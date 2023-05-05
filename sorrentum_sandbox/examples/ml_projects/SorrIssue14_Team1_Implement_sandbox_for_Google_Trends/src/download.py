@@ -41,7 +41,6 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
 
 
         if use_api:
-            # dotenv_path = os.getenv("DOTENV_FILE")
             load_dotenv("/cmamp/airflow/.env")
 
             timeframe = None
@@ -54,14 +53,6 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
                 if start_timestamp is not None and end_timestamp is not None:
                     timeframe = start_timestamp + " " + end_timestamp
 
-
-            # params = {
-            #     "engine": "google_trends",
-            #     "q": topic,
-            #     "data_type": "TIMESERIES",
-            #     "date": timeframe,
-            #     "api_key": os.environ.get("API_KEY")
-            # }
             params = {
                 "engine": "google_trends",
                 "q": topic,
@@ -70,14 +61,10 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
                 "api_key": os.environ.get("API_KEY")
             }
 
-            # print(params)
-
             # performing a query
             search = GoogleSearch(params)
             results = search.get_dict()
             file_to_use = results["interest_over_time"]
-
-            # / root / data / data.json
 
         else:
             with open("/cmamp/files/data.json", 'r') as file:
@@ -99,6 +86,5 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
 
         # constructing a dataframe out of the data
         df = pd.DataFrame(cleaned_data, columns=columns)
-        # print(df.head(5))
 
         return df

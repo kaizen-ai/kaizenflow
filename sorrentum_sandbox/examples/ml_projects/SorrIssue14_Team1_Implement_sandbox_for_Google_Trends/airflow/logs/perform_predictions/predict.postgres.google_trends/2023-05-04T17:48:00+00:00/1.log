@@ -1,0 +1,105 @@
+[2023-05-04 17:52:17,414] {taskinstance.py:1035} INFO - Dependencies all met for <TaskInstance: perform_predictions.predict.postgres.google_trends scheduled__2023-05-04T17:48:00+00:00 [queued]>
+[2023-05-04 17:52:17,422] {taskinstance.py:1035} INFO - Dependencies all met for <TaskInstance: perform_predictions.predict.postgres.google_trends scheduled__2023-05-04T17:48:00+00:00 [queued]>
+[2023-05-04 17:52:17,423] {taskinstance.py:1241} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-04 17:52:17,424] {taskinstance.py:1242} INFO - Starting attempt 1 of 1
+[2023-05-04 17:52:17,425] {taskinstance.py:1243} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-04 17:52:17,434] {taskinstance.py:1262} INFO - Executing <Task(BashOperator): predict.postgres.google_trends> on 2023-05-04 17:48:00+00:00
+[2023-05-04 17:52:17,438] {standard_task_runner.py:52} INFO - Started process 689 to run task
+[2023-05-04 17:52:17,442] {standard_task_runner.py:76} INFO - Running: ['***', 'tasks', 'run', 'perform_predictions', 'predict.postgres.google_trends', 'scheduled__2023-05-04T17:48:00+00:00', '--job-id', '24', '--raw', '--subdir', 'DAGS_FOLDER/***_predictions_scheduler.py', '--cfg-path', '/tmp/tmp4zgm3z2m', '--error-file', '/tmp/tmpt5zo7e11']
+[2023-05-04 17:52:17,443] {standard_task_runner.py:77} INFO - Job 24: Subtask predict.postgres.google_trends
+[2023-05-04 17:52:17,486] {logging_mixin.py:109} INFO - Running <TaskInstance: perform_predictions.predict.postgres.google_trends scheduled__2023-05-04T17:48:00+00:00 [running]> on host c896eb598e2f
+[2023-05-04 17:52:17,531] {taskinstance.py:1429} INFO - Exporting the following env vars:
+AIRFLOW_CTX_DAG_EMAIL=***@example.com
+AIRFLOW_CTX_DAG_OWNER=***
+AIRFLOW_CTX_DAG_ID=perform_predictions
+AIRFLOW_CTX_TASK_ID=predict.postgres.google_trends
+AIRFLOW_CTX_EXECUTION_DATE=2023-05-04T17:48:00+00:00
+AIRFLOW_CTX_DAG_RUN_ID=scheduled__2023-05-04T17:48:00+00:00
+[2023-05-04 17:52:17,533] {subprocess.py:62} INFO - Tmp dir root location: 
+ /tmp
+[2023-05-04 17:52:17,534] {subprocess.py:74} INFO - Running command: ['bash', '-c', 'sleep 5 && /cmamp/src/load_validate_transform.py --source_table google_trends_data --target_table google_trends_predictions --topic Oven']
+[2023-05-04 17:52:17,542] {subprocess.py:85} INFO - Output:
+[2023-05-04 17:53:23,526] {subprocess.py:89} INFO - Data fetched from 'google_trends_data' table:
+[2023-05-04 17:53:23,528] {subprocess.py:89} INFO -     Topic      Time  Frequency
+[2023-05-04 17:53:23,530] {subprocess.py:89} INFO - 0    oven  Jan 2004       21.0
+[2023-05-04 17:53:23,531] {subprocess.py:89} INFO - 1    oven  Feb 2004       19.0
+[2023-05-04 17:53:23,533] {subprocess.py:89} INFO - 2    oven  Mar 2004       18.0
+[2023-05-04 17:53:23,534] {subprocess.py:89} INFO - 3    oven  Apr 2004       20.0
+[2023-05-04 17:53:23,535] {subprocess.py:89} INFO - 4    oven  May 2004       19.0
+[2023-05-04 17:53:23,537] {subprocess.py:89} INFO - ..    ...       ...        ...
+[2023-05-04 17:53:23,538] {subprocess.py:89} INFO - 227  oven  Dec 2022       78.0
+[2023-05-04 17:53:23,539] {subprocess.py:89} INFO - 228  oven  Jan 2023       72.0
+[2023-05-04 17:53:23,540] {subprocess.py:89} INFO - 229  oven  Feb 2023       67.0
+[2023-05-04 17:53:23,542] {subprocess.py:89} INFO - 230  oven  Mar 2023       58.0
+[2023-05-04 17:53:23,543] {subprocess.py:89} INFO - 231  oven  Apr 2023       64.0
+[2023-05-04 17:53:23,544] {subprocess.py:89} INFO - 
+[2023-05-04 17:53:23,545] {subprocess.py:89} INFO - [232 rows x 3 columns]
+[2023-05-04 17:53:23,546] {subprocess.py:89} INFO - 
+[2023-05-04 17:53:23,547] {subprocess.py:89} INFO - Running all QA checks:
+[2023-05-04 17:53:23,548] {subprocess.py:89} INFO - DenormalizedDatasetCheck: PASSED
+[2023-05-04 17:53:23,549] {subprocess.py:89} INFO - 
+[2023-05-04 17:53:23,550] {subprocess.py:89} INFO - Step 1: Converting to Dask Dataframe, Done
+[2023-05-04 17:53:23,551] {subprocess.py:89} INFO - Step 2: Preprocessing before prediction, Done
+[2023-05-04 17:53:23,552] {subprocess.py:89} INFO - Performing stepwise search to minimize aic
+[2023-05-04 17:53:23,553] {subprocess.py:89} INFO -  ARIMA(0,1,0)(0,1,0)[12]             : AIC=1309.820, Time=0.03 sec
+[2023-05-04 17:53:23,554] {subprocess.py:89} INFO -  ARIMA(1,1,0)(1,1,0)[12]             : AIC=1245.644, Time=0.08 sec
+[2023-05-04 17:53:23,555] {subprocess.py:89} INFO -  ARIMA(0,1,1)(0,1,1)[12]             : AIC=1189.458, Time=0.31 sec
+[2023-05-04 17:53:23,557] {subprocess.py:89} INFO -  ARIMA(0,1,1)(0,1,0)[12]             : AIC=1310.708, Time=0.04 sec
+[2023-05-04 17:53:23,558] {subprocess.py:89} INFO -  ARIMA(0,1,1)(1,1,1)[12]             : AIC=1187.909, Time=0.24 sec
+[2023-05-04 17:53:23,559] {subprocess.py:89} INFO -  ARIMA(0,1,1)(1,1,0)[12]             : AIC=1245.079, Time=0.09 sec
+[2023-05-04 17:53:23,560] {subprocess.py:89} INFO -  ARIMA(0,1,1)(2,1,1)[12]             : AIC=1184.365, Time=0.53 sec
+[2023-05-04 17:53:23,561] {subprocess.py:89} INFO -  ARIMA(0,1,1)(2,1,0)[12]             : AIC=1194.853, Time=0.20 sec
+[2023-05-04 17:53:23,562] {subprocess.py:89} INFO -  ARIMA(0,1,1)(3,1,1)[12]             : AIC=1186.196, Time=1.61 sec
+[2023-05-04 17:53:23,563] {subprocess.py:89} INFO -  ARIMA(0,1,1)(2,1,2)[12]             : AIC=1186.257, Time=1.05 sec
+[2023-05-04 17:53:23,564] {subprocess.py:89} INFO -  ARIMA(0,1,1)(1,1,2)[12]             : AIC=1186.331, Time=1.21 sec
+[2023-05-04 17:53:23,565] {subprocess.py:89} INFO -  ARIMA(0,1,1)(3,1,0)[12]             : AIC=1187.760, Time=0.51 sec
+[2023-05-04 17:53:23,567] {subprocess.py:89} INFO -  ARIMA(0,1,1)(3,1,2)[12]             : AIC=1188.192, Time=2.85 sec
+[2023-05-04 17:53:23,568] {subprocess.py:89} INFO -  ARIMA(0,1,0)(2,1,1)[12]             : AIC=1183.911, Time=0.39 sec
+[2023-05-04 17:53:23,569] {subprocess.py:89} INFO -  ARIMA(0,1,0)(1,1,1)[12]             : AIC=1187.508, Time=0.15 sec
+[2023-05-04 17:53:23,570] {subprocess.py:89} INFO -  ARIMA(0,1,0)(2,1,0)[12]             : AIC=1194.278, Time=0.25 sec
+[2023-05-04 17:53:23,571] {subprocess.py:89} INFO -  ARIMA(0,1,0)(3,1,1)[12]             : AIC=1185.829, Time=1.02 sec
+[2023-05-04 17:53:23,572] {subprocess.py:89} INFO -  ARIMA(0,1,0)(2,1,2)[12]             : AIC=1185.859, Time=0.59 sec
+[2023-05-04 17:53:23,573] {subprocess.py:89} INFO -  ARIMA(0,1,0)(1,1,0)[12]             : AIC=1244.264, Time=0.06 sec
+[2023-05-04 17:53:23,574] {subprocess.py:89} INFO -  ARIMA(0,1,0)(1,1,2)[12]             : AIC=1185.799, Time=0.89 sec
+[2023-05-04 17:53:23,575] {subprocess.py:89} INFO -  ARIMA(0,1,0)(3,1,0)[12]             : AIC=1186.946, Time=0.30 sec
+[2023-05-04 17:53:23,576] {subprocess.py:89} INFO -  ARIMA(0,1,0)(3,1,2)[12]             : AIC=1187.822, Time=2.74 sec
+[2023-05-04 17:53:23,578] {subprocess.py:89} INFO -  ARIMA(1,1,0)(2,1,1)[12]             : AIC=1185.077, Time=0.58 sec
+[2023-05-04 17:53:23,579] {subprocess.py:89} INFO -  ARIMA(1,1,1)(2,1,1)[12]             : AIC=1183.075, Time=0.94 sec
+[2023-05-04 17:53:23,580] {subprocess.py:89} INFO -  ARIMA(1,1,1)(1,1,1)[12]             : AIC=1186.310, Time=0.37 sec
+[2023-05-04 17:53:23,581] {subprocess.py:89} INFO -  ARIMA(1,1,1)(2,1,0)[12]             : AIC=1194.116, Time=0.35 sec
+[2023-05-04 17:53:23,582] {subprocess.py:89} INFO -  ARIMA(1,1,1)(3,1,1)[12]             : AIC=1184.915, Time=1.84 sec
+[2023-05-04 17:53:23,583] {subprocess.py:89} INFO -  ARIMA(1,1,1)(2,1,2)[12]             : AIC=1184.965, Time=1.45 sec
+[2023-05-04 17:53:23,584] {subprocess.py:89} INFO -  ARIMA(1,1,1)(1,1,0)[12]             : AIC=1243.051, Time=0.16 sec
+[2023-05-04 17:53:23,585] {subprocess.py:89} INFO -  ARIMA(1,1,1)(1,1,2)[12]             : AIC=1184.614, Time=1.86 sec
+[2023-05-04 17:53:23,586] {subprocess.py:89} INFO -  ARIMA(1,1,1)(3,1,0)[12]             : AIC=1186.804, Time=0.77 sec
+[2023-05-04 17:53:23,587] {subprocess.py:89} INFO -  ARIMA(1,1,1)(3,1,2)[12]             : AIC=1186.914, Time=4.14 sec
+[2023-05-04 17:53:23,588] {subprocess.py:89} INFO -  ARIMA(2,1,1)(2,1,1)[12]             : AIC=1166.234, Time=1.33 sec
+[2023-05-04 17:53:23,590] {subprocess.py:89} INFO -  ARIMA(2,1,1)(1,1,1)[12]             : AIC=1170.054, Time=0.49 sec
+[2023-05-04 17:53:23,591] {subprocess.py:89} INFO -  ARIMA(2,1,1)(2,1,0)[12]             : AIC=1179.506, Time=0.86 sec
+[2023-05-04 17:53:23,593] {subprocess.py:89} INFO -  ARIMA(2,1,1)(3,1,1)[12]             : AIC=1168.228, Time=2.51 sec
+[2023-05-04 17:53:23,594] {subprocess.py:89} INFO -  ARIMA(2,1,1)(2,1,2)[12]             : AIC=1168.230, Time=2.20 sec
+[2023-05-04 17:53:23,595] {subprocess.py:89} INFO -  ARIMA(2,1,1)(1,1,0)[12]             : AIC=1228.738, Time=0.24 sec
+[2023-05-04 17:53:23,596] {subprocess.py:89} INFO -  ARIMA(2,1,1)(1,1,2)[12]             : AIC=1167.930, Time=2.23 sec
+[2023-05-04 17:53:23,597] {subprocess.py:89} INFO -  ARIMA(2,1,1)(3,1,0)[12]             : AIC=1170.162, Time=1.35 sec
+[2023-05-04 17:53:23,598] {subprocess.py:89} INFO -  ARIMA(2,1,1)(3,1,2)[12]             : AIC=1170.139, Time=7.67 sec
+[2023-05-04 17:53:23,600] {subprocess.py:89} INFO -  ARIMA(2,1,0)(2,1,1)[12]             : AIC=1173.100, Time=1.21 sec
+[2023-05-04 17:53:23,601] {subprocess.py:89} INFO -  ARIMA(3,1,1)(2,1,1)[12]             : AIC=1168.036, Time=1.69 sec
+[2023-05-04 17:53:23,602] {subprocess.py:89} INFO -  ARIMA(2,1,2)(2,1,1)[12]             : AIC=1167.881, Time=2.12 sec
+[2023-05-04 17:53:23,603] {subprocess.py:89} INFO -  ARIMA(1,1,2)(2,1,1)[12]             : AIC=1166.275, Time=1.28 sec
+[2023-05-04 17:53:23,604] {subprocess.py:89} INFO -  ARIMA(3,1,0)(2,1,1)[12]             : AIC=1172.587, Time=0.91 sec
+[2023-05-04 17:53:23,605] {subprocess.py:89} INFO -  ARIMA(3,1,2)(2,1,1)[12]             : AIC=1169.796, Time=2.51 sec
+[2023-05-04 17:53:23,606] {subprocess.py:89} INFO -  ARIMA(2,1,1)(2,1,1)[12] intercept   : AIC=1168.173, Time=2.46 sec
+[2023-05-04 17:53:23,608] {subprocess.py:89} INFO - 
+[2023-05-04 17:53:23,609] {subprocess.py:89} INFO - Best model:  ARIMA(2,1,1)(2,1,1)[12]
+[2023-05-04 17:53:23,610] {subprocess.py:89} INFO - Total fit time: 58.702 seconds
+[2023-05-04 17:53:23,611] {subprocess.py:89} INFO - Step 4: Predicting best fit using AIRMA models, Done
+[2023-05-04 17:53:23,612] {subprocess.py:89} INFO - Step 5: Reformatting predictions according to DB requirements, Done
+[2023-05-04 17:53:23,613] {subprocess.py:89} INFO - Step 6: Reformatting historical data according to DB requirements, Done
+[2023-05-04 17:53:23,615] {subprocess.py:89} INFO - Step 7: Concatinating historical data with predictions, Done
+[2023-05-04 17:53:23,616] {subprocess.py:89} INFO - Step 8: converting frequencies to 'int', Done
+[2023-05-04 17:53:23,786] {subprocess.py:93} INFO - Command exited with return code 0
+[2023-05-04 17:53:23,815] {taskinstance.py:1280} INFO - Marking task as SUCCESS. dag_id=perform_predictions, task_id=predict.postgres.google_trends, execution_date=20230504T174800, start_date=20230504T175217, end_date=20230504T175323
+[2023-05-04 17:53:23,853] {local_task_job.py:154} INFO - Task exited with return code 0
+[2023-05-04 17:53:23,879] {local_task_job.py:264} INFO - 0 downstream tasks scheduled from follow-on schedule check

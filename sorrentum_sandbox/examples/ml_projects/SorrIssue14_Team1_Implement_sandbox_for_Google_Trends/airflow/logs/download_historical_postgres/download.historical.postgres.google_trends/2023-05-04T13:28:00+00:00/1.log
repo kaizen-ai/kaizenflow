@@ -1,0 +1,36 @@
+[2023-05-04 13:31:54,905] {taskinstance.py:1035} INFO - Dependencies all met for <TaskInstance: download_historical_postgres.download.historical.postgres.google_trends scheduled__2023-05-04T13:28:00+00:00 [queued]>
+[2023-05-04 13:31:54,914] {taskinstance.py:1035} INFO - Dependencies all met for <TaskInstance: download_historical_postgres.download.historical.postgres.google_trends scheduled__2023-05-04T13:28:00+00:00 [queued]>
+[2023-05-04 13:31:54,915] {taskinstance.py:1241} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-04 13:31:54,916] {taskinstance.py:1242} INFO - Starting attempt 1 of 1
+[2023-05-04 13:31:54,917] {taskinstance.py:1243} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-04 13:31:54,926] {taskinstance.py:1262} INFO - Executing <Task(BashOperator): download.historical.postgres.google_trends> on 2023-05-04 13:28:00+00:00
+[2023-05-04 13:31:54,929] {standard_task_runner.py:52} INFO - Started process 238 to run task
+[2023-05-04 13:31:54,933] {standard_task_runner.py:76} INFO - Running: ['***', 'tasks', 'run', 'download_historical_postgres', 'download.historical.postgres.google_trends', 'scheduled__2023-05-04T13:28:00+00:00', '--job-id', '8', '--raw', '--subdir', 'DAGS_FOLDER/download_historical_postgres_google_trends.py', '--cfg-path', '/tmp/tmpurnkf2sx', '--error-file', '/tmp/tmpxrhvhxyc']
+[2023-05-04 13:31:54,934] {standard_task_runner.py:77} INFO - Job 8: Subtask download.historical.postgres.google_trends
+[2023-05-04 13:31:54,975] {logging_mixin.py:109} INFO - Running <TaskInstance: download_historical_postgres.download.historical.postgres.google_trends scheduled__2023-05-04T13:28:00+00:00 [running]> on host 7d6ed9fdc9c5
+[2023-05-04 13:31:55,019] {taskinstance.py:1429} INFO - Exporting the following env vars:
+AIRFLOW_CTX_DAG_EMAIL=***@example.com
+AIRFLOW_CTX_DAG_OWNER=***
+AIRFLOW_CTX_DAG_ID=download_historical_postgres
+AIRFLOW_CTX_TASK_ID=download.historical.postgres.google_trends
+AIRFLOW_CTX_EXECUTION_DATE=2023-05-04T13:28:00+00:00
+AIRFLOW_CTX_DAG_RUN_ID=scheduled__2023-05-04T13:28:00+00:00
+[2023-05-04 13:31:55,021] {subprocess.py:62} INFO - Tmp dir root location: 
+ /tmp
+[2023-05-04 13:31:55,022] {subprocess.py:74} INFO - Running command: ['bash', '-c', 'sleep 5 && /cmamp/src/download_to_db.py --target_table google_trends_data --use_api True --real_time_data False --topic Oven']
+[2023-05-04 13:31:55,029] {subprocess.py:85} INFO - Output:
+[2023-05-04 13:32:01,386] {subprocess.py:89} INFO - !!connection fetched!!
+[2023-05-04 13:32:01,388] {subprocess.py:89} INFO - DELETE FROM google_trends_data WHERE topic = 'oven'
+[2023-05-04 13:32:01,389] {subprocess.py:89} INFO - !Done!
+[2023-05-04 13:32:01,390] {subprocess.py:89} INFO -   Topic      Time  Frequency
+[2023-05-04 13:32:01,391] {subprocess.py:89} INFO - 0  oven  Jan 2004         21
+[2023-05-04 13:32:01,392] {subprocess.py:89} INFO - 1  oven  Feb 2004         19
+[2023-05-04 13:32:01,393] {subprocess.py:89} INFO - 2  oven  Mar 2004         18
+[2023-05-04 13:32:01,394] {subprocess.py:89} INFO - 3  oven  Apr 2004         20
+[2023-05-04 13:32:01,395] {subprocess.py:89} INFO - 4  oven  May 2004         19
+[2023-05-04 13:32:01,441] {subprocess.py:93} INFO - Command exited with return code 0
+[2023-05-04 13:32:01,468] {taskinstance.py:1280} INFO - Marking task as SUCCESS. dag_id=download_historical_postgres, task_id=download.historical.postgres.google_trends, execution_date=20230504T132800, start_date=20230504T133154, end_date=20230504T133201
+[2023-05-04 13:32:01,485] {local_task_job.py:154} INFO - Task exited with return code 0
+[2023-05-04 13:32:01,509] {local_task_job.py:264} INFO - 0 downstream tasks scheduled from follow-on schedule check

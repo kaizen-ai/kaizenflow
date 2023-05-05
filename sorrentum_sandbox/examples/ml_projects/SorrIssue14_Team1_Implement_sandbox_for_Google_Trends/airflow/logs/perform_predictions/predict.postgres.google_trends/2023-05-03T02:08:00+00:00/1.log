@@ -1,0 +1,90 @@
+[2023-05-03 02:10:05,312] {taskinstance.py:1035} INFO - Dependencies all met for <TaskInstance: perform_predictions.predict.postgres.google_trends scheduled__2023-05-03T02:08:00+00:00 [queued]>
+[2023-05-03 02:10:05,321] {taskinstance.py:1035} INFO - Dependencies all met for <TaskInstance: perform_predictions.predict.postgres.google_trends scheduled__2023-05-03T02:08:00+00:00 [queued]>
+[2023-05-03 02:10:05,322] {taskinstance.py:1241} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-03 02:10:05,323] {taskinstance.py:1242} INFO - Starting attempt 1 of 1
+[2023-05-03 02:10:05,324] {taskinstance.py:1243} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-03 02:10:05,333] {taskinstance.py:1262} INFO - Executing <Task(BashOperator): predict.postgres.google_trends> on 2023-05-03 02:08:00+00:00
+[2023-05-03 02:10:05,336] {standard_task_runner.py:52} INFO - Started process 973 to run task
+[2023-05-03 02:10:05,339] {standard_task_runner.py:76} INFO - Running: ['***', 'tasks', 'run', 'perform_predictions', 'predict.postgres.google_trends', 'scheduled__2023-05-03T02:08:00+00:00', '--job-id', '25', '--raw', '--subdir', 'DAGS_FOLDER/***_predictions_scheduler.py', '--cfg-path', '/tmp/tmpe38kywri', '--error-file', '/tmp/tmpx_0a4h4t']
+[2023-05-03 02:10:05,340] {standard_task_runner.py:77} INFO - Job 25: Subtask predict.postgres.google_trends
+[2023-05-03 02:10:05,379] {logging_mixin.py:109} INFO - Running <TaskInstance: perform_predictions.predict.postgres.google_trends scheduled__2023-05-03T02:08:00+00:00 [running]> on host adc748a128b1
+[2023-05-03 02:10:05,421] {taskinstance.py:1429} INFO - Exporting the following env vars:
+AIRFLOW_CTX_DAG_EMAIL=***@example.com
+AIRFLOW_CTX_DAG_OWNER=***
+AIRFLOW_CTX_DAG_ID=perform_predictions
+AIRFLOW_CTX_TASK_ID=predict.postgres.google_trends
+AIRFLOW_CTX_EXECUTION_DATE=2023-05-03T02:08:00+00:00
+AIRFLOW_CTX_DAG_RUN_ID=scheduled__2023-05-03T02:08:00+00:00
+[2023-05-03 02:10:05,422] {subprocess.py:62} INFO - Tmp dir root location: 
+ /tmp
+[2023-05-03 02:10:05,424] {subprocess.py:74} INFO - Running command: ['bash', '-c', 'sleep 5 && /cmamp/src/load_validate_transform.py --source_table google_trends_data --target_table google_trends_predictions --topic washing_machines']
+[2023-05-03 02:10:05,431] {subprocess.py:85} INFO - Output:
+[2023-05-03 02:10:10,898] {subprocess.py:89} INFO - Running all QA checks:
+[2023-05-03 02:10:10,899] {subprocess.py:89} INFO - DenormalizedDatasetCheck: PASSED
+[2023-05-03 02:10:10,900] {subprocess.py:89} INFO - RESAMPLING DATA
+[2023-05-03 02:10:10,903] {subprocess.py:89} INFO - Traceback (most recent call last):
+[2023-05-03 02:10:10,904] {subprocess.py:89} INFO -   File "/cmamp/src/load_validate_transform.py", line 118, in <module>
+[2023-05-03 02:10:10,905] {subprocess.py:89} INFO -     _main(_parse())
+[2023-05-03 02:10:10,906] {subprocess.py:89} INFO -   File "/cmamp/src/load_validate_transform.py", line 109, in _main
+[2023-05-03 02:10:10,907] {subprocess.py:89} INFO -     resampled_data = _resample_data_to_5min(data)
+[2023-05-03 02:10:10,907] {subprocess.py:89} INFO -   File "/cmamp/src/load_validate_transform.py", line 32, in _resample_data_to_5min
+[2023-05-03 02:10:10,908] {subprocess.py:89} INFO -     data = pd.read_csv("../files/ipad.csv")
+[2023-05-03 02:10:10,909] {subprocess.py:89} INFO -   File "/home/***/.local/lib/python3.7/site-packages/pandas/util/_decorators.py", line 311, in wrapper
+[2023-05-03 02:10:10,910] {subprocess.py:89} INFO -     return func(*args, **kwargs)
+[2023-05-03 02:10:10,910] {subprocess.py:89} INFO -   File "/home/***/.local/lib/python3.7/site-packages/pandas/io/parsers/readers.py", line 586, in read_csv
+[2023-05-03 02:10:10,911] {subprocess.py:89} INFO -     return _read(filepath_or_buffer, kwds)
+[2023-05-03 02:10:10,912] {subprocess.py:89} INFO -   File "/home/***/.local/lib/python3.7/site-packages/pandas/io/parsers/readers.py", line 482, in _read
+[2023-05-03 02:10:10,913] {subprocess.py:89} INFO -     parser = TextFileReader(filepath_or_buffer, **kwds)
+[2023-05-03 02:10:10,914] {subprocess.py:89} INFO -   File "/home/***/.local/lib/python3.7/site-packages/pandas/io/parsers/readers.py", line 811, in __init__
+[2023-05-03 02:10:10,915] {subprocess.py:89} INFO -     self._engine = self._make_engine(self.engine)
+[2023-05-03 02:10:10,916] {subprocess.py:89} INFO -   File "/home/***/.local/lib/python3.7/site-packages/pandas/io/parsers/readers.py", line 1040, in _make_engine
+[2023-05-03 02:10:10,917] {subprocess.py:89} INFO -     return mapping[engine](self.f, **self.options)  # type: ignore[call-arg]
+[2023-05-03 02:10:10,918] {subprocess.py:89} INFO -   File "/home/***/.local/lib/python3.7/site-packages/pandas/io/parsers/c_parser_wrapper.py", line 51, in __init__
+[2023-05-03 02:10:10,919] {subprocess.py:89} INFO -     self._open_handles(src, kwds)
+[2023-05-03 02:10:10,919] {subprocess.py:89} INFO -   File "/home/***/.local/lib/python3.7/site-packages/pandas/io/parsers/base_parser.py", line 229, in _open_handles
+[2023-05-03 02:10:10,920] {subprocess.py:89} INFO -     errors=kwds.get("encoding_errors", "strict"),
+[2023-05-03 02:10:10,921] {subprocess.py:89} INFO -   File "/home/***/.local/lib/python3.7/site-packages/pandas/io/common.py", line 707, in get_handle
+[2023-05-03 02:10:10,922] {subprocess.py:89} INFO -     newline="",
+[2023-05-03 02:10:10,923] {subprocess.py:89} INFO - FileNotFoundError: [Errno 2] No such file or directory: '../files/ipad.csv'
+[2023-05-03 02:10:10,972] {subprocess.py:93} INFO - Command exited with return code 1
+[2023-05-03 02:10:10,990] {taskinstance.py:1703} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/models/taskinstance.py", line 1332, in _run_raw_task
+    self._execute_task_with_callbacks(context)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/models/taskinstance.py", line 1458, in _execute_task_with_callbacks
+    result = self._execute_task(context, self.task)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/models/taskinstance.py", line 1514, in _execute_task
+    result = execute_callable(context=context)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/operators/bash.py", line 188, in execute
+    f'Bash command failed. The command returned a non-zero exit code {result.exit_code}.'
+airflow.exceptions.AirflowException: Bash command failed. The command returned a non-zero exit code 1.
+[2023-05-03 02:10:10,999] {taskinstance.py:1280} INFO - Marking task as FAILED. dag_id=perform_predictions, task_id=predict.postgres.google_trends, execution_date=20230503T020800, start_date=20230503T021005, end_date=20230503T021010
+[2023-05-03 02:10:11,012] {standard_task_runner.py:91} ERROR - Failed to execute job 25 for task predict.postgres.google_trends
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/task/task_runner/standard_task_runner.py", line 85, in _start_by_fork
+    args.func(args, dag=self.dag)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/cli/cli_parser.py", line 48, in command
+    return func(*args, **kwargs)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/utils/cli.py", line 92, in wrapper
+    return f(*args, **kwargs)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/cli/commands/task_command.py", line 292, in task_run
+    _run_task_by_selected_method(args, dag, ti)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/cli/commands/task_command.py", line 107, in _run_task_by_selected_method
+    _run_raw_task(args, ti)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/cli/commands/task_command.py", line 184, in _run_raw_task
+    error_file=args.error_file,
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/utils/session.py", line 70, in wrapper
+    return func(*args, session=session, **kwargs)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/models/taskinstance.py", line 1332, in _run_raw_task
+    self._execute_task_with_callbacks(context)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/models/taskinstance.py", line 1458, in _execute_task_with_callbacks
+    result = self._execute_task(context, self.task)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/models/taskinstance.py", line 1514, in _execute_task
+    result = execute_callable(context=context)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/operators/bash.py", line 188, in execute
+    f'Bash command failed. The command returned a non-zero exit code {result.exit_code}.'
+airflow.exceptions.AirflowException: Bash command failed. The command returned a non-zero exit code 1.
+[2023-05-03 02:10:11,038] {local_task_job.py:154} INFO - Task exited with return code 1
+[2023-05-03 02:10:11,066] {local_task_job.py:264} INFO - 0 downstream tasks scheduled from follow-on schedule check

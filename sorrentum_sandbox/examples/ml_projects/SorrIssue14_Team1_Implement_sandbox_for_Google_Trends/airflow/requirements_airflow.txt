@@ -1,4 +1,8 @@
 google_search_results
-pandas==1.5.3
-psycopg2_binary==2.9.5
-python-dotenv==1.0.0
+pandas
+psycopg2_binary
+python-dotenv
+dask
+matplotlib
+pmdarima
+statsmodels

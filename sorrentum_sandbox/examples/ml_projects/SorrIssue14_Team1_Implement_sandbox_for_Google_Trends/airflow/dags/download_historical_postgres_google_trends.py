@@ -15,7 +15,9 @@ _DAG_DESCRIPTION = (
 
 # Specify when often to execute the DAG.
 # runs once
-_SCHEDULE = "* * * * *"
+
+_SCHEDULE = "*/2 * * * *"
+# _SCHEDULE = "0 * * * *"
 
 
 # Pass default parameters for the DAG.
@@ -37,9 +39,9 @@ dag = airflow.DAG(
     description=_DAG_DESCRIPTION,
     max_active_runs=1,
     default_args=default_args,
-    schedule_interval=None,
+    schedule_interval=_SCHEDULE,
     catchup=False,
-    start_date=datetime.datetime(2023, 4, 16, 8, 0, 0)
+    start_date=datetime.datetime(2023, 4, 30, 18, 30, 0)
 )
 
 
@@ -50,7 +52,8 @@ bash_command = [
     "/cmamp/src/download_to_db.py",
     "--target_table google_trends_data",
     "--use_api True",
-    "--real_time_data False"
+    "--real_time_data False",
+    "--topic iPad"
 ]
 
 downloading_task = BashOperator(

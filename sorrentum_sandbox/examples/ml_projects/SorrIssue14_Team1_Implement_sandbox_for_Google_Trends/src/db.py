@@ -29,10 +29,25 @@ def get_google_trends_create_table_query() -> str:
     return query
 
 
+def get_google_trends_predictions_create_table_query() -> str:
+    query = """
+                    CREATE TABLE IF NOT EXISTS google_trends_predictions
+                    (
+                        topic VARCHAR(225), 
+                        date_stamp DATE, 
+                        record_type VARCHAR(225),
+                        frequency NUMERIC
+                    );
+            """
+
+    return query
+
+
 def get_db_connection() -> Any:
     """
     Retrieve connection to the Postgres DB.
     """
+
     connection = psycop.connect(
         host="postgres_db",
         dbname="google_trends",
@@ -63,7 +78,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         self.db_connection = db_connection
         self._create_tables()
 
-    def save(self, data: pd.DataFrame, db_table: str) -> None:
+    def save(self, data: pd.DataFrame, db_table: str, topic: str) -> None:
         """
         Save a DataFrame to a specified DB table.
 
@@ -73,11 +88,16 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         # Transform dataframe into list of tuples.
         values = [tuple(v) for v in data.to_numpy()]
 
+        cursor = self.db_connection.cursor()
+
+        # delete records code
+        query = self._create_delete_query(db_table, topic)
+        cursor.execute(query)
+
         # Generate a query for multiple rows.
         query = self._create_insert_query(db_table)
 
-        # Execute query for each provided row.
-        cursor = self.db_connection.cursor()
+        # insert values into table
         extras.execute_values(cursor, query, values)
         self.db_connection.commit()
 
@@ -95,6 +115,12 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         query = f"INSERT INTO {db_table} VALUES %s"
         return query
 
+    @staticmethod
+    def _create_delete_query(table: str, topic: str) -> str:
+        query ="DELETE FROM "+table+" WHERE topic = '" + topic + "'"
+        # print(query)
+        return query
+
     def _create_tables(self) -> None:
         """
         Create DB data tables to store data.
@@ -102,6 +128,9 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         cursor = self.db_connection.cursor()
 
         query = get_google_trends_create_table_query()
+        cursor.execute(query)
+
+        query = get_google_trends_predictions_create_table_query()
         cursor.execute(query)
 
 
@@ -124,12 +153,12 @@ class PostgresClient(sinsacli.DataClient):
         self.db_conn = db_connection
 
     def load(
-        self,
-        dataset_signature: str,
-        *,
-        start_timestamp: Optional[pd.Timestamp] = None,
-        end_timestamp: Optional[pd.Timestamp] = None,
-        **kwargs: Any,
+            self,
+            dataset_signature: str,
+            *,
+            start_timestamp: Optional[pd.Timestamp] = None,
+            end_timestamp: Optional[pd.Timestamp] = None,
+            **kwargs: Any,
     ) -> Any:
         """
         Load CSV data specified by a unique signature from a desired source
@@ -137,7 +166,8 @@ class PostgresClient(sinsacli.DataClient):
 
         The method assumes data having a `timestamp` column.
         """
-        select_query = f"SELECT * FROM google_trends_data where topic = " + "'" + dataset_signature + "'"
+        topic = kwargs.get("topic")
+        select_query = f"SELECT * FROM " + dataset_signature + " where topic = " + "'" + topic + "'"
 
         # Read data.
         data = pd.read_sql_query(select_query, self.db_conn)

@@ -18,7 +18,7 @@ USER airflow
 RUN /usr/local/bin/python -m pip install --upgrade pip
 
 # google_trends specific modules
-RUN pip3 install google_search_results pandas psycopg2_binary python-dotenv
+RUN pip3 install google_search_results pandas psycopg2_binary python-dotenv dask matplotlib pmdarima statsmodels
 
 
 RUN pip3 install \

@@ -1,0 +1,45 @@
+[2023-05-03 02:26:02,138] {taskinstance.py:1035} INFO - Dependencies all met for <TaskInstance: perform_predictions.predict.postgres.google_trends scheduled__2023-05-03T02:24:00+00:00 [queued]>
+[2023-05-03 02:26:02,146] {taskinstance.py:1035} INFO - Dependencies all met for <TaskInstance: perform_predictions.predict.postgres.google_trends scheduled__2023-05-03T02:24:00+00:00 [queued]>
+[2023-05-03 02:26:02,147] {taskinstance.py:1241} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-03 02:26:02,148] {taskinstance.py:1242} INFO - Starting attempt 1 of 1
+[2023-05-03 02:26:02,149] {taskinstance.py:1243} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-03 02:26:02,158] {taskinstance.py:1262} INFO - Executing <Task(BashOperator): predict.postgres.google_trends> on 2023-05-03 02:24:00+00:00
+[2023-05-03 02:26:02,161] {standard_task_runner.py:52} INFO - Started process 1291 to run task
+[2023-05-03 02:26:02,164] {standard_task_runner.py:76} INFO - Running: ['***', 'tasks', 'run', 'perform_predictions', 'predict.postgres.google_trends', 'scheduled__2023-05-03T02:24:00+00:00', '--job-id', '37', '--raw', '--subdir', 'DAGS_FOLDER/***_predictions_scheduler.py', '--cfg-path', '/tmp/tmp3w0mxume', '--error-file', '/tmp/tmppgslpdel']
+[2023-05-03 02:26:02,166] {standard_task_runner.py:77} INFO - Job 37: Subtask predict.postgres.google_trends
+[2023-05-03 02:26:02,205] {logging_mixin.py:109} INFO - Running <TaskInstance: perform_predictions.predict.postgres.google_trends scheduled__2023-05-03T02:24:00+00:00 [running]> on host adc748a128b1
+[2023-05-03 02:26:02,247] {taskinstance.py:1429} INFO - Exporting the following env vars:
+AIRFLOW_CTX_DAG_EMAIL=***@example.com
+AIRFLOW_CTX_DAG_OWNER=***
+AIRFLOW_CTX_DAG_ID=perform_predictions
+AIRFLOW_CTX_TASK_ID=predict.postgres.google_trends
+AIRFLOW_CTX_EXECUTION_DATE=2023-05-03T02:24:00+00:00
+AIRFLOW_CTX_DAG_RUN_ID=scheduled__2023-05-03T02:24:00+00:00
+[2023-05-03 02:26:02,249] {subprocess.py:62} INFO - Tmp dir root location: 
+ /tmp
+[2023-05-03 02:26:02,250] {subprocess.py:74} INFO - Running command: ['bash', '-c', 'sleep 5 && /cmamp/src/load_validate_transform.py --source_table google_trends_data --target_table google_trends_predictions --topic washing_machines']
+[2023-05-03 02:26:02,257] {subprocess.py:85} INFO - Output:
+[2023-05-03 02:26:07,677] {subprocess.py:89} INFO - Running all QA checks:
+[2023-05-03 02:26:07,678] {subprocess.py:89} INFO - DenormalizedDatasetCheck: PASSED
+[2023-05-03 02:26:07,680] {subprocess.py:89} INFO - RESAMPLING DATA
+[2023-05-03 02:26:07,681] {subprocess.py:89} INFO -                 Topic       Time  Record Type  Frequency
+[2023-05-03 02:26:07,682] {subprocess.py:89} INFO - 0    washing machines 2004-01-01         data      100.0
+[2023-05-03 02:26:07,683] {subprocess.py:89} INFO - 1    washing machines 2004-02-01         data       95.0
+[2023-05-03 02:26:07,684] {subprocess.py:89} INFO - 2    washing machines 2004-03-01         data       87.0
+[2023-05-03 02:26:07,685] {subprocess.py:89} INFO - 3    washing machines 2004-04-01         data       79.0
+[2023-05-03 02:26:07,686] {subprocess.py:89} INFO - 4    washing machines 2004-05-01         data       82.0
+[2023-05-03 02:26:07,687] {subprocess.py:89} INFO - ..                ...        ...          ...        ...
+[2023-05-03 02:26:07,688] {subprocess.py:89} INFO - 227  washing machines 2022-12-01  predictions       25.0
+[2023-05-03 02:26:07,688] {subprocess.py:89} INFO - 228  washing machines 2023-01-01  predictions       25.0
+[2023-05-03 02:26:07,689] {subprocess.py:89} INFO - 229  washing machines 2023-02-01  predictions       24.0
+[2023-05-03 02:26:07,690] {subprocess.py:89} INFO - 230  washing machines 2023-03-01  predictions       23.0
+[2023-05-03 02:26:07,691] {subprocess.py:89} INFO - 231  washing machines 2023-04-01  predictions       24.0
+[2023-05-03 02:26:07,691] {subprocess.py:89} INFO - 
+[2023-05-03 02:26:07,692] {subprocess.py:89} INFO - [232 rows x 4 columns]
+[2023-05-03 02:26:07,693] {subprocess.py:89} INFO - DELETE FROM google_trends_predictions WHERE topic = 'washing machines'
+[2023-05-03 02:26:07,730] {subprocess.py:93} INFO - Command exited with return code 0
+[2023-05-03 02:26:07,752] {taskinstance.py:1280} INFO - Marking task as SUCCESS. dag_id=perform_predictions, task_id=predict.postgres.google_trends, execution_date=20230503T022400, start_date=20230503T022602, end_date=20230503T022607
+[2023-05-03 02:26:07,797] {local_task_job.py:154} INFO - Task exited with return code 0
+[2023-05-03 02:26:07,826] {local_task_job.py:264} INFO - 0 downstream tasks scheduled from follow-on schedule check

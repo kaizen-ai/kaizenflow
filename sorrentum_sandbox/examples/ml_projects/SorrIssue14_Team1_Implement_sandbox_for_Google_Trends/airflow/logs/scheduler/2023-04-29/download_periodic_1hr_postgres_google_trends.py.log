@@ -1,0 +1,381 @@
+[2023-04-29 23:10:15,589] {processor.py:163} INFO - Started process (PID=49) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:10:15,606] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:10:15,608] {logging_mixin.py:109} INFO - [2023-04-29 23:10:15,608] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:10:15,652] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:10:16,918] {logging_mixin.py:109} INFO - [2023-04-29 23:10:16,918] {providers_manager.py:156} WARNING - Exception when importing 'airflow.providers.google.leveldb.hooks.leveldb.LevelDBHook' from 'apache-airflow-providers-google' package: No module named 'plyvel'
+[2023-04-29 23:10:17,407] {logging_mixin.py:109} INFO - [2023-04-29 23:10:17,407] {providers_manager.py:156} WARNING - Exception when importing 'airflow.providers.google.leveldb.hooks.leveldb.LevelDBHook' from 'apache-airflow-providers-google' package: No module named 'plyvel'
+[2023-04-29 23:10:17,426] {logging_mixin.py:109} INFO - [2023-04-29 23:10:17,426] {manager.py:496} INFO - Created Permission View: can read on DAG:download_periodic_1hr_postgres
+[2023-04-29 23:10:17,437] {logging_mixin.py:109} INFO - [2023-04-29 23:10:17,436] {manager.py:496} INFO - Created Permission View: can edit on DAG:download_periodic_1hr_postgres
+[2023-04-29 23:10:17,438] {logging_mixin.py:109} INFO - [2023-04-29 23:10:17,438] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:10:17,447] {logging_mixin.py:109} INFO - [2023-04-29 23:10:17,447] {dag.py:2415} INFO - Creating ORM DAG for download_periodic_1hr_postgres
+[2023-04-29 23:10:17,458] {logging_mixin.py:109} INFO - [2023-04-29 23:10:17,458] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:10:17,470] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 1.884 seconds
+[2023-04-29 23:10:47,610] {processor.py:163} INFO - Started process (PID=77) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:10:47,614] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:10:47,616] {logging_mixin.py:109} INFO - [2023-04-29 23:10:47,616] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:10:47,667] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:10:47,685] {logging_mixin.py:109} INFO - [2023-04-29 23:10:47,685] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:10:47,705] {logging_mixin.py:109} INFO - [2023-04-29 23:10:47,705] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:10:47,715] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.115 seconds
+[2023-04-29 23:11:17,868] {processor.py:163} INFO - Started process (PID=80) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:11:17,870] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:11:17,872] {logging_mixin.py:109} INFO - [2023-04-29 23:11:17,872] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:11:17,906] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:11:17,917] {logging_mixin.py:109} INFO - [2023-04-29 23:11:17,917] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:11:17,938] {logging_mixin.py:109} INFO - [2023-04-29 23:11:17,938] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:11:17,949] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.086 seconds
+[2023-04-29 23:11:48,101] {processor.py:163} INFO - Started process (PID=83) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:11:48,103] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:11:48,104] {logging_mixin.py:109} INFO - [2023-04-29 23:11:48,104] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:11:48,159] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:11:48,171] {logging_mixin.py:109} INFO - [2023-04-29 23:11:48,171] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:11:48,195] {logging_mixin.py:109} INFO - [2023-04-29 23:11:48,195] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:11:48,207] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.110 seconds
+[2023-04-29 23:12:18,360] {processor.py:163} INFO - Started process (PID=86) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:12:18,362] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:12:18,364] {logging_mixin.py:109} INFO - [2023-04-29 23:12:18,364] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:12:18,399] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:12:18,408] {logging_mixin.py:109} INFO - [2023-04-29 23:12:18,408] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:12:18,423] {logging_mixin.py:109} INFO - [2023-04-29 23:12:18,423] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:12:18,431] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.075 seconds
+[2023-04-29 23:12:48,583] {processor.py:163} INFO - Started process (PID=89) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:12:48,585] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:12:48,587] {logging_mixin.py:109} INFO - [2023-04-29 23:12:48,587] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:12:48,624] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:12:48,634] {logging_mixin.py:109} INFO - [2023-04-29 23:12:48,634] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:12:48,649] {logging_mixin.py:109} INFO - [2023-04-29 23:12:48,649] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:12:48,658] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.080 seconds
+[2023-04-29 23:13:18,807] {processor.py:163} INFO - Started process (PID=92) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:13:18,809] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:13:18,811] {logging_mixin.py:109} INFO - [2023-04-29 23:13:18,810] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:13:18,841] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:13:18,869] {logging_mixin.py:109} INFO - [2023-04-29 23:13:18,869] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:13:18,883] {logging_mixin.py:109} INFO - [2023-04-29 23:13:18,882] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:13:18,891] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.088 seconds
+[2023-04-29 23:13:49,039] {processor.py:163} INFO - Started process (PID=95) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:13:49,041] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:13:49,042] {logging_mixin.py:109} INFO - [2023-04-29 23:13:49,042] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:13:49,075] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:13:49,085] {logging_mixin.py:109} INFO - [2023-04-29 23:13:49,085] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:13:49,098] {logging_mixin.py:109} INFO - [2023-04-29 23:13:49,098] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:13:49,106] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.072 seconds
+[2023-04-29 23:14:19,255] {processor.py:163} INFO - Started process (PID=98) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:14:19,257] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:14:19,258] {logging_mixin.py:109} INFO - [2023-04-29 23:14:19,258] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:14:19,289] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:14:19,299] {logging_mixin.py:109} INFO - [2023-04-29 23:14:19,299] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:14:19,315] {logging_mixin.py:109} INFO - [2023-04-29 23:14:19,314] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:14:19,324] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.073 seconds
+[2023-04-29 23:14:49,468] {processor.py:163} INFO - Started process (PID=101) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:14:49,470] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:14:49,472] {logging_mixin.py:109} INFO - [2023-04-29 23:14:49,471] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:14:49,503] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:14:49,512] {logging_mixin.py:109} INFO - [2023-04-29 23:14:49,512] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:14:49,526] {logging_mixin.py:109} INFO - [2023-04-29 23:14:49,526] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:14:49,534] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.070 seconds
+[2023-04-29 23:15:19,707] {processor.py:163} INFO - Started process (PID=104) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:15:19,710] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:15:19,712] {logging_mixin.py:109} INFO - [2023-04-29 23:15:19,712] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:15:19,745] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:15:19,754] {logging_mixin.py:109} INFO - [2023-04-29 23:15:19,754] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:15:19,768] {logging_mixin.py:109} INFO - [2023-04-29 23:15:19,768] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:15:19,776] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.074 seconds
+[2023-04-29 23:15:49,910] {processor.py:163} INFO - Started process (PID=107) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:15:49,912] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:15:49,914] {logging_mixin.py:109} INFO - [2023-04-29 23:15:49,914] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:15:49,941] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:15:49,951] {logging_mixin.py:109} INFO - [2023-04-29 23:15:49,951] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:15:49,965] {logging_mixin.py:109} INFO - [2023-04-29 23:15:49,965] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:15:49,973] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.067 seconds
+[2023-04-29 23:16:20,116] {processor.py:163} INFO - Started process (PID=110) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:16:20,118] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:16:20,120] {logging_mixin.py:109} INFO - [2023-04-29 23:16:20,119] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:16:20,148] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:16:20,157] {logging_mixin.py:109} INFO - [2023-04-29 23:16:20,157] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:16:20,171] {logging_mixin.py:109} INFO - [2023-04-29 23:16:20,171] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:16:20,180] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.067 seconds
+[2023-04-29 23:16:50,332] {processor.py:163} INFO - Started process (PID=113) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:16:50,334] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:16:50,336] {logging_mixin.py:109} INFO - [2023-04-29 23:16:50,336] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:16:50,368] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:16:50,378] {logging_mixin.py:109} INFO - [2023-04-29 23:16:50,377] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:16:50,393] {logging_mixin.py:109} INFO - [2023-04-29 23:16:50,393] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:16:50,402] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.073 seconds
+[2023-04-29 23:17:20,471] {processor.py:163} INFO - Started process (PID=116) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:17:20,473] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:17:20,475] {logging_mixin.py:109} INFO - [2023-04-29 23:17:20,475] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:17:20,509] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:17:20,518] {logging_mixin.py:109} INFO - [2023-04-29 23:17:20,518] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:17:20,532] {logging_mixin.py:109} INFO - [2023-04-29 23:17:20,532] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:17:20,540] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.073 seconds
+[2023-04-29 23:17:50,696] {processor.py:163} INFO - Started process (PID=119) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:17:50,698] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:17:50,700] {logging_mixin.py:109} INFO - [2023-04-29 23:17:50,700] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:17:50,735] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:17:50,744] {logging_mixin.py:109} INFO - [2023-04-29 23:17:50,744] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:17:50,758] {logging_mixin.py:109} INFO - [2023-04-29 23:17:50,758] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:17:50,766] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.074 seconds
+[2023-04-29 23:18:20,926] {processor.py:163} INFO - Started process (PID=122) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:18:20,928] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:18:20,929] {logging_mixin.py:109} INFO - [2023-04-29 23:18:20,929] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:18:20,961] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:18:20,971] {logging_mixin.py:109} INFO - [2023-04-29 23:18:20,970] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:18:20,984] {logging_mixin.py:109} INFO - [2023-04-29 23:18:20,984] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:18:20,992] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.071 seconds
+[2023-04-29 23:20:51,360] {processor.py:163} INFO - Started process (PID=50) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:20:51,362] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:20:51,363] {logging_mixin.py:109} INFO - [2023-04-29 23:20:51,363] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:20:51,395] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:20:52,421] {logging_mixin.py:109} INFO - [2023-04-29 23:20:52,421] {providers_manager.py:156} WARNING - Exception when importing 'airflow.providers.google.leveldb.hooks.leveldb.LevelDBHook' from 'apache-airflow-providers-google' package: No module named 'plyvel'
+[2023-04-29 23:20:52,819] {logging_mixin.py:109} INFO - [2023-04-29 23:20:52,819] {providers_manager.py:156} WARNING - Exception when importing 'airflow.providers.google.leveldb.hooks.leveldb.LevelDBHook' from 'apache-airflow-providers-google' package: No module named 'plyvel'
+[2023-04-29 23:20:52,839] {logging_mixin.py:109} INFO - [2023-04-29 23:20:52,839] {manager.py:496} INFO - Created Permission View: can edit on DAG:download_periodic_1hr_postgres
+[2023-04-29 23:20:52,849] {logging_mixin.py:109} INFO - [2023-04-29 23:20:52,849] {manager.py:496} INFO - Created Permission View: can read on DAG:download_periodic_1hr_postgres
+[2023-04-29 23:20:52,850] {logging_mixin.py:109} INFO - [2023-04-29 23:20:52,850] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:20:52,858] {logging_mixin.py:109} INFO - [2023-04-29 23:20:52,858] {dag.py:2415} INFO - Creating ORM DAG for download_periodic_1hr_postgres
+[2023-04-29 23:20:52,868] {logging_mixin.py:109} INFO - [2023-04-29 23:20:52,868] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:20:52,880] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 1.523 seconds
+[2023-04-29 23:21:23,052] {processor.py:163} INFO - Started process (PID=77) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:21:23,054] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:21:23,055] {logging_mixin.py:109} INFO - [2023-04-29 23:21:23,055] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:21:23,088] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:21:23,099] {logging_mixin.py:109} INFO - [2023-04-29 23:21:23,099] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:21:23,113] {logging_mixin.py:109} INFO - [2023-04-29 23:21:23,113] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:21:23,122] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.074 seconds
+[2023-04-29 23:21:53,271] {processor.py:163} INFO - Started process (PID=80) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:21:53,273] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:21:53,275] {logging_mixin.py:109} INFO - [2023-04-29 23:21:53,275] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:21:53,305] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:21:53,322] {logging_mixin.py:109} INFO - [2023-04-29 23:21:53,322] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:21:53,344] {logging_mixin.py:109} INFO - [2023-04-29 23:21:53,344] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:21:53,372] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.104 seconds
+[2023-04-29 23:22:23,680] {processor.py:163} INFO - Started process (PID=83) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:22:23,688] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:22:23,691] {logging_mixin.py:109} INFO - [2023-04-29 23:22:23,691] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:22:23,764] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:22:23,784] {logging_mixin.py:109} INFO - [2023-04-29 23:22:23,784] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:22:23,809] {logging_mixin.py:109} INFO - [2023-04-29 23:22:23,809] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:22:23,821] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.156 seconds
+[2023-04-29 23:22:54,743] {processor.py:163} INFO - Started process (PID=86) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:22:54,746] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:22:54,747] {logging_mixin.py:109} INFO - [2023-04-29 23:22:54,747] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:22:54,782] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:22:54,792] {logging_mixin.py:109} INFO - [2023-04-29 23:22:54,791] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:22:54,805] {logging_mixin.py:109} INFO - [2023-04-29 23:22:54,805] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:22:54,813] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.074 seconds
+[2023-04-29 23:23:24,957] {processor.py:163} INFO - Started process (PID=89) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:23:24,960] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:23:24,962] {logging_mixin.py:109} INFO - [2023-04-29 23:23:24,961] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:23:24,996] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:23:25,007] {logging_mixin.py:109} INFO - [2023-04-29 23:23:25,007] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:23:25,023] {logging_mixin.py:109} INFO - [2023-04-29 23:23:25,023] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:23:25,032] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.079 seconds
+[2023-04-29 23:23:55,190] {processor.py:163} INFO - Started process (PID=92) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:23:55,193] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:23:55,195] {logging_mixin.py:109} INFO - [2023-04-29 23:23:55,195] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:23:55,228] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:23:55,237] {logging_mixin.py:109} INFO - [2023-04-29 23:23:55,237] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:23:55,252] {logging_mixin.py:109} INFO - [2023-04-29 23:23:55,252] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:23:55,260] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.074 seconds
+[2023-04-29 23:24:25,399] {processor.py:163} INFO - Started process (PID=95) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:24:25,401] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:24:25,403] {logging_mixin.py:109} INFO - [2023-04-29 23:24:25,402] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:24:25,432] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:24:25,441] {logging_mixin.py:109} INFO - [2023-04-29 23:24:25,441] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:24:25,456] {logging_mixin.py:109} INFO - [2023-04-29 23:24:25,456] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:24:25,465] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.069 seconds
+[2023-04-29 23:24:55,630] {processor.py:163} INFO - Started process (PID=98) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:24:55,633] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:24:55,635] {logging_mixin.py:109} INFO - [2023-04-29 23:24:55,635] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:24:55,674] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:24:55,686] {logging_mixin.py:109} INFO - [2023-04-29 23:24:55,686] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:24:55,702] {logging_mixin.py:109} INFO - [2023-04-29 23:24:55,702] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:24:55,712] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.086 seconds
+[2023-04-29 23:25:25,764] {processor.py:163} INFO - Started process (PID=101) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:25:25,766] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:25:25,768] {logging_mixin.py:109} INFO - [2023-04-29 23:25:25,767] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:25:25,801] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:25:25,812] {logging_mixin.py:109} INFO - [2023-04-29 23:25:25,812] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:25:25,829] {logging_mixin.py:109} INFO - [2023-04-29 23:25:25,829] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:25:25,838] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.079 seconds
+[2023-04-29 23:25:56,028] {processor.py:163} INFO - Started process (PID=104) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:25:56,030] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:25:56,032] {logging_mixin.py:109} INFO - [2023-04-29 23:25:56,032] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:25:56,068] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:25:56,078] {logging_mixin.py:109} INFO - [2023-04-29 23:25:56,078] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:25:56,092] {logging_mixin.py:109} INFO - [2023-04-29 23:25:56,092] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:25:56,101] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.076 seconds
+[2023-04-29 23:26:26,269] {processor.py:163} INFO - Started process (PID=107) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:26:26,271] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:26:26,273] {logging_mixin.py:109} INFO - [2023-04-29 23:26:26,273] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:26:26,315] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:26:26,326] {logging_mixin.py:109} INFO - [2023-04-29 23:26:26,326] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:26:26,344] {logging_mixin.py:109} INFO - [2023-04-29 23:26:26,344] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:26:26,353] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.089 seconds
+[2023-04-29 23:26:56,399] {processor.py:163} INFO - Started process (PID=110) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:26:56,400] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:26:56,402] {logging_mixin.py:109} INFO - [2023-04-29 23:26:56,402] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:26:56,432] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:26:56,443] {logging_mixin.py:109} INFO - [2023-04-29 23:26:56,443] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:26:56,461] {logging_mixin.py:109} INFO - [2023-04-29 23:26:56,461] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:26:56,471] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.076 seconds
+[2023-04-29 23:27:26,622] {processor.py:163} INFO - Started process (PID=113) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:27:26,626] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:27:26,629] {logging_mixin.py:109} INFO - [2023-04-29 23:27:26,628] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:27:26,672] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:27:26,686] {logging_mixin.py:109} INFO - [2023-04-29 23:27:26,686] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:27:26,706] {logging_mixin.py:109} INFO - [2023-04-29 23:27:26,706] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:27:26,718] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.102 seconds
+[2023-04-29 23:27:56,869] {processor.py:163} INFO - Started process (PID=116) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:27:56,871] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:27:56,872] {logging_mixin.py:109} INFO - [2023-04-29 23:27:56,872] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:27:56,907] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:27:56,919] {logging_mixin.py:109} INFO - [2023-04-29 23:27:56,919] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:27:56,939] {logging_mixin.py:109} INFO - [2023-04-29 23:27:56,939] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:27:56,948] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.084 seconds
+[2023-04-29 23:28:27,109] {processor.py:163} INFO - Started process (PID=119) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:28:27,112] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:28:27,113] {logging_mixin.py:109} INFO - [2023-04-29 23:28:27,113] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:28:27,147] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:28:27,156] {logging_mixin.py:109} INFO - [2023-04-29 23:28:27,156] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:28:27,171] {logging_mixin.py:109} INFO - [2023-04-29 23:28:27,171] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:28:27,180] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.075 seconds
+[2023-04-29 23:28:57,334] {processor.py:163} INFO - Started process (PID=122) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:28:57,337] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:28:57,338] {logging_mixin.py:109} INFO - [2023-04-29 23:28:57,338] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:28:57,371] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:28:57,380] {logging_mixin.py:109} INFO - [2023-04-29 23:28:57,380] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:28:57,394] {logging_mixin.py:109} INFO - [2023-04-29 23:28:57,394] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:28:57,402] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.073 seconds
+[2023-04-29 23:29:27,557] {processor.py:163} INFO - Started process (PID=125) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:29:27,559] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:29:27,561] {logging_mixin.py:109} INFO - [2023-04-29 23:29:27,561] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:29:27,596] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:29:27,606] {logging_mixin.py:109} INFO - [2023-04-29 23:29:27,606] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:29:27,620] {logging_mixin.py:109} INFO - [2023-04-29 23:29:27,620] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:29:27,628] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.076 seconds
+[2023-04-29 23:29:57,778] {processor.py:163} INFO - Started process (PID=128) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:29:57,780] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:29:57,781] {logging_mixin.py:109} INFO - [2023-04-29 23:29:57,781] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:29:57,812] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:29:57,821] {logging_mixin.py:109} INFO - [2023-04-29 23:29:57,821] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:29:57,835] {logging_mixin.py:109} INFO - [2023-04-29 23:29:57,834] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:29:57,842] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.069 seconds
+[2023-04-29 23:30:27,998] {processor.py:163} INFO - Started process (PID=131) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:30:28,001] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:30:28,003] {logging_mixin.py:109} INFO - [2023-04-29 23:30:28,003] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:30:28,040] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:30:28,053] {logging_mixin.py:109} INFO - [2023-04-29 23:30:28,052] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:30:28,072] {logging_mixin.py:109} INFO - [2023-04-29 23:30:28,072] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:30:28,083] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.090 seconds
+[2023-04-29 23:30:58,284] {processor.py:163} INFO - Started process (PID=149) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:30:58,286] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:30:58,288] {logging_mixin.py:109} INFO - [2023-04-29 23:30:58,288] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:30:58,339] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:30:58,357] {logging_mixin.py:109} INFO - [2023-04-29 23:30:58,357] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:30:58,377] {logging_mixin.py:109} INFO - [2023-04-29 23:30:58,377] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:30:58,386] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.107 seconds
+[2023-04-29 23:31:28,436] {processor.py:163} INFO - Started process (PID=167) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:31:28,439] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:31:28,440] {logging_mixin.py:109} INFO - [2023-04-29 23:31:28,440] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:31:28,474] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:31:28,483] {logging_mixin.py:109} INFO - [2023-04-29 23:31:28,483] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:31:28,496] {logging_mixin.py:109} INFO - [2023-04-29 23:31:28,496] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:31:28,505] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.073 seconds
+[2023-04-29 23:31:58,654] {processor.py:163} INFO - Started process (PID=170) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:31:58,657] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:31:58,658] {logging_mixin.py:109} INFO - [2023-04-29 23:31:58,658] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:31:58,687] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:31:58,696] {logging_mixin.py:109} INFO - [2023-04-29 23:31:58,696] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:31:58,710] {logging_mixin.py:109} INFO - [2023-04-29 23:31:58,710] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:31:58,717] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.068 seconds
+[2023-04-29 23:32:28,926] {processor.py:163} INFO - Started process (PID=188) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:32:28,928] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:32:28,930] {logging_mixin.py:109} INFO - [2023-04-29 23:32:28,929] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:32:28,962] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:32:28,971] {logging_mixin.py:109} INFO - [2023-04-29 23:32:28,971] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:32:28,985] {logging_mixin.py:109} INFO - [2023-04-29 23:32:28,985] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:32:28,992] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.071 seconds
+[2023-04-29 23:32:59,139] {processor.py:163} INFO - Started process (PID=191) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:32:59,141] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:32:59,143] {logging_mixin.py:109} INFO - [2023-04-29 23:32:59,143] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:32:59,174] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:32:59,183] {logging_mixin.py:109} INFO - [2023-04-29 23:32:59,183] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:32:59,197] {logging_mixin.py:109} INFO - [2023-04-29 23:32:59,197] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:32:59,205] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.070 seconds
+[2023-04-29 23:33:29,395] {processor.py:163} INFO - Started process (PID=194) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:33:29,397] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:33:29,398] {logging_mixin.py:109} INFO - [2023-04-29 23:33:29,398] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:33:29,432] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:33:29,442] {logging_mixin.py:109} INFO - [2023-04-29 23:33:29,441] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:33:29,455] {logging_mixin.py:109} INFO - [2023-04-29 23:33:29,455] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:33:29,463] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.073 seconds
+[2023-04-29 23:33:59,631] {processor.py:163} INFO - Started process (PID=197) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:33:59,634] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:33:59,636] {logging_mixin.py:109} INFO - [2023-04-29 23:33:59,636] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:33:59,667] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:33:59,676] {logging_mixin.py:109} INFO - [2023-04-29 23:33:59,676] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:33:59,690] {logging_mixin.py:109} INFO - [2023-04-29 23:33:59,690] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:33:59,698] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.071 seconds
+[2023-04-29 23:34:50,239] {processor.py:163} INFO - Started process (PID=216) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:34:50,246] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:34:50,249] {logging_mixin.py:109} INFO - [2023-04-29 23:34:50,249] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:34:50,281] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:34:50,291] {logging_mixin.py:109} INFO - [2023-04-29 23:34:50,291] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:34:50,308] {logging_mixin.py:109} INFO - [2023-04-29 23:34:50,308] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:34:50,321] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.086 seconds
+[2023-04-29 23:35:20,491] {processor.py:163} INFO - Started process (PID=219) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:35:20,494] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:35:20,495] {logging_mixin.py:109} INFO - [2023-04-29 23:35:20,495] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:35:20,526] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:35:20,536] {logging_mixin.py:109} INFO - [2023-04-29 23:35:20,536] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:35:20,550] {logging_mixin.py:109} INFO - [2023-04-29 23:35:20,550] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:35:20,558] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.071 seconds
+[2023-04-29 23:35:50,725] {processor.py:163} INFO - Started process (PID=222) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:35:50,727] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:35:50,728] {logging_mixin.py:109} INFO - [2023-04-29 23:35:50,728] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:35:50,759] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:35:50,770] {logging_mixin.py:109} INFO - [2023-04-29 23:35:50,770] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:35:50,785] {logging_mixin.py:109} INFO - [2023-04-29 23:35:50,785] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:35:50,793] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.072 seconds
+[2023-04-29 23:36:20,976] {processor.py:163} INFO - Started process (PID=240) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:36:20,978] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:36:20,980] {logging_mixin.py:109} INFO - [2023-04-29 23:36:20,979] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:36:21,013] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:36:21,025] {logging_mixin.py:109} INFO - [2023-04-29 23:36:21,024] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:36:21,041] {logging_mixin.py:109} INFO - [2023-04-29 23:36:21,041] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:36:21,051] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.080 seconds
+[2023-04-29 23:36:51,200] {processor.py:163} INFO - Started process (PID=243) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:36:51,202] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:36:51,204] {logging_mixin.py:109} INFO - [2023-04-29 23:36:51,203] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:36:51,235] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:36:51,246] {logging_mixin.py:109} INFO - [2023-04-29 23:36:51,245] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:36:51,263] {logging_mixin.py:109} INFO - [2023-04-29 23:36:51,263] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:36:51,273] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.077 seconds
+[2023-04-29 23:37:21,423] {processor.py:163} INFO - Started process (PID=246) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:37:21,425] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:37:21,428] {logging_mixin.py:109} INFO - [2023-04-29 23:37:21,427] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:37:21,460] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:37:21,470] {logging_mixin.py:109} INFO - [2023-04-29 23:37:21,470] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:37:21,484] {logging_mixin.py:109} INFO - [2023-04-29 23:37:21,484] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:37:21,493] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.074 seconds
+[2023-04-29 23:37:51,641] {processor.py:163} INFO - Started process (PID=249) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:37:51,644] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:37:51,646] {logging_mixin.py:109} INFO - [2023-04-29 23:37:51,646] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:37:51,677] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:37:51,689] {logging_mixin.py:109} INFO - [2023-04-29 23:37:51,689] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:37:51,704] {logging_mixin.py:109} INFO - [2023-04-29 23:37:51,704] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:37:51,713] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.077 seconds
+[2023-04-29 23:38:21,859] {processor.py:163} INFO - Started process (PID=267) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:38:21,861] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:38:21,863] {logging_mixin.py:109} INFO - [2023-04-29 23:38:21,863] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:38:21,891] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:38:21,901] {logging_mixin.py:109} INFO - [2023-04-29 23:38:21,901] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:38:21,914] {logging_mixin.py:109} INFO - [2023-04-29 23:38:21,914] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:38:21,922] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.067 seconds
+[2023-04-29 23:57:25,677] {processor.py:163} INFO - Started process (PID=270) to work on /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:57:25,679] {processor.py:625} INFO - Processing file /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py for tasks to queue
+[2023-04-29 23:57:25,682] {logging_mixin.py:109} INFO - [2023-04-29 23:57:25,682] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:57:25,726] {processor.py:637} INFO - DAG(s) dict_keys(['download_periodic_1hr_postgres']) retrieved from /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py
+[2023-04-29 23:57:25,743] {logging_mixin.py:109} INFO - [2023-04-29 23:57:25,743] {dag.py:2396} INFO - Sync 1 DAGs
+[2023-04-29 23:57:25,763] {logging_mixin.py:109} INFO - [2023-04-29 23:57:25,763] {dag.py:2928} INFO - Setting next_dagrun for download_periodic_1hr_postgres to None
+[2023-04-29 23:57:25,779] {processor.py:171} INFO - Processing /opt/airflow/dags/download_periodic_1hr_postgres_google_trends.py took 0.106 seconds

@@ -1,0 +1,64 @@
+[2023-05-03 01:06:02,430] {taskinstance.py:1035} INFO - Dependencies all met for <TaskInstance: perform_predictions.predict.postgres.google_trends scheduled__2023-05-03T01:04:00+00:00 [queued]>
+[2023-05-03 01:06:02,439] {taskinstance.py:1035} INFO - Dependencies all met for <TaskInstance: perform_predictions.predict.postgres.google_trends scheduled__2023-05-03T01:04:00+00:00 [queued]>
+[2023-05-03 01:06:02,440] {taskinstance.py:1241} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-03 01:06:02,441] {taskinstance.py:1242} INFO - Starting attempt 1 of 1
+[2023-05-03 01:06:02,442] {taskinstance.py:1243} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-03 01:06:02,452] {taskinstance.py:1262} INFO - Executing <Task(BashOperator): predict.postgres.google_trends> on 2023-05-03 01:04:00+00:00
+[2023-05-03 01:06:02,456] {standard_task_runner.py:52} INFO - Started process 320 to run task
+[2023-05-03 01:06:02,460] {standard_task_runner.py:76} INFO - Running: ['***', 'tasks', 'run', 'perform_predictions', 'predict.postgres.google_trends', 'scheduled__2023-05-03T01:04:00+00:00', '--job-id', '14', '--raw', '--subdir', 'DAGS_FOLDER/***_predictions_scheduler.py', '--cfg-path', '/tmp/tmpyqln0wvr', '--error-file', '/tmp/tmphwokim8d']
+[2023-05-03 01:06:02,462] {standard_task_runner.py:77} INFO - Job 14: Subtask predict.postgres.google_trends
+[2023-05-03 01:06:02,506] {logging_mixin.py:109} INFO - Running <TaskInstance: perform_predictions.predict.postgres.google_trends scheduled__2023-05-03T01:04:00+00:00 [running]> on host adc748a128b1
+[2023-05-03 01:06:02,556] {taskinstance.py:1429} INFO - Exporting the following env vars:
+AIRFLOW_CTX_DAG_EMAIL=***@example.com
+AIRFLOW_CTX_DAG_OWNER=***
+AIRFLOW_CTX_DAG_ID=perform_predictions
+AIRFLOW_CTX_TASK_ID=predict.postgres.google_trends
+AIRFLOW_CTX_EXECUTION_DATE=2023-05-03T01:04:00+00:00
+AIRFLOW_CTX_DAG_RUN_ID=scheduled__2023-05-03T01:04:00+00:00
+[2023-05-03 01:06:02,558] {subprocess.py:62} INFO - Tmp dir root location: 
+ /tmp
+[2023-05-03 01:06:02,559] {subprocess.py:74} INFO - Running command: ['bash', '-c', 'sleep 5 && /cmamp/src/perform_ml_predictions.py --source_table google_trends_data --target_table google_trends_predictions --topic washing_machines']
+[2023-05-03 01:06:02,567] {subprocess.py:85} INFO - Output:
+[2023-05-03 01:06:07,576] {subprocess.py:89} INFO - bash: /cmamp/src/perform_ml_predictions.py: Permission denied
+[2023-05-03 01:06:07,578] {subprocess.py:93} INFO - Command exited with return code 126
+[2023-05-03 01:06:07,593] {taskinstance.py:1703} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/models/taskinstance.py", line 1332, in _run_raw_task
+    self._execute_task_with_callbacks(context)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/models/taskinstance.py", line 1458, in _execute_task_with_callbacks
+    result = self._execute_task(context, self.task)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/models/taskinstance.py", line 1514, in _execute_task
+    result = execute_callable(context=context)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/operators/bash.py", line 188, in execute
+    f'Bash command failed. The command returned a non-zero exit code {result.exit_code}.'
+airflow.exceptions.AirflowException: Bash command failed. The command returned a non-zero exit code 126.
+[2023-05-03 01:06:07,600] {taskinstance.py:1280} INFO - Marking task as FAILED. dag_id=perform_predictions, task_id=predict.postgres.google_trends, execution_date=20230503T010400, start_date=20230503T010602, end_date=20230503T010607
+[2023-05-03 01:06:07,613] {standard_task_runner.py:91} ERROR - Failed to execute job 14 for task predict.postgres.google_trends
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/task/task_runner/standard_task_runner.py", line 85, in _start_by_fork
+    args.func(args, dag=self.dag)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/cli/cli_parser.py", line 48, in command
+    return func(*args, **kwargs)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/utils/cli.py", line 92, in wrapper
+    return f(*args, **kwargs)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/cli/commands/task_command.py", line 292, in task_run
+    _run_task_by_selected_method(args, dag, ti)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/cli/commands/task_command.py", line 107, in _run_task_by_selected_method
+    _run_raw_task(args, ti)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/cli/commands/task_command.py", line 184, in _run_raw_task
+    error_file=args.error_file,
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/utils/session.py", line 70, in wrapper
+    return func(*args, session=session, **kwargs)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/models/taskinstance.py", line 1332, in _run_raw_task
+    self._execute_task_with_callbacks(context)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/models/taskinstance.py", line 1458, in _execute_task_with_callbacks
+    result = self._execute_task(context, self.task)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/models/taskinstance.py", line 1514, in _execute_task
+    result = execute_callable(context=context)
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/operators/bash.py", line 188, in execute
+    f'Bash command failed. The command returned a non-zero exit code {result.exit_code}.'
+airflow.exceptions.AirflowException: Bash command failed. The command returned a non-zero exit code 126.
+[2023-05-03 01:06:07,645] {local_task_job.py:154} INFO - Task exited with return code 1
+[2023-05-03 01:06:07,671] {local_task_job.py:264} INFO - 0 downstream tasks scheduled from follow-on schedule check

@@ -1,0 +1,71 @@
+[2023-05-04 17:57:13,847] {taskinstance.py:1035} INFO - Dependencies all met for <TaskInstance: perform_predictions.predict.postgres.google_trends scheduled__2023-05-04T17:54:00+00:00 [queued]>
+[2023-05-04 17:57:13,856] {taskinstance.py:1035} INFO - Dependencies all met for <TaskInstance: perform_predictions.predict.postgres.google_trends scheduled__2023-05-04T17:54:00+00:00 [queued]>
+[2023-05-04 17:57:13,858] {taskinstance.py:1241} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-04 17:57:13,859] {taskinstance.py:1242} INFO - Starting attempt 1 of 1
+[2023-05-04 17:57:13,860] {taskinstance.py:1243} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-04 17:57:13,874] {taskinstance.py:1262} INFO - Executing <Task(BashOperator): predict.postgres.google_trends> on 2023-05-04 17:54:00+00:00
+[2023-05-04 17:57:13,879] {standard_task_runner.py:52} INFO - Started process 791 to run task
+[2023-05-04 17:57:13,883] {standard_task_runner.py:76} INFO - Running: ['***', 'tasks', 'run', 'perform_predictions', 'predict.postgres.google_trends', 'scheduled__2023-05-04T17:54:00+00:00', '--job-id', '26', '--raw', '--subdir', 'DAGS_FOLDER/***_predictions_scheduler.py', '--cfg-path', '/tmp/tmp1y5ig342', '--error-file', '/tmp/tmpdt9h_c7p']
+[2023-05-04 17:57:13,885] {standard_task_runner.py:77} INFO - Job 26: Subtask predict.postgres.google_trends
+[2023-05-04 17:57:13,928] {logging_mixin.py:109} INFO - Running <TaskInstance: perform_predictions.predict.postgres.google_trends scheduled__2023-05-04T17:54:00+00:00 [running]> on host c896eb598e2f
+[2023-05-04 17:57:13,977] {taskinstance.py:1429} INFO - Exporting the following env vars:
+AIRFLOW_CTX_DAG_EMAIL=***@example.com
+AIRFLOW_CTX_DAG_OWNER=***
+AIRFLOW_CTX_DAG_ID=perform_predictions
+AIRFLOW_CTX_TASK_ID=predict.postgres.google_trends
+AIRFLOW_CTX_EXECUTION_DATE=2023-05-04T17:54:00+00:00
+AIRFLOW_CTX_DAG_RUN_ID=scheduled__2023-05-04T17:54:00+00:00
+[2023-05-04 17:57:13,979] {subprocess.py:62} INFO - Tmp dir root location: 
+ /tmp
+[2023-05-04 17:57:13,980] {subprocess.py:74} INFO - Running command: ['bash', '-c', 'sleep 5 && /cmamp/src/load_validate_transform.py --source_table google_trends_data --target_table google_trends_predictions --topic Washing_Machines']
+[2023-05-04 17:57:13,989] {subprocess.py:85} INFO - Output:
+[2023-05-04 17:57:26,259] {subprocess.py:89} INFO - Data fetched from 'google_trends_data' table:
+[2023-05-04 17:57:26,260] {subprocess.py:89} INFO -                 Topic      Time  Frequency
+[2023-05-04 17:57:26,261] {subprocess.py:89} INFO - 0    washing machines  Jan 2004      100.0
+[2023-05-04 17:57:26,262] {subprocess.py:89} INFO - 1    washing machines  Feb 2004       94.0
+[2023-05-04 17:57:26,264] {subprocess.py:89} INFO - 2    washing machines  Mar 2004       89.0
+[2023-05-04 17:57:26,265] {subprocess.py:89} INFO - 3    washing machines  Apr 2004       78.0
+[2023-05-04 17:57:26,266] {subprocess.py:89} INFO - 4    washing machines  May 2004       83.0
+[2023-05-04 17:57:26,267] {subprocess.py:89} INFO - ..                ...       ...        ...
+[2023-05-04 17:57:26,268] {subprocess.py:89} INFO - 227  washing machines  Dec 2022       24.0
+[2023-05-04 17:57:26,268] {subprocess.py:89} INFO - 228  washing machines  Jan 2023       25.0
+[2023-05-04 17:57:26,269] {subprocess.py:89} INFO - 229  washing machines  Feb 2023       24.0
+[2023-05-04 17:57:26,270] {subprocess.py:89} INFO - 230  washing machines  Mar 2023       24.0
+[2023-05-04 17:57:26,271] {subprocess.py:89} INFO - 231  washing machines  Apr 2023       23.0
+[2023-05-04 17:57:26,272] {subprocess.py:89} INFO - 
+[2023-05-04 17:57:26,273] {subprocess.py:89} INFO - [232 rows x 3 columns]
+[2023-05-04 17:57:26,273] {subprocess.py:89} INFO - 
+[2023-05-04 17:57:26,274] {subprocess.py:89} INFO - Running all QA checks:
+[2023-05-04 17:57:26,275] {subprocess.py:89} INFO - DenormalizedDatasetCheck: PASSED
+[2023-05-04 17:57:26,276] {subprocess.py:89} INFO - 
+[2023-05-04 17:57:26,276] {subprocess.py:89} INFO - Step 1: Converting to Dask Dataframe, Done
+[2023-05-04 17:57:26,278] {subprocess.py:89} INFO - Step 2: Preprocessing before prediction, Done
+[2023-05-04 17:57:26,279] {subprocess.py:89} INFO - Performing stepwise search to minimize aic
+[2023-05-04 17:57:26,280] {subprocess.py:89} INFO -  ARIMA(0,1,0)(0,1,0)[12]             : AIC=1291.622, Time=0.02 sec
+[2023-05-04 17:57:26,281] {subprocess.py:89} INFO -  ARIMA(1,1,0)(1,1,0)[12]             : AIC=1214.062, Time=0.11 sec
+[2023-05-04 17:57:26,281] {subprocess.py:89} INFO -  ARIMA(0,1,1)(0,1,1)[12]             : AIC=1174.663, Time=0.15 sec
+[2023-05-04 17:57:26,282] {subprocess.py:89} INFO -  ARIMA(0,1,1)(0,1,0)[12]             : AIC=1248.716, Time=0.04 sec
+[2023-05-04 17:57:26,283] {subprocess.py:89} INFO -  ARIMA(0,1,1)(1,1,1)[12]             : AIC=1176.663, Time=0.23 sec
+[2023-05-04 17:57:26,284] {subprocess.py:89} INFO -  ARIMA(0,1,1)(0,1,2)[12]             : AIC=1176.663, Time=0.44 sec
+[2023-05-04 17:57:26,284] {subprocess.py:89} INFO -  ARIMA(0,1,1)(1,1,0)[12]             : AIC=1200.374, Time=0.08 sec
+[2023-05-04 17:57:26,285] {subprocess.py:89} INFO -  ARIMA(0,1,1)(1,1,2)[12]             : AIC=inf, Time=2.54 sec
+[2023-05-04 17:57:26,286] {subprocess.py:89} INFO -  ARIMA(0,1,0)(0,1,1)[12]             : AIC=1227.379, Time=0.10 sec
+[2023-05-04 17:57:26,287] {subprocess.py:89} INFO -  ARIMA(1,1,1)(0,1,1)[12]             : AIC=1176.614, Time=0.23 sec
+[2023-05-04 17:57:26,288] {subprocess.py:89} INFO -  ARIMA(0,1,2)(0,1,1)[12]             : AIC=1176.604, Time=0.18 sec
+[2023-05-04 17:57:26,288] {subprocess.py:89} INFO -  ARIMA(1,1,0)(0,1,1)[12]             : AIC=1189.038, Time=0.16 sec
+[2023-05-04 17:57:26,289] {subprocess.py:89} INFO -  ARIMA(1,1,2)(0,1,1)[12]             : AIC=1176.428, Time=0.76 sec
+[2023-05-04 17:57:26,290] {subprocess.py:89} INFO -  ARIMA(0,1,1)(0,1,1)[12] intercept   : AIC=1175.887, Time=0.25 sec
+[2023-05-04 17:57:26,291] {subprocess.py:89} INFO - 
+[2023-05-04 17:57:26,292] {subprocess.py:89} INFO - Best model:  ARIMA(0,1,1)(0,1,1)[12]
+[2023-05-04 17:57:26,292] {subprocess.py:89} INFO - Total fit time: 5.303 seconds
+[2023-05-04 17:57:26,293] {subprocess.py:89} INFO - Step 4: Predicting best fit using AIRMA models, Done
+[2023-05-04 17:57:26,294] {subprocess.py:89} INFO - Step 5: Reformatting predictions according to DB requirements, Done
+[2023-05-04 17:57:26,295] {subprocess.py:89} INFO - Step 6: Reformatting historical data according to DB requirements, Done
+[2023-05-04 17:57:26,296] {subprocess.py:89} INFO - Step 7: Concatinating historical data with predictions, Done
+[2023-05-04 17:57:26,296] {subprocess.py:89} INFO - Step 8: converting frequencies to 'int', Done
+[2023-05-04 17:57:26,478] {subprocess.py:93} INFO - Command exited with return code 0
+[2023-05-04 17:57:26,502] {taskinstance.py:1280} INFO - Marking task as SUCCESS. dag_id=perform_predictions, task_id=predict.postgres.google_trends, execution_date=20230504T175400, start_date=20230504T175713, end_date=20230504T175726
+[2023-05-04 17:57:26,551] {local_task_job.py:154} INFO - Task exited with return code 0
+[2023-05-04 17:57:26,579] {local_task_job.py:264} INFO - 0 downstream tasks scheduled from follow-on schedule check
