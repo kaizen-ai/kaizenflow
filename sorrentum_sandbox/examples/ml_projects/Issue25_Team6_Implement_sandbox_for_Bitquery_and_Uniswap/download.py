@@ -93,7 +93,7 @@ def run_bitquery_query(start_time: str, end_time: str = None, live_flag: bool = 
             trades: count
             quotePrice
             tradeAmount(in: USD)
-            sellAmount(in: USD)
+            buyAmount(in: USD)
             sellAmount(in: USD)
         }
     }
