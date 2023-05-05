@@ -13,7 +13,6 @@ import requests
 from typing import Any, Dict, List
 from dotenv import load_dotenv
 from datetime import datetime
-
 import sorrentum_sandbox.examples.ml_projects.Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap.db as sisebidb
 import sorrentum_sandbox.common.download as ssandown
 
@@ -67,18 +66,11 @@ def run_bitquery_query(start_time: str, end_time: str = None, live_flag: bool = 
             }
             tradeIndex
             protocol
-            exchange {
-            fullName
-            }
-            
             baseCurrency {
             symbol
-            address
             }
-            baseAmount(in: USD)
             quoteCurrency {
             symbol
-            address
             }
             transaction {
             hash
@@ -93,10 +85,9 @@ def run_bitquery_query(start_time: str, end_time: str = None, live_flag: bool = 
             quoteAmount(in: USD)
             trades: count
             quotePrice
-            maximum_price: quotePrice(calculate: maximum)
-            minimum_price: quotePrice(calculate: minimum)
-            open_price: minimum(of: block, get: quote_price)
-            close_price: maximum(of: block, get: quote_price)
+            tradeAmount(in: USD)
+            sellAmount(in: USD)
+            buyAmount(in: USD)
         }
     }
     }
