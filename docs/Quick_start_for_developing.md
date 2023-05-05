@@ -49,6 +49,8 @@
     with the same system, and it makes it easy to share code and reproduce
     problems
 
+- Preparation
+
   1. Build the thin environment
 
   ```
@@ -77,39 +79,39 @@
 
 - To start a Docker container:
 
-```
-> i docker_bash
-```
+  ```
+  > i docker_bash
+  ```
 
-Ignore all the warnings that do not prevent you from running the tests, e.g.,
-```
-WARNING: The AM_AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
-WARNING: The AM_AWS_DEFAULT_REGION variable is not set. Defaulting to a blank string.
-WARNING: The AM_AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
-WARNING: The AM_FORCE_TEST_FAIL variable is not set. Defaulting to a blank string.
-WARNING: The CK_AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
-WARNING: The CK_AWS_DEFAULT_REGION variable is not set. Defaulting to a blank string.
-WARNING: The CK_AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
-WARNING: The CK_TELEGRAM_TOKEN variable is not set. Defaulting to a blank string.
-```
+  Ignore all the warnings that do not prevent you from running the tests, e.g.,
+  ```
+  WARNING: The AM_AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
+  WARNING: The AM_AWS_DEFAULT_REGION variable is not set. Defaulting to a blank string.
+  WARNING: The AM_AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
+  WARNING: The AM_FORCE_TEST_FAIL variable is not set. Defaulting to a blank string.
+  WARNING: The CK_AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
+  WARNING: The CK_AWS_DEFAULT_REGION variable is not set. Defaulting to a blank string.
+  WARNING: The CK_AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
+  WARNING: The CK_TELEGRAM_TOKEN variable is not set. Defaulting to a blank string.
+  ```
 
-```
------------------------------------------------------------------------------
-This code is not in sync with the container:
-code_version='1.4.1' != container_version='1.4.0'
------------------------------------------------------------------------------
-You need to:
-- merge origin/master into your branch with `invoke git_merge_master`
-- pull the latest container with `invoke docker_pull`
-```
+  ```
+  -----------------------------------------------------------------------------
+  This code is not in sync with the container:
+  code_version='1.4.1' != container_version='1.4.0'
+  -----------------------------------------------------------------------------
+  You need to:
+  - merge origin/master into your branch with `invoke git_merge_master`
+  - pull the latest container with `invoke docker_pull`
+  ```
 
 - To start a Jupyter server:
 
-```
-> i docker_jupyter
-```
+  ```
+  > i docker_jupyter
+  ```
 
-To open a Jupyter notebook in a local web-browser:
-- in the output from the cmd above find an assigned port, e.g., `[I 14:52:26.824 NotebookApp] http://0044e866de8d:10091/` -> port is `10091`
-- add the port to the link like so: `http://localhost:10091/` or `http://127.0.0.1:10091`
-- copy-paste the link into a web-browser and update the page
+  To open a Jupyter notebook in a local web-browser:
+  - in the output from the cmd above find an assigned port, e.g., `[I 14:52:26.824 NotebookApp] http://0044e866de8d:10091/` -> port is `10091`
+  - add the port to the link like so: `http://localhost:10091/` or `http://127.0.0.1:10091`
+  - copy-paste the link into a web-browser and update the page
