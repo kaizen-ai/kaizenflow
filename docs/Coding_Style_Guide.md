@@ -1,6 +1,6 @@
 ﻿# Sorrentum - Python Style Guide
 
-# <a name="_jriwruw1q2lb"></a><a name="_1oydvxmk6rm4"></a>**Meta**
+# **Meta**
 - What we call the "rules" is actually just a convention
   - Not about the absolute best way of doing something in all cases
   - Optimized for the common case
@@ -15,11 +15,11 @@
   - We want to minimize the propagation of a change
 - Some of the rules are evolving based on what we are seeing through the reviews
 
-# <a name="_30j0zll"></a>**Disclaimer**
+# **Disclaimer**
 This document was forked from [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html), therefore, the numbering of chapters sets off where the Style Guide ends. Make sure to familiarize yourself with it before proceeding to the rest of the doc, since it is the basis of our team’s code style.
 
 Another important source is [The Pragmatic Programmer](https://drive.google.com/file/d/1g0vjtaBVq0dt32thNprBRJpeHJsJSe-Z/view?usp=sharing) by David Thomas and Andrew Hunt. While not Python-specific, it provides an invaluable set of general principles by which any person working with code (software developer, DevOps or data scientist) should abide. Read it on long commutes, during lunch, and treat yourself to a physical copy on Christmas. The book is summarized [here](https://github.com/cryptokaizen/cmamp/blob/master/documentation/general/the_pragramatic_programmer.md), but do not deprive yourself of the engaging manner in which Thomas & Hunt elaborate on these points -- on top of it all, it is a very, very enjoyable read.
-## <a name="_qk4gfjjkcpqe"></a>**References**
+## **References**
 - Coding
   - [Google Python Style Guide (GPSG)](https://google.github.io/styleguide/pyguide.html)[](https://google.github.io/styleguide/pyguide.html)
   - [](https://google.github.io/styleguide/pyguide.html)[Code convention from PEP8](https://www.python.org/dev/peps/pep-0008/)[](https://www.python.org/dev/peps/pep-0008/)
@@ -33,41 +33,41 @@ Another important source is [The Pragmatic Programmer](https://drive.google.com/
   - [Google philosophical stuff](https://github.com/google/styleguide/blob/gh-pages/docguide/philosophy.md)
   - [Unix rules (although a bit cryptic sometimes)](https://en.wikipedia.org/wiki/Unix_philosophy#Eric_Raymond%E2%80%99s_17_Unix_Rules)
 
-# <a name="_uemsp8ak265i"></a>**High-Level Principles**
+# **High-Level Principles**
 In this paragraph we summarize the high-level principles that we follow for designing and implementing code and research. We should be careful in adding principles here. Ideally principles should be non-overlapping and generating all the other lower level principles we follow (like a basis for a vector space)
 
-- ### <a name="_iggqbxccj4wk"></a>***Follow the [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself) principle***
-- ### <a name="_wo1inrak15aw"></a>***Optimize for reading***
+- ### ***Follow the [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself) principle***
+- ### ***Optimize for reading***
   - Make code easy to read even if it is more difficult to write
   - Code is written 1x and read 100x
-- ### <a name="_tas901lqe274"></a>***Encapsulate what changes***
+- ### ***Encapsulate what changes***
   - Separate what changes from what stays the same
-- ### <a name="_1mpw76oowcw"></a>[***Least surprise principle***](https://en.wikipedia.org/wiki/Principle_of_least_astonishment)
+- ### [***Least surprise principle***](https://en.wikipedia.org/wiki/Principle_of_least_astonishment)
   - Try to make sure that the reader is not surprised
-- ### <a name="_82axlognom66"></a>***Pay the technical debt***
+- ### ***Pay the technical debt***
   - Any unpaid debt is guaranteed to bite you when you don't expect it
   - Still some debt is inevitable: try to find the right trade-off
-- ### <a name="_7amsurynhnwe"></a>***End-to-end first***
+- ### ***End-to-end first***
   - Always focus on implementing things end-to-end, then improve each block
   - Remember the analogy of building the car through the skateboard, the bike, etc.
     - Compare this approach to building wheels, chassis, with a big-bang
     integration at the end
-- ### <a name="_jt5c9gfx9xos"></a>***Unit test everything***
+- ### ***Unit test everything***
   - Code that matters needs to be unit tested
   - Code that doesn't matter should not be checked in the repo
   - The logical implication is: all code checked in the repo should be unit tested
-- ### <a name="_mp9i6h1srmmo"></a>***Don't get attached to code***
+- ### ***Don't get attached to code***
   - It's ok to delete, discard, retire code that is not useful any more
   - Don't take it personally when people suggest changes or simplification
-- ### <a name="_47lm09d3bzcd"></a>***Always plan before writing code***
+- ### ***Always plan before writing code***
   - File a GitHub issue
   - Think about what to do and how to do it
   - Ask for help or for a review
   - The best code is the one that we avoid to write through a clever mental kung-fu move
-- ### <a name="_uslxnxcm0b4g"></a>***Think hard about naming***
+- ### ***Think hard about naming***
   - Finding a name for a code object, notebook, is extremely difficult but very important to build a mental map
   - Spend the needed time on it
-- ### <a name="_kqmvksdtmwbw"></a>***Look for inconsistencies***
+- ### ***Look for inconsistencies***
   - Stop for a second after you have, before sending out:
     - Implemented code or a notebook
     - Written documentation
@@ -79,16 +79,11 @@ In this paragraph we summarize the high-level principles that we follow for desi
     - Do you see inconsistencies, potential issues?
   - It will take less and less time to become good at this
 
-# <a name="_1fob9te"></a>**5 Our coding suggestions**
-## <a name="_3znysh7"></a>**5.0 Template**
-- ### <a name="_2et92p0"></a>***5.0.1 Definition***
-- ### <a name="_tyjcwt"></a>***5.0.2 Pros***
-- ### <a name="_3dy6vkm"></a>***5.0.3 Cons***
-- ### <a name="_1t3h5sf"></a>***5.0.4 Decision***
+# **5 Our coding suggestions**
 
-## <a name="_2bn6wsx"></a>**5.1 Being careful with naming**
+## **5.1 Being careful with naming**
 
-### <a name="_e7fshihabhdn"></a>***5.1.1 Follow the conventions***
+### ***5.1.1 Follow the conventions***
 - Name executable files (scripts) and library functions using verbs (e.g., `download.py`, `download_data()`)
 - Name classes and (non-executable) files using nouns (e.g., `Downloader()`, `downloader.py`)
 - For decorators we don't use a verb as we do for normal functions, but rather an adjective or a past tense verb, e.g.,
@@ -100,7 +95,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
       …
   ```
 
-### <a name="_322g2bv30ukt"></a>***5.1.2 Follow spelling rules***
+### ***5.1.2 Follow spelling rules***
 - Capitalize the abbreviations, e.g.:
   - `CSV`
   - `DB` since it's an abbreviation of Database
@@ -110,7 +105,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - We use different names for indicating the same concept, e.g., `dir`, `path`, `folder`
   - Preferred term is `dir`
 
-### <a name="_vwj13y81fgj4"></a>***5.1.3 Search good names, avoid bad names***
+### ***5.1.3 Search good names, avoid bad names***
 - Naming things properly is one of the most difficult task of a programmer /
   data scientist
   - The name needs to be (possibly) short and memorable
@@ -137,7 +132,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
       - Then we need to change the name everywhere!
     - The name should capture what the data structure represents (its *semantics)* and not how it is implemented
 
-### <a name="_lfncgwn92ywg"></a>***5.1.4 Avoid code stutter***
+### ***5.1.4 Avoid code stutter***
 - An example of code stutter: in a module `git` there is a function called
   `get_git_root_path()`.
 - **Bad**
@@ -155,9 +150,9 @@ In this paragraph we summarize the high-level principles that we follow for desi
   ```
   - This is not only aesthetic reason but a bit related to a weak form of DRY
 
-## <a name="_3himk9ogtr6i"></a>**5.3 Comments**
+## **5.3 Comments**
 
-### <a name="_j7dx9b8p1dnb"></a>***5.3.1 Docstring conventions***
+### ***5.3.1 Docstring conventions***
 - Code needs to be properly commented
 - We follow python standard [PEP 257](https://www.python.org/dev/peps/pep-0257/)
   for commenting
@@ -168,7 +163,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   - Epytext
   - Numpydoc
 
-### <a name="_kty2n4fy2x2m"></a>***5.3.2 ReST style***
+### ***5.3.2 ReST style***
 - ReST (aka re-Structured Text) style is:
   - The most widely supported in the python community
   - Supported by all doc generation tools (e.g., epydoc, sphinx)
@@ -209,7 +204,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     ```
 - [More examples of and discussions on python docstrings](https://stackoverflow.com/questions/3898572)
 
-### <a name="_yulr657dq6o7"></a>***5.3.3 Descriptive vs imperative style***
+### ***5.3.3 Descriptive vs imperative style***
 - GPSG suggests using descriptive comments, e.g., "This function does this and
   that", instead of an imperative style "Do this and that"
 - [PEP 257](https://www.python.org/dev/peps/pep-0257/)
@@ -222,11 +217,11 @@ In this paragraph we summarize the high-level principles that we follow for desi
   - Since we prefer to rely upon automatic checks, we have decided to use the
     imperative style
 
-### <a name="_th92refmwfed"></a>***5.3.4 Comments***
+### ***5.3.4 Comments***
 - Comments follow the same style of docstrings, e.g., imperative style with
   period . at the end
 
-### <a name="_uc5zwcl4sugb"></a>***5.3.5 Use type hints***
+### ***5.3.5 Use type hints***
 - We expect new code to use type hints whenever possible
   - See [PEP 484](https://www.python.org/dev/peps/pep-0484/)
   - [Type hints cheat sheet](https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html)
@@ -234,7 +229,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - We plan to start using static analyzers (e.g., `mypy`) to check for bugs from
   type mistakes and to enforce type hints at run-time, whenever possible
 
-### <a name="_4d42k22plwo"></a>***5.3.6 Replace empty lines in code with comments***
+### ***5.3.6 Replace empty lines in code with comments***
 - If you feel that you need an empty line in the code, it probably means that a
   specific chunk of code is a logical piece of code performing a cohesive
   function.
@@ -266,7 +261,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   empty line is used also to separate functions. For this reason we suggest
   using an empty comment.
 
-### <a name="_o4kp9jyu31yc"></a>***5.3.7 Avoid distracting comments***
+### ***5.3.7 Avoid distracting comments***
 - Use comments to explain the high level logic / goal of a piece of code and not
   the details
   - E.g., do not comment things that are obvious, e.g.,
@@ -275,7 +270,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   _LOG.info("Results are %s", ...)
   ```
 
-### <a name="_alpdt3vvb6yj"></a>***5.3.8 Commenting out code***
+### ***5.3.8 Commenting out code***
 - When we comment out code, we should explain why it is no longer relevant and
 - What we need to do before removing the commented out code:
   - E.g., instead of
@@ -290,7 +285,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     is_alive = pd.Series(True, index=metadata.index)
     ```
 
-### <a name="_h4q4hdx8l767"></a>***5.3.9 If you find a bug or obsolete docstring/TODO in the code***
+### ***5.3.9 If you find a bug or obsolete docstring/TODO in the code***
 - The process is:
   - Do a `git blame` to find who wrote the code
   - If it's an easy bug, you can fix it and ask for a review from the author
@@ -301,7 +296,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     - Stacktrace
     - You can use the tag "BUG: ..."
 
-### <a name="_qhvefftproz"></a>***5.3.10 Referring to an object in code comments***
+### ***5.3.10 Referring to an object in code comments***
 - We prefer to refer to objects in the code using Markdown like this (this is
   a convention used in the documentation system Sphinx)
   ```
@@ -315,7 +310,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   # The df `df_tmp` is used for ...
   ```
 
-### <a name="_9ehb494a3z2t"></a>***5.3.11 Inline comments***
+### ***5.3.11 Inline comments***
 - In general we prefer to avoid writing comments on the same line as code since
   they require extra maintenance (e.g., when the line becomes too long)
   - **Bad**
@@ -328,9 +323,9 @@ In this paragraph we summarize the high-level principles that we follow for desi
     print("hello world")
     ```
 
-## <a name="_hvmesdarhw2b"></a>**5.4 Linter**
+## **5.4 Linter**
 
-### <a name="_dsu3fly59znv"></a>***5.4.1 Disabling linter messages***
+### ***5.4.1 Disabling linter messages***
 - When the linter reports a problem:
   - We assume that linter messages are correct, until the linter is proven wrong
   - We try to understand what is the rationale for the linter's complaints
@@ -363,7 +358,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     import config.logging_settings
     ```
 
-### <a name="_evbl2i7veqk8"></a>***5.4.2 Prefer non-inlined linter comments***
+### ***5.4.2 Prefer non-inlined linter comments***
 - Although we don't like inlined comments sometimes there is no other choice
   than an inlined comment to get the linter to understand which line we are
   referring to:
@@ -377,12 +372,12 @@ In this paragraph we summarize the high-level principles that we follow for desi
     import config.logging_settings  # pylint: disable=unused-import
     ```
 
-## <a name="_296dyuocel4o"></a>**5.5 Logging**
+## **5.5 Logging**
 
-### <a name="_jz27ls37166"></a>***5.5.1 Always use logging instead of prints***
+### ***5.5.1 Always use logging instead of prints***
 - Always use logging and never `print()` to monitor the execution
 
-### <a name="_lpkpv09qvyx6"></a>***5.5.2 Our logging idiom***
+### ***5.5.2 Our logging idiom***
 - In order to use our logging framework (e.g., `-v` from command lines, and much
   more) use:
   ```
@@ -399,7 +394,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   - E.g., when there is a bug one can run with `-v DEBUG` and see what's
     happening right before the bug
 
-### <a name="_va0msnze90lk"></a>***5.5.3 Logging level***
+### ***5.5.3 Logging level***
 - Use `_LOG.warning` for messages to the final user related to something
   unexpected where the code is making a decision that might be controversial
   - E.g., processing a dir that is supposed to contain only `.csv` files the
@@ -418,7 +413,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     sometimes this happens silently and it is reported only from the OS return
     code
 
-### <a name="_96azoq14ooag"></a>***5.5.4 Use positional args when logging***
+### ***5.5.4 Use positional args when logging***
 - **Bad**
   ```
   _LOG.debug('cmd=%s %s %s' % (cmd1, cmd2, cmd3))
@@ -432,7 +427,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - The two statements are equivalent from the functional point of view
 - The reason is that in the second case the string is not built unless the
   logging is actually performed, which limits time overhead from logging
-### <a name="_ch9w8cly486"></a>***5.5.5 Exceptions don't allow positional args***
+### ***5.5.5 Exceptions don't allow positional args***
 - For some reason people tend to believe that using the logging / dassert
   approach of positional param to exceptions
   - **Bad** (use positional args)
@@ -453,7 +448,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   - There is little time overhead since if you get to the exception probably the
     code is going to terminate, and it's not in a hot loop
 
-### <a name="_z0wdd3v1q1bj"></a>***5.5.6 Report warnings***
+### ***5.5.6 Report warnings***
 - If there is a something that is suspicious but you don't feel like it's
   worthwhile to assert, report a warning with:
   ```
@@ -465,9 +460,9 @@ In this paragraph we summarize the high-level principles that we follow for desi
   - Send the rest to warnings.log
   - At the end of the run, reports "there are warnings in warnings.log"
 
-## <a name="_zhr6ctb6g6oy"></a>**5.6 Assertions**
+## **5.6 Assertions**
 
-### <a name="_wel8bybg57ks"></a>***5.6.1 Use positional args when asserting***
+### ***5.6.1 Use positional args when asserting***
 - `dassert_*` is modeled after logging so for the same reasons one should use
   positional args 
 - **Bad**
@@ -478,7 +473,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   ```
   dbg.dassert_eq(a, 1, "No info for %s", method)
   ```
-### <a name="_tvjji3o9alu7"></a>***5.6.2 Report as much information as possible in an assertion***
+### ***5.6.2 Report as much information as possible in an assertion***
 - When using a `dassert_*` you want to give to the user as much information as
   possible to fix the problem
   - E.g., if you get an assertion after 8 hours of computation you don't want to
@@ -496,9 +491,9 @@ In this paragraph we summarize the high-level principles that we follow for desi
     ```
     - Note that often is useful to add ' (backtick) to fight pesky spaces that make the value unclear, or to make the error as readable as possible
 
-## <a name="_w6uys91uersj"></a>**5.7 Imports**
+## **5.7 Imports**
 
-### <a name="_adhj0d647tjy"></a>***5.7.1 Don't use evil `import *`***
+### ***5.7.1 Don't use evil `import *`***
 - Do not use in notebooks or code the evil `import *`
   - **Bad**
     ```
@@ -515,7 +510,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     with the namespace
   - [Is evil in many other ways](https://stackoverflow.com/questions/2386714/why-is-import-bad)
 
-### <a name="_i96qjzghnikm"></a>***5.7.2 Cleaning up the evil `import *`***
+### ***5.7.2 Cleaning up the evil `import *`***
 - To clean up the mess you can:
   - For notebooks
     - Find & replace (e.g., using jupytext and pycharm)
@@ -526,7 +521,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   tweak the path of symbols exported by a library
   - This is an advanced topic and you should rarely use it
 
-### <a name="_hu2jg6irsd3"></a>***5.7.3 Avoid `from ... import ...`***
+### ***5.7.3 Avoid `from ... import ...`***
 - The rule is:
   ```
   import library as short_name
@@ -556,7 +551,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     - `np.read_documents()` at least give information of which packages is it
       coming from
 
-### <a name="_nxppoh4vvwwg"></a>***5.7.4 Exceptions to the import style***
+### ***5.7.4 Exceptions to the import style***
 - We try to minimize the exceptions to this rule to avoid to keep this rule
   simple, rather than discussing about
 - The current agreed upon exceptions are:
@@ -567,7 +562,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     in order to avoid typing everywhere, since we want to use type hints as
     much as possible
 
-### <a name="_i3s4c3d4fyiu"></a>***5.7.5 Examples of imports***
+### ***5.7.5 Examples of imports***
 - Example 1
   - **Bad**
     ```
@@ -605,7 +600,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     import helpers.misc as hm
     ```
 
-### <a name="_lfzuxcvyh4ci"></a>***5.7.6 Always import with a full path from the root of the repo / submodule***
+### ***5.7.6 Always import with a full path from the root of the repo / submodule***
 - **Bad**
   ```
   import exchange_class
@@ -616,7 +611,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   ```
 - In this way your code can run without depending upon your current dir
 
-### <a name="_6vanzab4o4pv"></a>***5.7.7 Baptizing module import***
+### ***5.7.7 Baptizing module import***
 - Each module that can be imported should have a docstring at the very beginning
   (before any code) describing how it should be imported
   ```
@@ -630,7 +625,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - The goal is to have always the same imports so it's easy to move code around,
   without collisions
 
-### <a name="_25h3h56wb094"></a>***5.7.8 Use Python and not bash for scripting***
+### ***5.7.8 Use Python and not bash for scripting***
 - We prefer to use python instead of bash scripts with very few
   exceptions
   - E.g., scripts that need to modify the environment by setting env vars, like
@@ -647,7 +642,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - Our approach is to make simple to create scripts in python that are equivalent
   to sequencing shell commands, so that can evolve in complex scripts
 
-### <a name="_hjd17vo2sw23"></a>***5.7.9 Skeleton for a script***
+### ***5.7.9 Skeleton for a script***
 - The ingredients are:
   - `dev_scripts/script_skeleton.py`: a template to write simple scripts you can copy and modify it
   - `helpers/system_interaction.py`: a set of utilities that make simple to run shell commands (e.g., capturing their output, breaking on error or not, tee-ing to file, logging, ...)
@@ -657,7 +652,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - A simple example is: `dev_scripts/git/gup.py`
 - A complex example is: `dev_scripts/linter.py`
 
-### <a name="_rxrpimr6hkbz"></a>***5.7.10 Some useful patterns***
+### ***5.7.10 Some useful patterns***
 - Some useful patterns / idioms that are supported by the framework are:
   - Incremental mode: you skip an action if its outcome is already present
     (e.g., skipping creating a dir, if it already exists and it contains all the
@@ -665,9 +660,8 @@ In this paragraph we summarize the high-level principles that we follow for desi
   - Non-incremental mode: clean and execute everything from scratch
   - Dry-run mode: the commands are written to screen instead of being executed
 
-### <a name="_mrct9zuu3ah"></a>***5.7.11 Use scripts and not notebooks for long-running jobs***
-- We prefer to use scripts to execute code that might take long time (e.g.,
-  hours) to run, instead of notebooks
+### ***5.7.11 Use scripts and not notebooks for long-running jobs***
+- We prefer to use scripts to execute code that might take long time (e.g., hours) to run, instead of notebooks
 - Pros of script
   - All the parameters are completely specified by a command line
   - Reproducible and re-runnable
@@ -675,14 +669,11 @@ In this paragraph we summarize the high-level principles that we follow for desi
   - Tend to crash / hang for long jobs
   - Not easy to understand if the notebook is doing progress
   - Not easy to get debug output
-- Notebooks are designed for interactive computing / debugging and not batch
-  jobs
-  - You can experiment with notebooks, move the code into a library, and wrap it
-    in a script
+- Notebooks are designed for interactive computing / debugging and not batch jobs
+  - You can experiment with notebooks, move the code into a library, and wrap it in a script
 
-### <a name="_pyv4l29ml4dn"></a>***5.7.12 Follow the same structure***
+### ***5.7.12 Follow the same structure***
 - All python scripts that are meant to be executed directly should:
-
   1. Be marked as executable files with:
       ```
       > chmod +x foo_bar.py
@@ -701,7 +692,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 
 - In this way you can execute directly without prepending with python
 
-### <a name="_qyu75unmh40i"></a>***5.7.13 Use clear names for the scripts***
+### ***5.7.13 Use clear names for the scripts***
 - In general scripts (like functions) should have a name like "action_verb".
   - **Bad**
     - Example of bad names are `timestamp_extractor.py` and `timestamp_extractor_v2.py`
@@ -716,9 +707,9 @@ In this paragraph we summarize the high-level principles that we follow for desi
   this dataset, that we refer in the bug name, e.g., `TaskXYZ_edgar_timestamp_dataset_extractor.py`
 - Also where the script is located should give some clue of what is related to
 
-## <a name="_ym38mut2m0t1"></a>**5.8 Functions**
+## **5.8 Functions**
 
-### <a name="_e7pma4i2hjrq"></a>***5.8.1 Avoid using non-exclusive `bool` arguments***
+### ***5.8.1 Avoid using non-exclusive `bool` arguments***
 - While a simple `True`/`False` switch may suffice for today's needs, very often
   more flexibility is eventually needed
 - If more flexibility is needed for a `bool` argument, you are faced with the
@@ -733,7 +724,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   parameter `None`. This is only a good route if the default operation is
   non-controversial / intuitively obvious.
 
-### <a name="_anjbq3ufe64c"></a>***5.8.2 Try to make functions work on multiple types***
+### ***5.8.2 Try to make functions work on multiple types***
 - We encourage implementing functions that can work on multiple related types:
   - **Bad**: implement `demean_series()`, `demean_dataframe()`
   - **Good**: implement a function `demean(obj)` that can work with `pd.Series` and `pd.DataFrame`
@@ -744,7 +735,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - Try to return the same type of the input, if possible
   - E.g., the function called on a `pd.Series` returns a `pd.Series`
 
-### <a name="_jvuhsmmionwi"></a>***5.8.3 Avoid hard-wired column name dependencies***
+### ***5.8.3 Avoid hard-wired column name dependencies***
 - When working with dataframes, we often want need handle certain columns
   differently, or perform an operation on a strict subset of columns
 - In these cases, it is tempting to assume that the special columns will have
@@ -773,7 +764,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   - This prevents hidden column name dependencies from spreading like a virus
     throughout the codebase
 
-### <a name="_vrx7kcip62ih"></a>***5.8.4 Single exit point from a function***
+### ***5.8.4 Single exit point from a function***
   ```
   @staticmethod
   def _get_zero_element(list_: list):
@@ -786,8 +777,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   ```
 - Try to have a single exit point from a function, since this guarantees that
   the return value is always the same
-- In general returning different data structures from the same function (e.g., a
-  list in one case and a float in another) is indication of bad design
+- In general returning different data structures from the same function (e.g., a list in one case and a float in another) is indication of bad design
   - There are exceptions like a function that works on different types (e.g., accepts a dataframe or a series and then returns a dataframe or a series, but the input and output is the same)
   - Returning different types (e.g., float and string) is also bad
   - Returning a type or None is typically ok
@@ -807,27 +797,27 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - It's ok to have functions like:
     ```
     def ...(...):
-        // Handle simple cases.
+        # Handle simple cases.
         ...
         if ...:
             return
-        // lots of code
+        # lots of code
         ...
         return
     ```
 
-### <a name="_tg9j6am2boea"></a>***5.8.5 Order of function parameters***
-#### <a name="_odtdux5vpy68"></a>*Problem*
+### ***5.8.5 Order of function parameters***
+#### *Problem*
 - We want to have a standard, simple, and logical order for specifying the
   arguments of a function
-#### <a name="_3ajyixq7w8tn"></a>*Decision*
+#### *Decision*
 - The preferred order is:
   - Input parameters
   - Output parameters
   - In-out parameters
   - Default parameters
 
-### <a name="_qkei1p4h9ilm"></a>***5.8.6 Consistency of ordering of function parameters***
+### ***5.8.6 Consistency of ordering of function parameters***
 - Try to:
   - Keep related variables close to each other
   - Keep the order of parameters similar across functions that have similar
@@ -837,10 +827,10 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - Use linter to check consistency of types between function definition
   and invocation
 
-### <a name="_i4lbjmjx5lcg"></a>***5.8.7 Style for default parameter***
-#### <a name="_lvb0jhvyngrv"></a>*Problem*
+### ***5.8.7 Style for default parameter***
+#### *Problem*
 - How to assign default parameters in a function?
-#### <a name="_kiwqjqqnhln6"></a>*Decision*
+#### *Decision*
 - It's ok to use a default parameter in the interface as long as it is a Python scalar (which is immutable by definition)
   - **Good**
     ```
@@ -890,7 +880,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
       function1(..., dir_name=dir_name)
     ```
 
-#### <a name="_ki1strrnm8cc"></a>*Rationale*
+#### *Rationale*
 - Pros of the **Good** vs **Bad** style
   - When you wrap multiple functions, each function needs to propagate the
     default parameters, which: - violates DRY; and - adds maintenance burden (if you change the innermost default parameter, you need to change all of them!)
@@ -902,8 +892,8 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - Cons:
   - One needs to add `Optional` to the type hint
 
-### <a name="_rlai5tzg95g0"></a>***5.8.8 Calling functions with default parameters***
-#### <a name="_z68j0mtt5gmx"></a>*Problem*
+### ***5.8.8 Calling functions with default parameters***
+#### *Problem*
 - You have a function
   ```
   def func(
@@ -914,7 +904,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   ...
   ```
 - How should it be invoked?
-#### <a name="_5bxnapkqipvj"></a>*Decision*
+#### *Decision*
 - We prefer to
   - Assign directly the positional parameters
   - Bind explicitly the parameters with a default value using their name
@@ -926,7 +916,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   ```
   func(task_name, dataset_dir, clobber)
   ```
-#### <a name="_ql1b55agybtq"></a>*Rationale*
+#### *Rationale*
 - Pros of **Good** vs **Bad** style
   - If a new parameter with a default value is added to the function `func`
     before `clobber`:
@@ -941,15 +931,15 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - Cons:
   - None
 
-### <a name="_9xfxpgqypews"></a>***5.8.9 Don't repeat non-default parameters***
-#### <a name="_iz9l3ajl4u9z"></a>*Problem*
+### ***5.8.9 Don't repeat non-default parameters***
+#### *Problem*
 - Given a function with the following interface:
   ```
   def mult_and_sum(multiplier_1, multiplier_2, sum_):
       return multiplier_1 * multiplier_2 + sum_
   ```
   how to invoke it?
-#### <a name="_ycs87v6o47it"></a>*Decision*
+#### *Decision*
 - We prefer to invoke it as:
   - **Good**
     ```
@@ -967,7 +957,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
                  multiplier_2=b,
                  sum_=c)
     ```
-#### <a name="_g84xbfaxulx8"></a>*Rationale*
+#### *Rationale*
 - Pros of **Good** vs **Bad**
   - Non-default parameters in Python require all the successive parameters to be name-assigned
     - This causes maintenance burden
@@ -992,16 +982,16 @@ In this paragraph we summarize the high-level principles that we follow for desi
       mult_and_sum(mul1, mul2, sum_)
       ```
 
-## <a name="_oah7hruhaach"></a>**5.9 Writing clear beautiful code**
+## **5.9 Writing clear beautiful code**
 
-### <a name="_3as4poj"></a>***5.9.2 Keep related code close***
+### ***5.9.2 Keep related code close***
 E.g., keep code that computes data close to the code that uses it.
 
 This holds also for notebooks: do not compute all the data structure and then analyze them.
 
 It’s better to keep the section that “reads data” close to the section that “processes it”. In this way it’s easier to see “blocks” of code that are dependent from each other, and run only a cluster of cells.
 
-### <a name="_1pxezwc"></a>***5.9.3 Distinguish public and private functions***
+### ***5.9.3 Distinguish public and private functions***
 The public functions `foo_bar()` (not starting with `_`) are the ones that make up the interface of a module and that are called from other modules and from notebooks.
 
 Use private functions like `_foo_bar()` when a function is a helper of another private or public function. Also follow the “keep related code close” close by keeping the private functions close to the functions (private or public) that are using them.
@@ -1009,7 +999,7 @@ Use private functions like `_foo_bar()` when a function is a helper of another p
 Some references:
 - [StackOverflow](https://stackoverflow.com/questions/1641219/does-python-have-private-variables-in-classes?noredirect=1&lq=1)
 
-### <a name="_49x2ik5"></a>***5.9.4 Keep public functions organized in a logical order***
+### ***5.9.4 Keep public functions organized in a logical order***
 Keep the public functions in an order related to the use representing the typical flow of use, e.g.,
 - common functions, used by all other functions
 - read data
@@ -1064,7 +1054,7 @@ def func1_read_data1():
     - E.g., using OOP only to reorganize the code instead of introducing “concepts”
     - IMO the worst issue is that they don’t play super-well with Jupyter autoreload
 
-### <a name="_2p2csry"></a>***5.9.5 Do not wrap printf()***
+### ***5.9.5 Do not wrap printf()***
 
 Examples of horrible functions are:
 ```
@@ -1083,7 +1073,7 @@ def folder_name(f_name):
     return f_name
 ```
 
-### <a name="_147n2zr"></a>***5.9.6 Do not introduce another “concept” unless really needed***
+### ***5.9.6 Do not introduce another “concept” unless really needed***
 
 We want to introduce degrees of freedom and indirection only when we think this can be useful to make the code easy to maintain, read, and expand. 
 
@@ -1116,7 +1106,7 @@ SNAPSHOT_ID = 'TigerId'
 ```
 then the variable and its value are in contrast.
 
-### <a name="_3o7alnk"></a>***5.9.7 Return None or keep one type***
+### ***5.9.7 Return None or keep one type***
 Functions that return different types can make things complicated downstream, since the callers need to be aware of all of it and handle different cases. This also complicates the docstring, since one needs to explicitly explain what the special values mean, all the types and so on.
 
 In general returning multiple types is an indication that there is a problem.
@@ -1139,7 +1129,7 @@ else:
     df['Name'] = df['Tags'].apply(extract_name)
 ```
 
-### <a name="_23ckvvd"></a>***5.9.8 Avoid wall-of-text functions***
+### ***5.9.8 Avoid wall-of-text functions***
 ```
 def get_timestamp_v07(raw_df):
     timestamp_df = get_raw_timestamp(raw_df)
@@ -1189,9 +1179,10 @@ def get_timestamp_v07(raw_df):
     timestamp_df = timestamp_df.rename(columns=api.cfg.TIMESTAMP_COLUMN_RENAMES)
     return timestamp_df
 ```
-## <a name="_ihv636"></a>**5.10 Writing robust code**
 
-### <a name="_32hioqz"></a>***5.10.1 Don’t let your functions catch the default-itis***
+## **5.10 Writing robust code**
+
+### ***5.10.1 Don’t let your functions catch the default-itis***
 Default-itis is a disease of a function that manifests itself by getting too many default parameters. 
 
 Default params should be used only for parameters that 99% of the time are constant.
@@ -1200,7 +1191,7 @@ In general we require the caller to be clear and specify all the params.
 
 Functions catch defaultitis when the programmer is lazy and wants to change the behavior of a function without changing all the callers and unit tests. Resist this urge! grep is friend. pycharm does this refactoring automatically.
 
-### <a name="_1hmsyys"></a>***5.10.2 Explicitly bind default parameters***
+### ***5.10.2 Explicitly bind default parameters***
 It’s best to explicitly bind functions with the default params so that if the function signature changes, your functions doesn’t confuse a default param was a positional one.
 
 Instead of
@@ -1219,7 +1210,7 @@ do this
   )
   ```
 
-### <a name="_41mghml"></a>***5.10.3 Don’t hardwire params in a function call***
+### ***5.10.3 Don’t hardwire params in a function call***
 E.g., code like 
 ```
 esa_df = universe.get_esa_universe_mapped(False, True)
@@ -1232,7 +1223,7 @@ esa_df = universe.get_esa_universe_mapped(gvkey=False, cik=True)
 ```
 This solution is robust since it will work as long as gvkey and cik are the only needed params, which is as much as we can require from the called function.
 
-### <a name="_2grqrue"></a>***5.10.4 Make if-then-else complete***
+### ***5.10.4 Make if-then-else complete***
 In general if-then-else needs to be complete, so that the code is robust.
 
 Instead of
@@ -1268,13 +1259,13 @@ if datafmt is not None and items is not None:
 
 The last line is a catch-all that makes sure even if we modify the previous code, the code is robust.
 
-### <a name="_vx1227"></a>***5.10.5 Encode the assumptions using assertions***
+### ***5.10.5 Encode the assumptions using assertions***
 If your code makes an assumption don’t just write a comment, but implement an assertion so the code can’t be executed if the assertion is not verified (instead of failing silently)
 ```
 dbg.dassert_lt(start_date, end_date)
 ```
 
-### <a name="_3fwokq0"></a>***5.10.6 Add TODOs when needed***
+### ***5.10.6 Add TODOs when needed***
 - When there is something that you know you should have done, but you didn’t have time to do, add a TODO, possibly using your git name or github name e.g.,
   ```
   # TODO(gp): …
@@ -1292,9 +1283,9 @@ dbg.dassert_lt(start_date, end_date)
   # TODO(Sergey): P1 This can be implemented in pandas using a range generation.
   ```
 
-## <a name="_1v1yuxt"></a>**5.11 Common Python mistakes**
+## **5.11 Common Python mistakes**
 
-### <a name="_4f1mdlm"></a>***5.11.1 == vs is***
+### ***5.11.1 == vs is***
 `is` checks whether two variables point to the same object (aka reference equality), while `==` checks if the two pointed objects are equivalent (value equality).
 
 For checking against types, None we want to use `is`, `is not`
@@ -1309,7 +1300,7 @@ if var == None
 ```
 For more info checks [here](https://stackoverflow.com/questions/132988/is-there-a-difference-between-and-is-in-python)
 
-### <a name="_2u6wntf"></a>***5.11.2 type() vs isinstance()***
+### ***5.11.2 type() vs isinstance()***
 E.g., you want to do:
 ```
 if isinstance(obj, list): 
@@ -1324,7 +1315,7 @@ Note that `type(obj) == list` is even worse since we want to test for reference 
 
 For more info check [here](https://stackoverflow.com/questions/1549801/what-are-the-differences-between-type-and-isinstance)
 
-## <a name="_46r0co2"></a>**5.12 Unit test**
+## **5.12 Unit test**
 - Provide a minimal end-to-end unit test (which creates a conda environment and then run a few unit tests)
 - Use
   - pytest <https://docs.pytest.org/en/latest/>
@@ -1339,9 +1330,9 @@ For more info check [here](https://stackoverflow.com/questions/1549801/what-are-
 > pytest datetime_utils_test.py -x -s
 ```
 
-## <a name="_2lwamvv"></a>**5.13 Refactoring**
+## **5.13 Refactoring**
 
-### <a name="_111kx3o"></a>***5.13.1 When moving / refactoring code***
+### ***5.13.1 When moving / refactoring code***
 If you move files, refactor code, move functions around make sure that:
 - code and notebook work (e.g., imports and caller of the functions)
 - documentation is updated (this is difficult, so best effort is enough)
@@ -1366,8 +1357,9 @@ If it’s important code:
 - run unit tests
 - run notebooks (see [here](https://n-xovwktmtjsnaxyc2mwes2xu7pohqedmdm6zjw5q-0lu-script.googleusercontent.com/userCodeAppPanel#))
 
-## <a name="_3l18frh"></a>**5.14 Architectural and design pattern**
-### <a name="_206ipza"></a>***5.14.1 Organize scripts as pipelines***
+## **5.14 Architectural and design pattern**
+
+### ***5.14.1 Organize scripts as pipelines***
 One can organize complex computations in stages of a pipeline
 
 - E.g., to parse EDGAR forms
@@ -1386,7 +1378,8 @@ This can also mixed with the “incremental mode”, so that if one stage has al
 The code should be organized to allow these different modes of operations, but there is not always need to be super exhaustive in terms of command line options
 
 - E.g., I implement the various chunks of the pipeline in a library, separating functions that read / save data after a stage and then assemble the pieces into a throw-away script where I hardwire the file names and so on
-### <a name="_4k668n3"></a>***5.14.2 Incremental behavior***
+
+### ***5.14.2 Incremental behavior***
 - Often we need to run the same code over and over
   - E.g., because the code fails on an unexpected point and then we need to re-run from the beginning
 - We use options like:
@@ -1403,18 +1396,22 @@ The code should be organized to allow these different modes of operations, but t
   - if `--incremental` is not set
     - if output file exists then we issue a log.warn and abort the process
     - if output file exists and param `--force`, then report a log.warn and rewrite output file
-### <a name="_2zbgiuw"></a>***5.14.3 Run end-to-end***
+
+### ***5.14.3 Run end-to-end***
 - Try to run things end-to-end (and from scratch) so we can catch these unexpected issues and code defensively
   - E.g., we found out that TR data is malformed sometimes and only running end-to-end we can catch all the weird cases
   - This also helps with scalability issues, since if takes 1 hr for 1 month of data and we have 10 years of data is going to take 120 hours (=5 days) to run on the entire data set
-### <a name="_1egqt2p"></a>***5.14.4 Think about scalability***
+
+### ***5.14.4 Think about scalability***
 - Do experiments to try to understand if a code solution can scale to the dimension of the data we have to deal with
   - E.g., inserting data by doing SQL inserts of single rows are not scalable for pushing 100GB of data
 - Remember that typically we need to run the same scripts multiple times (e.g., for debug and / or production)
-### <a name="_3ygebqi"></a>***5.14.5 Use command line for reproducibility***
+
+### ***5.14.5 Use command line for reproducibility***
 - Try to pass params through command line options when possible
   - In this way a command line contains all the set-up to run an experiment
-### <a name="_2dlolyb"></a>***5.14.6 Structure the code in terms of filters***
+
+### ***5.14.6 Structure the code in terms of filters***
 - Focus on build a set of "filters" split into different functions, rather than a monolithic flow
 - Organize the code in terms of a sequence of transformations that can be run in sequence, e.g.,
   1. create SQL tables
@@ -1424,17 +1421,18 @@ The code should be organized to allow these different modes of operations, but t
   5. sanity check the SQL (e.g., mismatching TR codes, missing dates)
   6. patch up SQL (e.g., inserting missing TR codes and reporting them to us so we can check with TR)
 
-## <a name="_x9ek237hamq8"></a>**Code style for different languages**
-### <a name="_x12p76oyv2ok"></a>***SQL***
+## **Code style for different languages**
+
+### ***SQL***
 - You can use the package https://github.com/andialbrecht/sqlparse to format
   SQL queries
 - There is also an on-line version of the same formatter at https://sqlformat.org
 
-## <a name="_fy8eoq72xnz2"></a>**Misc (to reorg)**
+## **Misc (to reorg)**
 - TODO(*): Start moving these functions in the right place once we have more a
   better document structure
 
-### <a name="_98u43jga6htz"></a>***Write robust code***
+### ***Write robust code***
 - Write code where there is minimal coupling between different different parts
   - This is a corollary of DRY, since not following DRY implies coupling
 - Consider the following code:
@@ -1463,7 +1461,7 @@ The code should be organized to allow these different modes of operations, but t
       raise ValueError("Invalid server_name='%s'" % server_name)
   ```
 
-### <a name="_80t21iqbeo18"></a>***Capitalized words***
+### ***Capitalized words***
 - In documentation and comments we capitalize abbreviations (e.g., `YAML`,
   `CSV`)
 - In the code:
@@ -1473,14 +1471,14 @@ The code should be organized to allow these different modes of operations, but t
   - Other times we use camel case, when appropriate
     - E.g., `ConvertCsvToYaml`, since `ConvertCSVToYAML` is difficult to read
 
-### <a name="_xp62qcw97bcp"></a>***Regex***
+### ***Regex***
 - The rule of thumb is to compile a regex expression, e.g.,
   ```
   backslash_regexp = re.compile(r"\\")
   ```
   only if it's called more than once, otherwise the overhead of compilation and creating another var is not justified
 
-### <a name="_or2wuk6lc5dw"></a>***Order of functions in a file***
+### ***Order of functions in a file***
 - We try to organize code in a file to represent the logical flow of the code
   execution, e.g.,
   - At the beginning of the file: functions / classes for reading data
@@ -1491,7 +1489,8 @@ The code should be organized to allow these different modes of operations, but t
     private section in classes
     - A possible justification is that classes typically contain less code than a file and tend to be used through their API
     - A file contains larger amount of loosely coupled code and so we want to keep implementation and API close together
-### <a name="_ctc5m8w42foo"></a>***Use layers design pattern***
+
+### ***Use layers design pattern***
 - A "layer" design pattern (see Unix architecture) is a piece of code that talks
   / has dependency only to one outermost layer and one innermost layer
 - You can use this approach in your files representing data processing pipelines
@@ -1509,7 +1508,7 @@ The code should be organized to allow these different modes of operations, but t
   ```
 - This often suggests to split the code in classes to represent namespaces of related functions
 
-### <a name="_z8ejnvmgtkgl"></a>***Write complete `if-then-else`***
+### ***Write complete `if-then-else`***
 - Consider this good piece of code
   ```
   dbg.dassert_in(
@@ -1530,14 +1529,14 @@ The code should be organized to allow these different modes of operations, but t
 - It makes sense to check early only when you want to fail before doing more work
   - E.g., sanity checking the parameters of a long running function, so that it doesn't run for 1 hr and then crash because the name of the file is incorrect
 
-### <a name="_agbp4f3fd8gi"></a>***Do not be stingy at typing***
+### ***Do not be stingy at typing***
 - Why calling an object `TimeSeriesMinStudy` instead of `TimeSeriesMinuteStudy`?
   - Saving 3 letters is not worth
   - The reader might interpret `Min` as `Minimal` (or `Miniature`, `Minnie`, `Minotaur`)
 - If you don't like to type, we suggest you get a better keyboard, e.g.,
   [this](https://kinesis-ergo.com/shop/advantage2/)
 
-### <a name="_1fpomy79nom4"></a>***Research quality vs production quality***
+### ***Research quality vs production quality***
 - Code belonging to top level libraries (e.g., `//amp/core`, `//amp/helpers`) and production (e.g., `//.../db`, `vendors`) needs to meet high quality standards, e.g.,
   - Well commented
   - Following our style guide
@@ -1560,16 +1559,16 @@ The code should be organized to allow these different modes of operations, but t
 - We should be able to raise the quality of a piece of research code to
   production quality when that research goes into production
 
-### <a name="_l11z10i9lwg6"></a>***Life cycle of research code***
+### ***Life cycle of research code***
 - Often the life cycle of a piece of code is to start as research and then be promoted to higher level libraries to be used in multiple research, after its quality reaches production quality
 
-### <a name="_2mzm3l4sjsrc"></a>***No ugly hacks***
+### ***No ugly hacks***
 - We don't tolerate "ugly hacks", i.e., hacks that require lots of work to be undone (much more than the effort to do it right in the first place)
   - Especially an ugly design hack, e.g., a Singleton, or some unnecessary
     dependency between distant pieces of code
   - Ugly hacks spreads everywhere in the code base
 
-### <a name="_2ag48chdljj9"></a>***Always separate what changes from what stays the same***
+### ***Always separate what changes from what stays the same***
 - In both main code and unit test it's not a good idea to repeat the same code
 - **Bad**
   - Copy-paste-modify
@@ -1622,46 +1621,36 @@ The code should be organized to allow these different modes of operations, but t
     _helper(texts, categories, expected_result)
     ```
     - Yes, Version A is **Bad** and Version B is **Good**
-### <a name="_89o3zm4yi3lu"></a>***Don't mix real changes with linter changes***
-- The linter is in change of reformatting the code according to our conventions
-  and reporting potential problems
+### ***Don't mix real changes with linter changes***
+- The linter is in change of reformatting the code according to our conventions and reporting potential problems
 1. We don't commit changes that modify the code together with linter
    reformatting, unless the linting is applied to the changes we just made
-   - The reason for not mixing real and linter changes is that for a PR or to
-     just read the code it is difficult to understand what really changed vs
-     what was just a cosmetic modification
-1. If you are worried the linter might change your code in a way you don't like,
-   e.g.,
+   - The reason for not mixing real and linter changes is that for a PR or to just read the code it is difficult to understand what really changed vs what was just a cosmetic modification
+2. If you are worried the linter might change your code in a way you don't like, e.g.,
    - Screwing up some formatting you care about for some reason, or
-   - Suggesting changes that you are worried might introduce bugs you can commit
-     your code and then do a "lint commit" with a message "CMTaskXYZ: Lint"
-- In this way you have a backup state that you can rollback to, if you want
-3. If you run the linter and see that the linter is reformatting / modifying
-   pieces of code you din't change, it means that our team mate forgot to lint
-   their code
+   - Suggesting changes that you are worried might introduce bugs you can commit your code and then do a "lint commit" with a message "CMTaskXYZ: Lint"
+  - In this way you have a backup state that you can rollback to, if you want
+3. If you run the linter and see that the linter is reformatting / modifying pieces of code you din't change, it means that our team mate forgot to lint their code
    - `git blame` can figure out the culprit
-   - You can send him / her a ping to remind her to lint, so you don't have to
-     clean after him / her
+   - You can send him / her a ping to remind her to lint, so you don't have to clean after him / her
    - In this case, the suggested approach is:
      - Commit your change to a branch / stash
-     - Run the linter by itself on the files that need to be cleaned, without
-       any change
+     - Run the linter by itself on the files that need to be cleaned, without any change
      - Run the unit tests to make sure nothing is breaking
      - You can fix lints or just do formatting: it's up to you
-     - You can make this change directly on `master` or do a PR if you want to
-       be extra sure: your call
+     - You can make this change directly on `master` or do a PR if you want to be extra sure: your call
 
-# <a name="_mfgnp9i6bpoe"></a>**6. Conventions (Addendum)**
+# **6. Conventions (Addendum)**
 [Original gdoc](https://docs.google.com/document/u/0/d/1w9mSexl9aXXXY-ZzL6sEUyjOGs7KJm4wuz4EIQLz_e8/edit)
-## <a name="_lprevz1emcuq"></a>**Introduction**
-## <a name="_jxt20rubia04"></a>**Be patient**
+## **Introduction**
+## **Be patient**
 For some reason talking about conventions makes people defensive and uncomfortable, sometimes.
 
 Conventions are not a matter of being right or wrong, but to consider pros and cons of different approaches, and make the decision only once instead of discussing the same problem every time. In this way we can focus on achieving the UltimateGoal.
 
 If you are unsure or indifferent to a choice, be flexible and let other persons that seem to be less flexible decide.
 
-## <a name="_10eekrukwnqy"></a>**Goal**
+## **Goal**
 The goal of the conventions is to simplify our job by removing ambiguity
 
 - There is no right or wrong: that's why it's a convention and not a law of nature
@@ -1674,7 +1663,7 @@ Once a convention is stable, we would like to automate enforcing it by the linte
 
 - ideally the linter should fix our mistakes so we don't even have to think about them, and reviewers don't have to be distracted with pointing out the lints
 
-## <a name="_fwt106gsfna"></a>**Keep the rules simple**
+## **Keep the rules simple**
 E.g., assume that we accepted the following rules:
 
 - Git is capitalized if it refers to the tool and it's not capitalized when it refers to the command (this is what Git documentation suggests)
@@ -1689,7 +1678,7 @@ In this case we want to leverage the ambiguity of "it's unclear what is the corr
 - E.g., every name of tools or library is always capitalized
 - This is simple to remember and automatically enforce
 
-### <a name="_a044hfnivuhm"></a>**Allow turning off the automatic tools**
+### **Allow turning off the automatic tools**
 We understand that tools can't always understand the context and the subtleties of human thoughts, and therefore they yield inevitably to false positives.
 
 Then we always want to permit disabling the automatic checks / fixes e.g., by using directives in comments or special syntax (e.g., anything in a `...` or ``` … ``` block should be leaved untouched)
@@ -1698,44 +1687,47 @@ It can be tricky determining when an exception is really needed and when overrid
 
 Patience and flexibility is advised here.
 
-## <a name="_ntjdqgvyd0zn"></a>**The writer is the reader**
+## **The writer is the reader**
 Remember that even if things are perfectly clear now to the person that wrote the code, in a couple of months the code will look foreign to whoever wrote the code.
 
 So make your future-self's life easier by following the conventions and erring on the side of documenting for the reader.
-## <a name="_k4sa8iya4ay1"></a>**Gdoc vs markdown**
+
+## **Gdoc vs markdown**
 We use this gdoc for staging proposed code conventions, idioms, architectural guidelines and so on.
 
 Once the document is stable it can become a markdown text and be checked in the repo.
 
 
-## <a name="_t4ltgxiecgg4"></a>**Approved conventions**
-### <a name="_1cpgaghbp5n"></a>***Validate values before an assignment***
-####
-#### <a name="_tkookhpc4rfa"></a><a name="_dsccj2or3i9x"></a>*Rationale*
+## **Approved conventions**
+
+### ***Validate values before an assignment***
+
+#### *Rationale*
 We consider this as an extension of a pre-condition ("only assign values that are correct") rather than a postcondition
 
 Often is more compact since it doesn't have reference to `self`
-####
-#### <a name="_v7wvgg1jl2hw"></a><a name="_7wx581y1ihl3"></a>*Bad*
+
+#### *Bad*
 ```
 self._tau = tau
 dbg.dassert_lte(self._tau, 0)
 ```
-####
-#### <a name="_xv707wdngi03"></a><a name="_fq5yd9a3kpj0"></a>*Good*
+
+#### *Good*
 ```
 dbg.dassert_lte(tau, 0)
 self._tau = tau
 ```
-####
-#### <a name="_u4k7m5y57ier"></a><a name="_wou84jgvrs7a"></a>*Exceptions*
+
+#### *Exceptions*
 When we handle a default assignment, it's more natural to implement a post-condition:
 ```
 col_rename_func = col_rename_func or (lambda x: x)
 dbg.dassert_isinstance(col_rename_func, collections.Callable)
 ```
 
-### <a name="_8wbrke1ir3rk"></a>***Format docstrings and comments as markdown***
+### ***Format docstrings and comments as markdown***
+
 **Good**
 ```
 """
@@ -1775,17 +1767,17 @@ Generate "random returns" in the form:
 """
 ```
 
-### <a name="_zea6e81nxfw5"></a>***Do not abbreviate just to save characters***
-####
-#### <a name="_1x9npgthu5y7"></a><a name="_5br5pho99jk9"></a>*Rationale*
+### ***Do not abbreviate just to save characters***
+
+#### *Rationale*
 Abbreviations just to save space are rarely beneficial to the reader. E.g.,
 
 - fwd (forward)
 - bwd (backward)
 - act (actual)
 - exp (expected)
-####
-#### <a name="_imh52alia9vq"></a><a name="_9t0mqkdxsakx"></a>*Exceptions*
+
+#### *Exceptions*
 We could relax this rule for short lived functions and variables in order to save some visual noise.
 
 Sometimes an abbreviation is so short and common that it's ok to leave it E.g.,
@@ -1800,15 +1792,15 @@ Sometimes an abbreviation is so short and common that it's ok to leave it E.g.,
 - kwargs (keyword arguments)
 - col (column)
 - vol (volatility) while volume is always spelled out
-### <a name="_y6y1g5ape9du"></a>***Use empty comments to group related code***
+
+### ***Use empty comments to group related code***
 We try to avoid the "wall-of-text", where there is lots of code without an obvious structure.
 
 You can add comments to shortly describe chunks of code or just add an empty comment to represent the different logical pieces of code.
-####
-#### <a name="_syblqurw1klc"></a><a name="_upco9lx3zy80"></a>*Rationale*
+
+#### *Rationale*
 The common reader can't easily understand a large piece or large blob of code.
-####
-#### <a name="_yldhelz4jdgn"></a><a name="_w1tv8fdgwic8"></a>*Bad*
+#### *Bad*
 ```
 
 dbg.dassert_isinstance(df_in, pd.DataFrame)
@@ -1826,8 +1818,7 @@ dbg.dassert_isinstance(col_rename_func, collections.Callable)
 col_mode = col_mode or "merge_all"
 
 ```
-####
-#### <a name="_s905821bwkyd"></a><a name="_nq1a582pqbdi"></a>*Good*
+#### *Good*
 ```
 
 dbg.dassert_isinstance(df_in, pd.DataFrame)
@@ -1852,20 +1843,20 @@ col_mode = col_mode or "merge_all"
 
 ```
 
-## <a name="_r9axmtovbgst"></a>**Proposed conventions**
-### <a name="_2kfn2tpl9nnh"></a>***Order functions in topological order***
+## **Proposed conventions**
+### ***Order functions in topological order***
 - Order functions / classes in topological order so that the ones at the top of the files are the "innermost" and the ones at the end of the files are the "outermost"
 - We are ok with not enforcing this too strictly
-####
-#### <a name="_njsxdc4pgsk4"></a><a name="_81cp3ofp9hih"></a>*Rationale*
+
+#### *Rationale*
 In this way, reading the code top to bottom one should not find a forward reference that requires skipping back and forth
 
-### <a name="_sosqhmy8uay9"></a>***Make the spell-checker happy***
+### ***Make the spell-checker happy***
 The spell-checker is not always right: false positives are often very annoying.
 
 We prefer to find a way to make the spell-checker happy rather than argue that the spell-checker is wrong and ignore it.
-####
-#### <a name="_s6wyc2ymaip6"></a><a name="_1jgcwymipabe"></a>*Rationale*
+
+#### *Rationale*
 The risk with overriding the spell-checker (and any other tool) is that the decision is not binary anymore correct / not-correct and can't be automated and requires mental energy to see if the flagged error is real or not.
 
 E.g., `insample` is flagged as erroneous, so we convert it into `in-sample`.
@@ -1880,7 +1871,7 @@ Still we don't want to override the spell-checker when an alternative lower-cost
 - `out-of-sample` instead of `oos`
 
 We decided that `hyper-parameter` can be written without hyphen: `hyperparameter`
-### <a name="_hfi3pz8fgyx8"></a>***Convention for naming tests***
+### ***Convention for naming tests***
 According to PEP8 names of classes should always be camel case.
 
 On the other hand, if we are testing a function `foo_bar()` we prefer to call the testing code `Test_foo_bar` instead of `TestFooBar`.
@@ -1896,11 +1887,13 @@ We are ok with mixing camel case and snake case to mirror the code being tested.
 We prefer to name classes `TestFooBar1` and methods `TestFooBar1.test1()`, even if there is a single class / method, to make it easier to add another test class, without having to rename class and `check_string` files.
 
 We are ok with using suffixes like `01`, `02`, … , when we believe it's important that methods are tested in a certain order (e.g., from the simplest to the most complex)
-### <a name="_4qgp3xgk44h3"></a>***Interval notation***
+
+### ***Interval notation***
 Intervals are represented with `[a, b), (a, b], (a, b), [a, b]`.
 
 We don't use the other style `[a, b[`.
-### <a name="_15wb9h5slk08"></a>***Make filename unique***
+
+### ***Make filename unique***
 **Problem**
 
 We have a lot of structure / boilerplate in our project around RH hypotheses. E.g., there are corresponding files for all the RH like:
@@ -1934,12 +1927,12 @@ Cons of the repetition:
 - What happens if there are multiple nested dirs? Do we repeat all the prefixes?
   - This seems to be an infrequent case
 
-### <a name="_7hxq8svtq28l"></a>***Be clear on the meaning of TODO***
+### ***Be clear on the meaning of TODO***
 A `TODO(Batman): clean this up` can be interpreted as
 
 1. "Batman suggested to clean this up" 
-1. "Batman should clean this up"
-1. "Batman has the most context to explain this problem or fix it"
+2. "Batman should clean this up"
+3. "Batman has the most context to explain this problem or fix it"
 
 On the one hand, `git blame` will report who created the TODO, so the first meaning is redundant.
 
@@ -1948,7 +1941,7 @@ On the other hand, since we follow a shared ownership of the code, the second me
 Given pros and cons, the proposal is to use the first meaning.
 
 This is also what Google style guide suggests [here](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#312-todo-comments)
-### <a name="_310r7bjrwd9u"></a>***Convention on certain spellings***
+### ***Convention on certain spellings***
 Profit-and-loss 
 
 - PnL instead of pnl, PNL, PnL
@@ -1966,5 +1959,5 @@ Timestamp
 - We spell `timestamp`, we do not abbreviate it as `ts`
 - We prefer timestamp to `datetime`
 - E.g., `start_timestamp` instead of `start_datetime`
-### <a name="_h3504xf4mtjv"></a>***Always use imperative docstring and comments***
+### ***Always use imperative docstring and comments***
 PEP257 and Google standards seem to mix imperative and descriptive style without really a reason. The proposal is to always use "imperative" in both comments and all docstrings.
