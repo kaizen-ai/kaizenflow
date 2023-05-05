@@ -9,10 +9,10 @@ from airflow.operators.bash import BashOperator
 
 _DAG_ID = "download_periodic_1min_postgres_coingecko"
 _DAG_DESCRIPTION = (
-    "Download Coingecko data every day and save to Postgres"
+    "Download Coingecko data every hour and save to Postgres"
 )
 # Specify when to execute the DAG.
-_SCHEDULE = "*/2 * * * *"
+_SCHEDULE = '0 * * * *'
 
 # Pass default parameters for the DAG.
 default_args = {
@@ -41,9 +41,9 @@ bash_command = [
     "&&",
     "/cmamp/sorrentum_sandbox/examples/ml_projects/Issue29_Team10_Implement_sandbox_for_coingecko/dowonload_to_db.py",
     "--target_table 'coingecko_historic'",
-    "--id {{ data_id }} ",
-    "--from_timestamp {{ data_interval_start }} ",
-    "--to_timestamp {{ data_interval_end }}",
+    "--id bitcoin",
+    "--from_timestamp {{ data_interval_start.int_timestamp }} ",
+    "--to_timestamp {{ data_interval_end.int_timestamp }}",
     "-v DEBUG"
 ]
 
