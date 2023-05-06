@@ -1,15 +1,15 @@
 # Signing up to the project
 
-- Look around the repo and make sure that you are really interested in what we
-  are doing, and you **have time to contribute**
+- **(Contributor)Look around the repo and make sure that you are really interested in what we
+  are doing, and you have time to contribute**
 
   - Ponder on the IMPORTANT note [here](/README.md#Important)
   - Please fork, star, watch the Sorrentum repo so that GitHub promotes our repo
     (we gotta work the system)
 
 - **(Contributor) Fill out the initial
-  [Contact Form](https://docs.google.com/forms/d/e/1FAIpQLSf6IogJch1YUMSc_GfRcMIltGEEZ1xTotbRVkwZzWT7eBz_jA/viewform?usp=sf_link).**
-  It's meant to just get basic contact info about you
+  [Contact Info](https://docs.google.com/forms/d/e/1FAIpQLSf6IogJch1YUMSc_GfRcMIltGEEZ1xTotbRVkwZzWT7eBz_jA/viewform?usp=sf_link).**
+  - It's meant to just get basic contact info about you
 
 - **(Admin): Receive an email that somebody is interested**
   - Add the contributor to Mailchimp
@@ -65,7 +65,7 @@
 
   - The admin adds in the on-boarding issue https://github.com/sorrentum/sorrentum/issues/189 the checklist for the Contributor onboarding.
 
-- **(Contributor) Tasks**
+- **(Contributor) On-boarding Tasks**
 
   - The contributor goes through the [on-boarding](https://github.com/sorrentum/sorrentum/issues/189) checlistlist for their username one-by-one, marking each item as done when **it's actually done**.
 
