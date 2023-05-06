@@ -12,7 +12,7 @@
   It's meant to just get basic contact info about you
 
 - **(Admin): Receive an email that somebody is interested**
-
+  - Add the contributor to Mailchimp
   - Reply with the welcome email
   - Update the
     [Contributor List](https://docs.google.com/spreadsheets/d/1eRZJaj5-1g6W7w_Ay4UhJEdtAvrTTM1V94cKj6_Vwoc/edit#gid=1253964093)
@@ -61,41 +61,11 @@
   - Telegram IM channel for higher bandwidth discussion
   - Through the Sorrentum mailing list
 
-## On-boarding process
+- **(Admin) On-boarding process**
 
-- **(Contributor)** Get familiar with GitHub and our workflow (see resources in /README.md)
+  - The admin adds in the on-boarding issue https://github.com/sorrentum/sorrentum/issues/189 the checklist for the Contributor onboarding.
 
-- **(Admin)** The admin adds in the on-boarding issue
-  https://github.com/sorrentum/sorrentum/issues/189 the following checklist for
-  the Contributor onboarding
+- **(Contributor) Tasks**
 
-- **(Contributor)** The contributor goes through the list one-by-one marking each item as done
-  when **it's actually done**
+  - The contributor goes through the [on-boarding](https://github.com/sorrentum/sorrentum/issues/189) checlistlist for their username one-by-one, marking each item as done when **it's actually done**.
 
-### Web3
-
-```
-@<GITHUB_USERNAME>
-
-## First day
-[ ] Subscribe to the Research Office hours calendar
-[ ] Subscribe to Telegram channels
-
-## First week
-[ ] Read [How to organize your work](docs/How_to_organize_your_work.md)
-[ ] Read [Quick start for developing](docs/Quick_start_for_developing.md)
-[ ] Make sure the Docker dev container works
-[ ] Make sure the unit tests run successfully
-[ ] Read [Sorrentum Python coding style guide](https://docs.google.com/document/d/1R6jhFDbZKvyDdbnSQ9DA_N8417YF13hMI_Uw4quO4Xk)
-[ ] Get assigned a warm-up issue
-[ ] Get up to speed in terms of the background knowledge for specific project
-    - For Web3 / Crypto : /defi/README.md
-    - For Arbitrage / Modeling: /docs/From_zero_to_modeling.md
-
-## Second week
-[ ] Learn the technologies we use [/README.md#Technologies Used]
-[ ] Get familiar with our Docker development toolchain
-
-## Third week
-...
-```
