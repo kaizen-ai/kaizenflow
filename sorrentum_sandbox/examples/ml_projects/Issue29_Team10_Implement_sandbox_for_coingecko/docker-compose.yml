@@ -37,9 +37,9 @@ services:
       - "8091:8080"
     user: "${AIRFLOW_UID}:0"
     volumes:
-      - ./sorrentum_sandbox/examples/ml_projects/Issue29_Team10_Implement_sandbox_for_coingecko/dags:/opt/airflow/dags
-      - ./sorrentum_sandbox/examples/ml_projects/Issue29_Team10_Implement_sandbox_for_coingecko/log_volume:/opt/airflow/log
-      - ./sorrentum_sandbox/examples/ml_projects/Issue29_Team10_Implement_sandbox_for_coingecko/plugins:/opt/airflow/plugins 
+      - ./dags:/opt/airflow/dags
+      - ./log_volume:/opt/airflow/log
+      - ./plugins:/opt/airflow/plugins 
       - ../..:/cmamp
     
     extra_hosts:
@@ -58,9 +58,9 @@ services:
     depends_on:
       - postgres
     volumes:
-      - ./sorrentum_sandbox/examples/ml_projects/Issue29_Team10_Implement_sandbox_for_coingecko/dags:/opt/airflow/dags
-      - ./sorrentum_sandbox/examples/ml_projects/Issue29_Team10_Implement_sandbox_for_coingecko/log_volume:/opt/airflow/log
-      - ./sorrentum_sandbox/examples/ml_projects/Issue29_Team10_Implement_sandbox_for_coingecko/plugins:/opt/airflow/plugins 
+      - ./dags:/opt/airflow/dags
+      - ./log_volume:/opt/airflow/log
+      - ./plugins:/opt/airflow/plugins 
       - ../..:/cmamp
     environment:
       # TODO(Juraj): this is a quick hack to get through

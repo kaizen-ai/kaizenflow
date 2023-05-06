@@ -17,16 +17,16 @@ def get_db_connection() -> Any:
     The parameters must match the parameters set up in the Sorrentum
     data node docker-compose.
     """
-    connection = psycop.connect(
+    db_connection = psycop.connect(
         host="localhost",
         dbname="airflow",
-        port=5432,
+        port=5532,
         user="postgres",
         password="postgres",
     )
-    connection.autocommit = True
+    db_connection.autocommit = True
 
-    return connection
+    return db_connection
 
 
 def get_coingecko_historic_table_query() -> str:

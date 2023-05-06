@@ -2,6 +2,7 @@ import argparse
 import logging
 from pathlib import Path
 import pandas as pd
+import pendulum
 
 import helpers.hdbg as hdbg
 # from helpers import hparser
@@ -80,6 +81,8 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     # Load data.
+    # from_timestamp = str(pendulum.parse(args.from_timestamp).int_timestamp)
+    # to_timestamp = str(pendulum.parse(args.to_timestamp).int_timestamp)
     from_timestamp = str(args.from_timestamp)
     to_timestamp = str(args.to_timestamp)
     id = str(args.id)
@@ -88,7 +91,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Save data to DB.
     db_conn = sisebidb.get_db_connection()
     saver = sisebidb.PostgresDataFrameSaver(db_conn)
-    saver.save(raw_data, args.target_table)
+    target_table = str(args.target_table)
+    saver.save(raw_data, target_table)
 
 
 if __name__ == "__main__":

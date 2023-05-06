@@ -3,6 +3,7 @@ DAG to download OHLCV data from CoinGecko
 """
 
 import datetime
+import pendulum 
 
 import airflow
 from airflow.operators.bash import BashOperator
@@ -40,10 +41,10 @@ bash_command = [
     "sleep 5",
     "&&",
     "/cmamp/sorrentum_sandbox/examples/ml_projects/Issue29_Team10_Implement_sandbox_for_coingecko/dowonload_to_db.py",
-    "--target_table 'coingecko_historic'",
     "--id bitcoin",
-    "--from_timestamp {{ data_interval_start.int_timestamp }} ",
-    "--to_timestamp {{ data_interval_end.int_timestamp }}",
+    "--from_timestamp {{ data_interval_start }}",
+    "--to_timestamp {{ data_interval_end.int_timestamp }} ",
+    "--target_table 'coingecko_historic'",
     "-v DEBUG"
 ]
 
