@@ -7,11 +7,11 @@
   - Please fork, star, watch the Sorrentum repo so that GitHub promotes our repo
     (we gotta work the system)
 
-- Fill out the initial
-  [Interest Form](https://docs.google.com/forms/d/e/1FAIpQLSf6IogJch1YUMSc_GfRcMIltGEEZ1xTotbRVkwZzWT7eBz_jA/viewform?usp=sf_link).
+- **(Contributor) Fill out the initial
+  [Contact Form](https://docs.google.com/forms/d/e/1FAIpQLSf6IogJch1YUMSc_GfRcMIltGEEZ1xTotbRVkwZzWT7eBz_jA/viewform?usp=sf_link).**
   It's meant to just get basic contact info about you
 
-- (Admin): Receive an email that somebody is interested
+- **(Admin): Receive an email that somebody is interested**
 
   - Reply with the welcome email
   - Update the
@@ -22,32 +22,32 @@
   - Add Contributor email as Editor to the
     [Sorrentum - Contributors gdrive](https://drive.google.com/drive/u/0/folders/1LXwKpmaFWJI-887IoA50sVC8-dw_1L8I)
 
-- Accept the invite from GitHub that we will send you
+- **(Contributor) Accept the invite from GitHub that we will send you**
 
   - The invite is in your email or at
     https://github.com/sorrentum/sorrentum/invitations
   - Again please don't forget to fork, star, watch the Sorrentum repo so that
     GitHub promotes our repo (we gotta work the system)
 
-- Accept the invite to join the Google Drive
+- **(Contributor) Accept the invite to join the Google Drive**
 
-- Please fill out the
-  [Project Survey](https://docs.google.com/forms/d/e/1FAIpQLScRDe4gdPi6hYElea6g5Eg_xGfVorn667lEaDIhA4kuWCCC_g/viewform?usp=sf_link)
+- **(Contributor)** Please fill out the
+  [Technical background](https://docs.google.com/forms/d/e/1FAIpQLScRDe4gdPi6hYElea6g5Eg_xGfVorn667lEaDIhA4kuWCCC_g/viewform?usp=sf_link)
   so we know a little about you and your (initial) skills
 
   - Don’t worry: by working with us, you will quickly become a coding machine
 
-- Make sure the info on the
+- **(Contributor) Make sure the info on the
   [Contributor List](https://docs.google.com/spreadsheets/d/1eRZJaj5-1g6W7w_Ay4UhJEdtAvrTTM1V94cKj6_Vwoc/edit#gid=1253964093)
-  are correct
+  are correct**
 
   - E.g., especially email, GitHub account, and Telegram handle
   - If something is incorrect, please update the information in "Suggestion
     mode"
 
-- Go to the
+- **(Contributor) Go to the
   [Research Office Hours](https://docs.google.com/document/d/1bR5Xe_pSOqa2wReySsHrHPVz9zatx-QWDzvfsADDW3I/edit)
-  to access the invite links for the different team groups
+  to access the invite links for the different team groups**
 
   - We suggest to join a Research meeting for each topic at least once to
     understand how things work and what topics we work on
@@ -63,13 +63,13 @@
 
 ## On-boarding process
 
-- Get familiar with GitHub and our workflow (see resources in /README.md)
+- **(Contributor)** Get familiar with GitHub and our workflow (see resources in /README.md)
 
-- The admin adds in the on-boarding issue
+- **(Admin)** The admin adds in the on-boarding issue
   https://github.com/sorrentum/sorrentum/issues/189 the following checklist for
   the Contributor onboarding
 
-- The contributor goes through the list one-by-one marking each item as done
+- **(Contributor)** The contributor goes through the list one-by-one marking each item as done
   when **it's actually done**
 
 ### Web3
