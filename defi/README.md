@@ -89,6 +89,7 @@
 
 - Use the script `lint_solidity.sh` inside `dev_scripts` directory for formatting
   and linting the smart contracts
+  
   ```
   > dev_scripts/lint_solidity.sh file.sol file2.sol ...
   ```
