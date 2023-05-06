@@ -39,6 +39,7 @@ class CGDownloader(ssandown.DataDownloader):
         mc.set_index('timestamp', inplace=True)
         vol.set_index('timestamp', inplace=True)
         df = pd.concat([price, mc, vol], axis=1)
+        df['id'] = id
         df.reset_index(inplace=True)
         print(df.columns)
 

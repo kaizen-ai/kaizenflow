@@ -37,6 +37,7 @@ def get_coingecko_historic_table_query() -> str:
     query = """
                 CREATE TABLE IF NOT EXISTS coingecko_historic
                 (
+                    id VARCHAR,
                     timestamp BIGINT,
                     price NUMERIC,
                     market_cap NUMERIC,
@@ -175,7 +176,7 @@ class PostgresClient(sinsacli.DataClient):
         Load CSV data specified by a unique signature from a desired source
         directory for a specified time period.
         """
-        select_query = f"SELECT * FROM {dataset_signature}"
+        select_query = f"SELECT id, timestamp, price, market_cap, total_volume FROM {dataset_signature}"
         # Filter data.
         if from_timestamp:
             hdateti.dassert_has_tz(from_timestamp)
