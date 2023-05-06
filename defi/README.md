@@ -89,7 +89,6 @@
 
 - Use the script `lint_solidity.sh` inside `dev_scripts` directory for formatting
   and linting the smart contracts
-- Start the defi container from the main directory:
   ```
   > dev_scripts/lint_solidity.sh file.sol file2.sol ...
   ```
