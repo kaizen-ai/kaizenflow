@@ -84,6 +84,10 @@
 \begin{document}
 
 \title{TuLiP: A protocol for trading with liquidity providers}
+% TODO(gp): @paul At this point I would just use the most general "Tulip: A
+% decentralized protocol for token exchange" and say "Tulip" is just the name,
+% because it's cute.
+% We could also call Dao... -> TulipCross and TulipSwap.
 
 \author{Giacinto Paolo Saggese}
 \author{Paul Smith}
@@ -104,15 +108,17 @@
 \maketitle
 
 \begin{abstract}
-Modern financial exchanges are built on the concept of limit order books. Limit
-orders are a natural and powerful way to interact with markets. Creating modes
-of decentralized exchange around limit orders poses unique challenges, and the
-dominant decentralized alternatives lack this interface. We propose ``TuLiP", a
-protocol for decentralized exchange built around limit orders, at whose heart
-is a novel auction mechanism for price discovery, matching and clearing. While
-the auction mechanism has application beyond decentralized exchange, its
-features have immediate and application to improving the efficiency of
-decentralized token exchange.
+Limit orders are a natural and powerful way to interact with financial markets.
+Creating decentralized exchanges around limit orders poses unique challenges,
+and the dominant decentralized alternatives lack this interface.
+We propose ``TuLiP", a protocol for decentralized exchange built around limit
+orders, at whose heart is a novel auction mechanism for price discovery,
+matching and clearing. Besides a natural trading interface, Tulip allows
+welfare maximization, liquidity pooling across tokens and time, trading
+efficiency, complete transparency, no impermanent loss, no need for
+intermediary custody, no rent extraction from high-frequency custody,
+censorship resistance, and ease of use. These features have immediate
+application in improving the efficiency of decentralized token exchange.
 \end{abstract}
 
 \tableofcontents
@@ -123,11 +129,60 @@ decentralized token exchange.
 % ###############################################################################
 \section{Introduction}
 
-TuLiP is a new protocol that enables decentralized token
+TuLiP is a new financial primitive that enables decentralized token
 exchange using limit orders. It brings together the advantages of trading
 efficiency and ease-of-use of centralized exchanges with the transparency and
 self-custody of decentralized approaches, without the risk of impermanent loss,
 contrary to automatic market maker-based approaches.
+
+Some of the innovative features of TuLiP are:
+\begin{enumerate}
+    \item Natural trading interface:
+          TuLiP uses limit orders as a way to express interest to trading. This
+          is the approach that is most natural and in fact used by virtually
+          the entirety of traditional finance, but surprisingly ignored by many
+          decentralized primitives
+    \item Welfare maximization:
+          TuLiP maximizes the aggregated welfare by allowing to relax the
+          constraint of a single clearing price, which has been the standard
+          assumption in traditional finance and inherited by decentralized
+          finance
+    \item Liquidity pooling across tokens:
+          TuLiP participants are not artifically segregated in separated liquidity
+          pools, but they are aggregated in a single optimization problem that
+          handles in a natural way both multi-coin and reverse token exchange
+	\item Liquidity pooling across time:
+          TuLiP participants provide liquidity only when they wish to trade, and only
+          in the amount that they wish to trade, instead of artifically
+          separating traders as liquidity providers and liquidity takers, like
+          in automated market makers protocols
+	\item High trading efficiency:
+          TuLiP uses discrete and frequent auctions for price discovery and
+          efficiently matching supply and demands, allowing trading tokens
+          peer-to-peer minimizing and sharing spread costs
+    \item Complete transparency:
+          TuLiP collects on-chain all the information for maximum transparency
+          and allows to independently verify the correctness of any computation
+          moved off-chain for minimizing execution costs due to current limitations
+          of blockchain technology
+	\item No impermanent loss:
+	      liquidity providers are not exposed to the risk of impermanent loss
+	      (a form of unrealized loss that becomes realized upon withdrawing
+	      liquidity), unlike the case with other decentralized exchange protocols
+	      based on automated market makers
+	\item No intermediary custody:
+	      exchanged tokens always remain under the control of their respective
+          owners, in contrast to centralized exchanges
+	\item No rent extraction from high-frequency traders:
+          in TuLiP speed alone does not confer an advantage to traders, as the
+          discrete and frequent auctions prevent predatory tactics such as
+          front-running, limit order scalping, and spoofing, which are known
+          issues seen with continuous limit order books
+    \item Censorship resistance and ease-of-use:
+          the interaction between buyers and sellers occurs through smart
+          contracts and a website front-end
+\end{enumerate}
+
 
 % ===============================================================================
 \subsection{Token swap as a financial primitive}
@@ -290,32 +345,6 @@ intervals. In the simplest case, it resembles a Walrasian-style auction
 \cite{Wa}. In cases where liquidity is pooled more broadly, the auction clearing
 mechanism satisfies a collection of inequalities.
 
-\subsubsection{Advantages of DaoCross and DaoSwap}
-While DaoSwap and DaoCross differ in how the token exchange rate is determined,
-both share several common advantages:
-\begin{enumerate}
-	\item Low cost:
-	      they implement a DeFi primitive that allows trading tokens
-          peer-to-peer without incurring spread costs
-	\item Capital efficiency:
-	      participants provide liquidity only when
-	      they wish to trade, and only in the amount that they wish to trade
-	\item No impermanent loss:
-	      liquidity providers are not exposed to the risk of impermanent loss
-	      (a form of unrealized loss that becomes realized upon withdrawing
-	      liquidity), unlike the case with other decentralized exchange protocols
-	      based on automated market makers
-	\item No intermediary custody:
-	      exchanged tokens always remain under the control of their respective
-	      owners
-	\item No rent extraction from high-frequency traders:
-	      speed alone does not confer an advantage to traders, as the discrete
-	      timing prevents predatory tactics such as front-running, limit order
-	      scalping, and spoofing, which are known issues seen with continuous
-	      limit order books
-	\item Ease-of-use: the interaction between buyers and sellers occurs
-	      through smart contracts, with a website front-end planned
-\end{enumerate}
 
 \subsubsection{Comparison with alternative solutions}
 A comparison between DaoCross and DaoSwap and other solutions for token
@@ -323,6 +352,7 @@ swapping, namely limit-order books (e.g., centralized exchanges such as
 Binance) and automatic market-makers (e.g., Uniswap) is summarized below
 and discussed in detail in Section \ref{AlSoToSw}.
 
+% TODO(gp): Updat this table once the list of features in the intro is stable
 \begin{samepage}
 	\begin{table}[h!]
 		\centering
@@ -1465,6 +1495,7 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 \subsection{DaoSwap}
 
 \begin{itemize}
+
 	\item Custodial risk: Low
 	      \begin{itemize}
 		      \item Private keys and funds are always under the control of the users
