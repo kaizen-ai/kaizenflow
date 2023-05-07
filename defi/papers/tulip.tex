@@ -137,7 +137,7 @@ contrary to automatic market maker-based approaches.
 
 Some of the innovative features of TuLiP are:
 \begin{enumerate}
-    \item Natural trading interface:
+    \item Support for trading orders:
           TuLiP uses limit orders as a way to express interest to trading. This
           is the approach that is most natural and in fact used by virtually
           the entirety of traditional finance, but surprisingly ignored by many
@@ -1465,7 +1465,6 @@ currency pairs is reached.
 \subsection{Performing the swap}
 
 % ###############################################################################
-
 \section{Alternative solutions for token swapping}
 \label{AlSoToSw}
 
@@ -1496,14 +1495,51 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 
 \begin{itemize}
 
-	\item Custodial risk: Low
+	\item Support for limit order: Yes
 	      \begin{itemize}
-		      \item Private keys and funds are always under the control of the users
+		      \item DaoSwap supports limit orders natively
 	      \end{itemize}
-	\item Transparency: High
+	\item Welfare maximization: Yes
+	      \begin{itemize}
+		      \item The DaoSwap optimization problem allows to exchange tokens with multiple
+                clearing prices to maximize the aggregated welfare of the participants
+	      \end{itemize}
+	\item Liquidity pooling across tokens: High
+	      \begin{itemize}
+		      \item The DaoSwap optimization problem allows to exchange tokens simultaneously across 
+                all the participants independently of their base and quote tokens
+	      \end{itemize}
+	\item Liquidity pooling across time: High
+	      \begin{itemize}
+              \item In DaoSwap there is no difference between the roles of
+                liquidity providers and liquidity takers, so that takers and makers
+                can trade against each other directly and efficiently
+	      \end{itemize}
+	\item Trading efficiency: High
+	      \begin{itemize}
+              \item DaoSwap relies on periodic auctions and it has been argued
+                in previous literature that for small enough intervals (e.g.,
+                seconds) periodic auctions result in the same quality of
+                continuous matching \ref{BuCrSh15}
+	      \end{itemize}
+	\item Transparency: Yes
 	      \begin{itemize}
               \item Work is done on-chain and the off-chain computations are
                 independently verifiable
+	      \end{itemize}
+	\item Impermanent loss: No
+	      \begin{itemize}
+		      \item There is no impermanent loss since liquidity is not locked inside
+                the contract, like for an AMM
+	      \end{itemize}
+	\item Custodial risk: No
+	      \begin{itemize}
+		      \item Private keys and funds are always under the control of the users
+	      \end{itemize}
+	\item Rent extracted by high-frequency traders: Low
+	      \begin{itemize}
+              \item Discrete and frequent auctions minimize predatory
+                behaviors from HFT behavior \ref{BuCrSh15}
 	      \end{itemize}
 	\item Censoriship resistance: Yes
 	      \begin{itemize}
@@ -1512,78 +1548,111 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 		            approaches to distributed oracles, or even ported on-chain if gas prices
 		            are not an issue (e.g., using Layer2 solutions)
 	      \end{itemize}
-	\item Intrinsic efficiency: High
-	      \begin{itemize}
-              \item DaoSwap relies on periodic auctions and it has been argued
-                in previous literature that for small enough intervals (e.g.,
-                seconds) periodic auctions result in the same quality of
-                continuous matching without allowing predatory behaviors
-		      \item TODO(gp): Add a reference to Cramton paper
-	      \end{itemize}
-	\item Support for limit order: Yes
-	      \begin{itemize}
-		      \item Limit orders are supported natively
-	      \end{itemize}
-	\item Risk of predatory behaviors: Low
-	      \begin{itemize}
-		      \item TODO(gp):
-	      \end{itemize}
-	\item Impermanent loss: No
-	      \begin{itemize}
-		      \item TODO(gp):
-	      \end{itemize}
-	\item Support for multi-coin swap: Yes
-	      \begin{itemize}
-              \item TODO(gp): DaoSwap/Cross pools all the liquidity in a single
-                optimization problem
-	      \end{itemize}
 \end{itemize}
 
 % ===============================================================================
 \subsection{DaoCross}
 
-\begin{itemize}
-	\item Custodial risk: Low
-	      \begin{itemize}
-		      \item Same as DaoSwap
-	      \end{itemize}
-	\item Transparency: Medium
-	      \begin{itemize}
-		      \item DaoCross relies on price discovery carried out on a lit exchange
-	      \end{itemize}
-	\item Censoriship resistance: No
-	      \begin{itemize}
-              \item The robustness of DaoCross is the same as the lit exchange
-                that it relies on. See comments on the corresponding topic for
-                LOB
-	      \end{itemize}
-	\item Intrinsic efficiency: Medium
-	      \begin{itemize}
-              \item The efficiency in matching trades is the same as the
-                limit-order book. See comments on the corresponding topic for
-                LOB
-	      \end{itemize}
 	\item Support for limit order: Yes
 	      \begin{itemize}
-		      \item Same as DaoSwap
+		      \item DaoCross supports limit orders natively
 	      \end{itemize}
-	\item Risk of predatory behaviors:
+	\item Welfare maximization: No
 	      \begin{itemize}
-		      \item TODO(gp)
+		      \item The DaoCross optimization problem uses prices determined by
+                a lit exchange and thus there is a single clearing price for all
+                the swaps. This does not allow to achieve maximal welfare for
+                the traders involved in the swap
+	      \end{itemize}
+	\item Liquidity pooling across tokens: High
+	      \begin{itemize}
+		      \item DaoCross share the same behavior of DaoSwap from this point of view
+	      \end{itemize}
+	\item Liquidity pooling across time: High
+	      \begin{itemize}
+		      \item DaoCross share the same behavior of DaoSwap from this point of view
+	      \end{itemize}
+	\item Trading efficiency: Medium
+	      \begin{itemize}
+              \item The trading efficiency in matching trades is the same as the
+                lit exchange on which price discovery is peformed (e.g., a
+                centralized exchange)
+	      \end{itemize}
+	\item Transparency: Yes
+	      \begin{itemize}
+		      \item DaoCross share the same behavior of DaoSwap from this point of view
 	      \end{itemize}
 	\item Impermanent loss: No
 	      \begin{itemize}
-		      \item TODO(gp)
+		      \item DaoCross share the same behavior of DaoSwap from this point of view
 	      \end{itemize}
-	\item Support for multi-coin swap:
+	\item Custodial risk: No
 	      \begin{itemize}
-              \item TODO(gp): DaoSwap/Cross pools all the liquidity in a single
-                optimization problem
+		      \item DaoCross share the same behavior of DaoSwap from this point of view
+	      \end{itemize}
+	\item Rent extracted by high-frequency traders: Medium
+	      \begin{itemize}
+              \item DaoCross behaves as a dark pool of liquidity and thus it can be suscetible
+                to predatory behaviors, although mitigated by the discrete auction mechanism
+                \ref{BuCrSh15}
+	      \end{itemize}
+	\item Censoriship resistance: No
+	      \begin{itemize}
+              \item DaoCross behaves as a dark pool of liquidity and thus it can be suscetible
+                to censorship resistance in the same way as the lit exchange on which
+                price discovery is carried out
 	      \end{itemize}
 \end{itemize}
 
 % ===============================================================================
 \subsection{Limit Order Book (LOB)}
+
+	\item Support for limit order: Yes
+	\item Welfare maximization: Medium
+	      \begin{itemize}
+		      \item The presence of priority rules in the continuous matching
+                might artificially reduce the achieved welfare of the participants
+	      \end{itemize}
+	\item Liquidity pooling across tokens: Low
+	      \begin{itemize}
+		      \item LOBs only allow exchanging one type of token with another,
+                artificially separating liquidity
+	      \end{itemize}
+	\item Liquidity pooling across time: High
+	      \begin{itemize}
+		      \item LOBs let liquidity providers and takers trade against each other
+	      \end{itemize}
+	\item Trading efficiency: Medium
+	      \begin{itemize}
+              \item Although the continuous matching 
+                The trading efficiency in matching trades is the same as the
+                lit exchange on which price discovery is peformed (e.g., a
+                centralized exchange)
+	      \end{itemize}
+	\item Transparency: Yes
+	      \begin{itemize}
+		      \item DaoCross share the same behavior of DaoSwap from this point of view
+	      \end{itemize}
+	\item Impermanent loss: No
+	      \begin{itemize}
+		      \item DaoCross share the same behavior of DaoSwap from this point of view
+	      \end{itemize}
+	\item Custodial risk: No
+	      \begin{itemize}
+		      \item DaoCross share the same behavior of DaoSwap from this point of view
+	      \end{itemize}
+	\item Rent extracted by high-frequency traders: Medium
+	      \begin{itemize}
+              \item DaoCross behaves as a dark pool of liquidity and thus it can be suscetible
+                to predatory behaviors, although mitigated by the discrete auction mechanism
+                \ref{BuCrSh15}
+	      \end{itemize}
+	\item Censoriship resistance: No
+	      \begin{itemize}
+              \item DaoCross behaves as a dark pool of liquidity and thus it can be suscetible
+                to censorship resistance in the same way as the lit exchange on which
+                price discovery is carried out
+	      \end{itemize}
 
 \begin{itemize}
 	\item Custodial risk: High
@@ -2024,6 +2093,20 @@ selection (quantified and characterized by the LVR paper)
         date={October 2020},
         eprint={https://professorjey.com/assets/papers/AMM_Order_Book_Equivalence_DRAFT_2020_10_16.pdf},
     }
+
+    \bib{BuCrSh15}{article}{
+      author={Budish, Eric B.},
+      author={Cramton, Peter },
+      author={Shim, John J.},
+      title={The High-Frequency Trading Arms Race: Frequent Batch Auctions as a Market Design Response},
+      date={2015},
+    }
+
+    %    \bib{}{article}{
+    %      author={,},
+    %      title={},
+    %      date={},
+    %    }
 
 \end{thebibliography}
 
