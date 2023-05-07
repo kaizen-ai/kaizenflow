@@ -13,3 +13,4 @@ s3fs
 seaborn
 tqdm 
 yapf 
+apache-airflow
