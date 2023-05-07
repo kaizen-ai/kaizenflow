@@ -53,7 +53,7 @@ def bridge(data_interval_start):
     logging.info("Current from_timestamp1 value is" + str(fromValue))
 
     logging.info("Setting Airflow Variable from_timestamp1 to" + str(fromValue))
-    os.system('airflow variables -- set from_timestamp1' + str(fromValue))
+    os.system('airflow variables --set from_timestamp1' + str(fromValue))
 
 def bridge2(data_interval_end):
 
@@ -64,7 +64,7 @@ def bridge2(data_interval_end):
     logging.info("Current from_timestamp1 value is" + str(toValue))
 
     logging.info("Setting Airflow Variable from_timestamp1 to" + str(toValue))
-    os.system('airflow variables -- set from_timestamp1' + str(toValue))
+    os.system('airflow variables --set from_timestamp1' + str(toValue))
 
 
 
