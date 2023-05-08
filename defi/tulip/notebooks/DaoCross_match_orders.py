@@ -33,16 +33,6 @@ _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
 
-# %%
-base_token, quote_token, action, quantity, limit_price, timestamp, deposit_address, wallet_address
-
-# %%
-5 * 10**18, 100000000000
-
-# %%
-
-# %%
-5+3+4
 
 # %%
 buy_order1 = ddacrord.Order("BaseToken", "ETH", "buy", 5, 100000000000000/10**18, timestamp=None, deposit_address=1 , wallet_address=1)
@@ -53,11 +43,6 @@ buy_order3 = ddacrord.Order("BaseToken", "ETH", "buy", 4, 100000000000000/10**18
 buy_orders = [buy_order1, buy_order2, buy_order3]
 display(buy_orders)
 
-# %%
-3 * 10**18
-
-# %%
-25 * 10**17
 
 # %%
 sell_order1 = ddacrord.Order("BaseToken", "ETH", "sell", 2, 100000000000000/10**18, timestamp=None, deposit_address=-1 , wallet_address=-1)

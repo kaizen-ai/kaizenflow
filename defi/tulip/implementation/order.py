@@ -1,7 +1,7 @@
 """
 Import as:
 
-import defi.dao_cross.order as ddacrord
+import defi.tulip.implementation.order as dtuimor
 """
 
 import collections

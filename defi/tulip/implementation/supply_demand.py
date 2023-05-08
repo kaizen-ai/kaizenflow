@@ -1,7 +1,7 @@
 """
 Import as:
 
-import defi.dao_cross.supply_demand as ddcrsede
+import defi.tulip.implementation.supply_demand as dtuimsd
 """
 
 import logging
