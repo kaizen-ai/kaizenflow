@@ -92,8 +92,7 @@ def test_sellOrder_baseToken_address(daocross, base_token):
 
 def test_sellOrder_allowance(daocross, base_token):
     """
-    Check if the allowance by the token seller is greater than
-    or equal to the quantity.
+    Check if the allowance by the token seller is greater than or equal to the quantity.
     """
     base_token.transfer(accounts[5], 5* 10**18, {"from": accounts[0], "gas_price": "60 gwei"})
     base_token.approve(daocross, 5 * 10**18, {"from": accounts[5], "gas_price": "60 gwei"})
@@ -171,10 +170,10 @@ def test_onSwapTime_similarQuantity(daocross, base_token):
     daocross.sellOrder(base_token.address, 5 * 10**18, 100000000000, accounts[5], {"from": accounts[5], "gas_price": "60 gwei"})
     daocross.onSwapTime({"from": accounts[0], "gas_price": "60 gwei"})
     
-    #Check if buyer received the desired amount of tokens.
+    # Check if buyer received the desired amount of tokens.
     assert base_token.balanceOf(accounts[1]) == 5 * 10**18
  
-    #Check if the Orders array is deleted after the swapping. 
+    # Check if the Orders array is deleted after the swapping. 
     with reverts():
         daocross.orders(0)[0] == 0
 
@@ -225,7 +224,7 @@ def test_onSwapTime_remainingHeap_moreBuying(daocross, base_token):
     
     # Buy 5 tokens for 100000000000 WEI.
     daocross.buyOrder(base_token.address, 5 * 10**18, 100000000000, accounts[1], {"from": accounts[1], "gas_price": "60 gwei", "value": 100000000000*5})
-    #Balance after placing the order.
+    # Balance after placing the order.
     initialBalance = accounts[1].balance()
     # Buy 2.5 tokens for 100000000000 WEI.
     daocross.buyOrder(base_token.address, 2.5 * 10**18, 100000000000, accounts[2], {"from": accounts[2], "gas_price": "60 gwei", "value": 100000000000*2.5})
@@ -234,13 +233,13 @@ def test_onSwapTime_remainingHeap_moreBuying(daocross, base_token):
     
     daocross.onSwapTime({"from": accounts[0], "gas_price": "60 gwei"})
     
-    #Check that user that wanted to buy 5 tokens, gets only 3.5 tokens.
+    # Check that user that wanted to buy 5 tokens, gets only 3.5 tokens.
     assert base_token.balanceOf(accounts[1]) == 3.5 * 10**18
-    #Check that buyer got their extra money for unbought 1.5 token back.
+    # Check that buyer got their extra money for unbought 1.5 token back.
     assert accounts[1].balance() == initialBalance + 100000000000*1.5
-    #Check that user that wanted to buy 2.5 tokens gets 2.5 tokens.
+    # Check that user that wanted to buy 2.5 tokens gets 2.5 tokens.
     assert base_token.balanceOf(accounts[2]) == 2.5 * 10**18
-    #Check that user that wanted to buy 4 tokens gets 4 tokens.
+    # Check that user that wanted to buy 4 tokens gets 4 tokens.
     assert base_token.balanceOf(accounts[3]) == 4 * 10**18
     # Check that seller that wanted to sell 2 tokens sold 2 tokens.
     assert base_token.balanceOf(accounts[4]) == 0
@@ -274,11 +273,11 @@ def test_onSwapTime_remainingHeap_moreSelling(daocross, base_token):
     # Submit sell orders.
     daocross.onSwapTime({"from": accounts[0], "gas_price": "60 gwei"})
     
-    #Check that user that wanted to buy 5 tokens gets 5 tokens.
+    # Check that user that wanted to buy 5 tokens gets 5 tokens.
     assert base_token.balanceOf(accounts[1]) == 5 * 10**18
-    #Check that user that wanted to buy 2 tokens gets 2 tokens.
+    # Check that user that wanted to buy 2 tokens gets 2 tokens.
     assert base_token.balanceOf(accounts[2]) == 2 * 10**18
-    #Check that user that wanted to buy 3 tokens gets 3 tokens.
+    # Check that user that wanted to buy 3 tokens gets 3 tokens.
     assert base_token.balanceOf(accounts[3]) == 3 * 10**18
     # Check that seller that wanted to sell 2 tokens sold 2 tokens.
     assert base_token.balanceOf(accounts[4]) == 0
