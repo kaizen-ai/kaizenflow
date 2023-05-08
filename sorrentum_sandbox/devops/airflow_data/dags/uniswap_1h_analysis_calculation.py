@@ -40,7 +40,7 @@ bash_command = [
     "&&",
     # "python3 -m pip install dask ",
     # "&&",
-    "python3 /cmamp/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap/dask.py"
+    "python3 /cmamp/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap/dask_script.py"
 ]
 
 downloading_task = BashOperator(
