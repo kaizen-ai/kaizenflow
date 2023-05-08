@@ -34,16 +34,35 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 # %%
-buy_order1 = ddacrord.Order("ETH", "BTC", "buy", 10, 0.1, 1, 1)
-buy_order2 = ddacrord.Order("ETH", "BTC", "buy", 9, 0.15, 2, 2)
-buy_order3 = ddacrord.Order("ETH", "BTC", "buy", 10, 0.15, 3, 3)
+base_token, quote_token, action, quantity, limit_price, timestamp, deposit_address, wallet_address
+
+# %%
+5 * 10**18, 100000000000
+
+# %%
+
+# %%
+5+3+4
+
+# %%
+buy_order1 = ddacrord.Order("BaseToken", "ETH", "buy", 5, 100000000000000/10**18, timestamp=None, deposit_address=1 , wallet_address=1)
+buy_order2 = ddacrord.Order("BaseToken", "ETH", "buy", 2.5, 100000000000000/10**18,timestamp=None,  deposit_address=2, wallet_address=2)
+buy_order3 = ddacrord.Order("BaseToken", "ETH", "buy", 4, 100000000000000/10**18,timestamp=None,  deposit_address=3, wallet_address=3)
+
+# %%
 buy_orders = [buy_order1, buy_order2, buy_order3]
 display(buy_orders)
 
 # %%
-sell_order1 = ddacrord.Order("ETH", "BTC", "sell", 11, 0.1, -1, -1)
-sell_order2 = ddacrord.Order("ETH", "BTC", "sell", 10, 0.15, -2, -2)
-sell_order3 = ddacrord.Order("ETH", "BTC", "sell", 9, 0.15, -3, -3)
+3 * 10**18
+
+# %%
+25 * 10**17
+
+# %%
+sell_order1 = ddacrord.Order("BaseToken", "ETH", "sell", 2, 100000000000000/10**18, timestamp=None, deposit_address=-1 , wallet_address=-1)
+sell_order2 = ddacrord.Order("BaseToken", "ETH", "sell", 5, 100000000000000/10**18, timestamp=None, deposit_address=-2, wallet_address=-2)
+sell_order3 = ddacrord.Order("BaseToken", "ETH", "sell", 3, 100000000000000/10**18, timestamp=None,  deposit_address=-3, wallet_address=-3)
 sell_orders = [sell_order1, sell_order2, sell_order3]
 display(sell_orders)
 
@@ -57,8 +76,11 @@ ddacrord.get_random_order()
 # ## Example 1
 
 # %%
-clearing_price = 0.14
+clearing_price = 100000000000000/10**18
 transfers_df = ddcrdacr.match_orders(buy_orders + sell_orders, clearing_price)
+
+# %%
+transfers_df
 
 # %%
 eth_transfers = transfers_df[transfers_df["token"] == "ETH"]
