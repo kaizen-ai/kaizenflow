@@ -136,7 +136,6 @@ def test_sellOrder_eventEmitted(daocross, base_token):
     tx =  daocross.sellOrder(base_token.address, 5 * 10**18, 100000000000, accounts[5], {"from": accounts[5], "gas_price": "60 gwei"})
     assert tx.events["newSellOrder"].values() == [base_token.address, ethAddress, quantity, limitPrice, depositAddress]
 
-
 def test_getChainlinkFeedPrice(daocross):
     """
     Check whether the MockV3Aggregator gets the latest price.
