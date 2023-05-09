@@ -35,20 +35,37 @@ def require_api_key(func: Callable) -> Callable:
     return check_api_key
 
 
-def _get_price_volume_data() -> Tuple[List[int], List[float]]:
+def _get_price_volume_data() -> Dict[str, Any]:
     """
     Query price and volume data from the CoinGecko API.
     """
     # Get parameters from the Chainlink node request.
-    symbol = request.json["symbol"]
-    start_time = request.json["start_time"]
-    end_time = request.json["end_time"]
+    data = request.json.get("data", {})
+    symbol = data.get("symbol", "")
+    start_time = data.get("start_time", '')
+    end_time = data.get("end_time", '')
     # Query the CoinGecko API for price data within the specified time range.
     response = requests.get(
         f"https://api.coingecko.com/api/v3/coins/{symbol}/market_chart/range?vs_currency=eth&from={start_time}&to={end_time}"
     )
-    price_data = json.loads(response.text)["prices"]
+    if response.status_code >= 400:
+        # Process an error.
+        error_data = {
+            'jobRunID': request.json.get("id", ""),
+            'status': 'errored',
+            'error': response.text,
+        }
+        return error_data
+    price_data = json.loads(response.text)
+    return price_data
+
+
+def _process_price_data(price_data: Dict[str, Any]) -> Tuple[List[int], List[float]]:
+    """
+    Get the sequence of volumes and prices in WEI.
+    """
     # Get price and volume data.
+    price_data = price_data["prices"]
     prices = [float(entry[1]) for entry in price_data]
     volumes = [float(entry[0]) for entry in price_data]
     # Convert prices to WEI.
@@ -63,11 +80,14 @@ def get_twap() -> Dict[str, Any]:
     """
     Get TWAP for the Chainlink node.
     """
-    prices, volumes = _get_price_volume_data()
+    price_data = _get_price_volume_data()
+    if price_data.get("error"):
+        return price_data
+    prices, volumes = _process_price_data(price_data)
     twap = np.average(prices, weights=volumes)
     twap = jsonify(
         {
-            "jobRunID": request.json["jobRunID"],
+            "jobRunID": request.json.get("id", ""),
             "data": {"result": str(twap)},
         }
     )
@@ -80,11 +100,14 @@ def get_vwap() -> Dict[str, Any]:
     """
     Get VWAP for the Chainlink node.
     """
-    prices, volumes = _get_price_volume_data()
+    price_data = _get_price_volume_data()
+    if price_data.get("error"):
+        return price_data
+    prices, volumes = _process_price_data(price_data)
     vwap = np.sum(prices * volumes) / np.sum(volumes)
     vwap = jsonify(
         {
-            "jobRunID": request.json["jobRunID"],
+            "jobRunID": request.json.get("id", ""),
             "data": {"result": str(vwap)},
         }
     )
