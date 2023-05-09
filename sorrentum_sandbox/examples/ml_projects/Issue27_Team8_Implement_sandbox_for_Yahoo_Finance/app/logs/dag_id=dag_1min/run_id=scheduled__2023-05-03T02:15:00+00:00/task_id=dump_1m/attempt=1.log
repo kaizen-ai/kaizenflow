@@ -1,44 +1,0 @@
-[2023-05-03T02:32:49.739+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_1min.dump_1m scheduled__2023-05-03T02:15:00+00:00 [queued]>
-[2023-05-03T02:32:50.164+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_1min.dump_1m scheduled__2023-05-03T02:15:00+00:00 [queued]>
-[2023-05-03T02:32:50.174+0000] {taskinstance.py:1288} INFO - 
---------------------------------------------------------------------------------
-[2023-05-03T02:32:50.177+0000] {taskinstance.py:1289} INFO - Starting attempt 1 of 1
-[2023-05-03T02:32:50.220+0000] {taskinstance.py:1290} INFO - 
---------------------------------------------------------------------------------
-[2023-05-03T02:32:50.882+0000] {taskinstance.py:1309} INFO - Executing <Task(PythonOperator): dump_1m> on 2023-05-03 02:15:00+00:00
-[2023-05-03T02:32:50.966+0000] {standard_task_runner.py:55} INFO - Started process 207 to run task
-[2023-05-03T02:32:51.061+0000] {standard_task_runner.py:82} INFO - Running: ['***', 'tasks', 'run', 'dag_1min', 'dump_1m', 'scheduled__2023-05-03T02:15:00+00:00', '--job-id', '172', '--raw', '--subdir', 'DAGS_FOLDER/dag_1min.py', '--cfg-path', '/tmp/tmp337vwvk6']
-[2023-05-03T02:32:51.105+0000] {standard_task_runner.py:83} INFO - Job 172: Subtask dump_1m
-[2023-05-03T02:32:52.496+0000] {task_command.py:389} INFO - Running <TaskInstance: dag_1min.dump_1m scheduled__2023-05-03T02:15:00+00:00 [running]> on host 5762cea9b149
-[2023-05-03T02:32:54.752+0000] {taskinstance.py:1518} INFO - Exporting the following env vars:
-AIRFLOW_CTX_DAG_OWNER=coder2j
-AIRFLOW_CTX_DAG_ID=dag_1min
-AIRFLOW_CTX_TASK_ID=dump_1m
-AIRFLOW_CTX_EXECUTION_DATE=2023-05-03T02:15:00+00:00
-AIRFLOW_CTX_TRY_NUMBER=1
-AIRFLOW_CTX_DAG_RUN_ID=scheduled__2023-05-03T02:15:00+00:00
-[2023-05-03T02:33:02.018+0000] {logging_mixin.py:137} WARNING -   0%|          | 0/2 [00:00<?, ?it/s]
-[2023-05-03T02:33:02.083+0000] {logging_mixin.py:137} INFO - Failed to create TzCache, reason: Error creating TzCache folder: '/home/***/.cache/py-yfinance' reason: [Errno 17] File exists: '/home/***/.cache/py-yfinance'
-[2023-05-03T02:33:02.096+0000] {logging_mixin.py:137} INFO - TzCache will not be used.
-[2023-05-03T02:33:02.102+0000] {logging_mixin.py:137} INFO - Tip: You can direct cache to use a different location with 'set_tz_cache_location(mylocation)'
-[2023-05-03T02:33:04.800+0000] {logging_mixin.py:137} INFO - [*********************100%***********************]  1 of 1 completed
-[2023-05-03T02:33:09.570+0000] {logging_mixin.py:137} WARNING -  50%|#####     | 1/2 [00:07<00:07,  7.52s/it]
-[2023-05-03T02:33:12.453+0000] {logging_mixin.py:137} INFO - [*********************100%***********************]  1 of 1 completed
-[2023-05-03T02:33:19.011+0000] {logging_mixin.py:137} WARNING - 100%|##########| 2/2 [00:16<00:00,  8.64s/it]
-[2023-05-03T02:33:19.064+0000] {logging_mixin.py:137} WARNING - 100%|##########| 2/2 [00:17<00:00,  8.51s/it]
-[2023-05-03T02:33:19.366+0000] {logging_mixin.py:137} INFO - Index(['open', 'high', 'low', 'close', 'adj_close', 'volume', 'timestamp',
-       'currency_pair', 'exchangetimezonename', 'timezone'],
-      dtype='object')
-[2023-05-03T02:33:21.100+0000] {download_yahoo.py:57} INFO - Downloaded data: 
-	         open       high        low  ...  currency_pair  exchangetimezonename  timezone
-0  16.699831  16.699831  16.699831  ...       AVAX-USD                   UTC       UTC
-1  16.696033  16.696033  16.696033  ...       AVAX-USD                   UTC       UTC
-2  16.697189  16.697189  16.697189  ...       AVAX-USD                   UTC       UTC
-3  16.695528  16.695528  16.695528  ...       AVAX-USD                   UTC       UTC
-4  16.698818  16.698818  16.698818  ...       AVAX-USD                   UTC       UTC
-
-[5 rows x 10 columns]
-[2023-05-03T02:33:24.239+0000] {python.py:177} INFO - Done. Returned value was: None
-[2023-05-03T02:33:24.974+0000] {taskinstance.py:1332} INFO - Marking task as SUCCESS. dag_id=dag_1min, task_id=dump_1m, execution_date=20230503T021500, start_date=20230503T023249, end_date=20230503T023324
-[2023-05-03T02:33:26.669+0000] {local_task_job.py:212} INFO - Task exited with return code 0
-[2023-05-03T02:33:28.529+0000] {taskinstance.py:2596} INFO - 1 downstream tasks scheduled from follow-on schedule check

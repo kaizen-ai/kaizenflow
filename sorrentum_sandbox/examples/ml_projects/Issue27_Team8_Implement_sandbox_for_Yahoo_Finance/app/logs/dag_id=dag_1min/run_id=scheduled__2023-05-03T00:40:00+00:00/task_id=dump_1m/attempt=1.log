@@ -1,23 +1,0 @@
-[2023-05-03T01:12:48.335+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_1min.dump_1m scheduled__2023-05-03T00:40:00+00:00 [queued]>
-[2023-05-03T01:12:49.572+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_1min.dump_1m scheduled__2023-05-03T00:40:00+00:00 [queued]>
-[2023-05-03T01:12:49.619+0000] {taskinstance.py:1288} INFO - 
---------------------------------------------------------------------------------
-[2023-05-03T01:12:49.648+0000] {taskinstance.py:1289} INFO - Starting attempt 1 of 1
-[2023-05-03T01:12:49.667+0000] {taskinstance.py:1290} INFO - 
---------------------------------------------------------------------------------
-[2023-05-03T01:12:51.544+0000] {taskinstance.py:1309} INFO - Executing <Task(PythonOperator): dump_1m> on 2023-05-03 00:40:00+00:00
-[2023-05-03T01:12:51.676+0000] {standard_task_runner.py:55} INFO - Started process 2473 to run task
-[2023-05-03T01:12:51.835+0000] {standard_task_runner.py:82} INFO - Running: ['***', 'tasks', 'run', 'dag_1min', 'dump_1m', 'scheduled__2023-05-03T00:40:00+00:00', '--job-id', '153', '--raw', '--subdir', 'DAGS_FOLDER/dag_1min.py', '--cfg-path', '/tmp/tmp__4gyj6q']
-[2023-05-03T01:12:51.867+0000] {standard_task_runner.py:83} INFO - Job 153: Subtask dump_1m
-[2023-05-03T01:13:25.815+0000] {task_command.py:389} INFO - Running <TaskInstance: dag_1min.dump_1m scheduled__2023-05-03T00:40:00+00:00 [running]> on host 4a3bd7cf27f4
-[2023-05-03T01:13:29.145+0000] {taskinstance.py:1518} INFO - Exporting the following env vars:
-AIRFLOW_CTX_DAG_OWNER=coder2j
-AIRFLOW_CTX_DAG_ID=dag_1min
-AIRFLOW_CTX_TASK_ID=dump_1m
-AIRFLOW_CTX_EXECUTION_DATE=2023-05-03T00:40:00+00:00
-AIRFLOW_CTX_TRY_NUMBER=1
-AIRFLOW_CTX_DAG_RUN_ID=scheduled__2023-05-03T00:40:00+00:00
-[2023-05-03T01:13:34.561+0000] {logging_mixin.py:137} WARNING -   0%|          | 0/2 [00:00<?, ?it/s]
-[2023-05-03T01:13:55.679+0000] {logging_mixin.py:137} INFO - [*********************100%***********************]  1 of 1 completed
-[2023-05-03T01:15:41.016+0000] {logging_mixin.py:137} WARNING -  50%|#####     | 1/2 [02:06<02:05, 125.19s/it]
-[2023-05-03T01:16:56.422+0000] {logging_mixin.py:137} INFO - [*********************100%***********************]  1 of 1 completed
