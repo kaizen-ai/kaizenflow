@@ -5,13 +5,34 @@ import defi.dao_swap.twap_vwap_adapter as ddstvwad
 """
 
 import json
-from typing import Any, Dict, List, Tuple
+import os
+from functools import wraps
+from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 import requests
-from flask import Flask, jsonify, request
+from flask import Flask, abort, jsonify, request
 
 app = Flask(__name__)
+
+API_KEY = os.environ.get("API_KEY")
+# Specify FLASK_DEBUG_MODE=0 To turn off debug mode.
+DEBUG_MODE = os.environ.get("FLASK_DEBUG_MODE", "1") == "1"
+
+
+def require_api_key(func: Callable) -> Callable:
+    """
+    Perform authorization of a request.
+    """
+
+    @wraps(func)
+    def check_api_key(*args, **kwargs):
+        api_key = request.headers.get("X-API-KEY")
+        if not api_key or api_key != API_KEY:
+            abort(401, "Unauthorized: Invalid API key")
+        return func(*args, **kwargs)
+
+    return check_api_key
 
 
 def _get_price_volume_data() -> Tuple[List[int], List[float]]:
@@ -22,15 +43,14 @@ def _get_price_volume_data() -> Tuple[List[int], List[float]]:
     symbol = request.json["symbol"]
     start_time = request.json["start_time"]
     end_time = request.json["end_time"]
-    time_interval = request.json["time_interval"]
     # Query the CoinGecko API for price data within the specified time range.
     response = requests.get(
-        f"https://api.coingecko.com/api/v3/coins/{symbol}/market_chart/range?vs_currency=eth&from={start_time}&to={end_time}&interval={time_interval}"
+        f"https://api.coingecko.com/api/v3/coins/{symbol}/market_chart/range?vs_currency=eth&from={start_time}&to={end_time}"
     )
     price_data = json.loads(response.text)["prices"]
     # Get price and volume data.
     prices = [float(entry[1]) for entry in price_data]
-    volumes = [float(entry[2]) for entry in price_data]
+    volumes = [float(entry[0]) for entry in price_data]
     # Convert prices to WEI.
     eth_to_wei = 10**18
     prices = [int(price * eth_to_wei) for price in prices]
@@ -38,6 +58,7 @@ def _get_price_volume_data() -> Tuple[List[int], List[float]]:
 
 
 @app.route("/get_twap", methods=["POST"])
+@require_api_key
 def get_twap() -> Dict[str, Any]:
     """
     Get TWAP for the Chainlink node.
@@ -54,6 +75,7 @@ def get_twap() -> Dict[str, Any]:
 
 
 @app.route("/get_vwap", methods=["POST"])
+@require_api_key
 def get_vwap() -> Dict[str, Any]:
     """
     Get VWAP for the Chainlink node.
@@ -70,4 +92,4 @@ def get_vwap() -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=DEBUG_MODE)
