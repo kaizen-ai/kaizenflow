@@ -1524,8 +1524,10 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 	      \end{itemize}
 	\item Transparency: Yes
 	      \begin{itemize}
-              \item Work is done on-chain and the off-chain computations are
-                independently verifiable
+              \item Price discovery, matching, and clearing are either done
+                completely on-chain or with additional off-chain computations that are
+                independently verifiable. Thus DaoCross guarantees the requirement
+                for a fully transparent solution
 	      \end{itemize}
 	\item Impermanent loss: No
 	      \begin{itemize}
@@ -1608,6 +1610,9 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 \subsection{Limit Order Book (LOB)}
 
 	\item Support for limit order: Yes
+	      \begin{itemize}
+		      \item Limit orders are naturally handled by a limit order book
+	      \end{itemize}
 	\item Welfare maximization: Medium
 	      \begin{itemize}
 		      \item The presence of priority rules in the continuous matching
@@ -1616,7 +1621,10 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 	\item Liquidity pooling across tokens: Low
 	      \begin{itemize}
 		      \item LOBs only allow exchanging one type of token with another,
-                artificially separating liquidity
+                artificially separating liquidity across different LOBs. 
+                Traders are thus forced to perform multiple trades when the
+                desired token pair is not available, resulting in increased
+                slippage and costs
 	      \end{itemize}
 	\item Liquidity pooling across time: High
 	      \begin{itemize}
@@ -1624,83 +1632,42 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 	      \end{itemize}
 	\item Trading efficiency: Medium
 	      \begin{itemize}
-              \item Although the continuous matching 
-                The trading efficiency in matching trades is the same as the
-                lit exchange on which price discovery is peformed (e.g., a
-                centralized exchange)
+              \item Although the continuous matching can be argued to be an efficient
+                trading mechanism, it also enables predatory behaviors that reduce
+                its efficiency from the point of view of non-HFT traders
 	      \end{itemize}
-	\item Transparency: Yes
+	\item Transparency: No
 	      \begin{itemize}
-		      \item DaoCross share the same behavior of DaoSwap from this point of view
+		      \item The need to cancel and reprice of orders induced by continuous
+                time makes a LOB difficult and potentially impossible on a blockchain.
+                Any solution that can not run on-chain does not guarantee trasparency
+                required by decentralized finance
 	      \end{itemize}
 	\item Impermanent loss: No
 	      \begin{itemize}
-		      \item DaoCross share the same behavior of DaoSwap from this point of view
+		      \item There is no impermanent loss since liquidity is not locked inside
+                the contract, like for an AMM
 	      \end{itemize}
-	\item Custodial risk: No
+	\item Custodial risk: Yes
 	      \begin{itemize}
-		      \item DaoCross share the same behavior of DaoSwap from this point of view
+		      \item For the same reasons described when reasoning about transprency
+                limit order books are run as centralized exchanges, which requires
+                traders to delegate the ownership of tokens to centralized exchanges
 	      \end{itemize}
-	\item Rent extracted by high-frequency traders: Medium
+	\item Rent extracted by high-frequency traders: High
 	      \begin{itemize}
-              \item DaoCross behaves as a dark pool of liquidity and thus it can be suscetible
-                to predatory behaviors, although mitigated by the discrete auction mechanism
+              \item Since time is treated as a continuous quantity, traders can
+                gain advantages from faster connections and computing, allowing
+                predatory behaviors from high-frequency traders
                 \ref{BuCrSh15}
 	      \end{itemize}
 	\item Censoriship resistance: No
 	      \begin{itemize}
-              \item DaoCross behaves as a dark pool of liquidity and thus it can be suscetible
-                to censorship resistance in the same way as the lit exchange on which
-                price discovery is carried out
-	      \end{itemize}
+              \item 
+		      \item For the same reasons described when reasoning about transprency
+                limit order books are run as centralized exchanges, which requires
 
-\begin{itemize}
-	\item Custodial risk: High
-	      \begin{itemize}
-		      \item Exchanges own user private keys and funds, creating issues with fraud (e.g., FTX) and hacking (Mt. Gox)
 	      \end{itemize}
-	\item Transparency: Low
-	      \begin{itemize}
-              \item Many centralized exchanges can easily exaggerate volume
-                (e.g., through wash trading) to attract ICOs and liquidity
-		      \item There is no guarantee on the
-	      \end{itemize}
-	\item Censorship resistance: No
-	      \begin{itemize}
-              \item Users need to link their bank account to CEX and transfer
-                funds, which can take 2-3 days and be subjected to
-                Know-Your-Customer (KYC) and AML (Anti money laundering
-                policies)
-              \item Governments can censor, interfere with, or even severe the
-                connection between traditional and decentralized finance (see
-                recent interventions of SEC against Coinbase and Binance, and
-                FDIC rescue of Silvergate Bank, Signature Bank)
-	      \end{itemize}
-	\item Intrinsic efficiency: Medium
-	      \begin{itemize}
-              \item Limit order books are considered efficient in matching
-                continuously trades, although recently researchers have
-                criticized their time-continuous-time nature as source of
-                latency arbitrage (TODO(gp): Add ref to Compton, IEX, Flash
-                Boys)
-              \item The same token can be traded on different exchanges causing
-                liquidity and price discovery to be fragmented with detriment
-                on market quality
-	      \end{itemize}
-	\item Support for limit order: Yes
-	      \begin{itemize}
-		      \item Limit order books naturally support limit orders from users
-		      \item Risk of predatory behaviors: High
-		      \item LOB operators often welcome and incentivize high-frequency traders as way
-		            to increase trading revenues and liquidity, at expense of predatory tactics
-		            (e.g., front-running, latency arbitrage, spoofing, sniping) which arm
-	      \end{itemize}
-	\item Impermanent loss: No
-	      \begin{itemize}
-		      \item LOB
-	      \end{itemize}
-	\item Support for multi-coin swap: No
-\end{itemize}
 
 % ===============================================================================
 \subsection{Automatic Market Makers (AMM)}
