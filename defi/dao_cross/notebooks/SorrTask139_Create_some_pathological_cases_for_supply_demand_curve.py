@@ -51,24 +51,30 @@ hprint.config_notebook()
 # ## Get orders and set prices.
 
 # %%
-type_ = "supply"
-supply_quantities = [1, 1, 1, 1]
-supply_limit_prices = [1.5, 2, 3, 3.5]
-#
-supply_orders1 = ddcrsede.get_curve_orders(
-    type_, supply_quantities, supply_limit_prices
+discrete_supply_curve = pd.Series(
+    index=[0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0],
+    data=[1.5, 1.5, 2.0, 2.0, 3.0, 3.0, 3.5, 3.5, 4.375],
+    name="supply",
 )
-ddacrord.convert_orders_to_dataframe(supply_orders1)
+discrete_supply_curve
 
 # %%
-type_ = "demand"
-demand_quantities = [1, 1, 1, 1]
-demand_limit_prices = [3.5, 2.5, 2, 1.5]
-#
-demand_orders1 = ddcrsede.get_curve_orders(
-    type_, demand_quantities, demand_limit_prices
+supply_orders1 = ddcrsede.convert_discrete_curve_to_limit_orders(discrete_supply_curve)
+supply_orders_df1 = ddacrord.convert_orders_to_dataframe(supply_orders1)
+supply_orders_df1
+
+# %%
+discrete_demand_curve = pd.Series(
+    index=[0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0],
+    data=[3.5, 3.5, 2.5, 2.5, 2.0, 2.0, 1.5, 1.5, 0.0],
+    name="demand",
 )
-ddacrord.convert_orders_to_dataframe(demand_orders1)
+discrete_demand_curve
+
+# %%
+demand_orders1 = ddcrsede.convert_discrete_curve_to_limit_orders(discrete_demand_curve)
+demand_orders_df1 = ddacrord.convert_orders_to_dataframe(demand_orders1)
+demand_orders_df1
 
 # %%
 prices = {"BTC": 1, "ETH": 2}
@@ -78,17 +84,17 @@ prices = {"BTC": 1, "ETH": 2}
 
 # %%
 type_ = "supply"
-supply_curve1 = ddcrsede.get_curve_dots(supply_orders1, type_)
+supply_curve1 = ddcrsede.get_supply_demand_discrete_curve(type_, supply_orders_df1)
 supply_curve1
 
 # %% run_control={"marked": false}
 type_ = "demand"
-demand_curve1 = ddcrsede.get_curve_dots(demand_orders1, type_)
+demand_curve1 = ddcrsede.get_supply_demand_discrete_curve(type_, demand_orders_df1)
 demand_curve1
 
 # %%
-plt.plot(*zip(*supply_curve1))
-plt.plot(*zip(*demand_curve1))
+plt.plot(supply_curve1)
+plt.plot(demand_curve1)
 plt.show()
 
 # %% run_control={"marked": false}
@@ -105,23 +111,21 @@ display(daoswap_results1)
 
 # %%
 quantity_const = 1.0
-type_ = "supply"
-supply_orders2 = ddcrsede.get_curve_orders(
-    type_,
-    supply_quantities,
-    supply_limit_prices,
+supply_orders2 = ddcrsede.convert_discrete_curve_to_limit_orders(
+    discrete_supply_curve,
     quantity_const=quantity_const,
 )
-ddacrord.convert_orders_to_dataframe(supply_orders2)
+supply_orders_df2 = ddacrord.convert_orders_to_dataframe(supply_orders2)
+supply_orders_df2
 
 # %%
 type_ = "supply"
-supply_curve2 = ddcrsede.get_curve_dots(supply_orders2, type_)
+supply_curve2 = ddcrsede.get_supply_demand_discrete_curve(type_, supply_orders_df2)
 supply_curve2
 
 # %%
-plt.plot(*zip(*supply_curve2))
-plt.plot(*zip(*demand_curve1))
+plt.plot(supply_curve2)
+plt.plot(demand_curve1)
 plt.show()
 
 # %%
@@ -137,23 +141,22 @@ display(daoswap_results2)
 # ## No intersection
 
 # %%
-limit_price_const = 5.0
-supply_orders3 = ddcrsede.get_curve_orders(
-    type_,
-    supply_quantities,
-    supply_limit_prices,
+limit_price_const = 3.0
+supply_orders3 = ddcrsede.convert_discrete_curve_to_limit_orders(
+    discrete_supply_curve,
     limit_price_const=limit_price_const,
 )
-ddacrord.convert_orders_to_dataframe(supply_orders3)
+supply_orders_df3 = ddacrord.convert_orders_to_dataframe(supply_orders3)
+supply_orders_df3
 
 # %%
 type_ = "supply"
-supply_curve3 = ddcrsede.get_curve_dots(supply_orders3, type_)
+supply_curve3 = ddcrsede.get_supply_demand_discrete_curve(type_, supply_orders_df3)
 supply_curve3
 
 # %%
-plt.plot(*zip(*supply_curve3))
-plt.plot(*zip(*demand_curve1))
+plt.plot(supply_curve3)
+plt.plot(demand_curve1)
 plt.show()
 
 # %%
