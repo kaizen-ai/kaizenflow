@@ -2,9 +2,7 @@
 import api_query
 import sorrentum_sandbox.examples.ml_projects.Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap.db as sisebidb
 import pandas as pd
-import sorrentum_sandbox.common.download as ssandown
 import dask.dataframe as dd
-import psycopg2
 
 query = "SELECT * FROM uniswap_table"
 

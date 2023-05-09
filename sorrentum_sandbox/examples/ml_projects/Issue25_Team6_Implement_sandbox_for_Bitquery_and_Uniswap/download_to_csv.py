@@ -123,8 +123,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     start_timestamp = (args.start_timestamp)
     end_timestamp = (args.end_timestamp)
     live_flag = (args.live_flag)
-    # downloader = sisebido.bitqueryApiDownloader()  ## TODO Alter here, create if statement and flag for realtime data
-    raw_data = sisebido.run_bitquery_query(start_timestamp, end_timestamp,live_flag)
+    raw_data = sisebido.run_bitquery_query(start_timestamp, None, end_timestamp,False)
     # Save data as CSV.
     saver = CsvDataFrameSaver(args.target_dir)
     saver.save(raw_data)

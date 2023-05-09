@@ -66,19 +66,15 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
             height
             }
             tradeIndex
-            protocol
             exchange {
             fullName
             }
             
             baseCurrency {
             symbol
-            address
             }
-            baseAmount(in: USD)
             quoteCurrency {
             symbol
-            address
             }
             transaction {
             hash
@@ -86,17 +82,15 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
             to {
                 address
             }
+            
             txFrom {
                 address
             }
             }
-            quoteAmount(in: USD)
             trades: count
-            quotePrice
-            maximum_price: quotePrice(calculate: maximum)
-            minimum_price: quotePrice(calculate: minimum)
-            open_price: minimum(of: block, get: quote_price)
-            close_price: maximum(of: block, get: quote_price)
+            buyAmount(in: USD)
+            sellAmount(in: USD)
+            tradeAmount(in: USD)
         }
     }
     }
