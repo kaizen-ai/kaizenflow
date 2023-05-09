@@ -1,7 +1,7 @@
 """
 Import as:
 
-import defi.dao_cross.order_matching as ddcrorma
+import defi.tulip.implementation.order_matching as dtuimorm
 """
 
 import copy
