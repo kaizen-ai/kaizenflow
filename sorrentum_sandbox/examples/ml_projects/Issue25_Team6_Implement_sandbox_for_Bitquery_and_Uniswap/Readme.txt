@@ -32,9 +32,8 @@ docker> cd /cmamp/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement
 docker> python3 download_to_csv.py --start_timestamp '2023-04-20T16:38:00' --target_dir 'uniswap_data'
 docker> python3 download_to_db.py --start_timestamp '2023-04-20T16:38:00' --target_table 'uniswap_table'
 
-## Login to airflow and start the download_periodic_12hr_postgres_uniswap DAG:
+## Login to airflow and start the download_periodic_12hr_postgres_uniswap DAG and uniswap_1h_analysis_calculation (This runs Dask_script.py):
 http://localhost:8091/home
-
 
 ####################################################
 ## Running jupyter notebook
@@ -51,7 +50,13 @@ http://localhost:8888/notebooks/data/sorrentum_sandbox/examples/ml_projects/Issu
 ####################################################
 ## Running project - Startup Airflow in Windows
 ####################################################
-
+# To run in windows download the Ubuntu-20.04 wsl package from the microsoft store
+# after installing open up powershell and run the following commands:
+# wsl --set-default Ubuntu-20.04
+# wsl
+# sudo apt update && upgrade
+# sudo apt install python3 python3-pip ipython3
+# sudo apt install dos2unix
 ## In $GIT_ROOT/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap:
 ## Rename .env_sample to .env and fill in your bitquery API_KEY
 
@@ -67,9 +72,8 @@ dos2unix docker_bash.sh
 docker> cd /cmamp/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap
 docker> python3 download_to_csv.py --start_timestamp '2023-04-20T16:38:00' --target_dir 'uniswap_data'
 docker> python3 download_to_db.py --start_timestamp '2023-04-20T16:38:00' --target_table 'uniswap_table'
-docker> python3 -m pip install --upgrade dask
 
-## Login to airflow and start the download_periodic_12hr_postgres_uniswap DAG:
+## Login to airflow and start the download_periodic_12hr_postgres_uniswap DAG and uniswap_1h_analysis_calculation (This runs Dask_script.py):
 http://localhost:8091/home
 
 ####################################################
