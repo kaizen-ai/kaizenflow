@@ -48,7 +48,6 @@ def get_uniswap_table_query() -> str:
     return query
 
 
-
 def get_db_connection() -> Any:
     """
     Retrieve connection to the Postgres DB inside the Sorrentum data node.
@@ -133,7 +132,6 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         #
         query = get_uniswap_table_query()
         cursor.execute(query)
-        
 
 
 # #############################################################################

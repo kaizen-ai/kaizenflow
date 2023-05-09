@@ -10,6 +10,7 @@ import logging
 import os
 import pandas as pd
 import requests
+
 import json
 from typing import Any, Dict, List
 from dotenv import load_dotenv
@@ -26,12 +27,15 @@ _LOG = logging.getLogger(__name__)
 
 
 # function for bitquery query
+
 def run_bitquery_query(start_time: str, target_table: str, end_time: str = None, live_flag: bool = False) -> ssandown.RawData:
+
     # Query for the API
     limit = 25000
     offset = 0
 
     time_format = '%Y-%m-%d %H:%M:%S'
+
 
     # Check for live_flag
     if live_flag:
@@ -47,10 +51,12 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
         query_alter_1 = "between"
         query_alter_2 = "[%s, %s]" % (start_time,end_time)
 
+
     # GraphQL API query to get Uniswap DEX data
     query = """
        query{
-    ethereum(network: ethereum) {
+
+       ethereum(network: ethereum) {
         dexTrades(
             options: {desc: ["block.height", "tradeIndex"], limit: %d, offset: %d}
             protocol: {is: "Uniswap"}
@@ -66,15 +72,18 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
             height
             }
             tradeIndex
+
             exchange {
             fullName
             }
             
             baseCurrency {
             symbol
+
             }
             quoteCurrency {
             symbol
+
             }
             transaction {
             hash
@@ -82,7 +91,7 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
             to {
                 address
             }
-            
+
             txFrom {
                 address
             }
@@ -91,6 +100,7 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
             buyAmount(in: USD)
             sellAmount(in: USD)
             tradeAmount(in: USD)
+
         }
     }
     }
@@ -104,6 +114,7 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
     api_key = os.environ.get('API_KEY')
     endpoint = "https://graphql.bitquery.io/"
     headers = {"X-API-KEY": api_key}
+
 
     # Define an empty list to store the results
     results = []
@@ -146,7 +157,9 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
     # Normalize and convert the results list into a Pandas DataFrame
     df = json_to_df(results)
 
+
     # lowercase column names and convert to Raw Data
+
     df = df.rename(str.lower, axis='columns')
     _LOG.info(f"Downloaded data: \n\t {df.head()}")
     return ssandown.RawData(df)
@@ -157,9 +170,6 @@ def json_to_df(data: List[Dict[Any, Any]]) -> pd.DataFrame:
     df = pd.json_normalize(data, sep="_")
     # df = df.set_index("timeInterval_minute") 
     return df
-
-
-
 
 
 def get_recent_timestamp(target_table) -> str:
@@ -180,5 +190,4 @@ def get_recent_timestamp(target_table) -> str:
 
     cur.close()
     return last_timestamp
-
 

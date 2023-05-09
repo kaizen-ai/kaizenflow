@@ -18,7 +18,6 @@ library OrderMinHeap {
         Order[] data;
     }
 
-
     /// @notice Initializes the heap with a size of 0
     /// @param self The heap structure to initialize
     function createHeap(Heap storage self) internal {
@@ -33,14 +32,16 @@ library OrderMinHeap {
             self.data.push();
         }
         uint32 _index = self.size++;
-        while (_index > 0 && self.data[parent(_index)].quantity < order.quantity) {
+        while (
+            _index > 0 && self.data[parent(_index)].quantity > order.quantity
+        ) {
             self.data[_index] = self.data[parent(_index)];
             _index = parent(_index);
         }
         self.data[_index] = order;
     }
 
-    /// @notice Removes the top (smallest) element from the heap 
+    /// @notice Removes the top (smallest) element from the heap
     /// @param self The heap structure to remove the top element from
     function removeTop(Heap storage self) internal {
         require(self.size > 0, "Heap underflow");
@@ -86,10 +87,16 @@ library OrderMinHeap {
             uint32 leftChild = left(i);
             uint32 rightChild = right(i);
 
-            if (leftChild < self.data.length && self.data[leftChild].quantity > self.data[min].quantity) {
+            if (
+                leftChild < self.data.length &&
+                self.data[leftChild].quantity < self.data[min].quantity
+            ) {
                 min = leftChild;
             }
-            if (rightChild < self.data.length && self.data[rightChild].quantity > self.data[min].quantity) {
+            if (
+                rightChild < self.data.length &&
+                self.data[rightChild].quantity < self.data[min].quantity
+            ) {
                 min = rightChild;
             }
 
