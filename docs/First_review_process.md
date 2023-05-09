@@ -23,11 +23,14 @@ We understand that receiving feedback on your code can be a difficult process, b
     ```
 - Run the linter with an invoke and pass all the files you need to lint in brackets after the `--files` option, separated by a space:
   ```
-  > invoke lint --files "defi/dao_cross/order.py defi/dao_cross/order_matching.py"
+  > i lint --files "defi/tulip/implementation/order.py defi/tulip/implementation/order_matching.py"
   ```
   - Output example:
     ```
-    # TODO (Dan): Add linter output example when the linter is fixed for Sorrentum.
+    defi/tulip/implementation/order_matching.py:14: error: Cannot find implementation or library stub for module named 'defi.dao_cross'  [import]
+    defi/tulip/implementation/order_matching.py:69: error: Need type annotation for 'buy_heap' (hint: "buy_heap: List[<type>] = ...")  [var-annotated]
+    defi/tulip/implementation/order_matching.py:70: error: Need type annotation for 'sell_heap' (hint: "sell_heap: List[<type>] = ...")  [var-annotated]
+    ...
     ```
 - Fix the lints
   - No need to obsessively fix all of them - just crucial and obvious ones
@@ -47,8 +50,8 @@ We understand that receiving feedback on your code can be a difficult process, b
 - It can be helpful to review some examples of previous first reviews to get an idea of what common issues are and how to address them.
 - Here are some links to previous first review examples:
   - Classes and functions:
-    - `defi/dao_cross/order.py`
-    - `defi/dao_cross/order_matching.py`
+    - `defi/tulip/implementation/order.py`
+    - `defi/tulip/implementation/order_matching.py`
   - Unit tests:
-    - `defi/dao_cross/test/test_order_matching.py`
-    - `defi/dao_cross/test/test_optimize.py`
+    - `defi/tulip/test/test_order_matching.py`
+    - `defi/tulip/test/test_optimize.py`
