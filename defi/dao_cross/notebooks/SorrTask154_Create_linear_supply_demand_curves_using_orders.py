@@ -102,7 +102,7 @@ display(daoswap_results)
 # %%
 type_ = "supply"
 descrete_supply_curve = ddcrsede.get_supply_demand_discrete_curve(
-    type_, agg_supply_orders_dfagg_supply_orders_df
+    type_, agg_supply_orders_df
 )
 descrete_supply_curve
 
