@@ -79,14 +79,13 @@ http://localhost:8091/home
 ####################################################
 ## Running jupyter notebook in Windows
 ####################################################
-cd $GIT_ROOT/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap
+cd ~\sorrentum_sandbox\examples
 wsl
-dos2unix
+dos2unix docker_jupyter.sh set_env.sh run_jupyter.sh
 ./docker_jupyter.sh
 
 ## Jupiter notebook location: (Paste into a web-browser)
-http://localhost:8888/notebooks/data/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap/uniswap_notebook.ipynb
-
+http://localhost:8888/tree/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap
 
 
 
