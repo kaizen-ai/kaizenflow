@@ -52,12 +52,13 @@ to Sorrentum (e.g., 10 hours / week), it is wise to wait to be sure you can do
 it. If you are excited and want to start, go for it, do your best, and we’ll
 make this experience the best possible for you.
 
+
 # Useful links
 
+- [Documentation entry point](/docs/README.md)
 - [Google drive](https://drive.google.com/drive/u/0/folders/1LXwKpmaFWJI-887IoA50sVC8-dw_1L8I)
 - [Collaborator list](https://docs.google.com/spreadsheets/d/1eRZJaj5-1g6W7w_Ay4UhJEdtAvrTTM1V94cKj6_Vwoc)
 - [Meeting room](https://umd.zoom.us/s/7447082187)
-- [Git issues](https://github.com/sorrentum/sorrentum/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc)
 - [Technical docs](https://docs.google.com/document/d/14Ul5uWd7NU1zZ9ZLHp1TerLMN7MOfS5MS5bSX-2rBQ8/edit)
 
 # Admin links
