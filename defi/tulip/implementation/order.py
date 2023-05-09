@@ -150,6 +150,7 @@ class Order:
         else:
             return -1
 
+    # TODO(Dan): Add `to_dataframe()` func.
     def to_dict(self) -> Dict[str, Any]:
         dict_: Dict[str, Any] = collections.OrderedDict()
         dict_["timestamp"] = self.timestamp
