@@ -96,6 +96,10 @@ all_orders1 = supply_orders1 + demand_orders1
 daocross_results1 = ddacropt.run_daocross_solver(all_orders1, prices)
 display(daocross_results1)
 
+# %%
+daoswap_results1 = ddacropt.run_daoswap_solver(all_orders1)
+display(daoswap_results1)
+
 # %% [markdown]
 # ## Multiple intersection points at price P'
 
@@ -125,6 +129,10 @@ all_orders2 = supply_orders2 + demand_orders1
 daocross_results2 = ddacropt.run_daocross_solver(all_orders2, prices)
 display(daocross_results2)
 
+# %%
+daoswap_results2 = ddacropt.run_daoswap_solver(all_orders2)
+display(daoswap_results2)
+
 # %% [markdown]
 # ## No intersection
 
@@ -152,5 +160,9 @@ plt.show()
 all_orders3 = supply_orders3 + demand_orders1
 daocross_results3 = ddacropt.run_daocross_solver(all_orders3, prices)
 display(daocross_results3)
+
+# %%
+daoswap_results3 = ddacropt.run_daoswap_solver(all_orders3)
+display(daoswap_results3)
 
 # %%
