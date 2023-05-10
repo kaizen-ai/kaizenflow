@@ -1,14 +1,12 @@
+# First Review Process
+
 <!--ts-->
-   * [First Review Process](#first-review-process)
-      * [Read Python Style Guide](#read-python-style-guide)
-      * [Run Linter](#run-linter)
-      * [Compare Your Code to Example Code](#compare-your-code-to-example-code)
-      * [Look at Examples of the First Reviews](#look-at-examples-of-the-first-reviews)
-
-
+  * [Read Python Style Guide](#read-python-style-guide)
+  * [Run linter](#run-linter)
+  * [Compare your code to example code](#compare-your-code-to-example-code)
+  * [Look at examples of the first reviews](#look-at-examples-of-the-first-reviews)
 
 <!--te-->
-# First Review Process
 
 We understand that receiving feedback on your code can be a difficult process,
 but it is an important part of our development workflow. Here we have gathered
@@ -17,15 +15,14 @@ some helpful tips and resources to guide you through your first review.
 ## Read Python Style Guide
 
 - Before submitting your code for review, we highly recommend that you read the
-  Python style guide, which outlines the major conventions and best practices
-  for writing Python code.
-  - `TODO (Dan): Add link to .md guide after it is merged`
+  [Python Style Guide](https://github.com/sorrentum/sorrentum/blob/master/docs/Coding_Style_Guide.md),
+  which outlines the major conventions and best practices for writing Python code.
 - Adhering to these standards will help ensure that your code is easy to read,
   maintain, and understand for other members of the team.
 
-## Run Linter
+## Run linter
 
-- A linter is a tool that checks your code for syntax errors, style violations,
+- Linter is a tool that checks your code for syntax errors, style violations,
   and other issues.
 - Run it on all the changed files to automatically catch any code issues before
   filing any PR or before requesting a review!
@@ -59,7 +56,7 @@ some helpful tips and resources to guide you through your first review.
   - Post unresolved lints in your PR so reviewers could see them and know which
     should be fixed and which are not
 
-## Compare Your Code to Example Code
+## Compare your code to example code
 
 - To get an idea of what well-formatted and well-organized code looks like, we
   suggest taking a look at some examples of code that adhere to our standards.
@@ -70,7 +67,7 @@ some helpful tips and resources to guide you through your first review.
   - Type hints
   - Containing directory structure
 
-## Look at Examples of the First Reviews
+## Look at examples of the first reviews
 
 - It can be helpful to review some examples of previous first reviews to get an
   idea of what common issues are and how to address them.
