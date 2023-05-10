@@ -12,6 +12,7 @@ from airflow.operators.bash_operator import BashOperator
 from airflow.operators.python_operator import PythonOperator
 import datetime
 import pendulum 
+import calendar
 
 # from airflow.operators.bash import BashOperator
 
@@ -46,34 +47,41 @@ dag = airflow.DAG(
 # create dynamic variables for data_invterval_start/end
 def bridge(data_interval_start):
 
-    start_str = str(data_interval_start)
-    from_timestamp = pendulum.parse(start_str).int_timestamp
-    fromValue = Variable.get("from_timestamp1")
+    date = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
+    utc_time_start = calendar.timegm(date.utctimetuple())
+    # start_str = str(data_interval_start)
+    # from_timestamp = pendulum.parse(start_str).int_timestamp
+    # Variable.update("from_timestamp","from_timest")
 
-    logging.info("Current from_timestamp1 value is" + str(fromValue))
+    # logging.info("Current from_timestamp1 value is" + str(fromValue))
 
-    logging.info("Setting Airflow Variable from_timestamp1 to" + str(fromValue))
-    os.system('airflow variables --set from_timestamp1' + str(fromValue))
+    logging.info("Setting Airflow Variable from_timestamp1 to " + str(utc_time_start))
+    Variable.set('from_timestamp1', str(utc_time_start))
+    # os.system('airflow variables -set from_timestamp1 ' + str(utc_time_start))
 
 def bridge2(data_interval_end):
 
-    data_str = str(data_interval_end)
-    to_timestamp = pendulum.parse(data_str).int_timestamp
-    toValue = Variable.get("to_timestamp1")
+    date = datetime.datetime.utcnow()
+    utc_time = calendar.timegm(date.utctimetuple())
 
-    logging.info("Current from_timestamp1 value is" + str(toValue))
+    # data_str = str(data_interval_end)
+    # to_timestamp = pendulum.parse(data_str).int_timestamp
+    # toValue = Variable.get("to_timestamp1")
 
-    logging.info("Setting Airflow Variable from_timestamp1 to" + str(toValue))
-    os.system('airflow variables --set from_timestamp1' + str(toValue))
+    # logging.info("Current from_timestamp1 value is " + str(toValue))
+
+    logging.info("Setting Airflow Variable to_timestamp1 to " + str(utc_time))
+    Variable.set('to_timestamp1', str(utc_time))
+    # os.system('airflow variables -set from_timestamp1 ' + str(utc_time))
 
 
 
 from_timestamp1 = Variable.get("from_timestamp1")
-logging.info("The current from_timestamp1 value is" + str(from_timestamp1))
+logging.info("The current from_timestamp1 value is " + str(from_timestamp1))
 
 
 to_timestamp1 = Variable.get("to_timestamp1")
-logging.info("The current to_timestamp1 value is" + str(to_timestamp1))
+logging.info("The current to_timestamp1 value is " + str(to_timestamp1))
 
 bridge_task = PythonOperator(task_id='bridge', dag=dag, provide_context=True, python_callable=bridge, op_args=[])
 bridge_task2 = PythonOperator(task_id='bridge2', dag=dag, provide_context=True, python_callable=bridge2, op_args=[])

@@ -27,13 +27,13 @@ class CGDownloader(ssandown.DataDownloader):
         # for symbol in self._UNIVERSE["coingecko"]:
         # cg = self.api
         cg = CoinGeckoAPI()
-        start_time = pendulum.parse(from_timestamp).int_timestamp
-        end_time = pendulum.parse(to_timestamp).int_timestamp
+        # start_time = pendulum.parse(from_timestamp).int_timestamp
+        # end_time = pendulum.parse(to_timestamp).int_timestamp
         data = cg.get_coin_market_chart_range_by_id(
         id= id,
         vs_currency= 'usd',
-        from_timestamp= start_time,
-        to_timestamp= end_time)
+        from_timestamp = from_timestamp,
+        to_timestamp= to_timestamp)
 
         price = pd.DataFrame(data['prices'], columns=['timestamp', 'price'])
         mc = pd.DataFrame(data['market_caps'], columns=['timestamp', 'market_cap'])
