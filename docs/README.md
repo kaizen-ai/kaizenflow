@@ -14,7 +14,7 @@ This document contains links to more in-depth documentation.
 
 - [Quick start for developing](Quick_start_for_developing.md)
 
-- [Sorrentum Python coding style guide](https://docs.google.com/document/d/1R6jhFDbZKvyDdbnSQ9DA_N8417YF13hMI_Uw4quO4Xk)
+- [Sorrentum Python coding style guide](https://github.com/sorrentum/sorrentum/blob/master/docs/Coding_Style_Guide.md)
 
 ## Learn how to become efficient at developing
 
