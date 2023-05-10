@@ -87,8 +87,10 @@
 % TODO(gp): @paul At this point I would just use the most general "Tulip: A
 % decentralized protocol for token exchange" and say "Tulip" is just the name,
 % because it's cute.
-% We could also call Dao... -> TulipCross and TulipSwap.
+% We could also call Dao* -> TulipCross and TulipSwap.
 
+% TODO(gp): @paul feel free to add the "* Authors have contributed equally
+% or are in alphabetical orders"
 \author{Giacinto Paolo Saggese}
 \author{Paul Smith}
 
@@ -135,6 +137,8 @@ efficiency and ease-of-use of centralized exchanges with the transparency and
 self-custody of decentralized approaches, without the risk of impermanent loss,
 contrary to automatic market maker-based approaches.
 
+% TODO(gp): @paul consider renaming "Welfare maximization" to "Utility maximization"
+% or another better name
 Some of the innovative features of TuLiP are:
 \begin{enumerate}
     \item Support for trading orders:
@@ -1641,7 +1645,7 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 	\item Transparency: No
 	      \begin{itemize}
 		      \item The need to cancel and reprice of orders induced by continuous
-                time makes a LOB difficult and potentially impossible on a blockchain.
+                time makes a LOB difficult if not impossible to run on a blockchain.
                 Any solution that can not run on-chain does not guarantee trasparency
                 required by decentralized finance
 	      \end{itemize}
@@ -1676,34 +1680,57 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 \subsection{Automatic Market Makers (AMM)}
 
 \begin{itemize}
-	\item Custodial risk: Low
-	      \begin{itemize}
-		      \item Private keys and the
-	      \end{itemize}
-	\item Transparency:
-	\item Censoriship risk:
-	\item Intrinsic efficiency: Low
-	      \begin{itemize}
-              \item Arbitrageurs are needed to keep liquidity pool and prices
-                in alignment with other centers for price discovery
-	      \end{itemize}
 	\item Support for limit order: No
 	      \begin{itemize}
 		      \item Uniswap V3 doesn't support limit orders directly but only in terms of
+                  maximum slippage
 	      \end{itemize}
-	\item Risk of predatory behaviors: High
+	\item Welfare maximization: Small
 	      \begin{itemize}
-		      \item TODO(gp):
+              \item In AMM price needs to be corrected by an arbitrageur,
+                impacting the quality of the provided liquidity
 	      \end{itemize}
-	\item Impermanent loss: Yes
+	\item Liquidity pooling across tokens: Medium
 	      \begin{itemize}
-              \item Uniswap is affected by impermanent loss because liquidity
+            \item Tokens are segregated in different liquidity pools, despite
+              the role of base and quote tokens being interchangeable.
+              Thus a swap between a generic token pair might require multiple
+              swaps and fees
+	      \end{itemize}
+	\item Liquidity pooling across time: Low
+	      \begin{itemize}
+            \item Liquidity providers and takers interact with AMMs at different times
+	      \end{itemize}
+	\item Trading efficiency: Low
+	      \begin{itemize}
+              \item The matching is done between one liquidity taker at a time against
+                liquidity providers, instead of letting traders interact directly
+	      \end{itemize}
+	\item Transparency: Yes
+	      \begin{itemize}
+              \item The implementation of an AMM can entirely on-chain and thus
+                it guarantees trasparency required by decentralized finance
+	      \end{itemize}
+	\item Impermanent loss: No
+	      \begin{itemize}
+              \item AMMs are affected by impermanent loss because liquidity
                 providers and liquidity takers are in general different users
                 operating at different time scales
 	      \end{itemize}
-	\item Support for multi-coin swap: Medium
+	\item Custodial risk: No
 	      \begin{itemize}
-		      \item Uniswap requires multiple swaps and fees for arbitrary tokens
+		      \item Tokens are always under control of the respective owners
+	      \end{itemize}
+	\item Rent extracted by high-frequency traders: High
+	      \begin{itemize}
+              \item In AMM price needs to be corrected by arbitrageurs in order
+                to be maintained aligned to large CEXs where the price
+                discovery happens, continuously creating arbitrage opportunity
+	      \end{itemize}
+	\item Censoriship resistance: Yes
+	      \begin{itemize}
+              \item The implementation of an AMM can entirely on-chain and thus
+                it is robust to censorship
 	      \end{itemize}
 \end{itemize}
 
