@@ -1,7 +1,7 @@
 """
 Import as:
 
-import defi.dao_cross.optimize as ddacropt
+import defi.tulip.implementation.optimize as dtuimopt
 """
 
 import logging
