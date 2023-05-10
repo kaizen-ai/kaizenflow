@@ -84,35 +84,43 @@
 \begin{document}
 
 \title{TuLiP: A protocol for trading with liquidity providers}
+% TODO(gp): @paul At this point I would just use the most general "Tulip: A
+% decentralized protocol for token exchange" and say "Tulip" is just the name,
+% because it's cute.
+% We could also call Dao* -> TulipCross and TulipSwap.
 
+% TODO(gp): @paul feel free to add the "* Authors have contributed equally
+% or are in alphabetical orders"
 \author{Giacinto Paolo Saggese}
 \author{Paul Smith}
 
 \thanks{With contributions from
-	Samarth KaPatel,
-	Grisha Pomazkin,
-	Juraj Smeriga,
-	Danya Tikhomirov,
-	Nina Trubacheva,
-	Dan Yachmenev,
-	Vladimir Yakovenko,
-	and
-	Tamara Zhordaniya}
+    Samarth KaPatel,
+    Grisha Pomazkin,
+    Juraj Smeriga,
+    Danya Tikhomirov,
+    Nina Trubacheva,
+    Dan Yachmenev,
+    Vladimir Yakovenko,
+    and
+    Tamara Zhordaniya}
 
 \date{\today}
 
 \maketitle
 
 \begin{abstract}
-Modern financial exchanges are built on the concept of limit order books. Limit
-orders are a natural and powerful way to interact with markets. Creating modes
-of decentralized exchange around limit orders poses unique challenges, and the
-dominant decentralized alternatives lack this interface. We propose ``TuLiP", a
-protocol for decentralized exchange built around limit orders, at whose heart
-is a novel auction mechanism for price discovery, matching and clearing. While
-the auction mechanism has application beyond decentralized exchange, its
-features have immediate and application to improving the efficiency of
-decentralized token exchange.
+Limit orders are a natural and powerful way to interact with financial markets.
+Creating decentralized exchanges around limit orders poses unique challenges,
+and the dominant decentralized alternatives lack this interface.
+We propose ``TuLiP", a protocol for decentralized exchange built around limit
+orders, at whose heart is a novel auction mechanism for price discovery,
+matching and clearing. Besides a natural trading interface, Tulip allows
+welfare maximization, liquidity pooling across tokens and time, trading
+efficiency, complete transparency, no impermanent loss, no need for
+intermediary custody, no rent extraction from high-frequency custody,
+censorship resistance, and ease of use. These features have immediate
+application in improving the efficiency of decentralized token exchange.
 \end{abstract}
 
 \tableofcontents
@@ -123,11 +131,62 @@ decentralized token exchange.
 % ###############################################################################
 \section{Introduction}
 
-TuLiP is a new protocol that enables decentralized token
+TuLiP is a new financial primitive that enables decentralized token
 exchange using limit orders. It brings together the advantages of trading
 efficiency and ease-of-use of centralized exchanges with the transparency and
 self-custody of decentralized approaches, without the risk of impermanent loss,
 contrary to automatic market maker-based approaches.
+
+% TODO(gp): @paul consider renaming "Welfare maximization" to "Utility maximization"
+% or another better name
+Some of the innovative features of TuLiP are:
+\begin{enumerate}
+    \item Support for trading orders:
+          TuLiP uses limit orders as a way to express interest to trading. This
+          is the approach that is most natural and in fact used by virtually
+          the entirety of traditional finance, but surprisingly ignored by many
+          decentralized primitives
+    \item Welfare maximization:
+          TuLiP maximizes the aggregated welfare by allowing to relax the
+          constraint of a single clearing price, which has been the standard
+          assumption in traditional finance and inherited by decentralized
+          finance
+    \item Liquidity pooling across tokens:
+          TuLiP participants are not artifically segregated in separated liquidity
+          pools, but they are aggregated in a single optimization problem that
+          handles in a natural way both multi-coin and reverse token exchange
+    \item Liquidity pooling across time:
+          TuLiP participants provide liquidity only when they wish to trade, and only
+          in the amount that they wish to trade, instead of artifically
+          separating traders as liquidity providers and liquidity takers, like
+          in automated market makers protocols
+    \item High trading efficiency:
+          TuLiP uses discrete and frequent auctions for price discovery and
+          efficiently matching supply and demands, allowing trading tokens
+          peer-to-peer minimizing and sharing spread costs
+    \item Complete transparency:
+          TuLiP collects on-chain all the information for maximum transparency
+          and allows to independently verify the correctness of any computation
+          moved off-chain for minimizing execution costs due to current limitations
+          of blockchain technology
+    \item No impermanent loss:
+          liquidity providers are not exposed to the risk of impermanent loss
+          (a form of unrealized loss that becomes realized upon withdrawing
+          liquidity), unlike the case with other decentralized exchange protocols
+          based on automated market makers
+    \item No intermediary custody:
+          exchanged tokens always remain under the control of their respective
+          owners, in contrast to centralized exchanges
+    \item No rent extraction from high-frequency traders:
+          in TuLiP speed alone does not confer an advantage to traders, as the
+          discrete and frequent auctions prevent predatory tactics such as
+          front-running, limit order scalping, and spoofing, which are known
+          issues seen with continuous limit order books
+    \item Censorship resistance and ease-of-use:
+          the interaction between buyers and sellers occurs through smart
+          contracts and a website front-end
+\end{enumerate}
+
 
 % ===============================================================================
 \subsection{Token swap as a financial primitive}
@@ -200,9 +259,9 @@ Exchanges have several roles:
 \begin{itemize}
     \item Provide a common meeting ground for market participants to
           facilitate matching supply and demand
-	\item Establish the rules of the trading process and institutional roles, so
+    \item Establish the rules of the trading process and institutional roles, so
           that the trading process is structured, monitored, and standardized
-	\item Provide a certain amount of oversight by monitoring and certifying
+    \item Provide a certain amount of oversight by monitoring and certifying
           financial statements and governance procedures
     \item Generate market data for market participants, such as trades and
           quote changes
@@ -213,8 +272,8 @@ fees as a small percent of traded volume.
 
 Typically, an exchange requires two components:
 \begin{enumerate}
-	\item Trade matching: participants find a counterparty agreeing on quantity
-	      and price of the assets to swap (this includes price discovery)
+    \item Trade matching: participants find a counterparty agreeing on quantity
+          and price of the assets to swap (this includes price discovery)
     \item Trade settlement (clearing): the assets are actually swapped after
           finding matching counterparties
 \end{enumerate}
@@ -223,8 +282,8 @@ Typically, an exchange requires two components:
 In decentralized finance, a token swap can be accomplished in different ways,
 e.g., using
 \begin{itemize}
-	\item a centralized exchange (CEX) (e.g., Coinbase, Binance, OkX)
-	\item a decentralized exchange (DEX) (e.g., Uniswap, SushiSwap)
+    \item a centralized exchange (CEX) (e.g., Coinbase, Binance, OkX)
+    \item a decentralized exchange (DEX) (e.g., Uniswap, SushiSwap)
 \end{itemize}
 
 We consider CEXs as a temporary bridge between traditional finance and the
@@ -235,9 +294,9 @@ central limit order book (CLOB).
 
 Decentralized exchanges can be organized as:
 \begin{itemize}
-	\item off-chain order books (e.g., 1inch)
-	\item on-chain order books (e.g., SwapSwap, KyberSwap)
-	\item automated market makers (AMM) (e.g., Uniswap)
+    \item off-chain order books (e.g., 1inch)
+    \item on-chain order books (e.g., SwapSwap, KyberSwap)
+    \item automated market makers (AMM) (e.g., Uniswap)
 \end{itemize}
 
 Off-chain solutions can run into custodial and censorship issues that stand
@@ -290,32 +349,6 @@ intervals. In the simplest case, it resembles a Walrasian-style auction
 \cite{Wa}. In cases where liquidity is pooled more broadly, the auction clearing
 mechanism satisfies a collection of inequalities.
 
-\subsubsection{Advantages of DaoCross and DaoSwap}
-While DaoSwap and DaoCross differ in how the token exchange rate is determined,
-both share several common advantages:
-\begin{enumerate}
-	\item Low cost:
-	      they implement a DeFi primitive that allows trading tokens
-          peer-to-peer without incurring spread costs
-	\item Capital efficiency:
-	      participants provide liquidity only when
-	      they wish to trade, and only in the amount that they wish to trade
-	\item No impermanent loss:
-	      liquidity providers are not exposed to the risk of impermanent loss
-	      (a form of unrealized loss that becomes realized upon withdrawing
-	      liquidity), unlike the case with other decentralized exchange protocols
-	      based on automated market makers
-	\item No intermediary custody:
-	      exchanged tokens always remain under the control of their respective
-	      owners
-	\item No rent extraction from high-frequency traders:
-	      speed alone does not confer an advantage to traders, as the discrete
-	      timing prevents predatory tactics such as front-running, limit order
-	      scalping, and spoofing, which are known issues seen with continuous
-	      limit order books
-	\item Ease-of-use: the interaction between buyers and sellers occurs
-	      through smart contracts, with a website front-end planned
-\end{enumerate}
 
 \subsubsection{Comparison with alternative solutions}
 A comparison between DaoCross and DaoSwap and other solutions for token
@@ -323,23 +356,24 @@ swapping, namely limit-order books (e.g., centralized exchanges such as
 Binance) and automatic market-makers (e.g., Uniswap) is summarized below
 and discussed in detail in Section \ref{AlSoToSw}.
 
+% TODO(gp): Updat this table once the list of features in the intro is stable
 \begin{samepage}
-	\begin{table}[h!]
-		\centering
-		\begin{tabular}{lllll}
-			                            & \emph{LOB} & \emph{AMM} & \emph{DaoSwap} & \emph{DaoCross} \\
-			\hline
-            Custodial risk              & \textcolor{red}{Yes}        & \textcolor{green}{No} & \textcolor{green}{No} & \textcolor{green}{No}  \\
-            Transparency                & \textcolor{red}{Low}        & \textcolor{green}{High}       & \textcolor{green}{High}           & \textcolor{yellow}{Medium} \\
-            Censorship resistance       & \textcolor{red}{No}         & \textcolor{green}{Yes} & \textcolor{green}{Yes} & \textcolor{red}{No} \\
-            Intrinsic efficiency        & \textcolor{yellow}{Medium}     & \textcolor{red}{Low}        & \textcolor{green}{High} & \textcolor{yellow}{Medium}          \\
-            Support for limit orders    & \textcolor{green}{Yes} & \textcolor{red}{No} & \textcolor{green}{Yes}            & \textcolor{green}{Yes} \\
-            Risk of predatory behaviors & \textcolor{red}{High} & \textcolor{yellow}{Low} & \textcolor{green}{Low}       & \textcolor{yellow}{Medium} \\
-            Impermanent loss            & \textcolor{green}{No}         & \textcolor{red}{Yes} & \textcolor{green}{No}             & \textcolor{green}{No}              \\
-            Multi-coin exchange support & \textcolor{red}{Low} & \textcolor{yellow}{Medium} & \textcolor{green}{High} & \textcolor{green}{High} \\
-			\hline
-		\end{tabular}
-	\end{table}
+    \begin{table}[h!]
+        \centering
+        \begin{tabular}{lllll}
+                                        & \emph{LOB}                 & \emph{AMM}                 & \emph{DaoSwap}          & \emph{DaoCross}            \\
+            \hline
+            Custodial risk              & \textcolor{red}{Yes}       & \textcolor{green}{No}      & \textcolor{green}{No}   & \textcolor{green}{No}      \\
+            Transparency                & \textcolor{red}{Low}       & \textcolor{green}{High}    & \textcolor{green}{High} & \textcolor{yellow}{Medium} \\
+            Censorship resistance       & \textcolor{red}{No}        & \textcolor{green}{Yes}     & \textcolor{green}{Yes}  & \textcolor{red}{No}        \\
+            Intrinsic efficiency        & \textcolor{yellow}{Medium} & \textcolor{red}{Low}       & \textcolor{green}{High} & \textcolor{yellow}{Medium} \\
+            Support for limit orders    & \textcolor{green}{Yes}     & \textcolor{red}{No}        & \textcolor{green}{Yes}  & \textcolor{green}{Yes}     \\
+            Risk of predatory behaviors & \textcolor{red}{High}      & \textcolor{yellow}{Low}    & \textcolor{green}{Low}  & \textcolor{yellow}{Medium} \\
+            Impermanent loss            & \textcolor{green}{No}      & \textcolor{red}{Yes}       & \textcolor{green}{No}   & \textcolor{green}{No}      \\
+            Multi-coin exchange support & \textcolor{red}{Low}       & \textcolor{yellow}{Medium} & \textcolor{green}{High} & \textcolor{green}{High}    \\
+            \hline
+        \end{tabular}
+    \end{table}
 \end{samepage}
 
 % ###############################################################################
@@ -364,8 +398,8 @@ To simplify, we follow the practice of foreign exchange (FX) markets,
 which break the symmetric, interchangeable roles of two currencies by
 specifying two non-interchangeable roles:
 \begin{enumerate}
-	\item a \emph{base} currency (for quantity)
-	\item a \emph{quote} currency (for price)
+    \item a \emph{base} currency (for quantity)
+    \item a \emph{quote} currency (for price)
 \end{enumerate}
 The roles are expressed by writing \emph{base currency/quote currency}, e.g.,
 ``EUR/USD".
@@ -407,9 +441,9 @@ constraints. A toy case along these lines one may consider is as follows:
 \begin{problem}[Triangular liquidity]
 Suppose there are the following three parties:
 \begin{itemize}
-	\item Party A, who holds $\BTC$ and wants $\ETH$
-	\item Party B, who holds $\ETH$ and wants $\DAI$
-	\item Party C, who holds $\DAI$ and wants $\BTC$
+    \item Party A, who holds $\BTC$ and wants $\ETH$
+    \item Party B, who holds $\ETH$ and wants $\DAI$
+    \item Party C, who holds $\DAI$ and wants $\BTC$
 \end{itemize}
 
 In the case above no party can trade with another single party, and yet there
@@ -466,15 +500,15 @@ with $\BTC$ as base token and $\ETH$ as quote token, as follows:
 If prices of base and quote tokens are expressed in terms of a common currency
 (e.g., USD) then it holds that:
 \[
-	p_{quote\_per\_base} = \frac{p_{quote}}{p_{base}},
+    p_{quote\_per\_base} = \frac{p_{quote}}{p_{base}},
 \]
 where the numeraire plays the role of a quote token for both $p_{quote}$ and
 $p_{base}$ and is implicit.
 
 Of course it holds that
 \[
-	p_{quote\_per\_base} =
-	\frac{1}{p_{base\_per\_quote}}.
+    p_{quote\_per\_base} =
+    \frac{1}{p_{base\_per\_quote}}.
 \]
 
 Note that in the following we use both notations of price of a token relative to
@@ -552,11 +586,11 @@ In the sequel, when clear from the context we may:
 \subsubsection{Extracting attributes from an order}
 A limit order can also be represented as a tuple in the following way
 \[
-	o = (a, q, \pi, p, \tau)
+    o = (a, q, \pi, p, \tau)
 \]
 where
 \begin{itemize}
-	\item $a$ is the desired action ($\buy$ or $\sell$)
+    \item $a$ is the desired action ($\buy$ or $\sell$)
     \item $\pi$ is the base token
     \item $\tau$ is the quote token
     \item $q$ is the maximum quantity desired in the exchange of the base token
@@ -566,7 +600,7 @@ where
     %\item $q_{\tau}$ or $q_{quote}$ is the corresponding quantity of the quote
     %      token $\tau$ exchanged resulting from the actual execution of the
     %      order
-	\item $p$ is the limit price in terms of quote token $\tau$ per base token
+    \item $p$ is the limit price in terms of quote token $\tau$ per base token
           $\pi$
     %\item $p_{\pi}$ (or $p_{base}$) is the variable price of the base token with
     %      respect to a common numeraire
@@ -670,13 +704,13 @@ corresponding limit order value.
 
 Recalling that an order may be represented as the tuple
 \[
-	o = (a, q, \pi, p, \tau),
+    o = (a, q, \pi, p, \tau),
 \]
 we let
 \begin{itemize}
-	\item $q_\pi^*$ be the quantity of the base token $\pi$ exchanged in the
-	      execution of order $o$
-	\item $q_\tau^*$ be the quantity of the quote token $\tau$ exchanged in
+    \item $q_\pi^*$ be the quantity of the base token $\pi$ exchanged in the
+          execution of order $o$
+    \item $q_\tau^*$ be the quantity of the quote token $\tau$ exchanged in
           the execution of order $o$
       \item $p^*$ be the effective price for the order, given by
           $q_\tau^* / q_\pi^*$, in the event that $q_\pi^*$ is positive
@@ -689,8 +723,8 @@ we let
     %      rate between the quote and base tokens for the swap $o$
     \item $p_{quote\_per\_base}^*$ denote the unique exchange rate between the
           quote and base tokens for all the swaps (if it exists)
-	\item $p_{quote\_per\_base}^*$ denotes the unique exchange rate between the
-	      quote and base tokens for all the swaps (if it exists)
+    \item $p_{quote\_per\_base}^*$ denotes the unique exchange rate between the
+          quote and base tokens for all the swaps (if it exists)
 \end{itemize}
 By convention, we require that
 \[
@@ -761,7 +795,7 @@ price of 0.5, the order cannot be executed.
 Throughout this section, let $\{o_i\}_{i=1}^n$ denote a collection of $n$ limit
 orders, each of the form
 \[
-	o_i = (a_i, q_i, \pi_i, p_i, \tau_i),
+    o_i = (a_i, q_i, \pi_i, p_i, \tau_i),
 \]
 where the quote token $\pi_i$ is implicit in the quantity $q_i$ and
 the quote token $\tau_i$ and base token $\pi_i$ are implicit in the limit price
@@ -808,9 +842,9 @@ following notation.
 Let $T$ denote the intersection of the union of all base tokens and the union
 of all quote tokens:
 \[
-	T :=
+    T :=
     \left( \bigcup_{i=1}^n \pi_i \right)
-	\bigcap
+    \bigcap
     \left( \bigcup_{i=1}^n \tau_i \right)
 \]
 The set of tokens $T$ is the set of tokens eligible for swapping.
@@ -818,11 +852,11 @@ The set of tokens $T$ is the set of tokens eligible for swapping.
 For each token $u \in T$, define the indicator function
 $\mathcal{T}: T \to \{0, 1\}$ via
 \[
-	\mathcal{T}_u(v) =
-	\begin{cases}
-		1 \text{ if } v = u \\
-		0 \text{ if } v \neq u
-	\end{cases}
+    \mathcal{T}_u(v) =
+    \begin{cases}
+        1 \text{ if } v = u \\
+        0 \text{ if } v \neq u
+    \end{cases}
 \]
 Then, for each $u \in T$, the following conservation law must hold:
 \begin{equation}\label{token_conservation_law}
@@ -973,9 +1007,9 @@ up to $p$ $\tB$ per unit of $\tA$",
 and it corresponds to the following constraint on realized quantity exchanged
 and clearing exchange rate:
 \begin{equation*}
-	(p_{\tB\_per\_\tA}^* \leq p(o_i)) \land
-	(0 \le q_\tA^*(o_i) \leq q(o_i)) \lor
-	(q_\tA^*(o_i) = 0)
+    (p_{\tB\_per\_\tA}^* \leq p(o_i)) \land
+    (0 \le q_\tA^*(o_i) \leq q(o_i)) \lor
+    (q_\tA^*(o_i) = 0)
 \end{equation*}
 The constraint on the quantity exchanged is conditioned on the corresponding
 price's satisfying the desired limit price constraint: if the desired limit price
@@ -1012,9 +1046,9 @@ of at least $p$ $\tB$ per unit of $\tA$",
 and it corresponds to the following constraint on realized quantity exchanged
 and clearing exchange rate:
 \begin{equation*}
-	(p_{\tB\_per\_\tA}^* \geq p(o_i) \land
-	(0 \le q_\tA^*(o_i) \leq q(o_i)) \lor
-	(q_\tA^*(o_i) = 0)
+    (p_{\tB\_per\_\tA}^* \geq p(o_i) \land
+    (0 \le q_\tA^*(o_i) \leq q(o_i)) \lor
+    (q_\tA^*(o_i) = 0)
 \end{equation*}
 
 \begin{exmp}[Inequalities for sell order]
@@ -1037,16 +1071,16 @@ transformation below.
 
 Let
 \[
-	o_1 = (\buy, q, \tA, p_{\tB\_per\_\tA}, \tB).
+    o_1 = (\buy, q, \tA, p_{\tB\_per\_\tA}, \tB).
 \]
 Suppose that $p^*_{\tB\_per\_\tA}$ is fixed and known. Then the order
 \[
-	o_2 = (\sell, q^\prime, \tB, 1 / p_{\tB\_per\_\tA}, \tA)
+    o_2 = (\sell, q^\prime, \tB, 1 / p_{\tB\_per\_\tA}, \tA)
 \]
 may be handled in order crossing in the same way that $o_1$ may be
 provided that
 \[
-	q^\prime = q \cdot p^*_{\tB\_per\_\tA}
+    q^\prime = q \cdot p^*_{\tB\_per\_\tA}
 \]
 
 % TODO(gp): flesh out the examples
@@ -1235,10 +1269,10 @@ quadratic programming formulation.
 % the actual price $p^*$ and the limit order price $p(o_i)$) is either verified
 % or not (the solution does not need to consider both branches):
 % \begin{equation*}
-% 	\begin{cases}
-% 		0 \le q_{base}^*(o_i) \le q_{base}^* & \text{ if } c_i       \\
-% 		q_{base}^*(o_i) = 0                & \text{ if } \lnot c_i \\
-% 	\end{cases}.
+%     \begin{cases}
+%         0 \le q_{base}^*(o_i) \le q_{base}^* & \text{ if } c_i       \\
+%         q_{base}^*(o_i) = 0                & \text{ if } \lnot c_i \\
+%     \end{cases}.
 % \end{equation*}
 % TODO: Comment on quote token amount exchanged. Verify supply meets demand.
 %
@@ -1251,7 +1285,7 @@ quadratic programming formulation.
 % \subsubsection{Limit price in terms of quantities}
 % Assume that a buy order is:
 % \[
-% 	o = (\buy q, \pi, p, \tau)
+%     o = (\buy q, \pi, p, \tau)
 % \]
 %
 % corresponds to the natural language description:
@@ -1330,7 +1364,7 @@ for $\BTC$ (e.g., expressed in $\USDC$), and $\bideth, \asketh$ be the analogous
 prices for $\ETH$. Then, a commitment to buy one $\BTC$ and pay $\ETH$ would
 clear at a midpoint price of
 \[
-	\BTC/\ETH_{\midpoint} = \frac{\bidbtc + \askbtc}{\bideth + \asketh}
+    \BTC/\ETH_{\midpoint} = \frac{\bidbtc + \askbtc}{\bideth + \asketh}
 \]
 expressed in $\BTC$ per $\ETH$. Note that if the dollar price of BTH is significantly
 more than the dollar price of ETH, then this price implies paying many
@@ -1340,7 +1374,7 @@ In general, DaoCross may use the following reference price for a base/quote
 token pair, where the bids and asks come from a lit exchange and are expressed
 in terms of stablecoin prices:
 \begin{equation}
-	\frac{\bidbase + \askbase}{\bidquote + \askquote}
+    \frac{\bidbase + \askbase}{\bidquote + \askquote}
 \end{equation}
 
 \subsubsection{Averaging reference prices}
@@ -1372,9 +1406,9 @@ prioritization rules used by one of Morgan Stanley's equity liquidity pools.
 \subsubsection{Priority rules}
 DaoCross prioritizes fills according to:
 \begin{itemize}
-	\item Volume (higher volume comes first in priority)
-	\item Price (higher limit price breaks volume ties)
-	\item Timestamp (earlier timestamp breaks ties in volume and price)
+    \item Volume (higher volume comes first in priority)
+    \item Price (higher limit price breaks volume ties)
+    \item Timestamp (earlier timestamp breaks ties in volume and price)
 \end{itemize}
 If, in the unlikely scenario that all three of these parameters perfectly
 agree, a certain priority is not guaranteed.
@@ -1435,7 +1469,6 @@ currency pairs is reached.
 \subsection{Performing the swap}
 
 % ###############################################################################
-
 \section{Alternative solutions for token swapping}
 \label{AlSoToSw}
 
@@ -1443,198 +1476,261 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 
 % TODO(gp): Consider using one of the fancy table, e.g., tabularray
 \begin{samepage}
-	\begin{table}[h!]
-		\centering
-		\begin{tabular}{lllll}
-			                            & \emph{LOB} & \emph{AMM} & \emph{DaoSwap} & \emph{DaoCross} \\
-			\hline
-            Custodial risk              & \textcolor{red}{Yes}        & \textcolor{green}{No} & \textcolor{green}{No} & \textcolor{green}{No}  \\
-            Transparency                & \textcolor{red}{Low}        & \textcolor{green}{High}       & \textcolor{green}{High}           & \textcolor{yellow}{Medium} \\
-            Censorship resistance       & \textcolor{red}{No}         & \textcolor{green}{Yes} & \textcolor{green}{Yes} & \textcolor{red}{No} \\
-            Intrinsic efficiency        & \textcolor{yellow}{Medium}     & \textcolor{red}{Low}        & \textcolor{green}{High} & \textcolor{yellow}{Medium}          \\
-            Support for limit orders    & \textcolor{green}{Yes} & \textcolor{red}{No} & \textcolor{green}{Yes}            & \textcolor{green}{Yes} \\
-            Risk of predatory behaviors & \textcolor{red}{High} & \textcolor{yellow}{Low} & \textcolor{green}{Low}       & \textcolor{yellow}{Medium} \\
-            Impermanent loss            & \textcolor{green}{No}         & \textcolor{red}{Yes} & \textcolor{green}{No}             & \textcolor{green}{No}              \\
-            Multi-coin exchange support & \textcolor{red}{Low} & \textcolor{yellow}{Medium} & \textcolor{green}{High} & \textcolor{green}{High} \\
-			\hline
-		\end{tabular}
-	\end{table}
+    \begin{table}[h!]
+        \centering
+        \begin{tabular}{lllll}
+                                        & \emph{LOB}                 & \emph{AMM}                 & \emph{DaoSwap}          & \emph{DaoCross}            \\
+            \hline
+            Custodial risk              & \textcolor{red}{Yes}       & \textcolor{green}{No}      & \textcolor{green}{No}   & \textcolor{green}{No}      \\
+            Transparency                & \textcolor{red}{Low}       & \textcolor{green}{High}    & \textcolor{green}{High} & \textcolor{yellow}{Medium} \\
+            Censorship resistance       & \textcolor{red}{No}        & \textcolor{green}{Yes}     & \textcolor{green}{Yes}  & \textcolor{red}{No}        \\
+            Intrinsic efficiency        & \textcolor{yellow}{Medium} & \textcolor{red}{Low}       & \textcolor{green}{High} & \textcolor{yellow}{Medium} \\
+            Support for limit orders    & \textcolor{green}{Yes}     & \textcolor{red}{No}        & \textcolor{green}{Yes}  & \textcolor{green}{Yes}     \\
+            Risk of predatory behaviors & \textcolor{red}{High}      & \textcolor{yellow}{Low}    & \textcolor{green}{Low}  & \textcolor{yellow}{Medium} \\
+            Impermanent loss            & \textcolor{green}{No}      & \textcolor{red}{Yes}       & \textcolor{green}{No}   & \textcolor{green}{No}      \\
+            Multi-coin exchange support & \textcolor{red}{Low}       & \textcolor{yellow}{Medium} & \textcolor{green}{High} & \textcolor{green}{High}    \\
+            \hline
+        \end{tabular}
+    \end{table}
 \end{samepage}
 
 % ===============================================================================
 \subsection{DaoSwap}
 
 \begin{itemize}
-	\item Custodial risk: Low
-	      \begin{itemize}
-		      \item Private keys and funds are always under the control of the users
-	      \end{itemize}
-	\item Transparency: High
-	      \begin{itemize}
-              \item Work is done on-chain and the off-chain computations are
-                independently verifiable
-	      \end{itemize}
-	\item Censoriship resistance: Yes
-	      \begin{itemize}
-		      \item The application runs on-chain and even if the web front-end is attacked
-		            or disabled. The off-chain computation can be made robust using similar
-		            approaches to distributed oracles, or even ported on-chain if gas prices
-		            are not an issue (e.g., using Layer2 solutions)
-	      \end{itemize}
-	\item Intrinsic efficiency: High
-	      \begin{itemize}
+
+    \item Support for limit order: Yes
+          \begin{itemize}
+              \item DaoSwap supports limit orders natively
+          \end{itemize}
+    \item Welfare maximization: Yes
+          \begin{itemize}
+              \item The DaoSwap optimization problem allows to exchange tokens with multiple
+                    clearing prices to maximize the aggregated welfare of the participants
+          \end{itemize}
+    \item Liquidity pooling across tokens: High
+          \begin{itemize}
+              \item The DaoSwap optimization problem allows to exchange tokens simultaneously across
+                    all the participants independently of their base and quote tokens
+          \end{itemize}
+    \item Liquidity pooling across time: High
+          \begin{itemize}
+              \item In DaoSwap there is no difference between the roles of
+                    liquidity providers and liquidity takers, so that takers and makers
+                    can trade against each other directly and efficiently
+          \end{itemize}
+    \item Trading efficiency: High
+          \begin{itemize}
               \item DaoSwap relies on periodic auctions and it has been argued
-                in previous literature that for small enough intervals (e.g.,
-                seconds) periodic auctions result in the same quality of
-                continuous matching without allowing predatory behaviors
-		      \item TODO(gp): Add a reference to Cramton paper
-	      \end{itemize}
-	\item Support for limit order: Yes
-	      \begin{itemize}
-		      \item Limit orders are supported natively
-	      \end{itemize}
-	\item Risk of predatory behaviors: Low
-	      \begin{itemize}
-		      \item TODO(gp):
-	      \end{itemize}
-	\item Impermanent loss: No
-	      \begin{itemize}
-		      \item TODO(gp):
-	      \end{itemize}
-	\item Support for multi-coin swap: Yes
-	      \begin{itemize}
-              \item TODO(gp): DaoSwap/Cross pools all the liquidity in a single
-                optimization problem
-	      \end{itemize}
+                    in previous literature that for small enough intervals (e.g.,
+                    seconds) periodic auctions result in the same quality of
+                    continuous matching \ref{BuCrSh15}
+          \end{itemize}
+    \item Transparency: Yes
+          \begin{itemize}
+              \item Price discovery, matching, and clearing are either done
+                    completely on-chain or with additional off-chain computations that are
+                    independently verifiable. Thus DaoCross guarantees the requirement
+                    for a fully transparent solution
+          \end{itemize}
+    \item Impermanent loss: No
+          \begin{itemize}
+              \item There is no impermanent loss since liquidity is not locked inside
+                    the contract, like for an AMM
+          \end{itemize}
+    \item Custodial risk: No
+          \begin{itemize}
+              \item Private keys and funds are always under the control of the users
+          \end{itemize}
+    \item Rent extracted by high-frequency traders: Low
+          \begin{itemize}
+              \item Discrete and frequent auctions minimize predatory
+                    behaviors from HFT behavior \ref{BuCrSh15}
+          \end{itemize}
+    \item Censoriship resistance: Yes
+          \begin{itemize}
+              \item The application runs on-chain and even if the web front-end is attacked
+                    or disabled. The off-chain computation can be made robust using similar
+                    approaches to distributed oracles, or even ported on-chain if gas prices
+                    are not an issue (e.g., using Layer2 solutions)
+          \end{itemize}
 \end{itemize}
 
 % ===============================================================================
 \subsection{DaoCross}
 
 \begin{itemize}
-	\item Custodial risk: Low
-	      \begin{itemize}
-		      \item Same as DaoSwap
-	      \end{itemize}
-	\item Transparency: Medium
-	      \begin{itemize}
-		      \item DaoCross relies on price discovery carried out on a lit exchange
-	      \end{itemize}
-	\item Censoriship resistance: No
-	      \begin{itemize}
-              \item The robustness of DaoCross is the same as the lit exchange
-                that it relies on. See comments on the corresponding topic for
-                LOB
-	      \end{itemize}
-	\item Intrinsic efficiency: Medium
-	      \begin{itemize}
-              \item The efficiency in matching trades is the same as the
-                limit-order book. See comments on the corresponding topic for
-                LOB
-	      \end{itemize}
-	\item Support for limit order: Yes
-	      \begin{itemize}
-		      \item Same as DaoSwap
-	      \end{itemize}
-	\item Risk of predatory behaviors:
-	      \begin{itemize}
-		      \item TODO(gp)
-	      \end{itemize}
-	\item Impermanent loss: No
-	      \begin{itemize}
-		      \item TODO(gp)
-	      \end{itemize}
-	\item Support for multi-coin swap:
-	      \begin{itemize}
-              \item TODO(gp): DaoSwap/Cross pools all the liquidity in a single
-                optimization problem
-	      \end{itemize}
+    \item Support for limit order: Yes
+          \begin{itemize}
+              \item DaoCross supports limit orders natively
+          \end{itemize}
+    \item Welfare maximization: No
+          \begin{itemize}
+              \item The DaoCross optimization problem uses prices determined by
+                    a lit exchange and thus there is a single clearing price for all
+                    the swaps. This does not allow to achieve maximal welfare for
+                    the traders involved in the swap
+          \end{itemize}
+    \item Liquidity pooling across tokens: High
+          \begin{itemize}
+              \item DaoCross share the same behavior of DaoSwap from this point of view
+          \end{itemize}
+    \item Liquidity pooling across time: High
+          \begin{itemize}
+              \item DaoCross share the same behavior of DaoSwap from this point of view
+          \end{itemize}
+    \item Trading efficiency: Medium
+          \begin{itemize}
+              \item The trading efficiency in matching trades is the same as the
+                    lit exchange on which price discovery is peformed (e.g., a
+                    centralized exchange)
+          \end{itemize}
+    \item Transparency: Yes
+          \begin{itemize}
+              \item DaoCross share the same behavior of DaoSwap from this point of view
+          \end{itemize}
+    \item Impermanent loss: No
+          \begin{itemize}
+              \item DaoCross share the same behavior of DaoSwap from this point of view
+          \end{itemize}
+    \item Custodial risk: No
+          \begin{itemize}
+              \item DaoCross share the same behavior of DaoSwap from this point of view
+          \end{itemize}
+    \item Rent extracted by high-frequency traders: Medium
+          \begin{itemize}
+              \item DaoCross behaves as a dark pool of liquidity and thus it can be suscetible
+                    to predatory behaviors, although mitigated by the discrete auction mechanism
+                    \ref{BuCrSh15}
+          \end{itemize}
+    \item Censoriship resistance: No
+          \begin{itemize}
+              \item DaoCross behaves as a dark pool of liquidity and thus it can be suscetible
+                    to censorship resistance in the same way as the lit exchange on which
+                    price discovery is carried out
+          \end{itemize}
 \end{itemize}
 
 % ===============================================================================
 \subsection{Limit Order Book (LOB)}
 
 \begin{itemize}
-	\item Custodial risk: High
-	      \begin{itemize}
-		      \item Exchanges own user private keys and funds, creating issues with fraud (e.g., FTX) and hacking (Mt. Gox)
-	      \end{itemize}
-	\item Transparency: Low
-	      \begin{itemize}
-              \item Many centralized exchanges can easily exaggerate volume
-                (e.g., through wash trading) to attract ICOs and liquidity
-		      \item There is no guarantee on the
-	      \end{itemize}
-	\item Censorship resistance: No
-	      \begin{itemize}
-              \item Users need to link their bank account to CEX and transfer
-                funds, which can take 2-3 days and be subjected to
-                Know-Your-Customer (KYC) and AML (Anti money laundering
-                policies)
-              \item Governments can censor, interfere with, or even severe the
-                connection between traditional and decentralized finance (see
-                recent interventions of SEC against Coinbase and Binance, and
-                FDIC rescue of Silvergate Bank, Signature Bank)
-	      \end{itemize}
-	\item Intrinsic efficiency: Medium
-	      \begin{itemize}
-              \item Limit order books are considered efficient in matching
-                continuously trades, although recently researchers have
-                criticized their time-continuous-time nature as source of
-                latency arbitrage (TODO(gp): Add ref to Compton, IEX, Flash
-                Boys)
-              \item The same token can be traded on different exchanges causing
-                liquidity and price discovery to be fragmented with detriment
-                on market quality
-	      \end{itemize}
-	\item Support for limit order: Yes
-	      \begin{itemize}
-		      \item Limit order books naturally support limit orders from users
-		      \item Risk of predatory behaviors: High
-		      \item LOB operators often welcome and incentivize high-frequency traders as way
-		            to increase trading revenues and liquidity, at expense of predatory tactics
-		            (e.g., front-running, latency arbitrage, spoofing, sniping) which arm
-	      \end{itemize}
-	\item Impermanent loss: No
-	      \begin{itemize}
-		      \item LOB
-	      \end{itemize}
-	\item Support for multi-coin swap: No
+    \item Support for limit order: Yes
+          \begin{itemize}
+              \item Limit orders are naturally handled by a limit order book
+          \end{itemize}
+    \item Welfare maximization: Medium
+          \begin{itemize}
+              \item The presence of priority rules in the continuous matching
+                    might artificially reduce the achieved welfare of the participants
+          \end{itemize}
+    \item Liquidity pooling across tokens: Low
+          \begin{itemize}
+              \item LOBs only allow exchanging one type of token with another,
+                    artificially separating liquidity across different LOBs.
+                    Traders are thus forced to perform multiple trades when the
+                    desired token pair is not available, resulting in increased
+                    slippage and costs
+          \end{itemize}
+    \item Liquidity pooling across time: High
+          \begin{itemize}
+              \item LOBs let liquidity providers and takers trade against each other
+          \end{itemize}
+    \item Trading efficiency: Medium
+          \begin{itemize}
+              \item Although the continuous matching can be argued to be an efficient
+                    trading mechanism, it also enables predatory behaviors that reduce
+                    its efficiency from the point of view of non-HFT traders
+          \end{itemize}
+    \item Transparency: No
+          \begin{itemize}
+              \item The need to cancel and reprice of orders induced by continuous
+                    time makes a LOB difficult if not impossible to run on a blockchain.
+                    Any solution that can not run on-chain does not guarantee trasparency
+                    required by decentralized finance
+          \end{itemize}
+    \item Impermanent loss: No
+          \begin{itemize}
+              \item There is no impermanent loss since liquidity is not locked inside
+                    the contract, like for an AMM
+          \end{itemize}
+    \item Custodial risk: Yes
+          \begin{itemize}
+              \item For the same reasons described when reasoning about transprency
+                    limit order books are run as centralized exchanges, which requires
+                    traders to delegate the ownership of tokens to centralized exchanges
+          \end{itemize}
+    \item Rent extracted by high-frequency traders: High
+          \begin{itemize}
+              \item Since time is treated as a continuous quantity, traders can
+                    gain advantages from faster connections and computing, allowing
+                    predatory behaviors from high-frequency traders
+                    \ref{BuCrSh15}
+          \end{itemize}
+    \item Censoriship resistance: No
+          \begin{itemize}
+              \item For the same reasons described when reasoning about transprency
+                    limit order books are run as centralized exchanges, which requires
+
+          \end{itemize}
 \end{itemize}
 
 % ===============================================================================
 \subsection{Automatic Market Makers (AMM)}
 
 \begin{itemize}
-	\item Custodial risk: Low
-	      \begin{itemize}
-		      \item Private keys and the
-	      \end{itemize}
-	\item Transparency:
-	\item Censoriship risk:
-	\item Intrinsic efficiency: Low
-	      \begin{itemize}
-              \item Arbitrageurs are needed to keep liquidity pool and prices
-                in alignment with other centers for price discovery
-	      \end{itemize}
-	\item Support for limit order: No
-	      \begin{itemize}
-		      \item Uniswap V3 doesn't support limit orders directly but only in terms of
-	      \end{itemize}
-	\item Risk of predatory behaviors: High
-	      \begin{itemize}
-		      \item TODO(gp):
-	      \end{itemize}
-	\item Impermanent loss: Yes
-	      \begin{itemize}
-              \item Uniswap is affected by impermanent loss because liquidity
-                providers and liquidity takers are in general different users
-                operating at different time scales
-	      \end{itemize}
-	\item Support for multi-coin swap: Medium
-	      \begin{itemize}
-		      \item Uniswap requires multiple swaps and fees for arbitrary tokens
-	      \end{itemize}
+    \item Support for limit order: No
+          \begin{itemize}
+              \item Uniswap V3 doesn't support limit orders directly but only in terms of
+                    maximum slippage
+          \end{itemize}
+    \item Welfare maximization: Small
+          \begin{itemize}
+              \item In AMM price needs to be corrected by an arbitrageur,
+                    impacting the quality of the provided liquidity
+          \end{itemize}
+    \item Liquidity pooling across tokens: Medium
+          \begin{itemize}
+              \item Tokens are segregated in different liquidity pools, despite
+                    the role of base and quote tokens being interchangeable.
+                    Thus a swap between a generic token pair might require multiple
+                    swaps and fees
+          \end{itemize}
+    \item Liquidity pooling across time: Low
+          \begin{itemize}
+              \item Liquidity providers and takers interact with AMMs at different times
+          \end{itemize}
+    \item Trading efficiency: Low
+          \begin{itemize}
+              \item The matching is done between one liquidity taker at a time against
+                    liquidity providers, instead of letting traders interact directly
+          \end{itemize}
+    \item Transparency: Yes
+          \begin{itemize}
+              \item The implementation of an AMM can entirely on-chain and thus
+                    it guarantees trasparency required by decentralized finance
+          \end{itemize}
+    \item Impermanent loss: No
+          \begin{itemize}
+              \item AMMs are affected by impermanent loss because liquidity
+                    providers and liquidity takers are in general different users
+                    operating at different time scales
+          \end{itemize}
+    \item Custodial risk: No
+          \begin{itemize}
+              \item Tokens are always under control of the respective owners
+          \end{itemize}
+    \item Rent extracted by high-frequency traders: High
+          \begin{itemize}
+              \item In AMM price needs to be corrected by arbitrageurs in order
+                    to be maintained aligned to large CEXs where the price
+                    discovery happens, continuously creating arbitrage opportunity
+          \end{itemize}
+    \item Censoriship resistance: Yes
+          \begin{itemize}
+              \item The implementation of an AMM can entirely on-chain and thus
+                    it is robust to censorship
+          \end{itemize}
 \end{itemize}
 
 
@@ -1646,20 +1742,20 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 
 Some of the benefits of AMMs are:
 \begin{itemize}
-	\item conceptual simplicity
-	\item low computational requirements
-	\item ability to provide liquidity even for illiquid markets
-	\item ability to function without a reference price
+    \item conceptual simplicity
+    \item low computational requirements
+    \item ability to provide liquidity even for illiquid markets
+    \item ability to function without a reference price
 \end{itemize}
 
 Some of the drawbacks of AMMs are:
 \begin{itemize}
-	\item force liquidity providers to trade at worse-than-market prices
-	\item a rarely used building block used mainly in prediction markets rather than
-	      in mainstream finance. In fact only recently papers have started analyzing
-	      the financial return / risk profile of AMMs \cite{MiMoRoZh22}
-	\item price needs to be corrected by an arbitrageur, impacting the quality of
-	      the provided liquidity
+    \item force liquidity providers to trade at worse-than-market prices
+    \item a rarely used building block used mainly in prediction markets rather than
+          in mainstream finance. In fact only recently papers have started analyzing
+          the financial return / risk profile of AMMs \cite{MiMoRoZh22}
+    \item price needs to be corrected by an arbitrageur, impacting the quality of
+          the provided liquidity
     \item artificially separates liquidity providers from traders, preventing traders
           from providing liquidity to each other in the way well-functioning
           markets do
@@ -1667,26 +1763,26 @@ Some of the drawbacks of AMMs are:
 
 Some critiques and counterpoints can be made to the benefits of AMMs listed above.
 \begin{itemize}
-	\item conceptual simplicity. Although this is a favorable point for users
-	      without experience in finance, the evolution of finance practices favors the
-	      use of limit orders, as explained in the introduction.
-	\item low computational requirements. This is not necessarily a strict
-	      requirement any more due to progress in off-chain computation and
+    \item conceptual simplicity. Although this is a favorable point for users
+          without experience in finance, the evolution of finance practices favors the
+          use of limit orders, as explained in the introduction.
+    \item low computational requirements. This is not necessarily a strict
+          requirement any more due to progress in off-chain computation and
           improved scalability in blockchain technology (such as layer 2
           blockchains). We do not believe that an inefficient solution (from
           the point of view of exchanged value) should be preferred only
           because of implementation simplicity.
-	\item ability to function even for illiquid markets.
-	      Although this is a valid advantage for many markets (e.g., prediction markets),
-	      the vast majority of crypto coins are extremely liquid and do not require
-	      trading off trading quality.
-	\item ability to function without a reference price.
+    \item ability to function even for illiquid markets.
+          Although this is a valid advantage for many markets (e.g., prediction markets),
+          the vast majority of crypto coins are extremely liquid and do not require
+          trading off trading quality.
+    \item ability to function without a reference price.
           This feature was certainly appealing to initial researchers (e.g., \cite{Bu17})
-	      in search of a fully-decentralized solution to the problem
-	      of token exchange. In reality, the fact that price discovery unquestionably
-	      happens on current CEXs turned AMMs into arbitrage generation machines
-	      (AGMs), where 80\% of the trading volume is due to arbitrageurs keeping AMM
-	      prices in sync with the predominant price TODO(gp): Add reference
+          in search of a fully-decentralized solution to the problem
+          of token exchange. In reality, the fact that price discovery unquestionably
+          happens on current CEXs turned AMMs into arbitrage generation machines
+          (AGMs), where 80\% of the trading volume is due to arbitrageurs keeping AMM
+          prices in sync with the predominant price TODO(gp): Add reference
 \end{itemize}
 
 One of the problems with current state of DeFi is that users look for
@@ -1727,24 +1823,24 @@ selection (quantified and characterized by the LVR paper)
 % be compensated for by adding (paying) some amount $\delta b$ to the pool.
 % The constant product constraint ensures
 % \[
-% 	a_0 b_0 = (a_0 - \delta a) (b_0 + \delta b)
+%     a_0 b_0 = (a_0 - \delta a) (b_0 + \delta b)
 % \]
 % which upon rearrangement leads to
 % \[
-% 	\delta b = b_0 \frac{\delta a}{a_0 - \delta a}
+%     \delta b = b_0 \frac{\delta a}{a_0 - \delta a}
 % \]
 % The effective cost of buying $\delta a$ units of $\tA$ is given by
 % \[
-% 	\frac{\delta b}{\delta a} = \frac{b_0}{a_0 - \delta a}
+%     \frac{\delta b}{\delta a} = \frac{b_0}{a_0 - \delta a}
 % \]
 % If we make the substitution $b_0 = k / a_0$, this becomes
 % \[
-% 	\frac{\delta b}{\delta a} = \frac{k}{a_0(a_0 - \delta a)}
+%     \frac{\delta b}{\delta a} = \frac{k}{a_0(a_0 - \delta a)}
 % \]
 % In the idealized setting of infinite divisibility of tokens, the
 % instantaneous price of buying $\tA$ at point $(a_0, b_0)$ is
 % \[
-% 	\frac{b_0}{a_0} = \frac{k}{a_0^2}
+%     \frac{b_0}{a_0} = \frac{k}{a_0^2}
 % \]
 % For convenience, define $p_0$ as this price:
 % \[
@@ -1763,7 +1859,7 @@ selection (quantified and characterized by the LVR paper)
 % purchase. If the current state of the market is $a_0, b_0$, then the price $p$
 % of purchasing quantity $q$ is
 % \[
-% 	p(a_0, b_0, q) = \frac{k}{a_0 (a_0 - q)}
+%     p(a_0, b_0, q) = \frac{k}{a_0 (a_0 - q)}
 % \]
 % For brevity, we drop the functional dependence. Reexpressing in
 % terms of quantity, we have
@@ -1786,15 +1882,15 @@ selection (quantified and characterized by the LVR paper)
 %
 % When a buy transaction takes places, the market price changes from
 % \[
-% 	p_0 = \frac{b_0}{a_0}
+%     p_0 = \frac{b_0}{a_0}
 % \]
 % to
 % \[
-% 	p_1 = \frac{b_0 + \delta b}{a_0 - \delta a}.
+%     p_1 = \frac{b_0 + \delta b}{a_0 - \delta a}.
 % \]
 % Note that this is greater than the effective purchase price of
 % \[
-% 	\frac{b_0}{a_0 - \delta a},
+%     \frac{b_0}{a_0 - \delta a},
 % \]
 % which is analogous to what happens when multiple levels of a limit order book
 % are cleared (the new best offer is greater than the effective price of the buy
@@ -1809,53 +1905,53 @@ selection (quantified and characterized by the LVR paper)
 
 \begin{thebibliography}{10}
 
-	\bib{Ad18}{article}{
-		author={Adams, Hayden},
-		title={Uniswap Whitepaper},
-		date={2018},
-		eprint={https://hackmd.io/s/HJ9jLsfTz},
-	}
+    \bib{Ad18}{article}{
+        author={Adams, Hayden},
+        title={Uniswap Whitepaper},
+        date={2018},
+        eprint={https://hackmd.io/s/HJ9jLsfTz},
+    }
 
-	\bib{AdZiRo20}{article}{
-		author={Adams, Hayden},
-		author={Zinsmeister, Noah},
-		author={Robinson, Dan},
-		title={Uniswap v2 Core},
-		date={March 2020},
-		eprint={https://uniswap.org/whitepaper.pdf},
-	}
+    \bib{AdZiRo20}{article}{
+        author={Adams, Hayden},
+        author={Zinsmeister, Noah},
+        author={Robinson, Dan},
+        title={Uniswap v2 Core},
+        date={March 2020},
+        eprint={https://uniswap.org/whitepaper.pdf},
+    }
 
-	\bib{AdZiSaKeRo21}{article}{
-		author={Adams, Hayden},
-		author={Zinsmeister, Noah},
-		author={Salem, Moody},
-		author={Keefer, River},
-		author={Robinson, Dan},
-		title={Uniswap v3 Core},
-		date={March 2021},
-		eprint={https://uniswap.org/whitepaper-v3.pdf},
-	}
+    \bib{AdZiSaKeRo21}{article}{
+        author={Adams, Hayden},
+        author={Zinsmeister, Noah},
+        author={Salem, Moody},
+        author={Keefer, River},
+        author={Robinson, Dan},
+        title={Uniswap v3 Core},
+        date={March 2021},
+        eprint={https://uniswap.org/whitepaper-v3.pdf},
+    }
 
-	\bib{BeLaLiVa22}{article}{
-		author={Bernales, Alejandro},
-		author={Ladley, Daniel},
-		author={Litos, Evangelos},
-		author={Valenzuela, Marcela},
-		title={Alternative Execution Priority Rules in Dark Pools},
-		date={July 22, 2022},
-		eprint={https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4169352},
-	}
+    \bib{BeLaLiVa22}{article}{
+        author={Bernales, Alejandro},
+        author={Ladley, Daniel},
+        author={Litos, Evangelos},
+        author={Valenzuela, Marcela},
+        title={Alternative Execution Priority Rules in Dark Pools},
+        date={July 22, 2022},
+        eprint={https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4169352},
+    }
 
-	\bib{BoBoDoGo18}{book}{
-		author={Bouchaud, Jean-Philippe},
-		author={Bonart, Julius},
-		author={Donier, Jonathan},
-		author={Gould, Martin},
-		title={Trades, Quotes and Prices: Financial Markets Under the Microscope},
-		date={2018},
-		publisher={Cambridge University Press},
-		doi={https://doi.org/10.1017/9781316659335},
-	}
+    \bib{BoBoDoGo18}{book}{
+        author={Bouchaud, Jean-Philippe},
+        author={Bonart, Julius},
+        author={Donier, Jonathan},
+        author={Gould, Martin},
+        title={Trades, Quotes and Prices: Financial Markets Under the Microscope},
+        date={2018},
+        publisher={Cambridge University Press},
+        doi={https://doi.org/10.1017/9781316659335},
+    }
 
     \bib{Bu17}{article}{
         author={Buterin, Vitalik},
@@ -1864,28 +1960,28 @@ selection (quantified and characterized by the LVR paper)
         eprint={https://www.reddit.com/r/ethereum/comments/55m04x/lets_run_onchain_decentralized_exchanges_the_way}
     }
 
-	\bib{Cme23}{article}{
-		author={CME Group},
-		title={2023 FX Product Guide},
-		edition={22nd},
-		eprint={https://www.cmegroup.com/trading/fx/files/fx-product-guide-2023-us.pdf},
-	}
+    \bib{Cme23}{article}{
+        author={CME Group},
+        title={2023 FX Product Guide},
+        edition={22nd},
+        eprint={https://www.cmegroup.com/trading/fx/files/fx-product-guide-2023-us.pdf},
+    }
 
-	\bib{CmeFx}{article}{
-		author={CME Group},
-		title={Euro FX Futures - Contract Specs},
-		eprint={https://www.cmegroup.com/markets/fx/g10/euro-fx.contractSpecs.html},
-	}
+    \bib{CmeFx}{article}{
+        author={CME Group},
+        title={Euro FX Futures - Contract Specs},
+        eprint={https://www.cmegroup.com/markets/fx/g10/euro-fx.contractSpecs.html},
+    }
 
-	\bib{Ha03}{article}{
-		author={Hanson, Robin},
-		title={Combinatorial Information Market Design},
-		journal={Information Systems Frontiers},
-		date={2003},
-		volume={5},
-		pages={107-119},
-		eprint={https://doi.org/10.1023/A:1022058209073},
-	}
+    \bib{Ha03}{article}{
+        author={Hanson, Robin},
+        title={Combinatorial Information Market Design},
+        journal={Information Systems Frontiers},
+        date={2003},
+        volume={5},
+        pages={107-119},
+        eprint={https://doi.org/10.1023/A:1022058209073},
+    }
 
     \bib{IyJoMo16}{article}{
         author={Iyer, Krishnamurthy},
@@ -1926,35 +2022,35 @@ selection (quantified and characterized by the LVR paper)
     }
 
     \bib{MiMoRo23}{article}{
-		author={Milionis, Jason},
-		author={Moallemi, Ciamac C.},
-		author={Roughgarden, Tim},
+        author={Milionis, Jason},
+        author={Moallemi, Ciamac C.},
+        author={Roughgarden, Tim},
         title={Complexity-Approximation Trade-offs in Exchange Mechanisms: AMMs vs. LOBs},
         date={2023},
         eprint={https://arxiv.org/abs/2302.11652},
     }
 
-	\bib{MiMoRoZh22}{article}{
-		author={Milionis, Jason},
-		author={Moallemi, Ciamac C.},
-		author={Roughgarden, Tim},
-		author={Zhang, Anthony Lee},
-		title={Automated Market Making and Loss-Versus-Rebalancing},
-		date={2022},
-		eprint={https://doi.org/10.48550/arXiv.2208.06046},
-	}
+    \bib{MiMoRoZh22}{article}{
+        author={Milionis, Jason},
+        author={Moallemi, Ciamac C.},
+        author={Roughgarden, Tim},
+        author={Zhang, Anthony Lee},
+        title={Automated Market Making and Loss-Versus-Rebalancing},
+        date={2022},
+        eprint={https://doi.org/10.48550/arXiv.2208.06046},
+    }
 
-	\bib{Ms}{article}{
-		author={Morgan Stanley},
-		title={Morgan Stanley Dark Pools},
-		eprint={https://www.morganstanley.com/disclosures/morgan-stanley-dark-pools},
-	}
+    \bib{Ms}{article}{
+        author={Morgan Stanley},
+        title={Morgan Stanley Dark Pools},
+        eprint={https://www.morganstanley.com/disclosures/morgan-stanley-dark-pools},
+    }
 
-	\bib{MsAts}{article}{
-		author={Morgan Stanley},
-		title={MS Pool ATS-N Filings},
-		eprint={https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&filenum=013-00117}
-	}
+    \bib{MsAts}{article}{
+        author={Morgan Stanley},
+        title={MS Pool ATS-N Filings},
+        eprint={https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&filenum=013-00117}
+    }
 
     \bib{Pa22a}{article}{
         author={Park, Andreas},
@@ -1970,22 +2066,22 @@ selection (quantified and characterized by the LVR paper)
         eprint={https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4148717},
     }
 
-	\bib{Wa}{article}{
-		title={Walrasian auction},
-		eprint={https://en.wikipedia.org/wiki/Walrasian_auction},
-	}
+    \bib{Wa}{article}{
+        title={Walrasian auction},
+        eprint={https://en.wikipedia.org/wiki/Walrasian_auction},
+    }
 
-	\bib{XiStWh05}{article}{
-		author={Xia, Mu},
-		author={Stallaert, Jan},
-		author={Whinston, Andrew B.},
-		title={Solving the combinatorial double auction problem},
-		journal={Journal of Operation Research},
-		date={2005},
-		pages={239-251},
-		volume={164},
-		eprint={https://www.sciencedirect.com/science/article/abs/pii/S0377221703008981},
-	}
+    \bib{XiStWh05}{article}{
+        author={Xia, Mu},
+        author={Stallaert, Jan},
+        author={Whinston, Andrew B.},
+        title={Solving the combinatorial double auction problem},
+        journal={Journal of Operation Research},
+        date={2005},
+        pages={239-251},
+        volume={164},
+        eprint={https://www.sciencedirect.com/science/article/abs/pii/S0377221703008981},
+    }
 
     \bib{Yo20}{article}{
         author={Young, Jamie E.},
@@ -1993,6 +2089,20 @@ selection (quantified and characterized by the LVR paper)
         date={October 2020},
         eprint={https://professorjey.com/assets/papers/AMM_Order_Book_Equivalence_DRAFT_2020_10_16.pdf},
     }
+
+    \bib{BuCrSh15}{article}{
+        author={Budish, Eric B.},
+        author={Cramton, Peter },
+        author={Shim, John J.},
+        title={The High-Frequency Trading Arms Race: Frequent Batch Auctions as a Market Design Response},
+        date={2015},
+    }
+
+    %    \bib{}{article}{
+    %      author={,},
+    %      title={},
+    %      date={},
+    %    }
 
 \end{thebibliography}
 
