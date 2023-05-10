@@ -8,17 +8,19 @@ This document contains links to more in-depth documentation.
 
 ## How to start developing
 
-- This contains the absolute minimal amount of info to start developing
+This contains the absolute minimal amount of info to start developing
 
 - [How to organize your work](How_to_organize_your_work.md)
 
 - [Quick start for developing](Quick_start_for_developing.md)
 
-- [Sorrentum Python coding style guide](https://github.com/sorrentum/sorrentum/blob/master/docs/Coding_Style_Guide.md)
+- [Sorrentum Python coding style guide](Coding_Style_Guide.md)
+
+- [Git workflow and best practices](Git_workflow_and_best_practices.md)
 
 ## Learn how to become efficient at developing
 
-- This contains a set of resources that over time will make 10x more productive
+This contains a set of resources that over time will make 10x more productive
 
 - TODO: Docker
 
