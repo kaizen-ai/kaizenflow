@@ -14,6 +14,7 @@
 
 
 <!--te-->
+
 # Choose a crypto wallet type
 
 - Https://academy.binance.com/en/articles/crypto-wallet-types-explained
@@ -71,7 +72,6 @@ https://bitcoin.org/en/choose-your-wallet
 # Send a crypto wallet address
 
 Send your crypto wallet address to GP together with an invoice via email. E.g.,
-
 ```
 Hi GP,
 
