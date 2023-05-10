@@ -75,7 +75,7 @@ Send your crypto wallet address to GP together with an invoice via email. E.g.,
 ```
 Hi GP,
 
-Please my invoice for the period [a, b] attached. I would like to receive the money in USDT ERC20.
+Please find my invoice for the period [a, b] attached. I would like to receive the money in USDT ERC20.
 
 My crypto wallet address is: 0x5ce3d650703f745B9C0cf20E322204b00bF59205
 ```
@@ -98,7 +98,7 @@ money to your bank account
 E.g.,
 
 - [Built-in Exodus crypto withdrawal
-  service][https://www.exodus.com/support/article/2435-sell-crypto-moonpay#mobile]
+  service](https://www.exodus.com/support/article/2435-sell-crypto-moonpay#mobile)
 - [Coinbase cash out serivce](https://help.coinbase.com/en/coinbase/trading-and-funding/buying-selling-or-converting-crypto/how-do-i-sell-or-cash-out-my-digital-currency)
 - [Binance P2P](https://p2p.binance.com/en/trade/all-payments/USDT?fiat=USD)
 
