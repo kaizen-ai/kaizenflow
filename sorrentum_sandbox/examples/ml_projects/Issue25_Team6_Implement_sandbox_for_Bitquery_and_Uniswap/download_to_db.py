@@ -83,7 +83,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
 
     # Save data to DB.
     db_conn = sisebidb.get_db_connection()
-    saver = sisebidb.PostgresDataFrameSaver(db_conn)
+    saver = sisebidb.PostgresDataFrameSaver(db_conn,target_table)
     saver.save(raw_data, args.target_table)
 
 

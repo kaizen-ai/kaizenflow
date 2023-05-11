@@ -20,14 +20,14 @@ import sorrentum_sandbox.common.download as sinsadow
 import sorrentum_sandbox.common.save as sinsasav
 
 
-def get_uniswap_table_query() -> str:
+def get_uniswap_table_query(table_name:str) -> str:
     """
     Get SQL query to create GraphQL API table.
 
     This table contains the data as it is downloaded.
     """
     query = """
-    CREATE TABLE IF NOT EXISTS uniswap_table(
+    CREATE TABLE IF NOT EXISTS %s(
             tradeIndex INT,
             block_timestamp_time TIMESTAMP,
             block_height INT,
@@ -44,7 +44,7 @@ def get_uniswap_table_query() -> str:
             transaction_to_address VARCHAR(255) NOT NULL,
             transaction_txFrom_address VARCHAR(255) NOT NULL
             )
-            """
+            """ % table_name
     return query
 
 
@@ -76,14 +76,14 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
     Save Pandas DataFrame to a PostgreSQL using a provided DB connection.
     """
 
-    def __init__(self, db_connection: str) -> None:
+    def __init__(self, db_connection: str,table_name:str) -> None:
         """
         Constructor.
 
         :param db_conn: DB connection
         """
         self.db_conn = db_connection
-        self._create_tables()
+        self._create_tables(table_name)
 
     def save(
         self, data: sinsadow.RawData, db_table: str, *args: Any, **kwargs: Any
@@ -105,6 +105,18 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         extras.execute_values(cursor, query, values)
         self.db_conn.commit()
 
+    def _create_tables(self,table_name: str) -> None:
+        """
+        Create DB data tables to store data.
+
+        Note that typically table creation would not be handled in the same place
+        as downloading the data, but as an example this suffices.
+        """
+        cursor = self.db_conn.cursor()
+        
+        query = get_uniswap_table_query(table_name)
+        cursor.execute(query)
+
     @staticmethod
     def _create_insert_query(df: pd.DataFrame, db_table: str) -> str:
         """
@@ -121,10 +133,8 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         query = f"INSERT INTO {db_table}({columns}) VALUES %s"
         return query
 
-    def _create_tables(self) -> None:
-        """
-        Create DB data tables to store data.
 
+<<<<<<< Updated upstream
         Note that typically table creation would not be handled in the same place
         as downloading the data, but as an example this suffices.
         """
@@ -132,6 +142,9 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         #
         query = get_uniswap_table_query()
         cursor.execute(query)
+=======
+        
+>>>>>>> Stashed changes
 
 
 # #############################################################################
