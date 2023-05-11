@@ -1,95 +1,95 @@
 # Introduction
 
-In the following we use the abbreviations below:
-- GH = GitHub
-- ZH = ZenHub
-- PR = Pull Request
-- RP = Responsible party (tech lead)
+- In the following we use the abbreviations below:
+  - GH = GitHub
+  - ZH = ZenHub
+  - PR = Pull Request
+  - RP = Responsible party (Team Leader)
 
-Everything we work on comes as a GitHub task
-- We file tasks and then prioritize and distribute the workload
-- We try to always work on high priority (aka, P0) tasks
-- Issues vs bugs vs tasks
-    - We call GitHub Issues "issues", and "tasks", (sometimes "tickets") interchangeably. We avoid to call them bugs since many times we use GitHub to track ideas, activities, and improvements, and not only defects in the code
-    - The best names are "tasks" and "issues"
+- Everything we work on comes as a GH task
+  - We file tasks and then prioritize and distribute the workload
+  - We try to always work on high priority (aka, P0) tasks
+  - Issues vs bugs vs tasks
+      - We call GH Issues "issues", and "tasks", (sometimes "tickets") interchangeably. We avoid to call them bugs since many times we use GH to track ideas, activities, and improvements, and not only defects in the code
+      - The best names are "tasks" and "issues"
 
-[ZenHub](https://app.zenhub.com/workspaces/cm-615371012ed326001e044788/board?repos=297496097,399815537&showPRs=false&showReviewers=false) for project management
-- We use ZenHub as project management layer on top of GitHub
-- Please install the [ZenHub extension](https://www.zenhub.com/extension) for GitHub. This is going to make your life easier
-
-### `# TODO(Dan): Add a pic with example as in Gdoc.`
+- [ZenHub](https://app.zenhub.com/workspaces/cm-615371012ed326001e044788/board?repos=586614470) for project management
+  - We use ZH as project management layer on top of GH
+  - Please install the [ZH extension](https://www.zenhub.com/extension) for GH. This is going to make your life easier
 
 # Concepts
 
 ## Epic
 
 - An Epic pulls together Issues that are somehow related by their topic
-- We distinguish Master Epics (e.g., "INFRA") and sub-Epics (e.g., "INFRA - AWS")
-- See the current list of Epics on GH [here](https://github.com/cryptokaizen/cmamp/issues?q=is%3Aopen+is%3Aissue+label%3AEpic) and on ZH [here](https://github.com/cryptokaizen/cmamp/issues?q=is%3Aopen+is%3Aissue+label%3AEpic#workspaces/cm-615371012ed326001e044788/board?epics:settings=epicsOnly&filterLogic=any&repos=399815537)
+- We distinguish Master Epics (e.g., `WEB3`) and sub-Epics (e.g., `WEB3 - DaoCross v0.1`)
+- See the current list of Epics on GH [here](https://github.com/cryptokaizen/cmamp/issues?q=is%3Aopen+is%3Aissue+label%3AEpic)
 - We maintain all the information about what the Epic is about in its description
 
 ### Master Epics
 
 - Master Epics are long-running Epics (i.e., projects)
+  - E.g., `WEB3`
 - Each issue should belong to at least one Epic: either a sub-epic or a master Epic
     - There is no need to add an issue to a Master Epic if it is already added to a sub-epic
 
 ### Sub-epics
 
 - Master Epics can be broken down into smaller Epics (=sub-epics)
-  - E.g.,: `IM - V2`
-- Their titles should follow the pattern: `XYZ -`, where XYZ is a master Epic title
-- Epics and sub-epics are typed as "EPIC - Subepic", i.e., the master epic is capitalized and the sub-epics are capitalized lower-case
+  - E.g., `WEB3 - DaoCross v0.1`
+- Their titles should follow the pattern: `XYZ - ABC v*`, where:
+  - `XYZ` - master Epic title
+  - `ABC` - sub-epic title
+  - `v*` - version
+- Epics and sub-epics are typed as `EPIC - Sub-Epic`, i.e., the master epic is capitalized and the sub-epics are capitalized lower-case
 - Sub-epics should have a short title and a smaller scope
-- Some sub-epics are related to short term milestones or releases (e.g., IM - V1.0.1), other sub-epics are for long-running activities (e.g., IM - DB)
-- Sub-epics should belong to a Master Epic in ZenHub
-  - A sub-epic can be moved to `Done` only if all issues nested in it are moved to `Done`
+- Some sub-epics are related to short term milestones or releases (e.g., `WEB3 - DaoCross - v0.1`), other sub-epics are for long-running activities (e.g., `WEB3 - Good First Issue`)
+- Sub-epics should belong to a Master Epic in ZH
+  - A sub-epic can be moved to `Done/Pre-prod` only if all issues nested in it are moved to `Done/Pre-prod`
 
 ## Issue
 
 - Issue is a piece of work to be done.
 - Issues are combined into Epics by topic
 - An issue has certain characteristics, i.e. labels
-- An issue has a progress status, i.e. ZH pipeline (e.g., "Product backlog", "In progress", "Done")
+- An issue has a progress status, i.e. ZH pipeline (e.g., `Product backlog (P1)`, `In progress`, `Done/Pre-prod`)
 - PRs are linked to work needed to complete an issue 
 
 ## Label
 
-- Labels are attributes of an issue (or PR), e.g., `documentation`, `reading`, `P0`, etc.
-- See the current list of labels and their descriptions [here](https://github.com/cryptokaizen/cmamp/labels).
-  - `# TODO(Dan): Add a pic with example as in Gdoc.`
+- Labels are attributes of an issue (or PR), e.g., `good first issue`, `PR_for_reviewers`, `duplicate`, etc.
+- See the current list of labels and their descriptions [here](https://github.com/sorrentum/sorrentum/labels)
 
 ## Pipeline
 
-A ZH Pipeline represents the "progress" status of an Issue in our process.
-
-We have the following Pipelines on the ZH board:
-- New Issues
-    - Any new GH Issue with unclear Epic / Pipeline goes here
-- Icebox (P2)
-    - Low priority, unprioritized issues
-- Product Backlog (P1)
-    - Issues of medium priority at the moment
-- Background
-    - Tasks one can do in background, e.g. reading, updating documentation, etc.
-- Sprint backlog (P0)
-    - Issues of high priority at the moment
-- In Progress
-    - Issues that we are currently working on
-- Review/QA
-    - Issues opened for review and testing
-    - Code is ready to be deployed pending feedback
-- Done
-    - Issues that are done and are waiting for closing
-- Epics
-    - Both Master Epics and Sub-epics
-- Closed
-    - Issues that are done and don't need a follow-up
-    - GP/RPs are responsible for closing
+- A ZH Pipeline represents the "progress" status of an Issue in our process
+- We have the following Pipelines on the ZH board:
+  - `New Issues`
+      - Any new GH Issue with unclear Epic / Pipeline goes here
+  - `Icebox (P2)`
+      - Low priority, unprioritized issues
+  - `Product Backlog (P1)`
+      - Issues of medium priority at the moment
+  - `Background`
+      - Tasks one can do in background, e.g. reading, updating documentation, etc.
+  - `Sprint backlog (P0)`
+      - Issues of high priority at the moment
+  - `In Progress`
+      - Issues that we are currently working on
+  - `Review/QA`
+      - Issues opened for review and testing
+      - Code is ready to be deployed pending feedback
+  - `Done/Pre-prod`
+      - Issues that are done and are waiting for closing
+  - `Epics`
+      - Both Master Epics and Sub-epics
+  - `Closed`
+      - Issues that are done and don't need a follow-up
+      - GP/RPs are responsible for closing
 
 ## PR
 
-A pull request is an event  where a contributor asks to review code they want to merge into a project
+- A pull request is an event  where a contributor asks to review code they want to merge into a project
 
 # Issue workflows
 
@@ -105,21 +105,19 @@ A pull request is an event  where a contributor asks to review code they want to
   - What the problem is
   - Why the outcome is different from what you expected
 - Use check boxes for "small" actions that need to be tracked in the issue (not worth their own bug)
-    - An issue should be closed only after all the checkboxes have been addressed
-    - `# TODO(Dan): Add a pic with example as in Gdoc.`
+  - An issue should be closed only after all the checkboxes have been addressed
 - We use the `FYI @...` syntax to add "watchers"
   - E.g., `FYI @cryptomtc` so that he receives notifications for this issue
   - Authors and assignees receive all the emails in any case
   - In general everybody should be subscribed to receiving all the notifications and you can quickly go through them to know what's happening around you
-  - `# TODO(Dan): Add a pic with example as in Gdoc.`
 - Assign an Issue to the right person for re-routing
   - There should be a single assignee to a bug so we know who needs to do the work
   - Assign GP/current RPs if not sure
 - Assign an Issue to one of the pipelines, ideally based on the urgency
 - If you are not sure, leave it unassigned but `@tag` GP / RPs to make sure we can take care of it
 - Assign an Issue to the right Epic and Label
-    - Use `blocking` label when an issue needs to be handled immediately, i.e. it prevents you from making progress
-    - If you are unsure then you can leave it empty, but `@tag` GP / RPs to make sure we can re-route and improve the Epics/Labels
+  - Use `Blocking` label when an issue needs to be handled immediately, i.e. it prevents you from making progress
+  - If you are unsure then you can leave it empty, but `@tag` GP / RPs to make sure we can re-route and improve the Epics/Labels
 
 ## Updating an issue
 
@@ -136,19 +134,17 @@ A pull request is an event  where a contributor asks to review code they want to
 
 ## Closing an issue
 
-- A task is closed when the pull request has been reviewed and merged into `master`
-- When, in your opinion, there is no more work to be done on your side on an Issue, please move it to the `Done` or `Review/QA` pipeline, but do not close it
-    - GP/RPs will close it after review
+- A task is closed when PR has been reviewed and merged into `master`
+- When, in your opinion, there is no more work to be done on your side on an Issue, please move it to the `Done/Pre-prod` or `Review/QA` pipeline, but do not close it
+  - GP/RPs will close it after review
 - If you made specific assumptions, or if there are loose ends, etc., add a `TODO(user) `or file a follow-up bug
 - Done means that something is DONE, not 99% done
-    - It means that the code is tested, readable and usable by other teammates
+  - It means that the code is tested, readable and usable by other teammates
 - Together we can decide that 99% done is good enough, but it should be a conscious decision and not come as a surprise
 
 # PR workflows
 
 ## PR labels 
-
-### `# TODO(Dan): Update for Sorrentum.`
 
 - `PR_for_authors`
     - There are changes to be addressed by an author of a PR
@@ -159,61 +155,63 @@ A pull request is an event  where a contributor asks to review code they want to
 
 ## Filing a new PR
 
-Implement a feature in a branch (not master), once it is ready for review push it and file a PR via GitHub interface
+### General tips
 
-We have invoke tasks to automate some of these tasks:
-```
-> i git_create_branch -i 828
-> i git_create_branch -b Cmamp723_hello_world
-> i gh_create_pr
-```
+- Implement a feature in a branch (not master), once it is ready for review push it and file a PR via GH interface
+- We have invoke tasks to automate some of these tasks:
+  ```
+  > i git_create_branch -i 828
+  > i git_create_branch -b Cmamp723_hello_world
+  > i gh_create_pr
+  ```
+- If you want to make sure you are going in a right direction or just to confirm the interfaces you can also file a PR to discuss
+- Mark PR as draft if it is not ready, use the `convert to draft` button
 
-If you want to make sure you are going in a right direction or just to confirm the interfaces you can also file a PR to discuss 
+### Filing process
 
-- Mark it as draft if it is not ready, use the `convert to draft` button
-  - `# TODO(Dan): Add a pic with example as in Gdoc.`
 - Add a description to help reviewers to understand what it is about and what you want the focus to be
+  - Add a pointer in the description to the issue that PR is related to - this will ease the GH navigation for you and reviewers
 - Leave the assignee field empty
+  - This will be done by RPs
 - Add reviewers to the reviewers list
-    - For optional review just do `@FYI` `person_name` in the description
+  - For optional review just do `@FYI` `person_name` in the description
 - Add a corresponding label
-    - If it is urgent/blocking, use the `blocking` label 
-- Make sure that the tests pass
+  - Usually the first label in the filed PR is `PR_for_reviewers`
+  - If it is urgent/blocking, use the `Blocking` label 
+- Make sure that the corresponding tests pass
 - Always lint before asking for a review
 - Link a PR to an issue via ZH plugin feature 
-  - `# TODO(Dan): Add a pic with example as in Gdoc.`
+  - `# TODO(Dan): Add a pic with example.`
 - If the output is a notebook:
-    - Publish a notebook, see [here](https://docs.google.com/document/d/1b3RptKVK6vFUc8upcz3n0nTZhTO0ZQ-Ay5I01nCp5WM/edit#heading=h.oi342wm38z0a)
-    - Attach a cmd line to open a published notebook, see [here](https://docs.google.com/document/d/1b3RptKVK6vFUc8upcz3n0nTZhTO0ZQ-Ay5I01nCp5WM/edit#heading=h.i7m2jg6llfl2)
+  - Publish a notebook, see [here](https://docs.google.com/document/d/1b3RptKVK6vFUc8upcz3n0nTZhTO0ZQ-Ay5I01nCp5WM/edit#heading=h.oi342wm38z0a)
+  - Attach a cmd line to open a published notebook, see [here](https://docs.google.com/document/d/1b3RptKVK6vFUc8upcz3n0nTZhTO0ZQ-Ay5I01nCp5WM/edit#heading=h.i7m2jg6llfl2)
 
 ## Review
 
-A reviewer should check the code:
-- Architecture
-- Conformity with specs
-- Code style conventions
-- Interfaces
-- Mistakes
-- Readability
-
-There are 2 possible outcomes of a review:
-- There are changes to be addressed by author
+- A reviewer should check the code:
+  - Architecture
+  - Conformity with specs
+  - Code style conventions
+  - Interfaces
+  - Mistakes
+  - Readability
+- There are 2 possible outcomes of a review:
+  - There are changes to be addressed by author
     - A reviewer leaves comments to the code 
     - Marks PR as `PR_for_authors` 
-- A PR is ready to be merged:
+  - A PR is ready to be merged:
     - Pass it to integrators and mark it as `PR_for_integrators`
+      - Usually is placed by RPs after they approve PR
 
 ## Addressing comment
 
-If the reviewer's comment is clear to the author and agreed upon:
-- The author addresses the comment with a code change and after changing the code (everywhere the comment it applies) marks it as RESOLVED on the GitHub interface
-- Here we trust the authors to do a good job and to not skip / lose comments
-- If the comment needs further discussion, the author adds a note explaining why he/she disagrees and the discussion continues until consensus is reached
-
-Once all comments are addressed:
-- Re-request the review
-- Mark it as `PR_for_reviewers`
-
+- If the reviewer's comment is clear to the author and agreed upon:
+  - The author addresses the comment with a code change and after changing the code (everywhere the comment it applies) marks it as `RESOLVED` on the GH interface
+  - Here we trust the authors to do a good job and to not skip / lose comments
+  - If the comment needs further discussion, the author adds a note explaining why he/she disagrees and the discussion continues until consensus is reached
+- Once all comments are addressed:
+  - Re-request the review
+  - Mark it as `PR_for_reviewers`
 
 ## Coverage reports in PRs - discussion 
 
@@ -221,7 +219,8 @@ We should start posting coverage reports in PRs.
 
 The suggested process is:
 - PR’s author posts coverage stats before (from master) and after the changes in the format below. The report should contain only the files that were touched in a PR.
-    - We need to do [#853 ](https://github.com/cryptokaizen/cmamp/issues/853)first
+    - We have `run_coverage_report` invoke
+      - `TODO(*): Enable for Sorrentum and add usage examples.`
     - Maybe we can automate it somehow, e.g., with GH actions. But we need to start from something.
       ```
       Name                                    Stmts   Miss Branch BrPart  Cover
@@ -250,4 +249,3 @@ The suggested process is:
       TOTAL                                    1562    274    252     30    80%
       ```
 - PR’s author also sends a link to S3 with the full html report so that a reviewer can check that the new lines added are covered by the tests
-    - We need to do [#795 ](https://github.com/cryptokaizen/cmamp/issues/795)first
