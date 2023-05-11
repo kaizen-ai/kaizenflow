@@ -16,7 +16,13 @@ This contains the absolute minimal amount of info to start developing
 
 - [Sorrentum Python coding style guide](Coding_Style_Guide.md)
 
+## Project management
+
+- [GitHub/ZenHub workflows](GitHub_ZenHub_workflows.md)
+  - How to use GitHub and ZenHub, file a PR, review GitHub/ZenHub workflows
+
 - [Git workflow and best practices](Git_workflow_and_best_practices.md)
+  - `git` workflows, branch management, troubleshooting, common procedures
 
 ## Learn how to become efficient at developing
 
