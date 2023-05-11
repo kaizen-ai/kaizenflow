@@ -1479,7 +1479,7 @@ currency pairs is reached.
 
 \begin{itemize}
 
-    \item Support for limit order: Yes
+    \item Support for limit orders: Yes
           \begin{itemize}
               \item TulipSwap supports limit orders natively
           \end{itemize}
@@ -1527,12 +1527,12 @@ currency pairs is reached.
               \item Discrete and frequent auctions minimize predatory
                     behaviors from HFT behavior \cite{BuCrSh15}
           \end{itemize}
-    \item Censoriship resistance: Yes
+    \item Censorship resistance: Yes
           \begin{itemize}
               \item The application runs on-chain and even if the web front-end is attacked
                     or disabled. The off-chain computation can be made robust using similar
                     approaches to distributed oracles, or even ported on-chain if gas prices
-                    are not an issue (e.g., using layer 2 solutions)
+                    are not an issue (e.g., using layer 2 solutions).
           \end{itemize}
 \end{itemize}
 
@@ -1540,7 +1540,7 @@ currency pairs is reached.
 \subsection{TulipCross}
 
 \begin{itemize}
-    \item Support for limit order: Yes
+    \item Support for limit orders: Yes
           \begin{itemize}
               \item TulipCross supports limit orders natively
           \end{itemize}
@@ -1548,44 +1548,44 @@ currency pairs is reached.
           \begin{itemize}
               \item The TulipCross optimization problem uses prices determined by
                     a lit exchange and thus there is a single clearing price for all
-                    the swaps. This does not allow to achieve maximal welfare for
-                    the traders involved in the swap
+                    the swaps. This does not allow achieving maximal welfare for
+                    the traders involved in the swap.
           \end{itemize}
     \item Liquidity pooling across tokens: High
           \begin{itemize}
-              \item TulipCross share the same behavior of TulipSwap from this point of view
+              \item TulipCross has the same behavior as TulipSwap from this point of view
           \end{itemize}
     \item Liquidity pooling across time: High
           \begin{itemize}
-              \item TulipCross share the same behavior of TulipSwap from this point of view
+              \item TulipCross has the same behavior as TulipSwap from this point of view
           \end{itemize}
     \item Trading efficiency: Medium
           \begin{itemize}
               \item The trading efficiency in matching trades is the same as the
-                    lit exchange on which price discovery is peformed (e.g., a
+                    lit exchange on which price discovery is performed (e.g., a
                     centralized exchange)
           \end{itemize}
     \item Transparency: Yes
           \begin{itemize}
-              \item TulipCross share the same behavior of TulipSwap from this point of view
+              \item TulipCross has the same behavior as TulipSwap from this point of view
           \end{itemize}
     \item Impermanent loss: No
           \begin{itemize}
-              \item TulipCross share the same behavior of TulipSwap from this point of view
+              \item TulipCross has the same behavior as TulipSwap from this point of view
           \end{itemize}
     \item Custodial risk: No
           \begin{itemize}
-              \item TulipCross share the same behavior of TulipSwap from this point of view
+              \item TulipCross has the same behavior as TulipSwap from this point of view
           \end{itemize}
     \item Rent extracted by high-frequency traders: Medium
           \begin{itemize}
-              \item TulipCross behaves as a dark pool of liquidity and thus it can be suscetible
+              \item TulipCross behaves as a dark pool of liquidity and thus it can be susceptible
                     to predatory behaviors, although mitigated by the discrete auction mechanism
-                    \ref{BuCrSh15}
+                    \cite{BuCrSh15}
           \end{itemize}
-    \item Censoriship resistance: No
+    \item Censorship resistance: No
           \begin{itemize}
-              \item TulipCross behaves as a dark pool of liquidity and thus it can be suscetible
+              \item TulipCross behaves as a dark pool of liquidity and thus it can be susceptible
                     to censorship resistance in the same way as the lit exchange on which
                     price discovery is carried out
           \end{itemize}
