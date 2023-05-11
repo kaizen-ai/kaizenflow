@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../node_modules/@chainlink/contracts/src/v0.7/ChainlinkClient.sol";
+import "../node_modules/@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 
 contract TwapVwapAdapter is ChainlinkClient {
+    using Chainlink for Chainlink.Request;
+
     uint256 public price;
     uint256 private fee;
     address private oracle;
@@ -11,15 +13,16 @@ contract TwapVwapAdapter is ChainlinkClient {
     bytes32 private jobIdVwap;
 
     
-    constructor(address _oracle, string memory _jobIdTwap, string memory _jobIdVwap, uint256 _fee) public {
-        setPublicChainlinkToken();
-        oracle = _oracle;
-        jobIdTwap = stringToBytes32(_jobIdTwap);
-        jobIdVwap = stringToBytes32(_jobIdVwap);
-        fee = _fee;
+    constructor() {
+        address sepoliaLINKContract = 0x779877A7B0D9E8603169DdbD7836e478b4624789;
+        setChainlinkToken(sepoliaLINKContract);
+        oracle = 0xa07c906a6c9eDCb21a03943586e8920D2d716E3D;
+        jobIdTwap = stringToBytes32("75d8ce9d26db4edc942b878b1c89ac05");
+        jobIdVwap = stringToBytes32("e3202058df5c4feea73fcf2c705a2fda");
+        fee = 0.1 * 1*10**18;
     }
     
-    function requestTwap(string _symbol, uint128 _startTimestamp, uint128 _endTimestamp) public returns (bytes32 requestId) {
+    function requestTwap(string memory _symbol, string memory _startTimestamp, string memory _endTimestamp) public returns (bytes32 requestId) {
         Chainlink.Request memory request = buildChainlinkRequest(jobIdTwap, address(this), this.fulfill.selector);
         // Set the parameters.
         request.add("symbol", _symbol);
@@ -28,7 +31,7 @@ contract TwapVwapAdapter is ChainlinkClient {
         return sendChainlinkRequestTo(oracle, request, fee);
     }
 
-    function requestVwap(string _symbol, uint128 _startTimestamp, uint128 _endTimestamp) public returns (bytes32 requestId) {
+    function requestVwap(string memory _symbol, string memory _startTimestamp, string memory _endTimestamp) public returns (bytes32 requestId) {
         Chainlink.Request memory request = buildChainlinkRequest(jobIdVwap, address(this), this.fulfill.selector);
         // Set the parameters.
         request.add("symbol", _symbol);
