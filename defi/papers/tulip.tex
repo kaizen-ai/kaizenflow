@@ -75,11 +75,21 @@
 \newcommand{\buy}{\textnormal{\texttt{buy}}}
 \newcommand{\sell}{\textnormal{\texttt{sell}}}
 \newcommand{\nan}{\textnormal{\texttt{nan}}}
-
+%
 \newcommand{\midpoint}{\mathrm{midpoint}}
+% Table icons.
+\newcommand{\trm}{\textcolor{red}{-}}
+\newcommand{\tyo}{\textcolor{yellow}{o}}
+\newcommand{\tgp}{\textcolor{green}{+}}
 
 % Use this if using `\contrib[]{...}`.
 %\makeatletter\let\@wraptoccontribs\wraptoccontribs\makeatother
+% https://tex.stackexchange.com/questions/418547/equal-contribution-using-thanks-with-llncs-class#418563
+\makeatletter
+\newcommand{\printfnsymbol}[1]{%
+  \textsuperscript{\@fnsymbol{#1}}%
+}
+\makeatother
 
 \begin{document}
 
@@ -87,8 +97,10 @@
 
 % TODO(gp): @paul feel free to add the "* Authors have contributed equally
 % or are in alphabetical order"
-\author{Giacinto Paolo Saggese}
-\author{Paul Smith}
+% \author[GP, Paul]{Giacinto Paolo Saggese$^{*}$ and Paul Smith$^{*}$}
+\author{Giacinto Paolo Saggese$^{*}$}
+\author{Paul Smith$^{*}$}
+\thanks{$^{*}$ The authors contributed equally to this work and are listed alphabetically.}
 
 \thanks{With contributions from
     Samarth KaPatel,
@@ -337,9 +349,7 @@ also performs the role of price discovery (TulipSwap).
 TulipCross is a decentralized liquidity pool that crosses buy and sell orders
 with respect to an external reference price, i.e., a price oracle. This allows
 traders to interact directly with each other and share price improvement with
-respect to exchanges, e.g., by trading at bid-ask midpoint. Additionally, order
-intentions are not publicly disclosed prior to a cross, which enables block or
-other high-volume traders to execute quickly with minimal market impact.
+respect to exchanges, e.g., by trading at bid-ask midpoint.
 
 \subsubsection{TulipSwap}
 TulipSwap performs price discovery by matching supply and demand at regular time
@@ -352,23 +362,33 @@ mechanism satisfies a collection of inequalities.
 A comparison between TulipCross and TulipSwap and other solutions for token
 swapping, namely limit-order books (e.g., centralized exchanges such as
 Binance) and automatic market-makers (e.g., Uniswap) is summarized below
-and discussed in detail in Section \ref{AlSoToSw}.
+and discussed in detail in Section \ref{comparison_section}.
 
-% TODO(gp): Update this table once the list of features in the intro is stable
 \begin{samepage}
     \begin{table}[h!]
         \centering
-        \begin{tabular}{lcccc}
-                                        & \emph{LOB}                 & \emph{AMM}                 & \emph{TulipSwap}          & \emph{TulipCross}            \\
+        \begin{tabular}{l|c|c|c|c|}
+                                                  & \emph{LOB} & \emph{AMM} & \emph{TulipSwap} & \emph{TulipCross} \\
             \hline
-            Low custodial risk              & \textcolor{red}{-}       & \textcolor{green}{+}      & \textcolor{green}{+}   & \textcolor{green}{+}      \\
-            High transparency                & \textcolor{red}{-}       & \textcolor{green}{+}    & \textcolor{green}{+} & \textcolor{yellow}{o} \\
-            Censorship resistance       & \textcolor{red}{-}        & \textcolor{green}{+}     & \textcolor{green}{+}  & \textcolor{red}{-}        \\
-            Intrinsic efficiency        & \textcolor{yellow}{o} & \textcolor{red}{-}       & \textcolor{green}{+} & \textcolor{yellow}{o} \\
-            Support for limit orders    & \textcolor{green}{+}     & \textcolor{red}{-}        & \textcolor{green}{+}  & \textcolor{green}{+}     \\
-            Low risk of predatory behaviors & \textcolor{red}{-}      & \textcolor{yellow}{o}    & \textcolor{green}{+}  & \textcolor{yellow}{o} \\
-            No impermanent loss            & \textcolor{green}{+}      & \textcolor{red}{-}       & \textcolor{green}{+}   & \textcolor{green}{+}      \\
-            Multi-coin exchange support & \textcolor{red}{-}       & \textcolor{yellow}{o} & \textcolor{green}{+} & \textcolor{green}{+}    \\
+            Support for limit orders              & \tgp & \trm & \tgp & \tgp \\
+            \hline
+            Welfare maximization                  & \tyo & \trm & \tgp & \trm \\
+            \hline
+            Liquidity pooling across tokens       & \trm & \tyo & \tgp & \tgp \\
+            \hline
+            Liquidity pooling across time         & \tgp & \trm & \tgp & \tgp \\
+            \hline
+            Trading efficiency                    & \tyo & \trm & \tgp & \tyo \\
+            \hline
+            Transparency                          & \trm & \tgp & \tgp & \tgp \\
+            \hline
+            No impermanent loss                   & \trm & \trm & \tgp & \tgp \\
+            \hline
+            Low custodial risk                    & \trm & \tgp & \tgp & \tgp \\
+            \hline
+            No rent extraction                    & \trm & \trm & \tgp & \tyo \\
+            \hline
+            Censorship resistance and ease of use & \trm & \tgp & \tgp & \trm \\
             \hline
         \end{tabular}
     \end{table}
@@ -1106,7 +1126,7 @@ provided that
 
 % ###############################################################################
 
-\section{Formulation and solutions of swap problems}
+\section{Formulation and solution of TulipSwap and TulipCross problems}
 The general problem of determining the token equilibrium prices and the
 allocation among the swap participants can be formulated in terms of the
 inequalities on quantities and prices corresponding to the orders and on the
@@ -1469,8 +1489,8 @@ currency pairs is reached.
 % \subsection{Performing the swap}
 
 % ###############################################################################
-\section{Alternative solutions for token swapping}
-\label{AlSoToSw}
+\section{A comparison of token swapping solutions}
+\label{comparison_section}
 
 In this section, we expand upon the summary table introduced in \ref{comparison_table}.
 
@@ -1718,7 +1738,7 @@ In this section, we expand upon the summary table introduced in \ref{comparison_
 
 
 % ===============================================================================
-\subsection{Additional comments on AMMs}
+\subsubsection{Additional comments on AMMs}
 
 Some of the benefits of AMMs are:
 \begin{itemize}
