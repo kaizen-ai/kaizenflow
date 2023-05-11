@@ -134,17 +134,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         return query
 
 
-<<<<<<< Updated upstream
-        Note that typically table creation would not be handled in the same place
-        as downloading the data, but as an example this suffices.
-        """
-        cursor = self.db_conn.cursor()
-        #
-        query = get_uniswap_table_query()
-        cursor.execute(query)
-=======
         
->>>>>>> Stashed changes
 
 
 # #############################################################################

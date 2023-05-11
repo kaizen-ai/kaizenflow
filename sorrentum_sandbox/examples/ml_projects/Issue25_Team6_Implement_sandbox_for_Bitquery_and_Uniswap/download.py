@@ -41,17 +41,17 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
     if live_flag:
         live_date = get_recent_timestamp(target_table)
         query_alter_1 = "since"
-        query_alter_2 = "%s" % live_date
+        query_alter_2 = "\"%s\"" % live_date
 
     # Alter query depending on if end_time is present
     elif end_time == None:
         query_alter_1 = "since"
-        query_alter_2 = "%s" % start_time
+        query_alter_2 = "\"%s\"" % start_time
     else:
         query_alter_1 = "between"
-        query_alter_2 = "[%s, %s]" % (start_time,end_time)
+        query_alter_2 = "[\"%s\", \"%s\"]" % (start_time,end_time)
 
-
+    print(query_alter_1,query_alter_2)
     # GraphQL API query to get Uniswap DEX data
     query = """
        query{
@@ -60,7 +60,7 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
         dexTrades(
             options: {desc: ["block.height", "tradeIndex"], limit: %d, offset: %d}
             protocol: {is: "Uniswap"}
-            date: {%s: "%s"},
+            date: {%s: %s},
         ) {
             timeInterval {
             minute
@@ -121,7 +121,7 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
 
     # # # initialize offset value
     # offset = 0
-
+    print(query % (limit, offset,query_alter_1, query_alter_2,time_format))
     # Stream in data until there are no more results
     while True:
         # Construct the API query with the current offset
