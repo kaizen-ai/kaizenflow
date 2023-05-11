@@ -11,6 +11,7 @@ import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hio as hio
 import common.download as sinsadow
+
 import download_kaiko as sisebido
 import common.save as sinsasav
 
@@ -38,7 +39,9 @@ class CsvDataFrameSaver(sinsasav.DataSaver):
         :param data: data to persists into CSV
         """
         hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
+
         signature = "tick_trades"
+
         signature += ".csv"
         hio.create_dir(self.target_dir, incremental=True)
         target_path = os.path.join(self.target_dir, signature)
@@ -75,6 +78,7 @@ def _add_download_args(
         type=str,
         help="Path to the target directory to store CSV data into",
     )
+
     return parser
 
 
@@ -98,7 +102,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Download data.
     start_timestamp = pd.Timestamp(args.start_timestamp)
     end_timestamp = pd.Timestamp(args.end_timestamp)
+
     downloader = sisebido.KaikoDownloader()
+r
     raw_data = downloader.download(start_timestamp, end_timestamp)
     # Save data as CSV.
     saver = CsvDataFrameSaver(args.target_dir)
