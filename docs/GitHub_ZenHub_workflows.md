@@ -50,7 +50,7 @@
 - An Epic pulls together Issues that are somehow related by their topic
 - We distinguish Master Epics (e.g., `WEB3`) and sub-Epics (e.g., `WEB3 - DaoCross v0.1`)
 - See the current list of Epics on GH
-  [here](https://github.com/cryptokaizen/cmamp/issues?q=is%3Aopen+is%3Aissue+label%3AEpic)
+  [here](https://github.com/sorrentum/sorrentum/issues?q=is%3Aopen+is%3Aissue+label%3AEpic+)
 - We maintain all the information about what the Epic is about in its description
 
 ### Master Epics
