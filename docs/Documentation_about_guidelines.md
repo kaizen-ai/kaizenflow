@@ -1,4 +1,4 @@
-# Documentation guidelines
+# Documentation about guidelines
 
 <!--ts-->
    * [Guidelines for writing workflows](#guidelines-for-writing-workflows)
