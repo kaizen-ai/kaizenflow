@@ -7,6 +7,7 @@ from pycoingecko import CoinGeckoAPI
 import json
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+
 import sorrentum_sandbox.common.client as sinsacli
 import sorrentum_sandbox.common.download as sinsadow
 import sorrentum_sandbox.common.save as sinsasav
@@ -18,7 +19,7 @@ def get_db_connection() -> Any:
     data node docker-compose.
     """
     db_connection = psycop.connect(
-        host="localhost",
+        host="host.docker.internal",
         dbname="airflow",
         port=5532,
         user="postgres",

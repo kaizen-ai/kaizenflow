@@ -75,8 +75,7 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - postgres
-    command:
-      tail -f /dev/null
+
 
 volumes:
   airflow-database-data:

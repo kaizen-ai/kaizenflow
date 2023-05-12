@@ -49,30 +49,21 @@ def bridge(data_interval_start):
 
     date = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
     utc_time_start = calendar.timegm(date.utctimetuple())
-    # start_str = str(data_interval_start)
-    # from_timestamp = pendulum.parse(start_str).int_timestamp
-    # Variable.update("from_timestamp","from_timest")
 
-    # logging.info("Current from_timestamp1 value is" + str(fromValue))
 
     logging.info("Setting Airflow Variable from_timestamp1 to " + str(utc_time_start))
     Variable.set('from_timestamp1', str(utc_time_start))
-    # os.system('airflow variables -set from_timestamp1 ' + str(utc_time_start))
+    
 
 def bridge2(data_interval_end):
 
     date = datetime.datetime.utcnow()
     utc_time = calendar.timegm(date.utctimetuple())
 
-    # data_str = str(data_interval_end)
-    # to_timestamp = pendulum.parse(data_str).int_timestamp
-    # toValue = Variable.get("to_timestamp1")
-
-    # logging.info("Current from_timestamp1 value is " + str(toValue))
 
     logging.info("Setting Airflow Variable to_timestamp1 to " + str(utc_time))
     Variable.set('to_timestamp1', str(utc_time))
-    # os.system('airflow variables -set from_timestamp1 ' + str(utc_time))
+ 
 
 
 
@@ -90,22 +81,26 @@ bash_command = [
     # Sleep 5 seconds to ensure the bar is finished.
     "sleep 5",
     "&&",
-    "/cmamp/sorrentum_sandbox/examples/ml_projects/Issue29_Team10_Implement_sandbox_for_coingecko/dowonload_to_db.py",
+    "cd /cmamp/ml_projects/Issue29_Team10_Implement_sandbox_for_coingecko",
+    "&&",
+    "${pythonpath}",
+    "&&",
+    "python",
+    "dowonload_to_db.py"
     "--id bitcoin",
     "--from_timestamp ${from_timestamp}",
     "--to_timestamp ${to_timestamp}",
-    "--target_table 'coingecko_historic'",
-    "-v DEBUG"
+    "--target_table 'coingecko_historic'"
 ]
 
 downloading_task = BashOperator(
     task_id="download.periodic_1min.postgres.ohlcv.coingecko",
     depends_on_past=False,
     bash_command=" ".join(bash_command),
-    env = {"from_timestamp":"{{ var.value.get('from_timestamp1') }}", "to_timestamp":"{{ var.value.get('to_timestamp1') }}"},
+    env = {"pythonpath":"{{ var.value.get('pythonpath') }}", "from_timestamp":"{{ var.value.get('from_timestamp1') }}", "to_timestamp":"{{ var.value.get('to_timestamp1') }}"},
     dag=dag,
 )
-
+# set downstream tasks to execute in order
 bridge_task.set_downstream(bridge_task2)
 bridge_task2.set_downstream(downloading_task)
 

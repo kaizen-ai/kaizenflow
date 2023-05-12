@@ -14,3 +14,4 @@ seaborn
 tqdm 
 yapf 
 apache-airflow
+requests
