@@ -20,7 +20,7 @@ database: airflow
 ####################################################
 
 ## In $GIT_ROOT/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap:
-## Rename .env_sample to .env and fill in your bitquery API_KEY
+## In .env, fill in your bitquery API_KEY
 
 ## go to sorrentum_sandbox directory
 cd ~\sorrentum_sandbox\devops
