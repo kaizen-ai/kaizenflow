@@ -63,6 +63,6 @@ This contains a set of resources that over time will make 10x more productive
 
 ### How to receive a crypto transfer
 
-- [Receive crypto payment](docs/Receive_crypto_payment.md)
+- [Receive crypto payment](Receive_crypto_payment.md)
 
 
