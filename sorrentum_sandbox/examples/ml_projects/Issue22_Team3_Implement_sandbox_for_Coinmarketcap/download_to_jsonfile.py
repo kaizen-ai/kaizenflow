@@ -3,7 +3,9 @@
 Download data from CoinMarketCap and save it as CSV locally.
 
 Use as:
-> download_to_jsonfile.py --start 1 --limit 100
+> download_to_jsonfile.py --id 1
+
+id: specific id of the cryptocurrency
 
 """
 import json
@@ -42,22 +44,13 @@ def _add_download_args(
     Add the command line options for exchange download.
     """
     parser.add_argument(
-        "--start",
+        "--id",
         action="store",
-        required=True,
+        required=False,
         type=int,
         help="Path to the target directory to store CSV data into",
     )
-    parser.add_argument(
-        "--limit",
-        action="store",
-        required=True,
-        type=int,
-        help="Path to the target directory to store CSV data into",
-    )
-
     return parser
-
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -78,7 +71,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     # Download data.
     downloader = coinmarketcap_download.CMCRestApiDownloader()
-    raw_data = downloader.download(args.start,args.limit)
+    raw_data = downloader.download(args.id)
     # Save data as CSV.
     save_to_json(raw_data.get_data())
 

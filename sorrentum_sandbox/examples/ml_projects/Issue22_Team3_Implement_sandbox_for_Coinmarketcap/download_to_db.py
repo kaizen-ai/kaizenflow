@@ -3,7 +3,7 @@
 Download CoinMarketCap data and save it into the MongoDB.
 
 Use as:
-> download_to_db.py --api_key 'change to your own api key' --collection_name cmc_data
+> download_to_db.py --id '1' --collection_name coinmarketcap_data
 """
 import argparse
 import logging
