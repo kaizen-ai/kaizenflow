@@ -58,3 +58,11 @@ This contains a set of resources that over time will make 10x more productive
 ## Arbitrage / Modeling: start developing
 
 ## Arbitrage / Modeling: in-depth docs
+
+## Payment
+
+### How to receive a crypto transfer
+
+- [Receive crypto payment](Receive_crypto_payment.md)
+
+
