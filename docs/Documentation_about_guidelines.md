@@ -27,13 +27,12 @@
 
 <!--te-->
 
-# Guidelines for writing workflows
+# Guidelines for describing workflows
 
 - Make no assumptions on the user's knowledge
   - Nothing is obvious to somebody who doesn't know
-- How to know if the process worked
-  - Add sections explaining how to verify that the process completed
-    successfully
+- Add ways to verify if a described process worked
+  - E.g., "do this and that, if this and that is correct should see this"
 - Have a trouble-shooting procedure
   - One approach is to always start from scratch
 
@@ -48,6 +47,8 @@
 ## Use nice 80 columns formatting for txt files
 
 - Vim has a `:gq` command to reflow the comments
+- There are plugins to take care of this for PyCharm
+- Our linter takes care of reflowing the comments as well
 
 ## Empty line after heading
 
@@ -77,11 +78,11 @@
 - We use `-` instead of `*`:
   - Bad
     ```
+    * Foo bar!
+    * hello
+    * world
+    * Baz
     ```
-* Foo bar!
-* hello
-* world
-* Baz ```
   - Good
     ```
     - Foo bar!
@@ -98,15 +99,15 @@
   - Command lines (e.g., `git push`)
 - When using a block of code use the write syntax highlighting
   - Bash
-    ```
+    ```bash
     `> git push`
     ```
   - Python
-          ```
-          if __name__ == "__main__":
-              predict_the_future()
-              print("done!")
-          ```
+    ```python
+    if __name__ == "__main__":
+        predict_the_future()
+        print("done!")
+     ```
 
 ## Indenting `code` style
 
@@ -114,7 +115,6 @@
   over the previous line
   - Bad `> git push`
   - Good
-
     `> git push`
 
 ## Improve your written English
@@ -133,7 +133,7 @@
 
 - You can:
   - Check in a branch and use GitHub to render it
-  - Use pycharm to edit, which also renders it side-by-side
+  - Use Pycharm to edit, which also renders it side-by-side
 
 ## Table of content (TOC)
 
