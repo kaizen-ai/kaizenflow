@@ -2,9 +2,9 @@ import argparse
 import requests
 
 # Enter your GitHub API access token and repository details
-access_token = "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"
-owner_username = "patel954"
-repo_name = "Joint_Saving_Account"
+access_token = "your_access_token_here"
+owner_username = "owner_username_here"
+repo_name = "repo_name_here"
 
 # API endpoint to check if a user is a collaborator
 collaborator_check_endpoint = f"https://api.github.com/repos/{owner_username}/{repo_name}/collaborators/{{collaborator}}"
