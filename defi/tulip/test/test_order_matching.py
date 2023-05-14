@@ -178,31 +178,35 @@ class TestMatchOrders1(hunitest.TestCase):
         
     def test3(self) -> None:
         """
-        All orders are randomly generated
+        All orders are randomly generated.
         """
         orders = []
-        # Randomly create orders.
         for i in range(6):
             order = ddacrord.get_random_order(seed=i)
             orders.append(order)
         clearing_price = 1
         base_token = "ETH"
         quote_token = "BTC"
+        # Match orders.
         actual_df = ddcrorma.match_orders(
             orders, clearing_price, base_token, quote_token
         )
+        # Check the unique tokens.
         actual_tokens = sorted(list(actual_df["token"].unique()))
         expected_tokens = ["BTC", "ETH"]
         self.assertEqual(actual_tokens, expected_tokens)
+        # Check that the DaoCross conservation law is fullfilled.
         btc_quantity = actual_df[actual_df["token"] == "BTC"]["amount"].sum()
         eth_quantity = actual_df[actual_df["token"] == "ETH"]["amount"].sum()
         self.assertEqual(btc_quantity * clearing_price, eth_quantity)
+        # Check the signature.
         actual_signature = hpandas.df_to_str(
             actual_df,
             print_shape_info=True,
             tag="df",
         )
         expected_signature = r"""
+        # df=
         index=[0, 7]
         columns=token,amount,from,to
         shape=(8, 4)
