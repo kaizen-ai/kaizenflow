@@ -1,116 +1,66 @@
-<!--ts-->
-
-
-
-
-<!--te-->
-
 <img width="100" alt="image" src="https://user-images.githubusercontent.com/33238329/216777823-851b28ed-7d7a-4b52-9d71-ab38d146edc3.png">
 
-Sorrentum is an open-Source DeFi protocol to build advanced financial applications
+Sorrentum is an open-source Web3 / DeFi protocol to build advanced financial
+applications using machine learning.
 
-- [Website](https://www.sorrentum.org)
-- [Welcome page](https://github.com/sorrentum/sorrentum/wiki/Welcome-to-the-Sorrentum-Project)
-- Some info on the procedures and organizations of the project:
-  https://github.com/sorrentum/sorrentum/wiki/Organization-and-procedures
+# Welcome
 
-## On-boarding process
-- Create an issue in the repo https://github.com/sorrentum/sorrentum with the
-  following checklist
-  ```
-  [ ] Subscribe to the Research Office hours calendar
-  [ ] Subscribe to Telegram channels (see below)
-  [ ] Read Sorrentum Python coding style guide (see below)
-  [ ] Learn how to do contribute code via GitHub Pull Requests (see below)
-  [ ] Get assigned a warm-up issue (see below)
-  ```
-  and go through the list one-by-one marking each item as done when it's actually
-  done
+Hello!
 
-## Python coding style guide
-- Read Sorrentum [Python coding style guide](https://docs.google.com/document/d/1R6jhFDbZKvyDdbnSQ9DA_N8417YF13hMI_Uw4quO4Xk)
+Nice to meet you.
 
-## Technologies used
-- [UMD DATA605 Big Data Systems](https://github.com/gpsaggese/umd_data605)
-  contains
-   [lectures](https://github.com/gpsaggese/umd_data605/tree/main/lectures) and
-   [tutorials](https://github.com/gpsaggese/umd_data605/tree/main/tutorials)
-   about most of the technologies we use in Sorrentum, e.g.,
-     - Dask
-     - Docker
-     - Docker Compose
-     - Git, github
-     - Jupyter
-     - MongoDB
-     - Pandas
-     - Postgres
-     - Apache Spark
-- You can go through the lectures and tutorials on a per-need basis, depending on
-  what it's useful for you to develop
+We are very happy that you are interested in the
+[Sorrentum Project](https://www.sorrentum.org/)!
 
-## How to contribute code (short version)
-- The proper way to contribute to the Sorrentum project is as follows:
-  - Create a branch of your assigned issues/bugs
-    - E.g., for a GitHub issue with the name "Expose the linter container to
-      Sorrentum contributors #63", the branch name should be
-      `SorrTask63_Expose_the_linter_container_to_Sorrentum_contributors`
-    - This step is automated through the invoke flow
-  - Push the code to your branch
-  - Make sure you are following our coding practices (see above)
-  - Make sure your branch is up-to-date with the master branch
-  - Create a Pull Request (PR) from your branch
-  - Add your assigned reviewers for your PR so that they are informed of your PR
-  - After being reviewed, it will be merged to the master branch by your reviewers
+The project aims to combine open-source development, startups, and brilliant
+students. We’ve seen this mixture of ingredients work exceptionally well at
+Stanford / Berkeley / MIT / etc, where every student seems to be trying to start
+a company on the side. Our goal is to bootstrap the same virtuous cycle outside
+Silicon Valley so that instead of just looking for a job, you create your own.
+We are still figuring out things as we go, and we are working with University of
+Maryland and other interested parties to provide internships, research
+assistantships, and development grants.
 
-## Sorrentum Docker container
+Besides the immediate financial benefit, this is a unique opportunity for you to:
 
-- We work in a Docker container that has all the required dependencies installed
-  - You can use PyCharm / VS code on your laptop to edit code, but you want to
-    run code inside the container since this makes sure everyone is running with
-    the same system and it makes it easy to share code and reproduce problems
+- Work on cutting-edge problems on machine learning and Web3
+- Learn about startups and how to start your own project
+- Write academic papers
+- Get internships and full-time positions at companies working on Sorrentum
+  applications or from our network
 
-  0) Build the thin environment
-  ```
-  > source dev_scripts/client_setup/build.sh
-  ```
+Most importantly, this is a unique way to be part of a community of individuals
+interested in building innovative products.
 
-  1) Activate the thin environment
-  ```
-  > source dev_scripts/setenv_amp.sh
-  ```
+# IMPORTANT
 
-  2) Pull the latest cmamp image
-  ```
-  > i docker_pull
-  or
-  > docker pull sorrentum/cmamp:latest
-  ```
+This is our only request to you.
 
-  3) Merge the latest version of master into your branch
+We understand that due to your commitments (e.g., classes, life), you might not
+be able to work on Sorrentum consistently. That’s ok. At the same time, please be
+aware that taking on a task means that:
 
-  ```
-  > i git_merge_master
-  ```
+1. The same task might not be available to your colleagues; and
 
-  To start a Docker container:
-  ```
-  > i docker_bash
-  ```
+2. We spend time helping, training, and mentoring you. So the energy we put into
+   helping you will be taken away from your colleagues. If you drop out of the
+   project, our effort could have been used for other teammates that committed
+   more firmly to making progress
 
-  To start a Jupyter server:
-  ```
-  > i docker_jupyter
-  ```
+In other words, if you are not sure you can commit a meaningful amount of time
+to Sorrentum (e.g., 10 hours / week), it is wise to wait to be sure you can do
+it. If you are excited and want to start, go for it, do your best, and we’ll
+make this experience the best possible for you.
 
-## Getting a first issue to work on (aka warm-up issue)
-- The goal is to get comfortable with the development system
 
-- Mark certain bugs as “good-as-first-bug”
-- Write unit tests
-- Copy-paste-modify
-- Simple refactoring
+# Useful links
 
-## Web3 / DeFi resources
-- The code for Web3 / DeFi projects is in
-  https://github.com/sorrentum/sorrentum/tree/master/defi
-- You can follow the [readme](https://github.com/sorrentum/sorrentum/tree/master/defi/README.md)
+- [Documentation entry point](/docs/README.md)
+- [Google drive](https://drive.google.com/drive/u/0/folders/1LXwKpmaFWJI-887IoA50sVC8-dw_1L8I)
+- [Collaborator list](https://docs.google.com/spreadsheets/d/1eRZJaj5-1g6W7w_Ay4UhJEdtAvrTTM1V94cKj6_Vwoc)
+- [Meeting room](https://umd.zoom.us/s/7447082187)
+- [Technical docs](https://docs.google.com/document/d/14Ul5uWd7NU1zZ9ZLHp1TerLMN7MOfS5MS5bSX-2rBQ8/edit)
+
+# Admin links
+
+- [Survey results](https://drive.google.com/drive/u/0/folders/1-aaFlPtlbJ-pUL-c5GQbjFgZRp9ZNRUk)
