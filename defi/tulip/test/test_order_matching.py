@@ -175,6 +175,52 @@ class TestMatchOrders1(hunitest.TestCase):
             dedent=True,
             fuzzy_match=True,
         )
+        
+    def test3(self) -> None:
+        """
+        All orders are randomly generated
+        """
+        orders = []
+        # Randomly create orders.
+        for i in range(6):
+            order = ddacrord.get_random_order(seed=i)
+            orders.append(order)
+        clearing_price = 1
+        base_token = "ETH"
+        quote_token = "BTC"
+        actual_df = ddcrorma.match_orders(
+            orders, clearing_price, base_token, quote_token
+        )
+        actual_tokens = sorted(list(actual_df["token"].unique()))
+        expected_tokens = ["BTC", "ETH"]
+        self.assertEqual(actual_tokens, expected_tokens)
+        btc_quantity = actual_df[actual_df["token"] == "BTC"]["amount"].sum()
+        eth_quantity = actual_df[actual_df["token"] == "ETH"]["amount"].sum()
+        self.assertEqual(btc_quantity * clearing_price, eth_quantity)
+        actual_signature = hpandas.df_to_str(
+            actual_df,
+            print_shape_info=True,
+            tag="df",
+        )
+        expected_signature = r"""
+        index=[0, 7]
+        columns=token,amount,from,to
+        shape=(8, 4)
+        token  amount  from  to
+        0   ETH       4    -3   0
+        1   BTC       4     0  -3
+        2   ETH       5    -3   0
+        ...
+        5   BTC       1     2  -3
+        6   ETH       8    -2   2
+        7   BTC       8     2  -2
+        """
+        self.assert_equal(
+            actual_signature,
+            expected_signature,
+            dedent=True,
+            fuzzy_match=True,
+        )
 
 
 class TestGetEquivalentOrder1(hunitest.TestCase):
