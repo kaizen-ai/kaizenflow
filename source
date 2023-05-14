@@ -1,0 +1,654 @@
+which python=/Users/jimmylkm/opt/anaconda3/bin/python
+python -v=Python 3.8.8
+which python3=/Users/jimmylkm/opt/anaconda3/bin/python3
+python3 -v=Python 3.8.8
+AM_SRC_DIR=/Users/jimmylkm/src
+# VENV_DIR=/Users/jimmylkm/src/venv/amp.client_venv
+# Deleting old virtual environment in '/Users/jimmylkm/src/venv/amp.client_venv'
+# Creating virtual environment in '/Users/jimmylkm/src/venv/amp.client_venv'
+Collecting pip
+  Using cached pip-23.1.2-py3-none-any.whl (2.1 MB)
+Installing collected packages: pip
+  Attempting uninstall: pip
+    Found existing installation: pip 20.2.3
+    Uninstalling pip-20.2.3:
+      Successfully uninstalled pip-20.2.3
+Successfully installed pip-23.1.2
+Collecting awscli>=1.19 (from -r dev_scripts/client_setup/requirements.txt (line 1))
+  Using cached awscli-1.27.133-py3-none-any.whl (4.1 MB)
+Collecting docker-compose>=1.29.0 (from -r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached docker_compose-1.29.2-py2.py3-none-any.whl (114 kB)
+Collecting invoke>=1.5.0 (from -r dev_scripts/client_setup/requirements.txt (line 3))
+  Using cached invoke-2.1.1-py3-none-any.whl (159 kB)
+Collecting jupyter (from -r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached jupyter-1.0.0-py2.py3-none-any.whl (2.7 kB)
+Collecting jupyter_contrib_nbextensions (from -r dev_scripts/client_setup/requirements.txt (line 5))
+  Using cached jupyter_contrib_nbextensions-0.7.0-py2.py3-none-any.whl
+Collecting pandas (from -r dev_scripts/client_setup/requirements.txt (line 6))
+  Using cached pandas-2.0.1-cp38-cp38-macosx_10_9_x86_64.whl (11.6 MB)
+Collecting poetry (from -r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached poetry-1.4.2-py3-none-any.whl (222 kB)
+Collecting pytest>="6.0.0" (from -r dev_scripts/client_setup/requirements.txt (line 8))
+  Using cached pytest-7.3.1-py3-none-any.whl (320 kB)
+Collecting pytest-cov (from -r dev_scripts/client_setup/requirements.txt (line 9))
+  Using cached pytest_cov-4.0.0-py3-none-any.whl (21 kB)
+Collecting pytest-instafail (from -r dev_scripts/client_setup/requirements.txt (line 10))
+  Using cached pytest_instafail-0.5.0-py3-none-any.whl (4.2 kB)
+Collecting pytest-xdist (from -r dev_scripts/client_setup/requirements.txt (line 11))
+  Using cached pytest_xdist-3.3.0-py3-none-any.whl (41 kB)
+Collecting python-dateutil (from -r dev_scripts/client_setup/requirements.txt (line 12))
+  Using cached python_dateutil-2.8.2-py2.py3-none-any.whl (247 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2023.5.0-py3-none-any.whl (28 kB)
+Collecting tqdm (from -r dev_scripts/client_setup/requirements.txt (line 14))
+  Using cached tqdm-4.65.0-py3-none-any.whl (77 kB)
+Collecting botocore==1.29.133 (from awscli>=1.19->-r dev_scripts/client_setup/requirements.txt (line 1))
+  Using cached botocore-1.29.133-py3-none-any.whl (10.7 MB)
+Collecting docutils<0.17,>=0.10 (from awscli>=1.19->-r dev_scripts/client_setup/requirements.txt (line 1))
+  Using cached docutils-0.16-py2.py3-none-any.whl (548 kB)
+Collecting s3transfer<0.7.0,>=0.6.0 (from awscli>=1.19->-r dev_scripts/client_setup/requirements.txt (line 1))
+  Using cached s3transfer-0.6.1-py3-none-any.whl (79 kB)
+Collecting PyYAML<5.5,>=3.10 (from awscli>=1.19->-r dev_scripts/client_setup/requirements.txt (line 1))
+  Using cached PyYAML-5.4.1-cp38-cp38-macosx_10_9_x86_64.whl (253 kB)
+Collecting colorama<0.4.5,>=0.2.5 (from awscli>=1.19->-r dev_scripts/client_setup/requirements.txt (line 1))
+  Using cached colorama-0.4.4-py2.py3-none-any.whl (16 kB)
+Collecting rsa<4.8,>=3.1.2 (from awscli>=1.19->-r dev_scripts/client_setup/requirements.txt (line 1))
+  Using cached rsa-4.7.2-py3-none-any.whl (34 kB)
+Collecting jmespath<2.0.0,>=0.7.1 (from botocore==1.29.133->awscli>=1.19->-r dev_scripts/client_setup/requirements.txt (line 1))
+  Using cached jmespath-1.0.1-py3-none-any.whl (20 kB)
+Collecting urllib3<1.27,>=1.25.4 (from botocore==1.29.133->awscli>=1.19->-r dev_scripts/client_setup/requirements.txt (line 1))
+  Using cached urllib3-1.26.15-py2.py3-none-any.whl (140 kB)
+Collecting distro<2,>=1.5.0 (from docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached distro-1.8.0-py3-none-any.whl (20 kB)
+Collecting docker[ssh]>=5 (from docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached docker-6.1.2-py3-none-any.whl (148 kB)
+Collecting dockerpty<1,>=0.4.1 (from docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached dockerpty-0.4.1-py3-none-any.whl
+Collecting docopt<1,>=0.6.1 (from docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached docopt-0.6.2-py2.py3-none-any.whl
+Collecting jsonschema<4,>=2.5.1 (from docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached jsonschema-3.2.0-py2.py3-none-any.whl (56 kB)
+Collecting python-dotenv<1,>=0.13.0 (from docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached python_dotenv-0.21.1-py3-none-any.whl (19 kB)
+Collecting requests<3,>=2.20.0 (from docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached requests-2.30.0-py3-none-any.whl (62 kB)
+Collecting texttable<2,>=0.9.0 (from docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached texttable-1.6.7-py2.py3-none-any.whl (10 kB)
+Collecting websocket-client<1,>=0.32.0 (from docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached websocket_client-0.59.0-py2.py3-none-any.whl (67 kB)
+Collecting notebook (from jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached notebook-6.5.4-py3-none-any.whl (529 kB)
+Collecting qtconsole (from jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached qtconsole-5.4.3-py3-none-any.whl (121 kB)
+Collecting jupyter-console (from jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached jupyter_console-6.6.3-py3-none-any.whl (24 kB)
+Collecting nbconvert (from jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached nbconvert-7.4.0-py3-none-any.whl (285 kB)
+Collecting ipykernel (from jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached ipykernel-6.23.0-py3-none-any.whl (150 kB)
+Collecting ipywidgets (from jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached ipywidgets-8.0.6-py3-none-any.whl (138 kB)
+Collecting ipython-genutils (from jupyter_contrib_nbextensions->-r dev_scripts/client_setup/requirements.txt (line 5))
+  Using cached ipython_genutils-0.2.0-py2.py3-none-any.whl (26 kB)
+Collecting jupyter-contrib-core>=0.3.3 (from jupyter_contrib_nbextensions->-r dev_scripts/client_setup/requirements.txt (line 5))
+  Using cached jupyter_contrib_core-0.4.2-py2.py3-none-any.whl
+Collecting jupyter-core (from jupyter_contrib_nbextensions->-r dev_scripts/client_setup/requirements.txt (line 5))
+  Using cached jupyter_core-5.3.0-py3-none-any.whl (93 kB)
+Collecting jupyter-highlight-selected-word>=0.1.1 (from jupyter_contrib_nbextensions->-r dev_scripts/client_setup/requirements.txt (line 5))
+  Using cached jupyter_highlight_selected_word-0.2.0-py2.py3-none-any.whl (11 kB)
+Collecting jupyter-nbextensions-configurator>=0.4.0 (from jupyter_contrib_nbextensions->-r dev_scripts/client_setup/requirements.txt (line 5))
+  Using cached jupyter_nbextensions_configurator-0.6.3-py2.py3-none-any.whl (466 kB)
+Collecting tornado (from jupyter_contrib_nbextensions->-r dev_scripts/client_setup/requirements.txt (line 5))
+  Using cached tornado-6.3.1-cp38-abi3-macosx_10_9_x86_64.whl (422 kB)
+Collecting traitlets>=4.1 (from jupyter_contrib_nbextensions->-r dev_scripts/client_setup/requirements.txt (line 5))
+  Using cached traitlets-5.9.0-py3-none-any.whl (117 kB)
+Collecting lxml (from jupyter_contrib_nbextensions->-r dev_scripts/client_setup/requirements.txt (line 5))
+  Using cached lxml-4.9.2-cp38-cp38-macosx_10_15_x86_64.whl (4.7 MB)
+Collecting pytz>=2020.1 (from pandas->-r dev_scripts/client_setup/requirements.txt (line 6))
+  Using cached pytz-2023.3-py2.py3-none-any.whl (502 kB)
+Collecting tzdata>=2022.1 (from pandas->-r dev_scripts/client_setup/requirements.txt (line 6))
+  Using cached tzdata-2023.3-py2.py3-none-any.whl (341 kB)
+Collecting numpy>=1.20.3 (from pandas->-r dev_scripts/client_setup/requirements.txt (line 6))
+  Using cached numpy-1.24.3-cp38-cp38-macosx_10_9_x86_64.whl (19.8 MB)
+Collecting build<0.11.0,>=0.10.0 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached build-0.10.0-py3-none-any.whl (17 kB)
+Collecting cachecontrol[filecache]<0.13.0,>=0.12.9 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached CacheControl-0.12.11-py2.py3-none-any.whl (21 kB)
+Collecting cleo<3.0.0,>=2.0.0 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached cleo-2.0.1-py3-none-any.whl (77 kB)
+Collecting crashtest<0.5.0,>=0.4.1 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached crashtest-0.4.1-py3-none-any.whl (7.6 kB)
+Collecting dulwich<0.22.0,>=0.21.2 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached dulwich-0.21.5-cp38-cp38-macosx_10_9_x86_64.whl (470 kB)
+Collecting filelock<4.0.0,>=3.8.0 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached filelock-3.12.0-py3-none-any.whl (10 kB)
+Collecting html5lib<2.0,>=1.0 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached html5lib-1.1-py2.py3-none-any.whl (112 kB)
+Collecting importlib-metadata>=4.4 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached importlib_metadata-6.6.0-py3-none-any.whl (22 kB)
+Collecting installer<0.8.0,>=0.7.0 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached installer-0.7.0-py3-none-any.whl (453 kB)
+INFO: pip is looking at multiple versions of poetry to determine which version is compatible with other requirements. This could take a while.
+Collecting poetry (from -r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached poetry-1.4.1-py3-none-any.whl (222 kB)
+  Using cached poetry-1.4.0-py3-none-any.whl (221 kB)
+Collecting installer<0.7.0,>=0.6.0 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached installer-0.6.0-py3-none-any.whl (452 kB)
+Collecting poetry (from -r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached poetry-1.3.2-py3-none-any.whl (218 kB)
+Collecting dulwich<0.21.0,>=0.20.46 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached dulwich-0.20.50-cp38-cp38-macosx_10_9_x86_64.whl (460 kB)
+Collecting importlib-metadata<5.0,>=4.4 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached importlib_metadata-4.13.0-py3-none-any.whl (23 kB)
+Collecting poetry (from -r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached poetry-1.3.1-py3-none-any.whl (218 kB)
+  Using cached poetry-1.3.0-py3-none-any.whl (218 kB)
+  Using cached poetry-1.2.2-py3-none-any.whl (212 kB)
+Collecting cachy<0.4.0,>=0.3.0 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached cachy-0.3.0-py2.py3-none-any.whl (20 kB)
+Collecting cleo<2.0.0,>=1.0.0a5 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached cleo-1.0.0a5-py3-none-any.whl (78 kB)
+Collecting crashtest<0.4.0,>=0.3.0 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached crashtest-0.3.1-py3-none-any.whl (7.0 kB)
+Collecting poetry (from -r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached poetry-1.2.1-py3-none-any.whl (211 kB)
+INFO: pip is looking at multiple versions of poetry to determine which version is compatible with other requirements. This could take a while.
+  Using cached poetry-1.2.0-py3-none-any.whl (210 kB)
+  Using cached poetry-1.1.15-py2.py3-none-any.whl (175 kB)
+Collecting cleo<0.9.0,>=0.8.1 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached cleo-0.8.1-py2.py3-none-any.whl (21 kB)
+Collecting clikit<0.7.0,>=0.6.2 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached clikit-0.6.2-py2.py3-none-any.whl (91 kB)
+Collecting keyring>=21.2.0 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached keyring-23.13.1-py3-none-any.whl (37 kB)
+Collecting packaging<21.0,>=20.4 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached packaging-20.9-py2.py3-none-any.whl (40 kB)
+Collecting pexpect<5.0.0,>=4.7.0 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached pexpect-4.8.0-py2.py3-none-any.whl (59 kB)
+Collecting pkginfo<2.0,>=1.4 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached pkginfo-1.9.6-py3-none-any.whl (30 kB)
+Collecting poetry-core<1.1.0,>=1.0.7 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached poetry_core-1.0.8-py2.py3-none-any.whl (425 kB)
+Collecting requests-toolbelt<0.10.0,>=0.9.1 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached requests_toolbelt-0.9.1-py2.py3-none-any.whl (54 kB)
+Collecting shellingham<2.0,>=1.1 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached shellingham-1.5.0.post1-py2.py3-none-any.whl (9.4 kB)
+Collecting tomlkit<1.0.0,>=0.7.0 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached tomlkit-0.11.8-py3-none-any.whl (35 kB)
+Collecting virtualenv<21.0.0,>=20.0.26 (from poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached virtualenv-20.23.0-py3-none-any.whl (3.3 MB)
+Collecting iniconfig (from pytest>="6.0.0"->-r dev_scripts/client_setup/requirements.txt (line 8))
+  Using cached iniconfig-2.0.0-py3-none-any.whl (5.9 kB)
+Collecting pluggy<2.0,>=0.12 (from pytest>="6.0.0"->-r dev_scripts/client_setup/requirements.txt (line 8))
+  Using cached pluggy-1.0.0-py2.py3-none-any.whl (13 kB)
+Collecting exceptiongroup>=1.0.0rc8 (from pytest>="6.0.0"->-r dev_scripts/client_setup/requirements.txt (line 8))
+  Using cached exceptiongroup-1.1.1-py3-none-any.whl (14 kB)
+Collecting tomli>=1.0.0 (from pytest>="6.0.0"->-r dev_scripts/client_setup/requirements.txt (line 8))
+  Using cached tomli-2.0.1-py3-none-any.whl (12 kB)
+Collecting coverage[toml]>=5.2.1 (from pytest-cov->-r dev_scripts/client_setup/requirements.txt (line 9))
+  Using cached coverage-7.2.5-cp38-cp38-macosx_10_9_x86_64.whl (200 kB)
+Collecting execnet>=1.1 (from pytest-xdist->-r dev_scripts/client_setup/requirements.txt (line 11))
+  Using cached execnet-1.9.0-py2.py3-none-any.whl (39 kB)
+Collecting six>=1.5 (from python-dateutil->-r dev_scripts/client_setup/requirements.txt (line 12))
+  Using cached six-1.16.0-py2.py3-none-any.whl (11 kB)
+Collecting aiobotocore~=2.5.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached aiobotocore-2.5.0-py3-none-any.whl (72 kB)
+Collecting fsspec==2023.5.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2023.5.0-py3-none-any.whl (160 kB)
+Collecting aiohttp!=4.0.0a0,!=4.0.0a1 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached aiohttp-3.8.4-cp38-cp38-macosx_10_9_x86_64.whl (359 kB)
+INFO: pip is looking at multiple versions of aiobotocore to determine which version is compatible with other requirements. This could take a while.
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2023.4.0-py3-none-any.whl (28 kB)
+Collecting fsspec==2023.4.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2023.4.0-py3-none-any.whl (153 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2023.3.0-py3-none-any.whl (27 kB)
+Collecting aiobotocore~=2.4.2 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached aiobotocore-2.4.2-py3-none-any.whl (66 kB)
+Collecting fsspec==2023.3.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2023.3.0-py3-none-any.whl (145 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2023.1.0-py3-none-any.whl (27 kB)
+Collecting fsspec==2023.1.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2023.1.0-py3-none-any.whl (143 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2022.11.0-py3-none-any.whl (27 kB)
+Collecting fsspec==2022.11.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2022.11.0-py3-none-any.whl (139 kB)
+Collecting aiobotocore~=2.4.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached aiobotocore-2.4.1-py3-none-any.whl (66 kB)
+  Using cached aiobotocore-2.4.0-py3-none-any.whl (65 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2022.10.0-py3-none-any.whl (27 kB)
+Collecting fsspec==2022.10.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2022.10.0-py3-none-any.whl (138 kB)
+INFO: pip is looking at multiple versions of aiobotocore to determine which version is compatible with other requirements. This could take a while.
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2022.8.2-py3-none-any.whl (27 kB)
+Collecting fsspec==2022.8.2 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2022.8.2-py3-none-any.whl (140 kB)
+INFO: This is taking longer than usual. You might need to provide the dependency resolver with stricter constraints to reduce runtime. See https://pip.pypa.io/warnings/backtracking for guidance. If you want to abort this run, press Ctrl + C.
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2022.8.1-py3-none-any.whl (27 kB)
+Collecting fsspec==2022.8.1 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2022.8.1-py3-none-any.whl (140 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2022.8.0-py3-none-any.whl (27 kB)
+Collecting fsspec==2022.8.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2022.8.0-py3-none-any.whl (140 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2022.7.1-py3-none-any.whl (27 kB)
+Collecting aiobotocore~=2.3.4 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached aiobotocore-2.3.4-py3-none-any.whl (64 kB)
+Collecting fsspec==2022.7.1 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2022.7.1-py3-none-any.whl (141 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2022.7.0-py3-none-any.whl (27 kB)
+Collecting fsspec==2022.7.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2022.7.0-py3-none-any.whl (141 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2022.5.0-py3-none-any.whl (27 kB)
+Collecting fsspec==2022.5.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2022.5.0-py3-none-any.whl (140 kB)
+Collecting aiobotocore~=2.3.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached aiobotocore-2.3.3.tar.gz (65 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+  Using cached aiobotocore-2.3.2.tar.gz (104 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+  Using cached aiobotocore-2.3.1.tar.gz (65 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+  Using cached aiobotocore-2.3.0.tar.gz (65 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2022.3.0-py3-none-any.whl (26 kB)
+Collecting aiobotocore~=2.2.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached aiobotocore-2.2.0.tar.gz (59 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting fsspec==2022.3.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2022.3.0-py3-none-any.whl (136 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2022.2.0-py3-none-any.whl (26 kB)
+Collecting aiobotocore~=2.1.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached aiobotocore-2.1.2.tar.gz (58 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting fsspec==2022.02.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2022.2.0-py3-none-any.whl (134 kB)
+Collecting aiobotocore~=2.1.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached aiobotocore-2.1.1.tar.gz (57 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+  Using cached aiobotocore-2.1.0.tar.gz (54 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2022.1.0-py3-none-any.whl (25 kB)
+Collecting fsspec==2022.01.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2022.1.0-py3-none-any.whl (133 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2021.11.1-py3-none-any.whl (25 kB)
+Collecting aiobotocore~=2.0.1 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached aiobotocore-2.0.1.tar.gz (54 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting fsspec==2021.11.1 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2021.11.1-py3-none-any.whl (132 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2021.11.0-py3-none-any.whl (25 kB)
+Collecting aiobotocore~=1.4.1 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached aiobotocore-1.4.2.tar.gz (52 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting fsspec==2021.11.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2021.11.0-py3-none-any.whl (132 kB)
+Collecting aiobotocore~=1.4.1 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached aiobotocore-1.4.1.tar.gz (52 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2021.10.1-py3-none-any.whl (26 kB)
+Collecting fsspec==2021.10.1 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2021.10.1-py3-none-any.whl (125 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2021.10.0-py3-none-any.whl (26 kB)
+Collecting fsspec==2021.10.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2021.10.0-py3-none-any.whl (125 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2021.9.0-py3-none-any.whl (26 kB)
+Collecting fsspec==2021.09.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2021.9.0-py3-none-any.whl (123 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2021.8.1-py3-none-any.whl (26 kB)
+Collecting fsspec==2021.08.1 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2021.8.1-py3-none-any.whl (119 kB)
+Collecting aiobotocore~=1.4.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached aiobotocore-1.4.0.tar.gz (51 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2021.8.0-py3-none-any.whl (26 kB)
+Collecting fsspec==2021.07.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2021.7.0-py3-none-any.whl (118 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2021.7.0-py3-none-any.whl (25 kB)
+Collecting aiobotocore>=1.0.1 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached aiobotocore-2.0.0.tar.gz (52 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+  Using cached aiobotocore-1.3.3.tar.gz (50 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+  Using cached aiobotocore-1.3.2.tar.gz (49 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+  Using cached aiobotocore-1.3.1.tar.gz (48 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+  Using cached aiobotocore-1.3.0.tar.gz (48 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+  Using cached aiobotocore-1.2.2.tar.gz (48 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+  Using cached aiobotocore-1.2.1.tar.gz (48 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+  Using cached aiobotocore-1.2.0.tar.gz (47 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+  Using cached aiobotocore-1.1.2-py3-none-any.whl (45 kB)
+  Using cached aiobotocore-1.1.1-py3-none-any.whl (45 kB)
+  Using cached aiobotocore-1.1.0-py3-none-any.whl (43 kB)
+  Using cached aiobotocore-1.0.7-py3-none-any.whl (42 kB)
+  Using cached aiobotocore-1.0.6-py3-none-any.whl (42 kB)
+  Using cached aiobotocore-1.0.5-py3-none-any.whl (42 kB)
+  Using cached aiobotocore-1.0.4-py3-none-any.whl (41 kB)
+  Using cached aiobotocore-1.0.3-py3-none-any.whl (40 kB)
+  Using cached aiobotocore-1.0.2-py3-none-any.whl (40 kB)
+  Using cached aiobotocore-1.0.1-py3-none-any.whl (40 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2021.6.1-py3-none-any.whl (25 kB)
+Collecting fsspec==2021.06.1 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2021.6.1-py3-none-any.whl (115 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2021.6.0-py3-none-any.whl (24 kB)
+Collecting fsspec==2021.06.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2021.6.0-py3-none-any.whl (114 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2021.5.0-py3-none-any.whl (24 kB)
+Collecting fsspec==2021.05.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2021.5.0-py3-none-any.whl (111 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-2021.4.0-py3-none-any.whl (23 kB)
+Collecting fsspec==2021.04.0 (from s3fs->-r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached fsspec-2021.4.0-py3-none-any.whl (108 kB)
+Collecting s3fs (from -r dev_scripts/client_setup/requirements.txt (line 13))
+  Using cached s3fs-0.6.0-py3-none-any.whl (23 kB)
+  Using cached s3fs-0.5.2-py3-none-any.whl (22 kB)
+  Using cached s3fs-0.5.1-py3-none-any.whl (21 kB)
+  Using cached s3fs-0.5.0-py3-none-any.whl (21 kB)
+  Using cached s3fs-0.4.2-py3-none-any.whl (19 kB)
+Collecting msgpack>=0.5.2 (from cachecontrol[filecache]<0.13.0,>=0.12.9->poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached msgpack-1.0.5-cp38-cp38-macosx_10_9_x86_64.whl (73 kB)
+Collecting lockfile>=0.9 (from cachecontrol[filecache]<0.13.0,>=0.12.9->poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached lockfile-0.12.2-py2.py3-none-any.whl (13 kB)
+Collecting pastel<0.3.0,>=0.2.0 (from clikit<0.7.0,>=0.6.2->poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached pastel-0.2.1-py2.py3-none-any.whl (6.0 kB)
+Collecting pylev<2.0,>=1.3 (from clikit<0.7.0,>=0.6.2->poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached pylev-1.4.0-py2.py3-none-any.whl (6.1 kB)
+Collecting paramiko>=2.4.3 (from docker[ssh]>=5->docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached paramiko-3.1.0-py3-none-any.whl (211 kB)
+Collecting webencodings (from html5lib<2.0,>=1.0->poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached webencodings-0.5.1-py2.py3-none-any.whl (11 kB)
+Collecting attrs>=17.4.0 (from jsonschema<4,>=2.5.1->docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached attrs-23.1.0-py3-none-any.whl (61 kB)
+Collecting pyrsistent>=0.14.0 (from jsonschema<4,>=2.5.1->docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached pyrsistent-0.19.3-cp38-cp38-macosx_10_9_universal2.whl (82 kB)
+Requirement already satisfied: setuptools in /Users/jimmylkm/src/venv/amp.client_venv/lib/python3.8/site-packages (from jsonschema<4,>=2.5.1->docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2)) (49.2.1)
+Collecting jaraco.classes (from keyring>=21.2.0->poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached jaraco.classes-3.2.3-py3-none-any.whl (6.0 kB)
+Collecting importlib-resources (from keyring>=21.2.0->poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached importlib_resources-5.12.0-py3-none-any.whl (36 kB)
+Collecting beautifulsoup4 (from nbconvert->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached beautifulsoup4-4.12.2-py3-none-any.whl (142 kB)
+Collecting bleach (from nbconvert->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached bleach-6.0.0-py3-none-any.whl (162 kB)
+Collecting defusedxml (from nbconvert->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached defusedxml-0.7.1-py2.py3-none-any.whl (25 kB)
+Collecting jinja2>=3.0 (from nbconvert->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached Jinja2-3.1.2-py3-none-any.whl (133 kB)
+Collecting jupyterlab-pygments (from nbconvert->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached jupyterlab_pygments-0.2.2-py2.py3-none-any.whl (21 kB)
+Collecting markupsafe>=2.0 (from nbconvert->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached MarkupSafe-2.1.2-cp38-cp38-macosx_10_9_x86_64.whl (13 kB)
+Collecting mistune<3,>=2.0.3 (from nbconvert->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached mistune-2.0.5-py2.py3-none-any.whl (24 kB)
+Collecting nbclient>=0.5.0 (from nbconvert->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached nbclient-0.7.4-py3-none-any.whl (73 kB)
+Collecting nbformat>=5.1 (from nbconvert->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached nbformat-5.8.0-py3-none-any.whl (77 kB)
+Collecting pandocfilters>=1.4.1 (from nbconvert->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached pandocfilters-1.5.0-py2.py3-none-any.whl (8.7 kB)
+Collecting pygments>=2.4.1 (from nbconvert->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached Pygments-2.15.1-py3-none-any.whl (1.1 MB)
+Collecting tinycss2 (from nbconvert->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached tinycss2-1.2.1-py3-none-any.whl (21 kB)
+Collecting platformdirs>=2.5 (from jupyter-core->jupyter_contrib_nbextensions->-r dev_scripts/client_setup/requirements.txt (line 5))
+  Using cached platformdirs-3.5.1-py3-none-any.whl (15 kB)
+Collecting pyzmq>=17 (from notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached pyzmq-25.0.2-cp38-cp38-macosx_10_15_universal2.whl (1.8 MB)
+Collecting argon2-cffi (from notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached argon2_cffi-21.3.0-py3-none-any.whl (14 kB)
+Collecting jupyter-client>=5.3.4 (from notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached jupyter_client-8.2.0-py3-none-any.whl (103 kB)
+Collecting nest-asyncio>=1.5 (from notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached nest_asyncio-1.5.6-py3-none-any.whl (5.2 kB)
+Collecting Send2Trash>=1.8.0 (from notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached Send2Trash-1.8.2-py3-none-any.whl (18 kB)
+Collecting terminado>=0.8.3 (from notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached terminado-0.17.1-py3-none-any.whl (17 kB)
+Collecting prometheus-client (from notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached prometheus_client-0.16.0-py3-none-any.whl (122 kB)
+Collecting nbclassic>=0.4.7 (from notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached nbclassic-1.0.0-py3-none-any.whl (10.0 MB)
+Collecting pyparsing>=2.0.2 (from packaging<21.0,>=20.4->poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached pyparsing-3.0.9-py3-none-any.whl (98 kB)
+Collecting ptyprocess>=0.5 (from pexpect<5.0.0,>=4.7.0->poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached ptyprocess-0.7.0-py2.py3-none-any.whl (13 kB)
+Collecting charset-normalizer<4,>=2 (from requests<3,>=2.20.0->docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached charset_normalizer-3.1.0-cp38-cp38-macosx_10_9_x86_64.whl (123 kB)
+Collecting idna<4,>=2.5 (from requests<3,>=2.20.0->docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached idna-3.4-py3-none-any.whl (61 kB)
+Collecting certifi>=2017.4.17 (from requests<3,>=2.20.0->docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached certifi-2023.5.7-py3-none-any.whl (156 kB)
+Collecting pyasn1>=0.1.3 (from rsa<4.8,>=3.1.2->awscli>=1.19->-r dev_scripts/client_setup/requirements.txt (line 1))
+  Using cached pyasn1-0.5.0-py2.py3-none-any.whl (83 kB)
+Collecting distlib<1,>=0.3.6 (from virtualenv<21.0.0,>=20.0.26->poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached distlib-0.3.6-py2.py3-none-any.whl (468 kB)
+Collecting appnope (from ipykernel->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached appnope-0.1.3-py2.py3-none-any.whl (4.4 kB)
+Collecting comm>=0.1.1 (from ipykernel->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached comm-0.1.3-py3-none-any.whl (6.6 kB)
+Collecting debugpy>=1.6.5 (from ipykernel->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached debugpy-1.6.7-cp38-cp38-macosx_10_15_x86_64.whl (1.7 MB)
+Collecting ipython>=7.23.1 (from ipykernel->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached ipython-8.12.2-py3-none-any.whl (797 kB)
+Collecting matplotlib-inline>=0.1 (from ipykernel->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached matplotlib_inline-0.1.6-py3-none-any.whl (9.4 kB)
+Collecting psutil (from ipykernel->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached psutil-5.9.5-cp36-abi3-macosx_10_9_x86_64.whl (245 kB)
+Collecting widgetsnbextension~=4.0.7 (from ipywidgets->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached widgetsnbextension-4.0.7-py3-none-any.whl (2.1 MB)
+Collecting jupyterlab-widgets~=3.0.7 (from ipywidgets->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached jupyterlab_widgets-3.0.7-py3-none-any.whl (198 kB)
+Collecting prompt-toolkit>=3.0.30 (from jupyter-console->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached prompt_toolkit-3.0.38-py3-none-any.whl (385 kB)
+Collecting qtpy>=2.0.1 (from qtconsole->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached QtPy-2.3.1-py3-none-any.whl (84 kB)
+Collecting zipp>=0.5 (from importlib-metadata>=4.4->poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached zipp-3.15.0-py3-none-any.whl (6.8 kB)
+Collecting backcall (from ipython>=7.23.1->ipykernel->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached backcall-0.2.0-py2.py3-none-any.whl (11 kB)
+Collecting decorator (from ipython>=7.23.1->ipykernel->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached decorator-5.1.1-py3-none-any.whl (9.1 kB)
+Collecting jedi>=0.16 (from ipython>=7.23.1->ipykernel->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached jedi-0.18.2-py2.py3-none-any.whl (1.6 MB)
+Collecting pickleshare (from ipython>=7.23.1->ipykernel->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached pickleshare-0.7.5-py2.py3-none-any.whl (6.9 kB)
+Collecting stack-data (from ipython>=7.23.1->ipykernel->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached stack_data-0.6.2-py3-none-any.whl (24 kB)
+Collecting typing-extensions (from ipython>=7.23.1->ipykernel->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached typing_extensions-4.5.0-py3-none-any.whl (27 kB)
+Collecting jupyter-server>=1.8 (from nbclassic>=0.4.7->notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached jupyter_server-2.5.0-py3-none-any.whl (366 kB)
+Collecting notebook-shim>=0.2.3 (from nbclassic>=0.4.7->notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached notebook_shim-0.2.3-py3-none-any.whl (13 kB)
+Collecting fastjsonschema (from nbformat>=5.1->nbconvert->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached fastjsonschema-2.16.3-py3-none-any.whl (23 kB)
+Collecting bcrypt>=3.2 (from paramiko>=2.4.3->docker[ssh]>=5->docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached bcrypt-4.0.1-cp36-abi3-macosx_10_10_universal2.whl (473 kB)
+Collecting cryptography>=3.3 (from paramiko>=2.4.3->docker[ssh]>=5->docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached cryptography-40.0.2-cp36-abi3-macosx_10_12_x86_64.whl (2.8 MB)
+Collecting pynacl>=1.5 (from paramiko>=2.4.3->docker[ssh]>=5->docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached PyNaCl-1.5.0-cp36-abi3-macosx_10_10_universal2.whl (349 kB)
+Collecting wcwidth (from prompt-toolkit>=3.0.30->jupyter-console->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached wcwidth-0.2.6-py2.py3-none-any.whl (29 kB)
+Collecting argon2-cffi-bindings (from argon2-cffi->notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached argon2_cffi_bindings-21.2.0-cp38-abi3-macosx_10_9_universal2.whl (53 kB)
+Collecting soupsieve>1.2 (from beautifulsoup4->nbconvert->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached soupsieve-2.4.1-py3-none-any.whl (36 kB)
+Collecting more-itertools (from jaraco.classes->keyring>=21.2.0->poetry->-r dev_scripts/client_setup/requirements.txt (line 7))
+  Using cached more_itertools-9.1.0-py3-none-any.whl (54 kB)
+Collecting cffi>=1.12 (from cryptography>=3.3->paramiko>=2.4.3->docker[ssh]>=5->docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached cffi-1.15.1-cp38-cp38-macosx_10_9_x86_64.whl (178 kB)
+Collecting parso<0.9.0,>=0.8.0 (from jedi>=0.16->ipython>=7.23.1->ipykernel->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached parso-0.8.3-py2.py3-none-any.whl (100 kB)
+Collecting anyio>=3.1.0 (from jupyter-server>=1.8->nbclassic>=0.4.7->notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached anyio-3.6.2-py3-none-any.whl (80 kB)
+Collecting jupyter-events>=0.4.0 (from jupyter-server>=1.8->nbclassic>=0.4.7->notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached jupyter_events-0.6.3-py3-none-any.whl (18 kB)
+Collecting jupyter-server-terminals (from jupyter-server>=1.8->nbclassic>=0.4.7->notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached jupyter_server_terminals-0.4.4-py3-none-any.whl (13 kB)
+Collecting executing>=1.2.0 (from stack-data->ipython>=7.23.1->ipykernel->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached executing-1.2.0-py2.py3-none-any.whl (24 kB)
+Collecting asttokens>=2.1.0 (from stack-data->ipython>=7.23.1->ipykernel->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached asttokens-2.2.1-py2.py3-none-any.whl (26 kB)
+Collecting pure-eval (from stack-data->ipython>=7.23.1->ipykernel->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached pure_eval-0.2.2-py3-none-any.whl (11 kB)
+Collecting sniffio>=1.1 (from anyio>=3.1.0->jupyter-server>=1.8->nbclassic>=0.4.7->notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached sniffio-1.3.0-py3-none-any.whl (10 kB)
+Collecting pycparser (from cffi>=1.12->cryptography>=3.3->paramiko>=2.4.3->docker[ssh]>=5->docker-compose>=1.29.0->-r dev_scripts/client_setup/requirements.txt (line 2))
+  Using cached pycparser-2.21-py2.py3-none-any.whl (118 kB)
+Collecting jsonschema[format-nongpl]>=3.2.0 (from jupyter-events>=0.4.0->jupyter-server>=1.8->nbclassic>=0.4.7->notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached jsonschema-4.17.3-py3-none-any.whl (90 kB)
+Collecting python-json-logger>=2.0.4 (from jupyter-events>=0.4.0->jupyter-server>=1.8->nbclassic>=0.4.7->notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached python_json_logger-2.0.7-py3-none-any.whl (8.1 kB)
+Collecting rfc3339-validator (from jupyter-events>=0.4.0->jupyter-server>=1.8->nbclassic>=0.4.7->notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached rfc3339_validator-0.1.4-py2.py3-none-any.whl (3.5 kB)
+Collecting rfc3986-validator>=0.1.1 (from jupyter-events>=0.4.0->jupyter-server>=1.8->nbclassic>=0.4.7->notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached rfc3986_validator-0.1.1-py2.py3-none-any.whl (4.2 kB)
+INFO: pip is looking at multiple versions of jsonschema[format-nongpl] to determine which version is compatible with other requirements. This could take a while.
+Collecting jsonschema[format-nongpl]>=3.2.0 (from jupyter-events>=0.4.0->jupyter-server>=1.8->nbclassic>=0.4.7->notebook->jupyter->-r dev_scripts/client_setup/requirements.txt (line 4))
+  Using cached jsonschema-4.17.1-py3-none-any.whl (90 kB)
+  Using cached jsonschema-4.17.0-py3-none-any.whl (83 kB)
+  Using cached jsonschema-4.16.0-py3-none-any.whl (83 kB)
+  Using cached jsonschema-4.15.0-py3-none-any.whl (82 kB)
+  Using cached jsonschema-4.14.0-py3-none-any.whl (82 kB)
+  Using cached jsonschema-4.13.0-py3-none-any.whl (81 kB)
+  Using cached jsonschema-4.12.1-py3-none-any.whl (81 kB)
+INFO: pip is looking at multiple versions of jsonschema[format-nongpl] to determine which version is compatible with other requirements. This could take a while.
+  Using cached jsonschema-4.12.0-py3-none-any.whl (81 kB)
+  Using cached jsonschema-4.11.0-py3-none-any.whl (80 kB)
+  Using cached jsonschema-4.10.3-py3-none-any.whl (81 kB)
+  Using cached jsonschema-4.10.2-py3-none-any.whl (81 kB)
+  Using cached jsonschema-4.10.1-py3-none-any.whl (81 kB)
+INFO: This is taking longer than usual. You might need to provide the dependency resolver with stricter constraints to reduce runtime. See https://pip.pypa.io/warnings/backtracking for guidance. If you want to abort this run, press Ctrl + C.
+  Using cached jsonschema-4.10.0-py3-none-any.whl (80 kB)
+  Using cached jsonschema-4.9.1-py3-none-any.whl (79 kB)
+  Using cached jsonschema-4.9.0-py3-none-any.whl (79 kB)
