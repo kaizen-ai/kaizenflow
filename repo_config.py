@@ -112,7 +112,9 @@ def enable_privileged_mode() -> bool:
         elif hserver.is_mac(version="Catalina"):
             # Docker for macOS Catalina supports dind.
             ret = True
-        elif hserver.is_mac(version="Monterey") or hserver.is_mac(version="Ventura"):
+        elif hserver.is_mac(version="Monterey") or hserver.is_mac(
+            version="Ventura"
+        ):
             # Docker for macOS Monterey doesn't seem to support dind.
             ret = False
         else:
@@ -204,8 +206,8 @@ def has_dind_support() -> bool:
             if hserver.is_mac() or hserver.is_dev_ck() or hserver.is_inside_ci():
                 # dind should be supported on Mac, dev_ck, and GH Actions.
                 assert has_dind, (
-                    f"Expected privileged mode: has_dind={has_dind}\n" +
-                    hserver.setup_to_str()
+                    f"Expected privileged mode: has_dind={has_dind}\n"
+                    + hserver.setup_to_str()
                 )
             elif hserver.is_dev4() or hserver.is_ig_prod():
                 assert not has_dind, "Not expected privileged mode"
@@ -352,11 +354,10 @@ def get_html_dir_to_url_mapping() -> Dict[str, str]:
     """
     Return a mapping between directories mapped on URLs.
 
-    This is used when we have web servers serving files from specific directories.
+    This is used when we have web servers serving files from specific
+    directories.
     """
-    dir_to_url = {
-        "s3://cryptokaizen-html": "http://172.30.2.44"
-    }
+    dir_to_url = {"s3://cryptokaizen-html": "http://172.30.2.44"}
     return dir_to_url
 
 
@@ -378,7 +379,7 @@ def skip_submodules_test() -> bool:
     E.g. while running `i run_fast_tests`.
     """
     # TODO(gp): Why do we want to skip running tests?
-    if get_name() in ("//dev_tools", ):
+    if get_name() in ("//dev_tools",):
         # Skip running `amp` tests from `dev_tools`.
         return True
     return False
