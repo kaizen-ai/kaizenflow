@@ -65,9 +65,8 @@ def _process_price_data(price_data: Dict[str, Any]) -> Tuple[List[int], List[flo
     Get the sequence of volumes and prices in WEI.
     """
     # Get price and volume data.
-    price_data = price_data["prices"]
-    prices = [float(entry[1]) for entry in price_data]
-    volumes = [float(entry[0]) for entry in price_data]
+    prices = [price[1] for price in price_data["prices"]]
+    volumes = [volume[1] for volume in price_data["total_volumes"]]
     # Convert prices to WEI.
     eth_to_wei = 10**18
     prices = [int(price * eth_to_wei) for price in prices]
