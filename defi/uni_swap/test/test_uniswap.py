@@ -37,6 +37,7 @@ class TestUniswapV1(hunitest.TestCase):
         expected_token_reserve = 1.8 
         expected_eth_reserve = 2.1
         self.assertEqual(expected_token_reserve, actual_token_reserve)
+        self.assertEqual(expected_eth_reserve, actual_eth_reserve)
         
     def test_get_token_amount1(self) -> None:
         """
