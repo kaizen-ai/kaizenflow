@@ -14,9 +14,20 @@ This contains the absolute minimal amount of info to start developing
 
 - [Quick start for developing](Quick_start_for_developing.md)
 
+- [First Review Process](First_review_process.md)
+
 - [Sorrentum Python coding style guide](Coding_Style_Guide.md)
 
+## Project management
+
+- [GitHub/ZenHub workflows](GitHub_ZenHub_workflows.md)
+  - How to use GitHub and ZenHub, file a PR, review GitHub/ZenHub workflows
+
 - [Git workflow and best practices](Git_workflow_and_best_practices.md)
+  - `git` workflows, branch management, troubleshooting, common procedures
+
+- [Documentation about guidelines](Documentation_about_guidelines.md)
+  - How to write guidelines, format documentation, convert Gdocs to markdown files and vice versa
 
 ## Learn how to become efficient at developing
 
@@ -50,3 +61,11 @@ This contains a set of resources that over time will make 10x more productive
 ## Arbitrage / Modeling: start developing
 
 ## Arbitrage / Modeling: in-depth docs
+
+## Payment
+
+### How to receive a crypto transfer
+
+- [Receive crypto payment](Receive_crypto_payment.md)
+
+

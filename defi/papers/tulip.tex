@@ -4,7 +4,7 @@
 \usepackage{hyperref}
 \usepackage{slashed}
 \usepackage{fullpage}
-% Prevent from repositioning tables.
+% Prevent table repositioning.
 \usepackage{float}
 % For textcolor.
 \usepackage{xcolor}
@@ -75,24 +75,30 @@
 \newcommand{\buy}{\textnormal{\texttt{buy}}}
 \newcommand{\sell}{\textnormal{\texttt{sell}}}
 \newcommand{\nan}{\textnormal{\texttt{nan}}}
-
+%
 \newcommand{\midpoint}{\mathrm{midpoint}}
+% Table icons.
+\newcommand{\trm}{\textcolor{red}{-}}
+\newcommand{\tyo}{\textcolor{yellow}{o}}
+\newcommand{\tgp}{\textcolor{green}{+}}
 
 % Use this if using `\contrib[]{...}`.
 %\makeatletter\let\@wraptoccontribs\wraptoccontribs\makeatother
+% https://tex.stackexchange.com/questions/418547/equal-contribution-using-thanks-with-llncs-class#418563
+\makeatletter
+\newcommand{\printfnsymbol}[1]{%
+  \textsuperscript{\@fnsymbol{#1}}%
+}
+\makeatother
 
 \begin{document}
 
-\title{TuLiP: A protocol for trading with liquidity providers}
-% TODO(gp): @paul At this point I would just use the most general "Tulip: A
-% decentralized protocol for token exchange" and say "Tulip" is just the name,
-% because it's cute.
-% We could also call Dao* -> TulipCross and TulipSwap.
+\title{Tulip: A decentralized protocol for token exchange}
 
-% TODO(gp): @paul feel free to add the "* Authors have contributed equally
-% or are in alphabetical orders"
-\author{Giacinto Paolo Saggese}
-\author{Paul Smith}
+% \author[GP, Paul]{Giacinto Paolo Saggese$^{*}$ and Paul Smith$^{*}$}
+\author{Giacinto Paolo Saggese$^{*}$}
+\author{Paul Smith$^{*}$}
+\thanks{$^{*}$ The authors contributed equally to this work and are listed alphabetically.}
 
 \thanks{With contributions from
     Samarth KaPatel,
@@ -107,22 +113,24 @@
 
 \date{\today}
 
-\maketitle
-
 \begin{abstract}
 Limit orders are a natural and powerful way to interact with financial markets.
 Creating decentralized exchanges around limit orders poses unique challenges,
 and the dominant decentralized alternatives lack this interface.
-We propose ``TuLiP", a protocol for decentralized exchange built around limit
+We propose ``Tulip", a protocol for decentralized exchange built around limit
 orders, at whose heart is a novel auction mechanism for price discovery,
-matching and clearing. Besides a natural trading interface, Tulip allows
-welfare maximization, liquidity pooling across tokens and time, trading
-efficiency, complete transparency, no impermanent loss, no need for
-intermediary custody, no rent extraction from high-frequency custody,
-censorship resistance, and ease of use. These features have immediate
-application in improving the efficiency of decentralized token exchange.
+matching and clearing. Besides providing a natural trading interface, Tulip
+promotes welfare maximization, pools liquidity across tokens and time,
+and has the features of high trading efficiency, complete transparency,
+no impermanent loss, no need for intermediary custody, no rent extraction from
+high-frequency traders, censorship resistance, and ease of use. These features
+have immediate application in improving the efficiency of decentralized token
+exchange.
 \end{abstract}
 
+\maketitle
+
+\setcounter{tocdepth}{1}
 \tableofcontents
 
 % TODO(gp): Should we always talk about token swap instead of token exchange,
@@ -131,7 +139,7 @@ application in improving the efficiency of decentralized token exchange.
 % ###############################################################################
 \section{Introduction}
 
-TuLiP is a new financial primitive that enables decentralized token
+Tulip is a new financial primitive that enables decentralized token
 exchange using limit orders. It brings together the advantages of trading
 efficiency and ease-of-use of centralized exchanges with the transparency and
 self-custody of decentralized approaches, without the risk of impermanent loss,
@@ -139,36 +147,36 @@ contrary to automatic market maker-based approaches.
 
 % TODO(gp): @paul consider renaming "Welfare maximization" to "Utility maximization"
 % or another better name
-Some of the innovative features of TuLiP are:
+Some of the innovative features of Tulip are:
 \begin{enumerate}
-    \item Support for trading orders:
-          TuLiP uses limit orders as a way to express interest to trading. This
+    \item Support for limit orders:
+          Tulip uses limit orders as a way to express interest in trading. This
           is the approach that is most natural and in fact used by virtually
           the entirety of traditional finance, but surprisingly ignored by many
           decentralized primitives
     \item Welfare maximization:
-          TuLiP maximizes the aggregated welfare by allowing to relax the
-          constraint of a single clearing price, which has been the standard
+          Tulip maximizes the aggregated welfare by allowing the relaxation of
+          the constraint of a single clearing price, which has been the standard
           assumption in traditional finance and inherited by decentralized
           finance
     \item Liquidity pooling across tokens:
-          TuLiP participants are not artifically segregated in separated liquidity
-          pools, but they are aggregated in a single optimization problem that
+          Tulip participants are not artificially segregated in separate liquidity
+          pools, but are aggregated in a single optimization problem that
           handles in a natural way both multi-coin and reverse token exchange
     \item Liquidity pooling across time:
-          TuLiP participants provide liquidity only when they wish to trade, and only
-          in the amount that they wish to trade, instead of artifically
-          separating traders as liquidity providers and liquidity takers, like
-          in automated market makers protocols
+          Tulip participants provide liquidity only when they wish to trade, and only
+          in the amount that they wish to trade, instead of artificially
+          separating traders as liquidity providers and liquidity takers as is
+          done  in automated market makers protocols
     \item High trading efficiency:
-          TuLiP uses discrete and frequent auctions for price discovery and
-          efficiently matching supply and demands, allowing trading tokens
-          peer-to-peer minimizing and sharing spread costs
+          Tulip uses discrete and frequent auctions for price discovery and
+          efficiently matching supply and demand, allowing trading tokens
+          peer-to-peer while minimizing and sharing spread costs
     \item Complete transparency:
-          TuLiP collects on-chain all the information for maximum transparency
-          and allows to independently verify the correctness of any computation
-          moved off-chain for minimizing execution costs due to current limitations
-          of blockchain technology
+          Tulip collects on-chain all information for maximum transparency
+          and allows the independent verification of the correctness of any
+          computation moved off-chain for minimizing execution costs due to
+          current limitations of blockchain technology
     \item No impermanent loss:
           liquidity providers are not exposed to the risk of impermanent loss
           (a form of unrealized loss that becomes realized upon withdrawing
@@ -178,7 +186,7 @@ Some of the innovative features of TuLiP are:
           exchanged tokens always remain under the control of their respective
           owners, in contrast to centralized exchanges
     \item No rent extraction from high-frequency traders:
-          in TuLiP speed alone does not confer an advantage to traders, as the
+          in Tulip speed alone does not confer an advantage to traders, as the
           discrete and frequent auctions prevent predatory tactics such as
           front-running, limit order scalping, and spoofing, which are known
           issues seen with continuous limit order books
@@ -215,7 +223,7 @@ in the future.
 % ===============================================================================
 \subsection{Limit orders as an interface to token swap}
 A limit order expresses a commitment to buy or to sell an asset, up to
-a certain quantity, at a price that is as good or better than the limit price.
+a certain quantity, at a price that is as good as or better than the limit price.
 As supply and demand are represented by quantity available at a given price,
 limit orders provide a way for buyers and sellers to participate in price
 discovery and exchange.
@@ -231,7 +239,7 @@ demand curves by combining multiple limit orders. The elegance follows from the
 simplicity and ease-of-use of the interface.
 
 \subsubsection{Limit orders in traditional finance and DeFi}
-As consequence of these benefits, limit orders and their aggregation into
+As a consequence of these benefits, limit orders and their aggregation into
 limit order books (LOBs) are ubiquitous in traditional financial markets
 and dominate cryptocurrency trading on centralized exchanges (CEXs).
 Interestingly, however, limit orders currently do not play as prominent a role
@@ -320,9 +328,9 @@ exchange is cost of computation. Continual submission and cancelation of orders
 incurs costs, as does the ongoing process of matching supply and demand.
 
 % ===============================================================================
-\subsection{The advantages of TuLiP}
+\subsection{The advantages of Tulip}
 
-TuLiP retains the key advantages of on-chain decentralized exchange while
+Tulip retains the key advantages of on-chain decentralized exchange while
 overcoming the issues of cost. Additionally, it includes an implementation
 that preserves the familiar LOB interface but deepens the pool of available
 liquidity in matching supply and demand.
@@ -332,45 +340,53 @@ contracts\footnote{https://ethereum.org/en/developers/docs/smart-contracts/}
 for
 ERC-20\footnote{https://ethereum.org/en/developers/docs/standards/tokens/erc-20/}
 token exchange that match supply and demand differently depending upon whether
-there exists an external reference price (DaoCross) or whether the contract
-also performs the role of price discovery (DaoSwap).
+there exists an external reference price (TulipCross) or whether the contract
+also performs the role of price discovery (TulipSwap).
 
-\subsubsection{DaoCross}
-DaoCross is a decentralized liquidity pool that crosses buy and sell orders
+\subsubsection{TulipCross}
+TulipCross is a decentralized liquidity pool that crosses buy and sell orders
 with respect to an external reference price, i.e., a price oracle. This allows
 traders to interact directly with each other and share price improvement with
-respect to exchanges, e.g., by trading at bid-ask midpoint. Additionally, order
-intentions are not publicly disclosed prior to a cross, which enables block or
-other high-volume traders to execute quickly with minimal market impact.
+respect to exchanges, e.g., by trading at bid-ask midpoint.
 
-\subsubsection{DaoSwap}
-DaoSwap performs price discovery by matching supply and demand at regular time
+\subsubsection{TulipSwap}
+TulipSwap performs price discovery by matching supply and demand at regular time
 intervals. In the simplest case, it resembles a Walrasian-style auction
 \cite{Wa}. In cases where liquidity is pooled more broadly, the auction clearing
 mechanism satisfies a collection of inequalities.
 
 
-\subsubsection{Comparison with alternative solutions}
-A comparison between DaoCross and DaoSwap and other solutions for token
+\subsubsection{Comparison with alternative solutions}\label{comparison_table}
+A comparison between TulipCross and TulipSwap and other solutions for token
 swapping, namely limit-order books (e.g., centralized exchanges such as
 Binance) and automatic market-makers (e.g., Uniswap) is summarized below
-and discussed in detail in Section \ref{AlSoToSw}.
+and discussed in detail in Section \ref{comparison_section}.
 
-% TODO(gp): Updat this table once the list of features in the intro is stable
 \begin{samepage}
     \begin{table}[h!]
         \centering
-        \begin{tabular}{lllll}
-                                        & \emph{LOB}                 & \emph{AMM}                 & \emph{DaoSwap}          & \emph{DaoCross}            \\
+        \begin{tabular}{l|c|c|c|c|}
+                                                  & \emph{LOB} & \emph{AMM} & \emph{TulipSwap} & \emph{TulipCross} \\
             \hline
-            Custodial risk              & \textcolor{red}{Yes}       & \textcolor{green}{No}      & \textcolor{green}{No}   & \textcolor{green}{No}      \\
-            Transparency                & \textcolor{red}{Low}       & \textcolor{green}{High}    & \textcolor{green}{High} & \textcolor{yellow}{Medium} \\
-            Censorship resistance       & \textcolor{red}{No}        & \textcolor{green}{Yes}     & \textcolor{green}{Yes}  & \textcolor{red}{No}        \\
-            Intrinsic efficiency        & \textcolor{yellow}{Medium} & \textcolor{red}{Low}       & \textcolor{green}{High} & \textcolor{yellow}{Medium} \\
-            Support for limit orders    & \textcolor{green}{Yes}     & \textcolor{red}{No}        & \textcolor{green}{Yes}  & \textcolor{green}{Yes}     \\
-            Risk of predatory behaviors & \textcolor{red}{High}      & \textcolor{yellow}{Low}    & \textcolor{green}{Low}  & \textcolor{yellow}{Medium} \\
-            Impermanent loss            & \textcolor{green}{No}      & \textcolor{red}{Yes}       & \textcolor{green}{No}   & \textcolor{green}{No}      \\
-            Multi-coin exchange support & \textcolor{red}{Low}       & \textcolor{yellow}{Medium} & \textcolor{green}{High} & \textcolor{green}{High}    \\
+            Support for limit orders              & \tgp & \trm & \tgp & \tgp \\
+            \hline
+            Welfare maximization                  & \tyo & \trm & \tgp & \trm \\
+            \hline
+            Liquidity pooling across tokens       & \trm & \tyo & \tgp & \tgp \\
+            \hline
+            Liquidity pooling across time         & \tgp & \trm & \tgp & \tgp \\
+            \hline
+            Trading efficiency                    & \tyo & \trm & \tgp & \tyo \\
+            \hline
+            Transparency                          & \trm & \tgp & \tgp & \tgp \\
+            \hline
+            No impermanent loss                   & \trm & \trm & \tgp & \tgp \\
+            \hline
+            Low custodial risk                    & \trm & \tgp & \tgp & \tgp \\
+            \hline
+            No rent extraction                    & \trm & \trm & \tgp & \tyo \\
+            \hline
+            Censorship resistance and ease of use & \trm & \tgp & \tgp & \trm \\
             \hline
         \end{tabular}
     \end{table}
@@ -505,7 +521,7 @@ If prices of base and quote tokens are expressed in terms of a common currency
 where the numeraire plays the role of a quote token for both $p_{quote}$ and
 $p_{base}$ and is implicit.
 
-Of course it holds that
+Of course, it holds that
 \[
     p_{quote\_per\_base} =
     \frac{1}{p_{base\_per\_quote}}.
@@ -524,9 +540,9 @@ as the quote token, so that, in effect, the US dollar is the numeraire.
 % TODO(gp): Consider adding source_address as way to identify the user.
 \subsection{Order attributes and notation}
 We introduce the following tuple notation for a general limit order
-(valid for both DaoCross and DaoSwap).
+(valid for both TulipCross and TulipSwap).
 \begin{defn}[Limit order]
-A DaoCross or DaoSwap limit order is represented by a tuple of the form
+A TulipCross or TulipSwap limit order is represented by a tuple of the form
 \begin{align*}
 ( & \timestamp,       \\
   & \action,          \\
@@ -636,10 +652,10 @@ is a maximum price that Alice is willing to pay, $p_M$ (if no such upper limit
 exists, we may first assume that Alice executes market orders until such a
 price exists). Assume also that there is a maximum quantity $Q_M$ that Alice
 demands, and that price is always positive. Then, there exists a partitioning
-of prices $(p_j, p_{j + 1})$ and positive (cumulative) quantities $Q_j$ such
+of prices $(p_j, p_{j + 1}]$ and positive (cumulative) quantities $Q_j$ such
 that
 \[
-    Q_+(p) = \sum_{j = 0}^n Q_j \cdot \mathbb{1}_{[p_j, p_{j + 1}]}(p),
+    Q_+(p) = \sum_{j = 0}^n Q_j \cdot \mathbb{1}_{(p_j, p_{j + 1}]}(p),
 \]
 where $\mathbb{1}$ denotes the indicator function. We allow $p_{j + 1} = p_j$.
 This representation simply expresses the fact that $Q_+(p)$ only changes at
@@ -668,7 +684,7 @@ supply and demand are monotonic in price.
 
 % ===============================================================================
 \subsection{Order clearing quantity and exchange rate}
-In TuLiP, orders are collected from users during a finite period of time,
+In Tulip, orders are collected from users during a finite period of time,
 after which tokens are redistributed among users according to their limit
 orders.
 
@@ -872,7 +888,7 @@ for each token, the total amount bought must equal the total amount sold.
 % ===============================================================================
 \subsection{Unique clearing price per token pair}
 
-In the DaoCross case, a single exchange rate per exchanged token pair
+In the TulipCross case, a single exchange rate per exchanged token pair
 prevails, as a reference price serves this function.
 One may make the case that this is a desirable property for token swap more
 generally. That is, for participants trading the same token pair, no
@@ -908,14 +924,14 @@ domain of linear programming (to be discussed in the sequel).
 
 % ===============================================================================
 \subsection{No arbitrage constraint}
-In DaoCross, multi-currency arbitrages may or may not exist in the reference
+In TulipCross, multi-currency arbitrages may or may not exist in the reference
 prices. In practice, one would expect such opportunities in the reference
 prices to be fleeting or small, since otherwise arbitrageurs would exploit
 them until market pressures eliminated the opportunities. Note, though, that
 it is not the exchange mechanism itself that minimizes arbitrage opportunities;
 rather, it is the active participation of arbitrageurs.
 
-In the case of multi-token DaoSwap, and in the case where we impose unique
+In the case of multi-token TulipSwap, and in the case where we impose unique
 clearing prices (per token pair), we have the flexibility to impose the
 additional constraint of no-arbitrage in the realized prices. One the one hand,
 this property is appealing in terms of fairness. On the other hand, any such
@@ -930,8 +946,8 @@ of elements $T$, and whose directed edges $E$ are given by
     E = \bigcup_{\substack{i \in \{1, \ldots, n\} \\ \pi_i, \tau_i \in T}}
     \left( (\pi_i, \tau_i) \cup (\tau_i, \pi_i) \right)
 \]
-Each edge $(b, a) \in E$ we give the weight $w_{a, b}$. Note that
-$w_{a, b}$ and $w_{b, a}$ are distinct.
+Each edge $(b, a) \in E$ we give the weight $w_{a, b}$, corresponding to a log
+exchange rate. Note that $w_{a, b}$ and $w_{b, a}$ are distinct.
 
 Let $C$ denote the collection of all simple cycles of $\Gamma$.
 For an simple cycle $\gamma \in C$, consecutively enumerate the vertices
@@ -1108,7 +1124,7 @@ provided that
 
 % ###############################################################################
 
-\section{Formulation and solutions of swap problems}
+\section{Formulation and solution of TulipSwap and TulipCross problems}
 The general problem of determining the token equilibrium prices and the
 allocation among the swap participants can be formulated in terms of the
 inequalities on quantities and prices corresponding to the orders and on the
@@ -1117,20 +1133,20 @@ swaps, i.e., the quantity bought for each token is equal to the quantity sold.
 
 \subsection{Problem formulations}
 
-\begin{problem}[DaoSwap token exchange]\label{problem_daoswap}
+\begin{problem}[TulipSwap token exchange]\label{problem_tulipswap}
 Let $\{o_i\}_{i = 1}^n$ be a collection of limit orders, with associated
 constraints given by \eqref{limit_order_quantity_constraint},
 \eqref{limit_order_price_constraint}, and \eqref{token_conservation_law}.
-The DaoSwap problem is to find nonnegative quantities
+The TulipSwap problem is to find nonnegative quantities
 $q_{i, \pi}^*, q_{i, \tau}^*$, $i = 1, \ldots, n$, that satisfy the constraints
 \eqref{limit_order_quantity_constraint},
 \eqref{limit_order_price_constraint}, and \eqref{token_conservation_law},
 such that the objective function \eqref{objective_function} is maximized.
 \end{problem}
 
-\begin{problem}[DaoCross token exchange]\label{problem_daocross}
+\begin{problem}[TulipCross token exchange]\label{problem_tulipcross}
 Let $\{o_i\}_{i = 1}^n$ and associated constraints be as in Problem
-\ref{problem_daoswap}.
+\ref{problem_tulipswap}.
 Let $\{p_i^*\}$ denote a collection of reference prices, such that
 each $p_i^*$ only depends upon the base token $\pi_i$ and quote
 token $\tau_i$ of order $o_i$.
@@ -1138,7 +1154,7 @@ Introduce the reference price constraint
 \begin{equation}\label{reference_price_constraint}
     a_{i, \tau} q_{i, \tau}^* = q_{i, \pi}^* p_i^*, \quad i \in \{1, \ldots, n\}
 \end{equation}
-The DaoCross problem is to find nonnegative quantities
+The TulipCross problem is to find nonnegative quantities
 $q_{i, \pi}^*, q_{i, \tau}^*$, $i = 1, \ldots, n$, that satisfy the constraints
 \eqref{limit_order_quantity_constraint},
 \eqref{limit_order_price_constraint}, \eqref{token_conservation_law},
@@ -1153,11 +1169,11 @@ price equality \eqref{reference_price_constraint} are given by
     q_{i, \tau}^* = q_{i, \pi}^* = 0
 \]
 
-\begin{problem}[DaoSwap token exchange with unique clearing prices]
-\label{problem_daoswap_with_unique_prices}
+\begin{problem}[TulipSwap token exchange with unique clearing prices]
+\label{problem_tulipswap_with_unique_prices}
 Let $\{o_i\}_{i = 1}^n$ and associated constraints be as in Problem
-\ref{problem_daoswap}.
-The DaoSwap problem with unique clearing prices is to find nonnegative
+\ref{problem_tulipswap}.
+The TulipSwap problem with unique clearing prices is to find nonnegative
 quantities $q_{i, \pi}^*, q_{i, \tau}^*$, $i = 1, \ldots, n$, that satisfy the
 constraints \eqref{limit_order_quantity_constraint},
 \eqref{limit_order_price_constraint}, and \eqref{token_conservation_law},
@@ -1169,7 +1185,7 @@ such that the objective function \eqref{objective_function} is maximized.
 
 \subsection{Problem solutions}
 
-\subsubsection{DaoSwap as a linear program}
+\subsubsection{TulipSwap as a linear program}
 
 Let $x$ denote the vector with structure
 \[
@@ -1192,7 +1208,7 @@ Then the limit order quantity constraint
 \eqref{limit_order_quantity_constraint}
 is expressed in matrix form via
 \[
-    Q x \leq q
+    Q x \leq q.
 \]
 
 Let $P$ be the matrix whose $i$-th row is $n$-dimensional with entry
@@ -1201,17 +1217,19 @@ elsewhere. Then the limit order price constraint
 \eqref{limit_order_price_constraint}
 may be expressed as
 \[
-    P x \leq 0
+    P x \leq 0.
 \]
 
 For \eqref{token_conservation_law}, we introduce a matrix $R$, which expresses
 the equality constraint (which could be expressed as two inequality constraints
 in canonical form) such that it becomes
 \[
-    R x = 0
+    R x = 0.
 \]
+We leave the definition of $R$ implicit, though this can be formalized as was
+done for $P$ and $Q$.
 
-Then Problem \ref{problem_daoswap} may be expressed as the problem of maximizing
+Then Problem \ref{problem_tulipswap} may be expressed as the problem of maximizing
 \[
     \mathbb{1}^T x
 \]
@@ -1220,37 +1238,37 @@ subject to the inequality constraints
     \begin{bmatrix} Q & P & -I \end{bmatrix} x \leq
     \begin{bmatrix} q & 0 & 0 \end{bmatrix}
 \]
-and the equality constraints
+and the equality constraint
 \[
-    R x = 0
+    R x = 0.
 \]
 Note that this problem falls in domain of linear programming and may be solved
 via standard simplex or interior point methods.
 
 The problem is polynomial-time in the ideal setting of infinite divisibility.
 Discretization (and renormalization) move the problem to the domain of
-integer programming, which is NP-hard.
-
+integer programming, which is NP-complete.
 In our setting, where the typical exchanged value is much larger than the
-discretization grid, obtaining a linear programming solution and
+discretization grid, obtaining a linear programming solution
+(i.e., solving the linear programming relaxation) and
 discretizing after-the-fact may be acceptable in practice.
 
-\subsubsection{DaoDross as a linear program with additional constraints}
+\subsubsection{TulipCross as a linear program with additional constraints}
 
-We proceed as in the case of DaoSwap, but add the additional equality
+We proceed as in the case of TulipSwap, but add the additional equality
 constraint \eqref{reference_price_constraint}, which may similarly
 may be expressed in matrix form.
 
-As in the case of DaoSwap, DaoCross is a linear program, and so may be solved
+As in the case of TulipSwap, TulipCross is a linear program, and so may be solved
 efficiently.
 
-\subsubsection{DaoSwap with unique clearing prices}
+\subsubsection{TulipSwap with unique clearing prices}
 
-Problem \ref{problem_daoswap_with_unique_prices} differs from
-Problem \ref{problem_daoswap} in that constraints
+Problem \ref{problem_tulipswap_with_unique_prices} differs from
+Problem \ref{problem_tulipswap} in that constraints
 \eqref{unique_price_constraint} must hold. These constraints are quadratic
 rather than linear in $x$, which means that Problem
-\ref{problem_daoswap_with_unique_prices} falls outside of the domain of
+\ref{problem_tulipswap_with_unique_prices} falls outside of the domain of
 linear programming.
 
 Due to the fact that the constraint matrix is not positive definite and
@@ -1258,8 +1276,8 @@ the fact that the matrix expresses a constraint rather than part of an
 objective function, it does not appear that the problem admits a
 quadratic programming formulation.
 
-% \subsubsection{DaoCross problem as simplified DaoSwap problem}
-% In the DaoCross set-up, the price of the tokens involved in the swap is
+% \subsubsection{TulipCross problem as simplified TulipSwap problem}
+% In the TulipCross set-up, the price of the tokens involved in the swap is
 % determined by an external oracle.
 % This allows simplifying the general problem by applying the equivalence
 % principle between orders and removing the non-linearity from the set of
@@ -1327,16 +1345,16 @@ quadratic programming formulation.
 % The limit price means that 1 $\ETH$ is worth at most 4 $\BTC$
 
 % ###############################################################################
-\section{DaoCross order matching with two tokens}
+\section{TulipCross order matching with two tokens}
 
 In this section, we consider a simplified version of Problem
-\ref{problem_daocross}. In particular, we only allow two tokens in the pool
+\ref{problem_tulipcross}. In particular, we only allow two tokens in the pool
 of liquidity, and we use order normalization to transform orders so that
 there is a unique base token and unique quote token across all orders.
 
 % ===============================================================================
-\subsection{DaoCross reference clearing prices}
-DaoCross relies on a \emph{price oracle} for determining the effective
+\subsection{TulipCross reference clearing prices}
+TulipCross relies on a \emph{price oracle} for determining the effective
 token exchange rate in a cross. The price oracle may come from a lit
 exchange, centralized or decentralized, or even on-chain automated market
 makers such as Uniswap (\cite[\S 2.2]{AdZiRo20}).
@@ -1355,7 +1373,7 @@ exchanges, we must derive a clearing price from pairs involving stablecoins.
 
 \subsubsection{Last price as reference price}
 % TODO(gp): Expand
-One can use as reference price for DaoCross the last executed price on an
+One can use as reference price for TulipCross the last executed price on an
 exchange or AMM.
 
 \subsubsection{Exchange bid-ask midpoint reference price}
@@ -1370,7 +1388,7 @@ expressed in $\BTC$ per $\ETH$. Note that if the dollar price of BTH is signific
 more than the dollar price of ETH, then this price implies paying many
 multiples of ETH for BTC (as is the case at the time of this writing).
 
-In general, DaoCross may use the following reference price for a base/quote
+In general, TulipCross may use the following reference price for a base/quote
 token pair, where the bids and asks come from a lit exchange and are expressed
 in terms of stablecoin prices:
 \begin{equation}
@@ -1404,7 +1422,7 @@ different prioritization rule choices. See \cite{MsAts} for the
 prioritization rules used by one of Morgan Stanley's equity liquidity pools.
 
 \subsubsection{Priority rules}
-DaoCross prioritizes fills according to:
+TulipCross prioritizes fills according to:
 \begin{itemize}
     \item Volume (higher volume comes first in priority)
     \item Price (higher limit price breaks volume ties)
@@ -1430,16 +1448,16 @@ time complexity of the task is $O(n \log n)$. Memory requirements are $O(n)$.
 
 
 % ###############################################################################
-\section{Fees and tokenomics}
-TuLiP charges a fee on each transaction based on the exchanged tokens.
-E.g., a transaction requiring
+%\section{Fees and tokenomics}
+%Tulip charges a fee on each transaction based on the exchanged tokens.
+%E.g., a transaction requiring
 
 % ###############################################################################
 \section{Implementation details}
 
 % ===============================================================================
-\subsection{DaoCross and DaoSwap Architecture}
-TuLiP addresses cost issues primarily in two ways: (1) discretizing time; and
+\subsection{TulipCross and TulipSwap Architecture}
+Tulip addresses cost issues primarily in two ways: (1) discretizing time; and
 (2) scaling with layer 2 solutions. By addressing these issues, we combine the
 novel advantages of decentralized exchange with the utility and ease-of-use of
 the familiar interface of limit orders.
@@ -1451,92 +1469,75 @@ computational limitation of blockchains. We do not believe that this is detrimen
 to the security and decentralization level of TLP as long as these computations
 are provably correct.
 
-For instance, although the solution of the DaoSwap problem is NP-hard, verifying
-that one solution is correct only requires time linear in the number of
+For instance, although the solution of the TulipSwap problem \ref{problem_tulipswap}
+is polynomial in the number of constraints (or NP-complete in the fully discretized case),
+verifying that one solution is correct only requires time linear in the number of
 constraints.
 
-For this reason, DaoSwap stores on-chain the result of the DaoSwap optimization
+For this reason, TulipSwap stores on-chain the result of the TulipSwap optimization
 in order to allow independent verification that the off-chain system is not
 malicious or compromised.
 
 % ===============================================================================
 \subsection{Ensuring a timely solution}
-DaoSwap avoids the case where solving the optimization problem becomes
+TulipSwap avoids the case where solving the optimization problem becomes
 intractable by performing a swap when a maximum number of orders and/or
 currency pairs is reached.
 
 % ===============================================================================
-\subsection{Performing the swap}
+% \subsection{Performing the swap}
 
 % ###############################################################################
-\section{Alternative solutions for token swapping}
-\label{AlSoToSw}
+\section{A comparison of token swapping solutions}
+\label{comparison_section}
 
-TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
+In this section, we expand upon the summary table introduced in \ref{comparison_table}.
 
-% TODO(gp): Consider using one of the fancy table, e.g., tabularray
-\begin{samepage}
-    \begin{table}[h!]
-        \centering
-        \begin{tabular}{lllll}
-                                        & \emph{LOB}                 & \emph{AMM}                 & \emph{DaoSwap}          & \emph{DaoCross}            \\
-            \hline
-            Custodial risk              & \textcolor{red}{Yes}       & \textcolor{green}{No}      & \textcolor{green}{No}   & \textcolor{green}{No}      \\
-            Transparency                & \textcolor{red}{Low}       & \textcolor{green}{High}    & \textcolor{green}{High} & \textcolor{yellow}{Medium} \\
-            Censorship resistance       & \textcolor{red}{No}        & \textcolor{green}{Yes}     & \textcolor{green}{Yes}  & \textcolor{red}{No}        \\
-            Intrinsic efficiency        & \textcolor{yellow}{Medium} & \textcolor{red}{Low}       & \textcolor{green}{High} & \textcolor{yellow}{Medium} \\
-            Support for limit orders    & \textcolor{green}{Yes}     & \textcolor{red}{No}        & \textcolor{green}{Yes}  & \textcolor{green}{Yes}     \\
-            Risk of predatory behaviors & \textcolor{red}{High}      & \textcolor{yellow}{Low}    & \textcolor{green}{Low}  & \textcolor{yellow}{Medium} \\
-            Impermanent loss            & \textcolor{green}{No}      & \textcolor{red}{Yes}       & \textcolor{green}{No}   & \textcolor{green}{No}      \\
-            Multi-coin exchange support & \textcolor{red}{Low}       & \textcolor{yellow}{Medium} & \textcolor{green}{High} & \textcolor{green}{High}    \\
-            \hline
-        \end{tabular}
-    \end{table}
-\end{samepage}
+% TODO(gp): Reorg, maybe from best to worst? TulipSwap, LOB, TulipCross, AMM
 
 % ===============================================================================
-\subsection{DaoSwap}
+\subsection{TulipSwap}
 
 \begin{itemize}
 
-    \item Support for limit order: Yes
+    \item Support for limit orders: Yes
           \begin{itemize}
-              \item DaoSwap supports limit orders natively
+              \item TulipSwap supports limit orders natively
           \end{itemize}
     \item Welfare maximization: Yes
           \begin{itemize}
-              \item The DaoSwap optimization problem allows to exchange tokens with multiple
+              \item The TulipSwap optimization problem allows exchanging tokens with multiple
                     clearing prices to maximize the aggregated welfare of the participants
           \end{itemize}
     \item Liquidity pooling across tokens: High
           \begin{itemize}
-              \item The DaoSwap optimization problem allows to exchange tokens simultaneously across
-                    all the participants independently of their base and quote tokens
+              \item The TulipSwap optimization problem allows exchanging tokens simultaneously across
+                    all participants independently of their base and quote tokens
           \end{itemize}
     \item Liquidity pooling across time: High
           \begin{itemize}
-              \item In DaoSwap there is no difference between the roles of
+              \item In TulipSwap there is no difference between the roles of
                     liquidity providers and liquidity takers, so that takers and makers
                     can trade against each other directly and efficiently
           \end{itemize}
     \item Trading efficiency: High
           \begin{itemize}
-              \item DaoSwap relies on periodic auctions and it has been argued
+              \item TulipSwap relies on periodic auctions, and it has been argued
                     in previous literature that for small enough intervals (e.g.,
-                    seconds) periodic auctions result in the same quality of
-                    continuous matching \ref{BuCrSh15}
+                    seconds) periodic auctions result in the same quality as
+                    continuous matching \cite{BuCrSh15}
           \end{itemize}
     \item Transparency: Yes
           \begin{itemize}
               \item Price discovery, matching, and clearing are either done
                     completely on-chain or with additional off-chain computations that are
-                    independently verifiable. Thus DaoCross guarantees the requirement
-                    for a fully transparent solution
+                    independently verifiable. Thus TulipCross guarantees the requirements
+                    for a fully transparent solution.
           \end{itemize}
     \item Impermanent loss: No
           \begin{itemize}
-              \item There is no impermanent loss since liquidity is not locked inside
-                    the contract, like for an AMM
+              \item There is no impermanent loss, since liquidity is not locked inside
+                    the contract (contrary to the case for AMMs)
           \end{itemize}
     \item Custodial risk: No
           \begin{itemize}
@@ -1545,67 +1546,67 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
     \item Rent extracted by high-frequency traders: Low
           \begin{itemize}
               \item Discrete and frequent auctions minimize predatory
-                    behaviors from HFT behavior \ref{BuCrSh15}
+                    behaviors from HFT behavior \cite{BuCrSh15}
           \end{itemize}
-    \item Censoriship resistance: Yes
+    \item Censorship resistance: Yes
           \begin{itemize}
               \item The application runs on-chain and even if the web front-end is attacked
                     or disabled. The off-chain computation can be made robust using similar
                     approaches to distributed oracles, or even ported on-chain if gas prices
-                    are not an issue (e.g., using Layer2 solutions)
+                    are not an issue (e.g., using layer 2 solutions).
           \end{itemize}
 \end{itemize}
 
 % ===============================================================================
-\subsection{DaoCross}
+\subsection{TulipCross}
 
 \begin{itemize}
-    \item Support for limit order: Yes
+    \item Support for limit orders: Yes
           \begin{itemize}
-              \item DaoCross supports limit orders natively
+              \item TulipCross supports limit orders natively
           \end{itemize}
     \item Welfare maximization: No
           \begin{itemize}
-              \item The DaoCross optimization problem uses prices determined by
+              \item The TulipCross optimization problem uses prices determined by
                     a lit exchange and thus there is a single clearing price for all
-                    the swaps. This does not allow to achieve maximal welfare for
-                    the traders involved in the swap
+                    the swaps. This does not allow achieving maximal welfare for
+                    the traders involved in the swap.
           \end{itemize}
     \item Liquidity pooling across tokens: High
           \begin{itemize}
-              \item DaoCross share the same behavior of DaoSwap from this point of view
+              \item TulipCross has the same behavior as TulipSwap from this point of view
           \end{itemize}
     \item Liquidity pooling across time: High
           \begin{itemize}
-              \item DaoCross share the same behavior of DaoSwap from this point of view
+              \item TulipCross has the same behavior as TulipSwap from this point of view
           \end{itemize}
     \item Trading efficiency: Medium
           \begin{itemize}
               \item The trading efficiency in matching trades is the same as the
-                    lit exchange on which price discovery is peformed (e.g., a
+                    lit exchange on which price discovery is performed (e.g., a
                     centralized exchange)
           \end{itemize}
     \item Transparency: Yes
           \begin{itemize}
-              \item DaoCross share the same behavior of DaoSwap from this point of view
+              \item TulipCross has the same behavior as TulipSwap from this point of view
           \end{itemize}
     \item Impermanent loss: No
           \begin{itemize}
-              \item DaoCross share the same behavior of DaoSwap from this point of view
+              \item TulipCross has the same behavior as TulipSwap from this point of view
           \end{itemize}
     \item Custodial risk: No
           \begin{itemize}
-              \item DaoCross share the same behavior of DaoSwap from this point of view
+              \item TulipCross has the same behavior as TulipSwap from this point of view
           \end{itemize}
     \item Rent extracted by high-frequency traders: Medium
           \begin{itemize}
-              \item DaoCross behaves as a dark pool of liquidity and thus it can be suscetible
+              \item TulipCross behaves as a dark pool of liquidity and thus it can be susceptible
                     to predatory behaviors, although mitigated by the discrete auction mechanism
-                    \ref{BuCrSh15}
+                    \cite{BuCrSh15}
           \end{itemize}
-    \item Censoriship resistance: No
+    \item Censorship resistance: No
           \begin{itemize}
-              \item DaoCross behaves as a dark pool of liquidity and thus it can be suscetible
+              \item TulipCross behaves as a dark pool of liquidity and thus it can be susceptible
                     to censorship resistance in the same way as the lit exchange on which
                     price discovery is carried out
           \end{itemize}
@@ -1615,7 +1616,7 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 \subsection{Limit Order Book (LOB)}
 
 \begin{itemize}
-    \item Support for limit order: Yes
+    \item Support for limit orders: Yes
           \begin{itemize}
               \item Limit orders are naturally handled by a limit order book
           \end{itemize}
@@ -1644,32 +1645,32 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
           \end{itemize}
     \item Transparency: No
           \begin{itemize}
-              \item The need to cancel and reprice of orders induced by continuous
-                    time makes a LOB difficult if not impossible to run on a blockchain.
-                    Any solution that can not run on-chain does not guarantee trasparency
-                    required by decentralized finance
+              \item The need to cancel and reprice orders, induced by continuous
+                    time, makes an LOB difficult if not impossible to run on a blockchain.
+                    Any solution that can not run on-chain does not guarantee transparency
+                    as required by decentralized finance.
           \end{itemize}
     \item Impermanent loss: No
           \begin{itemize}
-              \item There is no impermanent loss since liquidity is not locked inside
-                    the contract, like for an AMM
+              \item There is no impermanent loss, since liquidity is not locked inside
+                    the contract, contrary to the case for AMMs
           \end{itemize}
     \item Custodial risk: Yes
           \begin{itemize}
-              \item For the same reasons described when reasoning about transprency
+              \item For the same reasons described when reasoning about transparency,
                     limit order books are run as centralized exchanges, which requires
                     traders to delegate the ownership of tokens to centralized exchanges
           \end{itemize}
     \item Rent extracted by high-frequency traders: High
           \begin{itemize}
               \item Since time is treated as a continuous quantity, traders can
-                    gain advantages from faster connections and computing, allowing
+                    gain advantages from faster connections and computation, allowing
                     predatory behaviors from high-frequency traders
-                    \ref{BuCrSh15}
+                    \cite{BuCrSh15}
           \end{itemize}
-    \item Censoriship resistance: No
+    \item Censorship resistance: No
           \begin{itemize}
-              \item For the same reasons described when reasoning about transprency
+              \item For the same reasons described when reasoning about transparency,
                     limit order books are run as centralized exchanges, which requires
 
           \end{itemize}
@@ -1679,14 +1680,14 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 \subsection{Automatic Market Makers (AMM)}
 
 \begin{itemize}
-    \item Support for limit order: No
+    \item Support for limit orders: No
           \begin{itemize}
-              \item Uniswap V3 doesn't support limit orders directly but only in terms of
+              \item Uniswap V3 does not support limit orders directly, but only in terms of
                     maximum slippage
           \end{itemize}
     \item Welfare maximization: Small
           \begin{itemize}
-              \item In AMM price needs to be corrected by an arbitrageur,
+              \item In AMMs, price needs to be corrected by an arbitrageur,
                     impacting the quality of the provided liquidity
           \end{itemize}
     \item Liquidity pooling across tokens: Medium
@@ -1699,6 +1700,7 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
     \item Liquidity pooling across time: Low
           \begin{itemize}
               \item Liquidity providers and takers interact with AMMs at different times
+                    and on different time scales
           \end{itemize}
     \item Trading efficiency: Low
           \begin{itemize}
@@ -1707,38 +1709,35 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
           \end{itemize}
     \item Transparency: Yes
           \begin{itemize}
-              \item The implementation of an AMM can entirely on-chain and thus
-                    it guarantees trasparency required by decentralized finance
+              \item The implementation of an AMM can be done entirely on-chain and thus
+                    it guarantees transparency as required by decentralized finance
           \end{itemize}
     \item Impermanent loss: No
           \begin{itemize}
-              \item AMMs are affected by impermanent loss because liquidity
+              \item AMMs are affected by impermanent loss, because liquidity
                     providers and liquidity takers are in general different users
                     operating at different time scales
           \end{itemize}
     \item Custodial risk: No
           \begin{itemize}
-              \item Tokens are always under control of the respective owners
+              \item Tokens are always under the control of their respective owners
           \end{itemize}
     \item Rent extracted by high-frequency traders: High
           \begin{itemize}
               \item In AMM price needs to be corrected by arbitrageurs in order
-                    to be maintained aligned to large CEXs where the price
-                    discovery happens, continuously creating arbitrage opportunity
+                    to maintain alignment with large CEXs, where the price
+                    discovery happens, continuously creating arbitrage opportunities
           \end{itemize}
     \item Censoriship resistance: Yes
           \begin{itemize}
-              \item The implementation of an AMM can entirely on-chain and thus
+              \item The implementation of an AMM can be done entirely on-chain and thus
                     it is robust to censorship
           \end{itemize}
 \end{itemize}
 
 
-% ###############################################################################
-\section{Alternative solutions to the token swap problem}
-
 % ===============================================================================
-\subsection{Comments on AMMs}
+\subsubsection{Additional comments on AMMs}
 
 Some of the benefits of AMMs are:
 \begin{itemize}
@@ -1750,10 +1749,10 @@ Some of the benefits of AMMs are:
 
 Some of the drawbacks of AMMs are:
 \begin{itemize}
-    \item force liquidity providers to trade at worse-than-market prices
     \item a rarely used building block used mainly in prediction markets rather than
           in mainstream finance. In fact only recently papers have started analyzing
           the financial return / risk profile of AMMs \cite{MiMoRoZh22}
+    \item liquidity providers are forced to trade at worse-than-market prices
     \item price needs to be corrected by an arbitrageur, impacting the quality of
           the provided liquidity
     \item artificially separates liquidity providers from traders, preventing traders
@@ -1763,38 +1762,42 @@ Some of the drawbacks of AMMs are:
 
 Some critiques and counterpoints can be made to the benefits of AMMs listed above.
 \begin{itemize}
-    \item conceptual simplicity. Although this is a favorable point for users
+    \item \textbf{Conceptual simplicity}.
+          Although this is a favorable point for users
           without experience in finance, the evolution of finance practices favors the
           use of limit orders, as explained in the introduction.
-    \item low computational requirements. This is not necessarily a strict
+    \item \textbf{Low computational requirements}.
+          This is not necessarily a strict
           requirement any more due to progress in off-chain computation and
           improved scalability in blockchain technology (such as layer 2
           blockchains). We do not believe that an inefficient solution (from
           the point of view of exchanged value) should be preferred only
           because of implementation simplicity.
-    \item ability to function even for illiquid markets.
+    \item \textbf{Ability to function even for illiquid markets}.
           Although this is a valid advantage for many markets (e.g., prediction markets),
           the vast majority of crypto coins are extremely liquid and do not require
-          trading off trading quality.
-    \item ability to function without a reference price.
+          sacrificing trading quality.
+    \item \textbf{Ability to function without a reference price}.
           This feature was certainly appealing to initial researchers (e.g., \cite{Bu17})
           in search of a fully-decentralized solution to the problem
           of token exchange. In reality, the fact that price discovery unquestionably
-          happens on current CEXs turned AMMs into arbitrage generation machines
+          happens on current CEXs has turned AMMs into arbitrage generation machines
           (AGMs), where 80\% of the trading volume is due to arbitrageurs keeping AMM
-          prices in sync with the predominant price TODO(gp): Add reference
+          prices in sync with the predominant price.
 \end{itemize}
 
-One of the problems with current state of DeFi is that users look for
-applications to use their crypto coins, waiting for mainsteam adoption of
-crypto in every day payment.
-Also a current trend is for crypto holders to find yield to benefit from
-holding crypto. AMMs satisfied the need for ways to extract yields from holding
-coins.
+One problem AMMs address is that they provide a way for token holders to
+extract yield from their holdings. While this a useful function, new
+mechanisms are needed so that LPs may be compensated with revenues to
+offset the cost of their adverse selection, as quantified and characterized
+by \cite{MiMoRoZh22}.
 
-We don't think AMM will be completely replaced but new mechanisms are needed LPs
-need to be compensated with revenues to offset the cost of their adverse
-selection (quantified and characterized by the LVR paper)
+% One of the problems with current state of DeFi is that users look for
+% applications to use their crypto coins, waiting for mainsteam adoption of
+% crypto in every day payment.
+% Also a current trend is for crypto holders to find yield to benefit from
+% holding crypto. AMMs satisfied the need for ways to extract yields from holding
+% coins.
 
 % % ===============================================================================
 % \subsection{CPMM as an LOB}
@@ -1900,7 +1903,7 @@ selection (quantified and characterized by the LVR paper)
 % $(a_1, b_1)$ of the book.
 
 % ###############################################################################
-\bibliography{Daobib}
+\bibliography{Tulipbib}
 \bibliographystyle{amsplain}
 
 \begin{thebibliography}{10}
@@ -1951,6 +1954,14 @@ selection (quantified and characterized by the LVR paper)
         date={2018},
         publisher={Cambridge University Press},
         doi={https://doi.org/10.1017/9781316659335},
+    }
+
+    \bib{BuCrSh15}{article}{
+        author={Budish, Eric B.},
+        author={Cramton, Peter },
+        author={Shim, John J.},
+        title={The High-Frequency Trading Arms Race: Frequent Batch Auctions as a Market Design Response},
+        date={2015},
     }
 
     \bib{Bu17}{article}{
@@ -2083,20 +2094,13 @@ selection (quantified and characterized by the LVR paper)
         eprint={https://www.sciencedirect.com/science/article/abs/pii/S0377221703008981},
     }
 
-    \bib{Yo20}{article}{
-        author={Young, Jamie E.},
-        title={On Equivalence of Automated Market Maker and Limit Order Book Systems},
-        date={October 2020},
-        eprint={https://professorjey.com/assets/papers/AMM_Order_Book_Equivalence_DRAFT_2020_10_16.pdf},
-    }
-
-    \bib{BuCrSh15}{article}{
-        author={Budish, Eric B.},
-        author={Cramton, Peter },
-        author={Shim, John J.},
-        title={The High-Frequency Trading Arms Race: Frequent Batch Auctions as a Market Design Response},
-        date={2015},
-    }
+% Include reference in follow-up analysis.
+%     \bib{Yo20}{article}{
+%         author={Young, Jamie E.},
+%         title={On Equivalence of Automated Market Maker and Limit Order Book Systems},
+%         date={October 2020},
+%         eprint={https://professorjey.com/assets/papers/AMM_Order_Book_Equivalence_DRAFT_2020_10_16.pdf},
+%     }
 
     %    \bib{}{article}{
     %      author={,},
