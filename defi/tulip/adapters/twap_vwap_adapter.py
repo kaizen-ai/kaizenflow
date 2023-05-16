@@ -64,12 +64,10 @@ def _process_price_data(price_data: Dict[str, Any]) -> Tuple[List[int], List[flo
     """
     Get the sequence of volumes and prices in WEI.
     """
-    # Get price and volume data.
-    prices = [price[1] for price in price_data["prices"]]
-    volumes = [volume[1] for volume in price_data["total_volumes"]]
-    # Convert prices to WEI.
-    eth_to_wei = 10**18
-    prices = [int(price * eth_to_wei) for price in prices]
+    # Select and convert prices to WEI.
+    prices = np.array([int(price[1] * 10**18) for price in price_data["prices"]])
+    # Select volumes.
+    volumes = np.array([volume[1] for volume in price_data["total_volumes"]])
     return prices, volumes
 
 
@@ -82,8 +80,8 @@ def get_twap() -> Dict[str, Any]:
     price_data = _get_price_volume_data()
     if price_data.get("error"):
         return price_data
-    prices, volumes = _process_price_data(price_data)
-    twap = np.average(prices, weights=volumes)
+    prices, _ = _process_price_data(price_data)
+    twap = np.mean(prices)
     twap = jsonify(
         {
             "jobRunID": request.json.get("id", ""),
@@ -103,7 +101,7 @@ def get_vwap() -> Dict[str, Any]:
     if price_data.get("error"):
         return price_data
     prices, volumes = _process_price_data(price_data)
-    vwap = np.sum(prices * volumes) / np.sum(volumes)
+    vwap = np.average(prices, weights=volumes)
     vwap = jsonify(
         {
             "jobRunID": request.json.get("id", ""),
