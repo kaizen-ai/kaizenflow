@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./PriceOracle.sol";
+import "./PriceFeedOracle.sol";
 import "./OrderMinHeap.sol";
+import "./TwapVwapAdapter.sol";
 
 import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -17,10 +18,13 @@ contract DaoCross is Ownable {
     OrderMinHeap.Heap private sellHeap;
 
     // From https://docs.chain.link/data-feeds/price-feeds/addresses.
-    PriceOracle public priceOracle;
+    PriceFeedOracle public priceFeedOracle;
+    TwapVwapAdapter public twapVwapOracle;
     uint16 public swapPeriodInSecs;
     uint8 public swapRandomizationInSecs;
+    uint8 public priceMode;
     uint256 public feesAsPct;
+    string public baseTokenSymbol;
     // The ERC20 token to buy / sell relatively to ETH.
     IERC20 baseToken;
 
@@ -51,23 +55,34 @@ contract DaoCross is Ownable {
     );
 
     /// @param _baseToken: a token to swap (e.g., wBTC, ADA)
+    /// @param _baseTokenSymbol: base token symbol to use with twap/vwap API
     /// @param _swapPeriodInSecs: how often to perform the swap (e.g., 300 to perform a swap every 5 minutes)
     /// @param _swapRandomizationInSecs: how many random seconds to add or subtract to the `swapPeriodsInSecs`.
     ///    E.g., _swapPeriodInSecs=300 and _swapRandomizationInSecs=5, it means that each swap happens every 5 minutes
     ///    with a different number of seconds in [0, 5] before or after the 5 minute mark.
     /// @param _feesAsPct: fees to charge in terms of value exchanged
-    /// @param _priceOracle: contract providing the price for the swap
+    /// @param _priceMode: 1 for chainlink price feed, 2 for twap, 3 for vwap
+    /// @param _priceFeedOracle: contract providing the price for the _baseToken from chainlink price feed
+    /// @param _twapVwapOracle: contract providing the price for the _baseToken from our twap/vwap external adapter
     constructor(
         address _baseToken,
+        string memory _baseTokenSymbol,
         uint16 _swapPeriodInSecs,
         uint8 _swapRandomizationInSecs,
         uint8 _feesAsPct,
-        address _priceOracle
+        uint8 _priceMode,
+        address _priceFeedOracle,
+        address _twapVwapOracle
     ) {
         swapPeriodInSecs = _swapPeriodInSecs;
         swapRandomizationInSecs = _swapRandomizationInSecs;
         feesAsPct = _feesAsPct;
-        priceOracle = new PriceOracle(_priceOracle);
+        baseTokenSymbol = _baseTokenSymbol;
+        priceMode = _priceMode;
+        // Deploy new price feed client contract.
+        priceFeedOracle = new PriceFeedOracle(_priceFeedOracle);
+        // Get the deployed contract of TwapVwap adapter.
+        twapVwapOracle = TwapVwapAdapter(_twapVwapOracle);
         baseToken = IERC20(_baseToken);
     }
 
@@ -160,7 +175,7 @@ contract DaoCross is Ownable {
      * executing the transfers, it erases all orders.
      */
     function onSwapTime() public onlyOwner {
-        uint256 clearingPrice = getChainlinkFeedPrice();
+        uint256 clearingPrice = getPrice();
         // Initialize the heaps.
         Transfer[] memory transfers = processOrders(clearingPrice);
         for (uint256 i = 0; i < transfers.length; i++) {
@@ -378,12 +393,26 @@ contract DaoCross is Ownable {
         return transferIndex;
     }
 
-    /// @notice Get token price from the Chainlink price feed.
-    function getChainlinkFeedPrice() public view returns (uint256) {
-        int256 price = priceOracle.getLatestPrice();
-        require(price > 0, "Price should be more than zero");
-        uint256 uintPrice = uint(price);
+
+    /// @notice Get token price from the Chainlink price feed or TwapVwap adapter. 
+    function getPrice() public returns (uint256) {
+        uint256 uintPrice;
+        int256 currentTimestamp = int(block.timestamp);
+        // Get the timestamp of one week before.
+        int256 startTimestamp = currentTimestamp - 604800;
+        if (priceMode == 1) {
+            int256 price = priceFeedOracle.getLatestPrice();
+            uintPrice = uint(price);
+        } else if (priceMode == 2) {
+            bytes32 requestId = twapVwapOracle.requestTwap(baseTokenSymbol, startTimestamp, currentTimestamp);
+            uintPrice = twapVwapOracle.getResult(requestId);
+        } else if (priceMode == 3) {
+            bytes32 requestId = twapVwapOracle.requestVwap(baseTokenSymbol, startTimestamp, currentTimestamp);
+            uintPrice = twapVwapOracle.getResult(requestId);
+        }
+        require(uintPrice > 0, "Price should be more than zero");
         return uintPrice;
+
     }
 
     function eraseOrders() internal onlyOwner {
