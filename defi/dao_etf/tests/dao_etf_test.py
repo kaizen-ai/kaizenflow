@@ -30,4 +30,3 @@ def test_flow():
     dao_etf.withdraw(10000000000000000000, {"from": owner})
     assert owner.balance() == 1010000000000000000000
     assert dao_etf.balance() == 0
-

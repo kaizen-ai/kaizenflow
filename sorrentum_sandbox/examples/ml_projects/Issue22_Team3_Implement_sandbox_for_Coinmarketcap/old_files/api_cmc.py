@@ -3,7 +3,7 @@
 API list:
 1. /v1/cryptocurrency/listings/latest - Latest listings
 2. /v2/cryptocurrency/quotes/latest - this endpoint to request the latest quote for specific cryptocurrencies.
-3. /v1/exchange/map - CoinMarketCap ID map 
+3. /v1/exchange/map - CoinMarketCap ID map
 4. /v1/exchange/assets - Exchange Assets
 5. /v1/global-metrics/quotes/latest - Latest global metrics
 '''
@@ -19,14 +19,14 @@ class CMC_request():
                 method="GET",
                 url=url,
                 headers={
-                    "Content-Type": "application/json", 
-                    "X-CMC_PRO_API_KEY": self.api_key, 
+                    "Content-Type": "application/json",
+                    "X-CMC_PRO_API_KEY": self.api_key,
                     "Accepts": "application/json"},
                 data={},
             )
             if response.json()['status']['error_code'] == 0:
                 print("Request successful!")
-                return response.json()['data']  
+                return response.json()['data']
             else:
                 print("Request failed, status code:", response.json()['status']['error_code'])
         except Exception as e:
@@ -75,7 +75,6 @@ class CMC_request():
             )
         else:
             print("Invalid API number, please use number between 1-5")
-
 
 
 

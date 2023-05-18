@@ -110,8 +110,8 @@ def print_balance(w3: web3.Web3, account, units="ether", token=None):
     if symbol is not None:
         ret += " " + symbol
     print(ret)
-    
-    
+
+
 def print_tx(tx_id):
     print("tx_id=", tx_id)
     tx = brownie.chain.get_transaction(tx_id)

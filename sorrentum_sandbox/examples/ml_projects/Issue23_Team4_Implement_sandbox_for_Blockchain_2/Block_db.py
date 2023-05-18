@@ -20,7 +20,7 @@ def get_Market_Price_Historical_table_query() -> str:
     Get SQL query to create Market_Price_Historical table.
     """
     query = """
-    
+
     CREATE TABLE IF NOT EXISTS Historical_Market_Price(
             id SERIAL PRIMARY KEY,
             timestamp INT,
@@ -35,7 +35,7 @@ def get_Market_Price_Real_Time_table_query() -> str:
     Get SQL query to create Market_Price_Real_Time table.
     """
     query = """
-    
+
     CREATE TABLE IF NOT EXISTS Real_Time_Market_Price(
             id SERIAL PRIMARY KEY,
             timestamp INT,

@@ -113,7 +113,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
 
     @staticmethod
     def _create_insert_query(df: pd.DataFrame, db_table: str) -> str:
-      
+
         columns = ",".join(list(df.columns))
         query = f"INSERT INTO {db_table}({columns}) VALUES %s"
         return query
@@ -130,9 +130,9 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
 
 
 class PostgresClient(sinsacli.DataClient):
-    
+
     def __init__(self, db_connection: str) -> None:
-        
+
         self.db_conn = db_connection
 
     def load(
@@ -143,7 +143,7 @@ class PostgresClient(sinsacli.DataClient):
         end_timestamp: Optional[pd.Timestamp] = None,
         **kwargs: Any,
     ) -> Any:
-    
+
         select_query = f"SELECT * FROM {dataset_signature}"
         # Filter data.
         if start_timestamp:
@@ -166,4 +166,3 @@ class PostgresClient(sinsacli.DataClient):
         data = pd.read_sql_query(select_query, self.db_conn)
 
         return data
-

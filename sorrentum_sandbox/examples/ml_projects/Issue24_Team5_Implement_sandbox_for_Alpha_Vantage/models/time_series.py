@@ -50,7 +50,7 @@ class TimeSeriesData:
         Returns:
         List[TimeSeriesData]
         """
-        
+
         time_series: List[cls] = []
         for key in data.keys():
             if "Time Series" in key:

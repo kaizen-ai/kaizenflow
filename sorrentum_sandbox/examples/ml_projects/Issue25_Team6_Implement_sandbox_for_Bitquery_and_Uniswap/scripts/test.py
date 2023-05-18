@@ -69,7 +69,7 @@ print(df.head())
 # for item in tables_and_dfs:
 #     table_name = item["table_name"]
 #     df = item["df"]
-    
+
 #     # Create a new table in the database
 #     with conn.cursor() as cur:
 #         if table_name == "tran_token_info":
@@ -224,7 +224,7 @@ print(df.head())
 # conn.close()
 
 
-   
+
 
 # # create table in database
 # # create_table_query = '''CREATE TABLE IF NOT EXISTS tran_token_info (

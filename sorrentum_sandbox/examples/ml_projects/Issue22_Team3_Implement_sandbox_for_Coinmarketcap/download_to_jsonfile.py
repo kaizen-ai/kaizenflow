@@ -31,7 +31,7 @@ def save_to_json(data) -> None:
     """
     with open('CoinMarketData.json', 'w+') as f:
         json.dump(data, f)
-        _LOG.info("Saving data to json file 'CoinMarketCap.json'") 
+        _LOG.info("Saving data to json file 'CoinMarketCap.json'")
 
 # #############################################################################
 

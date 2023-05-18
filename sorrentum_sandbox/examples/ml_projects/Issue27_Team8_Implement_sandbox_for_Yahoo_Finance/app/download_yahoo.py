@@ -45,7 +45,7 @@ class YFinanceDownloader(ssandown.DataDownloader):
             data['currency_pair']=symbol
             data['exchangeTimezoneName'] = yf.Ticker(symbol).history_metadata['exchangeTimezoneName']
             data['timezone'] = yf.Ticker(symbol).history_metadata['timezone']
-            
+
             dfs.append(data)
             # Delay for throttling in seconds.
             time.sleep(0.5)

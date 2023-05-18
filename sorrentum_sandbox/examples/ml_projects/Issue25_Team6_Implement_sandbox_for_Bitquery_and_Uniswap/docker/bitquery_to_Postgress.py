@@ -48,7 +48,7 @@ def run_bitquery_query(start_time: str,  limit: int) -> pd.DataFrame:
         }
         txFrom {
           address
-        }    
+        }
         }
       quoteAmount(in: USD)
       trades: count
@@ -108,7 +108,7 @@ def run_bitquery_query(start_time: str,  limit: int) -> pd.DataFrame:
 
   # Normalize and convert the results list into a Pandas DataFrame
   df = json_to_df(results)
-  
+
   return df
 
 
@@ -127,7 +127,7 @@ start_time = '2023-03-22T00:00:00Z'
 limit = 25000
 
 
-# Commented out for debugging - Query was taking too long 
+# Commented out for debugging - Query was taking too long
 df = run_bitquery_query(start_time,limit)
 
 # print(df.head())
@@ -199,7 +199,7 @@ tran_metadata.to_sql('tran_token_info', engine, index=False, if_exists='replace'
 # for item in tables_and_dfs:
 #     table_name = item["table_name"]
 #     df = item["df"]
-    
+
 #     # Create a new table in the database
 #     with conn.cursor() as cur:
 #         if table_name == "tran_token_info":
@@ -354,7 +354,7 @@ tran_metadata.to_sql('tran_token_info', engine, index=False, if_exists='replace'
 # conn.close()
 
 
-   
+
 
 # # create table in database
 # # create_table_query = '''CREATE TABLE IF NOT EXISTS tran_token_info (

@@ -17,7 +17,7 @@ def test_transfer_sender_balance(accounts, token):
     token.transfer(accounts[1], 10**18, {"from": accounts[0]})
     # Check whether the sender balance increased.
     assert token.balanceOf(accounts[0]) == balance - 10**18
- 
+
 
 def test_transfer_receiver_balance(accounts, token):
     balance = token.balanceOf(accounts[1])
@@ -25,7 +25,7 @@ def test_transfer_receiver_balance(accounts, token):
     # Check whether the reciever balance decreased.
     assert token.balanceOf(accounts[1]) == balance + 10**18
 
-    
+
 def test_transfer_insufficient_balance(accounts, token):
     with brownie.reverts("ERC20: transfer amount exceeds balance"):
         token.transfer(accounts[2], 10**18, {"from": accounts[1]})
@@ -47,4 +47,3 @@ def test_mint_more_max_supply_error(accounts, token):
 def test_mint_reverts_not_owner(accounts, token):
     with brownie.reverts("Ownable: caller is not the owner"):
         token.mint(accounts[1], 1, {"from": accounts[1]})
-

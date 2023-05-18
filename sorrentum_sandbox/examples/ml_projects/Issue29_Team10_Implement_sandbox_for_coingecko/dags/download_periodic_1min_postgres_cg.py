@@ -55,4 +55,3 @@ downloading_task = BashOperator(
 )
 
 downloading_task
-

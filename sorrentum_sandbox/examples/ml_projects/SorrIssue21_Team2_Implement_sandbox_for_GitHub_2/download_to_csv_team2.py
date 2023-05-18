@@ -122,7 +122,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     saver = CsvDataFrameSaver(args.target_dir)
     saver.save(downloader)
 
-    
+
 
 
 if __name__ == "__main__":

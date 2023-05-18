@@ -64,7 +64,7 @@ def run_bitquery_query(start_time: str, end_time: str = None) -> ssandown.RawDat
             exchange {
             fullName
             }
-            
+
             baseCurrency {
             symbol
             address
@@ -157,7 +157,7 @@ def run_bitquery_query(start_time: str, end_time: str = None) -> ssandown.RawDat
 def json_to_df(data: List[Dict[Any, Any]]) -> pd.DataFrame:
     # normalize and set index to time_interval
     df = pd.json_normalize(data, sep="_")
-    # df = df.set_index("timeInterval_minute") 
+    # df = df.set_index("timeInterval_minute")
     return df
 
 
@@ -166,4 +166,3 @@ def json_to_df(data: List[Dict[Any, Any]]) -> pd.DataFrame:
 
 
 
-  

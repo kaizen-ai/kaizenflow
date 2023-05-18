@@ -133,7 +133,7 @@ def get_test_orders(
 ) -> Tuple[ddacrord.Order, ddacrord.Order]:
     """
     Get toy orders to demonstrate how the solver works.
-    
+
     :param limit_price_1: limit price for the buy order
     :param limit_price_2: limit price for the sell order
     :return: buy and sell orders

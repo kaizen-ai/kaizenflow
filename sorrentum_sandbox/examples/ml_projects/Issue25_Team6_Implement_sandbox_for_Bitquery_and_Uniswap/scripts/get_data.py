@@ -45,7 +45,7 @@ def make_query(start_date:str):
     }
     """
     return query
-  
+
 
 def run_query(query: str):
     # header here just for easy use
@@ -61,7 +61,7 @@ def run_query(query: str):
                 request.status_code, query
             )
         )
-    
+
 def json_to_df(data: List[Dict[Any, Any]]) -> pd.DataFrame:
     """
     Transform the data to Dataframe and set the time index.
@@ -69,6 +69,5 @@ def json_to_df(data: List[Dict[Any, Any]]) -> pd.DataFrame:
     df = pd.json_normalize(data, sep="_")
     df = df.set_index("timeInterval_minute")
     return df
-
 
 

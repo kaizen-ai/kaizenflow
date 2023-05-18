@@ -51,8 +51,8 @@ class CMCRestApiDownloader(ssandown.DataDownloader):
                 method="GET",
                 url=url,
                 headers={
-                    "Content-Type": "application/json", 
-                    "X-CMC_PRO_API_KEY": self.api_key, 
+                    "Content-Type": "application/json",
+                    "X-CMC_PRO_API_KEY": self.api_key,
                     "Accepts": "application/json"},
                 data={},
             )
@@ -65,7 +65,7 @@ class CMCRestApiDownloader(ssandown.DataDownloader):
             else:
                  _LOG.info("Request failed, status code:{}" .format(response.json()['status']['error_code']))
         except Exception as e:
-            _LOG.info(f"Request exception:{e}") 
+            _LOG.info(f"Request exception:{e}")
 
 
     def download(self,id) -> ssandown.RawData:

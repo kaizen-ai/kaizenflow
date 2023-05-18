@@ -117,7 +117,7 @@ def display(
             df['anomaly'] = quantiles(data=df)
         else:
             df['anomaly'] = isolation_forest_labels(data=df)
-        
+
         outliers = df.query('anomaly==True')
         ax1.scatter(outliers.date, outliers.close, color='blue')
 

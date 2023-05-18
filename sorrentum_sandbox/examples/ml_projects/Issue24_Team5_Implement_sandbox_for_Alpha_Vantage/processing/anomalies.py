@@ -25,7 +25,7 @@ def quantiles(data: DataFrame):
 
     Returns:
     np.array[Bool]
-    """    
+    """
     df = data.sort_values(by='close', ascending=True).reset_index()
 
     # Lower/upper quantile index
@@ -50,6 +50,6 @@ def quantiles(data: DataFrame):
             labs.append(True)
             continue
 
-        labs.append(False) 
-    
+        labs.append(False)
+
     return np.array(labs)

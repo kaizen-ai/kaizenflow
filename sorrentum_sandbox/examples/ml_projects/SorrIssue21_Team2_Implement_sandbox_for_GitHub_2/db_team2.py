@@ -40,7 +40,7 @@ def get_github_create_main_table_query() -> str:
             watchers  NUMERIC,
             network_count NUMERIC,
             subscribers_count NUMERIC,
-            owner_id NUMERIC, 
+            owner_id NUMERIC,
             organization_id NUMERIC,
             Crypto VARCHAR(255) NOT NULL,
             inserted_at TIMESTAMP
@@ -63,14 +63,14 @@ def get_github_create_issues_table_query() -> str:
             updated_at TIMESTAMP,
             closed_at TIMESTAMP,
             author_association VARCHAR(255),
-            comments NUMERIC,   
+            comments NUMERIC,
             body VARCHAR(50000) ,
             user_login VARCHAR(255) NOT NULL,
             user_id NUMERIC,
             Crypto_Name VARCHAR(255) NOT NULL,
             Extension VARCHAR(255) NOT NULL
             )
-             
+
             """
     return query
 
@@ -90,9 +90,9 @@ def get_github_create_commits_table_query() -> str:
           Sun NUMERIC,
           Mon NUMERIC,
           Tue NUMERIC,
-          Wed NUMERIC, 
-          Thur NUMERIC, 
-          Fri NUMERIC, 
+          Wed NUMERIC,
+          Thur NUMERIC,
+          Fri NUMERIC,
           Sat NUMERIC
             )
             """
@@ -176,13 +176,13 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         as downloading the data, but as an example this suffices.
         """
         cursor = self.db_conn.cursor()
-        
+
         query = get_github_create_main_table_query()
         cursor.execute(query)
-        
+
         query = get_github_create_issues_table_query()
         cursor.execute(query)
-        
+
         query = get_github_create_commits_table_query()
         cursor.execute(query)
 
@@ -233,4 +233,3 @@ class PostgresClient(sinsacli.DataClient):
         # Read data.
         data = pd.read_sql_query(select_query, self.db_conn)
         return data
-
