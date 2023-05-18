@@ -265,4 +265,3 @@ def run_daocross_solver(
     result_df["q_tau_star"] = result["q_tau_star"]
     result_df["effective_price"] = result_df["q_tau_star"] / result_df["q_pi_star"]
     return result_df
-

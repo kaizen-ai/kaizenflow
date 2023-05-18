@@ -70,7 +70,7 @@ def _add_download_args(
     )
 
 
-    
+
     return parser
 
 def _parse() -> argparse.ArgumentParser:

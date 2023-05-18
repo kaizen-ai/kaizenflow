@@ -87,8 +87,7 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
         return (
             f"{api}/{chart_Name}?timespan={time_span}&" + \
             f"start={start_timestamp}&format={format}"
-            
-        )
 
+        )
 
 

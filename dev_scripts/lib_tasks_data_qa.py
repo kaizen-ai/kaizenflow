@@ -109,7 +109,7 @@ def _run_data_qa_notebook(
 ) -> None:
     """
     Run data QA notebook and store it in a specified location.
-    
+
     The function encapsulates common behavior, concrete QA flows parametrize
     it for particular use cases.
 
@@ -153,7 +153,7 @@ def _run_data_qa_notebook(
     # hdbg.dassert_dir_exists(results_dir)
     # Copy the published notebook to the specified folder.
     # TODO(Juraj): This is a make-do solution to avoid ridiculously long
-    #  directory names when running cross dataset QA. For now this should not 
+    #  directory names when running cross dataset QA. For now this should not
     #  cause conflicts.
     dir_specifier = (
         "dataset_signature" if "dataset_signature" in config_dict else "dataset_signature1"

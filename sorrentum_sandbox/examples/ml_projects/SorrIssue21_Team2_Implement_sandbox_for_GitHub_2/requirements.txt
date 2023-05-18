@@ -1,6 +1,6 @@
 sqlalchemy
 psycopg2-binary
-pandas 
+pandas
 requests
 tqdm
 #Test

@@ -17,8 +17,8 @@ def get_yfinance_spot_downloaded_1min_create_table_query() -> str:
     """
     query = """
     CREATE TABLE IF NOT EXISTS yahoo_yfinance_spot_downloaded_1min(
-            
-            
+
+
             open NUMERIC,
             high NUMERIC,
             low NUMERIC,
@@ -232,7 +232,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         :param table_name: name of the table for insertion
         :return: SQL query, e.g.
         """
-        
+
         columns = ",".join(list(df.columns))
         query = f"INSERT INTO {db_table}({columns}) VALUES %s"
         return query

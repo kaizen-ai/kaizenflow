@@ -265,4 +265,4 @@ def convert_aggregated_curve_to_limit_orders(
         orders.append(order)
         # Update quantity on market.
         quantity_on_market = q
-    return orders 
+    return orders

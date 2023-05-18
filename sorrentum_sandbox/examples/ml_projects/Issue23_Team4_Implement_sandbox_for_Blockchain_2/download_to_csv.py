@@ -104,7 +104,7 @@ def _add_download_args(
     )
 
 
-    
+
     return parser
 
 
@@ -126,7 +126,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # report_memory_usage=True
     )
     # Download data.
-   
+
     downloader = sisebido.OhlcvRestApiDownloader(api=args.api, chart_name=args.chart_name)
     raw_data = downloader.download(args.start_timestamp,args.time_span)
 

@@ -11,7 +11,7 @@ def query_from_db(query):
             user="postgres",
             password="postgres",
         )
-    
+
     cursor = connection.cursor()
     cursor.execute(query)
 

@@ -36,7 +36,7 @@ class MongoDataSaver(ssansave.DataSaver):
         #     hdbg.dassert_isinstance(data, list, "This data type is not supported")
         db = self.mongo_client
         db[self.db_name][collection_name].insert_one(data)
-    
+
     # get data from mongoDB
     def get_data(self, collection_name: str) -> pd.DataFrame:
         db = self.mongo_client
