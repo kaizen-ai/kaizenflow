@@ -12,9 +12,8 @@ import logging
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import sorrentum_sandbox.examples.ml_projects.SorrIssue21_Team2_Implement_sandbox_for_GitHub_2.db_team2 as sisebidb
+import sorrentum_sandbox.examples.ml_projects.SorrIssue21_Team2_Implement_sandbox_for_GitHub_2.db_team2 as ssempstisfg2dt
 import sorrentum_sandbox.examples.ml_projects.SorrIssue21_Team2_Implement_sandbox_for_GitHub_2.download_team2 as sisebido
-
 
 _LOG = logging.getLogger(__name__)
 
@@ -51,7 +50,7 @@ def _add_download_args(
         action="store",
         required=True,
         type=str,
-        help="Name of the db table to save data into"
+        help="Name of the db table to save data into",
     )
     return parser
 
@@ -70,13 +69,17 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     # Load data.
-    if(args.roundid is None):
-        raw_data = sisebido.downloader(pair = args.pair,target_table=args.target_table, num_of_data = args.num_of_data)
-    elif(args.num_of_data is None):
-        raw_data = sisebido.downloader(pair = args.pair, roundid = args.roundid)
+    if args.roundid is None:
+        raw_data = sisebido.downloader(
+            pair=args.pair,
+            target_table=args.target_table,
+            num_of_data=args.num_of_data,
+        )
+    elif args.num_of_data is None:
+        raw_data = sisebido.downloader(pair=args.pair, roundid=args.roundid)
     # Save data to DB.
-    db_conn = sisebidb.get_db_connection()
-    saver = sisebidb.PostgresDataFrameSaver(db_conn)
+    db_conn = ssempstisfg2dt.get_db_connection()
+    saver = ssempstisfg2dt.PostgresDataFrameSaver(db_conn)
     saver.save(raw_data, args.target_table)
 
 

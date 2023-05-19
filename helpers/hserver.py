@@ -100,9 +100,7 @@ def is_mac(*, version: Optional[str] = None) -> bool:
     """
     _LOG.debug("version=%s", version)
     host_os_name = os.uname()[0]
-    _LOG.debug(
-        "os.uname()=%s", str(os.uname())
-    )
+    _LOG.debug("os.uname()=%s", str(os.uname()))
     am_host_os_name = os.environ.get("AM_HOST_OS_NAME", None)
     _LOG.debug(
         "host_os_name=%s am_host_os_name=%s", host_os_name, am_host_os_name
@@ -168,7 +166,7 @@ def is_ig_prod() -> bool:
     """
     # CF sets up `DOCKER_BUILD` so we can use it to determine if we are inside
     # a CF container or not.
-    #print("os.environ\n", str(os.environ))
+    # print("os.environ\n", str(os.environ))
     return bool(os.environ.get("DOCKER_BUILD", False))
 
 
@@ -208,14 +206,20 @@ def _dassert_setup_consistency() -> None:
     is_inside_ci_ = is_inside_ci()
     is_mac_ = is_mac()
     # One and only one set-up should be true.
-    sum_ = sum([is_dev4_, is_dev_ck_, is_inside_ci_, is_mac_, is_cmamp_prod_,
-                is_ig_prod_])
+    sum_ = sum(
+        [
+            is_dev4_,
+            is_dev_ck_,
+            is_inside_ci_,
+            is_mac_,
+            is_cmamp_prod_,
+            is_ig_prod_,
+        ]
+    )
     if sum_ != 1:
-        msg = (
-            "One and only one set-up config should be true:\n"
-            + setup_to_str())
+        msg = "One and only one set-up config should be true:\n" + setup_to_str()
         _LOG.warning(msg)
-        #raise ValueError(msg)
+        # raise ValueError(msg)
 
 
 # If the env var is not defined then we want to check. The only reason to skip

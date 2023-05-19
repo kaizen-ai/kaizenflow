@@ -17,7 +17,9 @@ class TestRunTutorialDataflowNotebook(hunitest.TestCase):
         Test if the notebook run end-to-end with no errors.
         """
         notebook_path = "dataflow/notebooks/tutorial_dataflow.ipynb"
-        config_func_path = "dataflow.notebooks.test.test_tutorial_dataflow.build_config_list()"
+        config_func_path = (
+            "dataflow.notebooks.test.test_tutorial_dataflow.build_config_list()"
+        )
         dst_dir = "dataflow/notebooks/test/test_results"
         # Build the command with parameters.
         cmd = f"""run_notebook.py \

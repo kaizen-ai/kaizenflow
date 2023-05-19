@@ -1,33 +1,33 @@
-#"""
-#Import as:
+# """
+# Import as:
 #
-#import market_data_lime.ig_stitched_market_data as mdlesmada
-#"""
+# import market_data_lime.ig_stitched_market_data as mdlesmada
+# """
 #
-#import logging
-#from typing import Any, List, Optional
+# import logging
+# from typing import Any, List, Optional
 #
-#import pandas as pd
+# import pandas as pd
 #
-#import helpers.hdatetime as hdateti
-#import helpers.hdbg as hdbg
-#import helpers.hpandas as hpandas
-#import helpers.hprint as hprint
-#import im_lime.eg as imlimeg
-#import market_data as mdata
-#import market_data_lime.ig_real_time_market_data as mdlertmda
+# import helpers.hdatetime as hdateti
+# import helpers.hdbg as hdbg
+# import helpers.hpandas as hpandas
+# import helpers.hprint as hprint
+# import im_lime.eg as imlimeg
+# import market_data as mdata
+# import market_data_lime.ig_real_time_market_data as mdlertmda
 #
-#_LOG = logging.getLogger(__name__)
+# _LOG = logging.getLogger(__name__)
 #
 #
 ## TODO(gp): These normalization operations should be done by the ImClient.
-#def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
+# def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
 #    df.index.name = "end_time"
 #    df.index = df.index.tz_convert("America/New_York")
 #    return df
 #
 #
-#def normalize_rt_df(df: pd.DataFrame) -> pd.DataFrame:
+# def normalize_rt_df(df: pd.DataFrame) -> pd.DataFrame:
 #    """
 #    Normalize a df from the RT data.
 #    """
@@ -36,7 +36,7 @@
 #    return df
 #
 #
-#def normalize_historical_df(df: pd.DataFrame) -> pd.DataFrame:
+# def normalize_historical_df(df: pd.DataFrame) -> pd.DataFrame:
 #    """
 #    Normalize a df from the historical data.
 #    """
@@ -46,7 +46,7 @@
 #
 ## TODO(gp): Since we are using composition here, we just need an empty interface
 ##  instead of MarketData (only asset_ids and get_wall_clock_time).
-#class IgStitchedMarketData(mdata.MarketData):
+# class IgStitchedMarketData(mdata.MarketData):
 #    def __init__(
 #        self,
 #        asset_ids: List[Any],

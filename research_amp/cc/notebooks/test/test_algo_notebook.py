@@ -17,9 +17,7 @@ class TestCmTask3352Notebook(hunitest.TestCase):
         Test if the notebook runs end-to-end with no errors.
         """
         notebook_path = "research_amp/cc/notebooks/CMTask3352_pegged_at_mid_algo_simulation.ipynb"
-        config_func_path = (
-            "research_amp.cc.notebooks.test.test_algo_notebook.build_config_list()"
-        )
+        config_func_path = "research_amp.cc.notebooks.test.test_algo_notebook.build_config_list()"
         dst_dir = "cc/notebooks/test/outcomes"
         # Build the command with parameters.
         cmd = f"""run_notebook.py \

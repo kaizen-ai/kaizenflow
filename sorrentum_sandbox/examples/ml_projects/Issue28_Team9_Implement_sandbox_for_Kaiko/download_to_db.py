@@ -4,14 +4,12 @@
 import argparse
 import logging
 
+import db_kaiko as sisebidb
+import download_kaiko as sisebido
 import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-
-import db_kaiko as sisebidb
-import download_kaiko as sisebido
-
 
 _LOG = logging.getLogger(__name__)
 

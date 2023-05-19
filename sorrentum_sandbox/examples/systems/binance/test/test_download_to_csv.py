@@ -5,8 +5,8 @@ from typing import Any, List
 import pandas as pd
 
 import helpers.hunit_test as hunitest
-import sorrentum_sandbox.common.download as ssandown
-import sorrentum_sandbox.examples.systems.binance.download_to_csv as ssebdtocs
+import sorrentum_sandbox.common.download as ssacodow
+import sorrentum_sandbox.examples.systems.binance.download_to_csv as ssesbdtcs
 
 
 def _fake_binance_response() -> List[List[Any]]:
@@ -49,7 +49,7 @@ class TestDownloadToCsv(hunitest.TestCase):
         """
         Test arg parser for predefined args in the script.
         """
-        parser = ssebdtocs._parse()
+        parser = ssesbdtcs._parse()
         cmd = []
         cmd.extend(["--start_timestamp", "2022-10-20 10:00:00-04:00"])
         cmd.extend(["--end_timestamp", "2022-10-21 15:30:00-04:00"])
@@ -61,11 +61,11 @@ class TestDownloadToCsv(hunitest.TestCase):
             "end_timestamp": "2022-10-21 15:30:00-04:00",
             "target_dir": "binance_data",
             "use_global_api": False,
-            "log_level": "INFO"
+            "log_level": "INFO",
         }
         self.assertDictEqual(actual, expected)
 
-    @umock.patch.object(ssebdtocs.CsvDataFrameSaver, "save")
+    @umock.patch.object(ssesbdtcs.CsvDataFrameSaver, "save")
     def test_main(self, mock_save) -> None:
         """
         Test that calling the script returns the expected data.
@@ -79,20 +79,20 @@ class TestDownloadToCsv(hunitest.TestCase):
             "end_timestamp": "2022-10-20 11:00:00-04:00",
             "target_dir": "binance_data",
             "use_global_api": False,
-            "log_level": "INFO"
+            "log_level": "INFO",
         }
         namespace = argparse.Namespace(**kwargs)
         mock_argument_parser.parse_args.return_value = namespace
         # Run.
-        mock_downloaded_data = ssandown.RawData(
+        mock_downloaded_data = ssacodow.RawData(
             pd.DataFrame(_fake_binance_response())
         )
         with umock.patch.object(
-            ssebdtocs.sisebido.OhlcvRestApiDownloader,
+            ssesbdtcs.sisebido.OhlcvRestApiDownloader,
             "download",
             return_value=mock_downloaded_data,
         ) as mock_download:
-            ssebdtocs._main(mock_argument_parser)
+            ssesbdtcs._main(mock_argument_parser)
             # Check the output.
             mock_download.assert_called_with(
                 pd.Timestamp(kwargs["start_timestamp"]),

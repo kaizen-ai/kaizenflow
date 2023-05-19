@@ -12,6 +12,6 @@ ticktrade = kaiko.TickTrades(
     instrument="btc-usd",
     start_time="2022-1-1",
     end_time="2022-1-2",
-    client=kc
+    client=kc,
 )
 print(ticktrade.df)

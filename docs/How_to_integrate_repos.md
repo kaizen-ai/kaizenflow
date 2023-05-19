@@ -45,6 +45,7 @@
   ```
   > cd amp1
   > i integrate_create_branch --dir-basename amp1
+  > i integrate_create_branch --dir-basename sorrentum1
   > cd cmamp1
   > i integrate_create_branch --dir-basename cmamp1
   ```

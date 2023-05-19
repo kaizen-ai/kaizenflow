@@ -1,25 +1,25 @@
-#"""
-#Import as:
+# """
+# Import as:
 #
-#import market_data_lime.ig_real_time_market_data as mdlertmda
-#"""
+# import market_data_lime.ig_real_time_market_data as mdlertmda
+# """
 #
-#import datetime
-#import logging
-#from typing import List
+# import datetime
+# import logging
+# from typing import List
 #
-#import pandas as pd
+# import pandas as pd
 #
-#import helpers.hdatetime as hdateti
-#import market_data as mdata
+# import helpers.hdatetime as hdateti
+# import market_data as mdata
 #
-#_LOG = logging.getLogger(__name__)
+# _LOG = logging.getLogger(__name__)
 #
 #
 ## #############################################################################
 #
 #
-#def ig_db_should_be_online(current_time: pd.Timestamp) -> bool:
+# def ig_db_should_be_online(current_time: pd.Timestamp) -> bool:
 #    """
 #    The IG RT system is on-line between 9:00 ET and 16:38 ET when the US market
 #    is open.
@@ -42,7 +42,7 @@
 ## #############################################################################
 #
 #
-#class IgRealTimeMarketData(mdata.RealTimeMarketData):
+# class IgRealTimeMarketData(mdata.RealTimeMarketData):
 #    """
 #    Connect to the actual IG RT DB.
 #    """

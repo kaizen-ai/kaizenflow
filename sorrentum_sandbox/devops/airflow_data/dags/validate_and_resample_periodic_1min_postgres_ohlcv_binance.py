@@ -45,7 +45,7 @@ bash_command = [
     "--target_table 'binance_ohlcv_spot_resampled_5min'",
     "--start_timestamp {{ data_interval_start }} ",
     "--end_timestamp {{ data_interval_end }}",
-    "-v DEBUG"
+    "-v DEBUG",
 ]
 
 downloading_task = BashOperator(

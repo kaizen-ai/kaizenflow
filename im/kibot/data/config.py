@@ -19,7 +19,7 @@ try:
 except AssertionError as e:
     import helpers.hserver as hserver
 
-    #if hserver.is_dev4() or hserver.is_ig_prod():
+    # if hserver.is_dev4() or hserver.is_ig_prod():
     if hserver.is_ig_prod():
         # In IG prod we let the outside system control S3 and don't need Kibot,
         # so we ignore the assertion about S3 bucket being empty.

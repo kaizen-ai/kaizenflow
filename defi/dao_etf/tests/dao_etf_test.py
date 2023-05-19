@@ -1,4 +1,5 @@
-from brownie import accounts, DaoETF
+from brownie import DaoETF, accounts
+
 
 def test_flow():
     """

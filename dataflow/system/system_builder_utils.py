@@ -500,7 +500,9 @@ def get_DataFramePortfolio_from_System(
     if is_prod:
         # Initialize `Portfolio` with parameters that are set in the example.
         portfolio = oms.get_DataFramePortfolio_example3(
-            market_data=market_data, column_remap=column_remap, asset_ids=asset_ids
+            market_data=market_data,
+            column_remap=column_remap,
+            asset_ids=asset_ids,
         )
     else:
         # Set event loop object for `DataFrameBroker` used in simulation.

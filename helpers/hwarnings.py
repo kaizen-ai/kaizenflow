@@ -22,6 +22,7 @@ action = "ignore"
 
 try:
     import statsmodels
+
     _HAS_STATSMODELS = True
 except ImportError:
     _HAS_STATSMODELS = False
@@ -76,6 +77,7 @@ warnings.filterwarnings(
 
 try:
     import pandas as pd
+
     _HAS_PANDAS = True
 except ImportError:
     _HAS_PANDAS = False

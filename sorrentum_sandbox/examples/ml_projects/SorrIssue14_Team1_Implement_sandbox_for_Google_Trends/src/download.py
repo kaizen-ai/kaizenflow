@@ -5,15 +5,17 @@ Import as:
 import src.download as ssexbido
 """
 
-import logging
-from typing import Any
-from serpapi import GoogleSearch
-import pandas as pd
-import common.download as ssandown
-from dotenv import load_dotenv
-import os
 import json
+import logging
+import os
 import subprocess
+from typing import Any
+
+import common.download as ssandown
+import pandas as pd
+from dotenv import load_dotenv
+from serpapi import GoogleSearch
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -39,7 +41,6 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
 
         file_to_use = None
 
-
         if use_api:
             # dotenv_path = os.getenv("DOTENV_FILE")
             load_dotenv("/cmamp/airflow/.env")
@@ -54,7 +55,6 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
                 if start_timestamp is not None and end_timestamp is not None:
                     timeframe = start_timestamp + " " + end_timestamp
 
-
             # params = {
             #     "engine": "google_trends",
             #     "q": topic,
@@ -67,7 +67,7 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
                 "q": topic,
                 "data_type": "TIMESERIES",
                 "date": timeframe,
-                "api_key": os.environ.get("API_KEY")
+                "api_key": os.environ.get("API_KEY"),
             }
 
             # print(params)
@@ -80,7 +80,7 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
             # / root / data / data.json
 
         else:
-            with open("/cmamp/files/data.json", 'r') as file:
+            with open("/cmamp/files/data.json", "r") as file:
                 file_to_use = json.load(file)
 
         # formatting the data
@@ -93,7 +93,7 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
                 [
                     record["values"][0]["query"],
                     record["date"].replace("\u2009", " "),
-                    record["values"][0]["extracted_value"]
+                    record["values"][0]["extracted_value"],
                 ]
             )
 

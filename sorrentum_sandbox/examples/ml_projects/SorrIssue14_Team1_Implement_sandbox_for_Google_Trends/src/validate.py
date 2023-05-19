@@ -6,8 +6,9 @@ Import google_trends.src.validate as validator
 """
 
 from typing import Any, List
-import pandas as pd
+
 import common.validate as sinsaval
+import pandas as pd
 
 
 class DenormalizedDatasetCheck(sinsaval.QaCheck):
@@ -29,4 +30,3 @@ class DenormalizedDatasetCheck(sinsaval.QaCheck):
             else:
                 self._status = "PASSED"
                 return True
-

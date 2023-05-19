@@ -455,8 +455,11 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         # In a dataframe-based system, there is not order processor.
         add_order_processor_signature = False
         actual = dtfsysysig.get_signature_from_result_bundle(
-            system, result_bundles, add_system_config, add_run_signature,
-            add_order_processor_signature
+            system,
+            result_bundles,
+            add_system_config,
+            add_run_signature,
+            add_order_processor_signature,
         )
         # 3) Check the state of the Portfolio after forced liquidation.
         if liquidate_at_trading_end_time:
@@ -562,8 +565,11 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         )
         # Check the run signature.
         actual = dtfsysysig.get_signature_from_result_bundle(
-            system, result_bundles, add_system_config, add_run_signature,
-            add_order_processor_signature
+            system,
+            result_bundles,
+            add_system_config,
+            add_run_signature,
+            add_order_processor_signature,
         )
         return actual
 
@@ -859,7 +865,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
             system_with_database_portfolio,
             add_system_config=add_system_config,
             add_run_signature=add_run_signature,
-            add_order_processor_signature=add_order_processor_signature
+            add_order_processor_signature=add_order_processor_signature,
         )
         #
         hdbg.dassert_lte(10, len(expected.split("\n")))

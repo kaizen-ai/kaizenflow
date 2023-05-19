@@ -8,9 +8,7 @@ import airflow
 from airflow.operators.bash import BashOperator
 
 _DAG_ID = "download_periodic_1min_postgres_coingecko"
-_DAG_DESCRIPTION = (
-    "Download Coingecko data every day and save to Postgres"
-)
+_DAG_DESCRIPTION = "Download Coingecko data every day and save to Postgres"
 # Specify when to execute the DAG.
 _SCHEDULE = "*/2 * * * *"
 
@@ -44,7 +42,7 @@ bash_command = [
     "--id {{ data_id }} ",
     "--from_timestamp {{ data_interval_start }} ",
     "--to_timestamp {{ data_interval_end }}",
-    "-v DEBUG"
+    "-v DEBUG",
 ]
 
 downloading_task = BashOperator(

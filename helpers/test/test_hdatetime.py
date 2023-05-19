@@ -429,8 +429,11 @@ class Test_find_bar_timestamp1(hunitest.TestCase):
     def helper1(self, current_timestamp: pd.Timestamp) -> None:
         bar_duration_in_secs = 15 * 60
         max_distance_in_secs = 10
-        act = hdateti.find_bar_timestamp(current_timestamp, bar_duration_in_secs,
-                                       max_distance_in_secs=max_distance_in_secs)
+        act = hdateti.find_bar_timestamp(
+            current_timestamp,
+            bar_duration_in_secs,
+            max_distance_in_secs=max_distance_in_secs,
+        )
         exp = pd.Timestamp("2021-09-09T08:00:00", tz="UTC")
         self.assert_equal(str(act), str(exp))
 

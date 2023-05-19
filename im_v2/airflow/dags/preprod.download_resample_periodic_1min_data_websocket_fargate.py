@@ -4,14 +4,15 @@ via websockets. In case of bid/ask data, a parallel resampling task
 runs which resamples raw data to 1 minute on the fly.
 """
 
+import copy
+import datetime
+import os
+from itertools import product
+
 import airflow
 from airflow.contrib.operators.ecs_operator import ECSOperator
 from airflow.models import Variable
 from airflow.operators.dummy_operator import DummyOperator
-import copy
-import datetime
-from itertools import product
-import os
 
 _FILENAME = os.path.basename(__file__)
 
@@ -34,7 +35,7 @@ _DAG_ID = _FILENAME.rsplit(".", 1)[0]
 _EXCHANGES = ["binance"]
 _VENDORS = ["ccxt"]
 _UNIVERSES = {"ccxt": "v7"}
-#_CONTRACTS = ["spot", "futures"]
+# _CONTRACTS = ["spot", "futures"]
 _CONTRACTS = ["futures"]
 _DATA_TYPES = ["ohlcv", "bid_ask"]
 # How many levels deep in to order book
@@ -53,10 +54,12 @@ _ACTION_TAG = "downloaded_1min"
 _DATA_FORMAT = "postgres"
 # The value is implicit since this is an Airflow DAG.
 _DOWNLOADING_ENTITY = "airflow"
-_DAG_DESCRIPTION = f"Realtime {_DATA_TYPES} data download and resampling, contracts:" \
-                + f"{_CONTRACTS}, using {_VENDORS} from {_EXCHANGES}."
+_DAG_DESCRIPTION = (
+    f"Realtime {_DATA_TYPES} data download and resampling, contracts:"
+    + f"{_CONTRACTS}, using {_VENDORS} from {_EXCHANGES}."
+)
 # Specify when/how often to execute the DAG.
-_SCHEDULE = Variable.get(f'{_DAG_ID}_schedule')
+_SCHEDULE = Variable.get(f"{_DAG_ID}_schedule")
 
 # Used for container overrides inside DAG task definition.
 # If this is a test DAG don't forget to add your username to container suffix.
@@ -71,7 +74,7 @@ _CONTAINER_NAME = f"cmamp{_CONTAINER_SUFFIX}"
 # but production is ccxt_ohlcv.
 _TABLE_SUFFIX = f"_{_STAGE}" if _STAGE in ["test", "preprod"] else ""
 
-ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
+ecs_cluster = Variable.get(f"{_STAGE}_ecs_cluster")
 # The naming convention is set such that this value is then reused
 # in log groups, stream prefixes and container names to minimize
 # convolution and maximize simplicity.
@@ -87,7 +90,7 @@ ecs_awslogs_stream_prefix = f"ecs/{ecs_task_definition}"
 # Pass default parameters for the DAG.
 default_args = {
     "retries": 0,
-    "email": [Variable.get(f'{_STAGE}_notification_email')],
+    "email": [Variable.get(f"{_STAGE}_notification_email")],
     "email_on_failure": True if _STAGE in ["prod", "preprod"] else False,
     "owner": "airflow",
 }
@@ -139,10 +142,12 @@ kwargs["network_configuration"] = {
     },
 }
 
-for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONTRACTS, _DATA_TYPES):
+for vendor, exchange, contract, data_type in product(
+    _VENDORS, _EXCHANGES, _CONTRACTS, _DATA_TYPES
+):
 
     table_name = f"{vendor}_{data_type}"
-    #TODO(Juraj): CmTask2804.
+    # TODO(Juraj): CmTask2804.
     if contract == "futures":
         table_name += "_futures"
     if data_type == "bid_ask":
@@ -177,8 +182,10 @@ for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONT
         awslogs_group=ecs_awslogs_group,
         awslogs_stream_prefix=ecs_awslogs_stream_prefix,
         # just as a small backup mechanism.
-        execution_timeout=datetime.timedelta(minutes=_RUN_FOR + (2 * _DAG_STANDBY)),
-        **kwargs
+        execution_timeout=datetime.timedelta(
+            minutes=_RUN_FOR + (2 * _DAG_STANDBY)
+        ),
+        **kwargs,
     )
     # Define the sequence of execution of task.
     start_task >> downloading_task >> end_task
@@ -198,7 +205,7 @@ resample_command = [
 
 for vendor, exchange, contract in product(_VENDORS, _EXCHANGES, _CONTRACTS):
     table_name = f"{vendor}_bid_ask"
-    #TODO(Juraj): CmTask2804.
+    # TODO(Juraj): CmTask2804.
     if contract == "futures":
         table_name += "_futures"
     # Specify that this table stores raw bid/ask data.
@@ -210,9 +217,10 @@ for vendor, exchange, contract in product(_VENDORS, _EXCHANGES, _CONTRACTS):
     # Do a deepcopy of the bash command list so we can reformat params on each iteration.
     curr_resample_command = copy.deepcopy(resample_command)
     curr_resample_command[2] = curr_resample_command[2].format(table_name_raw)
-    curr_resample_command[3] = curr_resample_command[3].format(table_name_resampled)
+    curr_resample_command[3] = curr_resample_command[3].format(
+        table_name_resampled
+    )
     # Define the sequence of execution of task.
-
 
     resampling_task = ECSOperator(
         task_id=f"{_DOWNLOAD_MODE}.resample.{vendor}.{exchange}.bid_ask.{contract}",
@@ -229,12 +237,14 @@ for vendor, exchange, contract in product(_VENDORS, _EXCHANGES, _CONTRACTS):
                 }
             ],
             "cpu": "512",
-            "memory": "2048"
+            "memory": "2048",
         },
         awslogs_group=ecs_awslogs_group,
         awslogs_stream_prefix=ecs_awslogs_stream_prefix,
         # just as a small backup mechanism.
-        execution_timeout=datetime.timedelta(minutes=_RUN_FOR + (2 * _DAG_STANDBY)),
-        **kwargs
+        execution_timeout=datetime.timedelta(
+            minutes=_RUN_FOR + (2 * _DAG_STANDBY)
+        ),
+        **kwargs,
     )
     start_task >> resampling_task >> end_task

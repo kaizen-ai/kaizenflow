@@ -196,11 +196,13 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
             )
         _LOG.info("Data archival finished successfully.")
 
+
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     _LOG.info(args)
     _archive_db_data_to_s3(args)
+
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -212,8 +214,8 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="Time threshold for archival. Data for which" +
-            "`table_timestamp_column` > `timestamp`, gets archived and dropped",
+        help="Time threshold for archival. Data for which"
+        + "`table_timestamp_column` > `timestamp`, gets archived and dropped",
     )
     parser.add_argument(
         "--db_stage",

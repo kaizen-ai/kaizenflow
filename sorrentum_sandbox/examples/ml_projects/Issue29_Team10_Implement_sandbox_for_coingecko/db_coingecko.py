@@ -1,15 +1,18 @@
+import json
 from typing import Any, Optional
+
 import pandas as pd
 import psycopg2 as psycop
 import psycopg2.extras as extras
 import requests
 from pycoingecko import CoinGeckoAPI
-import json
+
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import sorrentum_sandbox.common.client as sinsacli
-import sorrentum_sandbox.common.download as sinsadow
-import sorrentum_sandbox.common.save as sinsasav
+import sorrentum_sandbox.common.client as ssacocli
+import sorrentum_sandbox.common.download as ssacodow
+import sorrentum_sandbox.common.save as ssacosav
+
 
 def get_db_connection() -> Any:
     """
@@ -45,6 +48,7 @@ def get_coingecko_historic_table_query() -> str:
             """
     return query
 
+
 def get_coingecko_realtime_table_query() -> str:
     """
     Get SQL query to create coingecko table.
@@ -61,6 +65,7 @@ def get_coingecko_realtime_table_query() -> str:
             """
     return query
 
+
 def get_coingecko_drop_query() -> str:
     """
     Get SQL query to drop coingecko table.
@@ -68,7 +73,6 @@ def get_coingecko_drop_query() -> str:
     query = "drop table coingecko_data"
 
     return query
-
 
 
 # def get_coingecko_table_fetch_query(id) -> str:
@@ -79,7 +83,7 @@ def get_coingecko_drop_query() -> str:
 #     return query
 
 
-class PostgresDataFrameSaver(sinsasav.DataSaver):
+class PostgresDataFrameSaver(ssacosav.DataSaver):
     """
     Save Pandas DataFrame to a PostgreSQL using a provided DB connection.
     """
@@ -94,7 +98,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         self._create_tables()
 
     def save(
-        self, data: sinsadow.RawData, db_table: str, *args: Any, **kwargs: Any
+        self, data: ssacodow.RawData, db_table: str, *args: Any, **kwargs: Any
     ) -> None:
         """
         Save RawData storing a DataFrame to a specified DB table.
@@ -102,7 +106,9 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         :param data: data to persists into DB
         :param db_table: table to save data to
         """
-        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
+        hdbg.dassert_isinstance(
+            data.get_data(), pd.DataFrame, "Only DataFrame is supported."
+        )
         # Transform dataframe into list of tuples.
         df = data.get_data()
         values = [tuple(v) for v in df.to_numpy()]
@@ -112,7 +118,6 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         cursor = self.db_conn.cursor()
         extras.execute_values(cursor, query, values)
         self.db_conn.commit()
-
 
     @staticmethod
     def _create_insert_query(df: pd.DataFrame, db_table: str) -> str:
@@ -145,12 +150,13 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         query = get_coingecko_realtime_table_query()
         cursor.execute(query)
 
+
 # # #############################################################################
 # # PostgresClient
 # # #############################################################################
 
 
-class PostgresClient(sinsacli.DataClient):
+class PostgresClient(ssacocli.DataClient):
     """
     Load PostgreSQL data.
     """

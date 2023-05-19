@@ -42,8 +42,8 @@ def _get_price_volume_data() -> Dict[str, Any]:
     # Get parameters from the Chainlink node request.
     data = request.json.get("data", {})
     symbol = data.get("symbol", "")
-    start_time = data.get("start_time", '')
-    end_time = data.get("end_time", '')
+    start_time = data.get("start_time", "")
+    end_time = data.get("end_time", "")
     # Query the CoinGecko API for price data within the specified time range.
     response = requests.get(
         f"https://api.coingecko.com/api/v3/coins/{symbol}/market_chart/range?vs_currency=eth&from={start_time}&to={end_time}"
@@ -51,21 +51,25 @@ def _get_price_volume_data() -> Dict[str, Any]:
     if response.status_code >= 400:
         # Process an error.
         error_data = {
-            'jobRunID': request.json.get("id", ""),
-            'status': 'errored',
-            'error': response.text,
+            "jobRunID": request.json.get("id", ""),
+            "status": "errored",
+            "error": response.text,
         }
         return error_data
     price_data = json.loads(response.text)
     return price_data
 
 
-def _process_price_data(price_data: Dict[str, Any]) -> Tuple[List[int], List[float]]:
+def _process_price_data(
+    price_data: Dict[str, Any]
+) -> Tuple[List[int], List[float]]:
     """
     Get the sequence of volumes and prices in WEI.
     """
     # Select and convert prices to WEI.
-    prices = np.array([int(price[1] * 10**18) for price in price_data["prices"]])
+    prices = np.array(
+        [int(price[1] * 10**18) for price in price_data["prices"]]
+    )
     # Select volumes.
     volumes = np.array([volume[1] for volume in price_data["total_volumes"]])
     return prices, volumes

@@ -29,17 +29,21 @@ dag = airflow.DAG(
     description=_DAG_DESCRIPTION,
     max_active_runs=1,
     default_args=default_args,
-    schedule_interval='@hourly', # Execute the DAG 1hr.
+    schedule_interval="@hourly",  # Execute the DAG 1hr.
     catchup=False,
     start_date=datetime.datetime(2023, 4, 5, 0, 0, 0),
     dagrun_timeout=timedelta(minutes=30),
 )
 
 # SQL query to retrive the maximum roundid of BTC/USC data in chainlink_real_time table.
-postgres_query = "\"SELECT max(roundid) FROM chainlink_real_time WHERE pair = 'BTC / USD'\""
-get_max_roundid = "export max_roundid=$(psql -U postgres -p 5532 -d airflow -h host.docker.internal -c" + \
-                  postgres_query + \
-                  "| sed -n '3p' | tr -d ' ')"
+postgres_query = (
+    "\"SELECT max(roundid) FROM chainlink_real_time WHERE pair = 'BTC / USD'\""
+)
+get_max_roundid = (
+    "export max_roundid=$(psql -U postgres -p 5532 -d airflow -h host.docker.internal -c"
+    + postgres_query
+    + "| sed -n '3p' | tr -d ' ')"
+)
 
 # bash command we want to execute by the scheduled time.
 bash_command = [
@@ -51,7 +55,7 @@ bash_command = [
     "&&",
     get_max_roundid,
     "&&",
-    "./download_to_db.py --pair BTC/USD --start_roundid $max_roundid --target_table 'chainlink_real_time'"
+    "./download_to_db.py --pair BTC/USD --start_roundid $max_roundid --target_table 'chainlink_real_time'",
 ]
 
 downloading_task = BashOperator(

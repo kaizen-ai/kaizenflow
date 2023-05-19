@@ -1,21 +1,25 @@
 """
 Tools for Kaiko API
 """
-import pandas as pd
+import logging
 from datetime import datetime
+from time import sleep
+
+import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
-from time import sleep
-import logging
 
-default_headers = {'Accept': 'application/json', 'Accept-Encoding': 'gzip'}
-default_df_formatter = lambda res, extra_args = {}: pd.DataFrame(res['data'])
+default_headers = {"Accept": "application/json", "Accept-Encoding": "gzip"}
+default_df_formatter = lambda res, extra_args={}: pd.DataFrame(res["data"])
 
 # Sleep time between consecutive queries (in seconds)
 sleep_time = 0.01
 
-def requests_retry_session(retries=5, backoff_factor=0.3, status_forcelist=(500, 502, 504), session=None):
+
+def requests_retry_session(
+    retries=5, backoff_factor=0.3, status_forcelist=(500, 502, 504), session=None
+):
     """
     Adapted from https://www.peterbe.com/plog/best-practice-with-retries-with-requests
     """
@@ -28,14 +32,20 @@ def requests_retry_session(retries=5, backoff_factor=0.3, status_forcelist=(500,
         status_forcelist=status_forcelist,
     )
     adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
 
     return session
 
 
-def request_data(url: str, headers: dict = default_headers, params: dict = None, session_params: dict = {},
-                 pagination: bool = True, **kwargs):
+def request_data(
+    url: str,
+    headers: dict = default_headers,
+    params: dict = None,
+    session_params: dict = {},
+    pagination: bool = True,
+    **kwargs,
+):
     """
     Makes the request from the REST endpoint and returns the json response.
 
@@ -55,25 +65,36 @@ def request_data(url: str, headers: dict = default_headers, params: dict = None,
     res = response.json()
     if pagination:
         res_tmp = res
-        res['total_queries'] = 1
-        while 'next_url' in res_tmp.keys():
+        res["total_queries"] = 1
+        while "next_url" in res_tmp.keys():
             logging.warning(f"total_queries = {res['total_queries']}")
-            response = session.get(res_tmp['next_url'], headers=headers)
+            response = session.get(res_tmp["next_url"], headers=headers)
             res_tmp = response.json()
             # append data to previous query
-            res['data'] = res['data'] + res_tmp['data']
-            res['total_queries'] += 1
+            res["data"] = res["data"] + res_tmp["data"]
+            res["total_queries"] += 1
             sleep(sleep_time)
 
     try:
-        if ('result' in res and res['result'] == 'success') or ('result' not in res):
+        if ("result" in res and res["result"] == "success") or (
+            "result" not in res
+        ):
             pass
     except Exception as e:
         logging.error(f"{e}")
-        logging.error('Data request failed - here is what was returned:\n%s' % (res))
+        logging.error(
+            "Data request failed - here is what was returned:\n%s" % (res)
+        )
     return res
 
-def request_next_data(next_url: str, n_next: int = 1, headers: dict = default_headers, session_params: dict = {}, **kwargs):
+
+def request_next_data(
+    next_url: str,
+    n_next: int = 1,
+    headers: dict = default_headers,
+    session_params: dict = {},
+    **kwargs,
+):
     """
     Makes the request from the REST endpoint and returns the json response.
 
@@ -95,24 +116,37 @@ def request_next_data(next_url: str, n_next: int = 1, headers: dict = default_he
 
     res_tmp = res
     counter = 1
-    while 'next_url' in res_tmp.keys():
-        response = session.get(res_tmp['next_url'], headers=headers)
+    while "next_url" in res_tmp.keys():
+        response = session.get(res_tmp["next_url"], headers=headers)
         res_tmp = response.json()
         # append data to previous query
-        res['data'] = res['data'] + res_tmp['data']
+        res["data"] = res["data"] + res_tmp["data"]
         counter += 1
         sleep(sleep_time)
         if counter > n_next:
             break
     try:
-        if ('result' in res and res['result'] == 'success') or ('result' not in res):
+        if ("result" in res and res["result"] == "success") or (
+            "result" not in res
+        ):
             pass
     except Exception as e:
         logging.error(f"{e}")
-        logging.error('Data request failed - here is what was returned:\n%s' % (res))
+        logging.error(
+            "Data request failed - here is what was returned:\n%s" % (res)
+        )
     return res
 
-def request_next_df(next_url: str, return_query: bool = False, return_res: bool = False, df_formatter = default_df_formatter, n_next: int = 1,  extra_args: dict = {}, **kwargs):
+
+def request_next_df(
+    next_url: str,
+    return_query: bool = False,
+    return_res: bool = False,
+    df_formatter=default_df_formatter,
+    n_next: int = 1,
+    extra_args: dict = {},
+    **kwargs,
+):
     """
     Make a simple request from the API.
 
@@ -127,9 +161,9 @@ def request_next_df(next_url: str, return_query: bool = False, return_res: bool 
     """
     res = request_next_data(next_url, n_next, **kwargs)
     try:
-        df = df_formatter(res, extra_args = extra_args)
-        if 'query' in res.keys():
-            query = res['query']
+        df = df_formatter(res, extra_args=extra_args)
+        if "query" in res.keys():
+            query = res["query"]
         else:
             query = None
     except Exception as e:
@@ -137,16 +171,22 @@ def request_next_df(next_url: str, return_query: bool = False, return_res: bool 
         df = pd.DataFrame()
     if return_query and return_res:
         return df, query, res
-    elif return_query and not(return_res):
+    elif return_query and not (return_res):
         return df, query
-    elif not(return_query) and return_res:
+    elif not (return_query) and return_res:
         return df, res
     else:
         return df
 
 
-
-def request_df(url: str, return_query: bool = False, return_res: bool = False, df_formatter = default_df_formatter, extra_args: dict = {}, **kwargs):
+def request_df(
+    url: str,
+    return_query: bool = False,
+    return_res: bool = False,
+    df_formatter=default_df_formatter,
+    extra_args: dict = {},
+    **kwargs,
+):
     """
     Make a simple request from the API.
 
@@ -161,9 +201,9 @@ def request_df(url: str, return_query: bool = False, return_res: bool = False, d
     """
     res = request_data(url, **kwargs)
     try:
-        df = df_formatter(res, extra_args = extra_args)
-        if 'query' in res.keys():
-            query = res['query']
+        df = df_formatter(res, extra_args=extra_args)
+        if "query" in res.keys():
+            query = res["query"]
         else:
             query = None
     except Exception as e:
@@ -171,22 +211,22 @@ def request_df(url: str, return_query: bool = False, return_res: bool = False, d
         df = pd.DataFrame()
     if return_query and return_res:
         return df, query, res
-    elif return_query and not(return_res):
+    elif return_query and not (return_res):
         return df, query
-    elif not(return_query) and return_res:
+    elif not (return_query) and return_res:
         return df, res
     else:
         return df
 
 
-def convert_timestamp_unix_to_datetime(ts, unit='ms'):
+def convert_timestamp_unix_to_datetime(ts, unit="ms"):
     """
     Convert a unix millisecond timestamp to pandas datetime format.
 
     :param ts: Timestamp in unix millisecond format.
     :return:
     """
-    return pd.to_datetime(ts, unit = unit)
+    return pd.to_datetime(ts, unit=unit)
 
 
 def convert_timestamp_str_to_datetime(ts: str):
@@ -198,7 +238,8 @@ def convert_timestamp_str_to_datetime(ts: str):
     :return:
     """
     # removing UTC timezone if ISO 8601 format
-    if ts.endswith('Z'): ts = ts.replace('Z', '')
+    if ts.endswith("Z"):
+        ts = ts.replace("Z", "")
 
     return pd.to_datetime(ts)
 
@@ -233,12 +274,14 @@ def convert_timestamp_to_apiformat(ts):
     elif type(ts) in [int, float]:
         ts = convert_timestamp_unix_to_datetime(ts)
 
-    return ts.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+    return ts.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     headers = default_headers.copy()
-    headers['X-Api-Key'] = 'YOUR API KEY'
-    URL = 'https://us.market-api.kaiko.io/v1/data/trades.latest/exchanges/{exchange}/spot/{pair}/aggregations' \
-          '/count_ohlcv_vwap'
+    headers["X-Api-Key"] = "YOUR API KEY"
+    URL = (
+        "https://us.market-api.kaiko.io/v1/data/trades.latest/exchanges/{exchange}/spot/{pair}/aggregations"
+        "/count_ohlcv_vwap"
+    )
     # df = request_df(URL)

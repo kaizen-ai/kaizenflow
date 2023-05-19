@@ -5,8 +5,8 @@ Import as:
 
 import sorrentum_sandbox.projects.Issue22_Team3_Implement_sandbox_for_Coinmarketcap.download_cmc as ssexbido
 """
-import os
 import logging
+import os
 import time
 from typing import Generator, Tuple
 
@@ -40,14 +40,18 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
             self,
             limit=self._MAX_LINES,
         )
-        api_key=COINMARKETCAP_API_KEY
+        api_key = COINMARKETCAP_API_KEY
         print(api_key)
 
         # request data here
         response = requests.request(
             method="GET",
             url=url,
-            headers={"Content-Type": "application/json", "X-CMC_PRO_API_KEY": api_key, "Accepts": "application/json"},
+            headers={
+                "Content-Type": "application/json",
+                "X-CMC_PRO_API_KEY": api_key,
+                "Accepts": "application/json",
+            },
             data={},
         )
 
@@ -57,20 +61,28 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
         data = pd.DataFrame(
             [
                 {
-                    "id"                : row['id'],
-                    "name"              : row['name'],
-                    "num_market_pairs"  : row['num_market_pairs'],
-                    "circulating_supply": row['circulating_supply'],
-                    "price"             :row['quote']['USD']['price'],
-                    "market_cap"        :row['quote']['USD']['market_cap'],
-                    "volume_24h"        :row['quote']['USD']['volume_24h'],
-                    "volume_change_24h"        :row['quote']['USD']['volume_change_24h'],
-                    "percent_change_1h"        :row['quote']['USD']['percent_change_1h'],
-                    "percent_change_24h"        :row['quote']['USD']['percent_change_24h'],
-                    "percent_change_7d"        :row['quote']['USD']['percent_change_7d'],
-                    "percent_change_30d"        :row['quote']['USD']['percent_change_30d'],
-                    "percent_change_60d"        :row['quote']['USD']['percent_change_60d'],
-                    "percent_change_90d"        :row['quote']['USD']['percent_change_90d'],
+                    "id": row["id"],
+                    "name": row["name"],
+                    "num_market_pairs": row["num_market_pairs"],
+                    "circulating_supply": row["circulating_supply"],
+                    "price": row["quote"]["USD"]["price"],
+                    "market_cap": row["quote"]["USD"]["market_cap"],
+                    "volume_24h": row["quote"]["USD"]["volume_24h"],
+                    "volume_change_24h": row["quote"]["USD"]["volume_change_24h"],
+                    "percent_change_1h": row["quote"]["USD"]["percent_change_1h"],
+                    "percent_change_24h": row["quote"]["USD"][
+                        "percent_change_24h"
+                    ],
+                    "percent_change_7d": row["quote"]["USD"]["percent_change_7d"],
+                    "percent_change_30d": row["quote"]["USD"][
+                        "percent_change_30d"
+                    ],
+                    "percent_change_60d": row["quote"]["USD"][
+                        "percent_change_60d"
+                    ],
+                    "percent_change_90d": row["quote"]["USD"][
+                        "percent_change_90d"
+                    ],
                 }
                 for row in response.json()["data"]
             ]

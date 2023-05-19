@@ -3,14 +3,14 @@ import logging
 import os
 from typing import Any
 
+import common.download as sinsadow
+import common.save as sinsasav
+import download_yahoo as sisebido
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import helpers.hparser as hparser
 import helpers.hio as hio
-import common.download as sinsadow
-import download_yahoo as sisebido
-import common.save as sinsasav
+import helpers.hparser as hparser
 
 print(1)
 
@@ -37,10 +37,10 @@ class CsvDataFrameSaver(sinsasav.DataSaver):
 
         :param data: data to persists into CSV
         """
-        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
-        signature = (
-            "bulk.manual.download_1min.csv.yahoo.v1_0_0"
+        hdbg.dassert_isinstance(
+            data.get_data(), pd.DataFrame, "Only DataFrame is supported."
         )
+        signature = "bulk.manual.download_1min.csv.yahoo.v1_0_0"
         signature += ".csv"
         hio.create_dir(self.target_dir, incremental=True)
         target_path = os.path.join(self.target_dir, signature)
@@ -86,7 +86,6 @@ def _add_download_args(
         help="frequency of the data, e.g. 1m,1h,1d",
     )
 
-
     return parser
 
 
@@ -110,10 +109,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Download data.
     start_timestamp = args.start_timestamp
     end_timestamp = args.end_timestamp
-    interval= args.interval
+    interval = args.interval
 
     downloader = sisebido.YFinanceDownloader()
-    raw_data = downloader.download(start_timestamp, end_timestamp,interval)
+    raw_data = downloader.download(start_timestamp, end_timestamp, interval)
     # Save data as CSV.
     saver = CsvDataFrameSaver(args.target_dir)
     saver.save(raw_data)

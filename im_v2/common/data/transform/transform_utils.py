@@ -366,6 +366,7 @@ def resample_multilevel_bid_ask_data(
     data_resampled["exchange_id"] = data["exchange_id"].iloc[0]
     return data_resampled
 
+
 # TODO(Juraj, Vlad): add a unit test.
 def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame:
     """

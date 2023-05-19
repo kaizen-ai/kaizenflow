@@ -1,2 +1,1 @@
-from . import db
-from . import download
+from . import db, download

@@ -109,7 +109,9 @@ def run_tiled_rolling_backtest(
     # Build the dag runner.
     dag_runner = system.dag_runner
     hdbg.dassert_isinstance(dag_runner, dtfcore.RollingFitPredictDagRunner)
-    dst_dir = os.path.join(system.config["backtest_config", "dst_dir"], "fit_results")
+    dst_dir = os.path.join(
+        system.config["backtest_config", "dst_dir"], "fit_results"
+    )
     # This loop corresponds to evaluating the model on a tile, but it's done in
     # chunks to do fit / predict.
     pred_rbs = []
@@ -126,13 +128,9 @@ def run_tiled_rolling_backtest(
         fit_state = dtfcore.get_fit_state(dag)
         dst_dir_tmp = os.path.join(dst_dir, f"fit_{idx}_{training_datetime_str}")
         file_name = os.path.join(dst_dir_tmp, "fit_state.pkl")
-        hpickle.to_pickle(
-            fit_state, file_name, log_level=logging.DEBUG
-        )
+        hpickle.to_pickle(fit_state, file_name, log_level=logging.DEBUG)
         file_name = os.path.join(dst_dir_tmp, "fit_state.json")
-        hpickle.to_json(
-            file_name, fit_state
-        )
+        hpickle.to_json(file_name, fit_state)
         # Save fit data.
         file_name = os.path.join(dst_dir_tmp, "fit_result_df.parquet")
         result_df = fit_rb.result_df

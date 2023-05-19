@@ -1,7 +1,9 @@
 from typing import List
-from api.alpha_vantage import AlphaVantage
-from models.time_series import TimeSeriesData, TimeInterval, DataType
+
 import pandas as pd
+from api.alpha_vantage import AlphaVantage
+from models.time_series import DataType, TimeInterval, TimeSeriesData
+
 
 class Ticker:
     def __init__(
@@ -9,11 +11,11 @@ class Ticker:
         ticker: str,
         get_name: bool = False,
         time_series_data: List[TimeSeriesData] = None,
-        **kwargs
+        **kwargs,
     ) -> None:
         self.ticker = ticker
 
-        self.name = kwargs.get('name', ticker)
+        self.name = kwargs.get("name", ticker)
         if get_name:
             self.name = AlphaVantage.get_name_for(ticker)
 
@@ -38,7 +40,9 @@ class Ticker:
         Datapoints: {len(self.time_series_data) if self.time_series_data else "No Data"}
         """
 
-    def get_data(self, data_type: DataType, time_interval: TimeInterval = TimeInterval.HOUR):
+    def get_data(
+        self, data_type: DataType, time_interval: TimeInterval = TimeInterval.HOUR
+    ):
         """
         Requests and loads the specified data type using Alpha Vantage.
 
@@ -61,18 +65,20 @@ class Ticker:
     def to_json(self) -> dict:
         """Converts object to JSON as long as it has time_series_data"""
         if self.time_series_data:
-            return  {
+            return {
                 "ticker": self.ticker,
                 "name": self.name,
                 "last_updated": self.last_updated,
                 "last_open": self.last_open,
                 "last_close": self.last_close,
-                "time_series_data": [point.to_json() for point in self.time_series_data]
+                "time_series_data": [
+                    point.to_json() for point in self.time_series_data
+                ],
             }
 
     def to_CSV(self):
         """Stores data in CSV format locally"""
         json = self.to_json()
         if json:
-            df = pd.DataFrame(json['time_series_data'])
-            df.to_csv(f'./{self.ticker.lower()}.csv')
+            df = pd.DataFrame(json["time_series_data"])
+            df.to_csv(f"./{self.ticker.lower()}.csv")
