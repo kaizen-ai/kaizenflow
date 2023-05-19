@@ -192,9 +192,8 @@ def get_supply_demand_aggregated_curve(
         hdbg.dassert_lt(0.0, alpha)
         # Get supply min quantity to set it as a limit.
         min_quantity = -beta / alpha
-        if min_quantity < 0.0:
-            # Supply quantity cannot be negative.
-            min_quantity = 0.0
+        # Supply quantity cannot be negative.
+        min_quantity = max(0.0, min_quantity)
     elif type_ == "demand":
         hdbg.dassert_lt(alpha, 0.0)
         hdbg.dassert_lt(0.0, beta)
