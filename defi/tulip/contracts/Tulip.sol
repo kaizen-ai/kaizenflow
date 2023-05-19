@@ -20,7 +20,11 @@ contract Tulip is Ownable {
     //uint8 public swapRandomizationInSecs;
     //uint256 public feesAsPct;
     uint8 public priceMode;
+    // The numerical ID of unique swap pair, e.g. wBTC/ETH.
+    uint16 public pairID;
+    // The ID of the current swap, is incremented after the swap is done.
     uint256 public currentSwapID;
+    // The ID of the current order, is incremented after the order is submitted.
     uint256 public currentOrderID;
     // Store the ID of orders from the current swap.
     uint256[] ordersID;
@@ -33,7 +37,10 @@ contract Tulip is Ownable {
         address quoteToken,
         uint256 amount,
         uint256 limitPrice,
-        address depositAddress
+        address depositAddress,
+        address senderAddress,
+        uint16 pairID
+
     );
     event newSellOrder(
         uint256 indexed swapID,
@@ -42,7 +49,9 @@ contract Tulip is Ownable {
         address quoteToken,
         uint256 amount,
         uint256 limitPrice,
-        address depositAddress
+        address depositAddress,
+        address senderAddress,
+        uint16 pairID
     );
 
     event buyOrderDone();
@@ -51,18 +60,21 @@ contract Tulip is Ownable {
 
     /// @param _baseToken: a token to swap (e.g., wBTC, ADA)
     /// @param _baseTokenSymbol: base token symbol to use with twap/vwap API
+    /// @param _pairID: The numerical ID of unique swap pair, e.g. wBTC/ETH.
     /// @param _priceMode: 1 for chainlink price feed, 2 for twap, 3 for vwap
     /// @param _priceFeedOracle: contract providing the price for the _baseToken from chainlink price feed
     /// @param _twapVwapOracle: contract providing the price for the _baseToken from our twap/vwap external adapter
     constructor(
         address _baseToken,
         string memory _baseTokenSymbol,
+        uint16 _pairID,
         uint8 _priceMode,
         address _priceFeedOracle,
         address _twapVwapOracle
     ) {
         baseTokenSymbol = _baseTokenSymbol;
         priceMode = _priceMode;
+        pairID = _pairID;
         // Deploy new price feed client contract.
         priceFeedOracle = new PriceFeedOracle(_priceFeedOracle);
         // Get the deployed contract of TwapVwap adapter.
@@ -80,7 +92,7 @@ contract Tulip is Ownable {
         uint256 _quantity,
         uint256 _limitPrice,
         address _depositAddress
-    ) external payable {
+    ) external payable returns (uint256) {
         require(_baseToken == address(baseToken));
         uint256 fullPrice = (_quantity * _limitPrice) / 10 ** 18;
         require(
@@ -94,10 +106,13 @@ contract Tulip is Ownable {
             address(0x0),
             _quantity,
             _limitPrice,
-            _depositAddress
+            _depositAddress,
+            msg.sender,
+            pairID
         );
         ordersID.push(currentOrderID);
-        currentOrderID++;
+        // Return the value and increment it after.
+        return currentOrderID++;
     }
 
     /// @notice Create an order to sell the tokens for ETH.
@@ -110,7 +125,7 @@ contract Tulip is Ownable {
         uint256 _quantity,
         uint256 _limitPrice,
         address _depositAddress
-    ) external payable {
+    ) external payable returns (uint256) {
         require(_baseToken == address(baseToken));
         // NOTE: User needs to approve the smart contract to spend their tokens.
         uint256 allowance = baseToken.allowance(msg.sender, address(this));
@@ -124,15 +139,18 @@ contract Tulip is Ownable {
             address(0x0),
             _quantity,
             _limitPrice,
-            _depositAddress
+            _depositAddress,
+            msg.sender,
+            pairID
         );
         ordersID.push(currentOrderID);
-        currentOrderID++;
+        // Return the value and increment it after.
+        return currentOrderID++;
     }
 
 
-    function runSwap() public {
-        currentSwapID++;
+    function runSwap() public returns (uint256) {
+        return currentSwapID++;
     }
 
     /// @notice Get token price from the Chainlink price feed or TwapVwap adapter. 
