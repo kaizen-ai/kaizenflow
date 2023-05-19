@@ -26,7 +26,7 @@ def daocross(price_oracle, base_token):
 
 def test_buyOrder_baseToken_address(daocross, base_token):
     """
-    Check if the error is asserted when the token to buy is not equal 
+    Check if the error is asserted when the token to buy is not equal
     to the base token of the contract.
     """
     baseToken = "0x1234567890123456789012345678901234567890"
@@ -35,7 +35,7 @@ def test_buyOrder_baseToken_address(daocross, base_token):
     depositAddress = accounts[1]
     with reverts():
          daocross.buyOrder(baseToken, quantity, limitPrice, depositAddress, {"from": accounts[1], "value": limitPrice*5, "gas_price": "60 gwei"})
-    
+
 def test_buyOrder_passedEther(daocross, base_token):
     """
     Check whether the amount of ETH transferred with the function call meet or exceed the total amount user wants to spend.
@@ -49,7 +49,7 @@ def test_buyOrder_passedEther(daocross, base_token):
 def test_buyOrder_orderArray(daocross, base_token):
     """
     Check if the length of order array is increased after creating the buy orders.
-    
+
     Buy 5 tokens for 100000000000 WEI.
     Buy 2.5 tokens for 100000000000 WEI.
     """
@@ -58,7 +58,7 @@ def test_buyOrder_orderArray(daocross, base_token):
     daocross.buyOrder(base_token.address, 2.5 * 10**18, limitPrice, accounts[2], {"from": accounts[2], "value": limitPrice*2.5, "gas_price": "60 gwei"})
     assert daocross.orders(0)[0] == 0
     assert daocross.orders(1)[0] == 1
-    
+
 def test_buyOrder_eventEmitted(daocross, base_token):
     """
     Check whether the newBuyOrder event was emitted or not.
@@ -73,7 +73,7 @@ def test_buyOrder_eventEmitted(daocross, base_token):
 
 def test_sellOrder_baseToken_address(daocross, base_token):
     """
-    Check if the error is asserted when the token to sell is not equal 
+    Check if the error is asserted when the token to sell is not equal
     to the base token of the contract.
     """
     baseToken = "0x1234567890123456789012345678901234567890"
@@ -110,7 +110,7 @@ def test_sellOrder_checkBalance(daocross, base_token):
 def test_sellOrder_orderArray(daocross, base_token):
     """
     Check if the length of order array is increased after creating the sell orders.
-    
+
     Sell 5 tokens.
     Sell 2.5 tokens.
     """
@@ -122,7 +122,7 @@ def test_sellOrder_orderArray(daocross, base_token):
     daocross.sellOrder(base_token.address, 2.5 * 10**18, 100000000000, accounts[6], {"from": accounts[6], "gas_price": "60 gwei"})
     assert daocross.orders(0)[0] == 0
     assert daocross.orders(1)[0] == 1
-    
+
 def test_sellOrder_eventEmitted(daocross, base_token):
     """
     Check whether the newSellOrder event was emitted or not.
@@ -154,7 +154,7 @@ def test_onSwapTime_similarQuantity(daocross, base_token):
     daocross.onSwapTime({"from": accounts[0], "gas_price": "60 gwei"})
     # Check if buyer received the desired amount of tokens.
     assert base_token.balanceOf(accounts[1]) == 5 * 10**18
-    # Check if the Orders array is deleted after the swapping. 
+    # Check if the Orders array is deleted after the swapping.
     with reverts():
         daocross.orders(0)[0] == 0
 
@@ -184,7 +184,7 @@ def test_onSwapTime_buyOrder_with_less_than_limitPrice(daocross, base_token):
 def test_onSwapTime_remainingHeap_moreBuying(daocross, base_token):
     """
     Check if after the token transfers, the remaining tokens are transfered to the owner of the tokens.
-    
+
     Buying 11.5 tokens and selling 10 tokens.
     """
     # Add some sell orders, overall sell 10 tokens.
@@ -224,7 +224,7 @@ def test_onSwapTime_remainingHeap_moreBuying(daocross, base_token):
 def test_onSwapTime_remainingHeap_moreSelling(daocross, base_token):
     """
     Check if after the token transfers, the remaining tokens are transfered to the owner of the tokens.
-    
+
     Buying 10 tokens and selling 11.5 tokens.
     """
     n_tokens =  [2, 5, 4.5]

@@ -43,7 +43,7 @@ def run_bitquery_query(start_time: str,  limit: int, offset: int) -> pd.DataFram
 		  exchange {
 			fullName
 		  }
-		  
+
 		  baseCurrency {
 			symbol
 			address
@@ -88,7 +88,7 @@ def run_bitquery_query(start_time: str,  limit: int, offset: int) -> pd.DataFram
 
   # # initialize offset value
   offset = 0
-  
+
   # Stream in data until there are no more results
   while True:
       # Construct the API query with the current offset
@@ -123,7 +123,7 @@ def run_bitquery_query(start_time: str,  limit: int, offset: int) -> pd.DataFram
 
   # Normalize and convert the results list into a Pandas DataFrame
   df = json_to_df(results)
-  
+
   return df
 
 
@@ -131,7 +131,7 @@ def run_bitquery_query(start_time: str,  limit: int, offset: int) -> pd.DataFram
 def json_to_df(data: List[Dict[Any, Any]]) -> pd.DataFrame:
   # normalize and set index to time_interval
   df = pd.json_normalize(data, sep="_")
-  # df = df.set_index("timeInterval_minute") 
+  # df = df.set_index("timeInterval_minute")
   return df
 
 
@@ -243,7 +243,7 @@ postgres_push(df)
 # for item in tables_and_dfs:
 #     table_name = item["table_name"]
 #     df = item["df"]
-    
+
 #     # Create a new table in the database
 #     with conn.cursor() as cur:
 #         if table_name == "tran_token_info":
@@ -393,7 +393,7 @@ postgres_push(df)
 # conn.close()
 
 
-   
+
 
 # # create table in database
 # # create_table_query = '''CREATE TABLE IF NOT EXISTS tran_token_info (

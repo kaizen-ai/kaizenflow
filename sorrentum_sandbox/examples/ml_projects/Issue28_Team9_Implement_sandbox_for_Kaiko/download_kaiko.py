@@ -42,11 +42,11 @@ class KaikoDownloader(ssandown.DataDownloader):
                 end_time=end_timestamp,
                 client=self._KC,
             ).df
-            
+
             data = data.reset_index()
             data['currency_pair']=symbol
 
-            
+
             dfs.append(data)
             # Delay for throttling in seconds.
             time.sleep(0.5)
@@ -57,4 +57,3 @@ class KaikoDownloader(ssandown.DataDownloader):
         return ssandown.RawData(df)
 
 print('download_kaiko.py Done')
-

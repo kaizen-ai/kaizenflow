@@ -184,7 +184,7 @@ def convert_timestamp_unix_to_datetime(ts, unit='ms'):
     Convert a unix millisecond timestamp to pandas datetime format.
 
     :param ts: Timestamp in unix millisecond format.
-    :return: 
+    :return:
     """
     return pd.to_datetime(ts, unit = unit)
 

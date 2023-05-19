@@ -30,4 +30,3 @@ class DenormalizedDatasetCheck(sinsaval.QaCheck):
                 self._status = "PASSED"
                 return True
 
-

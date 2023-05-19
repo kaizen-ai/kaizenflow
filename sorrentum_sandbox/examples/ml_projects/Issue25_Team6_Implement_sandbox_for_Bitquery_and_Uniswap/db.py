@@ -155,7 +155,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         :param table_name: name of the table for insertion
         :return: SQL query, e.g.,
             ```
-            INSERT INTO bitquery_uniswap(timestamp,open,high,low,close) VALUES %s  
+            INSERT INTO bitquery_uniswap(timestamp,open,high,low,close) VALUES %s
         ```
         """
         columns = ",".join(list(df.columns))

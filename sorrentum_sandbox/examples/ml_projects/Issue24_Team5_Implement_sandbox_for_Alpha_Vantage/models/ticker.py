@@ -69,7 +69,7 @@ class Ticker:
                 "last_close": self.last_close,
                 "time_series_data": [point.to_json() for point in self.time_series_data]
             }
-    
+
     def to_CSV(self):
         """Stores data in CSV format locally"""
         json = self.to_json()

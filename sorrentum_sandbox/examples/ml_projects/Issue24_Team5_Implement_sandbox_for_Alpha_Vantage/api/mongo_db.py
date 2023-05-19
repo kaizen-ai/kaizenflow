@@ -57,7 +57,7 @@ class Mongo:
         """
         if not data.time_series_data:
             return
-        
+
         json = data.to_json()
         new_data = json['time_series_data']
 
@@ -72,7 +72,7 @@ class Mongo:
 
         cls.collection.find_one_and_update(
             {"_id": data.ticker},
-            {'$push': 
+            {'$push':
                 {'time_series_data': {'$each': new_data}}
             },
             upsert=True

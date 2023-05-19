@@ -21,8 +21,8 @@ def get_google_trends_create_table_query() -> str:
     query = """
                     CREATE TABLE IF NOT EXISTS google_trends_data
                     (
-                        topic VARCHAR(225), 
-                        date_stamp varchar(225), 
+                        topic VARCHAR(225),
+                        date_stamp varchar(225),
                         frequency NUMERIC
                     );
             """
