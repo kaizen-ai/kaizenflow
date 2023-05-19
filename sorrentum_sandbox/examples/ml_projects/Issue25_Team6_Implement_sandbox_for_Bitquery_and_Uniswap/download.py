@@ -159,10 +159,3 @@ def json_to_df(data: List[Dict[Any, Any]]) -> pd.DataFrame:
     df = pd.json_normalize(data, sep="_")
     # df = df.set_index("timeInterval_minute")
     return df
-
-
-
-
-
-
-

@@ -89,5 +89,3 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
             f"start={start_timestamp}&format={format}"
 
         )
-
-

@@ -50,4 +50,3 @@ issues_df.to_csv("github_issues.csv",encoding='utf-8', index=False)
 commits_df.to_csv("github_commits.csv",encoding='utf-8', index=False)
 main_df.to_csv("github_main.csv",encoding='utf-8', index=False)
 print("Insertion Done!")
-

@@ -178,4 +178,3 @@ def downloader(pair,target_table,**kwargs):
 
   print("\nData Inserted to:",target_table)
   return ssandown.RawData(table)
-
