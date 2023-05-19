@@ -1,11 +1,12 @@
 import numpy as np
 import pandas as pd
+from functools import reduce
 import datetime
 from typing import List, Optional, str 
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-def convert_to_multi_index(
+def convert_to_multiindex(
     exchange_df: pd.DataFrame, keep_single: Optional[bool] = False
 ) -> pd.DataFrame:
     """
@@ -75,11 +76,11 @@ def calculate_vwap(
         denominator = np.cumsum(df["volume"])
         df[vwap_column_name] = np.divide(numerator, denominator)
         # Now rename the OHLCV columns.
-        df.rename(columns={"volume" : volume_column_name}, inplace=True)
-        df.rename(columns={"open" : open_column_name}, inplace=True)
-        df.rename(columns={"high" : high_column_name}, inplace=True)
-        df.rename(columns={"low" : low_column_name}, inplace=True)
-        df.rename(columns={"close" : close_column_name}, inplace=True)
+        df.rename(columns={"volume" : volume_column_name, 
+                           "open": open_column_name, 
+                           "high": high_column_name, 
+                           "low": low_column_name, 
+                           "close": close_column_name}, inplace=True)
         # Drop irrelevant columns and set timestamp as index.
         df.drop(columns=["currency_pair"], inplace=True)
         df.set_index("timestamp", inplace=True)
@@ -106,20 +107,20 @@ def define_levels(single_df: pd.DataFrame) -> pd.DataFrame:
     volume_string = "volume " * num_pairs
     vwap_string = "vwap " * num_pairs
     feature_string = "".join([close_string, high_string, low_string, open_string, volume_string, vwap_string])
-    # Simultaneously inner level (exchange::currency_pair)
+    # Simultaneously inner level (exchange::currency_pair).
     currency_pair_string = ""
     for column_name in columns:
         hyphen = column_name.rfind("-")
         currency_pair_string += column_name[hyphen + 1:] + " "
-    # Convert the given dataframe to multi-index
+    # Convert the given dataframe to multi-index.
     return_df = pd.DataFrame(np.array(single_df), columns=[feature_string.split(), currency_pair_string.split()])
-    # Restore the initial timestamp
+    # Restore the initial timestamp.
     return_df.index = timestamp
-    # Drop duplicate columns if there are any
+    # Drop duplicate columns if there are any.
     return_df = return_df.loc[:,~return_df.columns.duplicated()].copy()
     return return_df
 
-def merge_and_convert_to_multi_index(
+def merge_and_convert_to_multiindex(
     exchange_dfs: List[pd.DataFrame]
 ) -> List[pd.DataFrame]:
     """
@@ -131,18 +132,39 @@ def merge_and_convert_to_multi_index(
     """
     # Edge case if exchange_dfs of size == 1
     if len(exchange_dfs) == 1:
-        return convert_to_multi_index(exchange_df)
+        return convert_to_multiindex(exchange_df)
     # Make all dataframes in exchange_dfs easily convertible to multi-index
     for i, exchange_df in enumerate(exchange_dfs):
-        exchange_dfs[i] = convert_to_multi_index(exchange_df, True)
-    # Merge the first two dataframes
-    return_df = pd.merge(exchange_dfs[0], exchange_dfs[1], on="timestamp", how="outer")
-    # Now merge the rest of them
-    for i in range(2, len(exchange_dfs)):
-        return_df = pd.merge(return_df, exchange_dfs[i], on="timestamp", how="outer")
+        exchange_dfs[i] = convert_to_multiindex(exchange_df, True)
+    # Merge dataframes using reduce().
+    return_df = reduce(lambda df1, df2: pd.merge(df1, df2, on="timestamp", how="outer"), exchange_dfs)
     # Sort by time and columns before passing into define_levels
     return_df = return_df.sort_index()
     return_df = return_df.sort_index(axis=1)
-    # Drop duplicate columns if there are any
+    # Drop duplicate columns if there are any.
     return_df = return_df.loc[:,~return_df.columns.duplicated()]
     return define_levels(return_df)
+
+def get_symbols(multindex_df: pd.MultiIndex) -> List[str]:
+    """
+    Retrieves a list of all of the unique symbols (currency pairs) given a 
+    multiindex dataframe.
+
+    :param multiindex_df: a df returned by convert_to_multiindex
+    :return: list of symbols
+    """
+    symbols_with_prefix = multindex_df["close"].columns
+    symbols = [symbol[symbol.rfind(":")+1:] for symbol in symbols_with_prefix]
+    return list(set(symbols))
+
+def get_symbol_info(multiindex_df: pd.MultiIndex, symbol: str) -> pd.MultiIndex:
+    """
+    Returns a two-level dataframe with only the given symbol.
+
+    :param multiindex_df: a df returned by convert_to_multiindex
+    :param symbol: the desired symbol (currency_pair)
+    :return: all data associated with the symbol
+    """
+    columns_list = multiindex_df.columns
+    columns = [column for column in columns_list if symbol in column[1]]
+    return multiindex_df[columns]
