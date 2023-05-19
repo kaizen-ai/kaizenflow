@@ -75,6 +75,3 @@ class CMC_request():
             )
         else:
             print("Invalid API number, please use number between 1-5")
-
-
-

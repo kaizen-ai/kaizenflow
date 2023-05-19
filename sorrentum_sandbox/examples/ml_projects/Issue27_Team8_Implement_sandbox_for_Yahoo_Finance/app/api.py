@@ -49,4 +49,3 @@ def api_from_db(start_time,end_time,granularity,ticker_list):
     data.columns=['open', 'high', 'low', 'close', 'adj_close', 'volume', 'timestamp','currency_pair', 'exchangetimezonename', 'timezone']
 
     return data
-
