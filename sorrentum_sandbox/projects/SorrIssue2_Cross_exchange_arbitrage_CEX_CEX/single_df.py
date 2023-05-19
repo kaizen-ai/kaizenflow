@@ -6,8 +6,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 def convert_to_multi_index(
-    exchange_df: pd.DataFrame,
-    keep_single: Optional[bool] = False
+    exchange_df: pd.DataFrame, keep_single: Optional[bool] = False
 ) -> pd.DataFrame:
     """
     Rearrange the given exchange dataframe such that the index is time
@@ -19,29 +18,29 @@ def convert_to_multi_index(
     """
     # Move timestamp to a column and localize it.
     exchange_df = exchange_df.reset_index()
-    exchange_df['timestamp'] = pd.to_datetime(exchange_df['timestamp'])
-    exchange_df['timestamp'] = exchange_df['timestamp'].dt.tz_localize(None)
-    exchange_df['timestamp'] = exchange_df['timestamp'].astype('datetime64[ns]')
-    exchange_df = exchange_df.sort_values(by='timestamp')
+    exchange_df["timestamp"] = pd.to_datetime(exchange_df["timestamp"])
+    exchange_df["timestamp"] = exchange_df["timestamp"].dt.tz_localize(None)
+    exchange_df["timestamp"] = exchange_df["timestamp"].astype("datetime64[ns]")
+    exchange_df = exchange_df.sort_values(by="timestamp")
     # Get the name of the exchange.
-    exchange_id = exchange_df['exchange_id'].unique()[0]
+    exchange_id = exchange_df["exchange_id"].unique()[0]
     # Drop all irrelevant columns.
-    exchange_df = exchange_df.drop(columns=['timestamp.1', 'knowledge_timestamp', 'open', 'close', 'year', 'month', 'exchange_id'])
+    exchange_df = exchange_df.drop(columns=["timestamp.1", "knowledge_timestamp", "year", "month", "exchange_id"])
     # Group the dataframe by currency pair.
-    currency_pair_dfs = exchange_df.groupby('currency_pair')
+    currency_pair_dfs = exchange_df.groupby("currency_pair")
     currency_pair_dfs = [currency_pair_dfs.get_group(currency_pair) for currency_pair in currency_pair_dfs.groups]
     # Initialize the dataframe that we will return, which starts as just time.
-    return_df = pd.DataFrame(exchange_df['timestamp'].unique())
+    return_df = pd.DataFrame(exchange_df["timestamp"].unique())
     return_df = return_df.rename(columns={0:"timestamp"})
-    # Calls calculate_vwap helper function.
+    # Calls calculate_vwap helper function that also renames OHLCV columns.
     currency_pair_dfs = calculate_vwap(currency_pair_dfs, exchange_id) 
     # Merge all currency pair dataframes into the return dataframe
     for currency_pair in currency_pair_dfs:
-        return_df = pd.merge_asof(return_df, currency_pair, on='timestamp')
+        return_df = pd.merge_asof(return_df, currency_pair, on="timestamp")
     # Set index as timestamp which was lost during merging.
-    return_df = return_df.set_index('timestamp')
+    return_df = return_df.set_index("timestamp")
     # Sort by column name to the order is consistent.
-    reutrn_df = return_df.sort_index(axis=1)
+    return_df = return_df.sort_index(axis=1)
     # Drop duplicate columns if there are any
     return_df = return_df.loc[:,~return_df.columns.duplicated()]
     # Call define_levels function for next step.
@@ -64,18 +63,26 @@ def calculate_vwap(
     for df in currency_pair_dfs:
         # Get name of currency_pair for renaming purposes.
         currency_pair = df["currency_pair"].unique()[0]
-        vwap_column_name = f"vwap-{exchange_id}:{currency_pair}"
-        volume_column_name = f"volume-{exchange_id}:{currency_pair}"
+        vwap_column_name = f"vwap-{exchange_id}::{currency_pair}"
+        volume_column_name = f"volume-{exchange_id}::{currency_pair}"
+        open_column_name = f"open-{exchange_id}::{currency_pair}"
+        high_column_name = f"high-{exchange_id}::{currency_pair}"
+        low_column_name = f"low-{exchange_id}::{currency_pair}"
+        close_column_name = f"close-{exchange_id}::{currency_pair}"
         # Calculate vwap.
         midprice = (df["high"] + df["low"]) / 2
         numerator = np.cumsum(np.multiply(df["volume"], midprice))
         denominator = np.cumsum(df["volume"])
         df[vwap_column_name] = np.divide(numerator, denominator)
-        # Now rename the volume column.
-        df.rename(columns={'volume' : volume_column_name}, inplace=True)
+        # Now rename the OHLCV columns.
+        df.rename(columns={"volume" : volume_column_name}, inplace=True)
+        df.rename(columns={"open" : open_column_name}, inplace=True)
+        df.rename(columns={"high" : high_column_name}, inplace=True)
+        df.rename(columns={"low" : low_column_name}, inplace=True)
+        df.rename(columns={"close" : close_column_name}, inplace=True)
         # Drop irrelevant columns and set timestamp as index.
-        df.drop(columns=['high', 'low', 'currency_pair'], inplace=True)
-        df.set_index('timestamp', inplace=True)
+        df.drop(columns=["currency_pair"], inplace=True)
+        df.set_index("timestamp", inplace=True)
     return currency_pair_dfs
 
 def define_levels(single_df: pd.DataFrame) -> pd.DataFrame:
@@ -90,20 +97,22 @@ def define_levels(single_df: pd.DataFrame) -> pd.DataFrame:
     timestamp = single_df.index
     # Create a list of all column names.
     columns = list(single_df.columns)
+    num_pairs = int(len(columns) / 6)
     # Create outer level (feature).
-    volume_string = "volume " * int(len(columns) / 2)
-    vwap_string = "vwap " * int(len(columns) / 2)
-    feature_string = "".join([volume_string, vwap_string])
-    # Simultaneously create middle level (exchange) and inner level (currency pairs)
-    exchange_string = ""
+    close_string = "close " * num_pairs
+    high_string = "high " * num_pairs
+    low_string = "low " * num_pairs
+    open_string = "open " * num_pairs
+    volume_string = "volume " * num_pairs
+    vwap_string = "vwap " * num_pairs
+    feature_string = "".join([close_string, high_string, low_string, open_string, volume_string, vwap_string])
+    # Simultaneously inner level (exchange::currency_pair)
     currency_pair_string = ""
     for column_name in columns:
         hyphen = column_name.rfind("-")
-        semicolon = column_name.rfind(":")
-        exchange_string += column_name[hyphen + 1:semicolon] + " "
-        currency_pair_string += column_name[semicolon + 1:] + " "
+        currency_pair_string += column_name[hyphen + 1:] + " "
     # Convert the given dataframe to multi-index
-    return_df = pd.DataFrame(np.array(single_df), columns=[feature_string.split(), exchange_string.split(), currency_pair_string.split()])
+    return_df = pd.DataFrame(np.array(single_df), columns=[feature_string.split(), currency_pair_string.split()])
     # Restore the initial timestamp
     return_df.index = timestamp
     # Drop duplicate columns if there are any
