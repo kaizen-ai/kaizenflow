@@ -1,5 +1,9 @@
 """
 DAG to download OHLCV data from CoinGecko
+
+Import as:
+
+import sorrentum_sandbox.examples.ml_projects.Issue29_Team10_Implement_sandbox_for_coingecko.dags.download_periodic_1min_postgres_cg as ssempitisfcddp1pc
 """
 
 import datetime

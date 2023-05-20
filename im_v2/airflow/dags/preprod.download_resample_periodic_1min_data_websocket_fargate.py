@@ -2,6 +2,10 @@
 This DAG is used to download realtime data to the IM database
 via websockets. In case of bid/ask data, a parallel resampling task
 runs which resamples raw data to 1 minute on the fly.
+
+Import as:
+
+import im_v2.airflow.dags.preprod.download_resample_periodic_1min_data_websocket_fargate as imvadpdrp1dwf
 """
 
 import copy

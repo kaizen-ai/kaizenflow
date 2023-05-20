@@ -58,32 +58,6 @@ class PostsDownloader(ssandown.DataDownloader):
         # memory usage will double if enabled."
         self.reddit_client.config.store_json_result = True
 
-
-    @staticmethod
-    def _transform_to_dict(source: praw.models.Submission) -> dict:
-        """
-        Transform object to dict.
-
-        :param source: object to transform
-        :return: transformed dictionary
-        """
-        output_comments = []
-        # Get comments before main transform since it is not possible to do it
-        # after an iterator is fetched.
-        if hasattr(source, "comments"):
-            for comment in source.comments:
-                output_comments += [PostsDownloader._transform_to_dict(comment)]
-        output = vars(source)
-        for key in output:
-            # If object can't be deserialized then assign a question mark.
-            try:
-                output[key] = json.dumps(output[key])
-            except (TypeError, OverflowError):
-                output[key] = "?"
-        if len(output_comments) > 0:
-            output["comments"] = output_comments
-        return output
-
     def download(
         self,
         *,
@@ -123,3 +97,28 @@ class PostsDownloader(ssandown.DataDownloader):
                 output += [post_as_dict]
         _LOG.info("Reddit download finished.")
         return ssandown.RawData(output)
+
+    @staticmethod
+    def _transform_to_dict(source: praw.models.Submission) -> dict:
+        """
+        Transform object to dict.
+
+        :param source: object to transform
+        :return: transformed dictionary
+        """
+        output_comments = []
+        # Get comments before main transform since it is not possible to do it
+        # after an iterator is fetched.
+        if hasattr(source, "comments"):
+            for comment in source.comments:
+                output_comments += [PostsDownloader._transform_to_dict(comment)]
+        output = vars(source)
+        for key in output:
+            # If object can't be deserialized then assign a question mark.
+            try:
+                output[key] = json.dumps(output[key])
+            except (TypeError, OverflowError):
+                output[key] = "?"
+        if len(output_comments) > 0:
+            output["comments"] = output_comments
+        return output

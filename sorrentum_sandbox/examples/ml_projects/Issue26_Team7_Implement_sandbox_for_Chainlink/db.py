@@ -3,7 +3,7 @@ Implementation of load part of the ETL and QA pipeline.
 
 Import as:
 
-import sorrentum_sandbox.projects.Issue26_Team7_Implement_sandbox_for_Chainlink.db as sisebidb
+import sorrentum_sandbox.examples.ml_projects.Issue26_Team7_Implement_sandbox_for_Chainlink.db as ssempitisfcd
 """
 from typing import Any, Optional
 

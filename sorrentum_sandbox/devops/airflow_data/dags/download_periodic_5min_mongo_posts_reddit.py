@@ -1,5 +1,9 @@
 """
 DAG to download Reddit data.
+
+Import as:
+
+import sorrentum_sandbox.devops.airflow_data.dags.download_periodic_5min_mongo_posts_reddit as ssdadddp5mpr
 """
 
 

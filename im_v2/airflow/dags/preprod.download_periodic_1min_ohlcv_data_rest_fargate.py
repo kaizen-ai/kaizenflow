@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im_v2.airflow.dags.preprod.download_periodic_1min_ohlcv_data_rest_fargate as imvadpdp1odrf
+"""
+
 # This DAG is used to download realtime data to the IM database
 #  via REST API.
 

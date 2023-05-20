@@ -1,7 +1,7 @@
 """
 Import as:
 
-import defi.tulip.implementation.order as dtuimor
+import defi.tulip.implementation.order as dtuimord
 """
 
 import collections

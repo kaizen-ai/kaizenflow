@@ -1,7 +1,7 @@
 """
 Import as:
 
-import defi.dao_swap.twap_vwap_adapter as ddstvwad
+import defi.tulip.adapters.twap_vwap_adapter as dtatvwad
 """
 
 import json
