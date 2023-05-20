@@ -523,14 +523,14 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
     - `DatabasePortfolio` and `OrderProcessor`
     """
 
-    @classmethod
-    def get_id(cls) -> int:
-        return hash(cls.__name__) % 10000
-
     @staticmethod
     def reset() -> None:
         oms.Fill._fill_id = 0
         oms.Order._order_id = 0
+
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
 
     def setUp(self) -> None:
         super().setUp()
@@ -599,14 +599,6 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         oms.Fill._fill_id = 0
         oms.Order._order_id = 0
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.reset()
-
-    def tearDown(self) -> None:
-        super().tearDown()
-        self.reset()
-
     @staticmethod
     def postprocess_result_bundle(
         result_bundle: dtfcore.ResultBundle,
@@ -621,6 +613,14 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         result_bundle_df.index.name = None
         result_bundle.result_df = result_bundle_df
         return result_bundle
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.reset()
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        self.reset()
 
     @abc.abstractmethod
     def get_NonTime_ForecastSystem_from_Time_ForecastSystem(

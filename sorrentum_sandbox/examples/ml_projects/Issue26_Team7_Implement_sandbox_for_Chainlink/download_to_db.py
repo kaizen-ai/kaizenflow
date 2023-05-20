@@ -13,7 +13,7 @@ import logging
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import sorrentum_sandbox.examples.ml_projects.Issue26_Team7_Implement_sandbox_for_Chainlink.db as sisebidb
+import sorrentum_sandbox.examples.ml_projects.Issue26_Team7_Implement_sandbox_for_Chainlink.db as ssempitisfcd
 import sorrentum_sandbox.examples.ml_projects.Issue26_Team7_Implement_sandbox_for_Chainlink.download as sisebido
 
 _LOG = logging.getLogger(__name__)
@@ -83,8 +83,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         )
 
     # Save data to DB.
-    db_conn = sisebidb.get_db_connection()
-    saver = sisebidb.PostgresDataFrameSaver(db_conn)
+    db_conn = ssempitisfcd.get_db_connection()
+    saver = ssempitisfcd.PostgresDataFrameSaver(db_conn)
     saver.save(raw_data, args.target_table)
 
 

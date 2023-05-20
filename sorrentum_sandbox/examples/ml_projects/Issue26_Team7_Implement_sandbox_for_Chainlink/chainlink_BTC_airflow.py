@@ -1,5 +1,9 @@
 """
 DAG to download real time data from Chainlink.
+
+Import as:
+
+import sorrentum_sandbox.examples.ml_projects.Issue26_Team7_Implement_sandbox_for_Chainlink.chainlink_BTC_airflow as ssempitisfccba
 """
 
 import datetime

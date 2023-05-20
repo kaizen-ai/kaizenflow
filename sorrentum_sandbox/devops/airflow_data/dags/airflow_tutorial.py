@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import sorrentum_sandbox.devops.airflow_data.dags.airflow_tutorial as ssdaddatu
+"""
+
 from datetime import datetime, timedelta
 from textwrap import dedent
 

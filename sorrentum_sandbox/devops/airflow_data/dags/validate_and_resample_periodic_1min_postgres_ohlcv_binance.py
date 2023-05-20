@@ -1,6 +1,10 @@
 """
 Example DAG to load data from PostgreSQL, validate, and transform them and save
 back to the DB.
+
+Import as:
+
+import sorrentum_sandbox.devops.airflow_data.dags.validate_and_resample_periodic_1min_postgres_ohlcv_binance as ssdaddvarp1pob
 """
 
 import datetime

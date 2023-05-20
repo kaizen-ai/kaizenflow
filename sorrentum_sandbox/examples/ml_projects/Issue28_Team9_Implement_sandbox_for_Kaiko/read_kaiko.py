@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import sorrentum_sandbox.examples.ml_projects.Issue28_Team9_Implement_sandbox_for_Kaiko.read_kaiko as ssempitisfkrk
+"""
+
 import kaiko
 import numpy as np
 import pandas as pd

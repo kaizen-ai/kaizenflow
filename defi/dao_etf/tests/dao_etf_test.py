@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import defi.dao_etf.tests.dao_etf_test as ddetdette
+"""
+
 from brownie import DaoETF, accounts
 
 

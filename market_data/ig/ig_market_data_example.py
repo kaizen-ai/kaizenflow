@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import market_data.ig.ig_market_data_example as mdiimdaex
+"""
+
 # """
 # Import as:
 #

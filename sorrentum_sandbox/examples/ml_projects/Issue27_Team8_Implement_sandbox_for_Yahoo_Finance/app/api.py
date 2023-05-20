@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import sorrentum_sandbox.examples.ml_projects.Issue27_Team8_Implement_sandbox_for_Yahoo_Finance.app.api as ssempitisfyfaa
+"""
+
 import pandas as pd
 import psycopg2 as psycop
 

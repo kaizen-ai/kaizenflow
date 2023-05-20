@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import defi.web3_utils as dwebutil
+"""
+
 import functools
 import os
 from typing import Any, List

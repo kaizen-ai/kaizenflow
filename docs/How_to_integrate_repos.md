@@ -54,6 +54,11 @@
     > find . -type f -empty -print | grep -v .git | grep -v __init__ | grep -v ".log$" | grep -v ".txt$" | xargs git rm
     ```
     - TODO(gp): Add this step to `dev_scripts/clean_up_text_files.sh`
+     
+- Align `lib_tasks.py`:
+  ```
+  > vimdiff ~/src/{amp1,cmamp1}/tasks.py; diff_to_vimdiff.py --dir1 ~/src/amp1 --dir2 ~/src/cmamp1 --subdir helpers
+  ```
 
 - Lint both dirs:
   ```
@@ -183,14 +188,14 @@
   ```
 
 ## Run tests
-1) Check `amp` / `cmamp` using GH actions:
+- Check `amp` / `cmamp` using GH actions:
   ```
   > i gh_create_pr --no-draft
   > i pytest_collect_only
   > i gh_workflow_list
   ```
 
-2) Check `lem` on dev1
+- Check `lem` on dev1
   ```
   # Clean everything.
   > git reset --hard; git clean -fd; git pull; (cd amp; git reset --hard; git clean -fd; git pull)
@@ -206,8 +211,8 @@
   > i git_branch_create -b $AM_BRANCH
   ```
 
-3) Check `lime` on dev4
+- Check `lime` on dev4
 
-4) Check `orange` on dev1
+- Check `orange` on dev1
  
-5) Check `dev_tools` on dev1
+- Check `dev_tools` on dev1

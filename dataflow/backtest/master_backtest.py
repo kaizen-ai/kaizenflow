@@ -3,7 +3,7 @@ Entry point for `run_config_list.py`.
 
 Import as:
 
-import dataflow.backtest.master_backtest as dtfbamaexp
+import dataflow.backtest.master_backtest as dtfbamabac
 """
 
 import logging

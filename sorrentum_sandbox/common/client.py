@@ -1,7 +1,7 @@
 """
 Import as:
 
-import sorrentum_sandbox.common.client as sinsacli
+import sorrentum_sandbox.common.client as ssacocli
 """
 
 import abc

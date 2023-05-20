@@ -16,7 +16,7 @@ import tqdm
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import sorrentum_sandbox.common.download as ssandown
+import sorrentum_sandbox.common.download as ssacodow
 
 _LOG = logging.getLogger(__name__)
 COINMARKETCAP_API_KEY = os.environ["COINMARKETCAP_API_KEY"]
@@ -26,14 +26,14 @@ COINMARKETCAP_API_KEY = os.environ["COINMARKETCAP_API_KEY"]
 # #############################################################################
 
 
-class OhlcvRestApiDownloader(ssandown.DataDownloader):
+class OhlcvRestApiDownloader(ssacodow.DataDownloader):
     """
     Class for downloading data using REST API provided by CoinMarketCap.
     """
 
     _MAX_LINES = 5000
 
-    def download(self) -> ssandown.RawData:
+    def download(self) -> ssacodow.RawData:
         # Download data once symbol at a time.
         dfs = []
         url = self._build_url(
@@ -93,7 +93,7 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
         time.sleep(0.5)
         df = pd.concat(dfs, ignore_index=True)
         _LOG.info(f"Downloaded data: \n\t {df.head()}")
-        return ssandown.RawData(df)
+        return ssacodow.RawData(df)
 
     @staticmethod
     def _build_url(
