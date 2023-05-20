@@ -291,6 +291,36 @@ def _git_log(num_commits: int = 5, my_commits: bool = False) -> str:
 # End copy.
 
 
+def _get_git_signature(git_commit_type: str = "all") -> List[str]:
+    """
+    Get information about current branch and latest commits.
+    """
+    txt_tmp: List[str] = []
+    # Get the branch name.
+    cmd = "git branch --show-current"
+    _, branch_name = hsystem.system_to_one_line(cmd)
+    txt_tmp.append(f"branch_name='{branch_name}'")
+    # Get the short Git hash of the current branch.
+    cmd = "git rev-parse --short HEAD"
+    _, hash_ = hsystem.system_to_one_line(cmd)
+    txt_tmp.append(f"hash='{hash_}'")
+    # Add info about the latest commits.
+    num_commits = 3
+    if git_commit_type == "all":
+        txt_tmp.append("# Last commits:")
+        log_txt = _git_log(num_commits=num_commits, my_commits=False)
+        txt_tmp.append(hprint.indent(log_txt))
+    elif git_commit_type == "mine":
+        txt_tmp.append("# Your last commits:")
+        log_txt = _git_log(num_commits=num_commits, my_commits=True)
+        txt_tmp.append(hprint.indent(log_txt))
+    elif git_commit_type == "none":
+        pass
+    else:
+        raise ValueError(f"Invalid value='{git_commit_type}'")
+    return txt_tmp
+
+
 def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     # TODO(gp): This should return a string that we append to the rest.
     container_dir_name = "."
@@ -301,27 +331,18 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     txt.append("# Git")
     txt_tmp: List[str] = []
     try:
-        cmd = "git branch --show-current"
-        _, branch_name = hsystem.system_to_one_line(cmd)
-        txt_tmp.append(f"branch_name='{branch_name}'")
-        #
-        cmd = "git rev-parse --short HEAD"
-        _, hash_ = hsystem.system_to_one_line(cmd)
-        txt_tmp.append(f"hash='{hash_}'")
-        #
-        num_commits = 3
-        if git_commit_type == "all":
-            txt_tmp.append("# Last commits:")
-            log_txt = _git_log(num_commits=num_commits, my_commits=False)
-            txt_tmp.append(hprint.indent(log_txt))
-        elif git_commit_type == "mine":
-            txt_tmp.append("# Your last commits:")
-            log_txt = _git_log(num_commits=num_commits, my_commits=True)
-            txt_tmp.append(hprint.indent(log_txt))
-        elif git_commit_type == "none":
-            pass
-        else:
-            raise ValueError(f"Invalid value='{git_commit_type}'")
+        txt_tmp += _get_git_signature(git_commit_type)
+        # If there is amp as submodule, fetch its git signature.
+        if os.path.exists("amp"):
+            prev_cwd = os.getcwd()
+            try:
+                # Temporarily descend into amp.
+                os.chdir("amp")
+                txt_tmp.append("# Git amp")
+                git_amp_sig = _get_git_signature(git_commit_type)
+                txt_tmp, git_amp_sig = _append(txt_tmp, git_amp_sig)
+            finally:
+                os.chdir(prev_cwd)
     except RuntimeError as e:
         _LOG.error(str(e))
     txt, txt_tmp = _append(txt, txt_tmp)

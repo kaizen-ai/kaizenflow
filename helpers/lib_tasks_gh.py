@@ -93,9 +93,12 @@ def _get_workflow_table() -> htable.TableType:
     _LOG.debug(hprint.to_str("txt"))
     # pylint: disable=line-too-long
     # > gh run list
-    # STATUS  NAME                                                        WORKFLOW    BRANCH                                                EVENT              ID          ELAPSED  AGE
-    # X       Amp task1786 integrate 2021118 (#1857)                    Fast tests  master                                                push               1477484584  5m40s    23m
-    # X       Merge branch 'master' into AmpTask1786_Integrate_2021118  Fast tests  AmpTask1786_Integrate_2021118                         pull_request       1477445218  5m52s    34m
+    # STATUS  TITLE                                                          WORKFLOW    BRANCH                                                         EVENT         ID          ELAPSED  AGE
+    # *       AmpTask1786_Integrate_20230518_2                               Fast tests  AmpTask1786_Integrate_20230518_2                               pull_request  5027911519  4m49s    4m
+    # > gh run list | more
+    # completed       success AmpTask1786_Integrate_20230518_2        Fast tests      AmpTask1786_Integrate_20230518_2        pull_request    5027911519      7m17s   10m
+    # in_progress             AmpTask1786_Integrate_20230518_2        Slow tests      AmpTask1786_Integrate_20230518_2        pull_request    5027911518      10m9s   10m
+
     # pylint: enable=line-too-long
     # The output is tab separated, so convert it into CSV.
     first_line = txt.split("\n")[0]
@@ -103,9 +106,9 @@ def _get_workflow_table() -> htable.TableType:
     num_cols = len(first_line.split("\t"))
     _LOG.debug(hprint.to_str("first_line num_cols"))
     cols = [
-        "completed",
-        "status",
-        "name",
+        "completed",  # E.g., completed, in_progress
+        "status",   # E.g., success, failure
+        "name",  # Aka title
         "workflow",
         "branch",
         "event",
@@ -124,7 +127,7 @@ def _get_workflow_table() -> htable.TableType:
 def gh_workflow_list(  # type: ignore
     ctx,
     filter_by_branch="current_branch",
-    filter_by_status="all",
+    filter_by_completed="all",
     report_only_status=True,
     show_stack_trace=False,
 ):
@@ -135,12 +138,12 @@ def gh_workflow_list(  # type: ignore
         - `current_branch` for the current Git branch
         - `master` for master branch
         - `all` for all branches
-    :param filter_by_status: filter table by the status of the workflow
+    :param filter_by_completed: filter table by the status of the workflow
         - E.g., "failure", "success"
     :param show_stack_trace: in case of error run `pytest_repro` reporting also
         the stack trace
     """
-    hlitauti.report_task(txt=hprint.to_str("filter_by_branch filter_by_status"))
+    hlitauti.report_task(txt=hprint.to_str("filter_by_branch filter_by_completed"))
     # Login.
     gh_login(ctx)
     # Get the table.
@@ -152,9 +155,9 @@ def gh_workflow_list(  # type: ignore
         print(f"Filtering table by {field}={value}")
         table = table.filter_rows(field, value)
     # Filter table by the workflow status.
-    if filter_by_status != "all":
-        field = "status"
-        value = filter_by_status
+    if filter_by_completed != "all":
+        field = "completed"
+        value = filter_by_completed
         print(f"Filtering table by {field}={value}")
         table = table.filter_rows(field, value)
     if (
@@ -174,10 +177,12 @@ def gh_workflow_list(  # type: ignore
         print(table_tmp)
         # Find the first success.
         num_rows = table.size()[0]
+        _LOG.debug("num_rows=%s", num_rows)
         for i in range(num_rows):
             status_column = table_tmp.get_column("status")
             _LOG.debug("status_column=%s", str(status_column))
-            hdbg.dassert_lt(i, len(status_column))
+            hdbg.dassert_lt(i, len(status_column),
+                            msg="status_column=%s" % status_column)
             status = status_column[i]
             if status == "success":
                 print(f"Workflow '{workflow}' for '{branch_name}' is ok")
