@@ -1291,6 +1291,7 @@ class TestReadDataFromS3(hunitest.TestCase):
         stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         hpandas.read_csv_to_df(stream, **kwargs)
 
+    @pytest.mark.slow("~15 sec.")
     def test_read_parquet1(self) -> None:
         s3fs = hs3.get_s3fs(_AWS_PROFILE)
         file_name = os.path.join(
@@ -1517,13 +1518,15 @@ class TestDropDuplicates(hunitest.TestCase):
     def test_drop_duplicates1(self) -> None:
         """
         - use_index = True
-        - subset is not None
+        - column_subset is not None
         """
         # Prepare test data.
         df = self.get_test_data()
         use_index = True
-        subset = ["float"]
-        no_duplicates_df = hpandas.drop_duplicates(df, use_index, subset=subset)
+        column_subset = ["float"]
+        no_duplicates_df = hpandas.drop_duplicates(
+            df, use_index, column_subset=column_subset
+        )
         no_duplicates_df = hpandas.df_to_str(no_duplicates_df)
         # Prepare expected result.
         expected_signature = r"""
@@ -1539,7 +1542,7 @@ class TestDropDuplicates(hunitest.TestCase):
     def test_drop_duplicates2(self) -> None:
         """
         - use_index = True
-        - subset = None
+        - column_subset = None
         """
         # Prepare test data.
         df = self.get_test_data()
@@ -1561,7 +1564,7 @@ class TestDropDuplicates(hunitest.TestCase):
     def test_drop_duplicates3(self) -> None:
         """
         - use_index = False
-        - subset = None
+        - column_subset = None
         """
         # Prepare test data.
         df = self.get_test_data()
@@ -1582,13 +1585,15 @@ class TestDropDuplicates(hunitest.TestCase):
     def test_drop_duplicates4(self) -> None:
         """
         - use_index = False
-        - subset is not None
+        - column_subset is not None
         """
         # Prepare test data.
         df = self.get_test_data()
         use_index = False
-        subset = ["letter", "float"]
-        no_duplicates_df = hpandas.drop_duplicates(df, use_index, subset)
+        column_subset = ["letter", "float"]
+        no_duplicates_df = hpandas.drop_duplicates(
+            df, use_index, column_subset=column_subset
+        )
         no_duplicates_df = hpandas.df_to_str(no_duplicates_df)
         # Prepare expected result.
         expected_signature = r"""
@@ -1974,7 +1979,11 @@ class Test_compare_dfs(hunitest.TestCase):
         df1, df2 = self.get_test_dfs_equal()
         df2 = df2.rename(
             columns={"tsC": "extra_col"},
-            index={pd.Timestamp("2022-01-01 21:03:00+00:00"): "extra_row"},
+            index={
+                pd.Timestamp("2022-01-01 21:03:00+00:00"): pd.Timestamp(
+                    "2022-01-01 21:04:00+00:00"
+                )
+            },
         )
         return df1, df2
 
@@ -2168,6 +2177,28 @@ class Test_compare_dfs(hunitest.TestCase):
         2022-01-01 21:02:00+00:00             NaN             NaN
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test8(self) -> None:
+        """
+        - compare_nans = True
+        """
+        # Build test dataframes.
+        df1 = pd.DataFrame(
+            data={
+                "A": [1.1, np.nan, 3.1, np.nan, np.inf, np.inf],
+                "B": [0, 0, 0, 0, 0, 0],
+            }
+        )
+        df2 = pd.DataFrame(
+            data={
+                "A": [3.0, 2.2, np.nan, np.nan, np.nan, np.inf],
+                "B": [0, 0, 0, 0, 0, 0],
+            }
+        )
+        # Check.
+        with self.assertRaises(AssertionError):
+            compare_nans = True
+            hpandas.compare_dfs(df1, df2, compare_nans=compare_nans)
 
     def test_invalid_input(self) -> None:
         """
@@ -2838,3 +2869,36 @@ class Test_compute_duration_df(hunitest.TestCase):
         self.intersection_helper(
             valid_intersect, expected_start_timestamp, expected_end_timestamp
         )
+
+
+# #############################################################################
+
+
+class Test_compare_nans_in_dataframes(hunitest.TestCase):
+    def test1(self):
+        """
+        Check that NaN differences are identified correctly.
+        """
+        # Build test dataframes.
+        df1 = pd.DataFrame(
+            data={
+                "A": [1.1, np.nan, 3.1, np.nan, np.inf, np.inf],
+                "B": [0, 0, 0, 0, 0, 0],
+            }
+        )
+        df2 = pd.DataFrame(
+            data={
+                "A": [3.0, 2.2, np.nan, np.nan, np.nan, np.inf],
+                "B": [0, 0, 0, 0, 0, 0],
+            }
+        )
+        df = hpandas.compare_nans_in_dataframes(df1, df2)
+        actual = hpandas.df_to_str(df)
+        expected = r"""
+            A
+           df1  df2
+        1  NaN  2.2
+        2  3.1  NaN
+        4  inf  NaN
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)

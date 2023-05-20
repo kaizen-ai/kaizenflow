@@ -231,6 +231,7 @@ def _dassert_setup_consistency() -> None:
     )
     if sum_ != 1:
         msg = "One and only one set-up config should be true:\n" + setup_to_str()
+        # TODO(gp): Unclear if this is a difference between Sorrentum and cmamp.
         _LOG.warning(msg)
         # raise ValueError(msg)
 
