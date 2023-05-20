@@ -1246,11 +1246,11 @@ class TestCase(unittest.TestCase):
         self,
         aws_profile: str,
         *,
+        use_only_test_class: bool = False,
         test_class_name: Optional[str] = None,
         test_method_name: Optional[str] = None,
     ) -> str:
         # Make the path unique for the test.
-        use_only_test_class = True
         use_absolute_path = False
         test_path = self._get_current_path(
             use_only_test_class,

@@ -1,3 +1,12 @@
+# cmamp-1.4.3
+- 2023-02-24
+- Changes from #3585 IM - Extract v3.0 (Next gen Data QA)
+- Changes from #3662 IM - Extract v3.2 (Extend the dataset matrix)#3662
+
+# cmamp-1.4.2
+- 2023-01-11
+- Changes from #3503 IM - Extract v2.9 (Prod Database, Continue Adapting to Sorrentum)
+
 # cmamp-1.4.1
 - 2022-12-19
 - Changes from #3165
