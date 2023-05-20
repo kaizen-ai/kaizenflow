@@ -1,7 +1,7 @@
 """
 Import as:
 
-import sorrentum_sandbox.common.client as sinsacli
+import sorrentum_sandbox.examples.ml_projects.Issue28_Team9_Implement_sandbox_for_Kaiko.common.client as ssempitisfkcc
 """
 
 import abc

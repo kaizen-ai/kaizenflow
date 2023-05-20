@@ -9,7 +9,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestCreateDb1(imvcddbut.TestImDbHelper):
-
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000

@@ -30,31 +30,40 @@ if __name__ == "__main__":
     topic = "iphone"
     # topic = topic.lower()
 
-    #_LOG.info("-------------------------------------------")
-    #_LOG.info("Fetching a connection to postgres db...")
+    # _LOG.info("-------------------------------------------")
+    # _LOG.info("Fetching a connection to postgres db...")
     db_conn = sisebidb.get_db_connection()
-    #_LOG.info("Connection fetched")
+    # _LOG.info("Connection fetched")
 
-    #_LOG.info("Creating a Postgres client with the connection...")
+    # _LOG.info("Creating a Postgres client with the connection...")
     db_client = sisebidb.PostgresClient(db_conn)
-    #_LOG.info("Client created")
+    # _LOG.info("Client created")
 
-    #_LOG.info("Fetching records with the topic: "+topic+" ...")
+    # _LOG.info("Fetching records with the topic: "+topic+" ...")
     data = db_client.load(dataset_signature=topic)
-    #_LOG.info("Dataframe fetched")
+    # _LOG.info("Dataframe fetched")
 
-    #_LOG.info("Renaming columns...")
-    data.rename(columns={'topic': 'Topic', 'date_stamp': 'Time', 'frequency':'Frequency'}, inplace=True)
+    # _LOG.info("Renaming columns...")
+    data.rename(
+        columns={
+            "topic": "Topic",
+            "date_stamp": "Time",
+            "frequency": "Frequency",
+        },
+        inplace=True,
+    )
     print(data)
-    #_LOG.info(f"Loaded data: \n {data.head()}")
+    # _LOG.info(f"Loaded data: \n {data.head()}")
 
-    #_LOG.info("Initialising Normalization checker...")
+    # _LOG.info("Initialising Normalization checker...")
     denormalized_dataset_check = sisebiva.DenormalizedDatasetCheck()
-    #_LOG.info("Checker created")
+    # _LOG.info("Checker created")
 
-    #_LOG.info("Adding checker to SingleDatasetValidator class...")
-    dataset_validator = sinsaval.SingleDatasetValidator([denormalized_dataset_check])
-    #_LOG.info("Check added")
+    # _LOG.info("Adding checker to SingleDatasetValidator class...")
+    dataset_validator = sinsaval.SingleDatasetValidator(
+        [denormalized_dataset_check]
+    )
+    # _LOG.info("Check added")
 
-    #_LOG.info("Running Validations...")
+    # _LOG.info("Running Validations...")
     dataset_validator.run_all_checks([data])

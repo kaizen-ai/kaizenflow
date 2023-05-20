@@ -17,14 +17,15 @@
 # %autoreload 2
 
 import logging
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
+import defi.dao_cross.order as ddacrord
+import defi.dao_cross.supply_demand as ddcrsede
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
-import defi.dao_cross.supply_demand as ddcrsede
-import defi.dao_cross.order as ddacrord
 
 # %%
 try:
@@ -32,6 +33,7 @@ try:
 except ImportError:
     # !sudo /bin/bash -c "(source /venv/bin/activate; pip install pulp)"
     import pulp
+
 import defi.dao_cross.optimize as ddacropt
 
 # %%
@@ -72,12 +74,16 @@ plt.plot(agg_demand_curve)
 plt.show()
 
 # %%
-agg_supply_orders = ddcrsede.convert_aggregated_curve_to_limit_orders(agg_supply_curve)
+agg_supply_orders = ddcrsede.convert_aggregated_curve_to_limit_orders(
+    agg_supply_curve
+)
 agg_supply_orders_df = ddacrord.convert_orders_to_dataframe(agg_supply_orders)
 agg_supply_orders_df
 
 # %%
-agg_demand_orders = ddcrsede.convert_aggregated_curve_to_limit_orders(agg_demand_curve)
+agg_demand_orders = ddcrsede.convert_aggregated_curve_to_limit_orders(
+    agg_demand_curve
+)
 agg_demand_orders_df = ddacrord.convert_orders_to_dataframe(agg_demand_orders)
 agg_demand_orders_df
 

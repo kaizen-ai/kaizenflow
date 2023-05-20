@@ -94,9 +94,7 @@ class ResultBundle(abc.ABC):
         """
         Initialize `ResultBundle` from a nested dict.
         """
-        result_bundle_config = cconfig.Config.from_dict(
-            result_bundle_dict
-        )
+        result_bundle_config = cconfig.Config.from_dict(result_bundle_dict)
         result_bundle_class = eval(result_bundle_config["class"])
         result_bundle: ResultBundle = result_bundle_class.from_config(
             result_bundle_config

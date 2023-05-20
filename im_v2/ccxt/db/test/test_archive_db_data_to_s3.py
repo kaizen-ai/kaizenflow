@@ -35,7 +35,9 @@ class TestArchiveDbDataToS3(imvcddbut.TestImDbHelper, hmoto.S3Mock_TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-    @umock.patch.object(imvcdaddts.imvcddbut.DbConnectionManager, "get_connection")
+    @umock.patch.object(
+        imvcdaddts.imvcddbut.DbConnectionManager, "get_connection"
+    )
     def test_full_archival_flow(
         self, mock_get_connection: umock.MagicMock
     ) -> None:

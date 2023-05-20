@@ -64,6 +64,7 @@ simplify_logic(b)
 # %%
 # Compute truth table.
 from sympy.logic.boolalg import truth_table
+
 table = truth_table(x >> y, [x, y])
 for t in table:
     print(f"{t[0]} -> {t[1]}")

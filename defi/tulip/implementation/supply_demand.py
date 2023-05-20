@@ -10,11 +10,10 @@ from typing import List, Tuple
 
 import pandas as pd
 
-import helpers.hdbg as hdbg
 import defi.dao_cross.order as ddacrord
+import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
-
 
 
 # #############################################################################
@@ -105,12 +104,12 @@ def get_supply_demand_discrete_curve(
     """
     # TODO(Dan): Add asserts for orders compatibility.
     if type_ == "supply":
-        orders_df = orders_df[orders_df["action"]=="sell"]
+        orders_df = orders_df[orders_df["action"] == "sell"]
         ascending = True
         # Extend supply curve with a straight line up at the max quantity.
         last_limit_price_mpl = 1.25
     elif type_ == "demand":
-        orders_df = orders_df[orders_df["action"]=="buy"]
+        orders_df = orders_df[orders_df["action"] == "buy"]
         ascending = False
         # Extend demand curve with a straight line down until zero quantity.
         last_limit_price_mpl = 0.0
@@ -180,7 +179,7 @@ def get_supply_demand_aggregated_curve(
     if type_ == "supply":
         hdbg.dassert_lt(0.0, alpha)
         # Get supply min quantity to set it as a limit.
-        min_quantity = - beta / alpha
+        min_quantity = -beta / alpha
         if min_quantity < 0.0:
             # Supply quantity cannot be negative.
             min_quantity = 0.0
@@ -190,7 +189,7 @@ def get_supply_demand_aggregated_curve(
         # A buyer can order any non-negative quantity.
         min_quantity = 0.0
         # Get demand max quantity to set it as a limit.
-        max_quantity = - beta / alpha
+        max_quantity = -beta / alpha
     else:
         raise ValueError("Invalid type_='%s'" % type_)
     # Generate curve dots.

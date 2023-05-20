@@ -1,24 +1,24 @@
-#import asyncio
-#import logging
+# import asyncio
+# import logging
 #
-#import pandas as pd
-#import pytest
+# import pandas as pd
+# import pytest
 #
-#import helpers.hdatetime as hdateti
-#import helpers.hpandas as hpandas
-#import helpers.hprint as hprint
-#import helpers.hunit_test as hunitest
-#import market_data_lime.ig_market_data_example as mdlemdaex
-#import market_data_lime.ig_real_time_market_data as mdlertmda
+# import helpers.hdatetime as hdateti
+# import helpers.hpandas as hpandas
+# import helpers.hprint as hprint
+# import helpers.hunit_test as hunitest
+# import market_data_lime.ig_market_data_example as mdlemdaex
+# import market_data_lime.ig_real_time_market_data as mdlertmda
 #
-#_LOG = logging.getLogger(__name__)
+# _LOG = logging.getLogger(__name__)
 #
 #
 ## #############################################################################
 #
 #
 ## TODO(gp): Use MarketDataTestCase
-#class TestIgHistoricalMarketData1(hunitest.TestCase):
+# class TestIgHistoricalMarketData1(hunitest.TestCase):
 #    def test_should_be_online1(self) -> None:
 #        asset_ids = [17085]
 #        market_data = mdlemdaex.get_IgHistoricalMarketData_example1(asset_ids)

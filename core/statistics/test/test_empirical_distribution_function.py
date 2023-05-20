@@ -2,8 +2,8 @@ import logging
 
 import pandas as pd
 
-import core.statistics.empirical_distribution_function as cstaecdf
-import core.statistics.random_samples as cstatrs
+import core.statistics.empirical_distribution_function as csemdifu
+import core.statistics.random_samples as cstrasam
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
@@ -12,11 +12,11 @@ _LOG = logging.getLogger(__name__)
 
 class Test_compute_empirical_cdf1(hunitest.TestCase):
     def test_gaussian(self) -> None:
-        data = cstatrs.get_iid_standard_gaussian_samples(
+        data = cstrasam.get_iid_standard_gaussian_samples(
             10,
             seed=0,
         )
-        empirical_cdf = cstaecdf.compute_empirical_cdf(data)
+        empirical_cdf = csemdifu.compute_empirical_cdf(data)
         actual = get_df_as_str(empirical_cdf)
         expected = r"""
              ecdf
@@ -95,11 +95,8 @@ class Test_compute_empirical_cdf_with_bounds1(hunitest.TestCase):
         seed,
         alpha,
     ) -> pd.DataFrame:
-        data = cstatrs.get_iid_standard_gaussian_samples(
-            n_samples,
-            seed
-        )
-        empirical_cdf = cstaecdf.compute_empirical_cdf_with_bounds(data, alpha)
+        data = cstrasam.get_iid_standard_gaussian_samples(n_samples, seed)
+        empirical_cdf = csemdifu.compute_empirical_cdf_with_bounds(data, alpha)
         return empirical_cdf
 
 

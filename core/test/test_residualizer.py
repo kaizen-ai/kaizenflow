@@ -8,7 +8,7 @@ import pandas as pd
 import scipy
 
 import core.explore as coexplor
-import core.pandas_helpers as cpanh
+import core.pandas_helpers as cpanhelp
 import core.residualizer as coresidu
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
@@ -254,7 +254,7 @@ class TestPcaFactorComputer2(hunitest.TestCase):
         comp = coresidu.PcaFactorComputer(
             nan_mode_in_data, nan_mode_in_corr, sort_eigvals, stabilize_eig
         )
-        df_res = cpanh.df_rolling_apply(
+        df_res = cpanhelp.df_rolling_apply(
             result["y"], window, comp, progress_bar=True
         )
         if report_stats:

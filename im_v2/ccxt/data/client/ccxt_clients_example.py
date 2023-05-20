@@ -134,9 +134,7 @@ def get_CcxtHistoricalPqByTileClient_example1(
         )
     else:
         # Use the the historical data.
-        root_dir = os.path.join(
-            s3_bucket_path, "reorg", "historical.manual.pq"
-        )
+        root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
     resample_1min = False
     partition_mode = "by_year_month"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(

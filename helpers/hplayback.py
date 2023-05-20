@@ -383,7 +383,7 @@ class Playback:
         self._code.append(hprint.indent(string, num_spaces=num_spaces))
 
 
-# ################################################################################
+# #############################################################################
 
 
 def json_pretty_print(parsed: Any) -> str:
@@ -429,9 +429,9 @@ def round_trip_convert(obj1: Any, log_level: int) -> Any:
     return obj2
 
 
-# ################################################################################
+# #############################################################################
 # Decorator
-# ################################################################################
+# #############################################################################
 
 
 # TODO(gp): This approach doesn't work since we use introspection and so we probably
@@ -449,10 +449,10 @@ def round_trip_convert(obj1: Any, log_level: int) -> Any:
 
 
 def playback(func: Callable) -> Callable:
-
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        import helpers.hplayback as hplayb
-        playback = hplayb.Playback("assert_equal")
+        import helpers.hplayback as hplayba
+
+        playback = hplayba.Playback("assert_equal")
         res = func(*args, **kwargs)
         code = playback.run(res)
         print(code)

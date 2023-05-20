@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import core.pandas_helpers as cpanh
+import core.pandas_helpers as cpanhelp
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -22,7 +22,9 @@ class TestResampleIndex1(hunitest.TestCase):
         txt = []
         txt.extend(["df.head()=", df.head()])
         txt.extend(["df.tail()=", df.tail()])
-        resampled_index = cpanh.resample_index(df.index, time=(10, 30), freq="D")
+        resampled_index = cpanhelp.resample_index(
+            df.index, time=(10, 30), freq="D"
+        )
         # Normalize since the format seems to be changing on different machines.
         txt_tmp = str(resampled_index).replace("\n", "").replace(" ", "")
         txt.extend(["resampled_index=", txt_tmp])
@@ -58,7 +60,7 @@ class TestDfRollingApply(hunitest.TestCase):
         #
         window = 5
         func = np.mean
-        df_act = cpanh.df_rolling_apply(df, window, func)
+        df_act = cpanhelp.df_rolling_apply(df, window, func)
         #
         df_exp = df.rolling(window).apply(func, raw=True)
         # Check.
@@ -82,7 +84,7 @@ class TestDfRollingApply(hunitest.TestCase):
         #
         window = 5
         func = np.mean
-        df_act = cpanh.df_rolling_apply(df, window, func)
+        df_act = cpanhelp.df_rolling_apply(df, window, func)
         #
         df_exp = df.rolling(window).apply(func, raw=True)
         # Check.
@@ -98,7 +100,7 @@ class TestDfRollingApply(hunitest.TestCase):
         #
         window = 5
         func = lambda x: pd.DataFrame(np.mean(x))
-        df_act = cpanh.df_rolling_apply(df, window, func)
+        df_act = cpanhelp.df_rolling_apply(df, window, func)
         #
         func = np.mean
         df_exp = df.rolling(window).apply(func, raw=True)
@@ -117,7 +119,7 @@ class TestDfRollingApply(hunitest.TestCase):
         #
         window = 5
         func = lambda x: pd.DataFrame([np.mean(x), np.sum(x)])
-        df_act = cpanh.df_rolling_apply(df, window, func)
+        df_act = cpanhelp.df_rolling_apply(df, window, func)
         # Check.
         self.check_string(df_act.to_string())
 
@@ -130,12 +132,14 @@ class TestDfRollingApply(hunitest.TestCase):
             np.random.rand(len(dts), 2).round(2), columns=["A", "B"], index=dts
         )
         #
-        resampled_index = cpanh.resample_index(df.index, time=(9, 0), freq="1D")
+        resampled_index = cpanhelp.resample_index(
+            df.index, time=(9, 0), freq="1D"
+        )
         self.assertEqual(len(resampled_index), 6)
         #
         window = 5
         func = np.mean
-        df_act = cpanh.df_rolling_apply(
+        df_act = cpanhelp.df_rolling_apply(
             df, window, func, timestamps=resampled_index
         )
         # Check.
