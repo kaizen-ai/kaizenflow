@@ -19,7 +19,7 @@
 
 - The user runs commands in an abs_dir, e.g., `/Users/saggese/src/{amp1,cmamp1}`
 - The user refers in the command line to `dir_basename`, which is the basename of
-  the integration directories (e.g., `amp1`, `cmamp1`)
+  the integration directories (e.g., `amp1`, `cmamp1`, `sorrentum1`)
   - The "src_dir_basename" is the one where the command is issued
   - The "dst_dir_basename" is assumed to be parallel to the "src_dir_basename"
 - The dirs are then transformed in absolute dirs "abs_src_dir"
@@ -30,25 +30,30 @@
 
 - Pull master
 
-- Remove white spaces from both `amp` and `cmamp`:
+- Remove white spaces from both source and destination repos:
   ```
   > dev_scripts/clean_up_text_files.sh
   > git commit -am "Remove white spaces"; git push
   ```
+  - One should still run the regressions out of paranoia since some golden 
+    outcomes can be changed
+  - Remove trailing spaces:
+    ```
+    > find . -name "*.py" -o -name "*.txt" -o -name "*.json" | xargs perl -pi -e 's/\s+$/\n/'
+    ```
+  - Add end-of-file:
+    ```
+    > find . -name "*.py" | xargs sed -i '' -e '$a\'
 
-- Align `lib_tasks.py`:
-  ```
-  > vimdiff ~/src/{amp1,cmamp1}/tasks.py; diff_to_vimdiff.py --dir1 ~/src/amp1 --dir2 ~/src/cmamp1 --subdir helpers
-  ```
-
-- Create the integration branches:
-  ```
-  > cd amp1
-  > i integrate_create_branch --dir-basename amp1
-  > i integrate_create_branch --dir-basename sorrentum1
-  > cd cmamp1
-  > i integrate_create_branch --dir-basename cmamp1
-  ```
+  - Remove end-of-file:
+    ```
+    > find . -name -name "*.txt" | xargs perl -pi -e 'chomp if eof'
+    ```
+  - Remove empty files:
+    ```
+    > find . -type f -empty -print | grep -v .git | grep -v __init__ | grep -v ".log$" | grep -v ".txt$" | xargs git rm
+    ```
+    - TODO(gp): Add this step to `dev_scripts/clean_up_text_files.sh`
 
 - Lint both dirs:
   ```
@@ -64,34 +69,32 @@
   > FILES=$(cat files.txt)
   > i lint --only-format -f "$FILES"
   ```
+  - This should be done as a single separated PR to be reviewed separately
 
-- Remove trailing spaces:
+- Align `lib_tasks.py`:
   ```
-  > find . -name "*.py" -o -name "*.txt" -o -name "*.json" | xargs perl -pi -e 's/\s+$/\n/'
-  ```
-- Add end-of-file:
-  ```
-  > find . -name "*.py" | xargs sed -i '' -e '$a\'
-
-- Remove end-of-file:
-  ```
-  > find . -name -name "*.txt" | xargs perl -pi -e 'chomp if eof'
-  ```
-- Remove empty files:
-  ```
-  > find . -type f -empty -print | grep -v .git | grep -v __init__ | grep -v ".log$" | grep -v ".txt$" | xargs git rm
+  > vimdiff ~/src/{amp1,cmamp1}/tasks.py; diff_to_vimdiff.py --dir1 ~/src/amp1 --dir2 ~/src/cmamp1 --subdir helpers
   ```
 
 ## Integration
 
-1) Check what files were modified since the last integration in each fork:
+- Create the integration branches:
+  ```
+  > cd amp1
+  > i integrate_create_branch --dir-basename amp1
+  > i integrate_create_branch --dir-basename sorrentum1
+  > cd cmamp1
+  > i integrate_create_branch --dir-basename cmamp1
+  ```
+
+- Check what files were modified since the last integration in each fork:
   ```
   > i integrate_files --file-direction common_files
   > i integrate_files --file-direction only_files_in_src
   > i integrate_files --file-direction only_files_in_dst
   ```
 
-2) Look for directory touched on only one branch:
+- Look for directory touched on only one branch:
   ```
   > i integrate_files --file-direction common_files --mode "print_dirs"
   > i integrate_files --file-direction only_files_in_src --mode "print_dirs"
@@ -103,7 +106,7 @@
   > i integrate_diff_dirs --subdir $SUBDIR -c
   ```
 
-3) Check which change was made in each side since the last integration
+- Check which change was made in each side since the last integration
    ```
    # Find the integration point:
    > i integrate_files --file-direction common_files
@@ -115,12 +118,12 @@
    > git difftool 813c7e763 ...
    ```
 
-4) Check which files are different between the dirs:
+- Check which files are different between the dirs:
   ```
   > i integrate_diff_dirs
   ```
 
-5) Diff dir by dir
+- Diff dir by dir
   ```
   > i integrate_diff_dirs --subdir dataflow/system
   ```
@@ -130,7 +133,7 @@
   > i integrate_diff_dirs --subdir market_data -c
   ```
 
-6) Sync a dir to handle moved files
+- Sync a dir to handle moved files
 - Assume that there is a dir where files were moved
   ```
   > invoke integrate_diff_dirs
