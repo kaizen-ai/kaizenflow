@@ -26,11 +26,11 @@
 import argparse
 import logging
 
-import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.henv as henv
-import helpers.hio as hio
 import helpers.hprint as hprint
+import helpers.hio as hio
+import core.config as cconfig
 import im_v2.common.data.extract.data_qa as imvcodedq
 
 # %% [markdown]
@@ -63,9 +63,7 @@ config = cconfig.Config.from_env_var(env_var_name)
 # %%
 config = config.to_dict()
 # bid_ask_accuracy needs to be cast to int if its defined
-config["bid_ask_accuracy"] = (
-    int(config["bid_ask_accuracy"]) if config["bid_ask_accuracy"] else None
-)
+config["bid_ask_accuracy"] = int(config["bid_ask_accuracy"]) if config["bid_ask_accuracy"] else None
 # bid_ask_depth needs to be cast to int if its defined
 # config["bid_ask_depth"] = int(config["bid_ask_depth"]) if config["bid_ask_depth"] else None
 config
@@ -102,6 +100,4 @@ data_reconciliation_outcome = "SUCCESS"
 
 # %%
 # This can be read by the invoke task to find out if reconciliation was successful.
-hio.to_file(
-    "/app/ck_data_reconciliation_outcome.txt", data_reconciliation_outcome
-)
+hio.to_file("/app/ck_data_reconciliation_outcome.txt", data_reconciliation_outcome)

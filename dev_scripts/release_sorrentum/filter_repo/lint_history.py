@@ -46,15 +46,12 @@ import argparse
 import os
 import subprocess
 import tempfile
-
 try:
-    import git_filter_repo as fr
+  import git_filter_repo as fr
 except ImportError:
-    raise SystemExit(
-        "Error: Couldn't find git_filter_repo.py.  Did you forget to make a symlink to git-filter-repo named git_filter_repo.py or did you forget to put the latter in your PYTHONPATH?"
-    )
+  raise SystemExit("Error: Couldn't find git_filter_repo.py.  Did you forget to make a symlink to git-filter-repo named git_filter_repo.py or did you forget to put the latter in your PYTHONPATH?")
 
-example_text = """CALLBACK
+example_text = '''CALLBACK
 
     When you pass --relevant 'BODY', the following style of function
     will be compiled and called:
@@ -83,130 +80,100 @@ INTERNALS
     location of this temporary directory can be controlled via the
     TMPDIR environment variable as per
     https://docs.python.org/3/library/tempfile.html#tempfile.mkdtemp.
-    """
+    '''
 
-parser = argparse.ArgumentParser(
-    description="Run a program (e.g. code formatter or linter) on files in history",
-    epilog=example_text,
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-)
+parser = argparse.ArgumentParser(description='Run a program (e.g. code formatter or linter) on files in history',
+                                 epilog = example_text,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
 
-parser.add_argument(
-    "--relevant",
-    metavar="FUNCTION_BODY",
-    help=(
-        "Python code for determining whether to apply linter to a "
-        "given filename.  Implies --filenames-important.  See CALLBACK "
-        "below."
-    ),
-)
-parser.add_argument(
-    "--filenames-important",
-    action="store_true",
-    help=(
-        "By default, contents are written to a temporary file with a "
-        "random name.  If the linting program needs to know the file "
-        "basename to operate correctly (e.g. because it needs to know "
-        "the file's extension), then pass this argument"
-    ),
-)
-parser.add_argument(
-    "--refs",
-    nargs="+",
-    help=(
-        "Limit history rewriting to the specified refs. "
-        "Implies --partial of git-filter-repo (and all its "
-        "implications)."
-    ),
-)
-parser.add_argument(
-    "command",
-    nargs=argparse.REMAINDER,
-    help=("Lint command to run, other than the filename at the end"),
-)
+parser.add_argument('--relevant', metavar="FUNCTION_BODY",
+        help=("Python code for determining whether to apply linter to a "
+              "given filename.  Implies --filenames-important.  See CALLBACK "
+              "below."))
+parser.add_argument('--filenames-important', action='store_true',
+        help=("By default, contents are written to a temporary file with a "
+              "random name.  If the linting program needs to know the file "
+              "basename to operate correctly (e.g. because it needs to know "
+              "the file's extension), then pass this argument"))
+parser.add_argument('--refs', nargs='+',
+                    help=("Limit history rewriting to the specified refs. "
+                          "Implies --partial of git-filter-repo (and all its "
+                          "implications)."))
+parser.add_argument('command', nargs=argparse.REMAINDER,
+        help=("Lint command to run, other than the filename at the end"))
 lint_args = parser.parse_args()
 if not lint_args.command:
-    raise SystemExit("Error: Need to specify a lint command")
+  raise SystemExit("Error: Need to specify a lint command")
 
 tmpdir = None
 blobs_handled = {}
 cat_file_process = None
-
-
 def lint_with_real_filenames(commit, metadata):
-    for change in commit.file_changes:
-        if change.blob_id in blobs_handled:
-            change.blob_id = blobs_handled[change.blob_id]
-        elif change.type == b"D":
-            continue
-        elif not is_relevant(change.filename):
-            continue
-        else:
-            # Get the old blob contents
-            cat_file_process.stdin.write(change.blob_id + b"\n")
-            cat_file_process.stdin.flush()
-            objhash, objtype, objsize = cat_file_process.stdout.readline().split()
-            contents_plus_newline = cat_file_process.stdout.read(int(objsize) + 1)
+  for change in commit.file_changes:
+    if change.blob_id in blobs_handled:
+      change.blob_id = blobs_handled[change.blob_id]
+    elif change.type == b'D':
+      continue
+    elif not is_relevant(change.filename):
+      continue
+    else:
+      # Get the old blob contents
+      cat_file_process.stdin.write(change.blob_id + b'\n')
+      cat_file_process.stdin.flush()
+      objhash, objtype, objsize = cat_file_process.stdout.readline().split()
+      contents_plus_newline = cat_file_process.stdout.read(int(objsize)+1)
 
-            # Write it out to a file with the same basename
-            filename = os.path.join(tmpdir, os.path.basename(change.filename))
-            with open(filename, "wb") as f:
-                f.write(contents_plus_newline[:-1])
+      # Write it out to a file with the same basename
+      filename = os.path.join(tmpdir, os.path.basename(change.filename))
+      with open(filename, "wb") as f:
+        f.write(contents_plus_newline[:-1])
 
-            # Lint the file
-            subprocess.check_call(lint_args.command + [filename.decode("utf-8")])
+      # Lint the file
+      subprocess.check_call(lint_args.command + [filename.decode('utf-8')])
 
-            # Get the new contents
-            with open(filename, "rb") as f:
-                blob = fr.Blob(f.read())
+      # Get the new contents
+      with open(filename, "rb") as f:
+        blob = fr.Blob(f.read())
 
-            # Insert the new file into the filter's stream, and remove the tempfile
-            filter.insert(blob)
-            os.remove(filename)
+      # Insert the new file into the filter's stream, and remove the tempfile
+      filter.insert(blob)
+      os.remove(filename)
 
-            # Record our handling of the blob and use it for this change
-            blobs_handled[change.blob_id] = blob.id
-            change.blob_id = blob.id
-
+      # Record our handling of the blob and use it for this change
+      blobs_handled[change.blob_id] = blob.id
+      change.blob_id = blob.id
 
 def lint_non_binary_blobs(blob, metadata):
-    if not b"\0" in blob.data[0:8192]:
-        filename = ".git/info/tmpfile"
-        with open(filename, "wb") as f:
-            f.write(blob.data)
-        subprocess.check_call(lint_args.command + [filename])
-        with open(filename, "rb") as f:
-            blob.data = f.read()
-        os.remove(filename)
-
+  if not b"\0" in blob.data[0:8192]:
+    filename = '.git/info/tmpfile'
+    with open(filename, "wb") as f:
+      f.write(blob.data)
+    subprocess.check_call(lint_args.command + [filename])
+    with open(filename, "rb") as f:
+      blob.data = f.read()
+    os.remove(filename)
 
 if lint_args.filenames_important and not lint_args.relevant:
-    lint_args.relevant = "return True"
+  lint_args.relevant = 'return True'
 if lint_args.relevant:
-    body = lint_args.relevant
-    exec(
-        "def is_relevant(filename):\n  " + "\n  ".join(body.splitlines()),
-        globals(),
-    )
-    lint_args.filenames_important = True
+  body = lint_args.relevant
+  exec('def is_relevant(filename):\n  '+'\n  '.join(body.splitlines()),
+       globals())
+  lint_args.filenames_important = True
 input_args = []
 if lint_args.refs:
-    input_args = [
-        "--args",
-    ] + lint_args.refs
-args = fr.FilteringOptions.parse_args(input_args, error_on_empty=False)
+  input_args = ["--args",] + lint_args.refs
+args = fr.FilteringOptions.parse_args(input_args, error_on_empty = False)
 args.force = True
 if lint_args.filenames_important:
-    tmpdir = tempfile.mkdtemp().encode()
-    cat_file_process = subprocess.Popen(
-        ["git", "cat-file", "--batch"],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-    )
-    filter = fr.RepoFilter(args, commit_callback=lint_with_real_filenames)
-    filter.run()
-    cat_file_process.stdin.close()
-    cat_file_process.wait()
+  tmpdir = tempfile.mkdtemp().encode()
+  cat_file_process = subprocess.Popen(['git', 'cat-file', '--batch'],
+                                      stdin = subprocess.PIPE,
+                                      stdout = subprocess.PIPE)
+  filter = fr.RepoFilter(args, commit_callback=lint_with_real_filenames)
+  filter.run()
+  cat_file_process.stdin.close()
+  cat_file_process.wait()
 else:
-    filter = fr.RepoFilter(args, blob_callback=lint_non_binary_blobs)
-    filter.run()
+  filter = fr.RepoFilter(args, blob_callback=lint_non_binary_blobs)
+  filter.run()
