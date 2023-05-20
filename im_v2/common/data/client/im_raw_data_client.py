@@ -11,11 +11,11 @@ import logging
 import pandas as pd
 
 import data_schema.dataset_schema_utils as dsdascut
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
 import helpers.hsql_implementation as hsqlimpl
-import helpers.hdatetime as hdateti
 import im_v2.common.db.db_utils as imvcddbut
 
 _LOG = logging.getLogger(__name__)
@@ -80,7 +80,6 @@ class RawDataReader:
         head = hsql.execute_query_to_df(connection, query_head)
         return head
 
-
     # TODO(Juraj): this is make-do solution, it needs consolidation with the rest of the code
     #  + adding docstrings.
     def load_parquet(
@@ -94,16 +93,12 @@ class RawDataReader:
         start_ts = hdateti.convert_timestamp_to_unix_epoch(
             start_ts, unit=epoch_unit
         )
-        end_ts = hdateti.convert_timestamp_to_unix_epoch(
-            end_ts, unit=epoch_unit
-        )
+        end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts, unit=epoch_unit)
         s3_path = dsdascut.build_s3_dataset_path_from_args(
             s3_base_path, self.args
         )
         filters = [("timestamp", ">=", start_ts), ("timestamp", "<=", end_ts)]
-        data = hparque.from_parquet(
-            s3_path, filters=filters, aws_profile="ck"
-        )
+        data = hparque.from_parquet(s3_path, filters=filters, aws_profile="ck")
         return data
 
     def _get_db_table_name(self) -> str:

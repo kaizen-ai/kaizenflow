@@ -7,21 +7,22 @@
 
 # This DAG's configuration deploys tasks to AWS Fargate to offload the EC2s
 # mainly utilized for rt download
+import copy
 import datetime
+import os
+from itertools import product
+
 import airflow
 from airflow.contrib.operators.ecs_operator import ECSOperator
-from airflow.operators.dummy_operator import DummyOperator
 from airflow.models import Variable
-from itertools import product
-import copy
-import os
+from airflow.operators.dummy_operator import DummyOperator
 
 _FILENAME = os.path.basename(__file__)
 
 # This variable will be propagated throughout DAG definition as a prefix to
 # names of Airflow configuration variables, allow to switch from test to preprod/prod
 # in one line (in best case scenario).
-#_STAGE = _FILENAME.split(".")[0]
+# _STAGE = _FILENAME.split(".")[0]
 _STAGE = _FILENAME.split(".")[0]
 assert _STAGE in ["prod", "preprod", "test"]
 
@@ -43,29 +44,32 @@ _RECONCILIATION_JOBS = [
         "contract_type": "futures",
         "db_table_base_name": "ccxt_ohlcv_futures",
         "s3_dataset_signature": "periodic_daily.airflow.downloaded_1min.parquet.ohlcv.futures.v7.ccxt.binance.v1_0_0",
-        "add_invoke_params": []
+        "add_invoke_params": [],
     },
     # Spot real time downloaded has been paused at the moment.
-    #{
+    # {
     #    "data_type": "ohlcv",
     #    "contract_type": "spot",
     #    "db_table_base_name": "ccxt_ohlcv",
     #    "s3_dataset_signature": "periodic_daily.airflow.downloaded_1min.parquet.ohlcv.spot.v7.ccxt.binance.v1_0_0",
     #    "add_invoke_params": []
-    #},
+    # },
     {
         "data_type": "bid_ask",
         "contract_type": "futures",
         "db_table_base_name": "ccxt_bid_ask_futures_resampled_1min",
-        "s3_dataset_signature":  "periodic_daily.airflow.resampled_1min.parquet.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0",
-        "add_invoke_params": ["--bid-ask-accuracy {{ var.value.bid_ask_qa_acc_thresh }}"]
-    }
+        "s3_dataset_signature": "periodic_daily.airflow.resampled_1min.parquet.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0",
+        "add_invoke_params": [
+            "--bid-ask-accuracy {{ var.value.bid_ask_qa_acc_thresh }}"
+        ],
+    },
 ]
 # Shared location to store the reconciliaiton notebook into
 _QA_NB_DST_DIR = os.path.join("{{ var.value.efs_mount }}", _STAGE, "data_qa")
-_DAG_DESCRIPTION = "Daily data QA. Run QA notebook and publish results" \
-                    + " to a shared EFS."
-_SCHEDULE = Variable.get(f'{_DAG_ID}_schedule')
+_DAG_DESCRIPTION = (
+    "Daily data QA. Run QA notebook and publish results" + " to a shared EFS."
+)
+_SCHEDULE = Variable.get(f"{_DAG_ID}_schedule")
 
 # Used for container overrides inside DAG task definition.
 # If this is a test DAG don't forget to add your username to container suffix.
@@ -76,7 +80,7 @@ _CONTAINER_SUFFIX = f"-{_STAGE}" if _STAGE in ["preprod", "test"] else ""
 _CONTAINER_SUFFIX += f"-{_USERNAME}" if _STAGE == "test" else ""
 _CONTAINER_NAME = f"cmamp{_CONTAINER_SUFFIX}"
 
-ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
+ecs_cluster = Variable.get(f"{_STAGE}_ecs_cluster")
 # The naming convention is set such that this value is then reused
 # in log groups, stream prefixes and container names to minimize
 # convolution and maximize simplicity.
@@ -93,7 +97,7 @@ s3_bucket = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}"
 # Pass default parameters for the DAG.
 default_args = {
     "retries": 0,
-    "email": [Variable.get(f'{_STAGE}_notification_email')],
+    "email": [Variable.get(f"{_STAGE}_notification_email")],
     "email_on_failure": True if _STAGE in ["prod", "preprod"] else False,
     "email_on_retry": False,
     "owner": "airflow",
@@ -122,15 +126,15 @@ invoke_cmd = [
     f"--base-dst-dir '{_QA_NB_DST_DIR}'",
 ]
 
-start_comparison = DummyOperator(task_id='start_comparison', dag=dag)
-end_comparison = DummyOperator(task_id='end_comparison', dag=dag)
+start_comparison = DummyOperator(task_id="start_comparison", dag=dag)
+end_comparison = DummyOperator(task_id="end_comparison", dag=dag)
 
 for job in _RECONCILIATION_JOBS:
 
     db_table = job["db_table_base_name"]
     db_table += f"_{_STAGE}" if _STAGE in ["test", "preprod"] else ""
 
-    #TODO(Juraj): Make this code more readable.
+    # TODO(Juraj): Make this code more readable.
     # Do a deepcopy of the bash cmd list so we can reformat params on each iteration.
     curr_invoke_cmd = copy.deepcopy(invoke_cmd)
     curr_invoke_cmd[4] = curr_invoke_cmd[4].format(db_table)
@@ -165,12 +169,12 @@ for job in _RECONCILIATION_JOBS:
                 }
             ],
             "cpu": "512",
-            "memory": "2048"
+            "memory": "2048",
         },
         awslogs_group=ecs_awslogs_group,
         awslogs_stream_prefix=ecs_awslogs_stream_prefix,
         execution_timeout=datetime.timedelta(minutes=15),
-        **kwargs
+        **kwargs,
     )
 
     start_comparison >> comparing_task >> end_comparison

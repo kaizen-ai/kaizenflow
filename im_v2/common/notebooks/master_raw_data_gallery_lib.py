@@ -3,7 +3,7 @@ Helper functions for im_v2/common/notebooks/Master_raw_data_gallery.ipynb.
 
 Import as:
 
-from im_v2.common.notebooks.master_raw_data_gallery_lib import *
+import im_v2.common.notebooks.master_raw_data_gallery_lib as imvcnmrdgl
 """
 import logging
 from typing import Optional

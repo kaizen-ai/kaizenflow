@@ -8,13 +8,14 @@ import sorrentum_sandbox.examples.ml_projects.Issue25_Team6_Implement_sandbox_fo
 
 import logging
 import os
+import time
+from typing import Any, Dict, List
+
 import pandas as pd
 import requests
-from typing import Any, Dict, List
 from dotenv import load_dotenv
-import time
 
-import sorrentum_sandbox.common.download as ssandown
+import sorrentum_sandbox.common.download as ssacodow
 
 _LOG = logging.getLogger(__name__)
 
@@ -25,19 +26,19 @@ _LOG = logging.getLogger(__name__)
 
 
 # function for bitquery query
-def run_bitquery_query(start_time: str, end_time: str = None) -> ssandown.RawData:
+def run_bitquery_query(start_time: str, end_time: str = None) -> ssacodow.RawData:
     # Query for the API
     limit = 25000
     offset = 0
 
-    time_format = '%Y-%m-%d %H:%M:%S'
+    time_format = "%Y-%m-%d %H:%M:%S"
     # Alter query depending on if end_time is present
     if end_time == None:
         query_alter_1 = "since"
         query_alter_2 = "%s" % start_time
     else:
         query_alter_1 = "between"
-        query_alter_2 = "[%s, %s]" % (start_time,end_time)
+        query_alter_2 = "[%s, %s]" % (start_time, end_time)
 
     print(start_time)
     print(end_time)
@@ -101,11 +102,9 @@ def run_bitquery_query(start_time: str, end_time: str = None) -> ssandown.RawDat
     # API endpoint and header
     # Get API Key
     load_dotenv()
-    api_key = os.environ.get('API_KEY')
+    api_key = os.environ.get("API_KEY")
     endpoint = "https://graphql.bitquery.io/"
     headers = {"X-API-KEY": api_key}
-
-
 
     # Define an empty list to store the results
     results = []
@@ -116,17 +115,25 @@ def run_bitquery_query(start_time: str, end_time: str = None) -> ssandown.RawDat
     # Stream in data until there are no more results
     while True:
         # Construct the API query with the current offset
-        fractured_query = query % (limit, offset,query_alter_1, query_alter_2,time_format)
+        fractured_query = query % (
+            limit,
+            offset,
+            query_alter_1,
+            query_alter_2,
+            time_format,
+        )
         print(fractured_query)
         # Send the API request and get the response
-        response = requests.post(endpoint, json={'query': fractured_query}, headers=headers)
+        response = requests.post(
+            endpoint, json={"query": fractured_query}, headers=headers
+        )
 
         # Check if the API request was successful
         if response.status_code == 200:
             # Parse the response JSON
             response_json = response.json()
             # Extract the data from the response JSON
-            data = response_json['data']['ethereum']['dexTrades']
+            data = response_json["data"]["ethereum"]["dexTrades"]
 
             # Check if there are no more results
             if len(data) == 0:
@@ -141,17 +148,18 @@ def run_bitquery_query(start_time: str, end_time: str = None) -> ssandown.RawDat
             # If the API request failed, raise an exception and exit the loop
             raise Exception(
                 "Query failed and return code is {}.      {}".format(
-                response.status_code, query
-                    )
+                    response.status_code, query
                 )
+            )
 
     # Normalize and convert the results list into a Pandas DataFrame
     df = json_to_df(results)
 
     # lowercase column names
-    df = df.rename(str.lower, axis='columns')
+    df = df.rename(str.lower, axis="columns")
     _LOG.info(f"Downloaded data: \n\t {df.head()}")
-    return ssandown.RawData(df)
+    return ssacodow.RawData(df)
+
 
 # Function for converting json to a dataframe
 def json_to_df(data: List[Dict[Any, Any]]) -> pd.DataFrame:

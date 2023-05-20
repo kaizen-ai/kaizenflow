@@ -113,7 +113,9 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         :param data: data to persists into DB
         :param db_table: table to save data to
         """
-        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
+        hdbg.dassert_isinstance(
+            data.get_data(), pd.DataFrame, "Only DataFrame is supported."
+        )
         # Transform dataframe into list of tuples.
         df = data.get_data()
         values = [tuple(v) for v in df.to_numpy()]

@@ -1,14 +1,20 @@
+"""
+Import as:
+
+import sorrentum_sandbox.examples.ml_projects.Issue28_Team9_Implement_sandbox_for_Kaiko.db_kaiko as ssempitisfkdk
+"""
+
 from typing import Any, Optional
 
+import common.client as sinsacli
+import common.download as sinsadow
+import common.save as sinsasav
 import pandas as pd
 import psycopg2 as psycop
 import psycopg2.extras as extras
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import common.client as sinsacli
-import common.download as sinsadow
-import common.save as sinsasav
 
 
 def get_ohlcv_spot_downloaded_1min_create_table_query() -> str:
@@ -99,7 +105,9 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         :param data: data to persists into DB
         :param db_table: table to save data to
         """
-        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
+        hdbg.dassert_isinstance(
+            data.get_data(), pd.DataFrame, "Only DataFrame is supported."
+        )
         # Transform dataframe into list of tuples.
         df = data.get_data()
         values = [tuple(v) for v in df.to_numpy()]
@@ -109,7 +117,6 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         cursor = self.db_conn.cursor()
         extras.execute_values(cursor, query, values)
         self.db_conn.commit()
-
 
     @staticmethod
     def _create_insert_query(df: pd.DataFrame, db_table: str) -> str:
@@ -130,7 +137,6 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
 
 
 class PostgresClient(sinsacli.DataClient):
-
     def __init__(self, db_connection: str) -> None:
 
         self.db_conn = db_connection

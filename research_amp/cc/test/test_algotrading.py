@@ -96,7 +96,7 @@ class TestAlgotrading1(hunitest.TestCase):
         df = self.get_test_dataframe()
         # Drop irrelevant columns.
         df = df.drop(["limit_buy_price", "limit_sell_price"], axis=1)
-        #.
+        # .
         mid_col_name = "mid"
         debug_mode = False
         abs_spread = 0.001

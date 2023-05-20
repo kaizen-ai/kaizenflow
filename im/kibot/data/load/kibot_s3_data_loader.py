@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.kibot.data.load.kibot_s3_data_loader as ikdlksdlo
+import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
 """
 
 import logging

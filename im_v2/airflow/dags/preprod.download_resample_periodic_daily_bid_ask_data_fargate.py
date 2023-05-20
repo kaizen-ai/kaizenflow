@@ -1,14 +1,21 @@
+"""
+Import as:
+
+import im_v2.airflow.dags.preprod.download_resample_periodic_daily_bid_ask_data_fargate as imvadpdrpdbadf
+"""
+
 # This is a utility DAG to conduct QA on real time data download
 # DAG task downloads data for last N minutes in one batch
 
+import copy
 import datetime
+import os
+from itertools import product
+
 import airflow
 from airflow.contrib.operators.ecs_operator import ECSOperator
-from airflow.operators.dummy_operator import DummyOperator
 from airflow.models import Variable
-from itertools import product
-import copy
-import os
+from airflow.operators.dummy_operator import DummyOperator
 
 _FILENAME = os.path.basename(__file__)
 
@@ -30,8 +37,8 @@ assert _LAUNCH_TYPE in ["ec2", "fargate"]
 _DAG_ID = _FILENAME.rsplit(".", 1)[0]
 _EXCHANGES = ["binance"]
 _VENDORS = ["crypto_chassis"]
-_UNIVERSES = { "crypto_chassis": "v3"}
-#_CONTRACTS = ["spot", "futures"]
+_UNIVERSES = {"crypto_chassis": "v3"}
+# _CONTRACTS = ["spot", "futures"]
 _CONTRACTS = ["futures"]
 _DATA_TYPES = ["bid_ask"]
 # These values are changed dynamically based on DAG purpose and nature
@@ -43,9 +50,11 @@ _DATA_FORMAT = "parquet"
 _DOWNLOADING_ENTITY = "airflow"
 _DATASET_VERSION = "v1_0_0"
 _BID_ASK_DEPTH = "{{ var.value.historical_download_bid_ask_depth }}"
-_DAG_DESCRIPTION = f"Daily {_DATA_TYPES} data download and resampling, contracts:" \
-                + f"{_CONTRACTS}, using {_VENDORS} from {_EXCHANGES}."
-_SCHEDULE = Variable.get(f'{_DAG_ID}_schedule')
+_DAG_DESCRIPTION = (
+    f"Daily {_DATA_TYPES} data download and resampling, contracts:"
+    + f"{_CONTRACTS}, using {_VENDORS} from {_EXCHANGES}."
+)
+_SCHEDULE = Variable.get(f"{_DAG_ID}_schedule")
 
 # Used for container overrides inside DAG task definition.
 # If this is a test DAG don't forget to add your username to container suffix.
@@ -56,7 +65,7 @@ _CONTAINER_SUFFIX = f"-{_STAGE}" if _STAGE in ["preprod", "test"] else ""
 _CONTAINER_SUFFIX += f"-{_USERNAME}" if _STAGE == "test" else ""
 _CONTAINER_NAME = f"cmamp{_CONTAINER_SUFFIX}"
 
-ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
+ecs_cluster = Variable.get(f"{_STAGE}_ecs_cluster")
 # The naming convention is set such that this value is then reused
 # in log groups, stream prefixes and container names to minimize
 # convolution and maximize simplicity.
@@ -73,7 +82,7 @@ s3_bucket_path = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}"
 # Pass default parameters for the DAG.
 default_args = {
     "retries": 0,
-    "email": [Variable.get(f'{_STAGE}_notification_email')],
+    "email": [Variable.get(f"{_STAGE}_notification_email")],
     "email_on_failure": True,
     "email_on_retry": False,
     "owner": "airflow",
@@ -93,23 +102,23 @@ dag = airflow.DAG(
 download_command = [
     "/app/amp/im_v2/common/data/extract/download_bulk.py",
     # Calculate timestamp to download data from the entire past day
-     "--end_timestamp '{{ data_interval_end.replace(hour=0, minute=0, second=0) - macros.timedelta(seconds=1) }}'",
-     "--start_timestamp '{{ data_interval_start.replace(hour=0, minute=0, second=0) }}'",
-     "--exchange_id '{}'",
-     "--universe '{}'",
-     "--data_type '{}'",
-     "--vendor '{}'",
-     "--contract_type '{}'",
-     "--aws_profile 'ck'",
-     # The command needs to be executed manually first because --incremental
-     # assumes appending to existing folder.
-     "--incremental",
-     f"--bid_ask_depth {_BID_ASK_DEPTH}",
-     f"--s3_path '{s3_bucket_path}'",
-     f"--download_mode '{_DOWNLOAD_MODE}'",
-     f"--downloading_entity '{_DOWNLOADING_ENTITY}'",
-     f"--action_tag '{_ACTION_TAG}'",
-     f"--data_format '{_DATA_FORMAT}'",
+    "--end_timestamp '{{ data_interval_end.replace(hour=0, minute=0, second=0) - macros.timedelta(seconds=1) }}'",
+    "--start_timestamp '{{ data_interval_start.replace(hour=0, minute=0, second=0) }}'",
+    "--exchange_id '{}'",
+    "--universe '{}'",
+    "--data_type '{}'",
+    "--vendor '{}'",
+    "--contract_type '{}'",
+    "--aws_profile 'ck'",
+    # The command needs to be executed manually first because --incremental
+    # assumes appending to existing folder.
+    "--incremental",
+    f"--bid_ask_depth {_BID_ASK_DEPTH}",
+    f"--s3_path '{s3_bucket_path}'",
+    f"--download_mode '{_DOWNLOAD_MODE}'",
+    f"--downloading_entity '{_DOWNLOADING_ENTITY}'",
+    f"--action_tag '{_ACTION_TAG}'",
+    f"--data_format '{_DATA_FORMAT}'",
 ]
 
 resample_command = [
@@ -117,15 +126,17 @@ resample_command = [
     "--end_timestamp '{{ data_interval_end.replace(hour=0, minute=0, second=0) - macros.timedelta(seconds=1) }}'",
     "--start_timestamp '{{ data_interval_start.replace(hour=0, minute=0, second=0) }}'",
     "--src_dir '{}'",
-    "--dst_dir '{}'"
+    "--dst_dir '{}'",
 ]
 
-start_task = DummyOperator(task_id='start_dag', dag=dag)
-end_download = DummyOperator(task_id='end_dag', dag=dag)
+start_task = DummyOperator(task_id="start_dag", dag=dag)
+end_download = DummyOperator(task_id="end_dag", dag=dag)
 
-for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONTRACTS, _DATA_TYPES):
+for vendor, exchange, contract, data_type in product(
+    _VENDORS, _EXCHANGES, _CONTRACTS, _DATA_TYPES
+):
 
-    #TODO(Juraj): Make this code more readable.
+    # TODO(Juraj): Make this code more readable.
     # Do a deepcopy of the bash command list so we can reformat params on each iteration.
     curr_bash_command = copy.deepcopy(download_command)
     curr_bash_command[3] = curr_bash_command[3].format(exchange)
@@ -157,15 +168,15 @@ for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONT
                 }
             ],
             "cpu": "1024",
-            "memory": "4096"
+            "memory": "4096",
         },
         awslogs_group=ecs_awslogs_group,
         awslogs_stream_prefix=ecs_awslogs_stream_prefix,
         execution_timeout=datetime.timedelta(minutes=30),
-        **kwargs
+        **kwargs,
     )
 
-    #TODO(Juraj): Make this code more readable.
+    # TODO(Juraj): Make this code more readable.
     # Do a deepcopy of the bash command list so we can reformat params on each iteration.
     curr_bash_command = copy.deepcopy(resample_command)
     curr_bash_command[-2] = curr_bash_command[-2].format(
@@ -182,7 +193,7 @@ for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONT
             _UNIVERSES[vendor],
             vendor,
             exchange,
-            _DATASET_VERSION
+            _DATASET_VERSION,
         )
     )
     curr_bash_command[-1] = curr_bash_command[-1].format(
@@ -199,7 +210,7 @@ for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONT
             _UNIVERSES[vendor],
             vendor,
             exchange,
-            _DATASET_VERSION
+            _DATASET_VERSION,
         )
     )
 
@@ -218,12 +229,12 @@ for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONT
                 }
             ],
             "cpu": "1024",
-            "memory": "4096"
+            "memory": "4096",
         },
         awslogs_group=ecs_awslogs_group,
         awslogs_stream_prefix=ecs_awslogs_stream_prefix,
         execution_timeout=datetime.timedelta(minutes=30),
-        **kwargs
+        **kwargs,
     )
 
     start_task >> downloading_task >> resampling_task >> end_download

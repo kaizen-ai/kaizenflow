@@ -16,7 +16,7 @@ import tqdm
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import sorrentum_sandbox.common.download as ssandown
+import sorrentum_sandbox.common.download as ssacodow
 
 _LOG = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class OhlcvRestApiDownloader(ssandown.DataDownloader):
+class OhlcvRestApiDownloader(ssacodow.DataDownloader):
     """
     Class for downloading OHLCV data using REST API provided by Binance.
     """
@@ -50,7 +50,7 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
 
     def download(
         self, start_timestamp: pd.Timestamp, end_timestamp: pd.Timestamp
-    ) -> ssandown.RawData:
+    ) -> ssacodow.RawData:
         # Convert and check timestamps.
         hdateti.dassert_has_tz(start_timestamp)
         start_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
@@ -115,7 +115,7 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
         #  end_timestamp, so we need to filter out.
         df = df[df["timestamp"] <= end_timestamp_as_unix]
         _LOG.info(f"Downloaded data: \n\t {df.head()}")
-        return ssandown.RawData(df)
+        return ssacodow.RawData(df)
 
     @staticmethod
     def _process_symbol(symbol: str) -> str:

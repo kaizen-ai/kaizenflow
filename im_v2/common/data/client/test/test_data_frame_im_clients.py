@@ -2,8 +2,8 @@ from typing import List
 
 import pandas as pd
 
-import im_v2.common.data.client.data_frame_im_clients_example as imvcdcdfimce
 import im_v2.common.data.client as icdc
+import im_v2.common.data.client.data_frame_im_clients_example as imvcdcdfimce
 
 # #############################################################################
 # TestDataFrameImClient1

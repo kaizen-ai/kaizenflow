@@ -14,16 +14,16 @@ from typing import Any
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import helpers.hparser as hparser
 import helpers.hio as hio
-import sorrentum_sandbox.common.download as sinsadow
+import helpers.hparser as hparser
+import sorrentum_sandbox.common.download as ssacodow
+import sorrentum_sandbox.common.save as ssacosav
 import sorrentum_sandbox.projects.Issue22_Team3_Implement_sandbox_for_Coinmarketcap.download_cmc as sisebido
-import sorrentum_sandbox.common.save as sinsasav
 
 _LOG = logging.getLogger(__name__)
 
 
-class CsvDataFrameSaver(sinsasav.DataSaver):
+class CsvDataFrameSaver(ssacosav.DataSaver):
     """
     Class for saving pandas DataFrame as CSV to a local filesystem at desired
     location.
@@ -37,13 +37,15 @@ class CsvDataFrameSaver(sinsasav.DataSaver):
         """
         self.target_dir = target_dir
 
-    def save(self, data: sinsadow.RawData, **kwargs: Any) -> None:
+    def save(self, data: ssacodow.RawData, **kwargs: Any) -> None:
         """
         Save RawData storing a DataFrame to CSV.
 
         :param data: data to persists into CSV
         """
-        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
+        hdbg.dassert_isinstance(
+            data.get_data(), pd.DataFrame, "Only DataFrame is supported."
+        )
         signature = (
             "bulk.manual.download_1min.csv.ohlcv.spot.v7.CoinMarketCap.v1_0_0"
         )
@@ -52,7 +54,9 @@ class CsvDataFrameSaver(sinsasav.DataSaver):
         target_path = os.path.join(self.target_dir, signature)
         data.get_data().to_csv(target_path, index=False)
 
+
 # #############################################################################
+
 
 def _add_download_args(
     parser: argparse.ArgumentParser,

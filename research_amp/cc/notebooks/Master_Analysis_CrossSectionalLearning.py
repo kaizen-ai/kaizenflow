@@ -90,7 +90,7 @@ def get_CrossSectionalLearning_config() -> cconconf.Config:
                     "full_symbol",
                 ],
                 "resampling_rule": "5T",
-                "rets_type": "pct_change", # or "log_rets"
+                "rets_type": "pct_change",  # or "log_rets"
             },
         },
         "analysis": {

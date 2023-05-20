@@ -10,17 +10,15 @@ import logging
 import time
 from typing import Generator, Tuple
 
+import common_download as ssandown
 import pandas as pd
 import requests
 import tqdm
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import common_download as ssandown
 
 _LOG = logging.getLogger(__name__)
-
-
 
 
 class OhlcvRestApiDownloader(ssandown.DataDownloader):
@@ -56,14 +54,14 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
         )
 
         hdbg.dassert_eq(response.status_code, 200)
-        data=pd.json_normalize(response.json())
-        #Convert data into dataframe
-        timestamp=list()
-        value=list()
-        for i in data['values'].iloc[0]:
-            timestamp.append(i['x'])
-            value.append(i['y'])
-        df=pd.DataFrame(zip(timestamp,value),columns =['Timestamp', 'Values'])
+        data = pd.json_normalize(response.json())
+        # Convert data into dataframe
+        timestamp = list()
+        value = list()
+        for i in data["values"].iloc[0]:
+            timestamp.append(i["x"])
+            value.append(i["y"])
+        df = pd.DataFrame(zip(timestamp, value), columns=["Timestamp", "Values"])
 
         dfs.append(df)
         # Delay for throttling in seconds.
@@ -85,7 +83,6 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
         """
         end_timestamp = start_timestamp + time_span
         return (
-            f"{api}/{chart_Name}?timespan={time_span}&" + \
-            f"start={start_timestamp}&format={format}"
-
+            f"{api}/{chart_Name}?timespan={time_span}&"
+            + f"start={start_timestamp}&format={format}"
         )

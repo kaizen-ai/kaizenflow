@@ -179,6 +179,7 @@ def get_currency_pair_create_table_query() -> str:
             """
     return query
 
+
 # TODO(Juraj): This is currently not important for the local
 #  stage of the DB but it helps to track the desired state of
 #  the DB until we find a suitable solution to #CmTask3146.

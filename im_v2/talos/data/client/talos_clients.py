@@ -197,7 +197,9 @@ class TalosSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         This mode is required when loading data to use inside a model.
         """
         vendor = "talos"
-        super().__init__(vendor, db_connection, table_name, resample_1min=resample_1min)
+        super().__init__(
+            vendor, db_connection, table_name, resample_1min=resample_1min
+        )
         self._mode = mode
 
     @staticmethod

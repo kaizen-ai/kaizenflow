@@ -7,7 +7,7 @@ Create Date: 2022-11-14 15:04:45.509703+00:00
 
 Import as:
 
-import alembic.versions.411c7363a33d_init as ave41ini
+import ck_alembic.versions.411c7363a33d_init as cave41in
 """
 import os
 

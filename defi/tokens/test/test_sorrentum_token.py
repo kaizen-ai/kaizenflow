@@ -4,7 +4,9 @@ import pytest
 
 @pytest.fixture(scope="module")
 def token(SorrentumToken, accounts):
-    return SorrentumToken.deploy("Sorrentum", "SORR", 100, 1000, {"from": accounts[0]})
+    return SorrentumToken.deploy(
+        "Sorrentum", "SORR", 100, 1000, {"from": accounts[0]}
+    )
 
 
 @pytest.fixture(autouse=True)
@@ -36,7 +38,7 @@ def test_mint_more(accounts, token):
     # Maximum supply is 1000, current supply is 100, so 900 tokens is a maximum we can mint.
     token.mint(accounts[0], 900, {"from": accounts[0]})
     # Check whether the new portion of tokes was minted.
-    assert token.balanceOf(accounts[0]) == balance + 900*10**18
+    assert token.balanceOf(accounts[0]) == balance + 900 * 10**18
 
 
 def test_mint_more_max_supply_error(accounts, token):

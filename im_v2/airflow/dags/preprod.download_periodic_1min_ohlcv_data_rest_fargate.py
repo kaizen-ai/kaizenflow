@@ -1,15 +1,22 @@
+"""
+Import as:
+
+import im_v2.airflow.dags.preprod.download_periodic_1min_ohlcv_data_rest_fargate as imvadpdp1odrf
+"""
+
 # This DAG is used to download realtime data to the IM database
 #  via REST API.
 
+
+import copy
+import datetime
+import os
+from itertools import product
 
 import airflow
 from airflow.contrib.operators.ecs_operator import ECSOperator
 from airflow.models import Variable
 from airflow.operators.dummy_operator import DummyOperator
-import copy
-import datetime
-from itertools import product
-import os
 
 _FILENAME = os.path.basename(__file__)
 
@@ -32,9 +39,9 @@ _DAG_ID = _FILENAME.rsplit(".", 1)[0]
 _EXCHANGES = ["binance"]
 _VENDORS = ["ccxt"]
 _UNIVERSES = {"ccxt": "v7"}
-#_CONTRACTS = ["spot", "futures"]
+# _CONTRACTS = ["spot", "futures"]
 _CONTRACTS = ["futures"]
-#_DATA_TYPES = ["ohlcv", "bid_ask"]
+# _DATA_TYPES = ["ohlcv", "bid_ask"]
 _DATA_TYPES = ["ohlcv"]
 # How often should a downloader within a single container run.
 _DOWNLOAD_INTERVAL = {"ohlcv": 1}
@@ -51,10 +58,12 @@ _ACTION_TAG = "downloaded_1min"
 _DATA_FORMAT = "postgres"
 # The value is implicit since this is an Airflow DAG.
 _DOWNLOADING_ENTITY = "airflow"
-_DAG_DESCRIPTION = f"Realtime {_DATA_TYPES} data download, contracts:" \
-                + f"{_CONTRACTS}, using {_VENDORS} from {_EXCHANGES}."
+_DAG_DESCRIPTION = (
+    f"Realtime {_DATA_TYPES} data download, contracts:"
+    + f"{_CONTRACTS}, using {_VENDORS} from {_EXCHANGES}."
+)
 # Specify when/how often to execute the DAG.
-_SCHEDULE = Variable.get(f'{_DAG_ID}_schedule')
+_SCHEDULE = Variable.get(f"{_DAG_ID}_schedule")
 
 # Used for container overrides inside DAG task definition.
 # If this is a test DAG don't forget to add your username to container suffix.
@@ -69,7 +78,7 @@ _CONTAINER_NAME = f"cmamp{_CONTAINER_SUFFIX}"
 # but production is ccxt_ohlcv.
 _TABLE_SUFFIX = f"_{_STAGE}" if _STAGE in ["test", "preprod"] else ""
 
-ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
+ecs_cluster = Variable.get(f"{_STAGE}_ecs_cluster")
 # The naming convention is set such that this value is then reused
 # in log groups, stream prefixes and container names to minimize
 # convolution and maximize simplicity.
@@ -85,7 +94,7 @@ ecs_awslogs_stream_prefix = f"ecs/{ecs_task_definition}"
 # Pass default parameters for the DAG.
 default_args = {
     "retries": 0,
-    "email": [Variable.get(f'{_STAGE}_notification_email')],
+    "email": [Variable.get(f"{_STAGE}_notification_email")],
     "email_on_failure": True if _STAGE == ["prod", "preprod"] else False,
     "owner": "airflow",
 }
@@ -130,10 +139,12 @@ start_task = DummyOperator(task_id="start", dag=dag)
 end_task = DummyOperator(task_id="end", dag=dag)
 
 
-for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONTRACTS, _DATA_TYPES):
+for vendor, exchange, contract, data_type in product(
+    _VENDORS, _EXCHANGES, _CONTRACTS, _DATA_TYPES
+):
 
     table_name = f"{vendor}_{data_type}"
-    #TODO(Juraj): CmTask2804.
+    # TODO(Juraj): CmTask2804.
     if contract == "futures":
         table_name += "_futures"
     table_name += _TABLE_SUFFIX
@@ -146,7 +157,9 @@ for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONT
     curr_bash_command[3] = curr_bash_command[3].format(table_name)
     curr_bash_command[4] = curr_bash_command[4].format(data_type)
     curr_bash_command[5] = curr_bash_command[5].format(contract)
-    curr_bash_command[6] = curr_bash_command[6].format(_DOWNLOAD_INTERVAL[data_type])
+    curr_bash_command[6] = curr_bash_command[6].format(
+        _DOWNLOAD_INTERVAL[data_type]
+    )
     curr_bash_command[7] = curr_bash_command[7].format(vendor)
 
     kwargs = {}
@@ -175,8 +188,10 @@ for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONT
         awslogs_group=ecs_awslogs_group,
         awslogs_stream_prefix=ecs_awslogs_stream_prefix,
         # just as a small backup mechanism.
-        execution_timeout=datetime.timedelta(minutes=_RUN_FOR + (2 * _DAG_STANDBY)),
-        **kwargs
+        execution_timeout=datetime.timedelta(
+            minutes=_RUN_FOR + (2 * _DAG_STANDBY)
+        ),
+        **kwargs,
     )
     # Define the sequence of execution of task.
     start_task >> downloading_task >> end_task

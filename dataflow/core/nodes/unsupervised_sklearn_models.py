@@ -201,7 +201,8 @@ class MultiindexUnsupervisedSkLearnModel(
         self, df_in: pd.DataFrame, fit: bool
     ) -> Tuple[Dict[str, pd.DataFrame], collections.OrderedDict]:
         dfs = dtfconobas.CrossSectionalDfToDfColProcessor.preprocess(
-            df_in, [self._in_col_group],
+            df_in,
+            [self._in_col_group],
         )
         df = dfs[self._in_col_group]
         df_out, info = self._fit_predict_unsupervised_sklearn_model(df, fit=fit)
