@@ -170,6 +170,19 @@ def is_ig_prod() -> bool:
     return bool(os.environ.get("DOCKER_BUILD", False))
 
 
+# TODO(Grisha): consider adding to `setup_to_str()`.
+def is_inside_ecs_container() -> bool:
+    """
+    Detect whether we are running in an ECS container.
+
+    When deploying jobs via ECS the container obtains credentials based on
+    passed task role specified in the ECS task-definition, refer to:
+    https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html.
+    """
+    ret = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" in os.environ
+    return ret
+
+
 def setup_to_str() -> str:
     txt = []
     #
@@ -218,6 +231,7 @@ def _dassert_setup_consistency() -> None:
     )
     if sum_ != 1:
         msg = "One and only one set-up config should be true:\n" + setup_to_str()
+        # TODO(gp): Unclear if this is a difference between Sorrentum and cmamp.
         _LOG.warning(msg)
         # raise ValueError(msg)
 
@@ -231,7 +245,7 @@ if check_repo:
         _dassert_setup_consistency()
         _is_called = True
 else:
-    _LOG.warning(f"Skipping repo check in {__file__}")
+    _LOG.warning("Skipping repo check in %s", __file__)
 
 
 # #############################################################################
