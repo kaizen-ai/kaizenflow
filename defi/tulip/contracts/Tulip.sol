@@ -28,6 +28,7 @@ contract Tulip is Ownable {
     uint256 public currentOrderID;
     // Store the ID of orders from the current swap.
     uint256[] ordersID;
+    bytes32 priceRequestID;
 
     // .
     event newBuyOrder(
@@ -153,28 +154,26 @@ contract Tulip is Ownable {
         return currentSwapID++;
     }
 
+
+    function extractPrice() public view returns (uint256) {
+        return twapVwapOracle.getResult(priceRequestID);
+    }
+
     /// @notice Get token price from the Chainlink price feed or TwapVwap adapter. 
-    function getPrice() public returns (uint256) {
-        uint256 uintPrice;
+    function requestPrice() public {
+        // Get the timestamp of the current block.
         int256 currentTimestamp = int(block.timestamp);
         // Get the timestamp of one week before.
         int256 startTimestamp = currentTimestamp - 604800;
+        bytes32 requestId;
         if (priceMode == 1) {
-            // Get the price from chainlink price feed.
-            int256 price = priceFeedOracle.getLatestPrice();
-            uintPrice = uint(price);
-        } else if (priceMode == 2) {
             // Get twap price from coingecko API.
-            bytes32 requestId = twapVwapOracle.requestTwap(baseTokenSymbol, startTimestamp, currentTimestamp);
-            uintPrice = twapVwapOracle.getResult(requestId);
-        } else if (priceMode == 3) {
+            requestId = twapVwapOracle.requestTwap(baseTokenSymbol, startTimestamp, currentTimestamp);
+        } else if (priceMode == 2) {
             // Get VWAP price from coingecko API.
-            bytes32 requestId = twapVwapOracle.requestVwap(baseTokenSymbol, startTimestamp, currentTimestamp);
-            uintPrice = twapVwapOracle.getResult(requestId);
+            requestId = twapVwapOracle.requestVwap(baseTokenSymbol, startTimestamp, currentTimestamp);
         }
-        require(uintPrice > 0, "Price should be more than zero");
-        return uintPrice;
-
+        priceRequestID = requestId;
     }
 
     function eraseOrders() internal onlyOwner {
