@@ -15,7 +15,7 @@ from typing import List, Optional, Tuple
 import pandas as pd
 import praw
 
-import sorrentum_sandbox.common.download as ssandown
+import sorrentum_sandbox.common.download as ssacodow
 
 _LOG = logging.getLogger(__name__)
 REDDIT_CLIENT_ID = os.environ["REDDIT_CLIENT_ID"]
@@ -38,7 +38,7 @@ class PostFeatures:
         return {k: str(v) for k, v in dataclasses.asdict(self).items()}
 
 
-class PostsDownloader(ssandown.DataDownloader):
+class PostsDownloader(ssacodow.DataDownloader):
     """
     Download Reddit data using praw lib.
     """
@@ -65,7 +65,7 @@ class PostsDownloader(ssandown.DataDownloader):
         end_timestamp: Optional[pd.Timestamp] = pd.Timestamp.max,
         numbers_post_to_fetch: int = 5,
         subreddits: Optional[Tuple[str, ...]] = None
-    ) -> ssandown.RawData:
+    ) -> ssacodow.RawData:
         """
         Download posts in the hot category in the predefined subreddits.
 
@@ -96,7 +96,7 @@ class PostsDownloader(ssandown.DataDownloader):
                 post_as_dict["created"] = post_timestamp
                 output += [post_as_dict]
         _LOG.info("Reddit download finished.")
-        return ssandown.RawData(output)
+        return ssacodow.RawData(output)
 
     @staticmethod
     def _transform_to_dict(source: praw.models.Submission) -> dict:

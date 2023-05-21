@@ -2,7 +2,6 @@
 Implementation of load part of the ETL and QA pipeline.
 
 Import as:
-
 import sorrentum_sandbox.examples.systems.binance.db as sisebidb
 """
 
@@ -14,9 +13,9 @@ import psycopg2.extras as extras
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import sorrentum_sandbox.common.client as sinsacli
-import sorrentum_sandbox.common.download as sinsadow
-import sorrentum_sandbox.common.save as sinsasav
+import sorrentum_sandbox.common.client as ssacocli
+import sorrentum_sandbox.common.download as ssacodow
+import sorrentum_sandbox.common.save as ssacosav
 
 
 def get_ohlcv_spot_downloaded_1min_create_table_query() -> str:
@@ -69,7 +68,8 @@ def get_ohlcv_spot_resampled_5min_create_table_query() -> str:
 
 def get_db_connection() -> Any:
     """
-    Retrieve connection to the Postgres DB inside the Sorrentum data node.
+    Retrieve connection to the Postgres DB inside the Sorrentum data node,
+    based on hardcoded values.
 
     The parameters must match the parameters set up in the Sorrentum
     data node docker-compose.
@@ -90,7 +90,7 @@ def get_db_connection() -> Any:
 # #############################################################################
 
 
-class PostgresDataFrameSaver(sinsasav.DataSaver):
+class PostgresDataFrameSaver(ssacosav.DataSaver):
     """
     Save Pandas DataFrame to a PostgreSQL using a provided DB connection.
     """
@@ -105,7 +105,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         self._create_tables()
 
     def save(
-        self, data: sinsadow.RawData, db_table: str, *args: Any, **kwargs: Any
+        self, data: ssacodow.RawData, db_table: str, *args: Any, **kwargs: Any
     ) -> None:
         """
         Save RawData storing a DataFrame to a specified DB table.
@@ -135,7 +135,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         :param table_name: name of the table for insertion
         :return: SQL query, e.g.,
             ```
-            INSERT INTO ccxt_ohlcv(timestamp,open,high,low,close) VALUES %s
+            INSERT INTO ccxt_ohlcv_spot(timestamp,open,high,low,close) VALUES %s
             ```
         """
         columns = ",".join(list(df.columns))
@@ -163,7 +163,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
 # #############################################################################
 
 
-class PostgresClient(sinsacli.DataClient):
+class PostgresClient(ssacocli.DataClient):
     """
     Load PostgreSQL data.
     """
