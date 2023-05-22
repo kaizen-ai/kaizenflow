@@ -117,6 +117,9 @@ if [[ 0 == 1 ]]; then
     echo "After"; $SHOW $FILE | xxd
 else
     echo "Make sure that last line terminates with exactly new line (0x0a)"
-    #find . -name "*.py" -o -name "*.txt" -o -name "*.json" -type d -name "directory_to_skip" -prune | xargs -n 10 $SCRIPT_NAME
-    find . -name "*.py" -o -name "*.json" -type d -name "directory_to_skip" -prune | xargs -n 10 $SCRIPT_NAME
+    find . -name "*.py" -o -name "*.json" | xargs -n 10 $SCRIPT_NAME
+    find . -name "*.txt" | grep -v "/output/" | xargs -n 10 $SCRIPT_NAME
+    #
+    find . -name "*.txt" | xargs -n 10 $SCRIPT_NAME
+    git checkout master -- helpers/test/outcomes/Test_get_dir_signature1.test2/output/test.txt
 fi;

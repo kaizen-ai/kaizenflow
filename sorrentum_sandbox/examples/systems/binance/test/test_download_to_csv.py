@@ -88,7 +88,7 @@ class TestDownloadToCsv(hunitest.TestCase):
             pd.DataFrame(_fake_binance_response())
         )
         with umock.patch.object(
-            ssesbdtcs.sisebido.OhlcvRestApiDownloader,
+            ssesbdtcs.ssesbido.OhlcvRestApiDownloader,
             "download",
             return_value=mock_downloaded_data,
         ) as mock_download:
