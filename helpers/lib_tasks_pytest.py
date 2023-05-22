@@ -262,6 +262,8 @@ def _run_tests(
     git_clean_: bool,
     *,
     start_coverage_script: bool = False,
+    # TODO(Grisha): do we need to expose ctx kwargs to the invoke targets?
+    # E.g., to `run_fast_tests`. See CmTask3602 "All tests fail".
     **ctx_run_kwargs: Any,
 ) -> Optional[int]:
     """
@@ -365,7 +367,6 @@ def run_fast_tests(  # type: ignore
     tee_to_file=False,
     n_threads="serial",
     git_clean_=False,
-    **kwargs,
 ):
     """
     Run fast tests.
@@ -397,7 +398,6 @@ def run_fast_tests(  # type: ignore
         tee_to_file,
         n_threads,
         git_clean_,
-        **kwargs,
     )
     return rc
 
@@ -414,7 +414,6 @@ def run_slow_tests(  # type: ignore
     tee_to_file=False,
     n_threads="serial",
     git_clean_=False,
-    **kwargs,
 ):
     """
     Run slow tests.
@@ -437,7 +436,6 @@ def run_slow_tests(  # type: ignore
         tee_to_file,
         n_threads,
         git_clean_,
-        **kwargs,
     )
     return rc
 
@@ -454,7 +452,6 @@ def run_superslow_tests(  # type: ignore
     tee_to_file=False,
     n_threads="serial",
     git_clean_=False,
-    **kwargs,
 ):
     """
     Run superslow tests.
@@ -477,7 +474,6 @@ def run_superslow_tests(  # type: ignore
         tee_to_file,
         n_threads,
         git_clean_,
-        **kwargs,
     )
     return rc
 

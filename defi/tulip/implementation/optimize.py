@@ -124,20 +124,16 @@ def get_tulip_problem_and_variables(
     # Specify the executed quantities vars. Setting the lower bound to zero
     # allows to omit the >= 0 constraint.
     q_pi_star = [
-        pulp.LpVariable(f"q_pi_star_{i}", lowBound=0)
-        for i in range(n_orders)
+        pulp.LpVariable(f"q_pi_star_{i}", lowBound=0) for i in range(n_orders)
     ]
     q_tau_star = [
-        pulp.LpVariable(f"q_tau_star_{i}", lowBound=0)
-        for i in range(n_orders)
+        pulp.LpVariable(f"q_tau_star_{i}", lowBound=0) for i in range(n_orders)
     ]
     # Objective function. Maximize the total exchanged volume.
     # problem.setObjective(pulp.lpSum(
     #     [q_pi_star[i] + q_tau_star[i] for i in range(n_orders)]
     # ))
-    problem += pulp.lpSum(
-        q_pi_star[i] + q_tau_star[i] for i in range(n_orders)
-    )
+    problem += pulp.lpSum(q_pi_star[i] + q_tau_star[i] for i in range(n_orders))
     # Constraints.
     # Impose limit order quantity constraint.
     for i in range(n_orders):
@@ -152,27 +148,31 @@ def get_tulip_problem_and_variables(
             problem += q_tau_star[i] >= q_pi_star[i] * orders[i].limit_price
     # Impose constraints on the token level: the amount of sold tokens must match that
     # of bought tokens for each token.
-    tokens = list(set([order.base_token for order in orders] + [order.quote_token for order in orders]))
+    tokens = list(
+        set(
+            [order.base_token for order in orders]
+            + [order.quote_token for order in orders]
+        )
+    )
     for token in tokens:
         problem += (
-                pulp.lpSum(
-                    -orders[i].action_as_int
-                    * q_pi_star[i]
-                    * (1 if orders[i].base_token == token else 0)
-                    +
-                    orders[i].action_as_int
-                    * q_tau_star[i]
-                    * (1 if orders[i].quote_token == token else 0)
-                    for i in range(n_orders)
-                )
-                == 0
+            pulp.lpSum(
+                -orders[i].action_as_int
+                * q_pi_star[i]
+                * (1 if orders[i].base_token == token else 0)
+                + orders[i].action_as_int
+                * q_tau_star[i]
+                * (1 if orders[i].quote_token == token else 0)
+                for i in range(n_orders)
+            )
+            == 0
         )
     return problem, q_pi_star, q_tau_star
 
 
 # TODO(Paul): Reorganize code.
 def run_daoswap_solver(
-        orders: List[ddacrord.Order],
+    orders: List[ddacrord.Order],
 ) -> Dict[str, Any]:
     """
     Find the maximum exchanged volume given the constraints.
@@ -213,7 +213,9 @@ def run_daoswap_solver(
     result_df = ddacrord.convert_orders_to_dataframe(orders)
     result_df["q_pi_star"] = result["q_pi_star"]
     result_df["q_tau_star"] = result["q_tau_star"]
-    result_df["effective_price"] = result_df["q_tau_star"] / result_df["q_pi_star"]
+    result_df["effective_price"] = (
+        result_df["q_tau_star"] / result_df["q_pi_star"]
+    )
     return result_df
 
 
@@ -263,6 +265,7 @@ def run_daocross_solver(
     result_df = ddacrord.convert_orders_to_dataframe(orders)
     result_df["q_pi_star"] = result["q_pi_star"]
     result_df["q_tau_star"] = result["q_tau_star"]
-    result_df["effective_price"] = result_df["q_tau_star"] / result_df["q_pi_star"]
+    result_df["effective_price"] = (
+        result_df["q_tau_star"] / result_df["q_pi_star"]
+    )
     return result_df
-

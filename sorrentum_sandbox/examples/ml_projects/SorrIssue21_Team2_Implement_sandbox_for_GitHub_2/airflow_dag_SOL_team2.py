@@ -45,42 +45,40 @@ dag = airflow.DAG(
 )
 
 
-
-
 bash_command1 = [
     # Sleep 5 seconds to ensure the bar is finished.
     "sleep 5",
     "&&",
-    "/cmamp/sorrentum_sandbox/examples/ml_projects/SorrIssue21_Team2_Implement_sandbox_for_GitHub_2/download_to_db_team2.py",	
+    "/cmamp/sorrentum_sandbox/examples/ml_projects/SorrIssue21_Team2_Implement_sandbox_for_GitHub_2/download_to_db_team2.py",
     "--pair SOL",
     "--target_table 'github_main'",
-    #"--start_timestamp {{ data_interval_start }} ",
-    #"--end_timestamp {{ data_interval_end }}",
-    "-v DEBUG"
+    # "--start_timestamp {{ data_interval_start }} ",
+    # "--end_timestamp {{ data_interval_end }}",
+    "-v DEBUG",
 ]
 
 bash_command2 = [
     # Sleep 5 seconds to ensure the bar is finished.
     "sleep 5",
     "&&",
-    "/cmamp/sorrentum_sandbox/examples/ml_projects/SorrIssue21_Team2_Implement_sandbox_for_GitHub_2/download_to_db_team2.py",	
+    "/cmamp/sorrentum_sandbox/examples/ml_projects/SorrIssue21_Team2_Implement_sandbox_for_GitHub_2/download_to_db_team2.py",
     "--pair SOL",
     "--target_table 'github_issues'",
-    #"--start_timestamp {{ data_interval_start }} ",
-    #"--end_timestamp {{ data_interval_end }}",
-    "-v DEBUG"
+    # "--start_timestamp {{ data_interval_start }} ",
+    # "--end_timestamp {{ data_interval_end }}",
+    "-v DEBUG",
 ]
 
 bash_command3 = [
     # Sleep 5 seconds to ensure the bar is finished.
     "sleep 5",
     "&&",
-    "/cmamp/sorrentum_sandbox/examples/ml_projects/SorrIssue21_Team2_Implement_sandbox_for_GitHub_2/download_to_db_team2.py",	
+    "/cmamp/sorrentum_sandbox/examples/ml_projects/SorrIssue21_Team2_Implement_sandbox_for_GitHub_2/download_to_db_team2.py",
     "--pair SOL",
     "--target_table 'github_commits'",
-    #"--start_timestamp {{ data_interval_start }} ",
-    #"--end_timestamp {{ data_interval_end }}",
-    "-v DEBUG"
+    # "--start_timestamp {{ data_interval_start }} ",
+    # "--end_timestamp {{ data_interval_end }}",
+    "-v DEBUG",
 ]
 
 downloading_main = BashOperator(

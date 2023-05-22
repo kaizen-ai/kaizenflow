@@ -5,14 +5,14 @@ import logging
 import os
 from typing import Any
 
+import common.download as sinsadow
+import common.save as sinsasav
+import Issue29_Team10_Implement_sandbox_for_coingecko.download_coingecko as sisebido
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import helpers.hparser as hparser
 import helpers.hio as hio
-import common.download as sinsadow
-import Issue29_Team10_Implement_sandbox_for_coingecko.download_coingecko as sisebido
-import common.save as sinsasav
+import helpers.hparser as hparser
 
 _LOG = logging.getLogger(__name__)
 
@@ -37,7 +37,9 @@ class CsvDataFrameSaver(sinsasav.DataSaver):
 
         :param data: data to persists into CSV
         """
-        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
+        hdbg.dassert_isinstance(
+            data.get_data(), pd.DataFrame, "Only DataFrame is supported."
+        )
         signature = (
             "bulk.manual.download_1min.csv.ohlcv.spot.v7.binance.binance.v1_0_0"
         )
@@ -82,7 +84,7 @@ def _add_download_args(
         action="store",
         required=True,
         type=str,
-        help="Name of coin to load"
+        help="Name of coin to load",
     )
     return parser
 

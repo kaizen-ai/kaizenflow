@@ -455,8 +455,11 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         # In a dataframe-based system, there is not order processor.
         add_order_processor_signature = False
         actual = dtfsysysig.get_signature_from_result_bundle(
-            system, result_bundles, add_system_config, add_run_signature,
-            add_order_processor_signature
+            system,
+            result_bundles,
+            add_system_config,
+            add_run_signature,
+            add_order_processor_signature,
         )
         # 3) Check the state of the Portfolio after forced liquidation.
         if liquidate_at_trading_end_time:
@@ -520,14 +523,14 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
     - `DatabasePortfolio` and `OrderProcessor`
     """
 
-    @classmethod
-    def get_id(cls) -> int:
-        return hash(cls.__name__) % 10000
-
     @staticmethod
     def reset() -> None:
         oms.Fill._fill_id = 0
         oms.Order._order_id = 0
+
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
 
     def setUp(self) -> None:
         super().setUp()
@@ -562,8 +565,11 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         )
         # Check the run signature.
         actual = dtfsysysig.get_signature_from_result_bundle(
-            system, result_bundles, add_system_config, add_run_signature,
-            add_order_processor_signature
+            system,
+            result_bundles,
+            add_system_config,
+            add_run_signature,
+            add_order_processor_signature,
         )
         return actual
 
@@ -593,14 +599,6 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         oms.Fill._fill_id = 0
         oms.Order._order_id = 0
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.reset()
-
-    def tearDown(self) -> None:
-        super().tearDown()
-        self.reset()
-
     @staticmethod
     def postprocess_result_bundle(
         result_bundle: dtfcore.ResultBundle,
@@ -615,6 +613,14 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         result_bundle_df.index.name = None
         result_bundle.result_df = result_bundle_df
         return result_bundle
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.reset()
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        self.reset()
 
     @abc.abstractmethod
     def get_NonTime_ForecastSystem_from_Time_ForecastSystem(
@@ -859,7 +865,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
             system_with_database_portfolio,
             add_system_config=add_system_config,
             add_run_signature=add_run_signature,
-            add_order_processor_signature=add_order_processor_signature
+            add_order_processor_signature=add_order_processor_signature,
         )
         #
         hdbg.dassert_lte(10, len(expected.split("\n")))

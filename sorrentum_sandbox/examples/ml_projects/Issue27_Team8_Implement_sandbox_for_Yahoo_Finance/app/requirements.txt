@@ -4,6 +4,6 @@ scikit-learn==0.24.2
 sqlalchemy
 psycopg2-binary
 yfinance
-pandas 
+pandas
 requests
 tqdm

@@ -1,4 +1,27 @@
+v7.4
+- 2023-04-11
+- Added universe for kraken
+
+v7.3
+- 2023-03-19
+- Removed XRP_USDT from binance US, since it is not supported
+
+v7.3
+- 2023-03-03
+- #CmTask3917 next symbols were deleted from binance:
+  - "ETH_BUSD"
+  - "BTC_BUSD"
+
+v7.3
+- 2023-02-15
+- Added universe for okx
+
 v7
+- 2023-02-07
+- Added universe for binance US
+- the list is shorter than for binance.common
+- because some pairs are not available in US
+
 - 2022-08-05
 - Only `binance` futures
 - Same coins as in `binance` in the `download` universe `top30_20220706`

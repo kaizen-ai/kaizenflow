@@ -30,10 +30,10 @@
 import logging
 from typing import Tuple
 
+import defi.dao_cross.order as ddacrord
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
-import defi.dao_cross.order as ddacrord
 
 # %%
 try:
@@ -98,8 +98,12 @@ def optimize_for_volume(
     _LOG.info("limit_price_cond_2 is %s", limit_price_cond_2)
     # Executed quantity is not greater than the requested quantity
     # given that the limit price condition is satisfied.
-    problem += q_base_asterisk_1 <= order_1.quantity + M * (1 - limit_price_cond_1)
-    problem += q_base_asterisk_2 <= order_2.quantity + M * (1 - limit_price_cond_2)
+    problem += q_base_asterisk_1 <= order_1.quantity + M * (
+        1 - limit_price_cond_1
+    )
+    problem += q_base_asterisk_2 <= order_2.quantity + M * (
+        1 - limit_price_cond_2
+    )
     # Executed quantity is zero if the limit price condition is not met.
     problem += q_base_asterisk_1 <= M * limit_price_cond_1
     problem += q_base_asterisk_1 >= -M * limit_price_cond_1
@@ -133,7 +137,7 @@ def get_test_orders(
 ) -> Tuple[ddacrord.Order, ddacrord.Order]:
     """
     Get toy orders to demonstrate how the solver works.
-    
+
     :param limit_price_1: limit price for the buy order
     :param limit_price_2: limit price for the sell order
     :return: buy and sell orders

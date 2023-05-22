@@ -7,9 +7,9 @@ import alembic.env as alenv
 import logging
 
 import sqlalchemy
+from alembic import context
 
 import im_v2.common.db.db_utils as imvcddbut
-from alembic import context
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

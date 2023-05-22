@@ -39,7 +39,6 @@ class ImClient(abc.ABC):
 
     The data in output of a class derived from `ImClient` is normalized so that:
     - the index:
-      - represents the knowledge time
       - is the end of the sampling interval
       - is called `timestamp`
       - is a tz-aware timestamp in UTC
@@ -204,17 +203,18 @@ class ImClient(abc.ABC):
             full_symbol_col_name=full_symbol_col_name,
             **kwargs,
         )
-        self.juraj_test = df
-        _LOG.debug("After read_data: df=\n%s", hpandas.df_to_str(df, num_rows=3))
+        _LOG.debug(
+            hpandas.df_to_str(df, print_shape_info=True, tag="after _read_data")
+        )
         # Check that we got what we asked for.
         # hpandas.dassert_increasing_index(df)
         if "level" in df.columns:
             _LOG.debug(
-                "Detected level column and calling handle_orderbook_levels"
+                "Detected level column and calling transform_bid_ask_long_data_to_wide"
             )
             # Transform bid ask data with multiple order book levels.
             timestamp_col = self._timestamp_col_name
-            df = cfibiask.handle_orderbook_levels(df, timestamp_col)
+            df = cfibiask.transform_bid_ask_long_data_to_wide(df, timestamp_col)
         #
         hdbg.dassert_in(full_symbol_col_name, df.columns)
         loaded_full_symbols = df[full_symbol_col_name].unique().tolist()
@@ -241,16 +241,21 @@ class ImClient(abc.ABC):
                 start_ts,
                 end_ts,
             )
-            # TODO(gp): Difference between amp and cmamp.
-            self._dassert_output_data_is_valid(
-                df_tmp,
-                full_symbol_col_name,
-                self._resample_1min,
-                start_ts,
-                end_ts,
-                self._timestamp_col_name,
-            )
-            dfs.append(df_tmp)
+            if not df_tmp.empty:
+                # Validate data that remained after normalization and append it
+                # to the result.
+                # TODO(gp): Difference between amp and cmamp.
+                self._dassert_output_data_is_valid(
+                    df_tmp,
+                    full_symbol_col_name,
+                    self._resample_1min,
+                    start_ts,
+                    end_ts,
+                    self._timestamp_col_name,
+                )
+                dfs.append(df_tmp)
+            else:
+                _LOG.debug("Df for full_symbol=%s is empty", full_symbol)
         hdbg.dassert_lt(0, df.shape[0], "Empty df=\n%s", df)
         df = pd.concat(dfs, axis=0)
         _LOG.debug("After im_normalization: df=\n%s", hpandas.df_to_str(df))
@@ -326,9 +331,23 @@ class ImClient(abc.ABC):
         Apply normalizations to IM data.
         """
         _LOG.debug(hprint.to_str("full_symbol_col_name start_ts end_ts"))
-        # 1) Drop duplicates.
+        # 1) Drop duplicated timestamps.
         use_index = True
         df = hpandas.drop_duplicates(df, use_index)
+        # TODO(Grisha): Consider adding "knowledge_timestamp" to every dataset
+        # and removing the condition, otherwise some tests fail, see CmTask3630.
+        if "knowledge_timestamp" in df.columns:
+            duplicate_columns = [full_symbol_col_name]
+            # Sort values by "knowledge_timestamp" to keep the latest ones while
+            # removing duplicates.
+            df = df.sort_values("knowledge_timestamp", ascending=True)
+            use_index = True
+            df = hpandas.drop_duplicates(
+                df,
+                use_index,
+                column_subset=duplicate_columns,
+                keep="last",
+            ).sort_index()
         # 2) Trim the data keeping only the data with index in [start_ts, end_ts].
         # Trimming of the data is done because:
         # - some data sources can be only queried at day resolution so we get
@@ -366,6 +385,9 @@ class ImClient(abc.ABC):
         """
         Verify that the normalized data is valid.
         """
+        # TODO(Grisha): consider using `hpandas.dassert_time_indexed_df()`.
+        # Check that data is not empty.
+        hdbg.dassert_lt(0, df.shape[0])
         # Check that index is `pd.DatetimeIndex`.
         hpandas.dassert_index_is_datetime(df)
         if resample_1min:
@@ -394,6 +416,54 @@ class ImClient(abc.ABC):
         # Ensure that all the data is in [start_ts, end_ts].
         hdateti.dassert_timestamp_lte(start_ts, df.index.min())
         hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
+        if "knowledge_timestamp" in df.columns:
+            # Assert that both timestamps have timezone info.
+            hdateti.dassert_tz_compatible(
+                df["knowledge_timestamp"].iloc[0], df.index[0]
+            )
+            # Check if data is downloaded after a bar ends. E.g., a bar starts at
+            # 20:00:00 (timestamp) and ends at 20:01:00 while knowledge_timestamp
+            # is 20:00:40. That means that the data was downloaded before the bar
+            # ends, i.e. incomplete data is received.
+            # TODO(Grisha): should be the end of sampling interval for all datasets.
+            bid_ask_cols = [col for col in df.columns if "bid_" in col]
+            if len(bid_ask_cols) > 0:
+                # For bid-ask data `timestamp` is the end of sampling interval.
+                mask = df["knowledge_timestamp"] <= (df.index)
+            else:
+                # For ohlcv data `timestamp` is the start of sampling interval.
+                mask = df["knowledge_timestamp"] <= (
+                    df.index + pd.DateOffset(minutes=1)
+                )
+            early_data = df.loc[mask]
+            if not early_data.empty:
+                _LOG.warning(
+                    "Data that is downloaded before a bar ends accounts for=%s",
+                    hprint.perc(early_data.shape[0], df.shape[0]),
+                )
+
+    @staticmethod
+    def _split_full_symbols_by_exchanges(
+        full_symbols: List[ivcu.FullSymbol],
+    ) -> Dict[str, List[ivcu.FullSymbol]]:
+        """
+        Split full symbols by exchanges.
+
+        :param full_symbols: full symbols, e.g., `[binance::BTC_USDT, kraken::BTC_USDT]`
+        :return: full symbols batches split by exchanges, e.g.,
+            `{"binance": [binance::BTC_USDT], "kraken": [kraken::BTC_USDT]}`
+        """
+        # TODO(Grisha): can it be simplified?
+        exchange_to_full_symbols = []
+        for symbol in full_symbols:
+            exchange, _ = ivcu.parse_full_symbol(symbol)
+            exchange_to_full_symbols.append((exchange, symbol))
+        exchange_to_full_symbols_unique = {}
+        for exchange, full_symbol in exchange_to_full_symbols:
+            exchange_to_full_symbols_unique.setdefault(exchange, []).append(
+                full_symbol
+            )
+        return exchange_to_full_symbols_unique
 
     # //////////////////////////////////////////////////////////////////////////
 
@@ -628,6 +698,7 @@ class RealTimeImClient(ImClient):
     """
 
 
+# TODO(Grisha): derive from `ImClientReadingMultipleSymbols`.
 class SqlRealTimeImClient(RealTimeImClient):
     """
     Read data from a table of an SQL DB.
@@ -636,15 +707,13 @@ class SqlRealTimeImClient(RealTimeImClient):
     def __init__(
         self,
         vendor: str,
+        universe_version: str,
         db_connection: hsql.DbConnection,
         table_name: str,
         *,
         resample_1min: bool = False,
     ) -> None:
         _LOG.debug(hprint.to_str("db_connection table_name"))
-        # Real-time implementation has a different mechanism for getting universe.
-        # Passing to make the parent class happy.
-        universe_version = None
         # These parameters are needed to get the universe which is needed to init
         # the parent class so they go before the parent's init.
         self._table_name = table_name
@@ -664,7 +733,24 @@ class SqlRealTimeImClient(RealTimeImClient):
 
     def get_universe(self) -> List[ivcu.FullSymbol]:
         """
-        See description in the parent class.
+        See the description in the parent class.
+
+        The method is overriden to make it possible to infer universe
+        from available data for this specific class.
+        """
+        if self._universe_version == "infer_from_data":
+            # Infer universe from data.
+            universe = self.infer_universe_from_data()
+        else:
+            # Use the parent class implementation.
+            universe = super().get_universe()
+        return universe
+
+    def infer_universe_from_data(self) -> List[ivcu.FullSymbol]:
+        """
+        Infer universe from available data.
+
+        :return: universe as full symbols
         """
         # Extract DataFrame with unique combinations of `exchange_id`,
         # `currency_pair`.
@@ -709,6 +795,11 @@ class SqlRealTimeImClient(RealTimeImClient):
         :param full_symbol_col_name: name of column containing full symbols
         :return:
         """
+        _LOG.debug(
+            hprint.to_str(
+                "full_symbols start_ts end_ts columns full_symbol_col_name kwargs"
+            )
+        )
         # Parse symbols into exchange and currency pair.
         parsed_symbols = [ivcu.parse_full_symbol(s) for s in full_symbols]
         # Convert timestamps to epochs.
@@ -725,6 +816,9 @@ class SqlRealTimeImClient(RealTimeImClient):
             parsed_symbols, start_unix_epoch, end_unix_epoch, **kwargs
         )
         data = hsql.execute_query_to_df(self._db_connection, select_query)
+        _LOG.debug(
+            "-> df after execute_query_to_df=\n%s", hpandas.df_to_str(data)
+        )
         # Add a full symbol column.
         full_symbol_col_name = self._get_full_symbol_col_name(
             full_symbol_col_name
@@ -737,14 +831,8 @@ class SqlRealTimeImClient(RealTimeImClient):
         data[self._timestamp_col_name] = data[self._timestamp_col_name].apply(
             hdateti.convert_unix_epoch_to_timestamp
         )
-        # Remove duplicates in data.
-        # TODO(Juraj): this is temporary solution, for bid/ask
-        #  we need to load more than 1 level meaning the _filter_duplicates
-        #  method does not work as expected.
-        if "bid_ask" not in self._table_name:
-            data = self._filter_duplicates(data, full_symbol_col_name)
-        else:
-            data = data.set_index(self._timestamp_col_name)
+        # Set timestamp column as index.
+        data = data.set_index(self._timestamp_col_name)
         # TODO(Dan): Move column filtering to the SQL query.
         if columns is None:
             columns = data.columns
@@ -789,6 +877,11 @@ class SqlRealTimeImClient(RealTimeImClient):
         :param limit: number of rows to return
         :return: SELECT query for SQL data
         """
+        _LOG.debug(
+            hprint.to_str(
+                "parsed_symbols start_unix_epoch end_unix_epoch columns ts_col_name left_close right_close limit"
+            )
+        )
         hdbg.dassert_container_type(
             obj=parsed_symbols,
             container_type=List,
@@ -798,6 +891,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         table_columns = hsql.get_table_columns(
             self._db_connection, self._table_name
         )
+        _LOG.debug(hprint.to_str("table_columns"))
         if columns is None:
             columns = table_columns
         hdbg.dassert_is_subset(columns, table_columns)
@@ -845,125 +939,46 @@ class SqlRealTimeImClient(RealTimeImClient):
         query = select_query + " AND ".join(where_clause)
         if limit:
             query += f" LIMIT {limit}"
+        _LOG.debug(hprint.to_str("query"))
         return query
 
-    def _read_data_for_multiple_symbols(
-        self,
-        full_symbols: List[ivcu.FullSymbol],
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],  # Converts to unix epoch
-        columns: Optional[List[str]],
-        full_symbol_col_name: Optional[str] = None,
-        **kwargs: Any,
-    ) -> pd.DataFrame:
-        """
-        Read data for the given time range and full symbols.
+    # TODO(Grisha): does not work in the current architecture, we cannot integrate
+    # vendor-speicifc (e.g., CCXT-Binance) behaviours when a function overrides the base
+    # class method.
+    # def _get_start_end_ts_for_symbol(
+    #     self, full_symbol: ivcu.FullSymbol, mode: str
+    # ) -> pd.Timestamp:
+    #     """
+    #     Select a maximum/minimum timestamp for the given symbol.
 
-        The method builds a SELECT query like:
+    #     Overrides the method in parent class to utilize
+    #     the MIN/MAX SQL operators.
 
-        SELECT * FROM {self._table_name} WHERE exchange_id="binance" AND currency_pair="ADA_USDT"
-
-        The WHERE clause with AND/OR operators is built using a built-in method.
-
-        :param full_symbols: a list of symbols, e.g. ["binance::ADA_USDT"]
-        :param start_ts: beginning of the period, is converted to unix epoch
-        :param end_ts: end of the period, is converted to unix epoch
-        :param full_symbol_col_name: the name of the full_symbol column
-        """
-        full_symbol_col_name = self._get_full_symbol_col_name(
-            full_symbol_col_name
-        )
-        # TODO(Danya): Convert timestamps to int when reading.
-        # TODO(Danya): add a full symbol column to the output
-        raise NotImplementedError
-
-    def _get_start_end_ts_for_symbol(
-        self, full_symbol: ivcu.FullSymbol, mode: str
-    ) -> pd.Timestamp:
-        """
-        Select a maximum/minimum timestamp for the given symbol.
-
-        Overrides the method in parent class to utilize
-        the MIN/MAX SQL operators.
-
-        :param full_symbol: unparsed full_symbol value
-        :param mode: 'start' or 'end'
-        :return: min or max value of 'timestamp' column.
-        """
-        _LOG.debug(hprint.to_str("full_symbol"))
-        exchange, currency_pair = ivcu.parse_full_symbol(full_symbol)
-        # Build a MIN/MAX query.
-        if mode == "start":
-            query = (
-                f"SELECT MIN(timestamp) from {self._table_name}"
-                f" WHERE currency_pair='{currency_pair}'"
-                f" AND exchange_id='{exchange}'"
-            )
-        elif mode == "end":
-            query = (
-                f"SELECT MAX(timestamp) from {self._table_name}"
-                f" WHERE currency_pair='{currency_pair}'"
-                f" AND exchange_id='{exchange}'"
-            )
-        else:
-            raise ValueError("Invalid mode='%s'" % mode)
-        # TODO(Danya): factor out min/max as helper function.
-        # Load the target timestamp as unix epoch.
-        timestamp = hsql.execute_query_to_df(self._db_connection, query).loc[0][0]
-        # Convert to `pd.Timestamp` type.
-        timestamp = hdateti.convert_unix_epoch_to_timestamp(timestamp)
-        hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
-        return timestamp
-
-    def _filter_duplicates(
-        self, data: pd.DataFrame, full_symbol_col_name: str
-    ) -> pd.DataFrame:
-        """
-        Remove duplicates from data based on full symbol and timestamp.
-
-        Keeps the row with the highest 'knowledge_timestamp' value.
-
-        The function gives a warning if the knowledge timestamp is less
-        than a minute over the data timestamp. This might indicate that
-        the data hasn't been downloaded in full, although the risk is
-        very low.
-
-        :param data: data from the DB
-        :return: DB data with duplicates removed
-        """
-        hdbg.dassert_is_subset(
-            [
-                "knowledge_timestamp",
-                self._timestamp_col_name,
-                full_symbol_col_name,
-            ],
-            data.columns,
-        )
-        duplicate_columns = [self._timestamp_col_name, full_symbol_col_name]
-        # Remove duplicates.
-        data = data.sort_values("knowledge_timestamp", ascending=False)
-        use_index = False
-        data = hpandas.drop_duplicates(
-            data, use_index, subset=duplicate_columns
-        ).sort_index()
-        hdbg.dassert_lt(0, data.shape[0], "Empty df=\n%s", data)
-        # Check if the knowledge_timestamp is over the candle timestamp by at least minute.
-        #
-        # Assert that both timestamps have timezone info.
-        # TODO(Danya): Create a `hdatetime` function to assert tz in pd.Series.
-        hdbg.dassert_is_not(data["knowledge_timestamp"].dt.tz, None)
-        hdbg.dassert_is_not(data[self._timestamp_col_name].dt.tz, None)
-        # Get all "early" data.
-        mask = data["knowledge_timestamp"] <= (
-            data[self._timestamp_col_name] + pd.DateOffset(minutes=1)
-        )
-        early_data = data.loc[mask]
-        if not early_data.empty:
-            _LOG.warning(
-                "Knowledge timestamp for the following rows is <1m after data timestamp>:\n%s",
-                hpandas.df_to_str(early_data, num_rows=None),
-            )
-        data = data.set_index(
-            self._timestamp_col_name,
-        )
-        return data
+    #     :param full_symbol: unparsed full_symbol value
+    #     :param mode: 'start' or 'end'
+    #     :return: min or max value of 'timestamp' column.
+    #     """
+    #     _LOG.debug(hprint.to_str("full_symbol"))
+    #     exchange, currency_pair = ivcu.parse_full_symbol(full_symbol)
+    #     # Build a MIN/MAX query.
+    #     if mode == "start":
+    #         query = (
+    #             f"SELECT MIN(timestamp) from {self._table_name}"
+    #             f" WHERE currency_pair='{currency_pair}'"
+    #             f" AND exchange_id='{exchange}'"
+    #         )
+    #     elif mode == "end":
+    #         query = (
+    #             f"SELECT MAX(timestamp) from {self._table_name}"
+    #             f" WHERE currency_pair='{currency_pair}'"
+    #             f" AND exchange_id='{exchange}'"
+    #         )
+    #     else:
+    #         raise ValueError("Invalid mode='%s'" % mode)
+    #     # TODO(Danya): factor out min/max as helper function.
+    #     # Load the target timestamp as unix epoch.
+    #     timestamp = hsql.execute_query_to_df(self._db_connection, query).loc[0][0]
+    #     # Convert to `pd.Timestamp` type.
+    #     timestamp = hdateti.convert_unix_epoch_to_timestamp(timestamp)
+    #     hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
+    #     return timestamp

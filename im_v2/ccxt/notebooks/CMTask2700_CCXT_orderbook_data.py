@@ -27,7 +27,7 @@ import pandas as pd
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
-import im_v2.ccxt.data.extract.extractor as ivcdexex
+import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.common.universe.universe as imvcounun
 import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
 
@@ -45,7 +45,7 @@ hprint.config_notebook()
 
 # %%
 # Initialize CCXT extractor.
-ccxt_extractor = ivcdexex.CcxtExtractor("binance", "futures")
+ccxt_extractor = imvcdexex.CcxtExtractor("binance", "futures")
 exchange = ccxt_extractor._exchange
 
 # %%

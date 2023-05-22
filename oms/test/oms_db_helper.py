@@ -1,7 +1,7 @@
 import abc
 import logging
 import os
-from typing import Any, Dict, Callable
+from typing import Any, Callable, Dict
 
 import helpers.henv as henv
 import helpers.hgit as hgit

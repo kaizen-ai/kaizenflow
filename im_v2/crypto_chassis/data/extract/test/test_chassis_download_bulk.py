@@ -35,6 +35,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         cmd.extend(["--aws_profile", "ck"])
         cmd.extend(["--s3_path", "s3://cryptokaizen-data-test/"])
         cmd.extend(["--data_format", "parquet"])
+        cmd.extend(["--universe_part", "1"])
         args = parser.parse_args(cmd)
         actual = vars(args)
         expected = {
@@ -54,6 +55,8 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "log_level": "INFO",
             "data_format": "parquet",
             "bid_ask_depth": None,
+            "universe_part": 1,
+            "assert_on_missing_data": False,
         }
         self.assertDictEqual(actual, expected)
 
@@ -92,6 +95,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "log_level": "INFO",
             "s3_path": "s3://mock_bucket",
             "aws_profile": "ck",
+            "universe_part": 1,
         }
         namespace = argparse.Namespace(**kwargs)
         mock_argument_parser.parse_args.return_value = namespace

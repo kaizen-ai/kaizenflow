@@ -5,7 +5,6 @@ import im_v2.common.data_snapshot.data_snapshot_utils as imvcdsdsut
 """
 
 import re
-
 from typing import Optional
 
 import helpers.hdbg as hdbg
@@ -49,7 +48,7 @@ def get_data_snapshot(
     """
     # TODO(Toma): commented out since CmTask2704, should think about
     # whether we really need this check here.
-    #_dassert_is_valid_root_dir(aws_profile, root_dir)
+    # _dassert_is_valid_root_dir(aws_profile, root_dir)
     if data_snapshot == "latest":
         pattern = "*"
         only_files = False
@@ -79,9 +78,7 @@ def dassert_is_valid_data_snapshot(data_snapshot: str) -> None:
         hdbg.dassert_eq(len(data_snapshot), 8)
 
 
-def _dassert_is_valid_root_dir(
-    aws_profile: Optional[str], root_dir: str
-) -> None:
+def _dassert_is_valid_root_dir(aws_profile: Optional[str], root_dir: str) -> None:
     """
     Check that the root dir is valid.
     """

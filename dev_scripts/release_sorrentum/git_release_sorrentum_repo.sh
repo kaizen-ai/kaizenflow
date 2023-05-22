@@ -96,6 +96,9 @@ if [[ 0 == 1 ]]; then
     #    # git commit 
     #fi;
 
+    # Install gitleaks
+    # https://github.com/gitleaks/gitleaks/releases/download/v8.16.3/gitleaks_8.16.3_linux_x64.tar.gz
+
     # Check and remove leaks.
     if [[ 0 == 1 ]]; then
         gitleaks detect --report-path gitleaks.before.json -v || true

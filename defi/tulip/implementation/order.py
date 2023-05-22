@@ -1,7 +1,7 @@
 """
 Import as:
 
-import defi.tulip.implementation.order as dtuimor
+import defi.tulip.implementation.order as dtuimord
 """
 
 import collections
@@ -225,9 +225,7 @@ def get_random_order(seed: Optional[int] = None) -> Order:
     return order
 
 
-def convert_orders_to_dataframe(
-    orders: List[Order]
-) -> pd.DataFrame:
+def convert_orders_to_dataframe(orders: List[Order]) -> pd.DataFrame:
     """
     Convert a list of orders to a dataframe
 

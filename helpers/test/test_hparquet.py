@@ -732,10 +732,10 @@ class TestAddDatePartitionColumns(hunitest.TestCase):
     def test_add_date_partition_columns3(self) -> None:
         partition_mode = "by_year_month_day"
         # pylint: disable=line-too-long
-        expected = r"""                           dummy_value  dummy_timestamp  year  month        date
-        2021-12-04 19:40:00+00:00            1    1638646800000  2021     12  2021-12-04
-        2021-12-04 19:41:00+00:00            2    1638646860000  2021     12  2021-12-04
-        2021-12-04 19:42:00+00:00            3    1638646960000  2021     12  2021-12-04"""
+        expected = r"""                           dummy_value  dummy_timestamp  year  month  day
+        2021-12-04 19:40:00+00:00            1    1638646800000  2021     12    4
+        2021-12-04 19:41:00+00:00            2    1638646860000  2021     12    4
+        2021-12-04 19:42:00+00:00            3    1638646960000  2021     12    4"""
         self.add_date_partition_columns_helper(partition_mode, expected)
 
     def test_add_date_partition_columns4(self) -> None:
