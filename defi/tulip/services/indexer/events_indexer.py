@@ -1,6 +1,7 @@
 import psycopg2 as psycop
 import web3
 
+import json
 import logging
 import os
 import time
@@ -32,24 +33,25 @@ def get_connection_from_env_vars(autocommit: bool = True) -> DbConnection:
     return connection
 
 
-def get_contract() -> web3.eth.Contract:
+def get_contract(path_to_contract: str) -> web3.eth.Contract:
     """
     Instantiate the Tulip contract.
     """
     infura_key = os.environ.get("API_KEY")
     # Connect to the network.
-    web3 = web3.Web3(web3.HTTPProvider(f"https://sepolia.infura.io/v3/{infura_key}")) 
+    web3_provider = web3.Web3(web3.HTTPProvider(f"https://sepolia.infura.io/v3/{infura_key}")) 
     tulip_address = os.environ.get("TULIP_ADDRESS")
-    with open("TulipABI.json", "r") as f:
-        tulip_abi = f.read()
+    with open(path_to_contract, "r") as f:
+        tulip_abi = json.load(f)
     # Instantiate the contract.
-    contract = web3.eth.contract(address=tulip_address, abi=tulip_abi)
+    contract = web3_provider.eth.contract(address=tulip_address, abi=tulip_abi["abi"])
     return contract
 
 def send_event_to_db(event_type: str, arguments: Dict[str, Any], cursor: psycop.extensions.cursor):
     """
     """
-    
+    print(event_type)
+    print(arguments)
     # Add events to the DB.
 
 def log_loop(db_connection: DbConnection, event_filters: List[web3._utils.filters.LogFilter], poll_interval: int):
@@ -65,8 +67,7 @@ def log_loop(db_connection: DbConnection, event_filters: List[web3._utils.filter
                 #
                 arguments = event["args"]
                 send_event_to_db(event_type, arguments, cursor)
-            time.sleep(poll_interval)
-        time.sleep(poll_interval)  
+        time.sleep(poll_interval)
 
 def main():
     """
@@ -74,8 +75,9 @@ def main():
     # Get DB connection.
     db_connection = get_connection_from_env_vars()
     # Get Tulip contact entity.
-    contract = get_contract()
+    contract = get_contract("TulipABI.json")
     # Set-up filter for sell orders.
+    print(web3.__version__)
     sell_event_filter = contract.events.newSellOrder.createFilter(fromBlock='latest')
     # Set-up filter for buy orders.
     buy_event_filter = contract.events.newBuyOrder.createFilter(fromBlock='latest')
