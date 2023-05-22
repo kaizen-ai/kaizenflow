@@ -96,10 +96,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
     # Initiate DB client.
-    resample_1min = False
-    table_name = "ccxt_ohlcv"
+    table_name = "ccxt_ohlcv_spot"
+    universe_version = "infer_from_data"
     ccxt_db_client = icdcl.CcxtSqlRealTimeImClient(
-        resample_1min, connection, table_name
+        universe_version, connection, table_name, resample_1min=False
     )
     # Get universe of symbols.
     vendor = "CCXT"

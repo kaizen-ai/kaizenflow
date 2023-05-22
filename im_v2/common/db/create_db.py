@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
 Script to create IM (Instrument Master) database using the given connection.
+Currently not working due to #CmTask3636
 
 # Note: assumes existing database setup, for example using
 #  `invoke im_docker_up -s local`

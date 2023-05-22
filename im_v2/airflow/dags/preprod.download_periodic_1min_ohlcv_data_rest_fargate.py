@@ -1,9 +1,3 @@
-"""
-Import as:
-
-import im_v2.airflow.dags.preprod.download_periodic_1min_ohlcv_data_rest_fargate as imvadpdp1odrf
-"""
-
 # This DAG is used to download realtime data to the IM database
 #  via REST API.
 
@@ -14,6 +8,7 @@ import os
 from itertools import product
 
 import airflow
+import airflow_utils.telegram.operator as aiutteop
 from airflow.contrib.operators.ecs_operator import ECSOperator
 from airflow.models import Variable
 from airflow.operators.dummy_operator import DummyOperator
@@ -28,7 +23,7 @@ assert _STAGE in ["prod", "preprod", "test"]
 
 # Used for seperations of deployment environments
 # ignored when executing on prod/preprod.
-_USERNAME = ""
+_USERNAME = "juraj"
 
 # Deployment type, if the task should be run via fargate (serverless execution)
 # or EC2 (machines deployed in our auto-scaling group)
@@ -43,7 +38,7 @@ _UNIVERSES = {"ccxt": "v7"}
 _CONTRACTS = ["futures"]
 # _DATA_TYPES = ["ohlcv", "bid_ask"]
 _DATA_TYPES = ["ohlcv"]
-# How often should a downloader within a single container run.
+# How often (in minutes) should a downloader within a single container run.
 _DOWNLOAD_INTERVAL = {"ohlcv": 1}
 # Specify how long should the DAG be running for (in minutes).
 _RUN_FOR = 60
@@ -74,9 +69,6 @@ _CONTAINER_SUFFIX = f"-{_STAGE}" if _STAGE in ["preprod", "test"] else ""
 _CONTAINER_SUFFIX += f"-{_USERNAME}" if _STAGE == "test" else ""
 _CONTAINER_NAME = f"cmamp{_CONTAINER_SUFFIX}"
 
-# E.g. DB table ccxt_ohlcv -> has an equivalent for testing ccxt_ohlcv_test
-# but production is ccxt_ohlcv.
-_TABLE_SUFFIX = f"_{_STAGE}" if _STAGE in ["test", "preprod"] else ""
 
 ecs_cluster = Variable.get(f"{_STAGE}_ecs_cluster")
 # The naming convention is set such that this value is then reused
@@ -86,14 +78,15 @@ ecs_task_definition = _CONTAINER_NAME
 
 # Subnets and security group is not needed for EC2 deployment but
 # we keep the configuration header unified for convenience/reusability.
-ecs_subnets = [Variable.get("ecs_subnet1")]
-ecs_security_group = [Variable.get("ecs_security_group")]
+ecs_subnets = [Variable.get("ecs_public_subnet")]
+ecs_security_group = [Variable.get("ecs_public_sg")]
 ecs_awslogs_group = f"/ecs/{ecs_task_definition}"
 ecs_awslogs_stream_prefix = f"ecs/{ecs_task_definition}"
 
 # Pass default parameters for the DAG.
 default_args = {
-    "retries": 0,
+    "retries": 1 if _STAGE in ["prod", "preprod"] else 0,
+    "retry_delay": 0,
     "email": [Variable.get(f"{_STAGE}_notification_email")],
     "email_on_failure": True if _STAGE == ["prod", "preprod"] else False,
     "owner": "airflow",
@@ -109,14 +102,13 @@ bash_command = [
     "--contract_type '{}'",
     "--interval_min '{}'",
     "--vendor {}",
-    "--db_stage 'dev'",
-    # This argument gets ignored for OHLCV data type.
+    f"--db_stage '{_STAGE}'",
     "--aws_profile 'ck'",
     # At this point we set up a logic for real time execution
     # Start date is postponed by _DAG_STANDBY minutes and a short
     # few seconds delay to ensure the bars from the nearest minute are finished.
-    "--start_time '{{ macros.datetime.now().replace(second=0, microsecond=0) + macros.timedelta(minutes=var.value.rt_data_download_standby_min | int, seconds=10) }}'",
-    "--stop_time '{{ macros.datetime.now().replace(second=0, microsecond=0) + macros.timedelta(minutes=(var.value.rt_data_download_run_for_min | int) + var.value.rt_data_download_standby_min | int) }}'",
+    "--start_time '{{ macros.datetime.now(dag.timezone).replace(second=0, microsecond=0) + macros.timedelta(minutes=var.value.rt_data_download_standby_min | int, seconds=10) }}'",
+    "--stop_time '{{ data_interval_end + macros.timedelta(minutes=(var.value.rt_data_download_run_for_min | int) + var.value.rt_data_download_standby_min | int) }}'",
     "--method 'rest'",
     f"--download_mode '{_DOWNLOAD_MODE}'",
     f"--downloading_entity '{_DOWNLOADING_ENTITY}'",
@@ -147,7 +139,6 @@ for vendor, exchange, contract, data_type in product(
     # TODO(Juraj): CmTask2804.
     if contract == "futures":
         table_name += "_futures"
-    table_name += _TABLE_SUFFIX
 
     # Do a deepcopy of the bash command list so we can reformat params on each iteration.
     curr_bash_command = copy.deepcopy(bash_command)
@@ -167,6 +158,7 @@ for vendor, exchange, contract, data_type in product(
         "awsvpcConfiguration": {
             "securityGroups": ecs_security_group,
             "subnets": ecs_subnets,
+            "assignPublicIp": "ENABLED",
         },
     }
 
@@ -195,3 +187,9 @@ for vendor, exchange, contract, data_type in product(
     )
     # Define the sequence of execution of task.
     start_task >> downloading_task >> end_task
+
+if _STAGE != "test":
+    telegram_notification_task = aiutteop.get_telegram_operator(
+        dag, _STAGE, _DAG_ID, "{{ run_id }}"
+    )
+    end_task >> telegram_notification_task

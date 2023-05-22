@@ -32,7 +32,7 @@ _USERNAME = ""
 # Deployment type, if the task should be run via fargate (serverless execution)
 # or EC2 (machines deployed in our auto-scaling group)
 _LAUNCH_TYPE = "fargate"
-assert _LAUNCH_TYPE in ["ec2", "fargate"]
+assert _LAUNCH_TYPE in ["ec2", "fargate", "fargate"]
 
 _DAG_ID = _FILENAME.rsplit(".", 1)[0]
 # Base name of the db tables to archive, stage will be appended later.
@@ -67,7 +67,8 @@ s3_db_archival_data_path = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}/{Va
 
 # Pass default parameters for the DAG.
 default_args = {
-    "retries": 0,
+    "retries": 2,
+    "retry_delay": datetime.timedelta(minutes=10),
     "email": [Variable.get(f"{_STAGE}_notification_email")],
     "email_on_failure": True if _STAGE in ["prod", "preprod"] else False,
     "email_on_retry": False,
@@ -82,13 +83,16 @@ dag = airflow.DAG(
     default_args=default_args,
     schedule_interval=_SCHEDULE,
     catchup=True,
-    start_date=datetime.datetime(2022, 12, 17, 21, 0, 0),
+    start_date=datetime.datetime(2023, 1, 10, 20, 0, 0),
+    user_defined_macros={
+        "bid_ask_raw_data_retention_hours_var_name": f"{_STAGE}_bid_ask_raw_data_retention_hours"
+    },
 )
 
 archival_command = [
     "/app/amp/im_v2/ccxt/db/archive_db_data_to_s3.py",
-    "--db_stage 'dev'",
-    "--timestamp '{{ data_interval_end - macros.timedelta(hours=var.value.db_archival_delay_hours | int) }}'",
+    f"--db_stage '{_STAGE}'",
+    "--timestamp '{{ data_interval_end - macros.timedelta(hours=var.value.get(bid_ask_raw_data_retention_hours_var_name) | int) }}'",
     "--db_table '{}'",
     f"--s3_path '{s3_db_archival_data_path}'",
     # The command needs to be executed manually first because --incremental
@@ -100,14 +104,10 @@ start_archival = DummyOperator(task_id="start_archival", dag=dag)
 end_archival = DummyOperator(task_id="end_archival", dag=dag)
 
 for db_table in _DB_TABLES:
-
-    db_table_with_stage = db_table
-    db_table_with_stage += f"_{_STAGE}" if _STAGE in ["test", "preprod"] else ""
-
     # TODO(Juraj): Make this code more readable.
     # Do a deepcopy of the bash command list so we can reformat params on each iteration.
     curr_bash_command = copy.deepcopy(archival_command)
-    curr_bash_command[3] = curr_bash_command[3].format(db_table_with_stage)
+    curr_bash_command[3] = curr_bash_command[3].format(db_table)
     if _DRY_RUN:
         curr_bash_command.append("--dry_run")
 
@@ -120,7 +120,7 @@ for db_table in _DB_TABLES:
     }
 
     archiving_task = ECSOperator(
-        task_id=f"archive_{db_table_with_stage}",
+        task_id=f"archive_{db_table}",
         dag=dag,
         aws_conn_id=None,
         cluster=ecs_cluster,
@@ -133,8 +133,8 @@ for db_table in _DB_TABLES:
                     "command": curr_bash_command,
                 }
             ],
-            "cpu": "2048",
-            "memory": "10240",
+            "cpu": "1024",
+            "memory": "6144",
         },
         awslogs_group=ecs_awslogs_group,
         awslogs_stream_prefix=ecs_awslogs_stream_prefix,

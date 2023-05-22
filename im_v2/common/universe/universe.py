@@ -49,7 +49,7 @@ def _get_universe_file_path(
     return file_path
 
 
-def _get_vedor_universe(
+def _get_vendor_universe(
     vendor: str,
     mode: str,
     *,
@@ -78,10 +78,12 @@ def _get_vedor_universe(
             }
         }
     """
-    # TODO(Grisha): consider always converting a vendor to lowercase.
     file_path = _get_universe_file_path(vendor, mode, version=version)
     hdbg.dassert_path_exists(file_path)
     universe = hio.from_json(file_path)
+    # Convert vendor name to lowercase.
+    vendor = vendor.lower()
+    universe = {k.lower(): v for k, v in universe.items()}
     hdbg.dassert_in(vendor, universe, "Invalid vendor=`%s`", vendor)
     vendor_universe = universe[vendor]
     return vendor_universe  # type: ignore[no-any-return]
@@ -118,7 +120,7 @@ def get_vendor_universe(
         }
         or ["gateio::XRP_USDT", "kucoin::SOL_USDT"]
     """
-    vendor_universe = _get_vedor_universe(vendor, mode, version=version)
+    vendor_universe = _get_vendor_universe(vendor, mode, version=version)
     if as_full_symbol:
         # Convert vendor universe dict to a sorted list of full symbols.
         vendor_universe = [
