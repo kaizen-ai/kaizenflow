@@ -3,7 +3,6 @@
 import copy
 import datetime
 import os
-from itertools import product
 
 import airflow
 from airflow.contrib.operators.ecs_operator import ECSOperator
@@ -28,11 +27,17 @@ _LAUNCH_TYPE = "fargate"
 assert _LAUNCH_TYPE in ["ec2", "fargate"]
 
 _DAG_ID = _FILENAME.rsplit(".", 1)[0]
-_EXCHANGES = ["binance"]
-_VENDORS = ["crypto_chassis", "ccxt"]
-_UNIVERSES = {"crypto_chassis": "v3", "ccxt": "v7"}
-_CONTRACTS = ["spot", "futures"]
 _DATA_TYPES = ["ohlcv"]
+# List jobs in the following tuple format:
+#  vendor, exchange, contract, data_type, universe
+_JOBS = [
+    ("crypto_chassis", "binance", "spot", "ohlcv", "v3"),
+    ("crypto_chassis", "binance", "futures", "ohlcv", "v3"),
+    ("ccxt", "binance", "spot", "ohlcv", "v7"),
+    ("ccxt", "binance", "futures", "ohlcv", "v7"),
+    ("ccxt", "binanceus", "spot", "ohlcv", "v7"),
+    ("ccxt", "okx", "futures", "ohlcv", "v7.3"),
+]
 # These values are changed dynamically based on DAG purpose and nature
 #  of the downloaded data
 _DOWNLOAD_MODE = "periodic_daily"
@@ -40,10 +45,7 @@ _ACTION_TAG = "downloaded_1min"
 _DATA_FORMAT = "parquet"
 # The value is implicit since this is an Airflow DAG.
 _DOWNLOADING_ENTITY = "airflow"
-_DAG_DESCRIPTION = (
-    f"Daily {_DATA_TYPES} data download, contracts:"
-    + f"{_CONTRACTS}, using {_VENDORS} from {_EXCHANGES}."
-)
+_DAG_DESCRIPTION = f"Daily {_DATA_TYPES} data download."
 # Specify when/how often to execute the DAG.
 _SCHEDULE = Variable.get(f"{_DAG_ID}_schedule")
 # Used for container overrides inside DAG task definition.
@@ -70,7 +72,7 @@ ecs_awslogs_stream_prefix = f"ecs/{ecs_task_definition}"
 s3_bucket_path = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}"
 # Pass default parameters for the DAG.
 default_args = {
-    "retries": 0,
+    "retries": 1 if _STAGE in ["prod", "preprod"] else 0,
     "email": [Variable.get(f"{_STAGE}_notification_email")],
     "email_on_failure": True if _STAGE in ["prod", "preprod"] else False,
     "email_on_retry": False,
@@ -85,7 +87,7 @@ dag = airflow.DAG(
     default_args=default_args,
     schedule_interval=_SCHEDULE,
     catchup=True,
-    start_date=datetime.datetime(2022, 12, 4, 0, 0, 0),
+    start_date=datetime.datetime(2023, 2, 1, 0, 0, 0),
 )
 
 download_command = [
@@ -111,16 +113,14 @@ download_command = [
 start_task = DummyOperator(task_id="start_dag", dag=dag)
 end_download = DummyOperator(task_id="end_dag", dag=dag)
 
-for vendor, exchange, contract, data_type in product(
-    _VENDORS, _EXCHANGES, _CONTRACTS, _DATA_TYPES
-):
+for vendor, exchange, contract, data_type, universe in _JOBS:
 
     # TODO(Juraj): Make this code more readable.
     # Do a deepcopy of the bash command list so we can reformat params on each iteration.
     curr_bash_command = copy.deepcopy(download_command)
     curr_bash_command[3] = curr_bash_command[3].format(vendor)
     curr_bash_command[4] = curr_bash_command[4].format(exchange)
-    curr_bash_command[5] = curr_bash_command[5].format(_UNIVERSES[vendor])
+    curr_bash_command[5] = curr_bash_command[5].format(universe)
     curr_bash_command[6] = curr_bash_command[6].format(data_type)
     curr_bash_command[7] = curr_bash_command[7].format(contract)
 
@@ -133,7 +133,7 @@ for vendor, exchange, contract, data_type in product(
     }
 
     downloading_task = ECSOperator(
-        task_id=f"download.{_DOWNLOAD_MODE}.{vendor}.{exchange}.{contract}",
+        task_id=f"download.{_DOWNLOAD_MODE}.{vendor}.{exchange}.{contract}.{universe}",
         dag=dag,
         aws_conn_id=None,
         cluster=ecs_cluster,

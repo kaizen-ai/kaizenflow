@@ -1,9 +1,3 @@
-"""
-Import as:
-
-import im_v2.airflow.dags.preprod.download_resample_periodic_daily_bid_ask_data_fargate as imvadpdrpdbadf
-"""
-
 # This is a utility DAG to conduct QA on real time data download
 # DAG task downloads data for last N minutes in one batch
 

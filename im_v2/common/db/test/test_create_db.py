@@ -33,7 +33,7 @@ class TestCreateDb1(imvcddbut.TestImDbHelper):
                 "ccxt_bid_ask_futures_raw",
                 "ccxt_bid_ask_resampled_1min",
                 "ccxt_bid_ask_futures_resampled_1min",
-                "ccxt_ohlcv",
+                "ccxt_ohlcv_spot",
                 "ccxt_ohlcv_futures",
                 "currency_pair",
                 "exchange",
