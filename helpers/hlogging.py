@@ -320,11 +320,17 @@ def addLoggingLevel(levelName, levelNum, methodName=None):
         methodName = levelName.lower()
 
     if hasattr(logging, levelName):
-       raise AttributeError('{} already defined in logging module'.format(levelName))
+        raise AttributeError(
+            "{} already defined in logging module".format(levelName)
+        )
     if hasattr(logging, methodName):
-       raise AttributeError('{} already defined in logging module'.format(methodName))
+        raise AttributeError(
+            "{} already defined in logging module".format(methodName)
+        )
     if hasattr(logging.getLoggerClass(), methodName):
-       raise AttributeError('{} already defined in logger class'.format(methodName))
+        raise AttributeError(
+            "{} already defined in logger class".format(methodName)
+        )
 
     # This method was inspired by the answers to Stack Overflow post
     # http://stackoverflow.com/q/2183233/2988730, especially
@@ -332,6 +338,7 @@ def addLoggingLevel(levelName, levelNum, methodName=None):
     def logForLevel(self, message, *args, **kwargs):
         if self.isEnabledFor(levelNum):
             self._log(levelNum, message, args, **kwargs)
+
     def logToRoot(message, *args, **kwargs):
         logging.log(levelNum, message, *args, **kwargs)
 
@@ -341,7 +348,7 @@ def addLoggingLevel(levelName, levelNum, methodName=None):
     setattr(logging, methodName, logToRoot)
 
 
-addLoggingLevel('TRACE', 5)
+addLoggingLevel("TRACE", 5)
 
 
 # Note that this doesn't avoid evaluating the call.
@@ -351,8 +358,8 @@ addLoggingLevel('TRACE', 5)
 # ```
 def shut_up_log_debug(logger: logging.Logger) -> None:
     logging.disable(logging.DEBUG)
-    #logger.debug = lambda *_: 0
-    #logger.trace = lambda *_: 0
+    # logger.debug = lambda *_: 0
+    # logger.trace = lambda *_: 0
 
 
 # #############################################################################

@@ -16,9 +16,9 @@ import datetime
 import airflow
 from airflow.operators.bash import BashOperator
 
-_DAG_ID = "download_github_data_for_DOGE_6hour_gap"
+_DAG_ID = "download_github_data_for_SOL_6hour_gap"
 _DAG_DESCRIPTION = (
-    "Download GitHub data for DOGE every 6 hours and save to Postgres"
+    "Download GitHub data for SOL every 6 hours and save to Postgres"
 )
 # Specify when often to execute the DAG.
 _SCHEDULE = "05 0,6,12,18 * * *"
@@ -45,18 +45,16 @@ dag = airflow.DAG(
 )
 
 
-
-
 bash_command1 = [
     # Sleep 5 seconds to ensure the bar is finished.
     "sleep 5",
     "&&",
     "/cmamp/sorrentum_sandbox/examples/ml_projects/SorrIssue21_Team2_Implement_sandbox_for_GitHub_2/download_to_db_team2.py",
-    "--pair DOGE",
+    "--pair SOL",
     "--target_table 'github_main'",
-    #"--start_timestamp {{ data_interval_start }} ",
-    #"--end_timestamp {{ data_interval_end }}",
-    "-v DEBUG"
+    # "--start_timestamp {{ data_interval_start }} ",
+    # "--end_timestamp {{ data_interval_end }}",
+    "-v DEBUG",
 ]
 
 bash_command2 = [
@@ -64,11 +62,11 @@ bash_command2 = [
     "sleep 5",
     "&&",
     "/cmamp/sorrentum_sandbox/examples/ml_projects/SorrIssue21_Team2_Implement_sandbox_for_GitHub_2/download_to_db_team2.py",
-    "--pair DOGE",
+    "--pair SOL",
     "--target_table 'github_issues'",
-    #"--start_timestamp {{ data_interval_start }} ",
-    #"--end_timestamp {{ data_interval_end }}",
-    "-v DEBUG"
+    # "--start_timestamp {{ data_interval_start }} ",
+    # "--end_timestamp {{ data_interval_end }}",
+    "-v DEBUG",
 ]
 
 bash_command3 = [
@@ -76,11 +74,11 @@ bash_command3 = [
     "sleep 5",
     "&&",
     "/cmamp/sorrentum_sandbox/examples/ml_projects/SorrIssue21_Team2_Implement_sandbox_for_GitHub_2/download_to_db_team2.py",
-    "--pair DOGE",
+    "--pair SOL",
     "--target_table 'github_commits'",
-    #"--start_timestamp {{ data_interval_start }} ",
-    #"--end_timestamp {{ data_interval_end }}",
-    "-v DEBUG"
+    # "--start_timestamp {{ data_interval_start }} ",
+    # "--end_timestamp {{ data_interval_end }}",
+    "-v DEBUG",
 ]
 
 downloading_main = BashOperator(

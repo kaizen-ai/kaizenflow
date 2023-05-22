@@ -15,9 +15,8 @@ import dev_scripts.script_skeleton as dscscske
 import argparse
 import logging
 
+import helpers.hlogging as hloggin
 import helpers.hparser as hparser
-import helpers.hlogging as hlogging
-
 
 _LOG = logging.getLogger(__name__)
 
@@ -38,11 +37,11 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hparser.parse_verbosity_args(args, use_exec_path=True)
-    hlogging.test_logger()
+    hloggin.test_logger()
     #
-    #logging.disable(logging.WARNING)
-    hlogging.shut_up_log_debug(_LOG)
-    hlogging.test_logger()
+    # logging.disable(logging.WARNING)
+    hloggin.shut_up_log_debug(_LOG)
+    hloggin.test_logger()
 
 
 if __name__ == "__main__":

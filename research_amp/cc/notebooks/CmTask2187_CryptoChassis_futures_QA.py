@@ -101,7 +101,9 @@ print(config)
 # Major metric for a QA check is `"bad data [%]"` which is the sum of `"volume=0 [%]"` and `"NaNs [%]"`.
 
 # %%
-client = iccdc.CryptoChassisHistoricalPqByTileClient(**config["data"]["im_client"])
+client = iccdc.CryptoChassisHistoricalPqByTileClient(
+    **config["data"]["im_client"]
+)
 
 # %%
 universe = client.get_universe()

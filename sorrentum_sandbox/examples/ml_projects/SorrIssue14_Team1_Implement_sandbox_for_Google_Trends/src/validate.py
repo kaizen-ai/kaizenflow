@@ -2,12 +2,14 @@
 QA pipeline for Google Trends .
 
 Import as:
-Import google_trends.src.validate as validator
+
+import sorrentum_sandbox.examples.ml_projects.SorrIssue14_Team1_Implement_sandbox_for_Google_Trends.src.validate as ssempstisfgtsv
 """
 
 from typing import Any, List
-import pandas as pd
+
 import common.validate as sinsaval
+import pandas as pd
 
 
 class DenormalizedDatasetCheck(sinsaval.QaCheck):
@@ -29,4 +31,3 @@ class DenormalizedDatasetCheck(sinsaval.QaCheck):
             else:
                 self._status = "PASSED"
                 return True
-

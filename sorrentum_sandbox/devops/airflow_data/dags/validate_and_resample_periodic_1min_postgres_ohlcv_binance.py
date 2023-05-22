@@ -1,6 +1,10 @@
 """
 Example DAG to load data from PostgreSQL, validate, and transform them and save
 back to the DB.
+
+Import as:
+
+import sorrentum_sandbox.devops.airflow_data.dags.validate_and_resample_periodic_1min_postgres_ohlcv_binance as ssdaddvarp1pob
 """
 
 import datetime
@@ -45,7 +49,7 @@ bash_command = [
     "--target_table 'binance_ohlcv_spot_resampled_5min'",
     "--start_timestamp {{ data_interval_start }} ",
     "--end_timestamp {{ data_interval_end }}",
-    "-v DEBUG"
+    "-v DEBUG",
 ]
 
 downloading_task = BashOperator(

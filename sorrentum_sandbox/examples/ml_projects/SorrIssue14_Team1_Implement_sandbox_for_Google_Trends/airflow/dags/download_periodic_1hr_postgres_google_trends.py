@@ -9,9 +9,7 @@ from airflow.operators.bash import BashOperator
 
 # Real time data fetching
 _DAG_ID = "download_periodic_1hr_postgres"
-_DAG_DESCRIPTION = (
-    "Download Google trends data every hour and save to Postgres"
-)
+_DAG_DESCRIPTION = "Download Google trends data every hour and save to Postgres"
 # Specify when often to execute the DAG.
 _SCHEDULE = "0 * * * *"
 
@@ -23,7 +21,7 @@ default_args = {
     "email_on_failure": False,
     "email_on_retry": False,
     "retries": 0,
-    'timezone': 'America/New_York'
+    "timezone": "America/New_York",
 }
 
 # Create a DAG.
@@ -34,7 +32,7 @@ dag = airflow.DAG(
     default_args=default_args,
     schedule_interval=None,
     catchup=False,
-    start_date=datetime.datetime(2023, 4, 16, 4, 0, 0)
+    start_date=datetime.datetime(2023, 4, 16, 4, 0, 0),
 )
 
 bash_command = [
@@ -44,7 +42,7 @@ bash_command = [
     "/cmamp/src/download_to_db.py",
     "--target_table google_trends_data",
     "--use_api True",
-    "--real_time_data False"
+    "--real_time_data False",
 ]
 
 downloading_task = BashOperator(

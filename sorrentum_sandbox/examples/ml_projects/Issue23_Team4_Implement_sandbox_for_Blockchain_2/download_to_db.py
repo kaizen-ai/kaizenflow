@@ -12,20 +12,18 @@ Use as:
 import argparse
 import logging
 
+import Block_db as sisebidb
+import Block_download as sisebido
 import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import Block_db as sisebidb
-import Block_download as sisebido
-
-
 
 _LOG = logging.getLogger(__name__)
 
 
 def _add_download_args(
-     parser: argparse.ArgumentParser,
+    parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     """
     Add the command line options for exchange download.
@@ -55,7 +53,7 @@ def _add_download_args(
     parser.add_argument(
         "--api",
         action="store",
-        default='https://api.blockchain.info/charts',
+        default="https://api.blockchain.info/charts",
         type=str,
         help="Base URL for the API",
     )
@@ -63,15 +61,14 @@ def _add_download_args(
     parser.add_argument(
         "--chart_name",
         action="store",
-        default='market-price',
+        default="market-price",
         required=True,
         type=str,
         help="Name of the chart to download",
     )
 
-
-
     return parser
+
 
 def _parse() -> argparse.ArgumentParser:
     hdbg.init_logger(use_exec_path=True)
@@ -87,8 +84,10 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     # Load data.
-    downloader = sisebido.OhlcvRestApiDownloader(api=args.api, chart_name=args.chart_name)
-    raw_data = downloader.download(args.start_timestamp,args.time_span)
+    downloader = sisebido.OhlcvRestApiDownloader(
+        api=args.api, chart_name=args.chart_name
+    )
+    raw_data = downloader.download(args.start_timestamp, args.time_span)
     # Save data to DB.
     db_conn = sisebidb.get_db_connection()
     saver = sisebidb.PostgresDataFrameSaver(db_conn)

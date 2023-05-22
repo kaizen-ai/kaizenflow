@@ -103,7 +103,7 @@ def integrate_create_branch(ctx, dir_basename, dry_run=False):  # type: ignore
     hlitauti.run(ctx, cmd, dry_run=dry_run)
 
 
-# ##################################################################################
+# #############################################################################
 
 
 def _resolve_src_dst_names(
@@ -223,11 +223,11 @@ def integrate_diff_dirs(  # type: ignore
                 cmd += f" --ignore_files='{regex}'"
     # We need to use `system` to get vimdiff to connect to stdin and stdout.
     if not dry_run:
-        #hlitauti.run(ctx, cmd, dry_run=dry_run, print_cmd=True)
+        # hlitauti.run(ctx, cmd, dry_run=dry_run, print_cmd=True)
         os.system(cmd)
 
 
-# ##################################################################################
+# #############################################################################
 
 
 def _find_files_touched_since_last_integration(
@@ -320,7 +320,7 @@ def integrate_find_files_touched_since_last_integration(  # type: ignore
     print("\n".join(files))
 
 
-# ##################################################################################
+# #############################################################################
 
 
 def _integrate_files(
@@ -589,7 +589,7 @@ def integrate_diff_overlapping_files(  # type: ignore
     print(f"# To diff against the base run:\n> {script_file_name}")
 
 
-# ##################################################################################
+# #############################################################################
 
 
 def _infer_dst_dir(src_dir: str) -> Tuple[str, str]:
@@ -613,17 +613,19 @@ def _infer_dst_dir(src_dir: str) -> Tuple[str, str]:
     if idx >= 0:
         src_dir_basename = "cmamp1"
         dst_dir_basename = "amp1"
-        subdir = src_dir[idx + len(target_dir):]
+        subdir = src_dir[idx + len(target_dir) :]
     else:
         idx = src_dir.find("/amp1/")
         if idx >= 0:
             src_dir_basename = "amp1"
             dst_dir_basename = "cmamp1"
-            subdir = src_dir[idx + len(target_dir):]
+            subdir = src_dir[idx + len(target_dir) :]
         else:
             raise ValueError(f"Can't parse src_dir='{src_dir}")
     # Replace `cmamp1` with `amp1`
-    dst_dir = src_dir.replace("/" + src_dir_basename + "/", "/" + dst_dir_basename + "/")
+    dst_dir = src_dir.replace(
+        "/" + src_dir_basename + "/", "/" + dst_dir_basename + "/"
+    )
     _LOG.debug(hprint.to_str("src_dir dst_dir subdir"))
     return dst_dir, subdir
 

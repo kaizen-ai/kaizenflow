@@ -12,7 +12,6 @@ import oms.ccxt_broker as occxbrok
 import oms.hsecrets as omssec
 import oms.portfolio as omportfo
 
-
 _LOG = logging.getLogger(__name__)
 
 

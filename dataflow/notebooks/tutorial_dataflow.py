@@ -121,7 +121,9 @@ start_ts = config["data"]["start_date"]
 end_ts = config["data"]["end_date"]
 ts_col_name = "timestamp"
 
-data_hist = market_data.get_data_for_interval(start_ts, end_ts, ts_col_name, asset_ids)
+data_hist = market_data.get_data_for_interval(
+    start_ts, end_ts, ts_col_name, asset_ids
+)
 print(data_hist.shape)
 data_hist.head(3)
 
@@ -200,11 +202,15 @@ df_approach_1.head(3)
 
 # %%
 # Drop non numerical columns to apply computations.
-data_hist_num = data_hist.drop(columns=["full_symbol", "knowledge_timestamp", "start_ts"])
+data_hist_num = data_hist.drop(
+    columns=["full_symbol", "knowledge_timestamp", "start_ts"]
+)
 
 # %% run_control={"marked": false}
 # Convert historical data to multiindex format.
-converted_data = dtfsys.source_nodes._convert_to_multiindex(data_hist_num, "asset_id")
+converted_data = dtfsys.source_nodes._convert_to_multiindex(
+    data_hist_num, "asset_id"
+)
 converted_data.head(3)
 
 # %%

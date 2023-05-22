@@ -1,19 +1,19 @@
 #!/usr/bin/env python
-'''
+"""
 API list:
 1. /v1/cryptocurrency/listings/latest - Latest listings
 2. /v2/cryptocurrency/quotes/latest - this endpoint to request the latest quote for specific cryptocurrencies.
 3. /v1/exchange/map - CoinMarketCap ID map
 4. /v1/exchange/assets - Exchange Assets
 5. /v1/global-metrics/quotes/latest - Latest global metrics
-'''
+"""
 
 import requests
 
-class CMC_request():
 
+class CMC_request:
     def get_data(api_num: int):
-        url = self._build_url(self,api_num)
+        url = self._build_url(self, api_num)
         try:
             response = requests.request(
                 method="GET",
@@ -21,27 +21,30 @@ class CMC_request():
                 headers={
                     "Content-Type": "application/json",
                     "X-CMC_PRO_API_KEY": self.api_key,
-                    "Accepts": "application/json"},
+                    "Accepts": "application/json",
+                },
                 data={},
             )
-            if response.json()['status']['error_code'] == 0:
+            if response.json()["status"]["error_code"] == 0:
                 print("Request successful!")
-                return response.json()['data']
+                return response.json()["data"]
             else:
-                print("Request failed, status code:", response.json()['status']['error_code'])
+                print(
+                    "Request failed, status code:",
+                    response.json()["status"]["error_code"],
+                )
         except Exception as e:
             print("Request exception:", e)
-
 
     @staticmethod
     def _build_url(
         self,
         api_num: int,
-        start:int = 1,
-        convert:str = "USD",
-        limit:int = 5000,
-        id:str = "1",
-        exchange_id:str = "270",
+        start: int = 1,
+        convert: str = "USD",
+        limit: int = 5000,
+        id: str = "1",
+        exchange_id: str = "270",
     ) -> str:
         if api_num == 1:
             # 1. /v1/cryptocurrency/listings/latest - Latest listings
@@ -75,6 +78,3 @@ class CMC_request():
             )
         else:
             print("Invalid API number, please use number between 1-5")
-
-
-

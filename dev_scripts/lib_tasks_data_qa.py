@@ -28,7 +28,7 @@ docker> invoke run_cross_dataset_qa_notebook \
 
 Import as:
 
-import dev_scripts.lib_tasks_data_qa as dsltdare
+import dev_scripts.lib_tasks_data_qa as dsltdaqa
 """
 
 import logging
@@ -126,9 +126,7 @@ def _run_data_qa_notebook(
     # Set directory to store results locally
     results_dir = "."
     cmd_txt = []
-    config_builder = (
-        "amp.im_v2.common.data.qa.qa_check.build_dummy_data_reconciliation_config()"
-    )
+    config_builder = "amp.im_v2.common.data.qa.qa_check.build_dummy_data_reconciliation_config()"
     opts = (
         "--num_threads 'serial' --allow_errors --publish_notebook -v DEBUG 2>&1"
     )
@@ -156,7 +154,9 @@ def _run_data_qa_notebook(
     #  directory names when running cross dataset QA. For now this should not
     #  cause conflicts.
     dir_specifier = (
-        "dataset_signature" if "dataset_signature" in config_dict else "dataset_signature1"
+        "dataset_signature"
+        if "dataset_signature" in config_dict
+        else "dataset_signature1"
     )
     target_dir = _create_dir_for_data_qa(
         base_dst_dir,
@@ -249,5 +249,7 @@ def run_cross_dataset_qa_notebook(
     _ = ctx
     # TODO(Juraj): come up with a more modular solution to executing the correct notebook.
     data_type = "bid_ask" if "bid_ask" in dataset_signature1 else "ohlcv"
-    notebook_path = f"amp/im_v2/common/data/qa/notebooks/cross_dataset_qa_{data_type}.ipynb"
+    notebook_path = (
+        f"amp/im_v2/common/data/qa/notebooks/cross_dataset_qa_{data_type}.ipynb"
+    )
     _run_data_qa_notebook(config_dict, base_dst_dir, notebook_path)

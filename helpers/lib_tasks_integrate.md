@@ -1,0 +1,209 @@
+# Concepts
+
+- We have two dirs storing two forks of the same repo
+    - Files are touched, e.g., added, modified, deleted in each forks
+    - The most problematic files are the files that are modified in both forks
+    - Files that are added or deleted in one fork, should be added / deleted also
+      in the other fork
+- Often we can integrate "by directory", i.e., finding entire directories that
+  we were touched in one branch but not the other
+    - In this case we can simply copy the entire dir from one dir to the other
+- Other times we need to integrate "by file"
+
+- There are various interesting Git reference points:
+    1) the branch point for each branch, at which the integration branch was started
+    2) the last integration point for each branch, at which the repos are the same,
+       or at least aligned
+
+# Invariants for the integration set-up
+
+- The user runs commands in an abs_dir, e.g., `/Users/saggese/src/{amp1,cmamp1}`
+- The user refers in the command line to `dir_basename`, which is the basename of
+  the integration directories (e.g., `amp1`, `cmamp1`)
+  - The "src_dir_basename" is the one where the command is issued
+  - The "dst_dir_basename" is assumed to be parallel to the "src_dir_basename"
+- The dirs are then transformed in absolute dirs "abs_src_dir"
+
+# Integration process
+
+## Preparation
+
+- Pull master
+
+- Remove white spaces from both `amp` and `cmamp`:
+  ```
+  > dev_scripts/clean_up_text_files.sh
+  > git commit -am "Remove white spaces"; git push
+  ```
+
+- Align `lib_tasks.py`:
+  ```
+  > vimdiff ~/src/{amp1,cmamp1}/tasks.py; diff_to_vimdiff.py --dir1 ~/src/amp1 --dir2 ~/src/cmamp1 --subdir helpers
+  ```
+
+- Create the integration branches:
+  ```
+  > cd amp1
+  > i integrate_create_branch --dir-basename amp1
+  > cd cmamp1
+  > i integrate_create_branch --dir-basename cmamp1
+  ```
+
+- Lint both dirs:
+  ```
+  > cd amp1
+  > i lint --dir-name . --only-format
+  > cd cmamp1
+  > i lint --dir-name . --only-format
+  ```
+  or at least the files touched by both repos:
+  ```
+  > i integrate_files --file-direction only_files_in_src
+  > cat tmp.integrate_find_files_touched_since_last_integration.cmamp1.txt tmp.integrate_find_files_touched_since_last_integration.amp1.txt | sort | uniq >files.txt
+  > FILES=$(cat files.txt)
+  > i lint --only-format -f "$FILES"
+  ```
+
+- Remove trailing spaces:
+  ```
+  > find . -name "*.py" -o -name "*.txt" -o -name "*.json" | xargs perl -pi -e 's/\s+$/\n/'
+  ```
+- Add end-of-file:
+  ```
+  > find . -name "*.py" | xargs sed -i '' -e '$a\'
+
+- Remove end-of-file:
+  ```
+  > find . -name -name "*.txt" | xargs perl -pi -e 'chomp if eof'
+  ```
+- Remove empty files:
+  ```
+  > find . -type f -empty -print | grep -v .git | grep -v __init__ | grep -v ".log$" | grep -v ".txt$" | xargs git rm
+  ```
+
+## Integration
+
+1) Check what files were modified since the last integration in each fork:
+  ```
+  > i integrate_files --file-direction common_files
+  > i integrate_files --file-direction only_files_in_src
+  > i integrate_files --file-direction only_files_in_dst
+  ```
+
+2) Look for directory touched on only one branch:
+  ```
+  > i integrate_files --file-direction common_files --mode "print_dirs"
+  > i integrate_files --file-direction only_files_in_src --mode "print_dirs"
+  > i integrate_files --file-direction only_files_in_dst --mode "print_dirs"
+  ```
+- If we find dirs that are touched in one branch but not in the other we can
+  copy / merge without running risks
+  ```
+  > i integrate_diff_dirs --subdir $SUBDIR -c
+  ```
+
+3) Check which change was made in each side since the last integration
+   ```
+   # Find the integration point:
+   > i integrate_files --file-direction common_files
+   ...
+   last_integration_hash='813c7e763'
+
+   # Diff the changes in each side from the integration point:
+   > i git_branch_diff_with -t hash -h 813c7e763 -f ...
+   > git difftool 813c7e763 ...
+   ```
+
+4) Check which files are different between the dirs:
+  ```
+  > i integrate_diff_dirs
+  ```
+
+5) Diff dir by dir
+  ```
+  > i integrate_diff_dirs --subdir dataflow/system
+  ```
+
+- Copy by dir
+  ```
+  > i integrate_diff_dirs --subdir market_data -c
+  ```
+
+6) Sync a dir to handle moved files
+- Assume that there is a dir where files were moved
+  ```
+  > invoke integrate_diff_dirs
+  ...
+  ... Only in .../cmamp1/.../alpha_numeric_data_snapshots: alpha
+  ... Only in .../amp1/.../alpha_numeric_data_snapshots: latest
+  ```
+- You can accept the `cmamp1` side with:
+  ```
+  > invoke integrate_rsync .../cmamp1/.../alpha_numeric_data_snapshots/
+  ```
+- This corresponds to:
+  ```
+  > rsync --delete -a -r {src_dir}/ {dst_dir}/
+  ```
+
+## Double-check the integration
+
+- Check that the regressions are passing on GH
+  ```
+  > i gh_create_pr --no-draft
+  ```
+
+- Check the files that were changed in both branches (i.e., the "problematic ones")
+  since the last integration and compare them to the base in each branch
+  ```
+  > cd amp1
+  > i integrate_diff_overlapping_files --src-dir-basename "amp1" --dst-dir-basename "cmamp1"
+  > cd cmamp1
+  > i integrate_diff_overlapping_files --src-dir-basename "cmamp1" --dst-dir-basename "amp1"
+  ```
+  
+- Read the changes to Python files:
+  ```
+  > cd amp1
+  > i git_branch_diff_with -t base --keep-extensions py
+  > cd cmamp1
+  > i git_branch_diff_with -t base --keep-extensions py
+  ```
+
+- Quickly scan all the changes in the branch compared to the base:
+  ```
+  > cd amp1
+  > i git_branch_diff_with -t base
+  > cd cmamp1
+  > i git_branch_diff_with -t base
+  ```
+
+## Run tests
+1) Check `amp` / `cmamp` using GH actions:
+  ```
+  > i gh_create_pr --no-draft
+  > i pytest_collect_only
+  > i gh_workflow_list
+  ```
+
+2) Check `lem` on dev1
+  ```
+  # Clean everything.
+  > git reset --hard; git clean -fd; git pull; (cd amp; git reset --hard; git clean -fd; git pull)
+  
+  > i git_pull
+  
+  > AM_BRANCH=AmpTask1786_Integrate_20220916
+  > (cd amp; gco $AM_BRANCH)
+  
+  > i pytest_collect_only
+  > i pytest_buildmeister
+  
+  > i git_branch_create -b $AM_BRANCH
+  ```
+
+3) Check `lime` on dev4
+
+4) Check `orange` on dev1
+ 
+5) Check `dev_tools` on dev1
