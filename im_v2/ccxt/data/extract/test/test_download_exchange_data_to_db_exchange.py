@@ -37,7 +37,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
         cmd.extend(["--contract_type", "spot"])
         cmd.extend(["--universe", "v3"])
         cmd.extend(["--db_stage", "dev"])
-        cmd.extend(["--db_table", "ccxt_ohlcv"])
+        cmd.extend(["--db_table", "ccxt_ohlcv_spot"])
         cmd.extend(["--aws_profile", "ck"])
         cmd.extend(["--data_type", "ohlcv"])
         cmd.extend(["--data_format", "postgres"])
@@ -54,7 +54,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
             "contract_type": "spot",
             "universe": "v3",
             "db_stage": "dev",
-            "db_table": "ccxt_ohlcv",
+            "db_table": "ccxt_ohlcv_spot",
             "incremental": False,
             "log_level": "INFO",
             "aws_profile": "ck",
@@ -89,7 +89,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
             "data_type": "ohlcv",
             "universe": "v3",
             "db_stage": "local",
-            "db_table": "ccxt_ohlcv",
+            "db_table": "ccxt_ohlcv_spot",
             "incremental": False,
             "log_level": "INFO",
             "aws_profile": "ck",

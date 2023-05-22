@@ -5,16 +5,14 @@ import logging
 import os
 from typing import Any
 
+import common.download as sinsadow
+import common.save as sinsasav
+import download_kaiko as sisebido
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import helpers.hparser as hparser
 import helpers.hio as hio
-import common.download as sinsadow
-
-import download_kaiko as sisebido
-
-import common.save as sinsasav
+import helpers.hparser as hparser
 
 _LOG = logging.getLogger(__name__)
 
@@ -39,7 +37,9 @@ class CsvDataFrameSaver(sinsasav.DataSaver):
 
         :param data: data to persists into CSV
         """
-        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
+        hdbg.dassert_isinstance(
+            data.get_data(), pd.DataFrame, "Only DataFrame is supported."
+        )
 
         signature = "tick_trades"
 
@@ -79,7 +79,6 @@ def _add_download_args(
         type=str,
         help="Path to the target directory to store CSV data into",
     )
-
 
     return parser
 

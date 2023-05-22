@@ -148,35 +148,29 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         client_futures._download_bid_ask(
             exchange_id, currency_pair, start_timestamp, end_timestamp, depth=1
         )
-        # Check calls against `convert_currency`.
-        self.assertEqual(self.convert_currency_pair_mock.call_count, 2)
-        actual_args = str(self.convert_currency_pair_mock.call_args_list)
-        expected_args = "[call('btc/usdt'), call('btc/usdt')]"
-        self.assertEqual(actual_args, expected_args)
         # Check calls against `build_base_url`.
         self.assertEqual(self.build_base_url_mock.call_count, 2)
         actual_args = str(self.build_base_url_mock.call_args_list)
         expected_args = """[call(data_type='market-depth', exchange='binance', currency_pair='btc-usdt'),
  call(data_type='market-depth', exchange='binance-coin-futures', currency_pair='btcusd_perp')]"""
-        self.assertEqual(actual_args, expected_args)
         # Check calls against `build_query_url`.
         self.assertEqual(self.build_query_url_mock.call_count, 2)
         actual_args = str(self.build_query_url_mock.call_args_list)
         expected_args = (
             """[call('https://api.cryptochassis.com/v1/market-depth/binance/btc-usdt', """
-        """startTime='2022-08-18T00:00:00Z', depth='10'),
+            """startTime='2022-08-18T00:00:00Z', depth='10'),
  call('https://api.cryptochassis.com/v1/market-depth/binance-coin-futures/btcusd_perp', """
-        """startTime='2022-08-18T00:00:00Z', depth='1')]"""
+            """startTime='2022-08-18T00:00:00Z', depth='1')]"""
         )
         self.assertEqual(actual_args, expected_args)
         # Check calls against `requests.get`.
         self.assertEqual(self.requests_mock.get.call_count, 2)
         actual_args = str(self.requests_mock.get.call_args_list)
-        expected_args=(
+        expected_args = (
             """[call('https://api.cryptochassis.com/v1/market-depth/binance/btc-usdt"""
-        """?startTime=1660766400&endTime=1660852740'),
+            """?startTime=1660766400&endTime=1660852740'),
  call('https://api.cryptochassis.com/v1/market-depth/binance-coin-futures/btcusd_perp"""
-        """?startTime=1660766400&endTime=1660852740')]"""
+            """?startTime=1660766400&endTime=1660852740')]"""
         )
         self.assertEqual(actual_args, expected_args)
         # Check calls against `pandas.read_csv`.
@@ -200,7 +194,14 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         )
         expected_args = (
             (exp_arg_df,),
-            {"float_columns": ["bid_price_l1", "bid_size_l1", "ask_price_l1", "ask_size_l1"]},
+            {
+                "float_columns": [
+                    "bid_price_l1",
+                    "bid_size_l1",
+                    "ask_price_l1",
+                    "ask_size_l1",
+                ]
+            },
         )
         # Convert Dataframes to string.
         expected_df_str = hpandas.df_to_str(expected_args[0][0])
@@ -368,19 +369,11 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         client_futures._download_ohlcv(
             exchange_id, currency_pair, start_timestamp, end_timestamp
         )
-        # Check calls against `convert_currency`.
-        self.assertEqual(self.convert_currency_pair_mock.call_count, 2)
-        actual_args = str(self.convert_currency_pair_mock.call_args_list)
-        expected_args = "[call('btc/usd'), call('btc/usd')]"
-        self.assertEqual(actual_args, expected_args)
         # Check calls against `build_base_url`.
         self.assertEqual(self.build_base_url_mock.call_count, 2)
         actual_args = str(self.build_base_url_mock.call_args_list)
-        expected_args = (
-            """[call(data_type='ohlc', exchange='binance', currency_pair='btc-usd'),
+        expected_args = """[call(data_type='ohlc', exchange='binance', currency_pair='btc-usd'),
  call(data_type='ohlc', exchange='binance-coin-futures', currency_pair='btcusd_perp')]"""
-        )
-        self.assertEqual(actual_args, expected_args)
         # Check calls against `build_query_url`.
         self.assertEqual(self.build_query_url_mock.call_count, 2)
         actual_args = str(self.build_query_url_mock.call_args_list)
@@ -388,7 +381,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
             """[call('https://api.cryptochassis.com/v1/ohlc/binance/btc-usd', startTime=1660867200, """
             """endTime=1660953540, interval='1m', includeRealTime='0'),
  call('https://api.cryptochassis.com/v1/ohlc/binance-coin-futures/btcusd_perp', startTime=1660867200, """
-    """endTime=1660953540, interval='1m', includeRealTime='0')]"""
+            """endTime=1660953540, interval='1m', includeRealTime='0')]"""
         )
         self.assertEqual(actual_args, expected_args)
         # Check calls against `requests.get`.
@@ -479,7 +472,6 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = hpandas.convert_df_to_json_string(actual)
         self.assert_equal(expected, actual, fuzzy_match=True)
 
-
     def test_download_ohlcv_invalid_input1(self) -> None:
         """
         Run with invalid start timestamp.
@@ -552,18 +544,11 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         client._download_trades(
             exchange_id, currency_pair, start_timestamp=start_timestamp
         )
-        # Check calls against `convert_currency`.
-        self.assertEqual(self.convert_currency_pair_mock.call_count, 2)
-        actual_args = str(self.convert_currency_pair_mock.call_args_list)
-        expected_args = ("""[call('btc/usd'), call('btc/usd')]""")
-        self.assertEqual(actual_args, expected_args)
         # Check calls against `build_base_url`.
         self.assertEqual(self.build_base_url_mock.call_count, 2)
         actual_args = str(self.build_base_url_mock.call_args_list)
-        expected_args = ("""[call(data_type='trade', exchange='binance', currency_pair='btc-usd'),
+        expected_args = """[call(data_type='trade', exchange='binance', currency_pair='btc-usd'),
  call(data_type='trade', exchange='binance-usds-futures', currency_pair='btcusdt')]"""
-        )
-        self.assertEqual(actual_args, expected_args)
         # Check calls against `build_query_url`.
         self.assertEqual(self.build_query_url_mock.call_count, 2)
         actual_args = str(self.build_query_url_mock.call_args_list)
@@ -577,8 +562,9 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         # Check calls against `requests.get`.
         self.assertEqual(self.requests_mock.get.call_count, 2)
         actual_args = str(self.requests_mock.get.call_args_list)
-        expected_args = ("""[call('https://api.cryptochassis.com/v1/trade/binance/"""
-        """btc-usd?startTime=1660766400'),
+        expected_args = (
+            """[call('https://api.cryptochassis.com/v1/trade/binance/"""
+            """btc-usd?startTime=1660766400'),
  call('https://api.cryptochassis.com/v1/trade/binance-usds-futures/btcusdt?startTime=1660766400')]"""
         )
         self.assertEqual(actual_args, expected_args)
@@ -593,10 +579,10 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         # Check final `trade` data.
         trade_expected = pd.DataFrame(
             {
-                "timestamp": [1660780800],
+                "timestamp": [1660780800000],
                 "price": [23344.42],
-                "size": [0.0022015],
-                "is_buyer_maker": [0],
+                "amount": [0.0022015],
+                "side": ["sell"],
             }
         )
         expected_df_str = hpandas.df_to_str(trade_expected)
@@ -628,7 +614,6 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         )
         actual = hpandas.convert_df_to_json_string(actual)
         self.assert_equal(expected, actual, fuzzy_match=True)
-
 
     def test_download_trade_invalid_input1(self) -> None:
         """

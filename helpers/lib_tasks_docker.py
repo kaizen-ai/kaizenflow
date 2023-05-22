@@ -289,7 +289,9 @@ def docker_login(ctx):  # type: ignore
     if major_version == 1:
         cmd = f"eval $(aws ecr get-login --profile {profile} --no-include-email --region {region})"
     elif major_version == 2:
-        ecr_base_path = hlitauti.get_default_param(f"{profile.upper()}_ECR_BASE_PATH")
+        ecr_base_path = hlitauti.get_default_param(
+            f"{profile.upper()}_ECR_BASE_PATH"
+        )
         # TODO(Nikola): Remove `_get_aws_cli_version()` and use only `aws ecr get-login-password`
         #  as it is present in both versions of `awscli`.
         cmd = (
@@ -1251,9 +1253,7 @@ def _docker_cmd(
     _LOG.info("Pulling the latest version of Docker")
     docker_pull(ctx)
     _LOG.debug("cmd=%s", docker_cmd_)
-    rc: Optional[int] = hlitauti.run(
-        ctx, docker_cmd_, pty=True, **ctx_run_kwargs
-    )
+    rc: Optional[int] = hlitauti.run(ctx, docker_cmd_, pty=True, **ctx_run_kwargs)
     return rc
 
 

@@ -86,11 +86,11 @@ period = "7d"
 interval = "1m"
 #
 df_all = yf.download(
-    tickers = universe,
-    period = period,
-    interval = interval,
-    ignore_tz = True,
-    prepost = False,
+    tickers=universe,
+    period=period,
+    interval=interval,
+    ignore_tz=True,
+    prepost=False,
 )
 df_all.tail()
 

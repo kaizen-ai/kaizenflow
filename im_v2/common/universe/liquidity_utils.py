@@ -1,29 +1,29 @@
-#"""
-#Combine Datastream and IDC liquidity data and use it to compute a universe.
+# """
+# Combine Datastream and IDC liquidity data and use it to compute a universe.
 #
-#Import as:
+# Import as:
 #
-#import vendors_lime.datastream_liquidity.universe_utils as vldlunut
-#"""
+# import vendors_lime.datastream_liquidity.universe_utils as vldlunut
+# """
 #
-#import logging
-#from typing import List
+# import logging
+# from typing import List
 #
-#import pandas as pd
-#from tqdm.autonotebook import tqdm
+# import pandas as pd
+# from tqdm.autonotebook import tqdm
 #
-#import helpers.hdatetime as hdateti
-#import helpers.hdbg as hdbg
-#import helpers.hsql as hsql
-#import im_v2.ig.ig_utils as imvigigut
-#import im_v2.ig.universe.ticker_igid_mapping as imviutigma
-#import vendors_lime.datastream_liquidity.utils as vldaliut
-#import vendors_lime.idc.utils as vliiduti
+# import helpers.hdatetime as hdateti
+# import helpers.hdbg as hdbg
+# import helpers.hsql as hsql
+# import im_v2.ig.ig_utils as imvigigut
+# import im_v2.ig.universe.ticker_igid_mapping as imviutigma
+# import vendors_lime.datastream_liquidity.utils as vldaliut
+# import vendors_lime.idc.utils as vliiduti
 #
-#_LOG = logging.getLogger(__name__)
+# _LOG = logging.getLogger(__name__)
 #
 #
-#def _and_filters(filters: List[pd.Series]) -> pd.Series:
+# def _and_filters(filters: List[pd.Series]) -> pd.Series:
 #    """
 #    Compute the logical AND of a list of filters, represented by Series.
 #
@@ -48,7 +48,7 @@
 #    return and_filter
 #
 #
-#def _apply_categorical_filters(df: pd.DataFrame) -> pd.DataFrame:
+# def _apply_categorical_filters(df: pd.DataFrame) -> pd.DataFrame:
 #    """
 #    Apply criteria to `df` to select assets that could belong to our universe.
 #
@@ -81,13 +81,13 @@
 #    return filtered_df
 #
 #
-#def generate_liquidity_df(
+# def generate_liquidity_df(
 #    datetime_: hdateti.Datetime,
 #    connection: hsql.DbConnection,
 #    *,
 #    apply_categorical_filters: bool = True,
 #    add_rankings: bool = True,
-#) -> pd.DataFrame:
+# ) -> pd.DataFrame:
 #    """
 #    Create a merged Datastream / IDC liquidity dataframe.
 #
@@ -166,14 +166,14 @@
 ## #############################################################################
 #
 #
-#def apply_threshold_filters(
+# def apply_threshold_filters(
 #    df: pd.DataFrame,
 #    min_last_close_usd: float = 10,
 #    min_mdv_usd_63d_pct: float = 0.5,
 #    min_mkt_cap_usd_avg_90d_pct: float = 0.5,
 #    max_spread_bps_63d_pct: float = 0.5,
 #    max_count: int = 1000,
-#) -> pd.DataFrame:
+# ) -> pd.DataFrame:
 #    """
 #    Apply criteria to select assets that are candidates for the universe.
 #    """
@@ -193,9 +193,9 @@
 #    return filtered_df
 #
 #
-#def get_filtered_universe_dfs(
+# def get_filtered_universe_dfs(
 #    datetimes: List[hdateti.Datetime], connection: hsql.DbConnection
-#) -> List[pd.DataFrame]:
+# ) -> List[pd.DataFrame]:
 #    """
 #    Create a list of dataframes, one per date, with the universe on that date.
 #    """
@@ -224,7 +224,7 @@
 #    return dfs
 #
 #
-#def combine_universe_dfs(dfs: List[pd.DataFrame]) -> pd.DataFrame:
+# def combine_universe_dfs(dfs: List[pd.DataFrame]) -> pd.DataFrame:
 #    """ """
 #
 #    processed = []

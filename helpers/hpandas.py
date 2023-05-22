@@ -6,7 +6,7 @@ import helpers.hpandas as hpandas
 
 import logging
 import random
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -531,7 +531,7 @@ def compare_dataframe_rows(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame
 def drop_duplicates(
     data: Union[pd.Series, pd.DataFrame],
     use_index: bool,
-    subset: Optional[List[str]] = None,
+    column_subset: Optional[List[str]] = None,
     *args: Any,
     **kwargs: Any,
 ) -> Union[pd.Series, pd.DataFrame]:
@@ -542,40 +542,33 @@ def drop_duplicates(
     - https://pandas.pydata.org/docs/reference/api/pandas.Series.drop_duplicates.html
     - https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.drop_duplicates.html
 
-    :param use_index: use index values for identifying duplicates
-    :param subset: a list of columns to consider for identifying duplicates
+    :param use_index:
+        - if `True`, use index values together with a column subset for
+            identifying duplicates
+        - if `False`, duplicated rows are with the exact same values in a subset
+            and different indices
+    :param column_subset: a list of columns to consider for identifying duplicates
     :return: data without duplicates
     """
-    _LOG.debug(
-        "use_index = % s, subset = % s args = % s, kwargs = % s",
-        str(use_index),
-        str(subset),
-        str(args),
-        str(kwargs),
-    )
-    # TODO(Nina): Consider the case when one of the columns has "index" as its name.
-    hdbg.dassert_not_in("index", data.columns.tolist())
+    _LOG.debug(hprint.to_str("use_index column_subset args kwargs"))
     num_rows_before = data.shape[0]
     # Get all columns list for subset if no subset is passed.
-    if subset is None:
-        subset = data.columns.tolist()
+    if column_subset is None:
+        column_subset = data.columns.tolist()
     else:
-        hdbg.dassert_lte(1, len(subset), "Columns subset cannot be empty")
+        hdbg.dassert_lte(1, len(column_subset), "Columns subset cannot be empty")
     if use_index:
-        # Save index column name in order to set it back after removing duplicates.
-        index_col_name = data.index.name or "index"
-        # Add index column to subset columns in order to drop duplicates by it as well.
-        subset.insert(0, index_col_name)
-        data = data.reset_index()
+        # Add dummy index column to use it for duplicates detection.
+        index_col_name = "use_index_col"
+        hdbg.dassert_not_in(index_col_name, data.columns.tolist())
+        column_subset.insert(0, index_col_name)
+        data[index_col_name] = data.index
     #
-    data_no_dups = data.drop_duplicates(subset=subset, *args, **kwargs)
+    data_no_dups = data.drop_duplicates(subset=column_subset, *args, **kwargs)
     #
     if use_index:
-        # Set the index back.
-        data_no_dups = data_no_dups.set_index(index_col_name, drop=True)
-        # Remove the index's name if the original index does not have one.
-        if index_col_name == "index":
-            data_no_dups.index.name = None
+        # Remove dummy index column.
+        data_no_dups = data_no_dups.drop([index_col_name], axis=1)
     # Report the change.
     num_rows_after = data_no_dups.shape[0]
     if num_rows_before != num_rows_after:
@@ -1549,6 +1542,27 @@ def remove_outliers(
 # #############################################################################
 
 
+# TODO(Grisha): add assertions/logging.
+def get_df_from_iterator(
+    iter_: Iterator[pd.DataFrame],
+    *,
+    sort_index: bool = True,
+) -> pd.DataFrame:
+    """
+    Concat all the dataframes in the iterator in one dataframe.
+
+    :param iter_: dataframe iterator
+    :param sort_index: whether to sort output index or not
+    :return: combined iterator data
+    """
+    # TODO(gp): @all make a copy of `iter_` so we don't consume it.
+    dfs = list(iter_)
+    df_res = pd.concat(dfs)
+    if sort_index:
+        df_res = df_res.sort_index()
+    return df_res
+
+
 def heatmap_df(df: pd.DataFrame, *, axis: Any = None) -> pd.DataFrame:
     """
     Colorize a df with a heatmap depending on the numeric values.
@@ -1563,12 +1577,42 @@ def heatmap_df(df: pd.DataFrame, *, axis: Any = None) -> pd.DataFrame:
     return df
 
 
+def compare_nans_in_dataframes(
+    df1: pd.DataFrame, df2: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Compare equality of DataFrames in terms of NaNs.
+
+    For example:
+        - `5 vs np.nan` is a mismatch
+        - `np.nan vs 5` is a mismatch
+        - `np.nan vs np.nan` is a match
+        - `np.nan vs np.inf` is a mismatch
+
+    :param df1: dataframe to compare
+    :param df2: dataframe to compare with
+    :return: dataframe that shows the differences stacked side by side, see
+        `pandas.DataFrame.compare()` for an example
+    """
+    dassert_axes_equal(df1, df2)
+    # Keep rows where df1's value is NaN and df2's value is not NaN and vice versa.
+    mask1 = df1.isna() & ~df2.isna()
+    mask2 = ~df1.isna() & df2.isna()
+    mask3 = mask1 | mask2
+    # Compute a dataframe with the differences.
+    nan_diff_df = df1[mask3].compare(df2[mask3], result_names=("df1", "df2"))
+    return nan_diff_df
+
+
+# TODO(Grisha): -> `compare_dataframes()`?
 def compare_dfs(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
     *,
     row_mode: str = "equal",
     column_mode: str = "equal",
+    # TODO(Grisha): should be True by default?
+    compare_nans: bool = False,
     diff_mode: str = "diff",
     assert_diff_threshold: float = 1e-3,
     close_to_zero_threshold: float = 1e-6,
@@ -1585,6 +1629,8 @@ def compare_dfs(
         - "equal": rows need to be the same for the two dataframes
         - "inner": compute the common rows for the two dataframes
     :param column_mode: same as `row_mode`
+    :param compare_nans: include NaN comparison if True otherwise just
+        compare non-NaN values
     :param diff_mode: control how the dataframes are compared in terms of
         corresponding elements
         - "diff": use the difference
@@ -1599,10 +1645,12 @@ def compare_dfs(
     :param log_level: logging level
     :return: a singe dataframe with differences as values
     """
+    hdbg.dassert_isinstance(df1, pd.DataFrame)
+    hdbg.dassert_isinstance(df2, pd.DataFrame)
     # TODO(gp): Factor out this logic and use it for both compare_visually_dfs
     #  and
     if row_mode == "equal":
-        hdbg.dassert_eq(list(df1.index), list(df2.index))
+        dassert_indices_equal(df1, df2)
     elif row_mode == "inner":
         # TODO(gp): Add sorting on demand, otherwise keep the columns in order.
         same_rows = list((set(df1.index)).intersection(set(df2.index)))
@@ -1624,6 +1672,17 @@ def compare_dfs(
     # Round small numbers to 0 to exclude them from the diff computation.
     df1[close_to_zero_threshold_mask] = df1[close_to_zero_threshold_mask].round(0)
     df2[close_to_zero_threshold_mask] = df2[close_to_zero_threshold_mask].round(0)
+    if compare_nans:
+        # Compare NaN values in dataframes.
+        nan_diff_df = compare_nans_in_dataframes(df1, df2)
+        _LOG.log(
+            log_level,
+            "Dataframe with NaN differences=\n%s",
+            df_to_str(nan_diff_df, log_level=log_level),
+        )
+        # TODO(Grisha): add the `only_warning` switch to the function.
+        msg = "There are NaN values in one of the dataframes that are not in the other one."
+        hdbg.dassert_eq(0, nan_diff_df.shape[0], msg=msg)
     # Compute the difference df.
     if diff_mode == "diff":
         df_diff = df1 - df2

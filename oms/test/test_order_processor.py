@@ -36,14 +36,18 @@ class TestOrderProcessor1(omtodh.TestOmsDbHelper):
         # Create OMS tables.
         incremental = False
         self._asset_id_name = "asset_id"
-        oomsdb.create_oms_tables(self.connection, incremental, self._asset_id_name)
+        oomsdb.create_oms_tables(
+            self.connection, incremental, self._asset_id_name
+        )
 
     def tearDown(self) -> None:
         # Remove the OMS tables.
         oomsdb.remove_oms_tables(self.connection)
         super().tearDown()
 
-    def helper(self, termination_condition: Union[int, pd.Timestamp], exp: str) -> None:
+    def helper(
+        self, termination_condition: Union[int, pd.Timestamp], exp: str
+    ) -> None:
         """
         Create two coroutines, one with a `DatabaseBroker`, the other with an
         `OrderProcessor`.
@@ -70,10 +74,9 @@ class TestOrderProcessor1(omtodh.TestOmsDbHelper):
                 delay_to_accept_in_secs,
                 delay_to_fill_in_secs,
                 broker,
-                self._asset_id_name
+                self._asset_id_name,
             )
-            order_processor_coroutine = order_processor.run_loop(
-            )
+            order_processor_coroutine = order_processor.run_loop()
             # Run.
             coroutines = [order_processor_coroutine, broker_coroutine]
             hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)

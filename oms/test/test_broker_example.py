@@ -6,7 +6,6 @@ import helpers.hunit_test as hunitest
 import oms.broker_example as obroexam
 import oms.test.oms_db_helper as omtodh
 
-
 # #############################################################################
 # Test_Broker_builders1
 # #############################################################################

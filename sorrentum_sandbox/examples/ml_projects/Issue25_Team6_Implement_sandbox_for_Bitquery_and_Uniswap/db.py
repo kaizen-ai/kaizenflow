@@ -15,9 +15,9 @@ import psycopg2.extras as extras
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import sorrentum_sandbox.common.client as sinsacli
-import sorrentum_sandbox.common.download as sinsadow
-import sorrentum_sandbox.common.save as sinsasav
+import sorrentum_sandbox.common.client as ssacocli
+import sorrentum_sandbox.common.download as ssacodow
+import sorrentum_sandbox.common.save as ssacosav
 
 
 def get_uniswap_table_query() -> str:
@@ -112,7 +112,7 @@ def get_db_connection() -> Any:
 # #############################################################################
 
 
-class PostgresDataFrameSaver(sinsasav.DataSaver):
+class PostgresDataFrameSaver(ssacosav.DataSaver):
     """
     Save Pandas DataFrame to a PostgreSQL using a provided DB connection.
     """
@@ -127,7 +127,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         self._create_tables()
 
     def save(
-        self, data: sinsadow.RawData, db_table: str, *args: Any, **kwargs: Any
+        self, data: ssacodow.RawData, db_table: str, *args: Any, **kwargs: Any
     ) -> None:
         """
         Save RawData storing a DataFrame to a specified DB table.
@@ -135,7 +135,9 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         :param data: data to persists into DB
         :param db_table: table to save data to
         """
-        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
+        hdbg.dassert_isinstance(
+            data.get_data(), pd.DataFrame, "Only DataFrame is supported."
+        )
         # Transform dataframe into list of tuples.
         df = data.get_data()
         values = [tuple(v) for v in df.to_numpy()]
@@ -155,7 +157,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         :param table_name: name of the table for insertion
         :return: SQL query, e.g.,
             ```
-            INSERT INTO bitquery_uniswap(timestamp,open,high,low,close) VALUES %s  
+            INSERT INTO bitquery_uniswap(timestamp,open,high,low,close) VALUES %s
         ```
         """
         columns = ",".join(list(df.columns))
@@ -183,7 +185,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
 # #############################################################################
 
 
-class PostgresClient(sinsacli.DataClient):
+class PostgresClient(ssacocli.DataClient):
     """
     Load PostgreSQL data.
     """

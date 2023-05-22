@@ -219,7 +219,9 @@ class ImClientMarketData(mdabmada.MarketData):
         )
         if df.empty:
             wall_clock_time = self.get_wall_clock_time()
-            _LOG.warning("No data found near wall_clock_time=%s", self.wall_clock_time)
+            _LOG.warning(
+                "No data found near wall_clock_time=%s", self.wall_clock_time
+            )
             ret = None
         else:
             # The latest timestamp is min timestamp across max timestamps

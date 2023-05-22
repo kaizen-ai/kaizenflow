@@ -203,8 +203,10 @@ class RealTimeDagRunner(dtfcore.DagRunner):
             mode = "round"
             max_distance_in_secs = 10
             bar_timestamp = hdateti.find_bar_timestamp(
-                current_timestamp, self._bar_duration_in_secs,
-                mode=mode, max_distance_in_secs=max_distance_in_secs
+                current_timestamp,
+                self._bar_duration_in_secs,
+                mode=mode,
+                max_distance_in_secs=max_distance_in_secs,
             )
             _LOG.debug(hprint.to_str("current_timestamp bar_timestamp"))
             _LOG.info("\n%s", hprint.frame("bar_timestamp=%s" % bar_timestamp))
