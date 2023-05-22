@@ -18,24 +18,21 @@
 
 import logging
 
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
 
-import defi.dao_cross.order as ddacrord
-import defi.dao_cross.supply_demand as ddcrsede
+import defi.tulip.implementation.order as dtuimord
+import defi.tulip.implementation.supply_demand as dtimsude
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
-import defi.tulip.implementation.order as dtuimor
-import defi.tulip.implementation.supply_demand as dtuimsd
 
 # %%
 try:
-    import pulp
+    pass
 except ImportError:
     # !sudo /bin/bash -c "(source /venv/bin/activate; pip install pulp)"
-    import pulp
+    pass
 import defi.tulip.implementation.optimize as dtuimopt
 
 # %%
@@ -72,8 +69,10 @@ discrete_supply_curve.index.name = quote_token
 discrete_supply_curve
 
 # %%
-supply_orders1 = dtuimsd.convert_discrete_curve_to_limit_orders(discrete_supply_curve)
-supply_orders_df1 = dtuimor.convert_orders_to_dataframe(supply_orders1)
+supply_orders1 = dtimsude.convert_discrete_curve_to_limit_orders(
+    discrete_supply_curve
+)
+supply_orders_df1 = dtuimord.convert_orders_to_dataframe(supply_orders1)
 supply_orders_df1
 
 # %%
@@ -91,8 +90,10 @@ discrete_demand_curve.index.name = quote_token
 discrete_demand_curve
 
 # %%
-demand_orders1 = dtuimsd.convert_discrete_curve_to_limit_orders(discrete_demand_curve)
-demand_orders_df1 = dtuimor.convert_orders_to_dataframe(demand_orders1)
+demand_orders1 = dtimsude.convert_discrete_curve_to_limit_orders(
+    discrete_demand_curve
+)
+demand_orders_df1 = dtuimord.convert_orders_to_dataframe(demand_orders1)
 demand_orders_df1
 
 # %%
@@ -103,15 +104,19 @@ prices = {"BTC": 1, "ETH": 2}
 
 # %%
 type_ = "supply"
-supply_curve1 = dtuimsd.get_supply_demand_discrete_curve(type_, supply_orders_df1)
+supply_curve1 = dtimsude.get_supply_demand_discrete_curve(
+    type_, supply_orders_df1
+)
 supply_curve1
 
 # %%
-supply_orders_ = dtuimsd.convert_discrete_curve_to_limit_orders(supply_curve1)
+supply_orders_ = dtimsude.convert_discrete_curve_to_limit_orders(supply_curve1)
 
 # %% run_control={"marked": false}
 type_ = "demand"
-demand_curve1 = dtuimsd.get_supply_demand_discrete_curve(type_, demand_orders_df1)
+demand_curve1 = dtimsude.get_supply_demand_discrete_curve(
+    type_, demand_orders_df1
+)
 demand_curve1
 
 # %%
@@ -133,16 +138,18 @@ display(daoswap_results1)
 
 # %%
 quantity_const = 1.0
-supply_orders2 = dtuimsd.convert_discrete_curve_to_limit_orders(
+supply_orders2 = dtimsude.convert_discrete_curve_to_limit_orders(
     discrete_supply_curve,
     quantity_const=quantity_const,
 )
-supply_orders_df2 = dtuimor.convert_orders_to_dataframe(supply_orders2)
+supply_orders_df2 = dtuimord.convert_orders_to_dataframe(supply_orders2)
 supply_orders_df2
 
 # %%
 type_ = "supply"
-supply_curve2 = dtuimsd.get_supply_demand_discrete_curve(type_, supply_orders_df2)
+supply_curve2 = dtimsude.get_supply_demand_discrete_curve(
+    type_, supply_orders_df2
+)
 supply_curve2
 
 # %%
@@ -164,16 +171,18 @@ display(daoswap_results2)
 
 # %%
 limit_price_const = 3.0
-supply_orders3 = dtuimsd.convert_discrete_curve_to_limit_orders(
+supply_orders3 = dtimsude.convert_discrete_curve_to_limit_orders(
     discrete_supply_curve,
     limit_price_const=limit_price_const,
 )
-supply_orders_df3 = dtuimor.convert_orders_to_dataframe(supply_orders3)
+supply_orders_df3 = dtuimord.convert_orders_to_dataframe(supply_orders3)
 supply_orders_df3
 
 # %%
 type_ = "supply"
-supply_curve3 = dtuimsd.get_supply_demand_discrete_curve(type_, supply_orders_df3)
+supply_curve3 = dtimsude.get_supply_demand_discrete_curve(
+    type_, supply_orders_df3
+)
 supply_curve3
 
 # %%
