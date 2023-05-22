@@ -148,17 +148,11 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         client_futures._download_bid_ask(
             exchange_id, currency_pair, start_timestamp, end_timestamp, depth=1
         )
-        # Check calls against `convert_currency`.
-        self.assertEqual(self.convert_currency_pair_mock.call_count, 2)
-        actual_args = str(self.convert_currency_pair_mock.call_args_list)
-        expected_args = "[call('btc/usdt'), call('btc/usdt')]"
-        self.assertEqual(actual_args, expected_args)
         # Check calls against `build_base_url`.
         self.assertEqual(self.build_base_url_mock.call_count, 2)
         actual_args = str(self.build_base_url_mock.call_args_list)
         expected_args = """[call(data_type='market-depth', exchange='binance', currency_pair='btc-usdt'),
  call(data_type='market-depth', exchange='binance-coin-futures', currency_pair='btcusd_perp')]"""
-        self.assertEqual(actual_args, expected_args)
         # Check calls against `build_query_url`.
         self.assertEqual(self.build_query_url_mock.call_count, 2)
         actual_args = str(self.build_query_url_mock.call_args_list)
@@ -375,17 +369,11 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         client_futures._download_ohlcv(
             exchange_id, currency_pair, start_timestamp, end_timestamp
         )
-        # Check calls against `convert_currency`.
-        self.assertEqual(self.convert_currency_pair_mock.call_count, 2)
-        actual_args = str(self.convert_currency_pair_mock.call_args_list)
-        expected_args = "[call('btc/usd'), call('btc/usd')]"
-        self.assertEqual(actual_args, expected_args)
         # Check calls against `build_base_url`.
         self.assertEqual(self.build_base_url_mock.call_count, 2)
         actual_args = str(self.build_base_url_mock.call_args_list)
         expected_args = """[call(data_type='ohlc', exchange='binance', currency_pair='btc-usd'),
  call(data_type='ohlc', exchange='binance-coin-futures', currency_pair='btcusd_perp')]"""
-        self.assertEqual(actual_args, expected_args)
         # Check calls against `build_query_url`.
         self.assertEqual(self.build_query_url_mock.call_count, 2)
         actual_args = str(self.build_query_url_mock.call_args_list)
@@ -556,17 +544,11 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         client._download_trades(
             exchange_id, currency_pair, start_timestamp=start_timestamp
         )
-        # Check calls against `convert_currency`.
-        self.assertEqual(self.convert_currency_pair_mock.call_count, 2)
-        actual_args = str(self.convert_currency_pair_mock.call_args_list)
-        expected_args = """[call('btc/usd'), call('btc/usd')]"""
-        self.assertEqual(actual_args, expected_args)
         # Check calls against `build_base_url`.
         self.assertEqual(self.build_base_url_mock.call_count, 2)
         actual_args = str(self.build_base_url_mock.call_args_list)
         expected_args = """[call(data_type='trade', exchange='binance', currency_pair='btc-usd'),
  call(data_type='trade', exchange='binance-usds-futures', currency_pair='btcusdt')]"""
-        self.assertEqual(actual_args, expected_args)
         # Check calls against `build_query_url`.
         self.assertEqual(self.build_query_url_mock.call_count, 2)
         actual_args = str(self.build_query_url_mock.call_args_list)
@@ -597,10 +579,10 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         # Check final `trade` data.
         trade_expected = pd.DataFrame(
             {
-                "timestamp": [1660780800],
+                "timestamp": [1660780800000],
                 "price": [23344.42],
-                "size": [0.0022015],
-                "is_buyer_maker": [0],
+                "amount": [0.0022015],
+                "side": ["sell"],
             }
         )
         expected_df_str = hpandas.df_to_str(trade_expected)

@@ -10,7 +10,6 @@
 import copy
 import datetime
 import os
-from itertools import product
 
 import airflow
 from airflow.contrib.operators.ecs_operator import ECSOperator
@@ -38,34 +37,24 @@ assert _LAUNCH_TYPE in ["ec2", "fargate"]
 _DAG_ID = _FILENAME.rsplit(".", 1)[0]
 # List of dicts to specify parameters for each reconciliation jobs.
 # "periodic_daily.airflow.downloaded_1min.parquet.ohlcv.futures.v7.ccxt.binance.v1_0_0"
-_RECONCILIATION_JOBS = [
+_QA_JOBS = [
     {
-        "data_type": "ohlcv",
-        "contract_type": "futures",
-        "db_table_base_name": "ccxt_ohlcv_futures",
-        "s3_dataset_signature": "periodic_daily.airflow.downloaded_1min.parquet.ohlcv.futures.v7.ccxt.binance.v1_0_0",
+        "dataset_signature1": "realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v7.ccxt.binance.v1_0_0",
+        "dataset_signature2": "periodic_daily.airflow.downloaded_1min.parquet.ohlcv.futures.v7.ccxt.binance.v1_0_0",
         "add_invoke_params": [],
     },
-    # Spot real time downloaded has been paused at the moment.
-    # {
-    #    "data_type": "ohlcv",
-    #    "contract_type": "spot",
-    #    "db_table_base_name": "ccxt_ohlcv",
-    #    "s3_dataset_signature": "periodic_daily.airflow.downloaded_1min.parquet.ohlcv.spot.v7.ccxt.binance.v1_0_0",
-    #    "add_invoke_params": []
-    # },
     {
-        "data_type": "bid_ask",
-        "contract_type": "futures",
-        "db_table_base_name": "ccxt_bid_ask_futures_resampled_1min",
-        "s3_dataset_signature": "periodic_daily.airflow.resampled_1min.parquet.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0",
+        "dataset_signature1": "realtime.airflow.resampled_1min.postgres.bid_ask.futures.v7.ccxt.binance.v1_0_0",
+        "dataset_signature2": "periodic_daily.airflow.resampled_1min.parquet.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0",
         "add_invoke_params": [
             "--bid-ask-accuracy {{ var.value.bid_ask_qa_acc_thresh }}"
         ],
     },
 ]
 # Shared location to store the reconciliaiton notebook into
-_QA_NB_DST_DIR = os.path.join("{{ var.value.efs_mount }}", _STAGE, "data_qa")
+_QA_NB_DST_DIR = os.path.join(
+    "{{ var.value.efs_mount }}", _STAGE, "data_qa", "periodic_daily"
+)
 _DAG_DESCRIPTION = (
     "Daily data QA. Run QA notebook and publish results" + " to a shared EFS."
 )
@@ -111,34 +100,29 @@ dag = airflow.DAG(
     default_args=default_args,
     schedule_interval=_SCHEDULE,
     catchup=True,
-    start_date=datetime.datetime(2022, 12, 17, 0, 0, 0),
+    start_date=datetime.datetime(2023, 2, 17, 0, 0, 0),
 )
 
 invoke_cmd = [
-    "invoke reconcile_data_run_notebook",
-    "--db-stage 'dev'",
+    "invoke run_cross_dataset_qa_notebook",
+    f"--stage '{_STAGE}'",
     "--start-timestamp '{{ data_interval_start.replace(hour=0, minute=0, second=0) }}'",
     "--end-timestamp '{{ data_interval_end.replace(hour=0, minute=0, second=0) - macros.timedelta(minutes=1) }}'",
-    "--db-table '{}'",
-    "--s3-dataset-signature '{}'",
+    "--dataset-signature1 '{}'",
+    "--dataset-signature2 '{}'",
     "--aws-profile 'ck'",
-    f"--s3-path '{s3_bucket}'",
     f"--base-dst-dir '{_QA_NB_DST_DIR}'",
 ]
 
 start_comparison = DummyOperator(task_id="start_comparison", dag=dag)
 end_comparison = DummyOperator(task_id="end_comparison", dag=dag)
 
-for job in _RECONCILIATION_JOBS:
-
-    db_table = job["db_table_base_name"]
-    db_table += f"_{_STAGE}" if _STAGE in ["test", "preprod"] else ""
-
+for job in _QA_JOBS:
     # TODO(Juraj): Make this code more readable.
     # Do a deepcopy of the bash cmd list so we can reformat params on each iteration.
     curr_invoke_cmd = copy.deepcopy(invoke_cmd)
-    curr_invoke_cmd[4] = curr_invoke_cmd[4].format(db_table)
-    curr_invoke_cmd[5] = curr_invoke_cmd[5].format(job["s3_dataset_signature"])
+    curr_invoke_cmd[4] = curr_invoke_cmd[4].format(job["dataset_signature1"])
+    curr_invoke_cmd[5] = curr_invoke_cmd[5].format(job["dataset_signature2"])
     for param in job["add_invoke_params"]:
         curr_invoke_cmd.append(param)
 
@@ -155,7 +139,7 @@ for job in _RECONCILIATION_JOBS:
     }
 
     comparing_task = ECSOperator(
-        task_id=f"data_qa.{db_table}",
+        task_id=f"data_qa.{job['dataset_signature1']}",
         dag=dag,
         aws_conn_id=None,
         cluster=ecs_cluster,
