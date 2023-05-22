@@ -28,7 +28,7 @@ import helpers.hprint as hprint
 
 # %%
 try:
-    pass
+    import pulp
 except ImportError:
     # !sudo /bin/bash -c "(source /venv/bin/activate; pip install pulp)"
     pass
