@@ -89,6 +89,7 @@ def get_cmtask2360_config() -> cconconf.Config:
     config = cconfig.Config.from_dict(param_dict)
     return config
 
+
 config = get_cmtask2360_config()
 print(config)
 

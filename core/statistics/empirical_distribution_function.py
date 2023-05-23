@@ -35,7 +35,9 @@ def compute_empirical_cdf(srs: pd.Series) -> pd.Series:
     return ecdf
 
 
-def compute_empirical_cdf_with_bounds(srs: pd.Series, alpha: float) -> pd.DataFrame:
+def compute_empirical_cdf_with_bounds(
+    srs: pd.Series, alpha: float
+) -> pd.DataFrame:
     """
     Compute the empirical cdf from data.
 

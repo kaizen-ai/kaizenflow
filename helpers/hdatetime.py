@@ -199,6 +199,29 @@ def dassert_tz_compatible(
     )
 
 
+def dassert_have_same_tz(
+    datetime1: StrictDatetime, datetime2: StrictDatetime
+) -> None:
+    """
+    Assert that both timestamps have the same tz.
+
+    The timezones are compared regardless of a DST mode.
+    """
+    dassert_tz_compatible(datetime1, datetime2)
+    # Convert to string to remove DST mode info.
+    tz1_as_str = str(datetime1.tzinfo)
+    tz2_as_str = str(datetime2.tzinfo)
+    hdbg.dassert_eq(
+        tz1_as_str,
+        tz2_as_str,
+        "datetime1=%s (datetime1.tzinfo=%s) datetime2=%s (datetime2.tzinfo=%s) ",
+        datetime1,
+        tz1_as_str,
+        datetime2,
+        tz2_as_str,
+    )
+
+
 # TODO(gp): Replace this check with compatibility between series vs scalar.
 # def dassert_srs_tz_compatible(
 # def dassert_srs_has_tz

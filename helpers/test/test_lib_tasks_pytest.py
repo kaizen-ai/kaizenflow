@@ -228,13 +228,12 @@ class Test_build_run_command_line1(hunitest.TestCase):
 
 class Test_pytest_repro1(hunitest.TestCase):
     def helper(self, file_name: str, mode: str, exp: List[str]) -> None:
-        script_name = os.path.join(self.get_scratch_space(), "tmp.pytest_repro.sh")
+        script_name = os.path.join(
+            self.get_scratch_space(), "tmp.pytest_repro.sh"
+        )
         ctx = httestlib._build_mock_context_returning_ok()
         act = hlitapyt.pytest_repro(
-            ctx,
-            mode=mode,
-            file_name=file_name,
-            script_name=script_name
+            ctx, mode=mode, file_name=file_name, script_name=script_name
         )
         hdbg.dassert_isinstance(act, str)
         exp = "\n".join(["pytest " + x for x in exp])
@@ -469,7 +468,9 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
 
     def helper(self, cmd: str) -> None:
         # Save output in tmp dir.
-        script_name = os.path.join(self.get_scratch_space(), "tmp.pytest_repro.sh")
+        script_name = os.path.join(
+            self.get_scratch_space(), "tmp.pytest_repro.sh"
+        )
         cmd += f" --script-name {script_name}"
         # Run the command.
         _, act = hsystem.system_to_string(cmd)

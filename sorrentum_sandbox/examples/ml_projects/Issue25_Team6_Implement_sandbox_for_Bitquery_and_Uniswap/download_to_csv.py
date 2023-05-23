@@ -23,16 +23,16 @@ from typing import Any
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import helpers.hparser as hparser
 import helpers.hio as hio
-import sorrentum_sandbox.common.download as sinsadow
+import helpers.hparser as hparser
+import sorrentum_sandbox.common.download as ssacodow
+import sorrentum_sandbox.common.save as ssacosav
 import sorrentum_sandbox.examples.ml_projects.Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap.download as sisebido
-import sorrentum_sandbox.common.save as sinsasav
 
 _LOG = logging.getLogger(__name__)
 
 
-class CsvDataFrameSaver(sinsasav.DataSaver):
+class CsvDataFrameSaver(ssacosav.DataSaver):
     """
     Class for saving pandas DataFrame as CSV to a local filesystem at desired
     location.
@@ -46,16 +46,16 @@ class CsvDataFrameSaver(sinsasav.DataSaver):
         """
         self.target_dir = target_dir
 
-    def save(self, data: sinsadow.RawData, **kwargs: Any) -> None:
+    def save(self, data: ssacodow.RawData, **kwargs: Any) -> None:
         """
         Save RawData storing a DataFrame to CSV.
 
         :param data: data to persists into CSV
         """
-        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
-        signature = (
-            "uniswap_table"
+        hdbg.dassert_isinstance(
+            data.get_data(), pd.DataFrame, "Only DataFrame is supported."
         )
+        signature = "uniswap_table"
         signature += ".csv"
         hio.create_dir(self.target_dir, incremental=True)
         target_path = os.path.join(self.target_dir, signature)
@@ -114,8 +114,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     # Download data.
     # Load data.
-    start_timestamp = (args.start_timestamp)
-    end_timestamp = (args.end_timestamp)
+    start_timestamp = args.start_timestamp
+    end_timestamp = args.end_timestamp
     # downloader = sisebido.bitqueryApiDownloader()  ## TODO Alter here, create if statement and flag for realtime data
     raw_data = sisebido.run_bitquery_query(start_timestamp, end_timestamp)
     # Save data as CSV.

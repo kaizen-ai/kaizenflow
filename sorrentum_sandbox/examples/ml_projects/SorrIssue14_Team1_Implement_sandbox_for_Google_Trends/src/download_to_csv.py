@@ -5,10 +5,12 @@ Download google trends data and save it as CSV locally.
 import argparse
 import os
 from typing import Any
-import src.download as sisebido
+
 import common.save as sinsasav
 import pandas as pd
 from utilities import custom_logger
+
+import src.download as sisebido
 
 
 class CsvDataFrameSaver(sinsasav.DataSaver):
@@ -44,9 +46,10 @@ class CsvDataFrameSaver(sinsasav.DataSaver):
 
         topic = kwargs.get("topic")
 
-        signature = topic+".csv"
+        signature = topic + ".csv"
         target_path = os.path.join(self.target_dir, signature)
         data.to_csv(target_path, index=False)
+
 
 # #############################################################################
 
@@ -83,7 +86,7 @@ def _add_download_args(
         action="store",
         required=True,
         type=str,
-        help="Fetch method, swich between using a pre-build Json or using the API"
+        help="Fetch method, swich between using a pre-build Json or using the API",
     )
     return parser
 
@@ -99,7 +102,7 @@ def _parse() -> argparse.ArgumentParser:
 
 
 log_path = "/var/lib/app/data/"
-_LOG = custom_logger.logger(log_path+"download_to_csv.py.log")
+_LOG = custom_logger.logger(log_path + "download_to_csv.py.log")
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
@@ -114,7 +117,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     topic = "ipad"
     topic = topic.lower()
     _LOG.info("\n-------------------------------------------")
-    _LOG.info("Topic to fetch: "+topic)
+    _LOG.info("Topic to fetch: " + topic)
 
     _LOG.info("Prepping the Downloader")
     downloader = sisebido.OhlcvRestApiDownloader()
@@ -127,7 +130,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.info("Downloading the data using the Google Trends API...")
     else:
         _LOG.info("Fetching the Json from /root/data/data.json")
-    raw_data = downloader.download(topic=topic, start_timestamp=start_timestamp, end_timestamp=end_timestamp, use_api=use_api)
+    raw_data = downloader.download(
+        topic=topic,
+        start_timestamp=start_timestamp,
+        end_timestamp=end_timestamp,
+        use_api=use_api,
+    )
 
     _LOG.info("Json fetched and converted to DataFrame")
 
@@ -139,7 +147,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _LOG.info("Saving the Dataframe as a CSV..")
     saver.save(raw_data, topic=topic)
 
-    _LOG.info("CSV Saved to"+target_dir+" as "+topic+".csv")
+    _LOG.info("CSV Saved to" + target_dir + " as " + topic + ".csv")
+
 
 # #############################################################################
 if __name__ == "__main__":

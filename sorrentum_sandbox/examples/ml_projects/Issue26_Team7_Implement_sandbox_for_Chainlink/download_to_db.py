@@ -13,11 +13,8 @@ import logging
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-
-import sorrentum_sandbox.examples.ml_projects.Issue26_Team7_Implement_sandbox_for_Chainlink.db as sisebidb
+import sorrentum_sandbox.examples.ml_projects.Issue26_Team7_Implement_sandbox_for_Chainlink.db as ssempitisfcd
 import sorrentum_sandbox.examples.ml_projects.Issue26_Team7_Implement_sandbox_for_Chainlink.download as sisebido
-
-
 
 _LOG = logging.getLogger(__name__)
 
@@ -36,7 +33,6 @@ def _add_download_args(
         help="Currency pair to download",
     )
     parser.add_argument(
-
         "--start_roundid",
         action="store",
         required=True,
@@ -49,14 +45,13 @@ def _add_download_args(
         required=False,
         type=int,
         help="the last data to download",
-
     )
     parser.add_argument(
         "--target_table",
         action="store",
         required=True,
         type=str,
-        help="Name of the db table to save data into"
+        help="Name of the db table to save data into",
     )
     return parser
 
@@ -76,14 +71,20 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     # Load data.
 
-    if(args.end_roundid is None):
-        raw_data = sisebido.downloader(pair = args.pair, start_roundid = args.start_roundid)
+    if args.end_roundid is None:
+        raw_data = sisebido.downloader(
+            pair=args.pair, start_roundid=args.start_roundid
+        )
     else:
-        raw_data = sisebido.downloader(pair = args.pair, start_roundid = args.start_roundid, end_roundid = args.end_roundid)
+        raw_data = sisebido.downloader(
+            pair=args.pair,
+            start_roundid=args.start_roundid,
+            end_roundid=args.end_roundid,
+        )
 
     # Save data to DB.
-    db_conn = sisebidb.get_db_connection()
-    saver = sisebidb.PostgresDataFrameSaver(db_conn)
+    db_conn = ssempitisfcd.get_db_connection()
+    saver = ssempitisfcd.PostgresDataFrameSaver(db_conn)
     saver.save(raw_data, args.target_table)
 
 

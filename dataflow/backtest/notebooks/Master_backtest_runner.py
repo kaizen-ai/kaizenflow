@@ -62,9 +62,7 @@ cdataf.draw(dag_runner.dag)
 # %%
 if "set_fit_intervals" in config["backtest_config"].to_dict():
     dag_runner.set_fit_intervals(
-        **config[
-            "backtest_config", "set_fit_intervals", "func_kwargs"
-        ].to_dict()
+        **config["backtest_config", "set_fit_intervals", "func_kwargs"].to_dict()
     )
 if "set_predict_intervals" in config["backtest_config"].to_dict():
     dag_runner.set_predict_intervals(

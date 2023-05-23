@@ -37,12 +37,7 @@ def _remove_files(file_name: str, to_ignore_regex: Optional[str]) -> None:
     files = txt.split("\n")
     removed_files = []
     kept_files = []
-    vals = [
-        "\.git\/",
-        "\.git:",
-        "\.idea",
-        "[\/ ]tmp\."
-    ]
+    vals = ["\.git\/", "\.git:", "\.idea", "[\/ ]tmp\."]
     if to_ignore_regex:
         vals.append(to_ignore_regex)
     regex = "|".join(vals)
@@ -60,11 +55,13 @@ def _remove_files(file_name: str, to_ignore_regex: Optional[str]) -> None:
     hio.to_file(file_name + ".removed", "\n".join(removed_files))
     hio.to_file(file_name, "\n".join(kept_files))
     hdbg.dassert_eq(len(files), len(removed_files) + len(kept_files))
-    #assert 0, (len(files), len(removed_files), len(kept_files))
-    #print(len(files), len(removed_files), len(kept_files))
+    # assert 0, (len(files), len(removed_files), len(kept_files))
+    # print(len(files), len(removed_files), len(kept_files))
 
 
-def _compare_file_list(dir1: str, dir2: str, to_ignore_regex: Optional[str]) -> None:
+def _compare_file_list(
+    dir1: str, dir2: str, to_ignore_regex: Optional[str]
+) -> None:
     """
     Extract the file list of the two dirs, run `sdiff`, and save the output in a file.
     """
@@ -73,7 +70,7 @@ def _compare_file_list(dir1: str, dir2: str, to_ignore_regex: Optional[str]) -> 
     hdbg.dassert_path_exists(dir2)
     # Find all the files in both dirs.
     cmd = ""
-    #remove_cmd = "| grep -v \"\.git/\" | grep -v \.idea | grep -v '[/ ]tmp.'"
+    # remove_cmd = "| grep -v \"\.git/\" | grep -v \.idea | grep -v '[/ ]tmp.'"
     cmd += '(cd %s && find %s -name "*" | sort >/tmp/dir1) && ' % (
         # os.path.dirname(dir1),
         # os.path.basename(dir1),
@@ -101,7 +98,9 @@ def _compare_file_list(dir1: str, dir2: str, to_ignore_regex: Optional[str]) -> 
     hsystem.system(cmd, abort_on_error=False, suppress_output=False)
 
 
-def _find_files_to_diff(dir1: str, dir2: str, to_ignore_regex: Optional[str]) -> str:
+def _find_files_to_diff(
+    dir1: str, dir2: str, to_ignore_regex: Optional[str]
+) -> str:
     """
     Diff the dirs with `diff -r --brief`, and save the output in a file.
 
@@ -329,12 +328,16 @@ def _parse() -> argparse.ArgumentParser:
         help="Show only files that are not present in both trees",
     )
     parser.add_argument(
-        "--ignore_files", action="store", default=None,
-        help="Regex to skip certain files"
+        "--ignore_files",
+        action="store",
+        default=None,
+        help="Regex to skip certain files",
     )
     hparser.add_bool_arg(
-        parser, "run_diff_script", default_value=True,
-        help_="Run the diffing script or not"
+        parser,
+        "run_diff_script",
+        default_value=True,
+        help_="Run the diffing script or not",
     )
     parser.add_argument(
         "--skip_comments", action="store_true", help="Do not show comments"

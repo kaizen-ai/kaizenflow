@@ -41,7 +41,7 @@ bash_command = [
     "/cmamp/sorrentum_sandbox/examples/reddit/load_validate_transform.py",
     "--start_timestamp {{ data_interval_start - macros.timedelta(minutes=10)}}",
     "--end_timestamp {{ data_interval_end - macros.timedelta(minutes=10) }}",
-    "-v DEBUG"
+    "-v DEBUG",
 ]
 
 extract_task = BashOperator(

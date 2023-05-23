@@ -15,11 +15,11 @@ class Mongo:
     MONGO_PWD = os.environ.get("MONGO_PWD")
 
     mongo_str = f"mongodb+srv://{MONGO_USER}:{MONGO_PWD}@cluster0.jtf4vwu.mongodb.net/?retryWrites=true&w=majority"
-    client = MongoClient(mongo_str, server_api=ServerApi('1'))
+    client = MongoClient(mongo_str, server_api=ServerApi("1"))
 
     # If line below errors try this: https://stackoverflow.com/questions/59411362/ssl-certificate-verify-failed-certificate-verify-failed-unable-to-get-local-i
-    db = client['DATA605']
-    collection = db['market']
+    db = client["DATA605"]
+    collection = db["market"]
 
     @classmethod
     def download(cls) -> List[Ticker]:
@@ -28,8 +28,10 @@ class Mongo:
         if data:
             tickers = []
             for ticker_data in data:
-                ticker_data['time_series_data'] = [TimeSeriesData(
-                    **point) for point in ticker_data['time_series_data']]
+                ticker_data["time_series_data"] = [
+                    TimeSeriesData(**point)
+                    for point in ticker_data["time_series_data"]
+                ]
                 tickers.append(Ticker(**ticker_data))
             return tickers
 
@@ -43,11 +45,12 @@ class Mongo:
         """
         data = cls.collection.find_one({"_id": ticker})
         if data:
-            data['time_series_data'] = [TimeSeriesData(
-                **point) for point in data['time_series_data']]
+            data["time_series_data"] = [
+                TimeSeriesData(**point) for point in data["time_series_data"]
+            ]
             return Ticker(**data)
 
-    @ classmethod
+    @classmethod
     def save_data(cls, data: Ticker):
         """
         Saves a ticker class to mongoDB
@@ -57,31 +60,31 @@ class Mongo:
         """
         if not data.time_series_data:
             return
-        
+
         json = data.to_json()
-        new_data = json['time_series_data']
+        new_data = json["time_series_data"]
 
         # Checking for duplicate data
         current = cls.get_ticker(data.ticker)
         if current:
-            new_data = [point.to_json() for point in data.time_series_data if point not in current.time_series_data]
+            new_data = [
+                point.to_json()
+                for point in data.time_series_data
+                if point not in current.time_series_data
+            ]
             if current.name != current.ticker:
-                json['name'] = current.name
+                json["name"] = current.name
 
-        json.pop('time_series_data', None)
+        json.pop("time_series_data", None)
 
         cls.collection.find_one_and_update(
             {"_id": data.ticker},
-            {'$push': 
-                {'time_series_data': {'$each': new_data}}
-            },
-            upsert=True
+            {"$push": {"time_series_data": {"$each": new_data}}},
+            upsert=True,
         )
 
         cls.collection.find_one_and_update(
-            {"_id": data.ticker},
-            {"$set": json},
-            upsert=True
+            {"_id": data.ticker}, {"$set": json}, upsert=True
         )
 
     @classmethod

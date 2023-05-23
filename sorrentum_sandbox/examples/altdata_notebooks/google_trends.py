@@ -26,7 +26,7 @@ from pytrends.request import TrendReq
 # # Get pytrends
 
 # %%
-pytrends = TrendReq(hl='en-US', tz=360)
+pytrends = TrendReq(hl="en-US", tz=360)
 
 # %% [markdown]
 # Define keywords list.
@@ -48,19 +48,21 @@ kw_list = ["Bitcoin"]
 # Let's find the start date of historical data, try year 2005, when Bitcoin and Etherium didn't exist.
 
 # %%
-hist_int_old=pytrends.get_historical_interest(kw_list,
-                                          year_start=2005,
-                                          month_start=1,
-                                          day_start=1,
-                                          hour_start=0,
-                                          year_end=2010,
-                                          month_end=12,
-                                          day_end=20,
-                                          hour_end=20,
-                                          cat=0,
-                                          geo='',
-                                          gprop='',
-                                          sleep=0)
+hist_int_old = pytrends.get_historical_interest(
+    kw_list,
+    year_start=2005,
+    month_start=1,
+    day_start=1,
+    hour_start=0,
+    year_end=2010,
+    month_end=12,
+    day_end=20,
+    hour_end=20,
+    cat=0,
+    geo="",
+    gprop="",
+    sleep=0,
+)
 
 # %% [markdown]
 # Google Trends normalizes search data to make comparisons between terms easier. Search results are normalized to the time and location of a query by the following process:
@@ -80,7 +82,7 @@ hist_int_old.plot(figsize=(20, 12))
 hist_int_old.plot(subplots=True, figsize=(20, 12))
 
 # %%
-hist_int_old[hist_int_old["Bitcoin"]!=0]
+hist_int_old[hist_int_old["Bitcoin"] != 0]
 
 # %% [markdown]
 # But how could `Bitcoin` appear in Google Trends in 2005 if it was created in 2008? Strange!
@@ -89,19 +91,21 @@ hist_int_old[hist_int_old["Bitcoin"]!=0]
 # ## Real-time data
 
 # %%
-hist_int_new=pytrends.get_historical_interest(kw_list,
-                                          year_start=2022,
-                                          month_start=1,
-                                          day_start=1,
-                                          hour_start=0,
-                                          year_end=2022,
-                                          month_end=12,
-                                          day_end=22,
-                                          hour_end=23,
-                                          cat=0,
-                                          geo='',
-                                          gprop='',
-                                          sleep=0)
+hist_int_new = pytrends.get_historical_interest(
+    kw_list,
+    year_start=2022,
+    month_start=1,
+    day_start=1,
+    hour_start=0,
+    year_end=2022,
+    month_end=12,
+    day_end=22,
+    hour_end=23,
+    cat=0,
+    geo="",
+    gprop="",
+    sleep=0,
+)
 
 # %%
 hist_int_new.plot(figsize=(20, 12))

@@ -1,28 +1,28 @@
 import unittest.mock as umock
 
 import helpers.hunit_test as hunitest
-import im_v2.common.data.extract.extractor as imvcdexex
+import im_v2.common.data.extract.extractor as ivcdexex
 
 
 class TestExtractor1(hunitest.TestCase):
     # Mock `Extractor`'s abstract functions.
     abstract_methods_patch = umock.patch.object(
-        imvcdexex.Extractor, "__abstractmethods__", new=set()
+        ivcdexex.Extractor, "__abstractmethods__", new=set()
     )
     ohlcv_patch = umock.patch.object(
-        imvcdexex.Extractor,
+        ivcdexex.Extractor,
         "_download_ohlcv",
-        spec=imvcdexex.Extractor._download_ohlcv,
+        spec=ivcdexex.Extractor._download_ohlcv,
     )
     bid_ask_patch = umock.patch.object(
-        imvcdexex.Extractor,
+        ivcdexex.Extractor,
         "_download_bid_ask",
-        spec=imvcdexex.Extractor._download_bid_ask,
+        spec=ivcdexex.Extractor._download_bid_ask,
     )
     trades_patch = umock.patch.object(
-        imvcdexex.Extractor,
+        ivcdexex.Extractor,
         "_download_trades",
-        spec=imvcdexex.Extractor._download_trades,
+        spec=ivcdexex.Extractor._download_trades,
     )
 
     def setUp(self) -> None:
@@ -50,7 +50,7 @@ class TestExtractor1(hunitest.TestCase):
             "bid_ask": self.bid_ask_mock,
             "trades": self.trades_mock,
         }
-        dummy_extractor = imvcdexex.Extractor()
+        dummy_extractor = ivcdexex.Extractor()
         test_samples = [
             ("ohlcv", "dummy_id", "dummy_currency_pair", {"type": "ohlcv"}),
             ("bid_ask", "dummy_id", "dummy_currency_pair", {"type": "bid_ask"}),
@@ -78,7 +78,7 @@ class TestExtractor1(hunitest.TestCase):
         """
         Verify that error is raised on unknown `data_type`.
         """
-        dummy_extractor = imvcdexex.Extractor()
+        dummy_extractor = ivcdexex.Extractor()
         with self.assertRaises(AssertionError) as fail:
             # Run.
             dummy_extractor.download_data("dummy_data_type", "", "")

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import defi.tulip.implementation.order_matching as dtuimorm
+import defi.tulip.implementation.order_matching as dtimorma
 """
 
 import copy

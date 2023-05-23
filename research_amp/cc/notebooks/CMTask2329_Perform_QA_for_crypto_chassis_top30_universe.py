@@ -89,6 +89,7 @@ def get_cmtask2329_config() -> cconconf.Config:
     config = cconfig.Config.from_dict(param_dict)
     return config
 
+
 config = get_cmtask2329_config()
 print(config)
 
@@ -96,7 +97,9 @@ print(config)
 # # Load the data
 
 # %%
-client = iccdc.CryptoChassisHistoricalPqByTileClient(**config["data"]["im_client"])
+client = iccdc.CryptoChassisHistoricalPqByTileClient(
+    **config["data"]["im_client"]
+)
 
 # %%
 universe = client.get_universe()
