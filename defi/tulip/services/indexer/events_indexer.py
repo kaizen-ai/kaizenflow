@@ -8,14 +8,20 @@ import json
 import logging
 import os
 import time
+from threading import Thread
 from typing import Any, Dict, List
+from queue import Queue
 
 import psycopg2 as psycop
 import web3
 
 _LOG = logging.getLogger(__name__)
 
+MAX_RETRIES=5
+
 DbConnection = Any
+
+event_queue = Queue()
 
 
 def _get_connection_from_env_vars(autocommit: bool = True) -> DbConnection:
@@ -92,24 +98,52 @@ def _add_order_to_db(
 
 
 def _catch_events(
-    db_connection: DbConnection,
     event_filters: List[web3._utils.filters.LogFilter],
     poll_interval: int,
 ):
     """
     Catch buy and sell orders and put them to the database.
     """
-    cursor = db_connection.cursor()
     while True:
         for event_filter in event_filters:
-            for event in event_filter.get_new_entries():
-                event_type = event["event"]
-                # TODO(Toma): We don't have a field in db for transaction hash yet,
-                # but probably we should.
-                # tx_hash = event["transactionHash"]
-                arguments = event["args"]
-                _add_order_to_db(event_type, arguments, cursor)
+            for attempt in range(MAX_RETRIES):
+                try:
+                    entries = event_filter.get_new_entries()
+                    for event in entries:
+                        event_queue.put(event)
+                    break
+                except Exception as e:
+                    _LOG.error(f"Failed get new events on attempt {attempt + 1}: {e}")
+                    time.sleep(1)
+            else:
+                _LOG.error(f"Failed to get new events after {MAX_RETRIES} attempts.")
         time.sleep(poll_interval)
+
+
+def _process_events(
+    db_connection: DbConnection,
+):
+    """
+    Process events from the queue and put them to the database.
+    """
+    cursor = db_connection.cursor()
+    while True:
+        if not event_queue.empty():
+            event = event_queue.get()
+            event_type = event["event"]
+            arguments = event["args"]
+            # TODO(Toma): We don't have a field in db for transaction hash yet,
+            # but probably we should.
+            # tx_hash = event["transactionHash"]
+            for attempt in range(MAX_RETRIES):
+                try:
+                    _add_order_to_db(event_type, arguments, cursor)
+                    break 
+                except Exception as e:
+                    _LOG.error(f"Failed to add order to DB on attempt {attempt + 1}: {e}")
+                    time.sleep(1)
+            else:
+                _LOG.error(f"Failed to add order to DB after {MAX_RETRIES} attempts.")
 
 
 # #############################################################################
@@ -129,7 +163,11 @@ def main():
     buy_event_filter = contract.events.newBuyOrder.createFilter(
         fromBlock="latest"
     )
-    _catch_events(db_connection, [sell_event_filter, buy_event_filter], 2)
+    # Start catching events in a separate thread.
+    event_catcher = Thread(target=_catch_events, args=([sell_event_filter, buy_event_filter], 2), daemon=True)
+    event_catcher.start()
+    # Start processing catched events in the main thread.
+    _process_events(db_connection)
 
 
 if __name__ == "__main__":
