@@ -1,5 +1,5 @@
 # Supporting OS
-- We support Mac x86, Apple Silicon and Linux Ubuntu.
+- We support Mac x86, Apple Silicon and Linux Ubuntu
 - If you are using Windows,
   - Install VMWare software
   - Reference video for installing [ubuntu](https://www.youtube.com/watch?v=NhlhJFKmzpk&ab_channel=ProgrammingKnowledge) on VMWare software
