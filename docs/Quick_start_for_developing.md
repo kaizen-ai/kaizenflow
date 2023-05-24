@@ -1,10 +1,10 @@
 # Supporting OS
 - We support Mac x86, Apple Silicon and Linux Ubuntu.
 - If you are using Windows,
-  - Install VMWare software.
-  - Reference video for installing [ubuntu](https://www.youtube.com/watch?v=NhlhJFKmzpk&ab_channel=ProgrammingKnowledge) on VMWare software.
-  - Make sure you set up your git and github.
-  - Install [docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository) on your Ubuntu VM.
+  - Install VMWare software
+  - Reference video for installing [ubuntu](https://www.youtube.com/watch?v=NhlhJFKmzpk&ab_channel=ProgrammingKnowledge) on VMWare software
+  - Make sure you set up your git and github
+  - Install [docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository) on your Ubuntu VM
 
 # Getting a first issue to work on (aka warm-up issue)
 
