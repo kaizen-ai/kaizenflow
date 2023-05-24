@@ -135,7 +135,22 @@
   possible, e.g.,:
   - What you are trying to achieve
   - Command line you ran
-  - **Copy-paste** the error from the cmd line, no screenshots.
+  - **Copy-paste** the error and the stack trace from the cmd line, no screenshots.
+    - Eg:
+      ```
+      Traceback (most recent call last):
+        File "/venv/bin/invoke", line 8, in <module>
+          sys.exit(program.run())
+        File "/venv/lib/python3.8/site-packages/invoke/program.py", line 373, in run
+          self.parse_collection()
+        File "/venv/lib/python3.8/site-packages/invoke/program.py", line 465, in parse_collection
+          self.load_collection()
+        File "/venv/lib/python3.8/site-packages/invoke/program.py", line 696, in load_collection
+          module, parent = loader.load(coll_name)
+        File "/app/amp/helpers/hserver.py", line 203, in _dassert_setup_consistency
+          raise ValueError(msg)
+        ValueError: One and only one set-up config should be true:
+        ```
   - The log of the run
     - Maybe the same run using `-v DEBUG` to get more info on the problem
   - What the problem is
