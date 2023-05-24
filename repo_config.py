@@ -82,13 +82,14 @@ def get_docker_base_image_name() -> str:
 #   - A different user and group is used inside the container
 
 
-def _raise_invalid_host() -> None:
+def _raise_invalid_host(only_warning: bool) -> None:
     host_os_name = os.uname()[0]
     am_host_os_name = os.environ.get("AM_HOST_OS_NAME", None)
-    raise ValueError(
-        f"Don't recognize host: host_os_name={host_os_name}, "
-        f"am_host_os_name={am_host_os_name}"
-    )
+    msg = f"Don't recognize host: host_os_name={host_os_name}, am_host_os_name={am_host_os_name}"
+    if only_warning:
+        _LOG.warning(msg)
+    else:
+        raise ValueError(msg)
 
 
 def enable_privileged_mode() -> bool:
@@ -111,15 +112,15 @@ def enable_privileged_mode() -> bool:
         elif hserver.is_mac(version="Catalina"):
             # Docker for macOS Catalina supports dind.
             ret = True
-        elif hserver.is_mac(version="Monterey") or hserver.is_mac(version="Ventura"):
+        elif hserver.is_mac(version="Monterey") or hserver.is_mac(
+            version="Ventura"
+        ):
             # Docker for macOS Monterey doesn't seem to support dind.
             ret = False
         else:
-            # TODO(Grisha): fails for the students who probably work on a machine
-            # that is not in the list above. Perhaps we should return False based
-            # on the `get_name()` output.
             ret = False
-            #_raise_invalid_host()
+            only_warning = True
+            _raise_invalid_host(only_warning)
     return ret
 
 
@@ -141,11 +142,9 @@ def has_docker_sudo() -> bool:
         # macOS runs Docker with sudo by default.
         ret = True
     else:
-        # TODO(Grisha): fails for the students who probably work on a machine
-        # that is not in the list above. Perhaps we should return False based
-        # on the `get_name()` output.
         ret = False
-        #_raise_invalid_host()
+        only_warning = True
+        _raise_invalid_host(only_warning)
     return ret
 
 
@@ -207,17 +206,15 @@ def has_dind_support() -> bool:
             if hserver.is_mac() or hserver.is_dev_ck() or hserver.is_inside_ci():
                 # dind should be supported on Mac, dev_ck, and GH Actions.
                 assert has_dind, (
-                    f"Expected privileged mode: has_dind={has_dind}\n" +
-                    hserver.setup_to_str()
+                    f"Expected privileged mode: has_dind={has_dind}\n"
+                    + hserver.setup_to_str()
                 )
             elif hserver.is_dev4() or hserver.is_ig_prod():
                 assert not has_dind, "Not expected privileged mode"
             else:
-                # TODO(Grisha): fails for the students who probably work on a machine
-                # that is not in the list above. Perhaps we should return False based
-                # on the `get_name()` output.
+                only_warning = True
+                _raise_invalid_host(only_warning)
                 return False
-                #_raise_invalid_host()
     else:
         am_repo_config = os.environ.get("AM_REPO_CONFIG_CHECK", "True")
         print(
@@ -264,11 +261,9 @@ def get_shared_data_dirs() -> Optional[Dict[str, str]]:
     elif hserver.is_mac() or hserver.is_inside_ci() or hserver.is_cmamp_prod():
         shared_data_dirs = None
     else:
-        # TODO(Grisha): fails for the students who probably work on a machine
-        # that is not in the list above. Perhaps we should return False based
-        # on the `get_name()` output.
         shared_data_dirs = None
-        #_raise_invalid_host()
+        only_warning = True
+        _raise_invalid_host(only_warning)
     return shared_data_dirs
 
 
@@ -328,11 +323,9 @@ def run_docker_as_root() -> bool:
     elif hserver.is_mac():
         ret = False
     else:
-        # TODO(Grisha): fails for the students who probably work on a machine
-        # that is not in the list above. Perhaps we should return False based
-        # on the `get_name()` output.
         ret = False
-        #_raise_invalid_host()
+        only_warning = True
+        _raise_invalid_host(only_warning)
     return ret
 
 
@@ -361,11 +354,10 @@ def get_html_dir_to_url_mapping() -> Dict[str, str]:
     """
     Return a mapping between directories mapped on URLs.
 
-    This is used when we have web servers serving files from specific directories.
+    This is used when we have web servers serving files from specific
+    directories.
     """
-    dir_to_url = {
-        "s3://cryptokaizen-html": "http://172.30.2.44"
-    }
+    dir_to_url = {"s3://cryptokaizen-html": "http://172.30.2.44"}
     return dir_to_url
 
 
@@ -387,7 +379,7 @@ def skip_submodules_test() -> bool:
     E.g. while running `i run_fast_tests`.
     """
     # TODO(gp): Why do we want to skip running tests?
-    if get_name() in ("//dev_tools", ):
+    if get_name() in ("//dev_tools",):
         # Skip running `amp` tests from `dev_tools`.
         return True
     return False

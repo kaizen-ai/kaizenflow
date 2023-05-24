@@ -37,6 +37,7 @@
 
 # %%
 import logging
+
 import requests
 
 import helpers.hdbg as hdbg
@@ -80,7 +81,9 @@ display(common["stargazers_count"])
 #
 
 # %%
-commits_yearly = requests.get("https://api.github.com/repos/bitcoin/bitcoin/stats/commit_activity").json()
+commits_yearly = requests.get(
+    "https://api.github.com/repos/bitcoin/bitcoin/stats/commit_activity"
+).json()
 
 # %% [markdown]
 # E.g. in the array [8, 11, 10, 25, 5, 13, 2] 8 is the number of commits for Sun, 11 - for Monday, 10 - for Tuesday, 25 - for Wednesday, 5 - for Thursday, 13 - for Friday and 2 - for Saturday
@@ -95,7 +98,9 @@ display(commits_yearly[:5])
 # Returns a historical weekly aggregate of the number of additions and deletions pushed to a repository.
 
 # %%
-all_commits_weekly_aggregated = requests.get("https://api.github.com/repos/bitcoin/bitcoin/stats/code_frequency").json()
+all_commits_weekly_aggregated = requests.get(
+    "https://api.github.com/repos/bitcoin/bitcoin/stats/code_frequency"
+).json()
 
 # %%
 # First date Sun Aug 30 2009 00:00:00 GMT+0000, but common info says that repository was created on '2010-12-19T15:16:43Z'
@@ -114,7 +119,9 @@ display(all_commits_weekly_aggregated[-5:])
 # The array order is oldest week (index 0) to most recent week.
 
 # %%
-total_commits = requests.get("https://api.github.com/repos/bitcoin/bitcoin/stats/participation").json()
+total_commits = requests.get(
+    "https://api.github.com/repos/bitcoin/bitcoin/stats/participation"
+).json()
 display(total_commits)
 
 # %% [markdown]
@@ -133,7 +140,9 @@ display(total_commits)
 # For example, [2, 14, 25] indicates that there were 25 total commits, during the 2:00pm hour on Tuesdays. All times are based on the time zone of individual commits.
 
 # %%
-hourly_commits = requests.get("https://api.github.com/repos/bitcoin/bitcoin/stats/punch_card").json()
+hourly_commits = requests.get(
+    "https://api.github.com/repos/bitcoin/bitcoin/stats/punch_card"
+).json()
 display(hourly_commits)
 
 # %% [markdown]
@@ -145,7 +154,9 @@ display(hourly_commits)
 # Note: GitHub's REST API considers every pull request an issue, but not every issue is a pull request. For this reason, "Issues" endpoints may return both issues and pull requests in the response. You can identify pull requests by the pull_request key. Be aware that the id of a pull request returned from "Issues" endpoints will be an issue id. To find out the pull request id, use the "List pull requests" endpoint.
 
 # %%
-issues = requests.get("https://api.github.com/repos/bitcoin/bitcoin/issues").json()
+issues = requests.get(
+    "https://api.github.com/repos/bitcoin/bitcoin/issues"
+).json()
 
 # %%
 display(len(issues))
@@ -170,7 +181,9 @@ display(len(issues))
 
 # %%
 query = "blockchain"
-search_repos = requests.get(f"https://api.github.com/search/repositories?q={query}").json()
+search_repos = requests.get(
+    f"https://api.github.com/search/repositories?q={query}"
+).json()
 display(search_repos["total_count"])
 
 # %%

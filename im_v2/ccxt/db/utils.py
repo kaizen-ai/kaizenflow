@@ -18,10 +18,10 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): -> get_create_ccxt_ohlcv_table_query()
 def get_ccxt_ohlcv_create_table_query() -> str:
     """
-    Get SQL query to create CCXT OHLCV table.
+    Get SQL query to create CCXT OHLCV spot table.
     """
     query = """
-    CREATE TABLE IF NOT EXISTS ccxt_ohlcv(
+    CREATE TABLE IF NOT EXISTS ccxt_ohlcv_spot(
             id SERIAL PRIMARY KEY,
             timestamp BIGINT NOT NULL,
             open NUMERIC,
@@ -178,6 +178,7 @@ def get_currency_pair_create_table_query() -> str:
             )
             """
     return query
+
 
 # TODO(Juraj): This is currently not important for the local
 #  stage of the DB but it helps to track the desired state of

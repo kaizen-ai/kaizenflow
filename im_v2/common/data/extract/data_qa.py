@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """
+NOTE: This script is deprecated refer to .../data/qa/notebooks/*.ipynb
+
 Compare data on DB and S3, raising an Exception when difference was found.
 
 Use as:
@@ -51,6 +53,7 @@ class QaCheck(abc.ABC):
     - check that OHLCV data is in the right format (e.g., timestamps are not missing, L < O, L < H, V != 0)
     - check that two data dataframes from different providers are compatible (e.g., the error is less than 1%)
     """
+
     def __init__(self) -> None:
         self._status: str = "Check has not been executed."
 
@@ -171,7 +174,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="DB table to use, e.g. 'ccxt_ohlcv'",
+        help="DB table to use, e.g. 'ccxt_ohlcv_spot'",
     )
     parser.add_argument(
         "--s3_dataset_signature",
@@ -197,18 +200,20 @@ def _parse() -> argparse.ArgumentParser:
     return parser  # type: ignore[no-any-return]
 
 
-# TODO(Juraj): This is a temporary adjustment to enable usage of surrentum protocol
+# TODO(Juraj): This is a temporary adjustment to enable usage of sorrentum protocol
 #  based principals. The solution will be rewritten into a class composition
 #  of validators and checks
 class RealTimeHistoricalReconciler:
     def __init__(self, args) -> None:
+        universe_version = "infer_from_data"
         # Set DB connection.
         db_connection = imvcddbut.DbConnectionManager.get_connection(
             args.db_stage
         )
+        self.db_stage = args.db_stage
         # Initialize CCXT client.
         self.ccxt_rt_im_client = icdcl.CcxtSqlRealTimeImClient(
-            False, db_connection, args.db_table
+            universe_version, db_connection, args.db_table, resample_1min=False
         )
         self.aws_profile = args.aws_profile
         self.s3_dataset_signature = args.s3_dataset_signature
@@ -388,10 +393,11 @@ class RealTimeHistoricalReconciler:
         """
         Load and process daily data.
         """
-        data_reader = imvcdcimrdc.RawDataReader(self.s3_dataset_signature)
-        daily_data = data_reader.load_parquet(
-            self.s3_path, self.start_ts, self.end_ts
+        # TODO(Juraj): Passing db_stage is a hot fix, will be handled in #CmTask3475.
+        data_reader = imvcdcimrdc.RawDataReader(
+            self.s3_dataset_signature, self.db_stage
         )
+        daily_data = data_reader.load_parquet(self.start_ts, self.end_ts)
         if "timestamp" in daily_data.columns:
             # Sometimes the data contains `timestamp` column which is not needed
             # since there is always a timestamp in the index.

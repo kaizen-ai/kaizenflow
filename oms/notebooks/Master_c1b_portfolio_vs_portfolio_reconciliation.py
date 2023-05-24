@@ -111,9 +111,7 @@ def compute_delay(df: pd.DataFrame, freq: str) -> pd.Series:
     return delay
 
 
-def check_for_missing_bars(
-    df: pd.DataFrame, freq: str
-) -> None:
+def check_for_missing_bars(df: pd.DataFrame, freq: str) -> None:
     """
     Check that no data bars are missed.
     """
@@ -122,9 +120,9 @@ def check_for_missing_bars(
     actual_index = df.index.round(freq)
     min_ts = df.index.min()
     max_ts = df.index.max()
-    expected_index = pd.date_range(
-        start=min_ts, end=max_ts, freq=freq
-    ).round(freq)
+    expected_index = pd.date_range(start=min_ts, end=max_ts, freq=freq).round(
+        freq
+    )
     hdbg.dassert_set_eq(actual_index, expected_index)
 
 
@@ -164,9 +162,7 @@ def load_config_as_list(path: str) -> List[str]:
     return lines
 
 
-def diff_lines(
-    list1: List[str], list2: List[str]
-) -> Tuple[List[str], List[str]]:
+def diff_lines(list1: List[str], list2: List[str]) -> Tuple[List[str], List[str]]:
     """
     Get output lines that differ.
     """
@@ -226,9 +222,7 @@ replayed_delay_in_mins_or_timestamp = get_replayed_delay_in_mins(
 replayed_delay_in_mins_or_timestamp
 
 # %%
-prod_dir = (
-    "/shared_data/prod_reconciliation/20220923/prod/system_log_dir_20220923_2hours"
-)
+prod_dir = "/shared_data/prod_reconciliation/20220923/prod/system_log_dir_20220923_2hours"
 sim_dir = "/shared_data/prod_reconciliation/20220923/simulation/system_log_dir"
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 prod_forecast_dir = os.path.join(prod_dir, "process_forecasts")

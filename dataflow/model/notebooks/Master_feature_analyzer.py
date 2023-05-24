@@ -22,7 +22,7 @@
 import logging
 
 import core.plotting as coplotti
-import dataflow.backtest.dataflow_backtest_utils as dtfbaexuti
+import dataflow.backtest.dataflow_backtest_utils as dtfbdtfbaut
 import dataflow.model.stats_computer as dtfmostcom
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
@@ -41,7 +41,7 @@ hprint.config_notebook()
 # # Load features
 
 # %%
-feat_iter = dtfbaexuti.yield_experiment_artifacts(
+feat_iter = dtfbdtfbaut.yield_experiment_artifacts(
     src_dir="",
     file_name="result_bundle.v2_0.pkl",
     load_rb_kwargs={},

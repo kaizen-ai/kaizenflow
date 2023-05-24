@@ -18,8 +18,8 @@ import pymongo
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import sorrentum_sandbox.common.download as ssandown
-import sorrentum_sandbox.common.validate as sinsaval
+import sorrentum_sandbox.common.download as ssacodow
+import sorrentum_sandbox.common.validate as ssacoval
 import sorrentum_sandbox.examples.reddit.db as ssexredb
 import sorrentum_sandbox.examples.reddit.transform as ssexretr
 import sorrentum_sandbox.examples.reddit.validate as ssexreva
@@ -100,7 +100,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _LOG.info("Loaded data: \n %s", data.head())
     empty_title_check = ssexreva.EmptyTitleCheck()
     positive_number_of_comments_check = ssexreva.PositiveNumberOfCommentsCheck()
-    dataset_validator = sinsaval.SingleDatasetValidator(
+    dataset_validator = ssacoval.SingleDatasetValidator(
         [empty_title_check, positive_number_of_comments_check]
     )
     # 3) Validate data.
@@ -113,7 +113,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         mongo_client=mongodb_client, db_name="reddit"
     )
     db_saver.save(
-        data=ssandown.RawData(features), collection_name=args.target_collection
+        data=ssacodow.RawData(features), collection_name=args.target_collection
     )
     _LOG.info("Features saved to MongoDB.")
 

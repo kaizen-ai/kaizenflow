@@ -23,8 +23,8 @@ import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hsecrets as hsecret
 import helpers.htimer as htimer
-import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
 
@@ -58,6 +58,37 @@ def get_connection(
     )
     if autocommit:
         connection.autocommit = True
+    return connection
+
+
+def get_connection_from_aws_secret(
+    *,
+    stage: str = "prod",
+) -> DbConnection:
+    """
+    Create an SQL connection using credentials obtained from AWS
+    SecretsManager.
+
+    The function uses `ck` AWS profile on the backend.
+    The intended usage is obtaining connection to a DB on RDS instances.
+
+    :param stage: DB stage to connect to. For "prod" stage it is only possible to obtain a read-only connection via this method.
+    """
+    hdbg.dassert_in(stage, ["prod", "preprod", "test"])
+    dbname = f"{stage}.im_data_db"
+    if stage == "prod":
+        secret_name = f"{dbname}.read_only"
+    else:
+        secret_name = dbname
+    _LOG.info("Fetching secret: %s", secret_name)
+    db_creds = hsecret.get_secret(secret_name)
+    connection = get_connection(
+        host=db_creds["host"],
+        dbname=dbname,
+        port=db_creds["port"],
+        user=db_creds["username"],
+        password=db_creds["password"],
+    )
     return connection
 
 
@@ -627,7 +658,7 @@ def create_insert_query(df: pd.DataFrame, table_name: str) -> str:
     :param table_name: name of the table for insertion
     :return: sql query, e.g.,
         ```
-        INSERT INTO ccxt_ohlcv(timestamp,open,high,low,close) VALUES %s
+        INSERT INTO ccxt_ohlcv_spot(timestamp,open,high,low,close) VALUES %s
         ```
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
@@ -733,22 +764,37 @@ def execute_insert_on_conflict_do_nothing_query(
         )
     # Execute query for each provided row.
     cur = connection.cursor()
-    extras.execute_values(cur, query, values)
-    connection.commit()
+    try:
+        extras.execute_values(cur, query, values)
+        connection.commit()
+    except Exception as e:
+        _LOG.error(
+            "Failed to insert data with the '%s'. Query %s. Values: %s",
+            str(e),
+            query,
+            values,
+        )
+        raise e
 
 
-def execute_query(connection: DbConnection, query: str) -> None:
+def execute_query(connection: DbConnection, query: str) -> List[tuple]:
     """
     Use for generic simple operations.
 
     :param connection: connection to the DB
     :param query: generic query that can be: insert, update, delete, etc.
+    :return: list of tuples with the results of the query
     """
     _LOG.debug(hprint.to_str("query"))
     with connection.cursor() as cursor:
         cursor.execute(query)
         if not connection.autocommit:
             connection.commit()
+        try:
+            result = cursor.fetchall()
+        except psycop.ProgrammingError:
+            result = [()]
+        return result
 
 
 # #############################################################################

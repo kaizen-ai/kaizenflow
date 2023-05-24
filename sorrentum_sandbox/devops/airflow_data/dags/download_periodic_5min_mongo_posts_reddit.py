@@ -1,5 +1,9 @@
 """
 DAG to download Reddit data.
+
+Import as:
+
+import sorrentum_sandbox.devops.airflow_data.dags.download_periodic_5min_mongo_posts_reddit as ssdadddp5mpr
 """
 
 
@@ -9,9 +13,7 @@ import airflow
 from airflow.operators.bash import BashOperator
 
 _DAG_ID = "download_periodic_5min_mongo_posts_reddit"
-_DAG_DESCRIPTION = (
-    "Download Reddit posts every 5 minutes and save to MongoDB"
-)
+_DAG_DESCRIPTION = "Download Reddit posts every 5 minutes and save to MongoDB"
 # Specify when to execute the DAG.
 _SCHEDULE = "*/5 * * * *"
 
@@ -43,7 +45,7 @@ bash_command = [
     "/cmamp/sorrentum_sandbox/examples/reddit/download_to_db.py",
     "--start_timestamp {{ data_interval_start }}",
     "--end_timestamp {{ data_interval_end }}",
-    "-v DEBUG"
+    "-v DEBUG",
 ]
 
 downloading_task = BashOperator(

@@ -13,13 +13,13 @@ import pymongo
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-
 import sorrentum_sandbox.examples.ml_projects.Issue22_Team3_Implement_sandbox_for_Coinmarketcap as coinmarketcap
 
 coinmarketcap_db = coinmarketcap.db
 coinmarketcap_download = coinmarketcap.download
 
 _LOG = logging.getLogger(__name__)
+
 
 def add_download_args(
     parser: argparse.ArgumentParser,
@@ -69,9 +69,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         mongo_saver.save(data=raw_data, collection_name=args.collection_name)
         _LOG.info("Saving data to MongoDB!")
     else:
-        _LOG.info(
-            "Empty data"
-        )
+        _LOG.info("Empty data")
+
 
 if __name__ == "__main__":
     _main(_parse())

@@ -82,14 +82,14 @@ def _run_notebook(
         f"export __CONFIG_BUILDER__='{config_builder}';",
         f'export __CONFIG_IDX__="{idx}";',
         f'export __CONFIG_DST_DIR__="{dst_dir}"',
-        f'; jupyter nbconvert {notebook_file}',
-        '--execute',
-        '--to notebook',
-        f'--output {dst_file}',
-        '--ExecutePreprocessor.kernel_name=python',
+        f"; jupyter nbconvert {notebook_file}",
+        "--execute",
+        "--to notebook",
+        f"--output {dst_file}",
+        "--ExecutePreprocessor.kernel_name=python",
         # From https://github.com/ContinuumIO/anaconda-issues/issues/877
-        '--ExecutePreprocessor.timeout=-1',
-        f'--ExecutePreprocessor.allow_errors={allow_notebook_errors}',
+        "--ExecutePreprocessor.timeout=-1",
+        f"--ExecutePreprocessor.allow_errors={allow_notebook_errors}",
     ]
     cmd = " ".join(cmd)
     # Prepare the log file.
@@ -123,7 +123,7 @@ def _run_notebook(
             # read and written back just to be able to publish it.
             with open(notebook_file) as f:
                 nb = nbformat.read(f, as_version=4)
-            with open(dst_file, mode='w', encoding='utf-8') as f:
+            with open(dst_file, mode="w", encoding="utf-8") as f:
                 nbformat.write(nb, f)
         _LOG.info("Publishing notebook %d", idx)
         html_subdir_name = os.path.join(
