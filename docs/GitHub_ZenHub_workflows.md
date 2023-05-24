@@ -135,6 +135,7 @@
   possible, e.g.,:
   - What you are trying to achieve
   - Command line you ran
+  - **Copy-paste** the error from the cmd line, no screenshots.
   - The log of the run
     - Maybe the same run using `-v DEBUG` to get more info on the problem
   - What the problem is
