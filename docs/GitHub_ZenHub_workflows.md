@@ -134,23 +134,47 @@
 - If it is a “serious” problem (bug) put as much information about the Issue as
   possible, e.g.,:
   - What you are trying to achieve
-  - Command line you ran
-  - **Copy-paste** the error and the stack trace from the cmd line, no screenshots.
-    - Eg:
-      ```
-      Traceback (most recent call last):
-        File "/venv/bin/invoke", line 8, in <module>
-          sys.exit(program.run())
-        File "/venv/lib/python3.8/site-packages/invoke/program.py", line 373, in run
-          self.parse_collection()
-        File "/venv/lib/python3.8/site-packages/invoke/program.py", line 465, in parse_collection
-          self.load_collection()
-        File "/venv/lib/python3.8/site-packages/invoke/program.py", line 696, in load_collection
-          module, parent = loader.load(coll_name)
-        File "/app/amp/helpers/hserver.py", line 203, in _dassert_setup_consistency
-          raise ValueError(msg)
-        ValueError: One and only one set-up config should be true:
-        ```
+  - Command line you ran, e.g.,
+    ```
+    > i lint -f defi/tulip/test/test_dao_cross_sol.py
+    ```
+  - **Copy-paste** the error and the stack trace from the cmd line, no screenshots, e.g.,
+    ```
+    Traceback (most recent call last):
+      File "/venv/bin/invoke", line 8, in <module>
+        sys.exit(program.run())
+      File "/venv/lib/python3.8/site-packages/invoke/program.py", line 373, in run
+        self.parse_collection()
+      File "/venv/lib/python3.8/site-packages/invoke/program.py", line 465, in parse_collection
+        self.load_collection()
+      File "/venv/lib/python3.8/site-packages/invoke/program.py", line 696, in load_collection
+        module, parent = loader.load(coll_name)
+      File "/venv/lib/python3.8/site-packages/invoke/loader.py", line 76, in load
+        module = imp.load_module(name, fd, path, desc)
+      File "/usr/lib/python3.8/imp.py", line 234, in load_module
+        return load_source(name, filename, file)
+      File "/usr/lib/python3.8/imp.py", line 171, in load_source
+        module = _load(spec)
+      File "<frozen importlib._bootstrap>", line 702, in _load
+      File "<frozen importlib._bootstrap>", line 671, in _load_unlocked
+      File "<frozen importlib._bootstrap_external>", line 848, in exec_module
+      File "<frozen importlib._bootstrap>", line 219, in _call_with_frames_removed
+      File "/src/tasks.py", line 10, in <module>
+        from helpers.lib_tasks import (  # This is not an invoke target.
+      File "/app/amp/helpers/lib_tasks.py", line 14, in <module>
+        from helpers.lib_tasks_docker import *  # isort:skip  # noqa: F401,F403 # pylint: disable=unused-import,unused-wildcard-import,wildcard-             import
+      File "/app/amp/helpers/lib_tasks_docker.py", line 21, in <module>
+        import helpers.henv as henv
+      File "/app/amp/helpers/henv.py", line 16, in <module>
+        import helpers.hversion as hversio
+      File "/app/amp/helpers/hversion.py", line 23, in <module>
+        import helpers.hserver as hserver
+      File "/app/amp/helpers/hserver.py", line 212, in <module>
+        _dassert_setup_consistency()
+      File "/app/amp/helpers/hserver.py", line 203, in _dassert_setup_consistency
+        raise ValueError(msg)
+    ValueError: One and only one set-up config should be true:
+    ```
   - The log of the run
     - Maybe the same run using `-v DEBUG` to get more info on the problem
   - What the problem is
