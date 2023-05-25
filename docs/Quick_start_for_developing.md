@@ -1,3 +1,11 @@
+# Supporting OS
+- We support Mac x86, Apple Silicon and Linux Ubuntu
+- If you are using Windows,
+  - Install VMWare software
+  - Reference video for installing [ubuntu](https://www.youtube.com/watch?v=NhlhJFKmzpk&ab_channel=ProgrammingKnowledge) on VMWare software
+  - Make sure you set up your git and github
+  - Install [docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository) on your Ubuntu VM
+
 # Getting a first issue to work on (aka warm-up issue)
 
 - The goal is to get comfortable with the development system
@@ -17,6 +25,7 @@
     Sorrentum contributors #63", the branch name should be
     `SorrTask63_Expose_the_linter_container_to_Sorrentum_contributors`
   - This step is automated through the `invoke` flow (see docs for more info)
+- Run the [linter](https://github.com/sorrentum/sorrentum/blob/master/docs/First_review_process.md#run-linter) on your code before pushing.
 - Push the code to your branch
 - Make sure your branch is up-to-date with the master branch
 - Create a Pull Request (PR) from your branch
