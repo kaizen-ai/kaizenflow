@@ -2,20 +2,20 @@ from typing import List
 
 import pandas as pd
 
-import defi.dao_cross.order as ddacrord
-import defi.dao_cross.order_matching as ddcrorma
+import defi.tulip.implementation.order_matching as dtuimorm
+import defi.tulip.implementation.order as dtuimor
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 
 class TestMatchOrders1(hunitest.TestCase):
     @staticmethod
-    def get_test_orders() -> List[ddacrord.Order]:
+    def get_test_orders() -> List[dtuimorm.Order]:
         timestamp = pd.Timestamp("2023-01-01 00:00:01+00:00")
         base_token = "BTC"
         quote_token = "ETH"
         #
-        order_1 = ddacrord.Order(
+        order_1 = dtuimorm.Order(
             timestamp=timestamp,
             action="buy",
             quantity=1.2,
@@ -25,7 +25,7 @@ class TestMatchOrders1(hunitest.TestCase):
             deposit_address=1,
             wallet_address=1,
         )
-        order_2 = ddacrord.Order(
+        order_2 = dtuimorm.Order(
             timestamp=timestamp + pd.Timedelta("2s"),
             action="buy",
             quantity=2.3,
@@ -35,7 +35,7 @@ class TestMatchOrders1(hunitest.TestCase):
             deposit_address=2,
             wallet_address=2,
         )
-        order_3 = ddacrord.Order(
+        order_3 = dtuimorm.Order(
             timestamp=timestamp + pd.Timedelta("3s"),
             action="sell",
             quantity=1.8,
@@ -45,7 +45,7 @@ class TestMatchOrders1(hunitest.TestCase):
             deposit_address=3,
             wallet_address=3,
         )
-        order_4 = ddacrord.Order(
+        order_4 = dtuimorm.Order(
             timestamp=timestamp + pd.Timedelta("4s"),
             action="buy",
             quantity=2.1,
@@ -55,7 +55,7 @@ class TestMatchOrders1(hunitest.TestCase):
             deposit_address=4,
             wallet_address=4,
         )
-        order_5 = ddacrord.Order(
+        order_5 = dtuimorm.Order(
             timestamp=timestamp + pd.Timedelta("5s"),
             action="sell",
             quantity=1.5,
@@ -65,7 +65,7 @@ class TestMatchOrders1(hunitest.TestCase):
             deposit_address=1,
             wallet_address=1,
         )
-        order_6 = ddacrord.Order(
+        order_6 = dtuimorm.Order(
             timestamp=timestamp + pd.Timedelta("6s"),
             action="sell",
             quantity=1.1,
@@ -87,7 +87,7 @@ class TestMatchOrders1(hunitest.TestCase):
         base_token = "BTC"
         quote_token = "ETH"
         # Match orders.
-        actual_df = ddcrorma.match_orders(
+        actual_df = dtuimor.match_orders(
             orders, clearing_price, base_token, quote_token
         )
         # Check the unique tokens.
@@ -134,12 +134,12 @@ class TestMatchOrders1(hunitest.TestCase):
         for order in orders:
             if order.action == "buy":
                 # Replace "buy" order with its "sell" equivalent.
-                order = ddcrorma.get_equivalent_order(order, clearing_price)
+                order = dtuimor.get_equivalent_order(order, clearing_price)
             mixed_orders.append(order)
         base_token = "BTC"
         quote_token = "ETH"
         # Match orders.
-        actual_df = ddcrorma.match_orders(
+        actual_df = dtuimor.match_orders(
             mixed_orders, clearing_price, base_token, quote_token
         )
         # Check the unique tokens.
@@ -182,13 +182,13 @@ class TestMatchOrders1(hunitest.TestCase):
         """
         orders = []
         for i in range(6):
-            order = ddacrord.get_random_order(seed=i)
+            order = dtuimorm.get_random_order(seed=i)
             orders.append(order)
         clearing_price = 1
         base_token = "ETH"
         quote_token = "BTC"
         # Match orders.
-        actual_df = ddcrorma.match_orders(
+        actual_df = dtuimor.match_orders(
             orders, clearing_price, base_token, quote_token
         )
         # Check the unique tokens.
@@ -241,7 +241,7 @@ class TestGetEquivalentOrder1(hunitest.TestCase):
         deposit_address = 1
         wallet_address = 1
         #
-        input_order = ddacrord.Order(
+        input_order = dtuimorm.Order(
             timestamp=timestamp,
             action=action,
             quantity=quantity,
@@ -253,6 +253,6 @@ class TestGetEquivalentOrder1(hunitest.TestCase):
         )
         clearing_price = 0.5
         # Get equivalent order and check its signature.
-        output_order = ddcrorma.get_equivalent_order(input_order, clearing_price)
+        output_order = dtuimor.get_equivalent_order(input_order, clearing_price)
         expected_signature = "timestamp=2023-01-01 00:00:01+00:00 action=buy quantity=1.6 base_token=ETH limit_price=4.0 quote_token=BTC deposit_address=1 wallet_address=1"
         self.assertEqual(output_order.__repr__(), expected_signature)
