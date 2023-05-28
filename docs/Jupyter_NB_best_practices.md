@@ -19,6 +19,7 @@
 Indicate a notebook's goal and what it does in its description, e.g.,
 	
 	## Description
+	
 		This notebook was used for prototyping / debugging code that was moved in the file `abc.py`
 
 ## General format of a notebook
@@ -35,6 +36,7 @@ Indicate a notebook's goal and what it does in its description, e.g.,
 	```
 
 ### Imports
+
 - Import the needed libraries: it's better to put all the imports in one cell:
 
 
@@ -162,6 +164,7 @@ The flow should be highlighted using headings in markdown:
 
 
 ## Show how data is transformed as you go
+
 - Print a few lines of data structures (e.g., `df.head(3)`) so one can see how data is transformed through the cells
 
 ## Use keyboard shortcuts
@@ -196,6 +199,7 @@ The flow should be highlighted using headings in markdown:
 - Before a commit (and definitively before a PR) do a clean run
 
 ## Add comments for complex cells
+
 - When a cell is too long, explain in a comment what a cell does, e.g.,
  
 ```
@@ -210,40 +214,46 @@ print("num_stocks_with_no_nans=%s" % perc(num_stocks_with_no_nans, rets.shape[1]
 -  Another approach is to factor out the code in functions with clear names and simplify the flow
 
 ## Do not cut & paste code
+
 -  Cutting + paste + modify is _NEVER_ a good idea
 -  It takes more time to clean up cut & paste code than doing right in the first place
 -  Just make a function out of the code and call it!
 
 ## Avoid "wall-of-code" cell
+
 -  Obvious
 
 ## Avoid data biases
+
 -  Try to compute statistics on the entire data set so that results are representative and not dependent on a particular slice of the data
 -  You can sample the data and check stability of the results
 -  If it takes too long to compute the statistics on the entire data set, report the problem and we can think of how to speed it up
 
 ## Avoid hardwired constants
+
 -  Don't use hardwired constants
 -  Try to parametrize the code
 
 
 ## Explain where data is coming from
+
 -  If you are using data from a file (e.g., `/data/wd/RP_1yr_13_companies.pkl`), explain in a comment how the file was generated
     - Ideally report a command line to regenerate the data
 -  The goal is for other people to be able to re-run the notebook from scratch
 
 
 ## Use ET times
+
 -  Although we store timestamps in UTC to make it canonical, try to use Eastern Times (ET) since typically financial data refers to New York time: \
  `datetime_ET = df.tz_localize(pytz.timezone('UTC')).tz_convert('US/Eastern')`
 -  If you don't use timezone info `tzinfo` clarify in the variable name what timezone is used (e.g., `datetime_ET` instead of `datetime`)
 
 
 ## Fix warnings
+
 - Like infra / dev code, a notebook should run without warnings
 - Warnings can't be ignored since they indicate that:
-
-The code is relying on a feature that will change in the future, e.g.,
+  The code is relying on a feature that will change in the future, e.g.,
 ```
 /utils.py:73: FutureWarning: Sorting because non-concatenation axis is
 not aligned. A future version of pandas will change to not sort by
@@ -251,11 +261,9 @@ default.
 To accept the future behavior, pass 'sort=False'.
 To retain the current behavior and silence the warning, pass 'sort=True'.
 ```
-
-  - If we don't fix the issue now, the next time we create a conda environment the code might either break or (even worse) have a different behavior, i.e., silent failure
-	- It's better to fix the warning now that we can verify that the code does what we want to do, instead of fixing it later when we don't remember anymore what exactly we were doing
-  
-We are doing something that might have side effects, e.g., \
+   - If we don't fix the issue now, the next time we create a conda environment the code might either break or (even worse) have a different behavior, i.e., silent failure
+   - It's better to fix the warning now that we can verify that the code does what we want to do, instead of fixing it later when we don't remember anymore what exactly we were doing
+   - We are doing something that might have side effects, e.g., \
 `.../pandas/core/indexing.py:189: SettingWithCopyWarning:`
 
 ```
@@ -263,9 +271,9 @@ A value is trying to be set on a copy of a slice from a DataFrame
 See the caveats in the documentation: http://pandas.pydata.org/pandas-docs/stable/indexing.html#indexing-view-versus-copy
 ```
 
-  - `self._setitem_with_indexer(indexer, value)`
-  - This is a typical pandas warning telling us that we created a view on a dataframe (e.g., by slicing) and we are modifying the underlying data through the view
-  - This is dangerous since it can create unexpected side effects and coupling between pieces of code that can be painful to debug and fix
+   - `self._setitem_with_indexer(indexer, value)`
+   - This is a typical pandas warning telling us that we created a view on a dataframe (e.g., by slicing) and we are modifying the underlying data through the view
+   - This is dangerous since it can create unexpected side effects and coupling between pieces of code that can be painful to debug and fix
 
 - If you have warnings in your code or notebook you can't be sure that the code is doing exactly what you think it is doing
 	- For what we know your code might be deleting your hard-disk, moving money from your account to mine, starting World War 3, ...
@@ -274,6 +282,7 @@ See the caveats in the documentation: http://pandas.pydata.org/pandas-docs/stabl
 	- If it's not obvious how to interpret or fix a warning file a bug, file a bug reporting clearly a repro case and the error message
 
 ## Make cells idempotent
+
 -  	Try to make a notebook cell able of being executed multiple times without changing its output value, e.g.,
 - _Bad \
  `df["id"] = df["id"] + 1`_
@@ -299,6 +308,7 @@ For data frames and variables is a good idea to create copies of the data along 
 
 
 ## Always look at the discarded data
+
 - Filtering the data is a risky operation since once the data is dropped, nobody is going to go back and double check what exactly happened
 - Everything downstream (e.g., all the results, all the conclusions, all the decisions based on those conclusions) rely on the filtering being correct
 
@@ -326,16 +336,19 @@ n_rows_after = compu_form_df.shape[0]
 
 
 ## Use a progress bar
+
 -  Always use progress bars (even in notebooks) so that user can see how long it will take for a certain computation.
 
 It is also possible to let `tqdm` automatically choose between console or notebook versions by using: \
  `from tqdm.autonotebook import tqdm`
 
 # Notebooks and libraries
+
 -  	It's ok to use functions in notebooks when building the analysis to leverage notebook interactivity
 -   Once the notebook is "stable", often it's better to move the code in a library, i.e., a python file.
 
 ## Pros
+
 -  	The same notebook code can be used for different notebooks
      - E.g., the function to read the data from disk is an obvious example
 -  	More people can reuse the same code for different analyses
@@ -349,6 +362,7 @@ It is also possible to let `tqdm` automatically choose between console or notebo
 
 
 ## Cons
+
 - One disadvantage is that changes that were immediate in the notebook are not immediate anymore
 
 That's actually not true, since using: \
@@ -362,50 +376,63 @@ That's actually not true, since using: \
 # Plots
 
 ## Use the proper y-scale
+
 - E.g., if one quantity can vary from -1.0 to 1.0 force the y-scale between those limits so that the values are absolutes, unless this would squash the plot
 
 ## Make each plot self-explanatory
+
 - Make sure that each plot has a descriptive title, x and y label
 - Explain the set-up of a plot / analysis
     - E.g., what is the universe of stocks used? What is the period of time?
     - Add this information also to the plots
 
 ## Avoid wall-of-text tables
+
 - Try to use plots summarizing the results besides the raw results in a table
 
 ## Use common axes to allow visual comparisons
+
 - Try to use same axes for multiple graphs when possible to allow visual comparison between graphs
 - If that's not possible or convenient make individual plots with different scales and add a plot with multiple graphs inside on the same axis (e.g., with y-log)
 
 ## Use the right plot
+
 - Pick the right type of graph to make your point
   - `pandas`, `seaborn`, `matplotlib` are your friends
 
 # Useful plugins
+
 - You can access the extensions menu:
   - ```Edit -> nbextensions config```
   - ```http://localhost:XYZ/nbextensions/```
     
 
 ## Vim bindings
+
 - [ VIM binding](https://github.com/lambdalisue/jupyter-vim-binding/wiki/Installation) will change your life
 
 
 ## Table of content (2)
+
 - To see the entire logical flow of the notebook, when you use the headers properly
 
 ## ExecuteTime
+
 - To see how long each cell takes to execute
 
 ## Spellchecker
+
 - To improve your English!
 
 ## AutoSaveTime
+
 - To save the code automatically every minute
 
 ## Notify
+
 - Show a browser notification when kernel becomes idle
 
 ## Jupytext
+
 - We use Jupytext as standard part of our development flow
 - See `documentation/general/jupytext.md`
