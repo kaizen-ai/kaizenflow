@@ -54,6 +54,8 @@ class TestDownloadBulkData1(hunitest.TestCase):
             "log_level": "INFO",
             "data_format": "parquet",
             "bid_ask_depth": None,
+            "universe_part": None,
+            "assert_on_missing_data": False,
         }
         self.assertDictEqual(actual, expected)
 

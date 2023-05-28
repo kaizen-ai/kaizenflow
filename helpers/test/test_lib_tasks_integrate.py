@@ -9,7 +9,9 @@ class Test_infer_dst_dir1(hunitest.TestCase):
         # Call function to test.
         act = hlitaint._infer_dst_dir(src_dir)
         # Define expected output.
-        exp = ("/src/amp1/im_v2/alpha_numeric_data_snapshots",
-               "im_v2/alpha_numeric_data_snapshots")
+        exp = (
+            "/src/amp1/im_v2/alpha_numeric_data_snapshots",
+            "im_v2/alpha_numeric_data_snapshots",
+        )
         # Compare actual and expected output.
         self.assertEqual(act, exp)

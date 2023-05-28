@@ -15,9 +15,9 @@ import psycopg2.extras as extras
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import sorrentum_sandbox.common.client as sinsacli
-import sorrentum_sandbox.common.download as sinsadow
-import sorrentum_sandbox.common.save as sinsasav
+import sorrentum_sandbox.common.client as ssacocli
+import sorrentum_sandbox.common.download as ssacodow
+import sorrentum_sandbox.common.save as ssacosav
 
 # create three tables that we want to save in database
 def get_github_create_main_table_query() -> str:
@@ -40,13 +40,14 @@ def get_github_create_main_table_query() -> str:
             watchers  NUMERIC,
             network_count NUMERIC,
             subscribers_count NUMERIC,
-            owner_id NUMERIC, 
+            owner_id NUMERIC,
             organization_id NUMERIC,
             Crypto VARCHAR(255) NOT NULL,
             inserted_at TIMESTAMP
             )
             """
     return query
+
 
 def get_github_create_issues_table_query() -> str:
     """
@@ -63,16 +64,17 @@ def get_github_create_issues_table_query() -> str:
             updated_at TIMESTAMP,
             closed_at TIMESTAMP,
             author_association VARCHAR(255),
-            comments NUMERIC,   
+            comments NUMERIC,
             body VARCHAR(50000) ,
             user_login VARCHAR(255) NOT NULL,
             user_id NUMERIC,
             Crypto_Name VARCHAR(255) NOT NULL,
             Extension VARCHAR(255) NOT NULL
             )
-             
+
             """
     return query
+
 
 def get_github_create_commits_table_query() -> str:
     """
@@ -90,13 +92,14 @@ def get_github_create_commits_table_query() -> str:
           Sun NUMERIC,
           Mon NUMERIC,
           Tue NUMERIC,
-          Wed NUMERIC, 
-          Thur NUMERIC, 
-          Fri NUMERIC, 
+          Wed NUMERIC,
+          Thur NUMERIC,
+          Fri NUMERIC,
           Sat NUMERIC
             )
             """
     return query
+
 
 def get_db_connection() -> Any:
     """
@@ -121,7 +124,7 @@ def get_db_connection() -> Any:
 # #############################################################################
 
 
-class PostgresDataFrameSaver(sinsasav.DataSaver):
+class PostgresDataFrameSaver(ssacosav.DataSaver):
     """
     Save Pandas DataFrame to a PostgreSQL using a provided DB connection.
     """
@@ -136,7 +139,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         self._create_tables()
 
     def save(
-        self, data: sinsadow.RawData, db_table: str, *args: Any, **kwargs: Any
+        self, data: ssacodow.RawData, db_table: str, *args: Any, **kwargs: Any
     ) -> None:
         """
         Save RawData storing a DataFrame to a specified DB table.
@@ -144,7 +147,9 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         :param data: data to persists into DB
         :param db_table: table to save data to
         """
-        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
+        hdbg.dassert_isinstance(
+            data.get_data(), pd.DataFrame, "Only DataFrame is supported."
+        )
         # Transform dataframe into list of tuples.
         df = data.get_data()
         values = [tuple(v) for v in df.to_numpy()]
@@ -176,22 +181,23 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         as downloading the data, but as an example this suffices.
         """
         cursor = self.db_conn.cursor()
-        
+
         query = get_github_create_main_table_query()
         cursor.execute(query)
-        
+
         query = get_github_create_issues_table_query()
         cursor.execute(query)
-        
+
         query = get_github_create_commits_table_query()
         cursor.execute(query)
+
 
 # #############################################################################
 # PostgresClient
 # #############################################################################
 
 
-class PostgresClient(sinsacli.DataClient):
+class PostgresClient(ssacocli.DataClient):
     """
     Load PostgreSQL data.
     """
@@ -233,4 +239,3 @@ class PostgresClient(sinsacli.DataClient):
         # Read data.
         data = pd.read_sql_query(select_query, self.db_conn)
         return data
-

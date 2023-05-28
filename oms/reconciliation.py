@@ -430,8 +430,8 @@ def check_dag_output_self_consistency(
         current_df = node_dfs[i][1]
         current_df = current_df.sort_index()
         #
-        previous_timestamp = node_dfs[i-1][0]
-        previous_df = node_dfs[i-1][1]
+        previous_timestamp = node_dfs[i - 1][0]
+        previous_df = node_dfs[i - 1][1]
         previous_df = previous_df.sort_index()
         _LOG.debug(
             "Comparing dfs for timestamps %s and %s",

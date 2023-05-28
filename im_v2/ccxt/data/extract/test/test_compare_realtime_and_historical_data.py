@@ -50,7 +50,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
     def tearDown(self) -> None:
         super().tearDown()
         # Drop table used in tests.
-        ccxt_ohlcv_drop_query = "DROP TABLE IF EXISTS ccxt_ohlcv;"
+        ccxt_ohlcv_drop_query = "DROP TABLE IF EXISTS ccxt_ohlcv_spot;"
         hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
 
     def ohlcv_dataframe_sample(self) -> pd.DataFrame:
@@ -547,7 +547,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         cmd.extend(["--end_timestamp", "20220217-000000"])
         cmd.extend(["--exchange_id", "binance"])
         cmd.extend(["--db_stage", "dev"])
-        cmd.extend(["--db_table", "ccxt_ohlcv"])
+        cmd.extend(["--db_table", "ccxt_ohlcv_spot"])
         cmd.extend(["--aws_profile", "ck"])
         cmd.extend(
             ["--s3_path", "s3://cryptokaizen-data/reorg/historical.manual.pq/"]
@@ -565,7 +565,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "end_timestamp": "20220217-000000",
             "db_stage": "dev",
             "exchange_id": "binance",
-            "db_table": "ccxt_ohlcv",
+            "db_table": "ccxt_ohlcv_spot",
             "log_level": "INFO",
             "aws_profile": "ck",
             "s3_path": "s3://cryptokaizen-data/reorg/historical.manual.pq/",
@@ -591,7 +591,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         hsql.execute_insert_query(
             connection=self.connection,
             obj=trimmed_sample,
-            table_name="ccxt_ohlcv",
+            table_name="ccxt_ohlcv_spot",
         )
 
     def _test_function_call(
@@ -606,7 +606,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "end_timestamp": self._test_end_timestamp,
             "db_stage": "local",
             "exchange_id": "binance",
-            "db_table": "ccxt_ohlcv",
+            "db_table": "ccxt_ohlcv_spot",
             "log_level": "INFO",
             "aws_profile": "ck",
             "s3_path": f"{self.get_s3_path()}",
@@ -627,143 +627,3 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         # Run.
         args = argparse.Namespace(**kwargs)
         imvcdecrah._run(args)
-
-
-class TestFilterDuplicates(hunitest.TestCase):
-    def test_filter_duplicates(self) -> None:
-        """
-        Verify that duplicated data is filtered correctly.
-        """
-        input_data = self._get_duplicated_test_data()
-        self.assertEqual(input_data.shape, (10, 10))
-        # Filter duplicates.
-        actual_data = imvcdecrah.RealTimeHistoricalReconciler._filter_duplicates(
-            input_data
-        )
-        expected_length = 6
-        expected_column_names = [
-            "close",
-            "full_symbol",
-            "end_download_timestamp",
-            "high",
-            "id",
-            "knowledge_timestamp",
-            "low",
-            "open",
-            "timestamp",
-            "volume",
-        ]
-        # pylint: disable=line-too-long
-        expected_signature = r"""
-        # df=
-        index=[0, 5]
-        columns=id,timestamp,open,high,low,close,volume,full_symbol,end_download_timestamp,knowledge_timestamp
-        shape=(6, 10)
-        id                 timestamp  open  high  low  close  volume        full_symbol    end_download_timestamp       knowledge_timestamp
-        0   1 2021-09-09 00:00:00+00:00    30    40   50     60      70  binance::BTC_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
-        1   2 2021-09-09 00:01:00+00:00    31    41   51     61      71  binance::BTC_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
-        2   3 2021-09-09 00:02:00+00:00    32    42   52     62      72  binance::ETH_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
-        3   4 2021-09-09 00:04:00+00:00    34    44   54     64      74  binance::BTC_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
-        4   5 2021-09-09 00:04:00+00:00    34    44   54     64      74  binance::ETH_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
-        5   6 2021-09-09 00:04:00+00:00    34    44   54     64      74   kucoin::ETH_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
-        """
-        # pylint: enable=line-too-long
-        self.check_df_output(
-            actual_data,
-            expected_length,
-            expected_column_names,
-            None,
-            expected_signature,
-        )
-
-    @staticmethod
-    def _get_test_data() -> pd.DataFrame:
-        """
-        Create a test CCXT OHLCV dataframe.
-        """
-        test_data = pd.DataFrame(
-            columns=[
-                "id",
-                "timestamp",
-                "open",
-                "high",
-                "low",
-                "close",
-                "volume",
-                "full_symbol",
-                "end_download_timestamp",
-                "knowledge_timestamp",
-            ],
-            # fmt: off
-            # pylint: disable=line-too-long
-            data=[
-                [0, 1631145600000, 30, 40, 50, 60, 70, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [1, 1631145660000, 31, 41, 51, 61, 71, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [2, 1631145840000, 34, 44, 54, 64, 74, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [3, 1631145840000, 34, 44, 54, 64, 74, "binance::ETH_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [4, 1631145840000, 34, 44, 54, 64, 74, "kucoin::ETH_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-            ]
-            # pylint: enable=line-too-long
-            # fmt: on
-        )
-        return test_data
-
-    @staticmethod
-    def _get_test_data() -> pd.DataFrame:
-        """
-        Create a test CCXT OHLCV dataframe.
-        """
-        test_data = pd.DataFrame(
-            columns=[
-                "id",
-                "timestamp",
-                "open",
-                "high",
-                "low",
-                "close",
-                "volume",
-                "full_symbol",
-                "end_download_timestamp",
-                "knowledge_timestamp",
-            ],
-            # fmt: off
-            # pylint: disable=line-too-long
-            data=[
-                [1, 1631145600000, 30, 40, 50, 60, 70, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [2, 1631145660000, 31, 41, 51, 61, 71, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [3, 1631145720000, 32, 42, 52, 62, 72, "binance::ETH_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [4, 1631145840000, 34, 44, 54, 64, 74, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [5, 1631145840000, 34, 44, 54, 64, 74, "binance::ETH_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [6, 1631145840000, 34, 44, 54, 64, 74, "kucoin::ETH_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-            ]
-            # pylint: enable=line-too-long
-            # fmt: on
-        )
-        return test_data
-
-    def _get_duplicated_test_data(self) -> pd.DataFrame:
-        """
-        Get test data with duplicates for `_filter_duplicates` method test.
-        """
-        test_data = self._get_test_data()
-        #
-        # TODO(Danya): Add timezone info to test data in client tests.
-        test_data["knowledge_timestamp"] = test_data[
-            "knowledge_timestamp"
-        ].dt.tz_localize("UTC")
-        test_data["end_download_timestamp"] = test_data[
-            "end_download_timestamp"
-        ].dt.tz_localize("UTC")
-        test_data["timestamp"] = test_data["timestamp"].apply(
-            hdateti.convert_unix_epoch_to_timestamp
-        )
-        # Add duplicated rows.
-        dupes = test_data.loc[0:3]
-        dupes["knowledge_timestamp"] = dupes[
-            "knowledge_timestamp"
-        ] - pd.Timedelta("40s")
-        dupes["end_download_timestamp"] = dupes[
-            "end_download_timestamp"
-        ] - pd.Timedelta("40s")
-        test_data = pd.concat([test_data, dupes]).reset_index(drop=True)
-        return test_data

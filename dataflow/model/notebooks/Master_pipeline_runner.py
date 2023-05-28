@@ -54,7 +54,9 @@ if "set_fit_intervals" in config["backtest_config"].to_dict():
     )
 if "set_predict_intervals" in config["backtest_config"].to_dict():
     dag_runner.set_predict_intervals(
-        **config["backtest_config", "set_predict_intervals", "func_kwargs"].to_dict()
+        **config[
+            "backtest_config", "set_predict_intervals", "func_kwargs"
+        ].to_dict()
     )
 
 # %%
@@ -64,7 +66,10 @@ fit_result_bundle = dag_runner.fit()
 payload = cconfig.Config.from_dict({"config": config})
 
 # %%
-if "run_oos" in config["backtest_config"].to_dict().keys() and config["backtest_config"]:
+if (
+    "run_oos" in config["backtest_config"].to_dict().keys()
+    and config["backtest_config"]
+):
     result_bundle = dag_runner.predict()
     payload["fit_result_bundle"] = fit_result_bundle.to_config()
 else:

@@ -2,7 +2,7 @@ import logging
 from typing import List
 
 import core.config as cconfig
-import dataflow.backtest.dataflow_backtest_utils as dtfbaexcon
+import dataflow.backtest.dataflow_backtest_utils as dtfbdtfbaut
 import dataflow.core as dtfcore
 import dataflow_amp.pipelines.mock1 as dtfapmo
 import helpers.hunit_test as hunitest
@@ -109,7 +109,7 @@ class Test_get_configs_from_command_line_Amp1(hunitest.TestCase):
 
         args = Args()
         # Run.
-        config_list = dtfbaexcon.get_config_list_from_command_line(args)
+        config_list = dtfbdtfbaut.get_config_list_from_command_line(args)
         # Check.
         txt = str(config_list)
         self.check_string(txt, purify_text=True)

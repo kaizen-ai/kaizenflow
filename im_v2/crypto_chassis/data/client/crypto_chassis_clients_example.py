@@ -34,7 +34,6 @@ def get_CryptoChassisHistoricalPqByTileClient_example1(
             contract_type,
             data_snapshot,
             aws_profile=aws_profile,
-            resample_1min=resample_1min,
         )
     )
     return crypto_chassis_parquet_client
@@ -66,7 +65,6 @@ def get_CryptoChassisHistoricalPqByTileClient_example2(
             data_snapshot,
             tag=tag,
             aws_profile=aws_profile,
-            resample_1min=resample_1min,
         )
     )
     return crypto_chassis_parquet_client

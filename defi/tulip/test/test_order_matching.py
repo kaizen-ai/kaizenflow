@@ -203,8 +203,6 @@ class TestGetEquivalentOrder1(hunitest.TestCase):
         )
         clearing_price = 0.5
         # Get equivalent order and check its signature.
-        output_order = ddcrorma.get_equivalent_order(
-            input_order, clearing_price
-        )
+        output_order = ddcrorma.get_equivalent_order(input_order, clearing_price)
         expected_signature = "timestamp=2023-01-01 00:00:01+00:00 action=buy quantity=1.6 base_token=ETH limit_price=4.0 quote_token=BTC deposit_address=1 wallet_address=1"
         self.assertEqual(output_order.__repr__(), expected_signature)

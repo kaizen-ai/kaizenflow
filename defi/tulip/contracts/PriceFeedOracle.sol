@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../node_modules/@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-contract PriceOracle {
+contract PriceFeedOracle {
     AggregatorV3Interface internal priceFeed;
 
     /// @param priceFeedAddr: contract address from https://docs.chain.link/data-feeds/price-feeds/addresses

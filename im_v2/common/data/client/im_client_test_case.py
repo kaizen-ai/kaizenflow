@@ -182,7 +182,7 @@ class ImClientTestCase(hunitest.TestCase):
         columns = None
         filter_data_mode = "assert"
         actual_df = im_client.read_data(
-             full_symbols, start_ts, end_ts, columns, filter_data_mode
+            full_symbols, start_ts, end_ts, columns, filter_data_mode
         )
         self.check_df_output(actual_df, *args, **kwargs)
 

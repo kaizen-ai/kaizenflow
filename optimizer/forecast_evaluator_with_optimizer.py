@@ -1,7 +1,7 @@
 """
 Import as:
 
-import optimizer.forecast_evaluator_with_optimizer as optfewo
+import optimizer.forecast_evaluator_with_optimizer as ofevwiop
 """
 import logging
 from typing import Dict, Optional, Tuple

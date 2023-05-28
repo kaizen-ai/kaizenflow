@@ -19,10 +19,10 @@ import pandas as pd
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import sorrentum_sandbox.common.download as sinsadow
-import sorrentum_sandbox.common.validate as sinsaval
-import sorrentum_sandbox.examples.systems.binance.db as sisebidb
-import sorrentum_sandbox.examples.systems.binance.validate as sisebiva
+import sorrentum_sandbox.common.download as ssacodow
+import sorrentum_sandbox.common.validate as ssacoval
+import sorrentum_sandbox.examples.systems.binance.db as ssesbidb
+import sorrentum_sandbox.examples.systems.binance.validate as ssesbiva
 
 _LOG = logging.getLogger(__name__)
 
@@ -130,8 +130,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     start_timestamp = pd.Timestamp(args.start_timestamp)
     end_timestamp = pd.Timestamp(args.end_timestamp)
     # 1) Load data.
-    db_conn = sisebidb.get_db_connection()
-    db_client = sisebidb.PostgresClient(db_conn)
+    db_conn = ssesbidb.get_db_connection()
+    db_client = ssesbidb.PostgresClient(db_conn)
     data = db_client.load(
         args.source_table,
         start_timestamp=start_timestamp,
@@ -139,13 +139,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     _LOG.info(f"Loaded data: \n {data.head()}")
     # 2) QA
-    empty_dataset_check = sisebiva.EmptyDatasetCheck()
+    empty_dataset_check = ssesbiva.EmptyDatasetCheck()
     # Conforming to the (a, b] interval convention, remove 1 minute from the
     # end_timestamp.
-    gaps_in_timestamp_check = sisebiva.GapsInTimestampCheck(
+    gaps_in_timestamp_check = ssesbiva.GapsInTimestampCheck(
         start_timestamp, end_timestamp - timedelta(minutes=1)
     )
-    dataset_validator = sinsaval.SingleDatasetValidator(
+    dataset_validator = ssacoval.SingleDatasetValidator(
         [empty_dataset_check, gaps_in_timestamp_check]
     )
     # Validate by running all QA checks, if one of them fails, the rest of the
@@ -155,8 +155,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     resampled_data = _resample_data_to_5min(data)
     # 4) Save back to DB.
     _LOG.info(f"Transformed data: \n {resampled_data.head()}")
-    db_saver = sisebidb.PostgresDataFrameSaver(db_conn)
-    db_saver.save(sinsadow.RawData(resampled_data), args.target_table)
+    db_saver = ssesbidb.PostgresDataFrameSaver(db_conn)
+    db_saver.save(ssacodow.RawData(resampled_data), args.target_table)
 
 
 if __name__ == "__main__":

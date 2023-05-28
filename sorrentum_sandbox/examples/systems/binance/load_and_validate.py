@@ -20,9 +20,9 @@ import pandas as pd
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import sorrentum_sandbox.common.client as sinsacli
-import sorrentum_sandbox.common.validate as sinsaval
-import sorrentum_sandbox.examples.systems.binance.validate as sisebiva
+import sorrentum_sandbox.common.client as ssacocli
+import sorrentum_sandbox.common.validate as ssacoval
+import sorrentum_sandbox.examples.systems.binance.validate as ssesbiva
 
 _LOG = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class CsvClient(sinsacli.DataClient):
+class CsvClient(ssacocli.DataClient):
     """
     Class for loading CSV data from local filesystem into main memory.
     """
@@ -138,16 +138,19 @@ def _main(parser: argparse.ArgumentParser) -> None:
     end_timestamp = pd.Timestamp(args.end_timestamp)
     # Load data.
     csv_client = CsvClient(args.source_dir)
-    data = csv_client.load(args.dataset_signature,
-        start_timestamp=start_timestamp, end_timestamp=end_timestamp)
+    data = csv_client.load(
+        args.dataset_signature,
+        start_timestamp=start_timestamp,
+        end_timestamp=end_timestamp,
+    )
     # Validate data.
-    empty_dataset_check = sisebiva.EmptyDatasetCheck()
+    empty_dataset_check = ssesbiva.EmptyDatasetCheck()
     # Conforming to the (a, b] interval convention, remove 1 minute from the
     # end_timestamp.
-    gaps_in_timestamp_check = sisebiva.GapsInTimestampCheck(
+    gaps_in_timestamp_check = ssesbiva.GapsInTimestampCheck(
         start_timestamp, end_timestamp - timedelta(minutes=1)
     )
-    dataset_validator = sinsaval.SingleDatasetValidator(
+    dataset_validator = ssacoval.SingleDatasetValidator(
         [empty_dataset_check, gaps_in_timestamp_check]
     )
     dataset_validator.run_all_checks([data])
