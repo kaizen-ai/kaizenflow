@@ -74,7 +74,8 @@ some helpful tips and resources to guide you through your first review.
 
 - Make sure to assign the PR to the reviewers so they get notified
   - <img width="313" alt="Снимок экрана 2023-05-29 в 03 51 01" src="https://github.com/sorrentum/sorrentum/assets/31514660/f8534c49-bff6-4d59-9037-d70dc03d5ff9">
-  - Juniors should assign Team Leaders to review their PR, Team Leaders assign integrators (GP & Paul)
+  - Juniors should assign Team Leaders to review their PR
+    - Team Leaders will assign integrators (GP & Paul) themselves after all their comments are implemented
   - Ping the assigned reviewer in the issue if nothing happens in 24 hours
 - Mention the corresponding issue in the PR description to ease the navigation
   - E.g., see an [example](https://github.com/sorrentum/sorrentum/pull/288#issue-1729654983)
