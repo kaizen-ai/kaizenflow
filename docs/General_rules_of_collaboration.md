@@ -185,8 +185,7 @@
      - Marketing and funding
      - On-boarding process
 - Telegram
-  - This is our messenger for tight interaction (like a debug session) or
-    immediacy (e.g., "are you ready for the sync up?")
+  - This is our messenger for tight interaction (like a debug session) or immediacy (e.g., "are you ready for the sync up?")
   - Please, avoid discussing anything that can be discussed at GitHub or Asana
     - You often need to reference some comments and ideas in other places like issues or messages and it is impossible to reference a Telegram message outside of it
     - It is much easier for all reviewers to catch up with all the thinking process if it is logged at one place - Telegram is never a place for this
@@ -196,8 +195,7 @@
 - Markdown files
   - Document instructions, process, design closely related to code
   - Notes that need to be close to the code itself
-  - Documents that need to be authoritative and long-term (e.g., reviewed,
-    tracked carefully)
+  - Documents that need to be authoritative and long-term (e.g., reviewed, tracked carefully)
 - Google docs
   - Document research in a descriptive way
   - Explain what are the results independently on how they were reached
