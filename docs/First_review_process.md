@@ -4,6 +4,7 @@
   * [Read Python Style Guide](#read-python-style-guide)
   * [Run linter](#run-linter)
   * [Compare your code to example code](#compare-your-code-to-example-code)
+  * [Save reviewers time](#save-reviewers-time)
   * [Look at examples of the first reviews](#look-at-examples-of-the-first-reviews)
 
 <!--te-->
@@ -68,6 +69,23 @@ some helpful tips and resources to guide you through your first review.
   - Unit tests:
     - `defi/tulip/test/test_order_matching.py`
     - `defi/tulip/test/test_optimize.py`
+
+## Save reviewers time
+
+- Make sure to assign the PR to the reviewers so they get notified
+  - <img width="313" alt="Снимок экрана 2023-05-29 в 03 51 01" src="https://github.com/sorrentum/sorrentum/assets/31514660/f8534c49-bff6-4d59-9037-d70dc03d5ff9">
+  - Juniors should assign Team Leaders to review their PR, Team Leaders assign integrators (GP & Paul)
+  - Ping the assigned reviewer in the issue if nothing happens in 24 hours
+- Mention the corresponding issue in the PR description to ease the navigation
+  - E.g., see an [example](https://github.com/sorrentum/sorrentum/pull/288#issue-1729654983)
+    - <img width="505" alt="Снимок экрана 2023-05-29 в 03 51 29" src="https://github.com/sorrentum/sorrentum/assets/31514660/69fbabec-300c-4f7c-94fc-45c5da5a6817">
+- When you've implemented a comment from a reviewer, press `Resolve conversation` button so the reviewers know that you actually took care of it
+  - <img width="328" alt="Снимок экрана 2023-05-29 в 03 27 26" src="https://github.com/sorrentum/sorrentum/assets/31514660/a4c79d73-62bd-419b-b3cf-e8011621ba3c">
+- When you've implemented all the comments and need another round of review:
+    - Press the circling arrows sign next to the reviewer for the ping
+      - <img width="280" alt="Снимок экрана 2023-05-29 в 03 28 01" src="https://github.com/sorrentum/sorrentum/assets/31514660/4f924f4f-abab-40be-975d-a4fa81d9af3b">
+    - Change label to `PR_for_reviewers` (label [desc](https://github.com/sorrentum/sorrentum/blob/master/docs/GitHub_ZenHub_workflows.md#pr-labels))
+      - <img width="271" alt="Снимок экрана 2023-05-29 в 04 24 18" src="https://github.com/sorrentum/sorrentum/assets/31514660/3580bf34-dcba-431b-af5c-5ae65f7597c3">
 
 ## Look at examples of the first reviews
 
