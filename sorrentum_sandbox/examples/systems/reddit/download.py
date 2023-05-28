@@ -15,7 +15,7 @@ from typing import List, Optional, Tuple
 import pandas as pd
 import praw
 
-import sorrentum_sandbox.common.download as ssandown
+import sorrentum_sandbox.common.download as ssacodow
 
 _LOG = logging.getLogger(__name__)
 REDDIT_CLIENT_ID = os.environ["REDDIT_CLIENT_ID"]
@@ -38,7 +38,7 @@ class PostFeatures:
         return {k: str(v) for k, v in dataclasses.asdict(self).items()}
 
 
-class PostsDownloader(ssandown.DataDownloader):
+class PostsDownloader(ssacodow.DataDownloader):
     """
     Download Reddit data using praw lib.
     """
@@ -58,32 +58,6 @@ class PostsDownloader(ssandown.DataDownloader):
         # memory usage will double if enabled."
         self.reddit_client.config.store_json_result = True
 
-
-    @staticmethod
-    def _transform_to_dict(source: praw.models.Submission) -> dict:
-        """
-        Transform object to dict.
-
-        :param source: object to transform
-        :return: transformed dictionary
-        """
-        output_comments = []
-        # Get comments before main transform since it is not possible to do it
-        # after an iterator is fetched.
-        if hasattr(source, "comments"):
-            for comment in source.comments:
-                output_comments += [PostsDownloader._transform_to_dict(comment)]
-        output = vars(source)
-        for key in output:
-            # If object can't be deserialized then assign a question mark.
-            try:
-                output[key] = json.dumps(output[key])
-            except (TypeError, OverflowError):
-                output[key] = "?"
-        if len(output_comments) > 0:
-            output["comments"] = output_comments
-        return output
-
     def download(
         self,
         *,
@@ -91,7 +65,7 @@ class PostsDownloader(ssandown.DataDownloader):
         end_timestamp: Optional[pd.Timestamp] = pd.Timestamp.max,
         numbers_post_to_fetch: int = 5,
         subreddits: Optional[Tuple[str, ...]] = None
-    ) -> ssandown.RawData:
+    ) -> ssacodow.RawData:
         """
         Download posts in the hot category in the predefined subreddits.
 
@@ -122,4 +96,29 @@ class PostsDownloader(ssandown.DataDownloader):
                 post_as_dict["created"] = post_timestamp
                 output += [post_as_dict]
         _LOG.info("Reddit download finished.")
-        return ssandown.RawData(output)
+        return ssacodow.RawData(output)
+
+    @staticmethod
+    def _transform_to_dict(source: praw.models.Submission) -> dict:
+        """
+        Transform object to dict.
+
+        :param source: object to transform
+        :return: transformed dictionary
+        """
+        output_comments = []
+        # Get comments before main transform since it is not possible to do it
+        # after an iterator is fetched.
+        if hasattr(source, "comments"):
+            for comment in source.comments:
+                output_comments += [PostsDownloader._transform_to_dict(comment)]
+        output = vars(source)
+        for key in output:
+            # If object can't be deserialized then assign a question mark.
+            try:
+                output[key] = json.dumps(output[key])
+            except (TypeError, OverflowError):
+                output[key] = "?"
+        if len(output_comments) > 0:
+            output["comments"] = output_comments
+        return output

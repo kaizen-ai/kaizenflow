@@ -72,7 +72,7 @@ def add_verbosity_arg(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
 def parse_verbosity_args(
     args: argparse.Namespace, *args_: Any, **kwargs: Any
 ) -> None:
-    #if args.log_level == "VERB_DEBUG":
+    # if args.log_level == "VERB_DEBUG":
     #    args.log_level = 5
     hdbg.init_logger(verbosity=args.log_level, *args_, **kwargs)
 

@@ -1,23 +1,23 @@
-
-import pandas as pd
 import json
 import os
 from typing import Any, Dict, List
+
+import pandas as pd
 import requests
-import json
-
-
 
 # function for bitquery query
-def make_query(start_date:str):
+def make_query(start_date: str):
 
     start_date = f'"{start_date}"'
 
-    query = """query{
+    query = (
+        """query{
     ethereum(network: ethereum) {
         dexTrades(
         options: {limit: 25000, offset: %d, asc: "timeInterval.minute"}
-        date: {since: """ + start_date + """,till:"2023-04-04"}
+        date: {since: """
+        + start_date
+        + """,till:"2023-04-04"}
         exchangeName: {is: "Uniswap"}
         )
         {
@@ -44,8 +44,9 @@ def make_query(start_date:str):
     }
     }
     """
+    )
     return query
-  
+
 
 def run_query(query: str):
     # header here just for easy use
@@ -61,7 +62,8 @@ def run_query(query: str):
                 request.status_code, query
             )
         )
-    
+
+
 def json_to_df(data: List[Dict[Any, Any]]) -> pd.DataFrame:
     """
     Transform the data to Dataframe and set the time index.
@@ -69,6 +71,3 @@ def json_to_df(data: List[Dict[Any, Any]]) -> pd.DataFrame:
     df = pd.json_normalize(data, sep="_")
     df = df.set_index("timeInterval_minute")
     return df
-
-
-

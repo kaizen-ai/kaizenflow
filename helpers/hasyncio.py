@@ -180,7 +180,7 @@ def _poll_iterate(
     get_wall_clock_time: hdateti.GetWallClockTime,
     num_iter: int,
     max_num_iter,
-    tag: str
+    tag: str,
 ) -> Tuple[int, PollOutput]:
     """
     Execute an iteration of the polling loop.
@@ -254,7 +254,8 @@ async def poll(
             get_wall_clock_time,
             num_iter,
             max_num_iter,
-            tag)
+            tag,
+        )
         if success:
             return num_iter, value
         _LOG.debug("sleep for %s secs", sleep_in_secs)
@@ -286,7 +287,8 @@ def sync_poll(
             get_wall_clock_time,
             num_iter,
             max_num_iter,
-            tag)
+            tag,
+        )
         if success:
             return success, value
         _LOG.debug("sleep for %s secs", sleep_in_secs)

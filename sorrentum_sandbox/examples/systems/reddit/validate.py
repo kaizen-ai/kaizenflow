@@ -11,10 +11,10 @@ from typing import Any, List
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import sorrentum_sandbox.common.validate as ssanvali
+import sorrentum_sandbox.common.validate as ssacoval
 
 
-class EmptyTitleCheck(ssanvali.QaCheck):
+class EmptyTitleCheck(ssacoval.QaCheck):
     def check(self, dataframes: List[pd.DataFrame], *args: Any) -> bool:
         """
         Check if dataset contains empty titles.
@@ -27,7 +27,7 @@ class EmptyTitleCheck(ssanvali.QaCheck):
         return not have_empty_title
 
 
-class PositiveNumberOfCommentsCheck(ssanvali.QaCheck):
+class PositiveNumberOfCommentsCheck(ssacoval.QaCheck):
     def check(self, dataframes: List[pd.DataFrame], *args: Any) -> bool:
         """
         Check if number of comments in a post is a positive integer.

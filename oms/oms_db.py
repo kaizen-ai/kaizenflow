@@ -25,9 +25,7 @@ SUBMITTED_ORDERS_TABLE_NAME = "submitted_orders"
 
 
 def create_submitted_orders_table(
-    db_connection: hsql.DbConnection,
-    incremental: bool,
-    table_name: str
+    db_connection: hsql.DbConnection, incremental: bool, table_name: str
 ) -> str:
     """
     Create a table storing the orders submitted to the system.
@@ -68,9 +66,7 @@ ACCEPTED_ORDERS_TABLE_NAME = "accepted_orders"
 
 
 def create_accepted_orders_table(
-    db_connection: hsql.DbConnection,
-    incremental: bool,
-    table_name: str
+    db_connection: hsql.DbConnection, incremental: bool, table_name: str
 ) -> str:
     """
     Create a table for acknowledging that orders have been accepted.
@@ -151,7 +147,7 @@ def create_current_positions_table(
     db_connection: hsql.DbConnection,
     incremental: bool,
     asset_id_name: str,
-    table_name: str
+    table_name: str,
 ) -> str:
     """
     Create a table holding the current positions.
@@ -162,7 +158,9 @@ def create_current_positions_table(
     :param table_name: name of the current positions table
     :return: name of created table
     """
-    _LOG.debug(hprint.to_str("db_connection incremental asset_id_name table_name"))
+    _LOG.debug(
+        hprint.to_str("db_connection incremental asset_id_name table_name")
+    )
     query = []
     if not incremental:
         query.append(f"DROP TABLE IF EXISTS {table_name}")
@@ -233,7 +231,7 @@ def create_restrictions_table(
     db_connection: hsql.DbConnection,
     incremental: bool,
     asset_id_name: str,
-    table_name: str
+    table_name: str,
 ) -> str:
     """
     Create a table holding restrictions.
@@ -244,7 +242,9 @@ def create_restrictions_table(
     :param table_name: name of the restrictions table
     :return: name of created table
     """
-    _LOG.debug(hprint.to_str("db_connection incremental asset_id_name table_name"))
+    _LOG.debug(
+        hprint.to_str("db_connection incremental asset_id_name table_name")
+    )
     query = []
     if not incremental:
         query.append(f"DROP TABLE IF EXISTS {table_name}")
@@ -278,6 +278,7 @@ def create_restrictions_table(
 # We can only create / remove tables in a DB controlled by us, so we can hard-wire
 # the table names to the ones we use. When the DB is external, then the caller
 # needs to specify the names of the tables.
+
 
 def create_oms_tables(
     db_connection: hsql.DbConnection, incremental: bool, asset_id_name: str

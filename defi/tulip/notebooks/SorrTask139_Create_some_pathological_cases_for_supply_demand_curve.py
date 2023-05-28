@@ -17,15 +17,16 @@
 # %autoreload 2
 
 import logging
-import pandas as pd
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import pandas as pd
 
+import defi.dao_cross.order as ddacrord
+import defi.dao_cross.supply_demand as ddcrsede
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
-import defi.dao_cross.supply_demand as ddcrsede
-import defi.dao_cross.order as ddacrord
 
 # %%
 try:
@@ -33,6 +34,7 @@ try:
 except ImportError:
     # !sudo /bin/bash -c "(source /venv/bin/activate; pip install pulp)"
     import pulp
+
 import defi.dao_cross.optimize as ddacropt
 
 # %%
@@ -59,7 +61,9 @@ discrete_supply_curve = pd.Series(
 discrete_supply_curve
 
 # %%
-supply_orders1 = ddcrsede.convert_discrete_curve_to_limit_orders(discrete_supply_curve)
+supply_orders1 = ddcrsede.convert_discrete_curve_to_limit_orders(
+    discrete_supply_curve
+)
 supply_orders_df1 = ddacrord.convert_orders_to_dataframe(supply_orders1)
 supply_orders_df1
 
@@ -72,7 +76,9 @@ discrete_demand_curve = pd.Series(
 discrete_demand_curve
 
 # %%
-demand_orders1 = ddcrsede.convert_discrete_curve_to_limit_orders(discrete_demand_curve)
+demand_orders1 = ddcrsede.convert_discrete_curve_to_limit_orders(
+    discrete_demand_curve
+)
 demand_orders_df1 = ddacrord.convert_orders_to_dataframe(demand_orders1)
 demand_orders_df1
 
@@ -84,12 +90,16 @@ prices = {"BTC": 1, "ETH": 2}
 
 # %%
 type_ = "supply"
-supply_curve1 = ddcrsede.get_supply_demand_discrete_curve(type_, supply_orders_df1)
+supply_curve1 = ddcrsede.get_supply_demand_discrete_curve(
+    type_, supply_orders_df1
+)
 supply_curve1
 
 # %% run_control={"marked": false}
 type_ = "demand"
-demand_curve1 = ddcrsede.get_supply_demand_discrete_curve(type_, demand_orders_df1)
+demand_curve1 = ddcrsede.get_supply_demand_discrete_curve(
+    type_, demand_orders_df1
+)
 demand_curve1
 
 # %%
@@ -120,7 +130,9 @@ supply_orders_df2
 
 # %%
 type_ = "supply"
-supply_curve2 = ddcrsede.get_supply_demand_discrete_curve(type_, supply_orders_df2)
+supply_curve2 = ddcrsede.get_supply_demand_discrete_curve(
+    type_, supply_orders_df2
+)
 supply_curve2
 
 # %%
@@ -151,7 +163,9 @@ supply_orders_df3
 
 # %%
 type_ = "supply"
-supply_curve3 = ddcrsede.get_supply_demand_discrete_curve(type_, supply_orders_df3)
+supply_curve3 = ddcrsede.get_supply_demand_discrete_curve(
+    type_, supply_orders_df3
+)
 supply_curve3
 
 # %%

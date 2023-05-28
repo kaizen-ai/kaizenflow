@@ -8,9 +8,7 @@ import airflow
 from airflow.operators.bash import BashOperator
 
 _DAG_ID = "download_periodic_1min_postgres_ohlcv_binance"
-_DAG_DESCRIPTION = (
-    "Download Binance OHLCV data every minute and save to Postgres"
-)
+_DAG_DESCRIPTION = "Download Binance OHLCV data every minute and save to Postgres"
 # Specify when often to execute the DAG.
 _SCHEDULE = "* * * * *"
 
@@ -43,7 +41,7 @@ bash_command = [
     "--target_table 'binance_ohlcv_spot_downloaded_1min'",
     "--start_timestamp {{ data_interval_start }} ",
     "--end_timestamp {{ data_interval_end }}",
-    "-v DEBUG"
+    "-v DEBUG",
 ]
 
 downloading_task = BashOperator(

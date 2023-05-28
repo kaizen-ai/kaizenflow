@@ -16,18 +16,16 @@ from typing import Any
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import helpers.hparser as hparser
 import helpers.hio as hio
-import sorrentum_sandbox.common.download as sinsadow
-import sorrentum_sandbox.examples.ml_projects.SorrIssue21_Team2_Implement_sandbox_for_GitHub_2.download_team2  as sisebido
-import sorrentum_sandbox.common.save as sinsasav
+import helpers.hparser as hparser
+import sorrentum_sandbox.common.download as ssacodow
+import sorrentum_sandbox.common.save as ssacosav
+import sorrentum_sandbox.examples.ml_projects.SorrIssue21_Team2_Implement_sandbox_for_GitHub_2.download_team2 as sisebido
 
 _LOG = logging.getLogger(__name__)
 
 
-
-
-class CsvDataFrameSaver(sinsasav.DataSaver):
+class CsvDataFrameSaver(ssacosav.DataSaver):
     """
     Class for saving pandas DataFrame as CSV to a local filesystem at desired
     location.
@@ -40,15 +38,15 @@ class CsvDataFrameSaver(sinsasav.DataSaver):
         """
         self.target_dir = target_dir
 
-    def save(self, data: sinsadow.RawData, **kwargs: Any) -> None:
+    def save(self, data: ssacodow.RawData, **kwargs: Any) -> None:
         """
         Save RawData storing a DataFrame to CSV.
         :param data: data to persists into CSV
         """
-        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
-        signature = (
-            "github_main_download"
+        hdbg.dassert_isinstance(
+            data.get_data(), pd.DataFrame, "Only DataFrame is supported."
         )
+        signature = "github_main_download"
         signature += ".csv"
         hio.create_dir(self.target_dir, incremental=True)
         target_path = os.path.join(self.target_dir, signature)
@@ -91,7 +89,7 @@ def _add_download_args(
         required=False,
         default=False,
         help="Domain switcher between binance.com when using --use_global_api"
-             " and binance.us by default"
+        " and binance.us by default",
     )
     return parser
 
@@ -116,13 +114,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Download data.
     start_timestamp = pd.Timestamp(args.start_timestamp)
     end_timestamp = pd.Timestamp(args.end_timestamp)
-    downloader = sisebido.downloader('BTC','github_main')
-    #raw_data = downloader.download(start_timestamp, end_timestamp)
+    downloader = sisebido.downloader("BTC", "github_main")
+    # raw_data = downloader.download(start_timestamp, end_timestamp)
     # Save data as CSV.
     saver = CsvDataFrameSaver(args.target_dir)
     saver.save(downloader)
-
-    
 
 
 if __name__ == "__main__":

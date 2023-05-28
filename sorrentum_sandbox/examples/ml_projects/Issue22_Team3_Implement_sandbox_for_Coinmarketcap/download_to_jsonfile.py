@@ -6,8 +6,8 @@ Use as:
 > download_to_jsonfile.py --start 1 --limit 100
 
 """
-import json
 import argparse
+import json
 import logging
 import os
 from typing import Any
@@ -15,25 +15,28 @@ from typing import Any
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import helpers.hparser as hparser
 import helpers.hio as hio
-import sorrentum_sandbox.common.download as sinsadow
-import sorrentum_sandbox.common.save as sinsasav
-
+import helpers.hparser as hparser
+import sorrentum_sandbox.common.download as ssacodow
+import sorrentum_sandbox.common.save as ssacosav
 import sorrentum_sandbox.examples.ml_projects.Issue22_Team3_Implement_sandbox_for_Coinmarketcap as coinmarketcap
+
 coinmarketcap_download = coinmarketcap.download
 
 _LOG = logging.getLogger(__name__)
+
 
 def save_to_json(data) -> None:
     """
     Save RawData storing a DataFrame to JSON file.
     """
-    with open('CoinMarketData.json', 'w+') as f:
+    with open("CoinMarketData.json", "w+") as f:
         json.dump(data, f)
-        _LOG.info("Saving data to json file 'CoinMarketCap.json'") 
+        _LOG.info("Saving data to json file 'CoinMarketCap.json'")
+
 
 # #############################################################################
+
 
 def _add_download_args(
     parser: argparse.ArgumentParser,
@@ -78,7 +81,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     # Download data.
     downloader = coinmarketcap_download.CMCRestApiDownloader()
-    raw_data = downloader.download(args.start,args.limit)
+    raw_data = downloader.download(args.start, args.limit)
     # Save data as CSV.
     save_to_json(raw_data.get_data())
 
