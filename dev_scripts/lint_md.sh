@@ -7,6 +7,10 @@
 #   --write \
 #   --tab-width 2 \
 #   file1.md file2.md ....
+# 
+# To generate TOC:
+# Add <!-- toc -->; at the top of the markdown file.
+# npx markdown-toc -i file1.md file2.md ....
 
 set -eux
 
@@ -29,7 +33,8 @@ RUN node -v
 RUN npm -v
 
 # Install Prettier.
-RUN npm install -g prettier
+RUN npm install -g prettier && \
+    npm install -g markdown-toc
 
 RUN npx prettier -v
 
@@ -45,6 +50,7 @@ MOUNT="type=bind,source=${WORKDIR},target=${WORKDIR}"
 cat >./run_linter.sh <<EOF
 
 npx prettier --parser markdown --prose-wrap always --tab-width 2 --write $@
+npx markdown-toc -i $@
 
 EOF
 
