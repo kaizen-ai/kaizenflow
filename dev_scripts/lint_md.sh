@@ -12,7 +12,7 @@ set -eux
 
 # Create a temporary file to build the Docker container.
 TMP_FILENAME="/tmp/tmp.lint_markdown.Dockerfile"
-cat >$TMP_FILENAME <<EOF
+cat>$TMP_FILENAME <<EOF
 FROM ubuntu:latest
 
 RUN apt-get update && \
