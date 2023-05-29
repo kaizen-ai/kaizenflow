@@ -66,5 +66,6 @@ make this experience the best possible for you.
 - [Survey results](https://drive.google.com/drive/u/0/folders/1-aaFlPtlbJ-pUL-c5GQbjFgZRp9ZNRUk)
 
 # Sorrentum Calendar
+Use the below link to access the Sorrentum Meetings. Feel free to check the calendar to get updated on the timings and meeting invites.
 
-[Calendar](https://calendar.google.com/calendar/embed?src=info%40sorrentum.org&ctz=America%2FChicago)
+- [Calendar](https://calendar.google.com/calendar/embed?src=info%40sorrentum.org&ctz=America%2FChicago)
