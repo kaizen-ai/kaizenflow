@@ -1,28 +1,25 @@
-# %%
 """
 Import as:
 
 import defi.tulip.implementation.order as dtuimord
 """
 
-# %%
 import collections
 import logging
 from typing import Any, Dict, List, Optional, Union
 
-# %%
 import numpy as np
 import pandas as pd
 
-# %%
+
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 
-# %%
+
 _LOG = logging.getLogger(__name__)
 
 
-# %%
+
 # TODO(gp): Maybe LimitOrder or DaoLimitOrder?
 class Order:
     """
@@ -200,7 +197,7 @@ class Order:
         return takes_precedence
 
 
-# %%
+
 def get_random_order(seed: Optional[int] = None) -> Order:
     """
     Get an order for ETH/BTC with randomized valid parameters.
@@ -241,7 +238,7 @@ def get_random_order(seed: Optional[int] = None) -> Order:
     return order
 
 
-# %%
+
 def convert_orders_to_dataframe(orders: List[Order]) -> pd.DataFrame:
     """
     Convert a list of orders to a dataframe
