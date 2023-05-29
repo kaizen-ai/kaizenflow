@@ -7,6 +7,7 @@ import defi.tulip.implementation.order_matching as dtimorma
 import copy
 import heapq
 import logging
+import psycopg2
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
@@ -14,6 +15,7 @@ import pandas as pd
 import defi.dao_cross.order as ddacrord
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
+import helpers.hsql_implementation as hsqlimpl
 
 _LOG = logging.getLogger(__name__)
 
@@ -187,3 +189,54 @@ def get_equivalent_order(
         order.wallet_address,
     )
     return order
+
+
+def extract_matching_orders(
+    swap_id: int, connection: hsqlimpl.DbConnection, table_name: str
+) -> List[Dict[str, Any]]:
+    """
+    Get orders with a specified swap id from database.
+
+    DB has the following schema:
+    ```
+    0  |  id                  | bigint                 
+    1  |  swap_pair_id        | integer                
+    2  |  swap_id             | bigint                 
+    3  |  order_id            | bigint                 
+    4  |  order_direction     | character varying(255) 
+    5  |  basetoken           | character varying(255) 
+    6  |  querytoken          | character varying(255) 
+    7  |  depositaddress      | character varying(255) 
+    8  |  senderaddress       | character varying(255) 
+    9  |  timestamp           | bigint                 
+    10 |  amount              | numeric                
+    11 |  limitprice          | numeric                
+    12 |  knowledge_timestamp | timestamp with time zone
+    ```
+
+    :param swap_id: swap id to match the orders by
+    :param connection: database connection
+    :param table_name: data table name
+    :return: all the matched orders
+    """
+    # Execute the query to fetch all the matching orders.
+    query = f"SELECT * FROM {table_name} WHERE swap_id = {swap_id}"
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+        matching_orders = cursor.fetchall()
+    # Put the matching orders in Solidity code compatible format.
+    transfers = []
+    for order in matching_orders:
+        basetoken = order[5]
+        amount = order[10]
+        sender_address = order[8]
+        deposit_address = order[7]
+        transfer = {
+            "token": basetoken,
+            "amount": amount,
+            "from": sender_address,
+            "to": deposit_address,
+            "isReturn": True,
+        }
+        transfers.append(transfer)
+    return transfers
