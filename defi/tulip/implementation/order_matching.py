@@ -226,12 +226,12 @@ def extract_matching_orders(
     # Put the matching orders in Solidity code compatible format.
     transfers = []
     for order in matching_orders:
-        basetoken = order[5]
+        base_token = order[5]
         amount = order[10]
         sender_address = order[8]
         deposit_address = order[7]
         transfer = {
-            "token": basetoken,
+            "token": base_token,
             "amount": amount,
             "from": sender_address,
             "to": deposit_address,
