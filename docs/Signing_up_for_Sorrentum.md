@@ -19,8 +19,10 @@
     with the contact info
   - Send the invite to join
     [GitHub repo](https://github.com/sorrentum/sorrentum/settings/access?guidance_task=)
-  - Add Contributor email as Editor to the
+  - Add Contributor email as Commenter to the
     [Sorrentum - Contributors gdrive](https://drive.google.com/drive/u/0/folders/1LXwKpmaFWJI-887IoA50sVC8-dw_1L8I)
+  - Add Contributor email as Editor to the
+    [Sorrentum - Projects folder](https://drive.google.com/drive/u/0/folders/1eKj6u_cbQM0ZLZ4wRJ6xPM1oqIKwusUo)
 
 - **(Contributor)**: Accept the invite from GitHub that we will send you
 
