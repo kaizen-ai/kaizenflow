@@ -11,10 +11,9 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-import defi.dao_cross.order as ddacrord
+import defi.tulip.implementation.order as dtuimord
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-import helpers.hsql_implementation as hsqlimpl
 
 _LOG = logging.getLogger(__name__)
 
@@ -42,8 +41,10 @@ def _get_transfer_df(transfers: Optional[List[Dict[str, Any]]]) -> pd.DataFrame:
     return transfer_df
 
 
+# TODO(Dan): Refactor so returns match `Transfer` format from
+#  `def/tulip/contracts/DaoCross.sol` and return leftover transfers as well.
 def match_orders(
-    orders: List[ddacrord.Order],
+    orders: List[dtuimord.Order],
     clearing_price: float,
     base_token: str,
     quote_token: str,
@@ -64,7 +65,7 @@ def match_orders(
     _LOG.debug(hprint.to_str("orders"))
     _LOG.debug(hprint.to_str("clearing_price"))
     hdbg.dassert_lt(0, len(orders))
-    hdbg.dassert_container_type(orders, list, ddacrord.Order)
+    hdbg.dassert_container_type(orders, list, dtuimord.Order)
     hdbg.dassert_lt(0, clearing_price)
     # Build buy and sell heaps.
     buy_heap = []
@@ -147,9 +148,9 @@ def match_orders(
 
 
 def get_equivalent_order(
-    order: ddacrord.Order,
+    order: dtuimord.Order,
     clearing_price: float,
-) -> ddacrord.Order:
+) -> dtuimord.Order:
     """
     Get equivalent DaoCross order.
 
@@ -161,7 +162,7 @@ def get_equivalent_order(
     :param clearing_price: clearing price
     :return: order equivalent to the input one
     """
-    hdbg.dassert_isinstance(order, ddacrord.Order)
+    hdbg.dassert_isinstance(order, dtuimord.Order)
     # Set action opposite to the input's one.
     if order.action == "buy":
         action = "sell"
@@ -177,7 +178,7 @@ def get_equivalent_order(
     # Convert limit price of base token to limit price of quote token.
     limit_price = 1 / order.limit_price
     # Build equivalent order.
-    order = ddacrord.Order(
+    order = dtuimord.Order(
         order.timestamp,
         action,
         quantity,
@@ -188,54 +189,3 @@ def get_equivalent_order(
         order.wallet_address,
     )
     return order
-
-
-def extract_matching_orders(
-    swap_id: int, connection: hsqlimpl.DbConnection, table_name: str
-) -> List[Dict[str, Any]]:
-    """
-    Get orders with a specified swap id from database.
-
-    DB has the following schema:
-    ```
-    0  |  id                  | bigint
-    1  |  swap_pair_id        | integer
-    2  |  swap_id             | bigint
-    3  |  order_id            | bigint
-    4  |  order_direction     | character varying(255)
-    5  |  basetoken           | character varying(255)
-    6  |  querytoken          | character varying(255)
-    7  |  depositaddress      | character varying(255)
-    8  |  senderaddress       | character varying(255)
-    9  |  timestamp           | bigint
-    10 |  amount              | numeric
-    11 |  limitprice          | numeric
-    12 |  knowledge_timestamp | timestamp with time zone
-    ```
-
-    :param swap_id: swap id to match the orders by
-    :param connection: database connection
-    :param table_name: data table name
-    :return: all the matched orders
-    """
-    # Execute the query to fetch all the matching orders.
-    query = f"SELECT * FROM {table_name} WHERE swap_id = {swap_id}"
-    with connection.cursor() as cursor:
-        cursor.execute(query)
-        matching_orders = cursor.fetchall()
-    # Put the matching orders in Solidity code compatible format.
-    transfers = []
-    for order in matching_orders:
-        base_token = order[5]
-        amount = order[10]
-        sender_address = order[8]
-        deposit_address = order[7]
-        transfer = {
-            "token": base_token,
-            "amount": amount,
-            "from": sender_address,
-            "to": deposit_address,
-            "isReturn": True,
-        }
-        transfers.append(transfer)
-    return transfers
