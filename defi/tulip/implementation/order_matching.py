@@ -198,18 +198,18 @@ def extract_matching_orders(
 
     DB has the following schema:
     ```
-    0  |  id                  | bigint                 
-    1  |  swap_pair_id        | integer                
-    2  |  swap_id             | bigint                 
-    3  |  order_id            | bigint                 
-    4  |  order_direction     | character varying(255) 
-    5  |  basetoken           | character varying(255) 
-    6  |  querytoken          | character varying(255) 
-    7  |  depositaddress      | character varying(255) 
-    8  |  senderaddress       | character varying(255) 
-    9  |  timestamp           | bigint                 
-    10 |  amount              | numeric                
-    11 |  limitprice          | numeric                
+    0  |  id                  | bigint
+    1  |  swap_pair_id        | integer
+    2  |  swap_id             | bigint
+    3  |  order_id            | bigint
+    4  |  order_direction     | character varying(255)
+    5  |  basetoken           | character varying(255)
+    6  |  querytoken          | character varying(255)
+    7  |  depositaddress      | character varying(255)
+    8  |  senderaddress       | character varying(255)
+    9  |  timestamp           | bigint
+    10 |  amount              | numeric
+    11 |  limitprice          | numeric
     12 |  knowledge_timestamp | timestamp with time zone
     ```
 
