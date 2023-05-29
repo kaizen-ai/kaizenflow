@@ -23,6 +23,7 @@
     [Sorrentum - Contributors gdrive](https://drive.google.com/drive/u/0/folders/1LXwKpmaFWJI-887IoA50sVC8-dw_1L8I)
   - Add Contributor email as Editor to the
     [Sorrentum - Projects folder](https://drive.google.com/drive/u/0/folders/1eKj6u_cbQM0ZLZ4wRJ6xPM1oqIKwusUo)
+  - Create a task on Asana with the name of the contributor. Add the contributor's information (link to the gsheets and some comment on the background) regarding the resume, start date and any other updates related to the contributor particularly.
 
 - **(Contributor)**: Accept the invite from GitHub that we will send you
 
@@ -65,9 +66,17 @@
 
 - **(Admin)**: On-boarding process
 
-  - The admin adds in the on-boarding issue https://github.com/sorrentum/sorrentum/issues/189 the checklist for the Contributor onboarding.
+  - When the contributor is ready to be on-boarded, file an issue like "On-board \<FIRST NAME LAST NAME\> Aka <GITHUB_HANDLE>". The content of the issue will be the following checklist. Admins need to keep track on the progress being made by the contributor.
+    - [ ] Read [How to organize your work](https://github.com/sorrentum/sorrentum/blob/master/docs/How_to_organize_your_work.md)
+    - [ ] Read [Quick start for developing](https://github.com/sorrentum/sorrentum/blob/master/docs/Quick_start_for_developing.md)
+    - [ ] Make sure the Docker dev container works
+    - [ ] Make sure the unit tests run successfully
+    - [ ] Read [Sorrentum Python coding style guide](https://github.com/sorrentum/sorrentum/blob/master/docs/Coding_Style_Guide.md)
+    - [ ] Get assigned a warm-up issue
+    - [ ] Get up to speed in terms of the background knowledge for specific project
+      - For Arbitrage / Modeling: [From_zero_to_modeling.md](https://github.com/sorrentum/sorrentum/blob/master/docs/From_zero_to_modeling.md)
 
 - **(Contributor)**: On-boarding Tasks
 
-  - The contributor goes through the [on-boarding](https://github.com/sorrentum/sorrentum/issues/189) checlistlist for their username one-by-one, marking each item as done when **it's actually done**.
+  - The contributor goes through the particular checlistlist from the issue assigned to them one-by-one, marking each item as done when **it's actually done**.
 
