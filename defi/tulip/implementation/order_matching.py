@@ -7,7 +7,6 @@ import defi.tulip.implementation.order_matching as dtimorma
 import copy
 import heapq
 import logging
-import psycopg2
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
