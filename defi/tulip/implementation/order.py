@@ -161,6 +161,15 @@ class Order:
         dict_["quote_token"] = self.quote_token
         dict_["deposit_address"] = self.deposit_address
         return dict_
+    
+    def to_dataframe(self) -> pd.DataFrame:
+        data = self.to_dict()
+        df = pd.DataFrame(data, index=[0])
+
+        if isinstance(df,pd.core.frame.DataFrame):
+            return df
+        else:
+            raise TypeError("Invalid format of the dictionary to be converted to a dataframe")
 
     def _takes_precedence(self, other: "Order") -> bool:
         """
