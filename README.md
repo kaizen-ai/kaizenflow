@@ -67,4 +67,4 @@ make this experience the best possible for you.
 
 # Sorrentum Calendar
 
-https://calendar.google.com/calendar/embed?src=info%40sorrentum.org&ctz=America%2FChicago
+[Calendar](https://calendar.google.com/calendar/embed?src=info%40sorrentum.org&ctz=America%2FChicago)
