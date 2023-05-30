@@ -87,6 +87,18 @@ def _extract_matching_orders(
     return orders
 
 
+# TODO(Toma): Create the function.
+def _process_transfers(
+    transfers: pd.DataFrame, tulip_address: str
+) -> None:
+    """
+    Process and execute transfers.
+
+    :param transfers: transfers to process
+    :param tulip_address:
+    """
+
+
 # #############################################################################
 
 
@@ -96,15 +108,19 @@ def main() -> None:
     # Get global parameters.
     swap_id = os.environ.get("SWAP_ID")
     clearing_price = os.environ.get("CLEARING_PRICE")
-    base_token = os.environ.get("BASE_TOKEN")
-    quote_token = os.environ.get("QUOTE_TOKEN")
     # Get matching orders from DB.
     matching_orders = _extract_matching_orders(swap_id, db_connection)
+    # Orders from the same swap id have the same base / quote token pair.
+    base_token = matching_orders[0].base_token
+    quote_token = matching_orders[0].quote_token
     # Match orders and get implemented transfers.
     transfer_df = dtimorma.match_orders(
         matching_orders, clearing_price, base_token, quote_token
     )
-    # TODO(Dan): Add next steps.
+    # TODO(Toma): To update.
+    # Process transfers.
+    tulip_address = "tulip_address"
+    _process_transfers(transfer_df, tulip_address)
 
 
 if __name__ == "__main__":

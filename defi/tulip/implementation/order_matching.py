@@ -41,8 +41,7 @@ def _get_transfer_df(transfers: Optional[List[Dict[str, Any]]]) -> pd.DataFrame:
     return transfer_df
 
 
-# TODO(Dan): Refactor so returns match `Transfer` format from
-#  `def/tulip/contracts/DaoCross.sol` and return leftover transfers as well.
+# TODO(Dan): "Adjust `match_orders()` returns to Tulip contract format" SorrTask #296.
 def match_orders(
     orders: List[dtuimord.Order],
     clearing_price: float,
