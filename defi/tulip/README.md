@@ -39,3 +39,4 @@ When it's time for the swap to occur, the owner calls the `onSwapTime` function.
 
 # Tulip 0.3 (Tulip.sol)
 
+![Diagram](./tulip_v3_diagram.png)
