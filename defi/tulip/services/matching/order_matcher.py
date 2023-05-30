@@ -8,10 +8,12 @@ import logging
 import os
 from typing import Any, List
 
+import pandas as pd
 import psycopg2 as psycop
 
 import defi.tulip.implementation.order as dtuimord
 import defi.tulip.implementation.order_matching as dtimorma
+import helpers.hdatetime as hdateti
 
 _LOG = logging.getLogger(__name__)
 
@@ -73,8 +75,10 @@ def _extract_matching_orders(
     # Covert DB orders to the conventional format.
     orders = []
     for db_order in matching_db_orders:
+        unix_timestamp = db_order[9]
+        timestamp = hdateti.convert_unix_epoch_to_timestamp(unix_timestamp)
         order = dtuimord.Order(
-            db_order[9],
+            timestamp,
             db_order[4],
             db_order[10],
             db_order[5],
