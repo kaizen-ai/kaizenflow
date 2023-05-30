@@ -164,7 +164,11 @@ class Order:
     def to_dataframe(self) -> pd.DataFrame:
         data = self.to_dict()
         df = pd.DataFrame(data, index=[0])
-        return df
+
+        if isinstance(df,pd.core.frame.DataFrame):
+            return df
+        else:
+            raise TypeError("Invalid format of the dictionary to be converted to a dataframe")
     
     def _takes_precedence(self, other: "Order") -> bool:
         """
