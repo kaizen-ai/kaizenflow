@@ -11,14 +11,10 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
 
-
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 
-
 _LOG = logging.getLogger(__name__)
-
-
 
 # TODO(gp): Maybe LimitOrder or DaoLimitOrder?
 class Order:
@@ -168,11 +164,7 @@ class Order:
     def to_dataframe(self) -> pd.DataFrame:
         data = self.to_dict()
         df = pd.DataFrame(data, index=[0])
-
-        if isinstance(df,pd.core.frame.DataFrame):
-            return df
-        else:
-            raise TypeError("Invalid format of the dictionary to be converted to a dataframe")
+        return df
     
     def _takes_precedence(self, other: "Order") -> bool:
         """
@@ -195,8 +187,6 @@ class Order:
         elif self.timestamp > other.timestamp:
             takes_precedence = True
         return takes_precedence
-
-
 
 def get_random_order(seed: Optional[int] = None) -> Order:
     """
@@ -236,8 +226,6 @@ def get_random_order(seed: Optional[int] = None) -> Order:
         wallet_address,
     )
     return order
-
-
 
 def convert_orders_to_dataframe(orders: List[Order]) -> pd.DataFrame:
     """
