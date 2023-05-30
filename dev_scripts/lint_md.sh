@@ -1,16 +1,10 @@
 #!/usr/bin/env bash
-# Markdown linter using prettier.
-#
-# Usage: 
-# npx prettier --parser markdown \
-#   --prose-wrap always \
-#   --write \
-#   --tab-width 2 \
-#   file1.md file2.md ....
-# 
-# To generate TOC:
-# Add <!-- toc -->; at the top of the markdown file.
-# npx markdown-toc -i file1.md file2.md ....
+# Lint a markdown file and update the table of content:
+
+# Usage
+# > dev_scripts/lint_md.sh file1.md ... fileN.md
+
+# To generate a table of content, add a comment `<!-- toc -->` at the top of the markdown file.
 
 set -eux
 
@@ -40,7 +34,9 @@ RUN npx prettier -v
 
 EOF
 
-docker build -f $TMP_FILENAME -t markdownlint .
+export DOCKER_CONTAINER_NAME="sorrentum_mdlint"
+
+docker build -f $TMP_FILENAME -t $DOCKER_CONTAINER_NAME .
 
 USER="$(id -u $(logname)):$(id -g $(logname))"
 WORKDIR="$(realpath .)"
