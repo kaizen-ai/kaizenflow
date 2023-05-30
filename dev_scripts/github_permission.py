@@ -5,7 +5,6 @@ repository, sends an invitation if not, and reports any pending invitations.
 Example:
     ```
     >python dev_scripts/github_permission.py GITHUB_USERNAME\
-        ...
     ```
 
 Import as:
@@ -40,11 +39,11 @@ def check_collaborator(
     """
     collaborator_check_endpoint: str = (
         "https://api.github.com/repos/{owner_username}/{repo_name}/collaborators/"
-        "{{collaborator}}"
+        "{collaborator}"
     )
     add_collaborator_endpoint: str = (
         "https://api.github.com/repos/{owner_username}/{repo_name}/collaborators/"
-        "{{collaborator}}"
+        "{collaborator}"
     )
 
     collaborator_check_url = collaborator_check_endpoint.format(
@@ -137,39 +136,25 @@ def main() -> None:
     """
     Perform the main execution logic of the script.
     """
-    # Parse command-line arguments for GitHub usernames.
+    # Parse command-line arguments for GitHub username.
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--owner-username",
-        action="store",
-        required=True,
-        help="Owner's GitHub username",
-    )
-    parser.add_argument(
-        "--repo-name", 
-        action="store", 
-        required=True, 
-        help="Repository name"
-    )
-    parser.add_argument(
-        "--access-token",
-        action="store",
-        required=True,
-        help="GitHub access token",
-    )
-    parser.add_argument(
-        "--github-username",
-        action="store",
-        required=True,
+        "github_username",
+        type=str,
         help="GitHub username to check",
     )
     args = parser.parse_args()
 
+    # Provide the necessary values for owner username, repo name, and access token.
+    owner_username = "your_owner_username"
+    repo_name = "your_repo_name"
+    access_token = "your_access_token"
+
     # Check collaborator status for the provided GitHub username.
     check_collaborator(
-        args.owner_username,
-        args.repo_name,
-        args.access_token,
+        owner_username,
+        repo_name,
+        access_token,
         args.github_username,
     )
 
