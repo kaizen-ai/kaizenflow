@@ -8,6 +8,7 @@ import logging
 import random
 from typing import List
 
+import matplotlib.pyplot as plt
 import pandas as pd
 
 import defi.tulip.implementation.order as dtuimord
@@ -57,13 +58,13 @@ def convert_discrete_curve_to_limit_orders(
     quote_token = discrete_curve.index.name
     # Invert coordinates, so prices are indices and quantities are values.
     # Sort by prices with respect to the curve type.
-    inverted_discrete_curve = pd.Series(
+    inverted_srs = pd.Series(
         index=discrete_curve.values,
         data=discrete_curve.index,
     ).sort_index(ascending=ascending)
     # Order quantities are distances between the curve quantities.
     # Order limit prices correspond to the curve limit prices.
-    order_data = inverted_discrete_curve.drop_duplicates().diff().dropna()
+    order_data = inverted_srs.diff().fillna(inverted_srs)
     # Generate orders.
     orders = []
     for p, q in order_data.items():
@@ -111,13 +112,9 @@ def get_supply_demand_discrete_curve(
     if type_ == "supply":
         orders_df = orders_df[orders_df["action"] == "sell"]
         ascending = True
-        # Extend supply curve with a straight line up at the max quantity.
-        last_limit_price_mpl = 1.25
     elif type_ == "demand":
         orders_df = orders_df[orders_df["action"] == "buy"]
         ascending = False
-        # Extend demand curve with a straight line down until zero quantity.
-        last_limit_price_mpl = 0.0
     else:
         raise ValueError("Invalid type_='%s'" % type_)
     # Get only necessary columns.
@@ -126,36 +123,69 @@ def get_supply_demand_discrete_curve(
     # Supply curve is increasing, orders are in ascending order.
     # Demand curve is decreasing, orders are in descending order.
     orders_df = orders_df.sort_values(by="limit_price", ascending=ascending)
-    # Set amount of quantity that has already entered the market.
-    quantity_on_market = 0
-    dots_x = []
-    dots_y = []
-    for _, row in orders_df.iterrows():
-        price = row["limit_price"]
-        order_quantity = row["quantity"]
-        # Add a dot that connects order dots on a discrete curve.
-        dots_x.append(quantity_on_market)
-        dots_y.append(price)
-        # Add a dot with order data.
-        # Order quantity is a distance between the dot with this order
-        # and quantity on market before it.
-        dot_x = order_quantity + quantity_on_market
-        dots_x.append(dot_x)
-        dots_y.append(price)
-        # Update quantity on market.
-        quantity_on_market = quantity_on_market + order_quantity
-    # Add last line of the curve:
-    last_quantity = dots_x[-1]
-    last_limit_price = dots_y[-1] * last_limit_price_mpl
-    dots_x.append(last_quantity)
-    dots_y.append(last_limit_price)
+    # Get curve values for quantities and limit prices.
+    curve_quantities = orders_df["quantity"].cumsum()
+    curve_limit_prices = orders_df["limit_price"]
     # Set curve name using base token and curve type.
     curve_name = ".".join([base_token, type_])
     # Build a series from curve coordinates.
-    dots = pd.Series(data=dots_y, index=dots_x, name=curve_name)
+    curve_srs = pd.Series(
+        data=curve_limit_prices.values,
+        index=curve_quantities.values,
+        name=curve_name,
+    )
     # Set curve index name using quote token.
-    dots.index.name = quote_token
-    return dots
+    curve_srs.index.name = quote_token
+    return curve_srs
+
+
+def plot_discrete_curve(
+    curve_srs: pd.Series,
+    *,
+    display_plot: bool = False,
+) -> None:
+    """
+    Plot a discrete supply or demand curve.
+    """
+    quantities = curve_srs.index
+    limit_prices = curve_srs.values
+    # Get tokens and curve type from the series.
+    quote_token = curve_srs.index.name
+    base_token, type_ = curve_srs.name.split(".")
+    # Set params dependent on the curve type.
+    if type_ == "demand":
+        color = "b"
+        vertical_line_ymin = 0
+        vertical_line_ymax = limit_prices[-1]
+    elif type_ == "supply":
+        color = "r"
+        vertical_line_ymin = limit_prices[-1]
+        # Supply curve limit price is extending to infinity at max quantity.
+        vertical_line_ymax = limit_prices[-1] * 1.25
+    else:
+        raise ValueError("Invalid type_='%s'" % type_)
+    # Plot the curve.
+    plt.step(quantities, limit_prices, color=color)
+    # Add lines to complete the step plots and capture available trading dots.
+    plt.vlines(
+        x=quantities[-1],
+        ymin=vertical_line_ymin,
+        ymax=vertical_line_ymax,
+        color=color,
+    )
+    plt.hlines(
+        xmin=0,
+        xmax=quantities[0],
+        y=limit_prices[0],
+        color=color,
+    )
+    # Add title and lables.
+    title = f"{base_token}/{quote_token}"
+    plt.title(title)
+    plt.xlabel("Quantity")
+    plt.ylabel("Limit price")
+    if display_plot:
+        plt.show()
 
 
 # #############################################################################

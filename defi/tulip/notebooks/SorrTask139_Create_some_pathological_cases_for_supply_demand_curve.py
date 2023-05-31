@@ -55,8 +55,8 @@ base_token = "BTC"
 quote_token = "ETH"
 
 # %%
-quantities = [0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0]
-limit_prices = [1.5, 1.5, 2.0, 2.0, 3.0, 3.0, 3.5, 3.5, 4.375]
+quantities = [1.0, 2.0, 3.0, 4.0]
+limit_prices = [1.5, 2.0, 3.0, 3.5]
 type_ = "supply"
 curve_name = ".".join([base_token, type_])
 #
@@ -76,8 +76,8 @@ supply_orders_df1 = dtuimord.convert_orders_to_dataframe(supply_orders1)
 supply_orders_df1
 
 # %%
-quantities = [0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0]
-limit_prices = [3.5, 3.5, 2.5, 2.5, 2.0, 2.0, 1.5, 1.5, 0.0]
+quantities = [1.0, 2.0, 3.0, 4.0]
+limit_prices = [3.5, 2.5, 2.0, 1.5]
 type_ = "demand"
 curve_name = ".".join([base_token, type_])
 #
@@ -112,7 +112,7 @@ supply_curve1
 # %%
 supply_orders_ = dtimsude.convert_discrete_curve_to_limit_orders(supply_curve1)
 
-# %% run_control={"marked": false}
+# %%
 type_ = "demand"
 demand_curve1 = dtimsude.get_supply_demand_discrete_curve(
     type_, demand_orders_df1
@@ -120,8 +120,8 @@ demand_curve1 = dtimsude.get_supply_demand_discrete_curve(
 demand_curve1
 
 # %%
-plt.plot(supply_curve1)
-plt.plot(demand_curve1)
+dtimsude.plot_discrete_curve(demand_curve1)
+dtimsude.plot_discrete_curve(supply_curve1)
 plt.show()
 
 # %% run_control={"marked": false}
@@ -153,8 +153,8 @@ supply_curve2 = dtimsude.get_supply_demand_discrete_curve(
 supply_curve2
 
 # %%
-plt.plot(supply_curve2)
-plt.plot(demand_curve1)
+dtimsude.plot_discrete_curve(demand_curve1)
+dtimsude.plot_discrete_curve(supply_curve2)
 plt.show()
 
 # %%
@@ -186,8 +186,8 @@ supply_curve3 = dtimsude.get_supply_demand_discrete_curve(
 supply_curve3
 
 # %%
-plt.plot(supply_curve3)
-plt.plot(demand_curve1)
+dtimsude.plot_discrete_curve(demand_curve1)
+dtimsude.plot_discrete_curve(supply_curve3)
 plt.show()
 
 # %%

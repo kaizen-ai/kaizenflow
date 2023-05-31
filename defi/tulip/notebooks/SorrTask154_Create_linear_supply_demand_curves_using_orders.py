@@ -67,16 +67,16 @@ agg_demand_curve = dtimsude.get_supply_demand_aggregated_curve(
 agg_demand_curve
 
 # %%
-plt.plot(agg_supply_curve)
-plt.plot(agg_demand_curve)
-plt.show()
-
-# %%
 agg_supply_orders = dtimsude.convert_aggregated_curve_to_limit_orders(
     agg_supply_curve
 )
 agg_supply_orders_df = dtuimord.convert_orders_to_dataframe(agg_supply_orders)
 agg_supply_orders_df
+
+# %%
+plt.plot(agg_supply_curve)
+plt.plot(agg_demand_curve)
+plt.show()
 
 # %%
 agg_demand_orders = dtimsude.convert_aggregated_curve_to_limit_orders(
@@ -118,8 +118,8 @@ discrete_demand_curve = dtimsude.get_supply_demand_discrete_curve(
 discrete_demand_curve
 
 # %%
-plt.plot(discrete_supply_curve)
-plt.plot(discrete_demand_curve)
+dtimsude.plot_discrete_curve(discrete_demand_curve)
+dtimsude.plot_discrete_curve(discrete_supply_curve)
 plt.show()
 
 # %%
