@@ -46,7 +46,7 @@
 ```
   
 
-# Sorrentum Docker container
+# Sorrentum Dev Docker container (aka dev container, cmamp container)
 
 - Get familiar with Docker if you are not (e.g.,
   https://docs.docker.com/get-started/overview/)
