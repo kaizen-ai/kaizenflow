@@ -23,7 +23,7 @@
     [Sorrentum - Contributors gdrive](https://drive.google.com/drive/u/0/folders/1LXwKpmaFWJI-887IoA50sVC8-dw_1L8I)
   - Add Contributor email as Editor to the
     [Sorrentum - Projects folder](https://drive.google.com/drive/u/0/folders/1eKj6u_cbQM0ZLZ4wRJ6xPM1oqIKwusUo)
-  - Create a task on Asana with the name of the contributor. Add the contributor's information (link to the gsheets and some comment on the background) regarding the resume, start date and any other updates related to the contributor particularly.
+  - Create a task on Asana with the name of the contributor. Add the contributor's information (link to the gsheets and some comment on the background) regarding the resume, start date and any other updates related to the contributor particularly
 
 - **(Contributor)**: Accept the invite from GitHub that we will send you
 
@@ -69,7 +69,7 @@
   - When the contributor is ready to be on-boarded, file an issue like "On-board \<FIRST NAME LAST NAME\> Aka <GITHUB_HANDLE>". The content of the issue will be the following checklist. Admins need to keep track on the progress being made by the contributor.
     - [ ] Read [How to organize your work](https://github.com/sorrentum/sorrentum/blob/master/docs/How_to_organize_your_work.md)
     - [ ] Read [Quick start for developing](https://github.com/sorrentum/sorrentum/blob/master/docs/Quick_start_for_developing.md)
-    - [ ] Make sure the [Docker dev container](https://github.com/sorrentum/sorrentum/blob/master/defi/README.md) works
+    - [ ] Make sure the [Docker dev container](https://github.com/sorrentum/sorrentum/blob/master/docs/Quick_start_for_developing.md#sorrentum-dev-docker-container-aka-dev-container-cmamp-container) works
     - [ ] Make sure the unit tests run successfully
     - [ ] Read [Sorrentum Python coding style guide](https://github.com/sorrentum/sorrentum/blob/master/docs/Coding_Style_Guide.md)
     - [ ] Get assigned a warm-up issue
