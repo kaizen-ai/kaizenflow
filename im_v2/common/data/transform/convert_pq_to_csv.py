@@ -2,13 +2,14 @@
 """
 Convert file from Parquet to CSV.
 
+- Path to Parquet file can be s3 or local
+- Destination dir should belong to the same filesystem as Parquet file (e.g., both at s3 or both at local)
+- Destination dir can be absolute or relative path
+
 Usage example:
 > im_v2/common/data/transform/convert_pq_to_csv.py \
     --pq_file_path im_v2/common/data/file_name.pq \
     --dst_dir im_v2/common/notebooks
-
-
-Note that pq_file_path can be s3 or local. Destination dir can be absolute or relative path.
 """
 
 import argparse
@@ -52,7 +53,7 @@ def _parse() -> argparse.ArgumentParser:
         required=False,
         default=None,
         type=str,
-        help="The AWS profile to convert file located at s3 filesystem.",
+        help="The AWS profile to convert file located at s3 filesystem",
     )
     parser = hparser.add_verbosity_arg(parser)
     return parser
@@ -67,7 +68,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if not dst_dir:
         dst_dir = os.path.dirname(pq_file_path)
     hs3.dassert_path_exists(dst_dir, aws_profile=aws_profile)
-    # Make a path to CSV file
+    # Make a path to CSV file.
     file_name = os.path.basename(pq_file_path).split(".")[-2]
     csv_file_path = os.path.join(dst_dir, file_name + ".csv")
     # Convert the file.
