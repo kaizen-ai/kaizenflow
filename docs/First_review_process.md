@@ -25,7 +25,11 @@ some helpful tips and resources to guide you through your first review.
 
 - Linter is a tool that checks (and tries to fix automatically) your code for syntax errors, style violations, and other issues.
 - Run it on all the changed files to automatically catch any code issues before filing any PR or before requesting a review!
-- To be able to run the linter, you need to you need to set up your client first since you're outside Docker:
+- To be able to run the linter, you need to pull the updated docker image
+  ```
+  > docker pull sorrentum/dev_tools:prod
+  ```
+- Set up your client since you're outside Docker:
   - The instructions are available at [Quick start for developing](Quick_start_for_developing.md)
   - In practice you need to have run
     ```
