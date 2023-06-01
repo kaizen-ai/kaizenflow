@@ -83,6 +83,9 @@ some helpful tips and resources to guide you through your first review.
   - Unit tests:
     - `defi/tulip/test/test_order_matching.py`
     - `defi/tulip/test/test_optimize.py`
+  - Scripts:
+    - `dev_scripts/replace_text.py`
+    - `dev_scripts/lint_md.sh`
 
 ## Save Reviewer time
 
