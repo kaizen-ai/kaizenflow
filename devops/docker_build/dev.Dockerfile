@@ -11,6 +11,13 @@ ENV HOME=/home
 ENV INSTALL_DIR=/install
 WORKDIR $INSTALL_DIR
 
+RUN apt-get update \
+    && apt-get install -y libblas-dev liblapack-dev libatlas-base-dev \
+    && apt-get install -y libumfpack5 libsuitesparse-dev \
+    && export CPPFLAGS="-I/usr/include/suitesparse"
+
+
+
 # Clean up the installation.
 # To disable the clean up stage, comment out the variable, instead of setting
 # to False.
