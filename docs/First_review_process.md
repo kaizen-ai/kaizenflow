@@ -4,7 +4,7 @@
   * [Read Python Style Guide](#read-python-style-guide)
   * [Run linter](#run-linter)
   * [Compare your code to example code](#compare-your-code-to-example-code)
-  * [Save reviewers time](#save-reviewers-time)
+  * [Save Reviewer time](#save-reviewer-time)
   * [Look at examples of the first reviews](#look-at-examples-of-the-first-reviews)
 
 <!--te-->
@@ -49,8 +49,7 @@ some helpful tips and resources to guide you through your first review.
     ```
 - Fix the lints
   - No need to obsessively fix all of them - just crucial and obvious ones
-  - Post unresolved lints in your PR so reviewers could see them and know which
-    should be fixed and which are not
+  - Post unresolved lints in your PR so Reviewer could see them and know which should be fixed and which are not
 
 ## Compare your code to example code
 
@@ -70,23 +69,23 @@ some helpful tips and resources to guide you through your first review.
     - `defi/tulip/test/test_order_matching.py`
     - `defi/tulip/test/test_optimize.py`
 
-## Save reviewers time
+## Save Reviewer time
 
-- Make sure to assign the PR to the reviewers so they get notified
-  - <img width="313" alt="Снимок экрана 2023-05-29 в 03 51 01" src="https://github.com/sorrentum/sorrentum/assets/31514660/f8534c49-bff6-4d59-9037-d70dc03d5ff9">
-  - Juniors should assign Team Leaders to review their PR
+- Make sure to assign your PR to a Reviewer so he/she gets notified
+  - <img width="313" alt="" src="https://github.com/sorrentum/sorrentum/assets/31514660/f8534c49-bff6-4d59-9037-d70dc03d5ff9">
+  - Junior contributors should assign Team Leaders (e.g., Grisha, DanY, Samarth, ...) to review their PR
     - Team Leaders will assign integrators (GP & Paul) themselves after all their comments are implemented
-  - Ping the assigned reviewer in the issue if nothing happens in 24 hours
+  - Ping the assigned Reviewer in the issue if nothing happens in 24 hours
 - Mention the corresponding issue in the PR description to ease the navigation
   - E.g., see an [example](https://github.com/sorrentum/sorrentum/pull/288#issue-1729654983)
-    - <img width="505" alt="Снимок экрана 2023-05-29 в 03 51 29" src="https://github.com/sorrentum/sorrentum/assets/31514660/69fbabec-300c-4f7c-94fc-45c5da5a6817">
-- When you've implemented a comment from a reviewer, press `Resolve conversation` button so the reviewers know that you actually took care of it
-  - <img width="328" alt="Снимок экрана 2023-05-29 в 03 27 26" src="https://github.com/sorrentum/sorrentum/assets/31514660/a4c79d73-62bd-419b-b3cf-e8011621ba3c">
+    - <img width="505" alt="" src="https://github.com/sorrentum/sorrentum/assets/31514660/69fbabec-300c-4f7c-94fc-45c5da5a6817">
+- When you've implemented a comment from a Reviewer, press `Resolve conversation` button so the Reviewer knows that you actually took care of it
+  - <img width="328" alt="" src="https://github.com/sorrentum/sorrentum/assets/31514660/a4c79d73-62bd-419b-b3cf-e8011621ba3c">
 - When you've implemented all the comments and need another round of review:
-    - Press the circling arrows sign next to the reviewer for the ping
-      - <img width="280" alt="Снимок экрана 2023-05-29 в 03 28 01" src="https://github.com/sorrentum/sorrentum/assets/31514660/4f924f4f-abab-40be-975d-a4fa81d9af3b">
+    - Press the circling arrows sign next to the Reviewer for the ping
+      - <img width="280" alt="" src="https://github.com/sorrentum/sorrentum/assets/31514660/4f924f4f-abab-40be-975d-a4fa81d9af3b">
     - Change label to `PR_for_reviewers` (label [desc](https://github.com/sorrentum/sorrentum/blob/master/docs/GitHub_ZenHub_workflows.md#pr-labels))
-      - <img width="271" alt="Снимок экрана 2023-05-29 в 04 24 18" src="https://github.com/sorrentum/sorrentum/assets/31514660/3580bf34-dcba-431b-af5c-5ae65f7597c3">
+      - <img width="271" alt="" src="https://github.com/sorrentum/sorrentum/assets/31514660/3580bf34-dcba-431b-af5c-5ae65f7597c3">
 
 ## Look at examples of the first reviews
 
