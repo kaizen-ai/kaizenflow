@@ -5,6 +5,7 @@ Convert file from Parquet to CSV.
 - Path to Parquet file can be s3 or local
 - Destination dir should belong to the same filesystem as Parquet file (e.g., both at s3 or both at local)
 - Destination dir can be absolute or relative path
+- WARNING: Resulting CSV file does not preserve dtypes like datetime 
 
 Usage example:
 > im_v2/common/data/transform/convert_pq_to_csv.py \
