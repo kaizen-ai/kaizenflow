@@ -88,7 +88,6 @@
   ```
   > docker pull hello-world
   Using default tag: latest
-  Using default tag: latest
   latest: Pulling from library/hello-world
   Digest: sha256:fc6cf906cbfa013e80938cdf0bb199fbdbb86d6e3e013783e5a766f50f5dbce0
   Status: Image is up to date for hello-world:latest
