@@ -111,6 +111,7 @@ def docker_build_local_image(  # type: ignore
     # git_tag_prefix = get_default_param("BASE_IMAGE")
     # container_version = get_git_tag(version)
     #
+    PLATFORM_BUILDER = "sorrentumBuilder"
     cmd = rf"""
     docker buildx create --name {PLATFORM_BUILDER} --driver docker-container --bootstrap && docker buildx use {PLATFORM_BUILDER}
     """
