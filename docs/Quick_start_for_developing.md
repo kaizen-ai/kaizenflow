@@ -42,7 +42,10 @@
 - To clone the repo, use the cloning command described in [the Github official documentation](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository-from-github/cloning-a-repository)
 - Example of cloning command:
 ```
+# Sometimes it does not work.
 > git clone git@github.com:sorrentum/sorrentum.git ~/src/sorrentum1
+# Alternative command.
+> git clone https://github.com/sorrentum/sorrentum.git ~/src/sorrentum1
 ```
   
 
@@ -58,21 +61,52 @@
     with the same system, and it makes it easy to share code and reproduce
     problems
 
-- Preparation
+- Install Docker Desktop on your PC
+   - Links:
+      - [Mac](https://docs.docker.com/desktop/install/mac-install/)
+      - [Linux](https://docs.docker.com/desktop/install/linux-install/)
+      - [Windows](https://docs.docker.com/desktop/install/windows-install/)
+   - Check the installation by running:
+   ```
+   > docker pull hello-world
+   Using default tag: latest
+   Using default tag: latest
+   latest: Pulling from library/hello-world
+   Digest: sha256:fc6cf906cbfa013e80938cdf0bb199fbdbb86d6e3e013783e5a766f50f5dbce0
+   Status: Image is up to date for hello-world:latest
+   docker.io/library/hello-world:latest
+   ```
 
-  1. Build the thin environment
+- Common problems with Docker
+   - Mac DNS problem, try step 5 from the [article](https://medium.com/freethreads/mac-os-docker-error-response-from-daemon-net-http-request-canceled-while-waiting-for-connection-7d1069eb4ca9) and repeat the cmd below:
+   ```
+   > docker pull hello-world
+   Error response from daemon: net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)
+   ``` 
+   - Linux sudo problem, see [here](https://stackoverflow.com/questions/48568172/docker-sock-permission-denied) for the solution
+   ```
+   > docker pull hello-world
+   Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get http://%2Fvar%2Frun%2Fdocker.sock/v1.40/containers/json: dial unix /var/run/docker.sock: connect: permission denied
+   ```
+
+
+- Thin environment
+
+  1. Build the thin environment; this is done once
 
   ```
   > source dev_scripts/client_setup/build.sh
   ```
 
-  2. Activate the thin environment
+  2. Activate the thin environment; make sure it is always activated
 
   ```
   > source dev_scripts/setenv_amp.sh
   ```
 
-  3. Pull the latest cmamp image
+- Docker image
+
+  1. Pull the latest cmamp image; this is done once
 
   ```
   > i docker_pull
@@ -80,13 +114,29 @@
   > docker pull sorrentum/cmamp:latest
   ```
 
-  4. Merge the latest version of master into your branch
+  2. Pull the latest dev_tools image; this is done onec
 
   ```
+  > i docker_pull_dev_tools
+  or
+  > docker pull sorrentum/dev_tools:prod
+  ```
+
+- Git
+
+  1. Get the latest version of `master`
+
+  ```
+  # To update your feature branch with the latest changes from master run
+  # the cmd below from a feature branch, i.e. not from master.
   > i git_merge_master
+  # If you are on `master` just pull the remote changes.
+  > i git_pull
   ```
 
-- To start a Docker container:
+- Basic Docker commands
+
+  1. Start a Docker container
 
   ```
   > i docker_bash
@@ -114,7 +164,7 @@
   - pull the latest container with `invoke docker_pull`
   ```
 
-- To start a Jupyter server:
+  2. Start a Jupyter server
 
   ```
   > i docker_jupyter
