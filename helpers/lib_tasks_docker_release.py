@@ -130,7 +130,6 @@ def docker_build_local_image(  # type: ignore
         --platform linux/amd64,linux/arm64 \
         --build-arg AM_CONTAINER_VERSION={dev_version} \
         --tag {image_local} \
-        -t samarth9008/sample1:latest --push \
         --file {dockerfile} \
         .
     """
