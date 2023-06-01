@@ -62,7 +62,7 @@ def _prepare_docker_ignore(ctx: Any, docker_ignore: str) -> None:
 
 # Use Docker buildkit or not.
 # DOCKER_BUILDKIT = 1
-DOCKER_BUILDKIT = 0
+DOCKER_BUILDKIT = 1
 
 
 # For base_image, we use "" as default instead None since pyinvoke can only infer
@@ -111,6 +111,11 @@ def docker_build_local_image(  # type: ignore
     # git_tag_prefix = get_default_param("BASE_IMAGE")
     # container_version = get_git_tag(version)
     #
+    cmd = rf"""
+    docker buildx create --name {PLATFORM_BUILDER} --driver docker-container --bootstrap && docker buildx use {PLATFORM_BUILDER}
+    """
+    hlitauti.run(ctx, cmd)
+    #
     dockerfile = "devops/docker_build/dev.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
     #
@@ -119,14 +124,22 @@ def docker_build_local_image(  # type: ignore
     cmd = rf"""
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
     time \
-    docker build \
+    docker buildx build \
         {opts} \
+        --platform linux/amd64,linux/arm64 \
         --build-arg AM_CONTAINER_VERSION={dev_version} \
         --tag {image_local} \
+        -t samarth9008/sample1:latest --push \
         --file {dockerfile} \
         .
     """
     hlitauti.run(ctx, cmd)
+    
+    cmd = rf"""
+    docker buildx rm {PLATFORM_BUILDER}
+    """
+    hlitauti.run(ctx, cmd)   
+    
     # Check image and report stats.
     cmd = f"docker image ls {image_local}"
     hlitauti.run(ctx, cmd)
