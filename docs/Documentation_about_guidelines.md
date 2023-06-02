@@ -201,7 +201,15 @@
 
 ## Gdocs -> Markdown
 
-- Approach 1:
+- Approach 1: pandoc
+  - Best for a large document
+  - Download document as docx
+  - Convert it to markdown using `pandoc`
+    ```
+    > pandoc -f docx -t markdown -o test.md /Users/saggese/Downloads/Sorrentum\ Protocol.docx
+    ```
+- Approach 2: Docs to Markdown extension
+  - Best for a large document
   - Use the [Docs to Markdown](https://github.com/evbacher/gd2md-html/wiki)
     extension
     - Install
@@ -211,8 +219,8 @@
       for the extension
   - One needs to accept/reject all suggestions in a gdoc as the extension works
     poorly when a document is edited in the suggestion mode
-- Approach 2:
-  - [https://mr0grog.github.io/google-docs-to-markdown/](https://mr0grog.github.io/google-docs-to-markdown/)
+- Approach 3: on-line conversion
+  - [Google-docs-to-markdown/](https://mr0grog.github.io/google-docs-to-markdown/)
 - Lint the markdown:
   - Replace all bullet points as `-` with `-`, if needed
   - Run the `linter.py`
