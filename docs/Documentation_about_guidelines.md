@@ -5,26 +5,26 @@
 - [Guidelines for describing workflows](#guidelines-for-describing-workflows)
 - [Useful reference](#useful-reference)
 - [Style and cosmetic lints](#style-and-cosmetic-lints)
-  * [Always use markdown linter](#always-use-markdown-linter)
-  * [Table of content (TOC)](#table-of-content-toc)
-  * [Use nice 80 columns formatting for txt files](#use-nice-80-columns-formatting-for-txt-files)
-  * [Empty line after heading](#empty-line-after-heading)
-  * [Bullet lists](#bullet-lists)
-  * [Using `code` style](#using-code-style)
-  * [Indenting `code` style](#indenting-code-style)
-  * [Embedding screenshots](#embedding-screenshots)
-  * [Improve your written English](#improve-your-written-english)
-  * [Make sure your markdown looks good](#make-sure-your-markdown-looks-good)
+  - [Always use markdown linter](#always-use-markdown-linter)
+  - [Table of content (TOC)](#table-of-content-toc)
+  - [Use nice 80 columns formatting for txt files](#use-nice-80-columns-formatting-for-txt-files)
+  - [Empty line after heading](#empty-line-after-heading)
+  - [Bullet lists](#bullet-lists)
+  - [Using `code` style](#using-code-style)
+  - [Indenting `code` style](#indenting-code-style)
+  - [Embedding screenshots](#embedding-screenshots)
+  - [Improve your written English](#improve-your-written-english)
+  - [Make sure your markdown looks good](#make-sure-your-markdown-looks-good)
 - [Google docs style conventions](#google-docs-style-conventions)
-  * [Headings](#headings)
-  * [Font](#font)
+  - [Headings](#headings)
+  - [Font](#font)
 - [Convert between Gdocs and Markdown](#convert-between-gdocs-and-markdown)
-  * [Gdocs -> Markdown](#gdocs---markdown)
-  * [Markdown -> Gdocs](#markdown---gdocs)
-  * [Markdown vs Google Docs](#markdown-vs-google-docs)
-    + [Markdown pros](#markdown-pros)
-    + [Google Docs pros](#google-docs-pros)
-    + [Rules of thumb](#rules-of-thumb)
+  - [Gdocs -> Markdown](#gdocs---markdown)
+  - [Markdown -> Gdocs](#markdown---gdocs)
+  - [Markdown vs Google Docs](#markdown-vs-google-docs)
+    - [Markdown pros](#markdown-pros)
+    - [Google Docs pros](#google-docs-pros)
+    - [Rules of thumb](#rules-of-thumb)
 
 <!-- tocstop -->
 
@@ -64,10 +64,9 @@
 - Unfortunately both markdown and GitHub don't support automatically generating
   a TOC for a document
 - To generate a table of content:
-  - Add the following tag at the top of the markdown file (note that in the text
-    below we interspersed spaces to avoid the TOC processor):
+  - Add the following tag at the top of the markdown file below the document title:
     ```
-    < ! - - toc - - >
+    <!-- toc -->
     ```
   - Run the markdown linter in order to build TOC automatically
 
@@ -87,6 +86,7 @@
     - ... and his big important wheels got STUCK!
     ```
   - _Good_
+
     ```
     # Very important title
 
