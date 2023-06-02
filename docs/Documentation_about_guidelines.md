@@ -223,6 +223,11 @@
   - [Google-docs-to-markdown/](https://mr0grog.github.io/google-docs-to-markdown/)
 - Lint the markdown:
   - Replace all bullet points as `-` with `-`, if needed
+  - Removing artifacts, e.g., with vim
+    ```
+    `:%s/\\\#\+ //cg`
+    `:%s/\\`\\`\\`$/```/cg`
+    ```
   - Run the `linter.py`
     - Do not mix manual edits and linter runs
     - If the linter messes up the text

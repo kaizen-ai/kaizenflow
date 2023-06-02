@@ -1,6 +1,3 @@
-TODO(gp): Once more stable switch to Latex. gdoc is good for interacting
-and iterating quickly
-
 # Sorrentum: a protocol for virtual consolidation of distributed digital financial systems
 
 GP Saggese, Paul Smith
@@ -530,7 +527,7 @@ We want to organize the data in a directory structure like:
 
 ***Better***
 
-\`\`\`
+```
 
 -   XYZ_sanity_check/
 
@@ -550,11 +547,11 @@ We want to organize the data in a directory structure like:
 
         -   temp_data/
 
-\`\`\`
+```
 
 ***Worse***
 
-\`\`\`
+```
 
 -   XYZ_sanity_check/
 
@@ -566,7 +563,7 @@ We want to organize the data in a directory structure like:
 
     -   temp_data.{date}/
 
-\`\`\`
+```
 
 The reasons why the first data layout is superior are:
 
@@ -1321,7 +1318,7 @@ Parquet data, preserving all the columns. Successive stages of the
 pipeline perform other data transformations. By-asset means that the
 asset that is in the innermost directory
 
-\`\`\`
+```
 
 dst_dir/
 
@@ -1339,7 +1336,7 @@ asset=ETH_USDT/
 
 data.parquet
 
-\`\`\`
+```
 
 Typically the by-date format is just a format that we receive data from,
 and we don\'t want to transform data to.
@@ -1501,7 +1498,7 @@ class can do its job, i.e., apply common transformations to all
 
 \[DerivedMarketData\] -\> \[AbstractMarketData\]
 
-\`\`\`
+```
 
 Transformations performed by classes derived from \`ImClient\`
 
@@ -1575,7 +1572,7 @@ get the data, but always pass back data that:
 
 \- E.g.,
 
-\`\`\`
+```
 
 asset_id start_time end_time close volume
 
@@ -1590,7 +1587,7 @@ idx
 2 17085 2021-07-26 13:31:00+00:00 2021-07-26 13:32:00+00:00 148.0999
 473869
 
-\`\`\`
+```
 
 Transformations performed by abstract class \`MarketData\`
 
@@ -1622,7 +1619,7 @@ to DataFlow computation
 
 \- E.g.,
 
-\`\`\`
+```
 
 asset_id start_time close volume
 
@@ -1635,7 +1632,7 @@ end_time
 
 2021-07-20 09:33:00-04:00 17085 2021-07-20 09:32:00-04:00 143.535 667639
 
-\`\`\`
+```
 
 Asset ids format
 
@@ -1910,7 +1907,7 @@ A Config can be represented as a dictionary or a string.
 
 Example of a dictionary representation:
 
-\`\`\`
+```
 
 config1 = {
 
@@ -1932,7 +1929,7 @@ config1 = {
 
 }
 
-\`\`\`
+```
 
 In the example above:
 
@@ -1989,23 +1986,23 @@ marking subconfigs as used and instead select leaves separately.
 
 Example of marking the subconfig as used:
 
-\`\`\`
+```
 
 \_ = config.get_and_mark_as_used("market_data_config")
 
 ![](./sorrentum_figs/image13.png){width="6.5in" height="1.1944444444444444in"}
 
-\`\`\`
+```
 
 Example of marking the leaf as used:
 
-\`\`\`
+```
 
 \_ = config.get_and_mark_as_used((\"market_data_config\", \"end_ts\"))
 
 ![](./sorrentum_figs/image10.png){width="6.5in" height="1.1388888888888888in"}
 
-\`\`\`
+```
 
 -   \`\_\_getitem\_\_\` is used to select items for uses which do not
     affect the construction of other objects:
@@ -2014,44 +2011,46 @@ Example of marking the leaf as used:
 
 ## DataFlow computing
 
--   **DataFlow framework**. DataFlow is a computing framework to
-    implement machine learning models that can run with minimal
-    changes in timed, non-timed, replayed simulation and real-time
-    execution.
+**DataFlow framework**. DataFlow is a computing framework to implement machine
+learning models that can run with minimal changes in timed, non-timed, replayed
+simulation and real-time execution.
 
 The working principle underlying DataFlow is to run a model in terms of
 time slices of data so that both historical and real-time semantics can
 be accommodated without changing the model.
 
-TODO(gp): Explain the advantages:
+- Some of the advantages of the DataFlow approach are:
 
--   Tiling to fit in memory
+  -   Tiling to fit in memory
 
--   Cached computation
+  -   Cached computation
 
--   Adapt a procedural semantic to a reactive / streaming semantic
+  -   Adapt a procedural semantic to a reactive / streaming semantic
 
--   Handle notion of time
+  -   Handle notion of time
 
--   Control for future peeking
+  -   Control for future peeking
 
--   Suite of tools to replay and debug executions from real-time
+  -   Suite of tools to replay and debug executions from real-time
 
--   Support for market data and other tabular data feeds
+  -   Support for market data and other tabular data feeds
 
--   Support for knowledge time
+  -   Support for knowledge time
+
+- TODO(gp): Explain the advantages
 
 Resampling VWAP (besides potential errors). This implies hardcoded
 formula in a mix with resampling functions.
 
+```
 vwap_approach_2 = (converted_data\[\"close\"\] \*
-converted_data\[\"volume\"\]).resample(
-
-resampling_freq
-
+converted_data\[\"volume\"\]).resample(resampling_freq)
 ).mean() / converted_data\[\"volume\"\].resample(resampling_freq).sum()
 
 vwap_approach_2.head(3)
+```
+
+- TODO(gp): Explain this piece of code
 
 **Dag Node**. It is a unit of computation of a DataFlow model. A Dag
 node has inputs, outputs, a unique node id (aka \`nid\`), and a state.
