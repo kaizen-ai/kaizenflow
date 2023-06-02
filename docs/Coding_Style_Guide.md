@@ -1235,7 +1235,7 @@ consistent with empty lines before / empty and so on.
    - IMO the worst issue is that they don’t play super-well with Jupyter
      autoreload
 
-### Do not make 
+### Do not make tiny wrappers
 
 - Examples of horrible functions:
   - How many characters do we really saved? If typing is a problem, learn to touch type.
@@ -1533,9 +1533,10 @@ demands identity of types and rejects instances of subtypes, AKA subclasses).
 - Use your common sense
   - E.g., no reason to test code that will be used only once
 - To run unit tests in a single file
-```
-> pytest datetime_utils_test.py -x -s
-```
+  ```
+  > pytest datetime_utils_test.py -x -s
+  ```
+- `TODO(Dan/Samarth): Add a link to unit test doc when it is converted to md.`
 
 ## Refactoring
 
@@ -1945,7 +1946,7 @@ linter
   - Git is capitalized if it refers to the tool and it's not capitalized when it
     refers to the command (this is what Git documentation suggests)
   - Python is written capitalized (this is what Python documentation suggests)
-  - Pandas is written lowercase, unless it is a beginning of the line in which
+  - `pandas` is written lowercase, unless it is a beginning of the line in which
     case it's capitalized, but it's better to try to avoid to start a sentence
     with it (this is what pandas + English convention seems to suggest)
   - Any other library could suggest a different convention based on the preference
