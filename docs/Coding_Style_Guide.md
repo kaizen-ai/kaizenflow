@@ -1,162 +1,6 @@
 # Sorrentum - Python Style Guide
 
-<!--ts-->
-   * [Meta](#meta)
-   * [Disclaimer](#disclaimer)
-      * [References](#references)
-   * [High-Level Principles](#high-level-principles)
-      * [Follow the DRY principle](#follow-the-dry-principle)
-      * [Optimize for reading](#optimize-for-reading)
-      * [Encapsulate what changes](#encapsulate-what-changes)
-      * [Least surprise principle](#least-surprise-principle)
-      * [Pay the technical debt](#pay-the-technical-debt)
-      * [End-to-end first](#end-to-end-first)
-      * [Unit test everything](#unit-test-everything)
-      * [Don't get attached to code](#dont-get-attached-to-code)
-      * [Always plan before writing code](#always-plan-before-writing-code)
-      * [Think hard about naming](#think-hard-about-naming)
-      * [Look for inconsistencies](#look-for-inconsistencies)
-   * [Our coding suggestions](#our-coding-suggestions)
-      * [Being careful with naming](#being-careful-with-naming)
-         * [Follow the conventions](#follow-the-conventions)
-         * [Follow spelling rules](#follow-spelling-rules)
-         * [Search good names, avoid bad names](#search-good-names-avoid-bad-names)
-         * [Avoid code stutter](#avoid-code-stutter)
-      * [Comments](#comments)
-         * [Docstring conventions](#docstring-conventions)
-         * [ReST style](#rest-style)
-         * [Descriptive vs imperative style](#descriptive-vs-imperative-style)
-         * [Comments](#comments-1)
-         * [Use type hints](#use-type-hints)
-         * [Replace empty lines in code with comments](#replace-empty-lines-in-code-with-comments)
-         * [Avoid distracting comments](#avoid-distracting-comments)
-         * [Commenting out code](#commenting-out-code)
-         * [If you find a bug or obsolete docstring/TODO in the code](#if-you-find-a-bug-or-obsolete-docstringtodo-in-the-code)
-         * [Referring to an object in code comments](#referring-to-an-object-in-code-comments)
-         * [Inline comments](#inline-comments)
-      * [Linter](#linter)
-         * [Disabling linter messages](#disabling-linter-messages)
-         * [Prefer non-inlined linter comments](#prefer-non-inlined-linter-comments)
-      * [Logging](#logging)
-         * [Always use logging instead of prints](#always-use-logging-instead-of-prints)
-         * [Our logging idiom](#our-logging-idiom)
-         * [Logging level](#logging-level)
-         * [Use positional args when logging](#use-positional-args-when-logging)
-         * [Exceptions don't allow positional args](#exceptions-dont-allow-positional-args)
-         * [Report warnings](#report-warnings)
-      * [Assertions](#assertions)
-         * [Use positional args when asserting](#use-positional-args-when-asserting)
-         * [Report as much information as possible in an assertion](#report-as-much-information-as-possible-in-an-assertion)
-      * [Imports](#imports)
-         * [Don't use evil import *](#dont-use-evil-import-)
-         * [Cleaning up the evil import *](#cleaning-up-the-evil-import-)
-         * [Avoid from ... import ...](#avoid-from--import-)
-         * [Exceptions to the import style](#exceptions-to-the-import-style)
-         * [Examples of imports](#examples-of-imports)
-         * [Always import with a full path from the root of the repo / submodule](#always-import-with-a-full-path-from-the-root-of-the-repo--submodule)
-         * [Baptizing module import](#baptizing-module-import)
-         * [Use Python and not bash for scripting](#use-python-and-not-bash-for-scripting)
-         * [Skeleton for a script](#skeleton-for-a-script)
-         * [Some useful patterns](#some-useful-patterns)
-         * [Use scripts and not notebooks for long-running jobs](#use-scripts-and-not-notebooks-for-long-running-jobs)
-         * [Follow the same structure](#follow-the-same-structure)
-         * [Use clear names for the scripts](#use-clear-names-for-the-scripts)
-      * [Functions](#functions)
-         * [Avoid using non-exclusive bool arguments](#avoid-using-non-exclusive-bool-arguments)
-         * [Try to make functions work on multiple types](#try-to-make-functions-work-on-multiple-types)
-         * [Avoid hard-wired column name dependencies](#avoid-hard-wired-column-name-dependencies)
-         * [Single exit point from a function](#single-exit-point-from-a-function)
-         * [Order of function parameters](#order-of-function-parameters)
-            * [Problem](#problem)
-            * [Decision](#decision)
-         * [Consistency of ordering of function parameters](#consistency-of-ordering-of-function-parameters)
-         * [Style for default parameter](#style-for-default-parameter)
-            * [Problem](#problem-1)
-            * [Decision](#decision-1)
-            * [Rationale](#rationale)
-         * [Calling functions with default parameters](#calling-functions-with-default-parameters)
-            * [Problem](#problem-2)
-            * [Decision](#decision-2)
-            * [Rationale](#rationale-1)
-         * [Don't repeat non-default parameters](#dont-repeat-non-default-parameters)
-            * [Problem](#problem-3)
-            * [Decision](#decision-3)
-            * [Rationale](#rationale-2)
-      * [Writing clear beautiful code](#writing-clear-beautiful-code)
-         * [Keep related code close](#keep-related-code-close)
-         * [Distinguish public and private functions](#distinguish-public-and-private-functions)
-         * [Keep public functions organized in a logical order](#keep-public-functions-organized-in-a-logical-order)
-         * [Do not wrap printf()](#do-not-wrap-printf)
-         * [Do not introduce another “concept” unless really needed](#do-not-introduce-another-concept-unless-really-needed)
-         * [Return None or keep one type](#return-none-or-keep-one-type)
-         * [Avoid wall-of-text functions](#avoid-wall-of-text-functions)
-      * [Writing robust code](#writing-robust-code)
-         * [Don’t let your functions catch the default-itis](#dont-let-your-functions-catch-the-default-itis)
-         * [Explicitly bind default parameters](#explicitly-bind-default-parameters)
-         * [Don’t hardwire params in a function call](#dont-hardwire-params-in-a-function-call)
-         * [Make if-then-else complete](#make-if-then-else-complete)
-         * [Encode the assumptions using assertions](#encode-the-assumptions-using-assertions)
-         * [Add TODOs when needed](#add-todos-when-needed)
-      * [Common Python mistakes](#common-python-mistakes)
-      * [Unit test](#unit-test)
-      * [Refactoring](#refactoring)
-         * [When moving / refactoring code](#when-moving--refactoring-code)
-      * [Architectural and design pattern](#architectural-and-design-pattern)
-         * [Organize scripts as pipelines](#organize-scripts-as-pipelines)
-         * [Incremental behavior](#incremental-behavior)
-         * [Run end-to-end](#run-end-to-end)
-         * [Think about scalability](#think-about-scalability)
-         * [Use command line for reproducibility](#use-command-line-for-reproducibility)
-         * [Structure the code in terms of filters](#structure-the-code-in-terms-of-filters)
-      * [Code style for different languages](#code-style-for-different-languages)
-         * [SQL](#sql)
-      * [Misc (to reorg)](#misc-to-reorg)
-         * [Write robust code](#write-robust-code)
-         * [Capitalized words](#capitalized-words)
-         * [Regex](#regex)
-         * [Order of functions in a file](#order-of-functions-in-a-file)
-         * [Use layers design pattern](#use-layers-design-pattern)
-         * [Write complete if-then-else](#write-complete-if-then-else)
-         * [Do not be stingy at typing](#do-not-be-stingy-at-typing)
-         * [Research quality vs production quality](#research-quality-vs-production-quality)
-         * [Life cycle of research code](#life-cycle-of-research-code)
-         * [No ugly hacks](#no-ugly-hacks)
-         * [Always separate what changes from what stays the same](#always-separate-what-changes-from-what-stays-the-same)
-         * [Don't mix real changes with linter changes](#dont-mix-real-changes-with-linter-changes)
-   * [Conventions (Addendum)](#conventions-addendum)
-      * [Be patient](#be-patient)
-      * [Goal](#goal)
-      * [Keep the rules simple](#keep-the-rules-simple)
-         * [Allow turning off the automatic tools](#allow-turning-off-the-automatic-tools)
-      * [The writer is the reader](#the-writer-is-the-reader)
-      * [Gdoc vs markdown](#gdoc-vs-markdown)
-      * [Approved conventions](#approved-conventions)
-         * [Validate values before an assignment](#validate-values-before-an-assignment)
-            * [Rationale](#rationale-3)
-            * [Bad](#bad)
-            * [Good](#good)
-            * [Exceptions](#exceptions)
-         * [Format docstrings and comments as markdown](#format-docstrings-and-comments-as-markdown)
-         * [Do not abbreviate just to save characters](#do-not-abbreviate-just-to-save-characters)
-            * [Rationale](#rationale-4)
-            * [Exceptions](#exceptions-1)
-         * [Use empty comments to group related code](#use-empty-comments-to-group-related-code)
-            * [Rationale](#rationale-5)
-            * [Bad](#bad-1)
-            * [Good](#good-1)
-      * [Proposed conventions](#proposed-conventions)
-         * [Order functions in topological order](#order-functions-in-topological-order)
-            * [Rationale](#rationale-6)
-         * [Make the spell-checker happy](#make-the-spell-checker-happy)
-            * [Rationale](#rationale-7)
-         * [Convention for naming tests](#convention-for-naming-tests)
-         * [Interval notation](#interval-notation)
-         * [Make filename unique](#make-filename-unique)
-         * [Be clear on the meaning of TODO](#be-clear-on-the-meaning-of-todo)
-         * [Convention on certain spellings](#convention-on-certain-spellings)
-         * [Always use imperative docstring and comments](#always-use-imperative-docstring-and-comments)
-
-<!--te-->
+<!-- toc -->
 
 # Meta
 
@@ -179,13 +23,13 @@
 
 # Disclaimer
 
-This document was forked from
+- This document was forked from
 [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html),
 therefore, the numbering of chapters sets off where the Style Guide ends. Make
 sure to familiarize yourself with it before proceeding to the rest of the doc,
 since it is the basis of our team’s code style.
 
-Another important source is
+- Another important source is
 [The Pragmatic Programmer](https://drive.google.com/file/d/1g0vjtaBVq0dt32thNprBRJpeHJsJSe-Z/view?usp=sharing)
 by David Thomas and Andrew Hunt. While not Python-specific, it provides an
 invaluable set of general principles by which any person working with code
@@ -214,58 +58,78 @@ read.
 
 # High-Level Principles
 
-In this paragraph we summarize the high-level principles that we follow for
+- In this paragraph we summarize the high-level principles that we follow for
 designing and implementing code and research. We should be careful in adding
 principles here. Ideally principles should be non-overlapping and generating all
 the other lower level principles we follow (like a basis for a vector space)
 
-- ### Follow the [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself) principle
-- ### Optimize for reading
-  - Make code easy to read even if it is more difficult to write
-  - Code is written 1x and read 100x
-- ### Encapsulate what changes
-  - Separate what changes from what stays the same
-- ### [Least surprise principle](https://en.wikipedia.org/wiki/Principle_of_least_astonishment)
-  - Try to make sure that the reader is not surprised
-- ### Pay the technical debt
-  - Any unpaid debt is guaranteed to bite you when you don't expect it
-  - Still some debt is inevitable: try to find the right trade-off
-- ### End-to-end first
-  - Always focus on implementing things end-to-end, then improve each block
-  - Remember the analogy of building the car through the skateboard, the bike,
-    etc.
-    - Compare this approach to building wheels, chassis, with a big-bang
-      integration at the end
-- ### Unit test everything
-  - Code that matters needs to be unit tested
-  - Code that doesn't matter should not be checked in the repo
-  - The logical implication is: all code checked in the repo should be unit
-    tested
-- ### Don't get attached to code
-  - It's ok to delete, discard, retire code that is not useful any more
-  - Don't take it personally when people suggest changes or simplification
-- ### Always plan before writing code
-  - File a GitHub issue
-  - Think about what to do and how to do it
-  - Ask for help or for a review
-  - The best code is the one that we avoid to write through a clever mental
-    kung-fu move
-- ### Think hard about naming
-  - Finding a name for a code object, notebook, is extremely difficult but very
-    important to build a mental map
-  - Spend the needed time on it
-- ### Look for inconsistencies
-  - Stop for a second after you have, before sending out:
-    - Implemented code or a notebook
-    - Written documentation
-    - Written an e-mail
-    - ...
-  - Reset your mind and look at everything with fresh eyes like if it was the
-    first time you saw it
-    - Does everything make sense to someone that sees this for the first time?
-    - Can (and should) it be improved?
-    - Do you see inconsistencies, potential issues?
-  - It will take less and less time to become good at this
+### Follow the [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself) principle
+
+### Optimize for reading
+
+- Make code easy to read even if it is more difficult to write
+- Code is written 1x and read 100x
+
+### Encapsulate what changes
+
+- Separate what changes from what stays the same
+
+### [Least surprise principle](https://en.wikipedia.org/wiki/Principle_of_least_astonishment)
+
+- Try to make sure that the reader is not surprised
+
+### Pay the technical debt
+
+- Any unpaid debt is guaranteed to bite you when you don't expect it
+- Still some debt is inevitable: try to find the right trade-off
+
+### End-to-end first
+
+- Always focus on implementing things end-to-end, then improve each block
+- Remember the analogy of building the car through the skateboard, the bike,
+  etc.
+  - Compare this approach to building wheels, chassis, with a big-bang
+    integration at the end
+
+### Unit test everything
+
+- Code that matters needs to be unit tested
+- Code that doesn't matter should not be checked in the repo
+- The logical implication is: all code checked in the repo should be unit
+  tested
+
+### Don't get attached to code
+
+- It's ok to delete, discard, retire code that is not useful any more
+- Don't take it personally when people suggest changes or simplification
+
+### Always plan before writing code
+
+- File a GitHub issue
+- Think about what to do and how to do it
+- Ask for help or for a review
+- The best code is the one that we avoid to write through a clever mental
+  kung-fu move
+
+### Think hard about naming
+
+- Finding a name for a code object, notebook, is extremely difficult but very
+  important to build a mental map
+- Spend the needed time on it
+
+### Look for inconsistencies
+
+- Stop for a second after you have, before sending out:
+  - Implemented code or a notebook
+  - Written documentation
+  - Written an e-mail
+  - ...
+- Reset your mind and look at everything with fresh eyes like if it was the
+  first time you saw it
+  - Does everything make sense to someone that sees this for the first time?
+  - Can (and should) it be improved?
+  - Do you see inconsistencies, potential issues?
+- It will take less and less time to become good at this
 
 # Our coding suggestions
 
@@ -282,7 +146,7 @@ the other lower level principles we follow (like a basis for a vector space)
   ```
   def timed(f):
       """
-      Decorator adding a timer around function `f`.
+      Add a timer decorator around a specified function.
       """
       …
   ```
@@ -304,9 +168,9 @@ the other lower level principles we follow (like a basis for a vector space)
 - Naming things properly is one of the most difficult task of a programmer /
   data scientist
   - The name needs to be (possibly) short and memorable
-    - Don't be afraid to use long names, if needed, e.g.,
+    - However, don't be afraid to use long names, if needed, e.g.,
       `process_text_with_full_pipeline_twitter_v1`
-    - However, clarity is more important than number of bytes used
+    - Сlarity is more important than number of bytes used
   - The name should capture what the object represents, without reference to
     things that can change or to details that are not important
   - The name should refer to what objects do (i.e., mechanisms), rather than how
@@ -316,7 +180,6 @@ the other lower level principles we follow (like a basis for a vector space)
   - The name needs to sound good in English
     - Bad: `AdapterSequential` sounds bad
     - Good: `SequentialAdapter` sounds good
-
 - Some examples of how NOT to do naming:
   - `raw_df` is a terrible name
     - "raw" with respect to what?
@@ -330,27 +193,28 @@ the other lower level principles we follow (like a basis for a vector space)
 
 ### Avoid code stutter
 
-- An example of code stutter: in a module `git` there is a function called
-  `get_git_root_path()`.
-- Bad
-  ```
-  import helpers.git as git
+- An example of code stutter: you want to add a function that returns `git` root path in a module `git`
+- _Bad_
+  - Name is `get_git_root_path()`
+    ```
+    import helpers.git as git
 
-  ... git.get_git_root_path()
-  ```
+    ... git.get_git_root_path()
+    ```
   - You see that the module is already specifying we are talking about Git
 
-- Good
-  ```
-  import helpers.git as git
+- _Good_
+  - Name is `get_root_path()`
+    ```
+    import helpers.git as git
 
-  ... git.get_root_path()
-  ```
+    ... git.get_root_path()
+    ```
   - This is not only aesthetic reason but a bit related to a weak form of DRY
 
-## Comments
+## Comments and docstrings
 
-### Docstring conventions
+### General conventions
 
 - Code needs to be properly commented
 - We follow python standard [PEP 257](https://www.python.org/dev/peps/pep-0257/)
@@ -364,35 +228,17 @@ the other lower level principles we follow (like a basis for a vector space)
   - Epytext
   - Numpydoc
 
-### ReST style
+### Docstrings
 
-- ReST (aka re-Structured Text) style is:
+- We follow ReST (aka re-Structured Text) style for docstrings which is:
   - The most widely supported in the python community
   - Supported by all doc generation tools (e.g., epydoc, sphinx)
   - Default in pycharm
   - Default in pyment
   - Supported by pydocstyle (which does not support Google style as explained
     [here](https://github.com/PyCQA/pydocstyle/issues/275))
-- An example of a function comment is:
+- Example of a function definition with ReST styled docstring:
   ```
-  """
-  This is a ReST style.
-
-  :param param1: this is a first param
-  :type param1: str
-  :param param2: this is a second param
-  :type param2: int
-  :returns: this is a description of what is returned
-  :rtype: bool
-  :raises keyError: raises an exception
-  """
-  ```
-  - We pick lowercase after `:param XYZ: ...` unless the first word is a proper
-    noun or type
-  - Type hinting makes the `:type ...` redundant and you should use only type
-    hinting
-  - As a result, an example of a function definition is:
-    ```
     def my_function(param1: str) -> str:
         """
         A one-line description of what the function does.
@@ -407,27 +253,46 @@ the other lower level principles we follow (like a basis for a vector space)
         :return: this is a description of what is returned
         """
     ```
-
+    - We pick lowercase after `:param XYZ: ...` unless the first word is a proper
+    noun or type
+    - A full ReST docstring styling also requires to specify params and return types, however type hinting makes it redundant so you should use only type hinting
+- Sometimes functions are small enough so we just use a 1-liner docstring without detailed params and return descriptions. Just do not put text and docstring brackets in one line
+  - _Bad_
+    ```
+    """This is not our approach."""
+    ```
+  - _Good_
+    ```
+    """
+    This is our approach.
+    """
+    ```
 - [More examples of and discussions on python docstrings](https://stackoverflow.com/questions/3898572)
 
 ### Descriptive vs imperative style
 
-- GPSG suggests using descriptive comments, e.g., "This function does this and
-  that", instead of an imperative style "Do this and that"
-- [PEP 257](https://www.python.org/dev/peps/pep-0257/)
-  ```
-  The docstring is a phrase ending in a period. It prescribes the function or
-  method's effect as a command ("Do this", "Return that"), not as a description;
-  e.g. don't write "Returns the pathname ...".
-  ```
+- We decided to use imperative style for our comments and docstrings
   - Pylint and other python QA tools favor an imperative style
-  - Since we prefer to rely upon automatic checks, we have decided to use the
-    imperative style
+  - From [PEP 257](https://www.python.org/dev/peps/pep-0257/)
+    ```
+    The docstring is a phrase ending in a period. It prescribes the function or
+    method's effect as a command ("Do this", "Return that"), not as a description;
+    e.g. don't write "Returns the pathname ...".
+    ```
 
 ### Comments
 
-- Comments follow the same style of docstrings, e.g., imperative style with
-  period . at the end
+- Comments follow the same style of docstrings, e.g., imperative style with period `.` at the end
+  - _Bad_
+    ```
+    # This comment is not imperative and has no period at the end
+    ```
+  - _Good_
+    ```
+    """
+    # Make comments imperative and end them with a period.
+    """
+    ```
 
 ### Use type hints
 
@@ -446,7 +311,7 @@ the other lower level principles we follow (like a basis for a vector space)
   ```
   ...
   end_y = end_dt.year
-  # Generate list of file paths for ParquetDataset.
+  # Generate a list of file paths for Parquet dataset.
   paths = list()
   ...
   ```
@@ -455,7 +320,7 @@ the other lower level principles we follow (like a basis for a vector space)
   ```
   ...
   end_y = end_dt.year
-  # Generate list of file paths for ParquetDataset.
+  # Generate a list of file paths for Parquet dataset.
   paths = list()
   ...
   ```
@@ -471,26 +336,47 @@ the other lower level principles we follow (like a basis for a vector space)
   empty line is used also to separate functions. For this reason we suggest
   using an empty comment.
 
+### Referring to an object in code comments
+
+- In general, **avoid** this whenever possible
+- Code object names (e.g., function, class, params) are oehten subject to change, so we need to take care of them everywhere. It is very hard to track all of them in comments so replace the names with their actual meaning
+  - _Bad_
+    ```
+    # Generate a list of file paths for `ParquetDataset`.
+    ```
+  - _Good_
+    ```
+    # Generate a list of file paths for Parquet dataset.
+    ```
+- However, sometimes it is necessary. In this case refer to objects in the code using Markdown. This is useful for distinguishing the object code from the real-life object
+  - _Bad_
+    ```
+    # The dataframe df_tmp is used for ...
+    ```
+  - _Good_
+    ```
+    # The dataframe `df_tmp` is used for ...
+    ```
+
 ### Avoid distracting comments
 
 - Use comments to explain the high level logic / goal of a piece of code and not
-  the details
-  - E.g., do not comment things that are obvious, e.g.,
-  ```
-  # Print results.
-  _LOG.info("Results are %s", ...)
-  ```
+  the details, e.g., do not comment things that are obvious
+  - _Bad_
+    ```
+    # Print results.
+    _LOG.info("Results are %s", ...)
+    ```
 
 ### Commenting out code
 
-- When we comment out code, we should explain why it is no longer relevant and
-- What we need to do before removing the commented out code:
-  - E.g., instead of
+- When we comment out code, we should explain why it is no longer relevant
+  - _Bad_
     ```
     is_alive = pd.Series(True, index=metadata.index)
     # is_alive = kgutils.annotate_alive(metadata, self.alive_cutoff)
     ```
-    use:
+  - _Good_
     ```
     # TODO(*): As discussed in PTask5047 for now we set all timeseries to be alive.
     # is_alive = kgutils.annotate_alive(metadata, self.alive_cutoff)
@@ -507,22 +393,6 @@ the other lower level principles we follow (like a basis for a vector space)
     - Clear info on the problem
     - How to reproduce it, ideally a unit test
     - Stacktrace
-    - You can use the tag "BUG: ..."
-
-### Referring to an object in code comments
-
-- We prefer to refer to objects in the code using Markdown like this (this is a
-  convention used in the documentation system Sphinx)
-  ```
-  """
-  Decorator adding a timer around function `f`.
-  """
-  ```
-- This is useful for distinguishing the object code from the real-life object
-- E.g.,
-  ```
-  # The df `df_tmp` is used for ...
-  ```
 
 ### Inline comments
 
