@@ -1,31 +1,7 @@
 # Documentation about guidelines
 
-<!--ts-->
-   * [Guidelines for writing workflows](#guidelines-for-writing-workflows)
-   * [Useful reference](#useful-reference)
-   * [Style and cosmetic lints](#style-and-cosmetic-lints)
-      * [Use nice 80 columns formatting for txt files](#use-nice-80-columns-formatting-for-txt-files)
-      * [Empty line after heading](#empty-line-after-heading)
-      * [Bullet lists](#bullet-lists)
-         * [Use bullet lists](#use-bullet-lists)
-         * [Style for bullet lists](#style-for-bullet-lists)
-      * [Using code style](#using-code-style)
-      * [Indenting code style](#indenting-code-style)
-      * [Improve your written English](#improve-your-written-english)
-      * [Make sure your markdown looks good](#make-sure-your-markdown-looks-good)
-      * [Table of content (TOC)](#table-of-content-toc)
-         * [Markdown TOC](#markdown-toc)
-         * [TOC tips](#toc-tips)
-      * [Lint all markdown files](#lint-all-markdown-files)
-   * [Google docs style conventions](#google-docs-style-conventions)
-      * [Headings](#headings)
-      * [Font](#font)
-   * [Convert between Gdocs and Markdown](#convert-between-gdocs-and-markdown)
-      * [Gdocs -&gt; Markdown](#gdocs---markdown)
-      * [Markdown -&gt; Gdocs](#markdown---gdocs)
-      * [Markdown vs Google Docs](#markdown-vs-google-docs)
+<!-- toc -->
 
-<!--te-->
 
 # Guidelines for describing workflows
 
@@ -44,26 +20,50 @@
 
 # Style and cosmetic lints
 
+## Always use markdown linter
+
+- Most cosmetic lints described further can be taken care automatically by our markdown linter, so make sure to run it after implementing the changes
+- The file is `dev_scripts/lint_md.sh`, see the docstrings for more details
+  - Example run:
+    ```
+    dev_scripts/lint_md.sh docs/Documentation_about_guidelines.md
+    ```
+- Do not mix manual edits and linter runs. Best practice is to run the linter and commit the changes it made as separate commit
+- If the linter messes up the text, file an issue with examples of what the linter does incorrectly
+
+## Table of content (TOC)
+
+- Unfortunately both markdown and GitHub don't support automatically generating
+  a TOC for a document
+- To generate a table of content:
+  - Add the following tag at the top of the markdown file (note that in the text below we interspersed spaces to avoid the TOC processor):
+    ```
+    < ! - - toc - - >
+    ```
+  - Run the markdown linter in order to build TOC automatically
+
 ## Use nice 80 columns formatting for txt files
 
 - Vim has a `:gq` command to reflow the comments
 - There are plugins to take care of this for PyCharm
-- Our linter takes care of reflowing the comments as well
+- Our markdown linter takes care of reflowing the comments as well
 
 ## Empty line after heading
 
 - Leave an empty line after a heading to make it more visible
-  ```
-  # Very important title
-  - Not really important
+  - _Bad_
+    ```
+    # Coming through! I've big important things to do!
+    - ... and his big important wheels got STUCK!
+    ```
+  - _Good_
+    ```
+    # Very important title
 
-  ## Coming through! I've big important things to do!
-  - ... and his big important wheels got STUCK!
-  ```
+    - Less important text
+    ```
 
 ## Bullet lists
-
-### Use bullet lists
 
 - We like using bullet list since one can represent thought process more
   clearly, e.g.,
@@ -72,22 +72,19 @@
   - This is thought #2
     - Well, that was cool!
     - But this is even better
-
-### Style for bullet lists
-
-- We use `-` instead of `*`:
-  - Bad
+- We strictly use `-` instead of `*`, circles, etc.:
+  - _Bad_
     ```
     * Foo bar!
-    * hello
-    * world
+      * hello
+      * world
     * Baz
     ```
-  - Good
+  - _Good_
     ```
     - Foo bar!
-        - hello
-        - world
+      - hello
+      - world
     - Baz
     ```
 
@@ -99,8 +96,8 @@
   - Command lines (e.g., `git push`)
 - When using a block of code use the write syntax highlighting
   - Bash
-    ```bash
-    `> git push`
+    ```
+    > git push
     ```
   - Python
     ```python
@@ -113,9 +110,31 @@
 
 - GitHub / pandoc seems to render incorrectly a code block unless it's indented
   over the previous line
-  - Bad `> git push`
-  - Good
-    `> git push`
+  - _Bad_
+  ```
+  > git push
+  ```
+  - _Good_
+    ```
+    > git push
+    ```
+
+## Embedding screenshots
+
+- [**Avoid** to use screenshots whenever possible!](https://github.com/sorrentum/sorrentum/blob/master/docs/First_review_process.md#do-not-use-screenshots)
+- However, sometimes we need it (e.g., plot infographics, website inteface, etc.)
+- To do it correctly:
+  - Place your screenshot in any comment window at GitHub
+    - <img width="770" alt="screenshot" src="https://github.com/sorrentum/sorrentum/assets/31514660/ade0b104-d162-40a8-9f0d-3edadf38c57e">
+    - This will upload the image to the GitHub cloud
+    - You DO NOT have to publish a comment, the provided link is already ready to use!
+  - Make sure your link has no not-English symbols in `alt` section
+    - <img width="778" alt="symbols" src="https://github.com/sorrentum/sorrentum/assets/31514660/6e54d66b-d45f-43f8-8bb6-b9c94217068e">
+    - They sometimes appear if your native PC language is not English
+    - You can avoid it by giving the picture a name in English
+    - Alternatively, you can just edit the `alt` section in the generated link - this will not corrupt the file
+  - Place the generated and edited link to the markdown file
+    - <img width="461" alt="last" src="https://github.com/sorrentum/sorrentum/assets/31514660/a416e49d-2859-40d6-ad13-792e6304f402">
 
 ## Improve your written English
 
@@ -134,34 +153,7 @@
 - You can:
   - Check in a branch and use GitHub to render it
   - Use Pycharm to edit, which also renders it side-by-side
-
-## Table of content (TOC)
-
-### Markdown TOC
-
-- Unfortunately both markdown and GitHub don't support automatically generating
-  a TOC for a document
-- Run linter in order to build TOC automatically
-  - Detailed linter instructions at
-    [First Review Process](First_review_process.md)
-  - Currently linter does puts TOH above all the markdown text, so put a file
-    name on top after the linter is run
-
-### TOC tips
-
-- Add the tags at the beginning of the markdown file
-- Note that in the text below we interspersed spaces to avoid the TOC processor
-  to add a table of content also here:
-  ```
-  &lt; ! - - t s - - >
-  &lt; ! - - t e - - >
-  ```
-
-## Lint all markdown files
-
-- To update all markdown files run:
-
-  `> documentation/scripts/lint_md.sh`
+  - Compare your markdown with already published [documentation](/docs/README.md)
 
 # Google docs style conventions
 
@@ -176,14 +168,16 @@
     ```
     ## Heading 2
     ```
-- The reason is that sometimes one doesn't have the time or the patience to
-  format things properly, so at least there is some indication of the level of
-  the titles.
-- Do not forget to convert the normal text to heading:
-  - Select the text
-  - Go to `Format`
-  - Go to `Paragraph style`
-  - Choose the heading style, e.g. `heading 2`
+- The reason is that sometimes one doesn't have the time or the patience to format things properly, so at least there is some indication of the level of the titles
+- Avoid having multiple `#` separatd by a space that sometimes appear in a process of convertion of Gdocs to Markdown files
+  - _Bad_:
+    ```
+    # # Heading 1
+    ```
+  - _Good_:
+    ```
+    # Heading 1
+    ```
 
 ## Font
 
@@ -213,27 +207,26 @@
     poorly when a document is edited in the suggestion mode
 - Approach 2:
   - [https://mr0grog.github.io/google-docs-to-markdown/](https://mr0grog.github.io/google-docs-to-markdown/)
-- Lint the markdown:
-  - Replace all bullet points as `-` with `-`, if needed
-  - Run the `linter.py`
-    - Do not mix manual edits and linter runs
-    - If the linter messes up the text
-      - File bugs in `amp` with examples what the linter does incorrectly
-  - When a gdoc becomes obsolete or it’s deleted
-    - Add a note at the top of a gdoc explaining what happened
-      - Example: "Moved to /new_markdown_file.md"
-    - Strike out the entire document
-    - Move the gdoc to the
-      [\_OLD directory](https://drive.google.com/drive/u/0/folders/1J4B1vq8EwT-q_z7qSLCZ9Tug2CA9f8i7)
+- Lint the markdown with `dev_scripts/lint_md.sh`
+- When a Gdoc becomes obsolete or it’s deleted
+  - Add a note at the top of a gdoc explaining what happened
+    - Example: "Moved to /new_markdown_file.md"
+  - Strike out the entire document and put a link to it in PR so integrators remove it after the merge
 
 ## Markdown -> Gdocs
 
 - Approach 1:
-  - `> pandoc MyFile.md -f markdown -t odt -s -o MyFile.odt`
+  - Run
+    ```
+    > pandoc MyFile.md -f markdown -t odt -s -o MyFile.odt
+    ```
   - Download the
     [template](https://docs.google.com/document/d/1Z_OdO6f7VYjimgjfGPofsYHyWvyxXrtOVVcvCauJIpI/edit)
     in odt format
-  - `> pandoc code_organization.md -f markdown -t odt -s -o code_org.odt --reference-doc /Users/saggese/Downloads/Gdoc\ -\ Template.odt`
+  - Run
+    ```
+    > pandoc code_organization.md -f markdown -t odt -s -o code_org.odt --reference-doc /Users/saggese/Downloads/Gdoc\ -\ Template.odt
+    ```
   - Open it with TextEdit, copy-paste to Gdoc
 - Approach 2:
   - Instead of copy-paste the markdown into Gdocs, you can copy the rendered
@@ -246,7 +239,18 @@
 
 ## Markdown vs Google Docs
 
-- Google Docs pros:
+### Markdown pros
+
+  - Can use vim
+  - Can version control
+  - Easy to `grep` text and code
+  - Easy to use verbatim (e.g., typing `foobar`)
+  - Easy to style using pandoc
+  - Easy to embed code
+  - Easy to add Latex equations
+
+### Google Docs pros
+
   - Easy to embed figures
   - Easy to collaborate
   - Easy to make quick changes (instead of making a commit)
@@ -262,15 +266,13 @@
       print("hello")
       ```
   - Auto-latex equations
-- Markdown pros:
-  - Can use vim
-  - Can version control
-  - Easy to use verbatim (e.g., typing `foobar`)
-  - Easy to style using pandoc
-  - Easy to embed code
-  - Easy to add Latex equations
-- Rules of thumb:
-  - If it has images -> gdocs
-  - If it has mostly formulas -> md
-  - If they are notes from book -> md
-  - If it is a tutorial (especially with figures) -> gdocs
+
+### Rules of thumb
+
+- Use Markdown
+  - If doc is going to be used as a public guideline
+  - If doc has mostly text, code, and formulas
+  - If there are notes from a book
+- Use Gdoc
+  - If doc requires a lot of images that cannot be placed as text
+  - If doc is a research of an analysis
