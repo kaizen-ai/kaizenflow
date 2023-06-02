@@ -1,45 +1,45 @@
 TODO(gp): Once more stable switch to Latex. gdoc is good for interacting
 and iterating quickly
 
-# Surrentum: a protocol for virtual consolidation of distributed digital financial systems
+# Sorrentum: a protocol for virtual consolidation of distributed digital financial systems
 
 GP Saggese, Paul Smith
 
 v0.1 (Dec 1 2022)
 
-# \# Abstract
+# Abstract
 
-Surrentum[^1] is a protocol to:
+Sorrentum[^1] is a protocol to:
 
 -   implement distributed investment strategies
 
 -   enforce a unified view of market exchanges, both centralized and
-    > decentralized, with benefits to the efficiency of the entire
-    > system
+    decentralized, with benefits to the efficiency of the entire
+    system
 
 -   incentivize participants that stake their cryptocurrencies to
-    > provide liquidity to digital asset markets
+    provide liquidity to digital asset markets
 
-Surrentum protocol contains:
+Sorrentum protocol contains:
 
 -   A framework for describing, simulating, assessing, and deploying
-    > financial machine learning models operating on any object on a
-    > blockchain (e.g., cryptocurrencies, tokens, NFTs, smart contracts)
+    financial machine learning models operating on any object on a
+    blockchain (e.g., cryptocurrencies, tokens, NFTs, smart contracts)
 
 -   A suite of standards for interoperability between components of the
-    > ecosystem (e.g., Surrentum Oracles, Surrentum Nodes, Market
-    > exchanges)
+    ecosystem (e.g., Sorrentum Oracles, Sorrentum Nodes, Market
+    exchanges)
 
 -   Smart contracts allowing peer-to-peer staking of cryptocurrencies
-    > used to provide liquidity to the financial system and be rewarded
-    > with investment returns
+    used to provide liquidity to the financial system and be rewarded
+    with investment returns
 
-# \# Motivation
+# Motivation
 
 Increasing adoption and continued decentralization of digital asset
 markets fragments and distorts prices, leading to volatile markets.
 
-![](media/image12.png){width="6.5in" height="2.5416666666666665in"}
+![](./sorrentum_figs/image12.png){width="6.5in" height="2.5416666666666665in"}
 
 At the current market capitalization of over \$2+ trillion and daily
 trading volume exceeding \$50 billion across 20,000 currencies and 500
@@ -57,24 +57,24 @@ possible price across multiple exchanges. In the case of
 cryptocurrencies, such a solution is impossible, given the decentralized
 nature of its market and the ways in which consensus is achieved.
 
-# \# Background
+# Background
 
-## \## Measures of fragmentation
+## Measures of fragmentation
 
 TODO(gp): Redo the plots better
 
-![](media/image3.png){width="6.5in"
-height="2.3854166666666665in"}![](media/image1.png){width="6.499991251093613in"
+![](./sorrentum_figs/image3.png){width="6.5in"
+height="2.3854166666666665in"}![](./sorrentum_figs/image1.png){width="6.499991251093613in"
 height="2.3854166666666665in"}
 
-![](media/image7.png){width="6.218640638670166in"
-height="2.1625656167979in"}![](media/image11.png){width="6.1338145231846015in"
+![](./sorrentum_figs/image7.png){width="6.218640638670166in"
+height="2.1625656167979in"}![](./sorrentum_figs/image11.png){width="6.1338145231846015in"
 height="2.1625656167979in"}
 
-## \## Arbitrage in financial crypto markets
+## Arbitrage in financial crypto markets
 
 Centralized market makers and hedge funds provide liquidity to markets
-in exchange for substantial profits. Surrentum Protocol democratizes the
+in exchange for substantial profits. Sorrentum Protocol democratizes the
 access to these profits by allowing anybody to stake arbitrage
 activities, receiving profits in return.
 
@@ -86,7 +86,7 @@ because it:
 -   collects fees when investing capital on behalf of outside investors
 
 -   needs to spend to hire expensive researchers and machine learning
-    > experts
+    experts
 
 -   needs to spend money to buy external data
 
@@ -99,7 +99,7 @@ markets
 
 -   Lock-in of capital
 
-## \## Arbitrage
+## Arbitrage
 
 Different types of arbitrage with different risk and return profiles
 
@@ -113,49 +113,49 @@ Different types of arbitrage with different risk and return profiles
 
 TODO(gp): all Describe a bit
 
-# \# Surrentum Protocol
+# Sorrentum Protocol
 
-Surrentum Node
+Sorrentum Node
 
 -   Receive data from exchanges and external oracles
 
--   Export data using the Surrentum Data Protocol
+-   Export data using the Sorrentum Data Protocol
 
 -   People stake their currencies which are then used to run the nodes
 
 -   Nodes are scored in terms of their return quality, correlation with
-    > markets, drawdowns
+    markets, drawdowns
 
 -   TODO(gp): This is System
 
-Surrentum Data Protocol
+Sorrentum Data Protocol
 
--   Specifies how data can be fed to Surrentum Nodes
+-   Specifies how data can be fed to Sorrentum Nodes
 
 -   Point-in-time view (e.g., data is annotated with knowledge time)
 
 -   Clear semantic (e.g., using intervals and specify clearly interval
-    > semantic)
+    semantic)
 
 -   Data quality assurance (e.g., historical and real-time
-    > reconciliation)
+    reconciliation)
 
 -   TODO(gp): This is MarketData
 
-Surrentum Pools
+Sorrentum Pools
 
--   Liquidity pools used by Surrentum nodes, where anybody can stake
-    > cryptos that Surrentum Nodes can use and earn rewards
+-   Liquidity pools used by Sorrentum nodes, where anybody can stake
+    cryptos that Sorrentum Nodes can use and earn rewards
 
-Surrentum Library
+Sorrentum Library
 
--   A library to build Surrentum Nodes using fixed API
+-   A library to build Sorrentum Nodes using fixed API
 
 -   Provides:
 
-    -   Surrentum Data Protocol
+    -   Sorrentum Data Protocol
 
-    -   Surrentum Node Interface
+    -   Sorrentum Node Interface
 
     -   Configuration layer
 
@@ -165,24 +165,24 @@ Surrentum Library
 
 -   TODO(gp): This is amp
 
-Surrentum Token
+Sorrentum Token
 
 -   Governance token
 
 -   Used to compensate staked cryptos
 
--   Used for returns for building and operating Surrentum Nodes
+-   Used for returns for building and operating Sorrentum Nodes
 
-# \# Asset representation
+# Asset representation
 
 TODO(gp): Ideally we want to use a single schema like
 \`Vendor:ExchangeId:Asset\`
 
-\\# Asset universe
+\Asset universe
 
-# \# Surrentum Data Specification
+# Sorrentum Data Specification
 
-## \## ETL
+## ETL
 
 We employ a variation of the ETL approach, called EtLT (i.e., extract,
 lightly transform, load, transform) for downloading both data and
@@ -198,14 +198,14 @@ instance:
 -   Different vendor can provide the same data
 
     -   E.g., Kibot, Binance, CryptoDataDownload provide data for the
-        > Binance exchange
+        Binance exchange
 
 -   Different time semantics, e.g.,
 
     -   Intervals can be \[a, b) or (a, b\]
 
     -   A bar can be marked at the end or at the beginning of the
-        > interval
+        interval
 
 -   Data and metadata
 
@@ -252,13 +252,13 @@ Some backends (e.g., Parquet) allow handling an S3 bucket transparently.
 Our typical approach is:
 
 -   When writing to S3, use the local filesystem for staging the data in
-    > the desired structure and then copy all the data to S3
+    the desired structure and then copy all the data to S3
 
 -   When reading from S3, read the data directly, use the
-    > functionalities supported by the backend, or copy the data locally
-    > and then read it from local disk
+    functionalities supported by the backend, or copy the data locally
+    and then read it from local disk
 
-**Data formats**. The main data formats that Surrentum supports are:
+**Data formats**. The main data formats that Sorrentum supports are:
 
 -   CSV
 
@@ -287,7 +287,7 @@ Our typical approach is:
     -   Data can\'t be easily sliced by asset ids / by time
 
     -   Large footprint (non binary), although it can be compressed
-        > (e.g., as \`.csv.gz\` on the fly)
+        (e.g., as \`.csv.gz\` on the fly)
 
 ```{=html}
 <!-- -->
@@ -363,11 +363,11 @@ supported backends.
 Typically we prefer to save
 
 -   Historical data into Parquet format since it supports more naturally
-    > the access patterns needed for long simulations
+    the access patterns needed for long simulations
 
 -   Real-time data into a database since this makes it easy to append
-    > and retrieve data in real-time. Often we want to also append
-    > real-time data to Parquet
+    and retrieve data in real-time. Often we want to also append
+    real-time data to Parquet
 
 Client stage. The client stage allows downstream pipelines to access
 data from the backend storage. The access pattern is always for a model
@@ -385,7 +385,7 @@ in different ways to create various ETL pipelines.
 -   Extract:
 
     -   Read data from an external source to memory (typically in the
-        > form of Pandas data structures)
+        form of Pandas data structures)
 
     -   E.g., downloading data from a REST or Websocket interface
 
@@ -395,7 +395,7 @@ in different ways to create various ETL pipelines.
 -   Load:
 
     -   Load data stored in memory -\> permanent storage (e.g., save as
-        > CSV or as Parquet)
+        CSV or as Parquet)
 
     -   E.g., pd.to_parquet()
 
@@ -451,13 +451,13 @@ in different ways to create various ETL pipelines.
     -   Write data into DB
 
         -   One could argue that operations on the DB might not look
-            > like \`extract\` but rather \`load\`
+            like \`extract\` but rather \`load\`
 
         -   We treat any backend (S3, local, DB) in the same way and the
-            > DB is just a backend
+            DB is just a backend
 
 -   [[More detailed
-    > description]{.underline}](https://docs.google.com/document/d/1EH7RqeTdVCXDcrCKPm0PvrtftTA11X9V-AT7F20V7T4/edit#heading=h.t1ycoe6irr95)
+    description]{.underline}](https://docs.google.com/document/d/1EH7RqeTdVCXDcrCKPm0PvrtftTA11X9V-AT7F20V7T4/edit#heading=h.t1ycoe6irr95)
 
     -   **Examples**:
 
@@ -467,7 +467,7 @@ in different ways to create various ETL pipelines.
 
         -   Convert Parquet by-date into Parquet by-asset
 
-## \## Data pipelines
+## Data pipelines
 
 Download data by asset (as a time series)
 
@@ -483,41 +483,41 @@ Download data by time, e.g.,
 
 -   This is typical of real-time flow
 
-## \## General conventions
+## General conventions
 
 **Data invariants**. We use the following invariants when storing data
 during data on-boarding and processing:
 
 -   Data quantities are associated to intervals are \[a, b) (e.g., the
-    > return over an interval) or to a single point in time (e.g., the
-    > close price at 9am UTC)
+    return over an interval) or to a single point in time (e.g., the
+    close price at 9am UTC)
 
 -   Every piece of data is labeled with the end of the sampling interval
-    > or with the point-in-time
+    or with the point-in-time
 
     -   E.g., for a quantity computed in an interval \[06:40:00,
-        > 06:41:00) the timestamp is 06:41:00
+        06:41:00) the timestamp is 06:41:00
 
 -   Timestamps are always time-zone aware and use UTC timezone
 
 -   Every piece of data has a knowledge timestamp (aka \"as-of-date\")
-    > which represent when we were aware of the data according to our
-    > wall-clock:
+    which represent when we were aware of the data according to our
+    wall-clock:
 
     -   Multiple timestamps associated with different events can be
-        > tracked, e.g., \`start_download_timestamp\`,
-        > \`end_download_timestamp\`
+        tracked, e.g., \`start_download_timestamp\`,
+        \`end_download_timestamp\`
 
     -   No system should depend on data available strictly before the
-        > knowledge timestamp
+        knowledge timestamp
 
 -   Data is versioned: every time we modify the schema or the semantics
-    > of the data, we bump up the version using semantic versioning and
-    > update the changelog of what each version contains
+    of the data, we bump up the version using semantic versioning and
+    update the changelog of what each version contains
 
 An example of tabular data is below:
 
-![](media/image5.png){width="6.5in" height="1.0138888888888888in"}
+![](./sorrentum_figs/image5.png){width="6.5in" height="1.0138888888888888in"}
 
 **Data organization**. We keep data together by execution run instead of
 by data element.
@@ -571,19 +571,19 @@ We want to organize the data in a directory structure like:
 The reasons why the first data layout is superior are:
 
 1)  It\'s easier to delete a single run by deleting a single dir instead
-    > of deleting multiple files
+    of deleting multiple files
 
 2)  It allows the format of the data to evolve over time without having
-    > to change the schema of the data retroactively
+    to change the schema of the data retroactively
 
 3)  It allows scripts post-processing the data to point to a directory
-    > with a specific run and work out of the box
+    with a specific run and work out of the box
 
 4)  it\'s easier to move the data for a single run from one dir (e.g.,
-    > locally) to another (e.g., a central location) in one command
+    locally) to another (e.g., a central location) in one command
 
 5)  there is redundancy and visual noise, e.g., the same data is
-    > everywhere
+    everywhere
 
 We can tag directory by a run mode (e.g., \`manual\` vs \`scheduled\`)
 by adding the proper suffix to a date-dir.
@@ -599,13 +599,13 @@ need it) applies.
 **Naming convention**.
 
 -   We use \`.\` to separate conceptually different pieces of a file or
-    > a directory.
+    a directory.
 
 -   We don\'t allow white spaces since they are not Linux friendly and
-    > need to be escaped. We replace white spaces with \`\_\`.
+    need to be escaped. We replace white spaces with \`\_\`.
 
 -   We prefer not to use \`-\` whenever possible, since they create
-    > issues with Linux auto-completion and need to be escaped.
+    issues with Linux auto-completion and need to be escaped.
 
 E.g., \`bulk.airflow.csv\` instead of \`bulk_airflow.csv\`
 
@@ -615,13 +615,13 @@ following:
 -   a downloader
 
     -   External DB (e.g., data provider) -\> Internal DB: the data
-        > flows from an external API to an internal DB
+        flows from an external API to an internal DB
 
     -   It downloads historical or real-time data and saves the dataset
-        > in a location
+        in a location
 
     -   The name of the script and the location of the data downloaded
-        > follow the naming scheme described below
+        follow the naming scheme described below
 
     -   It is typically implemented as a Python script
 
@@ -630,13 +630,13 @@ following:
     -   Internal DB -\> Process
 
     -   It computes some statistics from one or more datasets (primary
-        > or derived) and throws an exception if the data is malformed
+        or derived) and throws an exception if the data is malformed
 
     -   It aborts if the data has data not compliant to certain QA
-        > metrics
+        metrics
 
     -   It is typically implemented as a Python notebook backed by a
-        > Python library
+        Python library
 
 -   a derived dataset flow
 
@@ -653,7 +653,7 @@ following:
     -   Internal DB -\> Process -\> Outside DB (e.g., exchange)
 
     -   E.g., it runs a computation from internal data and places some
-        > trades
+        trades
 
     -   It is typically implemented as a Python script
 
@@ -670,7 +670,7 @@ currency pairs on different exchanges. The support of the data is
 referred to as the \"data universe\". This metadata is versioned as any
 other piece of data.
 
-## \## Data set downloading and handling
+## Data set downloading and handling
 
 **Data set naming scheme**. Each data set is stored in a data lake with
 a path and name that describe its metadata according to the following
@@ -709,27 +709,27 @@ attributes.
     -   Data downloaded in bulk mode, as one-off documented operations
 
     -   Sometimes it\'s referred to as \"historical\", since one
-        > downloads the historical data in bulk before the real-time
-        > flow is deployed
+        downloads the historical data in bulk before the real-time
+        flow is deployed
 
 -   \`periodic\`
 
     -   Aka \"scheduled\", \"streaming\", \"continuous\", and improperly
-        > \"real-time\"
+        \"real-time\"
 
     -   Data is captured regularly and continuously
 
     -   Sometimes it\'s referred as to \"real-time\" since one capture
-        > this data
+        this data
 
     -   It can contain information about the frequency of downloading
-        > (e.g., \`periodic-5mins\`, \`periodic-EOD\`) if it needs to be
-        > identified with respect to others
+        (e.g., \`periodic-5mins\`, \`periodic-EOD\`) if it needs to be
+        identified with respect to others
 
 -   \`unit_test\`
 
     -   Data used for unit test (independently if it was downloaded
-        > automatically or created manually)
+        automatically or created manually)
 
 -   
 
@@ -737,7 +737,7 @@ attributes.
 <!-- -->
 ```
 -   \`downloading_entity\`: different data depending on whom downloaded
-    > it, e.g.,
+    it, e.g.,
 
 ```{=html}
 <!-- -->
@@ -745,13 +745,13 @@ attributes.
 -   \`airflow\`: data was downloaded as part of the automatic flow
 
 -   \`manual\`: data download was triggered manually (e.g., running the
-    > download script)
+    download script)
 
 ```{=html}
 <!-- -->
 ```
 -   \`action_tag\`: information about the downloading, e.g.,
-    > \`downloaded_1min\` or \`downloaded_EOD\`
+    \`downloaded_1min\` or \`downloaded_EOD\`
 
 -   \`data_format\`: the format of the data, e.g.,
 
@@ -759,7 +759,7 @@ attributes.
 <!-- -->
 ```
 -   \`csv\` (always csv.gz, there is no reason for not compressing the
-    > data)
+    data)
 
 -   \`parquet\`
 
@@ -772,7 +772,7 @@ attributes.
 <!-- -->
 ```
 -   \`ohlcv\`, \`bid_ask\`, \`market_depth\` (aka \`order_book\`),
-    > \`bid_ask_market_data\` (if it includes both), \`trades\`
+    \`bid_ask_market_data\` (if it includes both), \`trades\`
 
 ```{=html}
 <!-- -->
@@ -788,10 +788,10 @@ attributes.
 <!-- -->
 ```
 -   \`universe\`: the name of the universe containing the possible
-    > assets
+    assets
 
     -   Typically the universe can have further characteristics and it
-        > can be also versioned
+        can be also versioned
 
     -   E.g., \`universe_v1_7\`
 
@@ -803,10 +803,10 @@ attributes.
 <!-- -->
 ```
 -   E.g., \`ccxt\`, \`crypto_chassis\`, \`cryptodata_download\`,
-    > \`talos\`, \`kaiko\`,
+    \`talos\`, \`kaiko\`,
 
 -   Data can also be downloaded directly from an exchange (e.g.,
-    > \`coinbase\`, \`binance\`)
+    \`coinbase\`, \`binance\`)
 
 -   \`exchange_id\`: which exchange the data refers to
 
@@ -821,28 +821,28 @@ attributes.
 -   \`version\`: any data set needs to have a version
 
     -   Version is represented as major, minor, patch according to
-        > semantic versioning in the format \`v{a}\_{b}\_{c}\` (e.g.,
-        > v1_0_0)
+        semantic versioning in the format \`v{a}\_{b}\_{c}\` (e.g.,
+        v1_0_0)
 
     -   If the schema of the data is changed the major version is
-        > increased
+        increased
 
     -   If a bug is fixed in the downloader that improves the semantic
-        > of the data but it\'s not a backward incompatible change, the
-        > minor version is increased
+        of the data but it\'s not a backward incompatible change, the
+        minor version is increased
 
     -   The same version can also include an optional \`snapshot\` which
-        > refers to the date when the data was downloaded (e.g., a
-        > specific date \`20220210\` to represent when the day on which
-        > the historical data was downloaded, i.e., the data was the
-        > historical data as-of 2022-02-10)
+        refers to the date when the data was downloaded (e.g., a
+        specific date \`20220210\` to represent when the day on which
+        the historical data was downloaded, i.e., the data was the
+        historical data as-of 2022-02-10)
 
     -   Note that \`snapshot\` and \`version\` have an overlapping but
-        > not identical meaning. \`snapshot\` represents when the data
-        > was downloaded, while \`version\` refers to the evolution of
-        > the semantic of the data and of the downloader. E.g., the same
-        > data source can be downloaded manually on different days with
-        > the same downloader (and thus with the same version).
+        not identical meaning. \`snapshot\` represents when the data
+        was downloaded, while \`version\` refers to the evolution of
+        the semantic of the data and of the downloader. E.g., the same
+        data source can be downloaded manually on different days with
+        the same downloader (and thus with the same version).
 
 ```{=html}
 <!-- -->
@@ -850,29 +850,29 @@ attributes.
 -   \`asset_type\`: which cryptocurrency the data refers to:
 
     -   Typically there is one file per asset (e.g.,
-        > \`BTC_USDT.csv.gz\`)
+        \`BTC_USDT.csv.gz\`)
 
     -   Certain data formats can organize the data in a more complex way
 
         -   E.g., Parquet files save the data in a directory structure
-            > \`{asset}/{year}/{month}/data.parquet\`
+            \`{asset}/{year}/{month}/data.parquet\`
 
 It is possible that a single data set covers multiple values of a
 specific attribute
 
 -   E.g., a data set storing data for both futures and spot, can have
-    > \`asset_type=futures_spot\`
+    \`asset_type=futures_spot\`
 
 Not all the cross-products are possible, e.g.
 
 -   there is no data set with \`download_mode=periodic\` scheduled by
-    > Airflow and \`downloading_entity=manual\`
+    Airflow and \`downloading_entity=manual\`
 
 We organize the schema in terms of access pattern for the modeling and
 analysis stage
 
 -   E.g., \`snapshot\` comes before \`vendor\` since in different
-    > snapshots we can have different universes
+    snapshots we can have different universes
 
 -   E.g., snapshot -\> dataset -\> vendor -\> exchange -\> coin
 
@@ -880,7 +880,7 @@ analysis stage
 <!-- -->
 ```
 -   A universe is just a mapping of a tag (e.g., v5) to a set of
-    > directories
+    directories
 
 Each data set has multiple columns.
 
@@ -895,7 +895,7 @@ notebooks]{.underline}](https://docs.google.com/document/d/17N8OTI1zxXI-l3OYDVcf
 CK data specs: [[Data pipelines -
 Specs]{.underline}](https://docs.google.com/document/d/1nLhaFBSHVrexCcwJMnpXlkqwn0l6bDiVer34GKVclYY/edit#)
 
-## \## Data on-boarding flow
+## Data on-boarding flow
 
 **Downloader types.** For each data set, there are typically two types
 of downloaders: bulk and periodic. This step is often the equivalent of
@@ -906,7 +906,7 @@ E.g., an EtLT pipeline can consists of the following phases:
 -   E: extract 1 minute data from websocket,
 
 -   t: apply non-business logic related transformation from JSON to
-    > dataframe
+    dataframe
 
 -   L: load into SQL
 
@@ -964,15 +964,15 @@ are less strict than for the datasets themselves.
 -   More emphasis is put into providing a comprehensive docstring
 
 -   We can\'t use \`.\` in filenames as attribute separators because
-    > Python uses them to separate packages in import statements, so we
-    > replace them with \`\_\` in scripts
+    Python uses them to separate packages in import statements, so we
+    replace them with \`\_\` in scripts
 
 -   The name should capture the most general use-case
 
     -   E.g. if a downloader can download both OHLCV and Bid/Ask data
-        > for given exchange in a given time interval and save to
-        > relational DB or S3 we can simply name it
-        > \`download_exchange_data.py\`
+        for given exchange in a given time interval and save to
+        relational DB or S3 we can simply name it
+        \`download_exchange_data.py\`
 
 TODO(Juraj): explain that Airflow DAG names follow similar naming
 conventions
@@ -1025,7 +1025,7 @@ components]{.underline}](https://docs.google.com/document/d/1C-22QF_gOe1k4HgyD6E
 [[OHLCV data
 pipeline]{.underline}](https://docs.google.com/document/d/1nLhaFBSHVrexCcwJMnpXlkqwn0l6bDiVer34GKVclYY/edit)
 
-## \## Data QA workflows
+## Data QA workflows
 
 **Quality-assurance metrics**. Each data set has QA metrics associated
 with it to make sure the data has the minimum expected data quality.
@@ -1039,10 +1039,10 @@ with it to make sure the data has the minimum expected data quality.
     -   points with volume = 0
 
     -   data points where OHLCV data is not in the correct relationship
-        > (e.g., H and L are not higher or lower than O and C),
+        (e.g., H and L are not higher or lower than O and C),
 
     -   data points where OHLCV data are outliers (e.g., they are more
-        > than N standard deviations from the running mean)
+        than N standard deviations from the running mean)
 
 **Bulk data single-dataset QA metrics**. It is possible to run the QA
 flow to compute the quality of the historical data. This is done
@@ -1060,21 +1060,21 @@ In case of low data quality data the system sends a notification.
 different data sets that are related to each other, e.g.,
 
 -   consider the case of downloading the same data (e.g., 1-minute OHLCV
-    > for spot BTC_USDT from Binance exchange) from different providers
-    > (e.g., Binance directly and a third-party provider) and wanting to
-    > compare the data under the assumption to be the same
+    for spot BTC_USDT from Binance exchange) from different providers
+    (e.g., Binance directly and a third-party provider) and wanting to
+    compare the data under the assumption to be the same
 
 -   
 
 -   consider the case where there is a REST API that allows to get data
-    > for a period of data, and a WebSocket that streams the data
+    for a period of data, and a WebSocket that streams the data
 
 -   consider the case where one gets an historical dump of the data from
-    > a third party provider vs the data from the exchange real-time
-    > stream
+    a third party provider vs the data from the exchange real-time
+    stream
 
 -   consider the case of NASDAQ streaming data vs TAQ data disseminated
-    > once the market is close
+    once the market is close
 
 **Historical / real-time QA flow.** Every period \$T\_{dl,hist}\$, a QA
 flow is run where the real-time data is compared to the historical data
@@ -1104,17 +1104,17 @@ where:
 -   \`qa_type\`: the type of the QA flow, e.g.,
 
     -   \`production_qa\`: perform a QA flow on historical and real-time
-        > data. The interface should be an IM client and thus it should
-        > be possible to run QA on both historical and real-time data
+        data. The interface should be an IM client and thus it should
+        be possible to run QA on both historical and real-time data
 
     -   \`research_analysis\`: perform a free-form analysis of the data.
-        > This can then be the basis for a \`qa\` analysis
+        This can then be the basis for a \`qa\` analysis
 
     -   \`compare_historical_real_time\`: compare historical and
-        > real-time data coming from the same source of data
+        real-time data coming from the same source of data
 
     -   \`compare_historical_cross_comparison\`: compare historical data
-        > from two different data sources
+        from two different data sources
 
 The same rules apply as in downloader and derived dataset for the naming
 scheme.
@@ -1196,7 +1196,7 @@ It is possible to use a long format
 | heck | check   |                |            |      |       |     |
 +------+---------+----------------+------------+------+-------+-----+
 
-## \## Derived data workflows
+## Derived data workflows
 
 **Derived data workflows**. Data workflows can transform datasets into
 other datasets
@@ -1226,27 +1226,27 @@ quality of the transformation
 -   It can be cross-vendor or not
 
 -   E.g., sample 1sec data to 1min and compare to a reference. The
-    > sampling is done on the fly since the researcher is trying to
-    > understand how to resample (e.g., removing outliers) to get a
-    > match
+    sampling is done on the fly since the researcher is trying to
+    understand how to resample (e.g., removing outliers) to get a
+    match
 
 **Derived data production flow.** The research flow is frozen and put in
 production
 
 -   E.g., run the resample script to sample and write back to DB and
-    > historical data. This flow can be run in historical mode (to
-    > populate the backend with the production data) and in real-time
-    > mode (to compute the streaming data)
+    historical data. This flow can be run in historical mode (to
+    populate the backend with the production data) and in real-time
+    mode (to compute the streaming data)
 
 **Derived data QA flow**. the goal is to monitor that the production
 flow is still performing properly with respect to the QA metrics
 
 -   E.g., the 1-sec to 1-min resampling is not performed on-the-fly, but
-    > it uses the data already computed by the script in the production
-    > flow.
+    it uses the data already computed by the script in the production
+    flow.
 
 -   This flow is mainly run in real-time, but we might want to look at
-    > QA performance also historically
+    QA performance also historically
 
 This same distinction can also be applied to feature computation and to
 the machine learning flow.
@@ -1254,7 +1254,7 @@ the machine learning flow.
 Provider -\> data -\> Us -\> derived flow -\> Us -\> features -\> Us -\>
 ML -\> Exchange
 
-## \## Data formats
+## Data formats
 
 **Storage-invariance of data.** Data should be independent from its
 storage format, e.g., CSV, Parquet, Relational DB. In other words,
@@ -1287,12 +1287,12 @@ vendor_date start_time end_time ticker open close volume id
 
 2019-01-07 1546871400 1546871460 AABA 58.90 58.91 7124 10846.0
 
-![](media/image4.png){width="6.5in" height="1.0416666666666667in"}
+![](./sorrentum_figs/image4.png){width="6.5in" height="1.0416666666666667in"}
 
 There are 2 special columns in the by-date file:
 
 -   one that represents the timestamp (\"start_time\" in the example).
-    > This is unique and monotonic (start_time, ticker) are unique
+    This is unique and monotonic (start_time, ticker) are unique
 
 -   one that represents the asset (\"ticker\" in the example)
 
@@ -1384,10 +1384,10 @@ data.parquet
 
 ...
 
-## \## Sandbox
+## Sandbox
 
 This paragraph describes an example of infrastructure that implements
-the Surrentum Data Protocol. The
+the Sorrentum Data Protocol. The
 
 It is a Docker Container containing the following services:
 
@@ -1401,17 +1401,17 @@ It is a Docker Container containing the following services:
 
 **Notes for CK devs (TO REMOVE)**
 
--   It is a separated code base from Surrentum and it shares only a few
-    > base library (e.g., \`helpers\`)
+-   It is a separated code base from Sorrentum and it shares only a few
+    base library (e.g., \`helpers\`)
 
 -   It is a scaled down version of CK production infrastructure (e.g.,
-    > managed Airflow is replaced by a local Airflow instance)
+    managed Airflow is replaced by a local Airflow instance)
 
 -   The system follows closely the production system described in [[Data
-    > pipelines -
-    > Specs]{.underline}](https://docs.google.com/document/d/1nLhaFBSHVrexCcwJMnpXlkqwn0l6bDiVer34GKVclYY/edit#)
+    pipelines -
+    Specs]{.underline}](https://docs.google.com/document/d/1nLhaFBSHVrexCcwJMnpXlkqwn0l6bDiVer34GKVclYY/edit#)
 
-## \## Data client stack
+## Data client stack
 
 Once the data is downloaded, it needs to be retrieved for processing in
 a common format (e.g., DataFlow format).
@@ -1424,25 +1424,25 @@ of reading the data
     -   Data is downloaded and saved with minimal or no transformation
 
     -   Adapts from the vendor data to a standard internal
-        > \"MarketData\" format
+        \"MarketData\" format
 
 -   MarketData\` implements \"behaviors\" that are orthogonal to
-    > vendors, e.g.,
+    vendors, e.g.,
 
     -   RealTime or Historical
 
     -   Stitched (i.e.,\"overlap\" multiple data sources giving a single
-        > view of the data). E.g., the data from the last day comes from
-        > a real-time source while the data before that comes from an
-        > historical source
+        view of the data). E.g., the data from the last day comes from
+        a real-time source while the data before that comes from an
+        historical source
 
     -   Replayed = serialize the data to disk and read it back,
-        > implementing also knowledge time as-of-time semantic. This
-        > behavior is orthogonal to RealTime, Historical, Stitched,
-        > i.e., one can replay any \`MarketData\`, including an already
-        > replayed one
+        implementing also knowledge time as-of-time semantic. This
+        behavior is orthogonal to RealTime, Historical, Stitched,
+        i.e., one can replay any \`MarketData\`, including an already
+        replayed one
 
-\# Data format for \`ImClient\` / \`MarketData\` pipeline
+Data format for \`ImClient\` / \`MarketData\` pipeline
 
 \- Both \`ImClient\` and \`MarketData\` have an output format that is
 enforced by the
@@ -1503,7 +1503,7 @@ class can do its job, i.e., apply common transformations to all
 
 \`\`\`
 
-\## Transformations performed by classes derived from \`ImClient\`
+Transformations performed by classes derived from \`ImClient\`
 
 \- Whatever is needed to transform the vendor data into the internal
 format accepted
@@ -1513,11 +1513,11 @@ by base \`ImClient\`
 \- Only derived classes \`ImClient\` knows what is exact semantic of the
 vendor-data
 
-\## Transformations performed by abstract class \`ImClient\`
+Transformations performed by abstract class \`ImClient\`
 
 \- Implemented by \`ImClient.\_apply_im_normalization()\`
 
-\## Output format of \`ImClient\`
+Output format of \`ImClient\`
 
 \- TODO(\*): Check the code in \`ImClient\` since that might be more up
 to date than
@@ -1560,7 +1560,7 @@ these can be
 
 inferred only from the vendor data semantic
 
-\## Transformations performed by classes derived from \`MarketData\`
+Transformations performed by classes derived from \`MarketData\`
 
 \- Classes derived from \`MarketData\` do whatever they need to do in
 \`\_get_data()\` to
@@ -1592,7 +1592,7 @@ idx
 
 \`\`\`
 
-\## Transformations performed by abstract class \`MarketData\`
+Transformations performed by abstract class \`MarketData\`
 
 \- The transformations are done inside \`get_data_for_interval()\`,
 during normalization,
@@ -1608,7 +1608,7 @@ desired timezone
 
 \- applying column remaps
 
-\## Output format of \`MarketData\`
+Output format of \`MarketData\`
 
 \- The base \`MarketData\` normalizes the data by:
 
@@ -1637,7 +1637,7 @@ end_time
 
 \`\`\`
 
-\# Asset ids format
+Asset ids format
 
 \- \`ImClient\` uses assets encoded as \`full_symbols\` strings (e.g.,
 \`binance::BTC_UTC\`)
@@ -1661,7 +1661,7 @@ encoded as ints
 
 \- This is because we want to use ints and not strings in dataframe
 
-\# Handling of \`asset_ids\`
+Handling of \`asset_ids\`
 
 \- Different implementations of \`ImClient\` backing a \`MarketData\`
 are possible,
@@ -1701,7 +1701,7 @@ of assets
 
 \- For each stage, a value of \`None\` means no filtering
 
-\# Handling of filtering by time
+Handling of filtering by time
 
 \- Clients of \`MarketData\` might want to query data by:
 
@@ -1717,42 +1717,42 @@ providing data
 
 \- \`MarketData\` adapts the fixed semantic to multiple ones
 
-\# Handling timezone
+Handling timezone
 
 \- \`ImClient\` always uses UTC as output
 
 \- \`MarketData\` adapts UTC to the desired timezone, as requested by
 the client
 
-## \## Checklist for releasing a new data set
+## Checklist for releasing a new data set
 
 -   Decide what to do exactly (e.g., do we download only bulk data or
-    > also real-time?)
+    also real-time?)
 
 -   Review what code we have and what can be generalized to accomplish
-    > the task at hand
+    the task at hand
 
 -   Decide what\'s the name of the data set according to our convention
 
 -   Create DAGs for Airflow
 
 -   Update the Raw Data Gallery
-    > im_v2/common/notebooks/Master_raw_data_gallery.ipynb
+    im_v2/common/notebooks/Master_raw_data_gallery.ipynb
 
 -   Quick exploratory analysis to make sure the data is not malformed
 
 -   Update the table in [[Data pipelines -
-    > Specs]{.underline}](https://docs.google.com/document/d/1nLhaFBSHVrexCcwJMnpXlkqwn0l6bDiVer34GKVclYY/edit#heading=h.8g5ajvlq6zks)
+    Specs]{.underline}](https://docs.google.com/document/d/1nLhaFBSHVrexCcwJMnpXlkqwn0l6bDiVer34GKVclYY/edit#heading=h.8g5ajvlq6zks)
 
 -   Exploratory analysis for a thorough QA analysis
 
 -   Add QA system to Airflow prod
 
-# \# Surrentum Node: specification
+# Sorrentum Node: specification
 
-## \## Time semantics
+## Time semantics
 
-**Time semantics**. A Surrentum component can be executed or simulated
+**Time semantics**. A Sorrentum component can be executed or simulated
 accounting for different ways to represent the passing of time. E.g., it
 can be simulated in a timed or non-timed simulation, depending on how
 data is delivered to the system (as it is generated or in bulk with
@@ -1766,19 +1766,19 @@ versions of clock:
     a.  Future peeking is allowed
 
 2)  Replayed clock. A moving clock that can be in the past or future
-    > with respect to a real clock
+    with respect to a real clock
 
     a.  Use time passing at the same pace of real-time wall-clock or
 
     b.  Simulate time based on events, e.g., as soon as the workload
-        > corresponding to one timestamp is complete we move to the next
-        > timestamp, without waiting for the actual time to pass
+        corresponding to one timestamp is complete we move to the next
+        timestamp, without waiting for the actual time to pass
 
     c.  Future peeking is technically possible but is prohibited
 
 3)  Real clock. The wall-clock time matches what we observe in
-    > real-life, data is provided to processing units as it is produced
-    > by systems.
+    real-life, data is provided to processing units as it is produced
+    by systems.
 
     a.  Future peeking is not possible in principle
 
@@ -1816,7 +1816,7 @@ df\[\"c\"\] = (df\[\"a\"\] + df\[\"b\"\]).shift(1)
 E.g., for a system predicting every 5 mins, one forecast is delivered
 every 5 mins of wall-clock.
 
-\# TODO(Grisha): add an example.
+TODO(Grisha): add an example.
 
 **Replayed simulation**. In replayed simulation, the data is provided in
 the same \"format\" and with the same timing than it would be provided
@@ -1824,9 +1824,9 @@ in real-time, but the clock type is "replayed clock".
 
 TODO(gp): Add an example of df with forecasts explaining the timing
 
-## \## Different views of System components
+## Different views of System components
 
-**Different implementations of a component**. A Surrentum component is
+**Different implementations of a component**. A Sorrentum component is
 described in terms of an interface and can have several implementations
 at different levels of detail.
 
@@ -1843,7 +1843,7 @@ mocked component can have the same timing semantics as the
 real-component (e.g., an asynchronous or reactive implementation) or
 not.
 
-## \## Architecture
+## Architecture
 
 In this section we summarize the responsibilities and the high level
 invariants of each component of a \`System\`.
@@ -1852,12 +1852,12 @@ The entire System is represented in terms of a Config. Each piece of a
 Config refers to and configures a specific part of the System. Each
 component should be completely configured in terms of a Config.
 
-### \### Component invariants
+### Component invariants
 
 Each component has a way to know:
 
 -   what is the current time (e.g., the real-time machine time or the
-    > simulated one)
+    simulated one)
 
 -   the timestamp of the current data bar it\'s working on
 
@@ -1884,7 +1884,7 @@ typically not mixing these two styles.
 Raw data is typically stored in S3 bucket in the same format as it comes
 or in Parquet format.
 
-## \## Config
+## Config
 
 **Config**. A \`Config\` is a dictionary-like object that represents
 parameters used to build and configure other objects (e.g., a DAG or a
@@ -1904,7 +1904,7 @@ Note that a dictionary or other mapping objects are not permitted inside
 a Config: each dictionary-like object should be converted to a Config
 and become a Subconfig.
 
-### \### Config representation and properties
+### Config representation and properties
 
 A Config can be represented as a dictionary or a string.
 
@@ -1945,39 +1945,39 @@ In the example above:
 -   "market_data" config is a subconfig of "config1"
 
 -   "start_ts" and "end_ts" are leaves of "market_data_config" and
-    > \`config1\`
+    \`config1\`
 
 Example of a string representation:
 
-![](media/image14.png){width="6.854779090113736in"
+![](./sorrentum_figs/image14.png){width="6.854779090113736in"
 height="1.2303444881889765in"}
 
 -   The same values are annotated with \`marked_as_used\`, \`writer\`
-    > and \`val_type\`
+    and \`val_type\`
 
     -   \`marked_as_used\` determines whether the object was used to
-        > construct another object
+        construct another object
 
     -   \`writer\` provides a stacktrace of the piece of code which
-        > marked the object as used
+        marked the object as used
 
     -   \`val_type\` is a type of the object
 
-### \### Assigning and getting Config items
+### Assigning and getting Config items
 
 -   Config object has its own implementations of \`\_\_setitem\_\_\` and
-    > \`\_\_getitem\_\_\`
+    \`\_\_getitem\_\_\`
 
 -   A new value can be set freely like in a python Dict object
 
 -   Overwriting the value is prohibited if the value has already been
-    > used
+    used
 
 Since Config is used to guarantee that the construction of any objects
 is reproducible, there are 2 methods to \`get\` the value.
 
 -   \`get_and_mark_as_used\` is utilized when a leaf of the config is
-    > used to construct another object
+    used to construct another object
 
     -   When the value is used inside a constructor
 
@@ -1993,7 +1993,7 @@ Example of marking the subconfig as used:
 
 \_ = config.get_and_mark_as_used("market_data_config")
 
-![](media/image13.png){width="6.5in" height="1.1944444444444444in"}
+![](./sorrentum_figs/image13.png){width="6.5in" height="1.1944444444444444in"}
 
 \`\`\`
 
@@ -2003,21 +2003,21 @@ Example of marking the leaf as used:
 
 \_ = config.get_and_mark_as_used((\"market_data_config\", \"end_ts\"))
 
-![](media/image10.png){width="6.5in" height="1.1388888888888888in"}
+![](./sorrentum_figs/image10.png){width="6.5in" height="1.1388888888888888in"}
 
 \`\`\`
 
 -   \`\_\_getitem\_\_\` is used to select items for uses which do not
-    > affect the construction of other objects:
+    affect the construction of other objects:
 
     -   Logging, debugging and printing
 
-## \## DataFlow computing
+## DataFlow computing
 
 -   **DataFlow framework**. DataFlow is a computing framework to
-    > implement machine learning models that can run with minimal
-    > changes in timed, non-timed, replayed simulation and real-time
-    > execution.
+    implement machine learning models that can run with minimal
+    changes in timed, non-timed, replayed simulation and real-time
+    execution.
 
 The working principle underlying DataFlow is to run a model in terms of
 time slices of data so that both historical and real-time semantics can
@@ -2041,7 +2041,7 @@ TODO(gp): Explain the advantages:
 
 -   Support for knowledge time
 
-\# Resampling VWAP (besides potential errors). This implies hardcoded
+Resampling VWAP (besides potential errors). This implies hardcoded
 formula in a mix with resampling functions.
 
 vwap_approach_2 = (converted_data\[\"close\"\] \*
@@ -2084,16 +2084,16 @@ information about \`Dag\` connectivity, which is specified in the
 ### **Template configs**
 
 -   Are incomplete configs, with some \"mandatory\" parameters
-    > unspecified but clearly identified with \`cconfig.DUMMY\` value
+    unspecified but clearly identified with \`cconfig.DUMMY\` value
 
 -   Have reasonable defaults for specified parameters
 
     -   This facilitates config extension (e.g., if we add additional
-        > parameters / flexibility in the future, then we should not
-        > have to regenerate old configs)
+        parameters / flexibility in the future, then we should not
+        have to regenerate old configs)
 
 -   Leave dummy parameters for frequently-varying fields, such as
-    > \`ticker\`
+    \`ticker\`
 
 -   Should be completable and be completed before use
 
@@ -2110,7 +2110,7 @@ The client:
 -   fills / modifies the config
 
 -   uses the final config to call \`get_dag(config)\` and get a fully
-    > built DAG
+    built DAG
 
 A \`DagBuilder\` can be passed to other objects instead of \`Dag\` when
 the template config is fully specified and thus the \`Dag\` can be
@@ -2121,24 +2121,24 @@ implementations of a \`DagRunner\` allow to run a \`Dag\` on data in
 different ways, e.g.,
 
 -   \`FitPredictDagRunner\`: implements two methods \`fit\` /
-    > \`predict\` when we want to learn on in-sample data and predict on
-    > out-of-sample data
+    \`predict\` when we want to learn on in-sample data and predict on
+    out-of-sample data
 
 -   \`RollingFitPredictDagRunner\`: allows to fit and predict on some
-    > data using a rolling pattern
+    data using a rolling pattern
 
 -   \`IncrementalDagRunner\`: allows to run one step at a time like in
-    > real-time
+    real-time
 
 -   \`RealTimeDagRunner\`: allows to run using nodes that have a
-    > real-time semantic
+    real-time semantic
 
-## \## DataFlow Computation Semantics
+## DataFlow Computation Semantics
 
 Often raw data is available in a \"long format\", where the data is
 conditioned on the asset (e.g., full_symbol), e.g.,
 
-![](media/image2.png){width="5.338542213473316in"
+![](./sorrentum_figs/image2.png){width="5.338542213473316in"
 height="1.1036406386701663in"}
 
 DataFlow represents data through multi-index dataframes, where
@@ -2147,7 +2147,7 @@ DataFlow represents data through multi-index dataframes, where
 
 -   the innermost index is the asset, e.g.,
 
-![](media/image6.png){width="6.5in" height="1.0416666666666667in"}
+![](./sorrentum_figs/image6.png){width="6.5in" height="1.0416666666666667in"}
 
 The reason for this convention is that typically features are computed
 in an univariate fashion (e.g., asset by asset), and we can get
@@ -2174,21 +2174,21 @@ with DataFlow at 4 levels of abstraction:
     -   We can apply the transformation in a vectorized way
 
     -   This approach is best for performance and with compatibility
-        > with DataFlow point of view
+        with DataFlow point of view
 
     -   An alternative approach is to express multi-index
-        > transformations in terms of approach 1 (i.e., single asset
-        > transformations and then concatenation). This approach is
-        > functionally equivalent to a multi-index transformation, but
-        > typically slow and memory inefficient
+        transformations in terms of approach 1 (i.e., single asset
+        transformations and then concatenation). This approach is
+        functionally equivalent to a multi-index transformation, but
+        typically slow and memory inefficient
 
 3)  DataFlow nodes
 
     -   A node implements a certain transformations on DataFrames
-        > according to the DataFlow convention and interfaces
+        according to the DataFlow convention and interfaces
 
     -   Nodes operate on the multi-index representation by typically
-        > calling functions from level 2 above
+        calling functions from level 2 above
 
 4)  DAG
 
@@ -2203,49 +2203,49 @@ E.g., code can be split in multiple functions at level 2) and then
 
 [[http://172.30.2.136:10051/notebooks/dataflow_orange/pipelines/C1/notebooks/Implement_RH1E.ipynb]{.underline}](http://172.30.2.136:10051/notebooks/dataflow_orange/pipelines/C1/notebooks/Implement_RH1E.ipynb)
 
-## \## Backtest and Experiment
+## Backtest and Experiment
 
-### **\### \`ConfigBuilder\`**
+### **\`ConfigBuilder\`**
 
 -   Generates a list of fully formed (not template) configs that can be
-    > then run
+    then run
 
 -   These configs can correspond to one or multiple Experiments, tiled
-    > or not (see below)
+    or not (see below)
 
 -   Config builder accepts \`BacktestConfig\` as an input
 
-### **\### Experiment in strict and loose sense**
+### **Experiment in strict and loose sense**
 
 Colloquially, we use experiment to mean different things, e.g., an
 experiment can consists in:
 
 -   a backtest where we run a single Dag with a single config (e.g.,
-    > when we test the predictive power of a single model)
+    when we test the predictive power of a single model)
 
 ```{=html}
 <!-- -->
 ```
 -   running a Dag (e.g., E8d) through multiple configs (e.g., with
-    > longer / shorter history) to perform an \"A / B experiment\"
+    longer / shorter history) to perform an \"A / B experiment\"
 
 -   running completely different Dags (e.g., E1 vs E8c) to compare their
-    > performance
+    performance
 
 Strictly speaking, we refer to:
 
 -   The first one as a \`Backtest\` (which can be executed in terms of
-    > tiled configs or not)
+    tiled configs or not)
 
 -   The second and the third as an \`Experiment\`
 
 In practice almost any experiment we run consists of one or more
 backtests
 
-### **\### \`Backtest\`**
+### **\`Backtest\`**
 
 -   In general a \"backtest\" is simply code that is configured by a
-    > \*single\* \`Config\`s
+    \*single\* \`Config\`s
 
     -   The code contained in a backtest experiment can be anything
 
@@ -2255,42 +2255,42 @@ backtests
 -   Typically a backtest consists of:
 
     -   creating a \`Dag\`(e.g., through a \`DagBuilder\`) or a
-        > \`System\` based on a config
+        \`System\` based on a config
 
     -   running it over a period of time (e.g., through a \`DagRunner\`)
 
     -   saving the result into a directory
 
-### **\### \`BacktestConfig\`**
+### **\`BacktestConfig\`**
 
 -   = a config that has multiple parts configuring both what to run
-    > (e.g., a \`Dag\`) and how to run it (e.g., the universe, the
-    > period of time)
+    (e.g., a \`Dag\`) and how to run it (e.g., the universe, the
+    period of time)
 
 -   It can correspond to multiple configs (e.g., when running a
-    > \`TiledBacktest\`)
+    \`TiledBacktest\`)
 
 -   The common pattern is
-    > \`\<universe\>-\<top_n\>.\<trading_period\>.\<time_interval\>\`,
-    > e.g., \`ccxt_v4-top3.5T.2019_2022\` where
+    \`\<universe\>-\<top_n\>.\<trading_period\>.\<time_interval\>\`,
+    e.g., \`ccxt_v4-top3.5T.2019_2022\` where
 
     -   \`ccxt_v4\` is a specific version of universe
 
     -   \`top3\` is top 3 assets, \`all\` means all assets in the
-        > universe
+        universe
 
     -   \`5T\` (5 minutes) is trading period
 
     -   \`2019-2022\` is timeframe, i.e. run the model using data from
-        > 2019 to 2022
+        2019 to 2022
 
-### **\### \`Experiment\`**
+### **\`Experiment\`**
 
 -   A set of backtests to run, each of which corresponds to conceptually
-    > a single \`Config\`
+    a single \`Config\`
 
 -   Each backtest can then be executed in a tiled fashion (e.g., by
-    > expressing it in terms of different configs, one per tile
+    expressing it in terms of different configs, one per tile
 
 In order to create the list of fully built configs, both a \`Backtest\`
 and a \`Experiment\` need:
@@ -2300,32 +2300,32 @@ and a \`Experiment\` need:
 -   a \`ConfigBuilder\` (how to configure)
 
 -   dst_dir (destination dir of the entire experiment list, i.e., the
-    > one that the user passes to the command)
+    one that the user passes to the command)
 
-### **\### Tiled backtest / experiment**
+### **Tiled backtest / experiment**
 
 -   An experiment / backtest that is run through multiple tiles for time
-    > and assets
+    and assets
 
 -   In general this is just an implementation detail
 
-### **\### Tiled vs Tile**
+### **Tiled vs Tile**
 
 -   We call \"tiled\" objects that are split in tiles (e.g.,
-    > \`TiledBacktest\`), and \"tile\" objects that refer to tiling
-    > (e.g., \`TileConfig\`)
+    \`TiledBacktest\`), and \"tile\" objects that refer to tiling
+    (e.g., \`TileConfig\`)
 
-### **\### Experiment (list) manager**
+### **Experiment (list) manager**
 
 -   TODO(gp): experiment_list manager?
 
 -   Python code that runs experiments by:
 
     -   generating a list of \`Config\` object to run, based on a
-        > \`ConfigBuilder\` (i.e., \`run_experiment.py\` and
-        > \`run_notebook.py\`)
+        \`ConfigBuilder\` (i.e., \`run_experiment.py\` and
+        \`run_notebook.py\`)
 
-### **\### \`ExperimentBuilder\`**
+### **\`ExperimentBuilder\`**
 
 -   TODO(gp): -\> BacktestBuilder
 
@@ -2337,16 +2337,16 @@ and a \`Experiment\` need:
 
     -   Saves the results in a specified directory
 
-### **\### \`BacktestRunner\`**
+### **\`BacktestRunner\`**
 
 -   A test case object that:
 
     -   runs a backtest (experiment) on a Dag and a Config
 
     -   processes its results (e.g., check that the output is readable,
-        > extract a PnL curve or other statistics)
+        extract a PnL curve or other statistics)
 
-### **\### System**
+### **System**
 
 -   An object representing a full trading system comprising of:
 
@@ -2366,29 +2366,29 @@ and a \`Experiment\` need:
 
         -   Broker
 
-### **\### SystemRunner**
+### **SystemRunner**
 
 -   An object that allows to build and run a System
 
 -   TODO(gp): Not sure it\'s needed
 
-### **\### System_TestCase**
+### **System_TestCase**
 
 -   TODO(gp): IMO this is a TestCase + various helpers
 
-### \### Data structures
+### Data structures
 
 **Fill**
 
 **Order**
 
-### \### Major software components
+### Major software components
 
-![](media/image9.png){width="6.5in" height="1.875in"}
+![](./sorrentum_figs/image9.png){width="6.5in" height="1.875in"}
 
 [[https://lucid.app/lucidchart/9ee80100-be76-42d6-ad80-531dcfee277e/edit?page=0_0&invitationId=inv_5777ae4b-d8f4-41c6-8901-cdfb93d98ca8#]{.underline}](https://lucid.app/lucidchart/9ee80100-be76-42d6-ad80-531dcfee277e/edit?page=0_0&invitationId=inv_5777ae4b-d8f4-41c6-8901-cdfb93d98ca8#)
 
-![](media/image15.png){width="6.5in" height="4.319444444444445in"}
+![](./sorrentum_figs/image15.png){width="6.5in" height="4.319444444444445in"}
 
 **ImClient**
 
@@ -2436,7 +2436,7 @@ Responsibilities:
 -   Retrieve the current holdings from Portfolio
 
 -   Perform optimization using forecasts and current holdings to compute
-    > the target position
+    the target position
 
 -   Generate the orders needed to achieve the target positions
 
@@ -2451,10 +2451,10 @@ Interactions:
 Main methods:
 
 -   compute_target_positions_and_generate_orders(): compute the target
-    > positions and generate the orders needed to reach
+    positions and generate the orders needed to reach
 
 -   \_compute_target_holdings_shares(): call the Optimizer to compute
-    > the target holdings in shares
+    the target holdings in shares
 
 **Locates**.
 
@@ -2474,19 +2474,19 @@ holdings of a System over time.
 Responsibilities:
 
 -   hold the holdings in terms of shares of each asset id and cash
-    > available
+    available
 
 Interactions:
 
 -   MarketData to receive current prices to estimate the value of the
-    > holdings
+    holdings
 
 -   Accumulate statistics and
 
 Main methods:
 
 -   mark_to_market(): estimate the value of the current holdings using
-    > the current market prices
+    the current market prices
 
 -   \...
 
@@ -2515,14 +2515,14 @@ Responsibilities:
 -   Wait to ensure that orders were properly accepted by MarketOms
 
 -   Execute complex orders (e.g., TWAP, VWAP, pegged orders) interacting
-    > with the target market
+    with the target market
 
 -   Receive fill information from the target market
 
 Interactions:
 
 -   MarketData to receive prices and other information necessary to
-    > execute orders
+    execute orders
 
 ```{=html}
 <!-- -->
@@ -2547,9 +2547,9 @@ as-is and it\'s not under control of the user or of the protocol
 
 **OmsDb**
 
-**\## TO REORG**
+**TO REORG**
 
-\# Invariants and conventions
+Invariants and conventions
 
 \- In this doc we use the new names for concepts and use \"aka\" to
 refer to the
@@ -2603,9 +2603,9 @@ loop has a reference to the global \`get_wall_clock_time()\`
 
 \- The Optimizer only thinks in terms of dollar
 
-\# Implementation
+Implementation
 
-\## process_forecasts()
+process_forecasts()
 
 \- Aka \`place_trades()\`
 
@@ -2647,7 +2647,7 @@ loop has a reference to the global \`get_wall_clock_time()\`
 
 \- It should not use any concrete implementation but only \`Abstract\*\`
 
-\## Portfolio
+Portfolio
 
 \- \`get_holdings()\`
 
@@ -2673,15 +2673,15 @@ some other dynamic checks)
 
 \- CASH_ID, \`\_compute_statistics()\` goes in \`Portolio\`
 
-\## Broker
+Broker
 
 \- \`submit_orders()\`
 
 \- \`get_fills()\`
 
-\# Simulation
+Simulation
 
-\## DataFramePortfolio
+DataFramePortfolio
 
 \- This is what we call \`Portfolio\`
 
@@ -2700,15 +2700,15 @@ to collect real and simulated behavior
 
 \- To make the simulated system closer to the implemented
 
-\## SimulatedBroker
+SimulatedBroker
 
 \- \`submit_orders()\`
 
 \- \`get_fills()\`
 
-\# Implemented system
+Implemented system
 
-\## ImplementedPortfolio
+ImplementedPortfolio
 
 \- \`get_holdings()\`
 
@@ -2724,7 +2724,7 @@ error
 
 \- No-op since the portfolio is updated automatically
 
-\## ImplementedBroker
+ImplementedBroker
 
 \- \`submit_orders()\`
 
@@ -2736,26 +2736,26 @@ error
 
 \- No-op since the portfolio is updated automatically
 
-\# Mocked system
+Mocked system
 
 \- Our implementation of the implemented system where we replace DB with
 a mock
 
 \- The mocked DB should be as similar as possible to the implemented DB
 
-\## DatabasePortfolio
+DatabasePortfolio
 
 \- \`get_holdings()\`
 
 \- Same behavior of \`ImplementedPortfolio\` but using \`OmsDb\`
 
-\## DatabaseBroker
+DatabaseBroker
 
 \- \`submit_orders()\`
 
 \- Same behavior of \`ImplementedBroker\` but using \`OmsDb\`
 
-\## OmsDb
+OmsDb
 
 \- \`submitted_orders\` table (mocks S3)
 
@@ -2765,7 +2765,7 @@ a mock
 
 \- \`current_position\` table
 
-\## OrderProcessor
+OrderProcessor
 
 \- Monitor \`OmsDb.submitted_orders\`
 
@@ -2778,7 +2778,7 @@ a mock
 
 ## 
 
-## \## Universal pricing machine
+## Universal pricing machine
 
 It promotes efficiency of decentralized digital asset markets by using
 financial machine learning to automatically price any digital currency
@@ -2807,7 +2807,7 @@ different complexity to set-up and / or execution time):
 -   Run a model -\> results_df -\> post-processing + comparison
 
 -   Run models sweeping the params -\> multiple results_df -\>
-    > comparison
+    comparison
 
 -   
 
@@ -2830,26 +2830,26 @@ MAE, AUC) as function of:
 
 -   ...
 
-There is a common idiom (which we will formalize in the Surrentum
+There is a common idiom (which we will formalize in the Sorrentum
 standard). In practice the pipeline is:
 
 **Step 1 (compute results_df)**
 
 -   Run the model and generate the usual output, then you can save /
-    > retrieve this output or just compute with the model on the flight
+    retrieve this output or just compute with the model on the flight
 
 ```{=html}
 <!-- -->
 ```
 -   The input is a multi-index dataframe in the DataFlow standard
-    > (results_df), like:
+    (results_df), like:
 
-![](media/image8.png){width="6.5in" height="2.5416666666666665in"}
+![](./sorrentum_figs/image8.png){width="6.5in" height="2.5416666666666665in"}
 
 **Step 2 (annotate metrics_df)**
 
 -   IMO the best representation is multi-index (timestamp, asset_id) on
-    > the rows and columns equal to the features
+    the rows and columns equal to the features
 
     -   We can call this format \"metrics_df\"
 
@@ -2860,39 +2860,39 @@ standard). In practice the pipeline is:
     -   (timestamp, asset_id)
 
 -   There is a function that annotates each row (timestamp, asset_id)
-    > based on certain criteria (e.g., asset_id, day of the week, a
-    > value function of a vwap volume)
+    based on certain criteria (e.g., asset_id, day of the week, a
+    value function of a vwap volume)
 
     -   We have a library of function that accept a metrics_df and then
-        > decorates it with an extra tag
+        decorates it with an extra tag
 
     -   E.g., to split the results by asset_id the function creating the
-        > tag is something like (timestamp, asset_id) -\> tag = asset_id
+        tag is something like (timestamp, asset_id) -\> tag = asset_id
 
     -   If you want to partition by time of the day you do (timestamp,
-        > asset_id) -\> tag = timestamp.time()
+        asset_id) -\> tag = timestamp.time()
 
     -   ...
 
 **Step 3 (split and compute metrics)**
 
 -   There is a function that computes a dict from tag to df (e.g., from
-    > asset_id to the corresponding df)
+    asset_id to the corresponding df)
 
 -   Then we call the function to compute the metric (e.g., hit rate,
-    > pnl, \...) on each df and build a new dict tag -\> transform(df)
+    pnl, \...) on each df and build a new dict tag -\> transform(df)
 
     -   The transform df accepts various column names to know what is
-        > the y, y_hat, \... (this dict is built from the model itself,
-        > saying what\'s the prediction col, the volatility, etc)
+        the y, y_hat, \... (this dict is built from the model itself,
+        saying what\'s the prediction col, the volatility, etc)
 
 **Step 4 (aggregate results)**
 
 -   Finally we aggregate the results as function of the tag (e.g.,
-    > asset_id -\> pnl) and plot
+    asset_id -\> pnl) and plot
 
 -   The output is a pd.DataFrame (with tag on the rows and metrics on
-    > the columns)
+    the columns)
 
 > Metric1
 >
@@ -2906,17 +2906,17 @@ standard). In practice the pipeline is:
 
 -   1030... ...
 
-# \# Building financial primitives with Surrentum Protocol
+# Building financial primitives with Sorrentum Protocol
 
-\## Building a Dark-Pool
+Building a Dark-Pool
 
-\## Building algorithmic orders
+Building algorithmic orders
 
-\## Internal matching of orders
+Internal matching of orders
 
-\## Smart order routing
+Smart order routing
 
-\## Building a synthetic bond
+Building a synthetic bond
 
 \- You like staking because it gives you something to do with your
 crypto
@@ -2959,18 +2959,18 @@ of cryptos
 
 \- We try to give you always ETH and BTC, but sometimes we give you our
 
-Surrentum token
+Sorrentum token
 
-\- You can sell or buy Surrentum on the open market as any crypto
+\- You can sell or buy Sorrentum on the open market as any crypto
 
-\- Where does the value of Surrentum come from (i.e., why does it trade
+\- Where does the value of Sorrentum come from (i.e., why does it trade
 at
 
 more than 0, why is the box not empty)?
 
 \- Well, it\'s an IOU that we use to make the bumpy cash flow straight
 
-\- As long as the algo makes money in the long run, the Surrentum token
+\- As long as the algo makes money in the long run, the Sorrentum token
 has
 
 value
@@ -2986,7 +2986,7 @@ the 20% / yr we made
 
 \- This would have been funded instantly few months ago
 
-# \# Related projects
+# Related projects
 
 -   Numerai
 
@@ -3002,18 +3002,18 @@ the 20% / yr we made
 
 -   https://vega.xyz/
 
-# \# Refs
+# Refs
 
-[[Surrentum Protocol - Technical
+[[Sorrentum Protocol - Technical
 appendix]{.underline}](https://docs.google.com/document/d/1Jp_yPU1FXFF7TdQjLiWzPzTLZmRLJ3KX0dooxArMQeI/edit)
 
-[[Surrentum protocol - Background
+[[Sorrentum protocol - Background
 research]{.underline}](https://docs.google.com/document/d/170IAWtrPUmMGXER-yIEFQ5zaArh2ksRNfvzciF6FLe0/edit#)
 
-[[Surrentum
+[[Sorrentum
 dir]{.underline}](https://drive.google.com/drive/u/1/folders/1icv3ifB095AIOMWtgr91v7mfR7Y7KaEl)
 
-[^1]: Surrentum is the Latin name of the coastal city of Sorrento in the
+[^1]: Sorrentum is the Latin name of the coastal city of Sorrento in the
     South of Italy. In Greek mythology it was the place inhabited by
     Sirens, who tried to seduce Ulysses in one of the episodes of the
     Odyssey.

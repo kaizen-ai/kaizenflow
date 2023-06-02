@@ -206,7 +206,7 @@
   - Download document as docx
   - Convert it to markdown using `pandoc`
     ```
-    > pandoc -f docx -t markdown -o test.md /Users/saggese/Downloads/Sorrentum\ Protocol.docx
+    > rm -rf media; pandoc --extract-media ./ -f docx -t markdown -o out.md in.docx
     ```
 - Approach 2: Docs to Markdown extension
   - Best for a large document
