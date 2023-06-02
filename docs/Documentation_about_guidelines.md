@@ -2,6 +2,31 @@
 
 <!-- toc -->
 
+- [Guidelines for describing workflows](#guidelines-for-describing-workflows)
+- [Useful reference](#useful-reference)
+- [Style and cosmetic lints](#style-and-cosmetic-lints)
+  * [Always use markdown linter](#always-use-markdown-linter)
+  * [Table of content (TOC)](#table-of-content-toc)
+  * [Use nice 80 columns formatting for txt files](#use-nice-80-columns-formatting-for-txt-files)
+  * [Empty line after heading](#empty-line-after-heading)
+  * [Bullet lists](#bullet-lists)
+  * [Using `code` style](#using-code-style)
+  * [Indenting `code` style](#indenting-code-style)
+  * [Embedding screenshots](#embedding-screenshots)
+  * [Improve your written English](#improve-your-written-english)
+  * [Make sure your markdown looks good](#make-sure-your-markdown-looks-good)
+- [Google docs style conventions](#google-docs-style-conventions)
+  * [Headings](#headings)
+  * [Font](#font)
+- [Convert between Gdocs and Markdown](#convert-between-gdocs-and-markdown)
+  * [Gdocs -> Markdown](#gdocs---markdown)
+  * [Markdown -> Gdocs](#markdown---gdocs)
+  * [Markdown vs Google Docs](#markdown-vs-google-docs)
+    + [Markdown pros](#markdown-pros)
+    + [Google Docs pros](#google-docs-pros)
+    + [Rules of thumb](#rules-of-thumb)
+
+<!-- tocstop -->
 
 # Guidelines for describing workflows
 
@@ -22,21 +47,25 @@
 
 ## Always use markdown linter
 
-- Most cosmetic lints described further can be taken care automatically by our markdown linter, so make sure to run it after implementing the changes
+- Most cosmetic lints described further can be taken care automatically by our
+  markdown linter, so make sure to run it after implementing the changes
 - The file is `dev_scripts/lint_md.sh`, see the docstrings for more details
   - Example run:
     ```
     dev_scripts/lint_md.sh docs/Documentation_about_guidelines.md
     ```
-- Do not mix manual edits and linter runs. Best practice is to run the linter and commit the changes it made as separate commit
-- If the linter messes up the text, file an issue with examples of what the linter does incorrectly
+- Do not mix manual edits and linter runs. Best practice is to run the linter
+  and commit the changes it made as separate commit
+- If the linter messes up the text, file an issue with examples of what the
+  linter does incorrectly
 
 ## Table of content (TOC)
 
 - Unfortunately both markdown and GitHub don't support automatically generating
   a TOC for a document
 - To generate a table of content:
-  - Add the following tag at the top of the markdown file (note that in the text below we interspersed spaces to avoid the TOC processor):
+  - Add the following tag at the top of the markdown file (note that in the text
+    below we interspersed spaces to avoid the TOC processor):
     ```
     < ! - - toc - - >
     ```
@@ -51,12 +80,14 @@
 ## Empty line after heading
 
 - Leave an empty line after a heading to make it more visible
+
   - _Bad_
     ```
     # Coming through! I've big important things to do!
     - ... and his big important wheels got STUCK!
     ```
   - _Good_
+
     ```
     # Very important title
 
@@ -104,7 +135,7 @@
     if __name__ == "__main__":
         predict_the_future()
         print("done!")
-     ```
+    ```
 
 ## Indenting `code` style
 
@@ -122,17 +153,20 @@
 ## Embedding screenshots
 
 - [**Avoid** to use screenshots whenever possible!](https://github.com/sorrentum/sorrentum/blob/master/docs/First_review_process.md#do-not-use-screenshots)
-- However, sometimes we need it (e.g., plot infographics, website inteface, etc.)
+- However, sometimes we need it (e.g., plot infographics, website inteface,
+  etc.)
 - To do it correctly:
   - Place your screenshot in any comment window at GitHub
     - <img width="770" alt="screenshot" src="https://github.com/sorrentum/sorrentum/assets/31514660/ade0b104-d162-40a8-9f0d-3edadf38c57e">
     - This will upload the image to the GitHub cloud
-    - You DO NOT have to publish a comment, the provided link is already ready to use!
+    - You DO NOT have to publish a comment, the provided link is already ready
+      to use!
   - Make sure your link has no not-English symbols in `alt` section
     - <img width="778" alt="symbols" src="https://github.com/sorrentum/sorrentum/assets/31514660/6e54d66b-d45f-43f8-8bb6-b9c94217068e">
     - They sometimes appear if your native PC language is not English
     - You can avoid it by giving the picture a name in English
-    - Alternatively, you can just edit the `alt` section in the generated link - this will not corrupt the file
+    - Alternatively, you can just edit the `alt` section in the generated link -
+      this will not corrupt the file
   - Place the generated and edited link to the markdown file
     - <img width="461" alt="last" src="https://github.com/sorrentum/sorrentum/assets/31514660/a416e49d-2859-40d6-ad13-792e6304f402">
 
@@ -153,7 +187,8 @@
 - You can:
   - Check in a branch and use GitHub to render it
   - Use Pycharm to edit, which also renders it side-by-side
-  - Compare your markdown with already published [documentation](/docs/README.md)
+  - Compare your markdown with already published
+    [documentation](/docs/README.md)
 
 # Google docs style conventions
 
@@ -168,8 +203,11 @@
     ```
     ## Heading 2
     ```
-- The reason is that sometimes one doesn't have the time or the patience to format things properly, so at least there is some indication of the level of the titles
-- Avoid having multiple `#` separatd by a space that sometimes appear in a process of convertion of Gdocs to Markdown files
+- The reason is that sometimes one doesn't have the time or the patience to
+  format things properly, so at least there is some indication of the level of
+  the titles
+- Avoid having multiple `#` separatd by a space that sometimes appear in a
+  process of convertion of Gdocs to Markdown files
   - _Bad_:
     ```
     # # Heading 1
@@ -211,7 +249,8 @@
 - When a Gdoc becomes obsolete or it’s deleted
   - Add a note at the top of a gdoc explaining what happened
     - Example: "Moved to /new_markdown_file.md"
-  - Strike out the entire document and put a link to it in PR so integrators remove it after the merge
+  - Strike out the entire document and put a link to it in PR so integrators
+    remove it after the merge
 
 ## Markdown -> Gdocs
 
@@ -241,22 +280,22 @@
 
 ### Markdown pros
 
-  - Can use vim
-  - Can version control
-  - Easy to `grep` text and code
-  - Easy to use verbatim (e.g., typing `foobar`)
-  - Easy to style using pandoc
-  - Easy to embed code
-  - Easy to add Latex equations
+- Can use vim
+- Can version control
+- Easy to `grep` text and code
+- Easy to use verbatim (e.g., typing `foobar`)
+- Easy to style using pandoc
+- Easy to embed code
+- Easy to add Latex equations
 
 ### Google Docs pros
 
-  - Easy to embed figures
-  - Easy to collaborate
-  - Easy to make quick changes (instead of making a commit)
-  - Easy to publish (just make them public with proper permissions)
-  - Styling
-    - [https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs](https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs)
+- Easy to embed figures
+- Easy to collaborate
+- Easy to make quick changes (instead of making a commit)
+- Easy to publish (just make them public with proper permissions)
+- Styling
+  - [https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs](https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs)
 - Interesting add-ons:
   - Enable Markdown
   - Code blocks
