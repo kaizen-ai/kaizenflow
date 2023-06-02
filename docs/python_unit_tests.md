@@ -1,6 +1,3 @@
-# Running unit tests
-
-
 
 * Before any PR (and ideally after every commit) we want to run all the unit tests to make sure we didn't introduce no new bugs
 * We use `pytest` and `unittest` as testing framework
@@ -116,10 +113,7 @@ To compute tests coverage use the `--coverage` option
 ## Timeout
 * We use the [pytest-timeout](https://pypi.org/project/pytest-timeout/) package to limit durations of fast, slow, and superslow tests
 * The timeout durations for each test type are listed 
-
-<p id="gdcalert1" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: undefined internal link (link text: "here"). Did you generate a TOC with blue links? </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert2">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-[here](#heading=h.ebxuhnwmjoj6)
+[here](#Running-unit-tests)
 * The timeout restricts only running time of the test method, not `setUp` and `tearDown` time
 
 ## Rerunning timeout-ed tests
