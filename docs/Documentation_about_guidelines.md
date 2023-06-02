@@ -87,7 +87,6 @@
     - ... and his big important wheels got STUCK!
     ```
   - _Good_
-
     ```
     # Very important title
 
@@ -208,11 +207,11 @@
   the titles
 - Avoid having multiple `#` separatd by a space that sometimes appear in a
   process of convertion of Gdocs to Markdown files
-  - _Bad_:
+  - _Bad_
     ```
     # # Heading 1
     ```
-  - _Good_:
+  - _Good_
     ```
     # Heading 1
     ```
