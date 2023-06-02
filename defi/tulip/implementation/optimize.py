@@ -7,7 +7,7 @@ import defi.tulip.implementation.optimize as dtuimopt
 import logging
 from typing import Any, Dict, List, Tuple
 
-import defi.dao_cross.order as ddacrord
+import defi.tulip.implementation.order as dtuimord
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 
@@ -22,7 +22,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(Paul): Deprecate.
 def run_solver(
-    orders: List[ddacrord.Order], prices: Dict[str, float]
+    orders: List[dtuimord.Order], prices: Dict[str, float]
 ) -> Dict[str, Any]:
     """
     Find the maximum exchanged volume given the constraints.
@@ -34,7 +34,7 @@ def run_solver(
     _LOG.debug(hprint.to_str("orders"))
     n_orders = len(orders)
     hdbg.dassert_lt(0, n_orders)
-    hdbg.dassert_container_type(orders, list, ddacrord.Order)
+    hdbg.dassert_container_type(orders, list, dtuimord.Order)
     #
     _LOG.debug(hprint.to_str("prices"))
     hdbg.dassert_isinstance(prices, dict)
@@ -104,7 +104,7 @@ def run_solver(
 
 
 def get_tulip_problem_and_variables(
-    orders: List[ddacrord.Order],
+    orders: List[dtuimord.Order],
 ) -> Tuple[pulp.LpProblem, List[pulp.LpVariable], List[pulp.LpVariable]]:
     """
     Return the basic tulip problem and variables.
@@ -117,26 +117,22 @@ def get_tulip_problem_and_variables(
     _LOG.debug(hprint.to_str("orders"))
     n_orders = len(orders)
     hdbg.dassert_lt(0, n_orders)
-    hdbg.dassert_container_type(orders, list, ddacrord.Order)
+    hdbg.dassert_container_type(orders, list, dtuimord.Order)
     # Initialize the model.
     problem = pulp.LpProblem("TuLiP", pulp.LpMaximize)
     # Specify the executed quantities vars. Setting the lower bound to zero
     # allows to omit the >= 0 constraint.
     q_pi_star = [
-        pulp.LpVariable(f"q_pi_star_{i}", lowBound=0)
-        for i in range(n_orders)
+        pulp.LpVariable(f"q_pi_star_{i}", lowBound=0) for i in range(n_orders)
     ]
     q_tau_star = [
-        pulp.LpVariable(f"q_tau_star_{i}", lowBound=0)
-        for i in range(n_orders)
+        pulp.LpVariable(f"q_tau_star_{i}", lowBound=0) for i in range(n_orders)
     ]
     # Objective function. Maximize the total exchanged volume.
     # problem.setObjective(pulp.lpSum(
     #     [q_pi_star[i] + q_tau_star[i] for i in range(n_orders)]
     # ))
-    problem += pulp.lpSum(
-        q_pi_star[i] + q_tau_star[i] for i in range(n_orders)
-    )
+    problem += pulp.lpSum(q_pi_star[i] + q_tau_star[i] for i in range(n_orders))
     # Constraints.
     # Impose limit order quantity constraint.
     for i in range(n_orders):
@@ -151,27 +147,31 @@ def get_tulip_problem_and_variables(
             problem += q_tau_star[i] >= q_pi_star[i] * orders[i].limit_price
     # Impose constraints on the token level: the amount of sold tokens must match that
     # of bought tokens for each token.
-    tokens = list(set([order.base_token for order in orders] + [order.quote_token for order in orders]))
+    tokens = list(
+        set(
+            [order.base_token for order in orders]
+            + [order.quote_token for order in orders]
+        )
+    )
     for token in tokens:
         problem += (
-                pulp.lpSum(
-                    -orders[i].action_as_int
-                    * q_pi_star[i]
-                    * (1 if orders[i].base_token == token else 0)
-                    +
-                    orders[i].action_as_int
-                    * q_tau_star[i]
-                    * (1 if orders[i].quote_token == token else 0)
-                    for i in range(n_orders)
-                )
-                == 0
+            pulp.lpSum(
+                -orders[i].action_as_int
+                * q_pi_star[i]
+                * (1 if orders[i].base_token == token else 0)
+                + orders[i].action_as_int
+                * q_tau_star[i]
+                * (1 if orders[i].quote_token == token else 0)
+                for i in range(n_orders)
+            )
+            == 0
         )
     return problem, q_pi_star, q_tau_star
 
 
 # TODO(Paul): Reorganize code.
 def run_daoswap_solver(
-        orders: List[ddacrord.Order],
+    orders: List[dtuimord.Order],
 ) -> Dict[str, Any]:
     """
     Find the maximum exchanged volume given the constraints.
@@ -209,15 +209,17 @@ def run_daoswap_solver(
     # TODO(Grisha): double-check that time is in seconds.
     result["solution_time_in_secs"] = round(problem.solutionTime, 2)
     #
-    result_df = ddacrord.convert_orders_to_dataframe(orders)
+    result_df = dtuimord.convert_orders_to_dataframe(orders)
     result_df["q_pi_star"] = result["q_pi_star"]
     result_df["q_tau_star"] = result["q_tau_star"]
-    result_df["effective_price"] = result_df["q_tau_star"] / result_df["q_pi_star"]
+    result_df["effective_price"] = (
+        result_df["q_tau_star"] / result_df["q_pi_star"]
+    )
     return result_df
 
 
 def run_daocross_solver(
-    orders: List[ddacrord.Order],
+    orders: List[dtuimord.Order],
     prices: Dict[str, float],
 ) -> Dict[str, Any]:
     """
@@ -259,9 +261,10 @@ def run_daocross_solver(
     # TODO(Grisha): double-check that time is in seconds.
     result["solution_time_in_secs"] = round(problem.solutionTime, 2)
     #
-    result_df = ddacrord.convert_orders_to_dataframe(orders)
+    result_df = dtuimord.convert_orders_to_dataframe(orders)
     result_df["q_pi_star"] = result["q_pi_star"]
     result_df["q_tau_star"] = result["q_tau_star"]
-    result_df["effective_price"] = result_df["q_tau_star"] / result_df["q_pi_star"]
+    result_df["effective_price"] = (
+        result_df["q_tau_star"] / result_df["q_pi_star"]
+    )
     return result_df
-

@@ -23,7 +23,7 @@ import os
 from typing import cast
 
 import core.config as cconfig
-import dataflow.backtest.dataflow_backtest_utils as dtfbaexuti
+import dataflow.backtest.dataflow_backtest_utils as dtfbdtfbaut
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
@@ -56,7 +56,7 @@ def _run_config_stub(
     hdbg.dassert_eq(1, num_attempts, "Multiple attempts not supported yet")
     _ = incremental
     #
-    dtfbaexuti.setup_experiment_dir(config)
+    dtfbdtfbaut.setup_experiment_dir(config)
     # Prepare command line to execute the experiment.
     file_name = "run_config_stub.py"
     exec_name = hgit.find_file_in_git_tree(file_name, super_module=True)
@@ -98,7 +98,7 @@ def _run_config_stub(
         raise RuntimeError(msg)
     # Mark as success.
     # if rc == 0:
-    dtfbaexuti.mark_config_as_success(experiment_result_dir)
+    dtfbdtfbaut.mark_config_as_success(experiment_result_dir)
     rc = cast(int, rc)
     return rc
 
@@ -109,7 +109,7 @@ def _get_joblib_workload(args: argparse.Namespace) -> hjoblib.Workload:
     parameters from command line.
     """
     # Get the configs to run.
-    config_list = dtfbaexuti.get_config_list_from_command_line(args)
+    config_list = dtfbdtfbaut.get_config_list_from_command_line(args)
     # Prepare one task per config to run.
     tasks = []
     for config in config_list.configs:
@@ -136,7 +136,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     # Add common experiment options related to configs to execute (e.g.,
     # --config_builder, --start_from_index).
-    parser = dtfbaexuti.add_run_experiment_args(parser, dst_dir_required=True)
+    parser = dtfbdtfbaut.add_run_experiment_args(parser, dst_dir_required=True)
     # Add more options to control the set of experiment.
     parser.add_argument(
         "--experiment_builder",

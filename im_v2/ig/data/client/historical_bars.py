@@ -236,12 +236,12 @@ def get_raw_bar_data_from_file(
         # For "saml-spm-sasm" we need to cache data locally to work around a
         # slowdown of accessing the data directly from S3, due to some format
         # change.
-        #tmp_file_name = tempfile.NamedTemporaryFile().name
+        # tmp_file_name = tempfile.NamedTemporaryFile().name
         tmp_file_name = "/tmp/" + "_".join(path.split("/")[-2:])
         _LOG.info("Downloading %s to %s", path, tmp_file_name)
         # For some reason downloading with s3fs is 3-5x slower than using the
         # command directly.
-        #s3fs_.download(path, tmp_file_name)
+        # s3fs_.download(path, tmp_file_name)
         if hserver.is_ig_prod():
             # When running in production we let the Docker container decide
             # the AWS profile to use.

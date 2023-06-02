@@ -17,12 +17,12 @@ _STR_TS_UTC = "2021-01-04 09:30:00-00:00"
 _STR_TS_ET = "2021-01-04 09:30:00-05:00"
 
 _PD_TS_NAIVE = pd.Timestamp("2021-01-04 09:30:00")
-_PD_TS_UTC = pd.Timestamp("2021-01-04 09:30:00-00:00")
-_PD_TS_ET = pd.Timestamp("2021-01-04 09:30:00-05:00")
+_PD_TS_UTC = pd.Timestamp("2021-01-04 09:30:00-00:00", tz="UTC")
+_PD_TS_ET = pd.Timestamp("2021-01-04 09:30:00-05:00", tz="America/New_York")
 
 _DT_DT_NAIVE = datetime.datetime(2021, 1, 4, 9, 30, 0)
 _DT_DT_UTC = pytz.timezone("UTC").localize(_DT_DT_NAIVE)
-_DT_DT_ET = pytz.timezone("US/Eastern").localize(_DT_DT_NAIVE)
+_DT_DT_ET = pytz.timezone("America/New_York").localize(_DT_DT_NAIVE)
 
 
 # #############################################################################
@@ -251,6 +251,56 @@ class Test_dassert_tz_compatible1(hunitest.TestCase):
 
 
 # #############################################################################
+# Test_dassert_have_same_tz1
+# #############################################################################
+
+
+class Test_dassert_have_same_tz1(hunitest.TestCase):
+    """
+    Test an assertion that checks that timezones are equal for input
+    timestamps.
+    """
+
+    def test1(self) -> None:
+        """
+        Timezones are equal.
+        """
+        hdateti.dassert_have_same_tz(_DT_DT_ET, _PD_TS_ET)
+
+    def test2(self) -> None:
+        """
+        Both timestamps are tz-naive.
+        """
+        hdateti.dassert_have_same_tz(_PD_TS_NAIVE, _DT_DT_NAIVE)
+
+    def test3(self) -> None:
+        """
+        Different timezones.
+        """
+        with self.assertRaises(AssertionError) as cm:
+            hdateti.dassert_have_same_tz(_DT_DT_ET, _DT_DT_UTC)
+        act = str(cm.exception)
+        # pylint: disable=line-too-long
+        exp = """
+        * Failed assertion *
+        'America/New_York'
+        ==
+        'UTC'
+        datetime1=2021-01-04 09:30:00-05:00 (datetime1.tzinfo=America/New_York) datetime2=2021-01-04 09:30:00+00:00 (datetime2.tzinfo=UTC)
+        """
+        # pylint: enable=line-too-long
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Same timezone but different DST mode (i.e. EST vs EDT).
+        """
+        ts_est = pd.Timestamp("2023-03-12 01:55:00-05:00", tz="America/New_York")
+        ts_edt = pd.Timestamp("2023-03-12 03:00:00-04:00", tz="America/New_York")
+        hdateti.dassert_have_same_tz(ts_est, ts_edt)
+
+
+# #############################################################################
 # Test_get_current_time1
 # #############################################################################
 
@@ -429,8 +479,11 @@ class Test_find_bar_timestamp1(hunitest.TestCase):
     def helper1(self, current_timestamp: pd.Timestamp) -> None:
         bar_duration_in_secs = 15 * 60
         max_distance_in_secs = 10
-        act = hdateti.find_bar_timestamp(current_timestamp, bar_duration_in_secs,
-                                       max_distance_in_secs=max_distance_in_secs)
+        act = hdateti.find_bar_timestamp(
+            current_timestamp,
+            bar_duration_in_secs,
+            max_distance_in_secs=max_distance_in_secs,
+        )
         exp = pd.Timestamp("2021-09-09T08:00:00", tz="UTC")
         self.assert_equal(str(act), str(exp))
 

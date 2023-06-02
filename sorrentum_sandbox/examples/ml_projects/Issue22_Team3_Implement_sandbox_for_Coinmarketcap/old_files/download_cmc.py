@@ -5,8 +5,8 @@ Import as:
 
 import sorrentum_sandbox.projects.Issue22_Team3_Implement_sandbox_for_Coinmarketcap.download_cmc as ssexbido
 """
-import os
 import logging
+import os
 import time
 from typing import Generator, Tuple
 
@@ -16,7 +16,7 @@ import tqdm
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import sorrentum_sandbox.common.download as ssandown
+import sorrentum_sandbox.common.download as ssacodow
 
 _LOG = logging.getLogger(__name__)
 COINMARKETCAP_API_KEY = os.environ["COINMARKETCAP_API_KEY"]
@@ -26,28 +26,32 @@ COINMARKETCAP_API_KEY = os.environ["COINMARKETCAP_API_KEY"]
 # #############################################################################
 
 
-class OhlcvRestApiDownloader(ssandown.DataDownloader):
+class OhlcvRestApiDownloader(ssacodow.DataDownloader):
     """
     Class for downloading data using REST API provided by CoinMarketCap.
     """
 
     _MAX_LINES = 5000
 
-    def download(self) -> ssandown.RawData:
+    def download(self) -> ssacodow.RawData:
         # Download data once symbol at a time.
         dfs = []
         url = self._build_url(
             self,
             limit=self._MAX_LINES,
         )
-        api_key=COINMARKETCAP_API_KEY
+        api_key = COINMARKETCAP_API_KEY
         print(api_key)
 
         # request data here
         response = requests.request(
             method="GET",
             url=url,
-            headers={"Content-Type": "application/json", "X-CMC_PRO_API_KEY": api_key, "Accepts": "application/json"},
+            headers={
+                "Content-Type": "application/json",
+                "X-CMC_PRO_API_KEY": api_key,
+                "Accepts": "application/json",
+            },
             data={},
         )
 
@@ -57,20 +61,28 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
         data = pd.DataFrame(
             [
                 {
-                    "id"                : row['id'],
-                    "name"              : row['name'],
-                    "num_market_pairs"  : row['num_market_pairs'],
-                    "circulating_supply": row['circulating_supply'],
-                    "price"             :row['quote']['USD']['price'],
-                    "market_cap"        :row['quote']['USD']['market_cap'],
-                    "volume_24h"        :row['quote']['USD']['volume_24h'],
-                    "volume_change_24h"        :row['quote']['USD']['volume_change_24h'],
-                    "percent_change_1h"        :row['quote']['USD']['percent_change_1h'],
-                    "percent_change_24h"        :row['quote']['USD']['percent_change_24h'],
-                    "percent_change_7d"        :row['quote']['USD']['percent_change_7d'],
-                    "percent_change_30d"        :row['quote']['USD']['percent_change_30d'],
-                    "percent_change_60d"        :row['quote']['USD']['percent_change_60d'],
-                    "percent_change_90d"        :row['quote']['USD']['percent_change_90d'],
+                    "id": row["id"],
+                    "name": row["name"],
+                    "num_market_pairs": row["num_market_pairs"],
+                    "circulating_supply": row["circulating_supply"],
+                    "price": row["quote"]["USD"]["price"],
+                    "market_cap": row["quote"]["USD"]["market_cap"],
+                    "volume_24h": row["quote"]["USD"]["volume_24h"],
+                    "volume_change_24h": row["quote"]["USD"]["volume_change_24h"],
+                    "percent_change_1h": row["quote"]["USD"]["percent_change_1h"],
+                    "percent_change_24h": row["quote"]["USD"][
+                        "percent_change_24h"
+                    ],
+                    "percent_change_7d": row["quote"]["USD"]["percent_change_7d"],
+                    "percent_change_30d": row["quote"]["USD"][
+                        "percent_change_30d"
+                    ],
+                    "percent_change_60d": row["quote"]["USD"][
+                        "percent_change_60d"
+                    ],
+                    "percent_change_90d": row["quote"]["USD"][
+                        "percent_change_90d"
+                    ],
                 }
                 for row in response.json()["data"]
             ]
@@ -81,7 +93,7 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
         time.sleep(0.5)
         df = pd.concat(dfs, ignore_index=True)
         _LOG.info(f"Downloaded data: \n\t {df.head()}")
-        return ssandown.RawData(df)
+        return ssacodow.RawData(df)
 
     @staticmethod
     def _build_url(

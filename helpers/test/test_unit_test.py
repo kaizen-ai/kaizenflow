@@ -186,7 +186,7 @@ class TestTestCase1(hunitest.TestCase):
         act = hunitest.purify_txt_from_client(act)
         act = act.replace(tmp_dir, "$TMP_DIR")
         # pylint: disable=line-too-long
-        exp ="""
+        exp = """
         # Dir structure
         $TMP_DIR
         $TMP_DIR/tmp_diff.sh

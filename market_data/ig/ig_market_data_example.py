@@ -1,33 +1,39 @@
-#"""
-#Import as:
+"""
+Import as:
+
+import market_data.ig.ig_market_data_example as mdiimdaex
+"""
+
+# """
+# Import as:
 #
-#import market_data_lime.ig_market_data_example as mdlemdaex
-#"""
+# import market_data_lime.ig_market_data_example as mdlemdaex
+# """
 #
-#import asyncio
-#import logging
-#from typing import List, Optional, Union
+# import asyncio
+# import logging
+# from typing import List, Optional, Union
 #
-#import helpers.hdatetime as hdateti
-#import helpers.hpandas as hpandas
-#import helpers.hs3 as hs3
-#import im_lime.eg as imlimeg
-#import market_data as mdata
-#import market_data_lime.ig_real_time_market_data as mdlertmda
-#import market_data_lime.ig_replayed_market_data as mdlermada
-#import market_data_lime.ig_stitched_market_data as mdlesmada
-#import vendors_lime.ig_credentials as vliegcre
+# import helpers.hdatetime as hdateti
+# import helpers.hpandas as hpandas
+# import helpers.hs3 as hs3
+# import im_lime.eg as imlimeg
+# import market_data as mdata
+# import market_data_lime.ig_real_time_market_data as mdlertmda
+# import market_data_lime.ig_replayed_market_data as mdlermada
+# import market_data_lime.ig_stitched_market_data as mdlesmada
+# import vendors_lime.ig_credentials as vliegcre
 #
-#_LOG = logging.getLogger(__name__)
+# _LOG = logging.getLogger(__name__)
 #
 #
 ## #############################################################################
 #
 #
 ## TODO(gp): Add types.
-#def get_IgRealTimeMarketData_example1(
+# def get_IgRealTimeMarketData_example1(
 #    asset_ids: List[int],
-#):
+# ):
 #    """
 #    Build a `IgRealTimeMarketData` object using the RT market data DB.
 #    """
@@ -44,11 +50,11 @@
 ## #############################################################################
 #
 #
-#def get_IgReplayedMarketData_example1(
+# def get_IgReplayedMarketData_example1(
 #    event_loop: Optional[asyncio.AbstractEventLoop],
 #    *,
 #    replayed_delay_in_mins_or_timestamp: Union[int, str] = 0,
-#) -> mdlermada.IgReplayedMarketData:
+# ) -> mdlermada.IgReplayedMarketData:
 #    """
 #    Build a `IgReplayedMarketData` using an S3 file with 10 stocks.
 #    """
@@ -83,9 +89,9 @@
 ## #############################################################################
 #
 #
-#def get_IgStitchedMarketData_example1(
+# def get_IgStitchedMarketData_example1(
 #    asset_ids: List[int],
-#) -> mdlesmada.IgStitchedMarketData:
+# ) -> mdlesmada.IgStitchedMarketData:
 #    """
 #    Build a `IgStitchedMarketData` object using:
 #
@@ -115,14 +121,14 @@
 ## #############################################################################
 #
 #
-#def get_IgHistoricalMarketData_example1(
+# def get_IgHistoricalMarketData_example1(
 #    asset_ids: List[int],
 #    *,
 #    root_dir_name: str = "/cache/tiled.bar_data.all.2010_2022.20220204",
 #    aws_profile: Optional[str] = None,
 #    partition_mode: str = "by_year_month",
 #    columns: Optional[List[str]] = None,
-#) -> mdata.ImClientMarketData:
+# ) -> mdata.ImClientMarketData:
 #    """
 #    Build a `ImClientMarketData` object using
 #    `IgHistoricalPqByTileTaqBarClient` to read data from the tiled Parquet

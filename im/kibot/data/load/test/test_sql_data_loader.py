@@ -6,7 +6,7 @@ import pytest
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
 import im.common.data.types as imcodatyp
-import im.kibot.data.load.kibot_sql_data_loader as imkdlksdlo
+import im.kibot.data.load.kibot_sql_data_loader as ikdlksdlo
 import im.kibot.sql_writer as imkisqwri
 import im_v2.common.db.db_utils as imvcddbut
 
@@ -36,7 +36,7 @@ class TestSqlDataLoader1(hunitest.TestCase):
         self._prepare_tables(writer)
         writer.close()
         # Create loader.
-        self._loader = imkdlksdlo.KibotSqlDataLoader(
+        self._loader = ikdlksdlo.KibotSqlDataLoader(
             self._new_db, self._user, self._password, self._host, self._port
         )
 

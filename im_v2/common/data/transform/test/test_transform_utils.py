@@ -6,6 +6,34 @@ import helpers.hunit_test as hunitest
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 
+class TestGetVendorEpochUnit(hunitest.TestCase):
+
+    POSSIBLE_UNITS = ["ms", "s", "ns"]
+
+    def test_get_vendor_epoch_unit(self) -> None:
+        """
+        Verify that the correct epoch unit is returned.
+        """
+        actual = imvcdttrut.get_vendor_epoch_unit("crypto_chassis", "bid_ask")
+        self.assertIn(actual, self.POSSIBLE_UNITS)
+
+    def test_get_vendor_epoch_unit_invalid_vendor(self) -> None:
+        """
+        Verify that ValueError is raised when invalid vendor is passed.
+        """
+        with pytest.raises(AssertionError):
+            vendor = "invalid_vendor"
+            data_type = "bid_ask"
+            imvcdttrut.get_vendor_epoch_unit(vendor, data_type)
+
+    def test_get_vendor_epoch_unit_invalid_data_type(self) -> None:
+        """
+        Verify that ValueError is raised when invalid data type is passed.
+        """
+        with pytest.raises(AssertionError):
+            imvcdttrut.get_vendor_epoch_unit("ccxt", "invalid_data_type")
+
+
 class TestConvertTimestampColumn(hunitest.TestCase):
     def test_integer_datetime(self) -> None:
         """
@@ -390,3 +418,76 @@ class TestTransformRawWebsocketData(hunitest.TestCase):
         self.assert_equal(
             hpandas.df_to_str(expected_df), hpandas.df_to_str(actual_df)
         )
+
+    def test_transform_raw_websocket_trades_data(self) -> None:
+        """
+        Verify that raw trades dict data received from websocket is
+        transformed to DataFrame of specified format.
+        """
+        # Build test data.
+        test_exchange = "binance"
+        test_timestamp = pd.Timestamp("2022-10-05 15:06:00.019422+00:00")
+
+        def get_nested_test_data(timestamp: int) -> dict:
+            """
+            Return a nested dict with test data.
+
+            :param timestamp: timestamp of the test data
+            :return: nested dict with test data
+            """
+            return {
+                "info": {"some": "info"},
+                "timestamp": timestamp,
+                "datetime": "2023-03-10T09:27:55.951Z",
+                "symbol": "ETH/USDT",
+                "id": "1",
+                "order": None,
+                "type": None,
+                "side": "buy",
+                "takerOrMaker": "taker",
+                "price": 1405.2,
+                "amount": 0.242,
+                "cost": 340.0584,
+                "fee": None,
+                "fees": [],
+            }
+
+        def get_test_record(data: list) -> dict:
+            """
+            Return a dict with test record.
+
+            :param data: list of nested dicts with test data
+            :return: dict with test record
+            """
+            return {
+                "data": data,
+                "currency_pair": "ETH/USDT",
+                "end_download_timestamp": test_timestamp,
+            }
+
+        test_data = [
+            get_test_record(
+                [
+                    get_nested_test_data(1678440475951),
+                    get_nested_test_data(1678440475952),
+                ]
+            ),
+            get_test_record(
+                [
+                    get_nested_test_data(1678440475953),
+                    get_nested_test_data(1678440475954),
+                ]
+            ),
+        ]
+        # Run transformation.
+        actual_df = imvcdttrut.transform_raw_websocket_data(
+            test_data, "trades", test_exchange
+        ).reset_index(drop=True)
+        # Verify results.
+        expected = """timestamp side   price  amount currency_pair           end_download_timestamp exchange_id
+            0  1678440475951  buy  1405.2   0.242      ETH/USDT 2022-10-05 15:06:00.019422+00:00     binance
+            1  1678440475952  buy  1405.2   0.242      ETH/USDT 2022-10-05 15:06:00.019422+00:00     binance
+            2  1678440475953  buy  1405.2   0.242      ETH/USDT 2022-10-05 15:06:00.019422+00:00     binance
+            3  1678440475954  buy  1405.2   0.242      ETH/USDT 2022-10-05 15:06:00.019422+00:00     binance"""
+        actual = hpandas.df_to_str(actual_df)
+        self.assert_equal(expected, actual, fuzzy_match=True)
