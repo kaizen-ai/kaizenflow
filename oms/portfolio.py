@@ -119,9 +119,10 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         self._asset_id_col = self.market_data.asset_id_col
         self._mark_to_market_col = mark_to_market_col
         # Parse `pricing_method`.
-        self._pricing_type, self._bar_duration_as_pd_str = self._parse_pricing_method(
-            pricing_method
-        )
+        (
+            self._pricing_type,
+            self._bar_duration_as_pd_str,
+        ) = self._parse_pricing_method(pricing_method)
         # Initialize bookkeeping dictionaries.
         # At each call to `mark_to_market()`, we capture `wall_clock_time` and
         # perform a sequence of updates to the following dictionaries.
@@ -258,7 +259,9 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         txt_tmp.append("_asset_id_col=%s" % self._asset_id_col)
         txt_tmp.append("_mark_to_market_col=%s" % self._mark_to_market_col)
         txt_tmp.append("_pricing_type=%s" % self._pricing_type)
-        txt_tmp.append("_bar_duration_as_pd_str=%s" % self._bar_duration_as_pd_str)
+        txt_tmp.append(
+            "_bar_duration_as_pd_str=%s" % self._bar_duration_as_pd_str
+        )
         txt_tmp.append("_max_num_bars=%s" % self._max_num_bars)
         txt_tmp = "\n".join(txt_tmp)
         txt.append(hprint.indent(txt_tmp))

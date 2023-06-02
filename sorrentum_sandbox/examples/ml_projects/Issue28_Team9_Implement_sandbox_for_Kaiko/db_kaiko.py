@@ -1,14 +1,20 @@
+"""
+Import as:
+
+import sorrentum_sandbox.examples.ml_projects.Issue28_Team9_Implement_sandbox_for_Kaiko.db_kaiko as ssempitisfkdk
+"""
+
 from typing import Any, Optional
 
+import common.client as sinsacli
+import common.download as sinsadow
+import common.save as sinsasav
 import pandas as pd
 import psycopg2 as psycop
 import psycopg2.extras as extras
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import common.client as sinsacli
-import common.download as sinsadow
-import common.save as sinsasav
 
 
 def get_ohlcv_spot_downloaded_1min_create_table_query() -> str:
@@ -56,14 +62,24 @@ def get_ohlcv_spot_resampled_5min_create_table_query() -> str:
 
 
 def get_db_connection() -> Any:
-   
-    connection = psycop.connect(
-        host="host.docker.internal",
-        dbname="kaiko database",
-        port=5432,
-        user="postgres",
-        password="Oliver1999",
-    )
+
+    try:
+        connection = psycop.connect(
+            host="host.docker.internal",
+            dbname="kaiko connection",
+            port=1999,
+            user="postgres",
+            password="postgres",
+        )
+    except Exception:
+        connection = psycop.connect(
+            host="localhost",
+            dbname="kaiko connection",
+            port=1999,
+            user="postgres",
+            password="postgres",
+        )
+
     connection.autocommit = True
     return connection
 
@@ -89,7 +105,9 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         :param data: data to persists into DB
         :param db_table: table to save data to
         """
-        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
+        hdbg.dassert_isinstance(
+            data.get_data(), pd.DataFrame, "Only DataFrame is supported."
+        )
         # Transform dataframe into list of tuples.
         df = data.get_data()
         values = [tuple(v) for v in df.to_numpy()]
@@ -100,10 +118,9 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         extras.execute_values(cursor, query, values)
         self.db_conn.commit()
 
-
     @staticmethod
     def _create_insert_query(df: pd.DataFrame, db_table: str) -> str:
-      
+
         columns = ",".join(list(df.columns))
         query = f"INSERT INTO {db_table}({columns}) VALUES %s"
         return query
@@ -120,9 +137,8 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
 
 
 class PostgresClient(sinsacli.DataClient):
-    
     def __init__(self, db_connection: str) -> None:
-        
+
         self.db_conn = db_connection
 
     def load(
@@ -133,7 +149,7 @@ class PostgresClient(sinsacli.DataClient):
         end_timestamp: Optional[pd.Timestamp] = None,
         **kwargs: Any,
     ) -> Any:
-    
+
         select_query = f"SELECT * FROM {dataset_signature}"
         # Filter data.
         if start_timestamp:
@@ -154,4 +170,5 @@ class PostgresClient(sinsacli.DataClient):
             select_query += f" timestamp < {end_timestamp_as_unix}"
         # Read data.
         data = pd.read_sql_query(select_query, self.db_conn)
+
         return data

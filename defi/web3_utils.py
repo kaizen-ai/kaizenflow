@@ -1,13 +1,21 @@
+"""
+Import as:
+
+import defi.web3_utils as dwebutil
+"""
+
 import functools
 import os
 from typing import Any, List
 
 import brownie
-import web3
 import etherscan
+import web3
 
 
-def dir_(obj: Any, *, skip_underscore: str =True, skip_dunder: str = True) -> List[str]:
+def dir_(
+    obj: Any, *, skip_underscore: str = True, skip_dunder: str = True
+) -> List[str]:
     """
     Print information about one object.
     """
@@ -41,7 +49,7 @@ def connect_to_brownie(brownie_project_dir: str, net: str) -> Any:
 
 
 @functools.cache
-def get_eth_price(provider: str="main") -> float:
+def get_eth_price(provider: str = "main") -> float:
     """
     Return the price of 1 ETH in USD using EtherScan.
 
@@ -63,7 +71,7 @@ def ether_to_str(w3: web3.Web3, value_in_wei, *, units="gwei") -> str:
     if units == "usd":
         eth_price_in_usd = get_eth_price("main")
         eth = w3.fromWei(value_in_wei, "ether")
-        #print(eth, eth_price_in_usd)
+        # print(eth, eth_price_in_usd)
         value_in_usd = float(eth) * eth_price_in_usd
         value = value_in_usd
     else:
@@ -84,9 +92,10 @@ def print_gas_price(w3) -> None:
     """
     Print gas price in gwei and USD.
     """
-    print("gas_price=%s=%s" % (
-        gas_price_as_str(w3, units="Gwei"),
-        gas_price_as_str(w3, units="usd")))
+    print(
+        "gas_price=%s=%s"
+        % (gas_price_as_str(w3, units="Gwei"), gas_price_as_str(w3, units="usd"))
+    )
 
 
 def print_balance(w3: web3.Web3, account, units="ether", token=None):
@@ -100,7 +109,7 @@ def print_balance(w3: web3.Web3, account, units="ether", token=None):
         if isinstance(account, str):
             balance = w3.eth.get_balance(account)
         else:
-            #elif isinstance(token, brownie.network.account.Account):
+            # elif isinstance(token, brownie.network.account.Account):
             balance = account.balance()
         symbol = None
     else:
@@ -110,8 +119,8 @@ def print_balance(w3: web3.Web3, account, units="ether", token=None):
     if symbol is not None:
         ret += " " + symbol
     print(ret)
-    
-    
+
+
 def print_tx(tx_id):
     print("tx_id=", tx_id)
     tx = brownie.chain.get_transaction(tx_id)

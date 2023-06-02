@@ -1,4 +1,11 @@
-from brownie import accounts, DaoETF
+"""
+Import as:
+
+import defi.dao_etf.tests.dao_etf_test as ddetdette
+"""
+
+from brownie import DaoETF, accounts
+
 
 def test_flow():
     """
@@ -30,4 +37,3 @@ def test_flow():
     dao_etf.withdraw(10000000000000000000, {"from": owner})
     assert owner.balance() == 1010000000000000000000
     assert dao_etf.balance() == 0
-

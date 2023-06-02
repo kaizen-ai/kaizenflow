@@ -37,7 +37,7 @@ class TestRunNotebook(hunitest.TestCase):
         Run the test notebook.
 
         :param fail: the notebook breaks if True otherwise it does not break
-        :param allow_errors: if `True`, run the notebook until the end 
+        :param allow_errors: if `True`, run the notebook until the end
             regardless of any error in it
         :return: return code as int
         """

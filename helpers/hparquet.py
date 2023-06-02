@@ -25,6 +25,7 @@ import helpers.hintrospection as hintros
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
+import helpers.hserver as hserver
 import helpers.htimer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -37,14 +38,42 @@ def get_pyarrow_s3fs(*args: Any, **kwargs: Any) -> pafs.S3FileSystem:
     Same as `hs3.get_s3fs`, used specifically for accessing Parquet
     datasets.
     """
-    aws_credentials = hs3.get_aws_credentials(*args, **kwargs)
-    s3fs_ = pafs.S3FileSystem(
-        access_key=aws_credentials["aws_access_key_id"],
-        secret_key=aws_credentials["aws_secret_access_key"],
-        session_token=aws_credentials["aws_session_token"],
-        region=aws_credentials["aws_region"],
-    )
+    # When deploying jobs via ECS the container obtains credentials based on passed
+    #  task role specified in the ECS task-definition, refer to:
+    #  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html
+    if hserver.is_inside_ecs_container():
+        _LOG.info("Fetching credentials from task IAM role")
+        s3fs_ = pafs.S3FileSystem()
+    else:
+        aws_credentials = hs3.get_aws_credentials(*args, **kwargs)
+        s3fs_ = pafs.S3FileSystem(
+            access_key=aws_credentials["aws_access_key_id"],
+            secret_key=aws_credentials["aws_secret_access_key"],
+            session_token=aws_credentials["aws_session_token"],
+            region=aws_credentials["aws_region"],
+        )
     return s3fs_
+
+
+def _get_parquet_tiles_from_file_path(file_path: str) -> List[Tuple[str, Any]]:
+    """
+    Hacky function to help get tile values from parquet file path.
+
+    Used by from_parquet when loading first n rows of a dataset only.
+
+    Example
+     input: ...ccxt/binance/v1_0_0/currency_pair=CTK_USDT/
+    year=2023/month=3/26dc59f62b87403d9a3e9f04c7c21382-0.parquet
+     output: [("currency_pair", "CTK_USDT"), ("year", 2023), ("month", 3)]
+    """
+    path_parts = file_path.split("/")
+    tiles = []
+    for part in path_parts:
+        if "=" in part:
+            col, value = part.split("=")
+            value = int(value) if value.isdigit() else value
+            tiles.append((col, value))
+    return tiles
 
 
 # TODO(Dan): Add mode to allow querying even when some non-existing columns are passed.
@@ -106,12 +135,19 @@ def from_parquet(
             # Load the data.
             parquet_file = pq.ParquetFile(file)
             # Get the head of the data.
-            first_ten_rows = next(parquet_file.iter_batches(batch_size=n_rows))
-            df = pa.Table.from_batches([first_ten_rows]).to_pandas()
+            df = (
+                parquet_file.read_row_group(0, columns=parquet_file.schema.names)
+                .to_pandas()
+                .head(n_rows)
+            )
             if columns:
                 # Note: `schema.names` also includes and index.
                 hdbg.dassert_is_subset(columns, parquet_file.schema.names)
                 df = df[columns]
+            # Hacky way to append tile values lost when obtaining particular .pq file.
+            tiles = _get_parquet_tiles_from_file_path(last_pq_file)
+            for col, value in tiles:
+                df[col] = value
         else:
             if schema is not None:
                 # Pass partition columns types explicitly.
@@ -708,7 +744,7 @@ def add_date_partition_columns(
             partition_columns = ["date"]
         else:
             if partition_mode == "by_year_month_day":
-                partition_columns = ["year", "month", "date"]
+                partition_columns = ["year", "month", "day"]
             elif partition_mode == "by_year_month":
                 partition_columns = ["year", "month"]
             elif partition_mode == "by_year_week":

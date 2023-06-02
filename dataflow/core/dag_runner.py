@@ -70,7 +70,11 @@ class DagRunner(abc.ABC, hobject.PrintableMixin):
     ) -> str:
         if attr_names_to_skip is None:
             attr_names_to_skip = []
-        attr_names_to_skip.extend(["dag", ])
+        attr_names_to_skip.extend(
+            [
+                "dag",
+            ]
+        )
         return super().__str__(attr_names_to_skip=attr_names_to_skip)
 
     def __repr__(
@@ -79,7 +83,11 @@ class DagRunner(abc.ABC, hobject.PrintableMixin):
     ) -> str:
         if attr_names_to_skip is None:
             attr_names_to_skip = []
-        attr_names_to_skip.extend(["dag", ])
+        attr_names_to_skip.extend(
+            [
+                "dag",
+            ]
+        )
         return super().__repr__(attr_names_to_skip=attr_names_to_skip)
 
     def _set_fit_predict_intervals(

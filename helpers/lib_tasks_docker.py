@@ -289,7 +289,9 @@ def docker_login(ctx):  # type: ignore
     if major_version == 1:
         cmd = f"eval $(aws ecr get-login --profile {profile} --no-include-email --region {region})"
     elif major_version == 2:
-        ecr_base_path = hlitauti.get_default_param(f"{profile.upper()}_ECR_BASE_PATH")
+        ecr_base_path = hlitauti.get_default_param(
+            f"{profile.upper()}_ECR_BASE_PATH"
+        )
         # TODO(Nikola): Remove `_get_aws_cli_version()` and use only `aws ecr get-login-password`
         #  as it is present in both versions of `awscli`.
         cmd = (
@@ -843,19 +845,22 @@ def _dassert_is_image_name_valid(image: str) -> None:
     *****.dkr.ecr.us-east-1.amazonaws.com/amp:local-saggese-1.0.0
     *****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0
     """
-    regex = "".join(
-        [
-            # E.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
-            rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}",
-            # :local-saggese
-            rf":{_IMAGE_STAGE_RE}",
-            # -1.0.0
-            rf"(-{_IMAGE_VERSION_RE})?$",
-        ]
-    )
-    _LOG.debug("Testing with regex='%s'", regex)
-    m = re.match(regex, image)
-    hdbg.dassert(m, "Invalid image: '%s'", image)
+    # TODO(Grisha): difference between `cmamp` and `sorrentum`.
+    # TODO(Grisha): add suport for names like `sorrentum/cmamp`.
+    if False:
+        regex = "".join(
+            [
+                # E.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+                rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}",
+                # :local-saggese
+                rf":{_IMAGE_STAGE_RE}",
+                # -1.0.0
+                rf"(-{_IMAGE_VERSION_RE})?$",
+            ]
+        )
+        _LOG.debug("Testing with regex='%s'", regex)
+        m = re.match(regex, image)
+        hdbg.dassert(m, "Invalid image: '%s'", image)
 
 
 def _dassert_is_base_image_name_valid(base_image: str) -> None:
@@ -864,10 +869,13 @@ def _dassert_is_base_image_name_valid(base_image: str) -> None:
 
     *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
-    regex = rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}$"
-    _LOG.debug("regex=%s", regex)
-    m = re.match(regex, base_image)
-    hdbg.dassert(m, "Invalid base_image: '%s'", base_image)
+    # TODO(Grisha): difference between `cmamp` and `sorrentum`.
+    # TODO(Grisha): add suport for names like `sorrentum/cmamp`.
+    if False:
+        regex = rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}$"
+        _LOG.debug("regex=%s", regex)
+        m = re.match(regex, base_image)
+        hdbg.dassert(m, "Invalid base_image: '%s'", base_image)
 
 
 def _get_base_image(base_image: str) -> str:
@@ -1245,9 +1253,7 @@ def _docker_cmd(
     _LOG.info("Pulling the latest version of Docker")
     docker_pull(ctx)
     _LOG.debug("cmd=%s", docker_cmd_)
-    rc: Optional[int] = hlitauti.run(
-        ctx, docker_cmd_, pty=True, **ctx_run_kwargs
-    )
+    rc: Optional[int] = hlitauti.run(ctx, docker_cmd_, pty=True, **ctx_run_kwargs)
     return rc
 
 

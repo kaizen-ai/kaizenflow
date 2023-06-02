@@ -87,7 +87,9 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         opts = " ".join(opts)
         #
         amp_dir = hgit.get_amp_abs_path()
-        exec_filename = os.path.join(amp_dir, "dataflow/backtest/run_config_list.py")
+        exec_filename = os.path.join(
+            amp_dir, "dataflow/backtest/run_config_list.py"
+        )
         hdbg.dassert_path_exists(exec_filename)
         #
         cmd = []
@@ -193,8 +195,9 @@ class TiledBacktest_TestCase(Backtest_TestCase):
         # 1) Check the configs against frozen representation.
         configs_signature = self.get_config_list_signature(config_builder)
         tag = "configs_signature"
-        self.check_string(configs_signature, fuzzy_match=True, purify_text=True,
-                tag=tag)
+        self.check_string(
+            configs_signature, fuzzy_match=True, purify_text=True, tag=tag
+        )
         # 2) Run the model using tiled backtest.
         run_model_dir = os.path.join(scratch_dir, "run_model")
         if hunitest.get_incremental_tests() and os.path.exists(run_model_dir):

@@ -3,18 +3,18 @@
 Download chainlink data from Binance and save it into the DB.
 
 Use as:
-> download_to_db.py --pair ETH/USD --num_of_data 10 --target_table 'chainlink_history'
 
-> download_to_db.py --pair ETH/USD --roundid 55340232221128670494 --target_table 'chainlink_real_time'
+> download_to_db.py --pair BTC/USD --start_roundid 92233720368547792257 --target_table 'chainlink_real_time'
+> download_to_db.py --pair BTC/USD --start_roundid 92233720368547792257 --end_roundid 92233720368547792260 --target_table 'chainlink_history'
+
 """
 import argparse
 import logging
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import sorrentum_sandbox.projects.Issue26_Team7_Implement_sandbox_for_Chainlink.db as sisebidb
-import sorrentum_sandbox.projects.Issue26_Team7_Implement_sandbox_for_Chainlink.download as sisebido
-
+import sorrentum_sandbox.examples.ml_projects.Issue26_Team7_Implement_sandbox_for_Chainlink.db as ssempitisfcd
+import sorrentum_sandbox.examples.ml_projects.Issue26_Team7_Implement_sandbox_for_Chainlink.download as sisebido
 
 _LOG = logging.getLogger(__name__)
 
@@ -33,25 +33,25 @@ def _add_download_args(
         help="Currency pair to download",
     )
     parser.add_argument(
-        "--num_of_data",
+        "--start_roundid",
+        action="store",
+        required=True,
+        type=int,
+        help="the first data to download",
+    )
+    parser.add_argument(
+        "--end_roundid",
         action="store",
         required=False,
         type=int,
-        help="Number of data to download",
-    )
-    parser.add_argument(
-        "--roundid",
-        action="store",
-        required=False,
-        type=str,
-        help="Roundid for the last stored transaction data",
+        help="the last data to download",
     )
     parser.add_argument(
         "--target_table",
         action="store",
         required=True,
         type=str,
-        help="Name of the db table to save data into"
+        help="Name of the db table to save data into",
     )
     return parser
 
@@ -70,13 +70,21 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     # Load data.
-    if(args.roundid is None):
-        raw_data = sisebido.downloader(pair = args.pair, num_of_data = args.num_of_data)
-    elif(args.num_of_data is None):
-        raw_data = sisebido.downloader(pair = args.pair, roundid = args.roundid)
+
+    if args.end_roundid is None:
+        raw_data = sisebido.downloader(
+            pair=args.pair, start_roundid=args.start_roundid
+        )
+    else:
+        raw_data = sisebido.downloader(
+            pair=args.pair,
+            start_roundid=args.start_roundid,
+            end_roundid=args.end_roundid,
+        )
+
     # Save data to DB.
-    db_conn = sisebidb.get_db_connection()
-    saver = sisebidb.PostgresDataFrameSaver(db_conn)
+    db_conn = ssempitisfcd.get_db_connection()
+    saver = ssempitisfcd.PostgresDataFrameSaver(db_conn)
     saver.save(raw_data, args.target_table)
 
 

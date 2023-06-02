@@ -13,7 +13,7 @@ import os
 import re
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterator, List, Optional, Union
 
 import pandas as pd
 
@@ -44,6 +44,7 @@ WEBSOCKET_CONFIG = {
         "sleep_between_iter_in_ms": 60000,
     },
     "bid_ask": {"max_buffer_size": 250, "sleep_between_iter_in_ms": 200},
+    "trades": {"max_buffer_size": 250, "sleep_between_iter_in_ms": 200},
 }
 
 
@@ -223,6 +224,7 @@ DATASET_SCHEMA = {
         "volume": "float64",
         "vwap": "float64",
         "year": "int32",
+        "day": "int32",
     },
     "ohlcv": {
         "ask_price": "float64",
@@ -245,18 +247,23 @@ DATASET_SCHEMA = {
         "volume": "float64",
         "vwap": "float64",
         "year": "int32",
+        "day": "int32",
     },
     "trades": {
         "currency_pair": "object",
+        "symbol": "object",
         "end_download_timestamp": "datetime64[ns, UTC]",
         "exchange_id": "object",
         "is_buyer_maker": "int32",
+        "side": "object",
         "knowledge_timestamp": "datetime64[ns, UTC]",
         "month": "int32",
         "price": "float64",
+        "amount": "float64",
         "size": "float64",
         "timestamp": "int64",
         "year": "int32",
+        "day": "int32",
     },
 }
 
@@ -283,7 +290,7 @@ def download_exchange_data_to_db(
     data_type = args["data_type"]
     exchange_id = args["exchange_id"]
     bid_ask_depth = args.get("bid_ask_depth")
-    if data_type == "ohlcv":
+    if data_type in ("ohlcv", "bid_ask", "trades"):
         # Convert timestamps.
         start_timestamp = pd.Timestamp(args["start_timestamp"])
         start_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
@@ -317,7 +324,7 @@ def download_exchange_data_to_db(
         data["currency_pair"] = currency_pair
         data["exchange_id"] = exchange_id
         # Add exchange specific filter.
-        if exchange_id == "binance":
+        if data_type == "ohlcv" and exchange_id == "binance":
             data = imvcdttrut.remove_unfinished_ohlcv_bars(data)
         # Save data to the database.
         imvcddbut.save_data_to_db(
@@ -556,13 +563,14 @@ def download_realtime_for_one_exchange_periodically(
     # Peform assertions common to all downloaders.
     start_time = pd.Timestamp(args["start_time"])
     stop_time = pd.Timestamp(args["stop_time"])
-    hdbg.dassert_eq(start_time.tz, stop_time.tz)
+    hdateti.dassert_have_same_tz(start_time, stop_time)
     tz = start_time.tz
     hdbg.dassert_lt(datetime.now(tz), start_time, "start_time is in the past")
     hdbg.dassert_lt(start_time, stop_time, "stop_time is less than start_time")
-    if args["method"] == "rest":
+    method = args["method"]
+    if method == "rest":
         _download_rest_realtime_for_one_exchange_periodically(args, exchange)
-    elif args["method"] == "websocket":
+    elif method == "websocket":
         # Websockets work asynchronously, in order this outer function synchronous
         # the websocket download needs go be executed using asyncio.
         loop = asyncio.get_event_loop()
@@ -571,6 +579,7 @@ def download_realtime_for_one_exchange_periodically(
                 args, exchange
             )
         )
+        loop.close()
     else:
         raise ValueError(
             f"Method: {method} is not a valid method for periodical download, "
@@ -621,16 +630,26 @@ def save_parquet(
     *,
     drop_columns: List[str] = ["end_download_timestamp"],
     mode: str = "list_and_merge",
+    partition_mode: str = "by_year_month",
 ) -> None:
     """
     Save Parquet dataset.
+
+    :param data: dataframe to save
+    :param path_to_dataset: path to the dataset
+    :param unit: unit of the data, e.g. "ms", "s", "m", "h", "D"
+    :param aws_profile: AWS profile to use
+    :param data_type: type of the data, e.g. "bid_ask"
+    :param drop_columns: list of columns to drop
+    :param mode: mode of saving, e.g. "list_and_merge", "append"
+    :param partition_mode: partition mode, e.g. "by_year_month"
     """
     hdbg.dassert_in(mode, ["list_and_merge", "append"])
     # Update indexing and add partition columns.
     # TODO(Danya): Add `unit` as a parameter in the function.
     data = imvcdttrut.reindex_on_datetime(data, "timestamp", unit=unit)
     data, partition_cols = hparque.add_date_partition_columns(
-        data, "by_year_month"
+        data, partition_mode
     )
     # Drop DB metadata columns.
     for column in drop_columns:
@@ -655,7 +674,100 @@ def save_parquet(
         )
 
 
-# TODO(Juraj): rename based on surrentum protocol conventions.
+def process_downloaded_historical_data(
+    data: Union[pd.DataFrame, Iterator[pd.DataFrame]],
+    args: Dict[str, Any],
+    currency_pair: str,
+    path_to_dataset: str,
+) -> None:
+    """
+    Process downloaded historical data:
+
+        - Assign pair and exchange columns.
+        - Add knowledge timestamp column.
+        - Save data to S3 filesystem.
+
+    :param data: downloaded data
+        It can be either a single DataFrame or an iterator of DataFrames.
+    :param args: arguments from the command line
+    :param currency_pair: currency pair, e.g. "BTC_USDT"
+    :param path_to_dataset: path to the dataset
+    """
+    if isinstance(data, Iterator):
+        for df in data:
+            process_downloaded_historical_data(
+                df, args, currency_pair, path_to_dataset
+            )
+        return
+    if data.empty:
+        if args["assert_on_missing_data"]:
+            raise RuntimeError(
+                "No data for currency_pair='%s' was downloaded.", currency_pair
+            )
+        else:
+            _LOG.warning(
+                "No data for currency_pair='%s' " "was downloaded: continuing",
+                currency_pair,
+            )
+        return
+    # Assign pair and exchange columns.
+    data["currency_pair"] = currency_pair
+    data["exchange_id"] = args["exchange_id"]
+    data = imvcdttrut.add_knowledge_timestamp_col(data, "UTC")
+    # Save data to S3 filesystem.
+    # TODO(Vlad): Refactor log messages when we save data by a day.
+    _LOG.info("Saving the dataset into %s", path_to_dataset)
+    if args["data_format"] == "parquet":
+        # Save by day for trades, by month for everything else.
+        partition_mode = "by_year_month"
+        if args["data_type"] == "trades":
+            partition_mode = "by_year_month_day"
+        save_parquet(
+            data,
+            path_to_dataset,
+            args["unit"],
+            args["aws_profile"],
+            args["data_type"],
+            mode="append",
+            partition_mode=partition_mode,
+        )
+    elif args["data_format"] == "csv":
+        save_csv(
+            data,
+            path_to_dataset,
+            currency_pair,
+            args["incremental"],
+            args["aws_profile"],
+        )
+    else:
+        hdbg.dfatal(f"Unsupported `{args['data_format']}` format!")
+
+
+def _split_crypto_chassis_universe(universe: List[str], universe_part: int):
+    """
+    Split the universe into groups of 10 symbols and return only universe_part-
+    th group.
+
+    CryptoChassis imposed a API limit of 10 requests per endpoint per IP.
+    This helps us only obtain a subset of universe such that download can go through
+    successfully.
+
+    :oaram universe: universe of currency pairs
+    :param universe_part: nth set of 10 to return
+    """
+    lower_bound = (universe_part - 1) * 10
+    # If no such part exists raise an error, i.e. user asks for 3rd part of
+    #  universe with 18 symbols.
+    if lower_bound > len(universe):
+        raise RuntimeError(
+            f"Universe does not have {universe_part} parts. \
+            It has {len(universe)} symbols."
+        )
+    upper_bound = min(len(universe), (universe_part * 10))
+    return universe[lower_bound:upper_bound]
+
+
+# TODO(Juraj): rename based on sorrentum protocol conventions.
 def download_historical_data(
     args: Dict[str, Any], exchange: ivcdexex.Extractor
 ) -> None:
@@ -686,13 +798,25 @@ def download_historical_data(
         exchange.vendor, mode, version=args["universe"]
     )
     currency_pairs = universe[args["exchange_id"]]
+    if args["vendor"] == "crypto_chassis":
+        # A hack introduced to overcme strict API call restrictions.
+        currency_pairs = _split_crypto_chassis_universe(
+            currency_pairs, args["universe_part"]
+        )
+        _LOG.info(
+            f"Using part {args['universe_part']} of {args['vendor']}"
+            + f" universe {args['universe']}:"
+        )
+        _LOG.info(f"\t {currency_pairs}")
     # Convert timestamps.
     start_timestamp = pd.Timestamp(args["start_timestamp"])
     end_timestamp = pd.Timestamp(args["end_timestamp"])
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
-        converted_currency_pair = exchange.convert_currency_pair(currency_pair)
+        converted_currency_pair = exchange.convert_currency_pair(
+            currency_pair, exchange_id=args["exchange_id"]
+        )
         # Download data.
         data = exchange.download_data(
             args["data_type"],
@@ -703,33 +827,9 @@ def download_historical_data(
             # If data_type = ohlcv, depth is ignored.
             depth=args.get("bid_ask_depth"),
         )
-        if data.empty:
-            continue
-        # Assign pair and exchange columns.
-        data["currency_pair"] = currency_pair
-        data["exchange_id"] = args["exchange_id"]
-        data = imvcdttrut.add_knowledge_timestamp_col(data, "UTC")
-        # Save data to S3 filesystem.
-        _LOG.info("Saving the dataset into %s", path_to_dataset)
-        if args["data_format"] == "parquet":
-            save_parquet(
-                data,
-                path_to_dataset,
-                args["unit"],
-                args["aws_profile"],
-                args["data_type"],
-                mode="append",
-            )
-        elif args["data_format"] == "csv":
-            save_csv(
-                data,
-                path_to_dataset,
-                currency_pair,
-                args["incremental"],
-                args["aws_profile"],
-            )
-        else:
-            hdbg.dfatal(f"Unsupported `{args['data_format']}` format!")
+        process_downloaded_historical_data(
+            data, args, currency_pair, path_to_dataset
+        )
 
 
 def verify_schema(data: pd.DataFrame, data_type: str) -> pd.DataFrame:
@@ -742,13 +842,19 @@ def verify_schema(data: pd.DataFrame, data_type: str) -> pd.DataFrame:
     error_msg = []
     if data.isnull().values.any():
         _LOG.warning("Extracted Dataframe contains NaNs")
+
+    # Regex match if the column name contains one of the bid/ask column names`.
+    regex = re.compile(r"(bid_size|bid_price|ask_price|ask_size)")
     for column in data.columns:
+        # There is a variety of Bid/Ask related columns, for
+        #  simplicity, only the base names are stored in the schema.
+        # Get the substring containing bid/ask related column if
+        #  it's one of the level values, or the original column name
+        #  otherwise.
+        col_match = regex.search(column)
+        col_after_regex = col_match.group(0) if col_match else column
         # Extract the expected type of the column from the schema.
-        #  Bid/ask columns have level suffix equal to _l1, _l2 etc.
-        #  For simplicity we store only base names in the schema
-        #  table.
-        column_re = re.sub("_l\d+$", "", column)
-        expected_type = DATASET_SCHEMA[data_type][column_re]
+        expected_type = DATASET_SCHEMA[data_type][col_after_regex]
         if (
             expected_type in ["float64", "int32", "int64"]
             and pd.to_numeric(data[column], errors="coerce").notnull().all()
@@ -786,7 +892,7 @@ def resample_rt_bid_ask_data_periodically(
     :param end_ts: end of the time interval
     """
     # Peform timestamp assertions.
-    hdbg.dassert_eq(start_ts.tz, end_ts.tz)
+    hdateti.dassert_have_same_tz(start_ts, end_ts)
     tz = start_ts.tz
     hdbg.dassert_lt(datetime.now(tz), start_ts, "start_ts is in the past")
     hdbg.dassert_lt(start_ts, end_ts, "end_ts is less than start_time")
@@ -804,7 +910,7 @@ def resample_rt_bid_ask_data_periodically(
         if df_raw.empty:
             _LOG.warning("Empty Dataframe, nothing to resample")
         else:
-            df_resampled = imvcdttrut.transform_and_resample_bid_ask_rt_data(
+            df_resampled = imvcdttrut.transform_and_resample_rt_bid_ask_data(
                 df_raw
             )
             imvcddbut.save_data_to_db(

@@ -567,29 +567,17 @@ class Test_dassert_callable1(hunitest.TestCase):
 
 class Test_dassert_related_params1(hunitest.TestCase):
     def test1(self) -> None:
-        obj = {
-            "val1": 1,
-            "val2": 1,
-            "val3": "hello"
-        }
+        obj = {"val1": 1, "val2": 1, "val3": "hello"}
         mode = "all_or_none_non_null"
         hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")
 
     def test2(self) -> None:
-        obj = {
-            "val1": 0,
-            "val2": None,
-            "val3": ""
-        }
+        obj = {"val1": 0, "val2": None, "val3": ""}
         mode = "all_or_none_non_null"
         hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")
 
     def test3(self) -> None:
-        obj = {
-            "val1": 1,
-            "val2": 0,
-            "val3": "hello"
-        }
+        obj = {"val1": 1, "val2": 0, "val3": "hello"}
         with self.assertRaises(Exception) as cm:
             mode = "all_or_none_non_null"
             hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")
@@ -609,11 +597,7 @@ class Test_dassert_related_params1(hunitest.TestCase):
 
 class Test_dassert_related_params2(hunitest.TestCase):
     def test1(self) -> None:
-        obj = {
-            "val1": 1,
-            "val2": 1,
-            "val3": "hello"
-        }
+        obj = {"val1": 1, "val2": 1, "val3": "hello"}
         mode = "all_or_none_non_None"
         hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")
 
@@ -627,11 +611,7 @@ class Test_dassert_related_params2(hunitest.TestCase):
         hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")
 
     def test3(self) -> None:
-        obj = {
-            "val1": None,
-            "val2": None,
-            "val3": "hello"
-        }
+        obj = {"val1": None, "val2": None, "val3": "hello"}
         with self.assertRaises(Exception) as cm:
             mode = "all_or_none_non_None"
             hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")

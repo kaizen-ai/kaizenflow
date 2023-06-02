@@ -178,7 +178,9 @@ class DatasetExtractor:
     Extract payloads for a particular dataset.
     """
 
-    def __init__(self, dataset: str, requests_session: requests.Session):
+    def __init__(
+        self, dataset: str, requests_session: requests.Session, aws_profile: str
+    ):
         """
         Init object.
 
@@ -187,7 +189,7 @@ class DatasetExtractor:
         """
         self.dataset = dataset
         self.requests_session = requests_session
-        self.aws_dir = os.path.join(imkidacon.S3_PREFIX, dataset)
+        self.aws_dir = os.path.join(imkidacon.get_s3_prefix(aws_profile), dataset)
         _LOG.info("Saving to S3 in '%s'", self.aws_dir)
 
     def delete_dataset_s3_directory(self) -> None:

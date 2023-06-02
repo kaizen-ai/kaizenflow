@@ -120,7 +120,6 @@ def docker_build_local_image(  # type: ignore
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
     time \
     docker build \
-        --progress=plain \
         {opts} \
         --build-arg AM_CONTAINER_VERSION={dev_version} \
         --tag {image_local} \
@@ -355,7 +354,6 @@ def docker_build_prod_image(  # type: ignore
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
     time \
     docker build \
-        --progress=plain \
         {opts} \
         --tag {image_versioned_prod} \
         --file {dockerfile} \

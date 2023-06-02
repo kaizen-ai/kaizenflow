@@ -415,14 +415,14 @@ def randomize_agents_on_prices(prices: int, n_agents: int) -> list:
     :return: number of agent for each of price groups
     """
     # Set the constraint that it should be at least one buyer in each group.
-    n_agents_in_groups = [1]*prices
+    n_agents_in_groups = [1] * prices
     # Allocate the remaining agents.
     remaining_agents = n_agents - prices
     # Probability of allocation.
     p = [1 / prices] * prices
     remaining_n_agents_in_groups = np.random.multinomial(remaining_agents, p)
     # Combine the initial agents (constrains) and the remaining ones.
-    n_agents_in_groups = n_agents_in_groups+remaining_n_agents_in_groups
+    n_agents_in_groups = n_agents_in_groups + remaining_n_agents_in_groups
     return n_agents_in_groups
 
 
@@ -448,7 +448,9 @@ def allocate_agents_on_quantities(
             # the diff between neighbour quantity values from supply curve.
             quantity_in_group = quantities[i] - quantities[i - 1]
         # Allocate quantities for prices.
-        ith_group = np.random.dirichlet(np.ones(n_agents_in_groups[i])) * (quantity_in_group)
+        ith_group = np.random.dirichlet(np.ones(n_agents_in_groups[i])) * (
+            quantity_in_group
+        )
         agents_dict[quantities[i]] = list(ith_group)
     return agents_dict
 
