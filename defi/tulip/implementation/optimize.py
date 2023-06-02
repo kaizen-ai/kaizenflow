@@ -7,7 +7,7 @@ import defi.tulip.implementation.optimize as dtuimopt
 import logging
 from typing import Any, Dict, List, Tuple
 
-import defi.dao_cross.order as ddacrord
+import defi.tulip.implementation.order as dtuimord
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 
@@ -22,7 +22,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(Paul): Deprecate.
 def run_solver(
-    orders: List[ddacrord.Order], prices: Dict[str, float]
+    orders: List[dtuimord.Order], prices: Dict[str, float]
 ) -> Dict[str, Any]:
     """
     Find the maximum exchanged volume given the constraints.
@@ -35,7 +35,7 @@ def run_solver(
     _LOG.debug(hprint.to_str("orders"))
     n_orders = len(orders)
     hdbg.dassert_lt(0, n_orders)
-    hdbg.dassert_container_type(orders, list, ddacrord.Order)
+    hdbg.dassert_container_type(orders, list, dtuimord.Order)
     #
     _LOG.debug(hprint.to_str("prices"))
     hdbg.dassert_isinstance(prices, dict)
@@ -105,7 +105,7 @@ def run_solver(
 
 
 def get_tulip_problem_and_variables(
-    orders: List[ddacrord.Order],
+    orders: List[dtuimord.Order],
 ) -> Tuple[pulp.LpProblem, List[pulp.LpVariable], List[pulp.LpVariable]]:
     """
     Return the basic tulip problem and variables.
@@ -118,7 +118,7 @@ def get_tulip_problem_and_variables(
     _LOG.debug(hprint.to_str("orders"))
     n_orders = len(orders)
     hdbg.dassert_lt(0, n_orders)
-    hdbg.dassert_container_type(orders, list, ddacrord.Order)
+    hdbg.dassert_container_type(orders, list, dtuimord.Order)
     # Initialize the model.
     problem = pulp.LpProblem("TuLiP", pulp.LpMaximize)
     # Specify the executed quantities vars. Setting the lower bound to zero
@@ -172,7 +172,7 @@ def get_tulip_problem_and_variables(
 
 # TODO(Paul): Reorganize code.
 def run_daoswap_solver(
-    orders: List[ddacrord.Order],
+    orders: List[dtuimord.Order],
 ) -> Dict[str, Any]:
     """
     Find the maximum exchanged volume given the constraints.
@@ -210,7 +210,7 @@ def run_daoswap_solver(
     # TODO(Grisha): double-check that time is in seconds.
     result["solution_time_in_secs"] = round(problem.solutionTime, 2)
     #
-    result_df = ddacrord.convert_orders_to_dataframe(orders)
+    result_df = dtuimord.convert_orders_to_dataframe(orders)
     result_df["q_pi_star"] = result["q_pi_star"]
     result_df["q_tau_star"] = result["q_tau_star"]
     result_df["effective_price"] = (
@@ -220,7 +220,7 @@ def run_daoswap_solver(
 
 
 def run_daocross_solver(
-    orders: List[ddacrord.Order],
+    orders: List[dtuimord.Order],
     prices: Dict[str, float],
 ) -> Dict[str, Any]:
     """
@@ -262,7 +262,7 @@ def run_daocross_solver(
     # TODO(Grisha): double-check that time is in seconds.
     result["solution_time_in_secs"] = round(problem.solutionTime, 2)
     #
-    result_df = ddacrord.convert_orders_to_dataframe(orders)
+    result_df = dtuimord.convert_orders_to_dataframe(orders)
     result_df["q_pi_star"] = result["q_pi_star"]
     result_df["q_tau_star"] = result["q_tau_star"]
     result_df["effective_price"] = (
