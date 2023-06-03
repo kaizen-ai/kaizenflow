@@ -612,7 +612,7 @@ E.g., to run a single test in the fast test target, instead of the entire regres
 
 * Note that the indentation matters, since it's a YAML file
 
-![alt_text](python_unit_tests_figs/image_3.png)
+    ![alt_text](python_unit_tests_figs/image_3.png)
 * The `-s --dbg` is to show `_LOG.debug` in case you care about that to get more information
 2. Commit the code to your branch (not in master please) since GH runs each branch independently
 3. Kick off manually the fast test through the GH interface
