@@ -212,16 +212,9 @@
   - Download document as docx
   - Convert it to markdown using `pandoc`
     ```
-    > rm -rf media; pandoc --extract-media ./ -f docx -t markdown -o out.md in.docx
+    > pandoc --extract-media ./ -f docx -t markdown -o out.md in.docx
     ```
-  - E.g.,
-    ```
-    > rm -rf media; pandoc --extract-media ./docs/Tools-PyCharm_figs -f docx -t markdown -o docs/Tools-PyCharm.md /Users/saggese/Downloads/Tools\ -\ PyCharm.docx
-    ```
-    # You need to move the 
-    > mv ./docs/Tools-PyCharm_figs/{media/*,}
-    > rm -rf ./docs/Tools-PyCharm_figs/media
-    ```
+  - The entire conversion flow is in `dev_scripts/convert_gdoc_to_markdown.sh`
 
 ## Gdocs -> Markdown using Chrome Docs to Markdown extension
   - Best for a large document
