@@ -4,6 +4,8 @@ OUT_PREFIX="docs/Tools-PyCharm"
 OUT_FILE="${OUT_PREFIX}.md"
 OUT_FIGS="${OUT_PREFIX}_figs"
 
+git checkout docs/Tools-PyCharm.md
+
 # Convert.
 rm -rf $OUT_FIGS
 cmd="pandoc --extract-media $OUT_FIGS -f docx -t markdown -o $OUT_FILE $IN_FILE"
@@ -14,23 +16,36 @@ mv $OUT_FIGS/{media/*,}
 rm -rf $OUT_FIGS/media
 
 # Clean up.
-# \_ -> _
-perl -pi -e "s/\\\_/_/g" $OUT_FILE
 
-# \@ -> @
-perl -pi -e "s/\\\@/@/g" $OUT_FILE
+#    -   Same as VNC, but instead of sending bitmaps through VNC, a
+#        > \"compressed\" version of the GUI is sent to the local
+#        > computer directly
+perl -pi -e 's/^(\s+)> /\1/g' $OUT_FILE
 
-# -\> -> ->
-perl -pi -e "s/-\>/->/g" $OUT_FILE
+# **\# Connecting via VNC**
+perl -pi -e 's/^\*\*\\#+ /**/g' $OUT_FILE
+
+# Remove the \ before - $ | < > " _ @ ) .
+perl -pi -e 's/\\([-\$|<>"\_\@\)\.])/\1/g' $OUT_FILE
 
 # Let\'s -> Let's
-perl -pi -e "s/\\'/\'/g" $OUT_FILE
+perl -pi -e "s/\\\'/'/g" $OUT_FILE
 
-# \| -> |
-perl -pi -e "s/\\|/\|/g" $OUT_FILE
+# Remove trailing \
+perl -pi -e 's/\\$//g' $OUT_FILE
+
+# \# -> #
+perl -pi -e "s/\\#/\#/g" $OUT_FILE
+
+# "# \# Running PyCharm remotely" -> "# Running PyCharm remotely"
+#perl -pi -e "s/# \\\#+ / /g' $OUT_FILE
+perl -pi -e 's/# \\#+ /# /g' $OUT_FILE
+
+# \`nid\` -> `nid`
+perl -pi -e "s/\\\\\`(.*?)\\\\\`/\`\1\`/g" $OUT_FILE
+
 #
-# \$ -> $
-perl -pi -e 's/\\\$/\$/g' $OUT_FILE
+perl -pi -e "s|$OUT_FIGS/media|$OUT_FIGS|g" $OUT_FILE
 
 # Remove:
 #   ```{=html}
@@ -65,11 +80,4 @@ with open(filename, "w") as file:
 chmod +x $SCRIPT_NAME
 $SCRIPT_NAME $OUT_FILE
 
-# "# \# Running PyCharm remotely" -> "# Running PyCharm remotely"
-perl -pi -e "s/\\\#+ //g" $OUT_FILE
-
-# \`nid\` -> `nid`
-perl -pi -e "s/\\\\\`(.*?)\\\\\`/\`\1\`/g" $OUT_FILE
-
-#
-perl -pi -e "s|$OUT_FIGS/media|$OUT_FIGS|g" $OUT_FILE
+gd docs/Tools-PyCharm.md
