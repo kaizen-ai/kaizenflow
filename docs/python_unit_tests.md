@@ -281,26 +281,20 @@ TOTAL                                    1562    274    252     30    80%
 To open the line coverage, from outside Docker go with your browser to `htmlcov/index.html`. The `htmlcov` is re-written with every coverage run with the `--cov-report html` option. If you move out `index.html` from `htmlcov` dir some html features (e.g., filtering) will not work.
 
 
-
+```
 # On macOS:
-
 > open htmlcov/index.html
+```
 
 
-<p id="gdcalert2" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image1.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert3">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
 
-
-![alt_text](images/image1.png "image_tooltip")
+![alt_text](python_unit_tests_figs/image_1.png)
 
 
 By clicking on a file you can see which lines are not covered
 
 
-
-<p id="gdcalert3" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image2.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert4">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/image2.png "image_tooltip")
+![alt_text](python_unit_tests_figs/image_2.png)
 
 
 
@@ -617,17 +611,7 @@ E.g., to run a single test in the fast test target, instead of the entire regres
     ```
 
 * Note that the indentation matters, since it's a YAML file
-
-
-
-<p id="gdcalert8" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image3.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert9">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/image3.png "image_tooltip")
-
-
-
-
+![alt_text](python_unit_tests_figs/image_3.png)
 * The `-s --dbg` is to show `_LOG.debug` in case you care about that to get more information
 2. Commit the code to your branch (not in master please) since GH runs each branch independently
 3. Kick off manually the fast test through the GH interface
@@ -1007,6 +991,7 @@ Below are the most common ones for basic understanding.
     * Copy-paste is not allowed in unit tests in the same way it's not allowed in production code
 7) In general you want to budget the time to write unit tests
     * E.g., "I'm going to spend 3 hours writing unit tests". This is going to help you focus on what's important to test and force you to use an iterative approach rather than incremental (remember the Monalisa)
+    ![alt_image](python_unit_tests_figs/image_4.png)
     * Write skeleton of unit tests and ask for a review if you are not sure how / what to test
        * Aka "testing plan" 
 
