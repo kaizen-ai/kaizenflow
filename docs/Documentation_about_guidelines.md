@@ -248,10 +248,13 @@
 
     ```
     # \_ -> _
-    perl -pe "s/\\\_/_/g"
+    perl -pi -e "s/\\\_/_/g"
+
+    # "# \# Running PyCharm remotely" -> "# Running PyCharm remotely"
+    perl -pi -e "s/\\\#\+ //g"
 
     # \`nid\` -> `nid`
-    perl -pe "s/\\\\\`(.*?)\\\\\`/'\1'/g" 
+    perl -pi -e "s/\\\\\`(.*?)\\\\\`/'\1'/g" 
     ```
 
   - Run the `linter.py`

@@ -1,4 +1,4 @@
-# \# Running PyCharm remotely
+# Running PyCharm remotely
 
 There are multiple ways to develop on a remote server using PyCharm
 
@@ -72,7 +72,7 @@ There are multiple ways to develop on a remote server using PyCharm
 
         -   You can\'t run / debug remotely
 
-## \## Current situation
+## Current situation
 
 So far we have been using 1) but it seems to require lots of memory and
 CPU and it\'s not really fast
@@ -92,7 +92,7 @@ requires less memory
 -   Note that once we start running tests, notebooks, and so on things
     > will get even worse
 
-# \# How to run our cmamp container directly from PyCharm
+# How to run our cmamp container directly from PyCharm
 
 PyCharm allows to run commands directly inside a container
 
@@ -105,14 +105,14 @@ inside it, but PyCharm can do the same thing
 TODO(gp): \@Juraj Let\'s both try this. There are some notes below about
 it
 
-# \# How to review a PR inside Pycharm
+# How to review a PR inside Pycharm
 
 CTRL + SHIFT + A -\> View Pull Request
 
 ![](./docs/Tools-PyCharm_figs/media/image13.png){width="3.612198162729659in"
 height="4.932292213473316in"}
 
-# \# How to edit remote code
+# How to edit remote code
 
 You need to use a certain local directory (e.g.,
 /Users/saggese/src/commodity_research1) and a remote directory (e.g.,
@@ -154,7 +154,7 @@ pycharm
 
 -   Run application remotely inside Docker
 
-# \# General ssh config
+# General ssh config
 
 -   File \| Settings \| Tools \| SSH Configurations
 
@@ -171,7 +171,7 @@ pycharm
 
     -   Etc.
 
-# \# DB connection via ssh
+# DB connection via ssh
 
 Note: PyCharm Professional DataGrip is used as an example.\
 There are numerous open source alternatives such as
@@ -202,7 +202,7 @@ Config below should apply to them also.
     -   ![](./docs/Tools-PyCharm_figs/media/image11.png){width="2.776042213473316in"
         > height="0.598069772528434in"}
 
-# \# Deployment with remote repository (through sync)
+# Deployment with remote repository (through sync)
 
 Note: Before setting up deployment, pull the cmamp repo on EC2 instance
 and use the same name as on your local machine (example: cmamp1). Always
@@ -235,9 +235,9 @@ the remote repo.
     -   ![](./docs/Tools-PyCharm_figs/media/image5.png){width="5.394192913385827in"
         > height="1.765625546806649in"}
 
-# \# PUDB - remote debugging - ToDo
+# PUDB - remote debugging - ToDo
 
-# \# How to run tests inside a container
+# How to run tests inside a container
 
 [[https://www.jetbrains.com/help/pycharm/using-docker-compose-as-a-remote-interpreter.html#docker-compose-remote]{.underline}](https://www.jetbrains.com/help/pycharm/using-docker-compose-as-a-remote-interpreter.html#docker-compose-remote)
 
@@ -245,9 +245,9 @@ Note that the "start SSH session..." action is available only in PyCharm
 Professional Edition, while the terminal itself is available in both
 Professional and Community editions.
 
-# \# Installing PyCharm Professional
+# Installing PyCharm Professional
 
-***[\## Windows]{.underline}***
+***[Windows]{.underline}***
 
 1\. Download the installer using this link:
 
@@ -257,7 +257,7 @@ Professional and Community editions.
 3. To run PyCharm, find it in the Windows **Start** menu or use the
 desktop shortcut.
 
-***[\## macOS]{.underline}***\
+***[macOS]{.underline}***\
 There are separate disk images for Intel and Apple Silicon processors.\
 \
 1. Download the image, based on your processor using this link:\
@@ -269,9 +269,9 @@ folder.
 3\. Run the PyCharm app from the **Applications** directory, Launchpad,
 or Spotlight.\
 \
-***[\## Linux\
+***[Linux\
 ]{.underline}***\
-**\### Using tar archives\
+**Using tar archives\
 **\
 1. Download the tar archive using this link:
 
@@ -300,7 +300,7 @@ For example,
 \
 \> sh pycharm.sh
 
-**\### Using snap packages**
+**Using snap packages**
 
 1\. For Ubuntu 16.04 and later, you can use snap packages to install
 PyCharm.
@@ -323,7 +323,7 @@ OR\
 \
 \> pycharm-educational
 
-**\# Connecting via PyCharm gateway (SSH)**
+**Connecting via PyCharm gateway (SSH)**
 
 **\
 **The first thing you need to do is [[sign up for a free trial
@@ -354,11 +354,11 @@ Then make sure you have a VPN connection.
 
 9.  Click on **Download and Start IDE.**
 
-**\# Connecting via VNC**
+**Connecting via VNC**
 
 Make sure you have a VPN connection.
 
-**\## Installing VNC**
+**Installing VNC**
 
 Install VNC using this link:
 
