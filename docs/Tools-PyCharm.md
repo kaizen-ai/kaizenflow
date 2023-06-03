@@ -206,7 +206,8 @@ Professional and Community editions.
 
 ## Windows
 
-1. Download the installer using this [link](https://www.jetbrains.com/pycharm/download/#section=windows)
+1. Download the installer using this
+   [link](https://www.jetbrains.com/pycharm/download/#section=windows)
 2. Run the installer and follow the wizard steps.
 3. To run PyCharm, find it in the Windows Start menu or use the desktop
    shortcut.
@@ -220,8 +221,7 @@ There are separate disk images for Intel and Apple Silicon processors.
 
 2. Mount the image and drag the PyCharm app to the Applications folder.
 
-3. Run the PyCharm app from the Applications directory, Launchpad, or
-   Spotlight.
+3. Run the PyCharm app from the Applications directory, Launchpad, or Spotlight.
 
 ## Linux
 
@@ -230,52 +230,51 @@ There are separate disk images for Intel and Apple Silicon processors.
 1. Download the tar archive using this
    [link](https://www.jetbrains.com/pycharm/download/#section=linux)
 
-2. Unpack the pycharm-*.tar.gz file to a different folder, if your current
+2. Unpack the pycharm-\*.tar.gz file to a different folder, if your current
    Download folder doesn't support file execution:
-  ```
-  > tar xzf pycharm-*.tar.gz -C <new_archive_folder>
-  ``
+
+   ```
+   > tar xzf pycharm-*.tar.gz -C <new_archive_folder>
+   ``
 
 The recommended installation location according to the filesystem hierarchy
 standard (FHS) is `/opt`. To install PyCharm into this directory, enter the
 following command:
 
-```
-> sudo tar xzf pycharm-*.tar.gz -C /opt/
-```
+   ```
+   > sudo tar xzf pycharm-\*.tar.gz -C /opt/
+   ```
 
 3. Switch to the **bin** subdirectory:
-  ```
-  > cd <new archive folder>/pycharm-*/bin
-
-  # E.g.,
-  > cd /opt/pycharm-*/bin
-  ```
+   ```
+   > cd <new archive folder>/pycharm-\*/bin
+   # E.g.,
+   > cd /opt/pycharm-\*/bin
+   ```
 
 4. Run pycharm.sh from the bin subdirectory
-
-```
-> sh pycharm.sh
-```
+   ```
+   > sh pycharm.sh
+   ```
 
 **Using snap packages**
 
 1. For Ubuntu 16.04 and later, you can use snap packages to install PyCharm.
 
-  ```
-  > sudo snap install pycharm-professional --classic
-  # or
-  > sudo snap install pycharm-community --classic
-  ```
+    ```
+    > sudo snap install pycharm-professional --classic
+    # or
+    > sudo snap install pycharm-community --classic
+    ```
 
 2. Run in the Terminalu
-  ```
-  > pycharm-professional
-  # or
-  > pycharm-community
-  # or
-  > pycharm-educational
-  ```
+    ```
+    > pycharm-professional
+    # or
+    > pycharm-community
+    # or
+    > pycharm-educational
+    ```
 
 # Connecting via PyCharm gateway (SSH)
 The first thing you need to do is sign up for a free [trial
@@ -287,8 +286,8 @@ Then make sure you have a VPN connection to our VPC
 1.  Click on Connect via SSH
 2.  Into Username: write <<yours_dev_server_username>> Example: richard
 3.  Into Host: write <<dev_server_ip_address>> Example: 172.30.2.136
-4.  Mark the Specify private key check box and locate the private key from
-    the zip which was sent in the onboarding process. Example: crypto.pub
+4.  Mark the Specify private key check box and locate the private key from the
+    zip which was sent in the onboarding process. Example: crypto.pub
 5.  Leave Port: 22 as it is.
 6.  Click on Check Connection and Continue.
 7.  Select IDE version: PyCharm Py 213.6777.x
@@ -313,12 +312,13 @@ Sysadmin has sent you:
 - a key `crypto.pub` that looks like:
 
 ```
+
 -----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn
-NhAAAAAwEAAQAAAYEA0IQsLy1lL3bhPT+43sht2/m9tqZm8sEQrXMAVtfm4ji/LXMr7094
-...
-hakqVTlQ2sr0YTAAAAHnNhZ2dlc2VAZ3BtYWMuZmlvcy1yb3V0ZXIuaG9tZQECAwQ=
------END OPENSSH PRIVATE KEY-----
+NhAAAAAwEAAQAAAYEA0IQsLy1lL3bhPT+43sht2/m9tqZm8sEQrXMAVtfm4ji/LXMr7094 ...
+hakqVTlQ2sr0YTAAAAHnNhZ2dlc2VAZ3BtYWMuZmlvcy1yb3V0ZXIuaG9tZQECAwQ= -----END
+OPENSSH PRIVATE KEY-----
+
 ```
 
 Let's say you are connected via VNC.
@@ -326,7 +326,9 @@ Let's say you are connected via VNC.
 2. Run pycharm.sh using terminal (should be there)
 
 ```
+
 > bash /opt/pycharm-community-2021.2.3/bin/pycharm.sh
+
 ```
 
 # Configuration
@@ -349,3 +351,4 @@ height="4.486111111111111in"}
 - GitHub Copilot
 
 - Tabnine
+```
