@@ -199,16 +199,31 @@
 
 # Convert between Gdocs and Markdown
 
-## Gdocs -> Markdown
+## Gdocs -> Markdown using pandoc
 
-- Approach 1: pandoc
+- Pros
   - Best for a large document
+  - Handle figures
+- Cons
+  - Need to remove formatting
+  - Need to move files
+
+- Process:
   - Download document as docx
   - Convert it to markdown using `pandoc`
     ```
     > rm -rf media; pandoc --extract-media ./ -f docx -t markdown -o out.md in.docx
     ```
-- Approach 2: Docs to Markdown extension
+  - E.g.,
+    ```
+    > rm -rf media; pandoc --extract-media ./docs/Tools-PyCharm_figs -f docx -t markdown -o docs/Tools-PyCharm.md /Users/saggese/Downloads/Tools\ -\ PyCharm.docx
+    ```
+    # You need to move the 
+    > mv ./docs/Tools-PyCharm_figs/{media/*,}
+    > rm -rf ./docs/Tools-PyCharm_figs/media
+    ```
+
+## Gdocs -> Markdown using Chrome Docs to Markdown extension
   - Best for a large document
   - Use the [Docs to Markdown](https://github.com/evbacher/gd2md-html/wiki)
     extension
@@ -221,6 +236,8 @@
     poorly when a document is edited in the suggestion mode
 - Approach 3: on-line conversion
   - [Google-docs-to-markdown/](https://mr0grog.github.io/google-docs-to-markdown/)
+
+## Cleaning up converted markdown
 - Lint the markdown:
   - Replace all bullet points as `-` with `-`, if needed
   - Removing artifacts, e.g., with vim
@@ -228,6 +245,15 @@
     `:%s/\\\#\+ //cg`
     `:%s/\\`\\`\\`$/```/cg`
     ```
+
+    ```
+    # \_ -> _
+    perl -pe "s/\\\_/_/g"
+
+    # \`nid\` -> `nid`
+    perl -pe "s/\\\\\`(.*?)\\\\\`/'\1'/g" 
+    ```
+
   - Run the `linter.py`
     - Do not mix manual edits and linter runs
     - If the linter messes up the text

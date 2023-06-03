@@ -173,7 +173,7 @@ Sorrentum Token
 # Asset representation
 
 TODO(gp): Ideally we want to use a single schema like
-\`Vendor:ExchangeId:Asset\`
+`Vendor:ExchangeId:Asset`
 
 \Asset universe
 
@@ -284,7 +284,7 @@ Our typical approach is:
     -   Data can\'t be easily sliced by asset ids / by time
 
     -   Large footprint (non binary), although it can be compressed
-        (e.g., as \`.csv.gz\` on the fly)
+        (e.g., as `.csv.gz` on the fly)
 
 ```{=html}
 <!-- -->
@@ -352,7 +352,7 @@ with minor or no transformation. Specifically we allow changing the
 representation of the data / format (e.g., removing some totally useless
 redundancy, compressing the data, transforming from strings to
 datetimes). We don't allow changing the semantics or filter columns.
-This is done dynamically in the \`client\` stage
+This is done dynamically in the `client` stage
 
 **Load stage.** The load stage simply saves the data into one of the
 supported backends.
@@ -448,7 +448,7 @@ in different ways to create various ETL pipelines.
     -   Write data into DB
 
         -   One could argue that operations on the DB might not look
-            like \`extract\` but rather \`load\`
+            like `extract` but rather `load`
 
         -   We treat any backend (S3, local, DB) in the same way and the
             DB is just a backend
@@ -502,8 +502,8 @@ during data on-boarding and processing:
     wall-clock:
 
     -   Multiple timestamps associated with different events can be
-        tracked, e.g., \`start_download_timestamp\`,
-        \`end_download_timestamp\`
+        tracked, e.g., `start_download_timestamp`,
+        `end_download_timestamp`
 
     -   No system should depend on data available strictly before the
         knowledge timestamp
@@ -519,9 +519,9 @@ An example of tabular data is below:
 **Data organization**. We keep data together by execution run instead of
 by data element.
 
-E.g., assume we run a flow called \`XYZ_sanity_check\` every day and the
-flow generates three pieces of data, one file \`output.txt\` and two
-directories \`logs\`, \`temp_data\`.
+E.g., assume we run a flow called `XYZ_sanity_check` every day and the
+flow generates three pieces of data, one file `output.txt` and two
+directories `logs`, `temp_data`.
 
 We want to organize the data in a directory structure like:
 
@@ -582,7 +582,7 @@ The reasons why the first data layout is superior are:
 5)  there is redundancy and visual noise, e.g., the same data is
     everywhere
 
-We can tag directory by a run mode (e.g., \`manual\` vs \`scheduled\`)
+We can tag directory by a run mode (e.g., `manual` vs `scheduled`)
 by adding the proper suffix to a date-dir.
 
 **Directory with one file**. Having a directory containing one single
@@ -595,16 +595,16 @@ need it) applies.
 
 **Naming convention**.
 
--   We use \`.\` to separate conceptually different pieces of a file or
+-   We use `.` to separate conceptually different pieces of a file or
     a directory.
 
 -   We don\'t allow white spaces since they are not Linux friendly and
-    need to be escaped. We replace white spaces with \`\_\`.
+    need to be escaped. We replace white spaces with `\_`.
 
--   We prefer not to use \`-\` whenever possible, since they create
+-   We prefer not to use `-` whenever possible, since they create
     issues with Linux auto-completion and need to be escaped.
 
-E.g., \`bulk.airflow.csv\` instead of \`bulk_airflow.csv\`
+E.g., `bulk.airflow.csv` instead of `bulk_airflow.csv`
 
 **Data pipeline classification**. A data pipeline can be any of the
 following:
@@ -682,24 +682,24 @@ The signature schema might be dependent on the backend
 E.g.,
 bulk/airflow/downloaded_1min/csv/ohlcv/futures/universe_v1_0/ccxt/binance/v1_0-20220210/BTC_USD.csv.gz
 
-We use \`-\` to separate pieces of the same attribute (e.g., version and
-snapshot) and \`\_\` as replacements of a space character.
+We use `-` to separate pieces of the same attribute (e.g., version and
+snapshot) and `\_` as replacements of a space character.
 
 The organization of files in directories should reflect the naming
 scheme. We always use one directory per attribute for files (e.g.,
-\`bulk.airflow.csv/\...\` or \`bulk/airflow/csv/\...\`). When the
+`bulk.airflow.csv/\...` or `bulk/airflow/csv/\...`). When the
 metadata is used not to identify a file in the filesystem (e.g., for a
-script or as a tag) then we use \`.\` as separators between the
+script or as a tag) then we use `.` as separators between the
 attributes.
 
 **Data set attributes**. There are several \"attributes\" of a data set:
 
--   \`download_mode\`: the type of downloading mode
+-   `download_mode`: the type of downloading mode
 
 ```{=html}
 <!-- -->
 ```
--   \`bulk\`
+-   `bulk`
 
     -   Aka \"one-shot\", \"one-off\", and improperly \"historical\"
 
@@ -709,7 +709,7 @@ attributes.
         downloads the historical data in bulk before the real-time
         flow is deployed
 
--   \`periodic\`
+-   `periodic`
 
     -   Aka \"scheduled\", \"streaming\", \"continuous\", and improperly
         \"real-time\"
@@ -720,10 +720,10 @@ attributes.
         this data
 
     -   It can contain information about the frequency of downloading
-        (e.g., \`periodic-5mins\`, \`periodic-EOD\`) if it needs to be
+        (e.g., `periodic-5mins`, `periodic-EOD`) if it needs to be
         identified with respect to others
 
--   \`unit_test\`
+-   `unit_test`
 
     -   Data used for unit test (independently if it was downloaded
         automatically or created manually)
@@ -733,48 +733,48 @@ attributes.
 ```{=html}
 <!-- -->
 ```
--   \`downloading_entity\`: different data depending on whom downloaded
+-   `downloading_entity`: different data depending on whom downloaded
     it, e.g.,
 
 ```{=html}
 <!-- -->
 ```
--   \`airflow\`: data was downloaded as part of the automatic flow
+-   `airflow`: data was downloaded as part of the automatic flow
 
--   \`manual\`: data download was triggered manually (e.g., running the
+-   `manual`: data download was triggered manually (e.g., running the
     download script)
 
 ```{=html}
 <!-- -->
 ```
--   \`action_tag\`: information about the downloading, e.g.,
-    \`downloaded_1min\` or \`downloaded_EOD\`
+-   `action_tag`: information about the downloading, e.g.,
+    `downloaded_1min` or `downloaded_EOD`
 
--   \`data_format\`: the format of the data, e.g.,
+-   `data_format`: the format of the data, e.g.,
 
 ```{=html}
 <!-- -->
 ```
--   \`csv\` (always csv.gz, there is no reason for not compressing the
+-   `csv` (always csv.gz, there is no reason for not compressing the
     data)
 
--   \`parquet\`
+-   `parquet`
 
 ```{=html}
 <!-- -->
 ```
--   \`data_type\`: what type of data is stored, e.g.,
+-   `data_type`: what type of data is stored, e.g.,
 
 ```{=html}
 <!-- -->
 ```
--   \`ohlcv\`, \`bid_ask\`, \`market_depth\` (aka \`order_book\`),
-    \`bid_ask_market_data\` (if it includes both), \`trades\`
+-   `ohlcv`, `bid_ask`, `market_depth` (aka `order_book`),
+    `bid_ask_market_data` (if it includes both), `trades`
 
 ```{=html}
 <!-- -->
 ```
--   \`asset_type\`: what is the asset class
+-   `asset_type`: what is the asset class
 
 ```{=html}
 <!-- -->
@@ -784,41 +784,41 @@ attributes.
 ```{=html}
 <!-- -->
 ```
--   \`universe\`: the name of the universe containing the possible
+-   `universe`: the name of the universe containing the possible
     assets
 
     -   Typically the universe can have further characteristics and it
         can be also versioned
 
-    -   E.g., \`universe_v1_7\`
+    -   E.g., `universe_v1_7`
 
--   \`vendor\`: the source that provided the data
+-   `vendor`: the source that provided the data
 
     -   Aka "provider"
 
 ```{=html}
 <!-- -->
 ```
--   E.g., \`ccxt\`, \`crypto_chassis\`, \`cryptodata_download\`,
-    \`talos\`, \`kaiko\`,
+-   E.g., `ccxt`, `crypto_chassis`, `cryptodata_download`,
+    `talos`, `kaiko`,
 
 -   Data can also be downloaded directly from an exchange (e.g.,
-    \`coinbase\`, \`binance\`)
+    `coinbase`, `binance`)
 
--   \`exchange_id\`: which exchange the data refers to
-
-```{=html}
-<!-- -->
-```
--   E.g., \`binance\`
+-   `exchange_id`: which exchange the data refers to
 
 ```{=html}
 <!-- -->
 ```
--   \`version\`: any data set needs to have a version
+-   E.g., `binance`
+
+```{=html}
+<!-- -->
+```
+-   `version`: any data set needs to have a version
 
     -   Version is represented as major, minor, patch according to
-        semantic versioning in the format \`v{a}\_{b}\_{c}\` (e.g.,
+        semantic versioning in the format `v{a}\_{b}\_{c}` (e.g.,
         v1_0_0)
 
     -   If the schema of the data is changed the major version is
@@ -828,15 +828,15 @@ attributes.
         of the data but it\'s not a backward incompatible change, the
         minor version is increased
 
-    -   The same version can also include an optional \`snapshot\` which
+    -   The same version can also include an optional `snapshot` which
         refers to the date when the data was downloaded (e.g., a
-        specific date \`20220210\` to represent when the day on which
+        specific date `20220210` to represent when the day on which
         the historical data was downloaded, i.e., the data was the
         historical data as-of 2022-02-10)
 
-    -   Note that \`snapshot\` and \`version\` have an overlapping but
-        not identical meaning. \`snapshot\` represents when the data
-        was downloaded, while \`version\` refers to the evolution of
+    -   Note that `snapshot` and `version` have an overlapping but
+        not identical meaning. `snapshot` represents when the data
+        was downloaded, while `version` refers to the evolution of
         the semantic of the data and of the downloader. E.g., the same
         data source can be downloaded manually on different days with
         the same downloader (and thus with the same version).
@@ -844,31 +844,31 @@ attributes.
 ```{=html}
 <!-- -->
 ```
--   \`asset_type\`: which cryptocurrency the data refers to:
+-   `asset_type`: which cryptocurrency the data refers to:
 
     -   Typically there is one file per asset (e.g.,
-        \`BTC_USDT.csv.gz\`)
+        `BTC_USDT.csv.gz`)
 
     -   Certain data formats can organize the data in a more complex way
 
         -   E.g., Parquet files save the data in a directory structure
-            \`{asset}/{year}/{month}/data.parquet\`
+            `{asset}/{year}/{month}/data.parquet`
 
 It is possible that a single data set covers multiple values of a
 specific attribute
 
 -   E.g., a data set storing data for both futures and spot, can have
-    \`asset_type=futures_spot\`
+    `asset_type=futures_spot`
 
 Not all the cross-products are possible, e.g.
 
--   there is no data set with \`download_mode=periodic\` scheduled by
-    Airflow and \`downloading_entity=manual\`
+-   there is no data set with `download_mode=periodic` scheduled by
+    Airflow and `downloading_entity=manual`
 
 We organize the schema in terms of access pattern for the modeling and
 analysis stage
 
--   E.g., \`snapshot\` comes before \`vendor\` since in different
+-   E.g., `snapshot` comes before `vendor` since in different
     snapshots we can have different universes
 
 -   E.g., snapshot -\> dataset -\> vendor -\> exchange -\> coin
@@ -960,22 +960,22 @@ are less strict than for the datasets themselves.
 
 -   More emphasis is put into providing a comprehensive docstring
 
--   We can\'t use \`.\` in filenames as attribute separators because
+-   We can\'t use `.` in filenames as attribute separators because
     Python uses them to separate packages in import statements, so we
-    replace them with \`\_\` in scripts
+    replace them with `\_` in scripts
 
 -   The name should capture the most general use-case
 
     -   E.g. if a downloader can download both OHLCV and Bid/Ask data
         for given exchange in a given time interval and save to
         relational DB or S3 we can simply name it
-        \`download_exchange_data.py\`
+        `download_exchange_data.py`
 
 TODO(Juraj): explain that Airflow DAG names follow similar naming
 conventions
 
 Notebooks and scripts follow the naming scheme using a description
-(e.g., \`resampler\`, \`notebook\`) instead of \`downloader\` and a
+(e.g., `resampler`, `notebook`) instead of `downloader` and a
 proper suffix (e.g., ipynb, py, sh)
 
 TODO(gp): The first cell of a notebook contains a description of the
@@ -1098,19 +1098,19 @@ research_cross_comparison.periodic.airflow.downloaded_1sec_1min.all.bid_ask.futu
 
 where:
 
--   \`qa_type\`: the type of the QA flow, e.g.,
+-   `qa_type`: the type of the QA flow, e.g.,
 
-    -   \`production_qa\`: perform a QA flow on historical and real-time
+    -   `production_qa`: perform a QA flow on historical and real-time
         data. The interface should be an IM client and thus it should
         be possible to run QA on both historical and real-time data
 
-    -   \`research_analysis\`: perform a free-form analysis of the data.
-        This can then be the basis for a \`qa\` analysis
+    -   `research_analysis`: perform a free-form analysis of the data.
+        This can then be the basis for a `qa` analysis
 
-    -   \`compare_historical_real_time\`: compare historical and
+    -   `compare_historical_real_time`: compare historical and
         real-time data coming from the same source of data
 
-    -   \`compare_historical_cross_comparison\`: compare historical data
+    -   `compare_historical_cross_comparison`: compare historical data
         from two different data sources
 
 The same rules apply as in downloader and derived dataset for the naming
@@ -1131,7 +1131,7 @@ compare_qa.periodic.1minute-1day.postgres.ohlcv.futures.1minute.ccxt.binance
 since the only difference is in the frequency of the data sampling.
 
 It is possible to use a long format
-\`{dataset_signature1}-vs-{dataset_signature2}\`.
+`{dataset_signature1}-vs-{dataset_signature2}`.
 
 **Examples**.
 
@@ -1210,8 +1210,8 @@ TODO(gp): Add a plot (we are the source of the provider)
 downloaded data set {dataset_signature}
 
 but we encode the information about the content of the newly generated
-data in the \`action_tag\` attribute of the data, e.g.,
-\`resample_1min\` to distinguish it from \`downloaded_1sec\`.
+data in the `action_tag` attribute of the data, e.g.,
+`resample_1min` to distinguish it from `downloaded_1sec`.
 
 We use this approach so that the scheme of the derived data is the same
 as a downloaded data set.
@@ -1341,8 +1341,8 @@ data.parquet
 Typically the by-date format is just a format that we receive data from,
 and we don\'t want to transform data to.
 
-The name of the asset can depend on the data and it can be \`asset\`,
-\`currency_pair\`, \`ticker\`.
+The name of the asset can depend on the data and it can be `asset`,
+`currency_pair`, `ticker`.
 
 By default we use names of columns from the data and we reindex the
 partitioned dataframe on datetime, so saved parquet will all have the
@@ -1399,7 +1399,7 @@ It is a Docker Container containing the following services:
 **Notes for CK devs (TO REMOVE)**
 
 -   It is a separated code base from Sorrentum and it shares only a few
-    base library (e.g., \`helpers\`)
+    base library (e.g., `helpers`)
 
 -   It is a scaled down version of CK production infrastructure (e.g.,
     managed Airflow is replaced by a local Airflow instance)
@@ -1416,7 +1416,7 @@ a common format (e.g., DataFlow format).
 We use a two layer approach to split the complexity / responsibilities
 of reading the data
 
--   \`ImClient\`
+-   `ImClient`
 
     -   Data is downloaded and saved with minimal or no transformation
 
@@ -1436,23 +1436,23 @@ of reading the data
     -   Replayed = serialize the data to disk and read it back,
         implementing also knowledge time as-of-time semantic. This
         behavior is orthogonal to RealTime, Historical, Stitched,
-        i.e., one can replay any \`MarketData\`, including an already
+        i.e., one can replay any `MarketData`, including an already
         replayed one
 
-Data format for \`ImClient\` / \`MarketData\` pipeline
+Data format for `ImClient` / `MarketData` pipeline
 
-\- Both \`ImClient\` and \`MarketData\` have an output format that is
+\- Both `ImClient` and `MarketData` have an output format that is
 enforced by the
 
 base and the derived classes together
 
-\- \`ImClient\` and \`MarketData\` have 3 interfaces each:
+\- `ImClient` and `MarketData` have 3 interfaces each:
 
 1\) an external \"input\" format for a class
 
-\- format of the data as input to a class derived from \`MarketData\` /
+\- format of the data as input to a class derived from `MarketData` /
 
-\`ImClient\`
+`ImClient`
 
 2\) an internal \"input\" format
 
@@ -1461,34 +1461,35 @@ base
 
 class can do its job, i.e., apply common transformations to all
 
-\`MarketData\` / \`ImClient\` classes
+`MarketData` / `ImClient` classes
 
 3\) an external \"output\" format
 
-\- format of the data outputted by any derived class from \`MarketData\`
+\- format of the data outputted by any derived class from `MarketData`
 /
 
-\`ImClient\`
+`ImClient`
 
 \- The chain of transformations is:
 
-\- Class derived from \`ImClient\`
+\- Class derived from `ImClient`
 
 \- The transformations are vendor-specific
 
-\- \`ImClient\`
+\- `ImClient`
 
 \- The transformations are fixed
 
-\- Class derived from \`MarketData\`
+\- Class derived from `MarketData`
 
-\- The transformations are specific to the \`MarketData\` concrete class
+\- The transformations are specific to the `MarketData` concrete class
+:qa
 
-\- \`MarketData\`
+\- `MarketData`
 
 \- The transformations are fixed
 
-\`\`\`plantuml
+``\`plantuml
 
 \[Vendor\] -\> \[DerivedImClient\]
 
@@ -1500,28 +1501,28 @@ class can do its job, i.e., apply common transformations to all
 
 ```
 
-Transformations performed by classes derived from \`ImClient\`
+Transformations performed by classes derived from `ImClient`
 
 \- Whatever is needed to transform the vendor data into the internal
 format accepted
 
-by base \`ImClient\`
+by base `ImClient`
 
-\- Only derived classes \`ImClient\` knows what is exact semantic of the
+\- Only derived classes `ImClient` knows what is exact semantic of the
 vendor-data
 
-Transformations performed by abstract class \`ImClient\`
+Transformations performed by abstract class `ImClient`
 
-\- Implemented by \`ImClient.\_apply_im_normalization()\`
+\- Implemented by `ImClient.\_apply_im_normalization()`
 
-Output format of \`ImClient\`
+Output format of `ImClient`
 
-\- TODO(\*): Check the code in \`ImClient\` since that might be more up
+\- TODO(\*): Check the code in `ImClient` since that might be more up
 to date than
 
 this document and, if needed, update this doc
 
-\- The data in output of a class derived from \`ImClient\` is normalized
+\- The data in output of a class derived from `ImClient` is normalized
 so that:
 
 \- the index:
@@ -1530,7 +1531,7 @@ so that:
 
 \- is the end of the sampling interval
 
-\- is called \`timestamp\`
+\- is called `timestamp`
 
 \- is a tz-aware timestamp in UTC
 
@@ -1538,29 +1539,29 @@ so that:
 
 \- is resampled on a 1 minute grid and filled with NaN values
 
-\- is sorted by index and \`full_symbol\`
+\- is sorted by index and `full_symbol`
 
 \- is guaranteed to have no duplicates
 
 \- belongs to intervals like \[a, b\]
 
-\- has a \`full_symbol\` column with a string representing the canonical
+\- has a `full_symbol` column with a string representing the canonical
 name
 
 of the instrument
 
-\- TODO(gp): We are planning to use an \`ImClient\` data format closer
-to \`MarketData\`
+\- TODO(gp): We are planning to use an `ImClient` data format closer
+to `MarketData`
 
-by using \`start_time\`, \`end_time\`, and \`knowledge_time\` since
+by using `start_time`, `end_time`, and `knowledge_time` since
 these can be
 
 inferred only from the vendor data semantic
 
-Transformations performed by classes derived from \`MarketData\`
+Transformations performed by classes derived from `MarketData`
 
-\- Classes derived from \`MarketData\` do whatever they need to do in
-\`\_get_data()\` to
+\- Classes derived from `MarketData` do whatever they need to do in
+`\_get_data()` to
 
 get the data, but always pass back data that:
 
@@ -1589,30 +1590,30 @@ idx
 
 ```
 
-Transformations performed by abstract class \`MarketData\`
+Transformations performed by abstract class `MarketData`
 
-\- The transformations are done inside \`get_data_for_interval()\`,
+\- The transformations are done inside `get_data_for_interval()`,
 during normalization,
 
 and are:
 
-\- indexing by \`end_time\`
+\- indexing by `end_time`
 
-\- converting \`end_time\`, \`start_time\`, \`knowledge_time\` to the
+\- converting `end_time`, `start_time`, `knowledge_time` to the
 desired timezone
 
-\- sorting by \`end_time\` and \`asset_id\`
+\- sorting by `end_time` and `asset_id`
 
 \- applying column remaps
 
-Output format of \`MarketData\`
+Output format of `MarketData`
 
-\- The base \`MarketData\` normalizes the data by:
+\- The base `MarketData` normalizes the data by:
 
-\- sorting by the columns that correspond to \`end_time\` and
-\`asset_id\`
+\- sorting by the columns that correspond to `end_time` and
+`asset_id`
 
-\- indexing by the column that corresponds to \`end_time\`, so that it
+\- indexing by the column that corresponds to `end_time`, so that it
 is suitable
 
 to DataFlow computation
@@ -1636,38 +1637,38 @@ end_time
 
 Asset ids format
 
-\- \`ImClient\` uses assets encoded as \`full_symbols\` strings (e.g.,
-\`binance::BTC_UTC\`)
+\- `ImClient` uses assets encoded as `full_symbols` strings (e.g.,
+`binance::BTC_UTC`)
 
 \- There is a vendor-specific mapping:
 
-\- from \`full_symbols\` to corresponding data
+\- from `full_symbols` to corresponding data
 
-\- from \`asset_ids\` (ints) to \`full_symbols\` (strings)
+\- from `asset_ids` (ints) to `full_symbols` (strings)
 
-\- If the \`asset_ids\` -\> \`full_symbols\` mapping is provided by the
+\- If the `asset_ids` -\> `full_symbols` mapping is provided by the
 vendor, then we
 
 reuse it
 
-\- Otherwise, we build a mapping hashing \`full_symbols\` strings into
+\- Otherwise, we build a mapping hashing `full_symbols` strings into
 numbers
 
-\- \`MarketData\` and everything downstream uses \`asset_ids\` that are
+\- `MarketData` and everything downstream uses `asset_ids` that are
 encoded as ints
 
 \- This is because we want to use ints and not strings in dataframe
 
-Handling of \`asset_ids\`
+Handling of `asset_ids`
 
-\- Different implementations of \`ImClient\` backing a \`MarketData\`
+\- Different implementations of `ImClient` backing a `MarketData`
 are possible,
 
 e.g.:
 
-\- The caller needs to specify the requested \`asset_ids\`
+\- The caller needs to specify the requested `asset_ids`
 
-\- In this case the universe is provided by \`MarketData\` when calling
+\- In this case the universe is provided by `MarketData` when calling
 the
 
 data access methods
@@ -1675,16 +1676,16 @@ data access methods
 \- The reading backend is initialized with the desired universe of
 assets and
 
-then \`MarketData\` just uses or subsets that universe
+then `MarketData` just uses or subsets that universe
 
 \- For these reasons, assets are selected at 3 different points:
 
-1\) \`MarketData\` allows to specify or subset the assets through
-\`asset_ids\`
+1\) `MarketData` allows to specify or subset the assets through
+`asset_ids`
 
 through the constructor
 
-2\) \`ImClient\` backends specify the assets returned
+2\) `ImClient` backends specify the assets returned
 
 \- E.g., a concrete implementation backed by a DB can stream the data
 for
@@ -1696,29 +1697,29 @@ subset
 
 of assets
 
-\- For each stage, a value of \`None\` means no filtering
+\- For each stage, a value of `None` means no filtering
 
 Handling of filtering by time
 
-\- Clients of \`MarketData\` might want to query data by:
+\- Clients of `MarketData` might want to query data by:
 
 \- using different interval types, namely \`\[a, b), \[a, b\], (a, b\],
 (a, b)\`
 
-\- filtering on either the \`start_ts\` or \`end_ts\`
+\- filtering on either the `start_ts` or `end_ts`
 
 \- For this reason, this class supports all these different ways of
 providing data
 
-\- \`ImClient\` has a fixed semantic of the interval \`\[a, b\]\`
+\- `ImClient` has a fixed semantic of the interval `\[a, b\]`
 
-\- \`MarketData\` adapts the fixed semantic to multiple ones
+\- `MarketData` adapts the fixed semantic to multiple ones
 
 Handling timezone
 
-\- \`ImClient\` always uses UTC as output
+\- `ImClient` always uses UTC as output
 
-\- \`MarketData\` adapts UTC to the desired timezone, as requested by
+\- `MarketData` adapts UTC to the desired timezone, as requested by
 the client
 
 ## Checklist for releasing a new data set
@@ -1843,7 +1844,7 @@ not.
 ## Architecture
 
 In this section we summarize the responsibilities and the high level
-invariants of each component of a \`System\`.
+invariants of each component of a `System`.
 
 The entire System is represented in terms of a Config. Each piece of a
 Config refers to and configures a specific part of the System. Each
@@ -1883,7 +1884,7 @@ or in Parquet format.
 
 ## Config
 
-**Config**. A \`Config\` is a dictionary-like object that represents
+**Config**. A `Config` is a dictionary-like object that represents
 parameters used to build and configure other objects (e.g., a DAG or a
 System).
 
@@ -1933,37 +1934,37 @@ config1 = {
 
 In the example above:
 
--   "resample_1min" is a leaf of the \`config1\`
+-   "resample_1min" is a leaf of the `config1`
 
--   "client_config" is a subconfig of \`config1\`
+-   "client_config" is a subconfig of `config1`
 
 -   "universe" is a subconfig of "client_config"
 
 -   "market_data" config is a subconfig of "config1"
 
 -   "start_ts" and "end_ts" are leaves of "market_data_config" and
-    \`config1\`
+    `config1`
 
 Example of a string representation:
 
 ![](./sorrentum_figs/image14.png){width="6.854779090113736in"
 height="1.2303444881889765in"}
 
--   The same values are annotated with \`marked_as_used\`, \`writer\`
-    and \`val_type\`
+-   The same values are annotated with `marked_as_used`, `writer`
+    and `val_type`
 
-    -   \`marked_as_used\` determines whether the object was used to
+    -   `marked_as_used` determines whether the object was used to
         construct another object
 
-    -   \`writer\` provides a stacktrace of the piece of code which
+    -   `writer` provides a stacktrace of the piece of code which
         marked the object as used
 
-    -   \`val_type\` is a type of the object
+    -   `val_type` is a type of the object
 
 ### Assigning and getting Config items
 
--   Config object has its own implementations of \`\_\_setitem\_\_\` and
-    \`\_\_getitem\_\_\`
+-   Config object has its own implementations of `\_\_setitem\_\_` and
+    `\_\_getitem\_\_`
 
 -   A new value can be set freely like in a python Dict object
 
@@ -1971,9 +1972,9 @@ height="1.2303444881889765in"}
     used
 
 Since Config is used to guarantee that the construction of any objects
-is reproducible, there are 2 methods to \`get\` the value.
+is reproducible, there are 2 methods to `get` the value.
 
--   \`get_and_mark_as_used\` is utilized when a leaf of the config is
+-   `get_and_mark_as_used` is utilized when a leaf of the config is
     used to construct another object
 
     -   When the value is used inside a constructor
@@ -2004,7 +2005,7 @@ Example of marking the leaf as used:
 
 ```
 
--   \`\_\_getitem\_\_\` is used to select items for uses which do not
+-   `\_\_getitem\_\_` is used to select items for uses which do not
     affect the construction of other objects:
 
     -   Logging, debugging and printing
@@ -2053,15 +2054,15 @@ vwap_approach_2.head(3)
 - TODO(gp): Explain this piece of code
 
 **Dag Node**. It is a unit of computation of a DataFlow model. A Dag
-node has inputs, outputs, a unique node id (aka \`nid\`), and a state.
+node has inputs, outputs, a unique node id (aka `nid`), and a state.
 Typically inputs and outputs are dataframes. A Dag node stores a value
-for each output and method name (e.g., methods are \`fit\`, \`predict\`,
-\`save_state\`, \`load_state\`). The DataFlow time slice semantics is
-implemented in terms of \`Pandas\` and \`Sklearn\` libraries.
+for each output and method name (e.g., methods are `fit`, `predict`,
+`save_state`, `load_state`). The DataFlow time slice semantics is
+implemented in terms of `Pandas` and `Sklearn` libraries.
 
 TODO(gp): Add picture.
 
-**DataFlow model**. A DataFlow model (aka \`DAG\`) is a direct acyclic
+**DataFlow model**. A DataFlow model (aka `DAG`) is a direct acyclic
 graph composed of DataFlow nodes. It allows to connect, query the
 structure
 
@@ -2070,20 +2071,20 @@ topological order, propagating values through the Dag nodes.
 
 TODO(gp): Add picture.
 
-**DagConfig**. A \`Dag\` can be built assembling Nodes using a function
+**DagConfig**. A `Dag` can be built assembling Nodes using a function
 representing the connectivity of the nodes and parameters contained in a
 Config (e.g., through a call to a builder
-\`DagBuilder.get_dag(config)\`).
+`DagBuilder.get_dag(config)`).
 
 A DagConfig is hierarchical and contains one subconfig per Dag node. It
-should only include \`Dag\` node configuration parameters, and not
-information about \`Dag\` connectivity, which is specified in the
-\`Dag\` builder part.
+should only include `Dag` node configuration parameters, and not
+information about `Dag` connectivity, which is specified in the
+`Dag` builder part.
 
 ### **Template configs**
 
 -   Are incomplete configs, with some \"mandatory\" parameters
-    unspecified but clearly identified with \`cconfig.DUMMY\` value
+    unspecified but clearly identified with `cconfig.DUMMY` value
 
 -   Have reasonable defaults for specified parameters
 
@@ -2092,44 +2093,44 @@ information about \`Dag\` connectivity, which is specified in the
         have to regenerate old configs)
 
 -   Leave dummy parameters for frequently-varying fields, such as
-    \`ticker\`
+    `ticker`
 
 -   Should be completable and be completed before use
 
--   Should be associated with a \`Dag\` builder
+-   Should be associated with a `Dag` builder
 
 **DagBuilder**. It is an object that builds a DAG and has a
-\`get_config_template()\` and a \`get_dag()\` method to keep the config
+`get_config_template()` and a `get_dag()` method to keep the config
 and the Dag in sync.
 
 The client:
 
--   calls \`get_config_template()\` to receive the template config
+-   calls `get_config_template()` to receive the template config
 
 -   fills / modifies the config
 
--   uses the final config to call \`get_dag(config)\` and get a fully
+-   uses the final config to call `get_dag(config)` and get a fully
     built DAG
 
-A \`DagBuilder\` can be passed to other objects instead of \`Dag\` when
-the template config is fully specified and thus the \`Dag\` can be
+A `DagBuilder` can be passed to other objects instead of `Dag` when
+the template config is fully specified and thus the `Dag` can be
 constructed from it.
 
-**DagRunner**. It is an object that allows to run a \`Dag\`. Different
-implementations of a \`DagRunner\` allow to run a \`Dag\` on data in
+**DagRunner**. It is an object that allows to run a `Dag`. Different
+implementations of a `DagRunner` allow to run a `Dag` on data in
 different ways, e.g.,
 
--   \`FitPredictDagRunner\`: implements two methods \`fit\` /
-    \`predict\` when we want to learn on in-sample data and predict on
+-   `FitPredictDagRunner`: implements two methods `fit` /
+    `predict` when we want to learn on in-sample data and predict on
     out-of-sample data
 
--   \`RollingFitPredictDagRunner\`: allows to fit and predict on some
+-   `RollingFitPredictDagRunner`: allows to fit and predict on some
     data using a rolling pattern
 
--   \`IncrementalDagRunner\`: allows to run one step at a time like in
+-   `IncrementalDagRunner`: allows to run one step at a time like in
     real-time
 
--   \`RealTimeDagRunner\`: allows to run using nodes that have a
+-   `RealTimeDagRunner`: allows to run using nodes that have a
     real-time semantic
 
 ## DataFlow Computation Semantics
@@ -2204,7 +2205,7 @@ E.g., code can be split in multiple functions at level 2) and then
 
 ## Backtest and Experiment
 
-### **\`ConfigBuilder\`**
+### **`ConfigBuilder`**
 
 -   Generates a list of fully formed (not template) configs that can be
     then run
@@ -2212,7 +2213,7 @@ E.g., code can be split in multiple functions at level 2) and then
 -   These configs can correspond to one or multiple Experiments, tiled
     or not (see below)
 
--   Config builder accepts \`BacktestConfig\` as an input
+-   Config builder accepts `BacktestConfig` as an input
 
 ### **Experiment in strict and loose sense**
 
@@ -2233,18 +2234,18 @@ experiment can consists in:
 
 Strictly speaking, we refer to:
 
--   The first one as a \`Backtest\` (which can be executed in terms of
+-   The first one as a `Backtest` (which can be executed in terms of
     tiled configs or not)
 
--   The second and the third as an \`Experiment\`
+-   The second and the third as an `Experiment`
 
 In practice almost any experiment we run consists of one or more
 backtests
 
-### **\`Backtest\`**
+### **`Backtest`**
 
 -   In general a \"backtest\" is simply code that is configured by a
-    \*single\* \`Config\`s
+    \*single\* `Config`s
 
     -   The code contained in a backtest experiment can be anything
 
@@ -2253,50 +2254,50 @@ backtests
 ```
 -   Typically a backtest consists of:
 
-    -   creating a \`Dag\`(e.g., through a \`DagBuilder\`) or a
-        \`System\` based on a config
+    -   creating a `Dag`(e.g., through a `DagBuilder`) or a
+        `System` based on a config
 
-    -   running it over a period of time (e.g., through a \`DagRunner\`)
+    -   running it over a period of time (e.g., through a `DagRunner`)
 
     -   saving the result into a directory
 
-### **\`BacktestConfig\`**
+### **`BacktestConfig`**
 
 -   = a config that has multiple parts configuring both what to run
-    (e.g., a \`Dag\`) and how to run it (e.g., the universe, the
+    (e.g., a `Dag`) and how to run it (e.g., the universe, the
     period of time)
 
 -   It can correspond to multiple configs (e.g., when running a
-    \`TiledBacktest\`)
+    `TiledBacktest`)
 
 -   The common pattern is
-    \`\<universe\>-\<top_n\>.\<trading_period\>.\<time_interval\>\`,
-    e.g., \`ccxt_v4-top3.5T.2019_2022\` where
+    `\<universe\>-\<top_n\>.\<trading_period\>.\<time_interval\>`,
+    e.g., `ccxt_v4-top3.5T.2019_2022` where
 
-    -   \`ccxt_v4\` is a specific version of universe
+    -   `ccxt_v4` is a specific version of universe
 
-    -   \`top3\` is top 3 assets, \`all\` means all assets in the
+    -   `top3` is top 3 assets, `all` means all assets in the
         universe
 
-    -   \`5T\` (5 minutes) is trading period
+    -   `5T` (5 minutes) is trading period
 
-    -   \`2019-2022\` is timeframe, i.e. run the model using data from
+    -   `2019-2022` is timeframe, i.e. run the model using data from
         2019 to 2022
 
-### **\`Experiment\`**
+### **`Experiment`**
 
 -   A set of backtests to run, each of which corresponds to conceptually
-    a single \`Config\`
+    a single `Config`
 
 -   Each backtest can then be executed in a tiled fashion (e.g., by
     expressing it in terms of different configs, one per tile
 
-In order to create the list of fully built configs, both a \`Backtest\`
-and a \`Experiment\` need:
+In order to create the list of fully built configs, both a `Backtest`
+and a `Experiment` need:
 
--   an \`BacktestBuilder\` (what to run in a backtest)
+-   an `BacktestBuilder` (what to run in a backtest)
 
--   a \`ConfigBuilder\` (how to configure)
+-   a `ConfigBuilder` (how to configure)
 
 -   dst_dir (destination dir of the entire experiment list, i.e., the
     one that the user passes to the command)
@@ -2311,8 +2312,8 @@ and a \`Experiment\` need:
 ### **Tiled vs Tile**
 
 -   We call \"tiled\" objects that are split in tiles (e.g.,
-    \`TiledBacktest\`), and \"tile\" objects that refer to tiling
-    (e.g., \`TileConfig\`)
+    `TiledBacktest`), and \"tile\" objects that refer to tiling
+    (e.g., `TileConfig`)
 
 ### **Experiment (list) manager**
 
@@ -2320,11 +2321,11 @@ and a \`Experiment\` need:
 
 -   Python code that runs experiments by:
 
-    -   generating a list of \`Config\` object to run, based on a
-        \`ConfigBuilder\` (i.e., \`run_experiment.py\` and
-        \`run_notebook.py\`)
+    -   generating a list of `Config` object to run, based on a
+        `ConfigBuilder` (i.e., `run_experiment.py` and
+        `run_notebook.py`)
 
-### **\`ExperimentBuilder\`**
+### **`ExperimentBuilder`**
 
 -   TODO(gp): -\> BacktestBuilder
 
@@ -2336,7 +2337,7 @@ and a \`Experiment\` need:
 
     -   Saves the results in a specified directory
 
-### **\`BacktestRunner\`**
+### **`BacktestRunner`**
 
 -   A test case object that:
 
@@ -2557,15 +2558,15 @@ old name, if needed
 
 \- We refer to:
 
-\- The as-of-date for a query as \`as_of_timestamp\`
+\- The as-of-date for a query as `as_of_timestamp`
 
-\- The actual time from \`get_wall_clock_time()\` as
-\`wall_clock_timestamp\`
+\- The actual time from `get_wall_clock_time()` as
+`wall_clock_timestamp`
 
-\- Objects need to use \`get_wall_clock_time()\` to get the \"actual\"
+\- Objects need to use `get_wall_clock_time()` to get the \"actual\"
 time
 
-\- We don\'t want to pass \`wall_clock_timestamp\` because this is
+\- We don\'t want to pass `wall_clock_timestamp` because this is
 dangerous
 
 \- It is difficult to enforce that there is no future peeking when one
@@ -2576,7 +2577,7 @@ object
 
 to double check that the wall clock time is accurate
 
-\- We pass \`wall_clock_timestamp\` only when one \"action\" happens
+\- We pass `wall_clock_timestamp` only when one \"action\" happens
 atomically but
 
 it is split in multiple functions that need to all share this
@@ -2584,21 +2585,21 @@ information.
 
 This approach should be the exception to the rule of calling
 
-\`get_wall_clock_time()\`
+`get_wall_clock_time()`
 
-\- It\'s ok to ask for a view of the world as of \`as_of_timestamp\`,
+\- It\'s ok to ask for a view of the world as of `as_of_timestamp`,
 but then the
 
 queried object needs to check that there is no future peeking by using
 
-\`get_wall_clock_time()\`
+`get_wall_clock_time()`
 
-\- Objects might need to get \`event_loop\`
+\- Objects might need to get `event_loop`
 
 \- TODO(gp): Clean it up so that we pass event loop all the times and
 event
 
-loop has a reference to the global \`get_wall_clock_time()\`
+loop has a reference to the global `get_wall_clock_time()`
 
 \- The Optimizer only thinks in terms of dollar
 
@@ -2606,7 +2607,7 @@ Implementation
 
 process_forecasts()
 
-\- Aka \`place_trades()\`
+\- Aka `place_trades()`
 
 \- Act on the forecasts by:
 
@@ -2618,48 +2619,48 @@ process_forecasts()
 
 \- Submitting the corresponding orders
 
-\- \`optimize_positions()\`
+\- `optimize_positions()`
 
-\- Aka \`optimize_and_update()\`
+\- Aka `optimize_and_update()`
 
 \- Calls the Optimizer
 
-\- \`compute_target_positions()\`
+\- `compute_target_positions()`
 
-\- Aka \`compute_trades()\`
+\- Aka `compute_trades()`
 
-\- \`submit_orders()\`
+\- `submit_orders()`
 
-\- Call \`Broker\`
+\- Call `Broker`
 
-\- \`get_fills()\`
+\- `get_fills()`
 
-\- Call \`Broker\`
-
-\- For IS it is different
-
-\- \`update_portfolio()\`
-
-\- Call \`Portfolio\`
+\- Call `Broker`
 
 \- For IS it is different
 
-\- It should not use any concrete implementation but only \`Abstract\*\`
+\- `update_portfolio()`
+
+\- Call `Portfolio`
+
+\- For IS it is different
+
+\- It should not use any concrete implementation but only `Abstract\*`
 
 Portfolio
 
-\- \`get_holdings()\`
+\- `get_holdings()`
 
 \- Abstract because IS, Mocked, Simulated have a different
 implementations
 
-\- \`mark_to_market()\`
+\- `mark_to_market()`
 
 \- Not abstract
 
-\- -\> \`get_holdings()\`, \`PriceInterface\`
+\- -\> `get_holdings()`, `PriceInterface`
 
-\- \`update_state()\`
+\- `update_state()`
 
 \- Abstract
 
@@ -2670,46 +2671,46 @@ some other dynamic checks)
 
 \- We are trying not to mix static typing and duck typing
 
-\- CASH_ID, \`\_compute_statistics()\` goes in \`Portolio\`
+\- CASH_ID, `\_compute_statistics()` goes in `Portolio`
 
 Broker
 
-\- \`submit_orders()\`
+\- `submit_orders()`
 
-\- \`get_fills()\`
+\- `get_fills()`
 
 Simulation
 
 DataFramePortfolio
 
-\- This is what we call \`Portfolio\`
+\- This is what we call `Portfolio`
 
-\- In RT we can run \`DataFramePortfolio\` and \`ImplementedPortfolio\`
+\- In RT we can run `DataFramePortfolio` and `ImplementedPortfolio`
 in parallel
 
 to collect real and simulated behavior
 
-\- \`get_holdings()\`
+\- `get_holdings()`
 
 \- Store the holdings in a df
 
-\- \`update_state()\`
+\- `update_state()`
 
-\- Update the holdings with fills -\> \`SimulatedBroker.get_fills()\`
+\- Update the holdings with fills -\> `SimulatedBroker.get_fills()`
 
 \- To make the simulated system closer to the implemented
 
 SimulatedBroker
 
-\- \`submit_orders()\`
+\- `submit_orders()`
 
-\- \`get_fills()\`
+\- `get_fills()`
 
 Implemented system
 
 ImplementedPortfolio
 
-\- \`get_holdings()\`
+\- `get_holdings()`
 
 \- Check self-consistency and assumptions
 
@@ -2719,19 +2720,19 @@ error
 
 \- Query the DB and gets you the answer
 
-\- \`update_state()\`
+\- `update_state()`
 
 \- No-op since the portfolio is updated automatically
 
 ImplementedBroker
 
-\- \`submit_orders()\`
+\- `submit_orders()`
 
 \- Save files in the proper location
 
 \- Wait for orders to be accepted
 
-\- \`get_fills\`
+\- `get_fills`
 
 \- No-op since the portfolio is updated automatically
 
@@ -2744,34 +2745,34 @@ a mock
 
 DatabasePortfolio
 
-\- \`get_holdings()\`
+\- `get_holdings()`
 
-\- Same behavior of \`ImplementedPortfolio\` but using \`OmsDb\`
+\- Same behavior of `ImplementedPortfolio` but using `OmsDb`
 
 DatabaseBroker
 
-\- \`submit_orders()\`
+\- `submit_orders()`
 
-\- Same behavior of \`ImplementedBroker\` but using \`OmsDb\`
+\- Same behavior of `ImplementedBroker` but using `OmsDb`
 
 OmsDb
 
-\- \`submitted_orders\` table (mocks S3)
+\- `submitted_orders` table (mocks S3)
 
 \- Contain the submitted orders
 
-\- \`accepted_orders\` table
+\- `accepted_orders` table
 
-\- \`current_position\` table
+\- `current_position` table
 
 OrderProcessor
 
-\- Monitor \`OmsDb.submitted_orders\`
+\- Monitor `OmsDb.submitted_orders`
 
-\- Update \`OmsDb.accepted_orders\`
+\- Update `OmsDb.accepted_orders`
 
-\- Update \`OmsDb.current_position\` using \`Fill\` and updating the
-\`Portfolio\`
+\- Update `OmsDb.current_position` using `Fill` and updating the
+`Portfolio`
 
 ## 
 
