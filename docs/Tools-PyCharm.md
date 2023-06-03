@@ -1,4 +1,4 @@
-# Running PyCharm remotely
+# \# Running PyCharm remotely
 
 There are multiple ways to develop on a remote server using PyCharm
 
@@ -72,7 +72,7 @@ There are multiple ways to develop on a remote server using PyCharm
 
         -   You can\'t run / debug remotely
 
-## Current situation
+## \## Current situation
 
 So far we have been using 1) but it seems to require lots of memory and
 CPU and it\'s not really fast
@@ -81,9 +81,9 @@ CPU and it\'s not really fast
 
 We want to try with 3)
 
-TODO(gp): \@Juraj pls a short tutorial on how to install
+TODO(gp): @Juraj pls a short tutorial on how to install
 
-TODO(gp): \@Juraj understand if it works, if it\'s fast, and if it
+TODO(gp): @Juraj understand if it works, if it\'s fast, and if it
 requires less memory
 
 -   In other terms it\'s just PyCharm a memory hog or the PyCharm + VNC
@@ -92,7 +92,7 @@ requires less memory
 -   Note that once we start running tests, notebooks, and so on things
     > will get even worse
 
-# How to run our cmamp container directly from PyCharm
+# \# How to run our cmamp container directly from PyCharm
 
 PyCharm allows to run commands directly inside a container
 
@@ -102,17 +102,17 @@ See
 In fact when we do \`i docker_bash\` we launch a container and run bash
 inside it, but PyCharm can do the same thing
 
-TODO(gp): \@Juraj Let\'s both try this. There are some notes below about
+TODO(gp): @Juraj Let\'s both try this. There are some notes below about
 it
 
-# How to review a PR inside Pycharm
+# \# How to review a PR inside Pycharm
 
 CTRL + SHIFT + A -\> View Pull Request
 
-![](./docs/Tools-PyCharm_figs/media/image13.png){width="3.612198162729659in"
+![](docs/Tools-PyCharm_figs/media/image13.png){width="3.612198162729659in"
 height="4.932292213473316in"}
 
-# How to edit remote code
+# \# How to edit remote code
 
 You need to use a certain local directory (e.g.,
 /Users/saggese/src/commodity_research1) and a remote directory (e.g.,
@@ -123,20 +123,20 @@ AmpTask1112_Audit_amp_Docker_system_03)
 
 Set-up Deployment
 
-![](./docs/Tools-PyCharm_figs/media/image3.png){width="4.810558836395451in"
+![](docs/Tools-PyCharm_figs/media/image3.png){width="4.810558836395451in"
 height="3.51540791776028in"}
 
-![](./docs/Tools-PyCharm_figs/media/image10.png){width="3.9114588801399823in"
+![](docs/Tools-PyCharm_figs/media/image10.png){width="3.9114588801399823in"
 height="1.6807655293088364in"}
 
 The deployment options are
 
-![](./docs/Tools-PyCharm_figs/media/image9.png){width="3.123700787401575in"
+![](docs/Tools-PyCharm_figs/media/image9.png){width="3.123700787401575in"
 height="2.78830271216098in"}
 
 You can see what file is changed in the file transfer window:
 
-![](./docs/Tools-PyCharm_figs/media/image14.png){width="6.5in"
+![](docs/Tools-PyCharm_figs/media/image14.png){width="6.5in"
 height="1.2083333333333333in"}
 
 pycharm
@@ -154,11 +154,11 @@ pycharm
 
 -   Run application remotely inside Docker
 
-# General ssh config
+# \# General ssh config
 
 -   File \| Settings \| Tools \| SSH Configurations
 
-    -   ![](./docs/Tools-PyCharm_figs/media/image7.png){width="3.802863079615048in"
+    -   ![](docs/Tools-PyCharm_figs/media/image7.png){width="3.802863079615048in"
         > height="1.4626399825021872in"}
 
 -   Once setup, ssh config can be used for all tools in PyCharm.
@@ -171,7 +171,7 @@ pycharm
 
     -   Etc.
 
-# DB connection via ssh
+# \# DB connection via ssh
 
 Note: PyCharm Professional DataGrip is used as an example.\
 There are numerous open source alternatives such as
@@ -181,28 +181,28 @@ Config below should apply to them also.
 -   To add a new data source in DataGrip, go to the database section in
     > the lower left corner.
 
-    -   ![](./docs/Tools-PyCharm_figs/media/image4.png){width="2.7734372265966756in"
+    -   ![](docs/Tools-PyCharm_figs/media/image4.png){width="2.7734372265966756in"
         > height="2.7734372265966756in"}
 
 -   Then pick your desired data source from the dropdown in the upper
     > right corner.
 
-    -   ![](./docs/Tools-PyCharm_figs/media/image6.png){width="4.164062773403325in"
+    -   ![](docs/Tools-PyCharm_figs/media/image6.png){width="4.164062773403325in"
         > height="2.028646106736658in"}
 
 -   You will be presented with a dummy config that needs to be replaced
     > with proper data as shown below.
 
-    -   ![](./docs/Tools-PyCharm_figs/media/image8.png){width="4.158922790901137in"
+    -   ![](docs/Tools-PyCharm_figs/media/image8.png){width="4.158922790901137in"
         > height="3.0320844269466316in"}
 
 -   Before that is done, be sure that proper ssh info is added in
     > SSH/SSL section.
 
-    -   ![](./docs/Tools-PyCharm_figs/media/image11.png){width="2.776042213473316in"
+    -   ![](docs/Tools-PyCharm_figs/media/image11.png){width="2.776042213473316in"
         > height="0.598069772528434in"}
 
-# Deployment with remote repository (through sync)
+# \# Deployment with remote repository (through sync)
 
 Note: Before setting up deployment, pull the cmamp repo on EC2 instance
 and use the same name as on your local machine (example: cmamp1). Always
@@ -212,15 +212,15 @@ the remote repo.
 
 -   Tools \| Deployment \| Configuration
 
-    -   ![](./docs/Tools-PyCharm_figs/media/image1.png){width="4.893396762904637in"
+    -   ![](docs/Tools-PyCharm_figs/media/image1.png){width="4.893396762904637in"
         > height="2.0781255468066493in"}
 
-    -   ![](./docs/Tools-PyCharm_figs/media/image12.png){width="4.838542213473316in"
+    -   ![](docs/Tools-PyCharm_figs/media/image12.png){width="4.838542213473316in"
         > height="1.1398490813648294in"}
 
 -   Tools \| Deployment \| Options
 
-    -   ![](./docs/Tools-PyCharm_figs/media/image2.png){width="4.671411854768154in"
+    -   ![](docs/Tools-PyCharm_figs/media/image2.png){width="4.671411854768154in"
         > height="3.2864588801399823in"}
 
         -   Uncheck "Skip external changes" and check "Delete remote
@@ -232,12 +232,12 @@ the remote repo.
 
 -   Tools \| Deployment \| Browse Remote Host
 
-    -   ![](./docs/Tools-PyCharm_figs/media/image5.png){width="5.394192913385827in"
+    -   ![](docs/Tools-PyCharm_figs/media/image5.png){width="5.394192913385827in"
         > height="1.765625546806649in"}
 
-# PUDB - remote debugging - ToDo
+# \# PUDB - remote debugging - ToDo
 
-# How to run tests inside a container
+# \# How to run tests inside a container
 
 [[https://www.jetbrains.com/help/pycharm/using-docker-compose-as-a-remote-interpreter.html#docker-compose-remote]{.underline}](https://www.jetbrains.com/help/pycharm/using-docker-compose-as-a-remote-interpreter.html#docker-compose-remote)
 
@@ -245,9 +245,9 @@ Note that the "start SSH session..." action is available only in PyCharm
 Professional Edition, while the terminal itself is available in both
 Professional and Community editions.
 
-# Installing PyCharm Professional
+# \# Installing PyCharm Professional
 
-***[Windows]{.underline}***
+***[\## Windows]{.underline}***
 
 1\. Download the installer using this link:
 
@@ -257,7 +257,7 @@ Professional and Community editions.
 3. To run PyCharm, find it in the Windows **Start** menu or use the
 desktop shortcut.
 
-***[macOS]{.underline}***\
+***[\## macOS]{.underline}***\
 There are separate disk images for Intel and Apple Silicon processors.\
 \
 1. Download the image, based on your processor using this link:\
@@ -269,9 +269,9 @@ folder.
 3\. Run the PyCharm app from the **Applications** directory, Launchpad,
 or Spotlight.\
 \
-***[Linux\
+***[\## Linux\
 ]{.underline}***\
-**Using tar archives\
+**\### Using tar archives\
 **\
 1. Download the tar archive using this link:
 
@@ -300,7 +300,7 @@ For example,
 \
 \> sh pycharm.sh
 
-**Using snap packages**
+**\### Using snap packages**
 
 1\. For Ubuntu 16.04 and later, you can use snap packages to install
 PyCharm.
@@ -323,7 +323,7 @@ OR\
 \
 \> pycharm-educational
 
-**Connecting via PyCharm gateway (SSH)**
+**\# Connecting via PyCharm gateway (SSH)**
 
 **\
 **The first thing you need to do is [[sign up for a free trial
@@ -354,11 +354,11 @@ Then make sure you have a VPN connection.
 
 9.  Click on **Download and Start IDE.**
 
-**Connecting via VNC**
+**\# Connecting via VNC**
 
 Make sure you have a VPN connection.
 
-**Installing VNC**
+**\## Installing VNC**
 
 Install VNC using this link:
 
@@ -371,7 +371,7 @@ Sysadmin has sent you:
 ```{=html}
 <!-- -->
 ```
--   your username \`\$USER\`
+-   your username \`$USER\`
 
 -   a key \`crypto.pub\` that looks like:
 
@@ -400,7 +400,7 @@ Let\'s say you are connected via VNC.\
 
 Set the reflow to reindent
 
-![](./docs/Tools-PyCharm_figs/media/image15.png){width="6.5in"
+![](docs/Tools-PyCharm_figs/media/image15.png){width="6.5in"
 height="4.486111111111111in"}
 
 ## Plug-ins
