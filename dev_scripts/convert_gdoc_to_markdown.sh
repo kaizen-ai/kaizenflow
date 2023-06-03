@@ -32,35 +32,38 @@ perl -pi -e "s/\\|/\|/g" $OUT_FILE
 # \$ -> $
 perl -pi -e 's/\\\$/\$/g' $OUT_FILE
 
+# Remove:
+#   ```{=html}
+#   <!-- -->
+#   ```
 #perl -pi -e 's/\s*```{=html}\n\s*<!-- -->\n\s*```/mg' $OUT_FILE
 
+# Create a Python script without no substitution.
 SCRIPT_NAME="/tmp/replace.py"
-cat <<EOF >$SCRIPT_NAME
-#! /usr/bin/env python
+cat <<< '#! /usr/bin/env python
 
 import re
 import sys
 
 filename = sys.argv[1]
 # Read the entire file.
-with open(filename, 'r') as file:
+with open(filename, "r") as file:
     lines = file.readlines()
-lines = "\n".join(lines)
+lines = "".join(lines)
 
-regex = r"\s*```{=html}\n\s*<!-- -->\n\s*```"
+regex = r"^\s*```{=html}\n\s*<!-- -->\n\s*```\n"
 
 subst = ""
 
 # You can manually specify the number of replacements by changing the 4th argument
-result = re.sub(regex, subst, lines, 1, re.MULTILINE)
+lines = re.sub(regex, subst, lines, 0, re.MULTILINE)
 
 # Write the modified content back to the file
-lines = lines.split("\n")
-with open(filename, 'w') as file:
-file.write(lines)
-EOF
+with open(filename, "w") as file:
+    file.write(lines)
+' >$SCRIPT_NAME
 chmod +x $SCRIPT_NAME
-
+$SCRIPT_NAME $OUT_FILE
 
 # "# \# Running PyCharm remotely" -> "# Running PyCharm remotely"
 perl -pi -e "s/\\\#+ //g" $OUT_FILE

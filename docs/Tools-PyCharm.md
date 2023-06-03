@@ -142,10 +142,6 @@ height="1.2083333333333333in"}
 pycharm
 
 -   Develop on one node, sync, run on the server
-
-```{=html}
-<!-- -->
-```
 -   Run local application with venv
 
 -   Database
@@ -367,10 +363,6 @@ Install VNC using this link:
 Sysadmin has sent you:
 
 -   \`os_password.txt\`
-
-```{=html}
-<!-- -->
-```
 -   your username \`$USER\`
 
 -   a key \`crypto.pub\` that looks like:
@@ -411,10 +403,6 @@ height="4.486111111111111in"}
 
 -   Wrap-to-column:
     > [[https://plugins.jetbrains.com/plugin/7234-wrap-to-column]{.underline}](https://plugins.jetbrains.com/plugin/7234-wrap-to-column)
-
-```{=html}
-<!-- -->
-```
 -   GitHub Copilot
 
 -   Tabnine
