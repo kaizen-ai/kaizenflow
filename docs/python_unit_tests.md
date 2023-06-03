@@ -611,6 +611,7 @@ E.g., to run a single test in the fast test target, instead of the entire regres
     ```
 
 * Note that the indentation matters, since it's a YAML file
+
 ![alt_text](python_unit_tests_figs/image_3.png)
 * The `-s --dbg` is to show `_LOG.debug` in case you care about that to get more information
 2. Commit the code to your branch (not in master please) since GH runs each branch independently
@@ -991,7 +992,8 @@ Below are the most common ones for basic understanding.
     * Copy-paste is not allowed in unit tests in the same way it's not allowed in production code
 7) In general you want to budget the time to write unit tests
     * E.g., "I'm going to spend 3 hours writing unit tests". This is going to help you focus on what's important to test and force you to use an iterative approach rather than incremental (remember the Monalisa)
-    ![alt_image](python_unit_tests_figs/image_4.png)
+
+      ![alt_image](python_unit_tests_figs/image_4.png)
     * Write skeleton of unit tests and ask for a review if you are not sure how / what to test
        * Aka "testing plan" 
 
