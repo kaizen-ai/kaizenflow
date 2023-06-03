@@ -4,22 +4,24 @@ OUT_PREFIX="docs/Tools-PyCharm"
 OUT_FILE="${OUT_PREFIX}.md"
 OUT_FIGS="${OUT_PREFIX}_figs"
 
-git $OUT_FILE
+git checkout -- $OUT_FILE
 
-# Convert.
-rm -rf $OUT_FIGS
-cmd="pandoc --extract-media $OUT_FIGS -f docx -t markdown -o $OUT_FILE $IN_FILE"
-eval $cmd
+# Convert from docx to Markdown.
+if [[ 1 == 0 ]]; then
+    rm -rf $OUT_FIGS
+    cmd="pandoc --extract-media $OUT_FIGS -f docx -t markdown -o $OUT_FILE $IN_FILE"
+    eval $cmd
 
-# Move the media.
-mv $OUT_FIGS/{media/*,}
-rm -rf $OUT_FIGS/media
+    # Move the media.
+    mv $OUT_FIGS/{media/*,}
+    rm -rf $OUT_FIGS/media
+fi;
 
-# Clean up.
+# Clean up artifacts.
 
-#    -   Same as VNC, but instead of sending bitmaps through VNC, a
-#        > \"compressed\" version of the GUI is sent to the local
-#        > computer directly
+# - Same as VNC, but instead of sending bitmaps through VNC, a
+#   > \"compressed\" version of the GUI is sent to the local
+#   > computer directly
 perl -pi -e 's/^(\s+)> /\1/g' $OUT_FILE
 
 # **\# Connecting via VNC**
@@ -43,8 +45,11 @@ perl -pi -e 's/# \\#+ /# /g' $OUT_FILE
 # \`nid\` -> `nid`
 perl -pi -e "s/\\\\\`(.*?)\\\\\`/\`\1\`/g" $OUT_FILE
 
-#
+# Fix the links.
 perl -pi -e "s|$OUT_FIGS/media|$OUT_FIGS|g" $OUT_FILE
+
+# [[https://plugins.jetbrains.com/plugin/7234-wrap-to-column]{.underline}](https://plugins.jetbrains.com/plugin/7234-wrap-to-column)
+perl -pi -e 's/\[\[(._)\](\{\.underline\})?]\((._)\)/[\1](\3)/g' $OUT_FILE
 
 # Remove:
 #   ```{=html}
@@ -78,5 +83,7 @@ with open(filename, "w") as file:
 ' >$SCRIPT_NAME
 chmod +x $SCRIPT_NAME
 $SCRIPT_NAME $OUT_FILE
+
+dev_scripts/lint_md.sh $OUT_FILE
 
 gd $OUT_FILE

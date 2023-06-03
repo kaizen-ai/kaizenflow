@@ -35,7 +35,7 @@ There are multiple ways to develop on a remote server using PyCharm
 
 4.  PyCharm Remote Set-up
     - This is described below in
-      [[PyCharm - Advanced tip and tricks]{.underline}](https://docs.google.com/document/d/1atNNMnmT6ZdIPSEtDaWZiBkL_fo5BHjPHy06He6zEZU/edit#heading=h.e0xo9fe70sks)
+      [PyCharm - Advanced tip and tricks](https://docs.google.com/document/d/1atNNMnmT6ZdIPSEtDaWZiBkL_fo5BHjPHy06He6zEZU/edit#heading=h.e0xo9fe70sks)
       - Edit locally and then PyCharm moves the files back and forth
     - Pros
       - Only requires ssh
@@ -63,7 +63,7 @@ memory
 PyCharm allows to run commands directly inside a container
 
 See
-[[https://www.jetbrains.com/help/pycharm/using-docker-as-a-remote-interpreter.html]{.underline}](https://www.jetbrains.com/help/pycharm/using-docker-as-a-remote-interpreter.html)
+[https://www.jetbrains.com/help/pycharm/using-docker-as-a-remote-interpreter.html](https://www.jetbrains.com/help/pycharm/using-docker-as-a-remote-interpreter.html)
 
 In fact when we do `i docker_bash` we launch a container and run bash inside it,
 but PyCharm can do the same thing
@@ -135,7 +135,7 @@ pycharm
 # DB connection via ssh
 
 Note: PyCharm Professional DataGrip is used as an example. There are numerous
-open source alternatives such as [[Beaver]{.underline}](https://dbeaver.io/).
+open source alternatives such as [Beaver](https://dbeaver.io/).
 Config below should apply to them also.
 
 - To add a new data source in DataGrip, go to the database section in the lower
@@ -196,7 +196,7 @@ Reload All From Disk . This will upload changes to the remote repo.
 
 # How to run tests inside a container
 
-[[https://www.jetbrains.com/help/pycharm/using-docker-compose-as-a-remote-interpreter.html#docker-compose-remote]{.underline}](https://www.jetbrains.com/help/pycharm/using-docker-compose-as-a-remote-interpreter.html#docker-compose-remote)
+[https://www.jetbrains.com/help/pycharm/using-docker-compose-as-a-remote-interpreter.html#docker-compose-remote](https://www.jetbrains.com/help/pycharm/using-docker-compose-as-a-remote-interpreter.html#docker-compose-remote)
 
 Note that the "start SSH session..." action is available only in PyCharm
 Professional Edition, while the terminal itself is available in both
@@ -208,7 +208,7 @@ Professional and Community editions.
 
 1. Download the installer using this link:
 
-[[https://www.jetbrains.com/pycharm/download/#section=windows]{.underline}](https://www.jetbrains.com/pycharm/download/#section=windows)
+[https://www.jetbrains.com/pycharm/download/#section=windows](https://www.jetbrains.com/pycharm/download/#section=windows)
 
 2. Run the installer and follow the wizard steps.
 3. To run PyCharm, find it in the Windows **Start** menu or use the desktop
@@ -218,7 +218,7 @@ Professional and Community editions.
 Silicon processors.
 
 1. Download the image, based on your processor using this link:
-   [[https://www.jetbrains.com/pycharm/download/#section=mac]{.underline}](https://www.jetbrains.com/pycharm/download/#section=mac)
+   [https://www.jetbrains.com/pycharm/download/#section=mac](https://www.jetbrains.com/pycharm/download/#section=mac)
 
 2. Mount the image and drag the **PyCharm** app to the **Applications** folder.
 
@@ -229,7 +229,7 @@ Silicon processors.
 
 1. Download the tar archive using this link:
 
-[[https://www.jetbrains.com/pycharm/download/#section=linux]{.underline}](https://www.jetbrains.com/pycharm/download/#section=linux)
+[https://www.jetbrains.com/pycharm/download/#section=linux](https://www.jetbrains.com/pycharm/download/#section=linux)
 
 2. Unpack the **pycharm-\*.tar.gz** file to a different folder, if your current
    **Download** folder doesn't support file execution:
@@ -279,7 +279,7 @@ OR
 **Connecting via PyCharm gateway (SSH)**
 
 \*\* \*\*The first thing you need to do is
-[[sign up for a free trial license]{.underline}](https://www.jetbrains.com/ru-ru/remote-development/gateway/)
+[sign up for a free trial license](https://www.jetbrains.com/ru-ru/remote-development/gateway/)
 or use it. If it exists.
 
 Then make sure you have a VPN connection.
@@ -311,7 +311,7 @@ Make sure you have a VPN connection.
 
 Install VNC using this link:
 
-[[https://www.realvnc.com/en/connect/download/viewer/windows/]{.underline}](https://www.realvnc.com/en/connect/download/viewer/windows/)
+[https://www.realvnc.com/en/connect/download/viewer/windows/](https://www.realvnc.com/en/connect/download/viewer/windows/)
 
 Sysadmin has sent you:
 
@@ -356,7 +356,7 @@ height="4.486111111111111in"}
 - Grazie
 
 - Wrap-to-column:
-  [[https://plugins.jetbrains.com/plugin/7234-wrap-to-column]{.underline}](https://plugins.jetbrains.com/plugin/7234-wrap-to-column)
+  [https://plugins.jetbrains.com/plugin/7234-wrap-to-column](https://plugins.jetbrains.com/plugin/7234-wrap-to-column)
 - GitHub Copilot
 
 - Tabnine
