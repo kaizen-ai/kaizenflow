@@ -233,23 +233,14 @@
 ## Cleaning up converted markdown
 - Lint the markdown:
   - Replace all bullet points as `-` with `-`, if needed
-  - Removing artifacts, e.g., with vim
+  - Removing artifacts manually or using the script
     ```
-    `:%s/\\\#\+ //cg`
-    `:%s/\\`\\`\\`$/```/cg`
+    > dev_scripts/convert_gdoc_to_markdown.sh
     ```
-
+  - Remove empty lines manually
     ```
-    # \_ -> _
-    perl -pi -e "s/\\\_/_/g"
-
-    # "# \# Running PyCharm remotely" -> "# Running PyCharm remotely"
-    perl -pi -e "s/\\\#\+ //g"
-
-    # \`nid\` -> `nid`
-    perl -pi -e "s/\\\\\`(.*?)\\\\\`/'\1'/g" 
+    :'<,'>! perl -ne 'print if /\S/'
     ```
-
   - Run the `linter.py`
     - Do not mix manual edits and linter runs
     - If the linter messes up the text

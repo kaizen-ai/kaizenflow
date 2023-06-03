@@ -4,7 +4,7 @@ OUT_PREFIX="docs/Tools-PyCharm"
 OUT_FILE="${OUT_PREFIX}.md"
 OUT_FIGS="${OUT_PREFIX}_figs"
 
-git checkout docs/Tools-PyCharm.md
+git $OUT_FILE
 
 # Convert.
 rm -rf $OUT_FIGS
@@ -38,7 +38,6 @@ perl -pi -e 's/\\$//g' $OUT_FILE
 perl -pi -e "s/\\#/\#/g" $OUT_FILE
 
 # "# \# Running PyCharm remotely" -> "# Running PyCharm remotely"
-#perl -pi -e "s/# \\\#+ / /g' $OUT_FILE
 perl -pi -e 's/# \\#+ /# /g' $OUT_FILE
 
 # \`nid\` -> `nid`
@@ -80,4 +79,4 @@ with open(filename, "w") as file:
 chmod +x $SCRIPT_NAME
 $SCRIPT_NAME $OUT_FILE
 
-gd docs/Tools-PyCharm.md
+gd $OUT_FILE
