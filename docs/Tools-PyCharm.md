@@ -3,16 +3,18 @@
 There are multiple ways to develop on a remote server using PyCharm
 
 1.  VNC approach
+
     - PyCharm runs locally on the server using a "virtual screen"
     - Your laptop interacts with a VNC server to get the GUI locally
     - Pros:
       - Everything works
-      - You can run anything like you are local on the server, since you are
-        in practice just using a virtual screen
+      - You can run anything like you are local on the server, since you are in
+        practice just using a virtual screen
     - Cons:
       - Without enough bandwidth it's slow and not snappy enough
 
 2.  X11 approach
+
     - Same as VNC, but instead of sending bitmaps through VNC, a "compressed"
       version of the GUI is sent to the local computer directly
     - Pros:
@@ -24,6 +26,7 @@ There are multiple ways to develop on a remote server using PyCharm
       - One needs to tunnel X11 traffic, set things up, and so on
 
 3.  PyCharm Gateway
+
     - New client-server architecture for PyCharm
       - A "headless" PyCharm runs on the server
       - A GUI client PyCharm runs on your laptop
@@ -44,19 +47,16 @@ There are multiple ways to develop on a remote server using PyCharm
 
 ## Current situation
 
-So far we have been using 1) but it seems to require lots of memory and CPU and
-it's not really fast
-2. works but it's a pain to set-up
+Approach 1) seems to require lots of memory and CPU and it's not really fast.
+
+Approach 2) works but it's a pain to set-up and slow.
+
 We want to try with 3)
 
 - TODO(gp): @Juraj pls a short tutorial on how to install
 
 - TODO(gp): @Juraj understand if it works, if it's fast, and if it requires less
-memory
-
-- In other terms it's just PyCharm a memory hog or the PyCharm + VNC combo?
-- Note that once we start running tests, notebooks, and so on things will get
-  even worse
+  memory
 
 # How to run our cmamp container directly from PyCharm
 
@@ -135,8 +135,8 @@ pycharm
 # DB connection via ssh
 
 Note: PyCharm Professional DataGrip is used as an example. There are numerous
-open source alternatives such as [Beaver](https://dbeaver.io/).
-Config below should apply to them also.
+open source alternatives such as [Beaver](https://dbeaver.io/). Config below
+should apply to them also.
 
 - To add a new data source in DataGrip, go to the database section in the lower
   left corner.
@@ -204,106 +204,98 @@ Professional and Community editions.
 
 # Installing PyCharm Professional
 
-**_[\## Windows]{.underline}_**
+## Windows
 
-1. Download the installer using this link:
-
-[https://www.jetbrains.com/pycharm/download/#section=windows](https://www.jetbrains.com/pycharm/download/#section=windows)
-
+1. Download the installer using this [link](https://www.jetbrains.com/pycharm/download/#section=windows)
 2. Run the installer and follow the wizard steps.
-3. To run PyCharm, find it in the Windows **Start** menu or use the desktop
+3. To run PyCharm, find it in the Windows Start menu or use the desktop
    shortcut.
 
-**_[\## macOS]{.underline}_** There are separate disk images for Intel and Apple
-Silicon processors.
+## macOS
 
-1. Download the image, based on your processor using this link:
-   [https://www.jetbrains.com/pycharm/download/#section=mac](https://www.jetbrains.com/pycharm/download/#section=mac)
+There are separate disk images for Intel and Apple Silicon processors.
 
-2. Mount the image and drag the **PyCharm** app to the **Applications** folder.
+1. Download the image, based on your processor using this
+   [link](https://www.jetbrains.com/pycharm/download/#section=mac)
 
-3. Run the PyCharm app from the **Applications** directory, Launchpad, or
+2. Mount the image and drag the PyCharm app to the Applications folder.
+
+3. Run the PyCharm app from the Applications directory, Launchpad, or
    Spotlight.
 
-**_[\## Linux ]{.underline}_** **Using tar archives **
+## Linux
 
-1. Download the tar archive using this link:
+**Using tar archives **
 
-[https://www.jetbrains.com/pycharm/download/#section=linux](https://www.jetbrains.com/pycharm/download/#section=linux)
+1. Download the tar archive using this
+   [link](https://www.jetbrains.com/pycharm/download/#section=linux)
 
-2. Unpack the **pycharm-\*.tar.gz** file to a different folder, if your current
-   **Download** folder doesn't support file execution:
-
-> tar xzf pycharm-\*.tar.gz -C <new_archive_folder>
+2. Unpack the pycharm-*.tar.gz file to a different folder, if your current
+   Download folder doesn't support file execution:
+  ```
+  > tar xzf pycharm-*.tar.gz -C <new_archive_folder>
+  ``
 
 The recommended installation location according to the filesystem hierarchy
-standard (FHS) is **/opt**. To install PyCharm into this directory, enter the
+standard (FHS) is `/opt`. To install PyCharm into this directory, enter the
 following command:
 
-> sudo tar xzf pycharm-\*.tar.gz -C /opt/
+```
+> sudo tar xzf pycharm-*.tar.gz -C /opt/
+```
 
 3. Switch to the **bin** subdirectory:
+  ```
+  > cd <new archive folder>/pycharm-*/bin
 
-> cd <new archive folder>/pycharm-\*/bin
+  # E.g.,
+  > cd /opt/pycharm-*/bin
+  ```
 
-For example,
+4. Run pycharm.sh from the bin subdirectory
 
-> cd /opt/pycharm-\*/bin
-
-4. Run **pycharm.sh** from the **bin** subdirectory.
-
+```
 > sh pycharm.sh
+```
 
 **Using snap packages**
 
 1. For Ubuntu 16.04 and later, you can use snap packages to install PyCharm.
 
-> sudo snap install pycharm-professional --classic
+  ```
+  > sudo snap install pycharm-professional --classic
+  # or
+  > sudo snap install pycharm-community --classic
+  ```
 
-OR
+2. Run in the Terminalu
+  ```
+  > pycharm-professional
+  # or
+  > pycharm-community
+  # or
+  > pycharm-educational
+  ```
 
-> sudo snap install pycharm-community --classic
+# Connecting via PyCharm gateway (SSH)
+The first thing you need to do is sign up for a free [trial
+license](https://www.jetbrains.com/ru-ru/remote-development/gateway/) or use it
+if it already have
 
-2. Run in the Terminal.
+Then make sure you have a VPN connection to our VPC
 
-> pycharm-professional
+1.  Click on Connect via SSH
+2.  Into Username: write <<yours_dev_server_username>> Example: richard
+3.  Into Host: write <<dev_server_ip_address>> Example: 172.30.2.136
+4.  Mark the Specify private key check box and locate the private key from
+    the zip which was sent in the onboarding process. Example: crypto.pub
+5.  Leave Port: 22 as it is.
+6.  Click on Check Connection and Continue.
+7.  Select IDE version: PyCharm Py 213.6777.x
+8.  Locate your directory. Example: /data/richard
+9.  Click on Download and Start IDE.
 
-OR
-
-> pycharm-community
-
-OR
-
-> pycharm-educational
-
-**Connecting via PyCharm gateway (SSH)**
-
-\*\* \*\*The first thing you need to do is
-[sign up for a free trial license](https://www.jetbrains.com/ru-ru/remote-development/gateway/)
-or use it. If it exists.
-
-Then make sure you have a VPN connection.
-
-1.  Click on **Connect via SSH**
-
-2.  Into **Username:** write **<<yours_dev_server_username>>** Example: richard
-
-3.  Into **Host:** write **<<dev_server_ip_address>>** Example: 172.30.2.136
-
-4.  Mark the **Specify private key** check box and locate the private key from
-    the zip which was sent in the onboarding process. Example: **crypto.pub**
-
-5.  Leave **Port: 22** as it is.
-
-6.  Click on **Check Connection and Continue**.
-
-7.  Select **IDE version: PyCharm Py 213.6777.x**
-
-8.  Locate your directory. Example: **/data/richard**
-
-9.  Click on **Download and Start IDE.**
-
-**Connecting via VNC**
+## Connecting via VNC
 
 Make sure you have a VPN connection.
 
@@ -320,25 +312,22 @@ Sysadmin has sent you:
 
 - a key `crypto.pub` that looks like:
 
+```
 -----BEGIN OPENSSH PRIVATE KEY-----
-
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn
-
 NhAAAAAwEAAQAAAYEA0IQsLy1lL3bhPT+43sht2/m9tqZm8sEQrXMAVtfm4ji/LXMr7094
-
 ...
-
 hakqVTlQ2sr0YTAAAAHnNhZ2dlc2VAZ3BtYWMuZmlvcy1yb3V0ZXIuaG9tZQECAwQ=
-
 -----END OPENSSH PRIVATE KEY-----
+```
 
 Let's say you are connected via VNC.
-
 1. Login into the OS.
-
 2. Run pycharm.sh using terminal (should be there)
 
+```
 > bash /opt/pycharm-community-2021.2.3/bin/pycharm.sh
+```
 
 # Configuration
 
