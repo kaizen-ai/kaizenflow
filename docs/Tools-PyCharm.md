@@ -236,16 +236,18 @@ There are separate disk images for Intel and Apple Silicon processors.
    ```
    > tar xzf pycharm-*.tar.gz -C <new_archive_folder>
    ``
+   ```
 
 The recommended installation location according to the filesystem hierarchy
 standard (FHS) is `/opt`. To install PyCharm into this directory, enter the
 following command:
 
-   ```
-   > sudo tar xzf pycharm-\*.tar.gz -C /opt/
-   ```
+```
+> sudo tar xzf pycharm-\*.tar.gz -C /opt/
+```
 
 3. Switch to the **bin** subdirectory:
+
    ```
    > cd <new archive folder>/pycharm-\*/bin
    # E.g.,
@@ -261,25 +263,26 @@ following command:
 
 1. For Ubuntu 16.04 and later, you can use snap packages to install PyCharm.
 
-    ```
-    > sudo snap install pycharm-professional --classic
-    # or
-    > sudo snap install pycharm-community --classic
-    ```
+   ```
+   > sudo snap install pycharm-professional --classic
+   # or
+   > sudo snap install pycharm-community --classic
+   ```
 
 2. Run in the Terminalu
-    ```
-    > pycharm-professional
-    # or
-    > pycharm-community
-    # or
-    > pycharm-educational
-    ```
+   ```
+   > pycharm-professional
+   # or
+   > pycharm-community
+   # or
+   > pycharm-educational
+   ```
 
 # Connecting via PyCharm gateway (SSH)
-The first thing you need to do is sign up for a free [trial
-license](https://www.jetbrains.com/ru-ru/remote-development/gateway/) or use it
-if it already have
+
+The first thing you need to do is sign up for a free
+[trial license](https://www.jetbrains.com/ru-ru/remote-development/gateway/) or
+use it if it already have
 
 Then make sure you have a VPN connection to our VPC
 
@@ -308,28 +311,23 @@ Sysadmin has sent you:
 
 - `os_password.txt`
 - your username `$USER`
-
 - a key `crypto.pub` that looks like:
-
-```
-
------BEGIN OPENSSH PRIVATE KEY-----
-b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn
-NhAAAAAwEAAQAAAYEA0IQsLy1lL3bhPT+43sht2/m9tqZm8sEQrXMAVtfm4ji/LXMr7094 ...
-hakqVTlQ2sr0YTAAAAHnNhZ2dlc2VAZ3BtYWMuZmlvcy1yb3V0ZXIuaG9tZQECAwQ= -----END
-OPENSSH PRIVATE KEY-----
-
-```
+  ```
+  -----BEGIN OPENSSH PRIVATE KEY-----
+  b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn
+  NhAAAAAwEAAQAAAYEA0IQsLy1lL3bhPT+43sht2/m9tqZm8sEQrXMAVtfm4ji/LXMr7094 ...
+  hakqVTlQ2sr0YTAAAAHnNhZ2dlc2VAZ3BtYWMuZmlvcy1yb3V0ZXIuaG9tZQECAwQ=
+  -----END OPENSSH PRIVATE KEY-----
+  ```
 
 Let's say you are connected via VNC.
+
 1. Login into the OS.
 2. Run pycharm.sh using terminal (should be there)
 
-```
-
-> bash /opt/pycharm-community-2021.2.3/bin/pycharm.sh
-
-```
+    ```
+    > bash /opt/pycharm-community-2021.2.3/bin/pycharm.sh
+    ```
 
 # Configuration
 
@@ -340,15 +338,9 @@ Set the reflow to reindent
 ![](docs/Tools-PyCharm_figs/image15.png){width="6.5in"
 height="4.486111111111111in"}
 
-## Plug-ins
+# Some recommended plug-ins
 
 - vim
-
 - Grazie
-
-- Wrap-to-column:
-  [https://plugins.jetbrains.com/plugin/7234-wrap-to-column](https://plugins.jetbrains.com/plugin/7234-wrap-to-column)
+- [Wrap-to-column](https://plugins.jetbrains.com/plugin/7234-wrap-to-column)
 - GitHub Copilot
-
-- Tabnine
-```
