@@ -1,6 +1,7 @@
 #!/bin/bash -xe
-IN_FILE='/Users/saggese/Downloads/Tools\ -\ PyCharm.docx'
-OUT_PREFIX="docs/Tools-PyCharm"
+#IN_FILE='/Users/saggese/Downloads/Tools\ -\ PyCharm.docx'
+#OUT_PREFIX="docs/Tools-PyCharm"
+OUT_PREFIX="defi/papers/sorrentum"
 OUT_FILE="${OUT_PREFIX}.md"
 OUT_FIGS="${OUT_PREFIX}_figs"
 
