@@ -19,30 +19,22 @@ a standard client interface.
 **Large variety of data.** Data comes in a very large variety, for instance:
 
 - Different vendor can provide the same data
-
   - E.g., Kibot, Binance, CryptoDataDownload provide data for the Binance
     exchange
 
 - Different time semantics, e.g.,
-
   - Intervals can be \[a, b) or (a, b\]
-
   - A bar can be marked at the end or at the beginning of the interval
 
 - Data and metadata
-
   - Some vendors provide metadata, others don't
 
 - Multiple asset classes (e.g., equities, futures, crypto)
 
 - Data at different time resolutions, e.g.,
-
   - daily bars
-
   - minute bars
-
   - trades
-
   - order book data
 
 - Historical vs real-time
@@ -50,11 +42,8 @@ a standard client interface.
 - Price data vs alternative data
 
 **Storage backend**. Data can be saved in multiple storage backends:
-
 - database (e.g., Postgres, MongoDB)
-
 - local filesystem
-
 - remote filesystems (e.g., AWS S3 bucket)
 
 Data can be saved on filesystems in different formats (e.g., CSV, JSON,
@@ -82,53 +71,35 @@ Our typical approach is:
 **Data formats**. The main data formats that Sorrentum supports are:
 
 - CSV
-- Pros
-- Easy to inspect
-- Easy to load / save
-
-- Everybody understands it
-- Cons
-
-  - Data can't be easily sliced by asset ids / by time
-
-  - Large footprint (non binary), although it can be compressed (e.g., as
-    `.csv.gz` on the fly)
+  - Pros
+    - Easy to inspect
+    - Easy to load / save
+    - Everybody understands it
+  - Cons
+    - Data can't be easily sliced by asset ids / by time
+    - Large footprint (non binary), although it can be compressed (e.g., as
+      `.csv.gz` on the fly)
 
 - Parquet
-- Pros
-
-  - Compressed
-
-  - AWS friendly
-
-  - Data can be easily sliced by asset ids and time
-
-- Cons
-
-  - Not easy to inspect
-
-    - Solution: use wrapper to convert to CSV
-
-  - Difficult to append
-
-    - Solution: use chunking + defragmentation
-
-  - Cumbersome for real-time data
+  - Pros
+    - Compressed
+    - AWS friendly
+    - Data can be easily sliced by asset ids and time
+  - Cons
+    - Not easy to inspect
+      - Solution: use wrapper to convert to CSV
+    - Difficult to append
+      - Solution: use chunking + defragmentation
+    - Cumbersome for real-time data
 
 - database
-- Pros
-
-  - Easy to inspect
-
-  - Support any access pattern
-
-  - Friendly for real-time data
-
-- Cons
-
-  - Need devops to manage database instance
-
-  - Difficult to track lineage and version
+  - Pros
+    - Easy to inspect
+    - Support any access pattern
+    - Friendly for real-time data
+  - Cons
+    - Need devops to manage database instance
+    - Difficult to track lineage and version
 
 Unfortunately there is not an obvious best solution so we have to deal with
 multiple representations and transforming between them. In practice Parquet is
@@ -140,7 +111,7 @@ The data can be either historical or real-time. We typically don't process the
 data at all, but rather we prefer to save the data raw as it comes from the
 wire.
 
-**Transform stage**. Typically we prefer to load the data in the backend with
+**Transform stage**. Typically, we prefer to load the data in the backend with
 minor or no transformation. Specifically we allow changing the representation of
 the data / format (e.g., removing some totally useless redundancy, compressing
 the data, transforming from strings to datetimes). We don't allow changing the
@@ -149,7 +120,7 @@ semantics or filter columns. This is done dynamically in the `client` stage
 **Load stage.** The load stage simply saves the data into one of the supported
 backends.
 
-Typically we prefer to save
+Typically, we prefer to save
 
 - Historical data into Parquet format since it supports more naturally the
   access patterns needed for long simulations
@@ -170,35 +141,24 @@ transform stage.
 different ways to create various ETL pipelines.
 
 - Extract:
-
   - Read data from an external source to memory (typically in the form of Pandas
     data structures)
-
   - E.g., downloading data from a REST or Websocket interface
 
 - Load:
-
   - Load data stored in memory -> permanent storage (e.g., save as CSV or as
     Parquet)
-
   - E.g., pd.to_parquet()
-
   - DbSave
-
     - Save to DB
-
     - Create schema
 
 - Client:
-
   - From a permanent storage (e.g., disk) -> Memory
-
   - E.g., pd.from_parquet()
 
 - ClientFromDb
-
   - DB -> Memory
-
   - Creates the SQL query to read the data
 
 - Validator
@@ -254,27 +214,19 @@ Download data by time, e.g.,
 
 **Data invariants**. We use the following invariants when storing data during
 data on-boarding and processing:
-
 - Data quantities are associated to intervals are \[a, b) (e.g., the return over
   an interval) or to a single point in time (e.g., the close price at 9am UTC)
-
 - Every piece of data is labeled with the end of the sampling interval or with
   the point-in-time
-
   - E.g., for a quantity computed in an interval \[06:40:00, 06:41:00) the
     timestamp is 06:41:00
-
 - Timestamps are always time-zone aware and use UTC timezone
-
 - Every piece of data has a knowledge timestamp (aka "as-of-date") which
   represent when we were aware of the data according to our wall-clock:
-
   - Multiple timestamps associated with different events can be tracked, e.g.,
     `start_download_timestamp`, `end_download_timestamp`
-
   - No system should depend on data available strictly before the knowledge
     timestamp
-
 - Data is versioned: every time we modify the schema or the semantics of the
   data, we bump up the version using semantic versioning and update the
   changelog of what each version contains
@@ -373,45 +325,30 @@ E.g., `bulk.airflow.csv` instead of `bulk_airflow.csv`
 **Data pipeline classification**. A data pipeline can be any of the following:
 
 - a downloader
-
   - External DB (e.g., data provider) -> Internal DB: the data flows from an
     external API to an internal DB
-
   - It downloads historical or real-time data and saves the dataset in a
     location
-
   - The name of the script and the location of the data downloaded follow the
     naming scheme described below
-
   - It is typically implemented as a Python script
 
 - a QA flow for a single or multiple datasets
-
   - Internal DB -> Process
-
   - It computes some statistics from one or more datasets (primary or derived)
     and throws an exception if the data is malformed
-
   - It aborts if the data has data not compliant to certain QA metrics
-
   - It is typically implemented as a Python notebook backed by a Python library
 
 - a derived dataset flow
-
   - Internal DB -> Process -> Internal DB
-
   - It computes some data derived from an existing data set
-
     - E.g., resampling, computing features
-
   - It is typically implemented as a Python script
 
 - a model flow
-
   - Internal DB -> Process -> Outside DB (e.g., exchange)
-
   - E.g., it runs a computation from internal data and places some trades
-
   - It is typically implemented as a Python script
 
 **Data classification**. Data can be from market sources or from non-market (aka
@@ -452,32 +389,23 @@ between the attributes.
 
 - `download_mode`: the type of downloading mode
 - `bulk`
-
   - Aka "one-shot", "one-off", and improperly "historical"
-
   - Data downloaded in bulk mode, as one-off documented operations
-
   - Sometimes it's referred to as "historical", since one downloads the
     historical data in bulk before the real-time flow is deployed
 
 - `periodic`
-
   - Aka "scheduled", "streaming", "continuous", and improperly "real-time"
-
   - Data is captured regularly and continuously
-
   - Sometimes it's referred as to "real-time" since one capture this data
-
   - It can contain information about the frequency of downloading (e.g.,
     `periodic-5mins`, `periodic-EOD`) if it needs to be identified with respect
     to others
 
 - `unit_test`
-
   - Data used for unit test (independently if it was downloaded automatically or
     created manually)
 
--
 - `downloading_entity`: different data depending on whom downloaded it, e.g.,
 - `airflow`: data was downloaded as part of the automatic flow
 
@@ -514,20 +442,15 @@ between the attributes.
 - `exchange_id`: which exchange the data refers to
 - E.g., `binance`
 - `version`: any data set needs to have a version
-
   - Version is represented as major, minor, patch according to semantic
     versioning in the format `v{a}_{b}_{c}` (e.g., v1_0_0)
-
   - If the schema of the data is changed the major version is increased
-
   - If a bug is fixed in the downloader that improves the semantic of the data
     but it's not a backward incompatible change, the minor version is increased
-
   - The same version can also include an optional `snapshot` which refers to the
     date when the data was downloaded (e.g., a specific date `20220210` to
     represent when the day on which the historical data was downloaded, i.e.,
     the data was the historical data as-of 2022-02-10)
-
   - Note that `snapshot` and `version` have an overlapping but not identical
     meaning. `snapshot` represents when the data was downloaded, while `version`
     refers to the evolution of the semantic of the data and of the downloader.
@@ -535,11 +458,8 @@ between the attributes.
     the same downloader (and thus with the same version).
 
 - `asset_type`: which cryptocurrency the data refers to:
-
-  - Typically there is one file per asset (e.g., `BTC_USDT.csv.gz`)
-
+  - Typically, there is one file per asset (e.g., `BTC_USDT.csv.gz`)
   - Certain data formats can organize the data in a more complex way
-
     - E.g., Parquet files save the data in a directory structure
       `{asset}/{year}/{month}/data.parquet`
 
@@ -949,21 +869,16 @@ There are 2 special columns in the by-date file:
 each single asset with the data for all the timestamps (no timestamp is repeated
 in a single file)
 
+```
 Bitcoin.pq
-
 1546871400 ...
-
 1546871401
-
 1546871402
-
 Eth.pq
-
 1546871400 ...
-
 1546871401
-
 1546871402
+```
 
 By-asset Parquet data. Data pipelines can transform by-asset data into Parquet
 data, preserving all the columns. Successive stages of the pipeline perform
@@ -971,26 +886,17 @@ other data transformations. By-asset means that the asset that is in the
 innermost directory
 
 ```
-
 dst_dir/
-
 year=2021/
-
 month=12/
-
 day=11/
-
 asset=BTC_USDT/
-
 data.parquet
-
 asset=ETH_USDT/
-
 data.parquet
-
 ```
 
-Typically the by-date format is just a format that we receive data from, and we
+Typically, the by-date format is just a format that we receive data from, and we
 don't want to transform data to.
 
 The name of the asset can depend on the data and it can be `asset`,
@@ -1006,31 +912,21 @@ partitioning function.
 partitioned by asset, by year, and by month so that it's possible to read only a
 chunk of that
 
+```
 asset=BTC_USDT/
-
 year=2021/
-
 month=12/
-
 data.parquet
-
 year=2021/
-
 month=11/
-
 data.parquet
-
 ...
-
 asset=ETH_USDT/
-
 year=2021/
-
 month=12/
-
 data.parquet
-
 ...
+```
 
 ## Sandbox
 
@@ -1112,19 +1008,13 @@ class can do its job, i.e., apply common transformations to all
 - format of the data outputted by any derived class from `MarketData` /
 
 `ImClient`
-
 - The chain of transformations is:
-
 - Class derived from `ImClient`
-
 - The transformations are vendor-specific
 
 - `ImClient`
-
 - The transformations are fixed
-
 - Class derived from `MarketData`
-
 - The transformations are specific to the `MarketData` concrete class :qa
 
 - `MarketData`
@@ -1165,35 +1055,23 @@ Output format of `ImClient`
 this document and, if needed, update this doc
 
 - The data in output of a class derived from `ImClient` is normalized so that:
-
 - the index:
-
-- represents the knowledge time
-
-- is the end of the sampling interval
-
-- is called `timestamp`
-
-- is a tz-aware timestamp in UTC
+  - represents the knowledge time
+  - is the end of the sampling interval
+  - is called `timestamp`
+  - is a tz-aware timestamp in UTC
 
 - the data:
-
-- is resampled on a 1 minute grid and filled with NaN values
-
-- is sorted by index and `full_symbol`
-
-- is guaranteed to have no duplicates
-
-- belongs to intervals like \[a, b\]
-
-- has a `full_symbol` column with a string representing the canonical name
-
-of the instrument
+  - is resampled on a 1 minute grid and filled with NaN values
+  - is sorted by index and `full_symbol`
+  - is guaranteed to have no duplicates
+  - belongs to intervals like \[a, b\]
+  - has a `full_symbol` column with a string representing the canonical name
+  of the instrument
 
 - TODO(gp): We are planning to use an `ImClient` data format closer to
   `MarketData`
-
-by using `start_time`, `end_time`, and `knowledge_time` since these can be
+  by using `start_time`, `end_time`, and `knowledge_time` since these can be
 
 inferred only from the vendor data semantic
 
@@ -1213,17 +1091,11 @@ get the data, but always pass back data that:
 - E.g.,
 
 ```
-
 asset_id start_time end_time close volume
-
 idx
-
 0 17085 2021-07-26 13:41:00+00:00 2021-07-26 13:42:00+00:00 148.8600 400176
-
 1 17085 2021-07-26 13:30:00+00:00 2021-07-26 13:31:00+00:00 148.5300 1407725
-
 2 17085 2021-07-26 13:31:00+00:00 2021-07-26 13:32:00+00:00 148.0999 473869
-
 ```
 
 Transformations performed by abstract class `MarketData`
@@ -1234,37 +1106,23 @@ Transformations performed by abstract class `MarketData`
 and are:
 
 - indexing by `end_time`
-
 - converting `end_time`, `start_time`, `knowledge_time` to the desired timezone
-
 - sorting by `end_time` and `asset_id`
-
 - applying column remaps
 
 Output format of `MarketData`
-
 - The base `MarketData` normalizes the data by:
-
 - sorting by the columns that correspond to `end_time` and `asset_id`
-
 - indexing by the column that corresponds to `end_time`, so that it is suitable
-
-to DataFlow computation
+  to DataFlow computation
 
 - E.g.,
-
 ```
-
 asset_id start_time close volume
-
 end_time
-
 2021-07-20 09:31:00-04:00 17085 2021-07-20 09:30:00-04:00 143.990 1524506
-
 2021-07-20 09:32:00-04:00 17085 2021-07-20 09:31:00-04:00 143.310 586654
-
 2021-07-20 09:33:00-04:00 17085 2021-07-20 09:32:00-04:00 143.535 667639
-
 ```
 
 Asset ids format
@@ -1279,9 +1137,7 @@ Asset ids format
 - from `asset_ids` (ints) to `full_symbols` (strings)
 
 - If the `asset_ids` -> `full_symbols` mapping is provided by the vendor, then
-  we
-
-reuse it
+  we reuse it
 
 - Otherwise, we build a mapping hashing `full_symbols` strings into numbers
 
@@ -1309,18 +1165,15 @@ then `MarketData` just uses or subsets that universe
 - For these reasons, assets are selected at 3 different points:
 
 1. `MarketData` allows to specify or subset the assets through `asset_ids`
-
-through the constructor
+   through the constructor
 
 2. `ImClient` backends specify the assets returned
 
-- E.g., a concrete implementation backed by a DB can stream the data for
+- E.g., a concrete implementation backed by a DB can stream the data for its
+  entire available universe
 
-its entire available universe
-
-3. Certain class methods allow querying data for a specific asset or subset
-
-of assets
+3. Certain class methods allow querying data for a specific asset or subset of
+   assets
 
 - For each stage, a value of `None` means no filtering
 
@@ -1349,22 +1202,14 @@ Handling timezone
 
 - Decide what to do exactly (e.g., do we download only bulk data or also
   real-time?)
-
 - Review what code we have and what can be generalized to accomplish the task at
   hand
-
 - Decide what's the name of the data set according to our convention
-
 - Create DAGs for Airflow
-
 - Update the Raw Data Gallery
   im_v2/common/notebooks/Master_raw_data_gallery.ipynb
-
 - Quick exploratory analysis to make sure the data is not malformed
-
 - Update the table in
-  [[Data pipelines - Specs]{.underline}](https://docs.google.com/document/d/1nLhaFBSHVrexCcwJMnpXlkqwn0l6bDiVer34GKVclYY/edit#heading=h.8g5ajvlq6zks)
-
+  [Data pipelines - Specs](https://docs.google.com/document/d/1nLhaFBSHVrexCcwJMnpXlkqwn0l6bDiVer34GKVclYY/edit#heading=h.8g5ajvlq6zks)
 - Exploratory analysis for a thorough QA analysis
-
 - Add QA system to Airflow prod
