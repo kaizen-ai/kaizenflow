@@ -37,11 +37,17 @@
 ## jackpyc
 ## jacktxt
 
-# Lint markdown
+# Markdown
 
 ## lint_md.sh
+- Lint a markdown file
 
 ## convert_gdoc_to_markdown.sh
+- Convert a Google Doc in docx format to markdown removing artifacts
+
+## remove_empty_lines.sh
+- Used in vim to remove empty spaces
+- 
 
 # `vim`
 

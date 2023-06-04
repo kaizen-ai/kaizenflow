@@ -1,11 +1,13 @@
 #!/bin/bash -xe
 #IN_FILE='/Users/saggese/Downloads/Tools\ -\ PyCharm.docx'
 #OUT_PREFIX="docs/Tools-PyCharm"
-OUT_PREFIX="defi/papers/sorrentum"
+#OUT_PREFIX="defi/papers/sorrentum"
+OUT_PREFIX="docs/DataFlow"
+#OUT_PREFIX="docs/DataPull"
 OUT_FILE="${OUT_PREFIX}.md"
 OUT_FIGS="${OUT_PREFIX}_figs"
 
-git checkout -- $OUT_FILE
+#git checkout -- $OUT_FILE
 
 # Convert from docx to Markdown.
 if [[ 1 == 0 ]]; then
@@ -28,8 +30,8 @@ perl -pi -e 's/^(\s+)> /\1/g' $OUT_FILE
 # **\# Connecting via VNC**
 perl -pi -e 's/^\*\*\\#+ /**/g' $OUT_FILE
 
-# Remove the \ before - $ | < > " _ @ ) .
-perl -pi -e 's/\\([-\$|<>"\_\@\)\.])/\1/g' $OUT_FILE
+# Remove the \ before - $ | < > " _ @ ) [ ].
+perl -pi -e 's/\\([-\$|<>"\_\@\)\]\[\.])/\1/g' $OUT_FILE
 
 # Let\'s -> Let's
 perl -pi -e "s/\\\'/'/g" $OUT_FILE

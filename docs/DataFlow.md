@@ -55,7 +55,9 @@ spaced on a 5-min grid and indexed with knowledge time.
 
 TODO(gp): Add an example of df with forecasts explaining the timing
 
-df\["c"\] = (df\["a"\] + df\["b"\]).shift(1)
+```python
+df["c"] = (df["a"] + df["b"]).shift(1)
+```
 
 **Real-time execution**. In real-time the clock type is "real clock".
 
@@ -151,40 +153,24 @@ A Config can be represented as a dictionary or a string.
 
 Example of a dictionary representation:
 
-```
-
-config1 = {
-
-"resample_1min": False,
-
-"client_config": {
-
-"universe": {
-
-"full_symbols": \["binance::ADA_USDT"\],
-
-"universe_version": "v3",
-
-},
-
-},
-
-"market_data_config": {"start_ts": start_ts, "end_ts": end_ts},
-
+```python
+config1={
+    "resample_1min": False,
+    "client_config": {
+        "universe": {
+            "full_symbols": ["binance::ADA_USDT"],
+            "universe_version": "v3",
+        },
+    },
+    "market_data_config": {"start_ts": start_ts, "end_ts": end_ts},
 }
-
 ```
 
 In the example above:
-
 - "resample_1min" is a leaf of the `config1`
-
 - "client_config" is a subconfig of `config1`
-
 - "universe" is a subconfig of "client_config"
-
 - "market_data" config is a subconfig of "config1"
-
 - "start_ts" and "end_ts" are leaves of "market_data_config" and `config1`
 
 Example of a string representation:
@@ -193,21 +179,16 @@ Example of a string representation:
 height="1.2303444881889765in"}
 
 - The same values are annotated with `marked_as_used`, `writer` and `val_type`
-
   - `marked_as_used` determines whether the object was used to construct another
     object
-
   - `writer` provides a stacktrace of the piece of code which marked the object
     as used
-
   - `val_type` is a type of the object
 
 ### Assigning and getting Config items
 
 - Config object has its own implementations of `__setitem__` and `__getitem__`
-
 - A new value can be set freely like in a python Dict object
-
 - Overwriting the value is prohibited if the value has already been used
 
 Since Config is used to guarantee that the construction of any objects is
@@ -226,23 +207,19 @@ used and instead select leaves separately.
 
 Example of marking the subconfig as used:
 
+```python
+_ = config.get_and_mark_as_used("market_data_config")
 ```
-
-\_ = config.get_and_mark_as_used("market_data_config")
 
 ![](./sorrentum_figs/image13.png){width="6.5in" height="1.1944444444444444in"}
 
-```
-
 Example of marking the leaf as used:
 
+```python
+_ = config.get_and_mark_as_used(("market_data_config", "end_ts"))
 ```
-
-\_ = config.get_and_mark_as_used(("market_data_config", "end_ts"))
 
 ![](./sorrentum_figs/image10.png){width="6.5in" height="1.1388888888888888in"}
-
-```
 
 - `__getitem__` is used to select items for uses which do not affect the
   construction of other objects:
@@ -282,14 +259,11 @@ accommodated without changing the model.
 Resampling VWAP (besides potential errors). This implies hardcoded formula in a
 mix with resampling functions.
 
-```
-
-vwap_approach_2 = (converted_data\["close"\] \*
-converted_data\["volume"\]).resample(resampling_freq) ).mean() /
-converted_data\["volume"\].resample(resampling_freq).sum()
-
+```python
+vwap_approach_2 = (converted_data["close"] *
+    converted_data["volume"]).resample(resampling_freq) ).mean() /
+    converted_data["volume"].resample(resampling_freq).sum()
 vwap_approach_2.head(3)
-
 ```
 
 - TODO(gp): Explain this piece of code
@@ -319,21 +293,16 @@ A DagConfig is hierarchical and contains one subconfig per Dag node. It should
 only include `Dag` node configuration parameters, and not information about
 `Dag` connectivity, which is specified in the `Dag` builder part.
 
-### **Template configs**
+### Template configs
 
 - Are incomplete configs, with some "mandatory" parameters unspecified but
   clearly identified with `cconfig.DUMMY` value
-
 - Have reasonable defaults for specified parameters
-
   - This facilitates config extension (e.g., if we add additional parameters /
     flexibility in the future, then we should not have to regenerate old
     configs)
-
 - Leave dummy parameters for frequently-varying fields, such as `ticker`
-
 - Should be completable and be completed before use
-
 - Should be associated with a `Dag` builder
 
 **DagBuilder**. It is an object that builds a DAG and has a
@@ -341,11 +310,8 @@ only include `Dag` node configuration parameters, and not information about
 in sync.
 
 The client:
-
 - calls `get_config_template()` to receive the template config
-
 - fills / modifies the config
-
 - uses the final config to call `get_dag(config)` and get a fully built DAG
 
 A `DagBuilder` can be passed to other objects instead of `Dag` when the template
@@ -357,12 +323,9 @@ e.g.,
 
 - `FitPredictDagRunner`: implements two methods `fit` / `predict` when we want
   to learn on in-sample data and predict on out-of-sample data
-
 - `RollingFitPredictDagRunner`: allows to fit and predict on some data using a
   rolling pattern
-
 - `IncrementalDagRunner`: allows to run one step at a time like in real-time
-
 - `RealTimeDagRunner`: allows to run using nodes that have a real-time semantic
 
 ## DataFlow Computation Semantics
@@ -384,38 +347,29 @@ DataFlow represents data through multi-index dataframes, where
 The reason for this convention is that typically features are computed in an
 univariate fashion (e.g., asset by asset), and we can get vectorization over the
 assets by expressing operations in terms of the features. E.g., we can express a
-feature as \`(df\["close", "open"\].max() - df\["high"\]).shift(2)\`.
+feature as `(df["close", "open"].max() - df["high"]).shift(2)`.
 
 Based on the example ./amp/dataflow/notebooks/gallery_dataflow_example.ipynb,
 one can work with DataFlow at 4 levels of abstraction:
 
 1.  Pandas long-format (non multi-index) dataframes and for-loops
-
     - We can do a group-by or filter by full_symbol
-
     - Apply the transformation on each resulting df
-
     - Merge the data back into a single dataframe with the long-format
 
 2.  Pandas multiindex dataframes
-
     - The data is in the DataFlow native format
-
     - We can apply the transformation in a vectorized way
-
     - This approach is best for performance and with compatibility with DataFlow
       point of view
-
     - An alternative approach is to express multi-index transformations in terms
       of approach 1 (i.e., single asset transformations and then concatenation).
       This approach is functionally equivalent to a multi-index transformation,
       but typically slow and memory inefficient
 
 3.  DataFlow nodes
-
     - A node implements a certain transformations on DataFrames according to the
       DataFlow convention and interfaces
-
     - Nodes operate on the multi-index representation by typically calling
       functions from level 2 above
 
@@ -434,7 +388,7 @@ E.g., code can be split in multiple functions at level 2) and then
 
 ## Backtest and Experiment
 
-### **`ConfigBuilder`**
+### `ConfigBuilder`
 
 - Generates a list of fully formed (not template) configs that can be then run
 
@@ -443,10 +397,10 @@ E.g., code can be split in multiple functions at level 2) and then
 
 - Config builder accepts `BacktestConfig` as an input
 
-### **Experiment in strict and loose sense**
+### Experiment in strict and loose sense
 
 Colloquially, we use experiment to mean different things, e.g., an experiment
-can consists in:
+can consist in:
 
 - a backtest where we run a single Dag with a single config (e.g., when we test
   the predictive power of a single model)
@@ -465,7 +419,7 @@ Strictly speaking, we refer to:
 
 In practice almost any experiment we run consists of one or more backtests
 
-### **`Backtest`**
+### `Backtest`
 
 - In general a "backtest" is simply code that is configured by a \*single\*
   `Config`s
@@ -481,7 +435,7 @@ In practice almost any experiment we run consists of one or more backtests
 
   - saving the result into a directory
 
-### **`BacktestConfig`**
+### `BacktestConfig`
 
 - = a config that has multiple parts configuring both what to run (e.g., a
   `Dag`) and how to run it (e.g., the universe, the period of time)
@@ -499,7 +453,7 @@ In practice almost any experiment we run consists of one or more backtests
 
   - `2019-2022` is timeframe, i.e. run the model using data from 2019 to 2022
 
-### **`Experiment`**
+### `Experiment`
 
 - A set of backtests to run, each of which corresponds to conceptually a single
   `Config`
@@ -517,19 +471,19 @@ In order to create the list of fully built configs, both a `Backtest` and a
 - dst_dir (destination dir of the entire experiment list, i.e., the one that the
   user passes to the command)
 
-### **Tiled backtest / experiment**
+### Tiled backtest / experiment
 
 - An experiment / backtest that is run through multiple tiles for time and
   assets
 
 - In general this is just an implementation detail
 
-### **Tiled vs Tile**
+### Tiled vs Tile
 
 - We call "tiled" objects that are split in tiles (e.g., `TiledBacktest`), and
   "tile" objects that refer to tiling (e.g., `TileConfig`)
 
-### **Experiment (list) manager**
+### Experiment (list) manager
 
 - TODO(gp): experiment_list manager?
 
@@ -538,7 +492,7 @@ In order to create the list of fully built configs, both a `Backtest` and a
   - generating a list of `Config` object to run, based on a `ConfigBuilder`
     (i.e., `run_experiment.py` and `run_notebook.py`)
 
-### **`ExperimentBuilder`**
+### `ExperimentBuilder`
 
 - TODO(gp): -> BacktestBuilder
 
@@ -550,7 +504,7 @@ In order to create the list of fully built configs, both a `Backtest` and a
 
   - Saves the results in a specified directory
 
-### **`BacktestRunner`**
+### `BacktestRunner`
 
 - A test case object that:
 
@@ -559,7 +513,7 @@ In order to create the list of fully built configs, both a `Backtest` and a
   - processes its results (e.g., check that the output is readable, extract a
     PnL curve or other statistics)
 
-### **System**
+### System
 
 - An object representing a full trading system comprising of:
 
@@ -579,13 +533,13 @@ In order to create the list of fully built configs, both a `Backtest` and a
 
     - Broker
 
-### **SystemRunner**
+### SystemRunner
 
 - An object that allows to build and run a System
 
 - TODO(gp): Not sure it's needed
 
-### **System_TestCase**
+### System_TestCase
 
 - TODO(gp): IMO this is a TestCase + various helpers
 

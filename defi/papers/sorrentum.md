@@ -163,37 +163,34 @@ Sorrentum Token
 
 - Used for returns for building and operating Sorrentum Nodes
 
-
 ## Universal pricing machine
 
-It promotes efficiency of decentralized digital asset markets by using
-financial machine learning to automatically price any digital currency
-or token.
+It promotes efficiency of decentralized digital asset markets by using financial
+machine learning to automatically price any digital currency or token.
 
-It distills knowledge from a large variety of data sources (e.g., news,
-social sentiment, financial databases, market data) to automatically
-estimate any quantity of interest and its uncertainty, including:
+It distills knowledge from a large variety of data sources (e.g., news, social
+sentiment, financial databases, market data) to automatically estimate any
+quantity of interest and its uncertainty, including:
 
--   price, trading volume
+- price, trading volume
 
--   risk, volatility
+- risk, volatility
 
--   probability of specific events
+- probability of specific events
 
-for digital assets such as: crypto currency, non-fungible tokens (NFT),
-smart contract
+for digital assets such as: crypto currency, non-fungible tokens (NFT), smart
+contract
 
 at different time scales ranging from seconds to days.
 
 ## Evaluating models
 
-The same goal can be achieved with different research pipelines (with
-different complexity to set-up and / or execution time):
+The same goal can be achieved with different research pipelines (with different
+complexity to set-up and / or execution time):
 
--   Run a model -> results_df -> post-processing + comparison
+- Run a model -> results_df -> post-processing + comparison
 
--   Run models sweeping the params -> multiple results_df ->
-    comparison
+- Run models sweeping the params -> multiple results_df -> comparison
 
 -
 
@@ -201,80 +198,79 @@ We want to separate how we compute the metrics and how we apply it
 
 I think we did some work with Max about this, but not sure where it is.
 
-We want to compute metrics (hit rate, pnl, SR, drawdown, $ per bet,
-MAE, AUC) as function of:
+We want to compute metrics (hit rate, pnl, SR, drawdown, $ per bet, MAE, AUC) as
+function of:
 
--   assets
+- assets
 
--   day of the week
+- day of the week
 
--   time of the day (e.g., between 9am and 10am, 10am and 11am)
+- time of the day (e.g., between 9am and 10am, 10am and 11am)
 
--   liquidity (e.g., how much volume was transacted)
+- liquidity (e.g., how much volume was transacted)
 
--   spread (...)
+- spread (...)
 
--   ...
+- ...
 
-There is a common idiom (which we will formalize in the Sorrentum
-standard). In practice the pipeline is:
+There is a common idiom (which we will formalize in the Sorrentum standard). In
+practice the pipeline is:
 
 **Step 1 (compute results_df)**
 
--   Run the model and generate the usual output, then you can save /
-    retrieve this output or just compute with the model on the flight
--   The input is a multi-index dataframe in the DataFlow standard
-    (results_df), like:
+- Run the model and generate the usual output, then you can save / retrieve this
+  output or just compute with the model on the flight
+- The input is a multi-index dataframe in the DataFlow standard (results_df),
+  like:
 
 ![](./sorrentum_figs/image8.png){width="6.5in" height="2.5416666666666665in"}
 
 **Step 2 (annotate metrics_df)**
 
--   IMO the best representation is multi-index (timestamp, asset_id) on
-    the rows and columns equal to the features
+- IMO the best representation is multi-index (timestamp, asset_id) on the rows
+  and columns equal to the features
 
-    -   We can call this format "metrics_df"
+  - We can call this format "metrics_df"
 
-    -   Each row is a prediction of the model
+  - Each row is a prediction of the model
 
-        -   Feature1 (price), Feature2 (volume), ...
+    - Feature1 (price), Feature2 (volume), ...
 
-    -   (timestamp, asset_id)
+  - (timestamp, asset_id)
 
--   There is a function that annotates each row (timestamp, asset_id)
-    based on certain criteria (e.g., asset_id, day of the week, a
-    value function of a vwap volume)
+- There is a function that annotates each row (timestamp, asset_id) based on
+  certain criteria (e.g., asset_id, day of the week, a value function of a vwap
+  volume)
 
-    -   We have a library of function that accept a metrics_df and then
-        decorates it with an extra tag
+  - We have a library of function that accept a metrics_df and then decorates it
+    with an extra tag
 
-    -   E.g., to split the results by asset_id the function creating the
-        tag is something like (timestamp, asset_id) -> tag = asset_id
+  - E.g., to split the results by asset_id the function creating the tag is
+    something like (timestamp, asset_id) -> tag = asset_id
 
-    -   If you want to partition by time of the day you do (timestamp,
-        asset_id) -> tag = timestamp.time()
+  - If you want to partition by time of the day you do (timestamp, asset_id) ->
+    tag = timestamp.time()
 
-    -   ...
+  - ...
 
 **Step 3 (split and compute metrics)**
 
--   There is a function that computes a dict from tag to df (e.g., from
-    asset_id to the corresponding df)
+- There is a function that computes a dict from tag to df (e.g., from asset_id
+  to the corresponding df)
 
--   Then we call the function to compute the metric (e.g., hit rate,
-    pnl, ...) on each df and build a new dict tag -> transform(df)
+- Then we call the function to compute the metric (e.g., hit rate, pnl, ...) on
+  each df and build a new dict tag -> transform(df)
 
-    -   The transform df accepts various column names to know what is
-        the y, y_hat, ... (this dict is built from the model itself,
-        saying what's the prediction col, the volatility, etc)
+  - The transform df accepts various column names to know what is the y, y_hat,
+    ... (this dict is built from the model itself, saying what's the prediction
+    col, the volatility, etc)
 
 **Step 4 (aggregate results)**
 
--   Finally we aggregate the results as function of the tag (e.g.,
-    asset_id -> pnl) and plot
+- Finally we aggregate the results as function of the tag (e.g., asset_id ->
+  pnl) and plot
 
--   The output is a pd.DataFrame (with tag on the rows and metrics on
-    the columns)
+- The output is a pd.DataFrame (with tag on the rows and metrics on the columns)
 
 > Metric1
 >
@@ -282,11 +278,11 @@ standard). In practice the pipeline is:
 >
 > ...
 
--   E.g., asset_id -> pnl
+- E.g., asset_id -> pnl
 
 > asset_id pnl conf_int
 
--   1030... ...
+- 1030... ...
 
 # Building financial primitives with Sorrentum Protocol
 
@@ -300,23 +296,20 @@ Smart order routing
 
 Building a synthetic bond
 
-- You like staking because it gives you something to do with your
-crypto
+- You like staking because it gives you something to do with your crypto
 
-- You like yield because banks give you 0% APR and you don't have
-access
+- You like yield because banks give you 0% APR and you don't have access
 
 to investment opportunities
 
 - Hence all the madness for yield farming
 
-- People creates Ponzi scheme just because there was a huge demand for
-yield
+- People creates Ponzi scheme just because there was a huge demand for yield
 
 but no supply (see the empty box from SBF)
 
-- Meanwhile, our hedge fund needs cash to invest and gives you back the
-cash flow
+- Meanwhile, our hedge fund needs cash to invest and gives you back the cash
+  flow
 
 from trading
 
@@ -324,20 +317,18 @@ from trading
 
 - You don't like that
 
-- The typical solution is "pay once a year" so that in average the
-total return
+- The typical solution is "pay once a year" so that in average the total return
 
 is positive, with high watermarks to account from crappy years
 
-- Can we transform our hedge fund bumpy cash flow in something stable,
-but worse
+- Can we transform our hedge fund bumpy cash flow in something stable, but worse
 
 in terms of expected return?
 
 - Yes!
 
-- You stake your crypto, we give you 0.5% / month (6% a year) in a mix
-of cryptos
+- You stake your crypto, we give you 0.5% / month (6% a year) in a mix of
+  cryptos
 
 - We try to give you always ETH and BTC, but sometimes we give you our
 
@@ -345,20 +336,17 @@ Sorrentum token
 
 - You can sell or buy Sorrentum on the open market as any crypto
 
-- Where does the value of Sorrentum come from (i.e., why does it trade
-at
+- Where does the value of Sorrentum come from (i.e., why does it trade at
 
 more than 0, why is the box not empty)?
 
 - Well, it's an IOU that we use to make the bumpy cash flow straight
 
-- As long as the algo makes money in the long run, the Sorrentum token
-has
+- As long as the algo makes money in the long run, the Sorrentum token has
 
 value
 
-- Of course we pocket the difference between the 6% / yr that we pay
-users and
+- Of course we pocket the difference between the 6% / yr that we pay users and
 
 the 20% / yr we made
 
@@ -370,33 +358,33 @@ the 20% / yr we made
 
 # Related projects
 
--   Numerai
+- Numerai
 
--   Lean
+- Lean
 
--   Quantopian
+- Quantopian
 
--   Crypto-bots (e.g., Pionex)
+- Crypto-bots (e.g., Pionex)
 
--   Amber / FalconX / Talos
+- Amber / FalconX / Talos
 
--   HummingbirdBot
+- HummingbirdBot
 
--   https://vega.xyz/
+- https://vega.xyz/
 
 # Refs
 
-[[Sorrentum Protocol - Technical
-appendix]{.underline}](https://docs.google.com/document/d/1Jp_yPU1FXFF7TdQjLiWzPzTLZmRLJ3KX0dooxArMQeI/edit)
+[[Sorrentum Protocol - Technical appendix]{.underline}](https://docs.google.com/document/d/1Jp_yPU1FXFF7TdQjLiWzPzTLZmRLJ3KX0dooxArMQeI/edit)
 
-[[Sorrentum protocol - Background
-research]{.underline}](https://docs.google.com/document/d/170IAWtrPUmMGXER-yIEFQ5zaArh2ksRNfvzciF6FLe0/edit#)
+[[Sorrentum protocol - Background research]{.underline}](https://docs.google.com/document/d/170IAWtrPUmMGXER-yIEFQ5zaArh2ksRNfvzciF6FLe0/edit#)
 
-[[Sorrentum
-dir]{.underline}](https://drive.google.com/drive/u/1/folders/1icv3ifB095AIOMWtgr91v7mfR7Y7KaEl)
+[[Sorrentum dir]{.underline}](https://drive.google.com/drive/u/1/folders/1icv3ifB095AIOMWtgr91v7mfR7Y7KaEl)
 
-[^1]: Sorrentum is the Latin name of the coastal city of Sorrento in the
-    South of Italy. In Greek mythology it was the place inhabited by
-    Sirens, who tried to seduce Ulysses in one of the episodes of the
-    Odyssey.
+[^1]:
+    Sorrentum is the Latin name of the coastal city of Sorrento in the South of
+    Italy. In Greek mythology it was the place inhabited by Sirens, who tried to
+    seduce Ulysses in one of the episodes of the Odyssey.
+
+```
+
 ```

@@ -1,10 +1,10 @@
-# Asset representation
+# DataPull
+
+## Asset representation
 
 TODO(gp): Ideally we want to use a single schema like `Vendor:ExchangeId:Asset`
 
 \Asset universe
-
-# Sorrentum Data Specification
 
 ## ETL
 
