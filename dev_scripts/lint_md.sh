@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
-# Lint a markdown file and update the table of content:
-
-# Usage
+# """
+# Lint a markdown file and update the table of content.
+# To generate a table of content, add a comment `<!-- toc -->` at the top of
+# the markdown file.
+#
+# Usage:
 # > dev_scripts/lint_md.sh file1.md ... fileN.md
-
-# To generate a table of content, add a comment `<!-- toc -->` at the top of the markdown file.
+# """
 
 set -eux
 
-# Create a temporary file to build the Docker container.
+# Build the Docker container.
 TMP_FILENAME="/tmp/tmp.lint_markdown.Dockerfile"
 cat>$TMP_FILENAME <<EOF
 FROM ubuntu:latest
@@ -31,33 +33,26 @@ RUN npm install -g prettier && \
     npm install -g markdown-toc
 
 RUN npx prettier -v
-
 EOF
 
 export DOCKER_CONTAINER_NAME="sorrentum_mdlint"
-
 docker build -f $TMP_FILENAME -t $DOCKER_CONTAINER_NAME .
 
+# Create the script to run the linter.
+LINTER="./tmp.lint_md.sh"
+cat >$LINTER <<EOF
+npx prettier --parser markdown --prose-wrap always --tab-width 2 --write $@
+npx markdown-toc -i $@
+EOF
+chmod +x $LINTER
+
+# Execute the custom script using Docker.
+CMD="bash -c $LINTER $@"
 USER="$(id -u $(logname)):$(id -g $(logname))"
 WORKDIR="$(realpath .)"
 MOUNT="type=bind,source=${WORKDIR},target=${WORKDIR}"
-
-# Append code to initialize the linter.
-cat >./run_linter.sh <<EOF
-
-npx prettier --parser markdown --prose-wrap always --tab-width 2 --write $@
-npx markdown-toc -i $@
-
-EOF
-
-# Execute the custom script using Docker.
-chmod +x ./run_linter.sh
-
-
-CMD="bash -c ./run_linter.sh $@"
-
-docker run --rm -it --workdir "${WORKDIR}" --mount "${MOUNT}" markdownlint:latest $CMD
+docker run --rm -it --workdir "${WORKDIR}" --mount "${MOUNT}" ${DOCKER_CONTAINER_NAME} ${CMD}
 
 # Clean up temporary files.
-rm run_linter.sh
+rm $LINTER
 rm $TMP_FILENAME

@@ -28,8 +28,7 @@ def run_solver(
     Find the maximum exchanged volume given the constraints.
 
     :param orders: buy / sell orders
-    :param prices: prices in terms of a reference common currency (e.g., USDT)
-        for each token
+    :param exchange_rate: price (in terms of quote token) per unit of base token
     :return: solver's output in human readable format
     """
     _LOG.debug(hprint.to_str("orders"))
