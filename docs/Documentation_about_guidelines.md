@@ -36,6 +36,38 @@
 - Have a trouble-shooting procedure
   - One approach is to always start from scratch
 
+# Markdown vs Google Docs
+
+- In general:
+  - We prefer to use Markdown for technical documentation
+  - We use Google for notes from meetings and research
+
+- Markdown pros:
+  - Can use vim
+  - Can version control
+  - Easy to use verbatim (e.g., typing `foobar`)
+  - Easy to style using pandoc
+  - Easy to embed code
+  - Easy to add Latex equations
+  - Easy to grep
+
+- Google Docs pros:
+  - Easy to embed figures
+  - Easy to collaborate
+  - Easy to make quick changes (instead of making a commit)
+  - Easy to publish (just make them public with proper permissions)
+  - Styling
+    - [https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs](https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs)
+  - Interesting add-ons:
+    - Enable Markdown
+    - Code blocks
+      - Use darcula, size 10
+        ```
+        def hello():
+        print("hello")
+        ```
+    - Auto-latex equations
+
 # Useful reference
 
 - [Markdown cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
@@ -199,7 +231,7 @@
 
 # Convert between Gdocs and Markdown
 
-## Gdocs -> Markdown using pandoc
+## Gdocs -> Markdown using pandoc (recommended)
 
 - Pros
   - Best for a large document
@@ -269,34 +301,3 @@
 - Approach 3:
   - [https://markdownlivepreview.com/](https://markdownlivepreview.com/)
   - TODO(gp): Check if the roundtrip works
-
-## Markdown vs Google Docs
-
-- Google Docs pros:
-  - Easy to embed figures
-  - Easy to collaborate
-  - Easy to make quick changes (instead of making a commit)
-  - Easy to publish (just make them public with proper permissions)
-  - Styling
-    - [https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs](https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs)
-- Interesting add-ons:
-  - Enable Markdown
-  - Code blocks
-    - Use darcula, size 10
-      ```
-      def hello():
-      print("hello")
-      ```
-  - Auto-latex equations
-- Markdown pros:
-  - Can use vim
-  - Can version control
-  - Easy to use verbatim (e.g., typing `foobar`)
-  - Easy to style using pandoc
-  - Easy to embed code
-  - Easy to add Latex equations
-- Rules of thumb:
-  - If it has images -> gdocs
-  - If it has mostly formulas -> md
-  - If they are notes from book -> md
-  - If it is a tutorial (especially with figures) -> gdocs

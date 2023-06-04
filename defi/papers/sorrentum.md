@@ -384,7 +384,3 @@ the 20% / yr we made
     Sorrentum is the Latin name of the coastal city of Sorrento in the South of
     Italy. In Greek mythology it was the place inhabited by Sirens, who tried to
     seduce Ulysses in one of the episodes of the Odyssey.
-
-```
-
-```

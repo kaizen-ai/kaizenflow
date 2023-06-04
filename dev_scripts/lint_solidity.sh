@@ -78,6 +78,6 @@ CMD="bash -c ./run_linter.sh $@"
 docker run --rm -it --workdir "${WORKDIR}" --mount "${MOUNT}" ubuntulint:latest $CMD
 
 # Clean up temporary files.
-#rm run_linter.sh
-#rm -r $TMP_DIR_NAME
-#rm $TMP_FILENAME
+rm run_linter.sh
+rm -r $TMP_DIR_NAME
+rm $TMP_FILENAME
