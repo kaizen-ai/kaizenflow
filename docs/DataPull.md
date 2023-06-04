@@ -20,30 +20,30 @@ a standard client interface.
 
 - Different vendor can provide the same data
 
-    - E.g., Kibot, Binance, CryptoDataDownload provide data for the Binance
-      exchange
+  - E.g., Kibot, Binance, CryptoDataDownload provide data for the Binance
+    exchange
 
 - Different time semantics, e.g.,
 
-    - Intervals can be \[a, b) or (a, b\]
+  - Intervals can be \[a, b) or (a, b\]
 
-    - A bar can be marked at the end or at the beginning of the interval
+  - A bar can be marked at the end or at the beginning of the interval
 
 - Data and metadata
 
-    - Some vendors provide metadata, others don't
+  - Some vendors provide metadata, others don't
 
 - Multiple asset classes (e.g., equities, futures, crypto)
 
 - Data at different time resolutions, e.g.,
 
-    - daily bars
+  - daily bars
 
-    - minute bars
+  - minute bars
 
-    - trades
+  - trades
 
-    - order book data
+  - order book data
 
 - Historical vs real-time
 
@@ -89,46 +89,46 @@ Our typical approach is:
 - Everybody understands it
 - Cons
 
-    - Data can't be easily sliced by asset ids / by time
+  - Data can't be easily sliced by asset ids / by time
 
-    - Large footprint (non binary), although it can be compressed (e.g., as
-      `.csv.gz` on the fly)
+  - Large footprint (non binary), although it can be compressed (e.g., as
+    `.csv.gz` on the fly)
 
 - Parquet
 - Pros
 
-    - Compressed
+  - Compressed
 
-    - AWS friendly
+  - AWS friendly
 
-    - Data can be easily sliced by asset ids and time
+  - Data can be easily sliced by asset ids and time
 
 - Cons
 
-    - Not easy to inspect
+  - Not easy to inspect
 
-        - Solution: use wrapper to convert to CSV
+    - Solution: use wrapper to convert to CSV
 
-    - Difficult to append
+  - Difficult to append
 
-        - Solution: use chunking + defragmentation
+    - Solution: use chunking + defragmentation
 
-    - Cumbersome for real-time data
+  - Cumbersome for real-time data
 
 - database
 - Pros
 
-    - Easy to inspect
+  - Easy to inspect
 
-    - Support any access pattern
+  - Support any access pattern
 
-    - Friendly for real-time data
+  - Friendly for real-time data
 
 - Cons
 
-    - Need devops to manage database instance
+  - Need devops to manage database instance
 
-    - Difficult to track lineage and version
+  - Difficult to track lineage and version
 
 Unfortunately there is not an obvious best solution so we have to deal with
 multiple representations and transforming between them. In practice Parquet is
@@ -171,39 +171,39 @@ different ways to create various ETL pipelines.
 
 - Extract:
 
-    - Read data from an external source to memory (typically in the form of Pandas
-      data structures)
+  - Read data from an external source to memory (typically in the form of Pandas
+    data structures)
 
-    - E.g., downloading data from a REST or Websocket interface
+  - E.g., downloading data from a REST or Websocket interface
 
 - Load:
 
-    - Load data stored in memory -> permanent storage (e.g., save as CSV or as
-      Parquet)
+  - Load data stored in memory -> permanent storage (e.g., save as CSV or as
+    Parquet)
 
-    - E.g., pd.to_parquet()
+  - E.g., pd.to_parquet()
 
-    - DbSave
+  - DbSave
 
-        - Save to DB
+    - Save to DB
 
-        - Create schema
+    - Create schema
 
 - Client:
 
-    - From a permanent storage (e.g., disk) -> Memory
+  - From a permanent storage (e.g., disk) -> Memory
 
-    - E.g., pd.from_parquet()
+  - E.g., pd.from_parquet()
 
 - ClientFromDb
 
-    - DB -> Memory
+  - DB -> Memory
 
-    - Creates the SQL query to read the data
+  - Creates the SQL query to read the data
 
 - Validator
 
-    - https://github.com/cryptokaizen/cmamp/pull/3386/files
+  - https://github.com/cryptokaizen/cmamp/pull/3386/files
 
 - Transform
 - Just a class
@@ -216,23 +216,23 @@ different ways to create various ETL pipelines.
 
 - Insert 1 minute worth of data in the DB
 
-    - Write data into DB
+  - Write data into DB
 
-        - One could argue that operations on the DB might not look like `extract`
-          but rather `load`
+    - One could argue that operations on the DB might not look like `extract`
+      but rather `load`
 
-        - We treat any backend (S3, local, DB) in the same way and the DB is just a
-          backend
+    - We treat any backend (S3, local, DB) in the same way and the DB is just a
+      backend
 
 - [[More detailed description]{.underline}](https://docs.google.com/document/d/1EH7RqeTdVCXDcrCKPm0PvrtftTA11X9V-AT7F20V7T4/edit#heading=h.t1ycoe6irr95)
 
-    - **Examples**:
+  - **Examples**:
 
-        - Transformations CSV -> Parquet <-> DB
+    - Transformations CSV -> Parquet <-> DB
 
-        - Convert the CSV data into Parquet using certain indices
+    - Convert the CSV data into Parquet using certain indices
 
-        - Convert Parquet by-date into Parquet by-asset
+    - Convert Parquet by-date into Parquet by-asset
 
 ## Data pipelines
 
@@ -261,19 +261,19 @@ data on-boarding and processing:
 - Every piece of data is labeled with the end of the sampling interval or with
   the point-in-time
 
-    - E.g., for a quantity computed in an interval \[06:40:00, 06:41:00) the
-      timestamp is 06:41:00
+  - E.g., for a quantity computed in an interval \[06:40:00, 06:41:00) the
+    timestamp is 06:41:00
 
 - Timestamps are always time-zone aware and use UTC timezone
 
 - Every piece of data has a knowledge timestamp (aka "as-of-date") which
   represent when we were aware of the data according to our wall-clock:
 
-    - Multiple timestamps associated with different events can be tracked, e.g.,
-      `start_download_timestamp`, `end_download_timestamp`
+  - Multiple timestamps associated with different events can be tracked, e.g.,
+    `start_download_timestamp`, `end_download_timestamp`
 
-    - No system should depend on data available strictly before the knowledge
-      timestamp
+  - No system should depend on data available strictly before the knowledge
+    timestamp
 
 - Data is versioned: every time we modify the schema or the semantics of the
   data, we bump up the version using semantic versioning and update the
@@ -374,45 +374,45 @@ E.g., `bulk.airflow.csv` instead of `bulk_airflow.csv`
 
 - a downloader
 
-    - External DB (e.g., data provider) -> Internal DB: the data flows from an
-      external API to an internal DB
+  - External DB (e.g., data provider) -> Internal DB: the data flows from an
+    external API to an internal DB
 
-    - It downloads historical or real-time data and saves the dataset in a
-      location
+  - It downloads historical or real-time data and saves the dataset in a
+    location
 
-    - The name of the script and the location of the data downloaded follow the
-      naming scheme described below
+  - The name of the script and the location of the data downloaded follow the
+    naming scheme described below
 
-    - It is typically implemented as a Python script
+  - It is typically implemented as a Python script
 
 - a QA flow for a single or multiple datasets
 
-    - Internal DB -> Process
+  - Internal DB -> Process
 
-    - It computes some statistics from one or more datasets (primary or derived)
-      and throws an exception if the data is malformed
+  - It computes some statistics from one or more datasets (primary or derived)
+    and throws an exception if the data is malformed
 
-    - It aborts if the data has data not compliant to certain QA metrics
+  - It aborts if the data has data not compliant to certain QA metrics
 
-    - It is typically implemented as a Python notebook backed by a Python library
+  - It is typically implemented as a Python notebook backed by a Python library
 
 - a derived dataset flow
 
-    - Internal DB -> Process -> Internal DB
+  - Internal DB -> Process -> Internal DB
 
-    - It computes some data derived from an existing data set
+  - It computes some data derived from an existing data set
 
-        - E.g., resampling, computing features
+    - E.g., resampling, computing features
 
-    - It is typically implemented as a Python script
+  - It is typically implemented as a Python script
 
 - a model flow
 
-    - Internal DB -> Process -> Outside DB (e.g., exchange)
+  - Internal DB -> Process -> Outside DB (e.g., exchange)
 
-    - E.g., it runs a computation from internal data and places some trades
+  - E.g., it runs a computation from internal data and places some trades
 
-    - It is typically implemented as a Python script
+  - It is typically implemented as a Python script
 
 **Data classification**. Data can be from market sources or from non-market (aka
 alternative) sources. Each data source can come with metadata, e.g.,
@@ -453,29 +453,29 @@ between the attributes.
 - `download_mode`: the type of downloading mode
 - `bulk`
 
-    - Aka "one-shot", "one-off", and improperly "historical"
+  - Aka "one-shot", "one-off", and improperly "historical"
 
-    - Data downloaded in bulk mode, as one-off documented operations
+  - Data downloaded in bulk mode, as one-off documented operations
 
-    - Sometimes it's referred to as "historical", since one downloads the
-      historical data in bulk before the real-time flow is deployed
+  - Sometimes it's referred to as "historical", since one downloads the
+    historical data in bulk before the real-time flow is deployed
 
 - `periodic`
 
-    - Aka "scheduled", "streaming", "continuous", and improperly "real-time"
+  - Aka "scheduled", "streaming", "continuous", and improperly "real-time"
 
-    - Data is captured regularly and continuously
+  - Data is captured regularly and continuously
 
-    - Sometimes it's referred as to "real-time" since one capture this data
+  - Sometimes it's referred as to "real-time" since one capture this data
 
-    - It can contain information about the frequency of downloading (e.g.,
-      `periodic-5mins`, `periodic-EOD`) if it needs to be identified with respect
-      to others
+  - It can contain information about the frequency of downloading (e.g.,
+    `periodic-5mins`, `periodic-EOD`) if it needs to be identified with respect
+    to others
 
 - `unit_test`
 
-    - Data used for unit test (independently if it was downloaded automatically or
-      created manually)
+  - Data used for unit test (independently if it was downloaded automatically or
+    created manually)
 
 -
 - `downloading_entity`: different data depending on whom downloaded it, e.g.,
@@ -497,14 +497,14 @@ between the attributes.
 - E.g., futures, spot, options
 - `universe`: the name of the universe containing the possible assets
 
-    - Typically the universe can have further characteristics and it can be also
-      versioned
+  - Typically the universe can have further characteristics and it can be also
+    versioned
 
-    - E.g., `universe_v1_7`
+  - E.g., `universe_v1_7`
 
 - `vendor`: the source that provided the data
 
-    - Aka "provider"
+  - Aka "provider"
 
 - E.g., `ccxt`, `crypto_chassis`, `cryptodata_download`, `talos`, `kaiko`,
 
@@ -515,33 +515,33 @@ between the attributes.
 - E.g., `binance`
 - `version`: any data set needs to have a version
 
-    - Version is represented as major, minor, patch according to semantic
-      versioning in the format `v{a}_{b}_{c}` (e.g., v1_0_0)
+  - Version is represented as major, minor, patch according to semantic
+    versioning in the format `v{a}_{b}_{c}` (e.g., v1_0_0)
 
-    - If the schema of the data is changed the major version is increased
+  - If the schema of the data is changed the major version is increased
 
-    - If a bug is fixed in the downloader that improves the semantic of the data
-      but it's not a backward incompatible change, the minor version is increased
+  - If a bug is fixed in the downloader that improves the semantic of the data
+    but it's not a backward incompatible change, the minor version is increased
 
-    - The same version can also include an optional `snapshot` which refers to the
-      date when the data was downloaded (e.g., a specific date `20220210` to
-      represent when the day on which the historical data was downloaded, i.e.,
-      the data was the historical data as-of 2022-02-10)
+  - The same version can also include an optional `snapshot` which refers to the
+    date when the data was downloaded (e.g., a specific date `20220210` to
+    represent when the day on which the historical data was downloaded, i.e.,
+    the data was the historical data as-of 2022-02-10)
 
-    - Note that `snapshot` and `version` have an overlapping but not identical
-      meaning. `snapshot` represents when the data was downloaded, while `version`
-      refers to the evolution of the semantic of the data and of the downloader.
-      E.g., the same data source can be downloaded manually on different days with
-      the same downloader (and thus with the same version).
+  - Note that `snapshot` and `version` have an overlapping but not identical
+    meaning. `snapshot` represents when the data was downloaded, while `version`
+    refers to the evolution of the semantic of the data and of the downloader.
+    E.g., the same data source can be downloaded manually on different days with
+    the same downloader (and thus with the same version).
 
 - `asset_type`: which cryptocurrency the data refers to:
 
-    - Typically there is one file per asset (e.g., `BTC_USDT.csv.gz`)
+  - Typically there is one file per asset (e.g., `BTC_USDT.csv.gz`)
 
-    - Certain data formats can organize the data in a more complex way
+  - Certain data formats can organize the data in a more complex way
 
-        - E.g., Parquet files save the data in a directory structure
-          `{asset}/{year}/{month}/data.parquet`
+    - E.g., Parquet files save the data in a directory structure
+      `{asset}/{year}/{month}/data.parquet`
 
 It is possible that a single data set covers multiple values of a specific
 attribute
@@ -645,9 +645,9 @@ than for the datasets themselves.
 
 - The name should capture the most general use-case
 
-    - E.g. if a downloader can download both OHLCV and Bid/Ask data for given
-      exchange in a given time interval and save to relational DB or S3 we can
-      simply name it `download_exchange_data.py`
+  - E.g. if a downloader can download both OHLCV and Bid/Ask data for given
+    exchange in a given time interval and save to relational DB or S3 we can
+    simply name it `download_exchange_data.py`
 
 TODO(Juraj): explain that Airflow DAG names follow similar naming conventions
 
@@ -694,31 +694,29 @@ to make sure the data has the minimum expected data quality.
 
 - E.g., for 1-minute OHLCV data, the possible QA metrics are:
 
-    - missing bars (timestamp)
+  - missing bars (timestamp)
 
-    - missing / nan OHLCV values within an individual bar
+  - missing / nan OHLCV values within an individual bar
 
-    - points with volume = 0
+  - points with volume = 0
 
-    - data points where OHLCV data is not in the correct relationship (e.g., H and
-      L are not higher or lower than O and C),
+  - data points where OHLCV data is not in the correct relationship (e.g., H and
+    L are not higher or lower than O and C),
 
-    - data points where OHLCV data are outliers (e.g., they are more than N
-      standard deviations from the running mean)
+  - data points where OHLCV data are outliers (e.g., they are more than N
+    standard deviations from the running mean)
 
 **Bulk data single-dataset QA metrics**. It is possible to run the QA flow to
 compute the quality of the historical data. This is done typically as a one-off
 operation right after the historical data is downloaded in bulk. This touches
 only one dataset, namely the one that was just downloaded.
 
--
+- **Periodic QA metrics**. Every N minutes of downloading real-time data, the QA
+  flow is run to generate statistics about the quality of the data. In case of
+  low data quality data the system sends a notification.
 
-**Periodic QA metrics**. Every N minutes of downloading real-time data, the QA
-flow is run to generate statistics about the quality of the data. In case of low
-data quality data the system sends a notification.
-
-**Cross-datasets QA metrics**. There are QA workflows that compare different
-data sets that are related to each other, e.g.,
+  **Cross-datasets QA metrics**. There are QA workflows that compare different
+  data sets that are related to each other, e.g.,
 
 - consider the case of downloading the same data (e.g., 1-minute OHLCV for spot
   BTC_USDT from Binance exchange) from different providers (e.g., Binance
@@ -762,18 +760,18 @@ where:
 
 - `qa_type`: the type of the QA flow, e.g.,
 
-    - `production_qa`: perform a QA flow on historical and real-time data. The
-      interface should be an IM client and thus it should be possible to run QA on
-      both historical and real-time data
+  - `production_qa`: perform a QA flow on historical and real-time data. The
+    interface should be an IM client and thus it should be possible to run QA on
+    both historical and real-time data
 
-    - `research_analysis`: perform a free-form analysis of the data. This can then
-      be the basis for a `qa` analysis
+  - `research_analysis`: perform a free-form analysis of the data. This can then
+    be the basis for a `qa` analysis
 
-    - `compare_historical_real_time`: compare historical and real-time data coming
-      from the same source of data
+  - `compare_historical_real_time`: compare historical and real-time data coming
+    from the same source of data
 
-    - `compare_historical_cross_comparison`: compare historical data from two
-      different data sources
+  - `compare_historical_cross_comparison`: compare historical data from two
+    different data sources
 
 The same rules apply as in downloader and derived dataset for the naming scheme.
 
@@ -1070,22 +1068,22 @@ reading the data
 
 - `ImClient`
 
-    - Data is downloaded and saved with minimal or no transformation
+  - Data is downloaded and saved with minimal or no transformation
 
-    - Adapts from the vendor data to a standard internal "MarketData" format
+  - Adapts from the vendor data to a standard internal "MarketData" format
 
 - MarketData\` implements "behaviors" that are orthogonal to vendors, e.g.,
 
-    - RealTime or Historical
+  - RealTime or Historical
 
-    - Stitched (i.e.,"overlap" multiple data sources giving a single view of the
-      data). E.g., the data from the last day comes from a real-time source while
-      the data before that comes from an historical source
+  - Stitched (i.e.,"overlap" multiple data sources giving a single view of the
+    data). E.g., the data from the last day comes from a real-time source while
+    the data before that comes from an historical source
 
-    - Replayed = serialize the data to disk and read it back, implementing also
-      knowledge time as-of-time semantic. This behavior is orthogonal to RealTime,
-      Historical, Stitched, i.e., one can replay any `MarketData`, including an
-      already replayed one
+  - Replayed = serialize the data to disk and read it back, implementing also
+    knowledge time as-of-time semantic. This behavior is orthogonal to RealTime,
+    Historical, Stitched, i.e., one can replay any `MarketData`, including an
+    already replayed one
 
 Data format for `ImClient` / `MarketData` pipeline
 
@@ -1147,8 +1145,8 @@ class can do its job, i.e., apply common transformations to all
 
 Transformations performed by classes derived from `ImClient`
 
-- Whatever is needed to transform the vendor data into the internal
-  format accepted
+- Whatever is needed to transform the vendor data into the internal format
+  accepted
 
 by base `ImClient`
 
@@ -1161,13 +1159,12 @@ Transformations performed by abstract class `ImClient`
 
 Output format of `ImClient`
 
-- TODO(\*): Check the code in `ImClient` since that might be more up
-  to date than
+- TODO(\*): Check the code in `ImClient` since that might be more up to date
+  than
 
 this document and, if needed, update this doc
 
-- The data in output of a class derived from `ImClient` is normalized
-  so that:
+- The data in output of a class derived from `ImClient` is normalized so that:
 
 - the index:
 
@@ -1189,23 +1186,21 @@ this document and, if needed, update this doc
 
 - belongs to intervals like \[a, b\]
 
-- has a `full_symbol` column with a string representing the canonical
-  name
+- has a `full_symbol` column with a string representing the canonical name
 
 of the instrument
 
-- TODO(gp): We are planning to use an `ImClient` data format closer
-  to `MarketData`
+- TODO(gp): We are planning to use an `ImClient` data format closer to
+  `MarketData`
 
-by using `start_time`, `end_time`, and `knowledge_time` since
-these can be
+by using `start_time`, `end_time`, and `knowledge_time` since these can be
 
 inferred only from the vendor data semantic
 
 Transformations performed by classes derived from `MarketData`
 
-- Classes derived from `MarketData` do whatever they need to do in
-  `_get_data()` to
+- Classes derived from `MarketData` do whatever they need to do in `_get_data()`
+  to
 
 get the data, but always pass back data that:
 
@@ -1233,15 +1228,14 @@ idx
 
 Transformations performed by abstract class `MarketData`
 
-- The transformations are done inside `get_data_for_interval()`,
-  during normalization,
+- The transformations are done inside `get_data_for_interval()`, during
+  normalization,
 
 and are:
 
 - indexing by `end_time`
 
-- converting `end_time`, `start_time`, `knowledge_time` to the
-  desired timezone
+- converting `end_time`, `start_time`, `knowledge_time` to the desired timezone
 
 - sorting by `end_time` and `asset_id`
 
@@ -1251,11 +1245,9 @@ Output format of `MarketData`
 
 - The base `MarketData` normalizes the data by:
 
-- sorting by the columns that correspond to `end_time` and
-  `asset_id`
+- sorting by the columns that correspond to `end_time` and `asset_id`
 
-- indexing by the column that corresponds to `end_time`, so that it
-  is suitable
+- indexing by the column that corresponds to `end_time`, so that it is suitable
 
 to DataFlow computation
 
@@ -1286,54 +1278,47 @@ Asset ids format
 
 - from `asset_ids` (ints) to `full_symbols` (strings)
 
-- If the `asset_ids` -> `full_symbols` mapping is provided by the
-  vendor, then we
+- If the `asset_ids` -> `full_symbols` mapping is provided by the vendor, then
+  we
 
 reuse it
 
-- Otherwise, we build a mapping hashing `full_symbols` strings into
-  numbers
+- Otherwise, we build a mapping hashing `full_symbols` strings into numbers
 
-- `MarketData` and everything downstream uses `asset_ids` that are
-  encoded as ints
+- `MarketData` and everything downstream uses `asset_ids` that are encoded as
+  ints
 
 - This is because we want to use ints and not strings in dataframe
 
 Handling of `asset_ids`
 
-- Different implementations of `ImClient` backing a `MarketData`
-  are possible,
+- Different implementations of `ImClient` backing a `MarketData` are possible,
 
 e.g.:
 
 - The caller needs to specify the requested `asset_ids`
 
-- In this case the universe is provided by `MarketData` when calling
-  the
+- In this case the universe is provided by `MarketData` when calling the
 
 data access methods
 
-- The reading backend is initialized with the desired universe of
-  assets and
+- The reading backend is initialized with the desired universe of assets and
 
 then `MarketData` just uses or subsets that universe
 
 - For these reasons, assets are selected at 3 different points:
 
-1) `MarketData` allows to specify or subset the assets through
-   `asset_ids`
+1. `MarketData` allows to specify or subset the assets through `asset_ids`
 
 through the constructor
 
-2) `ImClient` backends specify the assets returned
+2. `ImClient` backends specify the assets returned
 
-- E.g., a concrete implementation backed by a DB can stream the data
-  for
+- E.g., a concrete implementation backed by a DB can stream the data for
 
 its entire available universe
 
-3) Certain class methods allow querying data for a specific asset or
-   subset
+3. Certain class methods allow querying data for a specific asset or subset
 
 of assets
 
@@ -1343,13 +1328,12 @@ Handling of filtering by time
 
 - Clients of `MarketData` might want to query data by:
 
-- using different interval types, namely \`\[a, b), \[a, b\], (a, b\],
-  (a, b)\`
+- using different interval types, namely \`\[a, b), \[a, b\], (a, b\], (a, b)\`
 
 - filtering on either the `start_ts` or `end_ts`
 
-- For this reason, this class supports all these different ways of
-  providing data
+- For this reason, this class supports all these different ways of providing
+  data
 
 - `ImClient` has a fixed semantic of the interval `\[a, b\]`
 
@@ -1359,30 +1343,28 @@ Handling timezone
 
 - `ImClient` always uses UTC as output
 
-- `MarketData` adapts UTC to the desired timezone, as requested by
-  the client
+- `MarketData` adapts UTC to the desired timezone, as requested by the client
 
 ## Checklist for releasing a new data set
 
--   Decide what to do exactly (e.g., do we download only bulk data or
-    also real-time?)
+- Decide what to do exactly (e.g., do we download only bulk data or also
+  real-time?)
 
--   Review what code we have and what can be generalized to accomplish
-    the task at hand
+- Review what code we have and what can be generalized to accomplish the task at
+  hand
 
--   Decide what's the name of the data set according to our convention
+- Decide what's the name of the data set according to our convention
 
--   Create DAGs for Airflow
+- Create DAGs for Airflow
 
--   Update the Raw Data Gallery
-    im_v2/common/notebooks/Master_raw_data_gallery.ipynb
+- Update the Raw Data Gallery
+  im_v2/common/notebooks/Master_raw_data_gallery.ipynb
 
--   Quick exploratory analysis to make sure the data is not malformed
+- Quick exploratory analysis to make sure the data is not malformed
 
--   Update the table in [[Data pipelines -
-    Specs]{.underline}](https://docs.google.com/document/d/1nLhaFBSHVrexCcwJMnpXlkqwn0l6bDiVer34GKVclYY/edit#heading=h.8g5ajvlq6zks)
+- Update the table in
+  [[Data pipelines - Specs]{.underline}](https://docs.google.com/document/d/1nLhaFBSHVrexCcwJMnpXlkqwn0l6bDiVer34GKVclYY/edit#heading=h.8g5ajvlq6zks)
 
--   Exploratory analysis for a thorough QA analysis
+- Exploratory analysis for a thorough QA analysis
 
--   Add QA system to Airflow prod
-
+- Add QA system to Airflow prod
