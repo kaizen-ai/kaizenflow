@@ -30,17 +30,16 @@
     + [Avoid code stutter](#avoid-code-stutter)
   * [Comments and docstrings](#comments-and-docstrings)
     + [General conventions](#general-conventions)
-    + [Docstrings](#docstrings)
     + [Descriptive vs imperative style](#descriptive-vs-imperative-style)
-    + [Comments](#comments)
-    + [Use type hints](#use-type-hints)
-    + [Interval notation](#interval-notation)
+    + [Docstrings style](#docstrings-style)
+    + [Comments style](#comments-style)
     + [Replace empty lines in code with comments](#replace-empty-lines-in-code-with-comments)
     + [Referring to an object in code comments](#referring-to-an-object-in-code-comments)
     + [Avoid distracting comments](#avoid-distracting-comments)
     + [Commenting out code](#commenting-out-code)
+    + [Use type hints](#use-type-hints)
+    + [Interval notation](#interval-notation)
     + [If you find a bug or obsolete docstring/TODO in the code](#if-you-find-a-bug-or-obsolete-docstringtodo-in-the-code)
-    + [Do not use inline comments](#do-not-use-inline-comments)
   * [Linter](#linter)
     + [Remove linter messages](#remove-linter-messages)
     + [When to disable linter messages](#when-to-disable-linter-messages)
@@ -108,7 +107,7 @@
     + [Don’t let your functions catch the default-itis](#dont-let-your-functions-catch-the-default-itis)
     + [Explicitly bind default parameters](#explicitly-bind-default-parameters)
     + [Don’t hardwire params in a function call](#dont-hardwire-params-in-a-function-call)
-    + [Make `if-then-else` complete](#make-if-then-else-complete)
+    + [Make `if-elif-else` complete](#make-if-elif-else-complete)
     + [Add TODOs when needed](#add-todos-when-needed)
   * [Common Python mistakes](#common-python-mistakes)
     + [`==` vs `is`](#-vs-is)
@@ -429,7 +428,18 @@
   - Epytext
   - Numpydoc
 
-### Docstrings
+### Descriptive vs imperative style
+
+- We decided to use imperative style for our comments and docstrings
+  - Pylint and other python QA tools favor an imperative style
+  - From [PEP 257](https://www.python.org/dev/peps/pep-0257/)
+    ```
+    The docstring is a phrase ending in a period. It prescribes the function or
+    method's effect as a command ("Do this", "Return that"), not as a description;
+    e.g. don't write "Returns the pathname ...".
+    ```
+
+### Docstrings style
 
 - We follow ReST (aka re-Structured Text) style for docstrings which is:
   - The most widely supported in the python community
@@ -488,18 +498,7 @@
     ```
 - [More examples of and discussions on python docstrings](https://stackoverflow.com/questions/3898572)
 
-### Descriptive vs imperative style
-
-- We decided to use imperative style for our comments and docstrings
-  - Pylint and other python QA tools favor an imperative style
-  - From [PEP 257](https://www.python.org/dev/peps/pep-0257/)
-    ```
-    The docstring is a phrase ending in a period. It prescribes the function or
-    method's effect as a command ("Do this", "Return that"), not as a description;
-    e.g. don't write "Returns the pathname ...".
-    ```
-
-### Comments
+### Comments style
 
 - Comments follow the same style of docstrings, e.g., imperative style with
   period `.` at the end
@@ -511,20 +510,41 @@
     ```python
     # Make comments imperative and end them with a period.
     ```
-
-### Use type hints
-
-- We expect new code to use type hints whenever possible
-  - See [PEP 484](https://www.python.org/dev/peps/pep-0484/)
-  - [Type hints cheat sheet](https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html)
-- At some point we will start adding type hints to old code
-- We plan to start using static analyzers (e.g., `mypy`) to check for bugs from
-  type mistakes and to enforce type hints at run-time, whenever possible
-
-### Interval notation
-
-- Intervals are represented with `[a, b), (a, b], (a, b), [a, b]`
-- We don't use the other style `[a, b[`
+- Always place comments above the lines that they are referring to. Avoid
+  writing comments on the same line as code since they require extra maintenance
+  (e.g., when the line becomes too long)
+  - _Bad_
+    ```python
+    print("hello world")      # Introduce yourself.
+    ```
+  - _Good_
+    ```python
+    # Introduce yourself.
+    print("hello world")
+    ```
+- The only exception is commenting `if-elif-else` statments: we comment them
+  underneath the each statement in order to explain the code that belongs to the
+  each statement particularly
+  - _Bad_
+    ```python
+    # Set remapping based on the run type.
+    if is_prod:
+        ...
+    else:
+        ...
+    ```
+  - _Good_
+    ```python
+    #
+    if is_prod:
+        # Set remapping for database data used in production.
+        ...
+    else:
+        # Set remapping for file system data used in simulation.
+        ...
+    ```
+    - If you want to separate an `if` statement from a bunch of code preceeding
+      it, you can leave an empty comment before it.
 
 ### Replace empty lines in code with comments
 
@@ -610,6 +630,20 @@
     is_alive = pd.Series(True, index=metadata.index)
     ```
 
+### Use type hints
+
+- We expect new code to use type hints whenever possible
+  - See [PEP 484](https://www.python.org/dev/peps/pep-0484/)
+  - [Type hints cheat sheet](https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html)
+- At some point we will start adding type hints to old code
+- We plan to start using static analyzers (e.g., `mypy`) to check for bugs from
+  type mistakes and to enforce type hints at run-time, whenever possible
+
+### Interval notation
+
+- Intervals are represented with `[a, b), (a, b], (a, b), [a, b]`
+- We don't use the other style `[a, b[`
+
 ### If you find a bug or obsolete docstring/TODO in the code
 
 - The process is:
@@ -620,20 +654,6 @@
     - Clear info on the problem
     - How to reproduce it, ideally a unit test
     - Stacktrace
-
-### Do not use inline comments
-
-- Avoid writing comments on the same line as code since they require extra
-  maintenance (e.g., when the line becomes too long)
-  - _Bad_
-    ```python
-    print("hello world")      # Introduce yourself.
-    ```
-  - _Good_
-    ```python
-    # Introduce yourself.
-    print("hello world")
-    ```
 
 ## Linter
 
@@ -1779,9 +1799,9 @@
     only needed params, which is as much as we can require from the called
     function.
 
-### Make `if-then-else` complete
+### Make `if-elif-else` complete
 
-- In general all the `if-then-else` statements should to be complete, so that
+- In general all the `if-elif-else` statements should to be complete, so that
   the code is robust.
 - _Bad_
   ```python
@@ -1805,7 +1825,7 @@
       raise ValueError("The %s frequency is not supported" % frequency)
   ```
   - This code is robust and correct
-  - Still the `if-then-else` is enough and the assertion is not needed
+  - Still the `if-elif-else` is enough and the assertion is not needed
     - DRY here wins: you don't want to have to keep two pieces of code in sync
     - The last line is a catch-all that makes sure even if we modify the
       previous
