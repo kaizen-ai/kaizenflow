@@ -143,7 +143,7 @@ the other lower level principles we follow (like a basis for a vector space)
   `downloader.py`)
 - For decorators we don't use a verb as we do for normal functions, but rather
   an adjective or a past tense verb, e.g.,
-  ```
+  ```python
   def timed(f):
       """
       Add a timer decorator around a specified function.
@@ -196,7 +196,7 @@ the other lower level principles we follow (like a basis for a vector space)
 - An example of code stutter: you want to add a function that returns `git` root path in a module `git`
 - _Bad_
   - Name is `get_git_root_path()`
-    ```
+    ```python
     import helpers.git as git
 
     ... git.get_git_root_path()
@@ -205,7 +205,7 @@ the other lower level principles we follow (like a basis for a vector space)
 
 - _Good_
   - Name is `get_root_path()`
-    ```
+    ```python
     import helpers.git as git
 
     ... git.get_root_path()
@@ -238,7 +238,7 @@ the other lower level principles we follow (like a basis for a vector space)
   - Supported by pydocstyle (which does not support Google style as explained
     [here](https://github.com/PyCQA/pydocstyle/issues/275))
 - Example of a function definition with ReST styled docstring:
-  ```
+  ```python
     def my_function(param1: str) -> str:
         """
         A one-line description of what the function does.
@@ -258,11 +258,11 @@ the other lower level principles we follow (like a basis for a vector space)
     - A full ReST docstring styling also requires to specify params and return types, however type hinting makes it redundant so you should use only type hinting
 - Sometimes functions are small enough so we just use a 1-liner docstring without detailed params and return descriptions. Just do not put text and docstring brackets in one line
   - _Bad_
-    ```
+    ```python
     """This is not our approach."""
     ```
   - _Good_
-    ```
+    ```python
     """
     This is our approach.
     """
@@ -284,14 +284,12 @@ the other lower level principles we follow (like a basis for a vector space)
 
 - Comments follow the same style of docstrings, e.g., imperative style with period `.` at the end
   - _Bad_
-    ```
+    ```python
     # This comment is not imperative and has no period at the end
     ```
   - _Good_
-    ```
-    """
+    ```python
     # Make comments imperative and end them with a period.
-    """
     ```
 
 ### Use type hints
@@ -308,7 +306,7 @@ the other lower level principles we follow (like a basis for a vector space)
 - If you feel that you need an empty line in the code, it probably means that a
   specific chunk of code is a logical piece of code performing a cohesive
   function.
-  ```
+  ```python
   ...
   end_y = end_dt.year
   # Generate a list of file paths for Parquet dataset.
@@ -317,7 +315,7 @@ the other lower level principles we follow (like a basis for a vector space)
   ```
 - Instead of putting an empty line, you should put a comment describing at high
   level what the code does.
-  ```
+  ```python
   ...
   end_y = end_dt.year
   # Generate a list of file paths for Parquet dataset.
@@ -325,7 +323,7 @@ the other lower level principles we follow (like a basis for a vector space)
   ...
   ```
 - If you don't want to add comments, just comment the empty line.
-  ```
+  ```python
   ...
   end_y = end_dt.year
   #
@@ -341,20 +339,20 @@ the other lower level principles we follow (like a basis for a vector space)
 - In general, **avoid** this whenever possible
 - Code object names (e.g., function, class, params) are oehten subject to change, so we need to take care of them everywhere. It is very hard to track all of them in comments so replace the names with their actual meaning
   - _Bad_
-    ```
+    ```python
     # Generate a list of file paths for `ParquetDataset`.
     ```
   - _Good_
-    ```
+    ```python
     # Generate a list of file paths for Parquet dataset.
     ```
 - However, sometimes it is necessary. In this case refer to objects in the code using Markdown. This is useful for distinguishing the object code from the real-life object
   - _Bad_
-    ```
+    ```python
     # The dataframe df_tmp is used for ...
     ```
   - _Good_
-    ```
+    ```python
     # The dataframe `df_tmp` is used for ...
     ```
 
@@ -363,7 +361,7 @@ the other lower level principles we follow (like a basis for a vector space)
 - Use comments to explain the high level logic / goal of a piece of code and not
   the details, e.g., do not comment things that are obvious
   - _Bad_
-    ```
+    ```python
     # Print results.
     _LOG.info("Results are %s", ...)
     ```
@@ -372,12 +370,12 @@ the other lower level principles we follow (like a basis for a vector space)
 
 - When we comment out code, we should explain why it is no longer relevant
   - _Bad_
-    ```
+    ```python
     is_alive = pd.Series(True, index=metadata.index)
     # is_alive = kgutils.annotate_alive(metadata, self.alive_cutoff)
     ```
   - _Good_
-    ```
+    ```python
     # TODO(*): As discussed in PTask5047 for now we set all timeseries to be alive.
     # is_alive = kgutils.annotate_alive(metadata, self.alive_cutoff)
     is_alive = pd.Series(True, index=metadata.index)
@@ -399,11 +397,11 @@ the other lower level principles we follow (like a basis for a vector space)
 - Avoid writing comments on the same line as code since
   they require extra maintenance (e.g., when the line becomes too long)
   - _Bad_
-    ```
+    ```python
     print("hello world")      # Introduce yourself.
     ```
   - _Good_
-    ```
+    ```python
     # Introduce yourself.
     print("hello world")
     ```
@@ -430,7 +428,7 @@ the other lower level principles we follow (like a basis for a vector space)
 
 - If you really believe you should override the linter in this particular case,
    then use something like:
-   ```
+   ```python
    # pylint: disable=some-message,another-one
    ```
    - You then need to explain in a comment why you are overriding the linter.
@@ -438,12 +436,12 @@ the other lower level principles we follow (like a basis for a vector space)
     [symbolic name](https://github.com/josherickson/pylint-symbolic-names)
     whenever possible:
     - _Bad_
-      ```
+      ```python
       # pylint: disable=W0611
       import config.logging_settings
       ```
     - _Good_
-      ```
+      ```python
       # pylint: disable=unused-import
       # This is needed when evaluating code at run-time that depends from
       # this import.
@@ -457,11 +455,11 @@ the other lower level principles we follow (like a basis for a vector space)
   than an inlined comment to get the linter to understand which line we are
   referring to, so in rare cases it is OK:
   - _Bad_ but ok if needed
-    ```
+    ```python
     import config.logging_settings  # pylint: disable=unused-import
     ```
   - _Good_
-    ```
+    ```python
     # pylint: disable=line-too-long
       expected_df_as_str = """# df=
                                   asset_id   last_price            start_datetime              timestamp_db
@@ -482,7 +480,7 @@ the other lower level principles we follow (like a basis for a vector space)
 
 - In order to use our logging framework (e.g., `-v` from command lines, and much
   more) use:
-  ```
+  ```python
   import helpers.hdbg as hdbg
 
   _LOG = logging.getLogger(__name__)
@@ -519,13 +517,13 @@ the other lower level principles we follow (like a basis for a vector space)
 ### Use positional args when logging
 
 - _Bad_
-  ```
+  ```python
   _LOG.debug("cmd=%s %s %s" % (cmd1, cmd2, cmd3))
   _LOG.debug("cmd=%s %s %s".format(cmd1, cmd2, cmd3))
   _LOG.debug("cmd={cmd1} {cmd2} {cmd3}")
   ```
 - _Good_
-  ```
+  ```python
   _LOG.debug("cmd=%s %s %s", cmd1, cmd2, cmd3)
   ```
 - All the statements are equivalent from the functional point of view
@@ -537,15 +535,15 @@ the other lower level principles we follow (like a basis for a vector space)
 - For some reason people tend to believe that using the `logging` / `dassert`
   approach of positional param to exceptions
   - _Bad_ (use positional args)
-    ```
+    ```python
     raise ValueError("Invalid server_name='%s'", server_name)
     ```
   - _Good_ (use string interpolation)
-    ```
+    ```python
     raise ValueError("Invalid server_name='%s'" % server_name)
     ```
   - _Best_ (use string format)
-    ```
+    ```python
     raise ValueError(f"Invalid server_name='{server_name}'")
     ```
 - The constructor of an exception accepts a string
@@ -558,7 +556,7 @@ the other lower level principles we follow (like a basis for a vector space)
 
 - If there is a something that is suspicious but you don't feel like it's
   worthwhile to assert, report a warning with:
-  ```
+  ```python
   _LOG.warning(...)
   ```
 - If you know that if there is a warning then there are going to be many many
@@ -574,11 +572,11 @@ the other lower level principles we follow (like a basis for a vector space)
 - `dassert_*` is modeled after logging so for the same reasons one should use
   positional args
 - _Bad_
-  ```
+  ```python
   hdbg.dassert_eq(a, 1, "No info for %s" % method)
   ```
   Good
-  ```
+  ```python
   hdbg.dassert_eq(a, 1, "No info for %s", method)
   ```
 
@@ -591,12 +589,12 @@ the other lower level principles we follow (like a basis for a vector space)
 - A `dassert_*` typically prints as much info as possible, but it can't report
   information that is not visible to it:
   - _Bad_
-    ```
+    ```python
     hdbg.dassert(string.startswith("hello"))
     ```
     - You don't know what is value of `string` is
   - _Good_
-    ```
+    ```python
     hdbg.dassert(string.startswith("hello"), "string='%s'", string)
     ```
     - Note that often is useful to add `'` (single quotation mark) to fight pesky spaces that
@@ -608,11 +606,11 @@ the other lower level principles we follow (like a basis for a vector space)
 
 - Do not use in notebooks or code the evil `import *`
   - _Bad_
-    ```
+    ```python
     from helpers.sql import *
     ```
   - _Good_
-    ```
+    ```python
     import helpers.sql as hsql
     ```
 - The `from ... import *`:
@@ -637,19 +635,19 @@ the other lower level principles we follow (like a basis for a vector space)
 ### Avoid `from ... import ...`
 
 - Import should always start from `import`:
-  ```
+  ```python
   import library as short_name
   import library.sublibrary as short_name
   ```
 - This rule applies to imports of third party libraries and our library
 - Because of this rule we have to always specify a short import of a parent lib before every code object that does not belong to the file:
   - _Bad_
-    ```
+    ```python
     from helpers.sql import get_connection, get_connection_from_env_vars, \
         DBConnection, wait_connection_from_db, execute_insert_query
     ```
   - _Good_
-    ```
+    ```python
     import helpers.sql as hsql
     ...
     ... hsql.get_connection()
@@ -672,7 +670,7 @@ the other lower level principles we follow (like a basis for a vector space)
   simple, rather than discussing about
 - The current agreed upon exceptions are:
   - For `typing` it is ok to do:
-    ```
+    ```python
     from typing import Iterable, List
     ```
     in order to avoid typing everywhere, since we want to use type hints as much
@@ -681,11 +679,11 @@ the other lower level principles we follow (like a basis for a vector space)
 ### Always import with a full path from the root of the repo / submodule
 
 - _Bad_
-  ```
+  ```python
   import exchange_class
   ```
 - _Good_
-  ```
+  ```python
   import im_v2.ccxt.data.extract.exchange_class
   ```
   - In this way your code can run without depending upon your current dir
@@ -694,7 +692,7 @@ the other lower level principles we follow (like a basis for a vector space)
 
 - Each module that can be imported should have a docstring at the very beginning
   (before any code) describing how it should be imported
-  ```
+  ```python
   """
   Import as:
 
@@ -712,29 +710,29 @@ the other lower level principles we follow (like a basis for a vector space)
 
 - Example 1
   - _Bad_
-    ```
+    ```python
     from im_v2.ccxt.data.client import ccxt_clients as ccxtcl
     ```
   - _Good_
-    ```
+    ```python
     import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
     ```
 - Example 2
   - _Bad_
-    ```
+    ```python
     from edgar.shared import headers_extractor as he
     ```
   - _Good_
-    ```
+    ```python
     import edgar.shared.headers_extractor as eshheext
     ```
 - Example 3
   - _Bad_
-    ```
+    ```python
     from helpers import hdbg
     ```
   - _Good_
-    ```
+    ```python
     import helpers.hdbg as hdbg
     ```
 
@@ -800,20 +798,19 @@ the other lower level principles we follow (like a basis for a vector space)
 ### Follow the same structure
 
 - All python scripts that are meant to be executed directly should:
-
   1. Be marked as executable files with:
      ```
      > chmod +x foo_bar.py
      ```
   2. Have the python code should start with the standard Unix shebang notation:
-     ```
+     ```python
      #!/usr/bin/env python
      ```
     - This line tells the shell to use the `python` defined in the environment
     - In this way you can execute directly without prepending with python
 
   3. Have a:
-     ```
+     ```python
      if __name__ == "__main__":
          ...
      ```
@@ -874,9 +871,9 @@ the other lower level principles we follow (like a basis for a vector space)
 - When working with dataframes, we often want need handle certain columns
   differently, or perform an operation on a strict subset of columns
 - In these cases, it is tempting to assume that the special columns will have
-  specific names, e.g., "datetime"
+  specific names, e.g., `"datetime"`
 - The problem is that column names are
-  - Rarely obvious (e.g., compare "datetime" vs "timestamp" vs "Datetime")
+  - Rarely obvious (e.g., compare `"datetime"` vs `"timestamp"` vs `"Datetime"`)
   - Tied to specific use cases
     - The function you are writing may be written for a specific use case today,
       but what if it is more general
@@ -884,15 +881,20 @@ the other lower level principles we follow (like a basis for a vector space)
       different column names make sense, why should they have to conform to your
       specific use case's needs?
   - May overwrite existing column names
-    - For example, you may decided to call a column "output", but what if the
+    - For example, you may decided to call a column `"output"`, but what if the
       dataframe already has a column with that name?
 - To get around this, allow the caller to communicate to the function the names
   of any special columns
+  - _Good_
+    ```python
+    def func(datetime_col: str):
+        ...
+    ```
 - Make sure that you require column names only if they are actually used by the
   function
 - If you must use hard-write column names internally or for some application,
   define the column name in the library file as a global variable, like
-  ```
+  ```python
   DATETIME_COL = "datetime"
   ```
   - Users of the library can now access the column name through imports
@@ -902,7 +904,7 @@ the other lower level principles we follow (like a basis for a vector space)
 ### Single exit point from a function
 
 - Consider the following _Bad_ function
-  ```
+  ```python
   def _get_zero_element(list_: List):
         if not list_:
             return None
@@ -922,14 +924,14 @@ the other lower level principles we follow (like a basis for a vector space)
     accepts a dataframe or a series and then returns a dataframe or a series,
     but the input and output is the same)
   - Returning different types (e.g., float and string) is also bad
-  - Returning a type or None is typically ok
+  - Returning a type or `None` is typically ok
 - Try to return values that are consistent so that the client doesn't have to
   switch statement, using `isinstance(...)`
   - E.g., return a `float` and if the value can't be computed return `np.nan`
     (instead of `None`) so that the client can use the return value in a uniform
     way
 - Function examples with single exit point
-    ```
+    ```python
     def _get_zero_element(list_: List):
         if not list_:
             ret = np.nan
@@ -938,13 +940,13 @@ the other lower level principles we follow (like a basis for a vector space)
         return ret
     ```
     or
-    ```
+    ```python
     def _get_zero_element(list_: List):
         ret = np.nan if not list_ else list_[0]
         return ret
     ```
 - However in rare cases it is OK to have functions like:
-  ```
+  ```python
   def ...(...):
       # Handle simple cases.
       ...
@@ -964,7 +966,6 @@ the other lower level principles we follow (like a basis for a vector space)
 
 #### Decision
 
-- All the required input parameters are 
 - The preferred order is:
   - Input parameters
   - Output parameters
@@ -986,55 +987,59 @@ the other lower level principles we follow (like a basis for a vector space)
 
 #### Problem
 
-- How to assign default parameters in a function?
+- How to assign default parameters in a function to make them clear and distinguishable?
 
 #### Decision
 
+- We make all the default parameters keyword-only
+  - This means that we should always specify default parameters using a keyword
+  - When building a function, always put default parameters after `*`
 - It's ok to use a default parameter in the interface as long as it is a Python
   scalar (which is immutable by definition)
   - _Good_
-    ```
+    ```python
     def function(
       value: int = 5,
-      dir_name : str = "hello_world",
+      *,
+      dir_name: str = "hello_world",
     ):
     ```
-- You should not use list, maps, objects, but pass `None` and then initialize
+- You should not use list, maps, objects, etc. as the default value but pass `None` and then initialize the default param
   inside the function
   - _Bad_
-    ```
+    ```python
     def function(
-      # These are actually a bug waiting to happen.
+      *,
       obj: Object = Object(),
-      list_: list[int] = [],
+      list_: List[int] = [],
     ):
     ```
   - _Good_
-    ```
+    ```python
     def function(
+      *,
       obj: Optional[Object] = None,
-      list_: Optional[list[int]] = None,
+      list_: Optional[List[int]] = None,
     ):
       if obj is None:
-      obj = Object()
+        obj = Object()
       if list_ is None:
-      list_ = []
+        list_ = []
     ```
 - We use a `None` default value when a function needs to be wrapped and the
   default parameter needs to be propagated
   - _Good_
-    ```
+    ```python
     def function1(
       ...,
+      *,
       dir_name: Optional[str] = None,
     ):
-        if dir_name is None:
-          dir_name = "/very_long_path"
-          # You can also abbreviate the previous code as:
-          # dir_name = dir_name or "/very_long_path"
+      dir_name = dir_name or "/very_long_path"
 
     def function2(
       ...,
+      *,
       dir_name: Optional[str] = None,
     ):
       function1(..., dir_name=dir_name)
@@ -1061,10 +1066,11 @@ the other lower level principles we follow (like a basis for a vector space)
 #### Problem
 
 - You have a function
-  ```
+  ```python
   def func(
     task_name : str,
     dataset_dir : str,
+    *,
     clobber : bool = clobber,
   ):
   ...
@@ -1076,14 +1082,18 @@ the other lower level principles we follow (like a basis for a vector space)
 - We prefer to
   - Assign directly the positional parameters
   - Bind explicitly the parameters with a default value using their name
-- _Good_
-  ```
-  func(task_name, dataset_dir, clobber=clobber)
-  ```
-- _Bad_
-  ```
-  func(task_name, dataset_dir, clobber)
-  ```
+  - Do not put actual parameter values to the function call but specify them right before
+  - _Bad_
+    ```python
+    func("some_task_name", "/dir/subdir", clobber=False)
+    ```
+  - _Good_
+    ```python
+    task_name = "some_task_name"
+    dataset_dir = "/dir/subdir"
+    clobber = False
+    func(task_name, dataset_dir, clobber=clobber)
+    ```
 
 #### Rationale
 
@@ -1106,7 +1116,7 @@ the other lower level principles we follow (like a basis for a vector space)
 #### Problem
 
 - Given a function with the following interface:
-  ```
+  ```python
   def mult_and_sum(multiplier_1, multiplier_2, sum_):
       return multiplier_1 * multiplier_2 + sum_
   ```
@@ -1114,22 +1124,22 @@ the other lower level principles we follow (like a basis for a vector space)
 
 #### Decision
 
-- We prefer to invoke it as:
-  - _Good_
-    ```
-    a = 1
-    b = 2
-    c = 3
-    mult_and_sum(a, b, c)
-    ```
+- Positional arguments are not default, so not keyword-only for consistency
   - _Bad_
-    ```
+    ```python
     a = 1
     b = 2
     c = 3
     mult_and_sum(multiplier_1=a,
                  multiplier_2=b,
                  sum_=c)
+    ```
+  - _Good_
+    ```python
+    a = 1
+    b = 2
+    c = 3
+    mult_and_sum(a, b, c)
     ```
 
 #### Rationale
@@ -1154,7 +1164,7 @@ the other lower level principles we follow (like a basis for a vector space)
   - One could argue that the _Bad_ form is clearer
     - IMO the problem is in the names of the variables, which are uninformative,
       e.g., a better naming achieves the same goal of clarity
-      ```
+      ```python
       mul1 = 1
       mul2 = 2
       sum_ = 3
@@ -1196,10 +1206,11 @@ typical flow of use, e.g.,
 (e.g., I have a vim macro to create banners that always look the same) and be
 consistent with empty lines before / empty and so on.
 - The banner is a way of saying “all these functions belong together”.
-  ```
-  # Common functions
-  ...
-  # Read data
+  ```python
+  # #############################################################################
+  # Read data.
+  # #############################################################################
+
   def _helper1_to_func1():
   ...
   def _helper2_to_func1():
@@ -1209,15 +1220,19 @@ consistent with empty lines before / empty and so on.
       ...
       _helper2_to_func2()
 
-  # Process data
+  # #############################################################################
+  # Process data.
+  # #############################################################################
   ...
-  # Save data
+  # #############################################################################
+  # Save data.
+  # #############################################################################
   ...
   ```
 
-1. Ideally each section of code should use only sections above, and be used by
+- Ideally each section of code should use only sections above, and be used by
    sections below (aka “Unix layer approach”).
-2. If you find yourself using too many banners this is in indication that code
+- If you find yourself using too many banners this is in indication that code
    might need to be split into different files.
    - Although we don’t have agreed upon rules, it might be ok to have large
      files as long as they are well organized. E.g., in pandas code base, all
@@ -1228,7 +1243,7 @@ consistent with empty lines before / empty and so on.
      across many files: in other words it is possible to organize the code too
      much (e.g. what if each function is in a single module?)
    - Let’s try to find the right balance.
-3. It might be a good idea to use classes to split the code, but also OOP can
+- It might be a good idea to use classes to split the code, but also OOP can
    have a dark side
    - E.g., using OOP only to reorganize the code instead of introducing
      “concepts”
@@ -1239,18 +1254,18 @@ consistent with empty lines before / empty and so on.
 
 - Examples of horrible functions:
   - How many characters do we really saved? If typing is a problem, learn to touch type.
-    ```
-    def is_exists(path):
+    ```python
+    def is_exists(path: str) -> None:
         return os.path.exists(path)
     ```
     or
-    ```
-    def make_dirs(path):
+    ```python
+    def make_dirs(path: str) -> List[str]:
         os.makedirs(path)
     ```
   - This one can be simply replaced by `os.path.dirname`
-    ```
-    def folder_name(f_name):
+    ```python
+    def folder_name(f_name: str) -> str:
         if f_name[-1] != "/":
             return f_name + "/"
         return f_name
@@ -1268,20 +1283,19 @@ needs to keep in mind. People that read the code, needs to go back and forth in
 the code to see what each concept means.
 - Think about the trade-offs and be consistent.
 - Example 1
-  ```
+  ```python
   def fancy_print(txt):
       print "fancy: ", txt
   ```
   - Then people that change the code need to be aware that there is a function that prints in a special way. The only reason to add this shallow wrapper is that, in the future, we believe we want to change all these calls in the code.
-
 - Example 2
-  ```
+  ```python
   SNAPSHOT_ID = "SnapshotId"
   ```
   - Another example is parametrizing a value used in a single function.
   - If multiple functions need to use the same value, then this practice can be a good idea. If there is a single function using this, one should at least keep it local to the function.
   - Still note that introducing a new concept can also create confusion. What if we need to change the code to:
-    ```
+    ```python
     SNAPSHOT_ID = "TigerId"
     ```
     then the variable and its value are in contrast.
@@ -1299,14 +1313,14 @@ easy to understand, e.g.,
 special happened) or an empty dataframe `pd.DataFrame(None)` to allow the caller
 code being indifferent to what is returned.
   - _Bad_
-    ```
+    ```python
     if "Tags" not in df.columns:
         df["Name"] = np.nan
     else:
         df["Name"] = df["Tags"].apply(extract_name)
     ```
   - _Good_
-    ```
+    ```python
     if "Tags" not in df.columns:
         df["Name"] = None
     else:
@@ -1316,8 +1330,8 @@ code being indifferent to what is returned.
 ### Avoid wall-of-text functions
 
 - _Bad_
-  ```
-  def get_timestamp_v07(raw_df):
+  ```python
+  def get_timestamp_data(raw_df: pd.DataFrame) -> pd.DataFrame:
       timestamp_df = get_raw_timestamp(raw_df)
       documents_series = raw_df.progress_apply(he.extract_documents_v2, axis=1)
       documents_df = pd.concat(documents_series.values.tolist())
@@ -1337,31 +1351,37 @@ code being indifferent to what is returned.
   ```
   - This function is correct but it has few problems (e.g., lack of a docstring, lots of unclear concepts, abuse of constants).
 - _Good_
-```
-def get_timestamp_v07(raw_df):
-    # Get the df containing the timestamp information.
-    timestamp_df = get_raw_timestamp(raw_df)
-    # Extract the documents
-    documents_series = raw_df.progress_apply(he.extract_documents_v2, axis=1)
-    documents_df = pd.concat(documents_series.values.tolist())
-    documents_df.set_index(api.cfg.INDEX_COLUMN, drop=True, inplace=True)
-    documents_df = documents_df[
-        documents_df[api.cfg.DOCUMENTS_DOC_TYPE_COL] != ""
-    ]
-    types = documents_df.groupby(
-        api.cfg.DOCUMENTS_IDX_COL
-    )[api.cfg.DOCUMENTS_DOC_TYPE_COL].unique()
-    # Decorate the df with columns about types of information contained.
-    timestamp_df[api.cfg.TIMESTAMP_DOC_TYPES_COL] = types
-    is_xbrl_series = raw_df[api.cfg.DATA_COLUMN].apply(he.check_xbrl)
-    timestamp_df[api.cfg.TIMESTAMP_DOC_ISXBRL_COL] = is_xbrl_series
-    timestamp_df[api.cfg.TIMESTAMP_DOC_EX99_COL] = timestamp_df[
-        api.cfg.TIMESTAMP_DOC_TYPES_COL
-    ].apply(lambda x: any(["ex-99" in t.lower() for t in x]))
-    # Rename columns to canonical representation.
-    timestamp_df = timestamp_df.rename(columns=api.cfg.TIMESTAMP_COLUMN_RENAMES)
-    return timestamp_df
-```
+  ```python
+  def get_timestamp_data(raw_df: pd.DataFrame) -> pd.DataFrame:
+      """
+      Get data containing timestamp information.
+
+      :param raw_df: input non-processed data
+      :return: timestamp data
+      """
+      # Get data containing raw timestamp information.
+      timestamp_df = get_raw_timestamp(raw_df)
+      # Extract the documents with data type information.
+      documents_series = raw_df.progress_apply(he.extract_documents_v2, axis=1)
+      documents_df = pd.concat(documents_series.values.tolist())
+      documents_df.set_index(api.cfg.INDEX_COLUMN, drop=True, inplace=True)
+      documents_df = documents_df[
+          documents_df[api.cfg.DOCUMENTS_DOC_TYPE_COL] != ""
+      ]
+      types = documents_df.groupby(
+          api.cfg.DOCUMENTS_IDX_COL
+      )[api.cfg.DOCUMENTS_DOC_TYPE_COL].unique()
+      # Set columns about types of information contained.
+      timestamp_df[api.cfg.TIMESTAMP_DOC_TYPES_COL] = types
+      is_xbrl_series = raw_df[api.cfg.DATA_COLUMN].apply(he.check_xbrl)
+      timestamp_df[api.cfg.TIMESTAMP_DOC_ISXBRL_COL] = is_xbrl_series
+      timestamp_df[api.cfg.TIMESTAMP_DOC_EX99_COL] = timestamp_df[
+          api.cfg.TIMESTAMP_DOC_TYPES_COL
+      ].apply(lambda x: any(["ex-99" in t.lower() for t in x]))
+      # Rename columns to canonical representation.
+      timestamp_df = timestamp_df.rename(columns=api.cfg.TIMESTAMP_COLUMN_RENAMES)
+      return timestamp_df
+  ```
   - You should at least split the functions in chunks using `#` or even better comment what each chunk of code does.
 
 ## Writing robust code
@@ -1383,14 +1403,14 @@ this urge! grep is friend. pycharm does this refactoring automatically.
 function signature changes, your functions doesn’t confuse a default param was a
 positional one.
   - _Bad_
-    ```
+    ```python
     hdbg.dassert(
         args.form or args.form_list,
         "You must specify one of the parameters: --form or --form_list",
     )
     ```
   - _Good_
-    ```
+    ```python
     hdbg.dassert(
         args.form or args.form_list,
         msg="You must specify one of the parameters: --form or --form_list",
@@ -1400,14 +1420,14 @@ positional one.
 ### Don’t hardwire params in a function call
 
 - _Bad_
-  ```
+  ```python
   esa_df = universe.get_esa_universe_mapped(False, True)
   ```
   - Itis difficult to read and understand without looking for the invoked function
 (aka write-only code) and it’s brittle since a change in the function params
 goes unnoticed.
 - _Good_
-  ```
+  ```python
   esa_df = universe.get_esa_universe_mapped(gvkey=False, cik=True)
   ```
   - It’s better to be explicit (as usual)
@@ -1417,7 +1437,7 @@ goes unnoticed.
 
 - In general all the `if-then-else` statements should to be complete, so that the code is robust.
 - _Bad_
-  ```
+  ```python
   if datafmt is not None and items is not None:
       filters = list()
       for item in items:
@@ -1430,7 +1450,7 @@ goes unnoticed.
       filters = None
   ```
 - _Good_
-  ```
+  ```python
   if datafmt is not None and items is not None:
       filters = list()
       for item in items:
@@ -1452,7 +1472,7 @@ code, the code is robust.
 - If your code makes an assumption don’t just write a comment, but implement an
 assertion so the code can’t be executed if the assertion is not verified
 (instead of failing silently)
-  ```
+  ```python
   hdbg.dassert_lt(start_date, end_date)
   ```
 
@@ -1460,7 +1480,7 @@ assertion so the code can’t be executed if the assertion is not verified
 
 - When there is something that you know you should have done, but you didn’t
   have time to do, add a TODO, possibly using your git name or github name e.g.,
-  ```
+  ```python
   # TODO(gp): …
   ```
   - In this way it’s easy to grep for your TODOs, which becomes complicated when
@@ -1468,7 +1488,7 @@ assertion so the code can’t be executed if the assertion is not verified
 
 - If the TODO is associated with a Github issue, you can alternatively write the
   issue number inside the TODO, e.g.,
-  ```
+  ```python
   # TODO(#123): …
   ```
 - You can create a TODO for somebody else, or you can create a Upsource comment
@@ -1478,7 +1498,7 @@ assertion so the code can’t be executed if the assertion is not verified
   take responsibility for their mistakes.
 - You can use P1, P2 to indicate if the issue is critical or not. E.g., P0 is
   the default for saying this is important, P1 is more of a “nice to have”.
-  ```
+  ```python
   # TODO(Sergey): P1 This can be implemented in pandas using a range generation.
   ```
 
@@ -1491,11 +1511,11 @@ equality), while `==` checks if the two pointed objects are equivalent (value
 equality).
 - For checking against types like `None` we want to use `is`, `is not`
   - _Bad_
-    ```
+    ```python
     if var == None
     ```
   - _Good__
-    ```
+    ```python
     if var is None:
     ```
 - For more info checks
@@ -1510,11 +1530,11 @@ a list.
 instance of a base class, too), while checking for equality of type does not (it
 demands identity of types and rejects instances of subtypes, AKA subclasses).
   - _Bad_
-    ```
+    ```python
     if type(obj) is list:
     ```
   - _Good__
-    ```
+    ```python
     if isinstance(obj, list):
     ```
 - For more info check
@@ -1668,14 +1688,14 @@ there is not always need to be super exhaustive in terms of command line options
 - Write code where there is minimal coupling between different different parts
   - This is a corollary of DRY, since not following DRY implies coupling
 - Consider the following code:
-  ```
+  ```python
   if server_name == "ip-172-31-16-23":
       out = 1
   if server_name == "ip-172-32-15-23":
       out = 2
   ```
 - This code is brittle since if you change the first part to:
-  ```
+  ```python
   if server_name.startswith("ip-172"):
       out = 1
   if server_name == "ip-172-32-15-23":
@@ -1683,7 +1703,7 @@ there is not always need to be super exhaustive in terms of command line options
   ```
   executing the code with `server_name = "ip-172-32-15-23"` will give `out=2`
 - The proper approach is to enumerate all the cases like:
-  ```
+  ```python
   if server_name == "ip-172-31-16-23":
       out = 1
   elif server_name == "ip-172-32-15-23":
@@ -1708,7 +1728,7 @@ there is not always need to be super exhaustive in terms of command line options
 ### Regex
 
 - The rule of thumb is to compile a regex expression, e.g.,
-  ```
+  ```python
   backslash_regexp = re.compile(r"\\")
   ```
   only if it's called more than once, otherwise the overhead of compilation and
@@ -1735,7 +1755,7 @@ there is not always need to be super exhaustive in terms of command line options
   / has dependency only to one outermost layer and one innermost layer
 - You can use this approach in your files representing data processing pipelines
 - You can split code in sections using 80 characters # comments, e.g.,
-  ```
+  ```python
   # ###################...
   # Read.
   # ###################...
@@ -1752,7 +1772,7 @@ there is not always need to be super exhaustive in terms of command line options
 ### Write complete `if-then-else`
 
 - Consider this good piece of code
-  ```
+  ```python
   hdbg.dassert_in(
       frequency,
       ["D", "T"]
@@ -1835,7 +1855,7 @@ there is not always need to be super exhaustive in terms of command line options
   - What code is clearer to you, VersionA or VersionB?
   - Can you spot the difference between the 2 pieces of code?
     - Version A
-      ```
+      ```python
       stopwords = nlp_ut.read_stopwords_json(_STOPWORDS_PATH)
       texts = ["a", "an", "the"]
       stop_words = nlp_ut.get_stopwords(
@@ -1855,7 +1875,7 @@ there is not always need to be super exhaustive in terms of command line options
       self.assertEqual(actual_result, expected_result)
       ```
     - Version B
-      ```
+      ```python
       def _helper(texts, categories, expected_result):
           stopwords = nlp_ut.read_stopwords_json(_STOPWORDS_PATH)
           stop_words = nlp_ut.get_stopwords(
@@ -1987,12 +2007,12 @@ on the side of documenting for the reader.
 are correct") rather than a postcondition
 - Often is more compact since it doesn't have reference to `self`
   - _Bad_
-    ```
+    ```python
     self._tau = tau
     hdbg.dassert_lte(self._tau, 0)
     ```
   - _Good_
-    ```
+    ```python
     hdbg.dassert_lte(tau, 0)
     self._tau = tau
     ```
@@ -2000,7 +2020,7 @@ are correct") rather than a postcondition
 
     When we handle a default assignment, it's more natural to implement a
     post-condition:
-    ```
+    ```python
     col_rename_func = col_rename_func or (lambda x: x)
     hdbg.dassert_isinstance(col_rename_func, collections.Callable)
     ```
@@ -2008,7 +2028,7 @@ are correct") rather than a postcondition
 ### Put docstrings in triple quotation marks
 
 - _Bad_
-  ```
+  ```python
   Generate "random returns" in the form:
 
                 vol_sq
@@ -2018,7 +2038,7 @@ are correct") rather than a postcondition
   2000-01-06   8.544551
   ```
 - _Good_
-  ```
+  ```python
   """
   Generate "random returns" in the form:
 
@@ -2065,7 +2085,7 @@ comment to represent the different logical pieces of code.
 
 - The common reader can't easily understand a large piece or large blob of code.
   - _Bad_
-    ```
+    ```python
     hdbg.dassert_isinstance(df_in, pd.DataFrame)
     hdbg.dassert_isinstance(df_out, pd.DataFrame)
     hdbg.dassert(cols is None or isinstance(cols, list))
@@ -2075,7 +2095,7 @@ comment to represent the different logical pieces of code.
     col_mode = col_mode or "merge_all"
     ```
   - _Good_
-    ```
+    ```python
     hdbg.dassert_isinstance(df_in, pd.DataFrame)
     hdbg.dassert_isinstance(df_out, pd.DataFrame)
     #
