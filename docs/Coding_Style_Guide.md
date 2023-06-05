@@ -116,6 +116,7 @@
     + [Convention for naming tests](#convention-for-naming-tests)
   * [Refactoring](#refactoring)
     + [When moving / refactoring code](#when-moving--refactoring-code)
+    + [Write script for renamings](#write-script-for-renamings)
   * [Architectural and design pattern](#architectural-and-design-pattern)
     + [Research quality vs production quality](#research-quality-vs-production-quality)
     + [Always separate what changes from what stays the same](#always-separate-what-changes-from-what-stays-the-same)
@@ -659,7 +660,8 @@
 
 - The linter is in charge of reformatting the code according to our conventions
   and reporting potential problems
-- `TODO(Dan/Samarth): Add a link to linter doc.`
+- You can find instructions on how to run linter at the
+  [First review process](First_review_process.md) doc
 
 ### Remove linter messages
 
@@ -1985,6 +1987,17 @@
   - Run unit tests
   - Run notebooks (see
     [here](https://n-xovwktmtjsnaxyc2mwes2xu7pohqedmdm6zjw5q-0lu-script.googleusercontent.com/userCodeAppPanel#))
+
+### Write script for renamings
+
+- When you need to rename any code object that is being used in many files, use
+  `dev_scripts/replace_text.py` to write a script that will implement your task
+  - Read the script docstring for detailed information about how to use it
+- You DO NOT use `replace_text.py` directly. Instead, create an executable `.sh`
+  script that uses `replace_text.py`
+  - Look for examples at `dev_scripts/cleanup_scripts`
+  - Commit the created script to the mentioned folder so then your team members
+    can use it to implement renaming in other libs
 
 ## Architectural and design pattern
 
