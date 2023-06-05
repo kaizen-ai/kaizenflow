@@ -9,6 +9,6 @@ script_name="cmamp/dev_scripts/cleanup_scripts/rename_pytestraises.sh"
     --exclude_files $script_name \
 
 ## Remove unused imports from affected files.
-#invoke lint -m --only-format
+##invoke lint -m --only-format
 
 
