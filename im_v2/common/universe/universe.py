@@ -14,6 +14,35 @@ import helpers.hstring as hstring
 import im_v2.common.universe.full_symbol as imvcufusy
 
 
+def _get_universe_dir(vendor: str, mode: str) -> str:
+    """
+    Get the dir containing universe files for the specified vendor and mode.
+
+    :param vendor: vendor to load data for (e.g., CCXT, Talos)
+    :param mode: download or trade universe
+    :return: universe dir
+    """
+    hdbg.dassert_in(mode, ["download", "trade"])
+    vendor = vendor.lower()
+    universe_dir = os.path.join(
+        hgit.get_amp_abs_path(), f"im_v2/{vendor}/universe/{mode}"
+    )
+    hdbg.dassert_dir_exists(universe_dir)
+    return universe_dir
+
+
+def _get_universe_files(universe_dir: str) -> List[str]:
+    """
+    Get full paths to all the files in a universe dir.
+
+    :param universe_dir: dir containing universe files
+    :return: paths to all the universe files
+    """
+    universe_files_pattern = os.path.join(universe_dir, "universe_v*.json")
+    universe_files = list(glob.glob(universe_files_pattern))
+    return universe_files
+
+
 def _get_universe_file_path(
     vendor: str, mode: str, *, version: Optional[str] = None
 ) -> str:
@@ -22,31 +51,46 @@ def _get_universe_file_path(
 
     :param vendor: vendor to load data for (e.g., CCXT, Talos)
     :param mode: download or trade universe
-    :param version: universe version (e.g. "v01"). If None it uses
-      the latest version available
+    :param version: universe version (e.g., "v01")
+        - If `None`, it uses the latest version available
     :return: file path to the universe file corresponding to the specified version
     """
-    hdbg.dassert_in(mode, ["download", "trade"])
-    vendor = vendor.lower()
-    # Get path to vendor universe dir.
-    vendor_dir = os.path.join(
-        hgit.get_amp_abs_path(), f"im_v2/{vendor}/universe/{mode}"
-    )
-    hdbg.dassert_dir_exists(vendor_dir)
+    universe_dir = _get_universe_dir(vendor, mode)
+    universe_files = _get_universe_files(universe_dir)
+    hdbg.dassert_ne(len(universe_files), 0)
     if version is None:
-        # Find all universe files.
-        vendor_universe_pattern = os.path.join(vendor_dir, f"universe_v*.json")
-        universe_files = list(glob.glob(vendor_universe_pattern))
-        hdbg.dassert_ne(len(universe_files), 0)
+        # Select the latest universe version available.
         file_path = max(
             universe_files, key=hstring.extract_version_from_file_name
         )
     else:
-        # TODO(Juraj): #1487 Assert version format (include 'small').
         file_name = "".join(["universe_", version, ".json"])
-        file_path = os.path.join(vendor_dir, file_name)
+        file_path = os.path.join(universe_dir, file_name)
     hdbg.dassert_path_exists(file_path)
     return file_path
+
+
+def get_universe_versions(vendor: str, mode: str) -> List[str]:
+    """
+    Get all the universe versions for the specified vendor and mode.
+
+    :param vendor: vendor to load data for (e.g., CCXT, Talos)
+    :param mode: download or trade universe
+    :return: universe versions
+    """
+    universe_dir = _get_universe_dir(vendor, mode)
+    universe_files = _get_universe_files(universe_dir)
+    # Get universe versions from the file names.
+    universe_versions_tuples = [
+        hstring.extract_version_from_file_name(file_) for file_ in universe_files
+    ]
+    # Put universe versions in a readable format.
+    universe_versions = [
+        "v" + ".".join(map(str, tuple_)).rstrip(".0")
+        for tuple_ in universe_versions_tuples
+    ]
+    universe_versions = sorted(universe_versions)
+    return universe_versions
 
 
 def _get_vendor_universe(
