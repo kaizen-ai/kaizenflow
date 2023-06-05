@@ -8,7 +8,7 @@ script_name="cmamp/dev_scripts/cleanup_scripts/rename_pytestraises.sh"
     --new "self.assertRaises" \
     --exclude_files $script_name \
 
-### Remove unused imports from affected files.
+## Remove unused imports from affected files.
 ##invoke lint -m --only-format
 
 
