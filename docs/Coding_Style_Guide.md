@@ -6,7 +6,7 @@
 - [Disclaimer](#disclaimer)
   * [References](#references)
 - [High-Level Principles](#high-level-principles)
-    + [Follow the DRY principle](#follow-the-dryhttpsenwikipediaorgwikidon%2527t_repeat_yourself-principle)
+    + [Follow the DRY principle](#follow-the-dry-principle)
     + [The writer is the reader](#the-writer-is-the-reader)
     + [Encapsulate what changes](#encapsulate-what-changes)
     + [Least surprise principle](#least-surprise-principle)
