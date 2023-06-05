@@ -161,15 +161,19 @@ class Order:
         return dict_
 
     def to_dataframe(self) -> pd.DataFrame:
-        """ Return order as a dataframe. """
+        """
+        Return the converted dataframe from the orders.
+        """
         data = self.to_dict()
         df = pd.DataFrame(data, index=[0])
 
-        if isinstance(df,pd.core.frame.DataFrame):
+        if isinstance(df, pd.core.frame.DataFrame):
             return df
         else:
-            raise TypeError("Invalid format of the dictionary to be converted to a dataframe")
-    
+            raise TypeError(
+                "Invalid format of the dictionary to be converted to a dataframe"
+            )
+
     def _takes_precedence(self, other: "Order") -> bool:
         """
         Compare order to another one according to quantity, price and
@@ -191,6 +195,7 @@ class Order:
         elif self.timestamp > other.timestamp:
             takes_precedence = True
         return takes_precedence
+
 
 def get_random_order(seed: Optional[int] = None) -> Order:
     """
@@ -231,9 +236,10 @@ def get_random_order(seed: Optional[int] = None) -> Order:
     )
     return order
 
+
 def convert_orders_to_dataframe(orders: List[Order]) -> pd.DataFrame:
     """
-    Convert a list of orders to a dataframe
+    Convert a list of orders to a dataframe.
 
     :param orders: list of `Order`
     :return: dataframe with one order per row and attributes as cols
