@@ -319,7 +319,7 @@
     doesn't conflict with other rules
     - E.g., `convert_to_CSV`, but `csv_file_name` as a variable name that is not
       global
-  - Profit-and-loss: PnL instead of pnl, PNL, PnL
+  - Profit-and-loss: PnL instead of pnl or PNL
 
 ### Search good names, avoid bad names
 
@@ -545,17 +545,17 @@
         ...
     ```
     - If you want to separate an `if` statement from a bunch of code preceeding
-      it, you can leave an empty comment before it.
+      it, you can leave an empty comment before it
 
 ### Replace empty lines in code with comments
 
 - If you feel that you need an empty line in the code, it probably means that a
   specific chunk of code is a logical piece of code performing a cohesive
-  function.
+  function
   ```python
   ...
   end_y = end_dt.year
-  # Generate a list of file paths for Parquet dataset.
+
   paths = list()
   ...
   ```
@@ -578,12 +578,12 @@
   ```
 - The problem with empty lines is that they are visually confusing since one
   empty line is used also to separate functions. For this reason we suggest
-  using an empty comment.
+  using an empty comment
 
 ### Referring to an object in code comments
 
 - In general, **avoid** this whenever possible
-- Code object names (e.g., function, class, params) are oehten subject to
+- Code object names (e.g., function, class, params) are often subject to
   change, so we need to take care of them everywhere. It is very hard to track
   all of them in comments so replace the names with their actual meaning
   - _Bad_
