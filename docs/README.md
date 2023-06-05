@@ -20,6 +20,8 @@ This contains the absolute minimal amount of info to start developing
 
 - [Sorrentum Python coding style guide](Coding_Style_Guide.md)
 
+- [Jupyter notebook best practices](Jupyter_notebook_best_practices.md)
+
 ## Project management
 
 - [GitHub/ZenHub workflows](GitHub_ZenHub_workflows.md)
