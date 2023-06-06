@@ -1,5 +1,36 @@
+# Documentation about guidelines
+
 <!-- toc -->
 
+- [Guidelines for describing workflows](#guidelines-for-describing-workflows)
+- [Markdown vs Google Docs](#markdown-vs-google-docs)
+    - [In general](#in-general)
+    - [Markdown pros](#markdown-pros)
+    - [Google Docs pros](#google-docs-pros)
+    - [Rules of thumb](#rules-of-thumb)
+    - [Useful references](#useful-references)
+- [Style and cosmetic lints](#style-and-cosmetic-lints)
+  - [Always use markdown linter](#always-use-markdown-linter)
+  - [Table of content (TOC)](#table-of-content-toc)
+  - [Use nice 80 columns formatting for txt files](#use-nice-80-columns-formatting-for-txt-files)
+  - [Empty line after heading](#empty-line-after-heading)
+  - [Bullet lists](#bullet-lists)
+  - [Using `code` style](#using-code-style)
+  - [Indenting `code` style](#indenting-code-style)
+  - [Embedding screenshots](#embedding-screenshots)
+  - [Improve your written English](#improve-your-written-english)
+  - [Make sure your markdown looks good](#make-sure-your-markdown-looks-good)
+- [Google docs style conventions](#google-docs-style-conventions)
+  - [Headings](#headings)
+  - [Font](#font)
+- [Convert between Gdocs and Markdown](#convert-between-gdocs-and-markdown)
+  - [Gdocs -> Markdown](#gdocs---markdown)
+    - [Using `pandoc`](#using-pandoc)
+    - [Using Chrome Docs to Markdown extension](#using-chrome-docs-to-markdown-extension)
+    - [Cleaning up converted markdown](#cleaning-up-converted-markdown)
+  - [Markdown -> Gdocs](#markdown---gdocs)
+
+<!-- tocstop -->
 
 
 # Guidelines for describing workflows
@@ -251,8 +282,9 @@
 
 ## Gdocs -> Markdown
 
-### Using pandoc (recommended)
+### Using `pandoc`
 
+- In general we recommend to use this approach
 - Pros
   - Best for a large document
   - Handle figures
