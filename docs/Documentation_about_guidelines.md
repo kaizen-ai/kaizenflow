@@ -36,6 +36,38 @@
 - Have a trouble-shooting procedure
   - One approach is to always start from scratch
 
+# Markdown vs Google Docs
+
+- In general:
+  - We prefer to use Markdown for technical documentation
+  - We use Google for notes from meetings and research
+
+- Markdown pros:
+  - Can use vim
+  - Can version control
+  - Easy to use verbatim (e.g., typing `foobar`)
+  - Easy to style using pandoc
+  - Easy to embed code
+  - Easy to add Latex equations
+  - Easy to grep
+
+- Google Docs pros:
+  - Easy to embed figures
+  - Easy to collaborate
+  - Easy to make quick changes (instead of making a commit)
+  - Easy to publish (just make them public with proper permissions)
+  - Styling
+    - [https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs](https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs)
+  - Interesting add-ons:
+    - Enable Markdown
+    - Code blocks
+      - Use darcula, size 10
+        ```
+        def hello():
+        print("hello")
+        ```
+    - Auto-latex equations
+
 # Useful reference
 
 - [Markdown cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
@@ -199,9 +231,25 @@
 
 # Convert between Gdocs and Markdown
 
-## Gdocs -> Markdown
+## Gdocs -> Markdown using pandoc (recommended)
 
-- Approach 1:
+- Pros
+  - Best for a large document
+  - Handle figures
+- Cons
+  - Need to remove formatting
+  - Need to move files
+
+- Process:
+  - Download document as docx
+  - Convert it to markdown using `pandoc`
+    ```
+    > pandoc --extract-media ./ -f docx -t markdown -o out.md in.docx
+    ```
+  - The entire conversion flow is in `dev_scripts/convert_gdoc_to_markdown.sh`
+
+## Gdocs -> Markdown using Chrome Docs to Markdown extension
+  - Best for a large document
   - Use the [Docs to Markdown](https://github.com/evbacher/gd2md-html/wiki)
     extension
     - Install
@@ -211,10 +259,20 @@
       for the extension
   - One needs to accept/reject all suggestions in a gdoc as the extension works
     poorly when a document is edited in the suggestion mode
-- Approach 2:
-  - [https://mr0grog.github.io/google-docs-to-markdown/](https://mr0grog.github.io/google-docs-to-markdown/)
+- Approach 3: on-line conversion
+  - [Google-docs-to-markdown/](https://mr0grog.github.io/google-docs-to-markdown/)
+
+## Cleaning up converted markdown
 - Lint the markdown:
   - Replace all bullet points as `-` with `-`, if needed
+  - Removing artifacts manually or using the script
+    ```
+    > dev_scripts/convert_gdoc_to_markdown.sh
+    ```
+  - Remove empty lines manually
+    ```
+    :'<,'>! perl -ne 'print if /\S/'
+    ```
   - Run the `linter.py`
     - Do not mix manual edits and linter runs
     - If the linter messes up the text
@@ -243,34 +301,3 @@
 - Approach 3:
   - [https://markdownlivepreview.com/](https://markdownlivepreview.com/)
   - TODO(gp): Check if the roundtrip works
-
-## Markdown vs Google Docs
-
-- Google Docs pros:
-  - Easy to embed figures
-  - Easy to collaborate
-  - Easy to make quick changes (instead of making a commit)
-  - Easy to publish (just make them public with proper permissions)
-  - Styling
-    - [https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs](https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs)
-- Interesting add-ons:
-  - Enable Markdown
-  - Code blocks
-    - Use darcula, size 10
-      ```
-      def hello():
-      print("hello")
-      ```
-  - Auto-latex equations
-- Markdown pros:
-  - Can use vim
-  - Can version control
-  - Easy to use verbatim (e.g., typing `foobar`)
-  - Easy to style using pandoc
-  - Easy to embed code
-  - Easy to add Latex equations
-- Rules of thumb:
-  - If it has images -> gdocs
-  - If it has mostly formulas -> md
-  - If they are notes from book -> md
-  - If it is a tutorial (especially with figures) -> gdocs

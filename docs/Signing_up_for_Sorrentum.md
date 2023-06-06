@@ -55,7 +55,8 @@
   - We suggest to join a Research meeting for each topic at least once to
     understand how things work and what topics we work on
   - Subscribe to the Telegram chats of the projects that you are interested in
-  - Sign up for the research meetings on the Google Calendar
+  - Sign up for the research meetings on the [Google Calendar](https://calendar.google.com/calendar/embed?src=info%40sorrentum.org&ctz=America%2FNew_York). Do check this out for any updates in the meeting schedules.
+
 
 - Communication with the project teams happen through:
 
