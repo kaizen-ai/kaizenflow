@@ -262,7 +262,9 @@
 
 # Convert between Gdocs and Markdown
 
-## Gdocs -> Markdown using pandoc (recommended)
+## Gdocs -> Markdown
+
+### Using pandoc (recommended)
 
 - Pros
   - Best for a large document
@@ -270,7 +272,6 @@
 - Cons
   - Need to remove formatting
   - Need to move files
-
 - Process:
   - Download document as docx
   - Convert it to markdown using `pandoc`
@@ -279,7 +280,8 @@
     ```
   - The entire conversion flow is in `dev_scripts/convert_gdoc_to_markdown.sh`
 
-## Gdocs -> Markdown using Chrome Docs to Markdown extension
+### Using Chrome Docs to Markdown extension
+
 - Best for a large document
 - Approach 1:
   - Use the [Docs to Markdown](https://github.com/evbacher/gd2md-html/wiki)
@@ -302,7 +304,7 @@
   - Strike out the entire document and put a link to it in PR so integrators
     remove it after the merge
 
-## Cleaning up converted markdown
+### Cleaning up converted markdown
 
 - Lint the markdown:
   - Replace all bullet points as `-` with `-`, if needed
