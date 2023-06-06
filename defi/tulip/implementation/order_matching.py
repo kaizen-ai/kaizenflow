@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-import defi.tulip.implementation.order as dtuimor
+import defi.tulip.implementation.order as dtuimord
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 
@@ -41,8 +41,9 @@ def _get_transfer_df(transfers: Optional[List[Dict[str, Any]]]) -> pd.DataFrame:
     return transfer_df
 
 
+# TODO(Dan): "Adjust `match_orders()` returns to Tulip contract format" SorrTask #296.
 def match_orders(
-    orders: List[dtuimor.Order],
+    orders: List[dtuimord.Order],
     clearing_price: float,
     base_token: str,
     quote_token: str,
@@ -63,7 +64,7 @@ def match_orders(
     _LOG.debug(hprint.to_str("orders"))
     _LOG.debug(hprint.to_str("clearing_price"))
     hdbg.dassert_lt(0, len(orders))
-    hdbg.dassert_container_type(orders, list, dtuimor.Order)
+    hdbg.dassert_container_type(orders, list, dtuimord.Order)
     hdbg.dassert_lt(0, clearing_price)
     # Build buy and sell heaps.
     buy_heap = []
@@ -146,9 +147,9 @@ def match_orders(
 
 
 def get_equivalent_order(
-    order: dtuimor.Order,
+    order: dtuimord.Order,
     clearing_price: float,
-) -> dtuimor.Order:
+) -> dtuimord.Order:
     """
     Get equivalent DaoCross order.
 
@@ -160,7 +161,7 @@ def get_equivalent_order(
     :param clearing_price: clearing price
     :return: order equivalent to the input one
     """
-    hdbg.dassert_isinstance(order, dtuimor.Order)
+    hdbg.dassert_isinstance(order, dtuimord.Order)
     # Set action opposite to the input's one.
     if order.action == "buy":
         action = "sell"
@@ -176,7 +177,7 @@ def get_equivalent_order(
     # Convert limit price of base token to limit price of quote token.
     limit_price = 1 / order.limit_price
     # Build equivalent order.
-    order = dtuimor.Order(
+    order = dtuimord.Order(
         order.timestamp,
         action,
         quantity,

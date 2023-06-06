@@ -86,11 +86,12 @@
 - Avoid emails any time possible
 
   - Communication should happen on GitHub around specific Issues
+  - Read [General Rules of Collaboration](General_rules_of_collaboration.md) for more details
 
-- Use the IM chat when you are blocked on something
+- Use Telegram chat when you are blocked on something
 
   - Try to use GitHub Issues when not urgent to provide context
-  - Don't abuse the IM, learning what is urgent and what's not
+  - Don't abuse Telegram, learning what is urgent and what's not
 
 - On GitHub
 
