@@ -1,37 +1,41 @@
 # General Rules of Collaboration
 
-<!--ts-->
-   * [Ask somebody if you have any doubts](#ask-somebody-if-you-have-any-doubts)
-   * [Collaboration](#collaboration)
-      * [Why do we need to follow this handbook?](#why-do-we-need-to-follow-this-handbook)
-         * [Learning from each other](#learning-from-each-other)
-         * [Consistency and process](#consistency-and-process)
-      * [Sync-ups](#sync-ups)
-         * [All-hands meetings](#all-hands-meetings)
-         * [Technical sync-ups](#technical-sync-ups)
-         * [Ad-hoc meetings](#ad-hoc-meetings)
-         * [Org emails](#org-emails)
-         * [Synchronization point](#synchronization-point)
-         * [Morning email](#morning-email)
-      * [Communication](#communication)
-         * [Use the right form of communication](#use-the-right-form-of-communication)
-         * [DRY also applies to documentation](#dry-also-applies-to-documentation)
-         * [Avoid write-once code and research](#avoid-write-once-code-and-research)
-         * [Consistency](#consistency)
-         * [Training period](#training-period)
-         * [Go slowly to go faster](#go-slowly-to-go-faster)
-      * [Improve your English!](#improve-your-english)
-         * [Study an English grammar book](#study-an-english-grammar-book)
+<!-- toc -->
 
-<!--te-->
+- [Ask somebody if you have any doubts](#ask-somebody-if-you-have-any-doubts)
+- [Collaboration](#collaboration)
+  * [Why do we need to follow this handbook?](#why-do-we-need-to-follow-this-handbook)
+    + [Learning from each other](#learning-from-each-other)
+    + [Consistency and process](#consistency-and-process)
+  * [Sync-ups](#sync-ups)
+    + [All-hands meetings](#all-hands-meetings)
+    + [Technical sync-ups](#technical-sync-ups)
+    + [Ad-hoc meetings](#ad-hoc-meetings)
+    + [Org emails](#org-emails)
+    + [Synchronization point](#synchronization-point)
+    + [Morning email](#morning-email)
+  * [Communication](#communication)
+    + [Use the right form of communication](#use-the-right-form-of-communication)
+    + [DRY also applies to documentation](#dry-also-applies-to-documentation)
+    + [Avoid write-once code and research](#avoid-write-once-code-and-research)
+    + [Consistency](#consistency)
+    + [Training period](#training-period)
+    + [Go slowly to go faster](#go-slowly-to-go-faster)
+  * [Improve your English!](#improve-your-english)
+    + [Study an English grammar book](#study-an-english-grammar-book)
+
+<!-- tocstop -->
 
 # Ask somebody if you have any doubts
 
 - If you have doubts on how to do something you want to do:
-  - Look in the [documentation](/docs/README.md) and our [Google drive](https://drive.google.com/drive/u/0/folders/1LXwKpmaFWJI-887IoA50sVC8-dw_1L8I)
+  - Look in the [documentation](/docs/README.md) and our
+    [Google drive](https://drive.google.com/drive/u/0/folders/1LXwKpmaFWJI-887IoA50sVC8-dw_1L8I)
   - Google search is your friend
   - Ask your team-members
-    - Note that often people tell you his / her interpretation or their workaround for a problem, which might not be the best approach, so be careful and always think for yourself
+    - Note that often people tell you his / her interpretation or their
+      workaround for a problem, which might not be the best approach, so be
+      careful and always think for yourself
     - Don't hesitate to ask anyone, even GP & Paul
 
 # Collaboration
@@ -48,7 +52,9 @@
 ### Consistency and process
 
 - Consistency is a crucial enabler to make teams faster
-- Productivity increases when team members "work in the same way", i.e., there is a single official way of performing a task, so that it's possible and easy to:
+- Productivity increases when team members "work in the same way", i.e., there
+  is a single official way of performing a task, so that it's possible and easy
+  to:
   - Re-use research and software components
   - Help each other in debugging issues
   - Add/transfer new people to teams
@@ -61,7 +67,8 @@
 
 ## Sync-ups
 
-- We meet regularly every week and with different audiences to check on the progress of the many projects we work on
+- We meet regularly every week and with different audiences to check on the
+  progress of the many projects we work on
 
 ### All-hands meetings
 
@@ -76,14 +83,18 @@
 ### Technical sync-ups
 
 - We meet one or two times per week for each of the projects (e.g., IM, WEB3)
-- Please check your calendar to make sure the times work and the invited participants are correct
-- The people running the day-to-day project should update the meeting agenda in the Gdoc
-  - Try to do it one day before so that everybody knows ahead of time what we need to talk about and can come prepared
+- Please check your calendar to make sure the times work and the invited
+  participants are correct
+- The people running the day-to-day project should update the meeting agenda in
+  the Gdoc
+  - Try to do it one day before so that everybody knows ahead of time what we
+    need to talk about and can come prepared
 - Typically 2-3 issues are more than enough to fill one hour of discussion
   - Give priority to tasks that are controversial, blocking, or finished
   - No reason to linger on the successes or the easy stuff
 - Send an email or tag a comment to Gdocs to broadcast the agenda
-- It's ok to skip a meeting when the agenda is empty, or keep it short when there is not much to discuss
+- It's ok to skip a meeting when the agenda is empty, or keep it short when
+  there is not much to discuss
   - We don't have to fill one hour every time
 
 ### Ad-hoc meetings
@@ -95,13 +106,16 @@
 
 ### Org emails
 
-- GP & Paul may send emails with the subject starting with "ORG:" pointing to interesting docs that are of general interest and relevance
-- Please make sure to read the docs carefully and internalize what we suggest to do and, especially, the rationale of the proposed solutions
+- GP & Paul may send emails with the subject starting with "ORG:" pointing to
+  interesting docs that are of general interest and relevance
+- Please make sure to read the docs carefully and internalize what we suggest to
+  do and, especially, the rationale of the proposed solutions
 - It's ok to acknowledge the email replying to `all@crypto-kaizen.com`
 
 ### Synchronization point
 
-- We understand that most of the time everybody is head-down making progress on their tasks
+- We understand that most of the time everybody is head-down making progress on
+  their tasks
   - This is great!
 - However, sometimes we need synchronization:
   - We need to stop the progress for a bit when requested
@@ -118,25 +132,34 @@
 
 ### Morning email
 
-- First thing in the morning, send an email to `all@crypto-kaizen.com` to broadcast what you are planning to work on during that day
+- First thing in the morning, send an email to `all@crypto-kaizen.com` to
+  broadcast what you are planning to work on during that day
 - The goal is:
-  - Think about what you are going to work on for the day, so you have a clear plan
+  - Think about what you are going to work on for the day, so you have a clear
+    plan
   - Let Team Leaders know that you're going work today and what is your workload
-  - Make sure people blocked on your tasks know that / whether you are working on those tasks
+  - Make sure people blocked on your tasks know that / whether you are working
+    on those tasks
   - Broadcast if you are blocked or if you don't have tasks
 - The process is:
-  - Stick to using `TODO` (all caps) as the email subject, and the suggested format, so that it's easy to filter emails and see what everybody is doing today and what was going on in the previous days
+  - Stick to using `TODO` (all caps) as the email subject, and the suggested
+    format, so that it's easy to filter emails and see what everybody is doing
+    today and what was going on in the previous days
   - Specify how many hours are you going to work today
     - At Monday we also specify an estimation for a week
     - No need to be too specific, give just an approximation
   - List all the tasks you're going to work during the day in priority order
-  - Add a hyperlink to the corresponding GitHub issue to each task in order to ease the navigation
+  - Add a hyperlink to the corresponding GitHub issue to each task in order to
+    ease the navigation
     - <img width="381" alt="Снимок экрана 2023-05-29 в 02 59 55" src="https://github.com/sorrentum/sorrentum/assets/31514660/0d2fbba4-1e6c-4c39-9c04-7ffc4acdde81">
   - Communicate realistic ETAs
     - No reason to be optimistic: complex things take time to be done correctly
     - Use a date in the usual format, e.g. 2023-05-10
-    - Add "today", "yesterday", "tomorrow", "end of week" so that it's easier to parse
-    - If your original ETA needs to be updated (e.g., you thought that you would have finished a task by yesterday, but it's taking longer) keep the older ETA and add the new one, e.g.,
+    - Add "today", "yesterday", "tomorrow", "end of week" so that it's easier to
+      parse
+    - If your original ETA needs to be updated (e.g., you thought that you would
+      have finished a task by yesterday, but it's taking longer) keep the older
+      ETA and add the new one, e.g.,
       ```
       - Create matching service #261
         - ETA: today (2023-05-25)
@@ -146,6 +169,7 @@
         - Reason: I had to context switch to ...
       ```
 - Full example:
+
   ```
   Subject: TODO
 
@@ -175,32 +199,40 @@
 ### Use the right form of communication
 
 - GitHub
-  - This is a major form of communication about technical details, so if you have any questions about any particular issue or PR, discuss it there first, e.g.:
+  - This is a major form of communication about technical details, so if you
+    have any questions about any particular issue or PR, discuss it there first,
+    e.g.:
     - Clarify issue specs
     - Ask for help with debugging
     - PR reviews
 - Asana
   - Is concerned with all the non-technical issues in general, e.g.:
-     - Work organization tasks
-     - Marketing and funding
-     - On-boarding process
+    - Work organization tasks
+    - Marketing and funding
+    - On-boarding process
 - Telegram
-  - This is our messenger for tight interaction (like a debug session) or immediacy (e.g., "are you ready for the sync up?")
+  - This is our messenger for tight interaction (like a debug session) or
+    immediacy (e.g., "are you ready for the sync up?")
   - Please, avoid discussing anything that can be discussed at GitHub or Asana
-    - You often need to reference some comments and ideas in other places like issues or messages and it is impossible to reference a Telegram message outside of it
-    - It is much easier for all reviewers to catch up with all the thinking process if it is logged at one place - Telegram is never a place for this
+    - You often need to reference some comments and ideas in other places like
+      issues or messages and it is impossible to reference a Telegram message
+      outside of it
+    - It is much easier for all reviewers to catch up with all the thinking
+      process if it is logged at one place - Telegram is never a place for this
 - Jupyter notebooks
   - Generally used to implement and describe research in detail
-    - `Master` notebooks are intended to be used as tools for demonstrative analysis with visible stats and plots
+    - `Master` notebooks are intended to be used as tools for demonstrative
+      analysis with visible stats and plots
 - Markdown files
   - Document instructions, process, design closely related to code
   - Notes that need to be close to the code itself
-  - Documents that need to be authoritative and long-term (e.g., reviewed, tracked carefully)
+  - Documents that need to be authoritative and long-term (e.g., reviewed,
+    tracked carefully)
 - Google docs
   - Document research in a descriptive way
   - Explain what are the results independently on how they were reached
 - Emails
-  - `TODO`s primarily 
+  - `TODO`s primarily
   - Rarely used for any other purpose
   - Exceptions are to send non-urgent information to everybody
 - There should be little replication among these forms of documentation
@@ -208,7 +240,8 @@
 
 ### DRY also applies to documentation
 
-- [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)! Do not Repeat Yourself
+- [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)! Do not Repeat
+  Yourself
 - E.g., it's not a good idea to cut & paste pieces of Gdocs in a GitHub bug,
   rather just point to the relevant session on Gdocs from the GitHub bug
 
@@ -226,7 +259,8 @@
 
 ### Training period
 
-- When you start working with us, you need to go through a period of training in following the procedures and conventions described in this handbook
+- When you start working with us, you need to go through a period of training in
+  following the procedures and conventions described in this handbook
 - We understand that this is a painful process for you:
   - You need to change your old habits for new habits that you might disagree
     with, or not comprehend
@@ -239,12 +273,14 @@
     - Try to convey the sense of why these procedures are important
 - In a few words, nobody _enjoys_ this process, and yet it is necessary,
   mandatory, and even beneficial
-- The process acquaintance can take several days if you are open and patient, but months if you resist or treat it as an afterthought
+- The process acquaintance can take several days if you are open and patient,
+  but months if you resist or treat it as an afterthought
   - Our suggestion is to accept these rules as the existence of gravity
 
 ### Go slowly to go faster
 
-- Once you reach proficiency, you will be moving much faster and make up for the invested time
+- Once you reach proficiency, you will be moving much faster and make up for the
+  invested time
   - In fact, everyone will be much quicker, because everyone will be able to
     look at any part of the codebase or any notebook and get oriented quickly
 
@@ -252,13 +288,13 @@
 
 - Make sure you have English checker in all your tools:
   - Pycharm: you can use
-    [this](https://plugins.jetbrains.com/plugin/12175-grazie)
-    plugin
+    [this](https://plugins.jetbrains.com/plugin/12175-grazie) plugin
   - Vim: `set spell`
   - Google docs: Grammarly
   - GitHub and web: Grammarly
   - Email client: TBD
-- These tools are going to help you improve since you can see the mistake as you go
+- These tools are going to help you improve since you can see the mistake as you
+  go
 - Feel free to use [Google Translate](https://translate.google.com/) when you
   are not sure about a word or a phrase
 - What's the point of doing an excellent job if you can't communicate it?
