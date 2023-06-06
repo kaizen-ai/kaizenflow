@@ -1,32 +1,6 @@
-# Documentation about guidelines
-
 <!-- toc -->
 
-- [Guidelines for describing workflows](#guidelines-for-describing-workflows)
-- [Useful reference](#useful-reference)
-- [Style and cosmetic lints](#style-and-cosmetic-lints)
-  - [Always use markdown linter](#always-use-markdown-linter)
-  - [Table of content (TOC)](#table-of-content-toc)
-  - [Use nice 80 columns formatting for txt files](#use-nice-80-columns-formatting-for-txt-files)
-  - [Empty line after heading](#empty-line-after-heading)
-  - [Bullet lists](#bullet-lists)
-  - [Using `code` style](#using-code-style)
-  - [Indenting `code` style](#indenting-code-style)
-  - [Embedding screenshots](#embedding-screenshots)
-  - [Improve your written English](#improve-your-written-english)
-  - [Make sure your markdown looks good](#make-sure-your-markdown-looks-good)
-- [Google docs style conventions](#google-docs-style-conventions)
-  - [Headings](#headings)
-  - [Font](#font)
-- [Convert between Gdocs and Markdown](#convert-between-gdocs-and-markdown)
-  - [Gdocs -> Markdown](#gdocs---markdown)
-  - [Markdown -> Gdocs](#markdown---gdocs)
-  - [Markdown vs Google Docs](#markdown-vs-google-docs)
-    - [Markdown pros](#markdown-pros)
-    - [Google Docs pros](#google-docs-pros)
-    - [Rules of thumb](#rules-of-thumb)
 
-<!-- tocstop -->
 
 # Guidelines for describing workflows
 
@@ -39,37 +13,50 @@
 
 # Markdown vs Google Docs
 
-- In general:
-  - We prefer to use Markdown for technical documentation
-  - We use Google for notes from meetings and research
+### In general
 
-- Markdown pros:
-  - Can use vim
-  - Can version control
-  - Easy to use verbatim (e.g., typing `foobar`)
-  - Easy to style using pandoc
-  - Easy to embed code
-  - Easy to add Latex equations
-  - Easy to grep
+- We prefer to use Markdown for technical documentation
+- We use Google for notes from meetings and research
 
-- Google Docs pros:
-  - Easy to embed figures
-  - Easy to collaborate
-  - Easy to make quick changes (instead of making a commit)
-  - Easy to publish (just make them public with proper permissions)
-  - Styling
-    - [https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs](https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs)
-  - Interesting add-ons:
-    - Enable Markdown
-    - Code blocks
-      - Use darcula, size 10
-        ```
-        def hello():
-        print("hello")
-        ```
-    - Auto-latex equations
+### Markdown pros
 
-# Useful reference
+- Can use vim
+- Can version control
+- Easy to use verbatim (e.g., typing `foobar`)
+- Easy to style using pandoc
+- Easy to embed code
+- Easy to add Latex equations
+- Easy to grep
+
+### Google Docs pros
+
+- Easy to embed figures
+- Easy to collaborate
+- Easy to make quick changes (instead of making a commit)
+- Easy to publish (just make them public with proper permissions)
+- Styling
+  - [https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs](https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs)
+- Interesting add-ons:
+  - Enable Markdown
+  - Code blocks
+    - Use darcula, size 10
+      ```
+      def hello():
+      print("hello")
+      ```
+  - Auto-latex equations
+
+### Rules of thumb
+
+- Use Markdown
+  - If doc is going to be used as a public guideline
+  - If doc has mostly text, code, and formulas
+  - If there are notes from a book
+- Use Gdoc
+  - If doc requires a lot of images that cannot be placed as text
+  - If doc is a research of an analysis
+
+### Useful references
 
 - [Markdown cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
 - [Google guide to Markdown](https://github.com/google/styleguide/blob/gh-pages/docguide/style.md)
@@ -295,7 +282,7 @@
     poorly when a document is edited in the suggestion mode
 - Approach 2:
   - [https://mr0grog.github.io/google-docs-to-markdown/](https://mr0grog.github.io/google-docs-to-markdown/)
-- Approach 3: on-line conversion
+- Approach 3:
   - [Google-docs-to-markdown/](https://mr0grog.github.io/google-docs-to-markdown/)
 - Lint the markdown with `dev_scripts/lint_md.sh`
 - When a Gdoc becomes obsolete or it’s deleted
@@ -350,43 +337,3 @@
 - Approach 3:
   - [https://markdownlivepreview.com/](https://markdownlivepreview.com/)
   - TODO(gp): Check if the roundtrip works
-
-## Markdown vs Google Docs
-
-### Markdown pros
-
-- Can use vim
-- Can version control
-- Easy to `grep` text and code
-- Easy to use verbatim (e.g., typing `foobar`)
-- Easy to style using pandoc
-- Easy to embed code
-- Easy to add Latex equations
-
-### Google Docs pros
-
-- Easy to embed figures
-- Easy to collaborate
-- Easy to make quick changes (instead of making a commit)
-- Easy to publish (just make them public with proper permissions)
-- Styling
-  - [https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs](https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs)
-- Interesting add-ons:
-  - Enable Markdown
-  - Code blocks
-    - Use darcula, size 10
-      ```
-      def hello():
-      print("hello")
-      ```
-  - Auto-latex equations
-
-### Rules of thumb
-
-- Use Markdown
-  - If doc is going to be used as a public guideline
-  - If doc has mostly text, code, and formulas
-  - If there are notes from a book
-- Use Gdoc
-  - If doc requires a lot of images that cannot be placed as text
-  - If doc is a research of an analysis
