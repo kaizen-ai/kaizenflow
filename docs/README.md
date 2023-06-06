@@ -12,11 +12,15 @@ This contains the absolute minimal amount of info to start developing
 
 - [How to organize your work](How_to_organize_your_work.md)
 
+- [General Rules of Collaboration](General_rules_of_collaboration.md)
+
 - [Quick start for developing](Quick_start_for_developing.md)
 
 - [First Review Process](First_review_process.md)
 
 - [Sorrentum Python coding style guide](Coding_Style_Guide.md)
+
+- [Jupyter notebook best practices](Jupyter_notebook_best_practices.md)
 
 ## Project management
 
