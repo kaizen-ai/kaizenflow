@@ -37,6 +37,38 @@
 - Have a trouble-shooting procedure
   - One approach is to always start from scratch
 
+# Markdown vs Google Docs
+
+- In general:
+  - We prefer to use Markdown for technical documentation
+  - We use Google for notes from meetings and research
+
+- Markdown pros:
+  - Can use vim
+  - Can version control
+  - Easy to use verbatim (e.g., typing `foobar`)
+  - Easy to style using pandoc
+  - Easy to embed code
+  - Easy to add Latex equations
+  - Easy to grep
+
+- Google Docs pros:
+  - Easy to embed figures
+  - Easy to collaborate
+  - Easy to make quick changes (instead of making a commit)
+  - Easy to publish (just make them public with proper permissions)
+  - Styling
+    - [https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs](https://webapps.stackexchange.com/questions/112275/define-special-inline-styles-in-google-docs)
+  - Interesting add-ons:
+    - Enable Markdown
+    - Code blocks
+      - Use darcula, size 10
+        ```
+        def hello():
+        print("hello")
+        ```
+    - Auto-latex equations
+
 # Useful reference
 
 - [Markdown cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
@@ -230,8 +262,25 @@
 
 # Convert between Gdocs and Markdown
 
-## Gdocs -> Markdown
+## Gdocs -> Markdown using pandoc (recommended)
 
+- Pros
+  - Best for a large document
+  - Handle figures
+- Cons
+  - Need to remove formatting
+  - Need to move files
+
+- Process:
+  - Download document as docx
+  - Convert it to markdown using `pandoc`
+    ```
+    > pandoc --extract-media ./ -f docx -t markdown -o out.md in.docx
+    ```
+  - The entire conversion flow is in `dev_scripts/convert_gdoc_to_markdown.sh`
+
+## Gdocs -> Markdown using Chrome Docs to Markdown extension
+- Best for a large document
 - Approach 1:
   - Use the [Docs to Markdown](https://github.com/evbacher/gd2md-html/wiki)
     extension
@@ -244,12 +293,37 @@
     poorly when a document is edited in the suggestion mode
 - Approach 2:
   - [https://mr0grog.github.io/google-docs-to-markdown/](https://mr0grog.github.io/google-docs-to-markdown/)
+- Approach 3: on-line conversion
+  - [Google-docs-to-markdown/](https://mr0grog.github.io/google-docs-to-markdown/)
 - Lint the markdown with `dev_scripts/lint_md.sh`
 - When a Gdoc becomes obsolete or it’s deleted
   - Add a note at the top of a gdoc explaining what happened
     - Example: "Moved to /new_markdown_file.md"
   - Strike out the entire document and put a link to it in PR so integrators
     remove it after the merge
+
+## Cleaning up converted markdown
+
+- Lint the markdown:
+  - Replace all bullet points as `-` with `-`, if needed
+  - Removing artifacts manually or using the script
+    ```
+    > dev_scripts/convert_gdoc_to_markdown.sh
+    ```
+  - Remove empty lines manually
+    ```
+    :'<,'>! perl -ne 'print if /\S/'
+    ```
+  - Run the `linter.py`
+    - Do not mix manual edits and linter runs
+    - If the linter messes up the text
+      - File bugs in `amp` with examples what the linter does incorrectly
+  - When a gdoc becomes obsolete or it’s deleted
+    - Add a note at the top of a gdoc explaining what happened
+      - Example: "Moved to /new_markdown_file.md"
+    - Strike out the entire document
+    - Move the gdoc to the
+      [\_OLD directory](https://drive.google.com/drive/u/0/folders/1J4B1vq8EwT-q_z7qSLCZ9Tug2CA9f8i7)
 
 ## Markdown -> Gdocs
 
