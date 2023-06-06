@@ -281,15 +281,7 @@
   - One needs to accept/reject all suggestions in a gdoc as the extension works
     poorly when a document is edited in the suggestion mode
 - Approach 2:
-  - [https://mr0grog.github.io/google-docs-to-markdown/](https://mr0grog.github.io/google-docs-to-markdown/)
-- Approach 3:
   - [Google-docs-to-markdown/](https://mr0grog.github.io/google-docs-to-markdown/)
-- Lint the markdown with `dev_scripts/lint_md.sh`
-- When a Gdoc becomes obsolete or it’s deleted
-  - Add a note at the top of a gdoc explaining what happened
-    - Example: "Moved to /new_markdown_file.md"
-  - Strike out the entire document and put a link to it in PR so integrators
-    remove it after the merge
 
 ### Cleaning up converted markdown
 
