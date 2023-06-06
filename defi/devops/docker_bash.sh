@@ -1,4 +1,7 @@
 #!/bin/bash -e
+#
+# Execute bash in the container.
+#
 
 # Find the name of the container.
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
@@ -11,6 +14,8 @@ source $DOCKER_NAME
 
 docker image ls $FULL_IMAGE_NAME
 
+JUPYTER_HOST_PORT=8889
+
 CONTAINER_NAME=$IMAGE_NAME
 OPTS="--user $(id -u):$(id -g)"
 # TODO(gp): Not sure --net bridge is needed.
@@ -19,6 +24,6 @@ docker run \
     $OPTS \
     --net bridge \
     --name $CONTAINER_NAME \
-    -p 5920:5920 -p 3001:3000 -p 7545:7545 -p 8545:8545 -p 8889:8888 \
+    -p 5920:5920 -p 3001:3000 -p 7545:7545 -p 8545:8545 -p $JUPYTER_HOST_PORT:8888 \
     -v $(pwd):/data \
     $FULL_IMAGE_NAME
