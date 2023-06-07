@@ -1,33 +1,169 @@
-/cmamp/core/signal_processing/test/test_swt.py:109:        with pytest.raises(ValueError):
-/cmamp/core/signal_processing/test/test_swt.py:112:        with pytest.raises(ValueError):
-/cmamp/dataflow/core/nodes/test/test_transformers.py:539:        with pytest.raises(AssertionError):
-/cmamp/dataflow/core/nodes/test/test_transformers.py:769:        with pytest.raises(AssertionError):
-/cmamp/dataflow/model/test/test_correlation.py:64:        with pytest.raises(AssertionError):
-/cmamp/dataflow/model/test/test_correlation.py:91:        with pytest.raises(AssertionError):
-/cmamp/helpers/test/test_hparquet.py:577:        with pytest.raises(AssertionError) as fail:
-/cmamp/helpers/test/test_hparquet.py:595:        with pytest.raises(ValueError) as fail:
-/cmamp/helpers/test/test_hs3.py:66:        with pytest.raises(ValueError) as fail:
-/cmamp/helpers/test/test_hs3.py:84:        with pytest.raises(ValueError) as fail:
-/cmamp/helpers/test/test_hstring.py:102:        with pytest.raises(AssertionError) as fail:
-/cmamp/im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:54:        with pytest.raises(AssertionError) as fail:
-/cmamp/im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:489:        with pytest.raises(AssertionError) as fail:
-/cmamp/im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:514:        with pytest.raises(AssertionError) as fail:
-/cmamp/im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:541:        with pytest.raises(AssertionError) as fail:
-/cmamp/im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:560:        with pytest.raises(AssertionError) as fail:
-/cmamp/im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:683:        with pytest.raises(AssertionError) as fail:
-/cmamp/im_v2/ccxt/data/extract/test/test_compare_realtime_and_historical_data.py:189:        with pytest.raises(AssertionError) as fail:
-/cmamp/im_v2/ccxt/data/extract/test/test_compare_realtime_and_historical_data.py:240:        with pytest.raises(AssertionError) as fail:
-/cmamp/im_v2/ccxt/data/extract/test/test_compare_realtime_and_historical_data.py:294:        with pytest.raises(AssertionError) as fail:
-/cmamp/im_v2/ccxt/data/extract/test/test_compare_realtime_and_historical_data.py:406:        with pytest.raises(AssertionError) as fail:
-/cmamp/im_v2/ccxt/data/extract/test/test_compare_realtime_and_historical_data.py:451:        with pytest.raises(AssertionError) as fail:
-/cmamp/im_v2/ccxt/data/extract/test/test_compare_realtime_and_historical_data.py:501:        with pytest.raises(AssertionError) as fail:
-/cmamp/im_v2/common/data/extract/test/test_extract_utils.py:222:        with pytest.raises(RuntimeError) as fail:
-/cmamp/im_v2/common/data/extract/test/test_extract_utils.py:805:        with pytest.raises(RuntimeError) as fail:
-/cmamp/im_v2/common/data/extract/test/test_extract_utils.py:871:            with pytest.raises(RuntimeError) as fail:
-/cmamp/im_v2/common/data/extract/test/test_extract_utils.py:965:        with pytest.raises(AssertionError) as fail:
-/cmamp/im_v2/common/data/extract/test/test_extract_utils.py:979:        with pytest.raises(AssertionError) as fail:
-/cmamp/im_v2/common/data/transform/test/test_transform_utils.py:24:        with pytest.raises(AssertionError):
-/cmamp/im_v2/common/data/transform/test/test_transform_utils.py:33:        with pytest.raises(AssertionError):
-/cmamp/im_v2/common/data/transform/test/test_transform_utils.py:219:        with pytest.raises(AssertionError) as fail:
-/cmamp/im_v2/talos/data/extract/test/test_talos_extractor.py:175:        with pytest.raises(raises) as fail:
-/cmamp/dev_scripts/cleanup_scripts/rename_pytestraises.sh:8:    --old "pytest.raises" \
+/cmamp/core/config/test/test_config.py:225:        with self.assertRaises(KeyError) as cm:
+/cmamp/core/config/test/test_config.py:244:        with self.assertRaises(KeyError) as cm:
+/cmamp/core/config/test/test_config.py:263:        with self.assertRaises(KeyError) as cm:
+/cmamp/core/config/test/test_config.py:300:        with self.assertRaises(AssertionError) as cm:
+/cmamp/core/config/test/test_config.py:315:        with self.assertRaises(AssertionError) as cm:
+/cmamp/core/config/test/test_config.py:438:        with self.assertRaises(KeyError) as cm:
+/cmamp/core/config/test/test_config.py:453:        with self.assertRaises(KeyError) as cm:
+/cmamp/core/config/test/test_config.py:468:        with self.assertRaises(KeyError) as cm:
+/cmamp/core/config/test/test_config.py:996:        with self.assertRaises(cconfig.OverwriteError) as cm:
+/cmamp/core/config/test/test_config.py:1346:        with self.assertRaises(cconfig.ReadOnlyConfigError) as cm:
+/cmamp/core/config/test/test_config.py:1372:        with self.assertRaises(cconfig.ReadOnlyConfigError) as cm:
+/cmamp/core/config/test/test_config.py:1399:        with self.assertRaises(RuntimeError) as cm:
+/cmamp/core/config/test/test_config.py:2232:        with self.assertRaises(assertion_type) as cm:
+/cmamp/core/config/test/test_config_utils.py:70:        with self.assertRaises(AssertionError) as cm:
+/cmamp/core/statistics/test/test_sharpe_ratio.py:275:        with self.assertRaises(AssertionError):
+/cmamp/data_schema/test/test_dataset_schema_utils.py:166:        with self.assertRaises(ValueError) as e:
+/cmamp/data_schema/test/test_dataset_schema_utils.py:190:        with self.assertRaises(KeyError) as e:
+/cmamp/dataflow/core/test/test_dag.py:63:        with self.assertRaises(AssertionError):
+/cmamp/dataflow/core/test/test_dag.py:83:        with self.assertRaises(AssertionError):
+/cmamp/dataflow/core/test/test_dag.py:146:        with self.assertRaises(AssertionError) as cm:
+/cmamp/dataflow/core/test/test_dag.py:167:        with self.assertRaises(AssertionError) as cm:
+/cmamp/dataflow/core/test/test_dag.py:185:        with self.assertRaises(AssertionError) as cm:
+/cmamp/dataflow/core/test/test_dag.py:222:        with self.assertRaises(AssertionError) as cm:
+/cmamp/dataflow/core/test/test_dag.py:242:        with self.assertRaises(AssertionError) as cm:
+/cmamp/dataflow/core/test/test_dag.py:275:        with self.assertRaises(AssertionError) as cm:
+/cmamp/dataflow/core/test/test_result_bundle.py:165:        with self.assertRaises(AssertionError):
+/cmamp/dataflow/model/test/test_dataframe_modeler.py:134:        with self.assertRaises(AssertionError):
+/cmamp/dev_scripts/test/test_toml_merge.py:110:        with self.assertRaises(ValueError):
+/cmamp/documentation/scripts/test/test_render_md.py:53:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/hdbg.py:473:    with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_cache.py:668:        with self.assertRaises(ValueError):
+/cmamp/helpers/test/test_cache.py:801:        with self.assertRaises(hcache.NotCachedValueException) as cm:
+/cmamp/helpers/test/test_cache.py:890:        with self.assertRaises(hcache.CachedValueException) as cm:
+/cmamp/helpers/test/test_dbg.py:31:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:39:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:47:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:55:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:63:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:76:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:93:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:98:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:106:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:123:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:134:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:144:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:155:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:168:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:192:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:215:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:236:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:248:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:264:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:278:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:301:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:318:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:365:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:379:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:393:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:409:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:435:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:450:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:465:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:514:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:524:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:540:        with self.assertRaises(Exception) as cm:
+/cmamp/helpers/test/test_dbg.py:555:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_dbg.py:581:        with self.assertRaises(Exception) as cm:
+/cmamp/helpers/test/test_dbg.py:615:        with self.assertRaises(Exception) as cm:
+/cmamp/helpers/test/test_git.py:263:        with self.assertRaises(ValueError):
+/cmamp/helpers/test/test_hdatetime.py:60:            with self.assertRaises(AssertionError):
+/cmamp/helpers/test/test_hdatetime.py:86:            with self.assertRaises(AssertionError):
+/cmamp/helpers/test/test_hdatetime.py:134:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_hdatetime.py:161:            with self.assertRaises(AssertionError):
+/cmamp/helpers/test/test_hdatetime.py:182:            with self.assertRaises(AssertionError):
+/cmamp/helpers/test/test_hdatetime.py:228:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_hdatetime.py:249:                with self.assertRaises(AssertionError):
+/cmamp/helpers/test/test_hdatetime.py:280:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_hdatetime.py:506:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_hdatetime.py:518:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_hpandas.py:79:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_hpandas.py:404:        with self.assertRaises(TypeError) as cm:
+/cmamp/helpers/test/test_hpandas.py:1644:        with self.assertRaises(AssertionError):
+/cmamp/helpers/test/test_hpandas.py:1657:        with self.assertRaises(AssertionError):
+/cmamp/helpers/test/test_hpandas.py:1795:        with self.assertRaises(AssertionError):
+/cmamp/helpers/test/test_hpandas.py:1896:        with self.assertRaises(AssertionError):
+/cmamp/helpers/test/test_hpandas.py:2199:        with self.assertRaises(AssertionError):
+/cmamp/helpers/test/test_hpandas.py:2208:        with self.assertRaises(AssertionError):
+/cmamp/helpers/test/test_hpandas.py:2442:        with self.assertRaises(AssertionError):
+/cmamp/helpers/test/test_hpandas.py:2450:        with self.assertRaises(AssertionError):
+/cmamp/helpers/test/test_hparquet.py:824:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_hunit_test_utils.py:152:        with self.assertRaises(AssertionError):
+/cmamp/helpers/test/test_lib_tasks.py:390:        with self.assertRaises(AssertionError):
+/cmamp/helpers/test/test_lib_tasks_git.py:117:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_lib_tasks_utils.py:193:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_lib_tasks_utils.py:225:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_open.py:24:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_open.py:33:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_sql.py:87:        with self.assertRaises(perrors.InvalidCatalogName):
+/cmamp/helpers/test/test_system_interaction.py:64:        with self.assertRaises(RuntimeError) as cm:
+/cmamp/helpers/test/test_table.py:21:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_table.py:38:        with self.assertRaises(AssertionError) as cm:
+/cmamp/helpers/test/test_unit_test.py:173:        with self.assertRaises(RuntimeError):
+/cmamp/helpers/test/test_unit_test.py:222:        with self.assertRaises(RuntimeError):
+/cmamp/helpers/test/test_unit_test.py:310:        with self.assertRaises(RuntimeError) as cm:
+/cmamp/helpers/test/test_unit_test.py:471:            with self.assertRaises(RuntimeError):
+/cmamp/helpers/test/test_unit_test.py:732:        with self.assertRaises(RuntimeError):
+/cmamp/helpers/test/test_unit_test_mock.py:194:        with self.assertRaises(KeyError) as cm:
+/cmamp/im/kibot/data/load/test/test_file_path_generator.py:70:        with self.assertRaises(AssertionError):
+/cmamp/im/kibot/data/load/test/test_sql_data_loader.py:62:        with self.assertRaises(AssertionError):
+/cmamp/im/kibot/data/load/test/test_sql_data_loader.py:77:        with self.assertRaises(AssertionError):
+/cmamp/im/kibot/data/load/test/test_sql_data_loader.py:93:        with self.assertRaises(AssertionError):
+/cmamp/im/kibot/data/load/test/test_sql_data_loader.py:125:        with self.assertRaises(AssertionError):
+/cmamp/im/kibot/data/load/test/test_sql_data_loader.py:133:        with self.assertRaises(AssertionError):
+/cmamp/im/kibot/metadata/test/test_contract_symbol_mapper.py:61:            with self.assertRaises(AssertionError):
+/cmamp/im/kibot/metadata/test/test_contract_symbol_mapper.py:71:            with self.assertRaises(AssertionError):
+/cmamp/im/kibot/metadata/test/test_expiry_contract_mapper.py:32:        with self.assertRaises(AssertionError):
+/cmamp/im/kibot/metadata/test/test_expiry_contract_mapper.py:91:        with self.assertRaises(AssertionError):
+/cmamp/im/kibot/metadata/test/test_expiry_contract_mapper.py:100:        with self.assertRaises(AssertionError):
+/cmamp/im/kibot/metadata/test/test_kibot_metadata.py:142:        with self.assertRaises(ValueError):
+/cmamp/im/kibot/metadata/test/test_kibot_metadata.py:214:        with self.assertRaises(ValueError):
+/cmamp/im/kibot/metadata/test/test_vendors2.py:133:#        with self.assertRaises(AssertionError):
+/cmamp/im/kibot/metadata/test/test_vendors2.py:138:#        with self.assertRaises(AssertionError):
+/cmamp/im/kibot/metadata/test/test_vendors2.py:143:#        with self.assertRaises(AssertionError):
+/cmamp/im_v2/common/data/client/im_client_test_case.py:161:        with self.assertRaises(AssertionError):
+/cmamp/im_v2/common/data/client/im_client_test_case.py:226:        with self.assertRaises(AssertionError):
+/cmamp/im_v2/common/data/client/im_client_test_case.py:247:        with self.assertRaises(AssertionError):
+/cmamp/im_v2/common/data/extract/test/test_backfill_bid_ask_db_data.py:153:        with self.assertRaises(RuntimeError):
+/cmamp/im_v2/common/data/extract/test/test_backfill_bid_ask_db_data.py:209:        with self.assertRaises(RuntimeError):
+/cmamp/im_v2/common/data/extract/test/test_extract_utils.py:254:        with self.assertRaises(AssertionError) as fail:
+/cmamp/im_v2/common/data/extract/test/test_extract_utils.py:273:        with self.assertRaises(AssertionError) as fail:
+/cmamp/im_v2/common/data/extract/test/test_extract_utils.py:291:        with self.assertRaises(AssertionError) as fail:
+/cmamp/im_v2/common/data/extract/test/test_extract_utils.py:311:        with self.assertRaises(AssertionError) as fail:
+/cmamp/im_v2/common/data/extract/test/test_extract_utils.py:1169:        with self.assertRaises(AssertionError) as cm:
+/cmamp/im_v2/common/data/extract/test/test_extractor.py:82:        with self.assertRaises(AssertionError) as fail:
+/cmamp/im_v2/common/data/transform/test/test_transform_utils.py:79:        with self.assertRaises(ValueError) as fail:
+/cmamp/im_v2/common/data/transform/test/test_transform_utils.py:150:        with self.assertRaises(AssertionError) as fail:
+/cmamp/im_v2/common/data/transform/test/test_transform_utils.py:167:        with self.assertRaises(AssertionError) as fail:
+/cmamp/im_v2/common/data_snapshot/test/test_data_snapshot_utils.py:56:        with self.assertRaises(AssertionError):
+/cmamp/im_v2/common/universe/test/test_full_symbol.py:20:        with self.assertRaises(AssertionError):
+/cmamp/im_v2/common/universe/test/test_full_symbol.py:28:        with self.assertRaises(AssertionError):
+/cmamp/im_v2/common/universe/test/test_full_symbol.py:36:        with self.assertRaises(AssertionError):
+/cmamp/im_v2/common/universe/test/test_full_symbol.py:44:        with self.assertRaises(AssertionError):
+/cmamp/im_v2/common/universe/test/test_full_symbol.py:52:        with self.assertRaises(TypeError):
+/cmamp/im_v2/common/universe/test/test_full_symbol.py:60:        with self.assertRaises(AssertionError):
+/cmamp/im_v2/common/universe/test/test_full_symbol.py:79:        with self.assertRaises(AssertionError):
+/cmamp/im_v2/common/universe/test/test_full_symbol.py:87:        with self.assertRaises(AssertionError):
+/cmamp/im_v2/common/universe/test/test_full_symbol.py:95:        with self.assertRaises(AssertionError):
+/cmamp/im_v2/common/universe/test/test_full_symbol.py:173:        with self.assertRaises(TypeError):
+/cmamp/im_v2/common/universe/test/test_universe.py:26:        with self.assertRaises(AssertionError):
+/cmamp/im_v2/common/universe/test/test_universe.py:94:        with self.assertRaises(AssertionError):
+/cmamp/im_v2/crypto_chassis/data/extract/test/test_chassis_extractor.py:82:        with self.assertRaises(AssertionError) as fail:
+/cmamp/im_v2/crypto_chassis/data/extract/test/test_chassis_extractor.py:270:        with self.assertRaises(AssertionError) as cm:
+/cmamp/im_v2/crypto_chassis/data/extract/test/test_chassis_extractor.py:293:        with self.assertRaises(AssertionError) as cm:
+/cmamp/im_v2/crypto_chassis/data/extract/test/test_chassis_extractor.py:490:        with self.assertRaises(AssertionError) as cm:
+/cmamp/im_v2/crypto_chassis/data/extract/test/test_chassis_extractor.py:632:        with self.assertRaises(AssertionError) as cm:
+/cmamp/im_v2/talos/data/client/test/test_talos_clients.py:686:        with self.assertRaises(AssertionError):
+/cmamp/im_v2/talos/data/client/test/test_talos_clients.py:702:        with self.assertRaises(AssertionError):
+/cmamp/im_v2/talos/data/client/test/test_talos_clients.py:718:        with self.assertRaises(AssertionError):
+/cmamp/market_data/market_data_test_case.py:331:        with self.assertRaises(AssertionError):
+/cmamp/market_data/test/test_replayed_market_data.py:637:        with self.assertRaises(TimeoutError):
+/cmamp/oms/test/test_cc_optimizer_utils.py:204:        with self.assertRaises(AssertionError):
+/cmamp/oms/test/test_ccxt_broker.py:244:                with self.assertRaises(Exception) as cm:
+/cmamp/oms/test/test_oms_db.py:222:        with self.assertRaises(TimeoutError):
+/cmamp/oms/test/test_oms_db.py:258:        with self.assertRaises(TimeoutError):
+/cmamp/oms/test/test_order_processor.py:145:        with self.assertRaises(TimeoutError):
+/cmamp/oms/test/test_order_processor.py:156:        with self.assertRaises(TimeoutError):
+/cmamp/test/test_tasks.py:156:        with self.assertRaises(RuntimeError):
+/cmamp/dev_scripts/cleanup_scripts/rename_pytestraises.sh:8:    --old "self.assertRaises" \
+/cmamp/dev_scripts/cleanup_scripts/rename_pytestraises.sh:9:    --new "self.assertRaises" \

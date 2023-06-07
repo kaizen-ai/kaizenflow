@@ -5,7 +5,7 @@ dir_names="/cmamp/"
 
 
 /cmamp/dev_scripts/replace_text.py \
-    --old "pytest.raises" \
+    --old "self.assertRaises" \
     --new "self.assertRaises" \
     --preview \
     --only_dirs "$dir_names"    
