@@ -132,12 +132,16 @@
 
 ### Morning email
 
-- First thing in the morning, send an email to `all@crypto-kaizen.com` if you are **full-time** or to collaborators@crypto-kaizen.com if they are **interns, collaborators** to broadcast what you are planning to work on during that day
+- First thing in the morning, send an email to `all@crypto-kaizen.com` if you are **full-time** or to `collaborators@crypto-kaizen.com` if you are **interns or collaborators** to broadcast what you are planning to work on during that day
 - If you are a collaborator or intern, follow the steps to join the mailing group
   - Visit the [group](https://groups.google.com/a/crypto-kaizen.com/g/contributors/)
   - Click “ask to join group”
+ ![alt_text](Morning_Emails_Figs/1_Visit.png)
   - Choose the following settings
+  
+    ![alt_text](Morning_Emails_Figs/2_Settings.png)
   - Wait for the confirmation e-mail, one for the group managers will approve your request. It should look like this:
+    ![alt_text](Morning_Emails_Figs/3_Request.png)
 - The goal is:
   - Think about what you are going to work on for the day, so you have a clear
     plan
@@ -197,7 +201,9 @@
   - Blocked on SorrTaskXYZ: Fix the world before it explodes #666
   - I'm running out of tasks!
   ```
+- Example image:
 
+  ![alt_text](Morning_Emails_Figs/image.png)
 ## Communication
 
 ### Use the right form of communication
