@@ -71,7 +71,7 @@ DOCKER_BUILDKIT = 1
 def docker_build_local_image(  # type: ignore
     ctx,
     version,
-    cache=True,
+    cache=False,
     base_image="",
     update_poetry=False,
     container_dir_name=".",
@@ -130,7 +130,7 @@ def docker_build_local_image(  # type: ignore
         --platform linux/amd64,linux/arm64 \
         --build-arg AM_CONTAINER_VERSION={dev_version} \
         --tag {image_local} \
-        -t samarth9008/sample2:latest \
+        -t samarth9008/sample7:latest \
         --push \
         --file {dockerfile} \
         .
@@ -145,7 +145,6 @@ def docker_build_local_image(  # type: ignore
     # Check image and report stats.
     cmd = f"docker image ls {image_local}"
     hlitauti.run(ctx, cmd)
-
 
 @task
 def docker_tag_local_image_as_dev(  # type: ignore

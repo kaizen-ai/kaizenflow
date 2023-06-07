@@ -2,6 +2,29 @@
 
 FROM ubuntu:20.04 AS builder
 
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    wget \
+    git \
+    python3 \
+    python3-pip \
+    build-essential \
+    libblas-dev \
+    liblapack-dev \
+    libatlas-base-dev \
+    gfortran \
+    libatlas3-base \
+    libumfpack5 \
+    libopenblas-dev \
+    libdsdp-dev \
+    libfftw3-dev \
+    libglpk-dev \
+    libgsl-dev
+
+
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Name of the virtual environment to create.
 ENV ENV_NAME="venv"
 ENV APP_DIR=/app
@@ -11,17 +34,16 @@ ENV HOME=/home
 ENV INSTALL_DIR=/install
 WORKDIR $INSTALL_DIR
 
-RUN apt-get update \
-    && apt-get install -y libblas-dev liblapack-dev libatlas-base-dev \
-    && apt-get install -y libumfpack5 libsuitesparse-dev \
-    && export CPPFLAGS="-I/usr/include/suitesparse"
-
-
-
 # Clean up the installation.
 # To disable the clean up stage, comment out the variable, instead of setting
 # to False.
 #ENV CLEAN_UP_INSTALLATION=True
+RUN wget http://faculty.cse.tamu.edu/davis/SuiteSparse/SuiteSparse-4.5.3.tar.gz \
+    && tar -xf SuiteSparse-4.5.3.tar.gz \
+    && export CVXOPT_SUITESPARSE_SRC_DIR=$(pwd)/SuiteSparse \
+    && export CPPFLAGS="-I/usr/include/suitesparse" \
+    && export CVXOPT_BUILD_FFTW=1 \
+    && pip install cvxopt --no-binary cvxopt
 
 # - Install OS packages.
 COPY devops/docker_build/install_os_packages.sh .
