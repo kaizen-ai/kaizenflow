@@ -136,7 +136,8 @@
 - If you are a collaborator or intern, follow the steps to join the mailing group
   - Visit the [group](https://groups.google.com/a/crypto-kaizen.com/g/contributors/)
   - Click “ask to join group”
- ![alt_text](Morning_Emails_Figs/1_Visit.png)
+ 
+    ![alt_text](Morning_Emails_Figs/1_Visits.png)
   - Choose the following settings
   
     ![alt_text](Morning_Emails_Figs/2_Settings.png)
