@@ -1,14 +1,14 @@
 #!/bin/bash -xe
 
-script_name="cmamp/dev_scripts/cleanup_scripts/rename_pytestraises.sh"
+#script_name="cmamp/dev_scripts/cleanup_scripts/rename_pytestraises.sh"
+dir_names="/cmamp/"
 
 
 /cmamp/dev_scripts/replace_text.py \
-    --old "self.assertRaises" \
+    --old "pytest.raises" \
     --new "self.assertRaises" \
-    --exclude_files $script_name \
-
-## Remove unused imports from affected files.
-##invoke lint -m --only-format
+    --preview \
+    --only_dirs "$dir_names"    
+    
 
 

@@ -1,0 +1,33 @@
+/cmamp/core/signal_processing/test/test_swt.py:109:        with pytest.raises(ValueError):
+/cmamp/core/signal_processing/test/test_swt.py:112:        with pytest.raises(ValueError):
+/cmamp/dataflow/core/nodes/test/test_transformers.py:539:        with pytest.raises(AssertionError):
+/cmamp/dataflow/core/nodes/test/test_transformers.py:769:        with pytest.raises(AssertionError):
+/cmamp/dataflow/model/test/test_correlation.py:64:        with pytest.raises(AssertionError):
+/cmamp/dataflow/model/test/test_correlation.py:91:        with pytest.raises(AssertionError):
+/cmamp/helpers/test/test_hparquet.py:577:        with pytest.raises(AssertionError) as fail:
+/cmamp/helpers/test/test_hparquet.py:595:        with pytest.raises(ValueError) as fail:
+/cmamp/helpers/test/test_hs3.py:66:        with pytest.raises(ValueError) as fail:
+/cmamp/helpers/test/test_hs3.py:84:        with pytest.raises(ValueError) as fail:
+/cmamp/helpers/test/test_hstring.py:102:        with pytest.raises(AssertionError) as fail:
+/cmamp/im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:54:        with pytest.raises(AssertionError) as fail:
+/cmamp/im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:489:        with pytest.raises(AssertionError) as fail:
+/cmamp/im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:514:        with pytest.raises(AssertionError) as fail:
+/cmamp/im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:541:        with pytest.raises(AssertionError) as fail:
+/cmamp/im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:560:        with pytest.raises(AssertionError) as fail:
+/cmamp/im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:683:        with pytest.raises(AssertionError) as fail:
+/cmamp/im_v2/ccxt/data/extract/test/test_compare_realtime_and_historical_data.py:189:        with pytest.raises(AssertionError) as fail:
+/cmamp/im_v2/ccxt/data/extract/test/test_compare_realtime_and_historical_data.py:240:        with pytest.raises(AssertionError) as fail:
+/cmamp/im_v2/ccxt/data/extract/test/test_compare_realtime_and_historical_data.py:294:        with pytest.raises(AssertionError) as fail:
+/cmamp/im_v2/ccxt/data/extract/test/test_compare_realtime_and_historical_data.py:406:        with pytest.raises(AssertionError) as fail:
+/cmamp/im_v2/ccxt/data/extract/test/test_compare_realtime_and_historical_data.py:451:        with pytest.raises(AssertionError) as fail:
+/cmamp/im_v2/ccxt/data/extract/test/test_compare_realtime_and_historical_data.py:501:        with pytest.raises(AssertionError) as fail:
+/cmamp/im_v2/common/data/extract/test/test_extract_utils.py:222:        with pytest.raises(RuntimeError) as fail:
+/cmamp/im_v2/common/data/extract/test/test_extract_utils.py:805:        with pytest.raises(RuntimeError) as fail:
+/cmamp/im_v2/common/data/extract/test/test_extract_utils.py:871:            with pytest.raises(RuntimeError) as fail:
+/cmamp/im_v2/common/data/extract/test/test_extract_utils.py:965:        with pytest.raises(AssertionError) as fail:
+/cmamp/im_v2/common/data/extract/test/test_extract_utils.py:979:        with pytest.raises(AssertionError) as fail:
+/cmamp/im_v2/common/data/transform/test/test_transform_utils.py:24:        with pytest.raises(AssertionError):
+/cmamp/im_v2/common/data/transform/test/test_transform_utils.py:33:        with pytest.raises(AssertionError):
+/cmamp/im_v2/common/data/transform/test/test_transform_utils.py:219:        with pytest.raises(AssertionError) as fail:
+/cmamp/im_v2/talos/data/extract/test/test_talos_extractor.py:175:        with pytest.raises(raises) as fail:
+/cmamp/dev_scripts/cleanup_scripts/rename_pytestraises.sh:8:    --old "pytest.raises" \
