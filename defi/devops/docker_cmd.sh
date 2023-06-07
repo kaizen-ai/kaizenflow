@@ -1,4 +1,10 @@
 #!/bin/bash -e
+#
+# Execute a command in the container.
+#
+
+CMD="$@"
+echo "Executing: '$CMD'"
 
 GIT_ROOT=$(git rev-parse --show-toplevel)
 source $GIT_ROOT/docker_common/utils.sh
@@ -12,9 +18,15 @@ if [[ ! -e $SCRIPT_DIR ]]; then
 fi;
 source $DOCKER_NAME
 
-# Build container.
-export DOCKER_BUILDKIT=1
-#export DOCKER_BUILDKIT=0
-#export DOCKER_BUILD_MULTI_ARCH=1
-export DOCKER_BUILD_MULTI_ARCH=0
-build_container_image
+docker image ls $FULL_IMAGE_NAME
+docker manifest inspect $FULL_IMAGE_NAME | grep arch
+
+DOCKER_RUN_OPTS=""
+CONTAINER_NAME=$IMAGE_NAME
+docker run \
+    --rm -ti \
+    --name $CONTAINER_NAME \
+    $DOCKER_RUN_OPTS \
+    -v $(pwd):/data \
+    $FULL_IMAGE_NAME \
+    $CMD
