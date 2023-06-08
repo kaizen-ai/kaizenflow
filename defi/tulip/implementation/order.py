@@ -238,17 +238,19 @@ def convert_orders_to_dataframe(orders: List[Order]) -> pd.DataFrame:
     return df
 
 
-def execute_order(order, price) -> List[Tuple[float, str], Tuple[float, str]]:
+def execute_order(
+    order: Order, price: float
+) -> List[Tuple[float, str], Tuple[float, str]]:
     """
-    Executes order at specified price.
+    Execute order at specified price.
 
     :param order: Order object
     :param price: Price that user pays in quote_token in exchange to get base_token
     :return: A list that contains deductions in quote_token and acquired base_token
     """
-    if price < order.limit.price:
-        return list(
-            tuple(order.quantity * price, order.quote_token),
-            tuple(order.quantity, order.base_token),
-        )
+    if price < order.limit_price:
+        return [
+            (-order.quantity * price, order.quote_token),
+            (order.quantity, order.base_token),
+        ]
     return None
