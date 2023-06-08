@@ -251,5 +251,4 @@ def execute_order(order, price) -> List[Tuple[float, str], Tuple[float, str]]:
             tuple(order.quantity * price, order.quote_token),
             tuple(order.quantity, order.base_token),
         )
-    else:
-        return None
+    return None
