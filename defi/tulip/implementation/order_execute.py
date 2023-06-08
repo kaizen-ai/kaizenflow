@@ -4,12 +4,12 @@ Import as:
 import defi.tulip.implementation.order_execute as dtimorex
 """
 
-import defi.tulip.implementation.order as dtuimord
 from typing import List, Tuple
 
-def execute_order(
-    order: dtuimord, price: float
-) -> List[Tuple[float, str], Tuple[float, str]]:
+import defi.tulip.implementation.order as dtuimord
+
+
+def execute_order(order: dtuimord, price: float) -> List[Tuple[float, str]]:
     """
     Execute order at specified price.
 
