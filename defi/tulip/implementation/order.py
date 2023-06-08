@@ -6,7 +6,7 @@ import defi.tulip.implementation.order as dtuimord
 
 import collections
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -236,3 +236,20 @@ def convert_orders_to_dataframe(orders: List[Order]) -> pd.DataFrame:
     df = pd.concat([pd.Series(order.to_dict()) for order in orders], axis=1).T
     df = df.convert_dtypes()
     return df
+
+
+def execute_order(order, price) -> List[Tuple[float, str], Tuple[float, str]]:
+    """
+    Executes order at specified price.
+
+    :param order: Order object
+    :param price: Price that user pays in quote_token in exchange to get base_token
+    :return: A list that contains deductions in quote_token and acquired base_token
+    """
+    if price < order.limit.price:
+        return list(
+            tuple(order.quantity * price, order.quote_token),
+            tuple(order.quantity, order.base_token),
+        )
+    else:
+        return None
