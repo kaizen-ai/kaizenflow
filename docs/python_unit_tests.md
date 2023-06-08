@@ -21,19 +21,14 @@
 [`invoke`](https://www.pyinvoke.org/) is a task execution which allows to
 execute some typical workflows, e.g. run the tests
 
+```
 # Run only fast tests:
-
 > i run_fast_tests
-
 # Run only slow tests:
-
 > i run_slow_tests
-
 # Run only superslow tests:
-
 > i run_superslow_tests
 
-```
 To see the options use `--help` option, e.g. `i --help run_fast_tests`:
 
 Usage: inv[oke] [--core-opts] run_fast_tests [--options] [other tasks here ...]
@@ -64,12 +59,16 @@ To select a specific stage for Docker image use the `--stage` option. E.g., this
 might be useful when a user wants to run regressions on the local Docker image
 to verify that nothing is broken before promoting it to `dev` image.
 
+```
 > i run_fast_tests --stage local
+```
 
 To run the tests on the specific version of a Docker image, use the `--version`
 option. E.g., this might be useful when releasing a new version of an image.
 
+```
 > i run_fast_tests --stage local --version 1.0.4
+```
 
 ### Specifying pytest options
 
@@ -77,20 +76,26 @@ With the option `--pytest-opts` it is possible to pass any `pytest` option to
 `invoke`. E.g., if a user want to run the tests in the debug mode to show the
 output
 
+```
 > i run_fast_tests -s --dbg
+```
 
 ### Save test output to file
 
 To save the output of `pytest` to `tmp.pytest.log` use the `--tee-to-file`
 option.
 
+```
 > i run_fast_tests --tee-to-file
+```
 
 ### Show the tests but do not run
 
 To show (but not run) the tests that will be executed, use the `--collect-only`.
 
+```
 > i run_fast_test --collect-only
+```
 
 ### Skip submodules
 
@@ -99,15 +104,18 @@ useful for repos with submodules, e.g., `dev_tools` where `cmamp` is a
 submodule. Using this option, only tests in `dev_tools` but not in `cmamp` are
 run
 
+```
 > cd dev_tools1
-
 > i run_fast_tests --skip-submodules
+```
 
 ### Compute tests coverage
 
 To compute tests coverage use the `--coverage` option
 
+```
 > i run_fast_tests --coverage
+```
 
 ## Timeout
 
@@ -143,6 +151,7 @@ The documentation for `coverage` is
 
 Run a set of unit tests enabling coverage:
 
+```
 # Run the coverage for a single test:
 
 > i run_fast_tests --coverage -p oms/test/test_broker.py::TestSimulatedBroker1
@@ -151,13 +160,13 @@ Run a set of unit tests enabling coverage:
 
 > i run_fast_tests --coverage -p oms
 
+```
+
 This generates and run a pytest command inside Docker like:
 
-docker
-
-> /venv/bin/pytest -m "not slow and not superslow"
-> oms/test/test_broker.py::TestSimulatedBroker1 --cov=. --cov-branch
-> --cov-report term-missing --cov-report html
+```
+docker> /venv/bin/pytest -m "not slow and not superslow" oms/test/test_broker.py::TestSimulatedBroker1 --cov=. --cov-branch --cov-report term-missing --cov-report html
+```
 
 which generates:
 
@@ -170,31 +179,37 @@ One can post-process the coverage report in different ways using the command
 `coverage` inside a docker container, since the code was run (as always) inside
 the Docker container that contains all the dependencies.
 
+```
 > coverage -h
 
-Coverage.py, version 5.5 with C extension Measure, collect, and report on code
-coverage in Python programs.
+Coverage.py, version 5.5 with C extension
+Measure, collect, and report on code coverage in Python programs.
 
 usage: coverage <command> [options] [args]
 
-Commands: annotate Annotate source files with execution information. combine
-Combine a number of data files. debug Display information about the internals of
-coverage.py erase Erase previously collected coverage data. help Get help on
-using coverage.py. html Create an HTML report. json Create a JSON report of
-coverage results. report Report coverage stats on modules. run Run a Python
-program and measure code execution. xml Create an XML report of coverage
-results.
+Commands:
+    annotate    Annotate source files with execution information.
+    combine     Combine a number of data files.
+    debug       Display information about the internals of coverage.py
+    erase       Erase previously collected coverage data.
+    help        Get help on using coverage.py.
+    html        Create an HTML report.
+    json        Create a JSON report of coverage results.
+    report      Report coverage stats on modules.
+    run         Run a Python program and measure code execution.
+    xml         Create an XML report of coverage results.
 
-Use "coverage help <command>" for detailed help on any command. Full
-documentation is at https://coverage.readthedocs.io
+Use "coverage help <command>" for detailed help on any command.
+Full documentation is at https://coverage.readthedocs.io
+```
 
+```
 > coverage report -h
 
 Usage: coverage report [options] [modules]
 
 Report coverage statistics on modules.
 
-```
 Options:
   --contexts=REGEX1,REGEX2,...
                         Only display data from lines covered in the given
@@ -226,9 +241,9 @@ Options:
                         tried. [env: COVERAGE_RCFILE]
 ```
 
+```
 > i docker_bash
 
-```
 # Report the coverage for all the files under `oms` using the workload above (i.e., the fast tests under `oms/test/test_broker.py::TestSimulatedBroker1`)
 docker> coverage report --include="oms/*"
 
@@ -269,9 +284,9 @@ TOTAL                                    2358    385    314     30    82%
 
 To exclude the test files, which could inflate the coverage
 
-> coverage report --include="oms/_" --omit="_/test\_\*.py"
-
 ```
+> coverage report --include="oms/*" --omit="*/test_*.py"
+
 Name                                    Stmts   Miss Branch BrPart  Cover
 -------------------------------------------------------------------------
 oms/__init__.py                             0      0      0      0   100%
@@ -325,6 +340,7 @@ We start by running the fast tests:
 # Run fast unit tests
 > i run_fast_tests --coverage -p oms
 collected 66 items / 7 deselected / 59 selected
+...
 
 # Compute the coverage for the module sorting by coverage
 docker> coverage report --include="oms/*" --omit="*/test_*.py" --sort=Cover
@@ -434,9 +450,7 @@ We see that the coverage from the slow tests is only 23% for 7 tests
 
 ```
 root@6faaa979072e:/app/amp# coverage combine .coverage_fast_tests .coverage_slow_tests
-
 Combined data file .coverage_fast_tests
-
 Combined data file .coverage_slow_tests
 ```
 
@@ -474,21 +488,20 @@ Usage: inv[oke] [--core-opts] run_coverage_report [--options] [other tasks here 
 Docstring:
 
   Compute test coverage stats.
-```
 
-The flow is:
+  The flow is:
 
-- Run tests and compute coverage stats for each test type
+* Run tests and compute coverage stats for each test type
 
-- Combine coverage stats in a single file
+* Combine coverage stats in a single file
 
-- Generate a text report
+ * Generate a text report
 
-- Generate a HTML report (optional)
+ * Generate a HTML report (optional)
 
-- Post it on S3 (optional)
+ * Post it on S3 (optional)
 
-```
+
 :param target_dir: directory to compute coverage stats for [here](#running-unit-tests)
 
 :param generate_html_report: whether to generate HTML coverage report or not
@@ -507,14 +520,14 @@ Options:
   -t STRING, --target-dir=STRING
 ```
 
-### Common usage
+#### Common usage
 
 Compute coverage for `market_data` dir, generate text and HTML reports and
 publish HTML report on S3
 
-> i run_coverage_report --target-dir market_data
-
 ```
+> i run_coverage_report --target-dir market_data
+...
 Name                                   Stmts   Miss Branch BrPart  Cover
 ------------------------------------------------------------------------
 market_data/real_time_market_data.py     100     81     32      0    16%
@@ -544,7 +557,7 @@ Wrote HTML report to htmlcov/index.html
   `html_coverage/grisha_CmTask1038_Tool_to_extract_the_dependency_from_a_project`
   - `html_coverage` is the common dir on S3 for coverage reports
 - After publishing the report, one can easily open it via a local web browser
-  - See the details in
+  - See the details in [htmlcov server](https://docs.google.com/document/d/1JWAbNLuwseLAleW1wQ0BH8gxHEA9Hb9ZRgAy-Ooj9-M/edit#heading=h.58pd2t5yyzlw)
   - E.g.
     [http://172.30.2.44/html_coverage/grisha_CmTask1038_Tool_to_extract_the_dependency_from_a_project/](http://172.30.2.44/html_coverage/grisha_CmTask1038_Tool_to_extract_the_dependency_from_a_project/)
 
@@ -597,7 +610,6 @@ To enable logging of `_LOG.debug` for a single test run:
 
 ```
 # Enable debug info
-
 > pytest oms/test/test_broker.py::TestSimulatedBroker1 -s --dbg
 ```
 
@@ -642,7 +654,6 @@ regression suite
 
    ```
    # run: invoke run_fast_tests
-
    run: invoke run_fast_tests --pytest-opts="helpers/test/test_git.py::Test_git_modified_files1::test_get_modified_files_in_branch1 -s --dbg"
    ```
 
@@ -770,7 +781,7 @@ regression suite
   - To test a function `generate_html_tables()` the corresponding test class is
     `TestGenerateHtmlTables`
 - It's ok to have multiple test methods, e.g., for `FooBar.method_a()` and
-  `FooBar.method_b()`, the test method is: \
+  `FooBar.method_b()`, the test method is: 
   ```
   class TestFooBar1(unittest2.TestCase):
       def test_method_a(self):
@@ -868,10 +879,13 @@ regression suite
   - Avoid many files with a lot of boilerplate code
 - Cons of 1) vs 2)
   - The single file can become huge!
-- Compromise solution: _ Start with a single file
-  `test_$DIRNAME.py` (or
+- Compromise solution: _ Start with a single file `test_$DIRNAME.py` (or
   `test_dir_name.py`) _ In the large file add a framed comment like: \
-  `# ##################'\ '# Unit tests for file: … '\ '# ##################' * So it's easy to find which file is tested were using grep * Then split when it becomes too big using `test\_$FILENAME.py`
+  '# ##################'\
+  '# Unit tests for file: … '\
+  '# ##################' _ 
+  - So it's easy to find which file is tested were using grep
+- Then split when it becomes too big using `test_$FILENAME.py`
 
 ### Skeleton for unit test
 
@@ -883,7 +897,7 @@ regression suite
       def test...(self):
           ...
   ```
-- `pytest` will take care of running the code so you don't need: \
+- `pytest` will take care of running the code so you don't need: 
   ```
   if __name__ == '__main__':
   unittest.main()
@@ -895,7 +909,7 @@ regression suite
   classes
 - A parent test class looks like:
   ```
-  import helpers.unit_test as hut \
+  import helpers.unit_test as hut 
   class SomeClientTestCase(hut.TestCase):
       def _test...1(self):
           ...
@@ -918,7 +932,8 @@ regression suite
 - It is OK to use non-private methods in test classes to ensure that the code is
   in order of dependency, so that the reader doesn't have to jump back / forth
 - We want to separate chunks of unit test code using:
-  `# ////////////////////////////////////////////////////////////////////////`
+  ` # //////////////////////////////////////////////////////////////////////// `
+  
   putting all the methods used by that chunk at the beginning and so on
 
 - It is OK to skip a `TestCase` method if not meaningful, when coverage is
@@ -953,49 +968,52 @@ List of useful testing functions are:
 ### Use setUp/tearDown
 
 - If you have a lot of repeated code in your tests, you can make them shorter by
-  moving this code to `setUp/tearDown `methods: _ `setUp()` \
+  moving this code to `setUp/tearDown `methods: 
+  - `setUp()` \
   Method called to prepare the test fixture. This is called immediately before calling
-  the test method; other than <code>[AssertionError](https://docs.python.org/3/library/exceptions.html#AssertionError)</code>
-  or <code>[SkipTest](https://docs.python.org/3/library/unittest.html#unittest.SkipTest)</code>,
+  the test method; other than [`AssertionError`](https://docs.python.org/3/library/exceptions.html#AssertionError)
+  or [`SkipTest`](https://docs.python.org/3/library/unittest.html#unittest.SkipTest),
   any exception raised by this method will be considered an error rather than a test
-  failure. The default implementation does nothing. _ <code>tearDown()</code> \
+  failure. The default implementation does nothing. 
+  - `tearDown()` \
   Method called immediately after the test method has been called and the result
   recorded. This is called even if the test method raised an exception, so the
   implementation in subclasses may need to be particularly careful about
   checking internal state. Any exception, other than
-  <code>[AssertionError](https://docs.python.org/3/library/exceptions.html#AssertionError)</code>
+  [`AssertionError`](https://docs.python.org/3/library/exceptions.html#AssertionError)
   or
-  <code>[SkipTest](https://docs.python.org/3/library/unittest.html#unittest.SkipTest)</code>,
+  [`SkipTest`](https://docs.python.org/3/library/unittest.html#unittest.SkipTest),
   raised by this method will be considered an additional error rather than a
   test failure (thus increasing the total number of reported errors). This
   method will only be called if the
-  <code>[setUp()](https://docs.python.org/3/library/unittest.html#unittest.TestCase.setUp)</code>
+  [`setUp()`](https://docs.python.org/3/library/unittest.html#unittest.TestCase.setUp)
   succeeds, regardless of the outcome of the test method. The default
   implementation does nothing.
 - If you need some expensive code parts to be done once for the whole test
   class, such as opening a database connection, opening a temporary file on the
   filesystem, loading a shared library for testing, etc., you can use
-  <code>setUpClass/tearDownClass </code>methods: \* <code>setUpClass()</code> \
-  A class method called before tests in an individual class are run. <code>setUpClass</code>
-  is called with the class as the only argument and must be decorated as a [classmethod()](https://docs.python.org/3/library/functions.html#classmethod):
+  `setUpClass/tearDownClass` methods:
+  
+  - `setUpClass()` 
+  
+    A class method called before tests in an individual class are run. `setUpClass`
+    is called with the class as the only argument and must be decorated as a [classmethod()](https://docs.python.org/3/library/functions.html#classmethod):
+      ```
+      @classmethod
+      def setUpClass(cls):
+          ...
+      ```
+  - `tearDownClass()`
 
-          ```
-          @classmethod
-          def setUpClass(cls):
-              ...
-          ```
-      * `tearDownClass()`\
-
-  A class method called after tests in an individual class have run.
-  `tearDownClass` is called with the class as the only argument and must be
-  decorated as a<span style="text-decoration:underline;">
-  [classmethod()](https://docs.python.org/3/library/functions.html#classmethod)</span>:
-
-          ```
-          @classmethod
-          def tearDownClass(cls):
-              ...
-          ```
+    A class method called after tests in an individual class have run.
+    `tearDownClass` is called with the class as the only argument and must be
+    decorated as a
+    [classmethod()](https://docs.python.org/3/library/functions.html#classmethod):
+      ```
+      @classmethod
+      def tearDownClass(cls):
+          ...
+      ```
 
 - For more information see
   [official unittest docs](https://docs.python.org/3/library/unittest.html)
@@ -1041,24 +1059,24 @@ Below are the most common ones for basic understanding.
 
 ## Philosophy about mocking
 
-- We want to mock the minimal surface of a class
-- E.g., assume there is a class that is interfacing with an external provider
-  and our code places requests and get values back
-- We want to replace the provider with an object that responds to the requests
-  with the actual response of the provider
-- In this way we can leave all the code of our class untouched and tested
-- We want to test public methods of our class (and a few private methods)
-- In other words, we want to test the end-to-end behavior and not how things are
-  achieved
-- Rationale: if we start testing "how" things are done and not "what" is done,
-  we can't change how we do things (even if it doesn't affect the interface and
-  its behavior), without updating tons of methods
-- We want to test the minimal amount of behavior that enforces what we care
-  about
+1) We want to mock the minimal surface of a class
+    - E.g., assume there is a class that is interfacing with an external provider
+      and our code places requests and get values back
+    - We want to replace the provider with an object that responds to the requests
+      with the actual response of the provider
+    - In this way we can leave all the code of our class untouched and tested
+2) We want to test public methods of our class (and a few private methods)
+    - In other words, we want to test the end-to-end behavior and not how things are
+      achieved
+    - Rationale: if we start testing "how" things are done and not "what" is done,
+      we can't change how we do things (even if it doesn't affect the interface and
+      its behavior), without updating tons of methods
+    - We want to test the minimal amount of behavior that enforces what we care
+      about
 
 ## Some general suggestions about testing
 
-1. Test from the outside-in
+1) Test from the outside-in
    - We want to start testing from the end-to-end methods towards the
      constructor of an object
    - Rationale: often we start testing very carefully the constructor and then
@@ -1068,14 +1086,13 @@ Below are the most common ones for basic understanding.
      objects
    - Use the code coverage to see what's left to test once you have tested the
      "most external" code
-2. We don't need to test all the assertions
+2) We don't need to test all the assertions
    - E.g., testing carefully that we can't pass a value to a constructor doesn't
      really test much besides the fact that `dassert` works (which surprisingly
      works!)
    - We don't care about line coverage or checking boxes for the sake of
      checking boxes
-3. Use strings to compare output instead of data structures
-
+3) Use strings to compare output instead of data structures
    - Often it's easier to do a check like:
 
      ```
@@ -1099,7 +1116,7 @@ Below are the most common ones for basic understanding.
      - in case of mismatch it's easier to update the string with copy-paste
        rather than creating a data structure that matches what was created
 
-4. Use `self.check_string()` for things that we care about not changing (or are
+4) Use `self.check_string()` for things that we care about not changing (or are
    too big to have as strings in the code)
    - Use `self.assert_equal()` for things that should not change (e.g., 1 + 1
      = 2)
@@ -1109,15 +1126,15 @@ Below are the most common ones for basic understanding.
      `check_string()` but we want to add a constraint like there are more
      timestamps than 0 to avoid the situation where we update the string to
      something malformed
-5. Each test method should test a single test case
+5) Each test method should test a single test case
    - Rationale: we want each test to be clear, simple, fast
    - If there is repeated code we should factor it out (e.g., builders for
      objects)
-6. Each test should be crystal clear on how is different from the others
+6) Each test should be crystal clear on how is different from the others
    - Often you can factor out all the common logic into an helper method
    - Copy-paste is not allowed in unit tests in the same way it's not allowed in
      production code
-7. In general you want to budget the time to write unit tests
+7) In general you want to budget the time to write unit tests
 
    - E.g., "I'm going to spend 3 hours writing unit tests". This is going to
      help you focus on what's important to test and force you to use an
@@ -1125,7 +1142,7 @@ Below are the most common ones for basic understanding.
 
      ![alt_image](python_unit_tests_figs/image_4.png)
 
-   - Write skeleton of unit tests and ask for a review if you are not sure how /
+8) Write skeleton of unit tests and ask for a review if you are not sure how /
      what to test
      - Aka "testing plan"
 
@@ -1175,27 +1192,24 @@ mock_get_secret.side_effect = ["dummy", Exception]
       pass
   ```
 - in actual function
-
   ```
   get_secret_patch = umock.patch("helpers.hsecret.get_secret")
-
   get_secret_mock = get_secret_patch.start()
   ```
-
-- this is the only approach in which you need to start/stop patch!
-  - the actual mock is returned as the return value of `start()` method!
-- in other two approaches start/stop is handled under the hood and we are always
-  interacting with `MagicMock` object
+  - this is the only approach in which you need to start/stop patch!
+    - the actual mock is returned as the return value of `start()` method!
+  - in other two approaches start/stop is handled under the hood and we are always
+    interacting with `MagicMock` object
 - via `with` statement (also in function)
   ```
   with umock.patch(""helpers.hsecret.get_secret"") as get_secret_mock:
       pass
   ```
-- One of the use cases for this is if we are calling a different function inside
-  a function that is being mocked
-- Mostly because it is easy for an eye if there are to much patches via
-  decorator and we do not need to worry about reverting the patch changes as
-  that is automatically done at the end of with statement
+  - One of the use cases for this is if we are calling a different function inside
+    a function that is being mocked
+    - Mostly because it is easy for an eye if there are to much patches via
+      decorator and we do not need to worry about reverting the patch changes as
+      that is automatically done at the end of with statement
 
 ## Mock object state after test run
 
