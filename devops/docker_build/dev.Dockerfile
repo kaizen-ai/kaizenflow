@@ -20,7 +20,13 @@ RUN apt-get update && apt-get install -y \
     libdsdp-dev \
     libfftw3-dev \
     libglpk-dev \
-    libgsl-dev
+    libgsl-dev \
+    libgcc-10-dev \
+    && wget http://faculty.cse.tamu.edu/davis/SuiteSparse/SuiteSparse-4.5.3.tar.gz \
+    && tar -xf SuiteSparse-4.5.3.tar.gz \
+    && export CVXOPT_SUITESPARSE_SRC_DIR=$(pwd)/SuiteSparse \
+    && export CPPFLAGS="-I/usr/include/suitesparse" \
+    && export CVXOPT_BUILD_FFTW=1 
 
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -38,12 +44,6 @@ WORKDIR $INSTALL_DIR
 # To disable the clean up stage, comment out the variable, instead of setting
 # to False.
 #ENV CLEAN_UP_INSTALLATION=True
-RUN wget http://faculty.cse.tamu.edu/davis/SuiteSparse/SuiteSparse-4.5.3.tar.gz \
-    && tar -xf SuiteSparse-4.5.3.tar.gz \
-    && export CVXOPT_SUITESPARSE_SRC_DIR=$(pwd)/SuiteSparse \
-    && export CPPFLAGS="-I/usr/include/suitesparse" \
-    && export CVXOPT_BUILD_FFTW=1 \
-    && pip install cvxopt --no-binary cvxopt
 
 # - Install OS packages.
 COPY devops/docker_build/install_os_packages.sh .
