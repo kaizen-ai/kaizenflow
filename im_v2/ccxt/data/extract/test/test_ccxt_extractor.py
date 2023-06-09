@@ -254,23 +254,13 @@ class TestCcxtExtractor1(hunitest.TestCase):
         """
         # Initialize class.
         # Using Binance.US API because Binance API is not accessible.
-        exchange_class = imvcdexex.CcxtExtractor("binance", "spot")
+        exchange_class = imvcdexex.CcxtExtractor("binanceus", "spot")
         exchange_class.currency_pairs = ["BTC/USDT"]
         start_timestamp = pd.Timestamp("2022-10-20T00:01:00Z")
-        # _download_ohlcv filters out bars which are within bounds
-        #  of the provided time intervals.
-        mid_timestamp = hdateti.convert_timestamp_to_unix_epoch(
-            pd.Timestamp("2022-10-20T00:03:00Z")
-        )
         end_timestamp = pd.Timestamp("2022-10-20T00:05:00Z")
-        # Mock a call to ccxt's `parse_timeframe method` called inside `_download_ohlcv`.
-        with umock.patch.object(
-            exchange_class._sync_exchange, "parse_timeframe", create=True
-        ) as parse_timeframe_mock:
-            parse_timeframe_mock.return_value = 60
         # Run.
         ccxt_data = exchange_class._download_ohlcv(
-            exchange_id="binance",
+            exchange_id="binanceus",
             currency_pair="BTC/USDT",
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
