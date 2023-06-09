@@ -2,8 +2,12 @@ import logging
 import unittest.mock as umock
 
 import ccxt
+import ccxt.pro as ccxtpro
 import pandas as pd
+import pytest
 
+import helpers.hdatetime as hdateti
+import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.extractor as imvcdexex
@@ -11,19 +15,21 @@ import im_v2.ccxt.data.extract.extractor as imvcdexex
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.skipif(
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available",
+)
 class TestCcxtVersion1(hunitest.TestCase):
     @umock.patch.object(imvcdexex.hdateti, "get_current_time")
-    def test_download_ohlcv_with_current_ccxt_version1(
+    def test_download_ohlcv_timestamp_representation1(
         self, mock_get_current_time: umock.MagicMock
     ) -> None:
         """
-        Run with the current ccxt version to verify that data semantics don't
-        change.
+        Verify that OHLCV data timestamps are correctly represented.
         """
         current_time = "2022-10-21 00:00:00.000000+00:00"
         mock_get_current_time.return_value = current_time
         # Prepare expected output.
-        # Expected output: This is downloaded data with the CCXT version 2.1.80.
         expected_output = r"""
         timestamp    open    high    low    close    volume    end_download_timestamp
         0    1666224060000    19120.48    19123.30    19114.05    19114.05    0.483268    2022-10-21 00:00:00.000000+00:00
@@ -33,7 +39,7 @@ class TestCcxtVersion1(hunitest.TestCase):
         4    1666224300000    19120.87    19120.87    19113.28    19113.28    0.434573    2022-10-21 00:00:00.000000+00:00
         """
         # Initialize class.
-        # Using Binanceus API because Binance API is not accessible.
+        # Using Binance.US API because Binance API is not accessible.
         exchange_class = imvcdexex.CcxtExtractor("binanceus", "spot")
         exchange_class.currency_pairs = ["BTC/USDT"]
         start_timestamp = pd.Timestamp("2022-10-20T00:01:00Z")
