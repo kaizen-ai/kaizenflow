@@ -252,16 +252,20 @@ class TestCcxtExtractor1(hunitest.TestCase):
         3    1666224240000    19118.08    19122.31    19115.23    19115.23    0.482966    2022-10-21 00:00:00.000000+00:00
         4    1666224300000    19120.87    19120.87    19113.28    19113.28    0.434573    2022-10-21 00:00:00.000000+00:00
         """
-        # Initialize class.
-        # Using Binance.US API because Binance API is not accessible.
-        exchange_class = imvcdexex.CcxtExtractor("binanceus", "spot")
-        exchange_class.currency_pairs = ["BTC/USDT"]
+        # Initialize parameters.
+        exchange_id = "binanceus"
+        currency_pair = "BTC/USDT"
+        currency_type = "spot"
         start_timestamp = pd.Timestamp("2022-10-20T00:01:00Z")
         end_timestamp = pd.Timestamp("2022-10-20T00:05:00Z")
+        # Initialize class.
+        # Using Binance.US API because Binance API is not accessible.
+        exchange_class = imvcdexex.CcxtExtractor(exchange_id, currency_type)
+        exchange_class.currency_pairs = [currency_pair]
         # Run.
         ccxt_data = exchange_class._download_ohlcv(
-            exchange_id="binanceus",
-            currency_pair="BTC/USDT",
+            exchange_id=exchange_id,
+            currency_pair=currency_pair,
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
             bar_per_iteration=500,
