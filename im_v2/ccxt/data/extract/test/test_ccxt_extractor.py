@@ -253,13 +253,13 @@ class TestCcxtExtractor1(hunitest.TestCase):
         4    1666224300000    19120.87    19120.87    19113.28    19113.28    0.434573    2022-10-21 00:00:00.000000+00:00
         """
         # Initialize parameters.
+        # Using Binance.US API because Binance API is not accessible.
         exchange_id = "binanceus"
         currency_pair = "BTC/USDT"
         currency_type = "spot"
         start_timestamp = pd.Timestamp("2022-10-20T00:01:00Z")
         end_timestamp = pd.Timestamp("2022-10-20T00:05:00Z")
         # Initialize class.
-        # Using Binance.US API because Binance API is not accessible.
         exchange_class = imvcdexex.CcxtExtractor(exchange_id, currency_type)
         exchange_class.currency_pairs = [currency_pair]
         # Run.
