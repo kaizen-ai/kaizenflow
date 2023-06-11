@@ -97,7 +97,6 @@ _ = config.get_and_mark_as_used(("market_data_config", "end_ts"))
   construction of other objects:
 
     - Logging, debugging and printing
->>>>>>> Stashed changes
 
 ## Time semantics
 
@@ -193,137 +192,34 @@ reactive implementation) or not.
 In this section we summarize the responsibilities and the high level invariants
 of each component of a `System`.
 
-The entire System is represented in terms of a Config. Each piece of a Config
-refers to and configures a specific part of the System. Each component should be
-completely configured in terms of a Config.
+A `System` is represented in terms of a `Config`.
+- Each piece of a `Config` refers to and configures a specific part of the `System`
+- Each component should be completely configured in terms of a `Config`
 
 ### Component invariants
-
-Each component has a way to know:
-
-- what is the current time (e.g., the real-time machine time or the simulated
-  one)
-
-- the timestamp of the current data bar it's working on
 
 All data in components should be indexed by the knowledge time (i.e., when the
 data became available to that component) in terms of current time.
 
-Each component should print its state so that one can inspect how exactly it has
-been initialized.
+Each component has a way to know:
+- what is the current time (e.g., the real-time machine time or the simulated
+  one)
+- the timestamp of the current data bar it's working on
 
-Each component can be serialized and deserialized from disk.
+Each component
+- should print its state so that one can inspect how exactly it has been
+  initialized
+- can be serialized and deserialized from disk
+- can be mocked for simulating
+- should save data in a directory as it executes to make the system observable
 
-Each component can be mocked for simulating.
-
-Each component should save data in a directory as it executes to make the system
-observable.
-
-Models are described in terms of DAGs using the DataFlowCompute framework
+Models are described in terms of DAGs using the DataFlow framework
 
 **Misc**. Models read data from historical and real-time data sets, typically
 not mixing these two styles.
 
 Raw data is typically stored in S3 bucket in the same format as it comes or in
 Parquet format.
-
-## Config
-
-**Config**. A `Config` is a dictionary-like object that represents parameters
-used to build and configure other objects (e.g., a DAG or a System).
-
-Each config is a hierarchical structure which consists of **Subconfigs** and
-**Leaves**.
-
-**Subconfig** is a nested object which represents a Config inside another
-config. A Subconfig of a Subconfig is a Subconfig of a Config, i.e. the relation
-is transitive.
-
-**Leaf** is any object inside a Config that is used to build another object that
-is not in itself a Config.
-
-Note that a dictionary or other mapping objects are not permitted inside a
-Config: each dictionary-like object should be converted to a Config and become a
-Subconfig.
-
-### Config representation and properties
-
-A Config can be represented as a dictionary or a string.
-
-Example of a dictionary representation:
-
-```python
-config1={
-    "resample_1min": False,
-    "client_config": {
-        "universe": {
-            "full_symbols": ["binance::ADA_USDT"],
-            "universe_version": "v3",
-        },
-    },
-    "market_data_config": {"start_ts": start_ts, "end_ts": end_ts},
-}
-```
-
-In the example above:
-- "resample_1min" is a leaf of the `config1`
-- "client_config" is a subconfig of `config1`
-- "universe" is a subconfig of "client_config"
-- "market_data" config is a subconfig of "config1"
-- "start_ts" and "end_ts" are leaves of "market_data_config" and `config1`
-
-Example of a string representation:
-
-![](./sorrentum_figs/image14.png){width="6.854779090113736in"
-height="1.2303444881889765in"}
-
-- The same values are annotated with `marked_as_used`, `writer` and `val_type`
-  - `marked_as_used` determines whether the object was used to construct another
-    object
-  - `writer` provides a stacktrace of the piece of code which marked the object
-    as used
-  - `val_type` is a type of the object
-
-### Assigning and getting Config items
-
-- Config object has its own implementations of `__setitem__` and `__getitem__`
-- A new value can be set freely like in a python Dict object
-- Overwriting the value is prohibited if the value has already been used
-
-Since Config is used to guarantee that the construction of any objects is
-reproducible, there are 2 methods to `get` the value.
-
-- `get_and_mark_as_used` is utilized when a leaf of the config is used to
-  construct another object
-
-  - When the value is used inside a constructor
-
-  - When the value is used as a parameter in a function
-
-Note that when selecting a subconfig the subconfig itself is not marked as used,
-but its leaves are. For this reason, the user should avoid marking subconfigs as
-used and instead select leaves separately.
-
-Example of marking the subconfig as used:
-
-```python
-_ = config.get_and_mark_as_used("market_data_config")
-```
-
-![](./sorrentum_figs/image13.png){width="6.5in" height="1.1944444444444444in"}
-
-Example of marking the leaf as used:
-
-```python
-_ = config.get_and_mark_as_used(("market_data_config", "end_ts"))
-```
-
-![](./sorrentum_figs/image10.png){width="6.5in" height="1.1388888888888888in"}
-
-- `__getitem__` is used to select items for uses which do not affect the
-  construction of other objects:
-
-  - Logging, debugging and printing
 
 ## DataFlow computing
 
@@ -336,21 +232,13 @@ slices of data so that both historical and real-time semantics can be
 accommodated without changing the model.
 
 - Some of the advantages of the DataFlow approach are:
-
   - Tiling to fit in memory
-
   - Cached computation
-
   - Adapt a procedural semantic to a reactive / streaming semantic
-
   - Handle notion of time
-
   - Control for future peeking
-
   - Suite of tools to replay and debug executions from real-time
-
   - Support for market data and other tabular data feeds
-
   - Support for knowledge time
 
 - TODO(gp): Explain the advantages
@@ -369,12 +257,13 @@ vwap_approach_2.head(3)
 
 - TODO(gp): Explain this piece of code
 
-**Dag Node**. It is a unit of computation of a DataFlow model. A Dag node has
-inputs, outputs, a unique node id (aka `nid`), and a state. Typically inputs and
-outputs are dataframes. A Dag node stores a value for each output and method
-name (e.g., methods are `fit`, `predict`, `save_state`, `load_state`). The
-DataFlow time slice semantics is implemented in terms of `Pandas` and `Sklearn`
-libraries.
+**Dag Node**. A Dag Node is a unit of computation of a DataFlow model.
+- A Dag Node has inputs, outputs, a unique node id (aka `nid`), and a state
+- Typically, inputs and outputs to a Dag Node are dataframes
+- A Dag node stores a value for each output and method name (e.g., methods are
+  `fit`, `predict`, `save_state`, `load_state`)
+- The DataFlow time slice semantics is implemented in terms of `Pandas` and
+  `Sklearn` libraries
 
 TODO(gp): Add picture.
 
@@ -445,8 +334,8 @@ DataFlow represents data through multi-index dataframes, where
 
 ![](./sorrentum_figs/image6.png){width="6.5in" height="1.0416666666666667in"}
 
-The reason for this convention is that typically features are computed in an
-univariate fashion (e.g., asset by asset), and we can get vectorization over the
+The reason for this convention is that typically features are computed in a
+uni-variate fashion (e.g., asset by asset), and we can get vectorization over the
 assets by expressing operations in terms of the features. E.g., we can express a
 feature as `(df["close", "open"].max() - df["high"]).shift(2)`.
 
@@ -475,7 +364,6 @@ one can work with DataFlow at 4 levels of abstraction:
       functions from level 2 above
 
 4.  DAG
-
     - A series of transformations in terms of DataFlow nodes
 
 Note that there are degrees of freedom in splitting the work between the various
@@ -492,10 +380,8 @@ E.g., code can be split in multiple functions at level 2) and then
 ### `ConfigBuilder`
 
 - Generates a list of fully formed (not template) configs that can be then run
-
 - These configs can correspond to one or multiple Experiments, tiled or not (see
   below)
-
 - Config builder accepts `BacktestConfig` as an input
 
 ### Experiment in strict and loose sense
@@ -598,40 +484,27 @@ In order to create the list of fully built configs, both a `Backtest` and a
 - TODO(gp): -> BacktestBuilder
 
 - It is a function that:
-
   - Creates a DAG from the passed config
-
   - Runs the DAG
-
   - Saves the results in a specified directory
 
 ### `BacktestRunner`
 
 - A test case object that:
-
   - runs a backtest (experiment) on a Dag and a Config
-
   - processes its results (e.g., check that the output is readable, extract a
     PnL curve or other statistics)
 
 ### System
 
 - An object representing a full trading system comprising of:
-
   - MarketData
-
     - HistoricalMarketData (ImClient)
-
     - RealTimeMarketData
-
   - Dag
-
   - DagRunner
-
   - Portfolio
-
     - Optimizer
-
     - Broker
 
 ### SystemRunner
@@ -771,24 +644,18 @@ objects. In practice Broker adapts the internal representation of Order and
 Fills to the ones that are specific to the target market.
 
 Responsibilities:
-
 - Submit orders to MarketOms
 - Wait to ensure that orders were properly accepted by MarketOms
-
 - Execute complex orders (e.g., TWAP, VWAP, pegged orders) interacting with the
   target market
-
 - Receive fill information from the target market
 
 Interactions:
-
 - MarketData to receive prices and other information necessary to execute orders
 - MarketOms to place orders and receive fills
 
 Main methods:
-
 - submit_orders()
-
 - get_fills()
 
 **MarketOms**. MarketOms is the interface that allows to place orders and
@@ -809,210 +676,129 @@ From ./oms/architecture.md
 
 Invariants and conventions
 
-- In this doc we use the new names for concepts and use "aka" to refer to the
-
-old name, if needed
+- In this doc we use the new names for concepts and use "aka" to refer to the old
+  name, if needed
 
 - We refer to:
-
 - The as-of-date for a query as `as_of_timestamp`
-
 - The actual time from `get_wall_clock_time()` as `wall_clock_timestamp`
-
 - Objects need to use `get_wall_clock_time()` to get the "actual" time
-
 - We don't want to pass `wall_clock_timestamp` because this is dangerous
-
 - It is difficult to enforce that there is no future peeking when one object
+  tells another what time it is, since there is no way for the second object to
+  double check that the wall clock time is accurate
 
-tells another what time it is, since there is no way for the second object
-
-to double check that the wall clock time is accurate
-
-- We pass `wall_clock_timestamp` only when one "action" happens atomically but
-
-it is split in multiple functions that need to all share this information.
-
-This approach should be the exception to the rule of calling
+- We pass `wall_clock_timestamp` only when one "action" happens atomically but it
+  is split in multiple functions that need to all share this information. This
+  approach should be the exception to the rule of calling
 
 `get_wall_clock_time()`
 
 - It's ok to ask for a view of the world as of `as_of_timestamp`, but then the
-
-queried object needs to check that there is no future peeking by using
-
-`get_wall_clock_time()`
+  queried object needs to check that there is no future peeking by using
+  `get_wall_clock_time()`
 
 - Objects might need to get `event_loop`
 
-- TODO(gp): Clean it up so that we pass event loop all the times and event
-
-loop has a reference to the global `get_wall_clock_time()`
+- TODO(gp): Clean it up so that we pass event loop all the times and event loop
+  has a reference to the global `get_wall_clock_time()`
 
 - The Optimizer only thinks in terms of dollar
 
 Implementation
 
 process_forecasts()
-
 - Aka `place_trades()`
-
 - Act on the forecasts by:
-
 - Get the state of portfolio (by getting fills from previous clock)
-
 - Updating the portfolio holdings
-
 - Computing the optimal positions
-
 - Submitting the corresponding orders
-
 - `optimize_positions()`
-
 - Aka `optimize_and_update()`
-
 - Calls the Optimizer
-
 - `compute_target_positions()`
-
 - Aka `compute_trades()`
-
 - `submit_orders()`
-
 - Call `Broker`
-
 - `get_fills()`
-
 - Call `Broker`
-
 - For IS it is different
-
 - `update_portfolio()`
-
 - Call `Portfolio`
-
 - For IS it is different
-
 - It should not use any concrete implementation but only `Abstract\*`
 
 Portfolio
-
 - `get_holdings()`
-
 - Abstract because IS, Mocked, Simulated have a different implementations
-
 - `mark_to_market()`
 
 - Not abstract
-
 - -> `get_holdings()`, `PriceInterface`
-
 - `update_state()`
-
 - Abstract
-
 - Use abstract but make it NotImplemented (we will get some static checks and
-
-some other dynamic checks)
-
+  some other dynamic checks)
 - We are trying not to mix static typing and duck typing
-
 - CASH_ID, `_compute_statistics()` goes in `Portolio`
 
 Broker
-
 - `submit_orders()`
-
 - `get_fills()`
 
 Simulation
 
 DataFramePortfolio
-
 - This is what we call `Portfolio`
-
-- In RT we can run `DataFramePortfolio` and `ImplementedPortfolio` in parallel
-
-to collect real and simulated behavior
-
+- In RT we can run `DataFramePortfolio` and `ImplementedPortfolio` in parallel to
+  collect real and simulated behavior
 - `get_holdings()`
-
 - Store the holdings in a df
-
 - `update_state()`
-
 - Update the holdings with fills -> `SimulatedBroker.get_fills()`
-
 - To make the simulated system closer to the implemented
 
 SimulatedBroker
-
 - `submit_orders()`
-
 - `get_fills()`
 
 Implemented system
 
 ImplementedPortfolio
-
 - `get_holdings()`
-
 - Check self-consistency and assumptions
-
-- Check that no order is in flight otherwise we should assert or log an
-
-error
-
+- Check that no order is in flight otherwise we should assert or log an error
 - Query the DB and gets you the answer
-
 - `update_state()`
-
 - No-op since the portfolio is updated automatically
 
 ImplementedBroker
-
 - `submit_orders()`
-
 - Save files in the proper location
-
 - Wait for orders to be accepted
-
 - `get_fills`
-
 - No-op since the portfolio is updated automatically
 
 Mocked system
-
 - Our implementation of the implemented system where we replace DB with a mock
-
 - The mocked DB should be as similar as possible to the implemented DB
 
 DatabasePortfolio
-
 - `get_holdings()`
-
 - Same behavior of `ImplementedPortfolio` but using `OmsDb`
 
 DatabaseBroker
-
 - `submit_orders()`
-
 - Same behavior of `ImplementedBroker` but using `OmsDb`
 
 OmsDb
-
 - `submitted_orders` table (mocks S3)
-
 - Contain the submitted orders
-
 - `accepted_orders` table
-
 - `current_position` table
 
 OrderProcessor
-
 - Monitor `OmsDb.submitted_orders`
-
 - Update `OmsDb.accepted_orders`
-
 - Update `OmsDb.current_position` using `Fill` and updating the `Portfolio`
