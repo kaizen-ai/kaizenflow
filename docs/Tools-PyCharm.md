@@ -3,7 +3,6 @@
 There are multiple ways to develop on a remote server using PyCharm
 
 1.  VNC approach
-
     - PyCharm runs locally on the server using a "virtual screen"
     - Your laptop interacts with a VNC server to get the GUI locally
     - Pros:
@@ -14,19 +13,17 @@ There are multiple ways to develop on a remote server using PyCharm
       - Without enough bandwidth it's slow and not snappy enough
 
 2.  X11 approach
-
     - Same as VNC, but instead of sending bitmaps through VNC, a "compressed"
       version of the GUI is sent to the local computer directly
     - Pros:
       - Maybe faster than VNC
       - PyCharm window is like a native window on your laptop
     - Cons:
-      - X11 is old crap developed long time again and not really supported any
-        more
+      - X11 is old (once glorious) crap developed long time again and not 
+        really supported anymore
       - One needs to tunnel X11 traffic, set things up, and so on
 
 3.  PyCharm Gateway
-
     - New client-server architecture for PyCharm
       - A "headless" PyCharm runs on the server
       - A GUI client PyCharm runs on your laptop
@@ -45,11 +42,10 @@ There are multiple ways to develop on a remote server using PyCharm
     - Cons
       - You can't run / debug remotely
 
-## Current situation
+Approach 1) / VNC seems to require lots of memory and CPU and it's not really 
+fast.
 
-Approach 1) seems to require lots of memory and CPU and it's not really fast.
-
-Approach 2) works but it's a pain to set-up and slow.
+Approach 2) / X11 works but it's a pain to set-up and slow.
 
 We want to try with 3)
 
