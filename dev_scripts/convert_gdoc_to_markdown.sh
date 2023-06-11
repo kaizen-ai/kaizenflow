@@ -1,23 +1,43 @@
 #!/bin/bash -xe
-#IN_FILE='/Users/saggese/Downloads/Tools\ -\ PyCharm.docx'
-#OUT_PREFIX="docs/Tools-PyCharm"
-#OUT_PREFIX="defi/papers/sorrentum"
-OUT_PREFIX="docs/DataFlow"
-#OUT_PREFIX="docs/DataPull"
+
+set -eux
+
+# Build the Docker container.
+TMP_FILENAME="/tmp/tmp._convert_docx_to_markdown.Dockerfile"
+cat >$TMP_FILENAME <<EOF
+FROM ubuntu:latest
+
+RUN apt-get update && \
+    apt-get -y upgrade
+
+RUN apt-get install -y curl pandoc && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+EOF
+
+export DOCKER_CONTAINER_NAME="sorrentum_docx_to_md"
+docker build -f $TMP_FILENAME -t $DOCKER_CONTAINER_NAME .
+
+IN_FILE="docs/Epics_and_Sprints.docx"
+OUT_PREFIX="docs/Sprint_planning_process"
 OUT_FILE="${OUT_PREFIX}.md"
 OUT_FIGS="${OUT_PREFIX}_figs"
+
+WORKDIR="$(realpath .)"
+MOUNT="type=bind,source=${WORKDIR},target=${WORKDIR}"
 
 #git checkout -- $OUT_FILE
 
 # Convert from docx to Markdown.
-if [[ 1 == 0 ]]; then
+if [[ 0 == 0 ]]; then
     rm -rf $OUT_FIGS
-    cmd="pandoc --extract-media $OUT_FIGS -f docx -t markdown -o $OUT_FILE $IN_FILE"
-    eval $cmd
+    CMD="pandoc --extract-media $OUT_FIGS -f docx -t markdown -o $OUT_FILE $IN_FILE"
+    docker run --rm -it --workdir "${WORKDIR}" --mount "${MOUNT}" ${DOCKER_CONTAINER_NAME} ${CMD}
 
-    # Move the media.
-    mv $OUT_FIGS/{media/*,}
-    rm -rf $OUT_FIGS/media
+    # # Move the media.
+    # mv $OUT_FIGS/{media/*,}
+    # rm -rf $OUT_FIGS/media
 fi;
 
 # Clean up artifacts.
@@ -90,3 +110,6 @@ $SCRIPT_NAME $OUT_FILE
 dev_scripts/lint_md.sh $OUT_FILE
 
 gd $OUT_FILE
+
+# Clean up temporary files.
+rm $TMP_FILENAME
