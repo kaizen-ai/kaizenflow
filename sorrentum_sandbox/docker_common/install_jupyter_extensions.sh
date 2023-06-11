@@ -39,12 +39,12 @@ done;
 # Disable configuration for nbextensions without explicit compatibility.
 echo "{\"nbext_hide_incompat\": false}" > /$HOME/.jupyter/nbconfig/common.json
 
+# Fix vim plugin extension (from dev_scripts/notebooks/fix_vim_plugin.sh).
 DIR=$(jupyter --data-dir)/nbextensions
 if [[ ! -e $DIR ]]; then
     mkdir $DIR
 fi
 
-# Fix vim plugin extension (from dev_scripts/notebooks/fix_vim_plugin.sh).
 # Install vim bindings.
 cd $DIR
 if [[ -e vim_binding ]]; then

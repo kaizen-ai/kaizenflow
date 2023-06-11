@@ -98,10 +98,9 @@ _ = config.get_and_mark_as_used(("market_data_config", "end_ts"))
 
     - Logging, debugging and printing
 
-
 ## Time semantics
 
-**Time semantics**. A Sorrentum component can be executed or simulated
+**Time semantics**. A DataFlow component can be executed or simulated
 accounting for different ways to represent the passing of time. E.g., it can be
 simulated in a timed or non-timed simulation, depending on how data is delivered
 to the system (as it is generated or in bulk with knowledge time).
@@ -166,14 +165,14 @@ mins of wall-clock.
 TODO(Grisha): add an example.
 
 **Replayed simulation**. In replayed simulation, the data is provided in the
-same "format" and with the same timing than it would be provided in real-time,
+same "format" and with the same timing as it would be provided in real-time,
 but the clock type is "replayed clock".
 
 TODO(gp): Add an example of df with forecasts explaining the timing
 
 ## Different views of System components
 
-**Different implementations of a component**. A Sorrentum component is described
+**Different implementations of a component**. A DataFlow component is described
 in terms of an interface and can have several implementations at different
 levels of detail.
 
@@ -225,12 +224,12 @@ Parquet format.
 ## DataFlow computing
 
 **DataFlow framework**. DataFlow is a computing framework to implement machine
-learning models that can run in timed, non-timed, replayed simulation and
-real-time execution with minimal changes
+learning models that can run with minimal changes in timed, non-timed, replayed
+simulation and real-time execution.
 
-The principle underlying DataFlow is to run a model in terms of time slices of
-data so that both historical and real-time semantics can be accommodated without
-changing the model.
+The working principle underlying DataFlow is to run a model in terms of time
+slices of data so that both historical and real-time semantics can be
+accommodated without changing the model.
 
 - Some of the advantages of the DataFlow approach are:
   - Tiling to fit in memory
@@ -248,8 +247,10 @@ Resampling VWAP (besides potential errors). This implies hardcoded formula in a
 mix with resampling functions.
 
 ```python
-vwap_approach_2 = (converted_data["close"] *
-    converted_data["volume"]).resample(resampling_freq) ).mean() /
+vwap_approach_2 = (
+        converted_data["close"] *
+      converted_data["volume"]).resample(resampling_freq)
+    ).mean() /
     converted_data["volume"].resample(resampling_freq).sum()
 vwap_approach_2.head(3)
 ```
@@ -670,6 +671,8 @@ it's not under control of the user or of the protocol
 **OmsDb**
 
 **TO REORG**
+
+From ./oms/architecture.md
 
 Invariants and conventions
 
