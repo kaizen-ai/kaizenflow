@@ -48,17 +48,19 @@ else
                   with properties {name:\"$filename\"})"
 fi
 
-# Copy Latex reference to clipboard.
-val="
-\$\$
-\includegraphics[height=4cm]{$filename}
-\$\$
-"
-# Copy Markdown reference to clipboard.
+# Copy reference for Latex.
 val="
 \$\$
 \includegraphics[height=4cm]{$filename}
 \$\$
 "
 echo $val
+
+# Print reference for Markdown.
+val="
+![]($filename)
+"
+echo $val
+
+# Copy last reference to clipboard.
 echo $val | pbcopy
