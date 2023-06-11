@@ -45,7 +45,7 @@ There are multiple ways to develop on a remote server using PyCharm
 Approach 1) / VNC seems to require lots of memory and CPU and it's not really 
 fast.
 
-Approach 2) / X11 works but it's a pain to set-up and slow.
+Approach 2) / X11 works, but it's a pain to set-up and slow.
 
 We want to try with 3)
 
@@ -70,8 +70,7 @@ TODO(gp): @Juraj Let's both try this. There are some notes below about it
 
 CTRL + SHIFT + A -> View Pull Request
 
-![](docs/Tools-PyCharm_figs/image13.png){width="3.612198162729659in"
-height="4.932292213473316in"}
+![Pull request](docs/Tools-PyCharm_figs/image13.png)
 
 # How to edit remote code
 
@@ -84,21 +83,17 @@ AmpTask1112_Audit_amp_Docker_system_03)
 
 Set-up Deployment
 
-![](docs/Tools-PyCharm_figs/image3.png){width="4.810558836395451in"
-height="3.51540791776028in"}
+![](docs/Tools-PyCharm_figs/image3.png)
 
-![](docs/Tools-PyCharm_figs/image10.png){width="3.9114588801399823in"
-height="1.6807655293088364in"}
+![](docs/Tools-PyCharm_figs/image10.png)
 
 The deployment options are
 
-![](docs/Tools-PyCharm_figs/image9.png){width="3.123700787401575in"
-height="2.78830271216098in"}
+![](docs/Tools-PyCharm_figs/image9.png)
 
 You can see what file is changed in the file transfer window:
 
-![](docs/Tools-PyCharm_figs/image14.png){width="6.5in"
-height="1.2083333333333333in"}
+![](docs/Tools-PyCharm_figs/image14.png)
 
 pycharm
 

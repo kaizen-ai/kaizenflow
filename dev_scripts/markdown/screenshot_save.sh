@@ -20,31 +20,41 @@ filename=fig-$(date +%Y-%m-%d-%H%M%S).png
 
 if [ $# -ne 0 ]; then
     if [[ -d $1 ]]; then
-        if [ "$1" != "." ]; then folder=$1; fi
+        if [ "$1" != "." ]; then
+            folder=$1
+        fi
     else
         a=$(dirname "$1")
         b=$(basename "$1" .png)
-
-        if [ "$b" != "" ]; then filename=$b.png; fi
-
-        if [ "$a" != "." ]; then folder=$a; fi
+        if [ "$b" != "" ]; then
+            filename=$b.png
+        fi
+        if [ "$a" != "." ]; then
+            folder=$a
+        fi
     fi
 fi
 echo "filename=$filename"
 
 if [[ 1 == 1 ]]; then
-  screencapture -i -t png $filename
+    screencapture -i -t png $filename
 else
-  # In practice it is
-  # > screencapture -c -i -t png notes/figs/game_theory/week4.pure_strategies_example.png
-  screencapture -c -i
-  osascript -e "tell application \"System Events\" to ¬
-          write (the clipboard as PNG picture) to ¬
-          (make new file at folder \"$folder\" ¬
-          with properties {name:\"$filename\"})"
-fi;
+    # In practice it is
+    # > screencapture -c -i -t png notes/figs/game_theory/week4.pure_strategies_example.png
+    screencapture -c -i
+    osascript -e "tell application \"System Events\" to ¬
+                  write (the clipboard as PNG picture) to ¬
+                  (make new file at folder \"$folder\" ¬
+                  with properties {name:\"$filename\"})"
+fi
 
 # Copy Latex reference to clipboard.
+val="
+\$\$
+\includegraphics[height=4cm]{$filename}
+\$\$
+"
+# Copy Markdown reference to clipboard.
 val="
 \$\$
 \includegraphics[height=4cm]{$filename}
