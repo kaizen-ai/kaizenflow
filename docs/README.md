@@ -30,7 +30,7 @@ This contains the absolute minimal amount of info to start developing
 - [Git workflow and best practices](Git_workflow_and_best_practices.md)
   - `git` workflows, branch management, troubleshooting, common procedures
 
-- [Documentation about guidelines](Documentation_about_guidelines.md)
+- [Documentation about guidelines](Documentation_guidelines.md)
   - How to write guidelines, format documentation, convert Gdocs to markdown files and vice versa
 
 ## Learn how to become efficient at developing

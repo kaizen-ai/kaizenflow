@@ -28,9 +28,10 @@ RUN apt-get update && apt-get install -y nodejs
 RUN node -v
 RUN npm -v
 
-# Install Prettier.
-RUN npm install -g prettier && \
-    npm install -g markdown-toc
+# Install executables.
+RUN npm install -g prettier
+RUN npm install -g markdown-toc
+RUN npm install -g markdown-link-check
 
 RUN npx prettier -v
 EOF

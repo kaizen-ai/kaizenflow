@@ -1,4 +1,4 @@
-# Documentation about guidelines
+# Documentation guidelines
 
 <!-- toc -->
 
