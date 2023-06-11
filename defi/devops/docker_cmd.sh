@@ -1,7 +1,10 @@
 #!/bin/bash -e
 #
-# Delete all images.
+# Execute a command in the container.
 #
+
+CMD="$@"
+echo "Executing: '$CMD'"
 
 GIT_ROOT=$(git rev-parse --show-toplevel)
 source $GIT_ROOT/docker_common/utils.sh
@@ -15,11 +18,15 @@ if [[ ! -e $SCRIPT_DIR ]]; then
 fi;
 source $DOCKER_NAME
 
-# Print Sorrentum images.
-docker image ls | grep $FULL_IMAGE_NAME
+docker image ls $FULL_IMAGE_NAME
+docker manifest inspect $FULL_IMAGE_NAME | grep arch
 
-# Remove images.
-docker image ls | grep $FULL_IMAGE_NAME | awk '{print $1}' | xargs -n 1 -t docker image rm -f
-
-# Print all images.
-docker image ls
+DOCKER_RUN_OPTS=""
+CONTAINER_NAME=$IMAGE_NAME
+docker run \
+    --rm -ti \
+    --name $CONTAINER_NAME \
+    $DOCKER_RUN_OPTS \
+    -v $(pwd):/data \
+    $FULL_IMAGE_NAME \
+    $CMD
