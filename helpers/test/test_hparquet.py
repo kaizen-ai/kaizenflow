@@ -574,7 +574,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         partition_mode = "by_year_month"
         start_ts = pd.Timestamp("2020-01-02 09:31:00+00:00")
         end_ts = pd.Timestamp("2020-01-02 09:30:00+00:00")
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             hparque.get_parquet_filters_from_timestamp_interval(
                 partition_mode, start_ts, end_ts
             )
@@ -592,7 +592,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         partition_mode = "new_mode"
         start_ts = pd.Timestamp("2020-01-02 09:31:00+00:00")
         end_ts = pd.Timestamp("2020-01-02 09:32:00+00:00")
-        with pytest.raises(ValueError) as fail:
+        with self.assertRaises(ValueError) as fail:
             hparque.get_parquet_filters_from_timestamp_interval(
                 partition_mode, start_ts, end_ts
             )

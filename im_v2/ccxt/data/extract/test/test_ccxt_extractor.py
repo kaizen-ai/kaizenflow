@@ -51,7 +51,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         expected_method_calls = "[call.load_markets()]"
         self.assertEqual(actual_method_calls, expected_method_calls)
         # Wrong contract type.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             imvcdexex.CcxtExtractor("binance", "dummy")
         actual = str(fail.value)
         expected = (
@@ -486,7 +486,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Run with invalid input.
         start_timestamp = "invalid"
         end_timestamp = pd.Timestamp("2021-09-10T00:00:00Z")
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             exchange_class._download_ohlcv(
                 exchange_id="binance",
                 currency_pair="BTC/USDT",
@@ -511,7 +511,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Run with invalid input.
         start_timestamp = pd.Timestamp("2021-09-09T00:00:00Z")
         end_timestamp = "invalid"
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             exchange_class._download_ohlcv(
                 exchange_id="binance",
                 currency_pair="BTC/USDT",
@@ -538,7 +538,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Run with invalid input.
         start_timestamp = pd.Timestamp("2021-09-10T00:00:00Z")
         end_timestamp = pd.Timestamp("2021-09-09T00:00:00Z")
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             exchange_class._download_ohlcv(
                 exchange_id="binance",
                 currency_pair="BTC/USDT",
@@ -557,7 +557,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Initialize class.
         exchange_class = imvcdexex.CcxtExtractor("binance", "spot")
         # Run with invalid input.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             exchange_class._download_ohlcv(
                 exchange_id="binance",
                 currency_pair="invalid_currency_pair",
@@ -680,7 +680,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         exchange_class.currency_pairs = ["BTC/USDT"]
         fake_currency_pair = "NON_EXIST"
         # Run with invalid input.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             exchange_class._download_bid_ask(exchange, fake_currency_pair, 10)
         # Check output for error.
         actual = str(fail.value)

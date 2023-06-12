@@ -63,7 +63,7 @@ class TestToFileAndFromFile1(hmoto.S3Mock_TestCase):
         moto_s3fs = hs3.get_s3fs(self.mock_aws_profile)
         s3_path = f"s3://{self.bucket_name}/{regular_file_name}"
         # Save file with `t` mode.
-        with pytest.raises(ValueError) as fail:
+        with self.assertRaises(ValueError) as fail:
             hs3.to_file(
                 regular_file_content, s3_path, mode="wt", aws_profile=moto_s3fs
             )
@@ -81,7 +81,7 @@ class TestToFileAndFromFile1(hmoto.S3Mock_TestCase):
         moto_s3fs = hs3.get_s3fs(self.mock_aws_profile)
         s3_path = f"s3://{self.bucket_name}/{regular_file_name}"
         # Read with encoding.
-        with pytest.raises(ValueError) as fail:
+        with self.assertRaises(ValueError) as fail:
             hs3.from_file(s3_path, encoding=True, aws_profile=moto_s3fs)
         # Check output.
         actual = str(fail.value)

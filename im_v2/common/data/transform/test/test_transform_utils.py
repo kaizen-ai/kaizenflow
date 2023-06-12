@@ -21,7 +21,7 @@ class TestGetVendorEpochUnit(hunitest.TestCase):
         """
         Verify that ValueError is raised when invalid vendor is passed.
         """
-        with pytest.raises(AssertionError):
+        with self.assertRaises(AssertionError):
             vendor = "invalid_vendor"
             data_type = "bid_ask"
             imvcdttrut.get_vendor_epoch_unit(vendor, data_type)
@@ -30,7 +30,7 @@ class TestGetVendorEpochUnit(hunitest.TestCase):
         """
         Verify that ValueError is raised when invalid data type is passed.
         """
-        with pytest.raises(AssertionError):
+        with self.assertRaises(AssertionError):
             imvcdttrut.get_vendor_epoch_unit("ccxt", "invalid_data_type")
 
 
@@ -216,7 +216,7 @@ class TestReindexOnCustomColumns(hunitest.TestCase):
         test_data = self.get_test_data()
         expected_columns = ["mock1", "mock2", "mock3"]
         # Run.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             imvcdttrut.reindex_on_custom_columns(
                 test_data, expected_columns[:2], expected_columns
             )

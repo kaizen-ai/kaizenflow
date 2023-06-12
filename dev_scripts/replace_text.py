@@ -177,7 +177,7 @@ def _get_files_to_replace(
         res.extend(res_tmp)
         if found:
             file_names_to_process.append(f)
-    #
+    # 
     txt = "\n".join(res)
     _LOG.info("Found %s occurrences to replace\n%s", len(res), hprint.indent(txt))
     _LOG.info("Found %s files to replace", len(file_names_to_process))

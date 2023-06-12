@@ -99,7 +99,7 @@ class TestExtractVersionFromFileName(hunitest.TestCase):
         :param file_name: incorrect file_name to test
         """
         expected_fail = "Can't parse file"
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             _ = hstring.extract_version_from_file_name(file_name)
         self.assertIn(expected_fail, str(fail.value))
 
