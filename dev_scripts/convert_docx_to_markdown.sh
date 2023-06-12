@@ -1,7 +1,26 @@
 #!/bin/bash -xe
 
-# TODO(gp): @all This script is becoming too complicated and it should be
-# converted in Python. Consider this before adding more complexity.
+# TODO(gp): @all "Convert dev_scripts/convert_docx_to_markdown.sh script to Python" SorrTask322.
+
+# """
+# Convert a Docx file to Markdown format using the `pandoc` tool.
+#
+# Usage:
+# - Specify a path to Docx file as `IN_FILE`
+# - Specify a path to Markdown file without extension `.md` as `OUT_PREFIX`
+# - Run the script
+#
+# Example:
+# - In the script code below:
+#   ```
+#   IN_FILE="docs/Epics_and_Sprints.docx"
+#   OUT_PREFIX="docs/Sprint_planning_process"
+#   ```
+# - In bash:
+#   ```
+#   > convert_docx_to_md.sh
+#   ```
+# """
 
 set -eux
 
