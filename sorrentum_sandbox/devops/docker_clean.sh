@@ -1,7 +1,4 @@
 #!/bin/bash -e
-#
-# Delete all images.
-#
 
 GIT_ROOT=$(git rev-parse --show-toplevel)
 source $GIT_ROOT/docker_common/utils.sh
@@ -15,11 +12,4 @@ if [[ ! -e $SCRIPT_DIR ]]; then
 fi;
 source $DOCKER_NAME
 
-# Print Sorrentum images.
-docker image ls | grep $FULL_IMAGE_NAME
-
-# Remove images.
-docker image ls | grep $FULL_IMAGE_NAME | awk '{print $1}' | xargs -n 1 -t docker image rm -f
-
-# Print all images.
-docker image ls
+remove_container_image
