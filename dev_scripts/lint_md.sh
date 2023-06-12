@@ -53,6 +53,8 @@ WORKDIR="$(realpath .)"
 MOUNT="type=bind,source=${WORKDIR},target=${WORKDIR}"
 docker run --rm -it --workdir "${WORKDIR}" --mount "${MOUNT}" ${DOCKER_CONTAINER_NAME} ${CMD}
 
+# TODO: Find a way to remove empty lines in bullet list.
+
 # Clean up temporary files.
 rm $LINTER
 rm $TMP_FILENAME
