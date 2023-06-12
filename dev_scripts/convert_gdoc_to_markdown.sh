@@ -1,9 +1,12 @@
 #!/bin/bash -xe
 
+# TODO(gp): @all This script is becoming too complicated and it should be
+# converted in Python. Consider this before adding more complexity.
+
 set -eux
 
 # Build the Docker container.
-TMP_FILENAME="/tmp/tmp._convert_docx_to_markdown.Dockerfile"
+TMP_FILENAME="dev_scripts/tmp._convert_docx_to_markdown.Dockerfile"
 cat >$TMP_FILENAME <<EOF
 FROM ubuntu:latest
 
@@ -30,15 +33,15 @@ MOUNT="type=bind,source=${WORKDIR},target=${WORKDIR}"
 #git checkout -- $OUT_FILE
 
 # Convert from docx to Markdown.
-if [[ 0 == 0 ]]; then
-    rm -rf $OUT_FIGS
-    CMD="pandoc --extract-media $OUT_FIGS -f docx -t markdown -o $OUT_FILE $IN_FILE"
-    docker run --rm -it --workdir "${WORKDIR}" --mount "${MOUNT}" ${DOCKER_CONTAINER_NAME} ${CMD}
+rm -rf $OUT_FIGS
+CMD="pandoc --extract-media $OUT_FIGS -f docx -t markdown -o $OUT_FILE $IN_FILE"
+docker run --rm -it --workdir "${WORKDIR}" --mount "${MOUNT}" ${DOCKER_CONTAINER_NAME} ${CMD}
 
-    # # Move the media.
-    # mv $OUT_FIGS/{media/*,}
-    # rm -rf $OUT_FIGS/media
-fi;
+# Move the media if it exists.
+if [[ -d "$OUT_FIGS/media" ]]; then
+    mv $OUT_FIGS/media/* $OUT_FIGS/
+    rm -rf $OUT_FIGS/media
+fi
 
 # Clean up artifacts.
 
@@ -107,6 +110,8 @@ with open(filename, "w") as file:
 chmod +x $SCRIPT_NAME
 $SCRIPT_NAME $OUT_FILE
 
+# TODO(*): Add a `<!-- toc -->`  line in the doc before running md linter
+# in order to create TOC. See `dev_scripts/lint_md.sh` for details.
 dev_scripts/lint_md.sh $OUT_FILE
 
 gd $OUT_FILE
