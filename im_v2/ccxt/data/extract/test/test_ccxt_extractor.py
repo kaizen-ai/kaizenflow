@@ -688,7 +688,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         self.assertIn(expected, actual)
 
 
-class TestCcxtExtractor1(hunitest.TestCase):
+class TestCcxtExtractor2(hunitest.TestCase):
     @umock.patch.object(imvcdexex.hdateti, "get_current_time")
     def test_download_ohlcv_timestamp_representation1(
         self, mock_get_current_time: umock.MagicMock
