@@ -182,8 +182,8 @@ class TestCcxtExtractor1(hunitest.TestCase):
 
     def test_download_ohlcv_websocket_kline_is_not_present(self) -> None:
         """
-        Verify that warning message is properly logged when last minutes timestamp
-        not in the downloaded raw websocket data.
+        Verify that warning message is properly logged when last minutes
+        timestamp not in the downloaded raw websocket data.
         """
         # Initialize class and parameters.
         exchange_id = "binance"
@@ -233,47 +233,6 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Check output.
         expected_logs = "[]"
         self.assert_equal(actual_logs, expected_logs, fuzzy_match=True)
-
-    @umock.patch.object(imvcdexex.hdateti, "get_current_time")
-    def test_download_ohlcv_timestamp_representation1(
-        self, mock_get_current_time: umock.MagicMock
-    ) -> None:
-        """
-        Verify that OHLCV data timestamps are correctly represented.
-        """
-        current_time = "2022-10-21 00:00:00.000000+00:00"
-        mock_get_current_time.return_value = current_time
-        # Prepare expected output.
-        expected_output = r"""
-        timestamp    open    high    low    close    volume    end_download_timestamp
-        0    1666224060000    19120.48    19123.30    19114.05    19114.05    0.483268    2022-10-21 00:00:00.000000+00:00
-        1    1666224120000    19117.81    19128.66    19117.81    19128.66    0.813596    2022-10-21 00:00:00.000000+00:00
-        2    1666224180000    19128.27    19128.27    19115.57    19122.26    1.800264    2022-10-21 00:00:00.000000+00:00
-        3    1666224240000    19118.08    19122.31    19115.23    19115.23    0.482966    2022-10-21 00:00:00.000000+00:00
-        4    1666224300000    19120.87    19120.87    19113.28    19113.28    0.434573    2022-10-21 00:00:00.000000+00:00
-        """
-        # Initialize parameters.
-        # Using Binance.US API because Binance API is not accessible.
-        exchange_id = "binanceus"
-        currency_pair = "BTC/USDT"
-        currency_type = "spot"
-        start_timestamp = pd.Timestamp("2022-10-20T00:01:00Z")
-        end_timestamp = pd.Timestamp("2022-10-20T00:05:00Z")
-        # Initialize class.
-        exchange_class = imvcdexex.CcxtExtractor(exchange_id, currency_type)
-        exchange_class.currency_pairs = [currency_pair]
-        # Run.
-        ccxt_data = exchange_class._download_ohlcv(
-            exchange_id=exchange_id,
-            currency_pair=currency_pair,
-            start_timestamp=start_timestamp,
-            end_timestamp=end_timestamp,
-            bar_per_iteration=500,
-        )
-        _LOG.info("\n==> Current CCXT version=%s <==", ccxt.__version__)
-        # Check output.
-        actual_output = hpandas.df_to_str(ccxt_data)
-        self.assert_equal(actual_output, expected_output, fuzzy_match=True)
 
     @umock.patch.object(imvcdexex.hdateti, "get_current_time")
     def test_fetch_ohlcv1(self, mock_get_current_time: umock.MagicMock) -> None:
@@ -727,3 +686,46 @@ class TestCcxtExtractor1(hunitest.TestCase):
         actual = str(fail.value)
         expected = "Currency pair is not present in exchange"
         self.assertIn(expected, actual)
+
+
+class TestCcxtExtractor2(hunitest.TestCase):
+    @umock.patch.object(imvcdexex.hdateti, "get_current_time")
+    def test_download_ohlcv_timestamp_representation1(
+        self, mock_get_current_time: umock.MagicMock
+    ) -> None:
+        """
+        Verify that OHLCV data timestamps are correctly represented.
+        """
+        current_time = "2022-10-21 00:00:00.000000+00:00"
+        mock_get_current_time.return_value = current_time
+        # Prepare expected output.
+        expected_output = r"""
+        timestamp    open    high    low    close    volume    end_download_timestamp
+        0    1666224060000    19120.48    19123.30    19114.05    19114.05    0.483268    2022-10-21 00:00:00.000000+00:00
+        1    1666224120000    19117.81    19128.66    19117.81    19128.66    0.813596    2022-10-21 00:00:00.000000+00:00
+        2    1666224180000    19128.27    19128.27    19115.57    19122.26    1.800264    2022-10-21 00:00:00.000000+00:00
+        3    1666224240000    19118.08    19122.31    19115.23    19115.23    0.482966    2022-10-21 00:00:00.000000+00:00
+        4    1666224300000    19120.87    19120.87    19113.28    19113.28    0.434573    2022-10-21 00:00:00.000000+00:00
+        """
+        # Initialize parameters.
+        # Using Binance.US API because Binance API is not accessible.
+        exchange_id = "binanceus"
+        currency_pair = "BTC/USDT"
+        currency_type = "spot"
+        start_timestamp = pd.Timestamp("2022-10-20T00:01:00Z")
+        end_timestamp = pd.Timestamp("2022-10-20T00:05:00Z")
+        # Initialize class.
+        exchange_class = imvcdexex.CcxtExtractor(exchange_id, currency_type)
+        exchange_class.currency_pairs = [currency_pair]
+        # Download real ohlcv data.
+        ccxt_data = exchange_class._download_ohlcv(
+            exchange_id=exchange_id,
+            currency_pair=currency_pair,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+            bar_per_iteration=500,
+        )
+        _LOG.info("\n==> Current CCXT version=%s <==", ccxt.__version__)
+        # Check output.
+        actual_output = hpandas.df_to_str(ccxt_data)
+        self.assert_equal(actual_output, expected_output, fuzzy_match=True)
