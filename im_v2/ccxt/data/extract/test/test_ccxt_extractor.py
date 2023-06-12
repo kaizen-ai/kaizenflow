@@ -182,8 +182,8 @@ class TestCcxtExtractor1(hunitest.TestCase):
 
     def test_download_ohlcv_websocket_kline_is_not_present(self) -> None:
         """
-        Verify that warning message is properly logged when last minutes timestamp
-        not in the downloaded raw websocket data.
+        Verify that warning message is properly logged when last minutes
+        timestamp not in the downloaded raw websocket data.
         """
         # Initialize class and parameters.
         exchange_id = "binance"
