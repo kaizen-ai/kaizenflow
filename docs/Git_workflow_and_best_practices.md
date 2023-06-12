@@ -92,20 +92,15 @@
 
 - Name a branch after its corresponding issue
   - The canonical name for a new feature branch is obtained by running
-    `ghi_show.py`:
+    `gh_issue_title` invoke:
     ```
-    > ghi_show.py 274 --only_github
+    i gh_issue_title 319
 
-    > ghi_show.py 274 -r .../... --only_github
-    # Github:
-    #274: PRICE: Download equity data
-    https://github.com/alphamatic/amp/issues/274
-    # Tag:
-    LemTask274_PRICE_Download_equity_data
+    SorrTask319_Refine_convert_gdoc_to_markdown_sh: https://github.com/sorrentum/sorrentum/issues/319
     ```
-  - The name is `LemTask274_PRICE_Download_equity_data`
+  - The name is `SorrTask319_Refine_convert_gdoc_to_markdown_sh`
   - To use multiple branches for a given task, append a numeral to the name,
-    e.g., `LemTask274_PRICE_Download_equity_data_02`
+    e.g., `SorrTask319_Refine_convert_gdoc_to_markdown_sh_v02`
 
 - Create and checkout the branch
   ```
