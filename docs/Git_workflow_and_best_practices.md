@@ -95,7 +95,9 @@
     `gh_issue_title` invoke:
     ```
     i gh_issue_title 319
-
+    ```
+    in logs:
+    ```
     SorrTask319_Refine_convert_gdoc_to_markdown_sh: https://github.com/sorrentum/sorrentum/issues/319
     ```
   - The name is `SorrTask319_Refine_convert_gdoc_to_markdown_sh`
