@@ -14,7 +14,7 @@ echo "##########################################################################
 # need to activate the environment.
 source /${ENV_NAME}/bin/activate
 
-echo "# Install jupyter extensions"
+echo "# Install Jupyter extensions"
 
 # Create jupyter data dir.
 DIR_NAME=$(jupyter --data-dir)
@@ -53,6 +53,7 @@ DIR=$(jupyter --data-dir)/nbextensions
 if [[ ! -e $DIR ]]; then
     mkdir $DIR
 fi
+
 cd $DIR
 if [[ -e vim_binding ]]; then
     rm -rf vim_binding
