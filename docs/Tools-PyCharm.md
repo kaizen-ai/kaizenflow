@@ -47,9 +47,9 @@ There are multiple ways to develop on a remote server using PyCharm
 
 ## Current situation
 
-Approach 1) seems to require lots of memory and CPU and it's not really fast.
+Approach 1) seems to require lots of memory and CPU, and it's not really fast.
 
-Approach 2) works but it's a pain to set-up and slow.
+Approach 2) works, but it's a pain to set up and slow.
 
 We want to try with 3)
 

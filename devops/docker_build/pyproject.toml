@@ -13,11 +13,9 @@ bs4 = "*"
 # This is the version in which CCXT pro got 
 # merged into the free version #CmTask2951.
 ccxt = ">= 1.95.2"
+# poetry can't install cvxopt so we install it as pip package later in the flow.
 #cvxopt = ">= 1.3.0"
 # poetry can't install cvxpy so we install it as pip package later in the flow.
-# ```
-# ERROR: cvxpy-1.2.2-cp38-cp38-manylinux_2_24_x86_64.whl is not a supported wheel on this platform.
-# ```
 #cvxpy = ">= 1.2.2"
 # This constraint is needed because 3.4.8 seems to fail.
 cryptography = "<= 3.4.7"

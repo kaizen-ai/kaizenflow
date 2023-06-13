@@ -111,6 +111,8 @@ def docker_build_local_image(  # type: ignore
     # git_tag_prefix = get_default_param("BASE_IMAGE")
     # container_version = get_git_tag(version)
     #
+    # TODO: Use the same approach as sorrentum_sandbox/docker_common/utils.sh
+    # We want to enable using multiarch and build for both a single arch or more.
     PLATFORM_BUILDER = "sorrentumBuilder"
     cmd = rf"""
     docker buildx create --name {PLATFORM_BUILDER} --driver docker-container --bootstrap && docker buildx use {PLATFORM_BUILDER}

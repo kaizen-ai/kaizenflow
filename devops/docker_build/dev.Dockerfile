@@ -63,8 +63,9 @@ COPY devops/docker_build/install_jupyter_extensions.sh .
 RUN /bin/sh -c "./install_jupyter_extensions.sh"
 
 # - Install Docker-in-docker.
-COPY devops/docker_build/install_dind.sh .
-RUN /bin/bash -c "./install_dind.sh"
+# TODO(gp): @samarth enable this and debug.
+#COPY devops/docker_build/install_dind.sh .
+#RUN /bin/bash -c "./install_dind.sh"
 
 # - Create users and set permissions.
 COPY devops/docker_build/create_users.sh .

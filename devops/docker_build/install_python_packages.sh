@@ -77,20 +77,22 @@ if [[ ! -e /usr/bin/pip ]]; then
     ln -s /usr/bin/pip3 /usr/bin/pip
 fi;
 
+# cvxopt has issues when built on ARM, see
+# `SorrIssue287_Build_Docker_Image_For_Multiple_Architectures`, so we need to install
+# it from source manually for both architectures.
+#if [[ $(uname -m) == "aarch64" ]]; then
+apt-get install -y libblas-dev liblapack-dev cmake
+apt-get install -y wget
+wget http://faculty.cse.tamu.edu/davis/SuiteSparse/SuiteSparse-4.5.3.tar.gz
+tar -xf SuiteSparse-4.5.3.tar.gz 
+export CVXOPT_SUITESPARSE_SRC_DIR=$(pwd)/SuiteSparse
+pip install cvxopt
+#fi;
+
 # We install cvxpy here after poetry since it doesn't work with poetry
 # ```
 # ERROR: cvxpy-1.2.2-cp38-cp38-manylinux_2_24_x86_64.whl is not a supported wheel on this platform.
 # ```
-if [[ $(uname -m) == "aarch64" ]]; then
-    # cvxopt has issues when built on Arm. See Issue287_Build_Docker_Image_For_Multiple_Architectures.
-    apt-get install -y libblas-dev liblapack-dev cmake
-    apt-get install -y wget
-    wget http://faculty.cse.tamu.edu/davis/SuiteSparse/SuiteSparse-4.5.3.tar.gz
-    tar -xf SuiteSparse-4.5.3.tar.gz 
-    export CVXOPT_SUITESPARSE_SRC_DIR=$(pwd)/SuiteSparse
-    pip install cvxopt
-fi;
-
 pip3 install cvxpy
 
 # Update the bashrc.
