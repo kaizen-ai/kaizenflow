@@ -13,12 +13,25 @@ echo "##> $FILE_NAME"
 echo "#############################################################################"
 
 # Install Docker.
-apt install -y apt-transport-https ca-certificates curl software-properties-common
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
-apt update
-apt-cache policy docker-ce
-apt install -y docker-ce
+sudo apt-get -y update
+sudo apt-get -y install ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+echo \
+  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get -y update
+sudo apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+
+# apt install -y apt-transport-https ca-certificates curl software-properties-common
+# curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+# add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+# apt update
+# apt-cache policy docker-ce
+# apt install -y docker-ce
 
 # Install the latest version of `docker-compose`, see
 # `https://docs.docker.com/compose/install/`.

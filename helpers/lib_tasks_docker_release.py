@@ -62,7 +62,7 @@ def _prepare_docker_ignore(ctx: Any, docker_ignore: str) -> None:
 
 # Use Docker buildkit or not.
 # DOCKER_BUILDKIT = 1
-DOCKER_BUILDKIT = 1
+DOCKER_BUILDKIT = 0
 
 
 # For base_image, we use "" as default instead None since pyinvoke can only infer
@@ -132,8 +132,6 @@ def docker_build_local_image(  # type: ignore
         --platform linux/amd64,linux/arm64 \
         --build-arg AM_CONTAINER_VERSION={dev_version} \
         --tag {image_local} \
-        -t samarth9008/sample7:latest \
-        --push \
         --file {dockerfile} \
         .
     """
