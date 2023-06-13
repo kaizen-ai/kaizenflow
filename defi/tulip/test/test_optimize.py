@@ -3,8 +3,8 @@ from typing import Any, Dict, List
 
 import numpy as np
 
-import defi.dao_cross.optimize as ddacropt
-import defi.dao_cross.order as ddacrord
+import defi.tulip.implementation.optimize as dtuimopt
+import defi.tulip.implementation.order as dtuimord
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
@@ -18,7 +18,7 @@ def _generate_test_orders(
     base_tokens: List[str],
     limit_prices: List[float],
     quote_tokens: List[str],
-) -> List[ddacrord.Order]:
+) -> List[dtuimord.Order]:
     """
     Create N `Order` instances using the inputs.
 
@@ -29,10 +29,10 @@ def _generate_test_orders(
     timestamp = np.nan
     deposit_address = 1
     wallet_address = 1
-    orders: List[ddacrord.Order] = []
+    orders: List[dtuimord.Order] = []
     # TODO(Grisha): check that all lists are of the same length.
     for i in range(len(base_tokens)):
-        order_i = ddacrord.Order(
+        order_i = dtuimord.Order(
             timestamp,
             actions[i],
             quantities[i],
@@ -48,7 +48,7 @@ def _generate_test_orders(
 
 def _check(
     self_: Any,
-    orders: List[ddacrord.Order],
+    orders: List[dtuimord.Order],
     prices: Dict[str, float],
     expected_volume: float,
     expected_quantities: str,
@@ -63,7 +63,7 @@ def _check(
     :param expected_quantities: executed quantity for each order, e.g.,
         "(4) 2.0 6.0 7.0 1.0"
     """
-    result = ddacropt.run_solver(orders, prices)
+    result = dtuimopt.run_solver(orders, prices)
     # Check that a solution is found.
     self_.assertEqual(result["problem_objective_value"], expected_volume)
     # Freeze the executed quantity values.
@@ -210,7 +210,7 @@ class TestRunSolver4(hunitest.TestCase):
     @staticmethod
     def get_test_btc_orders(
         limit_prices: List[float],
-    ) -> List[ddacrord.Order]:
+    ) -> List[dtuimord.Order]:
         """
         Get four orders for the unit tests (two buy and two sell orders).
 
@@ -228,7 +228,7 @@ class TestRunSolver4(hunitest.TestCase):
         wallet_address = 1
         # Generate buy orders.
         quantity = 4
-        order_0 = ddacrord.Order(
+        order_0 = dtuimord.Order(
             timestamp,
             buy_action,
             quantity,
@@ -240,7 +240,7 @@ class TestRunSolver4(hunitest.TestCase):
         )
         #
         quantity = 5
-        order_1 = ddacrord.Order(
+        order_1 = dtuimord.Order(
             timestamp,
             buy_action,
             quantity,
@@ -252,7 +252,7 @@ class TestRunSolver4(hunitest.TestCase):
         )
         # Genereate sell orders.
         quantity = 6
-        order_2 = ddacrord.Order(
+        order_2 = dtuimord.Order(
             timestamp,
             sell_action,
             quantity,
@@ -264,7 +264,7 @@ class TestRunSolver4(hunitest.TestCase):
         )
         #
         quantity = 2
-        order_3 = ddacrord.Order(
+        order_3 = dtuimord.Order(
             timestamp,
             sell_action,
             quantity,
@@ -280,7 +280,7 @@ class TestRunSolver4(hunitest.TestCase):
     @staticmethod
     def get_test_eth_orders(
         limit_prices: List[float],
-    ) -> List[ddacrord.Order]:
+    ) -> List[dtuimord.Order]:
         """
         Get toy ETH orders for the unit tests.
 
@@ -298,7 +298,7 @@ class TestRunSolver4(hunitest.TestCase):
         wallet_address = 1
         # Genereate buy orders.
         quantity = 1
-        order_0 = ddacrord.Order(
+        order_0 = dtuimord.Order(
             timestamp,
             buy_action,
             quantity,
@@ -310,7 +310,7 @@ class TestRunSolver4(hunitest.TestCase):
         )
         #
         quantity = 9
-        order_1 = ddacrord.Order(
+        order_1 = dtuimord.Order(
             timestamp,
             buy_action,
             quantity,
@@ -322,7 +322,7 @@ class TestRunSolver4(hunitest.TestCase):
         )
         # Genereate sell orders.
         quantity = 8
-        order_2 = ddacrord.Order(
+        order_2 = dtuimord.Order(
             timestamp,
             sell_action,
             quantity,
@@ -334,7 +334,7 @@ class TestRunSolver4(hunitest.TestCase):
         )
         #
         quantity = 6
-        order_3 = ddacrord.Order(
+        order_3 = dtuimord.Order(
             timestamp,
             sell_action,
             quantity,
