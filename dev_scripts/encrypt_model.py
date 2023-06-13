@@ -3,7 +3,16 @@
 Encrypt model using Pyarmor.
 
 Usage:
-> encrypt_model.py --source_dir model_source_dir --target_dir encrypted_model_output_dir
+> encrypt_model.py --model_dir source_model_dir --target_dir encrypted_model_output_dir
+
+# Encrypt a model and save into the same directory.
+> encrypt_model.py --model_dir dataflow_amp/pipelines/mock1
+
+# Ecncrypt a model and save into a specific directory.
+> encrypt_model.py --model_dir dataflow_amp/pipelines/mock1 --target_dir ./encrypted_model
+
+# Test original model and encrypted model.
+> encrypt_model.py --model_dir dataflow_amp/piplines/mock1 --test
 
 Import as:
 
@@ -23,11 +32,11 @@ import helpers.hsystem as hsystem
 _LOG = logging.getLogger(__name__)
 
 
-def _encrypt_model(source_dir: str, target_dir: str) -> None:
+def _encrypt_model(model_dir: str, target_dir: str) -> None:
     """
     Encrypt model using Pyarmor.
 
-    :param source_dir: model directory
+    :param model_dir: model directory
     :param target_dir: encrypted model output directory
     """
     # Create temporary Dockerfile.
@@ -45,10 +54,11 @@ def _encrypt_model(source_dir: str, target_dir: str) -> None:
     work_dir = os.getcwd()
     docker_target_dir = "/app"
     mount = f"type=bind,source={work_dir},target={docker_target_dir}"
-    encryption_flow = f"pyarmor-7 obfuscate --restrict=0 --recursive {source_dir} --output {target_dir}"
+    encryption_flow = f"pyarmor-7 obfuscate --restrict=0 --recursive {model_dir} --output {target_dir}"
     docker_cmd = f"docker run --rm -it --workdir {docker_target_dir} --mount {mount} encryption_flow {encryption_flow}"
     _LOG.info("Start running Docker container.")
     hsystem.system(docker_cmd)
+    hdbg.dassert_ne(len(os.listdir(target_dir)), 0, "Failed to encrypt model.")
     _LOG.info("Encrypted model successfully stored in %s.", target_dir)
     _LOG.info("Remove temporary Dockerfile.")
 
@@ -60,7 +70,6 @@ def _tweak_init(target_dir: str) -> None:
 
     :param target_dir: encrypted model output directory
     """
-    _LOG.info("Start tweaking __init__.py.")
     init_file = os.path.join(target_dir, "__init__.py")
     if os.path.exists(init_file):
         data = hio.from_file(init_file)
@@ -75,13 +84,16 @@ def _test_encrypted_model() -> None:
     Check that encrypted model works correctly.
     """
     temp_file_path = "./tmp.encrypt_model.test_encrypted_model.sh"
+    # Write testing script into temporary file.
     hio.to_file(
         temp_file_path,
         'python -c "import dataflow_amp.pipelines.mock1_encrypted.mock1_pipeline as f; a = f.Mock1_DagBuilder(); print(a)"',
     )
+    # Run test inside Docker container
     cmd = f"invoke docker_cmd -c 'bash {temp_file_path}'"
+    # Output: "nid_prefix="
     (_, output) = hsystem.system_to_string(cmd)
-    _LOG.info(output)
+    _LOG.debug(output)
     os.remove(temp_file_path)
 
 
@@ -90,13 +102,16 @@ def _test_model() -> None:
     Check that input model works correctly.
     """
     temp_file_path = "./tmp.encrypt_model.test_model.sh"
+    # Write testing script into temporary file.
     hio.to_file(
         temp_file_path,
         'python -c "import dataflow_amp.pipelines.mock1.mock1_pipeline as f; a = f.Mock1_DagBuilder(); print(a)"',
     )
+    # Run test inside Docker container
     cmd = f"invoke docker_cmd -c 'bash {temp_file_path}'"
+    # Output: "nid_prefix="
     (_, output) = hsystem.system_to_string(cmd)
-    _LOG.info(output)
+    _LOG.debug(output)
     os.remove(temp_file_path)
 
 
@@ -108,7 +123,7 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "--source_dir",
+        "--model_dir",
         required=True,
         type=str,
         help="Source model directory"
@@ -120,9 +135,12 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="Encrypted model output directory",
     )
-    parser.add_argument("--test", required=False,
-                        action="store_true",
-                        help="Run testing")
+    parser.add_argument(
+        "--test",
+        required=False,
+        action="store_true",
+        help="Run testing"
+    )
     hparser.add_verbosity_arg(parser)
     return parser
 
@@ -131,20 +149,19 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
-    source_dir = args.source_dir
-    hdbg.dassert_dir_exists(source_dir)
+    model_dir = args.model_dir
+    hdbg.dassert_dir_exists(model_dir)
     target_dir = args.target_dir
-    model_path = pathlib.Path(source_dir)
-    model_name = model_path.stem
+    source_dir = pathlib.Path(model_dir)
+    model_name = source_dir.stem
     if target_dir is not None:
-        # Make sure user specified `target_dir` exists.
         hdbg.dassert_dir_exists(target_dir)
     else:
-        # If no `target_dir` specified, save encrypted model in the same directory as the source model at.
+        # If no target dir is specified, save encrypted model in the source model directory.
         encrypted_model_name = "_".join([model_name, "encrypted"])
-        target_dir = os.path.join(model_path.parent, encrypted_model_name)
+        target_dir = os.path.join(source_dir.parent, encrypted_model_name)
         hio.create_dir(target_dir, incremental=True)
-    _encrypt_model(source_dir, target_dir)
+    _encrypt_model(model_dir, target_dir)
     if os.path.exists(os.path.join(target_dir, "__init__.py")):
         _tweak_init(target_dir)
     if args.test:
