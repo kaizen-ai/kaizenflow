@@ -6,7 +6,7 @@ import defi.tulip.implementation.order as dtuimord
 
 import collections
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -161,6 +161,20 @@ class Order:
         dict_["quote_token"] = self.quote_token
         dict_["deposit_address"] = self.deposit_address
         return dict_
+
+    def execute_order(self, price: float) -> List[Tuple[float, str]]:
+        """
+        Execute order at specified price.
+
+        :param price: Price that user pays in quote_token in exchange to get base_token
+        :return: A list that contains deductions in quote_token and acquired base_token
+        """
+        if price < self.limit_price:
+            return [
+                (-self.quantity * price, self.quote_token),
+                (self.quantity, self.base_token),
+            ]
+        return None
 
     def _takes_precedence(self, other: "Order") -> bool:
         """
