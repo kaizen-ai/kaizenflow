@@ -150,6 +150,9 @@ class Order:
             return -1
 
     def to_dict(self) -> Dict[str, Any]:
+        """ 
+        Return order as a dict.
+        """
         dict_: Dict[str, Any] = collections.OrderedDict()
         dict_["timestamp"] = self.timestamp
         dict_["action"] = self.action

@@ -1,22 +1,18 @@
 import pandas as pd
-
+import helpers.hdbg as hdbg
 import defi.tulip.implementation.order as dtuimord
+# import helpers.hpandas as hpandas
 
 
-class TestOrder:
+class TestOrder1:
     """
     Check that the Order Class methods are working correctly.
     """
-
-    def test_to_dataframe(self) -> None:
-        """
-        Function to test the to_dataframe() method of the Order class.
-        """
+    def test_to_dataframe1(self) -> None:
         timestamp = pd.Timestamp("2023-01-01 00:00:01+00:00")
         base_token = "BTC"
         quote_token = "ETH"
-
-        # Creating a sample order using 'ddacrord.Order() method'
+        # Create an order.
         order_1 = dtuimord.Order(
             timestamp=timestamp,
             action="buy",
@@ -27,8 +23,7 @@ class TestOrder:
             deposit_address=1,
             wallet_address=1,
         )
-
-        # Converting the order to a dataframe
+        # Convert the order to a dataframe.
         order_df = order_1.to_dataframe()
-
-        assert isinstance(order_df, pd.core.frame.DataFrame)
+        print(order_df)
+        hdbg.dassert_isinstance(order_df, pd.core.frame.DataFrame)
