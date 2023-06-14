@@ -59,7 +59,7 @@ def _encrypt_model(model_dir: str, target_dir: str) -> str:
     _LOG.info("Start running Docker container.")
     hsystem.system(docker_cmd)
     n_files = len(os.listdir(encrypted_model_dir))
-    hdbg.dassert_lt(0, n_files, "No files in target_dir=`%s`", encrypted_model_dir)
+    hdbg.dassert_lt(0, n_files, "No files in encrypted_model_dir=`%s`", encrypted_model_dir)
     _LOG.info("Encrypted model successfully stored in encrypted_model_dir='%s'", encrypted_model_dir)
     _LOG.info("Remove temporary Dockerfile.")
     return encrypted_model_dir
