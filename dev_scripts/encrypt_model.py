@@ -3,7 +3,7 @@
 Encrypt model using Pyarmor.
 
 Usage:
-> encrypt_model.py --model_dir dataflow_amp/pipelines/mock1 --target_dir dataflow/pipelines/ --test
+> dev_scripts/encrypt_model.py --model_dir dataflow_amp/pipelines/mock1 --test
 
 Import as:
 
@@ -14,6 +14,7 @@ import logging
 import os
 import pathlib
 import tempfile
+import stat
 
 import helpers.hdbg as hdbg
 import helpers.hio as hio
@@ -74,6 +75,7 @@ def _tweak_init(target_dir: str) -> None:
     """
     init_file = os.path.join(target_dir, "__init__.py")
     if os.path.exists(init_file):
+        os.chmod(init_file, stat.S_IRWXU | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
         data = hio.from_file(init_file)
         lines = "\n".join(
             ["from .pytransform import pyarmor_runtime; pyarmor_runtime()", data]
