@@ -1,0 +1,6 @@
+18:04:14 - [36mINFO [0m hunit_test.py setUp:1042                               18:04:14 - [36mINFO [0m hunit_test.py setUp:1042                               
+################################################################################
+TestCcxtExtractor2.test_download_ohlcv_timestamp_representation1
+################################################################################
+18:04:15 - [36mINFO [0m test_ccxt_extractor.py test_download_ohlcv_timestamp_representation1:728 18:04:15 - [36mINFO [0m test_ccxt_extractor.py test_download_ohlcv_timestamp_representation1:728 
+==> Current CCXT version=2.1.80 <==

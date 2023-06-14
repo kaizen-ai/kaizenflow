@@ -1,0 +1,213 @@
+The AM_AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
+The AM_AWS_DEFAULT_REGION variable is not set. Defaulting to a blank string.
+The AM_AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
+The AM_FORCE_TEST_FAIL variable is not set. Defaulting to a blank string.
+The AM_TELEGRAM_TOKEN variable is not set. Defaulting to a blank string.
+The CK_AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
+The CK_AWS_DEFAULT_REGION variable is not set. Defaulting to a blank string.
+The CK_AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
+The CK_TELEGRAM_TOKEN variable is not set. Defaulting to a blank string.
+Creating compose_linter_run ... 
+Creating compose_linter_run ... done
+##> devops/docker_run/entrypoint.sh
+UID=501
+GID=20
+# Activate environment
+##> /app/devops/docker_run/setenv.sh
+# Set PATH
+PATH=/app:/app/linters:/app/dev_scripts_devto/notebooks:/app/documentation_devto/scripts:/app/amp/documentation/scripts:/app/amp/dev_scripts/testing:/app/amp/dev_scripts/notebooks:/app/amp/dev_scripts/install:/app/amp/dev_scripts/infra:/app/amp/dev_scripts/git:/app/amp/dev_scripts/aws:/app/amp/dev_scripts:/app/amp:.:/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+# Set PYTHONPATH
+PYTHONPATH=/app:/app/amp:
+# Configure env
+git --version: git version 2.25.1
+/src
+[33mWARNING[0m: AWS credential check failed: can't find /home/.aws/credentials file.
+[33mWARNING[0m: AWS credential check failed: can't find /home/.aws/config file.
+# Check AWS authentication setup
+
+The config profile (am) could not be found
+      Name                    Value             Type    Location
+      ----                    -----             ----    --------
+   profile                       am           manual    --profile
+AM_CONTAINER_VERSION='1.2.0'
+which python: /venv/bin/python
+python -V: Python 3.8.10
+pandas: 1.4.3
+helpers: <module 'helpers' from '/src/helpers/__init__.py'>
+PATH=/app:/app/linters:/app/dev_scripts_devto/notebooks:/app/documentation_devto/scripts:/app/amp/documentation/scripts:/app/amp/dev_scripts/testing:/app/amp/dev_scripts/notebooks:/app/amp/dev_scripts/install:/app/amp/dev_scripts/infra:/app/amp/dev_scripts/git:/app/amp/dev_scripts/aws:/app/amp/dev_scripts:/app/amp:.:/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PYTHONPATH=/app:/app/amp:
+entrypoint.sh: 'pre-commit run -c /app/.pre-commit-config.yaml --files im_v2/ccxt/data/extract/test/test_ccxt_extractor.py'
+[0m[36mINFO[0m: > cmd='/venv/bin/invoke print_env'
+report_memory_usage=False report_cpu_usage=False
+18:18:37 - [41mWARN [0m henv.py get_repo_config_file:485                       Using value '/app/repo_config.py' for AM_REPO_CONFIG_PATH from env var
+[31m-----------------------------------------------------------------------------
+This code is not in sync with the container:
+code_version='1.4.3' != container_version='1.2.0'
+-----------------------------------------------------------------------------
+You need to:
+- merge origin/master into your branch with `invoke git_merge_master`
+- pull the latest container with `invoke docker_pull`[0m
+# Repo config:
+  enable_privileged_mode='False'
+  get_docker_base_image_name='dev_tools'
+  get_docker_shared_group=''
+  get_docker_user=''
+  get_host_name='github.com'
+  get_invalid_words='[]'
+  get_name='//dev_tools'
+  get_repo_map='{'cm': 'cryptokaizen/cmamp'}'
+  get_shared_data_dirs='None'
+  has_dind_support='False'
+  has_docker_sudo='True'
+  is_AM_S3_available='True'
+  is_CK_S3_available='False'
+  is_dev4='False'
+  is_dev_ck='False'
+  is_inside_ci='False'
+  is_inside_docker='True'
+  is_mac='True'
+  run_docker_as_root='False'
+  skip_submodules_test='True'
+  use_docker_network_mode_host='True'
+  use_docker_sibling_containers='False'
+# System signature:
+  # Git
+    branch_name='SorrIssue244_CCXT_Timestamp_Representation_Unit_Test'
+    hash='b83161cae'
+    # Last commits:
+      * b83161cae Yiyun    Fix typo                                                          (15 minutes ago) Mon Jun 12 22:03:48 2023  (HEAD -> SorrIssue244_CCXT_Timestamp_Representation_Unit_Test, origin/SorrIssue244_Ccxt_Version_Unit_Test)
+      * 7e023b07e Yiyun    Update                                                            (26 minutes ago) Mon Jun 12 21:52:23 2023           
+      * a950eff0e Yiyun    Update gitignore                                                  (30 minutes ago) Mon Jun 12 21:49:01 2023           
+  # Machine info
+    system=Linux
+    node name=1f60e9a0937f
+    release=5.15.49-linuxkit
+    version=#1 SMP PREEMPT Tue Sep 13 07:51:32 UTC 2022
+    machine=x86_64
+    processor=x86_64
+    cpu count=4
+    cpu freq=None
+    memory=svmem(total=8233017344, available=6196125696, percent=24.7, used=1487605760, free=3261362176, active=874635264, inactive=3552886784, buffers=92311552, cached=3391737856, shared=341716992, slab=423886848)
+    disk usage=sdiskusage(total=62671097856, used=16070332416, free=43384049664, percent=27.0)
+  # Packages
+    python: 3.8.10
+    cvxopt: ?
+    cvxpy: ?
+    gluonnlp: ?
+    gluonts: ?
+    joblib: 0.16.0
+    mxnet: ?
+    numpy: 1.23.0
+    pandas: 1.4.3
+    pyarrow: ?
+    scipy: 1.6.1
+    seaborn: ?
+    sklearn: ?
+    statsmodels: 0.13.2
+# Env vars:
+  AM_AWS_ACCESS_KEY_ID=undef
+  AM_AWS_DEFAULT_REGION=undef
+  AM_AWS_PROFILE='am'
+  AM_AWS_S3_BUCKET='alphamatic-data'
+  AM_AWS_SECRET_ACCESS_KEY=undef
+  AM_ECR_BASE_PATH='665840871993.dkr.ecr.us-east-1.amazonaws.com'
+  AM_ENABLE_DIND='0'
+  AM_FORCE_TEST_FAIL=''
+  AM_HOST_NAME='Yiyuns-MBP'
+  AM_HOST_OS_NAME='Darwin'
+  AM_HOST_USER_NAME='yiyunlei'
+  AM_HOST_VERSION='22.5.0'
+  AM_REPO_CONFIG_CHECK='True'
+  AM_REPO_CONFIG_PATH='/app/repo_config.py'
+  AM_TELEGRAM_TOKEN=empty
+  CI=''
+  CK_AWS_ACCESS_KEY_ID=empty
+  CK_AWS_DEFAULT_REGION=''
+  CK_AWS_S3_BUCKET='cryptokaizen-data'
+  CK_AWS_SECRET_ACCESS_KEY=empty
+  CK_ECR_BASE_PATH='sorrentum'
+  GH_ACTION_ACCESS_TOKEN=empty
+
+Check for merge conflicts................................................Passed
+Trim Trailing Whitespace.................................................Passed
+Fix End of Files.........................................................Failed
+- hook id: end-of-file-fixer
+- exit code: 1
+- files were modified by this hook
+
+Fixing im_v2/ccxt/data/extract/test/test_ccxt_extractor.py
+
+Check for added large files..............................................Passed
+CRLF end-lines remover...................................................Passed
+Tabs remover.............................................................Passed
+autoflake................................................................Passed
+add_python_init_files....................................................Passed
+amp_lint_md..........................................(no files to check)Skipped
+amp_doc_formatter........................................................Failed
+- hook id: amp_doc_formatter
+- files were modified by this hook
+
+[0m[36mINFO[0m: > cmd='/app/linters/amp_doc_formatter.py im_v2/ccxt/data/extract/test/test_ccxt_extractor.py'
+report_memory_usage=False report_cpu_usage=False
+
+amp_isort................................................................Failed
+- hook id: amp_isort
+- files were modified by this hook
+
+[0m[36mINFO[0m: > cmd='/app/linters/amp_isort.py im_v2/ccxt/data/extract/test/test_ccxt_extractor.py'
+report_memory_usage=False report_cpu_usage=False
+
+amp_class_method_order...................................................Failed
+- hook id: amp_class_method_order
+- files were modified by this hook
+
+[0m[36mINFO[0m: > cmd='/app/linters/amp_class_method_order.py im_v2/ccxt/data/extract/test/test_ccxt_extractor.py'
+report_memory_usage=False report_cpu_usage=False
+
+amp_normalize_import.....................................................Passed
+amp_format_separating_line...............................................Passed
+amp_black................................................................Failed
+- hook id: amp_black
+- files were modified by this hook
+
+[0m[36mINFO[0m: > cmd='/app/linters/amp_black.py im_v2/ccxt/data/extract/test/test_ccxt_extractor.py'
+report_memory_usage=False report_cpu_usage=False
+
+amp_processjupytext......................................................Passed
+amp_check_filename.......................................................Passed
+amp_warn_incorrectly_formatted_todo......................................Passed
+amp_flake8...............................................................Failed
+- hook id: amp_flake8
+- files were modified by this hook
+
+[0m[36mINFO[0m: > cmd='/app/linters/amp_flake8.py im_v2/ccxt/data/extract/test/test_ccxt_extractor.py'
+report_memory_usage=False report_cpu_usage=False
+
+amp_pylint...............................................................Failed
+- hook id: amp_pylint
+- exit code: 3
+- files were modified by this hook
+
+[0m[36mINFO[0m: > cmd='/app/linters/amp_pylint.py im_v2/ccxt/data/extract/test/test_ccxt_extractor.py'
+report_memory_usage=False report_cpu_usage=False
+************* Module im_v2.ccxt.data.extract.test.test_ccxt_extractor
+im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:436: [C0301(line-too-long), ] Line too long (104/100)
+im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:404: [W0105(pointless-string-statement), TestCcxtExtractor1.test_download_trades] String statement has no effect
+
+amp_mypy.................................................................Failed
+- hook id: amp_mypy
+- exit code: 9
+
+[0m[36mINFO[0m: > cmd='/app/linters/amp_mypy.py im_v2/ccxt/data/extract/test/test_ccxt_extractor.py'
+report_memory_usage=False report_cpu_usage=False
+im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:4: error: Cannot find implementation or library stub for module named 'ccxt'  [import]
+im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:5: error: Cannot find implementation or library stub for module named 'ccxt.pro'  [import]
+im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:71: error: Need type annotation for 'expected_args'  [var-annotated]
+im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:79: error: Need type annotation for 'expected_args'  [var-annotated]
+im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:133: error: Need type annotation for 'expected_args'  [var-annotated]
+im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:139: error: Incompatible types in assignment (expression has type "str", variable has type "Tuple[Any, ...]")  [assignment]
+im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:140: error: Incompatible types in assignment (expression has type "str", variable has type "Tuple[Tuple[str], Dict[Any, Any]]")  [assignment]
+im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:282: error: Need type annotation for 'expected_args'  [var-annotated]
+im_v2/ccxt/data/extract/test/test_ccxt_extractor.py:618: error: Need type annotation for 'expected_args'  [var-annotated]
+
+1

@@ -718,7 +718,7 @@ class TestCcxtExtractor2(hunitest.TestCase):
         # Initialize class.
         exchange_class = imvcdexex.CcxtExtractor(exchange_id, currency_type)
         exchange_class.currency_pairs = [currency_pair]
-        # Download real OHLCV data using ccxt.
+        # Download real OHLCV data using CCXT.
         ccxt_data = exchange_class._download_ohlcv(
             exchange_id=exchange_id,
             currency_pair=currency_pair,
