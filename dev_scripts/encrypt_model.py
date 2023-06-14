@@ -29,11 +29,11 @@ def _encrypt_model(model_dir: str, target_dir: str) -> str:
 
     :param model_dir: source model directory
     :param target_dir: encrypted model output directory
-    :return: final encrypted model directory
+    :return: encrypted model directory
     """
     hdbg.dassert_dir_exists(model_dir)
     hdbg.dassert_dir_exists(target_dir)
-    # Create encrypted model directory
+    # Create encrypted model directory.
     model_path = pathlib.Path(model_dir)
     model_name = model_path.stem
     encrypted_model_name = "_".join(["encrypted", model_name])
@@ -67,7 +67,7 @@ def _encrypt_model(model_dir: str, target_dir: str) -> str:
 
 def _tweak_init(target_dir: str) -> None:
     """
-    Add Pyarmor module to `__init__.py` to make sure that encryted model works 
+    Add Pyarmor module to `__init__.py` to make sure that encrypted model works 
     correctly.
 
     :param target_dir: encrypted model output directory
@@ -94,7 +94,7 @@ def _test_model(model_dir: str) -> None:
         temp_file_path,
         script
     )
-    # Run test inside Docker container
+    # Run test inside Docker container.
     cmd = f"invoke docker_cmd -c 'bash {temp_file_path}'"
     (_, output) = hsystem.system_to_string(cmd)
     _LOG.debug(output)
@@ -144,7 +144,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         model_path = pathlib.Path(model_dir)
         target_dir = str(model_path.parent)
     encrypted_model_dir = _encrypt_model(model_dir, target_dir)
-    if os.path.exists(os.path.join(encrypted_model_dir, "__init__.py")):
+    encrypted_init_file = os.path.join(encrypted_model_dir, "__init__.py")
+    if os.path.exists(encrypted_init_file):
         _tweak_init(encrypted_model_dir)
     if args.test:
         _test_model(model_dir)
