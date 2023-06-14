@@ -712,7 +712,7 @@ class TestCcxtExtractor2(hunitest.TestCase):
         # Using Binance.US API because Binance API is not accessible.
         exchange_id = "binanceus"
         currency_pair = "BTC/USDT"
-        currency_type = "spot"
+        contract_type = "spot"
         start_timestamp = pd.Timestamp("2022-10-20T00:01:00Z")
         end_timestamp = pd.Timestamp("2022-10-20T00:05:00Z")
         # Initialize class.
