@@ -3,16 +3,13 @@
 Encrypt model using Pyarmor.
 
 Usage:
-> encrypt_model.py --model_dir source_model_dir --target_dir encrypted_model_output_dir
+> encrypt_model.py --model_dir dataflow_amp/pipelines/mock1 --target_dir ./encrypted_model --test
 
-# Encrypt a model and save into the same directory.
+# Encrypt a model and save to the same directory.
 > encrypt_model.py --model_dir dataflow_amp/pipelines/mock1
 
-# Ecncrypt a model and save into a specific directory.
+# Ecncrypt a model and save to a specific directory.
 > encrypt_model.py --model_dir dataflow_amp/pipelines/mock1 --target_dir ./encrypted_model
-
-# Test original model and encrypted model.
-> encrypt_model.py --model_dir dataflow_amp/piplines/mock1 --test
 
 Import as:
 
@@ -39,6 +36,8 @@ def _encrypt_model(model_dir: str, target_dir: str) -> None:
     :param model_dir: model directory
     :param target_dir: encrypted model output directory
     """
+    hdbg.dassert_dir_exists(model_dir)
+    hdbg.dassert_dir_exists(target_dir)
     # Create temporary Dockerfile.
     with tempfile.NamedTemporaryFile(suffix=".Dockerfile") as temp_dockerfile:
         temp_dockerfile.write(
@@ -58,15 +57,16 @@ def _encrypt_model(model_dir: str, target_dir: str) -> None:
     docker_cmd = f"docker run --rm -it --workdir {docker_target_dir} --mount {mount} encryption_flow {encryption_flow}"
     _LOG.info("Start running Docker container.")
     hsystem.system(docker_cmd)
-    hdbg.dassert_ne(len(os.listdir(target_dir)), 0, "Failed to encrypt model.")
-    _LOG.info("Encrypted model successfully stored in %s.", target_dir)
+    n_files = len(os.listdir(target_dir))
+    hdbg.dassert_lt(0, n_files, "No files in target_dir=`%s`", target_dir)
+    _LOG.info("Encrypted model successfully stored in target_dir='%s'", target_dir)
     _LOG.info("Remove temporary Dockerfile.")
 
 
 def _tweak_init(target_dir: str) -> None:
     """
-    Add necessary Pyarmor module into `__init__.py` to ensure encryted model
-    works as expected.
+    Add Pyarmor module to `__init__.py` to make sure that encryted model works 
+    correctly.
 
     :param target_dir: encrypted model output directory
     """
@@ -79,37 +79,21 @@ def _tweak_init(target_dir: str) -> None:
         hio.to_file(init_file, lines)
 
 
-def _test_encrypted_model() -> None:
+def _test_model(model_path: str) -> None:
     """
-    Check that encrypted model works correctly.
-    """
-    temp_file_path = "./tmp.encrypt_model.test_encrypted_model.sh"
-    # Write testing script into temporary file.
-    hio.to_file(
-        temp_file_path,
-        'python -c "import dataflow_amp.pipelines.mock1_encrypted.mock1_pipeline as f; a = f.Mock1_DagBuilder(); print(a)"',
-    )
-    # Run test inside Docker container
-    cmd = f"invoke docker_cmd -c 'bash {temp_file_path}'"
-    # Output: "nid_prefix="
-    (_, output) = hsystem.system_to_string(cmd)
-    _LOG.debug(output)
-    os.remove(temp_file_path)
-
-
-def _test_model() -> None:
-    """
-    Check that input model works correctly.
+    Check that model works correctly.
     """
     temp_file_path = "./tmp.encrypt_model.test_model.sh"
-    # Write testing script into temporary file.
+    import_path = model_path.lstrip("./")
+    import_path = import_path.replace("/", ".")
+    script = f'python -c "import {import_path}.mock1_pipeline as f; a = f.Mock1_DagBuilder(); print(a)"'
+    # Write testing script to temporary file.
     hio.to_file(
         temp_file_path,
-        'python -c "import dataflow_amp.pipelines.mock1.mock1_pipeline as f; a = f.Mock1_DagBuilder(); print(a)"',
+        script
     )
     # Run test inside Docker container
     cmd = f"invoke docker_cmd -c 'bash {temp_file_path}'"
-    # Output: "nid_prefix="
     (_, output) = hsystem.system_to_string(cmd)
     _LOG.debug(output)
     os.remove(temp_file_path)
@@ -154,19 +138,19 @@ def _main(parser: argparse.ArgumentParser) -> None:
     target_dir = args.target_dir
     source_dir = pathlib.Path(model_dir)
     model_name = source_dir.stem
-    if target_dir is not None:
-        hdbg.dassert_dir_exists(target_dir)
-    else:
-        # If no target dir is specified, save encrypted model in the source model directory.
+    # Create target dir if not exist.
+    if target_dir is None:
         encrypted_model_name = "_".join([model_name, "encrypted"])
         target_dir = os.path.join(source_dir.parent, encrypted_model_name)
-        hio.create_dir(target_dir, incremental=True)
+    hio.create_dir(target_dir, incremental=True)
     _encrypt_model(model_dir, target_dir)
     if os.path.exists(os.path.join(target_dir, "__init__.py")):
         _tweak_init(target_dir)
     if args.test:
-        _test_model()
-        _test_encrypted_model()
+        # Test the original model.
+        _test_model(model_dir)
+        # Test the encrypted model.
+        _test_model(target_dir)        
 
 
 if __name__ == "__main__":
