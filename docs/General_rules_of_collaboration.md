@@ -132,7 +132,7 @@
 
 ### Morning email
 
-- First thing in the morning, send an email to `all@crypto-kaizen.com` if you are **full-time** or to `collaborators@crypto-kaizen.com` if you are **interns or collaborators** to broadcast what you are planning to work on during that day
+- First thing in the morning, send an email to `all@crypto-kaizen.com` if you are **full-time** or to `contributors@crypto-kaizen.com` if you are **interns or collaborators** to broadcast what you are planning to work on during that day
 - If you are a collaborator or intern, follow the steps to join the mailing group
   - Visit the [group](https://groups.google.com/a/crypto-kaizen.com/g/contributors/)
   - Click “ask to join group”
