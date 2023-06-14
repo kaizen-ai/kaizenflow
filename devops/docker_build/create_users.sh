@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # This needs to be kept in sync with devops/docker_build/etc_sudoers.
 # TODO(gp): Find a solution where you don't have to specify all the potential
 # users up front.
