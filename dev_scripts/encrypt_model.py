@@ -97,7 +97,7 @@ def _test_model(model_dir: str) -> None:
     # Run test inside Docker container
     cmd = f"invoke docker_cmd -c 'bash {temp_file_path}'"
     (_, output) = hsystem.system_to_string(cmd)
-    _LOG.info(output)
+    _LOG.debug(output)
     os.remove(temp_file_path)
 
 
