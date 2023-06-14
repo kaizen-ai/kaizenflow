@@ -716,7 +716,7 @@ class TestCcxtExtractor2(hunitest.TestCase):
         start_timestamp = pd.Timestamp("2022-10-20T00:01:00Z")
         end_timestamp = pd.Timestamp("2022-10-20T00:05:00Z")
         # Initialize class.
-        exchange_class = imvcdexex.CcxtExtractor(exchange_id, currency_type)
+        exchange_class = imvcdexex.CcxtExtractor(exchange_id, contract_type)
         exchange_class.currency_pairs = [currency_pair]
         # Download real OHLCV data using CCXT.
         ccxt_data = exchange_class._download_ohlcv(
