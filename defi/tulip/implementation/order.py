@@ -162,20 +162,6 @@ class Order:
         dict_["deposit_address"] = self.deposit_address
         return dict_
 
-    def execute_order(self, price: float) -> List[Tuple[float, str]]:
-        """
-        Execute order at specified price.
-
-        :param price: Price that user pays in quote_token in exchange to get base_token
-        :return: A list that contains deductions in quote_token and acquired base_token
-        """
-        if price < self.limit_price:
-            return [
-                (-self.quantity * price, self.quote_token),
-                (self.quantity, self.base_token),
-            ]
-        return None
-
     def _takes_precedence(self, other: "Order") -> bool:
         """
         Compare order to another one according to quantity, price and
@@ -250,3 +236,39 @@ def convert_orders_to_dataframe(orders: List[Order]) -> pd.DataFrame:
     df = pd.concat([pd.Series(order.to_dict()) for order in orders], axis=1).T
     df = df.convert_dtypes()
     return df
+
+
+def execute_order(order: Order, price: float) -> List[Tuple[float, str]]:
+    """
+    Execute order at specified price.
+
+    :param order: order to be executed
+    :param price: price that user pays in quote_token in exchange to get base_token
+    :return: info about executed changes in base and quote token amounts
+    """
+    exec_info = None
+    if price < order.limit_price:
+        if order.action == "buy":
+            exec_info = [
+                (-order.quantity * price, order.quote_token),
+                (order.quantity, order.base_token),
+            ]
+        else:
+            _LOG.info(
+                "The order cannot be executed because given price %f is less than limit price %f",
+                price,
+                order.limit_price,
+            )
+    else:
+        if order.action == "sell":
+            exec_info = [
+                (order.quantity * price, order.quote_token),
+                (order.quantity, order.base_token),
+            ]
+        else:
+            _LOG.info(
+                "The order cannot be executed because given price %f is greter than limit price %f",
+                price,
+                order.limit_price,
+            )
+    return exec_info
