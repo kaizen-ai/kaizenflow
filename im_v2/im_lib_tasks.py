@@ -51,7 +51,7 @@ def get_db_env_path(stage: str, *, idx: Optional[int] = None) -> str:
 # #############################################################################
 
 
-def _get_docker_cmd(stage: str, docker_cmd: str) -> str:
+def _get_docker_run_cmd(stage: str, docker_cmd: str) -> str:
     """
     Construct the `docker-compose' command to run a script inside this
     container Docker component.
@@ -94,7 +94,7 @@ def im_docker_cmd(ctx, stage, cmd):  # type: ignore
     """
     hdbg.dassert_ne(cmd, "")
     # Get docker cmd.
-    docker_cmd = _get_docker_cmd(stage, cmd)
+    docker_cmd = _get_docker_run_cmd(stage, cmd)
     # Execute the command.
     hlitauti.run(ctx, docker_cmd, pty=True)
 

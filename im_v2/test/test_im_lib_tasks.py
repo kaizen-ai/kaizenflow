@@ -16,7 +16,7 @@ class TestGetImDockerCmd(hunitest.TestCase):
         Test the `bash` command.
         """
         cmd = "bash"
-        actual = imvimlita._get_docker_cmd("local", cmd)
+        actual = imvimlita._get_docker_run_cmd("local", cmd)
         expected = r"""
         docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml \
@@ -30,7 +30,7 @@ class TestGetImDockerCmd(hunitest.TestCase):
         Test the Python script.
         """
         cmd = "im/devops/docker_scripts/set_shema_im_db.py"
-        actual = imvimlita._get_docker_cmd("local", cmd)
+        actual = imvimlita._get_docker_run_cmd("local", cmd)
         expected = r"""
         docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml \
