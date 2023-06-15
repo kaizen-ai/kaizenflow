@@ -242,33 +242,41 @@ def execute_order(order: Order, price: float) -> List[Tuple[float, str]]:
     """
     Execute order at specified price.
 
-    :param order: order to be executed
-    :param price: price that user pays in quote_token in exchange to get base_token
+    :param order: `Order` to be executed
+    :param price: price that user pays in quote token in exchange to get base token
     :return: info about executed changes in base and quote token amounts
     """
-    exec_info = None
-    if price < order.limit_price:
-        if order.action == "buy":
+    given_action = order.action
+    if given_action == "buy":
+        if price <= order.limit_price:
             exec_info = [
                 (-order.quantity * price, order.quote_token),
                 (order.quantity, order.base_token),
             ]
         else:
             _LOG.info(
-                "The order cannot be executed because given price %f is less than limit price %f",
+                "The order cannot be executed for given action='%s' as the given \
+                    price='%f' is greater than limit_price='%f'",
+                given_action,
                 price,
                 order.limit_price,
             )
-    else:
-        if order.action == "sell":
+            exec_info = None
+    elif given_action == "sell":
+        if price >= order.limit_price:
             exec_info = [
                 (order.quantity * price, order.quote_token),
                 (order.quantity, order.base_token),
             ]
         else:
             _LOG.info(
-                "The order cannot be executed because given price %f is greter than limit price %f",
+                "The order cannot be executed for given action='%s' as the given \
+                    price='%f' is less than limit_price='%f'",
+                given_action,
                 price,
                 order.limit_price,
             )
+            exec_info = None
+    else:
+        raise ValueError("Invalid order action='%s'" % given_action)
     return exec_info
