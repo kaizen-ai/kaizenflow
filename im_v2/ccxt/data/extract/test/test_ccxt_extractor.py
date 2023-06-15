@@ -737,7 +737,7 @@ class TestCcxtExtractor2(hunitest.TestCase):
         contract_type = "spot"
         start_timestamp = pd.Timestamp("2022-10-20T00:01:00Z")
         end_timestamp = pd.Timestamp("2022-10-20T00:05:00Z")
-        # Prepare expected output
+        # Prepare expected output.
         # pylint: disable=line-too-long
         expected_output = r"""
         timestamp    open    high    low    close    volume    end_download_timestamp
@@ -773,7 +773,7 @@ class TestCcxtExtractor2(hunitest.TestCase):
         contract_type = "spot"
         start_timestamp = pd.Timestamp("2022-10-20T00:01:00Z")
         end_timestamp = pd.Timestamp("2022-10-20T00:05:00Z")
-        # Prepare expected output
+        # Prepare expected output.
         # pylint: disable=line-too-long
         expected_output = r"""
         timestamp    open    high    low    close    volume    end_download_timestamp
