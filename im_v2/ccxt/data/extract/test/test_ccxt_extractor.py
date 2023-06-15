@@ -689,57 +689,57 @@ class TestCcxtExtractor1(hunitest.TestCase):
 
 
 class TestCcxtExtractor2(hunitest.TestCase):
+    def test_download_ohlcv_timestamp_representation_helper(
+        self,
+        exchange_id: str,
+        currency_pair: str,
+        contract_type: str,
+        start_timestamp: pd.Timestamp,
+        end_timestamp: pd.Timestamp,
+        expected_output: str,
+        mock_get_current_time: umock.MagicMock,
+    ) -> None:
+        """
+        Verify that OHLCV data timestamps are correctly represented.
+        """
+        # Mock current time.
+        current_time = "2022-10-21 00:00:00.000000+00:00"
+        mock_get_current_time.return_value = current_time
+        expected_output = expected_output.strip()
+        # Initialize class.
+        exchange_class = imvcdexex.CcxtExtractor(exchange_id, contract_type)
+        exchange_class.currency_pairs = [currency_pair]
+        # Download real OHLCV data using CCXT.
+        ccxt_data = exchange_class._download_ohlcv(
+            exchange_id=exchange_id,
+            currency_pair=currency_pair,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+            bar_per_iteration=500,
+        )
+        _LOG.info("\n==> Current CCXT version = '%s' <==", ccxt.__version__)
+        # Check output.
+        actual_output = hpandas.df_to_str(ccxt_data)
+        self.assert_equal(actual_output, expected_output, fuzzy_match=True)
+
     @pytest.mark.superslow("~30 seconds.")
     @umock.patch.object(imvcdexex.hdateti, "get_current_time")
     def test_download_ohlcv_timestamp_representation1(
         self, mock_get_current_time: umock.MagicMock
     ) -> None:
         """
-        Verify that OHLCV data timestamps are correctly represented.
+        Verify that OHLCV data timestamps for exchange ID Binance.US and
+        currency pair "BTC/USDT".
         """
-
-        def test_download_ohlcv_timestamp_representation_helper(
-            self,
-            exchange_id: str,
-            currency_pair: str,
-            contract_type: str,
-            start_timestamp: pd.Timestamp,
-            end_timestamp: pd.Timestamp,
-            expected_output: str,
-            mock_get_current_time: umock.MagicMock,
-        ) -> None:
-            """
-            Helper function to test_download_ohlcv_timestamp_representation.
-            """
-            # Mock current time.
-            current_time = "2022-10-21 00:00:00.000000+00:00"
-            mock_get_current_time.return_value = current_time
-            expected_output = expected_output.strip()
-            # Initialize class.
-            exchange_class = imvcdexex.CcxtExtractor(exchange_id, contract_type)
-            exchange_class.currency_pairs = [currency_pair]
-            # Download real OHLCV data using CCXT.
-            ccxt_data = exchange_class._download_ohlcv(
-                exchange_id=exchange_id,
-                currency_pair=currency_pair,
-                start_timestamp=start_timestamp,
-                end_timestamp=end_timestamp,
-                bar_per_iteration=500,
-            )
-            _LOG.info("\n==> Current CCXT version = '%s' <==", ccxt.__version__)
-            # Check output.
-            actual_output = hpandas.df_to_str(ccxt_data)
-            self.assert_equal(actual_output, expected_output, fuzzy_match=True)
-
         # Using Binance.US API because Binance API is not accessible.
         exchange_id = "binanceus"
-        currency_pairs = ["BTC/USDT", "ETH/USDT"]
+        currency_pair = "BTC/USDT"
         contract_type = "spot"
         start_timestamp = pd.Timestamp("2022-10-20T00:01:00Z")
         end_timestamp = pd.Timestamp("2022-10-20T00:05:00Z")
-        # Prepare expected output for currency pair "BTC/USDT".
+        # Prepare expected output
         # pylint: disable=line-too-long
-        expected_output_btc_usdt = r"""
+        expected_output = r"""
         timestamp    open    high    low    close    volume    end_download_timestamp
         0    1666224060000    19120.48    19123.30    19114.05    19114.05    0.483268    2022-10-21 00:00:00.000000+00:00
         1    1666224120000    19117.81    19128.66    19117.81    19128.66    0.813596    2022-10-21 00:00:00.000000+00:00
@@ -748,20 +748,34 @@ class TestCcxtExtractor2(hunitest.TestCase):
         4    1666224300000    19120.87    19120.87    19113.28    19113.28    0.434573    2022-10-21 00:00:00.000000+00:00
         """
         # pylint: enable=line-too-long
-        # Run test for currency pair "BTC/USDT".
-        test_download_ohlcv_timestamp_representation_helper(
-            self,
+        self.test_download_ohlcv_timestamp_representation_helper(
             exchange_id,
-            currency_pairs[0],
+            currency_pair,
             contract_type,
             start_timestamp,
             end_timestamp,
-            expected_output_btc_usdt,
+            expected_output,
             mock_get_current_time,
         )
-        # Prepare expected output for currency pair "ETH/USDT".
+
+    @pytest.mark.superslow("~30 seconds.")
+    @umock.patch.object(imvcdexex.hdateti, "get_current_time")
+    def test_download_ohlcv_timestamp_representation2(
+        self, mock_get_current_time: umock.MagicMock
+    ) -> None:
+        """
+        Verify that OHLCV data timestamps for exchange ID Binance.US and
+        currency pair "ETH/USDT".
+        """
+        # Using Binance.US API because Binance API is not accessible.
+        exchange_id = "binanceus"
+        currency_pair = "ETH/USDT"
+        contract_type = "spot"
+        start_timestamp = pd.Timestamp("2022-10-20T00:01:00Z")
+        end_timestamp = pd.Timestamp("2022-10-20T00:05:00Z")
+        # Prepare expected output
         # pylint: disable=line-too-long
-        expected_output_eth_usdt = r"""
+        expected_output = r"""
         timestamp    open    high    low    close    volume    end_download_timestamp
         0    1666224060000    1284.46    1284.46    1284.46    1284.46    0.50910    2022-10-21 00:00:00.000000+00:00
         1    1666224120000    1284.46    1284.46    1284.46    1284.46    0.00000    2022-10-21 00:00:00.000000+00:00
@@ -770,14 +784,12 @@ class TestCcxtExtractor2(hunitest.TestCase):
         4    1666224300000    1283.32    1283.32    1283.32    1283.32    4.93685    2022-10-21 00:00:00.000000+00:00
         """
         # pylint: enable=line-too-long
-        # Run test for currency pair "ETH/USDT".
-        test_download_ohlcv_timestamp_representation_helper(
-            self,
+        self.test_download_ohlcv_timestamp_representation_helper(
             exchange_id,
-            currency_pairs[1],
+            currency_pair,
             contract_type,
             start_timestamp,
             end_timestamp,
-            expected_output_eth_usdt,
+            expected_output,
             mock_get_current_time,
         )
