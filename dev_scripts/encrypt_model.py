@@ -62,21 +62,22 @@ def _encrypt_model(model_dir: str, target_dir: str) -> str:
     n_files = len(os.listdir(encrypted_model_dir))
     hdbg.dassert_lt(0, n_files, "No files in encrypted_model_dir=`%s`", encrypted_model_dir)
     _LOG.info("Encrypted model successfully stored in encrypted_model_dir='%s'", encrypted_model_dir)
+    # Make encrypted model files accessible by any user.
+    cmd = f"sudo chmod -R 777 {encrypted_model_dir}"
+    hsystem.system(cmd)
     _LOG.info("Remove temporary Dockerfile.")
     return encrypted_model_dir
 
 
-def _tweak_init(target_dir: str) -> None:
+def _tweak_init(encrypted_model_dir: str) -> None:
     """
     Add Pyarmor module to `__init__.py` to make sure that encrypted model works 
     correctly.
 
-    :param target_dir: encrypted model output directory
+    :param encrypted_model_dir: encrypted model directory
     """
-    init_file = os.path.join(target_dir, "__init__.py")
+    init_file = os.path.join(encrypted_model_dir, "__init__.py")
     if os.path.exists(init_file):
-        chmod_command = f"sudo chmod 766 {init_file}"
-        hsystem.system(chmod_command)
         data = hio.from_file(init_file)
         lines = "\n".join(
             ["from .pytransform import pyarmor_runtime; pyarmor_runtime()", data]
@@ -144,6 +145,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         model_path = pathlib.Path(model_dir)
         target_dir = str(model_path.parent)
     encrypted_model_dir = _encrypt_model(model_dir, target_dir)
+    # Tweak `__init__.py` file.
     encrypted_init_file = os.path.join(encrypted_model_dir, "__init__.py")
     if os.path.exists(encrypted_init_file):
         _tweak_init(encrypted_model_dir)
