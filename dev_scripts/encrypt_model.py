@@ -75,7 +75,8 @@ def _tweak_init(target_dir: str) -> None:
     """
     init_file = os.path.join(target_dir, "__init__.py")
     if os.path.exists(init_file):
-        os.chmod(init_file, stat.S_IRWXU | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
+        chmod_command = f"sudo chmod 766 {init_file}"
+        hsystem.system(chmod_command)
         data = hio.from_file(init_file)
         lines = "\n".join(
             ["from .pytransform import pyarmor_runtime; pyarmor_runtime()", data]
@@ -92,10 +93,7 @@ def _test_model(model_dir: str) -> None:
     import_path = import_path.replace("/", ".")
     script = f'python -c "import {import_path}.mock1_pipeline as f; a = f.Mock1_DagBuilder(); print(a)"'
     # Write testing script to temporary file.
-    hio.to_file(
-        temp_file_path,
-        script
-    )
+    hio.to_file(temp_file_path, script)
     # Run test inside Docker container.
     cmd = f"invoke docker_cmd -c 'bash {temp_file_path}'"
     (_, output) = hsystem.system_to_string(cmd)
