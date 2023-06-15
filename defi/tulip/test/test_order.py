@@ -4,7 +4,7 @@ import defi.tulip.implementation.order as dtuimord
 import helpers.hunit_test as hunitest
 
 
-class TestOrderExecute(hunitest.TestCase):
+class TestExecuteOrder(hunitest.TestCase):
     def test1(self) -> None:
         """
         Check that the buy order is correctly executed.
