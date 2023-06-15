@@ -728,8 +728,8 @@ class TestCcxtExtractor2(hunitest.TestCase):
         self, mock_get_current_time: umock.MagicMock
     ) -> None:
         """
-        Verify that OHLCV data timestamps for exchange ID Binance.US and
-        currency pair "BTC/USDT".
+        Verify OHLCV data timestamps for exchange ID Binance.US and currency
+        pair "BTC/USDT".
         """
         # Using Binance.US API because Binance API is not accessible.
         exchange_id = "binanceus"
@@ -764,8 +764,8 @@ class TestCcxtExtractor2(hunitest.TestCase):
         self, mock_get_current_time: umock.MagicMock
     ) -> None:
         """
-        Verify that OHLCV data timestamps for exchange ID Binance.US and
-        currency pair "ETH/USDT".
+        Verify OHLCV data timestamps for exchange ID Binance.US and currency
+        pair "ETH/USDT".
         """
         # Using Binance.US API because Binance API is not accessible.
         exchange_id = "binanceus"
