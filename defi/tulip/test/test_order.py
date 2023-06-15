@@ -2,7 +2,6 @@ import numpy as np
 
 import defi.tulip.implementation.order as dtuimord
 import helpers.hunit_test as hunitest
-from defi.tulip.implementation.order import execute_order
 
 
 class TestOrderExecute(hunitest.TestCase):
@@ -10,19 +9,27 @@ class TestOrderExecute(hunitest.TestCase):
         """
         Check that the buy order is correctly executed.
         """
-        # Create a random order which can be done from implementation in order.py.
-        random_order = dtuimord.get_random_order()
-        # Change the limit price.
-        random_order.limit_price = float(np.random.randint(2, 10))
-        # Propose an order price such that it is less than the limit price.
-        proposed_price = random_order.limit_price - 1
-        # Make sure that the order action is buy type.
-        random_order.action = "buy"
+        # Create an order for execution.
+        timestamp = np.nan
+        base_token = "BTC"
+        quote_token = "ETH"
+        #
+        buy_order = dtuimord.Order(
+            timestamp=timestamp,
+            action="buy",
+            quantity=1.2,
+            base_token=base_token,
+            limit_price=2.1,
+            quote_token=quote_token,
+            deposit_address=1,
+            wallet_address=1,
+        )
+        proposed_price = buy_order.limit_price - 1
         # Execute the order and get results.
-        result = execute_order(random_order, proposed_price)
+        result = dtuimord.execute_order(buy_order, proposed_price)
         expected_result = [
-            (-random_order.quantity * proposed_price, random_order.quote_token),
-            (random_order.quantity, random_order.base_token),
+            (-buy_order.quantity * proposed_price, buy_order.quote_token),
+            (buy_order.quantity, buy_order.base_token),
         ]
         self.assertEqual(result, expected_result)
 
@@ -30,16 +37,25 @@ class TestOrderExecute(hunitest.TestCase):
         """
         Check that the buy order is not executed.
         """
-        # Create a random order which can be done from implementation in order.py.
-        random_order = dtuimord.get_random_order()
-        # Change the limit price.
-        random_order.limit_price = float(np.random.randint(2, 10))
+        # Create an order for execution.
+        timestamp = np.nan
+        base_token = "BTC"
+        quote_token = "ETH"
+        #
+        buy_order = dtuimord.Order(
+            timestamp=timestamp,
+            action="buy",
+            quantity=1.2,
+            base_token=base_token,
+            limit_price=2.1,
+            quote_token=quote_token,
+            deposit_address=1,
+            wallet_address=1,
+        )
         # Propose an order price such that it is less than the limit price.
-        proposed_price = random_order.limit_price + 1
-        # Make sure that the order is buy type.
-        random_order.action = "buy"
+        proposed_price = buy_order.limit_price + 1
         # Execute the order and get results.
-        result = execute_order(random_order, proposed_price)
+        result = dtuimord.execute_order(buy_order, proposed_price)
         expected_result = None
         self.assertEqual(result, expected_result)
 
@@ -47,16 +63,25 @@ class TestOrderExecute(hunitest.TestCase):
         """
         Check that the sell order is not executed.
         """
-        # Create a random order which can be done from implementation in order.py.
-        random_order = dtuimord.get_random_order()
-        # Change the limit price.
-        random_order.limit_price = float(np.random.randint(2, 10))
+        # Create an order for execution.
+        timestamp = np.nan
+        base_token = "BTC"
+        quote_token = "ETH"
+        #
+        sell_order = dtuimord.Order(
+            timestamp=timestamp,
+            action="sell",
+            quantity=1.2,
+            base_token=base_token,
+            limit_price=2.1,
+            quote_token=quote_token,
+            deposit_address=1,
+            wallet_address=1,
+        )
         # Propose an order price such that it is less than the limit price.
-        proposed_price = random_order.limit_price - 1
-        # Make sure that the order action is buy type.
-        random_order.action = "sell"
+        proposed_price = sell_order.limit_price - 1
         # Execute the order and get results.
-        result = execute_order(random_order, proposed_price)
+        result = dtuimord.execute_order(sell_order, proposed_price)
         expected_result = None
         self.assertEqual(result, expected_result)
 
@@ -64,18 +89,27 @@ class TestOrderExecute(hunitest.TestCase):
         """
         Check that the sell order is correctly executed.
         """
-        # Create a random order which can be done from implementation in order.py.
-        random_order = dtuimord.get_random_order()
-        # Change the limit price.
-        random_order.limit_price = float(np.random.randint(2, 10))
+        # Create an order for execution.
+        timestamp = np.nan
+        base_token = "BTC"
+        quote_token = "ETH"
+        #
+        sell_order = dtuimord.Order(
+            timestamp=timestamp,
+            action="sell",
+            quantity=1.2,
+            base_token=base_token,
+            limit_price=2.1,
+            quote_token=quote_token,
+            deposit_address=1,
+            wallet_address=1,
+        )
         # Propose an order price such that it is less than the limit price.
-        proposed_price = random_order.limit_price + 1
-        # Make sure that the order is buy type.
-        random_order.action = "sell"
+        proposed_price = sell_order.limit_price + 1
         # Execute the order and get results.
-        result = execute_order(random_order, proposed_price)
+        result = dtuimord.execute_order(sell_order, proposed_price)
         expected_result = [
-            (random_order.quantity * proposed_price, random_order.quote_token),
-            (random_order.quantity, random_order.base_token),
+            (sell_order.quantity * proposed_price, sell_order.quote_token),
+            (sell_order.quantity, sell_order.base_token),
         ]
         self.assertEqual(result, expected_result)
