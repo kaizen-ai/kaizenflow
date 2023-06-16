@@ -689,39 +689,6 @@ class TestCcxtExtractor1(hunitest.TestCase):
 
 
 class TestCcxtExtractor2(hunitest.TestCase):
-    def test_download_ohlcv_timestamp_representation_helper(
-        self,
-        exchange_id: str,
-        currency_pair: str,
-        contract_type: str,
-        start_timestamp: pd.Timestamp,
-        end_timestamp: pd.Timestamp,
-        expected_output: str,
-        mock_get_current_time: umock.MagicMock,
-    ) -> None:
-        """
-        Verify that OHLCV data timestamps are correctly represented.
-        """
-        # Mock current time.
-        current_time = "2022-10-21 00:00:00.000000+00:00"
-        mock_get_current_time.return_value = current_time
-        expected_output = expected_output.strip()
-        # Initialize class.
-        exchange_class = imvcdexex.CcxtExtractor(exchange_id, contract_type)
-        exchange_class.currency_pairs = [currency_pair]
-        # Download real OHLCV data using CCXT.
-        ccxt_data = exchange_class._download_ohlcv(
-            exchange_id=exchange_id,
-            currency_pair=currency_pair,
-            start_timestamp=start_timestamp,
-            end_timestamp=end_timestamp,
-            bar_per_iteration=500,
-        )
-        _LOG.info("\n==> Current CCXT version = '%s' <==", ccxt.__version__)
-        # Check output.
-        actual_output = hpandas.df_to_str(ccxt_data)
-        self.assert_equal(actual_output, expected_output, fuzzy_match=True)
-
     @pytest.mark.superslow("~30 seconds.")
     @umock.patch.object(imvcdexex.hdateti, "get_current_time")
     def test_download_ohlcv_timestamp_representation1(
@@ -748,7 +715,7 @@ class TestCcxtExtractor2(hunitest.TestCase):
         4    1666224300000    19120.87    19120.87    19113.28    19113.28    0.434573    2022-10-21 00:00:00.000000+00:00
         """
         # pylint: enable=line-too-long
-        self.test_download_ohlcv_timestamp_representation_helper(
+        self._test_download_ohlcv_timestamp_representation_helper(
             exchange_id,
             currency_pair,
             contract_type,
@@ -784,7 +751,7 @@ class TestCcxtExtractor2(hunitest.TestCase):
         4    1666224300000    1283.32    1283.32    1283.32    1283.32    4.93685    2022-10-21 00:00:00.000000+00:00
         """
         # pylint: enable=line-too-long
-        self.test_download_ohlcv_timestamp_representation_helper(
+        self._test_download_ohlcv_timestamp_representation_helper(
             exchange_id,
             currency_pair,
             contract_type,
@@ -793,3 +760,41 @@ class TestCcxtExtractor2(hunitest.TestCase):
             expected_output,
             mock_get_current_time,
         )
+
+    def _test_download_ohlcv_timestamp_representation_helper(
+        self,
+        exchange_id: str,
+        currency_pair: str,
+        contract_type: str,
+        start_timestamp: pd.Timestamp,
+        end_timestamp: pd.Timestamp,
+        expected_output: str,
+        mock_get_current_time: umock.MagicMock,
+    ) -> None:
+        """
+        Verify that OHLCV data timestamps are correctly represented.
+
+        1. Perform a historical download of OHLCV data for a given time period
+           and currency pair.
+        2. Compare it to previously downloaded data using a specific CCXT version.
+           This test ensures we can detect a change in interface (i.e. timestamp
+           representation in this case) upon upgrading the library version.
+        """
+        # Mock current time.
+        current_time = "2022-10-21 00:00:00.000000+00:00"
+        mock_get_current_time.return_value = current_time
+        # Initialize class.
+        exchange_class = imvcdexex.CcxtExtractor(exchange_id, contract_type)
+        exchange_class.currency_pairs = [currency_pair]
+        # Download real OHLCV data using CCXT.
+        ccxt_data = exchange_class._download_ohlcv(
+            exchange_id=exchange_id,
+            currency_pair=currency_pair,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+            bar_per_iteration=500,
+        )
+        _LOG.info("\n==> Current CCXT version = '%s' <==", ccxt.__version__)
+        # Check output.
+        actual_output = hpandas.df_to_str(ccxt_data)
+        self.assert_equal(actual_output, expected_output, fuzzy_match=True)
