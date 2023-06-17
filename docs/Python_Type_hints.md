@@ -17,7 +17,7 @@
 
 
 <!--te-->
-# \# Why we use type hints
+# Why we use type hints
 
 We use Python 3 type hints to:
 
@@ -26,7 +26,7 @@ We use Python 3 type hints to:
 - Enforce the type checks at run-time, through automatic assertions (not
   implemented yet)
 
-# \# What to annotate with type hints
+# What to annotate with type hints
 
 - We expect all new library code (i.e., that is not in a notebook) to have type
   annotations
@@ -35,9 +35,9 @@ We use Python 3 type hints to:
   can't infer the type
 - We strive to get no errors / warnings from the linter, including mypy
 
-# \# Conventions
+# Conventions
 
-## \#\# Empty return
+## Empty return
 
 Return `-> None` if your function doesn't return
 
@@ -48,7 +48,7 @@ Return `-> None` if your function doesn't return
 - Cons:
   - `None` is the default value and so it might seem redundant
 
-## \#\# Invoke tasks
+## Invoke tasks
 
 For some reason `invoke` does not like type hints, so we
 
@@ -56,7 +56,7 @@ For some reason `invoke` does not like type hints, so we
 - Put `\# type: ignore` so that `mypy` does not complain Example:
   `` \` @task def run_qa_tests( \# type: ignore ctx, stage="dev", version="", ):  ``\`
 
-## \#\# Annotation for `kwargs`
+## Annotation for `kwargs`
 
 - We use `kwargs: Any` and not `kwargs: Dict[str, Any]`
 - `\*` always binds to a `Tuple`, and `\*\*` always binds to a `Dict[str, Any]`.
@@ -65,12 +65,12 @@ For some reason `invoke` does not like type hints, so we
   `Tuple[_, ...]` and `Dict[str, _]` container types.
 - [[Reference article]{.underline}](https://adamj.eu/tech/2021/05/11/python-type-hints-args-and-kwargs/)
 
-## \#\# `Any`
+## `Any`
 
 - `Any` type hint = no type hint
 - We try to avoid it everywhere when possible
 
-## \#\# `np.array` and `np.ndarray`
+## `np.array` and `np.ndarray`
 
 - If you get something like the following lint:
   `` \` dataflow/core/nodes/sklearn_models.py:537:[amp_mypy] error: Function "numpy.core.multiarray.array" is not valid as a type [valid-type]  ``\`
@@ -79,7 +79,7 @@ For some reason `invoke` does not like type hints, so we
   >
   > `x_vals: np.array` -> `x_vals: np.ndarray`
 
-# \# Handling the annoying `Incompatible types in assignment`
+# Handling the annoying `Incompatible types in assignment`
 
 - `mypy` assigns a single type to each variable for its entire scope
 - The problem is in common idioms where we use the same variable to store
@@ -148,7 +148,7 @@ For some reason `invoke` does not like type hints, so we
   >
   > ``\`
 
-# \# Handling the annoying `"None" has no attribute`
+# Handling the annoying `"None" has no attribute`
 
 - In some model classes `self._model` parameter is being assigned to `None` in
   ctor and being set after calling `set_fit_state` method
@@ -176,7 +176,7 @@ For some reason `invoke` does not like type hints, so we
      >    `None`:
      >    `` \` hdbg.dassert_is_not(self._model, None) self._model = cast(sklearn.base.BaseEstimator, self._model)  ``\`
 
-# \# Disabling `mypy` errors
+# Disabling `mypy` errors
 
 - If `mypy` reports an error and you don't understand why, please ping one of
   the python experts asking for help
@@ -197,7 +197,7 @@ For some reason `invoke` does not like type hints, so we
     >
     > ``\`
 
-# \# What to do when you don't know what to do
+# What to do when you don't know what to do
 
 - Go to the
   [[`mypy` official cheat sheet]{.underline}](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html)
@@ -209,7 +209,7 @@ For some reason `invoke` does not like type hints, so we
   - See
     [[the official `mypy` documentation]{.underline}](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html#when-you-re-puzzled-or-when-things-are-complicated)
 
-# \# Library without types
+# Library without types
 
 - `mypy` is unhappy when a library doesn't have types
 - Lots of libraries are starting to add type hints now that python 2 has been
@@ -234,7 +234,7 @@ For some reason `invoke` does not like type hints, so we
   >
   > ``\`
 
-# \# Inferring types using unit tests
+# Inferring types using unit tests
 
 Sometimes it is possible to infer types directly from unit tests. We have used
 this flow to annotate the code when we switched to Python3 and it worked fine
