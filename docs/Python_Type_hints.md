@@ -1,22 +1,22 @@
+# Python - Type hints
+
 <!--ts-->
-   * [# Why we use type hints](#-why-we-use-type-hints)
-   * [# What to annotate with type hints](#-what-to-annotate-with-type-hints)
-   * [# Conventions](#-conventions)
-      * [## Empty return](#-empty-return)
-      * [## Invoke tasks](#-invoke-tasks)
-      * [## Annotation for kwargs](#-annotation-for-kwargs)
-      * [## Any](#-any)
-      * [## np.array and np.ndarray](#-nparray-and-npndarray)
-   * [# Handling the annoying Incompatible types in assignment](#-handling-the-annoying-incompatible-types-in-assignment)
-   * [# Handling the annoying "None" has no attribute](#-handling-the-annoying-none-has-no-attribute)
-   * [# Disabling mypy errors](#-disabling-mypy-errors)
-   * [# What to do when you don't know what to do](#-what-to-do-when-you-dont-know-what-to-do)
-   * [# Library without types](#-library-without-types)
-   * [# Inferring types using unit tests](#-inferring-types-using-unit-tests)
-
-
-
+   * [Why we use type hints](#-why-we-use-type-hints)
+   * [What to annotate with type hints](#-what-to-annotate-with-type-hints)
+   * [Conventions](#-conventions)
+      * [Empty return](#-empty-return)
+      * [Invoke tasks](#-invoke-tasks)
+      * [Annotation for kwargs](#-annotation-for-kwargs)
+      * [Any](#-any)
+      * [np.array and np.ndarray](#-nparray-and-npndarray)
+   * [Handling the annoying Incompatible types in assignment](#-handling-the-annoying-incompatible-types-in-assignment)
+   * [Handling the annoying "None" has no attribute](#-handling-the-annoying-none-has-no-attribute)
+   * [Disabling mypy errors](#-disabling-mypy-errors)
+   * [What to do when you don't know what to do](#-what-to-do-when-you-dont-know-what-to-do)
+   * [Library without types](#-library-without-types)
+   * [Inferring types using unit tests](#-inferring-types-using-unit-tests)
 <!--te-->
+
 # Why we use type hints
 
 We use Python 3 type hints to:
@@ -53,18 +53,25 @@ Return `-> None` if your function doesn't return
 For some reason `invoke` does not like type hints, so we
 
 - Omit type hints for `invoke` tasks, i.e. functions with the `@task` decorator
-- Put `\# type: ignore` so that `mypy` does not complain Example:
-  `` \` @task def run_qa_tests( \# type: ignore ctx, stage="dev", version="", ):  ``\`
+- Put `# type: ignore` so that `mypy` does not complain
+
+Example:
+  ```python
+  @task def run_qa_tests( # type: ignore 
+    ctx, 
+    stage="dev", 
+    version="", 
+  ):  
+  ```
 
 ## Annotation for `kwargs`
 
 - We use `kwargs: Any` and not `kwargs: Dict[str, Any]`
-- `\*` always binds to a `Tuple`, and `\*\*` always binds to a `Dict[str, Any]`.
+- `*` always binds to a `Tuple`, and `**` always binds to a `Dict[str, Any]`.
   Because of this restriction, type hints only need you to define the types of
   the contained arguments. The type checker automatically adds the
   `Tuple[_, ...]` and `Dict[str, _]` container types.
-- [[Reference article]{.underline}](https://adamj.eu/tech/2021/05/11/python-type-hints-args-and-kwargs/)
-
+- [Reference article](https://adamj.eu/tech/2021/05/11/python-type-hints-args-and-kwargs/)
 ## `Any`
 
 - `Any` type hint = no type hint
@@ -73,80 +80,57 @@ For some reason `invoke` does not like type hints, so we
 ## `np.array` and `np.ndarray`
 
 - If you get something like the following lint:
-  `` \` dataflow/core/nodes/sklearn_models.py:537:[amp_mypy] error: Function "numpy.core.multiarray.array" is not valid as a type [valid-type]  ``\`
-  > Then the problem is probably that a parameter that the lint is related to
-  > has been types as `np.array` while it should be typed as `np.ndarray`:
-  >
-  > `x_vals: np.array` -> `x_vals: np.ndarray`
+  ```bash
+  dataflow/core/nodes/sklearn_models.py:537:[amp_mypy] error: Function "numpy.core.multiarray.array" is not valid as a type [valid-type]  
+  ```
+  Then the problem is probably that a parameter that the lint is related to
+  has been types as `np.array` while it should be typed as `np.ndarray`:
+  ```bash
+  `x_vals: np.array` -> `x_vals: np.ndarray`
+  ```
 
 # Handling the annoying `Incompatible types in assignment`
 
 - `mypy` assigns a single type to each variable for its entire scope
 - The problem is in common idioms where we use the same variable to store
   different representations of the same data
-  > ``\`
-  >
-  > output : str = ...
-  >
-  > output = output.split("\\n")
-  >
-  > ...
-  >
-  > \# Process output.
-  >
-  > ...
-  >
-  > output = "\\n".join(output)
-  >
-  > ``\`
+  ```bash
+  output : str = ...
+  output = output.split("\n")
+  ...
+  # Process output.
+  ...
+  output = "\n".join(output)
+  ```
 - Unfortunately the proper solution is to use different variables
-  > ``\`
-  >
-  > output : str = ...
-  >
-  > output_as_array = output.split("\\n")
-  >
-  > ...
-  >
-  > \# Process output.
-  >
-  > ...
-  >
-  > output = "\\n".join(output_as_array)
-  >
-  > ``\`
+  ```bash
+  output : str = ...
+  output_as_array = output.split("\n")
+  ...
+  # Process output.
+  ...
+  output = "\n".join(output_as_array)
+  ```
 - Another case could be:
-  > ``\`
-  >
-  > from typing import Optional
-  >
-  > def test_func(arg: bool):
-  >
-  > ...
-  >
-  > var: Optional[bool] = ...
-  >
-  > dbg.dassert_is_not(var, None)
-  >
-  > test_func(arg=var)
-  >
-  > ``\`
+  ```bash
+  from typing import Optional
+  def test_func(arg: bool):
+  ...
+  var: Optional[bool] = ...
+  dbg.dassert_is_not(var, None)
+  test_func(arg=var)
+  ```
 - Sometimes `mypy` doesn't pick up the `None` check, and warns that the function
   expects a `bool` rather than an `Optional[bool]`. In that case, the solution
   is to explicitly use `typing.cast` on the argument when passing it in, note
   that `typing.cast` has no runtime effects and is purely for type checking.
-- Here're the relevant
-  [[docs]{.underline}](https://mypy.readthedocs.io/en/stable/casts.html)
+- Here're the relevant [docs](https://mypy.readthedocs.io/en/stable/casts.html)
 - So the solution would be:
-  > ``\`
-  >
-  > from typing import cast ...
-  >
-  > ...
-  >
-  > test_func(arg=cast(bool, var))
-  >
-  > ``\`
+  ```bash
+  from typing import cast ...
+  ...
+  test_func(arg=cast(bool, var))
+  ```
 
 # Handling the annoying `"None" has no attribute`
 
@@ -155,26 +139,22 @@ For some reason `invoke` does not like type hints, so we
 - The problem is that statically it's not possible to understand that someone
   will call `set_fit_state` before using `self._model`, so when a model's method
   is applied:
-  > ``\`
-  >
-  > self.\_model = self.\_model.fit(...)
-  >
-  > ``\`
-  >
-  > the following lint appears:
-  >
-  > ``\`
-  >
-  > dataflow/core/nodes/sklearn_models.py:155:[amp_mypy] error: "None" has no
-  > attribute "fit"
-  >
-  > ``\`
+  ```bash
+  self._model = self._model.fit(...)
+  ```
+  the following lint appears:
+  ```bash
+  dataflow/core/nodes/sklearn_models.py:155:[amp_mypy] error: "None" has no attribute "fit"
+  ```
 - A solution is to
   1. Type hint when assigning the model parameter in ctor:
-     `` \` self._model: Optional[sklearn.base.BaseEstimator] = None  ``\`
-     > 2. Cast a type to the model parameter after asserting that it is not
-     >    `None`:
-     >    `` \` hdbg.dassert_is_not(self._model, None) self._model = cast(sklearn.base.BaseEstimator, self._model)  ``\`
+     ```bash
+     self._model: Optional[sklearn.base.BaseEstimator] = None
+     ```
+  2. Cast a type to the model parameter after asserting that it is not `None`:
+     ```bash
+     hdbg.dassert_is_not(self._model, None) self._model = cast(sklearn.base.BaseEstimator, self._model)
+     ```
 
 # Disabling `mypy` errors
 
@@ -185,54 +165,41 @@ For some reason `invoke` does not like type hints, so we
 - When you want to disable an error reported by `mypy`:
   - Add a comment reporting the `mypy` error
   - Explain why this is not a problem
-  - Add `\# type: ignore` with two spaces as usual for the inline comment
+  - Add `# type: ignore` with two spaces as usual for the inline comment
   - Example
-    > ``\`
-    >
-    > \# mypy: Cannot find module named 'pyannotate_runtime'
-    >
-    > \# pyannotate is not always installed
-    >
-    > from pyannotate_runtime import collect_types \# type: ignore
-    >
-    > ``\`
+    ```bash
+    # mypy: Cannot find module named 'pyannotate_runtime'
+    # pyannotate is not always installed
+    from pyannotate_runtime import collect_types # type: ignore
+    ```
 
 # What to do when you don't know what to do
 
-- Go to the
-  [[`mypy` official cheat sheet]{.underline}](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html)
+- Go to the [`mypy` official cheat sheet](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html)
 - Use `reveal_type`
   - To find out what type `mypy` infers for an expression anywhere in your
     program, wrap it in `reveal_type()`
   - `mypy` will print an error message with the type; remove it again before
     running the code
-  - See
-    [[the official `mypy` documentation]{.underline}](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html#when-you-re-puzzled-or-when-things-are-complicated)
+  - See [the official `mypy` documentation](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html#when-you-re-puzzled-or-when-things-are-complicated)
 
 # Library without types
 
 - `mypy` is unhappy when a library doesn't have types
 - Lots of libraries are starting to add type hints now that python 2 has been
   deprecated
-  > ``\`
-  >
-  > \*.py:14: error: No library stub file for module 'sklearn.model_selection'
-  > [mypy]
-  >
-  > ``\`
+  ```bash
+  *.py:14: error: No library stub file for module 'sklearn.model_selection' [mypy]
+  ```
 - You can go in `mypy.ini` and add the library (following the alphabetical
   order) to the list
 - Note that you need to ensure that different copies of `mypy.ini` in different
   sub projects are equal
-  > ``\`
-  >
-  > > vimdiff mypy.ini amp/mypy.ini
-  >
-  > or
-  >
-  > > cp mypy.ini amp/mypy.ini
-  >
-  > ``\`
+  ```bash
+  > vimdiff mypy.ini amp/mypy.ini
+  or
+  > cp mypy.ini amp/mypy.ini
+  ```
 
 # Inferring types using unit tests
 
@@ -243,28 +210,20 @@ on what the code is intended to do, rather than automatically infer it from how
 the code behaves.
 
 - Install `pyannotate`
-  > ``\`
-  >
-  > > pip install pyannotate
-  >
-  > ``\`
+  ```bash
+  > pip install pyannotate
+  ```
 - To enable collecting type hints run
-  > ``\`
-  >
-  > > export PYANNOTATE=True
-  >
-  > ``\`
+  ```bash
+  > export PYANNOTATE=True
+  ```
 - Run `pytest`, e.g., on a subset of unit tests:
 - Run `pytest`, e.g., on a subset of unit tests like `helpers`:
-  > ``\`
-  >
-  > > pytest helpers
-  >
-  > ``\`
+  ```bash
+  > pytest helpers
+  ```
 - A file `type_info.json` is generated
 - Annotate the code with the inferred types:
-  > ``\`
-  >
-  > > pyannotate -w --type-info type_info.json . --py3
-  >
-  > ``\`
+  ```bash
+  > pyannotate -w --type-info type_info.json . --py3
+  ```
