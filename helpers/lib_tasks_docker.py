@@ -1187,14 +1187,14 @@ def _get_docker_compose_cmd(
         )
     # Print the config for debugging purpose.
     if print_docker_config:
-        docker_config_cmd_as_str = hlitauti._to_multi_line_cmd(docker_config_cmd)
+        docker_config_cmd_as_str = hlitauti.to_multi_line_cmd(docker_config_cmd)
         _LOG.debug("docker_config_cmd=\n%s", docker_config_cmd_as_str)
         _LOG.debug(
             "docker_config=\n%s",
             hsystem.system_to_string(docker_config_cmd_as_str)[1],
         )
     # Print the config for debugging purpose.
-    docker_cmd_: str = hlitauti._to_multi_line_cmd(docker_cmd_)
+    docker_cmd_: str = hlitauti.to_multi_line_cmd(docker_cmd_)
     return docker_cmd_
 
 

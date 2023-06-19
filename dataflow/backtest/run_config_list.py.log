@@ -1,0 +1,105 @@
+23:18:24 - [36mINFO [0m config_builder.py get_config_list_from_builder:29      23:18:24 - [36mINFO [0m config_builder.py get_config_list_from_builder:29      Executing function 'dev_scripts.test.test_run_notebook.build_config_list2()'
+23:18:24 - [36mINFO [0m dataflow_backtest_utils.py get_config_list_from_command_line:204 23:18:24 - [36mINFO [0m dataflow_backtest_utils.py get_config_list_from_command_line:204 Generated 3 configs from the builder
+23:18:24 - [36mINFO [0m dataflow_backtest_utils.py select_config:177           23:18:24 - [36mINFO [0m dataflow_backtest_utils.py select_config:177           Selected 3 configs
+23:18:24 - [36mINFO [0m dataflow_backtest_utils.py get_config_list_from_command_line:219 23:18:24 - [36mINFO [0m dataflow_backtest_utils.py get_config_list_from_command_line:219 Selected 3 configs from command line
+23:18:24 - [36mINFO [0m dataflow_backtest_utils.py get_config_list_from_command_line:225 23:18:24 - [36mINFO [0m dataflow_backtest_utils.py get_config_list_from_command_line:225 Removed 0 configs since already executed
+23:18:24 - [36mINFO [0m dataflow_backtest_utils.py get_config_list_from_command_line:226 23:18:24 - [36mINFO [0m dataflow_backtest_utils.py get_config_list_from_command_line:226 Need to execute 3 configs
+23:18:24 - [36mINFO [0m run_config_list.py _main:182                           23:18:24 - [36mINFO [0m run_config_list.py _main:182                           log_file='/app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/log.20230617-231824.txt'
+23:18:24 - [36mINFO [0m hjoblib.py parallel_execute:549                        23:18:24 - [36mINFO [0m hjoblib.py parallel_execute:549                        dry_run=False, num_threads='serial', incremental=True, num_attempts=1, abort_on_error=False
+23:18:24 - [36mINFO [0m hjoblib.py parallel_execute:557                        23:18:24 - [36mINFO [0m hjoblib.py parallel_execute:557                        Saving log info in '/app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/log.20230617-231824.txt'
+23:18:24 - [36mINFO [0m hjoblib.py parallel_execute:558                        23:18:24 - [36mINFO [0m hjoblib.py parallel_execute:558                        Number of executing threads=1 (serial)
+23:18:24 - [36mINFO [0m hjoblib.py parallel_execute:563                        23:18:24 - [36mINFO [0m hjoblib.py parallel_execute:563                        Number of tasks=3
+23:18:24 - [36mINFO [0m htqdm.py flush:42                  23:18:24 - [36mINFO [0m htqdm.py flush:42                  num_threads=serial backend=asyncio_threading:   0%|          | 0/3 [00:00<?, ?it/s]
+23:18:24 - [36mINFO [0m dataflow_backtest_utils.py setup_experiment_dir:97     23:18:24 - [36mINFO [0m dataflow_backtest_utils.py setup_experiment_dir:97     Creating experiment dir '/app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_0'
+23:18:24 hsystem.py _system:223                              > (find /app -name 'run_config_stub.py' | grep -v .git) 2>&1
+23:18:24 - [36mINFO [0m run_config_list.py _run_config_stub:66                 23:18:24 - [36mINFO [0m run_config_list.py _run_config_stub:66                 
+################################################################################
+Executing experiment for config 0
+################################################################################
+23:18:24 - [36mINFO [0m run_config_list.py _run_config_stub:67                 23:18:24 - [36mINFO [0m run_config_list.py _run_config_stub:67                 config=
+fail: False
+id: 0
+backtest_config: 
+  id: 0
+  config_builder: dev_scripts.test.test_run_notebook.build_config_list2()
+  dst_dir: /app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch
+  experiment_builder: dataflow.backtest.test.simple_experiment.run_experiment
+  experiment_result_dir: /app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_0
+23:18:24 - [36mINFO [0m run_config_list.py _run_config_stub:87                 23:18:24 - [36mINFO [0m run_config_list.py _run_config_stub:87                 Executing '/app/dataflow/backtest/run_config_stub.py --experiment_builder 'dataflow.backtest.test.simple_experiment.run_experiment' --config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()' --config_idx 0 --dst_dir /app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch -v INFO'
+23:18:24 hsystem.py _system:223                              > (/app/dataflow/backtest/run_config_stub.py --experiment_builder 'dataflow.backtest.test.simple_experiment.run_experiment' --config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()' --config_idx 0 --dst_dir /app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch -v INFO) 2>&1 >/app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_0/run_config_list.0.log
+23:18:32 - [36mINFO [0m run_config_list.py _run_config_stub:91                 23:18:32 - [36mINFO [0m run_config_list.py _run_config_stub:91                 Executed cmd
+23:18:32 - [36mINFO [0m dataflow_backtest_utils.py mark_config_as_success:238  23:18:32 - [36mINFO [0m dataflow_backtest_utils.py mark_config_as_success:238  Creating file_name='/app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_0/success.txt'
+23:18:33 - [36mINFO [0m htqdm.py flush:42                  23:18:33 - [36mINFO [0m htqdm.py flush:42                  num_threads=serial backend=asyncio_threading:  33%|###3      | 1/3 [00:08<00:16,  8.30s/it]
+23:18:33 - [36mINFO [0m dataflow_backtest_utils.py setup_experiment_dir:97     23:18:33 - [36mINFO [0m dataflow_backtest_utils.py setup_experiment_dir:97     Creating experiment dir '/app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_1'
+23:18:33 - [36mINFO [0m run_config_list.py _run_config_stub:66                 23:18:33 - [36mINFO [0m run_config_list.py _run_config_stub:66                 
+################################################################################
+Executing experiment for config 1
+################################################################################
+23:18:33 - [36mINFO [0m run_config_list.py _run_config_stub:67                 23:18:33 - [36mINFO [0m run_config_list.py _run_config_stub:67                 config=
+fail: False
+id: 1
+backtest_config: 
+  id: 1
+  config_builder: dev_scripts.test.test_run_notebook.build_config_list2()
+  dst_dir: /app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch
+  experiment_builder: dataflow.backtest.test.simple_experiment.run_experiment
+  experiment_result_dir: /app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_1
+23:18:33 - [36mINFO [0m run_config_list.py _run_config_stub:87                 23:18:33 - [36mINFO [0m run_config_list.py _run_config_stub:87                 Executing '/app/dataflow/backtest/run_config_stub.py --experiment_builder 'dataflow.backtest.test.simple_experiment.run_experiment' --config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()' --config_idx 1 --dst_dir /app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch -v INFO'
+23:18:33 hsystem.py _system:223                              > (/app/dataflow/backtest/run_config_stub.py --experiment_builder 'dataflow.backtest.test.simple_experiment.run_experiment' --config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()' --config_idx 1 --dst_dir /app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch -v INFO) 2>&1 >/app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_1/run_config_list.1.log
+23:18:41 - [36mINFO [0m run_config_list.py _run_config_stub:91                 23:18:41 - [36mINFO [0m run_config_list.py _run_config_stub:91                 Executed cmd
+23:18:41 - [36mINFO [0m dataflow_backtest_utils.py mark_config_as_success:238  23:18:41 - [36mINFO [0m dataflow_backtest_utils.py mark_config_as_success:238  Creating file_name='/app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_1/success.txt'
+23:18:41 - [36mINFO [0m htqdm.py flush:42                  23:18:41 - [36mINFO [0m htqdm.py flush:42                  num_threads=serial backend=asyncio_threading:  67%|######6   | 2/3 [00:16<00:08,  8.32s/it]
+23:18:41 - [36mINFO [0m dataflow_backtest_utils.py setup_experiment_dir:97     23:18:41 - [36mINFO [0m dataflow_backtest_utils.py setup_experiment_dir:97     Creating experiment dir '/app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_2'
+23:18:41 - [36mINFO [0m run_config_list.py _run_config_stub:66                 23:18:41 - [36mINFO [0m run_config_list.py _run_config_stub:66                 
+################################################################################
+Executing experiment for config 2
+################################################################################
+23:18:41 - [36mINFO [0m run_config_list.py _run_config_stub:67                 23:18:41 - [36mINFO [0m run_config_list.py _run_config_stub:67                 config=
+fail: True
+id: 2
+backtest_config: 
+  id: 2
+  config_builder: dev_scripts.test.test_run_notebook.build_config_list2()
+  dst_dir: /app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch
+  experiment_builder: dataflow.backtest.test.simple_experiment.run_experiment
+  experiment_result_dir: /app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_2
+23:18:41 - [36mINFO [0m run_config_list.py _run_config_stub:87                 23:18:41 - [36mINFO [0m run_config_list.py _run_config_stub:87                 Executing '/app/dataflow/backtest/run_config_stub.py --experiment_builder 'dataflow.backtest.test.simple_experiment.run_experiment' --config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()' --config_idx 2 --dst_dir /app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch -v INFO'
+23:18:41 hsystem.py _system:223                              > (/app/dataflow/backtest/run_config_stub.py --experiment_builder 'dataflow.backtest.test.simple_experiment.run_experiment' --config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()' --config_idx 2 --dst_dir /app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch -v INFO) 2>&1 >/app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_2/run_config_list.2.log
+23:18:49 - [36mINFO [0m run_config_list.py _run_config_stub:91                 23:18:49 - [36mINFO [0m run_config_list.py _run_config_stub:91                 Executed cmd
+23:18:49 - [41mERROR[0m run_config_list.py _run_config_stub:97                 23:18:49 - [41mERROR[0m run_config_list.py _run_config_stub:97                 Execution failed for experiment 2
+23:18:49 - [41mERROR[0m hjoblib.py _parallel_execute_decorator:479             23:18:49 - [41mERROR[0m hjoblib.py _parallel_execute_decorator:479             Execution failed
+23:18:49 - [41mERROR[0m hjoblib.py _parallel_execute_decorator:495             23:18:49 - [41mERROR[0m hjoblib.py _parallel_execute_decorator:495             
+################################################################################
+3/3 (20230617-231841)
+################################################################################
+
+tag=3/3 (20230617-231841)
+workload_func=_run_config_stub
+func_name=_run_config_stub
+args=(fail (marked_as_used=False, writer=None, val_type=bool): True
+id (marked_as_used=False, writer=None, val_type=str): 2
+backtest_config (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+  id (marked_as_used=False, writer=None, val_type=int): 2
+  config_builder (marked_as_used=False, writer=None, val_type=str): dev_scripts.test.test_run_notebook.build_config_list2()
+  dst_dir (marked_as_used=False, writer=None, val_type=str): /app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch
+  experiment_builder (marked_as_used=False, writer=None, val_type=str): dataflow.backtest.test.simple_experiment.run_experiment
+  experiment_result_dir (marked_as_used=False, writer=None, val_type=str): /app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_2,)
+kwargs={}
+exception='Execution failed for experiment 2'
+func_res=
+  None
+elapsed_time_in_secs=7.8
+start_ts=20230617-231841
+end_ts=20230617-231849
+error=True
+23:18:49 - [41mERROR[0m hjoblib.py _parallel_execute_decorator:499             23:18:49 - [41mERROR[0m hjoblib.py _parallel_execute_decorator:499             Continuing execution since abort_on_error=False
+23:18:49 - [36mINFO [0m htqdm.py flush:42                  23:18:49 - [36mINFO [0m htqdm.py flush:42                  num_threads=serial backend=asyncio_threading: 100%|##########| 3/3 [00:24<00:00,  8.09s/it]
+23:18:49 - [36mINFO [0m htqdm.py flush:42                  23:18:49 - [36mINFO [0m htqdm.py flush:42                  num_threads=serial backend=asyncio_threading: 100%|##########| 3/3 [00:24<00:00,  8.15s/it]
+23:18:49 - [36mINFO [0m hjoblib.py parallel_execute:669                        23:18:49 - [36mINFO [0m hjoblib.py parallel_execute:669                        Saved log info in '/app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/log.20230617-231824.txt'
+23:18:49 - [36mINFO [0m run_config_list.py _main:199                           23:18:49 - [36mINFO [0m run_config_list.py _main:199                           dst_dir='/app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch'
+23:18:49 - [36mINFO [0m run_config_list.py _main:200                           23:18:49 - [36mINFO [0m run_config_list.py _main:200                           log_file='/app/dataflow/backtest/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/log.20230617-231824.txt'
+23:18:49 - [41mWARN [0m run_config_list.py _main:220                           23:18:49 - [41mWARN [0m run_config_list.py _main:220                           To archive results on S3 use --archive_on_S3
+23:18:49 - [36mINFO [0m hcache.py clear_global_cache:292                       23:18:49 - [36mINFO [0m hcache.py clear_global_cache:292                       Before clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem', size=nan
+23:18:49 - [41mWARN [0m hcache.py clear_global_cache:293                       23:18:49 - [41mWARN [0m hcache.py clear_global_cache:293                       Resetting 'global mem' cache '/mnt/tmpfs/tmp.cache.mem'
+23:18:49 - [41mWARN [0m hcache.py clear_global_cache:303                       23:18:49 - [41mWARN [0m hcache.py clear_global_cache:303                       Destroying '/mnt/tmpfs/tmp.cache.mem' ...
+23:18:49 - [36mINFO [0m hcache.py clear_global_cache:319                       23:18:49 - [36mINFO [0m hcache.py clear_global_cache:319                       After clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem', size=nan

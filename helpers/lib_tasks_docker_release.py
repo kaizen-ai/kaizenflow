@@ -115,7 +115,7 @@ def docker_build_local_image(  # type: ignore
     dockerfile = _to_abs_path(dockerfile)
     #
     opts = "--no-cache" if not cache else ""
-    # TODO(gp): Use _to_multi_line_cmd()
+    # TODO(gp): Use to_multi_line_cmd()
     cmd = rf"""
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
     time \
@@ -346,7 +346,7 @@ def docker_build_prod_image(  # type: ignore
     dockerfile = "devops/docker_build/prod.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
     #
-    # TODO(gp): Use _to_multi_line_cmd()
+    # TODO(gp): Use to_multi_line_cmd()
     opts = "--no-cache" if not cache else ""
     # Use dev version for building prod image.
     dev_version = hlitadoc._to_dev_version(prod_version)

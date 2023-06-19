@@ -1,0 +1,2 @@
+    timestamp  bid_price_l1  bid_size_l1  ask_price_l1  ask_size_l1
+0  1660780800      23341.25     0.003455      23344.58     0.052201

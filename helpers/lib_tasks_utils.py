@@ -155,7 +155,7 @@ def _to_single_line_cmd(cmd: Union[str, List[str]]) -> str:
 
 
 # TODO(Grisha): make it public #755.
-def _to_multi_line_cmd(docker_cmd_: List[str]) -> str:
+def to_multi_line_cmd(docker_cmd_: List[str]) -> str:
     r"""
     Convert a command encoded as a list of strings into a single command
     separated by `\`.

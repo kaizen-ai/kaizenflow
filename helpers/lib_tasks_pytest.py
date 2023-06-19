@@ -181,7 +181,7 @@ def _build_run_command_line(
     # Concatenate the options.
     _LOG.debug("pytest_opts_tmp=\n%s", str(pytest_opts_tmp))
     pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
-    # TODO(gp): Use _to_multi_line_cmd()
+    # TODO(gp): Use to_multi_line_cmd()
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
     cmd = f"pytest {pytest_opts}"
     if tee_to_file:
