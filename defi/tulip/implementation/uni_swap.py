@@ -1,7 +1,7 @@
 """
 Import as:
 
-import defi.tulip.implementation.uni_swap as dtuimunsw
+import defi.tulip.implementation.uni_swap as dtimunsw
 """
 
 import helpers.hdbg as hdbg
@@ -58,8 +58,8 @@ class UniswapV1:
         self, input_amount: float, input_reserve: float, output_reserve: float
     ) -> float:
         """
-        Get the amount of output token that can be bought for the given
-        amount of input token and token reserves.
+        Get the amount of output token that can be bought for the given amount
+        of input token and token reserves.
 
         :param input_amount: input token amount
         :param input_reserve: input token reserve
