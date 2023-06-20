@@ -29,53 +29,37 @@ You can check the Git credentials that will be used to commit in a client by
 running:
 
 ```
-
 > git config -l | grep user
-
 user.name=saggese
-
 user.email=saggese@gmail.com
-
 github.user=gpsaggese
-
 ```
 
 To know at which level each variable is defined, run
 
 ```
-
 > git config --show-origin user.name
-
 file:/Users/saggese/.gitconfig saggese
-
 ```
 
 You can see all the `Authors` in a Git repo history with:
 
 ```
-
 > git log | grep -i Author | sort | uniq
-
 ...
-
 ```
 
 Git doesn't do any validation of `user.name` and `user.email` but it just uses
 these values to compose a commit message like:
 
 ```
-
 > git log -2
-
 commit 31052d05c226b1c9834d954e0c3d5586ed35f41e (HEAD ->
 AmpTask1290_Avoid_committing_to_master_by_mistake)
-
 Author: saggese <saggese@gmail.com>
-
 Date: Mon Jun 21 16:22:25 2021
 
 Update hooks
-
 ```
 
 ## Setting Git credentials
@@ -84,34 +68,24 @@ To keep things simple and avoid variability, our convention is to use:
 
 - as `user.name` our Linux user name on the local computer we are using to
   commit which is returned by `whoami` (e.g., `user.name=saggese`)
-
 - as `user.email` the email that corresponds to that user (e.g,.
-  `user.email=[[saggese@gmail.com]{.underline}](mailto:saggese@gmail.com)`)
-
-To accomplish the set-up above you can:
-
+  `user.email=[[saggese@gmail.com]{.underline}](mailto:saggese@gmail.com)`) To
+  accomplish the set-up above you can:
 - use in `/Users/saggese/.gitconfig` the values for our open-source account, so
   that they are used by default
 
-> ```
->
-> > git config --global user.name $(whoami)
->
-> > git config --global user.email YOUR_EMAIL
->
-> ```
+```
+> git config --global user.name $(whoami)
+> git config --global user.email YOUR_EMAIL
+```
 
 - use the correct user / email in the repos that are not open-source
 
-> ```
->
-> > cd $GIT_ROOT
->
-> > git config --local user.name $(whoami)
->
-> > git config --local user.email YOUR_EMAIL
->
-> ```
+```
+> cd $GIT_ROOT
+> git config --local user.name $(whoami)
+> git config --local user.email YOUR_EMAIL
+```
 
 - Note that you need to set these local values on each Git client that you have
   cloned, since Git doesn't version control these values
@@ -129,15 +103,10 @@ the hooks.
 TODO(gp): We could create a script to automate cloning a repo and setting it up.
 
 ```
-
 > cd //amp
-
 > ./dev_scripts/git/git_hooks/install_hooks.py --action install
-
 > cd //lem
-
 > ./amp/dev_scripts/git/git_hooks/install_hooks.py --action install
-
 ```
 
 This procedure creates some links from `.git/hook` to the scripts in the repo.
@@ -150,13 +119,9 @@ hooks.
 You can follow the
 
 ```
-
-Build the client env
-
+\# Build the client env
 > dev_scripts/client_setup/build.sh
-
 > source dev_scripts/setenv_amp.sh
-
 ```
 
 # Invoke
@@ -191,29 +156,20 @@ The best approach to getting familiar with the tasks is to browse the list and
 then check the output of the help
 
 ```
-
 > invoke --help command
-
 > i -h gh_issue_title
-
 Usage: inv[oke] [--core-opts] gh_issue_title [--options] [other tasks here ...]
 
 Docstring:
-
 Print the title that corresponds to the given issue and repo_short_name.
-
 E.g., AmpTask1251_Update_GH_actions_for_amp.
 
 :param pbcopy: save the result into the system clipboard (only on macOS)
 
 Options:
-
 -i STRING, --issue-id=STRING
-
 -p, --[no-]pbcopy
-
 -r STRING, --repo-short-name=STRING
-
 ```
 
 I can guarantee you a 2x improvement in performance, if you master the
@@ -381,17 +337,13 @@ traceback Parse the traceback from Pytest and navigate it with vim.
 
 - All invoke tasks are functions with the `@task` decorator, e.g.,
 
-> ```
->
-> from invoke import task
->
-> @task
->
-> def invoke_task(...):
->
-> ...
->
-> ```
+```
+from invoke import task
+
+@task
+def invoke_task(...):
+  ...
+```
 
 - To run a task we use `context.run(...)`, see
   [[the official docs]{.underline}](https://docs.pyinvoke.org/en/0.11.1/concepts/context.html)
@@ -452,18 +404,15 @@ Once in a while it can be useful to list all the available workflows and see if
 something interesting was added.
 
 ```
-
 > invoke --list
 
 Available tasks:
 
-docker_bash Start a bash shell inside the container corresponding to a stage.
+docker_bash     Start a bash shell inside the container corresponding to a stage.
 
-docker_build_local_image Build a local image (i.e., a release candidate "dev"
+docker_build_local_image    Build a local image (i.e., a release candidate "dev"
 image).
-
 ...
-
 ```
 
 ## Getting help for a workflow
@@ -471,45 +420,28 @@ image).
 You can get a more detailed help with
 
 ```
-
 > invoke --help run_fast_tests
-
 Usage: inv[oke] [--core-opts] run_fast_tests [--options] [other tasks here ...]
 
 Docstring:
-
 Run fast tests.
 
 :param stage: select a specific stage for the Docker image
-
 :param pytest_opts: option for pytest
-
 :param pytest_mark: test list to select as `@pytest.mark.XYZ`
-
 :param dir_name: dir to start searching for tests
-
 :param skip_submodules: ignore all the dir inside a submodule
-
 :param coverage: enable coverage computation
-
 :param collect_only: do not run tests but show what will be executed
 
 Options:
-
 -c, --coverage
-
 -d STRING, --dir-name=STRING
-
 -k, --skip-submodules
-
 -o, --collect-only
-
 -p STRING, --pytest-opts=STRING
-
 -s STRING, --stage=STRING
-
 -y STRING, --pytest-mark=STRING
-
 ```
 
 ## Merge master in the current branch
@@ -544,36 +476,31 @@ When a piece of code can be merged:
 This workflow allows you to develop and regress / merge without too much hassle
 solving the problem of "stacked PRs".
 
-Go to the client with the branch that you want to divvy up.
+# Go to the client with the branch that you want to divvy up.
 
 > git checkout ${feature_branch}
 
-Make sure that the branch is up-to-date with master
+# Make sure that the branch is up-to-date with master
 
 > i git_merge_master
 
-Lint.
+# Lint.
 
 > i lint -b
 
-Create a patch from the branch (there are many options to tweak the workflow,
+# Create a patch from the branch (there are many options to tweak the workflow,
+
 check the help)
 
 > i git_create_patch -b
 
 ```
-
 ...
 
-To apply the patch and execute:
-
+\# To apply the patch and execute:
 > git checkout 8f9cda97
-
-> git apply
-> /Users/saggese/src/lemonade1/amp/patch.amp.8f9cda97.20210609_080439.patch
-
+> git apply /Users/saggese/src/lemonade1/amp/patch.amp.8f9cda97.20210609_080439.patch
 ...
-
 ```
 
 Go to a fresh Git client (I have 2-3 Git clients separated from the one in which
@@ -581,11 +508,11 @@ I develop for this kind of operations) or go to master in the same Git client
 
 ```
 
-Go to master
+# Go to master
 
 > git checkout master
 
-Apply the patch from the run of `git_create_patch`
+# Apply the patch from the run of `git_create_patch`
 
 > git apply
 > /Users/saggese/src/lemonade1/amp/patch.amp.8f9cda97.20210609_080439.patch
@@ -593,44 +520,38 @@ Apply the patch from the run of `git_create_patch`
 This patch should apply cleanly and with no errors from git, otherwise it means
 that your feature branch doesn't have the latest master
 
-### Remove what you don't want to commit.
+# Remove what you don't want to commit.
 
 Do not change anything or run the linter otherwise your feature branch will not
 merge easily.
 
 > git diff
-
 > git checkout master -- ...
-
 ...
-
 > git commit; git push
 
-Create a PR (non-draft so that GH can start running the tests)
+# Create a PR (non-draft so that GH can start running the tests)
 
 > i gh_create_pr --no-draft
 
-Regress the branch
+# Regress the branch
 
 > i run_fast_tests ...
 
-Merge the PR into master
+# Merge the PR into master
 
-Go back to your feature branch and merge master
+# Go back to your feature branch and merge master
 
 > gco ${feature_branch}
-
 > git pull
 
-Now one piece of your feature branch has been merged and you can repeat until
+# Now one piece of your feature branch has been merged and you can repeat until
 all the code is merged.
 
 ### Using git
 
 > git checkout `dst_branch`
-
 > git merge --squash --ff `src_branch`
-
 > git reset HEAD
 
 ## Systematic code transformation
@@ -657,39 +578,30 @@ image is not released.
 
 Build the local image (and update Poetry dependencies, if needed).
 
-> i docker_build_local_image --update-poetry
-
-...
-
-docker image ls 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
+> i docker_build_local_image --update-poetry ... docker image ls
+> 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
 
 REPOSITORY TAG IMAGE ID CREATED SIZE
-
 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp local 9b3f8f103a2c 1 second ago
 1.72GB
 
-Test the new "local" image
+# Test the new "local" image
 
-> i docker_bash --stage "local"
+> i docker_bash --stage "local" python -c "import async_solipsism" python -c
+> "import async_solipsism; print(async_solipsism.**version**)"
 
-python -c "import async_solipsism"
+# Run the tests with local image
 
-python -c "import async_solipsism; print(async_solipsism.**version**)"
-
-Run the tests with local image
-
-Make sure the new image is used: e.g., add an import and trigger the tests.
+# Make sure the new image is used: e.g., add an import and trigger the tests.
 
 > i run_fast_tests --stage "local" --pytest-opts
 > core/dataflow/test/test_real_time.py
 
 > i run_fast_slow_tests --stage "local"
 
-Promote a local image to dev.
+\# Promote a local image to dev.
 
-> i docker_tag_local_image_as_dev
-
-> i docker_push_dev_image
+> i docker_tag_local_image_as_dev i docker_push_dev_image
 
 ```
 
@@ -703,35 +615,30 @@ Clean all the Docker images locally, to make sure there is no hidden state.
 
 > docker system prune --all
 
-Update the needed packages.
+# Update the needed packages.
 
 > devops/docker_build/pyproject.toml
 
-Visually inspect the updated packages.
+# Visually inspect the updated packages.
 
 > git diff devops/docker_build/poetry.lock
 
-Run entire release process.
+# Run entire release process.
 
 > i docker_release_dev_image
 
 ```
-
 ## Experiment in a local image
 
 To install packages in an image, do `i docker_bash`
 
 ```
 
-Switch to root and install package.
+# Switch to root and install package.
 
-> sudo su -
+> sudo su - source /venv/bin/activate pip install <package>
 
-> source /venv/bin/activate
-
-> pip install <package>
-
-Switch back to user.
+# Switch back to user.
 
 > exit
 
@@ -741,9 +648,8 @@ You should test that the package is installed for your user, e.g.,
 
 ```
 
-> source /venv/bin/activate
-
-> python -c "import foobar; print(foobar); print(foobar.**version**)"
+> source /venv/bin/activate python -c "import foobar; print(foobar);
+> print(foobar.**version**)"
 
 ```
 
@@ -767,30 +673,26 @@ container is still running.
 
 - Commit image
 
-> ```
->
-> > docker commit <Container ID> <IMAGE>/cmamp:local-$USER
->
-> ```
->
-> E.g. `docker commit da8f3bb8f53b
-> 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:local-julias`
+```
+
+> docker commit <Container ID> <IMAGE>/cmamp:local-$USER E.g.
+> `docker commit da8f3bb8f53b 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:local-julias`
+
+```
+
 
 If you are running inside a notebook using `i docker_jupyter` you can install
 packages using a one liner `! sudo su -; source ...; `
 
 # GitHub Actions (CI)
 
-Running a single test in GH Actions
+## Running a single test in GH Actions
 
 Create a branch
 
 Change
-
 .github/workflows/fast_tests.yml
-
 run: invoke run_fast_tests
-
 un: invoke run_fast_tests
 --pytest-opts="helpers/test/test_git.py::Test_git_modified_files1::test_get_modified_files_in_branch1
 -s --dbg"
@@ -818,7 +720,7 @@ Then from outside Docker launch vim in quickfix mode
 
 > invoke traceback
 
-The short form is `it`
+# The short form is `it`
 
 ## Iterating on a failing regression test
 
@@ -826,15 +728,15 @@ The workflow is:
 
 ```
 
-Run a lot of tests, e.g., the entire regression suite.
+# Run a lot of tests, e.g., the entire regression suite.
 
 > pytest ...
 
-Some tests fail.
+# Some tests fail.
 
-Run the `pytest_repro` to summarize test failures and to generate
+# Run the `pytest_repro` to summarize test failures and to generate
 
-commands to reproduce them.
+# commands to reproduce them.
 
 > invoke pytest_repro
 
@@ -848,7 +750,7 @@ The command is
 
 > i pytest_find_unused_goldens
 
-```
+````
 
 The specific dir to check can be specified with the `dir_name` parameter.
 
@@ -913,15 +815,13 @@ desired behavior of a notebook
 
 side-by-side for changes
 
-Detailed instructions
+# Detailed instructions
 
 - You can get details by running:
 
 ```bash
-
 > dev_scripts/notebooks/publish_notebook.py -h
-
-```
+````
 
 Plug-in for Chrome
 
@@ -932,7 +832,6 @@ Plug-in for Chrome
 Make sure that your environment is set up properly
 
 ```
-
 **> more \~/.aws/credentials**
 
 **[am]**
@@ -946,28 +845,22 @@ Make sure that your environment is set up properly
 **> printenv | grep AM\_**
 
 **AM_AWS_PROFILE=am**
-
 ```
 
-If you don't have them, you need to re-run `source dev_scripts/seten.sh` in
-all the shells. It might be easier to kill that tmux session and restart it
+If you don't have them, you need to re-run `source dev_scripts/seten.sh` in all
+the shells. It might be easier to kill that tmux session and restart it
 
 ```
-
 **> tmux kill-session --t limeXYZ **
-
 **> \~/go_lem.sh XYZ**
-
 ```
 
 Inside or outside a Docker bash run
 
 ```
-
 **> publish_notebook.py --file
 http://127.0.0.1:2908/notebooks/notebooks/Task40_Optimizer.ipynb --action
 publish_on_s3**
-
 ```
 
 The file is copied to S3
@@ -978,29 +871,19 @@ The file is copied to S3
 You can also save the data locally:
 
 ```
-
->
-
-publish_notebook.py --file
+> publish_notebook.py --file
 amp/oms/notebooks/Master_forecast_processor_reader.ipynb --action publish_on_s3
 --aws_profile saml-spm-sasm
-
 ```
 
 You can also use a different path or profile by specifying it directly
 
 ```
-
 **> publish_notebook.py \\**
-
 **--file http://127.0.0.1:2908/notebooks/notebooks/Task40_Optimizer.ipynb \\**
-
 **--action publish_on_s3 \\**
-
 **--s3_path s3://alphamatic-data/notebooks \\**
-
 **--aws_profile am**
-
 ```
 
 ## Open a published notebook
@@ -1016,10 +899,8 @@ go to the page in the local browser
 To open a notebook saved on S3, \*outside\* a Docker container run:
 
 ```
-
 **> publish_notebook.py --action open --file
 s3://alphamatic-data/notebooks/Task40_Optimizer.20210717_010806.html**
-
 ```
 
 This opens a Chrome window through X-windows.
@@ -1027,9 +908,7 @@ This opens a Chrome window through X-windows.
 To open files faster you can open a Chrome window in background with
 
 ```
-
 > google-chrome
-
 ```
 
 and then navigate to the path (e.g.,
@@ -1040,10 +919,8 @@ and then navigate to the path (e.g.,
 Another approach is:
 
 ```
-
 **> aws s3 presign --expires-in 36000
 s3://alphamatic-data/notebooks/Task40_Optimizer.20210716_194400.html | xclip**
-
 ```
 
 Open the link saved in the clipboard in the Windows browser
@@ -1067,32 +944,24 @@ It worked only as cryptomtc, but not using my key
 
 # Integrate public to private: amp -> cmamp
 
-## Set-up
+### Set-up
 
 > git remote add public
 > [[git@github.com]{.underline}](mailto:git@github.com):alphamatic/amp
 
-Go to cmamp
+# Go to cmamp
 
-> cd /data/saggese/src/cmamp1
+> cd /data/saggese/src/cmamp1 cd /Users/saggese/src/cmamp1
 
-> cd /Users/saggese/src/cmamp1
+# Add the remote
 
-Add the remote
+# git remote add public https://github.com/exampleuser/public-repo.git
 
-git remote add public https://github.com/exampleuser/public-repo.git
-
-> git remote add public git@github.com:alphamatic/amp
-
-> git remote -v
-
-origin https://github.com/cryptomtc/cmamp.git (fetch)
-
-origin https://github.com/cryptomtc/cmamp.git (push)
-
-public git@github.com:alphamatic/amp (fetch)
-
-public git@github.com:alphamatic/amp (push)
+> git remote add public git@github.com:alphamatic/amp git remote -v origin
+> https://github.com/cryptomtc/cmamp.git (fetch) origin
+> https://github.com/cryptomtc/cmamp.git (push) public
+> git@github.com:alphamatic/amp (fetch) public git@github.com:alphamatic/amp
+> (push)
 
 ## Ours vs theirs
 
@@ -1117,7 +986,7 @@ When rebasing the role is swapped
 
 > git fetch origin; git fetch public
 
-Pull from both repos
+# Pull from both repos
 
 > git pull public master -X ours
 
@@ -1133,19 +1002,12 @@ When there is a file added it's better to add
 
 im/ccxt/db/test/test_ccxt_db_utils.py
 
-Merge branch
+## Merge branch
 
-> gs
-
-\+ git status
-
-On branch AmpTask1786_Integrate_20211128_02
-
-Your branch and 'origin/AmpTask1786_Integrate_20211128_02' have diverged,
-
-and have 861 and 489 different commits each, respectively.
-
-(use "git pull" to merge the remote branch into yours)
+> gs \+ git status On branch AmpTask1786_Integrate_20211128_02 Your branch and
+> 'origin/AmpTask1786_Integrate_20211128_02' have diverged, and have 861 and 489
+> different commits each, respectively. (use "git pull" to merge the remote
+> branch into yours)
 
 You are in a sparse checkout with 100% of tracked files present.
 
@@ -1153,7 +1015,7 @@ nothing to commit, working tree clean
 
 > git pull -X ours
 
-Make sure it's synced at ToT
+## Make sure it's synced at ToT
 
 rsync --delete -r /Users/saggese/src/cmamp2/ /Users/saggese/src/cmamp1
 --exclude='.git/'
@@ -1171,33 +1033,27 @@ git diff origin/master... >patch.txt
 
 cd /Users/saggese/src/cmamp2
 
-Create a branch
+# Create a branch
 
-git checkout -b Cmamp114_Integrate_amp_cmamp_20210928
+git checkout -b Cmamp114_Integrate_amp_cmamp_20210928 git apply patch.txt
 
-git apply patch.txt
-
-Compare branch with references
+# Compare branch with references
 
 dev_scripts/diff_to_vimdiff.py --dir1 /Users/saggese/src/cmamp1/im --dir2
 /Users/saggese/src/cmamp2/im
 
 diff -r --brief /Users/saggese/src/lemonade3/amp \~/src/cmamp2 | grep -v "/im"
 
-Creates a merge commit
+# Creates a merge commit
 
 git push origin master
 
 ## Integrate private to public: cmamp -> amp
 
-cd /data/saggese/src/cmamp1
+cd /data/saggese/src/cmamp1 tar cvzf patch.tgz $(git diff --name-only
+origin/master public/master | grep -v repo_config.py)
 
-tar cvzf patch.tgz $(git diff --name-only origin/master public/master | grep -v
-repo_config.py)
-
-> cd /Users/saggese/src/amp1
-
-> git remote add cmamp
+> cd /Users/saggese/src/amp1 git remote add cmamp
 > [[git@github.com]{.underline}](mailto:git@github.com):cryptomtc/cmamp.git
 
 > GIT_SSH_COMMAND="ssh -i \~/.ssh/cryptomatic/id_rsa.cryptomtc.github" git fetch
@@ -1213,15 +1069,8 @@ repo_config.py)
 From
 [[https://stackoverflow.com/questions/25356810/git-how-to-squash-all-commits-on-branch]{.underline}](https://stackoverflow.com/questions/25356810/git-how-to-squash-all-commits-on-branch)
 
-git checkout yourBranch
-
-git reset $(git merge-base master $(git branch --show-current))
-
-git add -A
-
-git commit -m "Squash"
-
-git push --force
+git checkout yourBranch git reset $(git merge-base master $(git branch
+--show-current)) git add -A git commit -m "Squash" git push --force
 
 # Double integration cmamp < -- > amp
 
@@ -1230,27 +1079,23 @@ The bug is
 
 ## Script set-up
 
-vi /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
-
-Update the date
+vi /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh Update the date
 
 vi /Users/saggese/src/amp1/dev_scripts/integrate_repos/\*
 
-cd \~/src/amp1
+cd \~/src/amp1 source
+/Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
 
-source /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
-
-cd \~/src/cmamp1
-
-source /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
+cd \~/src/cmamp1 source
+/Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
 
 ## Manual set-up branches
 
-Go to cmamp1
+# Go to cmamp1
 
 > go_amp.sh cmamp 1
 
-Set up the env vars in both clients
+# Set up the env vars in both clients
 
 > export AMP_DIR=/Users/saggese/src/amp1; export
 > CMAMP_DIR=/Users/saggese/src/cmamp1; echo "$AMP_DIR"; ls
@@ -1259,27 +1104,20 @@ $AMP_DIR; echo ">
 
 Create two branches
 
-> export BRANCH_NAME=AmpTask1786_Integrate_20211010
-
-...
-
-> export BRANCH_NAME=AmpTask1786_Integrate_2021117
+> export BRANCH_NAME=AmpTask1786_Integrate_20211010 ... export
+> BRANCH_NAME=AmpTask1786_Integrate_2021117
 
 > cd $AMP_DIR
 
-Create automatically
+# Create automatically
 
 > i git_create_branch -b $BRANCH_NAME
 
-Create manually
+# Create manually
 
-> git checkout -b $BRANCH_NAME
+> git checkout -b $BRANCH_NAME git push --set-upstream origin $BRANCH_NAME
 
-> git push --set-upstream origin $BRANCH_NAME
-
-> cd $CMAMP_DIR
-
-> i git_create_branch -b $BRANCH_NAME
+> cd $CMAMP_DIR i git_create_branch -b $BRANCH_NAME
 
 ## High-level plan
 
@@ -1299,34 +1137,30 @@ Everything else
 
 SUBDIR=im
 
-Check different files
+# Check different files
 
 diff -r --brief $AMP_DIR/$SUBDIR $CMAMP_DIR/$SUBDIR | grep -v .git
 
-Diff the entire dirs with vimdiff
+# Diff the entire dirs with vimdiff
 
 > dev_scripts/diff_to_vimdiff.py --dir1 $AMP_DIR/$SUBDIR --dir2
 > $CMAMP_DIR/$SUBDIR
 
-Find different files
+# Find different files
 
-find $AMP_DIR/$SUBDIR -name "\*"; find $CMAMP_DIR/$SUBDIR -name "\*"
+find $AMP_DIR/$SUBDIR -name "\*"; find $CMAMP_DIR/$SUBDIR -name "\*" sdiff
+/tmp/dir1 /tmp/dir2
 
-sdiff /tmp/dir1 /tmp/dir2
+# Copy cmamp -> amp
 
-Copy cmamp -> amp
+rsync --delete -au $CMAMP_DIR/$SUBDIR/ $AMP_DIR/$SUBDIR -a = archive -u = ignore
+newer
 
-rsync --delete -au $CMAMP_DIR/$SUBDIR/ $AMP_DIR/$SUBDIR
-
--a = archive
-
--u = ignore newer
-
-Add all the untracked files
+# Add all the untracked files
 
 cd $AMP_DIR/$SUBDIR && git add $(git ls-files -o --exclude-standard)
 
-Check that there are no differences after copying
+# Check that there are no differences after copying
 
 dev_scripts/diff_to_vimdiff.py --dir1 $AMP_DIR/$SUBDIR --dir2 $CMAMP_DIR/$SUBDIR
 
@@ -1334,105 +1168,53 @@ dev_scripts/diff_to_vimdiff.py --dir1 $AMP_DIR/$SUBDIR --dir2 $CMAMP_DIR/$SUBDIR
 
 rsync --delete -rtu $AMP_DIR/$SUBDIR/ $CMAMP_DIR/$SUBDIR
 
-> rsync --dry-run -rtui --delete $AMP_DIR/$SUBDIR/ $CMAMP_DIR/$SUBDIR/
+> rsync --dry-run -rtui --delete $AMP_DIR/$SUBDIR/ $CMAMP_DIR/$SUBDIR/ .d..t....
+> ./ f..t.... **init**.py cd+++++++ features/ f+++++++ features/**init**.py
+> f+++++++ features/pipeline.py cd+++++++ features/test/ f+++++++
+> features/test/test_feature_pipeline.py cd+++++++
+> features/test/TestFeaturePipeline.test1/ cd+++++++
+> features/test/TestFeaturePipeline.test1/output/ f+++++++
+> features/test/TestFeaturePipeline.test1/output/test.txt .d..t.... price/
+> .d..t.... real_time/ f..t.... real_time/**init**.py .d..t....
+> real_time/notebooks/ f..t.... real_time/notebooks/Implement_RT_interface.ipynb
+> f..t.... real_time/notebooks/Implement_RT_interface.py .d..t....
+> real_time/test/ cd+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/
+> cd+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/output/ f+++++++
+> real_time/test/TestRealTimeReturnPipeline1.test1/output/test.txt .d..t....
+> returns/ f..t.... returns/**init**.py f..t.... returns/pipeline.py .d..t....
+> returns/test/ f..t.... returns/test/test_returns_pipeline.py .d..t....
+> returns/test/TestReturnsBuilder.test_equities1/ .d..t....
+> returns/test/TestReturnsBuilder.test_equities1/output/ .d..t....
+> returns/test/TestReturnsBuilder.test_futures1/ .d..t....
+> returns/test/TestReturnsBuilder.test_futures1/output/
 
-.d..t.... ./
-
-> f..t.... **init**.py
-
-cd+++++++ features/
-
-> f+++++++ features/**init**.py
-
-> f+++++++ features/pipeline.py
-
-cd+++++++ features/test/
-
-> f+++++++ features/test/test_feature_pipeline.py
-
-cd+++++++ features/test/TestFeaturePipeline.test1/
-
-cd+++++++ features/test/TestFeaturePipeline.test1/output/
-
-> f+++++++ features/test/TestFeaturePipeline.test1/output/test.txt
-
-.d..t.... price/
-
-.d..t.... real_time/
-
-> f..t.... real_time/**init**.py
-
-.d..t.... real_time/notebooks/
-
-> f..t.... real_time/notebooks/Implement_RT_interface.ipynb
-
-> f..t.... real_time/notebooks/Implement_RT_interface.py
-
-.d..t.... real_time/test/
-
-cd+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/
-
-cd+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/output/
-
-> f+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/output/test.txt
-
-.d..t.... returns/
-
-> f..t.... returns/**init**.py
-
-> f..t.... returns/pipeline.py
-
-.d..t.... returns/test/
-
-> f..t.... returns/test/test_returns_pipeline.py
-
-.d..t.... returns/test/TestReturnsBuilder.test_equities1/
-
-.d..t.... returns/test/TestReturnsBuilder.test_equities1/output/
-
-.d..t.... returns/test/TestReturnsBuilder.test_futures1/
-
-.d..t.... returns/test/TestReturnsBuilder.test_futures1/output/
-
-> rsync --dry-run -rtui --delete $CMAMP_DIR/$SUBDIR/ $AMP_DIR/$SUBDIR/
-
-> f..t.... price/**init**.py
-
-> f..t.... price/pipeline.py
-
-> f..t.... real_time/pipeline.py
-
-> f..t.... real_time/test/test_dataflow_amp_real_time_pipeline.py
-
-> f..t.... returns/test/TestReturnsBuilder.test_equities1/output/test.txt
-
-> f..t.... returns/test/TestReturnsBuilder.test_futures1/output/test.txt
+> rsync --dry-run -rtui --delete $CMAMP_DIR/$SUBDIR/ $AMP_DIR/$SUBDIR/ f..t....
+> price/**init**.py f..t.... price/pipeline.py f..t.... real_time/pipeline.py
+> f..t.... real_time/test/test_dataflow_amp_real_time_pipeline.py f..t....
+> returns/test/TestReturnsBuilder.test_equities1/output/test.txt f..t....
+> returns/test/TestReturnsBuilder.test_futures1/output/test.txt
 
 ## Sync everything
 
-Check if there is anything in cmamp more recent than amp
+# Check if there is anything in cmamp more recent than amp
 
 > rsync -au --exclude='.git' --exclude='devops' $CMAMP_DIR/
 $AMP_DIR
 
-vimdiff
+# vimdiff
 
 dev_scripts/diff_to_vimdiff.py --dir1 $AMP_DIR --dir2
 $CMAMP_DIR
 
-F1: skip
+F1: skip F9: choose left (i.e., amp) F10: choose right (i.e,. cmamp)
 
-F9: choose left (i.e., amp)
-
-F10: choose right (i.e,. cmamp)
-
-Copy
+# Copy
 
 rsync -au --delete --exclude='.git' --exclude='devops' --exclude='im'
 $AMP_DIR/
 $CMAMP_DIR
 
-Add all the untracked files
+# Add all the untracked files
 
 (cd $CMAMP_DIR/$SUBDIR && git add $(git ls-files -o --exclude-standard))
 
@@ -1440,31 +1222,24 @@ diff -r --brief $AMP_DIR $CMAMP_DIR | grep -v .git | grep Only
 
 ## Files that need to be different
 
-amp needs an `if False`
+amp needs an `if False` helpers/lib_tasks.py
 
-helpers/lib_tasks.py
-
-amp needs two tests disabled
-
-im/ccxt/data/load/test/test_loader.py
-
+amp needs two tests disabled im/ccxt/data/load/test/test_loader.py
 im/ccxt/data/load/test/test_loader.py
 
 TODO(gp): How to copy files in vimdiff including last line?
 
 - Have a script to remove all the last lines
-
 - Some files end with an `0x0a`
-
 - tr -d '\\r'
 
 find . -name "\*.txt" | xargs perl -pi -e 's/\\r\\n/\\n/g'
 
-Remove `No newline at end of file`
+# Remove `No newline at end of file`
 
 find . -name "\*.txt" | xargs perl -pi -e 'chomp if eof'
 
-## Lint everything
+### Lint everything
 
 autoflake amp_check_filename amp_isort amp_flake8 amp_class_method_order
 amp_normalize_import amp_format_separating_line amp_black
@@ -1472,7 +1247,7 @@ amp_normalize_import amp_format_separating_line amp_black
 i lint --phases="amp_isort amp_class_method_order amp_normalize_import
 amp_format_separating_line amp_black" --files='$(find . -name "\*.py")'
 
-## Testing
+### Testing
 
 - Run amp on my laptop (or on the server)
 
