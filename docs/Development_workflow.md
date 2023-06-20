@@ -28,7 +28,6 @@ Refs:
 You can check the Git credentials that will be used to commit in a client by
 running:
 
-``\`
 
 > git config -l | grep user
 
@@ -38,32 +37,26 @@ user.email=saggese@gmail.com
 
 github.user=gpsaggese
 
-``\`
 
 To know at which level each variable is defined, run
 
-``\`
 
 > git config --show-origin user.name
 
 file:/Users/saggese/.gitconfig saggese
 
-``\`
 
 You can see all the `Authors` in a Git repo history with:
 
-``\`
 
 > git log | grep -i Author | sort | uniq
 
 ...
 
-``\`
 
 Git doesn't do any validation of `user.name` and `user.email` but it just uses
 these values to compose a commit message like:
 
-``\`
 
 > git log -2
 
@@ -76,7 +69,6 @@ Date: Mon Jun 21 16:22:25 2021
 
 Update hooks
 
-``\`
 
 ## Setting Git credentials
 
@@ -93,17 +85,17 @@ To accomplish the set-up above you can:
 - use in `/Users/saggese/.gitconfig` the values for our open-source account, so
   that they are used by default
 
-> ``\`
+>
 >
 > > git config --global user.name $(whoami)
 >
 > > git config --global user.email YOUR_EMAIL
 >
-> ``\`
+>
 
 - use the correct user / email in the repos that are not open-source
 
-> ``\`
+>
 >
 > > cd $GIT_ROOT
 >
@@ -111,7 +103,7 @@ To accomplish the set-up above you can:
 >
 > > git config --local user.email YOUR_EMAIL
 >
-> ``\`
+>
 
 - Note that you need to set these local values on each Git client that you have
   cloned, since Git doesn't version control these values
@@ -128,7 +120,6 @@ the hooks.
 
 TODO(gp): We could create a script to automate cloning a repo and setting it up.
 
-``\`
 
 > cd //amp
 
@@ -138,7 +129,6 @@ TODO(gp): We could create a script to automate cloning a repo and setting it up.
 
 > ./amp/dev_scripts/git/git_hooks/install_hooks.py --action install
 
-``\`
 
 This procedure creates some links from `.git/hook` to the scripts in the repo.
 
@@ -149,7 +139,6 @@ hooks.
 
 You can follow the
 
-``\`
 
 Build the client env
 
@@ -157,7 +146,6 @@ Build the client env
 
 > source dev_scripts/setenv_amp.sh
 
-``\`
 
 # Invoke
 
@@ -190,7 +178,6 @@ related tasks
 The best approach to getting familiar with the tasks is to browse the list and
 then check the output of the help
 
-``\`
 
 > invoke --help command
 
@@ -214,7 +201,6 @@ Options:
 
 -r STRING, --repo-short-name=STRING
 
-``\`
 
 I can guarantee you a 2x improvement in performance, if you master the
 workflows, but it takes some time and patience
@@ -381,7 +367,7 @@ traceback Parse the traceback from Pytest and navigate it with vim.
 
 - All invoke tasks are functions with the `@task` decorator, e.g.,
 
-> ``\`
+>
 >
 > from invoke import task
 >
@@ -391,7 +377,7 @@ traceback Parse the traceback from Pytest and navigate it with vim.
 >
 > ...
 >
-> ``\`
+>
 
 - To run a task we use `context.run(...)`, see
   [[the official docs]{.underline}](https://docs.pyinvoke.org/en/0.11.1/concepts/context.html)
@@ -416,7 +402,6 @@ traceback Parse the traceback from Pytest and navigate it with vim.
 
 ## GitHub
 
-``\`
 
 Get the official branch name corresponding to an Issue
 
@@ -429,7 +414,6 @@ Copied to system clipboard:
 AmpTask256_Part_task2236_jenkins_cleanup_split_scripts:
 [[https://github.com/alphamatic/amp/pull/256]{.underline}](https://github.com/alphamatic/amp/pull/256)
 
-``\`
 
 ## See all the workflows
 
@@ -451,7 +435,6 @@ e.g.,
 Once in a while it can be useful to list all the available workflows and see if
 something interesting was added.
 
-``\`
 
 > invoke --list
 
@@ -464,13 +447,11 @@ image).
 
 ...
 
-``\`
 
 ## Getting help for a workflow
 
 You can get a more detailed help with
 
-``\`
 
 > invoke --help run_fast_tests
 
@@ -510,7 +491,6 @@ Options:
 
 -y STRING, --pytest-mark=STRING
 
-``\`
 
 ## Merge master in the current branch
 
@@ -561,7 +541,6 @@ check the help)
 
 > i git_create_patch -b
 
-``\`
 
 ...
 
@@ -574,12 +553,10 @@ To apply the patch and execute:
 
 ...
 
-``\`
 
 Go to a fresh Git client (I have 2-3 Git clients separated from the one in which
 I develop for this kind of operations) or go to master in the same Git client
 
-``\`
 
 Go to master
 
@@ -653,7 +630,6 @@ team.
 The flow is similar to the dev image, but by default tests are not run and the
 image is not released.
 
-``\`
 
 Build the local image (and update Poetry dependencies, if needed).
 
@@ -691,13 +667,11 @@ Promote a local image to dev.
 
 > i docker_push_dev_image
 
-``\`
 
 ## Update the dev `amp` Docker image
 
 To implement the entire Docker QA process of a dev image
 
-``\`
 
 Clean all the Docker images locally, to make sure there is no hidden state.
 
@@ -715,13 +689,11 @@ Run entire release process.
 
 > i docker_release_dev_image
 
-``\`
 
 ## Experiment in a local image
 
 To install packages in an image, do `i docker_bash`
 
-``\`
 
 Switch to root and install package.
 
@@ -735,17 +707,14 @@ Switch back to user.
 
 > exit
 
-``\`
 
 You should test that the package is installed for your user, e.g.,
 
-``\`
 
 > source /venv/bin/activate
 
 > python -c "import foobar; print(foobar); print(foobar.**version**)"
 
-``\`
 
 You can now use the package in this container. Note that if you exit the
 container, the modified image is lost, so you need to install it again.
@@ -767,11 +736,11 @@ container is still running.
 
 - Commit image
 
-> ``\`
+>
 >
 > > docker commit <Container ID> <IMAGE>/cmamp:local-$USER
 >
-> ``\`
+>
 >
 > E.g. \`docker commit da8f3bb8f53b
 > 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:local-julias\`
@@ -824,7 +793,6 @@ The short form is `it`
 
 The workflow is:
 
-``\`
 
 Run a lot of tests, e.g., the entire regression suite.
 
@@ -838,17 +806,14 @@ commands to reproduce them.
 
 > invoke pytest_repro
 
-``\`
 
 ## Detect mismatches with golden test outcomes
 
 The command is
 
-``\`
 
 > i pytest_find_unused_goldens
 
-``\`
 
 The specific dir to check can be specified with the `dir_name` parameter.
 
@@ -916,12 +881,10 @@ side-by-side for changes
 Detailed instructions
 
 - You can get details by running:
-
-``\`bash
+bash
 
 > dev_scripts/notebooks/publish_notebook.py -h
 
-``\`
 
 Plug-in for Chrome
 
@@ -931,7 +894,6 @@ Plug-in for Chrome
 
 Make sure that your environment is set up properly
 
-``\`
 
 **> more \~/.aws/credentials**
 
@@ -947,28 +909,23 @@ Make sure that your environment is set up properly
 
 **AM_AWS_PROFILE=am**
 
-``\`
 
 If you don't have them, you need to re-run \`source dev_scripts/seten.sh\` in
 all the shells. It might be easier to kill that tmux session and restart it
 
-``\`
 
 **> tmux kill-session --t limeXYZ **
 
 **> \~/go_lem.sh XYZ**
 
-``\`
 
 Inside or outside a Docker bash run
 
-``\`
 
 **> publish_notebook.py --file
 http://127.0.0.1:2908/notebooks/notebooks/Task40_Optimizer.ipynb --action
 publish_on_s3**
 
-``\`
 
 The file is copied to S3
 
@@ -977,7 +934,6 @@ The file is copied to S3
 
 You can also save the data locally:
 
-``\`
 
 >
 
@@ -985,11 +941,9 @@ publish_notebook.py --file
 amp/oms/notebooks/Master_forecast_processor_reader.ipynb --action publish_on_s3
 --aws_profile saml-spm-sasm
 
-``\`
 
 You can also use a different path or profile by specifying it directly
 
-``\`
 
 **> publish_notebook.py \\**
 
@@ -1001,7 +955,6 @@ You can also use a different path or profile by specifying it directly
 
 **--aws_profile am**
 
-``\`
 
 ## Open a published notebook
 
@@ -1015,22 +968,18 @@ go to the page in the local browser
 
 To open a notebook saved on S3, \*outside\* a Docker container run:
 
-``\`
 
 **> publish_notebook.py --action open --file
 s3://alphamatic-data/notebooks/Task40_Optimizer.20210717_010806.html**
 
-``\`
 
 This opens a Chrome window through X-windows.
 
 To open files faster you can open a Chrome window in background with
 
-``\`
 
 > google-chrome
 
-``\`
 
 and then navigate to the path (e.g.,
 /local/home/share/html/published_notebooks/Master_forecast_processor_reader.20220810-112328.html)
@@ -1039,12 +988,10 @@ and then navigate to the path (e.g.,
 
 Another approach is:
 
-``\`
 
 **> aws s3 presign --expires-in 36000
 s3://alphamatic-data/notebooks/Task40_Optimizer.20210716_194400.html | xclip**
 
-``\`
 
 Open the link saved in the clipboard in the Windows browser
 
