@@ -1261,8 +1261,9 @@ Conceptually the flow consists of the following phases:
   > i opt_docker_bash
   docker> pytest .
   ```
-- We wrap this in an invoke target like `i opt_run_fast_tests` **Alternative
-  solution**
+- We wrap this in an invoke target like `i opt_run_fast_tests` 
+
+**Alternative solution**
 - We can use dind to run the `opt` container inside a `cmamp` one
   - Cons:
     - dind complicates the system
