@@ -21,12 +21,11 @@
 
 # Why we use type hints
 
-We use Python 3 type hints to:
+- We use Python 3 type hints to:
 
-- Improve documentation
-- Allow mypy to perform static checking of the code, looking for bugs
-- Enforce the type checks at run-time, through automatic assertions (not
-  implemented yet)
+  - Improve documentation
+  - Allow mypy to perform static checking of the code, looking for bugs
+  - Enforce the type checks at run-time, through automatic assertions (not implemented yet)
 
 # What to annotate with type hints
 
@@ -41,23 +40,23 @@ We use Python 3 type hints to:
 
 ## Empty return
 
-Return `-> None` if your function doesn't return
+- Return `-> None` if your function doesn't return
 
-- Pros:
-  - `mypy` checks functions only when there is at least an annotation: so using
-    `-> None` enables mypy to do type checking
-  - It reminds us that we need to use type hints
-- Cons:
-  - `None` is the default value and so it might seem redundant
+  - Pros:
+    - `mypy` checks functions only when there is at least an annotation: so using
+      `-> None` enables mypy to do type checking
+    - It reminds us that we need to use type hints
+  - Cons:
+    - `None` is the default value and so it might seem redundant
 
 ## Invoke tasks
 
-For some reason `invoke` does not like type hints, so we
+- For some reason `invoke` does not like type hints, so we
 
-- Omit type hints for `invoke` tasks, i.e. functions with the `@task` decorator
-- Put `# type: ignore` so that `mypy` does not complain
+  - Omit type hints for `invoke` tasks, i.e. functions with the `@task` decorator
+  - Put `# type: ignore` so that `mypy` does not complain
 
-Example:
+- Example:
   ```python
   @task def run_qa_tests( # type: ignore 
     ctx, 
@@ -86,7 +85,7 @@ Example:
   ```bash
   dataflow/core/nodes/sklearn_models.py:537:[amp_mypy] error: Function "numpy.core.multiarray.array" is not valid as a type [valid-type]  
   ```
-  Then the problem is probably that a parameter that the lint is related to
+- Then the problem is probably that a parameter that the lint is related to
   has been types as `np.array` while it should be typed as `np.ndarray`:
   ```bash
   `x_vals: np.array` -> `x_vals: np.ndarray`
@@ -150,11 +149,11 @@ Example:
   dataflow/core/nodes/sklearn_models.py:155:[amp_mypy] error: "None" has no attribute "fit"
   ```
 - A solution is to
-  1. Type hint when assigning the model parameter in ctor:
+  - 1. Type hint when assigning the model parameter in ctor:
      ```bash
      self._model: Optional[sklearn.base.BaseEstimator] = None
      ```
-  2. Cast a type to the model parameter after asserting that it is not `None`:
+  - 2. Cast a type to the model parameter after asserting that it is not `None`:
      ```bash
      hdbg.dassert_is_not(self._model, None) self._model = cast(sklearn.base.BaseEstimator, self._model)
      ```
@@ -206,27 +205,27 @@ Example:
 
 # Inferring types using unit tests
 
-Sometimes it is possible to infer types directly from unit tests. We have used
+- Sometimes it is possible to infer types directly from unit tests. We have used
 this flow to annotate the code when we switched to Python3 and it worked fine
 although there were various mistakes. We still prefer to annotate by hand based
 on what the code is intended to do, rather than automatically infer it from how
 the code behaves.
 
-- Install `pyannotate`
-  ```bash
-  > pip install pyannotate
-  ```
-- To enable collecting type hints run
-  ```bash
-  > export PYANNOTATE=True
-  ```
-- Run `pytest`, e.g., on a subset of unit tests:
-- Run `pytest`, e.g., on a subset of unit tests like `helpers`:
-  ```bash
-  > pytest helpers
-  ```
-- A file `type_info.json` is generated
-- Annotate the code with the inferred types:
-  ```bash
-  > pyannotate -w --type-info type_info.json . --py3
-  ```
+  - Install `pyannotate`
+    ```bash
+    > pip install pyannotate
+    ```
+  - To enable collecting type hints run
+    ```bash
+    > export PYANNOTATE=True
+    ```
+  - Run `pytest`, e.g., on a subset of unit tests:
+  - Run `pytest`, e.g., on a subset of unit tests like `helpers`:
+    ```bash
+    > pytest helpers
+    ```
+  - A file `type_info.json` is generated
+  - Annotate the code with the inferred types:
+    ```bash
+    > pyannotate -w --type-info type_info.json . --py3
+    ```
