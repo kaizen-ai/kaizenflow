@@ -1,4 +1,4 @@
-#  Introduction
+# Introduction
 
 Docker is an open-source tool designed to make our life typically easier
 (although sometimes it makes it harder) when creating, building, deploying, and
@@ -10,9 +10,9 @@ that can run on any Linux, Windows, or macOS computer.
 Our Docker containers have everything required (e.g. OS packages, Python
 packages) inside to run certain applications/code.
 
-#  Concepts
+# Concepts
 
-##  Docker image
+## Docker image
 
 - A Docker image is a read-only template with instructions for creating a Docker
   container
@@ -24,17 +24,17 @@ packages) inside to run certain applications/code.
 - All steps needed to create the image and run it are defined in a Dockerfile,
   e.g. `dev_tools/devops/docker_build/dev.Dockerfile`
 
-##  Docker container
+## Docker container
 
 A Docker container is a runnable instance of an image. One can run code inside a
 docker container having all requirements installed.
 
-##  Docker registry
+## Docker registry
 
 A Docker registry stores docker images. In other words, Docker registry for
 docker images is like GitHub for code.
 
-#  High level philosophy
+# High level philosophy
 
 We always want to separate things that don't need to run together in different
 containers (e.g., `dev / prod cmamp`, `optimizer`, `im`, `oms`, `dev_tools`),
@@ -95,7 +95,7 @@ scripts need
 We can start with approach 1), which will also allow us to transition to 2)
 transparently, if needed
 
-##  Relevant bugs
+## Relevant bugs
 
 - [[https://github.com/cryptokaizen/cmamp/issues/1060]{.underline}](https://github.com/cryptokaizen/cmamp/issues/1060)
 
@@ -105,7 +105,7 @@ transparently, if needed
 
 - Fix tests that fail due to pandas update and release cmamp image \#1002
 
-#  Poetry
+# Poetry
 
 Poetry is a tool for managing Python packages and dependencies:
 
@@ -120,9 +120,9 @@ Poetry is a tool for managing Python packages and dependencies:
 - If there is a new version of a package re-running `poetry` might give you an
   updated list of packages to install
 
-#  Build a Docker image
+# Build a Docker image
 
-##  General
+## General
 
 A docker image is built from a `Dockerfile`. The image is then used to run a
 Docker container.
@@ -133,13 +133,13 @@ height="3.0972222222222223in"}
 There is `/devops` dir under a project's dir that contains Docker-related files,
 e.g. `cmamp/devops`.
 
-##  Dockerfile
+## Dockerfile
 
 A `Dockerfile` is a text document that contains all the commands to call on the
 command line to assemble an image. E.g.
 `cmamp/devops/docker_build/dev.Dockerfile`.
 
-###  Base image
+### Base image
 
 A `Dockerfile` should start with specifying a base image.
 
@@ -154,7 +154,7 @@ FROM ubuntu:20.4
 
 ```
 
-###  Copy files
+### Copy files
 
 Copy files that are required to build a Docker image to the Docker filesystem.
 
@@ -177,7 +177,7 @@ COPY devops/docker_build/install_packages.sh .
 
 ```
 
-###  Install OS packages
+### Install OS packages
 
 Install OS packages that are needed for a Docker app, but that are not installed
 for a base image.
@@ -202,7 +202,7 @@ RUN /bin/sh -c "./install_packages.sh"
 
 ```
 
-###  Install Python packages
+### Install Python packages
 
 We prefer to install Python packages with `poetry `.
 
@@ -237,7 +237,7 @@ RUN poetry install
 
 ```
 
-##  Build an image from a Dockerfile
+## Build an image from a Dockerfile
 
 To build an image from a `Dockerfile` run:
 
@@ -258,7 +258,7 @@ You can point to any `Dockerfile` by using `-f`:
 
 ```
 
-#  Run multi-container Docker application
+# Run multi-container Docker application
 
 Compose is a tool for defining and running multi-container Docker applications.
 With Compose, you use a `YAML` file to configure your application's services.
@@ -266,7 +266,7 @@ With Compose, you use a `YAML` file to configure your application's services.
 ![](docs/Tools_Docker_figs/image1.png){width="6.267716535433071in"
 height="2.736111111111111in"}
 
-##  Version
+## Version
 
 At the beginning of a `docker-compose.yaml` file specify the `docker-compose`
 version. We use the version `3.0`, for more information see
@@ -278,7 +278,7 @@ version: "3.0"
 
 ```
 
-##  Images
+## Images
 
 You can either re-use a public image or build a new one from a `Dockerfile`.
 
@@ -307,7 +307,7 @@ image: postgres: 13
 
 ```
 
-##  Bind mount
+## Bind mount
 
 If you want to be able to access code inside a Docker container, you should
 bind-mount a directory with the code on the host.
@@ -320,12 +320,12 @@ directory to `/app` dir inside a Docker container:
 app:
 
 	volumes:
-	
+
 		- .:/app
 
 ```
 
-##  Environment variables
+## Environment variables
 
 You can either use variables directly from the environment or pass them in a
 `docker-compose.yaml` file.
@@ -347,9 +347,9 @@ Set environment variable in a service's container
 db:
 
 	environment:
-	
+
 		- POSTGRES_VERSION=13
-	
+
 		image: "postgres:${POSTGRES_VERSION}"
 
 ```
@@ -361,9 +361,9 @@ Set environment variable with `.env` file
 db:
 
 	env_file:
-	
+
 		- ./postgres_env.env
-	
+
 		image: "postgres:${POSTGRES_VERSION}"
 
 ```
@@ -378,7 +378,7 @@ POSTGRES_VERSION=13
 
 ```
 
-##  Basic commands
+## Basic commands
 
 To check more advanced usage, please see
 [[the official documentation.]{.underline}](https://docs.docker.com/compose/reference/)
@@ -409,13 +409,15 @@ Stop containers created by `down`.
 
 ```
 
-#  How to test a package in a Docker container
+# How to test a package in a Docker container
+
 ```
 > sudo /bin/bash -c "(source /venv/bin/activate; pip install yfinance)"
 
 > python -c "import finance"
 ```
-##  Hacky approach to patch up a container
+
+## Hacky approach to patch up a container
 
 ```
 
@@ -438,7 +440,7 @@ Stop containers created by `down`.
 
 ```
 
-#  How to release a Docker image
+# How to release a Docker image
 
 All the `invoke` tasks to run the release flow are in
 `//amp/helpers/lib_tasks.py`.
@@ -457,7 +459,7 @@ E.g.,
 We try to use the same flow, conventions, and code for all the containers (e.g.,
 amp, cmamp, dev_tools, opt).
 
-##  Stages
+## Stages
 
 A "stage" is a step (e.g., local, dev, prod) in our release workflow of Docker
 images, code, or infrastructure.
@@ -467,7 +469,7 @@ To run a Docker container in a certain stage use the `stage` parameter
 - E.g. `i docker_bash --stage="local"` creates a bash session inside the local
   docker `amp` container
 
-###  Local
+### Local
 
 A `local` image is used to develop and test an update to the Docker container,
 e.g. after updating a package, installing a new package, etc.
@@ -476,7 +478,7 @@ Local images can only be accessed locally by a developer, i.e. the team members
 can not / should not use local images. In practice `local` images are like `dev`
 images but private to users and servers.
 
-###  Dev
+### Dev
 
 A `dev` image is used by our team to develop our systems (e.g., to add new
 functionalities to the `dev_tools` code).
@@ -490,7 +492,7 @@ without worries.
 Once a `dev` image is pushed to the docker registry it can be pulled and used by
 the team members.
 
-###  Prod
+### Prod
 
 A `prod` image is used to run a system by final users. E.g., the linter inside
 `dev_tools`, some prod system inside Airflow.
@@ -502,7 +504,7 @@ Python packages.
 It is typically created from the `dev` image by copying the released code inside
 the `prod` image.
 
-##  Overview of how to release an image
+## Overview of how to release an image
 
 The release flow consists of the following phases
 
@@ -532,7 +534,7 @@ If there is also an associated prod image
 
 - Push prod image to ECR
 
-##  How to add a Python package to Docker image
+## How to add a Python package to Docker image
 
 To add a new Python package to a Docker image you need to update `poetry` files
 and release a new image:
@@ -613,14 +615,14 @@ d. run regressions for the local image, i.e.
     [[\# Release a Docker image]{.underline}](#how-to-test-a-package-in-a-docker-container)
     section, use `--update-poetry` flag to resolve the dependencies
 
-##  How to find unused packages
+## How to find unused packages
 
 While installing Python packages we need to make sure that we do not install
 packages that we do not use
 
-###  Import-based approach using `pipreqs`
+### Import-based approach using `pipreqs`
 
-####  How it works
+#### How it works
 
 To do so we use an import-based approach provided by
 [[`pipreqs`]{.underline}](https://github.com/bndr/pipreqs). Under the hood it
@@ -638,7 +640,7 @@ re.compile(r'\^from ((?!\.+).\*?) import (?:.\*)$')
 
 ```
 
-####  Limitations
+#### Limitations
 
 - Not all packages that we use are necessarily imported, e.g. `awscli`,
   `jupyter`, `pytest-cov`, etc. -> `pipreqs` won't find these packages
@@ -647,7 +649,7 @@ re.compile(r'\^from ((?!\.+).\*?) import (?:.\*)$')
   mapping
   [[here]{.underline}](https://github.com/bndr/pipreqs/blob/master/pipreqs/mapping)
 
-####  Usage
+#### Usage
 
 See the [[official docs]{.underline}](https://github.com/bndr/pipreqs) for the
 advanced usage.
@@ -707,7 +709,7 @@ helpers/hpickle.py:108: import dill
 
 ```
 
-##  How to build a local image
+## How to build a local image
 
 The recipe to build a `local` image is in `devops/docker_build/dev.Dockerfile`.
 This launches various scripts to install:
@@ -771,7 +773,7 @@ A local image is a candidate for becoming a `dev` image.
 
 ```
 
-##  Testing the local image
+## Testing the local image
 
 ```
 
@@ -810,7 +812,7 @@ ECR:
 
 ```
 
-##  Tag `local` image as `dev`
+## Tag `local` image as `dev`
 
 - Docker tag is just a way of referring to an image. A good analogy is how Git
   tags refer to a particular commit in your history.
@@ -828,7 +830,7 @@ ECR:
   `cmamp-1.0.0` is created in order to properly control sync between code and
   container.
 
-##  Push image
+## Push image
 
 - To push `dev` or `prod` image means to send it to the docker registry. It is
   more like pushing a commit to the GitHub
@@ -842,7 +844,7 @@ ECR:
 
 - To be able to push an image to the ECR one should have permissions to do so
 
-##  End-to-end flow for `dev` image
+## End-to-end flow for `dev` image
 
 Conceptually the flow consists of the following phases:
 
@@ -903,7 +905,7 @@ For specific cases that can not be done via GH action see commands below:
 
 ```
 
-##  Build prod image
+## Build prod image
 
 The recipe to build a `prod` image is in
 `dev_tools/devops/docker_build/prod.Dockerfile`.
@@ -942,6 +944,7 @@ To run a command inside the prod image
 > docker run --rm -t --user $(id -u):$(id -g) --workdir=/app
 > 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:prod-1.0.3 "ls -l /app"
 ```
+
 Example of a complex command:
 
 ```
@@ -952,7 +955,7 @@ Example of a complex command:
 > --data_type 'ohlcv' --api_keys 'API_keys.json' --universe 'v03'"
 ```
 
-##  QA for prod image
+## QA for prod image
 
 In dev_scripts repo test:
 
@@ -966,7 +969,7 @@ In amp repo make sure:
 > i lint -f "helpers/dbg.py"
 ```
 
-##  End-to-end flow for `prod` image
+## End-to-end flow for `prod` image
 
 1.  Build docker `prod` image
 
@@ -982,7 +985,6 @@ In amp repo make sure:
 
 To run the flow end-to-end do:
 
-
 ```
 > i docker_release_prod_image --version 1.0.0
 ```
@@ -991,7 +993,7 @@ To run the flow end-to-end do:
 
 - check options `i docker_release_prod_image -h`
 
-##  Flow for both dev and prod images
+## Flow for both dev and prod images
 
 To run both flows end-to-end do:
 
@@ -999,7 +1001,7 @@ To run both flows end-to-end do:
 
 Alternatively, one can run the release stages step-by-step.
 
-#  Docker-in-docker (dind)
+# Docker-in-docker (dind)
 
 It is possible to install a Docker engine inside a Docker container so that one
 can run Docker container (e.g., OMS or IM) inside an isolated `amp` container.
@@ -1015,7 +1017,7 @@ The problems with this approach are:
 
 An alternative approach is the "sibling container" approach
 
-##  Sibling container approach
+## Sibling container approach
 
 Refs:
 
@@ -1060,7 +1062,7 @@ docker run -ti --rm hello-world
 
 ```
 
-###  Connecting to Postgres instance using sibling containers
+### Connecting to Postgres instance using sibling containers
 
 We can start the Docker container with Postgres as a service from outside the
 container.
@@ -1165,9 +1167,9 @@ Test connection to the DB from inside the container
 
 ```
 
-#  Release flow
+# Release flow
 
-##  cmamp
+## cmamp
 
 - File an Issue for the release (e.g., "Add package foobar to cmamp image")
 
@@ -1236,7 +1238,7 @@ You need to:
     - pull the latest container with `invoke docker_pull`
 ```
 
-##  dev_tools
+## dev_tools
 
 - File an Issue for the release
 
@@ -1250,6 +1252,7 @@ You need to:
 > i docker_release_dev_image --version 1.1.0
 > i docker_release_prod_image --version 1.1.0
 ```
+
 - Update the changelog, i.e. `//dev_tools/changelog.txt`
 
   - The changelog should be updated only after the image is released; otherwise
@@ -1279,7 +1282,7 @@ You need to:
   - Users need to make sure to pull docker after the master is up-to-date
     (including amp submodules)
 
-#  Design release flow - discussion
+# Design release flow - discussion
 
 TODO(gp, Vitalii): Turn this into a description of the release flow
 
@@ -1446,7 +1449,7 @@ CONTAINER_VERSION='amp-1.1.1'
 
 BUILD_TAG='amp-1.1.1-20211114_093142-AmpTask1845_Get_docker_in_docker_to_work-47fb46513f084b8f3c9008a2e623ec05040a10e9'
 
-##  QA flow
+## QA flow
 
 - The goal is to test that the container as a whole works
 
@@ -1478,6 +1481,7 @@ dev_scripts_devto/client_setup/requirements.txt
 > source dev_scripts_devto/client_setup/build.sh
 
 ```
+
 A possible solution is to use Docker-in-Docker
 
 - in this way we don't have to pollute the thin env with a bunch of stuff
@@ -1486,11 +1490,13 @@ A possible solution is to use Docker-in-Docker
 
 This works in dev_tools because the code for the import detector is there and we
 are using a dev container which binds the src dir to the container
+
 ```
 > i lint_detect_cycles --dir-name
 > import_check/test/Test_detect_import_cycles.test1/input/ --stage dev
 
 ```
+
 In all the other repos, one needs to use the prod of dev_tools container (that's
 what the user would do)
 
@@ -1507,13 +1513,13 @@ Next steps:
 
   - To break the circular dep we release a prod-candidate
 
-#  Dev_tools container
+# Dev_tools container
 
 For specific dev_tools workflows see
 
-#  Optimizer container
+# Optimizer container
 
-##  Rationale
+## Rationale
 
 - The high-level goal is to move towards containerized Python scripts running in
   smaller containers instead of keep adding packages to `amp` / `cmamp`, which
@@ -1526,7 +1532,7 @@ For specific dev_tools workflows see
 - This is similar to what we do for the `dev_tools`, which is like a
   containerized Python script for the linter
 
-##  Build and run a local version of `opt`
+## Build and run a local version of `opt`
 
 You can build the container locally with:
 
@@ -1562,9 +1568,9 @@ Run the container as:
 
 To run a Jupyter notebook in the `opt` container:
 
-##  Internals
+## Internals
 
-###  One container per Git repo
+### One container per Git repo
 
 A simple approach is to have each deployable unit (i.e., container)
 corresponding to a Git repo
@@ -1604,7 +1610,7 @@ where the dependency between containers are
 
 - optimizer -> helpers, core
 
-###  Multiple containers per Git repo
+### Multiple containers per Git repo
 
 Another approach is to have `optimizer` as a directory inside `amp`
 
@@ -1755,7 +1761,7 @@ i opt_docker_build_local_image --version 0.4.0
 
 ```
 
-##  Invariants
+## Invariants
 
 - A deployable dir is a dir under a Git repo
 
@@ -1798,11 +1804,11 @@ You can't see code outside optimizer
 
 TODO(gp): running in amp under lemonade should use the local repo_config
 
-##  Release and ECR flow
+## Release and ECR flow
 
 TODO(gp): Implement this
 
-##  Unit testing code inside `opt` container
+## Unit testing code inside `opt` container
 
 Since we want to segregate the package dependencies in different containers,
 tests that have a dependency from cvxopt /cvxpy can't be run inside the `amp`
@@ -1821,7 +1827,7 @@ We want to:
 
 To achieve this we need to solve the 3 problems below.
 
-###  Avoid compiling code depending from cvxopt when running amp
+### Avoid compiling code depending from cvxopt when running amp
 
 We can't parse code (e.g., in `pytest`) that includes packages that are not
 present in a container
@@ -1914,7 +1920,7 @@ amp-1.0.3
 
 Given the pros and cons, we decided to follow Solution 1 and Solution 3
 
-###  Run optimizer tests in a stand-alone `opt` container
+### Run optimizer tests in a stand-alone `opt` container
 
 To run the optimizer tests, you can create an `opt ` container and then run
 `pytest`
@@ -1936,18 +1942,19 @@ We wrap this in an invoke target like `i opt_run_fast_tests`
 We can use dind to run the `opt` container inside a `cmamp` one
 
 - Cons:
-    - dind complicates the system
 
-    - dind is not supported everywhere (one needs privileged containers)
+  - dind complicates the system
 
-    - dind is slower since there are 2 levels of (relatively fast) virtualization
+  - dind is not supported everywhere (one needs privileged containers)
 
-###  Run optimizer tests as part of running unit tests for `cmamp`
+  - dind is slower since there are 2 levels of (relatively fast) virtualization
+
+### Run optimizer tests as part of running unit tests for `cmamp`
 
 - We use the same mechanism as `run_fast_slow_superslow_tests` to pull together
   different test lists
 
-##  Call a Dockerized executable from a container
+## Call a Dockerized executable from a container
 
 From
 [[https://github.com/cryptokaizen/cmamp/issues/1357]{.underline}](https://github.com/cryptokaizen/cmamp/issues/1357)
@@ -2008,6 +2015,7 @@ The interface to the Dockerized optimizer is in `run_optimizer` in
 `//amp/oms/call_optimizer.py`
 
 To run the examples
+
 ```
 > cd //lime
 
