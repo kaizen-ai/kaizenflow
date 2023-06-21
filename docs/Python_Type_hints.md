@@ -58,7 +58,8 @@
 
 - Example:
   ```python
-  @task def run_qa_tests( # type: ignore 
+  @task 
+  def run_qa_tests( # type: ignore 
     ctx, 
     stage="dev", 
     version="", 
@@ -86,8 +87,8 @@
   dataflow/core/nodes/sklearn_models.py:537:[amp_mypy] error: Function "numpy.core.multiarray.array" is not valid as a type [valid-type]  
   ```
 - Then the problem is probably that a parameter that the lint is related to
-  has been types as `np.array` while it should be typed as `np.ndarray`:
-  ```bash
+  has been typed as `np.array` while it should be typed as `np.ndarray`:
+  ```python
   `x_vals: np.array` -> `x_vals: np.ndarray`
   ```
 
@@ -96,7 +97,7 @@
 - `mypy` assigns a single type to each variable for its entire scope
 - The problem is in common idioms where we use the same variable to store
   different representations of the same data
-  ```bash
+  ```python
   output : str = ...
   output = output.split("\n")
   ...
@@ -105,7 +106,7 @@
   output = "\n".join(output)
   ```
 - Unfortunately the proper solution is to use different variables
-  ```bash
+  ```python
   output : str = ...
   output_as_array = output.split("\n")
   ...
@@ -114,7 +115,7 @@
   output = "\n".join(output_as_array)
   ```
 - Another case could be:
-  ```bash
+  ```python
   from typing import Optional
   def test_func(arg: bool):
   ...
@@ -128,7 +129,7 @@
   that `typing.cast` has no runtime effects and is purely for type checking.
 - Here're the relevant [docs](https://mypy.readthedocs.io/en/stable/casts.html)
 - So the solution would be:
-  ```bash
+  ```python
   from typing import cast ...
   ...
   test_func(arg=cast(bool, var))
@@ -141,7 +142,7 @@
 - The problem is that statically it's not possible to understand that someone
   will call `set_fit_state` before using `self._model`, so when a model's method
   is applied:
-  ```bash
+  ```python
   self._model = self._model.fit(...)
   ```
   the following lint appears:
@@ -149,13 +150,14 @@
   dataflow/core/nodes/sklearn_models.py:155:[amp_mypy] error: "None" has no attribute "fit"
   ```
 - A solution is to
-  - 1. Type hint when assigning the model parameter in ctor:
-     ```bash
+  - Type hint when assigning the model parameter in ctor:
+     ```python
      self._model: Optional[sklearn.base.BaseEstimator] = None
      ```
-  - 2. Cast a type to the model parameter after asserting that it is not `None`:
-     ```bash
-     hdbg.dassert_is_not(self._model, None) self._model = cast(sklearn.base.BaseEstimator, self._model)
+  - Cast a type to the model parameter after asserting that it is not `None`:
+     ```python
+     hdbg.dassert_is_not(self._model, None)
+     self._model = cast(sklearn.base.BaseEstimator, self._model)
      ```
 
 # Disabling `mypy` errors
@@ -169,7 +171,7 @@
   - Explain why this is not a problem
   - Add `# type: ignore` with two spaces as usual for the inline comment
   - Example
-    ```bash
+    ```python
     # mypy: Cannot find module named 'pyannotate_runtime'
     # pyannotate is not always installed
     from pyannotate_runtime import collect_types # type: ignore
