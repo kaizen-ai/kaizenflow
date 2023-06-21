@@ -122,6 +122,17 @@
   > source dev_scripts/setenv_amp.sh
   ```
 
+  3. If you see output like this, your environment is successfully built! If not and you encounter any issues, please post them under your designated on-baording issue
+  ```
+  alias sp='echo '\''source ~/.profile'\''; source ~/.profile'
+  alias vi='/usr/bin/vi'
+  alias vim='/usr/bin/vi'
+  alias vimdiff='/usr/bin/vi -d'
+  alias vip='vim -c "source ~/.vimrc_priv"'
+  alias w='which'
+  ==> SUCCESS <==
+  ```
+
 - Docker image
 
   1. Pull the latest cmamp image; this is done once
