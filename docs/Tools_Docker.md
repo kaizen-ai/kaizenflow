@@ -363,8 +363,8 @@ height="2.736111111111111in"}
   [`pipreqs`](https://github.com/bndr/pipreqs). Under the hood it uses the regex below and `os.walk` for selected dir:
     ```
     REGEXP = [
-    re.compile(r'\^import (.+)$'),
-    re.compile(r'\^from ((?!\.+).\*?) import (?:.\*)$')
+        re.compile(r'\^import (.+)$'),
+        re.compile(r'\^from ((?!\.+).\*?) import (?:.\*)$')
     ]
     ```
 #### Limitations
@@ -686,10 +686,10 @@ container.
     - Run the release flow manually (or rely on GH Action build workflow to create
     the new image)
         ```
-        > # Release dev image
-        i docker_release_dev_image --version $version
+        # Release dev image
+        > i docker_release_dev_image --version $version
         # Pick up the new image from ECR
-        i docker_pull
+        > i docker_pull
         ```
     - Send a message on the `all@` chat telling people that a new version of the
     `XYZ` container has been released
@@ -1115,8 +1115,7 @@ in an `if _has_package`
 - We use the same mechanism as `run_fast_slow_superslow_tests` to pull together
   different test lists
 ## Call a Dockerized executable from a container
-- From
-[https://github.com/cryptokaizen/cmamp/issues/1357](https://github.com/cryptokaizen/cmamp/issues/1357)
+- From [https://github.com/cryptokaizen/cmamp/issues/1357](https://github.com/cryptokaizen/cmamp/issues/1357)
 - We need to call something from `amp` to `opt` Docker
 
 **Solution 1**
