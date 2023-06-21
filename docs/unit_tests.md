@@ -1,7 +1,8 @@
+# Unit tests
 - [Running unit tests](#running-unit-tests)
-  * [Using invoke](#using-invoke)
+  * [Using `invoke`](#using-invoke)
     + [Docker image stage and version](#docker-image-stage-and-version)
-    + [Specifying pytest options](#specifying-pytest-options)
+    + [Specifying `pytest` options](#specifying-pytest-options)
     + [Save test output to file](#save-test-output-to-file)
     + [Show the tests but do not run](#show-the-tests-but-do-not-run)
     + [Skip submodules](#skip-submodules)
@@ -10,7 +11,7 @@
   * [Rerunning timeout-ed tests](#rerunning-timeout-ed-tests)
   * [Compute tests coverage](#compute-tests-coverage-1)
     + [An example coverage session](#an-example-coverage-session)
-    + [An example with customized pytest-cov html run](#an-example-with-customized-pytest-cov-html-run)
+    + [An example with customized `pytest-cov` html run](#an-example-with-customized-pytest-cov-html-run)
     + [Generate coverage report with `invoke`](#generate-coverage-report-with-invoke)
       - [Common usage](#common-usage)
     + [Publishing HTML report on S3](#publishing-html-report-on-s3)
@@ -36,13 +37,13 @@
     + [Naming and placement conventions](#naming-and-placement-conventions)
     + [Our framework to test using input / output data](#our-framework-to-test-using-input--output-data)
     + [Use text and not pickle files as input](#use-text-and-not-pickle-files-as-input)
-    + [check_string vs self.assertEqual](#check_string-vs-selfassertequal)
-    + [Use self.assert_equal](#use-selfassert-equal)
+    + [`check_string` vs `self.assertEqual`](#check_string-vs-selfassertequal)
+    + [Use `self.assert_equal`](#use-selfassert_equal)
     + [How to split unit test code in files](#how-to-split-unit-test-code-in-files)
     + [Skeleton for unit test](#skeleton-for-unit-test)
     + [Hierarchical `TestCase` approach](#hierarchical-testcase-approach)
     + [Use the appropriate `self.assert*`](#use-the-appropriate-selfassert)
-    + [Do not use hdbg.dassert](#do-not-use-hdbgdassert)
+    + [Do not use `hdbg.dassert`](#do-not-use-hdbgdassert)
     + [Interesting testing functions](#interesting-testing-functions)
     + [Use setUp/tearDown](#use-setupteardown)
 - [Update test tags](#update-test-tags)
@@ -77,9 +78,9 @@
   - `superslow`
     - Tests that run long workload, e.g., running a production model
 
-## Using invoke
+## Using `invoke`
 
-[`invoke`](https://www.pyinvoke.org/) is a task execution which allows to
+- [`invoke`](https://www.pyinvoke.org/) is a task execution which allows to
 execute some typical workflows, e.g. run the tests
 
 ```
@@ -116,7 +117,7 @@ Options:
 
 ### Docker image stage and version
 
-To select a specific stage for Docker image use the `--stage` option. E.g., this
+- To select a specific stage for Docker image use the `--stage` option. E.g., this
 might be useful when a user wants to run regressions on the local Docker image
 to verify that nothing is broken before promoting it to `dev` image.
 
@@ -124,16 +125,16 @@ to verify that nothing is broken before promoting it to `dev` image.
 > i run_fast_tests --stage local
 ```
 
-To run the tests on the specific version of a Docker image, use the `--version`
+- To run the tests on the specific version of a Docker image, use the `--version`
 option. E.g., this might be useful when releasing a new version of an image.
 
 ```
 > i run_fast_tests --stage local --version 1.0.4
 ```
 
-### Specifying pytest options
+### Specifying `pytest` options
 
-With the option `--pytest-opts` it is possible to pass any `pytest` option to
+- With the option `--pytest-opts` it is possible to pass any `pytest` option to
 `invoke`. E.g., if a user want to run the tests in the debug mode to show the
 output
 
@@ -143,7 +144,7 @@ output
 
 ### Save test output to file
 
-To save the output of `pytest` to `tmp.pytest.log` use the `--tee-to-file`
+- To save the output of `pytest` to `tmp.pytest.log` use the `--tee-to-file`
 option.
 
 ```
@@ -152,7 +153,7 @@ option.
 
 ### Show the tests but do not run
 
-To show (but not run) the tests that will be executed, use the `--collect-only`.
+- To show (but not run) the tests that will be executed, use the `--collect-only`.
 
 ```
 > i run_fast_test --collect-only
@@ -160,7 +161,7 @@ To show (but not run) the tests that will be executed, use the `--collect-only`.
 
 ### Skip submodules
 
-To skip running tests in submodules use the `--skip-submodules` option. This is
+- To skip running tests in submodules use the `--skip-submodules` option. This is
 useful for repos with submodules, e.g., `dev_tools` where `cmamp` is a
 submodule. Using this option, only tests in `dev_tools` but not in `cmamp` are
 run
@@ -172,7 +173,7 @@ run
 
 ### Compute tests coverage
 
-To compute tests coverage use the `--coverage` option
+- To compute tests coverage use the `--coverage` option
 
 ```
 > i run_fast_tests --coverage
@@ -207,10 +208,10 @@ To compute tests coverage use the `--coverage` option
 
 ## Compute tests coverage
 
-The documentation for `coverage` is
+- The documentation for `coverage` is
 [here](https://coverage.readthedocs.io/en/latest/cmd.html#reporting).
 
-Run a set of unit tests enabling coverage:
+- Run a set of unit tests enabling coverage:
 
 ```
 # Run the coverage for a single test:
@@ -229,14 +230,14 @@ This generates and run a pytest command inside Docker like:
 docker> /venv/bin/pytest -m "not slow and not superslow" oms/test/test_broker.py::TestSimulatedBroker1 --cov=. --cov-branch --cov-report term-missing --cov-report html
 ```
 
-which generates:
+- which generates:
 
-- a default coverage report
-- a binary `.coverage` file that contains the coverage information
-- an `htmlcov` dir with a browsable code output to inspect the coverage for the
-  files
+  - a default coverage report
+  - a binary `.coverage` file that contains the coverage information
+  - an `htmlcov` dir with a browsable code output to inspect the coverage for the
+    files
 
-One can post-process the coverage report in different ways using the command
+- One can post-process the coverage report in different ways using the command
 `coverage` inside a docker container, since the code was run (as always) inside
 the Docker container that contains all the dependencies.
 
@@ -343,7 +344,7 @@ oms/test/test_portfolio.py                135      0      6      0   100%
 TOTAL                                    2358    385    314     30    82%
 ```
 
-To exclude the test files, which could inflate the coverage
+- To exclude the test files, which could inflate the coverage
 
 ```
 > coverage report --include="oms/*" --omit="*/test_*.py"
@@ -374,7 +375,7 @@ oms/test/oms_db_helper.py                  29     11      2      0    65%
 TOTAL                                    1562    274    252     30    80%
 ```
 
-To open the line coverage, from outside Docker go with your browser to
+- To open the line coverage, from outside Docker go with your browser to
 `htmlcov/index.html`. The `htmlcov` is re-written with every coverage run with
 the `--cov-report html` option. If you move out `index.html` from `htmlcov` dir
 some html features (e.g., filtering) will not work.
@@ -384,18 +385,18 @@ some html features (e.g., filtering) will not work.
 > open htmlcov/index.html
 ```
 
-![alt_text](python_unit_tests_figs/image_1.png)
+![alt_text](unit_tests_figs/image_1.png)
 
-By clicking on a file you can see which lines are not covered
+- By clicking on a file you can see which lines are not covered
 
-![alt_text](python_unit_tests_figs/image_2.png)
+![alt_text](unit_tests_figs/image_2.png)
 
 ### An example coverage session
 
-We want to measure the unit test coverage of `oms` component from both fast and
+- We want to measure the unit test coverage of `oms` component from both fast and
 slow tests
 
-We start by running the fast tests:
+- We start by running the fast tests:
 
 ```
 # Run fast unit tests
@@ -432,10 +433,10 @@ oms/portfolio_example.py                   32      0      0      0   100%
 TOTAL                                    1562    274    252     30    80%
 ```
 
-We see that certain files have a low coverage, so we want to see what is not
+- We see that certain files have a low coverage, so we want to see what is not
 covered.
 
-Generate the same report in a browsable format
+- Generate the same report in a browsable format
 
 ```
 docker> rm -rf htmlcov; coverage html --include="oms/*" --omit="*/test_*.py"
@@ -444,10 +445,10 @@ docker> rm -rf htmlcov; coverage html --include="oms/*" --omit="*/test_*.py"
 > open htmlcov/index.html
 ```
 
-The low coverage for `tasks.py` and `oms_lib_tasks.py` is due to the fact that
+- The low coverage for `tasks.py` and `oms_lib_tasks.py` is due to the fact that
 we are running code through invoke that doesn't allow `coverage` to track it.
 
-Now we run the coverage for the slow tests
+- Now we run the coverage for the slow tests
 
 ```
 # Save the coverage from the fast tests run
@@ -507,7 +508,7 @@ oms/test/oms_db_helper.py                  29      0      2      0   100%
 TOTAL                                    1562   1191    252      3    23%
 ```
 
-We see that the coverage from the slow tests is only 23% for 7 tests
+- We see that the coverage from the slow tests is only 23% for 7 tests
 
 ```
 root@6faaa979072e:/app/amp# coverage combine .coverage_fast_tests .coverage_slow_tests
@@ -515,13 +516,13 @@ Combined data file .coverage_fast_tests
 Combined data file .coverage_slow_tests
 ```
 
-### An example with customized pytest-cov html run
+### An example with customized `pytest-cov` html run
 
-We want to measure unit test coverage specifically for one test in
+- We want to measure unit test coverage specifically for one test in
 `im_v2/common/data/transform/` and to save generated htmlcov in the same
 directory.
 
-Run command below after `i docker_bash`:
+- Run command below after `i docker_bash`:
 
 ```
 pytest --cov-report term-missing
@@ -529,7 +530,7 @@ pytest --cov-report term-missing
 --cov-report html:im_v2/common/data/transform/htmlcov \
 ```
 
-Output sample:
+- Output sample:
 
 ```
 ---------- coverage: platform linux, python 3.8.10-final-0 ----------- Name Stmts Miss Cover Missing ----------------------------------------------------------------------------------------------- im_v2/common/data/transform/convert_csv_to_pq.py 55 55 0% 2-159 im_v2/common/data/transform/extract_data_from_db.py 55 55 0% 2-125 im_v2/common/data/transform/pq_convert.py 126 126 0% 3-248 im_v2/common/data/transform/transform_pq_by_date_to_by_asset.py 131 131 0% 2-437 im_v2/common/data/transform/transform_utils.py 22 0 100% ----------------------------------------------------------------------------------------------- TOTAL 389 367 6% Coverage HTML written to dir im_v2/common/data/transform/htmlcov \
@@ -537,7 +538,7 @@ Output sample:
 
 ### Generate coverage report with `invoke`
 
-One can compute test coverage for a specified directory and generate text and
+- One can compute test coverage for a specified directory and generate text and
 HTML reports automatically using `invoke task run_coverage_report`
 
 ```
@@ -583,7 +584,7 @@ Options:
 
 #### Common usage
 
-Compute coverage for `market_data` dir, generate text and HTML reports and
+- Compute coverage for `market_data` dir, generate text and HTML reports and
 publish HTML report on S3
 
 ```
@@ -626,9 +627,8 @@ Wrote HTML report to htmlcov/index.html
 
 ## Usage and Invocations reference
 
-See [pytest documentation](http://doc.pytest.org/en/latest/usage.html)
-
-Some examples of useful command lines:
+- See [pytest documentation](http://doc.pytest.org/en/latest/usage.html)
+- Some examples of useful command lines:
 
 ```
 # Stop at first failure
@@ -667,7 +667,7 @@ Some examples of useful command lines:
 
 ### Enable logging
 
-To enable logging of `_LOG.debug` for a single test run:
+- To enable logging of `_LOG.debug` for a single test run:
 
 ```
 # Enable debug info
@@ -676,7 +676,7 @@ To enable logging of `_LOG.debug` for a single test run:
 
 ### Update golden outcomes
 
-This switch allows to overwrite the golden outcomes that are used as reference
+- This switch allows to overwrite the golden outcomes that are used as reference
 in the unit tests to detect failures
 
 ```
@@ -685,10 +685,10 @@ in the unit tests to detect failures
 
 ### Incremental test mode
 
-This switch allows to reuse artifacts in the test directory and to skip the
+- This switch allows to reuse artifacts in the test directory and to skip the
 clean up phase
 
-It is used to re-run tests from the middle when they are very long and one wants
+- It is used to re-run tests from the middle when they are very long and one wants
 to debug them
 
 ```
@@ -697,33 +697,33 @@ to debug them
 
 # Running tests on GH Actions
 
-The official documentation is
+- The official documentation is
 [https://docs.github.com/en/actions](https://docs.github.com/en/actions)
 
 ## How to run a single test on GH Action
 
-Unfortunately there is no way to log in and run interactively on GH machines.
+- Unfortunately there is no way to log in and run interactively on GH machines.
 This is a feature requested but not implemented by GH yet.
 
-All the code to run GH Actions is in the `.github` directory in `lemonade` and
+- All the code to run GH Actions is in the `.github` directory in `lemonade` and
 `amp`.
 
-E.g., to run a single test in the fast test target, instead of the entire
+- E.g., to run a single test in the fast test target, instead of the entire
 regression suite
 
-1. you can modify `.github/workflows/fast_tests.yml`, by replacing
+1. You can modify `.github/workflows/fast_tests.yml`, by replacing
 
    ```
    # run: invoke run_fast_tests
    run: invoke run_fast_tests --pytest-opts="helpers/test/test_git.py::Test_git_modified_files1::test_get_modified_files_in_branch1 -s --dbg"
    ```
 
-- Note that the indentation matters, since it's a YAML file
+    - Note that the indentation matters, since it's a YAML file
 
-  ![alt_text](python_unit_tests_figs/image_3.png)
+      ![alt_text](unit_tests_figs/image_3.png)
 
-- The `-s --dbg` is to show `_LOG.debug` in case you care about that to get more
-  information
+    - The `-s --dbg` is to show `_LOG.debug` in case you care about that to get more
+      information
 
 2. Commit the code to your branch (not in master please) since GH runs each
    branch independently
@@ -910,11 +910,11 @@ regression suite
     - More targeted unit test
   - Do not check in 1 megabyte of test data!
 
-### check_string vs self.assertEqual
+### `check_string` vs `self.assertEqual`
 
 - TODO(gp): Add
 
-### Use self.assert_equal
+### Use `self.assert_equal`
 
 - This is a function that helps you understand what are the mismatches
 - It works on `str`
@@ -1011,7 +1011,7 @@ regression suite
 - Good \
   `self.assertLess(a, b)`
 
-### Do not use hdbg.dassert
+### Do not use `hdbg.dassert`
 
 - `dassert` are for checking self-consistency of the code
 - The invariant is that you can remove `dbg.dassert` without changing the
@@ -1114,7 +1114,7 @@ Best to apply on any part that is deemed unnecessary for specific test
     - etc...
 - DB calls
 
-There are many more possible combinations that can be seen in official
+- There are many more possible combinations that can be seen in official
 documentation. \
 Below are the most common ones for basic understanding.
 
@@ -1201,7 +1201,7 @@ Below are the most common ones for basic understanding.
      help you focus on what's important to test and force you to use an
      iterative approach rather than incremental (remember the Monalisa)
 
-     ![alt_image](python_unit_tests_figs/image_4.png)
+     ![alt_image](unit_tests_figs/image_4.png)
 
 8) Write skeleton of unit tests and ask for a review if you are not sure how /
      what to test
