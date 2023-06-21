@@ -1,3 +1,83 @@
+# Tools Docker
+
+<!-- toc -->
+
+- [Introduction](#introduction)
+- [Concepts](#concepts)
+  * [Docker image](#docker-image)
+  * [Docker container](#docker-container)
+  * [Docker registry](#docker-registry)
+- [High level philosophy](#high-level-philosophy)
+  * [Thin client](#thin-client)
+  * [amp / cmamp container](#amp--cmamp-container)
+  * [Prod container](#prod-container)
+  * [Infra container](#infra-container)
+  * [Relevant bugs](#relevant-bugs)
+- [Poetry](#poetry)
+- [Build a Docker image](#build-a-docker-image)
+  * [General](#general)
+  * [Dockerfile](#dockerfile)
+    + [Base image](#base-image)
+    + [Copy files](#copy-files)
+    + [Install OS packages](#install-os-packages)
+    + [Install Python packages](#install-python-packages)
+  * [Build an image from a Dockerfile](#build-an-image-from-a-dockerfile)
+- [Run multi-container Docker application](#run-multi-container-docker-application)
+  * [Version](#version)
+  * [Images](#images)
+  * [Bind mount](#bind-mount)
+  * [Environment variables](#environment-variables)
+  * [Basic commands](#basic-commands)
+- [How to test a package in a Docker container](#how-to-test-a-package-in-a-docker-container)
+  * [Hacky approach to patch up a container](#hacky-approach-to-patch-up-a-container)
+- [How to release a Docker image](#how-to-release-a-docker-image)
+  * [Stages](#stages)
+    + [Local](#local)
+    + [Dev](#dev)
+    + [Prod](#prod)
+  * [Overview of how to release an image](#overview-of-how-to-release-an-image)
+  * [How to add a Python package to Docker image](#how-to-add-a-python-package-to-docker-image)
+  * [How to find unused packages](#how-to-find-unused-packages)
+    + [Import-based approach using `pipreqs`](#import-based-approach-using-pipreqs)
+      - [How it works](#how-it-works)
+      - [Limitations](#limitations)
+      - [Usage](#usage)
+  * [How to build a local image](#how-to-build-a-local-image)
+  * [Testing the local image](#testing-the-local-image)
+  * [Tag `local` image as `dev`](#tag-local-image-as-dev)
+  * [Push image](#push-image)
+  * [End-to-end flow for `dev` image](#end-to-end-flow-for-dev-image)
+  * [Build prod image](#build-prod-image)
+  * [QA for prod image](#qa-for-prod-image)
+  * [End-to-end flow for `prod` image](#end-to-end-flow-for-prod-image)
+  * [Flow for both dev and prod images](#flow-for-both-dev-and-prod-images)
+- [Docker-in-docker (dind)](#docker-in-docker-dind)
+  * [Sibling container approach](#sibling-container-approach)
+    + [Connecting to Postgres instance using sibling containers](#connecting-to-postgres-instance-using-sibling-containers)
+- [Release flow](#release-flow)
+  * [cmamp](#cmamp)
+  * [dev_tools](#dev_tools)
+- [Design release flow - discussion](#design-release-flow---discussion)
+  * [QA flow](#qa-flow)
+- [Dev_tools container](#dev_tools-container)
+- [Optimizer container](#optimizer-container)
+  * [Rationale](#rationale)
+  * [Build and run a local version of `opt`](#build-and-run-a-local-version-of-opt)
+  * [Internals](#internals)
+    + [One container per Git repo](#one-container-per-git-repo)
+    + [Multiple containers per Git repo](#multiple-containers-per-git-repo)
+      - [Mounting only `optimizer` dir inside Docker](#mounting-only-optimizer-dir-inside-docker)
+      - [Mounting the supermodule (e.g., lime, lemonade, amp) inside Docker](#mounting-the-supermodule-eg-lime-lemonade-amp-inside-docker)
+  * [Invariants](#invariants)
+  * [Release and ECR flow](#release-and-ecr-flow)
+  * [Unit testing code inside `opt` container](#unit-testing-code-inside-opt-container)
+    + [Avoid compiling code depending from cvxopt when running amp](#avoid-compiling-code-depending-from-cvxopt-when-running-amp)
+    + [Run optimizer tests in a stand-alone `opt` container](#run-optimizer-tests-in-a-stand-alone-opt-container)
+    + [Run optimizer tests as part of running unit tests for `cmamp`](#run-optimizer-tests-as-part-of-running-unit-tests-for-cmamp)
+  * [Call a Dockerized executable from a container](#call-a-dockerized-executable-from-a-container)
+
+<!-- tocstop -->
+
 # Introduction
 
 - Docker is an open-source tool designed to make our life typically easier
@@ -1261,9 +1341,10 @@ Conceptually the flow consists of the following phases:
   > i opt_docker_bash
   docker> pytest .
   ```
-- We wrap this in an invoke target like `i opt_run_fast_tests` 
+- We wrap this in an invoke target like `i opt_run_fast_tests`
 
 **Alternative solution**
+
 - We can use dind to run the `opt` container inside a `cmamp` one
   - Cons:
     - dind complicates the system
