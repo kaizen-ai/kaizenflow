@@ -410,11 +410,11 @@ Stop containers created by `down`.
 ```
 
 #  How to test a package in a Docker container
-
+```
 > sudo /bin/bash -c "(source /venv/bin/activate; pip install yfinance)"
 
 > python -c "import finance"
-
+```
 ##  Hacky approach to patch up a container
 
 ```
