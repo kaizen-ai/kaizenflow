@@ -156,8 +156,8 @@
     - This approach is similar to calling the `linter`
 - Approach 2: If we think we need to add new packages only for running infra
   scripts then we will create a new `infra` container.
-  - We can build on the fly and not release through ECR)
-- We can start with approach 1), which will also allow us to transition to 2)
+  - We can build on the fly and not release through ECR
+- We can start with approach 1, which will also allow us to transition to 2
   transparently, if needed
 
 ## Relevant bugs
@@ -1011,7 +1011,7 @@ Conceptually the flow consists of the following phases:
     but it's worth make the changes
 - We need to ensure that version can only be created going fwd.
 - We can do a comparison of the current version with the new version as tuples
-  (we could use semver but it feels not needed
+  (we could use semver but it feels not needed)
 - The workflows are:
   - Build a local image
   - Release a dev image
@@ -1263,8 +1263,8 @@ Conceptually the flow consists of the following phases:
 - We want to:
   1.  (as always) write and run unit tests for the optimizer code in isolation,
       i.e., test the code in the directory `optimizer` by itself
-  2.  run all the tests for the entire repo(relying on both containers `amp` and
-      `optimizer` with a single command invocation
+  2.  run all the tests for the entire repo (relying on both containers `amp` and
+      `optimizer` with a single command invocation)
   3.  be able to run tests belonging to only one of the containers to shorten
       the debugging cycle
 - To achieve this we need to solve the 3 problems below.
