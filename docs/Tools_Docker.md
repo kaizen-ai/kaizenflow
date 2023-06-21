@@ -703,7 +703,7 @@ container.
         code_version='1.0.3' != container_version='amp-1.0.3'
         ---
         You need to:
-            - merge origin/master into your branch with \`invoke git_merge_master\`
+            - merge origin/master into your branch with `invoke git_merge_master`
             - pull the latest container with `invoke docker_pull`
         ```
 ## dev_tools
@@ -1064,7 +1064,7 @@ conceptually equivalent to:
 - Test in eachfile for the existence of the needed packages and enclose the code
 in an `if _has_package`
     - Pros:
-        - We can skip code based dynamically on a \`try ... except ImportModule\` to
+        - We can skip code based dynamically on a `try ... except ImportModule` to
         check what packages are present
     - Cons:
         - Repeat the same piece of `try ... except` in many places
@@ -1074,7 +1074,7 @@ in an `if _has_package`
 **Solution 3**
 - Exclude certain directories (e.g., `//amp/optimizer`) from `pytest`
 - Pros:
-    - We don't have to spread the `try ... except` and \`if \_has_package\` in the
+    - We don't have to spread the `try ... except` and `if \_has_package` in the
         code
     - Cons:
     - The directory is relative to the top directory
@@ -1116,8 +1116,7 @@ in an `if _has_package`
 [https://github.com/cryptokaizen/cmamp/issues/1357](https://github.com/cryptokaizen/cmamp/issues/1357)
 - We need to call something from `amp` to `opt` Docker
 **Solution 1**
-- Inside the code we build the command line \`cmd = 'docker run -it ... ';
-system(cmd)\`
+- Inside the code we build the command line \`cmd = 'docker run -it ... '; system(cmd)\`
     - Cons:
         - there is code replicated between here and the invoke task (e.g., the info
             about the container, ...)
