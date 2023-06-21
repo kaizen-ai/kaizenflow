@@ -1,21 +1,23 @@
 # Python - Type hints
 
-<!--ts-->
-   * [Why we use type hints](#-why-we-use-type-hints)
-   * [What to annotate with type hints](#-what-to-annotate-with-type-hints)
-   * [Conventions](#-conventions)
-      * [Empty return](#-empty-return)
-      * [Invoke tasks](#-invoke-tasks)
-      * [Annotation for kwargs](#-annotation-for-kwargs)
-      * [Any](#-any)
-      * [np.array and np.ndarray](#-nparray-and-npndarray)
-   * [Handling the annoying Incompatible types in assignment](#-handling-the-annoying-incompatible-types-in-assignment)
-   * [Handling the annoying "None" has no attribute](#-handling-the-annoying-none-has-no-attribute)
-   * [Disabling mypy errors](#-disabling-mypy-errors)
-   * [What to do when you don't know what to do](#-what-to-do-when-you-dont-know-what-to-do)
-   * [Library without types](#-library-without-types)
-   * [Inferring types using unit tests](#-inferring-types-using-unit-tests)
-<!--te-->
+<!-- toc -->
+
+   - [Why we use type hints](#why-we-use-type-hints)
+   - [What to annotate with type hints](#what-to-annotate-with-type-hints)
+   - [Conventions](#conventions)
+      * [Empty return](#empty-return)
+      * [Invoke tasks](#invoke-tasks)
+      * [Annotation for kwargs](#annotation-for-kwargs)
+      * [Any](#any)
+      * [np.array and np.ndarray](#nparray-and-npndarray)
+   - [Handling the annoying Incompatible types in assignment](#handling-the-annoying-incompatible-types-in-assignment)
+   - [Handling the annoying "None" has no attribute](#handling-the-annoying-none-has-no-attribute)
+   - [Disabling mypy errors](#disabling-mypy-errors)
+   - [What to do when you don't know what to do](#what-to-do-when-you-dont-know-what-to-do)
+   - [Library without types](#library-without-types)
+   - [Inferring types using unit tests](#inferring-types-using-unit-tests)
+
+<!-- tocstop -->
 
 # Why we use type hints
 
@@ -72,6 +74,7 @@ Example:
   the contained arguments. The type checker automatically adds the
   `Tuple[_, ...]` and `Dict[str, _]` container types.
 - [Reference article](https://adamj.eu/tech/2021/05/11/python-type-hints-args-and-kwargs/)
+
 ## `Any`
 
 - `Any` type hint = no type hint
