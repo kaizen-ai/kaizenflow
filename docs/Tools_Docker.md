@@ -61,9 +61,9 @@
   transparently, if needed
 ## Relevant bugs
 - [https://github.com/cryptokaizen/cmamp/issues/1060](https://github.com/cryptokaizen/cmamp/issues/1060)
-- Tool to extract the dependency from a project \#1038
-- Create tool for poetry debugging \#1026
-- Fix tests that fail due to pandas update and release cmamp image \#1002
+- Tool to extract the dependency from a project #1038
+- Create tool for poetry debugging #1026
+- Fix tests that fail due to pandas update and release cmamp image #1002
 # Poetry
 - Poetry is a tool for managing Python packages and dependencies:
   - List packages you want to install with some constraints, e.g., `pandas` must
@@ -239,10 +239,10 @@ POSTGRES_VERSION=13
 ```
 ## Hacky approach to patch up a container
 ```
-\# After install create a new version of the container
+# After install create a new version of the container
 > docker commit d2916dd5f122
 > 623860924167.dkr.ecr.eu-north-1.amazonaws.com/cmamp:dev_ccxtpr
-\# Push to the repo
+# Push to the repo
 > docker push 623860924167.dkr.ecr.eu-north-1.amazonaws.com/cmamp:dev_ccxtpro
 # Then you can push and pull on different machines
 > docker pull 623860924167.dkr.ecr.eu-north-1.amazonaws.com/cmamp:dev_ccxtpro
@@ -351,7 +351,7 @@ Required-by:
 - Send a PR with the updated poetry files and any other change needed to make
   the tests pass
 - Release the new image. To do so follow the
-  [[\# Release a Docker image]{.underline}](#how-to-test-a-package-in-a-docker-container)
+  [[# Release a Docker image]{.underline}](#how-to-test-a-package-in-a-docker-container)
   section, use `--update-poetry` flag to resolve the dependencies
 ## How to find unused packages
 - While installing Python packages we need to make sure that we do not install
@@ -415,13 +415,13 @@ helpers/hpickle.py:108: import dill
 - To build a local image run:
 ```
 > i docker_build_local_image --version 1.0.0
-\# Build from scratch and not incrementally.
+# Build from scratch and not incrementally.
 > i docker_build_local_image --version 1.0.0 --no-cache
-\# Update poetry package list.
+# Update poetry package list.
 > i docker_build_local_image --version 1.0.0 --update-poetry
-\# Update poetry package list and build from scratch.
+# Update poetry package list and build from scratch.
 > i docker_build_local_image --version 1.0.0 --update-poetry --no-cache
-\# See more options:
+# See more options:
 > i docker_build_local_image -h
 ```
 - Once an image is built, it is tagged as `local-${user}-${version}`, e.g.,
@@ -495,19 +495,19 @@ Conceptually the flow consists of the following phases:
   preferred way to do an image release.
 - For specific cases that can not be done via GH action see commands below:
 ```
-\# To run the official flow end-to-end:
+# To run the official flow end-to-end:
 > i docker_release_dev_image --version 1.0.0
-\# To see the options:
+# To see the options:
 > i docker_release_dev_image -h
-\# Run from scratch and not incrementally:
+# Run from scratch and not incrementally:
 > i docker_release_dev_image --version 1.0.0 --no-cache
-\# Force an update to poetry to pick up new packages
+# Force an update to poetry to pick up new packages
 > i docker_release_dev_image --version 1.0.0 --update-poetry
-\# Skip running the QA tests
+# Skip running the QA tests
 > i docker_release_dev_image --version 1.0.0 --no-qa-tests
-\# Skip running the tests
+# Skip running the tests
 > i docker_release_dev_image --version 1.0.0 --skip-tests
-\# Skip end-to-end tests
+# Skip end-to-end tests
 > i docker_release_dev_image --version 1.0.0 --no-run-end-to-end-tests
 ```
 ## Build prod image
@@ -523,9 +523,9 @@ Conceptually the flow consists of the following phases:
 - To build the `prod` image run:
 ```
 > i docker_build_prod_image --version 1.0.0
-\# Check the options:
+# Check the options:
 > i docker_build_prod_image -h
-\# To build from scratch and not incrementally:
+# To build from scratch and not incrementally:
 > i docker_build_prod_image --version 1.0.0 --no-cache
 ```
 - To run a command inside the prod image
@@ -590,13 +590,13 @@ talk to Docker Engine.
 containers can be left hanging or can collide.
 - E.g.,
     ```
-    \# Run `docker ps` in a container, showing the containers running in the main
+    # Run `docker ps` in a container, showing the containers running in the main
     container
     > docker run -ti --rm \
     -v /var/run/docker.sock:/var/run/docker.sock \
     dindtest \
     docker ps
-    \# Start a sibling hello world container:
+    # Start a sibling hello world container:
     > docker run -it --rm \
     -v /var/run/docker.sock:/var/run/docker.sock \
     dindtest \
@@ -654,7 +654,7 @@ container.
     WARNING: psql major version 9.5, server major version 13.
     Some psql features might not work.
     Type "help" for help.
-    oms_postgres_db_local=\#
+    oms_postgres_db_local=#
     ```
 - Test connection to the DB from inside the container
     ```
@@ -681,13 +681,13 @@ container.
     is visible, the package version has been updated)
     - Do a PR with the change including the updated `changelog.txt`, the poetry
     files (both the specs `devops/docker_build/poetry.toml` and the package
-    version `devops/docker_build/poetry.loc
+    version `devops/docker_build/poetry.loc`)
     - Run the release flow manually (or rely on GH Action build workflow to create
     the new image)
         ```
-        > \# Release dev image
+        > # Release dev image
         i docker_release_dev_image --version $version
-        \# Pick up the new image from ECR
+        # Pick up the new image from ECR
         i docker_pull
         ```
     - Send a message on the `all@` chat telling people that a new version of the
@@ -935,9 +935,9 @@ corresponding to a Git repo
 - From `devops/compose/docker-compose.yml`
     ```
     42 volumes:
-    43 \# Move one dir up to include the entire git repo (see AmpTask1017).
+    43 # Move one dir up to include the entire git repo (see AmpTask1017).
     44 - ../../:/app
-    45 \# Move one dir down to include the entire git repo (see AmpTask1017).
+    45 # Move one dir down to include the entire git repo (see AmpTask1017).
     46 working_dir: /app
     ```
 - From `devops/docker_build/dev.Dockerfile`
@@ -955,7 +955,7 @@ that
     ...
     - GIT_DIR=/git
     volumes:
-    \# Move one dir up to include the entire git repo (see AmpTask1017).
+    # Move one dir up to include the entire git repo (see AmpTask1017).
     - ../../:/app
     - ../../../../.git:/git
     - ../../../../amp/helpers:/app/helpers
@@ -975,9 +975,9 @@ that
 - From `devops/compose/docker-compose.yml`
     ```
     42 volumes:
-    43 \# Move one dir up to include the entire git repo (see AmpTask1017).
+    43 # Move one dir up to include the entire git repo (see AmpTask1017).
     44 - ../../../:/app
-    45 \# Move one dir down to include the entire git repo (see AmpTask1017).
+    45 # Move one dir down to include the entire git repo (see AmpTask1017).
     46 working_dir: /app/amp
     ```
 - From `devops/docker_build/dev.Dockerfile`
@@ -989,21 +989,21 @@ that
     ```
     32 - ../../../helpers:/app/amp/optimizer/helpers
     33
-    34 \# Shared cache. This is specific of lime.
+    34 # Shared cache. This is specific of lime.
     35 - /local/home/share/cache:/cache
     36
-    37 \# Mount `amp` when it is used as submodule. In this case we need to
-    38 \# mount the super project in the container (to make git work with the
-    39 \# supermodule) and then change dir to `amp`.
+    37 # Mount `amp` when it is used as submodule. In this case we need to
+    38 # mount the super project in the container (to make git work with the
+    39 # supermodule) and then change dir to `amp`.
     40 app:
     41 extends:
     42 base_app
     43 volumes:
-    44 \# Move one dir up to include the entire git repo (see AmpTask1017).
+    44 # Move one dir up to include the entire git repo (see AmpTask1017).
     45 - ../../../../:/app
-    46 \# Move one dir down to include the entire git repo (see AmpTask1017).
+    46 # Move one dir down to include the entire git repo (see AmpTask1017).
     47 working_dir: /app/amp/optimizer
-    48 \#entrypoint: /bin/bash -c "ls helpers"
+    48 #entrypoint: /bin/bash -c "ls helpers"
     ```
 ## Invariants
 - A deployable dir is a dir under a Git repo
