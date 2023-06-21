@@ -134,7 +134,7 @@
 
   3. If you see output like this, your environment is successfully built! If not
      and you encounter any issues, please post them under your designated
-     on-baording issue
+     on-boarding issue
 
   ```
   alias sp='echo '\''source ~/.profile'\''; source ~/.profile'
