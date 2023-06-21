@@ -87,20 +87,26 @@
     branch, run
     ```
     > git checkout master
-    > gup.py
+    > i git_pull
     ```
 
 - Name a branch after its corresponding issue
   - The canonical name for a new feature branch is obtained by running
-    `gh_issue_title` invoke:
+    `i gh_issue_title`:
     ```
-    i gh_issue_title 319
+    > i gh_issue_title -i 274
+    INFO: > cmd='/Users/saggese/src/venv/amp.client_venv/bin/invoke gh_issue_title -i 274'
+    report_memory_usage=False report_cpu_usage=False
+    ## gh_issue_title: issue_id='274', repo_short_name='current'
+    ## gh_login:
+    07:35:54 - INFO  lib_tasks_gh.py gh_login:48                            account='sorrentum'
+    export GIT_SSH_COMMAND='ssh -i /Users/saggese/.ssh/id_rsa.sorrentum.github'
+    gh auth login --with-token </Users/saggese/.ssh/github_pat.sorrentum.txt
+
+    # Copied to system clipboard:
+    CmTask274_Update_names: https://github.com/sorrentum/sorrentum/pull/274
     ```
-    in logs:
-    ```
-    SorrTask319_Refine_convert_gdoc_to_markdown_sh: https://github.com/sorrentum/sorrentum/issues/319
-    ```
-  - The name is `SorrTask319_Refine_convert_gdoc_to_markdown_sh`
+  - The name is `CmTask274_Update_names`
   - To use multiple branches for a given task, append a numeral to the name,
     e.g., `SorrTask319_Refine_convert_gdoc_to_markdown_sh_v02`
 
