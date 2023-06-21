@@ -91,66 +91,66 @@ height="3.0972222222222223in"}
 - Base image is an image that a new image is built from. A new Docker image will
   have all the packages/dependencies that are installed in the base image.
 - Use `FROM` statement to specify a base image, e.g.
-```
-FROM ubuntu:20.4
-```
+    ```
+    FROM ubuntu:20.4
+    ```
 ### Copy files
 - Copy files that are required to build a Docker image to the Docker filesystem.
 - To copy a file from `/source_dir` (your filesystem) to `/dst_dir` (Docker
   filesystem) do:
-```
-COPY source_dir/file dst_dir
-```
+    ```
+    COPY source_dir/file dst_dir
+    ```
 - E.g., the command below will copy `install_packages.sh` from
   `devops/docker_build` to the Docker's root directory so that
   `install_packages.sh` can be accessed by Docker.
-```
-COPY devops/docker_build/install_packages.sh .
-```
+    ```
+    COPY devops/docker_build/install_packages.sh .
+    ```
 ### Install OS packages
 - Install OS packages that are needed for a Docker app, but that are not installed
   for a base image.
 - Use `RUN` instruction to install a package, e.g.
-```
-RUN apt-get install postgresql-client
-```
+    ```
+    RUN apt-get install postgresql-client
+    ```
 - Alternatively you can package all installation instructions in a `.sh` file and
   run it. Do not forget to copy a `.sh` file to the Docker filesystem so that
   Docker can see it. E.g.,
-```
-COPY devops/docker_build/install_packages.sh .
-RUN /bin/sh -c "./install_packages.sh"
-```
+    ```
+    COPY devops/docker_build/install_packages.sh .
+    RUN /bin/sh -c "./install_packages.sh"
+    ```
 ### Install Python packages
 - We prefer to install Python packages with `poetry `.
 - Make sure that there is instruction to install `pip3` and `poetry`. You can
   either put it in a `Dockerfile` or in a separate file like
   `install_packages.sh`.
-```
-RUN apt-get install python3-pip
-RUN pip3 install poetry
-```
+    ```
+    RUN apt-get install python3-pip
+    RUN pip3 install poetry
+    ```
 - Copy poetry-related files to the Docker filesystem so that files can be accessed
   by Docker
-```
-COPY devops/docker_build/poetry.toml
-COPY devops/docker_build/poetry.lock
-```
+    ```
+    COPY devops/docker_build/poetry.toml
+    COPY devops/docker_build/poetry.lock
+    ```
 - Update Python packages
-```
-RUN poetry install
-```
+    ```
+    RUN poetry install
+    ```
 ## Build an image from a Dockerfile
 - To build an image from a `Dockerfile` run:
-```
-> docker build .
-```
+    ```
+    > docker build .
+    ```
 - The `Dockerfile` must be called `Dockerfile` and located in the root of the
   context.
 - You can point to any `Dockerfile` by using `-f`:
-```
-> docker build -f /path_to_dockerfile/dockerfile_name
-```
+    ```
+    > docker build -f /path_to_dockerfile/dockerfile_name
+    ```
 # Run multi-container Docker application
 - Compose is a tool for defining and running multi-container Docker applications.
   With Compose, you use a `YAML` file to configure your application's services.
@@ -160,79 +160,80 @@ height="2.736111111111111in"}
 - At the beginning of a `docker-compose.yaml` file specify the `docker-compose`
   version. We use the version `3.0`, for more information see
   [[the official documents]{.underline}](https://docs.docker.com/compose/compose-file/compose-versioning/).
-```
-version: "3.0"
-```
+    ```
+    version: "3.0"
+    ```
 ## Images
 - You can either re-use a public image or build a new one from a `Dockerfile`.
 - The `app` service below uses the image that is built from the `dev.Dockerfile`.
-```
-app:
-build:
-context: .
-dockerfile: dev.Dockerfile
-```
+    ```
+    app:
+    build:
+    context: .
+    dockerfile: dev.Dockerfile
+    ```
 - The `im_postgres_local` service below uses the public `postgres` image pulled
   from the [[Docker hub registry]{.underline}](https://hub.docker.com/_/postgres).
-```
-im_postgres_local:
-image: postgres: 13
-```
+    ```
+    im_postgres_local:
+    image: postgres: 13
+    ```
 ## Bind mount
 - If you want to be able to access code inside a Docker container, you should
   bind-mount a directory with the code on the host.
 - Mount a directory on the host inside a Docker container, e.g. mount current
   directory to `/app` dir inside a Docker container:
-```
-app:
-	volumes:
-		- .:/app
-```
+    ```
+    app:
+        volumes:
+            - .:/app
+    ```
 ## Environment variables
 - You can either use variables directly from the environment or pass them in a
   `docker-compose.yaml` file.
 - It is supposed that `POSTGRES_VERSION` is already defined in the shell.
-```
-db:
-	image: "postgres:${POSTGRES_VERSION}"
-```
+    ```
+    db:
+        image: "postgres:${POSTGRES_VERSION}"
+    ```
 - Set environment variable in a service's container
-```
-db:
-	environment:
-		- POSTGRES_VERSION=13
-		image: "postgres:${POSTGRES_VERSION}"
-```
+    ```
+    db:
+        environment:
+            - POSTGRES_VERSION=13
+            image: "postgres:${POSTGRES_VERSION}"
+    ```
 - Set environment variable with `.env` file
-```
-db:
-	env_file:
-		- ./postgres_env.env
-		image: "postgres:${POSTGRES_VERSION}"
-```
+    ```
+    db:
+        env_file:
+            - ./postgres_env.env
+            image: "postgres:${POSTGRES_VERSION}"
+    ```
 - File `postgres_env.env`
-```
-> cat ./postgres_env.env
-POSTGRES_VERSION=13
-```
+    ```
+    > cat ./postgres_env.env
+    POSTGRES_VERSION=13
+    ```
 ## Basic commands
 - To check more advanced usage, please see
   [the official documentation.](https://docs.docker.com/compose/reference/)
 - Build, (re)create, start, and attach to containers for a service. It is assumed
   that a `docker-compose` file has the name `docker-compose.yaml` and is located
   in the current dir.
-```
-> docker-compose up
-```
+    ```
+    > docker-compose up
+    ```
 - List containers
-```
-> docker-compose ps
-```
+    ```
+    > docker-compose ps
+    ```
 - Stop containers created by `down`.
-```
-> docker-compose down
-```
+    ```
+    > docker-compose down
+    ```
 # How to test a package in a Docker container
+
 ```
 > sudo /bin/bash -c "(source /venv/bin/activate; pip install yfinance)"
 > python -c "import finance"
@@ -311,12 +312,12 @@ POSTGRES_VERSION=13
   - Add a new package to `amp/devops/docker_build/pyproject.toml` file to the
     `[tool.poetry.dependencies]` section
   - E.g., to add `pytest-timeout` do:
-```
-[tool.poetry.dependencies]
-...
-pytest-timeout = "\*"
-...
-```
+    ```
+    [tool.poetry.dependencies]
+    ...
+    pytest-timeout = "\*"
+    ...
+    ```
 - In general we use the latest version of a package (`\*`) until the tests
   fail or the system stops working
   - a. If the system fails, we freeze the version of the problematic packages to
@@ -332,21 +333,21 @@ pytest-timeout = "\*"
   - b. run a docker container based on the local image
     `> i docker_bash --stage local --version {new version}`
 - verify what package was installed with `pip show {package name}`, e.g.,
-```
-> pip show pytest-rerunfailures
-Name: pytest-rerunfailures
-Version: 10.2
-Summary: pytest plugin to re-run tests to eliminate flaky failures
-...
-Location: /venv/lib/python3.8/site-packages
-Requires: pytest, setuptools
-Required-by:
-```
+    ```
+    > pip show pytest-rerunfailures
+    Name: pytest-rerunfailures
+    Version: 10.2
+    Summary: pytest plugin to re-run tests to eliminate flaky failures
+    ...
+    Location: /venv/lib/python3.8/site-packages
+    Requires: pytest, setuptools
+    Required-by:
+    ```
 - run regressions for the local image, i.e.
-```
-> i run_fast_tests --stage local --version {new version}
-> i run_slow_tests --stage local --version {new version}
-```
+    ```
+    > i run_fast_tests --stage local --version {new version}
+    > i run_slow_tests --stage local --version {new version}
+    ```
 - Update the changelog describing the new version
 - Send a PR with the updated poetry files and any other change needed to make
   the tests pass
@@ -360,12 +361,12 @@ Required-by:
 #### How it works
 - To do so we use an import-based approach provided by
   [`pipreqs`](https://github.com/bndr/pipreqs). Under the hood it uses the regex below and `os.walk` for selected dir:
-```
-REGEXP = [
-re.compile(r'\^import (.+)$'),
-re.compile(r'\^from ((?!\.+).\*?) import (?:.\*)$')
-]
-```
+    ```
+    REGEXP = [
+    re.compile(r'\^import (.+)$'),
+    re.compile(r'\^from ((?!\.+).\*?) import (?:.\*)$')
+    ]
+    ```
 #### Limitations
 - Not all packages that we use are necessarily imported, e.g. `awscli`,
   `jupyter`, `pytest-cov`, etc. -> `pipreqs` won't find these packages
@@ -382,28 +383,28 @@ re.compile(r'\^from ((?!\.+).\*?) import (?:.\*)$')
     - You need to re-install `pipreqs` everytime you create a new Docker bash
       session
   - To run for a root dir do:
-```
-pipreqs . --savepath ./tmp.requirements.txt
-```
+    ```
+    pipreqs . --savepath ./tmp.requirements.txt
+    ```
 - The command above will generate `./tmp.requirements.txt` with the list of the
   imported packages, e.g.,
-```
-amp==1.1.4
-async_solipsism==0.3
-beautifulsoup4==4.11.1
-botocore==1.24.37
-cvxopt==1.3.0
-cvxpy==1.2.0
-dill==0.3.4
-environs==9.5.0
-...
-```
+    ```
+    amp==1.1.4
+    async_solipsism==0.3
+    beautifulsoup4==4.11.1
+    botocore==1.24.37
+    cvxopt==1.3.0
+    cvxpy==1.2.0
+    dill==0.3.4
+    environs==9.5.0
+    ...
+    ```
 - You can grep for a package name to see where it is used, e.g.,
-```
-> jackpy "dill"
-helpers/hpickle.py:108: import dill
-...
-```
+    ```
+    > jackpy "dill"
+    helpers/hpickle.py:108: import dill
+    ...
+    ```
 ## How to build a local image
 - The recipe to build a `local` image is in `devops/docker_build/dev.Dockerfile`.
   This launches various scripts to install:
@@ -413,32 +414,32 @@ helpers/hpickle.py:108: import dill
   - jupyter extensions
   - application-specific packages (e.g., for the linter)
 - To build a local image run:
-```
-> i docker_build_local_image --version 1.0.0
-# Build from scratch and not incrementally.
-> i docker_build_local_image --version 1.0.0 --no-cache
-# Update poetry package list.
-> i docker_build_local_image --version 1.0.0 --update-poetry
-# Update poetry package list and build from scratch.
-> i docker_build_local_image --version 1.0.0 --update-poetry --no-cache
-# See more options:
-> i docker_build_local_image -h
-```
+    ```
+    > i docker_build_local_image --version 1.0.0
+    # Build from scratch and not incrementally.
+    > i docker_build_local_image --version 1.0.0 --no-cache
+    # Update poetry package list.
+    > i docker_build_local_image --version 1.0.0 --update-poetry
+    # Update poetry package list and build from scratch.
+    > i docker_build_local_image --version 1.0.0 --update-poetry --no-cache
+    # See more options:
+    > i docker_build_local_image -h
+    ```
 - Once an image is built, it is tagged as `local-${user}-${version}`, e.g.,
   `local-saggese-1.0.0`
-```
-Successfully tagged
-665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.0.9
-docker image ls
-665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.0.9
-REPOSITORY TAG IMAGE ID CREATED SIZE
-665840871993.dkr.ecr.us-east-1.amazonaws.com/amp local-gsaggese-1.0.9
-cf16e3e3d1c7 Less than a second ago 2.75GB
-```
+    ```
+    Successfully tagged
+    665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.0.9
+    docker image ls
+    665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.0.9
+    REPOSITORY TAG IMAGE ID CREATED SIZE
+    665840871993.dkr.ecr.us-east-1.amazonaws.com/amp local-gsaggese-1.0.9
+    cf16e3e3d1c7 Less than a second ago 2.75GB
+    ```
 - A local image is a candidate for becoming a `dev` image.
-```
-> i run_fast_tests --stage local --version 1.0.0
-```
+    ```
+    > i run_fast_tests --stage local --version 1.0.0
+    ```
 ## Testing the local image
 ```
 > i docker_bash
@@ -452,7 +453,7 @@ cf16e3e3d1c7 Less than a second ago 2.75GB
 > i docker_cmd --cmd "pip list | tee pip_packages.dev.txt"; i docker_cmd --stage=local --version=1.0.9 --cmd "pip list | tee pip_packages.local.txt"
 > vimdiff pip_packages.dev.txt pip_packages.local.txt
 ```
-You can move the local image on different servers for testing by pushing it on
+- You can move the local image on different servers for testing by pushing it on
 ECR:
 ```
 > i docker_login
@@ -494,22 +495,22 @@ Conceptually the flow consists of the following phases:
 - The mentioned flow is executed by `Build dev image` GH action and that is a
   preferred way to do an image release.
 - For specific cases that can not be done via GH action see commands below:
-```
-# To run the official flow end-to-end:
-> i docker_release_dev_image --version 1.0.0
-# To see the options:
-> i docker_release_dev_image -h
-# Run from scratch and not incrementally:
-> i docker_release_dev_image --version 1.0.0 --no-cache
-# Force an update to poetry to pick up new packages
-> i docker_release_dev_image --version 1.0.0 --update-poetry
-# Skip running the QA tests
-> i docker_release_dev_image --version 1.0.0 --no-qa-tests
-# Skip running the tests
-> i docker_release_dev_image --version 1.0.0 --skip-tests
-# Skip end-to-end tests
-> i docker_release_dev_image --version 1.0.0 --no-run-end-to-end-tests
-```
+    ```
+    # To run the official flow end-to-end:
+    > i docker_release_dev_image --version 1.0.0
+    # To see the options:
+    > i docker_release_dev_image -h
+    # Run from scratch and not incrementally:
+    > i docker_release_dev_image --version 1.0.0 --no-cache
+    # Force an update to poetry to pick up new packages
+    > i docker_release_dev_image --version 1.0.0 --update-poetry
+    # Skip running the QA tests
+    > i docker_release_dev_image --version 1.0.0 --no-qa-tests
+    # Skip running the tests
+    > i docker_release_dev_image --version 1.0.0 --skip-tests
+    # Skip end-to-end tests
+    > i docker_release_dev_image --version 1.0.0 --no-run-end-to-end-tests
+    ```
 ## Build prod image
 - The recipe to build a `prod` image is in
   `dev_tools/devops/docker_build/prod.Dockerfile`.
@@ -521,35 +522,35 @@ Conceptually the flow consists of the following phases:
       - `dev` image requires packages to develop and run the code
       - `prod` image requires packages only to run the code
 - To build the `prod` image run:
-```
-> i docker_build_prod_image --version 1.0.0
-# Check the options:
-> i docker_build_prod_image -h
-# To build from scratch and not incrementally:
-> i docker_build_prod_image --version 1.0.0 --no-cache
-```
+    ```
+    > i docker_build_prod_image --version 1.0.0
+    # Check the options:
+    > i docker_build_prod_image -h
+    # To build from scratch and not incrementally:
+    > i docker_build_prod_image --version 1.0.0 --no-cache
+    ```
 - To run a command inside the prod image
-```
-> docker run --rm -t --user $(id -u):$(id -g) --workdir=/app
-> 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:prod-1.0.3 "ls -l /app"
-```
+    ```
+    > docker run --rm -t --user $(id -u):$(id -g) --workdir=/app
+    > 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:prod-1.0.3 "ls -l /app"
+    ```
 - Example of a complex command:
-```
-> docker run --rm -t --workdir=/app
-> 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:prod-1.0.3 "python
-> /app/im_v2/ccxt/data/extract/download_realtime.py --to_datetime
-> '20211204-194432' --from_datetime '20211204-193932' --dst_dir 'test/ccxt_test'
-> --data_type 'ohlcv' --api_keys 'API_keys.json' --universe 'v03'"
-```
+    ```
+    > docker run --rm -t --workdir=/app
+    > 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:prod-1.0.3 "python
+    > /app/im_v2/ccxt/data/extract/download_realtime.py --to_datetime
+    > '20211204-194432' --from_datetime '20211204-193932' --dst_dir 'test/ccxt_test'
+    > --data_type 'ohlcv' --api_keys 'API_keys.json' --universe 'v03'"
+    ```
 ## QA for prod image
 - In dev_scripts repo test:
-```
-> i lint --files "linters/amp_black.py"
-```
+    ```
+    > i lint --files "linters/amp_black.py"
+    ```
 - In amp repo make sure:
-```
-> i lint -f "helpers/dbg.py"
-```
+    ```
+    > i lint -f "helpers/dbg.py"
+    ```
 ## End-to-end flow for `prod` image
 1. Build docker `prod` image
    - `i docker_build_prod_image --version 1.0.0`
@@ -1045,6 +1046,7 @@ container but need to be run inside `opt`.
 present in a container
     - E.g., `pytest` running in `amp` should not parse code in `//amp/optimizer`
     since it contains imports that will fail
+
 **Solution 1**
 - We use the pytest mechanism `cvx = pytest.importorskip("cvxpy")` which is
 conceptually equivalent to:
@@ -1058,6 +1060,7 @@ conceptually equivalent to:
     def utils1():
     cvxopt...
     ```
+
 **Solution 2**
 - Test in eachfile for the existence of the needed packages and enclose the code
 in an `if _has_package`
@@ -1069,11 +1072,12 @@ in an `if _has_package`
             - Solution: we can factor it out in a function
         - We need to enclose the code in a `if ...` that screws up the indentation and
             makes the code weird
+
 **Solution 3**
 - Exclude certain directories (e.g., `//amp/optimizer`) from `pytest`
-- Pros:
-    - We don't have to spread the `try ... except` and `if \_has_package` in the
-        code
+    - Pros:
+        - We don't have to spread the `try ... except` and `if \_has_package` in the
+            code
     - Cons:
     - The directory is relative to the top directory
         - Solution: we can use a regex to specify the dir without the full path
@@ -1081,6 +1085,7 @@ in an `if _has_package`
         - E.g., running `pytest` in an `amp` container we need to skip the
         `optimizer` dir, while `pytest` in an `optimizer` container should skip
         everything but the `optimizer` dir
+
 **Solution 4**
 - Exclude certain directories or files based on which container we are running in
     - Cons:
@@ -1113,11 +1118,13 @@ in an `if _has_package`
 - From
 [https://github.com/cryptokaizen/cmamp/issues/1357](https://github.com/cryptokaizen/cmamp/issues/1357)
 - We need to call something from `amp` to `opt` Docker
+
 **Solution 1**
 - Inside the code we build the command line `cmd = 'docker run -it ... '; system(cmd)`
     - Cons:
         - there is code replicated between here and the invoke task (e.g., the info
             about the container, ...)
+
 **Solution 2**
 - Call the Dockerized executable using the `docker_cmd` invoke target
     ```
@@ -1131,6 +1138,7 @@ in an `if _has_package`
         - Another level of indirection: do a system call to call `invoke`, `invoke`
             calls docker, docker does the work
         - `invoke` needs to be installed inside the calling container
+
 **Solution 3**
 - Call opt_lib_tasks.py `opt_docker_cmd(cmd, ...)`
     - Pros
