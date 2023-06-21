@@ -1,4 +1,4 @@
-# Python - Type hints
+# Type hints
 
 <!-- toc -->
 
