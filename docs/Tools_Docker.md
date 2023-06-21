@@ -194,21 +194,21 @@ height="2.736111111111111in"}
 - It is supposed that `POSTGRES_VERSION` is already defined in the shell.
     ```
     db:
-        image: "postgres:${POSTGRES_VERSION}"
+      image: "postgres:${POSTGRES_VERSION}"
     ```
 - Set environment variable in a service's container
     ```
     db:
-        environment:
-            - POSTGRES_VERSION=13
-            image: "postgres:${POSTGRES_VERSION}"
+      environment:
+        - POSTGRES_VERSION=13
+        image: "postgres:${POSTGRES_VERSION}"
     ```
 - Set environment variable with `.env` file
     ```
     db:
-        env_file:
-            - ./postgres_env.env
-            image: "postgres:${POSTGRES_VERSION}"
+      env_file:
+        - ./postgres_env.env
+        image: "postgres:${POSTGRES_VERSION}"
     ```
 - File `postgres_env.env`
     ```
@@ -454,7 +454,7 @@ height="2.736111111111111in"}
 > vimdiff pip_packages.dev.txt pip_packages.local.txt
 ```
 - You can move the local image on different servers for testing by pushing it on
-ECR:
+  ECR:
 ```
 > i docker_login
 > i docker push 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.1.0
@@ -570,7 +570,7 @@ Conceptually the flow consists of the following phases:
 - Alternatively, one can run the release stages step-by-step.
 # Docker-in-docker (dind)
 - It is possible to install a Docker engine inside a Docker container so that one
-can run Docker container (e.g., OMS or IM) inside an isolated `amp` container.
+  can run Docker container (e.g., OMS or IM) inside an isolated `amp` container.
 - The problems with this approach are:
     - dind requires to run the external container in privileged mode, which might
     not be possible due to security concerns
@@ -583,9 +583,9 @@ can run Docker container (e.g., OMS or IM) inside an isolated `amp` container.
     - [Can I run Docker-in-Docker without using the --privileged flag - Stack Overflow](https://stackoverflow.com/questions/29612463/can-i-run-docker-in-docker-without-using-the-privileged-flag)
     - [https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/](https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/)
 - Often what's really needed is the ability to build / run a container from
-another container (e.g., CI or unit test). This can be achieved by mounting the
-Docker socket `/var/run/docker.sock` to the container, so that a container can
-talk to Docker Engine.
+  another container (e.g., CI or unit test). This can be achieved by mounting the
+  Docker socket `/var/run/docker.sock` to the container, so that a container can
+  talk to Docker Engine.
 - This approach allows reuse of the build cache across the sibling containers.
 - The downside is less isolation from the external container, e.g., spawned
 containers can be left hanging or can collide.
@@ -605,7 +605,7 @@ containers can be left hanging or can collide.
     ```
 ### Connecting to Postgres instance using sibling containers
 - We can start the Docker container with Postgres as a service from outside the
-container.
+  container.
     ```
     > (cd oms; i oms_docker_up -s local)
     INFO: > cmd='/local/home/gsaggese/src/venv/amp.client_venv/bin/invoke
@@ -684,7 +684,7 @@ container.
     files (both the specs `devops/docker_build/poetry.toml` and the package
     version `devops/docker_build/poetry.loc`)
     - Run the release flow manually (or rely on GH Action build workflow to create
-    the new image)
+      the new image)
         ```
         # Release dev image
         > i docker_release_dev_image --version $version
@@ -695,7 +695,7 @@ container.
     `XYZ` container has been released
     - Users need to do a `i docker_pull` to get the new container
     - Users that don't update should see a message telling them that the code and
-    container are not in sync any more, e.g.,:
+      container are not in sync any more, e.g.,:
         ```
         ---
         This code is not in sync with the container:
@@ -738,16 +738,16 @@ container.
 - Let's assume that we want to release dev image with version 1.2.3:
 - un `i docker_build_local_image --tag-name 1.2.3`
 - Initially we thought about using Git tags to mark releases points in the source
-repo for `dev` and `prod` releases (but not `local` since `local` is reserved to
-private use by a user).
+  repo for `dev` and `prod` releases (but not `local` since `local` is reserved to
+  private use by a user).
 - This approach is elegant, but it has some corner cases when used with containers
-for multiple repos that contain Git submodules.
+  for multiple repos that contain Git submodules.
 - We decided to use an approach where a `changelog.txt` file contains the latest
-code version
+  code version
     - all test tasks now also use `hversion.get_code_version()` that calls
     `hgit.git_describe()` to get latest tag in the repo (1.0.0 in this case)
 - Agree. git_describe will need to accept a dir to find the tag of the releasable
-dir
+  dir
     - when we are satisfied with local image, we run `i
     docker_tag_local_image_as_dev`
 - We will still need to pass --version 1.0.0
@@ -769,8 +769,8 @@ dir
 - Q0: Is the flow ok?
     - Yes
 - Q1: The flow is the same for `dev_tools` and `cmamp`, but to update the version
-of image on which `dev_tools` is based -- we'll need to modify Dockerfile now.
-Is that ok?
+  of image on which `dev_tools` is based -- we'll need to modify Dockerfile now.
+  Is that ok?
     - Maybe we should just create the dev_tools from scratch using the full-blown
     flow instead of build on top of it
     - The idea of building on top of it, was just a shortcut but it is creating more
@@ -778,26 +778,26 @@ Is that ok?
     - Then everything looks and behaves the same
     - TODO(vitalii): File a bug, if we don't have it yet
 - Q2: If the flow is run in the submodule, e.g. in `amp` dir, currently the
-behaviour is not well defined. Commands will try to build `cmamp` image in this
-case, but code version will be from `dev_tools` -- should we fix this?
+  behaviour is not well defined. Commands will try to build `cmamp` image in this
+  case, but code version will be from `dev_tools` -- should we fix this?
     - We are going towards the concept of "releasable dirs" (see im, optimizer). If
     there is a dir with devops, then that dir runs inside a container
     - The "Git version" should be associated to the dir we are releasing (e.g.,
     cmamp, im, optimizer, dev_tools)
 - Vitalii: If we will have monorepo with releasable dirs, then indeed git tags are
-not that comfortable to use, however I could argue that when one releases `im`
-image with version 1.0.0, he gets docker image `im:dev-1.0.0` , `im:prod-1.0.0`,
-`im:dev` and `im:prod` -- but how then one is able to find corresponding code
-that was used in that image?
+  not that comfortable to use, however I could argue that when one releases `im`
+  image with version 1.0.0, he gets docker image `im:dev-1.0.0` , `im:prod-1.0.0`,
+  `im:dev` and `im:prod` -- but how then one is able to find corresponding code
+  that was used in that image?
 - Perhaps instead, we could share namespace of git tags between all tags.
 - E.g. in git repo (github) we will have:
     - im-dev-1.0.0
     - cmamp-dev-1.0.0
     - im-prod-1.0.0
 - GP: Point taken. In fact the code in a releasable dir still needs code from
-other submodules (e.g., helpers). One approach is to put the Git hash in
-version.txt. The one you suggest (of tagging the entire repo) with also info on
-the dir makes sense.
+  other submodules (e.g., helpers). One approach is to put the Git hash in
+  version.txt. The one you suggest (of tagging the entire repo) with also info on
+  the dir makes sense.
 - I think the Git tags are designed to do what we want, so let's use them.
 - Q3: We don't need version.txt file in this flow. I will remove it, ok?
     - Yes, we can remove version.txt and use a README or changelog in the releasable
@@ -809,7 +809,7 @@ the dir makes sense.
     but it's worth make the changes
 - We need to ensure that version can only be created going fwd.
 - We can do a comparison of the current version with the new version as tuples (we
-could use semver but it feels not needed
+  could use semver but it feels not needed
 - The workflows are:
     - Build a local image
     - Release a dev image
@@ -827,8 +827,8 @@ could use semver but it feels not needed
     - tasks.py (with the exposed Invoke tasks)
     - lib_tasks.py (with the custom invoke tasks)
 - We want to try to move to helpers/lib_tasks all the "common" code without
-dependencies from the specific sw components. We pass function pointers for
-callbacks.
+  dependencies from the specific sw components. We pass function pointers for
+  callbacks.
 - What to do with:
     ```
     CONTAINER_VERSION='amp-1.1.1'
@@ -843,7 +843,7 @@ callbacks.
     > pytest -m qa test --image_stage dev
     ```
 - The problem is that now the thin client needs to have a bunch of deps (including
-pytest, pandas and so on) which defeats the purpose of the thin env
+  pytest, pandas and so on) which defeats the purpose of the thin env
     `dev_scripts_devto/client_setup/`
 - E.g., `//amp/dev_scripts/client_setup/requirements.txt`
 - A hack is to
@@ -859,13 +859,13 @@ pytest, pandas and so on) which defeats the purpose of the thin env
     - in this way we don't have to pollute the thin env with a bunch of stuff
     - Talk to Grisha and Vitalii
 - This works in dev_tools because the code for the import detector is there and we
-are using a dev container which binds the src dir to the container
+  are using a dev container which binds the src dir to the container
     ```
     > i lint_detect_cycles --dir-name
     > import_check/test/Test_detect_import_cycles.test1/input/ --stage dev
     ```
 - In all the other repos, one needs to use the prod of dev_tools container (that's
-what the user would do)
+  what the user would do)
 - Next steps:
     - TODO(Sonya + Grisha): release the prod dev_toools container as it is
     - TODO(Sonya + Grisha): document dev_tools, release procedure
@@ -907,7 +907,7 @@ what the user would do)
 ## Internals
 ### One container per Git repo
 - A simple approach is to have each deployable unit (i.e., container)
-corresponding to a Git repo
+  corresponding to a Git repo
     - The consequence would be:
         - a multiplication of repos
     - no implicit sharing of code across different containers
@@ -950,7 +950,7 @@ corresponding to a Git repo
     Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
     ```
 - A work around is to inject .git in /git of the container and then point git to
-that
+  that
     ```
     environment:
     ...
@@ -984,7 +984,7 @@ that
 - From `devops/docker_build/dev.Dockerfile`
 - ENTRYPOINT ["optimizer/devops/docker_run/entrypoint.sh"]
 - This approach mounts 4 dirs up from devops/compose/docker-compose.yml, i.e.,
-//lime
+  //lime
 - The problem with this approach is that now repo_config.py is incorrect
 - `i opt_docker_build_local_image --version 0.4.0`
     ```
@@ -1049,7 +1049,7 @@ present in a container
 
 **Solution 1**
 - We use the pytest mechanism `cvx = pytest.importorskip("cvxpy")` which is
-conceptually equivalent to:
+  conceptually equivalent to:
     ```
     try:
     import cvxopt
@@ -1063,7 +1063,7 @@ conceptually equivalent to:
 
 **Solution 2**
 - Test in eachfile for the existence of the needed packages and enclose the code
-in an `if _has_package`
+  in an `if _has_package`
     - Pros:
         - We can skip code based dynamically on a `try ... except ImportModule` to
         check what packages are present
@@ -1098,7 +1098,7 @@ in an `if _has_package`
 - Given the pros and cons, we decided to follow Solution 1 and Solution 3
 ### Run optimizer tests in a stand-alone `opt` container
 - To run the optimizer tests, you can create an `opt ` container and then run
-`pytest`
+  `pytest`
     ```
     > cd optimizer
     > i opt_docker_bash
