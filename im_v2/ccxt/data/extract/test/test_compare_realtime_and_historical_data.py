@@ -186,7 +186,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         # Prepare and attach sample to mocked function.
         mock_get_daily_data.return_value = sample_daily
         # Run.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             self._test_function_call("ohlcv", "spot", True)
         # Stop the patches.
         mock_get_rt_data_patch.stop()
@@ -237,7 +237,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         # Prepare and attach sample to mocked function.
         mock_get_daily_data.return_value = sample_daily
         # Run.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             self._test_function_call("ohlcv", "spot", True)
         # Stop the patches.
         mock_get_rt_data_patch.stop()
@@ -291,7 +291,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         # Prepare and attach sample to mocked function.
         mock_get_daily_data.return_value = sample_daily
         # Run.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             self._test_function_call("ohlcv", "spot", True)
         # Stop the patches.
         mock_get_rt_data_patch.stop()
@@ -403,7 +403,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         # Prepare and attach sample to mocked function.
         mock_get_daily_data.return_value = sample_daily
         # Run.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             self._test_function_call("bid_ask", "spot", True)
         # Stop the patches.
         mock_get_rt_data_patch.stop()
@@ -448,7 +448,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         # Prepare and attach sample to mocked function.
         mock_get_daily_data.return_value = sample_daily
         # Run.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             self._test_function_call("bid_ask", "spot", True)
         # Stop the patches.
         mock_get_rt_data_patch.stop()
@@ -498,7 +498,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         # Prepare and attach sample to mocked function.
         mock_get_daily_data.return_value = sample_daily
         # Run.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             self._test_function_call("bid_ask", "spot", True)
         # Stop the patches.
         mock_get_rt_data_patch.stop()

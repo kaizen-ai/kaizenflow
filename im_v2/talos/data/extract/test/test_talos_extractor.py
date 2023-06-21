@@ -172,7 +172,7 @@ class TestTalosExtractor1(hunitest.TestCase):
         # Initialize class.
         exchange_class = imvtdexex.TalosExtractor("sandbox")
         # Run with invalid input.
-        with pytest.raises(raises) as fail:
+        with self.assertRaises(raises) as fail:
             exchange_class._download_ohlcv(
                 exchange_id=exchange,
                 currency_pair=currency_pair,
