@@ -33,8 +33,7 @@
 - Certain containers that need to be widely available to the team and deployed go
   through the release process and ECR
 - Other containers that are lightweight and used only by one person (e.g., the
-  `infra` container) can be built on the fly using \`docker compose`/`docker
-  build\`.
+  `infra` container) can be built on the fly using `docker compose`/`docker build`.
 ## Thin client
 - To bootstrap the system we use a "thin client" which installs in a virtual env
   the minimum set of packages to run (e.g., installs `invoke`, `docker`, etc).
@@ -674,12 +673,11 @@ container.
 - We use [semantic versioning](https://semver.org/) convention
     - For example, adding a package to the image would mean bumping up version 1.0.0
     to 1.0.1
-    - Test the change using the local release flow \`i docker_build_local_image -v
-    ${version}\`
+    - Test the change using the local release flow `i docker_build_local_image -v
+    ${version}`
     - If a new package is added run `docker_build_local_image` with
         `--update-poetry` option and check in a `poetry.lock` file
-    - Make sure that the tests pass \`i run_fast_slow_tests -s local -v
-    ${version}\`, and that the goal of the Issue is achieved (e.g., a new package
+    - Make sure that the tests pass `i run_fast_slow_tests -s local -v ${version}`, and that the goal of the Issue is achieved (e.g., a new package
     is visible, the package version has been updated)
     - Do a PR with the change including the updated `changelog.txt`, the poetry
     files (both the specs `devops/docker_build/poetry.toml` and the package
@@ -1116,7 +1114,7 @@ in an `if _has_package`
 [https://github.com/cryptokaizen/cmamp/issues/1357](https://github.com/cryptokaizen/cmamp/issues/1357)
 - We need to call something from `amp` to `opt` Docker
 **Solution 1**
-- Inside the code we build the command line \`cmd = 'docker run -it ... '; system(cmd)\`
+- Inside the code we build the command line `cmd = 'docker run -it ... '; system(cmd)`
     - Cons:
         - there is code replicated between here and the invoke task (e.g., the info
             about the container, ...)
