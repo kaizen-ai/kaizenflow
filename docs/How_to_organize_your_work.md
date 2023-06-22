@@ -7,21 +7,19 @@
 - I'll remind you an adage that I tell myself when my teammates drive me crazy:
   "If you want to go fast, go alone; if you want to go far, go together"
 - While being assigned a warm-up issue:
-  - We value the importance of following instructions for efficient task
-    completion. We specifically pick the most straightforward simple issues
-    as the first ones so we’re not questioning whether you find a
-    solution for the task (most of the time we even give you interfaces, so
-    should not be a big deal). We want to see if you can follow simple rules
-    because no matter how smart you are until you learn how to follow the
-    instructions, you waste more of our time than save
+  - - We highly value the importance of following instructions to ensure
+      efficient task completion. We intentionally select straightforward and
+      simple issues as the first tasks for you. So as your first step you should
+      put primary focus on following the rules. Failure to do so can result in
+      wasting more of our time than saving it.
   - A pledge to put in the time you committed and not disappear
   - If we don't find that you can meaningfully contribute, we will give you a
     warning and help you improve, we will suggest you how to fill in your
-    knowledge gaps, and start not putting the time to help since we don't
-    have enough resources
-  - If we decide that you are not ready to contribute, we will drop you,
-    without discussions: this is our sole decision for the good of the project
-    and the other contributors
+    knowledge gaps, and start not putting the time to help since we don't have
+    enough resources
+  - If we decide that you are not ready to contribute, we will drop you, without
+    discussions: this is our sole decision for the good of the project and the
+    other contributors
   - You can study and try again in 6 months
 
 # Roles
