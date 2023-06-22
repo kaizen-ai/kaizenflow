@@ -186,7 +186,7 @@ hooks.
 You can follow the
 
 ```
-\# Build the client env
+# Build the client env
 > dev_scripts/client_setup/build.sh
 > source dev_scripts/setenv_amp.sh
 ```
@@ -200,23 +200,23 @@ targets, but using Python.
 
 We use `invoke` to automate tasks and package workflows for:
 
-- docker: `docker_\*`
+- docker: `docker_*`
 
-- Git: `git_\*`
+- Git: `git_*`
 
-- GitHub (relying on `gh` integration): `gh_\*`
+- GitHub (relying on `gh` integration): `gh_*`
 
-- running tests: `run_\*`
+- running tests: `run_*`
 
-- integrate: `integrate_\*`
+- integrate: `integrate_*`
 
-- releasing tools and Docker images: `docker_\*`
+- releasing tools and Docker images: `docker_*`
 
-- lint: `lint_\*`
+- lint: `lint_*`
 
 - pytest:
 
-Each set of commands starts with the topic, e.g., `docker_\*` for all the docker
+Each set of commands starts with the topic, e.g., `docker_*` for all the docker
 related tasks
 
 The best approach to getting familiar with the tasks is to browse the list and
@@ -333,11 +333,11 @@ traceback Parse the traceback from Pytest and navigate it with vim.
 
 ## Implementation details
 
-- By convention all invoke targets are in `\*_lib_tasks.py`, e.g.,
+- By convention all invoke targets are in `*_lib_tasks.py`, e.g.,
 
   - `helpers/lib_tasks.py` - tasks to be run in `cmamp`
 
-  - `opimizer/opt_lib_tasks.py` - tasks to be run in `cmamp/optimizer`
+  - `optimizer/opt_lib_tasks.py` - tasks to be run in `cmamp/optimizer`
 
 - All invoke tasks are functions with the `@task` decorator, e.g.,
 
@@ -378,7 +378,7 @@ Get the official branch name corresponding to an Issue
 
 # Copied to system clipboard:
 AmpTask256_Part_task2236_jenkins_cleanup_split_scripts:
-[https://github.com/alphamatic/amp/pull/256](https://github.com/alphamatic/amp/pull/256)
+https://github.com/alphamatic/amp/pull/256
 ```
 
 ## See all the workflows
@@ -386,15 +386,15 @@ AmpTask256_Part_task2236_jenkins_cleanup_split_scripts:
 Workflows are organized somehow around Linux command that they are related to,
 e.g.,
 
-- `docker_\*` for all `docker` related workflows
+- `docker_*` for all `docker` related workflows
 
 <!-- -->
 
-- `find_\*` for all workflows related to finding (e.g., unit tests)
+- `find_*` for all workflows related to finding (e.g., unit tests)
 
-- `gh_\*` for GitHub related workflows
+- `gh_*` for GitHub related workflows
 
-- `git_\*` for Git related workflows
+- `git_*` for Git related workflows
 
 - etc.
 
@@ -406,8 +406,7 @@ something interesting was added.
 Available tasks:
 
 docker_bash     Start a bash shell inside the container corresponding to a stage.
-docker_build_local_image    Build a local image (i.e., a release candidate "dev"
-image).
+docker_build_local_image    Build a local image (i.e., a release candidate "dev" image).
 ...
 ```
 
@@ -473,26 +472,20 @@ When a piece of code can be merged:
 
 This workflow allows you to develop and regress / merge without too much hassle
 solving the problem of "stacked PRs".
-
+```
 # Go to the client with the branch that you want to divvy up.
-
 > git checkout ${feature_branch}
 
 # Make sure that the branch is up-to-date with master
-
 > i git_merge_master
 
 # Lint.
-
 > i lint -b
 
 # Create a patch from the branch (there are many options to tweak the workflow, check the help)
-
 > i git_create_patch -b
 
 # To apply the patch and execute:
-
-```
 > git checkout 8f9cda97
 > git apply /Users/saggese/src/lemonade1/amp/patch.amp.8f9cda97.20210609_080439.patch
 ...
@@ -524,17 +517,14 @@ merge easily.
 > git commit; git push
 
 # Create a PR (non-draft so that GH can start running the tests)
-
 > i gh_create_pr --no-draft
 
 # Regress the branch
-
 > i run_fast_tests ...
 
 # Merge the PR into master
 
 # Go back to your feature branch and merge master
-
 > gco ${feature_branch}
 > git pull
 
@@ -542,7 +532,6 @@ merge easily.
 all the code is merged.
 
 ### Using git
-
 > git checkout `dst_branch`
 > git merge --squash --ff `src_branch`
 > git reset HEAD
@@ -662,8 +651,9 @@ packages using a one liner `! sudo su -; source ...; `
 
 Create a branch
 
-Change .github/workflows/fast_tests.yml run: invoke run_fast_tests un: invoke
-run_fast_tests
+Change .github/workflows/fast_tests.yml 
+run: invoke run_fast_tests 
+# run: invoke run_fast_tests
 --pytest-opts="helpers/test/test_git.py::Test_git_modified_files1::test_get_modified_files_in_branch1
 -s --dbg"
 
