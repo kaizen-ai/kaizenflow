@@ -1,7 +1,6 @@
 
 
 <!-- toc -->
-
 - [Setting up Git credentials](#setting-up-git-credentials)
   * [Preamble](#preamble)
   * [Check Git credentials](#check-git-credentials)
@@ -102,10 +101,7 @@ inherited if not overridden.
 Refs:
 
 - How to customize Git:
-  [[https://git-scm.com/book/en/v2/Customizing-Git-Git-Configuration]{.underline}](https://git-scm.com/book/en/v2/Customizing-Git-Git-Configuration)
-
-<!-- -->
-
+  [https://git-scm.com/book/en/v2/Customizing-Git-Git-Configuration](https://git-scm.com/book/en/v2/Customizing-Git-Git-Configuration)
 - Details on `git config`: https://git-scm.com/docs/git-config
 
 ## Check Git credentials
@@ -214,7 +210,7 @@ You can follow the
 We use `invoke` to implement workflows (aka "tasks") similar to Makefile
 targets, but using Python.
 
-[[The official documentation.]{.underline}](https://docs.pyinvoke.org/en/0.11.1/index.html)
+[The official documentation.](https://docs.pyinvoke.org/en/0.11.1/index.html)
 
 We use `invoke` to automate tasks and package workflows for:
 
@@ -261,157 +257,92 @@ I can guarantee you a 2x improvement in performance, if you master the
 workflows, but it takes some time and patience
 
 ## Listing all the tasks
-
+```
 > invoke --list
-
 INFO: > cmd='/Users/saggese/src/venv/amp.client_venv/bin/invoke --list'
-
 Available tasks:
 
 check_python_files Compile and execute Python files checking for errors.
-
 docker_bash Start a bash shell inside the container corresponding to a stage.
-
 docker_build_local_image Build a local image (i.e., a release candidate "dev"
 image).
-
 docker_build_prod_image (ONLY CI/CD) Build a prod image.
-
 docker_cmd Execute the command `cmd` inside a container corresponding to a
 stage.
-
 docker_images_ls_repo List images in the logged in repo_short_name.
-
 docker_jupyter Run jupyter notebook server.
-
 docker_kill Kill the last Docker container started.
-
 docker_login Log in the AM Docker repo_short_name on AWS.
-
 docker_ps List all the running containers.
-
 docker_pull Pull latest dev image corresponding to the current repo from the
 registry.
-
 docker_pull_dev_tools Pull latest prod image of `dev_tools` from the registry.
-
 docker_push_dev_image (ONLY CI/CD) Push the "dev" image to ECR.
-
 docker_push_prod_image (ONLY CI/CD) Push the "prod" image to ECR.
-
 docker_release_all (ONLY CI/CD) Release both dev and prod image to ECR.
-
 docker_release_dev_image (ONLY CI/CD) Build, test, and release to ECR the latest
 "dev" image.
-
 docker_release_prod_image (ONLY CI/CD) Build, test, and release to ECR the prod
 image.
-
 docker_rollback_dev_image Rollback the version of the dev image.
-
 docker_rollback_prod_image Rollback the version of the prod image.
-
 docker_stats Report last started Docker container stats, e.g., CPU, RAM.
-
 docker_tag_local_image_as_dev (ONLY CI/CD) Mark the "local" image as "dev".
-
 find_check_string_output Find output of `check_string()` in the test running
-
 find_test_class Report test files containing `class_name` in a format compatible
 with
-
 find_test_decorator Report test files containing `class_name` in pytest format.
-
 fix_perms :param action:
-
 gh_create_pr Create a draft PR for the current branch in the corresponding
-
 gh_issue_title Print the title that corresponds to the given issue and
 repo_short_name.
-
 gh_workflow_list Report the status of the GH workflows.
-
 gh_workflow_run Run GH workflows in a branch.
-
 git_add_all_untracked Add all untracked files to Git.
-
 git_branch_copy Create a new branch with the same content of the current branch.
-
 git_branch_diff_with_base Diff files of the current branch with master at the
 branching point.
-
 git_branch_files Report which files were added, changed, and modified in the
 current branch
-
 git_branch_next_name Return a name derived from the branch so that the branch
 doesn't exist.
-
 git_clean Clean the repo_short_name and its submodules from artifacts.
-
 git_create_branch Create and push upstream branch `branch_name` or the one
 corresponding to
-
 git_create_patch Create a patch file for the entire repo_short_name client from
 the base
-
 git_delete_merged_branches Remove (both local and remote) branches that have
 been merged into master.
-
 git_files Report which files are changed in the current branch with respect to
-
 git_last_commit_files Print the status of the files in the previous commit.
-
 git_merge_master Merge `origin/master` into the current branch.
-
 git_pull Pull all the repos.
-
 git_fetch_master Pull master without changing branch.
-
 git_rename_branch Rename current branch both locally and remotely.
-
 integrate_compare_branch_with_base Compare the files modified in both the
 branches in src_dir and dst_dir to
-
 integrate_copy_dirs Copy dir `subdir` from dir `src_dir` to `dst_dir`.
-
 integrate_create_branch Create the branch for integration in the current dir.
-
 integrate_diff_dirs Integrate repos from dir `src_dir` to `dst_dir`.
-
 lint Lint files.
-
 lint_create_branch Create the branch for linting in the current dir.
-
 print_setup Print some configuration variables.
-
 print_tasks Print all the available tasks in `lib_tasks.py`.
-
 pytest_clean Clean pytest artifacts.
-
 pytest_compare Compare the output of two runs of `pytest -s --dbg` removing
 irrelevant
-
 pytest_failed Process the list of failed tests from a pytest run.
-
 pytest_failed_freeze_test_list Copy last list of failed tests to not overwrite
 with successive pytest
-
 run_blank_tests (ONLY CI/CD) Test that pytest in the container works.
-
 run_coverage_report
-
 run_fast_slow_tests Run fast and slow tests independently.
-
 run_fast_tests Run fast tests.
-
 run_qa_tests Run QA tests independently.
-
 run_slow_tests Run slow tests.
-
 run_superslow_tests Run superslow tests.
-
 traceback Parse the traceback from Pytest and navigate it with vim.
-
+```
 ## Implementation details
 
 - By convention all invoke targets are in `\*_lib_tasks.py`, e.g.,
@@ -431,9 +362,7 @@ def invoke_task(...):
 ```
 
 - To run a task we use `context.run(...)`, see
-  [[the official docs]{.underline}](https://docs.pyinvoke.org/en/0.11.1/concepts/context.html)
-
-<!-- -->
+  [the official docs](https://docs.pyinvoke.org/en/0.11.1/concepts/context.html)
 
 - To be able to run a specified invoke task one should import it in `tasks.py`
 
@@ -454,18 +383,14 @@ def invoke_task(...):
 ## GitHub
 
 ```
-
 Get the official branch name corresponding to an Issue
 
 > i gh_issue_title -i 256
+## gh_issue_title: issue_id='256', repo_short_name='current'
 
-gh_issue_title: issue_id='256', repo_short_name='current'
-
-Copied to system clipboard:
-
+# Copied to system clipboard:
 AmpTask256_Part_task2236_jenkins_cleanup_split_scripts:
-[[https://github.com/alphamatic/amp/pull/256]{.underline}](https://github.com/alphamatic/amp/pull/256)
-
+[https://github.com/alphamatic/amp/pull/256](https://github.com/alphamatic/amp/pull/256)
 ```
 
 ## See all the workflows
@@ -490,11 +415,9 @@ something interesting was added.
 
 ```
 > invoke --list
-
 Available tasks:
 
 docker_bash     Start a bash shell inside the container corresponding to a stage.
-
 docker_build_local_image    Build a local image (i.e., a release candidate "dev"
 image).
 ...
@@ -530,9 +453,9 @@ Options:
 ```
 
 ## Merge master in the current branch
-
-i git_merge_master
-
+```
+> i git_merge_master
+```
 ## Create a PR
 
 TODO(gp): Describe
@@ -573,16 +496,13 @@ solving the problem of "stacked PRs".
 
 > i lint -b
 
-# Create a patch from the branch (there are many options to tweak the workflow,
-
-check the help)
+# Create a patch from the branch (there are many options to tweak the workflow, check the help)
 
 > i git_create_patch -b
 
-```
-...
 
-\# To apply the patch and execute:
+# To apply the patch and execute:
+```
 > git checkout 8f9cda97
 > git apply /Users/saggese/src/lemonade1/amp/patch.amp.8f9cda97.20210609_080439.patch
 ...
@@ -592,9 +512,7 @@ Go to a fresh Git client (I have 2-3 Git clients separated from the one in which
 I develop for this kind of operations) or go to master in the same Git client
 
 ```
-
 # Go to master
-
 > git checkout master
 
 # Apply the patch from the run of `git_create_patch`
@@ -638,7 +556,7 @@ all the code is merged.
 > git checkout `dst_branch`
 > git merge --squash --ff `src_branch`
 > git reset HEAD
-
+```
 ## Systematic code transformation
 
 See the help of amp/dev_scripts/replace_text.py
@@ -660,34 +578,27 @@ The flow is similar to the dev image, but by default tests are not run and the
 image is not released.
 
 ```
-
 Build the local image (and update Poetry dependencies, if needed).
 
-> i docker_build_local_image --update-poetry ... docker image ls
-> 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
+> i docker_build_local_image --update-poetry 
+... 
+docker image ls 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
 
 REPOSITORY TAG IMAGE ID CREATED SIZE
-665840871993.dkr.ecr.us-east-1.amazonaws.com/amp local 9b3f8f103a2c 1 second ago
-1.72GB
+665840871993.dkr.ecr.us-east-1.amazonaws.com/amp local 9b3f8f103a2c 1 second ago 1.72GB
 
 # Test the new "local" image
-
 > i docker_bash --stage "local" python -c "import async_solipsism" python -c
 > "import async_solipsism; print(async_solipsism.**version**)"
 
 # Run the tests with local image
-
 # Make sure the new image is used: e.g., add an import and trigger the tests.
-
-> i run_fast_tests --stage "local" --pytest-opts
-> core/dataflow/test/test_real_time.py
-
+> i run_fast_tests --stage "local" --pytest-opts core/dataflow/test/test_real_time.py
 > i run_fast_slow_tests --stage "local"
 
-\# Promote a local image to dev.
-
-> i docker_tag_local_image_as_dev i docker_push_dev_image
-
+# Promote a local image to dev.
+> i docker_tag_local_image_as_dev 
+> i docker_push_dev_image
 ```
 
 ## Update the dev `amp` Docker image
@@ -695,47 +606,35 @@ REPOSITORY TAG IMAGE ID CREATED SIZE
 To implement the entire Docker QA process of a dev image
 
 ```
-
 Clean all the Docker images locally, to make sure there is no hidden state.
-
 > docker system prune --all
 
 # Update the needed packages.
-
 > devops/docker_build/pyproject.toml
 
 # Visually inspect the updated packages.
-
 > git diff devops/docker_build/poetry.lock
 
 # Run entire release process.
-
 > i docker_release_dev_image
-
 ```
+
 ## Experiment in a local image
 
 To install packages in an image, do `i docker_bash`
-
 ```
-
 # Switch to root and install package.
-
-> sudo su - source /venv/bin/activate pip install <package>
+> sudo su - 
+> source /venv/bin/activate 
+> pip install <package>
 
 # Switch back to user.
-
 > exit
-
 ```
 
 You should test that the package is installed for your user, e.g.,
-
 ```
-
-> source /venv/bin/activate python -c "import foobar; print(foobar);
-> print(foobar.**version**)"
-
+> source /venv/bin/activate python -c "import foobar; print(foobar);print(foobar.__version__)"
 ```
 
 You can now use the package in this container. Note that if you exit the
@@ -750,20 +649,16 @@ container is still running.
     starts with `user_1011@da8f3bb8f53b:/app$`, your Container ID is
     `da8f3bb8f53b`
 
-<!-- -->
 
 - by listing running containers, e.g., run `docker ps` outside the container
-
-<!-- -->
 
 - Commit image
 
 ```
-
-> docker commit <Container ID> <IMAGE>/cmamp:local-$USER E.g.
-> `docker commit da8f3bb8f53b 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:local-julias`
-
+> docker commit <Container ID> <IMAGE>/cmamp:local-$USER 
 ```
+E.g. `docker commit da8f3bb8f53b 
+665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:local-julias`
 
 
 If you are running inside a notebook using `i docker_jupyter` you can install
@@ -787,11 +682,11 @@ branch
 
 # pytest
 
-From <https://gist.github.com/kwmiebach/3fd49612ef7a52b5ce3a>
+From [https://gist.github.com/kwmiebach/3fd49612ef7a52b5ce3a](https://gist.github.com/kwmiebach/3fd49612ef7a52b5ce3a)
 
 ## Run with coverage
 
-i run_fast_tests --pytest-opts="core/test/test_finance.py" --coverage
+> i run_fast_tests --pytest-opts="core/test/test_finance.py" --coverage
 
 ## Iterating on stacktrace of failing test
 
@@ -805,26 +700,19 @@ Then from outside Docker launch vim in quickfix mode
 
 > invoke traceback
 
-# The short form is `it`
+The short form is `it`
 
 ## Iterating on a failing regression test
 
 The workflow is:
 
 ```
-
 # Run a lot of tests, e.g., the entire regression suite.
-
 > pytest ...
-
 # Some tests fail.
 
-# Run the `pytest_repro` to summarize test failures and to generate
-
-# commands to reproduce them.
-
+# Run the `pytest_repro` to summarize test failures and to generate commands to reproduce them.
 > invoke pytest_repro
-
 ```
 
 ## Detect mismatches with golden test outcomes
@@ -832,9 +720,7 @@ The workflow is:
 The command is
 
 ```
-
 > i pytest_find_unused_goldens
-
 ````
 
 The specific dir to check can be specified with the `dir_name` parameter.
@@ -862,7 +748,7 @@ files.
     calls `check_string`, and this method B is called in the test method A.
 
 For more details see
-[[CmTask528]{.underline}](https://github.com/cryptokaizen/cmamp/issues/528).
+[CmTask528](https://github.com/cryptokaizen/cmamp/issues/528).
 
 # Playback
 
@@ -910,48 +796,42 @@ side-by-side for changes
 
 Plug-in for Chrome
 
-[[my-s3-browser]{.underline}](https://chrome.google.com/webstore/detail/my-s3-browser/lgkbddebikceepncgppakonioaopmbkk?hl=en)
+[my-s3-browser](https://chrome.google.com/webstore/detail/my-s3-browser/lgkbddebikceepncgppakonioaopmbkk?hl=en)
 
 ## Publish notebooks
 
 Make sure that your environment is set up properly
 
 ```
-**> more \~/.aws/credentials**
+> more ~/.aws/credentials
+[am]
+aws_access_key_id=**
+aws_secret_access_key=**
+aws_s3_bucket=alphamatic-data
 
-**[am]**
-
-**aws_access_key_id=\*\*\***
-
-**aws_secret_access_key=\*\*\***
-
-**aws_s3_bucket=alphamatic-data**
-
-**> printenv | grep AM\_**
-
-**AM_AWS_PROFILE=am**
+> printenv | grep AM_
+AM_AWS_PROFILE=am
 ```
 
 If you don't have them, you need to re-run `source dev_scripts/seten.sh` in all
 the shells. It might be easier to kill that tmux session and restart it
 
 ```
-**> tmux kill-session --t limeXYZ **
-**> \~/go_lem.sh XYZ**
+> tmux kill-session --t limeXYZ 
+
+> ~/go_lem.sh XYZ
 ```
 
 Inside or outside a Docker bash run
 
 ```
-**> publish_notebook.py --file
-http://127.0.0.1:2908/notebooks/notebooks/Task40_Optimizer.ipynb --action
-publish_on_s3**
+> publish_notebook.py --file http://127.0.0.1:2908/notebooks/notebooks/Task40_Optimizer.ipynb --action publish_on_s3
 ```
 
 The file is copied to S3
 
-**Copying './Task40_Optimizer.20210717_010806.html' to
-'s3://alphamatic-data/notebooks/Task40_Optimizer.20210717_010806.html'**
+Copying './Task40_Optimizer.20210717_010806.html' to
+'s3://alphamatic-data/notebooks/Task40_Optimizer.20210717_010806.html'
 
 You can also save the data locally:
 
@@ -964,11 +844,11 @@ amp/oms/notebooks/Master_forecast_processor_reader.ipynb --action publish_on_s3
 You can also use a different path or profile by specifying it directly
 
 ```
-**> publish_notebook.py \\**
-**--file http://127.0.0.1:2908/notebooks/notebooks/Task40_Optimizer.ipynb \\**
-**--action publish_on_s3 \\**
-**--s3_path s3://alphamatic-data/notebooks \\**
-**--aws_profile am**
+> publish_notebook.py \
+--file http://127.0.0.1:2908/notebooks/notebooks/Task40_Optimizer.ipynb \
+--action publish_on_s3 \
+--s3_path s3://alphamatic-data/notebooks \
+--aws_profile am
 ```
 
 ## Open a published notebook
@@ -984,14 +864,13 @@ go to the page in the local browser
 To open a notebook saved on S3, \*outside\* a Docker container run:
 
 ```
-**> publish_notebook.py --action open --file
-s3://alphamatic-data/notebooks/Task40_Optimizer.20210717_010806.html**
+> publish_notebook.py --action open --file
+s3://alphamatic-data/notebooks/Task40_Optimizer.20210717_010806.html
 ```
 
 This opens a Chrome window through X-windows.
 
 To open files faster you can open a Chrome window in background with
-
 ```
 > google-chrome
 ```
@@ -1004,8 +883,8 @@ and then navigate to the path (e.g.,
 Another approach is:
 
 ```
-**> aws s3 presign --expires-in 36000
-s3://alphamatic-data/notebooks/Task40_Optimizer.20210716_194400.html | xclip**
+> aws s3 presign --expires-in 36000
+s3://alphamatic-data/notebooks/Task40_Optimizer.20210716_194400.html | xclip
 ```
 
 Open the link saved in the clipboard in the Windows browser
@@ -1015,49 +894,45 @@ on the saved link
 
 # How to create a private fork
 
-[[https://stackoverflow.com/questions/10065526/github-how-to-make-a-fork-of-public-repository-private]{.underline}](https://stackoverflow.com/questions/10065526/github-how-to-make-a-fork-of-public-repository-private)
+[https://stackoverflow.com/questions/10065526/github-how-to-make-a-fork-of-public-repository-private](https://stackoverflow.com/questions/10065526/github-how-to-make-a-fork-of-public-repository-private)
 
 From
-[[https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/duplicating-a-repository]{.underline}](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/duplicating-a-repository)
+[https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/duplicating-a-repository](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/duplicating-a-repository)
 
 > git clone --bare git@github.com:alphamatic/amp.git amp_bare
 
-> git push --mirror
-> [[https://github.com/cryptomtc/cmamp.git]{.underline}](https://github.com/cryptomtc/cmamp.git)
+> git push --mirror [https://github.com/cryptomtc/cmamp.git](https://github.com/cryptomtc/cmamp.git)
 
 It worked only as cryptomtc, but not using my key
 
 # Integrate public to private: amp -> cmamp
 
 ### Set-up
-
-> git remote add public
-> [[git@github.com]{.underline}](mailto:git@github.com):alphamatic/amp
+```
+> git remote add public [git@github.com](mailto:git@github.com):alphamatic/amp
 
 # Go to cmamp
-
-> cd /data/saggese/src/cmamp1 cd /Users/saggese/src/cmamp1
+> cd /data/saggese/src/cmamp1 
+> cd /Users/saggese/src/cmamp1
 
 # Add the remote
-
 # git remote add public https://github.com/exampleuser/public-repo.git
+> git remote add public git@github.com:alphamatic/amp
 
-> git remote add public git@github.com:alphamatic/amp git remote -v origin
-> https://github.com/cryptomtc/cmamp.git (fetch) origin
-> https://github.com/cryptomtc/cmamp.git (push) public
-> git@github.com:alphamatic/amp (fetch) public git@github.com:alphamatic/amp
-> (push)
-
+> git remote -v 
+origin https://github.com/cryptomtc/cmamp.git (fetch) 
+origin https://github.com/cryptomtc/cmamp.git (push) 
+public git@github.com:alphamatic/amp (fetch) 
+public git@github.com:alphamatic/amp(push)
+```
 ## Ours vs theirs
 
 From
-[[https://stackoverflow.com/questions/25576415/what-is-the-precise-meaning-of-ours-and-theirs-in-git/25576672]{.underline}](https://stackoverflow.com/questions/25576415/what-is-the-precise-meaning-of-ours-and-theirs-in-git/25576672)
+[https://stackoverflow.com/questions/25576415/what-is-the-precise-meaning-of-ours-and-theirs-in-git/25576672](https://stackoverflow.com/questions/25576415/what-is-the-precise-meaning-of-ours-and-theirs-in-git/25576672)
 
 When merging:
 
 - ours = branch checked out (git checkout \*ours\*)
-
-<!-- -->
 
 - theirs = branch being merged (git merge \*theirs\*)
 
@@ -1088,11 +963,11 @@ When there is a file added it's better to add
 im/ccxt/db/test/test_ccxt_db_utils.py
 
 ## Merge branch
-
-> gs \+ git status On branch AmpTask1786_Integrate_20211128_02 Your branch and
-> 'origin/AmpTask1786_Integrate_20211128_02' have diverged, and have 861 and 489
-> different commits each, respectively. (use "git pull" to merge the remote
-> branch into yours)
+```
+> gs 
++ git status
+On branch AmpTask1786_Integrate_20211128_02 Your branch and 'origin/AmpTask1786_Integrate_20211128_02' have diverged, and have 861 and 489
+different commits each, respectively. (use "git pull" to merge the remote branch into yours)
 
 You are in a sparse checkout with 100% of tracked files present.
 
@@ -1102,44 +977,45 @@ nothing to commit, working tree clean
 
 ## Make sure it's synced at ToT
 
-rsync --delete -r /Users/saggese/src/cmamp2/ /Users/saggese/src/cmamp1
+> rsync --delete -r /Users/saggese/src/cmamp2/ /Users/saggese/src/cmamp1
 --exclude='.git/'
 
-diff -r --brief /Users/saggese/src/cmamp1 /Users/saggese/src/cmamp2 | grep -v
+> diff -r --brief /Users/saggese/src/cmamp1 /Users/saggese/src/cmamp2 | grep -v
 \.git
+```
 
 ## Updated sync
 
 > git fetch origin; git fetch public
 
 ## Check that things are fine
+```
+> git diff origin/master... >patch.txt
 
-git diff origin/master... >patch.txt
-
-cd /Users/saggese/src/cmamp2
+> cd /Users/saggese/src/cmamp2
 
 # Create a branch
 
-git checkout -b Cmamp114_Integrate_amp_cmamp_20210928 git apply patch.txt
+> git checkout -b Cmamp114_Integrate_amp_cmamp_20210928 
+> git apply patch.txt
 
 # Compare branch with references
 
-dev_scripts/diff_to_vimdiff.py --dir1 /Users/saggese/src/cmamp1/im --dir2
+> dev_scripts/diff_to_vimdiff.py --dir1 /Users/saggese/src/cmamp1/im --dir2
 /Users/saggese/src/cmamp2/im
 
-diff -r --brief /Users/saggese/src/lemonade3/amp \~/src/cmamp2 | grep -v "/im"
+> diff -r --brief /Users/saggese/src/lemonade3/amp \~/src/cmamp2 | grep -v "/im"
 
 # Creates a merge commit
-
-git push origin master
-
+> git push origin master
+```
 ## Integrate private to public: cmamp -> amp
-
-cd /data/saggese/src/cmamp1 tar cvzf patch.tgz $(git diff --name-only
-origin/master public/master | grep -v repo_config.py)
+```
+> cd /data/saggese/src/cmamp1 
+> tar cvzf patch.tgz $(git diff --name-onlyorigin/master public/master | grep -v repo_config.py)
 
 > cd /Users/saggese/src/amp1 git remote add cmamp
-> [[git@github.com]{.underline}](mailto:git@github.com):cryptomtc/cmamp.git
+> [git@github.com](mailto:git@github.com):cryptomtc/cmamp.git
 
 > GIT_SSH_COMMAND="ssh -i \~/.ssh/cryptomatic/id_rsa.cryptomtc.github" git fetch
 > git@github.com:cryptomtc/cmamp.git
@@ -1148,62 +1024,62 @@ origin/master public/master | grep -v repo_config.py)
 
 > GIT_SSH_COMMAND="ssh -i \~/.ssh/cryptomatic/id_rsa.cryptomtc.github" git pull
 > cmamp master -X ours
-
+```
 ## Squash commit of everything in the branch
 
 From
-[[https://stackoverflow.com/questions/25356810/git-how-to-squash-all-commits-on-branch]{.underline}](https://stackoverflow.com/questions/25356810/git-how-to-squash-all-commits-on-branch)
-
-git checkout yourBranch git reset $(git merge-base master $(git branch
---show-current)) git add -A git commit -m "Squash" git push --force
-
+[https://stackoverflow.com/questions/25356810/git-how-to-squash-all-commits-on-branch](https://stackoverflow.com/questions/25356810/git-how-to-squash-all-commits-on-branch)
+```
+> git checkout yourBranch
+> git reset $(git merge-base master $(git branch
+--show-current)) 
+> git add -A 
+> git commit -m "Squash" 
+> git push --force
+```
 # Double integration cmamp < -- > amp
 
 The bug is
-[[https://github.com/alphamatic/amp/issues/1786]{.underline}](https://github.com/alphamatic/amp/issues/1786)
+[https://github.com/alphamatic/amp/issues/1786](https://github.com/alphamatic/amp/issues/1786)
 
 ## Script set-up
+```
+> vi /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh 
+Update the date
 
-vi /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh Update the date
+> vi /Users/saggese/src/amp1/dev_scripts/integrate_repos/*
 
-vi /Users/saggese/src/amp1/dev_scripts/integrate_repos/\*
+> cd \~/src/amp1 source
+> /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
 
-cd \~/src/amp1 source
-/Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
-
-cd \~/src/cmamp1 source
-/Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
-
+> cd \~/src/cmamp1 source
+> /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
+```
 ## Manual set-up branches
-
+```
 # Go to cmamp1
-
 > go_amp.sh cmamp 1
 
 # Set up the env vars in both clients
-
 > export AMP_DIR=/Users/saggese/src/amp1; export
-> CMAMP_DIR=/Users/saggese/src/cmamp1; echo "$AMP_DIR"; ls
-$AMP_DIR; echo ">
-> $CMAMP_DIR"; ls $CMAMP_DIR
+CMAMP_DIR=/Users/saggese/src/cmamp1; echo "$AMP_DIR"; ls
+$AMP_DIR; echo "$CMAMP_DIR"; ls $CMAMP_DIR
 
 Create two branches
-
-> export BRANCH_NAME=AmpTask1786_Integrate_20211010 ... export
-> BRANCH_NAME=AmpTask1786_Integrate_2021117
-
+> export BRANCH_NAME=AmpTask1786_Integrate_20211010 export BRANCH_NAME=AmpTask1786_Integrate_2021117
+...
 > cd $AMP_DIR
 
 # Create automatically
-
 > i git_create_branch -b $BRANCH_NAME
 
 # Create manually
+> git checkout -b $BRANCH_NAME 
+> git push --set-upstream origin $BRANCH_NAME
 
-> git checkout -b $BRANCH_NAME git push --set-upstream origin $BRANCH_NAME
-
-> cd $CMAMP_DIR i git_create_branch -b $BRANCH_NAME
-
+> cd $CMAMP_DIR 
+> i git_create_branch -b $BRANCH_NAME
+```
 ## High-level plan
 
 SUBDIR=im
@@ -1219,97 +1095,103 @@ Everything else
 - Typically amp -> cmamp
 
 ## Sync `im` cmamp -> amp
-
+```
 SUBDIR=im
 
 # Check different files
-
-diff -r --brief $AMP_DIR/$SUBDIR $CMAMP_DIR/$SUBDIR | grep -v .git
+> diff -r --brief $AMP_DIR/$SUBDIR $CMAMP_DIR/$SUBDIR | grep -v .git
 
 # Diff the entire dirs with vimdiff
-
-> dev_scripts/diff_to_vimdiff.py --dir1 $AMP_DIR/$SUBDIR --dir2
-> $CMAMP_DIR/$SUBDIR
+> dev_scripts/diff_to_vimdiff.py --dir1 $AMP_DIR/$SUBDIR --dir2 $CMAMP_DIR/$SUBDIR
 
 # Find different files
-
-find $AMP_DIR/$SUBDIR -name "\*"; find $CMAMP_DIR/$SUBDIR -name "\*" sdiff
+> find $AMP_DIR/$SUBDIR -name "*"; find $CMAMP_DIR/$SUBDIR -name "*" sdiff
 /tmp/dir1 /tmp/dir2
 
 # Copy cmamp -> amp
-
-rsync --delete -au $CMAMP_DIR/$SUBDIR/ $AMP_DIR/$SUBDIR -a = archive -u = ignore
-newer
+> rsync --delete -au $CMAMP_DIR/$SUBDIR/ $AMP_DIR/$SUBDIR 
+-a = archive 
+-u = ignore newer
 
 # Add all the untracked files
-
-cd $AMP_DIR/$SUBDIR && git add $(git ls-files -o --exclude-standard)
+> cd $AMP_DIR/$SUBDIR && git add $(git ls-files -o --exclude-standard)
 
 # Check that there are no differences after copying
-
-dev_scripts/diff_to_vimdiff.py --dir1 $AMP_DIR/$SUBDIR --dir2 $CMAMP_DIR/$SUBDIR
+> dev_scripts/diff_to_vimdiff.py --dir1 $AMP_DIR/$SUBDIR --dir2 $CMAMP_DIR/$SUBDIR
 
 ==========
 
-rsync --delete -rtu $AMP_DIR/$SUBDIR/ $CMAMP_DIR/$SUBDIR
+> rsync --delete -rtu $AMP_DIR/$SUBDIR/ $CMAMP_DIR/$SUBDIR
 
-> rsync --dry-run -rtui --delete $AMP_DIR/$SUBDIR/ $CMAMP_DIR/$SUBDIR/ .d..t....
-> ./ f..t.... **init**.py cd+++++++ features/ f+++++++ features/**init**.py
-> f+++++++ features/pipeline.py cd+++++++ features/test/ f+++++++
-> features/test/test_feature_pipeline.py cd+++++++
-> features/test/TestFeaturePipeline.test1/ cd+++++++
-> features/test/TestFeaturePipeline.test1/output/ f+++++++
-> features/test/TestFeaturePipeline.test1/output/test.txt .d..t.... price/
-> .d..t.... real_time/ f..t.... real_time/**init**.py .d..t....
-> real_time/notebooks/ f..t.... real_time/notebooks/Implement_RT_interface.ipynb
-> f..t.... real_time/notebooks/Implement_RT_interface.py .d..t....
-> real_time/test/ cd+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/
-> cd+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/output/ f+++++++
-> real_time/test/TestRealTimeReturnPipeline1.test1/output/test.txt .d..t....
-> returns/ f..t.... returns/**init**.py f..t.... returns/pipeline.py .d..t....
-> returns/test/ f..t.... returns/test/test_returns_pipeline.py .d..t....
-> returns/test/TestReturnsBuilder.test_equities1/ .d..t....
-> returns/test/TestReturnsBuilder.test_equities1/output/ .d..t....
-> returns/test/TestReturnsBuilder.test_futures1/ .d..t....
-> returns/test/TestReturnsBuilder.test_futures1/output/
+> rsync --dry-run -rtui --delete $AMP_DIR/$SUBDIR/ $CMAMP_DIR/$SUBDIR/ .d..t.... ./ 
+> f..t.... __init__.py 
+cd+++++++ features/ 
+> f+++++++ features/__init__.py
+> f+++++++ features/pipeline.py 
+cd+++++++ features/test/ 
+> f+++++++ features/test/test_feature_pipeline.py 
+cd+++++++ features/test/TestFeaturePipeline.test1/ 
+cd+++++++ features/test/TestFeaturePipeline.test1/output/ 
+> f+++++++ features/test/TestFeaturePipeline.test1/output/test.txt 
+.d..t.... price/
+.d..t.... real_time/ 
+> f..t.... real_time/__init__.py 
+.d..t.... real_time/notebooks/ 
+> f..t.... real_time/notebooks/Implement_RT_interface.ipynb
+> f..t.... real_time/notebooks/Implement_RT_interface.py 
+.d..t.... real_time/test/ 
+cd+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/
+cd+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/output/ 
+> f+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/output/test.txt 
+.d..t.... returns/ 
+> f..t.... returns/__init__.py 
+> f..t.... returns/pipeline.py 
+.d..t.... returns/test/ 
+> f..t.... returns/test/test_returns_pipeline.py 
+.d..t.... returns/test/TestReturnsBuilder.test_equities1/ 
+.d..t.... returns/test/TestReturnsBuilder.test_equities1/output/ 
+.d..t.... returns/test/TestReturnsBuilder.test_futures1/ 
+.d..t.... returns/test/TestReturnsBuilder.test_futures1/output/
 
-> rsync --dry-run -rtui --delete $CMAMP_DIR/$SUBDIR/ $AMP_DIR/$SUBDIR/ f..t....
-> price/**init**.py f..t.... price/pipeline.py f..t.... real_time/pipeline.py
-> f..t.... real_time/test/test_dataflow_amp_real_time_pipeline.py f..t....
-> returns/test/TestReturnsBuilder.test_equities1/output/test.txt f..t....
-> returns/test/TestReturnsBuilder.test_futures1/output/test.txt
-
+> rsync --dry-run -rtui --delete $CMAMP_DIR/$SUBDIR/ $AMP_DIR/$SUBDIR/ 
+> f..t.... price/__init__.py 
+> f..t.... price/pipeline.py 
+> f..t.... real_time/pipeline.py
+> f..t.... real_time/test/test_dataflow_amp_real_time_pipeline.py 
+> f..t.... returns/test/TestReturnsBuilder.test_equities1/output/test.txt 
+> f..t.... returns/test/TestReturnsBuilder.test_futures1/output/test.txt
+```
 ## Sync everything
-
+```
 # Check if there is anything in cmamp more recent than amp
-
-> rsync -au --exclude='.git' --exclude='devops' $CMAMP_DIR/
-$AMP_DIR
+> rsync -au --exclude='.git' --exclude='devops' $CMAMP_DIR/ $AMP_DIR
 
 # vimdiff
-
-dev_scripts/diff_to_vimdiff.py --dir1 $AMP_DIR --dir2
+> dev_scripts/diff_to_vimdiff.py --dir1 $AMP_DIR --dir2
 $CMAMP_DIR
 
-F1: skip F9: choose left (i.e., amp) F10: choose right (i.e,. cmamp)
+F1: skip 
+F9: choose left (i.e., amp) 
+F10: choose right (i.e,. cmamp)
 
 # Copy
 
-rsync -au --delete --exclude='.git' --exclude='devops' --exclude='im'
+> rsync -au --delete --exclude='.git' --exclude='devops' --exclude='im'
 $AMP_DIR/
 $CMAMP_DIR
 
 # Add all the untracked files
 
-(cd $CMAMP_DIR/$SUBDIR && git add $(git ls-files -o --exclude-standard))
+> (cd $CMAMP_DIR/$SUBDIR && git add $(git ls-files -o --exclude-standard))
 
-diff -r --brief $AMP_DIR $CMAMP_DIR | grep -v .git | grep Only
-
+> diff -r --brief $AMP_DIR $CMAMP_DIR | grep -v .git | grep Only
+```
 ## Files that need to be different
 
 amp needs an `if False` helpers/lib_tasks.py
 
-amp needs two tests disabled im/ccxt/data/load/test/test_loader.py
+amp needs two tests disabled 
+im/ccxt/data/load/test/test_loader.py
 im/ccxt/data/load/test/test_loader.py
 
 TODO(gp): How to copy files in vimdiff including last line?
@@ -1318,20 +1200,19 @@ TODO(gp): How to copy files in vimdiff including last line?
 - Some files end with an `0x0a`
 - tr -d '\\r'
 
+```
 find . -name "\*.txt" | xargs perl -pi -e 's/\\r\\n/\\n/g'
-
 # Remove `No newline at end of file`
-
 find . -name "\*.txt" | xargs perl -pi -e 'chomp if eof'
-
+```
 ### Lint everything
-
-autoflake amp_check_filename amp_isort amp_flake8 amp_class_method_order
+```
+> autoflake amp_check_filename amp_isort amp_flake8 amp_class_method_order
 amp_normalize_import amp_format_separating_line amp_black
 
-i lint --phases="amp_isort amp_class_method_order amp_normalize_import
+> i lint --phases="amp_isort amp_class_method_order amp_normalize_import
 amp_format_separating_line amp_black" --files='$(find . -name "\*.py")'
-
+```
 ### Testing
 
 - Run amp on my laptop (or on the server)
