@@ -1,6 +1,7 @@
 
 
 <!-- toc -->
+
 - [Setting up Git credentials](#setting-up-git-credentials)
   * [Preamble](#preamble)
   * [Check Git credentials](#check-git-credentials)
@@ -19,19 +20,26 @@
 - [Go to the client with the branch that you want to divvy up.](#go-to-the-client-with-the-branch-that-you-want-to-divvy-up)
 - [Make sure that the branch is up-to-date with master](#make-sure-that-the-branch-is-up-to-date-with-master)
 - [Lint.](#lint)
-- [Create a patch from the branch (there are many options to tweak the workflow,](#create-a-patch-from-the-branch-there-are-many-options-to-tweak-the-workflow)
-- [Test the new "local" image](#test-the-new-local-image)
-- [Run the tests with local image](#run-the-tests-with-local-image)
-- [Make sure the new image is used: e.g., add an import and trigger the tests.](#make-sure-the-new-image-is-used-eg-add-an-import-and-trigger-the-tests)
-- [Update the needed packages.](#update-the-needed-packages)
-- [Visually inspect the updated packages.](#visually-inspect-the-updated-packages)
-- [Run entire release process.](#run-entire-release-process)
-- [Switch to root and install package.](#switch-to-root-and-install-package)
-- [Switch back to user.](#switch-back-to-user)
-- [Run a lot of tests, e.g., the entire regression suite.](#run-a-lot-of-tests-eg-the-entire-regression-suite)
-- [Some tests fail.](#some-tests-fail)
-- [Run the `pytest_repro` to summarize test failures and to generate](#run-the-pytest_repro-to-summarize-test-failures-and-to-generate)
-- [commands to reproduce them.](#commands-to-reproduce-them)
+- [Create a patch from the branch (there are many options to tweak the workflow, check the help)](#create-a-patch-from-the-branch-there-are-many-options-to-tweak-the-workflow-check-the-help)
+- [To apply the patch and execute:](#to-apply-the-patch-and-execute)
+  * [Systematic code transformation](#systematic-code-transformation)
+  * [Replace `check_string` with `assert_equal`](#replace-check_string-with-assert_equal)
+  * [Run unit tests with coverage](#run-unit-tests-with-coverage)
+  * [Munge list of failed tests](#munge-list-of-failed-tests)
+- [Docker](#docker)
+  * [Generate a local `amp` Docker image](#generate-a-local-amp-docker-image)
+  * [Update the dev `amp` Docker image](#update-the-dev-amp-docker-image)
+  * [Experiment in a local image](#experiment-in-a-local-image)
+- [GitHub Actions (CI)](#github-actions-ci)
+  * [Running a single test in GH Actions](#running-a-single-test-in-gh-actions)
+- [pytest](#pytest)
+  * [Run with coverage](#run-with-coverage)
+  * [Iterating on stacktrace of failing test](#iterating-on-stacktrace-of-failing-test)
+  * [Iterating on a failing regression test](#iterating-on-a-failing-regression-test)
+  * [Detect mismatches with golden test outcomes](#detect-mismatches-with-golden-test-outcomes)
+- [Playback](#playback)
+- [Publish a notebook](#publish-a-notebook)
+- [Detailed instructions](#detailed-instructions)
   * [Publish notebooks](#publish-notebooks)
   * [Open a published notebook](#open-a-published-notebook)
     + [Start a server](#start-a-server)
@@ -40,43 +48,21 @@
 - [How to create a private fork](#how-to-create-a-private-fork)
 - [Integrate public to private: amp -> cmamp](#integrate-public-to-private-amp---cmamp)
     + [Set-up](#set-up)
-- [Go to cmamp](#go-to-cmamp)
-- [Add the remote](#add-the-remote)
-- [git remote add public https://github.com/exampleuser/public-repo.git](#git-remote-add-public-httpsgithubcomexampleuserpublic-repogit)
   * [Ours vs theirs](#ours-vs-theirs)
   * [Sync the repos (after double integration)](#sync-the-repos-after-double-integration)
 - [Pull from both repos](#pull-from-both-repos)
   * [Merge branch](#merge-branch)
-  * [Make sure it's synced at ToT](#make-sure-its-synced-at-tot)
   * [Updated sync](#updated-sync)
   * [Check that things are fine](#check-that-things-are-fine)
-- [Create a branch](#create-a-branch)
-- [Compare branch with references](#compare-branch-with-references)
-- [Creates a merge commit](#creates-a-merge-commit)
   * [Integrate private to public: cmamp -> amp](#integrate-private-to-public-cmamp---amp)
   * [Squash commit of everything in the branch](#squash-commit-of-everything-in-the-branch)
 - [Double integration cmamp amp](#double-integration-cmamp--amp)
   * [Script set-up](#script-set-up)
   * [Manual set-up branches](#manual-set-up-branches)
-- [Go to cmamp1](#go-to-cmamp1)
-- [Set up the env vars in both clients](#set-up-the-env-vars-in-both-clients)
-- [Create automatically](#create-automatically)
-- [Create manually](#create-manually)
   * [High-level plan](#high-level-plan)
   * [Sync `im` cmamp -> amp](#sync-im-cmamp---amp)
-- [Check different files](#check-different-files)
-- [Diff the entire dirs with vimdiff](#diff-the-entire-dirs-with-vimdiff)
-- [Find different files](#find-different-files)
-- [Copy cmamp -> amp](#copy-cmamp---amp)
-- [Add all the untracked files](#add-all-the-untracked-files)
-- [Check that there are no differences after copying](#check-that-there-are-no-differences-after-copying)
   * [Sync everything](#sync-everything)
-- [Check if there is anything in cmamp more recent than amp](#check-if-there-is-anything-in-cmamp-more-recent-than-amp)
-- [vimdiff](#vimdiff)
-- [Copy](#copy)
-- [Add all the untracked files](#add-all-the-untracked-files-1)
   * [Files that need to be different](#files-that-need-to-be-different)
-- [Remove `No newline at end of file`](#remove-no-newline-at-end-of-file)
     + [Lint everything](#lint-everything)
     + [Testing](#testing)
 
@@ -257,6 +243,7 @@ I can guarantee you a 2x improvement in performance, if you master the
 workflows, but it takes some time and patience
 
 ## Listing all the tasks
+
 ```
 > invoke --list
 INFO: > cmd='/Users/saggese/src/venv/amp.client_venv/bin/invoke --list'
@@ -343,6 +330,7 @@ run_slow_tests Run slow tests.
 run_superslow_tests Run superslow tests.
 traceback Parse the traceback from Pytest and navigate it with vim.
 ```
+
 ## Implementation details
 
 - By convention all invoke targets are in `\*_lib_tasks.py`, e.g.,
@@ -453,9 +441,11 @@ Options:
 ```
 
 ## Merge master in the current branch
+
 ```
 > i git_merge_master
 ```
+
 ## Create a PR
 
 TODO(gp): Describe
@@ -500,8 +490,8 @@ solving the problem of "stacked PRs".
 
 > i git_create_patch -b
 
-
 # To apply the patch and execute:
+
 ```
 > git checkout 8f9cda97
 > git apply /Users/saggese/src/lemonade1/amp/patch.amp.8f9cda97.20210609_080439.patch
@@ -557,6 +547,7 @@ all the code is merged.
 > git merge --squash --ff `src_branch`
 > git reset HEAD
 ```
+
 ## Systematic code transformation
 
 See the help of amp/dev_scripts/replace_text.py
@@ -580,8 +571,8 @@ image is not released.
 ```
 Build the local image (and update Poetry dependencies, if needed).
 
-> i docker_build_local_image --update-poetry 
-... 
+> i docker_build_local_image --update-poetry
+...
 docker image ls 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
 
 REPOSITORY TAG IMAGE ID CREATED SIZE
@@ -597,7 +588,7 @@ REPOSITORY TAG IMAGE ID CREATED SIZE
 > i run_fast_slow_tests --stage "local"
 
 # Promote a local image to dev.
-> i docker_tag_local_image_as_dev 
+> i docker_tag_local_image_as_dev
 > i docker_push_dev_image
 ```
 
@@ -622,10 +613,11 @@ Clean all the Docker images locally, to make sure there is no hidden state.
 ## Experiment in a local image
 
 To install packages in an image, do `i docker_bash`
+
 ```
 # Switch to root and install package.
-> sudo su - 
-> source /venv/bin/activate 
+> sudo su -
+> source /venv/bin/activate
 > pip install <package>
 
 # Switch back to user.
@@ -633,6 +625,7 @@ To install packages in an image, do `i docker_bash`
 ```
 
 You should test that the package is installed for your user, e.g.,
+
 ```
 > source /venv/bin/activate python -c "import foobar; print(foobar);print(foobar.__version__)"
 ```
@@ -649,17 +642,16 @@ container is still running.
     starts with `user_1011@da8f3bb8f53b:/app$`, your Container ID is
     `da8f3bb8f53b`
 
-
 - by listing running containers, e.g., run `docker ps` outside the container
 
 - Commit image
 
 ```
-> docker commit <Container ID> <IMAGE>/cmamp:local-$USER 
+> docker commit <Container ID> <IMAGE>/cmamp:local-$USER
 ```
-E.g. `docker commit da8f3bb8f53b 
-665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:local-julias`
 
+E.g.
+`docker commit da8f3bb8f53b 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:local-julias`
 
 If you are running inside a notebook using `i docker_jupyter` you can install
 packages using a one liner `! sudo su -; source ...; `
@@ -670,10 +662,8 @@ packages using a one liner `! sudo su -; source ...; `
 
 Create a branch
 
-Change
-.github/workflows/fast_tests.yml
-run: invoke run_fast_tests
-un: invoke run_fast_tests
+Change .github/workflows/fast_tests.yml run: invoke run_fast_tests un: invoke
+run_fast_tests
 --pytest-opts="helpers/test/test_git.py::Test_git_modified_files1::test_get_modified_files_in_branch1
 -s --dbg"
 
@@ -682,7 +672,8 @@ branch
 
 # pytest
 
-From [https://gist.github.com/kwmiebach/3fd49612ef7a52b5ce3a](https://gist.github.com/kwmiebach/3fd49612ef7a52b5ce3a)
+From
+[https://gist.github.com/kwmiebach/3fd49612ef7a52b5ce3a](https://gist.github.com/kwmiebach/3fd49612ef7a52b5ce3a)
 
 ## Run with coverage
 
@@ -721,7 +712,7 @@ The command is
 
 ```
 > i pytest_find_unused_goldens
-````
+```
 
 The specific dir to check can be specified with the `dir_name` parameter.
 
@@ -792,7 +783,7 @@ side-by-side for changes
 
 ```bash
 > dev_scripts/notebooks/publish_notebook.py -h
-````
+```
 
 Plug-in for Chrome
 
@@ -817,7 +808,7 @@ If you don't have them, you need to re-run `source dev_scripts/seten.sh` in all
 the shells. It might be easier to kill that tmux session and restart it
 
 ```
-> tmux kill-session --t limeXYZ 
+> tmux kill-session --t limeXYZ
 
 > ~/go_lem.sh XYZ
 ```
@@ -871,6 +862,7 @@ s3://alphamatic-data/notebooks/Task40_Optimizer.20210717_010806.html
 This opens a Chrome window through X-windows.
 
 To open files faster you can open a Chrome window in background with
+
 ```
 > google-chrome
 ```
@@ -901,30 +893,33 @@ From
 
 > git clone --bare git@github.com:alphamatic/amp.git amp_bare
 
-> git push --mirror [https://github.com/cryptomtc/cmamp.git](https://github.com/cryptomtc/cmamp.git)
+> git push --mirror
+> [https://github.com/cryptomtc/cmamp.git](https://github.com/cryptomtc/cmamp.git)
 
 It worked only as cryptomtc, but not using my key
 
 # Integrate public to private: amp -> cmamp
 
 ### Set-up
+
 ```
 > git remote add public [git@github.com](mailto:git@github.com):alphamatic/amp
 
 # Go to cmamp
-> cd /data/saggese/src/cmamp1 
+> cd /data/saggese/src/cmamp1
 > cd /Users/saggese/src/cmamp1
 
 # Add the remote
 # git remote add public https://github.com/exampleuser/public-repo.git
 > git remote add public git@github.com:alphamatic/amp
 
-> git remote -v 
-origin https://github.com/cryptomtc/cmamp.git (fetch) 
-origin https://github.com/cryptomtc/cmamp.git (push) 
-public git@github.com:alphamatic/amp (fetch) 
+> git remote -v
+origin https://github.com/cryptomtc/cmamp.git (fetch)
+origin https://github.com/cryptomtc/cmamp.git (push)
+public git@github.com:alphamatic/amp (fetch)
 public git@github.com:alphamatic/amp(push)
 ```
+
 ## Ours vs theirs
 
 From
@@ -963,8 +958,9 @@ When there is a file added it's better to add
 im/ccxt/db/test/test_ccxt_db_utils.py
 
 ## Merge branch
+
 ```
-> gs 
+> gs
 + git status
 On branch AmpTask1786_Integrate_20211128_02 Your branch and 'origin/AmpTask1786_Integrate_20211128_02' have diverged, and have 861 and 489
 different commits each, respectively. (use "git pull" to merge the remote branch into yours)
@@ -989,6 +985,7 @@ nothing to commit, working tree clean
 > git fetch origin; git fetch public
 
 ## Check that things are fine
+
 ```
 > git diff origin/master... >patch.txt
 
@@ -996,7 +993,7 @@ nothing to commit, working tree clean
 
 # Create a branch
 
-> git checkout -b Cmamp114_Integrate_amp_cmamp_20210928 
+> git checkout -b Cmamp114_Integrate_amp_cmamp_20210928
 > git apply patch.txt
 
 # Compare branch with references
@@ -1009,9 +1006,11 @@ nothing to commit, working tree clean
 # Creates a merge commit
 > git push origin master
 ```
+
 ## Integrate private to public: cmamp -> amp
+
 ```
-> cd /data/saggese/src/cmamp1 
+> cd /data/saggese/src/cmamp1
 > tar cvzf patch.tgz $(git diff --name-onlyorigin/master public/master | grep -v repo_config.py)
 
 > cd /Users/saggese/src/amp1 git remote add cmamp
@@ -1025,26 +1024,30 @@ nothing to commit, working tree clean
 > GIT_SSH_COMMAND="ssh -i \~/.ssh/cryptomatic/id_rsa.cryptomtc.github" git pull
 > cmamp master -X ours
 ```
+
 ## Squash commit of everything in the branch
 
 From
 [https://stackoverflow.com/questions/25356810/git-how-to-squash-all-commits-on-branch](https://stackoverflow.com/questions/25356810/git-how-to-squash-all-commits-on-branch)
+
 ```
 > git checkout yourBranch
 > git reset $(git merge-base master $(git branch
---show-current)) 
-> git add -A 
-> git commit -m "Squash" 
+--show-current))
+> git add -A
+> git commit -m "Squash"
 > git push --force
 ```
+
 # Double integration cmamp < -- > amp
 
 The bug is
 [https://github.com/alphamatic/amp/issues/1786](https://github.com/alphamatic/amp/issues/1786)
 
 ## Script set-up
+
 ```
-> vi /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh 
+> vi /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
 Update the date
 
 > vi /Users/saggese/src/amp1/dev_scripts/integrate_repos/*
@@ -1055,7 +1058,9 @@ Update the date
 > cd \~/src/cmamp1 source
 > /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
 ```
+
 ## Manual set-up branches
+
 ```
 # Go to cmamp1
 > go_amp.sh cmamp 1
@@ -1074,12 +1079,13 @@ Create two branches
 > i git_create_branch -b $BRANCH_NAME
 
 # Create manually
-> git checkout -b $BRANCH_NAME 
+> git checkout -b $BRANCH_NAME
 > git push --set-upstream origin $BRANCH_NAME
 
-> cd $CMAMP_DIR 
+> cd $CMAMP_DIR
 > i git_create_branch -b $BRANCH_NAME
 ```
+
 ## High-level plan
 
 SUBDIR=im
@@ -1095,6 +1101,7 @@ Everything else
 - Typically amp -> cmamp
 
 ## Sync `im` cmamp -> amp
+
 ```
 SUBDIR=im
 
@@ -1109,8 +1116,8 @@ SUBDIR=im
 /tmp/dir1 /tmp/dir2
 
 # Copy cmamp -> amp
-> rsync --delete -au $CMAMP_DIR/$SUBDIR/ $AMP_DIR/$SUBDIR 
--a = archive 
+> rsync --delete -au $CMAMP_DIR/$SUBDIR/ $AMP_DIR/$SUBDIR
+-a = archive
 -u = ignore newer
 
 # Add all the untracked files
@@ -1123,45 +1130,47 @@ SUBDIR=im
 
 > rsync --delete -rtu $AMP_DIR/$SUBDIR/ $CMAMP_DIR/$SUBDIR
 
-> rsync --dry-run -rtui --delete $AMP_DIR/$SUBDIR/ $CMAMP_DIR/$SUBDIR/ .d..t.... ./ 
-> f..t.... __init__.py 
-cd+++++++ features/ 
+> rsync --dry-run -rtui --delete $AMP_DIR/$SUBDIR/ $CMAMP_DIR/$SUBDIR/ .d..t.... ./
+> f..t.... __init__.py
+cd+++++++ features/
 > f+++++++ features/__init__.py
-> f+++++++ features/pipeline.py 
-cd+++++++ features/test/ 
-> f+++++++ features/test/test_feature_pipeline.py 
-cd+++++++ features/test/TestFeaturePipeline.test1/ 
-cd+++++++ features/test/TestFeaturePipeline.test1/output/ 
-> f+++++++ features/test/TestFeaturePipeline.test1/output/test.txt 
+> f+++++++ features/pipeline.py
+cd+++++++ features/test/
+> f+++++++ features/test/test_feature_pipeline.py
+cd+++++++ features/test/TestFeaturePipeline.test1/
+cd+++++++ features/test/TestFeaturePipeline.test1/output/
+> f+++++++ features/test/TestFeaturePipeline.test1/output/test.txt
 .d..t.... price/
-.d..t.... real_time/ 
-> f..t.... real_time/__init__.py 
-.d..t.... real_time/notebooks/ 
+.d..t.... real_time/
+> f..t.... real_time/__init__.py
+.d..t.... real_time/notebooks/
 > f..t.... real_time/notebooks/Implement_RT_interface.ipynb
-> f..t.... real_time/notebooks/Implement_RT_interface.py 
-.d..t.... real_time/test/ 
+> f..t.... real_time/notebooks/Implement_RT_interface.py
+.d..t.... real_time/test/
 cd+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/
-cd+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/output/ 
-> f+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/output/test.txt 
-.d..t.... returns/ 
-> f..t.... returns/__init__.py 
-> f..t.... returns/pipeline.py 
-.d..t.... returns/test/ 
-> f..t.... returns/test/test_returns_pipeline.py 
-.d..t.... returns/test/TestReturnsBuilder.test_equities1/ 
-.d..t.... returns/test/TestReturnsBuilder.test_equities1/output/ 
-.d..t.... returns/test/TestReturnsBuilder.test_futures1/ 
+cd+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/output/
+> f+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/output/test.txt
+.d..t.... returns/
+> f..t.... returns/__init__.py
+> f..t.... returns/pipeline.py
+.d..t.... returns/test/
+> f..t.... returns/test/test_returns_pipeline.py
+.d..t.... returns/test/TestReturnsBuilder.test_equities1/
+.d..t.... returns/test/TestReturnsBuilder.test_equities1/output/
+.d..t.... returns/test/TestReturnsBuilder.test_futures1/
 .d..t.... returns/test/TestReturnsBuilder.test_futures1/output/
 
-> rsync --dry-run -rtui --delete $CMAMP_DIR/$SUBDIR/ $AMP_DIR/$SUBDIR/ 
-> f..t.... price/__init__.py 
-> f..t.... price/pipeline.py 
+> rsync --dry-run -rtui --delete $CMAMP_DIR/$SUBDIR/ $AMP_DIR/$SUBDIR/
+> f..t.... price/__init__.py
+> f..t.... price/pipeline.py
 > f..t.... real_time/pipeline.py
-> f..t.... real_time/test/test_dataflow_amp_real_time_pipeline.py 
-> f..t.... returns/test/TestReturnsBuilder.test_equities1/output/test.txt 
+> f..t.... real_time/test/test_dataflow_amp_real_time_pipeline.py
+> f..t.... returns/test/TestReturnsBuilder.test_equities1/output/test.txt
 > f..t.... returns/test/TestReturnsBuilder.test_futures1/output/test.txt
 ```
+
 ## Sync everything
+
 ```
 # Check if there is anything in cmamp more recent than amp
 > rsync -au --exclude='.git' --exclude='devops' $CMAMP_DIR/ $AMP_DIR
@@ -1170,8 +1179,8 @@ cd+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/output/
 > dev_scripts/diff_to_vimdiff.py --dir1 $AMP_DIR --dir2
 $CMAMP_DIR
 
-F1: skip 
-F9: choose left (i.e., amp) 
+F1: skip
+F9: choose left (i.e., amp)
 F10: choose right (i.e,. cmamp)
 
 # Copy
@@ -1186,12 +1195,12 @@ $CMAMP_DIR
 
 > diff -r --brief $AMP_DIR $CMAMP_DIR | grep -v .git | grep Only
 ```
+
 ## Files that need to be different
 
 amp needs an `if False` helpers/lib_tasks.py
 
-amp needs two tests disabled 
-im/ccxt/data/load/test/test_loader.py
+amp needs two tests disabled im/ccxt/data/load/test/test_loader.py
 im/ccxt/data/load/test/test_loader.py
 
 TODO(gp): How to copy files in vimdiff including last line?
@@ -1205,7 +1214,9 @@ find . -name "\*.txt" | xargs perl -pi -e 's/\\r\\n/\\n/g'
 # Remove `No newline at end of file`
 find . -name "\*.txt" | xargs perl -pi -e 'chomp if eof'
 ```
+
 ### Lint everything
+
 ```
 > autoflake amp_check_filename amp_isort amp_flake8 amp_class_method_order
 amp_normalize_import amp_format_separating_line amp_black
@@ -1213,6 +1224,7 @@ amp_normalize_import amp_format_separating_line amp_black
 > i lint --phases="amp_isort amp_class_method_order amp_normalize_import
 amp_format_separating_line amp_black" --files='$(find . -name "\*.py")'
 ```
+
 ### Testing
 
 - Run amp on my laptop (or on the server)
