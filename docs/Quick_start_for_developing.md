@@ -62,12 +62,12 @@
   [the Github official documentation](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository-from-github/cloning-a-repository)
 - Example of cloning command:
 
-```
-# Sometimes it does not work.
-> git clone git@github.com:sorrentum/sorrentum.git ~/src/sorrentum1
-# Alternative command.
-> git clone https://github.com/sorrentum/sorrentum.git ~/src/sorrentum1
-```
+    ```
+    # Sometimes it does not work.
+    > git clone git@github.com:sorrentum/sorrentum.git ~/src/sorrentum1
+    # Alternative command.
+    > git clone https://github.com/sorrentum/sorrentum.git ~/src/sorrentum1
+    ```
 
 # Sorrentum Dev Docker container (aka dev container, cmamp container)
 
@@ -89,14 +89,14 @@
     - [Windows](https://docs.docker.com/desktop/install/windows-install/)
   - Check the installation by running:
 
-  ```
-  > docker pull hello-world
-  Using default tag: latest
-  latest: Pulling from library/hello-world
-  Digest: sha256:fc6cf906cbfa013e80938cdf0bb199fbdbb86d6e3e013783e5a766f50f5dbce0
-  Status: Image is up to date for hello-world:latest
-  docker.io/library/hello-world:latest
-  ```
+      ```
+      > docker pull hello-world
+      Using default tag: latest
+      latest: Pulling from library/hello-world
+      Digest: sha256:fc6cf906cbfa013e80938cdf0bb199fbdbb86d6e3e013783e5a766f50f5dbce0
+      Status: Image is up to date for hello-world:latest
+      docker.io/library/hello-world:latest
+      ```
 
 - Common problems with Docker
 
@@ -104,85 +104,85 @@
     [article](https://medium.com/freethreads/mac-os-docker-error-response-from-daemon-net-http-request-canceled-while-waiting-for-connection-7d1069eb4ca9)
     and repeat the cmd below:
 
-  ```
-  > docker pull hello-world
-  Error response from daemon: net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)
-  ```
+      ```
+      > docker pull hello-world
+      Error response from daemon: net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)
+      ```
 
   - Linux sudo problem, see
     [here](https://stackoverflow.com/questions/48568172/docker-sock-permission-denied)
     for the solution
 
-  ```
-  > docker pull hello-world
-  Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get http://%2Fvar%2Frun%2Fdocker.sock/v1.40/containers/json: dial unix /var/run/docker.sock: connect: permission denied
-  ```
+      ```
+      > docker pull hello-world
+      Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get   http://%2Fvar%2Frun%2Fdocker.sock/v1.40/containers/json: dial unix /var/run/docker.sock: connect: permission denied
+      ```
 
 - Thin environment
 
   1. Build the thin environment; this is done once
 
-  ```
-  > source dev_scripts/client_setup/build.sh
-  ```
+      ```
+      > source dev_scripts/client_setup/build.sh
+      ```
 
   2. Activate the thin environment; make sure it is always activated
 
-  ```
-  > source dev_scripts/setenv_amp.sh
-  ```
+      ```
+      > source dev_scripts/setenv_amp.sh
+      ```
 
   3. If you see output like this, your environment is successfully built! If not
      and you encounter any issues, please post them under your designated
      on-boarding issue
 
-  ```
-  alias sp='echo '\''source ~/.profile'\''; source ~/.profile'
-  alias vi='/usr/bin/vi'
-  alias vim='/usr/bin/vi'
-  alias vimdiff='/usr/bin/vi -d'
-  alias vip='vim -c "source ~/.vimrc_priv"'
-  alias w='which'
-  ==> SUCCESS <==
-  ```
+      ```
+      alias sp='echo '\''source ~/.profile'\''; source ~/.profile'
+      alias vi='/usr/bin/vi'
+      alias vim='/usr/bin/vi'
+      alias vimdiff='/usr/bin/vi -d'
+      alias vip='vim -c "source ~/.vimrc_priv"'
+      alias w='which'
+      ==> SUCCESS <==
+      ```
 
 - Docker image
 
   1. Pull the latest cmamp image; this is done once
 
-  ```
-  > i docker_pull
-  or
-  > docker pull sorrentum/cmamp:latest
-  ```
+      ```
+      > i docker_pull
+      or
+      > docker pull sorrentum/cmamp:latest
+      ```
 
   2. Pull the latest dev_tools image; this is done onec
 
-  ```
-  > i docker_pull_dev_tools
-  or
-  > docker pull sorrentum/dev_tools:prod
-  ```
+      ```
+      > i docker_pull_dev_tools
+      or
+      > docker pull sorrentum/dev_tools:prod
+      ```
 
 - Git
 
   1. Get the latest version of `master`
 
-  ```
-  # To update your feature branch with the latest changes from master run
-  # the cmd below from a feature branch, i.e. not from master.
-  > i git_merge_master
-  # If you are on `master` just pull the remote changes.
-  > i git_pull
-  ```
+      ```
+      # To update your feature branch with the latest changes from master run
+      # the cmd below from a feature branch, i.e. not from master.
+      > i git_merge_master
+      # If you are on `master` just pull the remote changes.
+      > i git_pull
+      ```
 
 - Basic Docker commands
 
   1. Start a Docker container
 
-  ```
-  > i docker_bash
-  ```
+      ```
+      > i docker_bash
+      ```
 
   Ignore all the warnings that do not prevent you from running the tests, e.g.,
 
@@ -209,9 +209,9 @@
 
   2. Start a Jupyter server
 
-  ```
-  > i docker_jupyter
-  ```
+      ```
+      > i docker_jupyter
+      ```
 
   To open a Jupyter notebook in a local web-browser:
 
