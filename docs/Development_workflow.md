@@ -17,11 +17,6 @@
   * [Merge master in the current branch](#merge-master-in-the-current-branch)
   * [Create a PR](#create-a-pr)
   * [Extract a PR from a larger one](#extract-a-pr-from-a-larger-one)
-- [Go to the client with the branch that you want to divvy up.](#go-to-the-client-with-the-branch-that-you-want-to-divvy-up)
-- [Make sure that the branch is up-to-date with master](#make-sure-that-the-branch-is-up-to-date-with-master)
-- [Lint.](#lint)
-- [Create a patch from the branch (there are many options to tweak the workflow, check the help)](#create-a-patch-from-the-branch-there-are-many-options-to-tweak-the-workflow-check-the-help)
-- [To apply the patch and execute:](#to-apply-the-patch-and-execute)
   * [Systematic code transformation](#systematic-code-transformation)
   * [Replace `check_string` with `assert_equal`](#replace-check_string-with-assert_equal)
   * [Run unit tests with coverage](#run-unit-tests-with-coverage)
@@ -32,6 +27,7 @@
   * [Experiment in a local image](#experiment-in-a-local-image)
 - [GitHub Actions (CI)](#github-actions-ci)
   * [Running a single test in GH Actions](#running-a-single-test-in-gh-actions)
+- [run: invoke run_fast_tests](#run-invoke-run_fast_tests)
 - [pytest](#pytest)
   * [Run with coverage](#run-with-coverage)
   * [Iterating on stacktrace of failing test](#iterating-on-stacktrace-of-failing-test)
@@ -472,6 +468,7 @@ When a piece of code can be merged:
 
 This workflow allows you to develop and regress / merge without too much hassle
 solving the problem of "stacked PRs".
+
 ```
 # Go to the client with the branch that you want to divvy up.
 > git checkout ${feature_branch}
@@ -651,9 +648,10 @@ packages using a one liner `! sudo su -; source ...; `
 
 Create a branch
 
-Change .github/workflows/fast_tests.yml 
-run: invoke run_fast_tests 
+Change .github/workflows/fast_tests.yml run: invoke run_fast_tests
+
 # run: invoke run_fast_tests
+
 --pytest-opts="helpers/test/test_git.py::Test_git_modified_files1::test_get_modified_files_in_branch1
 -s --dbg"
 
@@ -966,8 +964,7 @@ nothing to commit, working tree clean
 > rsync --delete -r /Users/saggese/src/cmamp2/ /Users/saggese/src/cmamp1
 --exclude='.git/'
 
-> diff -r --brief /Users/saggese/src/cmamp1 /Users/saggese/src/cmamp2 | grep -v
-\.git
+> diff -r --brief /Users/saggese/src/cmamp1 /Users/saggese/src/cmamp2 | grep -v \.git
 ```
 
 ## Updated sync
