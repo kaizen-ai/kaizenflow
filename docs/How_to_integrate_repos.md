@@ -148,7 +148,7 @@
   ```
 - You can accept the `cmamp1` side with:
   ```
-  > invoke integrate_rsync .../cmamp1/.../alpha_numeric_data_snapshots/
+  > i integrate_rsync .../cmamp1/.../alpha_numeric_data_snapshots/
   ```
 - This corresponds to:
   ```
