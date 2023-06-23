@@ -194,7 +194,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self.assertEqual(mock_get_rt_data.call_count, 1)
         self.assertEqual(mock_get_daily_data.call_count, 1)
         # Check output.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"""
         ################################################################################
         Differing table contents:
@@ -245,7 +245,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self.assertEqual(mock_get_rt_data.call_count, 1)
         self.assertEqual(mock_get_daily_data.call_count, 1)
         # Check output.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"""
         ################################################################################
         Differing table contents:
@@ -299,7 +299,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self.assertEqual(mock_get_rt_data.call_count, 1)
         self.assertEqual(mock_get_daily_data.call_count, 1)
         # Check output.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"""
 
         ################################################################################
@@ -411,7 +411,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self.assertEqual(mock_get_rt_data.call_count, 1)
         self.assertEqual(mock_get_daily_data.call_count, 1)
         # Check output.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"""
         ################################################################################
         Difference between bid_size_l1 in real time and daily data for `binance::BTC_USDT` coin is more than 1%.
@@ -456,7 +456,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self.assertEqual(mock_get_rt_data.call_count, 1)
         self.assertEqual(mock_get_daily_data.call_count, 1)
         # Check output.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"""
         ################################################################################
         Difference between ask_price_l1 in real time and daily data for `binance::BTC_USDT` coin is more than 1%.
@@ -506,7 +506,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self.assertEqual(mock_get_rt_data.call_count, 1)
         self.assertEqual(mock_get_daily_data.call_count, 1)
         # Check output.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"""
         ################################################################################
         Gaps in real time data:

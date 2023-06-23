@@ -180,7 +180,7 @@ class TestTalosExtractor1(hunitest.TestCase):
                 end_timestamp=end_timestamp,
             )
         # Check output for error.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         self.assertIn(expected, actual)
 
     def download_ohlcv_data(
