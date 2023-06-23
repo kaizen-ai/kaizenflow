@@ -1,5 +1,3 @@
-
-
 <!-- toc -->
 
 - [General rules about code review](#general-rules-about-code-review)
@@ -94,12 +92,10 @@
 ## The golden rule of code review
 
 - Make life easy for the reviewers
-
   - Aka "Do not upset the reviewers, otherwise they won't let you merge your
     code"
 
 - Remember that reviewing other people's code is hard and unrewarding work
-
   - Do your best for not frustrating the reviewers
 
 - If you are in doubt "it's probably clear, although I am not 100% sure", err on
@@ -108,7 +104,6 @@
 ## Be clear in the PR request about what you want
 
 - Summarize what was done in the PR
-
   - Refer to the GH task, but the task alone might not be sufficient
   - A PR can implement only part of a complex task
     - Which part is it implementing?
@@ -116,7 +111,6 @@
 
 - If the code is not ready for merge, but you want a "pre-review" mark it as
   "Draft PR"
-
   - E.g., ask for an architectural review
   - Draft PRs can not be merged
 
@@ -129,19 +123,16 @@
 ## Do not mix changes and refactoring / shuffling code
 
 - The job of the reviewers become frustrating when the author mixes:
-
   - Refactoring / moving code; and
   - Changes
 
 - It is time consuming or impossible for a reviewer to understand what happened:
-
   - What is exactly changed?
   - What was moved where?
 
 - In those cases reviewers have the right to ask the PR to be broken in pieces
 
 - One approach for the PR author is to:
-
   - Do a quick PR to move code around (e.g., refactoring) or purely cosmetic
     - You can ask the reviewer to take a quick look
   - Do the next PRs with the actual changes
@@ -170,7 +161,6 @@
 ## Reviewing other people's code is usually not fun
 
 - Reviewing code is time-consuming and tedious
-
   - So do everything you can to make the reviewer's job easier
   - Don't cut corners
 
@@ -183,7 +173,6 @@
 ## The first reviews are painful
 
 - One needs to work on the same code over and over
-
   - Just think about the fact that the reviewer is also reading (still crappy)
     code over and over
 
@@ -196,7 +185,6 @@
   issue
 
 - E.g., if the reviewer says:
-
   - Please replace:
 
 - `_LOG.warning("Hello %s".format(name))` with `_LOG.warning("Hello %s", name)`
@@ -214,12 +202,9 @@
 ## Answering comments after a review
 
 - It's better to answer comments in chunks so we don't get an email per comment
-
   - Use "start a review" (not in conversation)
-
 - If one of the comment is urgent (e.g., other comments depend on this) you can
   send it as single comment
-
 - When you answer a comment, mark it as resolved
 
 ## Apply changes to a review quickly
@@ -227,7 +212,6 @@
 - In the same way the reviewers are expected to review PRs within 24 hours, the
   author of a PR is expected to apply the requested changes quickly, ideally in
   few hours
-
   - If it takes longer, then either the PR was too big or the quality of the PR
     was too low
 
@@ -279,7 +263,6 @@
 ## Code walk-through
 
 - It is best to create a branch with the files you want to review
-
   - Add TODOs in the code (so that the PR will pick up those sections)
   - File bugs for the more involved changes
 
@@ -291,8 +274,8 @@
 - When code is merged into master by one of the reviewers through the UI one can
   select the delete branch option
 
-- Otherwise you can delete the branch using the procedure in
-  [[Git]{.underline}](https://docs.google.com/document/u/0/d/1zahC8uDnFGYRSgkBrQRgg3W3ZmDjZZJj6yln6YeuHq4/edit)
+- Otherwise you can delete the branch using the procedure in 
+[[Git]{.underline}](https://docs.google.com/document/u/0/d/1zahC8uDnFGYRSgkBrQRgg3W3ZmDjZZJj6yln6YeuHq4/edit)
 
 ## Give priority to code review
 
@@ -305,7 +288,6 @@
 - When there are multiple reviewers for the same PR there can be some problem
 
 - Ok to keep moving fast and avoid blocking
-
   - Block only if it is controversial
 
 - Merge when we are confident that the other is ok
@@ -321,7 +303,6 @@
 - Each reviewer reviews the code pointing out everything that can be a problem
 
 - Problems are highlighted even if small or controversial
-
   - Not all of those comments might not be implemented by the author
 
 - Of course if different approaches are really equivalent but reviewers have
@@ -331,7 +312,6 @@
 ## Final GH comment
 
 - Once you are done with the detailed review of the code, you need to
-
   - Write a short comment
   - Decide what is the next step for the PR, e.g.,
     - Comment
