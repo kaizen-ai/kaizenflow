@@ -1,5 +1,11 @@
 #!/bin/bash -xe
 
 replace_text.py \
-    --old "self.assertRaises" \
-    --new "self.assertRaises"
+    --old "pytest.raises" \
+    --new "self.assertRaises" \
+    --ext "py,ipynb"
+
+replace_text.py \
+    --old "fail.value" \
+    --new "fail.exception" \
+    --ext "py,ipynb"
