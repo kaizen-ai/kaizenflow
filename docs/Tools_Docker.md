@@ -482,9 +482,13 @@
   - To verify that package is installed correctly one can
 
     - build a local image and update poetry
-      `> i docker_build_local_image --version {new version} --update-poetry`
+      ```
+      > i docker_build_local_image --version {new version} --update-poetry
+      ```
     - run a docker container based on the local image
-      `> i docker_bash --stage local --version {new version}`
+      ```
+      > i docker_bash --stage local --version {new version}
+      ```
     - verify what package was installed with `pip show {package name}`, e.g.,
       ```
       > pip show pytest-rerunfailures
@@ -964,6 +968,7 @@ We will still need to pass --version 1.0.0
 
 `docker_release_dev_image` will do basically the same (will require tag_name).
 Of course docker_release... is just a convenience wrapper running all the stages
+
 Now let's assume we want to promote dev image to prod:
 
   - then we run `i docker_build_prod_image`
@@ -1086,9 +1091,7 @@ E.g., `//amp/dev_scripts/client_setup/requirements.txt`
 A hack is to
 
 ```
-vimdiff
-/Users/saggese/src/lemonade2/amp/dev_scripts/client_setup/requirements.txt
-dev_scripts_devto/client_setup/requirements.txt
+vimdiff /Users/saggese/src/lemonade2/amp/dev_scripts/client_setup/requirements.txt dev_scripts_devto/client_setup/requirements.txt
 ```
 
 ```
@@ -1287,8 +1290,11 @@ Next steps:
 - Each
 
 One run the invoke commands from optimizer dir
+
 When the Docker container starts the current dir is optimizer
+
 helpers, core is mounted in the same dir
+
 You can't see code outside optimizer
 
 TODO(gp): running in amp under lemonade should use the local repo_config
