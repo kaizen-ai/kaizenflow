@@ -967,10 +967,13 @@
 
 TODO(gp, Vitalii): Turn this into a description of the release flow
 
-Let's assume that we want to release dev image with version 1.2.3: un
-`i docker_build_local_image --tag-name 1.2.3` Initially we thought about using
-Git tags to mark releases points in the source repo for `dev` and `prod`
-releases (but not `local` since `local` is reserved to private use by a user).
+Let's assume that we want to release dev image with version 1.2.3: 
+- un `i docker_build_local_image --tag-name 1.2.3` 
+
+Initially we thought about using Git tags to mark releases points in the source 
+repo for `dev` and `prod` releases (but not `local` since `local` is reserved to 
+private use by a user).
+
 This approach is elegant, but it has some corner cases when used with containers
 for multiple repos that contain Git submodules.
 
@@ -1071,9 +1074,10 @@ INV: version becomes mandatory in the release flow
 - This requires a lot of cosmetic changes to the code since now it's optional,
   but it's worth make the changes
 
-We need to ensure that version can only be created going fwd. We can do a
-comparison of the current version with the new version as tuples (we could use
-semver but it feels not needed)
+We need to ensure that version can only be created going fwd. 
+
+We can do a comparison of the current version with the new version as tuples 
+(we could use semver but it feels not needed)
 
 - The workflows are:
   - Build a local image
@@ -1382,7 +1386,6 @@ TODO(gp): Implement this
     if has_cvxopt:
             def utils1():
                      cvxopt…
-
     ```
 
 - **Solution 2**
