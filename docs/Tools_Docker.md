@@ -147,16 +147,16 @@
 
 ## Infra container
 
-- Approach 1: To run infra script, if we only need `boto3` and `moto`, we can
-  - create a Python library
-  - create a script interface
-  - create an `invoke` task that calls `i docker_cmd --cmd ...` reusing the
-    cmamp container, (since that container already has `boto3` and `moto` that
-    are dependencies we can't remove)
-    - This approach is similar to calling the `linter`
-- Approach 2: If we think we need to add new packages only for running infra
+1. To run infra script, if we only need `boto3` and `moto`, we can
+    - create a Python library
+    - create a script interface
+    - create an `invoke` task that calls `i docker_cmd --cmd ...` reusing the
+      cmamp container, (since that container already has `boto3` and `moto` that
+      are dependencies we can't remove)
+      - This approach is similar to calling the `linter`
+2. If we think we need to add new packages only for running infra
   scripts then we will create a new `infra` container.
-  - We can build on the fly and not release through ECR
+    - We can build on the fly and not release through ECR
 - We can start with approach 1, which will also allow us to transition to 2
   transparently, if needed
 
@@ -426,9 +426,7 @@
 - Typically the source code is mounted through a bind mount in Docker so that
   one can change the code and execute it in Docker.
 - The image is tested, blessed, and released so that users and CI can use it
-  without worries.
-- Once a `dev` image is pushed to the docker registry it can be pulled and used
-  by the team members.
+  without worries. Once a `dev` image is pushed to the docker registry it can be pulled and used by the team members.
 
 ### Prod
 
@@ -468,10 +466,10 @@
     ```
     [tool.poetry.dependencies]
     ...
-    pytest-timeout = "\*"
+    pytest-timeout = "*"
     ...
     ```
-  - In general we use the latest version of a package (`\*`) until the tests fail
+  - In general we use the latest version of a package (`*`) until the tests fail
     or the system stops working
 
     - If the system fails, we freeze the version of the problematic packages to
@@ -523,8 +521,8 @@
   below and `os.walk` for selected dir:
   ```
   REGEXP = [
-      re.compile(r'\^import (.+)$'),
-      re.compile(r'\^from ((?!\.+).\*?) import (?:.\*)$')
+      re.compile(r'^import (.+)$'),
+      re.compile(r'^from ((?!\.+).*?) import (?:.*)$')
   ]
   ```
 
@@ -624,15 +622,13 @@
   > i docker_bash --stage local --version 1.0.9
   > pip list | tee pip_packages.local.txt
   ```
-
 - or in one command:
 
   ```
   > i docker_cmd --cmd "pip list | tee pip_packages.dev.txt"; i docker_cmd --stage=local --version=1.0.9 --cmd "pip list | tee pip_packages.local.txt"
-  
+
   > vimdiff pip_packages.dev.txt pip_packages.local.txt
   ```
-
 - You can move the local image on different servers for testing by pushing it on
   ECR:
 
@@ -669,16 +665,16 @@
 ## End-to-end flow for `dev` image
 
 - Conceptually the flow consists of the following phases:
-  - Build a local image of docker
-    - `i docker_build_local_image --version 1.0.0`
-  - Run fast tests to verify that nothing is broken
-    - `i run_fast_tests --stage local --version 1.0.0`
-  - Run end-to-end tests by, e.g., running linter on some file
-    - `i lint --files helpers/tasks.py --stage local --version 1.0.0`
-  - Tag `local` image as `dev`
-    - `i docker_tag_local_image_as_dev --version 1.0.0`
-  - Push `dev` image to the docker registry
-    - `i docker_push_dev_image --version 1.0.0`
+  1. Build a local image of docker
+      - `i docker_build_local_image --version 1.0.0`
+  2. Run fast tests to verify that nothing is broken
+      - `i run_fast_tests --stage local --version 1.0.0`
+  3. Run end-to-end tests by, e.g., running linter on some file
+      - `i lint --files helpers/tasks.py --stage local --version 1.0.0`
+  4. Tag `local` image as `dev`
+      - `i docker_tag_local_image_as_dev --version 1.0.0`
+  5. Push `dev` image to the docker registry
+      - `i docker_push_dev_image --version 1.0.0`
   - The mentioned flow is executed by `Build dev image` GH action and that is a
     preferred way to do an image release.
 - For specific cases that can not be done via GH action see commands below:
@@ -760,6 +756,7 @@
   ```
   > i docker_release_prod_image --version 1.0.0
   ```
+
   - same options are available as for `i docker_release_dev_image`
   - check options `i docker_release_prod_image -h`
 
@@ -815,36 +812,25 @@
 - We can start the Docker container with Postgres as a service from outside the
   container.
   ```
-  > (cd oms; i oms_docker_up -s local)
-  INFO: > cmd='/local/home/gsaggese/src/venv/amp.client_venv/bin/invoke
-  oms_docker_up -s local'
+  > (cd oms;  i oms_docker_up -s local)
+  INFO: > cmd='/local/home/gsaggese/src/venv/amp.client_venv/bin/invoke oms_docker_up -s local'
   report_memory_usage=False report_cpu_usage=False
   docker-compose \
-  --file
-  /local/home/gsaggese/src/sasm-lime4/amp/oms/devops/compose/docker-compose.yml \
-  --env-file
-  /local/home/gsaggese/src/sasm-lime4/amp/oms/devops/env/local.oms_db_config.env \
+  --file /local/home/gsaggese/src/sasm-lime4/amp/oms/devops/compose/docker-compose.yml \
+  --env-file /local/home/gsaggese/src/sasm-lime4/amp/oms/devops/env/local.oms_db_config.env \
   up \
   oms_postgres
   Creating compose_oms_postgres_1 ... done
   Attaching to compose_oms_postgres_1
-  oms_postgres_1 |
-  oms_postgres_1 | PostgreSQL Database directory appears to contain a database;
-  Skipping initialization
-  oms_postgres_1 |
-  oms_postgres_1 | 2022-05-19 22:57:15.659 UTC [1] LOG: starting PostgreSQL 13.5
-  (Debian 13.5-1.pgdg110+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian
-  10.2.1-6) 10.2.1 20210110, 64-bit
-  oms_postgres_1 | 2022-05-19 22:57:15.659 UTC [1] LOG: listening on IPv4 address
-  "0.0.0.0", port 5432
-  oms_postgres_1 | 2022-05-19 22:57:15.659 UTC [1] LOG: listening on IPv6 address
-  "::", port 5432
-  oms_postgres_1 | 2022-05-19 22:57:15.663 UTC [1] LOG: listening on Unix socket
-  "/var/run/postgresql/.s.PGSQL.5432"
-  oms_postgres_1 | 2022-05-19 22:57:15.670 UTC [25] LOG: database system was shut
-  down at 2022-05-19 22:56:50 UTC
-  oms_postgres_1 | 2022-05-19 22:57:15.674 UTC [1] LOG: database system is ready
-  to accept connections
+  oms_postgres_1  |
+  oms_postgres_1  | PostgreSQL Database directory appears to contain a database; Skipping initialization
+  oms_postgres_1  |
+  oms_postgres_1  | 2022-05-19 22:57:15.659 UTC [1] LOG:  starting PostgreSQL 13.5 (Debian 13.5-1.pgdg110+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 10.2.1-6) 10.2.1 20210110, 64-bit
+  oms_postgres_1  | 2022-05-19 22:57:15.659 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+  oms_postgres_1  | 2022-05-19 22:57:15.659 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+  oms_postgres_1  | 2022-05-19 22:57:15.663 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+  oms_postgres_1  | 2022-05-19 22:57:15.670 UTC [25] LOG:  database system was shut down at 2022-05-19 22:56:50 UTC
+  oms_postgres_1  | 2022-05-19 22:57:15.674 UTC [1] LOG:  database system is ready to accept connections
   ```
 - Note that Postgres needs to be
 - Start a container able to
@@ -861,7 +847,7 @@
   Password for user aljsdalsd:
   psql (9.5.25, server 13.5 (Debian 13.5-1.pgdg110+1))
   WARNING: psql major version 9.5, server major version 13.
-      Some psql features might not work.
+          Some psql features might not work.
   Type "help" for help.
   oms_postgres_db_local=#
   ```
@@ -910,13 +896,13 @@
 - Users that don't update should see a message telling them that the code and
   container are not in sync any more, e.g.,:
   ```
-  ---
+  -----------------------------------------------------------------------------
   This code is not in sync with the container:
   code_version='1.0.3' != container_version='amp-1.0.3'
-  ---
+  -----------------------------------------------------------------------------
   You need to:
-      - merge origin/master into your branch with `invoke git_merge_master`
-      - pull the latest container with `invoke docker_pull`
+  - merge origin/master into your branch with `invoke git_merge_master`
+  - pull the latest container with `invoke docker_pull`
   ```
 
 ## dev_tools
@@ -951,65 +937,67 @@
 
 # Design release flow - discussion
 
-- TODO(gp, Vitalii): Turn this into a description of the release flow
-- Let's assume that we want to release dev image with version 1.2.3:
-- un `i docker_build_local_image --tag-name 1.2.3`
-- Initially we thought about using Git tags to mark releases points in the
-  source repo for `dev` and `prod` releases (but not `local` since `local` is
-  reserved to private use by a user).
-- This approach is elegant, but it has some corner cases when used with
-  containers for multiple repos that contain Git submodules.
-- We decided to use an approach where a `changelog.txt` file contains the latest
-  code version
-  - all test tasks now also use `hversion.get_code_version()` that calls
-    `hgit.git_describe()` to get latest tag in the repo (1.0.0 in this case)
-- Agree. git_describe will need to accept a dir to find the tag of the
-  releasable dir
-  - when we are satisfied with local image, we run
-    `i docker_tag_local_image_as_dev`
-- We will still need to pass --version 1.0.0
+TODO(gp, Vitalii): Turn this into a description of the release flow
+
+Let's assume that we want to release dev image with version 1.2.3:
+un `i docker_build_local_image --tag-name 1.2.3`
+Initially we thought about using Git tags to mark releases points in the source repo for `dev` and `prod` releases (but not `local` since `local` is reserved to private use by a user). 
+This approach is elegant, but it has some corner cases when used with containers for multiple repos that contain Git submodules. 
+
+We decided to use an approach where a `changelog.txt` file contains the latest code version
+- all test tasks now also use `hversion.get_code_version()` that calls `hgit.git_describe()` to get latest tag in the repo (1.0.0 in this case)
+
+Agree. git_describe will need to accept a dir to find the tag of the releasable dir
+
+- when we are satisfied with local image, we run
+  `i docker_tag_local_image_as_dev`
+
+We will still need to pass --version 1.0.0
   - invoke internally tags `local-1.0.0` as `dev-1.0.0`, in addition to `dev`
-- Both for Git tags and docker tags
+
+Both for Git tags and docker tags
   - then we run `i docker_push_dev_image`
-- We will still need to pass --version 1.0.0
+
+We will still need to pass --version 1.0.0
   - invoke internally pushes both `dev-1.0.0` and `dev` images to ECR
     \*\*AND\*\* pushes local 1.0.0 git tag to remote git repo (github)
-- `docker_release_dev_image` will do basically the same (will require tag_name).
-- Of course docker_release... is just a convenience wrapper running all the
-  stages
-- Now let's assume we want to promote dev image to prod:
+
+`docker_release_dev_image` will do basically the same (will require tag_name).
+Of course docker_release... is just a convenience wrapper running all the stages
+Now let's assume we want to promote dev image to prod:
+
   - then we run `i docker_build_prod_image`
   - invoke internally checks with `hversion.get_code_version()` and builds
     `prod-1.0.0` based on `dev-1.0.0`, also tagging `prod-1.0.0` as `prod`
   - then we run ` i docker_push_prod_image`
   - invoke pushes `prod-1.0.0` and `prod` tags to ECR
-- `docker_release_prod_image` will do basically the same (will require
+
+`docker_release_prod_image` will do basically the same (will require
   tag_name).
 
-
-
 Q0: Is the flow ok?
-  - Yes
 
+- Yes
 
 Q1: The flow is the same for `dev_tools` and `cmamp`, but to update the
   version of image on which `dev_tools` is based -- we'll need to modify
   Dockerfile now. Is that ok?
-  - Maybe we should just create the dev_tools from scratch using the full-blown
-    flow instead of build on top of it
-  - The idea of building on top of it, was just a shortcut but it is creating
-    more problems that what it's worth it
-  - Then everything looks and behaves the same
-  - TODO(vitalii): File a bug, if we don't have it yet
 
+- Maybe we should just create the dev_tools from scratch using the full-blown
+  flow instead of build on top of it
+- The idea of building on top of it, was just a shortcut but it is creating
+  more problems that what it's worth it
+- Then everything looks and behaves the same
+- TODO(vitalii): File a bug, if we don't have it yet
 
 Q2: If the flow is run in the submodule, e.g. in `amp` dir, currently the
   behaviour is not well defined. Commands will try to build `cmamp` image in
   this case, but code version will be from `dev_tools` -- should we fix this?
-  - We are going towards the concept of "releasable dirs" (see im, optimizer).
-    If there is a dir with devops, then that dir runs inside a container
-  - The "Git version" should be associated to the dir we are releasing (e.g.,
-    cmamp, im, optimizer, dev_tools)
+
+- We are going towards the concept of "releasable dirs" (see im, optimizer).
+  If there is a dir with devops, then that dir runs inside a container
+- The "Git version" should be associated to the dir we are releasing (e.g.,
+  cmamp, im, optimizer, dev_tools)
 
 Vitalii: If we will have monorepo with releasable dirs, then indeed git tags
 are not that comfortable to use, however I could argue that when one releases
@@ -1018,10 +1006,13 @@ are not that comfortable to use, however I could argue that when one releases
 corresponding code that was used in that image?
 
 Perhaps instead, we could share namespace of git tags between all tags.
+
 E.g. in git repo (github) we will have:
-  - im-dev-1.0.0
-  - cmamp-dev-1.0.0
-  - im-prod-1.0.0
+
+- im-dev-1.0.0
+- cmamp-dev-1.0.0
+- im-prod-1.0.0
+
 GP: Point taken. In fact the code in a releasable dir still needs code from
 other submodules (e.g., helpers). One approach is to put the Git hash in
 version.txt. The one you suggest (of tagging the entire repo) with also info
@@ -1030,44 +1021,48 @@ on the dir makes sense.
 I think the Git tags are designed to do what we want, so let's use them.
 
 Q3: We don't need version.txt file in this flow. I will remove it, ok?
-  - Yes, we can remove version.txt and use a README or changelog in the
-    releasable dir
+
+- Yes, we can remove version.txt and use a README or changelog in the
+  releasable dir
 
 The flow is similar to what I thought.
 
 Some observations / questions:
-- INV: version becomes mandatory in the release flow
+
+INV: version becomes mandatory in the release flow
   - This requires a lot of cosmetic changes to the code since now it's optional,
     but it's worth make the changes
 
 We need to ensure that version can only be created going fwd.
 We can do a comparison of the current version with the new version as tuples (we could use semver but it feels not needed)
 
-  - The workflows are:
-    - Build a local image
-    - Release a dev image
-    - Release a prod image
-    - Rollback an image
-      - We rarely move the dev / prod tag back, but rather users needs to docker
-        pull an older image and pass --base*name --stage and --version to
-        docker*{bash, cmd, jupyter}
-      - Then the image is fixed going forward
-  - A releasable dir has a
-    - repo_config
-      - Maybe we should call it component_config since now also dirs can be released
-    - README.md or changelog.md
-    - devops
-    - tasks.py (with the exposed Invoke tasks)
-    - lib_tasks.py (with the custom invoke tasks)
+- The workflows are:
+  - Build a local image
+  - Release a dev image
+  - Release a prod image
+  - Rollback an image
+    - We rarely move the dev / prod tag back, but rather users needs to docker
+      pull an older image and pass --base*name --stage and --version to
+      docker*{bash, cmd, jupyter}
+    - Then the image is fixed going forward
+
+A releasable dir has a
+  - repo_config
+    - Maybe we should call it component_config since now also dirs can be released
+  - README.md or changelog.md
+  - devops
+  - tasks.py (with the exposed Invoke tasks)
+  - lib_tasks.py (with the custom invoke tasks)
+
 We want to try to move to helpers/lib_tasks all the "common" code without
 dependencies from the specific sw components. We pass function pointers for
 callbacks.
 
 What to do with:
-  ```
-  CONTAINER_VERSION='amp-1.1.1'
-  BUILD_TAG='amp-1.1.1-20211114_093142-AmpTask1845_Get_docker_in_docker_to_work-47fb46513f084b8f3c9008a2e623ec05040a10e9'
-  ```
+```
+CONTAINER_VERSION='amp-1.1.1'
+BUILD_TAG='amp-1.1.1-20211114_093142-AmpTask1845_Get_docker_in_docker_to_work-47fb46513f084b8f3c9008a2e623ec05040a10e9'
+```
 
 ## QA flow
 
@@ -1082,42 +1077,44 @@ To test the container itself right now we test outside (in the thin client)
 ```
 
 The problem is that now the thin client needs to have a bunch of deps
-  (including pytest, pandas and so on) which defeats the purpose of the thin env
-  `dev_scripts_devto/client_setup/`
+(including pytest, pandas and so on) which defeats the purpose of the thin env
+
+`dev_scripts_devto/client_setup/`
+
 E.g., `//amp/dev_scripts/client_setup/requirements.txt`
 
-- A hack is to
+A hack is to
 
-  ```
-  vimdiff
-  /Users/saggese/src/lemonade2/amp/dev_scripts/client_setup/requirements.txt
-  dev_scripts_devto/client_setup/requirements.txt
-  ```
+```
+vimdiff
+/Users/saggese/src/lemonade2/amp/dev_scripts/client_setup/requirements.txt
+dev_scripts_devto/client_setup/requirements.txt
+```
 
-  ```
-  > source dev_scripts_devto/client_setup/build.sh
-  ```
-- A possible solution is to use Docker-in-Docker
+```
+> source dev_scripts_devto/client_setup/build.sh
+```
 
+A possible solution is to use Docker-in-Docker
   - in this way we don't have to pollute the thin env with a bunch of stuff
   - Talk to Grisha and Vitalii
 
-This works in dev_tools because the code for the import detector is there and
-  we are using a dev container which binds the src dir to the container
+This works in dev_tools because the code for the import detector is there and we are using a dev container which binds the src dir to the container
 
-  ```
+```
   > i lint_detect_cycles --dir-name import_check/test/Test_detect_import_cycles.test1/input/ --stage dev
-  ```
-In all the other repos, one needs to use the prod of dev_tools container
-  (that's what the user would do)
+```
+
+In all the other repos, one needs to use the prod of dev_tools container (that's what the user would do)
 
 Next steps:
-  - TODO(Sonya + Grisha): release the prod dev_toools container as it is
-  - TODO(Sonya + Grisha): document dev_tools, release procedure
-  - TODO(Sonya): pull prod dev_tools (i docker_pull_dev_tools) and test that now
-    in cmamp the tool works
-  - TODO(gp): figure out the QA workflow (and improve the thin client with dind)
-    - To break the circular dep we release a prod-candidate
+
+- TODO(Sonya + Grisha): release the prod dev_toools container as it is
+- TODO(Sonya + Grisha): document dev_tools, release procedure
+- TODO(Sonya): pull prod dev_tools (i docker_pull_dev_tools) and test that now
+  in cmamp the tool works
+- TODO(gp): figure out the QA workflow (and improve the thin client with dind)
+  - To break the circular dep we release a prod-candidate
 
 # Dev_tools container
 
@@ -1178,6 +1175,7 @@ Next steps:
       - oms
       - models in amp
   ```
+
   - where the dependency between containers are
     - lemonade -> amp
     - amp -> optimizer, helpers
@@ -1195,8 +1193,8 @@ Next steps:
 - From `devops/compose/docker-compose.yml`
   ```
   42 volumes:
-  43 # Move one dir up to include the entire git repo (see AmpTask1017).
-  44 - ../../:/app
+  43  # Move one dir up to include the entire git repo (see AmpTask1017).
+  44  - ../../:/app
   45 # Move one dir down to include the entire git repo (see AmpTask1017).
   46 working_dir: /app
   ```
@@ -1214,22 +1212,23 @@ Next steps:
   environment:
   ...
   - GIT_DIR=/git
+
   volumes:
-  # Move one dir up to include the entire git repo (see AmpTask1017).
-  - ../../:/app
-  - ../../../../.git:/git
-  - ../../../../amp/helpers:/app/helpers
+    # Move one dir up to include the entire git repo (see AmpTask1017).
+    - ../../:/app
+    - ../../../../.git:/git
+    - ../../../../amp/helpers:/app/helpers
   ```
 - Git works but it gets confused with the paths
   ```
-  modified: .dockerignore
-  deleted: .github/gh_requirements.txt
-  deleted: .github/workflows/build_image.yml.DISABLED
-  deleted: .github/workflows/fast_tests.yml
-  deleted: .github/workflows/linter.yml.DISABLED
-  deleted: .github/workflows/slow_tests.yml
-  deleted: .github/workflows/superslow_tests.yml.DISABLED
-  deleted: .gitignore
+      modified: .dockerignore
+      deleted: .github/gh_requirements.txt
+      deleted: .github/workflows/build_image.yml.DISABLED
+      deleted: .github/workflows/fast_tests.yml
+      deleted: .github/workflows/linter.yml.DISABLED
+      deleted: .github/workflows/slow_tests.yml
+      deleted: .github/workflows/superslow_tests.yml.DISABLED
+      deleted: .gitignore
   ```
 
 #### Mounting the supermodule (e.g., lime, lemonade, amp) inside Docker
@@ -1237,8 +1236,8 @@ Next steps:
 - From `devops/compose/docker-compose.yml`
   ```
   42 volumes:
-  43 # Move one dir up to include the entire git repo (see AmpTask1017).
-  44 - ../../../:/app
+  43  # Move one dir up to include the entire git repo (see AmpTask1017).
+  44  - ../../../:/app
   45 # Move one dir down to include the entire git repo (see AmpTask1017).
   46 working_dir: /app/amp
   ```
@@ -1258,11 +1257,11 @@ Next steps:
   38 # mount the super project in the container (to make git work with the
   39 # supermodule) and then change dir to `amp`.
   40 app:
-  41 extends:
-  42 base_app
+  41  extends:
+  42    base_app
   43 volumes:
-  44 # Move one dir up to include the entire git repo (see AmpTask1017).
-  45 - ../../../../:/app
+  44  # Move one dir up to include the entire git repo (see AmpTask1017).
+  45  - ../../../../:/app
   46 # Move one dir down to include the entire git repo (see AmpTask1017).
   47 working_dir: /app/amp/optimizer
   48 #entrypoint: /bin/bash -c "ls helpers"
@@ -1292,11 +1291,11 @@ When the Docker container starts the current dir is optimizer
 helpers, core is mounted in the same dir
 You can't see code outside optimizer
 
-- TODO(gp): running in amp under lemonade should use the local repo_config
+TODO(gp): running in amp under lemonade should use the local repo_config
 
 ## Release and ECR flow
 
-- TODO(gp): Implement this
+TODO(gp): Implement this
 
 ## Unit testing code inside `opt` container
 
@@ -1315,62 +1314,61 @@ You can't see code outside optimizer
 ### Avoid compiling code depending from cvxopt when running amp
 
 - We can't parse code (e.g., in `pytest`) that includes packages that are not
-  present in a container - E.g., `pytest` running in `amp` should not parse code
-  in `//amp/optimizer` since it contains imports that will fail
+  present in a container
+  - E.g., `pytest` running in `amp` should not parse code
+    in `//amp/optimizer` since it contains imports that will fail
 
-**Solution 1**
+- **Solution 1**
+  - We use the pytest mechanism `cvx = pytest.importorskip("cvxpy")` which is
+    conceptually equivalent to:
+    ```
+    try:
+      import cvxopt
+      has_cvxopt = True
+    except ImportError:
+      has_cvxopt = False
 
-- We use the pytest mechanism `cvx = pytest.importorskip("cvxpy")` which is
-  conceptually equivalent to:
-  ```
-  try:
-  import cvxopt
-  has_cvxopt = True
-  except ImportError:
-  has_cvxopt = False
-  if has_cvxopt:
-  def utils1():
-  cvxopt...
-  ```
+    if has_cvxopt:
+            def utils1():
+                     cvxopt…
 
-**Solution 2**
+    ```
 
-- Test in eachfile for the existence of the needed packages and enclose the code
-  in an `if _has_package`
-  - Pros:
-    - We can skip code based dynamically on a `try ... except ImportModule` to
-      check what packages are present
-  - Cons:
-    - Repeat the same piece of `try ... except` in many places
-      - Solution: we can factor it out in a function
-    - We need to enclose the code in a `if ...` that screws up the indentation
-      and makes the code weird
+- **Solution 2**
+  - Test in eachfile for the existence of the needed packages and enclose the code
+    in an `if _has_package`
+    - Pros:
+      - We can skip code based dynamically on a `try ... except ImportModule` to
+        check what packages are present
+    - Cons:
+      - Repeat the same piece of `try ... except` in many places
+        - Solution: we can factor it out in a function
+      - We need to enclose the code in a `if ...` that screws up the indentation
+        and makes the code weird
 
-**Solution 3**
+- **Solution 3**
+  - Exclude certain directories (e.g., `//amp/optimizer`) from `pytest`
+    - Pros:
+      - We don't have to spread the `try ... except` and `if \_has_package` in the
+        code
+    - Cons:
+      - The directory is relative to the top directory
+        - Solution: we can use a regex to specify the dir without the full path
+      - Which directories are included and excluded depends on where `pytest` is run
+        - E.g., running `pytest` in an `amp` container we need to skip the
+          `optimizer` dir, while `pytest` in an `optimizer` container should skip
+          everything but the `optimizer` dir
 
-- Exclude certain directories (e.g., `//amp/optimizer`) from `pytest`
-  - Pros:
-    - We don't have to spread the `try ... except` and `if \_has_package` in the
-      code
-  - Cons:
-  - The directory is relative to the top directory
-    - Solution: we can use a regex to specify the dir without the full path
-  - Which directories are included and excluded depends on where `pytest` is run
-    - E.g., running `pytest` in an `amp` container we need to skip the
-      `optimizer` dir, while `pytest` in an `optimizer` container should skip
-      everything but the `optimizer` dir
-
-**Solution 4**
-
-- Exclude certain directories or files based on which container we are running
-  in
-  - Cons:
-  - We need to have a way to determine in which container we are running
-    - Solution: we can use the env vars we use for versioning
-      ```
-      > echo $AM_CONTAINER_VERSION
-      amp-1.0.3
-      ```
+- **Solution 4**
+  - Exclude certain directories or files based on which container we are running
+    in
+    - Cons:
+      - We need to have a way to determine in which container we are running
+        - Solution: we can use the env vars we use for versioning
+        ```
+        > echo $AM_CONTAINER_VERSION
+        amp-1.0.3-
+        ```
 - Given the pros and cons, we decided to follow Solution 1 and Solution 3
 
 ### Run optimizer tests in a stand-alone `opt` container
@@ -1404,44 +1402,44 @@ You can't see code outside optimizer
   [https://github.com/cryptokaizen/cmamp/issues/1357](https://github.com/cryptokaizen/cmamp/issues/1357)
 - We need to call something from `amp` to `opt` Docker
 
-**Solution 1**
+- **Solution 1**
+  - Inside the code we build the command line
+    `cmd = 'docker run -it ... '; system(cmd)`
+    - Cons:
+      - there is code replicated between here and the invoke task (e.g., the info
+        about the container, ...)
 
-- Inside the code we build the command line
-  `cmd = 'docker run -it ... '; system(cmd)`
-  - Cons:
-    - there is code replicated between here and the invoke task (e.g., the info
-      about the container, ...)
+- **Solution 2**
+  - Call the Dockerized executable using the `docker_cmd` invoke target
 
-**Solution 2**
+    ```
+    cmd = "invoke opt_docker_cmd -cmd '...'"
+    system(cmd)
+    ```
 
-- Call the Dockerized executable using the `docker_cmd` invoke target
+    - Pros:
+      - All the Docker commands go through the same interface inside invoke
+    - Cons
+      - Bash interpolation in the command
+      - Another level of indirection: do a system call to call `invoke`, `invoke`
+        calls docker, docker does the work
+      - `invoke` needs to be installed inside the calling container
 
-  ```
-  cmd = "invoke opt_docker_cmd -cmd '...'"
-  system(cmd)
-  ```
+- **Solution 3**
+  - Call opt_lib_tasks.py `opt_docker_cmd(cmd, ...)`
 
-  - Pros:
-    - All the Docker commands go through the same interface inside invoke
-  - Cons
-    - Bash interpolation in the command
-    - Another level of indirection: do a system call to call `invoke`, `invoke`
-      calls docker, docker does the work
-    - `invoke` needs to be installed inside the calling container
+    - Pros
+      - avoid doing a call to invoke
+      - can deal with bash interpolation in Python
 
-**Solution 3**
-
-- Call opt_lib_tasks.py `opt_docker_cmd(cmd, ...)`
-
-  - Pros
-    - avoid doing a call to invoke
-    - can deal with bash interpolation in Python
 - We should always use Solution 3, although in the code sometimes we use
   Solution 1 and 2 (but we should replace in favor of Solution 3).
+
+##
+
 - The interface to the Dockerized optimizer is in `run_optimizer` in
   `//amp/oms/call_optimizer.py`
 - To run the examples
-
   ```
   > cd //lime
   > i docker_bash
