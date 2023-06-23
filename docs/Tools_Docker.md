@@ -186,7 +186,7 @@
 - A docker image is built from a `Dockerfile`. The image is then used to run a
   Docker container.
 
-  <img src="./Tools_Docker_figs/image2.png" width=60% height=60%>
+  <img src="./Tools_Docker_figs/image2.png" width=80% height=80%>
 
 - There is `/devops` dir under a project's dir that contains Docker-related
   files, e.g. `cmamp/devops`.
@@ -277,7 +277,8 @@
 - Compose is a tool for defining and running multi-container Docker
   applications. With Compose, you use a `YAML` file to configure your
   application's services.
-  ![](./Tools_Docker_figs/image1.png)
+
+  <img src="./Tools_Docker_figs/image1.png"  width=80% height=80%>
 
 ## Version
 
