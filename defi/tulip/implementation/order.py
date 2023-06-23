@@ -6,7 +6,7 @@ import defi.tulip.implementation.order as dtuimord
 
 import collections
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -227,7 +227,7 @@ def get_random_order(seed: Optional[int] = None) -> Order:
 
 def convert_orders_to_dataframe(orders: List[Order]) -> pd.DataFrame:
     """
-    Convert a list of orders to a dataframe
+    Convert a list of orders to a dataframe.
 
     :param orders: list of `Order`
     :return: dataframe with one order per row and attributes as cols
@@ -236,3 +236,47 @@ def convert_orders_to_dataframe(orders: List[Order]) -> pd.DataFrame:
     df = pd.concat([pd.Series(order.to_dict()) for order in orders], axis=1).T
     df = df.convert_dtypes()
     return df
+
+
+def execute_order(order: Order, price: float) -> List[Tuple[float, str]]:
+    """
+    Execute order at specified price.
+
+    :param order: `Order` to be executed
+    :param price: price that user pays in quote token in exchange to get base token
+    :return: info about executed changes in base and quote token amounts
+    """
+    given_action = order.action
+    if given_action == "buy":
+        if price <= order.limit_price:
+            exec_info = [
+                (-order.quantity * price, order.quote_token),
+                (order.quantity, order.base_token),
+            ]
+        else:
+            _LOG.info(
+                "The order cannot be executed for given action='%s' as the given \
+                    price='%f' is greater than limit_price='%f'",
+                given_action,
+                price,
+                order.limit_price,
+            )
+            exec_info = None
+    elif given_action == "sell":
+        if price >= order.limit_price:
+            exec_info = [
+                (order.quantity * price, order.quote_token),
+                (order.quantity, order.base_token),
+            ]
+        else:
+            _LOG.info(
+                "The order cannot be executed for given action='%s' as the given \
+                    price='%f' is less than limit_price='%f'",
+                given_action,
+                price,
+                order.limit_price,
+            )
+            exec_info = None
+    else:
+        raise ValueError("Invalid order action='%s'" % given_action)
+    return exec_info

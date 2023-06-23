@@ -8,4 +8,3 @@ cmd="(ganache -h 0.0.0.0 $OPTS 2>&1 | tee ~/ganache.log)"
 eval $cmd
 
 #(ganache -h 0.0.0.0 2>&1 >~/ganache.log) &
-
