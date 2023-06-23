@@ -57,12 +57,12 @@
 
 - Our usual review process is to work in a branch and create a pull request
   - See the
-    [[Git]{.underline}](https://docs.google.com/document/u/0/d/1zahC8uDnFGYRSgkBrQRgg3W3ZmDjZZJj6yln6YeuHq4/edit)
+    [Git](https://docs.google.com/document/u/0/d/1zahC8uDnFGYRSgkBrQRgg3W3ZmDjZZJj6yln6YeuHq4/edit)
     notes for details
   - The name of the pull request is generated with ghi_show.py and looks like
     PTask2704 make exchange contracts get contracts applicable to series
 
-# From the code author point of view\*\*
+# From the code author point of view
 
 ## Why we review code
 
@@ -275,7 +275,7 @@
   select the delete branch option
 
 - Otherwise you can delete the branch using the procedure in 
-[[Git]{.underline}](https://docs.google.com/document/u/0/d/1zahC8uDnFGYRSgkBrQRgg3W3ZmDjZZJj6yln6YeuHq4/edit)
+[Git](https://docs.google.com/document/u/0/d/1zahC8uDnFGYRSgkBrQRgg3W3ZmDjZZJj6yln6YeuHq4/edit)
 
 ## Give priority to code review
 
