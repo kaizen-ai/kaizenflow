@@ -1290,8 +1290,11 @@ Next steps:
 - Each
 
 One run the invoke commands from optimizer dir
+
 When the Docker container starts the current dir is optimizer
+
 helpers, core is mounted in the same dir
+
 You can't see code outside optimizer
 
 TODO(gp): running in amp under lemonade should use the local repo_config
