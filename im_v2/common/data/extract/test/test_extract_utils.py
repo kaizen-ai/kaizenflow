@@ -804,8 +804,8 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
         )
         with self.assertRaises(RuntimeError) as fail:
             imvcdtrdbad._run(namespace, aws_profile=self.s3fs_)
-        self.assertIn("Missing symbols", str(fail))
-        self.assertIn("BTC_USDT", str(fail))
+        self.assertIn("Missing symbols", str(fail.exception))
+        self.assertIn("BTC_USDT", str(fail.exception))
 
     def test_download_and_resample_bid_ask_data(self) -> None:
         """
@@ -872,7 +872,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
                 self.call_download_historical_data(
                     incremental=False, assert_on_missing_data=True
                 )
-            self.assertIn("No data", str(fail))
+            self.assertIn("No data", str(fail.exception))
 
     @pytest.mark.skip(reason="CMTask2089")
     @umock.patch.object(imvcdeexut.hparque, "list_and_merge_pq_files")

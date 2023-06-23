@@ -68,7 +68,7 @@ class TestToFileAndFromFile1(hmoto.S3Mock_TestCase):
                 regular_file_content, s3_path, mode="wt", aws_profile=moto_s3fs
             )
         # Check output.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"S3 only allows binary mode!"
         self.assert_equal(actual, expected)
 
@@ -84,7 +84,7 @@ class TestToFileAndFromFile1(hmoto.S3Mock_TestCase):
         with self.assertRaises(ValueError) as fail:
             hs3.from_file(s3_path, encoding=True, aws_profile=moto_s3fs)
         # Check output.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"Encoding is not supported when reading from S3!"
         self.assert_equal(actual, expected)
 
