@@ -185,7 +185,8 @@
 
 - A docker image is built from a `Dockerfile`. The image is then used to run a
   Docker container.
-  ![](./Tools_Docker_figs/image2.png)
+  ![](./Tools_Docker_figs/image2.png){:height="50%" width="50%"}
+  <img src="./Tools_Docker_figs/image2.png" width=50% height=50%>
 - There is `/devops` dir under a project's dir that contains Docker-related
   files, e.g. `cmamp/devops`.
 
