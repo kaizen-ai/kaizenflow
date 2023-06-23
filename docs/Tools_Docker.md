@@ -281,7 +281,7 @@
 
 - At the beginning of a `docker-compose.yaml` file specify the `docker-compose`
   version. We use the version `3.0`, for more information see
-  [[the official documents]{.underline}](https://docs.docker.com/compose/compose-file/compose-versioning/).
+  [the official documents](https://docs.docker.com/compose/compose-file/compose-versioning/).
   ```
   version: "3.0"
   ```
@@ -299,7 +299,7 @@
   ```
 - The `im_postgres_local` service below uses the public `postgres` image pulled
   from the
-  [[Docker hub registry]{.underline}](https://hub.docker.com/_/postgres).
+  [Docker hub registry](https://hub.docker.com/_/postgres).
   ```
   im_postgres_local:
   image: postgres: 13
@@ -474,7 +474,7 @@
     a known-good version to get the tests back to green until the problem is
     solved. We switch back to the latest version once the problem is fixed
   - b.If you need to put a constraint on the package version, follow the
-    [[official docs]{.underline}](https://python-poetry.org/docs/dependency-specification/),
+    [official docs](https://python-poetry.org/docs/dependency-specification/),
     and explain in a comment why this is needed making reference to GitHub
     issues
 - To verify that package is installed correctly one can
@@ -502,7 +502,7 @@
 - Send a PR with the updated poetry files and any other change needed to make
   the tests pass
 - Release the new image. To do so follow the
-  [[# Release a Docker image]{.underline}](#how-to-test-a-package-in-a-docker-container)
+  [# Release a Docker image](#how-to-test-a-package-in-a-docker-container)
   section, use `--update-poetry` flag to resolve the dependencies
 
 ## How to find unused packages
@@ -530,11 +530,11 @@
   `jupyter`, `pytest-cov`, etc. -> `pipreqs` won't find these packages
 - The import name is not always equal to the package actual name, see the
   mapping
-  [[here]{.underline}](https://github.com/bndr/pipreqs/blob/master/pipreqs/mapping)
+  [here](https://github.com/bndr/pipreqs/blob/master/pipreqs/mapping)
 
 #### Usage
 
-- See the [[official docs]{.underline}](https://github.com/bndr/pipreqs) for the
+- See the [official docs](https://github.com/bndr/pipreqs) for the
   advanced usage.
   - Run a bash session inside a Docker container
   - Install `pipreqs` with `sudo pip install pipreqs`
