@@ -238,7 +238,7 @@
 
 ### Install Python packages
 
-- We prefer to install Python packages with `poetry `.
+- We prefer to install Python packages with `poetry`.
 - Make sure that there is instruction to install `pip3` and `poetry`. You can
   either put it in a `Dockerfile` or in a separate file like
   `install_packages.sh`.
@@ -444,10 +444,10 @@
   - Make changes to the image
     - E.g., add Python package
     - Update the changelog
-    - Build a local image
-      - Run specific tests (e.g., make sure that the new packages are installed)
-      - Run unit tests
-      - Run QA tests
+  - Build a local image
+    - Run specific tests (e.g., make sure that the new packages are installed)
+    - Run unit tests
+    - Run QA tests
   - Tag local image as dev image
   - Push dev image to ECR
 - If there is also an associated prod image
@@ -470,34 +470,34 @@
     ```
 - In general we use the latest version of a package (`\*`) until the tests fail
   or the system stops working
-  - a. If the system fails, we freeze the version of the problematic packages to
+  - If the system fails, we freeze the version of the problematic packages to
     a known-good version to get the tests back to green until the problem is
     solved. We switch back to the latest version once the problem is fixed
-  - b.If you need to put a constraint on the package version, follow the
+  - If you need to put a constraint on the package version, follow the
     [official docs](https://python-poetry.org/docs/dependency-specification/),
     and explain in a comment why this is needed making reference to GitHub
     issues
 - To verify that package is installed correctly one can
-  - a. build a local image and update poetry
+  - build a local image and update poetry
     `> i docker_build_local_image --version {new version} --update-poetry`
-  - b. run a docker container based on the local image
+  - run a docker container based on the local image
     `> i docker_bash --stage local --version {new version}`
-- verify what package was installed with `pip show {package name}`, e.g.,
-  ```
-  > pip show pytest-rerunfailures
-  Name: pytest-rerunfailures
-  Version: 10.2
-  Summary: pytest plugin to re-run tests to eliminate flaky failures
-  ...
-  Location: /venv/lib/python3.8/site-packages
-  Requires: pytest, setuptools
-  Required-by:
-  ```
-- run regressions for the local image, i.e.
-  ```
-  > i run_fast_tests --stage local --version {new version}
-  > i run_slow_tests --stage local --version {new version}
-  ```
+  - verify what package was installed with `pip show {package name}`, e.g.,
+    ```
+    > pip show pytest-rerunfailures
+    Name: pytest-rerunfailures
+    Version: 10.2
+    Summary: pytest plugin to re-run tests to eliminate flaky failures
+    ...
+    Location: /venv/lib/python3.8/site-packages
+    Requires: pytest, setuptools
+    Required-by:
+    ```
+  - run regressions for the local image, i.e.
+    ```
+    > i run_fast_tests --stage local --version {new version}
+    > i run_slow_tests --stage local --version {new version}
+    ```
 - Update the changelog describing the new version
 - Send a PR with the updated poetry files and any other change needed to make
   the tests pass
@@ -546,25 +546,26 @@
     ```
     pipreqs . --savepath ./tmp.requirements.txt
     ```
-- The command above will generate `./tmp.requirements.txt` with the list of the
-  imported packages, e.g.,
-  ```
-  amp==1.1.4
-  async_solipsism==0.3
-  beautifulsoup4==4.11.1
-  botocore==1.24.37
-  cvxopt==1.3.0
-  cvxpy==1.2.0
-  dill==0.3.4
-  environs==9.5.0
-  ...
-  ```
-- You can grep for a package name to see where it is used, e.g.,
-  ```
-  > jackpy "dill"
-  helpers/hpickle.py:108: import dill
-  ...
-  ```
+
+    - The command above will generate `./tmp.requirements.txt` with the list of the
+      imported packages, e.g.,
+      ```
+      amp==1.1.4
+      async_solipsism==0.3
+      beautifulsoup4==4.11.1
+      botocore==1.24.37
+      cvxopt==1.3.0
+      cvxpy==1.2.0
+      dill==0.3.4
+      environs==9.5.0
+      ...
+      ```
+    - You can grep for a package name to see where it is used, e.g.,
+      ```
+      > jackpy "dill"
+      helpers/hpickle.py:108: import dill
+      ...
+      ```
 
 ## How to build a local image
 
@@ -637,7 +638,7 @@
   (`local-saggese-1.0.0`) to another (`dev`)
 - Once the `local` image is tagged as `dev`, your `dev` image becomes equal to
   `local-saggese-1.0.0`
-- `dev` image is also tagged with`dev-${version}`, e.g., `dev-1.0.0` to preserve
+- `dev` image is also tagged with `dev-${version}`, e.g., `dev-1.0.0` to preserve
   history and allow for quick rollback.
 - Locally in git repository a git tag `${repo_name}-${version}`, e.g.
   `cmamp-1.0.0` is created in order to properly control sync between code and
@@ -865,42 +866,42 @@ Conceptually the flow consists of the following phases:
 - Update the changelog, i.e. `//cmamp/changelog.txt`
   - Specify what was changed
   - Pick the release version accordingly
-- We use [semantic versioning](https://semver.org/) convention
-  - For example, adding a package to the image would mean bumping up version
-    1.0.0 to 1.0.1
-  - Test the change using the local release flow
-    `i docker_build_local_image -v ${version}`
+    - We use [semantic versioning](https://semver.org/) convention
+      - For example, adding a package to the image would mean bumping up version
+        1.0.0 to 1.0.1
+- Test the change using the local release flow
+  `i docker_build_local_image -v ${version}`
   - If a new package is added run `docker_build_local_image` with
     `--update-poetry` option and check in a `poetry.lock` file
-  - Make sure that the tests pass
-    `i run_fast_slow_tests -s local -v ${version}`, and that the goal of the
-    Issue is achieved (e.g., a new package is visible, the package version has
-    been updated)
-  - Do a PR with the change including the updated `changelog.txt`, the poetry
-    files (both the specs `devops/docker_build/poetry.toml` and the package
-    version `devops/docker_build/poetry.loc`)
-  - Run the release flow manually (or rely on GH Action build workflow to create
-    the new image)
-    ```
-    # Release dev image
-    > i docker_release_dev_image --version $version
-    # Pick up the new image from ECR
-    > i docker_pull
-    ```
-  - Send a message on the `all@` chat telling people that a new version of the
-    `XYZ` container has been released
-  - Users need to do a `i docker_pull` to get the new container
-  - Users that don't update should see a message telling them that the code and
-    container are not in sync any more, e.g.,:
-    ```
-    ---
-    This code is not in sync with the container:
-    code_version='1.0.3' != container_version='amp-1.0.3'
-    ---
-    You need to:
-        - merge origin/master into your branch with `invoke git_merge_master`
-        - pull the latest container with `invoke docker_pull`
-    ```
+- Make sure that the tests pass
+  `i run_fast_slow_tests -s local -v ${version}`, and that the goal of the
+  Issue is achieved (e.g., a new package is visible, the package version has
+  been updated)
+- Do a PR with the change including the updated `changelog.txt`, the poetry
+  files (both the specs `devops/docker_build/poetry.toml` and the package
+  version `devops/docker_build/poetry.lock`)
+- Run the release flow manually (or rely on GH Action build workflow to create
+  the new image)
+  ```
+  # Release dev image
+  > i docker_release_dev_image --version $version
+  # Pick up the new image from ECR
+  > i docker_pull
+  ```
+- Send a message on the `all@` chat telling people that a new version of the
+  `XYZ` container has been released
+- Users need to do a `i docker_pull` to get the new container
+- Users that don't update should see a message telling them that the code and
+  container are not in sync any more, e.g.,:
+  ```
+  ---
+  This code is not in sync with the container:
+  code_version='1.0.3' != container_version='amp-1.0.3'
+  ---
+  You need to:
+      - merge origin/master into your branch with `invoke git_merge_master`
+      - pull the latest container with `invoke docker_pull`
+  ```
 
 ## dev_tools
 
@@ -921,8 +922,8 @@ Conceptually the flow consists of the following phases:
     - NB! The release version should consist of 3 digits, e.g. "1.1.0" instead
       of "1.1"
     - We use [semantic versioning](https://semver.org/) convention
-  - For example, adding a package to the image would mean bumping up version
-    1.0.0 to 1.0.1
+      - For example, adding a package to the image would mean bumping up version
+        1.0.0 to 1.0.1
 - Do a PR with the change including the updated `changelog.txt`
 - Send a message on the `all@` chat telling people that a new version of the
   container has been released
@@ -1017,13 +1018,13 @@ Conceptually the flow consists of the following phases:
   - Release a dev image
   - Release a prod image
   - Rollback an image
-  - We rarely move the dev / prod tag back, but rather users needs to docker
-    pull an older image and pass --base*name --stage and --version to
-    docker*{bash, cmd, jupyter}
-  - Then the image is fixed going forward
+    - We rarely move the dev / prod tag back, but rather users needs to docker
+      pull an older image and pass --base*name --stage and --version to
+      docker*{bash, cmd, jupyter}
+    - Then the image is fixed going forward
 - A releasable dir has a
   - repo_config
-  - Maybe we should call it component_config since now also dirs can be released
+    - Maybe we should call it component_config since now also dirs can be released
   - README.md or changelog.md
   - devops
   - tasks.py (with the exposed Invoke tasks)
@@ -1043,6 +1044,7 @@ Conceptually the flow consists of the following phases:
 - We want to run the container as a user would do
 - Usually we run tests inside a container to verify that the code is correct
 - To test the container itself right now we test outside (in the thin client)
+
   ```
   > pytest -m qa test --image_stage dev
   ```
@@ -1051,19 +1053,23 @@ Conceptually the flow consists of the following phases:
   `dev_scripts_devto/client_setup/`
 - E.g., `//amp/dev_scripts/client_setup/requirements.txt`
 - A hack is to
+
   ```
   vimdiff
   /Users/saggese/src/lemonade2/amp/dev_scripts/client_setup/requirements.txt
   dev_scripts_devto/client_setup/requirements.txt
   ```
+
   ```
   > source dev_scripts_devto/client_setup/build.sh
   ```
 - A possible solution is to use Docker-in-Docker
+
   - in this way we don't have to pollute the thin env with a bunch of stuff
   - Talk to Grisha and Vitalii
 - This works in dev_tools because the code for the import detector is there and
   we are using a dev container which binds the src dir to the container
+
   ```
   > i lint_detect_cycles --dir-name
   > import_check/test/Test_detect_import_cycles.test1/input/ --stage dev
@@ -1071,12 +1077,13 @@ Conceptually the flow consists of the following phases:
 - In all the other repos, one needs to use the prod of dev_tools container
   (that's what the user would do)
 - Next steps:
+
   - TODO(Sonya + Grisha): release the prod dev_toools container as it is
   - TODO(Sonya + Grisha): document dev_tools, release procedure
   - TODO(Sonya): pull prod dev_tools (i docker_pull_dev_tools) and test that now
     in cmamp the tool works
   - TODO(gp): figure out the QA workflow (and improve the thin client with dind)
-  - To break the circular dep we release a prod-candidate
+    - To break the circular dep we release a prod-candidate
 
 # Dev_tools container
 
@@ -1124,23 +1131,23 @@ Conceptually the flow consists of the following phases:
   corresponding to a Git repo
   - The consequence would be:
     - a multiplication of repos
-  - no implicit sharing of code across different containers
-  - some mechanism to share code (e.g., `helpers`) across repos (e.g., using
-    bind mount)
-  - not playing nice with Git subrepo mechanism since Docker needs to see the
-    entire repo
-  - So the code would be organized in 4 repos:
-    ```
-    - lemonade / lime
-    - helpers
-    - optimizer
-    - oms
-    - models in amp
-    ```
-- where the dependency between containers are
-  - lemonade -> amp
-  - amp -> optimizer, helpers
-  - optimizer -> helpers, core
+    - no implicit sharing of code across different containers
+    - some mechanism to share code (e.g., `helpers`) across repos (e.g., using
+      bind mount)
+    - not playing nice with Git subrepo mechanism since Docker needs to see the
+      entire repo
+- So the code would be organized in 4 repos:
+  ```
+  - lemonade / lime
+  - helpers
+  - optimizer
+  - oms
+  - models in amp
+  ```
+  - where the dependency between containers are
+    - lemonade -> amp
+    - amp -> optimizer, helpers
+    - optimizer -> helpers, core
 
 ### Multiple containers per Git repo
 
@@ -1245,10 +1252,12 @@ Conceptually the flow consists of the following phases:
 - The `changelog.txt` file is in the deployable dir (e.g.,
   optimizer/changelog.txt)
 - Each
-- One run the invoke commands from optimizer dir
-- When the Docker container starts the current dir is optimizer helpers, core is
-  mounted in the same dir
-- You can't see code outside optimizer
+
+One run the invoke commands from optimizer dir
+When the Docker container starts the current dir is optimizer 
+helpers, core is mounted in the same dir
+You can't see code outside optimizer
+
 - TODO(gp): running in amp under lemonade should use the local repo_config
 
 ## Release and ECR flow
@@ -1261,12 +1270,12 @@ Conceptually the flow consists of the following phases:
   tests that have a dependency from cvxopt /cvxpy can't be run inside the `amp`
   container but need to be run inside `opt`.
 - We want to:
-  1.  (as always) write and run unit tests for the optimizer code in isolation,
-      i.e., test the code in the directory `optimizer` by itself
-  2.  run all the tests for the entire repo (relying on both containers `amp` and
-      `optimizer` with a single command invocation)
-  3.  be able to run tests belonging to only one of the containers to shorten
-      the debugging cycle
+  1. (as always) write and run unit tests for the optimizer code in isolation,
+     i.e., test the code in the directory `optimizer` by itself
+  2. run all the tests for the entire repo (relying on both containers `amp` and
+     `optimizer` with a single command invocation)
+  3. be able to run tests belonging to only one of the containers to shorten
+     the debugging cycle
 - To achieve this we need to solve the 3 problems below.
 
 ### Avoid compiling code depending from cvxopt when running amp
@@ -1376,6 +1385,7 @@ Conceptually the flow consists of the following phases:
   cmd = "invoke opt_docker_cmd -cmd '...'"
   system(cmd)
   ```
+
   - Pros:
     - All the Docker commands go through the same interface inside invoke
   - Cons
@@ -1392,8 +1402,6 @@ Conceptually the flow consists of the following phases:
     - can deal with bash interpolation in Python
 - We should always use Solution 3, although in the code sometimes we use
   Solution 1 and 2 (but we should replace in favor of Solution 3).
-
-##
 
 - The interface to the Dockerized optimizer is in `run_optimizer` in
   `//amp/oms/call_optimizer.py`
