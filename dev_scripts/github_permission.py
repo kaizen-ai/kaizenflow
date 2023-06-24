@@ -22,12 +22,8 @@ import requests
 
 _LOG = logging.getLogger(__name__)
 
-#def log_message(message: str) -> None:
-#   _LOG.debug(message)
-def _parse():
-    """
-    Parses the command-line arguments.
-    """
+
+def _parse() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "github_username",
@@ -36,26 +32,27 @@ def _parse():
     )
     return parser.parse_args()
 
-"""
-Docstring.
 
-:param owner_username: owner username
-:param repo_name: repository name
-:param access_token: generate access token
-:param github_username: collaborator's github username
-"""
+#:param owner_username: owner username.
+#:param repo_name: repository name.
+#:param access_token: generate access token.
+#:param github_username: collaborator's github username.
 def check_collaborator(
     owner_username: str,
     repo_name: str,
     access_token: str,
     github_username: str,
 ) -> None:
-   
-    add_collaborator_endpoint = f"https://api.github.com/repos/{owner_username}/{repo_name}/"
-    f"collaborators/{{collaborator}}"
 
-    collaborator_check_url = f"https://api.github.com/repos/{owner_username}/{repo_name}/"
-    f"collaborators/{github_username}"
+    add_collaborator_endpoint = (
+        f"https://api.github.com/repos/{owner_username}/{repo_name}/"
+        f"collaborators/{{collaborator}}"
+    )
+
+    collaborator_check_url = (
+        f"https://api.github.com/repos/{owner_username}/{repo_name}/"
+        f"collaborators/{github_username}"
+    )
 
     headers = {"Authorization": f"Bearer {access_token}"}
     response = requests.get(collaborator_check_url, headers=headers, timeout=10)
@@ -75,14 +72,14 @@ def check_collaborator(
             _LOG.debug(
                 "%s is already a collaborator with %s permission level.",
                 github_username,
-                current_permission_level
+                current_permission_level,
             )
 
         else:
             _LOG.debug(
                 "Error retrieving permission level for %s. Status code: %s",
                 github_username,
-                status_code
+                status_code,
             )
 
     # Check if an invitation is pending for the collaborator.
@@ -104,7 +101,7 @@ def check_collaborator(
                     _LOG.debug(
                         "%s's invitation is pending to accept with %s permission level.",
                         github_username,
-                        invitee_permission
+                        invitee_permission,
                     )
 
                     break
@@ -125,13 +122,13 @@ def check_collaborator(
                 if status_code == 201:
                     _LOG.debug(
                         "New invitation sent to %s with permission level.",
-                        github_username
+                        github_username,
                     )
                 else:
                     _LOG.debug(
                         "Error sending invitation to %s. Status code: %s",
                         github_username,
-                        status_code
+                        status_code,
                     )
 
         else:
@@ -140,25 +137,27 @@ def check_collaborator(
                 owner_username,
                 repo_name,
                 status_code,
-                current_permission_level
+                current_permission_level,
             )
 
     else:
         _LOG.debug(
             "Error retrieving information for %s. Status code: %s",
             github_username,
-            status_code
+            status_code,
         )
 
 
-def _main(args):
+def _main(args: argparse.Namespace) -> None:
     # Provide the necessary values for owner username, repo name, and access token.
     owner_username = "owner username"
     repo_name = "repo name"
     access_token = "access token"
 
     # Check collaborator status for the provided GitHub username.
-    check_collaborator(owner_username, repo_name, access_token, args.github_username)
+    check_collaborator(
+        owner_username, repo_name, access_token, args.github_username
+    )
 
     # Provide the necessary values for owner username, repo name, and access token.
     owner_username = "owner_username"
@@ -172,6 +171,7 @@ def _main(args):
         access_token,
         args.github_username,
     )
+
 
 if __name__ == "__main__":
     _main(_parse())
