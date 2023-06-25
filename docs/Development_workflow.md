@@ -46,8 +46,6 @@
     + [Set-up](#set-up)
   * [Ours vs theirs](#ours-vs-theirs)
   * [Sync the repos (after double integration)](#sync-the-repos-after-double-integration)
-- [Pull from both repos](#pull-from-both-repos)
-  * [Merge branch](#merge-branch)
   * [Updated sync](#updated-sync)
   * [Check that things are fine](#check-that-things-are-fine)
   * [Integrate private to public: cmamp -> amp](#integrate-private-to-public-cmamp---amp)
@@ -132,8 +130,10 @@ To keep things simple and avoid variability, our convention is to use:
 - as `user.name` our Linux user name on the local computer we are using to
   commit which is returned by `whoami` (e.g., `user.name=saggese`)
 - as `user.email` the email that corresponds to that user (e.g,.
-  `user.email=[[saggese@gmail.com]{.underline}](mailto:saggese@gmail.com)`) To
-  accomplish the set-up above you can:
+  `user.email=saggese@gmail.com`)
+
+To accomplish the set-up above you can:
+
 - use in `/Users/saggese/.gitconfig` the values for our open-source account, so
   that they are used by default
 
@@ -150,8 +150,8 @@ To keep things simple and avoid variability, our convention is to use:
 > git config --local user.email YOUR_EMAIL
 ```
 
-- Note that you need to set these local values on each Git client that you have
-  cloned, since Git doesn't version control these values
+-- Note that you need to set these local values on each Git client that you have
+cloned, since Git doesn't version control these values
 
 ## Enforcing Git credentials
 
@@ -665,7 +665,9 @@ From
 
 ## Run with coverage
 
+```
 > i run_fast_tests --pytest-opts="core/test/test_finance.py" --coverage
+```
 
 ## Iterating on stacktrace of failing test
 
@@ -927,6 +929,7 @@ When rebasing the role is swapped
 
 ## Sync the repos (after double integration)
 
+```
 > git fetch origin; git fetch public
 
 # Pull from both repos
@@ -945,9 +948,8 @@ When there is a file added it's better to add
 
 im/ccxt/db/test/test_ccxt_db_utils.py
 
-## Merge branch
+# Merge branch
 
-```
 > gs
 + git status
 On branch AmpTask1786_Integrate_20211128_02 Your branch and 'origin/AmpTask1786_Integrate_20211128_02' have diverged, and have 861 and 489
@@ -969,7 +971,9 @@ nothing to commit, working tree clean
 
 ## Updated sync
 
+```
 > git fetch origin; git fetch public
+```
 
 ## Check that things are fine
 
@@ -1001,7 +1005,7 @@ nothing to commit, working tree clean
 > tar cvzf patch.tgz $(git diff --name-onlyorigin/master public/master | grep -v repo_config.py)
 
 > cd /Users/saggese/src/amp1 git remote add cmamp
-> [git@github.com](mailto:git@github.com):cryptomtc/cmamp.git
+> git@github.com:cryptomtc/cmamp.git
 
 > GIT_SSH_COMMAND="ssh -i \~/.ssh/cryptomatic/id_rsa.cryptomtc.github" git fetch
 > git@github.com:cryptomtc/cmamp.git
@@ -1039,11 +1043,11 @@ Update the date
 
 > vi /Users/saggese/src/amp1/dev_scripts/integrate_repos/*
 
-> cd \~/src/amp1 source
-> /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
+> cd \~/src/amp1
+> source /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
 
-> cd \~/src/cmamp1 source
-> /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
+> cd \~/src/cmamp1
+> source /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
 ```
 
 ## Manual set-up branches
