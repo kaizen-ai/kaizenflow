@@ -106,9 +106,15 @@
     # Copied to system clipboard:
     CmTask274_Update_names: https://github.com/sorrentum/sorrentum/pull/274
     ```
+    - Before running verify that GitHub cli `gh` works
+      ```
+      > gh --version
+      gh version 2.29.0 (2023-05-10)
+      https://github.com/cli/cli/releases/tag/v2.29.0
+      ```
   - The name is `CmTask274_Update_names`
   - To use multiple branches for a given task, append a numeral to the name,
-    e.g., `LemTask274_PRICE_Download_equity_data_02`
+    e.g., `CmTask274_Update_names_v02`
 
 - Create and checkout the branch
   ```
