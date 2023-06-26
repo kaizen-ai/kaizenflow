@@ -1329,13 +1329,12 @@ def test_function_call1(self, fetch_ohlcv_mock: umock.MagicMock):
 
     ```python
     self.assertEqual(fetch_ohlcv_mock.call_count, 3)
-
-            actual_args = str(fetch_ohlcv_mock.call_args_list)
-            expected_args = r"""
-            [call('BTC/USDT', since=1645660800000, bar_per_iteration=500),
-            call('BTC/USDT', since=1645690800000, bar_per_iteration=500),
-            call('BTC/USDT', since=1645720800000, bar_per_iteration=500)]
-            """
+    actual_args = str(fetch_ohlcv_mock.call_args_list)
+    expected_args = r"""
+    [call('BTC/USDT', since=1645660800000, bar_per_iteration=500),
+    call('BTC/USDT', since=1645690800000, bar_per_iteration=500),
+    call('BTC/USDT', since=1645720800000, bar_per_iteration=500)]
+    """
     self.assert_equal(actual_args, expected_args, fuzzy_match=True)
     ```
 
