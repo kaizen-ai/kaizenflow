@@ -1,3 +1,5 @@
+# Code review
+
 <!-- toc -->
 
 - [General rules about code review](#general-rules-about-code-review)
@@ -109,8 +111,7 @@
     - Which part is it implementing?
     - Why is it doing it in a certain way?
 
-- If the code is not ready for merge, but you want a "pre-review" mark it as
-  "Draft PR"
+- If the code is not ready for merge, but you want a "pre-review" convert PR to a draft
   - E.g., ask for an architectural review
   - Draft PRs can not be merged
 
@@ -231,18 +232,13 @@
 
 ## Workflow of a review in terms of GH labels
 
-- Please always add GP and Paul as reviewers, together with anybody else that
-  can be useful to review the code
-
 - The current meaning of the labels are:
-  - `PR_TO_REVIEW`: assigned by the automatic PR system / author
-  - `PR_CHANGE_REQUIRED`: assigned by Paul and GP if the PR needs some changes
-  - `PR_GP_APPROVED`: assigned by GP when he is ok with merging
-  - `PR_PAUL_APPROVED`: assigned by Paul when he is ok with merging
+  - See GitHub ZenHub workflows [doc](https://github.com/sorrentum/sorrentum/blob/master/docs/GitHub_ZenHub_workflows.md#pr-labels)
 
 ## Link PR to GH issue
 
-- TODO(Paul): Not sure what's the latest approach
+- Mention the corresponding issue in the PR description to ease the navigation
+E.g., see an [example](https://github.com/sorrentum/sorrentum/pull/288#issue-1729654983)
 
 ## Fix later
 
