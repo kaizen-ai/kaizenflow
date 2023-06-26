@@ -1,7 +1,6 @@
 
 
 <!-- toc -->
-
 - [Setting up Git credentials](#setting-up-git-credentials)
   * [Preamble](#preamble)
   * [Check Git credentials](#check-git-credentials)
@@ -27,7 +26,7 @@
   * [Experiment in a local image](#experiment-in-a-local-image)
 - [GitHub Actions (CI)](#github-actions-ci)
   * [Running a single test in GH Actions](#running-a-single-test-in-gh-actions)
-- [run: invoke run_fast_tests](#run-invoke-run_fast_tests)
+  * [run: invoke run_fast_tests](#run-invoke-run_fast_tests)
 - [pytest](#pytest)
   * [Run with coverage](#run-with-coverage)
   * [Iterating on stacktrace of failing test](#iterating-on-stacktrace-of-failing-test)
@@ -35,7 +34,7 @@
   * [Detect mismatches with golden test outcomes](#detect-mismatches-with-golden-test-outcomes)
 - [Playback](#playback)
 - [Publish a notebook](#publish-a-notebook)
-- [Detailed instructions](#detailed-instructions)
+  * [Detailed instructions](#detailed-instructions)
   * [Publish notebooks](#publish-notebooks)
   * [Open a published notebook](#open-a-published-notebook)
     + [Start a server](#start-a-server)
@@ -43,7 +42,7 @@
     + [Using Windows browser](#using-windows-browser)
 - [How to create a private fork](#how-to-create-a-private-fork)
 - [Integrate public to private: amp -> cmamp](#integrate-public-to-private-amp---cmamp)
-    + [Set-up](#set-up)
+  * [Set-up](#set-up)
   * [Ours vs theirs](#ours-vs-theirs)
   * [Sync the repos (after double integration)](#sync-the-repos-after-double-integration)
   * [Updated sync](#updated-sync)
@@ -628,16 +627,16 @@ container is still running.
     starts with `user_1011@da8f3bb8f53b:/app$`, your Container ID is
     `da8f3bb8f53b`
 
-- by listing running containers, e.g., run `docker ps` outside the container
+  - by listing running containers, e.g., run `docker ps` outside the container
 
 - Commit image
 
 ```
-> docker commit <Container ID> <IMAGE>/cmamp:local-$USER
+    > docker commit <Container ID> <IMAGE>/cmamp:local-$USER
 ```
 
-E.g.
-`docker commit da8f3bb8f53b 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:local-julias`
+    E.g.
+    `docker commit da8f3bb8f53b 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:local-julias`
 
 If you are running inside a notebook using `i docker_jupyter` you can install
 packages using a one liner `! sudo su -; source ...; `
@@ -648,9 +647,11 @@ packages using a one liner `! sudo su -; source ...; `
 
 Create a branch
 
-Change .github/workflows/fast_tests.yml run: invoke run_fast_tests
+Change .github/workflows/fast_tests.yml
 
-# run: invoke run_fast_tests
+run: invoke run_fast_tests
+
+## run: invoke run_fast_tests
 
 --pytest-opts="helpers/test/test_git.py::Test_git_modified_files1::test_get_modified_files_in_branch1
 -s --dbg"
@@ -660,8 +661,7 @@ branch
 
 # pytest
 
-From
-[https://gist.github.com/kwmiebach/3fd49612ef7a52b5ce3a](https://gist.github.com/kwmiebach/3fd49612ef7a52b5ce3a)
+From https://gist.github.com/kwmiebach/3fd49612ef7a52b5ce3a
 
 ## Run with coverage
 
@@ -673,13 +673,17 @@ From
 
 Inside docker bash
 
+```
 > pytest ...
+```
 
 The test fails: switch to using `pytest.sh` to save the stacktrace to a file
 
 Then from outside Docker launch vim in quickfix mode
 
+```
 > invoke traceback
+```
 
 The short form is `it`
 
@@ -739,11 +743,9 @@ For more details see
 
 1. Opening a notebook in your browser (useful for read-only mode)
 
-- E.g., without having to use Jupyter notebook (which modifies the file in
-
-your client) or github preview (which is slow or fails when the notebook
-
-is too large)
+-- E.g., without having to use Jupyter notebook (which modifies the file in your
+client) or github preview (which is slow or fails when the notebook is too
+large)
 
 2. Sharing a notebook with others in a simple way
 
@@ -751,23 +753,18 @@ is too large)
 
 4. Reviewing someone's notebook
 
-5. Comparing multiple notebooks against each other in different browser
-
-windows
+5. Comparing multiple notebooks against each other in different browser windows
 
 6. Taking a snapshot / checkpoint of a notebook as a backup or before making
+   changes
 
-changes
+-- This is a lightweight alternative to "unit testing" to capture the desired
+behavior of a notebook
 
-- This is a lightweight alternative to "unit testing" to capture the
+-- One can take a snapshot and visually compare multiple notebooks side-by-side
+for changes
 
-desired behavior of a notebook
-
-- One can take a snapshot and visually compare multiple notebooks
-
-side-by-side for changes
-
-# Detailed instructions
+## Detailed instructions
 
 - You can get details by running:
 
@@ -794,7 +791,7 @@ aws_s3_bucket=alphamatic-data
 AM_AWS_PROFILE=am
 ```
 
-If you don't have them, you need to re-run `source dev_scripts/seten.sh` in all
+If you don't have them, you need to re-run `source dev_scripts/setenv.sh` in all
 the shells. It might be easier to kill that tmux session and restart it
 
 ```
@@ -811,8 +808,10 @@ Inside or outside a Docker bash run
 
 The file is copied to S3
 
+```
 Copying './Task40_Optimizer.20210717_010806.html' to
 's3://alphamatic-data/notebooks/Task40_Optimizer.20210717_010806.html'
+```
 
 You can also save the data locally:
 
@@ -876,24 +875,25 @@ on the saved link
 
 # How to create a private fork
 
-[https://stackoverflow.com/questions/10065526/github-how-to-make-a-fork-of-public-repository-private](https://stackoverflow.com/questions/10065526/github-how-to-make-a-fork-of-public-repository-private)
+https://stackoverflow.com/questions/10065526/github-how-to-make-a-fork-of-public-repository-private
 
 From
-[https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/duplicating-a-repository](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/duplicating-a-repository)
+https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/duplicating-a-repository
 
+```
 > git clone --bare git@github.com:alphamatic/amp.git amp_bare
 
-> git push --mirror
-> [https://github.com/cryptomtc/cmamp.git](https://github.com/cryptomtc/cmamp.git)
+> git push --mirror https://github.com/cryptomtc/cmamp.git
+```
 
 It worked only as cryptomtc, but not using my key
 
 # Integrate public to private: amp -> cmamp
 
-### Set-up
+## Set-up
 
 ```
-> git remote add public [git@github.com](mailto:git@github.com):alphamatic/amp
+> git remote add public git@github.com:alphamatic/amp
 
 # Go to cmamp
 > cd /data/saggese/src/cmamp1
