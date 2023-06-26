@@ -24,6 +24,16 @@ import helpers.hsystem as hsystem
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): We should support encrypting an entire dir
+# /Users/saggese/src/sorrentum1/dev_scripts/encrypt_model.py --model_dir dataflow_lemonade/pipelines
+
+# TODO(gp): Add a unit test for encrypting a single model and for an entire dir.
+# We want to use hsystem.system() using 
+# /Users/saggese/src/sorrentum1/dev_scripts/encrypt_model.py --model_dir dataflow_lemonade/pipelines/C5 -v DEBUG --test
+
+# TODO(gp): Make --test default.
+
+
 def _encrypt_model(model_dir: str, target_dir: str) -> str:
     """
     Encrypt model using Pyarmor.
@@ -41,6 +51,10 @@ def _encrypt_model(model_dir: str, target_dir: str) -> str:
     encrypted_model_dir = os.path.join(target_dir, encrypted_model_name)
     hio.create_dir(encrypted_model_dir, incremental=True)
     # Create temporary Dockerfile.
+    # TODO(gp): Add option --build_target to cross build like below.
+    docker_image = "gpsaggese/encryption_flow"
+    # TODO(gp): let's use ./tmp.encrypt_model.Dockerfile so it's easier to
+    #  execute only one
     with tempfile.NamedTemporaryFile(suffix=".Dockerfile") as temp_dockerfile:
         temp_dockerfile.write(
             b"""
@@ -49,25 +63,38 @@ def _encrypt_model(model_dir: str, target_dir: str) -> str:
             """
         )
         temp_dockerfile.flush()
-        cmd = f"docker build -f {temp_dockerfile.name} -t encryption_flow ."
+        if not args.build_target:
+            cmd = f"docker build -f {temp_dockerfile.name} -t encryption_flow ."
+        else:
+            cmd = f"docker buildx build --push --platform linux/amd64 -f {temp_dockerfile.name} -t {docker_image} ."
         hsystem.system(cmd)
     # Run Docker container to encrypt the model.
     work_dir = os.getcwd()
     docker_target_dir = "/app"
     mount = f"type=bind,source={work_dir},target={docker_target_dir}"
     encryption_flow = f"pyarmor-7 obfuscate --restrict=0 --recursive {model_dir} --output {encrypted_model_dir}"
-    docker_cmd = f"docker run --rm -it --workdir {docker_target_dir} --mount {mount} encryption_flow {encryption_flow}"
+    # TODO(gp): For cross-build one needs --platform linux/amd64
+    docker_cmd = f"docker run --rm -it --platform linux/amd64 --workdir {docker_target_dir} --mount {mount} {docker_image} {encryption_flow}"
     _LOG.info("Start running Docker container.")
     hsystem.system(docker_cmd)
     n_files = len(os.listdir(encrypted_model_dir))
     hdbg.dassert_lt(0, n_files, "No files in encrypted_model_dir=`%s`", encrypted_model_dir)
     _LOG.info("Encrypted model successfully stored in encrypted_model_dir='%s'", encrypted_model_dir)
     # Make encrypted model files accessible by any user.
-    cmd = f"sudo chmod -R 777 {encrypted_model_dir}"
+    # TODO(gp): Why is sudo needed? IMO the Docker container should use the right permissions.
+    # We can pass -u user and group as we do for the main Docker flow.
+    cmd = f"chmod -R 777 {encrypted_model_dir}"
     hsystem.system(cmd)
     _LOG.info("Remove temporary Dockerfile.")
     return encrypted_model_dir
 
+
+# TODO(gp): Generalize this.
+# 1) All the __init__.py under the dir to encrypt need to be changed, excluded the one
+#    under dataflow_lemonade/pipelines_encr/pytransform/__init__.py
+# 2) The pointer should be the absolute path of the library and not relative as .pytransform
+# ```
+# from dataflow_lemonade.pipelines_encr.pytransform import pyarmor_runtime; pyarmor_runtime()
 
 def _tweak_init(encrypted_model_dir: str) -> None:
     """
@@ -92,7 +119,8 @@ def _test_model(model_dir: str) -> None:
     temp_file_path = "./tmp.encrypt_model.test_model.sh"
     import_path = model_dir.lstrip("./")
     import_path = import_path.replace("/", ".")
-    script = f'python -c "import {import_path}.mock1_pipeline as f; a = f.Mock1_DagBuilder(); print(a)"'
+    # TODO(gp): The model name should be passed from command line.
+    script = f'python -c "import {import_path}.C5a_pipeline as f; a = f.C5a_DagBuilder(); print(a)"'
     # Write testing script to temporary file.
     hio.to_file(temp_file_path, script)
     # Run test inside Docker container.
