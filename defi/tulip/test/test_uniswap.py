@@ -10,10 +10,10 @@ class TestUniswapV1(hunitest.TestCase):
         token_reserve = 90
         eth_reserve = 10
         uniswap_pool = dtimunsw.UniswapV1(token_reserve, eth_reserve)
-        # Check outcomes
         token_amount = 10
         eth_amount = 5
         uniswap_pool.add_liquidity(token_amount, eth_amount)
+        # Check outcomes.
         actual_token_reserve = uniswap_pool.token_reserve
         actual_eth_reserve = uniswap_pool.eth_reserve
         expected_token_reserve = 100
@@ -28,10 +28,10 @@ class TestUniswapV1(hunitest.TestCase):
         token_reserve = 5
         eth_reserve = 10
         uniswap_pool = dtimunsw.UniswapV1(token_reserve, eth_reserve)
-        # Check outcomes
         token_amount = 5
         eth_amount = -4
         uniswap_pool.add_liquidity(token_amount, eth_amount)
+        # Check outcomes.
         actual_token_reserve = uniswap_pool.token_reserve
         actual_eth_reserve = uniswap_pool.eth_reserve
         expected_token_reserve = 10
@@ -46,9 +46,9 @@ class TestUniswapV1(hunitest.TestCase):
         token_reserve = 100
         eth_reserve = 100
         uniswap_pool = dtimunsw.UniswapV1(token_reserve, eth_reserve)
-        # Check outcomes
         eth_amount = 150
         actual_token_amount = uniswap_pool.get_token_amount(eth_amount)
+        # Check outcomes.
         expected_token_amount = 60
         self.assertEqual(expected_token_amount, actual_token_amount)
 
@@ -59,8 +59,8 @@ class TestUniswapV1(hunitest.TestCase):
         token_reserve = 60
         eth_reserve = 5
         uniswap_pool = dtimunsw.UniswapV1(token_reserve, eth_reserve)
-        # Check outcomes
         token_amount = 15
         actual_eth_amount = uniswap_pool.get_eth_amount(token_amount)
+        # Check outcomes.
         expected_eth_amount = 1
         self.assertEqual(expected_eth_amount, actual_eth_amount)
