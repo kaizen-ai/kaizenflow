@@ -1,5 +1,5 @@
 # Unit tests
-locator
+
 <!-- toc -->
 
 - [Running unit tests](#running-unit-tests)
@@ -96,7 +96,7 @@ locator
 - [`invoke`](https://www.pyinvoke.org/) is a task execution which allows to
   execute some typical workflows, e.g. run the tests
 
-  ```
+  ```bash
   # Run only fast tests:
   > i run_fast_tests
   # Run only slow tests:
@@ -134,7 +134,7 @@ locator
   this might be useful when a user wants to run regressions on the local Docker
   image to verify that nothing is broken before promoting it to `dev` image.
 
-  ```
+  ```bash
   > i run_fast_tests --stage local
   ```
 
@@ -142,7 +142,7 @@ locator
   `--version` option. E.g., this might be useful when releasing a new version of
   an image.
 
-  ```
+  ```bash
   > i run_fast_tests --stage local --version 1.0.4
   ```
 
@@ -152,7 +152,7 @@ locator
   `invoke`. E.g., if a user want to run the tests in the debug mode to show the
   output
 
-  ```
+  ```bash
   > i run_fast_tests -s --dbg
   ```
 
@@ -161,7 +161,7 @@ locator
 - To save the output of `pytest` to `tmp.pytest.log` use the `--tee-to-file`
   option.
 
-  ```
+  ```bash
   > i run_fast_tests --tee-to-file
   ```
 
@@ -170,7 +170,7 @@ locator
 - To show (but not run) the tests that will be executed, use the
   `--collect-only`.
 
-  ```
+  ```bash
   > i run_fast_test --collect-only
   ```
 
@@ -181,7 +181,7 @@ locator
   submodule. Using this option, only tests in `dev_tools` but not in `cmamp` are
   run
 
-  ```
+  ```bash
   > cd dev_tools1
   > i run_fast_tests --skip-submodules
   ```
@@ -190,7 +190,7 @@ locator
 
 - To compute tests coverage use the `--coverage` option
 
-  ```
+  ```bash
   > i run_fast_tests --coverage
   ```
 
@@ -229,7 +229,7 @@ locator
 
 - Run a set of unit tests enabling coverage:
 
-  ```
+  ```bash
   # Run the coverage for a single test:
 
   > i run_fast_tests --coverage -p oms/test/test_broker.py::TestSimulatedBroker1
@@ -242,7 +242,7 @@ locator
 
 - This generates and run a pytest command inside Docker like:
 
-  ```
+  ```bash
   docker> /venv/bin/pytest -m "not slow and not superslow" oms/test/test_broker.py::TestSimulatedBroker1 --cov=. --cov-branch --cov-report term-missing --cov-report html
   ```
 
@@ -257,7 +257,7 @@ locator
   `coverage` inside a docker container, since the code was run (as always)
   inside the Docker container that contains all the dependencies.
 
-  ```
+  ```bash
   > coverage -h
 
   Coverage.py, version 5.5 with C extension
@@ -281,7 +281,7 @@ locator
   Full documentation is at https://coverage.readthedocs.io
   ```
 
-  ```
+  ```bash
   > coverage report -h
 
   Usage: coverage report [options] [modules]
@@ -319,7 +319,7 @@ locator
                           tried. [env: COVERAGE_RCFILE]
   ```
 
-  ```
+  ```bash
   > i docker_bash
 
   # Report the coverage for all the files under `oms` using the workload above (i.e., the fast tests under `oms/test/test_broker.py::TestSimulatedBroker1`)
@@ -362,7 +362,7 @@ locator
 
 - To exclude the test files, which could inflate the coverage
 
-  ```
+  ```bash
   > coverage report --include="oms/*" --omit="*/test_*.py"
 
   Name                                    Stmts   Miss Branch BrPart  Cover
@@ -396,7 +396,7 @@ locator
   the `--cov-report html` option. If you move out `index.html` from `htmlcov`
   dir some html features (e.g., filtering) will not work.
 
-  ```
+  ```bash
   # On macOS:
   > open htmlcov/index.html
   ```
@@ -414,7 +414,7 @@ locator
 
 - We start by running the fast tests:
 
-  ```
+  ```bash
   # Run fast unit tests
   > i run_fast_tests --coverage -p oms
   collected 66 items / 7 deselected / 59 selected
@@ -454,7 +454,7 @@ locator
 
 - Generate the same report in a browsable format
 
-  ```
+  ```bash
   docker> rm -rf htmlcov; coverage html --include="oms/*" --omit="*/test_*.py"
   # Wrote HTML report to `htmlcov/index.html`
 
@@ -466,7 +466,7 @@ locator
 
 - Now we run the coverage for the slow tests
 
-  ```
+  ```bash
   # Save the coverage from the fast tests run
   > cp .coverage .coverage_fast_tests
 
@@ -526,7 +526,7 @@ locator
 
 - We see that the coverage from the slow tests is only 23% for 7 tests
 
-  ```
+  ```bash
   root@6faaa979072e:/app/amp# coverage combine .coverage_fast_tests .coverage_slow_tests
   Combined data file .coverage_fast_tests
   Combined data file .coverage_slow_tests
@@ -540,7 +540,7 @@ locator
 
 - Run command below after `i docker_bash`:
 
-  ```
+  ```bash
   pytest --cov-report term-missing
   --cov=im_v2/common/data/transform/ im_v2/common/data/transform/test/test_transform_utils.py
   --cov-report html:im_v2/common/data/transform/htmlcov \
@@ -548,7 +548,7 @@ locator
 
 - Output sample:
 
-  ```
+  ```bash
   ---------- coverage: platform linux, python 3.8.10-final-0 ----------- Name Stmts Miss Cover Missing ----------------------------------------------------------------------------------------------- im_v2/common/data/transform/convert_csv_to_pq.py 55 55 0% 2-159 im_v2/common/data/transform/extract_data_from_db.py 55 55 0% 2-125 im_v2/common/data/transform/pq_convert.py 126 126 0% 3-248 im_v2/common/data/transform/transform_pq_by_date_to_by_asset.py 131 131 0% 2-437 im_v2/common/data/transform/transform_utils.py 22 0 100% ----------------------------------------------------------------------------------------------- TOTAL 389 367 6% Coverage HTML written to dir im_v2/common/data/transform/htmlcov \
   ```
 
@@ -557,7 +557,7 @@ locator
 - One can compute test coverage for a specified directory and generate text and
   HTML reports automatically using `invoke task run_coverage_report`
 
-  ```
+  ```bash
   > i --help run_coverage_report
   INFO: > cmd='/data/grisha/src/venv/amp.client_venv/bin/invoke --help run_coverage_report'
 
@@ -603,7 +603,7 @@ locator
 - Compute coverage for `market_data` dir, generate text and HTML reports and
   publish HTML report on S3
 
-  ```
+  ```bash
   > i run_coverage_report --target-dir market_data
   ...
   Name                                   Stmts   Miss Branch BrPart  Cover
@@ -647,7 +647,7 @@ locator
 - See [`pytest` documentation](http://doc.pytest.org/en/latest/usage.html)
 - Some examples of useful command lines:
 
-  ```
+  ```bash
   # Stop at first failure
   > pytest -x
 
@@ -686,7 +686,7 @@ locator
 
 - To enable logging of `_LOG.debug` for a single test run:
 
-  ```
+  ```bash
   # Enable debug info
   > pytest oms/test/test_broker.py::TestSimulatedBroker1 -s --dbg
   ```
@@ -696,7 +696,7 @@ locator
 - This switch allows to overwrite the golden outcomes that are used as reference
   in the unit tests to detect failures
 
-  ```
+  ```bash
   > pytest --update_outcomes
   ```
 
@@ -708,7 +708,7 @@ locator
 - It is used to re-run tests from the middle when they are very long and one
   wants to debug them
 
-  ```
+  ```bash
   > pytest --incremental
   ```
 
@@ -730,7 +730,7 @@ locator
 
 1. You can modify `.github/workflows/fast_tests.yml`, by replacing
 
-   ```
+   ```bash
    # run: invoke run_fast_tests
    run: invoke run_fast_tests --pytest-opts="helpers/test/test_git.py::Test_git_modified_files1::test_get_modified_files_in_branch1 -s --dbg"
    ```
@@ -860,7 +860,7 @@ locator
     `TestGenerateHtmlTables`
 - It's ok to have multiple test methods, e.g., for `FooBar.method_a()` and
   `FooBar.method_b()`, the test method is:
-  ```
+  ```python
   class TestFooBar1(unittest2.TestCase):
       def test_method_a(self):
           ...
@@ -887,7 +887,7 @@ locator
   - `get_output_dir`: probably not interesting for the user
 - The directory structure enforced by the out `TestCase` is like:
 
-  ```
+  ```bash
   > tree -d edg/form_8/test/
   edg/form_8/test/
   └── TestExtractTables1.test1
@@ -896,7 +896,7 @@ locator
   ```
 
 - The layout of test dir:
-  ```
+  ```bash
   > ls -1 helpers/test/
   Test_dassert1.test2
   Test_dassert1.test3
@@ -960,9 +960,9 @@ locator
 - Compromise solution: Start with a single file
   `test_$DIRNAME.py`(or`test*dir_name.py`) \* In the large file add a framed
   comment like:
-  ```
+  ```python
   # ##################
-  # Unit tests for file: …
+  # Unit tests for …
   # ##################
   ```
   - So it's easy to find which file is tested were using grep
@@ -972,14 +972,14 @@ locator
 
 - Interesting unit tests are in `helpers/test`
 - A unit test looks like:
-  ```
+  ```python
   import helpers.unit_test as hut
   class Test...(hut.TestCase):
       def test...(self):
           ...
   ```
 - `pytest` will take care of running the code so you don't need:
-  ```
+  ```python
   if __name__ == '__main__':
   unittest.main()
   ```
@@ -989,7 +989,7 @@ locator
 - Whenever there is hierarchy in classes, we also create a hierarchy of test
   classes
 - A parent test class looks like:
-  ```
+  ```python
   import helpers.unit_test as hut
   class SomeClientTestCase(hut.TestCase):
       def _test...1(self):
@@ -999,7 +999,7 @@ locator
   ```
 - While a child test class looks like this where test methods use the
   corresponding methods from the parent test class:
-  ```
+  ```python
   class TestSomeClient(SomeClientTestCase):
       def test...1(self):
           ...
@@ -1014,7 +1014,7 @@ locator
   in order of dependency, so that the reader doesn't have to jump back / forth
 - We want to separate chunks of unit test code using:
 
-  ```
+  ```python
   # ########################################################################
   ```
 
@@ -1082,7 +1082,7 @@ locator
     decorated as a
     [classmethod()](https://docs.python.org/3/library/functions.html#classmethod):
 
-    ```
+    ```python
     @classmethod
     def setUpClass(cls):
         ...
@@ -1095,7 +1095,7 @@ locator
     decorated as a
     [classmethod()](https://docs.python.org/3/library/functions.html#classmethod):
 
-    ```
+    ```python
     @classmethod
     def tearDownClass(cls):
         ...
@@ -1184,7 +1184,7 @@ Best to apply on any part that is deemed unnecessary for specific test
 
 - Often it's easier to do a check like:
 
-  ```
+  ```python
   # Better:
   expected = str(...)
   expected = pprint.pformat(...)
@@ -1240,7 +1240,7 @@ Best to apply on any part that is deemed unnecessary for specific test
 
 ## Object patch with return value
 
-```
+```python
 import unittest.mock as umock
 import im_v2.ccxt.data.extract.extractor as ivcdexex
 
@@ -1263,7 +1263,7 @@ def test_function_call1(self, mock_get_secret: umock.MagicMock):
 
 ## Path patch with multiple return values
 
-```
+```python
 import unittest.mock as umock
 
 @umock.patch("helpers.hsecret.get_secret")
@@ -1278,13 +1278,13 @@ mock_get_secret.side_effect = ["dummy", Exception]
 ## Ways of calling `patch` and `patch.object`
 
 - Via decorator
-  ```
+  ```python
   @umock.patch("helpers.hsecret.get_secret")
   def test_function_call1(self, mock_get_secret: umock.MagicMock):
       pass
   ```
 - In actual function
-  ```
+  ```python
   get_secret_patch = umock.patch("helpers.hsecret.get_secret")
   get_secret_mock = get_secret_patch.start()
   ```
@@ -1293,7 +1293,7 @@ mock_get_secret.side_effect = ["dummy", Exception]
   - In other two approaches start/stop is handled under the hood and we are
     always interacting with `MagicMock` object
 - Via `with` statement (also in function)
-  ```
+  ```python
   with umock.patch(""helpers.hsecret.get_secret"") as get_secret_mock:
       pass
   ```
@@ -1305,9 +1305,8 @@ mock_get_secret.side_effect = ["dummy", Exception]
 
 ## Mock object state after test run
 
-```
+```python
 @umock.patch.object(exchange_class._exchange, "fetch_ohlcv")
-
 def test_function_call1(self, fetch_ohlcv_mock: umock.MagicMock):
     self.assertEqual(fetch_ohlcv_mock.call_count, 1)
     actual_args = tuple(fetch_ohlcv_mock.call_args)
@@ -1328,7 +1327,7 @@ def test_function_call1(self, fetch_ohlcv_mock: umock.MagicMock):
     `fetch_ohlcv_mock.call_args.kwargs` can be called for separate results of
     args/kwargs
 
-    ```
+    ```python
     self.assertEqual(fetch_ohlcv_mock.call_count, 3)
 
             actual_args = str(fetch_ohlcv_mock.call_args_list)
@@ -1347,7 +1346,7 @@ def test_function_call1(self, fetch_ohlcv_mock: umock.MagicMock):
 
 ## Mock common external calls in `hunitest.TestCase` class
 
-```
+```python
 class TestCcxtExtractor1(hunitest.TestCase):
 	# Mock calls to external providers.
 	get_secret_patch = umock.patch.object(ivcdexex.hsecret, "get_secret")
@@ -1388,7 +1387,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
 
 ## Mocks with specs
 
-```
+```python
 # Regular mock and external library `ccxt` is replaced with `MagicMock`
 @umock.patch.object(ivcdexex, "ccxt")
 # Only `ccxt` is spec'd, not actual components that are "deeper" in the `ccxt` library.
@@ -1413,26 +1412,25 @@ class TestCcxtExtractor1(hunitest.TestCase):
 
 ## Caveats
 
-```
+```python
 # `datetime.now` cannot be patched directly, as it is a built-in method.
 # Error: "can't set attributes of built-in/extension type 'datetime.datetime'"
-
 datetime_patch = umock.patch.object(imvcdeexut, "datetime", spec=imvcdeexut.datetime)
 ```
 
 - Python built-in methods can not be patched
 
-  ```
+  ```python
   class TestExtractor1(hunitest.TestCase):
-    # Mock `Extractor`'s abstract functions.
-    abstract_methods_patch = umock.patch.object(
-            imvcdexex.Extractor, "__abstractmethods__", new=set()
-    )
-    ohlcv_patch = umock.patch.object(
-            imvcdexex.Extractor,
-            "_download_ohlcv",
-            spec=imvcdexex.Extractor._download_ohlcv,
-            )
+      # Mock `Extractor`'s abstract functions.
+      abstract_methods_patch = umock.patch.object(
+          imvcdexex.Extractor, "__abstractmethods__", new=set()
+      )
+      ohlcv_patch = umock.patch.object(
+          imvcdexex.Extractor,
+          "_download_ohlcv",
+          spec=imvcdexex.Extractor._download_ohlcv,
+      )
   ```
 
 - Patching `__abstractmethods__` function of an abstract class enables us to
