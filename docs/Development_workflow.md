@@ -755,11 +755,11 @@ For more details see
 6. Taking a snapshot / checkpoint of a notebook as a backup or before making
    changes
 
-  - This is a lightweight alternative to "unit testing" to capture the desired
-    behavior of a notebook
+    - This is a lightweight alternative to "unit testing" to capture the desired
+      behavior of a notebook
 
-  - One can take a snapshot and visually compare multiple notebooks side-by-side
-    for changes
+    - One can take a snapshot and visually compare multiple notebooks side-by-side
+      for changes
 
 ## Detailed instructions
 
