@@ -740,9 +740,9 @@ For more details see
 
 1. Opening a notebook in your browser (useful for read-only mode)
 
-- E.g., without having to use Jupyter notebook (which modifies the file in your
-  client) or github preview (which is slow or fails when the notebook is too
-  large)
+  - E.g., without having to use Jupyter notebook (which modifies the file in your
+    client) or github preview (which is slow or fails when the notebook is too
+    large)
 
 2. Sharing a notebook with others in a simple way
 
@@ -755,11 +755,11 @@ For more details see
 6. Taking a snapshot / checkpoint of a notebook as a backup or before making
    changes
 
-- This is a lightweight alternative to "unit testing" to capture the desired
-  behavior of a notebook
+  - This is a lightweight alternative to "unit testing" to capture the desired
+    behavior of a notebook
 
-- One can take a snapshot and visually compare multiple notebooks side-by-side
-  for changes
+  - One can take a snapshot and visually compare multiple notebooks side-by-side
+    for changes
 
 ## Detailed instructions
 
