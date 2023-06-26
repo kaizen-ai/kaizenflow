@@ -1,5 +1,4 @@
 # Code review
-
 <!-- toc -->
 
 - [General rules about code review](#general-rules-about-code-review)
