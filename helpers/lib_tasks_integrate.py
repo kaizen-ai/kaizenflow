@@ -24,11 +24,12 @@ import helpers.lib_tasks_utils as hlitauti
 _LOG = logging.getLogger(__name__)
 
 
-DEFAULT_SRC_DIR_BASENAME="cmamp1"
-DEFAULT_DST_DIR_BASENAME="sorrentum1"
+DEFAULT_SRC_DIR_BASENAME = "cmamp1"
+DEFAULT_DST_DIR_BASENAME = "sorrentum1"
 
 # DEFAULT_SRC_DIR_BASENAME="amp1"
 # DEFAULT_DST_DIR_BASENAME="cmamp1"
+
 
 def _dassert_current_dir_matches(expected_dir_basename: str) -> None:
     """
@@ -599,11 +600,11 @@ def integrate_diff_overlapping_files(  # type: ignore
 
 
 def _infer_src_dst_dirs_from_file_path(
-        file_path: str,
-                                       *,
-                                       default_src_dir_basename=DEFAULT_SRC_DIR_BASENAME,
-                                       default_dst_dir_basename=DEFAULT_DST_DIR_BASENAME,
-                                       ) -> Tuple[str, str, str]:
+    file_path: str,
+    *,
+    default_src_dir_basename=DEFAULT_SRC_DIR_BASENAME,
+    default_dst_dir_basename=DEFAULT_DST_DIR_BASENAME,
+) -> Tuple[str, str, str]:
     """
     Convert a file path across two dirs with the same data structure.
 
@@ -620,22 +621,22 @@ def _infer_src_dst_dirs_from_file_path(
     if idx >= 0:
         src_dir_basename = default_dst_dir_basename
         dst_dir_basename = default_src_dir_basename
-        subdir =file_path[idx + len(target_dir):]
+        subdir = file_path[idx + len(target_dir) :]
     else:
-        target_dir=f"/{default_src_dir_basename}/"
+        target_dir = f"/{default_src_dir_basename}/"
         idx = file_path.find(target_dir)
         if idx >= 0:
             src_dir_basename = default_src_dir_basename
             dst_dir_basename = default_dst_dir_basename
-            subdir = file_path[idx + len(target_dir):]
+            subdir = file_path[idx + len(target_dir) :]
         else:
-            raise ValueError(f"Can't find either '{default_src_dir_basename}' or "
-                             f"'{default_dst_dir_basename}' in file_path="
-                             f"'{file_path}'")
+            raise ValueError(
+                f"Can't find either '{default_src_dir_basename}' or "
+                f"'{default_dst_dir_basename}' in file_path="
+                f"'{file_path}'"
+            )
     # Replace src dir (e.g., `cmamp1`) with dst dir (e.g., `amp1`).
-    dst_dir = file_path.replace(
-        f"/{src_dir_basename}/", f"/{dst_dir_basename}/"
-    )
+    dst_dir = file_path.replace(f"/{src_dir_basename}/", f"/{dst_dir_basename}/")
     _LOG.debug(hprint.to_str("src_dir dst_dir subdir"))
     hdbg.dassert_exists(src_dir)
     hdbg.dassert_exists(dst_dir)
@@ -659,7 +660,6 @@ def integrate_rsync(  # type: ignore
     # Accept the `cmamp1` side vs the `amp1` side with:
     > invoke integrate_rsync .../cmamp1/.../alpha_numeric_data_snapshots/
     ```
-
     """
     hlitauti.report_task()
     _ = ctx
@@ -695,10 +695,13 @@ def integrate_file(  # type: ignore
     hlitauti.report_task()
     _ = ctx
     hdbg.dassert_file_exists(file_name)
-    hdbg.dassert_eq(src_dir == "", dst_dir == "",
-                    "Both or neither src_dir='%s' and dst_dir='%s' should "
-                        "be defined",
-                    src_dir, dst_dir)
+    hdbg.dassert_eq(
+        src_dir == "",
+        dst_dir == "",
+        "Both or neither src_dir='%s' and dst_dir='%s' should " "be defined",
+        src_dir,
+        dst_dir,
+    )
     # Resolve the dst dir.
     if src_dir == "" or dst_dir == "":
         src_dir, dst_dir, _ = _infer_src_dst_dirs_from_file_path(file_name)

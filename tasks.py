@@ -66,7 +66,6 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     integrate_create_branch,
     integrate_diff_dirs,
     integrate_diff_overlapping_files,
-    integrate_file,
     integrate_files,
     integrate_find_files,
     integrate_find_files_touched_since_last_integration,
@@ -107,17 +106,17 @@ try:
         binance_get_open_positions,
         binance_flatten_account,
     )
-except ImportError as e:
+except ImportError:
     pass
-# # TODO(gp): This is due to the coupling between code in linter container and
-# #  the code being linted.
-# try:
-#     from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
-#         docker_update_prod_task_definition,
-#     )
-# except ImportError as e:
-#     #print(e)
-#     pass
+
+# TODO(gp): This is due to the coupling between code in linter container and
+#  the code being linted.
+try:
+    from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
+        integrate_file,
+    )
+except ImportError as e:
+    print(e)
 
 
 _LOG = logging.getLogger(__name__)

@@ -9,7 +9,7 @@ import contextlib
 import copy
 import datetime
 import logging
-from typing import Any, Callable, Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, Union
 
 # Avoid dependency from other helpers modules since this is used when the code
 # is bootstrapped.
@@ -314,7 +314,6 @@ def addLoggingLevel(levelName, levelNum, methodName=None):
     >>> logging.trace('so did this')
     >>> logging.TRACE
     5
-
     """
     if not methodName:
         methodName = levelName.lower()
