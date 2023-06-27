@@ -5,7 +5,7 @@
   * [Read the Google code review best practices](#read-the-google-code-review-best-practices)
 - [Code review workflows](#code-review-workflows)
   * [Pull request](#pull-request)
-- [From the code author point of view\*\*](#from-the-code-author-point-of-view)
+- [From the code author point of view](#from-the-code-author-point-of-view)
   * [Why we review code](#why-we-review-code)
   * [PR checklist](#pr-checklist)
   * [The golden rule of code review](#the-golden-rule-of-code-review)
