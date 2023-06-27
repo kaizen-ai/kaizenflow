@@ -599,12 +599,12 @@ def integrate_diff_overlapping_files(  # type: ignore
 # #############################################################################
 
 
-def _infer_src_dst_dirs_from_file_path(
-    file_path: str,
+def _infer_dst_file_path(
+    src_file_path: str,
     *,
-    default_src_dir_basename=DEFAULT_SRC_DIR_BASENAME,
-    default_dst_dir_basename=DEFAULT_DST_DIR_BASENAME,
-) -> Tuple[str, str, str]:
+    default_src_dir_basename: str =DEFAULT_SRC_DIR_BASENAME,
+    default_dst_dir_basename: str =DEFAULT_DST_DIR_BASENAME,
+) -> Tuple[str, str]:
     """
     Convert a file path across two dirs with the same data structure.
 
@@ -613,39 +613,44 @@ def _infer_src_dst_dirs_from_file_path(
     is converted into
     `.../src/amp1/.../test_data_snapshots/alpha_numeric_data_snapshots`
     """
-    _LOG.debug(hprint.to_str("file_path"))
-    file_path = os.path.normpath(file_path)
+    _LOG.debug(hprint.to_str("src_file_path"))
+    src_file_path = os.path.normpath(src_file_path)
+    hdbg.dassert_path_exists(src_file_path)
     # Extract the repo dir name, by looking for one of the default basenames.
     target_dir = f"/{default_dst_dir_basename}/"
-    idx = file_path.find(target_dir)
+    idx = src_file_path.find(target_dir)
     if idx >= 0:
         src_dir_basename = default_dst_dir_basename
         dst_dir_basename = default_src_dir_basename
-        subdir = file_path[idx + len(target_dir) :]
+        subdir =src_file_path[idx + len(target_dir):]
     else:
         target_dir = f"/{default_src_dir_basename}/"
-        idx = file_path.find(target_dir)
+        idx = src_file_path.find(target_dir)
         if idx >= 0:
             src_dir_basename = default_src_dir_basename
             dst_dir_basename = default_dst_dir_basename
-            subdir = file_path[idx + len(target_dir) :]
+            subdir =src_file_path[idx + len(target_dir):]
         else:
             raise ValueError(
                 f"Can't find either '{default_src_dir_basename}' or "
                 f"'{default_dst_dir_basename}' in file_path="
-                f"'{file_path}'"
+                f"'{src_file_path}'"
             )
     # Replace src dir (e.g., `cmamp1`) with dst dir (e.g., `amp1`).
-    dst_dir = file_path.replace(f"/{src_dir_basename}/", f"/{dst_dir_basename}/")
-    _LOG.debug(hprint.to_str("src_dir dst_dir subdir"))
-    hdbg.dassert_exists(src_dir)
-    hdbg.dassert_exists(dst_dir)
-    return src_dir, dst_dir, subdir
+    dst_file_path = src_file_path.replace(f"/{src_dir_basename}/", f"/{dst_dir_basename}/")
+    _LOG.debug(hprint.to_str("dst_file_path subdir"))
+    hdbg.dassert_path_exists(dst_file_path)
+    return dst_file_path, subdir
 
 
 @task
 def integrate_rsync(  # type: ignore
-    ctx, src_dir, dst_dir="", check_dir=True, dry_run=False
+    ctx, src_dir,
+
+        src_dir_basename=DEFAULT_SRC_DIR_BASENAME,
+        dst_dir_basename=DEFAULT_DST_DIR_BASENAME,
+
+        dst_dir="", check_dir=True, dry_run=False
 ):
     """
     Use `rsync` to bring two dirs to sync.
@@ -660,59 +665,82 @@ def integrate_rsync(  # type: ignore
     # Accept the `cmamp1` side vs the `amp1` side with:
     > invoke integrate_rsync .../cmamp1/.../alpha_numeric_data_snapshots/
     ```
+
+    :param src_dir: dir to be used. If empty, it is inferred from file_name
+    :param dst_dir: dir to be used. If empty, it is inferred from file_name
+    :param check_dir: force checking that src_dir and dst_dir are valid
+        integration dirs
+    :param dry_run: print the system command instead of executing them
     """
     hlitauti.report_task()
     _ = ctx
-    # Resolve
+    src_dir = os.path.normpath(src_dir)
+    hdbg.dassert_path_exists(src_dir)
+    _LOG.info(hprint.to_str("src_dir"))
     if check_dir:
         _dassert_is_integration_branch(src_dir)
+    # Resolve the dst dir.
     if dst_dir == "":
-        src_dir, dst_dir, _ = _infer_src_dst_dirs_from_file_path(src_dir)
+        dst_dir, _ = _infer_dst_file_path(
+            src_dir,
+            default_src_dir_basename=src_dir_basename,
+            default_dst_dir_basename=dst_dir_basename)
     if check_dir:
         _dassert_is_integration_branch(dst_dir)
-    #
-    src_dir = os.path.normpath(src_dir)
     dst_dir = os.path.normpath(dst_dir)
-    _LOG.info("Syncing:\n'%s'\nto\n'%s'", src_dir, dst_dir)
+    hdbg.dassert_path_exists(dst_dir)
+    _LOG.info(hprint.to_str("dst_dir"))
     #
+    _LOG.info("Syncing:\n'%s'\nto\n'%s'", src_dir, dst_dir)
     cmd = f"rsync --delete -a -r {src_dir}/ {dst_dir}/"
     hsystem.system(cmd, log_level=logging.INFO, dry_run=dry_run)
 
 
 @task
 def integrate_file(  # type: ignore
-    ctx, file_name, src_dir="", dst_dir="", check_dir=True, dry_run=False
+    ctx, file_name,
+    src_dir_basename=DEFAULT_SRC_DIR_BASENAME,
+    dst_dir_basename=DEFAULT_DST_DIR_BASENAME,
+    dry_run=False
 ):
     """
     Diff corresponding files in two different repos.
+
+    ```
+    # The path is assumed referred to current dir.
+    > i integrate_file --file-name helpers/lib_tasks_integrate.py
+
+    > i integrate_file --file-name /Users/saggese/src/sorrentum1/helpers/lib_tasks_integrate.py
+
+    > i integrate_file \
+        --file-name helpers/lib_tasks_integrate.py \
+        --src-dir-name cmamp1
+        --dst-dir-name sorrentum1
+    ```
 
     :param file_name: it can be a full path (e.g.,
         `/Users/saggese/src/sorrentum1/helpers/lib_tasks_integrate.py`)
         or a relative path to the root of the Git repo (e.g.,
         `helpers/lib_tasks_integrate.py)
-    :param
+    :param dst_dir: dir to be used. If empty, it is inferred from file_name
+    :param check_dir: force checking that src_dir and dst_dir are valid
+        integration dirs
+    :param dry_run: print the system command instead of executing them
     """
     hlitauti.report_task()
     _ = ctx
+    file_name = os.path.normpath(file_name)
     hdbg.dassert_file_exists(file_name)
-    hdbg.dassert_eq(
-        src_dir == "",
-        dst_dir == "",
-        "Both or neither src_dir='%s' and dst_dir='%s' should " "be defined",
-        src_dir,
-        dst_dir,
-    )
-    # Resolve the dst dir.
-    if src_dir == "" or dst_dir == "":
-        src_dir, dst_dir, _ = _infer_src_dst_dirs_from_file_path(file_name)
-    _LOG.info(hprint.to_str("src_dir dst_dir"))
-    if check_dir:
-        _dassert_is_integration_branch(src_dir)
-        _dassert_is_integration_branch(dst_dir)
+    # Resolve the src / dst dir, if needed.
+    dst_file_name, _ = _infer_dst_file_path(
+        file_name,
+        default_src_dir_basename=src_dir_basename,
+        default_dst_dir_basename=dst_dir_basename)
+    _LOG.info(hprint.to_str("file_name dst_file_name"))
     #
-    src_dir = os.path.normpath(src_dir)
-    dst_dir = os.path.normpath(dst_dir)
-    _LOG.info("Syncing:\n'%s'\nto\n'%s'", src_dir, dst_dir)
-    #
-    cmd = f"rsync --delete -a -r {src_dir}/ {dst_dir}/"
-    hsystem.system(cmd, log_level=logging.INFO, dry_run=dry_run)
+    _LOG.info("Syncing:\n'%s'\nto\n'%s'", file_name, dst_file_name)
+    cmd = f"vimdiff {file_name} {dst_file_name}"
+    # We need to use `system` to get vimdiff to connect to stdin and stdout.
+    if not dry_run:
+        # hlitauti.run(ctx, cmd, dry_run=dry_run, print_cmd=True)
+        os.system(cmd)
