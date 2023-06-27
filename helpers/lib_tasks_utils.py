@@ -154,7 +154,6 @@ def _to_single_line_cmd(cmd: Union[str, List[str]]) -> str:
     return cmd
 
 
-
 def _to_multi_line_cmd(docker_cmd_: List[str]) -> str:
     r"""
     Convert a command encoded as a list of strings into a single command
