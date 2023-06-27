@@ -13,29 +13,29 @@
 # Concepts
 
 - We have two dirs storing two forks of the same repo
-  - Files are touched, e.g., added, modified, deleted in each forks
-  - The most problematic files are the files that are modified in both forks
-  - Files that are added or deleted in one fork, should be added / deleted also
-    in the other fork
+    - Files are touched (e.g., added, modified, deleted) in each forks
+    - The most problematic files are the files that are modified in both forks
+    - Files that are added or deleted in one fork, should be added / deleted also
+      in the other fork
 - Often we can integrate "by directory", i.e., finding entire directories that
-  we were touched in one branch but not the other
-  - In this case we can simply copy the entire dir from one dir to the other
+  were touched in one branch but not in the other
+    - In this case we can simply copy the entire dir from one dir to the other
 - Other times we need to integrate "by file"
 
 - There are various interesting Git reference points:
-  1. The branch point for each branch, at which the integration branch was
-     started
-  2. The last integration point for each branch, at which the repos are the
-     same, or at least aligned
+    1) the branch point for each fork, at which the integration branch was 
+       started
+    2) the last integration point for each fork, at which the repos are the same,
+       or at least aligned
 
-# Invariants for the integration set-up
+# Invariants for the integration workflows
 
-- The user runs commands in an abs_dir, e.g., `/Users/saggese/src/{amp1,cmamp1}`
-- The user refers in the command line to `dir_basename`, which is the basename
-  of the integration directories (e.g., `amp1`, `cmamp1`, `sorrentum1`)
-  - The "src_dir_basename" is the one where the command is issued
-  - The "dst_dir_basename" is assumed to be parallel to the "src_dir_basename"
-- The dirs are then transformed in absolute dirs "abs_src_dir"
+- The user runs commands in an abs dir, e.g., `/Users/saggese/src/{amp1,cmamp1}`
+- The user refers in the command line to `dir_basename`, which is the basename of
+  the integration directories (e.g., `amp1`, `cmamp1`, `sorrentum1`)
+  - The `src_dir_basename` is the one where the command is issued
+  - The `dst_dir_basename` is assumed to be parallel to the `src_dir_basename`
+- The dirs are then transformed in absolute dirs `abs_src_dir`
 
 # Integration process
 
@@ -54,7 +54,7 @@
     ```bash
     > find . -name "*.py" -o -name "*.txt" -o -name "*.json" | xargs perl -pi -e 's/\s+$/\n/'
     ```
-  - Add end-of-file:
+  - Add end-of-file marker:
     ```bash
     > find . -name "*.py" | xargs sed -i '' -e '$a\'
     ```
@@ -106,7 +106,7 @@
   > i integrate_create_branch --dir-basename cmamp1
   ```
 
-- Check what files were modified since the last integration in each fork:
+- Check what files were modified in each fork since the last integration:
   ```bash
   > i integrate_files --file-direction common_files
   > i integrate_files --file-direction common_files --src-dir-basename cmamp1 --dst-dir-basename sorrentum1

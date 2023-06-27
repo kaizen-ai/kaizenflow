@@ -361,10 +361,17 @@ def _integrate_files(
             # They both exist.
             if only_different_files:
                 # We want to check if they are the same.
-                equal = hio.from_file(left_file) == hio.from_file(right_file)
+                try:
+                    equal = hio.from_file(left_file) == hio.from_file(right_file)
+                except RuntimeError as e:
+                    # RuntimeError: error='utf-8' codec can't decode byte 0xd0 in
+                    # position 10: invalid continuation byte
+                    _LOG.error("Caught error:\n%s", e)
+                    equal = True
                 skip = equal
             else:
-                # They both exists and we want to process even if they are the same.
+                # They both exist, and we want to process even if they are the
+                # same.
                 equal = None
                 skip = False
         _ = left_file, right_file, both_exist, equal, skip
