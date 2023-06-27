@@ -37,7 +37,7 @@ This contains the absolute minimal amount of info to start developing
 
 This contains a set of resources that over time will make 10x more productive
 
-- TODO: Docker
+- [Docker](Docker.md)
 
 ## Technologies used
 
