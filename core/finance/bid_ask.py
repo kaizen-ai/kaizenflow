@@ -93,6 +93,7 @@ def process_bid_ask(
         hdbg.dassert_isinstance(srs, (pd.Series, pd.DataFrame))
         hdbg.dassert_not_in(tag, results.keys())
         results[tag] = srs
+
     #
     for tag in requested_cols:
         if tag == "mid":
@@ -103,13 +104,13 @@ def process_bid_ask(
             srs = np.sqrt(df[bid_col] * df[ask_col])
         if tag == "quoted_spread":
             # bid - ask.
-            srs = (df[ask_col] - df[bid_col])
+            srs = df[ask_col] - df[bid_col]
         if tag == "relative_spread":
             # 2*(ask - bid) / (ask + bid).
             srs = 2 * (df[ask_col] - df[bid_col]) / (df[ask_col] + df[bid_col])
         if tag == "log_relative_spread":
             # log(ask) - log(bid).
-            srs = (np.log(df[ask_col]) - np.log(df[bid_col]))
+            srs = np.log(df[ask_col]) - np.log(df[bid_col])
         if tag == "weighted_mid":
             # bid * ask_volume + ask * bid_volume.
             srs = (
@@ -129,10 +130,10 @@ def process_bid_ask(
             srs = np.log(df[bid_volume_col]) - np.log(df[ask_volume_col])
         if tag == "bid_value":
             # bid * bid_volume.
-            srs = (df[bid_col] * df[bid_volume_col])
+            srs = df[bid_col] * df[bid_volume_col]
         if tag == "ask_value":
             # ask * ask_volume.
-            srs = (df[ask_col] * df[ask_volume_col])
+            srs = df[ask_col] * df[ask_volume_col]
         if tag == "mid_value":
             # (bid * bid_volume + ask * ask_volume) / 2.
             srs = (
@@ -183,9 +184,7 @@ def handle_orderbook_levels(
     ]
     # Index of pivoted data shouldn't also contain `level` (used as columns) and `id` (creates duplicates).
     non_bid_ask_cols = [
-        col
-        for col in df.columns
-        if col not in bid_ask_cols + ["level", "id"]
+        col for col in df.columns if col not in bid_ask_cols + ["level", "id"]
     ]
     # TODO(Max): Create an assertion that all values for levels are identical,
     # so we are merging the rows without duplicates (i.e., "knowledge_timestamp" and "end_download_timestamp").

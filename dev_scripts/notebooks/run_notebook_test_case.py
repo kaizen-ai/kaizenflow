@@ -55,5 +55,5 @@ class Test_Run_Notebook_TestCase(hunitest.TestCase):
         # Execute.
         rc = hsystem.system(cmd_txt, abort_on_error=True, log_level="echo")
         _LOG.debug("rc=%s", rc)
-        # Make sure that the run finishes successfully. 
+        # Make sure that the run finishes successfully.
         self.assertEqual(rc, 0)

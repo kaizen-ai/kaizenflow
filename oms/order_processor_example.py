@@ -48,15 +48,18 @@ def get_order_processor_example1(
     :param delay_to_fill_in_secs: delay after the order is accepted to update the
         position table with the filled positions
     """
-    _LOG.debug(hprint.to_str(
-        "bar_duration_in_secs "
-        "termination_condition "
-        "duration_in_secs "
-        "portfolio "
-        "asset_id_name "
-        "max_wait_time_for_order_in_secs "
-        "delay_to_accept_in_secs "
-        "delay_to_fill_in_secs"))
+    _LOG.debug(
+        hprint.to_str(
+            "bar_duration_in_secs "
+            "termination_condition "
+            "duration_in_secs "
+            "portfolio "
+            "asset_id_name "
+            "max_wait_time_for_order_in_secs "
+            "delay_to_accept_in_secs "
+            "delay_to_fill_in_secs"
+        )
+    )
     broker = portfolio.broker
     if duration_in_secs:
         # TODO(gp): Maybe this should be compute from the caller and simplify

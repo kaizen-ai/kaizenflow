@@ -100,9 +100,7 @@ def is_mac(*, version: Optional[str] = None) -> bool:
     """
     _LOG.debug("version=%s", version)
     host_os_name = os.uname()[0]
-    _LOG.debug(
-        "os.uname()=%s", str(os.uname())
-    )
+    _LOG.debug("os.uname()=%s", str(os.uname()))
     am_host_os_name = os.environ.get("AM_HOST_OS_NAME", None)
     _LOG.debug(
         "host_os_name=%s am_host_os_name=%s", host_os_name, am_host_os_name
@@ -168,8 +166,21 @@ def is_ig_prod() -> bool:
     """
     # CF sets up `DOCKER_BUILD` so we can use it to determine if we are inside
     # a CF container or not.
-    #print("os.environ\n", str(os.environ))
+    # print("os.environ\n", str(os.environ))
     return bool(os.environ.get("DOCKER_BUILD", False))
+
+
+# TODO(Grisha): consider adding to `setup_to_str()`.
+def is_inside_ecs_container() -> bool:
+    """
+    Detect whether we are running in an ECS container.
+
+    When deploying jobs via ECS the container obtains credentials based on
+    passed task role specified in the ECS task-definition, refer to:
+    https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html.
+    """
+    ret = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" in os.environ
+    return ret
 
 
 def setup_to_str() -> str:
@@ -208,14 +219,21 @@ def _dassert_setup_consistency() -> None:
     is_inside_ci_ = is_inside_ci()
     is_mac_ = is_mac()
     # One and only one set-up should be true.
-    sum_ = sum([is_dev4_, is_dev_ck_, is_inside_ci_, is_mac_, is_cmamp_prod_,
-                is_ig_prod_])
+    sum_ = sum(
+        [
+            is_dev4_,
+            is_dev_ck_,
+            is_inside_ci_,
+            is_mac_,
+            is_cmamp_prod_,
+            is_ig_prod_,
+        ]
+    )
     if sum_ != 1:
-        msg = (
-            "One and only one set-up config should be true:\n"
-            + setup_to_str())
+        msg = "One and only one set-up config should be true:\n" + setup_to_str()
+        # TODO(gp): Unclear if this is a difference between Sorrentum and cmamp.
         _LOG.warning(msg)
-        #raise ValueError(msg)
+        # raise ValueError(msg)
 
 
 # If the env var is not defined then we want to check. The only reason to skip
@@ -227,7 +245,7 @@ if check_repo:
         _dassert_setup_consistency()
         _is_called = True
 else:
-    _LOG.warning(f"Skipping repo check in {__file__}")
+    _LOG.warning("Skipping repo check in %s", __file__)
 
 
 # #############################################################################

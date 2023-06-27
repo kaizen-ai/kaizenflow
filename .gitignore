@@ -1,4 +1,5 @@
-.DS_Store   # macOS hidden files.
+# macOS hidden files.
+.DS_Store
 .idea
 .ipynb_checkpoints
 __pycache__

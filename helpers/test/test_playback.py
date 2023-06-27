@@ -443,17 +443,17 @@ class TestPlaybackFileMode1(hunitest.TestCase):
         """
         max_tests_str = "" if max_tests is None else f", max_tests={max_tests}"
         code = (
-                "\n".join(
-                    [
-                        "import helpers.hplayback as hplayba",
-                        "def plbck_sum(a: int, b: int) -> int:",
-                        '    hplayba.Playback("check_string", to_file=True%s).run(None)',
-                        "    return a + b",
-                        "",
-                        "[plbck_sum(i, i + 1) for i in range(4)]",
-                    ]
-                )
-                % max_tests_str
+            "\n".join(
+                [
+                    "import helpers.hplayback as hplayba",
+                    "def plbck_sum(a: int, b: int) -> int:",
+                    '    hplayba.Playback("check_string", to_file=True%s).run(None)',
+                    "    return a + b",
+                    "",
+                    "[plbck_sum(i, i + 1) for i in range(4)]",
+                ]
+            )
+            % max_tests_str
         )
         return code
 
@@ -467,8 +467,9 @@ class TestPlaybackFileMode1(hunitest.TestCase):
         code_basename = "code_.py"
         tmp_py_file = os.path.join(tmp_dir, code_basename)
         # File with test.
-        tmp_test_file = os.path.join(tmp_dir, "test", "test_by_playback_" +
-                code_basename)
+        tmp_test_file = os.path.join(
+            tmp_dir, "test", "test_by_playback_" + code_basename
+        )
         # Save the code to the file.
         hio.to_file(tmp_py_file, self.get_code(max_tests))
         # Executes the code.
