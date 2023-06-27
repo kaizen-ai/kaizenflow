@@ -142,10 +142,10 @@
   up.
 
   ```
-    > cd //amp
-    > ./dev_scripts/git/git_hooks/install_hooks.py --action install
-    > cd //lem
-    > ./amp/dev_scripts/git/git_hooks/install_hooks.py --action install
+  > cd //amp
+  > ./dev_scripts/git/git_hooks/install_hooks.py --action install
+  > cd //lem
+  > ./amp/dev_scripts/git/git_hooks/install_hooks.py --action install
   ```
 
 - This procedure creates some links from `.git/hook` to the scripts in the repo.
