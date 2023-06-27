@@ -90,7 +90,7 @@
   > i integrate_files --file-direction only_files_in_dst
   ```
 
-2) Look for directory touched on only one branch:
+2) Look for directory touched in only one branch:
   ```
   > i integrate_files --file-direction common_files --mode "print_dirs"
   > i integrate_files --file-direction only_files_in_src --mode "print_dirs"
@@ -132,14 +132,14 @@
 6) Sync a dir to handle moved files
 - Assume that there is a dir where files were moved
   ```
-  > invoke integrate_diff_dirs
+  > i integrate_diff_dirs
   ...
   ... Only in .../cmamp1/.../alpha_numeric_data_snapshots: alpha
   ... Only in .../amp1/.../alpha_numeric_data_snapshots: latest
   ```
 - You can accept the `cmamp1` side with:
   ```
-  > invoke integrate_rsync .../cmamp1/.../alpha_numeric_data_snapshots/
+  > i integrate_rsync .../cmamp1/.../alpha_numeric_data_snapshots/
   ```
 - This corresponds to:
   ```
