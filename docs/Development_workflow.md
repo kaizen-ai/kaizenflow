@@ -1,4 +1,7 @@
+# Development Workflow
+
 <!-- toc -->
+
 - [Setting up Git credentials](#setting-up-git-credentials)
   * [Preamble](#preamble)
   * [Check Git credentials](#check-git-credentials)
@@ -23,8 +26,6 @@
   * [Update the dev `amp` Docker image](#update-the-dev-amp-docker-image)
   * [Experiment in a local image](#experiment-in-a-local-image)
 - [GitHub Actions (CI)](#github-actions-ci)
-  * [Running a single test in GH Actions](#running-a-single-test-in-gh-actions)
-  * [run: invoke run_fast_tests](#run-invoke-run_fast_tests)
 - [pytest](#pytest)
   * [Run with coverage](#run-with-coverage)
   * [Iterating on stacktrace of failing test](#iterating-on-stacktrace-of-failing-test)
@@ -56,34 +57,29 @@
   * [Files that need to be different](#files-that-need-to-be-different)
     + [Lint everything](#lint-everything)
     + [Testing](#testing)
+
 <!-- tocstop -->
 
 # Setting up Git credentials
 
 ## Preamble
 
-Git allows setting credentials at different "levels":
-
-- system (set for all the users in `/etc/git`)
-
-- global (set for a single user in `$HOME/.gitconfig` or
-  `$HOME/.config/git/config`)
-
-- local (set on a per client basis in `.git/config` in the repo root)
-
-Git uses a hierarchical config approach in which settings of a broader scope are
-inherited if not overridden.
-
-Refs:
-
-- How to customize Git:
-  [https://git-scm.com/book/en/v2/Customizing-Git-Git-Configuration](https://git-scm.com/book/en/v2/Customizing-Git-Git-Configuration)
-- Details on `git config`: https://git-scm.com/docs/git-config
+- Git allows setting credentials at different "levels":
+  - system (set for all the users in `/etc/git`)
+  - global (set for a single user in `$HOME/.gitconfig` or
+    `$HOME/.config/git/config`)
+  - local (set on a per client basis in `.git/config` in the repo root)
+  - Git uses a hierarchical config approach in which settings of a broader scope
+    are inherited if not overridden.
+- Refs:
+  - How to customize Git:
+    https://git-scm.com/book/en/v2/Customizing-Git-Git-Configuration
+  - Details on `git config`: https://git-scm.com/docs/git-config
 
 ## Check Git credentials
 
-You can check the Git credentials that will be used to commit in a client by
-running:
+- You can check the Git credentials that will be used to commit in a client by
+  running:
 
 ```
 > git config -l | grep user
@@ -92,22 +88,22 @@ user.email=saggese@gmail.com
 github.user=gpsaggese
 ```
 
-To know at which level each variable is defined, run
+- To know at which level each variable is defined, run
 
 ```
 > git config --show-origin user.name
 file:/Users/saggese/.gitconfig saggese
 ```
 
-You can see all the `Authors` in a Git repo history with:
+- You can see all the `Authors` in a Git repo history with:
 
 ```
 > git log | grep -i Author | sort | uniq
 ...
 ```
 
-Git doesn't do any validation of `user.name` and `user.email` but it just uses
-these values to compose a commit message like:
+- Git doesn't do any validation of `user.name` and `user.email` but it just uses
+  these values to compose a commit message like:
 
 ```
 > git log -2
@@ -121,17 +117,14 @@ Update hooks
 
 ## Setting Git credentials
 
-To keep things simple and avoid variability, our convention is to use:
-
-- as `user.name` our Linux user name on the local computer we are using to
-  commit which is returned by `whoami` (e.g., `user.name=saggese`)
-- as `user.email` the email that corresponds to that user (e.g,.
-  `user.email=saggese@gmail.com`)
-
-To accomplish the set-up above you can:
-
-- use in `/Users/saggese/.gitconfig` the values for our open-source account, so
-  that they are used by default
+- To keep things simple and avoid variability, our convention is to use:
+  - as `user.name` our Linux user name on the local computer we are using to
+    commit which is returned by `whoami` (e.g., `user.name=saggese`)
+  - as `user.email` the email that corresponds to that user (e.g,.
+    `user.email=saggese@gmail.com`)
+- To accomplish the set-up above you can:
+  - use in `/Users/saggese/.gitconfig` the values for our open-source account,
+    so that they are used by default
 
 ```
 > git config --global user.name $(whoami)
@@ -146,20 +139,19 @@ To accomplish the set-up above you can:
 > git config --local user.email YOUR_EMAIL
 ```
 
--- Note that you need to set these local values on each Git client that you have
-cloned, since Git doesn't version control these values
+- Note that you need to set these local values on each Git client that you have
+  cloned, since Git doesn't version control these values
 
 ## Enforcing Git credentials
 
-We use Git hooks to enforce that certain emails are used for certain repos
-(e.g., we should commit to our open-source repos only using our personal
-non-corporate email).
-
-You need to install the hooks in each Git client that you use. Conceptually this
-step is part of `git clone`: every time you clone a repo locally you need to set
-the hooks.
-
-TODO(gp): We could create a script to automate cloning a repo and setting it up.
+- We use Git hooks to enforce that certain emails are used for certain repos
+  (e.g., we should commit to our open-source repos only using our personal
+  non-corporate email).
+- You need to install the hooks in each Git client that you use. Conceptually
+  this step is part of `git clone`: every time you clone a repo locally you need
+  to set the hooks.
+- TODO(gp): We could create a script to automate cloning a repo and setting it
+  up.
 
 ```
 > cd //amp
@@ -168,14 +160,13 @@ TODO(gp): We could create a script to automate cloning a repo and setting it up.
 > ./amp/dev_scripts/git/git_hooks/install_hooks.py --action install
 ```
 
-This procedure creates some links from `.git/hook` to the scripts in the repo.
-
-You can also use the action `status` to see the status and `remove` to the
-hooks.
+- This procedure creates some links from `.git/hook` to the scripts in the repo.
+- You can also use the action `status` to see the status and `remove` to the
+  hooks.
 
 # Create the env
 
-You can follow the
+- You can follow the
 
 ```
 # Build the client env
@@ -185,34 +176,22 @@ You can follow the
 
 # Invoke
 
-We use `invoke` to implement workflows (aka "tasks") similar to Makefile
-targets, but using Python.
-
-[The official documentation.](https://docs.pyinvoke.org/en/0.11.1/index.html)
-
-We use `invoke` to automate tasks and package workflows for:
-
-- docker: `docker_*`
-
-- Git: `git_*`
-
-- GitHub (relying on `gh` integration): `gh_*`
-
-- running tests: `run_*`
-
-- integrate: `integrate_*`
-
-- releasing tools and Docker images: `docker_*`
-
-- lint: `lint_*`
-
-- pytest:
-
-Each set of commands starts with the topic, e.g., `docker_*` for all the docker
-related tasks
-
-The best approach to getting familiar with the tasks is to browse the list and
-then check the output of the help
+- We use `invoke` to implement workflows (aka "tasks") similar to Makefile
+  targets, but using Python.
+- [The official documentation.](https://docs.pyinvoke.org/en/0.11.1/index.html)
+- We use `invoke` to automate tasks and package workflows for:
+  - docker: `docker_*`
+  - Git: `git_*`
+  - GitHub (relying on `gh` integration): `gh_*`
+  - running tests: `run_*`
+  - integrate: `integrate_*`
+  - releasing tools and Docker images: `docker_*`
+  - lint: `lint_*`
+  - pytest:
+- Each set of commands starts with the topic, e.g., `docker_*` for all the
+  docker elated tasks
+- The best approach to getting familiar with the tasks is to browse the list and
+  then check the output of the help
 
 ```
 > invoke --help command
@@ -231,8 +210,8 @@ Options:
 -r STRING, --repo-short-name=STRING
 ```
 
-I can guarantee you a 2x improvement in performance, if you master the
-workflows, but it takes some time and patience
+- I can guarantee you a 2x improvement in performance, if you master the
+  workflows, but it takes some time and patience
 
 ## Listing all the tasks
 
@@ -326,11 +305,8 @@ traceback Parse the traceback from Pytest and navigate it with vim.
 ## Implementation details
 
 - By convention all invoke targets are in `*_lib_tasks.py`, e.g.,
-
   - `helpers/lib_tasks.py` - tasks to be run in `cmamp`
-
   - `optimizer/opt_lib_tasks.py` - tasks to be run in `cmamp/optimizer`
-
 - All invoke tasks are functions with the `@task` decorator, e.g.,
 
 ```
@@ -343,20 +319,14 @@ def invoke_task(...):
 
 - To run a task we use `context.run(...)`, see
   [the official docs](https://docs.pyinvoke.org/en/0.11.1/concepts/context.html)
-
 - To be able to run a specified invoke task one should import it in `tasks.py`
-
   - E.g., see `cmamp/tasks.py`
-
 - A task can be run only in a dir where it is imported in a corresponding
   `tasks.py`, e.g.,
-
   - `invoke_task1` is imported in `cmamp/tasks.py` so it can be run only from
     `cmamp`
-
   - `invoke_task2` is imported in `cmamp/optimizer/tasks.py` so it can be run
     only from `cmamp/optimizer`
-
     - In other words one should do `cd cmamp/optimizer` before doing
       `i invoke_task2 ...`
 
@@ -375,23 +345,17 @@ https://github.com/alphamatic/amp/pull/256
 
 ## See all the workflows
 
-Workflows are organized somehow around Linux command that they are related to,
-e.g.,
+- Workflows are organized somehow around Linux command that they are related to,
+  e.g.,
 
-- `docker_*` for all `docker` related workflows
+  - `docker_*` for all `docker` related workflows
+  - `find_*` for all workflows related to finding (e.g., unit tests)
+  - `gh_*` for GitHub related workflows
+  - `git_*` for Git related workflows
+  - etc.
 
-<!-- -->
-
-- `find_*` for all workflows related to finding (e.g., unit tests)
-
-- `gh_*` for GitHub related workflows
-
-- `git_*` for Git related workflows
-
-- etc.
-
-Once in a while it can be useful to list all the available workflows and see if
-something interesting was added.
+- Once in a while it can be useful to list all the available workflows and see
+  if something interesting was added.
 
 ```
 > invoke --list
@@ -443,27 +407,27 @@ TODO(gp): Describe
 
 ## Extract a PR from a larger one
 
-My workflow is to have a feature branch (e.g.,
-`AmpTask1891_Sketch_out_the_design_of_RT_OMS`) that I develop in.
+- My workflow is to have a feature branch (e.g.,
+  `AmpTask1891_Sketch_out_the_design_of_RT_OMS`) that I develop in.
 
-When a piece of code can be merged:
+- When a piece of code can be merged:
 
-- create a new branch (e.g., `AmpTask1891_Sketch_out_the_design_of_RT_OMS_02`)
+  - create a new branch (e.g., `AmpTask1891_Sketch_out_the_design_of_RT_OMS_02`)
 
-- copy the current feature branch to the new branch
+  - copy the current feature branch to the new branch
 
-- remove the pieces that you don't want to merge
+  - remove the pieces that you don't want to merge
 
-- run regressions
+  - run regressions
 
-- PR
+  - PR
 
-- merge into master
+  - merge into master
 
-- merge master into the feature branch
+  - merge master into the feature branch
 
-This workflow allows you to develop and regress / merge without too much hassle
-solving the problem of "stacked PRs".
+- This workflow allows you to develop and regress / merge without too much
+  hassle solving the problem of "stacked PRs".
 
 ```
 # Go to the client with the branch that you want to divvy up.
@@ -484,8 +448,9 @@ solving the problem of "stacked PRs".
 ...
 ```
 
-Go to a fresh Git client (I have 2-3 Git clients separated from the one in which
-I develop for this kind of operations) or go to master in the same Git client
+- Go to a fresh Git client (I have 2-3 Git clients separated from the one in
+  which I develop for this kind of operations) or go to master in the same Git
+  client
 
 ```
 # Go to master
@@ -532,7 +497,7 @@ all the code is merged.
 
 ## Systematic code transformation
 
-See the help of amp/dev_scripts/replace_text.py
+- See the help of amp/dev_scripts/replace_text.py
 
 ## Replace `check_string` with `assert_equal`
 
@@ -544,11 +509,11 @@ See the help of amp/dev_scripts/replace_text.py
 
 ## Generate a local `amp` Docker image
 
-This is a manual flow used to test and debug images before releasing them to the
-team.
+- This is a manual flow used to test and debug images before releasing them to
+  the team.
 
-The flow is similar to the dev image, but by default tests are not run and the
-image is not released.
+- The flow is similar to the dev image, but by default tests are not run and the
+  image is not released.
 
 ```
 Build the local image (and update Poetry dependencies, if needed).
@@ -576,7 +541,7 @@ REPOSITORY TAG IMAGE ID CREATED SIZE
 
 ## Update the dev `amp` Docker image
 
-To implement the entire Docker QA process of a dev image
+- To implement the entire Docker QA process of a dev image
 
 ```
 Clean all the Docker images locally, to make sure there is no hidden state.
@@ -594,7 +559,7 @@ Clean all the Docker images locally, to make sure there is no hidden state.
 
 ## Experiment in a local image
 
-To install packages in an image, do `i docker_bash`
+- To install packages in an image, do `i docker_bash`
 
 ```
 # Switch to root and install package.
@@ -606,40 +571,37 @@ To install packages in an image, do `i docker_bash`
 > exit
 ```
 
-You should test that the package is installed for your user, e.g.,
+- You should test that the package is installed for your user, e.g.,
 
 ```
 > source /venv/bin/activate python -c "import foobar; print(foobar);print(foobar.__version__)"
 ```
 
-You can now use the package in this container. Note that if you exit the
-container, the modified image is lost, so you need to install it again.
-
-You can save the modified image, tagging the new image as local, while the
-container is still running.
+- You can now use the package in this container. Note that if you exit the
+  container, the modified image is lost, so you need to install it again.
+- You can save the modified image, tagging the new image as local, while the
+  container is still running.
 
 - Copy your Container ID. You can find it
-
   - in the docker bash session, e.g., if the command line in the container
     starts with `user_1011@da8f3bb8f53b:/app$`, your Container ID is
     `da8f3bb8f53b`
-
   - by listing running containers, e.g., run `docker ps` outside the container
-
 - Commit image
 
 ```
     > docker commit <Container ID> <IMAGE>/cmamp:local-$USER
 ```
 
-    E.g.
-    `docker commit da8f3bb8f53b 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:local-julias`
+        - E.g.
+          `docker commit da8f3bb8f53b 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:local-julias`
 
-If you are running inside a notebook using `i docker_jupyter` you can install
-packages using a one liner `! sudo su -; source ...; `
+- If you are running inside a notebook using `i docker_jupyter` you can install
+  packages using a one liner `! sudo su -; source ...; `
 
 # GitHub Actions (CI)
 
+```
 ## Running a single test in GH Actions
 
 Create a branch
@@ -655,10 +617,11 @@ run: invoke run_fast_tests
 
 In the current implementation (where we try to not run for branches) to run in a
 branch
+```
 
 # pytest
 
-From https://gist.github.com/kwmiebach/3fd49612ef7a52b5ce3a
+- From https://gist.github.com/kwmiebach/3fd49612ef7a52b5ce3a
 
 ## Run with coverage
 
@@ -668,25 +631,25 @@ From https://gist.github.com/kwmiebach/3fd49612ef7a52b5ce3a
 
 ## Iterating on stacktrace of failing test
 
-Inside docker bash
+- Inside docker bash
 
 ```
 > pytest ...
 ```
 
-The test fails: switch to using `pytest.sh` to save the stacktrace to a file
+- The test fails: switch to using `pytest.sh` to save the stacktrace to a file
 
-Then from outside Docker launch vim in quickfix mode
+- Then from outside Docker launch vim in quickfix mode
 
 ```
 > invoke traceback
 ```
 
-The short form is `it`
+- The short form is `it`
 
 ## Iterating on a failing regression test
 
-The workflow is:
+- The workflow is:
 
 ```
 # Run a lot of tests, e.g., the entire regression suite.
@@ -699,67 +662,52 @@ The workflow is:
 
 ## Detect mismatches with golden test outcomes
 
-The command is
+- The command is
 
 ```
 > i pytest_find_unused_goldens
 ```
 
-The specific dir to check can be specified with the `dir_name` parameter.
-
-The invoke detects and logs mismatches between the tests and the golden outcome
-files.
-
-- When goldens are required by the tests but the corresponding files do not
-  exist
-
-  - This usually happens if the tests are skipped or commented out.
-
-  - Sometimes it's a FP hit (e.g. the method doesn't actually call
-    `check_string` but instead has it in a string, or `check_string` is called
-    on a missing file on purpose to verify that an exception is raised).
-
-- When the existing golden files are not actually required by the corresponding
-  tests.
-
-  - In most cases it means the files are outdated and can be deleted.
-
-  - Alternatively, it can be a FN hit: the test method A, which the golden
-    outcome corresponds to, doesn't call `check_string` directly, but the test's
-    class inherits from a different class, which in turn has a method B that
-    calls `check_string`, and this method B is called in the test method A.
-
-For more details see
-[CmTask528](https://github.com/cryptokaizen/cmamp/issues/528).
+- The specific dir to check can be specified with the `dir_name` parameter.
+- The invoke detects and logs mismatches between the tests and the golden
+  outcome files.
+  - When goldens are required by the tests but the corresponding files do not
+    exist
+    - This usually happens if the tests are skipped or commented out.
+    - Sometimes it's a FP hit (e.g. the method doesn't actually call
+      `check_string` but instead has it in a string, or `check_string` is called
+      on a missing file on purpose to verify that an exception is raised).
+  - When the existing golden files are not actually required by the
+    corresponding tests.
+    - In most cases it means the files are outdated and can be deleted.
+    - Alternatively, it can be a FN hit: the test method A, which the golden
+      outcome corresponds to, doesn't call `check_string` directly, but the
+      test's class inherits from a different class, which in turn has a method B
+      that calls `check_string`, and this method B is called in the test method
+      A.
+- For more details see
+  [CmTask528](https://github.com/cryptokaizen/cmamp/issues/528).
 
 # Playback
 
 # Publish a notebook
 
 - `publish_notebook.py` is a little tool that allows to:
-
-1. Opening a notebook in your browser (useful for read-only mode)
-
-    - E.g., without having to use Jupyter notebook (which modifies the file in your
-      client) or github preview (which is slow or fails when the notebook is too
-      large)
-
-2. Sharing a notebook with others in a simple way
-
-3. Pointing to detailed documentation in your analysis Google docs
-
-4. Reviewing someone's notebook
-
-5. Comparing multiple notebooks against each other in different browser windows
-
-6. Taking a snapshot / checkpoint of a notebook as a backup or before making
-   changes
-
-    - This is a lightweight alternative to "unit testing" to capture the desired
-      behavior of a notebook
-
-    - One can take a snapshot and visually compare multiple notebooks side-by-side
-      for changes
+  1. Opening a notebook in your browser (useful for read-only mode)
+     - E.g., without having to use Jupyter notebook (which modifies the file in
+       your client) or github preview (which is slow or fails when the notebook
+       is too large)
+  2. Sharing a notebook with others in a simple way
+  3. Pointing to detailed documentation in your analysis Google docs
+  4. Reviewing someone's notebook
+  5. Comparing multiple notebooks against each other in different browser
+     windows
+  6. Taking a snapshot / checkpoint of a notebook as a backup or before making
+     changes
+     - This is a lightweight alternative to "unit testing" to capture the
+       desired behavior of a notebook
+     - One can take a snapshot and visually compare multiple notebooks
+       side-by-side for changes
 
 ## Detailed instructions
 
@@ -769,13 +717,12 @@ For more details see
 > dev_scripts/notebooks/publish_notebook.py -h
 ```
 
-Plug-in for Chrome
-
-[my-s3-browser](https://chrome.google.com/webstore/detail/my-s3-browser/lgkbddebikceepncgppakonioaopmbkk?hl=en)
+- Plug-in for Chrome
+  [my-s3-browser](https://chrome.google.com/webstore/detail/my-s3-browser/lgkbddebikceepncgppakonioaopmbkk?hl=en)
 
 ## Publish notebooks
 
-Make sure that your environment is set up properly
+- Make sure that your environment is set up properly
 
 ```
 > more ~/.aws/credentials
@@ -788,8 +735,8 @@ aws_s3_bucket=alphamatic-data
 AM_AWS_PROFILE=am
 ```
 
-If you don't have them, you need to re-run `source dev_scripts/setenv.sh` in all
-the shells. It might be easier to kill that tmux session and restart it
+- If you don't have them, you need to re-run `source dev_scripts/setenv.sh` in
+  all the shells. It might be easier to kill that tmux session and restart it
 
 ```
 > tmux kill-session --t limeXYZ
@@ -797,20 +744,20 @@ the shells. It might be easier to kill that tmux session and restart it
 > ~/go_lem.sh XYZ
 ```
 
-Inside or outside a Docker bash run
+- Inside or outside a Docker bash run
 
 ```
 > publish_notebook.py --file http://127.0.0.1:2908/notebooks/notebooks/Task40_Optimizer.ipynb --action publish_on_s3
 ```
 
-The file is copied to S3
+- The file is copied to S3
 
 ```
 Copying './Task40_Optimizer.20210717_010806.html' to
 's3://alphamatic-data/notebooks/Task40_Optimizer.20210717_010806.html'
 ```
 
-You can also save the data locally:
+- You can also save the data locally:
 
 ```
 > publish_notebook.py --file
@@ -818,7 +765,7 @@ amp/oms/notebooks/Master_forecast_processor_reader.ipynb --action publish_on_s3
 --aws_profile saml-spm-sasm
 ```
 
-You can also use a different path or profile by specifying it directly
+- You can also use a different path or profile by specifying it directly
 
 ```
 > publish_notebook.py \
@@ -832,50 +779,47 @@ You can also use a different path or profile by specifying it directly
 
 ### Start a server
 
-(cd /local/home/share/html/published_notebooks; python3 -m http.server 8000)
+- (cd /local/home/share/html/published_notebooks; python3 -m http.server 8000)
 
-go to the page in the local browser
+- go to the page in the local browser
 
 ### Using the dev box
 
-To open a notebook saved on S3, \*outside\* a Docker container run:
+- To open a notebook saved on S3, \*outside\* a Docker container run:
 
 ```
 > publish_notebook.py --action open --file
 s3://alphamatic-data/notebooks/Task40_Optimizer.20210717_010806.html
 ```
 
-This opens a Chrome window through X-windows.
-
-To open files faster you can open a Chrome window in background with
+- This opens a Chrome window through X-windows.
+- To open files faster you can open a Chrome window in background with
 
 ```
 > google-chrome
 ```
 
-and then navigate to the path (e.g.,
-/local/home/share/html/published_notebooks/Master_forecast_processor_reader.20220810-112328.html)
+- and then navigate to the path (e.g.,
+  /local/home/share/html/published_notebooks/Master_forecast_processor_reader.20220810-112328.html)
 
 ### Using Windows browser
 
-Another approach is:
+- Another approach is:
 
 ```
 > aws s3 presign --expires-in 36000
 s3://alphamatic-data/notebooks/Task40_Optimizer.20210716_194400.html | xclip
 ```
 
-Open the link saved in the clipboard in the Windows browser
-
-For some reason, Chrome saves the link instead of opening, so you need to click
-on the saved link
+- Open the link saved in the clipboard in the Windows browser
+- For some reason, Chrome saves the link instead of opening, so you need to
+  click on the saved link
 
 # How to create a private fork
 
-https://stackoverflow.com/questions/10065526/github-how-to-make-a-fork-of-public-repository-private
-
-From
-https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/duplicating-a-repository
+- https://stackoverflow.com/questions/10065526/github-how-to-make-a-fork-of-public-repository-private
+- From
+  https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/duplicating-a-repository
 
 ```
 > git clone --bare git@github.com:alphamatic/amp.git amp_bare
@@ -883,7 +827,7 @@ https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cr
 > git push --mirror https://github.com/cryptomtc/cmamp.git
 ```
 
-It worked only as cryptomtc, but not using my key
+- It worked only as cryptomtc, but not using my key
 
 # Integrate public to private: amp -> cmamp
 
@@ -909,20 +853,15 @@ public git@github.com:alphamatic/amp(push)
 
 ## Ours vs theirs
 
-From
-[https://stackoverflow.com/questions/25576415/what-is-the-precise-meaning-of-ours-and-theirs-in-git/25576672](https://stackoverflow.com/questions/25576415/what-is-the-precise-meaning-of-ours-and-theirs-in-git/25576672)
+- From
+  https://stackoverflow.com/questions/25576415/what-is-the-precise-meaning-of-ours-and-theirs-in-git/25576672
 
-When merging:
-
-- ours = branch checked out (git checkout \*ours\*)
-
-- theirs = branch being merged (git merge \*theirs\*)
-
-When rebasing the role is swapped
-
-- ours = branch being rebased onto (e.g., master)
-
-- theirs = branch being rebased (e.g., feature)
+- When merging:
+  - ours = branch checked out (git checkout \*ours\*)
+  - theirs = branch being merged (git merge \*theirs\*)
+- When rebasing the role is swapped
+  - ours = branch being rebased onto (e.g., master)
+  - theirs = branch being rebased (e.g., feature)
 
 ## Sync the repos (after double integration)
 
@@ -1015,8 +954,8 @@ nothing to commit, working tree clean
 
 ## Squash commit of everything in the branch
 
-From
-[https://stackoverflow.com/questions/25356810/git-how-to-squash-all-commits-on-branch](https://stackoverflow.com/questions/25356810/git-how-to-squash-all-commits-on-branch)
+- From
+  https://stackoverflow.com/questions/25356810/git-how-to-squash-all-commits-on-branch
 
 ```
 > git checkout yourBranch
@@ -1029,8 +968,7 @@ From
 
 # Double integration cmamp < -- > amp
 
-The bug is
-[https://github.com/alphamatic/amp/issues/1786](https://github.com/alphamatic/amp/issues/1786)
+- The bug is https://github.com/alphamatic/amp/issues/1786
 
 ## Script set-up
 
@@ -1076,17 +1014,12 @@ Create two branches
 
 ## High-level plan
 
-SUBDIR=im
-
-- Typically cmamp is copied on top of amp
-
-SUBDIR=devops
-
-- cmamp and amp need to be different (until we unify the Docker flow)
-
-Everything else
-
-- Typically amp -> cmamp
+- SUBDIR=im
+  - Typically cmamp is copied on top of amp
+- SUBDIR=devops
+  - cmamp and amp need to be different (until we unify the Docker flow)
+- Everything else
+  - Typically amp -> cmamp
 
 ## Sync `im` cmamp -> amp
 
@@ -1186,10 +1119,11 @@ $CMAMP_DIR
 
 ## Files that need to be different
 
-amp needs an `if False` helpers/lib_tasks.py
+- amp needs an `if False` helpers/lib_tasks.py
 
-amp needs two tests disabled im/ccxt/data/load/test/test_loader.py
-im/ccxt/data/load/test/test_loader.py
+- amp needs two tests disabled im/ccxt/data/load/test/test_loader.py
+
+  im/ccxt/data/load/test/test_loader.py
 
 TODO(gp): How to copy files in vimdiff including last line?
 
@@ -1216,13 +1150,8 @@ amp_format_separating_line amp_black" --files='$(find . -name "\*.py")'
 ### Testing
 
 - Run amp on my laptop (or on the server)
-
 - IN PROGRESS: Get amp PR to pass on GH
-
 - IN PROGRESS: Run lemonade on my laptop
-
 - Run cmamp on the dev server
-
 - Get cmamp PR to pass on GH
-
 - Run dev_tools on the dev server
