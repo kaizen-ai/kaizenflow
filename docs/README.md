@@ -22,6 +22,8 @@ This contains the absolute minimal amount of info to start developing
 
 - [Jupyter notebook best practices](Jupyter_notebook_best_practices.md)
 
+- [Unit tests](Unit_tests.md)
+
 ## Project management
 
 - [GitHub/ZenHub workflows](GitHub_ZenHub_workflows.md)

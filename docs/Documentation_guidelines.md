@@ -319,7 +319,7 @@ In general:
     ```
     > pandoc --extract-media ./ -f docx -t markdown -o out.md in.docx
     ```
-  - The entire conversion flow is in `dev_scripts/convert_gdoc_to_markdown.sh`
+  - The entire conversion flow is in `dev_scripts/convert_docx_to_markdown.sh`
 
 ### Using Chrome Docs to Markdown extension
 

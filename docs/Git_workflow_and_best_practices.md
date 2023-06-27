@@ -87,25 +87,34 @@
     branch, run
     ```
     > git checkout master
-    > gup.py
+    > i git_pull
     ```
 
 - Name a branch after its corresponding issue
   - The canonical name for a new feature branch is obtained by running
-    `ghi_show.py`:
+    `i gh_issue_title`:
     ```
-    > ghi_show.py 274 --only_github
+    > i gh_issue_title -i 274
+    INFO: > cmd='/Users/saggese/src/venv/amp.client_venv/bin/invoke gh_issue_title -i 274'
+    report_memory_usage=False report_cpu_usage=False
+    ## gh_issue_title: issue_id='274', repo_short_name='current'
+    ## gh_login:
+    07:35:54 - INFO  lib_tasks_gh.py gh_login:48                            account='sorrentum'
+    export GIT_SSH_COMMAND='ssh -i /Users/saggese/.ssh/id_rsa.sorrentum.github'
+    gh auth login --with-token </Users/saggese/.ssh/github_pat.sorrentum.txt
 
-    > ghi_show.py 274 -r .../... --only_github
-    # Github:
-    #274: PRICE: Download equity data
-    https://github.com/alphamatic/amp/issues/274
-    # Tag:
-    LemTask274_PRICE_Download_equity_data
+    # Copied to system clipboard:
+    CmTask274_Update_names: https://github.com/sorrentum/sorrentum/pull/274
     ```
-  - The name is `LemTask274_PRICE_Download_equity_data`
+    - Before running verify that GitHub cli `gh` works
+      ```
+      > gh --version
+      gh version 2.29.0 (2023-05-10)
+      https://github.com/cli/cli/releases/tag/v2.29.0
+      ```
+  - The name is `CmTask274_Update_names`
   - To use multiple branches for a given task, append a numeral to the name,
-    e.g., `LemTask274_PRICE_Download_equity_data_02`
+    e.g., `CmTask274_Update_names_v02`
 
 - Create and checkout the branch
   ```
