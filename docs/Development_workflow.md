@@ -17,6 +17,7 @@
   * [Merge master in the current branch](#merge-master-in-the-current-branch)
   * [Create a PR](#create-a-pr)
   * [Extract a PR from a larger one](#extract-a-pr-from-a-larger-one)
+    + [Using git](#using-git)
   * [Systematic code transformation](#systematic-code-transformation)
   * [Replace `check_string` with `assert_equal`](#replace-check_string-with-assert_equal)
   * [Run unit tests with coverage](#run-unit-tests-with-coverage)
@@ -80,40 +81,34 @@
 
 - You can check the Git credentials that will be used to commit in a client by
   running:
-
-```
-> git config -l | grep user
-user.name=saggese
-user.email=saggese@gmail.com
-github.user=gpsaggese
-```
-
+  ```
+  > git config -l | grep user
+  user.name=saggese
+  user.email=saggese@gmail.com
+  github.user=gpsaggese
+  ```
 - To know at which level each variable is defined, run
-
-```
-> git config --show-origin user.name
-file:/Users/saggese/.gitconfig saggese
-```
-
+  ````
+  > git config --show-origin user.name
+  file:/Users/saggese/.gitconfig saggese```
+  ````
 - You can see all the `Authors` in a Git repo history with:
-
-```
-> git log | grep -i Author | sort | uniq
-...
-```
-
+  ```
+  > git log | grep -i Author | sort | uniq
+  ...
+  ```
 - Git doesn't do any validation of `user.name` and `user.email` but it just uses
   these values to compose a commit message like:
 
-```
-> git log -2
-commit 31052d05c226b1c9834d954e0c3d5586ed35f41e (HEAD ->
-AmpTask1290_Avoid_committing_to_master_by_mistake)
-Author: saggese <saggese@gmail.com>
-Date: Mon Jun 21 16:22:25 2021
+  ```
+  > git log -2
+  commit 31052d05c226b1c9834d954e0c3d5586ed35f41e (HEAD ->
+  AmpTask1290_Avoid_committing_to_master_by_mistake)
+  Author: saggese <saggese@gmail.com>
+  Date: Mon Jun 21 16:22:25 2021
 
-Update hooks
-```
+  Update hooks
+  ```
 
 ## Setting Git credentials
 
@@ -123,22 +118,21 @@ Update hooks
   - as `user.email` the email that corresponds to that user (e.g,.
     `user.email=saggese@gmail.com`)
 - To accomplish the set-up above you can:
+
   - use in `/Users/saggese/.gitconfig` the values for our open-source account,
     so that they are used by default
 
-```
-> git config --global user.name $(whoami)
-> git config --global user.email YOUR_EMAIL
-```
+  ```
+  > git config --global user.name $(whoami)
+  > git config --global user.email YOUR_EMAIL
+  ```
 
 - use the correct user / email in the repos that are not open-source
-
-```
-> cd $GIT_ROOT
-> git config --local user.name $(whoami)
-> git config --local user.email YOUR_EMAIL
-```
-
+  ```
+  > cd $GIT_ROOT
+  > git config --local user.name $(whoami)
+  > git config --local user.email YOUR_EMAIL
+  ```
 - Note that you need to set these local values on each Git client that you have
   cloned, since Git doesn't version control these values
 
@@ -154,10 +148,10 @@ Update hooks
   up.
 
 ```
-> cd //amp
-> ./dev_scripts/git/git_hooks/install_hooks.py --action install
-> cd //lem
-> ./amp/dev_scripts/git/git_hooks/install_hooks.py --action install
+  > cd //amp
+  > ./dev_scripts/git/git_hooks/install_hooks.py --action install
+  > cd //lem
+  > ./amp/dev_scripts/git/git_hooks/install_hooks.py --action install
 ```
 
 - This procedure creates some links from `.git/hook` to the scripts in the repo.
@@ -167,12 +161,11 @@ Update hooks
 # Create the env
 
 - You can follow the
-
-```
-# Build the client env
-> dev_scripts/client_setup/build.sh
-> source dev_scripts/setenv_amp.sh
-```
+  ```
+  # Build the client env
+  > dev_scripts/client_setup/build.sh
+  > source dev_scripts/setenv_amp.sh
+  ```
 
 # Invoke
 
@@ -193,22 +186,22 @@ Update hooks
 - The best approach to getting familiar with the tasks is to browse the list and
   then check the output of the help
 
-```
-> invoke --help command
-> i -h gh_issue_title
-Usage: inv[oke] [--core-opts] gh_issue_title [--options] [other tasks here ...]
+  ```
+  > invoke --help command
+  > i -h gh_issue_title
+  Usage: inv[oke] [--core-opts] gh_issue_title [--options] [other tasks here ...]
 
-Docstring:
-Print the title that corresponds to the given issue and repo_short_name.
-E.g., AmpTask1251_Update_GH_actions_for_amp.
+  Docstring:
+  Print the title that corresponds to the given issue and repo_short_name.
+  E.g., AmpTask1251_Update_GH_actions_for_amp.
 
-:param pbcopy: save the result into the system clipboard (only on macOS)
+  :param pbcopy: save the result into the system clipboard (only on macOS)
 
-Options:
--i STRING, --issue-id=STRING
--p, --[no-]pbcopy
--r STRING, --repo-short-name=STRING
-```
+  Options:
+  -i STRING, --issue-id=STRING
+  -p, --[no-]pbcopy
+  -r STRING, --repo-short-name=STRING
+  ```
 
 - I can guarantee you a 2x improvement in performance, if you master the
   workflows, but it takes some time and patience
@@ -309,13 +302,13 @@ traceback Parse the traceback from Pytest and navigate it with vim.
   - `optimizer/opt_lib_tasks.py` - tasks to be run in `cmamp/optimizer`
 - All invoke tasks are functions with the `@task` decorator, e.g.,
 
-```
-from invoke import task
+  ```
+  from invoke import task
 
-@task
-def invoke_task(...):
-  ...
-```
+  @task
+  def invoke_task(...):
+    ...
+  ```
 
 - To run a task we use `context.run(...)`, see
   [the official docs](https://docs.pyinvoke.org/en/0.11.1/concepts/context.html)
@@ -347,53 +340,51 @@ https://github.com/alphamatic/amp/pull/256
 
 - Workflows are organized somehow around Linux command that they are related to,
   e.g.,
-
   - `docker_*` for all `docker` related workflows
   - `find_*` for all workflows related to finding (e.g., unit tests)
   - `gh_*` for GitHub related workflows
   - `git_*` for Git related workflows
   - etc.
-
 - Once in a while it can be useful to list all the available workflows and see
   if something interesting was added.
 
-```
-> invoke --list
-Available tasks:
+  ```
+  > invoke --list
+  Available tasks:
 
-docker_bash     Start a bash shell inside the container corresponding to a stage.
-docker_build_local_image    Build a local image (i.e., a release candidate "dev" image).
-...
-```
+  docker_bash     Start a bash shell inside the container corresponding to a stage.
+  docker_build_local_image    Build a local image (i.e., a release candidate "dev" image).
+  ...
+  ```
 
 ## Getting help for a workflow
 
-You can get a more detailed help with
+- You can get a more detailed help with
 
-```
-> invoke --help run_fast_tests
-Usage: inv[oke] [--core-opts] run_fast_tests [--options] [other tasks here ...]
+  ```
+  > invoke --help run_fast_tests
+  Usage: inv[oke] [--core-opts] run_fast_tests [--options] [other tasks here ...]
 
-Docstring:
-Run fast tests.
+  Docstring:
+  Run fast tests.
 
-:param stage: select a specific stage for the Docker image
-:param pytest_opts: option for pytest
-:param pytest_mark: test list to select as `@pytest.mark.XYZ`
-:param dir_name: dir to start searching for tests
-:param skip_submodules: ignore all the dir inside a submodule
-:param coverage: enable coverage computation
-:param collect_only: do not run tests but show what will be executed
+  :param stage: select a specific stage for the Docker image
+  :param pytest_opts: option for pytest
+  :param pytest_mark: test list to select as `@pytest.mark.XYZ`
+  :param dir_name: dir to start searching for tests
+  :param skip_submodules: ignore all the dir inside a submodule
+  :param coverage: enable coverage computation
+  :param collect_only: do not run tests but show what will be executed
 
-Options:
--c, --coverage
--d STRING, --dir-name=STRING
--k, --skip-submodules
--o, --collect-only
--p STRING, --pytest-opts=STRING
--s STRING, --stage=STRING
--y STRING, --pytest-mark=STRING
-```
+  Options:
+  -c, --coverage
+  -d STRING, --dir-name=STRING
+  -k, --skip-submodules
+  -o, --collect-only
+  -p STRING, --pytest-opts=STRING
+  -s STRING, --stage=STRING
+  -y STRING, --pytest-mark=STRING
+  ```
 
 ## Merge master in the current branch
 
@@ -409,87 +400,80 @@ TODO(gp): Describe
 
 - My workflow is to have a feature branch (e.g.,
   `AmpTask1891_Sketch_out_the_design_of_RT_OMS`) that I develop in.
-
 - When a piece of code can be merged:
-
   - create a new branch (e.g., `AmpTask1891_Sketch_out_the_design_of_RT_OMS_02`)
-
   - copy the current feature branch to the new branch
-
   - remove the pieces that you don't want to merge
-
   - run regressions
-
   - PR
-
   - merge into master
-
   - merge master into the feature branch
-
 - This workflow allows you to develop and regress / merge without too much
   hassle solving the problem of "stacked PRs".
 
-```
-# Go to the client with the branch that you want to divvy up.
-> git checkout ${feature_branch}
+  ```
+  # Go to the client with the branch that you want to divvy up.
+  > git checkout ${feature_branch}
 
-# Make sure that the branch is up-to-date with master
-> i git_merge_master
+  # Make sure that the branch is up-to-date with master
+  > i git_merge_master
 
-# Lint.
-> i lint -b
+  # Lint.
+  > i lint -b
 
-# Create a patch from the branch (there are many options to tweak the workflow, check the help)
-> i git_create_patch -b
+  # Create a patch from the branch (there are many options to tweak the workflow, check the help)
+  > i git_create_patch -b
 
-# To apply the patch and execute:
-> git checkout 8f9cda97
-> git apply /Users/saggese/src/lemonade1/amp/patch.amp.8f9cda97.20210609_080439.patch
-...
-```
+  # To apply the patch and execute:
+  > git checkout 8f9cda97
+  > git apply /Users/saggese/src/lemonade1/amp/patch.amp.8f9cda97.20210609_080439.patch
+  ...
+  ```
 
 - Go to a fresh Git client (I have 2-3 Git clients separated from the one in
   which I develop for this kind of operations) or go to master in the same Git
   client
 
-```
-# Go to master
-> git checkout master
+  ```
+  # Go to master
+  > git checkout master
 
-# Apply the patch from the run of `git_create_patch`
+  # Apply the patch from the run of `git_create_patch`
 
-> git apply
-> /Users/saggese/src/lemonade1/amp/patch.amp.8f9cda97.20210609_080439.patch
+  > git apply
+  > /Users/saggese/src/lemonade1/amp/patch.amp.8f9cda97.20210609_080439.patch
 
-This patch should apply cleanly and with no errors from git, otherwise it means
-that your feature branch doesn't have the latest master
+  # This patch should apply cleanly and with no errors from git, otherwise it means
+  that your feature branch doesn't have the latest master
 
-# Remove what you don't want to commit.
+  # Remove what you don't want to commit.
 
-Do not change anything or run the linter otherwise your feature branch will not
-merge easily.
+  # Do not change anything or run the linter otherwise your feature branch will not
+  merge easily.
+  > git diff
+  > git checkout master -- ...
+  ...
+  > git commit; git push
 
-> git diff
-> git checkout master -- ...
-...
-> git commit; git push
+  # Create a PR (non-draft so that GH can start running the tests)
+  > i gh_create_pr --no-draft
 
-# Create a PR (non-draft so that GH can start running the tests)
-> i gh_create_pr --no-draft
+  # Regress the branch
+  > i run_fast_tests ...
 
-# Regress the branch
-> i run_fast_tests ...
+  # Merge the PR into master
 
-# Merge the PR into master
+  # Go back to your feature branch and merge master
+  > gco ${feature_branch}
+  > git pull
 
-# Go back to your feature branch and merge master
-> gco ${feature_branch}
-> git pull
-
-# Now one piece of your feature branch has been merged and you can repeat until
-all the code is merged.
+  # Now one piece of your feature branch has been merged and you can repeat until
+  all the code is merged.
+  ```
 
 ### Using git
+
+```
 > git checkout `dst_branch`
 > git merge --squash --ff `src_branch`
 > git reset HEAD
@@ -511,91 +495,84 @@ all the code is merged.
 
 - This is a manual flow used to test and debug images before releasing them to
   the team.
-
 - The flow is similar to the dev image, but by default tests are not run and the
   image is not released.
 
-```
-Build the local image (and update Poetry dependencies, if needed).
+  ```
+  Build the local image (and update Poetry dependencies, if needed).
 
-> i docker_build_local_image --update-poetry
-...
-docker image ls 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
+  > i docker_build_local_image --update-poetry
+  ...
+  docker image ls 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local
 
-REPOSITORY TAG IMAGE ID CREATED SIZE
-665840871993.dkr.ecr.us-east-1.amazonaws.com/amp local 9b3f8f103a2c 1 second ago 1.72GB
+  REPOSITORY TAG IMAGE ID CREATED SIZE
+  665840871993.dkr.ecr.us-east-1.amazonaws.com/amp local 9b3f8f103a2c 1 second ago 1.72GB
 
-# Test the new "local" image
-> i docker_bash --stage "local" python -c "import async_solipsism" python -c
-> "import async_solipsism; print(async_solipsism.**version**)"
+  # Test the new "local" image
+  > i docker_bash --stage "local" python -c "import async_solipsism" python -c
+  > "import async_solipsism; print(async_solipsism.**version**)"
 
-# Run the tests with local image
-# Make sure the new image is used: e.g., add an import and trigger the tests.
-> i run_fast_tests --stage "local" --pytest-opts core/dataflow/test/test_real_time.py
-> i run_fast_slow_tests --stage "local"
+  # Run the tests with local image
+  # Make sure the new image is used: e.g., add an import and trigger the tests.
+  > i run_fast_tests --stage "local" --pytest-opts core/dataflow/test/test_real_time.py
+  > i run_fast_slow_tests --stage "local"
 
-# Promote a local image to dev.
-> i docker_tag_local_image_as_dev
-> i docker_push_dev_image
-```
+  # Promote a local image to dev.
+  > i docker_tag_local_image_as_dev
+  > i docker_push_dev_image
+  ```
 
-## Update the dev `amp` Docker image
+  ## Update the dev `amp` Docker image
 
-- To implement the entire Docker QA process of a dev image
+  - To implement the entire Docker QA process of a dev image
 
-```
-Clean all the Docker images locally, to make sure there is no hidden state.
-> docker system prune --all
+  ```
+  Clean all the Docker images locally, to make sure there is no hidden state.
+  > docker system prune --all
 
-# Update the needed packages.
-> devops/docker_build/pyproject.toml
+  # Update the needed packages.
+  > devops/docker_build/pyproject.toml
 
-# Visually inspect the updated packages.
-> git diff devops/docker_build/poetry.lock
+  # Visually inspect the updated packages.
+  > git diff devops/docker_build/poetry.lock
 
-# Run entire release process.
-> i docker_release_dev_image
-```
+  # Run entire release process.
+  > i docker_release_dev_image
+  ```
 
-## Experiment in a local image
+  ## Experiment in a local image
 
-- To install packages in an image, do `i docker_bash`
+  - To install packages in an image, do `i docker_bash`
 
-```
-# Switch to root and install package.
-> sudo su -
-> source /venv/bin/activate
-> pip install <package>
+  ```
+  # Switch to root and install package.
+  > sudo su -
+  > source /venv/bin/activate
+  > pip install <package>
 
-# Switch back to user.
-> exit
-```
+  # Switch back to user.
+  > exit
+  ```
 
 - You should test that the package is installed for your user, e.g.,
-
-```
-> source /venv/bin/activate python -c "import foobar; print(foobar);print(foobar.__version__)"
-```
-
+  ```
+  > source /venv/bin/activate python -c "import foobar; print(foobar);print(foobar.__version__)"
+  ```
 - You can now use the package in this container. Note that if you exit the
   container, the modified image is lost, so you need to install it again.
 - You can save the modified image, tagging the new image as local, while the
   container is still running.
-
 - Copy your Container ID. You can find it
   - in the docker bash session, e.g., if the command line in the container
     starts with `user_1011@da8f3bb8f53b:/app$`, your Container ID is
     `da8f3bb8f53b`
   - by listing running containers, e.g., run `docker ps` outside the container
 - Commit image
-
-```
-    > docker commit <Container ID> <IMAGE>/cmamp:local-$USER
-```
-
+  ```
+  > docker commit <Container ID> <IMAGE>/cmamp:local-$USER
+  ```
         - E.g.
           `docker commit da8f3bb8f53b 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:local-julias`
-
 - If you are running inside a notebook using `i docker_jupyter` you can install
   packages using a one liner `! sudo su -; source ...; `
 
@@ -632,13 +609,10 @@ branch
 ## Iterating on stacktrace of failing test
 
 - Inside docker bash
-
-```
-> pytest ...
-```
-
+  ```
+  > pytest ...
+  ```
 - The test fails: switch to using `pytest.sh` to save the stacktrace to a file
-
 - Then from outside Docker launch vim in quickfix mode
 
 ```
@@ -651,22 +625,22 @@ branch
 
 - The workflow is:
 
-```
-# Run a lot of tests, e.g., the entire regression suite.
-> pytest ...
-# Some tests fail.
+  ```
+  # Run a lot of tests, e.g., the entire regression suite.
+  > pytest ...
+  # Some tests fail.
 
-# Run the `pytest_repro` to summarize test failures and to generate commands to reproduce them.
-> invoke pytest_repro
-```
+  # Run the `pytest_repro` to summarize test failures and to generate commands to reproduce them.
+  > invoke pytest_repro
+  ```
 
 ## Detect mismatches with golden test outcomes
 
 - The command is
 
-```
-> i pytest_find_unused_goldens
-```
+  ```
+  > i pytest_find_unused_goldens
+  ```
 
 - The specific dir to check can be specified with the `dir_name` parameter.
 - The invoke detects and logs mismatches between the tests and the golden
@@ -713,9 +687,9 @@ branch
 
 - You can get details by running:
 
-```bash
-> dev_scripts/notebooks/publish_notebook.py -h
-```
+  ```bash
+  > dev_scripts/notebooks/publish_notebook.py -h
+  ```
 
 - Plug-in for Chrome
   [my-s3-browser](https://chrome.google.com/webstore/detail/my-s3-browser/lgkbddebikceepncgppakonioaopmbkk?hl=en)
@@ -724,56 +698,56 @@ branch
 
 - Make sure that your environment is set up properly
 
-```
-> more ~/.aws/credentials
-[am]
-aws_access_key_id=**
-aws_secret_access_key=**
-aws_s3_bucket=alphamatic-data
+  ```
+  > more ~/.aws/credentials
+  [am]
+  aws_access_key_id=**
+  aws_secret_access_key=**
+  aws_s3_bucket=alphamatic-data
 
-> printenv | grep AM_
-AM_AWS_PROFILE=am
-```
+  > printenv | grep AM_
+  AM_AWS_PROFILE=am
+  ```
 
 - If you don't have them, you need to re-run `source dev_scripts/setenv.sh` in
   all the shells. It might be easier to kill that tmux session and restart it
 
-```
-> tmux kill-session --t limeXYZ
+  ```
+  > tmux kill-session --t limeXYZ
 
-> ~/go_lem.sh XYZ
-```
+  > ~/go_lem.sh XYZ
+  ```
 
 - Inside or outside a Docker bash run
 
-```
-> publish_notebook.py --file http://127.0.0.1:2908/notebooks/notebooks/Task40_Optimizer.ipynb --action publish_on_s3
-```
+  ```
+  > publish_notebook.py --file http://127.0.0.1:2908/notebooks/notebooks/Task40_Optimizer.ipynb --action publish_on_s3
+  ```
 
 - The file is copied to S3
 
-```
-Copying './Task40_Optimizer.20210717_010806.html' to
-'s3://alphamatic-data/notebooks/Task40_Optimizer.20210717_010806.html'
-```
+  ```
+  Copying './Task40_Optimizer.20210717_010806.html' to
+  's3://alphamatic-data/notebooks/Task40_Optimizer.20210717_010806.html'
+  ```
 
 - You can also save the data locally:
 
-```
-> publish_notebook.py --file
-amp/oms/notebooks/Master_forecast_processor_reader.ipynb --action publish_on_s3
---aws_profile saml-spm-sasm
-```
+  ```
+  > publish_notebook.py --file
+  amp/oms/notebooks/Master_forecast_processor_reader.ipynb --action publish_on_s3
+  --aws_profile saml-spm-sasm
+  ```
 
 - You can also use a different path or profile by specifying it directly
 
-```
-> publish_notebook.py \
---file http://127.0.0.1:2908/notebooks/notebooks/Task40_Optimizer.ipynb \
---action publish_on_s3 \
---s3_path s3://alphamatic-data/notebooks \
---aws_profile am
-```
+  ```
+  > publish_notebook.py \
+  --file http://127.0.0.1:2908/notebooks/notebooks/Task40_Optimizer.ipynb \
+  --action publish_on_s3 \
+  --s3_path s3://alphamatic-data/notebooks \
+  --aws_profile am
+  ```
 
 ## Open a published notebook
 
@@ -787,17 +761,17 @@ amp/oms/notebooks/Master_forecast_processor_reader.ipynb --action publish_on_s3
 
 - To open a notebook saved on S3, \*outside\* a Docker container run:
 
-```
-> publish_notebook.py --action open --file
-s3://alphamatic-data/notebooks/Task40_Optimizer.20210717_010806.html
-```
+  ```
+  > publish_notebook.py --action open --file
+  s3://alphamatic-data/notebooks/Task40_Optimizer.20210717_010806.html
+  ```
 
 - This opens a Chrome window through X-windows.
 - To open files faster you can open a Chrome window in background with
 
-```
-> google-chrome
-```
+  ```
+  > google-chrome
+  ```
 
 - and then navigate to the path (e.g.,
   /local/home/share/html/published_notebooks/Master_forecast_processor_reader.20220810-112328.html)
@@ -806,10 +780,10 @@ s3://alphamatic-data/notebooks/Task40_Optimizer.20210717_010806.html
 
 - Another approach is:
 
-```
-> aws s3 presign --expires-in 36000
-s3://alphamatic-data/notebooks/Task40_Optimizer.20210716_194400.html | xclip
-```
+  ```
+  > aws s3 presign --expires-in 36000
+  s3://alphamatic-data/notebooks/Task40_Optimizer.20210716_194400.html | xclip
+  ```
 
 - Open the link saved in the clipboard in the Windows browser
 - For some reason, Chrome saves the link instead of opening, so you need to
@@ -821,11 +795,11 @@ s3://alphamatic-data/notebooks/Task40_Optimizer.20210716_194400.html | xclip
 - From
   https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/duplicating-a-repository
 
-```
-> git clone --bare git@github.com:alphamatic/amp.git amp_bare
+  ```
+  > git clone --bare git@github.com:alphamatic/amp.git amp_bare
 
-> git push --mirror https://github.com/cryptomtc/cmamp.git
-```
+  > git push --mirror https://github.com/cryptomtc/cmamp.git
+  ```
 
 - It worked only as cryptomtc, but not using my key
 
@@ -957,14 +931,14 @@ nothing to commit, working tree clean
 - From
   https://stackoverflow.com/questions/25356810/git-how-to-squash-all-commits-on-branch
 
-```
-> git checkout yourBranch
-> git reset $(git merge-base master $(git branch
---show-current))
-> git add -A
-> git commit -m "Squash"
-> git push --force
-```
+  ```
+  > git checkout yourBranch
+  > git reset $(git merge-base master $(git branch
+  --show-current))
+  > git add -A
+  > git commit -m "Squash"
+  > git push --force
+  ```
 
 # Double integration cmamp < -- > amp
 
@@ -1131,11 +1105,11 @@ TODO(gp): How to copy files in vimdiff including last line?
 - Some files end with an `0x0a`
 - tr -d '\\r'
 
-```
-find . -name "\*.txt" | xargs perl -pi -e 's/\\r\\n/\\n/g'
-# Remove `No newline at end of file`
-find . -name "\*.txt" | xargs perl -pi -e 'chomp if eof'
-```
+  ```
+  find . -name "\*.txt" | xargs perl -pi -e 's/\\r\\n/\\n/g'
+  # Remove `No newline at end of file`
+  find . -name "\*.txt" | xargs perl -pi -e 'chomp if eof'
+  ```
 
 ### Lint everything
 
