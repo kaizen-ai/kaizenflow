@@ -609,9 +609,9 @@ branch
 - The test fails: switch to using `pytest.sh` to save the stacktrace to a file
 - Then from outside Docker launch vim in quickfix mode
 
-```
-> invoke traceback
-```
+  ```
+  > invoke traceback
+  ```
 
 - The short form is `it`
 
