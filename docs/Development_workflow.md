@@ -1,7 +1,5 @@
 # Development Workflow
-
 <!-- toc -->
-
 - [Setting up Git credentials](#setting-up-git-credentials)
   * [Preamble](#preamble)
   * [Check Git credentials](#check-git-credentials)
@@ -58,7 +56,6 @@
   * [Files that need to be different](#files-that-need-to-be-different)
     + [Lint everything](#lint-everything)
     + [Testing](#testing)
-
 <!-- tocstop -->
 
 # Setting up Git credentials
@@ -118,15 +115,12 @@
   - as `user.email` the email that corresponds to that user (e.g,.
     `user.email=saggese@gmail.com`)
 - To accomplish the set-up above you can:
-
   - use in `/Users/saggese/.gitconfig` the values for our open-source account,
     so that they are used by default
-
   ```
   > git config --global user.name $(whoami)
   > git config --global user.email YOUR_EMAIL
   ```
-
 - use the correct user / email in the repos that are not open-source
   ```
   > cd $GIT_ROOT
@@ -147,12 +141,12 @@
 - TODO(gp): We could create a script to automate cloning a repo and setting it
   up.
 
-```
-  > cd //amp
-  > ./dev_scripts/git/git_hooks/install_hooks.py --action install
-  > cd //lem
-  > ./amp/dev_scripts/git/git_hooks/install_hooks.py --action install
-```
+  ```
+    > cd //amp
+    > ./dev_scripts/git/git_hooks/install_hooks.py --action install
+    > cd //lem
+    > ./amp/dev_scripts/git/git_hooks/install_hooks.py --action install
+  ```
 
 - This procedure creates some links from `.git/hook` to the scripts in the repo.
 - You can also use the action `status` to see the status and `remove` to the
@@ -524,7 +518,7 @@ TODO(gp): Describe
 
   ## Update the dev `amp` Docker image
 
-  - To implement the entire Docker QA process of a dev image
+- To implement the entire Docker QA process of a dev image
 
   ```
   Clean all the Docker images locally, to make sure there is no hidden state.
@@ -542,7 +536,7 @@ TODO(gp): Describe
 
   ## Experiment in a local image
 
-  - To install packages in an image, do `i docker_bash`
+- To install packages in an image, do `i docker_bash`
 
   ```
   # Switch to root and install package.
@@ -571,7 +565,7 @@ TODO(gp): Describe
   ```
   > docker commit <Container ID> <IMAGE>/cmamp:local-$USER
   ```
-        - E.g.
+    - E.g.
           `docker commit da8f3bb8f53b 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:local-julias`
 - If you are running inside a notebook using `i docker_jupyter` you can install
   packages using a one liner `! sudo su -; source ...; `
@@ -1106,9 +1100,9 @@ TODO(gp): How to copy files in vimdiff including last line?
 - tr -d '\\r'
 
   ```
-  find . -name "\*.txt" | xargs perl -pi -e 's/\\r\\n/\\n/g'
+  > find . -name "\*.txt" | xargs perl -pi -e 's/\\r\\n/\\n/g'
   # Remove `No newline at end of file`
-  find . -name "\*.txt" | xargs perl -pi -e 'chomp if eof'
+  > find . -name "\*.txt" | xargs perl -pi -e 'chomp if eof'
   ```
 
 ### Lint everything
