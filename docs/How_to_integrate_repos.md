@@ -95,6 +95,8 @@
 - Check what files were modified since the last integration in each fork:
   ```
   > i integrate_files --file-direction common_files
+  > i integrate_files --file-direction common_files --src-dir-basename cmamp1 --dst-dir-basename sorrentum1
+  
   > i integrate_files --file-direction only_files_in_src
   > i integrate_files --file-direction only_files_in_dst
   ```

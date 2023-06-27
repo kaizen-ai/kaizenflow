@@ -7,7 +7,7 @@ class Test_infer_dst_dir1(hunitest.TestCase):
         # Define input variables.
         src_dir = "/src/cmamp1/im_v2/alpha_numeric_data_snapshots/"
         # Call function to test.
-        act = hlitaint._infer_dst_dir(src_dir)
+        act = hlitaint._infer_src_dst_dirs_from_file_path(src_dir)
         # Define expected output.
         exp = (
             "/src/amp1/im_v2/alpha_numeric_data_snapshots",
