@@ -184,11 +184,9 @@
 - Apply a review comment everywhere, not just where the reviewer pointed out the
   issue
 
-- E.g., if the reviewer says:
-  - Please replace:
-
-- `_LOG.warning("Hello %s".format(name))` with `_LOG.warning("Hello %s", name)`
-  you are expected to do this replacement:
+- E.g., reviewer says:
+  - "Please replace `_LOG.warning("Hello %s".format(name))` with `_LOG.warning("Hello %s", name)`"
+- You are expected to do this replacement:
   - In the current review
   - In all future code you write
   - In old code, as you come across it in the course of your work
