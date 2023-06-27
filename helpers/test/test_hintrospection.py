@@ -181,3 +181,28 @@ class Test_get_name_from_function1(hunitest.TestCase):
         act = hstring.remove_prefix(act, "amp.", assert_on_error=False)
         exp = "helpers.test.test_hintrospection.test_function"
         self.assert_equal(act, exp)
+
+
+# #############################################################################
+# Test_get_function_from_string1
+# #############################################################################
+
+
+class TestGetFunctionFromString1(hunitest.TestCase):
+    def test_get_Cx_HistoricalMarketData_example1(self) -> None:
+        func_str = "get_Cx_HistoricalMarketData_example1()"
+        func = hintros.get_function_from_string(func_str)
+        self.assertIsNotNone(func)
+        self.assertTrue(callable(func))
+
+    def test_build_dummy_data_reconciliation_config(self) -> None:
+        func_str = "amp.im_v2.common.data.qa.qa_check.build_dummy_data_reconciliation_config()"
+        func = hintros.get_function_from_string(func_str)
+        self.assertIsNotNone(func)
+        self.assertTrue(callable(func))
+
+    def test_build_config_list1(self) -> None:
+        func_str = "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list1()'"
+        func = hintros.get_function_from_string(func_str)
+        self.assertIsNotNone(func)
+        self.assertTrue(callable(func))
