@@ -63,10 +63,10 @@ def _encrypt_model(model_dir: str, target_dir: str) -> str:
             """
         )
         temp_dockerfile.flush()
-        if not args.build_target:
-            cmd = f"docker build -f {temp_dockerfile.name} -t encryption_flow ."
-        else:
-            cmd = f"docker buildx build --push --platform linux/amd64 -f {temp_dockerfile.name} -t {docker_image} ."
+        #if not args.build_target:
+        #    cmd = f"docker build -f {temp_dockerfile.name} -t encryption_flow ."
+        #else:
+        cmd = f"docker buildx build --push --platform linux/amd64 -f {temp_dockerfile.name} -t {docker_image} ."
         hsystem.system(cmd)
     # Run Docker container to encrypt the model.
     work_dir = os.getcwd()
