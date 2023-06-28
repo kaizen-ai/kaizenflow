@@ -91,14 +91,14 @@
   - This should be done as a single separated PR to be reviewed separately
 
 - Align `lib_tasks.py`:
-  ```
+  ```bash
   > vimdiff ~/src/{amp1,cmamp1}/tasks.py; diff_to_vimdiff.py --dir1 ~/src/amp1 --dir2 ~/src/cmamp1 --subdir helpers
   ```
 
 ## Integration
 
 - Create the integration branches:
-  ```
+  ```bash
   > cd amp1
   > i integrate_create_branch --dir-basename amp1
   > i integrate_create_branch --dir-basename sorrentum1
@@ -145,29 +145,29 @@
   ```
 
 - Diff dir by dir
-  ```
+  ```bash
   > i integrate_diff_dirs --subdir dataflow/system
   ```
 
 - Copy by dir
-  ```
+  ```bash
   > i integrate_diff_dirs --subdir market_data -c
   ```
 
 - Sync a dir to handle moved files
 - Assume that there is a dir where files were moved
-  ```
+  ```bash
   > invoke integrate_diff_dirs
   ...
   ... Only in .../cmamp1/.../alpha_numeric_data_snapshots: alpha
   ... Only in .../amp1/.../alpha_numeric_data_snapshots: latest
   ```
 - You can accept the `cmamp1` side with:
-  ```
+  ```bash
   > invoke integrate_rsync .../cmamp1/.../alpha_numeric_data_snapshots/
   ```
 - This corresponds to:
-  ```
+  ```bash
   > rsync --delete -a -r {src_dir}/ {dst_dir}/
   ```
 
