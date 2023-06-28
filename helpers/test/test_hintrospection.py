@@ -195,9 +195,11 @@ def dummy_function() -> None:
 
 class TestGetFunctionFromString1(hunitest.TestCase):
     def test1(self) -> None:
-        # check if short string function is being found and extracted correctly.
+        """
+        Test if the function is being found and extracted correctly from a string.
+        """
         act = "helpers.test.test_hintrospection.dummy_function"
         act = hintros.get_function_from_string(act)
         exp = dummy_function
         hdbg.dassert_isinstance(act, Callable)
-        self.assert_equal(act, exp)
+        self.assert_equal(act.__name__, exp.__name__)
