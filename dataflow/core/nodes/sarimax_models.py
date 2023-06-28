@@ -232,7 +232,7 @@ class ContinuousSarimaxModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin)
             # Transform forecast into a row indexed by prediction time.
             forecast = forecast.to_frame(name=y_past.index[-1]).T
             forecast.columns = [
-                f"{y_var}_{i+1}_hat" for i in range(self._steps_ahead)
+                f"{y_var}.shift_-{i+1}_hat" for i in range(self._steps_ahead)
             ]
             preds.append(forecast)
         preds = pd.concat(preds)
@@ -308,8 +308,8 @@ class MultihorizonReturnsPredictionProcessor(dtfconobas.FitPredictNode):
         :param prediction_cols: name of columns with single-step returns
             predictions for each forecast step. The columns should be indexed
             by knowledge time and ordered by forecast step, e.g.
-            `["ret_0_zscored_1_hat", "ret_0_zscored_2_hat",
-            "ret_0_zscored_3_hat"]`
+            `["ret_0_zscored.shift_-1_hat", "ret_0_zscored.shift_-2_hat",
+            "ret_0_zscored.shift_-3_hat"]`
         :param volatility_col: name of a column containing one step ahead
             volatility forecast. If `None`, z-scoring is not inverted
         """
@@ -353,7 +353,9 @@ class MultihorizonReturnsPredictionProcessor(dtfconobas.FitPredictNode):
         cum_ret_hats = []
         for i in range(1, self._max_steps_ahead + 1):
             cum_ret_hat_curr = predictions.iloc[:, :i].sum(axis=1, skipna=False)
-            cum_ret_hats.append(cum_ret_hat_curr.to_frame(name=f"cumret_{i}_hat"))
+            cum_ret_hats.append(
+                cum_ret_hat_curr.to_frame(name=f"cumret.shift_-{i}_hat")
+            )
         return pd.concat(cum_ret_hats, axis=1)
 
     def _process_target(self, df_in: pd.DataFrame) -> pd.Series:
@@ -369,7 +371,9 @@ class MultihorizonReturnsPredictionProcessor(dtfconobas.FitPredictNode):
         # Accumulate target for each step.
         cum_rets = []
         for i in range(1, self._max_steps_ahead + 1):
-            cum_ret_curr = target.rolling(window=i).sum().rename(f"cumret_{i}")
+            cum_ret_curr = (
+                target.rolling(window=i).sum().rename(f"cumret.shift_-{i}")
+            )
             cum_rets.append(cum_ret_curr)
         cum_rets = pd.concat(cum_rets, axis=1)
         fwd_cum_ret = cum_rets.shift(-self._max_steps_ahead)

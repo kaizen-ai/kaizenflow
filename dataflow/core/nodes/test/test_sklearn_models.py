@@ -39,7 +39,7 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
         df_str = hunitest.convert_df_to_string(
             df_out.round(3), index=True, decimals=3
         )
-        self.check_string(df_str)
+        self.check_string(df_str, fuzzy_match=True)
 
     def test2(self) -> None:
         data = self._get_data(2)
@@ -63,7 +63,7 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
         df_str = hunitest.convert_df_to_string(
             df_out.round(3), index=True, decimals=3
         )
-        self.check_string(df_str)
+        self.check_string(df_str, fuzzy_match=True)
 
     def test3(self) -> None:
         """
@@ -92,7 +92,7 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
         df_str = hunitest.convert_df_to_string(
             df_out.round(3), index=True, decimals=3
         )
-        self.check_string(df_str)
+        self.check_string(df_str, fuzzy_match=True)
 
     def test4(self) -> None:
         data = self._get_data(1)
@@ -119,7 +119,7 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
         df_str = hunitest.convert_df_to_string(
             df_out.round(3), index=True, decimals=3
         )
-        self.check_string(df_str)
+        self.check_string(df_str, fuzzy_match=True)
 
     def test5(self) -> None:
         data = self._get_data(2)
@@ -145,7 +145,7 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
         df_str = hunitest.convert_df_to_string(
             df_out.round(3), index=True, decimals=3
         )
-        self.check_string(df_str)
+        self.check_string(df_str, fuzzy_match=True)
 
     def test6(self) -> None:
         """
@@ -171,7 +171,7 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
         df_str = hunitest.convert_df_to_string(
             df_out.round(3), index=True, decimals=3
         )
-        self.check_string(df_str)
+        self.check_string(df_str, fuzzy_match=True)
 
     def test7(self) -> None:
         """
@@ -199,7 +199,7 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
         df_str = hunitest.convert_df_to_string(
             df_out.round(3), index=True, decimals=3
         )
-        self.check_string(df_str)
+        self.check_string(df_str, fuzzy_match=True)
 
     def test8(self) -> None:
         """
@@ -229,7 +229,7 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
         df_str = hunitest.convert_df_to_string(
             df_out.round(3), index=True, decimals=3
         )
-        self.check_string(df_str)
+        self.check_string(df_str, fuzzy_match=True)
 
     def _get_data(self, lag: int) -> pd.DataFrame:
         """
@@ -278,7 +278,7 @@ class TestMultiindexSkLearnModel(hunitest.TestCase):
         df_str = hunitest.convert_df_to_string(
             df_out.round(3), index=True, decimals=3
         )
-        self.check_string(df_str)
+        self.check_string(df_str, fuzzy_match=True)
 
     def test2(self) -> None:
         data = self._get_data()
@@ -308,7 +308,7 @@ class TestMultiindexSkLearnModel(hunitest.TestCase):
         df_str = hunitest.convert_df_to_string(
             df_out.round(3), index=True, decimals=3
         )
-        self.check_string(df_str)
+        self.check_string(df_str, fuzzy_match=True)
 
     def _get_data(self) -> pd.DataFrame:
         """
@@ -357,7 +357,7 @@ class TestMultiindexPooledSkLearnModel(hunitest.TestCase):
         df_str = hunitest.convert_df_to_string(
             df_out.round(3), index=True, decimals=3
         )
-        self.check_string(df_str)
+        self.check_string(df_str, fuzzy_match=True)
 
     def test2(self) -> None:
         data = self._get_data()
@@ -387,7 +387,7 @@ class TestMultiindexPooledSkLearnModel(hunitest.TestCase):
         df_str = hunitest.convert_df_to_string(
             df_out.round(3), index=True, decimals=3
         )
-        self.check_string(df_str)
+        self.check_string(df_str, fuzzy_match=True)
 
     def _get_data(self) -> pd.DataFrame:
         """

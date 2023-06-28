@@ -6,7 +6,7 @@ Run a list of experiments consisting of multiple model runs based on the passed:
 
 # Run an RH1E pipeline using 2 threads:
 > run_config_list.py \
-    --experiment_builder "dataflow.backtest.master_backtest.run_experiment" \
+    --experiment_builder "dataflow.backtest.master_backtest.run_ins_oos_backtest" \
     --config_builder "dataflow_lm.RH1E.config.build_15min_model_configs()" \
     --dst_dir experiment1 \
     --num_threads 2
