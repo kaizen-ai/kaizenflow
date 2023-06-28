@@ -127,6 +127,7 @@ def yield_processed_parquet_tile_dict(
                 columns=columns,
                 filters=combined_filter,
             )
+            # TODO(Grisha): @Dan Add assert for empty tile df.
             df = process_parquet_read_df(
                 tile,
                 asset_id_col,
@@ -147,6 +148,7 @@ def evaluate_weighted_forecasts(
     annotate_forecasts_kwargs: Optional[dict] = None,
     target_freq_str: Optional[str] = None,
     preapply_gaussian_ranking: bool = False,
+    index_mode: str = "assert_equal",
 ) -> pd.DataFrame:
     """
     Mix forecasts with weights and evaluate the portfolio.
@@ -183,6 +185,7 @@ def evaluate_weighted_forecasts(
     :param preapply_gaussian_ranking: whether to preprocess predictions with
         Gaussian ranking. May be useful if predictions are on different
         scales.
+    :param index_mode: same as `mode` in `apply_index_mode()`
     :return: bar metrics dataframe
     """
     forecast_evaluator = dtfmfefrpr.ForecastEvaluatorFromPrices(
@@ -259,7 +262,9 @@ def evaluate_weighted_forecasts(
             #     val *= scale_factor
             dfs[key] = val
         bar_metrics_dict = {}
-        weighted_sum = hpandas.compute_weighted_sum(dfs, weights)
+        weighted_sum = hpandas.compute_weighted_sum(
+            dfs, weights, index_mode=index_mode
+        )
         for key, val in weighted_sum.items():
             df = pd.concat(
                 [val, volatility, price],
@@ -478,13 +483,12 @@ def regress(
         feature_cols = feature_cols + lagged_cols
     #
     ra = dtfmoreana.RegressionAnalyzer(
-        target_col=target_col,
-        feature_cols=feature_cols,
-        feature_lag=feature_lag,
+        y_col=target_col,
+        x_cols=feature_cols,
+        x_col_lag=feature_lag,
     )
     results = []
     corrs = {}
-    # TODO(Paul): Add sign correlation.
     tile_iter = hparque.yield_parquet_tiles_by_assets(
         file_name,
         asset_ids,

@@ -68,7 +68,8 @@ hpandas.df_to_str(df, print_shape_info=True)
 
 # %%
 import vendors_lime.taq_bars.futures_utils as tu
-import core.finance.tradability as trad
+
+import core.finance.tradability as cfintrad
 
 # TODO(max): Use the right functions (calculate_twap)
 
@@ -134,10 +135,10 @@ print(fut)
 df_tmp = tu.filter_by_ric(df2, fut)
 # display(df_tmp.head(3))
 hpandas.df_to_str(df_tmp, print_nan_info=True)
-df_tmp = trad.process_df(df_tmp, 5)
+df_tmp = cfintrad.process_df(df_tmp, 5)
 
 # print("trad.median=", df_tmp["trad"].median())
-print(trad.compute_stats(df_tmp))
+print(cfintrad.compute_stats(df_tmp))
 df_tmp["trad"].hist(bins=101)
 
 # %%
@@ -177,12 +178,12 @@ df_tmp3.head()
 df_tmp3.boxplot(rot=90)
 
 # %%
-df3 = df2.groupby("ric").apply(lambda df_tmp: trad.process_df(df_tmp, 5))
+df3 = df2.groupby("ric").apply(lambda df_tmp: cfintrad.process_df(df_tmp, 5))
 df3.head(3)
 
 # %%
 # Compute stats for all futures.
-gb = df3.reset_index(drop=True).groupby("ric").apply(trad.compute_stats)
+gb = df3.reset_index(drop=True).groupby("ric").apply(cfintrad.compute_stats)
 
 # gb.first()
 gb.sort_values("trad")

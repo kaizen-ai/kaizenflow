@@ -207,6 +207,8 @@ class DagBuilder(abc.ABC):
         :return: string representation of a time interval, e.g., "1T", "5T"
         """
 
+    # TODO(Grisha): -> `get_required_lookback_duration()`.
+    # TODO(Grisha): return `pd.Timedelta` instead of the number of days.
     @abc.abstractmethod
     def get_required_lookback_in_effective_days(
         self, config: cconfig.Config, mark_key_as_used: bool

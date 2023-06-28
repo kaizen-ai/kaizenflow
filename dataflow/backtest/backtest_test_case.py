@@ -3,7 +3,7 @@ Run a backtest for a DAG model.
 
 Import as:
 
-import dataflow.backtest.backtest_test_case as dtfbrpmofl
+import dataflow.backtest.backtest_test_case as dtfbbateca
 """
 
 import abc
@@ -61,13 +61,18 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         dst_dir: str,
     ) -> None:
         """
-        Invoke run_config_list.py on a config.
+        Invoke `run_config_list.py` on a config.
+
+        :param config_builder, experiment_builder: we cannot pass function
+            pointers to the builders or the result of the building to an executable
+            `amp/core/dataflow/backtest/run_config_list.py`, so we only can accept
+            strings representing static functions in the code.
         """
         # Execute a command line like:
         # ```
         # > /app/amp/core/dataflow/backtest/run_config_list.py \
         #       --experiment_builder \
-        #           amp.dataflow.backtest.master_backtest.run_experiment \
+        #           amp.dataflow.backtest.master_backtest.run_ins_oos_backtest \
         #       --config_builder \
         #           'dataflow....build_model_config_list("kibot_v1-top1.5T")' \
         #       --dst_dir .../run_model/oos_experiment.RH1E.kibot_v1-top1.5T \
@@ -95,7 +100,7 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         cmd = []
         cmd.append(exec_filename)
         # Experiment builder.
-        # E.g., "amp.dataflow.backtest.master_backtest.run_experiment"
+        # E.g., "amp.dataflow.backtest.master_backtest.run_ins_oos_backtest"
         cmd.append(f"--experiment_builder {experiment_builder}")
         # Config builder.
         # E.g.,
@@ -187,8 +192,12 @@ class TiledBacktest_TestCase(Backtest_TestCase):
         """
         Run the entire backtest flow.
 
-        :param config_builder: pointer to the function used to build configs
-        :param experiment_builder: pointer to the function used to build an experiment
+        See the explanation of why we need string pointers in `_run_model()`.
+
+        :param config_builder: string pointer to the function used to build
+            configs
+        :param experiment_builder: string pointer to the function used to build
+            an experiment
         :param run_model_extra_opts: extra options passed to a model run command
         """
         scratch_dir = self.get_scratch_space()

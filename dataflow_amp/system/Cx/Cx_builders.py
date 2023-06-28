@@ -6,7 +6,8 @@ import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 
 import datetime
 import logging
-from typing import Any, Callable, Dict, List, Union
+import os
+from typing import Any, Dict, List, Union
 
 import pandas as pd
 
@@ -15,12 +16,13 @@ import dataflow.core as dtfcore
 import dataflow.system as dtfsys
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-import helpers.hs3 as hs3
-import helpers.hsql as hsql
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
-import im_v2.im_lib_tasks as imvimlita
+import im_v2.common.db.db_utils as imvcddbut
 import market_data as mdata
-import oms
+
+# TODO(Sonya): it needs to be just `import oms`, but avoiding potential
+# circular imports: https://github.com/cryptokaizen/cmamp/issues/4510.
+import oms.ccxt.ccxt_portfolio as occccpor
 
 _LOG = logging.getLogger(__name__)
 
@@ -61,86 +63,19 @@ def get_Cx_RealTimeMarketData_prod_instance1(
     Build a `MarketData` backed with `RealTimeImClient`.
     """
     _LOG.debug(hprint.to_str("asset_ids"))
-    # TODO(Grisha): @Dan pass as much as possible via `system.config`.
-    resample_1min = False
-    # Get environment variables with login info.
-    env_file = imvimlita.get_db_env_path("dev")
-    # Get login info.
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    # Login.
-    db_connection = hsql.get_connection(*connection_params)
+    universe_version = "infer_from_data"
+    # Get DB connection.
+    db_connection = imvcddbut.DbConnectionManager.get_connection("prod")
     # Get the real-time `ImClient`.
     table_name = "ccxt_ohlcv_futures"
+    # TODO(Grisha): @Dan pass as much as possible via `system.config`.
+    resample_1min = False
     im_client = imvcdccccl.CcxtSqlRealTimeImClient(
-        db_connection, table_name, resample_1min=resample_1min
+        universe_version, db_connection, table_name, resample_1min=resample_1min
     )
     # Get the real-time `MarketData`.
     market_data, _ = mdata.get_RealTimeImClientMarketData_example1(
         im_client, asset_ids
-    )
-    return market_data
-
-
-# TODO(Grisha): @Dan Move to `system_builder_utils.py`.
-def get_Cx_ReplayedMarketData_from_file(
-    system: dtfsys.System, is_prod: bool
-) -> mdata.ReplayedMarketData:
-    """
-    Build a `ReplayedMarketData` backed with data from the specified file.
-    """
-    file_path = system.config["market_data_config", "file_path"]
-    # TODO(Grisha): ideally we want to pass `aws_profile` via config.
-    if hs3.is_s3_path(file_path):
-        aws_profile = "ck"
-        hs3.dassert_is_valid_aws_profile(file_path, aws_profile)
-    else:
-        aws_profile = None
-    hs3.dassert_is_valid_aws_profile(file_path, aws_profile)
-    # TODO(Grisha): @Dan pass `column_remap` and column name parameters via `system.config`.
-    # TODO(Grisha): @Dan Refactor default column names in system related functions.
-    # TODO(Grisha): @Dan Since remapping is different for prod and simulation,
-    # their data scheme is different so we need to fix it.
-    # Multiple functions that build the system are looking for "start_datetime"
-    # and "end_datetime" columns by default.
-    if is_prod:
-        # Set remapping for database data used in production.
-        column_remap = {
-            "start_timestamp": "start_datetime",
-            "end_timestamp": "end_datetime",
-        }
-    else:
-        # Set remapping for file system data used in simulation.
-        column_remap = {"start_ts": "start_datetime", "end_ts": "end_datetime"}
-    timestamp_db_column = "end_datetime"
-    datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
-    # Get market data for replaying.
-    market_data_df = mdata.load_market_data(
-        file_path,
-        aws_profile=aws_profile,
-        column_remap=column_remap,
-        timestamp_db_column=timestamp_db_column,
-        datetime_columns=datetime_columns,
-    )
-    if not is_prod:
-        # Asset ids are passed as params in prod, but for simulation we have to
-        # fill system config with asset ids from data for `Portfolio`.
-        hdbg.dassert_not_in(("market_data_config", "asset_ids"), system.config)
-        # TODO(Grisha): @Dan Add a method to `MarketData.get_asset_ids()` that does
-        #  `list(df[asset_id_col_name].unique())`.
-        system.config["market_data_config", "asset_ids"] = (
-            market_data_df["asset_id"].unique().tolist()
-        )
-    # Initialize market data client.
-    event_loop = system.config["event_loop_object"]
-    replayed_delay_in_mins_or_timestamp = system.config[
-        "market_data_config", "replayed_delay_in_mins_or_timestamp"
-    ]
-    delay_in_secs = system.config["market_data_config", "delay_in_secs"]
-    market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
-        event_loop,
-        replayed_delay_in_mins_or_timestamp,
-        market_data_df,
-        delay_in_secs=delay_in_secs,
     )
     return market_data
 
@@ -150,54 +85,134 @@ def get_Cx_ReplayedMarketData_from_file(
 # #############################################################################
 
 
+def get_Cx_order_config_prod_instance1(
+    system: dtfsys.System,
+    order_duration_in_mins: int,
+) -> Dict[str, Any]:
+    """
+    Get the order config prod instance.
+
+    :param system: the `System` class
+    :param order_duration_in_mins: see `TargetPositionAndOrderGenerator`
+    :return: config for placing the orders, e.g.,
+        ```
+        order_type: price@custom_twap
+        passivity_factor: 0.55
+        order_duration_in_mins: 5
+        ```
+    """
+    # Run mode is specific of the `Cx_ProdSystem` and is not used in other cases.
+    if "run_mode" in system.config:
+        run_mode = system.config.get("run_mode")
+        if run_mode == "prod":
+            # Place limit orders in the TWAP fashion.
+            order_type = "price@custom_twap"
+            passivity_factor = 0.55
+        elif run_mode in ["paper_trading", "simulation"]:
+            # The Broker is mocked. Thus, it does not matter which order type to use
+            # since there is no real execution.
+            order_type = "price@twap"
+            passivity_factor = None
+        else:
+            raise ValueError(f"Unsupported run_mode={run_mode}")
+    else:
+        # The params below are irrelevant for the unit tests since there is no
+        # interaction with an exchange. It is ok to use the market order type.
+        order_type = "price@twap"
+        passivity_factor = None
+    order_config = {
+        "order_type": order_type,
+        "passivity_factor": passivity_factor,
+        "order_duration_in_mins": order_duration_in_mins,
+    }
+    return order_config
+
+
+# TODO(Grisha): separate the unit test instance from the
+# prod instance.
 def get_ProcessForecastsNode_dict_instance1(
-    system: dtfsys.System, order_duration_in_mins: int, is_prod: bool
+    system: dtfsys.System,
+    order_duration_in_mins: int,
+    optimizer_backend: str,
+    style: str,
+    compute_target_positions_kwargs: Any,
+    root_log_dir: str,
 ) -> Dict[str, Any]:
     """
     Build the `ProcessForecastsNode` dictionary for simulation.
     """
     spread_col = None
-    style = "cross_sectional"
-    # For prod we use smaller GMV so that we can trade at low capacity while
-    # for simulation we do not trade with real money.
-    if is_prod:
-        compute_target_positions_kwargs = {
-            "bulk_frac_to_remove": 0.0,
-            "target_gmv": 700.0,
-        }
-        root_log_dir = system.config.get("system_log_dir")
-    else:
-        compute_target_positions_kwargs = {
-            "bulk_frac_to_remove": 0.0,
-            "bulk_fill_method": "zero",
-            "target_gmv": 1e5,
-        }
-        # TODO(Grisha): @Dan CmTask2849 "Pass an actual `system_log_dir` for simulation".
-        root_log_dir = None
     dag_builder = system.config["dag_builder_object"]
     volatility_col = dag_builder.get_column_name("volatility")
     prediction_col = dag_builder.get_column_name("prediction")
+    # Get the order config.
+    order_config = get_Cx_order_config_prod_instance1(
+        system, order_duration_in_mins
+    )
+    #
     process_forecasts_node_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
         system.portfolio,
         prediction_col,
         volatility_col,
         spread_col,
-        order_duration_in_mins,
+        order_config,
         style,
+        optimizer_backend,
         compute_target_positions_kwargs,
         root_log_dir,
     )
-    if is_prod:
-        # Set backend suitable for working with Binance.
-        process_forecasts_node_dict["process_forecasts_dict"]["optimizer_config"][
-            "backend"
-        ] = "cc_pomo"
     return process_forecasts_node_dict
 
 
 # #############################################################################
 # DAG instances.
 # #############################################################################
+
+
+def _get_Cx_RealTimeDag(
+    system: dtfsys.System,
+    share_quantization: str,
+    optimizer_backend: str,
+    style: str,
+    compute_target_positions_kwargs: Any,
+    root_log_dir: str,
+) -> dtfcore.DAG:
+    """
+    Build a DAG with `RealTimeDataSource` and `ForecastProcessorNode`.
+    """
+    hdbg.dassert_isinstance(system, dtfsys.System)
+    system = dtfsys.apply_history_lookback(system)
+    dag_builder = system.config.get_and_mark_as_used(
+        "dag_builder_object", mark_key_as_used=False
+    )
+    dag_config = system.config.get_and_mark_as_used(
+        "dag_config", mark_key_as_used=False
+    )
+    dag = dtfsys.add_real_time_data_source(system)
+    # Configure a `ProcessForecastNode`.
+    mark_key_as_used = True
+    trading_period_str = dag_builder.get_trading_period(
+        dag_config, mark_key_as_used
+    )
+    # TODO(gp): Add a param to `get_trading_period()` to return the int.
+    order_duration_in_mins = int(trading_period_str.replace("T", ""))
+    process_forecasts_node_dict = get_ProcessForecastsNode_dict_instance1(
+        system,
+        order_duration_in_mins,
+        optimizer_backend,
+        style,
+        compute_target_positions_kwargs,
+        root_log_dir,
+    )
+    system.config["process_forecasts_node_dict"] = cconfig.Config.from_dict(
+        process_forecasts_node_dict
+    )
+    system = dtfsys.apply_ProcessForecastsNode_config_for_crypto(
+        system, share_quantization
+    )
+    # Append the `ProcessForecastNode`.
+    dag = dtfsys.add_ProcessForecastsNode(system, dag)
+    return dag
 
 
 def get_Cx_HistoricalDag_example1(system: dtfsys.System) -> dtfcore.DAG:
@@ -231,7 +246,8 @@ def get_Cx_HistoricalDag_example1(system: dtfsys.System) -> dtfcore.DAG:
 
 def get_Cx_RealTimeDag_example1(system: dtfsys.System) -> dtfcore.DAG:
     """
-    Build a DAG with a real time data source.
+    Build a DAG with `RealTimeDataSource` for a unit tests from a system
+    config.
     """
     hdbg.dassert_isinstance(system, dtfsys.System)
     system = dtfsys.apply_history_lookback(system)
@@ -239,100 +255,106 @@ def get_Cx_RealTimeDag_example1(system: dtfsys.System) -> dtfcore.DAG:
     return dag
 
 
-def get_Cx_RealTimeDag_example2(
-    system: dtfsys.System, is_prod: bool
-) -> dtfcore.DAG:
+def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     """
-    Build a DAG with `RealTimeDataSource` and `ForecastProcessorNode`.
+    Build a DAG for unit tests with `RealTimeDataSource` and
+    `ForecastProcessorNode` from a system config.
     """
-    hdbg.dassert_isinstance(system, dtfsys.System)
-    system = dtfsys.apply_history_lookback(system)
-    dag = dtfsys.add_real_time_data_source(system)
-    # Configure a `ProcessForecastNode`.
-    order_duration_in_mins = 5
-    process_forecasts_node_dict = get_ProcessForecastsNode_dict_instance1(
-        system, order_duration_in_mins, is_prod
+    share_quantization = "no_quantization"
+    optimizer_backend = "pomo"
+    style = "cross_sectional"
+    compute_target_positions_kwargs = {
+        "bulk_frac_to_remove": 0.0,
+        "bulk_fill_method": "zero",
+        "target_gmv": 1e5,
+    }
+    root_log_dir = None
+    dag = _get_Cx_RealTimeDag(
+        system,
+        share_quantization,
+        optimizer_backend,
+        style,
+        compute_target_positions_kwargs,
+        root_log_dir,
     )
-    system.config["process_forecasts_node_dict"] = cconfig.Config.from_dict(
-        process_forecasts_node_dict
-    )
-    system = dtfsys.apply_ProcessForecastsNode_config_for_crypto(system, is_prod)
-    # Append the `ProcessForecastNode`.
-    dag = dtfsys.add_ProcessForecastsNode(system, dag)
-    return dag
-
-
-# TODO(gp): Copied from _get_E1_dag_prod... Try to share code.
-def _get_Cx_dag_prod_instance1(
-    system: dtfsys.System,
-    get_process_forecasts_node_dict_func: Callable,
-) -> dtfcore.DAG:
-    """
-    Build the DAG for a C1b production system from a system config.
-    """
-    hdbg.dassert_isinstance(system, dtfsys.System)
-    # Create the pipeline.
-    # TODO(gp): Fast prod system must be set before the DAG is built.
-    dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
-    dag_config = system.config.get_and_mark_as_used("dag_config")
-    # The config must be complete and stable here.
-    dag = dag_builder.get_dag(dag_config)
-    system = dtfsys.apply_dag_property(dag, system)
-    #
-    system = dtfsys.apply_DagRunner_config_for_crypto(system)
-    # Build Portfolio.
-    mark_key_as_used = True
-    trading_period_str = dag_builder.get_trading_period(
-        dag_config, mark_key_as_used
-    )
-    # TODO(gp): Add a param to get_trading_period to return the int.
-    order_duration_in_mins = int(trading_period_str.replace("T", ""))
-    system.config[
-        "portfolio_config", "order_duration_in_mins"
-    ] = order_duration_in_mins
-    # Set market data history lookback in days in to config.
-    system = dtfsys.apply_history_lookback(system)
-    # Build the process forecast dict.
-    is_prod = True
-    process_forecasts_node_dict = get_process_forecasts_node_dict_func(
-        system, order_duration_in_mins, is_prod
-    )
-    system.config["process_forecasts_node_dict"] = cconfig.Config.from_dict(
-        process_forecasts_node_dict
-    )
-    is_prod = True
-    system = dtfsys.apply_ProcessForecastsNode_config_for_crypto(system, is_prod)
-    # Assemble.
-    market_data = system.market_data
-    market_data_history_lookback = system.config.get_and_mark_as_used(
-        ("market_data_config", "history_lookback")
-    )
-    process_forecasts_node_dict = system.config.get_and_mark_as_used(
-        "process_forecasts_node_dict"
-    ).to_dict()
-    ts_col_name = "timestamp_db"
-    # TODO(Grisha): should we use `add_real_time_data_source` and
-    # `add_ProcessForecastsNode` from `system_builder_utils.py`?
-    dag = dtfsys.adapt_dag_to_real_time(
-        dag,
-        market_data,
-        market_data_history_lookback,
-        process_forecasts_node_dict,
-        ts_col_name,
-    )
-    _LOG.debug("dag=\n%s", dag)
     return dag
 
 
 def get_Cx_dag_prod_instance1(system: dtfsys.System) -> dtfcore.DAG:
     """
-    Build the DAG for a production system from a system config.
+    Build the DAG for a prod run from a system config.
+
+    Compute target posisions style is "cross_sectional".
     """
-    # TODO(gp): It seems that we inlined the code somewhere so we should factor it
-    #  out.
-    # get_process_forecasts_node_dict_func = dtfsys.get_process_forecasts_dict_example3
-    get_process_forecasts_node_dict_func = get_ProcessForecastsNode_dict_instance1
-    dag = _get_Cx_dag_prod_instance1(system, get_process_forecasts_node_dict_func)
+    share_quantization = "asset_specific"
+    # TODO(Grisha): use `Config.get_and_mark_as_used()`.
+    # Infer the optimizer config values from `System`.
+    optimizer_backend = system.config[
+        "process_forecasts_node_dict",
+        "process_forecasts_dict",
+        "optimizer_config",
+        "backend",
+    ]
+    style = system.config[
+        "process_forecasts_node_dict",
+        "process_forecasts_dict",
+        "optimizer_config",
+        "params",
+        "style",
+    ]
+    compute_target_positions_kwargs = system.config[
+        "process_forecasts_node_dict",
+        "process_forecasts_dict",
+        "optimizer_config",
+        "params",
+        "kwargs",
+    ]
+    root_log_dir = system.config.get_and_mark_as_used(
+        ("system_log_dir"), default_value=None
+    )
+    dag = _get_Cx_RealTimeDag(
+        system,
+        share_quantization,
+        optimizer_backend,
+        style,
+        compute_target_positions_kwargs,
+        root_log_dir,
+    )
+    return dag
+
+
+# TODO(Grisha): somehow pass params via a cmd line instead of
+# creating multiple prod instances.
+def get_Cx_dag_prod_instance2(system: dtfsys.System) -> dtfcore.DAG:
+    """
+    Build the DAG for a prod run from a system config.
+
+    Compte target posisions style is "longitudinal".
+    """
+    share_quantization = "asset_specific"
+    optimizer_backend = "cc_pomo"
+    style = "longitudinal"
+    compute_target_positions_kwargs = {
+        "prediction_abs_threshold": 0.0,
+        "volatility_to_spread_threshold": 0.0,
+        "volatility_lower_bound": 1e-4,
+        "gamma": 0.0,
+        "target_dollar_risk_per_name": 1.0,
+        "spread_lower_bound": 1e-4,
+        "modulate_using_prediction_magnitude": False,
+        "constant_decorrelation_coefficient": 0.0,
+    }
+    root_log_dir = system.config.get_and_mark_as_used(
+        ("system_log_dir"), default_value=None
+    )
+    dag = _get_Cx_RealTimeDag(
+        system,
+        share_quantization,
+        optimizer_backend,
+        style,
+        compute_target_positions_kwargs,
+        root_log_dir,
+    )
     return dag
 
 
@@ -344,21 +366,33 @@ def get_Cx_dag_prod_instance1(system: dtfsys.System) -> dtfcore.DAG:
 # TODO(gp): We should dump the state of the portfolio and load it back.
 # TODO(gp): Probably all prod system needs to have run_mode and trade_date and
 #  so we can generalize the class to be not E8 specific.
-def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
+def get_Cx_portfolio_prod_instance1(
+    system: dtfsys.System,
+) -> occccpor.CcxtPortfolio:
     """
     Build Portfolio instance for production.
     """
     run_mode = system.config.get_and_mark_as_used("run_mode")
-    cf_config_strategy = system.config.get_and_mark_as_used(
-        ("cf_config", "strategy")
-    )
+    #
     market_data = system.market_data
+    system = dtfsys.apply_Portfolio_config(system)
+    column_remap = system.config.get_and_mark_as_used(
+        ("portfolio_config", "column_remap")
+    )
+    asset_ids = system.config.get_and_mark_as_used(
+        ("market_data_config", "asset_ids")
+    )
+    cf_config_strategy = system.config.get_and_mark_as_used(
+        ("cf_config", "strategy"), default_value="Cx"
+    )
     universe_version = system.config.get_and_mark_as_used(
-        ("market_data_config", "universe_version")
+        ("market_data_config", "universe_version"), default_value=None
     )
     secret_identifier_config = system.config.get_and_mark_as_used(
-        "secret_identifier_config"
+        "secret_identifier_config", default_value=None
     )
+    log_dir = system.config.get_and_mark_as_used("system_log_dir")
+    log_dir = os.path.join(log_dir, "process_forecasts")
     #
     dag_builder = system.config["dag_builder_object"]
     dag_config = system.config["dag_config"]
@@ -369,15 +403,7 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     _LOG.debug(hprint.to_str("trading_period_str"))
     pricing_method = "twap." + trading_period_str
     #
-    asset_ids = system.config.get_and_mark_as_used(
-        ("market_data_config", "asset_ids")
-    )
-    #
-    system = dtfsys.apply_Portfolio_config(system)
-    column_remap = system.config.get_and_mark_as_used(
-        ("portfolio_config", "column_remap")
-    )
-    portfolio = oms.get_CcxtPortfolio_prod_instance1(
+    portfolio = occccpor.get_CcxtPortfolio_prod_instance1(
         run_mode,
         cf_config_strategy,
         market_data,
@@ -386,6 +412,7 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
         secret_identifier_config,
         pricing_method,
         asset_ids,
+        log_dir,
     )
     return portfolio
 
@@ -395,6 +422,7 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
 # #############################################################################
 
 
+# TODO(Grisha): P1, consider removing.
 def apply_Cx_MarketData_config(
     system: dtfsys.System,
     replayed_delay_in_mins_or_timestamp: Union[int, pd.Timestamp],
@@ -402,6 +430,13 @@ def apply_Cx_MarketData_config(
     """
     Extend system config with parameters for `MarketData` init.
     """
+    system.config["market_data_config", "datetime_columns"] = [
+        "start_datetime",
+        "end_datetime",
+        "timestamp_db",
+    ]
+    system.config["market_data_config", "timestamp_db_column"] = "end_datetime"
+    system.config["market_data_config", "aws_profile"] = "ck"
     system.config["market_data_config", "asset_id_col_name"] = "asset_id"
     system.config["market_data_config", "delay_in_secs"] = 10
     system.config[
@@ -410,6 +445,7 @@ def apply_Cx_MarketData_config(
     return system
 
 
+# TODO(Grisha): P1, consider removing.
 def apply_Cx_DagRunner_config(
     system: dtfsys.System,
     rt_timeout_in_secs_or_time: Union[int, datetime.time],
@@ -417,71 +453,19 @@ def apply_Cx_DagRunner_config(
     """
     Extend system config with parameters for `DagRunner` init.
     """
-    # TODO(Grisha): infer bar duration from `DagBuilder`.
-    system.config["dag_runner_config", "bar_duration_in_secs"] = 60 * 5
-    system.config["dag_runner_config", "fit_at_beginning"] = system.config[
-        "dag_builder_object"
-    ].fit_at_beginning
+    # TODO(Grisha): @Dan Factor out to `get_trading_period_from_system()`.
+    dag_builder = system.config["dag_builder_object"]
+    dag_config = system.config["dag_config"]
+    mark_key_as_used = False
+    trading_period = dag_builder.get_trading_period(dag_config, mark_key_as_used)
+    system.config["dag_runner_config", "bar_duration_in_secs"] = int(
+        pd.Timedelta(trading_period).total_seconds()
+    )
+    if hasattr(dag_builder, "fit_at_beginning"):
+        system.config[
+            "dag_runner_config", "fit_at_beginning"
+        ] = dag_builder.fit_at_beginning
     system.config[
         "dag_runner_config", "rt_timeout_in_secs_or_time"
     ] = rt_timeout_in_secs_or_time
-    return system
-
-
-def apply_research_pnl_config(system: dtfsys.System) -> dtfsys.System:
-    """
-    Extend system config with parameters for research PNL computations.
-    """
-    dag_builder = system.config["dag_builder_object"]
-    price_col = dag_builder.get_column_name("price")
-    volatility_col = dag_builder.get_column_name("volatility")
-    prediction_col = dag_builder.get_column_name("prediction")
-    system.config["research_pnl", "price_col"] = price_col
-    system.config["research_pnl", "volatility_col"] = volatility_col
-    system.config["research_pnl", "prediction_col"] = prediction_col
-    return system
-
-
-def apply_Cx_ForecastEvaluatorFromPrices_config(
-    system: dtfsys.System,
-) -> dtfsys.System:
-    """
-    Extend system config with parameters for `ForecastEvaluatorFromPrices`
-    init.
-    """
-    forecast_evaluator_from_prices_dict = {
-        "style": "cross_sectional",
-        "init": {
-            "price_col": system.config["research_pnl", "price_col"],
-            "volatility_col": system.config["research_pnl", "volatility_col"],
-            "prediction_col": system.config["research_pnl", "prediction_col"],
-        },
-        "kwargs": {
-            "target_gmv": 1e5,
-            "liquidate_at_end_of_day": False,
-        },
-    }
-    system.config[
-        "research_forecast_evaluator_from_prices"
-    ] = cconfig.Config.from_dict(forecast_evaluator_from_prices_dict)
-    return system
-
-
-def apply_Cx_OrderProcessor_config(system: dtfsys.System) -> dtfsys.System:
-    """
-    Extend system config with parameters for `OrderProcessor` init.
-    """
-    # If an order is not placed within a bar, then there is a timeout, so
-    # we add extra 5 seconds to `bar_duration_in_secs` (which represents
-    # the length of a trading bar) to make sure that the `OrderProcessor`
-    # waits long enough before timing out.
-    max_wait_time_for_order_in_secs = (
-        system.config["dag_runner_config", "bar_duration_in_secs"] + 5
-    )
-    system.config[
-        "order_processor_config", "max_wait_time_for_order_in_secs"
-    ] = max_wait_time_for_order_in_secs
-    system.config["order_processor_config", "duration_in_secs"] = system.config[
-        "dag_runner_config", "rt_timeout_in_secs_or_time"
-    ]
     return system
