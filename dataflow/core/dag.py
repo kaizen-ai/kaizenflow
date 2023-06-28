@@ -24,6 +24,7 @@ import helpers.hobject as hobject
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
+import helpers.hsystem as hsystem
 import helpers.htimer as htimer
 import helpers.hwall_clock_time as hwacltim
 
@@ -624,6 +625,8 @@ class DAG(hobject.PrintableMixin):
         if isinstance(obj, pd.DataFrame):
             df = obj
             # Save high level description about the df.
+            # TODO(Grisha): should we save the df stats only if `self._profile_execution`
+            # is True?
             txt = hpandas.df_to_str(
                 df,
                 print_dtypes=True,
@@ -734,3 +737,84 @@ class DAG(hobject.PrintableMixin):
                 file_tag,
                 extra_txt=txt,
             )
+
+
+# TODO(Grisha): consider creating a class `DagStatsComputer` and moving the
+# function (together with `DAG._write_prof_stats_to_dst_dir()`) there.
+def load_prof_stats_from_dst_dir(
+    dst_dir: str,
+    topological_id: int,
+    nid: str,
+    method: str,
+    output_name: str,
+    bar_timestamp_as_str: str,
+) -> str:
+    """
+    Load information about the system (e.g., time and memory) before or after
+    running a node.
+
+    This function is mirroring `DAG._write_prof_stats_to_dst_dir()`.
+
+    Output example:
+    ```
+    timestamp=20230221_080022
+    memory=rss=0.468GB vms=2.953GB mem_pct=2%
+    node_execution done (5.036 s)
+    run_node done (11.573 s)
+    run_node done: start=(0.439GB 2.933GB 1%) end=(0.468GB 2.953GB 2%) diff=(0.029GB 0.020GB 0%)
+    ```
+
+    :param dst_dir: dir that contains the DAG output
+    :param topological_id, nid, method: information about the node and its method
+    :param output_name: the tag to add to the file (e.g., `after_execution`)
+    :param bar_timestamp_as_str: bar timestamp to load the information for
+    :return: text with information about the system
+    """
+    # E.g., `predict.8.process_forecasts.before_execution.20230221_030500.txt`.
+    file_name = f"{method}.{topological_id}.{nid}.{output_name}.{bar_timestamp_as_str}.txt"
+    file_path = os.path.join(dst_dir, "node_io.prof", file_name)
+    txt = hio.from_file(file_path)
+    return txt
+
+
+# TODO(Grisha): consider creating a class `DagStatsComputer` and moving the
+# function there.
+def load_node_df_out_stats_from_dst_dir(
+    dst_dir: str,
+    topological_id: int,
+    nid: str,
+    method: str,
+    bar_timestamp_as_str: str,
+) -> str:
+    """
+    Load statistics about a node's results df.
+
+    The statistics includes:
+        - df memory consumption
+        - df size
+        - nan statistics
+        - df data types
+
+    :param dst_dir: dir that contains the DAG output
+    :param topological_id, nid, method: information about the node and its method
+    :param bar_timestamp_as_str: bar timestamp to load the information for
+    :return: text with a node's results df statistics
+    """
+    _LOG.debug(
+        hprint.to_str("dst_dir topological_id nid method bar_timestamp_as_str")
+    )
+    node_data_dir = os.path.join(dst_dir, "node_io.data")
+    hdbg.dassert_dir_exists(node_data_dir)
+    # Do include the `wall_clock_timestamp_as_str` to simplify the interface, rather
+    # just search for a file using the pattern.
+    # E.g., `predict.8.process_forecasts.df_out.20230221_030500_20230221_030542.txt`.
+    file_name_pattern = (
+        f"{method}.{topological_id}.{nid}.df_out.{bar_timestamp_as_str}.*.txt"
+    )
+    cmd = f"find '{node_data_dir}' -name {file_name_pattern}"
+    # TODO(Grisha): check that there is exactly one file.
+    _, file_name = hsystem.system_to_string(cmd)
+    _LOG.debug(hprint.to_str("file_name"))
+    file_path = os.path.join(node_data_dir, file_name)
+    txt = hio.from_file(file_path)
+    return txt
