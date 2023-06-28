@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.finance.tca_processing as cfitcpro
+import core.finance.tca_processing as cfitcproc
 """
 import logging
 

@@ -75,7 +75,11 @@ for filename in sys.argv[1:]:
 EOF
 chmod +x $SCRIPT_NAME
 
-if [[ 0 == 1 ]]; then
+#mode="Test"
+#mode="Test_on_file"
+mode="Run_on_everything"
+
+if [[ $mode == "Test" ]]; then
     # To test the process.
     FILE="sorrentum_sandbox/examples/reddit/validate.py"
     echo $FILE
@@ -115,7 +119,18 @@ if [[ 0 == 1 ]]; then
     echo "Before"; $SHOW $FILE | xxd
     $SCRIPT_NAME $FILE
     echo "After"; $SHOW $FILE | xxd
-else
+fi;
+
+if [[ $mode == "Test_on_file" ]]; then
+    # Run on a single file.
+    #FILE="dataflow/core/nodes/test/outcomes/TestArmaDataSource.test1/output/test.txt"
+    #FILE="/Users/saggese/src/cmamp1/dataflow/core/nodes/test/outcomes/TestArmaDataSource.test1/output/test.txt"
+    FILE="/Users/saggese/src/sorrentum1/dataflow/core/nodes/test/outcomes/TestArmaDataSource.test1/output/test.txt"
+    $SCRIPT_NAME $FILE
+fi;
+
+if [[ $mode == "Run_on_everything" ]]; then
+    # Run on everything.
     echo "Make sure that last line terminates with exactly new line (0x0a)"
     find . -name "*.py" -o -name "*.json" | xargs -n 10 $SCRIPT_NAME
     find . -name "*.txt" | grep -v "/output/" | xargs -n 10 $SCRIPT_NAME
