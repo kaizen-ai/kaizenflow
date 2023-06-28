@@ -1,4 +1,4 @@
-            vol_sq_2  vol_sq_2_hat
+            vol_sq.shift_-2  vol_sq.shift_-2_hat
 2000-01-20     0.481           NaN
 2000-01-21     3.262           NaN
 2000-01-24     0.369           NaN

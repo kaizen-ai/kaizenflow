@@ -122,8 +122,7 @@ class Mock1_Time_ForecastSystem_with_DataFramePortfolio(
         return dag
 
     def _get_portfolio(self) -> oms.Portfolio:
-        is_prod = False
-        portfolio = dtfsys.get_DataFramePortfolio_from_System(self, is_prod)
+        portfolio = dtfsys.get_DataFramePortfolio_from_System(self)
         return portfolio
 
     def _get_dag_runner(self) -> dtfsys.RealTimeDagRunner:
