@@ -24,7 +24,10 @@ if [[ ! -d $DIR_NAME ]]; then
 fi;
 
 # Install extensions.
-jupyter contrib nbextension install
+# For some reason it requires a dash between `contrib` and `nbextension` even
+# though it is not mentioned in the official docs.
+# https://jupyter-contrib-nbextensions.readthedocs.io/en/latest/install.html#install-javascript-and-css-files.
+jupyter contrib-nbextension install
 
 # Enable extensions.
 extensions="
@@ -53,7 +56,6 @@ DIR=$(jupyter --data-dir)/nbextensions
 if [[ ! -e $DIR ]]; then
     mkdir $DIR
 fi
-
 cd $DIR
 if [[ -e vim_binding ]]; then
     rm -rf vim_binding
