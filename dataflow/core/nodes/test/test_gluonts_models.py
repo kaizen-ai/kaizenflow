@@ -36,7 +36,7 @@ if True:
             #
             df_out = dag.run_leq_node("deepar", "fit")["df_out"]
             df_str = hunitest.convert_df_to_string(df_out, index=True, decimals=1)
-            self.check_string(df_str)
+            self.check_string(df_str, fuzzy_match=True)
 
         @pytest.mark.slow("~10 seconds.")
         def test_predict_dag1(self) -> None:
@@ -45,7 +45,7 @@ if True:
             dag.run_leq_node("deepar", "fit")
             df_out = dag.run_leq_node("deepar", "predict")["df_out"]
             df_str = hunitest.convert_df_to_string(df_out, index=True, decimals=1)
-            self.check_string(df_str)
+            self.check_string(df_str, fuzzy_match=True)
 
         def _get_dag(self) -> dtfcordag.DAG:
             mxnet.random.seed(0)

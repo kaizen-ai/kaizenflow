@@ -337,9 +337,13 @@ class SingleColumnVolatilityModel(dtfconobas.FitPredictNode):
                 "calculate_vol_pth_root": {
                     "cols": [
                         out_col_prefix + "_vol",
-                        out_col_prefix + "_vol_" + str(self._steps_ahead),
                         out_col_prefix
-                        + "_vol_"
+                        + "_vol"
+                        + ".shift_-"
+                        + str(self._steps_ahead),
+                        out_col_prefix
+                        + "_vol"
+                        + ".shift_-"
                         + str(self._steps_ahead)
                         + "_hat",
                     ],
@@ -348,7 +352,8 @@ class SingleColumnVolatilityModel(dtfconobas.FitPredictNode):
                 "demodulate_using_vol_pred": {
                     "signal_cols": [col],
                     "volatility_col": out_col_prefix
-                    + "_vol_"
+                    + "_vol"
+                    + ".shift_-"
                     + str(self._steps_ahead)
                     + "_hat",
                     "signal_steps_ahead": 0,
