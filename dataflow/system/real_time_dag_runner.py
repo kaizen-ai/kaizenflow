@@ -48,6 +48,8 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         wake_up_timestamp: Optional[pd.Timestamp] = None,
         bar_duration_in_secs: Optional[int] = None,
         set_current_bar_timestamp: bool = True,
+        # TODO(Danya): -> `max_allowed_delay_from_bar_start_in_secs`.
+        max_distance_in_secs: int = 30,
     ) -> None:
         """
         Build object.
@@ -60,6 +62,8 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         :param set_current_bar_timestamp: True if we need to set the timestamp
             of the bar. It requires bar_duration_in_secs to be a multiple of 60 secs,
             since for now we support only bars that last a multiple of one minute.
+        :param max_distance_in_secs: maximal distance that is allowed from the
+            start of the bar.
         """
         super().__init__(dag)
         # Save input parameters.
@@ -72,6 +76,7 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         self._wake_up_timestamp = wake_up_timestamp
         self._bar_duration_in_secs = bar_duration_in_secs
         self._set_current_bar_timestamp = set_current_bar_timestamp
+        self._max_distance_in_secs = max_distance_in_secs
         # Store information about the real-time execution.
         self._events: creatime.Events = []
         _LOG.debug("After RealTimeDagRunner ctor: \n%s", repr(self))
@@ -201,12 +206,11 @@ class RealTimeDagRunner(dtfcore.DagRunner):
             _LOG.debug("Setting current bar time")
             current_timestamp = self._get_wall_clock_time()
             mode = "round"
-            max_distance_in_secs = 10
             bar_timestamp = hdateti.find_bar_timestamp(
                 current_timestamp,
                 self._bar_duration_in_secs,
                 mode=mode,
-                max_distance_in_secs=max_distance_in_secs,
+                max_distance_in_secs=self._max_distance_in_secs,
             )
             _LOG.debug(hprint.to_str("current_timestamp bar_timestamp"))
             _LOG.info("\n%s", hprint.frame("bar_timestamp=%s" % bar_timestamp))
