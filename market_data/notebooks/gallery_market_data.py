@@ -27,9 +27,13 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import im_v2.ccxt.data.client as icdcl
+import im_v2.crypto_chassis.data.client as iccdc
+import market_data.market_data_example as mdmadaex
 
 # %%
-hdbg.init_logger(verbosity=logging.DEBUG)
+log_level = logging.INFO
+hdbg.init_logger(verbosity=log_level)
 
 _LOG = logging.getLogger(__name__)
 
@@ -41,27 +45,23 @@ hprint.config_notebook()
 # # OHLCV market data
 
 # %%
-import pandas as pd
-
-import im_v2.ccxt.data.client as icdcl
-import im_v2.crypto_chassis.data.client as iccdc
-
 # Initialize the client.
+data_version = "v2"
 universe_version = "v4"
 dataset = "ohlcv"
 contract_type = "futures"
 data_snapshot = "20220620"
 im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
+    data_version,
     universe_version,
     dataset,
     contract_type,
-    data_snapshot,
+    data_snapshot=data_snapshot,
 )
 # Set expected values.
 full_symbols = ["binance::BTC_USDT", "binance::ADA_USDT"]
 start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
 end_ts = pd.Timestamp("2022-05-01 13:05:00+00:00")
-
 columns = None
 filter_data_mode = "assert"
 actual_df = im_client.read_data(
@@ -77,11 +77,8 @@ asset_ids = im_client.get_asset_ids_from_full_symbols(symbols)
 print(asset_ids)
 
 # %%
-import market_data.market_data_example as mdmadaex
-
 columns = None
 column_remap = None
-
 market_data = mdmadaex.get_HistoricalImClientMarketData_example1(
     im_client, asset_ids, columns, column_remap
 )
@@ -92,14 +89,13 @@ market_data = mdmadaex.get_HistoricalImClientMarketData_example1(
 start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
 end_ts = pd.Timestamp("2022-05-02 13:05:00+00:00")
 ts_col_name = "knowledge_timestamp"
-
 df = market_data.get_data_for_interval(
     start_ts,
     end_ts,
     ts_col_name,
     asset_ids,
 )
-hpandas.df_to_str(df)
+hpandas.df_to_str(df, log_level=log_level)
 
 # %%
 data_source_node = dtfsys.HistoricalDataSource(
@@ -113,21 +109,19 @@ data_source_node.set_fit_intervals([(start_ts, end_ts)])
 
 # %%
 data = data_source_node.fit()["df_out"]
-hpandas.df_to_str(data)
+hpandas.df_to_str(data, log_level=log_level)
 
 # %% [markdown]
 # # Stitched OHLCV and bid/ask data
 
 # %%
 universe_version = "v4"
-resample_1min = True
 contract_type = "futures"
 data_snapshot = "20220707"
 #
 dataset1 = "ohlcv"
 im_client1 = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
     universe_version,
-    resample_1min,
     dataset1,
     contract_type,
     data_snapshot,
@@ -136,7 +130,6 @@ im_client1 = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
 dataset2 = "bid_ask"
 im_client2 = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
     universe_version,
-    resample_1min,
     dataset2,
     contract_type,
     data_snapshot,
@@ -178,14 +171,13 @@ market_data = mdmadaex.get_HorizontalStitchedMarketData_example1(
 start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
 end_ts = pd.Timestamp("2022-05-02 13:05:00+00:00")
 ts_col_name = "knowledge_timestamp"
-
 df = market_data.get_data_for_interval(
     start_ts,
     end_ts,
     ts_col_name,
     asset_ids,
 )
-hpandas.df_to_str(df)
+hpandas.df_to_str(df, log_level=log_level)
 
 # %%
 data_source_node = dtfsys.HistoricalDataSource(
@@ -199,6 +191,4 @@ data_source_node.set_fit_intervals([(start_ts, end_ts)])
 
 # %%
 data = data_source_node.fit()["df_out"]
-hpandas.df_to_str(data)
-
-# %%
+hpandas.df_to_str(data, log_level=log_level)

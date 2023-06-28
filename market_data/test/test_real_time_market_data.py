@@ -23,8 +23,9 @@ class TestRealTimeMarketData2(
     def setUp(self) -> None:
         super().setUp()
         # Create test table.
+        universe_version = "infer_from_data"
         im_client = icdc.get_mock_realtime_client(
-            self.connection, resample_1min=True
+            universe_version, self.connection, resample_1min=True
         )
         # Set up market data client.
         self.market_data = mdmadaex.get_RealtimeMarketData2_example1(im_client)

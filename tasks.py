@@ -106,17 +106,17 @@ try:
         binance_get_open_positions,
         binance_flatten_account,
     )
-except ImportError as e:
+except ImportError:
     pass
-# # TODO(gp): This is due to the coupling between code in linter container and
-# #  the code being linted.
-# try:
-#     from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
-#         docker_update_prod_task_definition,
-#     )
-# except ImportError as e:
-#     #print(e)
-#     pass
+
+# TODO(gp): This is due to the coupling between code in linter container and
+#  the code being linted.
+try:
+    from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
+        integrate_file,
+    )
+except ImportError as e:
+    print(e)
 
 
 _LOG = logging.getLogger(__name__)
