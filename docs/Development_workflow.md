@@ -1,5 +1,7 @@
 # Development Workflow
+
 <!-- toc -->
+
 - [Setting up Git credentials](#setting-up-git-credentials)
   * [Preamble](#preamble)
   * [Check Git credentials](#check-git-credentials)
@@ -17,10 +19,6 @@
   * [Extract a PR from a larger one](#extract-a-pr-from-a-larger-one)
     + [Using git](#using-git)
   * [Systematic code transformation](#systematic-code-transformation)
-  * [Replace `check_string` with `assert_equal`](#replace-check_string-with-assert_equal)
-  * [Run unit tests with coverage](#run-unit-tests-with-coverage)
-  * [Munge list of failed tests](#munge-list-of-failed-tests)
-- [Docker](#docker)
   * [Generate a local `amp` Docker image](#generate-a-local-amp-docker-image)
   * [Update the dev `amp` Docker image](#update-the-dev-amp-docker-image)
   * [Experiment in a local image](#experiment-in-a-local-image)
@@ -39,23 +37,24 @@
     + [Using the dev box](#using-the-dev-box)
     + [Using Windows browser](#using-windows-browser)
 - [How to create a private fork](#how-to-create-a-private-fork)
-- [Integrate public to private: amp -> cmamp](#integrate-public-to-private-amp---cmamp)
+- [Integrate public to private: `amp` -> `cmamp`](#integrate-public-to-private-amp---cmamp)
   * [Set-up](#set-up)
   * [Ours vs theirs](#ours-vs-theirs)
   * [Sync the repos (after double integration)](#sync-the-repos-after-double-integration)
   * [Updated sync](#updated-sync)
   * [Check that things are fine](#check-that-things-are-fine)
-  * [Integrate private to public: cmamp -> amp](#integrate-private-to-public-cmamp---amp)
+  * [Integrate private to public: `cmamp` -> `amp`](#integrate-private-to-public-cmamp---amp)
   * [Squash commit of everything in the branch](#squash-commit-of-everything-in-the-branch)
-- [Double integration cmamp amp](#double-integration-cmamp--amp)
+- [Double integration `cmamp` `amp`](#double-integration-cmamp--amp)
   * [Script set-up](#script-set-up)
   * [Manual set-up branches](#manual-set-up-branches)
   * [High-level plan](#high-level-plan)
-  * [Sync `im` cmamp -> amp](#sync-im-cmamp---amp)
+  * [Sync `im` `cmamp` -> `amp`](#sync-im-cmamp---amp)
   * [Sync everything](#sync-everything)
   * [Files that need to be different](#files-that-need-to-be-different)
     + [Lint everything](#lint-everything)
     + [Testing](#testing)
+
 <!-- tocstop -->
 
 # Setting up Git credentials
@@ -78,26 +77,26 @@
 
 - You can check the Git credentials that will be used to commit in a client by
   running:
-  ```
+  ```bash
   > git config -l | grep user
   user.name=saggese
   user.email=saggese@gmail.com
   github.user=gpsaggese
   ```
 - To know at which level each variable is defined, run
-  ````
+  ```bash
   > git config --show-origin user.name
-  file:/Users/saggese/.gitconfig saggese```
-  ````
-- You can see all the `Authors` in a Git repo history with:
+  file:/Users/saggese/.gitconfig saggese
   ```
+- You can see all the `Authors` in a Git repo history with:
+  ```bash
   > git log | grep -i Author | sort | uniq
   ...
   ```
 - Git doesn't do any validation of `user.name` and `user.email` but it just uses
   these values to compose a commit message like:
 
-  ```
+  ```bash
   > git log -2
   commit 31052d05c226b1c9834d954e0c3d5586ed35f41e (HEAD ->
   AmpTask1290_Avoid_committing_to_master_by_mistake)
@@ -117,12 +116,12 @@
 - To accomplish the set-up above you can:
   - use in `/Users/saggese/.gitconfig` the values for our open-source account,
     so that they are used by default
-  ```
+  ```bash
   > git config --global user.name $(whoami)
   > git config --global user.email YOUR_EMAIL
   ```
 - use the correct user / email in the repos that are not open-source
-  ```
+  ```bash
   > cd $GIT_ROOT
   > git config --local user.name $(whoami)
   > git config --local user.email YOUR_EMAIL
@@ -141,7 +140,7 @@
 - TODO(gp): We could create a script to automate cloning a repo and setting it
   up.
 
-  ```
+  ```bash
   > cd //amp
   > ./dev_scripts/git/git_hooks/install_hooks.py --action install
   > cd //lem
@@ -155,7 +154,7 @@
 # Create the env
 
 - You can follow the
-  ```
+  ```bash
   # Build the client env
   > dev_scripts/client_setup/build.sh
   > source dev_scripts/setenv_amp.sh
@@ -180,7 +179,7 @@
 - The best approach to getting familiar with the tasks is to browse the list and
   then check the output of the help
 
-  ```
+  ```bash
   > invoke --help command
   > i -h gh_issue_title
   Usage: inv[oke] [--core-opts] gh_issue_title [--options] [other tasks here ...]
@@ -202,7 +201,7 @@
 
 ## Listing all the tasks
 
-```
+```bash
 > invoke --list
 INFO: > cmd='/Users/saggese/src/venv/amp.client_venv/bin/invoke --list'
 Available tasks:
@@ -233,7 +232,7 @@ docker_rollback_dev_image Rollback the version of the dev image.
 docker_rollback_prod_image Rollback the version of the prod image.
 docker_stats Report last started Docker container stats, e.g., CPU, RAM.
 docker_tag_local_image_as_dev (ONLY CI/CD) Mark the "local" image as "dev".
-find_check_string_output Find output of `check_string()` in the test running
+find_check_string_output Find output of check_string() in the test running
 find_test_class Report test files containing `class_name` in a format compatible
 with
 find_test_decorator Report test files containing `class_name` in pytest format.
@@ -250,7 +249,7 @@ branching point.
 git_branch_files Report which files were added, changed, and modified in the
 current branch
 git_branch_next_name Return a name derived from the branch so that the branch
-doesn't exist.
+does not exist.
 git_clean Clean the repo_short_name and its submodules from artifacts.
 git_create_branch Create and push upstream branch `branch_name` or the one
 corresponding to
@@ -296,7 +295,7 @@ traceback Parse the traceback from Pytest and navigate it with vim.
   - `optimizer/opt_lib_tasks.py` - tasks to be run in `cmamp/optimizer`
 - All invoke tasks are functions with the `@task` decorator, e.g.,
 
-  ```
+  ```python
   from invoke import task
 
   @task
@@ -319,16 +318,16 @@ traceback Parse the traceback from Pytest and navigate it with vim.
 
 ## GitHub
 
-```
-Get the official branch name corresponding to an Issue
+- Get the official branch name corresponding to an Issue
 
-> i gh_issue_title -i 256
-## gh_issue_title: issue_id='256', repo_short_name='current'
+  ```bash
+  > i gh_issue_title -i 256
+  ## gh_issue_title: issue_id='256', repo_short_name='current'
 
-# Copied to system clipboard:
-AmpTask256_Part_task2236_jenkins_cleanup_split_scripts:
-https://github.com/alphamatic/amp/pull/256
-```
+  # Copied to system clipboard:
+  AmpTask256_Part_task2236_jenkins_cleanup_split_scripts:
+  https://github.com/alphamatic/amp/pull/256
+  ```
 
 ## See all the workflows
 
@@ -342,7 +341,7 @@ https://github.com/alphamatic/amp/pull/256
 - Once in a while it can be useful to list all the available workflows and see
   if something interesting was added.
 
-  ```
+  ```bash
   > invoke --list
   Available tasks:
 
@@ -355,7 +354,7 @@ https://github.com/alphamatic/amp/pull/256
 
 - You can get a more detailed help with
 
-  ```
+  ```bash
   > invoke --help run_fast_tests
   Usage: inv[oke] [--core-opts] run_fast_tests [--options] [other tasks here ...]
 
@@ -382,7 +381,7 @@ https://github.com/alphamatic/amp/pull/256
 
 ## Merge master in the current branch
 
-```
+```bash
 > i git_merge_master
 ```
 
@@ -405,7 +404,7 @@ TODO(gp): Describe
 - This workflow allows you to develop and regress / merge without too much
   hassle solving the problem of "stacked PRs".
 
-  ```
+  ```bash
   # Go to the client with the branch that you want to divvy up.
   > git checkout ${feature_branch}
 
@@ -428,7 +427,7 @@ TODO(gp): Describe
   which I develop for this kind of operations) or go to master in the same Git
   client
 
-  ```
+  ```bash
   # Go to master
   > git checkout master
 
@@ -467,7 +466,7 @@ TODO(gp): Describe
 
 ### Using git
 
-```
+```bash
 > git checkout `dst_branch`
 > git merge --squash --ff `src_branch`
 > git reset HEAD
@@ -475,15 +474,7 @@ TODO(gp): Describe
 
 ## Systematic code transformation
 
-- See the help of amp/dev_scripts/replace_text.py
-
-## Replace `check_string` with `assert_equal`
-
-## Run unit tests with coverage
-
-## Munge list of failed tests
-
-# Docker
+- See the help of `amp/dev_scripts/replace_text.py`
 
 ## Generate a local `amp` Docker image
 
@@ -492,7 +483,7 @@ TODO(gp): Describe
 - The flow is similar to the dev image, but by default tests are not run and the
   image is not released.
 
-  ```
+  ```bash
   Build the local image (and update Poetry dependencies, if needed).
 
   > i docker_build_local_image --update-poetry
@@ -520,7 +511,7 @@ TODO(gp): Describe
 
 - To implement the entire Docker QA process of a dev image
 
-  ```
+  ```bash
   Clean all the Docker images locally, to make sure there is no hidden state.
   > docker system prune --all
 
@@ -538,7 +529,7 @@ TODO(gp): Describe
 
 - To install packages in an image, do `i docker_bash`
 
-  ```
+  ```bash
   # Switch to root and install package.
   > sudo su -
   > source /venv/bin/activate
@@ -549,7 +540,7 @@ TODO(gp): Describe
   ```
 
 - You should test that the package is installed for your user, e.g.,
-  ```
+  ```bash
   > source /venv/bin/activate python -c "import foobar; print(foobar);print(foobar.__version__)"
   ```
 - You can now use the package in this container. Note that if you exit the
@@ -562,17 +553,17 @@ TODO(gp): Describe
     `da8f3bb8f53b`
   - by listing running containers, e.g., run `docker ps` outside the container
 - Commit image
-  ```
+  ```bash
   > docker commit <Container ID> <IMAGE>/cmamp:local-$USER
   ```
-    - E.g.
-          `docker commit da8f3bb8f53b 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:local-julias`
+  - E.g.
+    `docker commit da8f3bb8f53b 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:local-julias`
 - If you are running inside a notebook using `i docker_jupyter` you can install
   packages using a one liner `! sudo su -; source ...; `
 
 # GitHub Actions (CI)
 
-```
+```bash
 ## Running a single test in GH Actions
 
 Create a branch
@@ -596,20 +587,20 @@ branch
 
 ## Run with coverage
 
-```
+```bash
 > i run_fast_tests --pytest-opts="core/test/test_finance.py" --coverage
 ```
 
 ## Iterating on stacktrace of failing test
 
 - Inside docker bash
-  ```
+  ```bash
   > pytest ...
   ```
 - The test fails: switch to using `pytest.sh` to save the stacktrace to a file
 - Then from outside Docker launch vim in quickfix mode
 
-  ```
+  ```bash
   > invoke traceback
   ```
 
@@ -619,7 +610,7 @@ branch
 
 - The workflow is:
 
-  ```
+  ```bash
   # Run a lot of tests, e.g., the entire regression suite.
   > pytest ...
   # Some tests fail.
@@ -632,7 +623,7 @@ branch
 
 - The command is
 
-  ```
+  ```bash
   > i pytest_find_unused_goldens
   ```
 
@@ -692,7 +683,7 @@ branch
 
 - Make sure that your environment is set up properly
 
-  ```
+  ```bash
   > more ~/.aws/credentials
   [am]
   aws_access_key_id=**
@@ -706,7 +697,7 @@ branch
 - If you don't have them, you need to re-run `source dev_scripts/setenv.sh` in
   all the shells. It might be easier to kill that tmux session and restart it
 
-  ```
+  ```bash
   > tmux kill-session --t limeXYZ
 
   > ~/go_lem.sh XYZ
@@ -714,20 +705,20 @@ branch
 
 - Inside or outside a Docker bash run
 
-  ```
+  ```bash
   > publish_notebook.py --file http://127.0.0.1:2908/notebooks/notebooks/Task40_Optimizer.ipynb --action publish_on_s3
   ```
 
 - The file is copied to S3
 
-  ```
+  ```bash
   Copying './Task40_Optimizer.20210717_010806.html' to
   's3://alphamatic-data/notebooks/Task40_Optimizer.20210717_010806.html'
   ```
 
 - You can also save the data locally:
 
-  ```
+  ```bash
   > publish_notebook.py --file
   amp/oms/notebooks/Master_forecast_processor_reader.ipynb --action publish_on_s3
   --aws_profile saml-spm-sasm
@@ -735,7 +726,7 @@ branch
 
 - You can also use a different path or profile by specifying it directly
 
-  ```
+  ```bash
   > publish_notebook.py \
   --file http://127.0.0.1:2908/notebooks/notebooks/Task40_Optimizer.ipynb \
   --action publish_on_s3 \
@@ -747,7 +738,7 @@ branch
 
 ### Start a server
 
-- (cd /local/home/share/html/published_notebooks; python3 -m http.server 8000)
+- `(cd /local/home/share/html/published_notebooks; python3 -m http.server 8000)`
 
 - go to the page in the local browser
 
@@ -755,7 +746,7 @@ branch
 
 - To open a notebook saved on S3, \*outside\* a Docker container run:
 
-  ```
+  ```bash
   > publish_notebook.py --action open --file
   s3://alphamatic-data/notebooks/Task40_Optimizer.20210717_010806.html
   ```
@@ -763,18 +754,18 @@ branch
 - This opens a Chrome window through X-windows.
 - To open files faster you can open a Chrome window in background with
 
-  ```
+  ```bash
   > google-chrome
   ```
 
 - and then navigate to the path (e.g.,
-  /local/home/share/html/published_notebooks/Master_forecast_processor_reader.20220810-112328.html)
+  `/local/home/share/html/published_notebooks/Master_forecast_processor_reader.20220810-112328.html`)
 
 ### Using Windows browser
 
 - Another approach is:
 
-  ```
+  ```bash
   > aws s3 presign --expires-in 36000
   s3://alphamatic-data/notebooks/Task40_Optimizer.20210716_194400.html | xclip
   ```
@@ -789,7 +780,7 @@ branch
 - From
   https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/duplicating-a-repository
 
-  ```
+  ```bash
   > git clone --bare git@github.com:alphamatic/amp.git amp_bare
 
   > git push --mirror https://github.com/cryptomtc/cmamp.git
@@ -797,11 +788,11 @@ branch
 
 - It worked only as cryptomtc, but not using my key
 
-# Integrate public to private: amp -> cmamp
+# Integrate public to private: `amp` -> `cmamp`
 
 ## Set-up
 
-```
+```bash
 > git remote add public git@github.com:alphamatic/amp
 
 # Go to cmamp
@@ -833,7 +824,7 @@ public git@github.com:alphamatic/amp(push)
 
 ## Sync the repos (after double integration)
 
-```
+```bash
 > git fetch origin; git fetch public
 
 # Pull from both repos
@@ -846,7 +837,7 @@ You might want to use `git pull -X theirs` or `ours`
 
 > git pull public master -s recursive -X ours
 
-When there is a file added it's better to add
+When there is a file added it is better to add
 
 > git diff --name-status --diff-filter=U | awk '{print $2}'
 
@@ -875,13 +866,13 @@ nothing to commit, working tree clean
 
 ## Updated sync
 
-```
+```bash
 > git fetch origin; git fetch public
 ```
 
 ## Check that things are fine
 
-```
+```bash
 > git diff origin/master... >patch.txt
 
 > cd /Users/saggese/src/cmamp2
@@ -902,9 +893,9 @@ nothing to commit, working tree clean
 > git push origin master
 ```
 
-## Integrate private to public: cmamp -> amp
+## Integrate private to public: `cmamp` -> `amp`
 
-```
+```bash
 > cd /data/saggese/src/cmamp1
 > tar cvzf patch.tgz $(git diff --name-onlyorigin/master public/master | grep -v repo_config.py)
 
@@ -925,7 +916,7 @@ nothing to commit, working tree clean
 - From
   https://stackoverflow.com/questions/25356810/git-how-to-squash-all-commits-on-branch
 
-  ```
+  ```bash
   > git checkout yourBranch
   > git reset $(git merge-base master $(git branch
   --show-current))
@@ -934,13 +925,13 @@ nothing to commit, working tree clean
   > git push --force
   ```
 
-# Double integration cmamp < -- > amp
+# Double integration `cmamp` < -- > `amp`
 
 - The bug is https://github.com/alphamatic/amp/issues/1786
 
 ## Script set-up
 
-```
+```bash
 > vi /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
 Update the date
 
@@ -955,7 +946,7 @@ Update the date
 
 ## Manual set-up branches
 
-```
+```bash
 # Go to cmamp1
 > go_amp.sh cmamp 1
 
@@ -983,15 +974,15 @@ Create two branches
 ## High-level plan
 
 - SUBDIR=im
-  - Typically cmamp is copied on top of amp
+  - Typically `cmamp` is copied on top of `amp`
 - SUBDIR=devops
-  - cmamp and amp need to be different (until we unify the Docker flow)
+  - `cmamp` and `amp` need to be different (until we unify the Docker flow)
 - Everything else
-  - Typically amp -> cmamp
+  - Typically `amp` -> `cmamp`
 
-## Sync `im` cmamp -> amp
+## Sync `im` `cmamp` -> `amp`
 
-```
+```bash
 SUBDIR=im
 
 # Check different files
@@ -1060,7 +1051,7 @@ cd+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/output/
 
 ## Sync everything
 
-```
+```bash
 # Check if there is anything in cmamp more recent than amp
 > rsync -au --exclude='.git' --exclude='devops' $CMAMP_DIR/ $AMP_DIR
 
@@ -1087,11 +1078,11 @@ $CMAMP_DIR
 
 ## Files that need to be different
 
-- amp needs an `if False` helpers/lib_tasks.py
+- `amp` needs an `if False` `helpers/lib_tasks.py`
 
-- amp needs two tests disabled im/ccxt/data/load/test/test_loader.py
+- `amp` needs two tests disabled `im/ccxt/data/load/test/test_loader.py`
 
-  im/ccxt/data/load/test/test_loader.py
+  `im/ccxt/data/load/test/test_loader.py`
 
 TODO(gp): How to copy files in vimdiff including last line?
 
@@ -1099,7 +1090,7 @@ TODO(gp): How to copy files in vimdiff including last line?
 - Some files end with an `0x0a`
 - tr -d '\\r'
 
-  ```
+  ```bash
   > find . -name "\*.txt" | xargs perl -pi -e 's/\\r\\n/\\n/g'
   # Remove `No newline at end of file`
   > find . -name "\*.txt" | xargs perl -pi -e 'chomp if eof'
@@ -1107,7 +1098,7 @@ TODO(gp): How to copy files in vimdiff including last line?
 
 ### Lint everything
 
-```
+```bash
 > autoflake amp_check_filename amp_isort amp_flake8 amp_class_method_order
 amp_normalize_import amp_format_separating_line amp_black
 
@@ -1117,9 +1108,9 @@ amp_format_separating_line amp_black" --files='$(find . -name "\*.py")'
 
 ### Testing
 
-- Run amp on my laptop (or on the server)
-- IN PROGRESS: Get amp PR to pass on GH
+- Run `amp` on my laptop (or on the server)
+- IN PROGRESS: Get `amp` PR to pass on GH
 - IN PROGRESS: Run lemonade on my laptop
-- Run cmamp on the dev server
-- Get cmamp PR to pass on GH
+- Run `cmamp` on the dev server
+- Get `cmamp` PR to pass on GH
 - Run dev_tools on the dev server
