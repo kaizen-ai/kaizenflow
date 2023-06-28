@@ -26,17 +26,32 @@ _LOG = logging.getLogger(__name__)
 def _parse() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "github_username",
+        "--github_username",
         type=str,
-        help="GitHub username to check",
+        required=True,
+        help="Github username that you are providing the permissions",
+    )
+    parser.add_argument(
+        "--owner_username",
+        type=str,
+        required=True,
+        help="Owner's username of the repository",
+    )
+    parser.add_argument(
+        "--repo_name",
+        type=str,
+        required=True,
+        help="Repository name",
+    )
+    parser.add_argument(
+        "--access_token",
+        type=str,
+        required=True,
+        help="Owner's generated access token",
     )
     return parser.parse_args()
 
 
-#:param owner_username: owner username.
-#:param repo_name: repository name.
-#:param access_token: generate access token.
-#:param github_username: collaborator's github username.
 def check_collaborator(
     owner_username: str,
     repo_name: str,
@@ -148,23 +163,13 @@ def check_collaborator(
         )
 
 
-def _main(args: argparse.Namespace) -> None:
-    # Provide the necessary values for owner username, repo name, and access token.
-    owner_username = "owner username"
-    repo_name = "repo name"
-    access_token = "access token"
+def main() -> None:
+    args = _parse()
 
-    # Check collaborator status for the provided GitHub username.
-    check_collaborator(
-        owner_username, repo_name, access_token, args.github_username
-    )
+    owner_username = args.owner_username
+    repo_name = args.repo_name
+    access_token = args.access_token
 
-    # Provide the necessary values for owner username, repo name, and access token.
-    owner_username = "owner_username"
-    repo_name = "repo_name"
-    access_token = "access_token"
-
-    # Check collaborator status for the provided GitHub username.
     check_collaborator(
         owner_username,
         repo_name,
@@ -174,4 +179,5 @@ def _main(args: argparse.Namespace) -> None:
 
 
 if __name__ == "__main__":
-    _main(_parse())
+    logging.basicConfig(level=logging.DEBUG)
+    main()
