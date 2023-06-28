@@ -437,7 +437,7 @@ TODO(gp): Describe
   > /Users/saggese/src/lemonade1/amp/patch.amp.8f9cda97.20210609_080439.patch
 
   # This patch should apply cleanly and with no errors from git, otherwise it means
-  that your feature branch doesn't have the latest master
+  that your feature branch does not have the latest master
 
   # Remove what you don't want to commit.
 
@@ -484,7 +484,7 @@ TODO(gp): Describe
   image is not released.
 
   ```bash
-  Build the local image (and update Poetry dependencies, if needed).
+  # Build the local image (and update Poetry dependencies, if needed).
 
   > i docker_build_local_image --update-poetry
   ...
@@ -512,7 +512,7 @@ TODO(gp): Describe
 - To implement the entire Docker QA process of a dev image
 
   ```bash
-  Clean all the Docker images locally, to make sure there is no hidden state.
+  # Clean all the Docker images locally, to make sure there is no hidden state.
   > docker system prune --all
 
   # Update the needed packages.
@@ -577,8 +577,7 @@ run: invoke run_fast_tests
 --pytest-opts="helpers/test/test_git.py::Test_git_modified_files1::test_get_modified_files_in_branch1
 -s --dbg"
 
-In the current implementation (where we try to not run for branches) to run in a
-branch
+# In the current implementation (where we try to not run for branches) to run in a branch
 ```
 
 # pytest
@@ -831,13 +830,13 @@ public git@github.com:alphamatic/amp(push)
 
 > git pull public master -X ours
 
-You might want to use `git pull -X theirs` or `ours`
+# You might want to use `git pull -X theirs` or `ours`
 
 > git pull -X theirs
 
 > git pull public master -s recursive -X ours
 
-When there is a file added it is better to add
+# When there is a file added it is better to add
 
 > git diff --name-status --diff-filter=U | awk '{print $2}'
 
@@ -955,7 +954,7 @@ Update the date
 CMAMP_DIR=/Users/saggese/src/cmamp1; echo "$AMP_DIR"; ls
 $AMP_DIR; echo "$CMAMP_DIR"; ls $CMAMP_DIR
 
-Create two branches
+# Create two branches
 > export BRANCH_NAME=AmpTask1786_Integrate_20211010 export BRANCH_NAME=AmpTask1786_Integrate_2021117
 ...
 > cd $AMP_DIR
