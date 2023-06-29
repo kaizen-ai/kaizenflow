@@ -26,7 +26,7 @@ packages) inside to run certain applications/code.
 
 -   All steps needed to create the image and run it are defined in a
     Dockerfile, e.g.
-    \`dev_tools/devops/docker_build/dev.Dockerfile\`
+    `dev_tools/devops/docker_build/dev.Dockerfile`
 
 ## Docker container 
 ---------------------
@@ -44,40 +44,40 @@ for docker images is like GitHub for code.
 ========================
 
 We always want to separate things that don\'t need to run together in
-different containers (e.g., \`dev / prod cmamp\`, \`optimizer\`, \`im\`,
-\`oms\`, \`dev_tools\`), along a logic of "independently runnable /
-deployable directories".
+different containers (e.g., `dev / prod cmamp`, `optimizer`, `im`,
+`oms`, `dev_tools`), along a logic of \"independently runnable /
+deployable directories\".
 
 The problem is that when we put too many dependencies in a single
 container, trying to simplify the release approach we start having huge
 containers that are difficult to deploy and are unstable in terms of
-building even using \`poetry\`.
+building even using `poetry`.
 
-Each dir that can be "deployed" and run should have a \`devops\` dir
+Each dir that can be \"deployed\" and run should have a `devops` dir
 to build / qa / release containers with all the needed dependencies
 
 Certain containers that need to be widely available to the team and
 deployed go through the release process and ECR
 
 Other containers that are lightweight and used only by one person (e.g.,
-the \`infra\` container) can be built on the fly using \`docker
-compose\` / \`docker build\`.
+the `infra` container) can be built on the fly using `docker
+compose` / `docker build`.
 
 ## Thin client
 --------------------
 
-To bootstrap the system we use a "thin client" which installs in a
+To bootstrap the system we use a \"thin client\" which installs in a
 virtual env the minimum set of packages to run (e.g., installs
-\`invoke\`, \`docker\`, etc).
+`invoke`, `docker`, etc).
 
 TODO(gp): Audit / make sure we can simplify the thin env
 
 ## amp / cmamp container
 ------------------------------
 
-The \`dev\` version is used to develop
+The `dev` version is used to develop
 
-The \`prod\` version can be used for deployment as shortcut to creating
+The `prod` version can be used for deployment as shortcut to creating
 a smaller container with only the strictly needed dependencies
 
 ## Prod container
@@ -90,7 +90,7 @@ that specific prod scripts need
 ## Infra container
 ------------------------
 
-1)  To run infra script, if we only need \`boto3\` and \`moto\`, we can
+1)  To run infra script, if we only need `boto3` and `moto`, we can
 
 -   create a Python library
 
@@ -99,14 +99,14 @@ that specific prod scripts need
 ```
 -   create a script interface
 
--   create an \`invoke\` task that calls \`i docker_cmd --cmd ...\`
+-   create an `invoke` task that calls `i docker_cmd --cmd ...`
     reusing the cmamp container, (since that container already has
-    \`boto3\` and \`moto\` that are dependencies we can\'t remove)
+    `boto3` and `moto` that are dependencies we can\'t remove)
 
-    -   This approach is similar to calling the \`linter\`
+    -   This approach is similar to calling the `linter`
 
 2)  If we think we need to add new packages only for running infra
-    scripts then we will create a new \`infra\` container.
+    scripts then we will create a new `infra` container.
 
 -   We can build on the fly and not release through ECR)
 
@@ -131,15 +131,15 @@ We can start with approach 1), which will also allow us to transition to
 Poetry is a tool for managing Python packages and dependencies:
 
 -   List packages you want to install with some constraints, e.g.,
-    \`pandas\` must be above 1.0 in
-    \`devops/docker_build/pyproject.toml\`
+    `pandas` must be above 1.0 in
+    `devops/docker_build/pyproject.toml`
 
 -   Given a list of packages you need to install to get the desired
-    environment, you want \`poetry\` to "optimize" the packages and
-    generate \`devops/docker_build/poetry.lock\`, which contains the
+    environment, you want `poetry` to \"optimize\" the packages and
+    generate `devops/docker_build/poetry.lock`, which contains the
     list of versions of the packages to install
 
--   If there is a new version of a package re-running \`poetry\` might
+-   If there is a new version of a package re-running `poetry` might
     give you an updated list of packages to install
 
 # Build a Docker image
@@ -148,149 +148,149 @@ Poetry is a tool for managing Python packages and dependencies:
 ## General
 ------------
 
-A docker image is built from a \`Dockerfile\`. The image is then used to
+A docker image is built from a `Dockerfile`. The image is then used to
 run a Docker container.
 
 ![](docs/@Tools_Docker_Test_figs/media/image1.png){width="6.267716535433071in"
 height="3.0972222222222223in"}
 
-There is \`/devops\` dir under a project's dir that contains
-Docker-related files, e.g. \`cmamp/devops\`.
+There is `/devops` dir under a project's dir that contains
+Docker-related files, e.g. `cmamp/devops`.
 
 ## Dockerfile
 ---------------
 
-A \`Dockerfile\` is a text document that contains all the commands to
+A `Dockerfile` is a text document that contains all the commands to
 call on the command line to assemble an image. E.g.
-\`cmamp/devops/docker_build/dev.Dockerfile\`.
+`cmamp/devops/docker_build/dev.Dockerfile`.
 
 ### Base image
 
-A \`Dockerfile\` should start with specifying a base image.
+A `Dockerfile` should start with specifying a base image.
 
 Base image is an image that a new image is built from. A new Docker
 image will have all the packages/dependencies that are installed in the
 base image.
 
-Use \`FROM\` statement to specify a base image, e.g.
+Use `FROM` statement to specify a base image, e.g.
 
-\`\`\`
+```
 
-FROM ubuntu:20.4\`
+FROM ubuntu:20.4`
 
-\`\`\`
+```
 
 ### Copy files
 
 Copy files that are required to build a Docker image to the Docker
 filesystem.
 
-To copy a file from \`/source_dir\` (your filesystem) to \`/dst_dir\`
+To copy a file from `/source_dir` (your filesystem) to `/dst_dir`
 (Docker filesystem) do:
 
-\`\`\`
+```
 
 COPY source_dir/file dst_dir
 
-\`\`\`
+```
 
-E.g., the command below will copy \`install_packages.sh\` from
-\`devops/docker_build\` to the Docker's root directory so that
-\`install_packages.sh\` can be accessed by Docker.
+E.g., the command below will copy `install_packages.sh` from
+`devops/docker_build` to the Docker's root directory so that
+`install_packages.sh` can be accessed by Docker.
 
-\`\`\`
+```
 
 COPY devops/docker_build/install_packages.sh .
 
-\`\`\`
+```
 
 ### Install OS packages
 
 Install OS packages that are needed for a Docker app, but that are not
 installed for a base image.
 
-Use \`RUN\` instruction to install a package, e.g.
+Use `RUN` instruction to install a package, e.g.
 
-\`\`\`
+```
 
 RUN apt-get install postgresql-client
 
-\`\`\`
+```
 
-Alternatively you can package all installation instructions in a \`.sh\`
-file and run it. Do not forget to copy a \`.sh\` file to the Docker
+Alternatively you can package all installation instructions in a `.sh`
+file and run it. Do not forget to copy a `.sh` file to the Docker
 filesystem so that Docker can see it. E.g.,
 
-\`\`\`
+```
 
 COPY devops/docker_build/install_packages.sh .
 
 RUN /bin/sh -c "./install_packages.sh"
 
-\`\`\`
+```
 
 ### Install Python packages
 
-We prefer to install Python packages with \`poetry \`.
+We prefer to install Python packages with `poetry `.
 
-Make sure that there is instruction to install \`pip3\` and \`poetry\`.
-You can either put it in a \`Dockerfile\` or in a separate file like
-\`install_packages.sh\`.
+Make sure that there is instruction to install `pip3` and `poetry`.
+You can either put it in a `Dockerfile` or in a separate file like
+`install_packages.sh`.
 
-\`\`\`
+```
 
 RUN apt-get install python3-pip
 
 RUN pip3 install poetry
 
-\`\`\`
+```
 
 Copy poetry-related files to the Docker filesystem so that files can be
 accessed by Docker
 
-\`\`\`
+```
 
 COPY devops/docker_build/poetry.toml
 
 COPY devops/docker_build/poetry.lock
 
-\`\`\`
+```
 
 Update Python packages
 
-\`\`\`
+```
 
 RUN poetry install
 
-\`\`\`
+```
 
 ## Build an image from a Dockerfile
 -------------------------------------
 
-To build an image from a \`Dockerfile\` run:
+To build an image from a `Dockerfile` run:
 
-\`\`\`
+```
 
 > docker build .
 
-\`\`\`
+```
 
-The \`Dockerfile\` must be called \`Dockerfile\` and located in the root
+The `Dockerfile` must be called `Dockerfile` and located in the root
 of the context.
 
-You can point to any \`Dockerfile\` by using \`-f\`:
+You can point to any `Dockerfile` by using `-f`:
 
-\`\`\`
+```
 
 > docker build -f /path_to_dockerfile/dockerfile_name
 
-\`\`\`
+```
 
 # Run multi-container Docker application 
 =========================================
 
 Compose is a tool for defining and running multi-container Docker
-applications. With Compose, you use a \`YAML\` file to configure your
+applications. With Compose, you use a `YAML` file to configure your
 application's services.
 
 ![](docs/@Tools_Docker_Test_figs/media/image2.png){width="6.267716535433071in"
@@ -299,27 +299,27 @@ height="2.736111111111111in"}
 ## Version
 ------------
 
-At the beginning of a \`docker-compose.yaml\` file specify the
-\`docker-compose\` version. We use the version \`3.0\`, for more
+At the beginning of a `docker-compose.yaml` file specify the
+`docker-compose` version. We use the version `3.0`, for more
 information see [[the official
 documents]{.underline}](https://docs.docker.com/compose/compose-file/compose-versioning/).
 
-\`\`\`
+```
 
 version: "3.0"
 
-\`\`\`
+```
 
 ## Images
 -----------
 
 You can either re-use a public image or build a new one from a
-\`Dockerfile\`.
+`Dockerfile`.
 
-The \`app\` service below uses the image that is built from the
-\`dev.Dockerfile\`.
+The `app` service below uses the image that is built from the
+`dev.Dockerfile`.
 
-\`\`\`
+```
 
 app:
 
@@ -329,19 +329,19 @@ context: .
 
 dockerfile: dev.Dockerfile
 
-\`\`\`
+```
 
-The \`im_postgres_local\` service below uses the public \`postgres\`
+The `im_postgres_local` service below uses the public `postgres`
 image pulled from the [[Docker hub
 registry]{.underline}](https://hub.docker.com/_/postgres).
 
-\`\`\`
+```
 
 im_postgres_local:
 
 image: postgres: 13
 
-\`\`\`
+```
 
 ## Bind mount
 ---------------
@@ -350,9 +350,9 @@ If you want to be able to access code inside a Docker container, you
 should bind-mount a directory with the code on the host.
 
 Mount a directory on the host inside a Docker container, e.g. mount
-current directory to \`/app\` dir inside a Docker container:
+current directory to `/app` dir inside a Docker container:
 
-\`\`\`
+```
 
 app:
 
@@ -360,28 +360,28 @@ volumes:
 
 -   .:/app
 
-\`\`\`
+```
 
 ## Environment variables
 --------------------------
 
 You can either use variables directly from the environment or pass them
-in a \`docker-compose.yaml\` file.
+in a `docker-compose.yaml` file.
 
-It is supposed that \`POSTGRES_VERSION\` is already defined in the
+It is supposed that `POSTGRES_VERSION` is already defined in the
 shell.
 
-\`\`\`
+```
 
 db:
 
-image: "postgres:${POSTGRES_VERSION}"
+image: \"postgres:${POSTGRES_VERSION}\"
 
-\`\`\`
+```
 
 Set environment variable in a service's container
 
-\`\`\`
+```
 
 db:
 
@@ -389,13 +389,13 @@ environment:
 
 -   POSTGRES_VERSION=13
 
-image: "postgres:${POSTGRES_VERSION}"
+image: \"postgres:${POSTGRES_VERSION}\"
 
-\`\`\`
+```
 
-Set environment variable with \`.env\` file
+Set environment variable with `.env` file
 
-\`\`\`
+```
 
 db:
 
@@ -403,19 +403,19 @@ env_file:
 
 -   ./postgres_env.env
 
-image: "postgres:${POSTGRES_VERSION}"
+image: \"postgres:${POSTGRES_VERSION}\"
 
-\`\`\`
+```
 
-File \`postgres_env.env\`
+File `postgres_env.env`
 
-\`\`\`
+```
 
 > cat ./postgres_env.env
 
 POSTGRES_VERSION=13
 
-\`\`\`
+```
 
 ## Basic commands
 -------------------
@@ -424,38 +424,38 @@ To check more advanced usage, please see [[the official
 documentation.]{.underline}](https://docs.docker.com/compose/reference/)
 
 Build, (re)create, start, and attach to containers for a service. It is
-assumed that a \`docker-compose\` file has the name
-\`docker-compose.yaml\` and is located in the current dir.
+assumed that a `docker-compose` file has the name
+`docker-compose.yaml` and is located in the current dir.
 
-\`\`\`
+```
 
 > docker-compose up
 
-\`\`\`
+```
 
 List containers
 
-\`\`\`
+```
 
 > docker-compose ps
 
-\`\`\`
+```
 
-Stop containers created by \`up\`.
+Stop containers created by `up`.
 
-\`\`\`
+```
 
 > docker-compose down
 
-\`\`\`
+```
 
 # How to test a package in a Docker container
 ==============================================
 
-> sudo /bin/bash -c "(source /venv/bin/activate; pip install
-yfinance)"
+> sudo /bin/bash -c \"(source /venv/bin/activate; pip install
+yfinance)\"
 
-> python -c "import finance"
+> python -c \"import finance\"
 
 ## Hacky approach to patch up a container
 -------------------------------------------
@@ -475,7 +475,7 @@ Then you can push and pull on different machines
 > docker pull
 623860924167.dkr.ecr.eu-north-1.amazonaws.com/cmamp:dev_ccxtpro
 
-To use \`docker_bash\` you might need to retag it to match what the
+To use `docker_bash` you might need to retag it to match what the
 system expects
 
 > docker tag
@@ -484,20 +484,20 @@ system expects
 # How to release a Docker image
 ================================
 
-All the \`invoke\` tasks to run the release flow are in
-\`//amp/helpers/lib_tasks.py\`.
+All the `invoke` tasks to run the release flow are in
+`//amp/helpers/lib_tasks.py`.
 
 Depending on the type of changes sometimes one needs to rebuild only the
-\`prod\` image, other times one needs to rebuild also the \`dev\` image.
+`prod` image, other times one needs to rebuild also the `dev` image.
 
 E.g.,
 
 -   If you change Docker build-related things (e.g., add a Python
-    package), you need to rebuild the \`dev\` image and then the
-    \`prod\` image from the \`dev\` image
+    package), you need to rebuild the `dev` image and then the
+    `prod` image from the `dev` image
 
 -   If you change the code for a production system, you need to create a
-    new \`prod\` image
+    new `prod` image
 
 We try to use the same flow, conventions, and code for all the
 containers (e.g., amp, cmamp, dev_tools, opt).
@@ -505,27 +505,27 @@ containers (e.g., amp, cmamp, dev_tools, opt).
 ## Stages
 -----------
 
-A "stage" is a step (e.g., local, dev, prod) in our release workflow
+A \"stage\" is a step (e.g., local, dev, prod) in our release workflow
 of Docker images, code, or infrastructure.
 
-To run a Docker container in a certain stage use the \`stage\` parameter
+To run a Docker container in a certain stage use the `stage` parameter
 
--   E.g. \`i docker_bash --stage="local"\` creates a bash session
-    inside the local docker \`amp\` container
+-   E.g. `i docker_bash --stage="local"` creates a bash session
+    inside the local docker `amp` container
 
 ### Local
 
-A \`local\` image is used to develop and test an update to the Docker
+A `local` image is used to develop and test an update to the Docker
 container, e.g. after updating a package, installing a new package, etc.
 
 Local images can only be accessed locally by a developer, i.e. the team
-members can not / should not use local images. In practice \`local\`
-images are like \`dev\` images but private to users and servers.
+members can not / should not use local images. In practice `local`
+images are like `dev` images but private to users and servers.
 
 ### Dev
 
-A \`dev\` image is used by our team to develop our systems (e.g., to add
-new functionalities to the \`dev_tools\` code).
+A `dev` image is used by our team to develop our systems (e.g., to add
+new functionalities to the `dev_tools` code).
 
 Typically the source code is mounted through a bind mount in Docker so
 that one can change the code and execute it in Docker.
@@ -533,20 +533,20 @@ that one can change the code and execute it in Docker.
 The image is tested, blessed, and released so that users and CI can use
 it without worries.
 
-Once a \`dev\` image is pushed to the docker registry it can be pulled
+Once a `dev` image is pushed to the docker registry it can be pulled
 and used by the team members.
 
 ### Prod
 
-A \`prod\` image is used to run a system by final users. E.g., the
-linter inside \`dev_tools\`, some prod system inside Airflow.
+A `prod` image is used to run a system by final users. E.g., the
+linter inside `dev_tools`, some prod system inside Airflow.
 
 It is self-contained (it should have no dependencies) since it has
 everything required to run a system installed inside it, e.g., code
 (e.g., the linter), Python packages.
 
-It is typically created from the \`dev\` image by copying the released
-code inside the \`prod\` image.
+It is typically created from the `dev` image by copying the released
+code inside the `prod` image.
 
 ## Overview of how to release an image
 ----------------------------------------
@@ -584,14 +584,14 @@ If there is also an associated prod image
 ------------------------------------------------
 
 To add a new Python package to a Docker image you need to update
-\`poetry\` files and release a new image:
+`poetry` files and release a new image:
 
-1)  Add a new package to \`amp/devops/docker_build/pyproject.toml\`
-    file to the \`[tool.poetry.dependencies]\` section
+1)  Add a new package to `amp/devops/docker_build/pyproject.toml`
+    file to the `[tool.poetry.dependencies]` section
 
-E.g., to add \`pytest-timeout\` do:
+E.g., to add `pytest-timeout` do:
 
-  \`\`\`
+  ```
  
   [tool.poetry.dependencies]
  
@@ -601,9 +601,9 @@ E.g., to add \`pytest-timeout\` do:
  
   ...
  
-  \`\`\`
+  ```
 
-2)  In general we use the latest version of a package (\`\*\`) until the
+2)  In general we use the latest version of a package (`\*`) until the
     tests fail or the system stops working
 
     a.  If the system fails, we freeze the version of the problematic
@@ -621,17 +621,17 @@ E.g., to add \`pytest-timeout\` do:
 
     a.  build a local image and update poetry
 
-  \`> i docker_build_local_image --version {new version}
-  --update-poetry\`
+  `> i docker_build_local_image --version {new version}
+  --update-poetry`
 
 b.  run a docker container based on the local image
 
-  \`> i docker_bash --stage local --version {new version}\`
+  `> i docker_bash --stage local --version {new version}`
 
-c.  verify what package was installed with \`pip show {package name}\`,
+c.  verify what package was installed with `pip show {package name}`,
     e.g.,
 
-\`\`\`
+```
 
   > pip show pytest-rerunfailures
  
@@ -649,17 +649,17 @@ c.  verify what package was installed with \`pip show {package name}\`,
  
   Required-by:
  
-  \`\`\`
+  ```
 
 d.  run regressions for the local image, i.e.
 
-  \`\`\`
+  ```
  
   > i run_fast_tests --stage local --version {new version}
  
   > i run_slow_tests --stage local --version {new version}
  
-  \`\`\`
+  ```
 
 4)  Update the changelog describing the new version
 
@@ -668,7 +668,7 @@ d.  run regressions for the local image, i.e.
 
 6)  Release the new image. To do so follow the [[# Release a Docker
     image]{.underline}](#how-to-test-a-package-in-a-docker-container)
-    section, use \`--update-poetry\` flag to resolve the dependencies
+    section, use `--update-poetry` flag to resolve the dependencies
 
 ## How to find unused packages
 --------------------------------
@@ -676,15 +676,15 @@ d.  run regressions for the local image, i.e.
 While installing Python packages we need to make sure that we do not
 install packages that we do not use
 
-### Import-based approach using \`pipreqs\`
+### Import-based approach using `pipreqs`
 
 #### How it works 
 
 To do so we use an import-based approach provided by
-[[\`pipreqs\`]{.underline}](https://github.com/bndr/pipreqs). Under the
-hood it uses the regex below and \`os.walk\` for selected dir:
+[[`pipreqs`]{.underline}](https://github.com/bndr/pipreqs). Under the
+hood it uses the regex below and `os.walk` for selected dir:
 
-\`\`\`
+```
 
 REGEXP = [
 
@@ -694,12 +694,12 @@ re.compile(r\'\^from ((?!\.+).\*?) import (?:.\*)$\')
 
 ]
 
-\`\`\`
+```
 
 #### Limitations
 
 -   Not all packages that we use are necessarily imported, e.g.
-    \`awscli\`, \`jupyter\`, \`pytest-cov\`, etc. -> \`pipreqs\`
+    `awscli`, `jupyter`, `pytest-cov`, etc. -> `pipreqs`
     won't find these packages
 
 -   The import name is not always equal to the package actual name, see
@@ -713,26 +713,26 @@ for the advanced usage.
 
 -   Run a bash session inside a Docker container
 
--   Install \`pipreqs\` with \`sudo pip install pipreqs\`
+-   Install `pipreqs` with `sudo pip install pipreqs`
 
     -   We install it temporary within a Docker bash session in order to
         introduce another dependency
 
-    -   You need to re-install \`pipreqs\` everytime you create a new
+    -   You need to re-install `pipreqs` everytime you create a new
         Docker bash session
 
 -   To run for a root dir do:
 
-  \`\`\`
+  ```
  
   pipreqs . --savepath ./tmp.requirements.txt
  
-  \`\`\`
+  ```
 
--   The command above will generate \`./tmp.requirements.txt\` with the
+-   The command above will generate `./tmp.requirements.txt` with the
     list of the imported packages, e.g.,
 
-  \`\`\`
+  ```
  
   amp==1.1.4
  
@@ -752,25 +752,25 @@ for the advanced usage.
  
   ...
  
-  \`\`\`
+  ```
 
 -   You can grep for a package name to see where it is used, e.g.,
 
-\`\`\`
+```
 
-> jackpy "dill"
+> jackpy \"dill\"
 
 helpers/hpickle.py:108: import dill
 
 ...
 
-\`\`\`
+```
 
 ## How to build a local image
 -------------------------------
 
-The recipe to build a \`local\` image is in
-\`devops/docker_build/dev.Dockerfile\`. This launches various scripts
+The recipe to build a `local` image is in
+`devops/docker_build/dev.Dockerfile`. This launches various scripts
 to install:
 
 -   OS
@@ -785,7 +785,7 @@ to install:
 
 To build a local image run:
 
-\`\`\`
+```
 
 > i docker_build_local_image --version 1.0.0
 
@@ -806,12 +806,12 @@ To build a local image run:
 
 > i docker_build_local_image -h
 
-\`\`\`
+```
 
-Once an image is built, it is tagged as \`local-${user}-${version}\`,
-e.g., \`local-saggese-1.0.0\`
+Once an image is built, it is tagged as `local-${user}-${version}`,
+e.g., `local-saggese-1.0.0`
 
-\`\`\`
+```
 
 Successfully tagged
 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.0.9
@@ -824,9 +824,9 @@ REPOSITORY TAG IMAGE ID CREATED SIZE
 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp local-gsaggese-1.0.9
 cf16e3e3d1c7 Less than a second ago 2.75GB
 
-\`\`\`
+```
 
-A local image is a candidate for becoming a \`dev\` image.
+A local image is a candidate for becoming a `dev` image.
 
 > i run_fast_tests --stage local --version 1.0.0
 
@@ -837,7 +837,7 @@ A local image is a candidate for becoming a \`dev\` image.
 
 > pip list | tee pip_packages.dev.txt
 
-> i docker_cmd --cmd "pip list | tee pip_packages.dev.txt"
+> i docker_cmd --cmd \"pip list | tee pip_packages.dev.txt\"
 
 > i docker_bash --stage local --version 1.0.9
 
@@ -845,92 +845,92 @@ A local image is a candidate for becoming a \`dev\` image.
 
 or in one command:
 
-> i docker_cmd --cmd "pip list | tee pip_packages.dev.txt"; i
-docker_cmd --stage=local --version=1.0.9 --cmd "pip list | tee
-pip_packages.local.txt"
+> i docker_cmd --cmd \"pip list | tee pip_packages.dev.txt\"; i
+docker_cmd --stage=local --version=1.0.9 --cmd \"pip list | tee
+pip_packages.local.txt\"
 
 > vimdiff pip_packages.dev.txt pip_packages.local.txt
 
 You can move the local image on different servers for testing by pushing
 it on ECR:
 
-\`\`\`
+```
 
 > i docker_login
 
 > i docker push
 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.1.0
 
-\`\`\`
+```
 
-## Tag \`local\` image as \`dev\`
+## Tag `local` image as `dev`
 -----------------------------------
 
 -   Docker tag is just a way of referring to an image. A good analogy is
     how Git tags refer to a particular commit in your history.
 
 -   Basically, tagging is creating a reference from one image
-    (\`local-saggese-1.0.0\`) to another (\`dev\`)
+    (`local-saggese-1.0.0`) to another (`dev`)
 
--   Once the \`local\` image is tagged as \`dev\`, your \`dev\` image
-    becomes equal to \`local-saggese-1.0.0\`
+-   Once the `local` image is tagged as `dev`, your `dev` image
+    becomes equal to `local-saggese-1.0.0`
 
--   \`dev\` image is also tagged with\`dev-${version}\`, e.g.,
-    \`dev-1.0.0\` to preserve history and allow for quick rollback.
+-   `dev` image is also tagged with`dev-${version}`, e.g.,
+    `dev-1.0.0` to preserve history and allow for quick rollback.
 
--   Locally in git repository a git tag \`${repo_name}-${version}\`,
-    e.g. \`cmamp-1.0.0\` is created in order to properly control sync
+-   Locally in git repository a git tag `${repo_name}-${version}`,
+    e.g. `cmamp-1.0.0` is created in order to properly control sync
     between code and container.
 
 ## Push image 
 ---------------
 
--   To push \`dev\` or \`prod\` image means to send it to the docker
+-   To push `dev` or `prod` image means to send it to the docker
     registry. It is more like pushing a commit to the GitHub
 
 -   Once an image is pushed, it can be used by the team members by
-    running \`i docker_pull\`
+    running `i docker_pull`
 
--   Local git tag \`${repo_name}-${version}\`, e.g. \`cmamp-1.0.0\`,
+-   Local git tag `${repo_name}-${version}`, e.g. `cmamp-1.0.0`,
     is pushed at this stage to the remote repository to allow others
     to properly control sync between code and container.
 
 -   To be able to push an image to the ECR one should have permissions
     to do so
 
-## End-to-end flow for \`dev\` image
+## End-to-end flow for `dev` image
 --------------------------------------
 
 Conceptually the flow consists of the following phases:
 
 1)  Build a local image of docker
 
-    -   \`i docker_build_local_image --version 1.0.0\`
+    -   `i docker_build_local_image --version 1.0.0`
 
 2)  Run fast tests to verify that nothing is broken
 
-    -   \`i run_fast_tests --stage local --version 1.0.0\`
+    -   `i run_fast_tests --stage local --version 1.0.0`
 
 3)  Run end-to-end tests by, e.g., running linter on some file
 
-    -   \`i lint --files helpers/tasks.py --stage local --version
-        1.0.0\`
+    -   `i lint --files helpers/tasks.py --stage local --version
+        1.0.0`
 
-4)  Tag \`local\` image as \`dev\`
+4)  Tag `local` image as `dev`
 
-    -   \`i docker_tag_local_image_as_dev --version 1.0.0\`
+    -   `i docker_tag_local_image_as_dev --version 1.0.0`
 
-5)  Push \`dev\` image to the docker registry
+5)  Push `dev` image to the docker registry
 
-    -   \`i docker_push_dev_image --version 1.0.0\`
+    -   `i docker_push_dev_image --version 1.0.0`
 
--   The mentioned flow is executed by \`Build dev image\` GH action and
+-   The mentioned flow is executed by `Build dev image` GH action and
     that is a preferred way to do an image release.
 
 For specific cases that can not be done via GH action see commands
 below:
 
-\`\`\`
+```
 
 # To run the official flow end-to-end:
 
@@ -961,29 +961,29 @@ below:
 > i docker_release_dev_image --version 1.0.0
 --no-run-end-to-end-tests
 
-\`\`\`
+```
 
 ## Build prod image
 ---------------------
 
-The recipe to build a \`prod\` image is in
-\`dev_tools/devops/docker_build/prod.Dockerfile\`.
+The recipe to build a `prod` image is in
+`dev_tools/devops/docker_build/prod.Dockerfile`.
 
--   The main difference between \`dev\` image and \`prod\` image is that
+-   The main difference between `dev` image and `prod` image is that
 
-    -   source code is accessed through a bind mount for \`dev\` image
+    -   source code is accessed through a bind mount for `dev` image
         (so that it can be easily modified) and copied inside the
-        image for a \`prod\` image (since we want to package the code)
+        image for a `prod` image (since we want to package the code)
 
     -   requirements to be installed are different:
 
-        -   \`dev\` image requires packages to develop and run the code
+        -   `dev` image requires packages to develop and run the code
 
-        -   \`prod\` image requires packages only to run the code
+        -   `prod` image requires packages only to run the code
 
-To build the \`prod\` image run:
+To build the `prod` image run:
 
-\`\`\`
+```
 
 > i docker_build_prod_image --version 1.0.0
 
@@ -995,63 +995,63 @@ To build the \`prod\` image run:
 
 > i docker_build_prod_image --version 1.0.0 --no-cache
 
-\`\`\`
+```
 
 To run a command inside the prod image
 
 > docker run --rm -t --user $(id -u):$(id -g) --workdir=/app
-665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:prod-1.0.3 "ls -l
-/app"
+665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:prod-1.0.3 \"ls -l
+/app\"
 
 Example of a complex command:
 
 > docker run --rm -t --workdir=/app
-665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:prod-1.0.3 "python
+665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:prod-1.0.3 \"python
 /app/im_v2/ccxt/data/extract/download_realtime.py --to_datetime
 \'20211204-194432\' --from_datetime \'20211204-193932\' --dst_dir
 \'test/ccxt_test\' --data_type \'ohlcv\' --api_keys
-\'API_keys.json\' --universe \'v03\'"
+\'API_keys.json\' --universe \'v03\'\"
 
 ## QA for prod image
 ----------------------
 
 In dev_scripts repo test:
 
-> i lint --files "linters/amp_black.py"
+> i lint --files \"linters/amp_black.py\"
 
 In amp repo make sure:
 
-> i lint -f "helpers/dbg.py"
+> i lint -f \"helpers/dbg.py\"
 
-## End-to-end flow for \`prod\` image
+## End-to-end flow for `prod` image
 ---------------------------------------
 
-1)  Build docker \`prod\` image
+1)  Build docker `prod` image
 
--   \`i docker_build_prod_image --version 1.0.0\`
+-   `i docker_build_prod_image --version 1.0.0`
 
 2)  Run fast tests to verify that nothing is broken
 
--   \`i run_fast_tests\`
+-   `i run_fast_tests`
 
-3)  Push \`prod\` image to the docker registry
+3)  Push `prod` image to the docker registry
 
--   \`i docker_push_prod_image --version 1.0.0\`
+-   `i docker_push_prod_image --version 1.0.0`
 
 To run the flow end-to-end do:
 
 > i docker_release_prod_image --version 1.0.0
 
--   same options are available as for \`i docker_release_dev_image\`
+-   same options are available as for `i docker_release_dev_image`
 
--   check options \`i docker_release_prod_image -h\`
+-   check options `i docker_release_prod_image -h`
 
 ## Flow for both dev and prod images
 --------------------------------------
 
 To run both flows end-to-end do:
 
--   \`i docker_release_all\`
+-   `i docker_release_all`
 
 Alternatively, one can run the release stages step-by-step.
 
@@ -1060,7 +1060,7 @@ Alternatively, one can run the release stages step-by-step.
 
 It is possible to install a Docker engine inside a Docker container so
 that one can run Docker container (e.g., OMS or IM) inside an isolated
-\`amp\` container.
+`amp` container.
 
 The problems with this approach are:
 
@@ -1071,7 +1071,7 @@ The problems with this approach are:
     containers, so one needs to pull / build an image every time the
     outermost container is restarted
 
-An alternative approach is the "sibling container" approach
+An alternative approach is the \"sibling container\" approach
 
 ## Sibling container approach
 -------------------------------
@@ -1086,7 +1086,7 @@ Refs:
 
 Often what\'s really needed is the ability to build / run a container
 from another container (e.g., CI or unit test). This can be achieved by
-mounting the Docker socket \`/var/run/docker.sock\` to the container, so
+mounting the Docker socket `/var/run/docker.sock` to the container, so
 that a container can talk to Docker Engine.
 
 This approach allows reuse of the build cache across the sibling
@@ -1097,9 +1097,9 @@ spawned containers can be left hanging or can collide.
 
 E.g.,
 
-\`\`\`
+```
 
-# Run \`docker ps\` in a container, showing the containers running in
+# Run `docker ps` in a container, showing the containers running in
 the main container
 
 > docker run -ti --rm \\
@@ -1120,14 +1120,14 @@ dindtest \\
 
 docker run -ti --rm hello-world
 
-\`\`\`
+```
 
 ### Connecting to Postgres instance using sibling containers
 
 We can start the Docker container with Postgres as a service from
 outside the container.
 
-\`\`\`
+```
 
 > (cd oms; i oms_docker_up -s local)
 
@@ -1166,13 +1166,13 @@ PostgreSQL 13.5 (Debian 13.5-1.pgdg110+1) on x86_64-pc-linux-gnu,
 compiled by gcc (Debian 10.2.1-6) 10.2.1 20210110, 64-bit
 
 oms_postgres_1 | 2022-05-19 22:57:15.659 UTC [1] LOG: listening on
-IPv4 address "0.0.0.0", port 5432
+IPv4 address \"0.0.0.0\", port 5432
 
 oms_postgres_1 | 2022-05-19 22:57:15.659 UTC [1] LOG: listening on
-IPv6 address "::", port 5432
+IPv6 address \"::\", port 5432
 
 oms_postgres_1 | 2022-05-19 22:57:15.663 UTC [1] LOG: listening on
-Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+Unix socket \"/var/run/postgresql/.s.PGSQL.5432\"
 
 oms_postgres_1 | 2022-05-19 22:57:15.670 UTC [25] LOG: database
 system was shut down at 2022-05-19 22:56:50 UTC
@@ -1180,7 +1180,7 @@ system was shut down at 2022-05-19 22:56:50 UTC
 oms_postgres_1 | 2022-05-19 22:57:15.674 UTC [1] LOG: database
 system is ready to accept connections
 
-\`\`\`
+```
 
 Note that Postgres needs to be
 
@@ -1188,20 +1188,20 @@ Start a container able to
 
 From inside a container I launch postgres through the /var/...
 
-\`\`\`
+```
 
 > docker ps | grep postgres
 
 CONTAINER ID IMAGE COMMAND CREATED STATUS PORTS NAMES
 
-83bba0818c74 postgres:13 "docker-entrypoint.s..." 6 minutes ago Up 6
+83bba0818c74 postgres:13 \"docker-entrypoint.s...\" 6 minutes ago Up 6
 minutes 0.0.0.0:5432->5432/tcp compose-oms_postgres-1
 
-\`\`\`
+```
 
 Test connection to the DB from outside the container
 
-\`\`\`
+```
 
 > psql --host=cf-spm-dev4 --port=5432 --user aljsdalsd -d
 oms_postgres_db_local
@@ -1214,22 +1214,22 @@ WARNING: psql major version 9.5, server major version 13.
 
 Some psql features might not work.
 
-Type "help" for help.
+Type \"help\" for help.
 
 oms_postgres_db_local=#
 
-\`\`\`
+```
 
 Test connection to the DB from inside the container
 
-\`\`\`
+```
 
 > psql --host=cf-spm-dev4 --port=5432 --user aljsdalsd -d
 oms_postgres_db_local
 
 ...
 
-\`\`\`
+```
 
 # Release flow
 ===============
@@ -1237,15 +1237,15 @@ oms_postgres_db_local
 ## cmamp
 ----------
 
--   File an Issue for the release (e.g., "Add package foobar to cmamp
-    image")
+-   File an Issue for the release (e.g., \"Add package foobar to cmamp
+    image\")
 
--   Create the corresponding branch with \`i git_create_branch -i
-    ${issue_number}\`
+-   Create the corresponding branch with `i git_create_branch -i
+    ${issue_number}`
 
 -   Change the code
 
--   Update the changelog, i.e. \`//cmamp/changelog.txt\`
+-   Update the changelog, i.e. `//cmamp/changelog.txt`
 
     -   Specify what was changed
 
@@ -1260,25 +1260,25 @@ oms_postgres_db_local
 ```{=html}
 <!-- -->
 ```
--   Test the change using the local release flow \`i
-    docker_build_local_image -v ${version}\`
+-   Test the change using the local release flow `i
+    docker_build_local_image -v ${version}`
 
-    -   If a new package is added run \`docker_build_local_image\`
-        with \`--update-poetry\` option and check in a
-        \`poetry.lock\` file
+    -   If a new package is added run `docker_build_local_image`
+        with `--update-poetry` option and check in a
+        `poetry.lock` file
 
--   Make sure that the tests pass \`i run_fast_slow_tests -s local -v
-    ${version}\`, and that the goal of the Issue is achieved (e.g., a
+-   Make sure that the tests pass `i run_fast_slow_tests -s local -v
+    ${version}`, and that the goal of the Issue is achieved (e.g., a
     new package is visible, the package version has been updated)
 
--   Do a PR with the change including the updated \`changelog.txt\`, the
-    poetry files (both the specs \`devops/docker_build/poetry.toml\`
-    and the package version \`devops/docker_build/poetry.lock\`)
+-   Do a PR with the change including the updated `changelog.txt`, the
+    poetry files (both the specs `devops/docker_build/poetry.toml`
+    and the package version `devops/docker_build/poetry.lock`)
 
 -   Run the release flow manually (or rely on GH Action build workflow
     to create the new image)
 
-  \`\`\`
+  ```
  
   # Release dev image
 
@@ -1288,17 +1288,17 @@ i docker_release_dev_image --version $version
 
 i docker_pull
 
-\`\`\`
+```
 
--   Send a message on the \`all@\` chat telling people that a new
-    version of the \`XYZ\` container has been released
+-   Send a message on the `all@` chat telling people that a new
+    version of the `XYZ` container has been released
 
--   Users need to do a \`i docker_pull\` to get the new container
+-   Users need to do a `i docker_pull` to get the new container
 
 -   Users that don\'t update should see a message telling them that the
     code and container are not in sync any more, e.g.,:
 
-  \`\`\`
+  ```
  
   -----------------------------------------------------------------------------
  
@@ -1310,12 +1310,12 @@ i docker_pull
  
   You need to:
  
-  - merge origin/master into your branch with \`invoke
-  git_merge_master\`
+  - merge origin/master into your branch with `invoke
+  git_merge_master`
  
-  - pull the latest container with \`invoke docker_pull\`
+  - pull the latest container with `invoke docker_pull`
  
-  \`\`\`
+  ```
 
 ## dev_tools
 ---------------
@@ -1332,7 +1332,7 @@ i docker_pull
  
   > i docker_release_prod_image --version 1.1.0
 
--   Update the changelog, i.e. \`//dev_tools/changelog.txt\`
+-   Update the changelog, i.e. `//dev_tools/changelog.txt`
 
     -   The changelog should be updated only after the image is
         released; otherwise the sanity checks will assert that the
@@ -1355,13 +1355,13 @@ i docker_pull
     -   For example, adding a package to the image would mean bumping up
         version 1.0.0 to 1.0.1
 
--   Do a PR with the change including the updated \`changelog.txt\`
+-   Do a PR with the change including the updated `changelog.txt`
 
--   Send a message on the \`all@\` chat telling people that a new
+-   Send a message on the `all@` chat telling people that a new
     version of the container has been released
 
-    -   Users need to do 1) \`i docker_pull\` from \`dev_tools\`, 2)
-        \`i docker_pull_dev_tools\` from \`cmamp\`
+    -   Users need to do 1) `i docker_pull` from `dev_tools`, 2)
+        `i docker_pull_dev_tools` from `cmamp`
 
     -   Users need to make sure to pull docker after the master is
         up-to-date (including amp submodules)
@@ -1373,43 +1373,43 @@ TODO(gp, Vitalii): Turn this into a description of the release flow
 
 Let\'s assume that we want to release dev image with version 1.2.3:
 
-un \`i docker_build_local_image --tag-name 1.2.3\`
+un `i docker_build_local_image --tag-name 1.2.3`
 
 Initially we thought about using Git tags to mark releases points in the
-source repo for \`dev\` and \`prod\` releases (but not \`local\` since
-\`local\` is reserved to private use by a user).
+source repo for `dev` and `prod` releases (but not `local` since
+`local` is reserved to private use by a user).
 
 This approach is elegant, but it has some corner cases when used with
 containers for multiple repos that contain Git submodules.
 
-We decided to use an approach where a \`changelog.txt\` file contains
+We decided to use an approach where a `changelog.txt` file contains
 the latest code version
 
-- all test tasks now also use \`hversion.get_code_version()\` that
-calls \`hgit.git_describe()\` to get latest tag in the repo (1.0.0 in
+- all test tasks now also use `hversion.get_code_version()` that
+calls `hgit.git_describe()` to get latest tag in the repo (1.0.0 in
 this case)
 
 Agree. git_describe will need to accept a dir to find the tag of the
 releasable dir
 
-- when we are satisfied with local image, we run \`i
-docker_tag_local_image_as_dev\`
+- when we are satisfied with local image, we run `i
+docker_tag_local_image_as_dev`
 
 We will still need to pass --version 1.0.0
 
-- invoke internally tags \`local-1.0.0\` as \`dev-1.0.0\`, in addition
-to \`dev\`
+- invoke internally tags `local-1.0.0` as `dev-1.0.0`, in addition
+to `dev`
 
 Both for Git tags and docker tags
 
-- then we run \`i docker_push_dev_image\`
+- then we run `i docker_push_dev_image`
 
 We will still need to pass --version 1.0.0
 
-- invoke internally pushes both \`dev-1.0.0\` and \`dev\` images to ECR
+- invoke internally pushes both `dev-1.0.0` and `dev` images to ECR
 \*\*AND\*\* pushes local 1.0.0 git tag to remote git repo (github)
 
-\`docker_release_dev_image\` will do basically the same (will require
+`docker_release_dev_image` will do basically the same (will require
 tag_name).
 
 Of course docker_release... is just a convenience wrapper running all
@@ -1417,25 +1417,25 @@ the stages
 
 Now let\'s assume we want to promote dev image to prod:
 
-- then we run \`i docker_build_prod_image\`
+- then we run `i docker_build_prod_image`
 
-- invoke internally checks with \`hversion.get_code_version()\` and
-builds \`prod-1.0.0\` based on \`dev-1.0.0\`, also tagging
-\`prod-1.0.0\` as \`prod\`
+- invoke internally checks with `hversion.get_code_version()` and
+builds `prod-1.0.0` based on `dev-1.0.0`, also tagging
+`prod-1.0.0` as `prod`
 
-- then we run \` i docker_push_prod_image\`
+- then we run ` i docker_push_prod_image`
 
-- invoke pushes \`prod-1.0.0\` and \`prod\` tags to ECR
+- invoke pushes `prod-1.0.0` and `prod` tags to ECR
 
-\`docker_release_prod_image\` will do basically the same (will
+`docker_release_prod_image` will do basically the same (will
 require tag_name).
 
 Q0: Is the flow ok?
 
 Yes
 
-Q1: The flow is the same for \`dev_tools\` and \`cmamp\`, but to update
-the version of image on which \`dev_tools\` is based -- we\'ll need to
+Q1: The flow is the same for `dev_tools` and `cmamp`, but to update
+the version of image on which `dev_tools` is based -- we\'ll need to
 modify Dockerfile now. Is that ok?
 
 -   Maybe we should just create the dev_tools from scratch using the
@@ -1448,22 +1448,22 @@ modify Dockerfile now. Is that ok?
 
 -   TODO(vitalii): File a bug, if we don\'t have it yet
 
-Q2: If the flow is run in the submodule, e.g. in \`amp\` dir, currently
-the behaviour is not well defined. Commands will try to build \`cmamp\`
-image in this case, but code version will be from \`dev_tools\` --
+Q2: If the flow is run in the submodule, e.g. in `amp` dir, currently
+the behaviour is not well defined. Commands will try to build `cmamp`
+image in this case, but code version will be from `dev_tools` --
 should we fix this?
 
--   We are going towards the concept of "releasable dirs" (see im,
+-   We are going towards the concept of \"releasable dirs\" (see im,
     optimizer). If there is a dir with devops, then that dir runs
     inside a container
 
--   The "Git version" should be associated to the dir we are releasing
+-   The \"Git version\" should be associated to the dir we are releasing
     (e.g., cmamp, im, optimizer, dev_tools)
 
 Vitalii: If we will have monorepo with releasable dirs, then indeed git
 tags are not that comfortable to use, however I could argue that when
-one releases \`im\` image with version 1.0.0, he gets docker image
-\`im:dev-1.0.0\` , \`im:prod-1.0.0\`, \`im:dev\` and \`im:prod\` -- but
+one releases `im` image with version 1.0.0, he gets docker image
+`im:dev-1.0.0` , `im:prod-1.0.0`, `im:dev` and `im:prod` -- but
 how then one is able to find corresponding code that was used in that
 image?
 
@@ -1535,7 +1535,7 @@ A releasable dir has a
 
 -   lib_tasks.py (with the custom invoke tasks)
 
-We want to try to move to helpers/lib_tasks all the "common" code
+We want to try to move to helpers/lib_tasks all the \"common\" code
 without dependencies from the specific sw components. We pass function
 pointers for callbacks.
 
@@ -1622,33 +1622,33 @@ For specific dev_tools workflows see
 
 -   The high-level goal is to move towards containerized Python scripts
     running in smaller containers instead of keep adding packages to
-    \`amp\` / \`cmamp\`, which makes the \`amp\` / \`cmamp\` container
+    `amp` / `cmamp`, which makes the `amp` / `cmamp` container
     bloated and risky to build
 
 -   Along this design philosophy similar to microservices, we want to
-    have a Docker container, called \`opt\` with a Python script that
-    uses some packages that are not compatible with \`amp\`
+    have a Docker container, called `opt` with a Python script that
+    uses some packages that are not compatible with `amp`
     (specifically cvxopt, cvxpy)
 
--   This is similar to what we do for the \`dev_tools\`, which is like
+-   This is similar to what we do for the `dev_tools`, which is like
     a containerized Python script for the linter
 
-## Build and run a local version of \`opt\`
+## Build and run a local version of `opt`
 ---------------------------------------------
 
 You can build the container locally with:
 
-\`\`\`
+```
 
 > cd optimizer
 
 > i opt_docker_build_local_image --version 0.1.0
 
-\`\`\`
+```
 
 This process takes around 5 mins and then you should have the container
 
-\`\`\`
+```
 
 docker image ls
 665840871993.dkr.ecr.us-east-1.amazonaws.com/opt:local-saggese-0.1.0
@@ -1658,17 +1658,17 @@ REPOSITORY TAG IMAGE ID CREATED SIZE
 665840871993.dkr.ecr.us-east-1.amazonaws.com/opt local-saggese-0.1.0
 bb7d60d6a7d0 7 seconds ago 1.23GB
 
-\`\`\`
+```
 
 Run the container as:
 
-\`\`\`
+```
 
 > i opt_docker_bash --stage local --version 0.1.0
 
-\`\`\`
+```
 
-To run a Jupyter notebook in the \`opt\` container:
+To run a Jupyter notebook in the `opt` container:
 
 ## Internals
 --------------
@@ -1687,7 +1687,7 @@ corresponding to a Git repo
 ```
 -   no implicit sharing of code across different containers
 
--   some mechanism to share code (e.g., \`helpers\`) across repos (e.g.,
+-   some mechanism to share code (e.g., `helpers`) across repos (e.g.,
     using bind mount)
 
 -   not playing nice with Git subrepo mechanism since Docker needs to
@@ -1698,7 +1698,7 @@ corresponding to a Git repo
 ```
 -   So the code would be organized in 4 repos:
 
-\`\`\`
+```
 
 -   lemonade / lime
 
@@ -1713,7 +1713,7 @@ corresponding to a Git repo
 
 -   models in amp
 
-\`\`\`
+```
 
 where the dependency between containers are
 
@@ -1725,16 +1725,16 @@ where the dependency between containers are
 
 ### Multiple containers per Git repo 
 
-Another approach is to have \`optimizer\` as a directory inside \`amp\`
+Another approach is to have `optimizer` as a directory inside `amp`
 
--   This keeps \`amp\` and \`optimizer\` in a single repo
+-   This keeps `amp` and `optimizer` in a single repo
 
--   To build / run optimizer code in its container one needs to \`cd\`
+-   To build / run optimizer code in its container one needs to `cd`
     in the dir
 
--   The problem then becomes how to share \`helpers\`
+-   The problem then becomes how to share `helpers`
 
-#### Mounting only \`optimizer\` dir inside Docker
+#### Mounting only `optimizer` dir inside Docker
 
 From devops/compose/docker-compose.yml
 
@@ -1751,11 +1751,11 @@ AmpTask1017).
 
 From devops/docker_build/dev.Dockerfile
 
-ENTRYPOINT ["devops/docker_run/entrypoint.sh"]
+ENTRYPOINT [\"devops/docker_run/entrypoint.sh\"]
 
 The problem is that Git repo doesn\'t work anymore
 
-\`\`\`
+```
 
 git --version: git version 2.30.2
 
@@ -1764,12 +1764,12 @@ fatal: not a git repository (or any parent up to mount point /)
 Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not
 set).
 
-\`\`\`
+```
 
 A work around is to inject .git in /git of the container and then point
 git to that
 
-\`\`\`
+```
 
 environment:
 
@@ -1787,11 +1787,11 @@ volumes:
 
 - ../../../../amp/helpers:/app/helpers
 
-\`\`\`
+```
 
 Git works but it gets confused with the paths
 
-\`\`\`
+```
 
 modified: .dockerignore
 
@@ -1809,7 +1809,7 @@ deleted: .github/workflows/superslow_tests.yml.DISABLED
 
 deleted: .gitignore
 
-\`\`\`
+```
 
 #### Mounting the supermodule (e.g., lime, lemonade, amp) inside
 Docker
@@ -1829,7 +1829,7 @@ AmpTask1017).
 
 From devops/docker_build/dev.Dockerfile
 
-ENTRYPOINT ["optimizer/devops/docker_run/entrypoint.sh"]
+ENTRYPOINT [\"optimizer/devops/docker_run/entrypoint.sh\"]
 
 This approach mounts 4 dirs up from devops/compose/docker-compose.yml,
 i.e., //lime
@@ -1848,13 +1848,13 @@ i opt_docker_build_local_image --version 0.4.0
 
 36
 
-37 # Mount \`amp\` when it is used as submodule. In this case we need
+37 # Mount `amp` when it is used as submodule. In this case we need
 to
 
 38 # mount the super project in the container (to make git work with
 the
 
-39 # supermodule) and then change dir to \`amp\`.
+39 # supermodule) and then change dir to `amp`.
 
 40 app:
 
@@ -1873,7 +1873,7 @@ AmpTask1017).
 
 47 working_dir: /app/amp/optimizer
 
-48 #entrypoint: /bin/bash -c "ls helpers"
+48 #entrypoint: /bin/bash -c \"ls helpers\"
 
 ## Invariants
 ---------------
@@ -1883,7 +1883,7 @@ AmpTask1017).
     -   It corresponds to a software component (code + library = Docker
         container)
 
-    -   Anything that has a devops dir is "deployable"
+    -   Anything that has a devops dir is \"deployable\"
 
 -   Each Docker container is run from its corresponding dir, e.g.,
 
@@ -1895,21 +1895,21 @@ AmpTask1017).
 ```{=html}
 <!-- -->
 ```
--   Always mount the outermost Git repo under \`/app\`
+-   Always mount the outermost Git repo under `/app`
 
 -   Set the Docker working dir as the current dir
 
 -   
 
 -   Each deployable dir specifies all the needed information in
-    \`repo_config.py\` (which is the one in the current dir)
+    `repo_config.py` (which is the one in the current dir)
 
     -   What container to run
 
     -   What functionality is supported on different servers (e.g.,
         privileged way)
 
--   The \`changelog.txt\` file is in the deployable dir (e.g.,
+-   The `changelog.txt` file is in the deployable dir (e.g.,
     optimizer/changelog.txt)
 
 -   Each
@@ -1930,21 +1930,21 @@ repo_config
 
 TODO(gp): Implement this
 
-## Unit testing code inside \`opt\` container
+## Unit testing code inside `opt` container
 -----------------------------------------------
 
 Since we want to segregate the package dependencies in different
 containers, tests that have a dependency from cvxopt /cvxpy can\'t be
-run inside the \`amp\` container but need to be run inside \`opt\`.
+run inside the `amp` container but need to be run inside `opt`.
 
 We want to:
 
 1)  (as always) write and run unit tests for the optimizer code in
-    isolation, i.e., test the code in the directory \`optimizer\` by
+    isolation, i.e., test the code in the directory `optimizer` by
     itself
 
 2)  run all the tests for the entire repo(relying on both containers
-    \`amp\` and \`optimizer\` with a single command invocation
+    `amp` and `optimizer` with a single command invocation
 
 3)  be able to run tests belonging to only one of the containers to
     shorten the debugging cycle
@@ -1953,18 +1953,18 @@ To achieve this we need to solve the 3 problems below.
 
 ### Avoid compiling code depending from cvxopt when running amp
 
-We can\'t parse code (e.g., in \`pytest\`) that includes packages that
+We can\'t parse code (e.g., in `pytest`) that includes packages that
 are not present in a container
 
--   E.g., \`pytest\` running in \`amp\` should not parse code in
-    \`//amp/optimizer\` since it contains imports that will fail
+-   E.g., `pytest` running in `amp` should not parse code in
+    `//amp/optimizer` since it contains imports that will fail
 
 **Solution 1**
 
-We use the pytest mechanism \`cvx = pytest.importorskip("cvxpy")\`
+We use the pytest mechanism `cvx = pytest.importorskip(\"cvxpy\")`
 which is conceptually equivalent to:
 
-  \`\`\`
+  ```
  
   try:
  
@@ -1982,35 +1982,35 @@ which is conceptually equivalent to:
  
   cvxopt...
  
-  \`\`\`
+  ```
 
 **Solution 2**
 
 Test in eachfile for the existence of the needed packages and enclose
-the code in an \`if _has_package\`
+the code in an `if _has_package`
 
 -   Pros:
 
-    -   We can skip code based dynamically on a \`try ... except
-        ImportModule\` to check what packages are present
+    -   We can skip code based dynamically on a `try ... except
+        ImportModule` to check what packages are present
 
 -   Cons:
 
-    -   Repeat the same piece of \`try ... except\` in many places
+    -   Repeat the same piece of `try ... except` in many places
 
         -   Solution: we can factor it out in a function
 
-    -   We need to enclose the code in a \`if ...\` that screws up the
+    -   We need to enclose the code in a `if ...` that screws up the
         indentation and makes the code weird
 
 **Solution 3**
 
-Exclude certain directories (e.g., \`//amp/optimizer\`) from \`pytest\`
+Exclude certain directories (e.g., `//amp/optimizer`) from `pytest`
 
 -   Pros:
 
-    -   We don\'t have to spread the \`try ... except\` and \`if
-        _has_package\` in the code
+    -   We don\'t have to spread the `try ... except` and `if
+        _has_package` in the code
 
 -   Cons:
 
@@ -2020,12 +2020,12 @@ Exclude certain directories (e.g., \`//amp/optimizer\`) from \`pytest\`
             full path
 
     -   Which directories are included and excluded depends on where
-        \`pytest\` is run
+        `pytest` is run
 
-        -   E.g., running \`pytest\` in an \`amp\` container we need to
-            skip the \`optimizer\` dir, while \`pytest\` in an
-            \`optimizer\` container should skip everything but the
-            \`optimizer\` dir
+        -   E.g., running `pytest` in an `amp` container we need to
+            skip the `optimizer` dir, while `pytest` in an
+            `optimizer` container should skip everything but the
+            `optimizer` dir
 
 **Solution 4**
 
@@ -2039,22 +2039,22 @@ running in
 
         -   Solution: we can use the env vars we use for versioning
 
-  \`\`\`
+  ```
  
   > echo $AM_CONTAINER_VERSION
  
   amp-1.0.3
  
-  \`\`\`
+  ```
 
 Given the pros and cons, we decided to follow Solution 1 and Solution 3
 
-### Run optimizer tests in a stand-alone \`opt\` container
+### Run optimizer tests in a stand-alone `opt` container
 
-To run the optimizer tests, you can create an \`opt \` container and
-then run \`pytest\`
+To run the optimizer tests, you can create an `opt ` container and
+then run `pytest`
 
-\`\`\`
+```
 
 > cd optimizer
 
@@ -2062,13 +2062,13 @@ then run \`pytest\`
 
 docker> pytest .
 
-\`\`\`
+```
 
-We wrap this in an invoke target like \`i opt_run_fast_tests\`
+We wrap this in an invoke target like `i opt_run_fast_tests`
 
 **Alternative solution**
 
-We can use dind to run the \`opt\` container inside a \`cmamp\` one
+We can use dind to run the `opt` container inside a `cmamp` one
 
 -   Cons:
 
@@ -2082,9 +2082,9 @@ We can use dind to run the \`opt\` container inside a \`cmamp\` one
 -   dind is slower since there are 2 levels of (relatively fast)
     virtualization
 
-### Run optimizer tests as part of running unit tests for \`cmamp\`
+### Run optimizer tests as part of running unit tests for `cmamp`
 
--   We use the same mechanism as \`run_fast_slow_superslow_tests\`
+-   We use the same mechanism as `run_fast_slow_superslow_tests`
     to pull together different test lists
 
 ## Call a Dockerized executable from a container
@@ -2093,12 +2093,12 @@ We can use dind to run the \`opt\` container inside a \`cmamp\` one
 From
 [[https://github.com/cryptokaizen/cmamp/issues/1357]{.underline}](https://github.com/cryptokaizen/cmamp/issues/1357)
 
-We need to call something from \`amp\` to \`opt\` Docker
+We need to call something from `amp` to `opt` Docker
 
 **Solution 1**
 
-Inside the code we build the command line \`cmd = \'docker run -it ...
-\'; system(cmd)\`
+Inside the code we build the command line `cmd = \'docker run -it ...
+\'; system(cmd)`
 
 -   Cons:
 
@@ -2107,15 +2107,15 @@ Inside the code we build the command line \`cmd = \'docker run -it ...
 
 **Solution 2**
 
-Call the Dockerized executable using the \`docker_cmd\` invoke target
+Call the Dockerized executable using the `docker_cmd` invoke target
 
-\`\`\`
+```
 
-cmd = "invoke opt_docker_cmd -cmd \'...\'"
+cmd = \"invoke opt_docker_cmd -cmd \'...\'\"
 
 system(cmd)
 
-\`\`\`
+```
 
 -   Pros:
 
@@ -2127,13 +2127,13 @@ system(cmd)
     -   Bash interpolation in the command
 
     -   Another level of indirection: do a system call to call
-        \`invoke\`, \`invoke\` calls docker, docker does the work
+        `invoke`, `invoke` calls docker, docker does the work
 
-    -   \`invoke\` needs to be installed inside the calling container
+    -   `invoke` needs to be installed inside the calling container
 
 **Solution 3**
 
-Call opt_lib_tasks.py \`opt_docker_cmd(cmd, ...)\`
+Call opt_lib_tasks.py `opt_docker_cmd(cmd, ...)`
 
 -   Pros
 
@@ -2146,8 +2146,8 @@ Solution 1 and 2 (but we should replace in favor of Solution 3).
 
 ##
 
-The interface to the Dockerized optimizer is in \`run_optimizer\` in
-\`//amp/oms/call_optimizer.py\`
+The interface to the Dockerized optimizer is in `run_optimizer` in
+`//amp/oms/call_optimizer.py`
 
 To run the examples
 
