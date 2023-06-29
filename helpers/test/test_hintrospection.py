@@ -1,13 +1,12 @@
 import logging
 import os
-from typing import Any
-from typing import Callable
+from typing import Any, Callable
 
+import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hpickle as hpickle
 import helpers.hstring as hstring
 import helpers.hunit_test as hunitest
-import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -193,13 +192,14 @@ class Test_get_name_from_function1(hunitest.TestCase):
 def dummy_function() -> None:
     pass
 
+
 class TestGetFunctionFromString1(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Test that function is correctly extracted from a string.
+        Test function extraction correctly from string.
         """
-        func_str = "helpers.test.test_hintrospection.dummy_function"
-        act = hintros.get_function_from_string(func_str)
+        fun_str = "helpers.test.test_hintrospection.dummy_function"
+        act = hintros.get_function_from_string(fun_str)
         exp = dummy_function
         hdbg.dassert_isinstance(act, Callable)
         self.assert_equal(act.__name__, exp.__name__)
