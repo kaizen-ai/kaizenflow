@@ -18,15 +18,15 @@ packages) inside to run certain applications/code.
 -----------------
 
 -   A Docker image is a read-only template with instructions for
-    > creating a Docker container
+    creating a Docker container
 
 -   Typically instructions include information about which packages and
-    > their versions to install, e.g. list of python packages and their
-    > corresponding versions
+    their versions to install, e.g. list of python packages and their
+    corresponding versions
 
 -   All steps needed to create the image and run it are defined in a
-    > Dockerfile, e.g.
-    > \`dev\_tools/devops/docker\_build/dev.Dockerfile\`
+    Dockerfile, e.g.
+    \`dev\_tools/devops/docker\_build/dev.Dockerfile\`
 
 ## Docker container 
 ---------------------
@@ -100,13 +100,13 @@ that specific prod scripts need
 -   create a script interface
 
 -   create an \`invoke\` task that calls \`i docker\_cmd \--cmd ...\`
-    > reusing the cmamp container, (since that container already has
-    > \`boto3\` and \`moto\` that are dependencies we can\'t remove)
+    reusing the cmamp container, (since that container already has
+    \`boto3\` and \`moto\` that are dependencies we can\'t remove)
 
     -   This approach is similar to calling the \`linter\`
 
 2)  If we think we need to add new packages only for running infra
-    > scripts then we will create a new \`infra\` container.
+    scripts then we will create a new \`infra\` container.
 
 -   We can build on the fly and not release through ECR)
 
@@ -123,7 +123,7 @@ We can start with approach 1), which will also allow us to transition to
 -   Create tool for poetry debugging #1026
 
 -   Fix tests that fail due to pandas update and release cmamp image
-    > #1002
+    #1002
 
 # Poetry
 =========
@@ -131,16 +131,16 @@ We can start with approach 1), which will also allow us to transition to
 Poetry is a tool for managing Python packages and dependencies:
 
 -   List packages you want to install with some constraints, e.g.,
-    > \`pandas\` must be above 1.0 in
-    > \`devops/docker\_build/pyproject.toml\`
+    \`pandas\` must be above 1.0 in
+    \`devops/docker\_build/pyproject.toml\`
 
 -   Given a list of packages you need to install to get the desired
-    > environment, you want \`poetry\` to \"optimize\" the packages and
-    > generate \`devops/docker\_build/poetry.lock\`, which contains the
-    > list of versions of the packages to install
+    environment, you want \`poetry\` to \"optimize\" the packages and
+    generate \`devops/docker\_build/poetry.lock\`, which contains the
+    list of versions of the packages to install
 
 -   If there is a new version of a package re-running \`poetry\` might
-    > give you an updated list of packages to install
+    give you an updated list of packages to install
 
 # Build a Docker image
 =======================
@@ -493,11 +493,11 @@ Depending on the type of changes sometimes one needs to rebuild only the
 E.g.,
 
 -   If you change Docker build-related things (e.g., add a Python
-    > package), you need to rebuild the \`dev\` image and then the
-    > \`prod\` image from the \`dev\` image
+    package), you need to rebuild the \`dev\` image and then the
+    \`prod\` image from the \`dev\` image
 
 -   If you change the code for a production system, you need to create a
-    > new \`prod\` image
+    new \`prod\` image
 
 We try to use the same flow, conventions, and code for all the
 containers (e.g., amp, cmamp, dev\_tools, opt).
@@ -511,7 +511,7 @@ of Docker images, code, or infrastructure.
 To run a Docker container in a certain stage use the \`stage\` parameter
 
 -   E.g. \`i docker\_bash \--stage="local"\` creates a bash session
-    > inside the local docker \`amp\` container
+    inside the local docker \`amp\` container
 
 ### Local
 
@@ -562,7 +562,7 @@ The release flow consists of the following phases
 -   Build a local image
 
     -   Run specific tests (e.g., make sure that the new packages are
-        > installed)
+        installed)
 
     -   Run unit tests
 
@@ -587,7 +587,7 @@ To add a new Python package to a Docker image you need to update
 \`poetry\` files and release a new image:
 
 1)  Add a new package to \`amp/devops/docker\_build/pyproject.toml\`
-    > file to the \`\[tool.poetry.dependencies\]\` section
+    file to the \`\[tool.poetry.dependencies\]\` section
 
 E.g., to add \`pytest-timeout\` do:
 
@@ -604,18 +604,18 @@ E.g., to add \`pytest-timeout\` do:
 > \`\`\`
 
 2)  In general we use the latest version of a package (\`\*\`) until the
-    > tests fail or the system stops working
+    tests fail or the system stops working
 
     a.  If the system fails, we freeze the version of the problematic
-        > packages to a known-good version to get the tests back to
-        > green until the problem is solved. We switch back to the
-        > latest version once the problem is fixed
+        packages to a known-good version to get the tests back to
+        green until the problem is solved. We switch back to the
+        latest version once the problem is fixed
 
     b.  If you need to put a constraint on the package version, follow
-        > the [[official
-        > docs]{.underline}](https://python-poetry.org/docs/dependency-specification/),
-        > and explain in a comment why this is needed making reference
-        > to GitHub issues
+        the [[official
+        docs]{.underline}](https://python-poetry.org/docs/dependency-specification/),
+        and explain in a comment why this is needed making reference
+        to GitHub issues
 
 3)  To verify that package is installed correctly one can
 
@@ -629,7 +629,7 @@ b.  run a docker container based on the local image
 > \`\> i docker\_bash \--stage local \--version {new version}\`
 
 c.  verify what package was installed with \`pip show {package name}\`,
-    > e.g.,
+    e.g.,
 
 \`\`\`
 
@@ -664,11 +664,11 @@ d.  run regressions for the local image, i.e.
 4)  Update the changelog describing the new version
 
 5)  Send a PR with the updated poetry files and any other change needed
-    > to make the tests pass
+    to make the tests pass
 
 6)  Release the new image. To do so follow the [[# Release a Docker
-    > image]{.underline}](#how-to-test-a-package-in-a-docker-container)
-    > section, use \`\--update-poetry\` flag to resolve the dependencies
+    image]{.underline}](#how-to-test-a-package-in-a-docker-container)
+    section, use \`\--update-poetry\` flag to resolve the dependencies
 
 ## How to find unused packages
 --------------------------------
@@ -699,12 +699,12 @@ re.compile(r\'\^from ((?!\\.+).\*?) import (?:.\*)\$\')
 #### Limitations
 
 -   Not all packages that we use are necessarily imported, e.g.
-    > \`awscli\`, \`jupyter\`, \`pytest-cov\`, etc. -\> \`pipreqs\`
-    > won't find these packages
+    \`awscli\`, \`jupyter\`, \`pytest-cov\`, etc. -\> \`pipreqs\`
+    won't find these packages
 
 -   The import name is not always equal to the package actual name, see
-    > the mapping
-    > [[here]{.underline}](https://github.com/bndr/pipreqs/blob/master/pipreqs/mapping)
+    the mapping
+    [[here]{.underline}](https://github.com/bndr/pipreqs/blob/master/pipreqs/mapping)
 
 #### Usage
 
@@ -716,10 +716,10 @@ for the advanced usage.
 -   Install \`pipreqs\` with \`sudo pip install pipreqs\`
 
     -   We install it temporary within a Docker bash session in order to
-        > introduce another dependency
+        introduce another dependency
 
     -   You need to re-install \`pipreqs\` everytime you create a new
-        > Docker bash session
+        Docker bash session
 
 -   To run for a root dir do:
 
@@ -730,7 +730,7 @@ for the advanced usage.
 > \`\`\`
 
 -   The command above will generate \`./tmp.requirements.txt\` with the
-    > list of the imported packages, e.g.,
+    list of the imported packages, e.g.,
 
 > \`\`\`
 >
@@ -867,36 +867,36 @@ it on ECR:
 -----------------------------------
 
 -   Docker tag is just a way of referring to an image. A good analogy is
-    > how Git tags refer to a particular commit in your history.
+    how Git tags refer to a particular commit in your history.
 
 -   Basically, tagging is creating a reference from one image
-    > (\`local-saggese-1.0.0\`) to another (\`dev\`)
+    (\`local-saggese-1.0.0\`) to another (\`dev\`)
 
 -   Once the \`local\` image is tagged as \`dev\`, your \`dev\` image
-    > becomes equal to \`local-saggese-1.0.0\`
+    becomes equal to \`local-saggese-1.0.0\`
 
 -   \`dev\` image is also tagged with\`dev-\${version}\`, e.g.,
-    > \`dev-1.0.0\` to preserve history and allow for quick rollback.
+    \`dev-1.0.0\` to preserve history and allow for quick rollback.
 
 -   Locally in git repository a git tag \`\${repo\_name}-\${version}\`,
-    > e.g. \`cmamp-1.0.0\` is created in order to properly control sync
-    > between code and container.
+    e.g. \`cmamp-1.0.0\` is created in order to properly control sync
+    between code and container.
 
 ## Push image 
 ---------------
 
 -   To push \`dev\` or \`prod\` image means to send it to the docker
-    > registry. It is more like pushing a commit to the GitHub
+    registry. It is more like pushing a commit to the GitHub
 
 -   Once an image is pushed, it can be used by the team members by
-    > running \`i docker\_pull\`
+    running \`i docker\_pull\`
 
 -   Local git tag \`\${repo\_name}-\${version}\`, e.g. \`cmamp-1.0.0\`,
-    > is pushed at this stage to the remote repository to allow others
-    > to properly control sync between code and container.
+    is pushed at this stage to the remote repository to allow others
+    to properly control sync between code and container.
 
 -   To be able to push an image to the ECR one should have permissions
-    > to do so
+    to do so
 
 ## End-to-end flow for \`dev\` image
 --------------------------------------
@@ -914,7 +914,7 @@ Conceptually the flow consists of the following phases:
 3)  Run end-to-end tests by, e.g., running linter on some file
 
     -   \`i lint \--files helpers/tasks.py \--stage local \--version
-        > 1.0.0\`
+        1.0.0\`
 
 4)  Tag \`local\` image as \`dev\`
 
@@ -925,7 +925,7 @@ Conceptually the flow consists of the following phases:
     -   \`i docker\_push\_dev\_image \--version 1.0.0\`
 
 -   The mentioned flow is executed by \`Build dev image\` GH action and
-    > that is a preferred way to do an image release.
+    that is a preferred way to do an image release.
 
 For specific cases that can not be done via GH action see commands
 below:
@@ -972,8 +972,8 @@ The recipe to build a \`prod\` image is in
 -   The main difference between \`dev\` image and \`prod\` image is that
 
     -   source code is accessed through a bind mount for \`dev\` image
-        > (so that it can be easily modified) and copied inside the
-        > image for a \`prod\` image (since we want to package the code)
+        (so that it can be easily modified) and copied inside the
+        image for a \`prod\` image (since we want to package the code)
 
     -   requirements to be installed are different:
 
@@ -1065,11 +1065,11 @@ that one can run Docker container (e.g., OMS or IM) inside an isolated
 The problems with this approach are:
 
 -   dind requires to run the external container in privileged mode,
-    > which might not be possible due to security concerns
+    which might not be possible due to security concerns
 
 -   the Docker / build cache is not shared across parent and children
-    > containers, so one needs to pull / build an image every time the
-    > outermost container is restarted
+    containers, so one needs to pull / build an image every time the
+    outermost container is restarted
 
 An alternative approach is the \"sibling container\" approach
 
@@ -1079,8 +1079,8 @@ An alternative approach is the \"sibling container\" approach
 Refs:
 
 -   [[Can I run Docker-in-Docker without using the \--privileged flag -
-    > Stack
-    > Overflow]{.underline}](https://stackoverflow.com/questions/29612463/can-i-run-docker-in-docker-without-using-the-privileged-flag)
+    Stack
+    Overflow]{.underline}](https://stackoverflow.com/questions/29612463/can-i-run-docker-in-docker-without-using-the-privileged-flag)
 
 -   [[https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/]{.underline}](https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/)
 
@@ -1238,10 +1238,10 @@ oms\_postgres\_db\_local
 ----------
 
 -   File an Issue for the release (e.g., \"Add package foobar to cmamp
-    > image\")
+    image\")
 
 -   Create the corresponding branch with \`i git\_create\_branch -i
-    > \${issue\_number}\`
+    \${issue\_number}\`
 
 -   Change the code
 
@@ -1255,28 +1255,28 @@ oms\_postgres\_db\_local
 > convention
 
 -   For example, adding a package to the image would mean bumping up
-    > version 1.0.0 to 1.0.1
+    version 1.0.0 to 1.0.1
 
 ```{=html}
 <!-- -->
 ```
 -   Test the change using the local release flow \`i
-    > docker\_build\_local\_image -v \${version}\`
+    docker\_build\_local\_image -v \${version}\`
 
     -   If a new package is added run \`docker\_build\_local\_image\`
-        > with \`\--update-poetry\` option and check in a
-        > \`poetry.lock\` file
+        with \`\--update-poetry\` option and check in a
+        \`poetry.lock\` file
 
 -   Make sure that the tests pass \`i run\_fast\_slow\_tests -s local -v
-    > \${version}\`, and that the goal of the Issue is achieved (e.g., a
-    > new package is visible, the package version has been updated)
+    \${version}\`, and that the goal of the Issue is achieved (e.g., a
+    new package is visible, the package version has been updated)
 
 -   Do a PR with the change including the updated \`changelog.txt\`, the
-    > poetry files (both the specs \`devops/docker\_build/poetry.toml\`
-    > and the package version \`devops/docker\_build/poetry.lock\`)
+    poetry files (both the specs \`devops/docker\_build/poetry.toml\`
+    and the package version \`devops/docker\_build/poetry.lock\`)
 
 -   Run the release flow manually (or rely on GH Action build workflow
-    > to create the new image)
+    to create the new image)
 
 > \`\`\`
 >
@@ -1291,12 +1291,12 @@ i docker\_pull
 \`\`\`
 
 -   Send a message on the \`all@\` chat telling people that a new
-    > version of the \`XYZ\` container has been released
+    version of the \`XYZ\` container has been released
 
 -   Users need to do a \`i docker\_pull\` to get the new container
 
 -   Users that don\'t update should see a message telling them that the
-    > code and container are not in sync any more, e.g.,:
+    code and container are not in sync any more, e.g.,:
 
 > \`\`\`
 >
@@ -1335,36 +1335,36 @@ i docker\_pull
 -   Update the changelog, i.e. \`//dev\_tools/changelog.txt\`
 
     -   The changelog should be updated only after the image is
-        > released; otherwise the sanity checks will assert that the
-        > release's version is not higher than the latest version
-        > recorded in the changelog.
+        released; otherwise the sanity checks will assert that the
+        release's version is not higher than the latest version
+        recorded in the changelog.
 
     -   Specify what has changed
 
     -   Pick the release version accordingly
 
         -   NB! The release version should consist of 3 digits, e.g.
-            > "1.1.0" instead of "1.1"
+            "1.1.0" instead of "1.1"
 
         -   We use [[semantic
-            > versioning]{.underline}](https://semver.org/) convention
+            versioning]{.underline}](https://semver.org/) convention
 
     ```{=html}
     <!-- -->
     ```
     -   For example, adding a package to the image would mean bumping up
-        > version 1.0.0 to 1.0.1
+        version 1.0.0 to 1.0.1
 
 -   Do a PR with the change including the updated \`changelog.txt\`
 
 -   Send a message on the \`all@\` chat telling people that a new
-    > version of the container has been released
+    version of the container has been released
 
     -   Users need to do 1) \`i docker\_pull\` from \`dev\_tools\`, 2)
-        > \`i docker\_pull\_dev\_tools\` from \`cmamp\`
+        \`i docker\_pull\_dev\_tools\` from \`cmamp\`
 
     -   Users need to make sure to pull docker after the master is
-        > up-to-date (including amp submodules)
+        up-to-date (including amp submodules)
 
 # Design release flow - discussion
 ===================================
@@ -1439,10 +1439,10 @@ the version of image on which \`dev\_tools\` is based \-- we\'ll need to
 modify Dockerfile now. Is that ok?
 
 -   Maybe we should just create the dev\_tools from scratch using the
-    > full-blown flow instead of build on top of it
+    full-blown flow instead of build on top of it
 
 -   The idea of building on top of it, was just a shortcut but it is
-    > creating more problems that what it\'s worth it
+    creating more problems that what it\'s worth it
 
 -   Then everything looks and behaves the same
 
@@ -1454,11 +1454,11 @@ image in this case, but code version will be from \`dev\_tools\` \--
 should we fix this?
 
 -   We are going towards the concept of \"releasable dirs\" (see im,
-    > optimizer). If there is a dir with devops, then that dir runs
-    > inside a container
+    optimizer). If there is a dir with devops, then that dir runs
+    inside a container
 
 -   The \"Git version\" should be associated to the dir we are releasing
-    > (e.g., cmamp, im, optimizer, dev\_tools)
+    (e.g., cmamp, im, optimizer, dev\_tools)
 
 Vitalii: If we will have monorepo with releasable dirs, then indeed git
 tags are not that comfortable to use, however I could argue that when
@@ -1488,7 +1488,7 @@ them.
 Q3: We don\'t need version.txt file in this flow. I will remove it, ok?
 
 -   Yes, we can remove version.txt and use a README or changelog in the
-    > releasable dir
+    releasable dir
 
 The flow is similar to what I thought.
 
@@ -1497,7 +1497,7 @@ Some observations / questions:
 INV: version becomes mandatory in the release flow
 
 -   This requires a lot of cosmetic changes to the code since now it\'s
-    > optional, but it\'s worth make the changes
+    optional, but it\'s worth make the changes
 
 We need to ensure that version can only be created going fwd.
 
@@ -1515,8 +1515,8 @@ The workflows are:
 -   Rollback an image
 
     -   We rarely move the dev / prod tag back, but rather users needs
-        > to docker pull an older image and pass \--base\_name \--stage
-        > and \--version to docker\_{bash, cmd, jupyter}
+        to docker pull an older image and pass \--base\_name \--stage
+        and \--version to docker\_{bash, cmd, jupyter}
 
     -   Then the image is fixed going forward
 
@@ -1525,7 +1525,7 @@ A releasable dir has a
 -   repo\_config
 
     -   Maybe we should call it component\_config since now also dirs
-        > can be released
+        can be released
 
 -   README.md or changelog.md
 
@@ -1579,7 +1579,7 @@ dev\_scripts\_devto/client\_setup/requirements.txt
 A possible solution is to use Docker-in-Docker
 
 -   in this way we don\'t have to pollute the thin env with a bunch of
-    > stuff
+    stuff
 
 -   Talk to Grisha and Vitalii
 
@@ -1597,15 +1597,15 @@ container (that\'s what the user would do)
 Next steps:
 
 -   TODO(Sonya + Grisha): release the prod dev\_toools container as it
-    > is
+    is
 
 -   TODO(Sonya + Grisha): document dev\_tools, release procedure
 
 -   TODO(Sonya): pull prod dev\_tools (i docker\_pull\_dev\_tools) and
-    > test that now in cmamp the tool works
+    test that now in cmamp the tool works
 
 -   TODO(gp): figure out the QA workflow (and improve the thin client
-    > with dind)
+    with dind)
 
     -   To break the circular dep we release a prod-candidate
 
@@ -1621,17 +1621,17 @@ For specific dev\_tools workflows see
 --------------
 
 -   The high-level goal is to move towards containerized Python scripts
-    > running in smaller containers instead of keep adding packages to
-    > \`amp\` / \`cmamp\`, which makes the \`amp\` / \`cmamp\` container
-    > bloated and risky to build
+    running in smaller containers instead of keep adding packages to
+    \`amp\` / \`cmamp\`, which makes the \`amp\` / \`cmamp\` container
+    bloated and risky to build
 
 -   Along this design philosophy similar to microservices, we want to
-    > have a Docker container, called \`opt\` with a Python script that
-    > uses some packages that are not compatible with \`amp\`
-    > (specifically cvxopt, cvxpy)
+    have a Docker container, called \`opt\` with a Python script that
+    uses some packages that are not compatible with \`amp\`
+    (specifically cvxopt, cvxpy)
 
 -   This is similar to what we do for the \`dev\_tools\`, which is like
-    > a containerized Python script for the linter
+    a containerized Python script for the linter
 
 ## Build and run a local version of \`opt\`
 ---------------------------------------------
@@ -1688,10 +1688,10 @@ corresponding to a Git repo
 -   no implicit sharing of code across different containers
 
 -   some mechanism to share code (e.g., \`helpers\`) across repos (e.g.,
-    > using bind mount)
+    using bind mount)
 
 -   not playing nice with Git subrepo mechanism since Docker needs to
-    > see the entire repo
+    see the entire repo
 
 ```{=html}
 <!-- -->
@@ -1730,7 +1730,7 @@ Another approach is to have \`optimizer\` as a directory inside \`amp\`
 -   This keeps \`amp\` and \`optimizer\` in a single repo
 
 -   To build / run optimizer code in its container one needs to \`cd\`
-    > in the dir
+    in the dir
 
 -   The problem then becomes how to share \`helpers\`
 
@@ -1881,7 +1881,7 @@ AmpTask1017).
 -   A deployable dir is a dir under a Git repo
 
     -   It corresponds to a software component (code + library = Docker
-        > container)
+        container)
 
     -   Anything that has a devops dir is \"deployable\"
 
@@ -1890,7 +1890,7 @@ AmpTask1017).
     -   amp container from the amp dir
 
     -   amp container from the lemonade dir (this is just a shortcut
-        > since lemonade has the same deps right now as amp)
+        since lemonade has the same deps right now as amp)
 
 ```{=html}
 <!-- -->
@@ -1902,15 +1902,15 @@ AmpTask1017).
 -   
 
 -   Each deployable dir specifies all the needed information in
-    > \`repo\_config.py\` (which is the one in the current dir)
+    \`repo\_config.py\` (which is the one in the current dir)
 
     -   What container to run
 
     -   What functionality is supported on different servers (e.g.,
-        > privileged way)
+        privileged way)
 
 -   The \`changelog.txt\` file is in the deployable dir (e.g.,
-    > optimizer/changelog.txt)
+    optimizer/changelog.txt)
 
 -   Each
 
@@ -1940,14 +1940,14 @@ run inside the \`amp\` container but need to be run inside \`opt\`.
 We want to:
 
 1)  (as always) write and run unit tests for the optimizer code in
-    > isolation, i.e., test the code in the directory \`optimizer\` by
-    > itself
+    isolation, i.e., test the code in the directory \`optimizer\` by
+    itself
 
 2)  run all the tests for the entire repo(relying on both containers
-    > \`amp\` and \`optimizer\` with a single command invocation
+    \`amp\` and \`optimizer\` with a single command invocation
 
 3)  be able to run tests belonging to only one of the containers to
-    > shorten the debugging cycle
+    shorten the debugging cycle
 
 To achieve this we need to solve the 3 problems below.
 
@@ -1957,7 +1957,7 @@ We can\'t parse code (e.g., in \`pytest\`) that includes packages that
 are not present in a container
 
 -   E.g., \`pytest\` running in \`amp\` should not parse code in
-    > \`//amp/optimizer\` since it contains imports that will fail
+    \`//amp/optimizer\` since it contains imports that will fail
 
 **Solution 1**
 
@@ -1992,7 +1992,7 @@ the code in an \`if \_has\_package\`
 -   Pros:
 
     -   We can skip code based dynamically on a \`try ... except
-        > ImportModule\` to check what packages are present
+        ImportModule\` to check what packages are present
 
 -   Cons:
 
@@ -2001,7 +2001,7 @@ the code in an \`if \_has\_package\`
         -   Solution: we can factor it out in a function
 
     -   We need to enclose the code in a \`if ...\` that screws up the
-        > indentation and makes the code weird
+        indentation and makes the code weird
 
 **Solution 3**
 
@@ -2010,22 +2010,22 @@ Exclude certain directories (e.g., \`//amp/optimizer\`) from \`pytest\`
 -   Pros:
 
     -   We don\'t have to spread the \`try ... except\` and \`if
-        > \_has\_package\` in the code
+        \_has\_package\` in the code
 
 -   Cons:
 
     -   The directory is relative to the top directory
 
         -   Solution: we can use a regex to specify the dir without the
-            > full path
+            full path
 
     -   Which directories are included and excluded depends on where
-        > \`pytest\` is run
+        \`pytest\` is run
 
         -   E.g., running \`pytest\` in an \`amp\` container we need to
-            > skip the \`optimizer\` dir, while \`pytest\` in an
-            > \`optimizer\` container should skip everything but the
-            > \`optimizer\` dir
+            skip the \`optimizer\` dir, while \`pytest\` in an
+            \`optimizer\` container should skip everything but the
+            \`optimizer\` dir
 
 **Solution 4**
 
@@ -2035,7 +2035,7 @@ running in
 -   Cons:
 
     -   We need to have a way to determine in which container we are
-        > running
+        running
 
         -   Solution: we can use the env vars we use for versioning
 
@@ -2080,12 +2080,12 @@ We can use dind to run the \`opt\` container inside a \`cmamp\` one
 -   dind is not supported everywhere (one needs privileged containers)
 
 -   dind is slower since there are 2 levels of (relatively fast)
-    > virtualization
+    virtualization
 
 ### Run optimizer tests as part of running unit tests for \`cmamp\`
 
 -   We use the same mechanism as \`run\_fast\_slow\_superslow\_tests\`
-    > to pull together different test lists
+    to pull together different test lists
 
 ## Call a Dockerized executable from a container
 --------------------------------------------------
@@ -2103,7 +2103,7 @@ Inside the code we build the command line \`cmd = \'docker run -it \...
 -   Cons:
 
     -   there is code replicated between here and the invoke task (e.g.,
-        > the info about the container, \...)
+        the info about the container, \...)
 
 **Solution 2**
 
@@ -2120,14 +2120,14 @@ system(cmd)
 -   Pros:
 
     -   All the Docker commands go through the same interface inside
-        > invoke
+        invoke
 
 -   Cons
 
     -   Bash interpolation in the command
 
     -   Another level of indirection: do a system call to call
-        > \`invoke\`, \`invoke\` calls docker, docker does the work
+        \`invoke\`, \`invoke\` calls docker, docker does the work
 
     -   \`invoke\` needs to be installed inside the calling container
 
