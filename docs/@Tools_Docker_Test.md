@@ -63,7 +63,7 @@ Other containers that are lightweight and used only by one person (e.g.,
 the \`infra\` container) can be built on the fly using \`docker
 compose\` / \`docker build\`.
 
-**## Thin client**
+## Thin client
 --------------------
 
 To bootstrap the system we use a \"thin client\" which installs in a
@@ -72,7 +72,7 @@ virtual env the minimum set of packages to run (e.g., installs
 
 TODO(gp): Audit / make sure we can simplify the thin env
 
-**## amp / cmamp container**
+## amp / cmamp container
 ------------------------------
 
 The \`dev\` version is used to develop
@@ -80,14 +80,14 @@ The \`dev\` version is used to develop
 The \`prod\` version can be used for deployment as shortcut to creating
 a smaller container with only the strictly needed dependencies
 
-**## Prod container**
+## Prod container
 -----------------------
 
 In order to avoid shipping the monster cmamp dev / prod container, we
 want to start building smaller containers with only the dependencies
 that specific prod scripts need
 
-**## Infra container**
+## Infra container
 ------------------------
 
 1)  To run infra script, if we only need \`boto3\` and \`moto\`, we can
