@@ -1,15 +1,32 @@
 #!/usr/bin/env python
 
 """
-Transform the output of `diff -r --brief dir1 dir2` into a script using
-vimdiff.
+Diff content of two directories using vimdiff, by transform the output of `diff -r
+--brief dir1 dir2` into a script using vimdiff.
 
 # To clean up the crap in the dirs:
 > git status --ignored
 > git clean -fdx --dry-run
 
-# Diff dirs:
-> diff_to_vimdiff.py --dir1 /Users/saggese/src/...2/amp --dir2 /Users/saggese/src/...3/amp
+# Diff content of dirs using vimdiff:
+> diff_to_vimdiff.py \
+    --dir1 /Users/saggese/src/...2/amp \
+    --dir2 /Users/saggese/src/...3/amp
+
+# Diff only files that are present in both dirs but have different content:
+> diff_to_vimdiff.py \
+    --dir1 ... --dir2 ... \
+    --only_different_file_content
+
+# Diff only files that are not present in both dirs
+> diff_to_vimdiff.py \
+    --dir1 ... --dir2 ... \
+    --only_different_files
+
+# Compare the list of files in the two dirs, instead of the content of the files:
+> diff_to_vimdiff.py \
+    --dir1 ... --dir2 ... \
+    --compare_file_list
 
 Import as:
 
@@ -20,6 +37,7 @@ import argparse
 import logging
 import os
 import re
+import sys
 from typing import Any, Match, Optional
 
 import helpers.hdbg as hdbg
@@ -32,6 +50,13 @@ _LOG = logging.getLogger(__name__)
 
 
 def _remove_files(file_name: str, to_ignore_regex: Optional[str]) -> None:
+    """
+    Remove certain files (e.g., `.git`, `tmp.`, ...) from the content of a file.
+
+    - Read the file name which has one file per line
+    - Remove certain files
+    - Write the file back
+    """
     print(f"# Removing files from '{file_name}'")
     txt = hio.from_file(file_name)
     files = txt.split("\n")
@@ -59,11 +84,33 @@ def _remove_files(file_name: str, to_ignore_regex: Optional[str]) -> None:
     # print(len(files), len(removed_files), len(kept_files))
 
 
+# ###############################################################################
+
+
 def _compare_file_list(
     dir1: str, dir2: str, to_ignore_regex: Optional[str]
 ) -> None:
     """
-    Extract the file list of the two dirs, run `sdiff`, and save the output in a file.
+    Extract the file list from two dirs and run `sdiff` on the two file lists.
+
+    The output looks like:
+    ```
+    > sdiff --suppress-common-lines --expand-tabs /tmp/dir1 /tmp/dir2                                                                                                            [244/93661]
+                                                                    > ./.dockerignore
+                                                                    > ./.github.OLD
+                                                                    > ./.github.OLD/gh_requirements.txt
+
+      ./.github/workflows/build_image.cmamp.yml                     <
+      ./.github/workflows/build_image.dev.yml                       <
+      ./.github/workflows/ib_connector.build_image.yml.DISABLED     <
+      ./.github/workflows/import_cycles_detector.yml                <
+      ./dev_scripts/notebooks/test/outcomes/Test_publish_notebook1. | ./dev_scripts/notebooks/test/simple_notebook.ipynb
+      ./dev_scripts/notebooks/test/outcomes/Test_publish_notebook1. | ./dev_scripts/notebooks/test/simple_notebook.py
+    ```
+
+    :param dir1: first dir
+    :param dir2: second dir
+    :param to_ignore_regex: regex for files to remove
     """
     print(hprint.frame("Compare file list in dirs '%s' vs '%s'" % (dir1, dir2)))
     hdbg.dassert_path_exists(dir1)
@@ -71,16 +118,14 @@ def _compare_file_list(
     # Find all the files in both dirs.
     cmd = ""
     # remove_cmd = "| grep -v \"\.git/\" | grep -v \.idea | grep -v '[/ ]tmp.'"
-    cmd += '(cd %s && find %s -name "*" | sort >/tmp/dir1) && ' % (
+    cmd += '(cd %s && find . -name "*" | sort >/tmp/dir1) && ' % (
         # os.path.dirname(dir1),
         # os.path.basename(dir1),
         dir1,
-        dir2,
     )
-    cmd += '(cd %s && find %s -name "*" | sort >/tmp/dir2)' % (
+    cmd += '(cd %s && find . -name "*" | sort >/tmp/dir2)' % (
         # os.path.dirname(dir2),
         # os.path.basename(dir2),
-        dir1,
         dir2,
     )
     print(cmd)
@@ -96,6 +141,9 @@ def _compare_file_list(
     cmd = f"sdiff {opts} /tmp/dir1 /tmp/dir2"
     print("# Diff file listing with:\n> " + cmd)
     hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+
+
+# ###############################################################################
 
 
 def _find_files_to_diff(
@@ -140,8 +188,7 @@ def _parse_diff_output(
     input_file: str, dir1: str, dir2: str, args: argparse.Namespace
 ) -> None:
     """
-    Process the output of diff and create a script to diff the diffenrent
-    files.
+    Process the output of diff and create a script to diff the different files.
 
     :param input_file: the output of `diff -r --brief`, e.g.,
         ```
@@ -315,17 +362,30 @@ def _parse() -> argparse.ArgumentParser:
         "--output_file",
         action="store",
         default="tmp.diff_to_vimdiff.sh",
-        help="Output file. Don't specify anything for stdout",
+        help="Output script file. Don't specify anything for stdout",
+    )
+    parser.add_argument(
+        "--compare_file_list",
+        action="store_true",
+        help="Diff the list of files between the dirs and exit",
     )
     parser.add_argument(
         "--only_different_file_content",
         action="store_true",
-        help="Show only files that are both present but have different content",
+        help="Diff content of only files that are present in both dirs but have "
+             "different content",
     )
     parser.add_argument(
         "--only_different_files",
         action="store_true",
-        help="Show only files that are not present in both trees",
+        help="Diff content of only files that are not present in both dirs",
+    )
+    parser.add_argument(
+        "--select_files",
+        action="store",
+        default=None,
+        help="Specify a file that contains the files to actually consider "
+             "for the diff",
     )
     parser.add_argument(
         "--ignore_files",
@@ -337,16 +397,21 @@ def _parse() -> argparse.ArgumentParser:
         parser,
         "run_diff_script",
         default_value=True,
-        help_="Run the diffing script or not",
+        help_="Run automatically the diffing script or not",
     )
     parser.add_argument(
-        "--skip_comments", action="store_true", help="Do not show comments"
+        "--skip_comments", action="store_true",
+        help="Do not print comments in the diff script"
     )
     parser.add_argument(
-        "--skip_vim", action="store_true", help="Do not vim commands"
+        "--skip_vim", action="store_true",
+        help="Do not print vim commands in the diff script"
     )
     hparser.add_verbosity_arg(parser)
     return parser
+
+
+# ###############################################################################
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
@@ -358,12 +423,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.subdir:
         dir1 = os.path.join(dir1, args.subdir)
         dir2 = os.path.join(dir2, args.subdir)
-    # Compare the file list.
-    if False:
+    if args.compare_file_list:
+        # Compare the file list and exit.
         _compare_file_list(dir1, dir2, args.ignore_files)
+        sys.exit(0)
     # Find the files to diff.
     diff_file = _find_files_to_diff(dir1, dir2, args.ignore_files)
-    #
+    # Diff the files.
     _parse_diff_output(diff_file, dir1, dir2, args)
 
 
