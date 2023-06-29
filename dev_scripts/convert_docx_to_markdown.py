@@ -46,7 +46,7 @@ def _clean_up_artifacts(md_file: str) -> None:
     """
     perl_regex_manupulations = [
         #  \#\# Docker image  -> ## Docker image
-        f"perl -pi -e 's/\\#/\#/g' {md_file}",
+        # f"perl -pi -e 's/\\\#/\#/g' {md_file}",
         # # **\# Connecting via VNC**
         # f"perl -pi -e 's/# \*\*(\\#)+ (.*?)\*\*/# $2/g' {md_file}",
         # # # Remove the \ before - $ | < > " _ @ ) [ ].
@@ -61,7 +61,7 @@ def _clean_up_artifacts(md_file: str) -> None:
         # f"perl -pi -e 's/# (\\#)+ /# /g' {md_file}",
         # # \`nid\` -> `nid`
         # f"perl -pi -e 's/\\\\\`(.*?)\\\\\`/\`\1\`/g' {md_file}",
-        f"./dev_scripts/lint_md.sh {md_file}"
+        # f"./dev_scripts/lint_md.sh {md_file}"
 
     ]
     for clean_cmd in perl_regex_manupulations:
@@ -109,7 +109,7 @@ def _convert_docx_to_markdown(docx_file: str, md_file: str) -> None:
     hsystem.system(docker_cmd)
     _LOG.info("Finished converting '%s' to '%s'.", docx_file, md_file)
     # _move_media(md_file_figs)
-    # _clean_up_artifacts(md_file)
+    _clean_up_artifacts(md_file)
 
 # #############################################################################\
 
