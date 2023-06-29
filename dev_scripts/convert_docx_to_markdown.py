@@ -7,7 +7,7 @@ Usage:
 > dev_scripts/convert_docx_to_markdown.py --docx_file <docx_file> --md_file <md_file>
 
 Example:
-> dev_scripts/convert_docx_to_markdown.py --docx_file docs/Tools_Docker.docx --md_file docs/Tools_Docker_Test.md
+> dev_scripts/convert_docx_to_markdown.py --docx_file docs/Tools_Docker.docx --md_file docs/@Tools_Docker_Test.md
 
 """
 
@@ -24,22 +24,50 @@ import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
-# Move the media if it exists.
-"""
-if [[ -d "$OUT_FIGS/media" ]]; then
-    mv $OUT_FIGS/media/* $OUT_FIGS/
-    rm -rf $OUT_FIGS/media
-fi
-"""
+
 def _move_media(md_file_figs: str) -> None:
+    """
+    Move the media if it exists.
+    """
     if os.path.isdir(os.path.join(md_file_figs, "media")):
         # Move all the files in 'media' to 'out_figs'
         for file_name in os.listdir(os.path.join(md_file_figs, "media")):
-            shutil.move(os.path.join(md_file_figs, "media", file_name), md_file_figs)
+            shutil.move(os.path.join(
+                md_file_figs, "media", file_name), md_file_figs)
         # Remove the 'media' directory
         shutil.rmtree(os.path.join(md_file_figs, "media"))
 
-# TODO: Add perl regex manupulations;
+
+def _clean_up_artifacts(md_file: str) -> None:
+    """
+    Remove the artifacts.
+
+    :param md_file_figs: path to the folder containing the artifacts
+    """
+    perl_regex_manupulations = [
+        #  \#\# Docker image  -> ## Docker image
+        f"perl -pi -e 's/\\#/\#/g' {md_file}",
+        # # **\# Connecting via VNC**
+        # f"perl -pi -e 's/# \*\*(\\#)+ (.*?)\*\*/# $2/g' {md_file}",
+        # # # Remove the \ before - $ | < > " _ @ ) [ ].
+        # # f"perl -pi -e 's/\\([-\$|<>\_\@\)\]\[\.])/\1/g' {md_file}",
+        # # Let\'s -> Let's
+        # f"perl -pi -e 's/\\\\'/'/g' {md_file}",
+        # # Remove trailing \
+        # f"perl -pi -e 's/\\$//g' {md_file}",
+        # # \# -> #
+        # f"perl -pi -e 's/\\#/\#/g' {md_file}",
+        # # "# \# Running PyCharm remotely" -> "# Running PyCharm remotely"
+        # f"perl -pi -e 's/# (\\#)+ /# /g' {md_file}",
+        # # \`nid\` -> `nid`
+        # f"perl -pi -e 's/\\\\\`(.*?)\\\\\`/\`\1\`/g' {md_file}",
+        f"./dev_scripts/lint_md.sh {md_file}"
+
+    ]
+    for clean_cmd in perl_regex_manupulations:
+        hsystem.system(clean_cmd)
+
+
 def _convert_docx_to_markdown(docx_file: str, md_file: str) -> None:
     """
     Convert docx file to markdown.
@@ -80,12 +108,13 @@ def _convert_docx_to_markdown(docx_file: str, md_file: str) -> None:
     _LOG.info("Start converting docx to markdown.")
     hsystem.system(docker_cmd)
     _LOG.info("Finished converting '%s' to '%s'.", docx_file, md_file)
-    _move_media(md_file_figs)
+    # _move_media(md_file_figs)
+    # _clean_up_artifacts(md_file)
 
 # #############################################################################\
-def add_download_args(
-    parser: argparse.ArgumentParser,
-) -> argparse.ArgumentParser:
+
+
+def add_download_args(parser: argparse.ArgumentParser,) -> argparse.ArgumentParser:
     parser.add_argument(
         "--docx_file",
         action="store",
