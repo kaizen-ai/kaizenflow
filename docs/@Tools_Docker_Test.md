@@ -164,7 +164,7 @@ A \`Dockerfile\` is a text document that contains all the commands to
 call on the command line to assemble an image. E.g.
 \`cmamp/devops/docker\_build/dev.Dockerfile\`.
 
-### \#\#\# Base image
+### Base image
 
 A \`Dockerfile\` should start with specifying a base image.
 
@@ -180,7 +180,7 @@ FROM ubuntu:20.4\`
 
 \`\`\`
 
-### \#\#\# Copy files
+### Copy files
 
 Copy files that are required to build a Docker image to the Docker
 filesystem.
@@ -204,7 +204,7 @@ COPY devops/docker\_build/install\_packages.sh .
 
 \`\`\`
 
-### \#\#\# Install OS packages
+### Install OS packages
 
 Install OS packages that are needed for a Docker app, but that are not
 installed for a base image.
@@ -229,7 +229,7 @@ RUN /bin/sh -c "./install\_packages.sh"
 
 \`\`\`
 
-### \#\#\# Install Python packages
+### Install Python packages
 
 We prefer to install Python packages with \`poetry \`.
 
@@ -513,7 +513,7 @@ To run a Docker container in a certain stage use the \`stage\` parameter
 -   E.g. \`i docker\_bash \--stage="local"\` creates a bash session
     > inside the local docker \`amp\` container
 
-### \#\#\# Local
+### Local
 
 A \`local\` image is used to develop and test an update to the Docker
 container, e.g. after updating a package, installing a new package, etc.
@@ -522,7 +522,7 @@ Local images can only be accessed locally by a developer, i.e. the team
 members can not / should not use local images. In practice \`local\`
 images are like \`dev\` images but private to users and servers.
 
-### \#\#\# Dev
+### Dev
 
 A \`dev\` image is used by our team to develop our systems (e.g., to add
 new functionalities to the \`dev\_tools\` code).
@@ -536,7 +536,7 @@ it without worries.
 Once a \`dev\` image is pushed to the docker registry it can be pulled
 and used by the team members.
 
-### \#\#\# Prod
+### Prod
 
 A \`prod\` image is used to run a system by final users. E.g., the
 linter inside \`dev\_tools\`, some prod system inside Airflow.
@@ -676,9 +676,9 @@ d.  run regressions for the local image, i.e.
 While installing Python packages we need to make sure that we do not
 install packages that we do not use
 
-### \#\#\# Import-based approach using \`pipreqs\`
+### Import-based approach using \`pipreqs\`
 
-#### \#\#\#\# How it works 
+#### How it works 
 
 To do so we use an import-based approach provided by
 [[\`pipreqs\`]{.underline}](https://github.com/bndr/pipreqs). Under the
@@ -696,7 +696,7 @@ re.compile(r\'\^from ((?!\\.+).\*?) import (?:.\*)\$\')
 
 \`\`\`
 
-#### \#\#\#\# Limitations
+#### Limitations
 
 -   Not all packages that we use are necessarily imported, e.g.
     > \`awscli\`, \`jupyter\`, \`pytest-cov\`, etc. -\> \`pipreqs\`
@@ -706,7 +706,7 @@ re.compile(r\'\^from ((?!\\.+).\*?) import (?:.\*)\$\')
     > the mapping
     > [[here]{.underline}](https://github.com/bndr/pipreqs/blob/master/pipreqs/mapping)
 
-#### \#\#\#\# Usage
+#### Usage
 
 See the [[official docs]{.underline}](https://github.com/bndr/pipreqs)
 for the advanced usage.
@@ -1122,7 +1122,7 @@ docker run -ti \--rm hello-world
 
 \`\`\`
 
-### \#\#\# Connecting to Postgres instance using sibling containers
+### Connecting to Postgres instance using sibling containers
 
 We can start the Docker container with Postgres as a service from
 outside the container.
@@ -1673,7 +1673,7 @@ To run a Jupyter notebook in the \`opt\` container:
 \#\# Internals
 --------------
 
-### \#\#\# One container per Git repo
+### One container per Git repo
 
 A simple approach is to have each deployable unit (i.e., container)
 corresponding to a Git repo
@@ -1723,7 +1723,7 @@ where the dependency between containers are
 
 -   optimizer -\> helpers, core
 
-### \#\#\# Multiple containers per Git repo 
+### Multiple containers per Git repo 
 
 Another approach is to have \`optimizer\` as a directory inside \`amp\`
 
@@ -1951,7 +1951,7 @@ We want to:
 
 To achieve this we need to solve the 3 problems below.
 
-### \#\#\# Avoid compiling code depending from cvxopt when running amp
+### Avoid compiling code depending from cvxopt when running amp
 
 We can\'t parse code (e.g., in \`pytest\`) that includes packages that
 are not present in a container
@@ -2049,7 +2049,7 @@ running in
 
 Given the pros and cons, we decided to follow Solution 1 and Solution 3
 
-### \#\#\# Run optimizer tests in a stand-alone \`opt\` container
+### Run optimizer tests in a stand-alone \`opt\` container
 
 To run the optimizer tests, you can create an \`opt \` container and
 then run \`pytest\`
@@ -2082,7 +2082,7 @@ We can use dind to run the \`opt\` container inside a \`cmamp\` one
 -   dind is slower since there are 2 levels of (relatively fast)
     > virtualization
 
-### \#\#\# Run optimizer tests as part of running unit tests for \`cmamp\`
+### Run optimizer tests as part of running unit tests for \`cmamp\`
 
 -   We use the same mechanism as \`run\_fast\_slow\_superslow\_tests\`
     > to pull together different test lists
