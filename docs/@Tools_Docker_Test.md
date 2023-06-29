@@ -591,17 +591,17 @@ To add a new Python package to a Docker image you need to update
 
 E.g., to add \`pytest-timeout\` do:
 
-> \`\`\`
->
-> \[tool.poetry.dependencies\]
->
-> \...
->
-> pytest-timeout = "\*"
->
-> \...
->
-> \`\`\`
+  \`\`\`
+ 
+  \[tool.poetry.dependencies\]
+ 
+  \...
+ 
+  pytest-timeout = "\*"
+ 
+  \...
+ 
+  \`\`\`
 
 2)  In general we use the latest version of a package (\`\*\`) until the
     tests fail or the system stops working
@@ -621,45 +621,45 @@ E.g., to add \`pytest-timeout\` do:
 
     a.  build a local image and update poetry
 
-> \`\> i docker\_build\_local\_image \--version {new version}
-> \--update-poetry\`
+  \`\> i docker\_build\_local\_image \--version {new version}
+  \--update-poetry\`
 
 b.  run a docker container based on the local image
 
-> \`\> i docker\_bash \--stage local \--version {new version}\`
+  \`\> i docker\_bash \--stage local \--version {new version}\`
 
 c.  verify what package was installed with \`pip show {package name}\`,
     e.g.,
 
 \`\`\`
 
-> \> pip show pytest-rerunfailures
->
-> Name: pytest-rerunfailures
->
-> Version: 10.2
->
-> Summary: pytest plugin to re-run tests to eliminate flaky failures
->
-> \...
->
-> Location: /venv/lib/python3.8/site-packages
->
-> Requires: pytest, setuptools
->
-> Required-by:
->
-> \`\`\`
+  \> pip show pytest-rerunfailures
+ 
+  Name: pytest-rerunfailures
+ 
+  Version: 10.2
+ 
+  Summary: pytest plugin to re-run tests to eliminate flaky failures
+ 
+  \...
+ 
+  Location: /venv/lib/python3.8/site-packages
+ 
+  Requires: pytest, setuptools
+ 
+  Required-by:
+ 
+  \`\`\`
 
 d.  run regressions for the local image, i.e.
 
-> \`\`\`
->
-> \> i run\_fast\_tests \--stage local \--version {new version}
->
-> \> i run\_slow\_tests \--stage local \--version {new version}
->
-> \`\`\`
+  \`\`\`
+ 
+  \> i run\_fast\_tests \--stage local \--version {new version}
+ 
+  \> i run\_slow\_tests \--stage local \--version {new version}
+ 
+  \`\`\`
 
 4)  Update the changelog describing the new version
 
@@ -723,36 +723,36 @@ for the advanced usage.
 
 -   To run for a root dir do:
 
-> \`\`\`
->
-> pipreqs . \--savepath ./tmp.requirements.txt
->
-> \`\`\`
+  \`\`\`
+ 
+  pipreqs . \--savepath ./tmp.requirements.txt
+ 
+  \`\`\`
 
 -   The command above will generate \`./tmp.requirements.txt\` with the
     list of the imported packages, e.g.,
 
-> \`\`\`
->
-> amp==1.1.4
->
-> async\_solipsism==0.3
->
-> beautifulsoup4==4.11.1
->
-> botocore==1.24.37
->
-> cvxopt==1.3.0
->
-> cvxpy==1.2.0
->
-> dill==0.3.4
->
-> environs==9.5.0
->
-> ...
->
-> \`\`\`
+  \`\`\`
+ 
+  amp==1.1.4
+ 
+  async\_solipsism==0.3
+ 
+  beautifulsoup4==4.11.1
+ 
+  botocore==1.24.37
+ 
+  cvxopt==1.3.0
+ 
+  cvxpy==1.2.0
+ 
+  dill==0.3.4
+ 
+  environs==9.5.0
+ 
+  ...
+ 
+  \`\`\`
 
 -   You can grep for a package name to see where it is used, e.g.,
 
@@ -1251,8 +1251,8 @@ oms\_postgres\_db\_local
 
     -   Pick the release version accordingly
 
-> We use [[semantic versioning]{.underline}](https://semver.org/)
-> convention
+  We use [[semantic versioning]{.underline}](https://semver.org/)
+  convention
 
 -   For example, adding a package to the image would mean bumping up
     version 1.0.0 to 1.0.1
@@ -1278,9 +1278,9 @@ oms\_postgres\_db\_local
 -   Run the release flow manually (or rely on GH Action build workflow
     to create the new image)
 
-> \`\`\`
->
-> # Release dev image
+  \`\`\`
+ 
+  # Release dev image
 
 i docker\_release\_dev\_image \--version \$version
 
@@ -1298,24 +1298,24 @@ i docker\_pull
 -   Users that don\'t update should see a message telling them that the
     code and container are not in sync any more, e.g.,:
 
-> \`\`\`
->
-> \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
->
-> This code is not in sync with the container:
->
-> code\_version=\'1.0.3\' != container\_version=\'amp-1.0.3\'
->
-> \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
->
-> You need to:
->
-> \- merge origin/master into your branch with \`invoke
-> git\_merge\_master\`
->
-> \- pull the latest container with \`invoke docker\_pull\`
->
-> \`\`\`
+  \`\`\`
+ 
+  \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+ 
+  This code is not in sync with the container:
+ 
+  code\_version=\'1.0.3\' != container\_version=\'amp-1.0.3\'
+ 
+  \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
+ 
+  You need to:
+ 
+  \- merge origin/master into your branch with \`invoke
+  git\_merge\_master\`
+ 
+  \- pull the latest container with \`invoke docker\_pull\`
+ 
+  \`\`\`
 
 ## dev\_tools
 ---------------
@@ -1328,9 +1328,9 @@ i docker\_pull
 
 -   Run the release flow end-to-end
 
-> \> i docker\_release\_dev\_image \--version 1.1.0
->
-> \> i docker\_release\_prod\_image \--version 1.1.0
+  \> i docker\_release\_dev\_image \--version 1.1.0
+ 
+  \> i docker\_release\_prod\_image \--version 1.1.0
 
 -   Update the changelog, i.e. \`//dev\_tools/changelog.txt\`
 
@@ -1964,25 +1964,25 @@ are not present in a container
 We use the pytest mechanism \`cvx = pytest.importorskip(\"cvxpy\")\`
 which is conceptually equivalent to:
 
-> \`\`\`
->
-> try:
->
-> import cvxopt
->
-> has\_cvxopt = True
->
-> except ImportError:
->
-> has\_cvxopt = False
->
-> if has\_cvxopt:
->
-> def utils1():
->
-> cvxopt...
->
-> \`\`\`
+  \`\`\`
+ 
+  try:
+ 
+  import cvxopt
+ 
+  has\_cvxopt = True
+ 
+  except ImportError:
+ 
+  has\_cvxopt = False
+ 
+  if has\_cvxopt:
+ 
+  def utils1():
+ 
+  cvxopt...
+ 
+  \`\`\`
 
 **Solution 2**
 
@@ -2039,13 +2039,13 @@ running in
 
         -   Solution: we can use the env vars we use for versioning
 
-> \`\`\`
->
-> \> echo \$AM\_CONTAINER\_VERSION
->
-> amp-1.0.3
->
-> \`\`\`
+  \`\`\`
+ 
+  \> echo \$AM\_CONTAINER\_VERSION
+ 
+  amp-1.0.3
+ 
+  \`\`\`
 
 Given the pros and cons, we decided to follow Solution 1 and Solution 3
 
