@@ -220,6 +220,20 @@ data = reader.read_data_head()
 _LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
 
 # %% [markdown]
+# ## bulk.airflow.downloaded_1min.parquet.ohlcv.futures.v7_5.ccxt.binance.v1_0_0
+#
+# _This dataset is in the test stage only_
+
+# %%
+signature = "bulk.airflow.downloaded_1min.parquet.ohlcv.futures.v7_5.ccxt.binance.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="test")
+# 4 months of data is available.
+start_timestamp = pd.Timestamp("2023-02-01T00:00:00+00:00")
+end_timestamp = pd.Timestamp("2023-06-01T00:00:00+00:00")
+binance_ohlcv_data = reader.read_data(start_timestamp, end_timestamp)
+_LOG.log(log_level, hpandas.df_to_str(binance_ohlcv_data.head(), log_level=log_level))
+
+# %% [markdown]
 # # Archived data (data transferred from IM DB to postgres)
 #
 # TODO(Juraj): #CmTask3376 Update once the support for archive data has been added to the `RawDataReader`
