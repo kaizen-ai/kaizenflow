@@ -237,6 +237,34 @@ def integrate_diff_dirs(  # type: ignore
 # #############################################################################
 
 
+# TODO(gp): Allow to pass the hash of the last integration to consider.
+#  Factor out the logic to find the hash
+
+# Sometimes we want to see the changes in one dir since an integration point
+
+# E.g., find all the changes in `im_v2` since the last integration
+#
+# > git log --oneline im_v2
+# 77f612f75 SorrIssue244 CCXT timestamp representation unit test (#317)
+# 6b981b1f6 Sorrtask298 rename get docker cmd to get docker run cmd (#331)
+# bd33a5fb9 SorrTask267_Parquet_to_CSV (#267)
+# 9819fd117 AmpTask1786_Integrate_20230518_im (#273)       <====
+# d530ed561 Update (#272)
+# b75eab7ad AmpTask1786_Integrate_20230518_3 (#271)
+#
+# > git difftool 9819fd117.. im_v2
+# ...
+#
+# > git diff --name-only 9819fd117.. im_v2
+# im_v2/ccxt/data/extract/test/test_ccxt_extractor.py
+# im_v2/common/data/transform/convert_pq_to_csv.py
+# im_v2/im_lib_tasks.py
+# im_v2/test/test_im_lib_tasks.py
+#
+# for file in im_v2/ccxt/data/extract/test/test_ccxt_extractor.py im_v2/common/data/transform/convert_pq_to_csv.py im_v2/im_lib_tasks.py im_v2/test/test_im_lib_tasks.py; do
+#   vimdiff ~/src/cmamp1/$file ~/src/sorrentum1/$file
+# done
+
 def _find_files_touched_since_last_integration(
     abs_dir: str, subdir: str
 ) -> List[str]:
@@ -250,7 +278,7 @@ def _find_files_touched_since_last_integration(
     dir_basename = os.path.basename(abs_dir)
     # TODO(gp): dir_basename can be computed from abs_dir_name to simplify the
     #  interface.
-    # Change the dir to the correct one.
+    # Change the dir to the desired one.
     old_dir = os.getcwd()
     try:
         os.chdir(abs_dir)
@@ -400,9 +428,11 @@ def integrate_files(  # type: ignore
     """
     Find and copy the files that are touched only in one branch or in both.
 
+    :param ctx: invoke ctx
     :param src_dir_basename: dir with the source branch (e.g., amp1)
     :param dst_dir_basename: dir with the destination branch (e.g., cmamp1)
     :param reverse: switch the roles of the default source and destination branches
+    :param subdir: directory to select
     :param mode:
         - "print_dirs": print the directories
         - "vimdiff": diff the files
@@ -414,6 +444,8 @@ def integrate_files(  # type: ignore
         - "only_files_in_dst": files touched only in the dst dir
     :param only_different_files: consider only the files that are different among
         the branches
+    :param check_branches: ensure that the current branches are for integration
+        and not `master`
     """
     hlitauti.report_task()
     _ = ctx
