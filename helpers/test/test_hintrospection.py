@@ -196,7 +196,7 @@ def dummy_function() -> None:
 class TestGetFunctionFromString1(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Test function extraction correctly from string.
+        Test that function is correctly extracted from a string.
         """
         func_str = "helpers.test.test_hintrospection.dummy_function"
         act = hintros.get_function_from_string(func_str)
