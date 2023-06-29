@@ -45,15 +45,15 @@ for docker images is like GitHub for code.
 
 We always want to separate things that don\'t need to run together in
 different containers (e.g., `dev / prod cmamp`, `optimizer`, `im`,
-`oms`, `dev_tools`), along a logic of \"independently runnable /
-deployable directories\".
+`oms`, `dev_tools`), along a logic of "independently runnable /
+deployable directories".
 
 The problem is that when we put too many dependencies in a single
 container, trying to simplify the release approach we start having huge
 containers that are difficult to deploy and are unstable in terms of
 building even using `poetry`.
 
-Each dir that can be \"deployed\" and run should have a `devops` dir
+Each dir that can be "deployed" and run should have a `devops` dir
 to build / qa / release containers with all the needed dependencies
 
 Certain containers that need to be widely available to the team and
@@ -66,7 +66,7 @@ compose` / `docker build`.
 ## Thin client
 --------------------
 
-To bootstrap the system we use a \"thin client\" which installs in a
+To bootstrap the system we use a "thin client" which installs in a
 virtual env the minimum set of packages to run (e.g., installs
 `invoke`, `docker`, etc).
 
@@ -135,7 +135,7 @@ Poetry is a tool for managing Python packages and dependencies:
     `devops/docker_build/pyproject.toml`
 
 -   Given a list of packages you need to install to get the desired
-    environment, you want `poetry` to \"optimize\" the packages and
+    environment, you want `poetry` to "optimize" the packages and
     generate `devops/docker_build/poetry.lock`, which contains the
     list of versions of the packages to install
 
@@ -375,7 +375,7 @@ shell.
 
 db:
 
-image: \"postgres:${POSTGRES_VERSION}\"
+image: "postgres:${POSTGRES_VERSION}"
 
 ```
 
@@ -389,7 +389,7 @@ environment:
 
 -   POSTGRES_VERSION=13
 
-image: \"postgres:${POSTGRES_VERSION}\"
+image: "postgres:${POSTGRES_VERSION}"
 
 ```
 
@@ -403,7 +403,7 @@ env_file:
 
 -   ./postgres_env.env
 
-image: \"postgres:${POSTGRES_VERSION}\"
+image: "postgres:${POSTGRES_VERSION}"
 
 ```
 
@@ -452,10 +452,10 @@ Stop containers created by `up`.
 # How to test a package in a Docker container
 ==============================================
 
-> sudo /bin/bash -c \"(source /venv/bin/activate; pip install
-yfinance)\"
+> sudo /bin/bash -c "(source /venv/bin/activate; pip install
+yfinance)"
 
-> python -c \"import finance\"
+> python -c "import finance"
 
 ## Hacky approach to patch up a container
 -------------------------------------------
@@ -505,7 +505,7 @@ containers (e.g., amp, cmamp, dev_tools, opt).
 ## Stages
 -----------
 
-A \"stage\" is a step (e.g., local, dev, prod) in our release workflow
+A "stage" is a step (e.g., local, dev, prod) in our release workflow
 of Docker images, code, or infrastructure.
 
 To run a Docker container in a certain stage use the `stage` parameter
@@ -758,7 +758,7 @@ for the advanced usage.
 
 ```
 
-> jackpy \"dill\"
+> jackpy "dill"
 
 helpers/hpickle.py:108: import dill
 
@@ -837,7 +837,7 @@ A local image is a candidate for becoming a `dev` image.
 
 > pip list | tee pip_packages.dev.txt
 
-> i docker_cmd --cmd \"pip list | tee pip_packages.dev.txt\"
+> i docker_cmd --cmd "pip list | tee pip_packages.dev.txt"
 
 > i docker_bash --stage local --version 1.0.9
 
@@ -845,9 +845,9 @@ A local image is a candidate for becoming a `dev` image.
 
 or in one command:
 
-> i docker_cmd --cmd \"pip list | tee pip_packages.dev.txt\"; i
-docker_cmd --stage=local --version=1.0.9 --cmd \"pip list | tee
-pip_packages.local.txt\"
+> i docker_cmd --cmd "pip list | tee pip_packages.dev.txt"; i
+docker_cmd --stage=local --version=1.0.9 --cmd "pip list | tee
+pip_packages.local.txt"
 
 > vimdiff pip_packages.dev.txt pip_packages.local.txt
 
@@ -1000,28 +1000,28 @@ To build the `prod` image run:
 To run a command inside the prod image
 
 > docker run --rm -t --user $(id -u):$(id -g) --workdir=/app
-665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:prod-1.0.3 \"ls -l
-/app\"
+665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:prod-1.0.3 "ls -l
+/app"
 
 Example of a complex command:
 
 > docker run --rm -t --workdir=/app
-665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:prod-1.0.3 \"python
+665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:prod-1.0.3 "python
 /app/im_v2/ccxt/data/extract/download_realtime.py --to_datetime
 \'20211204-194432\' --from_datetime \'20211204-193932\' --dst_dir
 \'test/ccxt_test\' --data_type \'ohlcv\' --api_keys
-\'API_keys.json\' --universe \'v03\'\"
+\'API_keys.json\' --universe \'v03\'"
 
 ## QA for prod image
 ----------------------
 
 In dev_scripts repo test:
 
-> i lint --files \"linters/amp_black.py\"
+> i lint --files "linters/amp_black.py"
 
 In amp repo make sure:
 
-> i lint -f \"helpers/dbg.py\"
+> i lint -f "helpers/dbg.py"
 
 ## End-to-end flow for `prod` image
 ---------------------------------------
@@ -1071,7 +1071,7 @@ The problems with this approach are:
     containers, so one needs to pull / build an image every time the
     outermost container is restarted
 
-An alternative approach is the \"sibling container\" approach
+An alternative approach is the "sibling container" approach
 
 ## Sibling container approach
 -------------------------------
@@ -1166,13 +1166,13 @@ PostgreSQL 13.5 (Debian 13.5-1.pgdg110+1) on x86_64-pc-linux-gnu,
 compiled by gcc (Debian 10.2.1-6) 10.2.1 20210110, 64-bit
 
 oms_postgres_1 | 2022-05-19 22:57:15.659 UTC [1] LOG: listening on
-IPv4 address \"0.0.0.0\", port 5432
+IPv4 address "0.0.0.0", port 5432
 
 oms_postgres_1 | 2022-05-19 22:57:15.659 UTC [1] LOG: listening on
-IPv6 address \"::\", port 5432
+IPv6 address "::", port 5432
 
 oms_postgres_1 | 2022-05-19 22:57:15.663 UTC [1] LOG: listening on
-Unix socket \"/var/run/postgresql/.s.PGSQL.5432\"
+Unix socket "/var/run/postgresql/.s.PGSQL.5432"
 
 oms_postgres_1 | 2022-05-19 22:57:15.670 UTC [25] LOG: database
 system was shut down at 2022-05-19 22:56:50 UTC
@@ -1194,7 +1194,7 @@ From inside a container I launch postgres through the /var/...
 
 CONTAINER ID IMAGE COMMAND CREATED STATUS PORTS NAMES
 
-83bba0818c74 postgres:13 \"docker-entrypoint.s...\" 6 minutes ago Up 6
+83bba0818c74 postgres:13 "docker-entrypoint.s..." 6 minutes ago Up 6
 minutes 0.0.0.0:5432->5432/tcp compose-oms_postgres-1
 
 ```
@@ -1214,7 +1214,7 @@ WARNING: psql major version 9.5, server major version 13.
 
 Some psql features might not work.
 
-Type \"help\" for help.
+Type "help" for help.
 
 oms_postgres_db_local=#
 
@@ -1237,8 +1237,8 @@ oms_postgres_db_local
 ## cmamp
 ----------
 
--   File an Issue for the release (e.g., \"Add package foobar to cmamp
-    image\")
+-   File an Issue for the release (e.g., "Add package foobar to cmamp
+    image")
 
 -   Create the corresponding branch with `i git_create_branch -i
     ${issue_number}`
@@ -1453,11 +1453,11 @@ the behaviour is not well defined. Commands will try to build `cmamp`
 image in this case, but code version will be from `dev_tools` --
 should we fix this?
 
--   We are going towards the concept of \"releasable dirs\" (see im,
+-   We are going towards the concept of "releasable dirs" (see im,
     optimizer). If there is a dir with devops, then that dir runs
     inside a container
 
--   The \"Git version\" should be associated to the dir we are releasing
+-   The "Git version" should be associated to the dir we are releasing
     (e.g., cmamp, im, optimizer, dev_tools)
 
 Vitalii: If we will have monorepo with releasable dirs, then indeed git
@@ -1535,7 +1535,7 @@ A releasable dir has a
 
 -   lib_tasks.py (with the custom invoke tasks)
 
-We want to try to move to helpers/lib_tasks all the \"common\" code
+We want to try to move to helpers/lib_tasks all the "common" code
 without dependencies from the specific sw components. We pass function
 pointers for callbacks.
 
@@ -1751,7 +1751,7 @@ AmpTask1017).
 
 From devops/docker_build/dev.Dockerfile
 
-ENTRYPOINT [\"devops/docker_run/entrypoint.sh\"]
+ENTRYPOINT ["devops/docker_run/entrypoint.sh"]
 
 The problem is that Git repo doesn\'t work anymore
 
@@ -1829,7 +1829,7 @@ AmpTask1017).
 
 From devops/docker_build/dev.Dockerfile
 
-ENTRYPOINT [\"optimizer/devops/docker_run/entrypoint.sh\"]
+ENTRYPOINT ["optimizer/devops/docker_run/entrypoint.sh"]
 
 This approach mounts 4 dirs up from devops/compose/docker-compose.yml,
 i.e., //lime
@@ -1873,7 +1873,7 @@ AmpTask1017).
 
 47 working_dir: /app/amp/optimizer
 
-48 #entrypoint: /bin/bash -c \"ls helpers\"
+48 #entrypoint: /bin/bash -c "ls helpers"
 
 ## Invariants
 ---------------
@@ -1883,7 +1883,7 @@ AmpTask1017).
     -   It corresponds to a software component (code + library = Docker
         container)
 
-    -   Anything that has a devops dir is \"deployable\"
+    -   Anything that has a devops dir is "deployable"
 
 -   Each Docker container is run from its corresponding dir, e.g.,
 
@@ -1961,7 +1961,7 @@ are not present in a container
 
 **Solution 1**
 
-We use the pytest mechanism `cvx = pytest.importorskip(\"cvxpy\")`
+We use the pytest mechanism `cvx = pytest.importorskip("cvxpy")`
 which is conceptually equivalent to:
 
   ```
@@ -2111,7 +2111,7 @@ Call the Dockerized executable using the `docker_cmd` invoke target
 
 ```
 
-cmd = \"invoke opt_docker_cmd -cmd \'...\'\"
+cmd = "invoke opt_docker_cmd -cmd \'...\'"
 
 system(cmd)
 
