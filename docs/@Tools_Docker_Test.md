@@ -1102,21 +1102,21 @@ E.g.,
 # Run `docker ps` in a container, showing the containers running in
 the main container
 
-> docker run -ti --rm \\
+> docker run -ti --rm \
 
--v /var/run/docker.sock:/var/run/docker.sock \\
+-v /var/run/docker.sock:/var/run/docker.sock \
 
-dindtest \\
+dindtest \
 
 docker ps
 
 # Start a sibling hello world container:
 
-> docker run -it --rm \\
+> docker run -it --rm \
 
--v /var/run/docker.sock:/var/run/docker.sock \\
+-v /var/run/docker.sock:/var/run/docker.sock \
 
-dindtest \\
+dindtest \
 
 docker run -ti --rm hello-world
 
@@ -1136,17 +1136,17 @@ oms_docker_up -s local\'
 
 report_memory_usage=False report_cpu_usage=False
 
-docker-compose \\
+docker-compose \
 
 --file
 /local/home/gsaggese/src/sasm-lime4/amp/oms/devops/compose/docker-compose.yml
-\\
+\
 
 --env-file
 /local/home/gsaggese/src/sasm-lime4/amp/oms/devops/env/local.oms_db_config.env
-\\
+\
 
-up \\
+up \
 
 oms_postgres
 
