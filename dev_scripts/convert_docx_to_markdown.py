@@ -120,7 +120,7 @@ def _convert_docx_to_markdown(docx_file: str, md_file: str) -> None:
         temp_dockerfile.flush()
         cmd = f"docker build -f {temp_dockerfile.name} -t {docker_container_name} ."
         hsystem.system(cmd)
-    # Run Docker container to encrypt the model.
+    # Run Docker container.
     work_dir = os.getcwd()
     mount = f"type=bind,source={work_dir},target={work_dir}"
     # Convert from docx to Markdown.
