@@ -594,40 +594,51 @@ def serialize_custom_types_for_json_encoder(obj: Any) -> Any:
     return result
 
 
-def to_json(file_name: str, obj: dict) -> None:
+def to_json(file_name: str, obj: dict, *, use_types: bool = False) -> None:
     """
     Write an object into a JSON file.
 
     :param obj: data for writing
     :param file_name: name of file
-    :return:
+    :param use_types: whether to use jsonpickle to save the file
     """
     if not file_name.endswith(".json"):
         _LOG.warning("The file '%s' doesn't end in .json", file_name)
+    # Create dir.
     dir_name = os.path.dirname(file_name)
     if dir_name != "" and not os.path.isdir(dir_name):
         create_dir(dir_name, incremental=True)
+    # Write data as JSON.
     with open(file_name, "w") as outfile:
-        json.dump(
-            obj,
-            outfile,
-            indent=4,
-            default=serialize_custom_types_for_json_encoder,
-        )
+        if use_types:
+            # Use jsonpickle to save types.
+            import jsonpickle
+
+            txt = jsonpickle.encode(obj, indent=4)
+            outfile.write(txt)
+        else:
+            json.dump(
+                obj,
+                outfile,
+                indent=4,
+                default=serialize_custom_types_for_json_encoder,
+            )
 
 
-def from_json(file_name: str) -> Dict:
+def from_json(file_name: str, *, use_types: bool = False) -> Dict:
     """
     Read object from JSON file.
 
     :param file_name: name of file
+    :param use_types: whether to use jsonpickle to load the file
     :return: dict with data
     """
     if not file_name.endswith(".json"):
         _LOG.warning("The file '%s' doesn't end in .json", file_name)
+    # Read file as text.
     hdbg.dassert_file_exists(file_name)
     txt = from_file(file_name)
-    # Remove comments.
+    # Remove comments (which are not supported natively by JSON).
     txt_tmp = []
     for line in txt.split("\n"):
         if re.match(r"^\s*#", line):
@@ -635,7 +646,13 @@ def from_json(file_name: str) -> Dict:
         txt_tmp.append(line)
     txt_tmp = "\n".join(txt_tmp)
     _LOG.debug("txt_tmp=\n%s", txt_tmp)
-    data: Dict = json.loads(txt_tmp)
+    # Convert text into Python data structures.
+    if use_types:
+        import jsonpickle
+
+        data: Dict = jsonpickle.decode(txt_tmp)
+    else:
+        data: Dict = json.loads(txt_tmp)
     return data
 
 
