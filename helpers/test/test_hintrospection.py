@@ -198,8 +198,8 @@ class TestGetFunctionFromString1(hunitest.TestCase):
         """
         Test if the function is being found and extracted correctly from a string.
         """
-        act = "helpers.test.test_hintrospection.dummy_function"
-        act = hintros.get_function_from_string(act)
+        func_str = "helpers.test.test_hintrospection.dummy_function"
+        act = hintros.get_function_from_string(func_str)
         exp = dummy_function
         hdbg.dassert_isinstance(act, Callable)
         self.assert_equal(act.__name__, exp.__name__)
