@@ -284,7 +284,9 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
     Parquet dataset should be partitioned by currency pair.
     """
 
-    # TODO(Grisha): make v2-specific params optional.
+    # TODO(Grisha): make data_version-specific parameters optional,
+    # e.g., `data_snapshot` is applicable only for `v2`, `download_mode`,
+    # `downloading_entity` are applicable only for `v3`.
     def __init__(
         self,
         vendor: str,

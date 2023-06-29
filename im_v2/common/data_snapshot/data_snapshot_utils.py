@@ -50,7 +50,9 @@ def get_data_snapshot(
     # whether we really need this check here.
     # _dassert_is_valid_root_dir(aws_profile, root_dir)
     if data_snapshot == "latest":
-        pattern = "*"
+        # Find only dirs that are numeric representation of a date, e.g.,
+        # "20230524".
+        pattern = "[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]"
         only_files = False
         use_relatives_paths = True
         dirs = hs3.listdir(
@@ -60,9 +62,17 @@ def get_data_snapshot(
             use_relatives_paths,
             aws_profile=aws_profile,
         )
-        regex = r"^\d{8}$"
-        dirs = [snapshot for snapshot in dirs if re.match(regex, snapshot)]
         hdbg.dassert_lte(1, len(dirs))
+        # Sanity check the results.
+        regex = r"^\d{8}$"
+        _ = [
+            snapshot
+            for snapshot in dirs
+            if hdbg.dassert(
+                re.match(regex, snapshot),
+                msg=f"Provided data_snapshot={snapshot} does not follow the date pattern (e.g., '20230524').",
+            )
+        ]
         data_snapshot = max(dirs)
     dassert_is_valid_data_snapshot(data_snapshot)
     return data_snapshot
