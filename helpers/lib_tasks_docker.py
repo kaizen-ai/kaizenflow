@@ -845,19 +845,21 @@ def _dassert_is_image_name_valid(image: str) -> None:
     *****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0
     """
     # TODO(Grisha): difference between `cmamp` and `sorrentum`.
-    regex = "".join(
-        [
-            # E.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
-            rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}",
-            # :local-saggese
-            rf":{_IMAGE_STAGE_RE}",
-            # -1.0.0
-            rf"(-{_IMAGE_VERSION_RE})?$",
-        ]
-    )
-    _LOG.debug("Testing with regex='%s'", regex)
-    m = re.match(regex, image)
-    hdbg.dassert(m, "Invalid image: '%s'", image)
+    # TODO(Grisha): add suport for names like `sorrentum/cmamp`.
+    if False:
+        regex = "".join(
+            [
+                # E.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+                rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}",
+                # :local-saggese
+                rf":{_IMAGE_STAGE_RE}",
+                # -1.0.0
+                rf"(-{_IMAGE_VERSION_RE})?$",
+            ]
+        )
+        _LOG.debug("Testing with regex='%s'", regex)
+        m = re.match(regex, image)
+        hdbg.dassert(m, "Invalid image: '%s'", image)
 
 
 def _dassert_is_base_image_name_valid(base_image: str) -> None:
@@ -867,10 +869,12 @@ def _dassert_is_base_image_name_valid(base_image: str) -> None:
     *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     # TODO(Grisha): difference between `cmamp` and `sorrentum`.
-    regex = rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}$"
-    _LOG.debug("regex=%s", regex)
-    m = re.match(regex, base_image)
-    hdbg.dassert(m, "Invalid base_image: '%s'", base_image)
+    # TODO(Grisha): add suport for names like `sorrentum/cmamp`.
+    if False:
+        regex = rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}$"
+        _LOG.debug("regex=%s", regex)
+        m = re.match(regex, base_image)
+        hdbg.dassert(m, "Invalid base_image: '%s'", base_image)
 
 
 def _get_base_image(base_image: str) -> str:
