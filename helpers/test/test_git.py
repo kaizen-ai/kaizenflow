@@ -179,7 +179,7 @@ class Test_git_repo_name1(hunitest.TestCase):
             return
         mode = "short_name"
         act = hgit.get_all_repo_names(mode)
-        exp = ["amp", "dev_tools"]
+        exp = ["amp", "cmamp", "dev_tools"]
         self.assert_equal(str(act), str(exp))
 
     def test_get_all_repo_names2(self) -> None:
@@ -190,7 +190,7 @@ class Test_git_repo_name1(hunitest.TestCase):
             return
         mode = "full_name"
         act = hgit.get_all_repo_names(mode)
-        exp = ["alphamatic/amp", "alphamatic/dev_tools"]
+        exp = ["alphamatic/amp", "alphamatic/dev_tools", "cryptokaizen/cmamp"]
         self.assert_equal(str(act), str(exp))
 
     def test_get_repo_name_rountrip1(self) -> None:
