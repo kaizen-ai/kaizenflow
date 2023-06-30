@@ -2902,3 +2902,58 @@ class Test_compare_nans_in_dataframes(hunitest.TestCase):
         4  inf  NaN
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+# #############################################################################
+
+class Test_dassert_increasing_index(hunitest.TestCase):
+    def get_increasing_index_df1(self) -> pd.DataFrame:
+        """
+        Unit tests for cases that index is obviously not increasing at a certain data points
+        """
+        minutes = [1,2,3,4,5]
+        idx = [pd.Timestamp("2000-01-01 9:00") + pd.Timedelta(minutes=i)
+                for i in minutes]
+        values = [[i] for i in range(len(idx))]
+        df = pd.DataFrame(values, index=idx)
+        act = hpandas.df_to_str(df)
+        exp = r"""
+                             0
+        2000-01-01 09:01:00  0
+        2000-01-01 09:02:00  1
+        2000-01-01 09:03:00  2
+        2000-01-01 09:04:00  3
+        2000-01-01 09:05:00  4"""
+        self.assert_equal(act, exp, fuzzy_match=True)
+        return df
+    
+    def get_not_increasing_index_df2(self)-> pd.DataFrame:
+        minutes = [1,3,2,5,4]
+        idx = [pd.Timestamp("2000-01-01 9:00") + pd.Timedelta(minutes=i)
+                for i in minutes]
+        values = [[i] for i in range(len(idx))]
+        df = pd.DataFrame(values, index=idx)
+        act = hpandas.df_to_str(df)
+        exp = r"""
+                             0
+        2000-01-01 09:01:00  0
+        2000-01-01 09:03:00  1
+        2000-01-01 09:02:00  2
+        2000-01-01 09:05:00  3
+        2000-01-01 09:04:00  4"""
+        self.assert_equal(act, exp, fuzzy_match=True)
+        return df
+    
+    def test_dassert_increasing_index_on_df2(self)-> None:
+        df2 = self.get_not_increasing_index_df2
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_increasing_index(df2)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        cond=False
+        Not increasing indices are:
+                             0
+        2000-01-01 09:02:00  2
+        2000-01-01 09:04:00  4
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
