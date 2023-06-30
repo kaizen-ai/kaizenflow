@@ -25,6 +25,7 @@ import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hprint as hprint
 import oms.ccxt.ccxt_broker_instances as occcbrin
+import oms.ccxt.ccxt_broker_utils as occcbrut
 import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
@@ -88,6 +89,12 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="Order logs directory.",
     )
+    parser.add_argument(
+        "--clean_up_before_run",
+        action="store_true",
+        required=False,
+        help="Clean up before running the script.",
+    )
     parser = hparser.add_verbosity_arg(parser)
     return parser
 
@@ -106,14 +113,24 @@ def _generate_log_dir(log_dir: str) -> str:
 def _main(parser: argparse.ArgumentParser) -> None:
     # Initialize time log for in-script operations.
     args = parser.parse_args()
-    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Create a directory non-incrementally to avoid overlapping experiments.
     log_dir = args.log_dir
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # Initialize broker for the trading account.
+    secret_id = 3
+    # secret_id = 4
+    broker = occcbrin.get_CcxtBroker_v2(secret_id, log_dir)
+    # Clean up before running the script.
+    if args.clean_up_before_run:
+        _LOG.debug("Cleaning up before running the script.")
+        # TODO(Vlad): Temporarily hardcoded parameters.
+        exchange = "binance"
+        contract_type = "futures"
+        occcbrut.describe_and_flatten_account(
+            broker, exchange, contract_type, log_dir
+        )
+    # Create a directory non-incrementally to avoid overlapping experiments.
     log_dir = _generate_log_dir(log_dir)
     hio.create_dir(log_dir, incremental=False, abort_if_exists=True)
-    # Initialize broker for the trading account.
-    secret_id = 4
-    broker = occcbrin.get_CcxtBroker_v2(secret_id, log_dir)
     orders = get_orders()
     _LOG.debug(str(orders))
     hdbg.dassert_no_duplicates([order.asset_id for order in orders])

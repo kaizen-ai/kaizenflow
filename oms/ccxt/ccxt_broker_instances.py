@@ -107,6 +107,7 @@ def get_CcxtBroker_v2(secret_id: int, log_dir: str) -> occcbrv2.CcxtBroker_v2:
     # `MarketData` is not strictly needed to talk to exchange, but since it is
     #  required to init the `Broker` we pass something to make it work.
     asset_ids = None
+    # TODO(Vlad): Get rid of the sticking to the prod instance.
     market_data = dtfamsysc.get_Cx_RealTimeMarketData_prod_instance1(asset_ids)
     universe_version = "v7.1"
     strategy_id = "C1b"
