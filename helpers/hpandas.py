@@ -1389,13 +1389,16 @@ def read_parquet_to_df(
 def compute_weighted_sum(
     dfs: Dict[str, pd.DataFrame],
     weights: pd.DataFrame,
+    *,
+    index_mode: str = "assert_equal",
 ) -> Dict[str, pd.DataFrame]:
     """
     Compute weighted sums of `dfs` using `weights`.
 
-    :param dfs: dataframes keyed by id; all dfs should have the same index
-        and cols
+    :param dfs: dataframes keyed by id; all dfs should have the same cols,
+        indices are handled based on the `index_mode`
     :param weights: float weights indexed by id with unique col names
+    :param index_mode: same as `mode` in `apply_index_mode()`
     :return: weighted sums keyed by weight col names
     """
     hdbg.dassert_isinstance(dfs, dict)
@@ -1405,18 +1408,13 @@ def compute_weighted_sum(
     hdbg.dassert_isinstance(id_, str)
     df = dfs[id_]
     hdbg.dassert_isinstance(df, pd.DataFrame)
-    idx = df.index
     cols = df.columns
     # Sanity-check dataframes in dictionary.
     for key, value in dfs.items():
         hdbg.dassert_isinstance(key, str)
         hdbg.dassert_isinstance(value, pd.DataFrame)
-        hdbg.dassert(
-            value.index.equals(idx),
-            "Index equality fails for keys=%s, %s",
-            id_,
-            key,
-        )
+        # The reference df is not modified.
+        _, value = apply_index_mode(df, value, index_mode)
         hdbg.dassert(
             value.columns.equals(cols),
             "Column equality fails for keys=%s, %s",

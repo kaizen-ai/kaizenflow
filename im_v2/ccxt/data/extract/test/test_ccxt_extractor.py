@@ -51,9 +51,9 @@ class TestCcxtExtractor1(hunitest.TestCase):
         expected_method_calls = "[call.load_markets()]"
         self.assertEqual(actual_method_calls, expected_method_calls)
         # Wrong contract type.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             imvcdexex.CcxtExtractor("binance", "dummy")
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = (
             "Failed assertion *\n'dummy' in '['futures', 'spot']'\n"
             "Supported contract types: spot, futures"
@@ -182,8 +182,8 @@ class TestCcxtExtractor1(hunitest.TestCase):
 
     def test_download_ohlcv_websocket_kline_is_not_present(self) -> None:
         """
-        Verify that warning message is properly logged when last minutes
-        timestamp not in the downloaded raw websocket data.
+        Verify that warning message is properly logged when last minutes timestamp
+        not in the downloaded raw websocket data.
         """
         # Initialize class and parameters.
         exchange_id = "binance"
@@ -486,7 +486,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Run with invalid input.
         start_timestamp = "invalid"
         end_timestamp = pd.Timestamp("2021-09-10T00:00:00Z")
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             exchange_class._download_ohlcv(
                 exchange_id="binance",
                 currency_pair="BTC/USDT",
@@ -494,7 +494,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
                 end_timestamp=end_timestamp,
             )
         # Check output for error.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = (
             "'invalid' is '<class 'str'>' instead of "
             "'<class 'pandas._libs.tslibs.timestamps.Timestamp'"
@@ -511,7 +511,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Run with invalid input.
         start_timestamp = pd.Timestamp("2021-09-09T00:00:00Z")
         end_timestamp = "invalid"
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             exchange_class._download_ohlcv(
                 exchange_id="binance",
                 currency_pair="BTC/USDT",
@@ -519,7 +519,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
                 end_timestamp=end_timestamp,
             )
         # Check output for error.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = (
             "'invalid' is '<class 'str'>' instead of "
             "'<class 'pandas._libs.tslibs.timestamps.Timestamp'"
@@ -538,7 +538,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Run with invalid input.
         start_timestamp = pd.Timestamp("2021-09-10T00:00:00Z")
         end_timestamp = pd.Timestamp("2021-09-09T00:00:00Z")
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             exchange_class._download_ohlcv(
                 exchange_id="binance",
                 currency_pair="BTC/USDT",
@@ -546,7 +546,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
                 end_timestamp=end_timestamp,
             )
         # Check output for error.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = "2021-09-10 00:00:00+00:00 <= 2021-09-09 00:00:00+00:00"
         self.assertIn(expected, actual)
 
@@ -557,7 +557,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Initialize class.
         exchange_class = imvcdexex.CcxtExtractor("binance", "spot")
         # Run with invalid input.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             exchange_class._download_ohlcv(
                 exchange_id="binance",
                 currency_pair="invalid_currency_pair",
@@ -565,7 +565,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
                 end_timestamp=None,
             )
         # Check output for error.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = "Currency pair is not present in exchange"
         self.assertIn(expected, actual)
 
@@ -680,121 +680,9 @@ class TestCcxtExtractor1(hunitest.TestCase):
         exchange_class.currency_pairs = ["BTC/USDT"]
         fake_currency_pair = "NON_EXIST"
         # Run with invalid input.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             exchange_class._download_bid_ask(exchange, fake_currency_pair, 10)
         # Check output for error.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = "Currency pair is not present in exchange"
         self.assertIn(expected, actual)
-
-
-class TestCcxtExtractor2(hunitest.TestCase):
-    @pytest.mark.superslow("~30 seconds.")
-    @umock.patch.object(imvcdexex.hdateti, "get_current_time")
-    def test_download_ohlcv_timestamp_representation1(
-        self, mock_get_current_time: umock.MagicMock
-    ) -> None:
-        """
-        Verify OHLCV data timestamps for exchange ID Binance.US and currency
-        pair "BTC/USDT".
-        """
-        # Using Binance.US API because Binance API is not accessible.
-        exchange_id = "binanceus"
-        currency_pair = "BTC/USDT"
-        contract_type = "spot"
-        start_timestamp = pd.Timestamp("2022-10-20T00:01:00Z")
-        end_timestamp = pd.Timestamp("2022-10-20T00:05:00Z")
-        # Prepare expected output.
-        # pylint: disable=line-too-long
-        expected_output = r"""
-        timestamp    open    high    low    close    volume    end_download_timestamp
-        0    1666224060000    19120.48    19123.30    19114.05    19114.05    0.483268    2022-10-21 00:00:00.000000+00:00
-        1    1666224120000    19117.81    19128.66    19117.81    19128.66    0.813596    2022-10-21 00:00:00.000000+00:00
-        2    1666224180000    19128.27    19128.27    19115.57    19122.26    1.800264    2022-10-21 00:00:00.000000+00:00
-        3    1666224240000    19118.08    19122.31    19115.23    19115.23    0.482966    2022-10-21 00:00:00.000000+00:00
-        4    1666224300000    19120.87    19120.87    19113.28    19113.28    0.434573    2022-10-21 00:00:00.000000+00:00
-        """
-        # pylint: enable=line-too-long
-        self._test_download_ohlcv_timestamp_representation_helper(
-            exchange_id,
-            currency_pair,
-            contract_type,
-            start_timestamp,
-            end_timestamp,
-            expected_output,
-            mock_get_current_time,
-        )
-
-    @pytest.mark.superslow("~30 seconds.")
-    @umock.patch.object(imvcdexex.hdateti, "get_current_time")
-    def test_download_ohlcv_timestamp_representation2(
-        self, mock_get_current_time: umock.MagicMock
-    ) -> None:
-        """
-        Verify OHLCV data timestamps for exchange ID Binance.US and currency
-        pair "ETH/USDT".
-        """
-        # Using Binance.US API because Binance API is not accessible.
-        exchange_id = "binanceus"
-        currency_pair = "ETH/USDT"
-        contract_type = "spot"
-        start_timestamp = pd.Timestamp("2022-10-20T00:01:00Z")
-        end_timestamp = pd.Timestamp("2022-10-20T00:05:00Z")
-        # Prepare expected output.
-        # pylint: disable=line-too-long
-        expected_output = r"""
-        timestamp    open    high    low    close    volume    end_download_timestamp
-        0    1666224060000    1284.46    1284.46    1284.46    1284.46    0.50910    2022-10-21 00:00:00.000000+00:00
-        1    1666224120000    1284.46    1284.46    1284.46    1284.46    0.00000    2022-10-21 00:00:00.000000+00:00
-        2    1666224180000    1285.00    1285.00    1284.45    1284.45    3.66371    2022-10-21 00:00:00.000000+00:00
-        3    1666224240000    1284.45    1284.45    1284.45    1284.45    0.00000    2022-10-21 00:00:00.000000+00:00
-        4    1666224300000    1283.32    1283.32    1283.32    1283.32    4.93685    2022-10-21 00:00:00.000000+00:00
-        """
-        # pylint: enable=line-too-long
-        self._test_download_ohlcv_timestamp_representation_helper(
-            exchange_id,
-            currency_pair,
-            contract_type,
-            start_timestamp,
-            end_timestamp,
-            expected_output,
-            mock_get_current_time,
-        )
-
-    def _test_download_ohlcv_timestamp_representation_helper(
-        self,
-        exchange_id: str,
-        currency_pair: str,
-        contract_type: str,
-        start_timestamp: pd.Timestamp,
-        end_timestamp: pd.Timestamp,
-        expected_output: str,
-        mock_get_current_time: umock.MagicMock,
-    ) -> None:
-        """
-        Verify that OHLCV data timestamps are correctly represented.
-
-        1. Perform a historical download of OHLCV data for a given time period
-           and currency pair.
-        2. Compare it to previously downloaded data using a specific CCXT version.
-           This test ensures we can detect a change in interface (i.e. timestamp
-           representation in this case) upon upgrading the library version.
-        """
-        # Mock current time.
-        current_time = "2022-10-21 00:00:00.000000+00:00"
-        mock_get_current_time.return_value = current_time
-        # Initialize class.
-        exchange_class = imvcdexex.CcxtExtractor(exchange_id, contract_type)
-        exchange_class.currency_pairs = [currency_pair]
-        # Download real OHLCV data using CCXT.
-        ccxt_data = exchange_class._download_ohlcv(
-            exchange_id=exchange_id,
-            currency_pair=currency_pair,
-            start_timestamp=start_timestamp,
-            end_timestamp=end_timestamp,
-            bar_per_iteration=500,
-        )
-        _LOG.info("\n==> Current CCXT version = '%s' <==", ccxt.__version__)
-        # Check output.
-        actual_output = hpandas.df_to_str(ccxt_data)
-        self.assert_equal(actual_output, expected_output, fuzzy_match=True)

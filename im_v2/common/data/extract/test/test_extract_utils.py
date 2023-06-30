@@ -220,10 +220,10 @@ class TestDownloadExchangeDataToDbPeriodically1(hunitest.TestCase):
         download_for_error = self.datetime_side_effect[:5]
         [download_for_error.extend(download_for_error) for _ in range(4)]
         self.datetime_mock.now.side_effect = download_for_error
-        with pytest.raises(RuntimeError) as fail:
+        with self.assertRaises(RuntimeError) as fail:
             # Run.
             self.call_download_realtime_for_one_exchange_periodically()
-        actual_error = str(fail.value)
+        actual_error = str(fail.exception)
         expected_error = "5 consecutive downloads were failed"
         self.assert_equal(expected_error, actual_error)
         # Check mock states.
@@ -805,10 +805,10 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
         imvcdtrdbad.imvcdttrut.resample_multilevel_bid_ask_data_from_1sec_to_1min = (
             mock_resample_multilevel_bid_ask_data
         )
-        with pytest.raises(RuntimeError) as fail:
+        with self.assertRaises(RuntimeError) as fail:
             imvcdtrdbad._run(namespace, aws_profile=self.s3fs_)
-        self.assertIn("Missing symbols", str(fail))
-        self.assertIn("BTC_USDT", str(fail))
+        self.assertIn("Missing symbols", str(fail.exception))
+        self.assertIn("BTC_USDT", str(fail.exception))
 
     def test_download_and_resample_bid_ask_data(self) -> None:
         """
@@ -872,11 +872,11 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             imvcdexex.CcxtExtractor, "download_data", return_value=pd.DataFrame()
         ):
             # Check for an exception raising.
-            with pytest.raises(RuntimeError) as fail:
+            with self.assertRaises(RuntimeError) as fail:
                 self.call_download_historical_data(
                     incremental=False, assert_on_missing_data=True
                 )
-            self.assertIn("No data", str(fail))
+            self.assertIn("No data", str(fail.exception))
 
     @pytest.mark.skip(reason="CMTask2089")
     @umock.patch.object(imvcdeexut.hparque, "list_and_merge_pq_files")
@@ -966,10 +966,10 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         with s3fs_.open("s3://mock_bucket/binance/dummy.txt", "w") as f:
             f.write("test")
         incremental = False
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             self.call_download_historical_data(incremental)
         self.assertIn(
-            "S3 path 's3://mock_bucket/binance' already exist!", str(fail.value)
+            "S3 path 's3://mock_bucket/binance' already exist!", str(fail.exception)
         )
 
     @pytest.mark.skip(
@@ -980,10 +980,10 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         Verify error on incremental run.
         """
         incremental = True
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             self.call_download_historical_data(incremental)
         self.assertIn(
-            "S3 path 's3://mock_bucket/binance' doesn't exist!", str(fail.value)
+            "S3 path 's3://mock_bucket/binance' doesn't exist!", str(fail.exception)
         )
 
 

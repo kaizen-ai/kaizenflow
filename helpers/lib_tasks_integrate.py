@@ -114,13 +114,16 @@ def integrate_create_branch(ctx, dir_basename, dry_run=False):  # type: ignore
 
 
 def _resolve_src_dst_names(
-    src_dir_basename: str, dst_dir_basename: str, subdir: str
+    src_dir_basename: str, dst_dir_basename: str, subdir: str,
+    *,
+    check_exists: bool = True,
 ) -> Tuple[str, str]:
     """
     Return the full path of `src_dir_basename` and `dst_dir_basename`.
 
     :param src_dir_basename: the current dir (e.g., `amp1`)
     :param dst_dir_basename: a dir parallel to the current one (`cmamp1`)
+    :param check_exists: check that the dst dir exists
 
     :return: absolute paths of both directories
     """
@@ -132,7 +135,8 @@ def _resolve_src_dst_names(
     #
     abs_dst_dir = os.path.join(curr_parent_dir, dst_dir_basename, subdir)
     abs_dst_dir = os.path.normpath(abs_dst_dir)
-    hdbg.dassert_dir_exists(abs_dst_dir)
+    if check_exists:
+        hdbg.dassert_dir_exists(abs_dst_dir)
     return abs_src_dir, abs_dst_dir
 
 
@@ -184,9 +188,14 @@ def integrate_diff_dirs(  # type: ignore
         )
     # Check that the integration branches are in the expected state.
     # _dassert_current_dir_matches(src_dir_basename)
+    # When we integrate a dir that doesn't exist in the dst branch, we need to
+    # skip the check for existence.
+    check_exists = False
     abs_src_dir, abs_dst_dir = _resolve_src_dst_names(
-        src_dir_basename, dst_dir_basename, subdir
+        src_dir_basename, dst_dir_basename, subdir,
+        check_exists=check_exists
     )
+    hio.create_dir(abs_dst_dir, incremental=True)
     if check_branches:
         _dassert_is_integration_branch(abs_src_dir)
         _dassert_is_integration_branch(abs_dst_dir)
@@ -579,8 +588,12 @@ def integrate_diff_overlapping_files(  # type: ignore
     _ = ctx
     # Check that the integration branches are in the expected state.
     _dassert_current_dir_matches(src_dir_basename)
+    # When we integrate a dir that doesn't exist in the dst branch, we need to
+    # skip the check for existence.
+    check_exists = False
     src_dir_basename, dst_dir_basename = _resolve_src_dst_names(
-        src_dir_basename, dst_dir_basename, subdir
+        src_dir_basename, dst_dir_basename, subdir,
+        check_exists=check_exists
     )
     _dassert_is_integration_branch(src_dir_basename)
     _dassert_is_integration_branch(dst_dir_basename)
@@ -643,6 +656,7 @@ def _infer_dst_file_path(
     *,
     default_src_dir_basename: str =DEFAULT_SRC_DIR_BASENAME,
     default_dst_dir_basename: str =DEFAULT_DST_DIR_BASENAME,
+    check_exists: bool = True,
 ) -> Tuple[str, str]:
     """
     Convert a file path across two dirs with the same data structure.
@@ -654,7 +668,8 @@ def _infer_dst_file_path(
     """
     _LOG.debug(hprint.to_str("src_file_path"))
     src_file_path = os.path.normpath(src_file_path)
-    hdbg.dassert_path_exists(src_file_path)
+    if check_exists:
+        hdbg.dassert_path_exists(src_file_path)
     # Extract the repo dir name, by looking for one of the default basenames.
     target_dir = f"/{default_dst_dir_basename}/"
     idx = src_file_path.find(target_dir)
@@ -678,7 +693,8 @@ def _infer_dst_file_path(
     # Replace src dir (e.g., `cmamp1`) with dst dir (e.g., `amp1`).
     dst_file_path = src_file_path.replace(f"/{src_dir_basename}/", f"/{dst_dir_basename}/")
     _LOG.debug(hprint.to_str("dst_file_path subdir"))
-    hdbg.dassert_path_exists(dst_file_path)
+    if check_exists:
+        hdbg.dassert_path_exists(dst_file_path)
     return dst_file_path, subdir
 
 

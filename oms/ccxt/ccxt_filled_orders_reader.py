@@ -80,13 +80,15 @@ class CcxtLogsReader:
         """
         Load all data.
 
-        :return: dictionary with all four types of data
+        :return: dictionary storing the logged data
         """
         all_data = {
             "ccxt_order_responses": self.load_ccxt_order_response_df(),
             "oms_parent_orders": self.load_oms_parent_order_df(),
             "ccxt_trades": self.load_ccxt_trades_df(),
             "oms_child_orders": self.load_oms_child_order_df(),
+            "oms_fills": self.load_oms_fills_df(),
+            "ccxt_fills": self.load_ccxt_fills_df(),
         }
         return all_data
 
