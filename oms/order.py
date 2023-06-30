@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Match, Optional, cast
 
 import pandas as pd
 
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
@@ -49,6 +50,7 @@ class Order:
         diff_num_shares: float,
         *,
         order_id: Optional[int] = None,
+        extra_params: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Constructor.
@@ -62,6 +64,7 @@ class Order:
             - This is needed to track that we are aware of the current position
         :param diff_num_shares: the number of shares to buy / sell to reach the
             desired target position
+        :param extra_params: order auxiliary parameters, e.g., "ccxt_id"
         """
         if order_id is None:
             order_id = self._get_next_order_id()
@@ -85,9 +88,13 @@ class Order:
         hdbg.dassert_ne(diff_num_shares, 0)
         self.diff_num_shares = float(diff_num_shares)
         # Extract the timestamp.
-        hdbg.dassert_eq(creation_timestamp.tz, start_timestamp.tz)
-        hdbg.dassert_eq(creation_timestamp.tz, end_timestamp.tz)
+        hdateti.dassert_have_same_tz(creation_timestamp, start_timestamp)
+        hdateti.dassert_have_same_tz(creation_timestamp, end_timestamp)
         self.tz = creation_timestamp.tz
+        if extra_params is None:
+            extra_params = {}
+        hdbg.dassert_isinstance(extra_params, dict)
+        self.extra_params = extra_params
 
     def __str__(self) -> str:
         txt: List[str] = []
@@ -109,7 +116,7 @@ class Order:
         m = re.match(
             "^Order: order_id=(.*) creation_timestamp=(.*) asset_id=(.*) "
             "type_=(.*) start_timestamp=(.*) end_timestamp=(.*) "
-            "curr_num_shares=(.*) diff_num_shares=(.*) tz=(.*)",
+            "curr_num_shares=(.*) diff_num_shares=(.*) tz=(.*) extra_params=(.*)",
             txt,
         )
         hdbg.dassert(m, "Can't match '%s'", txt)
@@ -124,6 +131,9 @@ class Order:
         end_timestamp = pd.Timestamp(m.group(6), tz=tz)
         curr_num_shares = float(m.group(7))
         diff_num_shares = float(m.group(8))
+        extra_params = m.group(10)
+        # Convert dict as str to Python dict.
+        extra_params = eval(extra_params)
         return cls(
             creation_timestamp,
             asset_id,
@@ -133,6 +143,7 @@ class Order:
             curr_num_shares,
             diff_num_shares,
             order_id=order_id,
+            extra_params=extra_params,
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -146,6 +157,7 @@ class Order:
         dict_["curr_num_shares"] = self.curr_num_shares
         dict_["diff_num_shares"] = self.diff_num_shares
         dict_["tz"] = self.tz
+        dict_["extra_params"] = self.extra_params
         return dict_
 
     def is_mergeable(self, rhs: "Order") -> bool:

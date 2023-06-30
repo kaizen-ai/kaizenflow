@@ -17,12 +17,12 @@ import dev_scripts.notebooks.run_notebook as dsnoruno
 import argparse
 import logging
 import os
-from typing import Optional
+from typing import Optional, Union
 
 import nbformat
 
 import core.config as cconfig
-import dataflow.backtest.dataflow_backtest_utils as dtfbaexuti
+import dataflow.backtest.dataflow_backtest_utils as dtfbdtfbaut
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
@@ -36,12 +36,13 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(Grisha): Consider adding `allow_notebook_errors` switch.
 def _run_notebook(
     config: cconfig.Config,
     notebook_file: str,
     publish: bool,
     allow_notebook_errors: bool,
+    suppress_output: Union[str, bool],
+    tee: bool,
     #
     incremental: bool,
     num_attempts: int,
@@ -51,17 +52,21 @@ def _run_notebook(
 
     :param config: config for the experiment
     :param notebook_file: path to file with experiment template
-    :param num_attempts: maximum number of times to attempt running the
-        notebook
     :param publish: publish the notebook if `True`
     :param allow_notebook_errors: if `True`, the notebook is executed until
         the end, regardless of any error encountered during the execution;
         otherwise, raise an error if any cell in a notebook fails
+    :param suppress_output: same as in `hsystem.system()`
+    :param tee: same as in `hsystem.system()`. It applies to the innermost
+        `jupyter` cmd, so the log contains the output from the notebook
+        and not from this script
+    :param num_attempts: maximum number of times to attempt running the
+        notebook before erroring out
     :return: if notebook is skipped ("success.txt" file already exists), return
         `None`; otherwise, return `rc`
     """
     _ = incremental
-    dtfbaexuti.setup_experiment_dir(config)
+    dtfbdtfbaut.setup_experiment_dir(config)
     # Prepare the destination file.
     idx = config[("backtest_config", "id")]
     experiment_result_dir = config[("backtest_config", "experiment_result_dir")]
@@ -109,13 +114,18 @@ def _run_notebook(
                 num_attempts,
             )
         _LOG.info("cmd='%s'", cmd)
-        rc = hsystem.system(cmd, output_file=log_file, abort_on_error=False)
+        # TODO(Grisha): consider making `log_level` customizable.
+        rc = hsystem.system(
+            cmd,
+            output_file=log_file,
+            abort_on_error=False,
+            suppress_output=suppress_output,
+            tee=tee,
+        )
         if rc == 0:
             _LOG.info("Running notebook was successful")
             break
     if publish:
-        # TODO(Grisha): Consider adding a switch to publish regardless of errors, e.g.,
-        # `publish_even_if_fails`.
         # Convert to HTML and publish a notebook.
         if rc != 0:
             # The goal is to publish a notebook regardless of errors. However,
@@ -143,7 +153,7 @@ def _run_notebook(
         log_file = log_file.replace(".log", ".html.log")
         hsystem.system(cmd, output_file=log_file)
     if rc == 0:
-        dtfbaexuti.mark_config_as_success(experiment_result_dir)
+        dtfbdtfbaut.mark_config_as_success(experiment_result_dir)
     else:
         msg = f"Execution failed for experiment {idx}"
         _LOG.error(msg)
@@ -156,19 +166,28 @@ def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
     Prepare the workload using the parameters from command line.
     """
     # Get the configs to run.
-    config_list = dtfbaexuti.get_config_list_from_command_line(args)
+    config_list = dtfbdtfbaut.get_config_list_from_command_line(args)
     # Get the notebook file.
     notebook_file = os.path.abspath(args.notebook)
     hdbg.dassert_path_exists(notebook_file)
     #
     publish = args.publish_notebook
     allow_notebook_errors = args.allow_errors
+    suppress_output = args.suppress_output
+    tee = args.tee
     # Prepare the tasks.
     tasks = []
     for config in config_list:
         task: hjoblib.Task = (
             # args.
-            (config, notebook_file, publish, allow_notebook_errors),
+            (
+                config,
+                notebook_file,
+                publish,
+                allow_notebook_errors,
+                suppress_output,
+                tee,
+            ),
             # kwargs.
             {},
         )
@@ -188,7 +207,7 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     # Add common experiment options.
-    parser = dtfbaexuti.add_run_experiment_args(parser, dst_dir_required=True)
+    parser = dtfbdtfbaut.add_run_experiment_args(parser, dst_dir_required=True)
     # Add notebook options.
     parser.add_argument(
         "--notebook",
@@ -205,6 +224,26 @@ def _parse() -> argparse.ArgumentParser:
         "--allow_errors",
         action="store_true",
         help="Run the notebook until the end, regardless of any error in it",
+    )
+    parser = hparser.add_bool_arg(
+        parser,
+        "suppress_output",
+        default_value=True,
+        help_="""
+        Same as in `hsystem.system()`.
+        Does not work when `allow_errors` is True because a run is always
+        successful and no error is displayed.
+        """,
+    )
+    parser = hparser.add_bool_arg(
+        parser,
+        "tee",
+        default_value=False,
+        help_="""
+        Applies to the innermost `jupyter` cmd, same as in `hsystem.system()`.
+        Does not work when `allow_errors` is True because a run is always
+        successful and no error is displayed.
+        """,
     )
     parser = hparser.add_verbosity_arg(parser)
     # TODO(gp): For some reason, not even this makes mypy happy.

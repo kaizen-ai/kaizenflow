@@ -685,11 +685,9 @@ def _infer_dst_file_path(
 @task
 def integrate_rsync(  # type: ignore
     ctx, src_dir,
-
-        src_dir_basename=DEFAULT_SRC_DIR_BASENAME,
-        dst_dir_basename=DEFAULT_DST_DIR_BASENAME,
-
-        dst_dir="", check_dir=True, dry_run=False
+    src_dir_basename=DEFAULT_SRC_DIR_BASENAME,
+    dst_dir_basename=DEFAULT_DST_DIR_BASENAME,
+    dst_dir="", check_dir=True, dry_run=False
 ):
     """
     Use `rsync` to bring two dirs to sync.

@@ -185,7 +185,8 @@ def _system(
             hdbg.dassert(bool(dir_name), "dir_name='%s'", dir_name)
             os.makedirs(dir_name)
         if tee:
-            cmd += f" 2>&1 | tee -a {output_file}"
+            cmd += f" 2>&1 | tee -a {output_file};"
+            cmd += " exit ${PIPESTATUS[0]}"
         else:
             cmd += f" 2>&1 >{output_file}"
     else:

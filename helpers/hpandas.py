@@ -419,6 +419,51 @@ def find_gaps_in_dataframes(
     return first_missing_data, second_missing_data
 
 
+# TODO(Grisha): maybe also add `apply_column_mode` at some point.
+# TODO(Grisha): use this idiom everywhere in the codebase, e.g., in `compare_dfs()`.
+# TODO(Grisha): add unit tests.
+def apply_index_mode(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    mode: str,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Process DataFrames according to the index mode.
+
+    :param df1: first input df
+    :param df2: second input df
+    :param mode: method of processing indices
+        - "assert_equal": check that both indices are equal, assert otherwise
+        - "intersect": restrict both dfs to a common index
+        - "leave_unchanged": ignore any indices mismatch and return dfs as-is
+    :return: transformed copy of the inputs
+    """
+    _LOG.debug("mode=%s", mode)
+    hdbg.dassert_isinstance(df1, pd.DataFrame)
+    hdbg.dassert_isinstance(df2, pd.DataFrame)
+    hdbg.dassert_isinstance(mode, str)
+    # Copy in order not to modify the inputs.
+    df1_copy = df1.copy()
+    df2_copy = df2.copy()
+    if mode == "assert_equal":
+        dassert_indices_equal(df1_copy, df2_copy)
+    elif mode == "intersect":
+        # TODO(Grisha): Add sorting on demand.
+        common_index = df1_copy.index.intersection(df2_copy.index)
+        df1_copy = df1_copy[df1_copy.index.isin(common_index)]
+        df2_copy = df2_copy[df2_copy.index.isin(common_index)]
+    elif mode == "leave_unchanged":
+        _LOG.debug(
+            "Ignoring any index missmatch as per user's request.\n"
+            "df1.index.difference(df2.index)=\n%s\ndf2.index.difference(df1.index)=\n%s",
+            df1_copy.index.difference(df2_copy.index),
+            df2_copy.index.difference(df1_copy.index),
+        )
+    else:
+        raise ValueError(f"Unsupported index_mode={mode}")
+    return df1_copy, df2_copy
+
+
 def find_gaps_in_time_series(
     time_series: pd.Series,
     start_timestamp: pd.Timestamp,
