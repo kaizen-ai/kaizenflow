@@ -32,9 +32,13 @@ def get_DataFrameBroker_example1(
     # Build DataFrameBroker.
     strategy_id = "SAU1"
     account = "candidate"
+    universe_version = "v7.1"
+    stage = "preprod"
     broker = ombroker.DataFrameBroker(
         strategy_id,
         market_data,
+        universe_version,
+        stage,
         account=account,
         timestamp_col=timestamp_col,
         column_remap=column_remap,
@@ -64,9 +68,13 @@ def get_DatabaseBroker_example1(
     # Build DatabaseBroker.
     strategy_id = "SAU1"
     account = "candidate"
+    universe_version = "v7.1"
+    stage = "preprod"
     broker = ombroker.DatabaseBroker(
         strategy_id,
         market_data,
+        universe_version,
+        stage,
         account=account,
         timestamp_col=timestamp_col,
         db_connection=db_connection,

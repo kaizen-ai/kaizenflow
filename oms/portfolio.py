@@ -1262,6 +1262,8 @@ class DatabasePortfolio(Portfolio):
         #
         wall_clock_time = self._get_wall_clock_time()
         wall_clock_time_str = wall_clock_time.strftime("%Y%m%d_%H%M%S")
+        # TODO(Grisha): Assign to a variable, probably file_name and enable
+        # logging.
         f"{bar_timestamp}.{wall_clock_time_str}.csv"
         #
         # snapshot_df = self.get_historical_snapshot_dfs(num_periods)
