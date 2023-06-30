@@ -18,6 +18,7 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     docker_build_prod_image,
     docker_cmd,
     docker_create_candidate_image,
+    #docker_dash_app,
     docker_images_ls_repo,
     docker_jupyter,
     docker_kill,
@@ -103,20 +104,22 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
 # if needed in order not to break other invoke targets.
 try:
     from oms.lib_tasks_binance import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
-        binance_get_open_positions,
+        binance_display_open_positions,
         binance_flatten_account,
-    )
-except ImportError:
-    pass
-
-# TODO(gp): This is due to the coupling between code in linter container and
-#  the code being linted.
-try:
-    from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
-        integrate_file,
+        binance_log_open_positions,
+        binance_log_total_balance,
     )
 except ImportError as e:
-    print(e)
+    pass
+# # TODO(gp): This is due to the coupling between code in linter container and
+# #  the code being linted.
+# try:
+#     from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
+#         docker_update_prod_task_definition,
+#     )
+# except ImportError as e:
+#     #print(e)
+#     pass
 
 
 _LOG = logging.getLogger(__name__)

@@ -5,13 +5,14 @@ import research_amp.cc.algotrading as ramccalg
 """
 
 import logging
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 import core.config as cconfig
+import core.finance as cofinanc
 import dataflow.universe as dtfuniver
 import helpers.hdbg as hdbg
 import helpers.hlogging as hloggin
@@ -32,6 +33,7 @@ def get_default_config(
     *,
     start_ts: Optional[pd.Timestamp] = pd.Timestamp("2022-12-14 00:00:00+00:00"),
     end_ts: Optional[pd.Timestamp] = pd.Timestamp("2022-12-15 00:00:00+00:00"),
+    full_symbols: Optional[List[str]] = None,
 ) -> cconfig.Config:
     """
     Get a config for a notebook with algorithmic trading experiments.
@@ -46,14 +48,50 @@ def get_default_config(
             "tag": "downloaded_1sec",
             "contract_type": "futures",
             "universe": {
-                "full_symbols": ["binance::ADA_USDT"],
                 "universe_version": "v3",
             },
         },
         "market_data_config": {"start_ts": start_ts, "end_ts": end_ts},
     }
+    # If a list of full symbols is provided, include them in the Config.
+    #  Note: required when running the Config manually through a notebook,
+    #  in which case the user provides a subset of the universe manually.
+    if full_symbols:
+        dict_["client_config"]["universe"]["full_symbols"] = full_symbols
     config = cconfig.Config.from_dict(dict_)
     return config
+
+
+def build_CMTask3350_configs(
+    start_ts: pd.Timestamp, end_ts: pd.Timestamp, universe_version: str
+) -> cconfig.ConfigList:
+    """
+    Create a ConfigList for CMTask3350.
+
+    The config list is a default config with tiled universe.
+
+    :param start_ts: beginning of the examined time period
+    :param end_ts: end of the examined time period
+    :param universe_version: CryptoChassis universe, e.g. "v3"
+    :return: tiled universe configs
+    """
+    config = get_default_config(start_ts=start_ts, end_ts=end_ts)
+    # Assign an ImClient to the Config.
+    _ = get_bid_ask_ImClient(config)
+    # Load asset ids from the given universe.
+    universe_string = f"crypto_chassis_{universe_version}-all"
+    full_symbols = dtfuniver.get_universe(universe_string)
+    universe = get_universe(config, full_symbols=full_symbols)
+    # Create a tiled universe Config list.
+    config_list = cconfig.ConfigList([config])
+    asset_ids_key = ("market_data_config", "asset_ids")
+    task_config_list = cconfig.build_config_list_varying_universe_tiles(
+        config_list, asset_ids_key, universe
+    )
+    # Assign MarketData to each Config in the list based on their asset id.
+    for asset_config in task_config_list:
+        _ = get_market_data(asset_config)
+    return task_config_list
 
 
 # #############################################################################
@@ -83,9 +121,14 @@ def get_bid_ask_ImClient(config: cconfig.Config) -> icdc.ImClient:
     return client
 
 
-def get_universe(config: cconfig.Config) -> List[int]:
+def get_universe(
+    config: cconfig.Config, *, full_symbols: Optional[List[str]] = None
+) -> List[int]:
     """
     Load asset IDs based on config universe and symbols.
+
+    :param full_symbols: a subset of the universe, entire universe by defaul
+    :return: list of asset IDs
     """
     universe_version = config.get_and_mark_as_used(
         ("client_config", "universe", "universe_version")
@@ -94,17 +137,19 @@ def get_universe(config: cconfig.Config) -> List[int]:
     # Verify that provided symbols are present in the client.
     universe_string = f"crypto_chassis_{universe_version}-all"
     universe_full_symbols = dtfuniver.get_universe(universe_string)
-    config_full_symbols = config.get_and_mark_as_used(
-        ("client_config", "universe", "full_symbols")
-    )
+    # Select the full symbols
+    if full_symbols is None:
+        # Load all full symbols from the provided config.
+        config_full_symbols = config.get_and_mark_as_used(
+            ("client_config", "universe", "full_symbols")
+        )
+    else:
+        # Select only provided full symbols.
+        config_full_symbols = full_symbols
     hdbg.dassert_is_subset(config_full_symbols, universe_full_symbols)
     # Convert to asset ids.
-    config["client_config"]["universe"][
-        "asset_ids"
-    ] = client.get_asset_ids_from_full_symbols(config_full_symbols)
-    asset_ids = config.get_and_mark_as_used(
-        ("client_config", "universe", "asset_ids")
-    )
+    asset_ids = client.get_asset_ids_from_full_symbols(config_full_symbols)
+    config["market_data_config"]["asset_ids"] = asset_ids
     return asset_ids
 
 
@@ -113,9 +158,10 @@ def get_market_data(config: cconfig.Config) -> mdata.MarketData:
     Get historical market data to connect to data source node.
     """
     im_client = config.get_and_mark_as_used(("client_config", "client"))
-    asset_ids = config.get_and_mark_as_used(
-        ("client_config", "universe", "asset_ids")
-    )
+    asset_ids = config.get_and_mark_as_used(("market_data_config", "asset_ids"))
+    if isinstance(asset_ids, int):
+        asset_ids = [asset_ids]
+    #
     columns = None
     columns_remap = None
     wall_clock_time = pd.Timestamp("2100-01-01T00:00:00+00:00")
@@ -126,6 +172,9 @@ def get_market_data(config: cconfig.Config) -> mdata.MarketData:
         columns_remap,
         wall_clock_time=wall_clock_time,
     )
+    #
+    market_data_key = ("market_data_config", "market_data")
+    config[market_data_key] = market_data
     return market_data
 
 
@@ -146,16 +195,24 @@ def add_limit_order_prices(
     """
     Calculate limit order prices for buy/sell.
 
-    The limit order can be calculated via passivity factor or absolute spread,
-    but not both.
+        The limit order can be calculated via passivity factor or absolute spread,
+        but not both.
 
-    :param df: bid/ask DataFrame
-    :param mid_col_name: name of column containing bid/ask mid price
-    :param debug_mode: whether to show DataFrame info
-    :param resample_freq: resampling frequency, e.g. '1T', '5T'
-    :param passivity_factor: mid price factor for limit, value between 0 and 1
-    :param abs_spread: value to add to a spread
-    :return: original DataFrame with added limit price columns
+        Example on an output:
+
+                                    ask_value  bid_value      mid  ask_price  ask_size  bid_price  bid_size        full_symbol              knowledge_timestamp                  start_ts  limit_buy_price  limit_sell_price  is_buy  is_sell
+    end_ts
+    2022-12-13 19:00:00-05:00  53805.9582  25894.324  0.31405     0.3141  171302.0      0.314   82466.0  binance::ADA_USDT 2022-12-15 11:01:35.784679+00:00 2022-12-13 18:59:00-05:00              NaN               NaN   False    False
+    2022-12-13 19:00:01-05:00  53805.9582  25807.032  0.31405     0.3141  171302.0      0.314   82188.0  binance::ADA_USDT 2022-12-15 11:01:35.784679+00:00 2022-12-13 18:59:01-05:00              NaN               NaN   False    False
+    2022-12-13 19:00:03-05:00  53798.1057  25807.032  0.31405     0.3141  171277.0      0.314   82188.0  binance::ADA_USDT 2022-12-15 11:01:35.784679+00:00 2022-12-13 18:59:03-05:00              NaN               NaN   False    False
+
+        :param df: bid/ask DataFrame
+        :param mid_col_name: name of column containing bid/ask mid price
+        :param debug_mode: whether to show DataFrame info
+        :param resample_freq: resampling frequency, e.g. '1T', '5T'
+        :param passivity_factor: mid price factor for limit, value between 0 and 1
+        :param abs_spread: value to add to a spread
+        :return: original DataFrame with added limit price columns
     """
     hdbg.dassert_in(mid_col_name, df.columns.to_list())
     hdbg.dassert_is_subset(["ask_price", "bid_price"], df.columns.to_list())
@@ -218,9 +275,16 @@ def compute_repricing_df(df: pd.DataFrame, report_stats: bool) -> pd.DataFrame:
     """
     Compute the execution prices.
 
-    :param df: DataFrame containing bid/ask data
-    :param report_stats: print DaraFrame stats
-    :return: DataFrame with buy/sell execution prices
+        Example of an output:
+                                    ask_value  bid_value      mid  ask_price  ask_size  bid_price  bid_size        full_symbol              knowledge_timestamp                  start_ts  limit_buy_price  limit_sell_price  is_buy  is_sell  exec_buy_price  exec_sell_price
+    end_ts
+    2022-12-13 19:00:00-05:00  53805.9582  25894.324  0.31405     0.3141  171302.0      0.314   82466.0  binance::ADA_USDT 2022-12-15 11:01:35.784679+00:00 2022-12-13 18:59:00-05:00              NaN               NaN   False    False             NaN              NaN
+    2022-12-13 19:00:01-05:00  53805.9582  25807.032  0.31405     0.3141  171302.0      0.314   82188.0  binance::ADA_USDT 2022-12-15 11:01:35.784679+00:00 2022-12-13 18:59:01-05:00              NaN               NaN   False    False             NaN              NaN
+    2022-12-13 19:00:03-05:00  53798.1057  25807.032  0.31405     0.3141  171277.0      0.314   82188.0  binance::ADA_USDT 2022-12-15 11:01:35.784679+00:00 2022-12-13 18:59:03-05:00              NaN               NaN   False    False             NaN              NaN
+
+        :param df: DataFrame containing bid/ask data
+        :param report_stats: print DaraFrame stats
+        :return: DataFrame with buy/sell execution prices
     """
     hdbg.dassert_is_subset(
         ["is_buy", "is_sell", "ask_price", "bid_price"], df.columns
@@ -264,10 +328,17 @@ def compute_execution_df(
     """
     Compute the number and volume of buy/sell executions.
 
-    :param df: DataFrame with bid/ask columns
-    :param report_stats: print stats on the calculated values
-    :param join_output_with_input: merge the values with input DataFrame
-    :return: DataFrame with execution stats
+        Example of an output:
+                                   exec_buy_num  exec_buy_price  exec_is_buy  exec_buy_volume  exec_sell_num  exec_sell_price  exec_is_sell  exec_sell_volume      mid
+    end_ts
+    2022-12-13 19:00:00-05:00             4        0.314600         True     3.080028e+05            149         0.314590          True      1.057715e+07  0.31405
+    2022-12-13 19:05:00-05:00            92        0.314534         True     3.948841e+06            102         0.314748          True      4.196600e+06  0.31495
+    2022-12-13 19:10:00-05:00           101        0.314493         True     1.121826e+07            127         0.314724          True      9.520203e+06  0.31475
+
+        :param df: DataFrame with bid/ask columns
+        :param report_stats: print stats on the calculated values
+        :param join_output_with_input: merge the values with input DataFrame
+        :return: DataFrame with execution stats
     """
     hdbg.dassert_is_subset(
         ["is_buy", "is_sell", "ask_size", "ask_price", "mid"],
@@ -324,6 +395,70 @@ def compute_execution_df(
     else:
         exec_df["mid"] = df["mid"]
     return exec_df
+
+
+def compute_average_price_df_from_config(
+    config: cconfig.Config,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Compute average price and execution status DataFrames from Config.
+
+    :return: Two DataFrames: with avg price and execution status
+    """
+    start_ts = config.get_and_mark_as_used(("market_data_config", "start_ts"))
+    end_ts = config.get_and_mark_as_used(("market_data_config", "end_ts"))
+    #
+    # Load data.
+    market_data = config[("market_data_config", "market_data")]
+    ts_col_name = "end_ts"
+    asset_ids = config.get_and_mark_as_used(("market_data_config", "asset_ids"))
+    if isinstance(asset_ids, int):
+        asset_ids = [asset_ids]
+    #
+    left_close = True
+    right_close = True
+    df = market_data.get_data_for_interval(
+        start_ts,
+        end_ts,
+        ts_col_name,
+        asset_ids,
+        left_close=left_close,
+        right_close=right_close,
+    )
+    # Add mid, ask_value and bid_value features.
+    bid_col = "bid_price"
+    ask_col = "ask_price"
+    bid_volume_col = "bid_size"
+    ask_volume_col = "ask_size"
+    requested_cols = ["mid", "ask_value", "bid_value"]
+    join_output_with_input = True
+    df = cofinanc.process_bid_ask(
+        df,
+        bid_col,
+        ask_col,
+        bid_volume_col,
+        ask_volume_col,
+        requested_cols=requested_cols,
+        join_output_with_input=join_output_with_input,
+    )
+    # Compute limit order prices.
+    mid_col_name = "mid"
+    debug_mode = True
+    abs_spread = 0.0001
+    df = add_limit_order_prices(
+        df, mid_col_name, debug_mode, abs_spread=abs_spread
+    )
+    #
+    report_stats = True
+    reprice_df = compute_repricing_df(df, report_stats)
+    #
+    exec_df = compute_execution_df(reprice_df, report_stats)
+    return reprice_df, exec_df
+
+
+# #############################################################################
+# Visualization and analysis
+# #############################################################################
 
 
 def perform_spread_analysis(

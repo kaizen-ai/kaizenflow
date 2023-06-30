@@ -1297,6 +1297,8 @@ class TestCcxtLogsReader1(hunitest.TestCase):
                 "oms_parent_orders",
                 "ccxt_trades",
                 "oms_child_orders",
+                "oms_fills",
+                "ccxt_fills",
             ],
         )
         # Assert the dataframes are not empty.
