@@ -132,6 +132,36 @@ mean_asset_corr = costatis.compute_mean_pearson_correlation_by_group(
 )
 display(mean_asset_corr)
 
+# %%
+feature_stats = costatis.compute_centered_process_stats_by_group(feature_df)
+display(feature_stats.head())
+
+# %%
+mean_asset_stats_per_feature = feature_stats.groupby(level=1).mean()
+display(mean_asset_stats_per_feature)
+
+# %%
+# mean_asset_stats_per_feature[["mean", "var", "autocovar", "autocorr", "turn"]].boxplot(ylabel="mean asset per feature")
+
+# %%
+mean_feature_stats_per_asset = feature_stats.groupby(level=0).mean()
+display(mean_feature_stats_per_asset)
+
+# %%
+# mean_feature_stats_per_asset[["mean", "var", "autocovar", "autocorr", "turn"]].boxplot(ylabel="mean feature per asset")
+
+# %%
+mean_feature_corr = costatis.compute_mean_pearson_correlation_by_group(
+    feature_df, 1
+)
+coplotti.plot_heatmap(mean_feature_corr, mode="clustermap", figsize=(10, 10))
+
+# %%
+mean_asset_corr = costatis.compute_mean_pearson_correlation_by_group(
+    feature_df, 0
+)
+coplotti.plot_heatmap(mean_asset_corr, mode="clustermap", figsize=(10, 10))
+
 # %% [markdown]
 # # Per-asset cross-sectional feature analysis (all features for a single asset)
 

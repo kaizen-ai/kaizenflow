@@ -132,6 +132,7 @@ def combine_columns(
     arithmetic_kwargs: Optional[Dict[str, Any]] = None,
     term1_delay: Optional[int] = 0,
     term2_delay: Optional[int] = 0,
+    replace_inf_with_nan_post_div: bool = True,
 ) -> pd.DataFrame:
     """
     Apply an arithmetic operation to two columns.
@@ -144,6 +145,8 @@ def combine_columns(
     :param arithmetic_kwargs: kwargs for `operation()`
     :param term1_delay: number of shifts to preapply to term1
     :param term2_delay: number of shifts to preapply to term2
+    :param replace_inf_with_nan_post_div: if `operation` == "div", replace
+        infs with NaNs (as the division may introduce infs)
     :return: 1-column dataframe with result of binary operation
     """
     hdbg.dassert_in(term1_col, df.columns.to_list())
@@ -156,6 +159,8 @@ def combine_columns(
     term2 = df[term2_col].shift(term2_delay)
     result = getattr(term1, operation)(term2, **arithmetic_kwargs)
     result.name = out_col
+    if operation == "div" and replace_inf_with_nan_post_div:
+        result = result.replace([-np.inf, np.inf], np.nan)
     #
     return result.to_frame()
 

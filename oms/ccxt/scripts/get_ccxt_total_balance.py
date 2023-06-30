@@ -14,17 +14,10 @@ Example use:
 """
 import argparse
 import logging
-import os
-
-import pandas as pd
 
 import helpers.hdbg as hdbg
-import helpers.hio as hio
 import helpers.hparser as hparser
-import helpers.hprint as hprint
-import im_v2.common.data.client as icdc
-import im_v2.common.db.db_utils as imvcddbut
-import oms.ccxt.ccxt_broker_instances as occcbrin
+import oms.ccxt.ccxt_broker_utils as occcbrut
 
 _LOG = logging.getLogger(__name__)
 
@@ -76,36 +69,15 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Initialize IM client.
-    #  Data is not needed in this case, so connecting to `dev` DB.
-    connection = imvcddbut.DbConnectionManager.get_connection("dev")
-    im_client = icdc.get_mock_realtime_client("v1", connection)
-    market_data = occcbrin.get_RealTimeImClientMarketData_example2(im_client)
+    # Initialize broker.
     exchange = args.exchange
     contract_type = args.contract_type
     stage = args.stage
     secret_id = args.secret_id
-    # Initialize broker.
-    broker = occcbrin.get_CcxtBroker_example1(
-        market_data, exchange, contract_type, stage, secret_id
-    )
-    # Get open positions.
-    total_balance = broker.get_total_balance()
-    _LOG.debug(hprint.to_str("total_balance"))
-    # Save to provided log_dir.
     log_dir = args.log_dir
-    hdbg.dassert_path_exists(log_dir)
-    # Get enclosed balance directory.
-    enclosing_dir = os.path.join(log_dir, "total_balance")
-    hio.create_dir(enclosing_dir, incremental=True)
-    # Get file name for balance, e.g.
-    #  '/shared_data/system_log_dir/total_balance/binance_futures_balance_20230419_172022.json'
-    timestamp = pd.Timestamp.now(tz="UTC").strftime("%Y%m%d_%H%M%S")
-    file_name = f"{exchange}_{contract_type}_balance_{timestamp}.json"
-    file_path = os.path.join(enclosing_dir, file_name)
-    # Save.
-    hio.to_json(file_path, total_balance)
-    _LOG.debug("Total balance saved to %s", file_path)
+    broker = occcbrut.get_broker(exchange, contract_type, stage, secret_id)
+    # Get total balance.
+    occcbrut.get_ccxt_total_balance(broker, log_dir, exchange, contract_type)
 
 
 if __name__ == "__main__":
