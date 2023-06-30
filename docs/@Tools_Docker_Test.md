@@ -43,7 +43,7 @@ for docker images is like GitHub for code.
 # High level philosophy
 
 
-We always want to separate things that don\'t need to run together in
+We always want to separate things that don't need to run together in
 different containers (e.g., `dev / prod cmamp`, `optimizer`, `im`,
 `oms`, `dev_tools`), along a logic of "independently runnable /
 deployable directories".
@@ -101,7 +101,7 @@ that specific prod scripts need
 
 -   create an `invoke` task that calls `i docker_cmd --cmd ...`
     reusing the cmamp container, (since that container already has
-    `boto3` and `moto` that are dependencies we can\'t remove)
+    `boto3` and `moto` that are dependencies we can't remove)
 
     -   This approach is similar to calling the `linter`
 
@@ -688,9 +688,9 @@ hood it uses the regex below and `os.walk` for selected dir:
 
 REGEXP = [
 
-re.compile(r\'\^import (.+)$\'),
+re.compile(r'\^import (.+)$'),
 
-re.compile(r\'\^from ((?!\.+).\*?) import (?:.\*)$\')
+re.compile(r'\^from ((?!\.+).\*?) import (?:.\*)$')
 
 ]
 
@@ -1008,9 +1008,9 @@ Example of a complex command:
 > docker run --rm -t --workdir=/app
 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:prod-1.0.3 "python
 /app/im_v2/ccxt/data/extract/download_realtime.py --to_datetime
-\'20211204-194432\' --from_datetime \'20211204-193932\' --dst_dir
-\'test/ccxt_test\' --data_type \'ohlcv\' --api_keys
-\'API_keys.json\' --universe \'v03\'"
+'20211204-194432' --from_datetime '20211204-193932' --dst_dir
+'test/ccxt_test' --data_type 'ohlcv' --api_keys
+'API_keys.json' --universe 'v03'"
 
 ## QA for prod image
 
@@ -1084,7 +1084,7 @@ Refs:
 
 -   [[https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/]{.underline}](https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/)
 
-Often what\'s really needed is the ability to build / run a container
+Often what's really needed is the ability to build / run a container
 from another container (e.g., CI or unit test). This can be achieved by
 mounting the Docker socket `/var/run/docker.sock` to the container, so
 that a container can talk to Docker Engine.
@@ -1131,8 +1131,8 @@ outside the container.
 
 > (cd oms; i oms_docker_up -s local)
 
-INFO: > cmd=\'/local/home/gsaggese/src/venv/amp.client_venv/bin/invoke
-oms_docker_up -s local\'
+INFO: > cmd='/local/home/gsaggese/src/venv/amp.client_venv/bin/invoke
+oms_docker_up -s local'
 
 report_memory_usage=False report_cpu_usage=False
 
@@ -1295,7 +1295,7 @@ i docker_pull
 
 -   Users need to do a `i docker_pull` to get the new container
 
--   Users that don\'t update should see a message telling them that the
+-   Users that don't update should see a message telling them that the
     code and container are not in sync any more, e.g.,:
 
   ```
@@ -1304,7 +1304,7 @@ i docker_pull
  
   This code is not in sync with the container:
  
-  code_version=\'1.0.3\' != container_version=\'amp-1.0.3\'
+  code_version='1.0.3' != container_version='amp-1.0.3'
  
   
  
@@ -1371,7 +1371,7 @@ i docker_pull
 
 TODO(gp, Vitalii): Turn this into a description of the release flow
 
-Let\'s assume that we want to release dev image with version 1.2.3:
+Let's assume that we want to release dev image with version 1.2.3:
 
 un `i docker_build_local_image --tag-name 1.2.3`
 
@@ -1415,7 +1415,7 @@ tag_name).
 Of course docker_release... is just a convenience wrapper running all
 the stages
 
-Now let\'s assume we want to promote dev image to prod:
+Now let's assume we want to promote dev image to prod:
 
 - then we run `i docker_build_prod_image`
 
@@ -1435,18 +1435,18 @@ Q0: Is the flow ok?
 Yes
 
 Q1: The flow is the same for `dev_tools` and `cmamp`, but to update
-the version of image on which `dev_tools` is based -- we\'ll need to
+the version of image on which `dev_tools` is based -- we'll need to
 modify Dockerfile now. Is that ok?
 
 -   Maybe we should just create the dev_tools from scratch using the
     full-blown flow instead of build on top of it
 
 -   The idea of building on top of it, was just a shortcut but it is
-    creating more problems that what it\'s worth it
+    creating more problems that what it's worth it
 
 -   Then everything looks and behaves the same
 
--   TODO(vitalii): File a bug, if we don\'t have it yet
+-   TODO(vitalii): File a bug, if we don't have it yet
 
 Q2: If the flow is run in the submodule, e.g. in `amp` dir, currently
 the behaviour is not well defined. Commands will try to build `cmamp`
@@ -1482,10 +1482,10 @@ from other submodules (e.g., helpers). One approach is to put the Git
 hash in version.txt. The one you suggest (of tagging the entire repo)
 with also info on the dir makes sense.
 
-I think the Git tags are designed to do what we want, so let\'s use
+I think the Git tags are designed to do what we want, so let's use
 them.
 
-Q3: We don\'t need version.txt file in this flow. I will remove it, ok?
+Q3: We don't need version.txt file in this flow. I will remove it, ok?
 
 -   Yes, we can remove version.txt and use a README or changelog in the
     releasable dir
@@ -1496,8 +1496,8 @@ Some observations / questions:
 
 INV: version becomes mandatory in the release flow
 
--   This requires a lot of cosmetic changes to the code since now it\'s
-    optional, but it\'s worth make the changes
+-   This requires a lot of cosmetic changes to the code since now it's
+    optional, but it's worth make the changes
 
 We need to ensure that version can only be created going fwd.
 
@@ -1541,9 +1541,9 @@ pointers for callbacks.
 
 What to do with:
 
-CONTAINER_VERSION=\'amp-1.1.1\'
+CONTAINER_VERSION='amp-1.1.1'
 
-BUILD_TAG=\'amp-1.1.1-20211114_093142-AmpTask1845_Get_docker_in_docker_to_work-47fb46513f084b8f3c9008a2e623ec05040a10e9\'
+BUILD_TAG='amp-1.1.1-20211114_093142-AmpTask1845_Get_docker_in_docker_to_work-47fb46513f084b8f3c9008a2e623ec05040a10e9'
 
 # QA flow
 
@@ -1578,7 +1578,7 @@ dev_scripts_devto/client_setup/requirements.txt
 
 A possible solution is to use Docker-in-Docker
 
--   in this way we don\'t have to pollute the thin env with a bunch of
+-   in this way we don't have to pollute the thin env with a bunch of
     stuff
 
 -   Talk to Grisha and Vitalii
@@ -1592,7 +1592,7 @@ import_check/test/Test_detect_import_cycles.test1/input/ --stage
 dev
 
 In all the other repos, one needs to use the prod of dev_tools
-container (that\'s what the user would do)
+container (that's what the user would do)
 
 Next steps:
 
@@ -1753,7 +1753,7 @@ From devops/docker_build/dev.Dockerfile
 
 ENTRYPOINT ["devops/docker_run/entrypoint.sh"]
 
-The problem is that Git repo doesn\'t work anymore
+The problem is that Git repo doesn't work anymore
 
 ```
 
@@ -1920,7 +1920,7 @@ When the Docker container starts the current dir is optimizer
 
 helpers, core is mounted in the same dir
 
-You can\'t see code outside optimizer
+You can't see code outside optimizer
 
 TODO(gp): running in amp under lemonade should use the local
 repo_config
@@ -1934,7 +1934,7 @@ TODO(gp): Implement this
 
 
 Since we want to segregate the package dependencies in different
-containers, tests that have a dependency from cvxopt /cvxpy can\'t be
+containers, tests that have a dependency from cvxopt /cvxpy can't be
 run inside the `amp` container but need to be run inside `opt`.
 
 We want to:
@@ -1953,7 +1953,7 @@ To achieve this we need to solve the 3 problems below.
 
 ### Avoid compiling code depending from cvxopt when running amp
 
-We can\'t parse code (e.g., in `pytest`) that includes packages that
+We can't parse code (e.g., in `pytest`) that includes packages that
 are not present in a container
 
 -   E.g., `pytest` running in `amp` should not parse code in
@@ -2009,7 +2009,7 @@ Exclude certain directories (e.g., `//amp/optimizer`) from `pytest`
 
 -   Pros:
 
-    -   We don\'t have to spread the `try ... except` and `if
+    -   We don't have to spread the `try ... except` and `if
         _has_package` in the code
 
 -   Cons:
@@ -2097,8 +2097,8 @@ We need to call something from `amp` to `opt` Docker
 
 **Solution 1**
 
-Inside the code we build the command line `cmd = \'docker run -it ...
-\'; system(cmd)`
+Inside the code we build the command line `cmd = 'docker run -it ...
+'; system(cmd)`
 
 -   Cons:
 
@@ -2111,7 +2111,7 @@ Call the Dockerized executable using the `docker_cmd` invoke target
 
 ```
 
-cmd = "invoke opt_docker_cmd -cmd \'...\'"
+cmd = "invoke opt_docker_cmd -cmd '...'"
 
 system(cmd)
 

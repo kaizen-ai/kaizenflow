@@ -45,47 +45,34 @@ def _clean_up_artifacts(md_file: str) -> None:
     :param md_file_figs: path to the folder containing the artifacts
     """
     perl_regex_replacements = [
-        # clean up headers.
+        #
         # "# \# Running PyCharm remotely" -> "# Running PyCharm remotely"
-        f"perl -pi -e 's/# (\\\#)+ /# /g' {md_file}",
+        r"perl -pi -e 's:# (\\#)+ :# :g' {}".format(md_file),
         # \#\# Docker image  -> ## Docker image
-        f"perl -pi -e 's/\\\#/\#/g' {md_file}",
+        r"perl -pi -e 's:\\#:#:g' {}".format(md_file),
         # **## amp / cmamp container**
-        f"perl -pi -e 's/\*\*\#(.*?)\*\*/\#$1/g' {md_file}",
-        # Clean up the text content.
+        r"perl -pi -e 's:\*\*#(.*?)\*\*:#$1:g' {}".format(md_file),
         # - Same as VNC, but instead of sending bitmaps through VNC, a
         #   > \"compressed\" version of the GUI is sent to the local
         #   > computer directly
-        f"perl -pi -e 's/^(\s+)> /$1/g' {md_file}",
+        r"perl -pi -e 's:^(\s+)> :$1:g' {}".format(md_file),
+        #
         # >
         # > botocore==1.24.37
         # >
-        # This must run before the next one.
-        f"perl -pi -e 's/^>/ /g' {md_file}",
-        # just delete all '\'?
+        # This must run before the next Perl one-lineter.
+        r"perl -pi -e 's:^>: :g' {}" .format(md_file),
         # Remove the \ before - $ | < > " _ [ ]. 
-        f"perl -pi -e 's/\\\([-\$|<>\_\]\[\.])/$1/g' {md_file}",
-        # \" -> "
-        f"perl -pi -e 's/\\\\\"/\"/g' {md_file}",
+        r"perl -pi -e 's:\\([-\$|<>\"\_\]\[\.]\*):$1:g' {}" .format(md_file),
         # \' -> '
-        # f"perl -pi -e 's/\\\\'/\'/g' {md_file}",
+        r'perl -pi -e "s:\\\':\':g" {}'.format(md_file),
         # \` -> `
-        f"perl -pi -e 's/\\\\`/\`/g' {md_file}",
-        # \' -> '
-        # TODO：This is not working.Maybe need to use python regex.
-        # f'perl -pi -e "s/\\\\\'/\'/g" {md_file}',
+        r"perl -pi -e 's:\\\`:\`:g' {}" .format(md_file),
         # # Remove trailing \
-        f"perl -pi -e 's/\\\$//g' {md_file}",
-        f"perl -pi -e 's/======+//g' {md_file}",
-        f"perl -pi -e 's/------+//g' {md_file}",
-        # Remove:
-        #   ```{=html}
-        #   <!-- -->
-        #   ```
-        # # \`nid\` -> `nid`
-        # f"perl -pi -e 's/\\\\\`(.*?)\\\\\`/\`\1\`/g' {md_file}",
-        # f"./dev_scripts/lint_md.sh {md_file}"
-
+        r"perl -pi -e 's:\\$::g' {}" .format(md_file),
+        # Remove ========= and -------.
+        r"perl -pi -e 's:======+::g' {}" .format(md_file),
+        r"perl -pi -e 's:------+::g' {}" .format(md_file),
     ]
     for clean_cmd in perl_regex_replacements:
         hsystem.system(clean_cmd)
