@@ -237,17 +237,68 @@ def delete_dir(
 def create_dir(
     dir_name: str,
     incremental: bool,
+    *,
+    abort_if_exists: bool = False,
+    ask_to_delete: bool = False,
+    backup_dir_if_exists: bool = False,
+) -> None:
+    """
+    Create a directory.
+
+    :param incremental: if False then the directory is deleted and
+        re-created, otherwise the same directory is reused as it is
+    :param abort_if_exists: abort if the target directory already exists
+    :param ask_to_delete: if it is not incremental and the dir exists,
+        asks before deleting.
+        This option is used when we want to start with a clean dir
+        (i.e., incremental=False) but, at the same time, we want to
+        make sure that the user doesn't want to delete the content of the dir.
+        Another approach is to automatically rename
+        the old dir with backup_dir_if_exists.
+    :param backup_dir_if_exists: if the target dir already exists,
+        then rename it using a timestamp (e.g., dir_20231003_080000)
+        and create a new target dir
+    """
+    if backup_dir_if_exists:
+        if not os.path.exists(dir_name):
+            # Create new dir.
+            _LOG.debug("Creating dir '%s'", dir_name)
+            _create_dir(dir_name, incremental=True)
+        else:
+            _LOG.debug("Dir '%s' already exists", dir_name)
+            # Get dir timestamp.
+            dir_timestamp = os.path.getmtime(dir_name)
+            dir_datetime = datetime.datetime.fromtimestamp(dir_timestamp)
+            # Build new dir name with timestamp.
+            dir_name_new = dir_name + "." + dir_datetime.strftime("%Y%m%d_%H%M%S")
+            # Rename dir.
+            if not os.path.exists(dir_name_new):
+                _LOG.warning("Renaming dir '%s' -> '%s'", dir_name, dir_name_new)
+                os.rename(dir_name, dir_name_new)
+            else:
+                _LOG.warning("Dir '%s' already exists", dir_name_new)
+            # Create new dir.
+            _LOG.debug("Creating dir '%s'", dir_name)
+            _create_dir(dir_name, incremental=True)
+    else:
+        _create_dir(
+            dir_name,
+            incremental,
+            abort_if_exists=abort_if_exists,
+            ask_to_delete=ask_to_delete,
+        )
+
+
+def _create_dir(
+    dir_name: str,
+    incremental: bool,
     abort_if_exists: bool = False,
     ask_to_delete: bool = False,
 ) -> None:
     """
     Create a directory `dir_name` if it doesn't exist.
 
-    :param incremental: if False then the directory is deleted and
-        re-created, otherwise it skips
-    :param abort_if_exists:
-    :param ask_to_delete: if it is not incremental and the dir exists,
-        asks before deleting
+    Same interface as `create_dir()` but without handling `backup_dir_if_exists`.
     """
     _LOG.debug(
         hprint.to_str("dir_name incremental abort_if_exists ask_to_delete")
