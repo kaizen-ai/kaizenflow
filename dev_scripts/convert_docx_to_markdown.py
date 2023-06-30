@@ -37,15 +37,22 @@ def _move_media(md_file_figs: str) -> None:
         # Remove the 'media' directory
         shutil.rmtree(os.path.join(md_file_figs, "media"))
 
+def _remove_nonsence_lines(md_file: str, md_file_figs: str) -> None:
+    with open(md_file, 'r+') as f:
+        for line in f:
+            if line.strip() != '':
+                f.write(line)
+            else:
+                f.write(line+'\n')
 
-def _clean_up_artifacts(md_file: str) -> None:
+def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
     """
     Remove the artifacts.
 
     :param md_file_figs: path to the folder containing the artifacts
     """
     perl_regex_replacements = [
-        #
+        
         # "# \# Running PyCharm remotely" -> "# Running PyCharm remotely"
         r"perl -pi -e 's:# (\\#)+ :# :g' {}".format(md_file),
         # \#\# Docker image  -> ## Docker image
@@ -63,16 +70,28 @@ def _clean_up_artifacts(md_file: str) -> None:
         # This must run before the next Perl one-lineter.
         r"perl -pi -e 's:^>: :g' {}" .format(md_file),
         # Remove the \ before - $ | < > " _ [ ]. 
-        r"perl -pi -e 's:\\([-\$|<>\"\_\]\[\.]\*):$1:g' {}" .format(md_file),
+        r"perl -pi -e 's:\\([-\$|<>\"\_\]\[\.]):$1:g' {}" .format(md_file),
         # \' -> '
         r'perl -pi -e "s:\\\':\':g" {}'.format(md_file),
         # \` -> `
         r"perl -pi -e 's:\\\`:\`:g' {}" .format(md_file),
+        # \* -> *
+        r"perl -pi -e 's:\\\*:\*:g' {}" .format(md_file),
         # # Remove trailing \
         r"perl -pi -e 's:\\$::g' {}" .format(md_file),
         # Remove ========= and -------.
         r"perl -pi -e 's:======+::g' {}" .format(md_file),
         r"perl -pi -e 's:------+::g' {}" .format(md_file),
+        # [[https://plugins.jetbrains.com/plugin/7234-wrap-to-column]{.underline}](https://plugins.jetbrains.com/plugin/7234-wrap-to-column)
+        # TODO: bug: KeyError: '\\'
+        # Fix the image links.
+        r"perl -pi -e 's:\[\[(.*)\]\{{\.underline\}}\]\((.*)\):\[$1\]\($2\):g' {}".format(md_file),
+        # r"perl -pi -e 's:\!\[\]\((.*?)/media/:\!\[\]\($1/:g' {}" .format(md_file),
+        # Remove:
+        #   ```{=html}
+        #   <!-- -->
+        #   ```
+        r"perl -pi -e 's:^\s*```(.*?)\n\s*<!-- -->\n\s*```::mg' {}" .format(md_file),
     ]
     for clean_cmd in perl_regex_replacements:
         hsystem.system(clean_cmd)
@@ -118,8 +137,10 @@ def _convert_docx_to_markdown(docx_file: str, md_file: str) -> None:
     _LOG.info("Start converting docx to markdown.")
     hsystem.system(docker_cmd)
     _LOG.info("Finished converting '%s' to '%s'.", docx_file, md_file)
+    _LOG.info("Md figs '%s'", md_file_figs)
+    _remove_nonsence_lines(md_file, md_file_figs)
     # _move_media(md_file_figs)
-    _clean_up_artifacts(md_file)
+    _clean_up_artifacts(md_file, md_file_figs)
 
 # #############################################################################\
 
