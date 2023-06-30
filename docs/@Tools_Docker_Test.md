@@ -597,13 +597,13 @@ E.g., to add `pytest-timeout` do:
  
   ...
  
-  pytest-timeout = "\*"
+  pytest-timeout = "*"
  
   ...
  
   ```
 
-2)  In general we use the latest version of a package (`\*`) until the
+2)  In general we use the latest version of a package (`*`) until the
     tests fail or the system stops working
 
     a.  If the system fails, we freeze the version of the problematic
@@ -690,7 +690,7 @@ REGEXP = [
 
 re.compile(r'\^import (.+)$'),
 
-re.compile(r'\^from ((?!\.+).\*?) import (?:.\*)$')
+re.compile(r'\^from ((?!\.+).*?) import (?:.*)$')
 
 ]
 
@@ -1407,7 +1407,7 @@ Both for Git tags and docker tags
 We will still need to pass --version 1.0.0
 
 - invoke internally pushes both `dev-1.0.0` and `dev` images to ECR
-\*\*AND\*\* pushes local 1.0.0 git tag to remote git repo (github)
+**AND** pushes local 1.0.0 git tag to remote git repo (github)
 
 `docker_release_dev_image` will do basically the same (will require
 tag_name).
