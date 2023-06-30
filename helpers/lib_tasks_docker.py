@@ -814,8 +814,8 @@ def _dassert_is_subsequent_version(
 # ////////////////////////////////////////////////////////////////////////////////
 
 
-_INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
-_IMAGE_BASE_NAME_RE = r"[a-z0-9_-]+"
+
+_IMAGE_NAME_RE = r"[\w.-\/:-]+"
 _IMAGE_USER_RE = r"[a-z0-9_-]+"
 # For candidate prod images which have added hash for easy identification.
 _IMAGE_HASH_RE = r"[a-z0-9]{9}"
@@ -848,7 +848,7 @@ def _dassert_is_image_name_valid(image: str) -> None:
     regex = "".join(
         [
             # E.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
-            rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}",
+            rf"^{_IMAGE_NAME_RE}",
             # :local-saggese
             rf":{_IMAGE_STAGE_RE}",
             # -1.0.0
@@ -867,7 +867,7 @@ def _dassert_is_base_image_name_valid(base_image: str) -> None:
     *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     # TODO(Grisha): difference between `cmamp` and `sorrentum`.
-    regex = rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}$"
+    regex = rf"^{_IMAGE_NAME_RE}$"
     _LOG.debug("regex=%s", regex)
     m = re.match(regex, base_image)
     hdbg.dassert(m, "Invalid base_image: '%s'", base_image)
