@@ -38,12 +38,20 @@ def _move_media(md_file_figs: str) -> None:
         shutil.rmtree(os.path.join(md_file_figs, "media"))
 
 def _remove_nonsence_lines(md_file: str, md_file_figs: str) -> None:
-    with open(md_file, 'r+') as f:
-        for line in f:
-            if line.strip() != '':
-                f.write(line)
-            else:
-                f.write(line+'\n')
+    lines = []
+    with open(md_file, 'r') as f:
+        lines = list(f.readlines())
+    # with open(md_file, 'w') as f:
+    #     for idx,line in enumerate(lines):
+    #         if idx == len(lines) - 1:
+    #             f.write(line.rstrip('\n').rstrip('\r')+'\n')
+    #         elif line.strip() != '' and lines[idx+1].strip() != '':
+    #             if idx < 10:
+    #                 print(idx)
+    #                 # print(lines[idx+1])
+    #             f.write(line.rstrip('\n').rstrip('\r'))
+    #         else:
+    #             f.write(line)
 
 def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
     """
@@ -74,14 +82,21 @@ def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
         # \' -> '
         r'perl -pi -e "s:\\\':\':g" {}'.format(md_file),
         # \` -> `
-        r"perl -pi -e 's:\\\`:\`:g' {}" .format(md_file),
+        r"perl -pi -e 's:\\\`:\`:g' {}".format(md_file),
         # \* -> *
-        r"perl -pi -e 's:\\\*:\*:g' {}" .format(md_file),
-        # # Remove trailing \
+        r"perl -pi -e 's:\\\*:\*:g' {}".format(md_file),
+        # “ -> "
+        r"perl -pi -e 's:“:\":g' {}".format(md_file),
+        # ” -> "
+        r"perl -pi -e 's:”:\":g' {}".format(md_file),
+        # Remove trailing \
         r"perl -pi -e 's:\\$::g' {}" .format(md_file),
         # Remove ========= and -------.
         r"perl -pi -e 's:======+::g' {}" .format(md_file),
         r"perl -pi -e 's:------+::g' {}" .format(md_file),
+        # Translate HTML elements.
+        r"perl -pi -e 's:\&gt;:\>:g' {}" .format(md_file),
+        r"perl -pi -e 's:\<\!\-\-.*\-\-\>::g' {}".format(md_file),
         # [[https://plugins.jetbrains.com/plugin/7234-wrap-to-column]{.underline}](https://plugins.jetbrains.com/plugin/7234-wrap-to-column)
         # TODO: bug: KeyError: '\\'
         # Fix the image links.
@@ -132,7 +147,7 @@ def _convert_docx_to_markdown(docx_file: str, md_file: str) -> None:
     # Convert from docx to Markdown.
     remove_figs_folder_cmd = f"rm -rf {md_file_figs}"
     hsystem.system(remove_figs_folder_cmd)
-    convert_docx_to_markdown_cmd = f"pandoc --extract-media {md_file_figs} -f docx -t markdown -o {md_file} {docx_file}"
+    convert_docx_to_markdown_cmd = f"pandoc --extract-media {md_file_figs} -f docx -t markdown_strict -o {md_file} {docx_file}"
     docker_cmd = f"docker run --rm -it --workdir {work_dir} --mount {mount} {docker_container_name} {convert_docx_to_markdown_cmd}"
     _LOG.info("Start converting docx to markdown.")
     hsystem.system(docker_cmd)
