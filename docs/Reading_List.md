@@ -2,6 +2,8 @@
 
 <!-- toc -->
 
+- [Git](#git)
+- [Bash / Linux](#bash--linux)
 - [Coding](#coding)
 - [Data analysis](#data-analysis)
 - [SRE](#sre)
