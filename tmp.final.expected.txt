@@ -1,0 +1,6 @@
+* Failed assertion *
+cond=False
+Not increasing indices are:
+0
+# 2000-01-01 09:03:00 3
+2000-01-01 09:00:00 4
