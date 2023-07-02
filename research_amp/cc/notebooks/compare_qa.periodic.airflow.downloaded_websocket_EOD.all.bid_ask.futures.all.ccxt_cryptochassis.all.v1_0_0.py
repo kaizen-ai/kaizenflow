@@ -84,6 +84,7 @@ def get_example_config() -> cconfig.Config:
                 "tag": "downloaded_1sec",
             },
             "ccxt_im_client": {
+                "universe_version": "infer_from_data",
                 "resample_1min": False,
                 "db_connection": hsql.get_connection(
                     *hsql.get_connection_info_from_env_file(

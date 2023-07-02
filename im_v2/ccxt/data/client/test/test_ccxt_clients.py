@@ -1272,6 +1272,8 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
 
     # ////////////////////////////////////////////////////////////////////////
 
+    # TODO(gp): Difference between cmamp1 and sorrentum. Why is there a
+    # difference?
     @pytest.mark.skipif(
         not henv.execute_repo_config_code("get_name()") == "//amp",
         reason="Run only in //amp",

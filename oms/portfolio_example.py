@@ -15,7 +15,7 @@ import helpers.hsql as hsql
 import market_data as mdata
 import oms.broker as ombroker
 import oms.broker_example as obroexam
-import oms.ccxt_broker as occxbrok
+import oms.ccxt.dataframe_ccxt_broker as ocdaccbr
 import oms.oms_db as oomsdb
 import oms.portfolio as omportfo
 
@@ -117,7 +117,7 @@ def get_DataFramePortfolio_example3(
     # Build a DataFrameBroker.
     strategy_id = "Cx"
     stage = "preprod"
-    broker = occxbrok.get_DataFrameCcxtBroker_instance1(
+    broker = ocdaccbr.get_DataFrameCcxtBroker_instance1(
         strategy_id,
         market_data,
         stage,

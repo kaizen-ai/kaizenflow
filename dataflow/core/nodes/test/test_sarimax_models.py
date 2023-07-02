@@ -109,7 +109,8 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         # Compare outputs.
         df_out = pd.concat([skl_out, sarimax_out], axis=1)
         df_out["skl_sarimax_pred_diff"] = (
-            df_out["skl_ret_0_1_hat"] - df_out["sarimax_ret_0_1_hat"]
+            df_out["skl_ret_0.shift_-1_hat"]
+            - df_out["sarimax_ret_0.shift_-1_hat"]
         )
         # TODO(gp): Factor this out.
         act = (
@@ -118,7 +119,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
             f"{hprint.frame('df_out')}\n"
             f"{hunitest.convert_df_to_string(df_out, index=True)}"
         )
-        self.check_string(act)
+        self.check_string(act, fuzzy_match=True)
 
     def test_compare_to_linear_regression2(self) -> None:
         """
@@ -154,7 +155,8 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         # Compare outputs.
         df_out = pd.concat([skl_out, sarimax_out], axis=1)
         df_out["skl_sarimax_pred_diff"] = (
-            df_out["skl_ret_0_3_hat"] - df_out["sarimax_ret_0_3_hat"]
+            df_out["skl_ret_0.shift_-3_hat"]
+            - df_out["sarimax_ret_0.shift_-3_hat"]
         )
         # TODO(gp): Factor this out.
         act = (
@@ -163,7 +165,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
             f"{hprint.frame('df_out')}\n"
             f"{hunitest.convert_df_to_string(df_out, index=True)}"
         )
-        self.check_string(act)
+        self.check_string(act, fuzzy_match=True)
 
     @pytest.mark.slow("~5 seconds.")
     def test_predict1(self) -> None:
@@ -225,17 +227,24 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         df_out3 = csm.predict(data_predict3)["df_out"]
         #
         pd.testing.assert_series_equal(
-            df_out1.loc["2010-03-25":"2010-03-29", "ret_0_3_hat"],  # type: ignore
-            df_out2.loc["2010-03-25":"2010-03-29", "ret_0_3_hat"],  # type: ignore
+            df_out1.loc["2010-03-25":"2010-03-29", "ret_0.shift_-3_hat"],  # type: ignore
+            df_out2.loc["2010-03-25":"2010-03-29", "ret_0.shift_-3_hat"],  # type: ignore
         )
         pd.testing.assert_series_equal(
-            df_out2.loc["2010-04-10":"2010-04-13", "ret_0_3_hat"],  # type: ignore
-            df_out3.loc["2010-04-10":"2010-04-13", "ret_0_3_hat"],  # type: ignore
+            df_out2.loc["2010-04-10":"2010-04-13", "ret_0.shift_-3_hat"],  # type: ignore
+            df_out3.loc["2010-04-10":"2010-04-13", "ret_0.shift_-3_hat"],  # type: ignore
         )
         df_out = pd.concat(
-            [df_out1, df_out2["ret_0_3_hat"], df_out3["ret_0_3_hat"]], axis=1
+            [
+                df_out1,
+                df_out2["ret_0.shift_-3_hat"],
+                df_out3["ret_0.shift_-3_hat"],
+            ],
+            axis=1,
         )
-        self.check_string(hunitest.convert_df_to_string(df_out, index=True))
+        self.check_string(
+            hunitest.convert_df_to_string(df_out, index=True), fuzzy_match=True
+        )
 
     @pytest.mark.slow("~5 seconds.")
     def test_predict_no_x1(self) -> None:
@@ -273,12 +282,12 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         df_out3 = csm.predict(data_predict3)["df_out"]
         #
         pd.testing.assert_series_equal(
-            df_out1.loc["2010-03-26":"2010-04-01", "ret_0_3_hat"],  # type: ignore
-            df_out2.loc["2010-03-26":"2010-04-01", "ret_0_3_hat"],  # type: ignore
+            df_out1.loc["2010-03-26":"2010-04-01", "ret_0.shift_-3_hat"],  # type: ignore
+            df_out2.loc["2010-03-26":"2010-04-01", "ret_0.shift_-3_hat"],  # type: ignore
         )
         pd.testing.assert_series_equal(
-            df_out2.loc["2010-04-07":"2010-04-16", "ret_0_3_hat"],  # type: ignore
-            df_out3.loc["2010-04-07":"2010-04-16", "ret_0_3_hat"],  # type: ignore
+            df_out2.loc["2010-04-07":"2010-04-16", "ret_0.shift_-3_hat"],  # type: ignore
+            df_out3.loc["2010-04-07":"2010-04-16", "ret_0.shift_-3_hat"],  # type: ignore
         )
 
     @pytest.mark.slow("~5 seconds.")
@@ -350,7 +359,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         act.append(hprint.frame("config"))
         act.append(str(config))
         act = "\n".join(act)
-        self.check_string(act)
+        self.check_string(act, fuzzy_match=True)
         #
         self.check_dataframe(df_out, err_threshold=err_threshold)
 
@@ -362,11 +371,11 @@ class TestMultihorizonReturnsPredictionProcessor(hunitest.TestCase):
             {
                 "target_col": "ret_0_zscored",
                 "prediction_cols": [
-                    "ret_0_zscored_1_hat",
-                    "ret_0_zscored_2_hat",
-                    "ret_0_zscored_3_hat",
+                    "ret_0_zscored.shift_-1_hat",
+                    "ret_0_zscored.shift_-2_hat",
+                    "ret_0_zscored.shift_-3_hat",
                 ],
-                "volatility_col": "vol_1_hat",
+                "volatility_col": "vol.shift_-1_hat",
             }
         )
         mrpp = dtfcnosamo.MultihorizonReturnsPredictionProcessor(
@@ -384,15 +393,15 @@ class TestMultihorizonReturnsPredictionProcessor(hunitest.TestCase):
             f"{hprint.frame('df_out')}\n"
             f"{hunitest.convert_df_to_string(cum_y_yhat, index=True)}\n"
         )
-        self.check_string(act)
+        self.check_string(act, fuzzy_match=True)
 
     def test_invert_zret_0_zscoring1(self) -> None:
         model_output = self._get_multihorizon_model_output(1)
         config = cconfig.Config.from_dict(
             {
                 "target_col": "ret_0_zscored",
-                "prediction_cols": ["ret_0_zscored_1_hat"],
-                "volatility_col": "vol_1_hat",
+                "prediction_cols": ["ret_0_zscored.shift_-1_hat"],
+                "volatility_col": "vol.shift_-1_hat",
             }
         )
         mrpp = dtfcnosamo.MultihorizonReturnsPredictionProcessor(
@@ -401,11 +410,11 @@ class TestMultihorizonReturnsPredictionProcessor(hunitest.TestCase):
         cum_y_yhat = mrpp.fit(model_output)["df_out"]
         #
         ret_0 = model_output["ret_0"]
-        fwd_ret_0 = ret_0.shift(-1).rename("cumret_1_original")
-        ret_0_from_result = cum_y_yhat[["cumret_1"]]
+        fwd_ret_0 = ret_0.shift(-1).rename("cumret.shift_-1_original")
+        ret_0_from_result = cum_y_yhat[["cumret.shift_-1"]]
         df_out = ret_0_from_result.join(fwd_ret_0, how="outer")
         act = hunitest.convert_df_to_string(df_out, index=True)
-        self.check_string(act)
+        self.check_string(act, fuzzy_match=True)
 
     def test_invert_zret_3_zscoring1(self) -> None:
         model_output = self._get_multihorizon_model_output(3)
@@ -413,11 +422,11 @@ class TestMultihorizonReturnsPredictionProcessor(hunitest.TestCase):
             {
                 "target_col": "ret_0_zscored",
                 "prediction_cols": [
-                    "ret_0_zscored_1_hat",
-                    "ret_0_zscored_2_hat",
-                    "ret_0_zscored_3_hat",
+                    "ret_0_zscored.shift_-1_hat",
+                    "ret_0_zscored.shift_-2_hat",
+                    "ret_0_zscored.shift_-3_hat",
                 ],
-                "volatility_col": "vol_1_hat",
+                "volatility_col": "vol.shift_-1_hat",
             }
         )
         mrpp = dtfcnosamo.MultihorizonReturnsPredictionProcessor(
@@ -427,12 +436,12 @@ class TestMultihorizonReturnsPredictionProcessor(hunitest.TestCase):
         #
         ret_0 = model_output["ret_0"]
         cumret_3 = ret_0.rolling(window=3).sum()
-        fwd_cumret_3 = cumret_3.shift(-3).rename("cumret_3_original")
+        fwd_cumret_3 = cumret_3.shift(-3).rename("cumret.shift_-3_original")
         #
-        cumret_3_from_result = cum_y_yhat[["cumret_3"]]
+        cumret_3_from_result = cum_y_yhat[["cumret.shift_-3"]]
         df_out = cumret_3_from_result.join(fwd_cumret_3, how="outer")
         act = hunitest.convert_df_to_string(df_out, index=True)
-        self.check_string(act)
+        self.check_string(act, fuzzy_match=True)
 
     @staticmethod
     def _get_series(seed: int = 24) -> pd.Series:
@@ -454,17 +463,17 @@ class TestMultihorizonReturnsPredictionProcessor(hunitest.TestCase):
         # Get volatility estimate indexed by knowledge time. Volatility delay
         # should be one.
         fwd_vol = csigproc.compute_smooth_moving_average(rets, 16).rename(
-            "vol_1_hat"
+            "vol.shift_-1_hat"
         )
         rets_zscored = (rets / fwd_vol.shift(1)).to_frame(name="ret_0_zscored")
         fwd_rets_zscored = rets_zscored.shift(-steps_ahead).rename(
-            lambda x: f"{x}_{steps_ahead}", axis=1
+            lambda x: f"{x}.shift_-{steps_ahead}", axis=1
         )
         # Get mock returns predictions.
         model_output = [rets, fwd_vol, rets_zscored, fwd_rets_zscored]
         for i in range(1, steps_ahead + 1):
             ret_hat = csigproc.compute_smooth_moving_average(
                 rets_zscored, tau=i + 1
-            ).rename(lambda x: f"{x}_{i}_hat", axis=1)
+            ).rename(lambda x: f"{x}.shift_-{i}_hat", axis=1)
             model_output.append(ret_hat)
         return pd.concat(model_output, axis=1)

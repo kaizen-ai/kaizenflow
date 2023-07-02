@@ -5,13 +5,16 @@ import helpers.lib_tasks_integrate as hlitaint
 class Test_infer_dst_dir1(hunitest.TestCase):
     def test1(self) -> None:
         # Define input variables.
-        src_dir = "/src/cmamp1/im_v2/alpha_numeric_data_snapshots/"
+        src_dir = "/src/cmamp1/oms/broker.py"
         # Call function to test.
-        act = hlitaint._infer_dst_dir(src_dir)
+        act = hlitaint._infer_dst_file_path(src_dir,
+            default_src_dir_basename="cmamp1",
+            default_dst_dir_basename="amp1",
+            check_exists=False)
         # Define expected output.
         exp = (
-            "/src/amp1/im_v2/alpha_numeric_data_snapshots",
-            "im_v2/alpha_numeric_data_snapshots",
+            "/src/amp1/oms/broker.py",
+            "oms/broker.py",
         )
         # Compare actual and expected output.
         self.assertEqual(act, exp)

@@ -143,6 +143,7 @@ process_forecasts_node_dict:
   process_forecasts_dict:
     order_config:
       order_type: price@twap
+      passivity_factor: None
       order_duration_in_mins: 5
     optimizer_config:
       backend: pomo
@@ -215,4 +216,4 @@ dag_runner_object:
       2000-01-01 11:29:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:29:00-05:00  102.0       101     100       1.0
       2000-01-01 11:30:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:30:00-05:00 2000-01-01 11:30:00-05:00  102.0       101     100       1.0
     _knowledge_datetime_col_name='timestamp_db' <str>
-    _delay_in_secs='5' <int>>, 'bar_duration_in_secs': 300, 'rt_timeout_in_secs_or_time': 6900} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>, _set_current_bar_timestamp=True <bool>, _events=[] <list>)
+    _delay_in_secs='5' <int>>, 'bar_duration_in_secs': 300, 'rt_timeout_in_secs_or_time': 6900} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>, _set_current_bar_timestamp=True <bool>, _max_distance_in_secs=30 <int>, _events=[] <list>)
