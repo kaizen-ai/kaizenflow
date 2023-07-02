@@ -2,6 +2,8 @@
 
 <!-- toc -->
 
+- [Git](#git)
+- [Bash / Linux](#bash--linux)
 - [Coding](#coding)
 - [Data analysis](#data-analysis)
 - [SRE](#sre)
@@ -10,14 +12,13 @@
 
 # Git
 
-- A [short tutorial](https://git-scm.com/docs/gittutorial)
+- [short tutorial](https://git-scm.com/docs/gittutorial)
 - [Pro Git book](https://git-scm.com/book/en/v2)
   - To achieve mastery
 
 # Bash / Linux
 
-- A
-  [short tutorial](https://www.usenix.org/sites/default/files/conference/protected-files/lisa19_maheshwari.pdf)
+- [short tutorial](https://www.usenix.org/sites/default/files/conference/protected-files/lisa19_maheshwari.pdf)
 
 # Coding
 
