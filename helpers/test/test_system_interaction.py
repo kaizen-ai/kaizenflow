@@ -72,14 +72,17 @@ class Test_system1(hunitest.TestCase):
     def test8(self) -> None:
         """
         Test .system() on a failing cmd with --tee switch enabled.
-        """
-        with self.assertRaises(RuntimeError) as cm:
-            hsystem.system("-tee this_is_no_boolean_var")
-        act = str(cm.exception)
-        # Different systems return different rc.
-        # cmd='(ls this_file_doesnt_exist) 2>&1' failed with rc='2'
-        act = re.sub(r"rc='(\d+)'", "rc=''", act)
-        print('\n\nThis is the output of test8:',act)
+        """        
+        with self.assertRaises(AssertionError) as cm:
+            hsystem.system("ls this_should_fail", tee=True)    
+        output = 'tmp_hsystem_Test_system1_test8_output.txt'
+        try:            
+            hsystem.system("ls this_should_fail", tee=True, output_file=output)
+        except Exception as e:
+            self.fail("hsystem.system() raised", type(e).__name__," error")
+        finally:            
+            os.remove(output)
+        
 
 
 # #############################################################################
