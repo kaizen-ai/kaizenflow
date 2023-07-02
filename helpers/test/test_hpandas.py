@@ -2907,63 +2907,111 @@ class Test_compare_nans_in_dataframes(hunitest.TestCase):
 # #############################################################################
 
 class Test_dassert_increasing_index(hunitest.TestCase):
-    def get_increasing_index_df1(self) -> pd.DataFrame:
-        """
-        Unit tests for cases that index is obviously not increasing at a certain data points
-        """
-        minutes = [1,2,3,4,5]
-        idx = [pd.Timestamp("2000-01-01 9:00") + pd.Timedelta(minutes=i)
-                for i in minutes]
-        values = [[i] for i in range(len(idx))]
-        df = pd.DataFrame(values, index=idx)
-        act = hpandas.df_to_str(df)
-        exp = r"""
-                             0
-        2000-01-01 09:01:00  0
-        2000-01-01 09:02:00  1
-        2000-01-01 09:03:00  2
-        2000-01-01 09:04:00  3
-        2000-01-01 09:05:00  4"""
-        self.assert_equal(act, exp, fuzzy_match=True)
-        return df
-    
-    def get_not_increasing_index_df2(self)-> pd.DataFrame:
-        minutes = [1,2,5,4]
-        idx = [pd.Timestamp("2000-01-01 9:00") + pd.Timedelta(minutes=i)
-                for i in minutes]
-        values = [[i] for i in range(len(idx))]
-        df = pd.DataFrame(values, index=idx)
-        act = hpandas.df_to_str(df)
-        exp = r"""
-                             0
-        2000-01-01 09:01:00  0
-        2000-01-01 09:02:00  1
-        2000-01-01 09:05:00  2
-        2000-01-01 09:04:00  3"""
-        self.assert_equal(act, exp, fuzzy_match=True)
-        return df
-    
-    def test_dassert_increasing_index_on_df2(self)-> None:
-        df2 = self.get_not_increasing_index_df2()
-        print(df2)
-        # print(hpandas.dassert_increasing_index(df2))
-        with self.assertRaises(AssertionError) as cm:
-            hpandas.dassert_increasing_index(df2)
-        act = str(cm.exception)
-        print('act')
-        print(act)
-        exp = r"""
-        * Failed assertion *
-        cond=False
-        Not increasing indices are:
-                             0
-        2000-01-01 09:05:00  2
-        2000-01-01 09:04:00  3
-        """
-        self.assert_equal(act, exp, fuzzy_match=True)
-        # pytest helpers/test/test_hpandas.py::Test_dassert_increasing_index::test_dassert_increasing_index_on_df2
-     
+   def get_increasing_index_df1(self) -> pd.DataFrame:
+       """
+       return a df that index is obiviously increasing.
+       """
+       minutes = [1, 2, 3, 4, 5]
+       idx = [
+           pd.Timestamp("2000-01-01 9:00") + pd.Timedelta(minutes=i)
+           for i in minutes
+       ]
+       values = [[i] for i in range(len(idx))]
+       df = pd.DataFrame(values, index=idx)
+       act = hpandas.df_to_str(df)
+       exp = r"""
+                            0
+       2000-01-01 09:01:00  0
+       2000-01-01 09:02:00  1
+       2000-01-01 09:03:00  2
+       2000-01-01 09:04:00  3
+       2000-01-01 09:05:00  4"""
+       self.assert_equal(act, exp, fuzzy_match=True)
+       return df
 
+
+   def test_dassert_increasing_index_on_df1(self) -> None:
+       """
+       Unit tests for cases that index is monotonically increasing at a
+       certain data points.
+       """
+       df = self.get_increasing_index_df1()
+       hpandas.dassert_increasing_index(df)
+
+
+   def get_not_increasing_index_df2(self) -> pd.DataFrame:
+       """
+       return a df that index is not increasing.
+       """
+       minutes = [1, 2, 4, 3]
+       idx = [
+           pd.Timestamp("2000-01-01 9:00") + pd.Timedelta(minutes=i)
+           for i in minutes
+       ]
+       values = [[i] for i in range(len(idx))]
+       df = pd.DataFrame(values, index=idx)
+       act = hpandas.df_to_str(df)
+       exp = r"""
+                            0
+       2000-01-01 09:01:00  0
+       2000-01-01 09:02:00  1
+       2000-01-01 09:04:00  2
+       2000-01-01 09:03:00  3"""
+       self.assert_equal(act, exp, fuzzy_match=True)
+       return df
+
+
+   def test_dassert_increasing_index_on_df2(self) -> None:
+       """
+       Unit tests for cases that index is obviously not increasing at a
+       certain data points.
+       """
+       df2 = self.get_not_increasing_index_df2()
+       print(df2)
+       with self.assertRaises(AssertionError) as cm:
+           hpandas.dassert_increasing_index(df2)
+       act = str(cm.exception)
+       print("act")
+       print(act)
+       exp = r"""
+       * Failed assertion *
+       cond=False
+       Not increasing indices are:
+                            0
+       2000-01-01 09:04:00  2
+       2000-01-01 09:03:00  3"""
+       self.assert_equal(act, exp, fuzzy_match=True)
+
+
+   def get_not_increasing_index_df3(self) -> pd.DataFrame:
+       """
+       return a df that index that is duplicated.
+       """
+       minutes = [1, 1, 1, 1, 1]
+       idx = [
+           pd.Timestamp("2000-01-01 9:00") + pd.Timedelta(minutes=i)
+           for i in minutes
+       ]
+       values = [[i] for i in range(len(idx))]
+       df = pd.DataFrame(values, index=idx)
+       act = hpandas.df_to_str(df)
+       exp = r"""
+                            0
+       2000-01-01 09:01:00  0
+       2000-01-01 09:01:00  1
+       2000-01-01 09:01:00  2
+       2000-01-01 09:01:00  3
+       2000-01-01 09:01:00  4"""
+       self.assert_equal(act, exp, fuzzy_match=True)
+       return df
+
+
+   def test_dassert_increasing_index_on_df3(self) -> None:
+       """
+       Unit tests for cases that index are duplicated.
+       """
+       df3 = self.get_not_increasing_index_df3()
+       hpandas.dassert_increasing_index(df3)
 
 # #############################################################################
 
