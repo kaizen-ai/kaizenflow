@@ -33,15 +33,14 @@ def _print(msg: str) -> None:
 
 
 def get_name() -> str:
-    # TODO(Grisha): why using `//cmamp` for the `sorrentum` repo?
-    return "//cmamp"
+    return "//sorr"
 
 
 def get_repo_map() -> Dict[str, str]:
     """
     Return a mapping of short repo name -> long repo name.
     """
-    repo_map: Dict[str, str] = {"cm": "sorrentum/sorrentum"}
+    repo_map: Dict[str, str] = {"sorr": "sorrentum/sorrentum"}
     return repo_map
 
 

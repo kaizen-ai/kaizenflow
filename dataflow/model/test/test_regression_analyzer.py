@@ -20,8 +20,8 @@ class TestRegressionAnalyzer1(hunitest.TestCase):
             start_datetime, end_datetime, asset_ids, num_features=num_features
         )
         regression_analyzer = dtfmoreana.RegressionAnalyzer(
-            target_col="returns",
-            feature_cols=[1, 2],
+            x_cols=[1, 2],
+            y_col="returns",
         )
         coefficients = regression_analyzer.compute_regression_coefficients(
             feature_df

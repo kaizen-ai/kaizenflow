@@ -45,8 +45,8 @@ MN0:
           ---  ------           --------------  -----
            0   MN0              40 non-null     float64
            1   ret_0_vol        40 non-null     float64
-           2   ret_0_vol_2      38 non-null     float64
-           3   ret_0_vol_2_hat  25 non-null     float64
+           2   ret_0_vol.shift_-2      38 non-null     float64
+           3   ret_0_vol.shift_-2_hat  25 non-null     float64
           dtypes: float64(4)
     calculate_vol_pth_root:
       fit:
@@ -59,8 +59,8 @@ MN0:
           ---  ------           --------------  -----
            0   MN0              40 non-null     float64
            1   ret_0_vol        40 non-null     float64
-           2   ret_0_vol_2      38 non-null     float64
-           3   ret_0_vol_2_hat  25 non-null     float64
+           2   ret_0_vol.shift_-2      38 non-null     float64
+           3   ret_0_vol.shift_-2_hat  25 non-null     float64
           dtypes: float64(4)
     demodulate_using_vol_pred:
       fit:
@@ -72,8 +72,8 @@ MN0:
            #   Column           Non-Null Count  Dtype
           ---  ------           --------------  -----
            0   ret_0_vol        40 non-null     float64
-           1   ret_0_vol_2      38 non-null     float64
-           2   ret_0_vol_2_hat  25 non-null     float64
+           1   ret_0_vol.shift_-2      38 non-null     float64
+           2   ret_0_vol.shift_-2_hat  25 non-null     float64
            3   ret_0_vol_adj    23 non-null     float64
           dtypes: float64(4)
 MN1:
@@ -114,8 +114,8 @@ MN1:
           ---  ------           --------------  -----
            0   MN1              40 non-null     float64
            1   ret_0_vol        40 non-null     float64
-           2   ret_0_vol_2      38 non-null     float64
-           3   ret_0_vol_2_hat  23 non-null     float64
+           2   ret_0_vol.shift_-2      38 non-null     float64
+           3   ret_0_vol.shift_-2_hat  23 non-null     float64
           dtypes: float64(4)
     calculate_vol_pth_root:
       fit:
@@ -128,8 +128,8 @@ MN1:
           ---  ------           --------------  -----
            0   MN1              40 non-null     float64
            1   ret_0_vol        40 non-null     float64
-           2   ret_0_vol_2      38 non-null     float64
-           3   ret_0_vol_2_hat  23 non-null     float64
+           2   ret_0_vol.shift_-2      38 non-null     float64
+           3   ret_0_vol.shift_-2_hat  23 non-null     float64
           dtypes: float64(4)
     demodulate_using_vol_pred:
       fit:
@@ -141,14 +141,14 @@ MN1:
            #   Column           Non-Null Count  Dtype
           ---  ------           --------------  -----
            0   ret_0_vol        40 non-null     float64
-           1   ret_0_vol_2      38 non-null     float64
-           2   ret_0_vol_2_hat  23 non-null     float64
+           1   ret_0_vol.shift_-2      38 non-null     float64
+           2   ret_0_vol.shift_-2_hat  23 non-null     float64
            3   ret_0_vol_adj    21 non-null     float64
           dtypes: float64(4)
 ################################################################################
 df_out
 ################################################################################
-           ret_0_vol       ret_0_vol_2       ret_0_vol_2_hat       ret_0_vol_adj       ret_0       volume
+           ret_0_vol       ret_0_vol.shift_-2       ret_0_vol.shift_-2_hat       ret_0_vol_adj       ret_0       volume
                  MN0   MN1         MN0   MN1             MN0   MN1           MN0   MN1   MN0   MN1    MN0  MN1
 2000-01-03      3.11  2.33        3.63  1.97             NaN   NaN           NaN   NaN -3.11  2.33    100  100
 2000-01-04      1.23  2.02        1.76  1.13             NaN   NaN           NaN   NaN -1.23  2.02    100  100

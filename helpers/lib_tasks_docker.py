@@ -619,7 +619,6 @@ def _generate_docker_compose_file(
         # This is inside `services`.
         indent_level = 1
         append(txt_tmp, indent_level)
-    #
     if use_main_network:
         txt_tmp = """
         networks:
@@ -678,7 +677,7 @@ def _get_docker_compose_files(
     _LOG.debug("repo_short_name=%s", repo_short_name)
     # Check submodule status, if needed.
     mount_as_submodule = False
-    if repo_short_name in ("amp", "cm"):
+    if repo_short_name in ("amp", "cmamp"):
         # Check if `amp` is a submodule.
         path, _ = hgit.get_path_from_supermodule()
         if path != "":
@@ -1395,6 +1394,75 @@ def docker_jupyter(  # type: ignore
         version,
         port,
         self_test,
+        print_docker_config=print_docker_config,
+    )
+    _docker_cmd(ctx, docker_cmd_)
+
+
+def _get_docker_dash_app_cmd(
+    base_image: str,
+    stage: str,
+    version: str,
+    port: int,
+    *,
+    print_docker_config: bool = False,
+) -> str:
+    cmd = ""
+    extra_env_vars = [f"PORT={port}"]
+    extra_docker_run_opts = ["--service-ports"]
+    service_name = "dash_app"
+    #
+    docker_cmd_ = _get_docker_compose_cmd(
+        base_image,
+        stage,
+        version,
+        cmd,
+        extra_env_vars=extra_env_vars,
+        extra_docker_run_opts=extra_docker_run_opts,
+        service_name=service_name,
+        print_docker_config=print_docker_config,
+    )
+    return docker_cmd_
+
+
+@task
+def docker_dash_app(  # type: ignore
+    ctx,
+    stage="dev",
+    version="",
+    base_image="",
+    auto_assign_port=True,
+    port=None,
+    container_dir_name=".",
+):
+    """
+    Run dash app.
+
+    :param auto_assign_port: use the UID of the user and the inferred number of the
+        repo (e.g., 4 for `~/src/amp4`) to get a unique port
+    """
+    hlitauti.report_task(container_dir_name=container_dir_name)
+    if port is None:
+        if auto_assign_port:
+            uid = os.getuid()
+            _LOG.debug("uid=%s", uid)
+            git_repo_idx = hgit.get_project_dirname(only_index=True)
+            git_repo_idx = int(git_repo_idx)
+            _LOG.debug("git_repo_idx=%s", git_repo_idx)
+            # We assume that there are no more than `max_idx_per_users` clients.
+            max_idx_per_user = 10
+            hdbg.dassert_lte(git_repo_idx, max_idx_per_user)
+            port = (uid * max_idx_per_user) + git_repo_idx
+        else:
+            port = 9999
+    #
+    _LOG.info("Assigned port is %s", port)
+    print_docker_config = False
+    docker_cmd_ = _get_docker_dash_app_cmd(
+        base_image,
+        stage,
+        version,
+        port,
         print_docker_config=print_docker_config,
     )
     _docker_cmd(ctx, docker_cmd_)

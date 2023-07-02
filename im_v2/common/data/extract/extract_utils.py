@@ -673,6 +673,18 @@ def save_parquet(
             drop_duplicates_mode=data_type,
         )
 
+def handle_empty_data(assert_on_missing_data: bool, currency_pair: str) -> None:
+    """
+    Handle an empty data and raise an error or log a warning.
+
+    :param assert_on_missing_data: assert on missing data
+    :currency_pair: currency pair, e.g. "BTC_USDT"
+    """
+    base_message = "No data for currency_pair='%s' was downloaded."
+    if assert_on_missing_data:
+        raise RuntimeError(base_message, currency_pair)
+    else:
+        _LOG.warning(base_message + " Continuing.", currency_pair)
 
 def process_downloaded_historical_data(
     data: Union[pd.DataFrame, Iterator[pd.DataFrame]],
@@ -694,22 +706,19 @@ def process_downloaded_historical_data(
     :param path_to_dataset: path to the dataset
     """
     if isinstance(data, Iterator):
+        # If data is an iterator, we need to check if it is empty.
+        is_data_empty = True
         for df in data:
+            is_data_empty = False
             process_downloaded_historical_data(
                 df, args, currency_pair, path_to_dataset
             )
+        if is_data_empty:
+            handle_empty_data(args["assert_on_missing_data"], currency_pair)
         return
     if data.empty:
-        if args["assert_on_missing_data"]:
-            raise RuntimeError(
-                "No data for currency_pair='%s' was downloaded.", currency_pair
-            )
-        else:
-            _LOG.warning(
-                "No data for currency_pair='%s' " "was downloaded: continuing",
-                currency_pair,
-            )
-        return
+        handle_empty_data(args["assert_on_missing_data"], currency_pair)
+        return   
     # Assign pair and exchange columns.
     data["currency_pair"] = currency_pair
     data["exchange_id"] = args["exchange_id"]

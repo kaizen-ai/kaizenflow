@@ -33,7 +33,7 @@ _TRACE = False
 # #############################################################################
 
 
-# TODO(gp): Consider moving this in fill.py
+# TODO(gp): @danya move this to fill.py
 class Fill:
     """
     Represent an order fill.
@@ -193,12 +193,29 @@ def _get_price_per_share(
             end_timestamp, timestamp_col_name, asset_ids
         )
     elif timing == "twap":
+        # In simulation, for bar 9:35-9:40 we make the assumption that a TWAP
+        # order covers an interval (a, b] where a is the time where we actually
+        # place the order after the DAG computation (a=9:35 assuming that the
+        # DAG executes in less than 1 minute) b is the end of the bar (i.e.,
+        # 9:40), so in practice we assume that the TWAP is on (9:35, 9:40] =
+        # [9:36, 9:40].
+        # The TWAP order is either executed at the market side (i.e., we send
+        # the order to the market and thus there is no propagation delay from
+        # market to us anymore, so it’s possible to get the 9:40 price exactly),
+        # or we assume that we do local TWAP execution but we wait for a bar to
+        # be complete. In both cases we can actually observe the 9:40 price
+        # without future peaking. For all these reasons we can set `ignore_delay`
+        # to True.
+        # See CmTask #3369 "Fix `Order.end_timestamp` and allow to ignore market
+        # delay".
+        ignore_delay = True
         prices_df = market_data.get_twap_price(
             start_timestamp,
             end_timestamp,
             timestamp_col_name,
             asset_ids,
             column,
+            ignore_delay=ignore_delay,
         )
     else:
         raise ValueError(f"Invalid timing='{timing}'")
@@ -506,9 +523,9 @@ def _split_in_child_twap_orders(
             curr_num_shares += diff_num_shares
             diff_num_shares = round(curr_num_shares) - round(prev_num_shares)
             order_tmp = omorder.Order(
-                # For simplicity we assume that child orders have the same creation
-                # timestamp as the parent order, since it should not matter from the
-                # execution point of view.
+                # For simplicity, we assume that child orders have the same
+                # creation timestamp as the parent order, since it should not
+                # matter from the execution point of view.
                 order.creation_timestamp,
                 order.asset_id,
                 order.type_,
@@ -567,7 +584,7 @@ class Broker(abc.ABC, hobject.PrintableMixin):
     Represent a broker to which we can place orders and receive fills back.
 
     The broker:
-    1) keeps an internal book keeping of orders submitted and deadlines when they
+    1) keeps an internal bookkeeping of orders submitted and deadlines when they
        are supposed to be executed
     2) passes the orders to the actual Order Management System (OMS) through an
        interface (e.g., DB, file system)
@@ -589,6 +606,8 @@ class Broker(abc.ABC, hobject.PrintableMixin):
         self,
         strategy_id: str,
         market_data: mdata.MarketData,
+        universe_version: str,
+        stage: str,
         *,
         account: Optional[str] = None,
         timestamp_col: str = "end_datetime",
@@ -598,6 +617,10 @@ class Broker(abc.ABC, hobject.PrintableMixin):
         """
         Constructor.
 
+        :param universe_version: version of the universe to use
+        :param stage:
+            - "preprod" preproduction stage
+            - "local" debugging stage
         :param account: allow to have multiple accounts. `None` means not used
         :param column_remap: (optional) remap columns when accessing a
             `MarketData` to retrieve execution prices. The required columns
@@ -605,11 +628,15 @@ class Broker(abc.ABC, hobject.PrintableMixin):
         """
         _LOG.debug(
             hprint.to_str(
-                "strategy_id market_data account timestamp_col column_remap log_dir"
+                "strategy_id market_data universe_version stage account timestamp_col column_remap log_dir"
             )
         )
+        #
+        hdbg.dassert_in(stage, ["local", "preprod"])
+        self.stage = stage
         self._strategy_id = strategy_id
         self._account = account
+        self._universe_version = universe_version
         #
         hdbg.dassert_issubclass(market_data, mdata.MarketData)
         self.market_data = market_data
@@ -676,7 +703,7 @@ class Broker(abc.ABC, hobject.PrintableMixin):
             (e.g., path of the file created on S3 with the order info)
         """
         wall_clock_timestamp = self._get_wall_clock_time()
-        # Log the order for internal book keeping.
+        # Log the order for internal bookkeeping.
         self._log_order_submissions(orders)
         # Enqueue the orders based on their completion deadline time.
         _LOG.debug("Submitting %d orders", len(orders))
@@ -726,9 +753,8 @@ class Broker(abc.ABC, hobject.PrintableMixin):
         """
         Get any new fills filled since last invocation.
 
-        This is used by `DataframePortfolio` and `OrderProcessor` to to
-        find out how to update the Portfolio state at the end of the
-        bar.
+        This is used by `DataframePortfolio` and `OrderProcessor` to find out how
+        to update the `Portfolio` state at the end of the bar.
         """
         ...
 
@@ -755,16 +781,17 @@ class Broker(abc.ABC, hobject.PrintableMixin):
             to the execution system (e.g., if the execution system requires a file
             on a file system, the file is not written on the file system)
         :return:
-            - str: representing the id of the submitted order (e.g., a filename if
-              the order was saved in a file)
-            - pd.Series: an internal representation of the order to log in a file
+            - str: representing the receipt id of the submitted order (e.g., a
+              filename if the order was saved in a file)
+            - pd.DataFrame: the internal representation of the orders to log in a
+              file
         """
         ...
 
     @abc.abstractmethod
     async def _wait_for_accepted_orders(
         self,
-        file_name: str,
+        order_receipt: str,
     ) -> None:
         """
         Wait until orders are accepted by the actual OMS / market.
@@ -821,7 +848,7 @@ class Broker(abc.ABC, hobject.PrintableMixin):
 
     def _log_order_submissions(self, orders: List[omorder.Order]) -> None:
         """
-        Add the orders to the internal book keeping.
+        Add the orders to the internal bookkeeping.
         """
         hdbg.dassert_container_type(orders, list, omorder.Order)
         wall_clock_timestamp = self._get_wall_clock_time()
@@ -836,17 +863,18 @@ class Broker(abc.ABC, hobject.PrintableMixin):
 # DataFrameBroker
 # #############################################################################
 
+# TODO(gp): -> @danya Split in different files.
 
 class DataFrameBroker(Broker):
     """
-    Represent a broker to which we place orders and receive back fills:
+    Represent a broker to which we place orders and receive fills back:
 
     - completely, no incremental fills
     - as soon as their deadline comes
     - at the price from the Market
 
     There is no interaction with an OMS (e.g., no need to waiting for acceptance
-    acceptance and execution).
+    and execution).
     """
 
     def get_fills(self) -> List[Fill]:
@@ -873,26 +901,27 @@ class DataFrameBroker(Broker):
 
     async def _wait_for_accepted_orders(
         self,
-        file_name: str,
+        order_receipt: str,
     ) -> None:
         """
         Same as abstract method.
         """
         # Orders are always immediately accepted in simulation, so there is
         # nothing to do here.
-        _ = file_name
+        _ = order_receipt
 
 
 # #############################################################################
 # DatabaseBroker
 # #############################################################################
 
+# TODO(gp): -> @danya Split in different files.
 
 class DatabaseBroker(Broker):
     """
     An object that represents a broker backed by a DB with asynchronous updates
     to the state by an OMS handling the orders placed and then filled in the
-    market place.
+    marketplace.
 
     The DB contains the following tables:
     - `submitted_orders`: store information about orders placed by strategies
@@ -936,7 +965,7 @@ class DatabaseBroker(Broker):
         if poll_kwargs is None:
             poll_kwargs = hasynci.get_poll_kwargs(self._get_wall_clock_time)
         self._poll_kwargs = poll_kwargs
-        # Store the submitted rows to the DB for internal book keeping.
+        # Store the submitted rows to the DB for internal bookkeeping.
         self._submissions: Dict[
             pd.Timestamp, pd.Series
         ] = collections.OrderedDict()
@@ -976,13 +1005,13 @@ class DatabaseBroker(Broker):
         """
         # Add an order in the submitted orders table.
         submitted_order_id = self._get_next_submitted_order_id()
-        orderlist: List[Tuple[str, Any]] = []
+        order_list: List[Tuple[str, Any]] = []
         file_name = f"filename_{submitted_order_id}.txt"
-        orderlist.append(("filename", file_name))
+        order_list.append(("filename", file_name))
         timestamp_db = self._get_wall_clock_time()
-        orderlist.append(("timestamp_db", timestamp_db))
-        orderlist.append(("orders_as_txt", omorder.orders_to_string(orders)))
-        row = pd.Series(collections.OrderedDict(orderlist))
+        order_list.append(("timestamp_db", timestamp_db))
+        order_list.append(("orders_as_txt", omorder.orders_to_string(orders)))
+        row = pd.Series(collections.OrderedDict(order_list))
         # Store the order internally.
         self._submissions[timestamp_db] = row
         # Write the row into the DB.
@@ -999,7 +1028,7 @@ class DatabaseBroker(Broker):
 
     async def _wait_for_accepted_orders(
         self,
-        file_name: str,
+        order_receipt: str,
     ) -> None:
         """
         Same as abstract method.
@@ -1007,7 +1036,7 @@ class DatabaseBroker(Broker):
         _LOG.debug("Wait for accepted orders ...")
         await oomsdb.wait_for_order_acceptance(
             self._db_connection,
-            file_name,
+            order_receipt,
             self._poll_kwargs,
             table_name=self._accepted_orders_table_name,
             field_name="filename",

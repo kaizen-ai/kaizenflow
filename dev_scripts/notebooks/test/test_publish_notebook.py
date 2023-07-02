@@ -1,7 +1,6 @@
 import logging
 import os
 
-import helpers.hgit as hgit
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
@@ -13,9 +12,9 @@ class Test_publish_notebook1(hunitest.TestCase):
         """
         Publish locally a notebook as HTML.
         """
-        amp_dir = hgit.get_amp_abs_path()
+        input_dir = self.get_input_dir()
         file_name = os.path.join(
-            amp_dir, "dataflow/model/notebooks/Master_pipeline_runner.ipynb"
+            input_dir, "simple_notebook.ipynb"
         )
         cmd = []
         cmd.append("publish_notebook.py")

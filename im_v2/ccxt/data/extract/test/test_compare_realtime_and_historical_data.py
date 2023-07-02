@@ -186,7 +186,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         # Prepare and attach sample to mocked function.
         mock_get_daily_data.return_value = sample_daily
         # Run.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             self._test_function_call("ohlcv", "spot", True)
         # Stop the patches.
         mock_get_rt_data_patch.stop()
@@ -194,7 +194,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self.assertEqual(mock_get_rt_data.call_count, 1)
         self.assertEqual(mock_get_daily_data.call_count, 1)
         # Check output.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"""
         ################################################################################
         Differing table contents:
@@ -237,7 +237,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         # Prepare and attach sample to mocked function.
         mock_get_daily_data.return_value = sample_daily
         # Run.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             self._test_function_call("ohlcv", "spot", True)
         # Stop the patches.
         mock_get_rt_data_patch.stop()
@@ -245,7 +245,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self.assertEqual(mock_get_rt_data.call_count, 1)
         self.assertEqual(mock_get_daily_data.call_count, 1)
         # Check output.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"""
         ################################################################################
         Differing table contents:
@@ -291,7 +291,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         # Prepare and attach sample to mocked function.
         mock_get_daily_data.return_value = sample_daily
         # Run.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             self._test_function_call("ohlcv", "spot", True)
         # Stop the patches.
         mock_get_rt_data_patch.stop()
@@ -299,7 +299,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self.assertEqual(mock_get_rt_data.call_count, 1)
         self.assertEqual(mock_get_daily_data.call_count, 1)
         # Check output.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"""
 
         ################################################################################
@@ -403,7 +403,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         # Prepare and attach sample to mocked function.
         mock_get_daily_data.return_value = sample_daily
         # Run.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             self._test_function_call("bid_ask", "spot", True)
         # Stop the patches.
         mock_get_rt_data_patch.stop()
@@ -411,7 +411,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self.assertEqual(mock_get_rt_data.call_count, 1)
         self.assertEqual(mock_get_daily_data.call_count, 1)
         # Check output.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"""
         ################################################################################
         Difference between bid_size_l1 in real time and daily data for `binance::BTC_USDT` coin is more than 1%.
@@ -448,7 +448,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         # Prepare and attach sample to mocked function.
         mock_get_daily_data.return_value = sample_daily
         # Run.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             self._test_function_call("bid_ask", "spot", True)
         # Stop the patches.
         mock_get_rt_data_patch.stop()
@@ -456,7 +456,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self.assertEqual(mock_get_rt_data.call_count, 1)
         self.assertEqual(mock_get_daily_data.call_count, 1)
         # Check output.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"""
         ################################################################################
         Difference between ask_price_l1 in real time and daily data for `binance::BTC_USDT` coin is more than 1%.
@@ -498,7 +498,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         # Prepare and attach sample to mocked function.
         mock_get_daily_data.return_value = sample_daily
         # Run.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             self._test_function_call("bid_ask", "spot", True)
         # Stop the patches.
         mock_get_rt_data_patch.stop()
@@ -506,7 +506,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self.assertEqual(mock_get_rt_data.call_count, 1)
         self.assertEqual(mock_get_daily_data.call_count, 1)
         # Check output.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"""
         ################################################################################
         Gaps in real time data:

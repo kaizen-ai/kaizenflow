@@ -9,9 +9,11 @@ from typing import Optional, Union
 import pandas as pd
 
 import core.config as cconfig
+import core.finance as cofinanc
 import dataflow.system as dtfsys
 import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
 import im_v2.common.data.client as icdc
+import im_v2.common.universe as ivcu
 
 # #############################################################################
 # Mock1_NonTime_ForecastSystem_example
@@ -30,10 +32,18 @@ def get_Mock1_NonTime_ForecastSystem_for_simulation_example1(
     system.config["backtest_config", "freq_as_pd_str"] = "M"
     system.config["backtest_config", "lookback_as_pd_str"] = "10D"
     # Fill `MarketData` related config.
+    vendor = "mock1"
+    mode = "trade"
+    universe = ivcu.get_vendor_universe(
+        vendor, mode, version="v1", as_full_symbol=True
+    )
+    df = cofinanc.get_MarketData_df6(universe)
     system.config[
         "market_data_config", "im_client_ctor"
     ] = icdc.get_DataFrameImClient_example1
-    system.config["market_data_config", "im_client_config"] = cconfig.Config()
+    system.config[
+        "market_data_config", "im_client_config"
+    ] = cconfig.Config().from_dict({"df": df})
     # Set the research PNL parameters.
     dag_builder = system.config["dag_builder_object"]
     price_col = dag_builder.get_column_name("price")
@@ -88,6 +98,7 @@ def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
         "dag_runner_config", "rt_timeout_in_secs_or_time"
     ] = rt_timeout_in_secs_or_time
     # PnL config.
+    # TODO(Grisha): use `apply_ForecastEvaluatorFromPrices_config()` instead. 
     dag_builder = system.config["dag_builder_object"]
     price_col = dag_builder.get_column_name("price")
     volatility_col = dag_builder.get_column_name("volatility")
@@ -142,6 +153,7 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
         "dag_runner_config", "rt_timeout_in_secs_or_time"
     ] = rt_timeout_in_secs_or_time
     # PnL config.
+    # TODO(Grisha): use `apply_ForecastEvaluatorFromPrices_config()` instead. 
     dag_builder = system.config["dag_builder_object"]
     price_col = dag_builder.get_column_name("price")
     volatility_col = dag_builder.get_column_name("volatility")
@@ -201,15 +213,21 @@ def get_Mock1_NonTime_ForecastSystem_example1(
     system.config["backtest_config", "freq_as_pd_str"] = "M"
     system.config["backtest_config", "lookback_as_pd_str"] = "10D"
     # Fill `MarketData` related config.
+    vendor = "mock1"
+    mode = "trade"
+    universe = ivcu.get_vendor_universe(
+        vendor, mode, version="v1", as_full_symbol=True
+    )
+    df = cofinanc.get_MarketData_df6(universe)
     system.config[
         "market_data_config", "im_client_ctor"
     ] = icdc.get_DataFrameImClient_example1
-    im_client_config = cconfig.Config()
+    im_client_config = cconfig.Config().from_dict({"df": df})
     system.config["market_data_config", "im_client_config"] = im_client_config
     #
     system = dtfsys.apply_MarketData_config(system)
+    # TODO(Grisha): No need to set research PNL parameters, deprecate.
     # Set the research PNL parameters.
-    # TODO(gp): Use `apply_research_pnl` instead.
     dag_builder = system.config["dag_builder_object"]
     price_col = dag_builder.get_column_name("price")
     volatility_col = dag_builder.get_column_name("volatility")
@@ -237,7 +255,7 @@ def get_Mock1_Time_ForecastSystem_example1() -> dtfsys.ForecastSystem:
     # We want to have 10 minutes of burn in for the model.
     system.config[
         "market_data_config", "replayed_delay_in_mins_or_timestamp"
-    ] = 10
+    ] = pd.Timestamp("2000-01-01 09:41:00-05:00", tz="America/New_York")
     # Market takes 10 seconds to send the bar.
     system.config["market_data_config", "delay_in_secs"] = 10
     #
