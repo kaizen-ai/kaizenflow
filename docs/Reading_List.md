@@ -12,13 +12,13 @@
 
 # Git
 
-- [short tutorial](https://git-scm.com/docs/gittutorial)
+- [Short tutorial](https://git-scm.com/docs/gittutorial)
 - [Pro Git book](https://git-scm.com/book/en/v2)
   - To achieve mastery
 
 # Bash / Linux
 
-- [short tutorial](https://www.usenix.org/sites/default/files/conference/protected-files/lisa19_maheshwari.pdf)
+- [Short tutorial](https://www.usenix.org/sites/default/files/conference/protected-files/lisa19_maheshwari.pdf)
 
 # Coding
 
