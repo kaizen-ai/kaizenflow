@@ -23,16 +23,9 @@ import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
-
-# TODO(gp): We should support encrypting an entire dir
-# /Users/saggese/src/sorrentum1/dev_scripts/encrypt_model.py --model_dir dataflow_lemonade/pipelines
-
 # TODO(gp): Add a unit test for encrypting a single model and for an entire dir.
 # We want to use hsystem.system() using 
 # /Users/saggese/src/sorrentum1/dev_scripts/encrypt_model.py --model_dir dataflow_lemonade/pipelines/C5 -v DEBUG --test
-
-# TODO(gp): Make --test default.
-
 
 def _encrypt_model(model_dir: str, target_dir: str, build_target: str, docker_image_tag: str) -> str:
     """
@@ -51,9 +44,6 @@ def _encrypt_model(model_dir: str, target_dir: str, build_target: str, docker_im
     encrypted_model_dir = os.path.join(target_dir, encrypted_model_name)
     hio.create_dir(encrypted_model_dir, incremental=True)
     # Create temporary Dockerfile.
-    # TODO(gp): Add option --build_target to cross build like below.
-    # TODO(gp): let's use ./tmp.encrypt_model.Dockerfile so it's easier to
-    #  execute only one
     temp_dockerfile_path = './tmp.encrypt_model.Dockerfile'
     with open(temp_dockerfile_path ,'w') as temp_dockerfile:
         temp_dockerfile.write(
@@ -62,9 +52,6 @@ def _encrypt_model(model_dir: str, target_dir: str, build_target: str, docker_im
                 RUN pip install pyarmor
             """
         )
-    # if not args.build_target:
-    #    cmd = f"docker build -f {temp_dockerfile.name} -t encryption_flow ."
-    # else:
     cmd = f"docker buildx build --platform {build_target} -f {temp_dockerfile_path} -t {docker_image_tag} ."
     hsystem.system(cmd)
     os.remove(temp_dockerfile_path)
@@ -75,8 +62,7 @@ def _encrypt_model(model_dir: str, target_dir: str, build_target: str, docker_im
     docker_target_dir = "/app"
     mount = f"type=bind,source={work_dir},target={docker_target_dir}"
     encryption_flow = f"pyarmor-7 obfuscate --restrict=0 --recursive {model_dir} --output {encrypted_model_dir}"
-    # TODO(gp): For cross-build one needs --platform linux/amd64
-    docker_cmd = f"docker run --rm -it --platform {build_target} --workdir {docker_target_dir} --mount {mount} {docker_image} {encryption_flow}"
+    docker_cmd = f"docker run --rm -it --platform {build_target} --workdir {docker_target_dir} --mount {mount} {docker_image_tag} {encryption_flow}"
     _LOG.info("Start running Docker container.")
     hsystem.system(docker_cmd)
     n_files = len(os.listdir(encrypted_model_dir))
@@ -89,13 +75,6 @@ def _encrypt_model(model_dir: str, target_dir: str, build_target: str, docker_im
     hsystem.system(cmd)
     return encrypted_model_dir
 
-
-# TODO(gp): Generalize this.
-# 1) All the __init__.py under the dir to encrypt need to be changed, excluded the one
-#    under dataflow_lemonade/pipelines_encr/pytransform/__init__.py
-# 2) The pointer should be the absolute path of the library and not relative as .pytransform
-# ```
-# from dataflow_lemonade.pipelines_encr.pytransform import pyarmor_runtime; pyarmor_runtime()
 
 def _tweak_init(encrypted_model_dir: str) -> None:
     """
@@ -133,7 +112,6 @@ def _test_model(model_dir: str, model_dag_builder: str) -> None:
     import_path = model_dir.lstrip("./")
     import_path = import_path.replace("/", ".")
     # TODO(gp): The model name should be passed from command line.
-    # python -c "import dataflow_amp_test.encrypted_pipelines.mock1.mock1_pipeline as f; a=f.Mock1_DagBuilder(); print(a)"
     script = f'python -c "import {import_path}.C5a_pipeline as f; a = f.C5a_DagBuilder(); print(a)"'
     # Write testing script to temporary file.
     hio.to_file(temp_file_path, script)
@@ -187,7 +165,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--test",
-        required=False,
+        default=True,
         action="store_true",
         help="Run testing"
     )
