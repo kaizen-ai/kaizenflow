@@ -1,7 +1,8 @@
 import logging
 import os
-from typing import Any
+from typing import Any, Callable
 
+import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hpickle as hpickle
 import helpers.hstring as hstring
@@ -180,4 +181,27 @@ class Test_get_name_from_function1(hunitest.TestCase):
         act = hintros.get_name_from_function(test_function)
         act = hstring.remove_prefix(act, "amp.", assert_on_error=False)
         exp = "helpers.test.test_hintrospection.test_function"
+        self.assert_equal(act, exp)
+
+
+# #############################################################################
+# Test_get_function_from_string1
+# #############################################################################
+
+
+def dummy_function() -> None:
+    pass
+
+
+class TestGetFunctionFromString1(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test that function is correctly extracted from a string.
+        """
+        func_str = "helpers.test.test_hintrospection.dummy_function"
+        act_func = hintros.get_function_from_string(func_str)
+        exp_func = dummy_function
+        act = hintros.get_name_from_function(act_func)
+        exp = hintros.get_name_from_function(exp_func)
+        hdbg.dassert_isinstance(act_func, Callable)
         self.assert_equal(act, exp)

@@ -3,13 +3,14 @@ Import as:
 
 import core.statistics.regression as cstaregr
 """
-
+import collections
 import logging
 from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
 import scipy as sp
+from tqdm.autonotebook import tqdm
 
 import core.statistics.entropy as cstaentr
 import helpers.hdbg as hdbg
@@ -42,37 +43,24 @@ def compute_regression_coefficients(
     hdbg.dassert_is_subset(x_cols, df.columns)
     hdbg.dassert_isinstance(y_col, (int, str))
     hdbg.dassert_in(y_col, df.columns)
-    # Sanity check weight column, if available. Set weights uniformly to 1 if
-    # not specified.
-    if sample_weight_col is not None:
-        hdbg.dassert_in(sample_weight_col, df.columns)
-        weights = df[sample_weight_col].rename("weight")
-    else:
-        weights = pd.Series(index=df.index, data=1, name="weight")
-    # Ensure that no weights are negative.
-    hdbg.dassert(not (weights < 0).any())
-    # Ensure that the total weight is positive.
-    hdbg.dassert((weights > 0).any())
     # Drop rows with no y value.
     _LOG.debug("y_col=`%s` count=%i", y_col, df[y_col].count())
     df = df.dropna(subset=[y_col])
-    # Reindex weights to reflect any dropped y values.
-    weights = weights.reindex(df.index)
     # Extract x variables.
     x_vars = df[x_cols]
-    x_var_counts = x_vars.count().rename("count")
-    # Create a per-`x_col` weight dataframe to reflect possibly different NaN
-    # positions. This is used to generate accurate weighted sums and effective
-    # sample sizes.
-    weight_df = pd.DataFrame(index=x_vars.index, columns=x_cols)
-    for col in x_cols:
-        weight_df[col] = weights.reindex(x_vars[col].dropna().index)
+    if sample_weight_col is not None:
+        hdbg.dassert_in(sample_weight_col, df.columns)
+        x_vars_with_weights = df[x_cols + [sample_weight_col]]
+        y_var_with_weights = df[[y_col] + [sample_weight_col]]
+    else:
+        x_vars_with_weights = df[x_cols]
+        y_var_with_weights = df[[y_col]]
+    x_var_coefficients = compute_centered_process_stats(
+        x_vars_with_weights, sample_weight_col
+    )
+    weight_df = _get_weight_df(x_vars_with_weights, sample_weight_col)
     weight_sums = weight_df.sum(axis=0)
-    # We use the 2-cardinality of the weights. This is equivalent to using
-    # Kish's effective sample size.
-    x_var_eff_counts = weight_df.apply(
-        lambda x: cstaentr.compute_cardinality(x.dropna(), 2)
-    ).rename("eff_count")
+    weights = _get_weight_df(y_var_with_weights, sample_weight_col)[y_col]
     # Calculate sign correlation.
     sgn_rho = (
         x_vars.multiply(df[y_col], axis=0)
@@ -81,14 +69,6 @@ def compute_regression_coefficients(
         .sum(axis=0)
         .divide(weight_sums)
         .rename("sgn_rho")
-    )
-    # Calculate variance assuming x variables are centered at zero.
-    x_variance = (
-        x_vars.pow(2)
-        .multiply(weight_df, axis=0)
-        .sum(axis=0)
-        .divide(weight_sums)
-        .rename("var")
     )
     # Calculate covariance assuming x variables and y variable are centered.
     covariance = (
@@ -106,6 +86,7 @@ def compute_regression_coefficients(
     y_variance = df[y_col].pow(2).multiply(weights).sum() / weights.sum()
     _LOG.debug("y_col=`%s` variance=%f", y_col, y_variance)
     # Calculate correlation from covariances and variances.
+    x_variance = x_var_coefficients["var"]
     rho = covariance.divide(np.sqrt(x_variance) * np.sqrt(y_variance)).rename(
         "rho"
     )
@@ -113,6 +94,7 @@ def compute_regression_coefficients(
     beta = covariance.divide(x_variance).rename("beta")
     # The `x_var_eff_counts` term makes this invariant with respect to
     # rescalings of the weight column.
+    x_var_eff_counts = x_var_coefficients["eff_count"]
     beta_se = np.sqrt(
         y_variance / (x_variance.multiply(x_var_eff_counts))
     ).rename("SE(beta)")
@@ -120,31 +102,139 @@ def compute_regression_coefficients(
     # Calculate two-sided p-values.
     p_val_array = 2 * sp.stats.norm.sf(z_scores.abs())
     p_val = pd.Series(index=z_scores.index, data=p_val_array, name="p_val_2s")
+    # Consolidate stats.
+    xy_coefficients = [
+        covariance,
+        sgn_rho,
+        rho,
+        beta,
+        beta_se,
+        z_scores,
+        p_val,
+    ]
+    xy_coefficients = pd.concat(xy_coefficients, axis=1)
+    result = pd.concat([x_var_coefficients, xy_coefficients], axis=1)
+    cols = [
+        "count",
+        "eff_count",
+        "mean",
+        "var",
+        "covar",
+        "sgn_rho",
+        "rho",
+        "beta",
+        "SE(beta)",
+        "beta_z_scored",
+        "p_val_2s",
+        "autocovar",
+        "autocorr",
+        "turn",
+    ]
+    return result[cols]
+
+
+def compute_centered_process_stats(
+    df: pd.DataFrame,
+    sample_weight_col: Optional[Union[int, str]] = None,
+) -> pd.DataFrame:
+    """
+    Compute stats for mean zero processes.
+
+    :param df: Dataframe where each col represents samples for a process. No
+        correction is made for non-independence. Variance is calculated under
+        the hypothesis that the mean is zero.
+    :param sample_weight_col: optional column for sample weighting
+    """
+    weight_df = _get_weight_df(df, sample_weight_col)
+    weight_sums = weight_df.sum(axis=0)
+    process_df = df
+    if sample_weight_col is not None:
+        process_df = process_df.drop(sample_weight_col, axis=1)
+    counts = process_df.count().rename("count")
+    # We use the 2-cardinality of the weights. This is equivalent to using
+    # Kish's effective sample size.
+    eff_counts = weight_df.apply(
+        lambda x: cstaentr.compute_cardinality(x.dropna(), 2)
+    ).rename("eff_count")
+    # Calculate mean.
+    mean = (
+        process_df.multiply(weight_df, axis=0)
+        .sum(axis=0)
+        .divide(weight_sums)
+        .rename("mean")
+    )
+    # Calculate variance assuming x variables are centered at zero.
+    variance = (
+        process_df.pow(2)
+        .multiply(weight_df, axis=0)
+        .sum(axis=0)
+        .divide(weight_sums)
+        .rename("var")
+    )
     # Calculate autocovariance-related stats of x variables.
     autocovariance = (
-        x_vars.multiply(x_vars.shift(1), axis=0)
+        process_df.multiply(process_df.shift(1), axis=0)
         .multiply(weight_df, axis=0)
         .sum(axis=0)
         .divide(weight_sums)
         .rename("autocovar")
     )
     # Normalize autocovariance to get autocorrelation.
-    autocorrelation = autocovariance.divide(x_variance).rename("autocorr")
+    autocorrelation = autocovariance.divide(variance).rename("autocorr")
     turn = np.sqrt(2 * (1 - autocorrelation)).rename("turn")
     # Consolidate stats.
     coefficients = [
-        x_var_counts,
-        x_var_eff_counts,
-        sgn_rho,
-        x_variance,
-        covariance,
-        rho,
-        beta,
-        beta_se,
-        z_scores,
-        p_val,
+        counts,
+        eff_counts,
+        mean,
+        variance,
         autocovariance,
         autocorrelation,
         turn,
     ]
     return pd.concat(coefficients, axis=1)
+
+
+def compute_centered_process_stats_by_group(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_eq(df.columns.nlevels, 2)
+    groups = df.columns.levels[1].to_list()
+    _LOG.debug("Num groups=%d", len(groups))
+    coeffs = collections.OrderedDict()
+    for group in tqdm(groups, desc="Processing groups"):
+        group_df = df.T.xs(group, level=1).T
+        if group_df.empty:
+            _LOG.debug("Empty dataframe for group=%d", group)
+            continue
+        coeff = compute_centered_process_stats(group_df)
+        coeffs[group] = coeff
+    process_stats = pd.concat(coeffs)
+    return process_stats
+
+
+def _get_weight_df(
+    df: pd.DataFrame,
+    sample_weight_col: Optional[Union[int, str]] = None,
+) -> pd.DataFrame:
+    hdbg.dassert(not df.empty, msg="Dataframe must be nonempty")
+    if sample_weight_col is not None:
+        hdbg.dassert_in(sample_weight_col, df.columns)
+        weights = df[sample_weight_col].rename("weight")
+    else:
+        weights = pd.Series(index=df.index, data=1, name="weight")
+    # Ensure that no weights are negative.
+    hdbg.dassert(not (weights < 0).any())
+    # Ensure that the total weight is positive.
+    hdbg.dassert((weights > 0).any())
+    # Create a per-`x_col` weight dataframe to reflect possibly different NaN
+    # positions. This is used to generate accurate weighted sums and effective
+    # sample sizes.
+    cols = [x for x in df.columns if x != sample_weight_col]
+    # if sample_weight_col is not None:
+    #    cols = cols - [sample_weight_col]
+    weight_df = pd.DataFrame(index=df.index, columns=cols)
+    for col in cols:
+        weight_df[col] = weights.reindex(df[col].dropna().index)
+    return weight_df

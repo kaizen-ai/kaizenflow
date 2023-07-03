@@ -151,7 +151,9 @@ def process_bid_ask(
     return out_df
 
 
-def handle_orderbook_levels(
+# TODO(Juraj): the function name should be more clear, i.e.,
+# transform_bid_ask_long_to_wide.
+def transform_bid_ask_long_data_to_wide(
     df: pd.DataFrame,
     timestamp_col: str,
     *,

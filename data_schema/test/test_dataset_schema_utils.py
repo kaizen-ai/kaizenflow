@@ -16,6 +16,17 @@ DUMMY_SCHEMA = {
 }
 
 
+class TestGetVendorFromS3Path1(hunitest.TestCase):
+    def test_get_vendor_from_s3_path1(self) -> None:
+        """
+        Verify that vendor is extracted correctly from the path.
+        """
+        test_path = "s3://bucket-name/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis.downloaded_1sec"
+        expected_value = "crypto_chassis"
+        actual_value = dsdascut.get_vendor_from_s3_path(test_path)
+        self.assertEqual(expected_value, actual_value)
+
+
 class TestGetDatasetSchema1(hunitest.TestCase):
     @umock.patch.object(dsdascut, "_get_dataset_schema_file_path")
     @umock.patch.object(hio, "from_json")
@@ -180,7 +191,6 @@ class TestBuildS3DatasetPathFromArgs1(hunitest.TestCase):
         Verify S3 path building function throws exception when called with
         missing arguments.
         """
-        copy.deepcopy(DUMMY_SCHEMA)
         mock_from_json.return_value = copy.deepcopy(DUMMY_SCHEMA)
         mock_get_dataset_schema_file_path.return_value = "dataset_schema_v3.json"
         test_args = {
@@ -194,3 +204,52 @@ class TestBuildS3DatasetPathFromArgs1(hunitest.TestCase):
         "Missing required identifier for schema version v3: 'action_tag'"
         """
         self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
+
+
+class TestGetImDbTableNameFromSignature(hunitest.TestCase):
+
+    DUMMY_SCHEMA_FOR_DB = {
+        "dataset_signature": "download_mode.downloading_entity.action_tag.data_format.data_type.asset_type.universe.vendor.exchange_id.version",
+        "token_separator_character": ".",
+        "allowed_values": {
+            "download_mode": ["realtime"],
+            "downloading_entity": ["airflow"],
+            "action_tag": [
+                "downloaded_200ms",
+                "resampled_1min",
+                "downloaded_1min",
+            ],
+            "data_format": ["postgres"],
+            "data_type": ["ohlcv", "bid_ask", "trades"],
+            "asset_type": ["futures", "spot"],
+            "universe": ["v7", "v3"],
+            "vendor": ["ccxt"],
+            "exchange_id": ["binance"],
+            "version": ["v1_0_0"],
+        },
+    }
+
+    def test_get_im_db_table_name_from_signature(self):
+        """
+        Test mapping signatures to IM DB table names.
+        """
+        signature1 = "realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v7.ccxt.binance.v1_0_0"
+        table_name1 = dsdascut.get_im_db_table_name_from_signature(
+            signature1, self.DUMMY_SCHEMA_FOR_DB
+        )
+        self.assert_equal("ccxt_ohlcv_futures", table_name1)
+        signature2 = "realtime.airflow.downloaded_1min.postgres.ohlcv.spot.v7.ccxt.binance.v1_0_0"
+        table_name2 = dsdascut.get_im_db_table_name_from_signature(
+            signature2, self.DUMMY_SCHEMA_FOR_DB
+        )
+        self.assert_equal("ccxt_ohlcv_spot", table_name2)
+        signature3 = "realtime.airflow.resampled_1min.postgres.bid_ask.futures.v7.ccxt.binance.v1_0_0"
+        table_name3 = dsdascut.get_im_db_table_name_from_signature(
+            signature3, self.DUMMY_SCHEMA_FOR_DB
+        )
+        self.assert_equal("ccxt_bid_ask_futures_resampled_1min", table_name3)
+        signature4 = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7.ccxt.binance.v1_0_0"
+        table_name4 = dsdascut.get_im_db_table_name_from_signature(
+            signature4, self.DUMMY_SCHEMA_FOR_DB
+        )
+        self.assert_equal("ccxt_bid_ask_futures_raw", table_name4)

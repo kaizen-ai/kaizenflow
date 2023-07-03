@@ -227,15 +227,15 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
             print_docker_config=print_docker_config,
         )
         exp = r"""
-        IMAGE=$AM_ECR_BASE_PATH/amp_test:dev-1.0.0 \
-            docker-compose \
-            --file $GIT_ROOT/devops/compose/docker-compose.yml \
-            --env-file devops/env/default.env \
-            run \
-            --rm \
-            --name $USER_NAME.amp_test.app.app \
-            --entrypoint bash \
-            app
+        IMAGE=$CK_ECR_BASE_PATH/amp_test:dev-1.0.0 \
+        docker-compose \
+        --file $GIT_ROOT/devops/compose/docker-compose.yml \
+        --env-file devops/env/default.env \
+        run \
+        --rm \
+        --name $USER_NAME.amp_test.app.app \
+        --entrypoint bash \
+        app
         """
         self.check(act, exp)
 

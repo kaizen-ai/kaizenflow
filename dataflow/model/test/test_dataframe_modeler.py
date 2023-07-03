@@ -95,7 +95,7 @@ class TestDataFrameModeler(hunitest.TestCase):
         str_output = hunitest.convert_df_to_string(
             output_df.round(3), index=True, decimals=3
         )
-        self.check_string(str_output)
+        self.check_string(str_output, fuzzy_match=True)
 
     def test_apply_sklearn_model_predict_with_oos(self) -> None:
         pred_lag = 2
@@ -110,7 +110,7 @@ class TestDataFrameModeler(hunitest.TestCase):
         str_output = hunitest.convert_df_to_string(
             output_df.round(3), index=True, decimals=3
         )
-        self.check_string(str_output)
+        self.check_string(str_output, fuzzy_match=True)
 
     def test_apply_sklearn_model_fit_without_oos(self) -> None:
         pred_lag = 2
@@ -123,7 +123,7 @@ class TestDataFrameModeler(hunitest.TestCase):
         str_output = hunitest.convert_df_to_string(
             output_df.round(3), index=True, decimals=3
         )
-        self.check_string(str_output)
+        self.check_string(str_output, fuzzy_match=True)
 
     def test_apply_sklearn_model_predict_without_oos(self) -> None:
         pred_lag = 2

@@ -32,6 +32,7 @@ def string_to_numerical_id(string_id: str) -> int:
     return num_id
 
 
+# TODO(Grisha): Do we need to use the full symbol? It seems so.
 def build_numerical_to_string_id_mapping(universe: List[str]) -> Dict[int, str]:
     """
     Build a mapping from numerical ids to string ones.

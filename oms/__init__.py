@@ -5,7 +5,6 @@ import oms as oms
 """
 
 from oms.broker import *  # pylint: disable=unused-import # NOQA
-from oms.ccxt_portfolio import *  # pylint: disable=unused-import # NOQA
 from oms.ck_credentials import *  # pylint: disable=unused-import # NOQA
 from oms.oms_db import *  # pylint: disable=unused-import # NOQA
 from oms.order import *  # pylint: disable=unused-import # NOQA
