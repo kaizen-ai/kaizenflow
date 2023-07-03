@@ -2920,7 +2920,6 @@ class Test_dassert_increasing_index(hunitest.TestCase):
             pd.Timestamp("2000-01-01 9:04"),
         ]
         values = [0, 0, 0, 0]
-        #
         df = pd.DataFrame(values, index=idx)
         # Run.
         hpandas.dassert_increasing_index(df)
@@ -2938,8 +2937,8 @@ class Test_dassert_increasing_index(hunitest.TestCase):
             pd.Timestamp("2000-01-01 9:03"),
         ]
         values = [0, 0, 0, 0]
-        #
         df = pd.DataFrame(values, index=idx)
+        # Run.
         with self.assertRaises(AssertionError) as cm:
             hpandas.dassert_increasing_index(df)
         act = str(cm.exception)
@@ -2950,7 +2949,6 @@ class Test_dassert_increasing_index(hunitest.TestCase):
                                 0
         2000-01-01 09:04:00  0
         2000-01-01 09:03:00  0"""
-        # Run.
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test3(self) -> None:
@@ -2966,7 +2964,6 @@ class Test_dassert_increasing_index(hunitest.TestCase):
             pd.Timestamp("2000-01-01 9:01"),
         ]
         values = [0, 0, 0, 0]
-        #
         df = pd.DataFrame(values, index=idx)
         # Run.
         hpandas.dassert_increasing_index(df)
