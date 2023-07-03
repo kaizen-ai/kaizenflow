@@ -857,7 +857,7 @@
     classes that are testing the code in different ways (e.g.,`setUp()`
     `tearDown()` are different)
   - To test a function `generate_html_tables()` the corresponding test class is
-    `TestGenerateHtmlTables`
+    `Test_generate_html_tables`
 - It's ok to have multiple test methods, e.g., for `FooBar.method_a()` and
   `FooBar.method_b()`, the test method is:
   ```python
