@@ -19,6 +19,7 @@
 # Bash / Linux
 
 - [Short tutorial](https://www.usenix.org/sites/default/files/conference/protected-files/lisa19_maheshwari.pdf)
+- [Missing semester of CS](https://missing.csail.mit.edu/)
 
 # Coding
 
