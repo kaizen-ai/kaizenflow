@@ -37,21 +37,6 @@ def _move_media(md_file_figs: str) -> None:
         # Remove the 'media' directory
         shutil.rmtree(os.path.join(md_file_figs, "media"))
 
-def _remove_nonsence_lines(md_file: str, md_file_figs: str) -> None:
-    lines = []
-    with open(md_file, 'r') as f:
-        lines = list(f.readlines())
-    # with open(md_file, 'w') as f:
-    #     for idx,line in enumerate(lines):
-    #         if idx == len(lines) - 1:
-    #             f.write(line.rstrip('\n').rstrip('\r')+'\n')
-    #         elif line.strip() != '' and lines[idx+1].strip() != '':
-    #             if idx < 10:
-    #                 print(idx)
-    #                 # print(lines[idx+1])
-    #             f.write(line.rstrip('\n').rstrip('\r'))
-    #         else:
-    #             f.write(line)
 
 def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
     """
@@ -67,18 +52,17 @@ def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
         r"perl -pi -e 's:\\#:#:g' {}".format(md_file),
         # **## amp / cmamp container**
         r"perl -pi -e 's:\*\*#(.*?)\*\*:#$1:g' {}".format(md_file),
-        # - Same as VNC, but instead of sending bitmaps through VNC, a
-        #   > \"compressed\" version of the GUI is sent to the local
-        #   > computer directly
+        # -  Typically instructions include information about which packages and
+        #    > their versions to install, e.g. list of python packages and their
+        #    > corresponding versions
         r"perl -pi -e 's:^(\s+)> :$1:g' {}".format(md_file),
         #
         # >
         # > botocore==1.24.37
         # >
-        # This must run before the next Perl one-lineter.
         r"perl -pi -e 's:^>: :g' {}" .format(md_file),
-        # Remove the \ before - $ | < > " _ [ ]. 
-        r"perl -pi -e 's:\\([-\$|<>\"\_\]\[\.]):$1:g' {}" .format(md_file),
+        # Remove the \ before - $ | " _ [ ]. 
+        r"perl -pi -e 's:\\([-\$|\"\_\]\[\.]):$1:g' {}" .format(md_file),
         # \' -> '
         r'perl -pi -e "s:\\\':\':g" {}'.format(md_file),
         # \` -> `
@@ -97,16 +81,7 @@ def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
         # Translate HTML elements.
         r"perl -pi -e 's:\&gt;:\>:g' {}" .format(md_file),
         r"perl -pi -e 's:\<\!\-\-.*\-\-\>::g' {}".format(md_file),
-        # [[https://plugins.jetbrains.com/plugin/7234-wrap-to-column]{.underline}](https://plugins.jetbrains.com/plugin/7234-wrap-to-column)
-        # TODO: bug: KeyError: '\\'
-        # Fix the image links.
-        r"perl -pi -e 's:\[\[(.*)\]\{{\.underline\}}\]\((.*)\):\[$1\]\($2\):g' {}".format(md_file),
-        # r"perl -pi -e 's:\!\[\]\((.*?)/media/:\!\[\]\($1/:g' {}" .format(md_file),
-        # Remove:
-        #   ```{=html}
-        #   <!-- -->
-        #   ```
-        r"perl -pi -e 's:^\s*```(.*?)\n\s*<!-- -->\n\s*```::mg' {}" .format(md_file),
+        r"perl -pi -e 's:{}/media/:{}/:g' {}" .format(md_file_figs, md_file_figs, md_file),
     ]
     for clean_cmd in perl_regex_replacements:
         hsystem.system(clean_cmd)
@@ -153,11 +128,10 @@ def _convert_docx_to_markdown(docx_file: str, md_file: str) -> None:
     hsystem.system(docker_cmd)
     _LOG.info("Finished converting '%s' to '%s'.", docx_file, md_file)
     _LOG.info("Md figs '%s'", md_file_figs)
-    _remove_nonsence_lines(md_file, md_file_figs)
-    # _move_media(md_file_figs)
+    _move_media(md_file_figs)
     _clean_up_artifacts(md_file, md_file_figs)
 
-# #############################################################################\
+# #############################################################################
 
 
 def add_download_args(parser: argparse.ArgumentParser,) -> argparse.ArgumentParser:
