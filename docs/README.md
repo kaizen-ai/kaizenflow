@@ -22,7 +22,15 @@ This contains the absolute minimal amount of info to start developing
 
 - [Jupyter notebook best practices](Jupyter_notebook_best_practices.md)
 
+- [Unit tests](Unit_tests.md)
+
 ## Project management
+
+- [Code review](Code_review.md)
+  - PR review workflow from the code author and code reviewer points of view
+
+- [Development workflow](Development_workflow.md)
+  - Extended instructions on how to deploy your working environment and interact with it
 
 - [GitHub/ZenHub workflows](GitHub_ZenHub_workflows.md)
   - How to use GitHub and ZenHub, file a PR, review GitHub/ZenHub workflows
@@ -37,7 +45,7 @@ This contains the absolute minimal amount of info to start developing
 
 This contains a set of resources that over time will make 10x more productive
 
-- TODO: Docker
+- [Docker](Docker.md)
 
 ## Technologies used
 

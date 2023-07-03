@@ -232,7 +232,7 @@ def get_forward_cols(
     else:
         hdbg.dassert_isinstance(cols, tuple)
     # Append to the column names the number of steps ahead generated.
-    mapper = lambda x: str(x) + "_%i" % steps_ahead
+    mapper = lambda x: str(x) + ".shift_-%i" % steps_ahead
     forward_df = df[cols].shift(-steps_ahead).rename(columns=mapper)
     hdbg.dassert_not_intersection(forward_df.columns, df.columns)
     return forward_df

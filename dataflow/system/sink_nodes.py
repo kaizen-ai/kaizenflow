@@ -119,8 +119,9 @@ def get_ProcessForecastsNode_dict_example1(
     prediction_col: str,
     volatility_col: str,
     spread_col: Optional[str],
-    order_duration_in_mins: int,
+    order_config: Dict[str, Any],
     style: str,
+    optimizer_backend: str,
     compute_target_positions_kwargs: Dict[str, Any],
     root_log_dir: Optional[str],
 ) -> Dict[str, Any]:
@@ -133,20 +134,17 @@ def get_ProcessForecastsNode_dict_example1(
         `process_forecasts()` log dir
     """
     hdbg.dassert_isinstance(portfolio, omportfo.Portfolio)
+    hdbg.dassert_isinstance(order_config, dict)
     #
-    order_type = "price@twap"
     if root_log_dir is not None:
         log_dir = os.path.join(root_log_dir, "process_forecasts")
     else:
         log_dir = None
     process_forecasts_dict = {
         # Params for `ForecastProcessor`.
-        "order_config": {
-            "order_type": order_type,
-            "order_duration_in_mins": order_duration_in_mins,
-        },
+        "order_config": order_config,
         "optimizer_config": {
-            "backend": "pomo",
+            "backend": optimizer_backend,
             "params": {
                 "style": style,
                 "kwargs": compute_target_positions_kwargs,

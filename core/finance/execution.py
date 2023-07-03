@@ -25,7 +25,9 @@ def generate_limit_order_price(
     buy_spread_frac_offset: float,
     sell_spread_frac_offset: float,
     subsample_freq: str,
+    freq_offset: str,
     ffill_limit: int,
+    tick_decimals: int,
 ) -> pd.DataFrame:
     """
     Generate limit order prices from subsampled reference prices and an offset.
@@ -43,9 +45,12 @@ def generate_limit_order_price(
         sell reference price to determine the limit price
     :param subsample_freq: resampling frequency to use for subsampling, e.g.,
         "15T" for a dataframe of one-minute bars
+    :param freq_offset: offset to use for subsampling; this can be used to
+        simulate expected processing or computation times
     :param ffill_limit: number of ffill bars to propagate limit orders, e.g.,
         if we use one-minute bars, take `subsample_freq="15T"`, and let
         `ffill_limit=4`, then the execution window will be 1 + 4 = 5 minutes.
+    :param tick_decimals: number of decimals to round prices to
     :return: a series of limit order prices
     """
     hpandas.dassert_time_indexed_df(
@@ -61,26 +66,43 @@ def generate_limit_order_price(
     hdbg.dassert_isinstance(buy_spread_frac_offset, float)
     hdbg.dassert_isinstance(sell_spread_frac_offset, float)
     hdbg.dassert_isinstance(subsample_freq, str)
+    hdbg.dassert_isinstance(freq_offset, str)
     hdbg.dassert_isinstance(ffill_limit, int)
     # Subsample the reference price col, e.g., take samples every "15T" on a
     # "1T" series.
     buy_subsampled = cfinresa.resample(
-        df[buy_reference_price_col], rule=subsample_freq
+        df[buy_reference_price_col],
+        rule=subsample_freq,
+        offset=freq_offset,
     ).last()
     sell_subsampled = cfinresa.resample(
-        df[sell_reference_price_col], rule=subsample_freq
+        df[sell_reference_price_col],
+        rule=subsample_freq,
+        offset=freq_offset,
     ).last()
     quoted_spread = df[ask_col] - df[bid_col]
     # Apply a dollar offset to the subsampled prices.
     buy_subsampled = buy_subsampled + buy_spread_frac_offset * quoted_spread
+    buy_subsampled = buy_subsampled.round(tick_decimals).rename(
+        "buy_limit_order_price"
+    )
+    # Treat each subsampled limit price as the initiation of a new order.
+    buy_order_num = np.sign(buy_subsampled).abs().cumsum().rename("buy_order_num")
+    # Perform the analogous operations for sells.
     sell_subsampled = sell_subsampled + sell_spread_frac_offset * quoted_spread
-    # TODO(Paul): Add an option to round to a different tick size.
-    buy_subsampled = buy_subsampled.round(2).rename("buy_limit_order_price")
-    sell_subsampled = sell_subsampled.round(2).rename("sell_limit_order_price")
-    subsampled = pd.concat([buy_subsampled, sell_subsampled], axis=1)
+    sell_subsampled = sell_subsampled.round(tick_decimals).rename(
+        "sell_limit_order_price"
+    )
+    sell_order_num = (
+        np.sign(sell_subsampled).abs().cumsum().rename("sell_order_num")
+    )
+    # Combine buy and sell limits along with buy and sell order numbers.
+    subsampled = pd.concat(
+        [buy_subsampled, sell_subsampled, buy_order_num, sell_order_num], axis=1
+    )
     # Reindex to the original frequency (imputing NaNs).
     subsampled = subsampled.reindex(index=df.index)
-    # Forward fill the limit prices `ffill_limit` steps.
+    # Forward fill the limit prices and order numbers `ffill_limit` steps.
     subsampled = subsampled.ffill(limit=ffill_limit)
     return subsampled
 
@@ -91,6 +113,8 @@ def estimate_limit_order_execution(
     ask_col: str,
     buy_limit_price_col: str,
     sell_limit_price_col: str,
+    buy_order_num_col: str,
+    sell_order_num_col: str,
 ) -> pd.Series:
     """
     Estimate passive fills.
@@ -101,6 +125,8 @@ def estimate_limit_order_execution(
     :param buy_limit_price_col: name of column with limit order price; NaN
         represents no order.
     :param sell_limit_price_col: like `buy_limit_price_col` but for selling
+    :param buy_order_num_col: col with numerical order numbers for buys
+    :param sell_order_num_col: col with numerical order numbers for sells
     :return: dataframe with two bool columns, "limit_buy_executed" and
         "limit_sell_executed"
     """
@@ -110,20 +136,84 @@ def estimate_limit_order_execution(
     hdbg.dassert_isinstance(bid_col, str)
     hdbg.dassert_isinstance(ask_col, str)
     # Ensure that all required columns are in the dataframe.
-    cols = [bid_col, ask_col, buy_limit_price_col, sell_limit_price_col]
+    cols = [
+        bid_col,
+        ask_col,
+        buy_limit_price_col,
+        sell_limit_price_col,
+        buy_order_num_col,
+        sell_order_num_col,
+    ]
     hdbg.dassert_is_subset(cols, df.columns)
-    # TODO(Paul): Add a switch to allow equality.
+    # TODO(Paul): Add a switch to allow in/equality.
+    # Determine buy execution times.
     # Delay by one bar the limit price columns. The columns are indexed by
     # knowledge time (the limit price to use is known at end-of-bar), and so
     # earliest execution takes place in the next bar.
-    buy_limit_executed = (df[ask_col] < df[buy_limit_price_col].shift(1)).rename(
-        "limit_buy_executed"
+    buy_limit_marketable = (
+        df[ask_col] <= df[buy_limit_price_col].shift(1)
+    ).rename("limit_buy_marketable")
+    buy_times = pd.concat(
+        [
+            pd.Series(df.index, df.index, name="timestamp"),
+            df[buy_order_num_col].shift(1),
+        ],
+        axis=1,
     )
-    sell_limit_executed = (
-        df[bid_col] > df[sell_limit_price_col].shift(1)
-    ).rename("limit_sell_executed")
-    limit_executed = pd.concat([buy_limit_executed, sell_limit_executed], axis=1)
-    return limit_executed
+    buy_times = buy_times.loc[buy_limit_marketable]
+    buy_limit_executed = buy_times.groupby(buy_order_num_col)["timestamp"].min()
+    # Determine sell execution times.
+    sell_limit_marketable = (
+        df[bid_col] >= df[sell_limit_price_col].shift(1)
+    ).rename("limit_sell_marketable")
+    sell_times = pd.concat(
+        [
+            pd.Series(df.index, df.index, name="timestamp"),
+            df[sell_order_num_col].shift(1),
+        ],
+        axis=1,
+    )
+    sell_times = sell_times.loc[sell_limit_marketable]
+    sell_limit_executed = sell_times.groupby(sell_order_num_col)[
+        "timestamp"
+    ].min()
+    # Determine buy/sell trade prices.
+    # - If a buy limit price is not marketable, it executes at the limit
+    #   on touch and is removed from the book.
+    # - If a buy limit price is marketable, it executes at the ask and does not
+    #   stay on the book.
+    buy_price = df[buy_limit_price_col].shift(1)
+    # TODO(Paul): Add a switch for in/equality.
+    # TODO(Paul): Consider adding this to the output as a boolean column.
+    use_ask = df[buy_limit_price_col].shift(1) >= df[ask_col].shift(1)
+    # Treat the buy like a market order.
+    buy_price.loc[use_ask] = df[ask_col].shift(1)
+    buy_trades = buy_price.loc[buy_limit_executed]
+    # Perform analogous operations for sells.
+    sell_price = df[sell_limit_price_col].shift(1)
+    use_bid = df[sell_limit_price_col].shift(1) <= df[bid_col].shift(1)
+    sell_price.loc[use_bid] = df[bid_col].shift(1)
+    sell_trades = sell_price.loc[sell_limit_executed]
+    # Reindex according to original index.
+    buy_trades = buy_trades.reindex(index=df.index).rename("buy_trade_price")
+    sell_trades = sell_trades.reindex(index=df.index).rename("sell_trade_price")
+    buy_limit_executed = pd.Series(
+        True, index=buy_limit_executed, name="limit_buy_executed"
+    ).reindex(index=df.index, fill_value=False)
+    sell_limit_executed = pd.Series(
+        True, index=sell_limit_executed, name="limit_sell_executed"
+    ).reindex(index=df.index, fill_value=False)
+    # Combine bool and trade price cols.
+    execution_df = pd.concat(
+        [
+            buy_limit_executed,
+            sell_limit_executed,
+            buy_trades,
+            sell_trades,
+        ],
+        axis=1,
+    )
+    return execution_df
 
 
 def generate_limit_orders_and_estimate_execution(
@@ -135,7 +225,9 @@ def generate_limit_orders_and_estimate_execution(
     buy_spread_frac_offset: float,
     sell_spread_frac_offset: float,
     subsample_freq: str,
+    freq_offset: str,
     ffill_limit: int,
+    tick_decimals: int,
 ) -> pd.DataFrame:
     """
     Generate limit buy/sells and estimate execution.
@@ -148,7 +240,9 @@ def generate_limit_orders_and_estimate_execution(
     :param sell_reference_price_col: reference price col for sell limit orders
     :param sell_spread_frac_offset: amount to add to sell reference price
     :param subsample_freq: as in `generate_limit_order_price()`
+    :param freq_offset: as in `generate_limit_order_price()`
     :param ffill_limit: as in `generate_limit_order_price()`
+    :param tick_decimals: as in `generate_limit_order_price()`
     :return: dataframe with limit order price and execution cols
     """
     limit_order_prices = generate_limit_order_price(
@@ -160,33 +254,24 @@ def generate_limit_orders_and_estimate_execution(
         buy_spread_frac_offset,
         sell_spread_frac_offset,
         subsample_freq,
+        freq_offset,
         ffill_limit,
+        tick_decimals,
     )
-    executions = estimate_limit_order_execution(
+    execution_df = estimate_limit_order_execution(
         pd.concat([df, limit_order_prices], axis=1),
         bid_col,
         ask_col,
         "buy_limit_order_price",
         "sell_limit_order_price",
+        "buy_order_num",
+        "sell_order_num",
     )
-    buy_trades = limit_order_prices["buy_limit_order_price"].loc[
-        executions["limit_buy_executed"]
-    ]
-    sell_trades = limit_order_prices["sell_limit_order_price"].loc[
-        executions["limit_sell_executed"]
-    ]
-    buy_trades = buy_trades.reindex(index=df.index).rename("buy_trade_price")
-    sell_trades = sell_trades.reindex(index=df.index).rename("sell_trade_price")
-    execution_df = pd.concat(
-        [
-            limit_order_prices,
-            executions,
-            buy_trades,
-            sell_trades,
-        ],
+    limit_price_and_execution_df = pd.concat(
+        [limit_order_prices, execution_df],
         axis=1,
     )
-    return execution_df
+    return limit_price_and_execution_df
 
 
 def apply_execution_prices_to_trades(
@@ -230,3 +315,135 @@ def apply_execution_prices_to_trades(
         sell_price.multiply(use_sell_price), fill_value=0.0
     )
     return execution_price
+
+
+# TODO(Paul): Make the name more specific. This is execution quality with
+#  respect to bid/ask and midpoint.
+def compute_execution_quality(
+    df: pd.DataFrame,
+    bid_col: str,
+    ask_col: str,
+    buy_trade_price_col: str,
+    sell_trade_price_col: str,
+) -> pd.DataFrame:
+    """
+    Compute trade price stats relative to bid/ask prices.
+
+    :param bid_col: top-of-book bid price col
+    :param ask_col: top-of-book ask price col
+    :param buy_trade_price_col: price at which a "buy" was executed
+    :param sell_trade_price_col: price at which a "sell" was executed
+    :return: dataframe with several notions of execution quality, in notional
+        amounts and relative amounts (bps or pct)
+    """
+    data = []
+    # Compute midpoint and spread.
+    bid_ask_midpoint = 0.5 * (df[bid_col] + df[ask_col])
+    bid_ask_midpoint.name = "bid_ask_midpoint"
+    data.append(bid_ask_midpoint)
+    spread_notional = df[ask_col] - df[bid_col]
+    spread_notional.name = "spread_notional"
+    data.append(spread_notional)
+    spread_bps = 1e4 * spread_notional / bid_ask_midpoint
+    spread_bps.name = "spread_bps"
+    data.append(spread_bps)
+    # Compute buy trade price improvement.
+    buy_trade_price_improvement_notional = df[ask_col] - df[buy_trade_price_col]
+    buy_trade_price_improvement_notional.name = (
+        "buy_trade_price_improvement_notional"
+    )
+    data.append(buy_trade_price_improvement_notional)
+    buy_trade_price_improvement_bps = (
+        1e4 * buy_trade_price_improvement_notional / df[ask_col]
+    )
+    buy_trade_price_improvement_bps.name = "buy_trade_price_improvement_bps"
+    data.append(buy_trade_price_improvement_bps)
+    buy_trade_price_improvement_spread_pct = (
+        1e2 * buy_trade_price_improvement_notional / spread_notional
+    )
+    buy_trade_price_improvement_spread_pct.name = (
+        "buy_trade_price_improvement_spread_pct"
+    )
+    data.append(buy_trade_price_improvement_spread_pct)
+    # Compute sell trade price improvement.
+    sell_trade_price_improvement_notional = df[sell_trade_price_col] - df[bid_col]
+    sell_trade_price_improvement_notional.name = (
+        "sell_trade_price_improvement_notional"
+    )
+    data.append(sell_trade_price_improvement_notional)
+    sell_trade_price_improvement_bps = (
+        1e4 * sell_trade_price_improvement_notional / df[bid_col]
+    )
+    sell_trade_price_improvement_bps.name = "sell_trade_price_improvement_bps"
+    data.append(sell_trade_price_improvement_bps)
+    sell_trade_price_improvement_spread_pct = (
+        1e2 * sell_trade_price_improvement_notional / spread_notional
+    )
+    sell_trade_price_improvement_spread_pct.name = (
+        "sell_trade_price_improvement_spread_pct"
+    )
+    data.append(sell_trade_price_improvement_spread_pct)
+    # Compute buy trade slippage.
+    buy_trade_midpoint_slippage_notional = (
+        df[buy_trade_price_col] - bid_ask_midpoint
+    )
+    buy_trade_midpoint_slippage_notional.name = (
+        "buy_trade_midpoint_slippage_notional"
+    )
+    data.append(buy_trade_midpoint_slippage_notional)
+    buy_trade_midpoint_slippage_bps = (
+        1e4 * buy_trade_midpoint_slippage_notional / bid_ask_midpoint
+    )
+    buy_trade_midpoint_slippage_bps.name = "buy_trade_midpoint_slippage_bps"
+    data.append(buy_trade_midpoint_slippage_bps)
+    # Compute sell trade slippage.
+    sell_trade_midpoint_slippage_notional = (
+        bid_ask_midpoint - df[sell_trade_price_col]
+    )
+    sell_trade_midpoint_slippage_notional.name = (
+        "sell_trade_midpoint_slippage_notional"
+    )
+    data.append(sell_trade_midpoint_slippage_notional)
+    sell_trade_midpoint_slippage_bps = (
+        1e4 * sell_trade_midpoint_slippage_notional / bid_ask_midpoint
+    )
+    sell_trade_midpoint_slippage_bps.name = "sell_trade_midpoint_slippage_bps"
+    data.append(sell_trade_midpoint_slippage_bps)
+    # Combine computed columns.
+    df_out = pd.concat(data, axis=1)
+    return df_out
+
+
+def compute_trade_vs_limit_execution_quality(
+    df: pd.DataFrame,
+    buy_limit_price_col: str,
+    sell_limit_price_col: str,
+    buy_trade_price_col: str,
+    sell_trade_price_col: str,
+) -> pd.DataFrame:
+    data = []
+    # Compute buy trade slippage.
+    buy_trade_limit_slippage_notional = (
+        df[buy_trade_price_col] - df[buy_limit_price_col]
+    )
+    buy_trade_limit_slippage_notional.name = "buy_trade_limit_slippage_notional"
+    data.append(buy_trade_limit_slippage_notional)
+    buy_trade_limit_slippage_bps = (
+        1e4 * buy_trade_limit_slippage_notional / df[buy_limit_price_col]
+    )
+    buy_trade_limit_slippage_bps.name = "buy_trade_limit_slippage_bps"
+    data.append(buy_trade_limit_slippage_bps)
+    # Compute sell trade slippage.
+    sell_trade_limit_slippage_notional = (
+        df[sell_limit_price_col] - df[sell_trade_price_col]
+    )
+    sell_trade_limit_slippage_notional.name = "sell_trade_limit_slippage_notional"
+    data.append(sell_trade_limit_slippage_notional)
+    sell_trade_limit_slippage_bps = (
+        1e4 * sell_trade_limit_slippage_notional / df[sell_limit_price_col]
+    )
+    sell_trade_limit_slippage_bps.name = "sell_trade_limit_slippage_bps"
+    data.append(sell_trade_limit_slippage_bps)
+    # Combine computed columns.
+    df_out = pd.concat(data, axis=1)
+    return df_out

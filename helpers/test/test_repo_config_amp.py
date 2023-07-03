@@ -19,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 
 class TestRepoConfig_Amp(hunitest.TestCase):
 
-    expected_repo_name = "//amp"
+    expected_repo_name = "//cmamp"
 
     def test_repo_name1(self) -> None:
         """

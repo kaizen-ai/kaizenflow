@@ -17,4 +17,3 @@ source_scripts
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 setenv "$AMP/dev_scripts/setenv_amp.sh" $CONDA_ENV
-
