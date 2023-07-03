@@ -2916,26 +2916,25 @@ class Test_dassert_increasing_index(hunitest.TestCase):
            pd.Timestamp("2000-01-01 9:01"),
            pd.Timestamp("2000-01-01 9:02"),
            pd.Timestamp("2000-01-01 9:03"),
-           pd.Timestamp("2000-01-01 9:04")
+           pd.Timestamp("2000-01-01 9:04"),
        ]
        values = [0,0,0,0]
-       
+       #
        df = pd.DataFrame(values, index=idx)
        hpandas.dassert_increasing_index(df)
 
    def test2(self) -> None:
        """
-       Unit tests for cases that index is obviously not increasing at a
-       certain data points.
+       Check that an assert is raised when index is not monotonically increasing.
        """
        idx = [
            pd.Timestamp("2000-01-01 9:01"),
            pd.Timestamp("2000-01-01 9:02"),
            pd.Timestamp("2000-01-01 9:04"),
-           pd.Timestamp("2000-01-01 9:03")
+           pd.Timestamp("2000-01-01 9:03"),
        ]
        values = [0,0,0,0]
-       
+       #
        df = pd.DataFrame(values, index=idx)
        with self.assertRaises(AssertionError) as cm:
            hpandas.dassert_increasing_index(df)
@@ -2951,16 +2950,16 @@ class Test_dassert_increasing_index(hunitest.TestCase):
 
    def test3(self) -> None:
        """
-       Unit tests for cases that index are duplicated.
+       Check that a monotonically increasing index with duplicates passes the assert.
        """
        idx = [
+           pd.Timestamp("2000-01-01 9:00"),
+           pd.Timestamp("2000-01-01 9:00"),
            pd.Timestamp("2000-01-01 9:01"),
            pd.Timestamp("2000-01-01 9:01"),
-           pd.Timestamp("2000-01-01 9:01"),
-           pd.Timestamp("2000-01-01 9:01")
        ]
        values = [0,0,0,0]
-       
+       #
        df = pd.DataFrame(values, index=idx)
        hpandas.dassert_increasing_index(df)
 
