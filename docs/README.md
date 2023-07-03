@@ -47,6 +47,8 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Docker](Docker.md)
 
+- [Reading List](Reading_List.md)
+
 ## Technologies used
 
 - [UMD DATA605 Big Data Systems](https://github.com/gpsaggese/umd_data605)
