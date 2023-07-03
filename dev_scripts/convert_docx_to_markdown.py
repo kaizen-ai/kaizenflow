@@ -8,15 +8,13 @@ Usage:
 
 Example:
 > dev_scripts/convert_docx_to_markdown.py --docx_file docs/Tools_Docker.docx --md_file docs/@Tools_Docker_Test.md
-
 """
 
 import argparse
 import logging
-import tempfile
 import os
-import logging
 import shutil
+import tempfile
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
@@ -32,8 +30,9 @@ def _move_media(md_file_figs: str) -> None:
     if os.path.isdir(os.path.join(md_file_figs, "media")):
         # Move all the files in 'media' to 'out_figs'
         for file_name in os.listdir(os.path.join(md_file_figs, "media")):
-            shutil.move(os.path.join(
-                md_file_figs, "media", file_name), md_file_figs)
+            shutil.move(
+                os.path.join(md_file_figs, "media", file_name), md_file_figs
+            )
         # Remove the 'media' directory
         shutil.rmtree(os.path.join(md_file_figs, "media"))
 
@@ -45,7 +44,6 @@ def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
     :param md_file_figs: path to the folder containing the artifacts
     """
     perl_regex_replacements = [
-        
         # "# \# Running PyCharm remotely" -> "# Running PyCharm remotely"
         r"perl -pi -e 's:# (\\#)+ :# :g' {}".format(md_file),
         # \#\# Docker image  -> ## Docker image
@@ -60,9 +58,9 @@ def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
         # >
         # > botocore==1.24.37
         # >
-        r"perl -pi -e 's:^>: :g' {}" .format(md_file),
-        # Remove the \ before - $ | " _ [ ]. 
-        r"perl -pi -e 's:\\([-\$|\"\_\]\[\.]):$1:g' {}" .format(md_file),
+        r"perl -pi -e 's:^>: :g' {}".format(md_file),
+        # Remove the \ before - $ | " _ [ ].
+        r"perl -pi -e 's:\\([-\$|\"\_\]\[\.]):$1:g' {}".format(md_file),
         # \' -> '
         r'perl -pi -e "s:\\\':\':g" {}'.format(md_file),
         # \` -> `
@@ -74,14 +72,16 @@ def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
         # ” -> "
         r"perl -pi -e 's:”:\":g' {}".format(md_file),
         # Remove trailing \
-        r"perl -pi -e 's:\\$::g' {}" .format(md_file),
+        r"perl -pi -e 's:\\$::g' {}".format(md_file),
         # Remove ========= and -------.
-        r"perl -pi -e 's:======+::g' {}" .format(md_file),
-        r"perl -pi -e 's:------+::g' {}" .format(md_file),
+        r"perl -pi -e 's:======+::g' {}".format(md_file),
+        r"perl -pi -e 's:------+::g' {}".format(md_file),
         # Translate HTML elements.
-        r"perl -pi -e 's:\&gt;:\>:g' {}" .format(md_file),
+        r"perl -pi -e 's:\&gt;:\>:g' {}".format(md_file),
         r"perl -pi -e 's:\<\!\-\-.*\-\-\>::g' {}".format(md_file),
-        r"perl -pi -e 's:{}/media/:{}/:g' {}" .format(md_file_figs, md_file_figs, md_file),
+        r"perl -pi -e 's:{}/media/:{}/:g' {}".format(
+            md_file_figs, md_file_figs, md_file
+        ),
     ]
     for clean_cmd in perl_regex_replacements:
         hsystem.system(clean_cmd)
@@ -114,7 +114,9 @@ def _convert_docx_to_markdown(docx_file: str, md_file: str) -> None:
             """
         )
         temp_dockerfile.flush()
-        cmd = f"docker build -f {temp_dockerfile.name} -t {docker_container_name} ."
+        cmd = (
+            f"docker build -f {temp_dockerfile.name} -t {docker_container_name} ."
+        )
         hsystem.system(cmd)
     # Run Docker container.
     work_dir = os.getcwd()
@@ -131,10 +133,13 @@ def _convert_docx_to_markdown(docx_file: str, md_file: str) -> None:
     _move_media(md_file_figs)
     _clean_up_artifacts(md_file, md_file_figs)
 
+
 # #############################################################################
 
 
-def add_download_args(parser: argparse.ArgumentParser,) -> argparse.ArgumentParser:
+def add_download_args(
+    parser: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
     parser.add_argument(
         "--docx_file",
         action="store",
@@ -154,8 +159,7 @@ def add_download_args(parser: argparse.ArgumentParser,) -> argparse.ArgumentPars
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser = add_download_args(parser)
     parser = hparser.add_verbosity_arg(parser)
