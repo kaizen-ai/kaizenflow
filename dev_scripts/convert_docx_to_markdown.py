@@ -4,6 +4,7 @@
 Convert docx file to markdown.
 
 Example:
+Run this command in the same directory as the markdown file:
 > ../dev_scripts/convert_docx_to_markdown.py --docx_file Tools_Docker.docx --md_file Tools_Docker.md
 """
 
@@ -52,7 +53,6 @@ def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
         #    > their versions to install, e.g. list of python packages and their
         #    > corresponding versions
         r"perl -pi -e 's:^(\s+)> :$1:g' {}".format(md_file),
-        #
         # >
         # > botocore==1.24.37
         # >
