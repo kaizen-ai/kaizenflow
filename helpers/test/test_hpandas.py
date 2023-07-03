@@ -2912,6 +2912,7 @@ class Test_dassert_increasing_index(hunitest.TestCase):
         """
         Check that a monotonically increasing index passes the assert.
         """
+        # Build test dataframe.
         idx = [
             pd.Timestamp("2000-01-01 9:01"),
             pd.Timestamp("2000-01-01 9:02"),
@@ -2921,6 +2922,7 @@ class Test_dassert_increasing_index(hunitest.TestCase):
         values = [0, 0, 0, 0]
         #
         df = pd.DataFrame(values, index=idx)
+        # Run.
         hpandas.dassert_increasing_index(df)
 
     def test2(self) -> None:
@@ -2928,6 +2930,7 @@ class Test_dassert_increasing_index(hunitest.TestCase):
         Check that an assert is raised when index is not monotonically
         increasing.
         """
+        # Build test dataframe.
         idx = [
             pd.Timestamp("2000-01-01 9:01"),
             pd.Timestamp("2000-01-01 9:02"),
@@ -2941,12 +2944,13 @@ class Test_dassert_increasing_index(hunitest.TestCase):
             hpandas.dassert_increasing_index(df)
         act = str(cm.exception)
         exp = r"""
-       * Failed assertion *
-       cond=False
-       Not increasing indices are:
-                            0
-       2000-01-01 09:04:00  0
-       2000-01-01 09:03:00  0"""
+        * Failed assertion *
+        cond=False
+        Not increasing indices are:
+                                0
+        2000-01-01 09:04:00  0
+        2000-01-01 09:03:00  0"""
+        # Run.
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test3(self) -> None:
@@ -2954,6 +2958,7 @@ class Test_dassert_increasing_index(hunitest.TestCase):
         Check that a monotonically increasing index with duplicates passes the
         assert.
         """
+        # Build test dataframe.
         idx = [
             pd.Timestamp("2000-01-01 9:00"),
             pd.Timestamp("2000-01-01 9:00"),
@@ -2963,6 +2968,7 @@ class Test_dassert_increasing_index(hunitest.TestCase):
         values = [0, 0, 0, 0]
         #
         df = pd.DataFrame(values, index=idx)
+        # Run.
         hpandas.dassert_increasing_index(df)
 
 
