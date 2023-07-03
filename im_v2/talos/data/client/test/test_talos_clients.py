@@ -32,6 +32,9 @@ def get_expected_column_names() -> List[str]:
 # #############################################################################
 
 # TODO(Grisha): "Update Talos code CmTask #1967".
+
+# hasync, hpandas and hparquet all require docker
+@pytest.mark.requires_docker
 class TestTalosHistoricalPqByTileClient1(icdc.ImClientTestCase):
     """
     TODO(Grisha): Test multiple exchanges CmTask #1533.
@@ -342,7 +345,8 @@ class TestTalosHistoricalPqByTileClient1(icdc.ImClientTestCase):
 # TestTalosHistoricalPqByTileClient2
 # #############################################################################
 
-
+# hasync, hpandas and hparquet all require docker
+@pytest.mark.requires_docker
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
@@ -354,7 +358,6 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
     For all the test methods see description of corresponding private method in
     the parent class.
     """
-
     def test_read_data1(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -664,7 +667,8 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
 # TestTalosSqlRealTimeImClient1
 # #############################################################################
 
-
+# hasync, hpandas and hparquet all require docker
+@pytest.mark.requires_docker
 class TestTalosSqlRealTimeImClient1(
     icdc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
@@ -1349,7 +1353,8 @@ class TestTalosSqlRealTimeImClient1(
 # TestMockSqlRealTimeImClient1
 # #############################################################################
 
-
+# hasync, hpandas and hparquet all require docker
+@pytest.mark.requires_docker
 class TestMockSqlRealTimeImClient1(
     icdc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):

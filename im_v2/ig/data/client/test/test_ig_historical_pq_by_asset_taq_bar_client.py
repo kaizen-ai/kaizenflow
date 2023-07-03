@@ -10,7 +10,8 @@ import im_v2.ig.data.client.ig_historical_pq_by_asset_taq_bar_client as imvidcih
 
 _LOG = logging.getLogger(__name__)
 
-
+# hasync, hpandas and hparquet all require docker
+@pytest.mark.requires_docker
 class TestIgHistoricalPqByTileTaqBarClient1(icdc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in

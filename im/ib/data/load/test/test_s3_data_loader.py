@@ -10,7 +10,9 @@ import helpers.hunit_test as hunitest
 import im.common.data.types as imcodatyp
 import im.ib.data.load.ib_s3_data_loader as imidlisdlo
 
+import pytest
 
+@pytest.mark.requires_docker
 class TestS3IbDataLoader1(hunitest.TestCase):
     """
     Test data loading correctness for Ib from S3.

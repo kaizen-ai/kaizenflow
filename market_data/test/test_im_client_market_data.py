@@ -14,6 +14,8 @@ import market_data as mdata
 
 
 # TODO(Grisha): @Dan, can we use CcxtHistoricalPqByTileClient?
+# hpandas and hsql require docker
+@pytest.mark.requires_docker
 class TestImClientMarketData1(mdata.MarketData_get_data_TestCase):
     """
     For all the test methods see description of corresponding private method in
@@ -534,7 +536,8 @@ class TestImClientMarketData1(mdata.MarketData_get_data_TestCase):
 # TestImClientMarketData2
 # #############################################################################
 
-
+# hpandas and hsql require docker
+@pytest.mark.requires_docker
 class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
     """
     For all the test methods see description of corresponding private method in
@@ -1045,6 +1048,8 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
 
 # TODO(Dan): Replace `TestImClientMarketData1` on this one when extended.
 # TODO(Dan): use local data instead of S3.
+# hpandas and hsql require docker
+@pytest.mark.requires_docker
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",

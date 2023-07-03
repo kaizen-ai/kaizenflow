@@ -20,7 +20,8 @@ import im_v2.common.db.db_utils as imvcddbut
 
 _LOG = logging.getLogger(__name__)
 
-
+# hasync, hpandas and hparquet all require docker
+@pytest.mark.requires_docker
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("has_dind_support()")
     and not henv.execute_repo_config_code("use_docker_sibling_containers()"),
@@ -203,7 +204,8 @@ class TestArchiveDbDataToS3(imvcddbut.TestImDbHelper, hmoto.S3Mock_TestCase):
         okx_data["exchange_id"] = "okx"
         return pd.concat([binance_data, okx_data], ignore_index=True)
 
-
+# hasync, hpandas and hparquet all require docker
+@pytest.mark.requires_docker
 class TestArchiveDbDataToS3Mode(hunitest.TestCase):
     def _prepare_test_mode(self, mode: str) -> dict:
         """

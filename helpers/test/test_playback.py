@@ -4,6 +4,7 @@ import os
 from typing import Any, Optional
 
 import pandas as pd
+import pytest
 
 import core.config as cconfig
 import helpers.hio as hio
@@ -18,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 # TestJsonRoundtrip1
 # #############################################################################
 
-
+@pytest.mark.requires_docker
 class TestJsonRoundtrip1(hunitest.TestCase):
     """
     Test roundtrip conversion through jsonpickle for different types.

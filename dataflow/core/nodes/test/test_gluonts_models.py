@@ -28,7 +28,7 @@ _LOG = logging.getLogger(__name__)
 
 
 if True:
-
+    @pytest.mark.requires_docker
     class TestContinuousDeepArModel(hunitest.TestCase):
         @pytest.mark.slow
         def test_fit_dag1(self) -> None:
@@ -85,6 +85,7 @@ if True:
             dag.connect("data", "deepar")
             return dag
 
+    @pytest.mark.requires_docker
     class TestDeepARGlobalModel(hunitest.TestCase):
         def test_fit1(self) -> None:
             mxnet.random.seed(0)

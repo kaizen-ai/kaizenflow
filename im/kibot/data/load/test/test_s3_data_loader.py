@@ -5,7 +5,7 @@ import helpers.hunit_test as hunitest
 import im.common.data.types as imcodatyp
 import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
 
-
+@pytest.mark.requires_docker
 class TestKibotS3DataLoader(hunitest.TestCase):
     def setUp(self) -> None:
         super().setUp()

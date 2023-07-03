@@ -3,6 +3,7 @@ import logging
 import os
 
 import pandas as pd
+import pytest
 
 import core.finance_data_example as cfidaexa
 import dataflow.model.tiled_flows as dtfmotiflo
@@ -12,7 +13,7 @@ import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
-
+@pytest.mark.requires_docker
 class Test_evaluate_weighted_forecasts(hunitest.TestCase):
     @staticmethod
     def convert_to_parquet_format(df: pd.DataFrame) -> pd.DataFrame:

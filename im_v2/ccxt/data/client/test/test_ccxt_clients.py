@@ -36,7 +36,8 @@ def get_expected_column_names() -> List[str]:
 # TestCcxtCsvClient1
 # #############################################################################
 
-
+# hasync, hpandas and hparquet all require docker
+@pytest.mark.requires_docker
 class TestCcxtCsvClient1(icdc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
@@ -616,6 +617,8 @@ class TestCcxtPqByAssetClient1(icdc.ImClientTestCase):
 
 
 # TODO(Dan): add example client for `CcxtSqlRealTimeImClient`.
+# hasync, hpandas and hparquet all require docker
+@pytest.mark.requires_docker
 class TestCcxtSqlRealTimeImClient1(
     icdc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
@@ -1012,7 +1015,8 @@ class TestCcxtSqlRealTimeImClient1(
 # TestCcxtHistoricalPqByTileClient1
 # #############################################################################
 
-
+# hasync, hpandas and hparquet all require docker
+@pytest.mark.requires_docker
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",

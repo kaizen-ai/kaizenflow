@@ -85,7 +85,7 @@ def _compare_dfs(self: Any, df1: pd.DataFrame, df2: pd.DataFrame) -> str:
 
 # #############################################################################
 
-
+@pytest.mark.requires_docker
 class TestParquet1(hunitest.TestCase):
     def test_get_df1(self) -> None:
         """
@@ -211,7 +211,7 @@ class TestParquet1(hunitest.TestCase):
 
 # #############################################################################
 
-
+@pytest.mark.requires_docker
 class TestPartitionedParquet1(hunitest.TestCase):
 
     # From https://arrow.apache.org/docs/python/dataset.html#reading-partitioned-data
@@ -489,7 +489,7 @@ class TestPartitionedParquet1(hunitest.TestCase):
 
 # #############################################################################
 
-
+@pytest.mark.requires_docker
 class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
     def test_no_interval(self) -> None:
         """
@@ -693,7 +693,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
 
 # #############################################################################
 
-
+@pytest.mark.requires_docker
 class TestAddDatePartitionColumns(hunitest.TestCase):
     def add_date_partition_columns_helper(
         self, partition_mode: str, expected: str
@@ -749,7 +749,7 @@ class TestAddDatePartitionColumns(hunitest.TestCase):
 
 # #############################################################################
 
-
+@pytest.mark.requires_docker
 class TestToPartitionedDataset(hunitest.TestCase):
     @staticmethod
     def get_test_data1() -> pd.DataFrame:
@@ -836,7 +836,7 @@ class TestToPartitionedDataset(hunitest.TestCase):
 
 # #############################################################################
 
-
+@pytest.mark.requires_docker
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
@@ -951,7 +951,7 @@ class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
 
 # #############################################################################
 
-
+@pytest.mark.requires_docker
 class TestYieldParquetTiles(hunitest.TestCase):
     def generate_test_data(self) -> None:
         """

@@ -1,5 +1,7 @@
 import logging
 
+import pytest
+
 import dataflow.model.model_plotter as dtfmomoplo
 import dataflow.model.test.test_model_evaluator as cdmttme
 import helpers.hprint as hprint
@@ -11,7 +13,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): For now we just test that code executes, without checking the output.
 #  When we add DataFrame output to the ModelPlotter functions so we can check that.
 
-
+@pytest.mark.requires_docker
 class TestModelPlotter1(hunitest.TestCase):
     def test_plot_multiple_tests_adjustment1(self) -> None:
         plotter, _, eval_config = self._get_example_model_plotter()

@@ -17,7 +17,8 @@ _LOG = logging.getLogger(__name__)
 # TestHistoricalPqByTileClient1
 # #############################################################################
 
-
+# hasync, hpandas and hparquet all require docker
+@pytest.mark.requires_docker
 class TestHistoricalPqByTileClient1(icdc.ImClientTestCase):
     def test_read_data1(self) -> None:
         # Generate Parquet test data and initialize client.

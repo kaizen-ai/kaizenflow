@@ -19,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 
 _AWS_PROFILE = "am"
 
-
+@pytest.mark.requires_docker
 class Test_dassert_is_unique1(hunitest.TestCase):
     def get_df1(self) -> pd.DataFrame:
         """
@@ -92,7 +92,7 @@ class Test_dassert_is_unique1(hunitest.TestCase):
 
 # #############################################################################
 
-
+@pytest.mark.requires_docker
 class Test_to_series1(hunitest.TestCase):
     def helper(self, n: int, exp: str) -> None:
         vals = list(range(n))
@@ -132,7 +132,7 @@ class Test_to_series1(hunitest.TestCase):
 
 # #############################################################################
 
-
+@pytest.mark.requires_docker
 class Test_trim_df1(hunitest.TestCase):
     def get_df(self, *args: Any, **kwargs: Any) -> pd.DataFrame:
         """
@@ -634,7 +634,7 @@ class Test_trim_df1(hunitest.TestCase):
             df, ts_col_name, start_ts, end_ts, left_close, right_close, exp
         )
 
-
+@pytest.mark.requires_docker
 @pytest.mark.skip(
     "Used for comparing speed of different trimming methods (CmTask1404)."
 )
@@ -979,7 +979,7 @@ class Test_trim_df2(Test_trim_df1):
 
 # #############################################################################
 
-
+@pytest.mark.requires_docker
 class TestDfToStr(hunitest.TestCase):
     @staticmethod
     def get_test_data() -> pd.DataFrame:
@@ -1110,7 +1110,7 @@ class TestDfToStr(hunitest.TestCase):
 
 # #############################################################################
 
-
+@pytest.mark.requires_docker
 class TestDataframeToJson(hunitest.TestCase):
     def test_dataframe_to_json(self) -> None:
         """
@@ -1189,7 +1189,7 @@ class TestDataframeToJson(hunitest.TestCase):
 
 # #############################################################################
 
-
+@pytest.mark.requires_docker
 class TestFindGapsInDataframes(hunitest.TestCase):
     def test_find_gaps_in_dataframes(self) -> None:
         """
@@ -1218,7 +1218,7 @@ class TestFindGapsInDataframes(hunitest.TestCase):
 
 # #############################################################################
 
-
+@pytest.mark.requires_docker
 class TestCompareDataframeRows(hunitest.TestCase):
     def get_test_data(self) -> pd.DataFrame:
         test_data = {
@@ -1279,7 +1279,7 @@ class TestCompareDataframeRows(hunitest.TestCase):
 
 # #############################################################################
 
-
+@pytest.mark.requires_docker
 class TestReadDataFromS3(hunitest.TestCase):
     def test_read_csv1(self) -> None:
         s3fs = hs3.get_s3fs(_AWS_PROFILE)
@@ -1303,6 +1303,7 @@ class TestReadDataFromS3(hunitest.TestCase):
         hpandas.read_parquet_to_df(stream, **kwargs)
 
 
+@pytest.mark.requires_docker
 class TestSubsetDf1(hunitest.TestCase):
     def test1(self) -> None:
         # Generate some random data.
@@ -1327,6 +1328,7 @@ class TestSubsetDf1(hunitest.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+@pytest.mark.requires_docker
 class TestDropNa(hunitest.TestCase):
     def test_dropna1(self) -> None:
         """
@@ -1385,6 +1387,7 @@ class TestDropNa(hunitest.TestCase):
         hunitest.compare_df(actual, expected)
 
 
+@pytest.mark.requires_docker
 class TestDropAxisWithAllNans(hunitest.TestCase):
     def test_drop_rows1(self) -> None:
         """
@@ -1488,6 +1491,7 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
         hunitest.compare_df(actual, expected)
 
 
+@pytest.mark.requires_docker
 class TestDropDuplicates(hunitest.TestCase):
     """
     Test that duplicates are dropped correctly.
@@ -1606,6 +1610,7 @@ class TestDropDuplicates(hunitest.TestCase):
         self.assert_equal(no_duplicates_df, expected_signature, fuzzy_match=True)
 
 
+@pytest.mark.requires_docker
 class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
     """
     Test that matching columns are filtered correctly.
@@ -1692,6 +1697,7 @@ class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_merge_dfs1(hunitest.TestCase):
     """
     Test that 2 dataframes are merged correctly.
@@ -1906,6 +1912,7 @@ class Test_merge_dfs1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_compare_dfs(hunitest.TestCase):
     """
     - Define two DataFrames that can be either equal or different in terms of columns or rows
@@ -2218,6 +2225,7 @@ class Test_compare_dfs(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_subset_multiindex_df(hunitest.TestCase):
     """
     Filter Multiindex DataFrame with 2 column levels.
@@ -2457,6 +2465,7 @@ class Test_subset_multiindex_df(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_compare_multiindex_dfs(hunitest.TestCase):
     """
     Subset Multiindex DataFrames with 2 column levels and compare its values.
@@ -2736,6 +2745,7 @@ class Test_compare_multiindex_dfs(hunitest.TestCase):
         )
 
 
+@pytest.mark.requires_docker
 class Test_compute_duration_df(hunitest.TestCase):
     """
     Compute timestamp stats from dfs and check the intersection.
@@ -2874,6 +2884,7 @@ class Test_compute_duration_df(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_compare_nans_in_dataframes(hunitest.TestCase):
     def test1(self):
         """

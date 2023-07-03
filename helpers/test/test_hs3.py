@@ -9,7 +9,6 @@ import helpers.hmoto as hmoto
 import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
 
-
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",

@@ -7,10 +7,12 @@ import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.common.db.db_utils as imvcddbut
 import market_data.market_data_example as mdmadaex
+import pytest
 
 _LOG = logging.getLogger(__name__)
 
-
+# Importing helpers.hpandas requires docker
+@pytest.mark.requires_docker
 class TestRealTimeMarketData2(
     imvcddbut.TestImDbHelper,
 ):

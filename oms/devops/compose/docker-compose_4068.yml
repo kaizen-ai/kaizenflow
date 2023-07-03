@@ -1,0 +1,21 @@
+version: '3.5'
+
+services:
+  # Docker container running Postgres DB.
+  oms_postgres4068:
+    image: postgres:13
+    restart: "no"
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - oms_postgres4068_data:/var/lib/postgresql/data
+volumes:
+  oms_postgres4068_data: {}
+
+networks:
+  default:
+    #name: oms_postgres4068_network
+    name: main_network

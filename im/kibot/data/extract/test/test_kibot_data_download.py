@@ -3,7 +3,9 @@ import os
 import helpers.hunit_test as hunitest
 import im.kibot.data.extract.download as imkdaexdo
 
+import pytest
 
+@pytest.mark.requires_docker
 class TestKibotDownload(hunitest.TestCase):
     def test_extract_dataset_links(self) -> None:
         """

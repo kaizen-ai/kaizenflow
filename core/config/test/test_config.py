@@ -327,6 +327,7 @@ class Test_flat_config_get1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_flat_config_in1(hunitest.TestCase):
     def test_in1(self) -> None:
         """
@@ -383,6 +384,7 @@ def _get_nested_config1(self: Any) -> cconfig.Config:
     return config
 
 
+@pytest.mark.requires_docker
 class Test_nested_config_get1(hunitest.TestCase):
     def test_existing_key1(self) -> None:
         """
@@ -480,6 +482,7 @@ class Test_nested_config_get1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_nested_config_set1(hunitest.TestCase):
     def test_not_existing_key1(self) -> None:
         """
@@ -719,6 +722,7 @@ def _get_nested_config5(self: Any) -> cconfig.Config:
     return config
 
 
+@pytest.mark.requires_docker
 class Test_nested_config_misc1(hunitest.TestCase):
     def test_config_print1(self) -> None:
         """
@@ -788,6 +792,7 @@ class Test_nested_config_misc1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_nested_config_in1(hunitest.TestCase):
     def test_in1(self) -> None:
         """
@@ -844,6 +849,7 @@ class Test_nested_config_in1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_nested_config_update1(hunitest.TestCase):
     def test_update1(self) -> None:
         config1 = _get_nested_config3(self)
@@ -931,6 +937,7 @@ class Test_nested_config_update1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_nested_config_update2(hunitest.TestCase):
     """
     Test the different update_modes for `config.update()`.
@@ -1120,6 +1127,7 @@ def _get_nested_config6(self: Any) -> cconfig.Config:
     return config
 
 
+@pytest.mark.requires_docker
 class Test_nested_config_flatten1(hunitest.TestCase):
     def test_flatten1(self) -> None:
         # Build config.
@@ -1179,6 +1187,7 @@ class Test_nested_config_flatten1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_subtract_config1(hunitest.TestCase):
     def test1(self) -> None:
         config1 = cconfig.Config()
@@ -1228,6 +1237,7 @@ class Test_subtract_config1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_dassert_is_serializable1(hunitest.TestCase):
     def test1(self) -> None:
         """
@@ -1295,6 +1305,7 @@ class Test_dassert_is_serializable1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_from_env_var1(hunitest.TestCase):
     def test1(self) -> None:
         eval_config = cconfig.Config.from_dict(
@@ -1327,6 +1338,7 @@ class Test_from_env_var1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_make_read_only1(hunitest.TestCase):
     def test_set1(self) -> None:
         """
@@ -1458,6 +1470,7 @@ class Test_make_read_only1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_to_dict1(hunitest.TestCase):
     def helper(
         self,
@@ -1599,6 +1612,7 @@ class Test_to_dict1(hunitest.TestCase):
     #     config.update(config_tail)
 
 
+@pytest.mark.requires_docker
 class Test_to_dict2(hunitest.TestCase):
     def test1(self) -> None:
         config = _get_nested_config6(self)
@@ -1633,6 +1647,7 @@ class Test_to_dict2(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_get_config_from_flattened_dict1(hunitest.TestCase):
     def test1(self) -> None:
         flattened = collections.OrderedDict(
@@ -1684,6 +1699,7 @@ class Test_get_config_from_flattened_dict1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_from_dict1(hunitest.TestCase):
     def test1(self) -> None:
         nested = {
@@ -1781,6 +1797,7 @@ class Test_from_dict1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_to_pickleable_string(hunitest.TestCase):
     def helper(
         self,
@@ -1844,6 +1861,7 @@ class Test_to_pickleable_string(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_save_to_file(hunitest.TestCase):
     def helper(self, value: Optional[str]) -> None:
         # Set config.
@@ -1892,6 +1910,7 @@ def remove_line_numbers(actual_config: str):
     return actual_config
 
 
+@pytest.mark.requires_docker
 class Test_to_string(hunitest.TestCase):
     def get_test_config(
         self,
@@ -2027,6 +2046,7 @@ class Test_to_string(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_mark_as_used1(hunitest.TestCase):
     def test1(self) -> None:
         """
@@ -2122,6 +2142,7 @@ class Test_mark_as_used1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_get_marked_as_used1(hunitest.TestCase):
     """
     Verify that marked_as_used parameter is displayed correctly.
@@ -2149,6 +2170,7 @@ class Test_get_marked_as_used1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_check_unused_variables1(hunitest.TestCase):
     def test1(self) -> None:
         """
@@ -2195,6 +2217,7 @@ class Test_check_unused_variables1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class _Config_execute_stmt_TestCase1(hunitest.TestCase):
     """
     A class to apply transformations to a Config one-by-one checking its
@@ -2259,6 +2282,7 @@ class _Config_execute_stmt_TestCase1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
     """
     Test that _Config_execute_stmt_TestCase1 works properly.
@@ -2339,6 +2363,7 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_basic1(_Config_execute_stmt_TestCase1):
     def test1(self) -> None:
         """

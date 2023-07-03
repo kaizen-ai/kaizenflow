@@ -11,10 +11,12 @@ import im.common.data.types as imcodatyp
 import im.ib.data.config as imibdacon
 import im.ib.data.load.ib_file_path_generator as imidlifpge
 
+import pytest
+
 AM_AWS_PROFILE = "am"
 _S3_BUCKET = hs3.get_s3_bucket_path(AM_AWS_PROFILE, add_s3_prefix=False)
 
-
+@pytest.mark.requires_docker
 class TestIbFilePathGenerator(hunitest.TestCase):
     """
     Test correctness of S3 IB paths.

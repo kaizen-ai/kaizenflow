@@ -60,7 +60,7 @@ def get_workload1(
         workload = hjoblib.randomize_workload(workload, seed=seed)
     return workload
 
-
+@pytest.mark.requires_docker
 class Test_parallel_execute1(hunitest.TestCase):
     """
     Execute a workload of 5 tasks that all succeed.
@@ -146,7 +146,7 @@ def get_workload2() -> hjoblib.Workload:
     workload: hjoblib.Workload = (workload_function, "workload_function", tasks)
     return workload
 
-
+@pytest.mark.requires_docker
 class Test_parallel_execute2(hunitest.TestCase):
     """
     Execute a workload of 1 task that fails.
@@ -258,7 +258,7 @@ def get_workload3(
         workload = hjoblib.randomize_workload(workload, seed=seed)
     return workload
 
-
+@pytest.mark.requires_docker
 class Test_parallel_execute3(hunitest.TestCase):
     """
     Execute a workload with 5 tasks that succeed and 1 task that fails.
@@ -399,7 +399,7 @@ val1=4, val2=8, incremental=True, num_attempts=1, kwargs={'hello4': 'world8', 'g
 
 # #############################################################################
 
-
+@pytest.mark.requires_docker
 @pytest.mark.skip(reason="Just for experimenting with joblib")
 class Test_joblib_example1(hunitest.TestCase):
     @staticmethod

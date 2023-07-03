@@ -28,7 +28,8 @@ _IG_START_DATE = "2019-01-07"
 #                           PRE 20190107/
 #                           PRE 20190108/
 
-
+# hpandas requires docker
+@pytest.mark.requires_docker
 class TestTaqBarsUtils1(hunitest.TestCase):
     def test_get_available_dates1(self) -> None:
         dates = imvidchiba.get_available_dates(_ROOT_DATA_DIR, _AWS_PROFILE)
@@ -92,8 +93,8 @@ class TestTaqBarsUtils1(hunitest.TestCase):
 
 
 # #############################################################################
-
-
+# hpandas requires docker
+@pytest.mark.requires_docker
 class TestGetBarData1(hunitest.TestCase):
     def get_bar_data_helper(self, *args: Any, **kwargs: Any) -> None:
         df = imvidchiba.get_bar_data_for_dates(*args, **kwargs)
@@ -189,7 +190,8 @@ class TestGetBarData1(hunitest.TestCase):
 
 # #############################################################################
 
-
+# hpandas requires docker
+@pytest.mark.requires_docker
 class Test_get_cached_bar_data_for_date_interval1(hunitest.TestCase):
     def test_tsla1(self) -> None:
         """
@@ -220,7 +222,8 @@ class Test_get_cached_bar_data_for_date_interval1(hunitest.TestCase):
 
 # #############################################################################
 
-
+# hpandas requires docker
+@pytest.mark.requires_docker
 class Test_get_cached_bar_data_for_date_interval_perf1(hunitest.TestCase):
     @pytest.mark.slow("Takes around 1 minute")
     def test1(self) -> None:
@@ -298,7 +301,8 @@ class Test_get_cached_bar_data_for_date_interval_perf1(hunitest.TestCase):
 
 # #############################################################################
 
-
+# hpandas requires docker
+@pytest.mark.requires_docker
 class TestTaqBarsUtils2(hunitest.TestCase):
     @pytest.mark.skip(reason="This is used to generate the frozen input")
     def test_generate_raw_ig_data(self) -> None:

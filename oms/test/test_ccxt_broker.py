@@ -20,7 +20,8 @@ import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
 
-
+# Importing oms.ccxt_broker requires hpandas which requires docker
+@pytest.mark.requires_docker
 class TestCcxtBroker1(hunitest.TestCase):
     # Mock calls to external providers.
     get_secret_patch = umock.patch.object(occxbrok.hsecret, "get_secret")
@@ -439,7 +440,8 @@ class TestCcxtBroker1(hunitest.TestCase):
         # Check timestamps.
         self.assertEqual(actual_time, expected_time)
 
-
+# Importing oms.ccxt_broker requires hpandas which requires docker
+@pytest.mark.requires_docker
 @pytest.mark.skip(reason="Run manually.")
 class TestSaveMarketInfo(hunitest.TestCase):
     """

@@ -21,7 +21,7 @@ _LOG = logging.getLogger(__name__)
 # Test statsmodels - SARIMAX
 # #############################################################################
 
-
+@pytest.mark.requires_docker
 class TestContinuousSarimaxModel(hunitest.TestCase):
     """
     Warning: SARIMAX can give slightly different outputs on different machines.
@@ -355,6 +355,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         self.check_dataframe(df_out, err_threshold=err_threshold)
 
 
+@pytest.mark.requires_docker
 class TestMultihorizonReturnsPredictionProcessor(hunitest.TestCase):
     def test1(self) -> None:
         model_output = self._get_multihorizon_model_output(3)

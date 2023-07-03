@@ -16,6 +16,7 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.requires_docker
 class TestRealTimeDagRunner1(hunitest.TestCase):
     """
     - Create a naive DAG pipeline with a node generating random data and

@@ -2,10 +2,12 @@ import logging
 
 import helpers.hunit_test as hunitest
 import im_v2.common.data.client.im_raw_data_client as imvcdcimrdc
+import pytest
 
 _LOG = logging.getLogger(__name__)
 
-
+# hasync, hpandas and hparquet all require docker
+@pytest.mark.requires_docker
 class TestImRawDataClient(hunitest.TestCase):
     def test_build_s3_pq_file_path1(self) -> None:
         """

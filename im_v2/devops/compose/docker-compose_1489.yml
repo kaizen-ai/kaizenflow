@@ -1,0 +1,21 @@
+version: '3.5'
+
+services:
+  # Docker container running Postgres DB.
+  im_postgres1489:
+    image: postgres:13
+    restart: "no"
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - im_postgres1489_data:/var/lib/postgresql/data
+volumes:
+  im_postgres1489_data: {}
+
+networks:
+  default:
+    #name: im_postgres1489_network
+    name: main_network

@@ -23,7 +23,7 @@ from dataflow.core.nodes.volatility_models import (
 
 _LOG = logging.getLogger(__name__)
 
-
+@pytest.mark.requires_docker
 class TestSmaModel(hunitest.TestCase):
     def test1(self) -> None:
         # Load test data.
@@ -155,6 +155,7 @@ class TestSmaModel(hunitest.TestCase):
         self.check_string(actual)
 
 
+@pytest.mark.requires_docker
 class TestSingleColumnVolatilityModel(hunitest.TestCase):
     def test1(self) -> None:
         """
@@ -255,6 +256,7 @@ class TestSingleColumnVolatilityModel(hunitest.TestCase):
         return act
 
 
+@pytest.mark.requires_docker
 class TestVolatilityModel(hunitest.TestCase):
     @pytest.mark.skip("See CmTask #2975.")
     def test01(self) -> None:
@@ -603,6 +605,7 @@ class TestVolatilityModel(hunitest.TestCase):
         return df
 
 
+@pytest.mark.requires_docker
 class TestMultiindexVolatilityModel(hunitest.TestCase):
     def test1(self) -> None:
         """
@@ -699,6 +702,7 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         return data
 
 
+@pytest.mark.requires_docker
 class TestVolatilityModulator(hunitest.TestCase):
     def test_modulate1(self) -> None:
         steps_ahead = 2

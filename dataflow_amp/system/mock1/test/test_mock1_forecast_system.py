@@ -33,6 +33,7 @@ def _get_test_system_builder_func() -> Callable:
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_Mock1_System_CheckConfig(dtfsys.System_CheckConfig_TestCase1):
     def test_freeze_config1(self) -> None:
         system_builder_func = _get_test_system_builder_func()
@@ -45,6 +46,7 @@ class Test_Mock1_System_CheckConfig(dtfsys.System_CheckConfig_TestCase1):
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_Mock1_NonTime_ForecastSystem_FitPredict(
     dtfsys.NonTime_ForecastSystem_FitPredict_TestCase1
 ):
@@ -90,6 +92,7 @@ class Test_Mock1_NonTime_ForecastSystem_FitPredict(
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_Mock1_NonTime_ForecastSystem_FitInvariance(
     dtfsys.NonTime_ForecastSystem_FitInvariance_TestCase1
 ):
@@ -115,6 +118,7 @@ class Test_Mock1_NonTime_ForecastSystem_FitInvariance(
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_Mock1_NonTime_ForecastSystem_CheckPnl(
     dtfsys.NonTime_ForecastSystem_CheckPnl_TestCase1
 ):
@@ -135,6 +139,7 @@ class Test_Mock1_NonTime_ForecastSystem_CheckPnl(
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_Mock1_Time_ForecastSystem1(dtfsys.Test_Time_ForecastSystem_TestCase1):
     def test1(self) -> None:
         """
@@ -170,6 +175,7 @@ class Test_Mock1_Time_ForecastSystem1(dtfsys.Test_Time_ForecastSystem_TestCase1)
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
     dtfsys.Time_ForecastSystem_with_DataFramePortfolio_TestCase1
 ):
@@ -227,6 +233,7 @@ class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio2(
     dtfsys.Time_ForecastSystem_with_DataFramePortfolio_TestCase1
 ):
@@ -250,6 +257,7 @@ class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio2(
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
     dtfsys.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1
 ):
@@ -309,6 +317,7 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor2(
     dtfsys.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1
 ):
@@ -348,6 +357,7 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor2(
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio1(
     dtfsys.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1
 ):
@@ -414,6 +424,7 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_v
 # #############################################################################
 
 
+@pytest.mark.requires_docker
 class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
     dtfsys.NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1
 ):

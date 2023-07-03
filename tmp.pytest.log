@@ -1,0 +1,6 @@
+15:22:43 hdbg.py init_logger:987                             15:22:43 hdbg.py init_logger:987                             Effective logging level=5
+15:22:43 hlogging.py shutup_chatty_modules:198               15:22:43 hlogging.py shutup_chatty_modules:198               Shut up 1 modules: asyncio
+15:22:43 - [36mINFO [0m hunit_test.py setUp:1042                               15:22:43 - [36mINFO [0m hunit_test.py setUp:1042                               
+################################################################################
+Test_purify_from_env_vars.test2
+################################################################################

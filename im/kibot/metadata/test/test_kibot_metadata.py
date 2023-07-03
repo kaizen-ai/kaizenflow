@@ -5,9 +5,11 @@ import im.kibot.metadata.load.kibot_metadata as imkmlkime
 import im.kibot.metadata.load.s3_backend as imkmls3ba
 import im.kibot.metadata.test.mocking.mock_kibot_metadata as mkmd
 
+import pytest
+
 MAX_ROWS = 500
 
-
+@pytest.mark.requires_docker
 class TestKibotMetadata(hunitest.TestCase):
     def test_get_metadata_slow1(self) -> None:
         """

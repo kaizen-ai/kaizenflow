@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import core.artificial_signal_generators as carsigen
 import core.config as cconfig
@@ -74,6 +75,7 @@ def get_example_model_evaluator():
     return evaluator, eval_config
 
 
+@pytest.mark.requires_docker
 class TestModelEvaluator1(hunitest.TestCase):
     def test_calculate_stats1(self) -> None:
         evaluator, eval_config = get_example_model_evaluator()

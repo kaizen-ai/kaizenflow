@@ -21,7 +21,8 @@ import im_v2.common.data.transform.resample_daily_bid_ask_data as imvcdtrdbad
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
 
-
+# hasync, hpandas and hparquet all require docker
+@pytest.mark.requires_docker
 class TestDownloadExchangeDataToDbPeriodically1(hunitest.TestCase):
     # Regular mock for capturing logs.
     log_patch = umock.patch.object(imvcdeexut, "_LOG")
@@ -432,7 +433,8 @@ class TestDownloadExchangeDataToDbPeriodically2(hunitest.TestCase):
         self.loop.close()
         super().tearDown()
 
-
+# hasync, hpandas and hparquet all require docker
+@pytest.mark.requires_docker
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
@@ -615,7 +617,8 @@ def get_simple_crypto_chassis_mock_data(
         ]
     )
 
-
+# hasync, hpandas and hparquet all require docker
+@pytest.mark.requires_docker
 @pytest.mark.slow("Takes around 6 secs")
 class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
     def setUp(self) -> None:
@@ -815,7 +818,8 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
         self.check_download_historical_data()
         self.check_resampler()
 
-
+# hasync, hpandas and hparquet all require docker
+@pytest.mark.requires_docker
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
@@ -984,6 +988,8 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
 
 
 # TODO(gp): Difference between amp and cmamp.
+# hasync, hpandas and hparquet all require docker
+@pytest.mark.requires_docker
 @pytest.mark.skip(reason="File '/home/.aws/credentials' doesn't exist")
 class TestRemoveDuplicates(hmoto.S3Mock_TestCase, imvcddbut.TestImDbHelper):
     @classmethod
