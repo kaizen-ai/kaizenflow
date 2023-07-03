@@ -3,11 +3,8 @@
 """
 Convert docx file to markdown.
 
-Usage:
-> dev_scripts/convert_docx_to_markdown.py --docx_file <docx_file> --md_file <md_file>
-
 Example:
-> dev_scripts/convert_docx_to_markdown.py --docx_file docs/Tools_Docker.docx --md_file docs/@Tools_Docker_Test.md
+> ../dev_scripts/convert_docx_to_markdown.py --docx_file Tools_Docker.docx --md_file Tools_Docker.md
 """
 
 import argparse
@@ -28,12 +25,12 @@ def _move_media(md_file_figs: str) -> None:
     Move the media if it exists.
     """
     if os.path.isdir(os.path.join(md_file_figs, "media")):
-        # Move all the files in 'media' to 'out_figs'
+        # Move all the files in 'media' to 'md_file_figs'.
         for file_name in os.listdir(os.path.join(md_file_figs, "media")):
             shutil.move(
                 os.path.join(md_file_figs, "media", file_name), md_file_figs
             )
-        # Remove the 'media' directory
+        # Remove the 'media' directory.
         shutil.rmtree(os.path.join(md_file_figs, "media"))
 
 
@@ -41,6 +38,7 @@ def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
     """
     Remove the artifacts.
 
+    :param md_file: path to the markdown file
     :param md_file_figs: path to the folder containing the artifacts
     """
     perl_regex_replacements = [
@@ -73,16 +71,18 @@ def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
         r"perl -pi -e 's:”:\":g' {}".format(md_file),
         # Remove trailing \
         r"perl -pi -e 's:\\$::g' {}".format(md_file),
-        # Remove ========= and -------.
+        # Remove ========= and -------
         r"perl -pi -e 's:======+::g' {}".format(md_file),
         r"perl -pi -e 's:------+::g' {}".format(md_file),
         # Translate HTML elements.
         r"perl -pi -e 's:\&gt;:\>:g' {}".format(md_file),
         r"perl -pi -e 's:\<\!\-\-.*\-\-\>::g' {}".format(md_file),
+        # Fix image links.
         r"perl -pi -e 's:{}/media/:{}/:g' {}".format(
             md_file_figs, md_file_figs, md_file
         ),
     ]
+    # Run the commands.
     for clean_cmd in perl_regex_replacements:
         hsystem.system(clean_cmd)
 
@@ -121,17 +121,16 @@ def _convert_docx_to_markdown(docx_file: str, md_file: str) -> None:
     # Run Docker container.
     work_dir = os.getcwd()
     mount = f"type=bind,source={work_dir},target={work_dir}"
-    # Convert from docx to Markdown.
     remove_figs_folder_cmd = f"rm -rf {md_file_figs}"
     hsystem.system(remove_figs_folder_cmd)
+    # Convert from docx to Markdown.
     convert_docx_to_markdown_cmd = f"pandoc --extract-media {md_file_figs} -f docx -t markdown_strict -o {md_file} {docx_file}"
     docker_cmd = f"docker run --rm -it --workdir {work_dir} --mount {mount} {docker_container_name} {convert_docx_to_markdown_cmd}"
     _LOG.info("Start converting docx to markdown.")
     hsystem.system(docker_cmd)
-    _LOG.info("Finished converting '%s' to '%s'.", docx_file, md_file)
-    _LOG.info("Md figs '%s'", md_file_figs)
     _move_media(md_file_figs)
     _clean_up_artifacts(md_file, md_file_figs)
+    _LOG.info("Finished converting '%s' to '%s'.", docx_file, md_file)
 
 
 # #############################################################################
@@ -152,7 +151,7 @@ def add_download_args(
         action="store",
         required=True,
         type=str,
-        help="The converted markdown file",
+        help="The output markdown file",
     )
     return parser
 
