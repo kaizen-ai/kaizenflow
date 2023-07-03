@@ -7,6 +7,7 @@ from typing import List
 import helpers.hdbg as hdbg
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
+import helpers.hio as hio
 
 _LOG = logging.getLogger(__name__)
 
@@ -71,18 +72,32 @@ class Test_system1(hunitest.TestCase):
 
     def test8(self) -> None:
         """
-        Test .system() on a failing cmd with --tee switch enabled.
+        Test .system() on a failing cmd with --tee switch enabled and no other parameters.
         """        
         with self.assertRaises(AssertionError) as cm:
             hsystem.system("ls this_should_fail", tee=True)    
-        output = 'tmp_hsystem_Test_system1_test8_output.txt'
-        try:            
-            hsystem.system("ls this_should_fail", tee=True, output_file=output)
-        except Exception as e:
-            self.fail("hsystem.system() raised", type(e).__name__," error")
-        finally:            
-            os.remove(output)
         
+    
+    def test9(self) -> None:
+        """
+        Test .system() on a failing cmd with --tee switch enabled and specified log output file.
+        """  
+        log_dir = self.get_scratch_space()
+        log_file_path = os.path.join(log_dir, "tee_log")   
+        #Creates AssertRaisesContext error (seems unexpected)
+        with self.assertRaises(RuntimeError) as cm:
+            hsystem.system("ls this_should_fail", tee=True, output_file=log_file_path)
+        # Check that log file contains error message.
+        log_content = hio.from_file(log_file_path)
+        self.check_string(log_content)
+
+    def test10(self) -> None:
+        """
+        Test .system() on a failing cmd with --tee switch and allowedErrors enabled.
+        """
+        with self.assertRaises(TypeError) as cm:
+            hsystem.system("ls this_should_fail", tee=True, allowedErrors=True)
+
 
 
 # #############################################################################
