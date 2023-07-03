@@ -10,6 +10,11 @@
 - **(Contributor)**: Fill out the initial
   [Contact Info](https://docs.google.com/forms/d/e/1FAIpQLSf6IogJch1YUMSc_GfRcMIltGEEZ1xTotbRVkwZzWT7eBz_jA/viewform?usp=sf_link).
   - It's meant to just get basic contact info about you
+    
+  [Technical background](https://docs.google.com/forms/d/e/1FAIpQLScRDe4gdPi6hYElea6g5Eg_xGfVorn667lEaDIhA4kuWCCC_g/viewform?usp=sf_link)
+  so we know a little about you and your (initial) skills
+
+  - Don’t worry: by working with us, you will quickly become a coding machine
 
 - **(Admin)**: Receive an email that somebody is interested
   - Add the contributor to Mailchimp
@@ -33,12 +38,6 @@
     GitHub promotes our repo (we gotta work the system)
 
 - **(Contributor)**: Accept the invite to join the Google Drive
-
-- **(Contributor)**: Please fill out the
-  [Technical background](https://docs.google.com/forms/d/e/1FAIpQLScRDe4gdPi6hYElea6g5Eg_xGfVorn667lEaDIhA4kuWCCC_g/viewform?usp=sf_link)
-  so we know a little about you and your (initial) skills
-
-  - Don’t worry: by working with us, you will quickly become a coding machine
 
 - **(Contributor)**: Make sure the info on the
   [Contributor List](https://docs.google.com/spreadsheets/d/1eRZJaj5-1g6W7w_Ay4UhJEdtAvrTTM1V94cKj6_Vwoc/edit#gid=1253964093)
