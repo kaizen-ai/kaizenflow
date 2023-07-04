@@ -3,7 +3,7 @@
 Encrypt model using Pyarmor.
 
 Usage:
-> dev_scripts/encrypt_model.py --model_dir dataflow_amp/pipelines/mock1 --test
+> dev_scripts/encrypt_model.py --model_dir dataflow_amp/pipelines --model_dag_builder "Mock1_DagBuilder" -v DEBUG
 
 Import as:
 
@@ -13,8 +13,7 @@ import argparse
 import logging
 import os
 import pathlib
-import tempfile
-import stat
+import re
 
 import helpers.hdbg as hdbg
 import helpers.hio as hio
@@ -24,10 +23,13 @@ import helpers.hsystem as hsystem
 _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Add a unit test for encrypting a single model and for an entire dir.
-# We want to use hsystem.system() using 
+# We want to use hsystem.system() using
 # /Users/saggese/src/sorrentum1/dev_scripts/encrypt_model.py --model_dir dataflow_lemonade/pipelines/C5 -v DEBUG --test
 
-def _encrypt_model(model_dir: str, target_dir: str, build_target: str, docker_image_tag: str) -> str:
+
+def _encrypt_model(
+    model_dir: str, target_dir: str, build_target: str, docker_image_tag: str
+) -> str:
     """
     Encrypt model using Pyarmor.
 
@@ -44,8 +46,8 @@ def _encrypt_model(model_dir: str, target_dir: str, build_target: str, docker_im
     encrypted_model_dir = os.path.join(target_dir, encrypted_model_name)
     hio.create_dir(encrypted_model_dir, incremental=True)
     # Create temporary Dockerfile.
-    temp_dockerfile_path = './tmp.encrypt_model.Dockerfile'
-    with open(temp_dockerfile_path ,'w') as temp_dockerfile:
+    temp_dockerfile_path = "./tmp.encrypt_model.Dockerfile"
+    with open(temp_dockerfile_path, "w") as temp_dockerfile:
         temp_dockerfile.write(
             """
                 FROM python:3.8
@@ -56,7 +58,7 @@ def _encrypt_model(model_dir: str, target_dir: str, build_target: str, docker_im
     hsystem.system(cmd)
     os.remove(temp_dockerfile_path)
     _LOG.info("Remove temporary Dockerfile.")
-    
+
     # Run Docker container to encrypt the model.
     work_dir = os.getcwd()
     docker_target_dir = "/app"
@@ -66,8 +68,13 @@ def _encrypt_model(model_dir: str, target_dir: str, build_target: str, docker_im
     _LOG.info("Start running Docker container.")
     hsystem.system(docker_cmd)
     n_files = len(os.listdir(encrypted_model_dir))
-    hdbg.dassert_lt(0, n_files, "No files in encrypted_model_dir=`%s`", encrypted_model_dir)
-    _LOG.info("Encrypted model successfully stored in encrypted_model_dir='%s'", encrypted_model_dir)
+    hdbg.dassert_lt(
+        0, n_files, "No files in encrypted_model_dir=`%s`", encrypted_model_dir
+    )
+    _LOG.info(
+        "Encrypted model successfully stored in encrypted_model_dir='%s'",
+        encrypted_model_dir,
+    )
     # Make encrypted model files accessible by any user.
     # TODO(gp): Why is sudo needed? IMO the Docker container should use the right permissions.
     # We can pass -u user and group as we do for the main Docker flow.
@@ -78,15 +85,17 @@ def _encrypt_model(model_dir: str, target_dir: str, build_target: str, docker_im
 
 def _tweak_init(encrypted_model_dir: str) -> None:
     """
-    Add Pyarmor module to `__init__.py` to make sure that encrypted model works 
+    Add Pyarmor module to `__init__.py` to make sure that encrypted model works
     correctly.
 
     :param encrypted_model_dir: encrypted model directory
     """
-    # Generate absolute path of `pytransform` import.   
+    # Generate absolute path of `pytransform` import.
     encrypted_model_import_path = encrypted_model_dir.strip("/")
     encrypted_model_import_path = encrypted_model_import_path.replace("/", ".")
-    pytransform_import_path = '.'.join([encrypted_model_import_path, "pytransform"])
+    pytransform_import_path = ".".join(
+        [encrypted_model_import_path, "pytransform"]
+    )
     pytransform_import = f"from {pytransform_import_path} import pyarmor_runtime; pyarmor_runtime()"
     # Iteratively find all `__init__.py` under encrypted model directory.
     pending_dirs = [encrypted_model_dir]
@@ -95,9 +104,7 @@ def _tweak_init(encrypted_model_dir: str) -> None:
         init_file = os.path.join(current_dir, "__init__.py")
         if os.path.exists(init_file):
             data = hio.from_file(init_file)
-            lines = "\n".join(
-                [pytransform_import, data]
-            )   
+            lines = "\n".join([pytransform_import, data])
             hio.to_file(init_file, lines)
         for f in os.scandir(current_dir):
             if f.is_dir() and f.name != "pytransform":
@@ -106,13 +113,20 @@ def _tweak_init(encrypted_model_dir: str) -> None:
 
 def _test_model(model_dir: str, model_dag_builder: str) -> None:
     """
-    Check that model works correctly.
+    Check that a model works correctly.
     """
     temp_file_path = "./tmp.encrypt_model.test_model.sh"
     import_path = model_dir.lstrip("./")
     import_path = import_path.replace("/", ".")
-    # TODO(gp): The model name should be passed from command line.
-    script = f'python -c "import {import_path}.C5a_pipeline as f; a = f.C5a_DagBuilder(); print(a)"'
+    # Find the name of model pipeline under the model dir.
+    pipeline_name = r".+_pipeline.py"
+    model_pipeline = ""
+    for f in os.scandir(model_dir):
+        if re.match(pipeline_name, f.name) is not None:
+            model_pipeline = f.name
+            break
+    model_pipeline = model_pipeline[:-3]
+    script = f'python -c "import {import_path}.{model_pipeline} as f; a = f.{model_dag_builder}(); print(a)"'
     # Write testing script to temporary file.
     hio.to_file(temp_file_path, script)
     # Run test inside Docker container.
@@ -120,6 +134,16 @@ def _test_model(model_dir: str, model_dag_builder: str) -> None:
     (_, output) = hsystem.system_to_string(cmd)
     _LOG.debug(output)
     os.remove(temp_file_path)
+
+
+def _test_models_in_dir(model_dir: str, model_dag_builder: str) -> None:
+    """
+    Test all models in a directory.
+    """
+    for model in os.scandir(model_dir):
+        if model.is_dir() and model.name != "pytransform":
+            _LOG.info("Start testing model %s.", model.name)
+            _test_model(model.path, model_dag_builder)
 
 
 # #############################################################################
@@ -130,16 +154,13 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "--model_dir",
-        required=True,
-        type=str,
-        help="Source model directory"
+        "--model_dir", required=True, type=str, help="Source model directory"
     )
     parser.add_argument(
         "--model_dag_builder",
         required=True,
         type=str,
-        help="Model dag builder name"
+        help="Model dag builder name",
     )
     parser.add_argument(
         "--build_target",
@@ -147,7 +168,7 @@ def _parse() -> argparse.ArgumentParser:
         default="linux/amd64",
         choices=["linux/arm64", "linux/amd64", "linux/amd64,linux/arm64"],
         type=str,
-        help="Specify cross-build options for docker container"
+        help="Specify cross-build options for docker container",
     )
     parser.add_argument(
         "--target_dir",
@@ -161,13 +182,10 @@ def _parse() -> argparse.ArgumentParser:
         required=False,
         default="encryption_flow",
         type=str,
-        help="Docker image tag"
+        help="Docker image tag",
     )
     parser.add_argument(
-        "--test",
-        default=True,
-        action="store_true",
-        help="Run testing"
+        "--test", default=True, action="store_true", help="Run testing"
     )
     hparser.add_verbosity_arg(parser)
     return parser
@@ -185,13 +203,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
     else:
         model_path = pathlib.Path(model_dir)
         target_dir = str(model_path.parent)
-    encrypted_model_dir = _encrypt_model(model_dir, target_dir, args.build_target, args.docker_image_tag)
+    encrypted_model_dir = _encrypt_model(
+        model_dir, target_dir, args.build_target, args.docker_image_tag
+    )
     # Tweak `__init__.py` file.
     _tweak_init(encrypted_model_dir)
     if args.test:
         model_dag_builder = args.model_dag_builder
-        _test_model(model_dir)
-        _test_model(encrypted_model_dir)        
+        # Test original models in a dir.
+        _test_models_in_dir(model_dir, model_dag_builder)
+        # Test encrypted models in a dir.
+        _test_models_in_dir(encrypted_model_dir, model_dag_builder)
 
 
 if __name__ == "__main__":
