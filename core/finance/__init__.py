@@ -12,6 +12,7 @@ from core.finance.execution import *  # pylint: disable=unused-import # NOQA
 from core.finance.features import *  # pylint: disable=unused-import # NOQA
 from core.finance.holdings import *  # pylint: disable=unused-import # NOQA
 from core.finance.market_data_example import *  # pylint: disable=unused-import # NOQA
+from core.finance.market_impact import *  # pylint: disable=unused-import # NOQA
 from core.finance.per_bar_portfolio_metrics import *  # pylint: disable=unused-import # NOQA
 from core.finance.prediction_processing import *  # pylint: disable=unused-import # NOQA
 from core.finance.resampling import *  # pylint: disable=unused-import # NOQA

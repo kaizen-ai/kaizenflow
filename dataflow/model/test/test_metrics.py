@@ -15,14 +15,19 @@ def _get_result_data() -> pd.DataFrame:
         ("vwap.ret_0.vol_adj.lag_-2", 1467591036): [0.199, 0.12, 0.13, 0.3],
         ("vwap.ret_0.vol_adj.lag_-2", 2002879833): [0.133, 0.2, 0.333, 0.113],
         ("vwap.ret_0.vol_adj.lag_-2", 3187272957): [0, 0.23, 0.31, 0.222],
-        ("vwap.ret_0.vol_adj.lag_-2.hat", 1467591036): [
+        ("vwap.ret_0.vol_adj.shift_-2_hat", 1467591036): [
             0.22,
             0.232,
             0.221,
             0.112,
         ],
-        ("vwap.ret_0.vol_adj.lag_-2.hat", 2002879833): [0.98, 0.293, 0.223, 0.32],
-        ("vwap.ret_0.vol_adj.lag_-2.hat", 3187272957): [
+        ("vwap.ret_0.vol_adj.shift_-2_hat", 2002879833): [
+            0.98,
+            0.293,
+            0.223,
+            0.32,
+        ],
+        ("vwap.ret_0.vol_adj.shift_-2_hat", 3187272957): [
             0.38,
             0.283,
             0.821,
@@ -42,7 +47,7 @@ def _get_result_data() -> pd.DataFrame:
 def _get_metrics_df() -> pd.DataFrame:
     df = _get_result_data()
     y_column_name = "vwap.ret_0.vol_adj.lag_-2"
-    y_hat_column_name = "vwap.ret_0.vol_adj.lag_-2.hat"
+    y_hat_column_name = "vwap.ret_0.vol_adj.shift_-2_hat"
     metrics_df = dtfmodmetr.convert_to_metrics_format(
         df, y_column_name, y_hat_column_name
     )
@@ -55,7 +60,7 @@ class TestConvertToMetricsFormat(hunitest.TestCase):
         metrics_df = _get_metrics_df()
         actual = hpandas.df_to_str(metrics_df)
         expected = r"""
-                                            vwap.ret_0.vol_adj.lag_-2  vwap.ret_0.vol_adj.lag_-2.hat
+                                            vwap.ret_0.vol_adj.lag_-2  vwap.ret_0.vol_adj.shift_-2_hat
         end_ts                    asset_id
         2022-08-28 00:50:00-04:00 1467591036                    0.199                      0.22
                                   2002879833                    0.133                      0.98
@@ -80,7 +85,7 @@ class TestAnnotatedMetricsDf(hunitest.TestCase):
             "backtest_config": "ccxt_small-all.5T.2022-09-01_2022-11-30",
             "column_names": {
                 "target_variable": "vwap.ret_0.vol_adj.lag_-2",
-                "prediction": "vwap.ret_0.vol_adj.lag_-2.hat",
+                "prediction": "vwap.ret_0.vol_adj.shift_-2_hat",
             },
             "metrics": {
                 "n_quantiles": 10,
@@ -99,7 +104,7 @@ class TestAnnotatedMetricsDf(hunitest.TestCase):
         """
         tag_mode = "hour"
         expected = r"""
-                                            vwap.ret_0.vol_adj.lag_-2  vwap.ret_0.vol_adj.lag_-2.hat  hour
+                                            vwap.ret_0.vol_adj.lag_-2  vwap.ret_0.vol_adj.shift_-2_hat  hour
         end_ts                    asset_id
         2022-08-28 00:50:00-04:00 1467591036                    0.199                          0.22    0
                                   2002879833                    0.133                          0.98    0
@@ -118,7 +123,7 @@ class TestAnnotatedMetricsDf(hunitest.TestCase):
         """
         tag_mode = "all"
         expected = r"""
-                                            vwap.ret_0.vol_adj.lag_-2  vwap.ret_0.vol_adj.lag_-2.hat   all
+                                            vwap.ret_0.vol_adj.lag_-2  vwap.ret_0.vol_adj.shift_-2_hat   all
         end_ts                    asset_id
         2022-08-28 00:50:00-04:00 1467591036                    0.199                            0.22  all
                                   2002879833                    0.133                            0.98  all
@@ -137,7 +142,7 @@ class TestAnnotatedMetricsDf(hunitest.TestCase):
         """
         tag_mode = "target_var_magnitude_quantile_rank"
         expected = r"""
-                                             vwap.ret_0.vol_adj.lag_-2  vwap.ret_0.vol_adj.lag_-2.hat  target_var_magnitude_quantile_rank
+                                             vwap.ret_0.vol_adj.lag_-2  vwap.ret_0.vol_adj.shift_-2_hat  target_var_magnitude_quantile_rank
         end_ts                    asset_id
         2022-08-28 00:50:00-04:00 1467591036                    0.199                      0.22                        6
                                   2002879833                    0.133                      0.98                        3
@@ -156,7 +161,7 @@ class TestAnnotatedMetricsDf(hunitest.TestCase):
         """
         tag_mode = "full_symbol"
         expected = r"""
-                                               vwap.ret_0.vol_adj.lag_-2  vwap.ret_0.vol_adj.lag_-2.hat        full_symbol
+                                               vwap.ret_0.vol_adj.lag_-2  vwap.ret_0.vol_adj.shift_-2_hat        full_symbol
         end_ts                    asset_id
         2022-08-28 00:50:00-04:00 1467591036                      0.199                           0.22  binance::BTC_USDT
                                   2002879833                      0.133                           0.98   gateio::XRP_USDT
@@ -175,7 +180,7 @@ class TestAnnotatedMetricsDf(hunitest.TestCase):
         """
         tag_mode = "prediction_magnitude_quantile_rank"
         expected = r"""
-                                              vwap.ret_0.vol_adj.lag_-2  vwap.ret_0.vol_adj.lag_-2.hat  prediction_magnitude_quantile_rank
+                                              vwap.ret_0.vol_adj.lag_-2  vwap.ret_0.vol_adj.shift_-2_hat  prediction_magnitude_quantile_rank
         end_ts                    asset_id
         2022-08-28 00:50:00-04:00 1467591036                      0.199                           0.22                                   3
                                   2002879833                      0.133                           0.98                                   9

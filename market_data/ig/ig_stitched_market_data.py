@@ -1,9 +1,3 @@
-"""
-Import as:
-
-import market_data.ig.ig_stitched_market_data as mdiismada
-"""
-
 # """
 # Import as:
 #

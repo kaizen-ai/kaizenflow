@@ -334,7 +334,9 @@ async def process_forecasts(
                 char1="#",
             ),
         )
-        await target_position_and_order_generator.submit_orders(orders)
+        await target_position_and_order_generator.submit_orders(
+            orders, **order_dict
+        )
         _LOG.debug(
             "TargetPositionAndOrderGenerator=\n%s",
             str(target_position_and_order_generator),

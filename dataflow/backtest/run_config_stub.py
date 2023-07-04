@@ -5,7 +5,7 @@ Run a single config through a run_config()
 # Use example:
 > run_configs_stub.py \
     --dst_dir nlp/test_results \
-    --experiment_builder "dataflow.backtest.master_backtest.run_experiment" \
+    --experiment_builder "dataflow.backtest.master_backtest.run_ins_oos_backtest" \
     --config_builder "nlp.build_configs.build_PTask1088_configs()" \
     --num_threads 2
 
@@ -37,7 +37,7 @@ def _parse() -> argparse.ArgumentParser:
         "--experiment_builder",
         action="store",
         required=True,
-        help="E.g., 'dataflow.backtest.master_backtest.run_experiment'",
+        help="E.g., 'dataflow.backtest.master_backtest.run_ins_oos_backtest'",
     )
     parser.add_argument(
         "--config_builder",
@@ -66,7 +66,7 @@ def _parse() -> argparse.ArgumentParser:
 # A command line like:
 # ```
 # > /app/amp/dataflow/backtest/run_config_list.py \
-#   --experiment_builder 'amp.dataflow.backtest.master_backtest.run_tiled_backtest' \
+#   --experiment_builder 'amp.dataflow.backtest.master_backtest.run_in_sample_tiled_backtest' \
 #   --config_builder 'dataflow_lime.system.E8.E8_tile_config_builders.build_E8e_tile_config_list("eg_v2_0-top1.5T.2020-01-01_2020-03-01")' --dst_dir /app/dataflow_lime/system/E8/test/outcomes/Test_E8e_TiledBacktest1.test_top1_JanFeb2020/tmp.scratch/run_model \
 #   --aws_profile am \
 #   --clean_dst_dir --no_confirm --num_threads serial \
@@ -75,7 +75,7 @@ def _parse() -> argparse.ArgumentParser:
 # get expanded into a series of command like:
 # ```
 # /app/amp/dataflow/backtest/run_config_stub.py \
-#   --experiment_builder 'amp.dataflow.backtest.master_backtest.run_tiled_backtest' \
+#   --experiment_builder 'amp.dataflow.backtest.master_backtest.run_in_sample_tiled_backtest' \
 #   --config_builder 'dataflow_lime.system.E8.E8_tile_config_builders.build_E8e_tile_config_list("eg_v2_0-top1.5T.2020-01-01_2020-03-01")' \
 #   --config_idx 0 \
 #   --dst_dir /app/dataflow_lime/system/E8/test/outcomes/Test_E8e_TiledBacktest1.test_top1_JanFeb2020/tmp.scratch/run_model \
@@ -104,7 +104,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _LOG.info("config_list=\n%s", config_list)
     # 2) Execute the `experiment_builder` passing the config to execute.
     experiment_builder = args.experiment_builder
-    # E.g., `amp.dataflow.backtest.master_backtest.run_tiled_backtest`.
+    # E.g., `amp.dataflow.backtest.master_backtest.run_in_sample_tiled_backtest`.
     _LOG.info("experiment_builder='%s'", experiment_builder)
     hdbg.dassert(
         not experiment_builder.endswith("()"),

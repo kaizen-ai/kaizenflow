@@ -536,7 +536,7 @@ class TestSeriesToDfTransformer2(hunitest.TestCase):
             }
         )
         node = dtfconotra.SeriesToDfTransformer("add_lags", **config.to_dict())
-        with pytest.raises(AssertionError):
+        with self.assertRaises(AssertionError):
             node.fit(data)["df_out"]
 
     @staticmethod
@@ -766,7 +766,7 @@ class TestSeriesToSeriesTransformer3(hunitest.TestCase):
             }
         )
         node = dtfconotra.SeriesToSeriesTransformer("diff", **config.to_dict())
-        with pytest.raises(AssertionError):
+        with self.assertRaises(AssertionError):
             node.fit(data)["df_out"]
 
     def _get_data(self) -> pd.DataFrame:

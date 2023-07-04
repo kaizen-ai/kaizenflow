@@ -419,6 +419,51 @@ def find_gaps_in_dataframes(
     return first_missing_data, second_missing_data
 
 
+# TODO(Grisha): maybe also add `apply_column_mode` at some point.
+# TODO(Grisha): use this idiom everywhere in the codebase, e.g., in `compare_dfs()`.
+# TODO(Grisha): add unit tests.
+def apply_index_mode(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    mode: str,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Process DataFrames according to the index mode.
+
+    :param df1: first input df
+    :param df2: second input df
+    :param mode: method of processing indices
+        - "assert_equal": check that both indices are equal, assert otherwise
+        - "intersect": restrict both dfs to a common index
+        - "leave_unchanged": ignore any indices mismatch and return dfs as-is
+    :return: transformed copy of the inputs
+    """
+    _LOG.debug("mode=%s", mode)
+    hdbg.dassert_isinstance(df1, pd.DataFrame)
+    hdbg.dassert_isinstance(df2, pd.DataFrame)
+    hdbg.dassert_isinstance(mode, str)
+    # Copy in order not to modify the inputs.
+    df1_copy = df1.copy()
+    df2_copy = df2.copy()
+    if mode == "assert_equal":
+        dassert_indices_equal(df1_copy, df2_copy)
+    elif mode == "intersect":
+        # TODO(Grisha): Add sorting on demand.
+        common_index = df1_copy.index.intersection(df2_copy.index)
+        df1_copy = df1_copy[df1_copy.index.isin(common_index)]
+        df2_copy = df2_copy[df2_copy.index.isin(common_index)]
+    elif mode == "leave_unchanged":
+        _LOG.debug(
+            "Ignoring any index missmatch as per user's request.\n"
+            "df1.index.difference(df2.index)=\n%s\ndf2.index.difference(df1.index)=\n%s",
+            df1_copy.index.difference(df2_copy.index),
+            df2_copy.index.difference(df1_copy.index),
+        )
+    else:
+        raise ValueError(f"Unsupported index_mode={mode}")
+    return df1_copy, df2_copy
+
+
 def find_gaps_in_time_series(
     time_series: pd.Series,
     start_timestamp: pd.Timestamp,
@@ -1344,13 +1389,16 @@ def read_parquet_to_df(
 def compute_weighted_sum(
     dfs: Dict[str, pd.DataFrame],
     weights: pd.DataFrame,
+    *,
+    index_mode: str = "assert_equal",
 ) -> Dict[str, pd.DataFrame]:
     """
     Compute weighted sums of `dfs` using `weights`.
 
-    :param dfs: dataframes keyed by id; all dfs should have the same index
-        and cols
+    :param dfs: dataframes keyed by id; all dfs should have the same cols,
+        indices are handled based on the `index_mode`
     :param weights: float weights indexed by id with unique col names
+    :param index_mode: same as `mode` in `apply_index_mode()`
     :return: weighted sums keyed by weight col names
     """
     hdbg.dassert_isinstance(dfs, dict)
@@ -1360,18 +1408,13 @@ def compute_weighted_sum(
     hdbg.dassert_isinstance(id_, str)
     df = dfs[id_]
     hdbg.dassert_isinstance(df, pd.DataFrame)
-    idx = df.index
     cols = df.columns
     # Sanity-check dataframes in dictionary.
     for key, value in dfs.items():
         hdbg.dassert_isinstance(key, str)
         hdbg.dassert_isinstance(value, pd.DataFrame)
-        hdbg.dassert(
-            value.index.equals(idx),
-            "Index equality fails for keys=%s, %s",
-            id_,
-            key,
-        )
+        # The reference df is not modified.
+        _, value = apply_index_mode(df, value, index_mode)
         hdbg.dassert(
             value.columns.equals(cols),
             "Column equality fails for keys=%s, %s",

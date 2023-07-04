@@ -61,7 +61,7 @@ class Test_compute_correlations(hunitest.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_unequal_indices_failure(self) -> None:
-        with pytest.raises(AssertionError):
+        with self.assertRaises(AssertionError):
             df1, df2 = get_data(False, True)
             _ = dtfmodcorr.compute_correlations(
                 df1,
@@ -88,7 +88,7 @@ class Test_compute_correlations(hunitest.TestCase):
 
     def test_unequal_columns_failure(self) -> None:
         df1, df2 = get_data(True, False)
-        with pytest.raises(AssertionError):
+        with self.assertRaises(AssertionError):
             _ = dtfmodcorr.compute_correlations(df1, df2)
 
     def test_unequal_columns(self) -> None:
