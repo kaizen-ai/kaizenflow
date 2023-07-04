@@ -50,7 +50,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         type=str,
         required=True,
-        help="Path to a CSV of users and their permissions.",
+        help="Path to the CSV file with usernames and their permissions.",
     )
     hparser.add_verbosity_arg(parser)
     return parser
