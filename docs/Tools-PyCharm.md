@@ -3,7 +3,6 @@
 There are multiple ways to develop on a remote server using PyCharm
 
 1.  VNC approach
-
     - PyCharm runs locally on the server using a "virtual screen"
     - Your laptop interacts with a VNC server to get the GUI locally
     - Pros:
@@ -14,19 +13,17 @@ There are multiple ways to develop on a remote server using PyCharm
       - Without enough bandwidth it's slow and not snappy enough
 
 2.  X11 approach
-
     - Same as VNC, but instead of sending bitmaps through VNC, a "compressed"
       version of the GUI is sent to the local computer directly
     - Pros:
       - Maybe faster than VNC
       - PyCharm window is like a native window on your laptop
     - Cons:
-      - X11 is old crap developed long time again and not really supported any
-        more
+      - X11 is old (once glorious) crap developed long time again and not 
+        really supported anymore
       - One needs to tunnel X11 traffic, set things up, and so on
 
 3.  PyCharm Gateway
-
     - New client-server architecture for PyCharm
       - A "headless" PyCharm runs on the server
       - A GUI client PyCharm runs on your laptop
@@ -45,11 +42,10 @@ There are multiple ways to develop on a remote server using PyCharm
     - Cons
       - You can't run / debug remotely
 
-## Current situation
+Approach 1) / VNC seems to require lots of memory and CPU and it's not really 
+fast.
 
-Approach 1) seems to require lots of memory and CPU and it's not really fast.
-
-Approach 2) works but it's a pain to set-up and slow.
+Approach 2) / X11 works, but it's a pain to set-up and slow.
 
 We want to try with 3)
 
@@ -58,7 +54,7 @@ We want to try with 3)
 - TODO(gp): @Juraj understand if it works, if it's fast, and if it requires less
   memory
 
-# How to run our cmamp container directly from PyCharm
+# How to run our `cmamp` container directly from PyCharm
 
 PyCharm allows to run commands directly inside a container
 
@@ -74,8 +70,7 @@ TODO(gp): @Juraj Let's both try this. There are some notes below about it
 
 CTRL + SHIFT + A -> View Pull Request
 
-![](docs/Tools-PyCharm_figs/image13.png){width="3.612198162729659in"
-height="4.932292213473316in"}
+![Pull request](Tools-PyCharm_figs/image13.png)
 
 # How to edit remote code
 
@@ -88,21 +83,17 @@ AmpTask1112_Audit_amp_Docker_system_03)
 
 Set-up Deployment
 
-![](docs/Tools-PyCharm_figs/image3.png){width="4.810558836395451in"
-height="3.51540791776028in"}
+![](Tools-PyCharm_figs/image3.png)
 
-![](docs/Tools-PyCharm_figs/image10.png){width="3.9114588801399823in"
-height="1.6807655293088364in"}
+![](Tools-PyCharm_figs/image10.png)
 
 The deployment options are
 
-![](docs/Tools-PyCharm_figs/image9.png){width="3.123700787401575in"
-height="2.78830271216098in"}
+![](Tools-PyCharm_figs/image9.png)
 
 You can see what file is changed in the file transfer window:
 
-![](docs/Tools-PyCharm_figs/image14.png){width="6.5in"
-height="1.2083333333333333in"}
+![](Tools-PyCharm_figs/image14.png)
 
 pycharm
 
@@ -119,8 +110,7 @@ pycharm
 
 - File | Settings | Tools | SSH Configurations
 
-  - ![](docs/Tools-PyCharm_figs/image7.png){width="3.802863079615048in"
-    height="1.4626399825021872in"}
+  - ![](Tools-PyCharm_figs/image7.png)
 
 - Once setup, ssh config can be used for all tools in PyCharm.
 
@@ -141,26 +131,22 @@ should apply to them also.
 - To add a new data source in DataGrip, go to the database section in the lower
   left corner.
 
-  - ![](docs/Tools-PyCharm_figs/image4.png){width="2.7734372265966756in"
-    height="2.7734372265966756in"}
+  - ![](Tools-PyCharm_figs/image4.png)
 
 - Then pick your desired data source from the dropdown in the upper right
   corner.
 
-  - ![](docs/Tools-PyCharm_figs/image6.png){width="4.164062773403325in"
-    height="2.028646106736658in"}
+  - ![](Tools-PyCharm_figs/image6.png)
 
 - You will be presented with a dummy config that needs to be replaced with
   proper data as shown below.
 
-  - ![](docs/Tools-PyCharm_figs/image8.png){width="4.158922790901137in"
-    height="3.0320844269466316in"}
+  - ![](Tools-PyCharm_figs/image8.png)
 
 - Before that is done, be sure that proper ssh info is added in SSH/SSL section.
 
-  - ![](docs/Tools-PyCharm_figs/image11.png){width="2.776042213473316in"
-    height="0.598069772528434in"}
-
+  - ![](Tools-PyCharm_figs/image11.png)
+z
 # Deployment with remote repository (through sync)
 
 Note: Before setting up deployment, pull the cmamp repo on EC2 instance and use
@@ -170,16 +156,13 @@ Reload All From Disk . This will upload changes to the remote repo.
 
 - Tools | Deployment | Configuration
 
-  - ![](docs/Tools-PyCharm_figs/image1.png){width="4.893396762904637in"
-    height="2.0781255468066493in"}
+  - ![](Tools-PyCharm_figs/image1.png)
 
-  - ![](docs/Tools-PyCharm_figs/image12.png){width="4.838542213473316in"
-    height="1.1398490813648294in"}
+  - ![](Tools-PyCharm_figs/image12.png)
 
 - Tools | Deployment | Options
 
-  - ![](docs/Tools-PyCharm_figs/image2.png){width="4.671411854768154in"
-    height="3.2864588801399823in"}
+  - ![](Tools-PyCharm_figs/image2.png)
 
     - Uncheck "Skip external changes" and check "Delete remote files"
 
@@ -189,8 +172,7 @@ Reload All From Disk . This will upload changes to the remote repo.
 
 - Tools | Deployment | Browse Remote Host
 
-  - ![](docs/Tools-PyCharm_figs/image5.png){width="5.394192913385827in"
-    height="1.765625546806649in"}
+  - ![](Tools-PyCharm_figs/image5.png)
 
 # PUDB - remote debugging - ToDo
 
@@ -335,8 +317,7 @@ Let's say you are connected via VNC.
 
 Set the reflow to reindent
 
-![](docs/Tools-PyCharm_figs/image15.png){width="6.5in"
-height="4.486111111111111in"}
+![](Tools-PyCharm_figs/image15.png)
 
 # Some recommended plug-ins
 

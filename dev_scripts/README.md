@@ -47,7 +47,6 @@
 
 ## remove_empty_lines.sh
 - Used in vim to remove empty spaces
-- 
 
 # `vim`
 

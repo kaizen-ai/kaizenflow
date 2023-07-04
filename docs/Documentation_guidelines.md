@@ -1,55 +1,53 @@
-# Documentation about guidelines
+# Documentation guidelines
 
 <!-- toc -->
 
 - [Guidelines for describing workflows](#guidelines-for-describing-workflows)
 - [Markdown vs Google Docs](#markdown-vs-google-docs)
-    - [In general](#in-general)
-    - [Markdown pros](#markdown-pros)
-    - [Google Docs pros](#google-docs-pros)
-    - [Rules of thumb](#rules-of-thumb)
-    - [Useful references](#useful-references)
+    + [In general](#in-general)
+    + [Markdown pros](#markdown-pros)
+    + [Google Docs pros](#google-docs-pros)
+    + [Rules of thumb](#rules-of-thumb)
+    + [Useful references](#useful-references)
 - [Style and cosmetic lints](#style-and-cosmetic-lints)
-  - [Always use markdown linter](#always-use-markdown-linter)
-  - [Table of content (TOC)](#table-of-content-toc)
-  - [Use nice 80 columns formatting for txt files](#use-nice-80-columns-formatting-for-txt-files)
-  - [Empty line after heading](#empty-line-after-heading)
-  - [Bullet lists](#bullet-lists)
-  - [Using `code` style](#using-code-style)
-  - [Indenting `code` style](#indenting-code-style)
-  - [Embedding screenshots](#embedding-screenshots)
-  - [Improve your written English](#improve-your-written-english)
-  - [Make sure your markdown looks good](#make-sure-your-markdown-looks-good)
+  * [Always use markdown linter](#always-use-markdown-linter)
+  * [Table of content (TOC)](#table-of-content-toc)
+  * [Use nice 80 columns formatting for txt files](#use-nice-80-columns-formatting-for-txt-files)
+  * [Empty line after heading](#empty-line-after-heading)
+  * [Bullet lists](#bullet-lists)
+  * [Using `code` style](#using-code-style)
+  * [Indenting `code` style](#indenting-code-style)
+  * [Embedding screenshots](#embedding-screenshots)
+  * [Improve your written English](#improve-your-written-english)
+  * [Make sure your markdown looks good](#make-sure-your-markdown-looks-good)
 - [Google docs style conventions](#google-docs-style-conventions)
-  - [Headings](#headings)
-  - [Font](#font)
+  * [Headings](#headings)
+  * [Font](#font)
 - [Convert between Gdocs and Markdown](#convert-between-gdocs-and-markdown)
-  - [Gdocs -> Markdown](#gdocs---markdown)
-    - [Using `pandoc`](#using-pandoc)
-    - [Using Chrome Docs to Markdown extension](#using-chrome-docs-to-markdown-extension)
-    - [Cleaning up converted markdown](#cleaning-up-converted-markdown)
-  - [Markdown -> Gdocs](#markdown---gdocs)
+  * [Gdocs -> Markdown](#gdocs---markdown)
+    + [Using `pandoc`](#using-pandoc)
+    + [Using Chrome Docs to Markdown extension](#using-chrome-docs-to-markdown-extension)
+    + [Cleaning up converted markdown](#cleaning-up-converted-markdown)
+  * [Markdown -> Gdocs](#markdown---gdocs)
 
 <!-- tocstop -->
-
 
 # Guidelines for describing workflows
 
 - Make no assumptions on the user's knowledge
   - Nothing is obvious to somebody who doesn't know
 - Add ways to verify if a described process worked
-  - E.g., "do this and that, if this and that is correct should see this"
-- Have a trouble-shooting procedure
+  - E.g., "Do ABC. If ABC worked correctly, you should see XYZ"
+- Have a troubleshooting procedure
   - One approach is to always start from scratch
 
 # Markdown vs Google Docs
 
-### In general
-
+In general:
 - We prefer to use Markdown for technical documentation
 - We use Google for notes from meetings and research
 
-### Markdown pros
+## Markdown pros
 
 - Can use vim
 - Can version control
@@ -59,7 +57,7 @@
 - Easy to add Latex equations
 - Easy to grep
 
-### Google Docs pros
+## Google Docs pros
 
 - Easy to embed figures
 - Easy to collaborate
@@ -77,7 +75,7 @@
       ```
   - Auto-latex equations
 
-### Rules of thumb
+## Rules of thumb
 
 - Use Markdown
   - If doc is going to be used as a public guideline
@@ -85,15 +83,15 @@
   - If there are notes from a book
 - Use Gdoc
   - If doc requires a lot of images that cannot be placed as text
-  - If doc is a research of an analysis
+  - If doc corresponds to research / analysis
 
-### Useful references
+## Useful references
 
 - [Markdown cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
 - [Google guide to Markdown](https://github.com/google/styleguide/blob/gh-pages/docguide/style.md)
   - TODO(gp): Make sure it's compatible with our linter
 
-# Style and cosmetic lints
+# Markdown docs style conventions
 
 ## Always use markdown linter
 
@@ -102,10 +100,10 @@
 - The file is `dev_scripts/lint_md.sh`, see the docstrings for more details
   - Example run:
     ```
-    dev_scripts/lint_md.sh docs/Documentation_about_guidelines.md
+    dev_scripts/lint_md.sh docs/Documentation_guidelines.md
     ```
-- Do not mix manual edits and linter runs. Best practice is to run the linter
-  and commit the changes it made as separate commit
+- Do not mix manual edits and linter runs. The best practice is to run the linter
+  and commit the changes it made as a separate commit
 - If the linter messes up the text, file an issue with examples of what the
   linter does incorrectly
 
@@ -114,17 +112,24 @@
 - Unfortunately both markdown and GitHub don't support automatically generating
   a TOC for a document
 - To generate a table of content:
-  - Add the following tag at the top of the markdown file below the document title:
+
+  - Add the following tag at the top of the markdown file below the document
+    title (removing `REMOVE_THIS` in the text below to avoid to trigger the TOC
+    insertion also here)
+
     ```
-    <!-- toc -->
+    <!-REMOVE_THIS- toc -->
+
+    <!-REMOVE_THIS- tocstop -->
     ```
+
   - Run the markdown linter in order to build TOC automatically
 
 ## Use nice 80 columns formatting for txt files
 
+- `lint_md.sh` takes care of reflowing the comments as well
 - Vim has a `:gq` command to reflow the comments
 - There are plugins to take care of this for PyCharm
-- Our markdown linter takes care of reflowing the comments as well
 
 ## Empty line after heading
 
@@ -174,9 +179,9 @@
   - Code
   - Dirs (e.g.,` /home/users`)
   - Command lines (e.g., `git push`)
-- When using a block of code use the write syntax highlighting
+- When using a block of code specify the proper syntax highlighting 
   - Bash
-    ```
+    ```bash
     > git push
     ```
   - Python
@@ -191,9 +196,9 @@
 - GitHub / pandoc seems to render incorrectly a code block unless it's indented
   over the previous line
   - _Bad_
-  ```
-  > git push
-  ```
+```
+> git push
+```
   - _Good_
     ```
     > git push
@@ -201,10 +206,28 @@
 
 ## Embedding screenshots
 
-- [**Avoid** to use screenshots whenever possible!](https://github.com/sorrentum/sorrentum/blob/master/docs/First_review_process.md#do-not-use-screenshots)
-- However, sometimes we need it (e.g., plot infographics, website inteface,
-  etc.)
-- To do it correctly:
+- [Avoid*to use screenshots](https://github.com/sorrentum/sorrentum/blob/master/docs/First_review_process.md#do-not-use-screenshots)
+  when reporting code
+- However, sometimes we need a screenshot (e.g., plot infographics, website 
+  inteface, etc.)
+
+- We prefer to embed the files as png in a dir corresponding to the document
+  - E.g., for this file we would use a dir called `Documentation_guidelines_figs`
+    storing all the images
+    ```
+    ![](Tools-PyCharm_figs/image9.png)
+    ```
+  - The path needs to be relative to the corresponding file to work properly
+  - To point to a file with respect to the top of the repo use a path like 
+    `/foo/bar/...`
+  - You can use the script (only Mac for now) to generate automatically a file
+    ```
+    > dev_scripts/markdown/screenshot_save.sh ...
+    ```
+
+- Another approach to use GitHub to host the image
+  - We don't like this approach since it stores a single absolute pointer
+    to the figure and doesn't allow version control
   - Place your screenshot in any comment window at GitHub
     - <img width="770" alt="screenshot" src="https://github.com/sorrentum/sorrentum/assets/31514660/ade0b104-d162-40a8-9f0d-3edadf38c57e">
     - This will upload the image to the GitHub cloud
@@ -221,23 +244,22 @@
 
 ## Improve your written English
 
-- Use English spell-checker
+- Use an English spell-checker
   - Unfortunately this is not enough
-- Type somewhere where you can use several free choices:
+- You can use proofreaders
   - [Grammarly](https://github.com/cryptokaizen/cmamp/blob/master/documentation/general/www.grammarly.com)
   - [LanguageTool](https://www.languagetool.org/)
-  - Or other proofreading and copy-paste
 - This is super-useful to improve your English since you see the error and the
-  correction
-  - Otherwise you will keep making the same mistakes forever
+  correction, otherwise you will keep making the same mistakes forever
 
 ## Make sure your markdown looks good
+
+- Compare your markdown with something already published (e.g.,
+  [docs/README.md](/docs/README.md)) and make sure it looks good
 
 - You can:
   - Check in a branch and use GitHub to render it
   - Use Pycharm to edit, which also renders it side-by-side
-  - Compare your markdown with already published
-    [documentation](/docs/README.md)
 
 # Google docs style conventions
 
