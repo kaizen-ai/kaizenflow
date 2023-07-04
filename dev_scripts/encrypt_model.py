@@ -3,7 +3,7 @@
 Encrypt model using Pyarmor.
 
 Usage:
-> dev_scripts/encrypt_model.py --model_dir dataflow_amp/pipelines --model_dag_builder "Mock1_DagBuilder" -v DEBUG
+> dev_scripts/encrypt_model.py --model_dir dataflow_amp/pipelines --is_dir --model_dag_builder "Mock1_DagBuilder" -v DEBUG
 
 Import as:
 
@@ -185,7 +185,16 @@ def _parse() -> argparse.ArgumentParser:
         help="Docker image tag",
     )
     parser.add_argument(
-        "--test", default=True, action="store_true", help="Run testing"
+        "--test",
+        default=True,
+        action="store_true",
+        help="Run testing"
+    )
+    parser.add_argument(
+        "--is_dir",
+        action="store_true",
+        required=False,
+        help="Encrypt entire directory or a single model"
     )
     hparser.add_verbosity_arg(parser)
     return parser
@@ -210,10 +219,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _tweak_init(encrypted_model_dir)
     if args.test:
         model_dag_builder = args.model_dag_builder
-        # Test original models in a dir.
-        _test_models_in_dir(model_dir, model_dag_builder)
-        # Test encrypted models in a dir.
-        _test_models_in_dir(encrypted_model_dir, model_dag_builder)
+        if args.is_dir:
+            _LOG.info("Test original models.")
+            _test_models_in_dir(model_dir, model_dag_builder)
+            _LOG.info("Test encrypted models.")
+            _test_models_in_dir(encrypted_model_dir, model_dag_builder)
+        else:
+            _LOG.info("Test original model.")
+            _test_model(model_dir, model_dag_builder)
+            _LOG.info("Test encrypted model.")
+            _test_model(encrypted_model_dir, model_dag_builder)
 
 
 if __name__ == "__main__":
