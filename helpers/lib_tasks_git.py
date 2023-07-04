@@ -915,3 +915,9 @@ def git_branch_diff_with(  # type: ignore
 # dev_scripts/git/git_branch.sh
 # dev_scripts/git/git_branch_point.sh
 # dev_scripts/create_class_diagram.sh
+
+# How to find out if the current branch was merged
+# ```
+# > git branch --merged master | grep "$(git rev-parse --abbrev-ref HEAD)"
+# ```
+# If the output is empty it was merged, otherwise it was not merged.

@@ -1,3 +1,11 @@
+v7.5
+- 2023-06-20
+- Test extend binance up to 100 new symbols
+
+v7
+- 2023-05-25
+- Delete XRP_USDT from the binanceus universe due it is no longer supported
+
 v7.4
 - 2023-04-11
 - Added universe for kraken

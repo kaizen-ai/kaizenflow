@@ -1,0 +1,62 @@
+[NbConvertApp] Converting notebook /app/dev_scripts/notebooks/test/outcomes/TestRunNotebook/input/simple_notebook.ipynb to notebook
+Traceback (most recent call last):
+  File "/venv/bin/jupyter-nbconvert", line 8, in <module>
+    sys.exit(main())
+  File "/venv/lib/python3.8/site-packages/jupyter_core/application.py", line 276, in launch_instance
+    return super().launch_instance(argv=argv, **kwargs)
+  File "/venv/lib/python3.8/site-packages/traitlets/config/application.py", line 982, in launch_instance
+    app.start()
+  File "/venv/lib/python3.8/site-packages/nbconvert/nbconvertapp.py", line 426, in start
+    self.convert_notebooks()
+  File "/venv/lib/python3.8/site-packages/nbconvert/nbconvertapp.py", line 600, in convert_notebooks
+    self.convert_single_notebook(notebook_filename)
+  File "/venv/lib/python3.8/site-packages/nbconvert/nbconvertapp.py", line 563, in convert_single_notebook
+    output, resources = self.export_single_notebook(
+  File "/venv/lib/python3.8/site-packages/nbconvert/nbconvertapp.py", line 491, in export_single_notebook
+    output, resources = self.exporter.from_filename(
+  File "/venv/lib/python3.8/site-packages/nbconvert/exporters/exporter.py", line 190, in from_filename
+    return self.from_file(f, resources=resources, **kw)
+  File "/venv/lib/python3.8/site-packages/nbconvert/exporters/exporter.py", line 207, in from_file
+    return self.from_notebook_node(
+  File "/venv/lib/python3.8/site-packages/nbconvert/exporters/notebook.py", line 35, in from_notebook_node
+    nb_copy, resources = super().from_notebook_node(nb, resources, **kw)
+  File "/venv/lib/python3.8/site-packages/nbconvert/exporters/exporter.py", line 147, in from_notebook_node
+    nb_copy, resources = self._preprocess(nb_copy, resources)
+  File "/venv/lib/python3.8/site-packages/nbconvert/exporters/exporter.py", line 342, in _preprocess
+    nbc, resc = preprocessor(nbc, resc)
+  File "/venv/lib/python3.8/site-packages/nbconvert/preprocessors/base.py", line 47, in __call__
+    return self.preprocess(nb, resources)
+  File "/venv/lib/python3.8/site-packages/nbconvert/preprocessors/execute.py", line 91, in preprocess
+    self.preprocess_cell(cell, resources, index)
+  File "/venv/lib/python3.8/site-packages/nbconvert/preprocessors/execute.py", line 112, in preprocess_cell
+    cell = self.execute_cell(cell, index, store_history=True)
+  File "/venv/lib/python3.8/site-packages/nbclient/util.py", line 85, in wrapped
+    return just_run(coro(*args, **kwargs))
+  File "/venv/lib/python3.8/site-packages/nbclient/util.py", line 60, in just_run
+    return loop.run_until_complete(coro)
+  File "/venv/lib/python3.8/site-packages/nest_asyncio.py", line 90, in run_until_complete
+    return f.result()
+  File "/usr/lib/python3.8/asyncio/futures.py", line 178, in result
+    raise self._exception
+  File "/usr/lib/python3.8/asyncio/tasks.py", line 280, in __step
+    result = coro.send(None)
+  File "/venv/lib/python3.8/site-packages/nbclient/client.py", line 1019, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/venv/lib/python3.8/site-packages/nbclient/client.py", line 913, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+if config["fail"]:
+    raise ValueError("Failure")
+print("Success")
+------------------
+
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mValueError[0m                                Traceback (most recent call last)
+Cell [0;32mIn [4], line 2[0m
+[1;32m      1[0m [38;5;28;01mif[39;00m config[[38;5;124m"[39m[38;5;124mfail[39m[38;5;124m"[39m]:
+[0;32m----> 2[0m     [38;5;28;01mraise[39;00m [38;5;167;01mValueError[39;00m([38;5;124m"[39m[38;5;124mFailure[39m[38;5;124m"[39m)
+[1;32m      3[0m [38;5;28mprint[39m([38;5;124m"[39m[38;5;124mSuccess[39m[38;5;124m"[39m)
+
+[0;31mValueError[0m: Failure
+ValueError: Failure

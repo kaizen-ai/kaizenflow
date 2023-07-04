@@ -1155,7 +1155,7 @@ class TestCase(unittest.TestCase):
         dir_name = os.path.join(dir_name, "input")
         return dir_name
 
-    def get_output_dir(self) -> str:
+    def get_output_dir(self, *, test_class_name: Optional[str] = None) -> str:
         """
         Return the path of the directory storing output data for this test
         class.
@@ -1164,7 +1164,6 @@ class TestCase(unittest.TestCase):
         """
         # The output dir is specific of this dir.
         use_only_test_class = False
-        test_class_name = None
         test_method_name = None
         use_absolute_path = True
         dir_name = self._get_current_path(
@@ -1370,6 +1369,7 @@ class TestCase(unittest.TestCase):
         tag: str = "test",
         abort_on_error: bool = True,
         action_on_missing_golden: str = _ACTION_ON_MISSING_GOLDEN,
+        test_class_name=None,
     ) -> Tuple[bool, bool, Optional[bool]]:
         """
         Check the actual outcome of a test against the expected outcome
@@ -1399,7 +1399,9 @@ class TestCase(unittest.TestCase):
         )
         hdbg.dassert_in(type(actual), (bytes, str), "actual='%s'", actual)
         #
-        dir_name, file_name = self._get_golden_outcome_file_name(tag)
+        dir_name, file_name = self._get_golden_outcome_file_name(
+            tag, test_class_name=test_class_name
+        )
         if use_gzip:
             file_name += ".gz"
         _LOG.debug("file_name=%s", file_name)
@@ -1801,10 +1803,11 @@ class TestCase(unittest.TestCase):
 
     # ///////////////////////////////////////////////////////////////////////
 
-    def _get_golden_outcome_file_name(self, tag: str) -> Tuple[str, str]:
+    def _get_golden_outcome_file_name(
+            self, tag: str, *, test_class_name: Optional[str] = None
+    ) -> Tuple[str, str]:
         # Get the current dir name.
         use_only_test_class = False
-        test_class_name = None
         test_method_name = None
         use_absolute_path = True
         dir_name = self._get_current_path(
@@ -1817,7 +1820,9 @@ class TestCase(unittest.TestCase):
         hio.create_dir(dir_name, incremental=True)
         hdbg.dassert_path_exists(dir_name)
         # Get the expected outcome.
-        file_name = self.get_output_dir() + f"/{tag}.txt"
+        file_name = (
+            self.get_output_dir(test_class_name=test_class_name) + f"/{tag}.txt"
+        )
         return dir_name, file_name
 
     def _get_test_name(self) -> str:

@@ -4,6 +4,7 @@ Import as:
 import core.statistics.correlation as cstacorr
 """
 
+import collections
 import logging
 
 import numpy as np
@@ -112,3 +113,36 @@ def compute_distance_correlation(
         distance_variance_1 * distance_variance_2
     )
     return distance_correlation
+
+
+def compute_mean_pearson_correlation(df: pd.DataFrame):
+    """
+    Compute the mean Pearson correlation of cols of `df`.
+    """
+    corr = df.corr()
+    # Get upper triangular part without the main diagonal.
+    ut_indices = np.triu_indices_from(corr.values, 1)
+    ut_part = corr.values[ut_indices]
+    # Take a Fisher transformation.
+    fisher = np.arctanh(ut_part)
+    # Average and undo the Fisher transformation.
+    mean_corr = np.tanh(fisher.mean())
+    return mean_corr
+
+
+def compute_mean_pearson_correlation_by_group(
+    df: pd.DataFrame,
+    level: int,
+) -> pd.DataFrame:
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_eq(df.columns.nlevels, 2)
+    hdbg.dassert_is_integer(level)
+    hdbg.dassert_is_subset([level], [0, 1])
+    groups = df.columns.levels[level].to_list()
+    corrs = collections.OrderedDict()
+    for group in groups:
+        group_df = df.T.xs(group, level=level).T
+        corrs[group] = group_df.corr()
+    # TODO(Paul): Consider performing a Fisher transformation before taking the mean.
+    mean_corr = pd.concat(corrs).groupby(level=1).mean()
+    return mean_corr

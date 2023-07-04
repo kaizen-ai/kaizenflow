@@ -2902,3 +2902,158 @@ class Test_compare_nans_in_dataframes(hunitest.TestCase):
         4  inf  NaN
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class Test_dassert_increasing_index(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check that a monotonically increasing index passes the assert.
+        """
+        # Build test dataframe.
+        idx = [
+            pd.Timestamp("2000-01-01 9:01"),
+            pd.Timestamp("2000-01-01 9:02"),
+            pd.Timestamp("2000-01-01 9:03"),
+            pd.Timestamp("2000-01-01 9:04"),
+        ]
+        values = [0, 0, 0, 0]
+        df = pd.DataFrame(values, index=idx)
+        # Run.
+        hpandas.dassert_increasing_index(df)
+
+    def test2(self) -> None:
+        """
+        Check that an assert is raised when index is not monotonically
+        increasing.
+        """
+        # Build test dataframe.
+        idx = [
+            pd.Timestamp("2000-01-01 9:01"),
+            pd.Timestamp("2000-01-01 9:02"),
+            pd.Timestamp("2000-01-01 9:04"),
+            pd.Timestamp("2000-01-01 9:03"),
+        ]
+        values = [0, 0, 0, 0]
+        df = pd.DataFrame(values, index=idx)
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_increasing_index(df)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        cond=False
+        Not increasing indices are:
+                                0
+        2000-01-01 09:04:00  0
+        2000-01-01 09:03:00  0"""
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Check that a monotonically increasing index with duplicates passes the
+        assert.
+        """
+        # Build test dataframe.
+        idx = [
+            pd.Timestamp("2000-01-01 9:00"),
+            pd.Timestamp("2000-01-01 9:00"),
+            pd.Timestamp("2000-01-01 9:01"),
+            pd.Timestamp("2000-01-01 9:01"),
+        ]
+        values = [0, 0, 0, 0]
+        df = pd.DataFrame(values, index=idx)
+        # Run.
+        hpandas.dassert_increasing_index(df)
+
+
+# #############################################################################
+
+
+class Test_apply_index_mode(hunitest.TestCase):
+    @staticmethod
+    def get_test_data() -> Tuple[pd.DataFrame]:
+        """
+        Generate toy dataframes for the test.
+        """
+        # Define common columns.
+        columns = ["A", "B"]
+        # Build dataframes with intersecting indices.
+        idx1 = [0, 1, 2, 3, 4]
+        data1 = [
+            [0.21, 0.44],
+            [0.11, 0.42],
+            [1.99, 0.8],
+            [3.1, 0.91],
+            [3.5, 1.4],
+        ]
+        df1 = pd.DataFrame(data1, columns=columns, index=idx1)
+        #
+        idx2 = [0, 6, 2, 3, 5]
+        data1 = [
+            [0.1, 0.4],
+            [0.11, 0.2],
+            [1.29, 0.38],
+            [0.1, 0.9],
+            [3.3, 2.4],
+        ]
+        df2 = pd.DataFrame(data1, columns=columns, index=idx2)
+        return df1, df2
+
+    def test1(self) -> None:
+        """
+        Check that returned dataframes have indices that are equal to the
+        common index.
+
+        - `mode="intersect"`
+        """
+        # Get test data.
+        df1_in, df2_in = self.get_test_data()
+        # Use an index intersection to transform dataframes.
+        mode = "intersect"
+        df1_out, df2_out = hpandas.apply_index_mode(df1_in, df2_in, mode)
+        # Check that indices are common.
+        common_index = df1_in.index.intersection(df2_in.index)
+        common_index = hpandas.df_to_str(common_index)
+        idx1 = hpandas.df_to_str(df1_out.index)
+        idx2 = hpandas.df_to_str(df2_out.index)
+        self.assert_equal(idx1, common_index)
+        self.assert_equal(idx2, common_index)
+
+    def test2(self) -> None:
+        """
+        Check that dataframe indices did not change after applying an index
+        mode.
+
+        - `mode="leave_unchanged"`
+        """
+        # Get test data.
+        df1_in, df2_in = self.get_test_data()
+        mode = "leave_unchanged"
+        df1_out, df2_out = hpandas.apply_index_mode(df1_in, df2_in, mode)
+        # Check that indices are as-is.
+        df1_in_idx = hpandas.df_to_str(df1_in.index)
+        df1_out_idx = hpandas.df_to_str(df1_out.index)
+        self.assert_equal(df1_in_idx, df1_out_idx)
+        #
+        df2_in_idx = hpandas.df_to_str(df2_in.index)
+        df2_out_idx = hpandas.df_to_str(df2_out.index)
+        self.assert_equal(df2_in_idx, df2_out_idx)
+
+    def test3(self) -> None:
+        """
+        Check that an assertion is raised when indices are not equal.
+
+        - `mode="assert_equal"`
+        """
+        # Get test data.
+        df1_in, df2_in = self.get_test_data()
+        mode = "assert_equal"
+        # Check that both indices are equal, assert otherwise.
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.apply_index_mode(df1_in, df2_in, mode)
+        act = str(cm.exception)
+        # Compare the actual outcome with expected one.
+        self.check_string(act)

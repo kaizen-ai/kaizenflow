@@ -133,6 +133,7 @@ def load_kibot_data(
     end_date = _process_timestamp(end_date)
     df_out = vkibot.KibotS3DataLoader().read_data(
         exchange="CME",
+        aws_profile="am",
         asset_class=vkibot.AssetClass.Futures,
         frequency=frequency,
         contract_type=contract_type,
@@ -306,6 +307,7 @@ class KibotEquityReader(dtfcore.DataSource):
             data = vkibot.KibotS3DataLoader().read_data(
                 # TODO(*): This is required, but is it used?
                 exchange="NYSE",
+                aws_profile="am",
                 asset_class=vkibot.AssetClass.Stocks,
                 frequency=self._frequency,
                 symbol=symbol,
