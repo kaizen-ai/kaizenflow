@@ -35,10 +35,14 @@ def _encrypt_model(
 
     :param model_dir: source model directory
     :param target_dir: encrypted model output directory
+    :param build_target: Docker cross-building option
+    :param docker_image_tag: Docker image tag
     :return: encrypted model directory
     """
     hdbg.dassert_dir_exists(model_dir)
     hdbg.dassert_dir_exists(target_dir)
+    hdbg.dassert_type_is(build_target, str)
+    hdbg.dassert_type_is(docker_image_tag, str)
     # Create encrypted model directory.
     model_path = pathlib.Path(model_dir)
     model_name = model_path.stem
@@ -55,10 +59,10 @@ def _encrypt_model(
             """
         )
     cmd = f"docker buildx build --platform {build_target} -f {temp_dockerfile_path} -t {docker_image_tag} ."
-    hsystem.system(cmd)
+    (_, output) = hsystem.system_to_string(cmd)
+    _LOG.debug(output)
     os.remove(temp_dockerfile_path)
     _LOG.info("Remove temporary Dockerfile.")
-
     # Run Docker container to encrypt the model.
     work_dir = os.getcwd()
     docker_target_dir = "/app"
@@ -66,7 +70,8 @@ def _encrypt_model(
     encryption_flow = f"pyarmor-7 obfuscate --restrict=0 --recursive {model_dir} --output {encrypted_model_dir}"
     docker_cmd = f"docker run --rm -it --platform {build_target} --workdir {docker_target_dir} --mount {mount} {docker_image_tag} {encryption_flow}"
     _LOG.info("Start running Docker container.")
-    hsystem.system(docker_cmd)
+    (_, output) = hsystem.system_to_string(docker_cmd)
+    _LOG.debug(output)
     n_files = len(os.listdir(encrypted_model_dir))
     hdbg.dassert_lt(
         0, n_files, "No files in encrypted_model_dir=`%s`", encrypted_model_dir
@@ -78,8 +83,8 @@ def _encrypt_model(
     # Make encrypted model files accessible by any user.
     # TODO(gp): Why is sudo needed? IMO the Docker container should use the right permissions.
     # We can pass -u user and group as we do for the main Docker flow.
-    cmd = f"sudo chmod -R 777 {encrypted_model_dir}"
-    hsystem.system(cmd)
+    # cmd = f"sudo chmod -R 777 {encrypted_model_dir}"
+    # hsystem.system(cmd)
     return encrypted_model_dir
 
 
@@ -116,8 +121,7 @@ def _test_model(model_dir: str, model_dag_builder: str) -> None:
     Check that a model works correctly.
     """
     temp_file_path = "./tmp.encrypt_model.test_model.sh"
-    import_path = model_dir.lstrip("./")
-    import_path = import_path.replace("/", ".")
+    import_path = model_dir.lstrip("./").replace("/", ".")
     # Find the name of model pipeline under the model dir.
     pipeline_name = r".+_pipeline.py"
     model_pipeline = ""
