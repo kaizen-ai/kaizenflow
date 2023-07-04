@@ -70,7 +70,7 @@
     - [ ] Read [How to organize your work](https://github.com/sorrentum/sorrentum/blob/master/docs/How_to_organize_your_work.md)
     - [ ] Read [Quick start for developing](https://github.com/sorrentum/sorrentum/blob/master/docs/Quick_start_for_developing.md)
     - [ ] Make sure the [Docker dev container](https://github.com/sorrentum/sorrentum/blob/master/docs/Quick_start_for_developing.md#sorrentum-dev-docker-container-aka-dev-container-cmamp-container) works
-    - [ ] Make sure the unit tests run successfully
+    - [ ] Make sure the [unit tests](https://github.com/sorrentum/sorrentum/blob/master/docs/Unit_tests.md) run successfully
     - [ ] Read [Sorrentum Python coding style guide](https://github.com/sorrentum/sorrentum/blob/master/docs/Coding_Style_Guide.md)
     - [ ] Get assigned a warm-up issue
     - [ ] Learn about the [Morning Email](https://github.com/sorrentum/sorrentum/blob/master/documentation/general/general.md#morning-email)

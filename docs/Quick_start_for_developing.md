@@ -43,7 +43,8 @@
 - Run the
   [linter](https://github.com/sorrentum/sorrentum/blob/master/docs/First_review_process.md#run-linter)
   on your code before pushing.
-- Push the code to your branch
+- Do `git commit` and `git push` together so the latest changes are readily
+  visible
 - Make sure your branch is up-to-date with the master branch
 - Create a Pull Request (PR) from your branch
 - Add your assigned reviewers for your PR so that they are informed of your PR
