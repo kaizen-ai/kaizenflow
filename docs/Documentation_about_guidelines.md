@@ -309,7 +309,7 @@
   > ../dev_scripts/convert_docx_to_markdown.py --docx_file Tools_Docker.docx --md_file Tools_Docker.md
   ```
 
-### Other aprroachs - Using Chrome Docs to Markdown extension
+### Other aprroaches - Using Chrome Docs to Markdown extension
 
 - Best for a large document
 - Approach 1:
@@ -329,7 +329,7 @@
 
 - Fix some formatting manully before running the Markdown linter.
 
-  - Read throught [Style and cosmetic lints](#style-and-cosmetic-lints) for
+  - Read through [Style and cosmetic lints](#style-and-cosmetic-lints) for
     Markdown formatting and based on the rules, fix the formatting
     - Summary
       - Add the following tag at the top of the markdown file below the document
@@ -350,7 +350,7 @@
     > dev_scripts/lint_md.sh docs/Documentation_about_guidelines.md
     ```
   - What the linter will do:
-    - build TOC automatically
+    - Build TOC automatically
     - Fix indentation
     - Remove unnecessary empty lines
     - Adjust text layout
