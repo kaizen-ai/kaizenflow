@@ -10,9 +10,9 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_plots(unittest.TestCase):
-    def test_plot_histograms_and_lagged_scatterplots1(self) -> None:
+    def test_plot_histograms_and_lagged_scatterplot1(self) -> None:
         """
-        Smoke test for `plot_histograms_and_lagged_scatterplots()`.
+        Smoke test for `plot_histograms_and_lagged_scatterplot()`.
         """
         # Set inputs.
         seq = np.concatenate([np.random.uniform(-1, 1, 100), np.random.choice([5, 10], 100)])
