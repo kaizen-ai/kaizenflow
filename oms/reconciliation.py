@@ -314,6 +314,17 @@ def _dassert_is_date(date: str) -> None:
         raise ValueError(f"date='{date}' doesn't have the right format: {e}")
 
 
+def _dassert_is_date_time(date_time: str) -> None:
+    """
+    Check if an input string is a start timestamp.
+
+    :param date_time: date time as string, e.g., "20231013_064500"
+    """
+    hdbg.dassert_isinstance(date_time, str)
+    m = re.match(r"^\d{8}_\d{6}$", date_time)
+    hdbg.dassert(m, "date_time_as_str='%s'", date_time)
+
+
 # TODO(Grisha): -> `_get_run_date_from_start_timestamp`.
 def get_run_date(start_timestamp_as_str: Optional[str]) -> str:
     """
@@ -328,8 +339,7 @@ def get_run_date(start_timestamp_as_str: Optional[str]) -> str:
         # TODO(Grisha): do not use default values.
         run_date = datetime.date.today().strftime("%Y%m%d")
     else:
-        m = re.match(r"^\d{8}_\d{6}$", start_timestamp_as_str)
-        hdbg.dassert(m, "start_timestamp_as_str='%s'", start_timestamp_as_str)
+        _dassert_is_date_time(start_timestamp_as_str)
         run_date = start_timestamp_as_str.split("_")[0]
     _LOG.info(hprint.to_str("run_date"))
     _dassert_is_date(run_date)
