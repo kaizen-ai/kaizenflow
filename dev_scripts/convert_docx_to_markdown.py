@@ -21,6 +21,49 @@ import helpers.hsystem as hsystem
 _LOG = logging.getLogger(__name__)
 
 
+def _convert_docx_to_markdown(
+    docx_file: str, md_file: str, md_file_figs: str
+) -> None:
+    """
+    Convert Docx file to Markdown.
+
+    :param docx_file: path to the Docx file
+    :param md_file: path to the Markdown file
+    """
+    hdbg.dassert_file_exists(docx_file)
+    # Create the Markdown file.
+    hsystem.system(f"touch {md_file}")
+    # Create temporary Dockerfile.
+    docker_container_name = "convert_docx_to_markdown"
+    with tempfile.NamedTemporaryFile(suffix=".Dockerfile") as temp_dockerfile:
+        temp_dockerfile.write(
+            b"""
+                FROM ubuntu:latest
+
+                RUN apt-get update && \
+                    apt-get -y upgrade
+
+                RUN apt-get install -y curl pandoc && \
+                    apt-get clean && \
+                    rm -rf /var/lib/apt/lists/*
+            """
+        )
+        temp_dockerfile.flush()
+        cmd = (
+            f"docker build -f {temp_dockerfile.name} -t {docker_container_name} ."
+        )
+        hsystem.system(cmd)
+    # Run Docker container.
+    work_dir = os.getcwd()
+    mount = f"type=bind,source={work_dir},target={work_dir}"
+    remove_figs_folder_cmd = f"rm -rf {md_file_figs}"
+    hsystem.system(remove_figs_folder_cmd)
+    # Convert from Docx to Markdown.
+    convert_docx_to_markdown_cmd = f"pandoc --extract-media {md_file_figs} -f docx -t markdown_strict -o {md_file} {docx_file}"
+    docker_cmd = f"docker run --rm -it --workdir {work_dir} --mount {mount} {docker_container_name} {convert_docx_to_markdown_cmd}"
+    hsystem.system(docker_cmd)
+
+
 def _move_media(md_file_figs: str) -> None:
     """
     Move the media if it exists.
@@ -87,49 +130,6 @@ def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
     # Run the commands.
     for clean_cmd in perl_regex_replacements:
         hsystem.system(clean_cmd, suppress_output=False)
-
-
-def _convert_docx_to_markdown(
-    docx_file: str, md_file: str, md_file_figs: str
-) -> None:
-    """
-    Convert Docx file to Markdown.
-
-    :param docx_file: path to the Docx file
-    :param md_file: path to the Markdown file
-    """
-    hdbg.dassert_file_exists(docx_file)
-    # Create the Markdown file.
-    hsystem.system(f"touch {md_file}")
-    # Create temporary Dockerfile.
-    docker_container_name = "convert_docx_to_markdown"
-    with tempfile.NamedTemporaryFile(suffix=".Dockerfile") as temp_dockerfile:
-        temp_dockerfile.write(
-            b"""
-                FROM ubuntu:latest
-
-                RUN apt-get update && \
-                    apt-get -y upgrade
-
-                RUN apt-get install -y curl pandoc && \
-                    apt-get clean && \
-                    rm -rf /var/lib/apt/lists/*
-            """
-        )
-        temp_dockerfile.flush()
-        cmd = (
-            f"docker build -f {temp_dockerfile.name} -t {docker_container_name} ."
-        )
-        hsystem.system(cmd)
-    # Run Docker container.
-    work_dir = os.getcwd()
-    mount = f"type=bind,source={work_dir},target={work_dir}"
-    remove_figs_folder_cmd = f"rm -rf {md_file_figs}"
-    hsystem.system(remove_figs_folder_cmd)
-    # Convert from Docx to Markdown.
-    convert_docx_to_markdown_cmd = f"pandoc --extract-media {md_file_figs} -f docx -t markdown_strict -o {md_file} {docx_file}"
-    docker_cmd = f"docker run --rm -it --workdir {work_dir} --mount {mount} {docker_container_name} {convert_docx_to_markdown_cmd}"
-    hsystem.system(docker_cmd)
 
 
 # #############################################################################

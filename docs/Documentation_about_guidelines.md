@@ -4,11 +4,11 @@
 
 - [Guidelines for describing workflows](#guidelines-for-describing-workflows)
 - [Markdown vs Google Docs](#markdown-vs-google-docs)
-    + [In general](#in-general)
-    + [Markdown pros](#markdown-pros)
-    + [Google Docs pros](#google-docs-pros)
-    + [Rules of thumb](#rules-of-thumb)
-    + [Useful references](#useful-references)
+  * [In general](#in-general)
+  * [Markdown pros](#markdown-pros)
+  * [Google Docs pros](#google-docs-pros)
+  * [Rules of thumb](#rules-of-thumb)
+  * [Useful references](#useful-references)
 - [Style and cosmetic lints](#style-and-cosmetic-lints)
   * [Always use markdown linter](#always-use-markdown-linter)
   * [Table of content (TOC)](#table-of-content-toc)
@@ -28,7 +28,7 @@
     + [Using `convert_docx_to_markdown.py`](#using-convert_docx_to_markdownpy)
     + [Process](#process)
     + [Cleaning up converted markdown](#cleaning-up-converted-markdown)
-    + [Other approaches—Using Chrome Docs to Markdown extension](#other-approachesusing-chrome-docs-to-markdown-extension)
+    + [Other approaches](#other-approaches)
   * [Markdown -> Gdocs](#markdown---gdocs)
 
 <!-- tocstop -->
@@ -44,12 +44,12 @@
 
 # Markdown vs Google Docs
 
-### In general
+## In general
 
 - We prefer to use Markdown for technical documentation
 - We use Google for notes from meetings and research
 
-### Markdown pros
+## Markdown pros
 
 - Can use vim
 - Can version control
@@ -59,7 +59,7 @@
 - Easy to add Latex equations
 - Easy to grep
 
-### Google Docs pros
+## Google Docs pros
 
 - Easy to embed figures
 - Easy to collaborate
@@ -77,7 +77,7 @@
       ```
   - Auto-latex equations
 
-### Rules of thumb
+## Rules of thumb
 
 - Use Markdown
   - If doc is going to be used as a public guideline
@@ -87,7 +87,7 @@
   - If doc requires a lot of images that cannot be placed as text
   - If doc is a research of an analysis
 
-### Useful references
+## Useful references
 
 - [Markdown cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
 - [Google guide to Markdown](https://github.com/google/styleguide/blob/gh-pages/docguide/style.md)
