@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 """
-Convert docx file to markdown.
+Convert Docx file to Markdown.
 
 Example:
-Run this command in the same directory as the markdown file:
+Run this command in the same directory as the Markdown file:
 > ../dev_scripts/convert_docx_to_markdown.py --docx_file Tools_Docker.docx --md_file Tools_Docker.md
 """
 
@@ -25,29 +25,31 @@ def _move_media(md_file_figs: str) -> None:
     """
     Move the media if it exists.
     """
-    if os.path.isdir(os.path.join(md_file_figs, "media")):
+    media_dir = os.path.join(md_file_figs, "media")
+    if os.path.isdir(media_dir):
         # Move all the files in 'media' to 'md_file_figs'.
-        for file_name in os.listdir(os.path.join(md_file_figs, "media")):
-            shutil.move(
-                os.path.join(md_file_figs, "media", file_name), md_file_figs
-            )
+        for file_name in os.listdir(media_dir):
+            file_path = os.path.join(media_dir, file_name)
+            shutil.move(file_path, md_file_figs)
         # Remove the 'media' directory.
-        shutil.rmtree(os.path.join(md_file_figs, "media"))
+        shutil.rmtree(media_dir)
+    else:
+        _LOG.info("No media directory found.")
 
 
 def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
     """
     Remove the artifacts.
 
-    :param md_file: path to the markdown file
+    :param md_file: path to the Markdown file
     :param md_file_figs: path to the folder containing the artifacts
     """
     perl_regex_replacements = [
-        # "# \# Running PyCharm remotely" -> "# Running PyCharm remotely"
+        # # \# Running PyCharm remotely -> # Running PyCharm remotely.
         r"perl -pi -e 's:# (\\#)+ :# :g' {}".format(md_file),
-        # \#\# Docker image  -> ## Docker image
+        # \#\# Docker image"  -> ## Docker image.
         r"perl -pi -e 's:\\#:#:g' {}".format(md_file),
-        # **## amp / cmamp container**
+        # **## amp / cmamp container** -> ## amp / cmamp container.
         r"perl -pi -e 's:\*\*#(.*?)\*\*:#$1:g' {}".format(md_file),
         # -  Typically instructions include information about which packages and
         #    > their versions to install, e.g. list of python packages and their
@@ -59,19 +61,19 @@ def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
         r"perl -pi -e 's:^>: :g' {}".format(md_file),
         # Remove the \ before - $ | " _ [ ].
         r"perl -pi -e 's:\\([-\$|\"\_\]\[\.]):$1:g' {}".format(md_file),
-        # \' -> '
+        # \' -> '.
         r'perl -pi -e "s:\\\':\':g" {}'.format(md_file),
-        # \` -> `
+        # \` -> `.
         r"perl -pi -e 's:\\\`:\`:g' {}".format(md_file),
-        # \* -> *
+        # \* -> *.
         r"perl -pi -e 's:\\\*:\*:g' {}".format(md_file),
-        # “ -> "
+        # “ -> ".
         r"perl -pi -e 's:“:\":g' {}".format(md_file),
-        # ” -> "
+        # ” -> ".
         r"perl -pi -e 's:”:\":g' {}".format(md_file),
-        # Remove trailing \
+        # Remove trailing \.
         r"perl -pi -e 's:\\$::g' {}".format(md_file),
-        # Remove ========= and -------
+        # Remove ========= and --------.
         r"perl -pi -e 's:======+::g' {}".format(md_file),
         r"perl -pi -e 's:------+::g' {}".format(md_file),
         # Translate HTML elements.
@@ -84,21 +86,22 @@ def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
     ]
     # Run the commands.
     for clean_cmd in perl_regex_replacements:
-        hsystem.system(clean_cmd)
+        hsystem.system(clean_cmd, suppress_output=False)
 
 
-def _convert_docx_to_markdown(docx_file: str, md_file: str) -> None:
+def _convert_docx_to_markdown(
+    docx_file: str, md_file: str, md_file_figs: str
+) -> None:
     """
-    Convert docx file to markdown.
+    Convert Docx file to Markdown.
 
-    :param docx_file: path to the docx file
-    :param md_file: path to the markdown file
+    :param docx_file: path to the Docx file
+    :param md_file: path to the Markdown file
     """
     hdbg.dassert_file_exists(docx_file)
-    # create the markdown file.
+    # Create the Markdown file.
     hsystem.system(f"touch {md_file}")
     # Create temporary Dockerfile.
-    md_file_figs = md_file.replace(".md", "_figs")
     docker_container_name = "convert_docx_to_markdown"
     with tempfile.NamedTemporaryFile(suffix=".Dockerfile") as temp_dockerfile:
         temp_dockerfile.write(
@@ -123,52 +126,49 @@ def _convert_docx_to_markdown(docx_file: str, md_file: str) -> None:
     mount = f"type=bind,source={work_dir},target={work_dir}"
     remove_figs_folder_cmd = f"rm -rf {md_file_figs}"
     hsystem.system(remove_figs_folder_cmd)
-    # Convert from docx to Markdown.
+    # Convert from Docx to Markdown.
     convert_docx_to_markdown_cmd = f"pandoc --extract-media {md_file_figs} -f docx -t markdown_strict -o {md_file} {docx_file}"
     docker_cmd = f"docker run --rm -it --workdir {work_dir} --mount {mount} {docker_container_name} {convert_docx_to_markdown_cmd}"
-    _LOG.info("Start converting docx to markdown.")
     hsystem.system(docker_cmd)
-    _move_media(md_file_figs)
-    _clean_up_artifacts(md_file, md_file_figs)
-    _LOG.info("Finished converting '%s' to '%s'.", docx_file, md_file)
 
 
 # #############################################################################
-
-
-def add_download_args(
-    parser: argparse.ArgumentParser,
-) -> argparse.ArgumentParser:
-    parser.add_argument(
-        "--docx_file",
-        action="store",
-        required=True,
-        type=str,
-        help="The docx file that needs to be converted to markdown",
-    )
-    parser.add_argument(
-        "--md_file",
-        action="store",
-        required=True,
-        type=str,
-        help="The output markdown file",
-    )
-    return parser
 
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser = add_download_args(parser)
-    parser = hparser.add_verbosity_arg(parser)
+    parser.add_argument(
+        "--docx_file",
+        action="store",
+        required=True,
+        type=str,
+        help="The Docx file that needs to be converted to Markdown",
+    )
+    parser.add_argument(
+        "--md_file",
+        action="store",
+        required=True,
+        type=str,
+        help="The output Markdown file",
+    )
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    _convert_docx_to_markdown(args.docx_file, args.md_file)
+    docx_file = args.docx_file
+    md_file = args.md_file
+    # The folder for the figures.
+    md_file_figs = md_file.replace(".md", "_figs")
+    _LOG.info("Start converting Docx to Markdown.")
+    _convert_docx_to_markdown(docx_file, md_file, md_file_figs)
+    _move_media(md_file_figs)
+    _clean_up_artifacts(md_file, md_file_figs)
+    _LOG.info("Finished converting '%s' to '%s'.", docx_file, md_file)
 
 
 if __name__ == "__main__":
