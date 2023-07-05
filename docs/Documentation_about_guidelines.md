@@ -335,14 +335,16 @@
     ```
   - What the linter will do:
     - Build TOC automatically
-    - Adjust the indentation to improve the Markdown's format (but the precondition is that you have properly adjusted the indentation levels).
+    - Adjust the indentation to improve the Markdown's format (but the 
+      precondition is that you have properly adjusted the indentation levels).
     - Remove unnecessary empty lines
     - Adjust text layout
   - Do not mix manual edits and linter runs
   - If the linter messes up the text
     - File bugs in `amp` with examples what the linter does incorrectly
 - Last steps
-  - Compare the generated markdown file with the original Gdoc from top to bottom to ensure accurate rendering.
+  - Compare the generated markdown file with the original Gdoc from top to 
+    bottom to ensure accurate rendering.
   - Review the markdown file on GitHub to make sure it looks good, as it
     may slightly differ from the preview in your local markdown editor
 - When a gdoc becomes obsolete or it's deleted
