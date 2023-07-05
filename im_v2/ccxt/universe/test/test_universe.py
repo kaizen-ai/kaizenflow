@@ -49,9 +49,9 @@ class TestGetUniverse1(imvcountt.TestGetUniverse1_TestCase):
 
 
 class TestGetUniverseVersions1(imvcountt.TestGetUniverseVersions1_TestCase):
-    def test_get_universe_versions_trade(self) -> None:
+    def test_get_universe_versions1(self) -> None:
         """
-        Test the universe versions when mode is trade.
+        Verify that trade universe versions are returned correctly.
         """
         vendor = "CCXT"
         mode = "trade"
@@ -60,9 +60,9 @@ class TestGetUniverseVersions1(imvcountt.TestGetUniverseVersions1_TestCase):
         )
         self._test_get_universe_versions(vendor, mode, expected_universes_str)
 
-    def test_get_universe_versions_download(self) -> None:
+    def test_get_universe_versions2(self) -> None:
         """
-        Test the universe versions when mode is download.
+        Verify that download universe versions are returned correctly.
         """
         vendor = "CCXT"
         mode = "download"
