@@ -4,34 +4,34 @@
 
 - [Guidelines for describing workflows](#guidelines-for-describing-workflows)
 - [Markdown vs Google Docs](#markdown-vs-google-docs)
-    - [In general](#in-general)
-    - [Markdown pros](#markdown-pros)
-    - [Google Docs pros](#google-docs-pros)
-    - [Rules of thumb](#rules-of-thumb)
-    - [Useful references](#useful-references)
+    + [In general](#in-general)
+    + [Markdown pros](#markdown-pros)
+    + [Google Docs pros](#google-docs-pros)
+    + [Rules of thumb](#rules-of-thumb)
+    + [Useful references](#useful-references)
 - [Style and cosmetic lints](#style-and-cosmetic-lints)
-  - [Always use markdown linter](#always-use-markdown-linter)
-  - [Table of content (TOC)](#table-of-content-toc)
-  - [Use nice 80 columns formatting for txt files](#use-nice-80-columns-formatting-for-txt-files)
-  - [Empty line after heading](#empty-line-after-heading)
-  - [Bullet lists](#bullet-lists)
-  - [Using `code` style](#using-code-style)
-  - [Indenting `code` style](#indenting-code-style)
-  - [Embedding screenshots](#embedding-screenshots)
-  - [Improve your written English](#improve-your-written-english)
-  - [Make sure your markdown looks good](#make-sure-your-markdown-looks-good)
+  * [Always use markdown linter](#always-use-markdown-linter)
+  * [Table of content (TOC)](#table-of-content-toc)
+  * [Use nice 80 columns formatting for txt files](#use-nice-80-columns-formatting-for-txt-files)
+  * [Empty line after heading](#empty-line-after-heading)
+  * [Bullet lists](#bullet-lists)
+  * [Using `code` style](#using-code-style)
+  * [Indenting `code` style](#indenting-code-style)
+  * [Embedding screenshots](#embedding-screenshots)
+  * [Improve your written English](#improve-your-written-english)
+  * [Make sure your markdown looks good](#make-sure-your-markdown-looks-good)
 - [Google docs style conventions](#google-docs-style-conventions)
-  - [Headings](#headings)
-  - [Font](#font)
+  * [Headings](#headings)
+  * [Font](#font)
 - [Convert between Gdocs and Markdown](#convert-between-gdocs-and-markdown)
-  - [Gdocs -> Markdown](#gdocs---markdown)
-    - [Using `pandoc`](#using-pandoc)
-    - [Using Chrome Docs to Markdown extension](#using-chrome-docs-to-markdown-extension)
-    - [Cleaning up converted markdown](#cleaning-up-converted-markdown)
-  - [Markdown -> Gdocs](#markdown---gdocs)
+  * [Gdocs -> Markdown](#gdocs---markdown)
+    + [Using `convert_gdoc_to_markdown.py`](#using-convert_gdoc_to_markdownpy)
+      - [Process](#process)
+    + [Other aprroachs - Using Chrome Docs to Markdown extension](#other-aprroachs---using-chrome-docs-to-markdown-extension)
+    + [Cleaning up converted markdown](#cleaning-up-converted-markdown)
+  * [Markdown -> Gdocs](#markdown---gdocs)
 
 <!-- tocstop -->
-
 
 # Guidelines for describing workflows
 
@@ -114,7 +114,8 @@
 - Unfortunately both markdown and GitHub don't support automatically generating
   a TOC for a document
 - To generate a table of content:
-  - Add the following tag at the top of the markdown file below the document title:
+  - Add the following tag at the top of the markdown file below the document
+    title:
     ```
     <!-- toc -->
     ```
@@ -282,24 +283,33 @@
 
 ## Gdocs -> Markdown
 
-### Using `pandoc`
+### Using `convert_gdoc_to_markdown.py`
 
-- In general we recommend to use this approach
+- In general we recommend to use this approach, and this python script convert
+  Docx to Markdown using Pandoc.
+
 - Pros
+  - Removing artifacts with python script, less manual work
   - Best for a large document
   - Handle figures
 - Cons
-  - Need to remove formatting
   - Need to move files
-- Process:
-  - Download document as docx
-  - Convert it to markdown using `pandoc`
-    ```
-    > pandoc --extract-media ./ -f docx -t markdown -o out.md in.docx
-    ```
-  - The entire conversion flow is in `dev_scripts/convert_docx_to_markdown.sh`
 
-### Using Chrome Docs to Markdown extension
+#### Process
+
+- Download Google document as docx
+- Convert it to markdown using `convert_gdoc_to_markdown.py`. This command
+  should be run directly under the target output directory for the Markdown
+  file, in order to generate correct image links. Otherwise, you'll need to
+  manually fix the image links.
+
+  Example:
+
+  ```
+  > ../dev_scripts/convert_docx_to_markdown.py --docx_file Tools_Docker.docx --md_file Tools_Docker.md
+  ```
+
+### Other aprroachs - Using Chrome Docs to Markdown extension
 
 - Best for a large document
 - Approach 1:
@@ -317,23 +327,39 @@
 
 ### Cleaning up converted markdown
 
-- Lint the markdown:
-  - Replace all bullet points as `-` with `-`, if needed
-  - Removing artifacts manually or using the script
+- Fix some formatting manully before running the Markdown linter.
+
+  - Read throught [Style and cosmetic lints](#style-and-cosmetic-lints) for
+    Markdown formatting and based on the rules, fix the formatting
+    - Summary
+      - Add the following tag at the top of the markdown file below the document
+        title:
+        ```
+        <!-- toc -->
+        ```
+      - Use bullet lists to organize the whole Markdown for consistency with
+        other docs. See
+        [Coding_Style_Guide.md](https://github.com/sorrentum/sorrentum/blob/master/docs/Coding_Style_Guide.md)
+        or any other pubished Markdown format as reference
+      - Add missing ``` around code blocks. These could be missing in the
+        original google doc. Also adjust code block indentations if needed.
+
+- Run the `lint_md.sh`
+  - Usage:
     ```
-    > dev_scripts/convert_gdoc_to_markdown.sh
+    > dev_scripts/lint_md.sh docs/Documentation_about_guidelines.md
     ```
-  - Remove empty lines manually
-    ```
-    :'<,'>! perl -ne 'print if /\S/'
-    ```
-  - Run the `linter.py`
-    - Do not mix manual edits and linter runs
-    - If the linter messes up the text
-      - File bugs in `amp` with examples what the linter does incorrectly
+  - What the linter will do:
+    - build TOC automatically
+    - Fix indentation
+    - Remove unnecessary empty lines
+    - Adjust text layout
+  - Do not mix manual edits and linter runs
+  - If the linter messes up the text
+    - File bugs in `amp` with examples what the linter does incorrectly
   - When a gdoc becomes obsolete or it’s deleted
     - Add a note at the top of a gdoc explaining what happened
-      - Example: "Moved to /new_markdown_file.md"
+    - Example: "Moved to /new_markdown_file.md"
     - Strike out the entire document
     - Move the gdoc to the
       [\_OLD directory](https://drive.google.com/drive/u/0/folders/1J4B1vq8EwT-q_z7qSLCZ9Tug2CA9f8i7)
