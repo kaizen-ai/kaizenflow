@@ -328,9 +328,8 @@ def get_run_date(start_timestamp_as_str: Optional[str]) -> str:
         # TODO(Grisha): do not use default values.
         run_date = datetime.date.today().strftime("%Y%m%d")
     else:
-        assert re.match(
-            r"^\d{8}_\d{6}$", start_timestamp_as_str
-        ), "Invalid start timestamp format"
+        m = re.match(r"^\d{8}_\d{6}$", start_timestamp_as_str)
+        hdbg.dassert(m, "start_timestamp_as_str='%s'", start_timestamp_as_str)
         run_date = start_timestamp_as_str.split("_")[0]
     _LOG.info(hprint.to_str("run_date"))
     _dassert_is_date(run_date)
