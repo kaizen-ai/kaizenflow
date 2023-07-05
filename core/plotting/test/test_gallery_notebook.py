@@ -15,26 +15,54 @@
 # %% [markdown]
 # # Description
 #
-# This notebook will be used to plot all charts from amp/core/plotting in order to verify that the plots are being displayed correctly.
+# This gallery notebook is used to verify that `amp/core/plotting` functions display plots correctly.
+
+# %%
+# %load_ext autoreload
+# %autoreload 2
+# %matplotlib inline
 
 # %% [markdown]
-# ## Plot Histograms and Lagged Scatterplots
+# # Imports
 
 # %% run_control={"marked": false}
+import logging
+
 import numpy as np
 import pandas as pd
 
 import core.plotting.visual_stationarity_test as cpvistte
 
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hprint as hprint
+
+
+# %% [markdown]
+# # Configure Logger
 
 # %%
-srs = pd.Series(
-    np.concatenate([np.random.uniform(-1, 1, 100), np.random.choice([5, 10], 100)]),
-    index=pd.date_range(start="2023-01-01", periods=200, freq="D")
-)
+hdbg.init_logger(verbosity=logging.INFO)
+
+_LOG = logging.getLogger(__name__)
+
+_LOG.info("%s", henv.get_system_signature()[0])
+
+hprint.config_notebook()
+
+# %% [markdown]
+# # Plots
+
+# %% [markdown]
+# ## `plot_histograms_and_lagged_scatterplot()`
+
+# %%
+# Set inputs.
+seq = np.concatenate([np.random.uniform(-1, 1, 100), np.random.choice([5, 10], 100)])
+index = pd.date_range(start="2023-01-01", periods=len(seq), freq="D")
+srs = pd.Series(seq, index=index)
 lag = 7
-
-# %%
-cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize = (20,20))
-
-# %%
+# TODO(Dan): Remove after integration with `cmamp`
+figsize = (20,20)
+# Plot.
+cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
