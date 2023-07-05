@@ -25,10 +25,10 @@
   * [Font](#font)
 - [Convert between Gdocs and Markdown](#convert-between-gdocs-and-markdown)
   * [Gdocs -> Markdown](#gdocs---markdown)
-    + [Using `convert_gdoc_to_markdown.py`](#using-convert_gdoc_to_markdownpy)
-      - [Process](#process)
-    + [Other aprroachs - Using Chrome Docs to Markdown extension](#other-aprroachs---using-chrome-docs-to-markdown-extension)
+    + [Using `convert_docx_to_markdown.py`](#using-convert_docx_to_markdownpy)
+    + [Process](#process)
     + [Cleaning up converted markdown](#cleaning-up-converted-markdown)
+    + [Other approaches—Using Chrome Docs to Markdown extension](#other-approachesusing-chrome-docs-to-markdown-extension)
   * [Markdown -> Gdocs](#markdown---gdocs)
 
 <!-- tocstop -->
@@ -283,54 +283,38 @@
 
 ## Gdocs -> Markdown
 
-### Using `convert_gdoc_to_markdown.py`
+### Using `convert_docx_to_markdown.py`
 
-- In general we recommend to use this approach, and this python script convert
-  Docx to Markdown using Pandoc.
+- In general, we recommend using this approach
+- This python script converts Docx to Markdown using Pandoc.
 
 - Pros
-  - Removing artifacts with python script, less manual work
+  - Removing artifacts with this python script, less manual work
   - Best for a large document
   - Handle figures
 - Cons
   - Need to move files
 
-#### Process
+### Process
 
 - Download Google document as docx
-- Convert it to markdown using `convert_gdoc_to_markdown.py`. This command
+- Convert it to markdown using `convert_docx_to_markdown.py`. This command
   should be run directly under the target output directory for the Markdown
   file, in order to generate correct image links. Otherwise, you'll need to
   manually fix the image links.
 
-  Example:
+  Usage:
 
   ```
   > ../dev_scripts/convert_docx_to_markdown.py --docx_file Tools_Docker.docx --md_file Tools_Docker.md
   ```
 
-### Other aprroaches - Using Chrome Docs to Markdown extension
-
-- Best for a large document
-- Approach 1:
-  - Use the [Docs to Markdown](https://github.com/evbacher/gd2md-html/wiki)
-    extension
-    - Install
-      [the extension](https://gsuite.google.com/marketplace/app/docs_to_markdown/700168918607)
-      from the G Suite marketplace
-    - [User guide](https://github.com/evbacher/gd2md-html/wiki#using-docs-to-markdown)
-      for the extension
-  - One needs to accept/reject all suggestions in a gdoc as the extension works
-    poorly when a document is edited in the suggestion mode
-- Approach 2:
-  - [Google-docs-to-markdown/](https://mr0grog.github.io/google-docs-to-markdown/)
-
 ### Cleaning up converted markdown
 
-- Fix some formatting manully before running the Markdown linter.
+- Fix some formatting manually before running the Markdown linter.
 
   - Read through [Style and cosmetic lints](#style-and-cosmetic-lints) for
-    Markdown formatting and based on the rules, fix the formatting
+    Markdown formatting and fix some formatting based on the rules.
     - Summary
       - Add the following tag at the top of the markdown file below the document
         title:
@@ -340,9 +324,9 @@
       - Use bullet lists to organize the whole Markdown for consistency with
         other docs. See
         [Coding_Style_Guide.md](https://github.com/sorrentum/sorrentum/blob/master/docs/Coding_Style_Guide.md)
-        or any other pubished Markdown format as reference
+        or any other published Markdown format as reference
       - Add missing ``` around code blocks. These could be missing in the
-        original google doc. Also adjust code block indentations if needed.
+        original Google doc. Also adjust code block indentations if needed
 
 - Run the `lint_md.sh`
   - Usage:
@@ -351,18 +335,41 @@
     ```
   - What the linter will do:
     - Build TOC automatically
-    - Fix indentation
+    - Adjust the indentation to improve the Markdown's format (but the precondition is that you have properly adjusted the indentation levels).
     - Remove unnecessary empty lines
     - Adjust text layout
   - Do not mix manual edits and linter runs
   - If the linter messes up the text
     - File bugs in `amp` with examples what the linter does incorrectly
-  - When a gdoc becomes obsolete or it’s deleted
-    - Add a note at the top of a gdoc explaining what happened
-    - Example: "Moved to /new_markdown_file.md"
-    - Strike out the entire document
-    - Move the gdoc to the
-      [\_OLD directory](https://drive.google.com/drive/u/0/folders/1J4B1vq8EwT-q_z7qSLCZ9Tug2CA9f8i7)
+- Last steps
+  - Compare the generated markdown file with the original Gdoc from top to bottom to ensure accurate rendering.
+  - Review the markdown file on GitHub to make sure it looks good, as it
+    may slightly differ from the preview in your local markdown editor
+- When a gdoc becomes obsolete or it's deleted
+  - Add a note at the top of a gdoc explaining what happened
+  - Example: "Moved to /new_markdown_file.md"
+  - Strike out the entire document
+  - Move the gdoc to the
+    [\_OLD directory](https://drive.google.com/drive/u/0/folders/1J4B1vq8EwT-q_z7qSLCZ9Tug2CA9f8i7)
+
+### Other approaches
+
+- Best for a large document
+- Approach 1 - Chrome Docs to Markdown extension:
+  - Use the [Docs to Markdown](https://github.com/evbacher/gd2md-html/wiki)
+    extension
+    - Install
+      [the extension](https://gsuite.google.com/marketplace/app/docs_to_markdown/700168918607)
+      from the G Suite marketplace
+    - [User guide](https://github.com/evbacher/gd2md-html/wiki#using-docs-to-markdown)
+      for the extension
+  - One needs to accept/reject all suggestions in a gdoc as the extension works
+    poorly when a document is edited in the suggestion mode
+- Approach 2 - Online converter:
+  - [Google-docs-to-markdown/](https://mr0grog.github.io/google-docs-to-markdown/)
+
+- Also need to go through [Cleaning up converted markdown](#cleaning-up-converted-markdown)
+- You might need to remove artifacts manually
 
 ## Markdown -> Gdocs
 
