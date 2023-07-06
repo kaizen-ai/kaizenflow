@@ -29,7 +29,9 @@ _LOG = logging.getLogger(__name__)
 def _share_grive(
     cred_file_path: str, file_id: str, permission_file_path: str
 ) -> None:
-    # Share Google Drive permissions.
+    """
+    Share Google Drive permissions.
+    """
     creds = goa.service_account.Credentials.from_service_account_file(
         cred_file_path
     )
