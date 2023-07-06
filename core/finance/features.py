@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
@@ -99,15 +100,31 @@ def compute_stochastic(
     cols = [high_col, low_col, close_col]
     hdbg.dassert_container_type(cols, container_type=list, elem_type=str)
     hdbg.dassert_is_subset(cols, df.columns)
-    #
+    stochastic_col = "stochastic"
     hlc = df[cols]
+    # Check that having high = low implies all prices in the bar are the same.
+    high_equal_low_mask = hlc[high_col] == hlc[low_col]
+    close_not_equal_high_mask = hlc[close_col] != hlc[high_col]
+    high_equal_low_not_equal_close = hlc.loc[
+        high_equal_low_mask & close_not_equal_high_mask
+    ]
+    hdbg.dassert_eq(
+        high_equal_low_not_equal_close.shape[0],
+        0,
+        msg=f"There is a case when low=high!=close:\n{hpandas.df_to_str(high_equal_low_not_equal_close, num_rows=3)}\n",
+    )
+    #
     if apply_log:
         hlc = np.log(hlc)
-    high = hlc[high_col]
-    low = hlc[low_col]
-    close = hlc[close_col]
-    stochastic = (2 * close - high - low) / (high - low)
-    stochastic.name = "stochastic"
+    hlc[stochastic_col] = (2 * hlc[close_col] - hlc[high_col] - hlc[low_col]) / (
+        hlc[high_col] - hlc[low_col]
+    )
+    # Having all prices equal results in 0 / 0 = np.nan, however zero is more
+    # appropriate. However, np.nan == np.nan is False which means that NaNs
+    # will be preserved as intended.
+    hlc[stochastic_col].loc[high_equal_low_mask] = 0
+    stochastic = hlc[stochastic_col]
+    stochastic.name = stochastic_col
     return stochastic.to_frame()
 
 

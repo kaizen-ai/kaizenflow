@@ -119,8 +119,12 @@ if True:
             y_vars = [y_vars]
         hdbg.dassert_isinstance(y_vars, list)
         hdbg.dassert_eq(len(y_vars), 1, "Multitarget case is not supported.")
-        y_cols = [f"{y_vars[0]}_{i+1}" for i in range(prediction_length)]
-        yhat_cols = [f"{y_vars[0]}_hat_{i+1}" for i in range(prediction_length)]
+        # TODO(Grisha): usually the pattern is `y.shift_-2_hat` while here it is
+        # `y_hat.shift_-2` -> align with the rest of the codebase.
+        y_cols = [f"{y_vars[0]}.shift_-{i+1}" for i in range(prediction_length)]
+        yhat_cols = [
+            f"{y_vars[0]}_hat.shift_-{i+1}" for i in range(prediction_length)
+        ]
         yhat_all = np.full((df.shape[0], prediction_length), np.nan)
         y_all = np.full((df.shape[0], prediction_length), np.nan)
         #

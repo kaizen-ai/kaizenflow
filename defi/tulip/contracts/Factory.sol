@@ -20,29 +20,36 @@ contract SwapFactory is Ownable {
 
     // Create new eth-token swap pair.
     function createNewPair(
-        address _token,
+        address _baseToken,
+        string memory _baseTokenSymbol,
         uint16 _swapPeriodInSecs,
         uint8 _swapRandomizationInSecs,
         uint8 _feesAsPct,
-        address _priceOracle
+        uint8 _priceMode,
+        address _priceFeedOracle,
+        address _twapVwapOracle
     ) public {
-        require(_token != address(0));
+        require(_baseToken != address(0));
         require(
-            tokenToSwap[_token] == address(0),
+            tokenToSwap[_baseToken] == address(0),
             "Swap contract for this token already exists"
         );
         address swapAddress = address(
             new DaoCross(
-                _token,
+                _baseToken,
+                _baseTokenSymbol,
                 _swapPeriodInSecs,
                 _swapRandomizationInSecs,
                 _feesAsPct,
-                _priceOracle
+                _priceMode,
+                _priceFeedOracle,
+                _twapVwapOracle
             )
         );
-        tokenToSwap[_token] = swapAddress;
-        coveredTokens.push(_token);
-        emit PairCreated(_token, swapAddress, msg.sender, block.timestamp);
+
+        tokenToSwap[_baseToken] = swapAddress;
+        coveredTokens.push(_baseToken);
+        emit PairCreated(_baseToken, swapAddress, msg.sender, block.timestamp);
     }
 
     function getSwapByToken(address _token) external view returns (address) {

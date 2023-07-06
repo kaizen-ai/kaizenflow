@@ -16,6 +16,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import im_v2.common.data.client.base_im_clients as imvcdcbimcl
 import im_v2.common.data_snapshot as icdds
 import im_v2.common.universe as ivcu
@@ -192,9 +193,25 @@ class HistoricalPqByTileClient(
             #            )
             transformation_kwargs: Dict = {}
             if self._infer_exchange_id:
+                # Infer `exchange_id` position in a file path.
+                s3_bucket_path = hs3.get_s3_bucket_path(self._aws_profile)
+                reorg_root_dir = os.path.join(s3_bucket_path, "reorg")
+                daily_staged_reorg_dir = os.path.join(
+                    reorg_root_dir, "daily_staged.airflow.pq"
+                )
+                if root_dir == daily_staged_reorg_dir:
+                    # E.g. "binance" from
+                    # "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask-futures/crypto_chassis.downloaded_1min/binance/".
+                    exchange_loc = -1
+                else:
+                    # E.g. "binance" from
+                    # "s3://cryptokaizen-data/v3/periodic_daily/airflow/downloaded_1min/parquet/bid_ask/futures/v3/crypto_chassis/binance/v1_0_0/".
+                    exchange_loc = -2
                 # Infer `exchange_id` from a file path if it is not present in data.
                 # E.g., `s3://.../latest/ohlcv/ccxt/binance` -> `binance`.
-                transformation_kwargs["exchange_id"] = root_dir.split("/")[-1]
+                transformation_kwargs["exchange_id"] = root_dir.split("/")[
+                    exchange_loc
+                ]
             # Transform data.
             root_dir_df = self._apply_transformations(
                 root_dir_df, full_symbol_col_name, **transformation_kwargs
@@ -259,7 +276,7 @@ class HistoricalPqByTileClient(
 # HistoricalPqByCurrencyPairTileClient
 # #############################################################################
 
-# TODO(Juraj): This might even be deprecated.
+
 class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
     """
     Read historical data for vendor specific assets stored as Parquet dataset.
@@ -267,6 +284,9 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
     Parquet dataset should be partitioned by currency pair.
     """
 
+    # TODO(Grisha): make data_version-specific parameters optional,
+    # e.g., `data_snapshot` is applicable only for `v2`, `download_mode`,
+    # `downloading_entity` are applicable only for `v3`.
     def __init__(
         self,
         vendor: str,
@@ -278,6 +298,9 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         contract_type: str,
         data_snapshot: str,
         *,
+        download_mode: str = "periodic_daily",
+        downloading_entity: str = "airflow",
+        version: str = "",
         tag: str = "",
         aws_profile: Optional[str] = None,
         resample_1min: bool = False,
@@ -289,6 +312,9 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
 
         :param dataset: the dataset type, e.g. "ohlcv", "bid_ask"
         :param data_snapshot: same format used in `get_data_snapshot()`
+        :param download_mode: data download mode
+        :param downloading_entity: entity used to download data
+        :param version: data version
         :param tag: resample type, e.g., "resampled_1min", "downloaded_1sec"
         """
         infer_exchange_id = True
@@ -304,19 +330,29 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         hdbg.dassert_in(
             dataset, ["bid_ask", "ohlcv"], f"Invalid dataset type='{dataset}'"
         )
+        self._universe_version = universe_version
+        # TODO(Grisha): @Dan `dataset` -> `data_type`.
         self._dataset = dataset
         hdbg.dassert_in(
             contract_type,
             ["spot", "futures"],
             f"Invalid dataset type='{contract_type}'",
         )
+        # TODO(Grisha): @Dan `contract_type` -> `asset_type`.
         self._contract_type = contract_type
         data_snapshot = icdds.get_data_snapshot(
             root_dir, data_snapshot, aws_profile
         )
         self._data_snapshot = data_snapshot
-        hdbg.dassert_in(tag, ["", "downloaded_1sec", "resampled_1min"])
+        hdbg.dassert_in(
+            tag, ["", "downloaded_1min", "resampled_1min", "downloaded_1sec"]
+        )
+        self._download_mode = download_mode
+        self._downloading_entity = downloading_entity
+        self._version = version
+        # TODO(Grisha): @Dan `tag` -> `action_tag`.
         self._tag = tag
+        self._data_format = "parquet"
 
     @staticmethod
     def get_metadata() -> pd.DataFrame:
@@ -393,25 +429,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         }
         ```
         """
-        # TODO(Dan): "Rename S3 files to spot and futures CmTask #2150."
-        contract_type_separator = "-"
-        contract_type = self._contract_type
-        if contract_type == "spot":
-            # E.g., `s3://.../20210924/ohlcv/ccxt/coinbase`.
-            contract_type_separator = ""
-            contract_type = ""
-        # E.g., `ohlcv-futures` for futures.
-        dataset = "".join([self._dataset, contract_type_separator, contract_type])
-        # E.g., `crypto_chassis.resampled_1min` for resampled data.
-        vendor = self._vendor.lower()
-        if self._tag:
-            vendor = ".".join([vendor, self._tag])
-        root_dir = os.path.join(
-            self._root_dir,
-            self._data_snapshot,
-            dataset,
-            vendor,
-        )
+        filter_root_dir = self._get_filter_root_dir()
         # Split full symbols into exchange id and currency pair tuples, e.g.,
         # [('binance', 'ADA_USDT'),
         # ('coinbase', 'BTC_USDT')].
@@ -428,7 +446,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         # Build a dict with exchange root dirs as keys and Parquet filters by
         # the corresponding currency pairs as values.
         root_dir_symbol_filter_dict = {
-            os.path.join(root_dir, exchange_id): (
+            os.path.join(filter_root_dir, exchange_id, self._version): (
                 "currency_pair",
                 "in",
                 currency_pairs,
@@ -436,6 +454,80 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             for exchange_id, currency_pairs in symbol_dict.items()
         }
         return root_dir_symbol_filter_dict
+
+    def _get_filter_root_dir(self) -> str:
+        """
+        Build a root dir to files to filter.
+
+        Examples:
+        - reorg dir: 's3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask-futures/crypto_chassis.downloaded_1min/binance/'
+        - v3 dir: 's3://cryptokaizen-data/v3/periodic_daily/airflow/downloaded_1min/parquet/bid_ask/futures/v3/crypto_chassis/binance/v1_0_0/'
+        """
+        # Set condition for reorg and unit test subdirs approach.
+        s3_bucket_path = hs3.get_s3_bucket_path(self._aws_profile)
+        reorg_root_dir = os.path.join(s3_bucket_path, "reorg")
+        unit_test_root_dir = os.path.join(s3_bucket_path, "unit_test")
+        # The "unit_test" folder has the same structure as "reorg".
+        is_reorg_dir = self._root_dir.startswith(
+            reorg_root_dir
+        ) | self._root_dir.startswith(unit_test_root_dir)
+        if is_reorg_dir:
+            filter_root_dir = self._get_filter_root_dir_reorg()
+        else:
+            filter_root_dir = self._get_filter_root_dir_v3()
+        return filter_root_dir
+
+    def _get_filter_root_dir_reorg(self) -> str:
+        """
+        Build a reorg filter root dir.
+        """
+        vendor = self._vendor.lower()
+        contract_type_separator = "-"
+        contract_type = self._contract_type
+        if contract_type == "spot":
+            # E.g., `s3://.../20210924/ohlcv/ccxt/coinbase`.
+            contract_type_separator = ""
+            contract_type = ""
+        # E.g., `ohlcv-futures` for futures.
+        dataset = "".join([self._dataset, contract_type_separator, contract_type])
+        # E.g., `crypto_chassis.resampled_1min` for resampled data.
+        if self._tag:
+            vendor = ".".join([vendor, self._tag])
+        filter_root_dir = os.path.join(
+            self._root_dir,
+            self._data_snapshot,
+            dataset,
+            vendor,
+        )
+        return filter_root_dir
+
+    def _get_filter_root_dir_v3(self) -> str:
+        """
+        Build a v3 filter root dir.
+        """
+        vendor = self._vendor.lower()
+        # TODO(Grisha): expose `download_universe_version` as a param.
+        # The universe version is overwritten because in the dir path download
+        # universe version is used, while `universe_version` is a trade universe
+        # version.
+        if vendor == "ccxt":
+            universe_version = "v7"
+        elif vendor == "crypto_chassis":
+            universe_version = "v3"
+        else:
+            raise ValueError(f"Invalid vendor='{self._vendor}'")
+        filter_root_dir = os.path.join(
+            self._root_dir,
+            self._download_mode,
+            self._downloading_entity,
+            self._tag,
+            self._data_format,
+            self._dataset,
+            self._contract_type,
+            universe_version,
+            vendor,
+        )
+        return filter_root_dir
 
 
 # #############################################################################

@@ -2,6 +2,7 @@ import logging
 import unittest.mock as umock
 
 import ccxt
+import ccxt.pro as ccxtpro
 import pandas as pd
 import pytest
 
@@ -50,9 +51,9 @@ class TestCcxtExtractor1(hunitest.TestCase):
         expected_method_calls = "[call.load_markets()]"
         self.assertEqual(actual_method_calls, expected_method_calls)
         # Wrong contract type.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             imvcdexex.CcxtExtractor("binance", "dummy")
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = (
             "Failed assertion *\n'dummy' in '['futures', 'spot']'\n"
             "Supported contract types: spot, futures"
@@ -145,8 +146,8 @@ class TestCcxtExtractor1(hunitest.TestCase):
         actual_output = hpandas.df_to_str(ohlcv_data)
         expected_output = rf"""dummy timestamp
             0  dummy {mid_timestamp}
-            0  dummy {mid_timestamp}
-            0  dummy {mid_timestamp}
+            1  dummy {mid_timestamp}
+            2  dummy {mid_timestamp}
         """
         self.assert_equal(actual_output, expected_output, fuzzy_match=True)
 
@@ -171,13 +172,67 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Check output.
         self.assertEqual(fetch_ohlcv_mock.call_count, 1)
         actual_args = tuple(fetch_ohlcv_mock.call_args)
-        expected_args = (("BTC/USDT",), {"bar_per_iteration": 500})
+        expected_args = (("BTC/USDT",), {"bar_per_iteration": 1000})
         self.assertEqual(actual_args, expected_args)
         actual_output = hpandas.df_to_str(ohlcv_data)
         expected_output = r"""dummy
             0  dummy
         """
         self.assert_equal(actual_output, expected_output, fuzzy_match=True)
+
+    def test_download_ohlcv_websocket_kline_is_not_present(self) -> None:
+        """
+        Verify that warning message is properly logged when last minutes timestamp
+        not in the downloaded raw websocket data.
+        """
+        # Initialize class and parameters.
+        exchange_id = "binance"
+        contract_type = "futures"
+        extractor = imvcdexex.CcxtExtractor(exchange_id, contract_type)
+        currency_pair = "BTC_USDT"
+        # Mock currency pairs.
+        extractor.currency_pairs = [currency_pair]
+        # Mock an async_exchange.
+        extractor._async_exchange = umock.MagicMock()
+        # Test case 1 ------------------------------------------------------------
+        # Last minute timestamp is not in the downloaded raw websocket data.
+        # Mock return value of trades.
+        ohlcv_data = ccxtpro.base.cache.ArrayCacheByTimestamp()
+        ohlcv_data.append([1645660900000, 1.11, 2.11, 3.11, 4.11, 5.11])
+        ohlcv_data.append([1645660900000, 1.11, 2.11, 3.11, 4.11, 5.11])
+        expected = {"1m": ohlcv_data}
+        extractor._async_exchange.ohlcvs.__getitem__.return_value = expected
+        # Run with mocked log.
+        with umock.patch.object(imvcdexex, "_LOG") as mock_log:
+            extractor._download_websocket_ohlcv(exchange_id, currency_pair)
+        actual_logs = str(mock_log.method_calls)
+        # Check output.
+        expected_logs = (
+            "[call.warning('Latest kline is not present in the downloaded data."
+            " currency_pair=BTC_USDT.')]"
+        )
+        self.assert_equal(actual_logs, expected_logs, fuzzy_match=True)
+        # Test case 2 ------------------------------------------------------------
+        # Last minute timestamp is in the downloaded raw websocket data.
+        # Mock return value of trades.
+        timestamp_to_check = (
+            pd.Timestamp.utcnow() - pd.Timedelta(minutes=1)
+        ).replace(second=0, microsecond=0)
+        timestamp_to_check = hdateti.convert_timestamp_to_unix_epoch(
+            timestamp_to_check, unit="ms"
+        )
+        ohlcv_data = ccxtpro.base.cache.ArrayCacheByTimestamp()
+        ohlcv_data.append([1645660900000, 1.11, 2.11, 3.11, 4.11, 5.11])
+        ohlcv_data.append([timestamp_to_check, 1.11, 2.11, 3.11, 4.11, 5.11])
+        expected = {"1m": ohlcv_data}
+        extractor._async_exchange.ohlcvs.__getitem__.return_value = expected
+        # Run with mocked log.
+        with umock.patch.object(imvcdexex, "_LOG") as mock_log:
+            extractor._download_websocket_ohlcv(exchange_id, currency_pair)
+        actual_logs = str(mock_log.method_calls)
+        # Check output.
+        expected_logs = "[]"
+        self.assert_equal(actual_logs, expected_logs, fuzzy_match=True)
 
     @umock.patch.object(imvcdexex.hdateti, "get_current_time")
     def test_fetch_ohlcv1(self, mock_get_current_time: umock.MagicMock) -> None:
@@ -228,6 +283,182 @@ class TestCcxtExtractor1(hunitest.TestCase):
             self.assertEqual(actual_args, expected_args)
             self.assertEqual(mock_get_current_time.call_count, 1)
 
+    @umock.patch.object(imvcdexex.hdateti, "get_current_time")
+    def test_fetch_trades1(self, mock_get_current_time: umock.MagicMock) -> None:
+        """
+        Verify if download is properly requested and parsed upon retrieval.
+        """
+        # Prepare test data.
+        current_time = "2023-01-02 00:00:00.000000+00:00"
+        start_timestamp = pd.Timestamp("2023-01-01 00:00:01")
+        end_timestamp = pd.Timestamp("2023-01-01 00:10:01")
+        start_timestamp_in_ms = hdateti.convert_timestamp_to_unix_epoch(
+            start_timestamp
+        )
+        end_timestamp_in_ms = hdateti.convert_timestamp_to_unix_epoch(
+            end_timestamp
+        )
+        mock_get_current_time.return_value = current_time
+        mock_trades_start_chunk = [
+            ["123456789", start_timestamp_in_ms, "BTC/USDT", "buy", 10000.0, 1.0],
+            ["123456790", start_timestamp_in_ms, "BTC/USDT", "buy", 10001.0, 1.0],
+        ]
+        mock_trades_chunk_with_extra = [
+            ["123456791", start_timestamp_in_ms, "BTC/USDT", "buy", 10002.0, 1.0],
+            [
+                "123456792",
+                end_timestamp_in_ms + 1000,
+                "BTC/USDT",
+                "buy",
+                10003.0,
+                1.0,
+            ],
+        ]
+        # Prepare expected output.
+        expected = r"""timestamp    symbol side    price  amount            end_download_timestamp
+            0  1672531201000  BTC/USDT  buy  10000.0     1.0  2023-01-02 00:00:00.000000+00:00
+            1  1672531201000  BTC/USDT  buy  10001.0     1.0  2023-01-02 00:00:00.000000+00:00
+            2  1672531201000  BTC/USDT  buy  10002.0     1.0  2023-01-02 00:00:00.000000+00:00"""
+        # Prepare data and initialize class before run.
+        exchange_id = "binance"
+        contract_type = "futures"
+        ccxt_extractor = imvcdexex.CcxtExtractor(exchange_id, contract_type)
+        currency_pair = "BTC_USDT"
+        limit = 500
+        with umock.patch.object(
+            ccxt_extractor._sync_exchange, "fetch_trades", create=True
+        ) as fetch_trades_mock:
+            # Mock a call to CCXT `fetch_trades` method called inside
+            # `_fetch_trades`.
+            # The first call will return the first chunk of trades.
+            # The second call will return the second chunk of trades
+            # with an extra trade that is outside the requested time range.
+            fetch_trades_mock.side_effect = [
+                mock_trades_start_chunk,
+                mock_trades_chunk_with_extra,
+            ]
+            # Run.
+            ccxt_data = ccxt_extractor._fetch_trades(
+                currency_pair=currency_pair,
+                start_timestamp=start_timestamp,
+                end_timestamp=end_timestamp,
+                limit=limit,
+            )
+        # Check output.
+        actual = hpandas.df_to_str(ccxt_data)
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_download_trades(self) -> None:
+        """
+        Verify if download is properly requested and parsed upon retrieval.
+        """
+        # Prepare test data.
+        mock_trades = [
+            [
+                123456789000,
+                "BTC/USDT",
+                "buy",
+                10000.0,
+                1.0,
+                "2022-02-24 00:00:00.000000+00:00",
+            ],
+            [
+                123456789001,
+                "BTC/USDT",
+                "buy",
+                10012.0,
+                1.0,
+                "2022-02-24 00:00:00.000000+00:00",
+            ],
+        ]
+        columns = [
+            "timestamp",
+            "symbol",
+            "side",
+            "price",
+            "amount",
+            "end_download_timestamp",
+        ]
+        expected_df = pd.DataFrame(mock_trades, columns=columns)
+        # Prepare data and initialize class before run.
+        exchange_id = "binance"
+        contract_type = "futures"
+        ccxt_extractor = imvcdexex.CcxtExtractor(exchange_id, contract_type)
+        currency_pair = "BTC_USDT"
+        ccxt_extractor.currency_pairs = ["BTC/USDT"]
+        start_timestamp = pd.Timestamp("2023-01-01 00:00:01")
+        end_timestamp = pd.Timestamp("2023-01-01 00:10:01")
+        with umock.patch.object(
+            ccxt_extractor, "_fetch_trades", create=True
+        ) as mock_fetch_trades:
+            # Mock a call to ccxt's `fetch_trades` method called inside
+            # `_fetch_trades`.
+            mock_fetch_trades.return_value = expected_df
+            actual_df = ccxt_extractor._download_trades(
+                exchange_id,
+                currency_pair,
+                start_timestamp=start_timestamp,
+                end_timestamp=end_timestamp,
+            )
+        self.assertTrue(actual_df.equals(expected_df))
+        """
+        Verify if download is properly requested and parsed upon retrieval.
+        """
+        # Prepare test data.
+        mock_trades = [
+            [
+                123456789000,
+                "BTC/USDT",
+                "buy",
+                10000.0,
+                1.0,
+                "2022-02-24 00:00:00.000000+00:00",
+            ],
+            [
+                123456789001,
+                "BTC/USDT",
+                "buy",
+                10012.0,
+                1.0,
+                "2022-02-24 00:00:00.000000+00:00",
+            ],
+        ]
+        columns = [
+            "timestamp",
+            "symbol",
+            "side",
+            "price",
+            "amount",
+            "end_download_timestamp",
+        ]
+        mocked_df = pd.DataFrame(mock_trades, columns=columns)
+        # Prepare expected output.
+        expected_output = """timestamp    symbol side    price  amount            end_download_timestamp
+            0  123456789000  BTC/USDT  buy  10000.0     1.0  2022-02-24 00:00:00.000000+00:00
+            1  123456789001  BTC/USDT  buy  10012.0     1.0  2022-02-24 00:00:00.000000+00:00"""
+        # Prepare data and initialize class before run.
+        exchange_id = "binance"
+        contract_type = "futures"
+        ccxt_extractor = imvcdexex.CcxtExtractor(exchange_id, contract_type)
+        currency_pair = "BTC_USDT"
+        ccxt_extractor.currency_pairs = ["BTC/USDT"]
+        start_timestamp = pd.Timestamp("2023-01-01 00:00:01")
+        end_timestamp = pd.Timestamp("2023-01-01 00:10:01")
+        with umock.patch.object(
+            ccxt_extractor, "_fetch_trades", create=True
+        ) as mock_fetch_trades:
+            # Mock a call to ccxt's `fetch_trades` method called inside
+            # `_fetch_trades`.
+            mock_fetch_trades.return_value = mocked_df
+            actual_df = ccxt_extractor._download_trades(
+                exchange_id,
+                currency_pair,
+                start_timestamp=start_timestamp,
+                end_timestamp=end_timestamp,
+            )
+        actual_output = hpandas.df_to_str(actual_df)
+        self.assert_equal(actual_output, expected_output, fuzzy_match=True)
+
     def test_get_exchange_currency_pairs(self) -> None:
         """
         Test that a non-empty list of exchange currencies is loaded.
@@ -240,7 +471,6 @@ class TestCcxtExtractor1(hunitest.TestCase):
             load_markets_mock.return_value = {"BTC/USDT": {}}
             # Run.
             actual = exchange_class.get_exchange_currency_pairs()
-            #
             self.assertEqual(load_markets_mock.call_count, 1)
         # Check output.
         expected = ["BTC/USDT"]
@@ -256,7 +486,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Run with invalid input.
         start_timestamp = "invalid"
         end_timestamp = pd.Timestamp("2021-09-10T00:00:00Z")
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             exchange_class._download_ohlcv(
                 exchange_id="binance",
                 currency_pair="BTC/USDT",
@@ -264,7 +494,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
                 end_timestamp=end_timestamp,
             )
         # Check output for error.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = (
             "'invalid' is '<class 'str'>' instead of "
             "'<class 'pandas._libs.tslibs.timestamps.Timestamp'"
@@ -281,7 +511,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Run with invalid input.
         start_timestamp = pd.Timestamp("2021-09-09T00:00:00Z")
         end_timestamp = "invalid"
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             exchange_class._download_ohlcv(
                 exchange_id="binance",
                 currency_pair="BTC/USDT",
@@ -289,7 +519,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
                 end_timestamp=end_timestamp,
             )
         # Check output for error.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = (
             "'invalid' is '<class 'str'>' instead of "
             "'<class 'pandas._libs.tslibs.timestamps.Timestamp'"
@@ -308,7 +538,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Run with invalid input.
         start_timestamp = pd.Timestamp("2021-09-10T00:00:00Z")
         end_timestamp = pd.Timestamp("2021-09-09T00:00:00Z")
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             exchange_class._download_ohlcv(
                 exchange_id="binance",
                 currency_pair="BTC/USDT",
@@ -316,7 +546,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
                 end_timestamp=end_timestamp,
             )
         # Check output for error.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = "2021-09-10 00:00:00+00:00 <= 2021-09-09 00:00:00+00:00"
         self.assertIn(expected, actual)
 
@@ -327,7 +557,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Initialize class.
         exchange_class = imvcdexex.CcxtExtractor("binance", "spot")
         # Run with invalid input.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             exchange_class._download_ohlcv(
                 exchange_id="binance",
                 currency_pair="invalid_currency_pair",
@@ -335,7 +565,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
                 end_timestamp=None,
             )
         # Check output for error.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = "Currency pair is not present in exchange"
         self.assertIn(expected, actual)
 
@@ -399,6 +629,47 @@ class TestCcxtExtractor1(hunitest.TestCase):
             """
             self.assert_equal(actual_output, expected_output, fuzzy_match=True)
 
+    def test__download_websocket_trades(self) -> None:
+        """
+        Verify that trades are downloaded correctly by websocket.
+        """
+        # Initialize class and parameters.
+        exchange_id = "binance"
+        contract_type = "futures"
+        extractor = imvcdexex.CcxtExtractor(exchange_id, contract_type)
+        currency_pair = "BTC_USDT"
+        # Mock currency pairs.
+        extractor.currency_pairs = [currency_pair]
+        # Mock an async_exchange.
+        extractor._async_exchange = umock.MagicMock()
+        # Mock return value of trades.
+        expected = [
+            {
+                "info": {},
+                "timestamp": 1678109748838,
+                "datetime": "2023-03-06T13:35:48.838Z",
+                "symbol": "BTC/USDT",
+                "id": "3363915321",
+                "order": None,
+                "type": None,
+                "side": "buy",
+                "takerOrMaker": "taker",
+                "price": 22399.5,
+                "amount": 0.035,
+                "cost": 783.9825,
+                "fee": None,
+                "fees": [],
+            }
+        ]
+        extractor._async_exchange.trades.get.return_value = {
+            "some_key": "some_value"
+        }
+        extractor._async_exchange.trades.__getitem__.return_value = expected
+        # Run.
+        actual = extractor._download_websocket_trades(exchange_id, currency_pair)
+        # Check output.
+        self.assertEqual(actual["data"], expected)
+
     def test_download_bid_ask_invalid_input1(self) -> None:
         """
         Run with invalid currency pair.
@@ -409,9 +680,9 @@ class TestCcxtExtractor1(hunitest.TestCase):
         exchange_class.currency_pairs = ["BTC/USDT"]
         fake_currency_pair = "NON_EXIST"
         # Run with invalid input.
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             exchange_class._download_bid_ask(exchange, fake_currency_pair, 10)
         # Check output for error.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = "Currency pair is not present in exchange"
         self.assertIn(expected, actual)

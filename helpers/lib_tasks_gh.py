@@ -263,7 +263,6 @@ def _get_repo_full_name_from_cmd(repo_short_name: str) -> Tuple[str, str]:
         ret_repo_short_name = hgit.get_repo_name(
             repo_full_name, in_mode="full_name", include_host_name=False
         )
-
     else:
         # Get the repo name using the short -> full name mapping.
         repo_full_name_with_host = hgit.get_repo_name(

@@ -134,7 +134,19 @@
 - If it is a “serious” problem (bug) put as much information about the Issue as
   possible, e.g.,:
   - What you are trying to achieve
-  - Command line you ran
+  - Command line you ran, e.g.,
+    ```
+    > i lint -f defi/tulip/test/test_dao_cross_sol.py
+    ```
+  - **Copy-paste** the error and the stack trace from the cmd line, no screenshots, e.g.,
+    ```
+    Traceback (most recent call last):
+      File "/venv/bin/invoke", line 8, in <module>
+        sys.exit(program.run())
+      File "/venv/lib/python3.8/site-packages/invoke/program.py", line 373, in run
+        self.parse_collection()
+    ValueError: One and only one set-up config should be true:
+    ```
   - The log of the run
     - Maybe the same run using `-v DEBUG` to get more info on the problem
   - What the problem is

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import optimizer.forecast_evaluator_with_optimizer as ofevwiop
+import optimizer.forecast_evaluator_with_optimizer as optfewo
 """
 import logging
 from typing import Dict, Optional, Tuple
@@ -430,6 +430,7 @@ class ForecastEvaluatorWithOptimizer:
             columns={
                 self._price_col: "price",
                 self._volatility_col: "volatility",
+                self._prediction_col: "prediction",
             }
         )
         return dag_slice

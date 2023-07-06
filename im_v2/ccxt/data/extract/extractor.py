@@ -37,6 +37,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         :param exchange_id: CCXT exchange id to log into (e.g., 'binance')
         :param contract_type: spot or futures contracts to extract
         """
+        _LOG.info("CCXT version: %s", ccxt.__version__)
         super().__init__()
         hdbg.dassert_in(
             contract_type,
@@ -55,15 +56,26 @@ class CcxtExtractor(imvcdexex.Extractor):
         self.vendor = "CCXT"
 
     @staticmethod
-    def convert_currency_pair(currency_pair: str) -> str:
+    def convert_currency_pair(
+        currency_pair: str, *, exchange_id: str = None
+    ) -> str:
         """
         Convert currency pair used for getting data from exchange.
         """
-        return currency_pair.replace("_", "/")
+        # TODO(Vlad): This is a temporary fix for OKX. We should
+        #   implement a more general solution.
+        #   Also seems like it works for websocket and don't work for
+        #   REST API(bid_ask) - need to investigate.
+        if exchange_id == "okx":
+            # E.g., USD_BTC -> USD-BTC.
+            return currency_pair.replace("_", "-")
+        else:
+            # E.g., USD_BTC -> USD/BTC.
+            return currency_pair.replace("_", "/")
 
     def log_into_exchange(
         self, async_: bool
-    ) -> Union[ccxtpro.base.exchange.Exchange, ccxt.Exchange]:
+    ) -> ccxt.Exchange:
         """
         Log into an exchange via CCXT (or CCXT pro) and return the
         corresponding `Exchange` object.
@@ -88,6 +100,27 @@ class CcxtExtractor(imvcdexex.Extractor):
         """
         return list(self._sync_exchange.load_markets().keys())
 
+    def _is_latest_kline_present(self, data: list) -> bool:
+        """
+        Check if the last minute timestamp is present in the
+            raw websocket data.
+
+        :param data: list of OHLCV bars
+        :return: True if the last minute timestamp is found in the data
+            False otherwise
+        """
+        # Get the unique timestamps from the data.
+        timestamps = set([row[0] for row in data])
+        # Round the timestamp to the nearest minute.
+        timestamp_to_check = (
+            pd.Timestamp.utcnow() - pd.Timedelta(minutes=1)
+        ).replace(second=0, microsecond=0)
+        timestamp_to_check = hdateti.convert_timestamp_to_unix_epoch(
+            timestamp_to_check, unit="ms"
+        )
+        # Check if the timestamp is present in the data.
+        return timestamp_to_check in timestamps
+
     def _download_ohlcv(
         self,
         exchange_id: str,
@@ -95,8 +128,8 @@ class CcxtExtractor(imvcdexex.Extractor):
         *,
         start_timestamp: Optional[pd.Timestamp] = None,
         end_timestamp: Optional[pd.Timestamp] = None,
-        bar_per_iteration: Optional[int] = 500,
-        sleep_time_in_secs: float = 0.5,
+        bar_per_iteration: Optional[int] = 1000,
+        sleep_time_in_secs: float = 0.25,
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -109,6 +142,9 @@ class CcxtExtractor(imvcdexex.Extractor):
         :param sleep_time_in_secs: time in seconds between iterations
         :return: OHLCV data from CCXT
         """
+        # TODO(Vlad): Temporary fix for OKX REST. Need to refactor.
+        if exchange_id == "okx":
+            currency_pair = currency_pair.replace("-", "/")
         # Assign exchange_id to make it symmetrical to other vendors.
         _ = exchange_id
         hdbg.dassert(
@@ -167,6 +203,9 @@ class CcxtExtractor(imvcdexex.Extractor):
             (all_bars_df["timestamp"] >= start_timestamp)
             & (all_bars_df["timestamp"] <= end_timestamp)
         ]
+        # It can happen that the received the data are not ordered by timestamp, which would
+        #  make the is_monotonic check fail.
+        all_bars_df = all_bars_df.sort_values("timestamp").reset_index(drop=True)
         hdbg.dassert(all_bars_df.timestamp.is_monotonic)
         # TODO(gp): Double check if dataframes are properly concatenated.
         return all_bars_df
@@ -194,7 +233,7 @@ class CcxtExtractor(imvcdexex.Extractor):
          websocket stream via ohlcvs dict, e.g. exchange.ohlcvs['currency_pair']
         """
         converted_pair = self.convert_currency_pair(
-            currency_pair,
+            currency_pair, exchange_id=exchange_id
         )
         await self._async_exchange.watchOHLCV(
             converted_pair, timeframe=timeframe, since=since, limit=limit
@@ -217,16 +256,28 @@ class CcxtExtractor(imvcdexex.Extractor):
         :param bid_ask_depth: how many levels of order book to download
         """
         currency_pair = self.convert_currency_pair(
-            currency_pair,
+            currency_pair, exchange_id=exchange_id
         )
         await self._async_exchange.watchOrderBook(
             currency_pair, limit=bid_ask_depth
         )
 
-    async def _subscribe_to_websocket_trades(self, **kwargs: Any) -> None:
-        raise NotImplementedError(
-            "Trades websocket data is not implemented for CCXT vendor yet."
+    async def _subscribe_to_websocket_trades(
+        self, exchange_id: str, currency_pair: str, since: int, **kwargs: Any
+    ) -> None:
+        """
+        Wrapper to subscribe to trades data via watchTrades websocket based
+        approach.
+
+        :exchange_id: exchange to download from
+        :param currency_pair: currency pair, e.g. "BTC_USDT"
+        :param since:: from when is data fetched in UNIX epoch milliseconds
+         websocket stream via trades dict, e.g. exchange.trades['currency_pair']
+        """
+        converted_pair = self.convert_currency_pair(
+            currency_pair, exchange_id=exchange_id
         )
+        await self._async_exchange.watchTrades(converted_pair, since=since)
 
     def _pad_bids_asks_to_equal_len(
         self, bids: List[List], asks: List[List]
@@ -253,7 +304,14 @@ class CcxtExtractor(imvcdexex.Extractor):
         """
         data = {}
         try:
-            pair = self.convert_currency_pair(currency_pair)
+            pair = self.convert_currency_pair(
+                currency_pair, exchange_id=exchange_id
+            )
+            # TODO(Vlad): This is a temporary fix for OKX, which uses a different
+            #  symbol format than the rest of the exchanges.
+            #  Need to be refactored to a more general solution.
+            if exchange_id == "okx":
+                pair = pair.replace("-", "/")
             if data_type == "ohlcv":
                 data = copy.deepcopy(self._async_exchange.ohlcvs[pair])
                 for key in data:
@@ -266,6 +324,12 @@ class CcxtExtractor(imvcdexex.Extractor):
                         data[key], ccxtpro.base.cache.ArrayCacheByTimestamp
                     ):
                         ohlcv = data[key]
+                # TODO(Vlad, Juraj): Need to modify during #3194
+                if not self._is_latest_kline_present(ohlcv):
+                    _LOG.warning(
+                        f"Latest kline is not present in the downloaded data."
+                        f" currency_pair={currency_pair}."
+                    )
                 data["ohlcv"] = ohlcv
                 data["currency_pair"] = pair
             elif data_type == "bid_ask":
@@ -286,6 +350,32 @@ class CcxtExtractor(imvcdexex.Extractor):
                         ) = self._pad_bids_asks_to_equal_len(
                             data["bids"], data["asks"]
                         )
+                        # TODO(Vlad): This is a temporary fix for OKX exchange, which
+                        #  doesn't limit the number of bids and asks.
+                        #  Need to be refactored to use depth as parameter.
+                        if exchange_id == "okx":
+                            data["bids"] = data["bids"][:10]
+                            data["asks"] = data["asks"][:10]
+                        # For some reason the OKX exchange does not return the symbol.
+                        # This is a temporary fix for that.
+                        if exchange_id == "okx" and data["symbol"] is None:
+                            data["symbol"] = pair
+                        if not isinstance(data.get("timestamp"), int):
+                            _LOG.warning(
+                                "Timestamp is not an integer. "
+                                "currency_pair=%s.",
+                                currency_pair,
+                            )
+                else:
+                    data = None
+            elif data_type == "trades":
+                if self._async_exchange.trades.get(pair):
+                    # In case of trades, the data is stored in a list of dicts.
+                    # We convert it to a dict of lists for easier processing.
+                    data = dict(
+                        data=copy.deepcopy(self._async_exchange.trades[pair])
+                    )
+                    data["currency_pair"] = pair
                 else:
                     data = None
             else:
@@ -343,6 +433,9 @@ class CcxtExtractor(imvcdexex.Extractor):
         :param currency_pair: currency pair to download, i.e. BTC_USDT.
         :param depth: depth of the order book to download.
         """
+        # TODO(Vlad): Temporary fix for OKX REST. Need to refactor.
+        if exchange_id == "okx":
+            currency_pair = currency_pair.replace("-", "/")
         # TODO(Juraj): can we get rid of this duplication of information?
         # exchange_id is set in constructor.
         # Assign exchange_id to make it symmetrical to other vendors.
@@ -388,13 +481,127 @@ class CcxtExtractor(imvcdexex.Extractor):
         bid_ask = order_book[bid_ask_columns]
         return bid_ask
 
-    def _download_websocket_trades(self, **kwargs: Any) -> Dict:
-        raise NotImplementedError(
-            "Trades websocket data is not implemented for CCXT vendor yet."
-        )
+    def _download_websocket_trades(
+        self, exchange_id: str, currency_pair: str
+    ) -> Dict:
+        """
+        Get the most recent trades data for a given currency pair.
 
-    def _download_trades(self, **kwargs: Any) -> pd.DataFrame:
-        raise NotImplementedError("Trades data is not available for CCXT vendor")
+        :return Dict representing snapshot of the data for
+          a specified symbol and data type.
+          Example:
+            {
+                'data':[
+                    {
+                        'info': {
+                            'e': 'trade',
+                            'E': 1678440475956,
+                            'T': 1678440475951,
+                            's': 'ETHUSDT',
+                            't': 2764874199,
+                            'p': '1405.20',
+                            'q': '0.242',
+                            'X': 'MARKET',
+                            'm': False
+                        },
+                        'timestamp': 1678440475951,
+                        'datetime': '2023-03-10T09:27:55.951Z',
+                        'symbol': 'ETH/USDT',
+                        'id': '2764874199',
+                        'order': None,
+                        'type': None,
+                        'side': 'buy',
+                        'takerOrMaker': 'taker',
+                        'price': 1405.2,
+                        'amount': 0.242,
+                        'cost': 340.0584,
+                        'fee': None,
+                        'fees': []
+                    }
+                ]
+                'currency_pair': 'ETH/USDT'
+                'end_download_timestamp': '2023-03-10 09:30:26.296282+00:00'
+            }
+        """
+        return self._download_websocket_data(exchange_id, currency_pair, "trades")
+
+    def _download_trades(
+        self,
+        exchange_id: str,
+        currency_pair: str,
+        *,
+        start_timestamp: Optional[pd.Timestamp] = None,
+        end_timestamp: Optional[pd.Timestamp] = None,
+        sleep_time_in_secs: Optional[float] = 0.25,
+        trade_per_iteration: Optional[int] = 1000,
+        **kwargs: Any,
+    ) -> pd.DataFrame:
+        """
+        Download trades data from CCXT.
+
+        :param exchange_id: exchange to download from
+         (not used, kept for compatibility with parent class)
+        :param currency_pair: currency pair to download, i.g. BTC_USDT
+        :param start_timestamp: start timestamp of the data to download
+        :param end_timestamp: end timestamp of the data to download
+        :param sleep_time_in_secs: time to sleep between iterations
+            It's not necessary to sleep, but it's a good idea to avoid
+            overloading the exchange.
+        :param trade_per_iteration: number of trades to download per iteration
+            Add trade_per_iteration gain more control over the number of trades.
+        :return: trades data
+        """
+        # TODO(Vlad): Temporary fix for OKX REST. Need to refactor.
+        if exchange_id == "okx":
+            currency_pair = currency_pair.replace("-", "/")
+        elif exchange_id == "kraken":
+            # Check if sleep time is not too low.
+            # https://support.kraken.com/hc/en-us/articles/206548367-What-are-the-API-rate-limits-
+            if sleep_time_in_secs < 1:
+                _LOG.warning(
+                    "Kraken has a limit of calling the public endpoints "
+                    "at a frequency of 1 per second "
+                    "Sleep time is set to 1 second."
+                )
+                sleep_time_in_secs = 1
+        # Assign exchange_id to make it symmetrical to other vendors.
+        _ = exchange_id
+        hdbg.dassert(
+            self._sync_exchange.has["fetchTrades"],
+            "Exchange %s doesn't has fetchTrades method",
+            self._sync_exchange,
+        )
+        # Convert symbol to CCXT format, e.g. "BTC_USDT" -> "BTC/USDT".
+        currency_pair = self.convert_currency_pair(
+            currency_pair,
+        )
+        hdbg.dassert_in(
+            currency_pair,
+            self.currency_pairs,
+            "Currency pair is not present in exchange",
+        )
+        # Verify that date parameters are of correct format.
+        hdbg.dassert_isinstance(
+            end_timestamp,
+            pd.Timestamp,
+        )
+        hdbg.dassert_isinstance(
+            start_timestamp,
+            pd.Timestamp,
+        )
+        hdbg.dassert_lte(
+            start_timestamp,
+            end_timestamp,
+        )
+        # Fetch trades.
+        trades = self._fetch_trades(
+            currency_pair,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+            sleep_time_in_secs=sleep_time_in_secs,
+            limit=trade_per_iteration,
+        )
+        return trades
 
     def _fetch_ohlcv(
         self,
@@ -433,3 +640,78 @@ class CcxtExtractor(imvcdexex.Extractor):
         bars = pd.DataFrame(bars, columns=columns)
         bars["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
         return bars
+
+    def _fetch_trades(
+        self,
+        currency_pair: str,
+        *,
+        start_timestamp: Optional[pd.Timestamp] = None,
+        end_timestamp: Optional[pd.Timestamp] = None,
+        sleep_time_in_secs: Optional[float] = 0.25,
+        limit: Optional[int] = 1000,
+    ) -> pd.DataFrame:
+        """
+        Fetch trades with the ccxt method.
+
+        :param currency_pair: currency pair, e.g. "BTC_USDT"
+        :param start_timestamp: start timestamp of the data to download.
+        :param end_timestamp: end timestamp of the data to download.
+        :param sleep_time_in_secs: time to sleep between iterations
+        :param limit: number of trades per iteration
+        :return: trades data from CCXT that looks like:
+            ```
+                timestamp      symbol      side    price     amount           end_download_timestamp
+            0   1631145600000  BTC/USDT    buy     46048.31  0.001  2022-02-22 18:00:06.091652+00:00
+            1   1631145600000  BTC/USDT    sell    46050.00  0.001  2022-02-22 18:00:06.091652+00:00
+            ```
+        """
+        # Prepare parameters.
+        columns = ["id", "timestamp", "symbol", "side", "price", "amount"]
+        start_timestamp = hdateti.convert_timestamp_to_unix_epoch(start_timestamp)
+        end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
+        trades = []
+        last_data_id: Optional[int] = None
+        kraken_since: Optional[int] = None
+        # Fetch the data through CCXT.
+        while True:
+            if last_data_id is None:
+                # Start from beginning, get the data from the start timestamp.
+                data = self._sync_exchange.fetch_trades(
+                    currency_pair,
+                    since=start_timestamp,
+                    limit=limit,
+                )
+            else:
+                # Pick up where we left off, get the data from the last id.
+                if self.exchange_id == "kraken":
+                    # Kraken doesn't support the limit parameter.
+                    # And for iterations after the first one, we need to use
+                    # the timestamp of the last trade as the since parameter.
+                    # https://github.com/ccxt/ccxt/issues/5698
+                    data = self._sync_exchange.fetch_trades(
+                        currency_pair, since=kraken_since
+                    )
+                else:
+                    params = {"fromId": last_data_id}
+                    data = self._sync_exchange.fetch_trades(
+                        currency_pair, limit=limit, params=params
+                    )
+            if self.exchange_id == "kraken" and len(data) > 0:
+                kraken_since = int(data[-1]["timestamp"]) + 1
+            df = pd.DataFrame(data, columns=columns)
+            trades.append(df)
+            # Stop if there is no data.
+            if df.empty:
+                break
+            # Stop if dataset has reached the end of the time range.
+            if (df.timestamp > end_timestamp).any():
+                break
+            # Update the fromId parameter as next iteration's starting point.
+            last_data_id = int(df["id"].iloc[-1]) + 1
+            # Take a nap in order to avoid hitting the rate limit.
+            time.sleep(sleep_time_in_secs)
+        trades_df = pd.concat(trades).reset_index(drop=True).drop(columns=["id"])
+        trades_df["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+        # Cut the data if it exceeds the end timestamp.
+        trades_df = trades_df[trades_df["timestamp"] < end_timestamp]
+        return trades_df

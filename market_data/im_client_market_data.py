@@ -83,15 +83,18 @@ class ImClientMarketData(mdabmada.MarketData):
         left_close: bool,
         right_close: bool,
         limit: Optional[int],
+        ignore_delay: bool,
     ) -> pd.DataFrame:
         """
         See the parent class.
         """
         _LOG.debug(
             hprint.to_str(
-                "start_ts end_ts ts_col_name asset_ids left_close right_close limit"
+                "start_ts end_ts ts_col_name asset_ids left_close right_close limit ignore_delay"
             )
         )
+        # This is used only in ReplayedMarketData.
+        _ = ignore_delay
         if not left_close:
             if start_ts is not None:
                 # Add one millisecond to not include the left boundary.
@@ -141,6 +144,10 @@ class ImClientMarketData(mdabmada.MarketData):
             query_columns,
             self._filter_data_mode,
         )
+        _LOG.debug(
+            "-> df after _im_client.read_data=\n%s",
+            hpandas.df_to_str(market_data),
+        )
         # Add `asset_id` column.
         _LOG.debug("asset_id_col=%s", self._asset_id_col)
         _LOG.debug("full_symbol_col_name=%s", full_symbol_col_name)
@@ -171,6 +178,10 @@ class ImClientMarketData(mdabmada.MarketData):
             market_data = market_data.head(limit)
         # Prepare data for normalization by the parent class.
         market_data = self._convert_data_for_normalization(market_data)
+        _LOG.debug(
+            "-> df after _convert_data_for_normalization=\n%s",
+            hpandas.df_to_str(market_data),
+        )
         return market_data
 
     def _convert_data_for_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -210,12 +221,15 @@ class ImClientMarketData(mdabmada.MarketData):
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
         # We need to find the last timestamp before the current time. If don't have data
         # for an asset for the past hour it does not make any sense to compute further.
-        # TODO(gp): SELECT MAX(start_time) instead of getting all the data
-        #  and then find the max and use `start_time`
-        timedelta = pd.Timedelta("1H")
+        # TODO(Grisha): should be a function of `bar_length_in_minutes`, e.g.,
+        # `bar_length_in_minutes * 2`. In order not to complicate the interface
+        #  use 15T (the longest bar length) * 2.
+        timedelta = pd.Timedelta("30T")
         df = self.get_data_for_last_period(timedelta)
         _LOG.debug(
-            hpandas.df_to_str(df, print_shape_info=True, tag="after get_data")
+            hpandas.df_to_str(
+                df, print_shape_info=True, tag="after get_data_for_last_period"
+            )
         )
         if df.empty:
             wall_clock_time = self.get_wall_clock_time()
