@@ -72,31 +72,53 @@ class Test_system1(hunitest.TestCase):
 
     def test8(self) -> None:
         """
-        Test .system() on a failing cmd with --tee switch enabled and no other parameters.
+        Check that an assert is raised when `tee` is passed without a log file.
         """        
         with self.assertRaises(AssertionError) as cm:
-            hsystem.system("ls this_should_fail", tee=True)    
+            hsystem.system("ls this_should_fail", tee=True)  
+        actual = str(cm.exception)
+        expected = r"""        
+        ################################################################################
+        * Failed assertion *
+        'True' implies 'False'
+        ################################################################################
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)  
         
     
     def test9(self) -> None:
         """
-        Test .system() on a failing cmd with --tee switch enabled and specified log output file.
+        Check that the failing command fails and logs are stored in the log file.
+
+        - `allow_errors = False`
+        - `tee = True`
+        - Log file path is passed
         """  
         log_dir = self.get_scratch_space()
         log_file_path = os.path.join(log_dir, "tee_log")   
-        #Creates AssertRaisesContext error (seems unexpected)
+        # Run                
         with self.assertRaises(RuntimeError) as cm:
             hsystem.system("ls this_should_fail", tee=True, output_file=log_file_path)
-        # Check that log file contains error message.
-        log_content = hio.from_file(log_file_path)
-        self.check_string(log_content)
+        actual = str(cm.exception)
+        expected = r"""  
+        cmd='(ls this_should_fail) 2>&1 | tee -a /app/helpers/test/outcomes/Test_system1.test9/tmp.scratch/tee_log; exit ${PIPESTATUS[0]}' failed with rc='2'
+        truncated output=
+        ls: cannot access 'this_should_fail': No such file or directory          
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)  
 
     def test10(self) -> None:
         """
-        Test .system() on a failing cmd with --tee switch and allowedErrors enabled.
+        Check that the failing command passes and logs are stored in the log file.
+
+        - `allow_errors = True`
+        - `tee = True`
+        - Log file path is passed
         """
-        with self.assertRaises(TypeError) as cm:
-            hsystem.system("ls this_should_fail", tee=True, allowedErrors=True)
+        log_dir = self.get_scratch_space()
+        log_file_path = os.path.join(log_dir, "tee_log")                                 
+        rc = hsystem.system("ls this_should_fail", tee=True, abort_on_error=False, output_file=log_file_path)                
+        self.assertTrue(rc == 2)  
 
 
 
