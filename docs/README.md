@@ -64,6 +64,8 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Code organization](/code_organization.md)
 
+- [Buildmeister process](/docs/Buildmeister_process.md)
+
 ## DeFi: start developing
 
 - [DeFi README](/defi/README.md)
