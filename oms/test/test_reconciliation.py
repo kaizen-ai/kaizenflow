@@ -23,5 +23,5 @@ class TestGetRunDate1(hunitest.TestCase):
         an invalid format.
         """
         start_timestamp = "20231013_12345678"
-        with pytest.raises(Exception):
+        with self.assertRaises(AssertionError):
             omreconc.get_run_date(start_timestamp)
