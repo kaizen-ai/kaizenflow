@@ -1,4 +1,4 @@
-# Buildmeister Process
+# Buildmeister process
 
 <!-- toc -->
 
@@ -13,7 +13,6 @@
 # General
 
 - Buildmeister rotates every 2 weeks
-
   - To see who is the Buildmeister now refer to [<span
     class="underline">Buildmeister gsheet</span>](https://docs.google.com/spreadsheets/d/1Ab6a3BVeLX1l1B3_A6rNY9pHRsofeoCw2ip2dkQ6SdA/edit#gid=0)
 
@@ -21,7 +20,6 @@
     Buildmeister and the new one in the related Telegram chat
 
 - Buildmeister is responsible for:
-
   - Pushing team members to fix broken tests
   - Conducting post-mortem analysis
     - Why did the break happen?
@@ -61,7 +59,6 @@ Example:
 - You receive a break notification from @GH_bot
 
 - Have a look at the message
-
   - Do it right away, this is always your highest priority task
 
 - Notify the team
@@ -70,12 +67,10 @@ Post on the @ALL Telegram channel what tests broke, e.g.,
 FAILED knowledge_graph/vendors/test/test_utils.py::TestClean::test_clean
 
 - If unsure about the cause of failure (chance that failure is temporary):
-
   - Do a quick run locally for failed test
   - If test is specific and can not be run locally, rerun the regressions
 
 - Ask if somebody knows what is the problem
-
   - If you know who is in charge of that test (you can use git blame) ask
     directly
 
@@ -84,7 +79,6 @@ FAILED knowledge_graph/vendors/test/test_utils.py::TestClean::test_clean
 - Otherwise file a bug to track the issue
 
 - File an Issue in GH / ZH to report the failing tests and the errors
-
   - Example:  
     [<span
     class="underline">https://app.zenhub.com/workspaces/cm-615371012ed326001e044788/issues/alphamatic/dev_tools/318</span>](https://app.zenhub.com/workspaces/cm-615371012ed326001e044788/issues/alphamatic/dev_tools/318)
@@ -171,7 +165,6 @@ operation
 
 - We want to understand on why builds are broken so that we can improve the
   system to make it more robust
-
   - In order to do that, we need to understand the failure modes of the system
   - For this reason we keep a log of all the issues and what was the root cause
 
@@ -179,30 +172,25 @@ operation
   [Buildmeister spreadsheet sheet "Post-mortem breaks analysis"](https://docs.google.com/spreadsheets/d/1AajgLnRQka9-W8mKOkobg8QOzaEVOnIMlDi8wWVATeA/edit#gid=1363431255)
 
 - Date column:
-
   - Enter the date when the break took place
   - Keep the bug ordered in reverse chronological order (i.e., most recent dates
     first)
 
 - Repo column:
-
   - Specify the repo where break occurred
     - amp
     - ...
 
 - Test type column:
-
   - Specify the type of the failing tests
     - Fast
     - Slow
     - Super-slow
 
 - Link column:
-
   - Provide a link to a failing run
 
 - Reason column:
-
   - Specify the reason of the break
     - Merged a branch with broken tests
     - Master was not merged in a branch
@@ -210,7 +198,6 @@ operation
     - Underlying data changed
 
 - Issue column:
-
   - Provide the link to the ZH issue with the break description
 
 - Solution column:
