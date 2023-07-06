@@ -26,6 +26,26 @@ import helpers.hparser as hparser
 _LOG = logging.getLogger(__name__)
 
 
+def _share_grive(
+    cred_file_path: str, file_id: str, permission_file_path: str
+) -> None:
+    # Share Google Drive permissions.
+    creds = goa.service_account.Credentials.from_service_account_file(
+        cred_file_path
+    )
+    service = gapicld.build("drive", "v3", credentials=creds)
+    permission_df = pd.read_csv(permission_file_path)
+    # Assign permission to each contributor in the file.
+    for _, row in permission_df.iterrows():
+        email = row["emailAddress"]
+        role = row["role"]
+        permission = {"type": "user", "role": role, "emailAddress": email}
+        service.permissions().create(fileId=file_id, body=permission).execute()
+
+
+# #############################################################################
+
+
 def _parse() -> argparse.ArgumentParser:
     hdbg.init_logger(use_exec_path=True)
     parser = argparse.ArgumentParser(
@@ -56,28 +76,12 @@ def _parse() -> argparse.ArgumentParser:
     return parser
 
 
-# Share Google Drive permissions.
-def _share_gdrive(
-    cred_file_path: str, file_id: str, permission_file_path: str
-) -> None:
-    creds = goa.service_account.Credentials.from_service_account_file(
-        cred_file_path
-    )
-    service = gapicld.build("drive", "v3", credentials=creds)
-    permission_df = pd.read_csv(permission_file_path)
-    for _, row in permission_df.iterrows():
-        email = row["emailAddress"]
-        role = row["role"]
-        permission = {"type": "user", "role": role, "emailAddress": email}
-        service.permissions().create(fileId=file_id, body=permission).execute()
-
-
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     cred_file_path = args.credentials
     file_id = args.file_id
     permission_file_path = args.permission_file_path
-    _share_gdrive(cred_file_path, file_id, permission_file_path)
+    _share_grive(cred_file_path, file_id, permission_file_path)
 
 
 if __name__ == "__main__":
