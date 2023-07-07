@@ -38,9 +38,6 @@ import helpers.henv as henv
 import helpers.hprint as hprint
 
 
-# %% [markdown]
-# # Configure Logger
-
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
 
