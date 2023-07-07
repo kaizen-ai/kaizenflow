@@ -298,16 +298,16 @@
 ### Process
 
 - Download Google document as docx
-- Convert it to markdown using `convert_docx_to_markdown.py`.
-  Usage:
-
+- Convert it to markdown using `convert_docx_to_markdown.py`
+- Usage:
   ```
   > ../dev_scripts/convert_docx_to_markdown.py --docx_file Tools_Docker.docx --md_file Tools_Docker.md
   ```
   - This command should be run directly under the target output directory for 
     the Markdown file, in order to generate correct image links. Otherwise, 
     you'll need to manually fix the image links.
-  - The filename can't contain any spaces, so use _ to replace spaces.
+  - File names can't contain any spaces. Therefore, use underscores `_` to 
+    replace any spaces.
 
 ### Cleaning up converted markdown
 
