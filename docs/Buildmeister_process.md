@@ -16,13 +16,11 @@
   - To see who is the Buildmeister now refer to [<span class="underline">Buildmeister gsheet</span>](https://docs.google.com/spreadsheets/d/1Ab6a3BVeLX1l1B3_A6rNY9pHRsofeoCw2ip2dkQ6SdA/edit#gid=0)
   - Each rotation should be confirmed by a 'handshake' between the outgoing
     Buildmeister and the new one in the related Telegram chat
-
 - Buildmeister is responsible for:
   - Pushing team members to fix broken tests
   - Conducting post-mortem analysis
     - Why did the break happen?
     - What can we avoid the problem, especially through process and automation
-
 - Testing workflows are available via github actions:
   - Testing workflows that need to be checked:
     - cmamp:
@@ -32,7 +30,7 @@
       - [<span class="underline">Fast tests</span>](https://github.com/alphamatic/dev_tools/actions/workflows/fast_tests.yml)
       - [<span class="underline">Slow tests</span>](https://github.com/alphamatic/dev_tools/actions/workflows/slow_tests.yml)
   - Refer to .github dir in the repo for update schedule of GH actions
-  - Additional information about the [<spanclass="underline">tests</span>](https://github.com/sorrentum/sorrentum/blob/master/docs/Unit_tests.md) and [<spanclass="underline">gdoc</span>](https://docs.google.com/document/d/1M8I2qt5CuCw7537_1yayeZhIfh_VoeHT26h5jgSEm3Q/edit)
+  - Additional information about the [<span class="underline">tests</span>](https://github.com/sorrentum/sorrentum/blob/master/docs/Unit_tests.md) and [<span class="underline">gdoc</span>](https://docs.google.com/document/d/1M8I2qt5CuCw7537_1yayeZhIfh_VoeHT26h5jgSEm3Q/edit)
 
 # Notification system
 
@@ -77,9 +75,7 @@ Example:
   - List all the tests with FAILED status in a github run, e.g.,  
     ```
     FAILED knowledge_graph/vendors/test/test_p1_utils.py::TestClean::test_clean
-    
-    FAILED
-    knowledge_graph/vendors/nbsc/test/test_nbsc_utils.py::TestExposeNBSCMetadata::test_expose_nbsc_metadata
+    FAILED knowledge_graph/vendors/nbsc/test/test_nbsc_utils.py::TestExposeNBSCMetadata::test_expose_nbsc_metadata
     ```
     - Stack trace or part of it (if it's too large)  
         ```
