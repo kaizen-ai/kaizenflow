@@ -10,24 +10,29 @@
 
 <!-- tocstop -->
 
+TODO(gp): Consolidate here any other rule from other gdoc
+
 # Goals of packages
+
 The goal of creating packages is to:
 - simplify the import from clients
 - hide in which file the actual code is, so that we can reorganize the code without having to change all the client code
 - organize the code in related units
 - make it simpler to avoid import loops by enforcing that there are no import loops in any module and no import loops among modules
 E.g., referring to package from a different package looks like
-'''import dataflow.core as dtfcore
-dtfcore.ArmaGenerator(...)'''
+```import dataflow.core as dtfcore
+dtfcore.ArmaGenerator(...)```
 Importing the specific file:
-'''import dataflow.system.source_nodes as dtfsysonod
-dtfsysonod.ArmaGenerator(...)'''
+```import dataflow.system.source_nodes as dtfsysonod
+dtfsysonod.ArmaGenerator(...)```
 
 ## Circular dependency (aka import cycle, import loop)
+
 The simplest case of circular import is a situation when in lib `A` we have `import B`, and in lib B we have `import A`.
 The presence of circular imports can be checked with an invoke i lint_detect_cycles. By default, it will run on the whole repo, which takes a couple of minutes, but it will provide the most reliable and thorough check for circular imports.
 
 ## Rules for imports
+
 We follow rules to avoid import loops:
 1. Code inside a package should import directly a file in the same package and not use the package
    - E.g., im_v2/common/data/client/data_frame_im_clients.py
@@ -59,8 +64,10 @@ We follow rules to avoid import loops:
      """
      ```
 
-# How to import code from unit tests
+## How to import code from unit tests
+
 To avoid churning client code when code is moved among files, we allow unit tests to both:
+
 1. import the package when testing code exported from the package
    - E.g., in market_data/test/market_data_test_case.py you can import the package even if it's included
      ```
@@ -78,13 +85,15 @@ To justify 2., one can interpret that unit tests are tied to specific files, so 
 Given that both explanations are valid, we allow both styles.
 
 ## Common unit test code
+
 Unit tests should not import from each other
 - If there is common code, it should go in libraries inside or outside `test` directories
 - E.g., we use `foobar_example.py` files containing builders for mocks and examples of objects to be used by tests
 - E.g., we use `test/foobar_test_case.py` or `test/foobar_utils.py`
 - In other terms, test files are always leaves of the import graph
 
-# Package/lib hierarchy and cycle prevention
+## Package/lib hierarchy and cycle prevention
+
 Static import cycles can be detected by the invoke `lint_detect_cycles`.
 To prevent import cycles, we want to enforce that certain packages don't depend on other packages
 - E.g., `helpers` should not depend on any other package, besides external libraries
@@ -101,6 +110,6 @@ In addition, keep in mind the following rules to prevent import cycles:
 - Any import inside a function is just a temporary hack waiting to create problems.
 - Any time we can break a file into smaller pieces, we should do that since this helps control the dependencies.
 
-# Anatomy of a package
+## Anatomy of a package
 TODO(gp): Let's use `dataflow` as a running example
 A package has a special `__init__.py` exporting public methods
