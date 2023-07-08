@@ -1,3 +1,4 @@
+TODO(gp): Consolidate here any other rule from other gdoc
 # Goals of packages
 The goal of creating packages is to:
 - simplify the import from clients
