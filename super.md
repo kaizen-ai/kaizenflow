@@ -25,8 +25,10 @@ import dataflow.core as dtfcore
 dtfcore.ArmaGenerator(...)
 ```
 Importing the specific file:
-```import dataflow.system.source_nodes as dtfsysonod
-dtfsysonod.ArmaGenerator(...)```
+```
+import dataflow.system.source_nodes as dtfsysonod
+dtfsysonod.ArmaGenerator(...)
+```
 
 ## Circular dependency (aka import cycle, import loop)
 
