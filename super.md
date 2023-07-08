@@ -96,7 +96,7 @@ Unit tests should not import from each other
 - E.g., we use `test/foobar_test_case.py` or `test/foobar_utils.py`
 - In other terms, test files are always leaves of the import graph
 
-## Package/lib hierarchy and cycle prevention
+# Package/lib hierarchy and cycle prevention
 
 Static import cycles can be detected by the invoke `lint_detect_cycles`.
 To prevent import cycles, we want to enforce that certain packages don't depend on other packages
@@ -114,6 +114,6 @@ In addition, keep in mind the following rules to prevent import cycles:
 - Any import inside a function is just a temporary hack waiting to create problems.
 - Any time we can break a file into smaller pieces, we should do that since this helps control the dependencies.
 
-## Anatomy of a package
+# Anatomy of a package
 TODO(gp): Let's use `dataflow` as a running example
 A package has a special `__init__.py` exporting public methods
