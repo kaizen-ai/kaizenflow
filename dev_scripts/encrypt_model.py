@@ -83,8 +83,8 @@ def _encrypt_model(
     # Make encrypted model files accessible by any user.
     # TODO(gp): Why is sudo needed? IMO the Docker container should use the right permissions.
     # We can pass -u user and group as we do for the main Docker flow.
-    # cmd = f"sudo chmod -R 777 {encrypted_model_dir}"
-    # hsystem.system(cmd)
+    cmd = f"chmod -R 777 {encrypted_model_dir}"
+    hsystem.system(cmd)
     return encrypted_model_dir
 
 
