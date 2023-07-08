@@ -1,5 +1,6 @@
 # Golden rules
 
+- Please `watch`, `star` and `fork` the repo.
 - "Remember to treat others the way you want to be treated"
 - Everybody comes from a different place and different skill-level, somebody has
   a job, somebody has a full-time work
@@ -7,11 +8,11 @@
 - I'll remind you an adage that I tell myself when my teammates drive me crazy:
   "If you want to go fast, go alone; if you want to go far, go together"
 - While being assigned a warm-up issue:
-  - We highly value the importance of following instructions to ensure
-    efficient task completion. We intentionally select straightforward and
-    simple issues as the first tasks for you. So as your first step you should
-    put primary focus on following the rules. Failure to do so can result in
-    wasting more of our time than saving it.
+  - We highly value the importance of following instructions to ensure efficient
+    task completion. We intentionally select straightforward and simple issues
+    as the first tasks for you. So as your first step you should put primary
+    focus on following the rules. Failure to do so can result in wasting more of
+    our time than saving it.
   - A pledge to put in the time you committed and not disappear
   - If we don't find that you can meaningfully contribute, we will give you a
     warning and help you improve, we will suggest you how to fill in your
