@@ -3,7 +3,7 @@
 - [Goals of packages](#goals-of-packages)
   - [Circular dependency (aka import cycle, import loop)](#circular-dependency-aka-import-cycle-import-loop)
   - [Rules for imports](#rules-for-imports)
-- [How to import code from unit tests](#how-to-import-code-from-unit-tests)
+  - [How to import code from unit tests](#how-to-import-code-from-unit-tests)
   - [Common unit test code](#common-unit-test-code)
 - [Package/lib hierarchy and cycle prevention](#packagelib-hierarchy-and-cycle-prevention)
 - [Anatomy of a package](#anatomy-of-a-package)
