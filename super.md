@@ -1,16 +1,27 @@
-TODO(gp): Consolidate here any other rule from other gdoc
+<!-- toc -->
+
+- [Goals of packages](#goals-of-packages)
+  - [Circular dependency (aka import cycle, import loop)](#circular-dependency-aka-import-cycle-import-loop)
+  - [Rules for imports](#rules-for-imports)
+- [How to import code from unit tests](#how-to-import-code-from-unit-tests)
+  - [Common unit test code](#common-unit-test-code)
+- [Package/lib hierarchy and cycle prevention](#packagelib-hierarchy-and-cycle-prevention)
+- [Anatomy of a package](#anatomy-of-a-package)
+
+<!-- tocstop -->
+
 # Goals of packages
 The goal of creating packages is to:
 - simplify the import from clients
 - hide in which file the actual code is, so that we can reorganize the code without having to change all the client code
 - organize the code in related units
-- make simpler to avoid import loops by enforcing that there are no import loops in any module and no import loops among modules
+- make it simpler to avoid import loops by enforcing that there are no import loops in any module and no import loops among modules
 E.g., referring to package from a different package looks like
-import dataflow.core as dtfcore
-dtfcore.ArmaGenerator(...)
+'''import dataflow.core as dtfcore
+dtfcore.ArmaGenerator(...)'''
 Importing the specific file:
-import dataflow.system.source_nodes as dtfsysonod
-dtfsysonod.ArmaGenerator(...)
+'''import dataflow.system.source_nodes as dtfsysonod
+dtfsysonod.ArmaGenerator(...)'''
 
 ## Circular dependency (aka import cycle, import loop)
 The simplest case of circular import is a situation when in lib `A` we have `import B`, and in lib B we have `import A`.
@@ -48,7 +59,7 @@ We follow rules to avoid import loops:
      """
      ```
 
-## How to import code from unit tests
+# How to import code from unit tests
 To avoid churning client code when code is moved among files, we allow unit tests to both:
 1. import the package when testing code exported from the package
    - E.g., in market_data/test/market_data_test_case.py you can import the package even if it's included
@@ -66,7 +77,7 @@ To justify 1., one can argue that unit tests are clients of the code and should 
 To justify 2., one can interpret that unit tests are tied to specific files, so they should be kept in sync with the low-level code and not with the public interface. In fact, we already allow unit tests to call private functions, acknowledging that unit tests are not regular clients.
 Given that both explanations are valid, we allow both styles.
 
-### Common unit test code
+## Common unit test code
 Unit tests should not import from each other
 - If there is common code, it should go in libraries inside or outside `test` directories
 - E.g., we use `foobar_example.py` files containing builders for mocks and examples of objects to be used by tests
