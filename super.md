@@ -20,8 +20,10 @@ The goal of creating packages is to:
 - organize the code in related units
 - make it simpler to avoid import loops by enforcing that there are no import loops in any module and no import loops among modules
 E.g., referring to package from a different package looks like
-```import dataflow.core as dtfcore
-dtfcore.ArmaGenerator(...)```
+```
+import dataflow.core as dtfcore
+dtfcore.ArmaGenerator(...)
+```
 Importing the specific file:
 ```import dataflow.system.source_nodes as dtfsysonod
 dtfsysonod.ArmaGenerator(...)```
