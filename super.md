@@ -88,7 +88,7 @@ To justify 1., one can argue that unit tests are clients of the code and should 
 To justify 2., one can interpret that unit tests are tied to specific files, so they should be kept in sync with the low-level code and not with the public interface. In fact, we already allow unit tests to call private functions, acknowledging that unit tests are not regular clients.
 Given that both explanations are valid, we allow both styles.
 
-## Common unit test code
+### Common unit test code
 
 Unit tests should not import from each other
 - If there is common code, it should go in libraries inside or outside `test` directories
