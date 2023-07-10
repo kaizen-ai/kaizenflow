@@ -298,16 +298,16 @@
 ### Process
 
 - Download Google document as docx
-- Convert it to markdown using `convert_docx_to_markdown.py`. This command
-  should be run directly under the target output directory for the Markdown
-  file, in order to generate correct image links. Otherwise, you'll need to
-  manually fix the image links.
-
-  Usage:
-
+- Convert it to markdown using `convert_docx_to_markdown.py`
+- Usage:
   ```
   > ../dev_scripts/convert_docx_to_markdown.py --docx_file Tools_Docker.docx --md_file Tools_Docker.md
   ```
+  - This command should be run directly under the target output directory for 
+    the Markdown file, in order to generate correct image links. Otherwise, 
+    you'll need to manually fix the image links.
+  - File names can't contain any spaces. Therefore, use underscores `_` to 
+    replace any spaces.
 
 ### Cleaning up converted markdown
 
@@ -327,7 +327,10 @@
         or any other published Markdown format as reference
       - Add missing ``` around code blocks. These could be missing in the
         original Google doc. Also adjust code block indentations if needed
-
+- Remove empty lines manually
+  ```
+  :'<,'>! perl -ne 'print if /\S/'
+  ```
 - Run the `lint_md.sh`
   - Usage:
     ```
@@ -337,7 +340,7 @@
     - Build TOC automatically
     - Adjust the indentation to improve the Markdown's format (but the 
       precondition is that you have properly adjusted the indentation levels).
-    - Remove unnecessary empty lines
+    - Remove extra empty lines under headings
     - Adjust text layout
   - Do not mix manual edits and linter runs
   - If the linter messes up the text
