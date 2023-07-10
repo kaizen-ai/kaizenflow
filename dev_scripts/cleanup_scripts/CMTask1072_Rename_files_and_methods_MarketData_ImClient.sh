@@ -87,4 +87,3 @@
 
 # Remove unused imports from affected files.
 invoke lint -m --only-format
-

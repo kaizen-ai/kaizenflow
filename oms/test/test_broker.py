@@ -179,7 +179,7 @@ class Test_fill_orders1(hunitest.TestCase):
         order = self.get_order_example(type_)
         #
         exp = r"""
-        Order: order_id=0 creation_timestamp=2000-01-01 09:30:00-05:00 asset_id=101 type_=price@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York
+        Order: order_id=0 creation_timestamp=2000-01-01 09:30:00-05:00 asset_id=101 type_=price@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York extra_params={}
         [Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=997.93]
         """
         asset_ids = [101]
@@ -211,7 +211,7 @@ class Test_fill_orders1(hunitest.TestCase):
         order = self.get_order_example(type_)
         #
         exp = r"""
-        Order: order_id=0 creation_timestamp=2000-01-01 09:30:00-05:00 asset_id=101 type_=price@end start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York
+        Order: order_id=0 creation_timestamp=2000-01-01 09:30:00-05:00 asset_id=101 type_=price@end start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York extra_params={}
         [Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=997.425]
         """
         asset_ids = [101]
@@ -239,7 +239,7 @@ class Test_fill_orders1(hunitest.TestCase):
         Order: order_id=0 creation_timestamp=2000-01-01 09:30:00-05:00 asset_id=101
             type_=midpoint@end start_timestamp=2000-01-01 09:30:00-05:00
             end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0
-            diff_num_shares=100.0 tz=America/New_York
+            diff_num_shares=100.0 tz=America/New_York extra_params={}
         [Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=997.425]
         """
         asset_ids = [101]
@@ -269,7 +269,7 @@ class Test_fill_orders1(hunitest.TestCase):
         Order: order_id=0 creation_timestamp=2000-01-01 09:30:00-05:00
             asset_id=101 type_=price@twap start_timestamp=2000-01-01 09:30:00-05:00
             end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0
-            diff_num_shares=100.0 tz=America/New_York
+            diff_num_shares=100.0 tz=America/New_York extra_params={}
         [Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:31:00-05:00
         num_shares=20.0 price=998.9300000000001,
         Fill: asset_id=101 fill_id=1 timestamp=2000-01-01 09:32:00-05:00
@@ -389,7 +389,7 @@ class TestDataFrameBroker2(hunitest.TestCase):
     def test_collect_spread_buy(self) -> None:
         order = oordexam.get_order_example3(0.0)
         expected_order = r"""
-        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.0@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York
+        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.0@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York extra_params={}
         """
         self.assert_equal(str(order), expected_order, fuzzy_match=True)
         #
@@ -401,7 +401,7 @@ class TestDataFrameBroker2(hunitest.TestCase):
     def test_collect_spread_sell(self) -> None:
         order = oordexam.get_order_example3(0.0, -100)
         expected_order = """
-        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.0@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=-100.0 tz=America/New_York
+        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.0@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=-100.0 tz=America/New_York extra_params={}
         """
         self.assert_equal(str(order), expected_order, fuzzy_match=True)
         #
@@ -413,7 +413,7 @@ class TestDataFrameBroker2(hunitest.TestCase):
     def test_cross_spread_buy(self) -> None:
         order = oordexam.get_order_example3(1.0)
         expected_order = """
-        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_1.0@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York
+        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_1.0@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York extra_params={}
         """
         self.assert_equal(str(order), expected_order, fuzzy_match=True)
         #
@@ -425,7 +425,7 @@ class TestDataFrameBroker2(hunitest.TestCase):
     def test_cross_spread_sell(self) -> None:
         order = oordexam.get_order_example3(1.0, -100)
         expected_order = """
-        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_1.0@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=-100.0 tz=America/New_York
+        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_1.0@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=-100.0 tz=America/New_York extra_params={}
         """
         self.assert_equal(str(order), expected_order, fuzzy_match=True)
         #
@@ -437,7 +437,7 @@ class TestDataFrameBroker2(hunitest.TestCase):
     def test_midpoint_buy(self) -> None:
         order = oordexam.get_order_example3(0.5)
         expected_order = """
-        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.5@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York
+        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.5@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York extra_params={}
         """
         self.assert_equal(str(order), expected_order, fuzzy_match=True)
         #
@@ -449,7 +449,7 @@ class TestDataFrameBroker2(hunitest.TestCase):
     def test_midpoint_sell(self) -> None:
         order = oordexam.get_order_example3(0.5, -100)
         expected_order = """
-        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.5@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=-100.0 tz=America/New_York
+        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.5@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=-100.0 tz=America/New_York extra_params={}
         """
         self.assert_equal(str(order), expected_order, fuzzy_match=True)
         #
@@ -461,7 +461,7 @@ class TestDataFrameBroker2(hunitest.TestCase):
     def test_quarter_spread_buy(self) -> None:
         order = oordexam.get_order_example3(0.75)
         expected_order = """
-        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.75@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York
+        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.75@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York extra_params={}
         """
         self.assert_equal(str(order), expected_order, fuzzy_match=True)
         #
@@ -473,7 +473,7 @@ class TestDataFrameBroker2(hunitest.TestCase):
     def test_quarter_spread_sell(self) -> None:
         order = oordexam.get_order_example3(0.75, -100)
         expected_order = """
-        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.75@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=-100.0 tz=America/New_York
+        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.75@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=-100.0 tz=America/New_York extra_params={}
         """
         self.assert_equal(str(order), expected_order, fuzzy_match=True)
         #
@@ -555,7 +555,7 @@ class TestDatabaseBroker1(omtodh.TestOmsDbHelper):
         """
         order = oordexam.get_order_example1()
         expected_order = """
-        Order: order_id=0 creation_timestamp=2000-01-01 09:30:00-05:00 asset_id=101 type_=price@twap start_timestamp=2000-01-01 09:35:00-05:00 end_timestamp=2000-01-01 09:40:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York
+        Order: order_id=0 creation_timestamp=2000-01-01 09:30:00-05:00 asset_id=101 type_=price@twap start_timestamp=2000-01-01 09:35:00-05:00 end_timestamp=2000-01-01 09:40:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York extra_params={}
         """
         self.assert_equal(str(order), expected_order, fuzzy_match=True)
         #

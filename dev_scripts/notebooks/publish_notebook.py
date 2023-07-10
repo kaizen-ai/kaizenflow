@@ -175,8 +175,12 @@ def _post_to_s3(
     remote_path = os.path.join(s3_path, os.path.basename(local_src_path))
     # TODO(gp): Make sure the S3 dir exists.
     _LOG.info("Copying '%s' to '%s'", local_src_path, remote_path)
-    s3fs = hs3.get_s3fs(aws_profile)
-    s3fs.put(local_src_path, remote_path)
+    # For some reason when using `s3fs` a web-browser downloads an HTML file instead
+    # of just displaying it. See CmTask #4027 "Cosmetic change in serving notebooks
+    # via S3".
+    hs3.copy_file_to_s3(local_src_path, remote_path, aws_profile)
+    # s3fs = hs3.get_s3fs(aws_profile)
+    # s3fs.put(local_src_path, remote_path)
     return remote_path
 
 

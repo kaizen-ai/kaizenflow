@@ -45,8 +45,8 @@ fit:
           ---  ------           --------------  -----
            0   ret_0            29 non-null     float64
            1   ret_0_vol        29 non-null     float64
-           2   ret_0_vol_2      27 non-null     float64
-           3   ret_0_vol_2_hat  24 non-null     float64
+           2   ret_0_vol.shift_-2      27 non-null     float64
+           3   ret_0_vol.shift_-2_hat  24 non-null     float64
           dtypes: float64(4)
     calculate_vol_pth_root:
       fit:
@@ -59,8 +59,8 @@ fit:
           ---  ------           --------------  -----
            0   ret_0            29 non-null     float64
            1   ret_0_vol        29 non-null     float64
-           2   ret_0_vol_2      27 non-null     float64
-           3   ret_0_vol_2_hat  24 non-null     float64
+           2   ret_0_vol.shift_-2      27 non-null     float64
+           3   ret_0_vol.shift_-2_hat  24 non-null     float64
           dtypes: float64(4)
     demodulate_using_vol_pred:
       fit:
@@ -72,8 +72,8 @@ fit:
            #   Column           Non-Null Count  Dtype
           ---  ------           --------------  -----
            0   ret_0_vol        29 non-null     float64
-           1   ret_0_vol_2      27 non-null     float64
-           2   ret_0_vol_2_hat  24 non-null     float64
+           1   ret_0_vol.shift_-2      27 non-null     float64
+           2   ret_0_vol.shift_-2_hat  24 non-null     float64
            3   ret_0_vol_adj    24 non-null     float64
           dtypes: float64(4)
 predict:
@@ -114,8 +114,8 @@ predict:
           ---  ------           --------------  -----
            0   ret_0            38 non-null     float64
            1   ret_0_vol        38 non-null     float64
-           2   ret_0_vol_2      36 non-null     float64
-           3   ret_0_vol_2_hat  35 non-null     float64
+           2   ret_0_vol.shift_-2      36 non-null     float64
+           3   ret_0_vol.shift_-2_hat  35 non-null     float64
           dtypes: float64(4)
     calculate_vol_pth_root:
       predict:
@@ -128,8 +128,8 @@ predict:
           ---  ------           --------------  -----
            0   ret_0            38 non-null     float64
            1   ret_0_vol        38 non-null     float64
-           2   ret_0_vol_2      36 non-null     float64
-           3   ret_0_vol_2_hat  35 non-null     float64
+           2   ret_0_vol.shift_-2      36 non-null     float64
+           3   ret_0_vol.shift_-2_hat  35 non-null     float64
           dtypes: float64(4)
     demodulate_using_vol_pred:
       predict:
@@ -141,14 +141,14 @@ predict:
            #   Column           Non-Null Count  Dtype
           ---  ------           --------------  -----
            0   ret_0_vol        38 non-null     float64
-           1   ret_0_vol_2      36 non-null     float64
-           2   ret_0_vol_2_hat  35 non-null     float64
+           1   ret_0_vol.shift_-2      36 non-null     float64
+           2   ret_0_vol.shift_-2_hat  35 non-null     float64
            3   ret_0_vol_adj    33 non-null     float64
           dtypes: float64(4)
 ################################################################################
 df_out
 ################################################################################
-            ret_0_vol  ret_0_vol_2  ret_0_vol_2_hat  ret_0_vol_adj
+            ret_0_vol  ret_0_vol.shift_-2  ret_0_vol.shift_-2_hat  ret_0_vol_adj
 2000-01-03       1.33         0.95              NaN            NaN
 2000-01-04       1.31         0.44              NaN            NaN
 2000-01-05       0.95         0.42              NaN            NaN

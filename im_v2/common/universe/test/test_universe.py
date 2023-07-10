@@ -136,3 +136,22 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         self.assertEqual(len(universe_as_full_symbols), len(actual))
         self.assertEqual(actual[0], universe_as_full_symbols[0])
         self.assertEqual(actual[1], universe_as_full_symbols[1])
+
+
+class TestGetUniverseVersions1_TestCase(hunitest.TestCase):
+    def _test_get_universe_versions(
+        self, vendor: str, mode: str, expected_universes_str: str
+    ) -> None:
+        """
+        Verify that download universe versions for the specified vendor
+        are correctly detected and returned.
+
+        :param vendor: vendor to apply test to, e.g. CCXT or Talos
+        :param mode: download or trade universe
+        :param expected_universes_str: string representation of the expected
+            universe versions
+        """
+        actual_universes_str = str(
+            imvcounun.get_universe_versions(vendor, mode)
+        )
+        self.assertEqual(actual_universes_str, expected_universes_str)

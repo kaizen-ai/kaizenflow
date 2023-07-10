@@ -242,7 +242,7 @@ def plot_time_series_by_period(
     hdbg.dassert(
         hasattr(srs.index, period),
         msg="Not an attribute of `pd.DatetimeIndex`, whose attributes are %s"
-        % pd.DatetimeIndex._datetimelike_ops,
+        % pd.core.arrays.DatetimeArray._datetimelike_ops,
     )
     if not srs.name:
         srs = srs.copy()

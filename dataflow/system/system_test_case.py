@@ -8,7 +8,8 @@ import abc
 import asyncio
 import datetime
 import logging
-from typing import Any, Callable, Coroutine, List, Optional, Tuple
+import os
+from typing import Any, Coroutine, List, Optional, Tuple
 
 import pandas as pd
 
@@ -17,7 +18,9 @@ import dataflow.system.system as dtfsyssyst
 import dataflow.system.system_builder_utils as dtfssybuut
 import dataflow.system.system_signature as dtfsysysig
 import helpers.hasyncio as hasynci
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.client as icdcl
@@ -109,6 +112,14 @@ def run_Time_ForecastSystem(
         system.config["event_loop_object"] = event_loop
         # Create a `DagRunner`.
         dag_runner = system.dag_runner
+        _LOG.info(
+            "\n"
+            + hprint.frame("Final system config")
+            + "\n"
+            + hprint.indent(str(system.config))
+            + "\n"
+            + hprint.frame("End config")
+        )
         if check_config:
             # Check the system config against the frozen value.
             dtfsysysig.check_SystemConfig(self, system, config_tag)
@@ -124,6 +135,21 @@ def run_Time_ForecastSystem(
         # Extract the result bundles from the `DagRunner`.
         result_bundles = results[0]
     return result_bundles
+
+
+def get_test_file_path(self_: Any) -> str:
+    """
+    Get path to a file with market data; use in unit tests.
+    """
+    aws_profile = "ck"
+    use_only_test_class = True
+    dst_dir = self_.get_s3_input_dir(
+        aws_profile, use_only_test_class=use_only_test_class
+    )
+    # TODO(Grisha): consider exposing if needed.
+    file_name = "test_data.csv.gz"
+    file_path = os.path.join(dst_dir, file_name)
+    return file_path
 
 
 def save_Ccxt_MarketData(
@@ -200,7 +226,7 @@ class System_CheckConfig_TestCase1(hunitest.TestCase):
         txt = "\n".join(txt)
         txt = hunitest.filter_text("trade_date:", txt)
         txt = hunitest.filter_text("log_dir:", txt)
-        self.check_string(txt, purify_text=True)
+        self.check_string(txt, purify_text=True, fuzzy_match=True)
 
 
 # #############################################################################
@@ -262,12 +288,20 @@ class NonTime_ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         )
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
-    # TODO(Paul): This should have the option to burn the last N elements
-    #  of the fit/predict dataframes.
-    def _test_fit_vs_predict1(self, system: dtfsyssyst.System) -> None:
+    def _test_fit_vs_predict1(
+        self,
+        system: dtfsyssyst.System,
+        *,
+        n_last_rows_to_burn: Optional[int] = None,
+    ) -> None:
         """
         Check that `predict()` matches `fit()` on the same data, when the model
         is frozen.
+
+        :param n_last_rows_to_burn: the number of rows to remove from the fit and
+            predict results. When a model is fitting it cannot compute a
+            N-steps-ahead target but when a model has been already fit it can
+            compute it
         """
         use_unit_test_log_dir = True
         # Fit.
@@ -284,6 +318,12 @@ class NonTime_ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
             self, system, method, config_tag, use_unit_test_log_dir
         )
         predict_df = predict_result_bundle.result_df
+        if n_last_rows_to_burn is not None:
+            hdbg.dassert_isinstance(n_last_rows_to_burn, int)
+            hpandas.dassert_strictly_increasing_index(fit_df)
+            hpandas.dassert_strictly_increasing_index(predict_df)
+            fit_df = fit_df.head(-n_last_rows_to_burn)
+            predict_df = predict_df.head(-n_last_rows_to_burn)
         # Check.
         self.assert_dfs_close(fit_df, predict_df)
 
@@ -300,7 +340,7 @@ class NonTime_ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
 
     def _test_invariance1(
         self,
-        system_builder: Callable,
+        system: dtfsyssyst.System,
         start_timestamp1: pd.Timestamp,
         start_timestamp2: pd.Timestamp,
         end_timestamp: pd.Timestamp,
@@ -309,9 +349,8 @@ class NonTime_ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
         """
         Test output invariance over different history lengths.
         """
-        # Run dag_runner1.
-        system = system_builder()
         dtfssybuut.apply_unit_test_log_dir(self, system)
+        # Run dag_runner1.
         dag_runner1 = system.dag_runner
         dag_runner1.set_fit_intervals(
             [(start_timestamp1, end_timestamp)],
@@ -319,8 +358,6 @@ class NonTime_ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
         result_bundle1 = dag_runner1.fit()
         result_df1 = result_bundle1.result_df
         # Run dag_runner2.
-        system = system_builder()
-        dtfssybuut.apply_unit_test_log_dir(self, system)
         dag_runner2 = system.dag_runner
         dag_runner2.set_fit_intervals(
             [(start_timestamp2, end_timestamp)],
@@ -623,11 +660,10 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         self.reset()
 
     @abc.abstractmethod
-    def get_NonTime_ForecastSystem_from_Time_ForecastSystem(
-        self, time_system: dtfsyssyst.System
-    ) -> dtfsyssyst.System:
+    def get_NonTime_ForecastSystem(self) -> dtfsyssyst.System:
         """
-        Get the `NonTime_ForecastSystem` via initiated `Time_ForecastSystem`.
+        Get the `NonTime_ForecastSystem` to be compared to the
+        `Time_ForecastSystem`.
         """
 
     @abc.abstractmethod
@@ -696,14 +732,93 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         )
         return time_system_signature
 
+    @staticmethod
+    def _update_NonTime_ForecastSystem_config(
+        non_time_system: dtfsyssyst.NonTime_ForecastSystem,
+        time_system: dtfsyssyst.Time_ForecastSystem,
+    ) -> dtfsyssyst.System:
+        """
+        Update `NonTimeForecastSystem.config` using values from
+        `TimeForecastSystem.config`.
+
+        The problem is that run time period is set differently for the Systems:
+            - `NonTime_ForecastSystem`: using backtest_config,
+                e.g., `ccxt_v7-all.5T.2022-01-01_2022-02-01`
+            - `Time_ForecastSystem`: using `rt_timeout_in_secs_or_time`, 
+                e.g., run start time is `19:00` and `rt_timeout_in_secs_or_time` 
+                (for how long to run the System) is 900 seconds (15 minutes) -> 
+                run stop time is `19:15`.
+
+        For the reconciliation tests the System run period must be the same for
+        both Systems. Given 2 ways of specifying the run period it is easy to
+        get Systems out of sync. The function ensures that both Systems run for
+        the same time period. E.g., from `19:00` to `19:15`.
+        """
+        # Time when a `Time_ForecastSystem` starts running.
+        start_timestamp = time_system.config[
+            "market_data_config", "replayed_delay_in_mins_or_timestamp"
+        ]
+        # This is needed to know for how long a System runs.
+        rt_timeout_in_secs_or_time = time_system.config[
+            "dag_runner_config", "rt_timeout_in_secs_or_time"
+        ]
+        # TODO(Grisha): Won't work if `rt_timeout_in_secs_or_time` is not in seconds.
+        hdbg.dassert_isinstance(rt_timeout_in_secs_or_time, int)
+        end_timestamp = start_timestamp + pd.Timedelta(
+            rt_timeout_in_secs_or_time, "seconds"
+        )
+        # Align on a bar. E.g., if `end_ts` is `19:14` -> the last bar computed
+        # will be `19:10` assuming that the bar duration is 5 minutes.
+        bar_duration_in_secs = time_system.config[
+            "dag_runner_config", "bar_duration_in_secs"
+        ]
+        last_bar_timestamp = hdateti.find_bar_timestamp(
+            end_timestamp, bar_duration_in_secs, mode="floor"
+        )
+        # Account for market delay. E.g., when computing a bar 19:10 the Time System starts
+        # reading data at 19:10:10 (market delay is 10 seconds). In this case end_timestamp
+        # is 2021-12-26 19:10:10 (last bar + market delay) and start_timestamp is
+        # 2021-12-22 19:10:10, i.e. data at 2021-12-22 19:10:00 should be not be available
+        # for the NonTime System to mimic the Time System.
+        delay_in_secs = time_system.config["market_data_config"]["delay_in_secs"]
+        hdbg.dassert_isinstance(delay_in_secs, int)
+        last_bar_timestamp_with_delay = last_bar_timestamp + pd.Timedelta(
+            seconds=delay_in_secs
+        )
+        # Get the amount of history required before a System starts.
+        history_lookback = time_system.config[
+            "market_data_config", "history_lookback"
+        ]
+        hdbg.dassert_isinstance(history_lookback, pd.Timedelta)
+        # Use the last bar computed by the Time System to get the start timestamp for the
+        # NonTime System because when comparing the Systems we use only the results that
+        # correspond to the last bar computed by the Time System.
+        start_timestamp_with_lookback = (
+            last_bar_timestamp_with_delay - history_lookback
+        )
+        # Update the `NonTimeForecastSystem.config`.
+        non_time_system.config[
+            "backtest_config", "start_timestamp_with_lookback"
+        ] = start_timestamp_with_lookback
+        non_time_system.config[
+            "backtest_config", "end_timestamp"
+        ] = last_bar_timestamp_with_delay
+        return non_time_system
+
     def _test1(self, output_col_name: str) -> None:
+        # Run the Time System.
         time_system = self.get_Time_ForecastSystem()
         time_system_signature = self.get_Time_ForecastSystem_signature(
             time_system, output_col_name
         )
-        non_time_system = (
-            self.get_NonTime_ForecastSystem_from_Time_ForecastSystem(time_system)
+        # Build the Non-Time System.
+        non_time_system = self.get_NonTime_ForecastSystem()
+        # Overwrite Non-Time System's config values using Time System's config values
+        # to guarantee that both System are in sync.
+        non_time_system = self._update_NonTime_ForecastSystem_config(
+            non_time_system, time_system
         )
+        # Run the Non-Time System.
         non_time_system_signature = self.get_NonTime_ForecastSystem_signature(
             non_time_system, output_col_name
         )
@@ -718,13 +833,12 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
 
 
 # #############################################################################
-# Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfolio_TestCase1
+# Test_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfolio_TestCase1
 # #############################################################################
 
 
 # TODO(Grisha): Use for the Mock1 pipeline.
-# TODO(gp): This should not yhave a reference to C1b since it's here and not in orange.
-class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfolio_TestCase1(
+class Test_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfolio_TestCase1(
     hunitest.TestCase
 ):
     """

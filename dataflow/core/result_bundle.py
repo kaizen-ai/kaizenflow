@@ -53,7 +53,7 @@ class ResultBundle(abc.ABC):
         :param method: method which was executed
         :param result_df: dataframe with results
         :param column_to_tags: mapping of column names to list of tags. E.g.,
-            `{"y_0": ["target_col", "step_0"], ...}`
+            `{"y.shift_-0": ["target_col", "step_0"], ...}`
         :param info: DAG execution info
         :param payload: config with additional information, e.g., meta config
         """
@@ -63,6 +63,8 @@ class ResultBundle(abc.ABC):
         hdbg.dassert_isinstance(method, dtfcornode.Method)
         self._method = method
         if result_df is not None:
+            # TODO(Grisha): consider using `dassert_is_result_df()`; now some
+            # tests fail, see CmTask3515.
             hdbg.dassert_isinstance(result_df, pd.DataFrame)
         self._result_df = result_df
         if isinstance(column_to_tags, cconfig.Config):

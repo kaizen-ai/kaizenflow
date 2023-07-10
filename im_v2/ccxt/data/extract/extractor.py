@@ -37,6 +37,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         :param exchange_id: CCXT exchange id to log into (e.g., 'binance')
         :param contract_type: spot or futures contracts to extract
         """
+        _LOG.info("CCXT version: %s", ccxt.__version__)
         super().__init__()
         hdbg.dassert_in(
             contract_type,
@@ -74,7 +75,7 @@ class CcxtExtractor(imvcdexex.Extractor):
 
     def log_into_exchange(
         self, async_: bool
-    ) -> Union[ccxtpro.base.exchange.Exchange, ccxt.Exchange]:
+    ) -> ccxt.Exchange:
         """
         Log into an exchange via CCXT (or CCXT pro) and return the
         corresponding `Exchange` object.

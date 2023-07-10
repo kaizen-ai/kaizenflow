@@ -46,3 +46,27 @@ class TestGetUniverse1(imvcountt.TestGetUniverse1_TestCase):
         self._test_get_vendor_universe_as_full_symbol(
             "CCXT", ["binance::BTC_USDT", "gateio::XRP_USDT", "kucoin::ETH_USDT"]
         )
+
+
+class TestGetUniverseVersions1(imvcountt.TestGetUniverseVersions1_TestCase):
+    def test_get_universe_versions1(self) -> None:
+        """
+        Verify that trade universe versions are returned correctly.
+        """
+        vendor = "CCXT"
+        mode = "trade"
+        expected_universes_str = (
+            "['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v7.1', 'v7.2', 'v7.3']"
+        )
+        self._test_get_universe_versions(vendor, mode, expected_universes_str)
+
+    def test_get_universe_versions2(self) -> None:
+        """
+        Verify that download universe versions are returned correctly.
+        """
+        vendor = "CCXT"
+        mode = "download"
+        expected_universes_str = (
+            "['v1', 'v2', 'v3', 'v4', 'v5', 'v7', 'v7.3', 'v7.4', 'v7.5']"
+        )
+        self._test_get_universe_versions(vendor, mode, expected_universes_str)
