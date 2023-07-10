@@ -35,6 +35,7 @@ import logging
 import pandas as pd
 
 import core.finance as cofinanc
+import core.statistics as costatis
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
 import helpers.hdbg as hdbg
@@ -66,7 +67,7 @@ config = ramccalg.get_default_config()
 # Load the historical IM client.
 client = ramccalg.get_bid_ask_ImClient(config)
 # Load the asset ids of the given universe.
-asset_ids = ramccalg.get_universe(config)
+asset_ids = ramccalg.get_universe(config, full_symbols=["binance::ADA_USDT"])
 # Set up MarketData for
 market_data = ramccalg.get_market_data(config)
 
@@ -210,8 +211,9 @@ print(df_mid.index.max())
 df_features = df_mid.copy()
 
 # %%
-# This is really high. 100m USD per hour on top of the book.
-df_features[["bid_value", "ask_value"]].resample("1H").sum().plot()
+# Take the mean top-of-book value per hour (rather than the sum, since these are not transactions).
+# Typical top-of-book value is on the order of $50k.
+df_features[["bid_value", "ask_value"]].resample("1H").mean().plot()
 
 # %% run_control={"marked": false}
 mid_col_name = "mid"
@@ -319,3 +321,196 @@ print("sell_slippage_bps.median=", slippage["sell_slippage_bps"].median())
 
 # %% [markdown]
 # The quick look into the rate of successful trades indicated that for the given asset (`ADA/USDT`) and the date the successful "buy" order can be met for 16% of the time and a "sell" order is not met at all.
+
+# %% [markdown]
+# # Generate limit order prices and simulate
+
+# %%
+df_flat.head()
+
+# %%
+bid_col = "bid_price"
+ask_col = "ask_price"
+# Price buy limit order with respect to the bid.
+buy_reference_price_col = "bid_price"
+# Price sell limit order with respect to the ask.
+sell_reference_price_col = "ask_price"
+# Price orders halfway between near side and midpoint.
+buy_spread_frac_offset = 0.25
+sell_spread_frac_offset = -0.25
+# Reprice orders every minute.
+subsample_freq = "1T"
+# Keep orders in force for one minute.
+ffill_limit = 60
+tick_decimals = 5
+# Generate limit order prices.
+limit_orders = cofinanc.generate_limit_order_price(
+    df_flat,
+    bid_col,
+    ask_col,
+    buy_reference_price_col,
+    sell_reference_price_col,
+    buy_spread_frac_offset,
+    sell_spread_frac_offset,
+    subsample_freq,
+    ffill_limit,
+    tick_decimals,
+)
+
+# %%
+limit_orders.head()
+
+# %%
+limit_orders.tail(60 * 60).plot()
+
+# %%
+df_flat_with_limit_orders = pd.concat([df_flat, limit_orders], axis=1)
+df_flat_with_limit_orders.head()
+
+# %%
+df_flat_with_limit_orders[["bid_price", "ask_price"]].tail(60 * 60).plot()
+
+# %%
+executions = cofinanc.estimate_limit_order_execution(
+    df_flat_with_limit_orders,
+    bid_col,
+    ask_col,
+    "buy_limit_order_price",
+    "sell_limit_order_price",
+)
+
+# %%
+executions.head()
+
+# %%
+df_flat.head()
+
+# %%
+limit_order_and_execution_df = (
+    cofinanc.generate_limit_orders_and_estimate_execution(
+        df_flat,
+        bid_col,
+        ask_col,
+        buy_reference_price_col,
+        sell_reference_price_col,
+        buy_spread_frac_offset,
+        sell_spread_frac_offset,
+        subsample_freq,
+        ffill_limit,
+        tick_decimals,
+    )
+)
+
+# %%
+limit_order_and_execution_df.head()
+
+# %%
+# Average prices over 5-minute bars.
+# The previously boolean columns "limit_buy_executed" and "limit_sell_executed" represent
+#  percentage of the time an execution was possible during the bar.
+bar_executions = limit_order_and_execution_df.resample(
+    "5T", closed="right", label="right"
+).mean()
+bar_executions.head()
+
+# %%
+execution_summary_df = pd.concat(
+    [limit_order_and_execution_df, df_flat[bid_col], df_flat[ask_col]], axis=1
+)
+
+# %%
+buy_trade_price_col = "buy_trade_price"
+sell_trade_price_col = "sell_trade_price"
+execution_quality_df = cofinanc.compute_execution_quality(
+    execution_summary_df.resample("5T", label="right", closed="right").mean(),
+    bid_col,
+    ask_col,
+    buy_trade_price_col,
+    sell_trade_price_col,
+)
+
+# %%
+execution_quality_df[
+    [
+        "sell_trade_midpoint_slippage_bps",
+        "buy_trade_midpoint_slippage_bps",
+    ]
+].hist(bins=31)
+
+# %%
+execution_quality_df.apply(costatis.compute_moments)
+
+# %%
+bid_ask_midpoint = (0.5 * (df_flat["ask_price"] + df_flat["bid_price"])).rename(
+    "bid_ask_midpoint"
+)
+bar_bid_ask_midpoint = bid_ask_midpoint.resample(
+    "5T", closed="right", label="right"
+).mean()
+bar_executions_with_midpoint = pd.concat(
+    [
+        bar_executions[["buy_trade_price", "sell_trade_price"]],
+        bar_bid_ask_midpoint,
+    ],
+    axis=1,
+)
+
+# %%
+bar_executions_with_midpoint.plot()
+
+# %%
+# We may also use cofinanc.apply_execution_prices_to_trades()
+#  to assign prices to a single column of buys/sells
+
+# %% [markdown]
+# # Compare with trade data
+
+# %%
+import helpers.hdatetime as hdateti
+import helpers.hparquet as hparquet
+
+# %%
+first_timestamp = pd.Timestamp("2022-12-14 17:59:43-05:00")
+last_timestamp = pd.Timestamp("2022-12-14 19:00:00-05:00")
+
+# %%
+start = hdateti.convert_timestamp_to_unix_epoch(
+    pd.Timestamp(first_timestamp), unit="s"
+)
+end = hdateti.convert_timestamp_to_unix_epoch(
+    pd.Timestamp(last_timestamp), unit="s"
+)
+# Define filters for data period.
+# Note(Juraj): it's better from Airflow execution perspective
+#  to keep the interval closed: [start, end].
+filters = [
+    ("timestamp", ">=", start),
+    ("timestamp", "<=", end),
+    ("currency_pair", "==", "ADA_USDT"),
+    # ("level", "==", 1)
+]
+file_name = "s3://cryptokaizen-data/v3/periodic_daily/airflow/downloaded_1sec/parquet/trades/futures/v3_1/crypto_chassis/binance/v1_0_0/"
+df = hparquet.from_parquet(file_name, filters=filters, aws_profile="ck")
+
+# %%
+df.head()
+
+# %%
+df.loc["2022-12-14 17:59:43-05:00":"2022-12-14 19:00:00-05:00"]["price"].plot()
+
+# %%
+df.loc["2022-12-14 17:59:43-05:00":"2022-12-14 19:00:00-05:00"]["size"].plot()
+
+# %%
+df_flat_with_limit_orders[["bid_price", "ask_price"]].tail(60 * 60).plot()
+
+# %%
+size = df.loc["2022-12-14 17:59:43-05:00":"2022-12-14 19:00:00-05:00"]["size"]
+bid_ask = df_flat_with_limit_orders[["bid_price", "ask_price"]].tail(60 * 60)
+bid_ask.index = bid_ask.index.tz_convert("UTC")
+
+# %%
+bid_ask.resample("1s", label="right", closed="right").sum(min_count=1).plot()
+
+# %%
+size.resample("1s", label="right", closed="right").sum().plot()

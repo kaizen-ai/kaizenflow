@@ -5,6 +5,7 @@ import oms.order_example as oordexam
 """
 
 import logging
+from typing import Any, Dict, Optional
 
 import pandas as pd
 
@@ -14,7 +15,9 @@ import oms.order as omorder
 _LOG = logging.getLogger(__name__)
 
 
-def get_order_example1() -> omorder.Order:
+def get_order_example1(
+    order_extra_params: Optional[Dict[str, Any]] = None
+) -> omorder.Order:
     creation_timestamp = pd.Timestamp(
         "2000-01-01 09:30:00-05:00", tz="America/New_York"
     )
@@ -39,6 +42,7 @@ def get_order_example1() -> omorder.Order:
         curr_num_shares,
         diff_num_shares,
         order_id=order_id,
+        extra_params=order_extra_params,
     )
     return order
 

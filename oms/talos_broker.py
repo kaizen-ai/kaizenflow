@@ -218,6 +218,6 @@ class TalosBroker(ombroker.Broker):
 
     def _wait_for_accepted_orders(
         self,
-        file_name: str,
+        order_receipt: str,
     ) -> None:
         raise NotImplementedError

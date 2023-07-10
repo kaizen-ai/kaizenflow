@@ -132,7 +132,7 @@ fi;
 if [[ $mode == "Run_on_everything" ]]; then
     # Run on everything.
     echo "Make sure that last line terminates with exactly new line (0x0a)"
-    find . -name "*.py" -o -name "*.json" | xargs -n 10 $SCRIPT_NAME
+    find . -name "*.py" -o -name "*.json" -o -name "*.sh" | xargs -n 10 $SCRIPT_NAME
     find . -name "*.txt" | grep -v "/output/" | xargs -n 10 $SCRIPT_NAME
     #
     find . -name "*.txt" | xargs -n 10 $SCRIPT_NAME

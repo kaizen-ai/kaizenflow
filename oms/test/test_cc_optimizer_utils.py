@@ -6,13 +6,14 @@ import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms.cc_optimizer_utils as occoputi
-import oms.ccxt_broker as occxbrok
+import oms.ccxt.abstract_ccxt_broker as ocabccbr
+import oms.ccxt.ccxt_broker_v1 as occcbrv1
 import oms.hsecrets.secret_identifier as ohsseide
 
 
 class TestCcOptimizerUtils1(hunitest.TestCase):
-    get_secret_patch = umock.patch.object(occxbrok.hsecret, "get_secret")
-    ccxt_patch = umock.patch.object(occxbrok, "ccxt", spec=occxbrok.ccxt)
+    get_secret_patch = umock.patch.object(ocabccbr.hsecret, "get_secret")
+    ccxt_patch = umock.patch.object(ocabccbr, "ccxt", spec=ocabccbr.ccxt)
 
     @staticmethod
     def get_test_orders(below_min: bool) -> pd.DataFrame:
@@ -109,7 +110,7 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         return order_df
 
     @staticmethod
-    def get_mock_broker() -> occxbrok.CcxtBroker:
+    def get_mock_broker() -> occcbrv1.CcxtBroker_v1:
         """
         Build mock `CcxtBroker` for tests.
         """
@@ -121,19 +122,21 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         stage = "preprod"
         contract_type = "futures"
         strategy_id = "dummy_strategy_id"
+        bid_ask_im_client = None
         market_data = umock.create_autospec(spec=mdata.MarketData, instance=True)
         secret_id = ohsseide.SecretIdentifier(exchange_id, stage, account_type, 1)
         # Initialize broker.
-        broker = occxbrok.CcxtBroker(
+        broker = occcbrv1.CcxtBroker_v1(
             exchange_id,
-            universe_version,
-            stage,
             account_type,
             portfolio_id,
             contract_type,
             secret_id,
+            bid_ask_im_client=bid_ask_im_client,
             strategy_id=strategy_id,
             market_data=market_data,
+            universe_version=universe_version,
+            stage=stage,
         )
         # Set order limits manually, bypassing the API.
         broker.market_info = {

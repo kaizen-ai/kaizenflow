@@ -114,13 +114,16 @@ def integrate_create_branch(ctx, dir_basename, dry_run=False):  # type: ignore
 
 
 def _resolve_src_dst_names(
-    src_dir_basename: str, dst_dir_basename: str, subdir: str
+    src_dir_basename: str, dst_dir_basename: str, subdir: str,
+    *,
+    check_exists: bool = True,
 ) -> Tuple[str, str]:
     """
     Return the full path of `src_dir_basename` and `dst_dir_basename`.
 
     :param src_dir_basename: the current dir (e.g., `amp1`)
     :param dst_dir_basename: a dir parallel to the current one (`cmamp1`)
+    :param check_exists: check that the dst dir exists
 
     :return: absolute paths of both directories
     """
@@ -132,7 +135,8 @@ def _resolve_src_dst_names(
     #
     abs_dst_dir = os.path.join(curr_parent_dir, dst_dir_basename, subdir)
     abs_dst_dir = os.path.normpath(abs_dst_dir)
-    hdbg.dassert_dir_exists(abs_dst_dir)
+    if check_exists:
+        hdbg.dassert_dir_exists(abs_dst_dir)
     return abs_src_dir, abs_dst_dir
 
 
@@ -184,9 +188,14 @@ def integrate_diff_dirs(  # type: ignore
         )
     # Check that the integration branches are in the expected state.
     # _dassert_current_dir_matches(src_dir_basename)
+    # When we integrate a dir that doesn't exist in the dst branch, we need to
+    # skip the check for existence.
+    check_exists = False
     abs_src_dir, abs_dst_dir = _resolve_src_dst_names(
-        src_dir_basename, dst_dir_basename, subdir
+        src_dir_basename, dst_dir_basename, subdir,
+        check_exists=check_exists
     )
+    hio.create_dir(abs_dst_dir, incremental=True)
     if check_branches:
         _dassert_is_integration_branch(abs_src_dir)
         _dassert_is_integration_branch(abs_dst_dir)
@@ -237,6 +246,34 @@ def integrate_diff_dirs(  # type: ignore
 # #############################################################################
 
 
+# TODO(gp): Allow to pass the hash of the last integration to consider.
+#  Factor out the logic to find the hash
+
+# Sometimes we want to see the changes in one dir since an integration point
+
+# E.g., find all the changes in `im_v2` since the last integration
+#
+# > git log --oneline im_v2
+# 77f612f75 SorrIssue244 CCXT timestamp representation unit test (#317)
+# 6b981b1f6 Sorrtask298 rename get docker cmd to get docker run cmd (#331)
+# bd33a5fb9 SorrTask267_Parquet_to_CSV (#267)
+# 9819fd117 AmpTask1786_Integrate_20230518_im (#273)       <====
+# d530ed561 Update (#272)
+# b75eab7ad AmpTask1786_Integrate_20230518_3 (#271)
+#
+# > git difftool 9819fd117.. im_v2
+# ...
+#
+# > git diff --name-only 9819fd117.. im_v2
+# im_v2/ccxt/data/extract/test/test_ccxt_extractor.py
+# im_v2/common/data/transform/convert_pq_to_csv.py
+# im_v2/im_lib_tasks.py
+# im_v2/test/test_im_lib_tasks.py
+#
+# for file in im_v2/ccxt/data/extract/test/test_ccxt_extractor.py im_v2/common/data/transform/convert_pq_to_csv.py im_v2/im_lib_tasks.py im_v2/test/test_im_lib_tasks.py; do
+#   vimdiff ~/src/cmamp1/$file ~/src/sorrentum1/$file
+# done
+
 def _find_files_touched_since_last_integration(
     abs_dir: str, subdir: str
 ) -> List[str]:
@@ -250,7 +287,7 @@ def _find_files_touched_since_last_integration(
     dir_basename = os.path.basename(abs_dir)
     # TODO(gp): dir_basename can be computed from abs_dir_name to simplify the
     #  interface.
-    # Change the dir to the correct one.
+    # Change the dir to the desired one.
     old_dir = os.getcwd()
     try:
         os.chdir(abs_dir)
@@ -400,9 +437,11 @@ def integrate_files(  # type: ignore
     """
     Find and copy the files that are touched only in one branch or in both.
 
+    :param ctx: invoke ctx
     :param src_dir_basename: dir with the source branch (e.g., amp1)
     :param dst_dir_basename: dir with the destination branch (e.g., cmamp1)
     :param reverse: switch the roles of the default source and destination branches
+    :param subdir: directory to select
     :param mode:
         - "print_dirs": print the directories
         - "vimdiff": diff the files
@@ -414,6 +453,8 @@ def integrate_files(  # type: ignore
         - "only_files_in_dst": files touched only in the dst dir
     :param only_different_files: consider only the files that are different among
         the branches
+    :param check_branches: ensure that the current branches are for integration
+        and not `master`
     """
     hlitauti.report_task()
     _ = ctx
@@ -547,8 +588,12 @@ def integrate_diff_overlapping_files(  # type: ignore
     _ = ctx
     # Check that the integration branches are in the expected state.
     _dassert_current_dir_matches(src_dir_basename)
+    # When we integrate a dir that doesn't exist in the dst branch, we need to
+    # skip the check for existence.
+    check_exists = False
     src_dir_basename, dst_dir_basename = _resolve_src_dst_names(
-        src_dir_basename, dst_dir_basename, subdir
+        src_dir_basename, dst_dir_basename, subdir,
+        check_exists=check_exists
     )
     _dassert_is_integration_branch(src_dir_basename)
     _dassert_is_integration_branch(dst_dir_basename)
@@ -611,6 +656,7 @@ def _infer_dst_file_path(
     *,
     default_src_dir_basename: str =DEFAULT_SRC_DIR_BASENAME,
     default_dst_dir_basename: str =DEFAULT_DST_DIR_BASENAME,
+    check_exists: bool = True,
 ) -> Tuple[str, str]:
     """
     Convert a file path across two dirs with the same data structure.
@@ -622,7 +668,8 @@ def _infer_dst_file_path(
     """
     _LOG.debug(hprint.to_str("src_file_path"))
     src_file_path = os.path.normpath(src_file_path)
-    hdbg.dassert_path_exists(src_file_path)
+    if check_exists:
+        hdbg.dassert_path_exists(src_file_path)
     # Extract the repo dir name, by looking for one of the default basenames.
     target_dir = f"/{default_dst_dir_basename}/"
     idx = src_file_path.find(target_dir)
@@ -646,18 +693,17 @@ def _infer_dst_file_path(
     # Replace src dir (e.g., `cmamp1`) with dst dir (e.g., `amp1`).
     dst_file_path = src_file_path.replace(f"/{src_dir_basename}/", f"/{dst_dir_basename}/")
     _LOG.debug(hprint.to_str("dst_file_path subdir"))
-    hdbg.dassert_path_exists(dst_file_path)
+    if check_exists:
+        hdbg.dassert_path_exists(dst_file_path)
     return dst_file_path, subdir
 
 
 @task
 def integrate_rsync(  # type: ignore
     ctx, src_dir,
-
-        src_dir_basename=DEFAULT_SRC_DIR_BASENAME,
-        dst_dir_basename=DEFAULT_DST_DIR_BASENAME,
-
-        dst_dir="", check_dir=True, dry_run=False
+    src_dir_basename=DEFAULT_SRC_DIR_BASENAME,
+    dst_dir_basename=DEFAULT_DST_DIR_BASENAME,
+    dst_dir="", check_dir=True, dry_run=False
 ):
     """
     Use `rsync` to bring two dirs to sync.
