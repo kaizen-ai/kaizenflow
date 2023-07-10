@@ -3062,27 +3062,29 @@ class Test_apply_index_mode(hunitest.TestCase):
 # #############################################################################
 
 
-class TestGetDfFromIterator(hunitest.TestCase):
-    """
-    Test concatenating dataframes from an Iterator into a single daatframe.
-    """
-    def test_get_df_from_iterator(self):
-        d1 = {
+class Test_get_df_from_iterator(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check that a dataframe is correctly build from an iterator of dataframes.
+        """ 
+        # Build iterator of dataframes for the test.
+        df1 = {
             "num_col": [1, 2],
             "str_col": ["A", "B"],
         }
-        d2 = {
+        df2 = {
             "num_col": [3, 4],
             "str_col": ["C", "D"],
         }
-        d3 = {
+        df3 = {
              "num_col": [5, 6],
              "str_col": ["E", "F"],
         }
-        df1 = pd.DataFrame(data=d1)
-        df2 = pd.DataFrame(data=d2)
-        df3 = pd.DataFrame(data=d3)
-        iter_ = iter([df1,df2,df3])
+        df1 = pd.DataFrame(data=df1)
+        df2 = pd.DataFrame(data=df2)
+        df3 = pd.DataFrame(data=df3)
+        # Run.
+        iter_ = iter([df1, df2, df3])
         df_actual = hpandas.get_df_from_iterator(iter_)
         actual = hpandas.df_to_str(df_actual)
         expected = """  num_col str_col
@@ -3093,4 +3095,4 @@ class TestGetDfFromIterator(hunitest.TestCase):
         1        4       D
         1        6       F
         """
-        self.assert_equal(actual, expected, fuzzy_match = True)
+        self.assert_equal(actual, expected, fuzzy_match=True)
