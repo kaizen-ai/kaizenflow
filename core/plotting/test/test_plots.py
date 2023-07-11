@@ -10,18 +10,18 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_plots(unittest.TestCase):
-    def test_plot_histograms_and_lagged_scatterplot1(self) -> None:
+    @staticmethod
+    def test_plot_histograms_and_lagged_scatterplot1() -> None:
         """
         Smoke test for `plot_histograms_and_lagged_scatterplot()`.
         """
         # Set inputs.
-        seq = np.concatenate([np.random.uniform(-1, 1, 100), np.random.choice([5, 10], 100)])
-        index = pd.date_range(start="2023-01-01", periods=len(seq), freq="D")
-        srs = pd.Series(seq, index=index)
+        rng = np.random.default_rng(seed=0)
+        samples = rng.normal(size=100)
+        index = pd.date_range(start="2023-01-01", periods=len(samples), freq="D")
+        srs = pd.Series(samples, index=index)
         lag = 7
         # TODO(Dan): Remove after integration with `cmamp`
-        figsize = (20,20)
+        figsize = (20, 20)
         # Plot.
         cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
-
-

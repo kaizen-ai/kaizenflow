@@ -7,6 +7,17 @@ import dev_scripts.notebooks as dsnrn
 
 _LOG = logging.getLogger(__name__)
 
+def build_config_list() -> cconfig.ConfigList:
+    """
+    Empty config builder used by the test.
+    """
+    # We want to execute the notebook as it is, but config is needed
+    # so we pass an empty one.
+    config = {}
+    config = cconfig.Config()
+    config_list = cconfig.ConfigList([config])
+    return config_list
+
 @pytest.mark.superslow("~40 sec.")
 class TestGalleryNotebook(dsnrn.Test_Run_Notebook_TestCase):
     def test_run_notebook(self) -> None:
@@ -19,15 +30,6 @@ class TestGalleryNotebook(dsnrn.Test_Run_Notebook_TestCase):
         self._test_run_notebook(notebook_path, config_func_path)
 
 
-def build_config_list() -> cconfig.ConfigList:
-    """
-    Simple config builder for the test.
-    """
-    # We want to execute the notebook as it is, but config builder needs
-    # a config from the caller, which we ignore for now
-    config = {}
-    config = cconfig.Config()
-    config_list = cconfig.ConfigList([config])
-    return config_list
+
 
 

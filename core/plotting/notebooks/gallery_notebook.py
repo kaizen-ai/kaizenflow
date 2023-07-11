@@ -31,7 +31,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-import core.plotting.visual_stationarity_test as cpvistte
+import core.plotting.test.test_plots as test_plots
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -54,12 +54,6 @@ hprint.config_notebook()
 # ## `plot_histograms_and_lagged_scatterplot()`
 
 # %%
-# Set inputs.
-seq = np.concatenate([np.random.uniform(-1, 1, 100), np.random.choice([5, 10], 100)])
-index = pd.date_range(start="2023-01-01", periods=len(seq), freq="D")
-srs = pd.Series(seq, index=index)
-lag = 7
-# TODO(Dan): Remove after integration with `cmamp`
-figsize = (20,20)
-# Plot.
-cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
+test_plots.Test_plots.test_plot_histograms_and_lagged_scatterplot1()
+
+# %%
