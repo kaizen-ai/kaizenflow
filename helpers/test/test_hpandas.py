@@ -3063,31 +3063,31 @@ class Test_apply_index_mode(hunitest.TestCase):
 
 
 class Test_get_df_from_iterator(hunitest.TestCase):
-    def test1(self) -> None:
+    def test1(self)-> None:
         """
-        Check that a dataframe is correctly build from an iterator of dataframes.
+        Check that a dataframe is correctly built from an iterator of dataframes.
         """ 
         # Build iterator of dataframes for the test.
-        df1 = {
+        data1 = {
             "num_col": [1, 2],
             "str_col": ["A", "B"],
         }
-        df2 = {
+        df1 = pd.DataFrame(data=data1)
+        data2 = {
             "num_col": [3, 4],
             "str_col": ["C", "D"],
         }
-        df3 = {
+        df2 = pd.DataFrame(data=data2) 
+        data3 = {
              "num_col": [5, 6],
              "str_col": ["E", "F"],
         }
-        df1 = pd.DataFrame(data=df1)
-        df2 = pd.DataFrame(data=df2)
-        df3 = pd.DataFrame(data=df3)
+        df3 = pd.DataFrame(data=data3)
         # Run.
         iter_ = iter([df1, df2, df3])
-        df_actual = hpandas.get_df_from_iterator(iter_)
-        actual = hpandas.df_to_str(df_actual)
-        expected = """  num_col str_col
+        df = hpandas.get_df_from_iterator(iter_)
+        actual_signature = hpandas.df_to_str(df)
+        expected_signature = """  num_col str_col
         0        1       A
         0        3       C
         0        5       E
@@ -3095,4 +3095,4 @@ class Test_get_df_from_iterator(hunitest.TestCase):
         1        4       D
         1        6       F
         """
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)
