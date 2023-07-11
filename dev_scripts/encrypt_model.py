@@ -28,7 +28,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def _encrypt_model(
-    model_dir: str, target_dir: str, build_target: str, docker_image_tag: str
+    model_dir: str, target_dir: str, docker_build_target: str, docker_image_tag: str
 ) -> str:
     """
     Encrypt model using Pyarmor.
@@ -39,9 +39,7 @@ def _encrypt_model(
     :param docker_image_tag: Docker image tag
     :return: encrypted model directory
     """
-    hdbg.dassert_dir_exists(model_dir)
-    hdbg.dassert_dir_exists(target_dir)
-    hdbg.dassert_type_is(build_target, str)
+    hdbg.dassert_type_is(docker_build_target, str)
     hdbg.dassert_type_is(docker_image_tag, str)
     # Create encrypted model directory.
     model_path = pathlib.Path(model_dir)
@@ -58,7 +56,10 @@ def _encrypt_model(
                 RUN pip install pyarmor
             """
         )
-    cmd = f"docker buildx build --platform {build_target} -f {temp_dockerfile_path} -t {docker_image_tag} ."
+    if docker_build_target is not None:
+        cmd = f"docker buildx build --platform {docker_build_target} -f {temp_dockerfile_path} -t {docker_image_tag} ."
+    else:
+        cmd = f"docker build -f {temp_dockerfile.name} -t encryption_flow ."
     (_, output) = hsystem.system_to_string(cmd)
     _LOG.debug(output)
     os.remove(temp_dockerfile_path)
@@ -68,10 +69,14 @@ def _encrypt_model(
     docker_target_dir = "/app"
     mount = f"type=bind,source={work_dir},target={docker_target_dir}"
     encryption_flow = f"pyarmor-7 obfuscate --restrict=0 --recursive {model_dir} --output {encrypted_model_dir}"
-    docker_cmd = f"docker run --rm -it --platform {build_target} --workdir {docker_target_dir} --mount {mount} {docker_image_tag} {encryption_flow}"
-    _LOG.info("Start running Docker container.")
+    if docker_target_dir is not None:
+        docker_cmd = f"docker run --rm -it --platform {docker_build_target} --workdir {docker_target_dir} --mount {mount} {docker_image_tag} {encryption_flow}"
+    else:
+        docker_cmd = f"docker run --rm -it --workdir {docker_target_dir} --mount {mount} encryption_flow {encryption_flow}"
+    _LOG.info("Running Docker container.")
     (_, output) = hsystem.system_to_string(docker_cmd)
     _LOG.debug(output)
+    # Check that command worked by ensuring that there are dirs in the target dir.
     n_files = len(os.listdir(encrypted_model_dir))
     hdbg.dassert_lt(
         0, n_files, "No files in encrypted_model_dir=`%s`", encrypted_model_dir
@@ -162,14 +167,13 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--model_dag_builder",
-        required=True,
+        required=False,
         type=str,
         help="Model dag builder name",
     )
     parser.add_argument(
         "--build_target",
-        required=False,
-        default="linux/amd64",
+        default=None,
         choices=["linux/arm64", "linux/amd64", "linux/amd64,linux/arm64"],
         type=str,
         help="Specify cross-build options for docker container",
@@ -211,18 +215,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
     model_dir = args.model_dir
     hdbg.dassert_dir_exists(model_dir)
     target_dir = args.target_dir
-    if target_dir is not None:
-        hdbg.dassert_dir_exists(target_dir)
-    else:
-        model_path = pathlib.Path(model_dir)
-        target_dir = str(model_path.parent)
+    hio.create_dir(target_dir, incremental=False)
+    model_dag_builder = args.model_dag_builder
+    if args.test:
+        hdbg.dassert_is_not(model_dag_builder, None)
     encrypted_model_dir = _encrypt_model(
         model_dir, target_dir, args.build_target, args.docker_image_tag
     )
     # Tweak `__init__.py` file.
     _tweak_init(encrypted_model_dir)
     if args.test:
-        model_dag_builder = args.model_dag_builder
+        
         if args.is_dir:
             _LOG.info("Test original models.")
             _test_models_in_dir(model_dir, model_dag_builder)
