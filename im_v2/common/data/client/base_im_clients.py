@@ -425,16 +425,7 @@ class ImClient(abc.ABC):
             # 20:00:00 (timestamp) and ends at 20:01:00 while knowledge_timestamp
             # is 20:00:40. That means that the data was downloaded before the bar
             # ends, i.e. incomplete data is received.
-            # TODO(Grisha): should be the end of sampling interval for all datasets.
-            bid_ask_cols = [col for col in df.columns if "bid_" in col]
-            if len(bid_ask_cols) > 0:
-                # For bid-ask data `timestamp` is the end of sampling interval.
-                mask = df["knowledge_timestamp"] <= (df.index)
-            else:
-                # For ohlcv data `timestamp` is the start of sampling interval.
-                mask = df["knowledge_timestamp"] <= (
-                    df.index + pd.DateOffset(minutes=1)
-                )
+            mask = df["knowledge_timestamp"] <= (df.index)
             early_data = df.loc[mask]
             if not early_data.empty:
                 _LOG.warning(

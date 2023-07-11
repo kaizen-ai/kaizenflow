@@ -33,6 +33,7 @@
     [Google drive](https://drive.google.com/drive/u/0/folders/1LXwKpmaFWJI-887IoA50sVC8-dw_1L8I)
   - Google search is your friend
   - Ask your team-members
+    - Learn [how to ask questions](http://www.catb.org/~esr/faqs/smart-questions.html) first
     - Note that often people tell you his / her interpretation or their
       workaround for a problem, which might not be the best approach, so be
       careful and always think for yourself

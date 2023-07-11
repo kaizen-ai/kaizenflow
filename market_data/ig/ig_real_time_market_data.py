@@ -1,9 +1,3 @@
-"""
-Import as:
-
-import market_data.ig.ig_real_time_market_data as mdiirtmda
-"""
-
 # """
 # Import as:
 #

@@ -75,7 +75,7 @@ class TestLinearRegression(hunitest.TestCase):
             df_out.round(3), index=True, decimals=3
         )
         expected = """
-                y     x1     x2     x3     x4    y_1  y_1_hat
+                y     x1     x2     x3     x4    y.shift_-1  y.shift_-1_hat
 2000-01-03 -0.865  1.074 -1.604  0.966 -0.705  1.771    1.799
 2000-01-04  1.771 -0.705  1.262 -2.374 -0.447 -0.581   -1.010
 2000-01-05 -0.581  1.238 -0.811  2.345 -0.465  1.238    1.934
@@ -115,7 +115,7 @@ class TestLinearRegression(hunitest.TestCase):
             df_out.round(3), index=True, decimals=3
         )
         expected = """
-                y     x1     x2     x3     x4    y_1  y_1_hat
+                y     x1     x2     x3     x4    y.shift_-1  y.shift_-1_hat
 2000-01-03 -0.865  1.074 -1.604  0.966 -0.705  1.771    1.637
 2000-01-04  1.771 -0.705  1.262 -2.374 -0.447 -0.581   -0.696
 2000-01-05 -0.581  1.238 -0.811  2.345 -0.465  1.238    1.658
@@ -162,7 +162,7 @@ class TestLinearRegression(hunitest.TestCase):
             df_out.round(3), index=True, decimals=3
         )
         expected = """
-                y     x1     x2     x3     x4    y_1  y_1_hat
+                y     x1     x2     x3     x4    y.shift_-1  y.shift_-1_hat
 2000-01-10  0.863  0.562  0.317 -0.267 -0.741  0.200    1.047
 2000-01-11  0.200  1.190  0.655 -0.604 -0.187  0.424    0.462
 2000-01-12  0.424 -0.843  0.785  1.700 -0.057  0.188   -0.294
@@ -200,7 +200,7 @@ class TestLinearRegression(hunitest.TestCase):
             df_out.round(3), index=True, decimals=3
         )
         expected = """
-                y     x1     x2     x3     x4  weight    y_1  y_1_hat
+                y     x1     x2     x3     x4  weight    y.shift_-1  y.shift_-1_hat
 2000-01-03 -0.865  1.074 -1.604  0.966 -0.705       1  1.771    0.310
 2000-01-04  1.771 -0.705  1.262 -2.374 -0.447       2 -0.581    0.062
 2000-01-05 -0.581  1.238 -0.811  2.345 -0.465       3  1.238    0.741
@@ -250,7 +250,7 @@ class TestLinearRegression(hunitest.TestCase):
             df_out.round(3), index=True, decimals=3
         )
         expected = """
-                y     x1     x2     x3     x4  weight    y_1  y_1_hat
+                y     x1     x2     x3     x4  weight    y.shift_-1  y.shift_-1_hat
 2000-01-10  0.863  0.562  0.317 -0.267 -0.741       6  0.200    0.373
 2000-01-11  0.200  1.190  0.655 -0.604 -0.187       7  0.424    0.063
 2000-01-12  0.424 -0.843  0.785  1.700 -0.057       8  0.188   -0.061
@@ -285,7 +285,7 @@ class TestLinearRegression(hunitest.TestCase):
             df_out.round(3), index=True, decimals=3
         )
         expected = """
-                y     x1     x2     x3     x4    y_1  y_1_hat
+                y     x1     x2     x3     x4    y.shift_-1  y.shift_-1_hat
 2000-01-03 -0.865  1.074 -1.604  0.966 -0.705  1.771    0.961
 2000-01-04  1.771 -0.705  1.262 -2.374 -0.447 -0.581   -0.411
 2000-01-05 -0.581  1.238 -0.811  2.345 -0.465  1.238    1.217
@@ -443,7 +443,7 @@ end_ts,,,,,,,,
             df_out.round(3), index=True, decimals=3
         )
         expected = r"""
-                                    y_2        y_2_hat            x1            x2            x3             y
+                                    y.shift_-2        y.shift_-2_hat            x1            x2            x3             y
                              MN1    MN2     MN1    MN2    MN1    MN2    MN1    MN2    MN1    MN2    MN1    MN2
 end_ts
 2020-09-23 04:25:00-04:00 -0.434 -0.061   0.187 -0.065 -0.184 -0.636 -1.286 -0.867  0.158 -0.210  1.548  2.026

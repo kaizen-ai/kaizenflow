@@ -57,7 +57,7 @@ class TestTargetPositionAndOrderGenerator1(hunitest.TestCase):
 asset_id
 101                     0  1000.311925                  0                  0.0           1      0.0001    0.01             100031.192549           100031.192549                 100.0                   100.0
 # last orders=
-Order: order_id=0 creation_timestamp=2000-01-01 09:35:00-05:00 asset_id=101 type_=price@twap start_timestamp=2000-01-01 09:35:00-05:00 end_timestamp=2000-01-01 09:40:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York
+Order: order_id=0 creation_timestamp=2000-01-01 09:35:00-05:00 asset_id=101 type_=price@twap start_timestamp=2000-01-01 09:35:00-05:00 end_timestamp=2000-01-01 09:40:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York extra_params={}
 """
         target_position_and_order_generator = (
             self.get_target_position_and_order_generator1()
