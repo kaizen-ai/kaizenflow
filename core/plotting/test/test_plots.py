@@ -8,11 +8,10 @@ import core.plotting.visual_stationarity_test as cpvistte
 
 _LOG = logging.getLogger(__name__)
 
-@staticmethod
 def get_plot_histograms_and_lagged_scatterplot1() -> pd.Series:
     """"
-    Static method to be reused by gallery notebook. 
-    Returns inputs for `plot_histograms_and_lagged_scatterplot()`.
+    Helper method to be reused by gallery notebook. 
+    Returns sample series for `plot_histograms_and_lagged_scatterplot()`.
     """
     # Set inputs.
     rng = np.random.default_rng(seed=0)
