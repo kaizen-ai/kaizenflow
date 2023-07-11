@@ -77,21 +77,21 @@ Example:
     FAILED knowledge_graph/vendors/test/test_p1_utils.py::TestClean::test_clean
     FAILED knowledge_graph/vendors/nbsc/test/test_nbsc_utils.py::TestExposeNBSCMetadata::test_expose_nbsc_metadata
     ```
-    - Stack trace or part of it (if it's too large)  
-        ```
-        Traceback (most recent call last): File
-        "/.../automl/hypotheses/test/test*rh_generator.py", line 104, in test1
-        kg_metadata, * = p1ut.load_release(version="0.5.2") File
-        "/.../knowledge_graph/vendors/utils.py", line 53, in load_release % version,
-        File "/.../amp/helpers/dbg.py", line 335, in dassert_dir_exists \_dfatal(txt,
-        msg, \*args) File "/.../amp/helpers/dbg.py", line 97, in \_dfatal
-        dfatal(dfatal_txt) File "/.../amp/helpers/dbg.py", line 48, in dfatal raise
-        assertion_type(ret) AssertionError:
-        ##############################################################################
-        * Failed assertion * dir='/fsx/research/data/kg/releases/timeseries_db/v0.5.2'
-        doesn't exist or it's not a dir The requested version 0.5.2 has no directory
-        associated with it.
-        ```
+  - Stack trace or part of it (if it's too large)  
+    ```
+    Traceback (most recent call last): File
+    "/.../automl/hypotheses/test/test*rh_generator.py", line 104, in test1
+    kg_metadata, * = p1ut.load_release(version="0.5.2") File
+    "/.../knowledge_graph/vendors/utils.py", line 53, in load_release % version,
+    File "/.../amp/helpers/dbg.py", line 335, in dassert_dir_exists \_dfatal(txt,
+    msg, \*args) File "/.../amp/helpers/dbg.py", line 97, in \_dfatal
+    dfatal(dfatal_txt) File "/.../amp/helpers/dbg.py", line 48, in dfatal raise
+    assertion_type(ret) AssertionError:
+    ##############################################################################
+    * Failed assertion * dir='/fsx/research/data/kg/releases/timeseries_db/v0.5.2'
+    doesn't exist or it's not a dir The requested version 0.5.2 has no directory
+    associated with it.
+    ```
   - Add the issue to the
     [<span class="underline">BUILD - Breaks</span>](https://app.zenhub.com/workspaces/cm-615371012ed326001e044788/issues/cryptokaizen/cmamp/167) Epic so that we can track it
   - If the failures are not connected to each other, file separate issues for each
