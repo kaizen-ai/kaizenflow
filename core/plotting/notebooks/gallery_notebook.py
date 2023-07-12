@@ -32,7 +32,7 @@ import numpy as np
 import pandas as pd
 
 import core.plotting.visual_stationarity_test as cpvistte
-import core.plotting.test.test_plots as test_plots
+import core.plotting.test.test_plots as cptetepl
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -55,8 +55,8 @@ hprint.config_notebook()
 # ## `plot_histograms_and_lagged_scatterplot()`
 
 # %%
-# Set input
-srs = test_plots.get_plot_histograms_and_lagged_scatterplot1()
+# Set inputs.
+srs = cptetepl.Test_plots.get_plot_histograms_and_lagged_scatterplot1()
 lag = 7
 # TODO(Dan): Remove after integration with `cmamp`. Changes from Cm #4722 are not in `sorrentum` yet.
 figsize = (20,20)
