@@ -18,7 +18,7 @@
 
 <!-- tocstop -->
 
-## [Measure seven times, cut once (Russian proverb)](https://docs.google.com/document/d/1R6jhFDbZKvyDdbnSQ9DA_N8417YF13hMI_Uw4quO4Xk/edit#heading=h.47lm09d3bzcd)
+## Measure seven times, cut once (Russian proverb)
 
 - Before doing any work, sit down and plan
   - Describe somewhere _in writing_ your high-level plan. Put it in a Google doc to make it easier to collaborate and review.
@@ -82,8 +82,9 @@
 
 ## Tips from a pro
 
-- Adapted from [these slides](https://static.googleusercontent.com/media/research.google.com/en/people/jeff/stanford-295-talk.pdf) from a Stanford talk given by [Jeff Dean](<https://en.wikipedia.org/wiki/Jeff_Dean_(computer_scientist)>)
+- Adapted from [these slides](https://www.slideshare.net/adrianionel/software-engineering-advice-from-googles-jeff-dean-for-big-distributed-systems) from a Stanford talk given by [Jeff Dean](<https://en.wikipedia.org/wiki/Jeff_Dean_(computer_scientist)>)
   (the Chuck Norris of SWE)
+  
 ### Designing software systems is tricky
 
 - Need to balance:
