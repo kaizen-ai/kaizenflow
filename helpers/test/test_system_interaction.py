@@ -5,6 +5,7 @@ import tempfile
 from typing import List
 
 import helpers.hdbg as hdbg
+import helpers.hio as hio
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
@@ -71,7 +72,8 @@ class Test_system1(hunitest.TestCase):
 
     def test8(self) -> None:
         """
-        Check that an assert error is raised when `tee` is passed without a log file.
+        Check that an assert error is raised when `tee` is passed without a log
+        file.
         """
         with self.assertRaises(AssertionError) as cm:
             rc = hsystem.system("ls this_should_fail", tee=True)
@@ -94,7 +96,7 @@ class Test_system1(hunitest.TestCase):
         - Log file path is passed
         """
         log_dir = self.get_scratch_space()
-        log_file_path = os.path.join(log_dir, "tee_log")                     
+        log_file_path = os.path.join(log_dir, "tee_log")
         with self.assertRaises(RuntimeError) as cm:
             rc = hsystem.system(
                 "ls this_should_fail", tee=True, output_file=log_file_path
@@ -104,14 +106,13 @@ class Test_system1(hunitest.TestCase):
         cmd='(ls this_should_fail) 2>&1 | tee -a /app/helpers/test/outcomes/Test_system1.test9/tmp.scratch/tee_log; exit ${PIPESTATUS[0]}' failed with rc='2'
         truncated output=
         ls: cannot access 'this_should_fail': No such file or directory
-        """                
-        self.assert_equal(actual, expected, fuzzy_match=True)  
-        # Getting log output from output file.
-        expected = r"ls: cannot access 'this_should_fail': No such file or directory\n"          
-        with open(log_file_path,'r') as log_file_content:
-            actual = log_file_content.read()
+        """
         self.assert_equal(actual, expected, fuzzy_match=True)
-        
+        # Check log output.
+        with open(log_file_path, "r") as log_file_content:
+            actual = hio.from_file(log_file_path)
+            expected = r"ls: cannot access 'this_should_fail': No such file or directory\n"
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test10(self) -> None:
         """
@@ -129,13 +130,13 @@ class Test_system1(hunitest.TestCase):
             tee=True,
             abort_on_error=False,
             output_file=log_file_path,
-        )        
-        self.assertEqual(rc,2)  
-        # Getting log output from output file.
-        expected = r"ls: cannot access 'this_should_fail': No such file or directory\n"         
-        with open(log_file_path,'r') as log_file_content:
-            actual = log_file_content.read()
-        self.assert_equal(actual, expected, fuzzy_match=True)      
+        )
+        self.assertEqual(rc, 2)
+        # Check log output.
+        with open(log_file_path, "r") as log_file_content:
+            actual = hio.from_file(log_file_path)
+            expected = r"ls: cannot access 'this_should_fail': No such file or directory\n"
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
 
 # #############################################################################
