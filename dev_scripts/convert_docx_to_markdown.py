@@ -29,6 +29,7 @@ def _convert_docx_to_markdown(
 
     :param docx_file: path to the Docx file
     :param md_file: path to the Markdown file
+    :param md_file_figs: the folder containing the figures for Markdown file
     """
     hdbg.dassert_file_exists(docx_file)
     # Create the Markdown file.
