@@ -48,7 +48,7 @@ aware that taking on a task means that:
    more firmly to making progress
 
 In other words, if you are not sure you can commit a meaningful amount of time
-to Sorrentum (e.g., 10 hours / week), it is wise to wait to be sure you can do
+to Sorrentum (e.g., 20 hours / week), it is wise to wait to be sure you can do
 it. If you are excited and want to start, go for it, do your best, and we’ll
 make this experience the best possible for you.
 
