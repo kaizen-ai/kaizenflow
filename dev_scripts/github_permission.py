@@ -19,8 +19,12 @@ import dev_scripts.github_permission as descgipe
 import argparse
 import logging
 import os
+
 import requests
+
 _LOG = logging.getLogger(__name__)
+
+
 def _check_collaborator(
     owner_username: str,
     repo_name: str,
@@ -103,7 +107,7 @@ def _check_collaborator(
                 )
                 status_code = response.status_code
                 if status_code == 201:
-                    #This sends new invitation to GH user not a collaborator.
+                    # This sends new invitation to GH user not a collaborator.
                     _LOG.debug(
                         "New invitation sent to %s with permission level.",
                         github_username,
@@ -128,6 +132,8 @@ def _check_collaborator(
             github_username,
             status_code,
         )
+
+
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -156,6 +162,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     return parser
 
+
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     owner_username = args.owner_username
@@ -168,6 +175,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         access_token,
         github_username,
     )
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     _main(_parse())
