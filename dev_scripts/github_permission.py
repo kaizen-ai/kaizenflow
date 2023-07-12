@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 
 """
-The script checks if a GitHub user is already a collaborator of a specific
+The script checks if a GH user is already a collaborator of a specific
 repository, sends an invitation if not, and reports any pending invitations.
 
 Example:
-    > github_permission.py \
-        --github_username GITHUB_USERNAME \
-        --owner_username OWNER_USERNAME \
-        --repo_name REPO_NAME \
-        --access_token ACCESS_TOKEN
+> github_permission.py \
+--github_username GITHUB_USERNAME \
+--owner_username OWNER_USERNAME \
+--repo_name REPO_NAME \
+--access_token ACCESS_TOKEN
 
 Import as:
 
@@ -18,60 +18,32 @@ import dev_scripts.github_permission as descgipe
 
 import argparse
 import logging
-
+import os
 import requests
-
 _LOG = logging.getLogger(__name__)
-
-
-def _parse() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--github_username",
-        type=str,
-        required=True,
-        help="Github username that you are providing the permissions",
-    )
-    parser.add_argument(
-        "--owner_username",
-        type=str,
-        required=True,
-        help="Owner's username of the repository",
-    )
-    parser.add_argument(
-        "--repo_name",
-        type=str,
-        required=True,
-        help="Repository name",
-    )
-    parser.add_argument(
-        "--access_token",
-        type=str,
-        required=True,
-        help="Owner's generated access token",
-    )
-    return parser
-
-
 def _check_collaborator(
     owner_username: str,
     repo_name: str,
     access_token: str,
     github_username: str,
 ) -> None:
-    add_collaborator_endpoint = (
-        f"https://api.github.com/repos/{owner_username}/{repo_name}/"
-        f"collaborators/{{collaborator}}"
+    add_collaborator_endpoint = os.path.join(
+        "https://api.github.com/repos",
+        owner_username,
+        repo_name,
+        "collaborators/{collaborator}",
     )
-    collaborator_check_url = (
-        f"https://api.github.com/repos/{owner_username}/{repo_name}/"
-        f"collaborators/{github_username}"
+    collaborator_check_url = os.path.join(
+        "https://api.github.com/repos/",
+        owner_username,
+        repo_name,
+        "collaborators/{github_username}",
     )
-    headers = {"Authorization": f"Bearer {access_token}"}
+    headers = {"Authorization": "Bearer " + access_token}
     response = requests.get(collaborator_check_url, headers=headers, timeout=10)
     status_code = response.status_code
-    # Checks if that github user is a collaborator or not.
     if status_code == 204:
+        # Checks if that GH user is a collaborator or not.
         collaborator_permissions_url = "/".join(
             [collaborator_check_url, "permission"]
         )
@@ -80,6 +52,7 @@ def _check_collaborator(
         )
         status_code = response.status_code
         if status_code == 200:
+            # Tells what type of permission level is provided to that GH user
             current_permission_level = response.json()["permission"]
             _LOG.debug(
                 "%s is already a collaborator with %s permission level.",
@@ -92,11 +65,13 @@ def _check_collaborator(
                 github_username,
                 status_code,
             )
-    # Check if an invitation is pending for the collaborator.
     elif status_code == 404:
-        invitation_check_url = (
-            f"https://api.github.com/repos/{owner_username}/"
-            f"{repo_name}/invitations"
+        # Check if an invitation is pending for the collaborator.
+        invitation_check_url = os.path.join(
+            "https://api.github.com/repos",
+            owner_username,
+            repo_name,
+            "invitations",
         )
         response = requests.get(invitation_check_url, headers=headers, timeout=10)
         status_code = response.status_code
@@ -107,6 +82,7 @@ def _check_collaborator(
                 invitee_login = invitation["invitee"]["login"]
                 invitee_permission = invitation["permissions"]
                 if invitee_login == github_username:
+                    # Checks if the invitation was sent and was accepted or not.
                     _LOG.debug(
                         "%s's invitation is pending to accept with %s permission level.",
                         github_username,
@@ -127,6 +103,7 @@ def _check_collaborator(
                 )
                 status_code = response.status_code
                 if status_code == 201:
+                    #This sends new invitation to GH user not a collaborator.
                     _LOG.debug(
                         "New invitation sent to %s with permission level.",
                         github_username,
@@ -151,7 +128,33 @@ def _check_collaborator(
             github_username,
             status_code,
         )
-
+def _parse() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--github_username",
+        type=str,
+        required=True,
+        help="GH username that you are providing the permissions",
+    )
+    parser.add_argument(
+        "--owner_username",
+        type=str,
+        required=True,
+        help="Owner's username of the repository",
+    )
+    parser.add_argument(
+        "--repo_name",
+        type=str,
+        required=True,
+        help="Repository name",
+    )
+    parser.add_argument(
+        "--access_token",
+        type=str,
+        required=True,
+        help="Owner's generated access token",
+    )
+    return parser
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
@@ -165,8 +168,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
         access_token,
         github_username,
     )
-
-
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     _main(_parse())
