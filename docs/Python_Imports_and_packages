@@ -21,16 +21,18 @@
     - hide in which file the actual code is, so that we can reorganize the code without having to change all the client code
     - organize the code in related units
     - make it simpler to avoid import loops by enforcing that there are no import loops in any module and no import loops among modules
-    E.g., referring to package from a different package looks like
-        ```
-        import dataflow.core as dtfcore
-        dtfcore.ArmaGenerator(...)
-        ```
-    - Importing the specific file:
-        ```
-        import dataflow.system.source_nodes as dtfsysonod
-        dtfsysonod.ArmaGenerator(...)
-        ```
+   
+- E.g., referring to package from a different package looks like
+   ```python
+   import dataflow.core as dtfcore
+   dtfcore.ArmaGenerator(...)
+   ```
+- Importing the specific file:
+
+   ```python
+   import dataflow.system.source_nodes as dtfsysonod
+   dtfsysonod.ArmaGenerator(...)
+   ```
 
 ## Circular dependency (aka import cycle, import loop)
 
@@ -42,13 +44,13 @@
 - We follow rules to avoid import loops:
     1. Code inside a package should import directly a file in the same package and not use the package
         - E.g., im_v2/common/data/client/data_frame_im_clients.py
-
+        
             **Good**
-            ```
+            ```python
             import im_v2.common.data.client.base_im_clients as imvcdcbimcl
             ```
             **Bad**
-            ```
+            ```python
             import im_v2.common.data.client as icdc
             ```
     2. Code from a package should import other packages, instead of importing directly the file
@@ -64,7 +66,7 @@
     7. We specify a short import in the `__init__.py` file for a package manually because the linter cannot do it automatically yet.
         - We use the first letters to build a short import and try to keep it less than 8 chars long, e.g., `im_v2.talos.data.client` -> `itdcl`
         - We insert an import docstring in the `__init__.py` file manually and then we use the specified short import everywhere in the codebase. E.g.,
-            ```
+            ```python
             Import as:
             import im_v2.talos.data.client as itdcl
             ```
@@ -75,13 +77,13 @@
 
     1. import the package when testing code exported from the package
         - E.g., in market_data/test/market_data_test_case.py you can import the package even if it's included
-            ```
+            ```python
             import market_data as mdata
             … mdata.AbstractMarketData …
             ```
     2. import the files directly with the code and not the package
         - E.g.,
-            ```
+            ```python
             import market_data.abstract_market_data as mdabmada
             … mdabmada.AbstractMarketData …
             ```
