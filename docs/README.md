@@ -49,6 +49,8 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Reading List](Reading_List.md)
 
+- [Design Philosophy](Design_Philosophy.md)
+
 ## Technologies used
 
 - [UMD DATA605 Big Data Systems](https://github.com/gpsaggese/umd_data605)
