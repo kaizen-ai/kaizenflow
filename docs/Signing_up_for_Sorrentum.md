@@ -67,18 +67,17 @@
 - **(Admin)**: On-boarding process
 
   - When the contributor is ready to be on-boarded, file an issue like "On-board \<FIRST NAME LAST NAME\> Aka <GITHUB_HANDLE>". The content of the issue will be the following checklist. Admins need to keep track on the progress being made by the contributor.
+    - [ ] Acknowledge the pledge to put time in the project [here](/README.md#Important) 
     - [ ] Read [How to organize your work](https://github.com/sorrentum/sorrentum/blob/master/docs/How_to_organize_your_work.md)
     - [ ] Read [Quick start for developing](https://github.com/sorrentum/sorrentum/blob/master/docs/Quick_start_for_developing.md)
     - [ ] Make sure the [Docker dev container](https://github.com/sorrentum/sorrentum/blob/master/docs/Quick_start_for_developing.md#sorrentum-dev-docker-container-aka-dev-container-cmamp-container) works
     - [ ] Make sure the [unit tests](https://github.com/sorrentum/sorrentum/blob/master/docs/Unit_tests.md) run successfully
     - [ ] Read [Sorrentum Python coding style guide](https://github.com/sorrentum/sorrentum/blob/master/docs/Coding_Style_Guide.md)
+    - [ ] Fork, star, watch the Sorrentum repo so that GitHub promotes our repo (we gotta work the system)
     - [ ] Get assigned a warm-up issue
     - [ ] Learn about the [Morning Email](https://github.com/sorrentum/sorrentum/blob/master/documentation/general/general.md#morning-email)
     - [ ] How to do a [review](https://github.com/sorrentum/sorrentum/blob/master/docs/First_review_process.md)
-    - [ ] If you are graduating soon and you would like to get a part- / full-time job in one of the companies in the Sorrentum ecosystem reach out to GP at gp@sorrentum.org
-    - [ ] Get up to speed in terms of the background knowledge for specific project
-      - For Web3 / Crypto : [README.md](https://github.com/sorrentum/sorrentum/blob/master/defi/README.md)
-      - For Arbitrage / Modeling: [From_zero_to_modeling.md](https://github.com/sorrentum/sorrentum/blob/master/docs/From_zero_to_modeling.md)
+    - [ ] If you are graduating soon and you would like to get a full-time job in one of the companies in the Sorrentum ecosystem reach out to GP at gp@sorrentum.org
 
 - **(Contributor)**: On-boarding Tasks
 
