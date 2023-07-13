@@ -31,7 +31,9 @@ import logging
 import numpy as np
 import pandas as pd
 
+import core.plotting.misc_plotting as cplmiplo
 import core.plotting.visual_stationarity_test as cpvistte
+import core.plotting.test.test_plots as cptetepl
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -66,3 +68,16 @@ lag = 7
 figsize = (20,20)
 # Plot.
 cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
+
+# %% [markdown]
+# ## `plot_time_series_by_period()`
+
+# %%
+# Set inputs.
+test_series = cptetepl.Test_plots.get_plot_time_series_by_period1()
+# Run smoke tests.
+period = "hour"
+cplmiplo.plot_time_series_by_period(test_series, period)
+#
+period = "time"
+cplmiplo.plot_time_series_by_period(test_series, period)

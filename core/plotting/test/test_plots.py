@@ -11,6 +11,21 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_plots(unittest.TestCase):
+    @staticmethod
+    def get_plot_time_series_by_period1() -> pd.Series:
+        """
+        Generates a test time series with hourly timestamps for a specific
+        period.
+        """
+        # Create a test series with hourly timestamps.
+        timestamps = pd.date_range(
+            start="2023-07-01", end="2023-07-02", freq="4H"
+        )
+        np.random.seed(35)
+        values = np.random.rand(len(timestamps))
+        test_series = pd.Series(values, index=timestamps)
+        return test_series
+
     def test_plot_histograms_and_lagged_scatterplot1(self) -> None:
         """
         Smoke test for `plot_histograms_and_lagged_scatterplot()`.
@@ -27,17 +42,15 @@ class Test_plots(unittest.TestCase):
         # Plot.
         cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
 
-    def test_plot_time_series_by_period(self) -> None:
+    def test_plot_time_series_by_period1(self) -> None:
         """
         Smoke test for `plot_time_series_by_period()`.
         """
-        # Create a test series with hourly timestamps
-        timestamps = pd.date_range(start="2023-07-01", end="2023-07-02", freq="H")
-        values = np.random.rand(len(timestamps))
-        test_series = pd.Series(values, index=timestamps)
-
-        # Test for "hour" period
-        cplmiplo.plot_time_series_by_period(test_series, "hour")
-
-        # Test for "time" period
-        cplmiplo.plot_time_series_by_period(test_series, "time")
+        # Set inputs.
+        test_series = self.get_plot_time_series_by_period1()
+        # Run smoke tests.
+        period = "hour"
+        cplmiplo.plot_time_series_by_period(test_series, period)
+        #
+        period = "time"
+        cplmiplo.plot_time_series_by_period(test_series, period)
