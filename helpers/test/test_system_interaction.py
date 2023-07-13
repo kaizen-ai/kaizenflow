@@ -109,9 +109,8 @@ class Test_system1(hunitest.TestCase):
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
         # Check log output.
-        with open(log_file_path, "r") as log_file_content:
-            actual = hio.from_file(log_file_path)
-            expected = r"ls: cannot access 'this_should_fail': No such file or directory\n"
+        actual = hio.from_file(log_file_path)
+        expected = r"ls: cannot access 'this_should_fail': No such file or directory\n"
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test10(self) -> None:
@@ -133,9 +132,8 @@ class Test_system1(hunitest.TestCase):
         )
         self.assertEqual(rc, 2)
         # Check log output.
-        with open(log_file_path, "r") as log_file_content:
-            actual = hio.from_file(log_file_path)
-            expected = r"ls: cannot access 'this_should_fail': No such file or directory\n"
+        actual = hio.from_file(log_file_path)
+        expected = r"ls: cannot access 'this_should_fail': No such file or directory\n"
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
