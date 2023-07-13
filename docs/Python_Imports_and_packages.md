@@ -1,4 +1,4 @@
-# Python_Imports_and_packages.
+# Imports and packages
 
 <!-- toc -->
 
@@ -17,10 +17,10 @@
 # Goals of packages
 
 - The goal of creating packages is to:
-    - simplify the import from clients
-    - hide in which file the actual code is, so that we can reorganize the code without having to change all the client code
-    - organize the code in related units
-    - make it simpler to avoid import loops by enforcing that there are no import loops in any module and no import loops among modules
+    - Simplify the import from clients
+    - Hide in which file the actual code is, so that we can reorganize the code without having to change all the client code
+    - Organize the code in related units
+    - Make it simpler to avoid import loops by enforcing that there are no import loops in any module and no import loops among modules
    
 - E.g., referring to package from a different package looks like
    ```python
@@ -75,13 +75,13 @@
 
  - To avoid churning client code when code is moved among files, we allow unit tests to both:
 
-    1. import the package when testing code exported from the package
-        - E.g., in market_data/test/market_data_test_case.py you can import the package even if it's included
+    1. Import the package when testing code exported from the package
+        - E.g., in ```market_data/test/market_data_test_case.py``` you can import the package even if it's included
             ```python
             import market_data as mdata
             … mdata.AbstractMarketData …
             ```
-    2. import the files directly with the code and not the package
+    2. Import the files directly with the code and not the package
         - E.g.,
             ```python
             import market_data.abstract_market_data as mdabmada
@@ -119,4 +119,4 @@
 
 # Anatomy of a package
  - TODO(gp): Let's use `dataflow` as a running example
-A package has a special `__init__.py` exporting public methods
+ - A package has a special `__init__.py` exporting public methods
