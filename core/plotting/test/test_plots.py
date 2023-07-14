@@ -17,10 +17,10 @@ class Test_plots(unittest.TestCase):
         Generate a test time series with hourly timestamps.
         """
         # Create a test series with hourly timestamps.
+        np.random.seed(35)
         timestamps = pd.date_range(
             start="2023-07-01", end="2023-07-02", freq="4H"
         )
-        np.random.seed(35)
         values = np.random.rand(len(timestamps))
         test_series = pd.Series(values, index=timestamps)
         return test_series
@@ -45,9 +45,7 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for `plot_time_series_by_period()` for periods: "hour".
         """
-        # Set inputs.
         test_series = self.get_plot_time_series_by_period1()
-        # Run smoke tests.
         period = "hour"
         cplmiplo.plot_time_series_by_period(test_series, period)
 
@@ -55,8 +53,6 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for `plot_time_series_by_period()` for periods: "time".
         """
-        # Set inputs.
         test_series = self.get_plot_time_series_by_period1()
-        # Run smoke tests.
         period = "time"
-        cplmiplo.plot_time_series_by_period(test_series, period) 
+        cplmiplo.plot_time_series_by_period(test_series, period)
