@@ -69,6 +69,7 @@ df
 # # Save filtered data to gsheet
 
 # %%
+# A Google sheet with this name should already exist on the drive.
 spread2 = gspread_pandas.Spread(
     "search_retired1.profile_export.filtered.gsheet",
     sheet="Sheet1",
