@@ -14,8 +14,7 @@ class Test_plots(unittest.TestCase):
     @staticmethod
     def get_plot_time_series_by_period1() -> pd.Series:
         """
-        Generates a test time series with hourly timestamps for a specific
-        period.
+        Generate a test time series with hourly timestamps.
         """
         # Create a test series with hourly timestamps.
         timestamps = pd.date_range(
@@ -44,13 +43,20 @@ class Test_plots(unittest.TestCase):
 
     def test_plot_time_series_by_period1(self) -> None:
         """
-        Smoke test for `plot_time_series_by_period()`.
+        Smoke test for `plot_time_series_by_period()` for periods: "hour".
         """
         # Set inputs.
         test_series = self.get_plot_time_series_by_period1()
         # Run smoke tests.
         period = "hour"
         cplmiplo.plot_time_series_by_period(test_series, period)
-        #
+
+    def test_plot_time_series_by_period2(self) -> None:
+        """
+        Smoke test for `plot_time_series_by_period()` for periods: "time".
+        """
+        # Set inputs.
+        test_series = self.get_plot_time_series_by_period1()
+        # Run smoke tests.
         period = "time"
-        cplmiplo.plot_time_series_by_period(test_series, period)
+        cplmiplo.plot_time_series_by_period(test_series, period) 
