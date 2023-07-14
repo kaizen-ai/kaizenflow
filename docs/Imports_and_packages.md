@@ -56,17 +56,17 @@
 
     - E.g., `im_v2/common/data/client/data_frame_im_clients.py`
 
-      **Good**
+      - Good
 
-      ```python
-      import im_v2.common.data.client.base_im_clients as imvcdcbimcl
-      ```
+        ```python
+        import im_v2.common.data.client.base_im_clients as imvcdcbimcl
+        ```
 
-      **Bad**
+      - Bad
 
-      ```python
-      import im_v2.common.data.client as icdc
-      ```
+        ```python
+        import im_v2.common.data.client as icdc
+        ```
 
   - Code from a package should import other packages, instead of importing
     directly the file
@@ -148,11 +148,11 @@
 - We also want to enforce that certain libs don't import others within a single
   package. For example, in `helpers`, the following hierarchy should be
   respected:
-  1. Hdbg (should not depend on any other helper)
-  2. Hintrospection, hprint (should depend only on hdbg for assertion)
-  3. Henv, hsystem, hio, hversio (this is the base layer to access env vars and
+  1. `hdbg` (should not depend on any other helper)
+  2. `hintrospection`, `hprint` (should depend only on hdbg for assertion)
+  3. `henv`, `hsystem`, `hio`, `hversio` (this is the base layer to access env vars and
      execute commands)
-  4. Hgit (Git requires accessing env vars and system calls)
+  4. `hgit` (Git requires accessing env vars and system calls)
 - A library can only import libs that are "below" it or on the same level. E.g.,
   `henv` can import `hdbg`, `hprint`, and `hio`, but it cannot import `hgit`.
   NB: while importing a lib on the same level, make sure you are not creating an
