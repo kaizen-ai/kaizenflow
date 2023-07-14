@@ -1,6 +1,6 @@
 import logging
 import unittest
-
+import numpy as np
 import pandas as pd
 import core.plotting.misc_plotting as cplmiplo
 
@@ -9,15 +9,29 @@ class Test_plot_timeseries_distribution(unittest.TestCase):
         """
         Check hour period
         """
-        d = {'a': 1, 'b': 2, 'c': 3}
-        ser = pd.Series(data=d, index=['a', 'b', 'c'])
-        cplmiplo.plot_timeseries_distribution(ser)
+        idx = [
+            pd.Timestamp("2000-01-01 9:01"),
+            pd.Timestamp("2000-01-01 9:02"),
+            pd.Timestamp("2000-01-01 9:03"),
+            pd.Timestamp("2000-01-01 9:04"),
+        ]
+        value = [1.1,1.2,1.3,1.4]
+        srs = pd.Series(value, index = idx)
+        type = ["hour"]
+        cplmiplo.plot_timeseries_distribution(srs,type)
         
-       # self.assertListEqual(actual, expected)
-       
+       #pytest core/plotting/test/test_misc_plotting.py::Test_plot_timeseries_distribution::test1
     def test2(self)-> None:
         """
         Check time period
         """
-        
-       # self.assertListEqual(actual, expected)
+        idx = [
+            pd.Timestamp("2000-01-01 9:01"),
+            pd.Timestamp("2000-01-01 9:02"),
+            pd.Timestamp("2000-01-01 9:03"),
+            pd.Timestamp("2000-01-01 9:04"),
+        ]
+        value = [0,0,0,0]
+        srs = pd.Series(value, index = idx)
+        type = []
+        cplmiplo.plot_timeseries_distribution(srs,type)
