@@ -57,13 +57,11 @@
     - E.g., `im_v2/common/data/client/data_frame_im_clients.py`
 
       - Good
-
         ```python
         import im_v2.common.data.client.base_im_clients as imvcdcbimcl
         ```
 
       - Bad
-
         ```python
         import im_v2.common.data.client as icdc
         ```
@@ -109,19 +107,19 @@
        import market_data as mdata
        … mdata.AbstractMarketData …
        ```
+     - To justify, one can argue that unit tests are clients of the code and
+       should import packages like any other client
   2. Import the files directly with the code and not the package
      - E.g.,
        ```python
        import market_data.abstract_market_data as mdabmada
        … mdabmada.AbstractMarketData …
        ```
+     - To justify, one can interpret that unit tests are tied to specific files,
+       so they should be kept in sync with the low-level code and not with the public
+       interface. In fact, we already allow unit tests to call private functions,
+       acknowledging that unit tests are not regular clients
 
-- To justify 1., one can argue that unit tests are clients of the code and
-  should import packages like any other client
-- To justify 2., one can interpret that unit tests are tied to specific files,
-  so they should be kept in sync with the low-level code and not with the public
-  interface. In fact, we already allow unit tests to call private functions,
-  acknowledging that unit tests are not regular clients
 - Given that both explanations are valid, we allow both styles
 
 ### Common unit test code
