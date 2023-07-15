@@ -32,7 +32,6 @@
   dtfcore.ArmaGenerator(...)
   ```
 - Importing the specific file:
-
   ```python
   import dataflow.system.source_nodes as dtfsysonod
   dtfsysonod.ArmaGenerator(...)
@@ -83,12 +82,10 @@
         want to pay the overhead only if we get enough benefit from this
   - We specify a short import in the `__init__.py` file for a package manually
     because the linter cannot do it automatically yet
-
     - We use the first letters to build a short import and try to keep it less
       than 8 chars long, e.g., `im_v2.talos.data.client` -> `itdcl`
     - We insert an import docstring in the `__init__.py` file manually and then
       we use the specified short import everywhere in the codebase. E.g.,
-
       ```python
       Import as:
 
@@ -119,7 +116,6 @@
        so they should be kept in sync with the low-level code and not with the public
        interface. In fact, we already allow unit tests to call private functions,
        acknowledging that unit tests are not regular clients
-
 - Given that both explanations are valid, we allow both styles
 
 ### Common unit test code
