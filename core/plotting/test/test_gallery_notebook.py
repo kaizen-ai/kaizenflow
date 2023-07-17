@@ -1,12 +1,11 @@
 import logging
+import os
 
 import pytest
 
 import core.config as cconfig
 import dev_scripts.notebooks as dsnrn
-
 import helpers.hgit as hgit
-import os
 
 _LOG = logging.getLogger(__name__)
 
@@ -31,7 +30,7 @@ class TestGalleryNotebook(dsnrn.Test_Run_Notebook_TestCase):
         """
         amp_path = hgit.get_amp_abs_path()
         notebook_path = os.path.join(
-        amp_path, "core/plotting/notebooks/gallery_notebook.ipynb"
+            amp_path, "core/plotting/notebooks/gallery_notebook.ipynb"
         )
         config_func_path = "core.plotting.notebooks.test.test_gallery_notebook.build_config_list()"
         self._test_run_notebook(notebook_path, config_func_path)
