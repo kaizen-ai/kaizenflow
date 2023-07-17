@@ -18,12 +18,21 @@ class Test_plots(unittest.TestCase):
     @staticmethod
     def get_plot_time_series_by_period1() -> pd.Series:
         """
-        Generate a test time series with hourly timestamps.
+        Generate a test time series with daily timestamps.
         """
         np.random.seed(35)
-        timestamps = pd.date_range(
-            start="2023-07-01", end="2023-07-02", freq="4H"
-        )
+        timestamps = pd.date_range(start="2023-07-01", end="2023-07-07", freq="D")
+        values = np.random.rand(len(timestamps))
+        test_series = pd.Series(values, index=timestamps)
+        return test_series
+    
+    @staticmethod
+    def get_plot_time_series_by_period2() -> pd.Series:
+        """
+        Generate a test time series with hourily timestamps.
+        """
+        np.random.seed(35)
+        timestamps = pd.date_range(start="2023-07-01", end="2023-07-02", freq="4H")
         values = np.random.rand(len(timestamps))
         test_series = pd.Series(values, index=timestamps)
         return test_series
@@ -46,10 +55,10 @@ class Test_plots(unittest.TestCase):
 
     def test_plot_time_series_by_period1(self) -> None:
         test_series = self.get_plot_time_series_by_period1()
-        period = "hour"
+        period = "day"
         cplmiplo.plot_time_series_by_period(test_series, period)
 
     def test_plot_time_series_by_period2(self) -> None:
-        test_series = self.get_plot_time_series_by_period1()
+        test_series = self.get_plot_time_series_by_period2()
         period = "time"
         cplmiplo.plot_time_series_by_period(test_series, period)
