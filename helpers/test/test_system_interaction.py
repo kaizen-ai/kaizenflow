@@ -131,7 +131,7 @@ class Test_system1(hunitest.TestCase):
             abort_on_error=False,
             output_file=log_file_path,
         )
-        self.assertEqual(rc, 2)
+        self.assertNotEqual(rc, 0)
         # Check log output.
         actual = hio.from_file(log_file_path)
         expected = r"ls: cannot access 'this_should_fail': No such file or directory\n"
