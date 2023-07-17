@@ -74,18 +74,14 @@ cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
 
 # %%
 # Set inputs.
-test_series1 = cptetepl.Test_plots.get_plot_time_series_by_period1()
-
-# %%
-# Set inputs.
-test_series2 = cptetepl.Test_plots.get_plot_time_series_by_period2()
+test_series = cptetepl.Test_plots.get_plot_time_series_by_period1()
 
 # %%
 period = "day"
-cplmiplo.plot_time_series_by_period(test_series1, period)
+cplmiplo.plot_time_series_by_period(test_series, period)
 
 # %%
 period = "time"
-cplmiplo.plot_time_series_by_period(test_series2, period)
+cplmiplo.plot_time_series_by_period(test_series, period)
 
 # %%
