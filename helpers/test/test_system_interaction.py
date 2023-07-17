@@ -102,8 +102,9 @@ class Test_system1(hunitest.TestCase):
                 "ls this_should_fail", tee=True, output_file=log_file_path
             )
         actual = str(cm.exception)
+        actual = hunitest.purify_txt_from_client(actual)
         expected = r"""
-        cmd='(ls this_should_fail) 2>&1 | tee -a /app/helpers/test/outcomes/Test_system1.test9/tmp.scratch/tee_log; exit ${PIPESTATUS[0]}' failed with rc='2'
+        cmd='(ls this_should_fail) 2>&1 | tee -a $GIT_ROOT/helpers/test/outcomes/Test_system1.test9/tmp.scratch/tee_log; exit ${PIPESTATUS[0]}' failed with rc='2'
         truncated output=
         ls: cannot access 'this_should_fail': No such file or directory
         """
