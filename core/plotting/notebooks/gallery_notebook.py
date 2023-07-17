@@ -30,8 +30,10 @@ import logging
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 import core.plotting.visual_stationarity_test as cpvistte
+import core.plotting.misc_plotting as cpmiscplt
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -66,3 +68,12 @@ lag = 7
 figsize = (20,20)
 # Plot.
 cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
+
+# %%
+# Create large dataframe of random ints between 0 and 100.
+rand_df = pd.DataFrame(np.random.randint(0,100,size=(300, 6)), columns=['y1','y2','y3','y4','y5','y6'])
+#fig, ax = plt.subplots()
+#ax.plot(range(0, 100), range(0, 100))
+fig = plt.figure()
+ax = fig.add_axes([0,0,1,1])
+cpmiscplt.plot_projection(rand_df, special_values = [1000], mode = "scatter", ax = ax)
