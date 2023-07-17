@@ -15,10 +15,23 @@ class Test_plot_timeseries_distribution(unittest.TestCase):
             pd.Timestamp("2000-01-01 9:03"),
             pd.Timestamp("2000-01-01 9:04"),
         ]
-        value = [1.1,1.2,1.3,1.4]
+        value = [1,2,3,4]
         srs = pd.Series(value, index = idx)
-        type = ["hour","time"]
+        type = ["hour"]
         cplmiplo.plot_timeseries_distribution(srs,type)
         
        #pytest core/plotting/test/test_misc_plotting.py::Test_plot_timeseries_distribution::test1
- 
+    def test2(self)-> None:
+        """
+        Check month period
+        """
+        idx = [
+            pd.Timestamp("2000-01-01 9:01"),
+            pd.Timestamp("2000-01-01 9:02"),
+            pd.Timestamp("2000-01-01 9:03"),
+            pd.Timestamp("2000-01-01 9:04"),
+        ]
+        value = [1,2,3,4]
+        srs = pd.Series(value, index = idx)
+        type = ["month"]
+        cplmiplo.plot_timeseries_distribution(srs,type)
