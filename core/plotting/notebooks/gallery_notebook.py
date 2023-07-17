@@ -75,7 +75,7 @@ cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
 # %%
 # Set inputs.
 test_series = cptetepl.Test_plots.get_plot_time_series_by_period1()
-# Run smoke tests.
+# Plot.
 period = "hour"
 cplmiplo.plot_time_series_by_period(test_series, period)
 #
