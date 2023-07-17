@@ -76,7 +76,7 @@ class Test_system1(hunitest.TestCase):
         file.
         """
         with self.assertRaises(AssertionError) as cm:
-            rc = hsystem.system("ls this_should_fail", tee=True)
+            _ = hsystem.system("ls this_should_fail", tee=True)
         actual = str(cm.exception)
         expected = r"""
         ################################################################################
@@ -98,7 +98,7 @@ class Test_system1(hunitest.TestCase):
         log_dir = self.get_scratch_space()
         log_file_path = os.path.join(log_dir, "tee_log")
         with self.assertRaises(RuntimeError) as cm:
-            rc = hsystem.system(
+            _ = hsystem.system(
                 "ls this_should_fail", tee=True, output_file=log_file_path
             )
         actual = str(cm.exception)
@@ -111,7 +111,9 @@ class Test_system1(hunitest.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
         # Check log output.
         actual = hio.from_file(log_file_path)
-        expected = r"ls: cannot access 'this_should_fail': No such file or directory\n"
+        expected = (
+            r"ls: cannot access 'this_should_fail': No such file or directory\n"
+        )
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test10(self) -> None:
@@ -134,7 +136,9 @@ class Test_system1(hunitest.TestCase):
         self.assertNotEqual(rc, 0)
         # Check log output.
         actual = hio.from_file(log_file_path)
-        expected = r"ls: cannot access 'this_should_fail': No such file or directory\n"
+        expected = (
+            r"ls: cannot access 'this_should_fail': No such file or directory\n"
+        )
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
