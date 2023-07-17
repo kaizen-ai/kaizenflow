@@ -166,6 +166,7 @@ def get_container_info(container_id: str, api_key: str) -> Optional[dict]:
     # 
     return response.json()
 
+
 def get_last_updated_time(container_id: str, api_key: str) -> Optional[datetime.datetime]:
     """
     Get the last updated time for a given container ID.
