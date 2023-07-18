@@ -31,14 +31,14 @@ import logging
 import numpy as np
 import pandas as pd
 
+import core.plotting.misc_plotting as cplmiplo
+import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
 import core.plotting.test.test_plots as cptetepl
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
-
-
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
 
@@ -61,3 +61,18 @@ lag = 7
 # TODO(Dan): Remove after integration with `cmamp`. Changes from Cm #4722 are not in `sorrentum` yet.
 figsize = (20,20)
 cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
+
+# %% [markdown]
+# ## `plot_time_series_by_period()`
+
+# %%
+# Set inputs.
+test_series = cptetepl.Test_plots.get_plot_time_series_by_period1()
+
+# %%
+period = "day"
+cplmiplo.plot_time_series_by_period(test_series, period)
+
+# %%
+period = "time"
+cplmiplo.plot_time_series_by_period(test_series, period)
