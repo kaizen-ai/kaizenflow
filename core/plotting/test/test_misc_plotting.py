@@ -1,23 +1,29 @@
 import unittest
 
 import pandas as pd
+import numpy as np
 
 import core.plotting.misc_plotting as cplmiplo
 
 
 class Test_plot_timeseries_distribution(unittest.TestCase):
+    @staticmethod
+    def get_plot_timeseries_distribution(type: str) -> pd.Series:
+        rng = np.random.default_rng(seed=0)
+        samples = rng.normal(size=100)
+        if type == "hour":
+            frequency = "H"
+        elif type == "month":
+            frequency = "M"
+        index = pd.date_range(start="2023-01-01", periods=len(samples), freq=frequency)
+        srs = pd.Series(samples, index=index)
+        return srs
+    
     def test1(self) -> None:
         """
         Check hour period.
         """
-        idx = [
-            pd.Timestamp("2000-01-01 9:01"),
-            pd.Timestamp("2000-01-01 9:02"),
-            pd.Timestamp("2000-01-01 9:03"),
-            pd.Timestamp("2000-01-01 9:04"),
-        ]
-        value = [1, 2, 3, 4]
-        srs = pd.Series(value, index=idx)
+        srs = self.get_plot_timeseries_distribution("hour")
         type = ["hour"]
         cplmiplo.plot_timeseries_distribution(srs, type)
 
@@ -25,13 +31,6 @@ class Test_plot_timeseries_distribution(unittest.TestCase):
         """
         Check month period.
         """
-        idx = [
-            pd.Timestamp("2000-01-01 9:01"),
-            pd.Timestamp("2000-01-01 9:02"),
-            pd.Timestamp("2000-01-01 9:03"),
-            pd.Timestamp("2000-01-01 9:04"),
-        ]
-        value = [1, 2, 3, 4]
-        srs = pd.Series(value, index=idx)
-        type = ["hour", "month"]
+        srs = self.get_plot_timeseries_distribution("month")
+        type = ["month"]
         cplmiplo.plot_timeseries_distribution(srs, type)

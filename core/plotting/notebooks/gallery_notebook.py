@@ -32,6 +32,7 @@ import numpy as np
 import pandas as pd
 
 import core.plotting.visual_stationarity_test as cpvistte
+import core.plotting.misc_plotting as cplmiplo
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -66,3 +67,18 @@ lag = 7
 figsize = (20,20)
 # Plot.
 cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
+# %% [markdown]
+# ## `plot_timeseries_distribution()`rng = np.random.default_rng(seed=0)
+# %%
+rng = np.random.default_rng(seed=0)
+# Set inputs for hour interval.
+samples = rng.normal(size=100)
+index = pd.date_range(start="2023-01-01", periods=len(samples), freq="H")
+srs = pd.Series(samples, index=index)
+type = ["hour"]
+cplmiplo.plot_timeseries_distribution(srs,type)
+# Set input for month interval.
+type1 = ["month"]
+index1 = pd.date_range(start="2023-01-01", periods=len(samples), freq="M")
+srs1 = pd.Series(samples, index=index)
+cplmiplo.plot_timeseries_distribution(srs1,type1)
