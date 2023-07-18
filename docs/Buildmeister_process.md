@@ -34,7 +34,7 @@
 
 # Notification system
 
-- `GH_bot` notifies the team about breaks via Telegram channel `@ALL`
+- `@CK_cmamp_buildbot` notifies the team about breaks via Telegram channel `CK build notifications`
 - A notification contains:
   - Failing tests type: fast/slow/super-slow
   - Repo
@@ -47,12 +47,12 @@ Example:
 
 # Buildmeister instructions
 
-- You receive a break notification from `@GH_bot`
+- You receive a break notification from `@CK_cmamp_buildbot`
 - Have a look at the message
   - Do it right away, this is always your highest priority task
 - Notify the team
 
-- Post on the `@ALL` Telegram channel what tests broke, e.g.,  
+- Post on the `CK build notifications` Telegram channel what tests broke, e.g.,  
 `FAILED knowledge_graph/vendors/test/test_utils.py::TestClean::test_clean`
   - If unsure about the cause of failure (chance that failure is temporary):
     - Do a quick run locally for failed test
@@ -65,7 +65,7 @@ Example:
 
 - File an Issue in GH / ZH to report the failing tests and the errors
   - Example:  
-    [<span class="underline">https://app.zenhub.com/workspaces/cm-615371012ed326001e044788/issues/alphamatic/dev_tools/318</span>](https://app.zenhub.com/workspaces/cm-615371012ed326001e044788/issues/alphamatic/dev_tools/318)
+    [<span class="underline">https://app.zenhub.com/workspaces/cm-615371012ed326001e044788/issues/alphamatic/dev_tools/318</span>](https://github.com/cryptokaizen/cmamp/issues/4386)
   - Issue title template `Build fail - {repo} {test type} ({run number})`
     - Example: `Build fail - Cmamp fast_tests (1442077107)`
   - Paste the URL of the failing run
@@ -98,7 +98,7 @@ Example:
     of the potential root cause
   - Keep issues grouped according to the codebase organization
 
-- Post the issue reference on Telegram channel @ALL
+- Post the issue reference on Telegram channel CK build notifications
   - You can quickly discuss there who will take care of the broken tests, assign
     that person
   - You can use `git blame` to see who wrote the test
