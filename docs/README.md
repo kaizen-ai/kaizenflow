@@ -41,6 +41,9 @@ This contains the absolute minimal amount of info to start developing
 - [Documentation about guidelines](Documentation_about_guidelines.md)
   - How to write guidelines, format documentation, convert Gdocs to markdown files and vice versa
 
+- [Imports and packages](Imports_and_packages.md)
+  - How to import code, use packages, and resolve circular dependencies
+
 ## Learn how to become efficient at developing
 
 This contains a set of resources that over time will make 10x more productive
