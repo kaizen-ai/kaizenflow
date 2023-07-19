@@ -24,8 +24,12 @@ import requests
 
 _LOG = logging.getLogger(__name__)
 
+"""
+Invite a collaborator to GitHub.
+"""
 
-def _check_collaborator(
+
+def _invite_collaborator(
     owner_username: str,
     repo_name: str,
     access_token: str,
@@ -47,7 +51,7 @@ def _check_collaborator(
     response = requests.get(collaborator_check_url, headers=headers, timeout=10)
     status_code = response.status_code
     if status_code == 204:
-        # Checks if that GH user is a collaborator or not.
+        # Get GH collaborator status.
         collaborator_permissions_url = "/".join(
             [collaborator_check_url, "permission"]
         )
@@ -56,7 +60,7 @@ def _check_collaborator(
         )
         status_code = response.status_code
         if status_code == 200:
-            # Tells what type of permission level is provided to that GH user
+            # Get GH collaborator permission level.
             current_permission_level = response.json()["permission"]
             _LOG.debug(
                 "%s is already a collaborator with %s permission level.",
@@ -70,7 +74,7 @@ def _check_collaborator(
                 status_code,
             )
     elif status_code == 404:
-        # Check if an invitation is pending for the collaborator.
+        # Get invitation status.
         invitation_check_url = os.path.join(
             "https://api.github.com/repos",
             owner_username,
@@ -80,13 +84,12 @@ def _check_collaborator(
         response = requests.get(invitation_check_url, headers=headers, timeout=10)
         status_code = response.status_code
         if status_code == 200:
-            # If collaborator is already a collaborator, get their permission level.
+            # Check if an invitation was sent to a user that is already a GH collaborator.
             invitations = response.json()
             for invitation in invitations:
                 invitee_login = invitation["invitee"]["login"]
                 invitee_permission = invitation["permissions"]
                 if invitee_login == github_username:
-                    # Checks if the invitation was sent and was accepted or not.
                     _LOG.debug(
                         "%s's invitation is pending to accept with %s permission level.",
                         github_username,
@@ -94,8 +97,7 @@ def _check_collaborator(
                     )
                     break
             else:
-                # If collaborator is not a collaborator and there are no pending invitations,
-                # send an invitation.
+                # Send an invitation to a user that is not a GH collaborator.
                 add_collaborator_url = add_collaborator_endpoint.format(
                     owner_username=owner_username,
                     repo_name=repo_name,
@@ -107,7 +109,6 @@ def _check_collaborator(
                 )
                 status_code = response.status_code
                 if status_code == 201:
-                    # This sends new invitation to GH user not a collaborator.
                     _LOG.debug(
                         "New invitation sent to %s with permission level.",
                         github_username,
@@ -169,7 +170,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     repo_name = args.repo_name
     access_token = args.access_token
     github_username = args.github_username
-    _check_collaborator(
+    _invite_collaborator(
         owner_username,
         repo_name,
         access_token,
