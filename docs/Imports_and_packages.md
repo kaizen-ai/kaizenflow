@@ -1,17 +1,16 @@
 # Imports and packages
 
-
-<!--ts-->
+<!-- toc -->
 
 - [Goals of packages](#goals-of-packages)
-  - [Circular dependency (aka import cycle, import loop)](#circular-dependency-aka-import-cycle-import-loop)
-  - [Rules for imports](#rules-for-imports)
-  - [How to import code from unit tests](#how-to-import-code-from-unit-tests)
-    - [Common unit test code](#common-unit-test-code)
+  * [Circular dependency (aka import cycle, import loop)](#circular-dependency-aka-import-cycle-import-loop)
+  * [Rules for imports](#rules-for-imports)
+  * [How to import code from unit tests](#how-to-import-code-from-unit-tests)
+    + [Common unit test code](#common-unit-test-code)
 - [Package/lib hierarchy and cycle prevention](#packagelib-hierarchy-and-cycle-prevention)
 - [Anatomy of a package](#anatomy-of-a-package)
 
-<!--te-->
+<!-- tocstop -->
 
 - TODO(gp): Consolidate here any other rule from other gdoc
 
@@ -56,6 +55,7 @@
     - E.g., `im_v2/common/data/client/data_frame_im_clients.py`
 
       - Good
+
         ```python
         import im_v2.common.data.client.base_im_clients as imvcdcbimcl
         ```
@@ -82,10 +82,12 @@
         want to pay the overhead only if we get enough benefit from this
   - We specify a short import in the `__init__.py` file for a package manually
     because the linter cannot do it automatically yet
+
     - We use the first letters to build a short import and try to keep it less
       than 8 chars long, e.g., `im_v2.talos.data.client` -> `itdcl`
     - We insert an import docstring in the `__init__.py` file manually and then
       we use the specified short import everywhere in the codebase. E.g.,
+
       ```python
       Import as:
 
@@ -113,9 +115,10 @@
        … mdabmada.AbstractMarketData …
        ```
      - To justify, one can interpret that unit tests are tied to specific files,
-       so they should be kept in sync with the low-level code and not with the public
-       interface. In fact, we already allow unit tests to call private functions,
-       acknowledging that unit tests are not regular clients
+       so they should be kept in sync with the low-level code and not with the
+       public interface. In fact, we already allow unit tests to call private
+       functions, acknowledging that unit tests are not regular clients
+
 - Given that both explanations are valid, we allow both styles
 
 ### Common unit test code
@@ -130,7 +133,7 @@
 
 # Package/lib hierarchy and cycle prevention
 
-- Static import cycles can be detected by the invoke `lint_detect_cycles`.
+- Static import cycles can be detected by the invoke `lint_detect_cycles`
 - To prevent import cycles, we want to enforce that certain packages don't
   depend on other packages
   - E.g., `helpers` should not depend on any other package, besides external
@@ -144,13 +147,12 @@
   respected:
   1. `hdbg` (should not depend on any other helper)
   2. `hintrospection`, `hprint` (should depend only on hdbg for assertion)
-  3. `henv`, `hsystem`, `hio`, `hversio` (this is the base layer to access env vars and
-     execute commands)
+  3. `henv`, `hsystem`, `hio`, `hversio` (this is the base layer to access env
+     vars and execute commands)
   4. `hgit` (Git requires accessing env vars and system calls)
-- A library can only import libs that are "below" it or on the same level. E.g.,
-  `henv` can import `hdbg`, `hprint`, and `hio`, but it cannot import `hgit`.
-  NB: while importing a lib on the same level, make sure you are not creating an
-  import cycle
+- A library can only import libs that are "below" it or on the same level
+    - E.g., `henv` can import `hdbg`, `hprint`, and `hio`, but it cannot import `hgit`
+    - While importing a lib on the same level, make sure you are not creating an import cycle
 - In addition, keep in mind the following rules to prevent import cycles:
   - Any import inside a function is just a temporary hack waiting to create
     problems
