@@ -12,7 +12,8 @@ SCOPES = ["https://www.googleapis.com/auth/drive"]
 
 
 # #############################################################################
-def _create_empty_google_file(file_type:str, title: str, user: str) -> None:
+# TODO(Yiyun): Consider if add function of getting folder id from shared dir name. (Folder name and file name are not unique.)
+def _create_empty_google_file(file_type:str, title: str, user: str, folder_id: str) -> None:
     """
     Create an empty google file and share it to a user
     :return: None
@@ -46,6 +47,7 @@ def _create_empty_google_file(file_type:str, title: str, user: str) -> None:
         # Create a new document with a determined name. The contents of the document can be set using additional API calls.
         spreadsheet_id = spreadsheet.get('spreadsheetId')
         print('The file id of the new google sheet is: {}'.format(spreadsheet_id))
+        # 
         service = build('drive', 'v3', credentials=creds)
         # Create the permission.
         parameters = {
@@ -55,9 +57,13 @@ def _create_empty_google_file(file_type:str, title: str, user: str) -> None:
         }
         new_permission = service.permissions().create(fileId=spreadsheet_id, body=parameters).execute()
         print('The new permission id of the document is: {}'.format(new_permission.get('id')))
+        # Move spreadsheet to google drive shared dir.
+        res = service.files().update(fileId=spreadsheet_id, body={}, addParents=folder_id, removeParents='root', supportsAllDrives=True).execute()
+        # TODO(Yiyun): Get shared dir name.
+        print('The new google sheet is moved to shared dir: {}'.format(res))
     except HttpError as err:
         print(err)
 
 # #############################################################################
 if __name__ == '__main__':
-    _create_empty_google_file('sheets', 'new_gsheet', 'im.yiyun.lei@gmail.com')
+    _create_empty_google_file('sheets', 'new_gsheet', 'im.yiyun.lei@gmail.com', '1XWNGDnJrVICHAe-6V2cnoSklZpk0APc_')
