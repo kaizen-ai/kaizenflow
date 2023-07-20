@@ -849,7 +849,8 @@ def _dassert_is_image_name_valid(image: str) -> None:
             # E.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
             rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}",
             # :local-saggese
-            rf":{_IMAGE_STAGE_RE}",
+            # rf":{_IMAGE_STAGE_RE}",
+            rf"(:{_IMAGE_STAGE_RE})?",
             # -1.0.0
             rf"(-{_IMAGE_VERSION_RE})?$",
         ]

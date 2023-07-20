@@ -307,3 +307,52 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
             jupyter_server_test
         """
         self.check(act, exp)
+
+
+# #############################################################################
+
+
+class TestImageNameValidation(hunitest.TestCase):
+    def test1(self):
+        valid_images = [
+            "12345.dkr.ecr.us-east-1.amazonaws.com/amp:dev",
+            "abcde.dkr.ecr.us-east-1.amazonaws.com/amp:local-saggese-1.0.0",
+            "12345.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0",
+            "sorrentum/cmamp",
+        ]
+        for image in valid_images:
+            with self.subTest(image=image):
+                self.assertIsNone(hlitadoc._dassert_is_image_name_valid(image))
+
+    def test2(self):
+        invalid_images = [
+            "invalid-image-name",  # Missing required parts
+            "12345.dkr.ecr.us-east-1.amazonaws.com/amp:",  # Missing stage/version
+            "12345.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-invalid",  # Invalid version
+        ]
+        for image in invalid_images:
+            with self.subTest(image=image):
+                with self.assertRaises(AssertionError):
+                    hlitadoc._dassert_is_image_name_valid(image)
+
+    def test3(self):
+        valid_base_images = [
+            "12345.dkr.ecr.us-east-1.amazonaws.com/amp",
+            "sorrentum/cmamp",
+        ]
+        for base_image in valid_base_images:
+            with self.subTest(base_image=base_image):
+                self.assertIsNone(
+                    hlitadoc._dassert_is_base_image_name_valid(base_image)
+                )
+
+    def test4(self):
+        invalid_base_images = [
+            "invalid-base-image",  # Missing required parts
+            "abcde.dkr.ecr.us-east-1.amazonaws.com/amp:",  # Extra character at the end
+            "sorrentum/cmamp/invalid",  # Extra part in the name
+        ]
+        for base_image in invalid_base_images:
+            with self.subTest(base_image=base_image):
+                with self.assertRaises(AssertionError):
+                    hlitadoc._dassert_is_base_image_name_valid(base_image)
