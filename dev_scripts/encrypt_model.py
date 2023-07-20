@@ -27,7 +27,6 @@ import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): Add a unit test for encrypting a single model and for an entire dir.
 # We want to use hsystem.system() using
 # /Users/saggese/src/sorrentum1/dev_scripts/encrypt_model.py --model_dir dataflow_lemonade/pipelines/C5 -v DEBUG --test
 
