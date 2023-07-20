@@ -67,7 +67,6 @@ def _encrypt_model(
             """
                 FROM python:3.8
                 RUN pip install pyarmor
-                
             """
         )
     if docker_build_target is not None:
@@ -84,9 +83,9 @@ def _encrypt_model(
     mount = f"type=bind,source={work_dir},target={docker_target_dir}"
     encryption_flow = f"pyarmor-7 obfuscate --restrict=0 --recursive {model_dir} --output {encrypted_model_dir}"
     if docker_build_target is not None:
-        docker_cmd = f"docker run --rm -it ---user {user_id}:{group_id} -platform {docker_build_target} --workdir {docker_target_dir} --mount {mount} {docker_image_tag} {encryption_flow}"
+        docker_cmd = f"docker run --rm -it --platform {docker_build_target} --workdir {docker_target_dir} --mount {mount} {docker_image_tag} {encryption_flow}"
     else:
-        docker_cmd = f"docker run --rm -it --user {user_id}:{group_id} --workdir {docker_target_dir} --mount {mount} encryption_flow {encryption_flow}"
+        docker_cmd = f"docker run --rm -it --workdir {docker_target_dir} --mount {mount} encryption_flow {encryption_flow}"
     _LOG.info("Running Docker container.")
     (_, output) = hsystem.system_to_string(docker_cmd)
     _LOG.debug(output)
@@ -244,16 +243,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Tweak `__init__.py` file.
     _tweak_init(encrypted_model_dir)
     if args.test:
-        
         if args.is_dir:
-            _LOG.info("Test original models.")
+            _LOG.info("Testing original models.")
             _test_models_in_dir(model_dir, model_dag_builder)
-            _LOG.info("Test encrypted models.")
+            _LOG.info("Testing encrypted models.")
             _test_models_in_dir(encrypted_model_dir, model_dag_builder)
         else:
-            _LOG.info("Test original model.")
+            _LOG.info("Testing original model.")
             _test_model(model_dir, model_dag_builder)
-            _LOG.info("Test encrypted model.")
+            _LOG.info("Testing encrypted model.")
             _test_model(encrypted_model_dir, model_dag_builder)
    
 
