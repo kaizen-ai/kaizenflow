@@ -25,8 +25,8 @@ Tools_Profiling
 You can use the time-tested Linux `time` command to profile both time and memory
 
 ```
-
 > /usr/bin/time -v COMMAND 2>&1 | tee time.log
+
 Command being timed: "...COMMAND..."
 User time (seconds): 187.70
 System time (seconds): 16.27
@@ -50,27 +50,22 @@ Socket messages received: 0
 Signals delivered: 0
 Page size (bytes): 4096
 Exit status: 0
-
 ```
 
 Information about the spent time are:
 
 ```
-
 User time (seconds): 187.70
 System time (seconds): 16.27
 Percent of CPU this job got: 96%
 Elapsed (wall clock) time (h:mm:ss or m:ss): 3:31.38
-
 ```
 
 The relevant part is the following line representing the amount of resident
 memory (which is ~13GB)
 
 ```
-
 Maximum resident set size (kbytes): 13083892
-
 ```
 
 # Profiling Python code from command line
@@ -82,18 +77,15 @@ Maximum resident set size (kbytes): 13083892
 From devops/docker_build/install_cprofile.sh
 
 ```
-
 > sudo apt-get install -y python3-dev
 > sudo apt install -y libgraphviz-dev
 > sudo apt-get install -y graphviz
 > pip install gprof2dot
-
 ```
 
 ### How to use with workflow
 
 There is a script that runs the flow
-
 `amp/dev_scripts/run_profiling.sh`
 
 ### How to use manually
@@ -102,36 +94,30 @@ You need to run the code first with profiling enabled to collect the profiling
 data in a binary file (often called `prof.bin`).
 
 ```
-
 # Profile a python script.
 > python -m cProfile -o prof.bin ${CMD}
+
 # Profile a unit test.
 > python -m cProfile -o profile
 edgar/forms8/test/test_edgar_utils.py
 > python -m cProfile -o profile -m pytest
 edgar/forms8/test/test_edgar_utils.py::TestExtractTablesFromForms::test_table_extraction_example_2
-
 ```
 
 Plotting the results
 
 ```
-
 > gprof2dot -f pstats profile | dot -Tpng -o output.png
 > gprof2dot -n 10 -f pstats profile | dot -Tpng -o output.png
 > gprof2dot -n 10 -f pstats profile -l
 "*extract_tables_from_forms*" | dot -Tpng -o output.png
-
 ```
 
 gprof2dot has lots of interesting options to tweak the output, e.g.,
 
 ```
-
 > gprof2dot -h
-
 ...
-
 -n PERCENTAGE, --node-thres=PERCENTAGE
 eliminate nodes below this threshold [default: 0.5]
 -e PERCENTAGE, --edge-thres=PERCENTAGE
@@ -154,9 +140,7 @@ variety to lower percentages. Values > 1.0 give less
 variety to lower percentages
 -p FILTER_PATHS, --path=FILTER_PATHS
 Filter all modules not in a specified path
-
 ...
-
 ```
 
 ### process_prof.py
@@ -184,7 +168,6 @@ Install with: `pip install line_profiler`
 Instrument the code to profile:
 
 ```
-
 import line_profiler
 profiler = line_profiler.LineProfiler()
 
@@ -200,17 +183,14 @@ atexit.register(exit_handler)
 def function():
 
 ...
-
 ```
 
 Through command line:
 
 ```
-
 > kernprof -o prof.lprof -l $cmd
 ...
 Wrote profile results to run_process_forecasts.py.lprof
-
 ```
 
 ## pytest-profiling
@@ -223,11 +203,9 @@ Install with `pip install pytest-profiling`
 ### How to use
 
 ```
-
 > pytest --profile
 ./amp/core/dataflow_model/test/test_pnl_simulator.py::TestPnlSimulator2::test_perf1
 -s
-
 ```
 
 # Profiling in a Jupyter notebook
@@ -240,10 +218,8 @@ You can find all of the examples below in action in the
 In a notebook, execute cell with %time cell-magic:
 
 ```
-
 %%time
 func()
-
 ```
 
 ## By function
@@ -254,13 +230,11 @@ The documentation does not state this, but
 `%prun magic uses cProfile under the hood, so we can use it in the notebook instead: `
 
 ```
-
 # We can suppress output to the notebook by specifying "-q".
 %prun -D tmp.pstats func()
 
 !gprof2dot -f pstats tmp.pstats | dot -Tpng -o output.png
 dspl.Image(filename="output.png")
-
 ```
 
 This will output something like this:
@@ -273,10 +247,8 @@ graph in detail.
 gprof2dot supports thresholds that make output more readable:
 
 ```
-
 !gprof2dot -n 5 -e 5 -f pstats tmp.pstats | dot -Tpng -o output.png
 dspl.Image(filename="output.png")
-
 ```
 
 This will filter the output into something like this:
@@ -291,16 +263,12 @@ class="underline">memory-profiler</span>](https://github.com/pythonprofilers/mem
 Peak memory
 
 ```
-
 %%memit
 func()
-
 ```
 
 Memory by line
 
 ```
-
 %mprun -f func func()
-
 ```
