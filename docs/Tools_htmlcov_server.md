@@ -1,13 +1,19 @@
-# Proxy address to the s3 bucket
+# Tools - htmlcov server
+
+
 
 <!-- toc -->
 
+- [HTMLcov sever](#HTMLcov-sever)
+  * [Proxy address to the s3 bucket](#Proxy-address-to-the-s3-bucket)
 - [Usage](#usage)
 - [Admin Configuration Info](#admin-configuration-info)
   * [S3 bucket](#s3-bucket)
   * [NGINX server](#nginx-server)
 
 <!-- tocstop -->
+
+## Proxy address to the s3 bucket
 
 [http://172.30.2.44](http://172.30.2.44) (available only behind VPN)
 
@@ -27,10 +33,10 @@
 
 ### S3 bucket
 
-- Need to set bucket policy to only allow getObject operations from one IP:
+- Need to set bucket policy to only allow `getObject` operations from one IP:
   (which is a NAT GATEWAY of our VPC)
   - IMPORTANT STEP OTHERWISE THE SITE IS VISIBLE PUBLICLY
-  -
+  
   ```json
   {
     "Version": "2012-10-17",
@@ -60,7 +66,7 @@
   the server in case access via ssh is needed (user: ubuntu)
 - Simple t3.nano instance (run ansible hardening playbook for additional
   security)
-- Nginx installed with simple config added into /etc/nginx/sites-enabled/default
+- Nginx installed with simple config added into `/etc/nginx/sites-enabled/default`
   inside default server configuration:
 
   ```bash
