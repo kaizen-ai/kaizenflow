@@ -74,7 +74,7 @@ Maximum resident set size (kbytes): 13083892
 
 ### Install in a Docker container
 
-From devops/docker_build/install_cprofile.sh
+From `devops/docker_build/install_cprofile.sh`
 
 ```
 > sudo apt-get install -y python3-dev
@@ -215,7 +215,7 @@ You can find all of the examples below in action in the
 
 ## Time profilers
 
-In a notebook, execute cell with %time cell-magic:
+In a notebook, execute cell with `%time` cell-magic:
 
 ```
 %%time
