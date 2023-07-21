@@ -34,8 +34,6 @@ import pandas as pd
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
-import core.plotting.misc_plotting as cplmiplo
-import core.plotting.test.test_plots as cptetepl
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -65,18 +63,22 @@ cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
 # %% [markdown]
 # ## `plot_timeseries_distribution()`rng = np.random.default_rng(seed=0)
 # %%
-rng = np.random.default_rng(seed=0)
 # Set inputs for hour interval.
-samples = rng.normal(size=100)
+rng = np.random.default_rng(seed=0)
+samples = rng.normal(size=1000)
 index = pd.date_range(start="2023-01-01", periods=len(samples), freq="H")
 srs = pd.Series(samples, index=index)
-type = ["hour"]
-cplmiplo.plot_timeseries_distribution(srs,type)
+datetime_types = ["hour"]
+cplmiplo.plot_timeseries_distribution(srs,datetime_types)
+
+# %%
 # Set input for month interval.
-type1 = ["month"]
-index1 = pd.date_range(start="2023-01-01", periods=len(samples), freq="M")
+rng = np.random.default_rng(seed=0)
+samples = rng.normal(size=1000)
+index = pd.date_range(start="2023-01-01", periods=len(samples), freq="H")
 srs1 = pd.Series(samples, index=index)
-cplmiplo.plot_timeseries_distribution(srs1,type1)
+datetime_types1 = ["hour", "month"]
+cplmiplo.plot_timeseries_distribution(srs1,datetime_types1)
 
 # %% [markdown]
 # ## `plot_time_series_by_period()`

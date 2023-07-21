@@ -66,9 +66,8 @@ class Test_plot_timeseries_distribution(unittest.TestCase):
         Get plot with hour datetype.
         """
         rng = np.random.default_rng(seed=0)
-        samples = rng.normal(size=100)
-        frequency = "H"
-        index = pd.date_range(start="2023-01-01", periods=len(samples), freq=frequency)
+        samples = rng.normal(size=1000)
+        index = pd.date_range(start="2023-01-01", periods=len(samples), freq="H")
         srs = pd.Series(samples, index=index)
         return srs
     
@@ -78,18 +77,17 @@ class Test_plot_timeseries_distribution(unittest.TestCase):
         cplmiplo.plot_timeseries_distribution(srs, datetime_types)
     
     @staticmethod
-    def get_plot_timeseries_distribution3() -> pd.Series:
+    def get_plot_timeseries_distribution2() -> pd.Series:
         """
-        Get plot with month datetype.
+        Get plot with hour and month datetype.
         """
         rng = np.random.default_rng(seed=0)
-        samples = rng.normal(size=100)
-        frequency = "M"
-        index = pd.date_range(start="2023-01-01", periods=len(samples), freq=frequency)
+        samples = rng.normal(size=1000)
+        index = pd.date_range(start="2023-01-01", periods=len(samples), freq="M")
         srs = pd.Series(samples, index=index)
         return srs
     
     def test_plot_timeseries_distribution2(self) -> None:
-        srs = self.get_plot_timeseries_distribution3()
+        srs = self.get_plot_timeseries_distribution2()
         datetime_types = ["hour", "month"]
         cplmiplo.plot_timeseries_distribution(srs, datetime_types)
