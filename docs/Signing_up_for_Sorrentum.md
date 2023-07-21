@@ -1,7 +1,7 @@
 # Signing up to the project
 
 - **Collaborator**: Person contributing to the project
-- **Admin**: Person handling the new collaborator
+- **Admin**: Anyone from the team or the person handling the new collaborator
 
 - **(Collaborator)**: Look around the repo and make sure that you are really
   interested in what we are doing, and you have time to contribute
