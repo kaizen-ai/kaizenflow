@@ -1,6 +1,4 @@
-# Tools - htmlcov server
-
-
+# HTMLcov server
 
 <!-- toc -->
 
@@ -15,7 +13,7 @@
 
 ## Proxy address to the s3 bucket
 
-[http://172.30.2.44](http://172.30.2.44) (available only behind VPN)
+- [http://172.30.2.44](http://172.30.2.44) (available only behind VPN)
 
 ## Usage
 
@@ -62,7 +60,7 @@
 ### NGINX server
 
 - [Juraj Smeriga](mailto:juraj.smeriga@simkoit.com) and
-  [saggese@gmail.com](mailto:saggese@gmail.com) have their public key stored on
+  [GP](mailto:saggese@gmail.com) have their public key stored on
   the server in case access via ssh is needed (user: ubuntu)
 - Simple t3.nano instance (run ansible hardening playbook for additional
   security)
