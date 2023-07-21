@@ -10,20 +10,20 @@
   * [GitHub pull requests](#github-pull-requests)
     + [How to filter](#how-to-filter)
   * [GitHub issue activity](#github-issue-activity)
-    + [How to filter](#how-to-filter)
+    + [How to filter](#how-to-filter-1)
   * [Commits](#commits)
-    + [How to filter](#how-to-filter)
-  * [Gdocs]
-    + [How to filter](#how-to-filter)
+    + [How to filter](#how-to-filter-2)
+  * [Gdocs](#gdocs)
+    + [How to filter](#how-to-filter-3)
   * [TODO emails](#todo-emails)
-    + [How to filter](#how-to-filter)
+    + [How to filter](#how-to-filter-4)
 
 <!-- tocstop -->
 
 # Mailing lists
 
-- all@ is the mailing list with everybody at the company
-- We send notifications for commits and other services (e.g., Jenkins) to git@
+- `@all` is the mailing list with everybody at the company
+- We send notifications for commits and other services (e.g., Jenkins) to `@git`
 - A GitHub user infra is used to check out code for services (e.g., Jenkins, ReviewBoard)
 
 # Organizing email flow
@@ -68,8 +68,8 @@
     - Folders are on the server side, so my client can simply sync
   - Cons
     - The Gmail interface for filtering emails is horrible
-    - The web interface is [https://mail.google.com/mail/u/0/#settings/filters](https://mail.google.com/mail/u/0/#settings/filters)
-    - Note that Gmail distinguish different email accounts using different indices, e.g.,[https://mail.google.com/mail/u/<INDEX>/#inbox](https://mail.google.com/mail/u/<INDEX>/#inbox)
+- The web interface is [https://mail.google.com/mail/u/0/#settings/filters](https://mail.google.com/mail/u/0/#settings/filters)
+- Note that Gmail distinguish different email accounts using different indices, e.g., [https://mail.google.com/mail/u/<INDEX>/#inbox](https://mail.google.com/mail/u/<INDEX>/#inbox)
 
 ## Notifications from GitHub
 
@@ -77,71 +77,65 @@
 
 ## GitHub pull requests
 
-- These emails look like:
-  ```
+- These emails look like:  
+        
+        Paul <notifications@github.com>
+        Fri, Oct 11, 8:49 PM (22 hours ago)
+        to  
+           alphamatic/amp (amp@noreply.github.com)  
+           Subscribed (subscribed@noreply.github.com)
 
-  Paul <notifications@github.com>
-  Fri, Oct 11, 8:49 PM (22 hours ago)
-  to
-    alphamatic/amp (amp@noreply.github.com)
-    Subscribed (subscribed@noreply.github.com)
+        You can view, comment on, or merge this pull request online at:   
+         https://github.com/alphamatic/amp/pull/31
 
-  You can view, comment on, or merge this pull request online at:
-   https://github.com/alphamatic/amp/pull/31
-
-  Commit Summary
-  PTask403: Add docstrings and type annotations
-  Make comments self-consistent
-  Add more docstrings, annotations
-  ```
+        Commit Summary
+        PTask403: Add docstrings and type annotations
+        Make comments self-consistent
+        Add more docstrings, annotations
+        
 
 ### How to filter
 
-- These emails have review_requested@noreply.github.com in "to" field
+- These emails have `review_requested@noreply.github.com` in "to" field
 - These emails have the words: "You can view, comment on, or merge this pull request online at:" in the body of the email
 
 ## GitHub issue activity
 
-- These emails look like:
-  ```
+- These emails look like:    
 
-  GP Saggese <notifications@github.com>
-  to
-    .../... (...@noreply.github.com),
-    me (...@gmail.com)
-    Your (your_activity@noreply.github.com)
- 
-  A TOC (table of contents) for our md documentation might help navigating it,
-  since it's not easy to have a view of the high level structure.
+        GP Saggese <notifications@github.com>    
+        to    
+          .../... (...@noreply.github.com),    
+          me (...@gmail.com)    
+          Your (your_activity@noreply.github.com)    
 
-  A solution that seems pretty simple is here
+        A TOC (table of contents) for our md documentation might help navigating it,    
+        since it's not easy to have a view of the high level structure.    
 
-  [https://github.com/ekalinin/github-markdown-toc](https://github.com/ekalinin/github-markdown-toc)
-
-  You are receiving this because you are subscribed to this thread.
-  Reply to this email directly, view it on GitHub, or unsubscribe.
-  ```
+        A solution that seems pretty simple is here    
+        https://github.com/ekalinin/github-markdown-toc    
+        
+        You are receiving this because you are subscribed to this thread.    
+        Reply to this email directly, view it on GitHub, or unsubscribe.    
 
 - Another email looks like:
-  ```
+  
+        To: GP Saggese <notifications@github.com>
+        Suject: [.../...] BUG: jupytext sync doesn't work anymore (#572)
+        To: .../... <...@noreply.github.com>
+        Cc:  
+          Giacinto Paolo Saggese <abc@xyz.com>,  
+          Your activity <your_activity@noreply.github.com>
 
-  To: GP Saggese <notifications@github.com>
-  Suject: \[.../...] BUG: jupytext sync doesn't work anymore (#572)
-  To: .../... <...@noreply.github.com>
-  Cc:
-    Giacinto Paolo Saggese <abc@xyz.com>,
-    Your activity <your_activity@noreply.github.com>
+        > jupytext --sync --to py:percent
+        research/PTask218_Large_price_movement_analysis_for_security.py
+        [jupytext] Reading 
+        research/PTask218_Large_price_movement_analysis_for_security.py
+        [jupytext] Warning:
+        'research/PTask218_Large_price_movement_analysis_for_security.py' is not a paired notebook
 
-  > jupytext --sync --to py:percent
-  research/PTask218_Large_price_movement_analysis_for_security.py
-  [jupytext] Reading 
-  research/PTask218_Large_price_movement_analysis_for_security.py
-  [jupytext] Warning:
-  'research/PTask218_Large_price_movement_analysis_for_security.py' is not a paired notebook
-
-  You are receiving this because you are subscribed to this thread.
-  Reply to this email directly, view it on GitHub, or unsubscribe.
-  ```
+        You are receiving this because you are subscribed to this thread.
+        Reply to this email directly, view it on GitHub, or unsubscribe.   
 
 ### How to filter
 
@@ -155,30 +149,28 @@
 ## Commits
 
 - These emails look like:
-  ```
-       
-  Sergey Malanin <noreply@github.com>
-  to git
 
-    Branch: refs/heads/master
-    Home:   [https://github.com/.../...](https://github.com/.../...)
-    Commit: b0431274fdf619cdb831e1274cd01841fe810b62
+        Sergey Malanin <noreply@github.com>
+        to git   
 
-  [https://github.com/.../.../commit/b0431274fdf619cdb831e1274cd01841fe810b62](https://github.com/.../.../commit/b0431274fdf619cdb831e1274cd01841fe810b62)
-    Date:   2019-10-12 (Sat, 12 Oct 2019)
+          Branch: refs/heads/master   
+          Home: https://github.com/.../...    
+          Commit: b0431274fdf619cdb831e1274cd01841fe810b62   
 
-    Changed paths:
-     M Data_encyclopedia.ipynb
-     M Data_encyclopedia.py
-
-    Log Message:
-    -----------
-    PTask302 added reader in DE
-  ```
+        https://github.com/.../.../commit/b0431274fdf619cdb831e1274cd01841fe810b62   
+         Date: 2019-10-12 (Sat, 12 Oct 2019)    
+ 
+         Changed paths:    
+          M Data_encyclopedia.ipynb    
+          M Data_encyclopedia.py    
+      
+         Log Message:    
+         -----------    
+         PTask302 added reader in DE           
 
 ### How to filter
 
-- These emails come from notifications@github.com
+- These emails come from `notifications@github.com`
 - These emails can be recognized by the fact that have the words "Changed paths:" in the email body
 
 ## Gdocs
@@ -192,29 +184,3 @@
 ### How to filter
 
 - These emails have TODO in the subject
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
