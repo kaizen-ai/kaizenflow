@@ -1,22 +1,23 @@
 # Signing up to the project
 
-- **Collaborator**: Person contributing to the project
-- **Admin**: Anyone from the team or the person handling the new collaborator
+## Notations:
 
-- **(Collaborator)**: Look around the repo and make sure that you are really
+- **Contributor**: Person contributing to the project
+- **Admin**: Anyone from the team or the person handling the new contributor
+
+## Process
+
+- **(Contributor)**: Look around the repo and make sure that you are really
   interested in what we are doing, and you have time to contribute
 
-  - Ponder on the IMPORTANT note [here](/README.md#Important)
+  - Ponder on the **IMPORTANT** note [here](/README.md#commitment-to-Contribute)
   - Please fork, star, watch the Sorrentum repo so that GitHub promotes our repo
     (we gotta work the system)
 
-- **(Collaborator)**: Fill out the initial
-  [Contact Info](https://docs.google.com/forms/d/e/1FAIpQLSf6IogJch1YUMSc_GfRcMIltGEEZ1xTotbRVkwZzWT7eBz_jA/viewform?usp=sf_link).
+- **(Contributor)**: Fill out the
+  [Contributor Info form](https://docs.google.com/forms/d/e/1FAIpQLSf6IogJch1YUMSc_GfRcMIltGEEZ1xTotbRVkwZzWT7eBz_jA/viewform?usp=sf_link).
 
-  - It's meant to just get basic contact info about you
-  - [Technical background](https://docs.google.com/forms/d/e/1FAIpQLScRDe4gdPi6hYElea6g5Eg_xGfVorn667lEaDIhA4kuWCCC_g/viewform?usp=sf_link)
-    so we know a little about you and your (initial) skills
-
+  - It's meant to just get basic contact info and technical skills about you
   - Don’t worry: by working with us, you will quickly become a coding machine
 
 - **(Admin)**: Receive an email that somebody is interested
@@ -25,29 +26,27 @@
     [Contributor List](https://docs.google.com/spreadsheets/d/1eRZJaj5-1g6W7w_Ay4UhJEdtAvrTTM1V94cKj6_Vwoc/edit#gid=1253964093)
     with the contact info
     - Copy the information from
-      [Contact Info](https://docs.google.com/spreadsheets/d/13Mxj5ZIydMQHSmJUDCpURB5w-50RPXC0AjgKWYcMZnw/edit#gid=2038824432)
+      [Contributor Info](https://docs.google.com/spreadsheets/d/13Mxj5ZIydMQHSmJUDCpURB5w-50RPXC0AjgKWYcMZnw/edit#gid=2038824432)
       response sheet to the
       [Contributor List](https://docs.google.com/spreadsheets/d/1eRZJaj5-1g6W7w_Ay4UhJEdtAvrTTM1V94cKj6_Vwoc/edit#gid=1253964093)
-      as it is a master sheet for all the collaborators
-  - Create a task on Asana with the name of the collaborator. Add the
-    collaborator's information (link to the responses and some comment on the
+      as it is a master sheet for all the contributors
+  - Create a task on Asana with the name of the contributor. Add the
+    contributor's information (link to the responses and some comment on the
     background) regarding the resume, start date and any other updates related
-    to the collaborator particularly
-  - Ping GP on the asana task for that collaborator for invitation to the repo
-    [GitHub repo](https://github.com/sorrentum/sorrentum/settings/access?guidance_task=)
+    to the contributor particularly
+  - Ping GP on the asana task for that contributor for invitation to the repo
+    [GitHub repo](https://github.com/sorrentum/sorrentum)
   - Add Contributor email as Commenter to the
     [Sorrentum - Contributors gdrive](https://drive.google.com/drive/u/0/folders/1LXwKpmaFWJI-887IoA50sVC8-dw_1L8I)
-  - Add Contributor email as Editor to the
-    [Sorrentum - Projects folder](https://drive.google.com/drive/u/0/folders/1eKj6u_cbQM0ZLZ4wRJ6xPM1oqIKwusUo)
 
-- **(Collaborator)**: Accept the invite from GitHub that we will send you
+- **(Contributor)**: Accept the invite from GitHub that we will send you
 
   - Again please don't forget to fork, star, watch the Sorrentum repo so that
     GitHub promotes our repo (we gotta work the system)
 
-- **(Collaborator)**: Accept the invite to join the Google Drive
+- **(Contributor)**: Accept the invite to join the Google Drive
 
-- **(Collaborator)**: Make sure the info on the
+- **(Contributor)**: Make sure the info on the
   [Contributor List](https://docs.google.com/spreadsheets/d/1eRZJaj5-1g6W7w_Ay4UhJEdtAvrTTM1V94cKj6_Vwoc/edit#gid=1253964093)
   are correct
 
@@ -55,9 +54,8 @@
   - If something is incorrect, please update the information in "Suggestion
     mode"
 
-- **(Collaborator)**: Go to the
-  [Research Office Hours](https://docs.google.com/document/d/1bR5Xe_pSOqa2wReySsHrHPVz9zatx-QWDzvfsADDW3I/edit)
-  to access the invite links for the intern group
+- **(Contributor)**: Subscribe to the
+  [Telegram channel](https://t.me/+vqpTYvfgJRc3NzQx)
 
 - Communication with the project teams happen through:
 
@@ -68,12 +66,12 @@
 
 - **(Admin)**: On-boarding process
 
-  - When the collaborator is ready to be on-boarded, file an issue like
-    "On-board \<FIRST NAME LAST NAME\> Aka <GITHUB_HANDLE>". The content of the
-    issue will be the following checklist. Admins need to keep track on the
-    progress being made by the collaborator.
+  - When the contributor is ready to be on-boarded, file an issue like "On-board
+    \<FIRST NAME LAST NAME\> Aka <GITHUB_HANDLE>". The content of the issue will
+    be the following checklist. Admins need to keep track on the progress being
+    made by the contributor.
     - [ ] Acknowledge the pledge to put time in the project
-          [here](/README.md#Important)
+          [here](https://github.com/sorrentum/sorrentum/blob/master/README.md#commitment-to-Contribute)
     - [ ] Read
           [How to organize your work](https://github.com/sorrentum/sorrentum/blob/master/docs/How_to_organize_your_work.md)
     - [ ] Read
@@ -97,8 +95,8 @@
           in one of the companies in the Sorrentum ecosystem reach out to GP at
           gp@sorrentum.org
 
-- **(Collaborator)**: On-boarding Tasks
+- **(Contributor)**: On-boarding Tasks
 
-  - The collaborator goes through the particular checklist from the issue
+  - The contributor goes through the particular checklist from the issue
     assigned to them one-by-one, marking each item as done when **it's actually
     done**.
