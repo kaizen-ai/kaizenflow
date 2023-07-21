@@ -30,6 +30,8 @@
   - Through the Sorrentum mailing list
 
 - On-boarding Tasks
-  - The contributor goes through the particular checklist from the issue
-    assigned to them one-by-one, marking each item as done when **it's actually
-    done**.
+  - Once the invitation is accepted, an issue by the title
+    `On-board \<YOUR FIRST NAME LAST NAME\> Aka <YOUR GITHUB_HANDLE>` will be
+    created. If it is not assigned, assign it to yourself and go through the
+    checklist from that issue one-by-one, marking each item as done when **it's
+    actually done**.
