@@ -14,6 +14,7 @@ class Test_plots(unittest.TestCase):
     """
     Run smoke tests for plotting functions.
     """
+
     @staticmethod
     def get_plot_histograms_and_lagged_scatterplot1() -> pd.Series:
         """
@@ -32,7 +33,9 @@ class Test_plots(unittest.TestCase):
         Generate a test time series with daily timestamps.
         """
         np.random.seed(35)
-        timestamps = pd.date_range(start="2023-07-01", end="2023-07-07", freq="4H")
+        timestamps = pd.date_range(
+            start="2023-07-01", end="2023-07-07", freq="4H"
+        )
         values = np.random.rand(len(timestamps))
         test_series = pd.Series(values, index=timestamps)
         return test_series
@@ -59,6 +62,7 @@ class Test_plots(unittest.TestCase):
         period = "time"
         cplmiplo.plot_time_series_by_period(test_series, period)
 
+
 class Test_plot_timeseries_distribution(unittest.TestCase):
     @staticmethod
     def get_plot_timeseries_distribution1() -> pd.Series:
@@ -70,12 +74,7 @@ class Test_plot_timeseries_distribution(unittest.TestCase):
         index = pd.date_range(start="2023-01-01", periods=len(samples), freq="H")
         srs = pd.Series(samples, index=index)
         return srs
-    
-    def test_plot_timeseries_distribution1(self) -> None:
-        srs = self.get_plot_timeseries_distribution1()
-        datetime_types = ["hour"]
-        cplmiplo.plot_timeseries_distribution(srs, datetime_types)
-    
+
     @staticmethod
     def get_plot_timeseries_distribution2() -> pd.Series:
         """
@@ -86,7 +85,12 @@ class Test_plot_timeseries_distribution(unittest.TestCase):
         index = pd.date_range(start="2023-01-01", periods=len(samples), freq="M")
         srs = pd.Series(samples, index=index)
         return srs
-    
+
+    def test_plot_timeseries_distribution1(self) -> None:
+        srs = self.get_plot_timeseries_distribution1()
+        datetime_types = ["hour"]
+        cplmiplo.plot_timeseries_distribution(srs, datetime_types)
+
     def test_plot_timeseries_distribution2(self) -> None:
         srs = self.get_plot_timeseries_distribution2()
         datetime_types = ["hour", "month"]

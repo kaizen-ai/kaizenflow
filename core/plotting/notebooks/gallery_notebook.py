@@ -34,10 +34,10 @@ import pandas as pd
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
-
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
+
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
 
@@ -58,7 +58,7 @@ hprint.config_notebook()
 srs = cptetepl.Test_plots.get_plot_histograms_and_lagged_scatterplot1()
 lag = 7
 # TODO(Dan): Remove after integration with `cmamp`. Changes from Cm #4722 are not in `sorrentum` yet.
-figsize = (20,20)
+figsize = (20, 20)
 cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
 # %% [markdown]
 # ## `plot_timeseries_distribution()`rng = np.random.default_rng(seed=0)
@@ -69,7 +69,7 @@ samples = rng.normal(size=1000)
 index = pd.date_range(start="2023-01-01", periods=len(samples), freq="H")
 srs = pd.Series(samples, index=index)
 datetime_types = ["hour"]
-cplmiplo.plot_timeseries_distribution(srs,datetime_types)
+cplmiplo.plot_timeseries_distribution(srs, datetime_types)
 
 # %%
 # Set input for month interval.
@@ -78,7 +78,7 @@ samples = rng.normal(size=1000)
 index = pd.date_range(start="2023-01-01", periods=len(samples), freq="H")
 srs1 = pd.Series(samples, index=index)
 datetime_types1 = ["hour", "month"]
-cplmiplo.plot_timeseries_distribution(srs1,datetime_types1)
+cplmiplo.plot_timeseries_distribution(srs1, datetime_types1)
 
 # %% [markdown]
 # ## `plot_time_series_by_period()`
