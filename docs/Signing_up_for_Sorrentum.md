@@ -2,7 +2,6 @@
 
 - Look around the repo and make sure that you are really interested in what we
   are doing, and you have time to contribute
-
   - Ponder on the **IMPORTANT** note about committing to contribute to the
     project [here](/README.md#commitment-to-Contribute)
   - Please fork, star, watch the Sorrentum repo so that GitHub promotes our repo
@@ -10,19 +9,16 @@
 
 - Fill out the
   [Contributor Info form](https://docs.google.com/forms/d/e/1FAIpQLSf6IogJch1YUMSc_GfRcMIltGEEZ1xTotbRVkwZzWT7eBz_jA/viewform?usp=sf_link).
-
   - It's meant to just get basic contact info and technical skills about you
   - Don’t worry: by working with us, you will quickly become a coding machine
 
 - Communication with the project teams happens through:
-
   - GitHub on the [repo](https://github.com/sorrentum/sorrentum) like in any
     open-source development
   - Telegram IM channel for higher bandwidth discussion
   - Through the Sorrentum mailing list
 
 - Accept the invite from GitHub that we will send you
-
   - Again please don't forget to fork, star, watch the Sorrentum repo so that
     GitHub promotes our repo
 
