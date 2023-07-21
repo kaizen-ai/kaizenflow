@@ -32,7 +32,7 @@ Besides the immediate financial benefit, this is a unique opportunity for you to
 Most importantly, this is a unique way to be part of a community of individuals
 interested in building innovative products.
 
-# IMPORTANT
+# Commitment to contribute
 
 This is our only request to you.
 
