@@ -2,9 +2,8 @@
 
 - Look around the repo and make sure that you are really interested in what we
   are doing, and you have time to contribute
-
-  - Ponder on the **IMPORTANT** note about committing to contribute to the project
-    [here](/README.md#commitment-to-Contribute)
+  - Ponder on the **IMPORTANT** note about committing to contribute to the
+    project [here](/README.md#commitment-to-Contribute)
   - Please fork, star, watch the Sorrentum repo so that GitHub promotes our repo
     (this will help us promote our effort)
 
@@ -28,6 +27,7 @@
 - Subscribe to the [Telegram channel](https://t.me/+vqpTYvfgJRc3NzQx)
 
 - On-boarding Tasks
-  - The contributor goes through the particular checklist from the issue
-    assigned to them one-by-one, marking each item as done when **it's actually
-    done**.
+  - Once the invitation is accepted, an issue will be created by the title
+    `On-board \<YOUR FIRST NAME LAST NAME\> Aka <YOUR GITHUB_HANDLE>`. If not
+    assinged, assign it to yourself and go through the particular checklist from
+    the issue one-by-one, marking each item as done when **it's actually done**.
