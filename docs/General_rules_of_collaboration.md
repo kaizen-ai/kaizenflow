@@ -3,6 +3,7 @@
 <!-- toc -->
 
 - [Ask somebody if you have any doubts](#ask-somebody-if-you-have-any-doubts)
+- [Ping Team Leaders when you are out of tasks](#ping-team-leaders-when-you-are-out-of-tasks)
 - [Collaboration](#collaboration)
   * [Why do we need to follow this handbook?](#why-do-we-need-to-follow-this-handbook)
     + [Learning from each other](#learning-from-each-other)
@@ -33,11 +34,23 @@
     [Google drive](https://drive.google.com/drive/u/0/folders/1LXwKpmaFWJI-887IoA50sVC8-dw_1L8I)
   - Google search is your friend
   - Ask your team-members
-    - Learn [how to ask questions](http://www.catb.org/~esr/faqs/smart-questions.html) first
+    - Learn
+      [how to ask questions](http://www.catb.org/~esr/faqs/smart-questions.html)
+      first
     - Note that often people tell you his / her interpretation or their
       workaround for a problem, which might not be the best approach, so be
       careful and always think for yourself
     - Don't hesitate to ask anyone, even GP & Paul
+
+# Ping Team Leaders when you are out of tasks
+
+- When you're close to being out of tasks or all your ongoing PRs are waiting
+  for review and are close to being merged, feel free to ping us in the Telegram
+  chat to ask for more issues
+- In this way, Team Leaders can quickly assign you another issue, before you run
+  out of work.
+- The goal is for everyone to have 2 issues to work on at the same time to avoid
+  getting blocked on us
 
 # Collaboration
 
@@ -133,17 +146,27 @@
 
 ### Morning email
 
-- First thing in the morning, send an email to `all@crypto-kaizen.com` if you are **full-time** or to `contributors@crypto-kaizen.com` if you are **interns or collaborators** to broadcast what you are planning to work on during that day
-- If you are a collaborator or intern, follow the steps to join the mailing group
-  - Visit the [group](https://groups.google.com/a/crypto-kaizen.com/g/contributors/)
+- First thing in the morning, send an email to `all@crypto-kaizen.com` if you
+  are **full-time** or to `contributors@crypto-kaizen.com` if you are **interns
+  or collaborators** to broadcast what you are planning to work on during that
+  day
+- If you are a collaborator or intern, follow the steps to join the mailing
+  group
+
+  - Visit the
+    [group](https://groups.google.com/a/crypto-kaizen.com/g/contributors/)
   - Click “ask to join group”
- 
+
     ![alt_text](Morning_Emails_Figs/1_Visits.png)
+
   - Choose the following settings
-  
+
     ![alt_text](Morning_Emails_Figs/2_Settings.png)
-  - Wait for the confirmation e-mail, one for the group managers will approve your request. It should look like this:
+
+  - Wait for the confirmation e-mail, one for the group managers will approve
+    your request. It should look like this:
     ![alt_text](Morning_Emails_Figs/3_Request.png)
+
 - The goal is:
   - Think about what you are going to work on for the day, so you have a clear
     plan
@@ -203,9 +226,11 @@
   - Blocked on SorrTaskXYZ: Fix the world before it explodes #666
   - I'm running out of tasks!
   ```
+
 - Example image:
 
   ![alt_text](Morning_Emails_Figs/image.png)
+
 ## Communication
 
 ### Use the right form of communication
