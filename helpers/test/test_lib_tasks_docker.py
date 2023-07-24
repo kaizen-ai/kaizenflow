@@ -310,10 +310,15 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
 
 
 # #############################################################################
+# Test_dassert_is_image_name_valid1
+# #############################################################################
 
 
-class TestImageNameValidation(hunitest.TestCase):
-    def test1(self):
+class Test_dassert_is_image_name_valid1(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check that valid images pass the assertion.
+        """
         valid_images = [
             "12345.dkr.ecr.us-east-1.amazonaws.com/amp:dev",
             "abcde.dkr.ecr.us-east-1.amazonaws.com/amp:local-saggese-1.0.0",
@@ -322,37 +327,54 @@ class TestImageNameValidation(hunitest.TestCase):
         ]
         for image in valid_images:
             with self.subTest(image=image):
-                self.assertIsNone(hlitadoc._dassert_is_image_name_valid(image))
+                hlitadoc._dassert_is_image_name_valid(image)
 
-    def test2(self):
+    def test2(self) -> None:
+        """
+        Check that invalid images do not pass the assertion.
+        """
         invalid_images = [
-            "invalid-image-name",  # Missing required parts
-            "12345.dkr.ecr.us-east-1.amazonaws.com/amp:",  # Missing stage/version
-            "12345.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-invalid",  # Invalid version
+            # Missing required parts.
+            "invalid-image-name",
+            # Missing stage/version.
+            "12345.dkr.ecr.us-east-1.amazonaws.com/amp:",
+            # Invalid version.
+            "12345.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-invalid",
         ]
         for image in invalid_images:
-            with self.subTest(image=image):
-                with self.assertRaises(AssertionError):
-                    hlitadoc._dassert_is_image_name_valid(image)
+            with self.assertRaises(AssertionError):
+                hlitadoc._dassert_is_image_name_valid(image)
 
-    def test3(self):
+
+# #############################################################################
+# Test_dassert_is_base_image_name_valid1
+# #############################################################################
+
+
+class Test_dassert_is_base_image_name_valid1(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check that valid base images pass the assertion.
+        """
         valid_base_images = [
             "12345.dkr.ecr.us-east-1.amazonaws.com/amp",
             "sorrentum/cmamp",
         ]
         for base_image in valid_base_images:
-            with self.subTest(base_image=base_image):
-                self.assertIsNone(
-                    hlitadoc._dassert_is_base_image_name_valid(base_image)
-                )
+            hlitadoc._dassert_is_base_image_name_valid(base_image)
 
-    def test4(self):
+    def test2(self) -> None:
+        """
+        Check that invalid base images do not pass the assertion. 
+        """
         invalid_base_images = [
-            "invalid-base-image",  # Missing required parts
-            "abcde.dkr.ecr.us-east-1.amazonaws.com/amp:",  # Extra character at the end
-            "sorrentum/cmamp/invalid",  # Extra part in the name
+            # Missing required parts.
+            "invalid-base-image",
+            # Extra character at the end.
+            "abcde.dkr.ecr.us-east-1.amazonaws.com/amp:",
+            # Extra part in the name.
+            "sorrentum/cmamp/invalid",
         ]
         for base_image in invalid_base_images:
-            with self.subTest(base_image=base_image):
-                with self.assertRaises(AssertionError):
-                    hlitadoc._dassert_is_base_image_name_valid(base_image)
+            with self.assertRaises(AssertionError):
+                hlitadoc._dassert_is_base_image_name_valid(base_image)
