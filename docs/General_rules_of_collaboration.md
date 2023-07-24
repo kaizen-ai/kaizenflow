@@ -47,9 +47,9 @@
 - When you're close to being out of tasks or all your ongoing PRs are waiting
   for review and are close to being merged, feel free to ping us in the Telegram
   chat to ask for more issues
- - In this way, Team Leaders can quickly assign you another issue, before you run
+  - In this way, Team Leaders can quickly assign you another issue, before you run
   out of work
- - The goal is for everyone to have 2 issues to work on at the same time to avoid
+  - The goal is for everyone to have 2 issues to work on at the same time to avoid
   getting blocked on us
 
 # Collaboration
