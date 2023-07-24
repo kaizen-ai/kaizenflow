@@ -55,46 +55,46 @@ make this experience the best possible for you.
 
 # On-boarding
 
-- [Signing up for Sorrentum](Signing_up_for_Sorrentum.md)
+- [Signing up for Sorrentum](docs/Signing_up_for_Sorrentum.md)
 
 # How to start developing
 
 This contains the absolute minimal amount of info to start developing
 
-- [How to organize your work](How_to_organize_your_work.md)
+- [How to organize your work](docs/How_to_organize_your_work.md)
 
-- [General Rules of Collaboration](General_rules_of_collaboration.md)
+- [General Rules of Collaboration](docs/General_rules_of_collaboration.md)
 
-- [Quick start for developing](Quick_start_for_developing.md)
+- [Quick start for developing](docs/Quick_start_for_developing.md)
 
-- [First Review Process](First_review_process.md)
+- [First Review Process](docs/First_review_process.md)
 
-- [Sorrentum Python coding style guide](Coding_Style_Guide.md)
+- [Sorrentum Python coding style guide](docs/Coding_Style_Guide.md)
 
-- [Jupyter notebook best practices](Jupyter_notebook_best_practices.md)
+- [Jupyter notebook best practices](docs/Jupyter_notebook_best_practices.md)
 
-- [Unit tests](Unit_tests.md)
+- [Unit tests](docs/Unit_tests.md)
 
 # Project management
 
-- [Code review](Code_review.md)
+- [Code review](docs/Code_review.md)
 
   - PR review workflow from the code author and code reviewer points of view
 
-- [Development workflow](Development_workflow.md)
+- [Development workflow](docs/Development_workflow.md)
 
   - Extended instructions on how to deploy your working environment and interact
     with it
 
-- [GitHub/ZenHub workflows](GitHub_ZenHub_workflows.md)
+- [GitHub/ZenHub workflows](docs/GitHub_ZenHub_workflows.md)
 
   - How to use GitHub and ZenHub, file a PR, review GitHub/ZenHub workflows
 
-- [Git workflow and best practices](Git_workflow_and_best_practices.md)
+- [Git workflow and best practices](docs/Git_workflow_and_best_practices.md)
 
   - `git` workflows, branch management, troubleshooting, common procedures
 
-- [Documentation about guidelines](Documentation_about_guidelines.md)
+- [Documentation about guidelines](docs/Documentation_about_guidelines.md)
   - How to write guidelines, format documentation, convert Gdocs to markdown
     files and vice versa
 
@@ -102,11 +102,11 @@ This contains the absolute minimal amount of info to start developing
 
 This contains a set of resources that over time will make 10x more productive
 
-- [Docker](Docker.md)
+- [Docker](docs/Docker.md)
 
-- [Reading List](Reading_List.md)
+- [Reading List](docs/Reading_List.md)
 
-- [Design Philosophy](Design_Philosophy.md)
+- [Design Philosophy](docs/Design_Philosophy.md)
 
 # Technologies used
 
@@ -141,4 +141,4 @@ This contains a set of resources that over time will make 10x more productive
 
 ## How to receive a crypto transfer
 
-- [Receive crypto payment](Receive_crypto_payment.md)
+- [Receive crypto payment](docs/Receive_crypto_payment.md)
