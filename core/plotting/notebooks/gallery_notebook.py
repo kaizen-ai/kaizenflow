@@ -71,9 +71,19 @@ cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
 
 # %%
 # Create large dataframe of random ints between 0 and 100.
+import pdb
 rand_df = pd.DataFrame(np.random.randint(0,100,size=(300, 6)), columns=['y1','y2','y3','y4','y5','y6'])
 #fig, ax = plt.subplots()
 #ax.plot(range(0, 100), range(0, 100))
 fig = plt.figure()
 ax = fig.add_axes([0,0,1,1])
+pdb.set_trace()
 cpmiscplt.plot_projection(rand_df, special_values = [1000], mode = "scatter", ax = ax)
+
+# %%
+range_df_2 = rand_df.copy()
+for i in range(rand_df.shape[1]):
+    range_df_2.iloc[:, i] = i
+range_df_2.head(50)
+
+# %%
