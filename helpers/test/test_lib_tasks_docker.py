@@ -310,8 +310,6 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
 
 
 # #############################################################################
-# Test_dassert_is_image_name_valid1
-# #############################################################################
 
 
 class Test_dassert_is_image_name_valid1(hunitest.TestCase):
@@ -345,8 +343,6 @@ class Test_dassert_is_image_name_valid1(hunitest.TestCase):
                 hlitadoc._dassert_is_image_name_valid(image)
 
 
-# #############################################################################
-# Test_dassert_is_base_image_name_valid1
 # #############################################################################
 
 
