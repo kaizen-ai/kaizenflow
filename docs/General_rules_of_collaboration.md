@@ -50,7 +50,7 @@
 - In this way, Team Leaders can quickly assign you another issue, before you run
   out of work.
 - The goal is for everyone to have 2 issues to work on at the same time to avoid
-  getting blocked on
+  getting blocked on us
 
 # Collaboration
 
