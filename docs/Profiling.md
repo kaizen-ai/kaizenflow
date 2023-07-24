@@ -214,8 +214,7 @@ class="underline">https://pypi.org/project/pytest-profiling</span>](https://pypi
 # Profiling in a Jupyter notebook
 
 - You can find all of the examples below in action in the
-`time_memory_profiling_example.ipynb` [<span
-class="hyperlink">https://github.com/sorrentum/sorrentum/blob/master/core/notebooks/time_memory_profiling_example.ipynb</span>].
+[`amp/core/notebooks/time_memory_profiling_example.ipynb`] (https://github.com/sorrentum/sorrentum/blob/master/core/notebooks/time_memory_profiling_example.ipynb).
 
 ## Time profilers
 
