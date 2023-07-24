@@ -27,19 +27,25 @@ This contains the absolute minimal amount of info to start developing
 ## Project management
 
 - [Code review](Code_review.md)
+
   - PR review workflow from the code author and code reviewer points of view
 
 - [Development workflow](Development_workflow.md)
-  - Extended instructions on how to deploy your working environment and interact with it
+
+  - Extended instructions on how to deploy your working environment and interact
+    with it
 
 - [GitHub/ZenHub workflows](GitHub_ZenHub_workflows.md)
+
   - How to use GitHub and ZenHub, file a PR, review GitHub/ZenHub workflows
 
 - [Git workflow and best practices](Git_workflow_and_best_practices.md)
+
   - `git` workflows, branch management, troubleshooting, common procedures
 
 - [Documentation about guidelines](Documentation_about_guidelines.md)
-  - How to write guidelines, format documentation, convert Gdocs to markdown files and vice versa
+  - How to write guidelines, format documentation, convert Gdocs to markdown
+    files and vice versa
 
 ## Learn how to become efficient at developing
 
@@ -61,6 +67,8 @@ This contains a set of resources that over time will make 10x more productive
   Compose, Git, github, Jupyter, MongoDB, Pandas, Postgres, Apache Spark
 - You can go through the lectures and tutorials on a per-need basis, depending
   on what it's useful for you to develop
+- As an additional resource, you can refer to
+  [The Missing Semester of Your CS Education](https://missing.csail.mit.edu/)
 
 ## In-depth docs
 
@@ -69,7 +77,7 @@ This contains a set of resources that over time will make 10x more productive
 ## DeFi: start developing
 
 - [DeFi README](/defi/README.md)
- 
+
 - [From 0 to Web3](/defi/From_0_to_Web3.md)
 
 ## DeFi: in-depth docs
@@ -83,5 +91,3 @@ This contains a set of resources that over time will make 10x more productive
 ### How to receive a crypto transfer
 
 - [Receive crypto payment](Receive_crypto_payment.md)
-
-

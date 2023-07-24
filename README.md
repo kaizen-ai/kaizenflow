@@ -21,7 +21,8 @@ We are still figuring out things as we go, and we are working with University of
 Maryland and other interested parties to provide internships, research
 assistantships, and development grants.
 
-Besides the immediate financial benefit, this is a unique opportunity for you to:
+Besides the immediate financial benefit, this is a unique opportunity for you
+to:
 
 - Work on cutting-edge problems on machine learning and Web3
 - Learn about startups and how to start your own project
@@ -37,8 +38,8 @@ interested in building innovative products.
 This is our only request to you.
 
 We understand that due to your commitments (e.g., classes, life), you might not
-be able to work on Sorrentum consistently. That’s ok. At the same time, please be
-aware that taking on a task means that:
+be able to work on Sorrentum consistently. That’s ok. At the same time, please
+be aware that taking on a task means that:
 
 1. The same task might not be available to your colleagues; and
 
@@ -52,15 +53,8 @@ to Sorrentum (e.g., 20 hours / week), it is wise to wait to be sure you can do
 it. If you are excited and want to start, go for it, do your best, and we’ll
 make this experience the best possible for you.
 
-
 # Useful links
 
 - [Documentation entry point](/docs/README.md)
 - [Google drive](https://drive.google.com/drive/u/0/folders/1LXwKpmaFWJI-887IoA50sVC8-dw_1L8I)
-- [Collaborator list](https://docs.google.com/spreadsheets/d/1eRZJaj5-1g6W7w_Ay4UhJEdtAvrTTM1V94cKj6_Vwoc)
-- [Meeting room](https://umd.zoom.us/s/7447082187)
 - [Technical docs](https://docs.google.com/document/d/14Ul5uWd7NU1zZ9ZLHp1TerLMN7MOfS5MS5bSX-2rBQ8/edit)
-
-# Admin links
-
-- [Survey results](https://drive.google.com/drive/u/0/folders/1-aaFlPtlbJ-pUL-c5GQbjFgZRp9ZNRUk)
