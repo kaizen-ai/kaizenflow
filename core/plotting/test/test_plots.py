@@ -42,7 +42,7 @@ class Test_plots(unittest.TestCase):
         return test_series
 
     @staticmethod
-    def get_plot_heatmap() -> pd.core.frame.DataFrame:
+    def get_plot_heatmap1() -> pd.core.frame.DataFrame:
         """
         Generate a data frame with some random features.
         """
