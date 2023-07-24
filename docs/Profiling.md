@@ -214,7 +214,7 @@ class="underline">https://pypi.org/project/pytest-profiling</span>](https://pypi
 # Profiling in a Jupyter notebook
 
 - You can find all of the examples below in action in the
-[`amp/core/notebooks/time_memory_profiling_example.ipynb`] (https://github.com/sorrentum/sorrentum/blob/master/core/notebooks/time_memory_profiling_example.ipynb).
+[<span class="underline">`amp/core/notebooks/time_memory_profiling_example.ipynb`</span>span>] (https://github.com/sorrentum/sorrentum/blob/master/core/notebooks/time_memory_profiling_example.ipynb).
 
 ## Time profilers
 
@@ -242,7 +242,7 @@ dspl.Image(filename="output.png")
 
 - This will output something like this:
 
-<img src="Tools_Profiling_figs/image1.png" style="width:6.5in;height:12.5in" />
+<img src="Profiling_figs/image1.png" style="width:6.5in;height:12.5in" />
 
 - If you open the output image in the new tab, you can zoom in and look at the
 graph in detail.
@@ -256,7 +256,7 @@ dspl.Image(filename="output.png")
 
 - This will filter the output into something like this:
 
-<img src="Tools_Profiling_figs/image2.png" style="width:6.5in;height:5.45833in" />
+<img src="Profiling_figs/image2.png" style="width:6.5in;height:5.45833in" />
 
 # Memory profilers
 
