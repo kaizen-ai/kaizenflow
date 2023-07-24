@@ -23,7 +23,8 @@ import pandas as pd
 # # Load data
 
 # %%
-spread = gspread_pandas.Spread("search_retired1.profile_export.gsheet")
+spreadsheet_name = "sn_search5.profile_export.gsheet"
+spread = gspread_pandas.Spread(spreadsheet_name)
 df = spread.sheet_to_df(index=None)
 print(df.shape)
 df.head()
@@ -39,6 +40,16 @@ for col in df.columns:
 
 # %% [markdown]
 # # Filter data
+
+# %%
+# Drop errors.
+prev_len = len(df)
+df = df[df["error"] == ""].reset_index(drop=True)
+df = df[[col for col in df.columns if col != "error"]]
+print(
+    f"Dropped {prev_len - len(df)} rows ({round((prev_len - len(df))*100/prev_len, 2)}%)"
+)
+df.head()
 
 # %%
 # Filter by keywords.
@@ -70,8 +81,9 @@ df
 
 # %%
 # A Google sheet with this name should already exist on the drive.
+new_spreadsheet_name = "sn_search5.profile_export.filtered.gsheet"
 spread2 = gspread_pandas.Spread(
-    "search_retired1.profile_export.filtered.gsheet",
+    new_spreadsheet_name,
     sheet="Sheet1",
     create_sheet=True,
 )
