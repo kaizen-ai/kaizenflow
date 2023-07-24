@@ -76,6 +76,7 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for `plot_heatmap()`
         """
+        # TODO(Dan): Move to the notebook config.
         mode = "clustermap"
         corr_df = self.get_plot_heatmap()
         figsize = (20, 20)
