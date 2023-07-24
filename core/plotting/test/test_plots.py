@@ -4,6 +4,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
+import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.visual_stationarity_test as cpvistte
 
@@ -14,6 +15,7 @@ class Test_plots(unittest.TestCase):
     """
     Run smoke tests for plotting functions.
     """
+
     @staticmethod
     def get_plot_histograms_and_lagged_scatterplot1() -> pd.Series:
         """
@@ -32,10 +34,21 @@ class Test_plots(unittest.TestCase):
         Generate a test time series with daily timestamps.
         """
         np.random.seed(35)
-        timestamps = pd.date_range(start="2023-07-01", end="2023-07-07", freq="4H")
+        timestamps = pd.date_range(
+            start="2023-07-01", end="2023-07-07", freq="4H"
+        )
         values = np.random.rand(len(timestamps))
         test_series = pd.Series(values, index=timestamps)
         return test_series
+
+    @staticmethod
+    def get_plot_heatmap() -> pd.core.frame.DataFrame:
+        """
+        Generate a data frame with some random features.
+        """
+        np.random.seed(35)
+        df = pd.DataFrame(np.random.randn(10, 6), columns=list("ABCDEF"))
+        return df
 
     def test_plot_histograms_and_lagged_scatterplot1(self) -> None:
         """
@@ -58,3 +71,12 @@ class Test_plots(unittest.TestCase):
         test_series = self.get_plot_time_series_by_period1()
         period = "time"
         cplmiplo.plot_time_series_by_period(test_series, period)
+
+    def test_plot_heatmap1(self) -> None:
+        """
+        Smoke test for `plot_heatmap()`
+        """
+        mode = "clustermap"
+        corr_df = self.get_plot_heatmap()
+        figsize = (20, 20)
+        cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)
