@@ -2,9 +2,17 @@
 
 <!-- toc -->
 
+- [General](#general)
+- [Some reminders](#some-reminders)
+- [Grades](#grades)
+
+<!-- tocstop -->
+
 ## General
-- We give feedback about every 2 weeks. 
-- The scores are published [<span class="underline">here</span>](https://docs.google.com/spreadsheets/d/1a8ypuO2ODOzjp9BaRN23HWa5P7ruTKs_gHZWaPYsvy4/edit#gid=2082207396)
+
+- We give feedback about every 2 weeks
+- The scores are published
+  [<span class="underline">here</span>](https://docs.google.com/spreadsheets/d/1a8ypuO2ODOzjp9BaRN23HWa5P7ruTKs_gHZWaPYsvy4/edit#gid=2082207396)
 
 ## Some reminders
 
@@ -33,14 +41,12 @@
   performance
 
 - If your score falls below 4, please focus on improving in areas you are
-  lacking. Your mentor (indicated in the Google Sheet) can provide you
-  guidance for improving on Telegram. Feel free to have a short discussion
-  with them
+  lacking. Your mentor (indicated in the Google Sheet) can provide you guidance
+  for improving on Telegram. Feel free to have a short discussion with them
 
-- Contributors that have a score less than 3 will be given a warning and if
-  they can't increase their score, they will be dropped from the project. Our
+- Contributors that have a score less than 3 will be given a warning and if they
+  can't increase their score, they will be dropped from the project. Our
   decision is final, everybody had a fair shot, but we can't have dragged on
   discussions. In life, you have only one chance to give a first impression.
   After you are dropped, you can take 6 months off to improve your skills and
   then apply to contribute for the project again
-
