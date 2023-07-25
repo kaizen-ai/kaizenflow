@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import logging
 import os.path
+import helpers.hdbg as hdbg
 from typing import Optional, Any
 
 from google.auth.transport.requests import Request
@@ -11,34 +12,53 @@ from googleapiclient.errors import HttpError
 
 # _LOG = logging.getLogger(__name__)
 # Scopes required making API calls.
+_LOG = logging.getLogger(__name__)
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 
 
 # #############################################################################
-def create_empty_google_file(gsheet_name: str, folder_id: Optional[str], user: Optional[str]) -> None:
+def create_empty_google_file(
+        gfile_type: str, 
+        gfile_name: str,
+        folder_id: Optional[str] = None,
+        folder_name: Optional[str] = None,
+        user: Optional[str] = None
+    ) -> None:
     """
-    Create an empty Google file and share it to a user
+    Create an empty Google file and share it to a user.
     :return: None
     """
     #
     creds = _get_credentials()
     # 
     try:
-        gsheet_id = _create_new_google_sheet(creds, gsheet_name)
-        print('The file id of the new Google sheet is: {}'.format(gsheet_id))
+        if gfile_type == "sheet":
+            gfile_id = _create_new_google_sheet(creds, gfile_name)
+        elif gfile_type == "doc":
+            gfile_id = _create_new_google_doc(creds, gfile_name)
+        else:
+            _LOG.error("gfile_type must be either 'sheet' or 'doc'.")
+            return
+        _LOG.info('The file id of the new Google {} is: {}'.format(gfile_type, gfile_id))
         # Create a drive api client.
         gdrive_service = build('drive', 'v3', credentials=creds)
         # 
         if user:
-            _share_google_file(gdrive_service, gsheet_id, user)
-            print('Create the new google sheet {}'.format(gsheet_name))
-        # Move spreadsheet to google drive shared dir.
+            _share_google_file(gdrive_service, gfile_id, user)
+            _LOG.info('Create the new Google {}: {}'.format(gfile_type, gfile_name))
+        # Move Google file to a Google drive dir.
         if folder_id:
-            _move_gsheet_to_dir(gdrive_service, gsheet_id, folder_id)
-            print('Move the new google sheet {} to the shared dir {}'.format(gsheet_name, folder_id))
+            _move_gsheet_to_dir(gdrive_service, gfile_id, folder_id)
+            _LOG.info('Move the new Google {} {} to the shared dir: folder_id={}'.format(gfile_type, gfile_name, folder_id))
+        elif folder_name:
+            folders = _get_folders_in_gdrive(gdrive_service)
+            folder = _get_folder_id_by_foldername(folders, folder_name)
+            if folder:
+                _move_gsheet_to_dir(gdrive_service, gfile_id, folder.get("id"))
+                _LOG.info('Move the new google {} {} to the shared dir: {}'.format(gfile_type, gfile_name, folder.get("name")))
     #
     except HttpError as err:
-        print(err)
+        _LOG.error(err)
 
 # #############################################################################
 def _get_credentials() -> Credentials:
@@ -114,8 +134,8 @@ def _share_google_file(gdrive_service: Optional[Any], gsheet_id: str, user: str)
         'emailAddress': user
     }
     new_permission = gdrive_service.permissions().create(fileId=gsheet_id, body=parameters).execute()
-    print('The new permission id of the document is: {}'.format(new_permission.get('id')))
-    print('The google file is shared to {} successfully.'.format(user))
+    _LOG.info('The new permission id of the document is: {}'.format(new_permission.get('id')))
+    _LOG.info('The google file is shared to {} successfully.'.format(user))
 
 
 def _move_gsheet_to_dir(gdrive_service: Optional[Any], gsheet_id: str, folder_id: str) -> dict:
@@ -132,11 +152,7 @@ def _move_gsheet_to_dir(gdrive_service: Optional[Any], gsheet_id: str, folder_id
     return res
 
 
-def get_folders_in_gdrive(gdrive_service=None) -> list:
-    if gdrive_service == None:
-        # Create a drive api client.
-        gdrive_service = build('drive', 'v3', credentials=creds)
-    # 
+def _get_folders_in_gdrive(gdrive_service: Optional[Any]) -> list:
     response = gdrive_service.files().list(
         q="mimeType='application/vnd.google-apps.folder' and trashed=false",
         spaces='drive',
@@ -146,25 +162,26 @@ def get_folders_in_gdrive(gdrive_service=None) -> list:
     return response.get('files')
 
 
-def get_folder_id_by_foldername(folders: dict, foldername: str) -> list:
+def _get_folder_id_by_foldername(folders: list, foldername: str) -> list:
     folder_list = []
     for folder in folders:
         if folder.get("name") == foldername:
             folder_list.append(folder)
     if len(folder_list) == 1:
+        _LOG.info(f'Found folder: {folder.get("name")}, {folder.get("id")}')
         return folder
     elif len(folder_list) > 1:
         for folder in folder_list:
-            print(f'Found folder: {folder.get("name")}, {folder.get("id")}')
-        print(f'Return the first found folder. {folder_list[0].get("name")}, {folder_list[0].get("id")}')
-        print("if you want to use another folder id with the same filename {}, please copy the folder id manually.".format(foldername))
+            _LOG.info(f'Found folder: {folder.get("name")}, {folder.get("id")}')
+        _LOG.info(f'Return the first found folder. {folder_list[0].get("name")}, {folder_list[0].get("id")}')
+        _LOG.info("if you want to use another folder id with the same filename {}, please copy the folder id manually.".format(foldername))
         return folder_list[0]
     else:
-        print("Can't find the folder {}.".format(foldername))
+        _LOG.error("Can't find the folder {}.".format(foldername))
         return 0
 
 
 # #############################################################################
 if __name__ == '__main__':
-    # hdbg.init_logger(use_exec_path=True)
-    create_empty_google_file("test", "1q57bUW7i0dAEo9Q88esAiYUuyApumlvL", "im.yiyun.lei@gmail.com")
+    hdbg.init_logger(use_exec_path=True)
+    create_empty_google_file("sheet", "test", "1q57bUW7i0dAEo9Q88esAiYUuyApumlvL", "im.yiyun.lei@gmail.com")
