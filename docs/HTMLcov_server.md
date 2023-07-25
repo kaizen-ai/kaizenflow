@@ -59,8 +59,8 @@
 
 ### NGINX server
 
-- [Juraj Smeriga](mailto:juraj.smeriga@simkoit.com) and
-  [GP](mailto:saggese@gmail.com) have their public key stored on
+- [Juraj Smeriga](mailto:jsmeriga@crypto-kaizen.com) and
+  [GP](mailto:gp@crypto-kaizen.com) have their public key stored on
   the server in case access via ssh is needed (user: ubuntu)
 - Simple t3.nano instance (run ansible hardening playbook for additional
   security)
