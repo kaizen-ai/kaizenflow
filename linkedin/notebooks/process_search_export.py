@@ -20,6 +20,13 @@
 
 # %%
 import gspread_pandas
+import logging
+import helpers.hdbg as hdbg
+import linkedin.google_api.google_file_api as gapi
+
+# %%
+_LOG = logging.getLogger(__name__)
+hdbg.init_logger(use_exec_path=True)
 
 # %% [markdown]
 # # Load data
@@ -70,6 +77,24 @@ df
 
 # %% [markdown]
 # # Save filtered data to gsheet
+
+# %%
+# Set parameters.
+# gfile_type: 'sheet' or 'doc'.
+gfile_type = 'sheet'
+gfile_name = 'new_google_sheet'
+folder_name = ''
+folder_id = ''
+user = ''
+
+# %%
+gapi.create_empty_google_file(
+    gfile_type=gfile_type,
+    gfile_name = gfile_name,
+    folder_name = folder_name,
+    folder_id = folder_id,
+    user = user
+)
 
 # %%
 # A Google sheet with this name should already exist on the drive.

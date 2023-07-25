@@ -73,7 +73,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
         args.folder_name, 
         args.user
     )
-    _LOG.info("Done create empty google file.")
 
 
 if __name__ == "__main__":

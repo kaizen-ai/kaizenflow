@@ -10,7 +10,6 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-# _LOG = logging.getLogger(__name__)
 # Scopes required making API calls.
 _LOG = logging.getLogger(__name__)
 SCOPES = ["https://www.googleapis.com/auth/drive"]
@@ -52,10 +51,13 @@ def create_empty_google_file(
             _LOG.info('Move the new Google {} {} to the shared dir: folder_id={}'.format(gfile_type, gfile_name, folder_id))
         elif folder_name:
             folders = _get_folders_in_gdrive(gdrive_service)
+            _LOG.info('founder_name {}'.format(folder_name))
             folder = _get_folder_id_by_foldername(folders, folder_name)
             if folder:
                 _move_gsheet_to_dir(gdrive_service, gfile_id, folder.get("id"))
                 _LOG.info('Move the new google {} {} to the shared dir: {}'.format(gfile_type, gfile_name, folder.get("name")))
+        else:
+            _LOG.info('The new Google {} is created in your root dir.'.format(gfile_type))
     #
     except HttpError as err:
         _LOG.error(err)
@@ -164,24 +166,22 @@ def _get_folders_in_gdrive(gdrive_service: Optional[Any]) -> list:
 
 def _get_folder_id_by_foldername(folders: list, foldername: str) -> list:
     folder_list = []
+    # 
     for folder in folders:
         if folder.get("name") == foldername:
+            _LOG.info(f'folder.get("name") {folder.get("name")}')
             folder_list.append(folder)
+    # 
     if len(folder_list) == 1:
-        _LOG.info(f'Found folder: {folder.get("name")}, {folder.get("id")}')
-        return folder
+        _LOG.info(f'Found folder: {folder_list[0].get("name")}, {folder_list[0].get("id")}')
+        return folder_list[0]
     elif len(folder_list) > 1:
         for folder in folder_list:
             _LOG.info(f'Found folder: {folder.get("name")}, {folder.get("id")}')
+        # 
         _LOG.info(f'Return the first found folder. {folder_list[0].get("name")}, {folder_list[0].get("id")}')
-        _LOG.info("if you want to use another folder id with the same filename {}, please copy the folder id manually.".format(foldername))
+        _LOG.info("if you want to use another folder id, please copy the folder id manually.")
         return folder_list[0]
     else:
         _LOG.error("Can't find the folder {}.".format(foldername))
         return 0
-
-
-# #############################################################################
-if __name__ == '__main__':
-    hdbg.init_logger(use_exec_path=True)
-    create_empty_google_file("sheet", "test", "1q57bUW7i0dAEo9Q88esAiYUuyApumlvL", "im.yiyun.lei@gmail.com")
