@@ -125,6 +125,8 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Code organization](/code_organization.md)
 
+- [Tools - VisualStudio Code](/docs/Tools_VisualStudio_Code.md)
+
 # DeFi: start developing
 
 - [DeFi README](/defi/README.md)
