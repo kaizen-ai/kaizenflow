@@ -41,6 +41,4 @@ Some reminders
     After you are dropped, you can take 6 months off to improve your skills and
     then apply to contribute for the project again
 
-Thank you,
-
 The Sorrentum team

@@ -57,6 +57,8 @@ make this experience the best possible for you.
 
 - [Signing up for Sorrentum](docs/Signing_up_for_Sorrentum.md)
 
+- [Contributor Scorecard](docs/Contributor_scorecard.md)
+
 # How to start developing
 
 This contains the absolute minimal amount of info to start developing
