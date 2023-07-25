@@ -6,27 +6,24 @@ repository, sends an invitation if not, and reports any pending invitations.
 
 Example:
 > github_permission.py \
---github_username GITHUB_USERNAME \
---owner_username OWNER_USERNAME \
---repo_name REPO_NAME \
---access_token ACCESS_TOKEN
+    --github_username GITHUB_USERNAME \
+    --owner_username OWNER_USERNAME \
+    --repo_name REPO_NAME \
+    --access_token ACCESS_TOKEN
 
 Import as:
 
 import dev_scripts.github_permission as descgipe
 """
-
 import argparse
 import logging
 import os
 
 import requests
 
-_LOG = logging.getLogger(__name__)
+import helpers.hdbg as hdbg
 
-"""
-Invite a collaborator to GitHub.
-"""
+_LOG = logging.getLogger(__name__)
 
 
 def _invite_collaborator(
@@ -35,6 +32,14 @@ def _invite_collaborator(
     access_token: str,
     github_username: str,
 ) -> None:
+    """
+    Invite a collaborator to GitHub.
+
+    :params owner_username.
+    :params repo_name.
+    :params access_token.
+    :params github_username.
+    """
     add_collaborator_endpoint = os.path.join(
         "https://api.github.com/repos",
         owner_username,
@@ -135,6 +140,9 @@ def _invite_collaborator(
         )
 
 
+# #############################################################################
+
+
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -166,15 +174,12 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    owner_username = args.owner_username
-    repo_name = args.repo_name
-    access_token = args.access_token
-    github_username = args.github_username
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     _invite_collaborator(
-        owner_username,
-        repo_name,
-        access_token,
-        github_username,
+        args.owner_username,
+        args.repo_name,
+        args.access_token,
+        args.github_username,
     )
 
 
