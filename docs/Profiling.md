@@ -233,7 +233,7 @@ class="underline">link</span>](https://github.com/sorrentum/sorrentum/blob/maste
 	```
 
 - This will output something like this:
-  <img src="Profiling_figs/image1.png" style="width:6.5in;height:12.5in" />
+  	<img src="Profiling_figs/image1.png" style="width:6.5in;height:12.5in" />
 
 - If you open the output image in the new tab, you can zoom in and look at the
 graph in detail.
@@ -245,7 +245,7 @@ graph in detail.
 	```
 
 - This will filter the output into something like this:
-  <img src="Profiling_figs/image2.png" style="width:6.5in;height:5.45833in" />
+  	<img src="Profiling_figs/image2.png" style="width:6.5in;height:5.45833in" />
 
 # Memory profilers
 
