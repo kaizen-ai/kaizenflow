@@ -21,12 +21,12 @@
   - a key `crypto.pub` that looks like:
 
 ```
------BEGIN OPENSSH PRIVATE KEY-----
-b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn
+    -----BEGIN OPENSSH PRIVATE KEY-----
+    b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn
 NhAAAAAwEAAQAAAYEA0IQsLy1lL3bhPT+43sht2/m9tqZm8sEQrXMAVtfm4ji/LXMr7094
-…
-hakqVTlQ2sr0YTAAAAHnNhZ2dlc2VAZ3BtYWMuZmlvcy1yb3V0ZXIuaG9tZQECAwQ=
------END OPENSSH PRIVATE KEY-----
+    …
+    hakqVTlQ2sr0YTAAAAHnNhZ2dlc2VAZ3BtYWMuZmlvcy1yb3V0ZXIuaG9tZQECAwQ=
+    -----END OPENSSH PRIVATE KEY-----
 ```
 
 - Let's say you are connected via VNC.
@@ -64,7 +64,8 @@ hakqVTlQ2sr0YTAAAAHnNhZ2dlc2VAZ3BtYWMuZmlvcy1yb3V0ZXIuaG9tZQECAwQ=
 - Save and close the config file and press the green button again, then for
   connection click on "Connect to Host...". You should see the IP address of the
   server, so just click on it and it will connect you in a new window.
-- Open a preferred repo directory - Click on the "Source control" button on the
+- Open a preferred repo directory 
+  - Click on the "Source control" button on the
   left
   <img src="Tools_VisualStudio_Code_figs/image4.png" style="width:0.41667in;height:0.48958in" />
   - Choose "Open Folder"
