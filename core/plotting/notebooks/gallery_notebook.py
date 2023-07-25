@@ -61,22 +61,16 @@ lag = 7
 figsize = (20, 20)
 cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
 # %% [markdown]
-# ## `plot_timeseries_distribution()`rng = np.random.default_rng(seed=0)
+# ## `plot_timeseries_distribution()`
 # %%
 # Set inputs for hour interval.
-rng = np.random.default_rng(seed=0)
-samples = rng.normal(size=1000)
-index = pd.date_range(start="2023-01-01", periods=len(samples), freq="H")
-srs = pd.Series(samples, index=index)
+srs = cptetepl.Test_plot_timeseries_distribution.get_plot_timeseries_distribution1("H")
 datetime_types = ["hour"]
 cplmiplo.plot_timeseries_distribution(srs, datetime_types)
 
 # %%
 # Set input for month interval.
-rng = np.random.default_rng(seed=0)
-samples = rng.normal(size=1000)
-index = pd.date_range(start="2023-01-01", periods=len(samples), freq="H")
-srs1 = pd.Series(samples, index=index)
+srs1 = cptetepl.Test_plot_timeseries_distribution.get_plot_timeseries_distribution1("H")
 datetime_types1 = ["hour", "month"]
 cplmiplo.plot_timeseries_distribution(srs1, datetime_types1)
 
