@@ -23,7 +23,6 @@
 # Profiling end-to-end a command line
 
 - You can use the time-tested Linux `time` command to profile both time and memory
-
 ```bash
 > /usr/bin/time -v COMMAND 2>&1 | tee time.log
 
@@ -53,7 +52,6 @@ Exit status: 0
 ```
 
 - Information about the spent time are:
-
 ```
 User time (seconds): 187.70
 System time (seconds): 16.27
@@ -63,7 +61,6 @@ Elapsed (wall clock) time (h:mm:ss or m:ss): 3:31.38
 
 - The relevant part is the following line representing the amount of resident
 memory (which is ~13GB)
-
 ```
 Maximum resident set size (kbytes): 13083892
 ```
@@ -75,7 +72,6 @@ Maximum resident set size (kbytes): 13083892
 ### Install in a Docker container
 
 - From `devops/docker_build/install_cprofile.sh`
-
 ```bash
 > sudo apt-get install -y python3-dev
 > sudo apt install -y libgraphviz-dev
@@ -92,7 +88,6 @@ Maximum resident set size (kbytes): 13083892
 
 - You need to run the code first with profiling enabled to collect the profiling
 data in a binary file (often called `prof.bin`).
-
 ```bash
 # Profile a python script.
 > python -m cProfile -o prof.bin ${CMD}
@@ -105,7 +100,6 @@ edgar/forms8/test/test_edgar_utils.py::TestExtractTablesFromForms::test_table_ex
 ```
 
 - Plotting the results
-
 ```bash
 > gprof2dot -f pstats profile | dot -Tpng -o output.png
 > gprof2dot -n 10 -f pstats profile | dot -Tpng -o output.png
@@ -114,7 +108,6 @@ edgar/forms8/test/test_edgar_utils.py::TestExtractTablesFromForms::test_table_ex
 ```
 
 - gprof2dot has lots of interesting options to tweak the output, e.g.,
-
 ```bash
 > gprof2dot -h
 ...
@@ -161,12 +154,14 @@ kernprof allows to profile a function line by line.
 - GitHub: [<span
 class="underline">https://github.com/pyutils/line_profiler</span>](https://github.com/pyutils/line_profiler)
 
-- Install with: `pip install line_profiler`
+- Install with: 
+```bash
+> pip install line_profiler
+```
 
 ### How to use
 
 - Instrument the code to profile:
-
 ```python
 import line_profiler
 profiler = line_profiler.LineProfiler()
@@ -186,7 +181,6 @@ def function():
 ```
 
 - Through command line:
-
 ```bash
 > kernprof -o prof.lprof -l $cmd
 ...
@@ -204,7 +198,6 @@ class="underline">https://pypi.org/project/pytest-profiling</span>](https://pypi
 ```
 
 ### How to use
-
 ```bash
 > pytest --profile
 ./amp/core/dataflow_model/test/test_pnl_simulator.py::TestPnlSimulator2::test_perf1
@@ -220,7 +213,6 @@ class="underline">link</span>](https://github.com/sorrentum/sorrentum/blob/maste
 ## Time profilers
 
 - In a notebook, execute cell with `%time` cell-magic:
-
 ```python
 %%time
 func()
@@ -231,8 +223,7 @@ func()
 - We prefer cProfile for profiling and gprof2dot for visualization.
 
 - The documentation does not state this, but
-`%prun` magic uses cProfile under the hood, so we can use it in the notebook instead:
-
+`%prun` magic uses cProfile under the hood, so we can use it in the notebook instead
 ```python
 # We can suppress output to the notebook by specifying "-q".
 %prun -D tmp.pstats func()
@@ -249,7 +240,6 @@ dspl.Image(filename="output.png")
 graph in detail.
 
 - gprof2dot supports thresholds that make output more readable:
-
 ```python
 !gprof2dot -n 5 -e 5 -f pstats tmp.pstats | dot -Tpng -o output.png
 dspl.Image(filename="output.png")
@@ -265,14 +255,12 @@ dspl.Image(filename="output.png")
 class="underline">memory-profiler</span>](https://github.com/pythonprofilers/memory_profiler).
 
 - Peak memory
-
 ```bash
 %%memit
 func()
 ```
 
 - Memory by line
-
 ```bash
 %mprun -f func func()
 ```
