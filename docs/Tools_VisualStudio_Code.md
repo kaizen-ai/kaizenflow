@@ -57,18 +57,18 @@ NhAAAAAwEAAQAAAYEA0IQsLy1lL3bhPT+43sht2/m9tqZm8sEQrXMAVtfm4ji/LXMr7094
   <img src="Tools_VisualStudio_Code_figs/image6.png" style="width:4.04688in;height:0.71944in" />
 - The config should look like this:
   <img src="Tools_VisualStudio_Code_figs/image7.png" style="width:6.26772in;height:2.59722in" /> 
-  - HostName: dev1 (or dev2) server IP 
+  - HostName: dev1 (or dev2) server IP. 
   - User: your linux user name on the dev
-  server 
-  - IdentityFile: private key that you use to `SSH` to the dev server
+  server.
+  - IdentityFile: private key that you use to `SSH` to the dev server.
 - Save and close the config file and press the green button again, then for
   connection click on "Connect to Host...". You should see the IP address of the
   server, so just click on it and it will connect you in a new window.
-- Open a preferred repo directory 
+- Open a preferred repo directory. 
   - Click on the "Source control" button on the
-  left
+  left: 
     <img src="Tools_VisualStudio_Code_figs/image4.png" style="width:0.41667in;height:0.48958in" />
-  - Choose "Open Folder"
+  - Choose "Open Folder": 
     <img src="Tools_VisualStudio_Code_figs/image1.png" style="width:2.47917in;height:1.59375in" /> 
-  - Choose the desired repo directory from the drop-down menu, e.g., `cmamp1`
+  - Choose the desired repo directory from the drop-down menu, e.g., `cmamp1`: 
     <img src="Tools_VisualStudio_Code_figs/image5.png" style="width:2.5in;height:1.44792in" />
