@@ -127,9 +127,9 @@
 - Unit tests should not import from each other
   - If there is common code, it should go in libraries inside or outside `test`
     directories
-  - E.g., we use `foobar_example.py` files containing builders for mocks and
-    examples of objects to be used by tests
-  - E.g., we use `test/foobar_test_case.py` or `test/foobar_utils.py`
+    - E.g., we use `foobar_example.py` files containing builders for mocks and
+        examples of objects to be used by tests
+    - E.g., we use `test/foobar_test_case.py` or `test/foobar_utils.py`
   - In other terms, test files are always leaves of the import graph
 
 # Package/lib hierarchy and cycle prevention
