@@ -106,15 +106,16 @@
        import market_data as mdata
        … mdata.AbstractMarketData …
        ```
-     - To justify, one can argue that unit tests are clients of the code and
+- To justify, one can argue that unit tests are clients of the code and
        should import packages like any other client
+  
   2. Import the files directly with the code and not the package
      - E.g.,
        ```python
        import market_data.abstract_market_data as mdabmada
        … mdabmada.AbstractMarketData …
        ```
-     - To justify, one can interpret that unit tests are tied to specific files,
+- To justify, one can interpret that unit tests are tied to specific files,
        so they should be kept in sync with the low-level code and not with the
        public interface. In fact, we already allow unit tests to call private
        functions, acknowledging that unit tests are not regular clients
