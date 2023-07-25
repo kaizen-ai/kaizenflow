@@ -17,6 +17,22 @@ class Test_plots(unittest.TestCase):
     """
 
     @staticmethod
+    def get_plot_effective_correlation_rank1() -> pd.Series:
+        """
+        Generate a test DataFrame for plotting effective correlation rank.
+        """
+        seed_value = 42
+        np.random.seed(seed_value)
+        data = {
+            "Column1": np.random.rand(10),
+            "Column2": np.random.rand(10),
+            "Column3": np.random.rand(10),
+            "Column4": np.random.rand(10),
+        }
+        test_df = pd.DataFrame(data)
+        return test_df
+    
+    @staticmethod
     def get_plot_histograms_and_lagged_scatterplot1() -> pd.Series:
         """
         Get a random Gaussian data series for plotting histograms and lagged
@@ -81,3 +97,10 @@ class Test_plots(unittest.TestCase):
         corr_df = self.get_plot_heatmap()
         figsize = (20, 20)
         cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)
+
+    def test_plot_effective_correlation_rank1(self) -> None:
+        """
+        Smoke test for `plot_effective_correlation_rank()`
+        """
+        test_df = self.get_plot_effective_correlation_rank1()
+        cplocorr.plot_effective_correlation_rank(test_df)
