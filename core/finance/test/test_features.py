@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 import pandas as pd
 
 import core.finance.features as cfinfeat
@@ -12,6 +13,9 @@ _LOG = logging.getLogger(__name__)
 
 class Test_compute_stochastic(hunitest.TestCase):
     def test1(self) -> None:
+        """
+        Test that stochastic is computed correctly.
+        """
         df = get_data()
         feature = cfinfeat.compute_stochastic(
             df,
@@ -35,7 +39,81 @@ class Test_compute_stochastic(hunitest.TestCase):
 """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    def test2(self) -> None:
+        """
+        Test the case when all prices are equal.
+        """
+        df = pd.DataFrame(
+            data={
+                "high": 35,
+                "low": 35,
+                "close": 35,
+            },
+            index=[0],
+        )
+        feature = cfinfeat.compute_stochastic(
+            df,
+            "high",
+            "low",
+            "close",
+        )
+        actual = hpandas.df_to_str(feature, num_rows=None)
+        expected = r"""
+           stochastic
+        0         0.0
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Test the case when high=low!=close.
+        """
+        df = pd.DataFrame(
+            data={
+                "high": 35,
+                "low": 35,
+                "close": 12,
+            },
+            index=[0],
+        )
+        with self.assertRaises(AssertionError):
+            cfinfeat.compute_stochastic(
+                df,
+                "high",
+                "low",
+                "close",
+            )
+
+    def test4(self) -> None:
+        """
+        Test the case when any price is np.nan.
+        """
+        df = pd.DataFrame(
+            data={
+                "high": np.nan,
+                "low": np.nan,
+                "close": 12,
+            },
+            index=[0],
+        )
+        feature = cfinfeat.compute_stochastic(
+            df,
+            "high",
+            "low",
+            "close",
+        )
+        actual = hpandas.df_to_str(feature, num_rows=None)
+        expected = r"""
+        stochastic
+        0         NaN
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
     def test_log(self) -> None:
+        """
+        Test that stochastic is computed correctly when the log trasnformation
+        is applied.
+        """
         df = get_data()
         feature = cfinfeat.compute_stochastic(
             df, "high", "low", "close", apply_log=True

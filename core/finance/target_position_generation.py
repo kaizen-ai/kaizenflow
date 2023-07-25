@@ -130,6 +130,8 @@ def compute_target_positions_longitudinally(
     target_dollar_risk_per_name: float = 1e2,
     spread_lower_bound: float = 1e-4,
     spread: Optional[pd.DataFrame] = None,
+    modulate_using_prediction_magnitude: bool = False,
+    constant_decorrelation_coefficient: float = 0.0,
 ) -> pd.DataFrame:
     """
     Compute target dollar positions based on forecasts, basic constraints.
@@ -148,6 +150,13 @@ def compute_target_positions_longitudinally(
     :param spread_lower_bound: minimum allowable spread estimate
     :param spread: optional dataframe of spread forecasts; if `None`, then
         impute `spread_lower_bound`.
+    :param modulate_using_prediction_magnitude: if `False`, using only the
+        sign of the prediction (after any thresholding) and volatility for
+        determining position size; if `True`, perform a final multiplication
+        by the position magnitude.
+    :param constant_decorrelation_coefficient: must be >=0. If equal to zero,
+        this is a no-op; if greater than zero, preprocess predictions by
+        decorrelating under the assumption of constant correlation.
     """
     # TODO(Paul): Some callers compute at a single time step with an
     #  integer-indexed dataframe. Either update the callers to use a timestamp
@@ -166,6 +175,7 @@ def compute_target_positions_longitudinally(
     dassert_is_nonnegative_float(gamma)
     dassert_is_nonnegative_float(target_dollar_risk_per_name)
     dassert_is_nonnegative_float(spread_lower_bound)
+    dassert_is_nonnegative_float(constant_decorrelation_coefficient)
     # Initialize spread.
     if spread is None:
         _LOG.info(
@@ -183,6 +193,15 @@ def compute_target_positions_longitudinally(
     #
     idx = prediction.index
     prediction = prediction.dropna(how="all")
+    if constant_decorrelation_coefficient > 0:
+        prediction = sigproc.decorrelate_constant_correlation_df_rows(
+            prediction,
+            constant_decorrelation_coefficient,
+        )
+        _LOG.debug(
+            "decorrelated predictions=\n%s",
+            hpandas.df_to_str(prediction),
+        )
     non_nan_idx = prediction.index
     volatility_to_spread = volatility.divide(spread)
     _LOG.debug(
@@ -229,6 +248,8 @@ def compute_target_positions_longitudinally(
         hpandas.df_to_str(target_capital),
     )
     target_positions = target_position_signs.multiply(target_capital)
+    if modulate_using_prediction_magnitude:
+        target_positions = target_positions.multiply(prediction.abs())
     _LOG.debug("target_positions=\n%s", hpandas.df_to_str(target_positions))
     #
     hdbg.dassert_isinstance(target_positions, pd.DataFrame)

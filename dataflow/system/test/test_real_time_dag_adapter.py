@@ -47,8 +47,13 @@ class Test_adapt_dag_to_real_time1(hunitest.TestCase):
         prediction_col = "close"
         volatility_col = "close"
         spread_col = None
-        order_duration_in_mins = 5
+        order_config = {
+            "order_type": "price@twap",
+            "passivity_factor": None,
+            "order_duration_in_mins": 5,
+        }
         style = "cross_sectional"
+        optimizer_backend = "pomo"
         compute_target_positions_kwargs = {
             "bulk_frac_to_remove": 0.0,
             "target_gmv": 1e5,
@@ -61,8 +66,9 @@ class Test_adapt_dag_to_real_time1(hunitest.TestCase):
                 volatility_col,
                 prediction_col,
                 spread_col,
-                order_duration_in_mins,
+                order_config,
                 style,
+                optimizer_backend,
                 compute_target_positions_kwargs,
                 root_log_dir,
             )

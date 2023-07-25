@@ -1,7 +1,7 @@
 ################################################################################
 config
 ################################################################################
-cols: ['ret_0', 'ret_0_2']
+cols: ['ret_0', 'ret_0.shift_-2']
 steps_ahead: 2
 nan_mode: leave_unchanged
 ################################################################################
@@ -45,8 +45,8 @@ ret_0:
           ---  ------           --------------  -----
            0   ret_0            40 non-null     float64
            1   ret_0_vol        40 non-null     float64
-           2   ret_0_vol_2      38 non-null     float64
-           3   ret_0_vol_2_hat  30 non-null     float64
+           2   ret_0_vol.shift_-2      38 non-null     float64
+           3   ret_0_vol.shift_-2_hat  30 non-null     float64
           dtypes: float64(4)
     calculate_vol_pth_root:
       fit:
@@ -59,8 +59,8 @@ ret_0:
           ---  ------           --------------  -----
            0   ret_0            40 non-null     float64
            1   ret_0_vol        40 non-null     float64
-           2   ret_0_vol_2      38 non-null     float64
-           3   ret_0_vol_2_hat  30 non-null     float64
+           2   ret_0_vol.shift_-2      38 non-null     float64
+           3   ret_0_vol.shift_-2_hat  30 non-null     float64
           dtypes: float64(4)
     demodulate_using_vol_pred:
       fit:
@@ -72,12 +72,12 @@ ret_0:
            #   Column           Non-Null Count  Dtype
           ---  ------           --------------  -----
            0   ret_0_vol        40 non-null     float64
-           1   ret_0_vol_2      38 non-null     float64
-           2   ret_0_vol_2_hat  30 non-null     float64
+           1   ret_0_vol.shift_-2      38 non-null     float64
+           2   ret_0_vol.shift_-2_hat  30 non-null     float64
            3   ret_0_vol_adj    30 non-null     float64
           dtypes: float64(4)
-ret_0_2:
-  ret_0_2:
+ret_0.shift_-2:
+  ret_0.shift_-2:
     load_data:
       fit:
         fit_df_info:
@@ -87,7 +87,7 @@ ret_0_2:
           Data columns (total 1 columns):
            #   Column   Non-Null Count  Dtype
           ---  ------   --------------  -----
-           0   ret_0_2  40 non-null     float64
+           0   ret_0.shift_-2  40 non-null     float64
           dtypes: float64(1)
     calculate_vol_pth_power:
       fit:
@@ -98,8 +98,8 @@ ret_0_2:
           Data columns (total 2 columns):
            #   Column       Non-Null Count  Dtype
           ---  ------       --------------  -----
-           0   ret_0_2      40 non-null     float64
-           1   ret_0_2_vol  40 non-null     float64
+           0   ret_0.shift_-2      40 non-null     float64
+           1   ret_0.shift_-2.vol  40 non-null     float64
           dtypes: float64(2)
     compute_smooth_moving_average:
       fit:
@@ -112,10 +112,10 @@ ret_0_2:
           Data columns (total 4 columns):
            #   Column             Non-Null Count  Dtype
           ---  ------             --------------  -----
-           0   ret_0_2            40 non-null     float64
-           1   ret_0_2_vol        40 non-null     float64
-           2   ret_0_2_vol_2      38 non-null     float64
-           3   ret_0_2_vol_2_hat  30 non-null     float64
+           0   ret_0.shift_-2            40 non-null     float64
+           1   ret_0.shift_-2.vol        40 non-null     float64
+           2   ret_0.shift_-2.vol.shift_-2      38 non-null     float64
+           3   ret_0.shift_-2.vol.shift_-2_hat  30 non-null     float64
           dtypes: float64(4)
     calculate_vol_pth_root:
       fit:
@@ -126,10 +126,10 @@ ret_0_2:
           Data columns (total 4 columns):
            #   Column             Non-Null Count  Dtype
           ---  ------             --------------  -----
-           0   ret_0_2            40 non-null     float64
-           1   ret_0_2_vol        40 non-null     float64
-           2   ret_0_2_vol_2      38 non-null     float64
-           3   ret_0_2_vol_2_hat  30 non-null     float64
+           0   ret_0.shift_-2            40 non-null     float64
+           1   ret_0.shift_-2.vol        40 non-null     float64
+           2   ret_0.shift_-2.vol.shift_-2      38 non-null     float64
+           3   ret_0.shift_-2.vol.shift_-2_hat  30 non-null     float64
           dtypes: float64(4)
     demodulate_using_vol_pred:
       fit:
@@ -140,15 +140,15 @@ ret_0_2:
           Data columns (total 4 columns):
            #   Column             Non-Null Count  Dtype
           ---  ------             --------------  -----
-           0   ret_0_2_vol        40 non-null     float64
-           1   ret_0_2_vol_2      38 non-null     float64
-           2   ret_0_2_vol_2_hat  30 non-null     float64
-           3   ret_0_2_vol_adj    30 non-null     float64
+           0   ret_0.shift_-2.vol        40 non-null     float64
+           1   ret_0.shift_-2.vol.shift_-2      38 non-null     float64
+           2   ret_0.shift_-2.vol.shift_-2_hat  30 non-null     float64
+           3   ret_0.shift_-2.vol_adj    30 non-null     float64
           dtypes: float64(4)
 ################################################################################
 df_out
 ################################################################################
-               ret_0   ret_0_2  ret_0_vol  ret_0_vol_2  ret_0_vol_2_hat  ret_0_vol_adj  ret_0_2_vol  ret_0_2_vol_2  ret_0_2_vol_2_hat  ret_0_2_vol_adj
+               ret_0   ret_0.shift_-2  ret_0_vol  ret_0_vol.shift_-2  ret_0_vol.shift_-2_hat  ret_0_vol_adj  ret_0.shift_-2.vol  ret_0.shift_-2.vol.shift_-2  ret_0.shift_-2.vol.shift_-2_hat  ret_0.shift_-2.vol_adj
 2000-01-03  1.764052  0.715499   1.764052     1.516029              NaN            NaN     0.715499       0.190241                NaN              NaN
 2000-01-04  1.193981 -0.226037   1.193981     2.923106              NaN            NaN     0.226037       4.873882                NaN              NaN
 2000-01-05  1.516029 -0.190241   1.516029     3.182956              NaN            NaN     0.190241       2.673304                NaN              NaN

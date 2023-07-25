@@ -320,6 +320,7 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
         left_close: bool,
         right_close: bool,
         limit: Optional[int],
+        ignore_delay: bool,
     ) -> pd.DataFrame:
         """
         See the parent class.
@@ -332,6 +333,7 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
             left_close,
             right_close,
             limit,
+            ignore_delay,
         )
         market_data_df2 = self._im_client_market_data2._get_data(
             start_ts,
@@ -341,6 +343,7 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
             left_close,
             right_close,
             limit,
+            ignore_delay,
         )
         # TODO(Grisha): @Dan If the data is coming from the same data source,
         # then we merge on `full_symbol` and `asset_id`. If the data is coming

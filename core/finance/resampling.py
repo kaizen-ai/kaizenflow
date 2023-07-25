@@ -118,9 +118,17 @@ def resample_bars(
         resampled = resampled.rename(columns=col_dict)
         hdbg.dassert(not resampled.columns.has_duplicates)
         results.append(resampled)
+    if isinstance(resample_kwargs, dict) and "offset" in resample_kwargs:
+        offset = resample_kwargs["offset"]
+    else:
+        offset = None
     for price_col, volume_col, vwap_col in vwap_groups:
         vwap = compute_vwap(
-            df, rule=rule, price_col=price_col, volume_col=volume_col
+            df,
+            rule=rule,
+            price_col=price_col,
+            volume_col=volume_col,
+            offset=offset,
         )
         vwap.name = vwap_col
         results.append(vwap)

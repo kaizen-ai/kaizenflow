@@ -2,12 +2,12 @@
 config
 ################################################################################
 target_col: ret_0_zscored
-prediction_cols: ['ret_0_zscored_1_hat', 'ret_0_zscored_2_hat', 'ret_0_zscored_3_hat']
-volatility_col: vol_1_hat
+prediction_cols: ['ret_0_zscored.shift_-1_hat', 'ret_0_zscored.shift_-2_hat', 'ret_0_zscored.shift_-3_hat']
+volatility_col: vol.shift_-1_hat
 ################################################################################
 df_in
 ################################################################################
-               ret_0  vol_1_hat  ret_0_zscored  ret_0_zscored_3  ret_0_zscored_1_hat  ret_0_zscored_2_hat  ret_0_zscored_3_hat
+               ret_0  vol.shift_-1_hat  ret_0_zscored  ret_0_zscored.shift_-3  ret_0_zscored.shift_-1_hat  ret_0_zscored.shift_-2_hat  ret_0_zscored.shift_-3_hat
 2010-01-01  0.049671   0.049671            NaN         3.827786                  NaN                  NaN                  NaN
 2010-01-02  0.085516   0.068154       1.721642         2.943468             1.721642             1.721642             1.721642
 2010-01-03  0.136459   0.092359       2.002219         1.847281             1.896290             1.885098             1.879376
@@ -61,7 +61,7 @@ df_in
 ################################################################################
 df_out
 ################################################################################
-            cumret_1  cumret_2  cumret_3  cumret_1_hat  cumret_2_hat  cumret_3_hat
+            cumret.shift_-1  cumret.shift_-2  cumret.shift_-3  cumret.shift_-1_hat  cumret.shift_-2_hat  cumret.shift_-3_hat
 2010-01-01  0.353531  0.489989  0.575506           NaN           NaN           NaN
 2010-01-02  0.482418  0.835949  0.972408      0.117336      0.234673      0.352009
 2010-01-03  0.435589  0.918008  1.271538      0.175140      0.349245      0.522823

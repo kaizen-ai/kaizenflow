@@ -12,6 +12,7 @@
   * [Merge master to your branch](#merge-master-to-your-branch)
   * [Ask for reviews](#ask-for-reviews)
   * [Do not use screenshots](#do-not-use-screenshots)
+  * [Report bugs correctly](#report-bugs-correctly)
 - [Look at examples of the first reviews](#look-at-examples-of-the-first-reviews)
 
 <!-- tocstop -->
@@ -100,7 +101,7 @@ some helpful tips and resources to guide you through your first review.
       their comments are implemented
   - Ping the assigned Reviewer in the issue if nothing happens in 24 hours
   - If you want to keep someone notified about changes in the PR but do not want
-    to make him/her a Reviewer, type `FYI @githib_name` in a comment section
+    to make him/her a Reviewer, type `FYI @github_name` in a comment section
 
 ### Mention the issue
 
@@ -177,6 +178,32 @@ some helpful tips and resources to guide you through your first review.
 
     NameError: name 'ddcrsede' is not defined
     ```
+
+### Report bugs correctly
+
+- Whenever you face any errors put as much information about the issue as
+  possible, e.g.,:
+  - What you are trying to achieve
+  - Command line you ran, e.g.,
+    ```
+    > i lint -f defi/tulip/test/test_dao_cross_sol.py
+    ```
+  - **Copy-paste** the error and the stack trace from the cmd line, **no
+    screenshots**, e.g.,
+    ```
+    Traceback (most recent call last):
+      File "/venv/bin/invoke", line 8, in <module>
+        sys.exit(program.run())
+      File "/venv/lib/python3.8/site-packages/invoke/program.py", line 373, in run
+        self.parse_collection()
+    ValueError: One and only one set-up config should be true:
+    ```
+  - The log of the run
+    - Maybe the same run using `-v DEBUG` to get more info on the problem
+  - What the problem is
+  - Why the outcome is different from what you expected
+  - E.g. on how to report any issues
+    - https://github.com/sorrentum/sorrentum/issues/370#issue-1782574355
 
 ## Look at examples of the first reviews
 

@@ -14,15 +14,18 @@ from tqdm.autonotebook import tqdm
 
 import core.config as cconfig
 import core.key_sorted_ordered_dict as cksoordi
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hdict as hdict
 import helpers.hio as hio
 import helpers.hobject as hobject
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hwall_clock_time as hwacltim
 import oms.call_optimizer as ocalopti
 import oms.cc_optimizer_utils as occoputi
-import oms.ccxt_broker as occxbrok
+import oms.ccxt.ccxt_broker_v1 as occcbrv1
+import oms.ccxt.ccxt_utils as occccuti
 import oms.order as omorder
 import oms.portfolio as omportfo
 
@@ -83,11 +86,8 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         # Save order config.
         self._order_dict = order_dict
         _ = hdict.typed_get(order_dict, "order_type", expected_type=str)
-        _ = hdict.typed_get(
+        self._order_duration_in_mins = hdict.typed_get(
             order_dict, "order_duration_in_mins", expected_type=int
-        )
-        self._offset_min = pd.DateOffset(
-            minutes=order_dict["order_duration_in_mins"]
         )
         # Save optimizer config.
         _ = hdict.typed_get(optimizer_dict, "backend", expected_type=str)
@@ -258,21 +258,29 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
             self._log_state()
             self._portfolio.log_state(os.path.join(self._log_dir, "portfolio"))
 
-    async def submit_orders(self, orders: List[omorder.Order]) -> None:
+    async def submit_orders(self, orders: List[omorder.Order], **kwargs) -> None:
         """
         Submit `orders` to the broker confirming receipt and log the object
         state.
 
         :param orders: list of orders to execute
+        :param *args: args for `submit_order`, like `order_type` and `passivity_factor`
         """
         # Submit orders.
+        order_type = kwargs["order_type"]
         if orders:
             broker = self._portfolio.broker
             _LOG.debug("Event: awaiting broker.submit_orders()...")
-            await broker.submit_orders(orders)
-            _LOG.debug("Event: awaiting broker.submit_orders() done.")
+            if order_type == "price@custom_twap":
+                hdbg.dassert_in("passivity_factor", kwargs)
+                passivity_factor = kwargs["passivity_factor"]
+                hdbg.dassert_isinstance(broker, occcbrv1.CcxtBroker_v1)
+                await broker.submit_twap_orders(orders, passivity_factor)
+            else:
+                await broker.submit_orders(orders)
         else:
             _LOG.debug("No orders to submit to broker.")
+        _LOG.debug("Event: awaiting broker.submit_orders() done.")
         # Log the entire state after submitting the orders.
         # We don't need to mark to market since `generate_orders()` takes care of
         # marking to market the Portfolio.
@@ -306,7 +314,8 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         # TODO(gp): We should also add the bar timestamp as for other objects.
         wall_clock_time = self._get_wall_clock_time()
         wall_clock_time_str = wall_clock_time.strftime("%Y%m%d_%H%M%S")
-        filename = f"{wall_clock_time_str}.csv"
+        bar_timestamp = hwacltim.get_current_bar_timestamp(as_str=True)
+        filename = f"{bar_timestamp}.{wall_clock_time_str}.csv"
         # Log the last target position.
         if self._target_positions:
             _, last_target_positions = self._target_positions.peek()
@@ -354,7 +363,7 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         _LOG.debug("backend=%s", backend)
         if backend == "cc_pomo":
             market_info = self._portfolio.broker.market_info
-            asset_ids_to_decimals = occxbrok.subset_market_info(
+            asset_ids_to_decimals = occccuti.subset_market_info(
                 market_info, "amount_precision"
             )
             _LOG.debug("asset_ids_to_decimals=%s", asset_ids_to_decimals)
@@ -618,15 +627,32 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
                 char1="#",
             ),
         )
-        # Enter position between now and the next `order_duration_in_mins` minutes.
         # Create a config for `Order`.
-        timestamp_start = wall_clock_timestamp
-        timestamp_end = wall_clock_timestamp + self._offset_min
+        # Enter position between now and the end of the current bar.
+        order_timestamp_start = wall_clock_timestamp
+        # Find the end of the current bar.
+        mode = "floor"
+        # TODO(Grisha): we use `order_duration_in_mins` to infer a bar length;
+        # probably we should use bar duration directly from the `System.config`
+        # and remove `order_duration_in_mins` from the ctor of this class.
+        # TODO(Grisha): Consider creating a `find_bar_end_timestamp()`.
+        bar_duration_in_secs = hdateti.convert_minutes_to_seconds(
+            self._order_duration_in_mins
+        )
+        current_bar_start_timestamp = hdateti.find_bar_timestamp(
+            order_timestamp_start,
+            bar_duration_in_secs,
+            mode=mode,
+        )
+        current_bar_end_timestamp = current_bar_start_timestamp + pd.DateOffset(
+            seconds=bar_duration_in_secs
+        )
+        #
         order_dict = {
             "type_": self._order_dict["order_type"],
             "creation_timestamp": wall_clock_timestamp,
-            "start_timestamp": timestamp_start,
-            "end_timestamp": timestamp_end,
+            "start_timestamp": order_timestamp_start,
+            "end_timestamp": current_bar_end_timestamp,
         }
         orders = self._generate_orders(
             target_positions[["holdings_shares", "target_trades_shares"]],

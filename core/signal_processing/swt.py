@@ -60,6 +60,7 @@ def get_swt(
         - "tuple": return (smooth_df, detail_df)
         - "smooth": return smooth_df
         - "detail": return detail_df
+        - "detail_and_last_smooth": detail and `depth` smooth, as one dataframe
     :return: see `output_mode`
     """
     # Choice of wavelet may significantly impact results.
@@ -133,7 +134,12 @@ def get_swt(
         return smooth_df
     if output_mode == "detail":
         return detail_df
-    raise ValueError("Unsupported output_mode `{output_mode}`")
+    if output_mode == "detail_and_last_smooth":
+        effective_levels = smooth_df.columns.size
+        hdbg.dassert_in(effective_levels, smooth_df.columns)
+        detail_df[f"{effective_levels}_smooth"] = smooth_df[effective_levels]
+        return detail_df
+    raise ValueError(f"Unsupported output_mode `{output_mode}`")
 
 
 def get_swt_level(
@@ -173,6 +179,25 @@ def get_swt_level(
     )
     hdbg.dassert_in(level, swt.columns)
     return swt[level]
+
+
+def apply_swt(
+    sig: pd.DataFrame,
+    wavelet: Optional[str] = None,
+    depth: Optional[int] = None,
+    timing_mode: Optional[str] = None,
+    output_mode: Optional[str] = None,
+) -> pd.DataFrame:
+    hdbg.dassert_isinstance(sig, pd.DataFrame)
+    if output_mode is None or output_mode == "tuple":
+        raise AssertionError("Unsupported `output_mode`=%s" % str(output_mode))
+    dfs = []
+    for col in sig.columns:
+        df = get_swt(sig[col], wavelet, depth, timing_mode, output_mode)
+        df = df.rename(columns=lambda x: str(col) + "_" + str(x))
+        dfs.append(df)
+    df = pd.concat(dfs, axis=1)
+    return df
 
 
 # #############################################################################
@@ -431,7 +456,7 @@ def compute_swt_covar(
     axis: int = 1,
 ) -> pd.DataFrame:
     """
-    Get swt covar using levels up to `depth`.
+    Get swt covar using details up to `depth`.
 
     Params as in `get_swt()`.
     """
@@ -526,6 +551,11 @@ def _compute_fir_zscore(
 ) -> pd.Series:
     """
     Z-score with a FIR filter.
+
+    Demeaning (if selected) is performed using a high-pass filter. Variance
+    for z-scoring is computed using a low-pass filter.
+
+    TODO(Paul): Adjust scaling depending upon `wavelet`.
     """
     signal = hpandas.as_series(signal)
     if demean:
