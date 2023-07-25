@@ -27,18 +27,18 @@ _LOG = logging.getLogger(__name__)
 
 
 def _invite_collaborator(
+    github_username: str,
     owner_username: str,
     repo_name: str,
     access_token: str,
-    github_username: str,
 ) -> None:
     """
     Invite a collaborator to GitHub.
 
+    :params github_username.
     :params owner_username.
     :params repo_name.
     :params access_token.
-    :params github_username.
     """
     add_collaborator_endpoint = os.path.join(
         "https://api.github.com/repos",
@@ -145,23 +145,24 @@ def _invite_collaborator(
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
+    
     parser.add_argument(
         "--github_username",
         type=str,
         required=True,
-        help="GH username that you are providing the permissions",
+        help="Collaborator's GH username",
     )
     parser.add_argument(
         "--owner_username",
         type=str,
         required=True,
-        help="Owner's username of the repository",
+        help="Repository owner GH username",
     )
     parser.add_argument(
         "--repo_name",
         type=str,
         required=True,
-        help="Repository name",
+        help="Repository name to provide permission to",
     )
     parser.add_argument(
         "--access_token",
@@ -176,10 +177,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     _invite_collaborator(
+        args.github_username,
         args.owner_username,
         args.repo_name,
         args.access_token,
-        args.github_username,
     )
 
 
