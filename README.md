@@ -125,6 +125,8 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Code organization](/code_organization.md)
 
+- [Profiling](/docs/Profiling.md)
+
 # DeFi: start developing
 
 - [DeFi README](/defi/README.md)
