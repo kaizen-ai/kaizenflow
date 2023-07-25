@@ -35,6 +35,7 @@ import core.plotting.misc_plotting as cplmiplo
 import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
 import core.plotting.test.test_plots as cptetepl
+import core.plotting.correlation as cplocorr
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -76,3 +77,14 @@ cplmiplo.plot_time_series_by_period(test_series, period)
 # %%
 period = "time"
 cplmiplo.plot_time_series_by_period(test_series, period)
+
+# %% [markdown]
+# ## `plot_heatmap()`
+
+# %%
+mode = "clustermap"
+corr_df = cptetepl.Test_plots.get_plot_heatmap()
+figsize = (20, 20)
+cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)
+
+# %%
