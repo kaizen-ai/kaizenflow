@@ -24,7 +24,7 @@
 
 - You can use the time-tested Linux `time` command to profile both time and memory
 
-```bash
+``` `bash`
 > /usr/bin/time -v COMMAND 2>&1 | tee time.log
 
 Command being timed: "...COMMAND..."
