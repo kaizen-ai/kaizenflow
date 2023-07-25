@@ -65,6 +65,7 @@ This contains a set of resources that over time will make 10x more productive
 ## In-depth docs
 
 - [Code organization](/code_organization.md)
+- [Telegram](Telegram.md)
 
 ## DeFi: start developing
 
