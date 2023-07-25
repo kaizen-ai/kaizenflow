@@ -34,7 +34,7 @@ NhAAAAAwEAAQAAAYEA0IQsLy1lL3bhPT+43sht2/m9tqZm8sEQrXMAVtfm4ji/LXMr7094
   - Run `pycharm.sh` using terminal (should be there):
 
 ```
-        > bash /opt/pycharm-community-2021.2.3/bin/pycharm.sh
+    > bash /opt/pycharm-community-2021.2.3/bin/pycharm.sh
 ```
 
 # Installation of VS Code
@@ -67,8 +67,8 @@ NhAAAAAwEAAQAAAYEA0IQsLy1lL3bhPT+43sht2/m9tqZm8sEQrXMAVtfm4ji/LXMr7094
 - Open a preferred repo directory 
   - Click on the "Source control" button on the
   left
-  <img src="Tools_VisualStudio_Code_figs/image4.png" style="width:0.41667in;height:0.48958in" />
+    <img src="Tools_VisualStudio_Code_figs/image4.png" style="width:0.41667in;height:0.48958in" />
   - Choose "Open Folder"
-  <img src="Tools_VisualStudio_Code_figs/image1.png" style="width:2.47917in;height:1.59375in" />
+    <img src="Tools_VisualStudio_Code_figs/image1.png" style="width:2.47917in;height:1.59375in" /> 
   - Choose the desired repo directory from the drop-down menu, e.g., `cmamp1`
-  <img src="Tools_VisualStudio_Code_figs/image5.png" style="width:2.5in;height:1.44792in" />
+    <img src="Tools_VisualStudio_Code_figs/image5.png" style="width:2.5in;height:1.44792in" />
