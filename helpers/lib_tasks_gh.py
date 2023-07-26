@@ -107,7 +107,7 @@ def _get_workflow_table() -> htable.TableType:
     _LOG.debug(hprint.to_str("first_line num_cols"))
     cols = [
         "completed",  # E.g., completed, in_progress
-        "status",   # E.g., success, failure
+        "status",  # E.g., success, failure
         "name",  # Aka title
         "workflow",
         "branch",
@@ -143,7 +143,9 @@ def gh_workflow_list(  # type: ignore
     :param show_stack_trace: in case of error run `pytest_repro` reporting also
         the stack trace
     """
-    hlitauti.report_task(txt=hprint.to_str("filter_by_branch filter_by_completed"))
+    hlitauti.report_task(
+        txt=hprint.to_str("filter_by_branch filter_by_completed")
+    )
     # Login.
     gh_login(ctx)
     # Get the table.
@@ -181,8 +183,9 @@ def gh_workflow_list(  # type: ignore
         for i in range(num_rows):
             status_column = table_tmp.get_column("status")
             _LOG.debug("status_column=%s", str(status_column))
-            hdbg.dassert_lt(i, len(status_column),
-                            msg="status_column=%s" % status_column)
+            hdbg.dassert_lt(
+                i, len(status_column), msg="status_column=%s" % status_column
+            )
             status = status_column[i]
             if status == "success":
                 print(f"Workflow '{workflow}' for '{branch_name}' is ok")
@@ -328,8 +331,12 @@ def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # ty
     Print the title that corresponds to the given issue and repo_short_name.
     E.g., AmpTask1251_Update_GH_actions_for_amp.
 
-    :to use: run `invoke gh_issue_title [your_issue_id]` in your sorrentum directory. Note: before running the invoke, one must check their login status on GH by running `gh auth status`. 
-    
+    Before running the invoke, one must check their login status on GH by running
+    `gh auth status`.
+
+    :param issue_id: id number of the issue to create the branch for
+    :param repo_short_name: short name of the repo to use for the branch name building.
+        "current" refers to the repo where the call is implemented
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
     hlitauti.report_task(txt=hprint.to_str("issue_id repo_short_name"))
