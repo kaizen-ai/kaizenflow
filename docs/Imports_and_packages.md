@@ -40,8 +40,8 @@
 
 - The simplest case of circular import is a situation when in lib `A` we have
   `import B`, and in lib B we have `import A`
-- The presence of circular imports can be checked with an invoke i
-  lint_detect_cycles. By default, it will run on the whole repo, which takes a
+- The presence of circular imports can be checked with an invoke `i
+  lint_detect_cycles`. By default, it will run on the whole repo, which takes a
   couple of minutes, but it will provide the most reliable and thorough check
   for circular imports
 
