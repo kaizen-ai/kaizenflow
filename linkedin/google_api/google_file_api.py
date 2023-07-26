@@ -96,7 +96,8 @@ class GoogleFileApi:
                 folder_list[0].get("id"),
             )
             _LOG.info(
-                "if you want to use another folder id, please change the folder id manually."
+                "if you want to use another '%s' folder, please change the folder id manually.",
+                name,
             )
             return folder_list[0]
         #
@@ -128,7 +129,7 @@ class GoogleFileApi:
             )
             if not os.path.exists(client_secrets_path):
                 raise RuntimeError(
-                    "Please download client_secrets.json from Google API and put it under the same directory as google_sheets.py."
+                    "Please download client_secrets.json from Google API."
                 )
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
