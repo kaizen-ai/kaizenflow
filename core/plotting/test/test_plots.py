@@ -4,6 +4,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
+import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.visual_stationarity_test as cpvistte
 
@@ -40,6 +41,15 @@ class Test_plots(unittest.TestCase):
         test_series = pd.Series(values, index=timestamps)
         return test_series
 
+    @staticmethod
+    def get_plot_heatmap1() -> pd.core.frame.DataFrame:
+        """
+        Generate a data frame with some random features.
+        """
+        np.random.seed(35)
+        df = pd.DataFrame(np.random.randn(10, 6), columns=list("ABCDEF"))
+        return df
+
     def test_plot_histograms_and_lagged_scatterplot1(self) -> None:
         """
         Smoke test for `plot_histograms_and_lagged_scatterplot()`.
@@ -62,6 +72,15 @@ class Test_plots(unittest.TestCase):
         period = "time"
         cplmiplo.plot_time_series_by_period(test_series, period)
 
+    def test_plot_heatmap1(self) -> None:
+        """
+        Smoke test for `plot_heatmap()`
+        """
+        # TODO(Dan): Move to the notebook config.
+        mode = "clustermap"
+        corr_df = self.get_plot_heatmap()
+        figsize = (20, 20)
+        cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)
 
 class Test_plot_timeseries_distribution(unittest.TestCase):
     @staticmethod
