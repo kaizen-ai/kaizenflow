@@ -1020,6 +1020,18 @@ def assert_equal(
     return is_equal
 
 
+def _modify_end_of_line(output: Optional[str]) -> str:
+    """
+    Modify the last line of the string output.
+    """ 
+    if output:
+        output = [line.rstrip("\n") for line in output]
+        output = "\n".join(output)
+        output = output.rstrip("\n") + "\n"
+    else:
+        output = ""
+    return output
+
 # #############################################################################
 
 # If a golden outcome is missing asserts (instead of updating golden and adding
@@ -1413,13 +1425,16 @@ class TestCase(unittest.TestCase):
         _LOG.debug("actual=\n%s", actual)
         outcome_updated = False
         file_exists = os.path.exists(file_name)
+        if file_exists:
+            expected = hio.from_file(file_name)
+            expected = _modify_end_of_line(expected)
+        actual = _modify_end_of_line(actual)
         _LOG.debug("file_exists=%s", file_exists)
         is_equal: Optional[bool] = None
         if self._update_tests:
             _LOG.debug("# Update golden outcomes")
             # Determine whether outcome needs to be updated.
             if file_exists:
-                expected = hio.from_file(file_name)
                 is_equal = expected == actual
                 if not is_equal:
                     outcome_updated = True
@@ -1436,7 +1451,6 @@ class TestCase(unittest.TestCase):
             if file_exists:
                 # Golden outcome is available: check the actual outcome against
                 # the golden outcome.
-                expected = hio.from_file(file_name)
                 test_name = self._get_test_name()
                 is_equal = assert_equal(
                     actual,
