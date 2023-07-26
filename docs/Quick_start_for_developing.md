@@ -17,6 +17,9 @@
     [ubuntu](https://www.youtube.com/watch?v=NhlhJFKmzpk&ab_channel=ProgrammingKnowledge)
     on VMWare software
   - Make sure you set up your git and github
+    - Reference website for instances of
+      [terminal cache-locking](https://itsfoss.com/could-not-get-lock-error/#troubleshooting-1-unable-to-acquire-the-dpkg-frontend-lock-)
+      ; In the case of unattended processes, restart VM to install security patch updates
   - Install
     [docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
     on your Ubuntu VM
@@ -112,7 +115,9 @@
 
   - Linux sudo problem, see
     [here](https://stackoverflow.com/questions/48568172/docker-sock-permission-denied)
-    for the solution
+    for the solution (or
+    [here](https://phoenixnap.com/kb/docker-permission-denied.)
+    for issues within the thin environment)
 
     ```
     > docker pull hello-world
@@ -121,19 +126,29 @@
 
 - Thin environment
 
-  1. Build the thin environment; this is done once
+  1. Ensure that python3.10-venv is installed; if not run
+
+     ```
+     > sudo apt install python3.10-venv
+     ```
+     
+  2. Build the thin environment; this is done once
 
      ```
      > source dev_scripts/client_setup/build.sh
      ```
-
-  2. Activate the thin environment; make sure it is always activated
+     - If terminal crashes from
+       [aws-cli installation error](https://github.com/aws/aws-cli/issues/8036)
+       with output ending in `AttributeError: cython_sources`, open dev_scripts/client_setup/requirements.txt
+       and insert `pyyaml==5.3.1` at the top
+       
+  3. Activate the thin environment; make sure it is always activated
 
      ```
      > source dev_scripts/setenv_amp.sh
      ```
 
-  3. If you see output like this, your environment is successfully built! If not
+  4. If you see output like this, your environment is successfully built! If not
      and you encounter any issues, please post them under your designated
      on-boarding issue
 
@@ -208,7 +223,13 @@
   - pull the latest container with `invoke docker_pull`
   ```
 
-  2. Start a Jupyter server
+  2. Exit out of app terminal prompts
+
+     ```
+     I have no name!@60a1f38f89a3:/app$ exit
+     ```
+  
+  3. Start a Jupyter server
 
      ```
      > i docker_jupyter
