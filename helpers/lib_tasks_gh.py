@@ -328,6 +328,8 @@ def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # ty
     Print the title that corresponds to the given issue and repo_short_name.
     E.g., AmpTask1251_Update_GH_actions_for_amp.
 
+    :to use: run `invoke gh_issue_title [your_issue_id]` in your sorrentum directory. Note: before running the invoke, one must check their login status on GH by running `gh auth status`. 
+    
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
     hlitauti.report_task(txt=hprint.to_str("issue_id repo_short_name"))
