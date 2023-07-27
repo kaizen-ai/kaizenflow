@@ -414,7 +414,10 @@ def filter_text(regex: str, txt: str) -> str:
 
 def purify_from_environment(txt: str) -> str:
     """
-    Replace the username with `$USER_NAME`.
+    Purify environment variables with placeholders.
+
+    - replace the git path with `$GIT_ROOT`
+    - replace the user name with `$USER_NAME`
     """
     # We remove references to the Git modules starting from the innermost one.
     for super_module in [False, True]:
