@@ -1,6 +1,5 @@
 import logging
 import unittest
-import random
 
 import numpy as np
 import pandas as pd
@@ -14,21 +13,8 @@ _LOG = logging.getLogger(__name__)
 
 class Test_plots(unittest.TestCase):
     """
-    Run smoke tests for plotting functions. 
+    Run smoke tests for plotting functions.
     """
-
-    @classmethod
-    def setUpClass(cls):
-        # Save the original random seed.
-        cls.original_seed = np.random.get_state()
-        # Set a specific random seed for the entire test class.
-        cls._seed = 42 
-        np.random.seed(42)
-
-    @classmethod
-    def tearDownClass(cls):
-        # Restore the original random seed after all the test methods have been executed.
-        np.random.set_state(cls.original_seed)
 
     @staticmethod
     def get_plot_effective_correlation_rank1() -> pd.Series:
@@ -63,6 +49,19 @@ class Test_plots(unittest.TestCase):
         """
         df = pd.DataFrame(np.random.randn(10, 6), columns=list("ABCDEF"))
         return df
+
+    @classmethod
+    def setUpClass(cls):
+        # Save the original random seed.
+        cls.original_seed = np.random.get_state()
+        # Set a specific random seed for the entire test class.
+        cls._seed = 42
+        np.random.seed(42)
+
+    @classmethod
+    def tearDownClass(cls):
+        # Restore the original random seed after all the test methods have been executed.
+        np.random.set_state(cls.original_seed)
 
     def get_plot_histograms_and_lagged_scatterplot1(self) -> pd.Series:
         """
