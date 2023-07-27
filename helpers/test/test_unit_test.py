@@ -1187,28 +1187,30 @@ class Test_purify_amp_reference1(hunitest.TestCase):
 
 
 class Test_purify_from_environment1(hunitest.TestCase):
-    def _helper(self, txt: str, exp: str) -> None:
-        txt = hprint.dedent(txt)
-        act = hunitest.purify_from_environment(txt)
-        exp = hprint.dedent(exp)
-        self.assert_equal(act, exp)
-
-    def test(self) -> None:
+    def test1(self) -> None:
         """
         Replace the path to username with `$USER_NAME`
         """
         hsystem.set_user_name("dash")
         src = [
+            ("dash/take_square_dash",),
             ("take_square_dash",),
             ("dash_q_mv",),
             ("dash_q_mv_adj",),
             ("dash_q_mv_os",),
         ]
         dst = [
+            ("$USER_NAME/take_square_dash",),
             ("take_square_dash",),
-            ("$USER_NAME_q_mv",),
-            ("$USER_NAME_q_mv_adj",),
-            ("$USER_NAME_q_mv_os",),
+            ("dash_q_mv",),
+            ("dash_q_mv_adj",),
+            ("dash_q_mv_os",),
         ]
         for txt, exp in zip(src, dst):
-            self.helper(txt, exp)
+            self._helper(txt[0], exp[0])
+
+    def _helper(self, txt: str, exp: str) -> None:
+        txt = hprint.dedent(txt)
+        act = hunitest.purify_from_environment(txt)
+        exp = hprint.dedent(exp)
+        self.assert_equal(act, exp)

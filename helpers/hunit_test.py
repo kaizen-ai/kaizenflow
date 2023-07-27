@@ -413,10 +413,10 @@ def filter_text(regex: str, txt: str) -> str:
 
 
 def purify_from_environment(txt: str) -> str:
+    """
+    Replace the username with `$USER_NAME`.
+    """
     # We remove references to the Git modules starting from the innermost one.
-    """
-    Replace the path to username with `$USER_NAME`
-    """
     for super_module in [False, True]:
         # Replace the git path with `$GIT_ROOT`.
         super_module_path = hgit.get_client_root(super_module=super_module)
@@ -431,16 +431,10 @@ def purify_from_environment(txt: str) -> str:
     # Replace the user name with `$USER_NAME`.
     user_name = hsystem.get_user_name()
     txt_out = []
-
+    pattern = r"^(\/?)(" + user_name + r"/)"
+    target = r"\1$USER_NAME/"
     for line in txt.splitlines():
-        splitter = " |/|'"
-        keywords = re.split(splitter, line)
-        for kwd in keywords:
-            if kwd.startswith(user_name):
-                line = line.replace(user_name, "$USER_NAME")
-                break
-        txt_out.append(line)
-
+        txt_out.append(re.sub(pattern, target, line))
     txt = "\n".join(txt_out)
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
