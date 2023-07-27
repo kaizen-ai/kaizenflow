@@ -1,0 +1,50 @@
+17:01:00 - [36mINFO [0m hunit_test.py setUp:1042                               17:01:00 - [36mINFO [0m hunit_test.py setUp:1042                               
+################################################################################
+TestHistoricalPqByTileClient2.test_equal_dates1
+################################################################################
+17:01:00 hsystem.py _system:224                              > (/app/im_v2/common/test/generate_pq_test_data.py --start_date 2020-01-01 --end_date 2022-01-02 --freq 1H --assets binance::BTC_USDT,kucoin::FIL_USDT --asset_col_name full_symbol --partition_mode by_year_month --dst_dir /app/im_v2/common/data/client/test/outcomes/TestHistoricalPqByTileClient2.test_equal_dates1/tmp.scratch/tiled.bar_data --output_type cm_task_1103) 2>&1
+17:01:11 - [36mINFO [0m hunit_test.py setUp:1042                               17:01:11 - [36mINFO [0m hunit_test.py setUp:1042                               
+################################################################################
+TestHistoricalPqByTileClient2.test_multiple_months1
+################################################################################
+17:01:11 hsystem.py _system:224                              > (/app/im_v2/common/test/generate_pq_test_data.py --start_date 2020-01-01 --end_date 2022-01-02 --freq 1H --assets binance::BTC_USDT,kucoin::FIL_USDT --asset_col_name full_symbol --partition_mode by_year_month --dst_dir /app/im_v2/common/data/client/test/outcomes/TestHistoricalPqByTileClient2.test_multiple_months1/tmp.scratch/tiled.bar_data --output_type cm_task_1103) 2>&1
+17:01:20 - [36mINFO [0m hunit_test.py setUp:1042                               17:01:20 - [36mINFO [0m hunit_test.py setUp:1042                               
+################################################################################
+TestHistoricalPqByTileClient2.test_multiple_months2
+################################################################################
+17:01:20 hsystem.py _system:224                              > (/app/im_v2/common/test/generate_pq_test_data.py --start_date 2020-01-01 --end_date 2022-01-02 --freq 1H --assets binance::BTC_USDT,kucoin::FIL_USDT --asset_col_name full_symbol --partition_mode by_year_month --dst_dir /app/im_v2/common/data/client/test/outcomes/TestHistoricalPqByTileClient2.test_multiple_months2/tmp.scratch/tiled.bar_data --output_type cm_task_1103) 2>&1
+17:01:30 - [36mINFO [0m hunit_test.py setUp:1042                               17:01:30 - [36mINFO [0m hunit_test.py setUp:1042                               
+################################################################################
+TestHistoricalPqByTileClient2.test_multiple_months3
+################################################################################
+17:01:30 hsystem.py _system:224                              > (/app/im_v2/common/test/generate_pq_test_data.py --start_date 2020-01-01 --end_date 2022-01-02 --freq 1H --assets binance::BTC_USDT,kucoin::FIL_USDT --asset_col_name full_symbol --partition_mode by_year_month --dst_dir /app/im_v2/common/data/client/test/outcomes/TestHistoricalPqByTileClient2.test_multiple_months3/tmp.scratch/tiled.bar_data --output_type cm_task_1103) 2>&1
+17:01:40 - [36mINFO [0m hunit_test.py setUp:1042                               17:01:40 - [36mINFO [0m hunit_test.py setUp:1042                               
+################################################################################
+TestHistoricalPqByTileClient2.test_new_year1
+################################################################################
+17:01:40 hsystem.py _system:224                              > (/app/im_v2/common/test/generate_pq_test_data.py --start_date 2020-01-01 --end_date 2022-01-02 --freq 1H --assets binance::BTC_USDT,kucoin::FIL_USDT --asset_col_name full_symbol --partition_mode by_year_month --dst_dir /app/im_v2/common/data/client/test/outcomes/TestHistoricalPqByTileClient2.test_new_year1/tmp.scratch/tiled.bar_data --output_type cm_task_1103) 2>&1
+17:01:50 - [36mINFO [0m hunit_test.py setUp:1042                               17:01:50 - [36mINFO [0m hunit_test.py setUp:1042                               
+################################################################################
+TestHistoricalPqByTileClient2.test_one_month1
+################################################################################
+17:01:50 hsystem.py _system:224                              > (/app/im_v2/common/test/generate_pq_test_data.py --start_date 2020-01-01 --end_date 2022-01-02 --freq 1H --assets binance::BTC_USDT,kucoin::FIL_USDT --asset_col_name full_symbol --partition_mode by_year_month --dst_dir /app/im_v2/common/data/client/test/outcomes/TestHistoricalPqByTileClient2.test_one_month1/tmp.scratch/tiled.bar_data --output_type cm_task_1103) 2>&1
+17:01:59 - [36mINFO [0m hunit_test.py setUp:1042                               17:01:59 - [36mINFO [0m hunit_test.py setUp:1042                               
+################################################################################
+TestHistoricalPqByTileClient2.test_one_month2
+################################################################################
+17:01:59 hsystem.py _system:224                              > (/app/im_v2/common/test/generate_pq_test_data.py --start_date 2020-01-01 --end_date 2022-01-02 --freq 1H --assets binance::BTC_USDT,kucoin::FIL_USDT --asset_col_name full_symbol --partition_mode by_year_month --dst_dir /app/im_v2/common/data/client/test/outcomes/TestHistoricalPqByTileClient2.test_one_month2/tmp.scratch/tiled.bar_data --output_type cm_task_1103) 2>&1
+17:02:08 - [36mINFO [0m hunit_test.py setUp:1042                               17:02:08 - [36mINFO [0m hunit_test.py setUp:1042                               
+################################################################################
+TestHistoricalPqByTileClient2.test_only_end_date1
+################################################################################
+17:02:08 hsystem.py _system:224                              > (/app/im_v2/common/test/generate_pq_test_data.py --start_date 2020-01-01 --end_date 2022-01-02 --freq 1H --assets binance::BTC_USDT,kucoin::FIL_USDT --asset_col_name full_symbol --partition_mode by_year_month --dst_dir /app/im_v2/common/data/client/test/outcomes/TestHistoricalPqByTileClient2.test_only_end_date1/tmp.scratch/tiled.bar_data --output_type cm_task_1103) 2>&1
+17:02:18 - [36mINFO [0m hunit_test.py setUp:1042                               17:02:18 - [36mINFO [0m hunit_test.py setUp:1042                               
+################################################################################
+TestHistoricalPqByTileClient2.test_only_start_date1
+################################################################################
+17:02:18 hsystem.py _system:224                              > (/app/im_v2/common/test/generate_pq_test_data.py --start_date 2020-01-01 --end_date 2022-01-02 --freq 1H --assets binance::BTC_USDT,kucoin::FIL_USDT --asset_col_name full_symbol --partition_mode by_year_month --dst_dir /app/im_v2/common/data/client/test/outcomes/TestHistoricalPqByTileClient2.test_only_start_date1/tmp.scratch/tiled.bar_data --output_type cm_task_1103) 2>&1
+17:02:27 hsystem.py _system:224                              > (du -d 0 /mnt/tmpfs/tmp.cache.mem | awk '{print $1}') 2>&1
+17:02:27 - [36mINFO [0m hcache.py clear_global_cache:292                       17:02:27 - [36mINFO [0m hcache.py clear_global_cache:292                       Before clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem', size=60.0 KB
+17:02:27 - [41mWARN [0m hcache.py clear_global_cache:293                       17:02:27 - [41mWARN [0m hcache.py clear_global_cache:293                       Resetting 'global mem' cache '/mnt/tmpfs/tmp.cache.mem'
+17:02:27 - [41mWARN [0m hcache.py clear_global_cache:303                       17:02:27 - [41mWARN [0m hcache.py clear_global_cache:303                       Destroying '/mnt/tmpfs/tmp.cache.mem' ...
+17:02:27 - [36mINFO [0m hcache.py clear_global_cache:319                       17:02:27 - [36mINFO [0m hcache.py clear_global_cache:319                       After clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem', size=nan
