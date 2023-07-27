@@ -1181,3 +1181,20 @@ class Test_purify_amp_reference1(hunitest.TestCase):
             of class '_Man' is not a subclass of '<class 'int'>'
         """
         self.helper(txt, exp)
+
+
+class Test_purify_from_environment(hunitest.TestCase):
+    def helper(self, txt: str, exp: str) -> None:
+        act = hunitest.purify_from_environment(txt)
+        self.assert_equal(act, exp)
+
+    def test1(self) -> None:
+        """
+        Check wrong replace the git path with `$GIT_ROOT`.
+
+        eg. jupyter_core/application.py maybe replaced with
+        jupyter_core$GIT_ROOTlication.py
+        """
+        txt = "jupyter_core/application.py"
+        exp = "jupyter_core/application.py"
+        self.helper(txt, exp)

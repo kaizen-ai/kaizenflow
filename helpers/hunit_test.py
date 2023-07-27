@@ -418,13 +418,13 @@ def purify_from_environment(txt: str) -> str:
         # Replace the git path with `$GIT_ROOT`.
         super_module_path = hgit.get_client_root(super_module=super_module)
         if super_module_path != "/":
-            txt = txt.replace(super_module_path, "$GIT_ROOT")
+            txt = txt.replace(super_module_path + "/", "$GIT_ROOT" + "/")
         else:
             # If the git path is `/` then we don't need to do anything.
             pass
     # Replace the current path with `$PWD`
     pwd = os.getcwd()
-    txt = txt.replace(pwd, "$PWD")
+    txt = txt.replace(pwd + "/", "$PWD" + "/")
     # Replace the user name with `$USER_NAME`.
     user_name = hsystem.get_user_name()
     txt_out = []
