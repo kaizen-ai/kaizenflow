@@ -1,5 +1,6 @@
 import logging
 import unittest
+import random
 
 import numpy as np
 import pandas as pd
@@ -15,6 +16,19 @@ class Test_plots(unittest.TestCase):
     """
     Run smoke tests for plotting functions. 
     """
+
+    @classmethod
+    def setUpClass(cls):
+        # Save the original random seed.
+        cls.original_seed = np.random.get_state()
+        # Set a specific random seed for the entire test class.
+        cls._seed = 42 
+        np.random.seed(42)
+
+    @classmethod
+    def tearDownClass(cls):
+        # Restore the original random seed after all the test methods have been executed.
+        np.random.set_state(cls.original_seed)
 
     @staticmethod
     def get_plot_effective_correlation_rank1() -> pd.Series:
@@ -49,10 +63,6 @@ class Test_plots(unittest.TestCase):
         """
         df = pd.DataFrame(np.random.randn(10, 6), columns=list("ABCDEF"))
         return df
-
-    def setUp(self) -> None:
-        self._seed = 42
-        np.random.seed(self._seed)
 
     def get_plot_histograms_and_lagged_scatterplot1(self) -> pd.Series:
         """
@@ -99,16 +109,18 @@ class Test_plots(unittest.TestCase):
 
     def test_plot_effective_correlation_rank1(self) -> None:
         """
-        Smoke test for `plot_effective_correlation_rank()` with q_values is
-        None.
+        Smoke test for `plot_effective_correlation_rank()`.
+
+        - `q_values` is None
         """
         test_df = self.get_plot_effective_correlation_rank1()
         cplocorr.plot_effective_correlation_rank(test_df)
 
     def test_plot_effective_correlation_rank2(self) -> None:
         """
-        Smoke test for `plot_effective_correlation_rank()` with q_values is
-        some list of vals.
+        Smoke test for `plot_effective_correlation_rank()`.
+
+        - `q_values` is a list of values
         """
         num_q_values = 5
         q_values = np.random.uniform(1, 10, num_q_values).tolist()
