@@ -58,10 +58,12 @@ services:
       base_app
     volumes:
       - /home/dash/src/sorrentum1:/src
-      - ../../:/app
     working_dir: /src
     environment:
       - MYPYPATH
+      # Use the `repo_config.py` inside the dev_tools container instead of
+      # the one in the calling repo.
+      - AM_REPO_CONFIG_PATH=/app/repo_config.py
 
   jupyter_server:
     command: devops/docker_run/run_jupyter_server.sh

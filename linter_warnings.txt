@@ -1,0 +1,20 @@
+helpers/hunit_test.py:1003:[amp_mypy] error: Unpacking a string is disallowed  [misc]
+helpers/hunit_test.py:1004:[amp_pylint] [C0209(consider-using-f-string), assert_equal] Formatting a regular string which could be a f-string
+helpers/hunit_test.py:1005:[amp_mypy] error: Cannot determine type of 'actual_tmp'  [has-type]
+helpers/hunit_test.py:1005:[amp_mypy] error: Cannot determine type of 'expected_tmp'  [has-type]
+helpers/hunit_test.py:1008:[amp_mypy] error: Unpacking a string is disallowed  [misc]
+helpers/hunit_test.py:1009:[amp_mypy] error: Cannot determine type of 'actual_tmp'  [has-type]
+helpers/hunit_test.py:1009:[amp_mypy] error: Cannot determine type of 'expected_tmp'  [has-type]
+helpers/hunit_test.py:1085:[amp_pylint] [C0209(consider-using-f-string), TestCase.tearDown] Formatting a regular string which could be a f-string
+helpers/hunit_test.py:1365:[amp_mypy] error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+helpers/hunit_test.py:1797:[amp_mypy] error: Need type annotation for 'max_err'  [var-annotated]
+helpers/hunit_test.py:1798:[amp_pylint] [C0209(consider-using-f-string), TestCase._check_df_compare_outcome] Formatting a regular string which could be a f-string
+helpers/hunit_test.py:228:[amp_pylint] [C0209(consider-using-f-string), to_string] Formatting a regular string which could be a f-string
+helpers/hunit_test.py:434:[amp_pylint] [W0404(reimported), purify_from_environment] Reimport 're' (imported line 15)
+helpers/hunit_test.py:434:[amp_pylint] [W0621(redefined-outer-name), purify_from_environment] Redefining name 're' from outer scope (line 15)
+helpers/hunit_test.py:553:31:[amp_flake8] W605 invalid escape sequence '\d'
+helpers/hunit_test.py:553:[amp_pylint] [W1401(anomalous-backslash-in-string), ] Anomalous backslash in string: '\d'. String constant might be missing an r prefix.
+helpers/hunit_test.py:898:[amp_pylint] [E1206(logging-too-few-args), assert_equal._append] Not enough arguments for logging format string
+helpers/hunit_test.py:900:[amp_mypy] error: Incompatible types in assignment (expression has type "Tuple[str, str]", target has type "str")  [assignment]
+helpers/test/test_unit_test.py:1214:[amp_mypy] error: Argument 1 to "helper" of "Test_purify_from_environment1" has incompatible type "Tuple[str]"; expected "str"  [arg-type]
+helpers/test/test_unit_test.py:1214:[amp_mypy] error: Argument 2 to "helper" of "Test_purify_from_environment1" has incompatible type "Tuple[str]"; expected "str"  [arg-type]

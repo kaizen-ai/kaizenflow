@@ -414,6 +414,9 @@ def filter_text(regex: str, txt: str) -> str:
 
 def purify_from_environment(txt: str) -> str:
     # We remove references to the Git modules starting from the innermost one.
+    """
+    Replace the path to username with `$USER_NAME`
+    """
     for super_module in [False, True]:
         # Replace the git path with `$GIT_ROOT`.
         super_module_path = hgit.get_client_root(super_module=super_module)
@@ -428,16 +431,14 @@ def purify_from_environment(txt: str) -> str:
     # Replace the user name with `$USER_NAME`.
     user_name = hsystem.get_user_name()
     txt_out = []
-    import re
+
     for line in txt.splitlines():
-        splitter = ' |/|\''
-        kwds = re.split(splitter, line)
-        sgn = 0
-        for kwd in kwds:
+        splitter = " |/|'"
+        keywords = re.split(splitter, line)
+        for kwd in keywords:
             if kwd.startswith(user_name):
-                sgn = 1
+                line = line.replace(user_name, "$USER_NAME")
                 break
-        if sgn == 1: line = line.replace(user_name, "$USER_NAME")
         txt_out.append(line)
 
     txt = "\n".join(txt_out)
@@ -1808,7 +1809,7 @@ class TestCase(unittest.TestCase):
     # ///////////////////////////////////////////////////////////////////////
 
     def _get_golden_outcome_file_name(
-            self, tag: str, *, test_class_name: Optional[str] = None
+        self, tag: str, *, test_class_name: Optional[str] = None
     ) -> Tuple[str, str]:
         # Get the current dir name.
         use_only_test_class = False
