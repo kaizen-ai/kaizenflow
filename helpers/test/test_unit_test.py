@@ -1181,3 +1181,36 @@ class Test_purify_amp_reference1(hunitest.TestCase):
             of class '_Man' is not a subclass of '<class 'int'>'
         """
         self.helper(txt, exp)
+
+
+# #############################################################################
+
+
+class Test_purify_from_environment (hunitest.TestCase):
+    def helper(self, txt: str, exp: str) -> None:
+        txt = hprint.dedent(txt)
+        act = hunitest.purify_from_environment(txt)
+        exp = hprint.dedent(exp)
+        self.assert_equal(act, exp)
+
+    def test1(self) -> None:
+        """
+        Replaces the path to user names with `$USER_NAME`.
+        """
+
+        hsystem.set_user_name('dash')
+
+        txt = "take_square_dash"
+        exp = "take_square_dash"
+        self.helper(txt, exp)
+    
+    def test2(self) -> None:
+
+        hsystem.set_user_name('dash')
+
+        src = [('dash_q_mv',), ('dash_q_mv_adj',), ('dash_q_mv_os',)]
+        dst = [('$USER_NAME_q_mv',), ('$USER_NAME_q_mv_adj',), ('$USER_NAME_q_mv_os',)]
+        for index in range (3):
+            txt = src[index][0]
+            exp = dst[index][0]
+            self.helper(txt, exp)

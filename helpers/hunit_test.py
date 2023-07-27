@@ -428,14 +428,18 @@ def purify_from_environment(txt: str) -> str:
     # Replace the user name with `$USER_NAME`.
     user_name = hsystem.get_user_name()
     txt_out = []
+    import re
     for line in txt.splitlines():
-        if "take_square_root" in line:
-            # Skip replacing the user since it can be `root` interfering with
-            # the replacement.
-            txt_out.append(line)
-            continue
-        line = line.replace(user_name, "$USER_NAME")
+        splitter = ' |/|\''
+        kwds = re.split(splitter, line)
+        sgn = 0
+        for kwd in kwds:
+            if kwd.startswith(user_name):
+                sgn = 1
+                break
+        if sgn == 1: line = line.replace(user_name, "$USER_NAME")
         txt_out.append(line)
+
     txt = "\n".join(txt_out)
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt

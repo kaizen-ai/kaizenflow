@@ -1,0 +1,384 @@
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestTestCase1.test_assert_equal1
+################################################################################
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestTestCase1.test_assert_equal5
+################################################################################
+05:33:44 - [41mERROR[0m hunit_test.py assert_equal:951                         05:33:44 - [41mERROR[0m hunit_test.py assert_equal:951                         
+================================================================================
+Test 'TestTestCase1.test_assert_equal5' failed
+================================================================================
+05:33:44 - [36mINFO [0m hunit_test.py assert_equal:992                         05:33:44 - [36mINFO [0m hunit_test.py assert_equal:992                         Saved exp_var in tmp.exp_var.txt
+05:33:44 hsystem.py _system:224                              > (echo; sdiff --expand-tabs -l -w 150 helpers/test/outcomes/TestTestCase1.test_assert_equal5/tmp.final.actual.txt helpers/test/outcomes/TestTestCase1.test_assert_equal5/tmp.final.expected.txt) 2>&1
+05:33:44 hsystem.py _system:224                              > (chmod +x ./tmp_diff.sh) 2>&1
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestTestCase1.test_assert_equal_fuzzy_match1
+################################################################################
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestTestCase1.test_assert_not_equal1
+################################################################################
+05:33:44 - [41mERROR[0m hunit_test.py assert_equal:951                         05:33:44 - [41mERROR[0m hunit_test.py assert_equal:951                         
+================================================================================
+Test 'TestTestCase1.test_assert_not_equal1' failed
+================================================================================
+05:33:44 - [36mINFO [0m hunit_test.py assert_equal:992                         05:33:44 - [36mINFO [0m hunit_test.py assert_equal:992                         Saved exp_var in tmp.exp_var.txt
+05:33:44 hsystem.py _system:224                              > (echo; sdiff --expand-tabs -l -w 150 helpers/test/outcomes/TestTestCase1.test_assert_not_equal1/tmp.final.actual.txt helpers/test/outcomes/TestTestCase1.test_assert_not_equal1/tmp.final.expected.txt) 2>&1
+05:33:44 hsystem.py _system:224                              > (chmod +x /tmp/tmp0w48eglu/tmp_diff.sh) 2>&1
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestTestCase1.test_assert_not_equal2
+################################################################################
+05:33:44 - [41mERROR[0m hunit_test.py assert_equal:951                         05:33:44 - [41mERROR[0m hunit_test.py assert_equal:951                         
+================================================================================
+Test 'TestTestCase1.test_assert_not_equal2' failed
+================================================================================
+05:33:44 - [36mINFO [0m hunit_test.py assert_equal:992                         05:33:44 - [36mINFO [0m hunit_test.py assert_equal:992                         Saved exp_var in tmp.exp_var.txt
+05:33:44 hsystem.py _system:224                              > (echo; sdiff --expand-tabs -l -w 150 helpers/test/outcomes/TestTestCase1.test_assert_not_equal2/tmp.final.actual.txt helpers/test/outcomes/TestTestCase1.test_assert_not_equal2/tmp.final.expected.txt) 2>&1
+05:33:44 hsystem.py _system:224                              > (chmod +x /tmp/tmp8bb31i_3/tmp_diff.sh) 2>&1
+05:33:44 hsystem.py _system:224                              > (cd . && find /tmp/tmp8bb31i_3 -name "*") 2>&1
+05:33:44 - [41mWARN [0m hsystem.py remove_dirs:447                             05:33:44 - [41mWARN [0m hsystem.py remove_dirs:447                             Removed dirs: /tmp/tmp8bb31i_3
+05:33:44 hsystem.py _system:224                              > (git rev-parse --show-toplevel) 2>&1
+05:33:44 hsystem.py _system:224                              > (cd . && cd "$(git rev-parse --show-toplevel)/.." && (git rev-parse --is-inside-work-tree | grep -q true)) 2>&1
+05:33:44 hsystem.py _system:224                              > (git rev-parse --show-toplevel) 2>&1
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestTestCase1.test_get_input_dir1
+################################################################################
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestTestCase1.test_get_input_dir2
+################################################################################
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestTestCase1.test_get_input_dir3
+################################################################################
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestTestCase1.test_get_input_dir4
+################################################################################
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestTestCase1.test_get_output_dir1
+################################################################################
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestTestCase1.test_get_s3_scratch_dir1
+################################################################################
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestTestCase1.test_get_s3_scratch_dir2
+################################################################################
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestTestCase1.test_get_scratch_space1
+################################################################################
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestTestCase1.test_get_scratch_space2
+################################################################################
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestTestCase1.test_get_scratch_space3
+################################################################################
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_AssertEqual1.test_equal1
+################################################################################
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_AssertEqual1.test_equal2
+################################################################################
+05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:44 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_AssertEqual1.test_not_equal1
+################################################################################
+05:33:44 - [41mERROR[0m hunit_test.py assert_equal:951                         05:33:44 - [41mERROR[0m hunit_test.py assert_equal:951                         
+================================================================================
+Test 'Test_AssertEqual1.test_not_equal1' failed
+================================================================================
+05:33:44 - [36mINFO [0m hunit_test.py assert_equal:992                         05:33:44 - [36mINFO [0m hunit_test.py assert_equal:992                         Saved exp_var in tmp.exp_var.txt
+05:33:44 hsystem.py _system:224                              > (echo; sdiff --expand-tabs -l -w 150 helpers/test/outcomes/Test_AssertEqual1.test_not_equal1/tmp.scratch/tmp.final.actual.txt helpers/test/outcomes/Test_AssertEqual1.test_not_equal1/tmp.scratch/tmp.final.expected.txt) 2>&1
+05:33:45 hsystem.py _system:224                              > (chmod +x ./tmp_diff.sh) 2>&1
+05:33:45 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:45 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestCheckString1.test_check_string1
+################################################################################
+05:33:45 hsystem.py _system:224                              > (git add -u /app/helpers/test/outcomes/TestCheckString1.test_check_string1/output/test.txt) 2>&1
+05:33:45 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:45 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestCheckString1.test_check_string_missing1
+################################################################################
+05:33:45 hsystem.py _system:224                              > (git add -u /app/helpers/test/outcomes/TestCheckString1.test_check_string_missing1/output/test.txt) 2>&1
+05:33:45 - [41mWARN [0m test_unit_test.py _git_add:33                          05:33:45 - [41mWARN [0m test_unit_test.py _git_add:33                          Can't run 'git add -u /app/helpers/test/outcomes/TestCheckString1.test_check_string_missing1/output/test.txt': you need to add the file manually
+05:33:45 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:45 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestCheckString1.test_check_string_missing2
+################################################################################
+05:33:45 - [41mWARN [0m hunit_test.py check_string:1461                        05:33:45 - [41mWARN [0m hunit_test.py check_string:1461                        Can't find golden outcome file '/app/helpers/test/outcomes/TestCheckString1.test_check_string_missing2/output/test.txt'
+05:33:45 - [41mERROR[0m hunit_test.py check_string:1470                        05:33:45 - [41mERROR[0m hunit_test.py check_string:1470                        The golden outcome doesn't exist: saved the actual output in '/app/helpers/test/outcomes/TestCheckString1.test_check_string_missing2/output/test.txt.tmp'
+05:33:45 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:45 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestCheckString1.test_check_string_missing3
+################################################################################
+05:33:45 - [41mWARN [0m hunit_test.py check_string:1461                        05:33:45 - [41mWARN [0m hunit_test.py check_string:1461                        Can't find golden outcome file '/app/helpers/test/outcomes/TestCheckString1.test_check_string_missing3/output/test.txt'
+05:33:45 - [41mWARN [0m hunit_test.py check_string:1475                        05:33:45 - [41mWARN [0m hunit_test.py check_string:1475                        Creating the golden outcome
+05:33:45 hsystem.py _system:224                              > (cd . && find . -name 'test.txt' -not -path '*/\.git/*') 2>&1
+05:33:45 hsystem.py _system:224                              > (git add -u helpers/test/outcomes/TestCheckString1.test_check_string_missing3/output/test.txt) 2>&1
+05:33:45 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:45 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestCheckString1.test_check_string_not_equal1
+################################################################################
+05:33:45 - [41mERROR[0m hunit_test.py assert_equal:951                         05:33:45 - [41mERROR[0m hunit_test.py assert_equal:951                         
+================================================================================
+Test 'TestCheckString1.test_check_string_not_equal1' failed
+================================================================================
+05:33:45 hsystem.py _system:224                              > (echo; sdiff --expand-tabs -l -w 150 helpers/test/outcomes/TestCheckString1.test_check_string_not_equal1/tmp.final.actual.txt helpers/test/outcomes/TestCheckString1.test_check_string_not_equal1/tmp.final.expected.txt) 2>&1
+05:33:45 hsystem.py _system:224                              > (chmod +x ./tmp_diff.sh) 2>&1
+05:33:45 hsystem.py _system:224                              > (git add -u /app/helpers/test/outcomes/TestCheckString1.test_check_string_not_equal1/output/test.txt) 2>&1
+05:33:45 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:45 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestCheckString1.test_check_string_not_equal2
+################################################################################
+05:33:45 hsystem.py _system:224                              > (git add -u /app/helpers/test/outcomes/TestCheckString1.test_check_string_not_equal2/output/test.txt) 2>&1
+05:33:45 hsystem.py _system:224                              > (git add -u /app/helpers/test/outcomes/TestCheckString1.test_check_string_not_equal2/output/test.txt) 2>&1
+05:33:45 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:45 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestCheckString1.test_check_string_not_equal3
+################################################################################
+05:33:45 - [41mERROR[0m hunit_test.py assert_equal:951                         05:33:45 - [41mERROR[0m hunit_test.py assert_equal:951                         
+================================================================================
+Test 'TestCheckString1.test_check_string_not_equal3' failed
+================================================================================
+05:33:45 hsystem.py _system:224                              > (echo; sdiff --expand-tabs -l -w 150 helpers/test/outcomes/TestCheckString1.test_check_string_not_equal3/tmp.final.actual.txt helpers/test/outcomes/TestCheckString1.test_check_string_not_equal3/tmp.final.expected.txt) 2>&1
+05:33:45 hsystem.py _system:224                              > (chmod +x ./tmp_diff.sh) 2>&1
+05:33:45 hsystem.py _system:224                              > (git add -u /app/helpers/test/outcomes/TestCheckString1.test_check_string_not_equal3/output/test.txt) 2>&1
+05:33:45 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:45 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestCheckDataFrame1.test_check_df_equal1
+################################################################################
+05:33:45 hsystem.py _system:224                              > (git add -u /app/helpers/test/outcomes/TestCheckDataFrame1.test_check_df_equal1/output/test_df.txt) 2>&1
+05:33:46 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:46 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestCheckDataFrame1.test_check_df_equal2
+################################################################################
+05:33:46 hsystem.py _system:224                              > (git add -u /app/helpers/test/outcomes/TestCheckDataFrame1.test_check_df_equal2/output/test_df.txt) 2>&1
+05:33:46 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:46 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestCheckDataFrame1.test_check_df_equal3
+################################################################################
+05:33:46 hsystem.py _system:224                              > (git add -u /app/helpers/test/outcomes/TestCheckDataFrame1.test_check_df_equal3/output/test_df.txt) 2>&1
+05:33:46 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:46 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestCheckDataFrame1.test_check_df_missing1
+################################################################################
+05:33:46 hsystem.py _system:224                              > (git add -u /app/helpers/test/outcomes/TestCheckDataFrame1.test_check_df_missing1/output/test_df.txt) 2>&1
+05:33:46 - [41mWARN [0m test_unit_test.py _git_add:33                          05:33:46 - [41mWARN [0m test_unit_test.py _git_add:33                          Can't run 'git add -u /app/helpers/test/outcomes/TestCheckDataFrame1.test_check_df_missing1/output/test_df.txt': you need to add the file manually
+05:33:46 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:46 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestCheckDataFrame1.test_check_df_missing2
+################################################################################
+05:33:46 - [41mWARN [0m hunit_test.py check_dataframe:1554                     05:33:46 - [41mWARN [0m hunit_test.py check_dataframe:1554                     Can't find golden outcome file '/app/helpers/test/outcomes/TestCheckDataFrame1.test_check_df_missing2/output/test_df.txt'
+05:33:46 - [41mERROR[0m hunit_test.py check_dataframe:1564                     05:33:46 - [41mERROR[0m hunit_test.py check_dataframe:1564                     The golden outcome doesn't exist: saved the actual output in '/app/helpers/test/outcomes/TestCheckDataFrame1.test_check_df_missing2/output/test_df.txt.tmp'
+05:33:46 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:46 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestCheckDataFrame1.test_check_df_missing3
+################################################################################
+05:33:46 - [41mWARN [0m hunit_test.py check_dataframe:1554                     05:33:46 - [41mWARN [0m hunit_test.py check_dataframe:1554                     Can't find golden outcome file '/app/helpers/test/outcomes/TestCheckDataFrame1.test_check_df_missing3/output/test_df.txt'
+05:33:46 - [41mWARN [0m hunit_test.py check_dataframe:1569                     05:33:46 - [41mWARN [0m hunit_test.py check_dataframe:1569                     Creating the golden outcome
+05:33:46 hsystem.py _system:224                              > (cd . && find . -name 'test_df.txt' -not -path '*/\.git/*') 2>&1
+05:33:46 hsystem.py _system:224                              > (git add -u helpers/test/outcomes/TestCheckDataFrame1.test_check_df_missing3/output/test_df.txt) 2>&1
+05:33:46 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:46 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestCheckDataFrame1.test_check_df_not_equal1
+################################################################################
+05:33:46 - [41mERROR[0m hunit_test.py _check_df_compare_outcome:1774           05:33:46 - [41mERROR[0m hunit_test.py _check_df_compare_outcome:1774           Dataframe values are not close
+05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           actual=
+   a     b  c
+0  0  1.06  2
+1  3  4.00  5
+05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           expected=
+   a  b  c
+0  0  1  2
+1  3  4  5
+05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           actual_masked=
+[[ nan 1.06  nan]
+ [ nan  nan  nan]]
+05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           expected_masked=
+[[nan  1. nan]
+ [nan nan nan]]
+05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           err=
+[[ nan 0.06  nan]
+ [ nan  nan  nan]]
+05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           max_err=0.060
+05:33:46 - [41mERROR[0m hunit_test.py assert_equal:951                         05:33:46 - [41mERROR[0m hunit_test.py assert_equal:951                         
+================================================================================
+Test 'TestCheckDataFrame1.test_check_df_not_equal1' failed
+================================================================================
+05:33:46 hsystem.py _system:224                              > (echo; sdiff --expand-tabs -l -w 150 helpers/test/outcomes/TestCheckDataFrame1.test_check_df_not_equal1/tmp.final.actual.txt helpers/test/outcomes/TestCheckDataFrame1.test_check_df_not_equal1/tmp.final.expected.txt) 2>&1
+05:33:46 hsystem.py _system:224                              > (chmod +x ./tmp_diff.sh) 2>&1
+05:33:46 hsystem.py _system:224                              > (git add -u /app/helpers/test/outcomes/TestCheckDataFrame1.test_check_df_not_equal1/output/test_df.txt) 2>&1
+05:33:46 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:46 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestCheckDataFrame1.test_check_df_not_equal2
+################################################################################
+05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           Columns are different:
+Index(['a', 'd', 'c'], dtype='object')
+Index(['a', 'b', 'c'], dtype='object')
+05:33:46 - [41mERROR[0m hunit_test.py assert_equal:951                         05:33:46 - [41mERROR[0m hunit_test.py assert_equal:951                         
+================================================================================
+Test 'TestCheckDataFrame1.test_check_df_not_equal2' failed
+================================================================================
+05:33:46 hsystem.py _system:224                              > (echo; sdiff --expand-tabs -l -w 150 helpers/test/outcomes/TestCheckDataFrame1.test_check_df_not_equal2/tmp.final.actual.txt helpers/test/outcomes/TestCheckDataFrame1.test_check_df_not_equal2/tmp.final.expected.txt) 2>&1
+05:33:46 hsystem.py _system:224                              > (chmod +x ./tmp_diff.sh) 2>&1
+05:33:46 hsystem.py _system:224                              > (git add -u /app/helpers/test/outcomes/TestCheckDataFrame1.test_check_df_not_equal2/output/test_df.txt) 2>&1
+05:33:46 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:46 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestCheckDataFrame1.test_check_df_not_equal3
+################################################################################
+05:33:46 - [41mERROR[0m hunit_test.py _check_df_compare_outcome:1774           05:33:46 - [41mERROR[0m hunit_test.py _check_df_compare_outcome:1774           Dataframe values are not close
+05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           actual=
+   a  b  c
+0  0  1  2
+1  3  4  5
+05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           expected=
+   a  b  c
+0  0  2  2
+1  3  4  5
+05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           actual_masked=
+[[nan  1. nan]
+ [nan nan nan]]
+05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           expected_masked=
+[[nan  2. nan]
+ [nan nan nan]]
+05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           err=
+[[nan 0.5 nan]
+ [nan nan nan]]
+05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:46 - [41mERROR[0m hunit_test.py _to_error:1875                           max_err=0.500
+05:33:46 hsystem.py _system:224                              > (git add -u /app/helpers/test/outcomes/TestCheckDataFrame1.test_check_df_not_equal3/output/test_df.txt) 2>&1
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+TestCheckDataFrame1.test_check_df_not_equal4
+################################################################################
+05:33:47 - [41mERROR[0m hunit_test.py _check_df_compare_outcome:1774           05:33:47 - [41mERROR[0m hunit_test.py _check_df_compare_outcome:1774           Dataframe values are not close
+05:33:47 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:47 - [41mERROR[0m hunit_test.py _to_error:1875                           actual=
+   a     b  c
+0  0  1.06  2
+1  3  4.00  5
+05:33:47 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:47 - [41mERROR[0m hunit_test.py _to_error:1875                           expected=
+   a  b  c
+0  0  1  2
+1  3  4  5
+05:33:47 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:47 - [41mERROR[0m hunit_test.py _to_error:1875                           actual_masked=
+[[ nan 1.06  nan]
+ [ nan  nan  nan]]
+05:33:47 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:47 - [41mERROR[0m hunit_test.py _to_error:1875                           expected_masked=
+[[nan  1. nan]
+ [nan nan nan]]
+05:33:47 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:47 - [41mERROR[0m hunit_test.py _to_error:1875                           err=
+[[ nan 0.06  nan]
+ [ nan  nan  nan]]
+05:33:47 - [41mERROR[0m hunit_test.py _to_error:1875                           05:33:47 - [41mERROR[0m hunit_test.py _to_error:1875                           max_err=0.060
+05:33:47 - [41mERROR[0m hunit_test.py assert_equal:951                         05:33:47 - [41mERROR[0m hunit_test.py assert_equal:951                         
+================================================================================
+Test 'TestCheckDataFrame1.test_check_df_not_equal4' failed
+================================================================================
+05:33:47 hsystem.py _system:224                              > (echo; sdiff --expand-tabs -l -w 150 helpers/test/outcomes/TestCheckDataFrame1.test_check_df_not_equal4/tmp.final.actual.txt helpers/test/outcomes/TestCheckDataFrame1.test_check_df_not_equal4/tmp.final.expected.txt) 2>&1
+05:33:47 hsystem.py _system:224                              > (chmod +x ./tmp_diff.sh) 2>&1
+05:33:47 hsystem.py _system:224                              > (git add -u /app/helpers/test/outcomes/TestCheckDataFrame1.test_check_df_not_equal4/output/test_df.txt) 2>&1
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_check_string_debug1.test1
+################################################################################
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_check_string_debug1.test2
+################################################################################
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_unit_test1.test_purify_txt_from_client1
+################################################################################
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_unit_test1.test_purify_txt_from_client2
+################################################################################
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_get_dir_signature1.test1
+################################################################################
+05:33:47 hsystem.py _system:224                              > (cd . && find /app/helpers/test/outcomes/Test_get_dir_signature1.test1/input -name "*") 2>&1
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_get_dir_signature1.test2
+################################################################################
+05:33:47 hsystem.py _system:224                              > (cd . && find /app/helpers/test/outcomes/Test_get_dir_signature1.test2/input -name "*") 2>&1
+05:33:47 - [41mWARN [0m hsystem.py remove_dirs:447                             05:33:47 - [41mWARN [0m hsystem.py remove_dirs:447                             Removed dirs: /app/helpers/test/outcomes/Test_get_dir_signature1.test2/input, /app/helpers/test/outcomes/Test_get_dir_signature1.test2/input/result_0, /app/helpers/test/outcomes/Test_get_dir_signature1.test2/input/result_1
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_purify_txt_from_client1.test1
+################################################################################
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_purify_txt_from_client1.test2
+################################################################################
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_purify_txt_from_client1.test3
+################################################################################
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_purify_from_env_vars.test2
+################################################################################
+05:33:47 - [41mERROR[0m hunit_test.py assert_equal:951                         05:33:47 - [41mERROR[0m hunit_test.py assert_equal:951                         
+================================================================================
+Test 'Test_purify_from_env_vars.test2' failed
+================================================================================
+05:33:47 - [36mINFO [0m hunit_test.py assert_equal:992                         05:33:47 - [36mINFO [0m hunit_test.py assert_equal:992                         Saved exp_var in tmp.exp_var.txt
+05:33:47 hsystem.py _system:224                              > (echo; sdiff --expand-tabs -l -w 150 helpers/test/outcomes/Test_purify_from_env_vars.test2/tmp.final.actual.txt helpers/test/outcomes/Test_purify_from_env_vars.test2/tmp.final.expected.txt) 2>&1
+05:33:47 hsystem.py _system:224                              > (chmod +x ./tmp_diff.sh) 2>&1
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_purify_from_env_vars.test3
+################################################################################
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_purify_from_env_vars.test4
+################################################################################
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_purify_object_representation1.test1
+################################################################################
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_purify_object_representation1.test2
+################################################################################
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_purify_object_representation1.test3
+################################################################################
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_purify_object_representation1.test4
+################################################################################
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_purify_amp_reference1.test1
+################################################################################
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_purify_from_environment.test1
+################################################################################
+05:33:47 - [41mWARN [0m hsystem.py set_user_name:66                            05:33:47 - [41mWARN [0m hsystem.py set_user_name:66                            Setting user to 'dash'
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_purify_from_environment.test2
+################################################################################
+05:33:47 - [41mWARN [0m hsystem.py set_user_name:66                            05:33:47 - [41mWARN [0m hsystem.py set_user_name:66                            Setting user to 'dash'
+05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               05:33:47 - [36mINFO [0m hunit_test.py setUp:1046                               
+################################################################################
+Test_purify_from_environment.test3
+################################################################################
+05:33:47 - [41mWARN [0m hsystem.py set_user_name:66                            05:33:47 - [41mWARN [0m hsystem.py set_user_name:66                            Setting user to 'dash'
