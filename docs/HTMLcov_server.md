@@ -19,7 +19,9 @@
 
 1. Upload the coverage into bucket: **cryptokaizen-html** (located on CK AWS
    account), note the syntax from CLI:
-   - `aws s3 cp ./htmlcov s3://cryptokaizen-html/juraj_test --recursive --profile ck`
+   ```
+   > aws s3 cp ./htmlcov s3://cryptokaizen-html/juraj_test --recursive --profile ck
+   ```
 2. Access the coverage via browser:
    - [http://172.30.2.44/juraj_test](http://172.30.2.44/juraj_test)
 3. Nesting example
