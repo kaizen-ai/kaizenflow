@@ -634,24 +634,24 @@ class Test_dassert_file_extension1 (hunitest.TestCase):
         """
         Check if file has given extension.
         """
-        extension = r".csv.gz"
-        filename = r"extensionFile.csv.gz"
+        extension = ".csv.gz"
+        filename = "extensionFile.csv.gz"
         hdbg.dassert_file_extension(filename, extension)
 
     def test2(self) -> None:
         """
         Check if file has one of the given extensions.
         """
-        extension = [r".csv.gz", r".csv"]
-        filename = r"extensionFile.csv"
+        extension = [".csv.gz", ".csv"]
+        filename = "extensionFile.csv"
         hdbg.dassert_file_extension(filename, extension)
     
     def test3(self) -> None:
         """
         Case of filename that have incorrect extension with given extensions.
         """
-        extension = [r".csv.gz", r".csv"]
-        filename = r"txtFile.txt"
+        extension = [".csv.gz", ".csv"]
+        filename = "txtFile.txt"
         with self.assertRaises(Exception) as cm:
             hdbg.dassert_file_extension(filename, extension)
         act = str(cm.exception)
