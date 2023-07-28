@@ -800,23 +800,23 @@ def convert_timestamp_to_unix_epoch(
 
 
 def str_to_timestamp(
-    datetime_str: str, tz: str, format: str = None
+    datetime_str: str, tz: str, *, format: Optional[str] = None
 ) -> pd.Timestamp:
     """
-    Convert str datetime to pd.Timestamp
+    Convert str datetime to pd.Timestamp.
 
-    :param datetime_str: string datetime
+    :param datetime_str: string datetime(e.g., 20230523_150513)
     :param tz: timestamp timezone
-    :param format: datetime format. If None, infer automatically
-    :return: pd.Timestamp
+    :param format: datetime format(e.g., %Y%m%d_%H%M%S).
+        If None, infer automatically
+    :return: pd.Timestamp with provided timezone
     """
     if format:
-        # Try to convert using the provided format
+        # Convert using the provided format.
         timestamp = pd.to_datetime(datetime_str, format=format, utc=True)
     else:
-        # If the provided date_format fails, try to infer the format
+        # Try to infer the format automatically.
         timestamp = pd.to_datetime(datetime_str, infer_datetime_format=True, utc=True)
-
     # Convert to the specified timezone
     timestamp = timestamp.tz_convert(tz)
     return timestamp
