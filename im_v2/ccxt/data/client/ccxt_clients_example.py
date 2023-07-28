@@ -220,10 +220,10 @@ def get_CcxtSqlRealTimeImClient_example2(
     db_connection: hsql.DbConnection, resample_1min: bool
 ) -> imvcdccccl.CcxtSqlRealTimeImClient:
     """
-    Get a real-time DB client for CCXT data.
+    Get a real-time DB client for CCXT data for unit testing.
 
-    :param db_stage: 'local', 'dev', 'prod'
-    :param resample_1min:
+    :param db_connection: DB connection
+    :param resample_1min: whether to resample data to 1 minute or not
     :return: CCXT real-time client
     """
     universe_version = "infer_from_data"
