@@ -1183,18 +1183,16 @@ class Test_purify_amp_reference1(hunitest.TestCase):
         self.helper(txt, exp)
 
 
-class Test_purify_from_environment(hunitest.TestCase):
-    def helper(self, txt: str, exp: str) -> None:
+class Test_purify_from_environment1(hunitest.TestCase):
+    def check_output(self, txt: str, exp: str) -> None:
+        hsystem.set_user_name("user_1000")
         act = hunitest.purify_from_environment(txt)
         self.assert_equal(act, exp)
 
     def test1(self) -> None:
         """
-        Check wrong replace the git path with `$GIT_ROOT`.
-
-        eg. jupyter_core/application.py maybe replaced with
-        jupyter_core$GIT_ROOTlication.py
+        Check that the text is purified correctly.
         """
-        txt = "jupyter_core/application.py"
-        exp = "jupyter_core/application.py"
-        self.helper(txt, exp)
+        txt = "/app, /app/jupyter_core/application.py"
+        exp = "$GIT_ROOT, $GIT_ROOT/jupyter_core/application.py"
+        self.check_output(txt, exp)
