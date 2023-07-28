@@ -72,7 +72,6 @@ class Test_plots(unittest.TestCase):
         period = "time"
         cplmiplo.plot_time_series_by_period(test_series, period)
     
-    
     def test_plot_heatmap1(self) -> None:
         """
         Smoke test for `plot_heatmap()`
