@@ -212,7 +212,6 @@ def count_num_finite_samples(data: pd.Series) -> Union[int, float]:
 
 
 # TODO(Paul): Extend to dataframes.
-# TODO(Shaopeng): pytest unhappy with np.float. changed to np.float64.
 def count_num_unique_values(data: pd.Series) -> Union[int, float, np.float64]:
     """
     Count number of unique values in the series.

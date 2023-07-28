@@ -78,8 +78,6 @@ class Test_plots(unittest.TestCase):
         """
         # TODO(Dan): Move to the notebook config.
         mode = "clustermap"
-        # TODO(Shaopeng): double check the below fixes test failure.
-        # Failure message was "has no attribute get_plot_heatmap"
         corr_df = self.get_plot_heatmap1()
         figsize = (20, 20)
         cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)

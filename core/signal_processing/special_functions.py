@@ -13,8 +13,6 @@ import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(Shaopeng): double check. pytest is unhappy with np.float.
-# pytest says you need np.float64.
 def calculate_tau_from_com(com: float) -> Union[float, np.float64]:
     """
     Transform center-of-mass (com) into tau parameter.
