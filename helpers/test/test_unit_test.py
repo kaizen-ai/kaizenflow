@@ -1192,6 +1192,11 @@ class Test_purify_from_environment1(hunitest.TestCase):
         """
         Check that the text is purified correctly.
         """
-        txt = "/app, /app/jupyter_core/application.py"
-        exp = "$GIT_ROOT, $GIT_ROOT/jupyter_core/application.py"
+        txt = "/app/jupyter_core/application.py"
+        exp = "$GIT_ROOT/jupyter_core/application.py"
+        self.check_output(txt, exp)
+
+    def test2(self) -> None:
+        txt = "/app"
+        exp = "$GIT_ROOT"
         self.check_output(txt, exp)
