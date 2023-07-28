@@ -663,3 +663,12 @@ Invalid extension '.txt' for file 'txtFile.txt'
 ################################################################################
         """
         self.assert_equal(act, exp)
+
+    def test4(self) -> None:
+        """
+        Edge Case of multi dots.
+        e.g. filename = "order.20231701_120057.20231701_13000.csv.gz"
+        """
+        extension = [".csv.gz", ".csv"]
+        filename = "order.20231701_120057.20231701_13000.csv.gz"
+        hdbg.dassert_file_extension(filename, extension)
