@@ -57,6 +57,8 @@ make this experience the best possible for you.
 
 - [Signing up for Sorrentum](docs/Signing_up_for_Sorrentum.md)
 
+- [Contributor Scorecard](docs/Contributor_scorecard.md)
+
 # How to start developing
 
 This contains the absolute minimal amount of info to start developing
@@ -97,6 +99,9 @@ This contains the absolute minimal amount of info to start developing
 - [Documentation about guidelines](docs/Documentation_about_guidelines.md)
   - How to write guidelines, format documentation, convert Gdocs to markdown
     files and vice versa
+
+- [Imports and packages](docs/Imports_and_packages.md)
+  - How to import code, use packages, and resolve circular dependencies
 
 # Learn how to become efficient at developing
 
