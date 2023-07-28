@@ -13,6 +13,7 @@ import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
+
 def calculate_tau_from_com(com: float) -> Union[float, np.float64]:
     """
     Transform center-of-mass (com) into tau parameter.
