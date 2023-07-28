@@ -3057,3 +3057,42 @@ class Test_apply_index_mode(hunitest.TestCase):
         act = str(cm.exception)
         # Compare the actual outcome with expected one.
         self.check_string(act)
+
+
+# #############################################################################
+
+
+class Test_get_df_from_iterator(hunitest.TestCase):
+    def test1(self)-> None:
+        """
+        Check that a dataframe is correctly built from an iterator of dataframes.
+        """ 
+        # Build iterator of dataframes for the test.
+        data1 = {
+            "num_col": [1, 2],
+            "str_col": ["A", "B"],
+        }
+        df1 = pd.DataFrame(data=data1)
+        data2 = {
+            "num_col": [3, 4],
+            "str_col": ["C", "D"],
+        }
+        df2 = pd.DataFrame(data=data2) 
+        data3 = {
+             "num_col": [5, 6],
+             "str_col": ["E", "F"],
+        }
+        df3 = pd.DataFrame(data=data3)
+        # Run.
+        iter_ = iter([df1, df2, df3])
+        df = hpandas.get_df_from_iterator(iter_)
+        actual_signature = hpandas.df_to_str(df)
+        expected_signature = """  num_col str_col
+        0        1       A
+        0        3       C
+        0        5       E
+        1        2       B
+        1        4       D
+        1        6       F
+        """
+        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)

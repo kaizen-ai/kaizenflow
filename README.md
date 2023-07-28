@@ -57,6 +57,8 @@ make this experience the best possible for you.
 
 - [Signing up for Sorrentum](docs/Signing_up_for_Sorrentum.md)
 
+- [Contributor Scorecard](docs/Contributor_scorecard.md)
+
 # How to start developing
 
 This contains the absolute minimal amount of info to start developing
@@ -127,6 +129,8 @@ This contains a set of resources that over time will make 10x more productive
 # In-depth docs
 
 - [Code organization](/code_organization.md)
+
+- [HTMLcov server](/docs/HTMLcov_server.md)
 
 - [Visual Studio Code](/docs/Visual_Studio_Code.md)
 
