@@ -347,6 +347,7 @@ class TestTalosHistoricalPqByTileClient1(icdc.ImClientTestCase):
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
+@pytest.mark.requires_ck_infra
 class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
     """
     TODO(Grisha): Test multiple exchanges CmTask #1533.

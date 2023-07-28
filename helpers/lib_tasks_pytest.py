@@ -138,10 +138,19 @@ def _build_run_command_line(
     )
     pytest_opts = pytest_opts or "."
     pytest_opts_tmp = []
-
     # Select tests to skip based on the `test_list_name` (e.g., fast tests)
     # and on the custom marker, if present.
     skipped_tests = _select_tests_to_skip(test_list_name)
+    # Detect if we are running on a laptop.
+    skip_ck_infra_tests = (not hserver.is_dev_ck() or hgit.get_repo_name() ==
+                     "Sorrentum")
+    if skip_ck_infra_tests:
+        markers = "-m 'not requires_ck_infra"
+        # Disable the timeout by removing this part
+            -o timeout_func_only=true \
+            -timeout 5 \
+            #
+
     if custom_marker != "":
         pytest_opts_tmp.append(f'-m "{custom_marker} and {skipped_tests}"')
     else:
@@ -152,8 +161,15 @@ def _build_run_command_line(
     # Adding `timeout_func_only` is a workaround for
     # https://github.com/pytest-dev/pytest-rerunfailures/issues/99. Because of
     # it, we limit only run time, without setup and teardown time.
-    pytest_opts_tmp.append("-o timeout_func_only=true")
-    pytest_opts_tmp.append(f"--timeout {timeout_in_sec}")
+    if is_laptop:
+        # Make the timeout much larger.
+        pytest_opts_tmp.append("-o timeout_func_only=true")
+        timeout_secs *= 10
+        pytest_opts_tmp.append(f"--timeout {timeout_in_sec}")
+    else:
+        # Add a timeout.
+        pytest_opts_tmp.append("-o timeout_func_only=true")
+        pytest_opts_tmp.append(f"--timeout {timeout_in_sec}")
     num_reruns = _NUM_TIMEOUT_TEST_RERUNS[test_list_name]
     pytest_opts_tmp.append(
         f'--reruns {num_reruns} --only-rerun "Failed: Timeout"'
