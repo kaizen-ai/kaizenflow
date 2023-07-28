@@ -1,16 +1,21 @@
+# %%
 import logging
 import unittest
 
+# %%
 import numpy as np
 import pandas as pd
 
+# %%
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.visual_stationarity_test as cpvistte
 
+# %%
 _LOG = logging.getLogger(__name__)
 
 
+# %%
 class Test_plots(unittest.TestCase):
     """
     Run smoke tests for plotting functions.
@@ -82,6 +87,7 @@ class Test_plots(unittest.TestCase):
         figsize = (20, 20)
         cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)
 
+# %%
 class Test_plot_timeseries_distribution(unittest.TestCase):
     @staticmethod
     def get_plot_timeseries_distribution1(frequency: str) -> pd.Series:
