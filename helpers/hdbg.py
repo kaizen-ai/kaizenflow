@@ -806,7 +806,7 @@ def dassert_file_extension(
     # Make sure extension starts with .
     extensions = [f".{e}" if not e.startswith(".") else e for e in extensions]
     # Check.
-    act_ext = os.path.splitext(file_name)[-1].lower()
+    act_ext = file_name[file_name.find("."):]
     dassert_in(
         act_ext,
         extensions,

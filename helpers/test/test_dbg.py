@@ -624,3 +624,42 @@ class Test_dassert_related_params2(hunitest.TestCase):
         message 'hello world'
         """
         self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class Test_dassert_file_extension1 (hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check if file has given extension.
+        """
+        extension = r".csv.gz"
+        filename = r"extensionFile.csv.gz"
+        hdbg.dassert_file_extension(filename, extension)
+
+    def test2(self) -> None:
+        """
+        Check if file has one of the given extensions.
+        """
+        extension = [r".csv.gz", r".csv"]
+        filename = r"extensionFile.csv"
+        hdbg.dassert_file_extension(filename, extension)
+    
+    def test3(self) -> None:
+        """
+        Case of filename that have incorrect extension with given extensions.
+        """
+        extension = [r".csv.gz", r".csv"]
+        filename = r"txtFile.txt"
+        with self.assertRaises(Exception) as cm:
+            hdbg.dassert_file_extension(filename, extension)
+        act = str(cm.exception)
+        exp = """
+################################################################################
+* Failed assertion *
+'.txt' in '['.csv.gz', '.csv']'
+Invalid extension '.txt' for file 'txtFile.txt'
+################################################################################
+        """
+        self.assert_equal(act, exp)
