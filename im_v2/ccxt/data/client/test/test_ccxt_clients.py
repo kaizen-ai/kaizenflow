@@ -614,7 +614,6 @@ class TestCcxtPqByAssetClient1(icdc.ImClientTestCase):
 # #############################################################################
 
 
-# TODO(Dan): add example client for `CcxtSqlRealTimeImClient`.
 class TestCcxtSqlRealTimeImClient1(
     icdc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
