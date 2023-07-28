@@ -312,7 +312,7 @@ def plot_timeseries_distribution(
         ax.set_xlabel(datetime_type, fontsize=12)
         ax.set_ylabel(f"Quantity of {srs.name}", fontsize=12)
         ax.get_figure().set_size_inches(FIG_SIZE)
-        
+        plt.figure(clear = True)
         
 
 
