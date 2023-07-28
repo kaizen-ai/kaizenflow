@@ -797,3 +797,26 @@ def convert_timestamp_to_unix_epoch(
         "1" + unit
     )
     return epoch
+
+
+def str_to_timestamp(
+    datetime_str: str, tz: str, format: str = None
+) -> pd.Timestamp:
+    """
+    Convert str datetime to pd.Timestamp
+
+    :param datetime_str: string datetime
+    :param tz: timestamp timezone
+    :param format: datetime format. If None, infer automatically
+    :return: pd.Timestamp
+    """
+    if format:
+        # Try to convert using the provided format
+        timestamp = pd.to_datetime(datetime_str, format=format, utc=True)
+    else:
+        # If the provided date_format fails, try to infer the format
+        timestamp = pd.to_datetime(datetime_str, infer_datetime_format=True, utc=True)
+
+    # Convert to the specified timezone
+    timestamp = timestamp.tz_convert(tz)
+    return timestamp

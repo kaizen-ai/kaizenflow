@@ -623,3 +623,47 @@ class Test_convert_timestamp_to_unix_epoch(hunitest.TestCase):
         actual = hdateti.convert_timestamp_to_unix_epoch(timestamp=timestamp)
         expected = 1631145600000
         self.assert_equal(str(actual), str(expected))
+
+
+class Test_str_to_timestamp1(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test valid datetime with format
+        """
+        datetime_str = "20230728_150513"
+        timezone_info = "US/Pacific"
+        format = "%Y%m%d_%H%M%S"
+        actual = hdateti.str_to_timestamp(datetime_str, timezone_info, format)
+        expected = pd.Timestamp('2023-07-28 15:05:13+0000', tz='US/Pacific')
+        self.assertEqual(actual, expected)
+
+    def test2(self) -> None:
+        """
+        Test valid datetime without format
+        """
+        datetime_str = "2023-07-28 15:05:13"
+        timezone_info = "UTC"
+        expected = pd.Timestamp('2023-07-28 15:05:13+0000', tz='UTC')
+        actual = hdateti.str_to_timestamp(datetime_str, timezone_info)
+        self.assertEqual(actual, expected)
+
+    def test3(self):
+        """
+        Test invalid datetime with format
+        """
+        datetime_str = "28-07-2023 15:05:13"
+        timezone_info = "UTC"
+        format = "%Y%m%d_%H%M%S"
+        # Invalid datetime, should raise a ValueError
+        with self.assertRaises(ValueError):
+            hdateti.str_to_timestamp(datetime_str, timezone_info, format)
+
+    def test4(self):
+        """
+        Test invalid datetime without format
+        """
+        datetime_str = "qwe28abc07-201234"
+        timezone_info = "UTC"
+        # Invalid datetime, should raise a ValueError
+        with self.assertRaises(ValueError):
+            hdateti.str_to_timestamp(datetime_str, timezone_info)
