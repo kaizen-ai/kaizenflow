@@ -9,7 +9,6 @@ import helpers.henv as henv
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.client as icdc
@@ -657,22 +656,11 @@ class TestCcxtSqlRealTimeImClient1(
         ]
         return expected_column_names
 
-    def get_im_client(self, resample_1min: bool) -> icdcl.CcxtSqlRealTimeImClient:
-        """
-        Get `CcxtSqlRealTimeImClient` for unit testing.
-        """
-        universe_version = "infer_from_data"
-        im_client = icdcl.CcxtSqlRealTimeImClient(
-            universe_version,
-            self.connection,
-            "ccxt_ohlcv_spot",
-            resample_1min=resample_1min,
-        )
-        return im_client
-
     def test_read_data1(self) -> None:
         resample_1min = True
-        im_client = self.get_im_client(resample_1min)
+        im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
+            self.connection, resample_1min
+        )
         full_symbol = "binance::BTC_USDT"
         #
         expected_length = 5
@@ -704,7 +692,9 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_read_data2(self) -> None:
         resample_1min = True
-        im_client = self.get_im_client(resample_1min)
+        im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
+            self.connection, resample_1min
+        )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
         expected_length = 9
@@ -740,7 +730,9 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_read_data3(self) -> None:
         resample_1min = True
-        im_client = self.get_im_client(resample_1min)
+        im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
+            self.connection, resample_1min
+        )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
         #
@@ -778,7 +770,9 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_read_data4(self) -> None:
         resample_1min = True
-        im_client = self.get_im_client(resample_1min)
+        im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
+            self.connection, resample_1min
+        )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         end_ts = pd.Timestamp("2021-09-09T00:04:00-00:00")
         #
@@ -812,7 +806,9 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_read_data5(self) -> None:
         resample_1min = True
-        im_client = self.get_im_client(resample_1min)
+        im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
+            self.connection, resample_1min
+        )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = pd.Timestamp("2021-09-09T00:01:00-00:00")
         end_ts = pd.Timestamp("2021-09-09T00:03:00-00:00")
@@ -848,13 +844,17 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_read_data6(self) -> None:
         resample_1min = True
-        im_client = self.get_im_client(resample_1min)
+        im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
+            self.connection, resample_1min
+        )
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
     def test_read_data7(self) -> None:
         resample_1min = False
-        im_client = self.get_im_client(resample_1min)
+        im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
+            self.connection, resample_1min
+        )
         full_symbols = [
             "binance::BTC_USDT",
             "binance::ETH_USDT",
@@ -898,7 +898,9 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_get_start_ts_for_symbol1(self) -> None:
         resample_1min = True
-        im_client = self.get_im_client(resample_1min)
+        im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
+            self.connection, resample_1min
+        )
         full_symbol = "binance::BTC_USDT"
         expected_start_ts = pd.to_datetime("2021-09-09 00:02:00", utc=True)
         self._test_get_start_ts_for_symbol1(
@@ -907,7 +909,9 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_get_end_ts_for_symbol1(self) -> None:
         resample_1min = True
-        im_client = self.get_im_client(resample_1min)
+        im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
+            self.connection, resample_1min
+        )
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2021-09-09 00:06:00", utc=True)
         self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
@@ -916,7 +920,9 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_get_universe1(self) -> None:
         resample_1min = True
-        im_client = self.get_im_client(resample_1min)
+        im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
+            self.connection, resample_1min
+        )
         expected_length = 3
         expected_first_elements = [
             "kucoin::ETH_USDT",
@@ -939,7 +945,9 @@ class TestCcxtSqlRealTimeImClient1(
     @pytest.mark.slow
     def test_filter_columns1(self) -> None:
         resample_1min = True
-        im_client = self.get_im_client(resample_1min)
+        im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
+            self.connection, resample_1min
+        )
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         columns = ["full_symbol", "open", "high", "low", "close", "volume"]
         self._test_filter_columns1(im_client, full_symbols, columns)
@@ -947,7 +955,9 @@ class TestCcxtSqlRealTimeImClient1(
     @pytest.mark.slow
     def test_filter_columns2(self) -> None:
         resample_1min = True
-        im_client = self.get_im_client(resample_1min)
+        im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
+            self.connection, resample_1min
+        )
         full_symbol = "binance::BTC_USDT"
         columns = ["full_symbol", "whatever"]
         self._test_filter_columns2(im_client, full_symbol, columns)
@@ -955,7 +965,9 @@ class TestCcxtSqlRealTimeImClient1(
     @pytest.mark.slow
     def test_filter_columns3(self) -> None:
         resample_1min = True
-        im_client = self.get_im_client(resample_1min)
+        im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
+            self.connection, resample_1min
+        )
         full_symbol = "binance::BTC_USDT"
         columns = ["open", "close"]
         self._test_filter_columns3(im_client, full_symbol, columns)
