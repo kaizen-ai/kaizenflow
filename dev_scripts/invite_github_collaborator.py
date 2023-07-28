@@ -15,6 +15,7 @@ Import as:
 
 import dev_scripts.github_permission as descgipe
 """
+
 import argparse
 import logging
 import os
@@ -34,11 +35,6 @@ def _invite_collaborator(
 ) -> None:
     """
     Invite a collaborator to GitHub.
-
-    :params github_username.
-    :params owner_username.
-    :params repo_name.
-    :params access_token.
     """
     add_collaborator_endpoint = os.path.join(
         "https://api.github.com/repos",
@@ -145,7 +141,6 @@ def _invite_collaborator(
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
-    
     parser.add_argument(
         "--github_username",
         type=str,
@@ -185,5 +180,4 @@ def _main(parser: argparse.ArgumentParser) -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
     _main(_parse())
