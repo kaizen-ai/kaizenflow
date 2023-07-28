@@ -1202,11 +1202,17 @@ class Test_purify_from_environment1(hunitest.TestCase):
             ("dash/take_square_dash",),
             ("take_square_dash",),
             ("dash_q_mv",),
+            ("--name dash.amp_test.app.app",),
+            ("run_docker_as_dash='True'",),
+            ("run --rm -l user=dash",),
         ]
         dst = [
             ("$USER_NAME/take_square_dash",),
             ("take_square_dash",),
             ("dash_q_mv",),
+            ("--name $USER_NAME.amp_test.app.app",),
+            ("run_docker_as_dash='True'",),
+            ("run --rm -l user=$USER_NAME",),
         ]
         for txt, exp in zip(src, dst):
             self._helper(txt[0], exp[0])

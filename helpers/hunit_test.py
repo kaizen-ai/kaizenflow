@@ -434,8 +434,8 @@ def purify_from_environment(txt: str) -> str:
     # Replace the user name with `$USER_NAME`.
     user_name = hsystem.get_user_name()
     txt_out = []
-    pattern = r"^(\/?)(" + user_name + r"/)"
-    target = r"\1$USER_NAME/"
+    pattern = rf"([\s\/\.\=]|^)+{user_name}+([.\s/]|$)"
+    target = r"\1$USER_NAME\2"
     for line in txt.splitlines():
         txt_out.append(re.sub(pattern, target, line))
     txt = "\n".join(txt_out)
