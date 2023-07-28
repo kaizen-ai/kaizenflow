@@ -1185,7 +1185,6 @@ class Test_purify_amp_reference1(hunitest.TestCase):
 
 class Test_purify_from_environment1(hunitest.TestCase):
     def check_output(self, txt: str, exp: str) -> None:
-        hsystem.set_user_name("user_1000")
         act = hunitest.purify_from_environment(txt)
         self.assert_equal(act, exp)
 
