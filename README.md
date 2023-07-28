@@ -130,6 +130,8 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Code organization](/code_organization.md)
 
+- [Buildmeister process](/docs/Buildmeister_process.md)
+
 - [HTMLcov server](/docs/HTMLcov_server.md)
 
 - [Visual Studio Code](/docs/Visual_Studio_Code.md)
