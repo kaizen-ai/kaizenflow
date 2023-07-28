@@ -71,13 +71,16 @@ class Test_plots(unittest.TestCase):
         test_series = self.get_plot_time_series_by_period1()
         period = "time"
         cplmiplo.plot_time_series_by_period(test_series, period)
-
+    
+    
     def test_plot_heatmap1(self) -> None:
         """
         Smoke test for `plot_heatmap()`
         """
         # TODO(Dan): Move to the notebook config.
         mode = "clustermap"
-        corr_df = self.get_plot_heatmap()
+        # TODO(Shaopeng): double check the below fixes test failure.
+        # Failure message was "has no attribute get_plot_heatmap"
+        corr_df = self.get_plot_heatmap1()
         figsize = (20, 20)
         cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)
