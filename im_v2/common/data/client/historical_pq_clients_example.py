@@ -151,7 +151,7 @@ def get_MockHistoricalByTileClient_example3(
     Build mock client example to test randomly generated intervals.
     """
     # Specify parameters for test data generation and client initialization.
-    freq = "1T"
+    freq = "1H"
     assets = ",".join(full_symbols)
     asset_col_name = "full_symbol"
     output_type = "cm_task_1103"

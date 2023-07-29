@@ -753,10 +753,10 @@ class TestHistoricalPqByTileClient3(icdc.ImClientTestCase):
         random.seed(seed_)
         # Convert boundaries to epochs.
         left_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
-            left_boundary, unit="m"
+            left_boundary, unit="h"
         )
         right_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
-            right_boundary, unit="m"
+            right_boundary, unit="h"
         )
         # Generate 2 random consequtive epochs in specified boundaries.
         # TODO(Dan): Consider using a simpler solution.
@@ -770,9 +770,9 @@ class TestHistoricalPqByTileClient3(icdc.ImClientTestCase):
         end_ts_epoch = random.randint(start_ts_epoch, right_boundary_epoch - 1)
         # Convert generated epochs to timestamps.
         start_ts = hdateti.convert_unix_epoch_to_timestamp(
-            start_ts_epoch, unit="m"
+            start_ts_epoch, unit="h"
         )
-        end_ts = hdateti.convert_unix_epoch_to_timestamp(end_ts_epoch, unit="m")
+        end_ts = hdateti.convert_unix_epoch_to_timestamp(end_ts_epoch, unit="h")
         return start_ts, end_ts
 
     @pytest.mark.superslow("~180 seconds.")
@@ -815,7 +815,7 @@ class TestHistoricalPqByTileClient3(icdc.ImClientTestCase):
         Check output for correctness.
         """
         expected_length = int(
-            ((end_ts - start_ts).total_seconds() / 60 + 1) * len(full_symbols)
+            ((end_ts - start_ts).total_seconds() / (60*60) + 1) * len(full_symbols)
         )
         self.assert_equal(str(actual_df.shape[0]), str(expected_length))
         self.assert_equal(str(actual_df.index[0]), str(start_ts))
