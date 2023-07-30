@@ -1,14 +1,12 @@
-# %%
+
 # %matplotlib inline
 
-# %% [markdown]
 """
 Import as:
 
 import core.plotting.misc_plotting as cplmiplo
 """
 
-# %%
 # TODO(Paul): Move functions out of here into appropriate files.
 # TODO(gp): Test with a gallery notebook and/or with unit tests.
 
@@ -52,11 +50,10 @@ _DATETIME_TYPES = [
 _COLORMAP = cplpluti.COLORMAP
 
 
-# %% [markdown]
+
 # General plotting helpers
 # #############################################################################
 
-# %%
 
 def plot_non_na_cols(
     df: pd.core.frame.DataFrame,
@@ -224,11 +221,10 @@ def plot_projection(
 
 
 
-# %% [markdown]
+
 # Time series plotting
 # #############################################################################
 
-# %%
 
 def plot_time_series_by_period(
     srs: pd.Series,
@@ -307,13 +303,12 @@ def plot_timeseries_distribution(
     srs = hdatafr.apply_nan_mode(srs, mode="drop")
     index_series = pd.Series(srs.index)
     for datetime_type, ax in zip(datetime_types, axes):
-        sns.countplot(x = getattr(index_series.dt, datetime_type))
+        sns.countplot(x=getattr(index_series.dt, datetime_type))
         ax.set_title(f"Distribution by {datetime_type}")
         ax.set_xlabel(datetime_type, fontsize=12)
         ax.set_ylabel(f"Quantity of {srs.name}", fontsize=12)
         ax.get_figure().set_size_inches(FIG_SIZE)
-        plt.figure(clear = True)
-        
+        plt.show()
 
 
 def plot_timeseries_per_category(
@@ -609,11 +604,9 @@ def plot_time_series_dict(
 
 
 
-# %% [markdown]
 # Model evaluation
 # #############################################################################
 
-# %%
 
 def plot_cumulative_returns(
     cumulative_rets: pd.Series,

@@ -72,10 +72,10 @@ datetime_types = ["hour"]
 cplmiplo.plot_timeseries_distribution(srs, datetime_types)
 
 # %%
-# Set input for month interval.
-srs1 = cptetepl.Test_plot_timeseries_distribution.get_plot_timeseries_distribution1("H")
-datetime_types1 = ["hour", "month"]
-cplmiplo.plot_timeseries_distribution(srs1, datetime_types1)
+# Set input for hour and month interval.
+srs = cptetepl.Test_plot_timeseries_distribution.get_plot_timeseries_distribution1("H")
+datetime_types = ["hour", "month"]
+cplmiplo.plot_timeseries_distribution(srs, datetime_types)
 
 # %% [markdown]
 # ## `plot_time_series_by_period()`

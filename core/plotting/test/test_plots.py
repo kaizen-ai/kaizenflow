@@ -1,21 +1,16 @@
-# %%
+
 import logging
 import unittest
 
-# %%
 import numpy as np
 import pandas as pd
 
-# %%
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.visual_stationarity_test as cpvistte
 
-# %%
 _LOG = logging.getLogger(__name__)
 
-
-# %%
 class Test_plots(unittest.TestCase):
     """
     Run smoke tests for plotting functions.
@@ -87,25 +82,25 @@ class Test_plots(unittest.TestCase):
         figsize = (20, 20)
         cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)
 
-# %%
+
 class Test_plot_timeseries_distribution(unittest.TestCase):
     @staticmethod
-    def get_plot_timeseries_distribution1(frequency: str) -> pd.Series:
+    def get_plot_timeseries_distribution1() -> pd.Series:
         """
         Get test data for plotting time series distribution.
         """
         rng = np.random.default_rng(seed=0)
         samples = rng.normal(size=1000)
-        index = pd.date_range(start="2023-01-01", periods=len(samples), freq=frequency)
-        srs = pd.Series(samples, index=index)
+        index = pd.date_range(start="2023-01-01", periods=len(samples), freq="H")
+        srs = pd.Series(samples, index=index, name="test values")
         return srs
 
     def test_plot_timeseries_distribution1(self) -> None:
-        srs = self.get_plot_timeseries_distribution1("H")
+        srs = self.get_plot_timeseries_distribution1()
         datetime_types = ["hour"]
         cplmiplo.plot_timeseries_distribution(srs, datetime_types)
 
     def test_plot_timeseries_distribution2(self) -> None:
-        srs = self.get_plot_timeseries_distribution1("H")
+        srs = self.get_plot_timeseries_distribution1()
         datetime_types = ["hour", "month"]
         cplmiplo.plot_timeseries_distribution(srs, datetime_types)
