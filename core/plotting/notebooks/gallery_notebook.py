@@ -67,13 +67,13 @@ cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
 # ## `plot_timeseries_distribution()`
 # %%
 # Set inputs for hour interval.
-srs = cptetepl.Test_plot_timeseries_distribution.get_plot_timeseries_distribution1("H")
+srs = cptetepl.Test_plot_timeseries_distribution.get_plot_timeseries_distribution1()
 datetime_types = ["hour"]
 cplmiplo.plot_timeseries_distribution(srs, datetime_types)
 
 # %%
 # Set input for hour and month interval.
-srs = cptetepl.Test_plot_timeseries_distribution.get_plot_timeseries_distribution1("H")
+srs = cptetepl.Test_plot_timeseries_distribution.get_plot_timeseries_distribution1()
 datetime_types = ["hour", "month"]
 cplmiplo.plot_timeseries_distribution(srs, datetime_types)
 
