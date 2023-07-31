@@ -1187,7 +1187,7 @@ class Test_purify_amp_reference1(hunitest.TestCase):
 
 
 class Test_purify_from_environment1(hunitest.TestCase):
-    def _helper(self, txt: str, exp: str) -> None:
+    def helper(self, txt: str, exp: str) -> None:
         txt = hprint.dedent(txt)
         act = hunitest.purify_from_environment(txt)
         exp = hprint.dedent(exp)
