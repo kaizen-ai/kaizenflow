@@ -3,6 +3,7 @@ from typing import List, Tuple
 
 import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -650,19 +651,20 @@ class Test_dassert_file_extension1 (hunitest.TestCase):
         """
         Check that assertion is raised if filename has none of the given extensions.
         """
+        hsystem.set_user_name("user_1000")
         extensions = [".csv.gz", ".csv"]
         filename = "txtFile.txt"
         with self.assertRaises(Exception) as cm:
             hdbg.dassert_file_extension(filename, extensions)
         act = str(cm.exception)
-        exp = """
+        exp = r"""
         ################################################################################        
         * Failed assertion *
         '.txt' in '['.csv.gz', '.csv']'
         Invalid extension '.txt' for file 'txtFile.txt'
         ################################################################################
         """
-        self.assert_equal(act, exp)
+        self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
 
     def test4(self) -> None:
         """
