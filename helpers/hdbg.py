@@ -808,8 +808,10 @@ def dassert_file_extension(
     # Check.
     act_ext = os.path.splitext(file_name)[-1].lower()
     if act_ext == ".gz":
-        act_ext = os.path.splitext(file_name[:-3])[-1].lower() + ".gz"
-        
+        # Get a file extension that is preceding gzip extension. 
+        # get the set of chars starting from the dot that goes before '.gz'
+        ext = os.path.splitext(file_name[:-3])[-1].lower()
+        act_ext = ext + act_ext
     dassert_in(
         act_ext,
         extensions,

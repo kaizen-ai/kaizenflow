@@ -634,41 +634,40 @@ class Test_dassert_file_extension1 (hunitest.TestCase):
         """
         Check if file has given extension.
         """
-        extension = ".csv.gz"
+        extensions = ".csv.gz"
         filename = "extensionFile.csv.gz"
-        hdbg.dassert_file_extension(filename, extension)
+        hdbg.dassert_file_extension(filename, extensions)
 
     def test2(self) -> None:
         """
         Check if file has one of the given extensions.
         """
-        extension = [".csv.gz", ".csv"]
+        extensions = [".csv.gz", ".csv"]
         filename = "extensionFile.csv"
-        hdbg.dassert_file_extension(filename, extension)
+        hdbg.dassert_file_extension(filename, extensions)
     
     def test3(self) -> None:
         """
-        Case of filename that have incorrect extension with given extensions.
+        Check that assertion is raised if filename has none of the given extensions.
         """
-        extension = [".csv.gz", ".csv"]
+        extensions = [".csv.gz", ".csv"]
         filename = "txtFile.txt"
         with self.assertRaises(Exception) as cm:
-            hdbg.dassert_file_extension(filename, extension)
+            hdbg.dassert_file_extension(filename, extensions)
         act = str(cm.exception)
         exp = """
-################################################################################
-* Failed assertion *
-'.txt' in '['.csv.gz', '.csv']'
-Invalid extension '.txt' for file 'txtFile.txt'
-################################################################################
+        ################################################################################        
+        * Failed assertion *
+        '.txt' in '['.csv.gz', '.csv']'
+        Invalid extension '.txt' for file 'txtFile.txt'
+        ################################################################################
         """
         self.assert_equal(act, exp)
 
     def test4(self) -> None:
         """
-        Edge Case of multi dots.
-        e.g. filename = "order.20231701_120057.20231701_13000.csv.gz"
+        Check that a file with multiple dots in its name passes the assertion.
         """
-        extension = [".csv.gz", ".csv"]
+        extensions = [".csv.gz", ".csv"]
         filename = "order.20231701_120057.20231701_13000.csv.gz"
-        hdbg.dassert_file_extension(filename, extension)
+        hdbg.dassert_file_extension(filename, extensions)
