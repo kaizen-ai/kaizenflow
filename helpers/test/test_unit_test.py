@@ -1216,5 +1216,5 @@ class Test_purify_from_environment1(hunitest.TestCase):
             ("run --rm -l user=$USER_NAME",),
         ]
         for txt, exp in zip(src, dst):
-            self._helper(txt[0], exp[0])
+            self.helper(txt[0], exp[0])
         hsystem.set_user_name(None)
