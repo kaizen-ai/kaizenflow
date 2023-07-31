@@ -57,6 +57,8 @@ make this experience the best possible for you.
 
 - [Signing up for Sorrentum](docs/Signing_up_for_Sorrentum.md)
 
+- [Contributor Scorecard](docs/Contributor_Scorecard.md)
+
 # How to start developing
 
 This contains the absolute minimal amount of info to start developing
@@ -98,6 +100,9 @@ This contains the absolute minimal amount of info to start developing
   - How to write guidelines, format documentation, convert Gdocs to markdown
     files and vice versa
 
+- [Imports and packages](docs/Imports_and_packages.md)
+  - How to import code, use packages, and resolve circular dependencies
+
 # Learn how to become efficient at developing
 
 This contains a set of resources that over time will make 10x more productive
@@ -124,6 +129,10 @@ This contains a set of resources that over time will make 10x more productive
 # In-depth docs
 
 - [Code organization](/code_organization.md)
+
+- [Buildmeister process](/docs/Buildmeister_process.md)
+
+- [HTMLcov server](/docs/HTMLcov_server.md)
 
 - [Visual Studio Code](/docs/Visual_Studio_Code.md)
 

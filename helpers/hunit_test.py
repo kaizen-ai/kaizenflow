@@ -420,18 +420,21 @@ def purify_from_environment(txt: str) -> str:
     - replace the user name with `$USER_NAME`
     - replace pwd with `$PWD`
     """
+    dir_pattern = r"(?![\w])"
     # We remove references to the Git modules starting from the innermost one.
     for super_module in [False, True]:
         # Replace the git path with `$GIT_ROOT`.
         super_module_path = hgit.get_client_root(super_module=super_module)
         if super_module_path != "/":
-            txt = txt.replace(super_module_path, "$GIT_ROOT")
+            pattern = re.compile(f"{super_module_path}{dir_pattern}")
+            txt = pattern.sub("$GIT_ROOT", txt)
         else:
             # If the git path is `/` then we don't need to do anything.
             pass
     # Replace the current path with `$PWD`
     pwd = os.getcwd()
-    txt = txt.replace(pwd, "$PWD")
+    pattern = re.compile(f"{pwd}{dir_pattern}")
+    txt = pattern.sub("$PWD", txt)
     # Replace the user name with `$USER_NAME`.
     user_name = hsystem.get_user_name()
     txt_out = []
