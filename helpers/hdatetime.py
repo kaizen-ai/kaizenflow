@@ -521,6 +521,29 @@ def set_current_bar_timestamp(
 # #############################################################################
 
 
+def str_to_timestamp(
+    timestamp_as_str: str, tz: str, *, datetime_format: Optional[str] = None
+) -> pd.Timestamp:
+    """
+    Convert str datetime to pd.Timestamp.
+
+    :param timestamp_as_str: string datetime(e.g., 20230523_150513)
+    :param tz: timezone info(e.g., "US/Eastern")
+    :param datetime_format: datetime format(e.g., %Y%m%d_%H%M%S)
+        If None, infer automatically
+    :return: pd.Timestamp with a specified timezone
+    """
+    if datetime_format is None:
+        # Try to infer the format automatically.
+        timestamp = pd.to_datetime(timestamp_as_str, infer_datetime_format=True)
+    else:
+        # Convert using the provided format.
+        timestamp = pd.to_datetime(timestamp_as_str, format=datetime_format)
+    # Convert to the specified timezone
+    timestamp = timestamp.tz_localize(tz)
+    return timestamp
+
+
 def to_generalized_datetime(
     dates: Union[pd.Series, pd.Index], date_standard: Optional[str] = None
 ) -> Union[pd.Series, pd.Index]:
@@ -797,26 +820,3 @@ def convert_timestamp_to_unix_epoch(
         "1" + unit
     )
     return epoch
-
-
-def str_to_timestamp(
-    datetime_str: str, tz: str, *, format: Optional[str] = None
-) -> pd.Timestamp:
-    """
-    Convert str datetime to pd.Timestamp.
-
-    :param datetime_str: string datetime(e.g., 20230523_150513)
-    :param tz: timestamp timezone
-    :param format: datetime format(e.g., %Y%m%d_%H%M%S).
-        If None, infer automatically
-    :return: pd.Timestamp with provided timezone
-    """
-    if format:
-        # Convert using the provided format.
-        timestamp = pd.to_datetime(datetime_str, format=format, utc=True)
-    else:
-        # Try to infer the format automatically.
-        timestamp = pd.to_datetime(datetime_str, infer_datetime_format=True, utc=True)
-    # Convert to the specified timezone
-    timestamp = timestamp.tz_convert(tz)
-    return timestamp

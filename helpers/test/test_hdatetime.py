@@ -631,10 +631,10 @@ class Test_str_to_timestamp1(hunitest.TestCase):
         Test valid datetime with format.
         """
         datetime_str = "20230728_150513"
-        timezone_info = "US/Pacific"
+        timezone_info = "US/Eastern"
         format = "%Y%m%d_%H%M%S"
-        actual = hdateti.str_to_timestamp(datetime_str, timezone_info, format=format)
-        expected = pd.Timestamp('2023-07-28 15:05:13+0000', tz='US/Pacific')
+        actual = hdateti.str_to_timestamp(datetime_str, timezone_info, datetime_format=format)
+        expected = pd.Timestamp('2023-07-28 15:05:13-0400', tz='US/Eastern')
         self.assertEqual(actual, expected)
 
     def test2(self) -> None:
@@ -642,8 +642,8 @@ class Test_str_to_timestamp1(hunitest.TestCase):
         Test valid datetime without format.
         """
         datetime_str = "2023-07-28 15:05:13"
-        timezone_info = "UTC"
-        expected = pd.Timestamp('2023-07-28 15:05:13+0000', tz='UTC')
+        timezone_info = "US/Eastern"
+        expected = pd.Timestamp('2023-07-28 15:05:13-0400', tz='US/Eastern')
         actual = hdateti.str_to_timestamp(datetime_str, timezone_info)
         self.assertEqual(actual, expected)
 
@@ -652,18 +652,18 @@ class Test_str_to_timestamp1(hunitest.TestCase):
         Test invalid datetime with format.
         """
         datetime_str = "28-07-2023 15:05:13"
-        timezone_info = "UTC"
+        timezone_info = "US/Eastern"
         format = "%Y%m%d_%H%M%S"
         # Invalid datetime, should raise a ValueError.
         with self.assertRaises(ValueError):
-            hdateti.str_to_timestamp(datetime_str, timezone_info, format=format)
+            hdateti.str_to_timestamp(datetime_str, timezone_info, datetime_format=format)
 
     def test4(self):
         """
         Test invalid datetime without format.
         """
         datetime_str = "qwe28abc07-201234"
-        timezone_info = "UTC"
+        timezone_info = "US/Eastern"
         # Invalid datetime, should raise a ValueError.
         with self.assertRaises(ValueError):
             hdateti.str_to_timestamp(datetime_str, timezone_info)
