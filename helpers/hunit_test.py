@@ -437,7 +437,6 @@ def purify_from_environment(txt: str) -> str:
     txt = pattern.sub("$PWD", txt)
     # Replace the user name with `$USER_NAME`.
     user_name = hsystem.get_user_name()
-    txt_out = []
     """
     The regex pattern tries to find strings that follow the pattern
     - before the username, symbols like '/', '.', ' ', '=' come, or username itself is the beginning of string
