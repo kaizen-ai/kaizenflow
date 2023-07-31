@@ -418,6 +418,7 @@ def purify_from_environment(txt: str) -> str:
 
     - replace the git path with `$GIT_ROOT`
     - replace the user name with `$USER_NAME`
+    - replace pwd with `$PWD`
     """
     # We remove references to the Git modules starting from the innermost one.
     for super_module in [False, True]:
@@ -434,11 +435,15 @@ def purify_from_environment(txt: str) -> str:
     # Replace the user name with `$USER_NAME`.
     user_name = hsystem.get_user_name()
     txt_out = []
-    pattern = rf"([\s\/\.\=]|^)+{user_name}+([.\s/]|$)"
+    """
+    The regex pattern tries to find strings that follow the pattern
+    - before the username, symbols like '/', '.', ' ', '=' come, or username itself is the beginning of string
+    - after the username, symbols like '/', '.', ' ' come, or username itself is the end of string
+    """
+    pattern = rf"([\s\n\/\.\=]|^)+{user_name}+([.\s/]|$)"
+    # keep the forward and backward part of username in the regexp."\1" for forward and "\2" for backward
     target = r"\1$USER_NAME\2"
-    for line in txt.splitlines():
-        txt_out.append(re.sub(pattern, target, line))
-    txt = "\n".join(txt_out)
+    txt = re.sub(pattern, target, txt)
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
