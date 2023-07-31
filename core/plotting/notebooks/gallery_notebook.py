@@ -28,18 +28,16 @@
 # %% run_control={"marked": false}
 import logging
 
-import numpy as np
-import pandas as pd
-
+import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
-import core.plotting.test.test_plots as cptetepl
-import core.plotting.correlation as cplocorr
-
+import dataflow.model.model_plotter as dtfmomoplo
+import dataflow.model.test.test_model_evaluator as cdmttme
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
+
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
 
@@ -60,7 +58,7 @@ hprint.config_notebook()
 srs = cptetepl.Test_plots.get_plot_histograms_and_lagged_scatterplot1()
 lag = 7
 # TODO(Dan): Remove after integration with `cmamp`. Changes from Cm #4722 are not in `sorrentum` yet.
-figsize = (20,20)
+figsize = (20, 20)
 cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
 
 # %% [markdown]
@@ -83,8 +81,24 @@ cplmiplo.plot_time_series_by_period(test_series, period)
 
 # %%
 mode = "clustermap"
-corr_df = cptetepl.Test_plots.get_plot_heatmap()
+corr_df = cptetepl.Test_plots.get_plot_heatmap1()
 figsize = (20, 20)
 cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)
+
+# %% [markdown]
+# ## `plot_rets_signal_analysis()`
+
+# %%
+# Set inputs.
+evaluator, eval_config = cdmttme.get_example_model_evaluator()
+# Build the ModelPlotter.
+plotter = dtfmomoplo.ModelPlotter(evaluator)
+keys = None
+plotter.plot_performance(
+    keys=keys,
+    resample_rule=eval_config["resample_rule"],
+    mode=eval_config["mode"],
+    target_volatility=eval_config["target_volatility"],
+)
 
 # %%
