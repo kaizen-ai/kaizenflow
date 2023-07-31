@@ -44,7 +44,7 @@ df.columns
 # %%
 for col in df.columns:
     print(col)
-    print(df.iloc[0][col])
+    print(df.iloc[1][col])
     print()
 
 # %% [markdown]

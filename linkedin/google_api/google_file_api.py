@@ -138,7 +138,7 @@ class GoogleFileApi:
                     client_secrets_path, SCOPES
                 )
                 creds = flow.run_local_server(port=0)
-            # Save the credentials for the next run
+            # Save the credentials for the next run.
             with open(token_path, "w") as token:
                 token.write(creds.to_json())
         return creds

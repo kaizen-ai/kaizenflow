@@ -37,7 +37,7 @@ hdbg.init_logger(use_exec_path=True)
 # # Load data
 
 # %%
-spreadsheet_name = "sn_search5.search_export.gsheet"
+spreadsheet_name = "search_retired1.search_export.gsheet"
 spread = gspread_pandas.Spread(spreadsheet_name)
 df = spread.sheet_to_df(index=None)
 print(df.shape)
@@ -65,7 +65,13 @@ df = df[df["location"].apply(lambda x: location in x)].reset_index(drop=True)
 print(
     f"Dropped {prev_len - len(df)} rows ({round((prev_len - len(df))*100/prev_len, 2)}%)"
 )
-df.head()
+df[:10]
+
+# %%
+for col in df.columns:
+    print(col)
+    print(df.iloc[0][col])
+    print()
 
 # %%
 # Make sure profileUrl in the first column.
