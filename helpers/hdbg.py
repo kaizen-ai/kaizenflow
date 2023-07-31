@@ -308,13 +308,9 @@ def dassert_in(
     *args: Any,
     only_warning: bool = False,
 ) -> None:
-    cond = False
-    fileExtension = act_ext = os.path.splitext(str(value))[-1].lower()
-    for val in valid_values:
-        if str(value).endswith(str(val)) == True:
-            cond = cond | str(value).endswith(str(val))
+    cond = value in valid_values
     if not cond:
-        txt = f"'{fileExtension}' in '{valid_values}'"
+        txt = f"'{value}' in '{valid_values}'"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
@@ -811,8 +807,11 @@ def dassert_file_extension(
     extensions = [f".{e}" if not e.startswith(".") else e for e in extensions]
     # Check.
     act_ext = os.path.splitext(file_name)[-1].lower()
+    if act_ext == ".gz":
+        act_ext = os.path.splitext(file_name[:-3])[-1].lower() + ".gz"
+        
     dassert_in(
-        file_name,
+        act_ext,
         extensions,
         "Invalid extension '%s' for file '%s'",
         act_ext,
