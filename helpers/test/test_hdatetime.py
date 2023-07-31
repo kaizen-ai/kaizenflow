@@ -659,7 +659,7 @@ class Test_str_to_timestamp1(hunitest.TestCase):
             hdateti.str_to_timestamp(datetime_str, timezone_info, datetime_format=format)
         actual = str(err.exception)
         expected = "time data '28-07-2023 15:05:13' does not match format '%Y%m%d_%H%M%S' (match)"
-        self.assertEqual(actual, expected)
+        self.assert_equal(actual, expected)
 
     def test4(self) -> None:
         """
@@ -672,5 +672,4 @@ class Test_str_to_timestamp1(hunitest.TestCase):
             hdateti.str_to_timestamp(datetime_str, timezone_info)
         actual = str(err.exception)
         expected = "Unknown string format: qwe28abc07-201234 present at position 0"
-        self.assertEqual(actual, expected)
-
+        self.assert_equal(actual, expected)

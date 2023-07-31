@@ -533,6 +533,9 @@ def str_to_timestamp(
         If None, infer automatically
     :return: pd.Timestamp with a specified timezone
     """
+    hdbg.dassert_isinstance(timestamp_as_str, str)
+    hdbg.dassert_isinstance(tz, str)
+    _LOG.debug(hprint.to_str("timestamp_as_str tz datetime_format"))
     if datetime_format is None:
         # Try to infer the format automatically.
         timestamp = pd.to_datetime(timestamp_as_str, infer_datetime_format=True)
