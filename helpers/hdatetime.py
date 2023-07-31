@@ -525,11 +525,11 @@ def str_to_timestamp(
     timestamp_as_str: str, tz: str, *, datetime_format: Optional[str] = None
 ) -> pd.Timestamp:
     """
-    Convert str datetime to pd.Timestamp.
+    Convert timestamp as string to `pd.Timestamp`.
 
-    :param timestamp_as_str: string datetime(e.g., 20230523_150513)
-    :param tz: timezone info(e.g., "US/Eastern")
-    :param datetime_format: datetime format(e.g., %Y%m%d_%H%M%S)
+    :param timestamp_as_str: string datetime (e.g., 20230523_150513)
+    :param tz: timezone info (e.g., "US/Eastern")
+    :param datetime_format: datetime format (e.g., %Y%m%d_%H%M%S)
         If None, infer automatically
     :return: pd.Timestamp with a specified timezone
     """
