@@ -83,7 +83,7 @@ class TestModelPlotter1(hunitest.TestCase):
             target_volatility=eval_config["target_volatility"],
         )
 
-    def test_plot_rets_signal_analysis1(self) -> None:
+    def test_plot_performance1(self) -> None:
         plotter, _, eval_config = self._get_example_model_plotter()
         # Use all the models.
         keys = None
@@ -130,3 +130,4 @@ class TestModelPlotter1(hunitest.TestCase):
         # Build the ModelPlotter.
         plotter = dtfmomoplo.ModelPlotter(evaluator)
         return plotter, evaluator, eval_config
+        
