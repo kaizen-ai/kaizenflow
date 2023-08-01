@@ -1,6 +1,7 @@
 import logging
 import unittest
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -16,6 +17,18 @@ class Test_plots(unittest.TestCase):
     Run smoke tests for plotting functions.
     """
     
+    @staticmethod
+    def get_plot_spectrum1() -> pd.DataFrame:
+        """
+        Generate a test DataFrame for the plot_spectrum function.
+        """
+        data = {
+            "signal1": np.random.randn(1000),
+            "signal2": np.random.randn(1000),
+        }
+        df = pd.DataFrame(data)
+        return df
+
     @staticmethod
     def get_plot_effective_correlation_rank1() -> pd.Series:
         """
@@ -128,3 +141,24 @@ class Test_plots(unittest.TestCase):
         q_values = np.random.uniform(1, 10, num_q_values).tolist()
         test_df = self.get_plot_effective_correlation_rank1()
         cplocorr.plot_effective_correlation_rank(test_df, q_values)
+
+    def test_plot_spectrum1(self) -> None:
+        """
+        Smoke test for `plot_spectrum`.
+
+        - `axes` is None
+        """
+        test_df = self.get_plot_spectrum1()
+        cplmiplo.plot_spectrum(test_df)
+
+
+    def test_plot_spectrum2(self) -> None:
+        """
+        Smoke test for `plot_spectrum`.
+
+        - `axes` is list of Matplotlib
+        """
+        test_df = self.get_plot_spectrum1()
+        _, axes = plt.subplots(2, 2, figsize=(10, 8))
+        axes_flat = axes.flatten()
+        cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
