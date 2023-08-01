@@ -70,7 +70,7 @@ class Test_plots(unittest.TestCase):
         # Set a specific random seed for the entire test class.
         cls._seed = 42
         np.random.seed(42)
-        # Set a specific figure size
+        # Set a specific figure size.
         cls._figsize = (20, 20)
 
     @classmethod
