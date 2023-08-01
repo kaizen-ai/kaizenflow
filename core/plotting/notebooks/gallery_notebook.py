@@ -17,7 +17,7 @@
 #
 # This gallery notebook is used to verify that `amp/core/plotting` functions display plots correctly.
 
-# %%
+# %% [markdown]
 # %load_ext autoreload
 # %autoreload 2
 # %matplotlib inline
