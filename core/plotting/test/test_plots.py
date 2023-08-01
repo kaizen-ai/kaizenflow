@@ -90,8 +90,8 @@ class Test_plot_timeseries_distribution(unittest.TestCase):
         Get test data for plotting time series distribution.
         """
         rng = np.random.default_rng(seed=0)
-        samples = rng.normal(size=1000)
-        index = pd.date_range(start="2023-01-01", periods=len(samples), freq="H")
+        samples = rng.normal(size=50)
+        index = pd.date_range(start="2022-12-31", periods=len(samples), freq="H")
         srs = pd.Series(samples, index=index, name="test values")
         return srs
 
