@@ -137,6 +137,39 @@ def _invite_collaborator(
         )
 
 
+def _remove_collaborator(
+    github_username: str,
+    owner_username: str,
+    repo_name: str,
+    access_token: str,
+) -> None:
+    """
+    Remove a collaborator from GitHub.
+    """
+    remove_collaborator_url = os.path.join(
+        "https://api.github.com/repos",
+        owner_username,
+        repo_name,
+        "collaborators",
+        github_username,
+    )
+    headers = {"Authorization": "Bearer " + access_token}
+    response = requests.delete(
+        remove_collaborator_url, headers=headers, timeout=10
+    )
+    status_code = response.status_code
+    if status_code == 204:
+        _LOG.debug("%s has been removed as a collaborator.", github_username)
+    elif status_code == 404:
+        _LOG.debug("%s is not a collaborator in the repository.", github_username)
+    else:
+        _LOG.debug(
+            "Error removing %s as a collaborator. Status code: %s",
+            github_username,
+            status_code,
+        )
+
+
 # #############################################################################
 
 
@@ -166,6 +199,13 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         help="Owner's generated access token",
     )
+    parser.add_argument(
+        "--action",
+        type=str,
+        required=True,
+        choices=["add", "remove"],
+        help="Action to perform: add or remove",
+    )
     hparser.add_verbosity_arg(parser)
     return parser
 
@@ -173,12 +213,20 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    _invite_collaborator(
-        args.github_username,
-        args.owner_username,
-        args.repo_name,
-        args.access_token,
-    )
+    if args.action == "add":
+        _invite_collaborator(
+            args.github_username,
+            args.owner_username,
+            args.repo_name,
+            args.access_token,
+        )
+    elif args.action == "remove":
+        _remove_collaborator(
+            args.github_username,
+            args.owner_username,
+            args.repo_name,
+            args.access_token,
+        )
 
 
 if __name__ == "__main__":
