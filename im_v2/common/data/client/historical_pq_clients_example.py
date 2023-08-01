@@ -139,7 +139,6 @@ def get_MockHistoricalByTileClient_example2(
     return im_client
 
 
-# TODO(Dan): Generate hourly data in order to speed up tests.
 def get_MockHistoricalByTileClient_example3(
     self_: Any,
     full_symbols: List[ivcu.FullSymbol],
