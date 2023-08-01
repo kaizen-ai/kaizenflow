@@ -1843,6 +1843,7 @@ def multiindex_df_info(
         start_timestamp = df.index.min()
         end_timestamp = df.index.max()
         frequency = pd.infer_freq(df.index)
+        frequency = frequency if frequency else "N/A"
         ret.append(f"start_timestamp={start_timestamp}")
         ret.append(f"end_timestamp={end_timestamp}")
         ret.append(f"frequency={frequency}")

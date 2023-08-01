@@ -3196,6 +3196,33 @@ class Test_multiindex_df_info1(hunitest.TestCase):
 
     def test2(self) -> None:
         """
+        Test DataFrame with a non-frequency datetime index.
+        """
+        df = self.get_multiindex_df_with_datetime_index()
+        non_frequency_datetime_index = [
+            pd.Timestamp("2022-01-01 21:01:00+00:00"),
+            pd.Timestamp("2022-01-01 21:02:00+00:00"),
+            pd.Timestamp("2022-01-01 21:04:00+00:00"),
+            pd.Timestamp("2022-01-01 21:04:30+00:00"),
+            pd.Timestamp("2022-01-01 21:06:00+00:00"),
+        ]
+        df.index = non_frequency_datetime_index
+        act = hpandas.multiindex_df_info(df)
+        exp = "\n".join(
+            [
+               "shape=2 x 4 x 5",
+               "columns_level0=2 ['asset1', 'asset2']",
+               "columns_level1=4 ['close', 'high', 'low', 'open']",
+               "rows=5 ['2022-01-01 21:01:00+00:00', '2022-01-01 21:02:00+00:00', '2022-01-01 21:04:00+00:00', '2022-01-01 21:04:30+00:00', '2022-01-01 21:06:00+00:00']",
+               "start_timestamp=2022-01-01 21:01:00+00:00",
+               "end_timestamp=2022-01-01 21:06:00+00:00",
+               "frequency=N/A"
+            ]
+        )
+        self.assert_equal(act, exp)
+
+    def test3(self) -> None:
+        """
         Test DataFrame with a non-datetime index.
         """
         df = self.get_multiindex_df_with_non_datetime_index()
