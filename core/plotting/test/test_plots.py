@@ -15,7 +15,7 @@ class Test_plots(unittest.TestCase):
     """
     Run smoke tests for plotting functions.
     """
-    
+
     @staticmethod
     def get_plot_effective_correlation_rank1() -> pd.Series:
         """
@@ -50,6 +50,17 @@ class Test_plots(unittest.TestCase):
         df = pd.DataFrame(np.random.randn(10, 6), columns=list("ABCDEF"))
         return df
 
+    @staticmethod
+    def get_plot_timeseries_distribution1(self) -> pd.Series:
+        """
+        Get test data for plotting time series distribution.
+        """
+        rng = np.random.default_rng(seed=self._seed)
+        samples = rng.normal(size=50)
+        index = pd.date_range(start="2022-12-31", periods=len(samples), freq="H")
+        srs = pd.Series(samples, index=index, name="test values")
+        return srs
+
     @classmethod
     def setUpClass(cls):
         # Save the original random seed.
@@ -61,8 +72,8 @@ class Test_plots(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         """
-        Restore the original random seed after all the test 
-        methods have been executed.
+        Restore the original random seed after all the test methods have been
+        executed.
         """
         np.random.set_state(cls.original_seed)
 
@@ -108,7 +119,7 @@ class Test_plots(unittest.TestCase):
         corr_df = self.get_plot_heatmap1()
         figsize = (20, 20)
         cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)
-        
+
     def test_plot_effective_correlation_rank1(self) -> None:
         """
         Smoke test for `plot_effective_correlation_rank()`.
@@ -129,24 +140,18 @@ class Test_plots(unittest.TestCase):
         test_df = self.get_plot_effective_correlation_rank1()
         cplocorr.plot_effective_correlation_rank(test_df, q_values)
 
-class Test_plot_timeseries_distribution(unittest.TestCase):
-    @staticmethod
-    def get_plot_timeseries_distribution1() -> pd.Series:
-        """
-        Get test data for plotting time series distribution.
-        """
-        rng = np.random.default_rng(seed=0)
-        samples = rng.normal(size=50)
-        index = pd.date_range(start="2022-12-31", periods=len(samples), freq="H")
-        srs = pd.Series(samples, index=index, name="test values")
-        return srs
-
     def test_plot_timeseries_distribution1(self) -> None:
+        """
+        Smoke test for 'plot_timeseries_distribution()'.
+        """
         srs = self.get_plot_timeseries_distribution1()
         datetime_types = ["hour"]
         cplmiplo.plot_timeseries_distribution(srs, datetime_types)
 
     def test_plot_timeseries_distribution2(self) -> None:
+        """
+        Smoke test for 'plot_timeseries_distribution()'.
+        """
         srs = self.get_plot_timeseries_distribution1()
         datetime_types = ["hour", "month"]
         cplmiplo.plot_timeseries_distribution(srs, datetime_types)
