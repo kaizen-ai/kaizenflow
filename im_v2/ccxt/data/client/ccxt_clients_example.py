@@ -9,6 +9,7 @@ import os
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hs3 as hs3
+import helpers.hsql as hsql
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import im_v2.common.db.db_utils as imvcddbut
 
@@ -211,5 +212,23 @@ def get_CcxtSqlRealTimeImClient_example1(
     db_connection = imvcddbut.DbConnectionManager.get_connection(db_stage)
     client = imvcdccccl.CcxtSqlRealTimeImClient(
         universe_version, db_connection, table_name
+    )
+    return client
+
+
+def get_CcxtSqlRealTimeImClient_example2(
+    db_connection: hsql.DbConnection, resample_1min: bool
+) -> imvcdccccl.CcxtSqlRealTimeImClient:
+    """
+    Get a real-time DB client for CCXT data for unit testing.
+
+    :param db_connection: DB connection
+    :param resample_1min: whether to resample data to 1 minute or not
+    :return: CCXT real-time client
+    """
+    universe_version = "infer_from_data"
+    table_name = "ccxt_ohlcv_spot"
+    client = imvcdccccl.CcxtSqlRealTimeImClient(
+        universe_version, db_connection, table_name, resample_1min=resample_1min
     )
     return client
