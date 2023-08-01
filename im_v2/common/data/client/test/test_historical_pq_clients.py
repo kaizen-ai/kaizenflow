@@ -775,7 +775,7 @@ class TestHistoricalPqByTileClient3(icdc.ImClientTestCase):
         end_ts = hdateti.convert_unix_epoch_to_timestamp(end_ts_epoch, unit="h")
         return start_ts, end_ts
 
-    @pytest.mark.superslow("~180 seconds.")
+    @pytest.mark.superslow("~36 seconds.")
     def test_read_data_random1(self) -> None:
         """
         Timestamp intervals are randomly generated and tested N times.
