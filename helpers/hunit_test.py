@@ -1025,8 +1025,6 @@ def _modify_end_of_line(output: Optional[str]) -> str:
     Modify the last line of the string output.
     """ 
     if output:
-        output = [line.rstrip("\n") for line in output]
-        output = "\n".join(output)
         output = output.rstrip("\n") + "\n"
     else:
         output = ""

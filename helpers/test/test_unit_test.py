@@ -451,7 +451,7 @@ class TestCheckString1(hunitest.TestCase):
         self.assertTrue(file_exists)
         self.assertFalse(is_equal)
         # The golden outcome was updated.
-        self.assertEqual(new_golden, "hello world")
+        self.assertEqual(new_golden, "hello world\n")
 
     def test_check_string_not_equal3(self) -> None:
         """
@@ -506,8 +506,8 @@ class TestCheckString1(hunitest.TestCase):
         self.assertTrue(outcome_updated)
         self.assertFalse(file_exists)
         self.assertFalse(is_equal)
-        #
-        self.assertEqual(new_golden, "hello world")
+        # Getting error here --> new_golden == "hello world\n"
+        self.assertEqual(new_golden, "hello world\n")
 
     def test_check_string_missing2(self) -> None:
         """
@@ -537,7 +537,7 @@ class TestCheckString1(hunitest.TestCase):
         self.assertFalse(file_exists)
         self.assertFalse(is_equal)
         #
-        self.assertEqual(new_golden, "hello world")
+        self.assertEqual(new_golden, "hello world\n")
 
     def test_check_string_missing3(self) -> None:
         """
@@ -567,7 +567,7 @@ class TestCheckString1(hunitest.TestCase):
         self.assertFalse(file_exists)
         self.assertFalse(is_equal)
         #
-        self.assertEqual(new_golden, "hello world")
+        self.assertEqual(new_golden, "hello world\n")
 
 
 # #############################################################################
