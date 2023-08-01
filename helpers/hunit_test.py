@@ -437,13 +437,9 @@ def purify_from_environment(txt: str) -> str:
     txt = pattern.sub("$PWD", txt)
     # Replace the user name with `$USER_NAME`.
     user_name = hsystem.get_user_name()
-    """
-    The regex pattern tries to find strings that follow the pattern
-    - before the username, symbols like '/', '.', ' ', '=' come, or username itself is the beginning of string
-    - after the username, symbols like '/', '.', ' ' come, or username itself is the end of string
-    """
+    # The regex pattern tries to find strings that surrounded with dot, slash or space
     pattern = rf"([\s\n\/\.\=]|^)+{user_name}+([.\s/]|$)"
-    # keep the forward and backward part of username in the regexp."\1" for forward and "\2" for backward
+    # "\1" is to keep forward and "\2" is to keep backward part of username
     target = r"\1$USER_NAME\2"
     txt = re.sub(pattern, target, txt)
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
