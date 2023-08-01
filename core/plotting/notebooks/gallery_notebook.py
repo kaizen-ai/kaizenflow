@@ -107,14 +107,15 @@ cplocorr.plot_effective_correlation_rank(test_df, q_values)
 # ## `plot_spectrum()`
 
 # %%
-# Set inputs
+# Set inputs.
 test_df = cptetepl.Test_plots.get_plot_spectrum1()
 
 # %%
 cplmiplo.plot_spectrum(test_df)
 
 # %%
-_, axes = plt.subplots(2, 2, figsize=(10, 8))
+figsize = (20, 20)
+_, axes = plt.subplots(2, 2, figsize=figsize)
 axes_flat = axes.flatten()
 cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
 
