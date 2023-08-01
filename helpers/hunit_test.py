@@ -437,8 +437,8 @@ def purify_from_environment(txt: str) -> str:
     txt = pattern.sub("$PWD", txt)
     # Replace the user name with `$USER_NAME`.
     user_name = hsystem.get_user_name()
-    # Set a regex pattern that finds strings surrounded by dot, slash or space.
-    pattern = rf"([\s\n\/\.\=]|^)+{user_name}+([.\s/]|$)"
+    # Set a regex pattern that finds strings surrounded by dot, dash or space.
+    pattern = rf"([\s\n\-\.\=]|^)+{user_name}+([.\s/-]|$)"
     # "\1" is to keep forward and "\2" is to keep backward part of username.
     target = r"\1$USER_NAME\2"
     txt = re.sub(pattern, target, txt)
