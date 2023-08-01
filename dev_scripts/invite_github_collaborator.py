@@ -23,6 +23,7 @@ import os
 import requests
 
 import helpers.hdbg as hdbg
+import helpers.hparser as hparser
 
 _LOG = logging.getLogger(__name__)
 
@@ -165,6 +166,7 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         help="Owner's generated access token",
     )
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
