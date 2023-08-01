@@ -1,4 +1,3 @@
-
 import logging
 import unittest
 
@@ -10,6 +9,7 @@ import core.plotting.misc_plotting as cplmiplo
 import core.plotting.visual_stationarity_test as cpvistte
 
 _LOG = logging.getLogger(__name__)
+
 
 class Test_plots(unittest.TestCase):
     """
