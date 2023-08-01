@@ -45,7 +45,6 @@
   - General discussions within a team
   - Group chats
 - We do not share sensitive information via regular chats
-<!-- Regular chats cannot be accessed via Telegram Desktop version -->
 
 # Username
 
