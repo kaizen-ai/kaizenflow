@@ -3181,16 +3181,18 @@ class Test_multiindex_df_info1(hunitest.TestCase):
         """
         df = self.get_multiindex_df_with_datetime_index()
         act = hpandas.multiindex_df_info(df)
-        self.assertIn("shape=2 x 4 x 5", act)
-        self.assertIn("columns_level0=2 ['asset1', 'asset2']", act)
-        self.assertIn("columns_level1=4 ['close', 'high', 'low', 'open']", act)
-        self.assertIn(
-            "rows=5 ['2022-01-01 21:01:00+00:00', '2022-01-01 21:02:00+00:00', '2022-01-01 21:03:00+00:00', '2022-01-01 21:04:00+00:00', '2022-01-01 21:05:00+00:00']",
-            act,
+        exp = "\n".join(
+            [
+               "shape=2 x 4 x 5",
+               "columns_level0=2 ['asset1', 'asset2']",
+               "columns_level1=4 ['close', 'high', 'low', 'open']",
+               "rows=5 ['2022-01-01 21:01:00+00:00', '2022-01-01 21:02:00+00:00', '2022-01-01 21:03:00+00:00', '2022-01-01 21:04:00+00:00', '2022-01-01 21:05:00+00:00']",
+               "start_timestamp=2022-01-01 21:01:00+00:00",
+               "end_timestamp=2022-01-01 21:05:00+00:00",
+               "frequency=T"
+            ]
         )
-        self.assertIn("start_timestamp=2022-01-01 21:01:00", act)
-        self.assertIn("end_timestamp=2022-01-01 21:05:00", act)
-        self.assertIn("frequency=T", act)
+        self.assert_equal(act, exp)
 
     def test2(self) -> None:
         """
@@ -3198,10 +3200,12 @@ class Test_multiindex_df_info1(hunitest.TestCase):
         """
         df = self.get_multiindex_df_with_non_datetime_index()
         act = hpandas.multiindex_df_info(df)
-        self.assertIn("shape=2 x 2 x 2", act)
-        self.assertIn("columns_level0=2 ['A', 'B']", act)
-        self.assertIn("columns_level1=2 ['X', 'Y']", act)
-        self.assertIn("rows=2 ['M', 'N']", act)
-        self.assertNotIn("start_timestamp=", act)
-        self.assertNotIn("end_timestamp=", act)
-        self.assertNotIn("frequency=", act)
+        exp = "\n".join(
+            [
+                "shape=2 x 2 x 2",
+                "columns_level0=2 ['A', 'B']",
+                "columns_level1=2 ['X', 'Y']",
+                "rows=2 ['M', 'N']"
+            ]
+        )
+        self.assert_equal(act, exp)

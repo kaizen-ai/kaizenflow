@@ -1838,8 +1838,8 @@ def multiindex_df_info(
         "columns_level1=%s" % list_to_str(columns_level1, **list_to_str_kwargs)
     )
     ret.append("rows=%s" % list_to_str(rows, **list_to_str_kwargs))
-    # Check if the index is a DatetimeIndex and get more info
     if isinstance(df.index, pd.DatetimeIndex):
+        # Display timestamp info.
         start_timestamp = df.index.min()
         end_timestamp = df.index.max()
         frequency = pd.infer_freq(df.index)
