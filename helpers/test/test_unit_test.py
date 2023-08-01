@@ -1198,23 +1198,17 @@ class Test_purify_from_environment1(hunitest.TestCase):
         Check that user name is purified correctly.
         """
         # Manually set a user name to test the behaviour.
-        hsystem.set_user_name("root")
-        src = [
-            ("root/take_square_root",),
-            ("take_square_root",),
-            ("root_q_mv",),
-            ("--name root.amp_test.app.app",),
-            ("run_docker_as_root='True'",),
-            ("run --rm -l user=root",),
-        ]
-        dst = [
-            ("$USER_NAME/take_square_root",),
-            ("take_square_root",),
-            ("root_q_mv",),
-            ("--name $USER_NAME.amp_test.app.app",),
-            ("run_docker_as_root='True'",),
-            ("run --rm -l user=$USER_NAME",),
-        ]
-        for txt, exp in zip(src, dst):
-            self.helper(txt[0], exp[0])
-        hsystem.set_user_name(None)
+        try:
+            hsystem.set_user_name("root")
+            data = [
+                ("root/take_square_root", "$USER_NAME/take_square_root"),
+                ("take_square_root", "take_square_root"),
+                ("root_q_mv", "root_q_mv"),
+                ("--name root.amp_test.app.app", "--name $USER_NAME.amp_test.app.app"),
+                ("run_docker_as_root='True'", "run_docker_as_root='True'"),
+                ("run --rm -l user=root", "run --rm -l user=$USER_NAME"),
+            ]
+            for txt, exp in data:
+                self.helper(txt, exp)
+        finally:
+            hsystem.set_user_name(None)
