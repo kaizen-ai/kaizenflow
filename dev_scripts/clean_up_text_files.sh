@@ -125,7 +125,7 @@ if [[ $mode == "Test_on_file" ]]; then
     # Run on a single file.
     #FILE="dataflow/core/nodes/test/outcomes/TestArmaDataSource.test1/output/test.txt"
     #FILE="/Users/saggese/src/cmamp1/dataflow/core/nodes/test/outcomes/TestArmaDataSource.test1/output/test.txt"
-    FILE="/home/dash/src/sorrentum1/helpers/test/outcomes/TestCheckDataFrame1.test_check_df_not_equal3/output/test_df.txt"
+    FILE="/Users/saggese/src/sorrentum1/dataflow/core/nodes/test/outcomes/TestArmaDataSource.test1/output/test.txt"
     $SCRIPT_NAME $FILE
 fi;
 
