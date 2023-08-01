@@ -24,6 +24,15 @@
 # %%
 import gspread_pandas
 
+# %%
+import logging
+import helpers.hdbg as hdbg
+import linkedin.google_api.google_file_api as google_file_api
+
+# %%
+_LOG = logging.getLogger(__name__)
+hdbg.init_logger(use_exec_path=True)
+
 # %% [markdown]
 # # Config
 
