@@ -35,6 +35,7 @@ import core.plotting.misc_plotting as cplmiplo
 import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
 import core.plotting.test.test_plots as cptetepl
+import core.plotting.correlation as cplocorr
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -76,3 +77,29 @@ cplmiplo.plot_time_series_by_period(test_series, period)
 # %%
 period = "time"
 cplmiplo.plot_time_series_by_period(test_series, period)
+
+# %% [markdown]
+# ## `plot_heatmap()`
+
+# %%
+mode = "clustermap"
+corr_df = cptetepl.Test_plots.get_plot_heatmap()
+figsize = (20, 20)
+cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)
+
+# %% [markdown]
+# ## `plot_effective_correlation_rank()`
+
+# %%
+# Set inputs.
+test_df = cptetepl.Test_plots.get_plot_effective_correlation_rank1()
+
+# %%
+cplocorr.plot_effective_correlation_rank(test_df)
+
+# %%
+num_q_values = 5 
+q_values = np.random.uniform(1, 10, num_q_values).tolist()
+cplocorr.plot_effective_correlation_rank(test_df, q_values)
+
+# %%
