@@ -521,6 +521,32 @@ def set_current_bar_timestamp(
 # #############################################################################
 
 
+def str_to_timestamp(
+    timestamp_as_str: str, tz: str, *, datetime_format: Optional[str] = None
+) -> pd.Timestamp:
+    """
+    Convert timestamp as string to `pd.Timestamp`.
+
+    :param timestamp_as_str: string datetime (e.g., 20230523_150513)
+    :param tz: timezone info (e.g., "US/Eastern")
+    :param datetime_format: datetime format (e.g., %Y%m%d_%H%M%S)
+        If None, infer automatically
+    :return: pd.Timestamp with a specified timezone
+    """
+    hdbg.dassert_isinstance(timestamp_as_str, str)
+    hdbg.dassert_isinstance(tz, str)
+    _LOG.debug(hprint.to_str("timestamp_as_str tz datetime_format"))
+    if datetime_format is None:
+        # Try to infer the format automatically.
+        timestamp = pd.to_datetime(timestamp_as_str, infer_datetime_format=True)
+    else:
+        # Convert using the provided format.
+        timestamp = pd.to_datetime(timestamp_as_str, format=datetime_format)
+    # Convert to the specified timezone
+    timestamp = timestamp.tz_localize(tz)
+    return timestamp
+
+
 def to_generalized_datetime(
     dates: Union[pd.Series, pd.Index], date_standard: Optional[str] = None
 ) -> Union[pd.Series, pd.Index]:
