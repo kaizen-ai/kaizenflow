@@ -117,7 +117,7 @@
     [here](https://stackoverflow.com/questions/48568172/docker-sock-permission-denied)
     for the solution (or
     [here](https://phoenixnap.com/kb/docker-permission-denied.)
-    for issues within the thin environment)
+    as an additional resource)
 
     ```
     > docker pull hello-world
@@ -139,8 +139,7 @@
      ```
      - If terminal crashes from
        [aws-cli installation error](https://github.com/aws/aws-cli/issues/8036)
-       with output ending in `AttributeError: cython_sources`, open dev_scripts/client_setup/requirements.txt
-       and insert `pyyaml==5.3.1` at the top
+       with output ending in `AttributeError: cython_sources`, insert `pyyaml==5.3.1` in `dev_scripts/client_setup/requirements.txt`
        
   3. Activate the thin environment; make sure it is always activated
 
@@ -222,14 +221,8 @@
   - merge origin/master into your branch with `invoke git_merge_master`
   - pull the latest container with `invoke docker_pull`
   ```
-
-  2. Exit out of app terminal prompts
-
-     ```
-     I have no name!@60a1f38f89a3:/app$ exit
-     ```
   
-  3. Start a Jupyter server
+  2. Start a Jupyter server
 
      ```
      > i docker_jupyter
