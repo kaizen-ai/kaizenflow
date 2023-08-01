@@ -24,7 +24,8 @@
 
 - Accept the invite to join the Google Drive that we will send you
 
-- Subscribe to the [Telegram channel](https://t.me/+vqpTYvfgJRc3NzQx)
+- Subscribe to the [Telegram channel](https://t.me/+y5dd1qlDqGRjMjMx)
+  - Send a request, you will be added to the group after admin's approval
 
 - On-boarding Tasks
   - Once the invitation is accepted, an issue will be created by the title
