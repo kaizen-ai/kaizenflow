@@ -24,21 +24,19 @@
 # %%
 import gspread_pandas
 
-# %%
-import logging
-import helpers.hdbg as hdbg
-import linkedin.google_api.google_file_api as google_file_api
-
-# %%
-_LOG = logging.getLogger(__name__)
-hdbg.init_logger(use_exec_path=True)
+# %% [markdown]
+# # Config
 
 # %% [markdown]
 # # Load data
 
 # %%
+# Set config files path.
+c = gspread_pandas.conf.get_config("../config")
+
+# %%
 spreadsheet_name = "search_retired1.search_export.gsheet"
-spread = gspread_pandas.Spread(spreadsheet_name)
+spread = gspread_pandas.Spread(spreadsheet_name, config=c)
 df = spread.sheet_to_df(index=None)
 print(df.shape)
 df.head()
@@ -92,7 +90,20 @@ print(df.shape)
 # ## Create a empty Google sheet
 
 # %%
+import logging
+import pandas as pd
+import helpers.hdbg as hdbg
+import linkedin.google_api.google_file_api as google_file_api
+
+# %% run_control={"marked": true}
+_LOG = logging.getLogger(__name__)
+hdbg.init_logger(use_exec_path=True)
+
+# %% run_control={"marked": true}
 gapi = google_file_api.GoogleFileApi()
+
+# %%
+gfolder_id = ''
 
 # %%
 name = 'SN_Search5_Yiyun'
@@ -102,6 +113,17 @@ gdrive_folder  = gapi.get_folder_id_by_name(name)
 # %%
 # if you want to use another folder id, please change the folder id manually.
 # gdrive_folder  = {'id': '1XWNGDnJrVICHAe-6V2cnoSklZpk0APc_', 'name': 'SN_Search5_Yiyun'} 
+
+# %%
+spreadsheets_in_folder = gapi.get_spreadsheets_in_gdirve_folder(gdrive_folder.get("id"))
+df = pd.DataFrame(spreadsheets_in_folder)
+df
+
+# %%
+gsheet_name = 'sn_search5.search_export.filtered.gsheet'
+
+# %% [markdown]
+# ## Create a new Google Sheet
 
 # %%
 """
@@ -114,13 +136,13 @@ Create a new Google file (sheet or doc).
 :return: None
 """
 gfile_type = 'sheet'
-gsheet_name = 'sn_search5.search_export.filtered.gsheet'
 user = ''
 
 # %%
 gapi.create_empty_google_file(
     gfile_type = gfile_type,
     gfile_name = gsheet_name,
+    gfolder_id = gfolder_id,
     gdrive_folder = gdrive_folder,
     user = user
 )
@@ -136,5 +158,3 @@ spread2 = gspread_pandas.Spread(
     create_sheet=True,
 )
 spread2.df_to_sheet(df, index=False)
-
-# %%

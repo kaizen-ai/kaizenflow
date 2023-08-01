@@ -7,10 +7,11 @@ import json
 import requests
 import utils
 import config
+import config as p_config
 from typing import List, Optional
 
 # Getting API Key from config.py
-API_KEY = config.PHANTOMBUSTER_API
+API_KEY = p_config.PHANTOMBUSTER_API
 
 ###############################################################################
 # Phantom API
@@ -263,10 +264,10 @@ def get_search_result_by_phantom_id(phantom_id: str, api_key: str, depth: int = 
 def _main_():
     print(get_all_phantoms(API_KEY))
     # print(get_phantom_id_by_keyword(get_all_phantoms(API_KEY), "linkedin"))
-    phantom_id = get_phantom_id_by_keyword(get_all_phantoms(API_KEY), "GP Sales Navigator Search Export")
+    phantom_id = get_phantom_id_by_keyword(get_all_phantoms(API_KEY), "GP LinkedIn Profile Scraper")
     # print(get_phantom_info(phantom_id, API_KEY))
     print(get_phantom_name_by_id(phantom_id, API_KEY))
-    # result_csvs = get_result_csv_by_phantom_id(phantom_id, API_KEY, depth=None)
+    result_csvs = get_result_csv_by_phantom_id(phantom_id, API_KEY, depth=None)
     result = get_search_result_by_phantom_id(phantom_id, API_KEY, depth=None)
     print(result)
     

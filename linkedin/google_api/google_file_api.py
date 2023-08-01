@@ -26,15 +26,17 @@ class GoogleFileApi:
         self,
         gfile_type: str,
         gfile_name: str,
-        gdrive_folder: dict,
+        gfolder_id: Optional[str],
+        gdrive_folder: Optional[dict],
         user: Optional[str] = None,
     ) -> None:
         """
-        Create a new Google file (sheet or doc).
+        Create a new Google file (sheet or doc).If gfolder_id or gdrive_folder is provided, the new Google file will be created in the target folder.Otherwise, the new Google file will be created in the root folder.
 
         :param gfile_type: str, the type of the Google file ('sheet' or 'doc').
         :param gfile_name: str, the name of the new Google file.
-        :param gdrive_folder: dict, the id and the name of the Google Drive folder.
+        :param gfolder_id: str, the id of the Google Drive folder. gdrive_folder will be ignored if gfolder_id is provided.(Optional)
+        :param gdrive_folder: dict, the id and the name of the Google Drive folder.(Optional)
         :param user: str, the email address of the user to share the Google file (Optional).
         :return: None
         """
@@ -49,16 +51,24 @@ class GoogleFileApi:
             _LOG.info("Created a new Google %s '%s'.", gfile_type, gfile_name )
 
             # Move the Google file to a Google Drive dir.
-            if gdrive_folder:
+            if gfolder_id:
+                self._move_gfile_to_dir(gfile_id, gfolder_id)
+                _LOG.info(
+                    "Move the new Google %s '%s' to the target folder, and folder id = '%s'",
+                    gfile_type,
+                    gfile_name,
+                    gfolder_id,
+                )
+            elif gdrive_folder:
                 self._move_gfile_to_dir(gfile_id, gdrive_folder.get("id"))
                 _LOG.info(
-                    "Move the new Google %s '%s' to the dir '%s'",
+                    "Move the new Google %s '%s' to the folder '%s'",
                     gfile_type,
                     gfile_name,
                     gdrive_folder.get('name')
                 )
             else:
-                _LOG.info("The new Google '%s' is created in your root dir.", gfile_type)
+                _LOG.info("The new Google '%s' is created in your root folder.", gfile_type)
             # Share the Google file to a user and send an email.
             if user:
                 self._share_google_file(gfile_id, user)
@@ -70,8 +80,34 @@ class GoogleFileApi:
         except HttpError as err:
             _LOG.error(err)
 
+    def get_spreadsheets_in_gdirve_folder(self, folder_id: str) -> list:
+        response = (
+            self.gdrive_service.files()
+            .list(
+                q=f"'{folder_id}' in parents and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false", 
+                spaces="drive",
+                fields="nextPageToken, files(id, name)",
+            )
+            .execute()
+        )
+        # Return list of folder id and folder name.
+        return response.get("files")
+
+    def get_folders_in_gdrive(self) -> list:
+        response = (
+            self.gdrive_service.files()
+            .list(
+                q="mimeType='application/vnd.google-apps.folder' and trashed=false",
+                spaces="drive",
+                fields="nextPageToken, files(id, name)",
+            )
+            .execute()
+        )
+        # Return list of folder id and folder name.
+        return response.get("files")
+        
     def get_folder_id_by_name(self, name: str) -> Optional[list]:
-        folders = self._get_folders_in_gdrive()
+        folders = self.get_folders_in_gdrive()
         folder_list = []
         #
         for folder in folders:
@@ -214,15 +250,6 @@ class GoogleFileApi:
         )
         return res
 
-    def _get_folders_in_gdrive(self) -> list:
-        response = (
-            self.gdrive_service.files()
-            .list(
-                q="mimeType='application/vnd.google-apps.folder' and trashed=false",
-                spaces="drive",
-                fields="nextPageToken, files(id, name)",
-            )
-            .execute()
-        )
-        # Return list of folder id and folder name.
-        return response.get("files")
+
+    
+ 
