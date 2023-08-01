@@ -815,7 +815,8 @@ class TestHistoricalPqByTileClient3(icdc.ImClientTestCase):
         Check output for correctness.
         """
         expected_length = int(
-            ((end_ts - start_ts).total_seconds() / (60*60) + 1) * len(full_symbols)
+            ((end_ts - start_ts).total_seconds() / (60 * 60) + 1)
+            * len(full_symbols)
         )
         self.assert_equal(str(actual_df.shape[0]), str(expected_length))
         self.assert_equal(str(actual_df.index[0]), str(start_ts))
