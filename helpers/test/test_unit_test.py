@@ -1201,7 +1201,7 @@ class Test_purify_from_environment1(hunitest.TestCase):
         try:
             hsystem.set_user_name("root")
             data = [
-                ("root/take_square_root", "$USER_NAME/take_square_root"),
+                ("IMAGE=$CK_ECR_BASE_PATH/amp_test:local-root-1.0.0", "IMAGE=$CK_ECR_BASE_PATH/amp_test:local-root-1.0.0"),
                 ("take_square_root", "take_square_root"),
                 ("root_q_mv", "root_q_mv"),
                 ("--name root.amp_test.app.app", "--name $USER_NAME.amp_test.app.app"),
