@@ -16,12 +16,6 @@
 # # Imports
 
 # %%
-# !sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread_pandas)"
-
-# %%
-# !sudo /bin/bash -c "(source /venv/bin/activate; pip install google-api-python-client)"
-
-# %%
 import gspread_pandas
 
 # %%
@@ -37,8 +31,11 @@ hdbg.init_logger(use_exec_path=True)
 # # Load data
 
 # %%
-spreadsheet_name = "sn_search5.search_export.gsheet"
-spread = gspread_pandas.Spread(spreadsheet_name)
+search_name = "sn_search5"
+
+# %%
+gsheet_name = f"{search_name}.step1.search_export"
+spread = gspread_pandas.Spread(gsheet_name)
 df = spread.sheet_to_df(index=None)
 print(df.shape)
 df.head()
@@ -89,9 +86,8 @@ print(df.shape)
 gapi = google_file_api.GoogleFileApi()
 
 # %%
-name = 'SN_Search5_Yiyun'
 # gdrive_folder : dict, the id and the name of the Google Drive folder.
-gdrive_folder  = gapi.get_folder_id_by_name(name)
+gdrive_folder  = gapi.get_folder_id_by_name(search_name)
 
 # %%
 # if you want to use another folder id, please change the folder id manually.
@@ -108,7 +104,7 @@ Create a new Google file (sheet or doc).
 :return: None
 """
 gfile_type = 'sheet'
-gsheet_name = 'sn_search5.search_export.filtered.gsheet'
+gsheet_name = f'{search_name}.step2.search_export_filtered'
 user = ''
 
 # %%
