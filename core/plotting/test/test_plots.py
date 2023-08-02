@@ -51,12 +51,11 @@ class Test_plots(unittest.TestCase):
         return df
 
     @staticmethod
-    def get_plot_timeseries_distribution1(self) -> pd.Series:
+    def get_plot_timeseries_distribution1() -> pd.Series:
         """
         Get test data for plotting time series distribution.
         """
-        rng = np.random.default_rng(seed=self._seed)
-        samples = rng.normal(size=50)
+        samples = [0]*50
         index = pd.date_range(start="2022-12-31", periods=len(samples), freq="H")
         srs = pd.Series(samples, index=index, name="test values")
         return srs
