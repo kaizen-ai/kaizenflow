@@ -370,24 +370,24 @@ class TestHistoricalPqByTileClient2(icdc.ImClientTestCase):
             self, full_symbols
         )
         # Compare the expected values.
-        expected_length = 178560
+        expected_length = 2976
         expected_column_names = ["close", "full_symbol"]
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         }
         expected_signature = r"""# df=
-        index=[2021-11-01 00:00:00+00:00, 2022-01-01 23:59:00+00:00]
+        index=[2021-11-01 00:00:00+00:00, 2022-01-01 23:00:00+00:00]
         columns=full_symbol,close
-        shape=(178560, 2)
+        shape=(2976, 2)
                                          full_symbol   close
         timestamp
-        2021-11-01 00:00:00+00:00  binance::BTC_USDT  964800
-        2021-11-01 00:00:00+00:00   kucoin::FIL_USDT  964800
-        2021-11-01 00:01:00+00:00  binance::BTC_USDT  964801
+        2021-11-01 00:00:00+00:00  binance::BTC_USDT  16080
+        2021-11-01 00:00:00+00:00   kucoin::FIL_USDT  16080
+        2021-11-01 01:00:00+00:00  binance::BTC_USDT  16081
         ...
-        2022-01-01 23:58:00+00:00   kucoin::FIL_USDT  1054078
-        2022-01-01 23:59:00+00:00  binance::BTC_USDT  1054079
-        2022-01-01 23:59:00+00:00   kucoin::FIL_USDT  1054079"""
+        2022-01-01 22:00:00+00:00   kucoin::FIL_USDT  17566
+        2022-01-01 23:00:00+00:00  binance::BTC_USDT  17567
+        2022-01-01 23:00:00+00:00   kucoin::FIL_USDT  17567"""
         start_timestamp = pd.Timestamp("2021-11-01 00:00:00+00:00")
         self._test_read_data3(
             im_client,
@@ -410,7 +410,7 @@ class TestHistoricalPqByTileClient2(icdc.ImClientTestCase):
             self, full_symbols
         )
         # Compare the expected values.
-        expected_length = 1054082
+        expected_length = 17570
         expected_column_names = ["close", "full_symbol"]
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -418,16 +418,16 @@ class TestHistoricalPqByTileClient2(icdc.ImClientTestCase):
         expected_signature = r"""# df=
         index=[2020-01-01 00:00:00+00:00, 2021-01-01 00:00:00+00:00]
         columns=full_symbol,close
-        shape=(1054082, 2)
+        shape=(17570, 2)
                                          full_symbol  close
         timestamp
         2020-01-01 00:00:00+00:00  binance::BTC_USDT      0
         2020-01-01 00:00:00+00:00   kucoin::FIL_USDT      0
-        2020-01-01 00:01:00+00:00  binance::BTC_USDT      1
+        2020-01-01 01:00:00+00:00  binance::BTC_USDT      1
         ...
-        2020-12-31 23:59:00+00:00   kucoin::FIL_USDT  527039
-        2021-01-01 00:00:00+00:00  binance::BTC_USDT  527040
-        2021-01-01 00:00:00+00:00   kucoin::FIL_USDT  527040"""
+        2020-12-31 23:00:00+00:00   kucoin::FIL_USDT  8783
+        2021-01-01 00:00:00+00:00  binance::BTC_USDT  8784
+        2021-01-01 00:00:00+00:00   kucoin::FIL_USDT  8784"""
         end_timestamp = pd.Timestamp("2021-01-01 00:00:00+00:00")
         self._test_read_data4(
             im_client,
@@ -450,24 +450,24 @@ class TestHistoricalPqByTileClient2(icdc.ImClientTestCase):
             self, full_symbols
         )
         # Compare the expected values.
-        expected_length = 89280
+        expected_length = 1488
         expected_column_names = ["close", "full_symbol"]
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         }
         expected_signature = r"""# df=
-        index=[2021-08-01 00:00:00+00:00, 2021-08-31 23:59:00+00:00]
+        index=[2021-08-01 00:00:00+00:00, 2021-08-31 23:00:00+00:00]
         columns=full_symbol,close
-        shape=(89280, 2)
+        shape=(1488, 2)
                                          full_symbol   close
         timestamp
-        2021-08-01 00:00:00+00:00  binance::BTC_USDT  832320
-        2021-08-01 00:00:00+00:00   kucoin::FIL_USDT  832320
-        2021-08-01 00:01:00+00:00  binance::BTC_USDT  832321
+        2021-08-01 00:00:00+00:00  binance::BTC_USDT  13872
+        2021-08-01 00:00:00+00:00   kucoin::FIL_USDT  13872
+        2021-08-01 01:00:00+00:00  binance::BTC_USDT  13873
         ...
-        2021-08-31 23:58:00+00:00   kucoin::FIL_USDT  876958
-        2021-08-31 23:59:00+00:00  binance::BTC_USDT  876959
-        2021-08-31 23:59:00+00:00   kucoin::FIL_USDT  876959"""
+        2021-08-31 22:00:00+00:00   kucoin::FIL_USDT  14614
+        2021-08-31 23:00:00+00:00  binance::BTC_USDT  14615
+        2021-08-31 23:00:00+00:00   kucoin::FIL_USDT  14615"""
         start_timestamp = pd.Timestamp("2021-08-01 00:00:00+00:00")
         end_timestamp = pd.Timestamp("2021-08-31 23:59:00+00:00")
         self._test_read_data5(
@@ -492,7 +492,7 @@ class TestHistoricalPqByTileClient2(icdc.ImClientTestCase):
             self, full_symbols
         )
         # Compare the expected values.
-        expected_length = 89282
+        expected_length = 1490
         expected_column_names = ["close", "full_symbol"]
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -500,16 +500,16 @@ class TestHistoricalPqByTileClient2(icdc.ImClientTestCase):
         expected_signature = r"""# df=
         index=[2020-12-15 00:00:00+00:00, 2021-01-15 00:00:00+00:00]
         columns=full_symbol,close
-        shape=(89282, 2)
+        shape=(1490, 2)
                                          full_symbol   close
         timestamp
-        2020-12-15 00:00:00+00:00  binance::BTC_USDT  502560
-        2020-12-15 00:00:00+00:00   kucoin::FIL_USDT  502560
-        2020-12-15 00:01:00+00:00  binance::BTC_USDT  502561
+        2020-12-15 00:00:00+00:00  binance::BTC_USDT  8376
+        2020-12-15 00:00:00+00:00   kucoin::FIL_USDT  8376
+        2020-12-15 01:00:00+00:00  binance::BTC_USDT  8377
         ...
-        2021-01-14 23:59:00+00:00   kucoin::FIL_USDT  547199
-        2021-01-15 00:00:00+00:00  binance::BTC_USDT  547200
-        2021-01-15 00:00:00+00:00   kucoin::FIL_USDT  547200"""
+        2021-01-14 23:00:00+00:00   kucoin::FIL_USDT  9119
+        2021-01-15 00:00:00+00:00  binance::BTC_USDT  9120
+        2021-01-15 00:00:00+00:00   kucoin::FIL_USDT  9120"""
         start_timestamp = pd.Timestamp("2020-12-15 00:00:00+00:00")
         end_timestamp = pd.Timestamp("2021-01-15 00:00:00+00:00")
         self._test_read_data5(
@@ -533,7 +533,7 @@ class TestHistoricalPqByTileClient2(icdc.ImClientTestCase):
             self, full_symbols
         )
         # Compare the expected values.
-        expected_length = 264962
+        expected_length = 4418
         expected_column_names = ["close", "full_symbol"]
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -541,16 +541,16 @@ class TestHistoricalPqByTileClient2(icdc.ImClientTestCase):
         expected_signature = r"""# df=
         index=[2021-08-01 00:00:00+00:00, 2021-11-01 00:00:00+00:00]
         columns=full_symbol,close
-        shape=(264962, 2)
+        shape=(4418, 2)
                                          full_symbol   close
         timestamp
-        2021-08-01 00:00:00+00:00  binance::BTC_USDT  832320
-        2021-08-01 00:00:00+00:00   kucoin::FIL_USDT  832320
-        2021-08-01 00:01:00+00:00  binance::BTC_USDT  832321
+        2021-08-01 00:00:00+00:00  binance::BTC_USDT  13872
+        2021-08-01 00:00:00+00:00   kucoin::FIL_USDT  13872
+        2021-08-01 01:00:00+00:00  binance::BTC_USDT  13873
         ...
-        2021-10-31 23:59:00+00:00   kucoin::FIL_USDT  964799
-        2021-11-01 00:00:00+00:00  binance::BTC_USDT  964800
-        2021-11-01 00:00:00+00:00   kucoin::FIL_USDT  964800"""
+        2021-10-31 23:00:00+00:00   kucoin::FIL_USDT  16079
+        2021-11-01 00:00:00+00:00  binance::BTC_USDT  16080
+        2021-11-01 00:00:00+00:00   kucoin::FIL_USDT  16080"""
         start_timestamp = pd.Timestamp("2021-08-01 00:00:00+00:00")
         end_timestamp = pd.Timestamp("2021-11-01 00:00:00+00:00")
         self._test_read_data5(
@@ -575,7 +575,7 @@ class TestHistoricalPqByTileClient2(icdc.ImClientTestCase):
             self, full_symbols
         )
         # Compare the expected values.
-        expected_length = 434882
+        expected_length = 7250
         expected_column_names = ["close", "full_symbol"]
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -583,16 +583,16 @@ class TestHistoricalPqByTileClient2(icdc.ImClientTestCase):
         expected_signature = r"""# df=
         index=[2020-10-01 00:00:00+00:00, 2021-03-01 00:00:00+00:00]
         columns=full_symbol,close
-        shape=(434882, 2)
+        shape=(7250, 2)
                                          full_symbol   close
         timestamp
-        2020-10-01 00:00:00+00:00  binance::BTC_USDT  394560
-        2020-10-01 00:00:00+00:00   kucoin::FIL_USDT  394560
-        2020-10-01 00:01:00+00:00  binance::BTC_USDT  394561
+        2020-10-01 00:00:00+00:00  binance::BTC_USDT  6576
+        2020-10-01 00:00:00+00:00   kucoin::FIL_USDT  6576
+        2020-10-01 01:00:00+00:00  binance::BTC_USDT  6577
         ...
-        2021-02-28 23:59:00+00:00   kucoin::FIL_USDT  611999
-        2021-03-01 00:00:00+00:00  binance::BTC_USDT  612000
-        2021-03-01 00:00:00+00:00   kucoin::FIL_USDT  612000"""
+        2021-02-28 23:00:00+00:00   kucoin::FIL_USDT  10199
+        2021-03-01 00:00:00+00:00  binance::BTC_USDT  10200
+        2021-03-01 00:00:00+00:00   kucoin::FIL_USDT  10200"""
         start_timestamp = pd.Timestamp("2020-10-01 00:00:00+00:00")
         end_timestamp = pd.Timestamp("2021-03-01 00:00:00+00:00")
         self._test_read_data5(
@@ -617,7 +617,7 @@ class TestHistoricalPqByTileClient2(icdc.ImClientTestCase):
             self, full_symbols
         )
         # Compare the expected values.
-        expected_length = 1140482
+        expected_length = 19010
         expected_column_names = ["close", "full_symbol"]
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -625,16 +625,16 @@ class TestHistoricalPqByTileClient2(icdc.ImClientTestCase):
         expected_signature = r"""# df=
         index=[2020-12-01 00:00:00+00:00, 2022-01-01 00:00:00+00:00]
         columns=full_symbol,close
-        shape=(1140482, 2)
+        shape=(19010, 2)
                                          full_symbol   close
         timestamp
-        2020-12-01 00:00:00+00:00  binance::BTC_USDT  482400
-        2020-12-01 00:00:00+00:00   kucoin::FIL_USDT  482400
-        2020-12-01 00:01:00+00:00  binance::BTC_USDT  482401
+        2020-12-01 00:00:00+00:00  binance::BTC_USDT  8040
+        2020-12-01 00:00:00+00:00   kucoin::FIL_USDT  8040
+        2020-12-01 01:00:00+00:00  binance::BTC_USDT  8041
         ...
-        2021-12-31 23:59:00+00:00   kucoin::FIL_USDT  1052639
-        2022-01-01 00:00:00+00:00  binance::BTC_USDT  1052640
-        2022-01-01 00:00:00+00:00   kucoin::FIL_USDT  1052640"""
+        2021-12-31 23:00:00+00:00   kucoin::FIL_USDT  17543
+        2022-01-01 00:00:00+00:00  binance::BTC_USDT  17544
+        2022-01-01 00:00:00+00:00   kucoin::FIL_USDT  17544"""
         start_timestamp = pd.Timestamp("2020-12-01 00:00:00+00:00")
         end_timestamp = pd.Timestamp("2022-01-01 00:00:00+00:00")
         self._test_read_data5(
@@ -659,21 +659,19 @@ class TestHistoricalPqByTileClient2(icdc.ImClientTestCase):
             self, full_symbols
         )
         # Compare the expected values.
-        expected_length = 4
+        expected_length = 2
         expected_column_names = ["close", "full_symbol"]
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         }
         expected_signature = r"""# df=
-        index=[2021-12-31 23:59:00+00:00, 2022-01-01 00:00:00+00:00]
+        index=[2022-01-01 00:00:00+00:00, 2022-01-01 00:00:00+00:00]
         columns=full_symbol,close
-        shape=(4, 2)
+        shape=(2, 2)
                                          full_symbol    close
         timestamp
-        2021-12-31 23:59:00+00:00  binance::BTC_USDT  1052639
-        2021-12-31 23:59:00+00:00   kucoin::FIL_USDT  1052639
-        2022-01-01 00:00:00+00:00  binance::BTC_USDT  1052640
-        2022-01-01 00:00:00+00:00   kucoin::FIL_USDT  1052640"""
+        2022-01-01 00:00:00+00:00  binance::BTC_USDT  17544
+        2022-01-01 00:00:00+00:00   kucoin::FIL_USDT  17544"""
         start_timestamp = pd.Timestamp("2021-12-31 23:59:00+00:00")
         end_timestamp = pd.Timestamp("2022-01-01 00:00:00+00:00")
         self._test_read_data5(
@@ -708,8 +706,8 @@ class TestHistoricalPqByTileClient2(icdc.ImClientTestCase):
         shape=(2, 2)
                                          full_symbol   close
         timestamp
-        2021-08-01 00:00:00+00:00  binance::BTC_USDT  832320
-        2021-08-01 00:00:00+00:00   kucoin::FIL_USDT  832320"""
+        2021-08-01 00:00:00+00:00  binance::BTC_USDT  13872
+        2021-08-01 00:00:00+00:00   kucoin::FIL_USDT  13872"""
         start_timestamp = pd.Timestamp("2021-08-01 00:00:00+00:00")
         end_timestamp = pd.Timestamp("2021-08-01 00:00:00+00:00")
         self._test_read_data5(
@@ -755,10 +753,10 @@ class TestHistoricalPqByTileClient3(icdc.ImClientTestCase):
         random.seed(seed_)
         # Convert boundaries to epochs.
         left_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
-            left_boundary, unit="m"
+            left_boundary, unit="h"
         )
         right_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
-            right_boundary, unit="m"
+            right_boundary, unit="h"
         )
         # Generate 2 random consequtive epochs in specified boundaries.
         # TODO(Dan): Consider using a simpler solution.
@@ -772,12 +770,12 @@ class TestHistoricalPqByTileClient3(icdc.ImClientTestCase):
         end_ts_epoch = random.randint(start_ts_epoch, right_boundary_epoch - 1)
         # Convert generated epochs to timestamps.
         start_ts = hdateti.convert_unix_epoch_to_timestamp(
-            start_ts_epoch, unit="m"
+            start_ts_epoch, unit="h"
         )
-        end_ts = hdateti.convert_unix_epoch_to_timestamp(end_ts_epoch, unit="m")
+        end_ts = hdateti.convert_unix_epoch_to_timestamp(end_ts_epoch, unit="h")
         return start_ts, end_ts
 
-    @pytest.mark.superslow("~180 seconds.")
+    @pytest.mark.superslow("~36 seconds.")
     def test_read_data_random1(self) -> None:
         """
         Timestamp intervals are randomly generated and tested N times.
@@ -817,7 +815,8 @@ class TestHistoricalPqByTileClient3(icdc.ImClientTestCase):
         Check output for correctness.
         """
         expected_length = int(
-            ((end_ts - start_ts).total_seconds() / 60 + 1) * len(full_symbols)
+            ((end_ts - start_ts).total_seconds() / (60 * 60) + 1)
+            * len(full_symbols)
         )
         self.assert_equal(str(actual_df.shape[0]), str(expected_length))
         self.assert_equal(str(actual_df.index[0]), str(start_ts))
