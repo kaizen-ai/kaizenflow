@@ -238,5 +238,5 @@ def _main(parser: argparse.ArgumentParser) -> None:
         raise ValueError("Invalid action ='%s'" % action)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": 
     _main(_parse())
