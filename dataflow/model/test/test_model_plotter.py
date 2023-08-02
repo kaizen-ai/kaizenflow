@@ -125,7 +125,7 @@ class TestModelPlotter1(hunitest.TestCase):
             mode=eval_config["mode"],
         )
 
-    def _get_example_model_plotter(self):
+    def _get_example_model_plotter():
         evaluator, eval_config = cdmttme.get_example_model_evaluator()
         # Build the ModelPlotter.
         plotter = dtfmomoplo.ModelPlotter(evaluator)

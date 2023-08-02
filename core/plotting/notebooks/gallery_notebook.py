@@ -36,6 +36,7 @@ import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
 import core.plotting.test.test_plots as cptetepl
 import core.plotting.correlation as cplocorr
+import dataflow.model.test.test_model_plotter as dmtetemopl
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -86,5 +87,18 @@ mode = "clustermap"
 corr_df = cptetepl.Test_plots.get_plot_heatmap()
 figsize = (20, 20)
 cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)
+
+# %% [markdown]
+# ## `plot_performance()`
+
+# %%
+plotter, _, eval_config = dmtetemopl.TestModelPlotter1._get_example_model_plotter()
+keys = None
+plotter.plot_performance(
+    keys=keys,
+    resample_rule=eval_config["resample_rule"],
+    mode=eval_config["mode"],
+    target_volatility=eval_config["target_volatility"],
+)
 
 # %%
