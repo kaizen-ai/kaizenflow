@@ -3096,3 +3096,137 @@ class Test_get_df_from_iterator(hunitest.TestCase):
         1        6       F
         """
         self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)
+
+
+class Test_multiindex_df_info1(hunitest.TestCase):
+    @staticmethod
+    def get_multiindex_df_with_datetime_index() -> pd.DataFrame:
+        datetime_index = [
+            pd.Timestamp("2022-01-01 21:01:00+00:00"),
+            pd.Timestamp("2022-01-01 21:02:00+00:00"),
+            pd.Timestamp("2022-01-01 21:03:00+00:00"),
+            pd.Timestamp("2022-01-01 21:04:00+00:00"),
+            pd.Timestamp("2022-01-01 21:05:00+00:00"),
+        ]
+        iterables = [["asset1", "asset2"], ["open", "high", "low", "close"]]
+        index = pd.MultiIndex.from_product(iterables, names=[None, "timestamp"])
+        nums = np.array(
+            [
+                [
+                    0.77650806,
+                    0.12492164,
+                    -0.35929232,
+                    1.04137784,
+                    0.20099949,
+                    1.4078602,
+                    -0.1317103,
+                    0.10023361,
+                ],
+                [
+                    -0.56299812,
+                    0.79105046,
+                    0.76612895,
+                    -1.49935339,
+                    -1.05923797,
+                    0.06039862,
+                    -0.77652117,
+                    2.04578691,
+                ],
+                [
+                    0.77348467,
+                    0.45237724,
+                    1.61051308,
+                    0.41800008,
+                    0.20838053,
+                    -0.48289112,
+                    1.03015762,
+                    0.17123323,
+                ],
+                [
+                    0.40486053,
+                    0.88037142,
+                    -1.94567068,
+                    -1.51714645,
+                    -0.52759748,
+                    -0.31592803,
+                    1.50826723,
+                    -0.50215196,
+                ],
+                [
+                    0.17409714,
+                    -2.13997243,
+                    -0.18530403,
+                    -0.48807381,
+                    0.5621593,
+                    0.25899393,
+                    1.14069646,
+                    2.07721856,
+                ],
+            ]
+        )
+        df = pd.DataFrame(nums, index=datetime_index, columns=index)
+        return df
+
+    @staticmethod
+    def get_multiindex_df_with_non_datetime_index() -> pd.DataFrame:
+        non_datetime_index = ["M", "N"]
+        index = pd.MultiIndex.from_product([["A", "B"], ["X", "Y"]])
+        data = [[1, 2, 3, 4], [5, 6, 7, 8]]
+        df = pd.DataFrame(data, index=non_datetime_index, columns=index)
+        return df
+
+    def test1(self) -> None:
+        """
+        Test DataFrame with a datetime index.
+        """
+        df = self.get_multiindex_df_with_datetime_index()
+        act = hpandas.multiindex_df_info(df)
+        exp = """
+            shape=2 x 4 x 5
+            columns_level0=2 ['asset1', 'asset2']
+            columns_level1=4 ['close', 'high', 'low', 'open']
+            rows=5 ['2022-01-01 21:01:00+00:00', '2022-01-01 21:02:00+00:00', '2022-01-01 21:03:00+00:00', '2022-01-01 21:04:00+00:00', '2022-01-01 21:05:00+00:00']
+            start_timestamp=2022-01-01 21:01:00+00:00
+            end_timestamp=2022-01-01 21:05:00+00:00
+            frequency=T
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test2(self) -> None:
+        """
+        Test DataFrame with a non-frequency datetime index.
+        """
+        df = self.get_multiindex_df_with_datetime_index()
+        non_frequency_datetime_index = [
+            pd.Timestamp("2022-01-01 21:01:00+00:00"),
+            pd.Timestamp("2022-01-01 21:02:00+00:00"),
+            pd.Timestamp("2022-01-01 21:04:00+00:00"),
+            pd.Timestamp("2022-01-01 21:04:30+00:00"),
+            pd.Timestamp("2022-01-01 21:06:00+00:00"),
+        ]
+        df.index = non_frequency_datetime_index
+        act = hpandas.multiindex_df_info(df)
+        exp = """
+            shape=2 x 4 x 5
+            columns_level0=2 ['asset1', 'asset2']
+            columns_level1=4 ['close', 'high', 'low', 'open']
+            rows=5 ['2022-01-01 21:01:00+00:00', '2022-01-01 21:02:00+00:00', '2022-01-01 21:04:00+00:00', '2022-01-01 21:04:30+00:00', '2022-01-01 21:06:00+00:00']
+            start_timestamp=2022-01-01 21:01:00+00:00
+            end_timestamp=2022-01-01 21:06:00+00:00
+            frequency=None
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Test DataFrame with a non-datetime index.
+        """
+        df = self.get_multiindex_df_with_non_datetime_index()
+        act = hpandas.multiindex_df_info(df)
+        exp = """
+            shape=2 x 2 x 2
+            columns_level0=2 ['A', 'B']
+            columns_level1=2 ['X', 'Y']
+            rows=2 ['M', 'N']
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
