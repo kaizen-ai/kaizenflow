@@ -1460,7 +1460,7 @@ class TestCase(unittest.TestCase):
                     check_string=True,
                     dedent=dedent,
                     # We have handled the purification of the output earlier.
-                    purify_text=False,
+                    purify_text=purify_text,
                     fuzzy_match=fuzzy_match,
                     ignore_line_breaks=ignore_line_breaks,
                     sort=sort,
