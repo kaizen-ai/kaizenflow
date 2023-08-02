@@ -2,20 +2,13 @@
 
 """
 The script checks if a GH user is already a collaborator of a specific
-repository, sends an invitation if not, and reports any pending invitations.
+repository, sends an invitation if not, removes a collaborator if requested,
+and reports any pending invitations.
 
-Examples:
+Example:
   To invite a collaborator to the repository:
   > python github_permission.py \
     --action add \
-    --github_username GITHUB_USERNAME \
-    --owner_username OWNER_USERNAME \
-    --repo_name REPO_NAME \
-    --access_token ACCESS_TOKEN
-
-  To remove a collaborator from the repository:
-  > python github_permission.py \
-    --action remove \
     --github_username GITHUB_USERNAME \
     --owner_username OWNER_USERNAME \
     --repo_name REPO_NAME \
@@ -159,7 +152,7 @@ def _remove_collaborator(
     """
     Remove a collaborator from GitHub.
     """
-    remove_collaborator_url = os.path.join(
+    collaborator_endpoint = os.path.join(
         _GITHUB_API,
         owner_username,
         repo_name,
@@ -168,18 +161,14 @@ def _remove_collaborator(
     )
     headers = {"Authorization": "Bearer " + access_token}
     # Send a DELETE request to remove the collaborator.
-    response = requests.delete(
-        remove_collaborator_url, headers=headers, timeout=10
-    )
+    response = requests.delete(collaborator_endpoint, headers=headers, timeout=10)
+    # Process response status code.
     status_code = response.status_code
     if status_code == 204:
-        # Collaborator successfully removed.
         _LOG.debug("%s has been removed as a collaborator.", github_username)
     elif status_code == 404:
-        # Collaborator not found (not a collaborator)
         _LOG.debug("%s is not a repository collaborator.", github_username)
     else:
-        # Error occurred during removal.
         _LOG.debug(
             "Error removing %s as a collaborator. Status code: %s",
             github_username,
