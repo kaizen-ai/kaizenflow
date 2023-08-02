@@ -3181,18 +3181,16 @@ class Test_multiindex_df_info1(hunitest.TestCase):
         """
         df = self.get_multiindex_df_with_datetime_index()
         act = hpandas.multiindex_df_info(df)
-        exp = "\n".join(
-            [
-               "shape=2 x 4 x 5",
-               "columns_level0=2 ['asset1', 'asset2']",
-               "columns_level1=4 ['close', 'high', 'low', 'open']",
-               "rows=5 ['2022-01-01 21:01:00+00:00', '2022-01-01 21:02:00+00:00', '2022-01-01 21:03:00+00:00', '2022-01-01 21:04:00+00:00', '2022-01-01 21:05:00+00:00']",
-               "start_timestamp=2022-01-01 21:01:00+00:00",
-               "end_timestamp=2022-01-01 21:05:00+00:00",
-               "frequency=T"
-            ]
-        )
-        self.assert_equal(act, exp)
+        exp = """
+            shape=2 x 4 x 5
+            columns_level0=2 ['asset1', 'asset2']
+            columns_level1=4 ['close', 'high', 'low', 'open']
+            rows=5 ['2022-01-01 21:01:00+00:00', '2022-01-01 21:02:00+00:00', '2022-01-01 21:03:00+00:00', '2022-01-01 21:04:00+00:00', '2022-01-01 21:05:00+00:00']
+            start_timestamp=2022-01-01 21:01:00+00:00
+            end_timestamp=2022-01-01 21:05:00+00:00
+            frequency=T
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
     def test2(self) -> None:
         """
@@ -3208,18 +3206,16 @@ class Test_multiindex_df_info1(hunitest.TestCase):
         ]
         df.index = non_frequency_datetime_index
         act = hpandas.multiindex_df_info(df)
-        exp = "\n".join(
-            [
-               "shape=2 x 4 x 5",
-               "columns_level0=2 ['asset1', 'asset2']",
-               "columns_level1=4 ['close', 'high', 'low', 'open']",
-               "rows=5 ['2022-01-01 21:01:00+00:00', '2022-01-01 21:02:00+00:00', '2022-01-01 21:04:00+00:00', '2022-01-01 21:04:30+00:00', '2022-01-01 21:06:00+00:00']",
-               "start_timestamp=2022-01-01 21:01:00+00:00",
-               "end_timestamp=2022-01-01 21:06:00+00:00",
-               "frequency=None"
-            ]
-        )
-        self.assert_equal(act, exp)
+        exp = """
+            shape=2 x 4 x 5
+            columns_level0=2 ['asset1', 'asset2']
+            columns_level1=4 ['close', 'high', 'low', 'open']
+            rows=5 ['2022-01-01 21:01:00+00:00', '2022-01-01 21:02:00+00:00', '2022-01-01 21:04:00+00:00', '2022-01-01 21:04:30+00:00', '2022-01-01 21:06:00+00:00']
+            start_timestamp=2022-01-01 21:01:00+00:00
+            end_timestamp=2022-01-01 21:06:00+00:00
+            frequency=None
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
     def test3(self) -> None:
         """
@@ -3227,12 +3223,10 @@ class Test_multiindex_df_info1(hunitest.TestCase):
         """
         df = self.get_multiindex_df_with_non_datetime_index()
         act = hpandas.multiindex_df_info(df)
-        exp = "\n".join(
-            [
-                "shape=2 x 2 x 2",
-                "columns_level0=2 ['A', 'B']",
-                "columns_level1=2 ['X', 'Y']",
-                "rows=2 ['M', 'N']"
-            ]
-        )
-        self.assert_equal(act, exp)
+        exp = """
+            shape=2 x 2 x 2
+            columns_level0=2 ['A', 'B']
+            columns_level1=2 ['X', 'Y']
+            rows=2 ['M', 'N']
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
