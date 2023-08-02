@@ -37,7 +37,7 @@ hdbg.init_logger(use_exec_path=True)
 # # Load data
 
 # %%
-spreadsheet_name = "sn_search5.search_export.gsheet"
+spreadsheet_name = "1_search_export_sns5"
 spread = gspread_pandas.Spread(spreadsheet_name)
 df = spread.sheet_to_df(index=None)
 print(df.shape)
@@ -108,7 +108,7 @@ Create a new Google file (sheet or doc).
 :return: None
 """
 gfile_type = 'sheet'
-gsheet_name = 'sn_search5.search_export.filtered.gsheet'
+gsheet_name = '2_search_export_filtered_sns5'
 user = ''
 
 # %%
