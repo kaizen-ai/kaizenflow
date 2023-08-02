@@ -104,59 +104,6 @@ def _create_mock1_sql_data() -> pd.DataFrame:
 
 
 # #############################################################################
-# Mock1SqlRealTimeImClient
-# #############################################################################
-
-
-# TODO(Dan): Consider joining `Mock1SqlRealTimeImClient` and `MockSqlRealTimeImClient`.
-class Mock1SqlRealTimeImClient(icdc.SqlRealTimeImClient):
-    def __init__(
-        self,
-        universe_version: str,
-        resample_1min: bool,
-        db_connection: hsql.DbConnection,
-        table_name: str,
-    ):
-        vendor = "mock"
-        super().__init__(
-            vendor,
-            universe_version,
-            db_connection,
-            table_name,
-            resample_1min=resample_1min,
-        )
-
-    @staticmethod
-    def should_be_online() -> bool:
-        return True
-
-
-def get_mock1_realtime_client(
-    connection: hsql.DbConnection, *, resample_1min: bool = False
-) -> Mock1SqlRealTimeImClient:
-    """
-    Set up a real time Mock1 SQL client.
-
-    - Creates a Mock1 table
-    - Uploads mock1 data
-    - Creates a client connected to the given DB
-    """
-    # Create example table.
-    universe_version = "infer_from_data"
-    query = _get_mock1_create_table_query()
-    connection.cursor().execute(query)
-    table_name = "mock1_marketdata"
-    # Create a data example and upload to local DB.
-    data = _create_mock1_sql_data()
-    hsql.copy_rows_with_copy_from(connection, data, table_name)
-    # Initialize a client connected to the local DB.
-    im_client = Mock1SqlRealTimeImClient(
-        universe_version, resample_1min, connection, table_name
-    )
-    return im_client
-
-
-# #############################################################################
 # TestSqlRealTimeImClient
 # #############################################################################
 
@@ -230,7 +177,6 @@ def _create_mock2_sql_data() -> pd.DataFrame:
     return test_data
 
 
-# TODO(Dan): Consider joining `Mock1SqlRealTimeImClient` and `MockSqlRealTimeImClient`.
 class MockSqlRealTimeImClient(icdc.SqlRealTimeImClient):
     """
     Vendor-agnostic client to be used in tests.
@@ -266,7 +212,7 @@ def get_mock_realtime_client(
     connection: hsql.DbConnection,
     *,
     resample_1min: bool = False,
-) -> Mock1SqlRealTimeImClient:
+) -> MockSqlRealTimeImClient:
     """
     Set up a real time Mock2 SQL client.
 
