@@ -69,21 +69,36 @@ figsize = (20,20)
 # Plot.
 cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
 
-# %%
-# Create large dataframe of random ints between 0 and 100.
-import pdb
-rand_df = pd.DataFrame(np.random.randint(0,100,size=(300, 6)), columns=['y1','y2','y3','y4','y5','y6'])
-#fig, ax = plt.subplots()
-#ax.plot(range(0, 100), range(0, 100))
-fig = plt.figure()
-ax = fig.add_axes([0,0,1,1])
-pdb.set_trace()
-cpmiscplt.plot_projection(rand_df, special_values = [1000], mode = "scatter", ax = ax)
+# %% [markdown]
+# ## `plot_projection()`
 
 # %%
-range_df_2 = rand_df.copy()
-for i in range(rand_df.shape[1]):
-    range_df_2.iloc[:, i] = i
-range_df_2.head(50)
+# Calling plot_projection to test that it's basic functionality works
+data = [
+    [1, 1, 0, 1],
+    [0, 1, 0, 1],
+    [0, 0, 1, 1],
+    [1, 1, 1, 1],
+    [1, 1, 1, 1],
+]
+df = pd.DataFrame(data)
+fig = plt.figure()
+ax = fig.add_axes([0,0,1,1])
+cpmiscplt.plot_projection(df, special_values = [0], ax = ax)
+
+# %%
+# Calling plot_projection with the scatter plot mode enabled
+fig = plt.figure()
+ax = fig.add_axes([0,0,1,1])
+cpmiscplt.plot_projection(df, special_values = [1], mode = "scatter", ax = ax)
+
+# %%
+index = pd.date_range(start="2023-01-01", periods=len(data), freq="D")
+srs = pd.DataFrame(data, index=index)
+fig = plt.figure()
+ax = fig.add_axes([0,0,1,1])
+cpmiscplt.plot_projection(srs, special_values = [0], mode = "scatter", ax = ax)
+
+# %%
 
 # %%
