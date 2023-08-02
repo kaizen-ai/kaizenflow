@@ -563,6 +563,21 @@ def purify_white_spaces(txt: str) -> str:
     return txt
 
 
+def purify_end_of_line(txt: Optional[str]) -> str:
+    """
+    Ensure that there is a single end-of-line at the end of `txt`.
+    If the input text is `None`, return an empty string.
+
+    :param txt: input text as a multi-line string
+    :return: purified text
+    """ 
+    if txt:
+        txt = txt.rstrip("\n") + "\n"
+    else:
+        txt = ""
+    return txt
+
+
 def purify_txt_from_client(txt: str) -> str:
     """
     Remove from a string all the information of a specific run.
@@ -574,6 +589,7 @@ def purify_txt_from_client(txt: str) -> str:
     txt = purify_object_representation(txt)
     txt = purify_today_date(txt)
     txt = purify_white_spaces(txt)
+    txt = purify_end_of_line(txt)
     return txt
 
 
@@ -1020,16 +1036,6 @@ def assert_equal(
     return is_equal
 
 
-def _modify_end_of_line(output: Optional[str]) -> str:
-    """
-    Modify the last line of the string output.
-    """ 
-    if output:
-        output = output.rstrip("\n") + "\n"
-    else:
-        output = ""
-    return output
-
 # #############################################################################
 
 # If a golden outcome is missing asserts (instead of updating golden and adding
@@ -1416,17 +1422,13 @@ class TestCase(unittest.TestCase):
             file_name += ".gz"
         _LOG.debug("file_name=%s", file_name)
         # Remove reference from the current environment.
-        # TODO(gp): Not sure why we purify here and not delegate to `assert_equal`.
-        if purify_text:
-            _LOG.debug("Purifying actual outcome")
-            actual = purify_txt_from_client(actual)
         _LOG.debug("actual=\n%s", actual)
         outcome_updated = False
         file_exists = os.path.exists(file_name)
         if file_exists:
             expected = hio.from_file(file_name)
-            expected = _modify_end_of_line(expected)
-        actual = _modify_end_of_line(actual)
+            if purify_text:
+                expected = purify_end_of_line(expected)
         _LOG.debug("file_exists=%s", file_exists)
         is_equal: Optional[bool] = None
         if self._update_tests:

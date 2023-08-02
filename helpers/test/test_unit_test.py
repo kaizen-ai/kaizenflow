@@ -375,7 +375,7 @@ class TestCheckString1(hunitest.TestCase):
         if _to_skip_on_update_outcomes():
             return
         act = "hello world"
-        golden_outcome = "hello world"
+        golden_outcome = "hello world\n"
         #
         tag = "test"
         _, file_name = self._get_golden_outcome_file_name(tag)
@@ -400,7 +400,7 @@ class TestCheckString1(hunitest.TestCase):
         if _to_skip_on_update_outcomes():
             return
         act = "hello world"
-        golden_outcome = "hello world2"
+        golden_outcome = "hello world2\n"
         #
         tag = "test"
         _, file_name = self._get_golden_outcome_file_name(tag)
@@ -427,7 +427,7 @@ class TestCheckString1(hunitest.TestCase):
         if _to_skip_on_update_outcomes():
             return
         act = "hello world"
-        golden_outcome = "hello world2"
+        golden_outcome = "hello world2\n"
         # Force updating the golden outcomes.
         self.mock_update_tests()
         #
@@ -451,7 +451,7 @@ class TestCheckString1(hunitest.TestCase):
         self.assertTrue(file_exists)
         self.assertFalse(is_equal)
         # The golden outcome was updated.
-        self.assertEqual(new_golden, "hello world\n")
+        self.assertEqual(new_golden, "hello world")
 
     def test_check_string_not_equal3(self) -> None:
         """
@@ -460,7 +460,7 @@ class TestCheckString1(hunitest.TestCase):
         if _to_skip_on_update_outcomes():
             return
         act = "hello world"
-        golden_outcome = "hello world2"
+        golden_outcome = "hello world2\n"
         #
         tag = "test"
         _, file_name = self._get_golden_outcome_file_name(tag)
@@ -507,7 +507,7 @@ class TestCheckString1(hunitest.TestCase):
         self.assertFalse(file_exists)
         self.assertFalse(is_equal)
         # Getting error here --> new_golden == "hello world\n"
-        self.assertEqual(new_golden, "hello world\n")
+        self.assertEqual(new_golden, "hello world")
 
     def test_check_string_missing2(self) -> None:
         """
@@ -537,7 +537,7 @@ class TestCheckString1(hunitest.TestCase):
         self.assertFalse(file_exists)
         self.assertFalse(is_equal)
         #
-        self.assertEqual(new_golden, "hello world\n")
+        self.assertEqual(new_golden, "hello world")
 
     def test_check_string_missing3(self) -> None:
         """
@@ -567,7 +567,7 @@ class TestCheckString1(hunitest.TestCase):
         self.assertFalse(file_exists)
         self.assertFalse(is_equal)
         #
-        self.assertEqual(new_golden, "hello world\n")
+        self.assertEqual(new_golden, "hello world")
 
 
 # #############################################################################
