@@ -131,4 +131,17 @@ _, axes = plt.subplots(2, 2, figsize=figsize)
 axes_flat = axes.flatten()
 cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
 
+# %% [markdown]
+# ## `plot_performance()`
+
+# %%
+plotter, _, eval_config = dmtetemopl.TestModelPlotter1._get_example_model_plotter()
+keys = None
+plotter.plot_performance(
+    keys=keys,
+    resample_rule=eval_config["resample_rule"],
+    mode=eval_config["mode"],
+    target_volatility=eval_config["target_volatility"],
+)
+
 # %%

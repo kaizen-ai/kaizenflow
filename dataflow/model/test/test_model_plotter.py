@@ -130,4 +130,3 @@ class TestModelPlotter1(hunitest.TestCase):
         # Build the ModelPlotter.
         plotter = dtfmomoplo.ModelPlotter(evaluator)
         return plotter, evaluator, eval_config
-        
