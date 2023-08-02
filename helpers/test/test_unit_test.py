@@ -1197,10 +1197,11 @@ class Test_purify_from_environment1(hunitest.TestCase):
         """
         Check that user name is purified correctly.
         """
-        # Manually set a user name to test the behaviour.
         try:
+            # Manually set a user name to test the behaviour.
             hsystem.set_user_name("root")
-            data = [
+            # Set a list of tuples with strings to purify and expected outcomes.
+            test_data = [
                 (
                     "IMAGE=$CK_ECR_BASE_PATH/amp_test:local-root-1.0.0",
                     "IMAGE=$CK_ECR_BASE_PATH/amp_test:local-$USER_NAME-1.0.0",
@@ -1214,7 +1215,7 @@ class Test_purify_from_environment1(hunitest.TestCase):
                 ("run_docker_as_root='True'", "run_docker_as_root='True'"),
                 ("run --rm -l user=root", "run --rm -l user=$USER_NAME"),
             ]
-            for txt, exp in data:
+            for txt, exp in test_data:
                 self.helper(txt, exp)
         finally:
             hsystem.set_user_name(None)
