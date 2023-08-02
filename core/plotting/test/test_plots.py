@@ -1,6 +1,7 @@
 import logging
 import unittest
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -15,6 +16,18 @@ class Test_plots(unittest.TestCase):
     """
     Run smoke tests for plotting functions.
     """
+    
+    @staticmethod
+    def get_plot_spectrum1() -> pd.DataFrame:
+        """
+        Generate a test DataFrame for the plot_spectrum function.
+        """
+        data = {
+            "signal1": np.random.randn(1000),
+            "signal2": np.random.randn(1000),
+        }
+        df = pd.DataFrame(data)
+        return df
 
     @staticmethod
     def get_plot_effective_correlation_rank1() -> pd.Series:
@@ -67,6 +80,8 @@ class Test_plots(unittest.TestCase):
         # Set a specific random seed for the entire test class.
         cls._seed = 42
         np.random.seed(42)
+        # Set a specific figure size.
+        cls._figsize = (20, 20)
 
     @classmethod
     def tearDownClass(cls):
@@ -94,10 +109,10 @@ class Test_plots(unittest.TestCase):
         # Set inputs.
         srs = self.get_plot_histograms_and_lagged_scatterplot1()
         lag = 7
-        # TODO(Dan): Remove after integration with `cmamp`. Changes from Cm #4722 are not in `sorrentum` yet.
-        figsize = (20, 20)
         # Plot.
-        cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
+        cpvistte.plot_histograms_and_lagged_scatterplot(
+            srs, lag, figsize=self._figsize
+        )
 
     def test_plot_time_series_by_period1(self) -> None:
         test_series = self.get_plot_time_series_by_period1()
@@ -113,11 +128,9 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for `plot_heatmap()`
         """
-        # TODO(Dan): Move to the notebook config.
         mode = "clustermap"
         corr_df = self.get_plot_heatmap1()
-        figsize = (20, 20)
-        cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)
+        cplocorr.plot_heatmap(corr_df, mode, figsize=self._figsize)
 
     def test_plot_effective_correlation_rank1(self) -> None:
         """
@@ -154,3 +167,23 @@ class Test_plots(unittest.TestCase):
         srs = self.get_plot_timeseries_distribution1()
         datetime_types = ["hour", "month"]
         cplmiplo.plot_timeseries_distribution(srs, datetime_types)
+
+    def test_plot_spectrum1(self) -> None:
+        """
+        Smoke test for `plot_spectrum`.
+
+        - `axes` is None
+        """
+        test_df = self.get_plot_spectrum1()
+        cplmiplo.plot_spectrum(test_df)
+
+    def test_plot_spectrum2(self) -> None:
+        """
+        Smoke test for `plot_spectrum`.
+
+        - `axes` is a list of Matplotlib axes
+        """
+        test_df = self.get_plot_spectrum1()
+        _, axes = plt.subplots(2, 2, figsize=self._figsize)
+        axes_flat = axes.flatten()
+        cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
