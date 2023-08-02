@@ -16,7 +16,7 @@ class Test_plots(unittest.TestCase):
     """
     Run smoke tests for plotting functions.
     """
-    
+
     @staticmethod
     def get_plot_spectrum1() -> pd.DataFrame:
         """
@@ -68,7 +68,7 @@ class Test_plots(unittest.TestCase):
         """
         Get test data for plotting time series distribution.
         """
-        samples = [0]*50
+        samples = [0] * 50
         index = pd.date_range(start="2022-12-31", periods=len(samples), freq="H")
         srs = pd.Series(samples, index=index, name="test values")
         return srs
