@@ -63,6 +63,16 @@ class Test_plots(unittest.TestCase):
         df = pd.DataFrame(np.random.randn(10, 6), columns=list("ABCDEF"))
         return df
 
+    @staticmethod
+    def get_plot_timeseries_distribution1() -> pd.Series:
+        """
+        Get test data for plotting time series distribution.
+        """
+        samples = [0] * 50
+        index = pd.date_range(start="2022-12-31", periods=len(samples), freq="H")
+        srs = pd.Series(samples, index=index, name="test values")
+        return srs
+
     @classmethod
     def setUpClass(cls):
         # Save the original random seed.
@@ -141,6 +151,22 @@ class Test_plots(unittest.TestCase):
         q_values = np.random.uniform(1, 10, num_q_values).tolist()
         test_df = self.get_plot_effective_correlation_rank1()
         cplocorr.plot_effective_correlation_rank(test_df, q_values)
+
+    def test_plot_timeseries_distribution1(self) -> None:
+        """
+        Smoke test for 'plot_timeseries_distribution()'.
+        """
+        srs = self.get_plot_timeseries_distribution1()
+        datetime_types = ["hour"]
+        cplmiplo.plot_timeseries_distribution(srs, datetime_types)
+
+    def test_plot_timeseries_distribution2(self) -> None:
+        """
+        Smoke test for 'plot_timeseries_distribution()'.
+        """
+        srs = self.get_plot_timeseries_distribution1()
+        datetime_types = ["hour", "month"]
+        cplmiplo.plot_timeseries_distribution(srs, datetime_types)
 
     def test_plot_spectrum1(self) -> None:
         """
