@@ -4,17 +4,29 @@
 The script checks if a GH user is already a collaborator of a specific
 repository, sends an invitation if not, and reports any pending invitations.
 
-Example:
-> github_permission.py \
-    --github_username GITHUB_USERNAME \
-    --owner_username OWNER_USERNAME \
-    --repo_name REPO_NAME \
-    --access_token ACCESS_TOKEN
+Examples:
+  To invite a collaborator to the repository:
+  > python github_permission.py \
+    --action add \
+    --github_username john_doe \
+    --owner_username my_repo_owner \
+    --repo_name my_repository \
+    --access_token my_access_token
+
+  To remove a collaborator from the repository:
+  > python github_permission.py \
+    --action remove \
+    --github_username jane_smith \
+    --owner_username my_repo_owner \
+    --repo_name my_repository \
+    --access_token my_access_token
+
 
 Import as:
 
 import dev_scripts.github_permission as descgipe
 """
+
 
 import argparse
 import logging
@@ -26,6 +38,7 @@ import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 
 _LOG = logging.getLogger(__name__)
+_GITHUB_API = "https://api.github.com/repos"
 
 
 def _invite_collaborator(
@@ -38,13 +51,13 @@ def _invite_collaborator(
     Invite a collaborator to GitHub.
     """
     add_collaborator_endpoint = os.path.join(
-        "https://api.github.com/repos",
+        _GITHUB_API,
         owner_username,
         repo_name,
         "collaborators/{collaborator}",
     )
     collaborator_check_url = os.path.join(
-        "https://api.github.com/repos/",
+        _GITHUB_API,
         owner_username,
         repo_name,
         "collaborators/{github_username}",
@@ -78,7 +91,7 @@ def _invite_collaborator(
     elif status_code == 404:
         # Get invitation status.
         invitation_check_url = os.path.join(
-            "https://api.github.com/repos",
+            _GITHUB_API,
             owner_username,
             repo_name,
             "invitations",
@@ -137,9 +150,6 @@ def _invite_collaborator(
         )
 
 
-# #############################################################################
-
-
 def _remove_collaborator(
     github_username: str,
     owner_username: str,
@@ -150,22 +160,26 @@ def _remove_collaborator(
     Remove a collaborator from GitHub.
     """
     remove_collaborator_url = os.path.join(
-        "https://api.github.com/repos",
+        _GITHUB_API,
         owner_username,
         repo_name,
         "collaborators",
         github_username,
     )
     headers = {"Authorization": "Bearer " + access_token}
+    # Send a DELETE request to remove the collaborator.
     response = requests.delete(
         remove_collaborator_url, headers=headers, timeout=10
     )
     status_code = response.status_code
     if status_code == 204:
+        # Collaborator successfully removed.
         _LOG.debug("%s has been removed as a collaborator.", github_username)
     elif status_code == 404:
-        _LOG.debug("%s is not a collaborator in the repository.", github_username)
+        # Collaborator not found (not a collaborator)
+        _LOG.debug("%s is not a repository collaborator.", github_username)
     else:
+        # Error occurred during removal.
         _LOG.debug(
             "Error removing %s as a collaborator. Status code: %s",
             github_username,
@@ -178,6 +192,13 @@ def _remove_collaborator(
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--action",
+        type=str,
+        required=True,
+        choices=["add", "remove"],
+        help="Action to perform: add or remove",
+    )
     parser.add_argument(
         "--github_username",
         type=str,
@@ -202,34 +223,30 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         help="Owner's generated access token",
     )
-    parser.add_argument(
-        "--action",
-        type=str,
-        required=True,
-        choices=["add", "remove"],
-        help="Action to perform: add or remove",
-    )
     hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
+    action = args.action
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    if args.action == "add":
+    if action == "add":
         _invite_collaborator(
             args.github_username,
             args.owner_username,
             args.repo_name,
             args.access_token,
         )
-    elif args.action == "remove":
+    elif action == "remove":
         _remove_collaborator(
             args.github_username,
             args.owner_username,
             args.repo_name,
             args.access_token,
         )
+    else:
+        raise ValueError("Invalid action ='%s'" % action)
 
 
 if __name__ == "__main__":
