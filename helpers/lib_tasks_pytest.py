@@ -147,9 +147,9 @@ def _build_run_command_line(
     if skip_ck_infra_tests:
         markers = "-m 'not requires_ck_infra"
         # Disable the timeout by removing this part
-            -o timeout_func_only=true \
-            -timeout 5 \
-            #
+        # -o timeout_func_only=true \
+        # -timeout 5 \
+        #
 
     if custom_marker != "":
         pytest_opts_tmp.append(f'-m "{custom_marker} and {skipped_tests}"')

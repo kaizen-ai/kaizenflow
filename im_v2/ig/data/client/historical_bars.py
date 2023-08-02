@@ -267,6 +267,7 @@ def get_raw_bar_data_from_file(
 
 
 # TODO(gp): Change the order of the params (asset_ids, date, columns) everywhere.
+@pytest.mark.require_aws
 def get_raw_bar_data_for_date(
     date: datetime.date,
     root_data_dir: str,

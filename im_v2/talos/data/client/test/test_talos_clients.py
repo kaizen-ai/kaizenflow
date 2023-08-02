@@ -355,7 +355,8 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
     For all the test methods see description of corresponding private method in
     the parent class.
     """
-
+    
+    @pytest.mark.require_aws
     def test_read_data1(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -609,7 +610,8 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
         )
 
     # ////////////////////////////////////////////////////////////////////////
-
+   
+    @pytest.mark.require_aws
     def test_get_start_ts_for_symbol1(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -622,7 +624,8 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
             full_symbol,
             expected_start_ts,
         )
-
+    
+    @pytest.mark.require_aws
     def test_get_end_ts_for_symbol1(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
