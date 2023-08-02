@@ -28,6 +28,7 @@
 # %% run_control={"marked": false}
 import logging
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -86,5 +87,36 @@ mode = "clustermap"
 corr_df = cptetepl.Test_plots.get_plot_heatmap()
 figsize = (20, 20)
 cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)
+
+# %% [markdown]
+# ## `plot_effective_correlation_rank()`
+
+# %%
+# Set inputs.
+test_df = cptetepl.Test_plots.get_plot_effective_correlation_rank1()
+
+# %%
+cplocorr.plot_effective_correlation_rank(test_df)
+
+# %%
+num_q_values = 5 
+q_values = np.random.uniform(1, 10, num_q_values).tolist()
+cplocorr.plot_effective_correlation_rank(test_df, q_values)
+
+# %% [markdown]
+# ## `plot_spectrum()`
+
+# %%
+# Set inputs.
+test_df = cptetepl.Test_plots.get_plot_spectrum1()
+
+# %%
+cplmiplo.plot_spectrum(test_df)
+
+# %%
+figsize = (20, 20)
+_, axes = plt.subplots(2, 2, figsize=figsize)
+axes_flat = axes.flatten()
+cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
 
 # %%
