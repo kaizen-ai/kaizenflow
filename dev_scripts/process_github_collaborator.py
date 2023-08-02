@@ -8,18 +8,18 @@ Examples:
   To invite a collaborator to the repository:
   > python github_permission.py \
     --action add \
-    --github_username john_doe \
-    --owner_username my_repo_owner \
-    --repo_name my_repository \
-    --access_token my_access_token
+    --github_username GITHUB_USERNAME \
+    --owner_username OWNER_USERNAME \
+    --repo_name REPO_NAME \
+    --access_token ACCESS_TOKEN
 
   To remove a collaborator from the repository:
   > python github_permission.py \
     --action remove \
-    --github_username jane_smith \
-    --owner_username my_repo_owner \
-    --repo_name my_repository \
-    --access_token my_access_token
+    --github_username GITHUB_USERNAME \
+    --owner_username OWNER_USERNAME \
+    --repo_name REPO_NAME \
+    --access_token ACCESS_TOKEN
 
 
 Import as:
