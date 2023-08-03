@@ -506,7 +506,6 @@ class TestCheckString1(hunitest.TestCase):
         self.assertTrue(outcome_updated)
         self.assertFalse(file_exists)
         self.assertFalse(is_equal)
-        # Getting error here --> new_golden == "hello world\n"
         self.assertEqual(new_golden, "hello world")
 
     def test_check_string_missing2(self) -> None:
