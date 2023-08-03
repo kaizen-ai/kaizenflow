@@ -36,7 +36,8 @@ if _HAS_MOTO:
         reason="Run only if CK S3 is available",
     )
     class TestCreateClient(hunitest.TestCase):
-        @pytest.mark.requires_aws @pytest.mark.requires_ck_infra
+        @pytest.mark.requires_aws
+        @pytest.mark.requires_ck_infra
         def test_create_client1(self) -> None:
             """
             Simple smoke test to verify connection to AWS.
@@ -50,7 +51,8 @@ if _HAS_MOTO:
     )
     class TestGetSecret(hunitest.TestCase):
         @moto.mock_secretsmanager
-        @pytest.mark.requires_aws @pytest.mark.requires_ck_infra
+        @pytest.mark.requires_aws
+        @pytest.mark.requires_ck_infra
         def test_get_secret(self) -> None:
             """
             Verify that the secret can be retrieved correctly.
@@ -70,7 +72,8 @@ if _HAS_MOTO:
     )
     class TestStoreSecret(hunitest.TestCase):
         @moto.mock_secretsmanager
-        @pytest.mark.requires_aws @pytest.mark.requires_ck_infra
+        @pytest.mark.requires_aws 
+        @pytest.mark.requires_ck_infra
         def test_store_secret1(self) -> None:
             """
             Verify that a secret can be stored correctly.

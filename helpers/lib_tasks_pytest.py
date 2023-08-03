@@ -145,7 +145,8 @@ def _build_run_command_line(
     skip_ck_infra_tests = (not hserver.is_dev_ck() or hgit.get_repo_name() ==
                      "Sorrentum")
     if skip_ck_infra_tests:
-        markers = "-m 'not requires_ck_infra"
+        # markers = "-m 'not requires_ck_infra'"
+        skipped_tests += " and not requires_ck_infra"
         # Disable the timeout by removing this part
         # -o timeout_func_only=true \
         # -timeout 5 \
@@ -161,10 +162,11 @@ def _build_run_command_line(
     # Adding `timeout_func_only` is a workaround for
     # https://github.com/pytest-dev/pytest-rerunfailures/issues/99. Because of
     # it, we limit only run time, without setup and teardown time.
+    is_laptop = not hserver.is_dev_ck()
     if is_laptop:
         # Make the timeout much larger.
         pytest_opts_tmp.append("-o timeout_func_only=true")
-        timeout_secs *= 10
+        timeout_in_sec *= 10
         pytest_opts_tmp.append(f"--timeout {timeout_in_sec}")
     else:
         # Add a timeout.
@@ -376,7 +378,7 @@ def run_fast_tests(  # type: ignore
     ctx,
     stage="dev",
     version="",
-    pytest_opts="",
+    pytest_opts="", 
     skip_submodules=False,
     coverage=False,
     collect_only=False,

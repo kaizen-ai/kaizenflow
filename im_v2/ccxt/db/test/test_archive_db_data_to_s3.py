@@ -233,7 +233,8 @@ class TestArchiveDbDataToS3Mode(hunitest.TestCase):
         imvcdaddts.imvcdeexut = umock.MagicMock()
         return args
 
-    @pytest.mark.requires_aws @pytest.mark.requires_ck_infra
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test_archive_and_delete_mode(self):
         """
         Test that the archive_and_delete mode works.
@@ -246,7 +247,8 @@ class TestArchiveDbDataToS3Mode(hunitest.TestCase):
         imvcdaddts.imvcdeexut.save_parquet.assert_called_once()
         imvcdaddts.imvcddbut.drop_db_data_by_age.assert_called_once()
 
-    @pytest.mark.requires_aws @pytest.mark.requires_ck_infra
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test_archive_only_mode(self):
         """
         Test that the archive_only mode works.
@@ -259,7 +261,8 @@ class TestArchiveDbDataToS3Mode(hunitest.TestCase):
         imvcdaddts.imvcdeexut.save_parquet.assert_called_once()
         imvcdaddts.imvcddbut.drop_db_data_by_age.assert_not_called()
 
-    @pytest.mark.requires_aws @pytest.mark.requires_ck_infra
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test_delete_only_mode(self):
         """
         Test that the delete_only mode works.

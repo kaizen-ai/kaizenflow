@@ -40,7 +40,8 @@ class S3Mock_TestCase(hunitest.TestCase):
     #   Used in some tests that are obtaining data from 3rd party providers.
     binance_secret = None
 
-    @pytest.mark.requires_aws @pytest.mark.requires_ck_infra
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def setUp(self) -> None:
         # Getting necessary secret before boto3 is mocked.
         if self.binance_secret is None:

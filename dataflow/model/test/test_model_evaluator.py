@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import core.artificial_signal_generators as carsigen
 import core.config as cconfig
