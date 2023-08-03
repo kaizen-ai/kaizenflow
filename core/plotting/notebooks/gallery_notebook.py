@@ -28,6 +28,7 @@
 # %% run_control={"marked": false}
 import logging
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -40,6 +41,7 @@ import core.plotting.correlation as cplocorr
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
+
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
 
@@ -60,8 +62,22 @@ hprint.config_notebook()
 srs = cptetepl.Test_plots.get_plot_histograms_and_lagged_scatterplot1()
 lag = 7
 # TODO(Dan): Remove after integration with `cmamp`. Changes from Cm #4722 are not in `sorrentum` yet.
-figsize = (20,20)
+figsize = (20, 20)
 cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
+# %% [markdown]
+# ## `plot_timeseries_distribution()`
+# %%
+# Set inputs for hour interval.
+cptetepl.Test_plots.setUpClass()
+srs = cptetepl.Test_plots.get_plot_timeseries_distribution1()
+datetime_types = ["hour"]
+cplmiplo.plot_timeseries_distribution(srs, datetime_types)
+
+# %%
+# Set input for hour and month interval.
+srs = cptetepl.Test_plots.get_plot_timeseries_distribution1()
+datetime_types = ["hour", "month"]
+cplmiplo.plot_timeseries_distribution(srs, datetime_types)
 
 # %% [markdown]
 # ## `plot_time_series_by_period()`
@@ -101,5 +117,21 @@ cplocorr.plot_effective_correlation_rank(test_df)
 num_q_values = 5 
 q_values = np.random.uniform(1, 10, num_q_values).tolist()
 cplocorr.plot_effective_correlation_rank(test_df, q_values)
+
+# %% [markdown]
+# ## `plot_spectrum()`
+
+# %%
+# Set inputs.
+test_df = cptetepl.Test_plots.get_plot_spectrum1()
+
+# %%
+cplmiplo.plot_spectrum(test_df)
+
+# %%
+figsize = (20, 20)
+_, axes = plt.subplots(2, 2, figsize=figsize)
+axes_flat = axes.flatten()
+cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
 
 # %%
