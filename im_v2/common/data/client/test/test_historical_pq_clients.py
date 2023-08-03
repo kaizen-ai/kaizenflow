@@ -19,7 +19,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestHistoricalPqByTileClient1(icdc.ImClientTestCase):
-    
     @pytest.mark.requires_ck_infra 
     def test_read_data1(self) -> None:
         # Generate Parquet test data and initialize client.

@@ -1,6 +1,5 @@
 import logging
 import pytest
-
 from typing import Any, Dict
 
 import pandas as pd

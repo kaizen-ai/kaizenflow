@@ -165,13 +165,10 @@ def _build_run_command_line(
     is_laptop = not hserver.is_dev_ck()
     if is_laptop:
         # Make the timeout much larger.
-        pytest_opts_tmp.append("-o timeout_func_only=true")
         timeout_in_sec *= 10
-        pytest_opts_tmp.append(f"--timeout {timeout_in_sec}")
-    else:
         # Add a timeout.
-        pytest_opts_tmp.append("-o timeout_func_only=true")
-        pytest_opts_tmp.append(f"--timeout {timeout_in_sec}")
+    pytest_opts_tmp.append("-o timeout_func_only=true")
+    pytest_opts_tmp.append(f"--timeout {timeout_in_sec}")
     num_reruns = _NUM_TIMEOUT_TEST_RERUNS[test_list_name]
     pytest_opts_tmp.append(
         f'--reruns {num_reruns} --only-rerun "Failed: Timeout"'
