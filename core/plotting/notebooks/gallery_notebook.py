@@ -28,6 +28,10 @@
 # %% run_control={"marked": false}
 import logging
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.test.test_plots as cptetepl
@@ -55,11 +59,29 @@ hprint.config_notebook()
 
 # %%
 # Set inputs.
-srs = cptetepl.Test_plots.get_plot_histograms_and_lagged_scatterplot1()
+cptetepl.Test_plots.setUpClass()
+rng = np.random.default_rng(seed=cptetepl.Test_plots._seed)
+samples = rng.normal(size=100)
+index = pd.date_range(start="2023-01-01", periods=len(samples), freq="D")
+srs = pd.Series(samples, index=index)
 lag = 7
 # TODO(Dan): Remove after integration with `cmamp`. Changes from Cm #4722 are not in `sorrentum` yet.
 figsize = (20, 20)
 cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
+# %% [markdown]
+# ## `plot_timeseries_distribution()`
+# %%
+# Set inputs for hour interval.
+cptetepl.Test_plots.setUpClass()
+srs = cptetepl.Test_plots.get_plot_timeseries_distribution1()
+datetime_types = ["hour"]
+cplmiplo.plot_timeseries_distribution(srs, datetime_types)
+
+# %%
+# Set input for hour and month interval.
+srs = cptetepl.Test_plots.get_plot_timeseries_distribution1()
+datetime_types = ["hour", "month"]
+cplmiplo.plot_timeseries_distribution(srs, datetime_types)
 
 # %% [markdown]
 # ## `plot_time_series_by_period()`
@@ -101,4 +123,34 @@ plotter.plot_performance(
     target_volatility=eval_config["target_volatility"],
 )
 
+
+# %% [markdown]
+# ## `plot_effective_correlation_rank()`
+
 # %%
+# Set inputs.
+test_df = cptetepl.Test_plots.get_plot_effective_correlation_rank1()
+
+# %%
+cplocorr.plot_effective_correlation_rank(test_df)
+
+# %%
+num_q_values = 5
+q_values = np.random.uniform(1, 10, num_q_values).tolist()
+cplocorr.plot_effective_correlation_rank(test_df, q_values)
+
+# %% [markdown]
+# ## `plot_spectrum()`
+
+# %%
+# Set inputs.
+test_df = cptetepl.Test_plots.get_plot_spectrum1()
+
+# %%
+cplmiplo.plot_spectrum(test_df)
+
+# %%
+figsize = (20, 20)
+_, axes = plt.subplots(2, 2, figsize=figsize)
+axes_flat = axes.flatten()
+cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)

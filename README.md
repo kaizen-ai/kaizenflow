@@ -136,6 +136,8 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Visual Studio Code](/docs/Visual_Studio_Code.md)
 
+- [Telegram](/docs/Telegram.md)
+
 # DeFi: start developing
 
 - [DeFi README](/defi/README.md)
