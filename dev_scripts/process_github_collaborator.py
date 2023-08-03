@@ -176,6 +176,34 @@ def _remove_collaborator(
         )
 
 
+def _get_contributors(
+    owner_username: str,
+    repo_name: str,
+    access_token: str,
+) -> list:
+    """
+    Get a list of all contributors from the GitHub repository.
+    """
+    contributors_url = os.path.join(_GITHUB_API, owner_username, repo_name, "contributors")
+    headers = {"Authorization": "Bearer " + access_token}
+    # Send a GET request to retrieve the contributors data.
+    response = requests.get(contributors_url, headers=headers, timeout=10)
+    status_code = response.status_code
+    # Process response status code.
+    if status_code == 200:
+        contributors_data = response.json()
+        contributors = [contributor["login"] for contributor in contributors_data]
+        return contributors
+    else:
+        _LOG.debug(
+            "Error retrieving contributors for %s/%s. Status code: %s",
+            owner_username,
+            repo_name,
+            status_code,
+        )
+        return []
+
+
 # #############################################################################
 
 
@@ -185,13 +213,13 @@ def _parse() -> argparse.ArgumentParser:
         "--action",
         type=str,
         required=True,
-        choices=["add", "remove"],
-        help="Action to perform: add or remove",
+        choices=["add", "remove", "get"],
+        help="Action to perform: add, remove, or get",
     )
     parser.add_argument(
         "--github_username",
         type=str,
-        required=True,
+        required=False,
         help="Collaborator's GH username",
     )
     parser.add_argument(
@@ -221,6 +249,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     action = args.action
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     if action == "add":
+        if args.github_username is None:
+            raise ValueError("Collaborator's GitHub username is required for 'add' action.")
         _invite_collaborator(
             args.github_username,
             args.owner_username,
@@ -228,12 +258,21 @@ def _main(parser: argparse.ArgumentParser) -> None:
             args.access_token,
         )
     elif action == "remove":
+        if args.github_username is None:
+            raise ValueError("Collaborator's GitHub username is required for 'remove' action.")
         _remove_collaborator(
             args.github_username,
             args.owner_username,
             args.repo_name,
             args.access_token,
         )
+    elif action == "get":
+        contributors = _get_contributors(
+            args.owner_username,
+            args.repo_name,
+            args.access_token,
+        )
+        print("List of Contributors:", contributors)
     else:
         raise ValueError("Invalid action ='%s'" % action)
 
