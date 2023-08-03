@@ -90,17 +90,6 @@ figsize = (20, 20)
 cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)
 
 # %% [markdown]
-# ## `plot_performance()`
-
-# %%
-plotter, _, eval_config = dmtetemopl.get_example_model_plotter()
-keys = None
-plotter.plot_performance(
-    keys=keys,
-    resample_rule=eval_config["resample_rule"],
-    mode=eval_config["mode"],
-    target_volatility=eval_config["target_volatility"],
-)
 # ## `plot_effective_correlation_rank()`
 
 # %%
