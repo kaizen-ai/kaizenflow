@@ -75,6 +75,7 @@ def get_example_model_evaluator():
 
 
 class TestModelEvaluator1(hunitest.TestCase):
+    @pytest.mark.requires_ck_infra
     def test_calculate_stats1(self) -> None:
         evaluator, eval_config = get_example_model_evaluator()
         # Calculate costatis.
