@@ -11,6 +11,7 @@ class TestKibotS3DataLoader(hunitest.TestCase):
         super().setUp()
         self._s3_data_loader = imkdlksdlo.KibotS3DataLoader()
 
+    @pytest.mark.requires_aws @pytest.mark.requires_ck_infra
     def test1(self) -> None:
         df = self._s3_data_loader._read_data(
             symbol="XG",
