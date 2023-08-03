@@ -21,14 +21,14 @@ def get_example_model_plotter():
 
 class TestModelPlotter1(hunitest.TestCase):
     def test_plot_multiple_tests_adjustment1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+        plotter, _, eval_config = get_example_model_plotter()
         #
         plotter.plot_multiple_tests_adjustment(
             threshold=eval_config["bh_adj_threshold"], mode=eval_config["mode"]
         )
 
     def test_model_selection1(self) -> None:
-        plotter, evaluator, eval_config = self._get_example_model_plotter()
+        plotter, evaluator, eval_config = get_example_model_plotter()
         # Calculate stats.
         pnl_stats = evaluator.calculate_stats(
             mode=eval_config["mode"],
@@ -56,7 +56,7 @@ class TestModelPlotter1(hunitest.TestCase):
         )
 
     def test_plot_return_correlation1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+        plotter, _, eval_config = get_example_model_plotter()
         #
         plotter.plot_correlation_matrix(
             series="returns",
@@ -65,7 +65,7 @@ class TestModelPlotter1(hunitest.TestCase):
         )
 
     def test_plot_model_return_correlation1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+        plotter, _, eval_config = get_example_model_plotter()
         #
         plotter.plot_correlation_matrix(
             series="pnl",
@@ -74,13 +74,13 @@ class TestModelPlotter1(hunitest.TestCase):
         )
 
     def test_plot_sharpe_ratio_panel1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+        plotter, _, eval_config = get_example_model_plotter()
         # Use all the models.
         keys = None
         plotter.plot_sharpe_ratio_panel(keys=keys, mode=eval_config["mode"])
 
     def test_plot_rets_signal_analysis1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+        plotter, _, eval_config = get_example_model_plotter()
         # Use all the models.
         keys = None
         plotter.plot_rets_signal_analysis(
@@ -91,7 +91,7 @@ class TestModelPlotter1(hunitest.TestCase):
         )
 
     def test_plot_performance1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+        plotter, _, eval_config = get_example_model_plotter()
         # Use all the models.
         keys = None
         plotter.plot_performance(
@@ -102,7 +102,7 @@ class TestModelPlotter1(hunitest.TestCase):
         )
 
     def test_plot_rets_and_vol1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+        plotter, _, eval_config = get_example_model_plotter()
         # Use all the models.
         keys = None
         plotter.plot_rets_and_vol(
@@ -113,7 +113,7 @@ class TestModelPlotter1(hunitest.TestCase):
         )
 
     def test_plot_positions1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+        plotter, _, eval_config = get_example_model_plotter()
         # Use all the models.
         keys = None
         plotter.plot_positions(
@@ -123,7 +123,7 @@ class TestModelPlotter1(hunitest.TestCase):
         )
 
     def test_plot_returns_and_predictions1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+        plotter, _, eval_config = get_example_model_plotter()
         # Use all the models.
         keys = None
         plotter.plot_returns_and_predictions(
