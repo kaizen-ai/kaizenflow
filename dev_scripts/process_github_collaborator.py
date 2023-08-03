@@ -2,8 +2,8 @@
 
 """
 The script checks if a GH user is already a collaborator of a specific
-repository, sends an invitation if not, removes a collaborator if requested,
-and reports any pending invitations.
+repository, sends an invitation if not, removes a collaborator if requested, 
+get a list of contributors and reports any pending invitations.
 
 Example:
   To invite a collaborator to the repository:
@@ -14,6 +14,12 @@ Example:
     --repo_name REPO_NAME \
     --access_token ACCESS_TOKEN
 
+    To get a list of all contributors for the repository:
+    > python github_permission.py \
+    --action get \
+    --owner_username OWNER_USERNAME \
+    --repo_name REPO_NAME \
+    --access_token ACCESS_TOKEN
 
 Import as:
 
@@ -184,7 +190,9 @@ def _get_contributors(
     """
     Get a list of all contributors from the GitHub repository.
     """
-    contributors_url = os.path.join(_GITHUB_API, owner_username, repo_name, "contributors")
+    contributors_url = os.path.join(
+        _GITHUB_API, owner_username, repo_name, "contributors"
+    )
     headers = {"Authorization": "Bearer " + access_token}
     # Send a GET request to retrieve the contributors data.
     response = requests.get(contributors_url, headers=headers, timeout=10)
@@ -250,7 +258,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     if action == "add":
         if args.github_username is None:
-            raise ValueError("Collaborator's GitHub username is required for 'add' action.")
+            raise ValueError(
+                "Collaborator's GitHub username is required for 'add' action."
+            )
         _invite_collaborator(
             args.github_username,
             args.owner_username,
@@ -259,7 +269,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         )
     elif action == "remove":
         if args.github_username is None:
-            raise ValueError("Collaborator's GitHub username is required for 'remove' action.")
+            raise ValueError(
+                "Collaborator's GitHub username is required for 'remove' action."
+            )
         _remove_collaborator(
             args.github_username,
             args.owner_username,
@@ -277,5 +289,5 @@ def _main(parser: argparse.ArgumentParser) -> None:
         raise ValueError("Invalid action ='%s'" % action)
 
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     _main(_parse())
