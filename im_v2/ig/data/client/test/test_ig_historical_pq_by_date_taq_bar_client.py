@@ -28,7 +28,7 @@ class TestIgHistoricalPqByDateTaqBarClient1(hunitest.TestCase):
         _LOG.debug("actual_string=%s", actual_string)
         self.check_string(actual_string, fuzzy_match=True)
 
-    @pytest.mark.require_aws
+    @pytest.mark.requires_aws @pytest.mark.requires_ck_infra
     def test_read_data1(self) -> None:
         """
         - Read data for one symbol
@@ -48,7 +48,7 @@ class TestIgHistoricalPqByDateTaqBarClient1(hunitest.TestCase):
             filter_data_mode,
         )
 
-    @pytest.mark.require_aws
+    @pytest.mark.requires_aws @pytest.mark.requires_ck_infra
     def test_read_data2(self) -> None:
         """
         - Read data for two symbols
