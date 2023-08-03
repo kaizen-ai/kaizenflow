@@ -93,7 +93,7 @@ cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)
 # ## `plot_performance()`
 
 # %%
-plotter, _, eval_config = dmtetemopl.TestModelPlotter1._get_example_model_plotter()
+plotter, _, eval_config = dmtetemopl.get_example_model_plotter()
 keys = None
 plotter.plot_performance(
     keys=keys,
