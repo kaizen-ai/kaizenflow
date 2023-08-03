@@ -24,6 +24,7 @@ class TestIbFilePathGenerator(hunitest.TestCase):
         super().setUp()
         self._file_path_generator = imidlifpge.IbFilePathGenerator()
 
+    @pytest.mark.requires_aws @pytest.mark.requires_ck_infra
     def test_get_latest_symbols_file1(self) -> None:
         """
         Get the latest file with the info.
