@@ -12,6 +12,12 @@ _LOG = logging.getLogger(__name__)
 #  When we add DataFrame output to the ModelPlotter functions so we can check that.
 
 
+def get_example_model_plotter():
+    evaluator, eval_config = cdmttme.get_example_model_evaluator()
+    # Build the ModelPlotter.
+    plotter = dtfmomoplo.ModelPlotter(evaluator)
+    return plotter, evaluator, eval_config
+
 class TestModelPlotter1(hunitest.TestCase):
     def test_plot_multiple_tests_adjustment1(self) -> None:
         plotter, _, eval_config = self._get_example_model_plotter()
@@ -125,9 +131,3 @@ class TestModelPlotter1(hunitest.TestCase):
             mode=eval_config["mode"],
         )
 
-    @staticmethod
-    def _get_example_model_plotter():
-        evaluator, eval_config = cdmttme.get_example_model_evaluator()
-        # Build the ModelPlotter.
-        plotter = dtfmomoplo.ModelPlotter(evaluator)
-        return plotter, evaluator, eval_config
