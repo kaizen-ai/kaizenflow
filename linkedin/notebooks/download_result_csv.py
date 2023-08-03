@@ -16,12 +16,12 @@
 import linkedin.phantom_api.phantombuster_api as ph
 
 # %%
-# Get all phantoms and their phantom 
+# Get all phantoms and their phantom id.
 phantom = ph.Phantom()
 phantom.get_all_phantoms()
 
 # %%
-# (INPUT) Set your search name and phantom id (Choose id from above table).
+# (INPUT) Set your search name and phantom id (Choose id from the above table).
 search_name = "sn_search5"
 search_phantom_id = "2862499141527492"
 profile_phantom_id = "3593602419926765"
@@ -39,5 +39,3 @@ phantom.download_result_csv_by_phantom_id(search_phantom_id, search_result_csv_p
 # %%
 # Download profile result csv.
 phantom.download_result_csv_by_phantom_id(profile_phantom_id, profile_result_csv_path)
-
-# %%
