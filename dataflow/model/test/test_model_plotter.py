@@ -18,6 +18,7 @@ def get_example_model_plotter():
     plotter = dtfmomoplo.ModelPlotter(evaluator)
     return plotter, evaluator, eval_config
 
+
 class TestModelPlotter1(hunitest.TestCase):
     def test_plot_multiple_tests_adjustment1(self) -> None:
         plotter, _, eval_config = self._get_example_model_plotter()
@@ -130,4 +131,3 @@ class TestModelPlotter1(hunitest.TestCase):
             resample_rule=eval_config["resample_rule"],
             mode=eval_config["mode"],
         )
-
