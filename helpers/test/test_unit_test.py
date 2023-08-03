@@ -1181,3 +1181,22 @@ class Test_purify_amp_reference1(hunitest.TestCase):
             of class '_Man' is not a subclass of '<class 'int'>'
         """
         self.helper(txt, exp)
+
+
+class Test_purify_from_environment1(hunitest.TestCase):
+    def check_output(self, txt: str, exp: str) -> None:
+        act = hunitest.purify_from_environment(txt)
+        self.assert_equal(act, exp)
+
+    def test1(self) -> None:
+        """
+        Check that the text is purified correctly.
+        """
+        txt = "/app/jupyter_core/application.py"
+        exp = "$GIT_ROOT/jupyter_core/application.py"
+        self.check_output(txt, exp)
+
+    def test2(self) -> None:
+        txt = "/app"
+        exp = "$GIT_ROOT"
+        self.check_output(txt, exp)

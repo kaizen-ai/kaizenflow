@@ -623,3 +623,53 @@ class Test_convert_timestamp_to_unix_epoch(hunitest.TestCase):
         actual = hdateti.convert_timestamp_to_unix_epoch(timestamp=timestamp)
         expected = 1631145600000
         self.assert_equal(str(actual), str(expected))
+
+
+class Test_str_to_timestamp1(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test valid datetime with format.
+        """
+        datetime_str = "20230728_150513"
+        timezone_info = "US/Eastern"
+        format = "%Y%m%d_%H%M%S"
+        actual = hdateti.str_to_timestamp(datetime_str, timezone_info, datetime_format=format)
+        expected = pd.Timestamp('2023-07-28 15:05:13-0400', tz='US/Eastern')
+        self.assertEqual(actual, expected)
+
+    def test2(self) -> None:
+        """
+        Test valid datetime without format.
+        """
+        datetime_str = "2023-07-28 15:05:13"
+        timezone_info = "US/Eastern"
+        expected = pd.Timestamp('2023-07-28 15:05:13-0400', tz='US/Eastern')
+        actual = hdateti.str_to_timestamp(datetime_str, timezone_info)
+        self.assertEqual(actual, expected)
+
+    def test3(self) -> None:
+        """
+        Test invalid datetime with format.
+        """
+        datetime_str = "28-07-2023 15:05:13"
+        timezone_info = "US/Eastern"
+        format = "%Y%m%d_%H%M%S"
+        # Invalid datetime, should raise a ValueError.
+        with self.assertRaises(ValueError) as err:
+            hdateti.str_to_timestamp(datetime_str, timezone_info, datetime_format=format)
+        actual = str(err.exception)
+        expected = "time data '28-07-2023 15:05:13' does not match format '%Y%m%d_%H%M%S' (match)"
+        self.assert_equal(actual, expected)
+
+    def test4(self) -> None:
+        """
+        Test invalid datetime without format.
+        """
+        datetime_str = "qwe28abc07-201234"
+        timezone_info = "US/Eastern"
+        # Invalid datetime, should raise a ValueError.
+        with self.assertRaises(ValueError) as err:
+            hdateti.str_to_timestamp(datetime_str, timezone_info)
+        actual = str(err.exception)
+        expected = "Unknown string format: qwe28abc07-201234 present at position 0"
+        self.assert_equal(actual, expected)
