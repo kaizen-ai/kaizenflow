@@ -1,4 +1,5 @@
 import os
+import pytest
 
 import helpers.hunit_test as hunitest
 import im.kibot.data.extract.download as imkdaexdo
@@ -15,6 +16,7 @@ class TestKibotDownload(hunitest.TestCase):
         actual = imkdaexdo.DatasetListExtractor.extract_dataset_links(file_name)
         self.check_string(actual.to_csv())
 
+    @pytest.mark.requires_ck_infra
     def test_extract_payload_links(self) -> None:
         """
         Test that extraction of payload links from a dataset page works.

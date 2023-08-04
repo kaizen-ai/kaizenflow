@@ -7,7 +7,6 @@ import helpers.hsql_test as hsqltest
 import abc
 import logging
 import os
-
 import pytest
 
 import helpers.hdocker as hdocker
@@ -103,7 +102,9 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         # Save connection info.
         # TODO(gp): -> db_connection
         cls.connection = hsql.get_connection(*connection_info, autocommit=True)
-
+    
+    @pytest.mark.requires_ck_infra
+    @pytest.mark.requires_docker_in_docker #from error msg
     @classmethod
     def tearDownClass(cls) -> None:
         """

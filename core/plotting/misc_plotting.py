@@ -299,7 +299,11 @@ def plot_timeseries_distribution(
     srs = hdatafr.apply_nan_mode(srs, mode="drop")
     index_series = pd.Series(srs.index)
     for datetime_type, ax in zip(datetime_types, axes):
-        sns.countplot(getattr(index_series.dt, datetime_type))
+        sns.countplot(
+            data=index_series.to_frame(),
+            x=getattr(index_series.dt, datetime_type),
+            ax=ax,
+        )
         ax.set_title(f"Distribution by {datetime_type}")
         ax.set_xlabel(datetime_type, fontsize=12)
         ax.set_ylabel(f"Quantity of {srs.name}", fontsize=12)
