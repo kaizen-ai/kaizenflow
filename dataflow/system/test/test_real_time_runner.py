@@ -119,6 +119,7 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
         actual = "\n".join(map(str, actual))
         self.check_string(actual)
 
+    @pytest.mark.requires_ck_infra
     def test_simulated_replayed_time1(self) -> None:
         """
         Use simulated replayed time.
