@@ -1,9 +1,13 @@
 import logging
+from typing import Tuple
 
 import dataflow.model.model_plotter as dtfmomoplo
 import dataflow.model.test.test_model_evaluator as cdmttme
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
+from core.config import Config
+from dataflow.model.model_evaluator import ModelEvaluator
+from dataflow.model.model_plotter import ModelPlotter
 
 _LOG = logging.getLogger(__name__)
 
@@ -12,7 +16,7 @@ _LOG = logging.getLogger(__name__)
 #  When we add DataFrame output to the ModelPlotter functions so we can check that.
 
 
-def get_example_model_plotter():
+def get_example_model_plotter() -> Tuple[ModelPlotter, ModelEvaluator, Config]:
     evaluator, eval_config = cdmttme.get_example_model_evaluator()
     # Build the ModelPlotter.
     plotter = dtfmomoplo.ModelPlotter(evaluator)
