@@ -2,24 +2,24 @@
 
 """
 The script checks if a GH user is already a collaborator of a specific
-repository, sends an invitation if not, removes a collaborator if requested, 
+repository, sends an invitation if not, removes a collaborator if requested,
 get a list of contributors and reports any pending invitations.
 
 Example:
   To invite a collaborator to the repository:
-  > python github_permission.py \
+  > python process_github_collaborator.py \
     --action add \
     --github_username GITHUB_USERNAME \
     --owner_username OWNER_USERNAME \
     --repo_name REPO_NAME \
     --access_token ACCESS_TOKEN
 
-    To get a list of all contributors for the repository:
-    > python github_permission.py \
-    --action get \
-    --owner_username OWNER_USERNAME \
-    --repo_name REPO_NAME \
-    --access_token ACCESS_TOKEN
+  To get a list of all contributors for the repository:
+  > python process_github_collaborator.py \
+  --action get \
+  --owner_username OWNER_USERNAME \
+  --repo_name REPO_NAME \
+  --access_token ACCESS_TOKEN
 
 Import as:
 
@@ -30,6 +30,7 @@ import dev_scripts.github_permission as descgipe
 import argparse
 import logging
 import os
+from typing import List
 
 import requests
 
@@ -186,12 +187,12 @@ def _get_contributors(
     owner_username: str,
     repo_name: str,
     access_token: str,
-) -> list:
+) -> List[str]:
     """
     Get a list of all contributors from the GitHub repository.
     """
     contributors_url = os.path.join(
-        _GITHUB_API, owner_username, repo_name, "contributors"
+        _GITHUB_API, owner_username, repo_name, "collaborators"
     )
     headers = {"Authorization": "Bearer " + access_token}
     # Send a GET request to retrieve the contributors data.
@@ -255,34 +256,32 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     action = args.action
+    github_username = args.github_username
+    owner_username = args.owner_username
+    repo_name = args.repo_name
+    access_token = args.access_token
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     if action == "add":
-        if args.github_username is None:
-            raise ValueError(
-                "Collaborator's GitHub username is required for 'add' action."
-            )
+        hdbg.dassert_is_not(github_username, None)
         _invite_collaborator(
-            args.github_username,
-            args.owner_username,
-            args.repo_name,
-            args.access_token,
+            github_username,
+            owner_username,
+            repo_name,
+            access_token,
         )
     elif action == "remove":
-        if args.github_username is None:
-            raise ValueError(
-                "Collaborator's GitHub username is required for 'remove' action."
-            )
+        hdbg.dassert_is_not(github_username, None)
         _remove_collaborator(
-            args.github_username,
-            args.owner_username,
-            args.repo_name,
-            args.access_token,
+            github_username,
+            owner_username,
+            repo_name,
+            access_token,
         )
     elif action == "get":
         contributors = _get_contributors(
-            args.owner_username,
-            args.repo_name,
-            args.access_token,
+            owner_username,
+            repo_name,
+            access_token,
         )
         print("List of Contributors:", contributors)
     else:
