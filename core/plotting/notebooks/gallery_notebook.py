@@ -31,6 +31,7 @@ import logging
 import matplotlib.pyplot as plt
 import numpy as np
 
+import core.config as cconfig
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.test.test_plots as cptetepl
@@ -51,6 +52,13 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 # %% [markdown]
+# # Build config
+
+# %%
+config_dict = {"figsize": (20, 10)}
+config = cconfig.Config.from_dict(config_dict)
+
+# %% [markdown]
 # # Plots
 
 # %% [markdown]
@@ -62,7 +70,9 @@ srs = cptetepl.Test_plots.get_plot_histograms_and_lagged_scatterplot1()
 lag = 7
 # TODO(Dan): Remove after integration with `cmamp`. Changes from Cm #4722 are not in `sorrentum` yet.
 figsize = (20, 20)
-cpvistte.plot_histograms_and_lagged_scatterplot(srs, lag, figsize=figsize)
+cpvistte.plot_histograms_and_lagged_scatterplot(
+    srs, lag, figsize=config["figsize"]
+)
 # %% [markdown]
 # ## `plot_timeseries_distribution()`
 # %%
@@ -99,8 +109,7 @@ cplmiplo.plot_time_series_by_period(test_series, period)
 # %%
 mode = "clustermap"
 corr_df = cptetepl.Test_plots.get_plot_heatmap1()
-figsize = (20, 20)
-cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)
+cplocorr.plot_heatmap(corr_df, mode, figsize=config["figsize"])
 
 # %% [markdown]
 # ## `plot_rets_signal_analysis()`
@@ -145,9 +154,6 @@ test_df = cptetepl.Test_plots.get_plot_spectrum1()
 cplmiplo.plot_spectrum(test_df)
 
 # %%
-figsize = (20, 20)
-_, axes = plt.subplots(2, 2, figsize=figsize)
+_, axes = plt.subplots(2, 2, figsize=config["figsize"])
 axes_flat = axes.flatten()
 cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
-
-# %%
