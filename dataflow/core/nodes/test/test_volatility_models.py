@@ -604,6 +604,8 @@ class TestVolatilityModel(hunitest.TestCase):
 
 
 class TestMultiindexVolatilityModel(hunitest.TestCase):
+    
+    @pytest.mark.requires_ck_infra
     def test1(self) -> None:
         """
         Perform a typical `fit()` call.
@@ -624,6 +626,7 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act, fuzzy_match=True)
 
+    @pytest.mark.requires_ck_infra
     def test2(self) -> None:
         """
         Perform a typical `predict()` call.
