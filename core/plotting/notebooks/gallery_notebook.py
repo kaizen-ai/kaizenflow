@@ -30,7 +30,6 @@ import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
@@ -59,11 +58,7 @@ hprint.config_notebook()
 
 # %%
 # Set inputs.
-cptetepl.Test_plots.setUpClass()
-rng = np.random.default_rng(seed=cptetepl.Test_plots._seed)
-samples = rng.normal(size=100)
-index = pd.date_range(start="2023-01-01", periods=len(samples), freq="D")
-srs = pd.Series(samples, index=index)
+srs = cptetepl.Test_plots.get_plot_histograms_and_lagged_scatterplot1()
 lag = 7
 # TODO(Dan): Remove after integration with `cmamp`. Changes from Cm #4722 are not in `sorrentum` yet.
 figsize = (20, 20)
@@ -154,3 +149,5 @@ figsize = (20, 20)
 _, axes = plt.subplots(2, 2, figsize=figsize)
 axes_flat = axes.flatten()
 cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
+
+# %%
