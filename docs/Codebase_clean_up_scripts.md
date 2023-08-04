@@ -5,7 +5,7 @@
 - [Using the script approach](#using-the-script-approach)
 - [Rationale for the script approach](#rationale-for-the-script-approach)
 - [Notes on `replace_text.py`](#notes-on-replace_textpy)
-- [Example usage of `replace_text.py`](#example-usage-of-replace_textpy)
+- [Usage examples](#usage-examples)
 - [Instructions for the PR author](#instructions-for-the-pr-author)
   * [Example](#example)
 - [Instructions for the subrepo integrator](#instructions-for-the-subrepo-integrator)
@@ -49,7 +49,7 @@
     with the script approach we can check out master, run the script to apply
     the changes automatically, regress and merge
 
-## Notes on `replace_text.py`
+## Usage examples
 
 - Replace an instance of text in all:
   - `.py` file contents
@@ -96,18 +96,18 @@
 ## Instructions for the PR author
 
 - Create a local branch called `...TaskXYZ_..._script` containing:
-  - the code that needs to be changed manually
-    - E.g.: replacing `pytest.raises` with `self.assertRaises`
-  - more contextual changes
-    - E.g.: adding unit tests to the new functions
-  - the script for the replacement of the caller named after the GH issue
+  - The code that needs to be changed manually
+    - E.g.: Replacing `pytest.raises` with `self.assertRaises`
+  - More contextual changes
+    - E.g.: Adding unit tests to the new functions
+  - The script for the replacement of the caller named after the GH issue
     - The script should:
-      - prepare the target Git client
-      - merge this `script` branch with the manual changes
-      - make the automated changes
-        - E.g., rename a function or replace certain word in comments /
+      - Prepare the target Git client
+      - Merge this `script` branch with the manual changes
+      - Make the automated changes
+        - E.g.: Rename a function or replace certain word in comments /
           docstring
-  - notes in the files that need to be changed manually after the automatic
+  - Notes in the files that need to be changed manually after the automatic
     script
 - Run from scratch the script getting the regression to pass
   - Any time there is a change needed by hand, the change should be added to the
@@ -129,11 +129,10 @@
 
 ## Instructions for the subrepo integrator
 
-- The integrator:
-  - does a `git checkout` of the `...TaskXYZ_..._script`
-  - runs the script
-  - reviews carefully the changes to make sure we are not screwing things up
-  - runs the regressions
-  - merges the resulting `...TaskXYZ...` PR
-  - ensures `...TaskXYZ_..._script` is merged in `master`
-  - deletes `...TaskXYZ_..._script`
+- Do a `git checkout` of the `...TaskXYZ_..._script`
+- Run the script
+- Review carefully the changes to make sure we are not screwing things up
+- Run the regressions
+- Merge the resulting `...TaskXYZ...` PR
+- Ensure that the `...TaskXYZ_..._script` is merged in `master`
+- Delete the `...TaskXYZ_..._script`
