@@ -43,23 +43,13 @@ class Test_build_run_command_line1(hunitest.TestCase):
             tee_to_file,
             n_threads,
         )
-        skip_ck_infra_tests = (not hserver.is_dev_ck() or hgit.get_repo_name() ==
-                     "Sorrentum")
-        is_laptop = not hserver.is_dev_ck() 
-        if skip_ck_infra_tests and is_laptop:
+        skip_ck_infra_tests = not hserver.is_dev_ck()
+        if skip_ck_infra_tests: 
             exp = (
                 'pytest -m "not slow and not superslow and not requires_ck_infra" . '
                 "-o timeout_func_only=true --timeout 50 --reruns 2 "
                 '--only-rerun "Failed: Timeout" -n 1'
             )
-        # if not laptop, might still be skip_ck_infra_tests. time out shorter
-        elif skip_ck_infra_tests and (not is_laptop): 
-            exp = (
-                'pytest -m "not slow and not superslow and not requires_ck_infra" . '
-                "-o timeout_func_only=true --timeout 5 --reruns 2 "
-                '--only-rerun "Failed: Timeout" -n 1'
-            )
-        # else it's not skip_ck_infra_tests.
         else: 
             exp = (
                 'pytest -m "not slow and not superslow" . '
@@ -91,8 +81,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
             tee_to_file,
             n_threads,
         )
-        #TODO(SP): for exp, there has to be similar changes like run_fast_tests1 according to 
-        #require_ck_infra statuses. For now I'm just disabling it.
+        #TODO(shaopengz): Apply the same changes as in run_fast_tests1. Disabling it for now.
         exp = (
             r'pytest -m "not slow and not superslow" . '
             r"-o timeout_func_only=true --timeout 5 --reruns 2 "

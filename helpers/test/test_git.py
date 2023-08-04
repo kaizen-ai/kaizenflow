@@ -212,11 +212,11 @@ class Test_git_repo_name1(hunitest.TestCase):
         exp = "DevToolsTask"
         self.assert_equal(act, exp)
 
-# Test_git_path1 constantly hangs when I run `i run_fast_tests`.
+#TODO(shaopengz): This test hangs in hgit.is_in_amp_as_supermodule().
 @pytest.mark.requires_ck_infra
 class Test_git_path1(hunitest.TestCase):
     @pytest.mark.skipif(
-        not hgit.is_in_amp_as_supermodule(), #error msg says it hangs here.
+        not hgit.is_in_amp_as_supermodule(),
         reason="Run only in amp as super-module",
     )
     def test_get_path_from_git_root1(self) -> None:
