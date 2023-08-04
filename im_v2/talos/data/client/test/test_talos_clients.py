@@ -347,6 +347,7 @@ class TestTalosHistoricalPqByTileClient1(icdc.ImClientTestCase):
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
+@pytest.mark.requires_ck_infra
 class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
     """
     TODO(Grisha): Test multiple exchanges CmTask #1533.
@@ -354,7 +355,9 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
     For all the test methods see description of corresponding private method in
     the parent class.
     """
-
+    
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra 
     def test_read_data1(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -608,7 +611,9 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
         )
 
     # ////////////////////////////////////////////////////////////////////////
-
+   
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test_get_start_ts_for_symbol1(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -621,7 +626,9 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
             full_symbol,
             expected_start_ts,
         )
-
+    
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test_get_end_ts_for_symbol1(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(

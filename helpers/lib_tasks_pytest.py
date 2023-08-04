@@ -138,17 +138,22 @@ def _build_run_command_line(
     )
     pytest_opts = pytest_opts or "."
     pytest_opts_tmp = []
-
     # Select tests to skip based on the `test_list_name` (e.g., fast tests)
     # and on the custom marker, if present.
     skipped_tests = _select_tests_to_skip(test_list_name)
+    timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[test_list_name]
+    # Detect if we are running on a laptop.
+    skip_ck_infra_tests = not hserver.is_dev_ck()
+    if skip_ck_infra_tests:
+        _LOG.warning("Skipping CK infra related tasks")
+        skipped_tests += " and not requires_ck_infra"
+        timeout_in_sec *= 10
     if custom_marker != "":
         pytest_opts_tmp.append(f'-m "{custom_marker} and {skipped_tests}"')
     else:
         pytest_opts_tmp.append(f'-m "{skipped_tests}"')
     if pytest_opts:
         pytest_opts_tmp.append(pytest_opts)
-    timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[test_list_name]
     # Adding `timeout_func_only` is a workaround for
     # https://github.com/pytest-dev/pytest-rerunfailures/issues/99. Because of
     # it, we limit only run time, without setup and teardown time.
@@ -360,7 +365,7 @@ def run_fast_tests(  # type: ignore
     ctx,
     stage="dev",
     version="",
-    pytest_opts="",
+    pytest_opts="", 
     skip_submodules=False,
     coverage=False,
     collect_only=False,

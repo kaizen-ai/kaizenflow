@@ -212,7 +212,8 @@ class Test_git_repo_name1(hunitest.TestCase):
         exp = "DevToolsTask"
         self.assert_equal(act, exp)
 
-
+#TODO(shaopengz): This test hangs in hgit.is_in_amp_as_supermodule().
+@pytest.mark.requires_ck_infra
 class Test_git_path1(hunitest.TestCase):
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_supermodule(),
