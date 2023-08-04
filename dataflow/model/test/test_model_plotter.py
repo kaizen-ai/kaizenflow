@@ -1,5 +1,6 @@
 import logging
 from typing import Tuple
+
 import pytest
 
 import dataflow.model.model_plotter as dtfmomoplo
@@ -31,6 +32,7 @@ class TestModelPlotter1(hunitest.TestCase):
         plotter.plot_multiple_tests_adjustment(
             threshold=eval_config["bh_adj_threshold"], mode=eval_config["mode"]
         )
+
     @pytest.mark.requires_ck_infra
     def test_model_selection1(self) -> None:
         plotter, evaluator, eval_config = get_example_model_plotter()
