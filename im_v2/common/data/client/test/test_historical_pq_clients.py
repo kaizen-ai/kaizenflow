@@ -19,6 +19,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestHistoricalPqByTileClient1(icdc.ImClientTestCase):
+    @pytest.mark.requires_ck_infra 
     def test_read_data1(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbol = "binance::BTC_USDT"
@@ -52,6 +53,7 @@ class TestHistoricalPqByTileClient1(icdc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.requires_ck_infra
     def test_read_data2(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -88,6 +90,7 @@ class TestHistoricalPqByTileClient1(icdc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.requires_ck_infra
     def test_read_data3(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -125,6 +128,7 @@ class TestHistoricalPqByTileClient1(icdc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.requires_ck_infra
     def test_read_data4(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -162,6 +166,7 @@ class TestHistoricalPqByTileClient1(icdc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.requires_ck_infra
     def test_read_data5(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -213,6 +218,7 @@ class TestHistoricalPqByTileClient1(icdc.ImClientTestCase):
         full_symbol = "kucoin::MOCK"
         self._test_read_data6(im_client, full_symbol)
 
+    @pytest.mark.requires_ck_infra
     def test_read_data7(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -249,6 +255,7 @@ class TestHistoricalPqByTileClient1(icdc.ImClientTestCase):
         )
 
     # TODO(Dan): Update test data generator with adding one more column to it.
+    @pytest.mark.requires_ck_infra 
     def test_filter_columns1(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -259,6 +266,7 @@ class TestHistoricalPqByTileClient1(icdc.ImClientTestCase):
         expected_columns = ["full_symbol", "close"]
         self._test_filter_columns1(im_client, full_symbols, expected_columns)
 
+    @pytest.mark.requires_ck_infra
     def test_filter_columns2(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -293,6 +301,7 @@ class TestHistoricalPqByTileClient1(icdc.ImClientTestCase):
 
     # ////////////////////////////////////////////////////////////////////////
 
+    @pytest.mark.requires_ck_infra
     def test_get_start_ts_for_symbol1(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbol = "binance::BTC_USDT"
@@ -306,6 +315,7 @@ class TestHistoricalPqByTileClient1(icdc.ImClientTestCase):
             im_client, full_symbol, expected_start_timestamp
         )
 
+    @pytest.mark.requires_ck_infra
     def test_get_end_ts_for_symbol1(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbol = "binance::BTC_USDT"
