@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import pytest
 
 import pandas as pd
 
@@ -23,6 +24,7 @@ class Test_evaluate_weighted_forecasts(hunitest.TestCase):
         df["month"] = df.index.month
         return df
 
+    @pytest.mark.requires_ck_infra
     def test_combine_two_signals(self) -> None:
         base_dir = self.get_scratch_space()
         start_datetime = pd.Timestamp(

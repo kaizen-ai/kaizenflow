@@ -1296,6 +1296,7 @@ class Test_dassert_is_serializable1(hunitest.TestCase):
 
 
 class Test_from_env_var1(hunitest.TestCase):
+    @pytest.mark.requires_ck_infra
     def test1(self) -> None:
         eval_config = cconfig.Config.from_dict(
             {

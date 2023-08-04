@@ -51,6 +51,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         # Check results.
         self._check_results(config, df_out)
 
+    @pytest.mark.requires_ck_infra
     def test_fit_with_constant1(self) -> None:
         data = self._get_data([1], [])
         config = self._get_config((1, 0, 0))
@@ -75,6 +76,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         # Check results.
         self._check_results(config, df_out, err_threshold=0.05)
 
+    @pytest.mark.requires_ck_infra
     def test_compare_to_linear_regression1(self) -> None:
         """
         Compare SARIMAX results to Linear Regression.
@@ -121,6 +123,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         )
         self.check_string(act, fuzzy_match=True)
 
+    @pytest.mark.requires_ck_infra
     def test_compare_to_linear_regression2(self) -> None:
         """
         Compare SARIMAX results to Linear Regression for 3 steps ahead.
@@ -179,6 +182,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         # Check results.
         self._check_results(config, df_out, err_threshold=0.40)
 
+    @pytest.mark.requires_ck_infra
     def test_predict2(self) -> None:
         """
         Test AR(1) process.
@@ -193,6 +197,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         # Check results.
         self._check_results(config, df_out)
 
+    @pytest.mark.requires_ck_infra
     def test_predict_with_nan(self) -> None:
         """
         Test AR(1) process with NaNs in the target.
@@ -210,6 +215,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         # Check results.
         self._check_results(config, df_out)
 
+    @pytest.mark.requires_ck_infra
     def test_predict_different_intervals1(self) -> None:
         """
         Verify that predictions on different intervals match.
@@ -263,6 +269,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         # Check results.
         self._check_results(config, df_out, err_threshold=0.20)
 
+    @pytest.mark.requires_ck_infra
     def test_predict_different_intervals_no_x1(self) -> None:
         """
         Verify that predictions on different intervals match.
