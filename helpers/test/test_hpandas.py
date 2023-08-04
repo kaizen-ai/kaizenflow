@@ -1281,6 +1281,8 @@ class TestCompareDataframeRows(hunitest.TestCase):
 
 
 class TestReadDataFromS3(hunitest.TestCase):
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test_read_csv1(self) -> None:
         s3fs = hs3.get_s3fs(_AWS_PROFILE)
         file_name = os.path.join(
