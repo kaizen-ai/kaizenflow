@@ -49,7 +49,7 @@
     with the script approach we can check out master, run the script to apply
     the changes automatically, regress and merge
 
-## Usage examples
+## Notes on `replace_text.py`
 
 - Replace an instance of text in all:
   - `.py` file contents
@@ -69,7 +69,7 @@
   - defaults are `py, ipynb, txt, sh`
   - use `_all_` for all files
 
-## Example usage of `replace_text.py`
+## Usage examples
 
 - See [SorrIssue259](https://github.com/sorrentum/sorrentum/issues/259) and the
   related [PR](https://github.com/sorrentum/sorrentum/pull/336) for reference
