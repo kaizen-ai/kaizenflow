@@ -99,10 +99,8 @@
 
   - We wanted to make `_to_multiline_cmd()` from `helpers/lib_tasks_utils.py` a
     public function
-
   - This would require to rename `_to_multiline_cmd()` to `to_multiline_cmd()`
     with the script
-
   - This
     [script](https://github.com/cryptokaizen/cmamp/blob/master/dev_scripts/cleanup_scripts/SorrTask259_Make_to_multi_line_cmd_public.sh)
     will make the replacement smoothly everywhere in the code except for the
@@ -112,14 +110,12 @@
   related [PR](https://github.com/sorrentum/sorrentum/pull/350) for reference
 
   - We wanted to replace `pytest.raises` with `self.assertRaises`
-
   - This
     [script](https://github.com/sorrentum/sorrentum/blob/master/dev_scripts/cleanup_scripts/SorrTask258_Replace_pytest_raises_with_self_assertraises.sh)
     will replace it everywhere in the code
-
   - Note the use of `--ext` flag to specify the file extentions the script
     should work on
-
+    
 - Of course the changes need to be applied in one repo and then propagated to
   all the other repos if the tests are successful
 
@@ -129,10 +125,10 @@
 
   - the code that needs to be changed manually
     - E.g.: replacing `pytest.raises` with `self.assertRaises`
-  
+
   - more contextual changes
     - E.g.: adding unit tests to the new functions
-  
+
   - the script for the replacement of the caller named after the GH issue
     - The script should:
       - prepare the target Git client
