@@ -1,12 +1,13 @@
-<!--ts-->
-   * [Connecting Google Sheets to Pandas](#connecting-google-sheets-to-pandas)
-   * [Installing gspread-pandas](#installing-gspread-pandas)
-   * [Configuring gspread-pandas](#configuring-gspread-pandas)
-   * [Using gspread-pandas](#using-gspread-pandas)
+# Gsheet into pandas
 
+<!-- toc -->
 
+- [Connecting Google Sheets to Pandas](#connecting-google-sheets-to-pandas)
+  * [Installing gspread-pandas](#installing-gspread-pandas)
+  * [Configuring gspread-pandas](#configuring-gspread-pandas)
+- [Using gspread-pandas](#using-gspread-pandas)
 
-<!--te-->
+<!-- tocstop -->
 
 # Connecting Google Sheets to Pandas
 
@@ -55,23 +56,16 @@
   > scp $SRC_FILE research:$DST_FILE
   > ssh research "chmod 600 $DST_FILE"
   ``
+  ```
 
 # Using gspread-pandas
 
-- The notebook with the usage example is located at
-  `amp/core/notebooks/gsheet_into_pandas_example.ipynb`.
-
-- The first time the library is used, it will asks the user for an authorization
-  code.
-
+- The notebook with the usage example is located at `amp/core/notebooks/gsheet_into_pandas_example.ipynb`.
+- The first time the library is used, it will asks the user for an authorization code.
 ![image](https://user-images.githubusercontent.com/22771988/78498562-4e695580-774b-11ea-9f4e-08a413567e24.png)
-
 - After the authorization code is provided for the first time, it won't be asked
   again.
-
-- The official use documentation is provided
-  [here](https://gspread-pandas.readthedocs.io/en/latest/using.html).
-
+- The official use documentation is provided [here](https://gspread-pandas.readthedocs.io/en/latest/using.html).
 - **Don't feel stupid if you need multiple iterations to get this stuff
   working**
   - Clicking on GUI is always a recipe for low productivity
