@@ -1,3 +1,0 @@
-dataflow/model/test/test_model_plotter.py:53:[amp_pylint] [C0209(consider-using-f-string), TestModelPlotter1.test_model_selection1] Formatting a regular string which could be a f-string
-dataflow/model/test/test_model_plotter.py:56:[amp_pylint] [C0209(consider-using-f-string), TestModelPlotter1.test_model_selection1] Formatting a regular string which could be a f-string
-dataflow/model/test/test_model_plotter.py:57:[amp_pylint] [C0209(consider-using-f-string), TestModelPlotter1.test_model_selection1] Formatting a regular string which could be a f-string
