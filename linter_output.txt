@@ -1,0 +1,175 @@
+The AM_AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
+The AM_AWS_DEFAULT_REGION variable is not set. Defaulting to a blank string.
+The AM_AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
+The AM_FORCE_TEST_FAIL variable is not set. Defaulting to a blank string.
+The AM_TELEGRAM_TOKEN variable is not set. Defaulting to a blank string.
+The CK_AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
+The CK_AWS_DEFAULT_REGION variable is not set. Defaulting to a blank string.
+The CK_AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
+The CK_TELEGRAM_TOKEN variable is not set. Defaulting to a blank string.
+Creating compose_linter_run ... 
+Creating compose_linter_run ... done
+##> devops/docker_run/entrypoint.sh
+UID=501
+GID=20
+# Activate environment
+##> /app/devops/docker_run/setenv.sh
+# Set PATH
+PATH=/app:/app/linters:/app/dev_scripts_devto/notebooks:/app/documentation_devto/scripts:/app/amp/documentation/scripts:/app/amp/dev_scripts/testing:/app/amp/dev_scripts/notebooks:/app/amp/dev_scripts/install:/app/amp/dev_scripts/infra:/app/amp/dev_scripts/git:/app/amp/dev_scripts/aws:/app/amp/dev_scripts:/app/amp:.:/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+# Set PYTHONPATH
+PYTHONPATH=/app:/app/amp:
+# Configure env
+git --version: git version 2.25.1
+/src
+[33mWARNING[0m: AWS credential check failed: can't find /home/.aws/credentials file.
+[33mWARNING[0m: AWS credential check failed: can't find /home/.aws/config file.
+# Check AWS authentication setup
+
+The config profile (am) could not be found
+      Name                    Value             Type    Location
+      ----                    -----             ----    --------
+   profile                       am           manual    --profile
+AM_CONTAINER_VERSION='1.2.0'
+which python: /venv/bin/python
+python -V: Python 3.8.10
+pandas: 1.4.3
+helpers: <module 'helpers' from '/src/helpers/__init__.py'>
+PATH=/app:/app/linters:/app/dev_scripts_devto/notebooks:/app/documentation_devto/scripts:/app/amp/documentation/scripts:/app/amp/dev_scripts/testing:/app/amp/dev_scripts/notebooks:/app/amp/dev_scripts/install:/app/amp/dev_scripts/infra:/app/amp/dev_scripts/git:/app/amp/dev_scripts/aws:/app/amp/dev_scripts:/app/amp:.:/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PYTHONPATH=/app:/app/amp:
+entrypoint.sh: 'pre-commit run -c /app/.pre-commit-config.yaml --files dataflow/model/test/test_model_plotter.py'
+[0m[36mINFO[0m: > cmd='/venv/bin/invoke print_env'
+report_memory_usage=False report_cpu_usage=False
+05:51:36 - [41mWARN [0m henv.py get_repo_config_file:485                       Using value '/app/repo_config.py' for AM_REPO_CONFIG_PATH from env var
+[31m-----------------------------------------------------------------------------
+This code is not in sync with the container:
+code_version='1.4.3' != container_version='1.2.0'
+-----------------------------------------------------------------------------
+You need to:
+- merge origin/master into your branch with `invoke git_merge_master`
+- pull the latest container with `invoke docker_pull`[0m
+# Repo config:
+  enable_privileged_mode='False'
+  get_docker_base_image_name='dev_tools'
+  get_docker_shared_group=''
+  get_docker_user=''
+  get_host_name='github.com'
+  get_invalid_words='[]'
+  get_name='//dev_tools'
+  get_repo_map='{'cm': 'cryptokaizen/cmamp'}'
+  get_shared_data_dirs='None'
+  has_dind_support='False'
+  has_docker_sudo='True'
+  is_AM_S3_available='True'
+  is_CK_S3_available='False'
+  is_dev4='False'
+  is_dev_ck='False'
+  is_inside_ci='False'
+  is_inside_docker='True'
+  is_mac='True'
+  run_docker_as_root='False'
+  skip_submodules_test='True'
+  use_docker_network_mode_host='True'
+  use_docker_sibling_containers='False'
+# System signature:
+  # Git
+    branch_name='SorrTask462_Unit_Test_plot_performance'
+    hash='4e0e1a93f'
+    # Last commits:
+      *   4e0e1a93f zli00185 Merge branch 'master' into SorrTask462_Unit_Test_plot_performance (34 seconds ago) Fri Aug 4 09:51:04 2023  (HEAD -> SorrTask462_Unit_Test_plot_performance)
+      |\  
+      * | 64c33fdcf zli00185 update                                                            ( 2 minutes ago) Fri Aug 4 09:49:57 2023           
+      | * 4b9314c80 LibertasSpZ Sorr task283 create test list to run with sorrentum 2 (#506)      (   8 hours ago) Fri Aug 4 01:28:03 2023  (origin/master, origin/HEAD, master)
+  # Machine info
+    system=Linux
+    node name=b21c2e9e75eb
+    release=5.15.49-linuxkit-pr
+    version=#1 SMP PREEMPT Thu May 25 07:27:39 UTC 2023
+    machine=x86_64
+    processor=x86_64
+    cpu count=4
+    cpu freq=None
+    memory=svmem(total=4124446720, available=2769793024, percent=32.8, used=870854656, free=1665687552, active=806707200, inactive=1164619776, buffers=179384320, cached=1408520192, shared=292352000, slab=352550912)
+    disk usage=sdiskusage(total=62671097856, used=12447199232, free=47007182848, percent=20.9)
+  # Packages
+    python: 3.8.10
+    cvxopt: ?
+    cvxpy: ?
+    gluonnlp: ?
+    gluonts: ?
+    joblib: 0.16.0
+    mxnet: ?
+    numpy: 1.23.0
+    pandas: 1.4.3
+    pyarrow: ?
+    scipy: 1.6.1
+    seaborn: ?
+    sklearn: ?
+    statsmodels: 0.13.2
+# Env vars:
+  AM_AWS_ACCESS_KEY_ID=undef
+  AM_AWS_DEFAULT_REGION=undef
+  AM_AWS_PROFILE='am'
+  AM_AWS_S3_BUCKET='alphamatic-data'
+  AM_AWS_SECRET_ACCESS_KEY=undef
+  AM_ECR_BASE_PATH='665840871993.dkr.ecr.us-east-1.amazonaws.com'
+  AM_ENABLE_DIND='0'
+  AM_FORCE_TEST_FAIL=''
+  AM_HOST_NAME='Zeyus-MacBook-Air.local'
+  AM_HOST_OS_NAME='Darwin'
+  AM_HOST_USER_NAME='leosmacbook'
+  AM_HOST_VERSION='22.6.0'
+  AM_REPO_CONFIG_CHECK='True'
+  AM_REPO_CONFIG_PATH='/app/repo_config.py'
+  AM_TELEGRAM_TOKEN=empty
+  CI=''
+  CK_AWS_ACCESS_KEY_ID=empty
+  CK_AWS_DEFAULT_REGION=''
+  CK_AWS_S3_BUCKET='cryptokaizen-data'
+  CK_AWS_SECRET_ACCESS_KEY=empty
+  CK_ECR_BASE_PATH='sorrentum'
+  GH_ACTION_ACCESS_TOKEN=empty
+
+Check for merge conflicts................................................Passed
+Trim Trailing Whitespace.................................................Passed
+Fix End of Files.........................................................Passed
+Check for added large files..............................................Passed
+CRLF end-lines remover...................................................Passed
+Tabs remover.............................................................Passed
+autoflake................................................................Passed
+add_python_init_files....................................................Passed
+amp_lint_md..........................................(no files to check)Skipped
+amp_doc_formatter........................................................Passed
+amp_isort................................................................Passed
+amp_class_method_order...................................................Failed
+- hook id: amp_class_method_order
+- files were modified by this hook
+
+[0m[36mINFO[0m: > cmd='/app/linters/amp_class_method_order.py dataflow/model/test/test_model_plotter.py'
+report_memory_usage=False report_cpu_usage=False
+
+amp_normalize_import.....................................................Passed
+amp_format_separating_line...............................................Passed
+amp_black................................................................Failed
+- hook id: amp_black
+- files were modified by this hook
+
+[0m[36mINFO[0m: > cmd='/app/linters/amp_black.py dataflow/model/test/test_model_plotter.py'
+report_memory_usage=False report_cpu_usage=False
+
+amp_processjupytext......................................................Passed
+amp_check_filename.......................................................Passed
+amp_warn_incorrectly_formatted_todo......................................Passed
+amp_flake8...............................................................Passed
+amp_pylint...............................................................Failed
+- hook id: amp_pylint
+- exit code: 4
+
+[0m[36mINFO[0m: > cmd='/app/linters/amp_pylint.py dataflow/model/test/test_model_plotter.py'
+report_memory_usage=False report_cpu_usage=False
+************* Module dataflow.model.test.test_model_plotter
+dataflow/model/test/test_model_plotter.py:53: [C0209(consider-using-f-string), TestModelPlotter1.test_model_selection1] Formatting a regular string which could be a f-string
+dataflow/model/test/test_model_plotter.py:56: [C0209(consider-using-f-string), TestModelPlotter1.test_model_selection1] Formatting a regular string which could be a f-string
+dataflow/model/test/test_model_plotter.py:57: [C0209(consider-using-f-string), TestModelPlotter1.test_model_selection1] Formatting a regular string which could be a f-string
+
+amp_mypy.................................................................Passed
+1
