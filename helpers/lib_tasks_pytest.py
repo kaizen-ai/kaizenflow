@@ -145,8 +145,8 @@ def _build_run_command_line(
     # Detect if we are running on a laptop.
     skip_ck_infra_tests = not hserver.is_dev_ck()
     if skip_ck_infra_tests:
-        _LOG.warning("Skipping CK infra related tasks")
-        skipped_tests += " and not requires_ck_infra"
+        _LOG.warning("running only CK_infra-related tasks to find cause of err")
+        skipped_tests += " and requires_ck_infra"
         timeout_in_sec *= 10
     if custom_marker != "":
         pytest_opts_tmp.append(f'-m "{custom_marker} and {skipped_tests}"')
