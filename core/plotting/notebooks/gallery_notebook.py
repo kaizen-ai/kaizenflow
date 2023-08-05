@@ -55,8 +55,14 @@ hprint.config_notebook()
 # # Build config
 
 # %%
-config_dict = {"figsize": (20, 10)}
-config = cconfig.Config.from_dict(config_dict)
+config = cconfig.get_config_from_env()
+if config:
+    _LOG.info("Using config from env vars")
+else:
+    _LOG.info("Using hardwired config")
+    config_dict = {"figsize": (20, 10)}
+    config = cconfig.Config.from_dict(config_dict)
+print(config)
 
 # %% [markdown]
 # # Plots
@@ -68,23 +74,23 @@ config = cconfig.Config.from_dict(config_dict)
 # Set inputs.
 srs = cptetepl.Test_plots.get_plot_histograms_and_lagged_scatterplot1()
 lag = 7
+# %%
 # TODO(Dan): Remove after integration with `cmamp`. Changes from Cm #4722 are not in `sorrentum` yet.
-figsize = (20, 20)
 cpvistte.plot_histograms_and_lagged_scatterplot(
     srs, lag, figsize=config["figsize"]
 )
+
 # %% [markdown]
 # ## `plot_timeseries_distribution()`
 # %%
 # Set inputs for hour interval.
-cptetepl.Test_plots.setUpClass()
 srs = cptetepl.Test_plots.get_plot_timeseries_distribution1()
+
+# %%
 datetime_types = ["hour"]
 cplmiplo.plot_timeseries_distribution(srs, datetime_types)
 
 # %%
-# Set input for hour and month interval.
-srs = cptetepl.Test_plots.get_plot_timeseries_distribution1()
 datetime_types = ["hour", "month"]
 cplmiplo.plot_timeseries_distribution(srs, datetime_types)
 
@@ -109,24 +115,26 @@ cplmiplo.plot_time_series_by_period(test_series, period)
 # %%
 mode = "clustermap"
 corr_df = cptetepl.Test_plots.get_plot_heatmap1()
+
+# %%
 cplocorr.plot_heatmap(corr_df, mode, figsize=config["figsize"])
 
 # %% [markdown]
 # ## `plot_rets_signal_analysis()`
 
 # %%
-# Set inputs.
 evaluator, eval_config = cdmttme.get_example_model_evaluator()
-# Build the ModelPlotter.
 plotter = dtfmomoplo.ModelPlotter(evaluator)
 keys = None
+
+
+# %%
 plotter.plot_performance(
     keys=keys,
     resample_rule=eval_config["resample_rule"],
     mode=eval_config["mode"],
     target_volatility=eval_config["target_volatility"],
 )
-
 
 # %% [markdown]
 # ## `plot_effective_correlation_rank()`
