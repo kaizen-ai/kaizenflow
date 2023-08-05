@@ -43,19 +43,11 @@ class Test_build_run_command_line1(hunitest.TestCase):
             tee_to_file,
             n_threads,
         )
-        skip_ck_infra_tests = not hserver.is_dev_ck()
-        if skip_ck_infra_tests: 
-            exp = (
-                'pytest -m "not slow and not superslow and requires_ck_infra" . '
-                "-o timeout_func_only=true --timeout 50 --reruns 2 "
-                '--only-rerun "Failed: Timeout" -n 1'
-            )
-        else: 
-            exp = (
-                'pytest -m "not slow and not superslow" . '
-                "-o timeout_func_only=true --timeout 5 --reruns 2 "
-                '--only-rerun "Failed: Timeout" -n 1'
-            )
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1'
+        )
         self.assert_equal(act, exp)
 
     @pytest.mark.requires_ck_infra
@@ -82,23 +74,13 @@ class Test_build_run_command_line1(hunitest.TestCase):
             n_threads,
         )
 
-        skip_ck_infra_tests = not hserver.is_dev_ck()
-        if skip_ck_infra_tests: 
-            exp = (
-                r'pytest -m "not slow and not superslow and requires_ck_infra" . '
-                r"-o timeout_func_only=true --timeout 50 --reruns 2 "
-                r'--only-rerun "Failed: Timeout" --cov=.'
-                r" --cov-branch --cov-report term-missing --cov-report html "
-                r"--collect-only -n 1"
-            )
-        else:
-            exp = (
-                r'pytest -m "not slow and not superslow" . '
-                r"-o timeout_func_only=true --timeout 5 --reruns 2 "
-                r'--only-rerun "Failed: Timeout" --cov=.'
-                r" --cov-branch --cov-report term-missing --cov-report html "
-                r"--collect-only -n 1"
-            )
+        exp = (
+            r'pytest -m "not slow and not superslow" . '
+            r"-o timeout_func_only=true --timeout 5 --reruns 2 "
+            r'--only-rerun "Failed: Timeout" --cov=.'
+            r" --cov-branch --cov-report term-missing --cov-report html "
+            r"--collect-only -n 1"
+        )
         self.assert_equal(act, exp)
 
     @pytest.mark.skip(reason="Fix support for pytest_mark")
@@ -181,21 +163,12 @@ class Test_build_run_command_line1(hunitest.TestCase):
             tee_to_file,
             n_threads,
         )
-        skip_ck_infra_tests = not hserver.is_dev_ck()
-        if skip_ck_infra_tests: 
-            exp = (
-                'pytest -m "not slow and not superslow and requires_ck_infra" . '
-                "-o timeout_func_only=true --timeout 50 --reruns 2 "
-                '--only-rerun "Failed: Timeout" -n 1 2>&1'
-                " | tee tmp.pytest.fast_tests.log"
-            )
-        else:
-            exp = (
-                'pytest -m "not slow and not superslow" . '
-                "-o timeout_func_only=true --timeout 5 --reruns 2 "
-                '--only-rerun "Failed: Timeout" -n 1 2>&1'
-                " | tee tmp.pytest.fast_tests.log"
-            )
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1 2>&1'
+            " | tee tmp.pytest.fast_tests.log"
+        )
         self.assert_equal(act, exp)
 
     @pytest.mark.requires_ck_infra
@@ -221,19 +194,11 @@ class Test_build_run_command_line1(hunitest.TestCase):
             tee_to_file,
             n_threads,
         )
-        skip_ck_infra_tests = not hserver.is_dev_ck()
-        if skip_ck_infra_tests: 
-            exp = (
-                'pytest -m "optimizer and not slow and not superslow and requires_ck_infra" . '
-                "-o timeout_func_only=true --timeout 50 --reruns 2 "
-                '--only-rerun "Failed: Timeout" -n 1'
-            )
-        else: 
-            exp = (
-                'pytest -m "optimizer and not slow and not superslow" . '
-                "-o timeout_func_only=true --timeout 5 --reruns 2 "
-                '--only-rerun "Failed: Timeout" -n 1'
-            )
+        exp = (
+            'pytest -m "optimizer and not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1'
+        )
         self.assert_equal(act, exp)
 
     @pytest.mark.requires_ck_infra
@@ -259,19 +224,11 @@ class Test_build_run_command_line1(hunitest.TestCase):
             tee_to_file,
             n_threads,
         )
-        skip_ck_infra_tests = not hserver.is_dev_ck()
-        if skip_ck_infra_tests: 
-            exp = (
-            'pytest -m "not slow and not superslow and requires_ck_infra" . '
-            "-o timeout_func_only=true --timeout 50 --reruns 2 "
-            '--only-rerun "Failed: Timeout" -n auto'
-            )
-        else:
-            exp = (
+        exp = (
             'pytest -m "not slow and not superslow" . '
             "-o timeout_func_only=true --timeout 5 --reruns 2 "
             '--only-rerun "Failed: Timeout" -n auto'
-            )
+        )
         self.assert_equal(act, exp)
 
 

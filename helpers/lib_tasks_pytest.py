@@ -143,10 +143,10 @@ def _build_run_command_line(
     skipped_tests = _select_tests_to_skip(test_list_name)
     timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[test_list_name]
     # Detect if we are running on a laptop.
-    skip_ck_infra_tests = not hserver.is_dev_ck()
-    if skip_ck_infra_tests:
-        _LOG.warning("running only CK_infra-related tasks to find cause of err")
-        skipped_tests += " and requires_ck_infra"
+    outside_ck = not hserver.is_dev_ck()
+    if outside_ck:
+        # Since we are running outside the CK server we increase the duration
+        # of the timeout, since the thresholds are set for the CK server.
         timeout_in_sec *= 10
     if custom_marker != "":
         pytest_opts_tmp.append(f'-m "{custom_marker} and {skipped_tests}"')

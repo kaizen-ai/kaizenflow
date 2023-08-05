@@ -40,6 +40,19 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
     # Add custom options.
     def pytest_addoption(parser: Any) -> None:
         parser.addoption(
+            "--run_only_ck_infra_tests",
+            action="store_true",
+            default=False,
+            help="Running only CK infra related tasks",
+        )
+        #keep both switch to display different warning msgs.
+        parser.addoption(
+            "--skip_ck_infra_tests",
+            action="store_true",
+            default=False,
+            help="Skipping CK infra related tasks",
+        )
+        parser.addoption(
             "--update_outcomes",
             action="store_true",
             default=False,
@@ -73,6 +86,9 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
             help="Stage of the image to test against",
         )
 
+    def _update_marker_expr(marker_expr: str, added_marker: str) -> str:
+        return f"{marker_expr} and {added_marker}" if marker_expr else added_marker
+
     def pytest_collection_modifyitems(config: Any, items: Any) -> None:
         _ = items
         import helpers.henv as henv
@@ -82,6 +98,14 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
             print(henv.get_system_signature()[0])
         except:
             print(f"\n{_WARNING}: Can't print system_signature")
+        if config.getoption("--run_only_ck_infra_tests"):
+            print(f"\n{_WARNING}: Running only CK infra related tasks")
+            marker_expr = config.option.markexpr
+            config.option.markexpr = _update_marker_expr(marker_expr, "requires_ck_infra")
+        if config.getoption("--skip_ck_infra_tests"):
+            print(f"\n{_WARNING}: Skipping CK infra related tasks")
+            marker_expr = config.option.markexpr
+            config.option.markexpr = _update_marker_expr(marker_expr, "not requires_ck_infra")
         if config.getoption("--update_outcomes"):
             print(f"\n{_WARNING}: Updating test outcomes")
             hut.set_update_tests(True)
