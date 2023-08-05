@@ -374,7 +374,7 @@ def run_fast_tests(  # type: ignore
     git_clean_=False,
 ):
     """
-    Run fast tests.
+    Run fast tests. check `gh auth status` before invoking to avoid auth errors.
 
     :param stage: select a specific stage for the Docker image
     :param pytest_opts: additional options for `pytest` invocation. It can be empty
