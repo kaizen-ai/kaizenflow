@@ -32,12 +32,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import core.config as cconfig
+
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
+
 import dataflow.model.model_plotter as dtfmomoplo
 import dataflow.model.test.test_model_evaluator as cdmttme
+
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
@@ -135,6 +138,23 @@ plotter.plot_performance(
     mode=eval_config["mode"],
     target_volatility=eval_config["target_volatility"],
 )
+
+# %% [markdown]
+# ## `plot_rets_signal_analysis()`
+
+# %%
+# Set inputs.
+evaluator, eval_config = cdmttme.get_example_model_evaluator()
+# Build the ModelPlotter.
+plotter = dtfmomoplo.ModelPlotter(evaluator)
+keys = None
+plotter.plot_performance(
+    keys=keys,
+    resample_rule=eval_config["resample_rule"],
+    mode=eval_config["mode"],
+    target_volatility=eval_config["target_volatility"],
+)
+
 
 # %% [markdown]
 # ## `plot_effective_correlation_rank()`

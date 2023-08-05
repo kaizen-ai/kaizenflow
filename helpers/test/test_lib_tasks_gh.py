@@ -44,6 +44,7 @@ class TestLibTasks1(hunitest.TestCase):
         )
         self.assert_equal(str(act), str(exp))
 
+    @pytest.mark.require_ck_infra
     def test_get_gh_issue_title4(self) -> None:
         httestlib._gh_login()
         issue_id = 1

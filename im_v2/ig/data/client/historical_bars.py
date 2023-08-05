@@ -12,6 +12,7 @@ import datetime
 import functools
 import logging
 import os
+import pytest
 import tempfile
 from typing import List, Optional
 
@@ -267,6 +268,8 @@ def get_raw_bar_data_from_file(
 
 
 # TODO(gp): Change the order of the params (asset_ids, date, columns) everywhere.
+@pytest.mark.requires_aws 
+@pytest.mark.requires_ck_infra
 def get_raw_bar_data_for_date(
     date: datetime.date,
     root_data_dir: str,

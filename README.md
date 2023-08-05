@@ -113,6 +113,8 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Design Philosophy](docs/Design_Philosophy.md)
 
+- [Codebase Clean-up](docs/Codebase_clean_up_scripts.md)
+
 # Technologies used
 
 - [UMD DATA605 Big Data Systems](https://github.com/gpsaggese/umd_data605)
@@ -137,6 +139,8 @@ This contains a set of resources that over time will make 10x more productive
 - [Visual Studio Code](/docs/Visual_Studio_Code.md)
 
 - [Telegram](/docs/Telegram.md)
+
+- [Email](/docs/Email.md)
 
 # DeFi: start developing
 
