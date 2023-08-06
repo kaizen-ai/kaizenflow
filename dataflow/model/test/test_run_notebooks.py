@@ -79,6 +79,8 @@ class Test_run_master_feature_analyzer(dsnrnteca.Test_Run_Notebook_TestCase):
 
     @pytest.mark.skip("Run manually.")
     @pytest.mark.skipif(
+        # TODO(ShaopengZ): in some runs, pytest ignores the mark.skip above, and
+        # still evaluates and hangs at hgit.is_in_amp_as_supermodule() anyway.
         not hgit.is_in_amp_as_supermodule(),
         reason="Run only in amp as super-module",
     )

@@ -71,16 +71,16 @@ class Test_generate_compose_file1(hunitest.TestCase):
     def test3(self) -> None:
         self.helper(stage="prod", use_main_network=True)
 
-    #TODO(ShaopengZ): hangs at is_in_amp_as_supersubmodule().
-    @pytest.mark.superslow
+    # TODO(ShaopengZ): hangs at is_in_amp_as_supersubmodule().
+    @pytest.mark.skip
     @pytest.mark.skipif(
         hgit.is_in_amp_as_submodule(), reason="Only run in amp directly"
     )
     def test4(self) -> None:
         self.helper(stage="dev")
-    
-    #TODO(ShaopengZ): hangs at is_in_amp_as_supersubmodule().
-    @pytest.mark.superslow
+
+    # TODO(ShaopengZ): hangs at is_in_amp_as_supersubmodule().
+    @pytest.mark.skip
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
     )
@@ -91,8 +91,8 @@ class Test_generate_compose_file1(hunitest.TestCase):
 # #############################################################################
 
 
-#TODO(ShaopengZ): hangs at is_in_amp_as_supersubmodule().
-@pytest.mark.superslow
+# TODO(ShaopengZ): hangs at is_in_amp_as_supersubmodule().
+@pytest.mark.skip
 class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
     """
     Test `_get_docker_compose_cmd()`.
@@ -212,6 +212,7 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
             bash
         """
         self.check(act, exp)
+
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_supermodule(),
         reason="Only run in amp as supermodule",
@@ -365,7 +366,7 @@ class Test_dassert_is_base_image_name_valid1(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        Check that invalid base images do not pass the assertion. 
+        Check that invalid base images do not pass the assertion.
         """
         invalid_base_images = [
             # Missing required parts.

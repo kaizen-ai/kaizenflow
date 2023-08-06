@@ -142,7 +142,7 @@ def _build_run_command_line(
     # and on the custom marker, if present.
     skipped_tests = _select_tests_to_skip(test_list_name)
     timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[test_list_name]
-    # Detect if we are running on a laptop.
+    # Detect if we are running on a CK dev server or a laptop outside the CK infra.
     is_outside_ck_infra = not hserver.is_dev_ck()
     if is_outside_ck_infra:
         # Since we are running outside the CK server we increase the duration
@@ -364,21 +364,22 @@ def run_tests(  # type: ignore
 def run_fast_tests(  # type: ignore
     ctx,
     stage="dev",
-    require_ck="",
     version="",
-    pytest_opts="", 
+    pytest_opts="",
     skip_submodules=False,
     coverage=False,
     collect_only=False,
     tee_to_file=False,
     n_threads="serial",
     git_clean_=False,
+    only_requires_ck_infra_tests=False,
+    skip_requires_ck_infra_tests=False,
 ):
     """
-    Run fast tests. check `gh auth status` before invoking to avoid auth errors.
+    Run fast tests. check `gh auth status` before invoking to avoid auth
+    errors.
 
     :param stage: select a specific stage for the Docker image
-    :param require_ck: select whether to run tests that requires_ck_infra. 
     :param pytest_opts: additional options for `pytest` invocation. It can be empty
     :param skip_submodules: ignore all the dir inside a submodule
     :param coverage: enable coverage computation
@@ -387,18 +388,23 @@ def run_fast_tests(  # type: ignore
     :param n_threads: the number of threads to run the tests with
         - "auto": distribute the tests across all the available CPUs
     :param git_clean_: run `invoke git_clean --fix-perms` before running the tests
+    :param only_requires_ck_infra_tests: select ONLY ck infra related tests.
+    :param skip_requires_ck_infra_tests: skip ck infra related tests.
     :param kwargs: kwargs for `ctx.run`
     """
     hlitauti.report_task()
     test_list_name = "fast_tests"
-    if require_ck == "Yes":
+    hdbg.dassert(
+        not (skip_requires_ck_infra_tests and only_requires_ck_infra_tests),
+        msg="You can't use at the same time --skip_requires_ck_infra_tests and --only_requires_ck_infra_tests",
+    )
+    custom_marker = ""
+    if only_requires_ck_infra_tests:
         _LOG.warning("Running ck infra related tests ONLY")
         custom_marker = "requires_ck_infra"
-    elif require_ck == "No":
+    if skip_requires_ck_infra_tests:
         _LOG.warning("Skipping ck infra related tests")
         custom_marker = "not requires_ck_infra"
-    else:
-        custom_marker = ""
     rc = _run_tests(
         ctx,
         test_list_name,

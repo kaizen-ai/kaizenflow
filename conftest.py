@@ -73,7 +73,6 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
             help="Stage of the image to test against",
         )
 
-
     def pytest_collection_modifyitems(config: Any, items: Any) -> None:
         _ = items
         import helpers.henv as henv
