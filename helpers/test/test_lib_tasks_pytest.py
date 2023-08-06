@@ -21,6 +21,17 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_build_run_command_line1(hunitest.TestCase):
+    
+    def _compute_timeout_depending_on_ck_infra(self) -> int:
+        """
+        Generate exp string depending on ck_infra status.
+        """
+        is_outside_ck_infra = not hserver.is_dev_ck()
+        timeout_in_sec = 50 if is_outside_ck_infra else 5
+        return timeout_in_sec
+    
+
+    @pytest.mark.requires_ck_infra
     def test_run_fast_tests1(self) -> None:
         """
         Basic run fast tests.
@@ -48,6 +59,8 @@ class Test_build_run_command_line1(hunitest.TestCase):
             "-o timeout_func_only=true --timeout 5 --reruns 2 "
             '--only-rerun "Failed: Timeout" -n 1'
         )
+        timeout_in_sec = self._compute_timeout_depending_on_ck_infra()
+        exp = exp.replace("--timeout 5", f"--timeout {timeout_in_sec}")
         self.assert_equal(act, exp)
 
     @pytest.mark.requires_ck_infra
@@ -81,6 +94,8 @@ class Test_build_run_command_line1(hunitest.TestCase):
             r" --cov-branch --cov-report term-missing --cov-report html "
             r"--collect-only -n 1"
         )
+        timeout_in_sec = self._compute_timeout_depending_on_ck_infra()
+        exp = exp.replace("--timeout 5", f"--timeout {timeout_in_sec}")
         self.assert_equal(act, exp)
 
     @pytest.mark.skip(reason="Fix support for pytest_mark")
@@ -169,6 +184,8 @@ class Test_build_run_command_line1(hunitest.TestCase):
             '--only-rerun "Failed: Timeout" -n 1 2>&1'
             " | tee tmp.pytest.fast_tests.log"
         )
+        timeout_in_sec = self._compute_timeout_depending_on_ck_infra()
+        exp = exp.replace("--timeout 5", f"--timeout {timeout_in_sec}")
         self.assert_equal(act, exp)
 
     @pytest.mark.requires_ck_infra
@@ -199,6 +216,8 @@ class Test_build_run_command_line1(hunitest.TestCase):
             "-o timeout_func_only=true --timeout 5 --reruns 2 "
             '--only-rerun "Failed: Timeout" -n 1'
         )
+        timeout_in_sec = self._compute_timeout_depending_on_ck_infra()
+        exp = exp.replace("--timeout 5", f"--timeout {timeout_in_sec}")
         self.assert_equal(act, exp)
 
     @pytest.mark.requires_ck_infra
@@ -229,6 +248,8 @@ class Test_build_run_command_line1(hunitest.TestCase):
             "-o timeout_func_only=true --timeout 5 --reruns 2 "
             '--only-rerun "Failed: Timeout" -n auto'
         )
+        timeout_in_sec = self._compute_timeout_depending_on_ck_infra()
+        exp = exp.replace("--timeout 5", f"--timeout {timeout_in_sec}")
         self.assert_equal(act, exp)
 
 

@@ -143,8 +143,8 @@ def _build_run_command_line(
     skipped_tests = _select_tests_to_skip(test_list_name)
     timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[test_list_name]
     # Detect if we are running on a laptop.
-    outside_ck = not hserver.is_dev_ck()
-    if outside_ck:
+    is_outside_ck_infra = not hserver.is_dev_ck()
+    if is_outside_ck_infra:
         # Since we are running outside the CK server we increase the duration
         # of the timeout, since the thresholds are set for the CK server.
         timeout_in_sec *= 10
@@ -364,6 +364,7 @@ def run_tests(  # type: ignore
 def run_fast_tests(  # type: ignore
     ctx,
     stage="dev",
+    require_ck="",
     version="",
     pytest_opts="", 
     skip_submodules=False,
@@ -377,6 +378,7 @@ def run_fast_tests(  # type: ignore
     Run fast tests. check `gh auth status` before invoking to avoid auth errors.
 
     :param stage: select a specific stage for the Docker image
+    :param require_ck: select whether to run tests that requires_ck_infra. 
     :param pytest_opts: additional options for `pytest` invocation. It can be empty
     :param skip_submodules: ignore all the dir inside a submodule
     :param coverage: enable coverage computation
@@ -389,7 +391,14 @@ def run_fast_tests(  # type: ignore
     """
     hlitauti.report_task()
     test_list_name = "fast_tests"
-    custom_marker = ""
+    if require_ck == "Yes":
+        _LOG.warning("Running ck infra related tests ONLY")
+        custom_marker = "requires_ck_infra"
+    elif require_ck == "No":
+        _LOG.warning("Skipping ck infra related tests")
+        custom_marker = "not requires_ck_infra"
+    else:
+        custom_marker = ""
     rc = _run_tests(
         ctx,
         test_list_name,
