@@ -32,15 +32,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import core.config as cconfig
-
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
-
 import dataflow.model.model_plotter as dtfmomoplo
 import dataflow.model.test.test_model_evaluator as cdmttme
-
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
