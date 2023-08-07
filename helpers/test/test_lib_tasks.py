@@ -243,12 +243,15 @@ class TestDryRunTasks1(hunitest.TestCase):
 
 # #############################################################################
 
-
+# TODO(Shaopengz): The test hangs in hgit.is_in_amp_as_supermodule().
+@pytest.mark.skip
 @pytest.mark.slow(reason="Around 7s")
-@pytest.mark.skipif(
-    not hgit.is_in_amp_as_supermodule(),
-    reason="Run only in amp as super-module",
-)
+# TODO(Shaopengz): In some run, test ignores my mark.skip above, goes in
+# the mark.skipif block anyway, and hangs at the hgit.is_in_amp_as_supermodule().
+# @pytest.mark.skipif(
+#    not hgit.is_in_amp_as_supermodule(),
+#    reason="Run only in amp as super-module",
+# )
 class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     """
     - Call the invoke task directly from Python
@@ -351,6 +354,8 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "gh_issue_title(ctx, 1)"
         self._check_output(target)
 
+    # TODO(Shaopengz): hangs at hgit.is_amp()
+    @pytest.mark.skip
     @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
     def test_gh_workflow_list(self) -> None:
         _gh_login()
