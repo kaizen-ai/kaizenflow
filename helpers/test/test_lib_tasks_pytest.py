@@ -22,19 +22,9 @@ _LOG = logging.getLogger(__name__)
 
 class Test_build_run_command_line1(hunitest.TestCase):
     
-    def _compute_timeout_depending_on_ck_infra(self) -> int:
-        """
-        Generate exp string depending on ck_infra status.
-        """
-        is_outside_ck_infra = not hserver.is_dev_ck()
-        timeout_in_sec = 50 if is_outside_ck_infra else 5
-        return timeout_in_sec
-    
-
-    @pytest.mark.requires_ck_infra
     def test_run_fast_tests1(self) -> None:
         """
-        Basic run fast tests.
+        Basic run fast tests for is_dev_ck()=False.
         """
         custom_marker = ""
         pytest_opts = ""
@@ -44,26 +34,31 @@ class Test_build_run_command_line1(hunitest.TestCase):
         tee_to_file = False
         n_threads = "1"
         #
-        act = hlitapyt._build_run_command_line(
-            "fast_tests",
-            custom_marker,
-            pytest_opts,
-            skip_submodules,
-            coverage,
-            collect_only,
-            tee_to_file,
-            n_threads,
-        )
-        exp = (
-            'pytest -m "not slow and not superslow" . '
-            "-o timeout_func_only=true --timeout 5 --reruns 2 "
-            '--only-rerun "Failed: Timeout" -n 1'
-        )
-        timeout_in_sec = self._compute_timeout_depending_on_ck_infra()
-        exp = exp.replace("--timeout 5", f"--timeout {timeout_in_sec}")
-        self.assert_equal(act, exp)
+        with umock.patch.object(hserver, "is_dev_ck", True):
+            act = hlitapyt._build_run_command_line(
+                "fast_tests",
+                custom_marker,
+                pytest_opts,
+                skip_submodules,
+                coverage,
+                collect_only,
+                tee_to_file,
+                n_threads,
+            )
+            exp = (
+                'pytest -m "not slow and not superslow" . '
+                "-o timeout_func_only=true --timeout 50 --reruns 2 "
+                '--only-rerun "Failed: Timeout" -n 1'
+            )
+            #timeout_in_sec = self._compute_timeout_depending_on_ck_infra()
+            #exp = exp.replace("--timeout 5", f"--timeout {timeout_in_sec}")
+            self.assert_equal(act, exp)
 
-    @pytest.mark.requires_ck_infra
+    def test_run_fast_tests2(self) -> None:
+        """
+        Basic run fast tests for is_dev_ck()=True.
+        """
+
     def test_run_fast_tests2(self) -> None:
         """
         Coverage and collect-only.
@@ -154,7 +149,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         )
         self.assert_equal(act, exp)
 
-    @pytest.mark.requires_ck_infra
+    #@pytest.mark.requires_ck_infra
     def test_run_fast_tests5(self) -> None:
         """
         Basic run fast tests tee-ing to a file.
