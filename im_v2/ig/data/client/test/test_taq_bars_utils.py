@@ -30,6 +30,9 @@ _IG_START_DATE = "2019-01-07"
 
 
 class TestTaqBarsUtils1(hunitest.TestCase):
+    
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test_get_available_dates1(self) -> None:
         dates = imvidchiba.get_available_dates(_ROOT_DATA_DIR, _AWS_PROFILE)
         _LOG.debug("len(dates)=%s", len(dates))
@@ -39,6 +42,8 @@ class TestTaqBarsUtils1(hunitest.TestCase):
         self.assertEqual(sorted(dates), dates)
         self.assertEqual(str(dates[0]), _IG_START_DATE)
 
+    @pytest.mark.requires_aws
+    @pytest.mark.requires_ck_infra
     def test_filter_dates1(self) -> None:
         start_date = "2019-01-07"
         end_date = "2019-01-08"
@@ -50,6 +55,8 @@ class TestTaqBarsUtils1(hunitest.TestCase):
         self.assertEqual(str(max(filtered_dates)), end_date)
         self.assertEqual(len(filtered_dates), 2)
 
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test_filter_dates2(self) -> None:
         """
         Filter with [None, 2019-01-08].
@@ -64,6 +71,8 @@ class TestTaqBarsUtils1(hunitest.TestCase):
         self.assertEqual(str(max(filtered_dates)), end_date)
         self.assertEqual(len(filtered_dates), 1)
 
+    @pytest.mark.requires_aws
+    @pytest.mark.requires_ck_infra
     def test_filter_dates3(self) -> None:
         """
         Filter with [_IG_START_DATE, None].
@@ -77,7 +86,9 @@ class TestTaqBarsUtils1(hunitest.TestCase):
         self.assertEqual(str(min(filtered_dates)), _IG_START_DATE)
         self.assertGreater(str(max(filtered_dates)), "2019-01-07")
         self.assertGreater(len(filtered_dates), 1)
-
+    
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test_filter_dates4(self) -> None:
         """
         Check that filtering with [None, None] corresponds to no filtering.
@@ -126,7 +137,9 @@ class TestGetBarData1(hunitest.TestCase):
         act_result = "\n".join(act)
         self.check_string(act_result, fuzzy_match=True)
         return df
-
+    
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test1(self) -> None:
         """
         Get data for one day and multiple assets.
@@ -158,6 +171,8 @@ class TestGetBarData1(hunitest.TestCase):
             num_concurrent_requests,
         )
 
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test2(self) -> None:
         """
         Get multiple days and check the format.
@@ -191,6 +206,8 @@ class TestGetBarData1(hunitest.TestCase):
 
 
 class Test_get_cached_bar_data_for_date_interval1(hunitest.TestCase):
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test_tsla1(self) -> None:
         """
         Get the data the day before TSLA IPO: there should be no data.
