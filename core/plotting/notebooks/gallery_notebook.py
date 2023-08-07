@@ -185,3 +185,5 @@ cplmiplo.plot_spectrum(test_df)
 _, axes = plt.subplots(2, 2, figsize=config["figsize"])
 axes_flat = axes.flatten()
 cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
+
+# %%
