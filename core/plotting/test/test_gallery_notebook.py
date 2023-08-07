@@ -16,10 +16,11 @@ def build_config_list() -> cconfig.ConfigList:
     """
     # We want to execute the notebook as it is, but config is needed
     # so we pass an empty one.
-    config = {"figsize": (20, 10)}
-    config = cconfig.Config()
-    cconfig.ConfigList([config])
-    return config
+    config = {#"figsize": (20, 10)
+    }
+    #config = cconfig.Config.from_dict(config)
+    config_list = cconfig.ConfigList([config])
+    return config_list
 
 
 @pytest.mark.superslow("~40 sec.")
