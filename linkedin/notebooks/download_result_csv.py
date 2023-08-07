@@ -13,11 +13,19 @@
 # ---
 
 # %%
-import linkedin.phantom_api.phantombuster_api as ph
+import logging
+import helpers.hdbg as hdbg
+import linkedin.phantom_api.phantombuster_api as lpphapia
+
+# %%
+_LOG = logging.getLogger(__name__)
+hdbg.init_logger(use_exec_path=True)
+
+# %%
+phantom = lpphapia.Phantom()
 
 # %%
 # Get all phantoms and their phantom id.
-phantom = ph.Phantom()
 phantom.get_all_phantoms()
 
 # %%
