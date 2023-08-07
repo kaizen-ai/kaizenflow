@@ -135,7 +135,7 @@ axes_flat = axes.flatten()
 cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
 
 # %% [markdown]
-# ## plot_projection()
+# ## `plot_projection()`
 
 # %%
 # Calling plot_projection to test that it's basic functionality works.
