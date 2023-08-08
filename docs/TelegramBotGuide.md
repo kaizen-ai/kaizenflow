@@ -24,10 +24,9 @@
 
 # Set Up Environment:
 
-  - Store the bot's API token in an environment variable. You can do this in a
-    separate `.env` file.
-    ```python
-    TELEGRAM_BOT_TOKEN=YOUR_BOT_TOKEN
+  - Store the bot's API token in an environment variable.
+    ```bash
+    export TELEGRAM_BOT_TOKEN==YOUR_BOT_TOKEN
     ```
   - Install the required libraries:
     ```bash

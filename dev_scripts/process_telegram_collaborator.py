@@ -11,7 +11,7 @@ import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 
 load_dotenv()
-bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
 _LOG = logging.getLogger(__name__)
 _TELEGRAM_API = "https://api.telegram.org/bot"
 
