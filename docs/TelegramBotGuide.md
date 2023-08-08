@@ -26,7 +26,7 @@
 
   - Store the bot's API token in an environment variable.
     ```bash
-    export TELEGRAM_BOT_TOKEN==YOUR_BOT_TOKEN
+    export TELEGRAM_BOT_TOKEN=YOUR_BOT_TOKEN
     ```
   - Install the required libraries:
     ```bash

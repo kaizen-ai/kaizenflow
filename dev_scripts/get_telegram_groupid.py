@@ -18,21 +18,22 @@ import os
 import requests
 
 bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
-_TELEGRAM_API = "https://api.telegram.org/bot"
 
 def _get_group_info() -> None:
-    response = requests.get(f"{_TELEGRAM_API}{bot_token}/getUpdates")
-    data = response.json()
-    group_messages = {}
-    for update in data["result"]:
-        if "message" in update and "chat" in update["message"]:
-            chat_id = update["message"]["chat"]["id"]
-            message = update["message"]
-            # Get the last message.
-            if "text" in message:
-                group_messages[chat_id] = message["text"]
-    for group_id, last_message in group_messages.items():
-        print(f"Group ID: {group_id}, Last Message: {last_message}")
+    response = requests.get(f"https://api.telegram.org/bot{bot_token}/getUpdates", timeout=10,)
+    status_code = response.status_code
+    if status_code == 200: 
+        data = response.json()
+        group_messages = {}
+        for update in data["result"]:
+            if "message" in update and "chat" in update["message"]:
+                chat_id = update["message"]["chat"]["id"]
+                message = update["message"]
+                # Get the last message.
+                if "text" in message:
+                    group_messages[chat_id] = message["text"]
+        for group_id, last_message in group_messages.items():
+            print(f"Group ID: {group_id}, Last Message: {last_message}")
 
 
 def _main() -> None:
