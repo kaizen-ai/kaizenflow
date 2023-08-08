@@ -8,7 +8,6 @@ import telegram
 from dotenv import load_dotenv
 
 import helpers.hdbg as hdbg
-import helpers.hparser as hparser
 
 load_dotenv()
 bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -25,21 +24,22 @@ def _get_invite_link(group_id):
     )
     status_code = response.status_code
     if status_code == 200:
-        invite_link = response .json().get("result")
+        invite_link = response.json().get("result")
+        return invite_link
     else:
         _LOG.debug(
             "Error retrieving permission level for %s. Status code: %s",
             group_id,
             status_code,
         )
-    return invite_link
-
+    return None
 
 async def _invite_collaborator(bot, user_id, group_id):
     """
     Invite a collaborator to Telegram.
     """
     link = _get_invite_link(group_id)
+    hdbg.dassert_is_not(link, None)
     message = await bot.send_message(chat_id=user_id, text=link)
     hdbg.dassert_is_not(message, None)
 
@@ -60,11 +60,7 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         help="Action to perform: add or remove",
     )
-    parser.add_argument(
-        "--username", 
-        required=True, 
-        help="Username of the user"
-    )
+    parser.add_argument("--username", required=True, help="Username of the user")
     parser.add_argument(
         "--groupid",
         type=str,
