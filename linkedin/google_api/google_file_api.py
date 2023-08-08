@@ -33,7 +33,7 @@ class GoogleFileApi:
         self,
         gfile_type: str,
         gfile_name: str,
-        gdrive_folder: dict,
+        gdrive_folder_id: str,
         user: Optional[str] = None,
     ) -> None:
         """
@@ -41,9 +41,8 @@ class GoogleFileApi:
 
         :param gfile_type: str, the type of the Google file ('sheet' or 'doc').
         :param gfile_name: str, the name of the new Google file.
-        :param gdrive_folder: dict, the id and the name of the Google Drive folder.
+        :param gdrive_folder_id: the id of the Google Drive folder.
         :param user: str, the email address of the user to share the Google file (Optional).
-        :return: None
         """
         try:
             if gfile_type == "sheet":
@@ -56,13 +55,12 @@ class GoogleFileApi:
             _LOG.info("Created a new Google %s '%s'.", gfile_type, gfile_name )
 
             # Move the Google file to a Google Drive dir.
-            if gdrive_folder:
-                self._move_gfile_to_dir(gfile_id, gdrive_folder.get("id"))
+            if gdrive_folder_id:
+                self._move_gfile_to_dir(gfile_id, gdrive_folder_id)
                 _LOG.info(
-                    "Move the new Google %s '%s' to the dir '%s'",
+                    "Move the new Google %s '%s' to the given dir",
                     gfile_type,
-                    gfile_name,
-                    gdrive_folder.get('name')
+                    gfile_name
                 )
             else:
                 _LOG.info("The new Google '%s' is created in your root dir.", gfile_type)
@@ -77,7 +75,7 @@ class GoogleFileApi:
         except HttpError as err:
             _LOG.error(err)
 
-    def create_google_drive_folder(self, folder_name: str, parent_folder_id: str) -> None:
+    def create_google_drive_folder(self, folder_name: str, parent_folder_id: str) -> str:
         """
         Create a new Google Drive folder inside the given folder.
 
@@ -97,44 +95,10 @@ class GoogleFileApi:
             )
             _LOG.info("Created a new Google Drive folder '%s'.", folder_name)
             _LOG.info("The new folder id is '%s'.", folder.get("id"))
+            return folder.get("id")
         #
         except HttpError as err:
             _LOG.error(err)
-            
-    def get_folder_id_by_name(self, name: str) -> Optional[list]:
-        folders = self._get_folders_in_gdrive()
-        folder_list = []
-        #
-        for folder in folders:
-            if folder.get("name") == name:
-                folder_list.append(folder)
-        #
-        if len(folder_list) == 1:
-            _LOG.info("Found folder: %s", folder_list[0])
-            return folder_list[0]
-        #
-        elif len(folder_list) > 1:
-            for folder in folder_list:
-                _LOG.info(
-                    "Found folder: '%s', '%s'",
-                    folder.get("name"),
-                    folder.get("id"),
-                )
-            #
-            _LOG.info(
-                "Return the first found folder. '%s' '%s' ",
-                folder_list[0].get("name"),
-                folder_list[0].get("id"),
-            )
-            _LOG.info(
-                "if you want to use another '%s' folder, please change the folder id manually.",
-                name,
-            )
-            return folder_list[0]
-        #
-        else:
-            _LOG.error("Can't find the folder '%s'.", name)
-            return
 
     # #########################################################################
 
@@ -215,6 +179,12 @@ class GoogleFileApi:
         return self._create_new_google_document(gdoc_name, "docs")
 
     def _share_google_file(self, gsheet_id: str, user: str) -> None:
+        """
+        Share a Google file to a user.
+
+        :param gsheet_id: str, the id of the Google file.
+        :param user: str, the email address of the user.
+        """
         # Create the permission.
         parameters = {"role": "reader", "type": "user", "emailAddress": user}
         new_permission = (
@@ -230,7 +200,10 @@ class GoogleFileApi:
 
     def _move_gfile_to_dir(self, gfile_id: str, folder_id: str) -> dict:
         """
-        Moves a Google file to a specified folder in Google Drive.
+        Move a Google file to a specified folder in Google Drive.
+
+        :param gfile_id: str, the id of the Google file.
+        :param folder_id: str, the id of the folder.
         """
         res = (
             self.gdrive_service.files()
@@ -244,17 +217,3 @@ class GoogleFileApi:
             .execute()
         )
         return res
-
-    def _get_folders_in_gdrive(self) -> list:
-        response = (
-            self.gdrive_service.files()
-            .list(
-                q="mimeType='application/vnd.google-apps.folder' and trashed=false",
-                spaces="drive",
-                fields="nextPageToken, files(id, name)",
-            )
-            .execute()
-        )
-        # Return list of folder id and folder name.
-        return response.get("files")
-
