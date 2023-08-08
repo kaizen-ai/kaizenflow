@@ -359,6 +359,19 @@ def run_tests(  # type: ignore
     return rc
 
 
+@task
+def run_mock_tests(ctx):
+    """
+    Only run the 10 tests in helpers/test/test_lib_tasks_pytest.py that uses mock.
+    """
+    test_path = "helpers/test/test_lib_tasks_pytest.py::Test_build_run_command_line1"
+    for num in [1, 2, 5, 6, 7]:
+        for version in ["t", "f"]:
+            ctx.run(f"pytest {test_path}::test_run_fast_tests{num}{version}")
+    return 0
+
+
+
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code CmTask #1571.
 @task
 def run_fast_tests(  # type: ignore

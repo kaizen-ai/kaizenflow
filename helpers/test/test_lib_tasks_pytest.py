@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import pytest
+import tasks
 from typing import List
 
 
@@ -12,6 +13,7 @@ import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
+import unittest.mock as umock
 import helpers.lib_tasks_pytest as hlitapyt
 import helpers.test.test_lib_tasks as httestlib
 
@@ -19,12 +21,11 @@ _LOG = logging.getLogger(__name__)
 
 # pylint: disable=protected-access
 
-
 class Test_build_run_command_line1(hunitest.TestCase):
     
-    def test_run_fast_tests1(self) -> None:
+    def test_run_fast_tests1t(self) -> None:
         """
-        Basic run fast tests for is_dev_ck()=False.
+        Basic run fast tests for is_dev_ck()=True.
         """
         custom_marker = ""
         pytest_opts = ""
@@ -34,7 +35,10 @@ class Test_build_run_command_line1(hunitest.TestCase):
         tee_to_file = False
         n_threads = "1"
         #
-        with umock.patch.object(hserver, "is_dev_ck", True):
+        with umock.patch.object(hserver, "is_dev_ck", return_value = True):
+            obj = hserver()
+            self.assert_equal(obj.is_dev_ck(), True)
+            #is_dev_ck_mock.return_value = True
             act = hlitapyt._build_run_command_line(
                 "fast_tests",
                 custom_marker,
@@ -54,7 +58,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
             #exp = exp.replace("--timeout 5", f"--timeout {timeout_in_sec}")
             self.assert_equal(act, exp)
 
-    def test_run_fast_tests2(self) -> None:
+    def test_run_fast_tests1b(self) -> None:
         """
         Basic run fast tests for is_dev_ck()=True.
         """
