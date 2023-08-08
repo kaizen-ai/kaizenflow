@@ -1,19 +1,18 @@
 import logging
 import os
 import re
-import pytest
-import tasks
+import unittest.mock as umock
 from typing import List
 
+import pytest
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
-import helpers.hserver as hserver
 import helpers.hio as hio
 import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
-import unittest.mock as umock
 import helpers.lib_tasks_pytest as hlitapyt
 import helpers.test.test_lib_tasks as httestlib
 
@@ -21,143 +20,57 @@ _LOG = logging.getLogger(__name__)
 
 # pylint: disable=protected-access
 
+
 class Test_build_run_command_line1(hunitest.TestCase):
-    
-    def test_run_fast_tests1t(self) -> None:
+    def test_run_fast_tests1_on_ck_server(self) -> None:
         """
-        Basic run fast tests for is_dev_ck()=True.
+        Mock test for running fast tests on ck server.
         """
-        custom_marker = ""
-        pytest_opts = ""
-        skip_submodules = False
-        coverage = False
-        collect_only = False
-        tee_to_file = False
-        n_threads = "1"
-        #
-        with umock.patch.object(hserver, "is_dev_ck", return_value = True):
-            act = hlitapyt._build_run_command_line(
-                "fast_tests",
-                custom_marker,
-                pytest_opts,
-                skip_submodules,
-                coverage,
-                collect_only,
-                tee_to_file,
-                n_threads,
-            )
-            exp = (
-                'pytest -m "not slow and not superslow" . '
-                "-o timeout_func_only=true --timeout 5 --reruns 2 "
-                '--only-rerun "Failed: Timeout" -n 1'
-            )
-            #timeout_in_sec = self._compute_timeout_depending_on_ck_infra()
-            #exp = exp.replace("--timeout 5", f"--timeout {timeout_in_sec}")
-            self.assert_equal(act, exp)
-    
-    # TODO(Shaopeng): factor out the common parts of the mocked tests if time allows.
-    def test_run_fast_tests1f(self) -> None:
-        """
-        Basic run fast tests for is_dev_ck()=False.
-        """
-        custom_marker = ""
-        pytest_opts = ""
-        skip_submodules = False
-        coverage = False
-        collect_only = False
-        tee_to_file = False
-        n_threads = "1"
-        #
-        with umock.patch.object(hserver, "is_dev_ck", return_value = False):
-            act = hlitapyt._build_run_command_line(
-                "fast_tests",
-                custom_marker,
-                pytest_opts,
-                skip_submodules,
-                coverage,
-                collect_only,
-                tee_to_file,
-                n_threads,
-            )
-            exp = (
-                'pytest -m "not slow and not superslow" . '
-                "-o timeout_func_only=true --timeout 50 --reruns 2 "
-                '--only-rerun "Failed: Timeout" -n 1'
-            )
-            #timeout_in_sec = self._compute_timeout_depending_on_ck_infra()
-            #exp = exp.replace("--timeout 5", f"--timeout {timeout_in_sec}")
-            self.assert_equal(act, exp)
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1'
+        )
+        self._test_run_fast_tests1_helper(True, exp)
 
-    def test_run_fast_tests2t(self) -> None:
+    def test_run_fast_tests1_outside_ck_server(self) -> None:
         """
-        Coverage and collect-only. Mock: is_dev_ck is True. 
+        Mock test for running fast tests outside ck server.
         """
-        custom_marker = ""
-        pytest_opts = ""
-        skip_submodules = False
-        coverage = True
-        collect_only = True
-        tee_to_file = False
-        n_threads = "1"
-        #
-        with umock.patch.object(hserver, "is_dev_ck", return_value = True):
-            act = hlitapyt._build_run_command_line(
-                "fast_tests",
-                custom_marker,
-                pytest_opts,
-                skip_submodules,
-                coverage,
-                collect_only,
-                tee_to_file,
-                n_threads,
-            )
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 50 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1'
+        )
+        self._test_run_fast_tests1_helper(False, exp)
 
-            exp = (
-                r'pytest -m "not slow and not superslow" . '
-                r"-o timeout_func_only=true --timeout 5 --reruns 2 "
-                r'--only-rerun "Failed: Timeout" --cov=.'
-                r" --cov-branch --cov-report term-missing --cov-report html "
-                r"--collect-only -n 1"
-            )
-            #timeout_in_sec = self._compute_timeout_depending_on_ck_infra()
-            #exp = exp.replace("--timeout 5", f"--timeout {timeout_in_sec}")
-            self.assert_equal(act, exp)
-
-    def test_run_fast_tests2f(self) -> None:
+    def test_run_fast_tests2_on_ck_server(self) -> None:
         """
-        Coverage and collect-only. Mock: is_dev_ck is False. 
+        Mock test for running fast tests on ck server.
         """
-        custom_marker = ""
-        pytest_opts = ""
-        skip_submodules = False
-        coverage = True
-        collect_only = True
-        tee_to_file = False
-        n_threads = "1"
-        #
-        with umock.patch.object(hserver, "is_dev_ck", return_value = False):
-            act = hlitapyt._build_run_command_line(
-                "fast_tests",
-                custom_marker,
-                pytest_opts,
-                skip_submodules,
-                coverage,
-                collect_only,
-                tee_to_file,
-                n_threads,
-            )
 
-            exp = (
-                r'pytest -m "not slow and not superslow" . '
-                r"-o timeout_func_only=true --timeout 50 --reruns 2 "
-                r'--only-rerun "Failed: Timeout" --cov=.'
-                r" --cov-branch --cov-report term-missing --cov-report html "
-                r"--collect-only -n 1"
-            )
-            #timeout_in_sec = self._compute_timeout_depending_on_ck_infra()
-            #exp = exp.replace("--timeout 5", f"--timeout {timeout_in_sec}")
-            self.assert_equal(act, exp)
-    
+        exp = (
+            r'pytest -m "not slow and not superslow" . '
+            r"-o timeout_func_only=true --timeout 5 --reruns 2 "
+            r'--only-rerun "Failed: Timeout" --cov=.'
+            r" --cov-branch --cov-report term-missing --cov-report html "
+            r"--collect-only -n 1"
+        )
+        self._test_run_fast_tests2_helper(True, exp)
+
+    def test_run_fast_tests2_outside_ck_server(self) -> None:
+        """
+        Mock test for running fast tests outside ck server.
+        """
+        exp = (
+            r'pytest -m "not slow and not superslow" . '
+            r"-o timeout_func_only=true --timeout 50 --reruns 2 "
+            r'--only-rerun "Failed: Timeout" --cov=.'
+            r" --cov-branch --cov-report term-missing --cov-report html "
+            r"--collect-only -n 1"
+        )
+        self._test_run_fast_tests2_helper(False, exp)
+
     @pytest.mark.skip(reason="Fix support for pytest_mark")
     @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
     def test_run_fast_tests4(self) -> None:
@@ -214,12 +127,121 @@ class Test_build_run_command_line1(hunitest.TestCase):
         )
         self.assert_equal(act, exp)
 
-    #@pytest.mark.requires_ck_infra
-    def _test_run_fast_tests5(self, mock_is_dev_ck: bool) -> None:
+    def test_run_fast_tests5_on_ck_server(self) -> None:
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1 2>&1'
+            " | tee tmp.pytest.fast_tests.log"
+        )
+        self._test_run_fast_tests5_helper(True, exp)
+
+    def test_run_fast_tests5_outside_ck_server(self) -> None:
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 50 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1 2>&1'
+            " | tee tmp.pytest.fast_tests.log"
+        )
+        self._test_run_fast_tests5_helper(False, exp)
+
+    def test_run_fast_tests6_on_ck_server(self) -> None:
+        exp = (
+            'pytest -m "optimizer and not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1'
+        )
+        self._test_run_fast_tests6_helper(True, exp)
+
+    def test_run_fast_tests6_outside_ck_server(self) -> None:
+        exp = (
+            'pytest -m "optimizer and not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 50 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1'
+        )
+        self._test_run_fast_tests6_helper(False, exp)
+
+    def test_run_fast_tests7_on_ck_server(self) -> None:
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n auto'
+        )
+        self._test_run_fast_tests7_helper(True, exp)
+
+    def test_run_fast_tests7_outside_ck_server(self) -> None:
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 50 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n auto'
+        )
+        self._test_run_fast_tests7_helper(False, exp)
+
+    def _test_run_fast_tests1_helper(self, is_dev_ck_return_value, exp) -> None:
         """
-        Basic run fast tests tee-ing to a file. Mock depending on if mock_is_dev_ck is true.
-        
-        :param: mock_is_dev_ck: mocking the return_value of hserver.is_dev_ck.
+        Basic run fast tests.
+
+        :param: is_dev_ck_return_value: mocking the return_value of hserver.is_dev_ck.
+        :param: exp: expected output string.
+        """
+        custom_marker = ""
+        pytest_opts = ""
+        skip_submodules = False
+        coverage = False
+        collect_only = False
+        tee_to_file = False
+        n_threads = "1"
+        #
+        with umock.patch.object(
+            hserver, "is_dev_ck", return_value=is_dev_ck_return_value
+        ):
+            act = hlitapyt._build_run_command_line(
+                "fast_tests",
+                custom_marker,
+                pytest_opts,
+                skip_submodules,
+                coverage,
+                collect_only,
+                tee_to_file,
+                n_threads,
+            )
+            self.assert_equal(act, exp)
+
+    def _test_run_fast_tests2_helper(self, is_dev_ck_return_value, exp) -> None:
+        """
+        Coverage and collect-only.
+
+        :params: see _test_run_fast_tests1_helper.
+        """
+        custom_marker = ""
+        pytest_opts = ""
+        skip_submodules = False
+        coverage = True
+        collect_only = True
+        tee_to_file = False
+        n_threads = "1"
+        #
+        with umock.patch.object(
+            hserver, "is_dev_ck", return_value=is_dev_ck_return_value
+        ):
+            act = hlitapyt._build_run_command_line(
+                "fast_tests",
+                custom_marker,
+                pytest_opts,
+                skip_submodules,
+                coverage,
+                collect_only,
+                tee_to_file,
+                n_threads,
+            )
+            self.assert_equal(act, exp)
+
+    def _test_run_fast_tests5_helper(self, is_dev_ck_return_value, exp) -> None:
+        """
+        Basic run fast tests tee-ing to a file. Mock depending on
+        is_dev_ck_return_value.
+
+        :params: see _test_run_fast_tests1_helper.
         """
         test_list_name = "fast_tests"
         custom_marker = ""
@@ -230,7 +252,9 @@ class Test_build_run_command_line1(hunitest.TestCase):
         tee_to_file = True
         n_threads = "1"
         #
-        with umock.patch.object(hserver, "is_dev_ck", return_value = mock_is_dev_ck):
+        with umock.patch.object(
+            hserver, "is_dev_ck", return_value=is_dev_ck_return_value
+        ):
             act = hlitapyt._build_run_command_line(
                 test_list_name,
                 custom_marker,
@@ -241,30 +265,13 @@ class Test_build_run_command_line1(hunitest.TestCase):
                 tee_to_file,
                 n_threads,
             )
-            exp = (
-                'pytest -m "not slow and not superslow" . '
-                "-o timeout_func_only=true --timeout 5 --reruns 2 "
-                '--only-rerun "Failed: Timeout" -n 1 2>&1'
-                " | tee tmp.pytest.fast_tests.log"
-            )
-            timeout_in_sec = 5 if mock_is_dev_ck else 50
-            #timeout_in_sec = self._compute_timeout_depending_on_ck_infra()
-            exp = exp.replace("--timeout 5", f"--timeout {timeout_in_sec}")
             self.assert_equal(act, exp)
 
-    def test_run_fast_tests5t(self) -> None:
-        self._test_run_fast_tests5(True)
-
-    def test_run_fast_tests5f(self) -> None:
-        self._test_run_fast_tests5(False)
-
-
-    #@pytest.mark.requires_ck_infra
-    def _test_run_fast_tests6(self, mock_is_dev_ck) -> None:
+    def _test_run_fast_tests6_helper(self, is_dev_ck_return_value, exp) -> None:
         """
-        Run fast tests with a custom test marker. 
+        Run fast tests with a custom test marker.
 
-        :param: see test_run_fast_tests5.
+        :params: see _test_run_fast_tests1_helper.
         """
         custom_marker = "optimizer"
         pytest_opts = ""
@@ -274,7 +281,9 @@ class Test_build_run_command_line1(hunitest.TestCase):
         tee_to_file = False
         n_threads = "1"
         #
-        with umock.patch.object(hserver, "is_dev_ck", return_value = mock_is_dev_ck):
+        with umock.patch.object(
+            hserver, "is_dev_ck", return_value=is_dev_ck_return_value
+        ):
             act = hlitapyt._build_run_command_line(
                 "fast_tests",
                 custom_marker,
@@ -285,26 +294,13 @@ class Test_build_run_command_line1(hunitest.TestCase):
                 tee_to_file,
                 n_threads,
             )
-            exp = (
-                'pytest -m "optimizer and not slow and not superslow" . '
-                "-o timeout_func_only=true --timeout 5 --reruns 2 "
-                '--only-rerun "Failed: Timeout" -n 1'
-            )
-            timeout_in_sec = 5 if mock_is_dev_ck else 50
-            #timeout_in_sec = self._compute_timeout_depending_on_ck_infra()
-            exp = exp.replace("--timeout 5", f"--timeout {timeout_in_sec}")
             self.assert_equal(act, exp)
 
-    def test_run_fast_tests6t(self) -> None:
-        self._test_run_fast_tests6(True)
-
-    def test_run_fast_tests6f(self) -> None:
-        self._test_run_fast_tests6(False)
-
-    #@pytest.mark.requires_ck_infra
-    def _test_run_fast_tests7(self, mock_is_dev_ck) -> None:
+    def _test_run_fast_tests7_helper(self, is_dev_ck_return_value, exp) -> None:
         """
         Run fast tests with parallelization.
+
+        :params: see _test_run_fast_tests1_helper.
         """
         custom_marker = ""
         pytest_opts = ""
@@ -314,7 +310,9 @@ class Test_build_run_command_line1(hunitest.TestCase):
         tee_to_file = False
         n_threads = "auto"
         #
-        with umock.patch.object(hserver, "is_dev_ck", return_value = mock_is_dev_ck):
+        with umock.patch.object(
+            hserver, "is_dev_ck", return_value=is_dev_ck_return_value
+        ):
             act = hlitapyt._build_run_command_line(
                 "fast_tests",
                 custom_marker,
@@ -325,22 +323,8 @@ class Test_build_run_command_line1(hunitest.TestCase):
                 tee_to_file,
                 n_threads,
             )
-            exp = (
-                'pytest -m "not slow and not superslow" . '
-                "-o timeout_func_only=true --timeout 5 --reruns 2 "
-                '--only-rerun "Failed: Timeout" -n auto'
-            )
-            timeout_in_sec = 5 if mock_is_dev_ck else 50
-        #timeout_in_sec = self._compute_timeout_depending_on_ck_infra()
-            exp = exp.replace("--timeout 5", f"--timeout {timeout_in_sec}")
             self.assert_equal(act, exp)
 
-
-    def test_run_fast_tests7t(self) -> None:
-        self._test_run_fast_tests7(True)
-
-    def test_run_fast_tests7f(self) -> None:
-        self._test_run_fast_tests7(False)
 
 class Test_pytest_repro1(hunitest.TestCase):
     def helper(self, file_name: str, mode: str, exp: List[str]) -> None:

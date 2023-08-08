@@ -18,7 +18,7 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     docker_build_prod_image,
     docker_cmd,
     docker_create_candidate_image,
-    #docker_dash_app,
+    # docker_dash_app,
     docker_images_ls_repo,
     docker_jupyter,
     docker_kill,
@@ -92,7 +92,6 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     run_coverage_report,
     run_fast_slow_superslow_tests,
     run_fast_slow_tests,
-    run_mock_tests,
     run_fast_tests,
     run_qa_tests,
     run_slow_tests,
@@ -110,7 +109,7 @@ try:
         binance_log_open_positions,
         binance_log_total_balance,
     )
-except ImportError as e:
+except ImportError:
     pass
 # # TODO(gp): This is due to the coupling between code in linter container and
 # #  the code being linted.
