@@ -16,14 +16,12 @@ Show the Group ID and the last message in each groups.
 import os
 
 import requests
-from dotenv import load_dotenv
 
-load_dotenv()
 bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
-
+_TELEGRAM_API = "https://api.telegram.org/bot"
 
 def _get_group_info() -> None:
-    response = requests.get(f"https://api.telegram.org/bot{bot_token}/getUpdates")
+    response = requests.get(f"{_TELEGRAM_API}{bot_token}/getUpdates")
     data = response.json()
     group_messages = {}
     for update in data["result"]:
