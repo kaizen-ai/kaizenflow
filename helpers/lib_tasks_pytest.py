@@ -364,11 +364,27 @@ def run_mock_tests(ctx):
     """
     Only run the 10 tests in helpers/test/test_lib_tasks_pytest.py that uses mock.
     """
+    hlitauti.report_task()
     test_path = "helpers/test/test_lib_tasks_pytest.py::Test_build_run_command_line1"
+    cmd = "pytest"
     for num in [1, 2, 5, 6, 7]:
         for version in ["t", "f"]:
-            ctx.run(f"pytest {test_path}::test_run_fast_tests{num}{version}")
-    return 0
+            cmd += f" {test_path}::test_run_fast_tests{num}{version} "
+    base_image = ""
+    # We need to add some " to pass the string as it is to the container.
+    #######cmd = f"'{cmd}'"
+    # We use "host" for the app container to allow access to the database
+    # exposing port 5432 on localhost (of the server), when running dind we
+    # need to switch back to bridge. See CmTask988.
+    extra_env_vars = ["NETWORK_MODE=bridge"]
+    docker_cmd_ = hlitadoc._get_docker_compose_cmd(
+    base_image, "dev", "", cmd, extra_env_vars=extra_env_vars
+    )
+    _LOG.info("cmd=%s", docker_cmd_)
+    # We can't use `hsystem.system()` because of buffering of the output,
+    # losing formatting and so on, so we stick to executing through `ctx`.
+    rc: Optional[int] = hlitadoc._docker_cmd(ctx, docker_cmd_)
+    return rc
 
 
 
