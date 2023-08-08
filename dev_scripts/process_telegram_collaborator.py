@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import logging
 import os
 
 import requests
@@ -11,18 +12,26 @@ import helpers.hparser as hparser
 
 load_dotenv()
 bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+_LOG = logging.getLogger(__name__)
 _TELEGRAM_API = "https://api.telegram.org/bot"
 
 
-def _get_invate_link(group_id):
+def _get_invite_link(group_id):
     """
     Create a invate link of the Telegram group.
     """
-    invite_link_response = requests.get(
+    response = requests.get(
         f"{_TELEGRAM_API}{bot_token}/exportChatInviteLink?chat_id={group_id}"
     )
-    if invite_link_response.status_code == 200:
-        invite_link = invite_link_response.json().get("result")
+    status_code = response.status_code
+    if status_code == 200:
+        invite_link = response .json().get("result")
+    else:
+        _LOG.debug(
+            "Error retrieving permission level for %s. Status code: %s",
+            group_id,
+            status_code,
+        )
     return invite_link
 
 
@@ -30,7 +39,7 @@ async def _invite_collaborator(bot, user_id, group_id):
     """
     Invite a collaborator to Telegram.
     """
-    link = _get_invate_link(group_id)
+    link = _get_invite_link(group_id)
     message = await bot.send_message(chat_id=user_id, text=link)
     hdbg.dassert_is_not(message, None)
 
