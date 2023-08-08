@@ -23,6 +23,7 @@
     privileges.
 
 # Set Up Environment:
+
   - Store the bot's API token in an environment variable. You can do this in a
     separate `.env` file.
     ```python
@@ -38,6 +39,7 @@
     ```
 
 # Get IDs
+
 - Get your Group ID:
   - Use get_telegram_groupid.py
     ```bash
