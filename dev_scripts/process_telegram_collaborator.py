@@ -15,7 +15,7 @@ _LOG = logging.getLogger(__name__)
 _TELEGRAM_API = "https://api.telegram.org/bot"
 
 
-def _get_invite_link(group_id):
+def _get_invite_link(group_id) -> str:
     """
     Create a invate link of the Telegram group.
     """
@@ -34,7 +34,7 @@ def _get_invite_link(group_id):
         )
     return None
 
-async def _invite_collaborator(bot, user_id, group_id):
+async def _invite_collaborator(bot, user_id, group_id) -> None:
     """
     Invite a collaborator to Telegram.
     """
@@ -44,7 +44,7 @@ async def _invite_collaborator(bot, user_id, group_id):
     hdbg.dassert_is_not(message, None)
 
 
-async def _remove_collaborator(bot, user_id, group_id):
+async def _remove_collaborator(bot, user_id, group_id) -> None:
     """
     Remove a collaborator from Telegram.
     """
@@ -70,7 +70,7 @@ def _parse() -> argparse.ArgumentParser:
     return parser
 
 
-async def main(parser: argparse.ArgumentParser):
+async def main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     action = args.action
     username = args.username

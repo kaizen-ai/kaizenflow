@@ -22,7 +22,7 @@ load_dotenv()
 bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 
 
-def _get_group_info():
+def _get_group_info() -> None:
     response = requests.get(f"https://api.telegram.org/bot{bot_token}/getUpdates")
     data = response.json()
     group_messages = {}
@@ -37,7 +37,7 @@ def _get_group_info():
         print(f"Group ID: {group_id}, Last Message: {last_message}")
 
 
-def _main():
+def _main() -> None:
     _get_group_info()
 
 
