@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+
+"""
+Import as:
+
+import linkedin.google_api.google_file_api as lggogfia
+"""
+
 import logging
 import os.path
 from typing import Optional
@@ -70,6 +77,30 @@ class GoogleFileApi:
         except HttpError as err:
             _LOG.error(err)
 
+    def create_google_drive_folder(self, folder_name: str, parent_folder_id: str) -> None:
+        """
+        Create a new Google Drive folder inside the given folder.
+
+        :param folder_name: str, the name of the new Google Drive folder.
+        :param parent_folder_id: str, the id of the parent folder.
+        """
+        try:
+            file_metadata = {
+                "name": folder_name,
+                "mimeType": "application/vnd.google-apps.folder",
+                "parents": [parent_folder_id],
+            }
+            folder = (
+                self.gdrive_service.files()
+                .create(body=file_metadata, fields="id")
+                .execute()
+            )
+            _LOG.info("Created a new Google Drive folder '%s'.", folder_name)
+            _LOG.info("The new folder id is '%s'.", folder.get("id"))
+        #
+        except HttpError as err:
+            _LOG.error(err)
+            
     def get_folder_id_by_name(self, name: str) -> Optional[list]:
         folders = self._get_folders_in_gdrive()
         folder_list = []
@@ -226,3 +257,4 @@ class GoogleFileApi:
         )
         # Return list of folder id and folder name.
         return response.get("files")
+
