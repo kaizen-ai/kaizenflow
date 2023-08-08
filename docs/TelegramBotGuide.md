@@ -51,5 +51,5 @@
 
 - To add/remove a user from the group, use the following command:
   ```bash
-  > python process_telegram_collaborator.py --<add/remove> --username <USERNAME> --groupid <GROUP_ID>
+  > python process_telegram_collaborator.py --action <add/remove> --username <USERNAME> --groupid <GROUP_ID>
   ```
