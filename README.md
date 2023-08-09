@@ -144,7 +144,6 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Email](/docs/Email.md)
 
-
 # DeFi: start developing
 
 - [DeFi README](/defi/README.md)
