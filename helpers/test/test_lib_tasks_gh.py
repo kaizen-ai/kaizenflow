@@ -44,7 +44,7 @@ class TestLibTasks1(hunitest.TestCase):
         )
         self.assert_equal(str(act), str(exp))
 
-    # TODO(ShaopengZ): fails even on ck server. `gh auth login` issue.
+    # TODO(ShaopengZ): fails when running Sorrentum on ck server. `gh auth login` issue.
     @pytest.mark.skip
     def test_get_gh_issue_title4(self) -> None:
         httestlib._gh_login()
