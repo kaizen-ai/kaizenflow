@@ -24,18 +24,19 @@
     + [Enable logging](#enable-logging)
     + [Update golden outcomes](#update-golden-outcomes)
     + [Incremental test mode](#incremental-test-mode)
+  * [Debugging Notebooks](#debugging-notebooks)
 - [Running tests on GH Actions](#running-tests-on-gh-actions)
   * [How to run a single test on GH Action](#how-to-run-a-single-test-on-gh-action)
 - [Guidelines about writing unit tests](#guidelines-about-writing-unit-tests)
     + [**What is a unit test?**](#what-is-a-unit-test)
     + [**Why is unit testing important?**](#why-is-unit-testing-important)
   * [Unit testing tips](#unit-testing-tips)
-    + [Tip #1: Test one thing](#tip-1-test-one-thing)
-    + [Tip #2: Keep tests self-contained](#tip-2-keep-tests-self-contained)
-    + [Tip #3: Only specify data related to what is being tested](#tip-3-only-specify-data-related-to-what-is-being-tested)
-    + [Tip #4: Test realistic corner cases](#tip-4-test-realistic-corner-cases)
-    + [Tip #5: Test a typical scenario](#tip-5-test-a-typical-scenario)
-    + [Tip #6: Test executable scripts end-to-end](#tip-6-test-executable-scripts-end-to-end)
+    + [Tip #1: Test one thing](#tip-%231-test-one-thing)
+    + [Tip #2: Keep tests self-contained](#tip-%232-keep-tests-self-contained)
+    + [Tip #3: Only specify data related to what is being tested](#tip-%233-only-specify-data-related-to-what-is-being-tested)
+    + [Tip #4: Test realistic corner cases](#tip-%234-test-realistic-corner-cases)
+    + [Tip #5: Test a typical scenario](#tip-%235-test-a-typical-scenario)
+    + [Tip #6: Test executable scripts end-to-end](#tip-%236-test-executable-scripts-end-to-end)
   * [Conventions](#conventions)
     + [Naming and placement conventions](#naming-and-placement-conventions)
     + [Our framework to test using input / output data](#our-framework-to-test-using-input--output-data)
@@ -711,6 +712,23 @@
   ```bash
   > pytest --incremental
   ```
+
+## Debugging Notebooks
+
+1. run a failing test with `-s --dbg` to get detailed logs
+   - e.g., `> pytest core/plotting/test/test_gallery_notebook.py -s --dbg`
+2. from the logs take a `run_notebook.py` script command that was run by the
+   test
+   - e.g., starting like
+     `/app/dev_scripts/notebooks/run_notebook.py --notebook ...`
+3. Append ` --no_suppress_output` to this command and run it again directly from
+   the bash
+   - e.g., like
+     `> /app/dev_scripts/notebooks/run_notebook.py --notebook ... --no_suppress_output`
+4. scroll up the logs and see a report about the problem, notebooks failures
+   will be displayed as well
+   - e.g.,  
+      <img width="756" src="https://github.com/sorrentum/sorrentum/assets/31514660/43a2854e-ae4e-450d-95fd-f16df0a53c79">
 
 # Running tests on GH Actions
 
