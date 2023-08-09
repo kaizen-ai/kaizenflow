@@ -131,6 +131,8 @@ def _gh_login() -> None:
     hsystem.system(cmd)
 
 
+# TODO(ShaopengZ): fails on ck server. `gh auth login` issue.
+@pytest.mark.skip
 class TestGhLogin1(hunitest.TestCase):
     def test_gh_login(self) -> None:
         _gh_login()

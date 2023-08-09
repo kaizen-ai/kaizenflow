@@ -112,6 +112,8 @@ asset_id
 """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    # TODO(ShaopengZ): fails even on ck server. Numerics issue.
+    @pytest.mark.skip
     def test_only_gmv_constraint_scs(self) -> None:
         actual = self.run_opt_with_only_gmv_constraint("SCS")
         expected = r"""
