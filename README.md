@@ -140,6 +140,8 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Telegram](/docs/Telegram.md)
 
+- [Gsheet into pandas](/docs/Gsheet_into_pandas.md)
+
 - [Email](/docs/Email.md)
 
 # DeFi: start developing
