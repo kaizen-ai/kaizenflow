@@ -73,30 +73,13 @@ class Test_plots(unittest.TestCase):
         srs = pd.Series(samples, index=index, name="test values")
         return srs
 
-    @classmethod
-    def setUpClass(cls):
-        # Save the original random seed.
-        cls.original_seed = np.random.get_state()
-        # Set a specific random seed for the entire test class.
-        cls._seed = 42
-        np.random.seed(42)
-        # Set a specific figure size.
-        cls._figsize = (20, 20)
-
-    @classmethod
-    def tearDownClass(cls):
-        """
-        Restore the original random seed after all the test methods have been
-        executed.
-        """
-        np.random.set_state(cls.original_seed)
-
-    def get_plot_histograms_and_lagged_scatterplot1(self) -> pd.Series:
+    @staticmethod
+    def get_plot_histograms_and_lagged_scatterplot1() -> pd.Series:
         """
         Get a random Gaussian data series for plotting histograms and lagged
         scatterplot.
         """
-        rng = np.random.default_rng(seed=self._seed)
+        rng = np.random.default_rng(seed=0)
         samples = rng.normal(size=100)
         index = pd.date_range(start="2023-01-01", periods=len(samples), freq="D")
         srs = pd.Series(samples, index=index)
@@ -107,11 +90,11 @@ class Test_plots(unittest.TestCase):
         Smoke test for `plot_histograms_and_lagged_scatterplot()`.
         """
         # Set inputs.
-        srs = self.get_plot_histograms_and_lagged_scatterplot1()
+        srs = Test_plots.get_plot_histograms_and_lagged_scatterplot1()
         lag = 7
         # Plot.
         cpvistte.plot_histograms_and_lagged_scatterplot(
-            srs, lag, figsize=self._figsize
+            srs, lag, figsize=(20, 10)
         )
 
     def test_plot_time_series_by_period1(self) -> None:
@@ -130,7 +113,7 @@ class Test_plots(unittest.TestCase):
         """
         mode = "clustermap"
         corr_df = self.get_plot_heatmap1()
-        cplocorr.plot_heatmap(corr_df, mode, figsize=self._figsize)
+        cplocorr.plot_heatmap(corr_df, mode, figsize=(20, 10))
 
     def test_plot_effective_correlation_rank1(self) -> None:
         """
@@ -184,6 +167,6 @@ class Test_plots(unittest.TestCase):
         - `axes` is a list of Matplotlib axes
         """
         test_df = self.get_plot_spectrum1()
-        _, axes = plt.subplots(2, 2, figsize=self._figsize)
+        _, axes = plt.subplots(2, 2, figsize=(20, 10))
         axes_flat = axes.flatten()
         cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)

@@ -14,7 +14,7 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
-def calculate_tau_from_com(com: float) -> Union[float, np.float]:
+def calculate_tau_from_com(com: float) -> Union[float, np.float64]:
     """
     Transform center-of-mass (com) into tau parameter.
 
@@ -24,7 +24,7 @@ def calculate_tau_from_com(com: float) -> Union[float, np.float]:
     return 1.0 / np.log(1 + 1.0 / com)
 
 
-def calculate_com_from_tau(tau: float) -> Union[float, np.float]:
+def calculate_com_from_tau(tau: float) -> Union[float, np.float64]:
     """
     Transform tau parameter into center-of-mass (com).
 

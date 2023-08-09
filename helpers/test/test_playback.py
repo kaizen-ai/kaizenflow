@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import pytest
 from typing import Any, Optional
 
 import pandas as pd
@@ -477,6 +478,7 @@ class TestPlaybackFileMode1(hunitest.TestCase):
         playback_code = hio.from_file(tmp_test_file)
         return playback_code
 
+    @pytest.mark.requires_ck_infra
     def test1(self) -> None:
         """
         Test writing to file when number of tests is more than generated.
@@ -484,12 +486,14 @@ class TestPlaybackFileMode1(hunitest.TestCase):
         max_tests = 100
         self.check_string(self.helper(max_tests))
 
+    @pytest.mark.requires_ck_infra
     def test2(self) -> None:
         """
         Test writing to file when number of tests is default.
         """
         self.check_string(self.helper())
 
+    @pytest.mark.requires_ck_infra
     def test3(self) -> None:
         """
         Test writing to file when number of tests is lower than generated.
