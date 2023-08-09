@@ -71,56 +71,52 @@ print(config)
 # ## `plot_histograms_and_lagged_scatterplot()`
 
 # %%
-# Set inputs.
-srs = cptetepl.Test_plots.get_plot_histograms_and_lagged_scatterplot1()
+test_srs = cptetepl.Test_plots.get_plot_histograms_and_lagged_scatterplot1()
 lag = 7
 # %%
-# TODO(Dan): Remove after integration with `cmamp`. Changes from Cm #4722 are not in `sorrentum` yet.
 cpvistte.plot_histograms_and_lagged_scatterplot(
-    srs, lag, figsize=config["figsize"]
+    test_srs, lag, figsize=config["figsize"]
 )
 
 # %% [markdown]
 # ## `plot_timeseries_distribution()`
 # %%
-# Set inputs for hour interval.
-srs = cptetepl.Test_plots.get_plot_timeseries_distribution1()
+test_srs = cptetepl.Test_plots.get_plot_timeseries_distribution1()
 
 # %%
 datetime_types = ["hour"]
-cplmiplo.plot_timeseries_distribution(srs, datetime_types)
+cplmiplo.plot_timeseries_distribution(test_srs, datetime_types)
 
 # %%
 datetime_types = ["hour", "month"]
-cplmiplo.plot_timeseries_distribution(srs, datetime_types)
+cplmiplo.plot_timeseries_distribution(test_srs, datetime_types)
 
 # %% [markdown]
 # ## `plot_time_series_by_period()`
 
 # %%
-# Set inputs.
-test_series = cptetepl.Test_plots.get_plot_time_series_by_period1()
+test_srs = cptetepl.Test_plots.get_plot_time_series_by_period1()
 
 # %%
 period = "day"
-cplmiplo.plot_time_series_by_period(test_series, period)
+cplmiplo.plot_time_series_by_period(test_srs, period)
 
 # %%
 period = "time"
-cplmiplo.plot_time_series_by_period(test_series, period)
+cplmiplo.plot_time_series_by_period(test_srs, period)
 
 # %% [markdown]
 # ## `plot_heatmap()`
 
 # %%
 mode = "clustermap"
-corr_df = cptetepl.Test_plots.get_plot_heatmap1()
+test_df = cptetepl.Test_plots.get_plot_heatmap1()
 
 # %%
-cplocorr.plot_heatmap(corr_df, mode, figsize=config["figsize"])
+cplocorr.plot_heatmap(test_df, mode, figsize=config["figsize"])
 
 # %% [markdown]
-# ## `plot_rets_signal_analysis()`
+# ## `plot_performance()`
 
 # %%
 evaluator, eval_config = cdmttme.get_example_model_evaluator()
@@ -140,24 +136,23 @@ plotter.plot_performance(
 # ## `plot_rets_signal_analysis()`
 
 # %%
-# Set inputs.
 evaluator, eval_config = cdmttme.get_example_model_evaluator()
-# Build the ModelPlotter.
 plotter = dtfmomoplo.ModelPlotter(evaluator)
 keys = None
+
+
+# %%
 plotter.plot_performance(
     keys=keys,
     resample_rule=eval_config["resample_rule"],
     mode=eval_config["mode"],
     target_volatility=eval_config["target_volatility"],
 )
-
 
 # %% [markdown]
 # ## `plot_effective_correlation_rank()`
 
 # %%
-# Set inputs.
 test_df = cptetepl.Test_plots.get_plot_effective_correlation_rank1()
 
 # %%
@@ -172,7 +167,6 @@ cplocorr.plot_effective_correlation_rank(test_df, q_values)
 # ## `plot_spectrum()`
 
 # %%
-# Set inputs.
 test_df = cptetepl.Test_plots.get_plot_spectrum1()
 
 # %%
@@ -182,5 +176,3 @@ cplmiplo.plot_spectrum(test_df)
 _, axes = plt.subplots(2, 2, figsize=config["figsize"])
 axes_flat = axes.flatten()
 cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
-
-# %%
