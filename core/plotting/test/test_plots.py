@@ -1,17 +1,24 @@
+# %%
 import logging
 import unittest
 
+# %%
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+# %%
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.visual_stationarity_test as cpvistte
+import core.plotting.normality as cplonorm
 
+
+# %%
 _LOG = logging.getLogger(__name__)
 
 
+# %%
 class Test_plots(unittest.TestCase):
     """
     Run smoke tests for plotting functions.
@@ -84,6 +91,46 @@ class Test_plots(unittest.TestCase):
         index = pd.date_range(start="2023-01-01", periods=len(samples), freq="D")
         srs = pd.Series(samples, index=index)
         return srs
+    
+    @staticmethod
+    def get_plot_normal_distribution_data(size=100, seed=0) -> pd.Series:
+        """
+        Get a random normal distribution data series for the qq plot.
+
+        :param size: size of generated data.
+        :param seed: seed used to randomly generate data.
+        :return: generated test data series.
+        """
+        rng = np.random.default_rng(seed=seed)
+        samples = rng.normal(size=size)
+        srs = pd.Series(samples)
+        return srs
+
+    @staticmethod
+    def get_plot_exponential_distribution_data(size=100, seed=0) -> pd.Series:
+        """
+        Get a random exponential distribution data series for the qq plot.
+
+        :param size: size of generated data.
+        :param seed: seed used to randomly generate data.
+        :return: generated test data series.
+        """
+        rng = np.random.default_rng(seed=seed)
+        samples = rng.exponential(size=size)
+        srs = pd.Series(samples)
+        return srs
+
+    @staticmethod
+    def null_out_series_data(srs: pd.Series) -> pd.Series:
+        """
+        Randomly null out some data in the input series. 
+
+        :param srs: series to be modified.
+        :return: series with NaNs.
+        """
+        mask = np.random.choice([True, False], size=srs.shape, p=[0.2, 0.8])
+        new_srs = srs.mask(mask)
+        return new_srs
 
     def test_plot_histograms_and_lagged_scatterplot1(self) -> None:
         """
@@ -170,3 +217,46 @@ class Test_plots(unittest.TestCase):
         _, axes = plt.subplots(2, 2, figsize=(20, 10))
         axes_flat = axes.flatten()
         cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
+
+    def test_plot_qq1(self) -> None:
+        """
+        Smoke test for `plot_qq`.
+
+        - `ax` is None
+        """
+        test_srs = self.get_plot_normal_distribution_data()
+        cplonorm.plot_qq(test_srs)
+
+    def test_plot_qq2(self) -> None:
+        """
+        Smoke test for `plot_qq`.
+
+        - `ax` is Matplotlib axis.
+        """
+        test_srs = self.get_plot_normal_distribution_data()
+        _, ax = plt.subplots(1, 1, figsize=(5, 5))
+        cplonorm.plot_qq(test_srs, ax=ax)
+    
+    def test_plot_qq3(self) -> None:
+        """
+        Smoke test for `plot_qq`.
+
+        - `dist` is exponential distribution.
+        """
+        test_srs = self.get_plot_exponential_distribution_data()
+        _, ax = plt.subplot(1, 1, figsize=(5, 5))
+        cplonorm.plot_qq(test_srs, ax=ax, dist='expon')
+    
+    def test_plot_qq4(self) -> None:
+        """
+        Smoke test for `plot_qq`.
+
+        - NaNs present in the input series. 
+        """
+        test_srs = self.get_plot_normal_distribution_data()
+        srs_nan = self.null_out_series_data(test_srs)
+        _, ax = plt.subplot(1, 1, figsize=(5, 5))
+        cplonorm.plot_qq(srs_nan, ax=ax)
+
+
+# %%

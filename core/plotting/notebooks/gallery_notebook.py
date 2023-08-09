@@ -37,6 +37,7 @@ import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
 import dataflow.model.model_plotter as dtfmomoplo
 import dataflow.model.test.test_model_evaluator as cdmttme
+import core.plotting.normality as cplonorm
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
@@ -149,5 +150,37 @@ figsize = (20, 20)
 _, axes = plt.subplots(2, 2, figsize=figsize)
 axes_flat = axes.flatten()
 cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
+
+# %% [markdown] run_control={"marked": false}
+# ## `plot_qq()`
+
+# %%
+# Get test data.
+norm_data = cptetepl.Test_plots.get_plot_normal_distribution_data()
+exp_data = cptetepl.Test_plots.get_plot_exponential_distribution_data()
+data_nan = cptetepl.Test_plots.null_out_series_data(norm_data)
+
+# %%
+cplonorm.plot_qq(exp_data)
+
+# %%
+# Data distribution and expected distribution are the same.
+figsize = (10, 5)
+_, axes = plt.subplots(1, 2, figsize=figsize)
+cplonorm.plot_qq(norm_data, ax=axes[0])
+cplonorm.plot_qq(exp_data, ax=axes[1], dist='expon')
+
+# %%
+# Data distribution and expected distribution are different.
+figsize = (10, 5)
+_, axes = plt.subplots(1, 2, figsize=figsize)
+cplonorm.plot_qq(exp_data, ax=axes[0])
+cplonorm.plot_qq(norm_data, ax=axes[1], dist='expon')
+
+# %%
+# NaNs present in the input data.
+figsize = (5, 5)
+_, ax = plt.subplots(1, 1, figsize=figsize)
+cplonorm.plot_qq(data_nan, ax=ax)
 
 # %%
