@@ -23,8 +23,8 @@ class IgHistoricalPqByDateTaqBarClient(imvcdcli.HistoricalPqByDateClient):
 
     The Parquet by-date data is stored at:
     ```
-    > aws s3 ls --profile saml-spm-sasm \
-            s3://iglp-data/.../taq/v1.0-prod/60
+    > aws s3 ls --profile sasm \
+            s3://data/.../taq/v1.0-prod/60
        PRE 20031002/
        PRE 20031003/
        ...

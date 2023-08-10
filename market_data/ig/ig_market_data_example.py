@@ -54,9 +54,9 @@
 #    """
 #    # This file was generated with:
 #    # > pytest market_data_lime/test/test_ig_market_data.py::TestIgReplayedMarketData1::test_save_market_data1
-#    # > aws s3 cp market_data.20220104-183252.csv.gz s3://eglp-spm-sasm/data/
-#    file_name = "s3://eglp-spm-sasm/data/market_data.20220104-183252.csv.gz"
-#    s3fs_ = hs3.get_s3fs(aws_profile="saml-spm-sasm")
+#    # > aws s3 cp market_data.20220104-183252.csv.gz s3://
+#    file_name = "s3://sasm/data/market_data.20220104-183252.csv.gz"
+#    s3fs_ = hs3.get_s3fs(aws_profile="sasm")
 #    # Load data
 #    data = mdata.load_market_data(file_name, s3fs=s3fs_)
 #    _LOG.debug("\n%s", hpandas.df_to_str(data.head()))
