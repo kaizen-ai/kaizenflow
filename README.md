@@ -57,17 +57,15 @@ make this experience the best possible for you.
 
 - [Signing up for Sorrentum](docs/Signing_up_for_Sorrentum.md)
 
-- [Contributor Scorecard](docs/Contributor_Scorecard.md)
-
 # How to start developing
 
 This contains the absolute minimal amount of info to start developing
 
-- [How to organize your work](docs/How_to_organize_your_work.md)
-
 - [General Rules of Collaboration](docs/General_rules_of_collaboration.md)
 
-- [Quick start for developing](docs/Quick_start_for_developing.md)
+- [Quick start for developing](docs/Sorrentum_development_setup.md)
+
+- [How to organize your work](docs/How_to_organize_your_work.md)
 
 - [First Review Process](docs/First_review_process.md)
 
@@ -78,6 +76,10 @@ This contains the absolute minimal amount of info to start developing
 - [Unit tests](docs/Unit_tests.md)
 
 # Project management
+
+- [Contributor Scorecard](docs/Contributor_Scorecard.md)
+
+  - How we give feedback to contributors
 
 - [Code review](docs/Code_review.md)
 
