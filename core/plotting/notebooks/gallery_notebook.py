@@ -30,14 +30,13 @@ import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
+import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
-import core.plotting.test.test_plots as cptetepl
-import core.plotting.correlation as cplocorr
-
+import dataflow.model.model_plotter as dtfmomoplo
+import dataflow.model.test.test_model_evaluator as cdmttme
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
@@ -99,9 +98,26 @@ cplmiplo.plot_time_series_by_period(test_series, period)
 
 # %%
 mode = "clustermap"
-corr_df = cptetepl.Test_plots.get_plot_heatmap()
+corr_df = cptetepl.Test_plots.get_plot_heatmap1()
 figsize = (20, 20)
 cplocorr.plot_heatmap(corr_df, mode, figsize=figsize)
+
+# %% [markdown]
+# ## `plot_rets_signal_analysis()`
+
+# %%
+# Set inputs.
+evaluator, eval_config = cdmttme.get_example_model_evaluator()
+# Build the ModelPlotter.
+plotter = dtfmomoplo.ModelPlotter(evaluator)
+keys = None
+plotter.plot_performance(
+    keys=keys,
+    resample_rule=eval_config["resample_rule"],
+    mode=eval_config["mode"],
+    target_volatility=eval_config["target_volatility"],
+)
+
 
 # %% [markdown]
 # ## `plot_effective_correlation_rank()`
@@ -114,7 +130,7 @@ test_df = cptetepl.Test_plots.get_plot_effective_correlation_rank1()
 cplocorr.plot_effective_correlation_rank(test_df)
 
 # %%
-num_q_values = 5 
+num_q_values = 5
 q_values = np.random.uniform(1, 10, num_q_values).tolist()
 cplocorr.plot_effective_correlation_rank(test_df, q_values)
 
@@ -133,37 +149,5 @@ figsize = (20, 20)
 _, axes = plt.subplots(2, 2, figsize=figsize)
 axes_flat = axes.flatten()
 cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
-
-# %% [markdown]
-# ## `plot_spectrum()`
-
-# %%
-# Set inputs.
-test_df = cptetepl.Test_plots.get_plot_spectrum1()
-
-# %%
-cplmiplo.plot_spectrum(test_df)
-
-# %%
-figsize = (20, 20)
-_, axes = plt.subplots(2, 2, figsize=figsize)
-axes_flat = axes.flatten()
-cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
-
-# %% [markdown]
-# ## `plot_projection()`
-
-# %%
-df = cptetepl.Test_plots.get_plot_projection1()
-
-# %%
-cplmiplo.plot_projection(df, special_values=[0])
-
-# %%
-fig = plt.figure()
-df.replace({0: None}, inplace=True)
-ax = fig.add_axes([0, 0, 1, 1])
-mode = "scatter"
-cplmiplo.plot_projection(df, mode=mode, ax=ax)
 
 # %%
