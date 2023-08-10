@@ -1246,9 +1246,9 @@ def pytest_buildmeister_check(ctx, print_output=False):  # type: ignore
         _run(cmd)
     # Report failures using `invoke pytest_repro`.
     print(hprint.frame("Failures"))
-    # "> sudo -u spm-sasm rm ./tmp.pytest_repro.sh; i pytest_repro -f {log_file}"
+    # "> sudo -u sasm rm ./tmp.pytest_repro.sh; i pytest_repro -f {log_file}"
     if os.path.exists("./tmp.pytest_repro.sh"):
-        cmd = "sudo -u spm-sasm rm ./tmp.pytest_repro.sh"
+        cmd = "sudo -u sasm rm ./tmp.pytest_repro.sh"
         _run(cmd)
     #
     cmd = f"invoke pytest_repro -f {log_file}"

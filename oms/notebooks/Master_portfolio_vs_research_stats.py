@@ -52,9 +52,6 @@ hprint.config_notebook()
 # %%
 sim_dir = "/app/system_log_dir/forecast_evaluator"
 # find /share/data/cf_production/CF_2022_08_29 -name "cf_prod_system_log_dir"
-# prod_dir = "/data/cf_production/CF_2022_08_15/job-sasm_job-jobid-1002348952/user_executable_run_0-1000005033091/cf_prod_system_log_dir"
-# prod_dir = "/data/cf_production/CF_2022_08_31/job-sasm_job-jobid-1002388639/user_executable_run_0-1000005219664/cf_prod_system_log_dir"
-prod_dir = "/data/cf_production/CF_2022_08_29/job-sasm_job-jobid-1002385185/user_executable_run_0-1000005209955/cf_prod_system_log_dir"
 prod_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 
 # Simulation data.

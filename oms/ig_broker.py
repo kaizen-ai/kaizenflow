@@ -159,10 +159,10 @@
 #             # TODO(gp): Make sure the file doesn't exist on S3.
 #             # Copy the file to the S3 location.
 #             # TODO(gp): Maybe save directly on S3.
-#             # !aws s3 cp --profile "trading_sasm" \
+#             # !aws s3 cp --profile "sasm" \
 #             #   --acl bucket-owner-full-control \
 #             #   test.csv $file_name
-#             # opts = '--profile "trading_sasm" --acl bucket-owner-full-control'
+#             # opts = '--profile "sasm" --acl bucket-owner-full-control'
 #             opts = "--acl bucket-owner-full-control"
 #             cmd = f"aws s3 cp {opts} {local_file_name} {s3_file_name}"
 #             hsystem.system(cmd)
@@ -279,14 +279,14 @@
 #         """
 #         The file should look like:
 #
-#         s3://eglp-core-exch/files/spms/SAU1/cand/targets/YYYYMMDD000000/<filename>.csv
+#         s3://files/SAU1/cand/targets/YYYYMMDD000000/<filename>.csv
 #         """
 #         # The reference Java CF code looks like:
 #         # String timestampStr = DateTime.now().toString("yyyyMMddHHmmssSSS");
 #         # String.format("files/%s/%s/%s/targets/%s000000/%s_%s_%s.csv",
 #         #       groupPrefix, strategyId, dropId, date.toString("yyyyMMdd"), s3FilePrefix,
 #         #       date.toString("yyyyMMdd"), timestampStr);
-#         dst_dir = f"s3://eglp-core-exch/files/{group_prefix}/{strategy_id}"
+#         dst_dir = f"s3://files/{group_prefix}/{strategy_id}"
 #         # Find the subdir to use place orders.
 #         dir_name = self._get_S3_tradelist_path(
 #             self._liveness, self._instance_type
@@ -297,7 +297,7 @@
 #         date_dir += "0" * 6
 #         # Add a timestamp for readability.
 #         curr_timestamp_as_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-#         file_name = f"sasm_positions.{order_id}.{curr_timestamp_as_str}.csv"
+#         file_name = f"positions.{order_id}.{curr_timestamp_as_str}.csv"
 #         file_name = os.path.join(dst_dir, date_dir, file_name)
 #         _LOG.debug("file_name=%s", file_name)
 #         return file_name
