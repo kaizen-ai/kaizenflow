@@ -135,27 +135,35 @@ axes_flat = axes.flatten()
 cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
 
 # %% [markdown]
+# ## `plot_spectrum()`
+
+# %%
+# Set inputs.
+test_df = cptetepl.Test_plots.get_plot_spectrum1()
+
+# %%
+cplmiplo.plot_spectrum(test_df)
+
+# %%
+figsize = (20, 20)
+_, axes = plt.subplots(2, 2, figsize=figsize)
+axes_flat = axes.flatten()
+cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
+
+# %% [markdown]
 # ## `plot_projection()`
 
 # %%
-# Calling plot_projection to test that it's basic functionality works.
-data = [
-    [1, 1, 0, 1],
-    [0, 1, 0, 1],
-    [0, 0, 1, 1],
-    [1, 1, 1, 1],
-    [1, 1, 1, 1],
-]
-index = pd.date_range(start="2023-01-01", periods=len(data), freq="D")
-df = pd.DataFrame(data, index=index)
-fig = plt.figure()
-ax = fig.add_axes([0, 0, 1, 1])
-cplmiplo.plot_projection(df, special_values=[0], ax=ax)
+df = cptetepl.Test_plots.get_plot_projection1()
 
 # %%
-# Calling plot_projection with the scatter plot mode enabled.
+cplmiplo.plot_projection(df, special_values=[0])
+
+# %%
 fig = plt.figure()
+df.replace({0: None}, inplace=True)
 ax = fig.add_axes([0, 0, 1, 1])
-cplmiplo.plot_projection(df, special_values=[0], mode="scatter", ax=ax)
+mode = "scatter"
+cplmiplo.plot_projection(df, mode=mode, ax=ax)
 
 # %%

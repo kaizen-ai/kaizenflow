@@ -72,6 +72,22 @@ class Test_plots(unittest.TestCase):
         index = pd.date_range(start="2022-12-31", periods=len(samples), freq="H")
         srs = pd.Series(samples, index=index, name="test values")
         return srs
+    
+    @staticmethod
+    def get_plot_projection1() -> pd.DataFrame:
+        """
+        Generate a test DataFrame for the plot_projection function.
+        """
+        data = [
+            [1, 1, 0, 1],
+            [0, 1, 0, 1],
+            [0, 0, 1, 1],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+        ]
+        index = pd.date_range(start="2023-01-01", periods=len(data), freq="D")
+        df = pd.DataFrame(data,index=index)
+        return df
 
     @classmethod
     def setUpClass(cls):
@@ -188,19 +204,26 @@ class Test_plots(unittest.TestCase):
         axes_flat = axes.flatten()
         cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
 
-    def test_plot_projection(self) -> None:
+    def test_plot_projection1(self) -> None:
         """
         Smoke test for `plot_projection()`.
+
+        - `mode` is unspecified.
         """
-        data = [
-            [1, 1, 0, 1],
-            [0, 1, 0, 1],
-            [0, 0, 1, 1],
-            [1, 1, 1, 1],
-            [1, 1, 1, 1],
-        ]
-        index = pd.date_range(start="2023-01-01", periods=len(data), freq="D")
-        srs = pd.Series(data, index=index)
+        test_df = self.get_plot_projection1()
+        fig = plt.figure()
+        ax = fig.add_axes([0, 0, 1, 1])        
+        cplmiplo.plot_projection(test_df, special_values=[0], ax=ax)
+
+    def test_plot_projection2(self) -> None:        
+        """
+        Smoke test for `plot_projection()`.
+
+        - `mode` is 'scatter'.
+        """
+        test_df = self.get_plot_projection1()
+        test_df.replace({0: None}, inplace=True)
         fig = plt.figure()
         ax = fig.add_axes([0, 0, 1, 1])
-        cplmiplo.plot_projection(srs, special_values=[0], mode="scatter", ax=ax)
+        mode = "scatter"
+        cplmiplo.plot_projection(test_df, mode=mode, ax=ax)
