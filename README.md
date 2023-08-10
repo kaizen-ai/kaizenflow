@@ -145,6 +145,8 @@ This contains a set of resources that over time will make 10x more productive
 - [Gsheet into pandas](/docs/Gsheet_into_pandas.md)
 
 - [Email](/docs/Email.md)
+    
+- [Glossary](docs/Glossary.md)
 
 # DeFi: start developing
 
