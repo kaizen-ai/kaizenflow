@@ -250,10 +250,6 @@ class TestDryRunTasks1(hunitest.TestCase):
 @pytest.mark.slow(reason="Around 7s")
 # TODO(Shaopengz): In some run, test ignores my mark.skip above, goes in
 # the mark.skipif block anyway, and hangs at the hgit.is_in_amp_as_supermodule().
-# @pytest.mark.skipif(
-#    not hgit.is_in_amp_as_supermodule(),
-#    reason="Run only in amp as super-module",
-# )
 class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     """
     - Call the invoke task directly from Python
@@ -321,28 +317,34 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 
     # #########################################################################
     # TODO(gp): -> TestGhCommands1
-
+    # TODO(ShaopengZ): hands at hgit.is_in_amp_as_supermodule().
+    @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(
-        not hgit.is_in_amp_as_supermodule(),
-        reason="Only run in amp as supermodule",
+        not hserver.is_dev_ck(),
+        reason="Run only in CK infra"
     )
     def test_gh_create_pr1(self) -> None:
         _gh_login()
         target = "gh_create_pr(ctx, repo_short_name='amp', title='test')"
         self._check_output(target)
-
+    
+    # TODO(Shaopeng Z): hangs when outside CK infra at is_in_amp_as_supermodule().
+    @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(
-        not hgit.is_in_amp_as_supermodule(),
-        reason="Only run in amp as supermodule",
+        not hserver.is_dev_ck(),
+        reason="Run only in CK infra"
     )
+
     def test_gh_create_pr2(self) -> None:
         _gh_login()
         target = "gh_create_pr(ctx, body='hello_world', repo_short_name='amp', title='test')"
         self._check_output(target)
 
+    # TODO(Shaopeng Z): hangs when outside CK infra at is_in_amp_as_supermodule().
+    @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(
-        not hgit.is_in_amp_as_supermodule(),
-        reason="Only run in amp as supermodule",
+        not hserver.is_dev_ck(),
+        reason="Run only in CK infra"
     )
     def test_gh_create_pr3(self) -> None:
         _gh_login()
@@ -358,7 +360,8 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 
     # TODO(Shaopengz): hangs at hgit.is_amp()
     @pytest.mark.skip
-    @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
+    @pytest.mark.requires_ck_infra
+    @pytest.mark.skipif(not hserver.is_dev_ck(), reason="Only run in CK infra")
     def test_gh_workflow_list(self) -> None:
         _gh_login()
         target = "gh_workflow_list(ctx, filter_by_branch='master')"

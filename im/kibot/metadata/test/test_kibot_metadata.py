@@ -3,6 +3,7 @@ import pytest
 import unittest.mock as mock
 
 import helpers.hunit_test as hunitest
+import helpers.hserver as hserver
 import im.kibot.metadata.load.kibot_metadata as imkmlkime
 import im.kibot.metadata.load.s3_backend as imkmls3ba
 import im.kibot.metadata.test.mocking.mock_kibot_metadata as mkmd
@@ -10,10 +11,14 @@ import im.kibot.metadata.test.mocking.mock_kibot_metadata as mkmd
 MAX_ROWS = 500
 
 
+@pytest.mark.requires_aws 
+@pytest.mark.requires_ck_infra
+@pytest.mark.skipif(
+    not hserver.is_dev_ck(),
+    reason="Run only in CK infra"
+)
 class TestKibotMetadata(hunitest.TestCase):
     
-    @pytest.mark.requires_aws 
-    @pytest.mark.requires_ck_infra
     def test_get_metadata_slow1(self) -> None:
         """
         Output contains all expected columns.

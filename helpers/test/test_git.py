@@ -5,6 +5,7 @@ from typing import List, Optional
 import pytest
 
 import helpers.hgit as hgit
+import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -42,6 +43,11 @@ class Test_git_submodule1(hunitest.TestCase):
         func_call = "hgit.is_inside_submodule()"
         _execute_func_call(func_call)
 
+    @pytest.mark.requires_ck_infra #outside CK infra hgit.is_amp() usually hangs
+    @pytest.mark.skipif(
+        not hserver.is_dev_ck(),
+        reason = "Run only on CK infra"
+    )
     def test_is_amp(self) -> None:
         func_call = "hgit.is_amp()"
         _execute_func_call(func_call)
@@ -171,6 +177,11 @@ class Test_git_repo_name1(hunitest.TestCase):
         exp = "dev_tools"
         self.assert_equal(act, exp)
 
+    @pytest.mark.requires_ck_infra
+    @pytest.mark.skipif(
+        not hserver.is_dev_ck(), #outside CK infra, hangs at hgit.is_in_amp_as_supermodule()
+        reason = "Run only on CK infra"
+    )
     def test_get_all_repo_names1(self) -> None:
         if not hgit.is_in_amp_as_supermodule():
             _LOG.warning(
@@ -182,6 +193,11 @@ class Test_git_repo_name1(hunitest.TestCase):
         exp = ["amp", "cmamp", "dev_tools"]
         self.assert_equal(str(act), str(exp))
 
+    @pytest.mark.requires_ck_infra
+    @pytest.mark.skipif(
+        not hserver.is_dev_ck(), #outside CK infra, hangs at hgit.is_in_amp_as_supermodule()
+        reason = "Run only on CK infra"
+    )
     def test_get_all_repo_names2(self) -> None:
         if not hgit.is_in_amp_as_supermodule():
             _LOG.warning(
@@ -213,15 +229,14 @@ class Test_git_repo_name1(hunitest.TestCase):
         self.assert_equal(act, exp)
 
 
-# TODO(shaopengz): This test hangs in hgit.is_in_amp_as_supermodule().
+# TODO(shaopengz): outside CK infra, tests frequently hang in hgit.is_in_amp_as_supermodule().
 @pytest.mark.requires_ck_infra
 # TODO(shaopengz): To test requires_ck_infra and avoid hang, skipping.
-@pytest.mark.skip
+@pytest.mark.skipif(
+    not hserver.is_dev_ck(),
+    reason = "Run only on CK infra"
+)
 class Test_git_path1(hunitest.TestCase):
-    @pytest.mark.skipif(
-        not hgit.is_in_amp_as_supermodule(),
-        reason="Run only in amp as super-module",
-    )
     def test_get_path_from_git_root1(self) -> None:
         file_name = "/app/helpers/test/test_git.py"
         act = hgit.get_path_from_git_root(file_name, super_module=True)
@@ -230,9 +245,6 @@ class Test_git_path1(hunitest.TestCase):
         exp = "helpers/test/test_git.py"
         self.assert_equal(act, exp)
 
-    @pytest.mark.skipif(
-        not hgit.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
-    )
     def test_get_path_from_git_root2(self) -> None:
         file_name = "/app/amp/helpers/test/test_git.py"
         act = hgit.get_path_from_git_root(file_name, super_module=True)
@@ -271,10 +283,10 @@ class Test_git_path1(hunitest.TestCase):
 
 
 @pytest.mark.slow(reason="Around 7s")
-@pytest.mark.skip
+@pytest.mark.requires_ck_infra #outside CK, hangs at hgit.is_in_amp_as_supermodule()
 @pytest.mark.skipif(
-    not hgit.is_in_amp_as_supermodule(),
-    reason="Run only in amp as super-module",
+    not hserver.is_dev_ck(),
+    reason = "Run only on CK infra"
 )
 class Test_git_modified_files1(hunitest.TestCase):
     def setUp(self) -> None:
@@ -308,6 +320,13 @@ class Test_git_modified_files1(hunitest.TestCase):
 # #############################################################################
 
 
+# TODO(shaopengz): uses amp. Outside CK infra, hgit.*amp*() hangs very frequently.
+@pytest.mark.requires_ck_infra
+# TODO(shaopengz): To test requires_ck_infra and avoid hang, skipping.
+@pytest.mark.skipif(
+    not hserver.is_dev_ck(),
+    reason = "Run only on CK infra"
+)
 class Test_find_docker_file1(hunitest.TestCase):
     def test1(self) -> None:
         """

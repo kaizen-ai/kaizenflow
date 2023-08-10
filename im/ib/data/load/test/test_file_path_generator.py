@@ -8,6 +8,7 @@ import pytest
 
 import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
+import helpers.hserver as hserver
 import im.common.data.types as imcodatyp
 import im.ib.data.config as imibdacon
 import im.ib.data.load.ib_file_path_generator as imidlifpge
@@ -16,6 +17,12 @@ AM_AWS_PROFILE = "am"
 _S3_BUCKET = hs3.get_s3_bucket_path(AM_AWS_PROFILE, add_s3_prefix=False)
 
 
+@pytest.mark.requires_aws 
+@pytest.mark.requires_ck_infra
+@pytest.mark.skipif(
+    not hserver.is_dev_ck(),
+    reason="Run only on CK infra"
+)
 class TestIbFilePathGenerator(hunitest.TestCase):
     """
     Test correctness of S3 IB paths.
@@ -25,8 +32,6 @@ class TestIbFilePathGenerator(hunitest.TestCase):
         super().setUp()
         self._file_path_generator = imidlifpge.IbFilePathGenerator()
 
-    @pytest.mark.requires_aws 
-    @pytest.mark.requires_ck_infra
     def test_get_latest_symbols_file1(self) -> None:
         """
         Get the latest file with the info.

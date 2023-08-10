@@ -6,12 +6,17 @@ import helpers.hpandas as hpandas
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.common.db.db_utils as imvcddbut
+import helpers.hserver as hserver
 import market_data.market_data_example as mdmadaex
 
 _LOG = logging.getLogger(__name__)
 
-
+# TODO(Shaopeng Z): hangs when outside CK infra.
 @pytest.mark.requires_ck_infra
+@pytest.mark.skipif(
+    not hserver.is_dev_ck(),
+    reason="Run only in CK infra"
+)
 class TestRealTimeMarketData2(
     imvcddbut.TestImDbHelper,
 ):

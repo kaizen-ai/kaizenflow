@@ -366,14 +366,14 @@ def run_fast_tests(  # type: ignore
     stage="dev",
     version="",
     pytest_opts="",
+    run_only_test_list_as_string="",
+    skip_test_list_as_string="",
     skip_submodules=False,
     coverage=False,
     collect_only=False,
     tee_to_file=False,
     n_threads="serial",
     git_clean_=False,
-    only_requires_ck_infra_tests=False,
-    skip_requires_ck_infra_tests=False,
 ):
     """
     Run fast tests. check `gh auth status` before invoking to avoid auth
@@ -381,6 +381,9 @@ def run_fast_tests(  # type: ignore
 
     :param stage: select a specific stage for the Docker image
     :param pytest_opts: additional options for `pytest` invocation. It can be empty
+    :param run_only_test_list_as_string: select markers to run. Takes comma-separated tokens,
+           e.g. --run_only_test_list_as_string = requires_ck_infra,requires_aws
+    :param skip_test_list_as_string: select markers to skip. Takes comma-separated tokens.
     :param skip_submodules: ignore all the dir inside a submodule
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed
@@ -388,23 +391,32 @@ def run_fast_tests(  # type: ignore
     :param n_threads: the number of threads to run the tests with
         - "auto": distribute the tests across all the available CPUs
     :param git_clean_: run `invoke git_clean --fix-perms` before running the tests
-    :param only_requires_ck_infra_tests: select ONLY ck infra related tests.
-    :param skip_requires_ck_infra_tests: skip ck infra related tests.
     :param kwargs: kwargs for `ctx.run`
     """
     hlitauti.report_task()
     test_list_name = "fast_tests"
-    hdbg.dassert(
-        not (skip_requires_ck_infra_tests and only_requires_ck_infra_tests),
-        msg="You can't use at the same time --skip_requires_ck_infra_tests and --only_requires_ck_infra_tests",
-    )
-    custom_marker = ""
-    if only_requires_ck_infra_tests:
-        _LOG.warning("Running ck infra related tests ONLY")
-        custom_marker = "requires_ck_infra"
-    if skip_requires_ck_infra_tests:
-        _LOG.warning("Skipping ck infra related tests")
-        custom_marker = "not requires_ck_infra"
+    run_only_test_list = run_only_test_list_as_string.split(',') if run_only_test_list_as_string else []
+    skip_test_list = skip_test_list_as_string.split(',') if skip_test_list_as_string else []
+    if run_only_test_list:
+        _LOG.warning(f"Running only the following fast tests: {run_only_test_list_as_string}")
+        #only need to test for conflict in run_ and skip_ if run_ is non-empty.
+        for item in run_only_test_list:
+            hdbg.dassert(
+                (item not in skip_test_list),
+            msg= f"You can't run and skip {item} at the same time",
+        )
+    if skip_test_list:
+        _LOG.warning(f"Skipping the following fast tests: {skip_test_list_as_string}")
+    # form marker strings for pytest -m using " and " and " not ".
+    run_only_marker_string = " and ".join(run_only_test_list)
+    skip_marker_string = " and ".join([("not " + item) for item in skip_test_list])
+    if run_only_marker_string:
+        if skip_marker_string:
+            custom_marker = run_only_marker_string + " and " + skip_marker_string
+        else:
+            custom_marker = run_only_marker_string
+    else:
+        custom_marker = skip_marker_string
     rc = _run_tests(
         ctx,
         test_list_name,

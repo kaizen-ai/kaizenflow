@@ -10,6 +10,7 @@ import helpers.henv as henv
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
+import helpers.hserver as hserver
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
@@ -204,6 +205,12 @@ class TestArchiveDbDataToS3(imvcddbut.TestImDbHelper, hmoto.S3Mock_TestCase):
         return pd.concat([binance_data, okx_data], ignore_index=True)
 
 
+@pytest.mark.requires_aws 
+@pytest.mark.requires_ck_infra
+@pytest.mark.skipif(
+    not hserver.is_dev_ck(),
+    reason="Run only on CK infra"
+)
 class TestArchiveDbDataToS3Mode(hunitest.TestCase):
     def _prepare_test_mode(self, mode: str) -> dict:
         """
@@ -233,8 +240,6 @@ class TestArchiveDbDataToS3Mode(hunitest.TestCase):
         imvcdaddts.imvcdeexut = umock.MagicMock()
         return args
 
-    @pytest.mark.requires_aws 
-    @pytest.mark.requires_ck_infra
     def test_archive_and_delete_mode(self):
         """
         Test that the archive_and_delete mode works.

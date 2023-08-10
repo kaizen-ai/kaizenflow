@@ -5,6 +5,7 @@ import pytest
 
 import helpers.henv as henv
 import helpers.hsql as hsql
+import helpers.hserver as hserver
 import im_v2.common.data.client as icdc
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.talos.data.client.talos_clients as imvtdctacl
@@ -342,10 +343,11 @@ class TestTalosHistoricalPqByTileClient1(icdc.ImClientTestCase):
 # TestTalosHistoricalPqByTileClient2
 # #############################################################################
 
-
+# TODO(Shaopeng Z): henv.execute_repo_config_code("is_CK_S3_available()") failed to skip
+# when running outside CK infra. Change condition to not is_dev_ck().  
 @pytest.mark.skipif(
-    not henv.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available",
+    not hserver.is_dev_ck(),
+    reason="Run only on CK infra"
 )
 @pytest.mark.requires_ck_infra
 class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
@@ -358,6 +360,10 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
     
     @pytest.mark.requires_aws 
     @pytest.mark.requires_ck_infra 
+    @pytest.mark.skipif(
+        not hserver.is_dev_ck(),
+        reason="Run only on CK infra"
+    )
     def test_read_data1(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -614,6 +620,10 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
    
     @pytest.mark.requires_aws 
     @pytest.mark.requires_ck_infra
+    @pytest.mark.skipif(
+        not hserver.is_dev_ck(),
+        reason="Run only on CK infra"
+    )
     def test_get_start_ts_for_symbol1(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -629,6 +639,10 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
     
     @pytest.mark.requires_aws 
     @pytest.mark.requires_ck_infra
+    @pytest.mark.skipif(
+        not hserver.is_dev_ck(),
+        reason="Run only on CK infra"
+    )
     def test_get_end_ts_for_symbol1(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -672,6 +686,12 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
 # #############################################################################
 
 
+# TODO(Shaopeng Z): hangs when outside CK infra.
+@pytest.mark.requires_ck_infra
+@pytest.mark.skipif(
+    not hserver.is_dev_ck(),
+    reason="Run only in CK infra"
+)
 class TestTalosSqlRealTimeImClient1(
     icdc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):

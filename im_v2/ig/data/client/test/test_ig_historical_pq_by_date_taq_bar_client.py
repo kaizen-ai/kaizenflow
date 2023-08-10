@@ -5,6 +5,7 @@ from typing import Any, Dict
 import pandas as pd
 
 import helpers.hpandas as hpandas
+import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
 import im_v2.ig.data.client.ig_historical_pq_by_date_taq_bar_client as imvidcihpbdtbc
 
@@ -12,6 +13,12 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Use ImClientTestCase.
+@pytest.mark.requires_aws 
+@pytest.mark.requires_ck_infra
+@pytest.mark.skipif(
+    not hserver.is_dev_ck(),
+    reason="Run only on CK infra"
+)
 class TestIgHistoricalPqByDateTaqBarClient1(hunitest.TestCase):
     def read_data_helper(self, *args: Any, **kwargs: Dict[str, Any]) -> None:
         # Execute.

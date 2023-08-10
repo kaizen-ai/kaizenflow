@@ -6,6 +6,7 @@ import pytest
 
 import helpers.hgit as hgit
 import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
 import helpers.lib_tasks_docker as hlitadoc
 import helpers.test.test_lib_tasks as httestlib
@@ -71,19 +72,17 @@ class Test_generate_compose_file1(hunitest.TestCase):
     def test3(self) -> None:
         self.helper(stage="prod", use_main_network=True)
 
-    # TODO(ShaopengZ): hangs at is_in_amp_as_supersubmodule().
+    # TODO(ShaopengZ): hangs at is_in_amp_as_supersubmodule(). Changed skip condition.
     @pytest.mark.skip
     @pytest.mark.skipif(
-        hgit.is_in_amp_as_submodule(), reason="Only run in amp directly"
+        not hserver.is_dev_ck(), reason="Only run on CK infra"
     )
     def test4(self) -> None:
         self.helper(stage="dev")
 
-    # TODO(ShaopengZ): hangs at is_in_amp_as_supersubmodule().
+    # TODO(ShaopengZ): hangs at is_in_amp_as_supersubmodule(). Changed skip condition.
     @pytest.mark.skip
-    @pytest.mark.skipif(
-        not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
-    )
+    @pytest.mark.skipif(not hserver.is_dev_ck(), reason="Run only on CK infra")
     def test5(self) -> None:
         self.helper(stage="dev")
 
@@ -92,7 +91,11 @@ class Test_generate_compose_file1(hunitest.TestCase):
 
 
 # TODO(ShaopengZ): hangs at is_in_amp_as_supersubmodule().
-@pytest.mark.skip
+@pytest.mark.requires_ck_infra
+@pytest.mark.skipif(
+    not hserver.is_dev_ck(),
+    reason="Run only on CK infra"
+)
 class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
     """
     Test `_get_docker_compose_cmd()`.
@@ -111,8 +114,11 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
     # TODO(gp): After using a single docker file as part of AmpTask2308
     #  "Update_amp_container" we can probably run these tests in any repo, so
     #  we should be able to remove this `skipif`.
+    # TODO(ShaopengZ): hgit.is_in_amp_as_submodule() hangs outside CK infra so
+    # I removed the hgit.is_in_amp_as_submodule(). 
     @pytest.mark.skipif(
-        not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
+        not hserver.is_dev_ck(),
+        reason="Run only on CK infra"
     )
     def test_docker_bash1(self) -> None:
         """
@@ -147,8 +153,9 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
         """
         self.check(act, exp)
 
+    @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(
-        not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
+        not hserver.is_dev_ck(), reason="Only run on CK infra"
     )
     def test_docker_bash2(self) -> None:
         """
@@ -176,10 +183,13 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
                 app \
                 bash """
         self.check(act, exp)
-
+    
+    @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(
-        not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
+        not hserver.is_dev_ck(),
+        reason="Run only on CK infra"
     )
+    
     def test_docker_bash3(self) -> None:
         """
         Command for docker_bash with some env vars.
@@ -213,9 +223,10 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
         """
         self.check(act, exp)
 
+    @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(
-        not hgit.is_in_amp_as_supermodule(),
-        reason="Only run in amp as supermodule",
+        not hserver.is_dev_ck(),
+        reason="Run only on CK infra"
     )
     def test_docker_bash4(self) -> None:
         base_image = ""
@@ -282,8 +293,10 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
         """
         self.check(act, exp)
 
+    @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(
-        not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
+        not hserver.is_dev_ck(),
+        reason="Run only on CK infra"
     )
     def test_docker_jupyter1(self) -> None:
         base_image = ""

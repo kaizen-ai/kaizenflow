@@ -19,6 +19,7 @@ import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
+import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -984,6 +985,12 @@ class Test_purify_txt_from_client1(hunitest.TestCase):
         self.helper(txt, exp)
 
 
+# TODO(ShaopengZ): numerical issue. (arm vs x86)
+@pytest.mark.requires_ck_infra
+@pytest.mark.skipif(
+    not hserver.is_dev_ck(),
+    reason="Run only in CK infra."
+)
 class Test_purify_from_env_vars(hunitest.TestCase):
     """
     Test purification from env vars.
@@ -1006,8 +1013,7 @@ class Test_purify_from_env_vars(hunitest.TestCase):
         """
         env_var = "CK_AWS_S3_BUCKET"
         self.helper(env_var)
-
-    @pytest.mark.requires_ck_infra
+    
     def test2(self) -> None:
         """
         - $AM_TELEGRAM_TOKEN

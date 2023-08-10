@@ -9,6 +9,7 @@ import helpers.henv as henv
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
+import helpers.hserver as hserver
 import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.client as icdc
@@ -1023,14 +1024,13 @@ class TestCcxtSqlRealTimeImClient1(
 # TestCcxtHistoricalPqByTileClient1
 # #############################################################################
 
-
-@pytest.mark.skipif(
-    not henv.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available",
-)
+# TODO(Shaopeng Z): change the skip condition to not hserver.is_dev_ck().
 @pytest.mark.requires_aws 
-#"run only if CK S3 is available", so whole class requires CK.
 @pytest.mark.requires_ck_infra 
+@pytest.mark.skipif(
+    not hserver.is_dev_ck(),
+    reason="Run only in CK infra"
+)
 class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
