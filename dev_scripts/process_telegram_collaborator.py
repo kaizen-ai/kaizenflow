@@ -85,22 +85,47 @@ def _remove_collaborator(user_id: str, group_id: str) -> None:
         )
 
 
+def _get_group_info() -> None:
+    """
+    Get group id from Telegram.
+    """
+    response = requests.get(f"{_TELEGRAM_API}{bot_token}/getUpdates", timeout=10,)
+    status_code = response.status_code
+    if status_code == 200: 
+        data = response.json()
+        group_messages = {}
+        for update in data["result"]:
+            if "message" in update and "chat" in update["message"]:
+                chat_id = update["message"]["chat"]["id"]
+                message = update["message"]
+                # Get the last message.
+                if "text" in message:
+                    group_messages[chat_id] = message["text"]
+        for group_id, last_message in group_messages.items():
+            print(f"Group ID: {group_id}, Last Message: {last_message}")
+    else:
+        _LOG.debug(
+            "Error get group id. Status code: %s",
+            status_code,
+        )
+
+
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--action",
         type=str,
-        choices=["add", "remove", "unban"],
+        choices=["add", "remove", "get"],
         required=True,
         help="Action to perform: add or remove",
     )
     parser.add_argument(
-        "--username", type=str, required=True, help="Username of the user"
+        "--username", type=str, required=False, help="Username of the user"
     )
     parser.add_argument(
         "--groupid",
         type=str,
-        required=True,
+        required=False,
         help="Id of the group to add to",
     )
     hparser.add_verbosity_arg(parser)
@@ -114,9 +139,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
     groupid = args.groupid
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     if action == "add":
+        hdbg.dassert_is_not(username, None)
+        hdbg.dassert_is_not(groupid, None)
         _invite_collaborator(username, groupid)
     elif action == "remove":
+        hdbg.dassert_is_not(username, None)
+        hdbg.dassert_is_not(groupid, None)
         _remove_collaborator(username, groupid)
+    elif action == "get":
+        _get_group_info()
     else:
         raise ValueError("Invalid action ='%s'" % action)
 

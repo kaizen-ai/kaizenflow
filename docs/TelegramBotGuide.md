@@ -28,14 +28,6 @@
     ```bash
     export TELEGRAM_BOT_TOKEN=YOUR_BOT_TOKEN
     ```
-  - Install the required libraries:
-    ```bash
-    > pip install python-telegram-bot
-    ```
-  - Install Dependencies:
-    ```bash
-    > pip install python-telegram-bot requests python-dotenv
-    ```
 
 # Get IDs
 
@@ -44,7 +36,7 @@
     ```bash
     > python dev_scripts/get_telegram_groupid.py
     ```
-- Get target user's ID:
+- Get target user ID:
 
 # Add / Remove
 
