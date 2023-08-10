@@ -99,9 +99,6 @@ This contains the absolute minimal amount of info to start developing
 - [Documentation about guidelines](docs/Documentation_about_guidelines.md)
   - How to write guidelines, format documentation, convert Gdocs to markdown
     files and vice versa
-    
-- [Glossary](docs/Glossary.md)
-  - Explanations of commonly used terms and abbreviations
 
 - [Imports and packages](docs/Imports_and_packages.md)
   - How to import code, use packages, and resolve circular dependencies
@@ -144,6 +141,8 @@ This contains a set of resources that over time will make 10x more productive
 - [Telegram](/docs/Telegram.md)
 
 - [Email](/docs/Email.md)
+    
+- [Glossary](docs/Glossary.md)
 
 # DeFi: start developing
 
