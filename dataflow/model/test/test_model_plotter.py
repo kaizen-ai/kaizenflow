@@ -18,8 +18,10 @@ _LOG = logging.getLogger(__name__)
 
 
 def get_example_model_plotter() -> Tuple[dtfmomoplo.ModelPlotter, dtfmomoeva.ModelEvaluator, cconfig.Config]:
+    """
+    Get the ModelPlotter for unit testing and gallery demo.
+    """
     evaluator, eval_config = cdmttme.get_example_model_evaluator()
-    # Build the ModelPlotter.
     plotter = dtfmomoplo.ModelPlotter(evaluator)
     return plotter, evaluator, eval_config
 
