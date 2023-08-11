@@ -33,7 +33,7 @@ class Test_quantize_shares(hunitest.TestCase):
 
     def test_no_quantization(self) -> None:
         shares = self.get_shares()
-        quantization = "no_quantization"
+        quantization = 30
         quantized_shares = cfishqua.quantize_shares(shares, quantization)
         actual = hpandas.df_to_str(quantized_shares, num_rows=None)
         expected = r"""
@@ -49,7 +49,7 @@ class Test_quantize_shares(hunitest.TestCase):
 
     def test_round_to_nearest_share(self) -> None:
         shares = self.get_shares()
-        quantization = "nearest_share"
+        quantization = 0
         quantized_shares = cfishqua.quantize_shares(shares, quantization)
         actual = hpandas.df_to_str(quantized_shares, num_rows=None)
         expected = r"""
@@ -65,7 +65,7 @@ class Test_quantize_shares(hunitest.TestCase):
 
     def test_round_to_nearest_lot(self) -> None:
         shares = self.get_shares()
-        quantization = "nearest_lot"
+        quantization = -2
         quantized_shares = cfishqua.quantize_shares(shares, quantization)
         actual = hpandas.df_to_str(quantized_shares, num_rows=None)
         expected = r"""
@@ -81,13 +81,15 @@ class Test_quantize_shares(hunitest.TestCase):
 
     def test_asset_specific_rounding(self) -> None:
         shares = self.get_shares()
-        quantization = "asset_specific"
+        quantization = None
         asset_id_to_decimals = {
             101: -1,
             202: 1,
         }
         quantized_shares = cfishqua.quantize_shares(
-            shares, quantization, asset_id_to_decimals
+            shares,
+            quantization,
+            asset_id_to_decimals=asset_id_to_decimals,
         )
         actual = hpandas.df_to_str(quantized_shares, num_rows=None)
         expected = r"""
@@ -104,13 +106,15 @@ class Test_quantize_shares(hunitest.TestCase):
 
     def test_asset_specific_rounding_for_series(self) -> None:
         shares = self.get_shares().iloc[1]
-        quantization = "asset_specific"
+        quantization = None
         asset_id_to_decimals = {
             101: -1,
             202: 1,
         }
         quantized_shares = cfishqua.quantize_shares(
-            shares, quantization, asset_id_to_decimals
+            shares,
+            quantization,
+            asset_id_to_decimals=asset_id_to_decimals,
         )
         actual = hpandas.df_to_str(quantized_shares, num_rows=None)
         expected = r"""

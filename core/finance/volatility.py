@@ -14,6 +14,35 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
+def _validate_data(
+    df: pd.DataFrame,
+    cols: List[str],
+) -> None:
+    """
+    Ensure that `cols` belong to `df` and check types.
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_container_type(cols, container_type=list, elem_type=str)
+    hdbg.dassert_is_subset(cols, df.columns)
+
+
+def _package_var(
+    srs: pd.Series,
+    take_square_root: bool,
+    name_prefix: str,
+) -> pd.DataFrame:
+    """
+    Maybe convert var to vol, name srs appropriately, and convert to df.
+    """
+    hdbg.dassert_isinstance(srs, pd.Series)
+    if take_square_root:
+        srs = np.sqrt(srs)
+        srs.name = name_prefix + "_vol"
+    else:
+        srs.name = name_prefix + "_var"
+    return srs.to_frame()
+
+
 def estimate_squared_volatility(
     df: pd.DataFrame,
     estimators: List[str],
@@ -33,8 +62,8 @@ def estimate_squared_volatility(
             vol = compute_close_var(
                 df,
                 close_col,
-                apply_log,
-                take_square_root,
+                apply_log=apply_log,
+                take_square_root=take_square_root,
             )
         elif vol_name == "parkinson":
             vol = compute_parkinson_var(
@@ -64,6 +93,7 @@ def estimate_squared_volatility(
 def compute_close_var(
     df: pd.DataFrame,
     close_col: str,
+    *,
     apply_log: bool = True,
     take_square_root: bool = False,
 ) -> pd.DataFrame:
@@ -97,6 +127,8 @@ def compute_parkinson_var(
     df: pd.DataFrame,
     high_col: str,
     low_col: str,
+    # TODO(gp): Add *
+    # *,
     apply_log: bool = True,
     take_square_root: bool = False,
 ) -> pd.DataFrame:
@@ -137,6 +169,8 @@ def compute_garman_klass_var(
     high_col: str,
     low_col: str,
     close_col: str,
+    # TODO(gp): Add *
+    # *,
     apply_log: bool = True,
     take_square_root: bool = False,
 ) -> pd.DataFrame:
@@ -177,32 +211,3 @@ def compute_garman_klass_var(
 
 
 # TODO(Paul): Implement the Rogers-Satchell estimator
-
-
-def _validate_data(
-    df: pd.DataFrame,
-    cols: List[str],
-) -> None:
-    """
-    Ensure that `cols` belong to `df` and check types.
-    """
-    hdbg.dassert_isinstance(df, pd.DataFrame)
-    hdbg.dassert_container_type(cols, container_type=list, elem_type=str)
-    hdbg.dassert_is_subset(cols, df.columns)
-
-
-def _package_var(
-    srs: pd.Series,
-    take_square_root: bool,
-    name_prefix: str,
-) -> pd.DataFrame:
-    """
-    Maybe convert var to vol, name srs appropriately, and convert to df.
-    """
-    hdbg.dassert_isinstance(srs, pd.Series)
-    if take_square_root:
-        srs = np.sqrt(srs)
-        srs.name = name_prefix + "_vol"
-    else:
-        srs.name = name_prefix + "_var"
-    return srs.to_frame()

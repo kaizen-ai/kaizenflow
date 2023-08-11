@@ -19,11 +19,12 @@ _LOG = logging.getLogger(__name__)
 
 def quantize_holdings(
     holdings: pd.DataFrame,
-    quantization: str,
+    quantization: Optional[int],
+    *,
     asset_id_to_decimals: Optional[Dict[int, int]] = None,
 ) -> pd.DataFrame:
     """
-    Keep factional holdings or round to nearest share or lot.
+    Keep factional holdings or round to the nearest share or lot.
     """
     # Perform sanity-checks.
     hpandas.dassert_time_indexed_df(
@@ -32,7 +33,7 @@ def quantize_holdings(
     quantized_holdings = cfishqua.quantize_shares(
         holdings,
         quantization,
-        asset_id_to_decimals,
+        asset_id_to_decimals=asset_id_to_decimals,
     )
     return quantized_holdings
 
@@ -74,9 +75,9 @@ def adjust_holdings_for_overnight(
         eod_timestamps = timestamps.groupby(lambda x: x.date()).max()
         holdings.loc[eod_timestamps["timestamp"], :] = 0.0
         holdings.loc[bod_timestamps["timestamp"], :] *= 0
-    # TODO(Paul): Give the user the option of supplying the share
-    # adjustment factors. Infer as below if they are not supplied.
     elif adjust_for_splits:
+        # TODO(Paul): Give the user the option of supplying the share
+        #  adjustment factors. Infer as below if they are not supplied.
         split_factors = cfibapro.infer_splits(price)
         splits = split_factors.merge(
             bod_timestamps, left_index=True, right_index=True
@@ -106,7 +107,7 @@ def adjust_holdings_for_underfills(
     """
     Adapt holdings by taking into account underfills.
     """
-    # Perform sanity-checks
+    # Perform sanity-checks.
     dfs = [holdings, mark_to_market_price, buy_price, sell_price]
     for df in dfs:
         hpandas.dassert_time_indexed_df(
