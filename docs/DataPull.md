@@ -1,5 +1,22 @@
 # DataPull
 
+<!-- toc -->
+
+- [Asset representation](#asset-representation)
+- [ETL](#etl)
+- [Data pipelines](#data-pipelines)
+- [General conventions](#general-conventions)
+- [Data set downloading and handling](#data-set-downloading-and-handling)
+- [Data on-boarding flow](#data-on-boarding-flow)
+- [Data QA workflows](#data-qa-workflows)
+- [Derived data workflows](#derived-data-workflows)
+- [Data formats](#data-formats)
+- [Sandbox](#sandbox)
+- [Data client stack](#data-client-stack)
+- [Checklist for releasing a new data set](#checklist-for-releasing-a-new-data-set)
+
+<!-- tocstop -->
+
 ## Asset representation
 
 TODO(gp): Ideally we want to use a single schema like `Vendor:ExchangeId:Asset`
@@ -732,37 +749,62 @@ It is possible to use a long format
 
 **Examples**.
 
-+------+---------+----------------+------------+------+-------+-----+ | ** | **
-| _ | \*\*F | _ | * | \*\* | | Symb | Dataset | *Description** | requency** |
-*Das | *Data | Act | | olic | sign | | | hboa | locat | ive | | na | ature** | |
-| rd** | ion** | ?** | | me\*\* | | | | | | |
-+======+=========+================+============+======+=======+=====+ | hist |
-His | - | - All of | | s3:/ | Yes | | _dl1 | torical | | the | | /\... | | | | d
-| | past | | | | | | ownload | | day | | | | | | | | data | | | | | | | | | | |
-| | | | | - Once a | | | | | | | | day at | | | | | | | | | | | | | | | |
-0:00:00 | | | | | | | | UTC | | | |
-+------+---------+----------------+------------+------+-------+-----+ | rt | Re
-| - | Every | | s3:/ | Yes | | \_dl1 | al-time | | minute | | /\... | | | | d |
-| | | | | | | ownload | | | | | |
-+------+---------+----------------+------------+------+-------+-----+ | rt | Re
-| Check QA | Every 5 | | s3:/ | Yes | | \_dl1 | al-time | metrics for | minutes
-| | /\... | | | .qa1 | QA | dl1 | | | | | | | check | | | | | |
-+------+---------+----------------+------------+------+-------+-----+ | h |
-Check | Check | Once a day | | | | | ist_ | of | consistency | at 0:15:00 | | |
-| | dl1. | his | between | UTC | | | | | rt_d | torical | historical and | | | |
-| | l1.c | vs | real-time CCXT | | | | | | heck | re | binance data | | | | | |
-| al-time | | | | | |
-+------+---------+----------------+------------+------+-------+-----+ | rt | Re
-| - vendor | Every | | s3:/ | Yes | | \_dl2 | al-time | =CryptoChassis | minute
-| | /\... | | | | d | | | | | | | | ownload | - ex | | | | | | | |
-change=Binance | | | | | | | | | | | | | | | | - data | | | | | | | | | | | | |
-| | | type=bid/ask | | | | |
-+------+---------+----------------+------------+------+-------+-----+ | rt | Re
-| Check QA | Every 5 | | s3:/ | Yes | | \_dl2 | al-time | metrics for | minutes
-| | /\... | | | .qa2 | QA | dl3 | | | | | | | check | | | | | |
-+------+---------+----------------+------------+------+-------+-----+ | rt_d |
-Cro | Compare data | Every 5 | | | | | l1_d | ss-data | from rt_dl1 | minutes |
-| | | | l2.c | QA | and rt_dl2 | | | | | | heck | check | | | | | |
++------+---------+----------------+------------+------+-------+-----+
+| **   | **      | *              | **F        | *    | *     | **  |
+| Symb | Dataset | *Description** | requency** | *Das | *Data | Act |
+| olic | sign    |                |            | hboa | locat | ive |
+| na   | ature** |                |            | rd** | ion** | ?** |
+| me** |         |                |            |      |       |     |
++======+=========+================+============+======+=======+=====+
+| hist | His     | -              | -   All of |      | s3:/  | Yes |
+| _dl1 | torical |                |     the    |      | /\... |     |
+|      | d       |                |     past   |      |       |     |
+|      | ownload |                |     day    |      |       |     |
+|      |         |                |     data   |      |       |     |
+|      |         |                |            |      |       |     |
+|      |         |                | -   Once a |      |       |     |
+|      |         |                |     day at |      |       |     |
+|      |         |                |            |      |       |     |
+|      |         |                |    0:00:00 |      |       |     |
+|      |         |                |     UTC    |      |       |     |
++------+---------+----------------+------------+------+-------+-----+
+| rt   | Re      | -              | Every      |      | s3:/  | Yes |
+| _dl1 | al-time |                | minute     |      | /\... |     |
+|      | d       |                |            |      |       |     |
+|      | ownload |                |            |      |       |     |
++------+---------+----------------+------------+------+-------+-----+
+| rt   | Re      | Check QA       | Every 5    |      | s3:/  | Yes |
+| _dl1 | al-time | metrics for    | minutes    |      | /\... |     |
+| .qa1 | QA      | dl1            |            |      |       |     |
+|      | check   |                |            |      |       |     |
++------+---------+----------------+------------+------+-------+-----+
+| h    | Check   | Check          | Once a day |      |       |     |
+| ist_ | of      | consistency    | at 0:15:00 |      |       |     |
+| dl1. | his     | between        | UTC        |      |       |     |
+| rt_d | torical | historical and |            |      |       |     |
+| l1.c | vs      | real-time CCXT |            |      |       |     |
+| heck | re      | binance data   |            |      |       |     |
+|      | al-time |                |            |      |       |     |
++------+---------+----------------+------------+------+-------+-----+
+| rt   | Re      | -   vendor     | Every      |      | s3:/  | Yes |
+| _dl2 | al-time | =CryptoChassis | minute     |      | /\... |     |
+|      | d       |                |            |      |       |     |
+|      | ownload | -   ex         |            |      |       |     |
+|      |         | change=Binance |            |      |       |     |
+|      |         |                |            |      |       |     |
+|      |         | -   data       |            |      |       |     |
+|      |         |                |            |      |       |     |
+|      |         |   type=bid/ask |            |      |       |     |
++------+---------+----------------+------------+------+-------+-----+
+| rt   | Re      | Check QA       | Every 5    |      | s3:/  | Yes |
+| _dl2 | al-time | metrics for    | minutes    |      | /\... |     |
+| .qa2 | QA      | dl3            |            |      |       |     |
+|      | check   |                |            |      |       |     |
++------+---------+----------------+------------+------+-------+-----+
+| rt_d | Cro     | Compare data   | Every 5    |      |       |     |
+| l1_d | ss-data | from rt_dl1    | minutes    |      |       |     |
+| l2.c | QA      | and rt_dl2     |            |      |       |     |
+| heck | check   |                |            |      |       |     |
 +------+---------+----------------+------------+------+-------+-----+
 
 ## Derived data workflows

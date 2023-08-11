@@ -1,6 +1,6 @@
 # How to integrate repos
 
-<!--ts-->
+<!--toc-->
 
 - [Concepts](#concepts)
 - [Invariants for the integration set-up](#invariants-for-the-integration-set-up)
@@ -10,7 +10,7 @@
   - [Double-check the integration](#double-check-the-integration)
   - [Run tests](#run-tests)
 
-<!--te-->
+<!--toc-->
 
 # Concepts
 

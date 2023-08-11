@@ -1,4 +1,37 @@
-# DataFlow specification
+# DataFlow
+
+<!-- toc -->
+
+  * [Config](#config)
+    + [Config representation and properties](#config-representation-and-properties)
+    + [Assigning and getting Config items](#assigning-and-getting-config-items)
+  * [Time semantics](#time-semantics)
+  * [Different views of System components](#different-views-of-system-components)
+  * [Architecture](#architecture)
+    + [Component invariants](#component-invariants)
+  * [DataFlow computing](#dataflow-computing)
+    + [Template configs](#template-configs)
+  * [DataFlow Computation Semantics](#dataflow-computation-semantics)
+  * [Backtest and Experiment](#backtest-and-experiment)
+    + [`ConfigBuilder`](#configbuilder)
+    + [Experiment in strict and loose sense](#experiment-in-strict-and-loose-sense)
+    + [`Backtest`](#backtest)
+    + [`BacktestConfig`](#backtestconfig)
+    + [`Experiment`](#experiment)
+    + [Tiled backtest / experiment](#tiled-backtest--experiment)
+    + [Tiled vs Tile](#tiled-vs-tile)
+    + [Experiment (list) manager](#experiment-list-manager)
+    + [`ExperimentBuilder`](#experimentbuilder)
+    + [`BacktestRunner`](#backtestrunner)
+    + [System](#system)
+    + [SystemRunner](#systemrunner)
+    + [System_TestCase](#system_testcase)
+    + [Data structures](#data-structures)
+    + [Major software components](#major-software-components)
+- [OMS](#oms)
+  * [High-level invariants](#high-level-invariants)
+
+<!-- tocstop -->
 
 ## Config
 

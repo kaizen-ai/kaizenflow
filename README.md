@@ -106,7 +106,7 @@ This contains the absolute minimal amount of info to start developing
   - How to import code, use packages, and resolve circular dependencies
 
 - [How to integrate repos](docs/How_to_integrate_repos.md)
-  - Detailed integration workflow
+  - Detailed instruction on how to integrate repos
 
 # Learn how to become efficient at developing
 
@@ -158,6 +158,8 @@ This contains a set of resources that over time will make 10x more productive
 - [DataPull](docs/DataPull.md)
 
 - [Workflows](docs/Workflows.md)
+
+- [Type Hints](docs/Type_hints.md)
 
 # DeFi: start developing
 
