@@ -31,6 +31,7 @@
 - [How to test a package in a Docker container](#how-to-test-a-package-in-a-docker-container)
   * [Hacky approach to patch up a container](#hacky-approach-to-patch-up-a-container)
 - [How to release a Docker image](#how-to-release-a-docker-image)
+  * [Multi-architecture build](#multi-architecture-build)
   * [Stages](#stages)
     + [Local](#local)
     + [Dev](#dev)
@@ -406,6 +407,35 @@
     `prod` image
 - We try to use the same flow, conventions, and code for all the containers
   (e.g., amp, cmamp, dev_tools, opt).
+
+## Multi-architecture build
+
+- To build multi-arch (e.g., `x86`, `arm`) docker image using
+  `docker_build_local_image` we should use `--multi-build` flag
+
+  - To build for specific platforms specify the platform name:
+
+    - For `x86` - `linux/amd64`
+    - For `arm` - `linux/arm64`
+
+      ```
+      > i docker_build_local_image --version <VERSION> --multi-build --platform <PLATFORM NAME>
+      ```
+
+  - To build for both `arm` and `x86` architectures:
+
+    ```
+    > i docker_build_local_image --version <VERSION> --multi-build --platform linux/amd64,linux/arm64
+    ```
+
+  - Multi-arch images are built using `docker buildx` which do not generate any
+    local image by default
+  - Images are pushed to the remote registry and pulled for testing and usage
+  - To tag the local image as dev and push it to the registry, use
+
+    ```
+    > i docker_tag_push_multi_build_local_image_as_dev --version <VERSION>
+    ```
 
 ## Stages
 
@@ -967,11 +997,14 @@
 
 TODO(gp, Vitalii): Turn this into a description of the release flow
 
-Let's assume that we want to release dev image with version 1.2.3: 
-- un `i docker_build_local_image --tag-name 1.2.3` 
+Let's assume that we want to release dev image with version 1.2.3:
 
-Initially we thought about using Git tags to mark releases points in the source 
-repo for `dev` and `prod` releases (but not `local` since `local` is reserved to 
+```
+> i docker_build_local_image --tag-name 1.2.3
+```
+
+Initially we thought about using Git tags to mark releases points in the source
+repo for `dev` and `prod` releases (but not `local` since `local` is reserved to
 private use by a user).
 
 This approach is elegant, but it has some corner cases when used with containers
@@ -1074,10 +1107,10 @@ INV: version becomes mandatory in the release flow
 - This requires a lot of cosmetic changes to the code since now it's optional,
   but it's worth make the changes
 
-We need to ensure that version can only be created going fwd. 
+We need to ensure that version can only be created going fwd.
 
-We can do a comparison of the current version with the new version as tuples 
-(we could use semver but it feels not needed)
+We can do a comparison of the current version with the new version as tuples (we
+could use semver but it feels not needed)
 
 - The workflows are:
   - Build a local image
