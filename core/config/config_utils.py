@@ -4,9 +4,11 @@ Import as:
 import core.config.config_utils as ccocouti
 """
 
+import argparse
 import collections
 import copy
 import logging
+import re
 from typing import Any, Iterable, List, Optional
 
 import pandas as pd
@@ -100,6 +102,70 @@ def sort_config_string(txt: str) -> str:
         [k + hprint.indent("\n".join(chunks[k])) for k in chunks.keys()]
     )
     return chunks
+
+
+def apply_config_overrides(
+    config: cconconf.Config,
+    args: argparse.Namespace,
+) -> cconconf.Config:
+    """
+    Update the values in a config using the command line options.
+
+    :param config: config to update
+    :param args: cmd line parameters
+    :return: updated version of a config
+    """
+    args_dict = vars(args)
+    _LOG.debug("args_dict=%s", args_dict)
+    if args_dict["set_config_value"] is not None:
+        for arg_as_str in args_dict["set_config_value"]:
+            _LOG.debug("arg_as_str=%s", arg_as_str)
+            # E.g., `("foo","bar"),(bool("True"))``.
+            re_pattern = r"^\s*\((\S+)\),\((.*)\)\s*$"
+            match = re.match(re_pattern, arg_as_str)
+            n_groups_matches = len(match.groups())
+            hdbg.dassert_eq(
+                2,
+                n_groups_matches,
+                msg=f"Must be exactly 2 groups matched, found={n_groups_matches}",
+            )
+            key, value = match.groups()
+            # Convert the key into a tuple.
+            key = eval("(" + key + ")")
+            # Run the Python expression to handle types, e.g., (int(3)).
+            new_value = eval(value)
+            # TODO(Grisha): not sure we want to pass a `Dict`.
+            if isinstance(new_value, dict):
+                # Convert to a `Config` because a config's value cannot be a dict.
+                new_value = cconconf.Config.from_dict(new_value)
+            # Inform a user about the override.
+            if key in config:
+                old_value = config[key]
+                if new_value != old_value:
+                    _LOG.warning(
+                        "Overwriting compound_key=%s old_value=%s with new_value=%s",
+                        key,
+                        old_value,
+                        new_value,
+                    )
+            # TODO(Grisha): use `config.update()` instead of `config[key] = value`.
+            config[key] = new_value
+    return config
+
+
+def add_config_override_args(
+    parser: argparse.ArgumentParser
+) -> argparse.ArgumentParser:
+    parser.add_argument(
+        "--set_config_value",
+        action="append",
+        # key,value = `("target_gmv"),(int(10000))`
+        # key,value = `("portfolio", "style"),("longitudinal")`
+        # key,value = `("portfolio", "val"),(int(3))`
+        help="(config tuple),(value as a Python expression)",
+        type=str,
+    )
+    return parser
 
 
 # #############################################################################

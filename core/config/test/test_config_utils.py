@@ -1,3 +1,4 @@
+import argparse
 import collections
 from typing import Any
 
@@ -84,6 +85,32 @@ class Test_validate_configs1(hunitest.TestCase):
         config_list = cconfig.ConfigList()
         config_list.configs = configs
         config_list.validate_config_list()
+
+
+# #############################################################################
+# Test_apply_config_overrides1
+# #############################################################################
+
+
+class Test_apply_config_overrides1(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Verify that config values are updated correctly.
+        """
+        # Set test config and values to update.
+        config = _get_test_config1().copy()
+        val1 = "tanh"
+        val2 = "Natural Gas"
+        args = argparse.Namespace(
+            set_config_value=[
+                f'("build_model","activation"),("{val1}")',
+                f'("build_targets","target_asset"),("{val2}")',
+            ]
+        )
+        # Run.
+        actual = cconfig.apply_config_overrides(config, args)
+        self.assertEqual(actual["build_model"]["activation"], val1)
+        self.assertEqual(actual["build_targets"]["target_asset"], val2)
 
 
 # #############################################################################

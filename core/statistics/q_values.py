@@ -60,7 +60,7 @@ def estimate_q_values(
         # Fit natural cubic spline.
         tck = sp.interpolate.splrep(lambdas, pi0, k=3)
         pi0 = sp.interpolate.splev(lambdas[-1], tck)
-        _LOG.info("pi0=%.3f (estimated proportion of null features" % pi0)
+        _LOG.info("pi0=%.3f (estimated proportion of null features)" % pi0)
         if pi0 > 1:
             _LOG.info("pi0 > 1 (%.3f), clipping to 1" % pi0)
             pi0 = 1.0

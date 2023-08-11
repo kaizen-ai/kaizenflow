@@ -10,6 +10,7 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): -> _get_data?
 def get_data() -> pd.DataFrame:
     start_timestamp = pd.Timestamp("2022-01-10 09:30", tz="America/New_York")
     end_timestamp = pd.Timestamp("2022-01-10 10:00", tz="America/New_York")
@@ -23,6 +24,7 @@ def get_data() -> pd.DataFrame:
     return data
 
 
+# TODO(gp): -> _get_limit_order_prices?
 def get_limit_order_prices(
     data: pd.DataFrame,
     *,
@@ -176,7 +178,7 @@ end_datetime
 
 
 class Test_generate_limit_orders_and_estimate_execution1(hunitest.TestCase):
-    def test1(self):
+    def test1(self) -> None:
         data = get_data()
         bid_col = "bid"
         ask_col = "ask"

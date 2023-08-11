@@ -5,7 +5,7 @@ import core.finance.prediction_processing as cfiprpro
 """
 import datetime
 import logging
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -37,13 +37,12 @@ def compute_bar_start_timestamps(
     return srs
 
 
+# TODO(Paul): Add unit tests.
 def compute_epoch(
-    data: Union[pd.Series, pd.DataFrame], unit: Optional[str] = None
+    data: Union[pd.Series, pd.DataFrame], *, unit: Optional[str] = None
 ) -> Union[pd.Series, pd.DataFrame]:
     """
     Convert datetime index times to minutes, seconds, or nanoseconds.
-
-    TODO(Paul): Add unit tests.
 
     :param data: a dataframe or series with a `DatetimeIndex`
     :param unit: unit for reporting epoch. Supported units are:
@@ -79,6 +78,7 @@ def stack_prediction_df(
     prediction_col: str,
     ath_start: datetime.time,
     ath_end: datetime.time,
+    *,
     remove_weekends: bool = True,
 ) -> pd.DataFrame:
     """
@@ -120,14 +120,14 @@ def stack_prediction_df(
     bar_start_ts.index = bar_start_ts
     epoch = compute_epoch(df).squeeze().rename("minute_index")
     # Extract market data (price, return, vwap).
-    dfs = []
+    dfs: List[pd.DataFrame] = []
     dfs.append(
         df[[close_price_col]].rename(columns={close_price_col: "eob_close"})
     )
     dfs.append(df[[vwap_col]].rename(columns={vwap_col: "eob_vwap"}))
     dfs.append(df[[ret_col]].rename(columns={ret_col: "eob_ret"}))
     # Perform time shifts for previous-bar price and move prediction to
-    # begining-of-bar semantic.
+    # beginning-of-bar semantic.
     dfs.append(
         df[[close_price_col]]
         .shift(1)
@@ -143,7 +143,7 @@ def stack_prediction_df(
     # Maybe remove weekends.
     if remove_weekends:
         out_df = out_df[out_df.index.day_of_week < 5]
-    # TODO: Handle NaNs.
+    # TODO(Paul): Handle NaNs.
     # Stack data and annotate id column.
     out_df = (
         out_df.stack().reset_index(level=1).rename(columns={idx_name: id_col})

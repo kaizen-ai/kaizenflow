@@ -34,7 +34,7 @@ class Test_quantize_holdings(hunitest.TestCase):
 
     def test_no_quantization(self) -> None:
         holdings = self.get_holdings()
-        quantization = "no_quantization"
+        quantization = 30
         holdings = cfinhold.quantize_holdings(holdings, quantization)
         actual = hpandas.df_to_str(holdings, num_rows=None)
         expected = r"""
@@ -50,7 +50,7 @@ class Test_quantize_holdings(hunitest.TestCase):
 
     def test_round_to_nearest_share(self) -> None:
         holdings = self.get_holdings()
-        quantization = "nearest_share"
+        quantization = 0
         holdings = cfinhold.quantize_holdings(holdings, quantization)
         actual = hpandas.df_to_str(holdings, num_rows=None)
         expected = r"""
@@ -66,7 +66,7 @@ class Test_quantize_holdings(hunitest.TestCase):
 
     def test_round_to_nearest_lot(self) -> None:
         holdings = self.get_holdings()
-        quantization = "nearest_lot"
+        quantization = -2
         holdings = cfinhold.quantize_holdings(holdings, quantization)
         actual = hpandas.df_to_str(holdings, num_rows=None)
         expected = r"""
