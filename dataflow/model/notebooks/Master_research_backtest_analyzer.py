@@ -22,10 +22,7 @@ import datetime
 import logging
 import os
 
-import pandas as pd
-
 import core.config as cconfig
-import core.finance as cofinanc
 import core.plotting as coplotti
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
@@ -33,7 +30,6 @@ import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
-import helpers.hsql as hsql
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -56,30 +52,28 @@ dir_name = os.path.join(
 config = {
     "dir_name": dir_name,
     "start_date": datetime.date(2000, 1, 1),
-    "end_date": datetime.date(2000, 1, 2),
+    "end_date": datetime.date(2000, 1, 31),
     "asset_id_col": "asset_id",
-    "pnl_resampling_frequency": "5T",
+    "pnl_resampling_frequency": "15T",
     "annotate_forecasts_kwargs": {
-        # "bulk_frac_to_remove": 0.0,
-        # "bulk_fill_method": "zero",
-        # "target_gmv": 1e6,
-        # "dollar_neutrality": "gaussian_rank",
-        "quantization": "nearest_share",
-        "burn_in_bars": 3,
         "style": "longitudinal",
+        "quantization": 30,
+        "liquidate_at_end_of_day": False,
+        "initialize_beginning_of_day_trades_to_zero": False,
+        "burn_in_bars": 3,
+        "compute_extended_stats": True,
+        "target_dollar_risk_per_name": 1e2,
+        "modulate_using_prediction_magnitude": True,
     },
-    "regress_config": {
-        "target_col": "prediction",
-        # "feature_cols": [1, 2, 3, 4, 5, 6, "prediction"],
-        "feature_cols": ["vwap.ret_0.vol_adj"],
-        "feature_lag": 2,
-        "batch_size": 50,
-    },
-    # TODO(Grisha): consider inferring column names from a `DagBuilder` object.
     "column_names": {
         "price_col": "vwap",
         "volatility_col": "vwap.ret_0.vol",
-        "prediction_col": "feature1",
+        "prediction_col": "prediction",
+    },
+    "bin_annotated_portfolio_df_kwargs": {
+        "proportion_of_data_per_bin": 0.2,
+        "output_col": "pnl_in_bps",
+        "normalize_prediction_col_values": False,
     },
 }
 config = cconfig.Config().from_dict(config)
@@ -129,7 +123,7 @@ single_tile_df = dtfmod.process_parquet_read_df(
 )
 
 # %%
-single_tile_df.columns.levels[0]
+single_tile_df.columns.levels[0].to_list()
 
 # %%
 single_tile_df.head(3)
@@ -138,37 +132,34 @@ single_tile_df.head(3)
 # # Compute portfolio bar metrics
 
 # %%
-fep = dtfmod.ForecastEvaluatorFromPrices(
-    **config["column_names"],
-)
-
-# %%
-# Create backtest dataframe tile iterator.
-backtest_df_iter = dtfmod.yield_processed_parquet_tiles_by_year(
+portfolio_df, bar_metrics = dtfmod.annotate_forecasts_by_tile(
     config["dir_name"],
     config["start_date"],
     config["end_date"],
     config["asset_id_col"],
-    data_cols=fep.get_cols(),
+    config["column_names"]["price_col"],
+    config["column_names"]["volatility_col"],
+    config["column_names"]["prediction_col"],
     asset_ids=None,
+    annotate_forecasts_kwargs=config["annotate_forecasts_kwargs"].to_dict(),
+    return_portfolio_df=True,
 )
-# Process the dataframes in the interator.
-bar_metrics = []
-for df in backtest_df_iter:
-    _, bar_metrics_slice = fep.annotate_forecasts(
-        df,
-        # bulk_frac_to_remove=fep_config["bulk_frac_to_remove"],
-        # bulk_fill_method=fep_config["bulk_fill_method"],
-        # target_gmv=fep_config["target_gmv"],
-        **config["annotate_forecasts_kwargs"],
-    )
-    bar_metrics.append(bar_metrics_slice)
-bar_metrics = pd.concat(bar_metrics)
 
 # %%
 coplotti.plot_portfolio_stats(
     bar_metrics, freq=config["pnl_resampling_frequency"]
 )
+
+# %%
+fep = dtfmod.ForecastEvaluatorFromPrices(
+    **config["column_names"],
+)
+binned_df = fep.bin_annotated_portfolio_df(
+    portfolio_df, **config["bin_annotated_portfolio_df_kwargs"]
+)
+
+# %%
+binned_df["mean"].mean(axis=1).plot()
 
 # %% [markdown]
 # # Compute aggregate portfolio stats
@@ -183,54 +174,4 @@ portfolio_stats, daily_metrics = stats_computer.compute_portfolio_stats(
 )
 display(portfolio_stats)
 
-# %% [markdown]
-# # Overnight returns
-
 # %%
-# TODO(Grisha): consider enabling.
-if False:
-    # TODO(Grisha): pass params via config.
-    host = ""
-    dbname = ""
-    port = 1000
-    user = ""
-    password = ""
-    table_name = ""
-    connection = hsql.get_connection(host, dbname, port, user, password)
-    query_results = cofinanc.query_by_assets_and_dates(
-        connection,
-        table_name,
-        asset_ids=asset_ids,
-        asset_id_col=config["asset_id_col"],
-        start_date=config["start_date"],
-        end_date=config["end_date"],
-        date_col="date",
-        select_cols=[
-            "date",
-            "open_",
-            "close",
-            "total_return",
-            "prev_total_return",
-        ],
-    )
-    overnight_returns = cofinanc.compute_overnight_returns(
-        query_results,
-        config["asset_id_col"],
-    )
-
-# %% [markdown]
-# # Regression analysis
-
-# %%
-# TODO(Grisha): consider enabling.
-if False:
-    coefficients, corr = dtfmod.regress(
-        config["dir_name"],
-        config["asset_id_col"],
-        config["regress_config"]["target_col"],
-        config["regress_config"]["feature_cols"],
-        config["regress_config"]["feature_lag"],
-        config["regress_config"]["batch_size"],
-    )
-    coefficients.head(3)
-    corr.head()

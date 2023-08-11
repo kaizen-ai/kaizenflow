@@ -376,7 +376,7 @@ class ForecastEvaluatorFromPrices:
         df: pd.DataFrame,
         *,
         style: str = "cross_sectional",
-        quantization: str = "no_quantization",
+        quantization: Optional[int] = 30,
         liquidate_at_end_of_day: bool = True,
         initialize_beginning_of_day_trades_to_zero: bool = True,
         adjust_for_splits: bool = False,
@@ -398,7 +398,8 @@ class ForecastEvaluatorFromPrices:
             - "longitudinal": normalize and threshold predictions
               longitudinally, allocating an equal dollar risk to each name
               independently
-        :param quantization: indicate whether to round to nearest share / lot
+        :param quantization: same as in
+            `core.finance.share_quantization.quantize_shares()`
         :param liquidate_at_end_of_day: force holdings to zero at the last
             trade if true (otherwise hold overnight)
         :param adjust_for_splits: account for stock splits in considering
@@ -417,6 +418,8 @@ class ForecastEvaluatorFromPrices:
             `compute_target_positions_cross_sectionally()` or
             `compute_target_positions_longitudinally()` depending upon the
             value of `style`
+        :param asset_id_to_share_decimals: same as in
+            `core.finance.share_quantization.quantize_shares()`
         :return: dictionary of portfolio dataframes, with keys
             ["holdings_shares", "holdings_notional", "executed_trades_shares",
              "executed_trades_notional", "pnl", "stats"]
@@ -791,7 +794,7 @@ class ForecastEvaluatorFromPrices:
         self,
         df: pd.DataFrame,
         target_notional_positions: pd.DataFrame,
-        quantization: str,
+        quantization: Optional[int],
         liquidate_at_end_of_day: bool,
         adjust_for_splits: bool,
         ffill_limit: int,
@@ -802,10 +805,13 @@ class ForecastEvaluatorFromPrices:
 
         :param df: as in `compute_portfolio()`
         :param target_notional_positions: from `_compute_target_holdings_notional()`
-        :param quantization: as in `compute_portfolio()`
+        :param quantization: same as in
+            `core.finance.share_quantization.quantize_shares()`
         :param liquidate_at_end_of_day: as in `compute_portfolio()`
         :param adjust_for_splits: as in `compute_portfolio()`
         :param ffill_limit: as in `compute_portfolio()`
+        :param asset_id_to_share_decimals: same as in
+            `core.finance.share_quantization.quantize_shares()`
         :return: end-of-bar indexed holdings in shares (holdings held at the
             end of the bar)
         """
@@ -819,7 +825,9 @@ class ForecastEvaluatorFromPrices:
         )
         # Quantize holdings (e.g., nearest share).
         target_holdings_shares = cofinanc.quantize_holdings(
-            target_holdings_shares, quantization, asset_id_to_share_decimals
+            target_holdings_shares,
+            quantization,
+            asset_id_to_decimals=asset_id_to_share_decimals,
         )
         # Adjust holdings for end-of-day and splits. Convert from next-bar
         # desired holdings to end-of-bar realized (assuming perfect fills)

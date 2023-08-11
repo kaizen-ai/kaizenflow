@@ -345,6 +345,7 @@ class KibotEquityReader(dtfcore.DataSource):
 # #############################################################################
 
 
+# TODO(Grisha): Consider making it public and moving to a more general lib.
 def _convert_to_multiindex(df: pd.DataFrame, asset_id_col: str) -> pd.DataFrame:
     """
     Transform a df like: ```

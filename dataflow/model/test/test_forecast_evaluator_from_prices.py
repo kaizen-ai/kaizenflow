@@ -43,7 +43,7 @@ class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
         actual = forecast_evaluator.to_str(
             data,
             target_gmv=1e4,
-            quantization="nearest_share",
+            quantization=0,
             liquidate_at_end_of_day=False,
             burn_in_bars=0,
         )
@@ -107,7 +107,7 @@ class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
         _, stats_df = forecast_evaluator.annotate_forecasts(
             data,
             target_gmv=1e4,
-            quantization="nearest_share",
+            quantization=0,
             liquidate_at_end_of_day=False,
             burn_in_bars=0,
             compute_extended_stats=True,
@@ -141,7 +141,7 @@ class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
             prediction_abs_threshold=0.0,
             target_dollar_risk_per_name=10.0,
             volatility_lower_bound=0.0,
-            quantization="nearest_share",
+            quantization=0,
             liquidate_at_end_of_day=False,
             burn_in_bars=0,
         )
@@ -205,7 +205,7 @@ class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
         _, stats_df = forecast_evaluator.annotate_forecasts(
             data,
             target_gmv=1e4,
-            quantization="nearest_share",
+            quantization=0,
             liquidate_at_end_of_day=False,
             burn_in_bars=0,
             compute_extended_stats=True,
@@ -235,7 +235,7 @@ class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
         actual = forecast_evaluator.to_str(
             data,
             target_gmv=1e5,
-            quantization="nearest_share",
+            quantization=0,
             liquidate_at_end_of_day=False,
             burn_in_bars=0,
         )
@@ -304,7 +304,7 @@ class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
         actual = forecast_evaluator.to_str(
             data,
             target_gmv=1e5,
-            quantization="asset_specific",
+            quantization=None,
             liquidate_at_end_of_day=False,
             burn_in_bars=0,
             asset_id_to_share_decimals=asset_id_to_share_decimals,
@@ -373,7 +373,7 @@ class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
             prediction_abs_threshold=5e-4,
             target_dollar_risk_per_name=10.0,
             volatility_lower_bound=0.0,
-            quantization="nearest_share",
+            quantization=0,
             liquidate_at_end_of_day=False,
             burn_in_bars=0,
         )
@@ -447,7 +447,7 @@ class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
         actual = forecast_evaluator.to_str(
             data,
             target_gmv=target_gmv,
-            quantization="nearest_share",
+            quantization=0,
             liquidate_at_end_of_day=False,
             burn_in_bars=0,
         )
@@ -514,7 +514,7 @@ class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
             data,
             log_dir,
             target_gmv=1e6,
-            quantization="nearest_share",
+            quantization=0,
             liquidate_at_end_of_day=False,
             burn_in_bars=0,
         )

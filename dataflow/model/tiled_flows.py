@@ -11,7 +11,7 @@ import pandas as pd
 
 _LOG = logging.getLogger(__name__)
 
-from typing import Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from tqdm.autonotebook import tqdm
 
@@ -134,6 +134,73 @@ def yield_processed_parquet_tile_dict(
             )[prediction_col]
             dfs[idx] = df
         yield dfs
+
+
+def annotate_forecasts_by_tile(
+    dir_name: str,
+    start_date: datetime.date,
+    end_date: datetime.date,
+    asset_id_col: str,
+    price_col: str,
+    volatility_col: str,
+    prediction_col: str,
+    *,
+    asset_ids: Optional[List[int]] = None,
+    annotate_forecasts_kwargs: Dict[str, Any],
+    return_portfolio_df: bool = True,
+) -> Tuple[Optional[pd.DataFrame], pd.DataFrame]:
+    """
+    Combine yearly tiled loading with forecast evaluation.
+
+    :param dir_name: as in `yield_processed_parquet_tiles_by_year()`
+    :param start_date: as in `yield_processed_parquet_tiles_by_year()`
+    :param end_date: as in `yield_processed_parquet_tiles_by_year()`
+    :param asset_id_col: as in `yield_processed_parquet_tiles_by_year()`
+    :param price_col: as in `ForecastEvaluatorFromPrices.annotate_forecasts()`
+    :param volatility_col: as in `ForecastEvaluatorFromPrices.annotate_forecasts()`
+    :param prediction_col: as in `ForecastEvaluatorFromPrices.annotate_forecasts()`
+    :param asset_ids: as in `yield_processed_parquet_tiles_by_year()`
+    :param annotate_forecasts_kwargs: as in `ForecastEvaluatorFromPrices.annotate_forecasts()`
+    :param return_portfolio_df: if `True`, return the
+        ForecastEvaluatorFromPrices portfolio in addition to the bar metrics,
+        else discard the portfolio (e.g., to reduce memory requirements).
+    :return: (portfolio_df, bar_metrics), unless `return_portfolio_df=False`,
+        in which case the first element of the tuple is `None`.
+    """
+    # Create backtest dataframe tile iterator.
+    data_cols = [price_col, volatility_col, prediction_col]
+    backtest_df_iter = yield_processed_parquet_tiles_by_year(
+        dir_name,
+        start_date,
+        end_date,
+        asset_id_col,
+        data_cols=data_cols,
+        asset_ids=asset_ids,
+    )
+    fep = dtfmfefrpr.ForecastEvaluatorFromPrices(
+        price_col,
+        volatility_col,
+        prediction_col,
+    )
+    # Process the dataframes in the interator.
+    bar_metrics = []
+    portfolio_df = []
+    for df in backtest_df_iter:
+        portfolio_df_slice, bar_metrics_slice = fep.annotate_forecasts(
+            df,
+            **annotate_forecasts_kwargs,
+        )
+        bar_metrics.append(bar_metrics_slice)
+        if return_portfolio_df:
+            portfolio_df.append(portfolio_df_slice)
+        else:
+            _ = portfolio_df_slice
+    if return_portfolio_df:
+        portfolio_df = pd.concat(portfolio_df)
+    else:
+        portfolio_df = None
+    bar_metrics = pd.concat(bar_metrics)
+    return portfolio_df, bar_metrics
 
 
 def evaluate_weighted_forecasts(

@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.4
+#       jupytext_version: 1.14.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -232,7 +232,7 @@ df_1min_out["midpoint"] = (df_1min_out["bid"] + df_1min_out["ask"]) / 2
 df_1min_out.head()
 
 # %%
-import oms.pnl_simulator as opnlsimu
+import oms.obsolete.pnl_simulator as oobpnsim
 
 df_5mins = result_bundle_dict[0].result_df[["mid_ret_0_vol_adj_clipped_2_hat"]]
 df_5mins.columns = ["preds"]
@@ -249,58 +249,58 @@ config = {
     "use_cache": True,
     "cached_columns": ["price", "midpoint", "bid", "ask"],
 }
-mi = opnlsimu.MarketInterface(
+mi = oobpnsim.MarketInterface(
     df_1min_out, config["use_cache"], columns=config.get("cached_columns", None)
 )
 
 # %%
-df_5mins_out = opnlsimu.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
-# wealth, ret, df_5mins_out = opnlsimu.compute_pnl_level1(initial_wealth, df_1min_out, df_5mins)
+df_5mins_out = oobpnsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+# wealth, ret, df_5mins_out = oobpnsim.compute_pnl_level1(initial_wealth, df_1min_out, df_5mins)
 
 df_5mins_out["wealth"].resample("1B").mean().plot()  # ["2012-01-01":].plot()
 
 # %%
 config["order_type"] = "midpoint@end"
-df_5mins_out = opnlsimu.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
-# wealth, ret, df_5mins_out = opnlsimu.compute_pnl_level1(initial_wealth, df_1min_out, df_5mins)
+df_5mins_out = oobpnsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+# wealth, ret, df_5mins_out = oobpnsim.compute_pnl_level1(initial_wealth, df_1min_out, df_5mins)
 
 df_5mins_out["wealth"].resample("1B").mean().plot()  # ["2012-01-01":].plot()
 
 # %%
 config["order_type"] = "midpoint@twap"
-df_5mins_out = opnlsimu.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+df_5mins_out = oobpnsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
 
 df_5mins_out["wealth"].resample("1B").mean().plot()  # ["2012-01-01":].plot()
 
 
 # %%
 config["order_type"] = "partial_spread_0.5@end"
-df_5mins_out = opnlsimu.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
-# wealth, ret, df_5mins_out = opnlsimu.compute_pnl_level1(initial_wealth, df_1min_out, df_5mins)
+df_5mins_out = oobpnsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+# wealth, ret, df_5mins_out = oobpnsim.compute_pnl_level1(initial_wealth, df_1min_out, df_5mins)
 
 df_5mins_out["wealth"].resample("1B").mean().plot()  # ["2012-01-01":].plot()
 
 # %%
 config["order_type"] = "partial_spread_0.0@end"
-df_5mins_out = opnlsimu.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
-# wealth, ret, df_5mins_out = opnlsimu.compute_pnl_level1(initial_wealth, df_1min_out, df_5mins)
+df_5mins_out = oobpnsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+# wealth, ret, df_5mins_out = oobpnsim.compute_pnl_level1(initial_wealth, df_1min_out, df_5mins)
 
 df_5mins_out["wealth"].resample("1b").mean().plot()  # ["2012-01-01":].plot()
 
 # %%
 config["order_type"] = "partial_spread_0.3@end"
-df_5mins_out = opnlsimu.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+df_5mins_out = oobpnsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
 df_5mins_out["wealth"].resample("1b").mean().plot()  # ["2012-01-01":].plot()
 
 # %%
 config["order_type"] = "partial_spread_0.51@end"
-df_5mins_out = opnlsimu.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+df_5mins_out = oobpnsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
 df_5mins_out["wealth"].resample("1b").mean().plot()  # ["2012-01-01":].plot()
 
 # %%
 config["order_type"] = "full_spread@end"
-df_5mins_out = opnlsimu.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
-# wealth, ret, df_5mins_out = opnlsimu.compute_pnl_level1(initial_wealth, df_1min_out, df_5mins)
+df_5mins_out = oobpnsim.compute_pnl_level2(mi, df_5mins, initial_wealth, config)
+# wealth, ret, df_5mins_out = oobpnsim.compute_pnl_level1(initial_wealth, df_1min_out, df_5mins)
 
 df_5mins_out["wealth"].resample("1B").mean().plot()  # ["2012-01-01":].plot()
 
@@ -308,7 +308,7 @@ df_5mins_out["wealth"].resample("1B").mean().plot()  # ["2012-01-01":].plot()
 df_all2 = pd.DataFrame()
 for order_type in ["partial_spread_0.5@end", "midpoint@end", "midpoint@twap"]:
     config["order_type"] = order_type
-    df_5mins_out = opnlsimu.compute_pnl_level2(
+    df_5mins_out = oobpnsim.compute_pnl_level2(
         mi, df_5mins, initial_wealth, config
     )
     df_all2[order_type] = df_5mins_out["wealth"]
@@ -327,7 +327,7 @@ for order_type in [
     "partial_spread_0.53@end",
 ]:
     config["order_type"] = order_type
-    df_5mins_out = opnlsimu.compute_pnl_level2(
+    df_5mins_out = oobpnsim.compute_pnl_level2(
         mi, df_5mins, initial_wealth, config
     )
     df_all[order_type] = df_5mins_out["wealth"]
@@ -346,7 +346,7 @@ df_5mins_out["wealth"].resample("1B").mean().plot()  # ["2012-01-01":].plot()
 # %%
 df_5mins_merged = df_5mins_out.merge(df_price, right_index=True, left_index=True)
 
-_, df_5mins_merged = opnlsimu.compute_lag_pnl(df_5mins_merged)
+_, df_5mins_merged = oobpnsim.compute_lag_pnl(df_5mins_merged)
 # display(df_5mins_merged)
 # df_5mins_merged["pnl.lag"].cumsum().plot()
 df_5mins_merged["pnl.sim1"].cumsum().plot()

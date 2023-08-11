@@ -45,6 +45,7 @@ def _run_config_list_helper(
 
 # TODO(gp): We could factor out more common code between here and the corresponding
 #  unit tests in TestRunNotebook*. The difference is only in the command lines.
+@pytest.mark.superslow("~40 seconds.")
 @pytest.mark.flaky(reruns=2)
 class TestRunExperimentSuccess1(hunitest.TestCase):
     """
@@ -67,7 +68,6 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
         $SCRATCH_SPACE/result_1/run_config_list.1.log
         $SCRATCH_SPACE/result_1/success.txt"""
 
-    @pytest.mark.slow
     def test_serial1(self) -> None:
         """
         Execute:
@@ -84,7 +84,6 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
         _run_config_list_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
     @pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
-    @pytest.mark.slow
     def test_parallel1(self) -> None:
         """
         Execute:
@@ -106,6 +105,7 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.superslow("~60 seconds.")
 @pytest.mark.flaky(reruns=2)
 class TestRunExperimentFail2(hunitest.TestCase):
     """
@@ -129,7 +129,6 @@ class TestRunExperimentFail2(hunitest.TestCase):
         $SCRATCH_SPACE/result_2/config.txt
         $SCRATCH_SPACE/result_2/run_config_list.2.log"""
 
-    @pytest.mark.slow
     def test_serial1(self) -> None:
         """
         Execute:
@@ -147,7 +146,6 @@ class TestRunExperimentFail2(hunitest.TestCase):
         _LOG.warning("This command is supposed to fail")
         _run_config_list_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
-    @pytest.mark.slow
     def test_serial2(self) -> None:
         """
         Execute:
@@ -166,7 +164,6 @@ class TestRunExperimentFail2(hunitest.TestCase):
         _run_config_list_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
     @pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
-    @pytest.mark.slow
     def test_parallel1(self) -> None:
         """
         Execute:
@@ -187,7 +184,6 @@ class TestRunExperimentFail2(hunitest.TestCase):
         _run_config_list_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
     @pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
-    @pytest.mark.slow
     def test_parallel2(self) -> None:
         """
         Execute:
@@ -213,6 +209,7 @@ class TestRunExperimentFail2(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.superslow("~35 seconds.")
 class TestRunExperimentArchiveOnS3(hunitest.TestCase):
     """
     Run experiments that succeed and archive the results on S3.
@@ -230,7 +227,6 @@ class TestRunExperimentArchiveOnS3(hunitest.TestCase):
     # TODO(gp): This test needs write access to S3 for `infra` user. For now we
     #  gave access to the entire bucket. It would be better to give only access to
     #  `tmp`.
-    @pytest.mark.slow
     @umock.patch.dict(hs3.os.environ, {"AM_AWS_PROFILE": "am"})
     def test_serial1(self) -> None:
         """

@@ -120,6 +120,7 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
         self.check_string(actual)
 
     @pytest.mark.requires_ck_infra
+    @pytest.mark.slow("~6 seconds, see CmTask4951.")
     def test_simulated_replayed_time1(self) -> None:
         """
         Use simulated replayed time.

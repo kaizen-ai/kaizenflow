@@ -23,6 +23,8 @@
 import logging
 import os
 
+import matplotlib.pyplot as plt
+
 import core.config as cconfig
 import core.plotting as coplotti
 import core.statistics as costatis
@@ -51,18 +53,24 @@ dir_name = os.path.join(
     amp_dir,
     "dataflow/model/test/outcomes/Test_run_master_feature_analyzer/input/tiled_results",
 )
+cols = [
+    "vwap.ret_0.vol_adj.c.lag0",
+    "vwap.ret_0.vol_adj.c.lag1",
+    "vwap.ret_0.vol_adj.c.lag2",
+    "vwap.ret_0.vol_adj.c.lag3",
+]
 config = {
     "dir_name": dir_name,
     "asset_id": 1467591036,
     "asset_id_col": "asset_id",
     "resampling_frequency": "5T",
-    "feature_column_names": [
-        "vwap.ret_0.vol_adj.c.lag0",
-        "vwap.ret_0.vol_adj.c.lag1",
-        "vwap.ret_0.vol_adj.c.lag2",
-        "vwap.ret_0.vol_adj.c.lag3",
-    ],
+    "feature_column_names": cols,
     "single_feature_column_name": "vwap.ret_0.vol_adj.c.lag0",
+    "regression_config": {
+        "x_cols": cols,
+        "y_col": "vwap.ret_0.vol_adj.c.lag0",
+        "x_col_shift": 2,
+    },
 }
 config = cconfig.Config().from_dict(config)
 print(config)
@@ -121,18 +129,6 @@ feature_stats.groupby(level=1).mean()
 feature_stats.groupby(level=0).mean()
 
 # %%
-mean_feature_corr = costatis.compute_mean_pearson_correlation_by_group(
-    feature_df, 1
-)
-display(mean_feature_corr)
-
-# %%
-mean_asset_corr = costatis.compute_mean_pearson_correlation_by_group(
-    feature_df, 0
-)
-display(mean_asset_corr)
-
-# %%
 feature_stats = costatis.compute_centered_process_stats_by_group(feature_df)
 display(feature_stats.head())
 
@@ -141,14 +137,20 @@ mean_asset_stats_per_feature = feature_stats.groupby(level=1).mean()
 display(mean_asset_stats_per_feature)
 
 # %%
-# mean_asset_stats_per_feature[["mean", "var", "autocovar", "autocorr", "turn"]].boxplot(ylabel="mean asset per feature")
+_, ax = plt.subplots()
+mean_asset_stats_per_feature[
+    ["mean", "var", "autocovar", "autocorr", "turn"]
+].boxplot(ylabel="mean asset per feature", ax=ax)
 
 # %%
 mean_feature_stats_per_asset = feature_stats.groupby(level=0).mean()
 display(mean_feature_stats_per_asset)
 
 # %%
-# mean_feature_stats_per_asset[["mean", "var", "autocovar", "autocorr", "turn"]].boxplot(ylabel="mean feature per asset")
+_, ax = plt.subplots()
+mean_feature_stats_per_asset[
+    ["mean", "var", "autocovar", "autocorr", "turn"]
+].boxplot(ylabel="mean feature per asset", ax=ax)
 
 # %%
 mean_feature_corr = costatis.compute_mean_pearson_correlation_by_group(
@@ -223,5 +225,25 @@ coplotti.plot_correlation_matrix(xs_feature_df)
 
 # %%
 coplotti.plot_effective_correlation_rank(xs_feature_df)
+
+# %% [markdown]
+# # Linear regression
+
+# %%
+# NOTE: Discretion required to adapt and interpret.
+regression_coeffs = costatis.compute_regression_coefficients_by_group(
+    feature_df,
+    **config["regression_config"].to_dict(),
+)
+display(regression_coeffs.head())
+
+# %%
+q_vals = costatis.estimate_q_values(regression_coeffs["p_val_2s"])
+regression_coeffs["q_val"] = q_vals
+
+# %%
+regression_coeffs["q_val"].xs(
+    config["single_feature_column_name"], level=1
+).sort_values().reset_index()["q_val"].plot()
 
 # %%

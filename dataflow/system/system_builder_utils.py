@@ -630,7 +630,8 @@ def apply_ProcessForecastsNode_config_for_equities(
         "ath_end_time": ath_end_time,
         "trading_end_time": trading_end_time,
         "liquidate_at_trading_end_time": False,
-        "share_quantization": "no_quantization",
+        # In this case 30 is approximately the same as not rounding at all.
+        "share_quantization": 30,
     }
     config = cconfig.Config.from_dict(dict_)
     system.config["process_forecasts_node_dict", "process_forecasts_dict"].update(
@@ -640,7 +641,7 @@ def apply_ProcessForecastsNode_config_for_equities(
 
 
 def apply_ProcessForecastsNode_config_for_crypto(
-    system: dtfsyssyst.System, share_quantization: str
+    system: dtfsyssyst.System, share_quantization: Optional[int]
 ) -> dtfsyssyst.System:
     """
     Set the trading hours for crypto.
@@ -755,7 +756,6 @@ def apply_Portfolio_config(
 # #############################################################################
 
 
-# TODO(Grisha): CmTask4605 "Expose `initialize_beginning_of_day_trades_to_zero`".
 def apply_ForecastEvaluatorFromPrices_config(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
@@ -785,6 +785,7 @@ def apply_ForecastEvaluatorFromPrices_config(
             # probably we should start using `ForecastEvaluatorWithOptimizer`.
             "target_gmv": 1e5,
             "liquidate_at_end_of_day": False,
+            "initialize_beginning_of_day_trades_to_zero": False,
         },
     }
     system.config[

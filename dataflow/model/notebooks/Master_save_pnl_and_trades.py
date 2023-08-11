@@ -24,11 +24,11 @@
 #    - Computes research portfolio
 #    - Saves trades and pnl to a file
 #    - Performs prices and pnl cross-checks
-#     
+#
 # The code overlaps with that from:
 #    - the `dataflow/model/notebooks/Master_research_backtest_analyzer.ipynb`: load tiled simulation, compute research pnl
 #    - the `oms/notebooks/Master_execution_analysis.ipynb`: load and resmaple OHLCV prices
-#         
+#
 # What is really unique in the current notebook is:
 #    - Converting `holdings_shares` to `target_holdings_shares`
 #    - Saving data to a file
@@ -55,14 +55,12 @@ import core.plotting as coplotti
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
-import helpers.hgit as hgit
-import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
-import helpers.hsql as hsql
 import im_v2.common.universe as ivcu
+
 # TODO(Grisha): probably `dataflow/model` should not depend on `oms`.
-import oms.ccxt.ccxt_utils as occccuti
+import oms.broker.ccxt.ccxt_utils as obccccut
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -77,28 +75,30 @@ hprint.config_notebook()
 # # Build the config
 
 # %%
-market_info = occccuti.load_market_data_info()
-asset_id_to_share_decimals = occccuti.subset_market_info(
+market_info = obccccut.load_market_data_info()
+asset_id_to_share_decimals = obccccut.subset_market_info(
     market_info, "amount_precision"
 )
 asset_id_to_share_decimals
 
 # %%
 config = {
-    "dir_name": "/shared_data/model/historical/build_tile_configs.C3a.ccxt_v7_1-all.5T.2019-10-01_2023-06-15.ins/tiled_results",
-    "start_date": datetime.date(2022, 1, 1),
-    "end_date": datetime.date(2023, 3, 31),
+    "dir_name": "/shared_data/model/historical/build_tile_configs.C5b.ccxt_v7_1-all.5T.2019-10-01_2023-07-02.ins.run0/tiled_results",
+    "start_date": datetime.date(2022, 7, 2),
+    "end_date": datetime.date(2023, 7, 2),
     "asset_id_col": "asset_id",
     "pnl_resampling_frequency": "D",
+    "save_data_dst_dir": "/shared_data/marketing/cmtask4688",
     "annotate_forecasts_kwargs": {
-            "burn_in_bars": 3,
-            "style": "cross_sectional",
-            # Apply asset-specific rounding.
-            "quantization": "asset_specific",
-            "liquidate_at_end_of_day": False,
-            "initialize_beginning_of_day_trades_to_zero": False,
-            "asset_id_to_share_decimals": asset_id_to_share_decimals,
-        },
+        "burn_in_bars": 3,
+        "style": "longitudinal",
+        # Apply asset-specific rounding.
+        "quantization": None,
+        "target_dollar_risk_per_name": 50.0,
+        "liquidate_at_end_of_day": False,
+        "initialize_beginning_of_day_trades_to_zero": False,
+        "asset_id_to_share_decimals": asset_id_to_share_decimals,
+    },
     # TODO(Grisha): consider inferring column names from a `DagBuilder` object.
     "column_names": {
         "price_col": "vwap",
@@ -162,41 +162,25 @@ single_tile_df.head(3)
 # # Compute portfolio bar metrics
 
 # %%
-fep = dtfmod.ForecastEvaluatorFromPrices(
-    **config["column_names"],
-)
-
-# %%
-# Create backtest dataframe tile iterator.
-backtest_df_iter = dtfmod.yield_processed_parquet_tiles_by_year(
+portfolio_df, bar_metrics = dtfmod.annotate_forecasts_by_tile(
     config["dir_name"],
     config["start_date"],
     config["end_date"],
     config["asset_id_col"],
-    data_cols=fep.get_cols(),
-    asset_ids=None,
+    config["column_names"]["price_col"],
+    config["column_names"]["volatility_col"],
+    config["column_names"]["prediction_col"],
+    annotate_forecasts_kwargs=config["annotate_forecasts_kwargs"].to_dict(),
 )
-# Process the dataframes in the interator.
-bar_metrics = []
-portfolio_dfs = []
-for df in backtest_df_iter:
-    portfolio_df, bar_metrics_slice = fep.annotate_forecasts(
-        df,
-        # bulk_frac_to_remove=fep_config["bulk_frac_to_remove"],
-        # bulk_fill_method=fep_config["bulk_fill_method"],
-        # target_gmv=fep_config["target_gmv"],
-        **config["annotate_forecasts_kwargs"].to_dict(),
-    )
-    bar_metrics.append(bar_metrics_slice)
-    portfolio_dfs.append(portfolio_df)
-portfolio_df = pd.concat(portfolio_dfs)
-bar_metrics = pd.concat(bar_metrics)
 
 # %%
 portfolio_df.tail(3)
 
 # %%
 bar_metrics.tail(3)
+
+# %%
+_LOG.info("Mean GMV=%s", bar_metrics["gmv"].mean())
 
 # %%
 coplotti.plot_portfolio_stats(
@@ -218,68 +202,21 @@ dtfmod.cross_check_portfolio_pnl(portfolio_df).min()
 # %% run_control={"marked": true}
 vendor = "CCXT"
 mode = "trade"
-full_symbols = ivcu.get_vendor_universe(vendor, mode, version="v7.1", as_full_symbol=True)
-asset_id_to_full_symbol = ivcu.build_numerical_to_string_id_mapping(
-    full_symbols
+full_symbols = ivcu.get_vendor_universe(
+    vendor, mode, version="v7.1", as_full_symbol=True
 )
+asset_id_to_full_symbol = ivcu.build_numerical_to_string_id_mapping(full_symbols)
 asset_id_to_full_symbol
-
-# %% [markdown]
-# # Save target holdings shares
-
-# %% run_control={"marked": true}
-# Target holdings are current holdings shifted back by 1 bar. E.g., `target_holdings_shares` computed at 23:50 is
-# the holdings that Binance will observe at 23:55.
-target_holdings_shares = portfolio_df["holdings_shares"].shift(-1).stack().reset_index()
-# Mapp asset ids to fulls symbols.
-target_holdings_shares["full_symbol"] = target_holdings_shares["asset_id"].apply(lambda x: asset_id_to_full_symbol[x])
-# Rename the column.
-target_holdings_shares = target_holdings_shares.rename(columns={0: 'target_holdings_shares'})
-# Keep only the relevant columns.
-target_holdings_shares = target_holdings_shares[["end_ts", "full_symbol", "target_holdings_shares"]]
-_LOG.info("df.shape=%s", target_holdings_shares.shape)
-target_holdings_shares.tail(10)
-
-# %%
-target_holdings_shares_path = "/shared_data/marketing/vip9_binance/target_holdings_shares.csv.gz"
-target_holdings_shares.to_csv(target_holdings_shares_path, index=False)
-
-# %%
-tmp = pd.read_csv(target_holdings_shares_path)
-_LOG.info("df.shape=%s", tmp.shape)
-tmp.tail(10)
-
-# %% [markdown]
-# # Save PnL
-
-# %%
-pnl_df = portfolio_df["pnl"].stack().reset_index()
-# Mapp asset ids to fulls symbols.
-pnl_df["full_symbol"] = pnl_df["asset_id"].apply(lambda x: asset_id_to_full_symbol[x])
-# Rename.
-pnl_df = pnl_df.rename(columns={0: 'pnl'})
-# Keep only the relevant columns.
-pnl_df = pnl_df[["end_ts", "full_symbol", "pnl"]]
-_LOG.info("df.shape=%s", pnl_df.shape)
-pnl_df.tail(10)
-
-# %%
-pnl_path = "/shared_data/marketing/vip9_binance/pnl.csv.gz"
-pnl_df.to_csv(pnl_path, index=False)
-
-# %%
-tmp = pd.read_csv(pnl_path)
-_LOG.info("df.shape=%s", tmp.shape)
-tmp.tail(10)
 
 # %% [markdown]
 # # Sanity check PnL vs target positions
 
 # %%
+import dataflow.core as dtfcore
+import dataflow.system as dtfsys
 import dataflow_amp.system.Cx as dtfamsysc
 import market_data as mdata
-import dataflow.system as dtfsys
-import dataflow.core as dtfcore
+
 
 def _get_prod_market_data(universe_version: str) -> mdata.MarketData:
     """
@@ -397,7 +334,9 @@ _LOG.info(
 )
 bar_duration = "5T"
 universe_version = "v7.1"
-ohlcv_df = load_and_resample_ohlcv_data(start_timestamp, end_timestamp, bar_duration, universe_version)
+ohlcv_df = load_and_resample_ohlcv_data(
+    start_timestamp, end_timestamp, bar_duration, universe_version
+)
 # Convert to UTC to match the timezone from the research portfolio.
 ohlcv_df.index = ohlcv_df.index.tz_convert("UTC")
 ohlcv_df.tail(3)
@@ -413,14 +352,71 @@ ohlcv_df["vwap"].diff().corrwith(portfolio_df["price"].diff())
 # Re-compute the PnL using prices from the DB. For some reason the DB data
 # starts at `2022-01-08 19:05:00-05:00` and there are small differences between
 # the prices used to compute the Portfolio (Parquet data) vs the DB prices.
-holdings_shares = portfolio_df["holdings_shares"].loc["2022-01-08 19:05:00-05:00":]
+holdings_shares = portfolio_df["holdings_shares"].loc[
+    "2022-01-08 19:05:00-05:00":
+]
 new_pnl = holdings_shares.shift(1).multiply(ohlcv_df["vwap"].diff())
 # Check that the re-computed PnL matches the one from the research Portfolio.
 new_pnl.corrwith(portfolio_df["pnl"].loc["2022-01-08 19:05:00-05:00":])
 
+# %% [markdown]
+# # Save data
+
+# %% [markdown]
+# ## Target holdings shares
+
 # %%
-# Compare the PnL using TWAP prices.
-holdings_shares = portfolio_df["holdings_shares"].loc["2022-01-08 19:05:00-05:00":]
-new_pnl = holdings_shares.shift(1).multiply(ohlcv_df["twap"].diff())
-# Check that the re-computed PnL matches the one from the research Portfolio.
-new_pnl.corrwith(portfolio_df["pnl"].loc["2022-01-08 19:05:00-05:00":])
+idx_name = portfolio_df["holdings_shares"].index.name
+target_holdings_shares = (
+    portfolio_df["holdings_shares"].shift(-1).stack().reset_index()
+)
+# Map asset ids to fulls symbols.
+target_holdings_shares["full_symbol"] = target_holdings_shares["asset_id"].apply(
+    lambda x: asset_id_to_full_symbol[x]
+)
+# Rename the column.
+target_holdings_shares = target_holdings_shares.rename(
+    columns={0: "target_holdings_shares"}
+)
+# Keep only the relevant columns.
+target_holdings_shares = target_holdings_shares[
+    [idx_name, "full_symbol", "target_holdings_shares"]
+]
+_LOG.info("df.shape=%s", target_holdings_shares.shape)
+target_holdings_shares.tail(10)
+
+# %%
+target_holdings_shares_path = os.path.join(
+    config["save_data_dst_dir"], "target_holdings_shares.csv.gz"
+)
+target_holdings_shares.to_csv(target_holdings_shares_path, index=False)
+
+# %%
+tmp = pd.read_csv(target_holdings_shares_path)
+_LOG.info("df.shape=%s", tmp.shape)
+tmp.tail(10)
+
+# %% [markdown]
+# ## PnL
+
+# %%
+pnl_df = portfolio_df["pnl"].stack().reset_index()
+# Mapp asset ids to fulls symbols.
+pnl_df["full_symbol"] = pnl_df["asset_id"].apply(
+    lambda x: asset_id_to_full_symbol[x]
+)
+# Rename.
+pnl_df = pnl_df.rename(columns={0: "pnl"})
+# Keep only the relevant columns.
+pnl_df = pnl_df[["end_ts", "full_symbol", "pnl"]]
+_LOG.info("df.shape=%s", pnl_df.shape)
+pnl_df.tail(10)
+
+# %%
+pnl_path = os.path.join(config["save_data_dst_dir"], "pnl.csv.gz")
+pnl_df.to_csv(pnl_path, index=False)
+
+# %%
+tmp = pd.read_csv(pnl_path)
+_LOG.info("df.shape=%s", tmp.shape)
+tmp.tail(10)

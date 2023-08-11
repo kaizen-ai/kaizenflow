@@ -16,8 +16,8 @@ import dataflow.core as dtfcore
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import oms.portfolio as omportfo
-import oms.process_forecasts_ as oprofore
+import oms.order_processing.process_forecasts_ as oopprfo
+import oms.portfolio.portfolio as oporport
 
 _LOG = logging.getLogger(__name__)
 
@@ -33,11 +33,12 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
         prediction_col: str,
         volatility_col: str,
         spread_col: Optional[str],
-        portfolio: omportfo.Portfolio,
+        portfolio: oporport.Portfolio,
         process_forecasts_dict: Dict[str, Any],
     ) -> None:
         """
-        Parameters have the same meaning as in `oms/process_forecasts_()`.
+        Parameters have the same meaning as in
+        `oms/order_processing/process_forecasts_`.
 
         :param process_forecasts_dict: configures `process_forecasts()`
         """
@@ -64,7 +65,7 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
     async def process_forecasts(self) -> None:
         # Get the latest `df` index value.
         restrictions_df = None
-        await oprofore.process_forecasts(
+        await oopprfo.process_forecasts(
             self._prediction_df,
             self._volatility_df,
             self._portfolio,
@@ -115,7 +116,7 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
 #   This function can become `get_ProcessForecastsNode_dict_example` (without a
 #   number) which signify the innermost / most general builder.
 def get_ProcessForecastsNode_dict_example1(
-    portfolio: omportfo.Portfolio,
+    portfolio: oporport.Portfolio,
     prediction_col: str,
     volatility_col: str,
     spread_col: Optional[str],
@@ -133,7 +134,7 @@ def get_ProcessForecastsNode_dict_example1(
         object decides where to save its own data underneath the
         `process_forecasts()` log dir
     """
-    hdbg.dassert_isinstance(portfolio, omportfo.Portfolio)
+    hdbg.dassert_isinstance(portfolio, oporport.Portfolio)
     hdbg.dassert_isinstance(order_config, dict)
     #
     if root_log_dir is not None:
