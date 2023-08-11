@@ -383,7 +383,7 @@ def run_fast_tests(  # type: ignore
     :param pytest_opts: additional options for `pytest` invocation. It can be empty
     :param run_only_test_list: select markers to run. Takes comma-separated tokens,
            e.g. --run_only_test_list = requires_ck_infra,requires_aws
-    :param skip_test_list_as_string: select markers to skip. Takes comma-separated tokens.
+    :param skip_test_list: select markers to skip. Takes comma-separated tokens.
     :param skip_submodules: ignore all the dir inside a submodule
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed
