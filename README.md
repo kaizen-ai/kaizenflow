@@ -105,6 +105,9 @@ This contains the absolute minimal amount of info to start developing
 - [Imports and packages](docs/Imports_and_packages.md)
   - How to import code, use packages, and resolve circular dependencies
 
+- [How to integrate repos](docs/How_to_integrate_repos.md)
+  - Detailed integration workflow
+
 # Learn how to become efficient at developing
 
 This contains a set of resources that over time will make 10x more productive
@@ -116,6 +119,8 @@ This contains a set of resources that over time will make 10x more productive
 - [Design Philosophy](docs/Design_Philosophy.md)
 
 - [Codebase Clean-up](docs/Codebase_clean_up_scripts.md)
+
+- [Scrum Methodology](docs/Scrum_methodology.md)
 
 # Technologies used
 
@@ -147,6 +152,12 @@ This contains a set of resources that over time will make 10x more productive
 - [Email](/docs/Email.md)
     
 - [Glossary](docs/Glossary.md)
+
+- [DataFlow](docs/DataFlow.md)
+
+- [DataPull](docs/DataPull.md)
+
+- [Workflows](docs/Workflows.md)
 
 # DeFi: start developing
 

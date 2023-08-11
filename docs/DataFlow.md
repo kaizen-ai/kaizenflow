@@ -39,6 +39,7 @@ config1={
 ```
 
 In the example above:
+
 - "resample_1min" is a leaf of the `config1`
 - "client_config" is a subconfig of `config1`
 - "universe" is a subconfig of "client_config"
@@ -51,11 +52,11 @@ Example of a string representation:
 height="1.2303444881889765in"}
 
 - The same values are annotated with `marked_as_used`, `writer` and `val_type`
-    - `marked_as_used` determines whether the object was used to construct another
-      object
-    - `writer` provides a stacktrace of the piece of code which marked the object
-      as used
-    - `val_type` is a type of the object
+  - `marked_as_used` determines whether the object was used to construct another
+    object
+  - `writer` provides a stacktrace of the piece of code which marked the object
+    as used
+  - `val_type` is a type of the object
 
 ### Assigning and getting Config items
 
@@ -69,9 +70,9 @@ reproducible, there are 2 methods to `get` the value.
 - `get_and_mark_as_used` is utilized when a leaf of the config is used to
   construct another object
 
-    - When the value is used inside a constructor
+  - When the value is used inside a constructor
 
-    - When the value is used as a parameter in a function
+  - When the value is used as a parameter in a function
 
 Note that when selecting a subconfig the subconfig itself is not marked as used,
 but its leaves are. For this reason, the user should avoid marking subconfigs as
@@ -96,14 +97,14 @@ _ = config.get_and_mark_as_used(("market_data_config", "end_ts"))
 - `__getitem__` is used to select items for uses which do not affect the
   construction of other objects:
 
-    - Logging, debugging and printing
+  - Logging, debugging and printing
 
 ## Time semantics
 
-**Time semantics**. A DataFlow component can be executed or simulated
-accounting for different ways to represent the passing of time. E.g., it can be
-simulated in a timed or non-timed simulation, depending on how data is delivered
-to the system (as it is generated or in bulk with knowledge time).
+**Time semantics**. A DataFlow component can be executed or simulated accounting
+for different ways to represent the passing of time. E.g., it can be simulated
+in a timed or non-timed simulation, depending on how data is delivered to the
+system (as it is generated or in bulk with knowledge time).
 
 **Clock.** A function that reports the current timestamp. There are 3 versions
 of clock:
@@ -165,8 +166,8 @@ mins of wall-clock.
 TODO(Grisha): add an example.
 
 **Replayed simulation**. In replayed simulation, the data is provided in the
-same "format" and with the same timing as it would be provided in real-time,
-but the clock type is "replayed clock".
+same "format" and with the same timing as it would be provided in real-time, but
+the clock type is "replayed clock".
 
 TODO(gp): Add an example of df with forecasts explaining the timing
 
@@ -193,7 +194,9 @@ In this section we summarize the responsibilities and the high level invariants
 of each component of a `System`.
 
 A `System` is represented in terms of a `Config`.
-- Each piece of a `Config` refers to and configures a specific part of the `System`
+
+- Each piece of a `Config` refers to and configures a specific part of the
+  `System`
 - Each component should be completely configured in terms of a `Config`
 
 ### Component invariants
@@ -202,11 +205,13 @@ All data in components should be indexed by the knowledge time (i.e., when the
 data became available to that component) in terms of current time.
 
 Each component has a way to know:
+
 - what is the current time (e.g., the real-time machine time or the simulated
   one)
 - the timestamp of the current data bar it's working on
 
 Each component
+
 - should print its state so that one can inspect how exactly it has been
   initialized
 - can be serialized and deserialized from disk
@@ -232,6 +237,7 @@ slices of data so that both historical and real-time semantics can be
 accommodated without changing the model.
 
 - Some of the advantages of the DataFlow approach are:
+
   - Tiling to fit in memory
   - Cached computation
   - Adapt a procedural semantic to a reactive / streaming semantic
@@ -258,6 +264,7 @@ vwap_approach_2.head(3)
 - TODO(gp): Explain this piece of code
 
 **Dag Node**. A Dag Node is a unit of computation of a DataFlow model.
+
 - A Dag Node has inputs, outputs, a unique node id (aka `nid`), and a state
 - Typically, inputs and outputs to a Dag Node are dataframes
 - A Dag node stores a value for each output and method name (e.g., methods are
@@ -300,6 +307,7 @@ only include `Dag` node configuration parameters, and not information about
 in sync.
 
 The client:
+
 - calls `get_config_template()` to receive the template config
 - fills / modifies the config
 - uses the final config to call `get_dag(config)` and get a fully built DAG
@@ -335,19 +343,21 @@ DataFlow represents data through multi-index dataframes, where
 ![](./sorrentum_figs/image6.png){width="6.5in" height="1.0416666666666667in"}
 
 The reason for this convention is that typically features are computed in a
-uni-variate fashion (e.g., asset by asset), and we can get vectorization over the
-assets by expressing operations in terms of the features. E.g., we can express a
-feature as `(df["close", "open"].max() - df["high"]).shift(2)`.
+uni-variate fashion (e.g., asset by asset), and we can get vectorization over
+the assets by expressing operations in terms of the features. E.g., we can
+express a feature as `(df["close", "open"].max() - df["high"]).shift(2)`.
 
 Based on the example ./amp/dataflow/notebooks/gallery_dataflow_example.ipynb,
 one can work with DataFlow at 4 levels of abstraction:
 
 1.  Pandas long-format (non multi-index) dataframes and for-loops
+
     - We can do a group-by or filter by full_symbol
     - Apply the transformation on each resulting df
     - Merge the data back into a single dataframe with the long-format
 
 2.  Pandas multiindex dataframes
+
     - The data is in the DataFlow native format
     - We can apply the transformation in a vectorized way
     - This approach is best for performance and with compatibility with DataFlow
@@ -358,6 +368,7 @@ one can work with DataFlow at 4 levels of abstraction:
       but typically slow and memory inefficient
 
 3.  DataFlow nodes
+
     - A node implements a certain transformations on DataFrames according to the
       DataFlow convention and interfaces
     - Nodes operate on the multi-index representation by typically calling
@@ -644,6 +655,7 @@ objects. In practice Broker adapts the internal representation of Order and
 Fills to the ones that are specific to the target market.
 
 Responsibilities:
+
 - Submit orders to MarketOms
 - Wait to ensure that orders were properly accepted by MarketOms
 - Execute complex orders (e.g., TWAP, VWAP, pegged orders) interacting with the
@@ -651,10 +663,12 @@ Responsibilities:
 - Receive fill information from the target market
 
 Interactions:
+
 - MarketData to receive prices and other information necessary to execute orders
 - MarketOms to place orders and receive fills
 
 Main methods:
+
 - submit_orders()
 - get_fills()
 
@@ -676,8 +690,8 @@ From ./oms/architecture.md
 
 Invariants and conventions
 
-- In this doc we use the new names for concepts and use "aka" to refer to the old
-  name, if needed
+- In this doc we use the new names for concepts and use "aka" to refer to the
+  old name, if needed
 
 - We refer to:
 - The as-of-date for a query as `as_of_timestamp`
@@ -688,9 +702,9 @@ Invariants and conventions
   tells another what time it is, since there is no way for the second object to
   double check that the wall clock time is accurate
 
-- We pass `wall_clock_timestamp` only when one "action" happens atomically but it
-  is split in multiple functions that need to all share this information. This
-  approach should be the exception to the rule of calling
+- We pass `wall_clock_timestamp` only when one "action" happens atomically but
+  it is split in multiple functions that need to all share this information.
+  This approach should be the exception to the rule of calling
 
 `get_wall_clock_time()`
 
@@ -708,6 +722,7 @@ Invariants and conventions
 Implementation
 
 process_forecasts()
+
 - Aka `place_trades()`
 - Act on the forecasts by:
 - Get the state of portfolio (by getting fills from previous clock)
@@ -730,6 +745,7 @@ process_forecasts()
 - It should not use any concrete implementation but only `Abstract\*`
 
 Portfolio
+
 - `get_holdings()`
 - Abstract because IS, Mocked, Simulated have a different implementations
 - `mark_to_market()`
@@ -744,15 +760,17 @@ Portfolio
 - CASH_ID, `_compute_statistics()` goes in `Portolio`
 
 Broker
+
 - `submit_orders()`
 - `get_fills()`
 
 Simulation
 
 DataFramePortfolio
+
 - This is what we call `Portfolio`
-- In RT we can run `DataFramePortfolio` and `ImplementedPortfolio` in parallel to
-  collect real and simulated behavior
+- In RT we can run `DataFramePortfolio` and `ImplementedPortfolio` in parallel
+  to collect real and simulated behavior
 - `get_holdings()`
 - Store the holdings in a df
 - `update_state()`
@@ -760,12 +778,14 @@ DataFramePortfolio
 - To make the simulated system closer to the implemented
 
 SimulatedBroker
+
 - `submit_orders()`
 - `get_fills()`
 
 Implemented system
 
 ImplementedPortfolio
+
 - `get_holdings()`
 - Check self-consistency and assumptions
 - Check that no order is in flight otherwise we should assert or log an error
@@ -774,6 +794,7 @@ ImplementedPortfolio
 - No-op since the portfolio is updated automatically
 
 ImplementedBroker
+
 - `submit_orders()`
 - Save files in the proper location
 - Wait for orders to be accepted
@@ -781,24 +802,29 @@ ImplementedBroker
 - No-op since the portfolio is updated automatically
 
 Mocked system
+
 - Our implementation of the implemented system where we replace DB with a mock
 - The mocked DB should be as similar as possible to the implemented DB
 
 DatabasePortfolio
+
 - `get_holdings()`
 - Same behavior of `ImplementedPortfolio` but using `OmsDb`
 
 DatabaseBroker
+
 - `submit_orders()`
 - Same behavior of `ImplementedBroker` but using `OmsDb`
 
 OmsDb
+
 - `submitted_orders` table (mocks S3)
 - Contain the submitted orders
 - `accepted_orders` table
 - `current_position` table
 
 OrderProcessor
+
 - Monitor `OmsDb.submitted_orders`
 - Update `OmsDb.accepted_orders`
 - Update `OmsDb.current_position` using `Fill` and updating the `Portfolio`
@@ -806,52 +832,52 @@ OrderProcessor
 # OMS
 
 ## High-level invariants
-- The notion of parent vs child orders is only on our side, CCXT only understands
-  orders
+
+- The notion of parent vs child orders is only on our side, CCXT only
+  understands orders
 - We track data (e.g., orders, fills) into parallel OMS vs CCXT data structures
   - OMS vs CCXT orders
   - OMS vs CCXT fills
   - CCXT trades vs fills
 - `Portfolio` only cares about parent orders
+
   - How orders are executed is an implementation detail
   - Thus, we need to fold all child fills into an equivalent parent fill
 
 - The data
 
 - `ccxt_order`
+
   - Every time we submit an order to CCXT (parent or child) we get back a
     `ccxt_order` object (aka `ccxt_order_response`)
   - It's mainly a confirmation of the order
   - The format is https://docs.ccxt.com/#/?id=order-structure
-  - The most important info is the callback CCXT ID of the order (this is
-    the only way to do it)
+  - The most important info is the callback CCXT ID of the order (this is the
+    only way to do it)
 
 - `ccxt_trade`
   - For each order (parent or child), we get back from CCXT 0 or more
-    `ccxt_trade`, each representing a partial fill (e.g., price, number of 
+    `ccxt_trade`, each representing a partial fill (e.g., price, number of
     shares, fees)
   - E.g.,
     - If we walk the book, we obviously get multiple `ccxt_trade`
-    - If we match multiple trades even at the same price level, we might get 
+    - If we match multiple trades even at the same price level, we might get
       different `ccxt_trade`
-  
 - `ccxt_fill`
-  - When an order closes, we can ask CCXT to summarize the results of
-    that order in terms of the composing trades
+  - When an order closes, we can ask CCXT to summarize the results of that order
+    in terms of the composing trades
   - We can't use `ccxt_fill` to create an `oms_fill` because it doesn't contain
     enough info about prices and fees
     - We get some information about quantity, but we don't get fees and other
       info (e.g., prices)
   - We save this info to cross-check `ccxt_fill` vs `ccxt_trade`
-   
 - `oms_fill`
   - It represents the fill of a parent order, since outside the execution system
     (e.g., in `Portfolio`) we don't care about tracking individual fills
   - For a parent order we need to convert multiple `ccxt_trades` into a single
     `oms_fill`
   - TODO(gp): Unclear
-  - Get all the trades combined to the parent order to get a single OMS
-    fill
+  - Get all the trades combined to the parent order to get a single OMS fill
     - We use this v1
   - Another way is to query the state of an order
     - We use this in v2 prototype, but it's not sure that it's the final

@@ -19,19 +19,23 @@ a standard client interface.
 **Large variety of data.** Data comes in a very large variety, for instance:
 
 - Different vendor can provide the same data
+
   - E.g., Kibot, Binance, CryptoDataDownload provide data for the Binance
     exchange
 
 - Different time semantics, e.g.,
+
   - Intervals can be \[a, b) or (a, b\]
   - A bar can be marked at the end or at the beginning of the interval
 
 - Data and metadata
+
   - Some vendors provide metadata, others don't
 
 - Multiple asset classes (e.g., equities, futures, crypto)
 
 - Data at different time resolutions, e.g.,
+
   - daily bars
   - minute bars
   - trades
@@ -42,6 +46,7 @@ a standard client interface.
 - Price data vs alternative data
 
 **Storage backend**. Data can be saved in multiple storage backends:
+
 - database (e.g., Postgres, MongoDB)
 - local filesystem
 - remote filesystems (e.g., AWS S3 bucket)
@@ -71,6 +76,7 @@ Our typical approach is:
 **Data formats**. The main data formats that Sorrentum supports are:
 
 - CSV
+
   - Pros
     - Easy to inspect
     - Easy to load / save
@@ -81,6 +87,7 @@ Our typical approach is:
       `.csv.gz` on the fly)
 
 - Parquet
+
   - Pros
     - Compressed
     - AWS friendly
@@ -141,11 +148,13 @@ transform stage.
 different ways to create various ETL pipelines.
 
 - Extract:
+
   - Read data from an external source to memory (typically in the form of Pandas
     data structures)
   - E.g., downloading data from a REST or Websocket interface
 
 - Load:
+
   - Load data stored in memory -> permanent storage (e.g., save as CSV or as
     Parquet)
   - E.g., pd.to_parquet()
@@ -154,10 +163,12 @@ different ways to create various ETL pipelines.
     - Create schema
 
 - Client:
+
   - From a permanent storage (e.g., disk) -> Memory
   - E.g., pd.from_parquet()
 
 - ClientFromDb
+
   - DB -> Memory
   - Creates the SQL query to read the data
 
@@ -214,6 +225,7 @@ Download data by time, e.g.,
 
 **Data invariants**. We use the following invariants when storing data during
 data on-boarding and processing:
+
 - Data quantities are associated to intervals are \[a, b) (e.g., the return over
   an interval) or to a single point in time (e.g., the close price at 9am UTC)
 - Every piece of data is labeled with the end of the sampling interval or with
@@ -325,6 +337,7 @@ E.g., `bulk.airflow.csv` instead of `bulk_airflow.csv`
 **Data pipeline classification**. A data pipeline can be any of the following:
 
 - a downloader
+
   - External DB (e.g., data provider) -> Internal DB: the data flows from an
     external API to an internal DB
   - It downloads historical or real-time data and saves the dataset in a
@@ -334,6 +347,7 @@ E.g., `bulk.airflow.csv` instead of `bulk_airflow.csv`
   - It is typically implemented as a Python script
 
 - a QA flow for a single or multiple datasets
+
   - Internal DB -> Process
   - It computes some statistics from one or more datasets (primary or derived)
     and throws an exception if the data is malformed
@@ -341,6 +355,7 @@ E.g., `bulk.airflow.csv` instead of `bulk_airflow.csv`
   - It is typically implemented as a Python notebook backed by a Python library
 
 - a derived dataset flow
+
   - Internal DB -> Process -> Internal DB
   - It computes some data derived from an existing data set
     - E.g., resampling, computing features
@@ -389,12 +404,14 @@ between the attributes.
 
 - `download_mode`: the type of downloading mode
 - `bulk`
+
   - Aka "one-shot", "one-off", and improperly "historical"
   - Data downloaded in bulk mode, as one-off documented operations
   - Sometimes it's referred to as "historical", since one downloads the
     historical data in bulk before the real-time flow is deployed
 
 - `periodic`
+
   - Aka "scheduled", "streaming", "continuous", and improperly "real-time"
   - Data is captured regularly and continuously
   - Sometimes it's referred as to "real-time" since one capture this data
@@ -403,6 +420,7 @@ between the attributes.
     to others
 
 - `unit_test`
+
   - Data used for unit test (independently if it was downloaded automatically or
     created manually)
 
@@ -442,6 +460,7 @@ between the attributes.
 - `exchange_id`: which exchange the data refers to
 - E.g., `binance`
 - `version`: any data set needs to have a version
+
   - Version is represented as major, minor, patch according to semantic
     versioning in the format `v{a}_{b}_{c}` (e.g., v1_0_0)
   - If the schema of the data is changed the major version is increased
@@ -713,62 +732,37 @@ It is possible to use a long format
 
 **Examples**.
 
-+------+---------+----------------+------------+------+-------+-----+
-| **   | **      | *              | **F        | *    | *     | **  |
-| Symb | Dataset | *Description** | requency** | *Das | *Data | Act |
-| olic | sign    |                |            | hboa | locat | ive |
-| na   | ature** |                |            | rd** | ion** | ?** |
-| me** |         |                |            |      |       |     |
-+======+=========+================+============+======+=======+=====+
-| hist | His     | -              | -   All of |      | s3:/  | Yes |
-| _dl1 | torical |                |     the    |      | /\... |     |
-|      | d       |                |     past   |      |       |     |
-|      | ownload |                |     day    |      |       |     |
-|      |         |                |     data   |      |       |     |
-|      |         |                |            |      |       |     |
-|      |         |                | -   Once a |      |       |     |
-|      |         |                |     day at |      |       |     |
-|      |         |                |            |      |       |     |
-|      |         |                |    0:00:00 |      |       |     |
-|      |         |                |     UTC    |      |       |     |
-+------+---------+----------------+------------+------+-------+-----+
-| rt   | Re      | -              | Every      |      | s3:/  | Yes |
-| _dl1 | al-time |                | minute     |      | /\... |     |
-|      | d       |                |            |      |       |     |
-|      | ownload |                |            |      |       |     |
-+------+---------+----------------+------------+------+-------+-----+
-| rt   | Re      | Check QA       | Every 5    |      | s3:/  | Yes |
-| _dl1 | al-time | metrics for    | minutes    |      | /\... |     |
-| .qa1 | QA      | dl1            |            |      |       |     |
-|      | check   |                |            |      |       |     |
-+------+---------+----------------+------------+------+-------+-----+
-| h    | Check   | Check          | Once a day |      |       |     |
-| ist_ | of      | consistency    | at 0:15:00 |      |       |     |
-| dl1. | his     | between        | UTC        |      |       |     |
-| rt_d | torical | historical and |            |      |       |     |
-| l1.c | vs      | real-time CCXT |            |      |       |     |
-| heck | re      | binance data   |            |      |       |     |
-|      | al-time |                |            |      |       |     |
-+------+---------+----------------+------------+------+-------+-----+
-| rt   | Re      | -   vendor     | Every      |      | s3:/  | Yes |
-| _dl2 | al-time | =CryptoChassis | minute     |      | /\... |     |
-|      | d       |                |            |      |       |     |
-|      | ownload | -   ex         |            |      |       |     |
-|      |         | change=Binance |            |      |       |     |
-|      |         |                |            |      |       |     |
-|      |         | -   data       |            |      |       |     |
-|      |         |                |            |      |       |     |
-|      |         |   type=bid/ask |            |      |       |     |
-+------+---------+----------------+------------+------+-------+-----+
-| rt   | Re      | Check QA       | Every 5    |      | s3:/  | Yes |
-| _dl2 | al-time | metrics for    | minutes    |      | /\... |     |
-| .qa2 | QA      | dl3            |            |      |       |     |
-|      | check   |                |            |      |       |     |
-+------+---------+----------------+------------+------+-------+-----+
-| rt_d | Cro     | Compare data   | Every 5    |      |       |     |
-| l1_d | ss-data | from rt_dl1    | minutes    |      |       |     |
-| l2.c | QA      | and rt_dl2     |            |      |       |     |
-| heck | check   |                |            |      |       |     |
++------+---------+----------------+------------+------+-------+-----+ | ** | **
+| _ | \*\*F | _ | * | \*\* | | Symb | Dataset | *Description** | requency** |
+*Das | *Data | Act | | olic | sign | | | hboa | locat | ive | | na | ature** | |
+| rd** | ion** | ?** | | me\*\* | | | | | | |
++======+=========+================+============+======+=======+=====+ | hist |
+His | - | - All of | | s3:/ | Yes | | _dl1 | torical | | the | | /\... | | | | d
+| | past | | | | | | ownload | | day | | | | | | | | data | | | | | | | | | | |
+| | | | | - Once a | | | | | | | | day at | | | | | | | | | | | | | | | |
+0:00:00 | | | | | | | | UTC | | | |
++------+---------+----------------+------------+------+-------+-----+ | rt | Re
+| - | Every | | s3:/ | Yes | | \_dl1 | al-time | | minute | | /\... | | | | d |
+| | | | | | | ownload | | | | | |
++------+---------+----------------+------------+------+-------+-----+ | rt | Re
+| Check QA | Every 5 | | s3:/ | Yes | | \_dl1 | al-time | metrics for | minutes
+| | /\... | | | .qa1 | QA | dl1 | | | | | | | check | | | | | |
++------+---------+----------------+------------+------+-------+-----+ | h |
+Check | Check | Once a day | | | | | ist_ | of | consistency | at 0:15:00 | | |
+| | dl1. | his | between | UTC | | | | | rt_d | torical | historical and | | | |
+| | l1.c | vs | real-time CCXT | | | | | | heck | re | binance data | | | | | |
+| al-time | | | | | |
++------+---------+----------------+------------+------+-------+-----+ | rt | Re
+| - vendor | Every | | s3:/ | Yes | | \_dl2 | al-time | =CryptoChassis | minute
+| | /\... | | | | d | | | | | | | | ownload | - ex | | | | | | | |
+change=Binance | | | | | | | | | | | | | | | | - data | | | | | | | | | | | | |
+| | | type=bid/ask | | | | |
++------+---------+----------------+------------+------+-------+-----+ | rt | Re
+| Check QA | Every 5 | | s3:/ | Yes | | \_dl2 | al-time | metrics for | minutes
+| | /\... | | | .qa2 | QA | dl3 | | | | | | | check | | | | | |
++------+---------+----------------+------------+------+-------+-----+ | rt_d |
+Cro | Compare data | Every 5 | | | | | l1_d | ss-data | from rt_dl1 | minutes |
+| | | | l2.c | QA | and rt_dl2 | | | | | | heck | check | | | | | |
 +------+---------+----------------+------------+------+-------+-----+
 
 ## Derived data workflows
@@ -1008,6 +1002,7 @@ class can do its job, i.e., apply common transformations to all
 - format of the data outputted by any derived class from `MarketData` /
 
 `ImClient`
+
 - The chain of transformations is:
 - Class derived from `ImClient`
 - The transformations are vendor-specific
@@ -1056,22 +1051,24 @@ this document and, if needed, update this doc
 
 - The data in output of a class derived from `ImClient` is normalized so that:
 - the index:
+
   - represents the knowledge time
   - is the end of the sampling interval
   - is called `timestamp`
   - is a tz-aware timestamp in UTC
 
 - the data:
+
   - is resampled on a 1 minute grid and filled with NaN values
   - is sorted by index and `full_symbol`
   - is guaranteed to have no duplicates
   - belongs to intervals like \[a, b\]
-  - has a `full_symbol` column with a string representing the canonical name
-  of the instrument
+  - has a `full_symbol` column with a string representing the canonical name of
+    the instrument
 
 - TODO(gp): We are planning to use an `ImClient` data format closer to
-  `MarketData`
-  by using `start_time`, `end_time`, and `knowledge_time` since these can be
+  `MarketData` by using `start_time`, `end_time`, and `knowledge_time` since
+  these can be
 
 inferred only from the vendor data semantic
 
@@ -1111,12 +1108,14 @@ and are:
 - applying column remaps
 
 Output format of `MarketData`
+
 - The base `MarketData` normalizes the data by:
 - sorting by the columns that correspond to `end_time` and `asset_id`
 - indexing by the column that corresponds to `end_time`, so that it is suitable
   to DataFlow computation
 
 - E.g.,
+
 ```
 asset_id start_time close volume
 end_time
