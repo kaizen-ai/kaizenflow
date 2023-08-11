@@ -46,12 +46,8 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 # %%
-# find /share/data/cf_production/CF_2022_09_08 -name "cf_prod_system_log_dir" -type d
-# /share/data/cf_production/CF_2022_09_08/job-sasm_job-jobid-1002410338/user_executable_run_0-1000005273093/cf_prod_system_log_dir
 
 root_dir = (
-    # "/data/tmp/AmpTask2534_Prod_reconciliation_20220901/system_log_dir.prod"
-    "/data/cf_production/20220914/job.1002436966/job-sasm_job-jobid-1002436966/user_executable_run_0-1000005393900/cf_prod_system_log_dir"
 )
 # root_dir = "/app/system_log_dir"
 

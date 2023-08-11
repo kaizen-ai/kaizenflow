@@ -39,11 +39,9 @@ hprint.config_notebook()
 
 # %%
 connection = hsql.get_connection(
-    "dp-research.redshift.eglp.com",
+    "dp-research.redshift"
     "refdata",
     5439,
-    "cf_dev_gsaggese",
-    "tIELZucge1bT",
 )
 
 # %%
@@ -203,7 +201,7 @@ pd.Series(data=df.columns).to_csv("universe_20210810.csv", index=False)
 import pandas as pd
 
 # %%
-universe = pd.read_csv("s3://eglp-spm-sasm/data/universe_20210810.csv")
+universe = pd.read_csv("s3://data/universe_20210810.csv")
 
 # %%
 universe

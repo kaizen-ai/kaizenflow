@@ -43,6 +43,14 @@
 
 - Pull master
 
+- Crete the integration branches
+  ```
+  > cd cmamp1
+  > i integrate_create_branch --dir-basename cmamp1
+  > cd sorrentum1
+  > i integrate_create_branch --dir-basename sorrentum1
+  ```
+
 - Remove white spaces from both source and destination repos:
   ```bash
   > dev_scripts/clean_up_text_files.sh
@@ -50,23 +58,16 @@
   ```
   - One should still run the regressions out of paranoia since some golden
     outcomes can be changed
-  - Remove trailing spaces:
-    ```bash
-    > find . -name "*.py" -o -name "*.txt" -o -name "*.json" | xargs perl -pi -e 's/\s+$/\n/'
     ```
-  - Add end-of-file marker:
-    ```bash
-    > find . -name "*.py" | xargs sed -i '' -e '$a\'
+    > i gh_create_pr --no-draft
+    > i gh_workflow_list
     ```
-  - Remove end-of-file:
-    ```bash
-    > find . -name -name "*.txt" | xargs perl -pi -e 'chomp if eof'
-    ```
-  - Remove empty files:
-    ```bash
-    > find . -type f -empty -print | grep -v .git | grep -v __init__ | grep -v ".log$" | grep -v ".txt$" | xargs git rm
-    ```
-    - TODO(gp): Add this step to `dev_scripts/clean_up_text_files.sh`
+
+- Remove empty files:
+  ```bash
+  > find . -type f -empty -print | grep -v .git | grep -v __init__ | grep -v ".log$" | grep -v ".txt$" | xargs git rm
+  ```
+  - TODO(gp): Add this step to `dev_scripts/clean_up_text_files.sh`
 
 - Align `lib_tasks.py`:
   ```bash

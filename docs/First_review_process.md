@@ -38,7 +38,7 @@ some helpful tips and resources to guide you through your first review.
 - To be able to run the linter, you need to you need to set up your client first
   since you're outside Docker:
   - The instructions are available at
-    [Quick start for developing](Quick_start_for_developing.md)
+    [Sorrentum_development_setup.md](Sorrentum_development_setup.md.md)
   - In practice you need to have run
     ```
     > source dev_scripts/setenv_amp.sh

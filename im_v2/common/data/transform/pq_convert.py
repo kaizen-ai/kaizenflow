@@ -91,7 +91,7 @@ def get_available_dates():
         pd.Timestamp("2021-11-13"), pd.Timestamp("2021-11-17"), freq="1D"
     )
     # Essentially equivalent to `> aws s3 ls _PATH`
-    # dates = hs3.listdir(path, mode="non-recursive", aws_profile="saml-spm-sasm")
+    # dates = hs3.listdir(path, mode="non-recursive", aws_profile="sasm")
     # files = s3.ls(_PATH)
     # dates = map(os.path.basename, files)
     # dates = sorted(dates)

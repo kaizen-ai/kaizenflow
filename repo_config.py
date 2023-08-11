@@ -333,7 +333,7 @@ def get_docker_user() -> str:
     Return the user that runs Docker, if any.
     """
     if hserver.is_dev4():
-        val = "spm-sasm"
+        val = "sasm"
     else:
         val = ""
     return val
@@ -365,7 +365,7 @@ def get_docker_shared_group() -> str:
     Return the group of the user running Docker, if any.
     """
     if hserver.is_dev4():
-        val = "spm-sasm-fileshare"
+        val = "sasm-fileshare"
     else:
         val = ""
     return val

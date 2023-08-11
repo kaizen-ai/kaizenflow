@@ -50,14 +50,9 @@ end_timestamp = pd.Timestamp(date + " 15:45:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", start_timestamp)
 
 # %%
-# !ls /data/cf_production/20220915/job.1002440809/job-sasm_job-jobid-1002440809/user_executable_run_0-1000005405809/cf_prod_system_log_dir/process_forecasts
 
 # %%
-# /share/data/cf_production/20220919/job.1002450215/job-sasm_job-jobid-1002450215/user_executable_run_0-1000005484302/cf_prod_system_log_dir
-# /share/data/cf_production/20220919/job.1002452903/user_executable_run_0-1000005489454/cf_prod_system_log_dir
 prod_dir = (
-    # "/share/data/cf_production/20220919/job.1002450215/job-sasm_job-jobid-1002450215/user_executable_run_0-1000005484302/cf_prod_system_log_dir"
-    "/share/data/cf_production/20220919/job.1002452903/user_executable_run_0-1000005489454/cf_prod_system_log_dir"
 )
 prod_dir = prod_dir.replace("/share/data/", "/data/")
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
