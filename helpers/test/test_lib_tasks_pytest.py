@@ -22,31 +22,92 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_build_run_command_line1(hunitest.TestCase):
+    def run_fast_tests1_helper(self, is_dev_ck_return_value, exp) -> None:
+        """
+        Basic run fast tests.
+
+        :param is_dev_ck_return_value: mocking the return_value of hserver.is_dev_ck().
+        :param exp: expected output string.
+        """
+        custom_marker = ""
+        pytest_opts = ""
+        skip_submodules = False
+        coverage = False
+        collect_only = False
+        tee_to_file = False
+        n_threads = "1"
+        #
+        with umock.patch.object(
+            hserver, "is_dev_ck", return_value=is_dev_ck_return_value
+        ):
+            act = hlitapyt._build_run_command_line(
+                "fast_tests",
+                custom_marker,
+                pytest_opts,
+                skip_submodules,
+                coverage,
+                collect_only,
+                tee_to_file,
+                n_threads,
+            )
+            self.assert_equal(act, exp)
+
     def test_run_fast_tests1_on_ck_server(self) -> None:
         """
-        Mock test for running fast tests on ck server.
+        Mock test for running fast tests on CK server.
         """
         exp = (
             'pytest -m "not slow and not superslow" . '
             "-o timeout_func_only=true --timeout 5 --reruns 2 "
             '--only-rerun "Failed: Timeout" -n 1'
         )
-        self._test_run_fast_tests1_helper(True, exp)
+        is_dev_ck_return_value = True
+        self.run_fast_tests1_helper(is_dev_ck_return_value, exp)
 
     def test_run_fast_tests1_outside_ck_server(self) -> None:
         """
-        Mock test for running fast tests outside ck server.
+        Mock test for running fast tests outside CK server.
         """
         exp = (
             'pytest -m "not slow and not superslow" . '
             "-o timeout_func_only=true --timeout 50 --reruns 2 "
             '--only-rerun "Failed: Timeout" -n 1'
         )
-        self._test_run_fast_tests1_helper(False, exp)
+        is_dev_ck_return_value = False
+        self.run_fast_tests1_helper(is_dev_ck_return_value, exp)
+
+    def run_fast_tests2_helper(self, is_dev_ck_return_value, exp) -> None:
+        """
+        Coverage and collect-only.
+
+        :params: see run_fast_tests1_helper().
+        """
+        custom_marker = ""
+        pytest_opts = ""
+        skip_submodules = False
+        coverage = True
+        collect_only = True
+        tee_to_file = False
+        n_threads = "1"
+        #
+        with umock.patch.object(
+            hserver, "is_dev_ck", return_value=is_dev_ck_return_value
+        ):
+            act = hlitapyt._build_run_command_line(
+                "fast_tests",
+                custom_marker,
+                pytest_opts,
+                skip_submodules,
+                coverage,
+                collect_only,
+                tee_to_file,
+                n_threads,
+            )
+            self.assert_equal(act, exp)
 
     def test_run_fast_tests2_on_ck_server(self) -> None:
         """
-        Mock test for running fast tests on ck server.
+        Mock test for running fast tests on CK server.
         """
 
         exp = (
@@ -56,11 +117,12 @@ class Test_build_run_command_line1(hunitest.TestCase):
             r" --cov-branch --cov-report term-missing --cov-report html "
             r"--collect-only -n 1"
         )
-        self._test_run_fast_tests2_helper(True, exp)
+        is_dev_ck_return_value = True
+        self.run_fast_tests2_helper(is_dev_ck_return_value, exp)
 
     def test_run_fast_tests2_outside_ck_server(self) -> None:
         """
-        Mock test for running fast tests outside ck server.
+        Mock test for running fast tests outside CK server.
         """
         exp = (
             r'pytest -m "not slow and not superslow" . '
@@ -69,7 +131,8 @@ class Test_build_run_command_line1(hunitest.TestCase):
             r" --cov-branch --cov-report term-missing --cov-report html "
             r"--collect-only -n 1"
         )
-        self._test_run_fast_tests2_helper(False, exp)
+        is_dev_ck_return_value = False
+        self.run_fast_tests2_helper(is_dev_ck_return_value, exp)
 
     @pytest.mark.skip(reason="Fix support for pytest_mark")
     @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
@@ -127,121 +190,12 @@ class Test_build_run_command_line1(hunitest.TestCase):
         )
         self.assert_equal(act, exp)
 
-    def test_run_fast_tests5_on_ck_server(self) -> None:
-        exp = (
-            'pytest -m "not slow and not superslow" . '
-            "-o timeout_func_only=true --timeout 5 --reruns 2 "
-            '--only-rerun "Failed: Timeout" -n 1 2>&1'
-            " | tee tmp.pytest.fast_tests.log"
-        )
-        self._test_run_fast_tests5_helper(True, exp)
-
-    def test_run_fast_tests5_outside_ck_server(self) -> None:
-        exp = (
-            'pytest -m "not slow and not superslow" . '
-            "-o timeout_func_only=true --timeout 50 --reruns 2 "
-            '--only-rerun "Failed: Timeout" -n 1 2>&1'
-            " | tee tmp.pytest.fast_tests.log"
-        )
-        self._test_run_fast_tests5_helper(False, exp)
-
-    def test_run_fast_tests6_on_ck_server(self) -> None:
-        exp = (
-            'pytest -m "optimizer and not slow and not superslow" . '
-            "-o timeout_func_only=true --timeout 5 --reruns 2 "
-            '--only-rerun "Failed: Timeout" -n 1'
-        )
-        self._test_run_fast_tests6_helper(True, exp)
-
-    def test_run_fast_tests6_outside_ck_server(self) -> None:
-        exp = (
-            'pytest -m "optimizer and not slow and not superslow" . '
-            "-o timeout_func_only=true --timeout 50 --reruns 2 "
-            '--only-rerun "Failed: Timeout" -n 1'
-        )
-        self._test_run_fast_tests6_helper(False, exp)
-
-    def test_run_fast_tests7_on_ck_server(self) -> None:
-        exp = (
-            'pytest -m "not slow and not superslow" . '
-            "-o timeout_func_only=true --timeout 5 --reruns 2 "
-            '--only-rerun "Failed: Timeout" -n auto'
-        )
-        self._test_run_fast_tests7_helper(True, exp)
-
-    def test_run_fast_tests7_outside_ck_server(self) -> None:
-        exp = (
-            'pytest -m "not slow and not superslow" . '
-            "-o timeout_func_only=true --timeout 50 --reruns 2 "
-            '--only-rerun "Failed: Timeout" -n auto'
-        )
-        self._test_run_fast_tests7_helper(False, exp)
-
-    def _test_run_fast_tests1_helper(self, is_dev_ck_return_value, exp) -> None:
-        """
-        Basic run fast tests.
-
-        :param: is_dev_ck_return_value: mocking the return_value of hserver.is_dev_ck.
-        :param: exp: expected output string.
-        """
-        custom_marker = ""
-        pytest_opts = ""
-        skip_submodules = False
-        coverage = False
-        collect_only = False
-        tee_to_file = False
-        n_threads = "1"
-        #
-        with umock.patch.object(
-            hserver, "is_dev_ck", return_value=is_dev_ck_return_value
-        ):
-            act = hlitapyt._build_run_command_line(
-                "fast_tests",
-                custom_marker,
-                pytest_opts,
-                skip_submodules,
-                coverage,
-                collect_only,
-                tee_to_file,
-                n_threads,
-            )
-            self.assert_equal(act, exp)
-
-    def _test_run_fast_tests2_helper(self, is_dev_ck_return_value, exp) -> None:
-        """
-        Coverage and collect-only.
-
-        :params: see _test_run_fast_tests1_helper.
-        """
-        custom_marker = ""
-        pytest_opts = ""
-        skip_submodules = False
-        coverage = True
-        collect_only = True
-        tee_to_file = False
-        n_threads = "1"
-        #
-        with umock.patch.object(
-            hserver, "is_dev_ck", return_value=is_dev_ck_return_value
-        ):
-            act = hlitapyt._build_run_command_line(
-                "fast_tests",
-                custom_marker,
-                pytest_opts,
-                skip_submodules,
-                coverage,
-                collect_only,
-                tee_to_file,
-                n_threads,
-            )
-            self.assert_equal(act, exp)
-
-    def _test_run_fast_tests5_helper(self, is_dev_ck_return_value, exp) -> None:
+    def run_fast_tests5_helper(self, is_dev_ck_return_value, exp) -> None:
         """
         Basic run fast tests tee-ing to a file. Mock depending on
         is_dev_ck_return_value.
 
-        :params: see _test_run_fast_tests1_helper.
+        :params: see run_fast_tests1_helper().
         """
         test_list_name = "fast_tests"
         custom_marker = ""
@@ -267,11 +221,31 @@ class Test_build_run_command_line1(hunitest.TestCase):
             )
             self.assert_equal(act, exp)
 
-    def _test_run_fast_tests6_helper(self, is_dev_ck_return_value, exp) -> None:
+    def test_run_fast_tests5_on_ck_server(self) -> None:
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1 2>&1'
+            " | tee tmp.pytest.fast_tests.log"
+        )
+        is_dev_ck_return_value = True
+        self.run_fast_tests5_helper(is_dev_ck_return_value, exp)
+
+    def test_run_fast_tests5_outside_ck_server(self) -> None:
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 50 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1 2>&1'
+            " | tee tmp.pytest.fast_tests.log"
+        )
+        is_dev_ck_return_value = False
+        self.run_fast_tests5_helper(is_dev_ck_return_value, exp)
+
+    def run_fast_tests6_helper(self, is_dev_ck_return_value, exp) -> None:
         """
         Run fast tests with a custom test marker.
 
-        :params: see _test_run_fast_tests1_helper.
+        :params: see run_fast_tests1_helper().
         """
         custom_marker = "optimizer"
         pytest_opts = ""
@@ -296,11 +270,29 @@ class Test_build_run_command_line1(hunitest.TestCase):
             )
             self.assert_equal(act, exp)
 
-    def _test_run_fast_tests7_helper(self, is_dev_ck_return_value, exp) -> None:
+    def test_run_fast_tests6_on_ck_server(self) -> None:
+        exp = (
+            'pytest -m "optimizer and not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1'
+        )
+        is_dev_ck_return_value = True
+        self.run_fast_tests6_helper(is_dev_ck_return_value, exp)
+
+    def test_run_fast_tests6_outside_ck_server(self) -> None:
+        exp = (
+            'pytest -m "optimizer and not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 50 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1'
+        )
+        is_dev_ck_return_value = False
+        self.run_fast_tests6_helper(is_dev_ck_return_value, exp)
+
+    def run_fast_tests7_helper(self, is_dev_ck_return_value, exp) -> None:
         """
         Run fast tests with parallelization.
 
-        :params: see _test_run_fast_tests1_helper.
+        :params: see run_fast_tests1_helper().
         """
         custom_marker = ""
         pytest_opts = ""
@@ -324,6 +316,24 @@ class Test_build_run_command_line1(hunitest.TestCase):
                 n_threads,
             )
             self.assert_equal(act, exp)
+
+    def test_run_fast_tests7_on_ck_server(self) -> None:
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n auto'
+        )
+        is_dev_ck_return_value = True
+        self.run_fast_tests7_helper(is_dev_ck_return_value, exp)
+
+    def test_run_fast_tests7_outside_ck_server(self) -> None:
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 50 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n auto'
+        )
+        is_dev_ck_return_value = False
+        self.run_fast_tests7_helper(is_dev_ck_return_value, exp)
 
 
 class Test_pytest_repro1(hunitest.TestCase):

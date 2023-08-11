@@ -12,12 +12,10 @@ _LOG = logging.getLogger(__name__)
 
 def build_config_list() -> cconfig.ConfigList:
     """
-    Empty config builder used by the test.
+    Simple config builder used by the test.
     """
-    # We want to execute the notebook as it is, but config is needed
-    # so we pass an empty one.
-    config = {}
-    config = cconfig.Config()
+    config_dict = {"figsize": (20, 10)}
+    config = cconfig.Config.from_dict(config_dict)
     config_list = cconfig.ConfigList([config])
     return config_list
 
@@ -32,5 +30,7 @@ class TestGalleryNotebook(dsnrn.Test_Run_Notebook_TestCase):
         notebook_path = os.path.join(
             amp_path, "core/plotting/notebooks/gallery_notebook.ipynb"
         )
-        config_func_path = "core.plotting.notebooks.test.test_gallery_notebook.build_config_list()"
+        config_func_path = (
+            "core.plotting.test.test_gallery_notebook.build_config_list()"
+        )
         self._test_run_notebook(notebook_path, config_func_path)
