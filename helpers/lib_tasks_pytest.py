@@ -382,7 +382,7 @@ def run_fast_tests(  # type: ignore
     :param stage: select a specific stage for the Docker image
     :param pytest_opts: additional options for `pytest` invocation. It can be empty
     :param run_only_test_list: select markers to run. Takes comma-separated tokens,
-           e.g. --run_only_test_list = requires_ck_infra,requires_aws
+           e.g. `--run_only_test_list = requires_ck_infra,requires_aws`
     :param skip_test_list: select markers to skip. Takes comma-separated tokens.
     :param skip_submodules: ignore all the dir inside a submodule
     :param coverage: enable coverage computation
@@ -419,7 +419,7 @@ def run_fast_tests(  # type: ignore
         skip_test_list = skip_test_list.split(",")
         _LOG.warning(f"Skipping the tests inside: {skip_test_list}")
     else:
-        # When running inside CK infra, it is still possible for skip_test_list to be empty.
+        # When running inside CK infra, it is still possible for `skip_test_list` to be empty.
         skip_test_list = []
     # Convert marker strings for `pytest -m` using `and` and `not`.
     run_only_marker_string = " and ".join(run_only_test_list)
