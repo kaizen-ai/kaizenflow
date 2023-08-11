@@ -71,13 +71,13 @@ class Test_generate_compose_file1(hunitest.TestCase):
     def test3(self) -> None:
         self.helper(stage="prod", use_main_network=True)
 
-    # TODO(ShaopengZ): hangs outside CK infra. so skipping. 
+    # TODO(ShaopengZ): This hangs outside CK infra, so we skip it. 
     @pytest.mark.skip
     @pytest.mark.requires_ck_infra
     def test4(self) -> None:
         self.helper(stage="dev")
 
-    # TODO(ShaopengZ): hangs outside CK infra. so skipping. 
+    # TODO(ShaopengZ): This hangs outside CK infra. so we skip it. 
     @pytest.mark.skip
     @pytest.mark.requires_ck_infra
     def test5(self) -> None:
@@ -87,7 +87,7 @@ class Test_generate_compose_file1(hunitest.TestCase):
 # #############################################################################
 
 
-# TODO(ShaopengZ): hangs outside CK infra. so skipping. 
+# TODO(ShaopengZ): This hangs outside CK infra, so we skip it. 
 @pytest.mark.requires_ck_infra
 class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
     """

@@ -668,7 +668,7 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
 # #############################################################################
 
 
-# TODO(Shaopeng Z): hangs when outside CK infra, so skipping it.
+# TODO(Shaopeng Z): This hangs outside CK infra, so we skip it.
 @pytest.mark.requires_ck_infra
 class TestTalosSqlRealTimeImClient1(
     icdc.ImClientTestCase, imvcddbut.TestImDbHelper

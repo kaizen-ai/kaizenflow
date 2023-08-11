@@ -407,7 +407,7 @@ def run_fast_tests(  # type: ignore
             skip_test_list = "requires_ck_infra," + skip_test_list
         else:
             skip_test_list = "requires_ck_infra"
-    # split the run_only_test_list and skip_test_list strings into lists.
+    # Split the `run_only_test_list` and `skip_test_list` strings into lists.
     if run_only_test_list:
         # This works as expected when there is a single test in the list.
         run_only_test_list = run_only_test_list.split(",")
@@ -419,9 +419,9 @@ def run_fast_tests(  # type: ignore
         skip_test_list = skip_test_list.split(",")
         _LOG.warning(f"Skipping the tests inside: {skip_test_list}")
     else:
-        # when running inside CK infra, it is still possible for skip_test_list to be empty.
+        # When running inside CK infra, it is still possible for skip_test_list to be empty.
         skip_test_list = []
-    # form marker strings for pytest -m using " and " and " not ".
+    # Convert marker strings for `pytest -m` using `and` and `not`.
     run_only_marker_string = " and ".join(run_only_test_list)
     skip_marker_string = " and ".join(
         [("not " + item) for item in skip_test_list]
