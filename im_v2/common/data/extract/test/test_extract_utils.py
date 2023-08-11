@@ -14,7 +14,6 @@ import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
-import helpers.hserver as hserver
 import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
@@ -818,11 +817,7 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
 
 
 @pytest.mark.requires_ck_infra
-@pytest.mark.requires_aws #at least test_empty_dataset does
-@pytest.mark.skipif(
-    not hserver.is_dev_ck(),
-    reason="Run only on CK infra"
-)
+@pytest.mark.requires_aws
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
@@ -865,6 +860,8 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             )
             imvcdeexut.download_historical_data(args, exchange)
 
+    @pytest.mark.requires_ck_infra
+    @pytest.mark.requires_aws
     def test_empty_dataset(self):
         """
         Check that an exception is raised if assert_on_missing_data=True

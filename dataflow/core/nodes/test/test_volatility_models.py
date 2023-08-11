@@ -12,7 +12,6 @@ import core.signal_processing as csigproc
 import dataflow.core.nodes.test.helpers as cdnth
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
 from dataflow.core.nodes.volatility_models import (
     MultiindexVolatilityModel,
@@ -606,12 +605,7 @@ class TestVolatilityModel(hunitest.TestCase):
 
 # TODO(ShaopengZ): numerical issue. (arm vs x86)
 @pytest.mark.requires_ck_infra
-@pytest.mark.skipif(
-    not hserver.is_dev_ck(),
-    reason="Run only in ck infra."
-)
 class TestMultiindexVolatilityModel(hunitest.TestCase):
-    
     @pytest.mark.requires_ck_infra
     def test1(self) -> None:
         """

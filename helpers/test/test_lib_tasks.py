@@ -244,12 +244,10 @@ class TestDryRunTasks1(hunitest.TestCase):
 
 
 # #############################################################################
-
-# TODO(Shaopengz): The test hangs in hgit.is_in_amp_as_supermodule().
+# Outside CK infra, the class hangs, so we skip it.
 @pytest.mark.skip
+@pytest.mark.requires_ck_infra
 @pytest.mark.slow(reason="Around 7s")
-# TODO(Shaopengz): In some run, test ignores my mark.skip above, goes in
-# the mark.skipif block anyway, and hangs at the hgit.is_in_amp_as_supermodule().
 class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     """
     - Call the invoke task directly from Python
@@ -317,35 +315,22 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 
     # #########################################################################
     # TODO(gp): -> TestGhCommands1
-    # TODO(ShaopengZ): hands at hgit.is_in_amp_as_supermodule().
+    # TODO(ShaopengZ): Outside CK infra, the test hangs, so we skip it.
     @pytest.mark.requires_ck_infra
-    @pytest.mark.skipif(
-        not hserver.is_dev_ck(),
-        reason="Run only in CK infra"
-    )
     def test_gh_create_pr1(self) -> None:
         _gh_login()
         target = "gh_create_pr(ctx, repo_short_name='amp', title='test')"
         self._check_output(target)
-    
-    # TODO(Shaopeng Z): hangs when outside CK infra at is_in_amp_as_supermodule().
-    @pytest.mark.requires_ck_infra
-    @pytest.mark.skipif(
-        not hserver.is_dev_ck(),
-        reason="Run only in CK infra"
-    )
 
+    # TODO(ShaopengZ): Outside CK infra, the test hangs, so we skip it.
+    @pytest.mark.requires_ck_infra
     def test_gh_create_pr2(self) -> None:
         _gh_login()
         target = "gh_create_pr(ctx, body='hello_world', repo_short_name='amp', title='test')"
         self._check_output(target)
 
-    # TODO(Shaopeng Z): hangs when outside CK infra at is_in_amp_as_supermodule().
+    # TODO(ShaopengZ): Outside CK infra, the test hangs, so we skip it.
     @pytest.mark.requires_ck_infra
-    @pytest.mark.skipif(
-        not hserver.is_dev_ck(),
-        reason="Run only in CK infra"
-    )
     def test_gh_create_pr3(self) -> None:
         _gh_login()
         target = (
@@ -358,10 +343,9 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "gh_issue_title(ctx, 1)"
         self._check_output(target)
 
-    # TODO(Shaopengz): hangs at hgit.is_amp()
+    # TODO(Shaopengz):Outside CK infra, the test hangs, so skip.
     @pytest.mark.skip
     @pytest.mark.requires_ck_infra
-    @pytest.mark.skipif(not hserver.is_dev_ck(), reason="Only run in CK infra")
     def test_gh_workflow_list(self) -> None:
         _gh_login()
         target = "gh_workflow_list(ctx, filter_by_branch='master')"

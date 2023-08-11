@@ -10,7 +10,6 @@ import pyarrow.parquet as parquet
 import pytest
 
 import helpers.hdbg as hdbg
-import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
@@ -18,7 +17,6 @@ import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
-import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -840,14 +838,6 @@ class TestToPartitionedDataset(hunitest.TestCase):
 
 @pytest.mark.requires_ck_infra
 @pytest.mark.requires_aws
-@pytest.mark.skipif(
-    not hserver.is_dev_ck(),
-    reason="Run only on CK infra"
-)
-@pytest.mark.skipif(
-    not henv.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available",
-)
 class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
     def generate_test_data(self) -> hs3.AwsProfile:
         """

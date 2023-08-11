@@ -10,7 +10,6 @@ import helpers.henv as henv
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
-import helpers.hserver as hserver
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
@@ -205,13 +204,51 @@ class TestArchiveDbDataToS3(imvcddbut.TestImDbHelper, hmoto.S3Mock_TestCase):
         return pd.concat([binance_data, okx_data], ignore_index=True)
 
 
-@pytest.mark.requires_aws 
+@pytest.mark.requires_aws
 @pytest.mark.requires_ck_infra
-@pytest.mark.skipif(
-    not hserver.is_dev_ck(),
-    reason="Run only on CK infra"
-)
 class TestArchiveDbDataToS3Mode(hunitest.TestCase):
+    @pytest.mark.requires_aws
+    @pytest.mark.requires_ck_infra
+    def test_archive_and_delete_mode(self):
+        """
+        Test that the archive_and_delete mode works.
+        """
+        # Prepare arguments.
+        args = self._prepare_test_mode("archive_and_delete")
+        # Run.
+        imvcdaddts._archive_db_data_to_s3(argparse.Namespace(**args))
+        # Check that the data was saved to S3 and deleted from DB.
+        imvcdaddts.imvcdeexut.save_parquet.assert_called_once()
+        imvcdaddts.imvcddbut.drop_db_data_by_age.assert_called_once()
+
+    @pytest.mark.requires_aws
+    @pytest.mark.requires_ck_infra
+    def test_archive_only_mode(self):
+        """
+        Test that the archive_only mode works.
+        """
+        # Prepare arguments.
+        args = self._prepare_test_mode("archive_only")
+        # Run.
+        imvcdaddts._archive_db_data_to_s3(argparse.Namespace(**args))
+        # Check that the data was saved to S3 and not deleted from DB.
+        imvcdaddts.imvcdeexut.save_parquet.assert_called_once()
+        imvcdaddts.imvcddbut.drop_db_data_by_age.assert_not_called()
+
+    @pytest.mark.requires_aws
+    @pytest.mark.requires_ck_infra
+    def test_delete_only_mode(self):
+        """
+        Test that the delete_only mode works.
+        """
+        # Prepare arguments.
+        args = self._prepare_test_mode("delete_only")
+        # Run.
+        imvcdaddts._archive_db_data_to_s3(argparse.Namespace(**args))
+        # Check that the data was not saved to S3 and deleted from DB.
+        imvcdaddts.imvcdeexut.save_parquet.assert_not_called()
+        imvcdaddts.imvcddbut.drop_db_data_by_age.assert_called_once()
+
     def _prepare_test_mode(self, mode: str) -> dict:
         """
         Prepare the test mode environment.
@@ -239,43 +276,3 @@ class TestArchiveDbDataToS3Mode(hunitest.TestCase):
         imvcdaddts.imvcddbut.fetch_data_by_age = mock_fetch_data_by_age
         imvcdaddts.imvcdeexut = umock.MagicMock()
         return args
-
-    def test_archive_and_delete_mode(self):
-        """
-        Test that the archive_and_delete mode works.
-        """
-        # Prepare arguments.
-        args = self._prepare_test_mode("archive_and_delete")
-        # Run.
-        imvcdaddts._archive_db_data_to_s3(argparse.Namespace(**args))
-        # Check that the data was saved to S3 and deleted from DB.
-        imvcdaddts.imvcdeexut.save_parquet.assert_called_once()
-        imvcdaddts.imvcddbut.drop_db_data_by_age.assert_called_once()
-
-    @pytest.mark.requires_aws 
-    @pytest.mark.requires_ck_infra
-    def test_archive_only_mode(self):
-        """
-        Test that the archive_only mode works.
-        """
-        # Prepare arguments.
-        args = self._prepare_test_mode("archive_only")
-        # Run.
-        imvcdaddts._archive_db_data_to_s3(argparse.Namespace(**args))
-        # Check that the data was saved to S3 and not deleted from DB.
-        imvcdaddts.imvcdeexut.save_parquet.assert_called_once()
-        imvcdaddts.imvcddbut.drop_db_data_by_age.assert_not_called()
-
-    @pytest.mark.requires_aws 
-    @pytest.mark.requires_ck_infra
-    def test_delete_only_mode(self):
-        """
-        Test that the delete_only mode works.
-        """
-        # Prepare arguments.
-        args = self._prepare_test_mode("delete_only")
-        # Run.
-        imvcdaddts._archive_db_data_to_s3(argparse.Namespace(**args))
-        # Check that the data was not saved to S3 and deleted from DB.
-        imvcdaddts.imvcdeexut.save_parquet.assert_not_called()
-        imvcdaddts.imvcddbut.drop_db_data_by_age.assert_called_once()

@@ -9,7 +9,6 @@ import pytest
 import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.htimer as htimer
-import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
 import im_v2.ig.data.client.historical_bars as imvidchiba
 import im_v2.ig.ig_utils as imvigigut
@@ -32,10 +31,6 @@ _IG_START_DATE = "2019-01-07"
 
 @pytest.mark.requires_aws 
 @pytest.mark.requires_ck_infra
-@pytest.mark.skipif(
-    not hserver.is_dev_ck(),
-    reason="Run only on CK infra"
-)
 class TestTaqBarsUtils1(hunitest.TestCase):
     
     def test_get_available_dates1(self) -> None:
@@ -110,10 +105,6 @@ class TestTaqBarsUtils1(hunitest.TestCase):
 # #############################################################################
 
 @pytest.mark.requires_ck_infra
-@pytest.mark.skipif(
-    not hserver.is_dev_ck(),
-    reason="Run only on CK infra"
-)
 class TestGetBarData1(hunitest.TestCase):
     def get_bar_data_helper(self, *args: Any, **kwargs: Any) -> None:
         df = imvidchiba.get_bar_data_for_dates(*args, **kwargs)
@@ -149,10 +140,6 @@ class TestGetBarData1(hunitest.TestCase):
     
     @pytest.mark.requires_aws 
     @pytest.mark.requires_ck_infra
-    @pytest.mark.skipif(
-        not hserver.is_dev_ck(),
-        reason="Run only on CK infra"
-    )
     def test1(self) -> None:
         """
         Get data for one day and multiple assets.
@@ -186,10 +173,6 @@ class TestGetBarData1(hunitest.TestCase):
 
     @pytest.mark.requires_aws 
     @pytest.mark.requires_ck_infra
-    @pytest.mark.skipif(
-        not hserver.is_dev_ck(),
-        reason="Run only on CK infra"
-    )
     def test2(self) -> None:
         """
         Get multiple days and check the format.
@@ -224,10 +207,6 @@ class TestGetBarData1(hunitest.TestCase):
 
 @pytest.mark.requires_aws 
 @pytest.mark.requires_ck_infra
-@pytest.mark.skipif(
-    not hserver.is_dev_ck(),
-    reason="Run only on CK infra"
-)
 class Test_get_cached_bar_data_for_date_interval1(hunitest.TestCase):
     def test_tsla1(self) -> None:
         """

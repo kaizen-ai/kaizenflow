@@ -8,17 +8,12 @@ import pytest
 import pandas as pd
 
 import helpers.hunit_test as hunitest
-import helpers.hserver as hserver
 import im.common.data.types as imcodatyp
 import im.ib.data.load.ib_s3_data_loader as imidlisdlo
 
 
 @pytest.mark.requires_aws 
 @pytest.mark.requires_ck_infra
-@pytest.mark.skipif(
-    not hserver.is_dev_ck(),
-    reason="Run only on CK infra"
-    )
 class TestS3IbDataLoader1(hunitest.TestCase):
     """
     Test data loading correctness for Ib from S3.
@@ -28,6 +23,8 @@ class TestS3IbDataLoader1(hunitest.TestCase):
         super().setUp()
         self._s3_data_loader = imidlisdlo.IbS3DataLoader()
 
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test_dtypes1(self) -> None:
         """
         Test column types of loaded dataframe.

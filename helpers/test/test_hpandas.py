@@ -12,7 +12,6 @@ import pytest
 
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import helpers.hserver as hserver
 import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
 
@@ -1283,10 +1282,6 @@ class TestCompareDataframeRows(hunitest.TestCase):
 
 @pytest.mark.requires_ck_infra
 @pytest.mark.requires_aws
-@pytest.mark.skipif(
-    not hserver.is_dev_ck(),
-    reason="Run only on CK infra" 
-)
 class TestReadDataFromS3(hunitest.TestCase):
     def test_read_csv1(self) -> None:
         s3fs = hs3.get_s3fs(_AWS_PROFILE)

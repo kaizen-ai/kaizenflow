@@ -5,7 +5,6 @@ import pytest
 
 import core.config as cconfig
 import dev_scripts.notebooks.run_notebook_test_case as dsnrnteca
-import helpers.hserver as hserver
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hsystem as hsystem
@@ -79,13 +78,7 @@ class Test_run_master_feature_analyzer(dsnrnteca.Test_Run_Notebook_TestCase):
         _test_run_notebook(self, notebook_name)
 
     @pytest.mark.skip("Run manually.")
-    @pytest.mark.skipif(
-        # TODO(ShaopengZ): in some runs, pytest ignores the mark.skip above, and
-        # still evaluates and hangs at hgit.is_in_amp_as_supermodule() anyway.
-        # changing the condition to hserver.is_dev_ck().
-        not hserver.is_dev_ck(),
-        reason="Run only in CK infra"
-    )
+    @pytest.mark.requires_ck_infra
     def test_save_data(self) -> None:
         """
         Save test data.
@@ -105,12 +98,7 @@ class Test_run_master_research_backtest_analyzer(
         _test_run_notebook(self, notebook_name)
 
     @pytest.mark.skip("Run manually.")
-    @pytest.mark.skipif(
-        # TODO(Shaopeng Z): sometimes outside CK, the code ignores the unconditional skip and 
-        # goes to this block. This happens during collection stage.
-        not hserver.is_dev_ck(),
-        reason="Run only in CK infra"
-    )
+    @pytest.mark.requires_ck_infra
     def test_save_data(self) -> None:
         """
         Save test data.

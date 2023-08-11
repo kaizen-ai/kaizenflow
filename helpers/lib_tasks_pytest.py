@@ -366,8 +366,8 @@ def run_fast_tests(  # type: ignore
     stage="dev",
     version="",
     pytest_opts="",
-    run_only_test_list_as_string="",
-    skip_test_list_as_string="",
+    run_only_test_list="",
+    skip_test_list="",
     skip_submodules=False,
     coverage=False,
     collect_only=False,
@@ -381,8 +381,8 @@ def run_fast_tests(  # type: ignore
 
     :param stage: select a specific stage for the Docker image
     :param pytest_opts: additional options for `pytest` invocation. It can be empty
-    :param run_only_test_list_as_string: select markers to run. Takes comma-separated tokens,
-           e.g. --run_only_test_list_as_string = requires_ck_infra,requires_aws
+    :param run_only_test_list: select markers to run. Takes comma-separated tokens,
+           e.g. --run_only_test_list = requires_ck_infra,requires_aws
     :param skip_test_list_as_string: select markers to skip. Takes comma-separated tokens.
     :param skip_submodules: ignore all the dir inside a submodule
     :param coverage: enable coverage computation
@@ -394,22 +394,38 @@ def run_fast_tests(  # type: ignore
     :param kwargs: kwargs for `ctx.run`
     """
     hlitauti.report_task()
+    hdbg.dassert(
+        not (run_only_test_list and skip_test_list),
+        "You can't specify both --run_only_test_list and --skip_test_list",
+    )
     test_list_name = "fast_tests"
-    run_only_test_list = run_only_test_list_as_string.split(',') if run_only_test_list_as_string else []
-    skip_test_list = skip_test_list_as_string.split(',') if skip_test_list_as_string else []
+    # If we are running outside the CK server, tests that requires CK infra
+    # should be automatically skipped.
+    is_outside_ck_infra = not hserver.is_dev_ck()
+    if is_outside_ck_infra:
+        if skip_test_list:
+            skip_test_list = "requires_ck_infra," + skip_test_list
+        else:
+            skip_test_list = "requires_ck_infra"
+    # split the run_only_test_list and skip_test_list strings into lists.
     if run_only_test_list:
-        _LOG.warning(f"Running only the following fast tests: {run_only_test_list_as_string}")
-        #only need to test for conflict in run_ and skip_ if run_ is non-empty.
-        for item in run_only_test_list:
-            hdbg.dassert(
-                (item not in skip_test_list),
-            msg= f"You can't run and skip {item} at the same time",
-        )
+        # This works as expected when there is a single test in the list.
+        run_only_test_list = run_only_test_list.split(",")
+        _LOG.warning(f"Running only tests inside: {run_only_test_list}")
+    else:
+        run_only_test_list = []
     if skip_test_list:
-        _LOG.warning(f"Skipping the following fast tests: {skip_test_list_as_string}")
+        # This works as expected when there is a single test in the list.
+        skip_test_list = skip_test_list.split(",")
+        _LOG.warning(f"Skipping the tests inside: {skip_test_list}")
+    else:
+        # when running inside CK infra, it is still possible for skip_test_list to be empty.
+        skip_test_list = []
     # form marker strings for pytest -m using " and " and " not ".
     run_only_marker_string = " and ".join(run_only_test_list)
-    skip_marker_string = " and ".join([("not " + item) for item in skip_test_list])
+    skip_marker_string = " and ".join(
+        [("not " + item) for item in skip_test_list]
+    )
     if run_only_marker_string:
         if skip_marker_string:
             custom_marker = run_only_marker_string + " and " + skip_marker_string

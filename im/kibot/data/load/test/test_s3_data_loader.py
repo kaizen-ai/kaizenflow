@@ -2,22 +2,19 @@ import pandas as pd
 import pytest
 
 import helpers.hunit_test as hunitest
-import helpers.hserver as hserver
 import im.common.data.types as imcodatyp
 import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
 
 
-@pytest.mark.requires_aws 
+@pytest.mark.requires_aws
 @pytest.mark.requires_ck_infra
-@pytest.mark.skipif(
-    not hserver.is_dev_ck(),
-    reason="Run only on CK infra"
-)
 class TestKibotS3DataLoader(hunitest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         self._s3_data_loader = imkdlksdlo.KibotS3DataLoader()
 
+    @pytest.mark.requires_aws
+    @pytest.mark.requires_ck_infra
     def test1(self) -> None:
         df = self._s3_data_loader._read_data(
             symbol="XG",
