@@ -274,6 +274,9 @@
   - Exceptions are to send non-urgent information to everybody
 - There should be little replication among these forms of documentation
   - It's not ok to file a bug and then ping on Telegram unless it's urgent
+- Google Form
+  - When you want to ask a question anonymously use https://forms.gle/KMQgobqbyxhoTR9n6
+  - The question will be discussed at the all hands meeting
 
 ### DRY also applies to documentation
 
@@ -320,6 +323,13 @@
   invested time
   - In fact, everyone will be much quicker, because everyone will be able to
     look at any part of the codebase or any notebook and get oriented quickly
+
+## Vacations/OOTO time
+
+- We use [vacation calendar](https://calendar.google.com/calendar/u/0?cid=Y19kYWRlOGU0NTUwMzhiMDllMmUzNDk1OWM2YzFkYWNhYTVmMTAzYjdjZmNiODQ1MDkzOWZhMTBkZDY2NWI3ZjJhQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20) to announce time off
+- If you are a part of _@all_ mailing group you should be able to access this calendar with your company email
+- Create an event in it, whenever you have planned time off in order to let your colleagues know in advance
+
 
 ## Improve your English!
 
