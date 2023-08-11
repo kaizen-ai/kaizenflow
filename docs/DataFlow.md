@@ -802,3 +802,57 @@ OrderProcessor
 - Monitor `OmsDb.submitted_orders`
 - Update `OmsDb.accepted_orders`
 - Update `OmsDb.current_position` using `Fill` and updating the `Portfolio`
+
+# OMS
+
+## High-level invariants
+- The notion of parent vs child orders is only on our side, CCXT only understands
+  orders
+- We track data (e.g., orders, fills) into parallel OMS vs CCXT data structures
+  - OMS vs CCXT orders
+  - OMS vs CCXT fills
+  - CCXT trades vs fills
+- `Portfolio` only cares about parent orders
+  - How orders are executed is an implementation detail
+  - Thus, we need to fold all child fills into an equivalent parent fill
+
+- The data
+
+- `ccxt_order`
+  - Every time we submit an order to CCXT (parent or child) we get back a
+    `ccxt_order` object (aka `ccxt_order_response`)
+  - It's mainly a confirmation of the order
+  - The format is https://docs.ccxt.com/#/?id=order-structure
+  - The most important info is the callback CCXT ID of the order (this is
+    the only way to do it)
+
+- `ccxt_trade`
+  - For each order (parent or child), we get back from CCXT 0 or more
+    `ccxt_trade`, each representing a partial fill (e.g., price, number of 
+    shares, fees)
+  - E.g.,
+    - If we walk the book, we obviously get multiple `ccxt_trade`
+    - If we match multiple trades even at the same price level, we might get 
+      different `ccxt_trade`
+  
+- `ccxt_fill`
+  - When an order closes, we can ask CCXT to summarize the results of
+    that order in terms of the composing trades
+  - We can't use `ccxt_fill` to create an `oms_fill` because it doesn't contain
+    enough info about prices and fees
+    - We get some information about quantity, but we don't get fees and other
+      info (e.g., prices)
+  - We save this info to cross-check `ccxt_fill` vs `ccxt_trade`
+   
+- `oms_fill`
+  - It represents the fill of a parent order, since outside the execution system
+    (e.g., in `Portfolio`) we don't care about tracking individual fills
+  - For a parent order we need to convert multiple `ccxt_trades` into a single
+    `oms_fill`
+  - TODO(gp): Unclear
+  - Get all the trades combined to the parent order to get a single OMS
+    fill
+    - We use this v1
+  - Another way is to query the state of an order
+    - We use this in v2 prototype, but it's not sure that it's the final
+      approach
