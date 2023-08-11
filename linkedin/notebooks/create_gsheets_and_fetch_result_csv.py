@@ -18,54 +18,44 @@
 # %%
 import logging
 import helpers.hdbg as hdbg
+import helpers.hio as hio
 import linkedin.phantom_api.phantombuster_api as lpphapia
-import linkedin.google_api.google_file_api as lggogfia
+import linkedin.google_api.google_drive_api as lggodrapi
 
 # %%
 _LOG = logging.getLogger(__name__)
 hdbg.init_logger(use_exec_path=True)
 
 # %% [markdown]
-# # Set search name
+# # Initial
 
 # %%
-search_name = "sn_test_folder"
+googleapi = lggodrapi.GoogleFileApi()
+phantom = lpphapia.Phantom()
 
 # %% [markdown]
-# # Create the empty Google Drive folder and Google sheets
+# # Input
 
 # %%
-googleapi = lggogfia.GoogleFileApi()
+# (INPUT)Set the search name, it will also be the folder name, 
+# or set it as '' to create files in your Google Drive root folder.
+search_name = "sn_search5_test"
 
 # %%
-# linkedin_data folder id.
+# (INPUT)Set the parent folder: your new folder will be created in this folder.
+# "1dQ9e-bNKkXwNvobQyRFbPwgEh1-VSf4R" is linkedin_data folder id.
+# In the URL address: https://drive.google.com/drive/u/0/folders/1dQ9e-bNKkXwNvobQyRFbPwgEh1-VSf4R
+# 1dQ9e-bNKkXwNvobQyRFbPwgEh1-VSf4R is folder id.
 parent_folder_id = "1dQ9e-bNKkXwNvobQyRFbPwgEh1-VSf4R"
 
 # %%
-# Create a folder with search_name in the dir parent folder.
-current_folder_id = googleapi.create_google_drive_folder(search_name, parent_folder_id)
-
-# %%
-# Create empty gsheets in the new created folder.
+# Set gsheets name.
 gsheets_name = [
     f"{search_name}.step1.search_export",
     f"{search_name}.step2.search_export_filtered",
     f"{search_name}.step3.profile_export",
-    f"{search_name}.step4.profile_export_filtered",
+    f"{search_name}.step3.search_export_filtered",
 ]
-for gsheet_name in gsheets_name:
-    googleapi.create_empty_google_file(
-        gfile_type = "sheet",
-        gfile_name = gsheet_name,
-        gdrive_folder_id = current_folder_id,
-        user = ""
-    )
-
-# %% [markdown]
-# # Download result CSVs to local storage
-
-# %%
-phantom = lpphapia.Phantom()
 
 # %%
 # Get all phantoms and their phantom id.
@@ -81,6 +71,26 @@ profile_phantom_id = "3593602419926765"
 result_dir = "../result_csv/"
 search_result_csv_path = result_dir + f"{search_name}_search_result.csv"
 profile_result_csv_path = result_dir + f"{search_name}_profile_result.csv"
+
+# %% [markdown]
+# # Create the empty Google Drive folder and Google sheets
+
+# %%
+# Create a folder with search_name in the dir parent folder.
+current_folder_id = googleapi.create_google_drive_folder(search_name, parent_folder_id)
+
+# %%
+# Create empty gsheets in the new created folder.
+for gsheet_name in gsheets_name:
+    googleapi.create_empty_google_file(
+        gfile_type = "sheet",
+        gfile_name = gsheet_name,
+        gdrive_folder_id = current_folder_id,
+        user = ""
+    )
+
+# %% [markdown]
+# # Download result CSVs to local storage
 
 # %%
 # Download search result csv.
@@ -127,10 +137,9 @@ df_to_gsheet(f"{search_name}.step3.profile_export", profile_export_df)
 # # Delete temp result CSVs
 
 # %%
-import helpers.hio as hio
-
-# %%
 hio.delete_file(search_result_csv_path)
 _LOG.info("Delete file %s", search_result_csv_path)
+
+# %%
 hio.delete_file(profile_result_csv_path)
 _LOG.info("Delete file %s", profile_result_csv_path)

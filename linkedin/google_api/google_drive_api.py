@@ -3,7 +3,7 @@
 """
 Import as:
 
-import linkedin.google_api.google_file_api as lggogfia
+import linkedin.google_api.google_drive_api as lggodrapi
 """
 
 import logging
@@ -27,7 +27,12 @@ class GoogleFileApi:
         # Get Google API credentials.
         self.creds = self._get_credentials()
         # Create a Google drive api client.
-        self.gdrive_service = build("drive", "v3", credentials=self.creds)
+        self.gdrive_service = build(
+            "drive",
+            "v3",
+            credentials=self.creds,
+            cache_discovery=False
+        )
 
     def create_empty_google_file(
         self,
@@ -57,20 +62,12 @@ class GoogleFileApi:
             # Move the Google file to a Google Drive dir.
             if gdrive_folder_id:
                 self._move_gfile_to_dir(gfile_id, gdrive_folder_id)
-                _LOG.info(
-                    "Move the new Google %s '%s' to the given dir",
-                    gfile_type,
-                    gfile_name
-                )
-            else:
-                _LOG.info("The new Google '%s' is created in your root dir.", gfile_type)
             # Share the Google file to a user and send an email.
             if user:
                 self._share_google_file(gfile_id, user)
                 _LOG.info(
                     "The new Google '%s': '%s' is shared to '%s'", gfile_type, gfile_name, user
                 )
-            _LOG.info("Finished creating the new Google %s '%s'.", gfile_type, gfile_name)
         #
         except HttpError as err:
             _LOG.error(err)
@@ -99,6 +96,47 @@ class GoogleFileApi:
         #
         except HttpError as err:
             _LOG.error(err)
+
+    def get_folder_id_by_name(self, name: str) -> Optional[list]:
+        """
+        Get the folder id by the folder name.
+
+        :param name: str, the name of the folder.
+        :return: list, the list of the folder id and folder name.
+        """
+        folders = self._get_folders_in_gdrive()
+        folder_list = []
+        #
+        for folder in folders:
+            if folder.get("name") == name:
+                folder_list.append(folder)
+        #
+        if len(folder_list) == 1:
+            _LOG.info("Found folder: %s", folder_list[0])
+            return folder_list[0]
+        #
+        elif len(folder_list) > 1:
+            for folder in folder_list:
+                _LOG.info(
+                    "Found folder: '%s', '%s'",
+                    folder.get("name"),
+                    folder.get("id"),
+                )
+            #
+            _LOG.info(
+                "Return the first found folder. '%s' '%s' ",
+                folder_list[0].get("name"),
+                folder_list[0].get("id"),
+            )
+            _LOG.info(
+                "if you want to use another '%s' folder, please change the folder id manually.",
+                name,
+            )
+            return folder_list[0]
+        #
+        else:
+            _LOG.error("Can't find the folder '%s'.", name)
+            return
 
     # #########################################################################
 
@@ -150,6 +188,7 @@ class GoogleFileApi:
             doc_type,
             "v4" if doc_type == "sheets" else "v1",
             credentials=self.creds,
+            cache_discovery=False
         )
         document = {"properties": {"title": doc_name}}
         document = (
@@ -217,3 +256,16 @@ class GoogleFileApi:
             .execute()
         )
         return res
+
+    def _get_folders_in_gdrive(self) -> list:
+        response = (
+            self.gdrive_service.files()
+            .list(
+                q="mimeType='application/vnd.google-apps.folder' and trashed=false",
+                spaces="drive",
+                fields="nextPageToken, files(id, name)",
+            )
+            .execute()
+        )
+        # Return list of folder id and folder name.
+        return response.get("files")
