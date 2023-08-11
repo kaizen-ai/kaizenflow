@@ -84,6 +84,22 @@ class Test_plots(unittest.TestCase):
         index = pd.date_range(start="2023-01-01", periods=len(samples), freq="D")
         srs = pd.Series(samples, index=index)
         return srs
+    
+    @staticmethod
+    def get_plot_projection1() -> pd.DataFrame:
+        """
+        Generate a test DataFrame for the plot_projection function.
+        """
+        data = [
+            [1, 1, 0, 1],
+            [0, 1, 0, 1],
+            [0, 0, 1, 1],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+        ]
+        index = pd.date_range(start="2023-01-01", periods=len(data), freq="D")
+        df = pd.DataFrame(data,index=index)
+        return df
 
     def test_plot_histograms_and_lagged_scatterplot1(self) -> None:
         """
@@ -170,3 +186,25 @@ class Test_plots(unittest.TestCase):
         _, axes = plt.subplots(2, 2, figsize=(20, 10))
         axes_flat = axes.flatten()
         cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
+
+    def test_plot_projection1(self) -> None:
+        """
+        Smoke test for `plot_projection()`.
+
+        - `mode` is unspecified.
+        """
+        test_df = self.get_plot_projection1()         
+        cplmiplo.plot_projection(test_df, special_values=[0])
+
+    def test_plot_projection2(self) -> None:        
+        """
+        Smoke test for `plot_projection()`.
+
+        - `mode` is 'scatter'.
+        """
+        test_df = self.get_plot_projection1()
+        test_df.replace({0: None}, inplace=True)
+        fig = plt.figure()
+        ax = fig.add_axes([0, 0, 1, 1])
+        mode = "scatter"
+        cplmiplo.plot_projection(test_df, mode=mode, ax=ax)
