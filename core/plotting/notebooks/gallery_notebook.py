@@ -187,8 +187,8 @@ df = cptetepl.Test_plots.get_plot_projection1()
 cplmiplo.plot_projection(df, special_values=[0])
 
 # %%
-fig = plt.figure()
 df.replace({0: None}, inplace=True)
+fig = plt.figure()
 ax = fig.add_axes([0, 0, 1, 1])
 mode = "scatter"
 cplmiplo.plot_projection(df, mode=mode, ax=ax)

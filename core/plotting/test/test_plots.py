@@ -192,6 +192,7 @@ class Test_plots(unittest.TestCase):
         Smoke test for `plot_projection()`.
 
         - `mode` is unspecified.
+        - `ax` is unspecified.
         """
         test_df = self.get_plot_projection1()         
         cplmiplo.plot_projection(test_df, special_values=[0])
@@ -201,6 +202,8 @@ class Test_plots(unittest.TestCase):
         Smoke test for `plot_projection()`.
 
         - `mode` is 'scatter'.
+        - `ax` is used for plotting.
+        - `special_values` is unspecified. 
         """
         test_df = self.get_plot_projection1()
         test_df.replace({0: None}, inplace=True)
