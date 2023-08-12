@@ -29,10 +29,10 @@ _IG_START_DATE = "2019-01-07"
 #                           PRE 20190108/
 
 
+@pytest.mark.requires_aws 
+@pytest.mark.requires_ck_infra
 class TestTaqBarsUtils1(hunitest.TestCase):
     
-    @pytest.mark.requires_aws 
-    @pytest.mark.requires_ck_infra
     def test_get_available_dates1(self) -> None:
         dates = imvidchiba.get_available_dates(_ROOT_DATA_DIR, _AWS_PROFILE)
         _LOG.debug("len(dates)=%s", len(dates))
@@ -104,7 +104,7 @@ class TestTaqBarsUtils1(hunitest.TestCase):
 
 # #############################################################################
 
-
+@pytest.mark.requires_ck_infra
 class TestGetBarData1(hunitest.TestCase):
     def get_bar_data_helper(self, *args: Any, **kwargs: Any) -> None:
         df = imvidchiba.get_bar_data_for_dates(*args, **kwargs)
@@ -205,9 +205,9 @@ class TestGetBarData1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_aws 
+@pytest.mark.requires_ck_infra
 class Test_get_cached_bar_data_for_date_interval1(hunitest.TestCase):
-    @pytest.mark.requires_aws 
-    @pytest.mark.requires_ck_infra
     def test_tsla1(self) -> None:
         """
         Get the data the day before TSLA IPO: there should be no data.

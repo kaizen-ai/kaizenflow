@@ -1023,13 +1023,7 @@ class TestCcxtSqlRealTimeImClient1(
 # TestCcxtHistoricalPqByTileClient1
 # #############################################################################
 
-
-@pytest.mark.skipif(
-    not henv.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available",
-)
 @pytest.mark.requires_aws 
-#"run only if CK S3 is available", so whole class requires CK.
 @pytest.mark.requires_ck_infra 
 class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
     """

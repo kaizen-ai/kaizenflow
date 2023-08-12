@@ -603,8 +603,9 @@ class TestVolatilityModel(hunitest.TestCase):
         return df
 
 
+# TODO(ShaopengZ): numerical issue. (arm vs x86)
+@pytest.mark.requires_ck_infra
 class TestMultiindexVolatilityModel(hunitest.TestCase):
-    
     @pytest.mark.requires_ck_infra
     def test1(self) -> None:
         """

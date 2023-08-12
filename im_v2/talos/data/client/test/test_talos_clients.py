@@ -3,7 +3,6 @@ from typing import Dict, List, Optional
 import pandas as pd
 import pytest
 
-import helpers.henv as henv
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.common.db.db_utils as imvcddbut
@@ -343,11 +342,8 @@ class TestTalosHistoricalPqByTileClient1(icdc.ImClientTestCase):
 # #############################################################################
 
 
-@pytest.mark.skipif(
-    not henv.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available",
-)
 @pytest.mark.requires_ck_infra
+@pytest.mark.requires_aws
 class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
     """
     TODO(Grisha): Test multiple exchanges CmTask #1533.
@@ -355,9 +351,9 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
     For all the test methods see description of corresponding private method in
     the parent class.
     """
-    
-    @pytest.mark.requires_aws 
-    @pytest.mark.requires_ck_infra 
+
+    @pytest.mark.requires_aws
+    @pytest.mark.requires_ck_infra
     def test_read_data1(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -611,8 +607,8 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
         )
 
     # ////////////////////////////////////////////////////////////////////////
-   
-    @pytest.mark.requires_aws 
+
+    @pytest.mark.requires_aws
     @pytest.mark.requires_ck_infra
     def test_get_start_ts_for_symbol1(self) -> None:
         resample_1min = True
@@ -626,8 +622,8 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
             full_symbol,
             expected_start_ts,
         )
-    
-    @pytest.mark.requires_aws 
+
+    @pytest.mark.requires_aws
     @pytest.mark.requires_ck_infra
     def test_get_end_ts_for_symbol1(self) -> None:
         resample_1min = True
@@ -672,6 +668,8 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
 # #############################################################################
 
 
+# TODO(Shaopeng Z): This hangs outside CK infra, so we skip it.
+@pytest.mark.requires_ck_infra
 class TestTalosSqlRealTimeImClient1(
     icdc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
