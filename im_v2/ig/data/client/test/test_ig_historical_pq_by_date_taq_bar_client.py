@@ -12,6 +12,8 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Use ImClientTestCase.
+@pytest.mark.requires_aws 
+@pytest.mark.requires_ck_infra
 class TestIgHistoricalPqByDateTaqBarClient1(hunitest.TestCase):
     def read_data_helper(self, *args: Any, **kwargs: Dict[str, Any]) -> None:
         # Execute.

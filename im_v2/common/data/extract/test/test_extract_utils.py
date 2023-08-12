@@ -816,6 +816,8 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
         self.check_resampler()
 
 
+@pytest.mark.requires_ck_infra
+@pytest.mark.requires_aws
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
@@ -858,6 +860,8 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             )
             imvcdeexut.download_historical_data(args, exchange)
 
+    @pytest.mark.requires_ck_infra
+    @pytest.mark.requires_aws
     def test_empty_dataset(self):
         """
         Check that an exception is raised if assert_on_missing_data=True

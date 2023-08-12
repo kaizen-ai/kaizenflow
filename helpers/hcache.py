@@ -285,6 +285,7 @@ def clear_global_cache(
         hdbg.dfatal(f"Trying to delete cache '{cache_path}'")
     description = f"global {cache_type}"
     try:
+        # TODO(Shaopeng Z): in some test run outside CK infra, the _get_cache_size() hangs.
         info_before = _get_cache_size(cache_path, description)
     except ValueError:
         _LOG.warning("Cache has already been deleted by another process.")
