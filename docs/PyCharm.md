@@ -1,4 +1,27 @@
-# Running PyCharm remotely
+# PyCharm
+
+<!-- toc -->
+
+  * [Current situation](#current-situation)
+- [How to run our cmamp container directly from PyCharm](#how-to-run-our-cmamp-container-directly-from-pycharm)
+- [How to review a PR inside Pycharm](#how-to-review-a-pr-inside-pycharm)
+- [How to edit remote code](#how-to-edit-remote-code)
+- [General ssh config](#general-ssh-config)
+- [DB connection via ssh](#db-connection-via-ssh)
+- [Deployment with remote repository (through sync)](#deployment-with-remote-repository-through-sync)
+- [PUDB - remote debugging - ToDo](#pudb---remote-debugging---todo)
+- [How to run tests inside a container](#how-to-run-tests-inside-a-container)
+- [Installing PyCharm Professional](#installing-pycharm-professional)
+  * [Windows](#windows)
+  * [macOS](#macos)
+  * [Linux](#linux)
+- [Connecting via PyCharm gateway (SSH)](#connecting-via-pycharm-gateway-ssh)
+  * [Connecting via VNC](#connecting-via-vnc)
+- [Configuration](#configuration)
+  * [Reflow](#reflow)
+- [Some recommended plug-ins](#some-recommended-plug-ins)
+
+<!-- tocstop -->
 
 There are multiple ways to develop on a remote server using PyCharm
 
@@ -325,9 +348,9 @@ Let's say you are connected via VNC.
 1. Login into the OS.
 2. Run pycharm.sh using terminal (should be there)
 
-    ```
-    > bash /opt/pycharm-community-2021.2.3/bin/pycharm.sh
-    ```
+   ```
+   > bash /opt/pycharm-community-2021.2.3/bin/pycharm.sh
+   ```
 
 # Configuration
 
