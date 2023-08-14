@@ -790,7 +790,6 @@ def dassert_dir_exists(
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
-# TODO(gp): Does it work for a file ending in ".pkl.gz"? Add unit test.
 def dassert_file_extension(
     file_name: str, extensions: Union[str, List[str]], only_warning: bool = False
 ) -> None:
@@ -806,7 +805,11 @@ def dassert_file_extension(
     # Make sure extension starts with .
     extensions = [f".{e}" if not e.startswith(".") else e for e in extensions]
     # Check.
-    act_ext = os.path.splitext(file_name)[-1].lower()
+    name, act_ext = os.path.splitext(file_name)
+    if act_ext == ".gz":
+        # Concatenate with the preceding extension, e.g., `.csv.gz`.
+        ext = os.path.splitext(name)[-1]
+        act_ext = (ext + act_ext).lower()
     dassert_in(
         act_ext,
         extensions,

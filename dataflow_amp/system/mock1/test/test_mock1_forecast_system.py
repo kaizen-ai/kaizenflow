@@ -61,11 +61,13 @@ class Test_Mock1_NonTime_ForecastSystem_FitPredict(
         )
         return system
 
+    @pytest.mark.requires_ck_infra
     def test_fit_over_backtest_period1(self) -> None:
         system = self.get_system()
         output_col_name = "prediction"
         self._test_fit_over_backtest_period1(system, output_col_name)
 
+    @pytest.mark.requires_ck_infra
     def test_fit_over_period1(self) -> None:
         system = self.get_system()
         start_timestamp = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
@@ -78,6 +80,7 @@ class Test_Mock1_NonTime_ForecastSystem_FitPredict(
             output_col_name=output_col_name,
         )
 
+    @pytest.mark.requires_ck_infra
     def test_fit_vs_predict1(self) -> None:
         system = self.get_system()
         # The target variable is 2 steps ahead.
@@ -95,6 +98,7 @@ class Test_Mock1_NonTime_ForecastSystem_FitPredict(
 class Test_Mock1_NonTime_ForecastSystem_FitInvariance(
     dtfsys.NonTime_ForecastSystem_FitInvariance_TestCase1
 ):
+    @pytest.mark.requires_ck_infra
     def test_invariance1(self) -> None:
         system = _get_test_NonTime_ForecastSystem()
         start_timestamp1 = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
@@ -120,6 +124,7 @@ class Test_Mock1_NonTime_ForecastSystem_FitInvariance(
 class Test_Mock1_NonTime_ForecastSystem_CheckPnl(
     dtfsys.NonTime_ForecastSystem_CheckPnl_TestCase1
 ):
+    @pytest.mark.requires_ck_infra
     def test_fit_run1(self) -> None:
         system = _get_test_NonTime_ForecastSystem()
         system.config[
@@ -136,7 +141,8 @@ class Test_Mock1_NonTime_ForecastSystem_CheckPnl(
 # #############################################################################
 
 
-class Test_Mock1_Time_ForecastSystem1(dtfsys.Test_Time_ForecastSystem_TestCase1):
+class Test_Mock1_Time_ForecastSystem1(dtfsys.Test_Time_ForecastSystem_TestCase1): 
+    @pytest.mark.requires_ck_infra
     def test1(self) -> None:
         """
         Verify the contents of DAG prediction.

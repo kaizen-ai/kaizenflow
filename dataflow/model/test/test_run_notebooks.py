@@ -78,10 +78,7 @@ class Test_run_master_feature_analyzer(dsnrnteca.Test_Run_Notebook_TestCase):
         _test_run_notebook(self, notebook_name)
 
     @pytest.mark.skip("Run manually.")
-    @pytest.mark.skipif(
-        not hgit.is_in_amp_as_supermodule(),
-        reason="Run only in amp as super-module",
-    )
+    @pytest.mark.requires_ck_infra
     def test_save_data(self) -> None:
         """
         Save test data.
@@ -101,10 +98,7 @@ class Test_run_master_research_backtest_analyzer(
         _test_run_notebook(self, notebook_name)
 
     @pytest.mark.skip("Run manually.")
-    @pytest.mark.skipif(
-        not hgit.is_in_amp_as_supermodule(),
-        reason="Run only in amp as super-module",
-    )
+    @pytest.mark.requires_ck_infra
     def test_save_data(self) -> None:
         """
         Save test data.

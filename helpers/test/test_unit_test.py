@@ -984,6 +984,8 @@ class Test_purify_txt_from_client1(hunitest.TestCase):
         self.helper(txt, exp)
 
 
+# TODO(ShaopengZ): numerical issue. (arm vs x86)
+@pytest.mark.requires_ck_infra
 class Test_purify_from_env_vars(hunitest.TestCase):
     """
     Test purification from env vars.
@@ -1007,6 +1009,7 @@ class Test_purify_from_env_vars(hunitest.TestCase):
         env_var = "CK_AWS_S3_BUCKET"
         self.helper(env_var)
 
+    @pytest.mark.requires_ck_infra
     def test2(self) -> None:
         """
         - $AM_TELEGRAM_TOKEN

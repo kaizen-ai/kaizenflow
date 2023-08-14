@@ -624,3 +624,50 @@ class Test_dassert_related_params2(hunitest.TestCase):
         message 'hello world'
         """
         self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class Test_dassert_file_extension1(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check if file has given extension.
+        """
+        extensions = ".csv.gz"
+        filename = "extensionFile.csv.gz"
+        hdbg.dassert_file_extension(filename, extensions)
+
+    def test2(self) -> None:
+        """
+        Check if file has one of the given extensions.
+        """
+        extensions = [".csv.gz", ".csv"]
+        filename = "extensionFile.csv"
+        hdbg.dassert_file_extension(filename, extensions)
+    
+    def test3(self) -> None:
+        """
+        Check that assertion is raised if filename has none of the given extensions.
+        """
+        extensions = [".csv.gz", ".csv"]
+        filename = "txtFile.txt"
+        with self.assertRaises(Exception) as cm:
+            hdbg.dassert_file_extension(filename, extensions)
+        act = str(cm.exception)
+        exp = r"""
+        ################################################################################        
+        * Failed assertion *
+        '.txt' in '['.csv.gz', '.csv']'
+        Invalid extension '.txt' for file 'txtFile.txt'
+        ################################################################################
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Check that a file with multiple dots in its name passes the assertion.
+        """
+        extensions = [".csv.gz", ".csv"]
+        filename = "order.20231701_120057.20231701_13000.csv.gz"
+        hdbg.dassert_file_extension(filename, extensions)

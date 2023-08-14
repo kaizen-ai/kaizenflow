@@ -3,6 +3,7 @@ Import as:
 
 import im.ib.data.load.test.test_s3_data_loader as tsdloa
 """
+import pytest
 
 import pandas as pd
 
@@ -11,6 +12,8 @@ import im.common.data.types as imcodatyp
 import im.ib.data.load.ib_s3_data_loader as imidlisdlo
 
 
+@pytest.mark.requires_aws 
+@pytest.mark.requires_ck_infra
 class TestS3IbDataLoader1(hunitest.TestCase):
     """
     Test data loading correctness for Ib from S3.
@@ -20,6 +23,8 @@ class TestS3IbDataLoader1(hunitest.TestCase):
         super().setUp()
         self._s3_data_loader = imidlisdlo.IbS3DataLoader()
 
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test_dtypes1(self) -> None:
         """
         Test column types of loaded dataframe.
@@ -40,6 +45,8 @@ class TestS3IbDataLoader1(hunitest.TestCase):
         # Compare with expected.
         self.check_string(types, fuzzy_match=True)
 
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test_read_data1(self) -> None:
         """
         Test correctness of minute ES data loading.
@@ -60,6 +67,8 @@ class TestS3IbDataLoader1(hunitest.TestCase):
         # Compare with expected.
         self.check_string(actual_string, fuzzy_match=True)
 
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test_read_data2(self) -> None:
         """
         Test correctness of daily ES data loading.
@@ -80,6 +89,8 @@ class TestS3IbDataLoader1(hunitest.TestCase):
         # Compare with expected.
         self.check_string(actual_string, fuzzy_match=True)
 
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test_read_data3(self) -> None:
         """
         Test correctness of hourly ES data loading.
@@ -100,6 +111,8 @@ class TestS3IbDataLoader1(hunitest.TestCase):
         # Compare with expected.
         self.check_string(actual_string, fuzzy_match=True)
 
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra
     def test_read_data_check_date_type(self) -> None:
         """
         Check date type of date field if frequency is daily.
@@ -118,6 +131,8 @@ class TestS3IbDataLoader1(hunitest.TestCase):
         # Check if date columns is date type.
         self.assertIsInstance(data["date"][0], pd.Timestamp)
 
+    @pytest.mark.requires_aws 
+    @pytest.mark.requires_ck_infra 
     def test_read_data_with_start_end_ts(self) -> None:
         """
         Test correctness of hourly ES data loading.

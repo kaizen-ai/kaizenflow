@@ -12,6 +12,7 @@ import datetime
 import functools
 import logging
 import os
+import pytest
 import tempfile
 from typing import List, Optional
 
@@ -184,7 +185,7 @@ def get_available_dates(
     :return: sorted available dates
     """
     # > aws s3 ls \
-    #   --profile saml-spm-sasm \
+    #   --profile sasm \
     #   s3://iglp-core-data/ds/ext/bars/taq/v1.0-prod/60
     # PRE 20031002/
     # PRE 20031003/
@@ -232,8 +233,8 @@ def get_raw_bar_data_from_file(
     # Load the data as a pd.DataFrame.
     # _LOG.debug("filters=%s", filters)
     s3fs_ = hs3.get_s3fs(aws_profile) if path.startswith("s3://") else None
-    if (s3fs_ and download_locally) or aws_profile == "saml-spm-sasm":
-        # For "saml-spm-sasm" we need to cache data locally to work around a
+    if (s3fs_ and download_locally) or aws_profile == "sasm":
+        # For "sasm" we need to cache data locally to work around a
         # slowdown of accessing the data directly from S3, due to some format
         # change.
         # tmp_file_name = tempfile.NamedTemporaryFile().name
@@ -267,6 +268,8 @@ def get_raw_bar_data_from_file(
 
 
 # TODO(gp): Change the order of the params (asset_ids, date, columns) everywhere.
+@pytest.mark.requires_aws 
+@pytest.mark.requires_ck_infra
 def get_raw_bar_data_for_date(
     date: datetime.date,
     root_data_dir: str,

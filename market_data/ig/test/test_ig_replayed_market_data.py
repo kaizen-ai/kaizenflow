@@ -43,7 +43,7 @@
 #        limit = None
 #        mdata.save_market_data(market_data, file_name, timedelta, limit)
 #        _LOG.info("Written file '%s'", file_name)
-#        # > aws s3 cp market_data.20220104-183252.csv.gz s3://eglp-spm-sasm/data/
+#        # > aws s3 cp market_data.20220104-183252.csv.gz s3://data/
 #
 #
 ## #############################################################################
@@ -128,10 +128,10 @@
 #        """
 #        Read serialized data from `save_market_data()` and print some info.
 #        """
-#        file_name = "s3://eglp-spm-sasm/data/market_data.20220104-183252.csv.gz"
+#        file_name = "s3://data/market_data.20220104-183252.csv.gz"
 #        import helpers.hs3 as hs3
 #
-#        s3fs_ = hs3.get_s3fs(aws_profile="saml-spm-sasm")
+#        s3fs_ = hs3.get_s3fs(aws_profile="sasm")
 #        # Load data.
 #        df = mdata.load_market_data(file_name, s3fs=s3fs_)
 #        asset_ids = [17085, 13684]

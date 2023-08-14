@@ -86,6 +86,7 @@ if True:
             return dag
 
     class TestDeepARGlobalModel(hunitest.TestCase):
+        @pytest.mark.requires_ck_infra
         def test_fit1(self) -> None:
             mxnet.random.seed(0)
             local_ts = self._get_local_ts()
@@ -111,6 +112,7 @@ if True:
             )
             self.check_string(config_info_output)
 
+        @pytest.mark.requires_ck_infra
         def test_fit_dag1(self) -> None:
             mxnet.random.seed(0)
             dag = dtfcordag.DAG(mode="strict")

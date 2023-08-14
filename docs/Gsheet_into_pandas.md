@@ -1,12 +1,11 @@
-<!--ts-->
-   * [Connecting Google Sheets to Pandas](#connecting-google-sheets-to-pandas)
-   * [Installing gspread-pandas](#installing-gspread-pandas)
-   * [Configuring gspread-pandas](#configuring-gspread-pandas)
-   * [Using gspread-pandas](#using-gspread-pandas)
+<!-- toc -->
 
+- [Connecting Google Sheets to Pandas](#connecting-google-sheets-to-pandas)
+  * [Installing gspread-pandas](#installing-gspread-pandas)
+  * [Configuring gspread-pandas](#configuring-gspread-pandas)
+- [Using gspread-pandas](#using-gspread-pandas)
 
-
-<!--te-->
+<!-- tocstop -->
 
 # Connecting Google Sheets to Pandas
 
@@ -54,7 +53,7 @@
   > ssh research "mkdir -p $DST_DIR"
   > scp $SRC_FILE research:$DST_FILE
   > ssh research "chmod 600 $DST_FILE"
-  ``
+  ```
 
 # Using gspread-pandas
 

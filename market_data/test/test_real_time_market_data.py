@@ -1,5 +1,5 @@
 import logging
-
+import pytest
 import pandas as pd
 
 import helpers.hpandas as hpandas
@@ -10,7 +10,8 @@ import market_data.market_data_example as mdmadaex
 
 _LOG = logging.getLogger(__name__)
 
-
+# TODO(Shaopeng Z): hangs when outside CK infra.
+@pytest.mark.requires_ck_infra
 class TestRealTimeMarketData2(
     imvcddbut.TestImDbHelper,
 ):

@@ -57,17 +57,15 @@ make this experience the best possible for you.
 
 - [Signing up for Sorrentum](docs/Signing_up_for_Sorrentum.md)
 
-- [Contributor Scorecard](docs/Contributor_Scorecard.md)
-
 # How to start developing
 
 This contains the absolute minimal amount of info to start developing
 
-- [How to organize your work](docs/How_to_organize_your_work.md)
-
 - [General Rules of Collaboration](docs/General_rules_of_collaboration.md)
 
-- [Quick start for developing](docs/Quick_start_for_developing.md)
+- [Quick start for developing](docs/Sorrentum_development_setup.md)
+
+- [How to organize your work](docs/How_to_organize_your_work.md)
 
 - [First Review Process](docs/First_review_process.md)
 
@@ -78,6 +76,10 @@ This contains the absolute minimal amount of info to start developing
 - [Unit tests](docs/Unit_tests.md)
 
 # Project management
+
+- [Contributor Scorecard](docs/Contributor_Scorecard.md)
+
+  - How we give feedback to contributors
 
 - [Code review](docs/Code_review.md)
 
@@ -103,6 +105,9 @@ This contains the absolute minimal amount of info to start developing
 - [Imports and packages](docs/Imports_and_packages.md)
   - How to import code, use packages, and resolve circular dependencies
 
+- [How to integrate repos](docs/How_to_integrate_repos.md)
+  - Detailed instruction on how to integrate repos
+
 # Learn how to become efficient at developing
 
 This contains a set of resources that over time will make 10x more productive
@@ -112,6 +117,10 @@ This contains a set of resources that over time will make 10x more productive
 - [Reading List](docs/Reading_List.md)
 
 - [Design Philosophy](docs/Design_Philosophy.md)
+
+- [Codebase Clean-up](docs/Codebase_clean_up_scripts.md)
+
+- [Scrum Methodology](docs/Scrum_methodology.md)
 
 # Technologies used
 
@@ -137,6 +146,22 @@ This contains a set of resources that over time will make 10x more productive
 - [Profiling](/docs/Profiling.md)
 
 - [Visual Studio Code](/docs/Visual_Studio_Code.md)
+
+- [Telegram](/docs/Telegram.md)
+
+- [Gsheet into pandas](/docs/Gsheet_into_pandas.md)
+
+- [Email](/docs/Email.md)
+    
+- [Glossary](docs/Glossary.md)
+
+- [DataFlow](docs/DataFlow.md)
+
+- [DataPull](docs/DataPull.md)
+
+- [Workflows](docs/Workflows.md)
+
+- [Type Hints](docs/Type_hints.md)
 
 # DeFi: start developing
 
