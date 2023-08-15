@@ -2,7 +2,7 @@
 
 <!-- toc -->
 
-  * [Current situation](#current-situation)
+- [Current situation](#current-situation)
 - [How to run our cmamp container directly from PyCharm](#how-to-run-our-cmamp-container-directly-from-pycharm)
 - [How to review a PR inside Pycharm](#how-to-review-a-pr-inside-pycharm)
 - [How to edit remote code](#how-to-edit-remote-code)
@@ -68,48 +68,44 @@ There are multiple ways to develop on a remote server using PyCharm
     - Cons
       - You can't run / debug remotely
 
-## Current situation
+# Current situation
 
-Approach 1) seems to require lots of memory and CPU and it's not really fast.
+- Approach 1) seems to require lots of memory and CPU and it's not really fast.
 
-Approach 2) works but it's a pain to set-up and slow.
+- Approach 2) works but it's a pain to set-up and slow.
 
-We want to try with 3)
-
-- TODO(gp): @Juraj pls a short tutorial on how to install
-
-- TODO(gp): @Juraj understand if it works, if it's fast, and if it requires less
-  memory
+- We want to try with 3)
+  - TODO(gp): @Juraj pls a short tutorial on how to install
+  - TODO(gp): @Juraj understand if it works, if it's fast, and if it requires
+    less memory
 
 # How to run our cmamp container directly from PyCharm
 
-PyCharm allows to run commands directly inside a container
+- PyCharm allows to run commands directly inside a container
+  - See
+    [https://www.jetbrains.com/help/pycharm/using-docker-as-a-remote-interpreter.html](https://www.jetbrains.com/help/pycharm/using-docker-as-a-remote-interpreter.html)
+- In fact when we do `i docker_bash` we launch a container and run bash inside
+  it, but PyCharm can do the same thing
 
-See
-[https://www.jetbrains.com/help/pycharm/using-docker-as-a-remote-interpreter.html](https://www.jetbrains.com/help/pycharm/using-docker-as-a-remote-interpreter.html)
-
-In fact when we do `i docker_bash` we launch a container and run bash inside it,
-but PyCharm can do the same thing
-
-TODO(gp): @Juraj Let's both try this. There are some notes below about it
+- TODO(gp): @Juraj Let's both try this. There are some notes below about it
 
 # How to review a PR inside Pycharm
 
-CTRL + SHIFT + A -> View Pull Request
+- CTRL + SHIFT + A -> View Pull Request
 
 ![](docs/Tools-PyCharm_figs/image13.png){width="3.612198162729659in"
 height="4.932292213473316in"}
 
 # How to edit remote code
 
-You need to use a certain local directory (e.g.,
-/Users/saggese/src/commodity_research1) and a remote directory (e.g.,
-/wd/saggese/src/commodity_research1)
+- You need to use a certain local directory (e.g.,
+  /Users/saggese/src/commodity_research1) and a remote directory (e.g.,
+  /wd/saggese/src/commodity_research1)
 
-They need to be synced at the same git branch (e.g., master or
-AmpTask1112_Audit_amp_Docker_system_03)
+- They need to be synced at the same git branch (e.g., master or
+  AmpTask1112_Audit_amp_Docker_system_03)
 
-Set-up Deployment
+- Set-up Deployment
 
 ![](docs/Tools-PyCharm_figs/image3.png){width="4.810558836395451in"
 height="3.51540791776028in"}
@@ -117,12 +113,12 @@ height="3.51540791776028in"}
 ![](docs/Tools-PyCharm_figs/image10.png){width="3.9114588801399823in"
 height="1.6807655293088364in"}
 
-The deployment options are
+- The deployment options are
 
 ![](docs/Tools-PyCharm_figs/image9.png){width="3.123700787401575in"
 height="2.78830271216098in"}
 
-You can see what file is changed in the file transfer window:
+- You can see what file is changed in the file transfer window:
 
 ![](docs/Tools-PyCharm_figs/image14.png){width="6.5in"
 height="1.2083333333333333in"}
@@ -219,11 +215,11 @@ Reload All From Disk . This will upload changes to the remote repo.
 
 # How to run tests inside a container
 
-[https://www.jetbrains.com/help/pycharm/using-docker-compose-as-a-remote-interpreter.html#docker-compose-remote](https://www.jetbrains.com/help/pycharm/using-docker-compose-as-a-remote-interpreter.html#docker-compose-remote)
+- [https://www.jetbrains.com/help/pycharm/using-docker-compose-as-a-remote-interpreter.html#docker-compose-remote](https://www.jetbrains.com/help/pycharm/using-docker-compose-as-a-remote-interpreter.html#docker-compose-remote)
 
-Note that the "start SSH session..." action is available only in PyCharm
-Professional Edition, while the terminal itself is available in both
-Professional and Community editions.
+- Note that the "start SSH session..." action is available only in PyCharm
+  Professional Edition, while the terminal itself is available in both
+  Professional and Community editions.
 
 # Installing PyCharm Professional
 
@@ -322,13 +318,12 @@ Then make sure you have a VPN connection to our VPC
 
 ## Connecting via VNC
 
-Make sure you have a VPN connection.
+- Make sure you have a VPN connection.
 
 **Installing VNC**
 
-Install VNC using this link:
-
-[https://www.realvnc.com/en/connect/download/viewer/windows/](https://www.realvnc.com/en/connect/download/viewer/windows/)
+- Install VNC using this link:
+  - [https://www.realvnc.com/en/connect/download/viewer/windows/](https://www.realvnc.com/en/connect/download/viewer/windows/)
 
 Sysadmin has sent you:
 
@@ -356,7 +351,7 @@ Let's say you are connected via VNC.
 
 ## Reflow
 
-Set the reflow to reindent
+- Set the reflow to reindent
 
 ![](docs/Tools-PyCharm_figs/image15.png){width="6.5in"
 height="4.486111111111111in"}
