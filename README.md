@@ -142,6 +142,8 @@ This contains a set of resources that over time will make 10x more productive
 - [Buildmeister process](/docs/Buildmeister_process.md)
 
 - [HTMLcov server](/docs/HTMLcov_server.md)
+  
+- [Profiling](/docs/Profiling.md)
 
 - [Visual Studio Code](/docs/Visual_Studio_Code.md)
 
