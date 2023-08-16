@@ -184,8 +184,8 @@ class Test_plots(unittest.TestCase):
         _, axes = plt.subplots(2, 2, figsize=(20, 10))
         axes_flat = axes.flatten()
         cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
-        
-    def test_plot_cols(self)->None:
+
+    def test_plot_cols(self) -> None:
         """
         Smoke test for `plot_cols`.
         """
