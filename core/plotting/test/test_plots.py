@@ -30,6 +30,20 @@ class Test_plots(unittest.TestCase):
         return df
 
     @staticmethod
+    def get_plot_col1() -> pd.DataFrame:
+        """
+        Generate a test DataFrame for the plot_cols function.
+        """
+        data = {
+            "Column1": np.random.rand(10),
+            "Column2": np.random.rand(10),
+            "Column3": np.random.rand(10),
+            "Column4": np.random.rand(10),
+        }
+        df = pd.DataFrame(data)
+        return df
+
+    @staticmethod
     def get_plot_effective_correlation_rank1() -> pd.Series:
         """
         Generate a test DataFrame for plotting effective correlation rank.
@@ -170,3 +184,10 @@ class Test_plots(unittest.TestCase):
         _, axes = plt.subplots(2, 2, figsize=(20, 10))
         axes_flat = axes.flatten()
         cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
+        
+    def test_plot_cols(self)->None:
+        """
+        Smoke test for `plot_cols`.
+        """
+        test_df = self.get_plot_col1()
+        cplmiplo.plot_cols(test_df)
