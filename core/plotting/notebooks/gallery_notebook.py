@@ -110,7 +110,7 @@ cplmiplo.plot_time_series_by_period(test_srs, period)
 
 # %%
 mode = "clustermap"
-test_df = cptetepl.Test_plots.get_plot_heatmap1()
+test_df = cptetepl.Test_plots.get_test_plot_df1()
 
 # %%
 cplocorr.plot_heatmap(test_df, mode, figsize=config["figsize"])
@@ -153,7 +153,7 @@ plotter.plot_performance(
 # ## `plot_effective_correlation_rank()`
 
 # %%
-test_df = cptetepl.Test_plots.get_plot_effective_correlation_rank1()
+test_df = cptetepl.Test_plots.get_test_plot_df1()
 
 # %%
 cplocorr.plot_effective_correlation_rank(test_df)
@@ -167,7 +167,7 @@ cplocorr.plot_effective_correlation_rank(test_df, q_values)
 # ## `plot_spectrum()`
 
 # %%
-test_df = cptetepl.Test_plots.get_plot_spectrum1()
+test_df = cptetepl.Test_plots.get_test_plot_df1()
 
 # %%
 cplmiplo.plot_spectrum(test_df)
@@ -176,3 +176,5 @@ cplmiplo.plot_spectrum(test_df)
 _, axes = plt.subplots(2, 2, figsize=config["figsize"])
 axes_flat = axes.flatten()
 cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
+
+# %%
