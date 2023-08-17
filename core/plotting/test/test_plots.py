@@ -20,8 +20,7 @@ class Test_plots(unittest.TestCase):
     @staticmethod
     def get_test_plot_df1() -> pd.DataFrame:
         """
-        Generate a test DataFrame for the plot_cols, plot_spectrum,
-        plot_effective_correlation_rank function.
+        Generate a DataFrame with random values to test plotting functions.
         """
         data = {
             "Column1": np.random.rand(100),
