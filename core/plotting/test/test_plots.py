@@ -101,7 +101,7 @@ class Test_plots(unittest.TestCase):
 
         - `q_values` is None
         """
-        test_df = self.get_test_plot_df()
+        test_df = self.get_test_plot_df1()
         cplocorr.plot_effective_correlation_rank(test_df)
 
     def test_plot_effective_correlation_rank2(self) -> None:
@@ -112,7 +112,7 @@ class Test_plots(unittest.TestCase):
         """
         num_q_values = 5
         q_values = np.random.uniform(1, 10, num_q_values).tolist()
-        test_df = self.get_test_plot_df()
+        test_df = self.get_test_plot_df1()
         cplocorr.plot_effective_correlation_rank(test_df, q_values)
 
     def test_plot_timeseries_distribution1(self) -> None:
@@ -137,7 +137,7 @@ class Test_plots(unittest.TestCase):
 
         - `axes` is None
         """
-        test_df = self.get_test_plot_df()
+        test_df = self.get_test_plot_df1()
         cplmiplo.plot_spectrum(test_df)
 
     def test_plot_spectrum2(self) -> None:
@@ -146,7 +146,7 @@ class Test_plots(unittest.TestCase):
 
         - `axes` is a list of Matplotlib axes
         """
-        test_df = self.get_test_plot_df()
+        test_df = self.get_test_plot_df1()
         _, axes = plt.subplots(2, 2, figsize=(20, 10))
         axes_flat = axes.flatten()
         cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
@@ -155,5 +155,5 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for `plot_cols`.
         """
-        test_df = self.get_test_plot_df()
+        test_df = self.get_test_plot_df1()
         cplmiplo.plot_cols(test_df)
