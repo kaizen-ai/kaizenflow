@@ -18,44 +18,19 @@ class Test_plots(unittest.TestCase):
     """
 
     @staticmethod
-    def get_plot_spectrum1() -> pd.DataFrame:
+    def get_test_plot_df() -> pd.DataFrame:
         """
-        Generate a test DataFrame for the plot_spectrum function.
+        Generate a test DataFrame for the plot_cols, plot_spectrum,
+        plot_effective_correlation_rank function.
         """
         data = {
-            "signal1": np.random.randn(1000),
-            "signal2": np.random.randn(1000),
+            "Column1": np.random.rand(100),
+            "Column2": np.random.rand(100),
+            "Column3": np.random.rand(100),
+            "Column4": np.random.rand(100),
         }
         df = pd.DataFrame(data)
         return df
-
-    @staticmethod
-    def get_plot_col1() -> pd.DataFrame:
-        """
-        Generate a test DataFrame for the plot_cols function.
-        """
-        data = {
-            "Column1": np.random.rand(10),
-            "Column2": np.random.rand(10),
-            "Column3": np.random.rand(10),
-            "Column4": np.random.rand(10),
-        }
-        df = pd.DataFrame(data)
-        return df
-
-    @staticmethod
-    def get_plot_effective_correlation_rank1() -> pd.Series:
-        """
-        Generate a test DataFrame for plotting effective correlation rank.
-        """
-        data = {
-            "Column1": np.random.rand(10),
-            "Column2": np.random.rand(10),
-            "Column3": np.random.rand(10),
-            "Column4": np.random.rand(10),
-        }
-        test_df = pd.DataFrame(data)
-        return test_df
 
     @staticmethod
     def get_plot_time_series_by_period1() -> pd.Series:
@@ -135,7 +110,7 @@ class Test_plots(unittest.TestCase):
 
         - `q_values` is None
         """
-        test_df = self.get_plot_effective_correlation_rank1()
+        test_df = self.get_test_plot_df()
         cplocorr.plot_effective_correlation_rank(test_df)
 
     def test_plot_effective_correlation_rank2(self) -> None:
@@ -146,7 +121,7 @@ class Test_plots(unittest.TestCase):
         """
         num_q_values = 5
         q_values = np.random.uniform(1, 10, num_q_values).tolist()
-        test_df = self.get_plot_effective_correlation_rank1()
+        test_df = self.get_test_plot_df()
         cplocorr.plot_effective_correlation_rank(test_df, q_values)
 
     def test_plot_timeseries_distribution1(self) -> None:
@@ -171,7 +146,7 @@ class Test_plots(unittest.TestCase):
 
         - `axes` is None
         """
-        test_df = self.get_plot_spectrum1()
+        test_df = self.get_test_plot_df()
         cplmiplo.plot_spectrum(test_df)
 
     def test_plot_spectrum2(self) -> None:
@@ -180,14 +155,14 @@ class Test_plots(unittest.TestCase):
 
         - `axes` is a list of Matplotlib axes
         """
-        test_df = self.get_plot_spectrum1()
+        test_df = self.get_test_plot_df()
         _, axes = plt.subplots(2, 2, figsize=(20, 10))
         axes_flat = axes.flatten()
         cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
 
-    def test_plot_cols(self) -> None:
+    def test_plot_cols1(self) -> None:
         """
         Smoke test for `plot_cols`.
         """
-        test_df = self.get_plot_col1()
+        test_df = self.get_test_plot_df()
         cplmiplo.plot_cols(test_df)
