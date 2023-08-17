@@ -44,14 +44,6 @@ class Test_plots(unittest.TestCase):
         return test_series
 
     @staticmethod
-    def get_plot_heatmap1() -> pd.core.frame.DataFrame:
-        """
-        Generate a data frame with some random features.
-        """
-        df = pd.DataFrame(np.random.randn(10, 6), columns=list("ABCDEF"))
-        return df
-
-    @staticmethod
     def get_plot_timeseries_distribution1() -> pd.Series:
         """
         Get test data for plotting time series distribution.
@@ -100,7 +92,7 @@ class Test_plots(unittest.TestCase):
         Smoke test for `plot_heatmap()`
         """
         mode = "clustermap"
-        corr_df = self.get_plot_heatmap1()
+        corr_df = self.get_test_plot_df1()
         cplocorr.plot_heatmap(corr_df, mode, figsize=(20, 10))
 
     def test_plot_effective_correlation_rank1(self) -> None:
