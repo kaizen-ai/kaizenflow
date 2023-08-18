@@ -1,5 +1,0 @@
-dataflow/system/system_builder_utils.py:368:[amp_mypy] error: Incompatible types in assignment (expression has type "None", variable has type "str")  [assignment]
-dataflow/system/system_builder_utils.py:405:[amp_mypy] error: Need type annotation for 'process_forecasts_dict' (hint: "process_forecasts_dict: Dict[<type>, <type>] = ...")  [var-annotated]
-dataflow/system/system_builder_utils.py:407:[amp_pylint] [E1101(no-member), get_RealTimeDag_from_System] Module 'dataflow.system.system' has no 'adapt_dag_to_real_time' member
-dataflow/system/system_builder_utils.py:715:[amp_pylint] [W0212(protected-access), get_DatabasePortfolio_from_System] Access to a protected member _column_remap of a client class
-dataflow/system/system_builder_utils.py:861:[amp_pylint] [W0613(unused-argument), _apply_DagRunner_config] Unused argument 'trading_period_str'
