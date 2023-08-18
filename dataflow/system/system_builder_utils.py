@@ -393,28 +393,6 @@ def apply_ReplayedMarketData_from_file_config(
 # #############################################################################
 
 
-def get_RealTimeDag_from_System(
-    system: dtfsyssyst.System,
-) -> dtfsyssyst.System:
-    # Assemble.
-    dag = system.dag
-    market_data = system.market_data
-    market_data_history_lookback = system.config[
-        "market_data_config", "history_lookback"
-    ]
-    process_forecasts_dict = {}
-    ts_col_name = "end_datetime"
-    dag = dtfsyssyst.adapt_dag_to_real_time(
-        dag,
-        market_data,
-        market_data_history_lookback,
-        process_forecasts_dict,
-        ts_col_name,
-    )
-    _LOG.debug("dag=\n%s", dag)
-    # TODO(gp): Why is this not returning anything? Is this even used?
-
-
 def build_HistoricalDag_from_System(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with an historical data source for simulation.
