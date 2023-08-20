@@ -301,7 +301,7 @@ def get_x_and_forward_y_predict_df(
     df_out = merge_dataframes(x_df, forward_y_df)
     return df_out
 
- def _convert_to_multiindex(df: pd.DataFrame, asset_id_col: str) -> pd.DataFrame:
+ def convert_to_multiindex(df: pd.DataFrame, asset_id_col: str) -> pd.DataFrame:
      """
      Transform a df like: ```
  
