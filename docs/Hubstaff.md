@@ -1,5 +1,8 @@
-# General
+# Hubstaff
 
+<!-- toc -->
+
+# General
 
 [<span class="underline">Hubstaff</span>](https://hubstaff.com/) is a
 tool for remote working that automates:
@@ -12,23 +15,21 @@ tool for remote working that automates:
 
 The goal is to replace our [<span class="underline">hour log
 spreadsheet</span>](https://docs.google.com/spreadsheets/d/1oNd6ORhc94oUzg5nhNC7fQelN_PmfAv110F7lUiZsxo/edit#gid=0)
-with Hubstaff and get paid automatically for the worked hours.
+with Hubstaff and get paid automatically for the worked hours
 
 # Time Tracking
 
-
 ## Privacy
 
+- We have decided to turn off the feature of taking screenshots of the
+laptop as proof-as-work, URL, and app tracking
 
-We have decided to turn off the feature of taking screenshots of the
-laptop as proof-as-work, URL, and app tracking.
+    <img src="Hubstaff_figs/image9.jpg" style="width:6.26772in;height:4.66667in" />
 
-<img src="Hubstaff_figs/image9.jpg" style="width:6.26772in;height:4.66667in" />
-
-Although this seems to be standard practice for remote teams (e.g., it's
+- Although this seems to be standard practice for remote teams (e.g., it's
 default for UpWork), we don't believe in surveilling people, rather we
 prefer to assume that people do the right thing (until proven wrong, of
-course).
+course)
 
 <img src="Hubstaff_figs/image1.png" style="width:3.44034in;height:1.06338in" />
 
@@ -36,7 +37,7 @@ course).
 
 We left enabled "the keyboard and mouse activity" since this is used to
 automatically track the worked time. The tool does not store what you
-type, only if you type as a proxy for "working".
+type, only if you type as a proxy for "working"
 
 <img src="Hubstaff_figs/image5.png" style="width:3.01563in;height:1.45221in" />
 
