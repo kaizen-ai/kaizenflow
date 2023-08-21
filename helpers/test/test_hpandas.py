@@ -3065,10 +3065,11 @@ class Test_apply_index_mode(hunitest.TestCase):
 
 
 class Test_get_df_from_iterator(hunitest.TestCase):
-    def test1(self)-> None:
+    def test1(self) -> None:
         """
-        Check that a dataframe is correctly built from an iterator of dataframes.
-        """ 
+        Check that a dataframe is correctly built from an iterator of
+        dataframes.
+        """
         # Build iterator of dataframes for the test.
         data1 = {
             "num_col": [1, 2],
@@ -3079,10 +3080,10 @@ class Test_get_df_from_iterator(hunitest.TestCase):
             "num_col": [3, 4],
             "str_col": ["C", "D"],
         }
-        df2 = pd.DataFrame(data=data2) 
+        df2 = pd.DataFrame(data=data2)
         data3 = {
-             "num_col": [5, 6],
-             "str_col": ["E", "F"],
+            "num_col": [5, 6],
+            "str_col": ["E", "F"],
         }
         df3 = pd.DataFrame(data=data3)
         # Run.
@@ -3232,3 +3233,284 @@ class Test_multiindex_df_info1(hunitest.TestCase):
             rows=2 ['M', 'N']
         """
         self.assert_equal(act, exp, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class Test_multiindex_df_datetime(hunitest.TestCase):
+    @staticmethod
+    def get_multiindex_df_with_datetime_index(test_type: int) -> pd.DataFrame:
+        if test_type == 0:  # Strictly Increasing
+            datetime_index = [
+                pd.Timestamp("2022-01-01 21:01:00+00:00"),
+                pd.Timestamp("2022-01-01 21:02:00+00:00"),
+                pd.Timestamp("2022-01-01 21:03:00+00:00"),
+                pd.Timestamp("2022-01-01 21:04:00+00:00"),
+                pd.Timestamp("2022-01-01 21:05:00+00:00"),
+            ]
+        elif test_type == 1:  # Increasing
+            datetime_index = [
+                pd.Timestamp("2022-01-01 21:01:00+00:00"),
+                pd.Timestamp("2022-01-01 21:02:00+00:00"),
+                pd.Timestamp("2022-01-01 21:03:00+00:00"),
+                pd.Timestamp("2022-01-01 21:04:00+00:00"),
+                pd.Timestamp("2022-01-01 21:04:00+00:00"),
+            ]
+        elif test_type == 2:  # Not Increasing
+            datetime_index = [
+                pd.Timestamp("2022-01-01 21:03:00+00:00"),
+                pd.Timestamp("2022-01-01 21:04:00+00:00"),
+                pd.Timestamp("2022-01-01 21:05:00+00:00"),
+                pd.Timestamp("2022-01-01 21:02:00+00:00"),
+                pd.Timestamp("2022-01-01 21:01:00+00:00"),
+            ]
+        elif test_type == 4:  # Not having Timezone
+            datetime_index = [
+                pd.Timestamp("2022-01-01 21:01:00"),
+                pd.Timestamp("2022-01-01 21:02:00"),
+                pd.Timestamp("2022-01-01 21:03:00"),
+                pd.Timestamp("2022-01-01 21:04:00"),
+                pd.Timestamp("2022-01-01 21:05:00"),
+            ]
+
+        iterables = [["asset1", "asset2"], ["open", "high", "low", "close"]]
+        index = pd.MultiIndex.from_product(iterables, names=[None, "timestamp"])
+        nums = np.array(
+            [
+                [
+                    0.77650806,
+                    0.12492164,
+                    -0.35929232,
+                    1.04137784,
+                    0.20099949,
+                    1.4078602,
+                    -0.1317103,
+                    0.10023361,
+                ],
+                [
+                    -0.56299812,
+                    0.79105046,
+                    0.76612895,
+                    -1.49935339,
+                    -1.05923797,
+                    0.06039862,
+                    -0.77652117,
+                    2.04578691,
+                ],
+                [
+                    0.77348467,
+                    0.45237724,
+                    1.61051308,
+                    0.41800008,
+                    0.20838053,
+                    -0.48289112,
+                    1.03015762,
+                    0.17123323,
+                ],
+                [
+                    0.40486053,
+                    0.88037142,
+                    -1.94567068,
+                    -1.51714645,
+                    -0.52759748,
+                    -0.31592803,
+                    1.50826723,
+                    -0.50215196,
+                ],
+                [
+                    0.17409714,
+                    -2.13997243,
+                    -0.18530403,
+                    -0.48807381,
+                    0.5621593,
+                    0.25899393,
+                    1.14069646,
+                    2.07721856,
+                ],
+            ]
+        )
+        df = pd.DataFrame(nums, index=datetime_index, columns=index)
+        return df
+
+    @staticmethod
+    def get_multiindex_df_with_non_datetime_index() -> pd.DataFrame:
+        non_datetime_index = ["M", "N"]
+        index = pd.MultiIndex.from_product([["A", "B"], ["X", "Y"]])
+        data = [[1, 2, 3, 4], [5, 6, 7, 8]]
+        df = pd.DataFrame(data, index=non_datetime_index, columns=index)
+        return df
+
+    def test1(self) -> None:
+        """
+        Test dataframe for index containing datetimes.
+        """
+        df = self.get_multiindex_df_with_datetime_index(0)
+        hpandas.dassert_index_is_datetime(df)
+
+    def test2(self) -> None:
+        """
+        Test dataframe for index not containing datetimes.
+        """
+        df = self.get_multiindex_df_with_non_datetime_index()
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_index_is_datetime(df)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        Instance of 'Index(['M', 'N'], dtype='object')' is '<class 'pandas.core.indexes.base.Index'>' instead of '<class 'pandas.core.indexes.datetimes.DatetimeIndex'>'"""
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Test dataframe for empty data frames.
+        """
+        df = pd.DataFrame()
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_index_is_datetime(df)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        Instance of 'Index([], dtype='object')' is '<class 'pandas.core.indexes.base.Index'>' instead of '<class 'pandas.core.indexes.datetimes.DatetimeIndex'>'
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Test dataframe time indexed and well-formed.
+        """
+        df = self.get_multiindex_df_with_datetime_index(0)
+        allow_empty = False
+        strictly_increasing = False
+        hpandas.dassert_time_indexed_df(df, allow_empty, strictly_increasing)
+
+    def test5(self) -> None:
+        """
+        Test dataframe that is empty.
+        """
+        df = pd.DataFrame()
+        allow_empty = True
+        strictly_increasing = False
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_time_indexed_df(df, allow_empty, strictly_increasing)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        Instance of 'Index([], dtype='object')' is '<class 'pandas.core.indexes.base.Index'>' instead of '<class 'pandas.core.indexes.datetimes.DatetimeIndex'>'
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test6(self) -> None:
+        """
+        Test dataframe time indexed and well-formed.
+
+        For strictly increasing datetime.
+        """
+        df = self.get_multiindex_df_with_datetime_index(0)
+        allow_empty = False
+        strictly_increasing = True
+        hpandas.dassert_time_indexed_df(df, allow_empty, strictly_increasing)
+
+    def test7(self) -> None:
+        """
+        Test dataframe time indexed and well-formed.
+
+        For not strictly increasing datetime.
+        """
+        df = self.get_multiindex_df_with_datetime_index(1)
+        allow_empty = False
+        strictly_increasing = False
+        hpandas.dassert_time_indexed_df(df, allow_empty, strictly_increasing)
+
+    def test8(self) -> None:
+        """
+        Test dataframe time indexed and well-formed.
+
+        For duplicate date time.
+        """
+        df = self.get_multiindex_df_with_datetime_index(1)
+        allow_empty = False
+        strictly_increasing = True
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_time_indexed_df(df, allow_empty, strictly_increasing)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        cond=False
+        Duplicated rows are:
+                                    asset1                                  asset2
+        timestamp                      open      high       low     close      open      high       low     close
+        2022-01-01 21:04:00+00:00  0.404861  0.880371 -1.945671 -1.517146 -0.527597 -0.315928  1.508267 -0.502152
+        2022-01-01 21:04:00+00:00  0.174097 -2.139972 -0.185304 -0.488074  0.562159  0.258994  1.140696  2.077219
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test9(self) -> None:
+        """
+        Test dataframe time indexed and well-formed.
+
+        For not increasing date time
+        """
+        df = self.get_multiindex_df_with_datetime_index(2)
+        allow_empty = False
+        strictly_increasing = False
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_time_indexed_df(df, allow_empty, strictly_increasing)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        cond=False
+        Not increasing indices are:
+                                    asset1                                  asset2
+        timestamp                      open      high       low     close      open      high       low     close
+        2022-01-01 21:05:00+00:00  0.773485  0.452377  1.610513  0.418000  0.208381 -0.482891  1.030158  0.171233
+        2022-01-01 21:02:00+00:00  0.404861  0.880371 -1.945671 -1.517146 -0.527597 -0.315928  1.508267 -0.502152
+        2022-01-01 21:01:00+00:00  0.174097 -2.139972 -0.185304 -0.488074  0.562159  0.258994  1.140696  2.077219
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test10(self) -> None:
+        """
+        Test dataframe time indexed and well-formed.
+
+        For not increasing datetime through strict check
+        """
+        df = self.get_multiindex_df_with_datetime_index(2)
+        allow_empty = False
+        strictly_increasing = True
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_time_indexed_df(df, allow_empty, strictly_increasing)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        cond=False
+        Not increasing indices are:
+                                    asset1                                  asset2
+        timestamp                      open      high       low     close      open      high       low     close
+        2022-01-01 21:05:00+00:00  0.773485  0.452377  1.610513  0.418000  0.208381 -0.482891  1.030158  0.171233
+        2022-01-01 21:02:00+00:00  0.404861  0.880371 -1.945671 -1.517146 -0.527597 -0.315928  1.508267 -0.502152
+        2022-01-01 21:01:00+00:00  0.174097 -2.139972 -0.185304 -0.488074  0.562159  0.258994  1.140696  2.077219
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test11(self) -> None:
+        """
+        Test dataframe time indexed and well-formed.
+
+        For Timezone
+        """
+        df = self.get_multiindex_df_with_datetime_index(4)
+        allow_empty = False
+        strictly_increasing = True
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_time_indexed_df(df, allow_empty, strictly_increasing)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        'None' is not 'None'
+        datetime_='2022-01-01 21:01:00' doesn't have timezone info
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+
+# #############################################################################
