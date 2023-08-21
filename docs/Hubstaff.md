@@ -67,9 +67,7 @@ with Hubstaff and get paid automatically for the worked hours
 
     <img src="Hubstaff_figs/image6.png" style="width:2.89272in;height:2.35938in" />
 
-      See [<span
-
-  class="underline">https://hubstaff.com/how-tracking-works</span>](https://hubstaff.com/how-tracking-works)
+- See [<span class="underline">https://hubstaff.com/how-tracking-works</span>](https://hubstaff.com/how-tracking-works)
 
 ### Tracking time manually
 
