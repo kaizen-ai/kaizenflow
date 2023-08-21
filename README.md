@@ -163,6 +163,8 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Type Hints](docs/Type_hints.md)
 
+- [Hubstaff](docs/Hubstaff.md)
+
 # DeFi: start developing
 
 - [DeFi README](/defi/README.md)
