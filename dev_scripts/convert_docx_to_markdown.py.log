@@ -1,0 +1,23 @@
+09:09:45 - [36mINFO [0m convert_docx_to_markdown.py _main:168                  09:09:45 - [36mINFO [0m convert_docx_to_markdown.py _main:168                  Start converting Docx to Markdown.
+09:09:45 hsystem.py _system:224                              > (touch Hubstaff.md) 2>&1
+09:09:45 hsystem.py _system:224                              > (docker build -f /var/folders/cr/tj042x7963s_v_8y78mhrhm40000gn/T/tmp2apekl5z.Dockerfile -t convert_docx_to_markdown .) 2>&1
+09:10:01 hsystem.py _system:224                              > (rm -rf Hubstaff_figs) 2>&1
+09:10:01 hsystem.py _system:224                              > (docker run --rm -it --workdir /Users/gurtaj/src/sorrentum2/sorrentum/dev_scripts --mount type=bind,source=/Users/gurtaj/src/sorrentum2/sorrentum/dev_scripts,target=/Users/gurtaj/src/sorrentum2/sorrentum/dev_scripts convert_docx_to_markdown pandoc --extract-media Hubstaff_figs -f docx -t markdown_strict -o Hubstaff.md Hubstaff.docx) 2>&1
+09:10:02 hsystem.py _system:224                              > (perl -pi -e 's:# (\\#)+ :# :g' Hubstaff.md) 2>&1
+09:10:02 hsystem.py _system:224                              > (perl -pi -e 's:\\#:#:g' Hubstaff.md) 2>&1
+09:10:02 hsystem.py _system:224                              > (perl -pi -e 's:\*\*#(.*?)\*\*:#$1:g' Hubstaff.md) 2>&1
+09:10:02 hsystem.py _system:224                              > (perl -pi -e 's:^(\s+)> :$1:g' Hubstaff.md) 2>&1
+09:10:02 hsystem.py _system:224                              > (perl -pi -e 's:^>: :g' Hubstaff.md) 2>&1
+09:10:02 hsystem.py _system:224                              > (perl -pi -e 's:\\([-\$|\"\_\]\[\.]):$1:g' Hubstaff.md) 2>&1
+09:10:02 hsystem.py _system:224                              > (perl -pi -e "s:\\\':\':g" Hubstaff.md) 2>&1
+09:10:02 hsystem.py _system:224                              > (perl -pi -e 's:\\\`:\`:g' Hubstaff.md) 2>&1
+09:10:02 hsystem.py _system:224                              > (perl -pi -e 's:\\\*:\*:g' Hubstaff.md) 2>&1
+09:10:02 hsystem.py _system:224                              > (perl -pi -e 's:“:\":g' Hubstaff.md) 2>&1
+09:10:02 hsystem.py _system:224                              > (perl -pi -e 's:”:\":g' Hubstaff.md) 2>&1
+09:10:02 hsystem.py _system:224                              > (perl -pi -e 's:\\$::g' Hubstaff.md) 2>&1
+09:10:02 hsystem.py _system:224                              > (perl -pi -e 's:======+::g' Hubstaff.md) 2>&1
+09:10:02 hsystem.py _system:224                              > (perl -pi -e 's:------+::g' Hubstaff.md) 2>&1
+09:10:02 hsystem.py _system:224                              > (perl -pi -e 's:\&gt;:\>:g' Hubstaff.md) 2>&1
+09:10:02 hsystem.py _system:224                              > (perl -pi -e 's:\<\!\-\-.*\-\-\>::g' Hubstaff.md) 2>&1
+09:10:02 hsystem.py _system:224                              > (perl -pi -e 's:Hubstaff_figs/media/:Hubstaff_figs/:g' Hubstaff.md) 2>&1
+09:10:02 - [36mINFO [0m convert_docx_to_markdown.py _main:172                  09:10:02 - [36mINFO [0m convert_docx_to_markdown.py _main:172                  Finished converting 'Hubstaff.docx' to 'Hubstaff.md'.
