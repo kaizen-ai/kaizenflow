@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+
+"""
+Import as:
+
+import linkedin.google_api.google_drive_api as lggodrapi
+"""
+
 import logging
 import os.path
 from typing import Optional
@@ -20,13 +27,18 @@ class GoogleFileApi:
         # Get Google API credentials.
         self.creds = self._get_credentials()
         # Create a Google drive api client.
-        self.gdrive_service = build("drive", "v3", credentials=self.creds)
+        self.gdrive_service = build(
+            "drive",
+            "v3",
+            credentials=self.creds,
+            cache_discovery=False
+        )
 
     def create_empty_google_file(
         self,
         gfile_type: str,
         gfile_name: str,
-        gdrive_folder: dict,
+        gdrive_folder_id: str,
         user: Optional[str] = None,
     ) -> None:
         """
@@ -34,9 +46,8 @@ class GoogleFileApi:
 
         :param gfile_type: str, the type of the Google file ('sheet' or 'doc').
         :param gfile_name: str, the name of the new Google file.
-        :param gdrive_folder: dict, the id and the name of the Google Drive folder.
+        :param gdrive_folder_id: the id of the Google Drive folder.
         :param user: str, the email address of the user to share the Google file (Optional).
-        :return: None
         """
         try:
             if gfile_type == "sheet":
@@ -49,28 +60,50 @@ class GoogleFileApi:
             _LOG.info("Created a new Google %s '%s'.", gfile_type, gfile_name )
 
             # Move the Google file to a Google Drive dir.
-            if gdrive_folder:
-                self._move_gfile_to_dir(gfile_id, gdrive_folder.get("id"))
-                _LOG.info(
-                    "Move the new Google %s '%s' to the dir '%s'",
-                    gfile_type,
-                    gfile_name,
-                    gdrive_folder.get('name')
-                )
-            else:
-                _LOG.info("The new Google '%s' is created in your root dir.", gfile_type)
+            if gdrive_folder_id:
+                self._move_gfile_to_dir(gfile_id, gdrive_folder_id)
             # Share the Google file to a user and send an email.
             if user:
                 self._share_google_file(gfile_id, user)
                 _LOG.info(
                     "The new Google '%s': '%s' is shared to '%s'", gfile_type, gfile_name, user
                 )
-            _LOG.info("Finished creating the new Google %s '%s'.", gfile_type, gfile_name)
+        #
+        except HttpError as err:
+            _LOG.error(err)
+
+    def create_google_drive_folder(self, folder_name: str, parent_folder_id: str) -> str:
+        """
+        Create a new Google Drive folder inside the given folder.
+
+        :param folder_name: str, the name of the new Google Drive folder.
+        :param parent_folder_id: str, the id of the parent folder.
+        """
+        try:
+            file_metadata = {
+                "name": folder_name,
+                "mimeType": "application/vnd.google-apps.folder",
+                "parents": [parent_folder_id],
+            }
+            folder = (
+                self.gdrive_service.files()
+                .create(body=file_metadata, fields="id")
+                .execute()
+            )
+            _LOG.info("Created a new Google Drive folder '%s'.", folder_name)
+            _LOG.info("The new folder id is '%s'.", folder.get("id"))
+            return folder.get("id")
         #
         except HttpError as err:
             _LOG.error(err)
 
     def get_folder_id_by_name(self, name: str) -> Optional[list]:
+        """
+        Get the folder id by the folder name.
+
+        :param name: str, the name of the folder.
+        :return: list, the list of the folder id and folder name.
+        """
         folders = self._get_folders_in_gdrive()
         folder_list = []
         #
@@ -155,6 +188,7 @@ class GoogleFileApi:
             doc_type,
             "v4" if doc_type == "sheets" else "v1",
             credentials=self.creds,
+            cache_discovery=False
         )
         document = {"properties": {"title": doc_name}}
         document = (
@@ -184,6 +218,12 @@ class GoogleFileApi:
         return self._create_new_google_document(gdoc_name, "docs")
 
     def _share_google_file(self, gsheet_id: str, user: str) -> None:
+        """
+        Share a Google file to a user.
+
+        :param gsheet_id: str, the id of the Google file.
+        :param user: str, the email address of the user.
+        """
         # Create the permission.
         parameters = {"role": "reader", "type": "user", "emailAddress": user}
         new_permission = (
@@ -199,7 +239,10 @@ class GoogleFileApi:
 
     def _move_gfile_to_dir(self, gfile_id: str, folder_id: str) -> dict:
         """
-        Moves a Google file to a specified folder in Google Drive.
+        Move a Google file to a specified folder in Google Drive.
+
+        :param gfile_id: str, the id of the Google file.
+        :param folder_id: str, the id of the folder.
         """
         res = (
             self.gdrive_service.files()

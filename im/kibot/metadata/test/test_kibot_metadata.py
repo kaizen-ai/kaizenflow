@@ -10,6 +10,8 @@ import im.kibot.metadata.test.mocking.mock_kibot_metadata as mkmd
 MAX_ROWS = 500
 
 
+@pytest.mark.requires_aws 
+@pytest.mark.requires_ck_infra
 class TestKibotMetadata(hunitest.TestCase):
     
     @pytest.mark.requires_aws 
