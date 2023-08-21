@@ -14,8 +14,10 @@ import logging
 from typing import Callable, List, Tuple, Union
 
 import pandas as pd
+import numpy as np
 
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
@@ -301,7 +303,7 @@ def get_x_and_forward_y_predict_df(
     df_out = merge_dataframes(x_df, forward_y_df)
     return df_out
 
- def convert_to_multiindex(df: pd.DataFrame, asset_id_col: str) -> pd.DataFrame:
+def convert_to_multiindex(df: pd.DataFrame, asset_id_col: str) -> pd.DataFrame:
      """
      Transform a df like: ```
  
