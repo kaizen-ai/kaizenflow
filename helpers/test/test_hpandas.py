@@ -3254,7 +3254,10 @@ class Test_multiindex_df_datetime(hunitest.TestCase):
             ]
         else:
             datetime_index = ["string1", "string2"]
-        iterables = [["asset1", "asset2"], ["open", "high", "low", "close"]]
+        iterables = [
+            ["column1", "column2"],
+            ["subcolumn1", "subcolumn2", "subcolumn3", "subcolumn4"],
+        ]
         index = pd.MultiIndex.from_product(iterables, names=[None, "timestamp"])
         nums = np.random.uniform(-2, 2, size=(2, 8))
         df = pd.DataFrame(nums, index=datetime_index, columns=index)
@@ -3316,7 +3319,10 @@ class Test_multiindex_df_timezone(hunitest.TestCase):
 
         datetime_index = pd.date_range(start=start_time, end=end_time, freq="T")
 
-        iterables = [["asset1", "asset2"], ["open", "high", "low", "close"]]
+        iterables = [
+            ["column1", "column2"],
+            ["subcolumn1", "subcolumn2", "subcolumn3", "subcolumn4"],
+        ]
         index = pd.MultiIndex.from_product(iterables, names=[None, "timestamp"])
         nums = np.random.uniform(-2, 2, size=(5, 8))
         df = pd.DataFrame(nums, index=datetime_index, columns=index)
@@ -3358,7 +3364,7 @@ class Test_multiindex_df_timezone(hunitest.TestCase):
         df = self.get_multiindex_df_with_datetime_index(timezone)
         simple_df = df.stack(level=0).reset_index(level=1, drop=True)
         simple_df.index.name = "timestamp"
-        simple_df.columns = ["open", "high", "low", "close"]
+        simple_df.columns = ["column1", "column2", "column3", "column4"]
         allow_empty = False
         strictly_increasing = False
         hpandas.dassert_time_indexed_df(
@@ -3373,7 +3379,7 @@ class Test_multiindex_df_timezone(hunitest.TestCase):
         df = self.get_multiindex_df_with_datetime_index(timezone)
         simple_df = df.stack(level=0).reset_index(level=1, drop=True)
         simple_df.index.name = "timestamp"
-        simple_df.columns = ["open", "high", "low", "close"]
+        simple_df.columns = ["column1", "column2", "column3", "column4"]
         allow_empty = False
         strictly_increasing = False
         with self.assertRaises(AssertionError) as cm:
