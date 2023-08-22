@@ -3240,50 +3240,47 @@ class Test_multiindex_df_info1(hunitest.TestCase):
 
 class Test_multiindex_df_datetime(hunitest.TestCase):
     @staticmethod
-    def get_multiindex_df_with_datetime_index(timezone=True) -> pd.DataFrame:
-
-        if timezone:
-            # Add timezone in the data
-            start_time = pd.Timestamp("2022-01-01 21:01:00", tz="UTC")
-            end_time = pd.Timestamp("2022-01-01 21:05:00", tz="UTC")
+    def get_multiindex_df_with_datetime_index(
+        index_is_datetime: bool,
+    ) -> pd.DataFrame:
+        """
+        Get simple multi-index dataframe to unit test the assert.
+        """
+        if index_is_datetime:
+            # Get datatime index in dataframe.
+            datetime_index = [
+                pd.Timestamp("2022-01-01 21:00:00", tz="UTC"),
+                pd.Timestamp("2022-01-01 21:10:00", tz="UTC"),
+            ]
         else:
-            start_time = pd.Timestamp("2022-01-01 21:01:00")
-            end_time = pd.Timestamp("2022-01-01 21:05:00")
-
-        datetime_index = pd.date_range(start=start_time, end=end_time, freq="T")
-
+            datetime_index = ["string1", "string2"]
         iterables = [["asset1", "asset2"], ["open", "high", "low", "close"]]
         index = pd.MultiIndex.from_product(iterables, names=[None, "timestamp"])
-        nums = np.random.uniform(-2, 2, size=(5, 8))
+        nums = np.random.uniform(-2, 2, size=(2, 8))
         df = pd.DataFrame(nums, index=datetime_index, columns=index)
-        return df
-
-    @staticmethod
-    def get_multiindex_df_with_non_datetime_index() -> pd.DataFrame:
-        non_datetime_index = ["M", "N"]
-        index = pd.MultiIndex.from_product([["A", "B"], ["X", "Y"]])
-        data = [[1, 2, 3, 4], [5, 6, 7, 8]]
-        df = pd.DataFrame(data, index=non_datetime_index, columns=index)
         return df
 
     def test1(self) -> None:
         """
         Test dataframe for index containing datetimes.
         """
-        df = self.get_multiindex_df_with_datetime_index()
+        index_is_datetime = True
+        df = self.get_multiindex_df_with_datetime_index(index_is_datetime)
         hpandas.dassert_index_is_datetime(df)
 
     def test2(self) -> None:
         """
         Test dataframe for index not containing datetimes.
         """
-        df = self.get_multiindex_df_with_non_datetime_index()
+        index_is_datetime = False
+        df = self.get_multiindex_df_with_datetime_index(index_is_datetime)
         with self.assertRaises(AssertionError) as cm:
             hpandas.dassert_index_is_datetime(df)
         act = str(cm.exception)
         exp = r"""
         * Failed assertion *
-        Instance of 'Index(['M', 'N'], dtype='object')' is '<class 'pandas.core.indexes.base.Index'>' instead of '<class 'pandas.core.indexes.datetimes.DatetimeIndex'>'"""
+        Instance of 'Index(['string1', 'string2'], dtype='object')' is '<class 'pandas.core.indexes.base.Index'>' instead of '<class 'pandas.core.indexes.datetimes.DatetimeIndex'>'
+        """
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test3(self) -> None:
@@ -3300,20 +3297,47 @@ class Test_multiindex_df_datetime(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test4(self) -> None:
+
+# #############################################################################
+
+
+class Test_multiindex_df_timezone(hunitest.TestCase):
+    @staticmethod
+    def get_multiindex_df_with_datetime_index(
+        timezone: bool,
+    ) -> pd.DataFrame:
+        if timezone:
+            # Add timezone in the data.
+            start_time = pd.Timestamp("2022-01-01 21:01:00", tz="UTC")
+            end_time = pd.Timestamp("2022-01-01 21:05:00", tz="UTC")
+        else:
+            start_time = pd.Timestamp("2022-01-01 21:01:00")
+            end_time = pd.Timestamp("2022-01-01 21:05:00")
+
+        datetime_index = pd.date_range(start=start_time, end=end_time, freq="T")
+
+        iterables = [["asset1", "asset2"], ["open", "high", "low", "close"]]
+        index = pd.MultiIndex.from_product(iterables, names=[None, "timestamp"])
+        nums = np.random.uniform(-2, 2, size=(5, 8))
+        df = pd.DataFrame(nums, index=datetime_index, columns=index)
+        return df
+
+    def test1(self) -> None:
         """
         Test multiindex dataframe for index containing timezone.
         """
-        df = self.get_multiindex_df_with_datetime_index()
+        timezone = True
+        df = self.get_multiindex_df_with_datetime_index(timezone)
         allow_empty = False
         strictly_increasing = False
         hpandas.dassert_time_indexed_df(df, allow_empty, strictly_increasing)
 
-    def test5(self) -> None:
+    def test2(self) -> None:
         """
         Test multiindex dataframe for index not containing timezone.
         """
-        df = self.get_multiindex_df_with_datetime_index(False)
+        timezone = False
+        df = self.get_multiindex_df_with_datetime_index(timezone)
         allow_empty = False
         strictly_increasing = False
         with self.assertRaises(AssertionError) as cm:
@@ -3326,11 +3350,12 @@ class Test_multiindex_df_datetime(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test6(self) -> None:
+    def test3(self) -> None:
         """
         Test dataframe for index containing timezone.
         """
-        df = self.get_multiindex_df_with_datetime_index()
+        timezone = True
+        df = self.get_multiindex_df_with_datetime_index(timezone)
         simple_df = df.stack(level=0).reset_index(level=1, drop=True)
         simple_df.index.name = "timestamp"
         simple_df.columns = ["open", "high", "low", "close"]
@@ -3340,11 +3365,12 @@ class Test_multiindex_df_datetime(hunitest.TestCase):
             simple_df, allow_empty, strictly_increasing
         )
 
-    def test7(self) -> None:
+    def test4(self) -> None:
         """
         Test dataframe for index not containing timezone.
         """
-        df = self.get_multiindex_df_with_datetime_index(False)
+        timezone = False
+        df = self.get_multiindex_df_with_datetime_index(timezone)
         simple_df = df.stack(level=0).reset_index(level=1, drop=True)
         simple_df.index.name = "timestamp"
         simple_df.columns = ["open", "high", "low", "close"]
