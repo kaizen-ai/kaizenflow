@@ -157,3 +157,10 @@ class Test_plots(unittest.TestCase):
         """
         test_df = self.get_test_plot_df1()
         cplmiplo.plot_cols(test_df)
+
+    def test_plot_autocorrelation1(self) -> None:
+        """
+        Smoke test for `plot_autocorrelation()`
+        """
+        test_df = self.get_test_plot_df1()
+        cplmiplo.plot_autocorrelation(test_df)
