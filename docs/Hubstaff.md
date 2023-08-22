@@ -13,16 +13,16 @@
 
 # General
 
-[<span class="underline">Hubstaff</span>](https://hubstaff.com/) is a tool for
+- [<span class="underline">Hubstaff</span>](https://hubstaff.com/) is a tool for
 remote working that automates:
 
-- time tracking
+    - time tracking
 
-- invoice creation
+    - invoice creation
 
-- payment
+    - payment
 
-The goal is to replace our
+- The goal is to replace our
 [<span class="underline">hour log spreadsheet</span>](https://docs.google.com/spreadsheets/d/1oNd6ORhc94oUzg5nhNC7fQelN_PmfAv110F7lUiZsxo/edit#gid=0)
 with Hubstaff and get paid automatically for the worked hours
 
