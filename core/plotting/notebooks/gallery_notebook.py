@@ -177,6 +177,11 @@ _, axes = plt.subplots(2, 2, figsize=config["figsize"])
 axes_flat = axes.flatten()
 cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
 
-# %%
+# %% [markdown]
+# ## `plot_autocorrelation()`
 
 # %%
+test_df = cptetepl.Test_plots.get_test_plot_df1()
+
+# %%
+cplmiplo.plot_autocorrelation(test_df)
