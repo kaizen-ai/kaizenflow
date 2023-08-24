@@ -1,11 +1,10 @@
-#!/usr/bin/env python
 """
-Centralizing checking logical dependencies between values of various arguments
+Centralize checking logical dependencies between values of various arguments
 for ETL scripts.
 
 Import as:
 
-import im_v2.common.data.qa.validate_input_args as imvcdqvia
+import im_v2.common.data.qa.validate_input_args as imvcdqviar
 """
 import argparse
 
@@ -20,10 +19,11 @@ def validate_vendor_arg(
     vendor: str, args: argparse.Namespace
 ) -> ivcdexex.Extractor:
     """
-    Function to validate vendors arguments for contract type.
+    Get Extractor for the specified vendor using the passed args.
 
-    :param vendor: string to get the vendor
-    :param args: args to get the contract type
+    :param vendor: vendor name
+    :param args: ETL script args
+    :return: vendor data extractor
     """
     if vendor == "crypto_chassis":
         if not args.get("universe_part"):
