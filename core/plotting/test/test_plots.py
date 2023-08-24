@@ -211,3 +211,17 @@ class Test_plots(unittest.TestCase):
         mode = "scatter"
     	# Run.
         cplmiplo.plot_projection(test_df, mode=mode, ax=ax)
+
+    def test_plot_cols1(self) -> None:
+        """
+        Smoke test for `plot_cols`.
+        """
+        test_df = self.get_test_plot_df1()
+        cplmiplo.plot_cols(test_df)
+
+    def test_plot_autocorrelation1(self) -> None:
+        """
+        Smoke test for `plot_autocorrelation()`.
+        """
+        test_df = self.get_test_plot_df1()
+        cplmiplo.plot_autocorrelation(test_df)

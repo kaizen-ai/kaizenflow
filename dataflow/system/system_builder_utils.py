@@ -198,7 +198,8 @@ def build_ImClient_from_System(system: dtfsyssyst.System) -> icdc.ImClient:
 
 
 def apply_ImClient_config(
-    system: dtfsyssyst.System, universe_version: str,
+    system: dtfsyssyst.System,
+    universe_version: str,
 ) -> dtfsyssyst.System:
     """
     Fill IM client config and pass it to the system config.
@@ -392,28 +393,6 @@ def apply_ReplayedMarketData_from_file_config(
 # #############################################################################
 
 
-def get_RealTimeDag_from_System(
-    system: dtfsyssyst.System,
-) -> dtfsyssyst.System:
-    # Assemble.
-    dag = system.dag
-    market_data = system.market_data
-    market_data_history_lookback = system.config[
-        "market_data_config", "history_lookback"
-    ]
-    process_forecasts_dict = {}
-    ts_col_name = "end_datetime"
-    dag = dtfsyssyst.adapt_dag_to_real_time(
-        dag,
-        market_data,
-        market_data_history_lookback,
-        process_forecasts_dict,
-        ts_col_name,
-    )
-    _LOG.debug("dag=\n%s", dag)
-    # TODO(gp): Why is this not returning anything? Is this even used?
-
-
 def build_HistoricalDag_from_System(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with an historical data source for simulation.
@@ -579,18 +558,6 @@ def apply_unit_test_log_dir(self_: Any, system: dtfsyssyst.System) -> None:
     system.config["system_log_dir"] = os.path.join(
         self_.get_scratch_space(), "system_log_dir"
     )
-
-
-def apply_log_dir(
-    self_: Any, system: dtfsyssyst.System, log_dir: Optional[str] = None
-) -> None:
-    """
-    Update the `system_log_dir` to save data in `log_dir`.
-    """
-    hdbg.dassert_isinstance(system, dtfsyssyst.System)
-    if log_dir is None:
-        log_dir = "./system_log_dir"
-    system.config["system_log_dir"] = log_dir
 
 
 def apply_ProcessForecastsNode_config_for_equities(
@@ -1008,39 +975,6 @@ def apply_DagRunner_config_for_equities(
         trading_period_str,
     )
     return system
-
-
-# TODO(gp): @all -> get_RealtimeDagRunner or get_RealtimeDagRunner_from_system?
-# TODO(gp): This seems less general than the one below.
-def get_realtime_DagRunner_from_system(
-    system: dtfsyssyst.System,
-) -> dtfsrtdaru.RealTimeDagRunner:
-    """
-    Build a real-time DAG runner.
-    """
-    hdbg.dassert_isinstance(system, dtfsyssyst.System)
-    dag = system.dag
-    # TODO(gp): This should come from the config.
-    bar_duration_in_secs = 5 * 60
-    # Set up the event loop.
-    get_wall_clock_time = system.market_data.get_wall_clock_time
-    rt_timeout_in_secs_or_time = system.config.get_and_mark_as_used(
-        ("dag_runner_config", "rt_timeout_in_secs_or_time")
-    )
-    execute_rt_loop_kwargs = {
-        "get_wall_clock_time": get_wall_clock_time,
-        "bar_duration_in_secs": bar_duration_in_secs,
-        "rt_timeout_in_secs_or_time": rt_timeout_in_secs_or_time,
-    }
-    dag_runner_kwargs = {
-        "dag": dag,
-        "fit_state": None,
-        "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
-        "dst_dir": None,
-        "max_distance_in_secs": 30,
-    }
-    dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
-    return dag_runner
 
 
 def apply_RealtimeDagRunner_config(
