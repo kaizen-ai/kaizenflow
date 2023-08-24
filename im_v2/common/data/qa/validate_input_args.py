@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-Single dataset OHLCV QA checks.
+Centralizing checking logical dependencies between values of various arguments
+for ETL scripts.
 
 Import as:
 
@@ -19,8 +20,7 @@ def validate_vendor_arg(
     vendor: str, args: argparse.Namespace
 ) -> ivcdexex.Extractor:
     """
-    Function to centralizing checking logical dependencies between values of
-    various arguments for ETL scripts.
+    Function to validate vendors arguments for contract type.
 
     :param vendor: string to get the vendor
     :param args: args to get the contract type
