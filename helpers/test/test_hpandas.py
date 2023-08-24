@@ -3242,6 +3242,7 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
     @staticmethod
     def helper(
         index_is_datetime: bool,
+        multi_level_index: bool = False,
     ) -> pd.DataFrame:
         """
         Get simple multi-index dataframe to unit test the assert.
@@ -3258,9 +3259,18 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
             ["column1", "column2"],
             ["subcolumn1", "subcolumn2", "subcolumn3", "subcolumn4"],
         ]
+        iterables2 = [["index1", "index2"], datetime_index]
+        index = pd.MultiIndex.from_product(
+            iterables2, names=["index", "timestamp"]
+        )
         columns = pd.MultiIndex.from_product(iterables, names=[None, "timestamp"])
-        nums = np.random.uniform(-2, 2, size=(2, 8))
-        df = pd.DataFrame(nums, index=datetime_index, columns=columns)
+        if multi_level_index:
+            # Get dataframe with timestamp as a sub-index.
+            nums = np.random.uniform(-2, 2, size=(4, 8))
+            df = pd.DataFrame(nums, index=index, columns=columns)
+        else:
+            nums = np.random.uniform(-2, 2, size=(2, 8))
+            df = pd.DataFrame(nums, index=datetime_index, columns=columns)
         return df
 
     def test1(self) -> None:
@@ -3300,6 +3310,15 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    def test4(self) -> None:
+        """
+        Test dataframe for sub-index containing datetimes.
+        """
+        index_is_datetime = True
+        multi_level_index = True
+        df = self.helper(index_is_datetime, multi_level_index)
+        hpandas.dassert_index_is_datetime(df)
+
 
 # #############################################################################
 
@@ -3308,6 +3327,7 @@ class Test_dassert_time_indexed_df(hunitest.TestCase):
     @staticmethod
     def helper(
         index_is_datetime: bool,
+        multi_level_index: bool = False,
     ) -> pd.DataFrame:
         """
         Get simple multi-index dataframe to unit test the assert.
@@ -3329,13 +3349,18 @@ class Test_dassert_time_indexed_df(hunitest.TestCase):
             iterables2, names=["index", "timestamp"]
         )
         columns = pd.MultiIndex.from_product(iterables, names=[None, "timestamp"])
-        nums = np.random.uniform(-2, 2, size=(4, 8))
-        df = pd.DataFrame(nums, index=index, columns=columns)
+        if multi_level_index:
+            # Get dataframe with timestamp as a sub-index.
+            nums = np.random.uniform(-2, 2, size=(4, 8))
+            df = pd.DataFrame(nums, index=index, columns=columns)
+        else:
+            nums = np.random.uniform(-2, 2, size=(2, 8))
+            df = pd.DataFrame(nums, index=datetime_index, columns=columns)
         return df
 
     def test1(self) -> None:
         """
-        Test multiindex dataframe for index containing timezone.
+        Test multiindex dataframe for index 0 containing datetimes.
         """
         index_is_datetime = True
         df = self.helper(index_is_datetime)
@@ -3345,7 +3370,7 @@ class Test_dassert_time_indexed_df(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        Test multiindex dataframe for index not containing timezone.
+        Test multiindex dataframe for index 0 not containing datetimes.
         """
         index_is_datetime = False
         df = self.helper(index_is_datetime)
@@ -3356,20 +3381,35 @@ class Test_dassert_time_indexed_df(hunitest.TestCase):
         act = str(cm.exception)
         exp = r"""
         * Failed assertion *
-        Instance of 'MultiIndex([('index1', 'string1'),
-                    ('index1', 'string2'),
-                    ('index2', 'string1'),
-                    ('index2', 'string2')],
-                names=['index', 'timestamp'])' is '<class 'pandas.core.indexes.multi.MultiIndex'>' instead of '<class 'pandas.core.indexes.datetimes.DatetimeIndex'>'
+        Instance of 'Index(['string1', 'string2'], dtype='object')' is '<class 'pandas.core.indexes.base.Index'>' instead of '<class 'pandas.core.indexes.datetimes.DatetimeIndex'>'
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test3(self) -> None:
         """
-        Test dataframe for index containing timezone.
+        Test multiindex dataframe for index 0 not containing datetimes.
+        """
+        index_is_datetime = False
+        multi_level_index = True
+        df = self.helper(index_is_datetime, multi_level_index)
+        allow_empty = False
+        strictly_increasing = False
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_time_indexed_df(df, allow_empty, strictly_increasing)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        cond=False
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Test dataframe for index containing datetimes.
         """
         index_is_datetime = True
-        df = self.helper(index_is_datetime)
+        multi_level_index = True
+        df = self.helper(index_is_datetime, multi_level_index)
         simple_df = df.loc["index1"]
         allow_empty = False
         strictly_increasing = False
@@ -3377,12 +3417,13 @@ class Test_dassert_time_indexed_df(hunitest.TestCase):
             simple_df, allow_empty, strictly_increasing
         )
 
-    def test4(self) -> None:
+    def test5(self) -> None:
         """
-        Test dataframe for index not containing timezone.
+        Test dataframe for index not containing datetimes.
         """
         index_is_datetime = False
-        df = self.helper(index_is_datetime)
+        multi_level_index = True
+        df = self.helper(index_is_datetime, multi_level_index)
         simple_df = df.loc["index1"]
         allow_empty = False
         strictly_increasing = False
