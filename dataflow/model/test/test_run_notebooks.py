@@ -80,6 +80,7 @@ class Test_run_master_feature_analyzer(dsnrnteca.Test_Run_Notebook_TestCase):
         _test_run_notebook(self, notebook_name)
 
     @pytest.mark.skip("Run manually.")
+    @pytest.mark.requires_ck_infra
     @pytest.mark.slow("~15 sec.")
     def test_save_data(self) -> None:
         """
@@ -100,6 +101,7 @@ class Test_run_master_research_backtest_analyzer(
         _test_run_notebook(self, notebook_name)
 
     @pytest.mark.skip("Run manually.")
+    @pytest.mark.requires_ck_infra
     @pytest.mark.slow("~17 sec.")
     def test_save_data(self) -> None:
         """

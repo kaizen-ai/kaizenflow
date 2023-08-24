@@ -21,7 +21,6 @@ if _HAS_MOTO:
     import botocore
     import pytest
 
-    import helpers.henv as henv
     import helpers.hgit as hgit
     import helpers.hsecrets as hsecret
     import helpers.hunit_test as hunitest
@@ -31,13 +30,9 @@ if _HAS_MOTO:
     # The `mock_secretsmanager` decorator ensures the calls to the AWS API are
     # mocked.
 
-    @pytest.mark.skipif(
-        not henv.execute_repo_config_code("is_CK_S3_available()"),
-        reason="Run only if CK S3 is available",
-    )
+    @pytest.mark.requires_ck_infra
+    @pytest.mark.requires_aws
     class TestCreateClient(hunitest.TestCase):
-        @pytest.mark.requires_aws
-        @pytest.mark.requires_ck_infra
         def test_create_client1(self) -> None:
             """
             Simple smoke test to verify connection to AWS.
@@ -45,14 +40,10 @@ if _HAS_MOTO:
             client = hsecret.get_secrets_client(aws_profile="ck")
             self.assertIsInstance(client, botocore.client.BaseClient)
 
-    @pytest.mark.skipif(
-        not henv.execute_repo_config_code("is_CK_S3_available()"),
-        reason="Run only if CK S3 is available",
-    )
+    @pytest.mark.requires_ck_infra
+    @pytest.mark.requires_aws
     class TestGetSecret(hunitest.TestCase):
         @moto.mock_secretsmanager
-        @pytest.mark.requires_aws
-        @pytest.mark.requires_ck_infra
         def test_get_secret(self) -> None:
             """
             Verify that the secret can be retrieved correctly.
@@ -66,14 +57,10 @@ if _HAS_MOTO:
             )
             self.assertDictEqual(hsecret.get_secret(secret_name), secret)
 
-    @pytest.mark.skipif(
-        not henv.execute_repo_config_code("is_CK_S3_available()"),
-        reason="Run only if CK S3 is available",
-    )
+    @pytest.mark.requires_ck_infra
+    @pytest.mark.requires_aws
     class TestStoreSecret(hunitest.TestCase):
         @moto.mock_secretsmanager
-        @pytest.mark.requires_aws 
-        @pytest.mark.requires_ck_infra
         def test_store_secret1(self) -> None:
             """
             Verify that a secret can be stored correctly.

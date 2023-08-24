@@ -12,6 +12,8 @@ import im.common.data.types as imcodatyp
 import im.ib.data.load.ib_s3_data_loader as imidlisdlo
 
 
+@pytest.mark.requires_aws 
+@pytest.mark.requires_ck_infra
 class TestS3IbDataLoader1(hunitest.TestCase):
     """
     Test data loading correctness for Ib from S3.
