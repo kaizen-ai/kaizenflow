@@ -1,10 +1,14 @@
 import logging
+from typing import Tuple
+
 import pytest
 
 import dataflow.model.model_plotter as dtfmomoplo
 import dataflow.model.test.test_model_evaluator as cdmttme
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
+import dataflow.model.model_evaluator as dtfmomoeva
+import core.config as cconfig
 
 _LOG = logging.getLogger(__name__)
 
@@ -13,16 +17,26 @@ _LOG = logging.getLogger(__name__)
 #  When we add DataFrame output to the ModelPlotter functions so we can check that.
 
 
+def get_example_model_plotter() -> Tuple[dtfmomoplo.ModelPlotter, dtfmomoeva.ModelEvaluator, cconfig.Config]:
+    """
+    Get the ModelPlotter for unit testing and gallery demo.
+    """
+    evaluator, eval_config = cdmttme.get_example_model_evaluator()
+    plotter = dtfmomoplo.ModelPlotter(evaluator)
+    return plotter, evaluator, eval_config
+
+
 class TestModelPlotter1(hunitest.TestCase):
     def test_plot_multiple_tests_adjustment1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+        plotter, _, eval_config = get_example_model_plotter()
         #
         plotter.plot_multiple_tests_adjustment(
             threshold=eval_config["bh_adj_threshold"], mode=eval_config["mode"]
         )
+
     @pytest.mark.requires_ck_infra
     def test_model_selection1(self) -> None:
-        plotter, evaluator, eval_config = self._get_example_model_plotter()
+        plotter, evaluator, eval_config = get_example_model_plotter()
         # Calculate stats.
         pnl_stats = evaluator.calculate_stats(
             mode=eval_config["mode"],
@@ -50,7 +64,7 @@ class TestModelPlotter1(hunitest.TestCase):
         )
 
     def test_plot_return_correlation1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+        plotter, _, eval_config = get_example_model_plotter()
         #
         plotter.plot_correlation_matrix(
             series="returns",
@@ -59,7 +73,7 @@ class TestModelPlotter1(hunitest.TestCase):
         )
 
     def test_plot_model_return_correlation1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+        plotter, _, eval_config = get_example_model_plotter()
         #
         plotter.plot_correlation_matrix(
             series="pnl",
@@ -68,13 +82,13 @@ class TestModelPlotter1(hunitest.TestCase):
         )
 
     def test_plot_sharpe_ratio_panel1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+        plotter, _, eval_config = get_example_model_plotter()
         # Use all the models.
         keys = None
         plotter.plot_sharpe_ratio_panel(keys=keys, mode=eval_config["mode"])
 
     def test_plot_rets_signal_analysis1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+        plotter, _, eval_config = get_example_model_plotter()
         # Use all the models.
         keys = None
         plotter.plot_rets_signal_analysis(
@@ -84,8 +98,8 @@ class TestModelPlotter1(hunitest.TestCase):
             target_volatility=eval_config["target_volatility"],
         )
 
-    def test_plot_rets_signal_analysis1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+    def test_plot_performance1(self) -> None:
+        plotter, _, eval_config = get_example_model_plotter()
         # Use all the models.
         keys = None
         plotter.plot_performance(
@@ -96,7 +110,7 @@ class TestModelPlotter1(hunitest.TestCase):
         )
 
     def test_plot_rets_and_vol1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+        plotter, _, eval_config = get_example_model_plotter()
         # Use all the models.
         keys = None
         plotter.plot_rets_and_vol(
@@ -107,7 +121,7 @@ class TestModelPlotter1(hunitest.TestCase):
         )
 
     def test_plot_positions1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+        plotter, _, eval_config = get_example_model_plotter()
         # Use all the models.
         keys = None
         plotter.plot_positions(
@@ -117,7 +131,7 @@ class TestModelPlotter1(hunitest.TestCase):
         )
 
     def test_plot_returns_and_predictions1(self) -> None:
-        plotter, _, eval_config = self._get_example_model_plotter()
+        plotter, _, eval_config = get_example_model_plotter()
         # Use all the models.
         keys = None
         plotter.plot_returns_and_predictions(
@@ -125,9 +139,3 @@ class TestModelPlotter1(hunitest.TestCase):
             resample_rule=eval_config["resample_rule"],
             mode=eval_config["mode"],
         )
-
-    def _get_example_model_plotter(self):
-        evaluator, eval_config = cdmttme.get_example_model_evaluator()
-        # Build the ModelPlotter.
-        plotter = dtfmomoplo.ModelPlotter(evaluator)
-        return plotter, evaluator, eval_config
