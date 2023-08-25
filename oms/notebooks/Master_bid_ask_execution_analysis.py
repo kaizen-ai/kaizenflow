@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -38,7 +38,9 @@ import helpers.hprint as hprint
 import im_v2.common.data.client.im_raw_data_client as imvcdcimrdc
 import im_v2.common.universe.universe_utils as imvcuunut
 import oms
-import oms.ccxt_filled_orders_reader as ocfiorre
+import oms.broker.ccxt.ccxt_aggregation_functions as obccagfu
+import oms.broker.ccxt.ccxt_execution_quality as obccexqu
+import oms.broker.ccxt.ccxt_logs_reader as obcclore
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -53,42 +55,67 @@ hprint.config_notebook()
 # # Config
 
 # %%
-system_log_dir = "/shared_data/ecs/preprod/twap_experiment/system_reconciliation/C3a/20230419/system_log_dir.scheduled.20230419_041000.20230419_100500"
+config = cconfig.get_config_from_env()
+if config:
+    # Get config from env when running the notebook via the `run_notebook.py` script, e.g.,
+    # in the system reconciliation flow.
+    _LOG.info("Using config from env vars")
+else:
+    system_log_dir = "/shared_data/ecs/test/twap_experiment/20230814_1"
+    use_historical = False
+    config_dict = {
+        "meta": {
+            "use_historical": use_historical
+        },
+        "system_log_dir": system_log_dir
+    }
+    config = cconfig.Config.from_dict(config_dict)
+print(config)
+
+# %%
+system_log_dir = config["system_log_dir"]
 bar_duration = "5T"
 id_col = "asset_id"
 
 # %%
-ccxt_log_reader = ocfiorre.CcxtLogsReader(system_log_dir)
+ccxt_log_reader = obcclore.CcxtLogsReader(system_log_dir)
 
 # %%
 btc_usdt_id = 1467591036
 
 # %%
-use_historical = True
+# Use historical data for experiment runs older than 48h.
+use_historical = config["meta"]["use_historical"]
 
 # %% [markdown]
 # # Load order responses and fills
 
 # %%
 ccxt_order_response_df = ccxt_log_reader.load_ccxt_order_response_df()
-fills_df = ccxt_log_reader.load_ccxt_fills_df()
+ccxt_executed_trades_df = ccxt_log_reader.load_ccxt_trades_df()
 
 # %%
-trade_prices = ocfiorre.compute_buy_sell_prices_by_bar(
-    fills_df, bar_duration, groupby_id_col=id_col
+ccxt_executed_trades_df.head()
+
+# %%
+executed_trades_prices = obccagfu.compute_buy_sell_prices_by_bar(
+    ccxt_executed_trades_df, bar_duration, groupby_id_col=id_col
 )
 
 # %%
-child_order_df = ccxt_log_reader.load_child_order_df()
+oms_child_order_df = ccxt_log_reader.load_oms_child_order_df()
+
+# %%
+ccxt_order_response_df.head(3)
 
 # %% [markdown]
 # # Load bid-ask data
 
 # %%
 # TODO(Paul): Refine the cuts around the first and last bars.
-start_timestamp = ccxt_order_response_df["order_response_datetime"].min()
+start_timestamp = ccxt_order_response_df["order_update_datetime"].min()
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = fills_df["datetime"].max()
+end_timestamp = ccxt_executed_trades_df["datetime"].max()
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 
@@ -100,8 +127,8 @@ def load_bid_ask_data(
     asset_ids,
 ) -> pd.DataFrame:
     if use_historical:
-        signature = "periodic_daily.airflow.downloaded_1sec.parquet.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0"
-        reader = imvcdcimrdc.RawDataReader(signature)
+        signature = "periodic_daily.airflow.archived_200ms.parquet.bid_ask.futures.v7.ccxt.binance.v1_0_0"
+        reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
     else:
         signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7.ccxt.binance.v1_0_0"
         reader = imvcdcimrdc.RawDataReader(signature)
@@ -154,7 +181,7 @@ bad = load_bid_ask_data(
     start_timestamp,
     end_timestamp,
     use_historical,
-    trade_prices.columns.levels[1],
+    executed_trades_prices.columns.levels[1],
 )
 
 # %%
@@ -174,16 +201,16 @@ bad.head()
 bad.columns.levels[1]
 
 # %%
-child_order_df_restricted = child_order_df[
-    child_order_df["asset_id"].isin(bad.columns.levels[1])
+oms_child_order_df_restricted = oms_child_order_df[
+    oms_child_order_df["asset_id"].isin(bad.columns.levels[1])
 ]
 
 # %%
-child_order_df_restricted.head()
+oms_child_order_df_restricted.head()
 
 # %%
 # Forward fill to represent the time-in-force of the underlying order
-limit_prices = ocfiorre.get_limit_order_price(child_order_df_restricted)
+limit_prices = obccexqu.get_limit_order_price(oms_child_order_df_restricted)
 
 # limit_prices.index = limit_prices.index.tz_localize("UTC")
 limit_prices.head()
@@ -207,10 +234,7 @@ limit_prices = pd.concat(
 # ## Join limit orders with bid-ask data and simulate trades
 
 # %%
-# TODO(Paul): Historical bid/ask data needs to be lagged 1 minute
-#  to properly align. May be due to beginning-of-bar vs end-of-bar
-# . timestamp conventions.
-in_df = pd.concat([limit_prices, bad.shift(60)], axis=1)
+in_df = pd.concat([limit_prices, bad], axis=1)
 in_df.head()
 
 # %%
@@ -281,7 +305,7 @@ btc_slice["buy_trade_price"].ffill(limit=59).plot()
 # %%
 simulated_execution_quality_node = dtfcore.GroupedColDfToDfTransformer(
     "simulated_execution_quality",
-    transformer_func=cofinanc.compute_execution_quality,
+    transformer_func=cofinanc.compute_bid_ask_execution_quality,
     **{
         "in_col_groups": [
             ("buy_trade_price",),
@@ -318,8 +342,8 @@ btc_slice[active_cols].dropna(how="all")
 
 # %%
 col = "buy_trade_midpoint_slippage_bps"
-coplotti.plot_slippage_boxplot(
-    simulated_execution_quality_df[col], "by_asset", ylabel=col
+coplotti.plot_boxplot(
+    simulated_execution_quality_df[col], "by_col", ylabel=col
 )
 
 # %%
@@ -329,8 +353,8 @@ simulated_execution_quality_df["buy_trade_midpoint_slippage_bps"].unstack().hist
 
 # %%
 col = "sell_trade_midpoint_slippage_bps"
-coplotti.plot_slippage_boxplot(
-    simulated_execution_quality_df[col], "by_asset", ylabel=col
+coplotti.plot_boxplot(
+    simulated_execution_quality_df[col], "by_col", ylabel=col
 )
 
 # %%
@@ -362,13 +386,13 @@ simulated_execution_df["sell_limit_order_price"].resample(
 ).mean().head()
 
 # %%
-trade_prices = ocfiorre.compute_buy_sell_prices_by_bar(
-    fills_df,
+executed_trades_prices = obccagfu.compute_buy_sell_prices_by_bar(
+    ccxt_executed_trades_df,
     actual_vs_sim_trade_price_resampling_freq,
     offset="8s",
     groupby_id_col="asset_id",
 )
-trade_prices.head()
+executed_trades_prices.head()
 
 # %%
 resampled_simulated_execution_df = simulated_execution_df.resample(
@@ -380,15 +404,15 @@ resampled_simulated_execution_df = simulated_execution_df.resample(
 resampled_simulated_execution_df.head()
 
 # %%
-actual_trade_prices = ocfiorre.compute_buy_sell_prices_by_bar(
-    fills_df, "1s", offset="0s", groupby_id_col="asset_id"
+actual_executed_trades_prices = obccagfu.compute_buy_sell_prices_by_bar(
+    ccxt_executed_trades_df, "1s", offset="0s", groupby_id_col="asset_id"
 )
 
 
 # %%
 def combine_sim_and_actual_trades(simulated_execution_df, fills, freq, offset):
     #
-    actual_trade_prices = ocfiorre.compute_buy_sell_prices_by_bar(
+    actual_executed_trades_prices = obccagfu.compute_buy_sell_prices_by_bar(
         fills,
         freq,
         offset=offset,
@@ -401,16 +425,16 @@ def combine_sim_and_actual_trades(simulated_execution_df, fills, freq, offset):
         offset=offset,
     ).mean()
     #
-    col_set = actual_trade_prices.columns.levels[1].union(
+    col_set = actual_executed_trades_prices.columns.levels[1].union(
         resampled_simulated_execution_df.columns.levels[1]
     )
     col_set = col_set.sort_values()
     #
     trade_price_dict = {
-        "actual_buy_trade_price": actual_trade_prices["buy_trade_price"].reindex(
-            columns=col_set
-        ),
-        "actual_sell_trade_price": actual_trade_prices[
+        "actual_buy_trade_price": actual_executed_trades_prices[
+            "buy_trade_price"
+        ].reindex(columns=col_set),
+        "actual_sell_trade_price": actual_executed_trades_prices[
             "sell_trade_price"
         ].reindex(columns=col_set),
         "simulated_buy_trade_price": resampled_simulated_execution_df[
@@ -430,7 +454,7 @@ actual_vs_sim_trade_price_resampling_freq = "5T"
 # %%
 simulated_and_actual_trade_price_df = combine_sim_and_actual_trades(
     simulated_execution_df,
-    fills_df,
+    ccxt_executed_trades_df,
     actual_vs_sim_trade_price_resampling_freq,
     offset="8s",
 )
@@ -449,7 +473,7 @@ oms.get_asset_slice(simulated_and_actual_trade_price_df, btc_usdt_id)[
 # %%
 execution_quality_node = dtfcore.GroupedColDfToDfTransformer(
     "execution_quality",
-    transformer_func=ocfiorre.compute_execution_quality,
+    transformer_func=cofinanc.compute_ref_price_execution_quality,
     **{
         "in_col_groups": [
             ("actual_buy_trade_price",),
@@ -480,8 +504,8 @@ oms.get_asset_slice(sim_vs_actual_execution_quality_df, btc_usdt_id)
 
 # %%
 col = "buy_trade_slippage_bps"
-coplotti.plot_slippage_boxplot(
-    sim_vs_actual_execution_quality_df[col], "by_asset", ylabel=col
+coplotti.plot_boxplot(
+    sim_vs_actual_execution_quality_df[col], "by_col", ylabel=col
 )
 
 # %%
@@ -491,8 +515,8 @@ sim_vs_actual_execution_quality_df["buy_trade_slippage_bps"].unstack().hist(
 
 # %%
 col = "sell_trade_slippage_bps"
-coplotti.plot_slippage_boxplot(
-    sim_vs_actual_execution_quality_df[col], "by_asset", ylabel=col
+coplotti.plot_boxplot(
+    sim_vs_actual_execution_quality_df[col], "by_col", ylabel=col
 )
 
 # %%
@@ -510,8 +534,7 @@ sim_vs_actual_execution_quality_df["sell_trade_slippage_bps"].unstack().hist(
 
 # %%
 def get_data():
-    # Shift historical 60 seconds (bar convention)
-    return bad.shift(60)
+    return bad
 
 
 # %%
@@ -592,11 +615,11 @@ btc_simulated_prices[active_cols].dropna(how="all").plot()
 
 # %%
 # col = "buy_trade_midpoint_slippage_bps"
-# coplotti.plot_slippage_boxplot(df_out[col], "by_time", ylabel=col)
+# coplotti.plot_boxplot(df_out[col], "by_row", ylabel=col)
 
 # %%
 # col = "sell_trade_midpoint_slippage_bps"
-# coplotti.plot_slippage_boxplot(df_out[col], "by_time", ylabel=col)
+# coplotti.plot_boxplot(df_out[col], "by_row", ylabel=col)
 
 # %%
 costatis.compute_moments(

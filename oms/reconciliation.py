@@ -26,10 +26,11 @@ import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hpickle as hpickle
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
-import oms.ccxt.ccxt_utils as occccuti
-import oms.portfolio as omportfo
-import oms.target_position_and_order_generator as otpaorge
+import oms.broker.ccxt.ccxt_utils as obccccut
+import oms.order_processing.target_position_and_order_generator as ooptpaoge
+import oms.portfolio.portfolio as oporport
 
 _LOG = logging.getLogger(__name__)
 
@@ -101,11 +102,13 @@ def build_reconciliation_configs(
         bar_duration = "5T"
         #
         target_dir = get_target_dir(
-            dst_root_dir, dag_builder_name, start_timestamp_as_str, run_mode
+            dst_root_dir,
+            dag_builder_name,
+            run_mode,
+            start_timestamp_as_str,
+            end_timestamp_as_str,
         )
-        system_log_path_dict = get_system_log_dir_paths(
-            target_dir, mode, start_timestamp_as_str, end_timestamp_as_str
-        )
+        system_log_path_dict = get_system_log_dir_paths(target_dir, mode)
         # Get column names from `DagBuilder`.
         system_config_func_as_str = f"dataflow_orange.system.Cx.get_Cx_system_config_template_instance('{dag_builder_name}')"
         system_config = hintros.get_function_from_string(
@@ -117,9 +120,9 @@ def build_reconciliation_configs(
             "prediction_col": dag_builder.get_column_name("prediction"),
             "volatility_col": dag_builder.get_column_name("volatility"),
         }
-        quantization = "asset_specific"
-        market_info = occccuti.load_market_data_info()
-        asset_id_to_share_decimals = occccuti.subset_market_info(
+        quantization = None
+        market_info = obccccut.load_market_data_info()
+        asset_id_to_share_decimals = obccccut.subset_market_info(
             market_info, "amount_precision"
         )
         gmv = 3000.0
@@ -149,7 +152,7 @@ def build_reconciliation_configs(
             "prediction_col": "prediction",
             "volatility_col": "garman_klass_vol",
         }
-        quantization = "nearest_share"
+        quantization = 0
         asset_id_to_share_decimals = None
         gmv = 20000.0
         liquidate_at_end_of_day = True
@@ -188,10 +191,45 @@ def build_reconciliation_configs(
     return config_list
 
 
+def build_multiday_system_reconciliation_config(
+    dst_root_dir: str,
+    dag_builder_name: str,
+    run_mode: str,
+    start_timestamp_as_str: str,
+    end_timestamp_as_str: str,
+) -> cconfig.ConfigList:
+    """
+    Build multiday system reconciliation config.
+
+    :param dst_root_dir: dir to store the reconciliation results in, e.g.,
+        "/shared_data/prod_reconciliation/"
+    :param dag_builder_name: name of the DAG builder, e.g. "C1b"
+    :param run_mode: prod run mode, e.g. "prod" or "paper_trading"
+    :param start_timestamp_as_str: string representation of timestamp
+        at which to start reconcile run, e.g. "20221010_060500"
+    :param end_timestamp_as_str: string representation of timestamp
+        at which to end reconcile run, e.g. "20221010_080000"
+    """
+    start_timestamp = timestamp_as_str_to_timestamp(start_timestamp_as_str)
+    end_timestamp = timestamp_as_str_to_timestamp(end_timestamp_as_str)
+    config = {
+        "dst_root_dir": dst_root_dir,
+        "dag_builder_name": dag_builder_name,
+        "run_mode": run_mode,
+        "start_timestamp": start_timestamp,
+        "end_timestamp": end_timestamp,
+        "pnl_resampling_frequency": "5T",
+    }
+    config = cconfig.Config().from_dict(config)
+    config_list = cconfig.ConfigList([config])
+    return config_list
+
+
 # TODO(Grisha): Factor out common code with `build_reconciliation_configs()`.
 def build_prod_pnl_real_time_observer_configs(
     prod_data_root_dir: str,
     dag_builder_name: str,
+    run_mode: str,
     start_timestamp_as_str: str,
     end_timestamp_as_str: str,
     mode: str,
@@ -218,12 +256,16 @@ def build_prod_pnl_real_time_observer_configs(
     :return: list of configs
     """
     run_date = get_run_date(start_timestamp_as_str)
-    prod_data_dir = os.path.join(prod_data_root_dir, dag_builder_name, run_date)
     _LOG.info("Using run_date=%s", run_date)
-    #
-    system_log_subdir = get_prod_system_log_dir(
-        mode, start_timestamp_as_str, end_timestamp_as_str
+    prod_data_dir = get_target_dir(
+        prod_data_root_dir,
+        dag_builder_name,
+        run_mode,
+        start_timestamp_as_str,
+        end_timestamp_as_str,
     )
+    #
+    system_log_subdir = get_prod_system_log_dir(mode)
     system_log_dir = os.path.join(prod_data_dir, system_log_subdir)
     hdbg.dassert_dir_exists(system_log_dir)
     # Get necessary data from `DagBuilder`.
@@ -238,9 +280,9 @@ def build_prod_pnl_real_time_observer_configs(
         "prediction_col": dag_builder.get_column_name("prediction"),
         "volatility_col": dag_builder.get_column_name("volatility"),
     }
-    quantization = "asset_specific"
-    market_info = occccuti.load_market_data_info()
-    asset_id_to_share_decimals = occccuti.subset_market_info(
+    quantization = None
+    market_info = obccccut.load_market_data_info()
+    asset_id_to_share_decimals = obccccut.subset_market_info(
         market_info, "amount_precision"
     )
     gmv = 3000.0
@@ -264,7 +306,11 @@ def build_prod_pnl_real_time_observer_configs(
                 "quantization": quantization,
                 "liquidate_at_end_of_day": liquidate_at_end_of_day,
                 "initialize_beginning_of_day_trades_to_zero": initialize_beginning_of_day_trades_to_zero,
-                "burn_in_bars": 3,
+                # TODO(Grisha): should it be a function of a model?
+                # TODO(Grisha): ideally the value should come from `run_master_pnl_real_time_observer_notebook()`
+                # because some bars are burnt already there. E.g., the first 3 bars skipped by the
+                # `run_master_pnl_real_time_observer_notebook()` -> no need to burn here.
+                "burn_in_bars": 0,
                 "asset_id_to_share_decimals": asset_id_to_share_decimals,
                 "bulk_frac_to_remove": 0.0,
                 "target_gmv": gmv,
@@ -314,17 +360,6 @@ def _dassert_is_date(date: str) -> None:
         raise ValueError(f"date='{date}' doesn't have the right format: {e}")
 
 
-def _dassert_is_date_time(date_time: str) -> None:
-    """
-    Check if an input string is a start timestamp.
-
-    :param date_time: date time as string, e.g., "20231013_064500"
-    """
-    hdbg.dassert_isinstance(date_time, str)
-    m = re.match(r"^\d{8}_\d{6}$", date_time)
-    hdbg.dassert(m, "date_time_as_str='%s'", date_time)
-
-
 # TODO(Grisha): -> `_get_run_date_from_start_timestamp`.
 def get_run_date(start_timestamp_as_str: Optional[str]) -> str:
     """
@@ -339,7 +374,7 @@ def get_run_date(start_timestamp_as_str: Optional[str]) -> str:
         # TODO(Grisha): do not use default values.
         run_date = datetime.date.today().strftime("%Y%m%d")
     else:
-        _dassert_is_date_time(start_timestamp_as_str)
+        # TODO(Dan): Add assert for `start_timestamp_as_str` regex.
         run_date = start_timestamp_as_str.split("_")[0]
     _LOG.info(hprint.to_str("run_date"))
     _dassert_is_date(run_date)
@@ -347,8 +382,9 @@ def get_run_date(start_timestamp_as_str: Optional[str]) -> str:
 
 
 # TODO(Grisha): consider moving to `helpers/hdatetime.py`.
-# TODO(Grisha): pass timezone as a param.
-def timestamp_as_str_to_timestamp(timestamp_as_str: str) -> pd.Timestamp:
+def timestamp_as_str_to_timestamp(
+    timestamp_as_str: str, *, tz: str = "America/New_York"
+) -> pd.Timestamp:
     """
     Convert the given string UTC timestamp to the ET timezone timestamp.
     """
@@ -357,7 +393,7 @@ def timestamp_as_str_to_timestamp(timestamp_as_str: str) -> pd.Timestamp:
     timestamp_as_str = timestamp_as_str.replace("_", " ")
     # Add timezone offset in order to standartize the time.
     timestamp_as_str = "".join([timestamp_as_str, "+00:00"])
-    timestamp = pd.Timestamp(timestamp_as_str, tz="America/New_York")
+    timestamp = pd.Timestamp(timestamp_as_str, tz=tz)
     return timestamp
 
 
@@ -386,11 +422,47 @@ def get_system_reconciliation_notebook_path(notebook_run_mode: str) -> str:
     return notebook_path
 
 
+def get_multiday_system_reconciliation_notebook_path() -> str:
+    """
+    Get a multiday system reconciliation notebook path.
+
+    :return: path to a multiday system reconciliation notebook, e.g.,
+        ".../.../Master_multiday_system_reconciliation.ipynb"
+    """
+    amp_dir = hgit.get_amp_abs_path()
+    notebook_path = os.path.join(
+        amp_dir, "oms", "notebooks", "Master_multiday_system_reconciliation.ipynb"
+    )
+    return notebook_path
+
+
+def get_multiday_reconciliation_dir(
+    dst_root_dir: str,
+    dag_builder_name: str,
+    run_mode: str,
+    start_timestamp_as_str: str,
+    end_timestamp_as_str: str,
+) -> str:
+    """
+    Return multiday reconciliation results dir name.
+
+    E.g., "/shared_data/prod_reconciliation/C1b/paper_trading/multiday/20230707_101000.20230717_100500".
+    """
+    multiday_dir_path = os.path.join(
+        dst_root_dir,
+        dag_builder_name,
+        run_mode,
+        "multiday",
+        f"{start_timestamp_as_str}.{end_timestamp_as_str}",
+    )
+    return multiday_dir_path
+
+
 def get_prod_dir(dst_root_dir: str) -> str:
     """
     Return prod results dir name.
 
-    E.g., "/shared_data/prod_reconciliation/C1b/20230213/prod".
+    E.g., "/shared_data/prod_reconciliation/C1b/paper_trading/20230702_100500.20230703_100000/prod".
     """
     prod_dir = os.path.join(
         dst_root_dir,
@@ -403,7 +475,7 @@ def get_simulation_dir(dst_root_dir: str) -> str:
     """
     Return simulation results dir name.
 
-    E.g., "/shared_data/prod_reconciliation/C1b/20230213/simulation".
+    E.g., "/shared_data/prod_reconciliation/C1b/paper_trading/20230702_100500.20230703_100000/simulation".
     """
     sim_dir = os.path.join(
         dst_root_dir,
@@ -412,11 +484,183 @@ def get_simulation_dir(dst_root_dir: str) -> str:
     return sim_dir
 
 
+def _get_timestamp_dirs(
+    dst_root_dir: str,
+    dag_builder_name: str,
+    run_mode: str,
+) -> List[str]:
+    """
+    Get all timestamp dirs for the specified inputs.
+
+    :param dst_root_dir: a root dir containing the prod system run results
+    :param dag_builder_name: name of the DAG builder, e.g. "C1b"
+    :param run_mode: prod system run mode, e.g. "prod" or "paper_trading"
+    :return: a list of timestamp dirs, e.g.:
+        ```
+        [
+            "20220212_101500.20220213_100500",
+            "20220213_101500.20220214_100500",
+            ...
+        ]
+        ```
+    """
+    target_dir = os.path.join(dst_root_dir, dag_builder_name, run_mode)
+    # `listdir()` utilizes `glob` which has limited functionality compared
+    # to regex so other variations of the pattern might not work.
+    date_pattern = "[0-9]" * 8
+    time_pattern = "[0-9]" * 6
+    # E.g., "20220212_101500.20220213_100500".
+    pattern = f"{date_pattern}_{time_pattern}.{date_pattern}_{time_pattern}"
+    only_files = False
+    use_relatives_paths = True
+    # Get list of all timestamp dirs in the target dir.
+    timestamp_dirs = hs3.listdir(
+        target_dir,
+        pattern,
+        only_files,
+        use_relatives_paths,
+    )
+    # Filter timestamp dirs by regex to exclude pattern-like dirs from subdirs
+    # which are returned as relative paths, e.g., "multiday/20220213_101500.20220214_100500".
+    # TODO(Grisha): do not search recursively. The assumption is that all the
+    # timestamp dirs are under the `target_dir`.
+    timestamp_dirs = [dir_ for dir_ in timestamp_dirs if re.match(pattern, dir_)]
+    timestamp_dirs = sorted(timestamp_dirs)
+    return timestamp_dirs
+
+
+# TODO(Grisha): add unit test.
+def get_system_run_timestamps(
+    dst_root_dir: str,
+    dag_builder_name: str,
+    run_mode: str,
+    start_timestamp: Optional[pd.Timestamp],
+    end_timestamp: Optional[pd.Timestamp],
+) -> List[Tuple[str, str]]:
+    """
+    Get system run timestamps in between start and end dates from dir names.
+
+    :param dst_root_dir: a root dir containing the prod system run results
+    :param dag_builder_name: name of the DAG builder, e.g. "C1b"
+    :param run_mode: prod system run mode, e.g. "prod" or "paper_trading"
+    :param start_timestamp: a timestamp to start collect data from
+    :param end_timestamp: a timestamp to collect data until to
+    :return: sorted list of tuples that contains start and end timestamps
+        as strings, e.g., `[("20230715_131000", "20230716_130500"), ...]`
+    """
+    _LOG.debug(
+        hprint.to_str(
+            "dst_root_dir dag_builder_name run_mode start_timestamp end_timestamp"
+        )
+    )
+    # Find all availiable timestamp dirs.
+    timestamp_dirs = _get_timestamp_dirs(dst_root_dir, dag_builder_name, run_mode)
+    # Get start and end timestamps from a timestamp dir name. E.g.,
+    # `[("20230723_131000", "20230724_130500"), ...]`.
+    system_run_timestamps = [tuple(ts.split(".")) for ts in timestamp_dirs]
+    # Keep timestamps within the `[start_date, end_date]` range.
+    tz = "UTC"
+    # Filter by start / end timestamps using system run start timestamp.
+    if start_timestamp is not None:
+        # TODO(Grisha): use `str_to_timestamp()` from `helpers.hdatetime.py`.
+        system_run_timestamps = [
+            (system_run_start_timestamp, system_run_end_timestamp)
+            for (
+                system_run_start_timestamp,
+                system_run_end_timestamp,
+            ) in system_run_timestamps
+            if timestamp_as_str_to_timestamp(system_run_start_timestamp, tz=tz)
+            >= start_timestamp
+        ]
+        _LOG.info("Filtered by `start_timestamp`: %s.", system_run_timestamps)
+    if end_timestamp is not None:
+        system_run_timestamps = [
+            (system_run_start_timestamp, system_run_end_timestamp)
+            for (
+                system_run_start_timestamp,
+                system_run_end_timestamp,
+            ) in system_run_timestamps
+            if timestamp_as_str_to_timestamp(system_run_start_timestamp, tz=tz)
+            <= end_timestamp
+        ]
+        _LOG.info("Filtered by `end_timestamp`: %s.", system_run_timestamps)
+    msg = f"No system run dir found for start_date={start_timestamp}, end_date={end_timestamp}."
+    hdbg.dassert_lte(1, len(system_run_timestamps), msg=msg)
+    return system_run_timestamps
+
+
+def get_system_run_parameters(
+    dst_root_dir: str,
+    dag_builder_name: str,
+    run_mode: str,
+    start_timestamp: Optional[pd.Timestamp],
+    end_timestamp: Optional[pd.Timestamp],
+) -> List[Tuple[str, str, str]]:
+    """
+    Get all system run parameters from dir names.
+
+    The function can be used for the system reconciliation results also as long
+    as system run and system reconciliation dir structures are the same.
+
+    :param prod_data_root_dir: dir to store the production results in, e.g.,
+        "/shared_data/ecs/preprod/system_reconciliation/"
+    :param dag_builder_name: name of the DAG builder, e.g. "C1b"
+    :param run_mode: prod system run mode, e.g. "prod" or "paper_trading"
+    :param start_timestamp: a timestamp to filter out system run params from
+    :param end_timestamp: a timestamp to filter out system run params until to
+    :return: start and end timestamps as strings, mode of the system run,
+        e.g., "20220212_101500", "20220213_100500", "scheduled"
+    """
+    timestamps = get_system_run_timestamps(
+        dst_root_dir, dag_builder_name, run_mode, start_timestamp, end_timestamp
+    )
+    system_run_params = []
+    for start_timestamp_as_str, end_timestamp_as_str in timestamps:
+        # Get mode from system log dir name.
+        timestamp_dir_path = get_target_dir(
+            dst_root_dir,
+            dag_builder_name,
+            run_mode,
+            start_timestamp_as_str,
+            end_timestamp_as_str,
+        )
+        # TODO(Grisha): consider moving `mode` to timestamp dir, e.g.,
+        # `20220212_101500.20220213_100500` -> `20220212_101500.20220213_100500.scheduled`.
+        # Extract mode from dir name using the pattern `system_log_dir.{mode}`.
+        system_log_dir_pattern = "system_log_dir.*"
+        only_files = False
+        use_relative_paths = True
+        system_log_dirs = hs3.listdir(
+            timestamp_dir_path,
+            system_log_dir_pattern,
+            only_files,
+            use_relative_paths,
+        )
+        # Skip an empty prod dirs, e.g.:
+        # "/shared_data/ecs/C1b/paper_trading/20220212_101500.20220213_100500/prod/".
+        if len(system_log_dirs) == 0:
+            _LOG.warning(
+                "Empty prod dir was found: %s. Skipping.", timestamp_dir_path
+            )
+            continue
+        hdbg.dassert_eq(1, len(system_log_dirs))
+        system_log_dir = os.path.basename(system_log_dirs[0])
+        # E.g., `system_log_dir.scheduled` -> `scheduled`.
+        mode = system_log_dir.split(".")[-1]
+        system_run_params.append(
+            (start_timestamp_as_str, end_timestamp_as_str, mode)
+        )
+    return system_run_params
+
+
 def get_target_dir(
     dst_root_dir: str,
     dag_builder_name: str,
-    start_timestamp_as_str: str,
     run_mode: str,
+    start_timestamp_as_str: str,
+    end_timestamp_as_str: str,
+    *,
+    aws_profile: Optional[str] = None,
 ) -> str:
     """
     Return the target dir name to store reconcilation results.
@@ -425,28 +669,32 @@ def get_target_dir(
     dir on the shared disk with the corresponding `dag_builder_name`, run date,
     and `run_mode` subdirs.
 
-    E.g., "/shared_data/prod_reconciliation/C1b/20221101/paper_trading".
+    E.g., "/shared_data/prod_reconciliation/C1b/paper_trading/20230702_100500.20230703_100000".
 
     :param dst_root_dir: root dir of reconciliation result dirs, e.g.,
         "/shared_data/prod_reconciliation"
     :param dag_builder_name: name of the DAG builder, e.g. "C1b"
+    :param run_mode: prod run mode, e.g. "prod" or "paper_trading"
     :param start_timestamp_as_str: string representation of timestamp
         at which to start reconcile run, e.g. "20221010_060500"
-    :param run_mode: prod run mode, e.g. "prod" or "paper_trading"
+    :param end_timestamp_as_str: string representation of timestamp
+        at which to end reconcile run
     :return: a target dir to store reconcilation results
     """
     _LOG.info(
         hprint.to_str(
-            "dst_root_dir dag_builder_name start_timestamp_as_str run_mode"
+            "dst_root_dir dag_builder_name run_mode start_timestamp_as_str end_timestamp_as_str"
         )
     )
-    hdbg.dassert_path_exists(dst_root_dir)
+    hs3.dassert_path_exists(dst_root_dir, aws_profile)
     hdbg.dassert_isinstance(dag_builder_name, str)
     hdbg.dassert_isinstance(start_timestamp_as_str, str)
     hdbg.dassert_in(run_mode, ["prod", "paper_trading"])
     #
-    run_date = get_run_date(start_timestamp_as_str)
-    target_dir = os.path.join(dst_root_dir, dag_builder_name, run_date, run_mode)
+    timestamp_dir = f"{start_timestamp_as_str}.{end_timestamp_as_str}"
+    target_dir = os.path.join(
+        dst_root_dir, dag_builder_name, run_mode, timestamp_dir
+    )
     _LOG.info(hprint.to_str("target_dir"))
     return target_dir
 
@@ -455,7 +703,7 @@ def get_reconciliation_notebook_dir(dst_root_dir: str) -> str:
     """
     Return reconciliation notebook dir name.
 
-    E.g., "/shared_data/prod_reconciliation/C1b/20230213/reconciliation_notebook".
+    E.g., "/shared_data/prod_reconciliation/C1b/paper_trading/20230702_100500.20230703_100000/reconciliation_notebook".
     """
     notebook_dir = os.path.join(
         dst_root_dir,
@@ -468,7 +716,7 @@ def get_tca_dir(dst_root_dir: str) -> str:
     """
     Return TCA results dir name.
 
-    E.g., "/shared_data/prod_reconciliation/C1b/20230213/tca".
+    E.g., "/shared_data/prod_reconciliation/C1b/paper_trading/20230702_100500.20230703_100000/tca".
     """
     tca_dir = os.path.join(
         dst_root_dir,
@@ -479,20 +727,15 @@ def get_tca_dir(dst_root_dir: str) -> str:
 
 # TODO(Grisha): I would pass also a `root_dir` and check if
 # the resulting dir exists.
-def get_prod_system_log_dir(
-    mode: str, start_timestamp_as_str: str, end_timestamp_as_str: str
-) -> str:
+def get_prod_system_log_dir(mode: str) -> str:
     """
     Get a prod system log dir.
 
-    E.g.:
-    "system_log_dir.manual.20221109_0605.20221109_080000".
+    E.g.: "system_log_dir.manual".
 
     See `lib_tasks_reconcile.reconcile_run_all()` for params description.
     """
-    system_log_dir = (
-        f"system_log_dir.{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}"
-    )
+    system_log_dir = f"system_log_dir.{mode}"
     _LOG.info(hprint.to_str("system_log_dir"))
     return system_log_dir
 
@@ -501,31 +744,23 @@ def get_prod_system_log_dir(
 def get_system_log_dir_paths(
     target_dir: str,
     mode: str,
-    start_timestamp_as_str: str,
-    end_timestamp_as_str: str,
 ) -> Dict[str, str]:
     """
     Get paths to system log dirs.
 
     :param target_dir: dir to store the reconciliation results in, e.g.,
-        "/shared_data/prod_reconciliation/C3a/20221120/paper_trading"
+        "/shared_data/prod_reconciliation/C3a/paper_trading/20230702_100500.20230703_100000"
     :param mode: reconciliation run mode, i.e., "scheduled" and "manual"
-    :param start_timestamp_as_str: string representation of timestamp
-        at which to start reconcile run, e.g. "20221010_060500"
-    :param end_timestamp_as_str: string representation of timestamp
-        at which to end reconcile run, e.g. "20221010_061500"
     :return: system log dir paths for prod and simulation, e.g.,
         ```
         {
-            "prod": ".../prod/system_log_dir.manual.20221109_0605.20221109_080000",
+            "prod": ".../prod/system_log_dir.manual",
             "sim": ...
         }
         ```
     """
     prod_dir = get_prod_dir(target_dir)
-    prod_system_log_dir = get_prod_system_log_dir(
-        mode, start_timestamp_as_str, end_timestamp_as_str
-    )
+    prod_system_log_dir = get_prod_system_log_dir(mode)
     prod_system_log_dir = os.path.join(prod_dir, prod_system_log_dir)
     #
     sim_dir = get_simulation_dir(target_dir)
@@ -1555,6 +1790,7 @@ def plot_dag_df_out_size_stats(
 # TODO(gp): This needs to go close to Portfolio?
 def load_portfolio_artifacts(
     portfolio_dir: str,
+    # *,
     normalize_bar_times_freq: Optional[str] = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
@@ -1565,7 +1801,7 @@ def load_portfolio_artifacts(
     # Make sure the directory exists.
     hdbg.dassert_dir_exists(portfolio_dir)
     # Load the portfolio and stats dataframes.
-    portfolio_df, portfolio_stats_df = omportfo.Portfolio.read_state(
+    portfolio_df, portfolio_stats_df = oporport.Portfolio.read_state(
         portfolio_dir,
     )
     # Sanity-check the dataframes.
@@ -1594,6 +1830,8 @@ def load_portfolio_artifacts(
 
 def load_portfolio_dfs(
     portfolio_path_dict: Dict[str, str],
+    # TODO(gp): Add *
+    # *,
     normalize_bar_times_freq: Optional[str] = None,
 ) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
     """
@@ -1620,6 +1858,7 @@ def load_portfolio_dfs(
 # TODO(gp): Merge with load_portfolio_dfs
 def load_portfolio_versions(
     run_dir_dict: Dict[str, dict],
+    # TODO(gp): Add *
     normalize_bar_times_freq: Optional[str] = None,
     start_timestamp: Optional[pd.Timestamp] = None,
     end_timestamp: Optional[pd.Timestamp] = None,
@@ -1720,6 +1959,7 @@ def compute_delay(df: pd.DataFrame, freq: str) -> pd.Series:
 
 def load_target_positions(
     target_position_dir: str,
+    # TODO(gp): Add *
     normalize_bar_times_freq: Optional[str] = None,
 ) -> pd.DataFrame:
     """
@@ -1729,7 +1969,7 @@ def load_target_positions(
     hdbg.dassert_dir_exists(target_position_dir)
     # Load the target position dataframe.
     target_position_df = (
-        otpaorge.TargetPositionAndOrderGenerator.load_target_positions(
+        ooptpaoge.TargetPositionAndOrderGenerator.load_target_positions(
             target_position_dir
         )
     )
@@ -1883,6 +2123,29 @@ def compute_notional_costs(
     return cost_df
 
 
+def summarize_notional_costs(df: pd.DataFrame, aggregation: str) -> pd.DataFrame:
+    """
+    Aggregate notional costs by bar or by asset.
+
+    :param df: output of `compute_notional_costs()`
+    :param aggregation: "by_bar" or "by_asset"
+    :return: dataframe with columns [
+        "slippage_notional",
+        "underfill_notional_cost",
+        "net",
+      ]
+    """
+    if aggregation == "by_bar":
+        agg = df.groupby(axis=1, level=0).sum(min_count=1)
+    elif aggregation == "by_asset":
+        agg = df.sum(min_count=1).unstack(level=-1)
+        agg = agg.T
+    else:
+        raise ValueError("Invalid aggregation=%s", aggregation)
+    agg["net"] = agg.sum(axis=1, min_count=1)
+    return agg
+
+
 def apply_costs_to_baseline(
     baseline_portfolio_stats_df: pd.DataFrame,
     portfolio_stats_df: pd.DataFrame,
@@ -1920,149 +2183,6 @@ def apply_costs_to_baseline(
     srs.append(baseline_pnl_minus_pnl)
     df = pd.concat(srs, axis=1)
     return df
-
-
-# #############################################################################
-# Slippage derived from Portfolio
-# #############################################################################
-
-
-def compute_share_prices_and_slippage(
-    df: pd.DataFrame,
-    join_output_with_input: bool = False,
-) -> pd.DataFrame:
-    """
-    Compare trade prices against benchmark.
-    NOTE: baseline prices are not available when holdings_shares is zero, and
-        this may lead to artificial NaNs in the calculations.
-    :param df: a portfolio-like dataframe, with the following columns for
-        each asset:
-        - holdings_notional
-        - holdings_shares
-        - executed_trades_notional
-        - executed_trades_shares
-    :return: dataframe with per-asset
-        - holdings_price_per_share
-        - trade_price_per_share
-        - slippage_in_bps
-        - is_benchmark_profitable
-    """
-    hpandas.dassert_time_indexed_df(
-        df, allow_empty=False, strictly_increasing=True
-    )
-    hdbg.dassert_eq(2, df.columns.nlevels)
-    cols = [
-        "holdings_notional",
-        "holdings_shares",
-        "executed_trades_notional",
-        "executed_trades_shares",
-    ]
-    hdbg.dassert_is_subset(cols, df.columns.levels[0])
-    # Compute price per share of holdings (using holdings reference price).
-    # We assume that holdings are computed with a benchmark price (e.g., TWAP).
-    holdings_price_per_share = df["holdings_notional"] / df["holdings_shares"]
-    # We do not expect negative prices.
-    hdbg.dassert_lte(0, holdings_price_per_share.min().min())
-    # Compute price per share of trades (using execution reference prices).
-    trade_price_per_share = (
-        df["executed_trades_notional"] / df["executed_trades_shares"]
-    )
-    hdbg.dassert_lte(0, trade_price_per_share.min().min())
-    # Buy = +1, sell = -1.
-    buy = (df["executed_trades_notional"] > 0).astype(int)
-    sell = (df["executed_trades_notional"] < 0).astype(int)
-    side = buy - sell
-    # Compute notional slippage against benchmark.
-    slippage_notional_per_share = side * (
-        trade_price_per_share - holdings_price_per_share
-    )
-    slippage_notional = (
-        slippage_notional_per_share * df["executed_trades_shares"].abs()
-    )
-    # Compute slippage in bps.
-    slippage_in_bps = 1e4 * slippage_notional_per_share / holdings_price_per_share
-    # Determine whether the trade, if closed at t+1, would be profitable if
-    # executed at the benchmark price on both legs.
-    is_benchmark_profitable = side * np.sign(
-        holdings_price_per_share.diff().shift(-1)
-    )
-    benchmark_return_notional = side * holdings_price_per_share.diff().shift(-1)
-    benchmark_return_in_bps = (
-        1e4 * side * holdings_price_per_share.pct_change().shift(-1)
-    )
-    price_df = pd.concat(
-        {
-            "holdings_price_per_share": holdings_price_per_share,
-            "trade_price_per_share": trade_price_per_share,
-            "slippage_notional": slippage_notional,
-            "slippage_notional_per_share": slippage_notional_per_share,
-            "slippage_in_bps": slippage_in_bps,
-            "benchmark_return_notional": benchmark_return_notional,
-            "benchmark_return_in_bps": benchmark_return_in_bps,
-            "is_benchmark_profitable": is_benchmark_profitable,
-        },
-        axis=1,
-    )
-    if join_output_with_input:
-        price_df = pd.concat([df, price_df], axis=1)
-    return price_df
-
-
-# #############################################################################
-# Fill stats derived from target position dataframe
-# #############################################################################
-
-
-def compute_fill_stats(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Compare targets to realized.
-
-    :param df: a target position dataframe.
-    """
-    hpandas.dassert_time_indexed_df(
-        df, allow_empty=False, strictly_increasing=True
-    )
-    hdbg.dassert_eq(2, df.columns.nlevels)
-    cols = [
-        "holdings_shares",
-        "price",
-        "target_holdings_shares",
-        "target_trades_shares",
-    ]
-    hdbg.dassert_is_subset(cols, df.columns.levels[0])
-    # The trades and shares are signed to indicate the side.
-    realized_trades_shares = df["holdings_shares"].subtract(
-        df["holdings_shares"].shift(1), fill_value=0
-    )
-    # These are end-of-bar time-indexed.
-    fill_rate = (
-        realized_trades_shares / df["target_trades_shares"].shift(1)
-    ).abs()
-    tracking_error_shares = df["holdings_shares"] - df[
-        "target_holdings_shares"
-    ].shift(1)
-    underfill_share_count = (
-        df["target_trades_shares"].shift(1).abs() - realized_trades_shares.abs()
-    )
-    tracking_error_notional = df["holdings_notional"] - df[
-        "target_holdings_notional"
-    ].shift(1)
-    tracking_error_bps = (
-        1e4 * tracking_error_notional / df["target_holdings_notional"].shift(1)
-    )
-    #
-    fills_df = pd.concat(
-        {
-            "realized_trades_shares": realized_trades_shares,
-            "fill_rate": fill_rate,
-            "underfill_share_count": underfill_share_count,
-            "tracking_error_shares": tracking_error_shares,
-            "tracking_error_notional": tracking_error_notional,
-            "tracking_error_bps": tracking_error_bps,
-        },
-        axis=1,
-    )
-    return fills_df
 
 
 # #############################################################################

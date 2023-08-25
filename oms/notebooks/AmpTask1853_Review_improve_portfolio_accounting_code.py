@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.14.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -26,7 +26,7 @@ import helpers.hprint as hprint
 # %%
 # hdbg.init_logger(verbosity=logging.INFO)
 import market_data as mdata
-import oms.portfolio_example as oporexam
+import oms.portfolio.portfolio_example as opopoexa
 
 hdbg.init_logger(verbosity=logging.DEBUG)
 
@@ -45,7 +45,7 @@ market_data = mdata.get_ReplayedTimeMarketData_example3(event_loop)
 
 # %%
 initial_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
-portfolio = oporexam.get_simulated_portfolio_example1(
+portfolio = opopoexa.get_simulated_portfolio_example1(
     market_data, initial_timestamp
 )
 

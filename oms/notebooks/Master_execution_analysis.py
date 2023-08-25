@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -22,25 +22,25 @@
 # %autoreload 2
 
 import logging
-import os
 
 import numpy as np
 import pandas as pd
 
+import core.config as cconfig
 import core.finance as cofinanc
 import core.plotting as coplotti
 import core.statistics as costatis
-import dataflow.core as dtfcore
-import dataflow.system as dtfsys
 import dataflow_amp.system.Cx as dtfamsysc
 import helpers.hdbg as hdbg
 import helpers.henv as henv
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import im_v2.common.universe as ivcu
-import market_data as mdata
-import oms.ccxt.ccxt_filled_orders_reader as occforre
+import oms
+import oms.broker.ccxt.ccxt_aggregation_functions as obccagfu
+import oms.broker.ccxt.ccxt_execution_quality as obccexqu
+import oms.broker.ccxt.ccxt_logs_reader as obcclore
 import oms.reconciliation as omreconc
-import oms.target_position_and_order_generator as otpaorge
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -55,22 +55,44 @@ hprint.config_notebook()
 # # Config
 
 # %%
-# system_log_dir = "/shared_data/system_log_dir_20230323_20minutes/"
-# system_log_dir = "/shared_data/ecs/preprod/twap_experiment/system_reconciliation/C3a/20230412/system_log_dir.scheduled.20230412_041000.20230412_080500"
-# system_log_dir = "/shared_data/ecs/preprod/twap_experiment/system_reconciliation/C3a/20230413/system_log_dir.scheduled.20230413_143500.20230413_203000"
-system_log_dir = "/app/system_log_dir/"
-bar_duration = "5T"
-id_col = "asset_id"
-universe_version = "v7.1"
+config = cconfig.get_config_from_env()
+if config:
+    # Get config from env when running the notebook via the `run_notebook.py` script, e.g.,
+    # in the system reconciliation flow.
+    _LOG.info("Using config from env vars")
+else:
+    system_log_dir = "/shared_data/ecs/test/twap_experiment/20230815_1"
+    id_col = "asset_id"
+    universe_version = "v7.1"
+    vendor = "CCXT"
+    mode = "trade"
+    test_asset_id = 1467591036
+    bar_duration = "5T"
+    expected_num_child_orders = [0, 5]
+    use_historical = True
+    config_dict = {
+        "meta": {"id_col": id_col, "use_historical": use_historical},
+        "system_log_dir": system_log_dir,
+        "ohlcv_market_data": {
+            "vendor": vendor,
+            "mode": mode,
+            "universe": {
+                "universe_version": universe_version,
+                "test_asset_id": test_asset_id,
+            },
+        },
+        "execution_parameters": {
+            "bar_duration": bar_duration,
+            "expected_num_child_orders_per_bar": expected_num_child_orders,
+        },
+    }
+    config = cconfig.Config.from_dict(config_dict)
+print(config)
 
 # %%
-ccxt_log_reader = occforre.CcxtLogsReader(system_log_dir)
-
-# %%
-btc_ustd_id = 1467591036
-
-# %%
-use_historical = True
+ccxt_log_reader = obcclore.CcxtLogsReader(
+    config.get_and_mark_as_used(("system_log_dir",))
+)
 
 # %% [markdown]
 # # Load Ccxt order responses and fills
@@ -94,8 +116,11 @@ fills_df.head(3)
 fills_df.info()
 
 # %%
-execution_has_btc = btc_ustd_id in fills_df["asset_id"]
-_LOG.info("execution_has_btc=%s", execution_has_btc)
+test_asset_id = config.get_and_mark_as_used(
+    ("ohlcv_market_data", "universe", "test_asset_id")
+)
+id_col = config.get_and_mark_as_used(("meta", "id_col"))
+hdbg.dassert_in(test_asset_id, fills_df[id_col].to_list())
 
 # %%
 child_order_df.head(3)
@@ -107,19 +132,22 @@ child_order_df.info()
 # ## Aggregate by order and bar
 
 # %%
+bar_duration = config.get_and_mark_as_used(
+    ("execution_parameters", "bar_duration")
+)
 # TODO(Paul): Look into adding tqdm.
 # Aggregate order responses by bar.
-bar_ccxt_order_aggregation = occforre.aggregate_ccxt_orders_by_bar(
+bar_ccxt_order_aggregation = obccagfu.aggregate_ccxt_orders_by_bar(
     ccxt_order_response_df, bar_duration
 )
 # Aggregate fills by order.
-ccxt_order_fills = occforre.aggregate_fills_by_order(fills_df)
+ccxt_order_fills = obccagfu.aggregate_fills_by_order(fills_df)
 # Aggregate fills by bar.
-bar_fills = occforre.aggregate_fills_by_bar(
+bar_fills = obccagfu.aggregate_fills_by_bar(
     fills_df, bar_duration, groupby_id_col=id_col
 )
 # Aggregate buy/sell trade prices by bar.
-trade_prices = occforre.compute_buy_sell_prices_by_bar(
+trade_prices = obccagfu.compute_buy_sell_prices_by_bar(
     fills_df, bar_duration, groupby_id_col=id_col
 )
 
@@ -136,8 +164,7 @@ bar_fills.head(3)
 trade_prices.head(3)
 
 # %%
-if execution_has_btc:
-    omreconc.get_asset_slice(bar_ccxt_order_aggregation, btc_asset_id)
+omreconc.get_asset_slice(bar_ccxt_order_aggregation, test_asset_id)
 
 # %%
 # If `order_twap` and `order_vwap` are different for a given instrument and bar,
@@ -173,8 +200,13 @@ bar_ccxt_order_aggregation["order_count"].stack().value_counts()
 
 # %%
 # Get all bars and asset_ids with inconsistent child order number.
+expected_num_child_orders = config.get_and_mark_as_used(
+    ("execution_parameters", "expected_num_child_orders_per_bar")
+)
 inconsistent_order_num_df = bar_ccxt_order_aggregation["order_count"].stack()[
-    ~bar_ccxt_order_aggregation["order_count"].stack().isin([0, 4])
+    ~bar_ccxt_order_aggregation["order_count"]
+    .stack()
+    .isin(expected_num_child_orders)
 ]
 inconsistent_order_num_df
 
@@ -194,7 +226,7 @@ if False:
             child_order_df["creation_timestamp"]
             < inconsistent_order_num_df.index.max()[0]
         )
-        & (child_order_df["asset_id"].isin(inconsistent_order_num_df.index[1]))
+        & (child_order_df[id_col].isin(inconsistent_order_num_df.index[1]))
     ]
 
 # %% [markdown]
@@ -207,10 +239,16 @@ child_order_df-ccxt_order_response_df={child_order_df.shape[0]-ccxt_order_respon
 )
 
 # %%
-# Get child orders that were generated but did not get an order response.
-no_response_orders = child_order_df[child_order_df["ccxt_id"] == -1]
+# Extract ccxt_id from list.
+child_order_df["ccxt_id_as_single_value"] = child_order_df["ccxt_id"].apply(
+    lambda x: x[0]
+)
+# Get child orders that were generated but did not get an order response.no_response_orders = child_order_df[child_order_df["ccxt_id"] == "-1"]
+no_response_orders = child_order_df[
+    child_order_df["ccxt_id_as_single_value"] == -1
+]
 no_response_orders["error_msg"] = no_response_orders["extra_params"].apply(
-    lambda x: eval(x).get("error_msg", "")
+    lambda x: x.get("error_msg", "")
 )
 
 # %%
@@ -242,42 +280,34 @@ bar_fills.loc[has_buys & has_sells].shape[0]
 #  instead of slippage. Rename and move the plotting function.
 # TODO(Paul): This plotting function doesn't seem to be idempotent.
 # col = "order_count"
-# coplotti.plot_slippage_boxplot(bar_ccxt_order_aggregation[col], "by_time", ylabel=col)
+# coplotti.plot_boxplot(bar_ccxt_order_aggregation[col], "by_row", ylabel=col)
 
 # %%
 # TODO(Paul): This plotting function applies here too, even though we are working with counts
 #  instead of slippage. Rename and move the plotting function.
 # col = "order_count"
-# coplotti.plot_slippage_boxplot(bar_ccxt_order_aggregation[col], "by_asset", ylabel=col)
+# coplotti.plot_boxplot(bar_ccxt_order_aggregation[col], "by_col", ylabel=col)
 
 # %% [markdown]
 # ## Fee summary
 
 # %%
-order_fees = fills_df["transaction_cost"].sum()
-_LOG.info("Cumulative order fees in dollars=%f" % order_fees)
+group_by_col = "is_buy"
+obccexqu.generate_fee_summary(fills_df, "is_buy")
 
 # %%
-traded_dollar_volume = fills_df["cost"].sum()
-_LOG.info("Cumulative turnover in dollars=%f", traded_dollar_volume)
+group_by_col = "is_maker"
+obccexqu.generate_fee_summary(fills_df, group_by_col)
 
 # %%
-order_fees_in_bps = 1e4 * order_fees / traded_dollar_volume
-_LOG.info("Cumulative order fees in bps=%f", order_fees_in_bps)
-
-# %%
-realized_pnl = fills_df["realized_pnl"].sum()
-_LOG.info("Realized gross pnl in dollars=%f", realized_pnl)
-
-# %%
-realized_pnl_in_bps = 1e4 * realized_pnl / traded_dollar_volume
-_LOG.info("Realized gross pnl in bps=%f", realized_pnl_in_bps)
+group_by_col = "is_positive_realized_pnl"
+obccexqu.generate_fee_summary(fills_df, group_by_col)
 
 # %% [markdown]
 # ## Align ccxt orders and fills
 
 # %%
-filled_ccxt_orders, unfilled_ccxt_orders = occforre.align_ccxt_orders_and_fills(
+filled_ccxt_orders, unfilled_ccxt_orders = obccexqu.align_ccxt_orders_and_fills(
     ccxt_order_response_df, fills_df
 )
 
@@ -288,7 +318,7 @@ filled_ccxt_orders.head(3)
 unfilled_ccxt_orders.head(3)
 
 # %%
-filled_order_execution_quality = occforre.compute_filled_order_execution_quality(
+filled_order_execution_quality = obccexqu.compute_filled_order_execution_quality(
     filled_ccxt_orders, tick_decimals=6
 )
 filled_order_execution_quality.head()
@@ -363,7 +393,7 @@ _LOG.info(
 )
 
 # %%
-bar_child_order_aggregation = occforre.aggregate_child_limit_orders_by_bar(
+bar_child_order_aggregation = obccagfu.aggregate_child_limit_orders_by_bar(
     child_order_df, bar_duration
 )
 
@@ -378,121 +408,37 @@ bar_child_order_aggregation.columns.levels[0].to_list()
 
 # %%
 # TODO(Paul): Refine the cuts around the first and last bars.
-start_timestamp = bar_fills["first_datetime"].min()
+start_timestamp = bar_fills["first_datetime"].min() - pd.Timedelta(bar_duration)
 _LOG.info("start_timestamp=%s", start_timestamp)
 end_timestamp = bar_fills["last_datetime"].max()
 _LOG.info("end_timestamp=%s", end_timestamp)
 
-
 # %%
-def _get_prod_market_data(universe_version: str) -> mdata.MarketData:
-    """
-    Get `MarketData` backed by the realtime prod DB.
-
-    :param universe version: universe version, e.g., "v7.1."
-    """
-    # Get trading universe as asset ids.
-    vendor = "CCXT"
-    mode = "trade"
-    as_full_symbol = True
-    full_symbols = ivcu.get_vendor_universe(
-        vendor,
-        mode,
-        version=universe_version,
-        as_full_symbol=as_full_symbol,
+universe_version = config.get_and_mark_as_used(
+    ("ohlcv_market_data", "universe", "universe_version")
+)
+vendor = config.get_and_mark_as_used(
+    (
+        "ohlcv_market_data",
+        "vendor",
     )
-    asset_ids = [
-        ivcu.string_to_numerical_id(full_symbol) for full_symbol in full_symbols
-    ]
-    # Get prod `MarketData`.
-    market_data = dtfamsysc.get_Cx_RealTimeMarketData_prod_instance1(asset_ids)
-    return market_data
-
-
-def load_and_resample_ohlcv_data(
-    start_timestamp: pd.Timestamp,
-    end_timestamp: pd.Timestamp,
-    bar_duration: str,
-    universe_version: str,
-) -> pd.DataFrame:
-    """
-    Load OHLCV data and resample it.
-
-    :param start_timestamp: the earliest date timestamp to load data for
-    :param end_timestamp: the latest date timestamp to load data for
-    :param bar_duration: bar duration as pandas string
-    :param universe_version: universe version, e.g., "v7.1."
-    """
-    nid = "read_data"
-    market_data = _get_prod_market_data(universe_version)
-    ts_col_name = "end_timestamp"
-    multiindex_output = True
-    col_names_to_remove = None
-    # This is similar to what `RealTimeDataSource` does in production
-    # but allows to query data in the past.
-    historical_data_source = dtfsys.HistoricalDataSource(
-        nid,
-        market_data,
-        ts_col_name,
-        multiindex_output,
-        col_names_to_remove=col_names_to_remove,
+)
+mode = config.get_and_mark_as_used(
+    (
+        "ohlcv_market_data",
+        "mode",
     )
-    # Convert to the DataFlow `Intervals` format.
-    fit_intervals = [(start_timestamp, end_timestamp)]
-    _LOG.info("fit_intervals=%s", fit_intervals)
-    historical_data_source.set_fit_intervals(fit_intervals)
-    df_ohlcv = historical_data_source.fit()["df_out"]
-    # Resample data.
-    resampling_node = dtfcore.GroupedColDfToDfTransformer(
-        "resample",
-        transformer_func=cofinanc.resample_bars,
-        **{
-            "in_col_groups": [
-                ("open",),
-                ("high",),
-                ("low",),
-                ("close",),
-                ("volume",),
-            ],
-            "out_col_group": (),
-            "transformer_kwargs": {
-                "rule": bar_duration,
-                "resampling_groups": [
-                    ({"close": "close"}, "last", {}),
-                    ({"high": "high"}, "max", {}),
-                    ({"low": "low"}, "min", {}),
-                    ({"open": "open"}, "first", {}),
-                    (
-                        {"volume": "volume"},
-                        "sum",
-                        {"min_count": 1},
-                    ),
-                    (
-                        {
-                            "close": "twap",
-                        },
-                        "mean",
-                        {},
-                    ),
-                ],
-                "vwap_groups": [
-                    ("close", "volume", "vwap"),
-                ],
-            },
-            "reindex_like_input": False,
-            "join_output_with_input": False,
-        },
-    )
-    resampled_ohlcv = resampling_node.fit(df_ohlcv)["df_out"]
-    return resampled_ohlcv
-
-
-# %%
-ohlcv_bars = load_and_resample_ohlcv_data(
+)
+# Get asset ids.
+asset_ids = ivcu.get_vendor_universe_as_asset_ids(universe_version, vendor, mode)
+# Get prod `MarketData`.
+market_data = dtfamsysc.get_Cx_RealTimeMarketData_prod_instance1(asset_ids)
+# Load and resample OHLCV data.
+ohlcv_bars = dtfamsysc.load_and_resample_ohlcv_data(
+    market_data,
     start_timestamp,
     end_timestamp,
     bar_duration,
-    universe_version,
 )
 
 # %%
@@ -513,7 +459,7 @@ actual_and_ohlcv_price_df = pd.concat(actual_and_ohlcv_price_df, axis=1)
 actual_and_ohlcv_price_df.head()
 
 # %%
-actual_vs_ohlcv_execution_df = occforre.compute_execution_quality(
+actual_vs_ohlcv_execution_df = cofinanc.compute_ref_price_execution_quality(
     actual_and_ohlcv_price_df,
     "twap",
     "twap",
@@ -526,33 +472,159 @@ actual_vs_ohlcv_execution_df.head()
 actual_vs_ohlcv_execution_df.columns.levels[0].to_list()
 
 # %%
-actual_vs_ohlcv_execution_df["buy_trade_slippage_bps"].unstack().hist(bins=31)
+buy_trade_slippage_bps = (
+    actual_vs_ohlcv_execution_df["buy_trade_slippage_bps"]
+    .unstack()
+    .rename("buy_trade_slippage_bps")
+)
+sell_trade_slippage_bps = (
+    actual_vs_ohlcv_execution_df["sell_trade_slippage_bps"]
+    .unstack()
+    .rename("sell_trade_slippage_bps")
+)
+buy_sell_trade_slippage_bps_ecdf = costatis.compute_and_combine_empirical_cdfs(
+    [buy_trade_slippage_bps, sell_trade_slippage_bps]
+)
+buy_sell_trade_slippage_bps_ecdf.plot(yticks=np.arange(0, 1.1, 0.1))
 
 # %%
-actual_vs_ohlcv_execution_df["sell_trade_slippage_bps"].unstack().hist(bins=31)
-
-# %%
-if execution_has_btc:
-    omreconc.get_asset_slice(actual_and_ohlcv_price_df, btc_usdt_id).plot()
+omreconc.get_asset_slice(actual_and_ohlcv_price_df, test_asset_id).plot()
 
 # %%
 col = "buy_trade_slippage_bps"
-coplotti.plot_slippage_boxplot(
-    actual_vs_ohlcv_execution_df[col], "by_time", ylabel=col
-)
+coplotti.plot_boxplot(actual_vs_ohlcv_execution_df[col], "by_row", ylabel=col)
 
 # %%
-coplotti.plot_slippage_boxplot(
-    actual_vs_ohlcv_execution_df[col], "by_asset", ylabel=col
-)
+coplotti.plot_boxplot(actual_vs_ohlcv_execution_df[col], "by_col", ylabel=col)
 
 # %%
 col = "sell_trade_slippage_bps"
-coplotti.plot_slippage_boxplot(
-    actual_vs_ohlcv_execution_df[col], "by_time", ylabel=col
+coplotti.plot_boxplot(actual_vs_ohlcv_execution_df[col], "by_row", ylabel=col)
+
+# %%
+coplotti.plot_boxplot(actual_vs_ohlcv_execution_df[col], "by_col", ylabel=col)
+
+# %% [markdown]
+# # Construct portfolio, target positions and compute execution quality
+
+# %% [markdown]
+# ## Compute `target_position_df`
+
+# %%
+target_position_df = obccexqu.convert_parent_orders_to_target_position_df(
+    parent_order_df,
+    ohlcv_bars["twap"],
 )
 
 # %%
-coplotti.plot_slippage_boxplot(
-    actual_vs_ohlcv_execution_df[col], "by_asset", ylabel=col
+fills = oms.compute_fill_stats(target_position_df)
+hpandas.df_to_str(fills, num_rows=5, log_level=logging.INFO)
+
+# %%
+col = "fill_rate"
+coplotti.plot_boxplot(fills[col], "by_row", ylabel=col)
+
+# %%
+col = "fill_rate"
+coplotti.plot_boxplot(fills[col], "by_col", ylabel=col)
+
+# %% [markdown]
+# ## Compute `portfolio_df`
+
+# %%
+portfolio_df = obccexqu.convert_bar_fills_to_portfolio_df(
+    bar_fills,
+    ohlcv_bars["twap"],
 )
+
+# %%
+portfolio_df.head()
+
+# %%
+slippage = oms.compute_share_prices_and_slippage(portfolio_df)
+hpandas.df_to_str(slippage, num_rows=5, log_level=logging.INFO)
+slippage["slippage_in_bps"].plot()
+
+# %%
+stacked = slippage[["slippage_in_bps", "is_benchmark_profitable"]].stack()
+slippage_when_benchmark_profitable = stacked[
+    stacked["is_benchmark_profitable"] > 0
+]["slippage_in_bps"].rename("slippage_when_benchmark_profitable")
+slippage_when_not_benchmark_profitable = stacked[
+    stacked["is_benchmark_profitable"] <= 0
+]["slippage_in_bps"].rename("slippage_when_not_benchmark_profitable")
+slippage_when_benchmark_profitable.hist(bins=31, edgecolor="black", color="green")
+slippage_when_not_benchmark_profitable.hist(
+    bins=31, alpha=0.7, edgecolor="black", color="red"
+)
+
+# %%
+slippage_benchmark_profitability_ecdfs = (
+    costatis.compute_and_combine_empirical_cdfs(
+        [
+            slippage_when_benchmark_profitable,
+            slippage_when_not_benchmark_profitable,
+        ]
+    )
+)
+slippage_benchmark_profitability_ecdfs.plot(yticks=np.arange(0, 1.1, 0.1))
+
+# %%
+# TODO(*): Clean up and factor out.
+maker_ratio_df = bar_fills.copy()
+maker_ratio_df["maker_ratio"] = maker_ratio_df["maker_count"] / (
+    maker_ratio_df["maker_count"] + maker_ratio_df["taker_count"]
+)
+maker_ratio_df = maker_ratio_df["maker_ratio"].unstack(level=1)
+maker_ratio_df = pd.concat({"maker_ratio": maker_ratio_df}, axis=1)
+slippage2 = pd.concat([slippage, maker_ratio_df], axis=1)
+stacked2 = slippage2[["slippage_in_bps", "maker_ratio"]].stack()
+slippage_maker_dominated = stacked2[stacked2["maker_ratio"] > 0.5][
+    "slippage_in_bps"
+].rename("slippage_maker_dominated")
+slippage_taker_dominated = stacked2[stacked2["maker_ratio"] <= 0.5][
+    "slippage_in_bps"
+].rename("slippage_taker_dominated")
+slippage_maker_taker_ecdfs = costatis.compute_and_combine_empirical_cdfs(
+    [slippage_maker_dominated, slippage_taker_dominated]
+)
+slippage_maker_taker_ecdfs.plot(yticks=np.arange(0, 1.1, 0.1))
+
+# %% [markdown]
+# ## Compute notional costs
+
+# %%
+notional_costs = omreconc.compute_notional_costs(
+    portfolio_df,
+    target_position_df,
+)
+hpandas.df_to_str(notional_costs, num_rows=5, log_level=logging.INFO)
+
+# %%
+omreconc.summarize_notional_costs(notional_costs, "by_bar").plot(kind="bar")
+
+# %%
+omreconc.summarize_notional_costs(notional_costs, "by_asset").plot(kind="bar")
+
+# %%
+omreconc.summarize_notional_costs(notional_costs, "by_bar").sum()
+
+# %%
+portfolio_stats_df = cofinanc.compute_bar_metrics(
+    portfolio_df["holdings_notional"],
+    -portfolio_df["executed_trades_notional"],
+    portfolio_df["pnl"],
+    compute_extended_stats=True,
+)
+
+# %%
+portfolio_stats_df.head()
+
+# %%
+coplotti.plot_portfolio_stats(portfolio_stats_df)
+
+# %% [markdown]
+# # Config after notebook run
+
+# %%
+print(config.to_string(mode="verbose"))

@@ -63,8 +63,9 @@ else:
     # Below is just an example.
     prod_data_root_dir = "/shared_data/ecs/preprod/system_reconciliation"
     dag_builder_name = "C3a"
-    start_timestamp_as_str = "20230427_131000"
-    end_timestamp_as_str = "20230428_130500"
+    run_mode = "paper_trading"
+    start_timestamp_as_str = "20230716_131000"
+    end_timestamp_as_str = "20230717_130500"
     mode = "scheduled"
     save_plots_for_investors = True
     html_bucket_path = henv.execute_repo_config_code("get_html_bucket_path()")
@@ -72,6 +73,7 @@ else:
     config_list = oms.build_prod_pnl_real_time_observer_configs(
         prod_data_root_dir,
         dag_builder_name,
+        run_mode,
         start_timestamp_as_str,
         end_timestamp_as_str,
         mode,
