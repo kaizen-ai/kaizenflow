@@ -635,9 +635,8 @@ def _get_first_type(obj: Iterable, tag: str) -> Type:
     return list(obj_types)[0]
 
 
-# TODO(gp): IMO a bit overfit to the use case. I would have done it as building
-# the list and then check if everything is the same. I would move this to the
-# files that are using is.
+# TODO(gp): IMO a bit overfit to the use case. Move this to the files that are
+# using is.
 def dassert_all_attributes_are_same(
     list_: List[Any],
     attribute_name: str,

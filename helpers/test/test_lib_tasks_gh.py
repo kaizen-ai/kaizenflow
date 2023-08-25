@@ -46,7 +46,7 @@ class TestLibTasks1(hunitest.TestCase):
 
     # TODO(ShaopengZ): fails when running Sorrentum on CK server. `gh auth
     # login` issue.
-    @pytest.mark.skip
+    #@pytest.mark.skip
     def test_get_gh_issue_title4(self) -> None:
         httestlib._gh_login()
         issue_id = 1

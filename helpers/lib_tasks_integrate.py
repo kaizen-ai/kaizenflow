@@ -797,3 +797,7 @@ def integrate_file(  # type: ignore
     if not dry_run:
         # hlitauti.run(ctx, cmd, dry_run=dry_run, print_cmd=True)
         os.system(cmd)
+
+
+# Compare the timestamp of last modification of a file.
+# FILE=helpers/lib_tasks_git.py; (cd ~/src/cmamp1; git log -1 $FILE); (cd ~/src/sorrentum1; git log -1 $FILE)

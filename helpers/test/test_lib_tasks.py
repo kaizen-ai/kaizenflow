@@ -131,8 +131,9 @@ def _gh_login() -> None:
     hsystem.system(cmd)
 
 
-# TODO(ShaopengZ): fails when running Sorrentum on ck server. `gh auth login` issue.
-@pytest.mark.skip
+# TODO(ShaopengZ): fails when running Sorrentum on ck server. `gh auth login`
+# issue.
+# @pytest.mark.skip
 class TestGhLogin1(hunitest.TestCase):
     def test_gh_login(self) -> None:
         _gh_login()
