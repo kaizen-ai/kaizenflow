@@ -72,7 +72,6 @@ config = {
     },
     "bin_annotated_portfolio_df_kwargs": {
         "proportion_of_data_per_bin": 0.2,
-        "output_col": "pnl_in_bps",
         "normalize_prediction_col_values": False,
     },
 }
@@ -154,12 +153,34 @@ coplotti.plot_portfolio_stats(
 fep = dtfmod.ForecastEvaluatorFromPrices(
     **config["column_names"],
 )
-binned_df = fep.bin_annotated_portfolio_df(
-    portfolio_df, **config["bin_annotated_portfolio_df_kwargs"]
-)
 
 # %%
-binned_df["mean"].mean(axis=1).plot()
+output_col = "pnl"
+binned_df = fep.bin_annotated_portfolio_df(
+    portfolio_df, output_col=output_col, **config["bin_annotated_portfolio_df_kwargs"],
+)
+binned_df["mean"].mean(axis=1).plot(title=output_col)
+
+# %%
+output_col = "pnl_in_bps"
+binned_df = fep.bin_annotated_portfolio_df(
+    portfolio_df, output_col=output_col, **config["bin_annotated_portfolio_df_kwargs"],
+)
+binned_df["mean"].mean(axis=1).plot(title=output_col)
+
+# %%
+output_col = "sgn_corr"
+binned_df = fep.bin_annotated_portfolio_df(
+    portfolio_df, output_col=output_col, **config["bin_annotated_portfolio_df_kwargs"],
+)
+binned_df["mean"].mean(axis=1).plot(title=output_col)
+
+# %%
+output_col = "hit_rate"
+binned_df = fep.bin_annotated_portfolio_df(
+    portfolio_df, output_col=output_col, **config["bin_annotated_portfolio_df_kwargs"],
+)
+binned_df["mean"].mean(axis=1).plot(title=output_col)
 
 # %% [markdown]
 # # Compute aggregate portfolio stats

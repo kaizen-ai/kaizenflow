@@ -11,6 +11,7 @@ import dataflow.core.utils as dtfcorutil
 import datetime
 import io
 import logging
+import re
 from typing import Callable, List, Tuple, Union
 
 import pandas as pd
@@ -300,3 +301,32 @@ def get_x_and_forward_y_predict_df(
     # Merge x and forward y dataframes into one.
     df_out = merge_dataframes(x_df, forward_y_df)
     return df_out
+
+
+# #############################################################################
+
+
+# TODO(Grisha): maybe move closer to the DagBuilder class?
+def get_DagBuilder_name_from_string_pointer(dag_builder_ctor_as_str: str) -> str:
+    """
+    Get `DagBuilder` name from DagBuilder ctor passed as a string.
+
+    :param dag_builder_ctor_as_str: a pointer to a `DagBuilder` constructor,
+        e.g., `dataflow_orange.pipelines.C1.C1b_pipeline.C1b_DagBuilder`
+    :return: short DagBuilder name, e.g., C1b
+    """
+    # E.g., `dataflow_orange.pipelines.C1.C1b_pipeline.C1b_DagBuilder` ->
+    # `[dataflow_orange, pipelines, C1, C1b_pipeline, C1b_DagBuilder]`.
+    dag_builder_split = dag_builder_ctor_as_str.split(".")
+    hdbg.dassert_lt(0, len(dag_builder_split))
+    dag_builder_name = dag_builder_split[-1]
+    # Find a string that is followed by `_DagBuilder`.
+    # E.g., `C1b` in `C1b_DagBuilder`.
+    re_pattern = r"\w+(?=(_DagBuilder))"
+    dag_builder_name_match = re.match(re_pattern, dag_builder_name)
+    hdbg.dassert(
+        dag_builder_name_match,
+        msg=f"Make sure that `DagBuilder` is in the name={dag_builder_name}",
+    )
+    dag_builder_name = dag_builder_name_match[0]
+    return dag_builder_name

@@ -597,8 +597,10 @@ def apply_ProcessForecastsNode_config_for_equities(
         "ath_end_time": ath_end_time,
         "trading_end_time": trading_end_time,
         "liquidate_at_trading_end_time": False,
-        # In this case 30 is approximately the same as not rounding at all.
-        "share_quantization": 30,
+        # Round to a meaningful number of decimal places for the unit tests,
+        # otherwise the division is performed differently on different machines,
+        # see CmTask4707.
+        "share_quantization": 9,
     }
     config = cconfig.Config.from_dict(dict_)
     system.config["process_forecasts_node_dict", "process_forecasts_dict"].update(

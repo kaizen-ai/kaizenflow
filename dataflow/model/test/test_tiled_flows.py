@@ -1,15 +1,20 @@
 import datetime
 import logging
 import os
+from typing import Any, Optional
 import pytest
 
 import pandas as pd
 
+import core.config as cconfig
 import core.finance_data_example as cfidaexa
+import dataflow.model.forecast_evaluator_from_prices as dtfmfefrpr
 import dataflow.model.tiled_flows as dtfmotiflo
+import helpers.hgit as hgit
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hunit_test as hunitest
+import optimizer.forecast_evaluator_with_optimizer as optfewo
 
 _LOG = logging.getLogger(__name__)
 
@@ -108,4 +113,156 @@ end_ts
 2022-01-10 15:00:00-05:00  849.07     2.00e+06 -205502.75  1.00e+06 -210106.67  572.70     8.98e+05   88074.59  1.00e+06  210106.67   572.70     2.00e+06 -413183.39  1.00e+06 -291151.32
 2022-01-10 15:30:00-05:00 -912.96     1.27e+06  270448.98  1.00e+06   59429.36  912.96     1.27e+06 -270448.98  1.00e+06  -59429.36 -1127.83     1.27e+06  255320.69  1.00e+06  -36958.46
 2022-01-10 16:00:00-05:00  847.38     1.14e+06 -368085.80  9.99e+05 -307809.05 -847.38     1.31e+06   79002.84  9.99e+05   18726.10  -930.35     1.59e+06  464871.17  9.99e+05  426982.36"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+class Test_annotate_forecasts_by_tile(hunitest.TestCase):
+    """
+    Test annotating forecast by tile in dependency injection style.
+    """
+
+    @staticmethod
+    def get_config() -> cconfig.Config:
+        amp_dir = hgit.get_amp_abs_path()
+        dir_name = os.path.join(
+            amp_dir,
+            "dataflow/model/test/outcomes/Test_run_master_research_backtest_analyzer/input/tiled_results",
+        )
+        config = {
+            "dir_name": dir_name,
+            "start_date": datetime.date(2000, 1, 1),
+            "end_date": datetime.date(2000, 2, 28),
+            "asset_id_col": "asset_id",
+            "pnl_resampling_frequency": "15T",
+            "annotate_forecasts_kwargs": {
+                "style": "longitudinal",
+                "quantization": 30,
+                "liquidate_at_end_of_day": False,
+                "initialize_beginning_of_day_trades_to_zero": False,
+                "burn_in_bars": 3,
+                "compute_extended_stats": True,
+                "target_dollar_risk_per_name": 1e2,
+                "modulate_using_prediction_magnitude": True,
+            },
+            "column_names": {
+                "price_col": "vwap",
+                "volatility_col": "vwap.ret_0.vol",
+                "prediction_col": "prediction",
+            },
+            "bin_annotated_portfolio_df_kwargs": {
+                "proportion_of_data_per_bin": 0.2,
+                "output_col": "pnl_in_bps",
+                "normalize_prediction_col_values": False,
+            },
+        }
+        config = cconfig.Config().from_dict(config)
+        return config
+
+    def test_annotate_forecasts_by_tile_from_prices(self) -> None:
+        config = self.get_config()
+        forecast_evaluator = dtfmfefrpr.ForecastEvaluatorFromPrices
+        optimizer_config_dict = None
+        exp = r"""
+        pnl  gross_volume  net_volume       gmv       nmv  gpc  npc  wnl
+end_ts
+2000-01-01 15:30:00+00:00  114.60      22807.20    22807.20  11346.87  11346.87  2.0  2.0  2.0
+2000-01-01 15:35:00+00:00  113.47      23035.27   -23035.27  11574.94 -11574.94  2.0 -2.0  2.0
+2000-01-01 15:40:00+00:00  114.60      22807.20    22807.20  11346.87  11346.87  2.0  2.0  2.0
+2000-01-01 15:45:00+00:00  113.47      23035.27   -23035.27  11574.94 -11574.94  2.0 -2.0  2.0
+2000-01-01 15:50:00+00:00  114.60      22807.20    22807.20  11346.87  11346.87  2.0  2.0  2.0
+2000-01-01 15:55:00+00:00  113.47      23035.27   -23035.27  11574.94 -11574.94  2.0 -2.0  2.0
+2000-01-01 16:00:00+00:00  114.60      22807.20    22807.20  11346.87  11346.87  2.0  2.0  2.0
+2000-01-01 16:05:00+00:00  113.47      23035.27   -23035.27  11574.94 -11574.94  2.0 -2.0  2.0
+2000-01-01 16:10:00+00:00  114.60      22807.20    22807.20  11346.87  11346.87  2.0  2.0  2.0
+2000-01-01 16:15:00+00:00  113.47      23035.27   -23035.27  11574.94 -11574.94  2.0 -2.0  2.0
+2000-01-01 16:20:00+00:00  114.60      22807.20    22807.20  11346.87  11346.87  2.0  2.0  2.0
+2000-01-01 16:25:00+00:00  113.47      23035.27   -23035.27  11574.94 -11574.94  2.0 -2.0  2.0
+2000-01-01 16:30:00+00:00  114.60      22807.20    22807.20  11346.87  11346.87  2.0  2.0  2.0
+2000-01-01 16:35:00+00:00  113.47      23035.27   -23035.27  11574.94 -11574.94  2.0 -2.0  2.0
+2000-01-01 16:40:00+00:00  114.60      22807.20    22807.20  11346.87  11346.87  2.0  2.0  2.0
+2000-01-01 16:45:00+00:00  113.47      23035.27   -23035.27  11574.94 -11574.94  2.0 -2.0  2.0
+2000-01-01 16:50:00+00:00  114.60      22807.20    22807.20  11346.87  11346.87  2.0  2.0  2.0
+2000-01-01 16:55:00+00:00  113.47      23035.27   -23035.27  11574.94 -11574.94  2.0 -2.0  2.0
+2000-01-01 17:00:00+00:00  114.60      22807.20    22807.20  11346.87  11346.87  2.0  2.0  2.0
+2000-01-01 17:05:00+00:00  113.47      23035.27   -23035.27  11574.94 -11574.94  2.0 -2.0  2.0
+2000-01-01 17:10:00+00:00  114.60      22807.20    22807.20  11346.87  11346.87  2.0  2.0  2.0
+        """
+        self._annotate_forecasts_by_tile_helper(
+            config,
+            exp,
+            forecast_evaluator,
+            optimizer_config_dict=optimizer_config_dict,
+        )
+
+    def test_annotate_forecasts_by_tile_with_optimizer(self) -> None:
+        config = self.get_config()
+        forecast_evaluator = optfewo.ForecastEvaluatorWithOptimizer
+        optimizer_config_dict = {
+            "dollar_neutrality_penalty": 0.9,
+            "volatility_penalty": 1.0,
+            "relative_holding_penalty": 3.0,
+            "relative_holding_max_frac_of_gmv": 0.6,
+            "target_gmv": 1e4,
+            "target_gmv_upper_bound_penalty": 0.95,
+            "target_gmv_hard_upper_bound_multiple": 1.00,
+            "turnover_penalty": 0.09,
+            "solver": "ECOS",
+        }
+        exp = r"""
+                                pnl  gross_volume  net_volume       gmv       nmv  gpc  npc  wnl
+2000-01-01 15:30:00+00:00  7.32e-10      1.49e-07    1.49e-07  7.56e-08  7.56e-08  2.0  2.0  2.0
+2000-01-01 15:35:00+00:00  7.56e-10      1.53e-07   -1.53e-07  7.68e-08 -7.68e-08  2.0 -2.0  2.0
+2000-01-01 15:40:00+00:00  7.60e-10      1.51e-07    1.51e-07  7.50e-08  7.50e-08  2.0  2.0  2.0
+2000-01-01 15:45:00+00:00  7.50e-10      1.53e-07   -1.53e-07  7.69e-08 -7.69e-08  2.0 -2.0  2.0
+2000-01-01 15:50:00+00:00  7.61e-10      1.51e-07    1.51e-07  7.50e-08  7.50e-08  2.0  2.0  2.0
+2000-01-01 15:55:00+00:00  7.50e-10      1.53e-07   -1.53e-07  7.69e-08 -7.69e-08  2.0 -2.0  2.0
+2000-01-01 16:00:00+00:00  7.61e-10      1.51e-07    1.51e-07  7.50e-08  7.50e-08  2.0  2.0  2.0
+2000-01-01 16:05:00+00:00  7.50e-10      1.53e-07   -1.53e-07  7.69e-08 -7.69e-08  2.0 -2.0  2.0
+2000-01-01 16:10:00+00:00  7.61e-10      1.51e-07    1.51e-07  7.50e-08  7.50e-08  2.0  2.0  2.0
+2000-01-01 16:15:00+00:00  7.50e-10      1.53e-07   -1.53e-07  7.69e-08 -7.69e-08  2.0 -2.0  2.0
+2000-01-01 16:20:00+00:00  7.61e-10      1.51e-07    1.51e-07  7.50e-08  7.50e-08  2.0  2.0  2.0
+2000-01-01 16:25:00+00:00  7.50e-10      1.53e-07   -1.53e-07  7.69e-08 -7.69e-08  2.0 -2.0  2.0
+2000-01-01 16:30:00+00:00  7.61e-10      1.51e-07    1.51e-07  7.50e-08  7.50e-08  2.0  2.0  2.0
+2000-01-01 16:35:00+00:00  7.50e-10      1.53e-07   -1.53e-07  7.69e-08 -7.69e-08  2.0 -2.0  2.0
+2000-01-01 16:40:00+00:00  7.61e-10      1.51e-07    1.51e-07  7.50e-08  7.50e-08  2.0  2.0  2.0
+2000-01-01 16:45:00+00:00  7.50e-10      1.53e-07   -1.53e-07  7.69e-08 -7.69e-08  2.0 -2.0  2.0
+2000-01-01 16:50:00+00:00  7.61e-10      1.51e-07    1.51e-07  7.50e-08  7.50e-08  2.0  2.0  2.0
+2000-01-01 16:55:00+00:00  7.50e-10      1.53e-07   -1.53e-07  7.69e-08 -7.69e-08  2.0 -2.0  2.0
+2000-01-01 17:00:00+00:00  7.61e-10      1.51e-07    1.51e-07  7.50e-08  7.50e-08  2.0  2.0  2.0
+2000-01-01 17:05:00+00:00  7.50e-10      1.53e-07   -1.53e-07  7.69e-08 -7.69e-08  2.0 -2.0  2.0
+2000-01-01 17:10:00+00:00  7.61e-10      1.51e-07    1.51e-07  7.50e-08  7.50e-08  2.0  2.0  2.0
+"""
+        self._annotate_forecasts_by_tile_helper(
+            config,
+            exp,
+            forecast_evaluator,
+            optimizer_config_dict=optimizer_config_dict,
+        )
+
+    def _annotate_forecasts_by_tile_helper(
+        self,
+        config: cconfig.Config,
+        exp: str,
+        forecast_evaluator: Any,
+        *,
+        optimizer_config_dict: Optional[dict]
+    ) -> None:
+        portfolio_df, bar_metrics = dtfmotiflo.annotate_forecasts_by_tile(
+            config["dir_name"],
+            config["start_date"],
+            config["end_date"],
+            config["asset_id_col"],
+            config["column_names"]["price_col"],
+            config["column_names"]["volatility_col"],
+            config["column_names"]["prediction_col"],
+            asset_ids=None,
+            annotate_forecasts_kwargs=config[
+                "annotate_forecasts_kwargs"
+            ].to_dict(),
+            return_portfolio_df=True,
+            forecast_evaluator=forecast_evaluator,
+            optimizer_config_dict=optimizer_config_dict,
+        )
+        actual = hpandas.df_to_str(bar_metrics, num_rows=None, precision=2)
+        expected = exp
         self.assert_equal(actual, expected, fuzzy_match=True)

@@ -1,4 +1,5 @@
 import collections
+import copy
 import logging
 from typing import Any, Dict, List
 
@@ -606,6 +607,7 @@ class TestVolatilityModel(hunitest.TestCase):
 # TODO(ShaopengZ): numerical issue. (arm vs x86)
 @pytest.mark.requires_ck_infra
 class TestMultiindexVolatilityModel(hunitest.TestCase):
+    
     @pytest.mark.requires_ck_infra
     def test1(self) -> None:
         """
@@ -622,9 +624,10 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         )
         node = MultiindexVolatilityModel("vol_model", **config.to_dict())
         df_out = node.fit(data)["df_out"]
-        info = node.get_info("fit")
+        method = "fit"
+        info = node.get_info(method)
         # Package results.
-        act = self._package_results1(config, info, df_out)
+        act = self._package_results1(method, config, info, df_out)
         self.check_string(act, fuzzy_match=True)
 
     @pytest.mark.requires_ck_infra
@@ -645,8 +648,9 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         node.fit(data.loc[:"2000-01-31"])["df_out"]  # type: ignore[misc]
         # Package results.
         df_out = node.predict(data)["df_out"]
-        info = node.get_info("predict")
-        act = self._package_results1(config, info, df_out)
+        method = "predict"
+        info = node.get_info(method)
+        act = self._package_results1(method, config, info, df_out)
         self.check_string(act, fuzzy_match=True)
 
     def test3(self) -> None:
@@ -670,15 +674,38 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
 
     @staticmethod
     def _package_results1(
+        method: str,
         config: cconfig.Config,
         info: collections.OrderedDict,
         df_out: pd.DataFrame,
     ) -> str:
+        # Round tau value: we got different results on different machines
+        # due to Python floating point arithmetic.
+        rounded_info = copy.deepcopy(info)
+        precision = 6
+        initial_tau0 = rounded_info["MN0"]["MN0"][
+            "compute_smooth_moving_average"
+        ][method]["tau"]
+        rounded_tau0 = round(initial_tau0, precision)
+        (
+            rounded_info["MN0"]["MN0"]["compute_smooth_moving_average"][method][
+                "tau"
+            ]
+        ) = rounded_tau0
+        initial_tau1 = rounded_info["MN1"]["MN1"][
+            "compute_smooth_moving_average"
+        ][method]["tau"]
+        rounded_tau1 = round(initial_tau1, precision)
+        (
+            rounded_info["MN1"]["MN1"]["compute_smooth_moving_average"][method][
+                "tau"
+            ]
+        ) = rounded_tau1
         act: List[str] = []
         act.append(hprint.frame("config"))
         act.append(str(config))
         act.append(hprint.frame("info"))
-        act.append(str(cconfig.Config.from_dict(info)))
+        act.append(str(cconfig.Config.from_dict(rounded_info)))
         act.append(hprint.frame("df_out"))
         act.append(
             hunitest.convert_df_to_string(df_out.round(2), index=True, decimals=2)

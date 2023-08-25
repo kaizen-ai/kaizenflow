@@ -135,7 +135,8 @@ def yield_processed_parquet_tile_dict(
             dfs[idx] = df
         yield dfs
 
-
+# TODO(ShaopengZ): Clean up the classes by initializing `forecast_evaluator`
+# objects outside the tiling function.
 def annotate_forecasts_by_tile(
     dir_name: str,
     start_date: datetime.date,
@@ -148,6 +149,8 @@ def annotate_forecasts_by_tile(
     asset_ids: Optional[List[int]] = None,
     annotate_forecasts_kwargs: Dict[str, Any],
     return_portfolio_df: bool = True,
+    forecast_evaluator: Any = dtfmfefrpr.ForecastEvaluatorFromPrices,
+    optimizer_config_dict: Optional[dict] = None,
 ) -> Tuple[Optional[pd.DataFrame], pd.DataFrame]:
     """
     Combine yearly tiled loading with forecast evaluation.
@@ -164,6 +167,9 @@ def annotate_forecasts_by_tile(
     :param return_portfolio_df: if `True`, return the
         ForecastEvaluatorFromPrices portfolio in addition to the bar metrics,
         else discard the portfolio (e.g., to reduce memory requirements).
+    :param forecast_evaluator: a forecast evaluator object.
+    :param optimizer_config_dict: optional configuration dictionary. If
+     not None, forecast with optimization.
     :return: (portfolio_df, bar_metrics), unless `return_portfolio_df=False`,
         in which case the first element of the tuple is `None`.
     """
@@ -177,16 +183,19 @@ def annotate_forecasts_by_tile(
         data_cols=data_cols,
         asset_ids=asset_ids,
     )
-    fep = dtfmfefrpr.ForecastEvaluatorFromPrices(
+    args = [
         price_col,
         volatility_col,
         prediction_col,
-    )
+    ]
+    if optimizer_config_dict is not None:
+        args.append(optimizer_config_dict)
+    fepo = forecast_evaluator(*args)
     # Process the dataframes in the interator.
     bar_metrics = []
     portfolio_df = []
     for df in backtest_df_iter:
-        portfolio_df_slice, bar_metrics_slice = fep.annotate_forecasts(
+        portfolio_df_slice, bar_metrics_slice = fepo.annotate_forecasts(
             df,
             **annotate_forecasts_kwargs,
         )

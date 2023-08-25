@@ -126,7 +126,7 @@ class ExecutionPipeline(dtfcore.DagBuilder):
                 "reindex_like_input": False,
                 "join_output_with_input": False,
             },
-            self._get_nid("compute_execution_quality"): {
+            self._get_nid("compute_bid_ask_execution_quality"): {
                 "in_col_groups": [
                     ("bid_price",),
                     ("ask_price",),
@@ -189,11 +189,11 @@ class ExecutionPipeline(dtfcore.DagBuilder):
         )
         dag.append_to_tail(node)
         #
-        stage = "compute_execution_quality"
+        stage = "compute_bid_ask_execution_quality"
         nid = self._get_nid(stage)
         node = dtfcore.GroupedColDfToDfTransformer(
             nid,
-            transformer_func=cofinanc.compute_execution_quality,
+            transformer_func=cofinanc.compute_bid_ask_execution_quality,
             **config[nid].to_dict(),
         )
         dag.append_to_tail(node)

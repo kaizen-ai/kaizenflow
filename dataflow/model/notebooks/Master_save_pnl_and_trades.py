@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -50,9 +50,9 @@ import os
 import pandas as pd
 
 import core.config as cconfig
-import core.finance as cofinanc
 import core.plotting as coplotti
 import dataflow.model as dtfmod
+import dataflow_amp.system.Cx as dtfamsysc
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hparquet as hparque
@@ -105,6 +105,7 @@ config = {
         "volatility_col": "garman_klass_vol",
         "prediction_col": "feature",
     },
+    "save_data": False,
 }
 config = cconfig.Config().from_dict(config)
 print(config)
@@ -212,119 +213,14 @@ asset_id_to_full_symbol
 # # Sanity check PnL vs target positions
 
 # %%
-import dataflow.core as dtfcore
-import dataflow.system as dtfsys
-import dataflow_amp.system.Cx as dtfamsysc
-import market_data as mdata
-
-
-def _get_prod_market_data(universe_version: str) -> mdata.MarketData:
-    """
-    Get `MarketData` backed by the realtime prod DB.
-
-    :param universe version: universe version, e.g., "v7.1."
-    """
-    # Get trading universe as asset ids.
-    vendor = "CCXT"
-    mode = "trade"
-    as_full_symbol = True
-    full_symbols = ivcu.get_vendor_universe(
-        vendor,
-        mode,
-        version=universe_version,
-        as_full_symbol=as_full_symbol,
-    )
-    asset_ids = [
-        ivcu.string_to_numerical_id(full_symbol) for full_symbol in full_symbols
-    ]
-    # TODO(Grisha): consider creating `get_Cx_RealTimeMarketData_prod_instance2()`
-    # with `vendor`, `mode` and `universe_version` as params.
-    # Get prod `MarketData`.
-    market_data = dtfamsysc.get_Cx_RealTimeMarketData_prod_instance1(asset_ids)
-    return market_data
-
-
-# TODO(Grisha): factor out, test and re-use everywhere.
-def load_and_resample_ohlcv_data(
-    start_timestamp: pd.Timestamp,
-    end_timestamp: pd.Timestamp,
-    bar_duration: str,
-    universe_version: str,
-) -> pd.DataFrame:
-    """
-    Load OHLCV data and resample it.
-
-    :param start_timestamp: the earliest date timestamp to load data for
-    :param end_timestamp: the latest date timestamp to load data for
-    :param bar_duration: bar duration as pandas string
-    :param universe_version: universe version, e.g., "v7.1."
-    """
-    nid = "read_data"
-    market_data = _get_prod_market_data(universe_version)
-    ts_col_name = "end_timestamp"
-    multiindex_output = True
-    col_names_to_remove = None
-    # This is similar to what `RealTimeDataSource` does in production
-    # but allows to query data in the past.
-    historical_data_source = dtfsys.HistoricalDataSource(
-        nid,
-        market_data,
-        ts_col_name,
-        multiindex_output,
-        col_names_to_remove=col_names_to_remove,
-    )
-    # Convert to the DataFlow `Intervals` format.
-    fit_intervals = [(start_timestamp, end_timestamp)]
-    _LOG.info("fit_intervals=%s", fit_intervals)
-    historical_data_source.set_fit_intervals(fit_intervals)
-    df_ohlcv = historical_data_source.fit()["df_out"]
-    # Resample data.
-    resampling_node = dtfcore.GroupedColDfToDfTransformer(
-        "resample",
-        transformer_func=cofinanc.resample_bars,
-        **{
-            "in_col_groups": [
-                ("open",),
-                ("high",),
-                ("low",),
-                ("close",),
-                ("volume",),
-            ],
-            "out_col_group": (),
-            "transformer_kwargs": {
-                "rule": bar_duration,
-                "resampling_groups": [
-                    ({"close": "close"}, "last", {}),
-                    ({"high": "high"}, "max", {}),
-                    ({"low": "low"}, "min", {}),
-                    ({"open": "open"}, "first", {}),
-                    (
-                        {"volume": "volume"},
-                        "sum",
-                        {"min_count": 1},
-                    ),
-                    (
-                        {
-                            "close": "twap",
-                        },
-                        "mean",
-                        {},
-                    ),
-                ],
-                "vwap_groups": [
-                    ("close", "volume", "vwap"),
-                ],
-            },
-            "reindex_like_input": False,
-            "join_output_with_input": False,
-        },
-    )
-    resampled_ohlcv = resampling_node.fit(df_ohlcv)["df_out"]
-    return resampled_ohlcv
-
-
-# %%
-# Load OHLCV data from the real-time DB.
+universe_version = "v7.1"
+vendor = "CCXT"
+mode = "trade"
+# Get asset ids.
+asset_ids = ivcu.get_vendor_universe_as_asset_ids(universe_version, vendor, mode)
+# Get prod `MarketData`.
+market_data = dtfamsysc.get_Cx_RealTimeMarketData_prod_instance1(asset_ids)
+# Load and resample OHLCV data.
 start_timestamp = portfolio_df.index.min()
 end_timestamp = portfolio_df.index.max()
 _LOG.info(
@@ -333,9 +229,11 @@ _LOG.info(
     end_timestamp,
 )
 bar_duration = "5T"
-universe_version = "v7.1"
-ohlcv_df = load_and_resample_ohlcv_data(
-    start_timestamp, end_timestamp, bar_duration, universe_version
+ohlcv_df = dtfamsysc.load_and_resample_ohlcv_data(
+    market_data,
+    start_timestamp,
+    end_timestamp,
+    bar_duration,
 )
 # Convert to UTC to match the timezone from the research portfolio.
 ohlcv_df.index = ohlcv_df.index.tz_convert("UTC")
@@ -386,15 +284,14 @@ _LOG.info("df.shape=%s", target_holdings_shares.shape)
 target_holdings_shares.tail(10)
 
 # %%
-target_holdings_shares_path = os.path.join(
-    config["save_data_dst_dir"], "target_holdings_shares.csv.gz"
-)
-target_holdings_shares.to_csv(target_holdings_shares_path, index=False)
-
-# %%
-tmp = pd.read_csv(target_holdings_shares_path)
-_LOG.info("df.shape=%s", tmp.shape)
-tmp.tail(10)
+if config["save_data"]:
+    target_holdings_shares_path = os.path.join(
+        config["save_data_dst_dir"], "target_holdings_shares.csv.gz"
+    )
+    target_holdings_shares.to_csv(target_holdings_shares_path, index=False)
+    tmp = pd.read_csv(target_holdings_shares_path)
+    _LOG.info("df.shape=%s", tmp.shape)
+    tmp.tail(10)
 
 # %% [markdown]
 # ## PnL
@@ -413,10 +310,9 @@ _LOG.info("df.shape=%s", pnl_df.shape)
 pnl_df.tail(10)
 
 # %%
-pnl_path = os.path.join(config["save_data_dst_dir"], "pnl.csv.gz")
-pnl_df.to_csv(pnl_path, index=False)
-
-# %%
-tmp = pd.read_csv(pnl_path)
-_LOG.info("df.shape=%s", tmp.shape)
-tmp.tail(10)
+if config["save_data"]:
+    pnl_path = os.path.join(config["save_data_dst_dir"], "pnl.csv.gz")
+    pnl_df.to_csv(pnl_path, index=False)
+    tmp = pd.read_csv(pnl_path)
+    _LOG.info("df.shape=%s", tmp.shape)
+    tmp.tail(10)
