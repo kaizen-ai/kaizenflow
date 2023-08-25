@@ -3247,7 +3247,6 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
         Get multi-index dataframe to unit test the assert.
         """
         if index_is_datetime:
-            # Get datatime index in dataframe.
             index_inner = [
                 pd.Timestamp("2022-01-01 21:00:00", tz="UTC"),
                 pd.Timestamp("2022-01-01 21:10:00", tz="UTC"),
@@ -3317,33 +3316,27 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
 class Test_dassert_time_indexed_df(hunitest.TestCase):
     @staticmethod
     def helper(
-        index_is_datetime: bool = True,
-        switch_indexs: bool = False,
-        strictly_increasing: bool = True,
+        index_is_datetime: bool,
+        strictly_increasing: bool,
     ) -> pd.DataFrame:
         """
         Get simple multi-index dataframe to unit test the assert.
         """
         if index_is_datetime:
-            # Get datatime index in dataframe.
             if strictly_increasing:
-                # Datetime index is strictly increasing.
                 index_outer = [
                     pd.Timestamp("2022-01-01 21:00:00", tz="UTC"),
                     pd.Timestamp("2022-01-01 21:10:00", tz="UTC"),
                 ]
             else:
                 index_outer = [
-                    pd.Timestamp("2022-01-01 21:00:00", tz="UTC"),
+                    pd.Timestamp("2022-01-01 21:10:00", tz="UTC"),
                     pd.Timestamp("2022-01-01 21:00:00", tz="UTC"),
                 ]
         else:
             index_outer = ["string1", "string2"]
         index_inner = ["index1", "index2"]
-        if switch_indexs:
-            iterables = [index_inner, index_outer]
-        else:
-            iterables = [index_outer, index_inner]
+        iterables = [index_outer, index_inner]
         index = pd.MultiIndex.from_product(iterables, names=["name1", "name2"])
         columns = ["column1", "column2"]
         nums = np.random.uniform(-2, 2, size=(4, 2))
@@ -3352,19 +3345,19 @@ class Test_dassert_time_indexed_df(hunitest.TestCase):
 
     def test1(self) -> None:
         """
-        Check that multi-index dataframe has datetime type at index 0.
+        Check that multi-index df has a datetime outer index level.
         """
-        df = self.helper()
+        df = self.helper(index_is_datetime=True, strictly_increasing=True)
         allow_empty = False
         strictly_increasing = False
         hpandas.dassert_time_indexed_df(df, allow_empty, strictly_increasing)
 
     def test2(self) -> None:
         """
-        Check that multi-index dataframe doesn't have datetime type at index 0.
+        Check that an assert is raised if multi-index df outer index level is
+        datetime.
         """
-        df = self.helper(index_is_datetime=False)
-        print(df.index[0][0])
+        df = self.helper(index_is_datetime=False, strictly_increasing=True)
         allow_empty = False
         strictly_increasing = False
         with self.assertRaises(AssertionError) as cm:
@@ -3378,23 +3371,10 @@ class Test_dassert_time_indexed_df(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        Check that single-index dataframe has datetime type at index 0.
+        Check that an assert is raised if df index is not datetime.
         """
-        df = self.helper(switch_indexs=True)
-        simple_df = df.loc["index1"]
-        allow_empty = False
-        strictly_increasing = False
-        hpandas.dassert_time_indexed_df(
-            simple_df, allow_empty, strictly_increasing
-        )
-
-    def test4(self) -> None:
-        """
-        Check that single-index dataframe doesn't have datetime type at index
-        0.
-        """
-        df = self.helper(index_is_datetime=False, switch_indexs=True)
-        simple_df = df.loc["index1"]
+        df = self.helper(index_is_datetime=False, strictly_increasing=False)
+        simple_df = df.loc["string1"]
         allow_empty = False
         strictly_increasing = False
         with self.assertRaises(AssertionError) as cm:
@@ -3404,26 +3384,16 @@ class Test_dassert_time_indexed_df(hunitest.TestCase):
         act = str(cm.exception)
         exp = r"""
         * Failed assertion *
-        Instance of 'Index(['string1', 'string2'], dtype='object', name='name2')' is '<class 'pandas.core.indexes.base.Index'>' instead of '<class 'pandas.core.indexes.datetimes.DatetimeIndex'>'
+        Instance of 'Index(['index1', 'index2'], dtype='object', name='name2')' is '<class 'pandas.core.indexes.base.Index'>' instead of '<class 'pandas.core.indexes.datetimes.DatetimeIndex'>'
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test5(self) -> None:
+    def test4(self) -> None:
         """
-        Check that multi-index dataframe has datetime type at index 0 and is
+        Check that an assert is raised if multi-index df datetime index is not
         strictly increasing.
         """
-        df = self.helper()
-        allow_empty = False
-        strictly_increasing = True
-        hpandas.dassert_time_indexed_df(df, allow_empty, strictly_increasing)
-
-    def test6(self) -> None:
-        """
-        Check that multi-index dataframe has datetime type at index 0 and is
-        not strictly increasing.
-        """
-        df = self.helper(strictly_increasing=False)
+        df = self.helper(index_is_datetime=True, strictly_increasing=False)
         allow_empty = False
         strictly_increasing = True
         with self.assertRaises(AssertionError) as cm:
