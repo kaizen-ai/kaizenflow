@@ -6,11 +6,11 @@ import pandas as pd
 import pytest
 
 import core.data_adapters as cdatadap
+import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
-# TODO(gp): Remove after PTask2335.
-if True:
+if henv.has_module("gluonts"):
     import gluonts
     import gluonts.dataset.artificial as gda
 
@@ -47,8 +47,7 @@ class _TestAdapter:
         return df
 
 
-# TODO(gp): Remove after PTask2335.
-if True:
+if henv.has_module("gluonts"):
 
     class TestCreateIterSingleIndex(hunitest.TestCase):
         def test1(self) -> None:

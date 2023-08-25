@@ -323,9 +323,7 @@ def apply_execution_prices_to_trades(
     return execution_price
 
 
-# TODO(Paul): Make the name more specific. This is execution quality with
-#  respect to bid/ask and midpoint.
-def compute_execution_quality(
+def compute_bid_ask_execution_quality(
     df: pd.DataFrame,
     bid_col: str,
     ask_col: str,
@@ -417,6 +415,54 @@ def compute_execution_quality(
     data.append(sell_trade_midpoint_slippage_bps)
     # Combine computed columns.
     df_out = pd.concat(data, axis=1)
+    return df_out
+
+
+def compute_ref_price_execution_quality(
+    df: pd.DataFrame,
+    buy_trade_reference_price_col: str,
+    sell_trade_reference_price_col: str,
+    buy_trade_price_col: str,
+    sell_trade_price_col: str,
+) -> pd.DataFrame:
+    """
+    Compute buy/sell slippage in notional and bps wrt reference price.
+
+    Analogous to `compute_bid_ask_execution_quality()` but with reference
+    prices that are not necessarily bid/ask prices.
+
+    :param df: DataFrame, possibly with multiple column levels (assets in
+        inner level)
+    :param buy_trade_reference_price_col: name of col with reference (e.g.,
+        TWAP, VWAP) price for buy orders
+    :param sell_trade_reference_price_col: name of col with reference price
+        for sell orders; may be the same as `buy_trade_reference_price_col`
+    :param buy_trade_price_col: name of col with buy trade price
+    :param sell_trade_price_col: name of col with sell trade price
+    :return: DataFrame, possibly with multiple column levels, of notional and
+        relative slippage
+    """
+    # Compute buy trade slippage.
+    buy_trade_slippage_notional = (
+        df[buy_trade_price_col] - df[buy_trade_reference_price_col]
+    )
+    buy_trade_slippage_bps = 1e4 * buy_trade_slippage_notional.divide(
+        df[buy_trade_reference_price_col]
+    )
+    # Compute sell trade slippage.
+    sell_trade_slippage_notional = (
+        df[sell_trade_reference_price_col] - df[sell_trade_price_col]
+    )
+    sell_trade_slippage_bps = 1e4 * sell_trade_slippage_notional.divide(
+        df[sell_trade_reference_price_col]
+    )
+    dict_ = {
+        "buy_trade_slippage_notional": buy_trade_slippage_notional,
+        "buy_trade_slippage_bps": buy_trade_slippage_bps,
+        "sell_trade_slippage_notional": sell_trade_slippage_notional,
+        "sell_trade_slippage_bps": sell_trade_slippage_bps,
+    }
+    df_out = pd.concat(dict_, axis=1)
     return df_out
 
 

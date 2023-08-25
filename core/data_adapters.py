@@ -12,12 +12,13 @@ import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.henv as henv
 import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
 
-if True:
+if henv.has_module("gluonts"):
     # TODO(gp): @all -> gluonts/data_adapters.py
     # TODO(gp): @all Remove this `if True`
     import gluonts

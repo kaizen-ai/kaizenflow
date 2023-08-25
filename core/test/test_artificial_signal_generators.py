@@ -3,6 +3,7 @@ import logging
 import pandas as pd
 
 import core.artificial_signal_generators as carsigen
+import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -83,8 +84,7 @@ class Test_generate_arima_signal_and_response(hunitest.TestCase):
         self.check_string(hunitest.convert_df_to_string(srs, index=True))
 
 
-# TODO(gp): Remove after PTask2335
-if True:
+if henv.has_module("gluonts"):
     import gluonts
     import mxnet
 

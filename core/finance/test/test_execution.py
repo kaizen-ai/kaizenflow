@@ -244,7 +244,7 @@ end_datetime
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
-class Test_compute_execution_quality1(hunitest.TestCase):
+class Test_compute_bid_ask_execution_quality1(hunitest.TestCase):
     def test1(self):
         data = get_data()
         bid_col = "bid"
@@ -287,7 +287,7 @@ class Test_compute_execution_quality1(hunitest.TestCase):
             .mean()
         )
         #
-        execution_quality_df = cfinexec.compute_execution_quality(
+        execution_quality_df = cfinexec.compute_bid_ask_execution_quality(
             resampled_execution_df,
             bid_col,
             ask_col,
