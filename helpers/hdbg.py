@@ -635,6 +635,32 @@ def _get_first_type(obj: Iterable, tag: str) -> Type:
     return list(obj_types)[0]
 
 
+# TODO(gp): IMO a bit overfit to the use case. I would have done it as building
+# the list and then check if everything is the same. I would move this to the
+# files that are using is.
+def dassert_all_attributes_are_same(
+    list_: List[Any],
+    attribute_name: str,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
+) -> None:
+    """
+    Check if all the elements in the list have the same attribute value.
+
+    :param list_: list of objects
+    :param attribute_name: name of the attribute to check
+    """
+    dassert_isinstance(list_, list)
+    dassert_isinstance(attribute_name, str)
+    attribute_values = [getattr(element, attribute_name) for element in list_]
+    if len(set(attribute_values)) != 1:
+        txt = []
+        txt.append("Elements in the list have different values for ")
+        txt.append(f"attribute {attribute_name}:\n\t{set(attribute_values)}")
+        _dfatal(txt, msg, *args, only_warning=only_warning)
+
+
 def dassert_array_has_same_type_element(
     obj1: Any,
     obj2: Any,
@@ -711,6 +737,23 @@ def dassert_list_of_strings(
     dassert_isinstance(list_, list, msg, *args, only_warning=only_warning)
     for elem in list_:
         dassert_isinstance(elem, str, msg, *args, only_warning=only_warning)
+
+
+def dassert_all_defined_or_all_None(
+    vals: List[Any],
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
+) -> None:
+    """
+    Check that all the values in a list are either all defined or all None.
+    """
+    all_defined_cond = all(val is not None for val in vals)
+    all_none_cond = all(val is None for val in vals)
+    cond = all_defined_cond or all_none_cond
+    if not cond:
+        txt = f"Some values in list are defined and some are None: '{vals}'"
+        _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
 # #############################################################################

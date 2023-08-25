@@ -18,6 +18,7 @@ from invoke import task
 # We want to minimize the dependencies from non-standard Python packages since
 # this code needs to run with minimal dependencies and without Docker.
 import helpers.hdbg as hdbg
+import helpers.hdict as hdict
 import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hio as hio
@@ -268,8 +269,22 @@ def _get_aws_cli_version() -> int:
     return major_version
 
 
-@task
-def docker_login(ctx):  # type: ignore
+def _docker_login_dockerhub() -> None:
+    """
+    Log into the Docker Hub which is a public Docker image registry.
+    """
+    # TODO(gp): Why here?
+    import helpers.hsecrets as hsecret
+
+    secret_id = "sorrentum_dockerhub"
+    secret = hsecret.get_secret(secret_id)
+    username = hdict.typed_get(secret, "username", expected_type=str)
+    password = hdict.typed_get(secret, "password", expected_type=str)
+    cmd = f"docker login -u {username} -p {password}"
+    hsystem.system(cmd, suppress_output=False)
+
+
+def _docker_login_ecr() -> None:
     """
     Log in the AM Docker repo_short_name on AWS.
     """
@@ -306,7 +321,28 @@ def docker_login(ctx):  # type: ignore
     # TODO(Grisha): fix properly. We pass `ctx` despite the fact that we do not
     #  need it with `use_system=True`, but w/o `ctx` invoke tasks (i.e. ones
     #  with `@task` decorator) do not work.
-    hlitauti.run(ctx, cmd, use_system=True)
+    hsystem.system(cmd, suppress_output=False)
+
+
+@task
+def docker_login(ctx, target="aws_ecr.ck"):  # type: ignore
+    """
+    Log in the target registry.
+
+    :param target: target Docker image registry to log in to
+        - "dockerhub.sorrentum": public Sorrentum Docker image registry
+        - "aws_ecr.ck": private AWS CK ECR
+    """
+    hlitauti.report_task()
+    # We run everything using `hsystem.system(...)` but `ctx` is needed
+    # to make the function work as an invoke target.
+    _ = ctx
+    if target == "aws_ecr.ck":
+        _docker_login_ecr()
+    elif target == "dockerhub.sorrentum":
+        _docker_login_dockerhub()
+    else:
+        raise ValueError(f"Invalid Docker image registry='{target}'")
 
 
 # ////////////////////////////////////////////////////////////////////////////////
@@ -822,6 +858,8 @@ _IMAGE_HASH_RE = r"[a-z0-9]{9}"
 _IMAGE_STAGE_RE = rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod|prod(?:-{_IMAGE_USER_RE})(?:-{_IMAGE_HASH_RE})?|prod(?:-{_IMAGE_HASH_RE})?)"
 
 
+# TODO(Grisha): call `_dassert_is_base_image_name_valid()` and a separate
+# function that validates an image tag.
 def _dassert_is_image_name_valid(image: str) -> None:
     """
     Check whether an image name is valid.
@@ -846,11 +884,14 @@ def _dassert_is_image_name_valid(image: str) -> None:
     """
     regex = "".join(
         [
-            # E.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
-            rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}",
-            # :local-saggese
+            # E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/`
+            # or `sorrentum/`.
+            rf"^{_INTERNET_ADDRESS_RE}\/",
+            # E.g., `amp`.
+            rf"{_IMAGE_BASE_NAME_RE}",
+            # E.g., `:local-saggese`.
             rf"(:{_IMAGE_STAGE_RE})?",
-            # -1.0.0
+            # E.g., `-1.0.0`.
             rf"(-{_IMAGE_VERSION_RE})?$",
         ]
     )
@@ -871,6 +912,8 @@ def _dassert_is_base_image_name_valid(base_image: str) -> None:
     hdbg.dassert(m, "Invalid base_image: '%s'", base_image)
 
 
+# TODO(Grisha): instead of using `base_image` which is Docker registry address
+# + image name, use those as separate parameters. See CmTask5074.
 def _get_base_image(base_image: str) -> str:
     """
     :return: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
@@ -1180,14 +1223,14 @@ def _get_docker_compose_cmd(
         )
     # Print the config for debugging purpose.
     if print_docker_config:
-        docker_config_cmd_as_str = hlitauti._to_multi_line_cmd(docker_config_cmd)
+        docker_config_cmd_as_str = hlitauti.to_multi_line_cmd(docker_config_cmd)
         _LOG.debug("docker_config_cmd=\n%s", docker_config_cmd_as_str)
         _LOG.debug(
             "docker_config=\n%s",
             hsystem.system_to_string(docker_config_cmd_as_str)[1],
         )
     # Print the config for debugging purpose.
-    docker_cmd_: str = hlitauti._to_multi_line_cmd(docker_cmd_)
+    docker_cmd_: str = hlitauti.to_multi_line_cmd(docker_cmd_)
     return docker_cmd_
 
 

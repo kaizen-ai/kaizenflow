@@ -244,10 +244,15 @@ class TestDryRunTasks1(hunitest.TestCase):
 
 
 # #############################################################################
+
+
 # Outside CK infra, the class hangs, so we skip it.
-@pytest.mark.skip
 @pytest.mark.requires_ck_infra
 @pytest.mark.slow(reason="Around 7s")
+@pytest.mark.skipif(
+    not hgit.is_in_amp_as_supermodule(),
+    reason="Run only in amp as super-module",
+)
 class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     """
     - Call the invoke task directly from Python
@@ -271,6 +276,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_clean(ctx)"
         self._check_output(target)
 
+    # TODO(Grisha): is not it the same as `test_git_clean()`?
     def test_git_clean2(self) -> None:
         target = "git_clean(ctx, dry_run=False)"
         self._check_output(target)
@@ -315,8 +321,13 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 
     # #########################################################################
     # TODO(gp): -> TestGhCommands1
+
     # TODO(ShaopengZ): Outside CK infra, the test hangs, so we skip it.
     @pytest.mark.requires_ck_infra
+    @pytest.mark.skipif(
+        not hgit.is_in_amp_as_supermodule(),
+        reason="Only run in amp as supermodule",
+    )
     def test_gh_create_pr1(self) -> None:
         _gh_login()
         target = "gh_create_pr(ctx, repo_short_name='amp', title='test')"
@@ -324,6 +335,10 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 
     # TODO(ShaopengZ): Outside CK infra, the test hangs, so we skip it.
     @pytest.mark.requires_ck_infra
+    @pytest.mark.skipif(
+        not hgit.is_in_amp_as_supermodule(),
+        reason="Only run in amp as supermodule",
+    )
     def test_gh_create_pr2(self) -> None:
         _gh_login()
         target = "gh_create_pr(ctx, body='hello_world', repo_short_name='amp', title='test')"
@@ -331,6 +346,10 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
 
     # TODO(ShaopengZ): Outside CK infra, the test hangs, so we skip it.
     @pytest.mark.requires_ck_infra
+    @pytest.mark.skipif(
+        not hgit.is_in_amp_as_supermodule(),
+        reason="Only run in amp as supermodule",
+    )
     def test_gh_create_pr3(self) -> None:
         _gh_login()
         target = (
@@ -344,8 +363,8 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         self._check_output(target)
 
     # TODO(Shaopengz):Outside CK infra, the test hangs, so skip.
-    @pytest.mark.skip
     @pytest.mark.requires_ck_infra
+    @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
     def test_gh_workflow_list(self) -> None:
         _gh_login()
         target = "gh_workflow_list(ctx, filter_by_branch='master')"
@@ -376,7 +395,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     def test_git_branch_create2(self) -> None:
         _gh_login()
         target = (
-            "git_branch_create(ctx, issue_id=1, repo_short_name='amp', "
+            "git_branch_create(ctx, issue_id=1, repo_short_name='cmamp', "
             "only_branch_from_master=False)"
         )
         self._check_output(target)

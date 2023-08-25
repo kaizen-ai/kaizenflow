@@ -3,6 +3,7 @@ import os
 from typing import Any, Callable
 
 import helpers.hdbg as hdbg
+import helpers.hgit as hgit
 import helpers.hintrospection as hintros
 import helpers.hpickle as hpickle
 import helpers.hstring as hstring
@@ -199,9 +200,14 @@ class TestGetFunctionFromString1(hunitest.TestCase):
         Test that function is correctly extracted from a string.
         """
         func_str = "helpers.test.test_hintrospection.dummy_function"
+        # Compute the actual value.
         act_func = hintros.get_function_from_string(func_str)
-        exp_func = dummy_function
         act = hintros.get_name_from_function(act_func)
+        act = hstring.remove_prefix(act, "amp.", assert_on_error=False)
+        # Compute the expected value.
+        exp_func = dummy_function
         exp = hintros.get_name_from_function(exp_func)
+        exp = hstring.remove_prefix(exp, "amp.", assert_on_error=False)
+        # Run.
         hdbg.dassert_isinstance(act_func, Callable)
         self.assert_equal(act, exp)

@@ -9,8 +9,13 @@ import helpers.hmoto as hmoto
 import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
 
+
 @pytest.mark.requires_ck_infra
 @pytest.mark.requires_aws
+@pytest.mark.skipif(
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available",
+)
 class TestToFileAndFromFile1(hmoto.S3Mock_TestCase):
     def write_read_helper(self, file_name: str, force_flush: bool) -> None:
         # Prepare inputs.
@@ -88,6 +93,10 @@ class TestToFileAndFromFile1(hmoto.S3Mock_TestCase):
 
 @pytest.mark.requires_ck_infra
 @pytest.mark.requires_aws
+@pytest.mark.skipif(
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available",
+)
 class TestListdir1(hmoto.S3Mock_TestCase):
     def prepare_test_data(self) -> Tuple[str, hs3.AwsProfile]:
         bucket_s3_path = f"s3://{self.bucket_name}"
@@ -224,6 +233,10 @@ class TestListdir1(hmoto.S3Mock_TestCase):
 
 @pytest.mark.requires_ck_infra
 @pytest.mark.requires_aws
+@pytest.mark.skipif(
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available",
+)
 class TestDu1(hmoto.S3Mock_TestCase):
     def test_du1(self) -> None:
         """

@@ -10,6 +10,7 @@ import pyarrow.parquet as parquet
 import pytest
 
 import helpers.hdbg as hdbg
+import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
@@ -838,6 +839,10 @@ class TestToPartitionedDataset(hunitest.TestCase):
 
 @pytest.mark.requires_ck_infra
 @pytest.mark.requires_aws
+@pytest.mark.skipif(
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available",
+)
 class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
     def generate_test_data(self) -> hs3.AwsProfile:
         """
@@ -864,6 +869,7 @@ class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
         s3fs_.put(test_dir, s3_bucket, recursive=True)
         return s3fs_
 
+    @pytest.mark.slow("~7 seconds.")
     def test_list_and_merge_pq_files(self) -> None:
         """
         Check if predefined generated Parquet files are properly merged.

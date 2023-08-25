@@ -12,6 +12,7 @@ from typing import Any, List, Tuple, Union
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 import helpers.hversion as hversio
 
@@ -33,6 +34,10 @@ def has_module(module: str) -> bool:
     """
     Return whether a Python module can be imported or not.
     """
+    if module == "gluonts" and hserver.is_mac():
+        # Gluonts and mxnet modules are not properly supported on the ARM
+        # architecture yet, see CmTask4886 for details.
+        return False
     code = f"""
 try:
     import {module}
@@ -396,7 +401,13 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     libs = sorted(libs)
     failed_imports = 0
     for lib in libs:
-        version = _get_library_version(lib)
+        # This is due to Cmamp4924: 
+        # WARNING: libarmpl_lp64_mp.so: cannot open shared object file: No such
+        #  file or directory
+        try:
+            version = _get_library_version(lib)
+        except OSError as e:
+            print(_WARNING + ": " + str(e))
         if version.startswith("ERROR"):
             failed_imports += 1
         packages.append((lib, version))

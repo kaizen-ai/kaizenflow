@@ -1107,6 +1107,46 @@ class TestDfToStr(hunitest.TestCase):
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    def test_df_to_str8(self) -> None:
+        """
+        Test that `-0.0` is replaced with `0.0`.
+        """
+        test_data = {
+            "dummy_value_1": [1, 2, 3, 4],
+            "dummy_value_2": ["A", "B", "C", "D"],
+            "dummy_value_3": [0, 0, 0, 0],
+            "dummy_value_4": [+0.0, -0.0, +0.0, -0.0],
+        }
+        df = pd.DataFrame(data=test_data)
+        actual = hpandas.df_to_str(df)
+        expected = r"""
+            dummy_value_1 dummy_value_2  dummy_value_3  dummy_value_4
+        0              1             A              0            0.0
+        1              2             B              0            0.0
+        2              3             C              0            0.0
+        3              4             D              0            0.0"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_df_to_str9(self) -> None:
+        """
+        Test that `-0.0` is replaced with `0.0` in a multi-index dataframe.
+        """
+        test_data = {
+            ("A", "X"): [-0.0, 5.0, -0.0],
+            ("A", "Y"): [2, 6, 0],
+            ("B", "X"): [0, 7, 3],
+            ("B", "Y"): [4.4, -0.0, 5.1],
+        }
+        df = pd.DataFrame(data=test_data)
+        actual = hpandas.df_to_str(df)
+        expected = r"""
+             A     B
+             X  Y  X    Y
+        0  0.0  2  0  4.4
+        1  5.0  6  7  0.0
+        2  0.0  0  3  5.1"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
 
 # #############################################################################
 

@@ -719,17 +719,21 @@ def run_coverage_report(  # type: ignore
     :param aws_profile: the AWS profile to use for publishing HTML report
     """
     # TODO(Grisha): allow user to specify which tests to run.
-    # Run tests for the target dir and collect coverage stats.
-    fast_tests_cmd = (
-        f"invoke run_fast_tests --coverage -p {target_dir}; "
-        "cp .coverage .coverage_fast_tests"
-    )
-    hlitauti.run(ctx, fast_tests_cmd)
-    slow_tests_cmd = (
-        f"invoke run_slow_tests --coverage -p {target_dir}; "
-        "cp .coverage .coverage_slow_tests"
-    )
-    hlitauti.run(ctx, slow_tests_cmd)
+    # Run fast tests for the target dir and collect coverage results.
+    fast_tests_cmd = f"invoke run_fast_tests --coverage -p {target_dir}"
+    hlitauti.run(ctx, fast_tests_cmd, use_system=False)
+    fast_tests_coverage_file = ".coverage_fast_tests"
+    create_fast_tests_file_cmd = f"mv .coverage {fast_tests_coverage_file}"
+    hsystem.system(create_fast_tests_file_cmd)
+    # Run slow tests for the target dir and collect coverage results.
+    slow_tests_cmd = f"invoke run_slow_tests --coverage -p {target_dir}"
+    hlitauti.run(ctx, slow_tests_cmd, use_system=False)
+    slow_tests_coverage_file = ".coverage_slow_tests"
+    create_slow_tests_file_cmd = f"mv .coverage {slow_tests_coverage_file}"
+    hsystem.system(create_slow_tests_file_cmd)
+    # Check that coverage files are present for both fast and slow tests.
+    hdbg.dassert_file_exists(fast_tests_coverage_file)
+    hdbg.dassert_file_exists(slow_tests_coverage_file)
     #
     report_cmd: List[str] = []
     # Clean the previous coverage results. For some docker-specific reasons
@@ -739,7 +743,7 @@ def run_coverage_report(  # type: ignore
     report_cmd.append("coverage erase")
     # Merge stats for fast and slow tests into single dir.
     report_cmd.append(
-        "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
+        f"coverage combine --keep {fast_tests_coverage_file} {slow_tests_coverage_file}"
     )
     # Specify the dirs to include and exclude in the report.
     exclude_from_report = None

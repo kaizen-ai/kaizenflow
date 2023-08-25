@@ -50,11 +50,6 @@ def purify_file_name(file_name: str) -> str:
     return file_name_out
 
 
-# #############################################################################
-# Glob.
-# #############################################################################
-
-
 def listdir(
     dir_name: str,
     pattern: str,
@@ -606,6 +601,21 @@ def add_suffix_to_filename(
         ret = file_name + suffix
     _LOG.debug(hprint.to_str("ret"))
     return ret
+
+
+# TODO(gp): It would be useful to allow also to add suffix before ext.
+def rename_file_if_exists(file_name: str, suffix: str) -> None:
+    """
+    Rename a file if it exists using provided suffix.
+
+    {file_name}.{ext} -> {file_name}.{ext}.{suffix}
+
+    Used to avoid overwriting if writing multiple files with the same name.
+    """
+    if os.path.exists(file_name):
+        new_file_name = f"{file_name}.{suffix}"
+        _LOG.debug("renaming %s to %s", file_name, new_file_name)
+        os.rename(file_name, new_file_name)
 
 
 # #############################################################################

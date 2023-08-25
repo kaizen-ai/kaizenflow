@@ -11,7 +11,6 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 import s3fs
-import seaborn as sns
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -98,9 +97,18 @@ def dassert_index_is_datetime(
 ) -> None:
     """
     Ensure that the dataframe has an index containing datetimes.
+
+    It works for both single and multi-indexed dataframes.
     """
     index = _get_index(obj)
-    hdbg.dassert_isinstance(index, pd.DatetimeIndex, msg, *args)
+    if isinstance(index, pd.MultiIndex):
+        # In case of multi index check that at least one level is a datetime.
+        is_any_datetime = any(
+            isinstance(level, pd.DatetimeIndex) for level in index.levels
+        )
+        hdbg.dassert(is_any_datetime, msg, *args)
+    else:
+        hdbg.dassert_isinstance(index, pd.DatetimeIndex, msg, *args)
 
 
 def dassert_unique_index(
@@ -199,6 +207,8 @@ def dassert_time_indexed_df(
     """
     Validate that input dataframe is time indexed and well-formed.
 
+    It works for both single and multi-indexed dataframes.
+
     :param df: dataframe to validate
     :param allow_empty: allow empty data frames
     :param strictly_increasing: if True the index needs to be strictly increasing,
@@ -219,7 +229,11 @@ def dassert_time_indexed_df(
     # Check that the index is in datetime format.
     dassert_index_is_datetime(df)
     # Check that the passed timestamp has timezone info.
-    hdateti.dassert_has_tz(df.index[0])
+    index_item = df.index[0]
+    if isinstance(index_item, tuple):
+        # In case of multi index assume that the first level is a datetime.
+        index_item = index_item[0]
+    hdateti.dassert_has_tz(index_item)
 
 
 def dassert_valid_remap(to_remap: List[str], remap_dict: Dict[str, str]) -> None:
@@ -1104,6 +1118,11 @@ def df_to_str(
     elif isinstance(df, pd.Index):
         df = df.to_frame(index=False)
     hdbg.dassert_isinstance(df, pd.DataFrame)
+    # For some reason there are so-called "negative zeros", but we consider
+    # them equal to `0.0`. 
+    df = df.copy()
+    for col_name in df.select_dtypes(include=[np.float64, float]).columns:
+        df[col_name] = df[col_name].where(df[col_name] != -0.0, 0.0)
     out = []
     # Print the tag.
     if tag is not None:
@@ -1615,6 +1634,9 @@ def heatmap_df(df: pd.DataFrame, *, axis: Any = None) -> pd.DataFrame:
         - 1 colorize along columns
         - None colorize
     """
+    # Keep it here to avoid long start up times.
+    import seaborn as sns
+
     cm = sns.diverging_palette(5, 250, as_cmap=True)
     df = df.style.background_gradient(axis=axis, cmap=cm)
     return df
@@ -1838,17 +1860,6 @@ def multiindex_df_info(
         "columns_level1=%s" % list_to_str(columns_level1, **list_to_str_kwargs)
     )
     ret.append("rows=%s" % list_to_str(rows, **list_to_str_kwargs))
-    if isinstance(df.index, pd.DatetimeIndex):
-        # Display timestamp info.
-        start_timestamp = df.index.min()
-        end_timestamp = df.index.max()
-        frequency = df.index.freq
-        if frequency is None:
-            # Try to infer frequency.
-            frequency = pd.infer_freq(df.index)
-        ret.append(f"start_timestamp={start_timestamp}")
-        ret.append(f"end_timestamp={end_timestamp}")
-        ret.append(f"frequency={frequency}")
     ret = "\n".join(ret)
     _LOG.log(log_level, ret)
     return ret
@@ -2005,3 +2016,38 @@ def compute_duration_df(
             )
             tag_to_df_updated[tag] = df
     return data_stats, tag_to_df_updated
+
+
+# #############################################################################
+
+
+def to_gsheet(
+    df: pd.DataFrame,
+    gsheet_name: str,
+    gsheet_sheet_name: str,
+    overwrite: bool,
+) -> None:
+    """
+    Save a dataframe to a Google sheet.
+
+    :param df: the dataframe to save to a Google sheet
+    :param gsheet_name: the name of the Google sheet to save the df into;
+        the Google sheet with this name must already exist on the
+        Google Drive
+    :param gsheet_sheet_name: the name of the sheet in the Google sheet
+    :param overwrite: if True, the contents of the sheet are erased before saving
+        the dataframe into it;
+        if False, the dataframe is appended to the contents of the sheet
+    """
+    import gspread_pandas
+
+    spread = gspread_pandas.Spread(
+        gsheet_name, sheet=gsheet_sheet_name, create_sheet=True
+    )
+    if overwrite:
+        spread.clear_sheet()
+    else:
+        sheet_contents = spread.sheet_to_df(index=None)
+        combined_df = pd.concat([sheet_contents, df])
+        df = combined_df.drop_duplicates()
+    spread.df_to_sheet(df, index=False)

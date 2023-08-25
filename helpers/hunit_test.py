@@ -413,10 +413,19 @@ def filter_text(regex: str, txt: str) -> str:
 
 
 def purify_from_environment(txt: str) -> str:
-    # regex pattern to match any position in string that is not followed
-    # by a word character (alphanumeric character or underscore).
+    """
+    Replace environment variables with placeholders.
+
+    The performed transformations are:
+    1) Replace the Git path with `$GIT_ROOT`
+    2) Replace the path of current working dir with `$PWD`
+    3) Replace the current user name with `$USER_NAME`
+    """
+    # 1) Remove references to Git modules starting from the innermost one.
+    # Make sure that the path is not followed by a word character.
+    # E.g., `/app/test.txt` is the correct path, while `/application.py`
+    # is not a root path even though `/app` is the part of the text.
     dir_pattern = r"(?![\w])"
-    # We remove references to the Git modules starting from the innermost one.
     for super_module in [False, True]:
         # Replace the git path with `$GIT_ROOT`.
         super_module_path = hgit.get_client_root(super_module=super_module)
@@ -426,22 +435,19 @@ def purify_from_environment(txt: str) -> str:
         else:
             # If the git path is `/` then we don't need to do anything.
             pass
-    # Replace the current path with `$PWD`
+    # 2) Replace the path of current working dir with `$PWD`
     pwd = os.getcwd()
     pattern = re.compile(f"{pwd}{dir_pattern}")
     txt = pattern.sub("$PWD", txt)
-    # Replace the user name with `$USER_NAME`.
+    # 3) Replace the current user name with `$USER_NAME`.
     user_name = hsystem.get_user_name()
-    txt_out = []
-    for line in txt.splitlines():
-        if "take_square_root" in line:
-            # Skip replacing the user since it can be `root` interfering with
-            # the replacement.
-            txt_out.append(line)
-            continue
-        line = line.replace(user_name, "$USER_NAME")
-        txt_out.append(line)
-    txt = "\n".join(txt_out)
+    # Set a regex pattern that finds a user name surrounded by dot, dash or space.
+    # E.g., `IMAGE=$CK_ECR_BASE_PATH/amp_test:local-$USER_NAME-1.0.0`,
+    # `--name $USER_NAME.amp_test.app.app`, `run --rm -l user=$USER_NAME`.
+    pattern = rf"([\s\n\-\.\=]|^)+{user_name}+([.\s/-]|$)"
+    # Use `\1` and `\2` to preserve specific characters around `$USER_NAME`.
+    target = r"\1$USER_NAME\2"
+    txt = re.sub(pattern, target, txt)
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
@@ -1809,7 +1815,7 @@ class TestCase(unittest.TestCase):
     # ///////////////////////////////////////////////////////////////////////
 
     def _get_golden_outcome_file_name(
-            self, tag: str, *, test_class_name: Optional[str] = None
+        self, tag: str, *, test_class_name: Optional[str] = None
     ) -> Tuple[str, str]:
         # Get the current dir name.
         use_only_test_class = False
