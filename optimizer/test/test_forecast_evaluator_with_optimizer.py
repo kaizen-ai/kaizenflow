@@ -97,7 +97,7 @@ class TestForecastEvaluatorWithOptimizer1(hunitest.TestCase):
         )
         actual = forecast_evaluator.to_str(
             data,
-            quantization="nearest_share",
+            quantization=0,
         )
         expected = r"""
 # holdings_shares=
@@ -154,7 +154,7 @@ class TestForecastEvaluatorWithOptimizer1(hunitest.TestCase):
         )
         actual = forecast_evaluator.to_str(
             data,
-            quantization="nearest_share",
+            quantization=0,
             liquidate_at_end_of_day=False,
         )
         expected = r"""
@@ -219,37 +219,37 @@ class TestForecastEvaluatorWithOptimizer1(hunitest.TestCase):
         )
         actual = forecast_evaluator.to_str(
             data,
-            quantization="nearest_share",
+            quantization=0,
             liquidate_at_end_of_day=False,
         )
         expected = r"""
 # holdings_shares=
                             101   201   301
 2022-01-03 09:40:00-05:00   0.0   0.0   0.0
-2022-01-03 09:45:00-05:00  40.0  -0.0 -60.0
+2022-01-03 09:45:00-05:00  40.0   0.0 -60.0
 2022-01-03 09:50:00-05:00  40.0 -60.0   0.0
-2022-01-03 09:55:00-05:00 -40.0 -60.0  -0.0
+2022-01-03 09:55:00-05:00 -40.0 -60.0   0.0
 2022-01-03 10:00:00-05:00 -40.0 -60.0   0.0
 # holdings_notional=
                                 101       201       301
 2022-01-03 09:40:00-05:00      0.00      0.00      0.00
-2022-01-03 09:45:00-05:00  39895.73     -0.00 -59854.81
+2022-01-03 09:45:00-05:00  39895.73      0.00 -59854.81
 2022-01-03 09:50:00-05:00  39906.38 -59850.07      0.00
-2022-01-03 09:55:00-05:00 -39896.46 -59868.37     -0.00
+2022-01-03 09:55:00-05:00 -39896.46 -59868.37      0.00
 2022-01-03 10:00:00-05:00 -39901.51 -59757.61      0.00
 # executed_trades_shares=
                             101   201   301
 2022-01-03 09:40:00-05:00   0.0   0.0   0.0
-2022-01-03 09:45:00-05:00  40.0  -0.0 -60.0
+2022-01-03 09:45:00-05:00  40.0   0.0 -60.0
 2022-01-03 09:50:00-05:00   0.0 -60.0  60.0
-2022-01-03 09:55:00-05:00 -80.0   0.0  -0.0
+2022-01-03 09:55:00-05:00 -80.0   0.0   0.0
 2022-01-03 10:00:00-05:00   0.0   0.0   0.0
 # executed_trades_notional=
                                 101       201       301
 2022-01-03 09:40:00-05:00      0.00      0.00      0.00
-2022-01-03 09:45:00-05:00  39895.73     -0.00 -59854.81
+2022-01-03 09:45:00-05:00  39895.73      0.00 -59854.81
 2022-01-03 09:50:00-05:00      0.00 -59850.07  59915.53
-2022-01-03 09:55:00-05:00 -79792.93      0.00     -0.00
+2022-01-03 09:55:00-05:00 -79792.93      0.00      0.00
 2022-01-03 10:00:00-05:00      0.00      0.00      0.00
 # pnl=
                              101     201    301
@@ -318,7 +318,7 @@ class TestForecastEvaluatorWithOptimizer2(hunitest.TestCase):
         )
         _, stats_df = forecast_evaluator.annotate_forecasts(
             data,
-            quantization="nearest_share",
+            quantization=0,
         )
         precision = 2
         actual = hpandas.df_to_str(stats_df.round(precision), precision=precision)

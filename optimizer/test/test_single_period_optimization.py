@@ -23,7 +23,7 @@ def _run_optimizer(
     spo = osipeopt.SinglePeriodOptimizer(
         config_dict, df, restrictions=restrictions
     )
-    optimized = spo.optimize(quantization="nearest_share")
+    optimized = spo.optimize(quantization=0)
     # Round to the nearest cent to reduce jitter.
     precision = 2
     actual_str = hpandas.df_to_str(
@@ -79,26 +79,24 @@ class TestSinglePeriodOptimizer1(hunitest.TestCase):
 
     # ///////////////////////////////////////////////////////////////////////////////
 
-    @pytest.mark.skip("CmTask #1607 Flaky opt tests fail.")
     def test_only_gmv_constraint(self) -> None:
         actual = self.run_opt_with_only_gmv_constraint()
         expected = r"""
-          target_position  target_notional_trade  target_weight  target_weight_diff
+          holdings_shares  price  holdings_notional  prediction  volatility  target_holdings_shares  target_holdings_notional  target_trades_shares  target_trades_notional
 asset_id
-1                   -0.00               -1000.00           -0.0                -1.0
-2                 2999.94                1499.94            3.0                 1.5
-3                   -0.00                 500.00           -0.0                 0.5"""
+1                    1000      1               1000        0.05        0.05                     0.0                       0.0               -1000.0                 -1000.0
+2                    1500      1               1500        0.09        0.07                  3000.0                    3000.0                1500.0                  1500.0
+3                    -500      1               -500        0.03        0.08                     0.0                       0.0                 500.0                   500.0"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    @pytest.mark.skip("CmTask #1607 Flaky opt tests fail.")
     def test_only_gmv_constraint_osqp(self) -> None:
         actual = self.run_opt_with_only_gmv_constraint("OSQP")
         expected = r"""
-          target_position  target_notional_trade  target_weight  target_weight_diff
+          holdings_shares  price  holdings_notional  prediction  volatility  target_holdings_shares  target_holdings_notional  target_trades_shares  target_trades_notional
 asset_id
-1                   -0.00               -1000.00           -0.0                -1.0
-2                 2999.94                1499.94            3.0                 1.5
-3                   -0.00                 500.00           -0.0                 0.5"""
+1                    1000      1               1000        0.05        0.05                     0.0                       0.0               -1000.0                 -1000.0
+2                    1500      1               1500        0.09        0.07                  3000.0                    3000.0                1500.0                  1500.0
+3                    -500      1               -500        0.03        0.08                     0.0                       0.0                 500.0                   500.0"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_only_gmv_constraint_ecos(self) -> None:
@@ -112,8 +110,6 @@ asset_id
 """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    # TODO(ShaopengZ): fails even on ck server. Numerics issue.
-    @pytest.mark.skip
     def test_only_gmv_constraint_scs(self) -> None:
         actual = self.run_opt_with_only_gmv_constraint("SCS")
         expected = r"""
@@ -127,7 +123,7 @@ asset_id
 
     # ///////////////////////////////////////////////////////////////////////////////
 
-    @pytest.mark.skip("Fails with cvxpy.error.SolverError: Solver 'OSQP' failed.")
+    @pytest.mark.skip(reason="See CmTask5114.")
     def test_restrictions(self) -> None:
         dict_ = {
             "dollar_neutrality_penalty": 0.0,
@@ -153,11 +149,11 @@ asset_id
         )
         actual = _run_optimizer(dict_, df, restrictions=restrictions)
         expected = r"""
-          target_holdings_notional  target_trades_notional  target_weight  target_weight_diff
+          holdings_shares  price  holdings_notional  prediction  volatility  target_holdings_shares  target_holdings_notional  target_trades_shares  target_trades_notional
 asset_id
-1                           1499.8                   499.8            1.5                 0.5
-2                           1500.0                     0.0            1.5                 0.0
-3                             -0.0                   500.0           -0.0                 0.5
+1                    1000      1               1000        0.05        0.05                  1500.0                    1500.0                 500.0                   500.0
+2                    1500      1               1500        0.09        0.07                  1500.0                    1500.0                   0.0                     0.0
+3                    -500      1               -500        0.03        0.08                     0.0                       0.0                 500.0                   500.0
 """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
@@ -177,7 +173,7 @@ asset_id
         expected = r"""
           holdings_shares  price  holdings_notional  prediction  volatility  target_holdings_shares  target_holdings_notional  target_trades_shares  target_trades_notional
 asset_id
-1                    1000      1               1000        0.05        0.05                    -0.0                      -0.0               -1000.0                 -1000.0
+1                    1000      1               1000        0.05        0.05                     0.0                       0.0               -1000.0                 -1000.0
 2                    1500      1               1500        0.09        0.07                  1515.0                    1515.0                  15.0                    15.0
 3                    -500      1               -500        0.03        0.08                 -1515.0                   -1515.0               -1015.0                 -1015.0
 """
@@ -251,17 +247,23 @@ class TestSinglePeriodOptimizer2(hunitest.TestCase):
     def get_prediction_df() -> pd.DataFrame:
         df = pd.DataFrame(
             [
-                [101, 7734.32, 0.000858, 0.000910],
-                [201, -10962.44, 0.000426, 0.000231],
-                [301, -39037.56, -0.001845, 0.001404],
-                [401, 42265.68, 0.000505, 0.000240],
+                [101, 7734.32, 0.000858, 0.000910, 0.05, 0.05],
+                [201, -10962.44, 0.000426, 0.000231, 0.09, 0.07],
+                [301, -39037.56, -0.001845, 0.001404, 0.03, 0.08],
+                [401, 42265.68, 0.000505, 0.000240, 0.08, 0.03],
             ],
             range(0, 4),
-            ["asset_id", "position", "prediction", "volatility"],
+            [
+                "asset_id",
+                "holdings_shares",
+                "price",
+                "holdings_notional",
+                "prediction",
+                "volatility",
+            ],
         )
         return df
 
-    @pytest.mark.skip("TODO(gp): @Paul test asserting.")
     def test1(self) -> None:
         dict_ = {
             "dollar_neutrality_penalty": 0.1,
@@ -277,10 +279,10 @@ class TestSinglePeriodOptimizer2(hunitest.TestCase):
         restrictions = None
         actual = _run_optimizer(dict_, df, restrictions=restrictions)
         expected = r"""
-          target_position  target_notional_trade  target_weight  target_weight_diff
+        holdings_shares  price  holdings_notional  prediction  volatility  target_holdings_shares  target_holdings_notional  target_trades_shares  target_trades_notional
 asset_id
-101               8234.32                 500.00           0.33                0.02
-201                  0.00               10962.44           0.00                0.44
-301             -50500.00              -11462.44          -2.02               -0.46
-401              42265.68                  -0.00           1.69               -0.00"""
+101               7734.32    0.0                0.0        0.05        0.05               -1.37e+02                     -0.12             -7.87e+03                   -6.75
+201             -10962.44    0.0                0.0        0.09        0.07                8.58e+07                  36560.16              8.58e+07                36564.83
+301             -39037.56    0.0                0.0        0.03        0.08                2.74e+07                 -50499.60              2.74e+07               -50571.62
+401              42265.68    0.0                0.0        0.08        0.03                2.76e+07                  13939.71              2.76e+07                13918.37"""
         self.assert_equal(actual, expected, fuzzy_match=True)
