@@ -12,6 +12,7 @@ import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hstring as hstring
 import im_v2.common.universe.full_symbol as imvcufusy
+import im_v2.common.universe.universe_utils as imvcuunut
 
 
 def _get_universe_dir(vendor: str, mode: str) -> str:
@@ -180,3 +181,34 @@ def get_vendor_universe(
         # Sort list of symbols in the universe.
         vendor_universe = sorted(vendor_universe)
     return vendor_universe
+
+
+# TODO(Grisha): do we even use `as_full_symbols=False`? Maybe a better idea is to
+# introduce a new param  `return_as` which could be `full_symbols` or `asset_ids`.
+# In this way we can kill `as_full_symbols` and the `get_vendor_universe_as_asset_ids()`.
+def get_vendor_universe_as_asset_ids(
+    universe_version: str, vendor: str, mode: str
+) -> List[int]:
+    """
+    Get trading universe as asset ids.
+
+    :param vendor: vendor to load data for, e.g., "CCXT"
+    :param mode: download or trade universe
+    :return: a list of asset ids for given universe version, vendor and mode,
+        e.g., [9872743573, 3065029174, 5118394986]
+    """
+    # Get vendor universe as full symbols.
+    vendor = vendor.lower()
+    as_full_symbol = True
+    full_symbols = get_vendor_universe(
+        vendor,
+        mode,
+        version=universe_version,
+        as_full_symbol=as_full_symbol,
+    )
+    # Convert full symbols to asset ids.
+    asset_ids = [
+        imvcuunut.string_to_numerical_id(full_symbol)
+        for full_symbol in full_symbols
+    ]
+    return asset_ids

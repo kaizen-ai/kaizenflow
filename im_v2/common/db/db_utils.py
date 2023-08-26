@@ -18,6 +18,7 @@ import psycopg2 as psycop
 import helpers.hdatetime as hdateti
 import helpers.hgit as hgit
 import helpers.hio as hio
+import helpers.hretry as hretry
 import helpers.hsql as hsql
 import helpers.hsql_test as hsqltest
 import im.ib.sql_writer as imibsqwri
@@ -34,6 +35,7 @@ _LOG = logging.getLogger(__name__)
 BASE_UNIQUE_COLUMNS = ["timestamp", "exchange_id", "currency_pair"]
 BID_ASK_UNIQUE_COLUMNS = []
 TRADES_UNIQUE_COLUMNS = []
+NUMBER_OF_RETRIES_TO_SAVE = 3
 OHLCV_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + [
     "open",
     "high",
@@ -41,6 +43,7 @@ OHLCV_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + [
     "close",
     "volume",
 ]
+RETRY_EXCEPTION = (psycop.Error,)
 
 
 # #############################################################################
@@ -76,36 +79,69 @@ class DbConnectionManager:
                 "The connection has already been established to a different stage"
             )
         if cls.connection is None:
-            try:
-                # Connect with the parameters from the env var.
-                #  Usually when credentials are injected into a container.
-                #
-                cls.connection = hsql.get_connection_from_env_vars()
-            except KeyError as e:
-                _LOG.info(
-                    f"Unable to fetch DB credentials from environment variables: \n\t{e}\n\t"
-                    + "Attempting env file method."
-                )
-                try:
-                    # If there are no OS env vars, try to fetch credentials from env file.
-                    env_file = imvimlita.get_db_env_path(db_stage)
-                    # Connect with the parameters from the env file.
-                    #  Usually for test and dev stage.
-                    connection_params = hsql.get_connection_info_from_env_file(
-                        env_file
-                    )
-                    cls.connection = hsql.get_connection(*connection_params)
-                except Exception as e:
-                    _LOG.info(
-                        f"Unable to fetch DB credentials from env file: \n\t{e}\n\t"
-                        + "Attempting AWS SecretsManager method."
-                    )
-                    cls.connection = hsql.get_connection_from_aws_secret(
-                        stage=db_stage
-                    )
-            _LOG.info("Created %s DB connection: \n %s", db_stage, cls.connection)
-            cls.db_stage = db_stage
+            cls.connection = cls._get_new_connection(db_stage)
+        else:
+            if not cls._is_connection_alive():
+                _LOG.warning("Connection is not alive, reconnecting.")
+                cls.connection = cls._get_new_connection(db_stage)
+        cls.db_stage = db_stage
         return cls.connection
+
+    @classmethod
+    def _is_connection_alive(cls) -> bool:
+        """
+        Check if the connection is alive.
+        Based on the SO: 
+        https://stackoverflow.com/questions/1281875/making-sure-that-psycopg2-database-connection-alive
+
+        :return: True if the connection is alive, False otherwise.
+        """
+        if cls.connection is None:
+            _LOG.warning("No DB connection has been established yet.")
+            return False
+        try:
+            cur = cls.connection.cursor()
+            cur.execute("SELECT 1")
+        except (psycop.OperationalError, psycop.InterfaceError) as e:
+            _LOG.warning("Connection is not alive: %s", e)
+            return False
+        return True
+
+    @classmethod
+    def _get_new_connection(cls, db_stage: str) -> hsql.DbConnection:
+        """
+        Create and return a new DB connection.
+
+        :param db_stage: DB stage to create connection to.
+        :return: DbConnection
+        """
+        try:
+            # Connect with the parameters from the env var.
+            #  Usually when credentials are injected into a container.
+            #
+            connection = hsql.get_connection_from_env_vars()
+        except KeyError as e:
+            _LOG.info(
+                f"Unable to fetch DB credentials from environment variables: \n\t{e}\n\t"
+                + "Attempting env file method."
+            )
+            try:
+                # If there are no OS env vars, try to fetch credentials from env file.
+                env_file = imvimlita.get_db_env_path(db_stage)
+                # Connect with the parameters from the env file.
+                #  Usually for test and dev stage.
+                connection_params = hsql.get_connection_info_from_env_file(
+                    env_file
+                )
+                connection = hsql.get_connection(*connection_params)
+            except Exception as e:
+                _LOG.info(
+                    f"Unable to fetch DB credentials from env file: \n\t{e}\n\t"
+                    + "Attempting AWS SecretsManager method."
+                )
+                connection = hsql.get_connection_from_aws_secret(stage=db_stage)
+        _LOG.info("Created %s DB connection: \n %s", db_stage, cls.connection)
+        return connection
 
 
 def add_db_args(
@@ -433,6 +469,11 @@ def drop_db_data_by_age(
 # TODO(Juraj): replace all occurrences of code inserting to db with a call to
 # this function.
 # TODO(Juraj): probabl hsql is a better place for this?
+@hretry.retry(
+    num_attempts=NUMBER_OF_RETRIES_TO_SAVE,
+    exceptions=RETRY_EXCEPTION,
+    retry_delay_in_sec=0.5,
+)
 def save_data_to_db(
     data: pd.DataFrame,
     data_type: str,
