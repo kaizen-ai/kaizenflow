@@ -114,7 +114,7 @@ object.str:
       _knowledge_datetime_col_name='timestamp_db' <str>
       _delay_in_secs='5' <int>
   portfolio_object:
-    <oms.portfolio.DataFramePortfolio at 0x>
+    <oms.portfolio.dataframe_portfolio.DataFramePortfolio at 0x>
       # historical holdings=
       Empty DataFrame
       Columns: [-1]
@@ -135,7 +135,7 @@ object.str:
       Empty DataFrame
       Columns: [pnl]
       Index: []
-      broker=<oms.broker.DataFrameBroker at 0x>
+      broker=<oms.broker.broker.DataFrameBroker at 0x>
       market_data=<market_data.replayed_market_data.ReplayedMarketData at 0x>
       _account=candidate
       _timestamp_col=end_datetime
@@ -384,7 +384,7 @@ object.builder_function:
   dag_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag
   dag_runner_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag_runner
 portfolio_object:
-  <oms.portfolio.DataFramePortfolio at 0x>
+  <oms.portfolio.dataframe_portfolio.DataFramePortfolio at 0x>
     # historical holdings=
     asset_id                      101      -1
     2000-01-01 09:35:06-05:00    0.00  1.00e+06
@@ -514,7 +514,7 @@ process_forecasts_node_dict:
   volatility_col: vwap.ret_0.vol
   spread_col: None
   portfolio:
-    <oms.portfolio.DataFramePortfolio at 0x>
+    <oms.portfolio.dataframe_portfolio.DataFramePortfolio at 0x>
       # historical holdings=
       asset_id                      101      -1
       2000-01-01 09:35:06-05:00    0.00  1.00e+06

@@ -123,7 +123,7 @@ object.builder_function:
   order_processor_object: dataflow_amp.system.mock1.mock1_forecast_system._get_order_processor
   order_processor_coroutine: dataflow_amp.system.mock1.mock1_forecast_system._get_order_processor_coroutine
 portfolio_object:
-  <oms.portfolio.DatabasePortfolio at 0x>
+  <oms.portfolio.database_portfolio.DatabasePortfolio at 0x>
     # holdings_shares=
     asset_id                      101
     2000-01-01 09:35:06-05:00    0.00
@@ -182,7 +182,7 @@ process_forecasts_node_dict:
   volatility_col: vwap.ret_0.vol
   spread_col: None
   portfolio:
-    <oms.portfolio.DatabasePortfolio at 0x>
+    <oms.portfolio.database_portfolio.DatabasePortfolio at 0x>
       # holdings_shares=
       asset_id                      101
       2000-01-01 09:35:06-05:00    0.00
@@ -255,7 +255,7 @@ process_forecasts_node_dict:
     ath_end_time: 16:00:00
     trading_end_time: 15:55:00
     liquidate_at_trading_end_time: False
-    share_quantization: no_quantization
+    share_quantization: 9
 dag_object: DAG at 0x=(_nx_dag=DiGraph with 10 nodes and 9 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
 dag_runner_object:
   RealTimeDagRunner at 0x=(config= <core.config.config_.Config>, _column_to_tags_mapping=None <NoneType>, _result_nid=process_forecasts <str>, _execute_rt_loop_kwargs={'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
@@ -298,7 +298,7 @@ num_it=7 current_time='2000-01-01 10:05:00-05:00'
 
 # portfolio signature=
 
-<oms.portfolio.DatabasePortfolio at 0x>
+<oms.portfolio.database_portfolio.DatabasePortfolio at 0x>
   # holdings_shares=
   asset_id                      101
   2000-01-01 09:35:06-05:00    0.00
@@ -395,49 +395,49 @@ events=45
 2000-01-01 09:35:07-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
 2000-01-01 09:35:10-05:00: Wait until fulfillment deadline=2000-01-01 09:40:00-05:00
 2000-01-01 09:40:00-05:00: Received 1 fills:
-  Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:40:00-05:00 num_shares=-994.0357852882703 price=101.8
+  Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:40:00-05:00 num_shares=-994.035785288 price=101.8
 2000-01-01 09:40:00-05:00: wall_clock_time=Timestamp('xxx', tz='America/New_York') termination_condition=Timestamp('2000-01-01 10:10:05-0500', tz='America/New_York') -> wall_clock_time_tmp=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York') termination_condition_tmp=Timestamp('2000-01-01 10:10:00-0500', tz='America/New_York') -> is_done=False
 2000-01-01 09:40:00-05:00: Waiting for orders in table self._submitted_orders_table_name='submitted_orders'
 2000-01-01 09:40:07-05:00: diff_num_rows=1
 2000-01-01 09:40:07-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
 2000-01-01 09:40:10-05:00: Wait until fulfillment deadline=2000-01-01 09:45:00-05:00
 2000-01-01 09:45:00-05:00: Received 1 fills:
-  Fill: asset_id=101 fill_id=1 timestamp=2000-01-01 09:45:00-05:00 num_shares=1976.354056408113 price=100.6
+  Fill: asset_id=101 fill_id=1 timestamp=2000-01-01 09:45:00-05:00 num_shares=1976.354056408 price=100.6
 2000-01-01 09:45:00-05:00: wall_clock_time=Timestamp('xxx', tz='America/New_York') termination_condition=Timestamp('2000-01-01 10:10:05-0500', tz='America/New_York') -> wall_clock_time_tmp=Timestamp('2000-01-01 09:45:00-0500', tz='America/New_York') termination_condition_tmp=Timestamp('2000-01-01 10:10:00-0500', tz='America/New_York') -> is_done=False
 2000-01-01 09:45:00-05:00: Waiting for orders in table self._submitted_orders_table_name='submitted_orders'
 2000-01-01 09:45:07-05:00: diff_num_rows=1
 2000-01-01 09:45:07-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
 2000-01-01 09:45:10-05:00: Wait until fulfillment deadline=2000-01-01 09:50:00-05:00
 2000-01-01 09:50:00-05:00: Received 1 fills:
-  Fill: asset_id=101 fill_id=2 timestamp=2000-01-01 09:50:00-05:00 num_shares=-1976.354056408113 price=101.8
+  Fill: asset_id=101 fill_id=2 timestamp=2000-01-01 09:50:00-05:00 num_shares=-1976.354056408 price=101.8
 2000-01-01 09:50:00-05:00: wall_clock_time=Timestamp('xxx', tz='America/New_York') termination_condition=Timestamp('2000-01-01 10:10:05-0500', tz='America/New_York') -> wall_clock_time_tmp=Timestamp('2000-01-01 09:50:00-0500', tz='America/New_York') termination_condition_tmp=Timestamp('2000-01-01 10:10:00-0500', tz='America/New_York') -> is_done=False
 2000-01-01 09:50:00-05:00: Waiting for orders in table self._submitted_orders_table_name='submitted_orders'
 2000-01-01 09:50:07-05:00: diff_num_rows=1
 2000-01-01 09:50:07-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
 2000-01-01 09:50:10-05:00: Wait until fulfillment deadline=2000-01-01 09:55:00-05:00
 2000-01-01 09:55:00-05:00: Received 1 fills:
-  Fill: asset_id=101 fill_id=3 timestamp=2000-01-01 09:55:00-05:00 num_shares=1976.3540564081131 price=100.6
+  Fill: asset_id=101 fill_id=3 timestamp=2000-01-01 09:55:00-05:00 num_shares=1976.354056408 price=100.6
 2000-01-01 09:55:00-05:00: wall_clock_time=Timestamp('xxx', tz='America/New_York') termination_condition=Timestamp('2000-01-01 10:10:05-0500', tz='America/New_York') -> wall_clock_time_tmp=Timestamp('2000-01-01 09:55:00-0500', tz='America/New_York') termination_condition_tmp=Timestamp('2000-01-01 10:10:00-0500', tz='America/New_York') -> is_done=False
 2000-01-01 09:55:00-05:00: Waiting for orders in table self._submitted_orders_table_name='submitted_orders'
 2000-01-01 09:55:07-05:00: diff_num_rows=1
 2000-01-01 09:55:07-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
 2000-01-01 09:55:10-05:00: Wait until fulfillment deadline=2000-01-01 10:00:00-05:00
 2000-01-01 10:00:00-05:00: Received 1 fills:
-  Fill: asset_id=101 fill_id=4 timestamp=2000-01-01 10:00:00-05:00 num_shares=-1976.3540564081131 price=101.8
+  Fill: asset_id=101 fill_id=4 timestamp=2000-01-01 10:00:00-05:00 num_shares=-1976.354056408 price=101.8
 2000-01-01 10:00:00-05:00: wall_clock_time=Timestamp('xxx', tz='America/New_York') termination_condition=Timestamp('2000-01-01 10:10:05-0500', tz='America/New_York') -> wall_clock_time_tmp=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York') termination_condition_tmp=Timestamp('2000-01-01 10:10:00-0500', tz='America/New_York') -> is_done=False
 2000-01-01 10:00:00-05:00: Waiting for orders in table self._submitted_orders_table_name='submitted_orders'
 2000-01-01 10:00:07-05:00: diff_num_rows=1
 2000-01-01 10:00:07-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
 2000-01-01 10:00:10-05:00: Wait until fulfillment deadline=2000-01-01 10:05:00-05:00
 2000-01-01 10:05:00-05:00: Received 1 fills:
-  Fill: asset_id=101 fill_id=5 timestamp=2000-01-01 10:05:00-05:00 num_shares=1976.3540564081131 price=100.6
+  Fill: asset_id=101 fill_id=5 timestamp=2000-01-01 10:05:00-05:00 num_shares=1976.354056408 price=100.6
 2000-01-01 10:05:00-05:00: wall_clock_time=Timestamp('xxx', tz='America/New_York') termination_condition=Timestamp('2000-01-01 10:10:05-0500', tz='America/New_York') -> wall_clock_time_tmp=Timestamp('2000-01-01 10:05:00-0500', tz='America/New_York') termination_condition_tmp=Timestamp('2000-01-01 10:10:00-0500', tz='America/New_York') -> is_done=False
 2000-01-01 10:05:00-05:00: Waiting for orders in table self._submitted_orders_table_name='submitted_orders'
 2000-01-01 10:05:07-05:00: diff_num_rows=1
 2000-01-01 10:05:07-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
 2000-01-01 10:05:10-05:00: Wait until fulfillment deadline=2000-01-01 10:10:00-05:00
 2000-01-01 10:10:00-05:00: Received 1 fills:
-  Fill: asset_id=101 fill_id=6 timestamp=2000-01-01 10:10:00-05:00 num_shares=-1976.3540564081131 price=101.8
+  Fill: asset_id=101 fill_id=6 timestamp=2000-01-01 10:10:00-05:00 num_shares=-1976.354056408 price=101.8
 2000-01-01 10:10:00-05:00: wall_clock_time=Timestamp('xxx', tz='America/New_York') termination_condition=Timestamp('2000-01-01 10:10:05-0500', tz='America/New_York') -> wall_clock_time_tmp=Timestamp('2000-01-01 10:10:00-0500', tz='America/New_York') termination_condition_tmp=Timestamp('2000-01-01 10:10:00-0500', tz='America/New_York') -> is_done=True
 2000-01-01 10:10:00-05:00: Exiting loop: target_list_id=7, wall_clock_time=Timestamp('xxx', tz='America/New_York'), termination_condition=Timestamp('2000-01-01 10:10:05-0500', tz='America/New_York')
 ################################################################################

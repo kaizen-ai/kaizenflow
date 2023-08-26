@@ -1,256 +1,301 @@
-#!/usr/bin/env python
 """
-The script performs several actions:
+Import as:
 
-    - runs historical simulation for all configs
-    - runs historical simulation for 1 config with specified index and extended logs
-
-The following command runs rolling simulation for all configs:
-    ```
-    > dataflow_amp/system/Cx/run_Cx_historical_simulation.py \
-        --action run_all_configs \
-        --dag_builder_ctor_as_str "dataflow_orange.pipelines.C1.C1b_pipeline.C1b_DagBuilder" \
-        --backtest_config ccxt_v7_1-all.5T.2022-06-01_2022-12-01 \
-        --train_test_mode rolling \
-        --fit_at_beginning True \
-    ```
-
-The following command runs rolling simulation for the 3rd configs:
-    ```
-    > dataflow_amp/system/Cx/run_Cx_historical_simulation.py \
-        --action run_single_config \
-        --dag_builder_ctor_as_str "dataflow_orange.pipelines.C1.C1b_pipeline.C1b_DagBuilder" \
-        --backtest_config ccxt_v7_1-all.5T.2022-06-01_2022-12-01 \
-        --train_test_mode rolling \
-        --fit_at_beginning True \
-        --config_idx 3
-    ```
+import dataflow_amp.system.Cx.run_Cx_historical_simulation as dtfascrchs
 """
-# TODO(Grisha): maybe it is worth it to remove the wrapper and call
-# directly `amp/dataflow/backtest/run_config_list.py` everywhere.
-import argparse
+
 import logging
 import os
-import re
+from typing import Optional
 
+import core.config as cconfig
+import dataflow.backtest as dtfback
+import dataflow.core as dtfcore
 import dataflow.system as dtfsys
 import dataflow_amp.system.Cx.Cx_forecast_system_example as dtfasccfsex
 import dataflow_amp.system.Cx.Cx_tile_config_builders as dtfascctcbu
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hgit as hgit
-import helpers.hparser as hparser
-import helpers.hsystem as hsystem
+import helpers.hio as hio
+import helpers.hjoblib as hjoblib
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
 
-def _get_DagBuilder_name(dag_builder_ctor_as_str: str) -> str:
+def _run_experiment(
+    config_list: dtfsys.SystemConfigList, train_test_mode: str
+) -> None:
     """
-    Get `DagBuilder` name from DagBuilder ctor passed as a string.
+    Run experiment for the given config list and `train_test_mode`.
+
+    :param config_list: system config list to run experiment for
+    :param train_test_mode: see `run_backtest()`
     """
-    # E.g., `dataflow_orange.pipelines.C1.C1b_pipeline.C1b_DagBuilder` ->
-    # `[dataflow_orange, pipelines, C1, C1b_pipeline, C1b_DagBuilder]`.
-    dag_builder_split = dag_builder_ctor_as_str.split(".")
-    hdbg.dassert_lt(0, len(dag_builder_split))
-    dag_builder_name = dag_builder_split[-1]
-    re_pattern = r"\w+(?=(_DagBuilder))"
-    dag_builder_name_match = re.match(re_pattern, dag_builder_name)
-    hdbg.dassert(
-        dag_builder_name_match,
-        msg=f"Make sure that `DagBuilder` is in the name={dag_builder_name}",
+    if train_test_mode == "ins":
+        dtfback.run_in_sample_tiled_backtest(config_list)
+    elif train_test_mode == "ins_oos":
+        dtfback.run_ins_oos_tiled_backtest(config_list)
+    elif train_test_mode == "rolling":
+        dtfback.run_rolling_tiled_backtest(config_list)
+    else:
+        raise ValueError(f"Unsupported `train_test_mode={train_test_mode}")
+
+
+def _get_default_dst_dir(
+    dag_builder_ctor_as_str: str,
+    train_test_mode: str,
+    backtest_config: str,
+) -> str:
+    """
+    Get default destination dir from the system parameters.
+
+    See param descriptions in `run_backtest()`.
+
+    :return: dst dir, e.g., `build_tile_configs.C3a.ccxt_v7_1-all.5T.2022-06-01_2022-06-02.ins/`
+    """
+    # Get DagBuilder name since it's convenient to use in the dir names.
+    dag_builder_name = dtfcore.get_DagBuilder_name_from_string_pointer(
+        dag_builder_ctor_as_str
     )
-    dag_builder_name = dag_builder_name_match[0]
-    return dag_builder_name
+    dst_dir = ".".join(
+        [
+            "./build_tile_configs",
+            dag_builder_name,
+            backtest_config,
+            train_test_mode,
+        ]
+    )
+    return dst_dir
 
 
-def get_config_builder(
+def _patch_config_lists(
+    config_list: cconfig.ConfigList,
+    dst_dir: str,
+    index: Optional[int],
+    start_from_index: Optional[int],
+    incremental: bool,
+) -> cconfig.ConfigList:
+    """
+    Patch all the configs with all the necessary info to run the workload.
+
+    See param descriptions in `run_backtest()`.
+    """
+    # Patch the configs with the command line parameters.
+    params = {"dst_dir": dst_dir}
+    config_list = cconfig.patch_config_list(config_list, params)
+    # Select the configs based on command line options.
+    config_list = dtfback.select_config(config_list, index, start_from_index)
+    _LOG.info("Selected %d configs from command line", len(config_list))
+    # Remove the configs already executed.
+    config_list, num_skipped = dtfback.skip_configs_already_executed(
+        config_list, incremental
+    )
+    _LOG.info("Removed %d configs since already executed", num_skipped)
+    _LOG.info("Need to execute %d configs", len(config_list))
+    return config_list
+
+
+def run_backtest_for_single_config(
+    config_list: dtfsys.SystemConfigList,
+    train_test_mode: str,
+    #
+    incremental: bool,
+    num_attempts: int,
+) -> None:
+    """
+    Get `SystemConfigList` for the selected config and run the experiment.
+
+    :param config_list: system config list to run backtest experiment for
+    :param train_test_mode: see `run_backtest()`
+    """
+    hdbg.dassert_isinstance(config_list, dtfsys.SystemConfigList)
+    _ = incremental
+    hdbg.dassert_eq(1, num_attempts, "Multiple attempts not supported yet")
+    #
+    config = config_list.get_only_config()
+    dtfback.setup_experiment_dir(config)
+    # Extract params from config.
+    _LOG.info("config=\n%s", config)
+    idx = config[("backtest_config", "id")]
+    _LOG.info("\n%s", hprint.frame(f"Executing experiment for config {idx}"))
+    experiment_result_dir = config[("backtest_config", "experiment_result_dir")]
+    # Run experiment.
+    try:
+        _ = _run_experiment(config_list, train_test_mode)
+    except Exception as e:
+        # Display the type of occurring error.
+        _LOG.error("The error is: %s", e)
+        msg = f"Execution failed for experiment {idx}"
+        _LOG.error(msg)
+        raise RuntimeError(msg)
+    else:
+        _LOG.info("Execution successful for experiment %s", idx)
+        dtfback.mark_config_as_success(experiment_result_dir)
+
+
+def _get_joblib_workload(
     dag_builder_ctor_as_str: str,
     fit_at_beginning: bool,
     train_test_mode: str,
     backtest_config: str,
-    *,
-    oos_start_date_as_str: str = None,
-) -> dtfsys.SystemConfigList:
+    dst_dir: str,
+    index: Optional[int],
+    start_from_index: Optional[int],
+    incremental: bool,
+) -> hjoblib.Workload:
     """
-    Get a config builder function to pass it to the executable.
+    Prepare the joblib workload by building all the Configs.
 
-    :param dag_builder_ctor_as_str: same as in `Cx_NonTime_ForecastSystem`
-    :param fit_at_beginning: force the system to fit before making predictions
-    :param train_test_mode: same as in `Cx_NonTime_ForecastSystem`
-    :param backtest_config: see `apply_backtest_config()`
-    :param oos_start_date_as_str: used only for train_test_mode="ins_oos",
-        see `dtfasccfsex.apply_ins_oos_backtest_config()`
+    See param descriptions in `run_backtest()`.
     """
+    # Build a system to run simulation for.
     system = dtfasccfsex.get_Cx_NonTime_ForecastSystem_for_simulation_example1(
         dag_builder_ctor_as_str,
         fit_at_beginning,
         train_test_mode=train_test_mode,
         backtest_config=backtest_config,
-        oos_start_date_as_str=oos_start_date_as_str,
+        # oos_start_date_as_str=oos_start_date_as_str,
     )
-    config_builder = dtfascctcbu.build_tile_config_list(system, train_test_mode)
-    return config_builder
-
-
-def _parse() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    # Get configs to run.
+    config_list = dtfascctcbu.build_tile_config_list(system, train_test_mode)
+    _LOG.info("Generated %d configs", len(config_list))
+    # Patch configs with information needed to run.
+    config_list = _patch_config_lists(
+        config_list,
+        dst_dir,
+        index,
+        start_from_index,
+        incremental,
     )
-    parser.add_argument(
-        "--action",
-        action="store",
-        required=True,
-        type=str,
-        choices=["run_all_configs", "run_single_config"],
-        help="Whether to run all configs or just 1 config with detailed logs",
-    )
-    parser.add_argument(
-        "--dag_builder_ctor_as_str",
-        action="store",
-        required=True,
-        type=str,
-        help="a `DagBuilder` constructor, e.g., `dataflow_orange.pipelines.C1.C1b_pipeline.C1b_DagBuilder`",
-    )
-    parser.add_argument(
-        "--backtest_config",
-        action="store",
-        required=True,
-        type=str,
-        help="Backtest config, e.g., 'ccxt_v7-all.5T.2021-08-01_2022-07-01'",
-    )
-    parser.add_argument(
-        "--train_test_mode",
-        action="store",
-        required=True,
-        type=str,
-        help="""
-        How to perform the prediction:
-            - "ins": fit and predict using the same data
-            - "ins_oos": fit using a train dataset and predict using a test dataset
-            - "rolling": run a DAG by periodic fitting on previous history and evaluating on new data
-        """,
-    )
-    parser.add_argument(
-        "--fit_at_beginning",
-        action="store",
-        required=False,
-        type=bool,
-        default=None,
-        help="""
-        - Force the system to fit before making predictions
-        - Applicable only for ML models
-        """,
-    )
-    parser.add_argument(
-        "--oos_start_date_as_str",
-        action="store",
-        required=False,
-        type=str,
-        help="Out-of-sample start date date for `train_test_mode` = 'ins_oos'",
-    )
-    parser.add_argument(
-        "--config_idx",
-        action="store",
-        required=False,
-        type=int,
-        default=0,
-        help="Index of the config generated by `config_builder` to run",
-    )
-    parser.add_argument(
-        "--dry_run",
-        action="store_true",
-        help="Print the command and exit without running it",
-    )
-    parser.add_argument(
-        "--tag",
-        action="store",
-        help="Destination dir tag, e.g., `run0`",
-    )
-    parser = hparser.add_verbosity_arg(parser)
-    # TODO(gp): For some reason, not even this makes mypy happy.
-    # cast(argparse.ArgumentParser, parser)
-    return parser  # type: ignore
-
-
-def _main(parser: argparse.ArgumentParser) -> None:
-    args = parser.parse_args()
-    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # TODO(Grisha): consider enabling running from amp.
-    hdbg.dassert(
-        hgit.is_amp_present(),
-        msg="The script is runnable only from a repo that contains amp but not from amp itself.",
-    )
-    action = args.action
-    dag_builder_ctor_as_str = args.dag_builder_ctor_as_str
-    backtest_config = args.backtest_config
-    train_test_mode = args.train_test_mode
-    fit_at_beginning = args.fit_at_beginning
+    # Prepare one task per config to run.
+    tasks = []
+    for config in config_list.configs:
+        # Even though the goal is to run a single config, pass a config
+        # as a `SystemConfigList` object because it also carries the `System`
+        # which is required by an experiment runner.
+        config_list_copy = config_list.copy()
+        config_list_copy.configs = [config]
+        task: hjoblib.Task = (
+            # args.
+            (
+                config_list_copy,
+                train_test_mode,
+            ),
+            # kwargs.
+            {},
+        )
+        tasks.append(task)
     #
-    if train_test_mode == "ins":
-        experiment_builder = (
-            "amp.dataflow.backtest.master_backtest.run_in_sample_tiled_backtest"
-        )
-    elif train_test_mode == "ins_oos":
-        experiment_builder = (
-            "amp.dataflow.backtest.master_backtest.run_ins_oos_tiled_backtest"
-        )
-    elif train_test_mode == "rolling":
-        experiment_builder = (
-            "amp.dataflow.backtest.master_backtest.run_rolling_tiled_backtest"
-        )
-    else:
-        raise ValueError(f"Unsupported train_test_mode={train_test_mode}")
-    #
-    if train_test_mode == "ins_oos":
-        oos_start_date_as_str = args.oos_start_date_as_str
-        config_builder = f'amp.dataflow_amp.system.Cx.run_Cx_historical_simulation.get_config_builder("{dag_builder_ctor_as_str}",{fit_at_beginning},train_test_mode="{train_test_mode}",backtest_config="{backtest_config}",oos_start_date_as_str="{oos_start_date_as_str}")'
-    else:
-        config_builder = f'amp.dataflow_amp.system.Cx.run_Cx_historical_simulation.get_config_builder("{dag_builder_ctor_as_str}",{fit_at_beginning},train_test_mode="{train_test_mode}",backtest_config="{backtest_config}")'
-    tag = args.tag
-    dag_builder_name = _get_DagBuilder_name(dag_builder_ctor_as_str)
-    dst_dir = f"build_tile_configs.{dag_builder_name}.{backtest_config}.{train_test_mode}.{tag}"
-    # Set major opts.
-    opts = [
-        f"--experiment_builder {experiment_builder}",
-        f"--config_builder '{config_builder}'",
-        f"--dst_dir {dst_dir}",
-    ]
-    opts = " ".join(opts)
-    # Set script name and additional opts based on the action.
-    if action == "run_all_configs":
-        script_name = "amp/dataflow/backtest/run_config_list.py"
-        opts += " --clean_dst_dir --no_confirm --num_threads serial"
-        log_file_name = "run_config_list.txt"
-    elif action == "run_single_config":
-        script_name = "amp/dataflow/backtest/run_config_stub.py"
-        config_idx = args.config_idx
-        opts += f" --config_idx {config_idx}"
-        log_file_name = "log.txt"
-    else:
-        raise ValueError(f"Unsupported action={action}")
-    opts += f" -v DEBUG 2>&1 | tee {log_file_name}"
-    cmd = f"{script_name} {opts}"
-    if args.dry_run:
-        _LOG.warning("Dry-run: cmd='%s'", cmd)
-    else:
-        # TODO(Grisha): this is a work-around so that one does not overwrite a
-        # dir by accident, to solve properly "Use the run_config_list script to
-        # run historical simulations" CmTask #4609.
-        if os.path.exists(dst_dir):
-            _LOG.warning("Dir '%s' already exists", dst_dir)
-            hsystem.query_yes_no(
-                f"Do you want to delete the dir '{dst_dir}'",
-                abort_on_no=True,
-            )
-        hsystem.system(cmd, suppress_output=False, log_level="echo")
-        # TODO(Grisha): this is a work-around so that one does not overwrite a
-        # log file by accident, to solve properly "Use the run_config_list script to
-        # run historical simulations" CmTask #4609.
-        # Copy a log file to `dst_dir` so that one does not overwrite it by accident.
-        log_file_path = os.path.join(dst_dir, log_file_name)
-        mv_cmd = f"mv {log_file_name} {log_file_path}"
-        hsystem.system(mv_cmd)
+    func_name = "run_backtest_for_single_config"
+    workload = (run_backtest_for_single_config, func_name, tasks)
+    hjoblib.validate_workload(workload)
+    return workload
 
 
-if __name__ == "__main__":
-    _main(_parse())
+# TODO(Dan): Add `oos_start_date_as_str`.
+def run_backtest(
+    # Model params.
+    dag_builder_ctor_as_str: str,
+    fit_at_beginning: bool,
+    train_test_mode: str,
+    backtest_config: str,
+    # Dir params.
+    dst_dir: Optional[str],
+    dst_dir_tag: Optional[str],
+    clean_dst_dir: bool,
+    no_confirm: bool,
+    # Config params.
+    index: Optional[int],
+    start_from_index: Optional[int],
+    # Execution params.
+    # TODO(Grisha): make sure that aborting on error works.
+    # Probably it does not work out of the box.
+    abort_on_error: bool,
+    num_threads: int,
+    num_attempts: int,
+    dry_run: bool,
+) -> None:
+    """
+    Run historical simulation backtest.
+
+    :param dag_builder_ctor_as_str: a pointer to a `DagBuilder` constructor,
+        e.g., `dataflow_orange.pipelines.C1.C1b_pipeline.C1b_DagBuilder`
+    :param fit_at_beginning: force the system to fit before making predictions
+    :param train_test_mode: how to perform the prediction
+        - "ins": fit and predict using the same data
+        - "ins_oos": fit using a train dataset and predict using a test dataset
+        - "rolling": see `RollingFitPredictDagRunner` for description
+    :param backtest_config: backtest_config, e.g.,`ccxt_v7-all.5T.2022-09-01_2022-11-30`
+    :param dst_dir: experiment results destination directory,
+        e.g., `build_tile_configs.C3a.ccxt_v7_1-all.5T.2022-06-01_2022-06-02.ins/`
+    :param dst_dir_tag: a tag to add to the experiment results directory
+    :param clean_dst_dir: opposite of `incremental` form `hio.create_dir()`
+    :param no_confirm: opposite of `ask_to_delete` form `hio.create_dir()`
+    :param index: index of a config to execute, if not `None`
+    :param start_from_index: index of a config to start execution from,
+        if not `None`
+    :param abort_on_error: when True, if one task asserts then stop executing
+        the workload and return the exception of the failing task
+        - If False, the execution continues
+    :param num_threads: joblib parameter to control how many threads to use
+    :param dry_run: if True, print the workload and exit without executing it
+    """
+    # TODO(Grisha): make it work with multiple parallel threads.
+    hdbg.dassert_eq(
+        "serial",
+        num_threads,
+        "Multiple execition threads are not supported yet.",
+    )
+    # Set destination dir.
+    if not dst_dir:
+        # Use the default destination dir, see the function below.
+        dst_dir = _get_default_dst_dir(
+            dag_builder_ctor_as_str,
+            train_test_mode,
+            backtest_config,
+        )
+    if dst_dir_tag:
+        dst_dir = ".".join([dst_dir, dst_dir_tag])
+    # TODO(Grisha): We could use `incremental` and `ask_to_delete` directly,
+    # keeping `clean_dst_dir` and `no_confirm` so that the interface look like
+    # the one from `run_config_list.py`.
+    incremental = not clean_dst_dir
+    ask_to_delete = not no_confirm
+    hio.create_dir(dst_dir, incremental, ask_to_delete=ask_to_delete)
+    # Prepare the workload.
+    workload = _get_joblib_workload(
+        dag_builder_ctor_as_str,
+        fit_at_beginning,
+        train_test_mode,
+        backtest_config,
+        dst_dir,
+        index,
+        start_from_index,
+        incremental,
+    )
+    # Prepare the log file.
+    timestamp = hdateti.get_current_timestamp_as_string("naive_ET")
+    # TODO(Grisha): have a detailed log with info about each experiment,
+    # now the log contains only the high-level info, i.e. a config and if
+    # an experiment failed or not.
+    log_file = os.path.join(dst_dir, f"log.{timestamp}.txt")
+    _LOG.info("log_file='%s'", log_file)
+    # Execute.
+    # backend = "loky"
+    # TODO(gp): Is this the correct backend? It might not matter since we spawn
+    # a process with system.
+    backend = "asyncio_threading"
+    hjoblib.parallel_execute(
+        workload,
+        dry_run,
+        num_threads,
+        incremental,
+        abort_on_error,
+        num_attempts,
+        log_file,
+        backend=backend,
+    )
+    _LOG.info("dst_dir='%s'", dst_dir)
+    _LOG.info("log_file='%s'", log_file)
+    # TODO(Dan): Add archiving on S3.

@@ -7,7 +7,7 @@ import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 import datetime
 import logging
 import os
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
@@ -22,7 +22,7 @@ import market_data as mdata
 
 # TODO(Sonya): it needs to be just `import oms`, but avoiding potential
 # circular imports: https://github.com/cryptokaizen/cmamp/issues/4510.
-import oms.ccxt.ccxt_portfolio as occccpor
+import oms.broker.ccxt.ccxt_portfolio as obccccpo
 
 _LOG = logging.getLogger(__name__)
 
@@ -171,7 +171,7 @@ def get_ProcessForecastsNode_dict_instance1(
 
 def _get_Cx_RealTimeDag(
     system: dtfsys.System,
-    share_quantization: str,
+    share_quantization: Optional[int],
     optimizer_backend: str,
     style: str,
     compute_target_positions_kwargs: Any,
@@ -260,7 +260,9 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     Build a DAG for unit tests with `RealTimeDataSource` and
     `ForecastProcessorNode` from a system config.
     """
-    share_quantization = "no_quantization"
+    # Round to a meaningful number of decimal places for the unit tests, otherwise
+    # the division is performed differently on different machines, see CmTask4707.
+    share_quantization = 9
     optimizer_backend = "pomo"
     style = "cross_sectional"
     compute_target_positions_kwargs = {
@@ -286,7 +288,7 @@ def get_Cx_dag_prod_instance1(system: dtfsys.System) -> dtfcore.DAG:
 
     Compute target posisions style is "cross_sectional".
     """
-    share_quantization = "asset_specific"
+    share_quantization = None
     # TODO(Grisha): use `Config.get_and_mark_as_used()`.
     # Infer the optimizer config values from `System`.
     optimizer_backend = system.config[
@@ -331,7 +333,7 @@ def get_Cx_dag_prod_instance2(system: dtfsys.System) -> dtfcore.DAG:
 
     Compte target posisions style is "longitudinal".
     """
-    share_quantization = "asset_specific"
+    share_quantization = None
     optimizer_backend = "cc_pomo"
     style = "longitudinal"
     compute_target_positions_kwargs = {
@@ -368,7 +370,7 @@ def get_Cx_dag_prod_instance2(system: dtfsys.System) -> dtfcore.DAG:
 #  so we can generalize the class to be not E8 specific.
 def get_Cx_portfolio_prod_instance1(
     system: dtfsys.System,
-) -> occccpor.CcxtPortfolio:
+) -> obccccpo.CcxtPortfolio:
     """
     Build Portfolio instance for production.
     """
@@ -403,7 +405,7 @@ def get_Cx_portfolio_prod_instance1(
     _LOG.debug(hprint.to_str("trading_period_str"))
     pricing_method = "twap." + trading_period_str
     #
-    portfolio = occccpor.get_CcxtPortfolio_prod_instance1(
+    portfolio = obccccpo.get_CcxtPortfolio_prod_instance1(
         run_mode,
         cf_config_strategy,
         market_data,
