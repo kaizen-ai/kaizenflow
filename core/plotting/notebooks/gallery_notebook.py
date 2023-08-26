@@ -181,4 +181,23 @@ _, axes = plt.subplots(2, 2, figsize=config["figsize"])
 axes_flat = axes.flatten()
 cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
 
+# %% [markdown]
+# # `plot_projection()`
+
+# %%
+df = cptetepl.Test_plots.get_plot_projection1()
+
+# %%
+special_values = [1]
+cplmiplo.plot_projection(df, special_values=special_values)
+
+# %%
+df = df.replace({0: None})
+fig = plt.figure()
+ax = fig.add_axes([0, 0, 1, 1])
+mode = "scatter"
+cplmiplo.plot_projection(df, mode=mode, ax=ax)
+
+
+
 # %%

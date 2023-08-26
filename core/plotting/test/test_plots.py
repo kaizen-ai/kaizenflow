@@ -65,6 +65,22 @@ class Test_plots(unittest.TestCase):
         srs = pd.Series(samples, index=index)
         return srs
 
+    @staticmethod                                                                                                                                                          
+    def get_plot_projection1() -> pd.DataFrame:
+        """
+        Generate a test DataFrame for the plot_projection function.
+        """
+        data = [
+            [1, 1, 0, 1],
+            [0, 1, 0, 1],
+            [0, 0, 1, 1],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+        ]
+        index = pd.date_range(start="2023-01-01", periods=len(data), freq="D")
+        df = pd.DataFrame(data, index=index)                                                                                                                               
+        return df
+
     def test_plot_histograms_and_lagged_scatterplot1(self) -> None:
         """
         Smoke test for `plot_histograms_and_lagged_scatterplot()`.
@@ -164,3 +180,28 @@ class Test_plots(unittest.TestCase):
         """
         test_df = self.get_test_plot_df1()
         cplmiplo.plot_autocorrelation(test_df)
+
+    def test_plot_projection1(self) -> None:
+        """
+        Smoke test for `plot_projection()`.
+        """
+        test_df = self.get_plot_projection1()
+        special_values = [0]
+        cplmiplo.plot_projection(test_df, special_values=special_values)
+              
+    def test_plot_projection2(self) -> None:
+        """
+        Smoke test for `plot_projection()`.
+
+        - `mode` is 'scatter'
+        - `ax` is used for plotting
+        """
+        # Set input values with some empty values.
+        test_df = self.get_plot_projection1()
+        test_df = test_df.replace({0: None})
+        # Set params.
+        fig = plt.figure()
+        ax = fig.add_axes([0, 0, 1, 1])
+        mode = "scatter"
+        # Run.
+        cplmiplo.plot_projection(test_df, mode=mode, ax=ax)   
