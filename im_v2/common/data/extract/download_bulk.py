@@ -90,6 +90,8 @@ def _run(args: argparse.Namespace) -> None:
             # TODO(Vlad): Temporary stick to daily data for Binance.
             time_period=imvbdexex.BinanceNativeTimePeriod.DAILY,
         )
+    else:
+        hdbg.dfatal(f"Vendor {vendor} is not supported.")
     imvcdeexut.download_historical_data(args, exchange)
 
 
