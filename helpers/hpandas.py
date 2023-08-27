@@ -208,8 +208,6 @@ def dassert_time_indexed_df(
     """
     Validate that input dataframe is time indexed and well-formed.
 
-    Works for both single and multi-indexed dataframes.
-
     :param df: dataframe to validate
     :param allow_empty: allow empty data frames
     :param strictly_increasing: if True the index needs to be strictly increasing,
@@ -230,11 +228,7 @@ def dassert_time_indexed_df(
     # Check that the index is in datetime format.
     dassert_index_is_datetime(df)
     # Check that the passed timestamp has timezone info.
-    index_item = df.index[0]
-    if isinstance(index_item, tuple):
-        # In case of multi index assume that the first level is a datetime.
-        index_item = index_item[0]
-    hdateti.dassert_has_tz(index_item)
+    hdateti.dassert_has_tz(df.index[0])
 
 
 def dassert_valid_remap(to_remap: List[str], remap_dict: Dict[str, str]) -> None:
