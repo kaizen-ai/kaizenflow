@@ -29,5 +29,3 @@ def validate_vendor_arg(vendor: str, args: argparse.Namespace) -> None:
             raise RuntimeError(
                 f"--universe_part argument is mandatory for {vendor}"
             )
-    else:
-        hdbg.dfatal(f"Vendor {vendor} is not supported.")
