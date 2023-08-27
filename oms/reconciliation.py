@@ -13,7 +13,6 @@ import re
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
 import core.config as cconfig
@@ -56,6 +55,30 @@ def get_asset_slice(df: pd.DataFrame, asset_id: int) -> pd.DataFrame:
 # #############################################################################
 # Config
 # #############################################################################
+
+
+def get_reconciliation_configs(
+    system_log_dir: str,
+) -> cconfig.ConfigList:
+    """
+    Build reconciliation config with default values and provided system log
+    dir.
+    """
+    #
+    dag_builder_name = "C3a"
+    start_timestamp_as_str = "20230802_154500"
+    end_timestamp_as_str = "20230802_160000"
+    run_mode = "prod"
+    mode = "scheduled"
+    config_list = build_reconciliation_configs(
+        system_log_dir,
+        dag_builder_name,
+        start_timestamp_as_str,
+        end_timestamp_as_str,
+        run_mode,
+        mode,
+    )
+    return config_list
 
 
 # TODO(Grisha): separate crypto and equities (e.g., create 2 functions).
@@ -2012,177 +2035,6 @@ def load_target_position_versions(
             df = df.loc[:end_timestamp]
         dfs[run] = df
     return dfs
-
-
-# #############################################################################
-# Portfolio/order reconciliation
-# #############################################################################
-
-
-def compute_shares_traded(
-    portfolio_df: pd.DataFrame,
-    order_df: pd.DataFrame,
-    freq: str,
-) -> pd.DataFrame:
-    """
-    Compute the number of shares traded between portfolio snapshots.
-
-    :param portfolio_df: dataframe reconstructed from logged `Portfolio`
-        object
-    :param order_df: dataframe constructed from logged `Order` objects
-    :freq: bar frequency for dataframe index rounding (for bar alignment and
-        easy merging)
-    :return: multilevel column dataframe with shares traded, targets,
-        estimated benchmark cost per share, and underfill counts
-    """
-    # Process `portfolio_df`.
-    hdbg.dassert_isinstance(portfolio_df, pd.DataFrame)
-    hdbg.dassert_in("executed_trades_shares", portfolio_df.columns)
-    hdbg.dassert_in("executed_trades_notional", portfolio_df.columns)
-    portfolio_df.index = portfolio_df.index.round(freq)
-    executed_trades_shares = portfolio_df["executed_trades_shares"]
-    executed_trades_notional = portfolio_df["executed_trades_notional"]
-    # Divide the notional flow (signed) by the shares traded (signed)
-    # to get the estimated (positive) price at which the trades took place.
-    executed_trades_price_per_share = executed_trades_notional.abs().divide(
-        executed_trades_shares
-    )
-    # Process `order_df`.
-    hdbg.dassert_isinstance(order_df, pd.DataFrame)
-    hdbg.dassert_is_subset(
-        ["end_timestamp", "asset_id", "diff_num_shares"], order_df.columns
-    )
-    # Pivot the order dataframe.
-    order_share_targets = order_df.pivot(
-        index="end_timestamp",
-        columns="asset_id",
-        values="diff_num_shares",
-    )
-    order_share_targets.index = order_share_targets.index.round(freq)
-    # Compute underfills.
-    share_target_sign = np.sign(order_share_targets)
-    underfill = share_target_sign * (order_share_targets - executed_trades_shares)
-    # Combine into a multi-column dataframe.
-    df = pd.concat(
-        {
-            "shares_traded": executed_trades_shares,
-            "order_share_target": order_share_targets,
-            "executed_trades_price_per_shares": executed_trades_price_per_share,
-            "underfill": underfill,
-        },
-        axis=1,
-    )
-    # The indices may not perfectly agree in the concat, and so we perform
-    # another fillna and int casting.
-    df["underfill"] = df["underfill"].fillna(0).astype(int)
-    return df
-
-
-# #############################################################################
-# Costs derived from Portfolio and Target Positions
-# #############################################################################
-
-
-def compute_notional_costs(
-    portfolio_df: pd.DataFrame,
-    target_position_df: pd.DataFrame,
-) -> pd.DataFrame:
-    """
-    Compute notional slippage and underfill costs.
-
-    This is more accurate than slippage computed from `Portfolio` alone,
-    because `target_position_df` provides baseline prices even when
-    `holdings_shares` is zero (in which case we cannot compute the
-    baseline price from `Portfolio`).
-    """
-    executed_trades_shares = portfolio_df["executed_trades_shares"]
-    target_trades_shares = target_position_df["target_trades_shares"]
-    underfill_share_count = (
-        target_trades_shares.shift(1).abs() - executed_trades_shares.abs()
-    )
-    # Get baseline price.
-    price = target_position_df["price"]
-    # Compute underfill opportunity cost with respect to baseline price.
-    side = np.sign(target_position_df["target_trades_shares"].shift(2))
-    underfill_notional_cost = (
-        side * underfill_share_count.shift(1) * price.subtract(price.shift(1))
-    )
-    # Compute notional slippage.
-    executed_trades_notional = portfolio_df["executed_trades_notional"]
-    slippage_notional = executed_trades_notional - (
-        price * executed_trades_shares
-    )
-    # Aggregate results.
-    cost_df = pd.concat(
-        {
-            "underfill_notional_cost": underfill_notional_cost,
-            "slippage_notional": slippage_notional,
-        },
-        axis=1,
-    )
-    return cost_df
-
-
-def summarize_notional_costs(df: pd.DataFrame, aggregation: str) -> pd.DataFrame:
-    """
-    Aggregate notional costs by bar or by asset.
-
-    :param df: output of `compute_notional_costs()`
-    :param aggregation: "by_bar" or "by_asset"
-    :return: dataframe with columns [
-        "slippage_notional",
-        "underfill_notional_cost",
-        "net",
-      ]
-    """
-    if aggregation == "by_bar":
-        agg = df.groupby(axis=1, level=0).sum(min_count=1)
-    elif aggregation == "by_asset":
-        agg = df.sum(min_count=1).unstack(level=-1)
-        agg = agg.T
-    else:
-        raise ValueError("Invalid aggregation=%s", aggregation)
-    agg["net"] = agg.sum(axis=1, min_count=1)
-    return agg
-
-
-def apply_costs_to_baseline(
-    baseline_portfolio_stats_df: pd.DataFrame,
-    portfolio_stats_df: pd.DataFrame,
-    portfolio_df: pd.DataFrame,
-    target_position_df: pd.DataFrame,
-) -> pd.DataFrame:
-    srs = []
-    # Add notional pnls.
-    baseline_pnl = baseline_portfolio_stats_df["pnl"].rename("baseline_pnl")
-    srs.append(baseline_pnl)
-    pnl = portfolio_stats_df["pnl"].rename("pnl")
-    srs.append(pnl)
-    # Compute notional costs.
-    costs = compute_notional_costs(portfolio_df, target_position_df)
-    slippage = costs["slippage_notional"].sum(axis=1).rename("slippage_notional")
-    srs.append(slippage)
-    underfill_cost = (
-        costs["underfill_notional_cost"]
-        .sum(axis=1)
-        .rename("underfill_notional_cost")
-    )
-    srs.append(underfill_cost)
-    # Adjust baseline pnl by costs.
-    baseline_pnl_minus_costs = (baseline_pnl - slippage - underfill_cost).rename(
-        "baseline_pnl_minus_costs"
-    )
-    srs.append(baseline_pnl_minus_costs)
-    # Compare adjusted baseline pnl to pnl.
-    baseline_pnl_minus_costs_minus_pnl = (baseline_pnl_minus_costs - pnl).rename(
-        "baseline_pnl_minus_costs_minus_pnl"
-    )
-    srs.append(baseline_pnl_minus_costs_minus_pnl)
-    # Compare baseline pnl to pnl.
-    baseline_pnl_minus_pnl = (baseline_pnl - pnl).rename("baseline_pnl_minus_pnl")
-    srs.append(baseline_pnl_minus_pnl)
-    df = pd.concat(srs, axis=1)
-    return df
 
 
 # #############################################################################

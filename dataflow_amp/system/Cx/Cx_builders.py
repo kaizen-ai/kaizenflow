@@ -85,57 +85,10 @@ def get_Cx_RealTimeMarketData_prod_instance1(
 # #############################################################################
 
 
-def get_Cx_order_config_prod_instance1(
+def _get_ProcessForecastsNode_dict_instance1(
     system: dtfsys.System,
-    order_duration_in_mins: int,
-) -> Dict[str, Any]:
-    """
-    Get the order config prod instance.
-
-    :param system: the `System` class
-    :param order_duration_in_mins: see `TargetPositionAndOrderGenerator`
-    :return: config for placing the orders, e.g.,
-        ```
-        order_type: price@custom_twap
-        passivity_factor: 0.55
-        order_duration_in_mins: 5
-        ```
-    """
-    # Run mode is specific of the `Cx_ProdSystem` and is not used in other cases.
-    if "run_mode" in system.config:
-        run_mode = system.config.get("run_mode")
-        if run_mode == "prod":
-            # Place limit orders in the TWAP fashion.
-            order_type = "price@custom_twap"
-            passivity_factor = 0.55
-        elif run_mode in ["paper_trading", "simulation"]:
-            # The Broker is mocked. Thus, it does not matter which order type to use
-            # since there is no real execution.
-            order_type = "price@twap"
-            passivity_factor = None
-        else:
-            raise ValueError(f"Unsupported run_mode={run_mode}")
-    else:
-        # The params below are irrelevant for the unit tests since there is no
-        # interaction with an exchange. It is ok to use the market order type.
-        order_type = "price@twap"
-        passivity_factor = None
-    order_config = {
-        "order_type": order_type,
-        "passivity_factor": passivity_factor,
-        "order_duration_in_mins": order_duration_in_mins,
-    }
-    return order_config
-
-
-# TODO(Grisha): separate the unit test instance from the
-# prod instance.
-def get_ProcessForecastsNode_dict_instance1(
-    system: dtfsys.System,
-    order_duration_in_mins: int,
-    optimizer_backend: str,
-    style: str,
-    compute_target_positions_kwargs: Any,
+    order_config: Dict[str, Any],
+    optimizer_config: Dict[str, Any],
     root_log_dir: str,
 ) -> Dict[str, Any]:
     """
@@ -145,10 +98,6 @@ def get_ProcessForecastsNode_dict_instance1(
     dag_builder = system.config["dag_builder_object"]
     volatility_col = dag_builder.get_column_name("volatility")
     prediction_col = dag_builder.get_column_name("prediction")
-    # Get the order config.
-    order_config = get_Cx_order_config_prod_instance1(
-        system, order_duration_in_mins
-    )
     #
     process_forecasts_node_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
         system.portfolio,
@@ -156,9 +105,7 @@ def get_ProcessForecastsNode_dict_instance1(
         volatility_col,
         spread_col,
         order_config,
-        style,
-        optimizer_backend,
-        compute_target_positions_kwargs,
+        optimizer_config,
         root_log_dir,
     )
     return process_forecasts_node_dict
@@ -171,37 +118,22 @@ def get_ProcessForecastsNode_dict_instance1(
 
 def _get_Cx_RealTimeDag(
     system: dtfsys.System,
-    share_quantization: Optional[int],
-    optimizer_backend: str,
-    style: str,
-    compute_target_positions_kwargs: Any,
+    order_config: Dict[str, Any],
+    optimizer_config: Dict[str, Any],
     root_log_dir: str,
+    share_quantization: Optional[int],
 ) -> dtfcore.DAG:
     """
     Build a DAG with `RealTimeDataSource` and `ForecastProcessorNode`.
     """
     hdbg.dassert_isinstance(system, dtfsys.System)
     system = dtfsys.apply_history_lookback(system)
-    dag_builder = system.config.get_and_mark_as_used(
-        "dag_builder_object", mark_key_as_used=False
-    )
-    dag_config = system.config.get_and_mark_as_used(
-        "dag_config", mark_key_as_used=False
-    )
     dag = dtfsys.add_real_time_data_source(system)
     # Configure a `ProcessForecastNode`.
-    mark_key_as_used = True
-    trading_period_str = dag_builder.get_trading_period(
-        dag_config, mark_key_as_used
-    )
-    # TODO(gp): Add a param to `get_trading_period()` to return the int.
-    order_duration_in_mins = int(trading_period_str.replace("T", ""))
-    process_forecasts_node_dict = get_ProcessForecastsNode_dict_instance1(
+    process_forecasts_node_dict = _get_ProcessForecastsNode_dict_instance1(
         system,
-        order_duration_in_mins,
-        optimizer_backend,
-        style,
-        compute_target_positions_kwargs,
+        order_config,
+        optimizer_config,
         root_log_dir,
     )
     system.config["process_forecasts_node_dict"] = cconfig.Config.from_dict(
@@ -260,24 +192,36 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     Build a DAG for unit tests with `RealTimeDataSource` and
     `ForecastProcessorNode` from a system config.
     """
-    # Round to a meaningful number of decimal places for the unit tests, otherwise
-    # the division is performed differently on different machines, see CmTask4707.
-    share_quantization = 9
-    optimizer_backend = "pomo"
-    style = "cross_sectional"
+    order_config = {
+        "order_type": "price@twap",
+        "passivity_factor": None,
+        "order_duration_in_mins": 5,
+    }
+    #
     compute_target_positions_kwargs = {
         "bulk_frac_to_remove": 0.0,
         "bulk_fill_method": "zero",
         "target_gmv": 1e5,
     }
+    optimizer_config = {
+        "backend": "pomo",
+        "params": {
+            "style": "cross_sectional",
+            "kwargs": compute_target_positions_kwargs,
+        },
+    }
+    #
     root_log_dir = None
+    # Round to a meaningful number of decimal places for the unit tests, otherwise
+    # the division is performed differently on different machines, see CmTask4707.
+    share_quantization = 9
+    #
     dag = _get_Cx_RealTimeDag(
         system,
-        share_quantization,
-        optimizer_backend,
-        style,
-        compute_target_positions_kwargs,
+        order_config,
+        optimizer_config,
         root_log_dir,
+        share_quantization,
     )
     return dag
 
@@ -288,43 +232,38 @@ def get_Cx_dag_prod_instance1(system: dtfsys.System) -> dtfcore.DAG:
 
     Compute target posisions style is "cross_sectional".
     """
-    share_quantization = None
     # TODO(Grisha): use `Config.get_and_mark_as_used()`.
-    # Infer the optimizer config values from `System`.
-    optimizer_backend = system.config[
+    # Infer order and optimizer config values from `System`.
+    order_config = system.config[
+        "process_forecasts_node_dict",
+        "process_forecasts_dict",
+        "order_config",
+    ]
+    optimizer_config = system.config[
         "process_forecasts_node_dict",
         "process_forecasts_dict",
         "optimizer_config",
-        "backend",
     ]
-    style = system.config[
-        "process_forecasts_node_dict",
-        "process_forecasts_dict",
-        "optimizer_config",
-        "params",
-        "style",
-    ]
-    compute_target_positions_kwargs = system.config[
-        "process_forecasts_node_dict",
-        "process_forecasts_dict",
-        "optimizer_config",
-        "params",
-        "kwargs",
-    ]
+    # Convert to dict in order to comply with the required format.
+    order_config = order_config.to_dict()
+    optimizer_config = optimizer_config.to_dict()
+    #
     root_log_dir = system.config.get_and_mark_as_used(
         ("system_log_dir"), default_value=None
     )
+    share_quantization = None
+    #
     dag = _get_Cx_RealTimeDag(
         system,
-        share_quantization,
-        optimizer_backend,
-        style,
-        compute_target_positions_kwargs,
+        order_config,
+        optimizer_config,
         root_log_dir,
+        share_quantization,
     )
     return dag
 
 
+# TODO(Dan): Not used, deprecate.
 # TODO(Grisha): somehow pass params via a cmd line instead of
 # creating multiple prod instances.
 def get_Cx_dag_prod_instance2(system: dtfsys.System) -> dtfcore.DAG:
@@ -333,9 +272,12 @@ def get_Cx_dag_prod_instance2(system: dtfsys.System) -> dtfcore.DAG:
 
     Compte target posisions style is "longitudinal".
     """
-    share_quantization = None
-    optimizer_backend = "cc_pomo"
-    style = "longitudinal"
+    order_config = {
+        "order_type": "price@twap",
+        "passivity_factor": None,
+        "order_duration_in_mins": 5,
+    }
+    #
     compute_target_positions_kwargs = {
         "prediction_abs_threshold": 0.0,
         "volatility_to_spread_threshold": 0.0,
@@ -346,16 +288,25 @@ def get_Cx_dag_prod_instance2(system: dtfsys.System) -> dtfcore.DAG:
         "modulate_using_prediction_magnitude": False,
         "constant_decorrelation_coefficient": 0.0,
     }
+    optimizer_config = {
+        "backend": "pomo",
+        "params": {
+            "style": "longitudinal",
+            "kwargs": compute_target_positions_kwargs,
+        },
+    }
+    #
     root_log_dir = system.config.get_and_mark_as_used(
         ("system_log_dir"), default_value=None
     )
+    share_quantization = None
+    #
     dag = _get_Cx_RealTimeDag(
         system,
-        share_quantization,
-        optimizer_backend,
-        style,
-        compute_target_positions_kwargs,
+        order_config,
+        optimizer_config,
         root_log_dir,
+        share_quantization,
     )
     return dag
 

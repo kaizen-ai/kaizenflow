@@ -22,7 +22,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_build_run_command_line1(hunitest.TestCase):
-    def run_fast_tests1_helper(self, is_dev_ck_return_value, exp) -> None:
+    def run_fast_tests1_helper(self, is_dev_ck_return_value: bool, exp: str) -> None:
         """
         Basic run fast tests.
 
@@ -190,7 +190,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         )
         self.assert_equal(act, exp)
 
-    def run_fast_tests5_helper(self, is_dev_ck_return_value, exp) -> None:
+    def run_fast_tests5_helper(self, is_dev_ck_return_value: bool, exp: str) -> None:
         """
         Basic run fast tests tee-ing to a file. Mock depending on
         is_dev_ck_return_value.
@@ -288,7 +288,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         is_dev_ck_return_value = False
         self.run_fast_tests6_helper(is_dev_ck_return_value, exp)
 
-    def run_fast_tests7_helper(self, is_dev_ck_return_value, exp) -> None:
+    def run_fast_tests7_helper(self, is_dev_ck_return_value: bool, exp: str) -> None:
         """
         Run fast tests with parallelization.
 

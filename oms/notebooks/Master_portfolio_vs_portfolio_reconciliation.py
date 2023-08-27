@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.14.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -25,6 +25,7 @@ from typing import List, Tuple
 import pandas as pd
 
 import core.config as cconfig
+import core.finance.portfolio_df_processing as cofinpdp
 import core.plotting as coplotti
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
@@ -272,7 +273,7 @@ hpandas.df_to_str(
 # OMS
 
 # %%
-shares_df = oms.compute_shares_traded(prod_portfolio_df, prod_order_df, "15T")
+shares_df = cofinpdp.compute_shares_traded(prod_portfolio_df, prod_order_df, "15T")
 
 # %%
 shares_df.columns.levels[0]

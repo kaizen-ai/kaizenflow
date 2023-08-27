@@ -28,6 +28,8 @@ import pandas as pd
 
 import core.config as cconfig
 import core.finance as cofinanc
+import core.finance.portfolio_df_processing.slippage as cfpdprsl
+import core.finance.target_position_df_processing as cftpdp
 import core.plotting as coplotti
 import core.statistics as costatis
 import dataflow_amp.system.Cx as dtfamsysc
@@ -36,7 +38,6 @@ import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import im_v2.common.universe as ivcu
-import oms
 import oms.broker.ccxt.ccxt_aggregation_functions as obccagfu
 import oms.broker.ccxt.ccxt_execution_quality as obccexqu
 import oms.broker.ccxt.ccxt_logs_reader as obcclore
@@ -239,14 +240,8 @@ child_order_df-ccxt_order_response_df={child_order_df.shape[0]-ccxt_order_respon
 )
 
 # %%
-# Extract ccxt_id from list.
-child_order_df["ccxt_id_as_single_value"] = child_order_df["ccxt_id"].apply(
-    lambda x: x[0]
-)
 # Get child orders that were generated but did not get an order response.no_response_orders = child_order_df[child_order_df["ccxt_id"] == "-1"]
-no_response_orders = child_order_df[
-    child_order_df["ccxt_id_as_single_value"] == -1
-]
+no_response_orders = child_order_df[child_order_df["ccxt_id"] == -1]
 no_response_orders["error_msg"] = no_response_orders["extra_params"].apply(
     lambda x: x.get("error_msg", "")
 )
@@ -517,7 +512,7 @@ target_position_df = obccexqu.convert_parent_orders_to_target_position_df(
 )
 
 # %%
-fills = oms.compute_fill_stats(target_position_df)
+fills = cftpdp.compute_fill_stats(target_position_df)
 hpandas.df_to_str(fills, num_rows=5, log_level=logging.INFO)
 
 # %%
@@ -541,7 +536,7 @@ portfolio_df = obccexqu.convert_bar_fills_to_portfolio_df(
 portfolio_df.head()
 
 # %%
-slippage = oms.compute_share_prices_and_slippage(portfolio_df)
+slippage = cfpdprsl.compute_share_prices_and_slippage(portfolio_df)
 hpandas.df_to_str(slippage, num_rows=5, log_level=logging.INFO)
 slippage["slippage_in_bps"].plot()
 
@@ -594,20 +589,20 @@ slippage_maker_taker_ecdfs.plot(yticks=np.arange(0, 1.1, 0.1))
 # ## Compute notional costs
 
 # %%
-notional_costs = omreconc.compute_notional_costs(
+notional_costs = cftpdp.compute_notional_costs(
     portfolio_df,
     target_position_df,
 )
 hpandas.df_to_str(notional_costs, num_rows=5, log_level=logging.INFO)
 
 # %%
-omreconc.summarize_notional_costs(notional_costs, "by_bar").plot(kind="bar")
+cftpdp.summarize_notional_costs(notional_costs, "by_bar").plot(kind="bar")
 
 # %%
-omreconc.summarize_notional_costs(notional_costs, "by_asset").plot(kind="bar")
+cftpdp.summarize_notional_costs(notional_costs, "by_asset").plot(kind="bar")
 
 # %%
-omreconc.summarize_notional_costs(notional_costs, "by_bar").sum()
+cftpdp.summarize_notional_costs(notional_costs, "by_bar").sum()
 
 # %%
 portfolio_stats_df = cofinanc.compute_bar_metrics(
@@ -628,3 +623,5 @@ coplotti.plot_portfolio_stats(portfolio_stats_df)
 
 # %%
 print(config.to_string(mode="verbose"))
+
+# %%

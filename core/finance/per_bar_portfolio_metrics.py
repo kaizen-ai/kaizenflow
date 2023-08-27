@@ -15,6 +15,7 @@ import helpers.hpandas as hpandas
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(Paul): Move to `portfolio_df_processing/`.
 def compute_bar_metrics(
     notional_positions: pd.DataFrame,
     notional_flows: pd.DataFrame,

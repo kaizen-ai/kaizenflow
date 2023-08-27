@@ -35,6 +35,8 @@ import pandas as pd
 
 import core.config as cconfig
 import core.finance as cofinanc
+import core.finance.portfolio_df_processing.slippage as cfpdprsl
+import core.finance.target_position_df_processing as cftpdp
 import core.plotting as coplotti
 import core.statistics as costatis
 import dataflow.model as dtfmod
@@ -586,7 +588,7 @@ hpandas.df_to_str(sim_order_df, num_rows=5, log_level=logging.INFO)
 # # Fills statistics
 
 # %%
-fills = oms.compute_fill_stats(prod_target_position_df)
+fills = cftpdp.compute_fill_stats(prod_target_position_df)
 hpandas.df_to_str(fills, num_rows=5, log_level=logging.INFO)
 
 # %%
@@ -601,7 +603,7 @@ coplotti.plot_boxplot(fills[col], "by_col", ylabel=col)
 # # Slippage
 
 # %%
-slippage = oms.compute_share_prices_and_slippage(portfolio_dfs["prod"])
+slippage = cfpdprsl.compute_share_prices_and_slippage(portfolio_dfs["prod"])
 hpandas.df_to_str(slippage, num_rows=5, log_level=logging.INFO)
 
 # %%
@@ -640,23 +642,23 @@ slippage_benchmark_profitability_ecdfs.plot(yticks=np.arange(0, 1.1, 0.1))
 # # Total cost accounting
 
 # %%
-notional_costs = oms.compute_notional_costs(
+notional_costs = cftpdp.compute_notional_costs(
     portfolio_dfs["prod"],
     prod_target_position_df,
 )
 hpandas.df_to_str(notional_costs, num_rows=5, log_level=logging.INFO)
 
 # %%
-oms.summarize_notional_costs(notional_costs, "by_bar").plot(kind="bar")
+cftpdp.summarize_notional_costs(notional_costs, "by_bar").plot(kind="bar")
 
 # %%
-oms.summarize_notional_costs(notional_costs, "by_asset").plot(kind="bar")
+cftpdp.summarize_notional_costs(notional_costs, "by_asset").plot(kind="bar")
 
 # %%
-oms.summarize_notional_costs(notional_costs, "by_bar").sum()
+cftpdp.summarize_notional_costs(notional_costs, "by_bar").sum()
 
 # %%
-cost_df = oms.apply_costs_to_baseline(
+cost_df = cftpdp.apply_costs_to_baseline(
     portfolio_stats_dfs["research"],
     portfolio_stats_dfs["prod"],
     portfolio_dfs["prod"],

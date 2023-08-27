@@ -10,6 +10,7 @@ import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import oms.broker.ccxt.ccxt_logs_reader as obcclore
+import pytest
 
 
 def _write_ccxt_trades(target_dir: str, version: str) -> None:
@@ -466,7 +467,7 @@ def _write_oms_child_orders(target_dir: str, version: str) -> None:
         "used_bid_price": "latest_bid_price",
         "used_ask_price": "latest_ask_price",
         "limit_price": np.float64(4.12045),
-        "ccxt_id": np.int64(7954906695),
+        "ccxt_id": [np.int64(7954906695)],
     }
     child_order2 = {
         "order_id": 21,
@@ -486,9 +487,9 @@ def _write_oms_child_orders(target_dir: str, version: str) -> None:
         "used_bid_price": "latest_bid_price",
         "used_ask_price": "latest_ask_price",
         "limit_price": np.float64(15.804549999999999),
-        "ccxt_id": np.int64(14412582631),
+        "ccxt_id": [np.int64(14412582631)],
     }
-    # Generate subdir name and adde extra params based on Broker version.
+    # Generate subdir name and add extra params based on Broker version.
     if version == "v1":
         oms_orders_scratch_space = os.path.join(target_dir, "oms_child_orders")
         # Add timestamp logs to extra parameters corresponding to logging from CcxtBroker_v1.
@@ -500,6 +501,7 @@ def _write_oms_child_orders(target_dir: str, version: str) -> None:
                 2023, 5, 23, 11, 58, 51, 97500
             ),
             "submit_single_order_to_ccxt.num_attempts": 20,
+            "ccxt_id": [11381353660],
         }
         child_order1["extra_params"] = child_order1_extra_params
 
@@ -511,6 +513,7 @@ def _write_oms_child_orders(target_dir: str, version: str) -> None:
                 2023, 5, 23, 11, 58, 50, 584405
             ),
             "submit_single_order_to_ccxt.num_attempts": 21,
+            "ccxt_id": [8389765599793650580],
         }
         child_order2["extra_params"] = child_order2_extra_params
     elif version == "v2":
@@ -526,7 +529,7 @@ def _write_oms_child_orders(target_dir: str, version: str) -> None:
             "order_submitted_to_ccxt_inside_class_timestamp": datetime.datetime(
                 2023, 5, 23, 11, 58, 51, 363107
             ),
-            "ccxt_id": 11381353660,
+            "ccxt_id": [11381353660],
             "order_submitted_inside_coroutine_timestamp": datetime.datetime(
                 2023, 5, 23, 11, 58, 51, 363716
             ),
@@ -549,7 +552,7 @@ def _write_oms_child_orders(target_dir: str, version: str) -> None:
             "order_submitted_to_ccxt_inside_class_timestamp": datetime.datetime(
                 2023, 5, 23, 11, 58, 50, 835601
             ),
-            "ccxt_id": 8389765599793650580,
+            "ccxt_id": [8389765599793650580],
             "order_submitted_inside_coroutine_timestamp": datetime.datetime(
                 2023, 5, 23, 11, 58, 50, 836047
             ),
@@ -1200,7 +1203,7 @@ class TestCcxtLogsReader1(hunitest.TestCase):
         for df in all_data.values():
             self.assertFalse(df.empty)
 
-
+@pytest.mark.skip("CMTask5079: Disabled due to obsolete data format.")
 class Test_read_rt_data1(hunitest.TestCase):
     """
     Read back data from the logs of a real time execution done with

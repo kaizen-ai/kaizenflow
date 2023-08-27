@@ -49,6 +49,24 @@ def _get_test_config3() -> cconfig.Config:
     return config
 
 
+def _get_test_config4() -> cconfig.Config:
+    """
+    Build a test config with several key levels.
+    """
+    # Set config values.
+    config_dict = {
+        "key1": "val1",
+        "key2": {
+            "key2.1": {"key3.1": "val3"},
+            "key2.2": 2,
+        },
+    }
+    # Convert dict to a config with overwritable values.
+    config = cconfig.Config.from_dict(config_dict)
+    config.update_mode = "overwrite"
+    return config
+
+
 # #############################################################################
 # Test_validate_configs1
 # #############################################################################
@@ -98,7 +116,7 @@ class Test_apply_config_overrides1(hunitest.TestCase):
         Verify that config values are updated correctly.
         """
         # Set test config and values to update.
-        config = _get_test_config1().copy()
+        config = _get_test_config1()
         val1 = "tanh"
         val2 = "Natural Gas"
         args = argparse.Namespace(
@@ -111,6 +129,28 @@ class Test_apply_config_overrides1(hunitest.TestCase):
         actual = cconfig.apply_config_overrides(config, args)
         self.assertEqual(actual["build_model"]["activation"], val1)
         self.assertEqual(actual["build_targets"]["target_asset"], val2)
+
+    def test2(self) -> None:
+        """
+        Verify that config values are updated correctly.
+        """
+        # Set test config and values to update.
+        config = _get_test_config4()
+        val1 = "new_val1"
+        val2 = 22
+        val3 = "new_val3"
+        args = argparse.Namespace(
+            set_config_value=[
+                f'("key1"),("{val1}")',
+                f'("key2","key2.2"),(int({val2}))',
+                f'("key2", "key2.1", "key3.1"),("{val3}")',
+            ]
+        )
+        # Run and check that config values are updated.
+        cconfig.apply_config_overrides(config, args)
+        self.assertEqual(config["key1"], val1)
+        self.assertEqual(config["key2"]["key2.2"], val2)
+        self.assertEqual(config["key2"]["key2.1"]["key3.1"], val3)
 
 
 # #############################################################################

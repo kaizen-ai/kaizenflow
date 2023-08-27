@@ -23,6 +23,7 @@ import logging
 import os
 
 import core.config as cconfig
+import core.finance.portfolio_df_processing as cofinpdp
 import core.plotting as coplotti
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
@@ -150,35 +151,38 @@ coplotti.plot_portfolio_stats(
 )
 
 # %%
-fep = dtfmod.ForecastEvaluatorFromPrices(
-    **config["column_names"],
-)
-
-# %%
 output_col = "pnl"
-binned_df = fep.bin_annotated_portfolio_df(
-    portfolio_df, output_col=output_col, **config["bin_annotated_portfolio_df_kwargs"],
+binned_df = cofinpdp.bin_prediction_annotated_portfolio_df(
+    portfolio_df,
+    output_col=output_col,
+    **config["bin_annotated_portfolio_df_kwargs"],
 )
 binned_df["mean"].mean(axis=1).plot(title=output_col)
 
 # %%
 output_col = "pnl_in_bps"
-binned_df = fep.bin_annotated_portfolio_df(
-    portfolio_df, output_col=output_col, **config["bin_annotated_portfolio_df_kwargs"],
+binned_df = cofinpdp.bin_prediction_annotated_portfolio_df(
+    portfolio_df,
+    output_col=output_col,
+    **config["bin_annotated_portfolio_df_kwargs"],
 )
 binned_df["mean"].mean(axis=1).plot(title=output_col)
 
 # %%
 output_col = "sgn_corr"
-binned_df = fep.bin_annotated_portfolio_df(
-    portfolio_df, output_col=output_col, **config["bin_annotated_portfolio_df_kwargs"],
+binned_df = cofinpdp.bin_prediction_annotated_portfolio_df(
+    portfolio_df,
+    output_col=output_col,
+    **config["bin_annotated_portfolio_df_kwargs"],
 )
 binned_df["mean"].mean(axis=1).plot(title=output_col)
 
 # %%
 output_col = "hit_rate"
-binned_df = fep.bin_annotated_portfolio_df(
-    portfolio_df, output_col=output_col, **config["bin_annotated_portfolio_df_kwargs"],
+binned_df = cofinpdp.bin_prediction_annotated_portfolio_df(
+    portfolio_df,
+    output_col=output_col,
+    **config["bin_annotated_portfolio_df_kwargs"],
 )
 binned_df["mean"].mean(axis=1).plot(title=output_col)
 

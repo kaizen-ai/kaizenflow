@@ -8,7 +8,7 @@ import asyncio
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-import numpy as np
+import nest_asyncio
 import pandas as pd
 
 import helpers.hasyncio as hasynci
@@ -20,6 +20,12 @@ import oms.broker.ccxt.abstract_ccxt_broker as obcaccbr
 import oms.order.order as oordorde
 
 _LOG = logging.getLogger(__name__)
+
+# Added because of "RuntimeError: This event loop is already running"
+# https://stackoverflow.com/questions/46827007/runtimeerror-this-event-loop-is-already-running-in-python
+# TODO(gp): Investigate if it's a limitation of `asyncio` or a "design error" on our
+# side.
+nest_asyncio.apply()
 
 
 # #############################################################################
@@ -140,13 +146,12 @@ class CcxtBroker_v2(obcaccbr.AbstractCcxtBroker):
         # E.g., for 5-minute interval for parent orders and one wave of child orders per minute
         # there are 5 waves.
         execution_freq = pd.Timedelta(execution_freq)
-        num_waves = self._calculate_num_twap_child_order_waves(execution_end_timestamp, execution_freq)
+        num_waves = self._calculate_num_twap_child_order_waves(
+            execution_end_timestamp, execution_freq
+        )
         _LOG.debug(hprint.to_str("num_waves"))
         parent_order_ids_to_child_order_shares = (
-            self._calculate_twap_child_order_size(
-                parent_orders,
-                num_waves
-            )
+            self._calculate_twap_child_order_size(parent_orders, num_waves)
         )
         _LOG.debug(
             "TWAP child order size calculated timestamp=%s",
@@ -167,21 +172,9 @@ class CcxtBroker_v2(obcaccbr.AbstractCcxtBroker):
                 self._log_dir, self._get_wall_clock_time, parent_orders_copy
             )
             child_orders.extend(child_orders_iter)
-            # Cancel orders after waiting for them to finish.
-            # Note: the alignment of the waiting time for the next minute
-            # is handled in `_submit_twap_child_order` coroutine.
-            hasynci.sync_wait_until(
-                self._get_wall_clock_time().ceil(execution_freq),
-                self._get_wall_clock_time,
-            )
-            _LOG.debug(
-                "After syncing with next child wave=%s",
-                self.market_data.get_wall_clock_time(),
-            )
-            await self.cancel_open_orders_for_symbols(parent_orders_ccxt_symbols)
-            _LOG.debug(
-                "Orders cancelled timestamp=%s",
-                self.market_data.get_wall_clock_time(),
+            self._cancel_orders_and_sync_with_next_wave_start(
+                parent_orders_ccxt_symbols,
+                execution_freq,
             )
             # Log CCXT fills and trades.
             if self._log_dir is not None:
@@ -258,6 +251,49 @@ class CcxtBroker_v2(obcaccbr.AbstractCcxtBroker):
             hdbg.dassert(result, message)
         else:
             return result
+
+    def _cancel_orders_and_sync_with_next_wave_start(
+        self, 
+        parent_orders_ccxt_symbols: List[str],
+        execution_freq: pd.Timedelta
+    ) -> None:
+        """
+        Wait until the end of current wave, cancel orders and sync to next wave
+        start.
+
+        In order to avoid occasional closing of an order "too-late" (
+        after the end of the bar), we start to cancel a little bit earlier,
+        details in #CmTask5129.
+        The flow:
+        - Wait right until the end of the current wave minus a small delta.
+        - Cancel all orders from the most recent wave.
+        - Double check that we are in sync to start the next wave.
+        
+        :param parent_orders_ccxt_symbols: symbols to cancel orders for
+        :param execution_freq: wave execution frequency as pd.Timedelta
+        """
+        wait_until = self._get_wall_clock_time().ceil(execution_freq)
+        hasynci.sync_wait_until(
+            wait_until - pd.Timedelta(seconds=1),
+            self._get_wall_clock_time,
+        )
+        asyncio.get_running_loop().run_until_complete(
+            self.cancel_open_orders_for_symbols(parent_orders_ccxt_symbols)
+        )
+        _LOG.debug(
+            "Orders cancelled timestamp=%s",
+            self.market_data.get_wall_clock_time(),
+        )
+        # Wait again in case the order cancellation was faster than expected
+        # and we are still in the same wave time-wise.
+        hasynci.sync_wait_until(
+            wait_until,
+            self._get_wall_clock_time,
+        )
+        _LOG.debug(
+            "After syncing with next child wave=%s",
+            self.market_data.get_wall_clock_time(),
+        )
 
     async def _log_last_wave_results(
         self, child_orders: List[oordorde.Order]

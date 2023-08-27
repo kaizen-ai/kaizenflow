@@ -758,6 +758,14 @@ class CcxtLogsReader:
         oms_child_orders_df = oms_child_orders_df.applymap(
             lambda x: x.tz_convert("UTC") if isinstance(x, pd.Timestamp) else x
         )
+        # Unpack ccxt_id from the list format.
+        # E.g. [12028516372] -> 12028516372.
+        hdbg.dassert_in("ccxt_id", oms_child_orders_df.columns)
+        # Make sure that all CCXT ID lists have length of 1.
+        hdbg.dassert_eq_all(set(oms_child_orders_df["ccxt_id"].str.len()), {1})
+        oms_child_orders_df["ccxt_id"] = oms_child_orders_df["ccxt_id"].apply(
+            lambda x: x[0]
+        )
         if unpack_extra_params:
             # Unpack 'extra params' dictionary into a DataFrame.
             extra_params_df = oms_child_orders_df["extra_params"].apply(pd.Series)

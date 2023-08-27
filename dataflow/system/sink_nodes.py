@@ -121,9 +121,7 @@ def get_ProcessForecastsNode_dict_example1(
     volatility_col: str,
     spread_col: Optional[str],
     order_config: Dict[str, Any],
-    style: str,
-    optimizer_backend: str,
-    compute_target_positions_kwargs: Dict[str, Any],
+    optimizer_config: Dict[str, Any],
     root_log_dir: Optional[str],
 ) -> Dict[str, Any]:
     """
@@ -144,13 +142,7 @@ def get_ProcessForecastsNode_dict_example1(
     process_forecasts_dict = {
         # Params for `ForecastProcessor`.
         "order_config": order_config,
-        "optimizer_config": {
-            "backend": optimizer_backend,
-            "params": {
-                "style": style,
-                "kwargs": compute_target_positions_kwargs,
-            },
-        },
+        "optimizer_config": optimizer_config,
         # Params for `process_forecasts()`.
         "execution_mode": "real_time",
         "log_dir": log_dir,

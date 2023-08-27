@@ -111,6 +111,8 @@ def apply_config_overrides(
     """
     Update the values in a config using the command line options.
 
+    The change is done inplace.
+
     :param config: config to update
     :param args: cmd line parameters
     :return: updated version of a config
@@ -118,17 +120,26 @@ def apply_config_overrides(
     args_dict = vars(args)
     _LOG.debug("args_dict=%s", args_dict)
     if args_dict["set_config_value"] is not None:
+        # Allow to overwrite config values for the function execution.
+        initial_config_update_mode = config.update_mode
+        config.update_mode = "overwrite"
         for arg_as_str in args_dict["set_config_value"]:
             _LOG.debug("arg_as_str=%s", arg_as_str)
             # E.g., `("foo","bar"),(bool("True"))``.
-            re_pattern = r"^\s*\((\S+)\),\((.*)\)\s*$"
+            re_pattern = r"^\(([^()]+)\),\((.*)\)$"
             match = re.match(re_pattern, arg_as_str)
+            hdbg.dassert_ne(
+                match,
+                None,
+                msg=f"No match is found for config_val={arg_as_str}.",
+            )
             n_groups_matches = len(match.groups())
             hdbg.dassert_eq(
                 2,
                 n_groups_matches,
                 msg=f"Must be exactly 2 groups matched, found={n_groups_matches}",
             )
+            # TODO(Dan): `key` -> `compound_key`?
             key, value = match.groups()
             # Convert the key into a tuple.
             key = eval("(" + key + ")")
@@ -148,8 +159,18 @@ def apply_config_overrides(
                         old_value,
                         new_value,
                     )
+            # TODO(Dan): We may want to assert if `compound_key` is in config.
+            # Otherwise we always risk a silent append of a useless param to config.
+            else:
+                _LOG.warning(
+                    "Adding a new compound_key=%s value=%s",
+                    key,
+                    new_value,
+                )
             # TODO(Grisha): use `config.update()` instead of `config[key] = value`.
             config[key] = new_value
+        # Set back the initial config update mode.
+        config.update_mode = initial_config_update_mode
     return config
 
 
@@ -159,10 +180,17 @@ def add_config_override_args(
     parser.add_argument(
         "--set_config_value",
         action="append",
-        # key,value = `("target_gmv"),(int(10000))`
-        # key,value = `("portfolio", "style"),("longitudinal")`
-        # key,value = `("portfolio", "val"),(int(3))`
-        help="(config tuple),(value as a Python expression)",
+        # TODO(Dan): Add unit tests for provided examples.
+        help="""
+        A string representation of 2 tuples separated by comma.
+        The first tuple has 1 or more string keys separated by commas.
+        The second tuple contains a string representation of a value to replace.
+        Pattern: '("key1, key2, ..."),("value_to_replace")'
+        E.g.,
+        `("target_gmv"),(int(10000))`
+        `("portfolio", "style"),("longitudinal")`
+        `("portfolio", "val"),(int(3))`
+        """,
         type=str,
     )
     return parser

@@ -22,6 +22,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(Paul): Note that this is for ccxt orders.
 def get_limit_order_price(
     orders: pd.DataFrame, *, freq: str = "1s"
 ) -> pd.DataFrame:

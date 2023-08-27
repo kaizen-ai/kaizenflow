@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.15.0
+#       jupytext_version: 1.14.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -25,12 +25,12 @@ import os
 import core.config as cconfig
 import core.plotting as coplotti
 import dataflow.model as dtfmod
-import optimizer.forecast_evaluator_with_optimizer as optfewo
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
+import optimizer.forecast_evaluator_with_optimizer as ofevwiop
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -47,7 +47,6 @@ hprint.config_notebook()
 # %%
 amp_dir = hgit.get_amp_abs_path()
 dir_name = os.path.join(
-    
     "/shared_data/model/historical/build_tile_configs.C5b.ccxt_v7_1-all.5T.2019-10-01_2023-07-02.ins.run0/tiled_results",
 )
 config = {
@@ -154,33 +153,22 @@ coplotti.plot_portfolio_stats(
     bar_metrics, freq=config["pnl_resampling_frequency"]
 )
 
-# %%
-fep = forecast_evaluator(
-    **config["column_names"],
-)
-binned_df = fep.bin_annotated_portfolio_df(
-    portfolio_df, **config["bin_annotated_portfolio_df_kwargs"]
-)
-
-# %%
-binned_df["mean"].mean(axis=1).plot()
-
 # %% [markdown]
 # # Compute portfolio bar metrics when forecasting, with optimizer.
 
 # %%
-forecast_evaluator=optfewo.ForecastEvaluatorWithOptimizer
+forecast_evaluator = ofevwiop.ForecastEvaluatorWithOptimizer
 optimizer_config_dict = {
-            "dollar_neutrality_penalty": 0.9,
-            "volatility_penalty": 1.0,
-            "relative_holding_penalty": 3.0,
-            "relative_holding_max_frac_of_gmv": 0.6,
-            "target_gmv": 1e4,
-            "target_gmv_upper_bound_penalty": 0.95,
-            "target_gmv_hard_upper_bound_multiple": 1.00,
-            "turnover_penalty": 0.09,
-            "solver": "ECOS",
-        }
+    "dollar_neutrality_penalty": 0.9,
+    "volatility_penalty": 1.0,
+    "relative_holding_penalty": 3.0,
+    "relative_holding_max_frac_of_gmv": 0.6,
+    "target_gmv": 1e4,
+    "target_gmv_upper_bound_penalty": 0.95,
+    "target_gmv_hard_upper_bound_multiple": 1.00,
+    "turnover_penalty": 0.09,
+    "solver": "ECOS",
+}
 portfolio_df, bar_metrics = dtfmod.annotate_forecasts_by_tile(
     config["dir_name"],
     config["start_date"],
