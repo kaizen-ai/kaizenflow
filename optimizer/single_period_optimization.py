@@ -115,7 +115,7 @@ class SinglePeriodOptimizer:
     def optimize(
         self,
         *,
-        quantization: str = "no_quantization",
+        quantization: Optional[int] = 30,
         asset_id_to_share_decimals: Optional[Dict[int, int]] = None,
         liquidate_holdings: bool = False,
     ) -> pd.DataFrame:
@@ -157,7 +157,9 @@ class SinglePeriodOptimizer:
         ).rename("target_holdings_shares")
         # Quantize holdings (e.g., nearest share).
         target_holdings_shares = cofinanc.quantize_shares(
-            target_holdings_shares, quantization, asset_id_to_share_decimals
+            target_holdings_shares,
+            quantization,
+            asset_id_to_decimals=asset_id_to_share_decimals,
         )
         # Recompute `target_holdings_notional` from shares and price.
         target_holdings_notional = (
@@ -236,7 +238,7 @@ class SinglePeriodOptimizer:
     @staticmethod
     def _validate_restrictions_df(df: pd.DataFrame) -> None:
         """
-        Sanity-check `df`.
+        Sanity-check `df` (candidate `restrictions` for self).
         """
         SinglePeriodOptimizer._is_df_with_asset_id_col(df)
         # Type-check the dataframe.

@@ -3,6 +3,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 import pytest
 
+import helpers.henv as henv
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.common.db.db_utils as imvcddbut
@@ -344,6 +345,10 @@ class TestTalosHistoricalPqByTileClient1(icdc.ImClientTestCase):
 
 @pytest.mark.requires_ck_infra
 @pytest.mark.requires_aws
+@pytest.mark.skipif(
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available",
+)
 class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
     """
     TODO(Grisha): Test multiple exchanges CmTask #1533.

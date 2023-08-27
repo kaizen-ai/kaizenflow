@@ -34,7 +34,7 @@ MN0:
           dtypes: float64(2)
     compute_smooth_moving_average:
       predict:
-        tau: 1.7500008363798794
+        tau: 1.750001
         min_periods: 4
         df_out_info:
           <class 'pandas.core.frame.DataFrame'>
@@ -103,7 +103,7 @@ MN1:
           dtypes: float64(2)
     compute_smooth_moving_average:
       predict:
-        tau: 1.2500027854970344
+        tau: 1.250003
         min_periods: 3
         df_out_info:
           <class 'pandas.core.frame.DataFrame'>

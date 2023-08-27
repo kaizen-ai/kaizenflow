@@ -222,6 +222,10 @@ class Test_git_repo_name1(hunitest.TestCase):
 # Outside CK infra, the following class hangs, so we skip it.
 @pytest.mark.requires_ck_infra
 class Test_git_path1(hunitest.TestCase):
+    @pytest.mark.skipif(
+        not hgit.is_in_amp_as_supermodule(),
+        reason="Run only in amp as super-module",
+    )
     def test_get_path_from_git_root1(self) -> None:
         file_name = "/app/helpers/test/test_git.py"
         act = hgit.get_path_from_git_root(file_name, super_module=True)
@@ -230,6 +234,9 @@ class Test_git_path1(hunitest.TestCase):
         exp = "helpers/test/test_git.py"
         self.assert_equal(act, exp)
 
+    @pytest.mark.skipif(
+        not hgit.is_in_amp_as_submodule(), reason="Run only in amp as sub-module"
+    )
     def test_get_path_from_git_root2(self) -> None:
         file_name = "/app/amp/helpers/test/test_git.py"
         act = hgit.get_path_from_git_root(file_name, super_module=True)
@@ -268,8 +275,12 @@ class Test_git_path1(hunitest.TestCase):
 
 
 # Outside CK infra, the following class hangs, so we skip it.
-@pytest.mark.slow(reason="Around 7s")
 @pytest.mark.requires_ck_infra
+@pytest.mark.slow(reason="Around 7s")
+@pytest.mark.skipif(
+    not hgit.is_in_amp_as_supermodule(),
+    reason="Run only in amp as super-module",
+)
 class Test_git_modified_files1(hunitest.TestCase):
     def setUp(self) -> None:
         """

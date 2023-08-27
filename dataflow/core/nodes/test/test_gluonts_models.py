@@ -1,7 +1,6 @@
 import logging
 import pprint
 
-import mxnet
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,12 +8,9 @@ import pytest
 import core.artificial_signal_generators as carsigen
 import core.config as cconfig
 import dataflow.core.dag as dtfcordag
+import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
-from dataflow.core.nodes.gluonts_models import (
-    ContinuousDeepArModel,
-    DeepARGlobalModel,
-)
 
 # TODO(gp): use our import style instead of from ... import
 from dataflow.core.nodes.sources import DfDataSource
@@ -27,7 +23,14 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-if True:
+if henv.has_module("gluonts"):
+
+    import mxnet
+
+    from dataflow.core.nodes.gluonts_models import (
+        ContinuousDeepArModel,
+        DeepARGlobalModel,
+    )
 
     class TestContinuousDeepArModel(hunitest.TestCase):
         @pytest.mark.slow

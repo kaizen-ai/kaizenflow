@@ -36,6 +36,7 @@ import os
 import sys
 from typing import Optional
 
+import pandas as pd
 from invoke import task
 
 import helpers.hdatetime as hdateti
@@ -60,6 +61,7 @@ def _allow_update(
     dag_builder_name: str,
     run_mode: str,
     start_timestamp_as_str: str,
+    end_timestamp_as_str: str,
     dst_root_dir: str,
 ) -> None:
     """
@@ -69,7 +71,11 @@ def _allow_update(
     """
     # Get date-specific target dir.
     target_dir = omreconc.get_target_dir(
-        dst_root_dir, dag_builder_name, start_timestamp_as_str, run_mode
+        dst_root_dir,
+        dag_builder_name,
+        run_mode,
+        start_timestamp_as_str,
+        end_timestamp_as_str,
     )
     hdbg.dassert_path_exists(target_dir)
     # Allow overwritting.
@@ -137,6 +143,8 @@ def reconcile_create_dirs(
     dag_builder_name,
     run_mode,
     start_timestamp_as_str,
+    end_timestamp_as_str,
+    # TODO(Grisha): should be the 1st param.
     dst_root_dir,
     abort_if_exists,
 ):  # type: ignore
@@ -147,8 +155,8 @@ def reconcile_create_dirs(
     ```
     {dst_root_dir}/
         {dag_builder_name}/
-            {run_date}/
-                {run_mode}/
+            {run_mode}/
+                {start_timestamp_as_str}.{end_timestamp_as_str}/
                     prod/
                     simulation/
                     tca/
@@ -162,7 +170,11 @@ def reconcile_create_dirs(
     """
     _ = ctx
     target_dir = omreconc.get_target_dir(
-        dst_root_dir, dag_builder_name, start_timestamp_as_str, run_mode
+        dst_root_dir,
+        dag_builder_name,
+        run_mode,
+        start_timestamp_as_str,
+        end_timestamp_as_str,
     )
     # Create a dir for reconcilation results.
     hio.create_dir(target_dir, incremental=True, abort_if_exists=abort_if_exists)
@@ -231,11 +243,16 @@ def reconcile_dump_market_data(
     )
     _ = ctx
     target_dir = omreconc.get_target_dir(
-        dst_root_dir, dag_builder_name, start_timestamp_as_str, run_mode
+        dst_root_dir,
+        dag_builder_name,
+        run_mode,
+        start_timestamp_as_str,
+        end_timestamp_as_str,
     )
     sim_target_dir = omreconc.get_simulation_dir(target_dir)
     if source_dir is None:
         source_dir = "."
+    # TODO(Grisha): rename `test_data.csv.gz` -> `market_data.csv.gz`.
     market_data_file = "test_data.csv.gz"
     market_data_file_path = os.path.join(source_dir, market_data_file)
     if hs3.is_s3_path(source_dir):
@@ -311,7 +328,11 @@ def reconcile_run_sim(
     )
     # Build market data file path.
     target_dir = omreconc.get_target_dir(
-        dst_root_dir, dag_builder_name, start_timestamp_as_str, run_mode
+        dst_root_dir,
+        dag_builder_name,
+        run_mode,
+        start_timestamp_as_str,
+        end_timestamp_as_str,
     )
     sim_target_dir = omreconc.get_simulation_dir(target_dir)
     file_name = "test_data.csv.gz"
@@ -341,6 +362,7 @@ def reconcile_copy_sim_data(
     dag_builder_name,
     run_mode,
     start_timestamp_as_str,
+    end_timestamp_as_str,
     dst_root_dir,
     prevent_overwriting=True,
     aws_profile=None,
@@ -352,7 +374,11 @@ def reconcile_copy_sim_data(
     """
     _ = ctx
     target_dir = omreconc.get_target_dir(
-        dst_root_dir, dag_builder_name, start_timestamp_as_str, run_mode
+        dst_root_dir,
+        dag_builder_name,
+        run_mode,
+        start_timestamp_as_str,
+        end_timestamp_as_str,
     )
     sim_target_dir = omreconc.get_simulation_dir(target_dir)
     # Make sure that the destination dir exists before copying.
@@ -377,7 +403,7 @@ def reconcile_copy_prod_data(
     start_timestamp_as_str,
     end_timestamp_as_str,
     dst_root_dir,
-    # TODO(Nina): -> "source_dir".
+    # TODO(Nina): -> "prod_data_source_root_dir".
     prod_data_source_dir,
     mode,
     stage=None,
@@ -395,13 +421,25 @@ def reconcile_copy_prod_data(
     hdbg.dassert_in(mode, ("scheduled", "manual"))
     hs3.dassert_path_exists(prod_data_source_dir, aws_profile)
     _ = ctx
+    # `target_dir` is the local dir path where we copy results to.
     target_dir = omreconc.get_target_dir(
-        dst_root_dir, dag_builder_name, start_timestamp_as_str, run_mode
+        dst_root_dir,
+        dag_builder_name,
+        run_mode,
+        start_timestamp_as_str,
+        end_timestamp_as_str,
+        aws_profile=None,
     )
     # Set source log dir.
-    system_log_subdir = omreconc.get_prod_system_log_dir(
-        mode, start_timestamp_as_str, end_timestamp_as_str
+    prod_data_source_dir = omreconc.get_target_dir(
+        prod_data_source_dir,
+        dag_builder_name,
+        run_mode,
+        start_timestamp_as_str,
+        end_timestamp_as_str,
+        aws_profile=aws_profile,
     )
+    system_log_subdir = omreconc.get_prod_system_log_dir(mode)
     system_log_dir = os.path.join(prod_data_source_dir, system_log_subdir)
     hs3.dassert_path_exists(system_log_dir, aws_profile)
     # Set target dirs.
@@ -415,13 +453,98 @@ def reconcile_copy_prod_data(
         cmd = f"cp -vr {system_log_dir} {prod_results_target_dir}"
     _system(cmd)
     # Copy prod run logs to the specified folder.
-    log_file = f"log.{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}.txt"
-    log_file = os.path.join(prod_data_source_dir, "logs", log_file)
+    log_file_name = f"log.{mode}.txt"
+    log_file_path = os.path.join(prod_data_source_dir, "logs", log_file_name)
     #
-    _copy_result_file(log_file, prod_target_dir, aws_profile)
+    _copy_result_file(log_file_path, prod_target_dir, aws_profile)
     #
     if prevent_overwriting:
         _prevent_overwriting(prod_target_dir)
+
+
+@task
+def reconcile_run_multiday_notebook(
+    ctx,
+    dst_root_dir,
+    dag_builder_name,
+    run_mode,
+    start_timestamp_as_str,
+    end_timestamp_as_str,
+    html_notebook_tag,
+):  # type: ignore
+    """
+    Run the reconciliation notebook for multiple days (e.g., one week, one
+    month), publish it locally and copy the results to the specified folder.
+
+    See `reconcile_run_all()` for params description.
+
+    :param html_notebook_tag: a tag for a notebook run period, e.g., "last_week"
+    """
+    hdbg.dassert(
+        hserver.is_inside_docker(), "This is runnable only inside Docker."
+    )
+    _LOG.info(
+        hprint.to_str(
+            "dst_root_dir dag_builder_name run_mode start_timestamp_as_str end_timestamp_as_str html_notebook_tag"
+        )
+    )
+    _ = ctx
+    amp_dir = hgit.get_amp_abs_path()
+    script_path = os.path.join(
+        amp_dir, "dev_scripts", "notebooks", "run_notebook.py"
+    )
+    # Retrieve the notebook path.
+    notebook_path = omreconc.get_multiday_system_reconciliation_notebook_path()
+    # Prepare the config and the notebook params.
+    config_builder = (
+        f"amp.oms.build_multiday_system_reconciliation_config"
+        + f'("{dst_root_dir}", "{dag_builder_name}", "{run_mode}", "{start_timestamp_as_str}", "{end_timestamp_as_str}")'
+    )
+    notebook_dir = omreconc.get_multiday_reconciliation_dir(
+        dst_root_dir,
+        dag_builder_name,
+        run_mode,
+        start_timestamp_as_str,
+        end_timestamp_as_str,
+    )
+    # Build a cmd to run the notebook.
+    cmd = [
+        script_path,
+        f"--notebook {notebook_path}",
+        f"--config_builder '{config_builder}'",
+        f"--dst_dir {notebook_dir}",
+        "--tee",
+        "--no_suppress_output",
+        "--num_threads 'serial'",
+        "--publish_notebook",
+        "-v DEBUG 2>&1 | tee log.txt;",
+        "exit ${PIPESTATUS[0]}",
+    ]
+    cmd = " ".join(cmd)
+    # Run the notebook.
+    _system(cmd)
+    # Copy the notebook to S3 HTML bucket so that it is accessible via
+    # a web-browser.
+    notebook_name = os.path.basename(notebook_path)
+    notebook_name = os.path.splitext(notebook_name)[0]
+    pattern = f"{notebook_name}.*.html"
+    only_files = True
+    use_relative_paths = False
+    html_notebook_path = hs3.listdir(
+        notebook_dir,
+        pattern,
+        only_files,
+        use_relative_paths,
+    )
+    hdbg.dassert_eq(1, len(html_notebook_path))
+    #
+    html_notebook_path = html_notebook_path[0]
+    html_bucket_path = henv.execute_repo_config_code("get_html_bucket_path()")
+    s3_dst_dir = os.path.join(html_bucket_path, "system_reconciliation")
+    html_file_name = f"{dag_builder_name}.{html_notebook_tag}.html"
+    s3_dst_path = os.path.join(s3_dst_dir, html_file_name)
+    aws_profile = "ck"
+    hs3.copy_file_to_s3(html_notebook_path, s3_dst_path, aws_profile)
 
 
 @task
@@ -454,7 +577,11 @@ def reconcile_run_notebook(
     _ = ctx
     # Set results destination dir and clear it if is already filled.
     target_dir = omreconc.get_target_dir(
-        dst_root_dir, dag_builder_name, start_timestamp_as_str, run_mode
+        dst_root_dir,
+        dag_builder_name,
+        run_mode,
+        start_timestamp_as_str,
+        end_timestamp_as_str,
     )
     hdbg.dassert_dir_exists(target_dir)
     # The common pattern is to save an output locally and copy to the specified
@@ -544,9 +671,10 @@ def run_master_pnl_real_time_observer_notebook(
     ctx,
     prod_data_root_dir,
     dag_builder_name,
-    start_timestamp_as_str,
-    end_timestamp_as_str,
-    mode,
+    run_mode,
+    start_timestamp_as_str=None,
+    end_timestamp_as_str=None,
+    mode=None,
     burn_in_bars=3,
     mark_as_last_5minute_run=False,
 ):  # type: ignore
@@ -554,9 +682,14 @@ def run_master_pnl_real_time_observer_notebook(
     Run the PnL real time observer notebook and copy the results to the S3 HTML
     bucket.
 
+    If `start_timestamp_as_str`, `end_timestamp_as_str`, `mode`, use the results
+    that correspond to the latest prod system run for a given model, system run
+    mode.
+
     :param prod_data_root_dir: a dir that stores the production system output,
         e.g., "/shared_data/ecs/preprod/system_reconciliation/"
     :param dag_builder_name: name of the DAG builder, e.g. "C1b"
+    :param run_mode: prod run mode, e.g. "prod" or "paper_trading"
     :param start_timestamp_as_str: string representation of timestamp
         at which a production run started
     :param end_timestamp_as_str: string representation of timestamp
@@ -572,16 +705,52 @@ def run_master_pnl_real_time_observer_notebook(
     hdbg.dassert(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
-    hdbg.dassert_in(mode, ("scheduled", "manual"))
+    if mode is not None:
+        hdbg.dassert_in(mode, ("scheduled", "manual"))
     hdbg.dassert_dir_exists(prod_data_root_dir)
+    hdbg.dassert_all_defined_or_all_None(
+        [start_timestamp_as_str, end_timestamp_as_str, mode]
+    )
     # Check if at least `burn_in_bars` bars are computed, otherwise exit.
     # TODO(Grisha): consider passing the system_log_dir path directly to the
     # config building function.
-    run_date = omreconc.get_run_date(start_timestamp_as_str)
-    target_dir = os.path.join(prod_data_root_dir, dag_builder_name, run_date)
-    system_log_dir = omreconc.get_prod_system_log_dir(
-        mode, start_timestamp_as_str, end_timestamp_as_str
+    vals = [start_timestamp_as_str, end_timestamp_as_str, mode]
+    if all(val is None for val in vals):
+        # Filter system run params by current time to exclude the future
+        # timestamps when then both runs exists at the same time. E.g.,
+        # current timestamp is "20230802_130000", run from the previous day,
+        # "20230801_131000.20230802_130500", is still on going; while a dir
+        # for the next run has been already created, "20230802_131000.20230803_130500".
+        # So technically "20230802_131000.20230803_130500" is the latest timestamp
+        # but prod system run has not been started yet.
+        tz = "UTC"
+        end_timestamp = hdateti.get_current_time(tz)
+        start_timestamp = end_timestamp - pd.Timedelta(days=1)
+        system_run_params = omreconc.get_system_run_parameters(
+            prod_data_root_dir,
+            dag_builder_name,
+            run_mode,
+            start_timestamp,
+            end_timestamp,
+        )
+        hdbg.dassert_lte(1, len(system_run_params))
+        # Get the latest system run parameters. Using `max()` to check that all
+        # values in tuple are the latest.
+        # TODO(Grisha): do not use `max()` for strings.
+        start_timestamp_as_str, end_timestamp_as_str, mode = max(
+            system_run_params
+        )
+        _LOG.info(
+            hprint.to_str("start_timestamp_as_str, end_timestamp_as_str, mode")
+        )
+    target_dir = omreconc.get_target_dir(
+        prod_data_root_dir,
+        dag_builder_name,
+        run_mode,
+        start_timestamp_as_str,
+        end_timestamp_as_str,
     )
+    system_log_dir = omreconc.get_prod_system_log_dir(mode)
     system_log_dir = os.path.join(target_dir, system_log_dir)
     data_type = "orders"
     orders_dir = omreconc.get_data_type_system_log_path(system_log_dir, data_type)
@@ -613,16 +782,13 @@ def run_master_pnl_real_time_observer_notebook(
     s3_dst_dir = os.path.join(html_bucket_path, "pnl_for_investors")
     config_builder = (
         f"amp.oms.reconciliation.build_prod_pnl_real_time_observer_configs"
-        + f'("{prod_data_root_dir}", "{dag_builder_name}", "{start_timestamp_as_str}", "{end_timestamp_as_str}",  "{mode}", {save_plots_for_investors}, s3_dst_dir="{s3_dst_dir}")'
+        + f'("{prod_data_root_dir}", "{dag_builder_name}", "{run_mode}", "{start_timestamp_as_str}", "{end_timestamp_as_str}",  "{mode}", {save_plots_for_investors}, s3_dst_dir="{s3_dst_dir}")'
     )
     # Since the invoke is run multiple times per day create a subdir for every
     # run and mark it with the current UTC timestamp, e.g.,
     # `.../C3a/20230411/pnl_realtime_observer_notebook/20230411_130510`.
-    run_date = omreconc.get_run_date(start_timestamp_as_str)
     notebook_dir = "pnl_realtime_observer_notebook"
-    shared_notebook_dir = os.path.join(
-        prod_data_root_dir, dag_builder_name, run_date, notebook_dir
-    )
+    shared_notebook_dir = os.path.join(target_dir, notebook_dir)
     hio.create_dir(shared_notebook_dir, incremental=True)
     #
     tz = "UTC"
@@ -673,6 +839,7 @@ def reconcile_ls(
     dag_builder_name,
     run_mode,
     start_timestamp_as_str,
+    end_timestamp_as_str,
     dst_root_dir,
 ):  # type: ignore
     """
@@ -682,7 +849,11 @@ def reconcile_ls(
     """
     _ = ctx
     target_dir = omreconc.get_target_dir(
-        dst_root_dir, dag_builder_name, start_timestamp_as_str, run_mode
+        dst_root_dir,
+        dag_builder_name,
+        run_mode,
+        start_timestamp_as_str,
+        end_timestamp_as_str,
     )
     _LOG.info(hprint.to_str("target_dir"))
     hdbg.dassert_dir_exists(target_dir)
@@ -755,7 +926,7 @@ def reconcile_dump_tca_data(
     opts += f" --incremental -v DEBUG 2>&1 | tee {log_file}"
     opts += "; exit ${PIPESTATUS[0]}"
     cmd_run_txt = [
-        "amp/oms/ccxt/scripts/get_ccxt_trades.py",
+        "amp/oms/broker/ccxt/scripts/get_ccxt_trades.py",
         f"--start_timestamp '{start_timestamp}'",
         f"--end_timestamp '{end_timestamp}'",
         f"--dst_dir {local_results_dir}",
@@ -794,7 +965,7 @@ def reconcile_run_all(
     # TODO(Grisha): propagate everywhere below.
     incremental=False,
     prevent_overwriting=True,
-    abort_if_exists=False,
+    abort_if_exists=True,
     run_notebook=False,
     allow_update=False,
     aws_profile=None,
@@ -835,6 +1006,7 @@ def reconcile_run_all(
         dag_builder_name,
         run_mode,
         start_timestamp_as_str,
+        end_timestamp_as_str,
         dst_root_dir,
         abort_if_exists,
     )
@@ -877,6 +1049,7 @@ def reconcile_run_all(
         dag_builder_name,
         run_mode,
         start_timestamp_as_str,
+        end_timestamp_as_str,
         dst_root_dir,
         prevent_overwriting=prevent_overwriting,
     )
@@ -922,6 +1095,7 @@ def reconcile_run_all(
         dag_builder_name,
         run_mode,
         start_timestamp_as_str,
+        end_timestamp_as_str,
         dst_root_dir,
     )
     if allow_update:
@@ -929,5 +1103,6 @@ def reconcile_run_all(
             dag_builder_name,
             run_mode,
             start_timestamp_as_str,
+            end_timestamp_as_str,
             dst_root_dir,
         )
