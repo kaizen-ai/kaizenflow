@@ -231,11 +231,16 @@ def _docker_pull(
 
 
 @task
-def docker_pull(ctx, stage="dev", version=None):  # type: ignore
+def docker_pull(ctx, stage="dev", version=None, skip_pull=False):  # type: ignore
     """
     Pull latest dev image corresponding to the current repo from the registry.
+
+    :param skip_pull: if True skip pulling the docker image
     """
     hlitauti.report_task()
+    if skip_pull:
+        _LOG.warning("Skipping pulling docker image as per user request")
+        return
     #
     base_image = ""
     _docker_pull(ctx, base_image, stage, version)
@@ -1273,6 +1278,8 @@ def _get_lint_docker_cmd(
 def _docker_cmd(
     ctx: Any,
     docker_cmd_: str,
+    *,
+    skip_pull: bool = False,
     **ctx_run_kwargs: Any,
 ) -> Optional[int]:
     """
@@ -1287,7 +1294,7 @@ def _docker_cmd(
         # inside CI.
         hs3.generate_aws_files()
     _LOG.info("Pulling the latest version of Docker")
-    docker_pull(ctx)
+    docker_pull(ctx, skip_pull=skip_pull)
     _LOG.debug("cmd=%s", docker_cmd_)
     rc: Optional[int] = hlitauti.run(ctx, docker_cmd_, pty=True, **ctx_run_kwargs)
     return rc
@@ -1303,6 +1310,7 @@ def docker_bash(  # type: ignore
     as_user=True,
     generate_docker_compose_file=True,
     container_dir_name=".",
+    skip_pull=False,
 ):
     """
     Start a bash shell inside the container corresponding to a stage.
@@ -1310,6 +1318,7 @@ def docker_bash(  # type: ignore
     :param entrypoint: whether to use the `entrypoint` or not
     :param as_user: pass the user / group id or not
     :param generate_docker_compose_file: generate the Docker compose file or not
+    :param skip_pull: if True skip pulling the docker image
     """
     hlitauti.report_task(container_dir_name=container_dir_name)
     cmd = "bash"
@@ -1322,7 +1331,7 @@ def docker_bash(  # type: ignore
         entrypoint=entrypoint,
         as_user=as_user,
     )
-    _docker_cmd(ctx, docker_cmd_)
+    _docker_cmd(ctx, docker_cmd_, skip_pull=skip_pull)
 
 
 @task

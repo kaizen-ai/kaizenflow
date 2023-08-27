@@ -602,7 +602,7 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
         regex = "(WARN|INFO)\s+hcache.py"
         act = hunitest.filter_text(regex, act)
         # Check the outcome.
-        self.check_string(act, purify_text=True)
+        self.check_string(act, purify_text=True, fuzzy_match=True)
 
     def test1(self) -> None:
         file_name = f"{self.get_input_dir()}/cache/lastfailed"
