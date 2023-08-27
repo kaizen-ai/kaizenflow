@@ -88,7 +88,7 @@ if _HAS_PANDAS:
     # TODO(gp): We should fix the issues and re-enable.
     # See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
     #   row["net_cost"] -= cost
-    # /app/amp/oms/order_processor.py:376: SettingWithCopyWarning:
+    # /app/amp/oms/order_processing/order_processor.py:376: SettingWithCopyWarning:
     # A value is trying to be set on a copy of a slice from a DataFrame
 
     # /venv/lib/python3.8/site-packages/pandas/io/sql.py:761: UserWarning: pandas

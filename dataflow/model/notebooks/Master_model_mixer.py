@@ -60,7 +60,7 @@ config = {
     "freq": "D",
     "index_mode": "leave_unchanged",
     "annotate_forecasts_kwargs": {
-        "quantization": "nearest_share",
+        "quantization": 0,
         "burn_in_bars": 3,
         "style": "longitudinal",
         "initialize_beginning_of_day_trades_to_zero": False,

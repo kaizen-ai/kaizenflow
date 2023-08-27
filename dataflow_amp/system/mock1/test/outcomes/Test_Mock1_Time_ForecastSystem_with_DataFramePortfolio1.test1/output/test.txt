@@ -115,7 +115,7 @@ process_forecasts_node_dict:
   volatility_col: vwap.ret_0.vol
   spread_col: None
   portfolio:
-    <oms.portfolio.DataFramePortfolio at 0x>
+    <oms.portfolio.dataframe_portfolio.DataFramePortfolio at 0x>
       # holdings_shares=
       asset_id                      101
       2000-01-01 09:35:06-05:00     0.0
@@ -188,7 +188,7 @@ process_forecasts_node_dict:
     trading_start_time: 09:30:00
     ath_end_time: 16:00:00
     trading_end_time: 15:55:00
-    share_quantization: no_quantization
+    share_quantization: 9
 event_loop_object: <_EventLoop running=False closed=True debug=False>
 market_object: ReplayedMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[101] <list>, _start_time_col_name=start_datetime <str>, _end_time_col_name=end_datetime <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _df=pd.df((40, 7) <pandas.core.frame.DataFrame>, _knowledge_datetime_col_name=timestamp_db <str>, _delay_in_secs=5 <int>)
 object.builder_function:
@@ -197,7 +197,7 @@ object.builder_function:
   dag_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag
   dag_runner_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag_runner
 portfolio_object:
-  <oms.portfolio.DataFramePortfolio at 0x>
+  <oms.portfolio.dataframe_portfolio.DataFramePortfolio at 0x>
     # holdings_shares=
     asset_id                      101
     2000-01-01 09:35:06-05:00     0.0
@@ -291,7 +291,7 @@ num_it=7 current_time='2000-01-01 10:05:00-05:00'
 
 # portfolio signature=
 
-<oms.portfolio.DataFramePortfolio at 0x>
+<oms.portfolio.dataframe_portfolio.DataFramePortfolio at 0x>
   # holdings_shares=
   asset_id                      101
   2000-01-01 09:35:06-05:00     0.0

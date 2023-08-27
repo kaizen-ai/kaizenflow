@@ -1186,20 +1186,55 @@ class Test_purify_amp_reference1(hunitest.TestCase):
         self.helper(txt, exp)
 
 
+# #############################################################################
+
+
 class Test_purify_from_environment1(hunitest.TestCase):
-    def check_output(self, txt: str, exp: str) -> None:
-        act = hunitest.purify_from_environment(txt)
-        self.assert_equal(act, exp)
+    def check_helper(self, input_: str, exp: str) -> None:
+        """
+        Check that the text is purified from environment variables correctly.
+        """
+        try:
+            # Manually set a user name to test the behaviour.
+            hsystem.set_user_name("root")
+            # Run.
+            act = hunitest.purify_from_environment(input_)
+            self.assert_equal(act, exp, fuzzy_match=True)
+        finally:
+            # Reset the global user name variable regardless of a test results.
+            hsystem.set_user_name(None)
 
     def test1(self) -> None:
-        """
-        Check that the text is purified correctly.
-        """
-        txt = "/app/jupyter_core/application.py"
-        exp = "$GIT_ROOT/jupyter_core/application.py"
-        self.check_output(txt, exp)
+        input_ = "IMAGE=$CK_ECR_BASE_PATH/amp_test:local-root-1.0.0"
+        exp = "IMAGE=$CK_ECR_BASE_PATH/amp_test:local-$USER_NAME-1.0.0"
+        self.check_helper(input_, exp)
 
     def test2(self) -> None:
-        txt = "/app"
+        input_ = "--name root.amp_test.app.app"
+        exp = "--name $USER_NAME.amp_test.app.app"
+        self.check_helper(input_, exp)
+
+    def test3(self) -> None:
+        input_ = "run --rm -l user=root"
+        exp = "run --rm -l user=$USER_NAME"
+        self.check_helper(input_, exp)
+
+    def test4(self) -> None:
+        input_ = "run_docker_as_root='True'"
+        exp = "run_docker_as_root='True'"
+        self.check_helper(input_, exp)
+
+    def test5(self) -> None:
+        input_ = "out_col_groups: [('root_q_mv',), ('root_q_mv_adj',), ('root_q_mv_os',)]"
+        exp = "out_col_groups: [('root_q_mv',), ('root_q_mv_adj',), ('root_q_mv_os',)]"
+        self.check_helper(input_, exp)
+
+    def test6(self) -> None:
+        input_ = "/app/jupyter_core/application.py"
+        exp = "$GIT_ROOT/jupyter_core/application.py"
+        self.check_helper(input_, exp)
+
+    def test7(self) -> None:
+        input_ = "/app"
         exp = "$GIT_ROOT"
-        self.check_output(txt, exp)
+        self.check_helper(input_, exp)

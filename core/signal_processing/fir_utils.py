@@ -71,7 +71,7 @@ def extract_fir_filter_weights(
     length = max(desired_length, warmup_length)
     impulse = pd.Series(0, range(0, warmup_length + length))
     impulse.iloc[warmup_length - 1] = 1
-    # Apply the filter function to the step function.
+    # Apply the filter function to the impulse function.
     filtered_impulse = func(impulse, **func_kwargs)
     # Drop the warm-up data from the filtered series.
     filtered_impulse = filtered_impulse.iloc[warmup_length - 1 :]

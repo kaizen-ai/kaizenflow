@@ -340,6 +340,7 @@ buy_spread_frac_offset = 0.25
 sell_spread_frac_offset = -0.25
 # Reprice orders every minute.
 subsample_freq = "1T"
+freq_offset = "0T"
 # Keep orders in force for one minute.
 ffill_limit = 60
 tick_decimals = 5
@@ -353,6 +354,7 @@ limit_orders = cofinanc.generate_limit_order_price(
     buy_spread_frac_offset,
     sell_spread_frac_offset,
     subsample_freq,
+    freq_offset,
     ffill_limit,
     tick_decimals,
 )
@@ -361,7 +363,7 @@ limit_orders = cofinanc.generate_limit_order_price(
 limit_orders.head()
 
 # %%
-limit_orders.tail(60 * 60).plot()
+limit_orders[["buy_limit_order_price", "sell_limit_order_price"]].tail(60 * 60).plot()
 
 # %%
 df_flat_with_limit_orders = pd.concat([df_flat, limit_orders], axis=1)
@@ -377,6 +379,8 @@ executions = cofinanc.estimate_limit_order_execution(
     ask_col,
     "buy_limit_order_price",
     "sell_limit_order_price",
+    "buy_order_num",
+    "sell_order_num",
 )
 
 # %%
@@ -396,6 +400,7 @@ limit_order_and_execution_df = (
         buy_spread_frac_offset,
         sell_spread_frac_offset,
         subsample_freq,
+        freq_offset,
         ffill_limit,
         tick_decimals,
     )
@@ -421,7 +426,7 @@ execution_summary_df = pd.concat(
 # %%
 buy_trade_price_col = "buy_trade_price"
 sell_trade_price_col = "sell_trade_price"
-execution_quality_df = cofinanc.compute_execution_quality(
+execution_quality_df = cofinanc.compute_bid_ask_execution_quality(
     execution_summary_df.resample("5T", label="right", closed="right").mean(),
     bid_col,
     ask_col,
@@ -514,3 +519,5 @@ bid_ask.resample("1s", label="right", closed="right").sum(min_count=1).plot()
 
 # %%
 size.resample("1s", label="right", closed="right").sum().plot()
+
+# %%

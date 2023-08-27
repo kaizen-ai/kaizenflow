@@ -5,7 +5,7 @@ import core.statistics.regression as cstaregr
 """
 import collections
 import logging
-from typing import List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -22,6 +22,8 @@ def compute_regression_coefficients(
     df: pd.DataFrame,
     x_cols: List[Union[int, str]],
     y_col: Union[int, str],
+    *,
+    x_col_shift: int = 0,
     sample_weight_col: Optional[Union[int, str]] = None,
 ) -> pd.DataFrame:
     """
@@ -47,13 +49,13 @@ def compute_regression_coefficients(
     _LOG.debug("y_col=`%s` count=%i", y_col, df[y_col].count())
     df = df.dropna(subset=[y_col])
     # Extract x variables.
-    x_vars = df[x_cols]
+    x_vars = df[x_cols].shift(x_col_shift)
     if sample_weight_col is not None:
         hdbg.dassert_in(sample_weight_col, df.columns)
-        x_vars_with_weights = df[x_cols + [sample_weight_col]]
+        x_vars_with_weights = df[x_cols + [sample_weight_col]].shift(x_col_shift)
         y_var_with_weights = df[[y_col] + [sample_weight_col]]
     else:
-        x_vars_with_weights = df[x_cols]
+        x_vars_with_weights = df[x_cols].shift(x_col_shift)
         y_var_with_weights = df[[y_col]]
     x_var_coefficients = compute_centered_process_stats(
         x_vars_with_weights, sample_weight_col
@@ -198,20 +200,75 @@ def compute_centered_process_stats(
 def compute_centered_process_stats_by_group(
     df: pd.DataFrame,
 ) -> pd.DataFrame:
+    """
+    Compute process stats for each col of each group.
+
+    :param df: as in `compute_centered_process_stats()`
+    :return: output of `compute_centered_process_stats()` concatenated with
+        group on index.
+    """
+    func = compute_centered_process_stats
+    func_kwargs = {}
+    result_df = _compute_func_by_group(df, func, func_kwargs)
+    return result_df
+
+
+def compute_regression_coefficients_by_group(
+    df: pd.DataFrame,
+    x_cols: List[Union[int, str]],
+    y_col: Union[int, str],
+    *,
+    x_col_shift: int = 0,
+) -> pd.DataFrame:
+    """
+    Compute regression coefficients for each col of each group.
+
+    :param df: as in `compute_regression_coefficients()`
+    :param x_cols_: as in `compute_regression_coefficients()`
+    :param y_col: as in `compute_regression_coefficients()`
+    :param x_col_shift: as in `compute_regression_coefficients()`
+    :return: output of `compute_regression_coefficients()` concatenated with
+        group on index.
+    """
+    func = compute_regression_coefficients
+    func_kwargs = {
+        "x_cols": x_cols,
+        "y_col": y_col,
+        "x_col_shift": x_col_shift,
+    }
+    result_df = _compute_func_by_group(df, func, func_kwargs)
+    return result_df
+
+
+def _compute_func_by_group(
+    df: pd.DataFrame,
+    func: Callable[..., pd.DataFrame],
+    func_kwargs: Optional[Dict[str, Any]] = None,
+) -> pd.DataFrame:
+    """
+    Apply `func` to dfs from groups coming from col level 1.
+
+    :param func: function to apply to dataframe; should return a dataframe
+    :param func_kwargs: kwargs to forward to `func`
+    :return: output dataframes with index level 0 given by group
+    """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_eq(df.columns.nlevels, 2)
     groups = df.columns.levels[1].to_list()
     _LOG.debug("Num groups=%d", len(groups))
-    coeffs = collections.OrderedDict()
+    results = collections.OrderedDict()
+    if func_kwargs is None:
+        func_kwargs = {}
     for group in tqdm(groups, desc="Processing groups"):
         group_df = df.T.xs(group, level=1).T
         if group_df.empty:
             _LOG.debug("Empty dataframe for group=%d", group)
             continue
-        coeff = compute_centered_process_stats(group_df)
-        coeffs[group] = coeff
-    process_stats = pd.concat(coeffs)
-    return process_stats
+        result = func(group_df, **func_kwargs)
+        hdbg.dassert_isinstance(result, pd.DataFrame)
+        results[group] = result
+    result_df = pd.concat(results)
+    return result_df
 
 
 def _get_weight_df(

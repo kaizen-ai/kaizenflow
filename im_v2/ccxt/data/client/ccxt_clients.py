@@ -100,13 +100,18 @@ class CcxtImClient(icdc.ImClient):
 # #############################################################################
 
 
+# TODO(gp): It would be better to plug the functions directly in the classes,
+#  rather than complicating the class hierarchy. Also it seems that there is
+#  a single derived class.
 class CcxtCddClient(icdc.ImClient, abc.ABC):
     """
-    Contain common code for all the `CCXT` and `CDD` clients, e.g.,
+    Contain common code for all the `CCXT` and `CDD` clients.
 
+    E.g.,
     - getting `CCXT` and `CDD` universe
     - applying common transformation for all the data from `CCXT` and `CDD`
-        - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
+        - E.g., `_apply_olhlcv_transformations()`,
+          `_apply_vendor_normalization()`
     """
 
     def __init__(
@@ -166,10 +171,12 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         """
         if self._vendor == "CDD":
             # Rename columns for consistency with other crypto vendors.
-            # Column name for `volume` depends on the `currency_pair`, e.g., there are 2 columns
-            # `Volume BTC` and `Volume USDT` for `currency pair `BTC_USDT. And there is no easy
-            # way to select the right `Volume` column without passing `currency_pair` that will
-            # complicate the interface. To get rid of this dependency the column's index is used.
+            # Column name for `volume` depends on the `currency_pair`, e.g.,
+            # there are 2 columns `Volume BTC` and `Volume USDT` for `currency
+            # pair `BTC_USDT. And there is no easy way to select the right
+            # `Volume` column without passing `currency_pair` that will
+            # complicate the interface. To get rid of this dependency the
+            # column's index is used.
             data.columns.values[7] = "volume"
             data = data.rename({"unix": "timestamp"}, axis=1)
         # Verify that the timestamp data is provided in ms.
@@ -180,8 +187,8 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms", utc=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
-        # Round up float values in case values in raw data are rounded up incorrectly when
-        # being read from a file.
+        # Round up float values in case values in raw data are rounded up
+        # incorrectly when being read from a file.
         data = data.round(8)
         return data
 
@@ -218,7 +225,7 @@ class CcxtSqlRealTimeImClient(CcxtImClient, icdc.SqlRealTimeImClient):
 
 
 # #############################################################################
-# CcxtFileSystemClient
+# CcxtCddCsvParquetByAssetClient
 # #############################################################################
 
 

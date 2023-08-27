@@ -34,7 +34,7 @@ class Test_quantize_holdings(hunitest.TestCase):
 
     def test_no_quantization(self) -> None:
         holdings = self.get_holdings()
-        quantization = "no_quantization"
+        quantization = 30
         holdings = cfinhold.quantize_holdings(holdings, quantization)
         actual = hpandas.df_to_str(holdings, num_rows=None)
         expected = r"""
@@ -50,7 +50,7 @@ class Test_quantize_holdings(hunitest.TestCase):
 
     def test_round_to_nearest_share(self) -> None:
         holdings = self.get_holdings()
-        quantization = "nearest_share"
+        quantization = 0
         holdings = cfinhold.quantize_holdings(holdings, quantization)
         actual = hpandas.df_to_str(holdings, num_rows=None)
         expected = r"""
@@ -66,14 +66,14 @@ class Test_quantize_holdings(hunitest.TestCase):
 
     def test_round_to_nearest_lot(self) -> None:
         holdings = self.get_holdings()
-        quantization = "nearest_lot"
+        quantization = -2
         holdings = cfinhold.quantize_holdings(holdings, quantization)
         actual = hpandas.df_to_str(holdings, num_rows=None)
         expected = r"""
                              101    202
 2000-01-01 09:35:00-05:00    0.0    0.0
-2000-01-01 09:40:00-05:00   -0.0  100.0
-2000-01-01 09:45:00-05:00   -0.0  100.0
+2000-01-01 09:40:00-05:00    0.0  100.0
+2000-01-01 09:45:00-05:00    0.0  100.0
 2000-01-01 09:50:00-05:00 -100.0  100.0
 2000-01-01 09:55:00-05:00 -100.0  100.0
 2000-01-01 10:00:00-05:00 -100.0    0.0
@@ -154,7 +154,7 @@ class Test_adjust_holdings_for_overnight(hunitest.TestCase):
 2000-01-01 15:00:00-05:00  -49.9  100.1
 2000-01-01 15:30:00-05:00    NaN  100.0
 2000-01-01 16:00:00-05:00    0.0    0.0
-2000-01-02 09:30:00-05:00   -0.0    0.0
+2000-01-02 09:30:00-05:00    0.0    0.0
 2000-01-02 10:00:00-05:00 -100.0  305.0
 2000-01-02 10:30:00-05:00    0.0    0.0"""
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -182,7 +182,7 @@ class Test_adjust_holdings_for_overnight(hunitest.TestCase):
 2000-01-01 15:00:00-05:00  -49.9  100.1
 2000-01-01 15:30:00-05:00  -49.9  100.0
 2000-01-01 16:00:00-05:00    0.0    0.0
-2000-01-02 09:30:00-05:00   -0.0    0.0
+2000-01-02 09:30:00-05:00    0.0    0.0
 2000-01-02 10:00:00-05:00 -100.0  305.0
 2000-01-02 10:30:00-05:00    0.0    0.0"""
         self.assert_equal(actual, expected, fuzzy_match=True)
