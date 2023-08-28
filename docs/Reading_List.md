@@ -23,30 +23,31 @@
 
 # Coding
 
-- [The Pragmatic Programmer](https://www.amazon.com/Pragmatic-Programmer-Journeyman-Master/dp/020161622X)
-  - Aka the Black Book
-  - Reading and (really) understanding this is equivalent to accumulate 20 years
-    of coding
+- [The Pragmatic Programmer: Your Journey to Mastery (2ed)](https://www.amazon.com/Pragmatic-Programmer-Anniversary-Journey-Mastery/dp/B0833FBNHV)
+  - Reading (and really internalizing) this book is equivalent to the experience
+    you can gain by coding for 20 years
   - It will change your life
 
+- [A Philosophy of Software Design](https://www.amazon.com/Philosophy-Software-Design-John-Ousterhout/dp/1732102201)
+
+- [Code Complete: A Practical Handbook of Software Construction (2ed)](https://www.amazon.com/Code-Complete-Practical-Handbook-Construction/dp/0735619670)
+  - Likely the only decent product ever made by Micro$oft
+
 - [The Joel Test](https://www.joelonsoftware.com/2000/08/09/the-joel-test-12-steps-to-better-code)
-  - We should probably listen to the guy that started StackOverflow
-  - Today the 12 steps are obvious, but in 2000 these simple ideas were
-    revolutionary
-  - And, yes you are correct noticing that Joel is holding the table tennis
-    racquet incorrectly in the picture
+  - Today the 12 steps are accepted as obvious, but in 2000 these simple ideas
+    were revolutionary
+  - (And yes Joel is holding the table tennis paddle incorrectly in the picture)
 
 # Data analysis
 
 - [Python for Data Analysis](https://www.amazon.com/Python-Data-Analysis-Wrangling-IPython/dp/1491957662)
-  - Reading is not enough: you should have tried _all_ the examples of the book
-  - Remember: whatever you want to do, there is a more effective pandas way to
-    do it in one line
+  - Reading the book is not enough: you need to type and try _all_ the examples of the book
+  - Remember:
+    - Whatever you do, there is a more effective Pandas way to do it in one line
+    - Any Pandas code using for-loop is provably sub-optimal
+  
 
 # SRE
 
 - [Site Reliability Engineering](https://landing.google.com/sre/sre-book/toc/index.html)
-  - "Members of the SRE team explain how their engagement with the entire
-    software lifecycle has enabled Google to build, deploy, monitor, and
-    maintain some of the largest software systems in the world."
-  - An outstanding reference drawing on a wealth of experience
+  - An outstanding reference drawing on a wealth of experience at Google (but boring)
