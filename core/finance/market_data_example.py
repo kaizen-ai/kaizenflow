@@ -25,47 +25,6 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(Paul): Consider factoring out this wrapper pattern.
-def generate_random_ohlcv_bars(
-    start_datetime: pd.Timestamp,
-    end_datetime: pd.Timestamp,
-    asset_ids: List[int],
-    *,
-    bar_duration: str = "1T",
-    bar_volatility_in_bps: int = 10,
-    bar_expected_count: int = 1000,
-    last_price: float = 1000,
-    start_time: datetime.time = datetime.time(9, 31),
-    end_time: datetime.time = datetime.time(16, 00),
-    seed: int = 10,
-) -> pd.DataFrame:
-    """
-    Wrap `generate_random_ohlcv_bars_for_asset()` for multiple instruments.
-
-    :return: dataframe as in `generate_random_ohlcv_bars_for_asset()`,
-        concatenated along the index, sorted by timestamp then by asset it
-    """
-    asset_dfs = []
-    for asset_id in asset_ids:
-        df = generate_random_ohlcv_bars_for_asset(
-            start_datetime,
-            end_datetime,
-            asset_id,
-            bar_duration=bar_duration,
-            bar_volatility_in_bps=bar_volatility_in_bps,
-            bar_expected_count=bar_expected_count,
-            last_price=last_price,
-            start_time=start_time,
-            end_time=end_time,
-            seed=seed,
-        )
-        asset_dfs.append(df)
-        seed += 1
-    df = pd.concat(asset_dfs, axis=0).sort_values(["end_datetime", "asset_id"])
-    df.reset_index(drop=True, inplace=True)
-    return df
-
-
 def generate_random_ohlcv_bars_for_asset(
     start_datetime: pd.Timestamp,
     end_datetime: pd.Timestamp,
@@ -82,8 +41,6 @@ def generate_random_ohlcv_bars_for_asset(
     """
     Return a dataframe of random OHLCV bars for a single instrument.
 
-    Output example:
-
     :param start_datetime: initial timestamp
     :param end_datetime: final timestamp
     :param asset_id: asset id for labeling
@@ -97,6 +54,7 @@ def generate_random_ohlcv_bars_for_asset(
     :return: dataframe like
       - index is an integer index
       - columns include timestamps, asset id, open, high, low, close, volume
+    TODO(gp): @all add example.
     """
     price_process = carsigen.PriceProcess(seed)
     native_bar_duration = "1T"
@@ -146,6 +104,48 @@ def generate_random_ohlcv_bars_for_asset(
     return df.reset_index(drop=True)
 
 
+# TODO(Paul): Consider factoring out this wrapper pattern.
+# TODO(gp): Pass the defaults as kwargs.
+def generate_random_ohlcv_bars(
+    start_datetime: pd.Timestamp,
+    end_datetime: pd.Timestamp,
+    asset_ids: List[int],
+    *,
+    bar_duration: str = "1T",
+    bar_volatility_in_bps: int = 10,
+    bar_expected_count: int = 1000,
+    last_price: float = 1000,
+    start_time: datetime.time = datetime.time(9, 31),
+    end_time: datetime.time = datetime.time(16, 00),
+    seed: int = 10,
+) -> pd.DataFrame:
+    """
+    Wrap `generate_random_ohlcv_bars_for_asset()` for multiple instruments.
+
+    :return: dataframe as in `generate_random_ohlcv_bars_for_asset()`,
+        concatenated along the index, sorted by timestamp then by asset it
+    """
+    asset_dfs = []
+    for asset_id in asset_ids:
+        df = generate_random_ohlcv_bars_for_asset(
+            start_datetime,
+            end_datetime,
+            asset_id,
+            bar_duration=bar_duration,
+            bar_volatility_in_bps=bar_volatility_in_bps,
+            bar_expected_count=bar_expected_count,
+            last_price=last_price,
+            start_time=start_time,
+            end_time=end_time,
+            seed=seed,
+        )
+        asset_dfs.append(df)
+        seed += 1
+    df = pd.concat(asset_dfs, axis=0).sort_values(["end_datetime", "asset_id"])
+    df.reset_index(drop=True, inplace=True)
+    return df
+
+
 def generate_random_top_of_book_bars(
     start_datetime: pd.Timestamp,
     end_datetime: pd.Timestamp,
@@ -164,18 +164,15 @@ def generate_random_top_of_book_bars(
     Wrap `generate_random_top_of_book_bars_for_asset()` for multiple
     instruments.
 
-    Output example:
-
+    :return: dataframe like
+      - index is an integer index
+      - columns include timestamps, asset ids, price, volume, and fake features
     ```
                   start_datetime ...        ask     midpoint  volume  asset_id
     0  2000-01-01 09:31:00-05:00     998.897634   998.897480     988       101
     1  2000-01-01 09:31:00-05:00    1000.120981  1000.117331     955       102
     2  2000-01-01 09:32:00-05:00     997.401239   997.399872    1045       101
     ```
-
-    :return: dataframe like
-      - index is an integer index
-      - columns include timestamps, asset ids, price, volume, and fake features
     """
     asset_dfs = []
     for asset_id in asset_ids:
@@ -215,15 +212,6 @@ def generate_random_top_of_book_bars_for_asset(
     """
     Return a dataframe of random bars for a single instrument.
 
-    Output example:
-
-    ```
-                  start_datetime ...        ask    midpoint  volume  asset_id
-    0  2000-01-01 09:31:00-05:00     998.897634  998.897480     988       101
-    1  2000-01-01 09:32:00-05:00     998.120981  998.117331     955       101
-    2  2000-01-01 09:33:00-05:00     997.401239  997.399872    1045       101
-    ```
-
     :param start_datetime: initial timestamp
     :param end_datetime: final timestamp
     :param asset_id: asset id for labeling
@@ -238,6 +226,12 @@ def generate_random_top_of_book_bars_for_asset(
     :return: dataframe like
       - index is an integer index
       - columns include timestamps, asset id, price, volume, and fake features
+    ```
+                  start_datetime ...        ask    midpoint  volume  asset_id
+    0  2000-01-01 09:31:00-05:00     998.897634  998.897480     988       101
+    1  2000-01-01 09:32:00-05:00     998.120981  998.117331     955       101
+    2  2000-01-01 09:33:00-05:00     997.401239  997.399872    1045       101
+    ```
     """
     price_process = carsigen.PriceProcess(seed)
     bid = (
@@ -312,9 +306,8 @@ def generate_random_price_data(
     """
     Generate synthetic data used to mimic real-time price data.
 
-    The data:
-        - is a random walk with a bias of 1000 and increments ~ iid U[-0.5, 0.5]
-        - looks like:
+    :return: dataframe with random walk with a bias of 1000 and increments
+        ~ iid U[-0.5, 0.5]
         ```
                       start_datetime ...        price       volume   asset_id
         0  2000-01-01 09:31:00-05:00       999.874540   999.874540        101
@@ -366,17 +359,14 @@ def generate_random_bars(
     """
     Wrap `generate_random_bars_for_asset()` for multiple instruments.
 
-    Output example:
-
-    ```
-                  start_datetime ... volume    f1    f2    s1   s2  asset_id
-    0  2000-01-01 09:31:00-05:00        941  2010  1990  2.22  111       101
-    1  2000-01-01 09:31:00-05:00        997  1999  1985  0.90   90       102
-    2  2000-01-01 09:32:00-05:00       1043  2004  2015  6.82  115       101
-    ```
-
     :return: dataframe as in `generate_random_bars_for_asset()`, concatenated
         along the index, sorted by timestamp then by asset it
+        ```
+                      start_datetime ... volume    f1    f2    s1   s2  asset_id
+        0  2000-01-01 09:31:00-05:00        941  2010  1990  2.22  111       101
+        1  2000-01-01 09:31:00-05:00        997  1999  1985  0.90   90       102
+        2  2000-01-01 09:32:00-05:00       1043  2004  2015  6.82  115       101
+        ```
     """
     asset_dfs = []
     for asset_id in asset_ids:
@@ -415,15 +405,6 @@ def generate_random_bars_for_asset(
     """
     Return a dataframe of random bars for a single instrument.
 
-    Output example:
-
-    ```
-                  start_datetime ... volume    f1    f2    s1   s2  asset_id
-    0  2000-01-01 09:31:00-05:00        941  2010  1990  2.22  111       101
-    1  2000-01-01 09:32:00-05:00       1035  1935  1996  1.90  117       101
-    2  2000-01-01 09:33:00-05:00       1043  2004  2015  6.82  115       101
-    ```
-
     :param start_datetime: initial timestamp
     :param end_datetime: final timestamp
     :param asset_id: asset id for labeling
@@ -437,6 +418,12 @@ def generate_random_bars_for_asset(
     :return: dataframe like
       - index is an integer index
       - columns include timestamps, asset id, price, volume, and fake features
+        ```
+                      start_datetime ... volume    f1    f2    s1   s2  asset_id
+        0  2000-01-01 09:31:00-05:00        941  2010  1990  2.22  111       101
+        1  2000-01-01 09:32:00-05:00       1035  1935  1996  1.90  117       101
+        2  2000-01-01 09:33:00-05:00       1043  2004  2015  6.82  115       101
+        ```
     """
     price_process = carsigen.PriceProcess(seed)
     close = price_process.generate_price_series_from_normal_log_returns(
@@ -518,18 +505,16 @@ def build_timestamp_df(
     """
     Generate dataframe with start, end, and DB timestamps from the given index.
 
-    Output example:
-
-    ```
-                              start_datetime ...        timestamp_db
-    2000-01-01 09:31:00  2000-01-01 09:30:00     2000-01-01 09:31:10
-    2000-01-01 09:32:00  2000-01-01 09:31:00     2000-01-01 09:32:10
-    2000-01-01 09:33:00  2000-01-01 09:32:00     2000-01-01 09:33:10
-    ```
-
     :param index: index to use as end datetime
     :param bar_duration: duration between start and end timestamps, e.g. "1T"
     :param bar_delay: delay between end and database timestamps, e.g. "10sec"
+    :return:
+        ```
+                                  start_datetime ...        timestamp_db
+        2000-01-01 09:31:00  2000-01-01 09:30:00     2000-01-01 09:31:10
+        2000-01-01 09:32:00  2000-01-01 09:31:00     2000-01-01 09:32:10
+        2000-01-01 09:33:00  2000-01-01 09:32:00     2000-01-01 09:33:10
+        ```
     """
     hdbg.dassert_isinstance(index, pd.DatetimeIndex)
     bar_time_delta = pd.Timedelta(bar_duration)
@@ -632,14 +617,13 @@ def get_MarketData_df3() -> Tuple[pd.DataFrame, int]:
     Generate price series with a price pattern and a real-time loop timeout in
     seconds to test model.
 
-    Output example:
-
-    ```
-                                          start_datetime ... volume  feature1
-    2000-01-01 09:31:00-05:00  2000-01-01 09:30:00-05:00        100      -1.0
-    2000-01-01 09:32:00-05:00  2000-01-01 09:31:00-05:00        100      -1.0
-    ...
-    ```
+    :return:
+        ```
+                                              start_datetime ... volume  feature1
+        2000-01-01 09:31:00-05:00  2000-01-01 09:30:00-05:00        100      -1.0
+        2000-01-01 09:32:00-05:00  2000-01-01 09:31:00-05:00        100      -1.0
+        ...
+        ```
     """
     idx = pd.date_range(
         start=pd.Timestamp("2000-01-01 09:31:00-05:00", tz="America/New_York"),
@@ -666,14 +650,13 @@ def get_MarketData_df4() -> Tuple[pd.DataFrame, int]:
     Generate price series with a price pattern and a real-time loop timeout in
     seconds to test model.
 
-    Output example:
-
-    ```
-                                          start_datetime ... volume  feature1
-    2000-01-01 09:31:00-05:00  2000-01-01 09:30:00-05:00        100      -1.0
-    2000-01-01 09:32:00-05:00  2000-01-01 09:31:00-05:00        100      -1.0
-    2000-01-01 09:33:00-05:00  2000-01-01 09:32:00-05:00        100      -1.0
-    ```
+    :return
+        ```
+                                              start_datetime ... volume  feature1
+        2000-01-01 09:31:00-05:00  2000-01-01 09:30:00-05:00        100      -1.0
+        2000-01-01 09:32:00-05:00  2000-01-01 09:31:00-05:00        100      -1.0
+        2000-01-01 09:33:00-05:00  2000-01-01 09:32:00-05:00        100      -1.0
+        ```
     """
     idx = pd.date_range(
         start=pd.Timestamp("2000-01-01 09:31:00-05:00", tz="America/New_York"),
@@ -700,14 +683,13 @@ def get_MarketData_df5() -> pd.DataFrame:
     Generate price series with a price pattern and a real-time loop timeout in
     seconds to test model.
 
-    Output example:
-
-    ```
-                                          start_datetime ... volume  feature1
-    2000-01-01 09:31:00-05:00  2000-01-01 09:30:00-05:00        100      -1.0
-    2000-01-01 09:32:00-05:00  2000-01-01 09:31:00-05:00        100      -1.0
-    2000-01-01 09:33:00-05:00  2000-01-01 09:32:00-05:00        100      -1.0
-    ```
+    :return
+        ```
+                                              start_datetime ... volume  feature1
+        2000-01-01 09:31:00-05:00  2000-01-01 09:30:00-05:00        100      -1.0
+        2000-01-01 09:32:00-05:00  2000-01-01 09:31:00-05:00        100      -1.0
+        2000-01-01 09:33:00-05:00  2000-01-01 09:32:00-05:00        100      -1.0
+        ```
     """
     idx = pd.date_range(
         start=pd.Timestamp("2000-01-01 09:31:00-05:00", tz="America/New_York"),
@@ -736,15 +718,14 @@ def get_MarketData_df6(full_symbols: List[str]) -> pd.DataFrame:
 
     Input full symbols represent `icdc.FullSymbol`.
 
-    Output example:
-
-    ```
-                                    full_symbol ... close  volume  feature1
-    timestamp
-    2000-01-01 14:31:00+00:00  binance:BTC_USDT     101.0       0       1.0
-    2000-01-01 14:32:00+00:00  binance:BTC_USDT     101.0       1       1.0
-    2000-01-01 14:33:00+00:00  binance:BTC_USDT     101.0       2       1.0
-    ```
+    :return
+        ```
+                                        full_symbol ... close  volume  feature1
+        timestamp
+        2000-01-01 14:31:00+00:00  binance:BTC_USDT     101.0       0       1.0
+        2000-01-01 14:32:00+00:00  binance:BTC_USDT     101.0       1       1.0
+        2000-01-01 14:33:00+00:00  binance:BTC_USDT     101.0       2       1.0
+        ```
     """
     # Pass timestamps within the U.S. active trading hours.
     idx = pd.date_range(

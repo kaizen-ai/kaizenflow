@@ -16,6 +16,7 @@ import helpers.hpandas as hpandas
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): -> private
 def generate_limit_order_price(
     df: pd.DataFrame,
     bid_col: str,
@@ -30,9 +31,12 @@ def generate_limit_order_price(
     tick_decimals: int,
 ) -> pd.DataFrame:
     """
-    Generate limit order prices from subsampled reference prices and an offset.
+    Generate limit order prices from sub-sampled reference prices and an
+    offset.
 
-    :param df: datatime-indexed dataframe with a reference price column
+    E.g., place order 5% from the bid or ask level, repricing every 2 minutes.
+
+    :param df: datetime-indexed dataframe with a reference price column
     :param bid_col: name of column with last bid price for bar
     :param ask_col: like `bid_col` but for ask
     :param buy_reference_price_col: name of df column with reference prices
@@ -51,7 +55,7 @@ def generate_limit_order_price(
         if we use one-minute bars, take `subsample_freq="15T"`, and let
         `ffill_limit=4`, then the execution window will be 1 + 4 = 5 minutes.
     :param tick_decimals: number of decimals to round prices to
-    :return: a series of limit order prices
+    :return: a dataframe of limit order prices named `{buy,sell}_limit_order_price`
     """
     hpandas.dassert_time_indexed_df(
         df, allow_empty=True, strictly_increasing=True
@@ -62,7 +66,7 @@ def generate_limit_order_price(
         buy_reference_price_col,
         sell_reference_price_col,
     ]
-    hdbg.dassert_is_subset(list(set(required_cols)), df.columns)
+    hdbg.dassert_is_subset(required_cols, df.columns)
     hdbg.dassert_isinstance(buy_spread_frac_offset, float)
     hdbg.dassert_isinstance(sell_spread_frac_offset, float)
     hdbg.dassert_isinstance(subsample_freq, str)
@@ -107,6 +111,7 @@ def generate_limit_order_price(
     return subsampled
 
 
+# TODO(gp): -> private
 def estimate_limit_order_execution(
     df: pd.DataFrame,
     bid_col: str,
@@ -127,8 +132,8 @@ def estimate_limit_order_execution(
     :param sell_limit_price_col: like `buy_limit_price_col` but for selling
     :param buy_order_num_col: col with numerical order numbers for buys
     :param sell_order_num_col: col with numerical order numbers for sells
-    :return: dataframe with two bool columns, "limit_buy_executed" and
-        "limit_sell_executed"
+    :return: dataframe with two bool columns, `limit_buy_executed` and
+        `limit_sell_executed`
     """
     hpandas.dassert_time_indexed_df(
         df, allow_empty=True, strictly_increasing=True
@@ -216,6 +221,7 @@ def estimate_limit_order_execution(
     return execution_df
 
 
+# TODO(gp): -> private
 def generate_limit_orders_and_estimate_execution(
     df: pd.DataFrame,
     bid_col: str,
@@ -317,9 +323,7 @@ def apply_execution_prices_to_trades(
     return execution_price
 
 
-# TODO(Paul): Make the name more specific. This is execution quality with
-#  respect to bid/ask and midpoint.
-def compute_execution_quality(
+def compute_bid_ask_execution_quality(
     df: pd.DataFrame,
     bid_col: str,
     ask_col: str,
@@ -411,6 +415,54 @@ def compute_execution_quality(
     data.append(sell_trade_midpoint_slippage_bps)
     # Combine computed columns.
     df_out = pd.concat(data, axis=1)
+    return df_out
+
+
+def compute_ref_price_execution_quality(
+    df: pd.DataFrame,
+    buy_trade_reference_price_col: str,
+    sell_trade_reference_price_col: str,
+    buy_trade_price_col: str,
+    sell_trade_price_col: str,
+) -> pd.DataFrame:
+    """
+    Compute buy/sell slippage in notional and bps wrt reference price.
+
+    Analogous to `compute_bid_ask_execution_quality()` but with reference
+    prices that are not necessarily bid/ask prices.
+
+    :param df: DataFrame, possibly with multiple column levels (assets in
+        inner level)
+    :param buy_trade_reference_price_col: name of col with reference (e.g.,
+        TWAP, VWAP) price for buy orders
+    :param sell_trade_reference_price_col: name of col with reference price
+        for sell orders; may be the same as `buy_trade_reference_price_col`
+    :param buy_trade_price_col: name of col with buy trade price
+    :param sell_trade_price_col: name of col with sell trade price
+    :return: DataFrame, possibly with multiple column levels, of notional and
+        relative slippage
+    """
+    # Compute buy trade slippage.
+    buy_trade_slippage_notional = (
+        df[buy_trade_price_col] - df[buy_trade_reference_price_col]
+    )
+    buy_trade_slippage_bps = 1e4 * buy_trade_slippage_notional.divide(
+        df[buy_trade_reference_price_col]
+    )
+    # Compute sell trade slippage.
+    sell_trade_slippage_notional = (
+        df[sell_trade_reference_price_col] - df[sell_trade_price_col]
+    )
+    sell_trade_slippage_bps = 1e4 * sell_trade_slippage_notional.divide(
+        df[sell_trade_reference_price_col]
+    )
+    dict_ = {
+        "buy_trade_slippage_notional": buy_trade_slippage_notional,
+        "buy_trade_slippage_bps": buy_trade_slippage_bps,
+        "sell_trade_slippage_notional": sell_trade_slippage_notional,
+        "sell_trade_slippage_bps": sell_trade_slippage_bps,
+    }
+    df_out = pd.concat(dict_, axis=1)
     return df_out
 
 

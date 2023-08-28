@@ -1,15 +1,17 @@
 """
 Import as:
 
-import core.statistics.empirical_distribution_function as cstaecdf
+import core.statistics.empirical_distribution_function as csemdifu
 """
 
 import logging
+from typing import List
 
 import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
@@ -18,21 +20,56 @@ def compute_empirical_cdf(srs: pd.Series) -> pd.Series:
     """
     Compute the empirical cdf from data.
 
+    TODO(Paul): Compare to now-available scipy.stats.ecdf.
+
     :param srs: data series
     :return: series with
       - x values equal to sorted `srs`
       - y values equal to percentage of data leq x value
     """
     hdbg.dassert_isinstance(srs, pd.Series)
-    # Sort the series and drop NaNs.
-    sorted_srs = srs.sort_values().dropna()
-    # The new indexed comes from the sorted values. Rename for clarity.
-    new_idx = sorted_srs.values
+    # Sort the series, drop NaNs, and account for multiplicities.
+    nonan_srs = srs.dropna()
+    sorted_data_counts = nonan_srs.value_counts().sort_index()
+    # The new index comes from the sorted values. Rename for clarity.
+    new_idx = sorted_data_counts.index
     # Create the values representing cumulative percentage seen.
-    count = sorted_srs.count()
-    new_values = range(1, count + 1) / (count + 1)
-    ecdf = pd.Series(new_values, new_idx, name="ecdf")
+    increment = 1 / nonan_srs.count()
+    new_values = (sorted_data_counts * increment).cumsum()
+    ecdf = pd.Series(new_values, new_idx, name=srs.name + ".ecdf")
     return ecdf
+
+
+def combine_empirical_cdfs(ecdfs: List[pd.Series]) -> pd.DataFrame:
+    """
+    Combine multiple ecdfs into a dataframe (e.g., for easy plotting).
+
+    :param ecdfs: list of ecdfs represented as pd.Series
+    :return: dataframe with each ecdf as a column and index as a union of
+        the indices
+    """
+    hdbg.dassert_container_type(ecdfs, list, pd.Series)
+    for ecdf in ecdfs:
+        hpandas.dassert_increasing_index(ecdf)
+        hdbg.dassert(not ecdf.isna().any())
+        values_are_sorted = np.all(ecdf.values[:-1] <= ecdf.values[1:])
+        hdbg.dassert(values_are_sorted)
+        hdbg.dassert_lte(0, ecdf.min())
+        hdbg.dassert_lte(abs(1 - ecdf.max()), 1e-9)
+    combined_ecdfs = pd.concat(ecdfs, axis=1).sort_index().ffill().fillna(0)
+    return combined_ecdfs
+
+
+def compute_and_combine_empirical_cdfs(data: List[pd.Series]) -> pd.DataFrame:
+    """
+    Compute ecdfs for each series and combine into a single dataframe.
+    """
+    ecdfs = []
+    for srs in data:
+        ecdf = compute_empirical_cdf(srs)
+        ecdfs.append(ecdf)
+    combined_ecdfs = combine_empirical_cdfs(ecdfs)
+    return combined_ecdfs
 
 
 def compute_empirical_cdf_with_bounds(

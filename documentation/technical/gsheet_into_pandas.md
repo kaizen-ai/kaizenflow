@@ -54,7 +54,7 @@
   > ssh research "mkdir -p $DST_DIR"
   > scp $SRC_FILE research:$DST_FILE
   > ssh research "chmod 600 $DST_FILE"
-  ``
+  ```
 
 # Using gspread-pandas
 

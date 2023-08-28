@@ -35,13 +35,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config as cconfig
+import core.finance.portfolio_df_processing as cofinpdp
 import core.plotting as coplotti
 import dataflow.model as dtfmod
-import helpers.hdataframe as hdatafr
-import helpers.hdataframe as hdatafr
 import helpers.hdbg as hdbg
 import helpers.henv as henv
-import helpers.hpandas as hpandas
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 
@@ -230,12 +228,12 @@ metric_modes = ["pnl", "pnl_in_bps", "hit_rate"]
 
 # %%
 for metric in metric_modes:
-    metric_stats = fep.bin_annotated_portfolio_df(
+    metric_stats = cofinpdp.bin_prediction_annotated_portfolio_df(
         portfolio_df,
         config["fep_binning_portfolio"]["proportion_of_data_per_bin"],
         metric,
     )["mean"].mean(axis=1)
-    metric_stats_filtered = fep.bin_annotated_portfolio_df(
+    metric_stats_filtered = cofinpdp.bin_prediction_annotated_portfolio_df(
         portfolio_df_filtered,
         config["fep_binning_portfolio"]["proportion_of_data_per_bin"],
         metric,

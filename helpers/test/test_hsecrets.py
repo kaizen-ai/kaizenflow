@@ -21,6 +21,7 @@ if _HAS_MOTO:
     import botocore
     import pytest
 
+    import helpers.henv as henv
     import helpers.hgit as hgit
     import helpers.hsecrets as hsecret
     import helpers.hunit_test as hunitest
@@ -32,6 +33,10 @@ if _HAS_MOTO:
 
     @pytest.mark.requires_ck_infra
     @pytest.mark.requires_aws
+    @pytest.mark.skipif(
+        not henv.execute_repo_config_code("is_CK_S3_available()"),
+        reason="Run only if CK S3 is available",
+    )
     class TestCreateClient(hunitest.TestCase):
         def test_create_client1(self) -> None:
             """
@@ -42,6 +47,10 @@ if _HAS_MOTO:
 
     @pytest.mark.requires_ck_infra
     @pytest.mark.requires_aws
+    @pytest.mark.skipif(
+        not henv.execute_repo_config_code("is_CK_S3_available()"),
+        reason="Run only if CK S3 is available",
+    )
     class TestGetSecret(hunitest.TestCase):
         @moto.mock_secretsmanager
         def test_get_secret(self) -> None:
@@ -59,6 +68,10 @@ if _HAS_MOTO:
 
     @pytest.mark.requires_ck_infra
     @pytest.mark.requires_aws
+    @pytest.mark.skipif(
+        not henv.execute_repo_config_code("is_CK_S3_available()"),
+        reason="Run only if CK S3 is available",
+    )
     class TestStoreSecret(hunitest.TestCase):
         @moto.mock_secretsmanager
         def test_store_secret1(self) -> None:

@@ -191,15 +191,16 @@ class TestCcxtExtractor1(hunitest.TestCase):
         extractor = imvcdexex.CcxtExtractor(exchange_id, contract_type)
         currency_pair = "BTC_USDT"
         # Mock currency pairs.
-        extractor.currency_pairs = [currency_pair]
+        extractor.currency_pairs = ["BTC/USDT:USDT"]
         # Mock an async_exchange.
         extractor._async_exchange = umock.MagicMock()
         # Test case 1 ------------------------------------------------------------
         # Last minute timestamp is not in the downloaded raw websocket data.
         # Mock return value of trades.
-        ohlcv_data = ccxtpro.base.cache.ArrayCacheByTimestamp()
-        ohlcv_data.append([1645660900000, 1.11, 2.11, 3.11, 4.11, 5.11])
-        ohlcv_data.append([1645660900000, 1.11, 2.11, 3.11, 4.11, 5.11])
+        ohlcv_data = [
+            [1645660900000, 1.11, 2.11, 3.11, 4.11, 5.11],
+            [1645660900000, 1.11, 2.11, 3.11, 4.11, 5.11]
+        ]
         expected = {"1m": ohlcv_data}
         extractor._async_exchange.ohlcvs.__getitem__.return_value = expected
         # Run with mocked log.
@@ -221,9 +222,10 @@ class TestCcxtExtractor1(hunitest.TestCase):
         timestamp_to_check = hdateti.convert_timestamp_to_unix_epoch(
             timestamp_to_check, unit="ms"
         )
-        ohlcv_data = ccxtpro.base.cache.ArrayCacheByTimestamp()
-        ohlcv_data.append([1645660900000, 1.11, 2.11, 3.11, 4.11, 5.11])
-        ohlcv_data.append([timestamp_to_check, 1.11, 2.11, 3.11, 4.11, 5.11])
+        ohlcv_data = [
+            [1645660900000, 1.11, 2.11, 3.11, 4.11, 5.11],
+            [timestamp_to_check, 1.11, 2.11, 3.11, 4.11, 5.11]
+        ]
         expected = {"1m": ohlcv_data}
         extractor._async_exchange.ohlcvs.__getitem__.return_value = expected
         # Run with mocked log.
@@ -385,7 +387,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         contract_type = "futures"
         ccxt_extractor = imvcdexex.CcxtExtractor(exchange_id, contract_type)
         currency_pair = "BTC_USDT"
-        ccxt_extractor.currency_pairs = ["BTC/USDT"]
+        ccxt_extractor.currency_pairs = ["BTC/USDT:USDT"]
         start_timestamp = pd.Timestamp("2023-01-01 00:00:01")
         end_timestamp = pd.Timestamp("2023-01-01 00:10:01")
         with umock.patch.object(
@@ -441,7 +443,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         contract_type = "futures"
         ccxt_extractor = imvcdexex.CcxtExtractor(exchange_id, contract_type)
         currency_pair = "BTC_USDT"
-        ccxt_extractor.currency_pairs = ["BTC/USDT"]
+        ccxt_extractor.currency_pairs = ["BTC/USDT:USDT"]
         start_timestamp = pd.Timestamp("2023-01-01 00:00:01")
         end_timestamp = pd.Timestamp("2023-01-01 00:10:01")
         with umock.patch.object(
@@ -579,11 +581,12 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Prepare test data.
         current_time = "2022-02-24 00:00:00"
         mock_get_current_time.return_value = current_time
-        symbol = "BTC/BUSD"
+        symbol = "BTC_BUSD"
+        converted_symbol = "BTC/BUSD:BUSD"
         depth = 5
         exchange = "binance"
         exchange_class = imvcdexex.CcxtExtractor("binance", "futures")
-        exchange_class.currency_pairs = [symbol]
+        exchange_class.currency_pairs = [converted_symbol]
         self.assertEqual(
             exchange_class._sync_exchange._extract_mock_name(),
             f"ccxt.{exchange}()",
@@ -593,7 +596,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
             exchange_class._sync_exchange, "fetch_order_book", create=True
         ) as fetch_order_book_mock:
             fetch_order_book_mock.return_value = {
-                "symbol": symbol,
+                "symbol": "BTC/BUSD:BUSD",
                 "bids": [
                     [18904.6, 15.996],
                     [18904.5, 0.457],
@@ -615,7 +618,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
             #
             self.assertEqual(fetch_order_book_mock.call_count, 1)
             actual_args = tuple(fetch_order_book_mock.call_args)
-            expected_args = ((symbol, depth), {})
+            expected_args = ((converted_symbol, depth), {})
             self.assertEqual(actual_args, expected_args)
             # Check output.
             actual_output = hpandas.df_to_str(order_book)
@@ -639,7 +642,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         extractor = imvcdexex.CcxtExtractor(exchange_id, contract_type)
         currency_pair = "BTC_USDT"
         # Mock currency pairs.
-        extractor.currency_pairs = [currency_pair]
+        extractor.currency_pairs = ["BTC/USDT:USDT"]
         # Mock an async_exchange.
         extractor._async_exchange = umock.MagicMock()
         # Mock return value of trades.
@@ -677,7 +680,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Initialize test data.
         exchange = "binance"
         exchange_class = imvcdexex.CcxtExtractor(exchange, "spot")
-        exchange_class.currency_pairs = ["BTC/USDT"]
+        exchange_class.currency_pairs = ["BTC/USDT:USDT"]
         fake_currency_pair = "NON_EXIST"
         # Run with invalid input.
         with self.assertRaises(AssertionError) as fail:

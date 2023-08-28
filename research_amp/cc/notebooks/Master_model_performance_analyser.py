@@ -35,6 +35,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config as cconfig
+import core.finance.portfolio_df_processing as cofinpdp
 import core.plotting as coplotti
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
@@ -63,7 +64,7 @@ config = {
     "end_date": datetime.date(2023, 2, 13),
     "plot_portfolio_stats_freq": "D",
     "fep_annotate_forecasts_kwargs": {
-        "quantization": "no_quantization",
+        "quantization": 30,
         "burn_in_bars": 3,
         "style": "longitudinal",
         "liquidate_at_end_of_day": False,
@@ -153,7 +154,7 @@ metric_modes = ["pnl", "pnl_in_bps", "hit_rate"]
 
 # %%
 for metric in metric_modes:
-    metric_stats = fep.bin_annotated_portfolio_df(
+    metric_stats = cofinpdp.bin_prediction_annotated_portfolio_df(
         portfolio_df,
         config["fep_binning_portfolio"]["proportion_of_data_per_bin"],
         metric,

@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -30,11 +30,15 @@
 import logging
 import os
 
+import numpy as np
 import pandas as pd
 
 import core.config as cconfig
 import core.finance as cofinanc
+import core.finance.portfolio_df_processing.slippage as cfpdprsl
+import core.finance.target_position_df_processing as cftpdp
 import core.plotting as coplotti
+import core.statistics as costatis
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -66,9 +70,9 @@ else:
     # Below is just an example.
     dst_root_dir = "/shared_data/ecs/preprod/prod_reconciliation/"
     dag_builder_name = "C3a"
-    start_timestamp_as_str = "20230607_131000"
-    end_timestamp_as_str = "20230608_130500"
-    run_mode = "paper_trading"
+    start_timestamp_as_str = "20230802_154500"
+    end_timestamp_as_str = "20230802_160000"
+    run_mode = "prod"
     mode = "scheduled"
     config_list = oms.build_reconciliation_configs(
         dst_root_dir,
@@ -584,39 +588,77 @@ hpandas.df_to_str(sim_order_df, num_rows=5, log_level=logging.INFO)
 # # Fills statistics
 
 # %%
-fills = oms.compute_fill_stats(prod_target_position_df)
+fills = cftpdp.compute_fill_stats(prod_target_position_df)
 hpandas.df_to_str(fills, num_rows=5, log_level=logging.INFO)
-fills["fill_rate"].plot()
+
+# %%
+col = "fill_rate"
+coplotti.plot_boxplot(fills[col], "by_row", ylabel=col)
+
+# %%
+col = "fill_rate"
+coplotti.plot_boxplot(fills[col], "by_col", ylabel=col)
 
 # %% [markdown]
 # # Slippage
 
 # %%
-slippage = oms.compute_share_prices_and_slippage(portfolio_dfs["prod"])
+slippage = cfpdprsl.compute_share_prices_and_slippage(portfolio_dfs["prod"])
 hpandas.df_to_str(slippage, num_rows=5, log_level=logging.INFO)
-slippage["slippage_in_bps"].plot()
+
+# %%
+col = "slippage_in_bps"
+coplotti.plot_boxplot(slippage[col], "by_row", ylabel=col)
+
+# %%
+col = "slippage_in_bps"
+coplotti.plot_boxplot(slippage[col], "by_col", ylabel=col)
 
 # %%
 stacked = slippage[["slippage_in_bps", "is_benchmark_profitable"]].stack()
-stacked[stacked["is_benchmark_profitable"] > 0]["slippage_in_bps"].hist(
-    bins=31, edgecolor="red"
+slippage_when_benchmark_profitable = stacked[
+    stacked["is_benchmark_profitable"] > 0
+]["slippage_in_bps"].rename("slippage_when_benchmark_profitable")
+slippage_when_not_benchmark_profitable = stacked[
+    stacked["is_benchmark_profitable"] <= 0
+]["slippage_in_bps"].rename("slippage_when_not_benchmark_profitable")
+slippage_when_benchmark_profitable.hist(bins=31, edgecolor="black", color="green")
+slippage_when_not_benchmark_profitable.hist(
+    bins=31, alpha=0.7, edgecolor="black", color="red"
 )
-stacked[stacked["is_benchmark_profitable"] < 0]["slippage_in_bps"].hist(
-    bins=31, alpha=0.7, edgecolor="red"
+
+# %%
+slippage_benchmark_profitability_ecdfs = (
+    costatis.compute_and_combine_empirical_cdfs(
+        [
+            slippage_when_benchmark_profitable,
+            slippage_when_not_benchmark_profitable,
+        ]
+    )
 )
+slippage_benchmark_profitability_ecdfs.plot(yticks=np.arange(0, 1.1, 0.1))
 
 # %% [markdown]
 # # Total cost accounting
 
 # %%
-notional_costs = oms.compute_notional_costs(
+notional_costs = cftpdp.compute_notional_costs(
     portfolio_dfs["prod"],
     prod_target_position_df,
 )
 hpandas.df_to_str(notional_costs, num_rows=5, log_level=logging.INFO)
 
 # %%
-cost_df = oms.apply_costs_to_baseline(
+cftpdp.summarize_notional_costs(notional_costs, "by_bar").plot(kind="bar")
+
+# %%
+cftpdp.summarize_notional_costs(notional_costs, "by_asset").plot(kind="bar")
+
+# %%
+cftpdp.summarize_notional_costs(notional_costs, "by_bar").sum()
+
+# %%
+cost_df = cftpdp.apply_costs_to_baseline(
     portfolio_stats_dfs["research"],
     portfolio_stats_dfs["prod"],
     portfolio_dfs["prod"],

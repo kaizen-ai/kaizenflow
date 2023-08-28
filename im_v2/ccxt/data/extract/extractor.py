@@ -55,9 +55,8 @@ class CcxtExtractor(imvcdexex.Extractor):
         self.currency_pairs = self.get_exchange_currency_pairs()
         self.vendor = "CCXT"
 
-    @staticmethod
     def convert_currency_pair(
-        currency_pair: str, *, exchange_id: str = None
+        self, currency_pair: str, *, exchange_id: str = None
     ) -> str:
         """
         Convert currency pair used for getting data from exchange.
@@ -70,8 +69,18 @@ class CcxtExtractor(imvcdexex.Extractor):
             # E.g., USD_BTC -> USD-BTC.
             return currency_pair.replace("_", "-")
         else:
-            # E.g., USD_BTC -> USD/BTC.
-            return currency_pair.replace("_", "/")
+            if self.contract_type == "futures":
+                # TODO(Juraj): unify in #CmTask4986.
+                # In the newer CCXT version symbols are specified using the following format:
+                # BTC/USDT:USDT - the :USDT refers to the currency in which the futures contract
+                # are settled.
+                settlement_coin = currency_pair.split("_")[1]
+                currency_pair = currency_pair.replace("_", "/")
+                currency_pair =  f"{currency_pair}:{settlement_coin}"
+            else: 
+                # E.g., USD_BTC -> USD/BTC.
+                currency_pair = currency_pair.replace("_", "/")
+            return currency_pair
 
     def log_into_exchange(
         self, async_: bool
@@ -314,17 +323,14 @@ class CcxtExtractor(imvcdexex.Extractor):
                 pair = pair.replace("-", "/")
             if data_type == "ohlcv":
                 data = copy.deepcopy(self._async_exchange.ohlcvs[pair])
-                for key in data:
-                    # One of the returned key:value pairs is:
-                    #  "timeframe": [o, h, l, c, v] where timeframe is e.g. '1m' and
-                    #  o, h, l, c, v are the actual numerical values, 99,9% of time
-                    #  '1m' is used but this is a cosmetic generalization to also support
-                    #  '2m', '5m' etc.
-                    if isinstance(
-                        data[key], ccxtpro.base.cache.ArrayCacheByTimestamp
-                    ):
-                        ohlcv = data[key]
-                # TODO(Vlad, Juraj): Need to modify during #3194
+                # One of the returned key:value pairs is:
+                #  "timeframe": [o, h, l, c, v] where timeframe is e.g. '1m' and
+                #  o, h, l, c, v are the actual numerical values, 99,9% of time
+                #  '1m' is used but this is a cosmetic generalization to also support
+                #  '2m', '5m' etc.
+                hdbg.dassert_eq(len(data.keys()), 1)
+                for _, value in data.items():
+                    ohlcv = value
                 if not self._is_latest_kline_present(ohlcv):
                     _LOG.warning(
                         f"Latest kline is not present in the downloaded data."
@@ -356,10 +362,8 @@ class CcxtExtractor(imvcdexex.Extractor):
                         if exchange_id == "okx":
                             data["bids"] = data["bids"][:10]
                             data["asks"] = data["asks"][:10]
-                        # For some reason the OKX exchange does not return the symbol.
-                        # This is a temporary fix for that.
-                        if exchange_id == "okx" and data["symbol"] is None:
-                            data["symbol"] = pair
+                        # TODO(Juraj): Cleanup the naming convention of variables.
+                        data["symbol"] = currency_pair
                         if not isinstance(data.get("timestamp"), int):
                             _LOG.warning(
                                 "Timestamp is not an integer. "
