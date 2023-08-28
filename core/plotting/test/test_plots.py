@@ -7,6 +7,7 @@ import pandas as pd
 
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
+import core.plotting.normality as cplonorm
 import core.plotting.visual_stationarity_test as cpvistte
 
 _LOG = logging.getLogger(__name__)
@@ -63,6 +64,16 @@ class Test_plots(unittest.TestCase):
         samples = rng.normal(size=100)
         index = pd.date_range(start="2023-01-01", periods=len(samples), freq="D")
         srs = pd.Series(samples, index=index)
+        return srs
+    
+    @staticmethod
+    def get_plot_normal_distribution_data1() -> pd.Series:
+        """
+        Get test data for plotting normal distribution series.
+        """
+        rng = np.random.default_rng(seed=0)
+        samples = rng.normal(size=100)
+        srs = pd.Series(samples)
         return srs
 
     def test_plot_histograms_and_lagged_scatterplot1(self) -> None:
@@ -164,3 +175,20 @@ class Test_plots(unittest.TestCase):
         """
         test_df = self.get_test_plot_df1()
         cplmiplo.plot_autocorrelation(test_df)
+        
+    def test_plot_qq1(self) -> None:
+        """
+        Smoke test for `plot_qq()`.
+        """
+        test_series = self.get_plot_normal_distribution_data1()
+        cplonorm.plot_qq(test_series)
+        
+    def test_plot_qq2(self) -> None:
+        """
+        Smoke test for `plot_qq()` with NaN values in series and kwargs supplied.
+        """
+        test_series = self.get_plot_normal_distribution_data1()
+        test_series[20:50] = np.nan
+        _, axes = plt.subplots(1, 1, figsize=(10,10))
+        cplonorm.plot_qq(test_series, ax=axes, dist="norm", nan_mode="drop")
+        

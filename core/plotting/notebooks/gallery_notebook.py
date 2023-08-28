@@ -34,6 +34,7 @@ import numpy as np
 import core.config as cconfig
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
+import core.plotting.normality as cplonorm
 import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
 import core.plotting.test.test_plots as cptetepl
@@ -180,5 +181,19 @@ cplmiplo.plot_spectrum(test_df)
 _, axes = plt.subplots(2, 2, figsize=config["figsize"])
 axes_flat = axes.flatten()
 cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
+
+# %% [markdown]
+# ## `plot_qq()`
+
+# %%
+test_series = cptetepl.Test_plots.get_plot_normal_distribution_data1()
+
+# %%
+cplonorm.plot_qq(test_series)
+
+# %%
+test_series[20:50] = np.nan
+_, axes = plt.subplots(1, 1, figsize=(10,10))
+cplonorm.plot_qq(test_series, ax=axes, dist="norm", nan_mode="drop")
 
 # %%
