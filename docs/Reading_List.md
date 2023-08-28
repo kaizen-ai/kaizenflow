@@ -28,7 +28,7 @@
     you can gain by coding for 20 years
   - It will change your life
 
-- [A Philosophy of Software Design](https://www.amazon.com/Philosophy-Software-Design-John-Ousterhout/dp/1732102201)
+- [A Philosophy of Software Design (2ed)](https://www.amazon.com/Philosophy-Software-Design-2nd/dp/173210221X)
 
 - [Code Complete: A Practical Handbook of Software Construction (2ed)](https://www.amazon.com/Code-Complete-Practical-Handbook-Construction/dp/0735619670)
   - Likely the only decent product ever made by Micro$oft
