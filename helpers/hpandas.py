@@ -98,7 +98,7 @@ def dassert_index_is_datetime(
     """
     Ensure that the dataframe has an index containing datetimes.
 
-    Works for both single and multi-indexed dataframes.
+    It works for both single and multi-indexed dataframes.
     """
     index = _get_index(obj)
     if isinstance(index, pd.MultiIndex):

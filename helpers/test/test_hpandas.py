@@ -3280,7 +3280,7 @@ class Test_multiindex_df_info1(hunitest.TestCase):
 
 class Test_dassert_index_is_datetime(hunitest.TestCase):
     @staticmethod
-    def helper(
+    def get_test_df(
         index_is_datetime: bool,
     ) -> pd.DataFrame:
         """
@@ -3308,7 +3308,7 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
         Check that multi-index dataframe index is datetime type.
         """
         index_is_datetime = True
-        df = self.helper(index_is_datetime)
+        df = self.get_test_df(index_is_datetime)
         hpandas.dassert_index_is_datetime(df)
 
     def test2(self) -> None:
@@ -3316,7 +3316,7 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
         Check that multi-index dataframe index is not datetime type.
         """
         index_is_datetime = False
-        df = self.helper(index_is_datetime)
+        df = self.get_test_df(index_is_datetime)
         with self.assertRaises(AssertionError) as cm:
             hpandas.dassert_index_is_datetime(df)
         act = str(cm.exception)
@@ -3345,6 +3345,6 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
         Check that single-indexed dataframe index is datetime type.
         """
         index_is_datetime = True
-        df = self.helper(index_is_datetime)
+        df = self.get_test_df(index_is_datetime)
         df = df.loc["index1"]
         hpandas.dassert_index_is_datetime(df)
