@@ -123,6 +123,9 @@ def _get_workflow_table() -> htable.TableType:
     return table
 
 
+
+# TODO(Grisha): seems like GH changed the output format, we should update accordingly,
+# see CmTask #4672 "Slow tests fail (9835540316)" for details.
 @task
 def gh_workflow_list(  # type: ignore
     ctx,
@@ -212,6 +215,26 @@ def gh_workflow_list(  # type: ignore
                 hsystem.system(cmd, suppress_output=False, abort_on_error=False)
                 break
             if status == "":
+                if i == (len(status_column) - 1):
+                    # If all the runs in the table are in progress, i.e. there is no
+                    # failed or succesful run, issue a warning and exit. E.g.,
+                    ################################################################################
+                    # Superslow tests
+                    # ################################################################################
+                    # completed   | status | name            | workflow        | branch | event             | id         | elapsed | age |
+                    # ----------- | ------ | --------------- | --------------- | ------ | ----------------- | ---------- | ------- | --- |
+                    # in_progress |        | Superslow tests | Superslow tests | master | workflow_dispatch | 5421740561 | 13m25s  | 13m |
+                    _LOG.warning(
+                        "No failed/successful run found for workflow=%s for branch=%s, all runs are in progress, exiting.",
+                        workflow,
+                        branch_name,
+                    )
+                    break
+                _LOG.debug(
+                    "Workflow=%s for branch %s is in progress, continue looking for a failed/successful run",
+                    workflow,
+                    branch_name,
+                )
                 # It's in progress.
                 pass
             else:
