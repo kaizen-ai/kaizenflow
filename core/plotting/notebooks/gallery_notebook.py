@@ -36,6 +36,10 @@ import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
+import core.plotting.test.test_plots as cptetepl
+import core.plotting.correlation as cplocorr
+import dataflow.model.test.test_model_plotter as dmtetemopl
+
 import dataflow.model.model_plotter as dtfmomoplo
 import dataflow.model.test.test_model_evaluator as cdmttme
 import helpers.hdbg as hdbg

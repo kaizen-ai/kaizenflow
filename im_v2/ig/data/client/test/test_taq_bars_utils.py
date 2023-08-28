@@ -29,10 +29,10 @@ _IG_START_DATE = "2019-01-07"
 #                           PRE 20190108/
 
 
-@pytest.mark.requires_aws 
+@pytest.mark.requires_aws
 @pytest.mark.requires_ck_infra
 class TestTaqBarsUtils1(hunitest.TestCase):
-    
+
     def test_get_available_dates1(self) -> None:
         dates = imvidchiba.get_available_dates(_ROOT_DATA_DIR, _AWS_PROFILE)
         _LOG.debug("len(dates)=%s", len(dates))
@@ -55,7 +55,7 @@ class TestTaqBarsUtils1(hunitest.TestCase):
         self.assertEqual(str(max(filtered_dates)), end_date)
         self.assertEqual(len(filtered_dates), 2)
 
-    @pytest.mark.requires_aws 
+    @pytest.mark.requires_aws
     @pytest.mark.requires_ck_infra
     def test_filter_dates2(self) -> None:
         """
@@ -86,8 +86,8 @@ class TestTaqBarsUtils1(hunitest.TestCase):
         self.assertEqual(str(min(filtered_dates)), _IG_START_DATE)
         self.assertGreater(str(max(filtered_dates)), "2019-01-07")
         self.assertGreater(len(filtered_dates), 1)
-    
-    @pytest.mark.requires_aws 
+
+    @pytest.mark.requires_aws
     @pytest.mark.requires_ck_infra
     def test_filter_dates4(self) -> None:
         """
@@ -137,8 +137,8 @@ class TestGetBarData1(hunitest.TestCase):
         act_result = "\n".join(act)
         self.check_string(act_result, fuzzy_match=True)
         return df
-    
-    @pytest.mark.requires_aws 
+
+    @pytest.mark.requires_aws
     @pytest.mark.requires_ck_infra
     def test1(self) -> None:
         """
@@ -171,7 +171,7 @@ class TestGetBarData1(hunitest.TestCase):
             num_concurrent_requests,
         )
 
-    @pytest.mark.requires_aws 
+    @pytest.mark.requires_aws
     @pytest.mark.requires_ck_infra
     def test2(self) -> None:
         """
@@ -205,7 +205,7 @@ class TestGetBarData1(hunitest.TestCase):
 # #############################################################################
 
 
-@pytest.mark.requires_aws 
+@pytest.mark.requires_aws
 @pytest.mark.requires_ck_infra
 class Test_get_cached_bar_data_for_date_interval1(hunitest.TestCase):
     def test_tsla1(self) -> None:

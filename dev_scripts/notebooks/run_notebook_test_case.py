@@ -19,15 +19,14 @@ class Test_Run_Notebook_TestCase(hunitest.TestCase):
     Check that a notebook is not broken by running it end-to-end.
     """
 
-    # TODO(gp): `notebook_path` should be absolute to avoid breaks running
-    # tests outside amp.
     def _test_run_notebook(
         self, notebook_path: str, config_builder: str, *, extra_opts: str = ""
     ) -> None:
         """
         Test that a notebook runs end-to-end.
 
-        :param notebook_path: a path to a notebook file to run
+        :param notebook_path: path to a notebook file to run, use
+            `hgit.get_amp_abs_path()` when testing a notebook that is in `amp`
         :param config_builder: a function to use as config builder that returns
             a list of configs
         :param extra_opts: options for "run_notebook.py", e.g., "--publish_notebook"
@@ -39,7 +38,7 @@ class Test_Run_Notebook_TestCase(hunitest.TestCase):
             amp_dir, "dev_scripts", "notebooks", "run_notebook.py"
         )
         # Build a command to run the notebook.
-        opts = f"--num_threads 'serial'{extra_opts} -v DEBUG 2>&1"
+        opts = f"--no_suppress_output --num_threads 'serial'{extra_opts} -v DEBUG 2>&1"
         cmd = [
             f"{script_path}",
             f"--notebook {notebook_path}",
@@ -50,7 +49,9 @@ class Test_Run_Notebook_TestCase(hunitest.TestCase):
         cmd = " ".join(cmd)
         _LOG.debug("cmd=%s", cmd)
         # Execute.
-        rc = hsystem.system(cmd, abort_on_error=True, log_level="echo")
+        rc = hsystem.system(
+            cmd, abort_on_error=True, suppress_output=False, log_level="echo"
+        )
         _LOG.debug("rc=%s", rc)
         # Make sure that the run finishes successfully.
         self.assertEqual(rc, 0)

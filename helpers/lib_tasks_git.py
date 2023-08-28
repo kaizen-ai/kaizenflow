@@ -85,16 +85,19 @@ def git_clean(ctx, fix_perms_=False, dry_run=False):  # type: ignore
     hlitauti.report_task(txt=hprint.to_str("dry_run"))
 
     def _run_all_repos(cmd: str) -> None:
-        hsystem.system(cmd, abort_on_error=False)
+        # Use `run(ctx, cmd)` instead of `hsystem.system()` so that it is possible
+        # to easily use a mock context while unit testing.
+        hlitauti.run(ctx, cmd)
         # Clean submodules.
         cmd = f"git submodule foreach '{cmd}'"
-        hsystem.system(cmd, abort_on_error=False)
+        hlitauti.run(ctx, cmd)
 
     # Clean recursively.
-    # This cmd is supposed to give errors so we mute them.
-    git_clean_cmd = "git clean -fd >/dev/null 2>&1"
+    git_clean_cmd = "git clean -fd"
     if dry_run:
         git_clean_cmd += " --dry-run"
+    # This cmd is supposed to give errors so we mute them.
+    git_clean_cmd += " >/dev/null 2>&1"
     _run_all_repos(git_clean_cmd)
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
     #  mistake.
@@ -102,11 +105,8 @@ def git_clean(ctx, fix_perms_=False, dry_run=False):  # type: ignore
     if fix_perms_:
         cmd = "invoke fix_perms"
         hlitauti.run(ctx, cmd)
-    # Clean recursively.
-    git_clean_cmd = "git clean -fd"
-    if dry_run:
-        git_clean_cmd += " --dry-run"
-    _run_all_repos(git_clean_cmd)
+        # Clean temporary files created by permission fix.
+        _run_all_repos(git_clean_cmd)
     # Delete other files.
     to_delete = [
         r"*\.pyc",
@@ -358,6 +358,7 @@ def git_branch_create(  # type: ignore
     repo_short_name="current",
     suffix="",
     only_branch_from_master=True,
+    check_branch_name=True,
 ):
     """
     Create and push upstream branch `branch_name` or the one corresponding to
@@ -379,6 +380,8 @@ def git_branch_create(  # type: ignore
         - short name (e.g., "amp", "lm") of the branch
     :param suffix: suffix (e.g., "02") to add to the branch name when using issue_id
     :param only_branch_from_master: only allow to branch from master
+    :param check_branch_name: make sure the name of the branch is valid like
+        `{Amp,...}TaskXYZ_...`
     """
     hlitauti.report_task()
     if issue_id > 0:
@@ -395,7 +398,7 @@ def git_branch_create(  # type: ignore
             branch_name,
         )
         if suffix != "":
-            # Add the the suffix.
+            # Add the suffix.
             _LOG.debug("Adding suffix '%s' to '%s'", suffix, branch_name)
             if suffix[0] in ("-", "_"):
                 _LOG.warning(
@@ -408,12 +411,13 @@ def git_branch_create(  # type: ignore
     #
     _LOG.info("branch_name='%s'", branch_name)
     hdbg.dassert_ne(branch_name, "")
-    # Check that the branch is not just a number.
-    m = re.match(r"^\d+$", branch_name)
-    hdbg.dassert(not m, "Branch names with only numbers are invalid")
-    # The valid format of a branch name is `AmpTask1903_Implemented_system_...`.
-    m = re.match(r"^\S+Task\d+_\S+$", branch_name)
-    hdbg.dassert(m, "Branch name should be '{Amp,...}TaskXYZ_...'")
+    if check_branch_name:
+        # Check that the branch is not just a number.
+        m = re.match(r"^\d+$", branch_name)
+        hdbg.dassert(not m, "Branch names with only numbers are invalid")
+        # The valid format of a branch name is `AmpTask1903_Implemented_system_...`.
+        m = re.match(r"^\S+Task\d+_\S+$", branch_name)
+        hdbg.dassert(m, "Branch name should be '{Amp,...}TaskXYZ_...'")
     hdbg.dassert(
         not hgit.does_branch_exist(branch_name, mode="all"),
         "The branch '%s' already exists",
@@ -558,11 +562,19 @@ def git_branch_next_name(ctx, branch_name=None):  # type: ignore
 
 # TODO(gp): @all Improve docstring
 @task
-def git_branch_copy(ctx, new_branch_name="", skip_git_merge_master=False, use_patch=False):  # type: ignore
+def git_branch_copy(  # type: ignore
+    ctx,
+    new_branch_name="",
+    skip_git_merge_master=False,
+    use_patch=False,
+    check_branch_name=True,
+):
     """
     Create a new branch with the same content of the current branch.
 
     :param skip_git_merge_master
+    :param check_branch_name: make sure the name of the branch is valid like
+        `{Amp,...}TaskXYZ_...`
     """
     hdbg.dassert(not use_patch, "Patch flow not implemented yet")
     #
@@ -593,6 +605,8 @@ def git_branch_copy(ctx, new_branch_name="", skip_git_merge_master=False, use_pa
         cmd = f"git checkout {new_branch_name}"
     else:
         cmd = f"git checkout master && invoke git_branch_create -b '{new_branch_name}'"
+        if not check_branch_name:
+            cmd += " --no-check-branch-name"
     hlitauti.run(ctx, cmd)
     if use_patch:
         # TODO(gp): Apply the patch.

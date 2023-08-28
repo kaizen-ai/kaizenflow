@@ -121,7 +121,7 @@ object.builder_function:
   dag_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag
   dag_runner_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag_runner
 portfolio_object:
-  <oms.portfolio.DatabasePortfolio at 0x>
+  <oms.portfolio.database_portfolio.DatabasePortfolio at 0x>
     # holdings_shares=
     Empty DataFrame
     Columns: []
@@ -151,7 +151,7 @@ process_forecasts_node_dict:
   volatility_col: vwap.ret_0.vol
   spread_col: None
   portfolio:
-    <oms.portfolio.DatabasePortfolio at 0x>
+    <oms.portfolio.database_portfolio.DatabasePortfolio at 0x>
       # holdings_shares=
       Empty DataFrame
       Columns: []
@@ -195,7 +195,7 @@ process_forecasts_node_dict:
     ath_end_time: 16:00:00
     trading_end_time: 15:55:00
     liquidate_at_trading_end_time: False
-    share_quantization: no_quantization
+    share_quantization: 9
 dag_object: DAG at 0x=(_nx_dag=DiGraph with 10 nodes and 9 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
 dag_runner_object:
   RealTimeDagRunner at 0x=(config= <core.config.config_.Config>, _column_to_tags_mapping=None <NoneType>, _result_nid=process_forecasts <str>, _execute_rt_loop_kwargs={'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:

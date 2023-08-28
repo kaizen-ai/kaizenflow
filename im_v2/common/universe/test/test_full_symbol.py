@@ -95,6 +95,15 @@ class TestDassertIsFullSymbolValid(hunitest.TestCase):
         with self.assertRaises(AssertionError):
             imvcufusy.dassert_is_full_symbol_valid(full_symbol)
 
+    def test12(self) -> None:
+        """
+        Test that symbol that contains a digit is a valid one.
+
+        E.g.: `binance::1INCH_USDT`.
+        """
+        full_symbol = "binance::1INCH_USDT"
+        imvcufusy.dassert_is_full_symbol_valid(full_symbol)
+
 
 class TestParseFullSymbol(hunitest.TestCase):
     def test1(self) -> None:
