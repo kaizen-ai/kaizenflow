@@ -67,7 +67,6 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     integrate_create_branch,
     integrate_diff_dirs,
     integrate_diff_overlapping_files,
-    integrate_file,
     integrate_files,
     integrate_find_files,
     integrate_find_files_touched_since_last_integration,
@@ -116,6 +115,7 @@ except ImportError:
 try:
     from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
         docker_tag_push_multi_build_local_image_as_dev,
+        integrate_file,
     )
 except ImportError:
     pass
