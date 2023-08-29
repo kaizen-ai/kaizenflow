@@ -34,7 +34,7 @@ class Test_convert_to_multiindex(hunitest.TestCase):
        df = dtfcorutil.convert_to_multiindex(df = df, asset_id_col = pivot_col_id)
        expected_df_format = """
                                        close       volume
-                                 13684 17085  13684 17085
+                                 1 17085  13684 17085
        end_time
        2022-01-04 09:01:00-05:00   NaN   NaN      0     0
        2022-01-04 09:02:00-05:00   NaN   NaN      0     0
@@ -42,5 +42,5 @@ class Test_convert_to_multiindex(hunitest.TestCase):
        2022-01-04 09:04:00-05:00   NaN   NaN      0     0
        """ 
        info = dtfcorutil.get_df_info_as_string(df)
-       self.check_string(info,expected_df_format)
+       self.check_string(info)
 
