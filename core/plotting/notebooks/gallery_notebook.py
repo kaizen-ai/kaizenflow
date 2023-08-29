@@ -76,7 +76,7 @@ print(config)
 # ## `plot_histograms_and_lagged_scatterplot()`
 
 # %%
-test_srs = cptetepl.Test_plots.get_plot_histograms_and_lagged_scatterplot1()
+test_srs = cptetepl.Test_plots.get_test_plot_srs1()
 lag = 7
 # %%
 cpvistte.plot_histograms_and_lagged_scatterplot(
@@ -86,7 +86,7 @@ cpvistte.plot_histograms_and_lagged_scatterplot(
 # %% [markdown]
 # ## `plot_timeseries_distribution()`
 # %%
-test_srs = cptetepl.Test_plots.get_plot_timeseries_distribution1()
+test_srs = cptetepl.Test_plots.get_test_plot_srs1()
 
 # %%
 datetime_types = ["hour"]
@@ -100,7 +100,7 @@ cplmiplo.plot_timeseries_distribution(test_srs, datetime_types)
 # ## `plot_time_series_by_period()`
 
 # %%
-test_srs = cptetepl.Test_plots.get_plot_time_series_by_period1()
+test_srs = cptetepl.Test_plots.get_test_plot_srs1()
 
 # %%
 period = "day"
@@ -186,7 +186,7 @@ cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
 # ## `plot_qq()`
 
 # %%
-test_series = cptetepl.Test_plots.get_plot_normal_distribution_data1()
+test_series = cptetepl.Test_plots.get_test_plot_srs1()
 
 # %%
 cplonorm.plot_qq(test_series)

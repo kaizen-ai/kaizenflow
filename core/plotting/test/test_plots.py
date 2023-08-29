@@ -31,49 +31,16 @@ class Test_plots(unittest.TestCase):
         }
         df = pd.DataFrame(data)
         return df
-
-    @staticmethod
-    def get_plot_time_series_by_period1() -> pd.Series:
-        """
-        Generate a test time series with daily timestamps.
-        """
-        timestamps = pd.date_range(
-            start="2023-07-01", end="2023-07-07", freq="4H"
-        )
-        values = np.random.rand(len(timestamps))
-        test_series = pd.Series(values, index=timestamps)
-        return test_series
-
-    @staticmethod
-    def get_plot_timeseries_distribution1() -> pd.Series:
-        """
-        Get test data for plotting time series distribution.
-        """
-        samples = [0] * 50
-        index = pd.date_range(start="2022-12-31", periods=len(samples), freq="H")
-        srs = pd.Series(samples, index=index, name="test values")
-        return srs
-
-    @staticmethod
-    def get_plot_histograms_and_lagged_scatterplot1() -> pd.Series:
-        """
-        Get a random Gaussian data series for plotting histograms and lagged
-        scatterplot.
-        """
-        rng = np.random.default_rng(seed=0)
-        samples = rng.normal(size=100)
-        index = pd.date_range(start="2023-01-01", periods=len(samples), freq="D")
-        srs = pd.Series(samples, index=index)
-        return srs
     
     @staticmethod
-    def get_plot_normal_distribution_data1() -> pd.Series:
+    def get_test_plot_srs1() -> pd.Series:
         """
-        Get test data for plotting normal distribution series.
+        Generate a test data with normal distribution series and timestamps.
         """
         rng = np.random.default_rng(seed=0)
         samples = rng.normal(size=100)
-        srs = pd.Series(samples)
+        index = pd.date_range(start="2023-01-31", periods=len(samples), freq="H")
+        srs = pd.Series(samples, index=index, name="test values")
         return srs
 
     def test_plot_histograms_and_lagged_scatterplot1(self) -> None:
@@ -81,7 +48,7 @@ class Test_plots(unittest.TestCase):
         Smoke test for `plot_histograms_and_lagged_scatterplot()`.
         """
         # Set inputs.
-        srs = Test_plots.get_plot_histograms_and_lagged_scatterplot1()
+        srs = Test_plots.get_test_plot_srs1()
         lag = 7
         # Plot.
         cpvistte.plot_histograms_and_lagged_scatterplot(
@@ -89,12 +56,12 @@ class Test_plots(unittest.TestCase):
         )
 
     def test_plot_time_series_by_period1(self) -> None:
-        test_series = self.get_plot_time_series_by_period1()
+        test_series = self.get_test_plot_srs1()
         period = "day"
         cplmiplo.plot_time_series_by_period(test_series, period)
 
     def test_plot_time_series_by_period2(self) -> None:
-        test_series = self.get_plot_time_series_by_period1()
+        test_series = self.get_test_plot_srs1()
         period = "time"
         cplmiplo.plot_time_series_by_period(test_series, period)
 
@@ -130,7 +97,7 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for 'plot_timeseries_distribution()'.
         """
-        srs = self.get_plot_timeseries_distribution1()
+        srs = self.get_test_plot_srs1()
         datetime_types = ["hour"]
         cplmiplo.plot_timeseries_distribution(srs, datetime_types)
 
@@ -138,7 +105,7 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for 'plot_timeseries_distribution()'.
         """
-        srs = self.get_plot_timeseries_distribution1()
+        srs = self.get_test_plot_srs1()
         datetime_types = ["hour", "month"]
         cplmiplo.plot_timeseries_distribution(srs, datetime_types)
 
@@ -180,14 +147,14 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for `plot_qq()`.
         """
-        test_series = self.get_plot_normal_distribution_data1()
+        test_series = self.get_test_plot_srs1()
         cplonorm.plot_qq(test_series)
         
     def test_plot_qq2(self) -> None:
         """
         Smoke test for `plot_qq()` with NaN values in series and kwargs supplied.
         """
-        test_series = self.get_plot_normal_distribution_data1()
+        test_series = self.get_test_plot_srs1()
         test_series[20:50] = np.nan
         _, axes = plt.subplots(1, 1, figsize=(10,10))
         cplonorm.plot_qq(test_series, ax=axes, dist="norm", nan_mode="drop")
