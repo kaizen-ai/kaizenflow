@@ -68,6 +68,21 @@ def _parse() -> argparse.ArgumentParser:
     )
     return parser  # type: ignore[no-any-return]
 
+def validate_dst_dir_arg(args: argparse.Namespace) -> None:
+    """
+    Validate destination directory args.
+    
+    :param args: destination directory args
+    """
+    if args.get("dst_dir"):
+        data_format = args.get("data_format")
+        if data_format != 'csv' or data_format != 'parquet':
+            raise RuntimeError(f"--data_format argument cannot be {data_format} it should be either \
+                    'csv' or 'parquet'")
+        if args.get("db_table"):
+            raise RuntimeError(f"--db_table argument present")
+        if args.get("s3_path"):
+            raise RuntimeError(f"--s3_path argument present")
 
 def _run(args: argparse.Namespace) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)

@@ -126,6 +126,14 @@ def _add_common_download_args(
         type=str,
         help="Format of the data (e.g. csv, parquet, postgres)",
     )
+    parser.add_argument(
+        "--dst_dir",
+        action="store",
+        required=False,
+        type=str,
+        help="Path to the directory where the data will be \
+            downloaded locally (e.g. '/User/Output').",
+    )
     return parser
 
 
