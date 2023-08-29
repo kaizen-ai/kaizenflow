@@ -734,30 +734,41 @@ def process_downloaded_historical_data(
     # Save data to S3 filesystem.
     # TODO(Vlad): Refactor log messages when we save data by a day.
     _LOG.info("Saving the dataset into %s", path_to_dataset)
-    if args["data_format"] == "parquet":
-        # Save by day for trades, by month for everything else.
-        partition_mode = "by_year_month"
-        if args["data_type"] == "trades":
-            partition_mode = "by_year_month_day"
-        save_parquet(
-            data,
-            path_to_dataset,
-            args["unit"],
-            args["aws_profile"],
-            args["data_type"],
-            mode="append",
-            partition_mode=partition_mode,
-        )
-    elif args["data_format"] == "csv":
-        save_csv(
-            data,
-            path_to_dataset,
-            currency_pair,
-            args["incremental"],
-            args["aws_profile"],
-        )
+    if args.get("dst_dir"):
+        if args["data_format"] == "csv":
+            start_timestamp = args["start_timestamp"]
+            end_timestamp = args["end_timestamp"]
+            full_target_path = os.path.join(
+                args["dst_dir"], f"{start_timestamp}_{end_timestamp}.csv")
+            data.to_csv(full_target_path, index=False)
+        # TODO: Add elif to handle parquet data format.
+        else:
+            hdbg.dfatal(f"Unsupported `{args['data_format']}` format!")
     else:
-        hdbg.dfatal(f"Unsupported `{args['data_format']}` format!")
+        if args["data_format"] == "parquet":
+            # Save by day for trades, by month for everything else.
+            partition_mode = "by_year_month"
+            if args["data_type"] == "trades":
+                partition_mode = "by_year_month_day"
+            save_parquet(
+                data,
+                path_to_dataset,
+                args["unit"],
+                args["aws_profile"],
+                args["data_type"],
+                mode="append",
+                partition_mode=partition_mode,
+            )
+        elif args["data_format"] == "csv":
+            save_csv(
+                data,
+                path_to_dataset,
+                currency_pair,
+                args["incremental"],
+                args["aws_profile"],
+            )
+        else:
+            hdbg.dfatal(f"Unsupported `{args['data_format']}` format!")
 
 
 def _split_crypto_chassis_universe(universe: List[str], universe_part: int):
@@ -801,15 +812,18 @@ def download_historical_data(
     args["asset_type"] = args["contract_type"]
     # TODO(Juraj): Handle dataset version #CmTask3348.
     args["version"] = "v1_0_0"
-    path_to_dataset = dsdascut.build_s3_dataset_path_from_args(
-        args["s3_path"], args
-    )
-    # Verify that data exists for incremental mode to work.
-    if args["incremental"]:
-        hs3.dassert_path_exists(path_to_dataset, args["aws_profile"])
-    elif not args["incremental"]:
-        hs3.dassert_path_not_exists(path_to_dataset, args["aws_profile"])
-    # Load currency pairs.
+    if args.get("dst_dir"):
+        path_to_dataset = args["dst_dir"]
+    else:
+        path_to_dataset = dsdascut.build_s3_dataset_path_from_args(
+            args["s3_path"], args
+        )
+        # Verify that data exists for incremental mode to work.
+        if args["incremental"]:
+            hs3.dassert_path_exists(path_to_dataset, args["aws_profile"])
+        elif not args["incremental"]:
+            hs3.dassert_path_not_exists(path_to_dataset, args["aws_profile"])
+        # Load currency pairs.
     mode = "download"
     universe = ivcu.get_vendor_universe(
         exchange.vendor, mode, version=args["universe"]
