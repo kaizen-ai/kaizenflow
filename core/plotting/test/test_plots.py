@@ -152,10 +152,16 @@ class Test_plots(unittest.TestCase):
         
     def test_plot_qq2(self) -> None:
         """
-        Smoke test for `plot_qq()` with NaN values in series and kwargs supplied.
+        Smoke test for `plot_qq()`.
+
+        - input series contains NaN values
+        - nan_mode = "drop"
+        - axes are passed
         """
         test_series = self.get_test_plot_srs1()
         test_series[20:50] = np.nan
         _, axes = plt.subplots(1, 1, figsize=(10,10))
-        cplonorm.plot_qq(test_series, ax=axes, dist="norm", nan_mode="drop")
+        dist = "norm"
+        nan_mode = "drop"
+        cplonorm.plot_qq(test_series, ax=axes, dist=dist, nan_mode=nan_mode)
         
