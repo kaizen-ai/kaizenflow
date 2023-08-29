@@ -4,6 +4,7 @@ import pytest
 
 import helpers.henv as henv
 import helpers.hgit as hgit
+import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
 import helpers.lib_tasks_gh as hlitagh
 import helpers.test.test_lib_tasks as httestlib
