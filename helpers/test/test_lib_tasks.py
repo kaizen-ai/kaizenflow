@@ -135,6 +135,7 @@ def _gh_login() -> None:
 # issue.
 # the CmampTask5211 branch on Sorrentum: to reproduce the gh auth login error
 # on gh workflow. 
+# running 2nd time for checkpoint.
 # @pytest.mark.skip
 class TestGhLogin1(hunitest.TestCase):
     def test_gh_login(self) -> None:
