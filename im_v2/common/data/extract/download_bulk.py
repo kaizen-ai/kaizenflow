@@ -76,7 +76,7 @@ def validate_dst_dir_arg(args: argparse.Namespace) -> None:
     """
     if args.get("dst_dir"):
         data_format = args.get("data_format")
-        if data_format != 'csv' or data_format != 'parquet':
+        if data_format != 'csv' and data_format != 'parquet':
             raise RuntimeError(f"--data_format argument cannot be {data_format} it should be either \
                     'csv' or 'parquet'")
         if args.get("db_table"):
