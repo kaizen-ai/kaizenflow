@@ -188,7 +188,7 @@ cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
 df = cptetepl.Test_plots.get_plot_projection1()
 
 # %%
-special_values = [1]
+special_values = [0]
 cplmiplo.plot_projection(df, special_values=special_values)
 
 # %%
@@ -197,7 +197,5 @@ fig = plt.figure()
 ax = fig.add_axes([0, 0, 1, 1])
 mode = "scatter"
 cplmiplo.plot_projection(df, mode=mode, ax=ax)
-
-
 
 # %%
