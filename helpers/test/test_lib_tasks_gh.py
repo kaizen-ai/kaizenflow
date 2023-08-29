@@ -2,6 +2,7 @@ import logging
 
 import pytest
 
+import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
 import helpers.lib_tasks_gh as hlitagh
