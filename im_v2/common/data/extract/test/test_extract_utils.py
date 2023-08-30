@@ -1179,7 +1179,7 @@ class TestVerifySchema(hunitest.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
-class TestDownloadHistoricalDataLocal1(hunitest.TestCase):
+class TestDownloadHistoricalData2(hunitest.TestCase):
     def call_download_historical_data(self) -> None:
         """
         Call download_historical_data with the predefined arguments.
@@ -1208,7 +1208,7 @@ class TestDownloadHistoricalDataLocal1(hunitest.TestCase):
         exchange = imvccdexex.CryptoChassisExtractor(args["contract_type"])
         imvcdeexut.download_historical_data(args, exchange)
 
-    def test_download_csv_data_local(self) -> None:
+    def test_function_call1(self) -> None:
         """
         Download mocked data and check the local csv file generated.
         """
