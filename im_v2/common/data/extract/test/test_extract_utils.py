@@ -1177,3 +1177,64 @@ class TestVerifySchema(hunitest.TestCase):
             Invalid dtype of `close` column: expected type `float64`, found `object`
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+class TestDownloadHistoricalDataLocal1(hunitest.TestCase):
+    def call_download_historical_data(self) -> None:
+        """
+        Call download_historical_data with the predefined arguments.
+        """
+        # Prepare inputs.
+        args = {
+            "start_timestamp": "2021-12-31 23:00:00",
+            "end_timestamp": "2022-01-01 01:00:00",
+            "download_mode": "periodic_daily",
+            "downloading_entity": "manual",
+            "action_tag": "downloaded_1sec",
+            "vendor": "crypto_chassis",
+            "exchange_id": "binance",
+            "data_type": "ohlcv",
+            "contract_type": "futures",
+            "universe": "v3",
+            "incremental": False,
+            "s3_path": f"s3://test/",
+            "log_level": "INFO",
+            "data_format": "csv",
+            "unit": "s",
+            "universe_part": 1,
+            "assert_on_missing_data": False,
+            "dst_dir": "csv_test"
+        }
+        exchange = imvccdexex.CryptoChassisExtractor(args["contract_type"])
+        imvcdeexut.download_historical_data(args, exchange)
+
+    def test_download_csv_data_local(self) -> None:
+        """
+        Download mocked data and check the local csv file generated.
+        """
+        with umock.patch.object(
+            imvccdexex.CryptoChassisExtractor,
+            "download_data",
+            return_value=get_simple_crypto_chassis_mock_data(
+                start_timestamp=int("20211231230000"),
+                number_of_seconds=4,
+            ),
+        ):
+            self.call_download_historical_data()
+        # Get the result from the local directory.
+        actual_df = pd.read_csv(
+            'csv_test/2021-12-31 23:00:00_2022-01-01 01:00:00.csv'
+            )
+        # Need to exclude knowledge_timestamp that can't predict precisely.
+        actual_df = actual_df.drop(["knowledge_timestamp"], axis=1)
+        actual = hpandas.df_to_str(actual_df)
+        print(actual)
+        expected = r"""
+                timestamp  bid_price_l1  bid_size_l1  bid_price_l2  bid_size_l2  ask_price_l1  ask_size_l1  ask_price_l2  ask_size_l2 currency_pair exchange_id
+        0  20211231230000        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      XRP_USDT     binance
+        1  20211231230001        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      XRP_USDT     binance
+        2  20211231230002        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      XRP_USDT     binance
+        3  20211231230003        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      XRP_USDT     binance
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+        

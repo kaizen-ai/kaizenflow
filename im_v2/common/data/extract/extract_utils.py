@@ -738,6 +738,8 @@ def process_downloaded_historical_data(
         if args["data_format"] == "csv":
             start_timestamp = args["start_timestamp"]
             end_timestamp = args["end_timestamp"]
+            if not os.path.exists(args["dst_dir"]):
+                os.makedirs(args["dst_dir"])
             full_target_path = os.path.join(
                 args["dst_dir"], f"{start_timestamp}_{end_timestamp}.csv")
             data.to_csv(full_target_path, index=False)
