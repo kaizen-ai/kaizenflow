@@ -94,7 +94,7 @@ def _run(args: argparse.Namespace) -> None:
         )
     else:
         hdbg.dfatal(f"Vendor {vendor} is not supported.")
-    # imvcdqviar.validate_dst_dir_arg(args)
+    imvcdqviar.validate_dst_dir_arg(args)
     imvcdeexut.download_historical_data(args, exchange)
 
 
