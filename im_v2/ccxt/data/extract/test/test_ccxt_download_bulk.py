@@ -56,6 +56,7 @@ class TestDownloadBulkData1(hunitest.TestCase):
             "bid_ask_depth": None,
             "universe_part": None,
             "assert_on_missing_data": False,
+            "dst_dir": None,
         }
         self.assertDictEqual(actual, expected)
 

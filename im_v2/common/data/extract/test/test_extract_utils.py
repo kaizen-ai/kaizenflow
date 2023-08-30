@@ -1180,7 +1180,8 @@ class TestVerifySchema(hunitest.TestCase):
 
 
 class TestDownloadHistoricalData2(hunitest.TestCase):
-    def call_download_historical_data(self) -> None:
+    @umock.patch.object(imvcdeexut.ivcu, "get_vendor_universe")
+    def call_download_historical_data(self, mock_get_vendor_universe) -> None:
         """
         Call download_historical_data with the predefined arguments.
         """
@@ -1190,8 +1191,8 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
             "end_timestamp": "2022-01-01 01:00:00",
             "download_mode": "periodic_daily",
             "downloading_entity": "manual",
-            "action_tag": "downloaded_1sec",
-            "vendor": "crypto_chassis",
+            "action_tag": "downloaded_1min",
+            "vendor": "ccxt",
             "exchange_id": "binance",
             "data_type": "ohlcv",
             "contract_type": "futures",
@@ -1200,20 +1201,29 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
             "s3_path": f"s3://test/",
             "log_level": "INFO",
             "data_format": "csv",
-            "unit": "s",
-            "universe_part": 1,
             "assert_on_missing_data": False,
             "dst_dir": "csv_test"
         }
-        exchange = imvccdexex.CryptoChassisExtractor(args["contract_type"])
-        imvcdeexut.download_historical_data(args, exchange)
+        
+        mock_universe = umock.MagicMock()
+        mock_universe.__getitem__.return_value = ["ADA_USDT", "BTC_USDT"]
+        mock_get_vendor_universe.return_value = mock_universe
+        with umock.patch.object(
+            imvcdexex.CcxtExtractor,
+            "get_exchange_currency_pairs",
+            return_value=["ADA_USDT", "BTC_USDT"],
+        ):
+            exchange = imvcdexex.CcxtExtractor(
+                args["exchange_id"], args["contract_type"]
+            )
+            imvcdeexut.download_historical_data(args, exchange)
 
     def test_function_call1(self) -> None:
         """
         Download mocked data and check the local csv file generated.
         """
         with umock.patch.object(
-            imvccdexex.CryptoChassisExtractor,
+            imvcdexex.CcxtExtractor,
             "download_data",
             return_value=get_simple_crypto_chassis_mock_data(
                 start_timestamp=int("20211231230000"),
@@ -1228,13 +1238,12 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
         # Need to exclude knowledge_timestamp that can't predict precisely.
         actual_df = actual_df.drop(["knowledge_timestamp"], axis=1)
         actual = hpandas.df_to_str(actual_df)
-        print(actual)
         expected = r"""
                 timestamp  bid_price_l1  bid_size_l1  bid_price_l2  bid_size_l2  ask_price_l1  ask_size_l1  ask_price_l2  ask_size_l2 currency_pair exchange_id
-        0  20211231230000        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      XRP_USDT     binance
-        1  20211231230001        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      XRP_USDT     binance
-        2  20211231230002        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      XRP_USDT     binance
-        3  20211231230003        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      XRP_USDT     binance
+        0  20211231230000        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      BTC_USDT     binance
+        1  20211231230001        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      BTC_USDT     binance
+        2  20211231230002        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      BTC_USDT     binance
+        3  20211231230003        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      BTC_USDT     binance
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
         
