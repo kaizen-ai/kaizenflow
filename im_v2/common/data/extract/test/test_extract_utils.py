@@ -1217,11 +1217,13 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
                 args["exchange_id"], args["contract_type"]
             )
             imvcdeexut.download_historical_data(args, exchange)
-
-    def test_function_call1(self) -> None:
+    
+    @umock.patch.object(imvcddbut.hdateti, "get_current_time")
+    def test_function_call1(self, mock_get_current_time: umock.MagicMock,) -> None:
         """
         Download mocked data and check the local csv file generated.
         """
+        mock_get_current_time.return_value = "2022-02-08 10:12:00.000000+00:00"
         with umock.patch.object(
             imvcdexex.CcxtExtractor,
             "download_data",
@@ -1235,15 +1237,13 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
         actual_df = pd.read_csv(
             f"csv_test/{self.start_timestamp}_{self.end_timestamp}.csv"
             )
-        # Need to exclude knowledge_timestamp that can't predict precisely.
-        actual_df = actual_df.drop(["knowledge_timestamp"], axis=1)
         actual = hpandas.df_to_str(actual_df)
         expected = r"""
-                timestamp  bid_price_l1  bid_size_l1  bid_price_l2  bid_size_l2  ask_price_l1  ask_size_l1  ask_price_l2  ask_size_l2 currency_pair exchange_id
-        0  20211231230000        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance
-        1  20211231230001        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance
-        2  20211231230002        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance
-        3  20211231230003        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance
+                timestamp  bid_price_l1  bid_size_l1  bid_price_l2  bid_size_l2  ask_price_l1  ask_size_l1  ask_price_l2  ask_size_l2 currency_pair exchange_id               knowledge_timestamp
+        0  20211231230000        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance  2022-02-08 10:12:00.000000+00:00
+        1  20211231230001        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance  2022-02-08 10:12:00.000000+00:00
+        2  20211231230002        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance  2022-02-08 10:12:00.000000+00:00
+        3  20211231230003        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance  2022-02-08 10:12:00.000000+00:00
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
         
