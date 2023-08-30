@@ -1180,15 +1180,19 @@ class TestVerifySchema(hunitest.TestCase):
 
 
 class TestDownloadHistoricalData2(hunitest.TestCase):
-    @umock.patch.object(imvcdeexut.ivcu, "get_vendor_universe")
-    def call_download_historical_data(self, mock_get_vendor_universe) -> None:
+    def setUp(self) -> None:
+        self.start_timestamp = "2021-12-31 23:00:00"
+        self.end_timestamp = "2022-01-01 01:00:00"
+        super().setUp()
+        
+    def call_download_historical_data(self) -> None:
         """
         Call download_historical_data with the predefined arguments.
         """
         # Prepare inputs.
         args = {
-            "start_timestamp": "2021-12-31 23:00:00",
-            "end_timestamp": "2022-01-01 01:00:00",
+            "start_timestamp": self.start_timestamp,
+            "end_timestamp": self.end_timestamp,
             "download_mode": "periodic_daily",
             "downloading_entity": "manual",
             "action_tag": "downloaded_1min",
@@ -1204,10 +1208,6 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
             "assert_on_missing_data": False,
             "dst_dir": "csv_test"
         }
-        
-        mock_universe = umock.MagicMock()
-        mock_universe.__getitem__.return_value = ["ADA_USDT", "BTC_USDT"]
-        mock_get_vendor_universe.return_value = mock_universe
         with umock.patch.object(
             imvcdexex.CcxtExtractor,
             "get_exchange_currency_pairs",
@@ -1233,17 +1233,17 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
             self.call_download_historical_data()
         # Get the result from the local directory.
         actual_df = pd.read_csv(
-            'csv_test/2021-12-31 23:00:00_2022-01-01 01:00:00.csv'
+            f"csv_test/{self.start_timestamp}_{self.end_timestamp}.csv"
             )
         # Need to exclude knowledge_timestamp that can't predict precisely.
         actual_df = actual_df.drop(["knowledge_timestamp"], axis=1)
         actual = hpandas.df_to_str(actual_df)
         expected = r"""
                 timestamp  bid_price_l1  bid_size_l1  bid_price_l2  bid_size_l2  ask_price_l1  ask_size_l1  ask_price_l2  ask_size_l2 currency_pair exchange_id
-        0  20211231230000        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      BTC_USDT     binance
-        1  20211231230001        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      BTC_USDT     binance
-        2  20211231230002        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      BTC_USDT     binance
-        3  20211231230003        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      BTC_USDT     binance
+        0  20211231230000        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance
+        1  20211231230001        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance
+        2  20211231230002        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance
+        3  20211231230003        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
         
