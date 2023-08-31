@@ -1186,6 +1186,30 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
         self.data_format = ""
         super().setUp()
         
+    def get_simple_ccxt_mock_data(
+        self,
+        start_timestamp: int,
+        number_of_seconds: int,
+        currency_pair: str = "SOL_USDT",
+    ) -> pd.DataFrame:
+        return pd.DataFrame(
+            [
+                {
+                    "timestamp": start_timestamp + sec,
+                    "bid_price_l1": 0.3481,
+                    "bid_size_l1": 49676.8,
+                    "bid_price_l2": 0.3482,
+                    "bid_size_l2": 49676.8,
+                    "ask_price_l1": 0.3484,
+                    "ask_size_l1": 49676.8,
+                    "ask_price_l2": 0.3485,
+                    "ask_size_l2": 49676.8,
+                    "currency_pair": currency_pair,
+                }
+                for sec in range(number_of_seconds)
+            ]
+        )
+        
     def call_download_historical_data(self) -> None:
         """
         Call download_historical_data with the predefined arguments.
@@ -1229,7 +1253,7 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
         with umock.patch.object(
             imvcdexex.CcxtExtractor,
             "download_data",
-            return_value=get_simple_crypto_chassis_mock_data(
+            return_value=self.get_simple_ccxt_mock_data(
                 start_timestamp=int("20211231230000"),
                 number_of_seconds=4,
             ),
@@ -1259,7 +1283,7 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
         with umock.patch.object(
             imvcdexex.CcxtExtractor,
             "download_data",
-            return_value=get_simple_crypto_chassis_mock_data(
+            return_value=self.get_simple_ccxt_mock_data(
                 start_timestamp=int("20211231230000"),
                 number_of_seconds=4,
             ),
