@@ -1284,10 +1284,6 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
 
     # TODO(gp): Difference between cmamp1 and sorrentum. Why is there a
     # difference?
-    @pytest.mark.skipif(
-        not henv.execute_repo_config_code("get_name()") == "//amp",
-        reason="Run only in //amp",
-    )
     @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_filter_columns1(self) -> None:
         resample_1min = True
@@ -1298,10 +1294,6 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
         columns = ["full_symbol", "open", "close"]
         self._test_filter_columns1(im_client, full_symbols, columns)
 
-    @pytest.mark.skipif(
-        not henv.execute_repo_config_code("get_name()") == "//amp",
-        reason="Run only in //amp",
-    )
     def test_filter_columns2(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
