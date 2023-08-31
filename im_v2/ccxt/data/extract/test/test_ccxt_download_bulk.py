@@ -124,7 +124,7 @@ class TestDownloadBulkData2(hunitest.TestCase):
         ccxt_extractor_mock: umock.MagicMock,
     ) -> None:
         """
-        Smoke test to directly run `_main` function for coverage increase.
+        Smoke test to directly run `_main` function with dst_dir argument.
         """
         # Prepare inputs.
         mock_argument_parser = umock.create_autospec(
@@ -171,7 +171,8 @@ class TestDownloadBulkData2(hunitest.TestCase):
         ccxt_extractor_mock: umock.MagicMock,
     ) -> None:
         """
-        Unit test to directly run `_main` function to check validate_dst_dir_arg().
+        Unit test to directly run `_main` function to check validate_dst_dir_arg()
+        with s3_path argument.
         """
         # Prepare inputs.
         mock_argument_parser = umock.create_autospec(
@@ -214,7 +215,8 @@ class TestDownloadBulkData2(hunitest.TestCase):
         ccxt_extractor_mock: umock.MagicMock,
     ) -> None:
         """
-        Unit test to directly run `_main` function to check validate_dst_dir_arg().
+        Unit test to directly run `_main` function to check validate_dst_dir_arg()
+        with db_table argument.
         """
         # Prepare inputs.
         mock_argument_parser = umock.create_autospec(
@@ -257,7 +259,8 @@ class TestDownloadBulkData2(hunitest.TestCase):
         ccxt_extractor_mock: umock.MagicMock,
     ) -> None:
         """
-        Unit test to directly run `_main` function to check validate_dst_dir_arg().
+        Unit test to directly run `_main` function to check validate_dst_dir_arg()
+        with wrong data_format argument.
         """
         # Prepare inputs.
         mock_argument_parser = umock.create_autospec(
