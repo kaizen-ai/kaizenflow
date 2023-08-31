@@ -142,12 +142,17 @@ def _build_run_command_line(
     # and on the custom marker, if present.
     skipped_tests = _select_tests_to_skip(test_list_name)
     timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[test_list_name]
-    # Detect if we are running on a CK dev server or a laptop outside the CK infra.
-    is_outside_ck_infra = not hserver.is_dev_ck()
+    # Detect if we are running on a CK dev server / inside CI
+    # or a laptop outside the CK infra.
+    is_outside_ck_infra = not hserver.is_dev_ck() and not hserver.is_inside_ci()
     if is_outside_ck_infra:
+        timeout_multiplier = 10
+        _LOG.warning(
+            f"Tests are running outside the CK server and CI, timeout increased {timeout_multiplier} times."
+        )
         # Since we are running outside the CK server we increase the duration
         # of the timeout, since the thresholds are set for the CK server.
-        timeout_in_sec *= 10
+        timeout_in_sec *= timeout_multiplier
     if custom_marker != "":
         pytest_opts_tmp.append(f'-m "{custom_marker} and {skipped_tests}"')
     else:
@@ -399,10 +404,13 @@ def run_fast_tests(  # type: ignore
         "You can't specify both --run_only_test_list and --skip_test_list",
     )
     test_list_name = "fast_tests"
-    # If we are running outside the CK server, tests that requires CK infra
+    # If we are running outside the CK server / CI, tests that requires CK infra
     # should be automatically skipped.
-    is_outside_ck_infra = not hserver.is_dev_ck()
+    is_outside_ck_infra = not hserver.is_dev_ck() and not hserver.is_inside_ci()
     if is_outside_ck_infra:
+        _LOG.warning(
+            "Skipping the tests that require CK infra when running outside the CK server / CI."
+        )
         if skip_test_list:
             skip_test_list = "requires_ck_infra," + skip_test_list
         else:
