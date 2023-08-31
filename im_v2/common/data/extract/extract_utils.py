@@ -825,7 +825,7 @@ def download_historical_data(
             hs3.dassert_path_exists(path_to_dataset, args["aws_profile"])
         elif not args["incremental"]:
             hs3.dassert_path_not_exists(path_to_dataset, args["aws_profile"])
-        # Load currency pairs.
+    # Load currency pairs.
     mode = "download"
     universe = ivcu.get_vendor_universe(
         exchange.vendor, mode, version=args["universe"]
