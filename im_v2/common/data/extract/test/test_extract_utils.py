@@ -1183,6 +1183,7 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
     def setUp(self) -> None:
         self.start_timestamp = "2021-12-31 23:00:00"
         self.end_timestamp = "2022-01-01 01:00:00"
+        self.data_format = ""
         super().setUp()
         
     def call_download_historical_data(self) -> None:
@@ -1204,7 +1205,7 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
             "incremental": False,
             "s3_path": f"s3://test/",
             "log_level": "INFO",
-            "data_format": "csv",
+            "data_format": self.data_format,
             "assert_on_missing_data": False,
             "dst_dir": "csv_test"
         }
@@ -1224,6 +1225,7 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
         Download mocked data and check the local csv file generated.
         """
         mock_get_current_time.return_value = "2022-02-08 10:12:00.000000+00:00"
+        self.data_format = "csv"
         with umock.patch.object(
             imvcdexex.CcxtExtractor,
             "download_data",
@@ -1246,4 +1248,29 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
         3  20211231230003        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance  2022-02-08 10:12:00.000000+00:00
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
+        
+    @umock.patch.object(imvcddbut.hdateti, "get_current_time")
+    def test_function_call2(self, mock_get_current_time: umock.MagicMock,) -> None:
+        """
+        Check for wrong data_format argument passed.
+        """
+        mock_get_current_time.return_value = "2022-02-08 10:12:00.000000+00:00"
+        self.data_format = "test"
+        with umock.patch.object(
+            imvcdexex.CcxtExtractor,
+            "download_data",
+            return_value=get_simple_crypto_chassis_mock_data(
+                start_timestamp=int("20211231230000"),
+                number_of_seconds=4,
+            ),
+        ):
+            with self.assertRaises(AssertionError) as fail:
+                self.call_download_historical_data()
+        actual_error = str(fail.exception)
+        expected_error = r"""
+        ################################################################################
+        Unsupported `test` format!
+        ################################################################################
+        """
+        self.assert_equal(actual_error, expected_error, fuzzy_match=True)
         
