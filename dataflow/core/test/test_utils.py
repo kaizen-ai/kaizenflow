@@ -22,8 +22,7 @@ class Test_get_df_info_as_string(hunitest.TestCase):
 
 class Test_get_DagBuilder_name_from_string(hunitest.TestCase):
     """
-    Test that `get_DagBuilder_name_from_string()` returns a correct DAG builder
-    name.
+    Test that the function returns a correct DAG builder name.
     """
 
     def test1(self) -> None:
