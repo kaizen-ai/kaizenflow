@@ -199,7 +199,7 @@ def plot_projection(
     # `NaN`s.
     range_df = df.copy()
     for i in range(df.shape[1]):
-        range_df.iloc[:, i] = i
+        range_df.isetitem(i,i)
     df_to_plot = range_df.mask(special_val_mask, np.nan)
     # Plot.
     df_to_plot.plot(ax=ax, legend="reverse", colormap=colormap)
