@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import sorrentum_sandbox.examples.ml_projects.Issue24_Team5_Implement_sandbox_for_Alpha_Vantage.api.alpha_vantage as ssempitisfavaav
+"""
+
 import os
 from typing import List
 
@@ -6,6 +12,7 @@ from dotenv import load_dotenv
 from models.time_series import DataType, TimeInterval, TimeSeriesData
 
 load_dotenv()
+
 
 class AlphaVantage:
     API_KEY = os.environ.get("ALPHA_VANTAGE")
@@ -21,23 +28,21 @@ class AlphaVantage:
         Returns:
         classmethod - method used to retrieve specified data type
         """
-        match data_type:
-            case DataType.INTRADAY:
-                return cls.get_intraday_for
-            case DataType.DAILY:
-                return cls.get_daily_for
-            case DataType.WEEKLY:
-                return cls.get_weekly_for
-            case DataType.MONTHLY:
-                return cls.get_monthly_for
-            case other:
-                return None
+        if data_type == DataType.INTRADAY:
+            return cls.get_intraday_for
+        elif data_type == DataType.DAILY:
+            return cls.get_daily_for
+        elif data_type == DataType.WEEKLY:
+            return cls.get_weekly_for
+        elif data_type == DataType.MONTHLY:
+            return cls.get_monthly_for
+        else:
+            return None
 
     @classmethod
     def get_name_for(cls, ticker: str) -> str:
         """
-        Gets the name for specified ticker.
-        Uses 1 API Request.
+        Gets the name for specified ticker. Uses 1 API Request.
 
         Parameters:
         ticker: str - Ticker Symbol
@@ -55,17 +60,19 @@ class AlphaVantage:
         if data.get("Note"):
             return print("Out of API calls, try again later.")
 
-        if data['bestMatches']:
+        if data["bestMatches"]:
             if data["bestMatches"][0]["1. symbol"] == ticker:
                 return data["bestMatches"][0]["2. name"]
 
         return f"{ticker}?"
 
     @classmethod
-    def get_intraday_for(cls, ticker: str, interval: TimeInterval = TimeInterval.FIVE) -> List[TimeSeriesData]:
+    def get_intraday_for(
+        cls, ticker: str, interval: TimeInterval = TimeInterval.FIVE
+    ) -> List[TimeSeriesData]:
         """
-        Gets current day's (or latest trading day if holiday/weekend) trading information for specified ticker.
-        Uses 1 API Request.
+        Gets current day's (or latest trading day if holiday/weekend) trading
+        information for specified ticker. Uses 1 API Request.
 
         Parameters:
         ticker: str - Ticker Symbol
@@ -82,17 +89,14 @@ class AlphaVantage:
         if data.get("Note"):
             return print("Out of API calls, try again later.")
 
-        data = TimeSeriesData.load_json(
-            data_type=DataType.INTRADAY,
-            data=data
-        )
+        data = TimeSeriesData.load_json(data_type=DataType.INTRADAY, data=data)
         return data
 
     @classmethod
     def get_daily_for(cls, ticker: str, **kwargs) -> List[TimeSeriesData]:
         """
-        Gets years worth of trading days for specified ticker.
-        Uses 1 API Request.
+        Gets years worth of trading days for specified ticker. Uses 1 API
+        Request.
 
         Parameters:
         ticker: str - Ticker Symbol
@@ -108,17 +112,14 @@ class AlphaVantage:
         if data.get("Note"):
             return print("Out of API calls, try again later.")
 
-        data = TimeSeriesData.load_json(
-            data_type=DataType.DAILY,
-            data=data
-        )
+        data = TimeSeriesData.load_json(data_type=DataType.DAILY, data=data)
         return data
 
     @classmethod
     def get_weekly_for(cls, ticker: str, **kwargs) -> List[TimeSeriesData]:
         """
-        Gets years worth of trading weeks for specified ticker.
-        Uses 1 API Request.
+        Gets years worth of trading weeks for specified ticker. Uses 1 API
+        Request.
 
         Parameters:
         ticker: str - Ticker Symbol
@@ -134,17 +135,14 @@ class AlphaVantage:
         if data.get("Note"):
             return print("Out of API calls, try again later.")
 
-        data = TimeSeriesData.load_json(
-            data_type=DataType.WEEKLY,
-            data=data
-        )
+        data = TimeSeriesData.load_json(data_type=DataType.WEEKLY, data=data)
         return data
 
     @classmethod
     def get_monthly_for(cls, ticker: str, **kwargs) -> List[TimeSeriesData]:
         """
-        Gets years worth of trading months for specified ticker.
-        Uses 1 API Request.
+        Gets years worth of trading months for specified ticker. Uses 1 API
+        Request.
 
         Parameters:
         ticker: str - Ticker Symbol
@@ -160,10 +158,7 @@ class AlphaVantage:
         if data.get("Note"):
             return print("Out of API calls, try again later.")
 
-        data = TimeSeriesData.load_json(
-            data_type=DataType.MONTHLY,
-            data=data
-        )
+        data = TimeSeriesData.load_json(data_type=DataType.MONTHLY, data=data)
         return data
 
     @classmethod

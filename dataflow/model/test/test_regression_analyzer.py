@@ -32,6 +32,6 @@ class TestRegressionAnalyzer1(hunitest.TestCase):
         expected = r"""
               beta_z_scored                      p_val_2s
            mean    std skew kurtosis     mean    std skew kurtosis
-1        -0.289  0.155 -0.0     -2.0    0.774  0.118  0.0     -2.0
-2        -0.163  0.806  0.0     -2.0    0.574  0.156 -0.0     -2.0"""
+1        -0.289  0.155  0.0     -2.0    0.774  0.118  0.0     -2.0
+2        -0.163  0.806  0.0     -2.0    0.574  0.156  0.0     -2.0"""
         self.assert_equal(actual, expected, fuzzy_match=True)

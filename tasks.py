@@ -111,6 +111,14 @@ try:
     )
 except ImportError:
     pass
+# Collect imports that fails due to the `dev_tools` image is not being updated. See CmTask4892 for details.
+try:
+    from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
+        docker_tag_push_multi_build_local_image_as_dev,
+        integrate_file,
+    )
+except ImportError:
+    pass
 # # TODO(gp): This is due to the coupling between code in linter container and
 # #  the code being linted.
 # try:

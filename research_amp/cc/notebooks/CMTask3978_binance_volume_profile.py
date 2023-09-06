@@ -553,7 +553,7 @@ by_day_bid_ask_btc.plot(kind="bar")
 # %%
 # Run execution quality pipeline with subsampling=60.
 dag = create_execution_pipeline(60)
-df_out = dag.run_leq_node("compute_execution_quality", "fit")["df_out"]
+df_out = dag.run_leq_node("compute_bid_ask_execution_quality", "fit")["df_out"]
 
 # %%
 # Apply weights to sell price.
@@ -580,7 +580,7 @@ frequencies = [1, 60, 300, 900, 3600]
 result_dict = {}
 for f in frequencies:
     dag = create_execution_pipeline(f)
-    df = dag.run_leq_node("compute_execution_quality", "fit")["df_out"]
+    df = dag.run_leq_node("compute_bid_ask_execution_quality", "fit")["df_out"]
     result_dict[f] = df
 
 # %% [markdown]
@@ -692,7 +692,7 @@ display(by_day_bid_ask_eth.plot(kind="bar"))
 
 # %%
 dag = create_execution_pipeline(60)
-df_out = dag.run_leq_node("compute_execution_quality", "fit")["df_out"]
+df_out = dag.run_leq_node("compute_bid_ask_execution_quality", "fit")["df_out"]
 df_out = df_out[df_out.index <= pd.Timestamp("2022-11-30 23:59:59+00:00")]
 
 # %%
@@ -741,7 +741,7 @@ frequencies = [1, 60, 300, 900, 3600]
 result_dict = {}
 for f in frequencies:
     dag = create_execution_pipeline(f)
-    df = dag.run_leq_node("compute_execution_quality", "fit")["df_out"]
+    df = dag.run_leq_node("compute_bid_ask_execution_quality", "fit")["df_out"]
     result_dict[f] = df
 
 # %%

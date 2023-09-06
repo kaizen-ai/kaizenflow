@@ -206,7 +206,13 @@ def plot_barplot(
     # Choose scale.
     yscale = yscale or "linear"
     hdbg.dassert_in(yscale, ["log", "linear"], f"Invalid scale={yscale}")
-    ax.set_yscale(yscale)
+    if orientation == "vertical":
+        ax.set_yscale(yscale)
+    elif orientation == "horizontal":
+        # The axes get swapped, so y-axis becomes x-axis.
+        ax.set_xscale(yscale)
+    else:
+        raise ValueError("Invalid orientation='%s'" % orientation)
     # Add annotations to bars.
     # Note: annotations in both modes are taken from
     # entire series, not top N.

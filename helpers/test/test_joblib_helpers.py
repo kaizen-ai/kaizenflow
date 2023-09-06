@@ -108,6 +108,7 @@ val1=4, val2=8, incremental=True, num_attempts=1, kwargs={'hello4': 'world8', 'g
         self._run_test(num_threads, backend)
 
     @pytest.mark.requires_ck_infra
+    @pytest.mark.slow("~6 seconds, see CmTask4951.")
     def test_parallel_loky2(self) -> None:
         num_threads = "3"
         backend = "loky"
@@ -172,7 +173,7 @@ class Test_parallel_execute2(hunitest.TestCase):
         should_succeed = True
         self._run_test(abort_on_error, num_threads, backend, should_succeed)
 
-    @pytest.mark.requires_ck_infra 
+    @pytest.mark.requires_ck_infra
     def test_parallel_loky1(self) -> None:
         num_threads = 2
         abort_on_error = True
@@ -180,8 +181,8 @@ class Test_parallel_execute2(hunitest.TestCase):
         #
         should_succeed = False
         self._run_test(abort_on_error, num_threads, backend, should_succeed)
-    
-    @pytest.mark.requires_ck_infra 
+
+    @pytest.mark.requires_ck_infra
     def test_parallel_loky2(self) -> None:
         num_threads = 2
         abort_on_error = False
@@ -307,7 +308,7 @@ val1=4, val2=8, incremental=True, num_attempts=1, kwargs={'hello4': 'world8', 'g
         should_succeed = False
         self._run_test(abort_on_error, num_threads, backend, should_succeed)
 
-    @pytest.mark.requires_ck_infra 
+    @pytest.mark.requires_ck_infra
     def test_parallel_loky2(self) -> None:
         num_threads = "3"
         abort_on_error = True

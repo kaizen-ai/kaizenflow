@@ -431,10 +431,11 @@
   - Multi-arch images are built using `docker buildx` which do not generate any
     local image by default
   - Images are pushed to the remote registry and pulled for testing and usage
-  - To tag the local image as dev and push it to the registry, use
+  - To tag the local image as dev and push it to the target registry: 
+    e.g., `aws_ecr.ck` or `dockerhub.sorrentum` , use
 
     ```
-    > i docker_tag_push_multi_build_local_image_as_dev --version <VERSION>
+    > i docker_tag_push_multi_build_local_image_as_dev --version <VERSION> --target <TARGET>
     ```
 
 ## Stages

@@ -22,12 +22,18 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_build_run_command_line1(hunitest.TestCase):
-    def run_fast_tests1_helper(self, is_dev_ck_return_value, exp) -> None:
+    def run_fast_tests1_helper(
+        self,
+        is_dev_ck_return_value: bool,
+        is_inside_ci_return_value: bool,
+        exp: str,
+    ) -> None:
         """
         Basic run fast tests.
 
-        :param is_dev_ck_return_value: mocking the return_value of hserver.is_dev_ck().
-        :param exp: expected output string.
+        :param is_dev_ck_return_value: mocking the return_value of `hserver.is_dev_ck()`
+        :param is_inside_ci_return_value: mocking the return_value of `hserver.is_inside_ci()`
+        :param exp: expected output string
         """
         custom_marker = ""
         pytest_opts = ""
@@ -39,6 +45,8 @@ class Test_build_run_command_line1(hunitest.TestCase):
         #
         with umock.patch.object(
             hserver, "is_dev_ck", return_value=is_dev_ck_return_value
+        ), umock.patch.object(
+            hserver, "is_inside_ci", return_value=is_inside_ci_return_value
         ):
             act = hlitapyt._build_run_command_line(
                 "fast_tests",
@@ -52,9 +60,9 @@ class Test_build_run_command_line1(hunitest.TestCase):
             )
             self.assert_equal(act, exp)
 
-    def test_run_fast_tests1_on_ck_server(self) -> None:
+    def test_run_fast_tests1_inside_ck_infra(self) -> None:
         """
-        Mock test for running fast tests on CK server.
+        Mock test for running fast tests inside the CK infra.
         """
         exp = (
             'pytest -m "not slow and not superslow" . '
@@ -62,25 +70,51 @@ class Test_build_run_command_line1(hunitest.TestCase):
             '--only-rerun "Failed: Timeout" -n 1'
         )
         is_dev_ck_return_value = True
-        self.run_fast_tests1_helper(is_dev_ck_return_value, exp)
+        is_inside_ci_return_value = True
+        self.run_fast_tests1_helper(
+            is_dev_ck_return_value, is_inside_ci_return_value, exp
+        )
 
-    def test_run_fast_tests1_outside_ck_server(self) -> None:
+    def test_run_fast_tests1_inside_ci(self) -> None:
         """
-        Mock test for running fast tests outside CK server.
+        Mock test for running fast tests inside CI flow only.
+        """
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1'
+        )
+        is_dev_ck_return_value = False
+        is_inside_ci_return_value = True
+        self.run_fast_tests1_helper(
+            is_dev_ck_return_value, is_inside_ci_return_value, exp
+        )
+
+    def test_run_fast_tests1_outside_ck_infra(self) -> None:
+        """
+        Mock test for running fast tests outside the CK infra.
         """
         exp = (
             'pytest -m "not slow and not superslow" . '
             "-o timeout_func_only=true --timeout 50 --reruns 2 "
             '--only-rerun "Failed: Timeout" -n 1'
         )
+        is_inside_ci_return_value = False
         is_dev_ck_return_value = False
-        self.run_fast_tests1_helper(is_dev_ck_return_value, exp)
+        self.run_fast_tests1_helper(
+            is_dev_ck_return_value, is_inside_ci_return_value, exp
+        )
 
-    def run_fast_tests2_helper(self, is_dev_ck_return_value, exp) -> None:
+    def run_fast_tests2_helper(
+        self,
+        is_dev_ck_return_value: bool,
+        is_inside_ci_return_value: bool,
+        exp: str,
+    ) -> None:
         """
         Coverage and collect-only.
 
-        :params: see run_fast_tests1_helper().
+        See `run_fast_tests1_helper()` for params description.
         """
         custom_marker = ""
         pytest_opts = ""
@@ -92,6 +126,8 @@ class Test_build_run_command_line1(hunitest.TestCase):
         #
         with umock.patch.object(
             hserver, "is_dev_ck", return_value=is_dev_ck_return_value
+        ), umock.patch.object(
+            hserver, "is_inside_ci", return_value=is_inside_ci_return_value
         ):
             act = hlitapyt._build_run_command_line(
                 "fast_tests",
@@ -105,9 +141,9 @@ class Test_build_run_command_line1(hunitest.TestCase):
             )
             self.assert_equal(act, exp)
 
-    def test_run_fast_tests2_on_ck_server(self) -> None:
+    def test_run_fast_tests2_inside_ck_infra(self) -> None:
         """
-        Mock test for running fast tests on CK server.
+        Mock test for running fast tests inside the CK infra.
         """
 
         exp = (
@@ -118,11 +154,29 @@ class Test_build_run_command_line1(hunitest.TestCase):
             r"--collect-only -n 1"
         )
         is_dev_ck_return_value = True
-        self.run_fast_tests2_helper(is_dev_ck_return_value, exp)
+        is_inside_ci_return_value = True
+        self.run_fast_tests2_helper(
+            is_dev_ck_return_value, is_inside_ci_return_value, exp
+        )
 
-    def test_run_fast_tests2_outside_ck_server(self) -> None:
+    def test_run_fast_tests2_inside_ci(self) -> None:
         """
-        Mock test for running fast tests outside CK server.
+        Mock test for running fast tests inside CI flow only.
+        """
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1'
+        )
+        is_dev_ck_return_value = False
+        is_inside_ci_return_value = True
+        self.run_fast_tests1_helper(
+            is_dev_ck_return_value, is_inside_ci_return_value, exp
+        )
+
+    def test_run_fast_tests2_outside_ck_infra(self) -> None:
+        """
+        Mock test for running fast tests outside the CK infra.
         """
         exp = (
             r'pytest -m "not slow and not superslow" . '
@@ -132,7 +186,10 @@ class Test_build_run_command_line1(hunitest.TestCase):
             r"--collect-only -n 1"
         )
         is_dev_ck_return_value = False
-        self.run_fast_tests2_helper(is_dev_ck_return_value, exp)
+        is_inside_ci_return_value = False
+        self.run_fast_tests2_helper(
+            is_dev_ck_return_value, is_inside_ci_return_value, exp
+        )
 
     @pytest.mark.skip(reason="Fix support for pytest_mark")
     @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
@@ -190,14 +247,18 @@ class Test_build_run_command_line1(hunitest.TestCase):
         )
         self.assert_equal(act, exp)
 
-    def run_fast_tests5_helper(self, is_dev_ck_return_value, exp) -> None:
+    def run_fast_tests5_helper(
+        self,
+        is_dev_ck_return_value: bool,
+        is_inside_ci_return_value: bool,
+        exp: str,
+    ) -> None:
         """
         Basic run fast tests tee-ing to a file. Mock depending on
-        is_dev_ck_return_value.
+        `is_dev_ck_return_value`.
 
-        :params: see run_fast_tests1_helper().
+        See `run_fast_tests1_helper()` for params description.
         """
-        test_list_name = "fast_tests"
         custom_marker = ""
         pytest_opts = ""
         skip_submodules = False
@@ -208,9 +269,11 @@ class Test_build_run_command_line1(hunitest.TestCase):
         #
         with umock.patch.object(
             hserver, "is_dev_ck", return_value=is_dev_ck_return_value
+        ), umock.patch.object(
+            hserver, "is_inside_ci", return_value=is_inside_ci_return_value
         ):
             act = hlitapyt._build_run_command_line(
-                test_list_name,
+                "fast_tests",
                 custom_marker,
                 pytest_opts,
                 skip_submodules,
@@ -221,7 +284,10 @@ class Test_build_run_command_line1(hunitest.TestCase):
             )
             self.assert_equal(act, exp)
 
-    def test_run_fast_tests5_on_ck_server(self) -> None:
+    def test_run_fast_tests5_inside_ck_infra(self) -> None:
+        """
+        Mock test for running fast tests inside the CK infra.
+        """
         exp = (
             'pytest -m "not slow and not superslow" . '
             "-o timeout_func_only=true --timeout 5 --reruns 2 "
@@ -229,9 +295,30 @@ class Test_build_run_command_line1(hunitest.TestCase):
             " | tee tmp.pytest.fast_tests.log"
         )
         is_dev_ck_return_value = True
-        self.run_fast_tests5_helper(is_dev_ck_return_value, exp)
+        is_inside_ci_return_value = True
+        self.run_fast_tests5_helper(
+            is_dev_ck_return_value, is_inside_ci_return_value, exp
+        )
 
-    def test_run_fast_tests5_outside_ck_server(self) -> None:
+    def test_run_fast_tests5_inside_ci(self) -> None:
+        """
+        Mock test for running fast tests inside CI flow only.
+        """
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1'
+        )
+        is_dev_ck_return_value = False
+        is_inside_ci_return_value = True
+        self.run_fast_tests1_helper(
+            is_dev_ck_return_value, is_inside_ci_return_value, exp
+        )
+
+    def test_run_fast_tests5_outside_ck_infra(self) -> None:
+        """
+        Mock test for running fast tests outside the CK infra.
+        """
         exp = (
             'pytest -m "not slow and not superslow" . '
             "-o timeout_func_only=true --timeout 50 --reruns 2 "
@@ -239,13 +326,21 @@ class Test_build_run_command_line1(hunitest.TestCase):
             " | tee tmp.pytest.fast_tests.log"
         )
         is_dev_ck_return_value = False
-        self.run_fast_tests5_helper(is_dev_ck_return_value, exp)
+        is_inside_ci_return_value = False
+        self.run_fast_tests5_helper(
+            is_dev_ck_return_value, is_inside_ci_return_value, exp
+        )
 
-    def run_fast_tests6_helper(self, is_dev_ck_return_value, exp) -> None:
+    def run_fast_tests6_helper(
+        self,
+        is_dev_ck_return_value: bool,
+        is_inside_ci_return_value: bool,
+        exp: str,
+    ) -> None:
         """
         Run fast tests with a custom test marker.
 
-        :params: see run_fast_tests1_helper().
+        See `run_fast_tests1_helper()` for params description.
         """
         custom_marker = "optimizer"
         pytest_opts = ""
@@ -257,6 +352,8 @@ class Test_build_run_command_line1(hunitest.TestCase):
         #
         with umock.patch.object(
             hserver, "is_dev_ck", return_value=is_dev_ck_return_value
+        ), umock.patch.object(
+            hserver, "is_inside_ci", return_value=is_inside_ci_return_value
         ):
             act = hlitapyt._build_run_command_line(
                 "fast_tests",
@@ -270,29 +367,61 @@ class Test_build_run_command_line1(hunitest.TestCase):
             )
             self.assert_equal(act, exp)
 
-    def test_run_fast_tests6_on_ck_server(self) -> None:
+    def test_run_fast_tests6_inside_ck_infra(self) -> None:
+        """
+        Mock test for running fast tests inside the CK infra.
+        """
         exp = (
             'pytest -m "optimizer and not slow and not superslow" . '
             "-o timeout_func_only=true --timeout 5 --reruns 2 "
             '--only-rerun "Failed: Timeout" -n 1'
         )
         is_dev_ck_return_value = True
-        self.run_fast_tests6_helper(is_dev_ck_return_value, exp)
+        is_inside_ci_return_value = True
+        self.run_fast_tests6_helper(
+            is_dev_ck_return_value, is_inside_ci_return_value, exp
+        )
 
-    def test_run_fast_tests6_outside_ck_server(self) -> None:
+    def test_run_fast_tests6_inside_ci(self) -> None:
+        """
+        Mock test for running fast tests inside CI flow only.
+        """
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1'
+        )
+        is_dev_ck_return_value = False
+        is_inside_ci_return_value = True
+        self.run_fast_tests1_helper(
+            is_dev_ck_return_value, is_inside_ci_return_value, exp
+        )
+
+    def test_run_fast_tests6_outside_ck_infra(self) -> None:
+        """
+        Mock test for running fast tests outside the CK infra.
+        """
         exp = (
             'pytest -m "optimizer and not slow and not superslow" . '
             "-o timeout_func_only=true --timeout 50 --reruns 2 "
             '--only-rerun "Failed: Timeout" -n 1'
         )
         is_dev_ck_return_value = False
-        self.run_fast_tests6_helper(is_dev_ck_return_value, exp)
+        is_inside_ci_return_value = False
+        self.run_fast_tests6_helper(
+            is_dev_ck_return_value, is_inside_ci_return_value, exp
+        )
 
-    def run_fast_tests7_helper(self, is_dev_ck_return_value, exp) -> None:
+    def run_fast_tests7_helper(
+        self,
+        is_dev_ck_return_value: bool,
+        is_inside_ci_return_value: bool,
+        exp: str,
+    ) -> None:
         """
         Run fast tests with parallelization.
 
-        :params: see run_fast_tests1_helper().
+        See `run_fast_tests1_helper()` for params description.
         """
         custom_marker = ""
         pytest_opts = ""
@@ -304,6 +433,8 @@ class Test_build_run_command_line1(hunitest.TestCase):
         #
         with umock.patch.object(
             hserver, "is_dev_ck", return_value=is_dev_ck_return_value
+        ), umock.patch.object(
+            hserver, "is_inside_ci", return_value=is_inside_ci_return_value
         ):
             act = hlitapyt._build_run_command_line(
                 "fast_tests",
@@ -317,23 +448,50 @@ class Test_build_run_command_line1(hunitest.TestCase):
             )
             self.assert_equal(act, exp)
 
-    def test_run_fast_tests7_on_ck_server(self) -> None:
+    def test_run_fast_tests7_inside_ck_infra(self) -> None:
+        """
+        Mock test for running fast tests inside the CK infra.
+        """
         exp = (
             'pytest -m "not slow and not superslow" . '
             "-o timeout_func_only=true --timeout 5 --reruns 2 "
             '--only-rerun "Failed: Timeout" -n auto'
         )
         is_dev_ck_return_value = True
-        self.run_fast_tests7_helper(is_dev_ck_return_value, exp)
+        is_inside_ci_return_value = True
+        self.run_fast_tests7_helper(
+            is_dev_ck_return_value, is_inside_ci_return_value, exp
+        )
 
-    def test_run_fast_tests7_outside_ck_server(self) -> None:
+    def test_run_fast_tests7_inside_ci(self) -> None:
+        """
+        Mock test for running fast tests inside CI flow only.
+        """
+        exp = (
+            'pytest -m "not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1'
+        )
+        is_dev_ck_return_value = False
+        is_inside_ci_return_value = True
+        self.run_fast_tests1_helper(
+            is_dev_ck_return_value, is_inside_ci_return_value, exp
+        )
+
+    def test_run_fast_tests7_outside_ck_infra(self) -> None:
+        """
+        Mock test for running fast tests outside the CK infra.
+        """
         exp = (
             'pytest -m "not slow and not superslow" . '
             "-o timeout_func_only=true --timeout 50 --reruns 2 "
             '--only-rerun "Failed: Timeout" -n auto'
         )
         is_dev_ck_return_value = False
-        self.run_fast_tests7_helper(is_dev_ck_return_value, exp)
+        is_inside_ci_return_value = False
+        self.run_fast_tests7_helper(
+            is_dev_ck_return_value, is_inside_ci_return_value, exp
+        )
 
 
 class Test_pytest_repro1(hunitest.TestCase):
@@ -602,7 +760,7 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
         regex = "(WARN|INFO)\s+hcache.py"
         act = hunitest.filter_text(regex, act)
         # Check the outcome.
-        self.check_string(act, purify_text=True)
+        self.check_string(act, purify_text=True, fuzzy_match=True)
 
     def test1(self) -> None:
         file_name = f"{self.get_input_dir()}/cache/lastfailed"

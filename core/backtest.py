@@ -13,6 +13,7 @@ from tqdm.autonotebook import tqdm
 
 import core.data_adapters as cdatadap
 import helpers.hdbg as hdbg
+import helpers.henv as henv
 import helpers.hlist as hlist
 import helpers.hpandas as hpandas
 
@@ -20,8 +21,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): @Grisha -> gluonts/backtest.py
 
-# TODO(gp): @Grisha Remove after PTask2335.
-if True:
+if henv.has_module("gluonts"):
     import gluonts
     import gluonts.evaluation.backtest
 

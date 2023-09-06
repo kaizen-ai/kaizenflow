@@ -654,8 +654,8 @@ def integrate_diff_overlapping_files(  # type: ignore
 def _infer_dst_file_path(
     src_file_path: str,
     *,
-    default_src_dir_basename: str =DEFAULT_SRC_DIR_BASENAME,
-    default_dst_dir_basename: str =DEFAULT_DST_DIR_BASENAME,
+    default_src_dir_basename: str = DEFAULT_SRC_DIR_BASENAME,
+    default_dst_dir_basename: str = DEFAULT_DST_DIR_BASENAME,
     check_exists: bool = True,
 ) -> Tuple[str, str]:
     """
@@ -784,6 +784,10 @@ def integrate_file(  # type: ignore
     _ = ctx
     file_name = os.path.normpath(file_name)
     hdbg.dassert_file_exists(file_name)
+    # If the file is in the current dir, we need to prepend the dir name.
+    if not file_name.startswith("/"):
+        file_name = os.path.join(os.getcwd(), file_name)
+        _LOG.info(hprint.to_str("file_name"))
     # Resolve the src / dst dir, if needed.
     dst_file_name, _ = _infer_dst_file_path(
         file_name,
@@ -797,3 +801,28 @@ def integrate_file(  # type: ignore
     if not dry_run:
         # hlitauti.run(ctx, cmd, dry_run=dry_run, print_cmd=True)
         os.system(cmd)
+
+
+# Compare the timestamp of last modification of a file.
+# FILE=helpers/lib_tasks_git.py; (cd ~/src/cmamp1; git log -1 $FILE); (cd ~/src/sorrentum1; git log -1 $FILE)
+
+# > git log --pretty=format:"%h - %an, %ad : %s" --date=short | grep _Integrate_ | head -5
+# fffa1c8b2 - GP Saggese, 2023-06-30 : AmpTask1786_Integrate_20230627_7 (#367)
+# 5a05a0c94 - GP Saggese, 2023-06-29 : AmpTask1786_Integrate_20230627_6 (#365)
+# 6c3ad7d87 - GP Saggese, 2023-06-29 : AmpTask1786_Integrate_20230627_5 (#364)
+# 36abfd8b3 - GP Saggese, 2023-06-28 : AmpTask1786_Integrate_20230627_3 (#361)
+# 65fe42d38 - GP Saggese, 2023-06-28 : AmpTask1786_Integrate_20230627_2 (#360)
+
+# In Sorr
+# GIT_INTEGR_HASH=fffa1c8b2
+# fffa1c8b2 - GP Saggese, 2023-06-30 : AmpTask1786_Integrate_20230627_7 (#367)
+
+# In cmamp
+# 20526ed09 - GP Saggese, 2023-08-10 : AmpTask1786_Integrate_20230810_2 (#5011)
+
+# Show files changed since an integration point
+# > git diff --name-only $GIT_INTEGR_HASH dataflow_amp
+# dataflow_amp/system/mock1/test/test_mock1_forecast_system.py
+
+# Show the difference since an integration point
+# git difftool $GIT_INTEGR_HASH.. dataflow_amp
