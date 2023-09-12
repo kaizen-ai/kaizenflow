@@ -640,6 +640,7 @@ def _generate_docker_compose_file(
           ports:
             # TODO(gp): Rename `AM_PORT`.
             - "${PORT}:${PORT}"
+            - 8181:8181
 
         # TODO(gp): For some reason the following doesn't work.
         #  jupyter_server_test:
