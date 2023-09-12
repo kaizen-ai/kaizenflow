@@ -73,33 +73,11 @@ def get_swt(
     if output_mode is None:
         output_mode = "tuple"
     # _LOG.debug("output_mode=`%s`", output_mode)
-    # Convert to numpy and pad, since the pywt swt implementation
-    # requires that the input be a power of 2 in length.
-    sig_len = sig.size
-    padded = _pad_to_pow_of_2(sig.values)
-    # Perform the wavelet decomposition.
-    decomp = pywt.swt(padded, wavelet=wavelet, level=depth, norm=True)
-    # Ensure we have at least one level.
-    levels = len(decomp)
-    # _LOG.debug("levels=%d", levels)
-    hdbg.dassert_lt(0, levels)
-    # Reorganize wavelet coefficients. `pywt.swt` output is of the form
-    #     [(cAn, cDn), ..., (cA2, cD2), (cA1, cD1)]
-    smooth, detail = zip(*reversed(decomp))
-    # Reorganize `swt` output into a dataframe
-    # - columns indexed by `int` wavelet level (1 up to `level`)
-    # - index identical to `sig.index` (padded portion deleted)
-    detail_dict = {}
-    smooth_dict = {}
-    for level in range(1, levels + 1):
-        detail_dict[level] = detail[level - 1][:sig_len]
-        smooth_dict[level] = smooth[level - 1][:sig_len]
-    detail_df = pd.DataFrame.from_dict(data=detail_dict)
-    detail_df.index = sig.index
-    smooth_df = pd.DataFrame.from_dict(data=smooth_dict)
-    smooth_df.index = sig.index
+    smooth_df, detail_df = pad_compute_swt_and_trim(sig, wavelet, depth)
+    levels = detail_df.shape[1]
     # Record wavelet width (required for removing warm-up artifacts).
-    width = len(pywt.Wavelet(wavelet).filter_bank[0])
+    # width = len(pywt.Wavelet(wavelet).filter_bank[0])
+    width = pywt.Wavelet(wavelet).dec_len
     # _LOG.debug("wavelet width=%s", width)
     if timing_mode == "knowledge_time":
         for j in range(1, levels + 1):
@@ -357,6 +335,53 @@ def summarize_discrete_wavelets() -> pd.DataFrame:
     return df
 
 
+# #############################################################################
+# Helpers.
+# #############################################################################
+
+
+def pad_compute_swt_and_trim(
+    sig: pd.Series,
+    wavelet: str,
+    level: int,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Pad `sig` so that its length is a power of 2, apply swt, and trim.
+
+    :param sig: pd.Series of data
+    :param wavelet: as in `pywt.swt`
+    :param level: as in `pywt.swt`
+    :return: tuple of smooth and detail dataframes
+    """
+    hdbg.dassert_isinstance(sig, pd.Series)
+    # Convert to numpy and pad, since the pywt swt implementation
+    # requires that the input be a power of 2 in length.
+    sig_len = sig.size
+    padded = _pad_to_pow_of_2(sig.values)
+    # Perform the wavelet decomposition.
+    decomp = pywt.swt(padded, wavelet=wavelet, level=level, norm=True)
+    # Ensure we have at least one level.
+    levels = len(decomp)
+    # _LOG.debug("levels=%d", levels)
+    hdbg.dassert_lt(0, levels)
+    # Reorganize wavelet coefficients. `pywt.swt` output is of the form
+    #     [(cAn, cDn), ..., (cA2, cD2), (cA1, cD1)]
+    smooth, detail = zip(*reversed(decomp))
+    # Reorganize `swt` output into a dataframe
+    # - columns indexed by `int` wavelet level (1 up to `level`)
+    # - index identical to `sig.index` (padded portion deleted)
+    detail_dict = {}
+    smooth_dict = {}
+    for level in range(1, levels + 1):
+        detail_dict[level] = detail[level - 1][:sig_len]
+        smooth_dict[level] = smooth[level - 1][:sig_len]
+    detail_df = pd.DataFrame.from_dict(data=detail_dict)
+    detail_df.index = sig.index
+    smooth_df = pd.DataFrame.from_dict(data=smooth_dict)
+    smooth_df.index = sig.index
+    return smooth_df, detail_df
+
+
 def _get_artifact_length(
     width: int,
     level: int,
@@ -368,6 +393,8 @@ def _get_artifact_length(
     :level: wavelet level
     :return: length of required warm-up period
     """
+    # See Sec 5.11. Compare to
+    # (width - 1) * (2 ** level - 1) - 1.
     length = width * 2 ** (level - 1) - width // 2
     return length
 
@@ -395,7 +422,7 @@ def _set_warmup_region_to_nan(srs: pd.Series, width: int, level: int) -> None:
     :level: wavelet level
     """
     warmup_region = _get_artifact_length(width, level)
-    srs[:warmup_region] = np.nan
+    srs.iloc[:warmup_region] = np.nan
 
 
 def _reindex_by_knowledge_time(

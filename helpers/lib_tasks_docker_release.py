@@ -16,6 +16,7 @@ from invoke import task
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hs3 as hs3
+import helpers.hsystem as hsystem
 import helpers.lib_tasks_docker as hlitadoc
 import helpers.lib_tasks_pytest as hlitapyt
 import helpers.lib_tasks_utils as hlitauti
@@ -76,6 +77,8 @@ def docker_build_local_image(  # type: ignore
     update_poetry=False,
     container_dir_name=".",
     just_do_it=False,
+    multi_build=False,
+    platform="",
 ):
     """
     Build a local image (i.e., a release candidate "dev" image).
@@ -85,6 +88,8 @@ def docker_build_local_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param update_poetry: run poetry lock to update the packages
     :param just_do_it: execute the action ignoring the checks
+    :param multi_build: build for multiple architectures
+    :param platform: specific platforms to use. E.g.: linux/amd64,linux/arm64
     """
     hlitauti.report_task(container_dir_name=container_dir_name)
     if just_do_it:
@@ -113,22 +118,111 @@ def docker_build_local_image(  # type: ignore
     #
     dockerfile = "devops/docker_build/dev.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
-    #
     opts = "--no-cache" if not cache else ""
-    # TODO(gp): Use _to_multi_line_cmd()
-    cmd = rf"""
-    DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
-    time \
-    docker build \
-        {opts} \
-        --build-arg AM_CONTAINER_VERSION={dev_version} \
-        --tag {image_local} \
-        --file {dockerfile} \
-        .
-    """
-    hlitauti.run(ctx, cmd)
+    # We want to enable using multiarch and build for both a single arch or more.
+    if multi_build:
+        hdbg.dassert_ne(
+            platform, "", "Platform should be linux/amd64, linux/arm64 or both"
+        )
+        platform_builder = "multiarch_builder"
+        # Build multi-arch image using `docker buildx`.
+        cmd = rf"""
+        docker buildx rm {platform_builder}
+        """
+        # We do not abort on error since the platform builder might be present or not, depending
+        # whether the previous invocation worked or errored out.
+        hsystem.system(cmd, abort_on_error=False)
+        cmd = rf"""
+        docker buildx create \
+            --name {platform_builder} \
+            --driver docker-container \
+            --bootstrap \
+            && \
+            docker buildx use {platform_builder}
+        """
+        hlitauti.run(ctx, cmd)
+        cmd = rf"""
+            DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
+                time \
+                docker buildx build \
+                {opts} \
+                --push \
+                --platform {platform} \
+                --build-arg AM_CONTAINER_VERSION={dev_version} \
+                --tag {image_local} \
+                --file {dockerfile} \
+                .
+            """
+        hlitauti.run(ctx, cmd)
+        # Pull the image from registry.
+        cmd = rf"""
+        docker pull {image_local}
+        """
+        hlitauti.run(ctx, cmd)
+    else:
+        # Build for a single architecture using `docker build`.
+        cmd = rf"""
+        DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
+            time \
+            docker build \
+            {opts} \
+            --build-arg AM_CONTAINER_VERSION={dev_version} \
+            --tag {image_local} \
+            --file {dockerfile} \
+            .
+        """
+        hlitauti.run(ctx, cmd)
     # Check image and report stats.
     cmd = f"docker image ls {image_local}"
+    hlitauti.run(ctx, cmd)
+
+
+# TODO(Grisha): `base_image` and `target` are not orthogonal as they both contain information
+# about the target Docker registry.
+@task
+def docker_tag_push_multi_build_local_image_as_dev(  # type: ignore
+    ctx, version, local_base_image="", target="aws_ecr.ck", container_dir_name="."
+):
+    """
+    (ONLY CI/CD) Mark the multi-arch "local" image as "dev" and push it.
+
+    Docker image registry address in the local base image name is ignored 
+    when pushing, instead the `target` param provides a Docker image 
+    registry address to push to.
+
+    :param version: version to tag the image and code with
+    :param local_base_image: base name of a local image,
+        e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    :param target: target Docker image registry to push the image to
+        - "dockerhub.sorrentum": public Sorrentum Docker image registry
+        - "aws_ecr.ck": private AWS CK ECR        
+    :param container_dir_name: directory where the Dockerfile is located
+    """
+    hlitadoc.docker_login(ctx, target)
+    hlitauti.report_task(container_dir_name=container_dir_name)
+    prod_version = hlitadoc._resolve_version_value(
+        version, container_dir_name=container_dir_name
+    )
+    dev_version = hlitadoc._to_dev_version(prod_version)
+    image_versioned_local = hlitadoc.get_image(local_base_image, "local", dev_version)
+    if target == "aws_ecr.ck":
+        # Use the default AWS CK Docker registry.
+        dev_base_image = ""
+    if target == "dockerhub.sorrentum":
+        # Use public Sorrentum Docker registry.
+        dev_base_image = "sorrentum/cmamp"
+    else:
+        raise ValueError(f"Invalid target Docker image registry='{target}'")
+    # Tag and push the local image as versioned dev image (e.g., `dev-1.0.0`).
+    image_versioned_dev = hlitadoc.get_image(dev_base_image, "dev", dev_version)
+    cmd = f"docker buildx imagetools create -t {image_versioned_dev} {image_versioned_local}"
+    hlitauti.run(ctx, cmd)
+    # Tag and push local image as dev image.
+    latest_version = None
+    image_dev = hlitadoc.get_image(dev_base_image, "dev", latest_version)
+    cmd = (
+        f"docker buildx imagetools create -t {image_dev} {image_versioned_local}"
+    )
     hlitauti.run(ctx, cmd)
 
 
@@ -287,6 +381,7 @@ def docker_release_dev_image(  # type: ignore
 # - The PROD image is created from the DEV image by copying the code inside the
 #   image
 # - The PROD image is tagged as "prod"
+# The prod flow doesn't support buildx because we only run on x86 in prod.
 
 
 # TODO(gp): Remove redundancy with docker_build_local_image(), if possible.
@@ -346,7 +441,7 @@ def docker_build_prod_image(  # type: ignore
     dockerfile = "devops/docker_build/prod.Dockerfile"
     dockerfile = _to_abs_path(dockerfile)
     #
-    # TODO(gp): Use _to_multi_line_cmd()
+    # TODO(gp): Use to_multi_line_cmd()
     opts = "--no-cache" if not cache else ""
     # Use dev version for building prod image.
     dev_version = hlitadoc._to_dev_version(prod_version)
@@ -614,7 +709,9 @@ def docker_create_candidate_image(ctx, task_definition, user_tag=""):  # type: i
 
 
 @task
-def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s3_path, task_definition):  # type: ignore
+def docker_update_prod_task_definition(
+    ctx,version, preprod_tag, airflow_dags_s3_path, task_definition
+):  # type: ignore
     """
     Update image in prod task definition to the desired version.
 

@@ -45,6 +45,19 @@
 # > pylint sorrentum_sandbox/examples/reddit/__init__.py
 # > sorrentum_sandbox/examples/reddit/__init__.py:1:0: C0305: Trailing newlines (trailing-newlines)
 
+# Previous versions of the script did
+# - Remove trailing spaces:
+#   ```bash
+#   > find . -name "*.py" -o -name "*.txt" -o -name "*.json" | xargs perl -pi -e 's/\s+$/\n/'
+#   ```
+# - Add end-of-file marker:
+#   ```bash
+#   > find . -name "*.py" | xargs sed -i '' -e '$a\'
+#   ```
+# - Remove end-of-file:
+#   ```bash
+#   > find . -name -name "*.txt" | xargs perl -pi -e 'chomp if eof'
+#   ```
 
 #echo "Remove trailing spaces in each line ..."
 #find . -name "*.py" -o -name "*.txt" -o -name "*.json" | xargs perl -pi -e 's/\s+$/\n/'

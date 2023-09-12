@@ -13,15 +13,20 @@ import dataflow_amp.system.Cx as dtfamsysc
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hserver as hserver
+import helpers.hsql as hsql
+
 import helpers.hsystem as hsystem
-import oms.ccxt.ccxt_broker_instances as occcbrin
-import oms.ccxt.ccxt_broker_v1 as occcbrv1
+import oms.broker.ccxt.ccxt_broker_instances as obccbrin
+import im_v2.common.data.client as icdc
+import im_v2.common.db.db_utils as imvcddbut
+import im_v2.im_lib_tasks as imvimlita
+import oms.broker.ccxt.ccxt_broker_v1 as obccbrv1
 import oms.hsecrets as omssec
 
 _LOG = logging.getLogger(__name__)
 
 
-def _get_CcxtBroker(secret_id: int) -> occcbrv1.CcxtBroker_v1:
+def _get_CcxtBroker(secret_id: int) -> obccbrv1.CcxtBroker_v1:
     """
     Get a `CcxtBroker` instance.
     """
@@ -38,7 +43,7 @@ def _get_CcxtBroker(secret_id: int) -> occcbrv1.CcxtBroker_v1:
     secret_identifier = omssec.SecretIdentifier(
         exchange_id, stage, account_type, secret_id
     )
-    ccxt_broker = occcbrin.get_CcxtBroker_v1_prod_instance1(
+    ccxt_broker = obccbrin.get_CcxtBroker_v1_prod_instance1(
         strategy_id, market_data, universe_version, secret_identifier, log_dir
     )
     return ccxt_broker
@@ -81,7 +86,7 @@ def binance_log_open_positions(ctx, secret_id, log_dir):
     contract_type = "futures"
     stage = "preprod"
     cmd = (
-        f"oms/ccxt/scripts/get_ccxt_open_positions.py --exchange {exchange_id}"
+        f"oms/broker/ccxt/scripts/get_ccxt_open_positions.py --exchange {exchange_id}"
         + f" --contract_type {contract_type} --stage {stage}"
         + f" --secret_id {secret_id}"
         + f" --log_dir {log_dir}"
@@ -105,7 +110,7 @@ def binance_flatten_account(ctx, stage, secret_id):  # type: ignore
     exchange_id = "binance"
     contract_type = "futures"
     cmd = (
-        f"oms/ccxt/scripts/flatten_ccxt_account.py --exchange_id {exchange_id}"
+        f"oms/broker/ccxt/scripts/flatten_ccxt_account.py --exchange_id {exchange_id}"
         + f" --contract_type {contract_type} --stage {stage}"
         + f" --secret_id {secret_id}"
         + f" --assert_on_non_zero_positions"
@@ -128,7 +133,7 @@ def binance_log_total_balance(ctx, secret_id, log_dir):  # type: ignore
     contract_type = "futures"
     stage = "preprod"
     cmd = (
-        f"oms/ccxt/scripts/get_ccxt_total_balance.py --exchange {exchange_id}"
+        f"oms/broker/ccxt/scripts/get_ccxt_total_balance.py --exchange {exchange_id}"
         + f" --contract_type {contract_type} --stage {stage}"
         + f" --secret_id {secret_id}"
         + f" --log_dir {log_dir}"

@@ -4,6 +4,8 @@ Import as:
 import core.finance as cofinanc
 """
 
+import core.finance.portfolio_df_processing  # pylint: disable=unused-import # NOQA
+import core.finance.target_position_df_processing  # pylint: disable=unused-import # NOQA
 from core.finance.ablation import *  # pylint: disable=unused-import # NOQA
 from core.finance.accumulation import *  # pylint: disable=unused-import # NOQA
 from core.finance.bar_processing import *  # pylint: disable=unused-import # NOQA

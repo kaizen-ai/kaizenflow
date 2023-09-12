@@ -3,7 +3,6 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-import pytest
 
 import core.artificial_signal_generators as carsigen
 import core.signal_processing.swt as csiprswt
@@ -115,12 +114,368 @@ class Test_get_swt(hunitest.TestCase):
 
     @staticmethod
     def _get_series(seed: int, periods: int = 20) -> pd.Series:
-        arma_process = carsigen.ArmaProcess([0], [0])
-        date_range = {"start": "1/1/2010", "periods": periods, "freq": "M"}
-        series = arma_process.generate_sample(
-            date_range_kwargs=date_range, scale=0.1, seed=seed
+        return cstrasam.get_iid_standard_gaussian_samples(periods, seed)
+
+
+class Test_get_swt_1(hunitest.TestCase):
+    """
+    Test warmup, knowledge time, and time shifting behavior.
+    """
+
+    def test_haar_smooth_1(self) -> None:
+        """
+        Test warmup and knowledge time behavior.
+
+        The warmup for level-2 is so long that we only see the last
+        effect at that level of the impulse.
+        """
+        srs = pd.Series([0, 0, 0, 1, 0, 0, 0, 0])
+        smooth = csiprswt.get_swt(
+            srs,
+            wavelet="haar",
+            timing_mode="knowledge_time",
+            output_mode="smooth",
+            depth=2,
         )
-        return series
+        actual = hpandas.df_to_str(smooth, num_rows=None)
+        expected = r"""
+     1     2
+0  NaN   NaN
+1  NaN   NaN
+2  0.0   NaN
+3  0.5   NaN
+4  0.5   NaN
+5  0.0   NaN
+6  0.0  0.25
+7  0.0  0.00
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_haar_smooth_2(self) -> None:
+        """
+        Test warmup and knowledge time behavior.
+
+        We do not have enough warmup to generate level-2 coefficients at
+        the time of the impulse. However, the effects of the impulse can
+        be seen as soon as the warm-up period is over.
+        """
+        srs = pd.Series([0, 0, 0, 0, 1, 0, 0, 0, 0])
+        smooth = csiprswt.get_swt(
+            srs,
+            wavelet="haar",
+            timing_mode="knowledge_time",
+            output_mode="smooth",
+            depth=2,
+        )
+        actual = hpandas.df_to_str(smooth, num_rows=None)
+        expected = r"""
+     1     2
+0  NaN   NaN
+1  NaN   NaN
+2  0.0   NaN
+3  0.0   NaN
+4  0.5   NaN
+5  0.5   NaN
+6  0.0  0.25
+7  0.0  0.25
+8  0.0  0.00
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_haar_smooth_3(self) -> None:
+        """
+        Test warmup and knowledge time behavior.
+
+        We have just enough warmup to begin producing coefficients at
+        the second level at the time of the impulse (index 6).
+        """
+        srs = pd.Series([0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0])
+        smooth = csiprswt.get_swt(
+            srs,
+            wavelet="haar",
+            timing_mode="knowledge_time",
+            output_mode="smooth",
+            depth=2,
+        )
+        expected = r"""
+      1     2
+0   NaN   NaN
+1   NaN   NaN
+2   0.0   NaN
+3   0.0   NaN
+4   0.0   NaN
+5   0.0   NaN
+6   0.5  0.25
+7   0.5  0.25
+8   0.0  0.25
+9   0.0  0.25
+10  0.0  0.00
+"""
+        actual = hpandas.df_to_str(smooth, num_rows=None)
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_db2_smooth_1(self) -> None:
+        srs = pd.Series([0, 0, 0, 1, 0, 0, 0, 0])
+        smooth = csiprswt.get_swt(
+            srs,
+            wavelet="db2",
+            timing_mode="knowledge_time",
+            output_mode="smooth",
+            depth=1,
+        )
+        actual = hpandas.df_to_str(smooth, num_rows=None)
+        expected = r"""
+          1
+0       NaN
+1       NaN
+2       NaN
+3       NaN
+4  0.158494
+5  0.591506
+6  0.341506
+7  0.000000
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_db2_smooth_2(self) -> None:
+        srs = pd.Series([0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0])
+        smooth = csiprswt.get_swt(
+            srs,
+            wavelet="db2",
+            timing_mode="knowledge_time",
+            output_mode="smooth",
+            depth=2,
+        )
+        actual = hpandas.df_to_str(smooth, num_rows=None)
+        expected = r"""
+           1         2
+0        NaN       NaN
+1        NaN       NaN
+2        NaN       NaN
+3        NaN       NaN
+4   0.000000       NaN
+5   0.000000       NaN
+6   0.000000       NaN
+7   0.000000       NaN
+8  -0.091506       NaN
+9   0.158494       NaN
+10  0.591506       NaN
+11  0.341506       NaN
+12  0.000000  0.039623
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_db2_smooth_3(self) -> None:
+        srs = pd.Series([0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1])
+        smooth = csiprswt.get_swt(
+            srs,
+            wavelet="db2",
+            timing_mode="knowledge_time",
+            output_mode="smooth",
+            depth=2,
+        )
+        actual = hpandas.df_to_str(smooth, num_rows=None)
+        expected = r"""
+           1         2
+0        NaN       NaN
+1        NaN       NaN
+2        NaN       NaN
+3        NaN       NaN
+4   0.000000       NaN
+5   0.000000       NaN
+6   0.000000       NaN
+7   0.000000       NaN
+8  -0.091506       NaN
+9   0.158494       NaN
+10  0.591506       NaN
+11  0.341506       NaN
+12  0.000000  0.039623
+13  0.000000  0.147877
+14  0.000000  0.318630
+15  0.000000  0.256130
+16 -0.091506  0.210377
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_db3_smooth_1(self) -> None:
+        srs = pd.Series([0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0])
+        smooth = csiprswt.get_swt(
+            srs,
+            wavelet="db3",
+            timing_mode="knowledge_time",
+            output_mode="smooth",
+            depth=1,
+        )
+        actual = hpandas.df_to_str(smooth, num_rows=None)
+        expected = r"""
+           1
+0        NaN
+1        NaN
+2        NaN
+3        NaN
+4        NaN
+5        NaN
+6   0.024909
+7  -0.060416
+8  -0.095467
+9   0.325183
+10  0.570558
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+class Test_get_swt_2(hunitest.TestCase):
+    def test_scaling_invariance_1(self) -> None:
+        periods = 100
+        seed = 1
+        depth = 3
+        wavelet = "db5"
+        timing_mode = "knowledge_time"
+        output_mode = "detail_and_last_smooth"
+        shift = 0
+        scale_factor = 2.0
+        atol = 1e-5
+        self._test_invariance_helper(
+            periods,
+            seed,
+            depth,
+            wavelet,
+            timing_mode,
+            output_mode,
+            shift,
+            scale_factor,
+            atol,
+        )
+
+    # TODO(Paul): Debug trailing coefficients vs NaNs issue.
+    # def test_shift_invariance(self) -> None:
+    #     periods = 100
+    #     seed = 1
+    #     depth = 3
+    #     wavelet = "db5"
+    #     timing_mode = "knowledge_time"
+    #     output_mode = "detail"
+    #     shift = 1
+    #     scale_factor = 1
+    #     atol = 1e-5
+    #     self._test_invariance_helper(
+    #         periods,
+    #         seed,
+    #         depth,
+    #         wavelet,
+    #         timing_mode,
+    #         output_mode,
+    #         shift,
+    #         scale_factor,
+    #         atol
+    #     )
+
+    def _test_invariance_helper(
+        self,
+        periods,
+        seed,
+        depth,
+        wavelet,
+        timing_mode,
+        output_mode,
+        shift,
+        scale_factor,
+        atol,
+    ) -> None:
+        srs = cstrasam.get_iid_standard_gaussian_samples(periods, seed)
+        srs_swt_a = csiprswt.get_swt(
+            scale_factor * srs,
+            depth=depth,
+            wavelet=wavelet,
+            timing_mode=timing_mode,
+            output_mode=output_mode,
+        ).shift(shift)
+        srs_swt_b = scale_factor * csiprswt.get_swt(
+            srs.shift(shift),
+            depth=depth,
+            wavelet=wavelet,
+            timing_mode=timing_mode,
+            output_mode=output_mode,
+        )
+        self.assert_dfs_close(srs_swt_a, srs_swt_b, atol=atol)
+
+
+class Test_get_swt_3(hunitest.TestCase):
+    def test_knowledge_time_1(self) -> None:
+        impulse_position = 2**4
+        wavelet = "haar"
+        levels = 3
+        swt = self._test_knowledge_time_helper(
+            impulse_position,
+            wavelet,
+            levels,
+        )
+        actual = hpandas.df_to_str(swt.iloc[impulse_position], num_rows=None)
+        expected = r"""
+             16
+1        -0.500
+2        -0.250
+3        -0.125
+3_smooth  0.125
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_knowledge_time_2(self) -> None:
+        impulse_position = 2**5
+        wavelet = "db2"
+        levels = 3
+        swt = self._test_knowledge_time_helper(
+            impulse_position,
+            wavelet,
+            levels,
+        )
+        actual = hpandas.df_to_str(swt.iloc[impulse_position], num_rows=None)
+        expected = r"""
+                32
+1        -0.341506
+2         0.031250
+3        -0.002860
+3_smooth -0.000766
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_knowledge_time_3(self) -> None:
+        impulse_position = 2**6
+        wavelet = "db3"
+        levels = 3
+        swt = self._test_knowledge_time_helper(
+            impulse_position,
+            wavelet,
+            levels,
+        )
+        actual = hpandas.df_to_str(swt.iloc[impulse_position], num_rows=None)
+        expected = r"""
+                64
+1        -0.235234
+2        -0.005859
+3        -0.000146
+3_smooth  0.000015
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def _test_knowledge_time_helper(
+        self,
+        impulse_position: int,
+        wavelet: str,
+        levels: int,
+    ) -> pd.DataFrame:
+        srs = pd.Series([0] * 2 * impulse_position)
+        srs.iloc[impulse_position] = 1
+        swt = csiprswt.get_swt(
+            srs,
+            wavelet,
+            levels,
+            timing_mode="knowledge_time",
+            output_mode="detail_and_last_smooth",
+        )
+        max_abs_swt_before_impulse = swt.iloc[:impulse_position].abs().max().max()
+        np.testing.assert_almost_equal(max_abs_swt_before_impulse, 0.0)
+        return swt
 
 
 # #############################################################################
@@ -239,6 +594,7 @@ class Test_summarize_discrete_wavelets(hunitest.TestCase):
 
 
 def get_daily_gaussian(seed: int) -> pd.Series:
+    # TODO(Paul): Do not rely on `statsmodels` for random data.
     process = carsigen.ArmaProcess([], [])
     realization = process.generate_sample(
         {"start": "2000-01-01", "end": "2005-01-01", "freq": "B"}, seed=seed

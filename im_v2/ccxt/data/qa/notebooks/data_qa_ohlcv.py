@@ -126,7 +126,7 @@ data.head()
 data_frequency = "T" if "1min" in dataset_signature_as_dict["action_tag"] else "S"
 vendor_name = dataset_signature_as_dict["vendor"].upper()
 mode = "download"
-version = dataset_signature_as_dict["universe"]
+version = dataset_signature_as_dict["universe"].replace("_",".")
 exchange_id = dataset_signature_as_dict["exchange_id"]
 universe = imvcounun.get_vendor_universe(vendor_name, mode, version=version)
 universe_list = universe[exchange_id]

@@ -47,6 +47,7 @@ def plot_histograms_and_lagged_scatterplot(
     """
     hdbg.dassert(isinstance(srs, pd.Series), "Input must be Series")
     hpandas.dassert_monotonic_index(srs, "Index must be monotonic")
+    figsize = figsize or (20, 10)
     hist_kwargs = hist_kwargs or {}
     scatter_kwargs = scatter_kwargs or {}
     # Handle inf and nan.
@@ -59,7 +60,18 @@ def plot_histograms_and_lagged_scatterplot(
     srs_second_part = srs[oos_start:]  # type: ignore[misc]
     # Plot histograms.
     if axes is None:
-        _, axes = cplpluti.get_multiple_plots(3, 2, y_scale=figsize[1] / 2)
+        # This is needed to keep y and x axes on the same scale for histograms.
+        # More details in the matplotlib GH bug https://github.com/matplotlib/matplotlib/issues/11416.
+        subplots_kwargs = {
+            "sharex": "row",
+            "sharey": "row",
+            "subplot_kw": {"adjustable": "box"},
+        }
+        _, axes = cplpluti.get_multiple_plots(3, 2, y_scale=figsize[1] / 2, **subplots_kwargs)
+        # Since histograms share the same y-axis, the y-axis labels are displayed only for the
+        # 1st histogram by default, enable displaying labels for all histograms manually.
+        for ax in axes:
+            ax.yaxis.set_tick_params(labelleft=True)
         plt.suptitle(title or srs.name)
     sns.histplot(
         srs_first_part, ax=axes[0], kde=True, stat="probability", **hist_kwargs
@@ -75,6 +87,7 @@ def plot_histograms_and_lagged_scatterplot(
     axes[1].set(xlabel=None, ylabel=None, title="Sample distribution split 2")
     # Plot scatter plot.
     axes[2].scatter(srs, srs.shift(lag), **scatter_kwargs)
+    # This is needed to keep the scatter plot square. 
+    axes[2].set_box_aspect(1)
     axes[2].set(xlabel="Values", ylabel="Values with lag={}".format(lag))
-    axes[2].axis("equal")
     axes[2].set_title("Scatter-plot with lag={}".format(lag))

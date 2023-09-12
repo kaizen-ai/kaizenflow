@@ -120,7 +120,7 @@ class LinearRegression(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         # Regress `forward_y_col` on `x_vars` using `sample_weight_col` weights.
         # This performs one 1-variable regression per x variable.
         coefficients = costatis.compute_regression_coefficients(
-            df, x_vars, forward_y_col, sample_weight_col
+            df, x_vars, forward_y_col, sample_weight_col=sample_weight_col,
         )
         if fit:
             self._fit_coefficients = coefficients.copy()

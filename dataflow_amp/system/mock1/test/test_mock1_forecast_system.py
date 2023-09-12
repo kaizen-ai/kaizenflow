@@ -297,6 +297,7 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
         expected_last_timestamp = pd.Timestamp("2000-01-01 10:05:06-05:00")
         dtfsys.check_portfolio_state(self, system, expected_last_timestamp)
 
+    #TODO(Grisha): Format golden to be indented for better readability.
     @pytest.mark.superslow("~30 seconds.")
     def test3(self) -> None:
         # Build the system.

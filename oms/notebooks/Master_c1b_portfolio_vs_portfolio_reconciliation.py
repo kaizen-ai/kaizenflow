@@ -56,8 +56,8 @@ def get_replayed_delay_in_mins(
     min_timestamp_from_prod: pd.Timestamp,
 ) -> int:
     """
-    Compute replayed delay in minutes from minimal time in
-    market data from file and prod system start time.
+    Compute replayed delay in minutes from minimal time in market data from
+    file and prod system start time.
     """
     time_diff_in_secs = (
         min_timestamp_from_prod - min_timestamp_from_file

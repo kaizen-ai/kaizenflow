@@ -1,3 +1,4 @@
+import collections
 import logging
 from typing import List, Tuple
 
@@ -565,6 +566,40 @@ class Test_dassert_callable1(hunitest.TestCase):
 # #############################################################################
 
 
+class Test_dassert_all_defined_or_all_None(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Verify that test passes when all the values are defined.
+        """
+        vals = [1, 2, 3]
+        hdbg.dassert_all_defined_or_all_None(vals)
+
+    def test2(self) -> None:
+        """
+        Verify that assertion is raised when at least one of the values is not
+        defined.
+        """
+        vals = [1, 2, None, None]
+        with self.assertRaises(AssertionError) as cm:
+            hdbg.dassert_all_defined_or_all_None(vals)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        Some values in list are defined and some are None: '[1, 2, None, None]'
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Verify that test passes when all the values are not defined.
+        """
+        vals = [None, None, None]
+        hdbg.dassert_all_defined_or_all_None(vals)
+
+
+# #############################################################################
+
+
 class Test_dassert_related_params1(hunitest.TestCase):
     def test1(self) -> None:
         obj = {"val1": 1, "val2": 1, "val3": "hello"}
@@ -625,49 +660,56 @@ class Test_dassert_related_params2(hunitest.TestCase):
         """
         self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
 
-
 # #############################################################################
 
-
-class Test_dassert_file_extension1(hunitest.TestCase):
+class Test_dassert_all_attributes_are_same1(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Check if file has given extension.
+        Wrong type of object.
         """
-        extensions = ".csv.gz"
-        filename = "extensionFile.csv.gz"
-        hdbg.dassert_file_extension(filename, extensions)
+        with self.assertRaises(AssertionError) as cm:
+            hdbg.dassert_all_attributes_are_same(5, "a")
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        Instance of '5' is '<class 'int'>' instead of '<class 'list'>'
+        """
+        self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
 
     def test2(self) -> None:
         """
-        Check if file has one of the given extensions.
+        Wrong type of attribute.
         """
-        extensions = [".csv.gz", ".csv"]
-        filename = "extensionFile.csv"
-        hdbg.dassert_file_extension(filename, extensions)
-    
+        with self.assertRaises(AssertionError) as cm:
+            hdbg.dassert_all_attributes_are_same([1, 2, 3], 1)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        Instance of '1' is '<class 'int'>' instead of '<class 'str'>'
+        """
+        self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
+
     def test3(self) -> None:
         """
-        Check that assertion is raised if filename has none of the given extensions.
+        Attribute with different values.
         """
-        extensions = [".csv.gz", ".csv"]
-        filename = "txtFile.txt"
-        with self.assertRaises(Exception) as cm:
-            hdbg.dassert_file_extension(filename, extensions)
+        Obj = collections.namedtuple("Obj", ["a", "b"])
+        list_ = [Obj(1, 2), Obj(1, 3)]
+        with self.assertRaises(AssertionError) as cm:
+            hdbg.dassert_all_attributes_are_same(list_, "b")
         act = str(cm.exception)
-        exp = r"""
-        ################################################################################        
+        exp = """
         * Failed assertion *
-        '.txt' in '['.csv.gz', '.csv']'
-        Invalid extension '.txt' for file 'txtFile.txt'
-        ################################################################################
+        Elements in the list have different values for
+        attribute b:
+        {2, 3}
         """
-        self.assert_equal(act, exp, fuzzy_match=True)
+        self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
 
     def test4(self) -> None:
         """
-        Check that a file with multiple dots in its name passes the assertion.
+        Attribute with same values.
         """
-        extensions = [".csv.gz", ".csv"]
-        filename = "order.20231701_120057.20231701_13000.csv.gz"
-        hdbg.dassert_file_extension(filename, extensions)
+        Obj = collections.namedtuple("Obj", ["a", "b"])
+        list_ = [Obj(1, 2), Obj(1, 2)]
+        hdbg.dassert_all_attributes_are_same(list_, "b")
