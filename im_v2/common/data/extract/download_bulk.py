@@ -35,6 +35,7 @@ import helpers.hs3 as hs3
 import im_v2.binance.data.extract.extractor as imvbdexex
 import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
+import im_v2.common.data.qa.validate_input_args as imvcdqviar
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.data.qa.validate_input_args as imvcdqviar
 import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
@@ -74,11 +75,8 @@ def _run(args: argparse.Namespace) -> None:
     args = vars(args)
     vendor = args["vendor"]
     args["unit"] = imvcdttrut.get_vendor_epoch_unit(vendor, args["data_type"])
+    imvcdqviar.validate_vendor_arg(vendor=vendor, args=args)
     if vendor == "crypto_chassis":
-        if not args.get("universe_part"):
-            raise RuntimeError(
-                f"--universe_part argument is mandatory for {vendor}"
-            )
         exchange = imvccdexex.CryptoChassisExtractor(args["contract_type"])
     elif vendor == "ccxt":
         exchange = imvcdexex.CcxtExtractor(
