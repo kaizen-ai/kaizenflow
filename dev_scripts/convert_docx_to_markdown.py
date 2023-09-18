@@ -61,7 +61,8 @@ def _convert_docx_to_markdown(
     hsystem.system(remove_figs_folder_cmd)
     # Convert from Docx to Markdown.
     convert_docx_to_markdown_cmd = f"pandoc --extract-media {md_file_figs} -f docx -t markdown_strict -o {md_file} {docx_file}"
-    docker_cmd = f"docker run --rm -it --workdir {work_dir} --mount {mount} {docker_container_name} {convert_docx_to_markdown_cmd}"
+    # Run docker under current uid and gid.
+    docker_cmd = f"docker run --rm --user $(id -u):$(id -g) -it --workdir {work_dir} --mount {mount} {docker_container_name} {convert_docx_to_markdown_cmd}"
     hsystem.system(docker_cmd)
 
 
