@@ -60,7 +60,7 @@ Every scoring needs to happen (e.g., every two weeks):
   class="underline">here</span>](https://docs.google.com/forms/d/e/1FAIpQLSdXhjHo52Roz_ROY-zlkg0YPMHCzoDXmPpCd1x-KmeCtQVd5g/viewform)
 
   - You should see
-  - <img src="Contributor_Scorecard_figs/image1.png" style="width:6.5in;height:4.90278in" />
+  - <img src="Contributor_Scoring_figs/image1.png" style="width:6.5in;height:4.90278in" />
   - (For admin use, the source is [<span
     class="underline">here</span>](https://docs.google.com/forms/d/1IXpcMSrtVI0xO3eNMrzGNJ0zpv-KySQVXjujlSuZlpo/edit)
     and [<span
