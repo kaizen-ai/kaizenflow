@@ -1,4 +1,4 @@
-# Contributor Scorecard
+# Contributor Scoring
 
 <!-- toc -->
 
