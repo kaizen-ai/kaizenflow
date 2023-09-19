@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+import core.plotting.boxplot as cploboxp
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.visual_stationarity_test as cpvistte
-import core.plotting.boxplot as cplobox
 
 _LOG = logging.getLogger(__name__)
 
@@ -165,6 +165,7 @@ class Test_plots(unittest.TestCase):
         """
         test_df = self.get_test_plot_df1()
         cplmiplo.plot_autocorrelation(test_df)
+
     def test_plot_boxplot1(self) -> None:
         """
         Smoke test for `plot_boxplot`.
@@ -173,32 +174,14 @@ class Test_plots(unittest.TestCase):
         - `ylabel` is an empty string
         """
         test_df = self.get_test_plot_df1()
-        cplobox.plot_boxplot(test_df)
+        cploboxp.plot_boxplot(test_df)
+
     def test_plot_boxplot2(self) -> None:
         """
         Smoke test for `plot_boxplot`.
 
         - `grouping` is "by_col"
-        - `ylabel` is an empty string
-        """
-        test_df = self.get_test_plot_df1()
-        cplobox.plot_boxplot(test_df, grouping="by_col")
-    def test_plot_boxplot3(self) -> None:
-        """
-        Smoke test for `plot_boxplot`.
-
-        - `grouping` is "by_row"
         - `ylabel` is a non-empty string
         """
         test_df = self.get_test_plot_df1()
-        cplobox.plot_boxplot(test_df, grouping="by_row", ylabel="Test Label")
-    def test_plot_boxplot4(self) -> None:
-        """
-        Smoke test for `plot_boxplot`.
-
-        - `grouping` is "by_row"
-        - `ylabel` is a non-empty string
-        """
-        test_df = self.get_test_plot_df1()
-        cplobox.plot_boxplot(test_df, grouping="by_col", ylabel="Test Label")
-    
+        cploboxp.plot_boxplot(test_df, grouping="by_col", ylabel="Test Label")

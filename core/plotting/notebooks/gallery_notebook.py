@@ -192,12 +192,6 @@ test_df = cptetepl.Test_plots.get_test_plot_df1()
 cplobox.plot_boxplot(test_df)
 
 # %%
-cplobox.plot_boxplot(test_df, grouping="by_col")
-
-# %%
-cplobox.plot_boxplot(test_df, grouping="by_row", ylabel="Test Label")
-
-# %%
 cplobox.plot_boxplot(test_df, grouping="by_col", ylabel="Test Label")
 
 # %%
