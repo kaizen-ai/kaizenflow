@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -38,6 +38,7 @@ import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
 import core.plotting.test.test_plots as cptetepl
 import core.plotting.correlation as cplocorr
+import core.plotting.boxplot as cplobox
 import dataflow.model.test.test_model_plotter as dmtetemopl
 
 import dataflow.model.model_plotter as dtfmomoplo
@@ -180,5 +181,23 @@ cplmiplo.plot_spectrum(test_df)
 _, axes = plt.subplots(2, 2, figsize=config["figsize"])
 axes_flat = axes.flatten()
 cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
+
+# %% [markdown]
+# ## `plot_boxplot()`
+
+# %%
+test_df = cptetepl.Test_plots.get_test_plot_df1()
+
+# %%
+cplobox.plot_boxplot(test_df)
+
+# %%
+cplobox.plot_boxplot(test_df, grouping="by_col")
+
+# %%
+cplobox.plot_boxplot(test_df, grouping="by_row", ylabel="Test Label")
+
+# %%
+cplobox.plot_boxplot(test_df, grouping="by_col", ylabel="Test Label")
 
 # %%
