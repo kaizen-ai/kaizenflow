@@ -191,7 +191,6 @@ class Test_plots(unittest.TestCase):
         - `ylabel` is a non-empty string
         """
         test_df = self.get_test_plot_df1()
-        print(test_df)
         cplobox.plot_boxplot(test_df, grouping="by_row", ylabel="Test Label")
     def test_plot_boxplot4(self) -> None:
         """
