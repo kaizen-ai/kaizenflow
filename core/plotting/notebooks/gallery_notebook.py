@@ -32,15 +32,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import core.config as cconfig
+import core.plotting.boxplot as cploboxp
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
-import core.plotting.test.test_plots as cptetepl
-import core.plotting.correlation as cplocorr
-import core.plotting.boxplot as cplobox
-import dataflow.model.test.test_model_plotter as dmtetemopl
-
 import dataflow.model.model_plotter as dtfmomoplo
 import dataflow.model.test.test_model_evaluator as cdmttme
 import helpers.hdbg as hdbg
@@ -189,9 +185,9 @@ cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
 test_df = cptetepl.Test_plots.get_test_plot_df1()
 
 # %%
-cplobox.plot_boxplot(test_df)
+cploboxp.plot_boxplot(test_df)
 
 # %%
-cplobox.plot_boxplot(test_df, grouping="by_col", ylabel="Test Label")
+cploboxp.plot_boxplot(test_df, grouping="by_col", ylabel="Test Label")
 
 # %%
