@@ -307,7 +307,7 @@ def get_x_and_forward_y_predict_df(
 
 
 # TODO(Grisha): maybe move closer to the DagBuilder class?
-def get_DagBuilder_name_from_string_pointer(dag_builder_ctor_as_str: str) -> str:
+def get_DagBuilder_name_from_string(dag_builder_ctor_as_str: str) -> str:
     """
     Get `DagBuilder` name from DagBuilder ctor passed as a string.
 

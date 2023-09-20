@@ -426,7 +426,7 @@ class TestVolatilityModel(hunitest.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
-    @pytest.mark.skip(msg="We no longer directly expose tau")
+    @pytest.mark.skip("We no longer directly expose tau")
     def test08(self) -> None:
         """
         Ensure that explicit `tau` is used post-`fit()`.
@@ -607,7 +607,6 @@ class TestVolatilityModel(hunitest.TestCase):
 # TODO(ShaopengZ): numerical issue. (arm vs x86)
 @pytest.mark.requires_ck_infra
 class TestMultiindexVolatilityModel(hunitest.TestCase):
-    
     @pytest.mark.requires_ck_infra
     def test1(self) -> None:
         """

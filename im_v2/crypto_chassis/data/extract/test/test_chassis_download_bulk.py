@@ -57,6 +57,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "bid_ask_depth": None,
             "universe_part": 1,
             "assert_on_missing_data": False,
+            "dst_dir": None,
         }
         self.assertDictEqual(actual, expected)
 

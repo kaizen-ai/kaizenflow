@@ -62,6 +62,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
             "data_type": "ohlcv",
             "bid_ask_depth": None,
             "s3_path": None,
+            "dst_dir": None,
         }
         self.assertDictEqual(actual, expected)
 
