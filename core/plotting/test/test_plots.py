@@ -184,4 +184,6 @@ class Test_plots(unittest.TestCase):
         - `ylabel` is a non-empty string
         """
         test_df = self.get_test_plot_df1()
-        cploboxp.plot_boxplot(test_df, grouping="by_col", ylabel="Test Label")
+        grouping = "by_col"
+        ylabel = "Test Label"
+        cploboxp.plot_boxplot(test_df, grouping=grouping, ylabel=ylabel)

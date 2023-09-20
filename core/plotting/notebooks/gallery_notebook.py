@@ -66,6 +66,12 @@ else:
 print(config)
 
 # %% [markdown]
+# # Test data
+
+# %%
+test_df = cptetepl.Test_plots.get_test_plot_df1()
+
+# %% [markdown]
 # # Plots
 
 # %% [markdown]
@@ -111,7 +117,6 @@ cplmiplo.plot_time_series_by_period(test_srs, period)
 
 # %%
 mode = "clustermap"
-test_df = cptetepl.Test_plots.get_test_plot_df1()
 
 # %%
 cplocorr.plot_heatmap(test_df, mode, figsize=config["figsize"])
@@ -154,9 +159,6 @@ plotter.plot_performance(
 # ## `plot_effective_correlation_rank()`
 
 # %%
-test_df = cptetepl.Test_plots.get_test_plot_df1()
-
-# %%
 cplocorr.plot_effective_correlation_rank(test_df)
 
 # %%
@@ -166,9 +168,6 @@ cplocorr.plot_effective_correlation_rank(test_df, q_values)
 
 # %% [markdown]
 # ## `plot_spectrum()`
-
-# %%
-test_df = cptetepl.Test_plots.get_test_plot_df1()
 
 # %%
 cplmiplo.plot_spectrum(test_df)
@@ -182,12 +181,13 @@ cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
 # ## `plot_boxplot()`
 
 # %%
-test_df = cptetepl.Test_plots.get_test_plot_df1()
-
-# %%
 cploboxp.plot_boxplot(test_df)
 
 # %%
-cploboxp.plot_boxplot(test_df, grouping="by_col", ylabel="Test Label")
+grouping = "by_col"
+ylabel = "Test Label"
+
+# %%
+cploboxp.plot_boxplot(test_df, grouping=grouping, ylabel=ylabel)
 
 # %%
