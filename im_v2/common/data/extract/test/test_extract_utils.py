@@ -1177,3 +1177,124 @@ class TestVerifySchema(hunitest.TestCase):
             Invalid dtype of `close` column: expected type `float64`, found `object`
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+class TestDownloadHistoricalData2(hunitest.TestCase):
+    def setUp(self) -> None:
+        self.start_timestamp = "2021-12-31 23:00:00"
+        self.end_timestamp = "2022-01-01 01:00:00"
+        self.data_format = ""
+        super().setUp()
+        
+    def get_simple_ccxt_mock_data(
+        self,
+        start_timestamp: int,
+        number_of_seconds: int,
+        currency_pair: str = "SOL_USDT",
+    ) -> pd.DataFrame:
+        return pd.DataFrame(
+            [
+                {
+                    "timestamp": start_timestamp + sec,
+                    "bid_price_l1": 0.3481,
+                    "bid_size_l1": 49676.8,
+                    "bid_price_l2": 0.3482,
+                    "bid_size_l2": 49676.8,
+                    "ask_price_l1": 0.3484,
+                    "ask_size_l1": 49676.8,
+                    "ask_price_l2": 0.3485,
+                    "ask_size_l2": 49676.8,
+                    "currency_pair": currency_pair,
+                }
+                for sec in range(number_of_seconds)
+            ]
+        )
+        
+    def call_download_historical_data(self) -> None:
+        """
+        Call download_historical_data with the predefined arguments.
+        """
+        # Prepare inputs.
+        args = {
+            "start_timestamp": self.start_timestamp,
+            "end_timestamp": self.end_timestamp,
+            "download_mode": "periodic_daily",
+            "downloading_entity": "manual",
+            "action_tag": "downloaded_1min",
+            "vendor": "ccxt",
+            "exchange_id": "binance",
+            "data_type": "ohlcv",
+            "contract_type": "futures",
+            "universe": "v3",
+            "incremental": False,
+            "s3_path": f"s3://test/",
+            "log_level": "INFO",
+            "data_format": self.data_format,
+            "assert_on_missing_data": False,
+            "dst_dir": "csv_test"
+        }
+        with umock.patch.object(
+            imvcdexex.CcxtExtractor,
+            "get_exchange_currency_pairs",
+            return_value=["ADA_USDT", "BTC_USDT"],
+        ):
+            exchange = imvcdexex.CcxtExtractor(
+                args["exchange_id"], args["contract_type"]
+            )
+            imvcdeexut.download_historical_data(args, exchange)
+    
+    @umock.patch.object(imvcddbut.hdateti, "get_current_time")
+    def test_function_call1(self, mock_get_current_time: umock.MagicMock,) -> None:
+        """
+        Download mocked data and check the local csv file generated.
+        """
+        mock_get_current_time.return_value = "2022-02-08 10:12:00.000000+00:00"
+        self.data_format = "csv"
+        with umock.patch.object(
+            imvcdexex.CcxtExtractor,
+            "download_data",
+            return_value=self.get_simple_ccxt_mock_data(
+                start_timestamp=int("20211231230000"),
+                number_of_seconds=4,
+            ),
+        ):
+            self.call_download_historical_data()
+        # Get the result from the local directory.
+        actual_df = pd.read_csv(
+            f"csv_test/{self.start_timestamp}_{self.end_timestamp}.csv"
+            )
+        actual = hpandas.df_to_str(actual_df)
+        expected = r"""
+                timestamp  bid_price_l1  bid_size_l1  bid_price_l2  bid_size_l2  ask_price_l1  ask_size_l1  ask_price_l2  ask_size_l2 currency_pair exchange_id               knowledge_timestamp
+        0  20211231230000        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance  2022-02-08 10:12:00.000000+00:00
+        1  20211231230001        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance  2022-02-08 10:12:00.000000+00:00
+        2  20211231230002        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance  2022-02-08 10:12:00.000000+00:00
+        3  20211231230003        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance  2022-02-08 10:12:00.000000+00:00
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+        
+    @umock.patch.object(imvcddbut.hdateti, "get_current_time")
+    def test_function_call2(self, mock_get_current_time: umock.MagicMock,) -> None:
+        """
+        Check for wrong data_format argument passed.
+        """
+        mock_get_current_time.return_value = "2022-02-08 10:12:00.000000+00:00"
+        self.data_format = "test"
+        with umock.patch.object(
+            imvcdexex.CcxtExtractor,
+            "download_data",
+            return_value=self.get_simple_ccxt_mock_data(
+                start_timestamp=int("20211231230000"),
+                number_of_seconds=4,
+            ),
+        ):
+            with self.assertRaises(AssertionError) as fail:
+                self.call_download_historical_data()
+        actual_error = str(fail.exception)
+        expected_error = r"""
+        ################################################################################
+        Unsupported `test` format!
+        ################################################################################
+        """
+        self.assert_equal(actual_error, expected_error, fuzzy_match=True)
+        
