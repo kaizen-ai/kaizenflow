@@ -32,7 +32,7 @@
 
 - We want to score everyone we work with:
 
-  - Initially only people that we supervise, later any anyone
+  - Initially only people that we supervise, later on anyone
   - Feedback is anonymous
   - At least 2 persons should score everyone
 
