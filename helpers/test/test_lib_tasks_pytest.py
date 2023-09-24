@@ -493,6 +493,113 @@ class Test_build_run_command_line1(hunitest.TestCase):
             is_dev_ck_return_value, is_inside_ci_return_value, exp
         )
 
+    def get_custom_marker_helper(
+        self,
+        run_only_test_list: str,
+        skip_test_list: str,
+        is_dev_ck_return_value: bool,
+        is_inside_ci_return_value: bool,
+        exp: str,
+    ) -> None:
+        """
+        Test the return value of `_get_custom_marker_helper()`, check that
+        passing its return value into `_build_run_command_line` can generate
+        the correct command line.
+        """
+        pytest_opts = ""
+        skip_submodules = False
+        coverage = False
+        collect_only = False
+        tee_to_file = False
+        n_threads = "1"
+        # Mock test
+        with umock.patch.object(
+            hserver, "is_dev_ck", return_value=is_dev_ck_return_value
+        ), umock.patch.object(
+            hserver, "is_inside_ci", return_value=is_inside_ci_return_value
+        ):
+            is_outside_ck_infra = (
+                not hserver.is_dev_ck() and not hserver.is_inside_ci()
+            )
+            custom_marker = hlitapyt._get_custom_marker(
+                run_only_test_list, skip_test_list, is_outside_ck_infra
+            )
+            act = hlitapyt._build_run_command_line(
+                "fast_tests",
+                custom_marker,
+                pytest_opts,
+                skip_submodules,
+                coverage,
+                collect_only,
+                tee_to_file,
+                n_threads,
+            )
+            self.assert_equal(act, exp)
+
+    def get_custom_marker1_mock_full(self) -> None:
+        """
+        Mock test for `_get_custom_marker()` with all parameters non-empty.
+        """
+        exp = (
+            'pytest -m "'
+            "run_marker_1 and run_marker_2 "
+            "and not skip_marker_1 and not skip_marker_2 "
+            "and not requires_ck_infra "
+            'and not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 50 --reruns 2 "
+            '--only-rerun "Failed: Timeout" -n 1'
+        )
+        run_only_test_list = "run_marker_1,run_marker_2"
+        skip_test_list = "skip_marker_1,skip_marker_2"
+        is_dev_ck_return_value = False
+        is_inside_ci_return_value = False
+        self.get_custom_marker_helper(
+            run_only_test_list,
+            skip_test_list,
+            is_dev_ck_return_value,
+            is_inside_ci_return_value,
+            exp,
+        )
+
+    def get_custom_marker2_isolated_empty(self) -> None:
+        """
+        Isolated test for `_get_custom_marker()` with all parameters empty.
+        """
+        run_only_test_list = ""
+        skip_test_list = ""
+        is_outside_ck_infra = False
+        exp = ""
+        act = hlitapyt._get_custom_marker(
+            run_only_test_list, skip_test_list, is_outside_ck_infra
+        )
+        self.assert_equal(act, exp)
+
+    def get_custom_marker3_isolated_empty_run(self) -> None:
+        """
+        Isolated test for `_get_custom_marker()` with empty run list.
+        """
+        run_only_test_list = ""
+        skip_test_list = "skip_marker_1,skip_marker_2"
+        is_outside_ck_infra = True
+        exp = "not skip_marker_1 and not skip_marker_2 and not requires_ck_infra"
+        act = hlitapyt._get_custom_marker(
+            run_only_test_list, skip_test_list, is_outside_ck_infra
+        )
+        self.assert_equal(act, exp)
+
+    def get_custom_marker4_isolated_empty_skip(self) -> None:
+        """
+        Isolated test for `_get_custom_marker()` with empty skip list.
+        """
+        run_only_test_list = "run_marker_1,run_marker_2"
+        skip_test_list = ""
+        is_outside_ck_infra = False
+        exp = "run_marker_1 and run_marker_2"
+        act = hlitapyt._get_custom_marker(
+            run_only_test_list, skip_test_list, is_outside_ck_infra
+        )
+        self.assert_equal(act, exp)
+
 
 class Test_pytest_repro1(hunitest.TestCase):
     def helper(self, file_name: str, mode: str, exp: List[str]) -> None:
