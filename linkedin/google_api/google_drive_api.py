@@ -170,7 +170,7 @@ class GoogleFileApi:
                 flow = InstalledAppFlow.from_client_secrets_file(
                     client_secrets_path, SCOPES
                 )
-                creds = flow.run_local_server(port=0)
+                creds = flow.run_local_server(bind_addr="0.0.0.0", open_browser=False, port=8181)
             # Save the credentials for the next run
             with open(token_path, "w") as token:
                 token.write(creds.to_json())
