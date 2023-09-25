@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.plotting.boxplot as cplobox
+import core.plotting.boxplot as cploboxp
 """
 
 import logging
