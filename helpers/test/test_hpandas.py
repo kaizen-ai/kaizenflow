@@ -3331,7 +3331,6 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
         """
         index_is_datetime = False
         df = self.get_multiindex_df(index_is_datetime)
-        print(df)
         with self.assertRaises(AssertionError) as cm:
             hpandas.dassert_index_is_datetime(df)
         act = str(cm.exception)
