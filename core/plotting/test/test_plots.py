@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+import core.plotting.boxplot as cploboxp
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.normality as cplonorm
