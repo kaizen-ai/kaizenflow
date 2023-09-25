@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -32,14 +32,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import core.config as cconfig
+import core.plotting.boxplot as cploboxp
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
-import core.plotting.test.test_plots as cptetepl
-import core.plotting.correlation as cplocorr
-import dataflow.model.test.test_model_plotter as dmtetemopl
-
 import dataflow.model.model_plotter as dtfmomoplo
 import dataflow.model.test.test_model_evaluator as cdmttme
 import helpers.hdbg as hdbg
@@ -67,6 +64,12 @@ else:
     config_dict = {"figsize": (20, 10)}
     config = cconfig.Config.from_dict(config_dict)
 print(config)
+
+# %% [markdown]
+# # Test data
+
+# %%
+test_df = cptetepl.Test_plots.get_test_plot_df1()
 
 # %% [markdown]
 # # Plots
@@ -114,7 +117,6 @@ cplmiplo.plot_time_series_by_period(test_srs, period)
 
 # %%
 mode = "clustermap"
-test_df = cptetepl.Test_plots.get_test_plot_df1()
 
 # %%
 cplocorr.plot_heatmap(test_df, mode, figsize=config["figsize"])
@@ -157,9 +159,6 @@ plotter.plot_performance(
 # ## `plot_effective_correlation_rank()`
 
 # %%
-test_df = cptetepl.Test_plots.get_test_plot_df1()
-
-# %%
 cplocorr.plot_effective_correlation_rank(test_df)
 
 # %%
@@ -171,14 +170,24 @@ cplocorr.plot_effective_correlation_rank(test_df, q_values)
 # ## `plot_spectrum()`
 
 # %%
-test_df = cptetepl.Test_plots.get_test_plot_df1()
-
-# %%
 cplmiplo.plot_spectrum(test_df)
 
 # %%
 _, axes = plt.subplots(2, 2, figsize=config["figsize"])
 axes_flat = axes.flatten()
 cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
+
+# %% [markdown]
+# ## `plot_boxplot()`
+
+# %%
+cploboxp.plot_boxplot(test_df)
+
+# %%
+grouping = "by_col"
+ylabel = "Test Label"
+
+# %%
+cploboxp.plot_boxplot(test_df, grouping=grouping, ylabel=ylabel)
 
 # %%
