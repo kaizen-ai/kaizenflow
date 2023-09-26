@@ -32,7 +32,7 @@ class Test_plots(unittest.TestCase):
         }
         df = pd.DataFrame(data)
         return df
-    
+
     @staticmethod
     def get_test_plot_srs1() -> pd.Series:
         """
@@ -143,14 +143,36 @@ class Test_plots(unittest.TestCase):
         """
         test_df = self.get_test_plot_df1()
         cplmiplo.plot_autocorrelation(test_df)
-        
+
+    def test_plot_boxplot1(self) -> None:
+        """
+        Smoke test for `plot_boxplot`.
+
+        - `grouping` is "by_row"
+        - `ylabel` is an empty string
+        """
+        test_df = self.get_test_plot_df1()
+        cploboxp.plot_boxplot(test_df)
+
+    def test_plot_boxplot2(self) -> None:
+        """
+        Smoke test for `plot_boxplot`.
+
+        - `grouping` is "by_col"
+        - `ylabel` is a non-empty string
+        """
+        test_df = self.get_test_plot_df1()
+        grouping = "by_col"
+        ylabel = "Test Label"
+        cploboxp.plot_boxplot(test_df, grouping=grouping, ylabel=ylabel)
+
     def test_plot_qq1(self) -> None:
         """
         Smoke test for `plot_qq()`.
         """
         test_series = self.get_test_plot_srs1()
         cplonorm.plot_qq(test_series)
-        
+
     def test_plot_qq2(self) -> None:
         """
         Smoke test for `plot_qq()`.
@@ -161,8 +183,7 @@ class Test_plots(unittest.TestCase):
         """
         test_series = self.get_test_plot_srs1()
         test_series[20:50] = np.nan
-        _, axes = plt.subplots(1, 1, figsize=(10,10))
+        _, axes = plt.subplots(1, 1, figsize=(10, 10))
         dist = "norm"
         nan_mode = "drop"
         cplonorm.plot_qq(test_series, ax=axes, dist=dist, nan_mode=nan_mode)
-        

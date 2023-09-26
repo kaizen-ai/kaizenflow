@@ -71,6 +71,7 @@ print(config)
 
 # %%
 test_df = cptetepl.Test_plots.get_test_plot_df1()
+test_srs = cptetepl.Test_plots.get_test_plot_srs1()
 
 # %% [markdown]
 # # Plots
@@ -79,7 +80,6 @@ test_df = cptetepl.Test_plots.get_test_plot_df1()
 # ## `plot_histograms_and_lagged_scatterplot()`
 
 # %%
-test_srs = cptetepl.Test_plots.get_test_plot_srs1()
 lag = 7
 # %%
 cpvistte.plot_histograms_and_lagged_scatterplot(
@@ -88,9 +88,6 @@ cpvistte.plot_histograms_and_lagged_scatterplot(
 
 # %% [markdown]
 # ## `plot_timeseries_distribution()`
-# %%
-test_srs = cptetepl.Test_plots.get_test_plot_srs1()
-
 # %%
 datetime_types = ["hour"]
 cplmiplo.plot_timeseries_distribution(test_srs, datetime_types)
@@ -101,9 +98,6 @@ cplmiplo.plot_timeseries_distribution(test_srs, datetime_types)
 
 # %% [markdown]
 # ## `plot_time_series_by_period()`
-
-# %%
-test_srs = cptetepl.Test_plots.get_test_plot_srs1()
 
 # %%
 period = "day"
@@ -179,17 +173,25 @@ axes_flat = axes.flatten()
 cplmiplo.plot_spectrum(signal=test_df, axes=axes_flat)
 
 # %% [markdown]
+# ## `plot_boxplot()`
+
+# %%
+cploboxp.plot_boxplot(test_df)
+
+# %%
+grouping = "by_col"
+ylabel = "Test Label"
+
+# %%
+cploboxp.plot_boxplot(test_df, grouping=grouping, ylabel=ylabel)
+
+# %% [markdown]
 # ## `plot_qq()`
 
 # %%
-test_series = cptetepl.Test_plots.get_test_plot_srs1()
-
-# %%
-cplonorm.plot_qq(test_series)
+cplonorm.plot_qq(test_srs)
 
 # %%
 test_series[20:50] = np.nan
-_, axes = plt.subplots(1, 1, figsize=(10,10))
+_, axes = plt.subplots(1, 1, figsize=(10, 10))
 cplonorm.plot_qq(test_series, ax=axes, dist="norm", nan_mode="drop")
-
-# %%
