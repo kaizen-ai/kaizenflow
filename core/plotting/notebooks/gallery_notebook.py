@@ -35,6 +35,7 @@ import core.config as cconfig
 import core.plotting.boxplot as cploboxp
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
+import core.plotting.normality as cplonorm
 import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
 import dataflow.model.model_plotter as dtfmomoplo
@@ -70,6 +71,7 @@ print(config)
 
 # %%
 test_df = cptetepl.Test_plots.get_test_plot_df1()
+test_srs = cptetepl.Test_plots.get_test_plot_srs1()
 
 # %% [markdown]
 # # Plots
@@ -78,7 +80,6 @@ test_df = cptetepl.Test_plots.get_test_plot_df1()
 # ## `plot_histograms_and_lagged_scatterplot()`
 
 # %%
-test_srs = cptetepl.Test_plots.get_plot_histograms_and_lagged_scatterplot1()
 lag = 7
 # %%
 cpvistte.plot_histograms_and_lagged_scatterplot(
@@ -87,9 +88,6 @@ cpvistte.plot_histograms_and_lagged_scatterplot(
 
 # %% [markdown]
 # ## `plot_timeseries_distribution()`
-# %%
-test_srs = cptetepl.Test_plots.get_plot_timeseries_distribution1()
-
 # %%
 datetime_types = ["hour"]
 cplmiplo.plot_timeseries_distribution(test_srs, datetime_types)
@@ -100,9 +98,6 @@ cplmiplo.plot_timeseries_distribution(test_srs, datetime_types)
 
 # %% [markdown]
 # ## `plot_time_series_by_period()`
-
-# %%
-test_srs = cptetepl.Test_plots.get_plot_time_series_by_period1()
 
 # %%
 period = "day"
@@ -190,4 +185,13 @@ ylabel = "Test Label"
 # %%
 cploboxp.plot_boxplot(test_df, grouping=grouping, ylabel=ylabel)
 
+# %% [markdown]
+# ## `plot_qq()`
+
 # %%
+cplonorm.plot_qq(test_srs)
+
+# %%
+test_series[20:50] = np.nan
+_, axes = plt.subplots(1, 1, figsize=(10, 10))
+cplonorm.plot_qq(test_series, ax=axes, dist="norm", nan_mode="drop")
