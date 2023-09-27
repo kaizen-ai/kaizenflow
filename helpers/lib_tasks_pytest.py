@@ -376,6 +376,7 @@ def _get_custom_marker(
     :param run_only_test_list: a string of comma-separated markers to run.
            e.g. `run_only_test_list = "requires_ck_infra,requires_aws"`.
     :param skip_test_list: a string of comma-separated markers to skip.
+    :return: str, custom pytest marker.
     """
     # If we are running outside the CK server / CI, tests requiring CK infra
     # should be automatically skipped.
@@ -390,7 +391,7 @@ def _get_custom_marker(
             skip_test_list = "requires_ck_infra," + skip_test_list
         else:
             skip_test_list = "requires_ck_infra"
-    # Split the `run_only_test_list` and `skip_test_list` strings into lists.
+    # Convert string representations of lists to actual lists.
     if run_only_test_list:
         # This works as expected when there is a single test in the list.
         run_only_test_list_items = run_only_test_list.split(",")
@@ -402,8 +403,7 @@ def _get_custom_marker(
         skip_test_list_items = skip_test_list.split(",")
         _LOG.warning("Skipping the tests inside %s.", skip_test_list_items)
     else:
-        # It is still possible for `skip_test_list` to be empty when running
-        # inside CK infra
+        # The list can be empty when running inside CK infra.
         skip_test_list_items = []
     # Convert marker strings for `pytest -m` using `and` and `not`.
     run_only_marker_string = " and ".join(run_only_test_list_items)
@@ -460,7 +460,7 @@ def run_fast_tests(  # type: ignore
         "You can't specify both --run_only_test_list and --skip_test_list",
     )
     test_list_name = "fast_tests"
-    # Translate command line marker list to pytest marker list.
+    # Convert cmd line marker lists to a pytest marker list.
     custom_marker = _get_custom_marker(
         run_only_test_list=run_only_test_list, skip_test_list=skip_test_list
     )
