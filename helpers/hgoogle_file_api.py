@@ -14,7 +14,7 @@ from typing import Optional
 # Run the following two lines in any notebook would install them:
 # !sudo /bin/bash -c "(source /venv/bin/activate; pip install --upgrade google-auth google-auth-httplib2 google-auth-oauthlib google-api-python-client)"
 # !sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread-pandas)"
-
+# Or run the following part in python:
 # import subprocess
 # install_code = subprocess.call(
 #     'sudo /bin/bash -c "(source /venv/bin/activate; pip install --upgrade google-auth google-auth-httplib2 google-auth-oauthlib google-api-python-client gspread-pandas)"',
@@ -36,6 +36,7 @@ def get_credentials(
     *,
     client_secrets_path: str = ".google_credentials/client_secrets.json",
     token_path: str = ".google_credentials/token.json",
+    reset_token: bool = False,
 ) -> goacre.Credentials:
     """
     Get credentials for Google API.
@@ -45,14 +46,18 @@ def get_credentials(
         - Follow the steps in `Client Credentials` until you have the JSON file downloaded.
     :param token_path: str, the file path to write google credentials.
         - Will load the credentials if the file already exists.
-    :return: goacre.Credentials
+    :param reset_token: bool, if True, this method will reset existing token.
+        - This will be useful when the existing token becomes invalid.
+        - In that case, run this method once to generate a new token,
+        - then you can run other methods as normal.
+    :return: goacre.Credentials the Google credentials retrieved.
     """
     creds = None
     # The file token.json stores the user's access and refresh tokens, and
     # is created automatically when the authorization flow completes for
     # the first time.
     token_path = os.path.join(os.path.dirname(__file__), token_path)
-    if os.path.exists(token_path):
+    if os.path.exists(token_path) and not reset_token:
         creds = goacre.Credentials.from_authorized_user_file(token_path, SCOPES)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
@@ -88,7 +93,7 @@ def get_gdrive_service(*, creds: goacre.Credentials = None) -> godisc.Resource:
     Get Google drive service with current credential.
 
     :param creds: use the given credentials. Will use default if None is given.
-    :return: the Google drive service instance created
+    :return: the Google drive service instance created.
     """
     if creds is None:
         creds = get_credentials()
@@ -202,7 +207,8 @@ def get_folder_id_by_name(name: str) -> Optional[list]:
             folder_list[0].get("id"),
         )
         _LOG.info(
-            "if you want to use another '%s' folder, please change the folder id manually.",
+            "if you want to use another '%s' folder, "
+            "please change the folder id manually.",
             name,
         )
         return folder_list[0]
@@ -220,7 +226,8 @@ def share_google_file(
 
     :param gfile_id: str, the id of the Google file.
     :param user: str, the email address of the user.
-    :param service: the google drive service instance. Will use default if None is given.
+    :param service: the google drive service instance.
+        - Will use GDrive file service as default if None is given.
     """
     if service is None:
         service = get_gdrive_service()
@@ -242,7 +249,7 @@ def _create_new_google_document(doc_name: str, doc_type: str) -> str:
 
     :param doc_name: str, the name of the new Google document.
     :param doc_type: str, the type of the Google document ('sheets' or 'docs').
-    :return: doc_id.
+    :return: doc_id. The id to the created document in GDrive.
     """
     creds = get_credentials()
     service = godisc.build(
@@ -291,7 +298,8 @@ def _move_gfile_to_dir(
 
     :param gfile_id: str, the id of the Google file.
     :param folder_id: str, the id of the folder.
-    :param service: the google drive service instance. Will use default if None is given.
+    :param service: the google drive service instance.
+        - Will use GDrive file service as default if None is given.
     """
     if service is None:
         service = get_gdrive_service()
@@ -313,7 +321,8 @@ def _get_folders_in_gdrive(*, service: godisc.Resource = None) -> list:
     """
     Get a list of folders in Google drive.
 
-    :param service: the google drive service instance. Will use default if None is given.
+    :param service: the google drive service instance. 
+        - Will use GDrive file service as default if None is given.
     """
     if service is None:
         service = get_gdrive_service()

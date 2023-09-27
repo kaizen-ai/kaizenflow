@@ -9,14 +9,32 @@
 
 # Connecting Google Sheets to Pandas
 
-- In order to load a google sheet into a pandas dataframe (or the other way
-  around), one can use a library called `gspread-pandas`.
+- In order to load a Google sheet into a Pandas dataframe (or the other way
+  around), you can use a library called `gspread-pandas`.
+- Documentation for the package is
+  [here](https://gspread-pandas.readthedocs.io/en/latest/index.html)
+
 
 ## Installing gspread-pandas
 
-- The library should be automatically installed in your conda env
-  - The detailed instructions on how to install the library are located here:
-    [Installation/Usage](https://gspread-pandas.readthedocs.io/en/latest/getting_started.html#installation-usage).
+- The library should be automatically installed in the Dev container
+  - In a notebook
+  ```
+  notebook> import gspread; print(gspread.__version__)
+  ```
+  - In the dev container
+  ```
+  docker> python -c "import gspread; print(gspread.__version__)"
+  5.10.0
+  ```
+- Otherwise you can install it in the notebook with
+  ```
+  !pip install gspread-pandas
+  ```
+- Or in the Docker container with:
+  ```
+  sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread)"
+  ```
 
 ## Configuring gspread-pandas
 
@@ -25,6 +43,23 @@
     [here](https://gspread-pandas.readthedocs.io/en/latest/getting_started.html#client-credentials).
   - The process is not complicated but it's not obvious since you need to click
     around in the GUI
+  - The credentials file is a JSON downloaded from Google.
+- `gspread-pandas` leverages `gspread`
+  
+- https://docs.gspread.org/en/latest/oauth2.html
+  
+- Create a project using a name like "gp_gspread"
+- Search for "Drive API" and click on Enable API
+- Search for "Sheets API" and click on Enable API
+- On top click on "+ Create Credentials" and select OAuth client ID
+- Then you are going to get a pop up with "OAuth client created"
+  - Click "Download JSON" at the bottom
+  - The file downloaded is like "client_secret_42164...-00pdvmfnf3lrda....apps.googleusercontent.com"
+- Move the file to `helpers/.google_credentials/client_secrets.json` (Overwrite the existing placeholder file).
+  ```
+  > mv ~/Downloads/client_secret_421642061916-00pdvmfnf3lrdasoh2ccsnqb5akr4v9f.apps.googleusercontent.com.json ~/src/sorrentum1/helpers/.google_credentials/client_secrets.json
+  > chmod 600 ~/src/sorrentum1/helpers/.google_credentials/client_secrets.json
+  ```
 
 - Some gotchas:
   - Make sure to act only under your `...` account.
@@ -37,28 +72,26 @@
     the longest one.
   - When you are given a choice between `OAuth client ID` and `Service account`,
     choose `OAuth client ID`.
+  - Notice the "s" in the filename of Google credentials (`client_secrets.json`).
 
 - To use the library on the server, the downloaded JSON with the credentials
-  needs to be stored on your laptop
-  ```bash
-  > export SRC_FILE="~/Downloads/client_secret_4642711342-ib06g3lbv6pa4n622qusqrjk8j58o8k6.apps.googleusercontent.com.json"
-  > export DST_DIR="~/.config/gspread_pandas"
-  > export DST_FILE="$DST_DIR/google_secret.json"
-  > mkdir -p $DST_DIR
-  > mv $SRC_FILE $DST_FILE
-  > chmod 600 $DST_FILE
-  ```
-  and copy that on the server, e.g.,
-  ```bash
-  > ssh research "mkdir -p $DST_DIR"
-  > scp $SRC_FILE research:$DST_FILE
-  > ssh research "chmod 600 $DST_FILE"
-  ```
+  needs to be put into the server in `helpers/.google_credentials/` Upload your own JSON to overwrite anyone others if it already exists.
+  
 
 # Using gspread-pandas
 
 - The notebook with the usage example is located at
   `amp/core/notebooks/gsheet_into_pandas_example.ipynb`.
+
+- To use it:
+  ```
+  import gspread_pandas
+  spread = gspread_pandas.Spread("Test")
+  
+  """
+  Please visit this URL: https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=421642061916-00pdvmfnf3lrdasoh2ccsnqb5akr4v9f.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A8182%2F&scope=openid+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fspreadsheets&state=RR4MskRhontWm2HRYGPtMt1ck4DpGL&access_type=offline
+  """
+  ```
 
 - The first time the library is used, it will asks the user for an authorization
   code.
