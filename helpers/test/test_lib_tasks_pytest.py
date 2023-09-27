@@ -503,6 +503,12 @@ class Test_build_run_command_line1(hunitest.TestCase):
     ) -> None:
         """
         Check that a correct cmd line is generated with custom marker string.
+
+        :param run_only_test_list: a string of comma-separated markers to run
+        :param skip_test_list: a string of comma-separated markers to skip
+        :param is_dev_ck_return_value: see `run_fast_tests1_helper()`
+        :param is_inside_ci_return_value: see `run_fast_tests1_helper()`
+        :param exp: expected output string
         """
         pytest_opts = ""
         skip_submodules = False

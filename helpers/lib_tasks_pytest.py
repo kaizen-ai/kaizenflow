@@ -373,10 +373,10 @@ def _get_custom_marker(
     Get a custom pytest marker from comma-separated string representations of
     test lists to run or skip.
 
-    :param run_only_test_list: a string of comma-separated markers to run.
-           e.g. `run_only_test_list = "requires_ck_infra,requires_aws"`.
-    :param skip_test_list: a string of comma-separated markers to skip.
-    :return: str, custom pytest marker.
+    :param run_only_test_list: a string of comma-separated markers to run,
+        e.g. `run_only_test_list = "requires_ck_infra,requires_aws"`
+    :param skip_test_list: a string of comma-separated markers to skip
+    :return: custom pytest marker
     """
     # If we are running outside the CK server / CI, tests requiring CK infra
     # should be automatically skipped.
