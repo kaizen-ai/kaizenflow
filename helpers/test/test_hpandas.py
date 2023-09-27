@@ -3105,10 +3105,11 @@ class Test_apply_index_mode(hunitest.TestCase):
 
 
 class Test_get_df_from_iterator(hunitest.TestCase):
-    def test1(self)-> None:
+    def test1(self) -> None:
         """
-        Check that a dataframe is correctly built from an iterator of dataframes.
-        """ 
+        Check that a dataframe is correctly built from an iterator of
+        dataframes.
+        """
         # Build iterator of dataframes for the test.
         data1 = {
             "num_col": [1, 2],
@@ -3119,10 +3120,10 @@ class Test_get_df_from_iterator(hunitest.TestCase):
             "num_col": [3, 4],
             "str_col": ["C", "D"],
         }
-        df2 = pd.DataFrame(data=data2) 
+        df2 = pd.DataFrame(data=data2)
         data3 = {
-             "num_col": [5, 6],
-             "str_col": ["E", "F"],
+            "num_col": [5, 6],
+            "str_col": ["E", "F"],
         }
         df3 = pd.DataFrame(data=data3)
         # Run.
@@ -3272,3 +3273,93 @@ class Test_multiindex_df_info1(hunitest.TestCase):
             rows=2 ['M', 'N']
         """
         self.assert_equal(act, exp, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class Test_dassert_index_is_datetime(hunitest.TestCase):
+    @staticmethod
+    def get_multiindex_df(
+        index_is_datetime: bool,
+    ) -> pd.DataFrame:
+        """
+        Helper function to get test multi-index dataframe.
+        Example of dataframe returned when `index_is_datetime = True`.
+                                            column1     column2
+        index   timestamp                                    
+        index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
+                2022-01-01 21:10:00+00:00   1.303778    -0.288235
+        index2  2022-01-01 21:00:00+00:00   1.237079    1.168012
+                2022-01-01 21:10:00+00:00   1.333692    1.708455
+                
+        Example of dataframe returned when `index_is_datetime = False`.
+                            column1     column2
+        index   timestamp                    
+        index1  string1     -0.122140   -1.949431
+                string2     1.303778    -0.288235
+        index2  string1     1.237079    1.168012
+                string2     1.333692    1.708455
+        """
+        if index_is_datetime:
+            index_inner = [
+                pd.Timestamp("2022-01-01 21:00:00", tz="UTC"),
+                pd.Timestamp("2022-01-01 21:10:00", tz="UTC"),
+            ]
+        else:
+            index_inner = ["string1", "string2"]
+        index_outer = ["index1", "index2"]
+        iterables = [index_outer, index_inner]
+        index = pd.MultiIndex.from_product(
+            iterables, names=["index", "timestamp"]
+        )
+        columns = ["column1", "column2"]
+        nums = np.random.uniform(-2, 2, size=(4, 2))
+        df = pd.DataFrame(nums, index=index, columns=columns)
+        return df
+
+    def test1(self) -> None:
+        """
+        Check that multi-index dataframe index is datetime type.
+        """
+        index_is_datetime = True
+        df = self.get_multiindex_df(index_is_datetime)
+        hpandas.dassert_index_is_datetime(df)
+
+    def test2(self) -> None:
+        """
+        Check that multi-index dataframe index is not datetime type.
+        """
+        index_is_datetime = False
+        df = self.get_multiindex_df(index_is_datetime)
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_index_is_datetime(df)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        cond=False
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Check for empty dataframe.
+        """
+        df = pd.DataFrame()
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_index_is_datetime(df)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        Instance of 'Index([], dtype='object')' is '<class 'pandas.core.indexes.base.Index'>' instead of '<class 'pandas.core.indexes.datetimes.DatetimeIndex'>'
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Check that single-indexed dataframe index is datetime type.
+        """
+        index_is_datetime = True
+        df = self.get_multiindex_df(index_is_datetime)
+        df = df.loc["index1"]
+        hpandas.dassert_index_is_datetime(df)
