@@ -510,6 +510,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         :param is_inside_ci_return_value: see `run_fast_tests1_helper()`
         :param exp: expected output string
         """
+        # Mock settings.
         pytest_opts = ""
         skip_submodules = False
         coverage = False
@@ -539,9 +540,12 @@ class Test_build_run_command_line1(hunitest.TestCase):
             self.assert_equal(act, exp)
 
     def test_get_custom_marker1_full(self) -> None:
-        """
-        Mock test for running test with custom marker and outside the CK infra.
-        """
+        # Input params.
+        run_only_test_list = "run_marker_1,run_marker_2"
+        skip_test_list = "skip_marker_1,skip_marker_2"
+        is_dev_ck_return_value = False
+        is_inside_ci_return_value = False
+        # Expected output.
         exp = (
             'pytest -m "'
             "run_marker_1 and run_marker_2 "
@@ -551,10 +555,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
             "-o timeout_func_only=true --timeout 50 --reruns 2 "
             '--only-rerun "Failed: Timeout" -n 1'
         )
-        run_only_test_list = "run_marker_1,run_marker_2"
-        skip_test_list = "skip_marker_1,skip_marker_2"
-        is_dev_ck_return_value = False
-        is_inside_ci_return_value = False
+        # Mock check.
         self.get_custom_marker_helper(
             run_only_test_list,
             skip_test_list,
@@ -564,19 +565,18 @@ class Test_build_run_command_line1(hunitest.TestCase):
         )
 
     def get_custom_marker2_empty(self) -> None:
-        """
-        Mock test for running test with no custom marker and inside the CK
-        infra.
-        """
+        # Input params.
+        run_only_test_list = ""
+        skip_test_list = ""
+        is_dev_ck_return_value = True
+        is_inside_ci_return_value = True
+        # Expected output.
         exp = (
             'pytest -m "not slow and not superslow" . '
             "-o timeout_func_only=true --timeout 5 --reruns 2 "
             '--only-rerun "Failed: Timeout" -n 1'
         )
-        run_only_test_list = ""
-        skip_test_list = ""
-        is_dev_ck_return_value = True
-        is_inside_ci_return_value = True
+        # Mock check.
         self.get_custom_marker_helper(
             run_only_test_list,
             skip_test_list,
