@@ -834,6 +834,11 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
         cmd += f" --script-name {script_name}"
         # Run the command.
         _, act = hsystem.system_to_string(cmd)
+        # Filter out the "No module named ..." warnings.
+        # TODO(Grisha): add the "no module warning" filtering
+        # to `purify_text()` in `check_string()`.        
+        regex = "WARN.*No module"
+        act = hunitest.filter_text(regex, act)
         # Modify the outcome for reproducibility.
         act = hprint.remove_non_printable_chars(act)
         act = re.sub(r"[0-9]{2}:[0-9]{2}:[0-9]{2} - ", r"HH:MM:SS - ", act)
