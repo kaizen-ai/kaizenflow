@@ -21,7 +21,6 @@ ccxt = "4.0.53"
 #cvxpy = ">= 1.2.2"
 # This constraint is needed because 3.4.8 seems to fail.
 cryptography = "<= 3.4.7"
-gluonts = "== 0.6.7"
 gspread_pandas = "*"
 #ib_insync = "*"
 # This is needed for `jupyter` extensions.
@@ -39,7 +38,6 @@ jupyter_nbextensions_configurator = "*"
 jupytext = "*"
 matplotlib = "*"
 moto = "*"
-mxnet = ">= 1.6"
 networkx = "*"
 # See https://github.com/Jupyter-contrib/jupyter_nbextensions_configurator/issues/164.
 notebook = "< 7.0.0"

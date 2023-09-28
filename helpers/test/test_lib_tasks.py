@@ -178,6 +178,11 @@ class TestDryRunTasks1(hunitest.TestCase):
         act = hprint.remove_non_printable_chars(act)
         regex = "(WARN|INFO)\s+hcache.py"
         act = hunitest.filter_text(regex, act)
+        # Filter out `no module` warnings.
+        # TODO(Grisha): add the "no module warning" filtering
+        # to `purify_text()` in `check_string()`.
+        regex = "WARN.*No module"
+        act = hunitest.filter_text(regex, act)        
         if check_string:
             self.check_string(act)
 

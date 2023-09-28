@@ -7,7 +7,7 @@ import helpers.henv as henv
 import functools
 import logging
 import os
-from typing import Any, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import helpers.hdbg as hdbg
 import helpers.hio as hio
@@ -43,12 +43,18 @@ try:
     import {module}
     has_module_ = True
 except ImportError as e:
-    print(_WARNING + ": " + str(e))
+    _LOG.warning("%s: %s", _WARNING, str(e))
     has_module_ = False
 """
     # To make the linter happy.
     has_module_ = True
-    exec(code, globals())
+    locals_: Dict[str, Any] = {}
+    # Need to explicitly declare and pass `locals_`:
+    # https://docs.python.org/3/library/functions.html#exec
+    # `Pass an explicit locals dictionary if you need to see effects
+    # of the code on locals after function exec() returns.`
+    exec(code, globals(), locals_)
+    has_module_ = locals_["has_module_"]
     return has_module_
 
 
@@ -401,7 +407,7 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     libs = sorted(libs)
     failed_imports = 0
     for lib in libs:
-        # This is due to Cmamp4924: 
+        # This is due to Cmamp4924:
         # WARNING: libarmpl_lp64_mp.so: cannot open shared object file: No such
         #  file or directory
         try:
