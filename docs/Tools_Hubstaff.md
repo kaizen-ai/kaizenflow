@@ -35,14 +35,10 @@ The goal is to replace our
   <img src="Tools_Hubstaff_figs/image4.png" style="width:3.44034in;height:1.06338in" />
   <img src="Tools_Hubstaff_figs/image7.png" style="width:2.89844in;height:2.48438in" />
 
-- We left enabled "the keyboard and mouse activity" since this is used to
-  automatically track the worked time. The tool does not store what you type,
-  only if you type as a proxy for "working".
+- We left enabled "the keyboard and mouse activity" since this is used to automatically track the worked time. The tool does not store what you type, only if you type as a proxy for "working".
   <img src="Tools_Hubstaff_figs/image6.png" style="width:3.01563in;height:1.45221in" />
 
-- We let people decide if they want to monitor the usage of programs or not.
-  Some people like it (I do since it gives an insight on which program I spend
-  my time)
+- We let people decide if they want to monitor the usage of programs or not. Some people like it (I do since it gives an insight on which program I spend my time)
   <img src="Tools_Hubstaff_figs/image1.png" style="width:5.15625in;height:1.51042in" />
 
 - You can change your mind over time.
@@ -73,9 +69,10 @@ The goal is to replace our
 ## 3) Overriding time tracking
 
 - In case you forgot to turn on the timer or you are tracking time manually, go
-  to
+  to 
   <img src="Tools_Hubstaff_figs/image5.png" style="width:6.26772in;height:2.80556in" />
   and fill the timesheet for the past day
+  
   <img src="Tools_Hubstaff_figs/image9.png" style="width:3.5049in;height:5.28646in" />
 
 - See the
