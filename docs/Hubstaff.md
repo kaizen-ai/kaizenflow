@@ -59,9 +59,9 @@
 
 - You can track time using the
   [<span class="underline">Google Chrome extension</span>](https://chrome.google.com/webstore/detail/hubstaff-time-tracker/mipeohjjimeknlkekbemdjbjniogbgel):
-- [<span class="underline">Chrome Time Tracking - Hubstaff Time Tracker</span>](https://www.youtube.com/watch?v=1dXfD3EJb2M)
-- Start the timer when you start the work
-- Stop the timer when the work is paused
+  - [<span class="underline">Chrome Time Tracking - Hubstaff Time Tracker</span>](https://www.youtube.com/watch?v=1dXfD3EJb2M)
+  - Start the timer when you start the work
+  - Stop the timer when the work is paused
 
 ## Overriding time tracking
 
