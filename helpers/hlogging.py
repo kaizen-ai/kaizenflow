@@ -626,7 +626,7 @@ class CustomFormatter(logging.Formatter):
         # Add information about which coroutine we are running in.
         try:
             asyncio.get_running_loop()
-            task = asyncio.Task.current_task()
+            task = asyncio.current_task()
             if task is not None:
                 msg += f" {task.get_name()}"
         except (RuntimeError, AttributeError):

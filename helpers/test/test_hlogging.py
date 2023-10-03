@@ -29,7 +29,7 @@ class Test_hlogging_asyncio1(hunitest.TestCase):
         Coroutine simulating a workload waiting for 1s.
         """
         # Set the coroutine name.
-        task = asyncio.Task.current_task()
+        task = asyncio.current_task()
         task.set_name("workload")
 
         def _print_time() -> None:
