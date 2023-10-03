@@ -28,20 +28,20 @@
 
 - We have decided to turn off the feature of taking screenshots of the laptop as
   proof-as-work, URL, and app tracking.
-  - <img src="Hubstaff_figs/image3.jpg" style="width:6.26772in;height:4.66667in" />
+  - <img src="Hubstaff_figs/image3.jpg" />
 - Although this seems to be standard practice for remote teams (e.g., it's
   default for UpWork), we don't believe in surveilling people, rather we prefer
   to assume that people do the right thing (until proven wrong, of course).
-  - <img src="Hubstaff_figs/image4.png" style="width:3.44034in;height:1.06338in" /> -
-  - <img src="Hubstaff_figs/image7.png" style="width:2.89844in;height:2.48438in" />
+  - <img src="Hubstaff_figs/image4.png" /> -
+  - <img src="Hubstaff_figs/image7.png" />
 - We left enabled "the keyboard and mouse activity" since this is used to
   automatically track the worked time. The tool does not store what you type,
   only if you type as a proxy for "working".
-  - <img src="Hubstaff_figs/image6.png" style="width:3.01563in;height:1.45221in" />
+  - <img src="Hubstaff_figs/image6.png" />
   We let people decide if they want to monitor the usage of programs or not.
   Some people like it (I do since it gives an insight on which program I spend
   my time)
-  - <img src="Hubstaff_figs/image1.png" style="width:5.15625in;height:1.51042in" />
+  - <img src="Hubstaff_figs/image1.png" />
 - You can change your mind over time.
 
 ## Tracking time automatically
@@ -51,8 +51,8 @@
   - I prefer this since it's completely automated
   - For Linux (Ubuntu) follow this [guide](https://support.hubstaff.com/install-and-sign-in-into-linux-desktop-client/)
 - Both options update the time information to Hubstaff automatically.
-  - <img src="Hubstaff_figs/image2.png" style="width:2.76563in;height:2.71063in" />
-  - <img src="Hubstaff_figs/image8.png" style="width:2.89272in;height:2.35938in" />
+  - <img src="Hubstaff_figs/image2.png" />
+  - <img src="Hubstaff_figs/image8.png" />
 - See [<span
   class="underline">https://hubstaff.com/how-tracking-works</span>](https://hubstaff.com/how-tracking-works)
 
@@ -68,9 +68,9 @@
 
 - In case you forgot to turn on the timer or you are tracking time manually, go
   to
-  - <img src="Hubstaff_figs/image5.png" style="width:6.26772in;height:2.80556in" />
+  - <img src="Hubstaff_figs/image5.png" />
   and fill the timesheet for the past day
-  - <img src="Hubstaff_figs/image9.png" style="width:3.5049in;height:5.28646in" />
+  - <img src="Hubstaff_figs/image9.png" />
 - See the
   [<span class="underline">official guide</span>](https://support.hubstaff.com/how-to-add-delete-and-edit-manual-time-entries/#:~:text=First%2C%20navigate%20to%20the%20Timesheets,of%20the%20manual%20time%20entry.)
   for a lot of details
