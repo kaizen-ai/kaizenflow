@@ -48,7 +48,8 @@
 
 - You can use the desktop [<span
   class="underline">App</span>](https://app.hubstaff.com/download)
-- I prefer this since it's completely automated
+  - I prefer this since it's completely automated
+  - For Linux (Ubuntu) follow this [guide](https://support.hubstaff.com/install-and-sign-in-into-linux-desktop-client/)
 - Both options update the time information to Hubstaff automatically.
   - <img src="Hubstaff_figs/image2.png" style="width:2.76563in;height:2.71063in" />
   - <img src="Hubstaff_figs/image8.png" style="width:2.89272in;height:2.35938in" />
