@@ -32,7 +32,7 @@
 - Although this seems to be standard practice for remote teams (e.g., it's
   default for UpWork), we don't believe in surveilling people, rather we prefer
   to assume that people do the right thing (until proven wrong, of course).
-  - <img src="Hubstaff_figs/image4.png" /> -
+  - <img src="Hubstaff_figs/image4.png" />
   - <img src="Hubstaff_figs/image7.png" />
 - We left enabled "the keyboard and mouse activity" since this is used to
   automatically track the worked time. The tool does not store what you type,
