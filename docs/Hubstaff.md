@@ -13,13 +13,12 @@
 
 # General
 
-- [<span class="underline">Hubstaff</span>](https://hubstaff.com/) is a tool for
-  remote working that automates:
+- [Hubstaff](https://hubstaff.com/) is a tool for remote working that automates:
   - time tracking
   - invoice creation
   - payment
 - The goal is to replace our
-  [<span class="underline">hour log spreadsheet</span>](https://docs.google.com/spreadsheets/d/1oNd6ORhc94oUzg5nhNC7fQelN_PmfAv110F7lUiZsxo/edit#gid=0)
+  [hour log spreadsheet](https://docs.google.com/spreadsheets/d/1oNd6ORhc94oUzg5nhNC7fQelN_PmfAv110F7lUiZsxo/edit#gid=0)
   with Hubstaff and get paid automatically for the worked hours.
 
 # Time Tracking
@@ -46,21 +45,19 @@
 
 ## Tracking time automatically
 
-- You can use the desktop [<span
-  class="underline">App</span>](https://app.hubstaff.com/download)
+- You can use the desktop [App](https://app.hubstaff.com/download)
   - I prefer this since it's completely automated
   - For Linux (Ubuntu) follow this [guide](https://support.hubstaff.com/install-and-sign-in-into-linux-desktop-client/)
 - Both options update the time information to Hubstaff automatically.
   - <img src="Hubstaff_figs/image2.png" />
   - <img src="Hubstaff_figs/image8.png" />
-- See [<span
-  class="underline">https://hubstaff.com/how-tracking-works</span>](https://hubstaff.com/how-tracking-works)
+- See [https://hubstaff.com/how-tracking-works](https://hubstaff.com/how-tracking-works)
 
 ## Tracking time manually
 
 - You can track time using the
-  [<span class="underline">Google Chrome extension</span>](https://chrome.google.com/webstore/detail/hubstaff-time-tracker/mipeohjjimeknlkekbemdjbjniogbgel):
-  - [<span class="underline">Chrome Time Tracking - Hubstaff Time Tracker</span>](https://www.youtube.com/watch?v=1dXfD3EJb2M)
+  [Google Chrome extension](https://chrome.google.com/webstore/detail/hubstaff-time-tracker/mipeohjjimeknlkekbemdjbjniogbgel):
+  - [Chrome Time Tracking - Hubstaff Time Tracker](https://www.youtube.com/watch?v=1dXfD3EJb2M)
   - Start the timer when you start the work
   - Stop the timer when the work is paused
 
@@ -72,5 +69,5 @@
   and fill the timesheet for the past day
   - <img src="Hubstaff_figs/image9.png" />
 - See the
-  [<span class="underline">official guide</span>](https://support.hubstaff.com/how-to-add-delete-and-edit-manual-time-entries/#:~:text=First%2C%20navigate%20to%20the%20Timesheets,of%20the%20manual%20time%20entry.)
+  [official guide](https://support.hubstaff.com/how-to-add-delete-and-edit-manual-time-entries/#:~:text=First%2C%20navigate%20to%20the%20Timesheets,of%20the%20manual%20time%20entry.)
   for a lot of details
