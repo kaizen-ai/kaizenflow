@@ -3104,6 +3104,91 @@ class Test_apply_index_mode(hunitest.TestCase):
 # #############################################################################
 
 
+class Test_apply_column_mode(hunitest.TestCase):
+    @staticmethod
+    def get_test_data() -> Tuple[pd.DataFrame]:
+        """
+        Generate toy dataframes for the test.
+        """
+        # Define common columns.
+        columns = ["A", "B"]
+        # Create dts with columns
+        data1 = [
+            [0.21, 0.44],
+            [0.11, 0.42],
+            [1.99, 0.8],
+            [3.1, 0.91],
+            [3.5, 1.4],
+        ]
+        df1 = pd.DataFrame(data1, columns=columns, index=[0, 1, 2, 3, 4])
+        #
+        data1 = [
+            [0.1, 0.4],
+            [0.11, 0.2],
+            [1.29, 0.38],
+            [0.1, 0.9],
+            [3.3, 2.4],
+        ]
+        df2 = pd.DataFrame(data1, columns=columns, index=[0, 6, 2, 3, 5])
+        return df1, df2
+
+    def test1(self) -> None:
+        """
+        Check that returned dataframes have columns that are equal to the
+        common column.
+
+        - `mode="intersect"`
+        """
+        # Get test data.
+        df1_in, df2_in = self.get_test_data()
+        # Use an index intersection to transform dataframes.
+        mode = "intersect"
+        df1_out, df2_out = hpandas.apply_columns_mode(df1_in, df2_in, mode)
+        # Check that indices are common.
+        common_cloumns = df1_in.columns.intersection(df2_in.columns)
+        common_cloumns = hpandas.df_to_str(common_cloumns)
+        idx1 = hpandas.df_to_str(df1_out.columns)
+        idx2 = hpandas.df_to_str(df2_out.columns)
+        self.assert_equal(idx1, common_cloumns)
+        self.assert_equal(idx2, common_cloumns)
+
+    def test2(self) -> None:
+        """
+        Check that dataframes' columns did not change after applying a column
+        mode.
+
+        - `mode="leave_unchanged"`
+        """
+        # Get test data.
+        df1_in, df2_in = self.get_test_data()
+        mode = "leave_unchanged"
+        df1_out, df2_out = hpandas.apply_columns_mode(df1_in, df2_in, mode)
+        # Check that columns are as-is.
+        df1_in_idx = hpandas.df_to_str(df1_in.columns)
+        df1_out_idx = hpandas.df_to_str(df1_out.columns)
+        self.assert_equal(df1_in_idx, df1_out_idx)
+        #
+        df2_in_idx = hpandas.df_to_str(df2_in.columns)
+        df2_out_idx = hpandas.df_to_str(df2_out.columns)
+        self.assert_equal(df2_in_idx, df2_out_idx)
+
+    def test3(self) -> None:
+        """
+        Check that an assertion is raised when columns are not equal.
+
+        - `mode="assert_equal"`
+        """
+        # Get test data.
+        df1_in, df2_in = self.get_test_data()
+        mode = "assert_equal"
+        df1_out, df2_out = hpandas.apply_columns_mode(df1_in, df2_in, mode)
+        # Check the behavior of assert_equal mode.
+        self.assertCountEqual(df1_out.columns, df2_out.columns)
+
+
+# #############################################################################
+
+
 class Test_get_df_from_iterator(hunitest.TestCase):
     def test1(self) -> None:
         """
@@ -3287,15 +3372,15 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
         Helper function to get test multi-index dataframe.
         Example of dataframe returned when `index_is_datetime = True`.
                                             column1     column2
-        index   timestamp                                    
+        index   timestamp
         index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
                 2022-01-01 21:10:00+00:00   1.303778    -0.288235
         index2  2022-01-01 21:00:00+00:00   1.237079    1.168012
                 2022-01-01 21:10:00+00:00   1.333692    1.708455
-                
+
         Example of dataframe returned when `index_is_datetime = False`.
                             column1     column2
-        index   timestamp                    
+        index   timestamp
         index1  string1     -0.122140   -1.949431
                 string2     1.303778    -0.288235
         index2  string1     1.237079    1.168012

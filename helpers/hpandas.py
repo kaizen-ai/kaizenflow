@@ -478,6 +478,50 @@ def apply_index_mode(
     return df1_copy, df2_copy
 
 
+def apply_columns_mode(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    mode: str,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Process DataFrames according to the column mode.
+
+    :param df1: first input df
+    :param df2: second input df
+    :param mode: method of processing columns
+        - "assert_equal": check that both Dfs have equal columns, assert otherwise
+        - "intersect": restrict both Dfs to only include common columns
+        - "leave_unchanged": ignore any column mismatches and return Dfs as-is
+    :return: transformed copy of the inputs
+    """
+    _LOG.debug("mode=%s", mode)
+    # Input validation.
+    hdbg.dassert_isinstance(df1, pd.DataFrame)
+    hdbg.dassert_isinstance(df2, pd.DataFrame)
+    hdbg.dassert_isinstance(mode, str)
+    # Copy in order not to modify the inputs.
+    df1_copy = df1.copy()
+    df2_copy = df2.copy()
+    if mode == "assert_equal":
+        # Check if columns are equal.
+        dassert_columns_equal(df1_copy, df2_copy)
+    elif mode == "intersect":
+        common_columns = df1_copy.columns.intersection(df2_copy.columns)
+        df1_copy = df1_copy[common_columns]
+        df2_copy = df2_copy[common_columns]
+    elif mode == "leave_unchanged":
+        # ignore mismatch
+        _LOG.debug(
+            "Ignoring any column missmatch as per user's request.\n"
+            "df1.columns.difference(df2.columns)=\n%s\ndf2.columns.difference(df1.columns)=\n%s",
+            df1.columns.difference(df2.columns),
+            df2.columns.difference(df1.columns),
+        )
+    else:
+        raise ValueError(f"Unsupported column mode: {mode}")
+    return df1_copy, df2_copy
+
+
 def find_gaps_in_time_series(
     time_series: pd.Series,
     start_timestamp: pd.Timestamp,
@@ -1119,7 +1163,7 @@ def df_to_str(
         df = df.to_frame(index=False)
     hdbg.dassert_isinstance(df, pd.DataFrame)
     # For some reason there are so-called "negative zeros", but we consider
-    # them equal to `0.0`. 
+    # them equal to `0.0`.
     df = df.copy()
     for col_name in df.select_dtypes(include=[np.float64, float]).columns:
         df[col_name] = df[col_name].where(df[col_name] != -0.0, 0.0)
