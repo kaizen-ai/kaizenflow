@@ -520,7 +520,7 @@ def apply_columns_mode(
     else:
         raise ValueError(f"Unsupported column mode: {mode}")
     return df1_copy, df2_copy
-    
+
 
 def find_gaps_in_time_series(
     time_series: pd.Series,
@@ -1163,7 +1163,7 @@ def df_to_str(
         df = df.to_frame(index=False)
     hdbg.dassert_isinstance(df, pd.DataFrame)
     # For some reason there are so-called "negative zeros", but we consider
-    # them equal to `0.0`. 
+    # them equal to `0.0`.
     df = df.copy()
     for col_name in df.select_dtypes(include=[np.float64, float]).columns:
         df[col_name] = df[col_name].where(df[col_name] != -0.0, 0.0)
