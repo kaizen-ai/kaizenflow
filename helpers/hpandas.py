@@ -478,7 +478,7 @@ def apply_index_mode(
     return df1_copy, df2_copy
 
 
-def apply_column_mode(
+def apply_columns_mode(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
     mode: str,

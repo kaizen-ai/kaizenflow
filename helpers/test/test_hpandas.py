@@ -3143,7 +3143,7 @@ class Test_apply_column_mode(hunitest.TestCase):
         df1_in, df2_in = self.get_test_data()
         # Use an index intersection to transform dataframes.
         mode = "intersect"
-        df1_out, df2_out = hpandas.apply_column_mode(df1_in, df2_in, mode)
+        df1_out, df2_out = hpandas.apply_columns_mode(df1_in, df2_in, mode)
         # Check that indices are common.
         common_cloumns = df1_in.columns.intersection(df2_in.columns)
         common_cloumns = hpandas.df_to_str(common_cloumns)
@@ -3162,7 +3162,7 @@ class Test_apply_column_mode(hunitest.TestCase):
         # Get test data.
         df1_in, df2_in = self.get_test_data()
         mode = "leave_unchanged"
-        df1_out, df2_out = hpandas.apply_column_mode(df1_in, df2_in, mode)
+        df1_out, df2_out = hpandas.apply_columns_mode(df1_in, df2_in, mode)
         # Check that columns are as-is.
         df1_in_idx = hpandas.df_to_str(df1_in.columns)
         df1_out_idx = hpandas.df_to_str(df1_out.columns)
@@ -3181,7 +3181,7 @@ class Test_apply_column_mode(hunitest.TestCase):
         # Get test data.
         df1_in, df2_in = self.get_test_data()
         mode = "assert_equal"
-        df1_out, df2_out = hpandas.apply_column_mode(df1_in, df2_in, mode)
+        df1_out, df2_out = hpandas.apply_columns_mode(df1_in, df2_in, mode)
         # Check the behavior of assert_equal mode.
         self.assertCountEqual(df1_out.columns, df2_out.columns)
 
