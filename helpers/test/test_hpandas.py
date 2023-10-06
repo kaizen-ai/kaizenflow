@@ -3111,8 +3111,9 @@ class Test_apply_column_mode(hunitest.TestCase):
         Generate toy dataframes for the test.
         """
         # Define common columns.
-        columns = ["A", "B"]
-        # Create dts with columns
+        columns_1 = ["A", "B"]
+        columns_2 = ["A", "C"]
+        # Create dts with columns.
         data1 = [
             [0.21, 0.44],
             [0.11, 0.42],
@@ -3120,37 +3121,37 @@ class Test_apply_column_mode(hunitest.TestCase):
             [3.1, 0.91],
             [3.5, 1.4],
         ]
-        df1 = pd.DataFrame(data1, columns=columns, index=[0, 1, 2, 3, 4])
+        df1 = pd.DataFrame(data1, columns=columns_1)
         #
-        data1 = [
+        data2 = [
             [0.1, 0.4],
             [0.11, 0.2],
             [1.29, 0.38],
             [0.1, 0.9],
             [3.3, 2.4],
         ]
-        df2 = pd.DataFrame(data1, columns=columns, index=[0, 6, 2, 3, 5])
+        df2 = pd.DataFrame(data2, columns=columns_2)
         return df1, df2
 
     def test1(self) -> None:
         """
         Check that returned dataframes have columns that are equal to the
-        common column.
+        common ones.
 
         - `mode="intersect"`
         """
         # Get test data.
         df1_in, df2_in = self.get_test_data()
-        # Use an index intersection to transform dataframes.
+        # Use an column intersection to transform dataframes.
         mode = "intersect"
         df1_out, df2_out = hpandas.apply_columns_mode(df1_in, df2_in, mode)
-        # Check that indices are common.
+        # Check that columns are common.
         common_cloumns = df1_in.columns.intersection(df2_in.columns)
         common_cloumns = hpandas.df_to_str(common_cloumns)
-        idx1 = hpandas.df_to_str(df1_out.columns)
-        idx2 = hpandas.df_to_str(df2_out.columns)
-        self.assert_equal(idx1, common_cloumns)
-        self.assert_equal(idx2, common_cloumns)
+        columns1 = hpandas.df_to_str(df1_out.columns)
+        columns2 = hpandas.df_to_str(df2_out.columns)
+        self.assert_equal(columns1, common_cloumns)
+        self.assert_equal(columns2, common_cloumns)
 
     def test2(self) -> None:
         """
@@ -3164,13 +3165,13 @@ class Test_apply_column_mode(hunitest.TestCase):
         mode = "leave_unchanged"
         df1_out, df2_out = hpandas.apply_columns_mode(df1_in, df2_in, mode)
         # Check that columns are as-is.
-        df1_in_idx = hpandas.df_to_str(df1_in.columns)
-        df1_out_idx = hpandas.df_to_str(df1_out.columns)
-        self.assert_equal(df1_in_idx, df1_out_idx)
+        df1_in_columns = hpandas.df_to_str(df1_in.columns)
+        df1_out_columns = hpandas.df_to_str(df1_out.columns)
+        self.assert_equal(df1_in_columns, df1_out_columns)
         #
-        df2_in_idx = hpandas.df_to_str(df2_in.columns)
-        df2_out_idx = hpandas.df_to_str(df2_out.columns)
-        self.assert_equal(df2_in_idx, df2_out_idx)
+        df2_in_columns = hpandas.df_to_str(df2_in.columns)
+        df2_out_columns = hpandas.df_to_str(df2_out.columns)
+        self.assert_equal(df2_in_columns, df2_out_columns)
 
     def test3(self) -> None:
         """
@@ -3181,9 +3182,12 @@ class Test_apply_column_mode(hunitest.TestCase):
         # Get test data.
         df1_in, df2_in = self.get_test_data()
         mode = "assert_equal"
-        df1_out, df2_out = hpandas.apply_columns_mode(df1_in, df2_in, mode)
-        # Check the behavior of assert_equal mode.
-        self.assertCountEqual(df1_out.columns, df2_out.columns)
+        # Check that both sets of columns are equal, assert otherwise.
+        with self.assertRaises(ValueError) as cm:
+            hpandas.apply_columns_mode(df1_in, df2_in, mode)
+        act = str(cm.exception)
+        # Compare the actual outcome with an expected one since the dataframe are not equal.
+        self.assertEqual(act, "Columns in the two DataFrames are not equal.")
 
 
 # #############################################################################

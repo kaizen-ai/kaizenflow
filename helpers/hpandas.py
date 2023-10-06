@@ -503,14 +503,16 @@ def apply_columns_mode(
     df1_copy = df1.copy()
     df2_copy = df2.copy()
     if mode == "assert_equal":
-        # Check if columns are equal.
-        dassert_columns_equal(df1_copy, df2_copy)
+        # Check if columns are equal or not.
+        if not df1_copy.columns.equals(df2_copy.columns):
+            raise ValueError("Columns in the two DataFrames are not equal.")
     elif mode == "intersect":
+        # Filter dataframes based on its common columns.
         common_columns = df1_copy.columns.intersection(df2_copy.columns)
         df1_copy = df1_copy[common_columns]
         df2_copy = df2_copy[common_columns]
     elif mode == "leave_unchanged":
-        # ignore mismatch
+        # Ignore mismatch.
         _LOG.debug(
             "Ignoring any column missmatch as per user's request.\n"
             "df1.columns.difference(df2.columns)=\n%s\ndf2.columns.difference(df1.columns)=\n%s",
