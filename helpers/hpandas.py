@@ -488,9 +488,9 @@ def apply_columns_mode(
     :param df1: first input df
     :param df2: second input df
     :param mode: method of processing columns
-        - "assert_equal": check that both Dfs have equal columns, assert otherwise
-        - "intersect": restrict both Dfs to only include common columns
-        - "leave_unchanged": ignore any column mismatches and return Dfs as-is
+        - "assert_equal": check that both dfs have equal columns, assert otherwise
+        - "intersect": restrict both dfs to only include common columns
+        - "leave_unchanged": ignore any column mismatches and return dfs as-is
     :return: transformed copy of the inputs
     """
     _LOG.debug("mode=%s", mode)
@@ -509,6 +509,9 @@ def apply_columns_mode(
         common_columns = df1_copy.columns.intersection(df2_copy.columns)
         df1_copy = df1_copy[common_columns]
         df2_copy = df2_copy[common_columns]
+        # Log the string representation of 2 dfs.
+        _LOG.debug("df1 after filtering=\n%s", df_to_str(df1))
+        _LOG.debug("df2 after filtering=\n%s", df_to_str(df2))
     elif mode == "leave_unchanged":
         # Ignore mismatch.
         _LOG.debug(

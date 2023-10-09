@@ -3112,7 +3112,6 @@ class Test_apply_column_mode(hunitest.TestCase):
         """
         # Build dataframes with intersecting columns.
         columns_1 = ["A", "B"]
-        # Create dts with column.
         data1 = [
             [0.21, 0.44],
             [0.11, 0.42],
@@ -3142,10 +3141,10 @@ class Test_apply_column_mode(hunitest.TestCase):
         """
         # Get test data.
         df1_in, df2_in = self.get_test_data()
-        # Use a column intersection to transform dataframes.
+        # Use a column intersection mode to transform dataframes.
         mode = "intersect"
         df1_out, df2_out = hpandas.apply_columns_mode(df1_in, df2_in, mode)
-        # Check that columns are common.
+        # Check that dfs have equal column names.
         common_columns = df1_in.columns.intersection(df2_in.columns)
         common_columns = hpandas.df_to_str(common_columns)
         columns1 = hpandas.df_to_str(df1_out.columns)
@@ -3187,7 +3186,7 @@ class Test_apply_column_mode(hunitest.TestCase):
         with self.assertRaises(AssertionError) as cm:
             hpandas.apply_columns_mode(df1_in, df2_in, mode)
         actual = str(cm.exception)
-        # Compare the actual outcome with an expected one since the dataframes are not equal.
+        # Compare the actual outcome with an expected one.
         self.check_string(actual)
 
 
