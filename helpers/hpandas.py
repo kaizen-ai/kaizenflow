@@ -434,7 +434,6 @@ def find_gaps_in_dataframes(
 
 
 # TODO(Grisha): use this idiom everywhere in the codebase, e.g., in `compare_dfs()`.
-# TODO(Grisha): add unit tests.
 def apply_index_mode(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
