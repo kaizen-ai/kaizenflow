@@ -3097,7 +3097,7 @@ class Test_apply_index_mode(hunitest.TestCase):
         with self.assertRaises(AssertionError) as cm:
             hpandas.apply_index_mode(df1_in, df2_in, mode)
         act = str(cm.exception)
-        # Compare the actual outcome with expected one.
+        # Check the error exception message.
         self.check_string(act)
 
 
@@ -3185,7 +3185,7 @@ class Test_apply_column_mode(hunitest.TestCase):
         # Get test data.
         df1_in, df2_in = self.get_test_data()
         mode = "assert_equal"
-        # Check that both dataframes' columns are equal, assert otherwise.
+        # Check that both dataframes columns are equal, assert otherwise.
         with self.assertRaises(AssertionError) as cm:
             hpandas.apply_columns_mode(df1_in, df2_in, mode)
         actual = str(cm.exception)
