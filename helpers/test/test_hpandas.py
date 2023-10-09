@@ -3105,6 +3105,9 @@ class Test_apply_index_mode(hunitest.TestCase):
 
 
 class Test_apply_column_mode(hunitest.TestCase):
+    """
+    Test that function applies column modes correctly.
+    """
     @staticmethod
     def get_test_data() -> Tuple[pd.DataFrame]:
         """
