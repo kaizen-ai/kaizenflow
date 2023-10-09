@@ -433,7 +433,6 @@ def find_gaps_in_dataframes(
     return first_missing_data, second_missing_data
 
 
-# TODO(Grisha): maybe also add `apply_column_mode` at some point.
 # TODO(Grisha): use this idiom everywhere in the codebase, e.g., in `compare_dfs()`.
 # TODO(Grisha): add unit tests.
 def apply_index_mode(
@@ -504,8 +503,7 @@ def apply_columns_mode(
     df2_copy = df2.copy()
     if mode == "assert_equal":
         # Check if columns are equal or not.
-        if not df1_copy.columns.equals(df2_copy.columns):
-            raise ValueError("Columns in the two DataFrames are not equal.")
+        dassert_columns_equal(df1_copy, df2_copy)
     elif mode == "intersect":
         # Filter dataframes based on its common columns.
         common_columns = df1_copy.columns.intersection(df2_copy.columns)
