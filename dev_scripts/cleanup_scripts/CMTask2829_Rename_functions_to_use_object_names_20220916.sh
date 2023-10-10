@@ -61,4 +61,3 @@ replace_text.py \
   --old "check_system_config" \
   --new "check_SystemConfig" \
   --exclude_dirs "$dir_names"
-

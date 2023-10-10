@@ -9,7 +9,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestCreateDb1(imvcddbut.TestImDbHelper):
-
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
@@ -34,7 +33,7 @@ class TestCreateDb1(imvcddbut.TestImDbHelper):
                 "ccxt_bid_ask_futures_raw",
                 "ccxt_bid_ask_resampled_1min",
                 "ccxt_bid_ask_futures_resampled_1min",
-                "ccxt_ohlcv",
+                "ccxt_ohlcv_spot",
                 "ccxt_ohlcv_futures",
                 "currency_pair",
                 "exchange",

@@ -186,7 +186,7 @@ class TestTestCase1(hunitest.TestCase):
         act = hunitest.purify_txt_from_client(act)
         act = act.replace(tmp_dir, "$TMP_DIR")
         # pylint: disable=line-too-long
-        exp ="""
+        exp = """
         # Dir structure
         $TMP_DIR
         $TMP_DIR/tmp_diff.sh
@@ -984,6 +984,8 @@ class Test_purify_txt_from_client1(hunitest.TestCase):
         self.helper(txt, exp)
 
 
+# TODO(ShaopengZ): numerical issue. (arm vs x86)
+@pytest.mark.requires_ck_infra
 class Test_purify_from_env_vars(hunitest.TestCase):
     """
     Test purification from env vars.
@@ -1007,6 +1009,7 @@ class Test_purify_from_env_vars(hunitest.TestCase):
         env_var = "CK_AWS_S3_BUCKET"
         self.helper(env_var)
 
+    @pytest.mark.requires_ck_infra
     def test2(self) -> None:
         """
         - $AM_TELEGRAM_TOKEN
@@ -1181,3 +1184,57 @@ class Test_purify_amp_reference1(hunitest.TestCase):
             of class '_Man' is not a subclass of '<class 'int'>'
         """
         self.helper(txt, exp)
+
+
+# #############################################################################
+
+
+class Test_purify_from_environment1(hunitest.TestCase):
+    def check_helper(self, input_: str, exp: str) -> None:
+        """
+        Check that the text is purified from environment variables correctly.
+        """
+        try:
+            # Manually set a user name to test the behaviour.
+            hsystem.set_user_name("root")
+            # Run.
+            act = hunitest.purify_from_environment(input_)
+            self.assert_equal(act, exp, fuzzy_match=True)
+        finally:
+            # Reset the global user name variable regardless of a test results.
+            hsystem.set_user_name(None)
+
+    def test1(self) -> None:
+        input_ = "IMAGE=$CK_ECR_BASE_PATH/amp_test:local-root-1.0.0"
+        exp = "IMAGE=$CK_ECR_BASE_PATH/amp_test:local-$USER_NAME-1.0.0"
+        self.check_helper(input_, exp)
+
+    def test2(self) -> None:
+        input_ = "--name root.amp_test.app.app"
+        exp = "--name $USER_NAME.amp_test.app.app"
+        self.check_helper(input_, exp)
+
+    def test3(self) -> None:
+        input_ = "run --rm -l user=root"
+        exp = "run --rm -l user=$USER_NAME"
+        self.check_helper(input_, exp)
+
+    def test4(self) -> None:
+        input_ = "run_docker_as_root='True'"
+        exp = "run_docker_as_root='True'"
+        self.check_helper(input_, exp)
+
+    def test5(self) -> None:
+        input_ = "out_col_groups: [('root_q_mv',), ('root_q_mv_adj',), ('root_q_mv_os',)]"
+        exp = "out_col_groups: [('root_q_mv',), ('root_q_mv_adj',), ('root_q_mv_os',)]"
+        self.check_helper(input_, exp)
+
+    def test6(self) -> None:
+        input_ = "/app/jupyter_core/application.py"
+        exp = "$GIT_ROOT/jupyter_core/application.py"
+        self.check_helper(input_, exp)
+
+    def test7(self) -> None:
+        input_ = "/app"
+        exp = "$GIT_ROOT"
+        self.check_helper(input_, exp)

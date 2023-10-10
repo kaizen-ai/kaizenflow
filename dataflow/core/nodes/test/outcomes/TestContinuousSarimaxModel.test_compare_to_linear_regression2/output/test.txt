@@ -19,7 +19,7 @@ nan_mode: drop
 ################################################################################
 df_out
 ################################################################################
-            skl_ret_0  skl_ret_0_3  skl_ret_0_3_hat  sarimax_ret_0  sarimax_ret_0_3  sarimax_ret_0_1_hat  sarimax_ret_0_2_hat  sarimax_ret_0_3_hat  skl_sarimax_pred_diff
+            skl_ret_0  skl_ret_0.shift_-3  skl_ret_0.shift_-3_hat  sarimax_ret_0  sarimax_ret_0.shift_-3  sarimax_ret_0.shift_-1_hat  sarimax_ret_0.shift_-2_hat  sarimax_ret_0.shift_-3_hat  skl_sarimax_pred_diff
 2010-01-31   0.049671     0.252917        -0.038485       0.049671         0.252917             0.049312             0.048955             0.048601              -0.087086
 2010-02-28   0.035845     0.229501        -0.051199       0.035845         0.229501             0.035586             0.035328             0.035073              -0.086271
 2010-03-31   0.100614     0.206088         0.008357       0.100614         0.206088             0.099886             0.099163             0.098446              -0.090089

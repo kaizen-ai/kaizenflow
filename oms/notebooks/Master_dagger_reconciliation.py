@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.14.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -185,7 +185,7 @@ fep_dict = {
     "prediction_col": "prediction",
     "volatility_col": "garman_klass_vol",
     #
-    "quantization": "nearest_share",
+    "quantization": 0,
     "burn_in_bars": 3,
     #
     "style": "cross_sectional",

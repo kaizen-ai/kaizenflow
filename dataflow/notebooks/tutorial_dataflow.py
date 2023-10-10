@@ -12,6 +12,10 @@
 #     name: python3
 # ---
 
+# %%
+# %load_ext autoreload
+# %autoreload 2
+
 # %% [markdown]
 # # Description
 
@@ -61,11 +65,11 @@ def get_gallery_dataflow_example_config() -> cconconf.Config:
     config["load"]["dataset"] = "ohlcv"
     config["load"]["contract_type"] = "futures"
     config["load"]["universe_version"] = "v7"
+    config["load"]["data_version"] = "v2"
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["start_date"] = pd.Timestamp("2021-09-01", tz="UTC")
     config["data"]["end_date"] = pd.Timestamp("2021-09-15", tz="UTC")
-    config["data"]["resample_1min"] = False
     config["data"]["resampling_rule"] = "5T"
     return config
 
@@ -81,14 +85,13 @@ print(config)
 # ## Get IM client
 
 # %%
+data_version = config["load"]["data_version"]
 universe_version = config["load"]["universe_version"]
-resample_1min = config["data"]["resample_1min"]
 contract_type = config["load"]["contract_type"]
 dataset = config["load"]["dataset"]
 data_snapshot = config["load"]["data_snapshot"]
-
 client = icdcl.ccxt_clients_example.get_CcxtHistoricalPqByTileClient_example1(
-    universe_version, resample_1min, dataset, contract_type, data_snapshot
+    data_version, universe_version, dataset, contract_type, data_snapshot
 )
 
 
@@ -106,7 +109,6 @@ asset_ids = client.get_asset_ids_from_full_symbols(full_symbols)
 # %% run_control={"marked": true}
 columns = None
 columns_remap = None
-
 wall_clock_time = pd.Timestamp("2100-01-01T00:00:00+00:00")
 market_data = mdata.market_data_example.get_HistoricalImClientMarketData_example1(
     client, asset_ids, columns, columns_remap, wall_clock_time=wall_clock_time
@@ -120,8 +122,9 @@ market_data = mdata.market_data_example.get_HistoricalImClientMarketData_example
 start_ts = config["data"]["start_date"]
 end_ts = config["data"]["end_date"]
 ts_col_name = "timestamp"
-
-data_hist = market_data.get_data_for_interval(start_ts, end_ts, ts_col_name, asset_ids)
+data_hist = market_data.get_data_for_interval(
+    start_ts, end_ts, ts_col_name, asset_ids
+)
 print(data_hist.shape)
 data_hist.head(3)
 
@@ -200,11 +203,15 @@ df_approach_1.head(3)
 
 # %%
 # Drop non numerical columns to apply computations.
-data_hist_num = data_hist.drop(columns=["full_symbol", "knowledge_timestamp", "start_ts"])
+data_hist_num = data_hist.drop(
+    columns=["full_symbol", "knowledge_timestamp", "start_ts"]
+)
 
 # %% run_control={"marked": false}
 # Convert historical data to multiindex format.
-converted_data = dtfsys.source_nodes._convert_to_multiindex(data_hist_num, "asset_id")
+converted_data = dtfsys.source_nodes._convert_to_multiindex(
+    data_hist_num, "asset_id"
+)
 converted_data.head(3)
 
 # %%
@@ -310,5 +317,3 @@ rets = node.fit(vwap_twap_approach_3)
 # Save the result.
 vwap_twap_rets_approach_3 = rets["df_out"]
 vwap_twap_rets_approach_3.head(3)
-
-# %%

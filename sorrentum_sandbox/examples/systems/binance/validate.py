@@ -13,7 +13,7 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import sorrentum_sandbox.common.validate as sinsaval
+import sorrentum_sandbox.common.validate as ssacoval
 
 
 def find_gaps_in_time_series(
@@ -46,7 +46,7 @@ def find_gaps_in_time_series(
     return correct_time_series.difference(_time_series)
 
 
-class EmptyDatasetCheck(sinsaval.QaCheck):
+class EmptyDatasetCheck(ssacoval.QaCheck):
     """
     Assert that a DataFrame is not empty.
     """
@@ -58,7 +58,7 @@ class EmptyDatasetCheck(sinsaval.QaCheck):
         return not is_empty
 
 
-class GapsInTimestampCheck(sinsaval.QaCheck):
+class GapsInTimestampCheck(ssacoval.QaCheck):
     """
     Assert that a DataFrame does not have gaps in its timestamp column.
     """

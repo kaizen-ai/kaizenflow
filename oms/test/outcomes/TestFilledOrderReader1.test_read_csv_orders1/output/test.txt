@@ -1,5 +1,0 @@
-                                    symbol         id       order  side takerOrMaker  price  amount    cost      fees fees_currency  realized_pnl
-timestamp
-2022-09-29 16:46:39.509000+00:00  APE/USDT  282773274  5772340563  sell        taker  5.427     5.0  27.135  0.010854          USDT         0.000
-2022-09-29 16:51:58.567000+00:00  APE/USDT  282775654  5772441841   buy        taker  5.398     6.0  32.388  0.012955          USDT         0.145
-2022-09-29 16:57:00.267000+00:00  APE/USDT  282779084  5772536135   buy        taker  5.407     3.0  16.221  0.006488          USDT         0.000

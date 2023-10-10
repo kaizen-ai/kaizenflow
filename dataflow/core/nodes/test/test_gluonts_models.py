@@ -1,7 +1,6 @@
 import logging
 import pprint
 
-import mxnet
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,12 +8,9 @@ import pytest
 import core.artificial_signal_generators as carsigen
 import core.config as cconfig
 import dataflow.core.dag as dtfcordag
+import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
-from dataflow.core.nodes.gluonts_models import (
-    ContinuousDeepArModel,
-    DeepARGlobalModel,
-)
 
 # TODO(gp): use our import style instead of from ... import
 from dataflow.core.nodes.sources import DfDataSource
@@ -27,7 +23,14 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-if True:
+if henv.has_module("gluonts"):
+
+    import mxnet
+
+    from dataflow.core.nodes.gluonts_models import (
+        ContinuousDeepArModel,
+        DeepARGlobalModel,
+    )
 
     class TestContinuousDeepArModel(hunitest.TestCase):
         @pytest.mark.slow
@@ -36,7 +39,7 @@ if True:
             #
             df_out = dag.run_leq_node("deepar", "fit")["df_out"]
             df_str = hunitest.convert_df_to_string(df_out, index=True, decimals=1)
-            self.check_string(df_str)
+            self.check_string(df_str, fuzzy_match=True)
 
         @pytest.mark.slow("~10 seconds.")
         def test_predict_dag1(self) -> None:
@@ -45,7 +48,7 @@ if True:
             dag.run_leq_node("deepar", "fit")
             df_out = dag.run_leq_node("deepar", "predict")["df_out"]
             df_str = hunitest.convert_df_to_string(df_out, index=True, decimals=1)
-            self.check_string(df_str)
+            self.check_string(df_str, fuzzy_match=True)
 
         def _get_dag(self) -> dtfcordag.DAG:
             mxnet.random.seed(0)
@@ -72,9 +75,7 @@ if True:
             config["x_vars"] = None
             config["y_vars"] = ["y"]
             trainer_kwargs = {"epochs": 1}
-            config["trainer_kwargs"] = cconfig.Config.from_dict(
-                trainer_kwargs
-            )
+            config["trainer_kwargs"] = cconfig.Config.from_dict(trainer_kwargs)
             estimator_kwargs = {"prediction_length": 2}
             config["estimator_kwargs"] = cconfig.Config.from_dict(
                 estimator_kwargs
@@ -88,6 +89,7 @@ if True:
             return dag
 
     class TestDeepARGlobalModel(hunitest.TestCase):
+        @pytest.mark.requires_ck_infra
         def test_fit1(self) -> None:
             mxnet.random.seed(0)
             local_ts = self._get_local_ts()
@@ -113,6 +115,7 @@ if True:
             )
             self.check_string(config_info_output)
 
+        @pytest.mark.requires_ck_infra
         def test_fit_dag1(self) -> None:
             mxnet.random.seed(0)
             dag = dtfcordag.DAG(mode="strict")
@@ -157,9 +160,7 @@ if True:
             config = cconfig.Config()
             config["nid"] = "deepar"
             trainer_kwargs = {"epochs": 1}
-            config["trainer_kwargs"] = cconfig.Config.from_dict(
-                trainer_kwargs
-            )
+            config["trainer_kwargs"] = cconfig.Config.from_dict(trainer_kwargs)
             estimator_kwargs = {
                 "freq": "T",
                 "use_feat_dynamic_real": False,

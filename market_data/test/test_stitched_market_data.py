@@ -4,8 +4,9 @@ import pandas as pd
 import pytest
 
 import helpers.henv as henv
-import market_data.market_data_example as mdmadaex
 import market_data as mdata
+import market_data.market_data_example as mdmadaex
+
 # import market_data_lime.ig_market_data_example as mdlemdaex
 # import market_data_lime.ig_stitched_market_data as mdlesmada
 

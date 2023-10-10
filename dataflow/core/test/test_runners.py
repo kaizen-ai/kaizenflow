@@ -120,7 +120,7 @@ class TestIncrementalDagRunner1(hunitest.TestCase):
         # Check that dataframe results of `col` do not retroactively change
         # over successive prediction steps (which would suggest future
         # peeking).
-        col = "vwap_ret_0_vol_2_hat"
+        col = "vwap_ret_0_vol.shift_-2_hat"
         for rb_i, rb_i_next in zip(result_bundles[:-1], result_bundles[1:]):
             srs_i = rb_i.result_df[col]
             srs_i_next = rb_i_next.result_df[col]

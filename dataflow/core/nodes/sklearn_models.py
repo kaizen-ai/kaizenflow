@@ -19,6 +19,7 @@ import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
 import dataflow.core.utils as dtfcorutil
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
@@ -423,11 +424,27 @@ class MultiindexSkLearnModel(dtfconobas.FitPredictNode):
                 nan_mode=self._nan_mode,
             )
             if fit:
+                df_drop_na = hpandas.dropna(df, how="all")
+                if df_drop_na.empty:
+                    # TODO(Grisha): come up with a better mechanism to handle
+                    # empty data, maybe the fix should go to `ContinuousSkLearnModel`.
+                    # Do not fit on NaN data.
+                    _LOG.warning(
+                        "No data found for key=%s, skipping the fit stage", key
+                    )
+                    continue
                 df_out = csklm.fit(df)["df_out"]
                 info_out = csklm.get_info("fit")
                 self._key_fit_state[key] = csklm.get_fit_state()
             else:
-                hdbg.dassert_in(key, self._key_fit_state)
+                if key not in self._key_fit_state:
+                    # TODO(Grisha): come up with a better mechanism to handle
+                    # empty fit state, maybe the fix should go to `ContinuousSkLearnModel`.
+                    _LOG.warning(
+                        "No fit state found for key=%s, skipping the predict stage",
+                        key,
+                    )
+                    continue
                 csklm.set_fit_state(self._key_fit_state[key])
                 df_out = csklm.predict(df)["df_out"]
                 info_out = csklm.get_info("predict")

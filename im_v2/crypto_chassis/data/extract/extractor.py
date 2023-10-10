@@ -54,23 +54,28 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
             data[float_columns] = data[float_columns].astype(float)
         return data
 
-    def convert_currency_pair(self, currency_pair: str) -> str:
+    def convert_currency_pair(
+        self,
+        currency_pair: str,
+        exchange_id: str = None,
+    ) -> str:
         """
         Convert currency pair used for getting data from exchange.
 
-        The transformation is dependent on the provided contract type.
+        The transformation is dependent on the provided
+        contract types and exchange_id.
 
         :param currency_pair: extracted asset, e.g. "BTC_USDT"
-        :return: currency pair in CryptoChassis format.
         """
-        if self.contract_type == "futures":
-            # Remove separator for futures contracts, e.g.
-            #  'BTC/USDT' -> 'btcusdt'
-            replace = [("/", ""), ("_", "")]
-        elif self.contract_type == "spot":
+        if exchange_id == "okx" or self.contract_type == "spot":
             # Replace separators with '-', e.g.
             # 'BTC/USDT' -> 'btc-usdt'.
             replace = [("/", "-"), ("_", "-")]
+        elif self.contract_type == "futures":
+            # Remove separator for futures contracts, e.g.
+            #  'BTC/USDT' -> 'btcusdt'
+            replace = [("/", ""), ("_", "")]
+
         for old, new in replace:
             currency_pair = currency_pair.replace(old, new).lower()
         return currency_pair
@@ -192,20 +197,21 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         if depth:
             hdbg.dassert_lgt(1, depth, 10, True, True)
             depth = str(depth)
-        # Convert currency pair to CryptoChassis supported format.
-        currency_pair = self.convert_currency_pair(currency_pair)
         # Set an exchange ID for futures, if applicable.
         if self.contract_type == "futures":
-            hdbg.dassert_eq(
-                exchange_id, "binance", msg="Only binance futures are supported"
+            hdbg.dassert_in(
+                exchange_id,
+                ["binance", "okex"],
+                msg="Only binance and okex futures are supported",
             )
-            if currency_pair.endswith("usd"):
-                # Change exchange and currency format to COIN-M futures.
-                currency_pair = currency_pair + "_perp"
-                exchange_id = "binance-coin-futures"
-            else:
-                # Change exchange ID to USDS futures.
-                exchange_id = "binance-usds-futures"
+            if exchange_id == "binance":
+                if currency_pair.endswith("usd"):
+                    # Change exchange and currency format to COIN-M futures.
+                    currency_pair = currency_pair + "_perp"
+                    exchange_id = "binance-coin-futures"
+                else:
+                    # Change exchange ID to USDS futures.
+                    exchange_id = "binance-usds-futures"
         # Build base URL.
         core_url = self._build_base_url(
             data_type="market-depth",
@@ -302,10 +308,6 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
             end_timestamp = hdateti.convert_timestamp_to_unix_epoch(
                 end_timestamp, unit="s"
             )
-        # Currency pairs in market data are stored in `cur1/cur2` format,
-        # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
-        # convert the specified pair to this view.
-        currency_pair = self.convert_currency_pair(currency_pair)
         # Set an exchange ID for futures, if applicable.
         if self.contract_type == "futures":
             hdbg.dassert_eq(
@@ -404,13 +406,15 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
                 pd.Timestamp,
             )
             start_timestamp = start_timestamp.strftime("%Y-%m-%dT%XZ")
-        currency_pair = self.convert_currency_pair(currency_pair)
         # Set an exchange ID for futures, if applicable.
         if self.contract_type == "futures":
-            hdbg.dassert_eq(
-                exchange_id, "binance", msg="Only binance futures are supported"
+            hdbg.dassert_in(
+                exchange_id,
+                ["binance", "okex", "okx"],
+                msg="Only binance and okex futures are supported",
             )
-            exchange_id = "binance-usds-futures"
+            if exchange_id == "binance":
+                exchange_id = "binance-usds-futures"
         # Build base URL.
         core_url = self._build_base_url(
             data_type="trade",
@@ -420,9 +424,21 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         # Build URL with specified parameters.
         query_url = self._build_query_url(core_url, startTime=start_timestamp)
         # Request the data.
+        # TODO(Vlad): There is a bug in the Chassis API that causes it to return
+        #  a wrong dates for the data. For example, if we request data for
+        #  2023-01-01, it returns data for 2022-12-31.
+        #  Needs to be catch and inform the user.
         r = requests.get(query_url)
         # Retrieve raw data.
-        data_json = r.json()
+        try:
+            data_json = r.json()
+        except requests.exceptions.JSONDecodeError as e:
+            _LOG.error(
+                "Unable to retrieve data for %s" " message=%s",
+                currency_pair,
+                r.text,
+            )
+            raise e
         # If there is no `urls` key or there is one but the value is an empty list.
         if not data_json.get("urls"):
             _LOG.info(
@@ -435,9 +451,16 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         # Convert CSV into dataframe.
         trade = pd.read_csv(df_csv, compression="gzip")
         # Rename time column.
-        trade = trade.rename(columns={"time_seconds": "timestamp"})
-        # Convert float timestamp to int.
-        trade["timestamp"] = trade["timestamp"].apply(lambda x: int(x))
+        trade = trade.rename(
+            columns={"time_seconds": "timestamp", "size": "amount"}
+        )
+        # Convert milliseconds timestamp to integer.
+        trade["timestamp"] = trade["timestamp"] * 1000
+        trade["timestamp"] = trade["timestamp"].astype(int)
+        # Limit columns to those that are required.
+        trade["side"] = trade["is_buyer_maker"].map({1: "buy", 0: "sell"})
+        columns = ["timestamp", "price", "amount", "side"]
+        trade = trade[columns]
         return trade
 
     def _build_base_url(
@@ -454,6 +477,9 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         :param currency_pair: the pair of currency to exchange, e.g. `btc-usd`
         :return: base URL of CryptoChassis API
         """
+        # Make-do solution because chassis uses different name for OKX.
+        if exchange == "okx":
+            exchange = "okex"
         # Build main API URL.
         core_url = f"{self._endpoint}/{data_type}/{exchange}/{currency_pair}"
         return core_url

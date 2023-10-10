@@ -4,6 +4,7 @@ Import as:
 import core.plotting as coplotti
 """
 
+from core.plotting.boxplot import *  # pylint: disable=unused-import # NOQA
 from core.plotting.correlation import *  # pylint: disable=unused-import # NOQA
 from core.plotting.counts import *  # pylint: disable=unused-import # NOQA
 from core.plotting.drawdown import *  # pylint: disable=unused-import # NOQA

@@ -10,7 +10,7 @@ import argparse
 import logging
 import os
 from datetime import timedelta
-from typing import Optional
+from typing import List, Optional
 
 import pandas as pd
 import psycopg2 as psycop
@@ -18,6 +18,7 @@ import psycopg2 as psycop
 import helpers.hdatetime as hdateti
 import helpers.hgit as hgit
 import helpers.hio as hio
+import helpers.hretry as hretry
 import helpers.hsql as hsql
 import helpers.hsql_test as hsqltest
 import im.ib.sql_writer as imibsqwri
@@ -33,6 +34,8 @@ _LOG = logging.getLogger(__name__)
 #  corresponding data type
 BASE_UNIQUE_COLUMNS = ["timestamp", "exchange_id", "currency_pair"]
 BID_ASK_UNIQUE_COLUMNS = []
+TRADES_UNIQUE_COLUMNS = []
+NUMBER_OF_RETRIES_TO_SAVE = 3
 OHLCV_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + [
     "open",
     "high",
@@ -40,6 +43,7 @@ OHLCV_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + [
     "close",
     "volume",
 ]
+RETRY_EXCEPTION = (psycop.Error,)
 
 
 # #############################################################################
@@ -72,15 +76,56 @@ class DbConnectionManager:
         """
         if cls.db_stage is not None and cls.db_stage != db_stage:
             raise ValueError(
-                f"The connection has already been established to a different stage"
+                "The connection has already been established to a different stage"
             )
         if cls.connection is None:
+            cls.connection = cls._get_new_connection(db_stage)
+        else:
+            if not cls._is_connection_alive():
+                _LOG.warning("Connection is not alive, reconnecting.")
+                cls.connection = cls._get_new_connection(db_stage)
+        cls.db_stage = db_stage
+        return cls.connection
+
+    @classmethod
+    def _is_connection_alive(cls) -> bool:
+        """
+        Check if the connection is alive.
+        Based on the SO: 
+        https://stackoverflow.com/questions/1281875/making-sure-that-psycopg2-database-connection-alive
+
+        :return: True if the connection is alive, False otherwise.
+        """
+        if cls.connection is None:
+            _LOG.warning("No DB connection has been established yet.")
+            return False
+        try:
+            cur = cls.connection.cursor()
+            cur.execute("SELECT 1")
+        except (psycop.OperationalError, psycop.InterfaceError) as e:
+            _LOG.warning("Connection is not alive: %s", e)
+            return False
+        return True
+
+    @classmethod
+    def _get_new_connection(cls, db_stage: str) -> hsql.DbConnection:
+        """
+        Create and return a new DB connection.
+
+        :param db_stage: DB stage to create connection to.
+        :return: DbConnection
+        """
+        try:
+            # Connect with the parameters from the env var.
+            #  Usually when credentials are injected into a container.
+            #
+            connection = hsql.get_connection_from_env_vars()
+        except KeyError as e:
+            _LOG.info(
+                f"Unable to fetch DB credentials from environment variables: \n\t{e}\n\t"
+                + "Attempting env file method."
+            )
             try:
-                # Connect with the parameters from the env var.
-                #  Usually when credentials are injected into a container.
-                #
-                cls.connection = hsql.get_connection_from_env_vars()
-            except KeyError:
                 # If there are no OS env vars, try to fetch credentials from env file.
                 env_file = imvimlita.get_db_env_path(db_stage)
                 # Connect with the parameters from the env file.
@@ -88,11 +133,15 @@ class DbConnectionManager:
                 connection_params = hsql.get_connection_info_from_env_file(
                     env_file
                 )
-                cls.connection = hsql.get_connection(*connection_params)
-            _LOG.info(
-                f"Created {cls.db_stage} DB connection: \n {cls.connection}"
-            )
-        return cls.connection
+                connection = hsql.get_connection(*connection_params)
+            except Exception as e:
+                _LOG.info(
+                    f"Unable to fetch DB credentials from env file: \n\t{e}\n\t"
+                    + "Attempting AWS SecretsManager method."
+                )
+                connection = hsql.get_connection_from_aws_secret(stage=db_stage)
+        _LOG.info("Created %s DB connection: \n %s", db_stage, cls.connection)
+        return connection
 
 
 def add_db_args(
@@ -264,7 +313,7 @@ def fetch_last_minute_bid_ask_rt_db_data(
     """
     end_ts = hdateti.get_current_time(time_zone).floor("min")
     start_ts = end_ts - timedelta(minutes=1)
-    return fetch_bid_ask_rt_db_data(db_connection, src_table, start_ts, end_ts)
+    return load_db_data(db_connection, src_table, start_ts, end_ts)
 
 
 def fetch_bid_ask_rt_db_data(
@@ -272,7 +321,7 @@ def fetch_bid_ask_rt_db_data(
     src_table: str,
     start_ts: pd.Timestamp,
     end_ts: pd.Timestamp,
-) -> pd.Timestamp:
+) -> pd.DataFrame:
     """
     Fetch bid/ask data for specified interval.
 
@@ -293,11 +342,73 @@ def fetch_bid_ask_rt_db_data(
     return hsql.execute_query_to_df(db_connection, select_query)
 
 
+# TODO(Juraj): start by
+def load_db_data(
+    db_connection: hsql.DbConnection,
+    src_table: str,
+    start_ts: Optional[pd.Timestamp],
+    end_ts: Optional[pd.Timestamp],
+    *,
+    currency_pairs: Optional[List[str]] = None,
+    limit: Optional[int] = None,
+    bid_ask_levels: Optional[List[int]] = None,
+) -> pd.DataFrame:
+    """
+    Load database data from a specified table given a opened DB connection.
+
+    The method allows filtering by:
+        - timestamp interval (assuming `timestamp`
+    column is present)
+        - currency pairs (assuming `currency_pair` column is present)
+        - bid_ask_levels (assuming `level` column exists)
+
+    Timestamp interval is applied as: [start_ts, end_ts].
+
+    :param db_connection: a database connection object
+    :param src_table: name of the table to select from
+    :param start_ts: start of the filtered interval
+    :param timestamp: end of the filtered interval
+    :param currency_pairs: currency_pairs to select, if None, all pairs are loaded
+    :param limit: return first `limit` rows, ordered by timestamp in descending order
+    :param bid_ask_levels: which levels of bid_ask data to load, if None,
+     all levels are loaded
+    :return DataFrame with data loaded from `src_table`
+    """
+    query = f"SELECT * FROM {src_table}"
+    apply_and = False
+    if any([start_ts, end_ts, currency_pairs, bid_ask_levels]):
+        query += " WHERE "
+    if start_ts:
+        start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts, unit="ms")
+        query += f"timestamp >= {start_ts}"
+        apply_and = True
+    if end_ts:
+        end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts, unit="ms")
+        query += " AND " if apply_and else ""
+        apply_and = True
+        query += f"timestamp <= {end_ts}"
+    if currency_pairs:
+        query += " AND " if apply_and else ""
+        apply_and = True
+        pairs = [f"'{p}'" for p in currency_pairs]
+        pairs = ", ".join(pairs)
+        query += f"currency_pair IN ({pairs})"
+    if bid_ask_levels:
+        query += " AND " if apply_and else ""
+        levels = ", ".join(map(str, bid_ask_levels))
+        query += f"level IN ({levels})"
+    if limit:
+        query += f" ORDER BY timestamp DESC LIMIT {limit}"
+    _LOG.info(f"Executing query: \n\t{query}")
+    return hsql.execute_query_to_df(db_connection, query)
+
+
 def fetch_data_by_age(
     timestamp: pd.Timestamp,
     db_connection: hsql.DbConnection,
     db_table: str,
     table_timestamp_column: str,
+    exchange_id: str,
 ) -> pd.DataFrame:
     """
     Fetch data strictly older than a specified timestamp from a db table.
@@ -309,12 +420,15 @@ def fetch_data_by_age(
     :param db_table: name of the table to select from
     :param table_timestamp_column: name of the column to apply the comparison on
     :param timestamp: timestamp to filter on
+    :param exchange_id: exchange_id to filter on
     :return DataFrame with data older than the specified `timestamp` based
      on `table_column` value.
     """
     ts_unix = hdateti.convert_timestamp_to_unix_epoch(timestamp)
     select_query = f"""
-                    SELECT * FROM {db_table} WHERE {table_timestamp_column} < {ts_unix};
+                    SELECT * FROM {db_table}
+                    WHERE {table_timestamp_column} < {ts_unix}
+                    AND EXCHANGE_ID = '{exchange_id}';
                     """
     return hsql.execute_query_to_df(db_connection, select_query)
 
@@ -324,7 +438,8 @@ def drop_db_data_by_age(
     db_connection: hsql.DbConnection,
     db_table: str,
     table_column: str,
-) -> None:
+    exchange_id: str,
+) -> int:
     """
     Delete data strictly older than a specified timestamp from a db table.
 
@@ -334,22 +449,37 @@ def drop_db_data_by_age(
     :param db_table: name of the table to delete from
     :param table_column: name of the column to apply the comparison on
     :param timestamp: timestamp to filter on
+    :param exchange_id: exchange_id to filter on
+    :return number of deleted rows
     """
     ts_unix = hdateti.convert_timestamp_to_unix_epoch(timestamp)
     delete_query = f"""
-                    DELETE FROM {db_table} WHERE {table_column} < {ts_unix};
+                    WITH deleted AS (
+                    DELETE FROM {db_table}
+                    WHERE {table_column} < {ts_unix}
+                    AND EXCHANGE_ID = '{exchange_id}'
+                    RETURNING *)
+                    SELECT COUNT(*) FROM deleted;
                     """
-    hsql.execute_query(db_connection, delete_query)
+    result = hsql.execute_query(db_connection, delete_query)
+    num_deleted = result[0][0]
+    return num_deleted
 
 
 # TODO(Juraj): replace all occurrences of code inserting to db with a call to
 # this function.
 # TODO(Juraj): probabl hsql is a better place for this?
+@hretry.retry(
+    num_attempts=NUMBER_OF_RETRIES_TO_SAVE,
+    exceptions=RETRY_EXCEPTION,
+    retry_delay_in_sec=0.5,
+)
 def save_data_to_db(
     data: pd.DataFrame,
     data_type: str,
     db_connection: hsql.DbConnection,
     db_table: str,
+    # TODO(Vlad, Juraj): Implement the time_zone
     time_zone: str,
 ) -> None:
     """
@@ -358,6 +488,7 @@ def save_data_to_db(
     INSERT query logic ensures exact duplicates are not saved into the database again.
 
     :param data: data to insert into database.
+    :param data_type: the type of the data, (e.g., `bid_ask` or `ohlcv`)
     :param db_connection: a database connection object
     :param db_table: name of the table to insert to.
     :param time_zone: time zone used to add correct knowledge_timestamp to the data
@@ -370,6 +501,8 @@ def save_data_to_db(
         unique_columns = OHLCV_UNIQUE_COLUMNS
     elif data_type == "bid_ask":
         unique_columns = BID_ASK_UNIQUE_COLUMNS
+    elif data_type == "trades":
+        unique_columns = TRADES_UNIQUE_COLUMNS
     else:
         raise ValueError(f"Invalid data_type='{data_type}'")
     hsql.execute_insert_on_conflict_do_nothing_query(

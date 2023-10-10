@@ -33,12 +33,11 @@ from typing import List, Tuple
 import numpy as np
 import pandas as pd
 
+import defi.dao_cross.optimize as ddacropt
+import defi.dao_cross.order as ddacrord
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
-import defi.dao_cross.optimize as ddacropt
-import defi.dao_cross.order as ddacrord
-
 
 # %%
 try:
@@ -101,6 +100,7 @@ _quantities = [4, 2, 5, 3, 6, 2, 9, 1]
 _base_tokens = ["BTC", "BTC", "BTC", "BTC", "ETH", "ETH", "ETH", "ETH"]
 _quote_tokens = ["ETH", "ETH", "ETH", "ETH", "BTC", "BTC", "BTC", "BTC"]
 _limit_prices = [3, 3.5, 1.5, 1.9, 0.6, 2, 0.1, 0.25]
+
 
 def test1() -> None:
     """

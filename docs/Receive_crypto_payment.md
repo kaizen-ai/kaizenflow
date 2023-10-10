@@ -64,7 +64,7 @@ https://bitcoin.org/en/choose-your-wallet
 
 # Choose a crypto currency to receive money in
 
-- One can either receive a payment in BTC or in one of the Stablecoins (USDC is
+- One can either receive a payment in BTC or in one of the Stablecoins (USDT is
   a preference)
 - People in the team prefer to use Stablecoins since Stablecoins pursue price
   stability

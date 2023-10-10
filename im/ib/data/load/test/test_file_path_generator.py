@@ -4,6 +4,7 @@ Import as:
 import im.ib.data.load.test.test_file_path_generator as tfpgen
 """
 
+import pytest
 
 import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
@@ -15,6 +16,8 @@ AM_AWS_PROFILE = "am"
 _S3_BUCKET = hs3.get_s3_bucket_path(AM_AWS_PROFILE, add_s3_prefix=False)
 
 
+@pytest.mark.requires_aws
+@pytest.mark.requires_ck_infra
 class TestIbFilePathGenerator(hunitest.TestCase):
     """
     Test correctness of S3 IB paths.
@@ -24,6 +27,8 @@ class TestIbFilePathGenerator(hunitest.TestCase):
         super().setUp()
         self._file_path_generator = imidlifpge.IbFilePathGenerator()
 
+    @pytest.mark.requires_aws
+    @pytest.mark.requires_ck_infra
     def test_get_latest_symbols_file1(self) -> None:
         """
         Get the latest file with the info.
