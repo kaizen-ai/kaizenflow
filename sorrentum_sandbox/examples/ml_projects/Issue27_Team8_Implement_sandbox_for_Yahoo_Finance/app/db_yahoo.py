@@ -160,6 +160,19 @@ def get_yfinance_spot_downloaded_1d_create_table_query() -> str:
     return query
 
 
+def get_dask_db() -> str:
+    """
+    Get SQL query to create db for features computed using dask.
+    """
+    query = """
+    CREATE TABLE IF NOT EXISTS dask_dataframe_1min_average_300sec_check3(
+            currency_pair VARCHAR(255) NOT NULL,
+            timestamp TIMESTAMP WITH TIME ZONE,
+            average_last_300_seconds_open NUMERIC
+            )
+            """
+    return query
+
 def get_db_connection() -> Any:
     """
     Retrieve connection based on hardcoded values.
@@ -262,6 +275,8 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         query = get_yfinance_spot_downloaded_1d_create_table_query()
         cursor.execute(query)
 
+        query = get_dask_db()
+        cursor.execute(query)
 
 # #############################################################################
 # PostgresClient
