@@ -52,9 +52,8 @@ class CsvDataFrameSaver(ssacosav.DataSaver):
 
         :param data: data to persists into CSV
         """
-        hdbg.dassert_isinstance(
-            data.get_data(), pd.DataFrame, "Only DataFrame is supported."
-        )
+        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
+        signature = ("uniswap")
         signature = "uniswap_table"
         signature += ".csv"
         hio.create_dir(self.target_dir, incremental=True)
@@ -92,6 +91,14 @@ def _add_download_args(
         type=str,
         help="Path to the target directory to store CSV data into",
     )
+
+    parser.add_argument(
+        "--live_flag",
+        action="store_true",
+        required=False,
+        help="Flag for running in live mode"
+    )
+
     return parser
 
 
@@ -114,14 +121,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     # Download data.
     # Load data.
-    start_timestamp = args.start_timestamp
-    end_timestamp = args.end_timestamp
-    # downloader = sisebido.bitqueryApiDownloader()  ## TODO Alter here, create if statement and flag for realtime data
-    raw_data = sisebido.run_bitquery_query(start_timestamp, end_timestamp)
+    start_timestamp = (args.start_timestamp)
+    end_timestamp = (args.end_timestamp)
+    live_flag = (args.live_flag)
+    raw_data = sisebido.run_bitquery_query(start_timestamp, None, end_timestamp,False)
     # Save data as CSV.
     saver = CsvDataFrameSaver(args.target_dir)
     saver.save(raw_data)
-
 
 if __name__ == "__main__":
     _main(_parse())
