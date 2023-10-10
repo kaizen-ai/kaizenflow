@@ -55,7 +55,7 @@ def _get_default_dst_dir(
     :return: dst dir, e.g., `build_tile_configs.C3a.ccxt_v7_1-all.5T.2022-06-01_2022-06-02.ins/`
     """
     # Get DagBuilder name since it's convenient to use in the dir names.
-    dag_builder_name = dtfcore.get_DagBuilder_name_from_string_pointer(
+    dag_builder_name = dtfcore.get_DagBuilder_name_from_string(
         dag_builder_ctor_as_str
     )
     dst_dir = ".".join(

@@ -77,7 +77,7 @@ This contains the absolute minimal amount of info to start developing
 
 # Project management
 
-- [Contributor Scorecard](docs/Contributor_Scorecard.md)
+- [Contributor Scoring](docs/Contributor_Scoring.md)
 
   - How we give feedback to contributors
 

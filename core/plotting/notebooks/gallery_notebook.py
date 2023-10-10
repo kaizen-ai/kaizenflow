@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -32,14 +32,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import core.config as cconfig
+import core.plotting.boxplot as cploboxp
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
+import core.plotting.normality as cplonorm
 import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
-import core.plotting.test.test_plots as cptetepl
-import core.plotting.correlation as cplocorr
-import dataflow.model.test.test_model_plotter as dmtetemopl
-
 import dataflow.model.model_plotter as dtfmomoplo
 import dataflow.model.test.test_model_evaluator as cdmttme
 import helpers.hdbg as hdbg
@@ -69,13 +67,19 @@ else:
 print(config)
 
 # %% [markdown]
+# # Test data
+
+# %%
+test_df = cptetepl.Test_plots.get_test_plot_df1()
+test_srs = cptetepl.Test_plots.get_test_plot_srs1()
+
+# %% [markdown]
 # # Plots
 
 # %% [markdown]
 # ## `plot_histograms_and_lagged_scatterplot()`
 
 # %%
-test_srs = cptetepl.Test_plots.get_plot_histograms_and_lagged_scatterplot1()
 lag = 7
 # %%
 cpvistte.plot_histograms_and_lagged_scatterplot(
@@ -84,9 +88,6 @@ cpvistte.plot_histograms_and_lagged_scatterplot(
 
 # %% [markdown]
 # ## `plot_timeseries_distribution()`
-# %%
-test_srs = cptetepl.Test_plots.get_plot_timeseries_distribution1()
-
 # %%
 datetime_types = ["hour"]
 cplmiplo.plot_timeseries_distribution(test_srs, datetime_types)
@@ -97,9 +98,6 @@ cplmiplo.plot_timeseries_distribution(test_srs, datetime_types)
 
 # %% [markdown]
 # ## `plot_time_series_by_period()`
-
-# %%
-test_srs = cptetepl.Test_plots.get_plot_time_series_by_period1()
 
 # %%
 period = "day"
@@ -114,7 +112,6 @@ cplmiplo.plot_time_series_by_period(test_srs, period)
 
 # %%
 mode = "clustermap"
-test_df = cptetepl.Test_plots.get_test_plot_df1()
 
 # %%
 cplocorr.plot_heatmap(test_df, mode, figsize=config["figsize"])
@@ -157,9 +154,6 @@ plotter.plot_performance(
 # ## `plot_effective_correlation_rank()`
 
 # %%
-test_df = cptetepl.Test_plots.get_test_plot_df1()
-
-# %%
 cplocorr.plot_effective_correlation_rank(test_df)
 
 # %%
@@ -169,9 +163,6 @@ cplocorr.plot_effective_correlation_rank(test_df, q_values)
 
 # %% [markdown]
 # ## `plot_spectrum()`
-
-# %%
-test_df = cptetepl.Test_plots.get_test_plot_df1()
 
 # %%
 cplmiplo.plot_spectrum(test_df)
@@ -198,4 +189,27 @@ ax = fig.add_axes([0, 0, 1, 1])
 mode = "scatter"
 cplmiplo.plot_projection(df, mode=mode, ax=ax)
 
+
+# %% [markdown]
+# # `plot_boxplot()`
+
 # %%
+cploboxp.plot_boxplot(test_df)
+
+# %%
+grouping = "by_col"
+ylabel = "Test Label"
+
+# %%
+cploboxp.plot_boxplot(test_df, grouping=grouping, ylabel=ylabel)
+
+# %% [markdown]
+# ## `plot_qq()`
+
+# %%
+cplonorm.plot_qq(test_srs)
+
+# %%
+test_srs[20:50] = np.nan
+_, axes = plt.subplots(1, 1, figsize=(10, 10))
+cplonorm.plot_qq(test_srs, ax=axes, dist="norm", nan_mode="drop")

@@ -9,6 +9,7 @@ from typing import Dict
 import invoke
 import pytest
 
+import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hprint as hprint
 import helpers.hserver as hserver
@@ -133,7 +134,11 @@ def _gh_login() -> None:
 
 # TODO(ShaopengZ): fails when running Sorrentum on ck server. `gh auth login`
 # issue.
-@pytest.mark.skip
+@pytest.mark.skipif(
+    henv.execute_repo_config_code("get_name()") == "//sorr"
+    and hserver.is_inside_ci(),
+    reason="Do not pass from sorrentum GH actions. See CmTask5211",
+)
 class TestGhLogin1(hunitest.TestCase):
     def test_gh_login(self) -> None:
         _gh_login()
@@ -173,6 +178,11 @@ class TestDryRunTasks1(hunitest.TestCase):
         act = hprint.remove_non_printable_chars(act)
         regex = "(WARN|INFO)\s+hcache.py"
         act = hunitest.filter_text(regex, act)
+        # Filter out `no module` warnings.
+        # TODO(Grisha): add the "no module warning" filtering
+        # to `purify_text()` in `check_string()`.
+        regex = "WARN.*No module"
+        act = hunitest.filter_text(regex, act)        
         if check_string:
             self.check_string(act)
 

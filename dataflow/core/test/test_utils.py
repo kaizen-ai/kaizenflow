@@ -20,18 +20,16 @@ class Test_get_df_info_as_string(hunitest.TestCase):
         self.check_string(info)
 
 
-class Test_get_DagBuilder_name_from_string_pointer(hunitest.TestCase):
+class Test_get_DagBuilder_name_from_string(hunitest.TestCase):
     """
-    Test that `get_DagBuilder_name_from_string_pointer()` returns a correct DAG
-    builder name.
+    Test that the function returns a correct DAG builder name.
     """
+
     def test1(self) -> None:
         dag_builder_ctor_as_str = (
             "dataflow_orange.pipelines.C1.C1b_pipeline.C1b_DagBuilder"
         )
-        act = dtfcorutil.get_DagBuilder_name_from_string_pointer(
-            dag_builder_ctor_as_str
-        )
+        act = dtfcorutil.get_DagBuilder_name_from_string(dag_builder_ctor_as_str)
         exp = "C1b"
         self.assert_equal(act, exp)
 
@@ -39,9 +37,7 @@ class Test_get_DagBuilder_name_from_string_pointer(hunitest.TestCase):
         dag_builder_ctor_as_str = (
             "dataflow_orange.pipelines.C3.C3a_pipeline_tmp.C3a_DagBuilder_tmp"
         )
-        act = dtfcorutil.get_DagBuilder_name_from_string_pointer(
-            dag_builder_ctor_as_str
-        )
+        act = dtfcorutil.get_DagBuilder_name_from_string(dag_builder_ctor_as_str)
         exp = "C3a"
         self.assert_equal(act, exp)
 
@@ -49,8 +45,6 @@ class Test_get_DagBuilder_name_from_string_pointer(hunitest.TestCase):
         dag_builder_ctor_as_str = (
             "dataflow_lemonade.pipelines.C5.C5b_pipeline.C5b_DagBuilder"
         )
-        act = dtfcorutil.get_DagBuilder_name_from_string_pointer(
-            dag_builder_ctor_as_str
-        )
+        act = dtfcorutil.get_DagBuilder_name_from_string(dag_builder_ctor_as_str)
         exp = "C5b"
         self.assert_equal(act, exp)
