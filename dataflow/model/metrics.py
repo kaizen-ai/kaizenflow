@@ -4,17 +4,18 @@ Import as:
 import dataflow.model.metrics as dtfmodmetr
 """
 import logging
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 
 import core.config as cconfig
 import core.finance as cofinanc
-import core.statistics.requires_statsmodels as cstresta
-import core.statistics.sharpe_ratio as cstshrat
+import core.statistics as cstats
+import dataflow.core as dtfcore
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
@@ -25,6 +26,8 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(Paul): Consider deprecating this format, since it seems unique to this
+#  file.
 def _dassert_is_metrics_df(df: pd.DataFrame) -> None:
     """
     Check if the given df is a metrics_df.
@@ -32,6 +35,16 @@ def _dassert_is_metrics_df(df: pd.DataFrame) -> None:
     A metrics_df:
        - is indexed by the pair (end timestamp, asset id)
        - has all the features as columns
+
+    E.g.,
+    ```
+                                            close        ...  close.ret_0
+    end_ts                      asset_id
+    2022-08-31 20:00:00-04:00   1030828978  0.6696       ...  NaN
+                                1182743717  20016.4000   ...  NaN
+                                1464553467  1551.9500    ...  NaN
+    ...
+    ```
     """
     # Check that df is not empty.
     hdbg.dassert_lt(0, df.shape[0])
@@ -53,58 +66,60 @@ def _dassert_is_metrics_df(df: pd.DataFrame) -> None:
     hdbg.dassert_eq(asset_id_idx.name, "asset_id")
 
 
+# TODO(Grisha): consider adding `ResultDf` as a type hint so that we
+# can refer to it in the interfaces.
+# TODO(Grisha): consider moving the function to `result_bundle.py`.
+def dassert_is_result_df(df: pd.DataFrame) -> None:
+    """
+    Check if the given df is a result_df. A result_df:
+
+       - has 2 column levels
+       - has all the features as the 1st column level
+       - has asset ids as the 2nd column level
+       - is indexed by end timestamp
+    E.g.:
+    ```
+                              vwap.ret_0.vol_adj.lag2   ...   vwap.ret_0.vol_adj.c
+                              8968126878   1030828978   ...   8968126878  1030828978
+    end_ts
+    2022-08-31 20:00:00-04:00 NaN          0.09         ...   0.07        0.06
+    2022-08-31 20:05:00-04:00 0.08         NaN          ...   NaN         0.05
+    ...
+    ```
+    """
+    # Check that df is not empty.
+    hdbg.dassert_lt(0, df.shape[0])
+    # Check for number of column levels.
+    col_length = df.columns.nlevels
+    hdbg.dassert_eq(col_length, 2)
+    # Check type of column levels.
+    hdbg.dassert_container_type(df.columns.get_level_values(0), pd.Index, str)
+    hdbg.dassert_container_type(df.columns.get_level_values(1), pd.Index, int)
+    # Check if index is a datetime type that strictly increasing.
+    hpandas.dassert_index_is_datetime(df.index)
+    hpandas.dassert_strictly_increasing_index(df.index)
+
+
 def convert_to_metrics_format(
-    predict_df: pd.DataFrame,
+    result_df: pd.DataFrame,
     y_column_name: str,
     y_hat_column_name: str,
     *,
     asset_id_column_name: str = "asset_id",
 ) -> pd.DataFrame:
     """
-    Transform a predict_df (i.e. output of DataFlow pipeline) into a
+    Transform a result_df (i.e. output of the DataFlow pipeline) into a
     metrics_df.
-
-    A predict_df:
-       - is indexed by the timestamp of the end of intervals
-       - has multi-index column
-       - the innermost column corresponds to assets (encoded as ints)
-       - the outermost corresponding to "feature" (which can be inputs, outputs,
-           and internal nodes)
-
-    E.g.,
-    ```
-                              close                            ... close.ret_0
-                              1030828978 1182743717 1464553467 ... 1030828978 1182743717 1464553467
-    end_ts
-    2022-08-31 20:00:00-04:00  NaN        NaN        NaN       ...  NaN        NaN        NaN
-    2022-08-31 20:05:00-04:00  NaN        NaN        NaN       ...  NaN        NaN        NaN
-    ...
-    ```
-
-    A metrics_df:
-       - is indexed by the pair (end timestamp, asset id)
-       - has all the features as columns
-
-    E.g.,
-    ```
-                                            close        ...  close.ret_0
-    end_ts                      asset_id
-    2022-08-31 20:00:00-04:00   1030828978  0.6696       ...  NaN
-                                1182743717  20016.4000   ...  NaN
-                                1464553467  1551.9500    ...  NaN
-    ...
-    ```
     """
-    # TODO(Grisha): add `_dassert_is_result_df()`.
-    hdbg.dassert_eq(2, len(predict_df.columns.levels))
-    _LOG.debug("predict_df=\n%s", hpandas.df_to_str(predict_df))
+    dassert_is_result_df(result_df)
+    _LOG.debug("result_df=\n%s", hpandas.df_to_str(result_df))
     # Drop NaNs.
     drop_kwargs = {
         "drop_infs": True,
         "report_stats": True,
         "subset": [y_column_name, y_hat_column_name],
     }
-    metrics_df = predict_df.stack()
+    metrics_df = result_df.stack()
     metrics_df = hpandas.dropna(metrics_df, **drop_kwargs)
     #
     metrics_df.index.names = [metrics_df.index.names[0], asset_id_column_name]
@@ -113,52 +128,70 @@ def convert_to_metrics_format(
     return metrics_df
 
 
-# TODO(Grisha): specific of C3a, ideally we should add target variable
-# in `DagBuilder` so that `result_df` contains everythings we need.
+# TODO(Grisha): specific of C3a and C8b, ideally we should add target variable
+# in `DagBuilder` so that `result_df` contains everything we need.
 def add_target_var(
     result_df: pd.DataFrame, config: cconfig.Config, *, inplace: bool = False
 ) -> pd.DataFrame:
     """
     Add target variable to a result_df.
 
-    :param predict_df: DAG output
+    :param result_df: DAG output
     :param config: config that controls column names
     :param inplace: allow to change the original df if set to `True`, otherwise,
         make a copy
     :return: result_df with target variable
     """
-    hdbg.dassert_isinstance(result_df, pd.DataFrame)
+    dassert_is_result_df(result_df)
     _LOG.debug("result_df in=\n%s", hpandas.df_to_str(result_df))
     hdbg.dassert_isinstance(config, cconfig.Config)
     _LOG.debug("config=\n%s", config)
-    if not inplace:
-        # Make a df copy in order not to modify the original one.
-        result_df = result_df.copy()
-    # Compute returns.
-    rets = cofinanc.compute_ret_0(
-        result_df[config["column_names"]["price"]], mode="log_rets"
-    )
-    result_df = hpandas.add_multiindex_col(
-        result_df, rets, col_name=config["column_names"]["returns"]
-    )
-    # Adjust returns by volatility.
-    rets_vol_adj = result_df[config["column_names"]["returns"]] / result_df[
-        config["column_names"]["volatility"]
-    ].shift(2)
-    result_df = hpandas.add_multiindex_col(
-        result_df,
-        rets_vol_adj,
-        col_name=config["column_names"]["vol_adj_returns"],
-    )
-    # Shift 2 steps ahead.
-    rets_vol_adj_lead2 = result_df[
-        config["column_names"]["vol_adj_returns"]
-    ].shift(2)
-    result_df = hpandas.add_multiindex_col(
-        result_df,
-        rets_vol_adj_lead2,
-        col_name=config["column_names"]["target_variable"],
-    )
+    dag_builder_name = config["dag_builder_name"]
+    if dag_builder_name in ["C1b", "C1c", "C8a"]:
+        pass
+    elif dag_builder_name == "C3a":
+        if not inplace:
+            # Make a df copy in order not to modify the original one.
+            result_df = result_df.copy()
+        # Compute returns.
+        rets = cofinanc.compute_ret_0(
+            result_df[config["column_names"]["price"]], mode="log_rets"
+        )
+        result_df = hpandas.add_multiindex_col(
+            result_df, rets, col_name=config["cols_to_use"]["returns"]
+        )
+        # Adjust returns by volatility.
+        rets_vol_adj = result_df[config["cols_to_use"]["returns"]] / result_df[
+            config["column_names"]["volatility"]
+        ].shift(2)
+        result_df = hpandas.add_multiindex_col(
+            result_df,
+            rets_vol_adj,
+            col_name=config["cols_to_use"]["vol_adj_returns"],
+        )
+        # Shift 2 steps ahead.
+        rets_vol_adj_lead2 = result_df[
+            config["cols_to_use"]["vol_adj_returns"]
+        ].shift(2)
+        result_df = hpandas.add_multiindex_col(
+            result_df,
+            rets_vol_adj_lead2,
+            col_name=config["column_names"]["target_variable"],
+        )
+    elif dag_builder_name == "C8b":
+        if not inplace:
+            # Make a df copy in order not to modify the original one.
+            result_df = result_df.copy()
+        rets_vol_adj_lead2 = result_df[
+            config["column_names"]["vol_adj_returns"]
+        ].shift(2)
+        result_df = hpandas.add_multiindex_col(
+            result_df,
+            rets_vol_adj_lead2,
+            col_name=config["column_names"]["target_variable"],
+        )
+    else:
+        raise ValueError(f"Unsupported dag_builder_name={dag_builder_name}")
     _LOG.debug("result_df out=\n%s", hpandas.df_to_str(result_df))
     return result_df
 
@@ -183,6 +216,7 @@ def _parse_universe_version_str(universe_version_str: str) -> Tuple[str, str]:
     return vendor, universe_version
 
 
+# TODO(Paul): Review the design and possibly deprecate.
 # TODO(Grisha): @Dan Pass a list of tag modes instead of just 1.
 def annotate_metrics_df(
     metrics_df: pd.DataFrame,
@@ -277,6 +311,7 @@ def annotate_metrics_df(
 # #############################################################################
 
 
+# TODO(Paul): Consider deprecating.
 # TODO(Grisha): double check the return type, i.e. 1 and -1,
 # it seems working well with `calculate_hit_rate()` but is
 # counter-intuitive.
@@ -345,8 +380,8 @@ def apply_metrics(
     #
     y_column_name = config["column_names"]["target_variable"]
     y_hat_column_name = config["column_names"]["prediction"]
-    hit_col_name = config["column_names"]["hit"]
-    bar_pnl_col_name = config["column_names"]["bar_pnl"]
+    hit_col_name = config["metrics"]["column_names"]["hit"]
+    bar_pnl_col_name = config["metrics"]["column_names"]["bar_pnl"]
     #
     y = metrics_df[y_column_name]
     y_hat = metrics_df[y_hat_column_name]
@@ -360,7 +395,7 @@ def apply_metrics(
             # Compute hit rate per tag column.
             group_df = metrics_df.groupby(tag_col)
             srs = group_df[hit_col_name].apply(
-                lambda x: cstresta.calculate_hit_rate(
+                lambda x: cstats.calculate_hit_rate(
                     x, **config["metrics"]["calculate_hit_rate_kwargs"]
                 )
             )
@@ -395,7 +430,7 @@ def apply_metrics(
             # Compute Sharpe ratio per tag column.
             group_df = metrics_df.groupby(tag_col)
             srs = group_df[bar_pnl_col_name].apply(
-                lambda x: cstshrat.compute_sharpe_ratio(x, time_scaling)
+                lambda x: cstats.compute_sharpe_ratio(x, time_scaling)
             )
             srs.name = "SR"
             df_tmp = srs.to_frame()
@@ -465,3 +500,62 @@ def cross_val_apply_metrics(
     res_df = out_df.groupby(level=0).mean()
     _LOG.debug("res_df out=\n%s", hpandas.df_to_str(res_df))
     return res_df
+
+
+def _build_index_from_backtest_config(backtest_config: str) -> pd.Index:
+    """
+    Build a `DatetimeIndex` given a backtest config.
+
+    :param backtest_config: backtest_config, e.g.,`ccxt_v7-all.5T.2022-09-01_2022-11-30`
+    :return: pandas index with the start, end, freq specified by a backtest
+        config
+    """
+    _LOG.debug(hprint.to_str("backtest_config"))
+    _, trading_period_str, time_interval_str = cconfig.parse_backtest_config(
+        backtest_config
+    )
+    start_timestamp, end_timestamp = cconfig.get_period(time_interval_str)
+    # Convert both timestamps to ET.
+    start_timestamp = start_timestamp.tz_convert("America/New_York")
+    end_timestamp = end_timestamp.tz_convert("America/New_York")
+    idx = pd.date_range(start_timestamp, end_timestamp, freq=trading_period_str)
+    return idx
+
+
+# TODO(Grisha): is it used? revisit.
+# TODO(Grisha): maybe pass a DAG?
+def cross_val_predict(
+    dag_runner: dtfcore.FitPredictDagRunner,
+    backtest_config: str,
+    train_test_splits_mode: str,
+    *train_test_splits_args: Any,
+) -> List[pd.DataFrame]:
+    """
+    Generate result_df from cross-validation of the model.
+
+    Note: since multiple test sets is assumed, multiple result_dfs are returned.
+
+    :param backtest_config: backtest config, e.g., `ccxt_v7-all.5T.2022-09-01_2022-11-30`
+    :param train_test_splits_mode: correspond to the inputs to `get_train_test_splits()`
+    :param train_test_splits_args: correspond to the inputs to `get_train_test_splits()`
+    :return: list of result_dfs with estimates for each cross validation split
+    """
+    hdbg.dassert_isinstance(dag_runner, dtfcore.FitPredictDagRunner)
+    idx = _build_index_from_backtest_config(backtest_config)
+    train_test_splits = cstats.get_train_test_splits(
+        idx, train_test_splits_mode, *train_test_splits_args
+    )
+    result_dfs = []
+    for split in train_test_splits:
+        # 1) Split.
+        idx_train, idx_test = split
+        # 2) Fit.
+        dag_runner.set_fit_intervals([(idx_train[0], idx_train[-1])])
+        # TODO(gp): Store also the fit_df.
+        _ = dag_runner.fit()
+        # 3) Predict.
+        dag_runner.set_predict_intervals([(idx_test[0], idx_test[-1])])
+        predict_result_bundle = dag_runner.predict()
+        result_df = predict_result_bundle.result_df
+        result_dfs.append(result_df)
+    return result_dfs

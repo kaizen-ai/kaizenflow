@@ -20,8 +20,8 @@ class TestRegressionAnalyzer1(hunitest.TestCase):
             start_datetime, end_datetime, asset_ids, num_features=num_features
         )
         regression_analyzer = dtfmoreana.RegressionAnalyzer(
-            target_col="returns",
-            feature_cols=[1, 2],
+            x_cols=[1, 2],
+            y_col="returns",
         )
         coefficients = regression_analyzer.compute_regression_coefficients(
             feature_df
@@ -32,6 +32,6 @@ class TestRegressionAnalyzer1(hunitest.TestCase):
         expected = r"""
               beta_z_scored                      p_val_2s
            mean    std skew kurtosis     mean    std skew kurtosis
-1        -0.289  0.155 -0.0     -2.0    0.774  0.118  0.0     -2.0
-2        -0.163  0.806  0.0     -2.0    0.574  0.156 -0.0     -2.0"""
+1        -0.289  0.155  0.0     -2.0    0.774  0.118  0.0     -2.0
+2        -0.163  0.806  0.0     -2.0    0.574  0.156  0.0     -2.0"""
         self.assert_equal(actual, expected, fuzzy_match=True)

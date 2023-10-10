@@ -26,10 +26,11 @@ _LOG = logging.getLogger(__name__)
 
 def compute_vwap(
     df: pd.DataFrame,
-    *,
     rule: str,
     price_col: str,
     volume_col: str,
+    # TODO(gp): Add *
+    # *,
     offset: Optional[str] = None,
 ) -> pd.Series:
     """
@@ -72,6 +73,8 @@ def _resample_with_aggregate_function(
     cols: List[str],
     agg_func: str,
     agg_func_kwargs: htypes.Kwargs,
+    # TODO(gp): Add *
+    # *,
     resample_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """
@@ -93,6 +96,8 @@ def resample_bars(
     rule: str,
     resampling_groups: List[Tuple[Dict[str, str], str, htypes.Kwargs]],
     vwap_groups: List[Tuple[str, str, str]],
+    # TODO(gp): Add *
+    # *,
     resample_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """
@@ -118,9 +123,17 @@ def resample_bars(
         resampled = resampled.rename(columns=col_dict)
         hdbg.dassert(not resampled.columns.has_duplicates)
         results.append(resampled)
+    if isinstance(resample_kwargs, dict) and "offset" in resample_kwargs:
+        offset = resample_kwargs["offset"]
+    else:
+        offset = None
     for price_col, volume_col, vwap_col in vwap_groups:
         vwap = compute_vwap(
-            df, rule=rule, price_col=price_col, volume_col=volume_col
+            df,
+            rule=rule,
+            price_col=price_col,
+            volume_col=volume_col,
+            offset=offset,
         )
         vwap.name = vwap_col
         results.append(vwap)

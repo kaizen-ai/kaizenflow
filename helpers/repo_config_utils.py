@@ -16,14 +16,14 @@ _LOG = logging.getLogger(__name__)
 
 
 def assert_setup(
-    self_: Any,
-    exp_enable_privileged_mode: bool,
-    exp_has_dind_support: bool
+    self_: Any, exp_enable_privileged_mode: bool, exp_has_dind_support: bool
 ) -> None:
     signature = henv.env_to_str(add_system_signature=False)
     _LOG.debug("env_to_str=%s", signature)
     #
-    act_enable_privileged_mode = henv.execute_repo_config_code("enable_privileged_mode()")
+    act_enable_privileged_mode = henv.execute_repo_config_code(
+        "enable_privileged_mode()"
+    )
     self_.assertEqual(act_enable_privileged_mode, exp_enable_privileged_mode)
     #
     act_has_dind_support = henv.execute_repo_config_code("has_dind_support()")

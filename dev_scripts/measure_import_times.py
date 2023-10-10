@@ -9,9 +9,10 @@ import dev_scripts.measure_import_times as dsmeimti
 """
 
 import argparse
+import datetime
 import logging
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 from tqdm import tqdm
 
@@ -19,7 +20,7 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hsystem as hsystem
-from helpers.timer import Timer
+from helpers.htimer import Timer
 
 _LOG = logging.getLogger(__name__)
 
@@ -36,6 +37,8 @@ class ImportTimeChecker:
         self.dir_name = dir_name
         # Store all the modules with execution time (module: elapsed_time).
         self.checked_modules: Dict[str, float] = {}
+        # Store error messages for modules (module: error_message).
+        self.error_messages: Dict[str, str] = {}
         # instance of class for measure elapsed time.
         # Pattern for finding modules in file.
         self.match_pattern = (
@@ -55,22 +58,36 @@ class ImportTimeChecker:
         _LOG.debug("  -> modules=%s", modules)
         return modules
 
-    def measure_time(self, module: str) -> float:
+    def measure_time(self, module: str) -> Union[str, float]:
         """
         Measures execution time for a given module and save in
         self.checked_modules.
 
         :param module: module name
         :return: elapsed time to execute import
+            or error message if import failed
         """
+        # TODO(Grisha): unclear if the `python -c "import X"` is a viable approach, see the discussion in CmTask4968.
+        # TODO(Grisha): consider separating local modules vs 3rd party modules vs native Python libs.
+        # Execute python "import module" to measure.
         if module not in self.checked_modules:
-            # execute python "import module" to measure.
             timer = Timer()
-            hsystem.system(f'python -c "import {module}"')
+            rc, output = hsystem.system_to_string(f'python -c "import {module}"', abort_on_error=False)
             timer.stop()
-            elapsed_time = round(timer.get_elapsed(), 3)
-            self.checked_modules[module] = elapsed_time
-        return self.checked_modules[module]
+            if rc == 0:
+                # Save execution time.
+                elapsed_time = round(timer.get_elapsed(), 3)
+                self.checked_modules[module] = elapsed_time
+                ret = elapsed_time
+                # TODO(Grisha): consider catching exactly `ModuleNotFoundError`.
+            else:
+                # Save the errors.
+                _LOG.warning(output)
+                self.error_messages[module] = str(output)
+                ret = output
+        else:
+            ret = self.checked_modules[module]
+        return ret
 
     def measure_time_for_all_modules(self) -> None:
         """
@@ -94,9 +111,9 @@ class ImportTimeChecker:
         for module in tqdm(modules):
             self.measure_time(module)
 
-    def print_modules_time(self, sort: bool = False) -> None:
+    def output_modules_time(self, sort: bool = False) -> None:
         """
-        Print all measured modules.
+        Print and save to a files all measured modules.
 
         :param sort: defines whether sort output or not
         :return: None
@@ -105,6 +122,21 @@ class ImportTimeChecker:
             self._sort_by_time()
         for module, elapsed_time in self.checked_modules.items():
             print(f"{module} {elapsed_time} s")
+        # Save modules time to a file.
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"tmp_import_time_{timestamp}.txt"
+        lines = [
+            f"{module} {elapsed_time} s"
+            for module, elapsed_time in self.checked_modules.items()
+        ]
+        hio.to_file(filename, "\n".join(lines))
+        # Save errors to a file.
+        errors_filename = f"tmp_errors_import_time_{timestamp}.txt"
+        error_lines = [
+            f"{module} {error_message}"
+            for module, error_message in self.error_messages.items()
+        ]
+        hio.to_file(errors_filename, "\n".join(error_lines))
 
     def get_total_time(self) -> float:
         """
@@ -125,10 +157,12 @@ class ImportTimeChecker:
 
     def _sort_by_time(self) -> None:
         """
-        Sort time in ascending order in self.checked_modules
+        Sort time in descending order in self.checked_modules
         :return: None
         """
-        output = sorted(self.checked_modules.items(), key=lambda x: x[1])
+        output = sorted(
+            self.checked_modules.items(), reverse=True, key=lambda x: x[1]
+        )
         self.checked_modules = dict(output)
 
 
@@ -153,7 +187,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     checker = ImportTimeChecker(args.directory)
     checker.measure_time_for_all_modules()
-    checker.print_modules_time(sort=True)
+    checker.output_modules_time(sort=True)
     #
     total_time = checker.get_total_time()
     print(f"Total time for importing: {total_time}")

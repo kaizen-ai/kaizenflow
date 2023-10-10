@@ -1,11 +1,12 @@
 """
 Import as:
 
-import sorrentum_sandbox.common.client as sinsacli
+import sorrentum_sandbox.examples.ml_projects.SorrIssue14_Team1_Implement_sandbox_for_Google_Trends.common.client as ssempstisfgtcc
 """
 
 import abc
 from typing import Any, Optional
+
 import pandas as pd
 
 

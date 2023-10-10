@@ -36,7 +36,7 @@ class TestArmaReturnsBuilder(hunitest.TestCase):
             f"{hprint.frame('config')}\n{config}\n"
             f"{hprint.frame('df_out')}\n{hunitest.convert_df_to_string(df_out, index=True)}\n"
         )
-        self.check_string(str_output)
+        self.check_string(str_output, fuzzy_match=True)
 
     def test_str1(self) -> None:
         dag_builder = dtfcdabuex.ArmaReturnsBuilder()

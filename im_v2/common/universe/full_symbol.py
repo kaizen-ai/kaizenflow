@@ -27,16 +27,17 @@ def dassert_is_full_symbol_valid(
     full_symbol: Union[pd.Series, FullSymbol]
 ) -> None:
     """
-    Check that a full symbol or all the symbols in a series have valid format,
-    i.e. `exchange::symbol`.
+    Check that a full symbol or all the symbols in a series have a valid
+    format, i.e. `exchange::symbol`.
 
-    Note: digits and special symbols (except underscore) are not allowed.
+    Note: special symbols (except underscore) are not allowed.
     """
-    # Only letters and underscores are allowed.
-    # TODO(gp): I think we might need non-leading numbers.
-    letter_underscore_pattern = "[a-zA-Z_]"
+    # Only letters and underscores are allowed in exchanges.
+    # Numbers are only allowed for symbols.
+    exchange_pattern = "[a-zA-Z_]"
+    symbol_pattern = "[a-zA-Z_0-9]"
     # Exchanges and symbols must be separated by `::`.
-    regex_pattern = rf"{letter_underscore_pattern}*::{letter_underscore_pattern}*"
+    regex_pattern = rf"{exchange_pattern}*::{symbol_pattern}*"
     # Set match pattern.
     if isinstance(full_symbol, pd.Series):
         full_match = full_symbol.str.fullmatch(

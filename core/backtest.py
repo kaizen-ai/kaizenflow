@@ -13,6 +13,7 @@ from tqdm.autonotebook import tqdm
 
 import core.data_adapters as cdatadap
 import helpers.hdbg as hdbg
+import helpers.henv as henv
 import helpers.hlist as hlist
 import helpers.hpandas as hpandas
 
@@ -20,8 +21,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): @Grisha -> gluonts/backtest.py
 
-# TODO(gp): @Grisha Remove after PTask2335.
-if True:
+if henv.has_module("gluonts"):
     import gluonts
     import gluonts.evaluation.backtest
 
@@ -119,8 +119,12 @@ if True:
             y_vars = [y_vars]
         hdbg.dassert_isinstance(y_vars, list)
         hdbg.dassert_eq(len(y_vars), 1, "Multitarget case is not supported.")
-        y_cols = [f"{y_vars[0]}_{i+1}" for i in range(prediction_length)]
-        yhat_cols = [f"{y_vars[0]}_hat_{i+1}" for i in range(prediction_length)]
+        # TODO(Grisha): usually the pattern is `y.shift_-2_hat` while here it is
+        # `y_hat.shift_-2` -> align with the rest of the codebase.
+        y_cols = [f"{y_vars[0]}.shift_-{i+1}" for i in range(prediction_length)]
+        yhat_cols = [
+            f"{y_vars[0]}_hat.shift_-{i+1}" for i in range(prediction_length)
+        ]
         yhat_all = np.full((df.shape[0], prediction_length), np.nan)
         y_all = np.full((df.shape[0], prediction_length), np.nan)
         #

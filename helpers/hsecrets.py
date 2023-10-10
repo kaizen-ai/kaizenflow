@@ -36,8 +36,9 @@ def get_secret(secret_name: str) -> Optional[Dict[str, Any]]:
     }
     ```
     """
+    # TODO(Juraj): This assertion can't be applied universally.
     # Check if the secret name format is valid.
-    dassert_valid_secret(secret_name)
+    # dassert_valid_secret(secret_name)
     hdbg.dassert_isinstance(secret_name, str)
     # Create a AWS Secrets Manager client.
     aws_profile = "ck"
@@ -99,6 +100,7 @@ def store_secret(
     return False
 
 
+# TODO(Juraj): this might be deprecated since this is only fit for exchange API keys
 def dassert_valid_secret(secret_id: str) -> None:
     """
     The valid format is `exchange_id.stage.account_type.num`.

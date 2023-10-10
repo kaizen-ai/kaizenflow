@@ -15,7 +15,7 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import sorrentum_sandbox.examples.ml_projects.Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap.db as sisebidb
+import sorrentum_sandbox.examples.ml_projects.Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap.db as ssempitisfbaud
 import sorrentum_sandbox.examples.ml_projects.Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap.download as sisebido
 
 _LOG = logging.getLogger(__name__)
@@ -66,13 +66,13 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     # Load data.
-    start_timestamp = (args.start_timestamp)
-    end_timestamp = (args.end_timestamp)
+    start_timestamp = args.start_timestamp
+    end_timestamp = args.end_timestamp
     # downloader = sisebido.bitqueryApiDownloader()  ## TODO Alter here, create if statement and flag for realtime data
     raw_data = sisebido.run_bitquery_query(start_timestamp, end_timestamp)
     # Save data to DB.
-    db_conn = sisebidb.get_db_connection()
-    saver = sisebidb.PostgresDataFrameSaver(db_conn)
+    db_conn = ssempitisfbaud.get_db_connection()
+    saver = ssempitisfbaud.PostgresDataFrameSaver(db_conn)
     saver.save(raw_data, args.target_table)
 
 

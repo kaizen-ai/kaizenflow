@@ -12,9 +12,9 @@ import pandas as pd
 import pymongo
 
 import helpers.hdbg as hdbg
-import sorrentum_sandbox.common.client as ssanclie
-import sorrentum_sandbox.common.download as ssandown
-import sorrentum_sandbox.common.save as ssansave
+import sorrentum_sandbox.common.client as ssacocli
+import sorrentum_sandbox.common.download as ssacodow
+import sorrentum_sandbox.common.save as ssacosav
 
 MONGO_HOST = os.environ["MONGO_HOST"]
 
@@ -23,7 +23,7 @@ MONGO_HOST = os.environ["MONGO_HOST"]
 # #############################################################################
 
 
-class MongoDataSaver(ssansave.DataSaver):
+class MongoDataSaver(ssacosav.DataSaver):
     """
     Store data to MongoDB.
     """
@@ -32,7 +32,7 @@ class MongoDataSaver(ssansave.DataSaver):
         self.mongo_client = mongo_client
         self.db_name = db_name
 
-    def save(self, data: ssandown.RawData, collection_name: str) -> None:
+    def save(self, data: ssacodow.RawData, collection_name: str) -> None:
         data = data.get_data()
         if isinstance(data, pd.DataFrame):
             data = data.to_dict("records")
@@ -47,7 +47,7 @@ class MongoDataSaver(ssansave.DataSaver):
 # #############################################################################
 
 
-class MongoClient(ssanclie.DataClient):
+class MongoClient(ssacocli.DataClient):
     """
     Load data located in MongoDB into the memory.
     """

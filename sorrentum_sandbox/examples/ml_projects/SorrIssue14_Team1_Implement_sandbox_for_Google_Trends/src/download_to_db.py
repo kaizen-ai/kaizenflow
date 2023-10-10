@@ -4,13 +4,16 @@ Download Time Series Data from Google Trends and save it into the DB.
 """
 import argparse
 import logging
+
+from utilities import custom_logger
+
 import src.db as sisebidb
 import src.download as sisebido
-from utilities import custom_logger
+
 
 
 def _add_download_args(
-        parser: argparse.ArgumentParser,
+    parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     """
     Add the command line options for exchange download.
@@ -41,7 +44,7 @@ def _add_download_args(
         action="store",
         required=True,
         type=str,
-        help="Fetch method, swich between using a pre-build Json or using the API"
+        help="Fetch method, swich between using a pre-build Json or using the API",
     )
 
     parser.add_argument(
@@ -49,7 +52,7 @@ def _add_download_args(
         action="store",
         required=True,
         type=str,
-        help="Fetch realtime data / historical"
+        help="Fetch realtime data / historical",
     )
 
     parser.add_argument(
@@ -97,8 +100,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     downloader = sisebido.OhlcvRestApiDownloader()
 
     # fethcing the data as a dataframe
-    raw_data = downloader.download(topic=topic, start_timestamp=start_timestamp, end_timestamp=end_timestamp,
-                                   use_api=use_api, real_time_data=real_time_data)
+    raw_data = downloader.download(
+        topic=topic,
+        start_timestamp=start_timestamp,
+        end_timestamp=end_timestamp,
+        use_api=use_api,
+        real_time_data=real_time_data,
+    )
 
     # making a DB connection
     db_conn = sisebidb.get_db_connection()

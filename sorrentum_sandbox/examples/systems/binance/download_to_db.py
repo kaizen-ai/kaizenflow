@@ -15,8 +15,8 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import sorrentum_sandbox.examples.systems.binance.db as sisebidb
-import sorrentum_sandbox.examples.systems.binance.download as sisebido
+import sorrentum_sandbox.examples.systems.binance.db as ssesbidb
+import sorrentum_sandbox.examples.systems.binance.download as ssesbido
 
 _LOG = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ def _add_download_args(
         required=False,
         default=False,
         help="Domain switcher between binance.com when using --use_global_api"
-             " and binance.us by default"
+        " and binance.us by default",
     )
     return parser
 
@@ -75,11 +75,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Load data.
     start_timestamp = pd.Timestamp(args.start_timestamp)
     end_timestamp = pd.Timestamp(args.end_timestamp)
-    downloader = sisebido.OhlcvRestApiDownloader(args.use_global_api)
+    downloader = ssesbido.OhlcvRestApiDownloader(args.use_global_api)
     raw_data = downloader.download(start_timestamp, end_timestamp)
     # Save data to DB.
-    db_conn = sisebidb.get_db_connection()
-    saver = sisebidb.PostgresDataFrameSaver(db_conn)
+    db_conn = ssesbidb.get_db_connection()
+    saver = ssesbidb.PostgresDataFrameSaver(db_conn)
     saver.save(raw_data, args.target_table)
 
 

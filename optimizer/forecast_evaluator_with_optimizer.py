@@ -139,7 +139,7 @@ class ForecastEvaluatorWithOptimizer:
         self,
         df: pd.DataFrame,
         *,
-        quantization: str = "no_quantization",
+        quantization: Optional[int] = 30,
         liquidate_at_end_of_day: bool = True,
         initialize_beginning_of_day_trades_to_zero: bool = True,
         # adjust_for_splits: bool = False,
@@ -430,6 +430,7 @@ class ForecastEvaluatorWithOptimizer:
             columns={
                 self._price_col: "price",
                 self._volatility_col: "volatility",
+                self._prediction_col: "prediction",
             }
         )
         return dag_slice

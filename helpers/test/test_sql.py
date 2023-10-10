@@ -19,7 +19,6 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): helpers can't depend from im.
 class TestSql1(imvcddbut.TestImDbHelper):
-
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
@@ -31,7 +30,7 @@ class TestSql1(imvcddbut.TestImDbHelper):
         """
         actual_details = hsql.db_connection_to_tuple(self.connection)
         expected = {
-            #"host": "localhost",
+            # "host": "localhost",
             "dbname": "im_postgres_db_local",
             "user": "aljsdalsd",
             "password": "alsdkqoen",
@@ -41,8 +40,9 @@ class TestSql1(imvcddbut.TestImDbHelper):
         del actual_details_dict["host"]
         del actual_details_dict["port"]
         #
-        self.assert_equal(pprint.pformat(actual_details_dict),
-                pprint.pformat(expected))
+        self.assert_equal(
+            pprint.pformat(actual_details_dict), pprint.pformat(expected)
+        )
 
     @pytest.mark.slow("17 seconds.")
     def test_create_database(self) -> None:

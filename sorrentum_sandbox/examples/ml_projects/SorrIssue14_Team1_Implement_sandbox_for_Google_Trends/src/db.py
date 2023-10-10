@@ -6,11 +6,12 @@ Import google_trends.src.db as sisebidb
 """
 
 from typing import Any, Optional
+
+import common.client as sinsacli
+import common.save as sinsasav
 import pandas as pd
 import psycopg2 as psycop
 import psycopg2.extras as extras
-import common.client as sinsacli
-import common.save as sinsasav
 
 
 def get_google_trends_create_table_query() -> str:
@@ -21,8 +22,8 @@ def get_google_trends_create_table_query() -> str:
     query = """
                     CREATE TABLE IF NOT EXISTS google_trends_data
                     (
-                        topic VARCHAR(225), 
-                        date_stamp varchar(225), 
+                        topic VARCHAR(225),
+                        date_stamp varchar(225),
                         frequency NUMERIC
                     );
             """
@@ -63,6 +64,7 @@ def get_db_connection() -> Any:
 # #############################################################################
 # PostgresDataFrameSaver
 # #############################################################################
+
 
 class PostgresDataFrameSaver(sinsasav.DataSaver):
     """
@@ -168,7 +170,6 @@ class PostgresClient(sinsacli.DataClient):
         """
         topic = kwargs.get("topic")
         select_query = f"SELECT * FROM " + dataset_signature + " where topic = " + "'" + topic + "'"
-
         # Read data.
         data = pd.read_sql_query(select_query, self.db_conn)
         return data

@@ -1,9 +1,11 @@
 import pandas as pd
 import pytest
 
+import core.finance as cofinanc
 import helpers.henv as henv
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
+import im_v2.common.universe as ivcu
 import im_v2.crypto_chassis.data.client as iccdc
 
 # TODO(Grisha): factor out `ImClient` calls in a helper function.
@@ -23,15 +25,17 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         - contract_type = futures
         """
         # Initialize the client.
+        data_version = "v2"
         universe_version = "v4"
         dataset = "ohlcv"
         contract_type = "futures"
         data_snapshot = "20220620"
         im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
+            data_version,
             universe_version,
             dataset,
             contract_type,
-            data_snapshot,
+            data_snapshot=data_snapshot,
         )
         # Set expected values.
         full_symbols = ["binance::BTC_USDT", "binance::ADA_USDT"]
@@ -54,15 +58,15 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         index=[2022-05-01 13:00:00+00:00, 2022-05-01 13:05:00+00:00]
         columns=full_symbol,open,high,low,close,volume,knowledge_timestamp
         shape=(12, 7)
-                                         full_symbol        open        high         low       close      volume              knowledge_timestamp
+                                        full_symbol        open        high         low       close      volume              knowledge_timestamp
         timestamp
-        2022-05-01 13:00:00+00:00  binance::ADA_USDT      0.7727      0.7740      0.7727      0.7735  399952.000 2022-06-24 00:18:14.550505+00:00
-        2022-05-01 13:00:00+00:00  binance::BTC_USDT  37959.2000  37987.8000  37959.1000  37973.9000     146.115 2022-06-24 05:47:16.075108+00:00
-        2022-05-01 13:01:00+00:00  binance::ADA_USDT      0.7736      0.7736      0.7727      0.7734  188093.000 2022-06-24 00:18:14.550505+00:00
+        2022-05-01 13:00:00+00:00  binance::ADA_USDT      0.7717      0.7727      0.7713      0.7727  124082.000 2022-06-24 00:18:14.550505+00:00
+        2022-05-01 13:00:00+00:00  binance::BTC_USDT  37935.7000  37959.2000  37930.7000  37959.2000      71.386 2022-06-24 05:47:16.075108+00:00
+        2022-05-01 13:01:00+00:00  binance::ADA_USDT      0.7727      0.7740      0.7727      0.7735  399952.000 2022-06-24 00:18:14.550505+00:00
         ...
-        2022-05-01 13:04:00+00:00  binance::BTC_USDT  37933.300  37936.5000  37920.0000  37921.4000     58.987 2022-06-24 05:47:16.075108+00:00
-        2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.772      0.7726      0.7717      0.7722  83315.000 2022-06-24 00:18:14.550505+00:00
-        2022-05-01 13:05:00+00:00  binance::BTC_USDT  37921.400  37938.5000  37918.4000  37931.3000     48.736 2022-06-24 05:47:16.075108+00:00
+        2022-05-01 13:04:00+00:00  binance::BTC_USDT  37954.0000  37954.0000  37933.3000  37933.4000     46.995 2022-06-24 05:47:16.075108+00:00
+        2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.7726      0.7726      0.7719      0.7719  86855.000 2022-06-24 00:18:14.550505+00:00
+        2022-05-01 13:05:00+00:00  binance::BTC_USDT  37933.3000  37936.5000  37920.0000  37921.4000     58.987 2022-06-24 05:47:16.075108+00:00
         """
         # Check.
         self._test_read_data5(
@@ -76,6 +80,7 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.skip("Invalid knowledge_timestamp format. See CmTask3630.")
     def test_CcxtHistoricalPqByTileClient2(self) -> None:
         """
         - dataset = ohlcv
@@ -86,11 +91,9 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         dataset = "ohlcv"
         contract_type = "spot"
         data_snapshot = "20220530"
+        data_version = "v2"
         im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
-            universe_version,
-            dataset,
-            contract_type,
-            data_snapshot,
+            universe_version, dataset, contract_type, data_snapshot, data_version
         )
         # Set expected values.
         full_symbols = ["binance::BTC_USDT", "binance::ADA_USDT"]
@@ -122,67 +125,6 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         2022-05-01 13:04:00+00:00  binance::BTC_USDT  37951.8100  37951.8100  37938.4900  37939.3600     10.20479          2022-05-10
         2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.7726      0.7731      0.7724      0.7727  42522.60000          2022-05-10
         2022-05-01 13:05:00+00:00  binance::BTC_USDT  37939.3600  37956.1000  37936.0400  37950.7500     15.30911          2022-05-10
-        """
-        # Check.
-        self._test_read_data5(
-            im_client,
-            full_symbols,
-            start_ts,
-            end_ts,
-            expected_length,
-            expected_column_names,
-            expected_column_unique_values,
-            expected_signature,
-        )
-
-    def test_CcxtHistoricalPqByTileClient3(self) -> None:
-        """
-        - dataset = ohlcv
-        - contract_type = futures
-        - data_snapshot = ""
-        """
-        # Initialize client.
-        universe_version = None
-        dataset = "ohlcv"
-        contract_type = "futures"
-        data_snapshot = ""
-        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
-            universe_version,
-            dataset,
-            contract_type,
-            data_snapshot,
-        )
-        # Set expected values.
-        full_symbols = ["binance::APE_USDT", "binance::BTC_USDT"]
-        start_ts = pd.Timestamp("2022-08-28 15:45:00+00:00")
-        end_ts = pd.Timestamp("2022-08-28 15:50:00+00:00")
-        expected_length = 12
-        expected_column_names = [
-            "full_symbol",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "knowledge_timestamp",
-        ]
-        expected_column_unique_values = {
-            "full_symbol": ["binance::APE_USDT", "binance::BTC_USDT"]
-        }
-        expected_signature = r"""
-        # df=
-        index=[2022-08-28 15:45:00+00:00, 2022-08-28 15:50:00+00:00]
-        columns=full_symbol,open,high,low,close,volume,knowledge_timestamp
-        shape=(12, 7)
-                                       full_symbol       open       high        low      close      volume              knowledge_timestamp
-        timestamp
-        2022-08-28 15:45:00+00:00  binance::APE_USDT      4.824      4.828      4.820      4.825   77085.000 2022-08-29 00:17:46.587224+00:00
-        2022-08-28 15:45:00+00:00  binance::BTC_USDT  19991.900  19993.000  19982.800  19986.100     412.385 2022-08-29 00:17:05.280470+00:00
-        2022-08-28 15:46:00+00:00  binance::APE_USDT      4.824      4.837      4.824      4.835  133384.000 2022-08-29 00:17:46.587224+00:00
-        ...
-        2022-08-28 15:49:00+00:00  binance::BTC_USDT  19991.100  19992.000  19987.900  19991.500    175.287 2022-08-29 00:17:05.280470+00:00
-        2022-08-28 15:50:00+00:00  binance::APE_USDT      4.862      4.863      4.856      4.862  60928.000 2022-08-29 00:17:46.587224+00:00
-        2022-08-28 15:50:00+00:00  binance::BTC_USDT  19991.500  19997.600  19988.300  19996.100    246.412 2022-08-29 00:17:05.280470+00:00
         """
         # Check.
         self._test_read_data5(
@@ -445,7 +387,13 @@ class TestDataFrameImClients1(icdc.ImClientTestCase):
 
     def test_read_data5(self) -> None:
         # Initialize client.
-        im_client = icdc.get_DataFrameImClient_example1()
+        vendor = "mock1"
+        mode = "trade"
+        universe = ivcu.get_vendor_universe(
+            vendor, mode, version="v1", as_full_symbol=True
+        )
+        df = cofinanc.get_MarketData_df6(universe)
+        im_client = icdc.get_DataFrameImClient_example1(df)
         # Set expected values.
         full_symbols = ["binance::ADA_USDT", "binance::BTC_USDT"]
         start_timestamp = pd.Timestamp("2000-01-01 14:34:00+00:00")

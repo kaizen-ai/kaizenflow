@@ -43,11 +43,11 @@ s3 = s3fs.S3FileSystem(profile="default")
 # %%
 # path = "s3://iglp-core-data/ds/ext/bars/taq/v1.0-prod/60/"
 
-# #s3 = hs3.get_s3fs(aws_profile="saml-spm-sasm")
+# #s3 = hs3.get_s3fs(aws_profile="sasm")
 # s3 = hs3.get_s3fs(aws_profile="default")
 # print(s3)
 # #s3.ls("s3://iglp-core-data/")
-# #dates = hs3.listdir(PATH, mode="non-recursive", aws_profile="saml-spm-sasm")
+# #dates = hs3.listdir(PATH, mode="non-recursive", aws_profile="sasm")
 
 # dates = s3.ls(path)
 
