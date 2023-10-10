@@ -3,9 +3,11 @@ from typing import List
 import pandas as pd
 import pytest
 
+import core.finance as cofinanc
 import helpers.henv as henv
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
+import im_v2.common.universe as ivcu
 import market_data as mdata
 
 # #############################################################################
@@ -542,6 +544,17 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
     """
 
     @staticmethod
+    def get_ImClient() -> icdc.DataFrameImClient:
+        vendor = "mock1"
+        mode = "trade"
+        universe = ivcu.get_vendor_universe(
+            vendor, mode, version="v1", as_full_symbol=True
+        )
+        df = cofinanc.get_MarketData_df6(universe)
+        im_client = icdc.get_DataFrameImClient_example1(df)
+        return im_client
+
+    @staticmethod
     def get_expected_column_names() -> List[str]:
         """
         Return a list of expected column names.
@@ -566,7 +579,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = [1467591036]
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns=columns, column_remap=column_remap
         )
@@ -581,7 +594,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = [3303714233, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client,
             asset_ids,
@@ -597,7 +610,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = [3303714233, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -610,7 +623,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = [3303714233, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -623,7 +636,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = [3303714233, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -636,7 +649,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = [3303714233, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -649,7 +662,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = [3303714233, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -662,7 +675,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = [3303714233, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -675,7 +688,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = [3303714233, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -717,7 +730,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = None
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -762,7 +775,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = [3303714233, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -808,7 +821,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = [3303714233, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -854,7 +867,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = [3303714233, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -900,7 +913,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = [3303714233, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -948,7 +961,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = [1467591036, 3303714233]
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -987,7 +1000,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = [1467591036]
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -1000,7 +1013,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = [1467591036, 3303714233]
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -1029,7 +1042,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         asset_ids = [1467591036]
         columns = None
         column_remap = None
-        im_client = icdc.get_DataFrameImClient_example1()
+        im_client = self.get_ImClient()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -1125,13 +1138,13 @@ class TestImClientMarketData3(mdata.MarketData_get_data_TestCase):
         index=[2018-08-16 20:02:00-04:00, 2018-08-16 20:04:00-04:00]
         columns=asset_id,full_symbol,open,high,low,close,volume,start_ts
         shape=(6, 8)
-                                     asset_id        full_symbol         open         high          low        close     volume                  start_ts
+                                    asset_id        full_symbol         open         high          low        close     volume                  start_ts
         end_ts
-        2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226 2018-08-16 20:01:00-04:00
+        2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206 2018-08-16 20:01:00-04:00
         2018-08-16 20:02:00-04:00  3187272957   kucoin::ETH_USDT   286.405988   286.405988   285.400193   285.400197   0.162255 2018-08-16 20:01:00-04:00
-        2018-08-16 20:03:00-04:00  1467591036  binance::BTC_USDT  6299.970000  6299.970000  6286.930000  6294.520000  34.611797 2018-08-16 20:02:00-04:00
+        2018-08-16 20:03:00-04:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226 2018-08-16 20:02:00-04:00
         2018-08-16 20:03:00-04:00  3187272957   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260 2018-08-16 20:02:00-04:00
-        2018-08-16 20:04:00-04:00  1467591036  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586 2018-08-16 20:03:00-04:00
+        2018-08-16 20:04:00-04:00  1467591036  binance::BTC_USDT  6299.970000  6299.970000  6286.930000  6294.520000  34.611797 2018-08-16 20:03:00-04:00
         2018-08-16 20:04:00-04:00  3187272957   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655 2018-08-16 20:03:00-04:00
         """
         # pylint: enable=line-too-long

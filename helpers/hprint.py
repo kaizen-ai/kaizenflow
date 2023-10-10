@@ -73,6 +73,30 @@ def line(char: Optional[str] = None, num_chars: Optional[int] = None) -> str:
     return char * num_chars
 
 
+def pprint_pformat(obj: Any) -> str:
+    """
+    Pretty-print in color.
+    """
+    from pprint import pformat
+    from pygments import highlight
+    from pygments.formatters import Terminal256Formatter
+    from pygments.lexers import PythonLexer
+    txt = highlight(pformat(obj), PythonLexer(), Terminal256Formatter())
+    txt = txt.rstrip()
+    return txt
+
+
+def pprint_color(obj: Any, *, tag: Optional[str] = None, sep: str = "") -> None:
+    """
+    Pretty-print in color.
+    """
+    txt = ""
+    if tag is not None:
+        txt += tag + "= " + sep
+    txt += pprint_pformat(obj)
+    print(txt)
+
+
 # TODO(gp): -> Use *args instead of forcing to build a string to simplify the caller.
 def frame(
     message: str,
@@ -289,6 +313,7 @@ def thousand_separator(v: float) -> str:
 def perc(
     a: float,
     b: float,
+    *,
     only_perc: bool = False,
     invert: bool = False,
     num_digits: int = 2,
@@ -328,7 +353,9 @@ def perc(
 
 
 def round_digits(
-    v: float, num_digits: int = 2, use_thousands_separator: bool = False
+    v: float,
+    *,
+    num_digits: int = 2, use_thousands_separator: bool = False
 ) -> str:
     """
     Round digit returning a string representing the formatted number.
@@ -391,7 +418,7 @@ def to_str(
         `exp1=val1, exp2=val2, ...`
     :param print_lhs: whether we want to print the left hand side (i.e., `exp1`)
     :param mode: select how to print the value of the expressions (e.g., `str`,
-        `repr`, `pprint`)
+        `repr`, `pprint`, `pprint_color`)
     """
     # TODO(gp): If we pass an object it would be nice to find the name of it.
     # E.g., https://github.com/pwwang/python-varname
@@ -425,6 +452,8 @@ def to_str(
         ret += repr(eval_)
     elif mode == "pprint":
         ret += "\n" + indent(pprint.pformat(eval_))
+    elif mode == "pprint_color":
+        ret+="\n" + indent(pprint_pformat(eval_))
     else:
         raise ValueError(f"Invalid mode='{mode}'")
     return ret
@@ -606,6 +635,7 @@ def type_obj_to_str(obj: Any) -> str:
 
 def format_list(
     list_: List[Any],
+    *,
     sep: str = " ",
     max_n: Optional[int] = None,
     tag: Optional[str] = None,
@@ -635,6 +665,7 @@ def format_list(
 # TODO(gp): Use format_list().
 def list_to_str(
     list_: List,
+    *,
     tag: str = "",
     sort: bool = False,
     axis: int = 0,
@@ -669,6 +700,7 @@ def list_to_str(
 def set_diff_to_str(
     obj1: Iterable,
     obj2: Iterable,
+    *,
     obj1_name: str = "obj1",
     obj2_name: str = "obj2",
     sep_char: str = " ",

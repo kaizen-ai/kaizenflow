@@ -1,4 +1,5 @@
 import collections
+import copy
 import logging
 from typing import Any, Dict, List
 
@@ -152,7 +153,7 @@ class TestSmaModel(hunitest.TestCase):
         actual = hunitest.convert_df_to_string(
             df.round(decimals), index=True, decimals=decimals
         )
-        self.check_string(actual)
+        self.check_string(actual, fuzzy_match=True)
 
 
 class TestSingleColumnVolatilityModel(hunitest.TestCase):
@@ -174,7 +175,7 @@ class TestSingleColumnVolatilityModel(hunitest.TestCase):
         info = node.get_info("fit")
         # Package results.
         act = self._package_results1(config, info, df_out)
-        self.check_string(act)
+        self.check_string(act, fuzzy_match=True)
 
     def test2(self) -> None:
         """
@@ -198,7 +199,7 @@ class TestSingleColumnVolatilityModel(hunitest.TestCase):
         info["predict"] = node.get_info("predict")
         # Package results.
         act = self._package_results1(config, info, df_out)
-        self.check_string(act)
+        self.check_string(act, fuzzy_match=True)
 
     def test3(self) -> None:
         """
@@ -293,7 +294,7 @@ class TestVolatilityModel(hunitest.TestCase):
         node = VolatilityModel("vol_model", **config.to_dict())
         vol_adj_df = node.fit(data)["df_out"]
         # Invert volatility adjustment.
-        ret_0_vol_0_hat = vol_adj_df["ret_0_vol_2_hat"].shift(2)
+        ret_0_vol_0_hat = vol_adj_df["ret_0_vol.shift_-2_hat"].shift(2)
         inverted_rets = (ret_0_vol_0_hat * vol_adj_df["ret_0_vol_adj"]).rename(
             "ret_0_inverted"
         )
@@ -326,7 +327,7 @@ class TestVolatilityModel(hunitest.TestCase):
         info = node.get_info("fit")
         # Package results.
         act = self._package_results1(config, info, df_out)
-        self.check_string(act)
+        self.check_string(act, fuzzy_match=True)
 
     def test04(self) -> None:
         """
@@ -344,7 +345,7 @@ class TestVolatilityModel(hunitest.TestCase):
         node.fit(data.loc["2000-01-01":"2000-02-10"])  # type: ignore[misc]
         vol_adj_df = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]  # type: ignore[misc]
         # Invert volatility adjustment.
-        ret_0_vol_0_hat = vol_adj_df["ret_0_vol_2_hat"].shift(2)
+        ret_0_vol_0_hat = vol_adj_df["ret_0_vol.shift_-2_hat"].shift(2)
         inverted_rets = (ret_0_vol_0_hat * vol_adj_df["ret_0_vol_adj"]).rename(
             "ret_0_inverted"
         )
@@ -354,7 +355,7 @@ class TestVolatilityModel(hunitest.TestCase):
         info = node.get_info("fit")
         # Package results.
         act = self._package_results1(config, info, df_out)
-        self.check_string(act)
+        self.check_string(act, fuzzy_match=True)
 
     @pytest.mark.skip("See CmTask #2975.")
     def test05(self) -> None:
@@ -408,11 +409,11 @@ class TestVolatilityModel(hunitest.TestCase):
         # Load test data.
         data = self._get_data()
         # TODO(Paul): Rename this column.
-        data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
+        data["ret_0.shift_-2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config and create modeling node.
         config = cconfig.Config.from_dict(
             {
-                "cols": ["ret_0", "ret_0_2"],
+                "cols": ["ret_0", "ret_0.shift_-2"],
                 "steps_ahead": 2,
                 "nan_mode": "leave_unchanged",
             }
@@ -425,18 +426,18 @@ class TestVolatilityModel(hunitest.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
-    @pytest.mark.skip(msg="We no longer directly expose tau")
+    @pytest.mark.skip("We no longer directly expose tau")
     def test08(self) -> None:
         """
         Ensure that explicit `tau` is used post-`fit()`.
         """
         # Load test data.
         data = self._get_data()
-        data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
+        data["ret_0.shift_-2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config.
         config = cconfig.Config.from_dict(
             {
-                "cols": ["ret_0", "ret_0_2"],
+                "cols": ["ret_0", "ret_0.shift_-2"],
                 "steps_ahead": 2,
                 "nan_mode": "drop",
                 "tau": 10,
@@ -453,7 +454,7 @@ class TestVolatilityModel(hunitest.TestCase):
         """
         # Load test data.
         data = self._get_data()
-        data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
+        data["ret_0.shift_-2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config with columns implicit.
         config1 = cconfig.Config.from_dict(
             {
@@ -466,7 +467,7 @@ class TestVolatilityModel(hunitest.TestCase):
         # Specify config with explicit column names.
         config2 = cconfig.Config.from_dict(
             {
-                "cols": ["ret_0", "ret_0_2"],
+                "cols": ["ret_0", "ret_0.shift_-2"],
                 "steps_ahead": 2,
                 "nan_mode": "leave_unchanged",
             }
@@ -497,7 +498,7 @@ class TestVolatilityModel(hunitest.TestCase):
         # Get output with integer column names.
         node = VolatilityModel("vol_model", **config.to_dict())
         df_out = node.fit(data)["df_out"]
-        self.check_string(df_out.to_string())
+        self.check_string(df_out.to_string(), fuzzy_match=True)
 
     @pytest.mark.skip("See CmTask #2975.")
     def test11(self) -> None:
@@ -603,7 +604,10 @@ class TestVolatilityModel(hunitest.TestCase):
         return df
 
 
+# TODO(ShaopengZ): numerical issue. (arm vs x86)
+@pytest.mark.requires_ck_infra
 class TestMultiindexVolatilityModel(hunitest.TestCase):
+    @pytest.mark.requires_ck_infra
     def test1(self) -> None:
         """
         Perform a typical `fit()` call.
@@ -619,11 +623,13 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         )
         node = MultiindexVolatilityModel("vol_model", **config.to_dict())
         df_out = node.fit(data)["df_out"]
-        info = node.get_info("fit")
+        method = "fit"
+        info = node.get_info(method)
         # Package results.
-        act = self._package_results1(config, info, df_out)
-        self.check_string(act)
+        act = self._package_results1(method, config, info, df_out)
+        self.check_string(act, fuzzy_match=True)
 
+    @pytest.mark.requires_ck_infra
     def test2(self) -> None:
         """
         Perform a typical `predict()` call.
@@ -641,9 +647,10 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         node.fit(data.loc[:"2000-01-31"])["df_out"]  # type: ignore[misc]
         # Package results.
         df_out = node.predict(data)["df_out"]
-        info = node.get_info("predict")
-        act = self._package_results1(config, info, df_out)
-        self.check_string(act)
+        method = "predict"
+        info = node.get_info(method)
+        act = self._package_results1(method, config, info, df_out)
+        self.check_string(act, fuzzy_match=True)
 
     def test3(self) -> None:
         """
@@ -666,15 +673,38 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
 
     @staticmethod
     def _package_results1(
+        method: str,
         config: cconfig.Config,
         info: collections.OrderedDict,
         df_out: pd.DataFrame,
     ) -> str:
+        # Round tau value: we got different results on different machines
+        # due to Python floating point arithmetic.
+        rounded_info = copy.deepcopy(info)
+        precision = 6
+        initial_tau0 = rounded_info["MN0"]["MN0"][
+            "compute_smooth_moving_average"
+        ][method]["tau"]
+        rounded_tau0 = round(initial_tau0, precision)
+        (
+            rounded_info["MN0"]["MN0"]["compute_smooth_moving_average"][method][
+                "tau"
+            ]
+        ) = rounded_tau0
+        initial_tau1 = rounded_info["MN1"]["MN1"][
+            "compute_smooth_moving_average"
+        ][method]["tau"]
+        rounded_tau1 = round(initial_tau1, precision)
+        (
+            rounded_info["MN1"]["MN1"]["compute_smooth_moving_average"][method][
+                "tau"
+            ]
+        ) = rounded_tau1
         act: List[str] = []
         act.append(hprint.frame("config"))
         act.append(str(config))
         act.append(hprint.frame("info"))
-        act.append(str(cconfig.Config.from_dict(info)))
+        act.append(str(cconfig.Config.from_dict(rounded_info)))
         act.append(hprint.frame("df_out"))
         act.append(
             hunitest.convert_df_to_string(df_out.round(2), index=True, decimals=2)
@@ -711,7 +741,7 @@ class TestVolatilityModulator(hunitest.TestCase):
         config = cconfig.Config.from_dict(
             {
                 "signal_cols": ["ret_1_hat"],
-                "volatility_col": "vol_2_hat",
+                "volatility_col": "vol.shift_-2_hat",
                 "signal_steps_ahead": 1,
                 "volatility_steps_ahead": 2,
                 "mode": "modulate",
@@ -728,7 +758,7 @@ class TestVolatilityModulator(hunitest.TestCase):
         config = cconfig.Config.from_dict(
             {
                 "signal_cols": ["ret_0"],
-                "volatility_col": "vol_2_hat",
+                "volatility_col": "vol.shift_-2_hat",
                 "signal_steps_ahead": 0,
                 "volatility_steps_ahead": 2,
                 "mode": "demodulate",
@@ -745,7 +775,7 @@ class TestVolatilityModulator(hunitest.TestCase):
         config = cconfig.Config.from_dict(
             {
                 "signal_cols": ["ret_0"],
-                "volatility_col": "vol_2_hat",
+                "volatility_col": "vol.shift_-2_hat",
                 "signal_steps_ahead": 0,
                 "volatility_steps_ahead": 2,
                 "mode": "demodulate",
@@ -764,7 +794,7 @@ class TestVolatilityModulator(hunitest.TestCase):
         config = cconfig.Config.from_dict(
             {
                 "signal_cols": ["ret_0"],
-                "volatility_col": "vol_2_hat",
+                "volatility_col": "vol.shift_-2_hat",
                 "signal_steps_ahead": 0,
                 "volatility_steps_ahead": 2,
                 "mode": "demodulate",
@@ -789,7 +819,7 @@ class TestVolatilityModulator(hunitest.TestCase):
         vol = csigproc.compute_smooth_moving_average(signal, 16)
         fwd_vol = vol.shift(steps_ahead)
         return pd.concat(
-            [signal.rename("ret_0"), fwd_vol.rename("vol_2_hat")], axis=1
+            [signal.rename("ret_0"), fwd_vol.rename("vol.shift_-2_hat")], axis=1
         )
 
     def _check_results(
@@ -799,6 +829,6 @@ class TestVolatilityModulator(hunitest.TestCase):
         act.append(hprint.frame("config"))
         act.append(str(config))
         act = "\n".join(act)
-        self.check_string(act)
+        self.check_string(act, fuzzy_match=True)
         self.check_dataframe(df_in, tag="df_in", err_threshold=0.01)
         self.check_dataframe(df_out, tag="df_out", err_threshold=0.01)

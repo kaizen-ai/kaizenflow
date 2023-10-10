@@ -21,6 +21,8 @@ import helpers.hs3 as hs3  # noqa: E402 module level import not at top of file  
 import helpers.hunit_test as hunitest  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
 
+@pytest.mark.requires_aws 
+@pytest.mark.requires_ck_infra
 class S3Mock_TestCase(hunitest.TestCase):
     # Mocked AWS credentials.
     mock_aws_credentials_patch = umock.patch.dict(
@@ -45,7 +47,7 @@ class S3Mock_TestCase(hunitest.TestCase):
         if self.binance_secret is None:
             import helpers.hsecrets as hsecret
 
-            self.binance_secret = hsecret.get_secret("***REMOVED***")
+            self.binance_secret = hsecret.get_secret("binance.preprod.trading.1")
 
         # Start boto3 mock.
         self.mock_s3.start()

@@ -1,16 +1,12 @@
-
-from typing import Any, Dict, List
-
 import os
-import pandas as pd
-import requests
-import psycopg2
-from sqlalchemy import create_engine
 from datetime import datetime
 from io import StringIO
+from typing import Any, Dict, List
 
-
-
+import pandas as pd
+import psycopg2
+import requests
+from sqlalchemy import create_engine
 
 # df = pd.read_csv(r"bitquery_raw.csv")
 
@@ -26,19 +22,15 @@ from io import StringIO
 # print(len(tran_token_info))
 
 # database connection parameters
-host = 'localhost'
-port = '5432'
-dbname = 'db'
-user = 'postgres'
-password = 'postgres'
+host = "localhost"
+port = "5432"
+dbname = "db"
+user = "postgres"
+password = "postgres"
 
 # connection to the postgress database
 conn = psycopg2.connect(
-    host=host,
-    port=port,
-    dbname=dbname,
-    user=user,
-    password=password
+    host=host, port=port, dbname=dbname, user=user, password=password
 )
 
 # # # Use SQLAlchemy to create the table
@@ -52,8 +44,6 @@ conn = psycopg2.connect(
 # tran_metadata.to_sql('tran_metadata', engine, index=False, if_exists='replace', method='multi', chunksize=3000)
 
 
-
-
 # Create a cursor to execute SQL queries
 cur = conn.cursor()
 # Execute a SQL query to retrieve the last row of the table
@@ -63,13 +53,11 @@ df = pd.DataFrame(result)
 print(df.head())
 
 
-
-
 # # Iterate over the list and insert each dataframe into its respective table
 # for item in tables_and_dfs:
 #     table_name = item["table_name"]
 #     df = item["df"]
-    
+
 #     # Create a new table in the database
 #     with conn.cursor() as cur:
 #         if table_name == "tran_token_info":
@@ -122,11 +110,6 @@ print(df.head())
 
 # # Close the connection
 # conn.close()
-
-
-
-
-
 
 
 # # Create a new table in the database
@@ -190,10 +173,6 @@ print(df.head())
 # #     conn.commit()
 
 
-
-
-
-
 # print("here")
 
 # # Create a cursor to execute SQL queries
@@ -224,8 +203,6 @@ print(df.head())
 # conn.close()
 
 
-   
-
 # # create table in database
 # # create_table_query = '''CREATE TABLE IF NOT EXISTS tran_token_info (
 # #                             transaction_hash varchar(255),
@@ -237,7 +214,6 @@ print(df.head())
 
 # # Postgress schema
 # # Split df to match table schema and send to postgress db
-
 
 
 # ### TODO 3 ##

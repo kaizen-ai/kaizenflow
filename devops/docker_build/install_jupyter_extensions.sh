@@ -14,7 +14,7 @@ echo "##########################################################################
 # need to activate the environment.
 source /${ENV_NAME}/bin/activate
 
-echo "# Install jupyter extensions"
+echo "# Install Jupyter extensions"
 
 # Create jupyter data dir.
 DIR_NAME=$(jupyter --data-dir)
@@ -24,7 +24,10 @@ if [[ ! -d $DIR_NAME ]]; then
 fi;
 
 # Install extensions.
-jupyter contrib nbextension install
+# For some reason it requires a dash between `contrib` and `nbextension` even
+# though it is not mentioned in the official docs.
+# https://jupyter-contrib-nbextensions.readthedocs.io/en/latest/install.html#install-javascript-and-css-files.
+jupyter contrib-nbextension install
 
 # Enable extensions.
 extensions="

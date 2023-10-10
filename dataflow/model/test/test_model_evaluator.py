@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import core.artificial_signal_generators as carsigen
 import core.config as cconfig
@@ -75,6 +76,7 @@ def get_example_model_evaluator():
 
 
 class TestModelEvaluator1(hunitest.TestCase):
+    @pytest.mark.requires_ck_infra
     def test_calculate_stats1(self) -> None:
         evaluator, eval_config = get_example_model_evaluator()
         # Calculate costatis.

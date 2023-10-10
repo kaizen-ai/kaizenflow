@@ -31,6 +31,8 @@ if _HAS_MOTO:
     # The `mock_secretsmanager` decorator ensures the calls to the AWS API are
     # mocked.
 
+    @pytest.mark.requires_ck_infra
+    @pytest.mark.requires_aws
     @pytest.mark.skipif(
         not henv.execute_repo_config_code("is_CK_S3_available()"),
         reason="Run only if CK S3 is available",
@@ -43,6 +45,8 @@ if _HAS_MOTO:
             client = hsecret.get_secrets_client(aws_profile="ck")
             self.assertIsInstance(client, botocore.client.BaseClient)
 
+    @pytest.mark.requires_ck_infra
+    @pytest.mark.requires_aws
     @pytest.mark.skipif(
         not henv.execute_repo_config_code("is_CK_S3_available()"),
         reason="Run only if CK S3 is available",
@@ -62,6 +66,8 @@ if _HAS_MOTO:
             )
             self.assertDictEqual(hsecret.get_secret(secret_name), secret)
 
+    @pytest.mark.requires_ck_infra
+    @pytest.mark.requires_aws
     @pytest.mark.skipif(
         not henv.execute_repo_config_code("is_CK_S3_available()"),
         reason="Run only if CK S3 is available",

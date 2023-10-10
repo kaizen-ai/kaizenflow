@@ -19,11 +19,11 @@
 import logging
 
 import pandas as pd
+import vendors_lime.datastream_liquidity.universe_utils as vldlunut
 
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsql as hsql
-import vendors_lime.datastream_liquidity.universe_utils as vldlunut
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -39,21 +39,23 @@ hprint.config_notebook()
 
 # %%
 connection = hsql.get_connection(
-    "dp-research.redshift.eglp.com",
+    "dp-research.redshift"
     "refdata",
     5439,
-    "cf_dev_gsaggese",
-    "tIELZucge1bT",
 )
 
 # %%
 date = "2022-03-01"
 
-#apply_categorical_filters = False
+# apply_categorical_filters = False
 apply_categorical_filters = True
 add_rankings = False
-df = vldlunut.generate_liquidity_df(date, connection, apply_categorical_filters=apply_categorical_filters,
-                                    add_rankings=add_rankings)
+df = vldlunut.generate_liquidity_df(
+    date,
+    connection,
+    apply_categorical_filters=apply_categorical_filters,
+    add_rankings=add_rankings,
+)
 
 print("df=", df.shape)
 display(df.head(3))
@@ -79,15 +81,15 @@ print("is_prim_qt=\n%s" % df["is_prim_qt"].value_counts())
 print("sectype=\n%s" % df["sectype"].value_counts())
 
 # %%
-#mask = df["sectype"] == "NA:P "
-#mask = df["sectype"] == "NA:F "
+# mask = df["sectype"] == "NA:P "
+# mask = df["sectype"] == "NA:F "
 mask = df["is_prim_qt"] == False
 df[mask]
 print(df[mask]["ticker"])
 
 # %%
-mask = (df["ticker"] == "SPY")
-#mask = (df["ticker"] == "AAPL")
+mask = df["ticker"] == "SPY"
+# mask = (df["ticker"] == "AAPL")
 display(df[mask])
 display(df[mask]["sectype"])
 
@@ -101,17 +103,17 @@ df.columns.to_list()
 df["spread_usd_21d"].hist(bins=101)
 
 # %%
-#col = "spread_bps_21d"
+# col = "spread_bps_21d"
 col = "spread_usd_21d"
 df_val = df[df[col] <= 0.1]
 
-#print(df_val)
+# print(df_val)
 
 df_val[col].hist(bins=101)
 
 print(df_val[col].sum())
 
-#df["spread_bps_21d"].hist(bins=101)
+# df["spread_bps_21d"].hist(bins=101)
 
 # %%
 
@@ -199,7 +201,7 @@ pd.Series(data=df.columns).to_csv("universe_20210810.csv", index=False)
 import pandas as pd
 
 # %%
-universe = pd.read_csv("s3://eglp-spm-sasm/data/universe_20210810.csv")
+universe = pd.read_csv("s3://data/universe_20210810.csv")
 
 # %%
 universe

@@ -20,6 +20,10 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
+default_start_time = datetime.time(0, 0, 0, 0, datetime.timezone.utc)
+default_end_time = datetime.time(23, 59, 59, 999999, datetime.timezone.utc)
+
+
 class RegressionAnalyzer:
     """
     Regress target col against feature cols independently.
@@ -27,19 +31,19 @@ class RegressionAnalyzer:
 
     def __init__(
         self,
-        target_col: Union[int, str],
-        feature_cols: List[Union[int, str]],
+        x_cols: List[Union[int, str]],
+        y_col: Union[int, str],
         *,
-        feature_lag: int = 0,
+        x_col_lag: int = 0,
     ) -> None:
         """
         Initialize column names.
         """
-        hdbg.dassert_isinstance(feature_cols, list)
-        self._target_col = target_col
-        self._feature_cols = feature_cols
+        hdbg.dassert_isinstance(x_cols, list)
+        self._target_col = y_col
+        self._feature_cols = x_cols
         self._df_cols = self._feature_cols + [self._target_col]
-        self._feature_lag = feature_lag
+        self._feature_lag = x_col_lag
 
     @staticmethod
     def compute_moments(df: pd.DataFrame, stats: List[str]) -> pd.DataFrame:
@@ -49,6 +53,8 @@ class RegressionAnalyzer:
         Dataframe columns are statistics (e.g., "beta"). Rows are
         multiindex, with level 0 equal to the name and level 1 equal to
         the feature.
+
+        :param df: output of `compute_regression_coefficients`
         """
         all_moments = {}
         for stat in stats:
@@ -69,8 +75,8 @@ class RegressionAnalyzer:
         *,
         start_datetime: Optional[pd.Timestamp] = None,
         end_datetime: Optional[pd.Timestamp] = None,
-        start_time: datetime.time = datetime.time(9, 30),
-        end_time: datetime.time = datetime.time(16, 00),
+        start_time: datetime.time = default_start_time,
+        end_time: datetime.time = default_end_time,
     ) -> pd.DataFrame:
         """
         Compute regression coefficients.
@@ -136,10 +142,10 @@ class RegressionAnalyzer:
         end_datetime_1: Optional[pd.Timestamp] = None,
         start_datetime_2: Optional[pd.Timestamp] = None,
         end_datetime_2: Optional[pd.Timestamp] = None,
-        start_time_1: datetime.time = datetime.time(9, 30),
-        end_time_1: datetime.time = datetime.time(16, 00),
-        start_time_2: datetime.time = datetime.time(9, 30),
-        end_time_2: datetime.time = datetime.time(16, 00),
+        start_time_1: datetime.time = default_start_time,
+        end_time_1: datetime.time = default_end_time,
+        start_time_2: datetime.time = default_start_time,
+        end_time_2: datetime.time = default_end_time,
     ) -> None:
         """
         Show a paired plot of `statistics` for `feature`.

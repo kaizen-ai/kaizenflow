@@ -1,27 +1,27 @@
-#import asyncio
-#import logging
-#import os
+# import asyncio
+# import logging
+# import os
 #
-#import pandas as pd
-#import pytest
+# import pandas as pd
+# import pytest
 #
-#import helpers.hasyncio as hasynci
-#import helpers.hdatetime as hdateti
-#import helpers.hdbg as hdbg
-#import helpers.hpandas as hpandas
-#import helpers.hprint as hprint
-#import helpers.hunit_test as hunitest
-#import im_v2.ig.universe.ticker_igid_mapping as imviutigma
-#import market_data as mdata
-#import market_data_lime as mdlime
+# import helpers.hasyncio as hasynci
+# import helpers.hdatetime as hdateti
+# import helpers.hdbg as hdbg
+# import helpers.hpandas as hpandas
+# import helpers.hprint as hprint
+# import helpers.hunit_test as hunitest
+# import im_v2.ig.universe.ticker_igid_mapping as imviutigma
+# import market_data as mdata
+# import market_data_lime as mdlime
 #
-#_LOG = logging.getLogger(__name__)
+# _LOG = logging.getLogger(__name__)
 #
 #
 ## #############################################################################
 #
 #
-#class TestIgReplayedMarketData1(hunitest.TestCase):
+# class TestIgReplayedMarketData1(hunitest.TestCase):
 #    @pytest.mark.skip(reason="Run manually")
 #    def test_save_market_data1(self) -> None:
 #        """
@@ -43,13 +43,13 @@
 #        limit = None
 #        mdata.save_market_data(market_data, file_name, timedelta, limit)
 #        _LOG.info("Written file '%s'", file_name)
-#        # > aws s3 cp market_data.20220104-183252.csv.gz s3://eglp-spm-sasm/data/
+#        # > aws s3 cp market_data.20220104-183252.csv.gz s3://data/
 #
 #
 ## #############################################################################
 #
 #
-#class TestIgReplayedMarketData2(hunitest.TestCase):
+# class TestIgReplayedMarketData2(hunitest.TestCase):
 #    """
 #    - Build a `IgRealTimeMarketData`
 #    - Save the data from it into a file
@@ -128,10 +128,10 @@
 #        """
 #        Read serialized data from `save_market_data()` and print some info.
 #        """
-#        file_name = "s3://eglp-spm-sasm/data/market_data.20220104-183252.csv.gz"
+#        file_name = "s3://data/market_data.20220104-183252.csv.gz"
 #        import helpers.hs3 as hs3
 #
-#        s3fs_ = hs3.get_s3fs(aws_profile="saml-spm-sasm")
+#        s3fs_ = hs3.get_s3fs(aws_profile="sasm")
 #        # Load data.
 #        df = mdata.load_market_data(file_name, s3fs=s3fs_)
 #        asset_ids = [17085, 13684]
@@ -217,7 +217,7 @@
 ## #############################################################################
 #
 #
-#class TestIgReplayedMarketData3(hunitest.TestCase):
+# class TestIgReplayedMarketData3(hunitest.TestCase):
 #    """
 #    - Build a `IgReplayedMarketData` with data frozen on S3
 #    - Test the methods

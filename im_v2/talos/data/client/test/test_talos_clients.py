@@ -343,6 +343,8 @@ class TestTalosHistoricalPqByTileClient1(icdc.ImClientTestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_ck_infra
+@pytest.mark.requires_aws
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
@@ -355,6 +357,8 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
     the parent class.
     """
 
+    @pytest.mark.requires_aws
+    @pytest.mark.requires_ck_infra
     def test_read_data1(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -609,6 +613,8 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
 
     # ////////////////////////////////////////////////////////////////////////
 
+    @pytest.mark.requires_aws
+    @pytest.mark.requires_ck_infra
     def test_get_start_ts_for_symbol1(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -622,6 +628,8 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
             expected_start_ts,
         )
 
+    @pytest.mark.requires_aws
+    @pytest.mark.requires_ck_infra
     def test_get_end_ts_for_symbol1(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -665,6 +673,8 @@ class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
 # #############################################################################
 
 
+# TODO(Shaopeng Z): This hangs outside CK infra, so we skip it.
+@pytest.mark.requires_ck_infra
 class TestTalosSqlRealTimeImClient1(
     icdc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
@@ -887,9 +897,10 @@ class TestTalosSqlRealTimeImClient1(
         """
         Initialize Talos SQL Client.
         """
+        universe_version = "infer_from_data"
         table_name = "talos_ohlcv"
         sql_talos_client = imvtdctacl.TalosSqlRealTimeImClient(
-            resample_1min, self.connection, table_name
+            universe_version, resample_1min, self.connection, table_name
         )
         return sql_talos_client
 
@@ -1376,11 +1387,28 @@ class TestMockSqlRealTimeImClient1(
         ]
         return expected_column_names
 
+    def tearDown(self) -> None:
+        hsql.remove_table(self.connection, "mock2_marketdata")
+        super().tearDown()
+
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
+    def get_im_client(
+        self, universe_version: str
+    ) -> icdc.MockSqlRealTimeImClient:
+        """
+        Get Mock SqlRealTimeImClient for unit testing.
+        """
+        im_client = icdc.get_mock_realtime_client(
+            universe_version, self.connection
+        )
+        return im_client
+
     def test_read_data1(self) -> None:
+        universe_version = "infer_from_data"
+        im_client = self.get_im_client(universe_version)
         full_symbol = "binance::BTC_USDT"
         #
         expected_length = 3
@@ -1399,7 +1427,7 @@ class TestMockSqlRealTimeImClient1(
         """
         # pylint: enable=line-too-long
         self._test_read_data1(
-            self.client,
+            im_client,
             full_symbol,
             expected_length,
             expected_column_names,
@@ -1408,6 +1436,8 @@ class TestMockSqlRealTimeImClient1(
         )
 
     def test_read_data2(self) -> None:
+        universe_version = "infer_from_data"
+        im_client = self.get_im_client(universe_version)
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
         expected_length = 6
@@ -1431,7 +1461,7 @@ class TestMockSqlRealTimeImClient1(
         """
         # pylint: enable=line-too-long
         self._test_read_data2(
-            self.client,
+            im_client,
             full_symbols,
             expected_length,
             expected_column_names,
@@ -1440,6 +1470,8 @@ class TestMockSqlRealTimeImClient1(
         )
 
     def test_read_data3(self) -> None:
+        universe_version = "infer_from_data"
+        im_client = self.get_im_client(universe_version)
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = pd.Timestamp("2022-04-22T16:30:00-00:00")
         #
@@ -1460,7 +1492,7 @@ class TestMockSqlRealTimeImClient1(
         """
         # pylint: enable=line-too-long
         self._test_read_data3(
-            self.client,
+            im_client,
             full_symbols,
             start_ts,
             expected_length,
@@ -1470,6 +1502,8 @@ class TestMockSqlRealTimeImClient1(
         )
 
     def test_read_data4(self) -> None:
+        universe_version = "infer_from_data"
+        im_client = self.get_im_client(universe_version)
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         end_ts = pd.Timestamp("2022-04-22T14:40:00-00:00")
         #
@@ -1490,7 +1524,7 @@ class TestMockSqlRealTimeImClient1(
         """
         # pylint: enable=line-too-long
         self._test_read_data4(
-            self.client,
+            im_client,
             full_symbols,
             end_ts,
             expected_length,
@@ -1500,6 +1534,8 @@ class TestMockSqlRealTimeImClient1(
         )
 
     def test_read_data5(self) -> None:
+        universe_version = "infer_from_data"
+        im_client = self.get_im_client(universe_version)
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = pd.Timestamp("2022-04-22T13:00:00-00:00")
         end_ts = pd.Timestamp("2022-04-22T15:30:00-00:00")
@@ -1523,7 +1559,7 @@ class TestMockSqlRealTimeImClient1(
         """
         # pylint: enable=line-too-long
         self._test_read_data5(
-            self.client,
+            im_client,
             full_symbols,
             start_ts,
             end_ts,
@@ -1534,10 +1570,14 @@ class TestMockSqlRealTimeImClient1(
         )
 
     def test_read_data6(self) -> None:
+        universe_version = "infer_from_data"
+        im_client = self.get_im_client(universe_version)
         full_symbol = "unsupported_exchange::unsupported_currency"
-        self._test_read_data6(self.client, full_symbol)
+        self._test_read_data6(im_client, full_symbol)
 
     def test_read_data7(self) -> None:
+        universe_version = "infer_from_data"
+        im_client = self.get_im_client(universe_version)
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
         expected_length = 6
@@ -1561,7 +1601,7 @@ class TestMockSqlRealTimeImClient1(
         """
         # pylint: enable=line-too-long
         self._test_read_data7(
-            self.client,
+            im_client,
             full_symbols,
             expected_length,
             expected_column_names,
@@ -1572,22 +1612,39 @@ class TestMockSqlRealTimeImClient1(
     # ///////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:
+        universe_version = "infer_from_data"
+        im_client = self.get_im_client(universe_version)
         full_symbol = "binance::BTC_USDT"
         expected_start_ts = pd.to_datetime("2022-04-22 14:40:00", utc=True)
         self._test_get_start_ts_for_symbol1(
-            self.client, full_symbol, expected_start_ts
+            im_client, full_symbol, expected_start_ts
         )
 
     def test_get_end_ts_for_symbol1(self) -> None:
+        universe_version = "infer_from_data"
+        im_client = self.get_im_client(universe_version)
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2022-04-22 17:10:00", utc=True)
-        self._test_get_end_ts_for_symbol1(
-            self.client, full_symbol, expected_end_ts
-        )
+        self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
 
     # ///////////////////////////////////////////////////////////////////////
 
     def test_get_universe1(self) -> None:
+        universe_version = "v1"
+        im_client = self.get_im_client(universe_version)
+        expected_length = 2
+        expected_first_elements = ["binance::ADA_USDT", "binance::BTC_USDT"]
+        expected_last_elements = expected_first_elements
+        self._test_get_universe1(
+            im_client,
+            expected_length,
+            expected_first_elements,
+            expected_last_elements,
+        )
+
+    def test_get_universe2(self) -> None:
+        universe_version = "infer_from_data"
+        im_client = self.get_im_client(universe_version)
         expected_length = 2
         expected_first_elements = [
             "binance::BTC_USDT",
@@ -1595,7 +1652,7 @@ class TestMockSqlRealTimeImClient1(
         ]
         expected_last_elements = expected_first_elements
         self._test_get_universe1(
-            self.client,
+            im_client,
             expected_length,
             expected_first_elements,
             expected_last_elements,
@@ -1603,24 +1660,22 @@ class TestMockSqlRealTimeImClient1(
 
     # ///////////////////////////////////////////////////////////////////////
     def test_filter_columns1(self) -> None:
+        universe_version = "infer_from_data"
+        im_client = self.get_im_client(universe_version)
         full_symbols = ["binance::ETH_USDT", "binance::BTC_USDT"]
         columns = self.get_expected_column_names()
-        self._test_filter_columns1(self.client, full_symbols, columns)
+        self._test_filter_columns1(im_client, full_symbols, columns)
 
     def test_filter_columns2(self) -> None:
+        universe_version = "infer_from_data"
+        im_client = self.get_im_client(universe_version)
         full_symbol = "binance::BTC_USDT"
         columns = ["full_symbol", "unsupported"]
-        self._test_filter_columns2(self.client, full_symbol, columns)
+        self._test_filter_columns2(im_client, full_symbol, columns)
 
     def test_filter_columns3(self) -> None:
+        universe_version = "infer_from_data"
+        im_client = self.get_im_client(universe_version)
         full_symbol = "binance::BTC_USDT"
         columns = ["open", "close"]
-        self._test_filter_columns3(self.client, full_symbol, columns)
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.client = icdc.get_mock_realtime_client(self.connection)
-
-    def tearDown(self) -> None:
-        hsql.remove_table(self.connection, "mock2_marketdata")
-        super().tearDown()
+        self._test_filter_columns3(im_client, full_symbol, columns)

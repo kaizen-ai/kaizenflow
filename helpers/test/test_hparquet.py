@@ -574,11 +574,11 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         partition_mode = "by_year_month"
         start_ts = pd.Timestamp("2020-01-02 09:31:00+00:00")
         end_ts = pd.Timestamp("2020-01-02 09:30:00+00:00")
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             hparque.get_parquet_filters_from_timestamp_interval(
                 partition_mode, start_ts, end_ts
             )
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"""
         * Failed assertion *
         2020-01-02 09:31:00+00:00 <= 2020-01-02 09:30:00+00:00
@@ -592,11 +592,11 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         partition_mode = "new_mode"
         start_ts = pd.Timestamp("2020-01-02 09:31:00+00:00")
         end_ts = pd.Timestamp("2020-01-02 09:32:00+00:00")
-        with pytest.raises(ValueError) as fail:
+        with self.assertRaises(ValueError) as fail:
             hparque.get_parquet_filters_from_timestamp_interval(
                 partition_mode, start_ts, end_ts
             )
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"Unknown partition mode `new_mode`!"
         self.assert_equal(actual, expected, fuzzy_match=True)
 
@@ -732,10 +732,10 @@ class TestAddDatePartitionColumns(hunitest.TestCase):
     def test_add_date_partition_columns3(self) -> None:
         partition_mode = "by_year_month_day"
         # pylint: disable=line-too-long
-        expected = r"""                           dummy_value  dummy_timestamp  year  month        date
-        2021-12-04 19:40:00+00:00            1    1638646800000  2021     12  2021-12-04
-        2021-12-04 19:41:00+00:00            2    1638646860000  2021     12  2021-12-04
-        2021-12-04 19:42:00+00:00            3    1638646960000  2021     12  2021-12-04"""
+        expected = r"""                           dummy_value  dummy_timestamp  year  month  day
+        2021-12-04 19:40:00+00:00            1    1638646800000  2021     12    4
+        2021-12-04 19:41:00+00:00            2    1638646860000  2021     12    4
+        2021-12-04 19:42:00+00:00            3    1638646960000  2021     12    4"""
         self.add_date_partition_columns_helper(partition_mode, expected)
 
     def test_add_date_partition_columns4(self) -> None:
@@ -837,6 +837,8 @@ class TestToPartitionedDataset(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_ck_infra
+@pytest.mark.requires_aws
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
@@ -867,6 +869,7 @@ class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
         s3fs_.put(test_dir, s3_bucket, recursive=True)
         return s3fs_
 
+    @pytest.mark.slow("~7 seconds.")
     def test_list_and_merge_pq_files(self) -> None:
         """
         Check if predefined generated Parquet files are properly merged.

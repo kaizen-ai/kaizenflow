@@ -38,7 +38,7 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
-import im_v2.crypto_chassis.data.client.crypto_chassis_clients as ivccdcccc
+import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -67,7 +67,8 @@ def get_cmtask1866_config_ccxt() -> cconconf.Config:
                 "resample_1min": True,
                 "root_dir": os.path.join(
                     hs3.get_s3_bucket_path("ck"),
-                    "reorg", "historical.manual.pq",
+                    "reorg",
+                    "historical.manual.pq",
                 ),
                 "partition_mode": "by_year_month",
                 "data_snapshot": "latest",
@@ -259,7 +260,9 @@ def _plot_bad_data_stats(
 # Major metric for a QA check is `"bad data [%]"` which is the sum of `"volume=0 [%]"` and `"NaNs [%]"`.
 
 # %%
-client = ivccdcccc.CryptoChassisHistoricalPqByTileClient(**config["data"]["im_client"])
+client = imvccdcccc.CryptoChassisHistoricalPqByTileClient(
+    **config["data"]["im_client"]
+)
 
 # %%
 universe = client.get_universe()

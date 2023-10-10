@@ -17,8 +17,8 @@ def get_yfinance_spot_downloaded_1min_create_table_query() -> str:
     """
     query = """
     CREATE TABLE IF NOT EXISTS yahoo_yfinance_spot_downloaded_1min(
-            
-            
+
+
             open NUMERIC,
             high NUMERIC,
             low NUMERIC,
@@ -74,7 +74,6 @@ def get_yfinance_spot_downloaded_2min_create_table_query() -> str:
             )
             """
     return query
-
 
 
 def get_yfinance_spot_downloaded_15min_create_table_query() -> str:
@@ -139,6 +138,7 @@ def get_yfinance_spot_downloaded_1hr_create_table_query() -> str:
             """
     return query
 
+
 def get_yfinance_spot_downloaded_1d_create_table_query() -> str:
     """
     Get SQL query to create yahoo yfinance table.
@@ -158,12 +158,6 @@ def get_yfinance_spot_downloaded_1d_create_table_query() -> str:
             )
             """
     return query
-
-
-
-
-
-
 
 
 def get_db_connection() -> Any:
@@ -211,7 +205,9 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         :param data: data to persists into DB
         :param db_table: table to save data to
         """
-        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
+        hdbg.dassert_isinstance(
+            data.get_data(), pd.DataFrame, "Only DataFrame is supported."
+        )
         # Transform dataframe into list of tuples.
         df = data.get_data()
         values = [tuple(v) for v in df.to_numpy()]
@@ -222,7 +218,6 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         extras.execute_values(cursor, query, values)
         self.db_conn.commit()
 
-
     @staticmethod
     def _create_insert_query(df: pd.DataFrame, db_table: str) -> str:
         """
@@ -232,7 +227,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         :param table_name: name of the table for insertion
         :return: SQL query, e.g.
         """
-        
+
         columns = ",".join(list(df.columns))
         query = f"INSERT INTO {db_table}({columns}) VALUES %s"
         return query
@@ -266,6 +261,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
 
         query = get_yfinance_spot_downloaded_1d_create_table_query()
         cursor.execute(query)
+
 
 # #############################################################################
 # PostgresClient
@@ -320,5 +316,6 @@ class PostgresClient(sinsacli.DataClient):
         # Read data.
         data = pd.read_sql_query(select_query, self.db_conn)
         return data
+
 
 print(1)

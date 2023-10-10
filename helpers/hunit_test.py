@@ -413,30 +413,41 @@ def filter_text(regex: str, txt: str) -> str:
 
 
 def purify_from_environment(txt: str) -> str:
-    # We remove references to the Git modules starting from the innermost one.
+    """
+    Replace environment variables with placeholders.
+
+    The performed transformations are:
+    1) Replace the Git path with `$GIT_ROOT`
+    2) Replace the path of current working dir with `$PWD`
+    3) Replace the current user name with `$USER_NAME`
+    """
+    # 1) Remove references to Git modules starting from the innermost one.
+    # Make sure that the path is not followed by a word character.
+    # E.g., `/app/test.txt` is the correct path, while `/application.py`
+    # is not a root path even though `/app` is the part of the text.
+    dir_pattern = r"(?![\w])"
     for super_module in [False, True]:
         # Replace the git path with `$GIT_ROOT`.
         super_module_path = hgit.get_client_root(super_module=super_module)
         if super_module_path != "/":
-            txt = txt.replace(super_module_path, "$GIT_ROOT")
+            pattern = re.compile(f"{super_module_path}{dir_pattern}")
+            txt = pattern.sub("$GIT_ROOT", txt)
         else:
             # If the git path is `/` then we don't need to do anything.
             pass
-    # Replace the current path with `$PWD`
+    # 2) Replace the path of current working dir with `$PWD`
     pwd = os.getcwd()
-    txt = txt.replace(pwd, "$PWD")
-    # Replace the user name with `$USER_NAME`.
+    pattern = re.compile(f"{pwd}{dir_pattern}")
+    txt = pattern.sub("$PWD", txt)
+    # 3) Replace the current user name with `$USER_NAME`.
     user_name = hsystem.get_user_name()
-    txt_out = []
-    for line in txt.splitlines():
-        if "take_square_root" in line:
-            # Skip replacing the user since it can be `root` interfering with
-            # the replacement.
-            txt_out.append(line)
-            continue
-        line = line.replace(user_name, "$USER_NAME")
-        txt_out.append(line)
-    txt = "\n".join(txt_out)
+    # Set a regex pattern that finds a user name surrounded by dot, dash or space.
+    # E.g., `IMAGE=$CK_ECR_BASE_PATH/amp_test:local-$USER_NAME-1.0.0`,
+    # `--name $USER_NAME.amp_test.app.app`, `run --rm -l user=$USER_NAME`.
+    pattern = rf"([\s\n\-\.\=]|^)+{user_name}+([.\s/-]|$)"
+    # Use `\1` and `\2` to preserve specific characters around `$USER_NAME`.
+    target = r"\1$USER_NAME\2"
+    txt = re.sub(pattern, target, txt)
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
@@ -1155,7 +1166,7 @@ class TestCase(unittest.TestCase):
         dir_name = os.path.join(dir_name, "input")
         return dir_name
 
-    def get_output_dir(self) -> str:
+    def get_output_dir(self, *, test_class_name: Optional[str] = None) -> str:
         """
         Return the path of the directory storing output data for this test
         class.
@@ -1164,7 +1175,6 @@ class TestCase(unittest.TestCase):
         """
         # The output dir is specific of this dir.
         use_only_test_class = False
-        test_class_name = None
         test_method_name = None
         use_absolute_path = True
         dir_name = self._get_current_path(
@@ -1246,11 +1256,11 @@ class TestCase(unittest.TestCase):
         self,
         aws_profile: str,
         *,
+        use_only_test_class: bool = False,
         test_class_name: Optional[str] = None,
         test_method_name: Optional[str] = None,
     ) -> str:
         # Make the path unique for the test.
-        use_only_test_class = True
         use_absolute_path = False
         test_path = self._get_current_path(
             use_only_test_class,
@@ -1370,6 +1380,7 @@ class TestCase(unittest.TestCase):
         tag: str = "test",
         abort_on_error: bool = True,
         action_on_missing_golden: str = _ACTION_ON_MISSING_GOLDEN,
+        test_class_name=None,
     ) -> Tuple[bool, bool, Optional[bool]]:
         """
         Check the actual outcome of a test against the expected outcome
@@ -1399,7 +1410,9 @@ class TestCase(unittest.TestCase):
         )
         hdbg.dassert_in(type(actual), (bytes, str), "actual='%s'", actual)
         #
-        dir_name, file_name = self._get_golden_outcome_file_name(tag)
+        dir_name, file_name = self._get_golden_outcome_file_name(
+            tag, test_class_name=test_class_name
+        )
         if use_gzip:
             file_name += ".gz"
         _LOG.debug("file_name=%s", file_name)
@@ -1801,10 +1814,11 @@ class TestCase(unittest.TestCase):
 
     # ///////////////////////////////////////////////////////////////////////
 
-    def _get_golden_outcome_file_name(self, tag: str) -> Tuple[str, str]:
+    def _get_golden_outcome_file_name(
+        self, tag: str, *, test_class_name: Optional[str] = None
+    ) -> Tuple[str, str]:
         # Get the current dir name.
         use_only_test_class = False
-        test_class_name = None
         test_method_name = None
         use_absolute_path = True
         dir_name = self._get_current_path(
@@ -1817,7 +1831,9 @@ class TestCase(unittest.TestCase):
         hio.create_dir(dir_name, incremental=True)
         hdbg.dassert_path_exists(dir_name)
         # Get the expected outcome.
-        file_name = self.get_output_dir() + f"/{tag}.txt"
+        file_name = (
+            self.get_output_dir(test_class_name=test_class_name) + f"/{tag}.txt"
+        )
         return dir_name, file_name
 
     def _get_test_name(self) -> str:
