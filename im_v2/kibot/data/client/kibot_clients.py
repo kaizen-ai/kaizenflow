@@ -37,7 +37,9 @@ class KibotClient(icdc.ImClient):
     we do not forget about it.
     """
 
-    def __init__(self, universe_version: str, *, resample_1min: bool = False) -> None:
+    def __init__(
+        self, universe_version: str, *, resample_1min: bool = False
+    ) -> None:
         """
         Constructor.
         """

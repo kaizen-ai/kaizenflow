@@ -9,6 +9,7 @@ import helpers.hparser as hparser
 
 import sorrentum_sandbox.examples.ml_projects.Issue29_Team10_Implement_sandbox_for_coingecko.db_coingecko as sisebidb
 import sorrentum_sandbox.examples.ml_projects.Issue29_Team10_Implement_sandbox_for_coingecko.download_coingecko as sisebido
+
 """
 Download data from CoinGecko and save it into the DB.
 Use as:
@@ -86,6 +87,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     to_timestamp = str(args.to_timestamp)
     id = str(args.id)
     downloader = sisebido.CGDownloader()
+
     raw_data = downloader.download(id, from_timestamp, to_timestamp)
     # Save data to DB.
     db_conn = sisebidb.get_db_connection()

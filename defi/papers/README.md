@@ -25,4 +25,4 @@ brew install latexindent
 
 * Indent
 
-latexindent -w daocross_daoswap.tex
+latexindent -w tulip.tex

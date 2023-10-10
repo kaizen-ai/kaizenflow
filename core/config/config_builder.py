@@ -23,6 +23,12 @@ def get_config_list_from_builder(config_builder: str) -> ccocolis.ConfigList:
     """
     Execute Python code `config_builder()` to build configs.
 
+    The problem that we need to solve is how to pass builders across different
+    executable (e.g., the simulator runs multiple tiles in parallel through
+    multiple executables `dataflow/backtest/run_config_list.py`) so we can't
+    use anything else than a string that is converted into a function as late
+    as possible.
+
     :param config_builder: full Python command to create the configs.
         E.g., `nlp.build_config_list.build_PTask1088_config_list()`
     """

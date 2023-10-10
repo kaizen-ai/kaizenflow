@@ -3,8 +3,10 @@ from typing import Iterable
 
 import pytest
 
-# TODO(gp): Remove after PTask2335.
-if True:
+import helpers.henv as henv
+
+
+if henv.has_module("gluonts"):
     import gluonts
     import mxnet
     import numpy as np

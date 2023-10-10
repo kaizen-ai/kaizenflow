@@ -68,7 +68,7 @@ def add_run_experiment_args(
     return parser  # type: ignore
 
 
-# ###########################################################################
+# #############################################################################
 
 
 # TODO(gp): There is overlap between the concept of hjoblib.workload and experiment
@@ -100,7 +100,7 @@ def setup_experiment_dir(config: cconfig.Config) -> None:
     file_name = os.path.join(experiment_result_dir, "config.pkl")
     _LOG.debug("Saving '%s'", file_name)
     # Remove un-pickleable pieces.
-    for key in ("dag_runner_object", ):
+    for key in ("dag_runner_object",):
         if key in config:
             if not hintros.is_pickleable(config[key]):
                 config[key] = None
@@ -227,7 +227,7 @@ def get_config_list_from_command_line(
     return config_list
 
 
-# ###########################################################################
+# #############################################################################
 
 
 def mark_config_as_success(experiment_result_dir: str) -> None:

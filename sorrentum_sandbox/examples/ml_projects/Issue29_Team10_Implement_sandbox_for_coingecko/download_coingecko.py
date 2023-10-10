@@ -9,6 +9,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import sorrentum_sandbox.common.download as ssandown
 import pendulum
+
 _LOG = logging.getLogger(__name__)
 ###ok
 class CGDownloader(ssandown.DataDownloader):
@@ -49,5 +50,3 @@ class CGDownloader(ssandown.DataDownloader):
 
         _LOG.info(f"Downloaded data: \n\t {df.head()}")
         return ssandown.RawData(df)
-
-print('Done')

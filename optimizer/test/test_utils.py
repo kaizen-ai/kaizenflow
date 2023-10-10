@@ -11,7 +11,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_compute_tangency_portfolio(hunitest.TestCase):
-
     @staticmethod
     def get_covariance() -> pd.DataFrame:
         mat = np.array(

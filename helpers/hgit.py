@@ -240,7 +240,8 @@ def is_amp_present() -> bool:
     """
     Return whether the `amp` dir exists.
 
-    This is a bit of an hacky way of knowing if there is the amp submodule.
+    This is a bit of an hacky way of knowing if there is the amp
+    submodule.
     """
     return os.path.exists("amp")
 

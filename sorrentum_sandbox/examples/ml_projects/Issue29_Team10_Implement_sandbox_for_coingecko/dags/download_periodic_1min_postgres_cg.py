@@ -76,21 +76,6 @@ logging.info("The current to_timestamp1 value is " + str(to_timestamp1))
 
 bridge_task = PythonOperator(task_id='bridge', dag=dag, provide_context=True, python_callable=bridge, op_args=[])
 bridge_task2 = PythonOperator(task_id='bridge2', dag=dag, provide_context=True, python_callable=bridge2, op_args=[])
-
-bash_command = [
-    # Sleep 5 seconds to ensure the bar is finished.
-    "sleep 5",
-    "&&",
-    "cd /cmamp/ml_projects/Issue29_Team10_Implement_sandbox_for_coingecko",
-    "&&",
-    "${pythonpath}",
-    "&&",
-    "python",
-    "dowonload_to_db.py"
-    "--id bitcoin",
-    "--from_timestamp ${from_timestamp}",
-    "--to_timestamp ${to_timestamp}",
-    "--target_table 'coingecko_historic'"
 ]
 
 downloading_task = BashOperator(

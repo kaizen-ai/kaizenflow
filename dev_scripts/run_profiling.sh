@@ -14,7 +14,7 @@ fi;
 # $AMP_DIR/devops/docker_build/install_cprofile.sh
 
 # Exec.
-cmd_line="${AMP_DIR}/oms/run_process_forecasts.py --backtest_file_name /cache/tiled_simulations/rc_experiment.RH8Ed.eg_v2_0-all.5T.2012_2022.run1/tiled_results --asset_id_col egid --log_dir process_forecasts_backtest"
+cmd_line="${AMP_DIR}/oms/order_processing/run_process_forecasts.py --backtest_file_name /cache/tiled_simulations/rc_experiment.RH8Ed.eg_v2_0-all.5T.2012_2022.run1/tiled_results --asset_id_col egid --log_dir process_forecasts_backtest"
 
 # Delete all the profiling info.
 # ls -1 prof.*.bin prof.*.lprof

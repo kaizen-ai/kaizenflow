@@ -93,7 +93,9 @@ class Test_Mock1(_TestCase):
         # different mocks.
         self.check("v", "v=<Mock name='mock.dumps()' id='xxx'>")
         self.check("type(v)", "type(v)=<class 'unittest.mock.Mock'>")
-        self.check("json.dumps()", "json.dumps()=<Mock name='mock.dumps()' id='xxx'>")
+        self.check(
+            "json.dumps()", "json.dumps()=<Mock name='mock.dumps()' id='xxx'>"
+        )
         self.assertTrue(isinstance(json.dumps, umock.Mock))
         self.assertNotEqual(id(v), id(json.dumps))
 
@@ -245,8 +247,10 @@ class Test_Mock_Class_with_context_manager1(_TestCase):
         # Outside the context manager everything is normal.
         obj = _Class()
         # Check.
-        self.check("obj.get_a",
-                "obj.get_a=<bound method _Class.get_a of <helpers.test.test_unit_test_mock._Class object at 0x>>")
+        self.check(
+            "obj.get_a",
+            "obj.get_a=<bound method _Class.get_a of <helpers.test.test_unit_test_mock._Class object at 0x>>",
+        )
         self.assertEqual(obj.get_a(), 3)
 
     def test_dict1(self) -> None:

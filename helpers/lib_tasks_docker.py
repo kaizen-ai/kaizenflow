@@ -18,6 +18,7 @@ from invoke import task
 # We want to minimize the dependencies from non-standard Python packages since
 # this code needs to run with minimal dependencies and without Docker.
 import helpers.hdbg as hdbg
+import helpers.hdict as hdict
 import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hio as hio
@@ -230,11 +231,16 @@ def _docker_pull(
 
 
 @task
-def docker_pull(ctx, stage="dev", version=None):  # type: ignore
+def docker_pull(ctx, stage="dev", version=None, skip_pull=False):  # type: ignore
     """
     Pull latest dev image corresponding to the current repo from the registry.
+
+    :param skip_pull: if True skip pulling the docker image
     """
     hlitauti.report_task()
+    if skip_pull:
+        _LOG.warning("Skipping pulling docker image as per user request")
+        return
     #
     base_image = ""
     _docker_pull(ctx, base_image, stage, version)
@@ -268,8 +274,22 @@ def _get_aws_cli_version() -> int:
     return major_version
 
 
-@task
-def docker_login(ctx):  # type: ignore
+def _docker_login_dockerhub() -> None:
+    """
+    Log into the Docker Hub which is a public Docker image registry.
+    """
+    # TODO(gp): Why here?
+    import helpers.hsecrets as hsecret
+
+    secret_id = "sorrentum_dockerhub"
+    secret = hsecret.get_secret(secret_id)
+    username = hdict.typed_get(secret, "username", expected_type=str)
+    password = hdict.typed_get(secret, "password", expected_type=str)
+    cmd = f"docker login -u {username} -p {password}"
+    hsystem.system(cmd, suppress_output=False)
+
+
+def _docker_login_ecr() -> None:
     """
     Log in the AM Docker repo_short_name on AWS.
     """
@@ -289,7 +309,9 @@ def docker_login(ctx):  # type: ignore
     if major_version == 1:
         cmd = f"eval $(aws ecr get-login --profile {profile} --no-include-email --region {region})"
     elif major_version == 2:
-        ecr_base_path = hlitauti.get_default_param(f"{profile.upper()}_ECR_BASE_PATH")
+        ecr_base_path = hlitauti.get_default_param(
+            f"{profile.upper()}_ECR_BASE_PATH"
+        )
         # TODO(Nikola): Remove `_get_aws_cli_version()` and use only `aws ecr get-login-password`
         #  as it is present in both versions of `awscli`.
         cmd = (
@@ -304,7 +326,28 @@ def docker_login(ctx):  # type: ignore
     # TODO(Grisha): fix properly. We pass `ctx` despite the fact that we do not
     #  need it with `use_system=True`, but w/o `ctx` invoke tasks (i.e. ones
     #  with `@task` decorator) do not work.
-    hlitauti.run(ctx, cmd, use_system=True)
+    hsystem.system(cmd, suppress_output=False)
+
+
+@task
+def docker_login(ctx, target="aws_ecr.ck"):  # type: ignore
+    """
+    Log in the target registry.
+
+    :param target: target Docker image registry to log in to
+        - "dockerhub.sorrentum": public Sorrentum Docker image registry
+        - "aws_ecr.ck": private AWS CK ECR
+    """
+    hlitauti.report_task()
+    # We run everything using `hsystem.system(...)` but `ctx` is needed
+    # to make the function work as an invoke target.
+    _ = ctx
+    if target == "aws_ecr.ck":
+        _docker_login_ecr()
+    elif target == "dockerhub.sorrentum":
+        _docker_login_dockerhub()
+    else:
+        raise ValueError(f"Invalid Docker image registry='{target}'")
 
 
 # ////////////////////////////////////////////////////////////////////////////////
@@ -617,7 +660,6 @@ def _generate_docker_compose_file(
         # This is inside `services`.
         indent_level = 1
         append(txt_tmp, indent_level)
-    #
     if use_main_network:
         txt_tmp = """
         networks:
@@ -676,7 +718,7 @@ def _get_docker_compose_files(
     _LOG.debug("repo_short_name=%s", repo_short_name)
     # Check submodule status, if needed.
     mount_as_submodule = False
-    if repo_short_name in ("amp", "cm"):
+    if repo_short_name in ("amp", "cmamp"):
         # Check if `amp` is a submodule.
         path, _ = hgit.get_path_from_supermodule()
         if path != "":
@@ -813,7 +855,7 @@ def _dassert_is_subsequent_version(
 # ////////////////////////////////////////////////////////////////////////////////
 
 
-_INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
+_INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)*[a-z]{2,}"
 _IMAGE_BASE_NAME_RE = r"[a-z0-9_-]+"
 _IMAGE_USER_RE = r"[a-z0-9_-]+"
 # For candidate prod images which have added hash for easy identification.
@@ -821,6 +863,8 @@ _IMAGE_HASH_RE = r"[a-z0-9]{9}"
 _IMAGE_STAGE_RE = rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod|prod(?:-{_IMAGE_USER_RE})(?:-{_IMAGE_HASH_RE})?|prod(?:-{_IMAGE_HASH_RE})?)"
 
 
+# TODO(Grisha): call `_dassert_is_base_image_name_valid()` and a separate
+# function that validates an image tag.
 def _dassert_is_image_name_valid(image: str) -> None:
     """
     Check whether an image name is valid.
@@ -845,11 +889,14 @@ def _dassert_is_image_name_valid(image: str) -> None:
     """
     regex = "".join(
         [
-            # E.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
-            rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}",
-            # :local-saggese
-            rf":{_IMAGE_STAGE_RE}",
-            # -1.0.0
+            # E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/`
+            # or `sorrentum/`.
+            rf"^{_INTERNET_ADDRESS_RE}\/",
+            # E.g., `amp`.
+            rf"{_IMAGE_BASE_NAME_RE}",
+            # E.g., `:local-saggese`.
+            rf"(:{_IMAGE_STAGE_RE})?",
+            # E.g., `-1.0.0`.
             rf"(-{_IMAGE_VERSION_RE})?$",
         ]
     )
@@ -870,6 +917,8 @@ def _dassert_is_base_image_name_valid(base_image: str) -> None:
     hdbg.dassert(m, "Invalid base_image: '%s'", base_image)
 
 
+# TODO(Grisha): instead of using `base_image` which is Docker registry address
+# + image name, use those as separate parameters. See CmTask5074.
 def _get_base_image(base_image: str) -> str:
     """
     :return: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
@@ -1179,14 +1228,14 @@ def _get_docker_compose_cmd(
         )
     # Print the config for debugging purpose.
     if print_docker_config:
-        docker_config_cmd_as_str = hlitauti._to_multi_line_cmd(docker_config_cmd)
+        docker_config_cmd_as_str = hlitauti.to_multi_line_cmd(docker_config_cmd)
         _LOG.debug("docker_config_cmd=\n%s", docker_config_cmd_as_str)
         _LOG.debug(
             "docker_config=\n%s",
             hsystem.system_to_string(docker_config_cmd_as_str)[1],
         )
     # Print the config for debugging purpose.
-    docker_cmd_: str = hlitauti._to_multi_line_cmd(docker_cmd_)
+    docker_cmd_: str = hlitauti.to_multi_line_cmd(docker_cmd_)
     return docker_cmd_
 
 
@@ -1229,6 +1278,8 @@ def _get_lint_docker_cmd(
 def _docker_cmd(
     ctx: Any,
     docker_cmd_: str,
+    *,
+    skip_pull: bool = False,
     **ctx_run_kwargs: Any,
 ) -> Optional[int]:
     """
@@ -1243,11 +1294,9 @@ def _docker_cmd(
         # inside CI.
         hs3.generate_aws_files()
     _LOG.info("Pulling the latest version of Docker")
-    docker_pull(ctx)
+    docker_pull(ctx, skip_pull=skip_pull)
     _LOG.debug("cmd=%s", docker_cmd_)
-    rc: Optional[int] = hlitauti.run(
-        ctx, docker_cmd_, pty=True, **ctx_run_kwargs
-    )
+    rc: Optional[int] = hlitauti.run(ctx, docker_cmd_, pty=True, **ctx_run_kwargs)
     return rc
 
 
@@ -1261,6 +1310,7 @@ def docker_bash(  # type: ignore
     as_user=True,
     generate_docker_compose_file=True,
     container_dir_name=".",
+    skip_pull=False,
 ):
     """
     Start a bash shell inside the container corresponding to a stage.
@@ -1268,6 +1318,7 @@ def docker_bash(  # type: ignore
     :param entrypoint: whether to use the `entrypoint` or not
     :param as_user: pass the user / group id or not
     :param generate_docker_compose_file: generate the Docker compose file or not
+    :param skip_pull: if True skip pulling the docker image
     """
     hlitauti.report_task(container_dir_name=container_dir_name)
     cmd = "bash"
@@ -1280,7 +1331,7 @@ def docker_bash(  # type: ignore
         entrypoint=entrypoint,
         as_user=as_user,
     )
-    _docker_cmd(ctx, docker_cmd_)
+    _docker_cmd(ctx, docker_cmd_, skip_pull=skip_pull)
 
 
 @task
@@ -1389,6 +1440,75 @@ def docker_jupyter(  # type: ignore
         version,
         port,
         self_test,
+        print_docker_config=print_docker_config,
+    )
+    _docker_cmd(ctx, docker_cmd_)
+
+
+def _get_docker_dash_app_cmd(
+    base_image: str,
+    stage: str,
+    version: str,
+    port: int,
+    *,
+    print_docker_config: bool = False,
+) -> str:
+    cmd = ""
+    extra_env_vars = [f"PORT={port}"]
+    extra_docker_run_opts = ["--service-ports"]
+    service_name = "dash_app"
+    #
+    docker_cmd_ = _get_docker_compose_cmd(
+        base_image,
+        stage,
+        version,
+        cmd,
+        extra_env_vars=extra_env_vars,
+        extra_docker_run_opts=extra_docker_run_opts,
+        service_name=service_name,
+        print_docker_config=print_docker_config,
+    )
+    return docker_cmd_
+
+
+@task
+def docker_dash_app(  # type: ignore
+    ctx,
+    stage="dev",
+    version="",
+    base_image="",
+    auto_assign_port=True,
+    port=None,
+    container_dir_name=".",
+):
+    """
+    Run dash app.
+
+    :param auto_assign_port: use the UID of the user and the inferred number of the
+        repo (e.g., 4 for `~/src/amp4`) to get a unique port
+    """
+    hlitauti.report_task(container_dir_name=container_dir_name)
+    if port is None:
+        if auto_assign_port:
+            uid = os.getuid()
+            _LOG.debug("uid=%s", uid)
+            git_repo_idx = hgit.get_project_dirname(only_index=True)
+            git_repo_idx = int(git_repo_idx)
+            _LOG.debug("git_repo_idx=%s", git_repo_idx)
+            # We assume that there are no more than `max_idx_per_users` clients.
+            max_idx_per_user = 10
+            hdbg.dassert_lte(git_repo_idx, max_idx_per_user)
+            port = (uid * max_idx_per_user) + git_repo_idx
+        else:
+            port = 9999
+    #
+    _LOG.info("Assigned port is %s", port)
+    print_docker_config = False
+    docker_cmd_ = _get_docker_dash_app_cmd(
+        base_image,
+        stage,
+        version,
+        port,
         print_docker_config=print_docker_config,
     )
     _docker_cmd(ctx, docker_cmd_)

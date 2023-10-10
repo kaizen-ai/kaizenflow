@@ -71,12 +71,16 @@ class Test_generate_compose_file1(hunitest.TestCase):
     def test3(self) -> None:
         self.helper(stage="prod", use_main_network=True)
 
+    # TODO(ShaopengZ): This hangs outside CK infra, so we skip it. 
+    @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(
         hgit.is_in_amp_as_submodule(), reason="Only run in amp directly"
     )
     def test4(self) -> None:
         self.helper(stage="dev")
 
+    # TODO(ShaopengZ): This hangs outside CK infra, so we skip it. 
+    @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
     )
@@ -87,6 +91,8 @@ class Test_generate_compose_file1(hunitest.TestCase):
 # #############################################################################
 
 
+# TODO(ShaopengZ): This hangs outside CK infra, so we skip it. 
+@pytest.mark.requires_ck_infra
 class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
     """
     Test `_get_docker_compose_cmd()`.
@@ -102,6 +108,7 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
         act = hunitest.filter_text("--user", act)
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    @pytest.mark.requires_ck_infra
     # TODO(gp): After using a single docker file as part of AmpTask2308
     #  "Update_amp_container" we can probably run these tests in any repo, so
     #  we should be able to remove this `skipif`.
@@ -141,6 +148,7 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
         """
         self.check(act, exp)
 
+    @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
     )
@@ -171,6 +179,7 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
                 bash """
         self.check(act, exp)
 
+    @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
     )
@@ -227,15 +236,15 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
             print_docker_config=print_docker_config,
         )
         exp = r"""
-        IMAGE=$AM_ECR_BASE_PATH/amp_test:dev-1.0.0 \
-            docker-compose \
-            --file $GIT_ROOT/devops/compose/docker-compose.yml \
-            --env-file devops/env/default.env \
-            run \
-            --rm \
-            --name $USER_NAME.amp_test.app.app \
-            --entrypoint bash \
-            app
+        IMAGE=$CK_ECR_BASE_PATH/amp_test:dev-1.0.0 \
+        docker-compose \
+        --file $GIT_ROOT/devops/compose/docker-compose.yml \
+        --env-file devops/env/default.env \
+        run \
+        --rm \
+        --name $USER_NAME.amp_test.app.app \
+        --entrypoint bash \
+        app
         """
         self.check(act, exp)
 
@@ -307,3 +316,69 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
             jupyter_server_test
         """
         self.check(act, exp)
+
+
+# #############################################################################
+
+
+class Test_dassert_is_image_name_valid1(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check that valid images pass the assertion.
+        """
+        valid_images = [
+            "12345.dkr.ecr.us-east-1.amazonaws.com/amp:dev",
+            "abcde.dkr.ecr.us-east-1.amazonaws.com/amp:local-saggese-1.0.0",
+            "12345.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0",
+            "sorrentum/cmamp",
+        ]
+        for image in valid_images:
+            hlitadoc._dassert_is_image_name_valid(image)
+
+    def test2(self) -> None:
+        """
+        Check that invalid images do not pass the assertion.
+        """
+        invalid_images = [
+            # Missing required parts.
+            "invalid-image-name",
+            # Missing stage/version.
+            "12345.dkr.ecr.us-east-1.amazonaws.com/amp:",
+            # Invalid version.
+            "12345.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-invalid",
+        ]
+        for image in invalid_images:
+            with self.assertRaises(AssertionError):
+                hlitadoc._dassert_is_image_name_valid(image)
+
+
+# #############################################################################
+
+
+class Test_dassert_is_base_image_name_valid1(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check that valid base images pass the assertion.
+        """
+        valid_base_images = [
+            "12345.dkr.ecr.us-east-1.amazonaws.com/amp",
+            "sorrentum/cmamp",
+        ]
+        for base_image in valid_base_images:
+            hlitadoc._dassert_is_base_image_name_valid(base_image)
+
+    def test2(self) -> None:
+        """
+        Check that invalid base images do not pass the assertion.
+        """
+        invalid_base_images = [
+            # Missing required parts.
+            "invalid-base-image",
+            # Extra character at the end.
+            "abcde.dkr.ecr.us-east-1.amazonaws.com/amp:",
+            # Extra part in the name.
+            "sorrentum/cmamp/invalid",
+        ]
+        for base_image in invalid_base_images:
+            with self.assertRaises(AssertionError):
+                hlitadoc._dassert_is_base_image_name_valid(base_image)

@@ -7,15 +7,15 @@
 - `Brownie` allows to:
   - deploy contracts
   - interact with contracts on mainnet or local testnet
-  - debugging
-  - unit testing
+  - debug contracts
+  - unit test contracts
 
 # Brownie tutorials
 
 - These are the files needed for the tutorials:
   ```
-  + tree --dirsfirst -n -F --charset unicode tutorial_brownie/
-  tutorial_brownie//
+  + tree --dirsfirst -n -F --charset unicode tutorial_brownie
+  tutorial_brownie/
   |-- hello_world_contract/
   |   |-- build/
   |   |   |-- contracts/

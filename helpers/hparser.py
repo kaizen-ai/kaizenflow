@@ -72,7 +72,7 @@ def add_verbosity_arg(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
 def parse_verbosity_args(
     args: argparse.Namespace, *args_: Any, **kwargs: Any
 ) -> None:
-    #if args.log_level == "VERB_DEBUG":
+    # if args.log_level == "VERB_DEBUG":
     #    args.log_level = 5
     hdbg.init_logger(verbosity=args.log_level, *args_, **kwargs)
 
@@ -141,6 +141,7 @@ def parse_dst_dir_arg(args: argparse.Namespace) -> Tuple[str, bool]:
     """
     dst_dir = args.dst_dir
     _LOG.debug("dst_dir=%s", dst_dir)
+    # TODO(Dan): Fix `clean_dst_dir` usage since it is always `False` now.
     clean_dst_dir = False
     if args.clean_dst_dir:
         _LOG.info("Cleaning dst_dir='%s'", dst_dir)

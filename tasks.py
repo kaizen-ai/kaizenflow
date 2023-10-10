@@ -18,6 +18,7 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     docker_build_prod_image,
     docker_cmd,
     docker_create_candidate_image,
+    # docker_dash_app,
     docker_images_ls_repo,
     docker_jupyter,
     docker_kill,
@@ -98,14 +99,25 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     run_tests,
     traceback,
 )
+
 # A lib contains dependencies that exist only in a Docker environment. Skipping the import
 # if needed in order not to break other invoke targets.
 try:
     from oms.lib_tasks_binance import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
-        binance_get_open_positions,
+        binance_display_open_positions,
         binance_flatten_account,
+        binance_log_open_positions,
+        binance_log_total_balance,
     )
-except ImportError as e:
+except ImportError:
+    pass
+# Collect imports that fails due to the `dev_tools` image is not being updated. See CmTask4892 for details.
+try:
+    from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
+        docker_tag_push_multi_build_local_image_as_dev,
+        integrate_file,
+    )
+except ImportError:
     pass
 # # TODO(gp): This is due to the coupling between code in linter container and
 # #  the code being linted.
