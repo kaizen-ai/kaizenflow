@@ -4,7 +4,6 @@ import unittest
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pytest
 
 import core.plotting.boxplot as cploboxp
 import core.plotting.correlation as cplocorr
@@ -45,10 +44,10 @@ class Test_plots(unittest.TestCase):
         srs = pd.Series(samples, index=index, name="test values")
         return srs
 
-    @staticmethod                                                                                                                                                          
+    @staticmethod
     def get_plot_projection1() -> pd.DataFrame:
         """
-        Generate a test DataFrame for the plot_projection function.
+        Generate a test DataFrame for `plot_projection()`.
         """
         data = [
             [1, 1, 0, 1],
@@ -58,7 +57,7 @@ class Test_plots(unittest.TestCase):
             [1, 1, 1, 1],
         ]
         index = pd.date_range(start="2023-01-01", periods=len(data), freq="D")
-        df = pd.DataFrame(data, index=index)                                                                                                                               
+        df = pd.DataFrame(data, index=index)
         return df
 
     def test_plot_histograms_and_lagged_scatterplot1(self) -> None:
@@ -75,7 +74,7 @@ class Test_plots(unittest.TestCase):
 
     def test_plot_time_series_by_period1(self) -> None:
         """
-        Smoke test for `test_plot_time_series_by_period1()`.
+        Smoke test for `plot_time_series_by_period()`.
         """
         test_series = self.get_test_plot_srs1()
         period = "day"
@@ -83,7 +82,7 @@ class Test_plots(unittest.TestCase):
 
     def test_plot_time_series_by_period2(self) -> None:
         """
-        Smoke test for `test_plot_time_series_by_period2()`.
+        Smoke test for `plot_time_series_by_period()`.
         """
         test_series = self.get_test_plot_srs1()
         period = "time"
@@ -101,7 +100,7 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for `plot_effective_correlation_rank()`.
 
-        - q_values = "None"
+        - `q_values = None`
         """
         test_df = self.get_test_plot_df1()
         cplocorr.plot_effective_correlation_rank(test_df)
@@ -137,7 +136,7 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for `plot_spectrum()`.
 
-        - axes = "None"
+        - `axes = None`
         """
         test_df = self.get_test_plot_df1()
         cplmiplo.plot_spectrum(test_df)
@@ -174,12 +173,12 @@ class Test_plots(unittest.TestCase):
         test_df = self.get_plot_projection1()
         special_values = [0]
         cplmiplo.plot_projection(test_df, special_values=special_values)
-              
+
     def test_plot_projection2(self) -> None:
         """
         Smoke test for `plot_projection()`.
 
-        - mode = "scatter"
+        - `mode = "scatter"`
         - `ax` is used for plotting
         """
         # Set input values with some empty values.
@@ -190,12 +189,13 @@ class Test_plots(unittest.TestCase):
         ax = fig.add_axes([0, 0, 1, 1])
         mode = "scatter"
         # Run.
-        cplmiplo.plot_projection(test_df, mode=mode, ax=ax)   
+        cplmiplo.plot_projection(test_df, mode=mode, ax=ax)
+
     def test_plot_boxplot1(self) -> None:
         """
         Smoke test for `plot_boxplot()`.
 
-        - grouping = "by_row"
+        - `grouping= "by_row"`
         - `ylabel` is an empty string
         """
         test_df = self.get_test_plot_df1()
@@ -205,7 +205,7 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for `plot_boxplot()`.
 
-        - grouping = "by_col"
+        - `grouping = "by_col"`
         - `ylabel` is a non-empty string
         """
         test_df = self.get_test_plot_df1()
@@ -225,7 +225,7 @@ class Test_plots(unittest.TestCase):
         Smoke test for `plot_qq()`.
 
         - Input series contains NaN values
-        - nan_mode = "drop"
+        - `nan_mode = "drop"`
         - Axes are passed
         """
         test_series = self.get_test_plot_srs1()
