@@ -6,7 +6,6 @@ import sorrentum_sandbox.examples.ml_projects.Issue29_Team10_Implement_sandbox_f
 
 import json
 from typing import Any, Optional
-
 import pandas as pd
 import psycopg2 as psycop
 import psycopg2.extras as extras
@@ -19,24 +18,23 @@ import sorrentum_sandbox.common.client as ssacocli
 import sorrentum_sandbox.common.download as ssacodow
 import sorrentum_sandbox.common.save as ssacosav
 
-
 def get_db_connection() -> Any:
     """
     Retrieve connection to the Postgres DB inside the Sorrentum data node.
     The parameters must match the parameters set up in the Sorrentum
     data node docker-compose.
     """
-    connection = psycop.connect(
+    
+    db_connection = psycop.connect(
         host="host.docker.internal",
         dbname="airflow",
         port=5532,
         user="postgres",
         password="postgres",
     )
-    connection.autocommit = True
+    db_connection.autocommit = True
 
-    return connection
-
+    return db_connection
 
 def get_coingecko_historic_table_query() -> str:
     """
@@ -46,6 +44,7 @@ def get_coingecko_historic_table_query() -> str:
     query = """
                 CREATE TABLE IF NOT EXISTS coingecko_historic
                 (
+                    id VARCHAR,
                     timestamp BIGINT,
                     price NUMERIC,
                     market_cap NUMERIC,
@@ -53,7 +52,6 @@ def get_coingecko_historic_table_query() -> str:
                 );
             """
     return query
-
 
 def get_coingecko_realtime_table_query() -> str:
     """
@@ -70,7 +68,6 @@ def get_coingecko_realtime_table_query() -> str:
                 );
             """
     return query
-
 
 def get_coingecko_drop_query() -> str:
     """
@@ -156,7 +153,6 @@ class PostgresDataFrameSaver(ssacosav.DataSaver):
         query = get_coingecko_realtime_table_query()
         cursor.execute(query)
 
-
 # # #############################################################################
 # # PostgresClient
 # # #############################################################################
@@ -187,7 +183,7 @@ class PostgresClient(ssacocli.DataClient):
         Load CSV data specified by a unique signature from a desired source
         directory for a specified time period.
         """
-        select_query = f"SELECT * FROM {dataset_signature}"
+        select_query = f"SELECT id, timestamp, price, market_cap, total_volume FROM {dataset_signature}"
         # Filter data.
         if from_timestamp:
             hdateti.dassert_has_tz(from_timestamp)
