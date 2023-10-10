@@ -25,6 +25,7 @@ class KibotS3DataLoader(imcdladalo.AbstractS3DataLoader):
         self,
         exchange: str,
         symbol: str,
+        aws_profile: str,
         asset_class: imcodatyp.AssetClass,
         frequency: imcodatyp.Frequency,
         contract_type: Optional[imcodatyp.ContractType] = None,
@@ -40,6 +41,7 @@ class KibotS3DataLoader(imcdladalo.AbstractS3DataLoader):
         """
         return self._read_data(
             symbol=symbol,
+            aws_profile=aws_profile,
             asset_class=asset_class,
             frequency=frequency,
             contract_type=contract_type,
@@ -180,6 +182,7 @@ class KibotS3DataLoader(imcdladalo.AbstractS3DataLoader):
         symbol: str,
         asset_class: imcodatyp.AssetClass,
         frequency: imcodatyp.Frequency,
+        aws_profile: str,
         contract_type: Optional[imcodatyp.ContractType] = None,
         exchange: Optional[str] = None,
         currency: Optional[str] = None,
@@ -191,6 +194,7 @@ class KibotS3DataLoader(imcdladalo.AbstractS3DataLoader):
     ) -> pd.DataFrame:
         file_path = imkdlkfpge.KibotFilePathGenerator().generate_file_path(
             symbol=symbol,
+            aws_profile=aws_profile,
             asset_class=asset_class,
             frequency=frequency,
             contract_type=contract_type,

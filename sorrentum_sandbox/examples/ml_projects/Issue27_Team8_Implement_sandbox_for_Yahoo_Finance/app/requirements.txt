@@ -4,6 +4,6 @@ dask
 sqlalchemy
 psycopg2-binary
 yfinance
-pandas 
+pandas
 requests
 tqdm

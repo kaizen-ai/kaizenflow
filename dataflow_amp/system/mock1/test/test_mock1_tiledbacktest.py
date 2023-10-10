@@ -32,7 +32,7 @@ class Test_Mock1_NonTime_ForecastSystem_TiledBacktest(
             + f'build_Mock1_tile_config_list("{backtest_config}")'
         )
         experiment_builder = (
-            "dataflow.backtest.master_backtest.run_tiled_backtest"
+            "dataflow.backtest.master_backtest.run_in_sample_tiled_backtest"
         )
         # We abort on error since we don't expect failures.
         run_model_extra_opts = ""

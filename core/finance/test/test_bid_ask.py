@@ -251,7 +251,7 @@ datetime,mid_value
         return df
 
 
-class Test_handle_orderbook_levels(hunitest.TestCase):
+class Test_transform_bid_ask_long_data_to_wide(hunitest.TestCase):
     """
     Apply the test data from `get_df_with_long_levels()` to check that the
     output is in wide form.
@@ -285,7 +285,7 @@ class Test_handle_orderbook_levels(hunitest.TestCase):
         long_levels_df = self.get_df_with_long_levels()
         #
         timestamp_col = "timestamp"
-        wide_levels_df = cfibiask.handle_orderbook_levels(
+        wide_levels_df = cfibiask.transform_bid_ask_long_data_to_wide(
             long_levels_df, timestamp_col
         )
         #

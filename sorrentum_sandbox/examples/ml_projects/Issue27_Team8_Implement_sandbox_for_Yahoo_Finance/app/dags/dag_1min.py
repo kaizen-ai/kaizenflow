@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import sorrentum_sandbox.examples.ml_projects.Issue27_Team8_Implement_sandbox_for_Yahoo_Finance.app.dags.dag_1min as ssempitisfyfadd1
+"""
+
 from datetime import datetime, timedelta
 
 from airflow import DAG
@@ -10,14 +16,14 @@ from dask_db import dump_dask_data
 
 
 default_args = {
-    'owner': 'coder2j',
-    'retry': 5,
-    'retry_delay': timedelta(minutes=5)
+    "owner": "coder2j",
+    "retry": 5,
+    "retry_delay": timedelta(minutes=5),
 }
 
 
 def dump_1m():
-    dump_latest_data('yahoo_yfinance_spot_downloaded_1min','1m')
+    dump_latest_data("yahoo_yfinance_spot_downloaded_1min", "1m")
 
 def dump_dask_1m():
     dump_dask_data()

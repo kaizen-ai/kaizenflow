@@ -6,12 +6,11 @@ import helpers.hpandas as hpandas
 
 import logging
 import random
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import s3fs
-import seaborn as sns
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -98,9 +97,18 @@ def dassert_index_is_datetime(
 ) -> None:
     """
     Ensure that the dataframe has an index containing datetimes.
+
+    It works for both single and multi-indexed dataframes.
     """
     index = _get_index(obj)
-    hdbg.dassert_isinstance(index, pd.DatetimeIndex, msg, *args)
+    if isinstance(index, pd.MultiIndex):
+        # In case of multi index check that at least one level is a datetime.
+        is_any_datetime = any(
+            isinstance(level, pd.DatetimeIndex) for level in index.levels
+        )
+        hdbg.dassert(is_any_datetime, msg, *args)
+    else:
+        hdbg.dassert_isinstance(index, pd.DatetimeIndex, msg, *args)
 
 
 def dassert_unique_index(
@@ -199,6 +207,8 @@ def dassert_time_indexed_df(
     """
     Validate that input dataframe is time indexed and well-formed.
 
+    It works for both single and multi-indexed dataframes.
+
     :param df: dataframe to validate
     :param allow_empty: allow empty data frames
     :param strictly_increasing: if True the index needs to be strictly increasing,
@@ -219,7 +229,11 @@ def dassert_time_indexed_df(
     # Check that the index is in datetime format.
     dassert_index_is_datetime(df)
     # Check that the passed timestamp has timezone info.
-    hdateti.dassert_has_tz(df.index[0])
+    index_item = df.index[0]
+    if isinstance(index_item, tuple):
+        # In case of multi index assume that the first level is a datetime.
+        index_item = index_item[0]
+    hdateti.dassert_has_tz(index_item)
 
 
 def dassert_valid_remap(to_remap: List[str], remap_dict: Dict[str, str]) -> None:
@@ -419,6 +433,51 @@ def find_gaps_in_dataframes(
     return first_missing_data, second_missing_data
 
 
+# TODO(Grisha): maybe also add `apply_column_mode` at some point.
+# TODO(Grisha): use this idiom everywhere in the codebase, e.g., in `compare_dfs()`.
+# TODO(Grisha): add unit tests.
+def apply_index_mode(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    mode: str,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Process DataFrames according to the index mode.
+
+    :param df1: first input df
+    :param df2: second input df
+    :param mode: method of processing indices
+        - "assert_equal": check that both indices are equal, assert otherwise
+        - "intersect": restrict both dfs to a common index
+        - "leave_unchanged": ignore any indices mismatch and return dfs as-is
+    :return: transformed copy of the inputs
+    """
+    _LOG.debug("mode=%s", mode)
+    hdbg.dassert_isinstance(df1, pd.DataFrame)
+    hdbg.dassert_isinstance(df2, pd.DataFrame)
+    hdbg.dassert_isinstance(mode, str)
+    # Copy in order not to modify the inputs.
+    df1_copy = df1.copy()
+    df2_copy = df2.copy()
+    if mode == "assert_equal":
+        dassert_indices_equal(df1_copy, df2_copy)
+    elif mode == "intersect":
+        # TODO(Grisha): Add sorting on demand.
+        common_index = df1_copy.index.intersection(df2_copy.index)
+        df1_copy = df1_copy[df1_copy.index.isin(common_index)]
+        df2_copy = df2_copy[df2_copy.index.isin(common_index)]
+    elif mode == "leave_unchanged":
+        _LOG.debug(
+            "Ignoring any index missmatch as per user's request.\n"
+            "df1.index.difference(df2.index)=\n%s\ndf2.index.difference(df1.index)=\n%s",
+            df1_copy.index.difference(df2_copy.index),
+            df2_copy.index.difference(df1_copy.index),
+        )
+    else:
+        raise ValueError(f"Unsupported index_mode={mode}")
+    return df1_copy, df2_copy
+
+
 def find_gaps_in_time_series(
     time_series: pd.Series,
     start_timestamp: pd.Timestamp,
@@ -531,7 +590,7 @@ def compare_dataframe_rows(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame
 def drop_duplicates(
     data: Union[pd.Series, pd.DataFrame],
     use_index: bool,
-    subset: Optional[List[str]] = None,
+    column_subset: Optional[List[str]] = None,
     *args: Any,
     **kwargs: Any,
 ) -> Union[pd.Series, pd.DataFrame]:
@@ -542,40 +601,33 @@ def drop_duplicates(
     - https://pandas.pydata.org/docs/reference/api/pandas.Series.drop_duplicates.html
     - https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.drop_duplicates.html
 
-    :param use_index: use index values for identifying duplicates
-    :param subset: a list of columns to consider for identifying duplicates
+    :param use_index:
+        - if `True`, use index values together with a column subset for
+            identifying duplicates
+        - if `False`, duplicated rows are with the exact same values in a subset
+            and different indices
+    :param column_subset: a list of columns to consider for identifying duplicates
     :return: data without duplicates
     """
-    _LOG.debug(
-        "use_index = % s, subset = % s args = % s, kwargs = % s",
-        str(use_index),
-        str(subset),
-        str(args),
-        str(kwargs),
-    )
-    # TODO(Nina): Consider the case when one of the columns has "index" as its name.
-    hdbg.dassert_not_in("index", data.columns.tolist())
+    _LOG.debug(hprint.to_str("use_index column_subset args kwargs"))
     num_rows_before = data.shape[0]
     # Get all columns list for subset if no subset is passed.
-    if subset is None:
-        subset = data.columns.tolist()
+    if column_subset is None:
+        column_subset = data.columns.tolist()
     else:
-        hdbg.dassert_lte(1, len(subset), "Columns subset cannot be empty")
+        hdbg.dassert_lte(1, len(column_subset), "Columns subset cannot be empty")
     if use_index:
-        # Save index column name in order to set it back after removing duplicates.
-        index_col_name = data.index.name or "index"
-        # Add index column to subset columns in order to drop duplicates by it as well.
-        subset.insert(0, index_col_name)
-        data = data.reset_index()
+        # Add dummy index column to use it for duplicates detection.
+        index_col_name = "use_index_col"
+        hdbg.dassert_not_in(index_col_name, data.columns.tolist())
+        column_subset.insert(0, index_col_name)
+        data[index_col_name] = data.index
     #
-    data_no_dups = data.drop_duplicates(subset=subset, *args, **kwargs)
+    data_no_dups = data.drop_duplicates(subset=column_subset, *args, **kwargs)
     #
     if use_index:
-        # Set the index back.
-        data_no_dups = data_no_dups.set_index(index_col_name, drop=True)
-        # Remove the index's name if the original index does not have one.
-        if index_col_name == "index":
-            data_no_dups.index.name = None
+        # Remove dummy index column.
+        data_no_dups = data_no_dups.drop([index_col_name], axis=1)
     # Report the change.
     num_rows_after = data_no_dups.shape[0]
     if num_rows_before != num_rows_after:
@@ -1066,6 +1118,11 @@ def df_to_str(
     elif isinstance(df, pd.Index):
         df = df.to_frame(index=False)
     hdbg.dassert_isinstance(df, pd.DataFrame)
+    # For some reason there are so-called "negative zeros", but we consider
+    # them equal to `0.0`. 
+    df = df.copy()
+    for col_name in df.select_dtypes(include=[np.float64, float]).columns:
+        df[col_name] = df[col_name].where(df[col_name] != -0.0, 0.0)
     out = []
     # Print the tag.
     if tag is not None:
@@ -1351,13 +1408,16 @@ def read_parquet_to_df(
 def compute_weighted_sum(
     dfs: Dict[str, pd.DataFrame],
     weights: pd.DataFrame,
+    *,
+    index_mode: str = "assert_equal",
 ) -> Dict[str, pd.DataFrame]:
     """
     Compute weighted sums of `dfs` using `weights`.
 
-    :param dfs: dataframes keyed by id; all dfs should have the same index
-        and cols
+    :param dfs: dataframes keyed by id; all dfs should have the same cols,
+        indices are handled based on the `index_mode`
     :param weights: float weights indexed by id with unique col names
+    :param index_mode: same as `mode` in `apply_index_mode()`
     :return: weighted sums keyed by weight col names
     """
     hdbg.dassert_isinstance(dfs, dict)
@@ -1367,18 +1427,13 @@ def compute_weighted_sum(
     hdbg.dassert_isinstance(id_, str)
     df = dfs[id_]
     hdbg.dassert_isinstance(df, pd.DataFrame)
-    idx = df.index
     cols = df.columns
     # Sanity-check dataframes in dictionary.
     for key, value in dfs.items():
         hdbg.dassert_isinstance(key, str)
         hdbg.dassert_isinstance(value, pd.DataFrame)
-        hdbg.dassert(
-            value.index.equals(idx),
-            "Index equality fails for keys=%s, %s",
-            id_,
-            key,
-        )
+        # The reference df is not modified.
+        _, value = apply_index_mode(df, value, index_mode)
         hdbg.dassert(
             value.columns.equals(cols),
             "Column equality fails for keys=%s, %s",
@@ -1549,6 +1604,27 @@ def remove_outliers(
 # #############################################################################
 
 
+# TODO(Grisha): add assertions/logging.
+def get_df_from_iterator(
+    iter_: Iterator[pd.DataFrame],
+    *,
+    sort_index: bool = True,
+) -> pd.DataFrame:
+    """
+    Concat all the dataframes in the iterator in one dataframe.
+
+    :param iter_: dataframe iterator
+    :param sort_index: whether to sort output index or not
+    :return: combined iterator data
+    """
+    # TODO(gp): @all make a copy of `iter_` so we don't consume it.
+    dfs = list(iter_)
+    df_res = pd.concat(dfs)
+    if sort_index:
+        df_res = df_res.sort_index()
+    return df_res
+
+
 def heatmap_df(df: pd.DataFrame, *, axis: Any = None) -> pd.DataFrame:
     """
     Colorize a df with a heatmap depending on the numeric values.
@@ -1558,17 +1634,50 @@ def heatmap_df(df: pd.DataFrame, *, axis: Any = None) -> pd.DataFrame:
         - 1 colorize along columns
         - None colorize
     """
+    # Keep it here to avoid long start up times.
+    import seaborn as sns
+
     cm = sns.diverging_palette(5, 250, as_cmap=True)
     df = df.style.background_gradient(axis=axis, cmap=cm)
     return df
 
 
+def compare_nans_in_dataframes(
+    df1: pd.DataFrame, df2: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Compare equality of DataFrames in terms of NaNs.
+
+    For example:
+        - `5 vs np.nan` is a mismatch
+        - `np.nan vs 5` is a mismatch
+        - `np.nan vs np.nan` is a match
+        - `np.nan vs np.inf` is a mismatch
+
+    :param df1: dataframe to compare
+    :param df2: dataframe to compare with
+    :return: dataframe that shows the differences stacked side by side, see
+        `pandas.DataFrame.compare()` for an example
+    """
+    dassert_axes_equal(df1, df2)
+    # Keep rows where df1's value is NaN and df2's value is not NaN and vice versa.
+    mask1 = df1.isna() & ~df2.isna()
+    mask2 = ~df1.isna() & df2.isna()
+    mask3 = mask1 | mask2
+    # Compute a dataframe with the differences.
+    nan_diff_df = df1[mask3].compare(df2[mask3], result_names=("df1", "df2"))
+    return nan_diff_df
+
+
+# TODO(Grisha): -> `compare_dataframes()`?
 def compare_dfs(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
     *,
     row_mode: str = "equal",
     column_mode: str = "equal",
+    # TODO(Grisha): should be True by default?
+    compare_nans: bool = False,
     diff_mode: str = "diff",
     assert_diff_threshold: float = 1e-3,
     close_to_zero_threshold: float = 1e-6,
@@ -1585,6 +1694,8 @@ def compare_dfs(
         - "equal": rows need to be the same for the two dataframes
         - "inner": compute the common rows for the two dataframes
     :param column_mode: same as `row_mode`
+    :param compare_nans: include NaN comparison if True otherwise just
+        compare non-NaN values
     :param diff_mode: control how the dataframes are compared in terms of
         corresponding elements
         - "diff": use the difference
@@ -1599,10 +1710,12 @@ def compare_dfs(
     :param log_level: logging level
     :return: a singe dataframe with differences as values
     """
+    hdbg.dassert_isinstance(df1, pd.DataFrame)
+    hdbg.dassert_isinstance(df2, pd.DataFrame)
     # TODO(gp): Factor out this logic and use it for both compare_visually_dfs
     #  and
     if row_mode == "equal":
-        hdbg.dassert_eq(list(df1.index), list(df2.index))
+        dassert_indices_equal(df1, df2)
     elif row_mode == "inner":
         # TODO(gp): Add sorting on demand, otherwise keep the columns in order.
         same_rows = list((set(df1.index)).intersection(set(df2.index)))
@@ -1624,6 +1737,17 @@ def compare_dfs(
     # Round small numbers to 0 to exclude them from the diff computation.
     df1[close_to_zero_threshold_mask] = df1[close_to_zero_threshold_mask].round(0)
     df2[close_to_zero_threshold_mask] = df2[close_to_zero_threshold_mask].round(0)
+    if compare_nans:
+        # Compare NaN values in dataframes.
+        nan_diff_df = compare_nans_in_dataframes(df1, df2)
+        _LOG.log(
+            log_level,
+            "Dataframe with NaN differences=\n%s",
+            df_to_str(nan_diff_df, log_level=log_level),
+        )
+        # TODO(Grisha): add the `only_warning` switch to the function.
+        msg = "There are NaN values in one of the dataframes that are not in the other one."
+        hdbg.dassert_eq(0, nan_diff_df.shape[0], msg=msg)
     # Compute the difference df.
     if diff_mode == "diff":
         df_diff = df1 - df2
@@ -1736,6 +1860,17 @@ def multiindex_df_info(
         "columns_level1=%s" % list_to_str(columns_level1, **list_to_str_kwargs)
     )
     ret.append("rows=%s" % list_to_str(rows, **list_to_str_kwargs))
+    if isinstance(df.index, pd.DatetimeIndex):
+        # Display timestamp info.
+        start_timestamp = df.index.min()
+        end_timestamp = df.index.max()
+        frequency = df.index.freq
+        if frequency is None:
+            # Try to infer frequency.
+            frequency = pd.infer_freq(df.index)
+        ret.append(f"start_timestamp={start_timestamp}")
+        ret.append(f"end_timestamp={end_timestamp}")
+        ret.append(f"frequency={frequency}")
     ret = "\n".join(ret)
     _LOG.log(log_level, ret)
     return ret
@@ -1892,3 +2027,38 @@ def compute_duration_df(
             )
             tag_to_df_updated[tag] = df
     return data_stats, tag_to_df_updated
+
+
+# #############################################################################
+
+
+def to_gsheet(
+    df: pd.DataFrame,
+    gsheet_name: str,
+    gsheet_sheet_name: str,
+    overwrite: bool,
+) -> None:
+    """
+    Save a dataframe to a Google sheet.
+
+    :param df: the dataframe to save to a Google sheet
+    :param gsheet_name: the name of the Google sheet to save the df into;
+        the Google sheet with this name must already exist on the
+        Google Drive
+    :param gsheet_sheet_name: the name of the sheet in the Google sheet
+    :param overwrite: if True, the contents of the sheet are erased before saving
+        the dataframe into it;
+        if False, the dataframe is appended to the contents of the sheet
+    """
+    import gspread_pandas
+
+    spread = gspread_pandas.Spread(
+        gsheet_name, sheet=gsheet_sheet_name, create_sheet=True
+    )
+    if overwrite:
+        spread.clear_sheet()
+    else:
+        sheet_contents = spread.sheet_to_df(index=None)
+        combined_df = pd.concat([sheet_contents, df])
+        df = combined_df.drop_duplicates()
+    spread.df_to_sheet(df, index=False)

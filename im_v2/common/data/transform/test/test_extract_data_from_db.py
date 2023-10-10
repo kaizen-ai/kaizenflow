@@ -16,7 +16,7 @@ class TestExtractDataFromDb1(imvcddbut.TestImDbHelper):
         super().setUp()
         ccxt_ohlcv_table_query = imvccdbut.get_ccxt_ohlcv_create_table_query()
         ccxt_ohlcv_insert_query = """
-        INSERT INTO ccxt_ohlcv
+        INSERT INTO ccxt_ohlcv_spot
         VALUES
             (66, 1637690340000, 1.04549, 1.04549, 1.04527, 1.04527,
             5898.0427797325265, 'XRP_USDT', 'gateio',
@@ -31,7 +31,7 @@ class TestExtractDataFromDb1(imvcddbut.TestImDbHelper):
     def tearDown(self) -> None:
         super().tearDown()
         ccxt_ohlcv_drop_query = """
-        DROP TABLE IF EXISTS ccxt_ohlcv;
+        DROP TABLE IF EXISTS ccxt_ohlcv_spot;
         """
         hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
 

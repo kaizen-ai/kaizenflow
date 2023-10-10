@@ -7,13 +7,14 @@ import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import abc
 import logging
 import os
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
@@ -22,18 +23,95 @@ import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
 
+
+# #############################################################################
+# CcxtImClient
+# #############################################################################
+
+
+class CcxtImClient(icdc.ImClient):
+    """
+    Implement behaviors specific of CCXT.
+    """
+
+    def _read_data(
+        self,
+        full_symbols: List[ivcu.FullSymbol],
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
+        *,
+        full_symbol_col_name: Optional[str] = None,
+        **kwargs: Any,
+    ) -> pd.DataFrame:
+        """
+        Override the implementation by taking care of special timing semantic of the data (e.g., for Binance).
+        """
+        exchange_to_full_symbols_unique = self._split_full_symbols_by_exchanges(
+            full_symbols
+        )
+        _LOG.debug(hprint.to_str("exchange_to_full_symbols_unique"))
+        # Collect exchange-specific dataframes.
+        exchange_dfs = []
+        for exchange, full_symbols in exchange_to_full_symbols_unique.items():
+            if exchange == "binance":
+                # Account for the fact that for Binance `timestamp` is the start of the
+                # sampling interval. E.g., to get data for [17:00, 17:02] (end of sampling
+                # interval) one needs to query for [16:59, 17:01] (start of sampling interval).
+                # TODO(Grisha): the assumption is that data resolution is 1 minute, is it
+                # always true?
+                _LOG.debug(
+                    "Adjusting Binance timestamps to the DataFlow time semantic..."
+                )
+                if start_ts is not None:
+                    start_ts = start_ts - pd.Timedelta(minutes=1)
+                if end_ts is not None:
+                    end_ts = end_ts - pd.Timedelta(minutes=1)
+                _LOG.debug(hprint.to_str("start_ts end_ts"))
+                df = super()._read_data(
+                    full_symbols,
+                    start_ts,
+                    end_ts,
+                    columns,
+                    full_symbol_col_name=full_symbol_col_name,
+                    **kwargs,
+                )
+                # TODO(Grisha): is `timestamp` always an index?
+                # Add 1 minute back to convert `timestamp` to the end of sampling interval.
+                df.index = df.index + pd.Timedelta(minutes=1)
+                exchange_dfs.append(df)
+            else:
+                df = super()._read_data(
+                    full_symbols,
+                    start_ts,
+                    end_ts,
+                    columns,
+                    full_symbol_col_name=full_symbol_col_name,
+                    **kwargs,
+                )
+                exchange_dfs.append(df)
+        # Combine exchange specific dfs.
+        df = pd.concat(exchange_dfs)
+        return df
+
+
 # #############################################################################
 # CcxtCddClient
 # #############################################################################
 
 
+# TODO(gp): It would be better to plug the functions directly in the classes,
+#  rather than complicating the class hierarchy. Also it seems that there is
+#  a single derived class.
 class CcxtCddClient(icdc.ImClient, abc.ABC):
     """
-    Contain common code for all the `CCXT` and `CDD` clients, e.g.,
+    Contain common code for all the `CCXT` and `CDD` clients.
 
+    E.g.,
     - getting `CCXT` and `CDD` universe
     - applying common transformation for all the data from `CCXT` and `CDD`
-        - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
+        - E.g., `_apply_olhlcv_transformations()`,
+          `_apply_vendor_normalization()`
     """
 
     def __init__(
@@ -93,10 +171,12 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         """
         if self._vendor == "CDD":
             # Rename columns for consistency with other crypto vendors.
-            # Column name for `volume` depends on the `currency_pair`, e.g., there are 2 columns
-            # `Volume BTC` and `Volume USDT` for `currency pair `BTC_USDT. And there is no easy
-            # way to select the right `Volume` column without passing `currency_pair` that will
-            # complicate the interface. To get rid of this dependency the column's index is used.
+            # Column name for `volume` depends on the `currency_pair`, e.g.,
+            # there are 2 columns `Volume BTC` and `Volume USDT` for `currency
+            # pair `BTC_USDT. And there is no easy way to select the right
+            # `Volume` column without passing `currency_pair` that will
+            # complicate the interface. To get rid of this dependency the
+            # column's index is used.
             data.columns.values[7] = "volume"
             data = data.rename({"unix": "timestamp"}, axis=1)
         # Verify that the timestamp data is provided in ms.
@@ -107,8 +187,8 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms", utc=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
-        # Round up float values in case values in raw data are rounded up incorrectly when
-        # being read from a file.
+        # Round up float values in case values in raw data are rounded up
+        # incorrectly when being read from a file.
         data = data.round(8)
         return data
 
@@ -118,9 +198,10 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
 # #############################################################################
 
 
-class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
+class CcxtSqlRealTimeImClient(CcxtImClient, icdc.SqlRealTimeImClient):
     def __init__(
         self,
+        universe_version: str,
         db_connection: hsql.DbConnection,
         table_name: str,
         *,
@@ -128,7 +209,11 @@ class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
     ) -> None:
         vendor = "ccxt"
         super().__init__(
-            vendor, db_connection, table_name, resample_1min=resample_1min
+            vendor,
+            universe_version,
+            db_connection,
+            table_name,
+            resample_1min=resample_1min,
         )
 
     @staticmethod
@@ -140,7 +225,7 @@ class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
 
 
 # #############################################################################
-# CcxtFileSystemClient
+# CcxtCddCsvParquetByAssetClient
 # #############################################################################
 
 
@@ -310,7 +395,9 @@ class CcxtCddCsvParquetByAssetClient(
 # #############################################################################
 
 
-class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
+class CcxtHistoricalPqByTileClient(
+    CcxtImClient, icdc.HistoricalPqByCurrencyPairTileClient
+):
     """
     Read historical data for `CCXT` assets stored as Parquet dataset.
 
@@ -326,6 +413,8 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
         contract_type: str,
         data_snapshot: str,
         *,
+        version: str = "",
+        tag: str = "",
         aws_profile: Optional[str] = None,
         resample_1min: bool = False,
     ) -> None:
@@ -343,6 +432,8 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
             dataset,
             contract_type,
             data_snapshot,
+            version=version,
+            tag=tag,
             aws_profile=aws_profile,
             resample_1min=resample_1min,
         )

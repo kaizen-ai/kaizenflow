@@ -1,18 +1,24 @@
-#FROM ubuntu:latest
+#FROM ubuntu:20.04
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get -y update
 RUN apt-get -y upgrade
 
-RUN apt install -y \
-    sudo curl systemctl gnupg git \
-    xz-utils vim make build-essential
+# Install system utilities.
+RUN apt install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    gnupg \
+    make \
+    sudo \
+    systemctl \
+    vim \
+    xz-utils
 
 # Install Python.
-RUN apt-get update && apt install \
-    -y \
-    --no-install-recommends \
+RUN apt-get update && apt install -y --no-install-recommends \
     python3 \
     python3-dev \
     python3-pip \

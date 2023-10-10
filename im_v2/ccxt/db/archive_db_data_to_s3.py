@@ -7,10 +7,10 @@ Use as:
 > im_v2/ccxt/db/archive_db_data_to_s3.py \
    --db_stage 'dev' \
    --timestamp '2022-10-20 15:46:00+00:00' \
-   --db_table 'ccxt_ohlcv_test' \
-   --s3_path 's3://cryptokaizen-data-test/db_archive/' \
-   --incremental  \
+   --dataset_signature 'periodic_daily.airflow.downloaded_200ms.postgres.bid_ask.futures.v7_3.ccxt.binance.v1_0_0' \
+   --s3_path 's3://cryptokaizen-data-test/' \
    --dry_run
+   --mode 'archive_and_delete'
 
 Import as:
 
@@ -18,17 +18,16 @@ import im_v2.ccxt.db.archive_db_data_to_s3 as imvcdaddts
 """
 import argparse
 import logging
-import os
 
 import pandas as pd
 
+import data_schema.dataset_schema_utils as dsdascut
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
-import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
 
@@ -68,19 +67,13 @@ def _assert_db_args(
 def _assert_archival_mode(
     incremental: bool,
     s3_path: str,
-    db_stage: str,
-    db_table: str,
-    table_timestamp_column: str,
 ) -> None:
     """
-    Assert that the path corresponding to th DB stage and DB table exists if
+    Assert that the path corresponding to the DB stage and DB table exists if
     incremental is True, assert the path doesn't exist.
 
-    The folder structure used for archival:
-    s3://<s3_base_path>/<db_stage>/<db_table>/<table_timestamp_column>
-    /..parquet/partition/columns../data.parquet
-    Table column `table_timestamp_column` in the path helps ensure that
-    the same column is always reused in a single archival parquet file.
+    :param incremental: if True, the path must exist
+    :param s3_path: path to the S3 folder
     """
     if incremental:
         # The profile won't change for the foreseeable future so
@@ -120,6 +113,32 @@ def _assert_correct_archival(db_data: pd.DataFrame, s3_path: str) -> None:
     """
 
 
+def _delete_data_from_db(
+    min_age_timestamp: pd.Timestamp,
+    db_conn: hsql.DbConnection,
+    db_table: str,
+    table_timestamp_column: str,
+    exchange_id: str,
+    dry_run: bool,
+) -> None:
+    """
+    Delete data from DB table.
+
+    :param connection: DB connection
+    :param db_table: DB table name
+    :param table_timestamp_column: name of the column containing timestamp
+    :param dry_run: if True, the data are not deleted
+    """
+    if dry_run:
+        _LOG.info("Dry run. Data not deleted.")
+        return
+    # Delete data from DB.
+    num_deleted = imvcddbut.drop_db_data_by_age(
+        min_age_timestamp, db_conn, db_table, table_timestamp_column, exchange_id
+    )
+    _LOG.info("Deleted %d rows from DB.", num_deleted)
+
+
 def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
     """
     Archive data from DB table older than specified timestamp into a S3
@@ -130,39 +149,61 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
         incremental,
         s3_path,
         db_stage,
-        db_table,
+        dataset_signature,
         dry_run,
         table_timestamp_column,
         skip_time_continuity_assertion,
+        mode,
     ) = (
         args.incremental,
         args.s3_path,
         args.db_stage,
-        args.db_table,
+        args.dataset_signature,
         args.dry_run,
         args.table_timestamp_column,
         args.skip_time_continuity_assertion,
+        args.mode,
     )
-    s3_path = os.path.join(s3_path, db_stage, db_table, table_timestamp_column)
+    # Get db table name from dataset signature.
+    dataset_schema = dsdascut.get_dataset_schema()
+    db_table = dsdascut.get_im_db_table_name_from_signature(
+        dataset_signature, dataset_schema
+    )
+    # Replace "download" with "archive" in the dataset signature
+    #  and set data format to parquet.
+    args_from_signature = dsdascut.parse_dataset_signature_to_args(
+        dataset_signature, dataset_schema
+    )
+    args_from_signature["action_tag"] = args_from_signature["action_tag"].replace(
+        "downloaded", "archived"
+    )
+    args_from_signature["data_format"] = "parquet"
+    # Construct S3 path from args.
+    s3_dataset_path = dsdascut.build_s3_dataset_path_from_args(
+        s3_path, args_from_signature
+    )
     min_age_timestamp = pd.Timestamp(args.timestamp, tz="UTC")
     # Get database connection.
     db_conn = imvcddbut.DbConnectionManager.get_connection(db_stage)
     # Perform argument assertions.
     _assert_db_args(db_conn, db_table, table_timestamp_column)
-    _assert_archival_mode(
-        incremental, s3_path, db_stage, db_table, table_timestamp_column
-    )
+    _assert_archival_mode(incremental, s3_dataset_path)
     # Fetch DB data.
-    db_data = imvcddbut.fetch_data_by_age(
-        min_age_timestamp, db_conn, db_table, table_timestamp_column
-    )
-    if db_data.empty:
-        _LOG.warning(
-            f"There is no data older than '{min_age_timestamp}' in '{db_table}' table."
+    db_data = pd.DataFrame()
+    if mode in ("archive_only", "archive_and_delete"):
+        db_data = imvcddbut.fetch_data_by_age(
+            min_age_timestamp,
+            db_conn,
+            db_table,
+            table_timestamp_column,
+            args_from_signature["exchange_id"],
         )
-    else:
-        _LOG.info(f"Fetched {db_data.shape[0]} rows from '{db_table}'.")
-
+        if db_data.empty:
+            _LOG.warning(
+                f"There is no data older than '{min_age_timestamp}' in '{db_table}' table."
+            )
+        else:
+            _LOG.info(f"Fetched {db_data.shape[0]} rows from '{db_table}'.")
     # Fetch latest S3 row upon incremental archival.
     if incremental:
         # TODO(Juraj): CmTask#3087 think about a HW resource friendly solution to this.
@@ -175,26 +216,40 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
     else:
         if not db_data.empty:
             # Archive the data
-            imvcdeexut.save_parquet(
-                db_data,
-                s3_path,
-                unit="ms",
-                aws_profile=_AWS_PROFILE,
-                # TODO(Juraj): temporary solution, right now only bid_ask data
-                # are archived.
-                data_type="bid_ask",
-                # The `id` column is most likely not needed once the data is in S3.
-                drop_columns=["id"],
-                mode="append",
-            )
+            if mode in ("archive_only", "archive_and_delete"):
+                unit = "ms"
+                data_type = args_from_signature["data_type"]
+                # Partition by year, month and day for bid_ask and trades data.
+                if data_type in ("bid_ask", "trades"):
+                    partition_mode = "by_year_month_day"
+                else:
+                    partition_mode = "by_year_month"
+                imvcdeexut.save_parquet(
+                    db_data,
+                    s3_dataset_path,
+                    unit,
+                    _AWS_PROFILE,
+                    data_type,
+                    # The `id` column is most likely not needed once the data is in S3.
+                    drop_columns=["id"],
+                    mode="append",
+                    partition_mode=partition_mode,
+                )
             # Double check archival was successful
             # TODO(Juraj): CmTask#3087 this might a be pretty difficult problem.
             # _assert_correct_archival(db_data, s3_path)
-            # Drop DB data.
-            imvcddbut.drop_db_data_by_age(
-                min_age_timestamp, db_conn, db_table, table_timestamp_column
+        # Drop DB data.
+        if mode in ("archive_and_delete", "delete_only"):
+            _delete_data_from_db(
+                min_age_timestamp,
+                db_conn,
+                db_table,
+                table_timestamp_column,
+                args_from_signature["exchange_id"],
+                dry_run,
             )
         _LOG.info("Data archival finished successfully.")
+
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
@@ -202,18 +257,35 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _LOG.info(args)
     _archive_db_data_to_s3(args)
 
+
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
+        "--mode",
+        action="store",
+        required=False,
+        choices=["archive_only", "archive_and_delete", "delete_only"],
+        default="archive_only",
+        type=str,
+        help=(
+            """
+            How to process the archiving process.
+            - `archive_only`: archive only data older than the specified timestamp
+            - `archive_and_delete`: archive data older than the specified timestamp (like `archive_only`) but delete the data after it's archived
+            - `delete_only`: delete from the DB data older than the specified timestamp
+            """
+        ),
+    )
+    parser.add_argument(
         "--timestamp",
         action="store",
         required=True,
         type=str,
-        help="Time threshold for archival. Data for which" +
-            "`table_timestamp_column` > `timestamp`, gets archived and dropped",
+        help="Time threshold for archival. Data for which"
+        + "`table_timestamp_column` > `timestamp`, gets archived and dropped",
     )
     parser.add_argument(
         "--db_stage",
@@ -223,11 +295,11 @@ def _parse() -> argparse.ArgumentParser:
         help="DB stage to use",
     )
     parser.add_argument(
-        "--db_table",
+        "--dataset_signature",
         action="store",
         required=True,
         type=str,
-        help="DB table to archive data from",
+        help="Signature of the dataset (uniquely specifies a particular data set)",
     )
     # TODO(Juraj): for now we assume that the only column used for archival
     #  will be `timestamp`.
@@ -241,10 +313,10 @@ def _parse() -> argparse.ArgumentParser:
     )
     # #########################################################################
     # Only a base path needs to be provided, i.e.
-    #  when archiving DB table `ccxt_ohlcv` for dev DB
-    #  you only need to provide s3://cryptokaizen-data/archive/
+    #  when archiving DB table `ccxt_ohlcv_spot` for dev DB
+    #  you only need to provide s3://cryptokaizen-data/
     #  The script automatically creates/maintains the subfolder
-    #  structure for the specific stage and table.
+    #  structure from the dataset signature.
     parser.add_argument(
         "--s3_path",
         action="store",

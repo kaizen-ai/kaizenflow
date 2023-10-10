@@ -6,16 +6,18 @@ Load and validate data within a specified time period from a CSV file.
 import logging
 import os
 from typing import Any, Optional
-import pandas as pd
+
 import common.client as sinsacli
 import common.validate as sinsaval
-import src.validate as sisebiva
+import pandas as pd
 from utilities import custom_logger
+
+import src.validate as sisebiva
 
 # _LOG = logging.getLogger(__name__)
 yaml_log_path = "/var/lib/app/data/"
 docker_log_path = "/root/logs/"
-_LOG = custom_logger.logger(yaml_log_path+"load_and_validate.py.log")
+_LOG = custom_logger.logger(yaml_log_path + "load_and_validate.py.log")
 # #############################################################################
 # CsvClient
 # #############################################################################

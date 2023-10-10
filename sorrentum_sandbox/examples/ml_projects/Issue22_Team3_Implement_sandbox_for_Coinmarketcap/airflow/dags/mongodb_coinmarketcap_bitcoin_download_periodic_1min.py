@@ -3,15 +3,13 @@ DAG to download data from coinmarketcap to mongodb.
 """
 
 import datetime
+from datetime import timedelta
 
 import airflow
-from datetime import timedelta
 from airflow.operators.bash import BashOperator
 
 _DAG_ID = "bitcoin_mongodb_coinmarketcap_download_periodic_1min"
-_DAG_DESCRIPTION = (
-    "Download coinmarketcap data every minute and save to MongoDB."
-)
+_DAG_DESCRIPTION = "Download coinmarketcap data every minute and save to MongoDB."
 
 
 # Pass default parameters for the DAG.

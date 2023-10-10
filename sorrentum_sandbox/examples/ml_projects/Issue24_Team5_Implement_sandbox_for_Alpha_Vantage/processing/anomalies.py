@@ -1,6 +1,7 @@
-from sklearn.ensemble import IsolationForest
-from pandas import DataFrame
 import numpy as np
+from pandas import DataFrame
+from sklearn.ensemble import IsolationForest
+
 
 def isolation_forest_labels(data: DataFrame):
     """
@@ -16,6 +17,7 @@ def isolation_forest_labels(data: DataFrame):
     clf.fit(X)
     return clf.predict(X) == 1
 
+
 def quantiles(data: DataFrame):
     """
     Computes the quantiles and checks if each point
@@ -25,8 +27,8 @@ def quantiles(data: DataFrame):
 
     Returns:
     np.array[Bool]
-    """    
-    df = data.sort_values(by='close', ascending=True).reset_index()
+    """
+    df = data.sort_values(by="close", ascending=True).reset_index()
 
     # Lower/upper quantile index
     Q1 = round(0.25 * len(df))
@@ -50,6 +52,6 @@ def quantiles(data: DataFrame):
             labs.append(True)
             continue
 
-        labs.append(False) 
-    
+        labs.append(False)
+
     return np.array(labs)

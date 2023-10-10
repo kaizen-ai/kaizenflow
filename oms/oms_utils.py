@@ -35,6 +35,8 @@ def _get_col_name(col_name: str, prefix: str) -> str:
 # Accounting functions.
 # #############################################################################
 
+# TODO(gp): @sonya This seems dead. If it is let's kill it.
+
 # Represent a set of DataFrame columns that is built incrementally.
 Accounting = Dict[str, List[float]]
 
