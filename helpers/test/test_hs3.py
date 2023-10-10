@@ -10,6 +10,8 @@ import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
 
 
+@pytest.mark.requires_ck_infra
+@pytest.mark.requires_aws
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
@@ -63,12 +65,12 @@ class TestToFileAndFromFile1(hmoto.S3Mock_TestCase):
         moto_s3fs = hs3.get_s3fs(self.mock_aws_profile)
         s3_path = f"s3://{self.bucket_name}/{regular_file_name}"
         # Save file with `t` mode.
-        with pytest.raises(ValueError) as fail:
+        with self.assertRaises(ValueError) as fail:
             hs3.to_file(
                 regular_file_content, s3_path, mode="wt", aws_profile=moto_s3fs
             )
         # Check output.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"S3 only allows binary mode!"
         self.assert_equal(actual, expected)
 
@@ -81,14 +83,16 @@ class TestToFileAndFromFile1(hmoto.S3Mock_TestCase):
         moto_s3fs = hs3.get_s3fs(self.mock_aws_profile)
         s3_path = f"s3://{self.bucket_name}/{regular_file_name}"
         # Read with encoding.
-        with pytest.raises(ValueError) as fail:
+        with self.assertRaises(ValueError) as fail:
             hs3.from_file(s3_path, encoding=True, aws_profile=moto_s3fs)
         # Check output.
-        actual = str(fail.value)
+        actual = str(fail.exception)
         expected = r"Encoding is not supported when reading from S3!"
         self.assert_equal(actual, expected)
 
 
+@pytest.mark.requires_ck_infra
+@pytest.mark.requires_aws
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
@@ -227,6 +231,8 @@ class TestListdir1(hmoto.S3Mock_TestCase):
         self.assertListEqual(paths, expected_paths)
 
 
+@pytest.mark.requires_ck_infra
+@pytest.mark.requires_aws
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",

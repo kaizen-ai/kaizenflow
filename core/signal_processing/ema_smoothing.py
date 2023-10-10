@@ -6,11 +6,12 @@ import core.signal_processing.ema_smoothing as cspremsm
 
 import functools
 import logging
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import numpy as np
 import pandas as pd
 
+import core.signal_processing.fir_utils as csprfiut
 import core.signal_processing.special_functions as csprspfu
 import helpers.hdbg as hdbg
 
@@ -162,28 +163,20 @@ def extract_smooth_moving_average_weights(
     """
     Return present and historical weights used in SMA up to `index_location`.
 
-    This can be used in isolation to inspect SMA weights, or can be used on
-    data to, e.g., generate training data weights.
+    The results are approximate, since the underlying weight extract technique
+    is only exact for FIR filters.
 
-    TODO(Paul): Consider generalizing this to also work with other filters.
-
-    :param signal: data that provides an index (for reindexing). No column
-        values used.
+    :param signal: as in `extract_fir_filter_weights()`
     :param tau: as in `compute_smooth_moving_average()`
     :param min_depth: as in `compute_smooth_moving_average()`
     :param max_depth: as in `compute_smooth_moving_average()`
-    :param index_location: current and latest value to be considered operated
-        upon by the smooth moving average (e.g., the last in-sample index). If
-        `None`, then use the last index location of `signal`.
-    :return: dataframe with two columns of weights:
-        1. absolute weights (e.g., weights sum to 1)
-        2. relative weights (weight at `index_location` is equal to `1`, and
-           prior weights are expressed relative to this value
+    :param index_location: as in `extract_fir_filter_weights()`
+    :return: as in `extract_fir_filter_weights()`
     """
     hdbg.dassert_lt(0, tau)
     range_ = tau * (min_depth + max_depth) / 2.0
     warmup_length = int(np.round(10 * range_))
-    weights = extract_filter_weights(
+    weights = csprfiut.extract_fir_filter_weights(
         signal,
         func=compute_smooth_moving_average,
         func_kwargs={"tau": tau, "min_depth": min_depth, "max_depth": max_depth},
@@ -191,90 +184,6 @@ def extract_smooth_moving_average_weights(
         index_location=index_location,
     )
     return weights
-
-
-def extract_filter_weights(
-    signal: Union[pd.DataFrame, pd.Series],
-    func: Callable[[pd.Series], pd.Series],
-    func_kwargs: Dict[str, Any],
-    warmup_length: int,
-    index_location: Optional[Any] = None,
-) -> pd.DataFrame:
-    """
-    Return present and historical weights used in SMA up to `index_location`.
-
-    This can be used in isolation to inspect SMA weights, or can be used on
-    data to, e.g., generate training data weights.
-
-    TODO(Paul): Consider generalizing this to also work with other filters.
-
-    :param signal: data that provides an index (for reindexing). No column
-        values used.
-    :param func: a function that transforms a series into a series
-    :param func_kwargs: kwargs to forward to `func`, e.g., smoothing parameters
-    :param warmup_length: a lower bound on the number of points required for
-        properly initializing `func` in generating weights (e.g., if `func` is
-        an EWMA)
-    :param index_location: current and latest value to be considered operated
-        upon by the smooth moving average (e.g., the last in-sample index). If
-        `None`, then use the last index location of `signal`.
-    :return: dataframe with two columns of weights:
-        1. absolute weights (e.g., weights sum to 1)
-        2. relative weights (weight at `index_location` is equal to `1`, and
-           prior weights are expressed relative to this value
-    """
-    idx = signal.index
-    hdbg.dassert_isinstance(idx, pd.Index)
-    hdbg.dassert(not idx.empty, msg="`signal.index` must be nonempty.")
-    index_location = index_location or idx[-1]
-    if index_location > idx[-1]:
-        _LOG.warning(
-            "Requested `index_location` is out-of-range. "
-            "Proceeding with last `signal.index` location instead."
-        )
-        index_location = idx[-1]
-    hdbg.dassert_in(
-        index_location,
-        idx,
-        msg="`index_location` must be a member of `signal.index`",
-    )
-    hdbg.dassert_lt(0, warmup_length)
-    # Build a step series.
-    # - This is a sequence of ones followed by a sequence of zeros
-    # - The length of the ones series is determined by `tau` and is used for
-    #   warm-up
-    # - The length of the zeros is at least as long as the length of the
-    #   weight series implicitly asked for by the caller. If this is less than
-    #   the warm-up length, then we extend the zeros so that we can calculate
-    #   reliable absolute weights
-    desired_length = signal.loc[:index_location].shape[0]
-    ones = pd.Series(index=range(0, warmup_length), data=1)
-    length = max(desired_length, warmup_length)
-    zeros = pd.Series(index=range(warmup_length, warmup_length + length), data=0)
-    step = pd.concat([ones, zeros], axis=0)
-    # Apply the smooth moving average function to the step function.
-    filtered_step = func(step, **func_kwargs)
-    # Drop the warm-up ones from the smoothed series.
-    filtered_step = filtered_step.iloc[warmup_length - 1 :]
-    filtered_step.name = "relative_weight"
-    # Calculate absolute weights.
-    absolute_weights = (filtered_step / filtered_step.sum()).rename(
-        "absolute_weight"
-    )
-    # Build a `weights` dataframe of relative and absolute kernel weights.
-    weights = pd.concat([filtered_step, absolute_weights], axis=1).reset_index(
-        drop=True
-    )
-    # Truncate to `desired_length`, determined by `signal.index` and
-    # `index_location`.
-    weights = weights.iloc[:desired_length]
-    # Reverse the series (because the weights apply to historical
-    # observations).
-    weights = weights.iloc[::-1].reset_index(drop=True)
-    # Index and align the weights so that they terminate at `index_location`.
-    weights.index = signal.loc[:index_location].index
-    # Extend `weights` with NaNs if necessary.
-    return weights.reindex(idx)
 
 
 # #############################################################################

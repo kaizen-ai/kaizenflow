@@ -1,4 +1,4 @@
-	"""
+"""
 Implementation of load part of the ETL and QA pipeline.
 Import as:
 import sorrentum_sandbox.projects.B;ocl_db as sisebidb

@@ -60,7 +60,7 @@ SET default_table_access_method = heap;
 -- Name: ccxt_bid_ask_futures_raw; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.ccxt_bid_ask_futures_raw (
+CREATE TABLE IF NOT EXISTS public.ccxt_bid_ask_futures_raw (
     id bigint NOT NULL,
     "timestamp" bigint NOT NULL,
     bid_size numeric,
@@ -104,7 +104,7 @@ ALTER SEQUENCE public.ccxt_bid_ask_futures_raw_id_seq OWNED BY public.ccxt_bid_a
 -- Name: ccxt_bid_ask_futures_resampled_1min; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.ccxt_bid_ask_futures_resampled_1min (
+CREATE TABLE IF NOT EXISTS public.ccxt_bid_ask_futures_resampled_1min (
     id integer NOT NULL,
     "timestamp" bigint NOT NULL,
     bid_size numeric,
@@ -143,7 +143,7 @@ ALTER SEQUENCE public.ccxt_bid_ask_futures_resampled_1min_id_seq OWNED BY public
 -- Name: ccxt_bid_ask_raw; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.ccxt_bid_ask_raw (
+CREATE TABLE IF NOT EXISTS public.ccxt_bid_ask_raw (
     id bigint NOT NULL,
     "timestamp" bigint NOT NULL,
     bid_size numeric,
@@ -188,7 +188,7 @@ ALTER SEQUENCE public.ccxt_bid_ask_raw_id_seq OWNED BY public.ccxt_bid_ask_raw.i
 -- Name: ccxt_bid_ask_resampled_1min; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.ccxt_bid_ask_resampled_1min (
+CREATE TABLE IF NOT EXISTS public.ccxt_bid_ask_resampled_1min (
     id integer NOT NULL,
     "timestamp" bigint NOT NULL,
     bid_size numeric,
@@ -227,7 +227,7 @@ ALTER SEQUENCE public.ccxt_bid_ask_resampled_1min_id_seq OWNED BY public.ccxt_bi
 -- Name: ccxt_ohlcv; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.ccxt_ohlcv (
+CREATE TABLE IF NOT EXISTS public.ccxt_ohlcv (
     id integer NOT NULL,
     "timestamp" bigint NOT NULL,
     open numeric,
@@ -246,7 +246,7 @@ CREATE TABLE public.ccxt_ohlcv (
 -- Name: ccxt_ohlcv_futures; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.ccxt_ohlcv_futures (
+CREATE TABLE IF NOT EXISTS public.ccxt_ohlcv_futures (
     id integer NOT NULL,
     "timestamp" bigint NOT NULL,
     open numeric,
@@ -305,7 +305,7 @@ ALTER SEQUENCE public.ccxt_ohlcv_id_seq OWNED BY public.ccxt_ohlcv.id;
 -- Name: currency_pair; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.currency_pair (
+CREATE TABLE IF NOT EXISTS public.currency_pair (
     currency_pair_id integer NOT NULL,
     currency_pair character varying(255) NOT NULL
 );
@@ -347,7 +347,7 @@ CREATE SEQUENCE public.serial
 -- Name: exchange; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.exchange (
+CREATE TABLE IF NOT EXISTS public.exchange (
     id integer DEFAULT nextval('public.serial'::regclass) NOT NULL,
     name text
 );
@@ -357,7 +357,7 @@ CREATE TABLE public.exchange (
 -- Name: exchange_name; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.exchange_name (
+CREATE TABLE IF NOT EXISTS public.exchange_name (
     exchange_id integer NOT NULL,
     exchange_name character varying(255) NOT NULL
 );
@@ -387,7 +387,7 @@ ALTER SEQUENCE public.exchange_name_exchange_id_seq OWNED BY public.exchange_nam
 -- Name: ib_daily_data; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.ib_daily_data (
+CREATE TABLE IF NOT EXISTS public.ib_daily_data (
     id integer DEFAULT nextval('public.serial'::regclass) NOT NULL,
     trade_symbol_id integer,
     date date,
@@ -405,7 +405,7 @@ CREATE TABLE public.ib_daily_data (
 -- Name: ib_minute_data; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.ib_minute_data (
+CREATE TABLE IF NOT EXISTS public.ib_minute_data (
     id integer DEFAULT nextval('public.serial'::regclass) NOT NULL,
     trade_symbol_id integer,
     datetime timestamp with time zone,
@@ -423,7 +423,7 @@ CREATE TABLE public.ib_minute_data (
 -- Name: ib_tick_bid_ask_data; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.ib_tick_bid_ask_data (
+CREATE TABLE IF NOT EXISTS public.ib_tick_bid_ask_data (
     id integer DEFAULT nextval('public.serial'::regclass) NOT NULL,
     trade_symbol_id integer,
     datetime timestamp without time zone,
@@ -437,7 +437,7 @@ CREATE TABLE public.ib_tick_bid_ask_data (
 -- Name: ib_tick_data; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.ib_tick_data (
+CREATE TABLE IF NOT EXISTS public.ib_tick_data (
     id integer DEFAULT nextval('public.serial'::regclass) NOT NULL,
     trade_symbol_id integer,
     datetime timestamp without time zone,
@@ -450,7 +450,7 @@ CREATE TABLE public.ib_tick_data (
 -- Name: kibot_daily_data; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.kibot_daily_data (
+CREATE TABLE IF NOT EXISTS public.kibot_daily_data (
     id integer DEFAULT nextval('public.serial'::regclass) NOT NULL,
     trade_symbol_id integer,
     date date,
@@ -466,7 +466,7 @@ CREATE TABLE public.kibot_daily_data (
 -- Name: kibot_minute_data; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.kibot_minute_data (
+CREATE TABLE IF NOT EXISTS public.kibot_minute_data (
     id integer DEFAULT nextval('public.serial'::regclass) NOT NULL,
     trade_symbol_id integer,
     datetime timestamp without time zone,
@@ -482,7 +482,7 @@ CREATE TABLE public.kibot_minute_data (
 -- Name: kibot_tick_bid_ask_data; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.kibot_tick_bid_ask_data (
+CREATE TABLE IF NOT EXISTS public.kibot_tick_bid_ask_data (
     id integer DEFAULT nextval('public.serial'::regclass) NOT NULL,
     trade_symbol_id integer,
     datetime timestamp without time zone,
@@ -496,7 +496,7 @@ CREATE TABLE public.kibot_tick_bid_ask_data (
 -- Name: kibot_tick_data; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.kibot_tick_data (
+CREATE TABLE IF NOT EXISTS public.kibot_tick_data (
     id integer DEFAULT nextval('public.serial'::regclass) NOT NULL,
     trade_symbol_id integer,
     datetime timestamp without time zone,
@@ -509,7 +509,7 @@ CREATE TABLE public.kibot_tick_data (
 -- Name: symbol; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.symbol (
+CREATE TABLE IF NOT EXISTS public.symbol (
     id integer DEFAULT nextval('public.serial'::regclass) NOT NULL,
     code text,
     description text,
@@ -523,7 +523,7 @@ CREATE TABLE public.symbol (
 -- Name: trade_symbol; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.trade_symbol (
+CREATE TABLE IF NOT EXISTS public.trade_symbol (
     id integer DEFAULT nextval('public.serial'::regclass) NOT NULL,
     exchange_id integer,
     symbol_id integer

@@ -3,7 +3,7 @@ Implementation of load part of the ETL and QA pipeline.
 
 Import as:
 
-import sorrentum_sandbox.projects.Issue26_Team7_Implement_sandbox_for_Chainlink.db as sisebidb
+import sorrentum_sandbox.examples.ml_projects.Issue26_Team7_Implement_sandbox_for_Chainlink.db as ssempitisfcd
 """
 from typing import Any, Optional
 
@@ -13,9 +13,10 @@ import psycopg2.extras as extras
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import sorrentum_sandbox.common.client as sinsacli
-import sorrentum_sandbox.common.download as sinsadow
-import sorrentum_sandbox.common.save as sinsasav
+import sorrentum_sandbox.common.client as ssacocli
+import sorrentum_sandbox.common.download as ssacodow
+import sorrentum_sandbox.common.save as ssacosav
+
 
 def get_chainlink_create_history_table_query() -> str:
     """
@@ -52,6 +53,22 @@ def get_chainlink_create_real_time_table_query() -> str:
             """
     return query
 
+def get_chainlink_create_chainlink_compute_table_query() -> str:
+    """
+    Get SQL query to create chainlink_compute table.
+    """
+    query = """
+    CREATE TABLE IF NOT EXISTS chainlink_compute(
+            roundId DECIMAL NOT NULL,
+            price DECIMAL NOT NULL,
+            updatedAt TIMESTAMP,
+            pair VARCHAR(255) NOT NULL,
+            decimals INT,
+            percentage_diff FLOAT
+            )
+            """
+    return query
+
 
 def get_db_connection() -> Any:
     """
@@ -76,7 +93,7 @@ def get_db_connection() -> Any:
 # #############################################################################
 
 
-class PostgresDataFrameSaver(sinsasav.DataSaver):
+class PostgresDataFrameSaver(ssacosav.DataSaver):
     """
     Save Pandas DataFrame to a PostgreSQL using a provided DB connection.
     """
@@ -91,7 +108,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         self._create_tables()
 
     def save(
-        self, data: sinsadow.RawData, db_table: str, *args: Any, **kwargs: Any
+        self, data: ssacodow.RawData, db_table: str, *args: Any, **kwargs: Any
     ) -> None:
         """
         Save RawData storing a DataFrame to a specified DB table.
@@ -99,7 +116,9 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         :param data: data to persists into DB
         :param db_table: table to save data to
         """
-        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
+        hdbg.dassert_isinstance(
+            data.get_data(), pd.DataFrame, "Only DataFrame is supported."
+        )
         # Transform dataframe into list of tuples.
         df = data.get_data()
         values = [tuple(v) for v in df.to_numpy()]
@@ -109,7 +128,6 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         cursor = self.db_conn.cursor()
         extras.execute_values(cursor, query, values)
         self.db_conn.commit()
-
 
     @staticmethod
     def _create_insert_query(df: pd.DataFrame, db_table: str) -> str:
@@ -142,13 +160,16 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         query = get_chainlink_create_real_time_table_query()
         cursor.execute(query)
 
+        query = get_chainlink_create_chainlink_compute_table_query()
+        cursor.execute(query)
+
 
 # #############################################################################
 # PostgresClient
 # #############################################################################
 
 
-class PostgresClient(sinsacli.DataClient):
+class PostgresClient(ssacocli.DataClient):
     """
     Load PostgreSQL data.
     """
@@ -190,4 +211,3 @@ class PostgresClient(sinsacli.DataClient):
         # Read data.
         data = pd.read_sql_query(select_query, self.db_conn)
         return data
-

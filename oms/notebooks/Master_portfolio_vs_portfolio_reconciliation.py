@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.14.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -25,6 +25,7 @@ from typing import List, Tuple
 import pandas as pd
 
 import core.config as cconfig
+import core.finance.portfolio_df_processing as cofinpdp
 import core.plotting as coplotti
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
@@ -53,10 +54,10 @@ _LOG.info("end_timestamp=%s", start_timestamp)
 # !ls /data/cf_production/20220915/job.1002440809/job-sasm_job-jobid-1002440809/user_executable_run_0-1000005405809/cf_prod_system_log_dir/process_forecasts
 
 # %%
-#/share/data/cf_production/20220919/job.1002450215/job-sasm_job-jobid-1002450215/user_executable_run_0-1000005484302/cf_prod_system_log_dir
-#/share/data/cf_production/20220919/job.1002452903/user_executable_run_0-1000005489454/cf_prod_system_log_dir
+# /share/data/cf_production/20220919/job.1002450215/job-sasm_job-jobid-1002450215/user_executable_run_0-1000005484302/cf_prod_system_log_dir
+# /share/data/cf_production/20220919/job.1002452903/user_executable_run_0-1000005489454/cf_prod_system_log_dir
 prod_dir = (
-    #"/share/data/cf_production/20220919/job.1002450215/job-sasm_job-jobid-1002450215/user_executable_run_0-1000005484302/cf_prod_system_log_dir"
+    # "/share/data/cf_production/20220919/job.1002450215/job-sasm_job-jobid-1002450215/user_executable_run_0-1000005484302/cf_prod_system_log_dir"
     "/share/data/cf_production/20220919/job.1002452903/user_executable_run_0-1000005489454/cf_prod_system_log_dir"
 )
 prod_dir = prod_dir.replace("/share/data/", "/data/")
@@ -272,14 +273,14 @@ hpandas.df_to_str(
 # OMS
 
 # %%
-shares_df = oms.compute_shares_traded(prod_portfolio_df, prod_order_df, "15T")
+shares_df = cofinpdp.compute_shares_traded(prod_portfolio_df, prod_order_df, "15T")
 
 # %%
 shares_df.columns.levels[0]
 
 # %%
-#shares_df["estimated_price_per_share"]
-#shares_df["underfill"] / shares_df["order_share_target_as_int"]
+# shares_df["estimated_price_per_share"]
+# shares_df["underfill"] / shares_df["order_share_target_as_int"]
 shares_df["order_share_target_as_int"]
 
 

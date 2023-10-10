@@ -13,6 +13,7 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hstring as hstring
+import im_v2.common.universe.universe as imvcounun
 
 # TODO(Juraj): At high level this module essentially performs the same thing as
 #  im_v2/common/universe/universe.py -> try to extract the common logic
@@ -125,7 +126,24 @@ def _validate_dataset_signature_semantics(
     allowed_values_dict = dataset_schema["allowed_values"]
     # Assumes the syntax check has been performed.
     warning_messages = []
-    for token, value in zip(schema_signature_list, signature_list):
+    # Prepare a dict with tokens and their values.
+    tokens_values = dict(zip(schema_signature_list, signature_list))
+    # Check if the version is supported for the given vendor.
+    if "vendor" in tokens_values and "universe" in tokens_values:
+        try:
+            mode = "download"
+            vendor = tokens_values["vendor"]
+            # Convert universe version to the format used in the vendor.
+            version = tokens_values["universe"].replace("_", ".")
+            imvcounun.get_vendor_universe(vendor, mode, version=version)
+        except AssertionError:
+            warning_messages.append(
+                f"Universe version {version} is not supported for vendor {vendor}"
+            )
+    # Remove universe from the tokens_values dict in order to
+    # avoid checking it in the next step.
+    tokens_values.pop("universe", None)
+    for token, value in tokens_values.items():
         if value not in allowed_values_dict[token]:
             warning_messages.append(
                 f"Identifier {token} contains invalid value: {value}, "
@@ -197,7 +215,7 @@ def _build_dataset_signature_from_args(
     return token_separator_char.join(dataset_signature)
 
 
-def _parse_dataset_signature_to_args(
+def parse_dataset_signature_to_args(
     signature: str, dataset_schema: Dict[str, Any]
 ) -> Dict[str, str]:
     """
@@ -226,6 +244,21 @@ def _parse_dataset_signature_to_args(
     values = signature.split(token_separator)
     args = {keys[i]: values[i] for i in range(len(keys))}
     return args
+
+
+def get_vendor_from_s3_path(s3_path: str) -> str:
+    """
+    Extract vendor from S3 path.
+
+    :param s3_path: S3 path to extract vendor from
+    :return: vendor name
+    """
+    tokens = s3_path.replace("/", ".").split(".")
+    vendors_from_schema = get_dataset_schema()["allowed_values"]["vendor"]
+    for token in tokens:
+        if token in vendors_from_schema:
+            return token
+    raise ValueError(f"Vendor not found in S3 path: {s3_path}")
 
 
 def build_s3_dataset_path_from_args(
@@ -259,3 +292,32 @@ def build_s3_dataset_path_from_args(
     )
     s3_path = os.path.join(s3_path, dataset_signature)
     return s3_path
+
+
+def get_im_db_table_name_from_signature(
+    signature: str, dataset_schema: Dict[str, Any]
+) -> str:
+    """
+    Get database table name from provided signature for datasets with data
+    format "postgres".
+
+    Based on historical naming conventions for DB tables the table name is not directly
+    inferrable from the signature, this function provides a mapping from signatures to DB table names.
+
+    :param signature: dataset signature to parse,
+        e.g. `realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v7.ccxt.binance.v1_0_0`
+    :param dataset_schema: dataset schema to parse against
+    :return: DB table name corresponding to the signature, e.g.
+        input signature: `realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v7.ccxt.binance.v1_0_0`
+        output table: ccxt_ohlcv_futures
+    """
+    args = parse_dataset_signature_to_args(signature, dataset_schema)
+    hdbg.dassert_eq(args["data_format"], "postgres")
+    table_name = args["vendor"] + f"_{args['data_type']}_{args['asset_type']}"
+    action_tag = args["action_tag"]
+    if action_tag == "resampled_1min":
+        table_name += f"_{action_tag}"
+    else:
+        if args["data_type"] == "bid_ask":
+            table_name += "_raw"
+    return table_name

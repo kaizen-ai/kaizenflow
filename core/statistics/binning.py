@@ -55,7 +55,7 @@ def get_symmetric_normal_quantiles(bin_width: float) -> Tuple[list, list]:
     bin_medians = negative_bin_medians + [0] + positive_bin_medians
     # Ensure that the number of bin boundaries and bins matches.
     num_bins = len(bin_boundaries) - 1
-    _LOG.info("num_bins=%d", num_bins)
+    _LOG.debug("num_bins=%d", num_bins)
     hdbg.dassert_eq(num_bins, len(bin_medians))
     #
     return bin_boundaries, bin_medians
@@ -66,6 +66,7 @@ def group_by_bin(
     bin_col: Union[str, int],
     bin_width: float,
     aggregation_col: Union[str, int],
+    normalize_bin_col_values: bool = False,
 ) -> pd.DataFrame:
     """
     Compute aggregations in `aggregation_col` according to bins from `bin_col`.
@@ -77,6 +78,8 @@ def group_by_bin(
     :param bin_width: the percentage of data to be captured by each (non-tail)
         bin
     :param aggregation_col: the numerical col to aggregate
+    :param normalize_bin_col_values: divide `bin_col` values by their standard
+        deviation iff `True`
     :return: dataframe with count, mean, stdev of `aggregation_col` by bin
     """
     # Get bin boundaries assuming a normal distribution. Using theoretical
@@ -84,8 +87,11 @@ def group_by_bin(
     # different data.
     bin_boundaries, _ = get_symmetric_normal_quantiles(bin_width)
     # Standardize the binning column and cut.
-    normalized_bin_col = df[bin_col] / df[bin_col].std()
-    cuts = pd.cut(normalized_bin_col, bin_boundaries)
+    bin_col_values = df[bin_col]
+    if normalize_bin_col_values:
+        bin_col_values /= bin_col_values.std()
+        _LOG.debug("Standardizing bin_col=%s values", bin_col)
+    cuts = pd.cut(bin_col_values, bin_boundaries)
     # Group the aggregation column according to the bins.
     grouped_col_values = df.groupby(cuts)[aggregation_col]
     # Aggregate the grouped result.

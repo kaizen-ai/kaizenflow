@@ -63,19 +63,21 @@ def get_wall_clock_time() -> Optional["pd.Timestamp"]:
 # #############################################################################
 
 
-def to_timestamp_str(timestamp: "pd.Timestamp") -> str:
-    return timestamp.strftime("%Y%m%d_%H%M%S")
-
+def to_timestamp_str(timestamp: "pd.Timestamp", include_msec: bool = False) -> str:
+    if include_msec:
+        return timestamp.strftime("%Y%m%d_%H%M%S%f")
+    else:
+        return timestamp.strftime("%Y%m%d_%H%M%S")
 
 # This is redundant with `hdatetime.get_current_time()` and
 # `hdateti.get_current_timestamp_as_string()` but we keep them to simplify
 # dependencies.
 def get_machine_wall_clock_time(
-    *, as_str: bool = False
+    *, as_str: bool = False, include_msec: bool = False,
 ) -> Union[str, datetime.datetime]:
     ret = datetime.datetime.utcnow()
     if as_str:
-        ret = to_timestamp_str(ret)
+        ret = to_timestamp_str(ret, include_msec)
     return ret
 
 

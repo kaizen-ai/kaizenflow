@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import pytest
 from typing import Any, Optional
 
 import pandas as pd
@@ -443,17 +444,17 @@ class TestPlaybackFileMode1(hunitest.TestCase):
         """
         max_tests_str = "" if max_tests is None else f", max_tests={max_tests}"
         code = (
-                "\n".join(
-                    [
-                        "import helpers.hplayback as hplayba",
-                        "def plbck_sum(a: int, b: int) -> int:",
-                        '    hplayba.Playback("check_string", to_file=True%s).run(None)',
-                        "    return a + b",
-                        "",
-                        "[plbck_sum(i, i + 1) for i in range(4)]",
-                    ]
-                )
-                % max_tests_str
+            "\n".join(
+                [
+                    "import helpers.hplayback as hplayba",
+                    "def plbck_sum(a: int, b: int) -> int:",
+                    '    hplayba.Playback("check_string", to_file=True%s).run(None)',
+                    "    return a + b",
+                    "",
+                    "[plbck_sum(i, i + 1) for i in range(4)]",
+                ]
+            )
+            % max_tests_str
         )
         return code
 
@@ -467,8 +468,9 @@ class TestPlaybackFileMode1(hunitest.TestCase):
         code_basename = "code_.py"
         tmp_py_file = os.path.join(tmp_dir, code_basename)
         # File with test.
-        tmp_test_file = os.path.join(tmp_dir, "test", "test_by_playback_" +
-                code_basename)
+        tmp_test_file = os.path.join(
+            tmp_dir, "test", "test_by_playback_" + code_basename
+        )
         # Save the code to the file.
         hio.to_file(tmp_py_file, self.get_code(max_tests))
         # Executes the code.
@@ -476,6 +478,7 @@ class TestPlaybackFileMode1(hunitest.TestCase):
         playback_code = hio.from_file(tmp_test_file)
         return playback_code
 
+    @pytest.mark.requires_ck_infra
     def test1(self) -> None:
         """
         Test writing to file when number of tests is more than generated.
@@ -483,12 +486,14 @@ class TestPlaybackFileMode1(hunitest.TestCase):
         max_tests = 100
         self.check_string(self.helper(max_tests))
 
+    @pytest.mark.requires_ck_infra
     def test2(self) -> None:
         """
         Test writing to file when number of tests is default.
         """
         self.check_string(self.helper())
 
+    @pytest.mark.requires_ck_infra
     def test3(self) -> None:
         """
         Test writing to file when number of tests is lower than generated.

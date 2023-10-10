@@ -145,13 +145,20 @@ def set_asset_id(
         used to enforce a use patter like "create a template config and then
         overwrite DUMMY values only once".
     """
-    hdbg.dassert_isinstance(config, cconfig.Config)
-    _LOG.debug("Creating config for egid=`%s`", asset_id)
-    if not allow_new_key:
-        hdbg.dassert_in(asset_id_key, config)
-        if assume_dummy:
-            hdbg.dassert_eq(config.get(asset_id_key), cconfig.DUMMY)
-    config[asset_id_key] = asset_id
+    try:
+        # Save original update mode and allow overwriting of dummies.
+        update_mode = config.update_mode
+        config.update_mode = "overwrite"
+        hdbg.dassert_isinstance(config, cconfig.Config)
+        _LOG.debug("Creating config for egid=`%s`", asset_id)
+        if not allow_new_key:
+            hdbg.dassert_in(asset_id_key, config)
+            if assume_dummy:
+                hdbg.dassert_eq(config.get(asset_id_key), cconfig.DUMMY)
+        config[asset_id_key] = asset_id
+    finally:
+        # Reassign original update mode.
+        config.update_mode = update_mode
     return config
 
 

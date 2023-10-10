@@ -45,6 +45,7 @@ class KibotFilePathGenerator(imcdlfpage.FilePathGenerator):
     def generate_file_path(
         self,
         symbol: str,
+        aws_profile,
         frequency: imcodatyp.Frequency,
         asset_class: imcodatyp.AssetClass = imcodatyp.AssetClass.Futures,
         contract_type: Optional[imcodatyp.ContractType] = None,
@@ -77,7 +78,8 @@ class KibotFilePathGenerator(imcdlfpage.FilePathGenerator):
             file_path += ".csv.gz"
         # TODO(amr): should we allow pointing to a local file here?
         # or rename the method to `generate_s3_path`?
-        file_path = os.path.join(imkidacon.S3_PREFIX, file_path)
+        s3_prefix = imkidacon.get_s3_prefix(aws_profile)
+        file_path = os.path.join(s3_prefix, file_path)
         return file_path
 
     @staticmethod

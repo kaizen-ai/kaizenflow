@@ -1107,6 +1107,46 @@ class TestDfToStr(hunitest.TestCase):
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    def test_df_to_str8(self) -> None:
+        """
+        Test that `-0.0` is replaced with `0.0`.
+        """
+        test_data = {
+            "dummy_value_1": [1, 2, 3, 4],
+            "dummy_value_2": ["A", "B", "C", "D"],
+            "dummy_value_3": [0, 0, 0, 0],
+            "dummy_value_4": [+0.0, -0.0, +0.0, -0.0],
+        }
+        df = pd.DataFrame(data=test_data)
+        actual = hpandas.df_to_str(df)
+        expected = r"""
+            dummy_value_1 dummy_value_2  dummy_value_3  dummy_value_4
+        0              1             A              0            0.0
+        1              2             B              0            0.0
+        2              3             C              0            0.0
+        3              4             D              0            0.0"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_df_to_str9(self) -> None:
+        """
+        Test that `-0.0` is replaced with `0.0` in a multi-index dataframe.
+        """
+        test_data = {
+            ("A", "X"): [-0.0, 5.0, -0.0],
+            ("A", "Y"): [2, 6, 0],
+            ("B", "X"): [0, 7, 3],
+            ("B", "Y"): [4.4, -0.0, 5.1],
+        }
+        df = pd.DataFrame(data=test_data)
+        actual = hpandas.df_to_str(df)
+        expected = r"""
+             A     B
+             X  Y  X    Y
+        0  0.0  2  0  4.4
+        1  5.0  6  7  0.0
+        2  0.0  0  3  5.1"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
 
 # #############################################################################
 
@@ -1280,6 +1320,8 @@ class TestCompareDataframeRows(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.requires_ck_infra
+@pytest.mark.requires_aws
 class TestReadDataFromS3(hunitest.TestCase):
     def test_read_csv1(self) -> None:
         s3fs = hs3.get_s3fs(_AWS_PROFILE)
@@ -1291,6 +1333,7 @@ class TestReadDataFromS3(hunitest.TestCase):
         stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         hpandas.read_csv_to_df(stream, **kwargs)
 
+    @pytest.mark.slow("~15 sec.")
     def test_read_parquet1(self) -> None:
         s3fs = hs3.get_s3fs(_AWS_PROFILE)
         file_name = os.path.join(
@@ -1517,13 +1560,15 @@ class TestDropDuplicates(hunitest.TestCase):
     def test_drop_duplicates1(self) -> None:
         """
         - use_index = True
-        - subset is not None
+        - column_subset is not None
         """
         # Prepare test data.
         df = self.get_test_data()
         use_index = True
-        subset = ["float"]
-        no_duplicates_df = hpandas.drop_duplicates(df, use_index, subset=subset)
+        column_subset = ["float"]
+        no_duplicates_df = hpandas.drop_duplicates(
+            df, use_index, column_subset=column_subset
+        )
         no_duplicates_df = hpandas.df_to_str(no_duplicates_df)
         # Prepare expected result.
         expected_signature = r"""
@@ -1539,7 +1584,7 @@ class TestDropDuplicates(hunitest.TestCase):
     def test_drop_duplicates2(self) -> None:
         """
         - use_index = True
-        - subset = None
+        - column_subset = None
         """
         # Prepare test data.
         df = self.get_test_data()
@@ -1561,7 +1606,7 @@ class TestDropDuplicates(hunitest.TestCase):
     def test_drop_duplicates3(self) -> None:
         """
         - use_index = False
-        - subset = None
+        - column_subset = None
         """
         # Prepare test data.
         df = self.get_test_data()
@@ -1582,13 +1627,15 @@ class TestDropDuplicates(hunitest.TestCase):
     def test_drop_duplicates4(self) -> None:
         """
         - use_index = False
-        - subset is not None
+        - column_subset is not None
         """
         # Prepare test data.
         df = self.get_test_data()
         use_index = False
-        subset = ["letter", "float"]
-        no_duplicates_df = hpandas.drop_duplicates(df, use_index, subset)
+        column_subset = ["letter", "float"]
+        no_duplicates_df = hpandas.drop_duplicates(
+            df, use_index, column_subset=column_subset
+        )
         no_duplicates_df = hpandas.df_to_str(no_duplicates_df)
         # Prepare expected result.
         expected_signature = r"""
@@ -1974,7 +2021,11 @@ class Test_compare_dfs(hunitest.TestCase):
         df1, df2 = self.get_test_dfs_equal()
         df2 = df2.rename(
             columns={"tsC": "extra_col"},
-            index={pd.Timestamp("2022-01-01 21:03:00+00:00"): "extra_row"},
+            index={
+                pd.Timestamp("2022-01-01 21:03:00+00:00"): pd.Timestamp(
+                    "2022-01-01 21:04:00+00:00"
+                )
+            },
         )
         return df1, df2
 
@@ -2168,6 +2219,28 @@ class Test_compare_dfs(hunitest.TestCase):
         2022-01-01 21:02:00+00:00             NaN             NaN
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test8(self) -> None:
+        """
+        - compare_nans = True
+        """
+        # Build test dataframes.
+        df1 = pd.DataFrame(
+            data={
+                "A": [1.1, np.nan, 3.1, np.nan, np.inf, np.inf],
+                "B": [0, 0, 0, 0, 0, 0],
+            }
+        )
+        df2 = pd.DataFrame(
+            data={
+                "A": [3.0, 2.2, np.nan, np.nan, np.nan, np.inf],
+                "B": [0, 0, 0, 0, 0, 0],
+            }
+        )
+        # Check.
+        with self.assertRaises(AssertionError):
+            compare_nans = True
+            hpandas.compare_dfs(df1, df2, compare_nans=compare_nans)
 
     def test_invalid_input(self) -> None:
         """
@@ -2838,3 +2911,455 @@ class Test_compute_duration_df(hunitest.TestCase):
         self.intersection_helper(
             valid_intersect, expected_start_timestamp, expected_end_timestamp
         )
+
+
+# #############################################################################
+
+
+class Test_compare_nans_in_dataframes(hunitest.TestCase):
+    def test1(self):
+        """
+        Check that NaN differences are identified correctly.
+        """
+        # Build test dataframes.
+        df1 = pd.DataFrame(
+            data={
+                "A": [1.1, np.nan, 3.1, np.nan, np.inf, np.inf],
+                "B": [0, 0, 0, 0, 0, 0],
+            }
+        )
+        df2 = pd.DataFrame(
+            data={
+                "A": [3.0, 2.2, np.nan, np.nan, np.nan, np.inf],
+                "B": [0, 0, 0, 0, 0, 0],
+            }
+        )
+        df = hpandas.compare_nans_in_dataframes(df1, df2)
+        actual = hpandas.df_to_str(df)
+        expected = r"""
+            A
+           df1  df2
+        1  NaN  2.2
+        2  3.1  NaN
+        4  inf  NaN
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class Test_dassert_increasing_index(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check that a monotonically increasing index passes the assert.
+        """
+        # Build test dataframe.
+        idx = [
+            pd.Timestamp("2000-01-01 9:01"),
+            pd.Timestamp("2000-01-01 9:02"),
+            pd.Timestamp("2000-01-01 9:03"),
+            pd.Timestamp("2000-01-01 9:04"),
+        ]
+        values = [0, 0, 0, 0]
+        df = pd.DataFrame(values, index=idx)
+        # Run.
+        hpandas.dassert_increasing_index(df)
+
+    def test2(self) -> None:
+        """
+        Check that an assert is raised when index is not monotonically
+        increasing.
+        """
+        # Build test dataframe.
+        idx = [
+            pd.Timestamp("2000-01-01 9:01"),
+            pd.Timestamp("2000-01-01 9:02"),
+            pd.Timestamp("2000-01-01 9:04"),
+            pd.Timestamp("2000-01-01 9:03"),
+        ]
+        values = [0, 0, 0, 0]
+        df = pd.DataFrame(values, index=idx)
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_increasing_index(df)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        cond=False
+        Not increasing indices are:
+                                0
+        2000-01-01 09:04:00  0
+        2000-01-01 09:03:00  0"""
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Check that a monotonically increasing index with duplicates passes the
+        assert.
+        """
+        # Build test dataframe.
+        idx = [
+            pd.Timestamp("2000-01-01 9:00"),
+            pd.Timestamp("2000-01-01 9:00"),
+            pd.Timestamp("2000-01-01 9:01"),
+            pd.Timestamp("2000-01-01 9:01"),
+        ]
+        values = [0, 0, 0, 0]
+        df = pd.DataFrame(values, index=idx)
+        # Run.
+        hpandas.dassert_increasing_index(df)
+
+
+# #############################################################################
+
+
+class Test_apply_index_mode(hunitest.TestCase):
+    @staticmethod
+    def get_test_data() -> Tuple[pd.DataFrame]:
+        """
+        Generate toy dataframes for the test.
+        """
+        # Define common columns.
+        columns = ["A", "B"]
+        # Build dataframes with intersecting indices.
+        idx1 = [0, 1, 2, 3, 4]
+        data1 = [
+            [0.21, 0.44],
+            [0.11, 0.42],
+            [1.99, 0.8],
+            [3.1, 0.91],
+            [3.5, 1.4],
+        ]
+        df1 = pd.DataFrame(data1, columns=columns, index=idx1)
+        #
+        idx2 = [0, 6, 2, 3, 5]
+        data1 = [
+            [0.1, 0.4],
+            [0.11, 0.2],
+            [1.29, 0.38],
+            [0.1, 0.9],
+            [3.3, 2.4],
+        ]
+        df2 = pd.DataFrame(data1, columns=columns, index=idx2)
+        return df1, df2
+
+    def test1(self) -> None:
+        """
+        Check that returned dataframes have indices that are equal to the
+        common index.
+
+        - `mode="intersect"`
+        """
+        # Get test data.
+        df1_in, df2_in = self.get_test_data()
+        # Use an index intersection to transform dataframes.
+        mode = "intersect"
+        df1_out, df2_out = hpandas.apply_index_mode(df1_in, df2_in, mode)
+        # Check that indices are common.
+        common_index = df1_in.index.intersection(df2_in.index)
+        common_index = hpandas.df_to_str(common_index)
+        idx1 = hpandas.df_to_str(df1_out.index)
+        idx2 = hpandas.df_to_str(df2_out.index)
+        self.assert_equal(idx1, common_index)
+        self.assert_equal(idx2, common_index)
+
+    def test2(self) -> None:
+        """
+        Check that dataframe indices did not change after applying an index
+        mode.
+
+        - `mode="leave_unchanged"`
+        """
+        # Get test data.
+        df1_in, df2_in = self.get_test_data()
+        mode = "leave_unchanged"
+        df1_out, df2_out = hpandas.apply_index_mode(df1_in, df2_in, mode)
+        # Check that indices are as-is.
+        df1_in_idx = hpandas.df_to_str(df1_in.index)
+        df1_out_idx = hpandas.df_to_str(df1_out.index)
+        self.assert_equal(df1_in_idx, df1_out_idx)
+        #
+        df2_in_idx = hpandas.df_to_str(df2_in.index)
+        df2_out_idx = hpandas.df_to_str(df2_out.index)
+        self.assert_equal(df2_in_idx, df2_out_idx)
+
+    def test3(self) -> None:
+        """
+        Check that an assertion is raised when indices are not equal.
+
+        - `mode="assert_equal"`
+        """
+        # Get test data.
+        df1_in, df2_in = self.get_test_data()
+        mode = "assert_equal"
+        # Check that both indices are equal, assert otherwise.
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.apply_index_mode(df1_in, df2_in, mode)
+        act = str(cm.exception)
+        # Compare the actual outcome with expected one.
+        self.check_string(act)
+
+
+# #############################################################################
+
+
+class Test_get_df_from_iterator(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check that a dataframe is correctly built from an iterator of
+        dataframes.
+        """
+        # Build iterator of dataframes for the test.
+        data1 = {
+            "num_col": [1, 2],
+            "str_col": ["A", "B"],
+        }
+        df1 = pd.DataFrame(data=data1)
+        data2 = {
+            "num_col": [3, 4],
+            "str_col": ["C", "D"],
+        }
+        df2 = pd.DataFrame(data=data2)
+        data3 = {
+            "num_col": [5, 6],
+            "str_col": ["E", "F"],
+        }
+        df3 = pd.DataFrame(data=data3)
+        # Run.
+        iter_ = iter([df1, df2, df3])
+        df = hpandas.get_df_from_iterator(iter_)
+        actual_signature = hpandas.df_to_str(df)
+        expected_signature = """  num_col str_col
+        0        1       A
+        0        3       C
+        0        5       E
+        1        2       B
+        1        4       D
+        1        6       F
+        """
+        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)
+
+
+class Test_multiindex_df_info1(hunitest.TestCase):
+    @staticmethod
+    def get_multiindex_df_with_datetime_index() -> pd.DataFrame:
+        datetime_index = [
+            pd.Timestamp("2022-01-01 21:01:00+00:00"),
+            pd.Timestamp("2022-01-01 21:02:00+00:00"),
+            pd.Timestamp("2022-01-01 21:03:00+00:00"),
+            pd.Timestamp("2022-01-01 21:04:00+00:00"),
+            pd.Timestamp("2022-01-01 21:05:00+00:00"),
+        ]
+        iterables = [["asset1", "asset2"], ["open", "high", "low", "close"]]
+        index = pd.MultiIndex.from_product(iterables, names=[None, "timestamp"])
+        nums = np.array(
+            [
+                [
+                    0.77650806,
+                    0.12492164,
+                    -0.35929232,
+                    1.04137784,
+                    0.20099949,
+                    1.4078602,
+                    -0.1317103,
+                    0.10023361,
+                ],
+                [
+                    -0.56299812,
+                    0.79105046,
+                    0.76612895,
+                    -1.49935339,
+                    -1.05923797,
+                    0.06039862,
+                    -0.77652117,
+                    2.04578691,
+                ],
+                [
+                    0.77348467,
+                    0.45237724,
+                    1.61051308,
+                    0.41800008,
+                    0.20838053,
+                    -0.48289112,
+                    1.03015762,
+                    0.17123323,
+                ],
+                [
+                    0.40486053,
+                    0.88037142,
+                    -1.94567068,
+                    -1.51714645,
+                    -0.52759748,
+                    -0.31592803,
+                    1.50826723,
+                    -0.50215196,
+                ],
+                [
+                    0.17409714,
+                    -2.13997243,
+                    -0.18530403,
+                    -0.48807381,
+                    0.5621593,
+                    0.25899393,
+                    1.14069646,
+                    2.07721856,
+                ],
+            ]
+        )
+        df = pd.DataFrame(nums, index=datetime_index, columns=index)
+        return df
+
+    @staticmethod
+    def get_multiindex_df_with_non_datetime_index() -> pd.DataFrame:
+        non_datetime_index = ["M", "N"]
+        index = pd.MultiIndex.from_product([["A", "B"], ["X", "Y"]])
+        data = [[1, 2, 3, 4], [5, 6, 7, 8]]
+        df = pd.DataFrame(data, index=non_datetime_index, columns=index)
+        return df
+
+    def test1(self) -> None:
+        """
+        Test DataFrame with a datetime index.
+        """
+        df = self.get_multiindex_df_with_datetime_index()
+        act = hpandas.multiindex_df_info(df)
+        exp = """
+            shape=2 x 4 x 5
+            columns_level0=2 ['asset1', 'asset2']
+            columns_level1=4 ['close', 'high', 'low', 'open']
+            rows=5 ['2022-01-01 21:01:00+00:00', '2022-01-01 21:02:00+00:00', '2022-01-01 21:03:00+00:00', '2022-01-01 21:04:00+00:00', '2022-01-01 21:05:00+00:00']
+            start_timestamp=2022-01-01 21:01:00+00:00
+            end_timestamp=2022-01-01 21:05:00+00:00
+            frequency=T
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test2(self) -> None:
+        """
+        Test DataFrame with a non-frequency datetime index.
+        """
+        df = self.get_multiindex_df_with_datetime_index()
+        non_frequency_datetime_index = [
+            pd.Timestamp("2022-01-01 21:01:00+00:00"),
+            pd.Timestamp("2022-01-01 21:02:00+00:00"),
+            pd.Timestamp("2022-01-01 21:04:00+00:00"),
+            pd.Timestamp("2022-01-01 21:04:30+00:00"),
+            pd.Timestamp("2022-01-01 21:06:00+00:00"),
+        ]
+        df.index = non_frequency_datetime_index
+        act = hpandas.multiindex_df_info(df)
+        exp = """
+            shape=2 x 4 x 5
+            columns_level0=2 ['asset1', 'asset2']
+            columns_level1=4 ['close', 'high', 'low', 'open']
+            rows=5 ['2022-01-01 21:01:00+00:00', '2022-01-01 21:02:00+00:00', '2022-01-01 21:04:00+00:00', '2022-01-01 21:04:30+00:00', '2022-01-01 21:06:00+00:00']
+            start_timestamp=2022-01-01 21:01:00+00:00
+            end_timestamp=2022-01-01 21:06:00+00:00
+            frequency=None
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Test DataFrame with a non-datetime index.
+        """
+        df = self.get_multiindex_df_with_non_datetime_index()
+        act = hpandas.multiindex_df_info(df)
+        exp = """
+            shape=2 x 2 x 2
+            columns_level0=2 ['A', 'B']
+            columns_level1=2 ['X', 'Y']
+            rows=2 ['M', 'N']
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class Test_dassert_index_is_datetime(hunitest.TestCase):
+    @staticmethod
+    def get_multiindex_df(
+        index_is_datetime: bool,
+    ) -> pd.DataFrame:
+        """
+        Helper function to get test multi-index dataframe.
+        Example of dataframe returned when `index_is_datetime = True`.
+                                            column1     column2
+        index   timestamp                                    
+        index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
+                2022-01-01 21:10:00+00:00   1.303778    -0.288235
+        index2  2022-01-01 21:00:00+00:00   1.237079    1.168012
+                2022-01-01 21:10:00+00:00   1.333692    1.708455
+                
+        Example of dataframe returned when `index_is_datetime = False`.
+                            column1     column2
+        index   timestamp                    
+        index1  string1     -0.122140   -1.949431
+                string2     1.303778    -0.288235
+        index2  string1     1.237079    1.168012
+                string2     1.333692    1.708455
+        """
+        if index_is_datetime:
+            index_inner = [
+                pd.Timestamp("2022-01-01 21:00:00", tz="UTC"),
+                pd.Timestamp("2022-01-01 21:10:00", tz="UTC"),
+            ]
+        else:
+            index_inner = ["string1", "string2"]
+        index_outer = ["index1", "index2"]
+        iterables = [index_outer, index_inner]
+        index = pd.MultiIndex.from_product(
+            iterables, names=["index", "timestamp"]
+        )
+        columns = ["column1", "column2"]
+        nums = np.random.uniform(-2, 2, size=(4, 2))
+        df = pd.DataFrame(nums, index=index, columns=columns)
+        return df
+
+    def test1(self) -> None:
+        """
+        Check that multi-index dataframe index is datetime type.
+        """
+        index_is_datetime = True
+        df = self.get_multiindex_df(index_is_datetime)
+        hpandas.dassert_index_is_datetime(df)
+
+    def test2(self) -> None:
+        """
+        Check that multi-index dataframe index is not datetime type.
+        """
+        index_is_datetime = False
+        df = self.get_multiindex_df(index_is_datetime)
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_index_is_datetime(df)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        cond=False
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Check for empty dataframe.
+        """
+        df = pd.DataFrame()
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_index_is_datetime(df)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        Instance of 'Index([], dtype='object')' is '<class 'pandas.core.indexes.base.Index'>' instead of '<class 'pandas.core.indexes.datetimes.DatetimeIndex'>'
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Check that single-indexed dataframe index is datetime type.
+        """
+        index_is_datetime = True
+        df = self.get_multiindex_df(index_is_datetime)
+        df = df.loc["index1"]
+        hpandas.dassert_index_is_datetime(df)

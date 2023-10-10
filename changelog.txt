@@ -1,3 +1,38 @@
+# cmamp-1.9.0
+- 2023-09-29
+- Promote Python to 3.9
+- Changes from #5439 - Update Python to 3.9 (or even to the latest) version
+
+# cmamp-1.8.0
+- 2023-09-27
+- Remove `mxnet` and `gluonts`
+- Changes from #5466 - Remove mxnet, gluonts and disable related tests
+
+# cmamp-1.7.0
+- 2023-09-05
+- Bump `pytest` to the latest version
+- Changes from #5119 - Pytest teardown error
+
+# cmamp-1.6.0
+- 2023-08-14
+- Add `gspread_pandas`
+- Update CCXT
+
+# cmamp-1.5.0
+- 2023-08-03
+- Multi-architecture Docker image
+- Add user_1000
+- CmTask4886
+
+# cmamp-1.4.3
+- 2023-02-24
+- Changes from #3585 IM - Extract v3.0 (Next gen Data QA)
+- Changes from #3662 IM - Extract v3.2 (Extend the dataset matrix)#3662
+
+# cmamp-1.4.2
+- 2023-01-11
+- Changes from #3503 IM - Extract v2.9 (Prod Database, Continue Adapting to Sorrentum)
+
 # cmamp-1.4.1
 - 2022-12-19
 - Changes from #3165

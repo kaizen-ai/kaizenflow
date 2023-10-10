@@ -19,4 +19,3 @@ do
         (cd $ROOT_DST_DIR; git add $DIR)
     fi;
 done;
-

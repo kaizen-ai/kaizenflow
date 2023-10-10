@@ -1,7 +1,9 @@
+import argparse
+import datetime
+
 from airflow.models import DAG
 from airflow.operators.bash import BashOperator
 import datetime
-import argparse
 
 mydag = DAG(
     dag_id="realtime",
@@ -9,7 +11,7 @@ mydag = DAG(
     tags=["kaiko"],
     start_date=datetime.datetime(2023, 4, 1),
     catchup=True,
-    schedule=datetime.timedelta(days=1)
+    schedule=datetime.timedelta(days=1),
 )
 
 task = BashOperator(
@@ -17,7 +19,7 @@ task = BashOperator(
     bash_command="""
     cd /opt/airflow
     python3 download_to_db.py --start_timestamp "{{data_interval_start}}" --end_timestamp "{{data_interval_end}}" --target_table "public.realtime"
-    """
+    """,
 )
 
 mydag.add_task(task)

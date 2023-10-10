@@ -1,4 +1,4 @@
-                   x     ret_0   ret_0_3  ret_0_1_hat  ret_0_2_hat  ret_0_3_hat  ret_0_3_hat  ret_0_3_hat
+                   x     ret_0   ret_0.shift_-3  ret_0.shift_-1_hat  ret_0.shift_-2_hat  ret_0.shift_-3_hat  ret_0.shift_-3_hat  ret_0.shift_-3_hat
 2010-03-12 -0.834205 -0.906846 -0.600160          NaN          NaN          NaN          NaN          NaN
 2010-03-13 -0.830937 -0.753042 -0.862135          NaN          NaN          NaN          NaN          NaN
 2010-03-14 -0.827953 -0.756624 -0.779944          NaN          NaN          NaN          NaN          NaN

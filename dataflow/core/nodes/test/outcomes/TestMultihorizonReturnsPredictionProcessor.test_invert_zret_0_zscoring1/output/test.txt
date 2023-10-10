@@ -1,4 +1,4 @@
-            cumret_1  cumret_1_original
+            cumret.shift_-1  cumret.shift_-1_original
 2010-01-01  0.085516           0.085516
 2010-01-02  0.136459           0.136459
 2010-01-03  0.353531           0.353531

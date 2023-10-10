@@ -326,7 +326,7 @@ ccxt_ftx_BTC.loc[(ccxt_ftx_BTC.index.day == 25) & (ccxt_ftx_BTC.index.hour == 3)
 ccxt_exchange_ftx = _log_into_exchange("ftx")
 start_ts = pd.Timestamp("2020-04-01 00:00:00+00:00")
 end_ts = pd.Timestamp("2020-04-30 23:59:59+00:00")
-ccxt_df_ftx =  _get_ccxt_ohlcv_data(
+ccxt_df_ftx = _get_ccxt_ohlcv_data(
     ccxt_exchange_ftx, currency_pair_ftx, start_ts, end_ts
 )
 ccxt_df_ftx = _set_index_ts(ccxt_df_ftx)
