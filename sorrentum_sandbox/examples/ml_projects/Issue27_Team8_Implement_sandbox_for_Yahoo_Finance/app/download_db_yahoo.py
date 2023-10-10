@@ -11,12 +11,12 @@ Use as:
 import argparse
 import logging
 
+import db_yahoo as sisebidb
+import download_yahoo as sisebido
 import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import db_yahoo as sisebidb
-import download_yahoo as sisebido
 
 _LOG = logging.getLogger(__name__)
 
@@ -72,11 +72,11 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     # Load data.
-    start_timestamp = (args.start_timestamp)
-    end_timestamp = (args.end_timestamp)
-    interval= args.interval
+    start_timestamp = args.start_timestamp
+    end_timestamp = args.end_timestamp
+    interval = args.interval
     downloader = sisebido.YFinanceDownloader()
-    raw_data = downloader.download(start_timestamp, end_timestamp,interval)
+    raw_data = downloader.download(start_timestamp, end_timestamp, interval)
     print(raw_data.get_data().columns)
     # Save data to DB.
     db_conn = sisebidb.get_db_connection()

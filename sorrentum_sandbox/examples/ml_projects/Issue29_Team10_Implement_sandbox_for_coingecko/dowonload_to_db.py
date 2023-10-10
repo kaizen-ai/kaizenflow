@@ -1,12 +1,13 @@
 import argparse
 import logging
 
+import Issue29_Team10_Implement_sandbox_for_coingecko.db_coingecko as sisebidb
+import Issue29_Team10_Implement_sandbox_for_coingecko.download_coingecko as sisebido
 import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import Issue29_Team10_Implement_sandbox_for_coingecko.db_coingecko as sisebidb
-import Issue29_Team10_Implement_sandbox_for_coingecko.download_coingecko as sisebido
+
 """
 Download data from CoinGecko and save it into the DB.
 Use as:
@@ -43,7 +44,7 @@ def _add_download_args(
     parser.add_argument(
         "--api",
         action="store",
-        default='CoinGeckoAPI()',
+        default="CoinGeckoAPI()",
         type=str,
         help="Base API",
     )
@@ -59,7 +60,7 @@ def _add_download_args(
         action="store",
         required=True,
         type=str,
-        help="Name of coin to load"
+        help="Name of coin to load",
     )
     return parser
 

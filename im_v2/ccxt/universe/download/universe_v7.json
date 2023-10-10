@@ -28,6 +28,27 @@
         "DOGE_USDT",
         "SOL_USDT",
         "CTK_USDT"
+    ],
+    "binanceus": [
+      "APE_USDT",
+      "AVAX_USDT",
+      "AXS_USDT",
+      "BNB_USDT",
+      "BTC_BUSD",
+      "BTC_USDT",
+      "CRV_USDT",
+      "DOGE_USDT",
+      "DOT_USDT",
+      "ETH_BUSD",
+      "ETH_USDT",
+      "FTM_USDT",
+      "LINK_USDT",
+      "MATIC_USDT",
+      "NEAR_USDT",
+      "OGN_USDT",
+      "SAND_USDT",
+      "SOL_USDT",
+      "STORJ_USDT"
     ]
     }
   }

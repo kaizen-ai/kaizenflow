@@ -3,17 +3,22 @@ import pytest
 
 import helpers.hunit_test as hunitest
 import im.common.data.types as imcodatyp
-import im.kibot.data.load.kibot_s3_data_loader as ikdlksdlo
+import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
 
 
+@pytest.mark.requires_aws
+@pytest.mark.requires_ck_infra
 class TestKibotS3DataLoader(hunitest.TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self._s3_data_loader = ikdlksdlo.KibotS3DataLoader()
+        self._s3_data_loader = imkdlksdlo.KibotS3DataLoader()
 
+    @pytest.mark.requires_aws
+    @pytest.mark.requires_ck_infra
     def test1(self) -> None:
         df = self._s3_data_loader._read_data(
             symbol="XG",
+            aws_profile="am",
             asset_class=imcodatyp.AssetClass.Futures,
             frequency=imcodatyp.Frequency.Daily,
             contract_type=imcodatyp.ContractType.Continuous,

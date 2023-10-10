@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """
+NOTE: This script is deprecated refer to .../data/qa/notebooks/*.ipynb
+
 Compare data on DB and S3, raising when difference was found.
 
 Use as:
@@ -140,7 +142,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="DB table to use, e.g. 'ccxt_ohlcv'",
+        help="DB table to use, e.g. 'ccxt_ohlcv_spot'",
     )
     parser.add_argument(
         "--s3_vendor",
@@ -205,11 +207,15 @@ class RealTimeHistoricalReconciler:
             hdbg.dassert_lgt(0, args.bid_ask_accuracy, 100, True, True)
             self.bid_ask_accuracy = args.bid_ask_accuracy
         self.data_type = args.data_type
+        universe_version = "infer_from_data"
         # Set DB connection.
         db_connection = self.get_db_connection(args)
         # Initialize CCXT client.
         self.ccxt_rt_im_client = icdcl.CcxtSqlRealTimeImClient(
-            db_connection, args.db_table, resample_1min=args.resample_1min
+            universe_version,
+            db_connection,
+            args.db_table,
+            resample_1min=args.resample_1min,
         )
         self.aws_profile = args.aws_profile
         self.s3_path = self._build_s3_path(

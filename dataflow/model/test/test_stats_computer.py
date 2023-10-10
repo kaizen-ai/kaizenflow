@@ -41,7 +41,7 @@ percentage annualized_mean_return            22.94
            pnl_std                            0.01
            turnover_mean                     10.00
            turnover_stdev                     0.03
-           market_bias_mean                  -0.00
+           market_bias_mean                   0.00
            market_bias_stdev                  0.01"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 

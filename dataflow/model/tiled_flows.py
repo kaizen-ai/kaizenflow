@@ -11,7 +11,7 @@ import pandas as pd
 
 _LOG = logging.getLogger(__name__)
 
-from typing import Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from tqdm.autonotebook import tqdm
 
@@ -127,12 +127,89 @@ def yield_processed_parquet_tile_dict(
                 columns=columns,
                 filters=combined_filter,
             )
+            # TODO(Grisha): @Dan Add assert for empty tile df.
             df = process_parquet_read_df(
                 tile,
                 asset_id_col,
             )[prediction_col]
             dfs[idx] = df
         yield dfs
+
+# TODO(ShaopengZ): Clean up the classes by initializing `forecast_evaluator`
+# objects outside the tiling function.
+def annotate_forecasts_by_tile(
+    dir_name: str,
+    start_date: datetime.date,
+    end_date: datetime.date,
+    asset_id_col: str,
+    price_col: str,
+    volatility_col: str,
+    prediction_col: str,
+    *,
+    asset_ids: Optional[List[int]] = None,
+    annotate_forecasts_kwargs: Dict[str, Any],
+    return_portfolio_df: bool = True,
+    forecast_evaluator: Any = dtfmfefrpr.ForecastEvaluatorFromPrices,
+    optimizer_config_dict: Optional[dict] = None,
+) -> Tuple[Optional[pd.DataFrame], pd.DataFrame]:
+    """
+    Combine yearly tiled loading with forecast evaluation.
+
+    :param dir_name: as in `yield_processed_parquet_tiles_by_year()`
+    :param start_date: as in `yield_processed_parquet_tiles_by_year()`
+    :param end_date: as in `yield_processed_parquet_tiles_by_year()`
+    :param asset_id_col: as in `yield_processed_parquet_tiles_by_year()`
+    :param price_col: as in `ForecastEvaluatorFromPrices.annotate_forecasts()`
+    :param volatility_col: as in `ForecastEvaluatorFromPrices.annotate_forecasts()`
+    :param prediction_col: as in `ForecastEvaluatorFromPrices.annotate_forecasts()`
+    :param asset_ids: as in `yield_processed_parquet_tiles_by_year()`
+    :param annotate_forecasts_kwargs: as in `ForecastEvaluatorFromPrices.annotate_forecasts()`
+    :param return_portfolio_df: if `True`, return the
+        ForecastEvaluatorFromPrices portfolio in addition to the bar metrics,
+        else discard the portfolio (e.g., to reduce memory requirements).
+    :param forecast_evaluator: a forecast evaluator object.
+    :param optimizer_config_dict: optional configuration dictionary. If
+     not None, forecast with optimization.
+    :return: (portfolio_df, bar_metrics), unless `return_portfolio_df=False`,
+        in which case the first element of the tuple is `None`.
+    """
+    # Create backtest dataframe tile iterator.
+    data_cols = [price_col, volatility_col, prediction_col]
+    backtest_df_iter = yield_processed_parquet_tiles_by_year(
+        dir_name,
+        start_date,
+        end_date,
+        asset_id_col,
+        data_cols=data_cols,
+        asset_ids=asset_ids,
+    )
+    args = [
+        price_col,
+        volatility_col,
+        prediction_col,
+    ]
+    if optimizer_config_dict is not None:
+        args.append(optimizer_config_dict)
+    fepo = forecast_evaluator(*args)
+    # Process the dataframes in the interator.
+    bar_metrics = []
+    portfolio_df = []
+    for df in backtest_df_iter:
+        portfolio_df_slice, bar_metrics_slice = fepo.annotate_forecasts(
+            df,
+            **annotate_forecasts_kwargs,
+        )
+        bar_metrics.append(bar_metrics_slice)
+        if return_portfolio_df:
+            portfolio_df.append(portfolio_df_slice)
+        else:
+            _ = portfolio_df_slice
+    if return_portfolio_df:
+        portfolio_df = pd.concat(portfolio_df)
+    else:
+        portfolio_df = None
+    bar_metrics = pd.concat(bar_metrics)
+    return portfolio_df, bar_metrics
 
 
 def evaluate_weighted_forecasts(
@@ -147,6 +224,7 @@ def evaluate_weighted_forecasts(
     annotate_forecasts_kwargs: Optional[dict] = None,
     target_freq_str: Optional[str] = None,
     preapply_gaussian_ranking: bool = False,
+    index_mode: str = "assert_equal",
 ) -> pd.DataFrame:
     """
     Mix forecasts with weights and evaluate the portfolio.
@@ -183,6 +261,7 @@ def evaluate_weighted_forecasts(
     :param preapply_gaussian_ranking: whether to preprocess predictions with
         Gaussian ranking. May be useful if predictions are on different
         scales.
+    :param index_mode: same as `mode` in `apply_index_mode()`
     :return: bar metrics dataframe
     """
     forecast_evaluator = dtfmfefrpr.ForecastEvaluatorFromPrices(
@@ -259,7 +338,9 @@ def evaluate_weighted_forecasts(
             #     val *= scale_factor
             dfs[key] = val
         bar_metrics_dict = {}
-        weighted_sum = hpandas.compute_weighted_sum(dfs, weights)
+        weighted_sum = hpandas.compute_weighted_sum(
+            dfs, weights, index_mode=index_mode
+        )
         for key, val in weighted_sum.items():
             df = pd.concat(
                 [val, volatility, price],
@@ -478,13 +559,12 @@ def regress(
         feature_cols = feature_cols + lagged_cols
     #
     ra = dtfmoreana.RegressionAnalyzer(
-        target_col=target_col,
-        feature_cols=feature_cols,
-        feature_lag=feature_lag,
+        y_col=target_col,
+        x_cols=feature_cols,
+        x_col_lag=feature_lag,
     )
     results = []
     corrs = {}
-    # TODO(Paul): Add sign correlation.
     tile_iter = hparque.yield_parquet_tiles_by_assets(
         file_name,
         asset_ids,

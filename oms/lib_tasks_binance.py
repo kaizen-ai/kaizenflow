@@ -13,14 +13,20 @@ import dataflow_amp.system.Cx as dtfamsysc
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hserver as hserver
+import helpers.hsql as hsql
+
 import helpers.hsystem as hsystem
-import oms.ccxt_broker as occxbrok
+import oms.broker.ccxt.ccxt_broker_instances as obccbrin
+import im_v2.common.data.client as icdc
+import im_v2.common.db.db_utils as imvcddbut
+import im_v2.im_lib_tasks as imvimlita
+import oms.broker.ccxt.ccxt_broker_v1 as obccbrv1
 import oms.hsecrets as omssec
 
 _LOG = logging.getLogger(__name__)
 
 
-def _get_CcxtBroker(secret_id: int) -> occxbrok.CcxtBroker:
+def _get_CcxtBroker(secret_id: int) -> obccbrv1.CcxtBroker_v1:
     """
     Get a `CcxtBroker` instance.
     """
@@ -33,20 +39,18 @@ def _get_CcxtBroker(secret_id: int) -> occxbrok.CcxtBroker:
     exchange_id = "binance"
     stage = "preprod"
     account_type = "trading"
+    log_dir = "system_log_dir"
     secret_identifier = omssec.SecretIdentifier(
         exchange_id, stage, account_type, secret_id
     )
-    ccxt_broker = occxbrok.get_CcxtBroker_prod_instance1(
-        market_data,
-        universe_version,
-        strategy_id,
-        secret_identifier,
+    ccxt_broker = obccbrin.get_CcxtBroker_v1_prod_instance1(
+        strategy_id, market_data, universe_version, secret_identifier, log_dir
     )
     return ccxt_broker
 
 
 @task
-def binance_get_open_positions(ctx, secret_id):  # type: ignore
+def binance_display_open_positions(ctx, secret_id):  # type: ignore
     """
     Get current open positions from binance and display in a human-readable
     format.
@@ -68,6 +72,29 @@ def binance_get_open_positions(ctx, secret_id):  # type: ignore
 
 
 @task
+def binance_log_open_positions(ctx, secret_id, log_dir):
+    """
+    Get all open positions and save to a logging directory.
+    """
+    hdbg.dassert(
+        hserver.is_inside_docker(), "This is runnable only inside Docker."
+    )
+    _ = ctx
+    hdbg.dassert(secret_id.isnumeric())
+    secret_id = int(secret_id)
+    exchange_id = "binance"
+    contract_type = "futures"
+    stage = "preprod"
+    cmd = (
+        f"oms/broker/ccxt/scripts/get_ccxt_open_positions.py --exchange {exchange_id}"
+        + f" --contract_type {contract_type} --stage {stage}"
+        + f" --secret_id {secret_id}"
+        + f" --log_dir {log_dir}"
+    )
+    hsystem.system(cmd, suppress_output=False)
+
+
+@task
 def binance_flatten_account(ctx, stage, secret_id):  # type: ignore
     """
     Close all open positions in a binance account.
@@ -83,8 +110,32 @@ def binance_flatten_account(ctx, stage, secret_id):  # type: ignore
     exchange_id = "binance"
     contract_type = "futures"
     cmd = (
-        f"oms/flatten_ccxt_account.py --exchange_id {exchange_id}"
+        f"oms/broker/ccxt/scripts/flatten_ccxt_account.py --exchange_id {exchange_id}"
         + f" --contract_type {contract_type} --stage {stage}"
         + f" --secret_id {secret_id}"
+        + f" --assert_on_non_zero_positions"
+    )
+    hsystem.system(cmd, suppress_output=False)
+
+
+@task
+def binance_log_total_balance(ctx, secret_id, log_dir):  # type: ignore
+    """
+    Get total balance and save to a logging directory.
+    """
+    hdbg.dassert(
+        hserver.is_inside_docker(), "This is runnable only inside Docker."
+    )
+    _ = ctx
+    hdbg.dassert(secret_id.isnumeric())
+    secret_id = int(secret_id)
+    exchange_id = "binance"
+    contract_type = "futures"
+    stage = "preprod"
+    cmd = (
+        f"oms/broker/ccxt/scripts/get_ccxt_total_balance.py --exchange {exchange_id}"
+        + f" --contract_type {contract_type} --stage {stage}"
+        + f" --secret_id {secret_id}"
+        + f" --log_dir {log_dir}"
     )
     hsystem.system(cmd, suppress_output=False)

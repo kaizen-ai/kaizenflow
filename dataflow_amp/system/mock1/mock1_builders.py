@@ -53,12 +53,22 @@ def get_Mock1_ProcessForecastsNode_dict_example1(
     prediction_col = "feature1"
     volatility_col = "vwap.ret_0.vol"
     spread_col = None
-    order_duration_in_mins = 5
-    style = "cross_sectional"
+    order_config = {
+        "order_type": "price@twap",
+        "passivity_factor": None,
+        "order_duration_in_mins": 5,
+    }
     compute_target_positions_kwargs = {
         "bulk_frac_to_remove": 0.0,
         "bulk_fill_method": "zero",
         "target_gmv": 1e5,
+    }
+    optimizer_config = {
+        "backend": "pomo",
+        "params": {
+            "style": "cross_sectional",
+            "kwargs": compute_target_positions_kwargs,
+        },
     }
     root_log_dir = None
     process_forecasts_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
@@ -66,9 +76,8 @@ def get_Mock1_ProcessForecastsNode_dict_example1(
         prediction_col,
         volatility_col,
         spread_col,
-        order_duration_in_mins,
-        style,
-        compute_target_positions_kwargs,
+        order_config,
+        optimizer_config,
         root_log_dir,
     )
     return process_forecasts_dict
