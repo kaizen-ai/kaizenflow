@@ -4,8 +4,8 @@ Download chainlink data from Binance and save it into the DB.
 
 Use as:
 
-> download_to_db.py --pair BTC/USD --start_roundid 92233720368547792257 --target_table 'chainlink_real_time'
-> download_to_db.py --pair BTC/USD --start_roundid 92233720368547792257 --end_roundid 92233720368547792260 --target_table 'chainlink_history'
+> ./download_to_db.py --pair BTC/USD --start_roundid 92233720368547792257 --target_table 'chainlink_real_time'
+> ./download_to_db.py --pair BTC/USD --start_roundid 92233720368547792257 --end_roundid 92233720368547792260 --target_table 'chainlink_history'
 
 """
 import argparse
