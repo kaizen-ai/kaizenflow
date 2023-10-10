@@ -1,30 +1,8 @@
-#!/usr/bin/env python
-"""
-Load and validate historical data from a PostgreSQL table,
-perform ML predictions and load back the result into PostgreSQL.
-
-> load_validate_transform.py \
-    --topic 'washing machine' \
-    --source_table 'google_trends_data' \
-    --target_table 'google_trends_predictions'
-"""
-import argparse
-
+import pandas as pd
 import dask.dataframe as dd
 from pmdarima.arima import auto_arima
 from statsmodels.tsa.stattools import adfuller as ADF
 import matplotlib.pyplot as plt
-
-import pandas as pd
-
-import common.validate as sinsaval
-import src.db as sisebidb
-import src.validate as sisebiva
-
-
-# #############################################################################
-# Data processing.
-# #############################################################################
 
 
 def preprocess(data):
@@ -89,10 +67,10 @@ def apply_ARIMA(data, start, end, date_range):
     return predictions
 
 
-def predict_data(data: pd.DataFrame, topic: str) -> pd.DataFrame:
+def predict_data(data, topic):
     # Convert the input data to a Dask dataframe with 10 partitions
     data = dd.from_pandas(data, npartitions=10)
-    print("\nStep 1: Converting to Dask Dataframe, Done")
+    print("Step 1: Converting to Dask Dataframe, Done")
 
     # Preprocess the data
     processed_data = preprocess(data)
@@ -100,11 +78,8 @@ def predict_data(data: pd.DataFrame, topic: str) -> pd.DataFrame:
 
     # Define the start and end dates for the prediction period
     start = processed_data.compute().index[-1] + pd.offsets.MonthBegin(1)
-    end = pd.Timestamp(processed_data.compute().index.values[-1]) + pd.offsets.MonthBegin(12)
+    end = processed_data.compute().index.values[-1] + pd.offsets.MonthBegin(12)
     date_range = pd.date_range(start=start, end=end, freq="MS")
-
-    # if one wants to see the diffs.
-    # apply_ARIMA(data, start, end, date_range)
 
     # Generate predictions for the specified time range using the apply_ARIMA function
     predictions = apply_ARIMA(processed_data.compute(), start, end, date_range)
@@ -141,103 +116,20 @@ def predict_data(data: pd.DataFrame, topic: str) -> pd.DataFrame:
     return resampled_df.compute()
 
 
-def plot_figure(resampled_df: pd.DataFrame) -> None:
-    # fetching historical and predicted data from resampled data
+if __name__ == '__main__':
+    df = pd.read_csv("../files/ipad.csv")
+    # fetching data from json as a dataframe
+    resampled_df = predict_data(df, topic="ipads")
+
     historical_data = resampled_df[resampled_df["Record Type"] == 'data']
     predicted_data = resampled_df[resampled_df["Record Type"] == 'predictions']
 
-    # setting the figure size
     fig = plt.figure(figsize=(20, 5))
 
-    # plot historical data
     plt.plot(historical_data.Time, historical_data.Frequency)
     plt.scatter(historical_data.Time, historical_data.Frequency, c="Orange", s=12)
 
-    # plot predicted data
     plt.plot(predicted_data.Time, predicted_data.Frequency, c="Red")
     plt.scatter(predicted_data.Time, predicted_data.Frequency, c="Green", s=12)
 
     plt.show()
-
-# #############################################################################
-# Script.
-# #############################################################################
-
-
-def _add_load_args(
-        parser: argparse.ArgumentParser,
-) -> argparse.ArgumentParser:
-    """
-    Add the command line options for exchange download.
-    """
-    parser.add_argument(
-        "--topic",
-        required=True,
-        action="store",
-        type=str,
-        help="topic to predict",
-    )
-    parser.add_argument(
-        "--source_table",
-        action="store",
-        required=True,
-        type=str,
-        help="DB table to load data from",
-    )
-    parser.add_argument(
-        "--target_table",
-        action="store",
-        required=True,
-        type=str,
-        help="DB table to save transformed data into",
-    )
-    return parser
-
-
-def _parse() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawTextHelpFormatter,
-    )
-    parser = _add_load_args(parser)
-    # parser = hparser.add_verbosity_arg(parser)
-    return parser
-
-
-def _main(parser: argparse.ArgumentParser) -> None:
-    args = parser.parse_args()
-    target_table = args.target_table
-    topic = args.topic.replace("_", " ").lower()
-
-    # 1) Load data.
-    db_conn = sisebidb.get_db_connection()
-    db_client = sisebidb.PostgresClient(db_conn)
-
-    data = db_client.load(
-        dataset_signature=args.source_table,
-        topic=topic
-    )
-    data.rename(columns={'topic': 'Topic', 'date_stamp': 'Time', 'frequency': 'Frequency'}, inplace=True)
-    print("Data fetched from 'google_trends_data' table:")
-    print(data, "\n")
-
-    # 2) QA
-    denormalized_dataset_check = sisebiva.DenormalizedDatasetCheck()
-    dataset_validator = sinsaval.SingleDatasetValidator(
-        [denormalized_dataset_check]
-    )
-    dataset_validator.run_all_checks([data])
-
-    # 3) Transform data.
-    resampled_data = predict_data(data, topic)
-
-    # 4) Save back to DB.
-    db_saver = sisebidb.PostgresDataFrameSaver(db_conn)
-    db_saver.save(resampled_data, target_table, topic)
-
-    # 5) plotting
-    # plot_figure(resampled_data)
-
-
-if __name__ == "__main__":
-    _main(_parse())

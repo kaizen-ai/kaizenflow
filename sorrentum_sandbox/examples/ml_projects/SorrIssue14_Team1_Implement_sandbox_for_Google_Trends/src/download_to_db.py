@@ -11,6 +11,7 @@ import src.db as sisebidb
 import src.download as sisebido
 
 
+
 def _add_download_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
@@ -53,6 +54,14 @@ def _add_download_args(
         type=str,
         help="Fetch realtime data / historical",
     )
+
+    parser.add_argument(
+        "--topic",
+        action="store",
+        required=True,
+        type=str,
+        help="Topic to fetch historical data of."
+    )
     return parser
 
 
@@ -77,14 +86,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
     start_timestamp = args.start_timestamp
     end_timestamp = args.end_timestamp
     target_table = args.target_table
+    topic = args.topic.replace("_", " ").lower()
 
     # boolean flags
     use_api = True if args.use_api == "True" else False
     real_time_data = True if args.real_time_data == "True" else False
 
-    # topic to search
-    topic = "washing machines"
-    topic = topic.lower()
+    # # topic to search
+    # topic = "washing machines"
+    # topic = topic.lower()
 
     # initialising a downloader
     downloader = sisebido.OhlcvRestApiDownloader()
@@ -106,7 +116,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     saver = sisebidb.PostgresDataFrameSaver(db_conn)
 
     # saving the data
-    saver.save(raw_data, target_table)
+    saver.save(raw_data, target_table, topic)
     print("!Done!")
 
     # print df.head
