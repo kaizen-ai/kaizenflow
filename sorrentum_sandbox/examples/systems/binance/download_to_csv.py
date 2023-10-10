@@ -16,16 +16,16 @@ from typing import Any
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import helpers.hparser as hparser
 import helpers.hio as hio
+import helpers.hparser as hparser
 import sorrentum_sandbox.common.download as sinsadow
-import sorrentum_sandbox.examples.systems.binance.download as sisebido
-import sorrentum_sandbox.common.save as sinsasav
+import sorrentum_sandbox.common.save as ssacosav
+import sorrentum_sandbox.examples.systems.binance.download as ssesbido
 
 _LOG = logging.getLogger(__name__)
 
 
-class CsvDataFrameSaver(sinsasav.DataSaver):
+class CsvDataFrameSaver(ssacosav.DataSaver):
     """
     Class for saving pandas DataFrame as CSV to a local filesystem at desired
     location.
@@ -45,7 +45,9 @@ class CsvDataFrameSaver(sinsasav.DataSaver):
 
         :param data: data to persists into CSV
         """
-        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
+        hdbg.dassert_isinstance(
+            data.get_data(), pd.DataFrame, "Only DataFrame is supported."
+        )
         signature = (
             "bulk.manual.download_1min.csv.ohlcv.spot.v7.binance.binance.v1_0_0"
         )
@@ -91,7 +93,7 @@ def _add_download_args(
         required=False,
         default=False,
         help="Domain switcher between binance.com when using --use_global_api"
-             " and binance.us by default"
+        " and binance.us by default",
     )
     return parser
 
@@ -116,7 +118,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Download data.
     start_timestamp = pd.Timestamp(args.start_timestamp)
     end_timestamp = pd.Timestamp(args.end_timestamp)
-    downloader = sisebido.OhlcvRestApiDownloader(args.use_global_api)
+    downloader = ssesbido.OhlcvRestApiDownloader(args.use_global_api)
     raw_data = downloader.download(start_timestamp, end_timestamp)
     # Save data as CSV.
     saver = CsvDataFrameSaver(args.target_dir)

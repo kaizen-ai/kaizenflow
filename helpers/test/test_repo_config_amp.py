@@ -19,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 
 class TestRepoConfig_Amp(hunitest.TestCase):
 
-    expected_repo_name = "//amp"
+    expected_repo_name = "//cmamp"
 
     def test_repo_name1(self) -> None:
         """
@@ -207,7 +207,7 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
             has_dind_support='True'
             has_docker_sudo='False'
             is_CK_S3_available='False'
-            run_docker_as_$USER_NAME='True'
+            run_docker_as_root='True'
             skip_submodules_test='False'
             use_docker_db_container_name_to_connect='False'
             use_docker_network_mode_host='False'
@@ -254,7 +254,7 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
             has_dind_support='True'
             has_docker_sudo='False'
             is_CK_S3_available='True'
-            run_docker_as_$USER_NAME='True'
+            run_docker_as_root='True'
             skip_submodules_test='False'
             use_docker_db_container_name_to_connect='False'
             use_docker_network_mode_host='False'

@@ -39,14 +39,14 @@ _LOG = logging.getLogger(__name__)
 # 3) have the same user and group permissions
 
 # E.g.,
-# -rw-rw-r-- 1 spm-sasm spm-sasm-fileshare 21877 Nov  3 18:11 pytest_logger.log
+# -rw-rw-r-- 1 sasm sasm-fileshare 21877 Nov  3 18:11 pytest_logger.log
 
 # The possible problems are:
-# -r--r--r-- 1 spm-sasm spm-sasm-fileshare ./.git/objects/02/4df16f66c87bdfb
-# -rw-r--r-- 1 265533 spm-sasm-fileshare  ./core_lime/dataflow/nodes/test/te
-# -rw-rw-r-- 1 265533 spm-sasm-fileshare  ./research/real_time/notebooks/Lim
+# -r--r--r-- 1 sasm sasm-fileshare ./.git/objects/02/4df16f66c87bdfb
+# -rw-r--r-- 1 265533 sasm-fileshare  ./core_lime/dataflow/nodes/test/te
+# -rw-rw-r-- 1 265533 sasm-fileshare  ./research/real_time/notebooks/Lim
 
-# drwxr-sr-x 2 gsaggese spm-sasm-fileshare    35 Oct 12 21:51 test
+# drwxr-sr-x 2 gsaggese sasm-fileshare    35 Oct 12 21:51 test
 # chmod g=u amp/dev_scripts/git/git_hooks/test
 
 
@@ -204,14 +204,14 @@ def _change_file_ownership(file: str, abort_on_error: bool) -> None:
     """
     # pylint: disable=line-too-long
     # > ls -l ./core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py
-    # -rw-r--r-- 1 265533 spm-sasm-fileshare 14327 Nov  3 14:01 ./core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py
+    # -rw-r--r-- 1 265533 sasm-fileshare 14327 Nov  3 14:01 ./core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py
     #
     # > mv ./core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py{,.OLD}
     #
     # > cp ./core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py{.OLD,}
     #
     # > ls -l ./core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py
-    # -rw-r--r-- 1 gsaggese spm-sasm-fileshare 14327 Nov  5 17:58 ./core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py
+    # -rw-r--r-- 1 gsaggese sasm-fileshare 14327 Nov  5 17:58 ./core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py
     #
     # > rm -rf ./core_lime/dataflow/nodes/test/test_core_lime_dataflow_nodes.py.OLD
     # pylint: enable=line-too-long

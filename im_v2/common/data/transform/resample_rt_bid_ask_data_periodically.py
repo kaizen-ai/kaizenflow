@@ -16,8 +16,9 @@ import argparse
 import logging
 
 import pandas as pd
-import helpers.hparser as hparser
+
 import helpers.hdbg as hdbg
+import helpers.hparser as hparser
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 _LOG = logging.getLogger(__name__)
@@ -70,7 +71,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     args = vars(args)
-    imvcdeexut.resample_rt_bid_ask_data_periodically(args["db_stage"], args["src_table"], args["dst_table"], pd.Timestamp(args["start_ts"]), pd.Timestamp(args["end_ts"]))
+    imvcdeexut.resample_rt_bid_ask_data_periodically(
+        args["db_stage"],
+        args["src_table"],
+        args["dst_table"],
+        pd.Timestamp(args["start_ts"]),
+        pd.Timestamp(args["end_ts"]),
+    )
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.14.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -74,7 +74,7 @@ df = cfmadaex.generate_random_price_data(
 )
 
 df = df.set_index("timestamp_db").drop(columns=["start_datetime", "end_datetime"])
-df = dtfsys._convert_to_multiindex(df, "asset_id")
+df = dtfsys.source_nodes._convert_to_multiindex(df, "asset_id")
 
 # %%
 # Calculate returns.
@@ -179,7 +179,7 @@ df = cfmadaex.generate_random_bars(
 )
 
 df = df.set_index("timestamp_db").drop(columns=["start_datetime", "end_datetime"])
-df = dtfsys._convert_to_multiindex(df, "asset_id")
+df = dtfsys.source_nodes._convert_to_multiindex(df, "asset_id")
 
 # %%
 # Show prices.

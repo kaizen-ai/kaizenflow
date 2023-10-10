@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import sorrentum_sandbox.examples.ml_projects.Issue24_Team5_Implement_sandbox_for_Alpha_Vantage.models.ticker as ssempitisfavmt
+"""
+
 from typing import List
 
 import dask.dataframe as dd
@@ -9,16 +15,16 @@ from models.time_series import DataType, TimeInterval, TimeSeriesData
 
 _ = Client("scheduler:8786")
 
+
 class Ticker:
     def __init__(
         self,
         ticker: str,
         get_name: bool = False,
         time_series_data: List[TimeSeriesData] = None,
-        **kwargs
+        **kwargs,
     ) -> None:
         self.ticker = ticker
-
         self.name = kwargs.pop('name', ticker)
         if get_name and (self.ticker == self.name):
             self.name = AlphaVantage.get_name_for(ticker)

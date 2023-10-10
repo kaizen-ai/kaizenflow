@@ -21,15 +21,14 @@ depends_on = None
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 init_sql_file = os.path.join(dir_path, "411c7363a33d_init.sql")
-# op.execute is an alembic method to call sql
-# TODO(Juraj): specify the path to the revision file with relative to
-# root of the repo (container)
-with open(init_sql_file) as file:
-    alembic.op.execute(file.read())
 
 
 def upgrade() -> None:
-    pass
+    # op.execute is an alembic method to call sql
+    # TODO(Juraj): specify the path to the revision file with relative to
+    # root of the repo (container)
+    with open(init_sql_file) as file:
+        alembic.op.execute(file.read())
 
 
 def downgrade() -> None:

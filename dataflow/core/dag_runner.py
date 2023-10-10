@@ -70,7 +70,11 @@ class DagRunner(abc.ABC, hobject.PrintableMixin):
     ) -> str:
         if attr_names_to_skip is None:
             attr_names_to_skip = []
-        attr_names_to_skip.extend(["dag", ])
+        attr_names_to_skip.extend(
+            [
+                "dag",
+            ]
+        )
         return super().__str__(attr_names_to_skip=attr_names_to_skip)
 
     def __repr__(
@@ -79,7 +83,11 @@ class DagRunner(abc.ABC, hobject.PrintableMixin):
     ) -> str:
         if attr_names_to_skip is None:
             attr_names_to_skip = []
-        attr_names_to_skip.extend(["dag", ])
+        attr_names_to_skip.extend(
+            [
+                "dag",
+            ]
+        )
         return super().__repr__(attr_names_to_skip=attr_names_to_skip)
 
     def _set_fit_predict_intervals(
@@ -423,14 +431,12 @@ class RollingFitPredictDagRunner(DagRunner):
             fit_start = row[1].fit_start
             fit_end = row[1].fit_end
             fit_interval = (fit_start, fit_end)
-            fit_result_bundle = self._run_fit(fit_interval)
+            fit_result_bundle = self._fit(fit_interval)
             #
             predict_start = row[1].predict_start
             predict_end = row[1].predict_end
             predict_interval = (fit_start, predict_end)
-            predict_result_bundle = self._run_predict(
-                predict_interval, predict_start
-            )
+            predict_result_bundle = self._predict(predict_interval, predict_start)
             # TODO(gp): Better to return a pd.Timestamp rather than its representation.
             training_datetime_str = fit_start.strftime("%Y%m%d_%H%M%S")
             yield training_datetime_str, fit_result_bundle, predict_result_bundle
@@ -459,9 +465,9 @@ class RollingFitPredictDagRunner(DagRunner):
         )
         return left_aligned_timestamp
 
-    # TODO(gp): -> _fit for symmetry with the rest of the code.
-    def _run_fit(
-        self, interval: Tuple[hdateti.Datetime, hdateti.Datetime]
+    def _fit(
+        self,
+        interval: dtfcorutil.Intervals,
     ) -> dtfcorebun.ResultBundle:
         # Set fit interval on all source nodes of the DAG.
         for input_nid in self.dag.get_sources():
@@ -472,10 +478,10 @@ class RollingFitPredictDagRunner(DagRunner):
         df_out, info = self._run_dag_helper(method)
         return self._to_result_bundle(method, df_out, info)
 
-    def _run_predict(
+    def _predict(
         self,
         # TODO(gp): Use Interval
-        interval: Tuple[hdateti.Datetime, hdateti.Datetime],
+        interval: dtfcorutil.Intervals,
         oos_start: hdateti.Datetime,
     ) -> dtfcorebun.ResultBundle:
         # Set predict interval on all source nodes of the DAG.

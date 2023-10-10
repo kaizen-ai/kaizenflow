@@ -695,7 +695,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
             file_names = [
                 file_name
                 for file_name in file_names
-                if os.path.normpath(os.path.dirname(file_name)) not in exclude_dirs_list
+                if os.path.normpath(os.path.dirname(file_name))
+                not in exclude_dirs_list
             ]
             num_files_after = len(file_names)
             _LOG.info(

@@ -27,7 +27,7 @@ database: airflow
 ####################################################
 
 
-go to 
+go to
 cd ~\sorrentum_sandbox\devops
 docker-compose up -d
 
@@ -62,11 +62,10 @@ docker> python3 download_to_db.py --start_timestamp '2023-04-20T16:38:00' --targ
 psql -h localhost -U postgres airflow
 
 # load table names
-\dt 
+\dt
 
 # describe table
-\d <tablename> 
+\d <tablename>
 
 # delete table
 DROP TABLE <tablename>
-

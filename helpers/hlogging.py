@@ -9,7 +9,7 @@ import contextlib
 import copy
 import datetime
 import logging
-from typing import Any, Callable, Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, Union
 
 # Avoid dependency from other helpers modules since this is used when the code
 # is bootstrapped.
@@ -314,17 +314,22 @@ def addLoggingLevel(levelName, levelNum, methodName=None):
     >>> logging.trace('so did this')
     >>> logging.TRACE
     5
-
     """
     if not methodName:
         methodName = levelName.lower()
 
     if hasattr(logging, levelName):
-       raise AttributeError('{} already defined in logging module'.format(levelName))
+        raise AttributeError(
+            "{} already defined in logging module".format(levelName)
+        )
     if hasattr(logging, methodName):
-       raise AttributeError('{} already defined in logging module'.format(methodName))
+        raise AttributeError(
+            "{} already defined in logging module".format(methodName)
+        )
     if hasattr(logging.getLoggerClass(), methodName):
-       raise AttributeError('{} already defined in logger class'.format(methodName))
+        raise AttributeError(
+            "{} already defined in logger class".format(methodName)
+        )
 
     # This method was inspired by the answers to Stack Overflow post
     # http://stackoverflow.com/q/2183233/2988730, especially
@@ -332,6 +337,7 @@ def addLoggingLevel(levelName, levelNum, methodName=None):
     def logForLevel(self, message, *args, **kwargs):
         if self.isEnabledFor(levelNum):
             self._log(levelNum, message, args, **kwargs)
+
     def logToRoot(message, *args, **kwargs):
         logging.log(levelNum, message, *args, **kwargs)
 
@@ -341,7 +347,7 @@ def addLoggingLevel(levelName, levelNum, methodName=None):
     setattr(logging, methodName, logToRoot)
 
 
-addLoggingLevel('TRACE', 5)
+addLoggingLevel("TRACE", 5)
 
 
 # Note that this doesn't avoid evaluating the call.
@@ -351,8 +357,8 @@ addLoggingLevel('TRACE', 5)
 # ```
 def shut_up_log_debug(logger: logging.Logger) -> None:
     logging.disable(logging.DEBUG)
-    #logger.debug = lambda *_: 0
-    #logger.trace = lambda *_: 0
+    # logger.debug = lambda *_: 0
+    # logger.trace = lambda *_: 0
 
 
 # #############################################################################
@@ -620,7 +626,7 @@ class CustomFormatter(logging.Formatter):
         # Add information about which coroutine we are running in.
         try:
             asyncio.get_running_loop()
-            task = asyncio.Task.current_task()
+            task = asyncio.current_task()
             if task is not None:
                 msg += f" {task.get_name()}"
         except (RuntimeError, AttributeError):
@@ -721,10 +727,10 @@ def set_v2_formatter(
     if verbose_format:
         # Force to report memory / CPU usage.
         # report_memory_usage = report_cpu_usage = True
-        print(
-            "report_memory_usage=%s report_cpu_usage=%s"
-            % (report_memory_usage, report_cpu_usage)
-        )
+        # print(
+        #     "report_memory_usage=%s report_cpu_usage=%s"
+        #     % (report_memory_usage, report_cpu_usage)
+        # )
         formatter: Union[logging.Formatter, CustomFormatter] = CustomFormatter(
             report_memory_usage=report_memory_usage,
             report_cpu_usage=report_cpu_usage,

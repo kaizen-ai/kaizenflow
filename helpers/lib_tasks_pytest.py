@@ -138,17 +138,27 @@ def _build_run_command_line(
     )
     pytest_opts = pytest_opts or "."
     pytest_opts_tmp = []
-
     # Select tests to skip based on the `test_list_name` (e.g., fast tests)
     # and on the custom marker, if present.
     skipped_tests = _select_tests_to_skip(test_list_name)
+    timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[test_list_name]
+    # Detect if we are running on a CK dev server / inside CI
+    # or a laptop outside the CK infra.
+    is_outside_ck_infra = not hserver.is_dev_ck() and not hserver.is_inside_ci()
+    if is_outside_ck_infra:
+        timeout_multiplier = 10
+        _LOG.warning(
+            f"Tests are running outside the CK server and CI, timeout increased {timeout_multiplier} times."
+        )
+        # Since we are running outside the CK server we increase the duration
+        # of the timeout, since the thresholds are set for the CK server.
+        timeout_in_sec *= timeout_multiplier
     if custom_marker != "":
         pytest_opts_tmp.append(f'-m "{custom_marker} and {skipped_tests}"')
     else:
         pytest_opts_tmp.append(f'-m "{skipped_tests}"')
     if pytest_opts:
         pytest_opts_tmp.append(pytest_opts)
-    timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[test_list_name]
     # Adding `timeout_func_only` is a workaround for
     # https://github.com/pytest-dev/pytest-rerunfailures/issues/99. Because of
     # it, we limit only run time, without setup and teardown time.
@@ -181,7 +191,7 @@ def _build_run_command_line(
     # Concatenate the options.
     _LOG.debug("pytest_opts_tmp=\n%s", str(pytest_opts_tmp))
     pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
-    # TODO(gp): Use _to_multi_line_cmd()
+    # TODO(gp): Use to_multi_line_cmd()
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
     cmd = f"pytest {pytest_opts}"
     if tee_to_file:
@@ -262,6 +272,8 @@ def _run_tests(
     git_clean_: bool,
     *,
     start_coverage_script: bool = False,
+    # TODO(Grisha): do we need to expose ctx kwargs to the invoke targets?
+    # E.g., to `run_fast_tests`. See CmTask3602 "All tests fail".
     **ctx_run_kwargs: Any,
 ) -> Optional[int]:
     """
@@ -352,6 +364,62 @@ def run_tests(  # type: ignore
     return rc
 
 
+def _get_custom_marker(
+    *,
+    run_only_test_list: str = "",
+    skip_test_list: str = "",
+) -> str:
+    """
+    Get a custom pytest marker from comma-separated string representations of
+    test lists to run or skip.
+
+    :param run_only_test_list: a string of comma-separated markers to run,
+        e.g. `run_only_test_list = "requires_ck_infra,requires_aws"`
+    :param skip_test_list: a string of comma-separated markers to skip
+    :return: custom pytest marker
+    """
+    # If we are running outside the CK server / CI, tests requiring CK infra
+    # should be automatically skipped.
+    is_outside_ck_infra = not hserver.is_dev_ck() and not hserver.is_inside_ci()
+    # Skip tests that requires CK infra.
+    if is_outside_ck_infra:
+        _LOG.warning(
+            "Skipping the tests that require CK "
+            "infra when running outside the CK server / CI."
+        )
+        if skip_test_list:
+            skip_test_list = "requires_ck_infra," + skip_test_list
+        else:
+            skip_test_list = "requires_ck_infra"
+    # Convert string representations of lists to actual lists.
+    if run_only_test_list:
+        # This works as expected when there is a single test in the list.
+        run_only_test_list_items = run_only_test_list.split(",")
+        _LOG.warning("Running only tests inside %s.", run_only_test_list_items)
+    else:
+        run_only_test_list_items = []
+    if skip_test_list:
+        # This works as expected when there is a single test in the list.
+        skip_test_list_items = skip_test_list.split(",")
+        _LOG.warning("Skipping the tests inside %s.", skip_test_list_items)
+    else:
+        # The list can be empty when running inside CK infra.
+        skip_test_list_items = []
+    # Convert marker strings for `pytest -m` using `and` and `not`.
+    run_only_marker_string = " and ".join(run_only_test_list_items)
+    skip_marker_string = " and ".join(
+        [("not " + item) for item in skip_test_list_items]
+    )
+    if run_only_marker_string:
+        if skip_marker_string:
+            custom_marker = run_only_marker_string + " and " + skip_marker_string
+        else:
+            custom_marker = run_only_marker_string
+    else:
+        custom_marker = skip_marker_string
+    return custom_marker
+
+
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code CmTask #1571.
 @task
 def run_fast_tests(  # type: ignore
@@ -359,19 +427,24 @@ def run_fast_tests(  # type: ignore
     stage="dev",
     version="",
     pytest_opts="",
+    run_only_test_list="",
+    skip_test_list="",
     skip_submodules=False,
     coverage=False,
     collect_only=False,
     tee_to_file=False,
     n_threads="serial",
     git_clean_=False,
-    **kwargs,
 ):
     """
-    Run fast tests.
+    Run fast tests. check `gh auth status` before invoking to avoid auth
+    errors.
 
     :param stage: select a specific stage for the Docker image
     :param pytest_opts: additional options for `pytest` invocation. It can be empty
+    :param run_only_test_list: select markers to run. Takes comma-separated tokens,
+           e.g. `--run_only_test_list = requires_ck_infra,requires_aws`
+    :param skip_test_list: select markers to skip. Takes comma-separated tokens.
     :param skip_submodules: ignore all the dir inside a submodule
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed
@@ -382,8 +455,15 @@ def run_fast_tests(  # type: ignore
     :param kwargs: kwargs for `ctx.run`
     """
     hlitauti.report_task()
+    hdbg.dassert(
+        not (run_only_test_list and skip_test_list),
+        "You can't specify both --run_only_test_list and --skip_test_list",
+    )
     test_list_name = "fast_tests"
-    custom_marker = ""
+    # Convert cmd line marker lists to a pytest marker list.
+    custom_marker = _get_custom_marker(
+        run_only_test_list=run_only_test_list, skip_test_list=skip_test_list
+    )
     rc = _run_tests(
         ctx,
         test_list_name,
@@ -397,7 +477,6 @@ def run_fast_tests(  # type: ignore
         tee_to_file,
         n_threads,
         git_clean_,
-        **kwargs,
     )
     return rc
 
@@ -414,7 +493,6 @@ def run_slow_tests(  # type: ignore
     tee_to_file=False,
     n_threads="serial",
     git_clean_=False,
-    **kwargs,
 ):
     """
     Run slow tests.
@@ -437,7 +515,6 @@ def run_slow_tests(  # type: ignore
         tee_to_file,
         n_threads,
         git_clean_,
-        **kwargs,
     )
     return rc
 
@@ -454,7 +531,6 @@ def run_superslow_tests(  # type: ignore
     tee_to_file=False,
     n_threads="serial",
     git_clean_=False,
-    **kwargs,
 ):
     """
     Run superslow tests.
@@ -477,7 +553,6 @@ def run_superslow_tests(  # type: ignore
         tee_to_file,
         n_threads,
         git_clean_,
-        **kwargs,
     )
     return rc
 
@@ -675,17 +750,21 @@ def run_coverage_report(  # type: ignore
     :param aws_profile: the AWS profile to use for publishing HTML report
     """
     # TODO(Grisha): allow user to specify which tests to run.
-    # Run tests for the target dir and collect coverage stats.
-    fast_tests_cmd = (
-        f"invoke run_fast_tests --coverage -p {target_dir}; "
-        "cp .coverage .coverage_fast_tests"
-    )
-    hlitauti.run(ctx, fast_tests_cmd)
-    slow_tests_cmd = (
-        f"invoke run_slow_tests --coverage -p {target_dir}; "
-        "cp .coverage .coverage_slow_tests"
-    )
-    hlitauti.run(ctx, slow_tests_cmd)
+    # Run fast tests for the target dir and collect coverage results.
+    fast_tests_cmd = f"invoke run_fast_tests --coverage -p {target_dir}"
+    hlitauti.run(ctx, fast_tests_cmd, use_system=False)
+    fast_tests_coverage_file = ".coverage_fast_tests"
+    create_fast_tests_file_cmd = f"mv .coverage {fast_tests_coverage_file}"
+    hsystem.system(create_fast_tests_file_cmd)
+    # Run slow tests for the target dir and collect coverage results.
+    slow_tests_cmd = f"invoke run_slow_tests --coverage -p {target_dir}"
+    hlitauti.run(ctx, slow_tests_cmd, use_system=False)
+    slow_tests_coverage_file = ".coverage_slow_tests"
+    create_slow_tests_file_cmd = f"mv .coverage {slow_tests_coverage_file}"
+    hsystem.system(create_slow_tests_file_cmd)
+    # Check that coverage files are present for both fast and slow tests.
+    hdbg.dassert_file_exists(fast_tests_coverage_file)
+    hdbg.dassert_file_exists(slow_tests_coverage_file)
     #
     report_cmd: List[str] = []
     # Clean the previous coverage results. For some docker-specific reasons
@@ -695,7 +774,7 @@ def run_coverage_report(  # type: ignore
     report_cmd.append("coverage erase")
     # Merge stats for fast and slow tests into single dir.
     report_cmd.append(
-        "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
+        f"coverage combine --keep {fast_tests_coverage_file} {slow_tests_coverage_file}"
     )
     # Specify the dirs to include and exclude in the report.
     exclude_from_report = None
@@ -1218,9 +1297,9 @@ def pytest_buildmeister_check(ctx, print_output=False):  # type: ignore
         _run(cmd)
     # Report failures using `invoke pytest_repro`.
     print(hprint.frame("Failures"))
-    # "> sudo -u spm-sasm rm ./tmp.pytest_repro.sh; i pytest_repro -f {log_file}"
+    # "> sudo -u sasm rm ./tmp.pytest_repro.sh; i pytest_repro -f {log_file}"
     if os.path.exists("./tmp.pytest_repro.sh"):
-        cmd = "sudo -u spm-sasm rm ./tmp.pytest_repro.sh"
+        cmd = "sudo -u sasm rm ./tmp.pytest_repro.sh"
         _run(cmd)
     #
     cmd = f"invoke pytest_repro -f {log_file}"

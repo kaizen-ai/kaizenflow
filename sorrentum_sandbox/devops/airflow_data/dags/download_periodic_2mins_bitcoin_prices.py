@@ -9,9 +9,7 @@ import airflow
 from airflow.operators.bash import BashOperator
 
 _DAG_ID = "download_periodic_2mins_postgres_prices_bitcoin"
-_DAG_DESCRIPTION = (
-    "Download Bitcoin market prices every day and save to dbs"
-)
+_DAG_DESCRIPTION = "Download Bitcoin market prices every day and save to dbs"
 # Specify when to execute the DAG.
 _SCHEDULE = "*/2 * * * *"
 
@@ -45,7 +43,7 @@ bash_command = [
     "--time_span '6years'",
     "--target_table 'Real_Time_Market_Price'",
     "--chart_name 'market-price'",
-    "-v DEBUG"
+    "-v DEBUG",
 ]
 
 downloading_task = BashOperator(

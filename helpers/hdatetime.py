@@ -199,6 +199,29 @@ def dassert_tz_compatible(
     )
 
 
+def dassert_have_same_tz(
+    datetime1: StrictDatetime, datetime2: StrictDatetime
+) -> None:
+    """
+    Assert that both timestamps have the same tz.
+
+    The timezones are compared regardless of a DST mode.
+    """
+    dassert_tz_compatible(datetime1, datetime2)
+    # Convert to string to remove DST mode info.
+    tz1_as_str = str(datetime1.tzinfo)
+    tz2_as_str = str(datetime2.tzinfo)
+    hdbg.dassert_eq(
+        tz1_as_str,
+        tz2_as_str,
+        "datetime1=%s (datetime1.tzinfo=%s) datetime2=%s (datetime2.tzinfo=%s) ",
+        datetime1,
+        tz1_as_str,
+        datetime2,
+        tz2_as_str,
+    )
+
+
 # TODO(gp): Replace this check with compatibility between series vs scalar.
 # def dassert_srs_tz_compatible(
 # def dassert_srs_has_tz
@@ -313,7 +336,10 @@ GetWallClockTime = Callable[[], pd.Timestamp]
 # TODO(gp): tz -> tz_mode since we are not passing neither a timezone or a
 #  timezone_as_str.
 def get_current_time(
-    tz: str, event_loop: Optional[asyncio.AbstractEventLoop] = None
+    tz: str,
+    # TODO(gp): Add *
+    # *,
+    event_loop: Optional[asyncio.AbstractEventLoop] = None
 ) -> pd.Timestamp:
     """
     Return current time in UTC / ET timezone or as a naive time.
@@ -496,6 +522,32 @@ def set_current_bar_timestamp(
 
 
 # #############################################################################
+
+
+def str_to_timestamp(
+    timestamp_as_str: str, tz: str, *, datetime_format: Optional[str] = None
+) -> pd.Timestamp:
+    """
+    Convert timestamp as string to `pd.Timestamp`.
+
+    :param timestamp_as_str: string datetime (e.g., 20230523_150513)
+    :param tz: timezone info (e.g., "US/Eastern")
+    :param datetime_format: datetime format (e.g., %Y%m%d_%H%M%S)
+        If None, infer automatically
+    :return: pd.Timestamp with a specified timezone
+    """
+    hdbg.dassert_isinstance(timestamp_as_str, str)
+    hdbg.dassert_isinstance(tz, str)
+    _LOG.debug(hprint.to_str("timestamp_as_str tz datetime_format"))
+    if datetime_format is None:
+        # Try to infer the format automatically.
+        timestamp = pd.to_datetime(timestamp_as_str, infer_datetime_format=True)
+    else:
+        # Convert using the provided format.
+        timestamp = pd.to_datetime(timestamp_as_str, format=datetime_format)
+    # Convert to the specified timezone
+    timestamp = timestamp.tz_localize(tz)
+    return timestamp
 
 
 def to_generalized_datetime(

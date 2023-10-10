@@ -2,16 +2,15 @@
 DAG to download stock market data.
 """
 
-
-from airflow.models import DAG
-from airflow.decorators import task
-
+import datetime
 import time
+
+from airflow.decorators import task
+from airflow.models import DAG
+from api.mongo_db import Mongo
 from models.list_of_tickers import SP500
 from models.ticker import Ticker
-from models.time_series import TimeInterval, DataType
-from api.mongo_db import Mongo
-from airflow.utils.dates import days_ago
+from models.time_series import DataType, TimeInterval
 
 default_args = {
     "owner": "airflow",
@@ -25,7 +24,7 @@ with DAG(
     description="Downloads and updates S&P 500 data",
     max_active_runs=1,
     default_args=default_args,
-    schedule_interval='@daily',
+    schedule_interval="@daily",
     catchup=False,
 ) as dag:
 
@@ -38,11 +37,9 @@ with DAG(
 
         for symbol in SP500:
             ticker = Ticker(symbol, get_name=False)
-
             # Get latest data
             ticker.get_data(data_type=DataType.INTRADAY,
                             time_interval=TimeInterval.ONE)
-
             # Update DB
             Mongo.save_data(ticker)
 

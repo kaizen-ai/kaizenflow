@@ -60,10 +60,6 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
             full_symbol_col_name=full_symbol_col_name,
             resample_1min=resample_1min,
         )
-        # Validate and set input dataframe.
-        hpandas.dassert_time_indexed_df(
-            df, allow_empty=False, strictly_increasing=False
-        )
         self._df = df
 
     @staticmethod
@@ -96,6 +92,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         full_symbols_mask = self._df[full_symbol_col_name].isin(full_symbols)
         data = self._df[full_symbols_mask]
         # Filter data by specified timestamps.
+        hpandas.dassert_index_is_datetime(data)
         if start_ts:
             data = data.loc[data.index >= start_ts]
         if end_ts:

@@ -9,6 +9,7 @@ from typing import Dict
 import invoke
 import pytest
 
+import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hprint as hprint
 import helpers.hserver as hserver
@@ -28,6 +29,7 @@ def _get_default_params() -> Dict[str, str]:
     ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
     default_params = {
         "AM_ECR_BASE_PATH": ecr_base_path,
+        "CK_ECR_BASE_PATH": os.environ["CK_ECR_BASE_PATH"],
         "BASE_IMAGE": "amp_test",
         "DEV_TOOLS_IMAGE_PROD": f"{ecr_base_path}/dev_tools:prod",
     }
@@ -130,6 +132,13 @@ def _gh_login() -> None:
     hsystem.system(cmd)
 
 
+# TODO(ShaopengZ): fails when running Sorrentum on ck server. `gh auth login`
+# issue.
+@pytest.mark.skipif(
+    henv.execute_repo_config_code("get_name()") == "//sorr"
+    and hserver.is_inside_ci(),
+    reason="Do not pass from sorrentum GH actions. See CmTask5211",
+)
 class TestGhLogin1(hunitest.TestCase):
     def test_gh_login(self) -> None:
         _gh_login()
@@ -169,6 +178,11 @@ class TestDryRunTasks1(hunitest.TestCase):
         act = hprint.remove_non_printable_chars(act)
         regex = "(WARN|INFO)\s+hcache.py"
         act = hunitest.filter_text(regex, act)
+        # Filter out `no module` warnings.
+        # TODO(Grisha): add the "no module warning" filtering
+        # to `purify_text()` in `check_string()`.
+        regex = "WARN.*No module"
+        act = hunitest.filter_text(regex, act)        
         if check_string:
             self.check_string(act)
 
@@ -243,6 +257,8 @@ class TestDryRunTasks1(hunitest.TestCase):
 # #############################################################################
 
 
+# Outside CK infra, the class hangs, so we skip it.
+@pytest.mark.requires_ck_infra
 @pytest.mark.slow(reason="Around 7s")
 @pytest.mark.skipif(
     not hgit.is_in_amp_as_supermodule(),
@@ -271,6 +287,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_clean(ctx)"
         self._check_output(target)
 
+    # TODO(Grisha): is not it the same as `test_git_clean()`?
     def test_git_clean2(self) -> None:
         target = "git_clean(ctx, dry_run=False)"
         self._check_output(target)
@@ -316,6 +333,8 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     # #########################################################################
     # TODO(gp): -> TestGhCommands1
 
+    # TODO(ShaopengZ): Outside CK infra, the test hangs, so we skip it.
+    @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_supermodule(),
         reason="Only run in amp as supermodule",
@@ -325,6 +344,8 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "gh_create_pr(ctx, repo_short_name='amp', title='test')"
         self._check_output(target)
 
+    # TODO(ShaopengZ): Outside CK infra, the test hangs, so we skip it.
+    @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_supermodule(),
         reason="Only run in amp as supermodule",
@@ -334,6 +355,8 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "gh_create_pr(ctx, body='hello_world', repo_short_name='amp', title='test')"
         self._check_output(target)
 
+    # TODO(ShaopengZ): Outside CK infra, the test hangs, so we skip it.
+    @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_supermodule(),
         reason="Only run in amp as supermodule",
@@ -350,6 +373,8 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "gh_issue_title(ctx, 1)"
         self._check_output(target)
 
+    # TODO(Shaopengz):Outside CK infra, the test hangs, so skip.
+    @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
     def test_gh_workflow_list(self) -> None:
         _gh_login()
@@ -381,7 +406,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     def test_git_branch_create2(self) -> None:
         _gh_login()
         target = (
-            "git_branch_create(ctx, issue_id=1, repo_short_name='amp', "
+            "git_branch_create(ctx, issue_id=1, repo_short_name='cmamp', "
             "only_branch_from_master=False)"
         )
         self._check_output(target)

@@ -20,7 +20,7 @@ from typing import Any, Callable, List, Match, Optional, Tuple, Union, cast
 
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
-import helpers.hlogging as hlogging
+import helpers.hlogging as hloggin
 import helpers.hprint as hprint
 
 # This module can depend only on:
@@ -185,7 +185,8 @@ def _system(
             hdbg.dassert(bool(dir_name), "dir_name='%s'", dir_name)
             os.makedirs(dir_name)
         if tee:
-            cmd += f" 2>&1 | tee -a {output_file}"
+            cmd += f" 2>&1 | tee -a {output_file};"
+            cmd += " exit ${PIPESTATUS[0]}"
         else:
             cmd += f" 2>&1 >{output_file}"
     else:
@@ -219,7 +220,7 @@ def _system(
         stderr = subprocess.STDOUT
         # We want to print the command line even if this module logging is disabled.
         # print("  ==> cmd=%s" % cmd)
-        with hlogging.set_level(_LOG, logging.DEBUG):
+        with hloggin.set_level(_LOG, logging.DEBUG):
             _LOG.debug("> %s", cmd)
         with subprocess.Popen(
             cmd, shell=True, executable="/bin/bash", stdout=stdout, stderr=stderr

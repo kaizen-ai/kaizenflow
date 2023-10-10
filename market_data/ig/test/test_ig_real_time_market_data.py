@@ -1,23 +1,23 @@
-#import asyncio
-#import logging
+# import asyncio
+# import logging
 #
-#import pandas as pd
-#import pytest
+# import pandas as pd
+# import pytest
 #
-#import helpers.hdatetime as hdateti
-#import helpers.hpandas as hpandas
-#import helpers.hprint as hprint
-#import helpers.hunit_test as hunitest
-#import market_data_lime.ig_market_data_example as mdlemdaex
-#import market_data_lime.ig_real_time_market_data as mdlertmda
+# import helpers.hdatetime as hdateti
+# import helpers.hpandas as hpandas
+# import helpers.hprint as hprint
+# import helpers.hunit_test as hunitest
+# import market_data_lime.ig_market_data_example as mdlemdaex
+# import market_data_lime.ig_real_time_market_data as mdlertmda
 #
-#_LOG = logging.getLogger(__name__)
+# _LOG = logging.getLogger(__name__)
 #
 #
 ## #############################################################################
 #
 #
-#class TestIgRealTimeMarketData1(hunitest.TestCase):
+# class TestIgRealTimeMarketData1(hunitest.TestCase):
 #    def test_should_be_online1(self) -> None:
 #        """
 #        Check that the IG RT DB is on-line when it should be.
@@ -37,7 +37,7 @@
 ## #############################################################################
 #
 #
-#class TestIgRealTimeMarketData2(hunitest.TestCase):
+# class TestIgRealTimeMarketData2(hunitest.TestCase):
 #    def test_sql_get_query1(self) -> None:
 #        """
 #        Check the SQL query to get data.

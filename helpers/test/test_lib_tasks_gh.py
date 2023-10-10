@@ -2,7 +2,9 @@ import logging
 
 import pytest
 
+import helpers.henv as henv
 import helpers.hgit as hgit
+import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
 import helpers.lib_tasks_gh as hlitagh
 import helpers.test.test_lib_tasks as httestlib
@@ -44,6 +46,13 @@ class TestLibTasks1(hunitest.TestCase):
         )
         self.assert_equal(str(act), str(exp))
 
+    # TODO(ShaopengZ): fails when running Sorrentum on CK server. `gh auth
+    # login` issue.
+    @pytest.mark.skipif(
+        henv.execute_repo_config_code("get_name()") == "//sorr"
+        and hserver.is_inside_ci(),
+        reason="Do not pass from sorrentum GH actions. See CmTask5211",
+    )
     def test_get_gh_issue_title4(self) -> None:
         httestlib._gh_login()
         issue_id = 1
