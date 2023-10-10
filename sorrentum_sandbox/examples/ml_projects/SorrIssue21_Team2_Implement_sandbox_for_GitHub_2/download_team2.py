@@ -207,6 +207,3 @@ def downloader(pair, target_table, **kwargs):
         _LOG.info(f"\nInserting GitHub Issues data: \n\t {issues_df.head()}")
     else:
         table = data
-
-    print("\nData Inserted to:", target_table)
-    return ssandown.RawData(table)
