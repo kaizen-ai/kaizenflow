@@ -379,7 +379,7 @@ def _get_opt_docker_up_cmd(
         {service}"""
     )
     #
-    docker_up_cmd = hlitauti._to_multi_line_cmd(docker_up_cmd_)
+    docker_up_cmd = hlitauti.to_multi_line_cmd(docker_up_cmd_)
     return docker_up_cmd  # type: ignore[no-any-return]
 
 
@@ -430,7 +430,7 @@ def _get_opt_docker_down_cmd(
         r"""
         down"""
     )
-    docker_down_cmd = hlitauti._to_multi_line_cmd(docker_down_cmd_)
+    docker_down_cmd = hlitauti.to_multi_line_cmd(docker_down_cmd_)
     return docker_down_cmd  # type: ignore[no-any-return]
 
 

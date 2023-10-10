@@ -120,7 +120,7 @@ object.builder_function:
   order_processor_object: dataflow_amp.system.mock1.mock1_forecast_system._get_order_processor
   order_processor_coroutine: dataflow_amp.system.mock1.mock1_forecast_system._get_order_processor_coroutine
 portfolio_object:
-  <oms.portfolio.DatabasePortfolio at 0x>
+  <oms.portfolio.database_portfolio.DatabasePortfolio at 0x>
     # historical holdings=
     asset_id                     101      -1
     2000-01-01 09:35:06-05:00    0.0  1.00e+06
@@ -160,7 +160,7 @@ process_forecasts_node_dict:
   volatility_col: vwap.ret_0.vol
   spread_col: None
   portfolio:
-    <oms.portfolio.DatabasePortfolio at 0x>
+    <oms.portfolio.database_portfolio.DatabasePortfolio at 0x>
       # historical holdings=
       asset_id                     101      -1
       2000-01-01 09:35:06-05:00    0.0  1.00e+06

@@ -69,7 +69,7 @@ def get_cmtask1953_config() -> cconconf.Config:
                 "universe_version": "v1",
                 "resample_1min": True,
                 "root_dir": os.path.join(
-                    #hs3.get_s3_bucket_path("ck"),
+                    # hs3.get_s3_bucket_path("ck"),
                     "s3://cryptokaizen-data",
                     "reorg",
                     "historical.manual.pq",
@@ -79,7 +79,6 @@ def get_cmtask1953_config() -> cconconf.Config:
                 "aws_profile": "ck",
             },
             # TODO(max): bid_ask_im_client
-
             # Parameters for data query.
             "read_data": {
                 "full_symbols": ["binance::BTC_USDT"],
@@ -101,6 +100,7 @@ def get_cmtask1953_config() -> cconconf.Config:
     config = cconfig.Config.from_dict(param_dict)
     return config
 
+
 config = get_cmtask1953_config()
 print(config)
 
@@ -121,9 +121,9 @@ btc_ohlcv = client.read_data(**config["data"]["read_data"])
 # Post-processing.
 # TODO(max): load only a subset of the data from the config
 ohlcv_cols = [
-    #"open",
-    #"high",
-    #"low",
+    # "open",
+    # "high",
+    # "low",
     "close",
     "volume",
 ]
@@ -147,12 +147,13 @@ end_date = config["data"]["read_data"]["end_ts"]
 # Load bid ask from s3. Note: works only for 2022 for now.
 # TODO(Grisha, Dan): How to load the bid/ask data through ImClient?
 result = []
-import helpers.hparquet as hparquet
+import helpers.hparquet as hparque
+
 for i in range(start_date.month, end_date.month + 1):
     print(i)
-    tmp_df = hparquet.from_parquet(
+    tmp_df = hparque.from_parquet(
         f"s3://cryptokaizen-data/reorg/historical.manual.pq/20220520/bid_ask/crypto_chassis/binance/currency_pair=BTC_USDT/year=2022/month={i}/data.parquet",
-        aws_profile="ck"
+        aws_profile="ck",
     )
     result.append(tmp_df)
 bid_ask_btc = pd.concat(result)
@@ -325,6 +326,7 @@ display(get_lookback_value(btc, date, 14, "volume"))
 # the predicted var is always y
 # compute lags
 # add the median feature
+
 
 def collect_real_naive_lookback_est(
     estimators_df: pd.DataFrame,
@@ -515,7 +517,7 @@ test_sk, info = cofeatur.compute_lagged_features(
 test_sk = test_sk.drop(columns=[f"naive_{target}"])
 print(info)
 # Display the results.
-#display(test_sk.corr())
+# display(test_sk.corr())
 display(test_sk.shape)
 display(test_sk.tail(3))
 print(f"Set of prediciton features = {list(test_sk.columns[1:])}")

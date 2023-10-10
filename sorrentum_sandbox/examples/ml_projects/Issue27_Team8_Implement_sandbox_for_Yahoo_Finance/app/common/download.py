@@ -1,14 +1,13 @@
 """
 Import as:
 
-import sorrentum_sandbox.common.download as sinsadow
+import sorrentum_sandbox.examples.ml_projects.Issue27_Team8_Implement_sandbox_for_Yahoo_Finance.app.common.download as ssempitisfyfacd
 """
 
 import abc
 from typing import Any, Optional
 
 import pandas as pd
-
 
 # #############################################################################
 # RawData

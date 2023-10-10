@@ -44,3 +44,14 @@ class TestGetUniverse1(imvcountt.TestGetUniverse1_TestCase):
         self._test_get_vendor_universe_as_full_symbol(
             vendor, universe_as_full_symbols
         )
+
+
+class TestGetUniverseVersions1(imvcountt.TestGetUniverseVersions1_TestCase):
+    def test_get_universe_versions1(self) -> None:
+        """
+        Verify that universe versions are returned correctly.
+        """
+        vendor = "mock1"
+        mode = "trade"
+        expected_universes_str = "['v1']"
+        self._test_get_universe_versions(vendor, mode, expected_universes_str)

@@ -2,14 +2,16 @@ import logging
 import time
 from typing import Generator, Tuple
 
+import common.download as ssandown
+import kaiko as ka
 import pandas as pd
 import requests
-import kaiko as ka
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import common.download as ssandown
+
 _LOG = logging.getLogger(__name__)
+
 
 class KaikoDownloader(ssandown.DataDownloader):
     """
@@ -30,11 +32,9 @@ class KaikoDownloader(ssandown.DataDownloader):
 
     def download(
         self, start_timestamp: str, end_timestamp: str
-
     ) -> ssandown.RawData:
         dfs = []
         for symbol in self._UNIVERSE["kaiko"]:
-
 
             data = ka.TickTrades(
                 exchange=self._EXCHANGE,
@@ -43,11 +43,10 @@ class KaikoDownloader(ssandown.DataDownloader):
                 end_time=end_timestamp,
                 client=self._KC,
             ).df
-            
-            data = data.reset_index()
-            data['currency_pair']=symbol
 
-            
+            data = data.reset_index()
+            data["currency_pair"] = symbol
+
             dfs.append(data)
             # Delay for throttling in seconds.
             time.sleep(0.5)
@@ -56,5 +55,5 @@ class KaikoDownloader(ssandown.DataDownloader):
         _LOG.info(f"Downloaded data: \n\t {df.head()}")
         return ssandown.RawData(df)
 
-print('download_kaiko.py Done')
 
+print("download_kaiko.py Done")

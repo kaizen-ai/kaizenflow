@@ -132,7 +132,9 @@ vwap_twap_rets_df.head(3)
 # %% run_control={"marked": false}
 # Stats and vizualisation to check the outcomes.
 coin_ex = vwap_twap_rets_df.swaplevel(axis=1)
-coin_ex = coin_ex["binance::DOGE_USDT"][["close.ret_0", "twap.ret_0", "vwap.ret_0"]]
+coin_ex = coin_ex["binance::DOGE_USDT"][
+    ["close.ret_0", "twap.ret_0", "vwap.ret_0"]
+]
 display(coin_ex.corr())
 coin_ex.plot()
 

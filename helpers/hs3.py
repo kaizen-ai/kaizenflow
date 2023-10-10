@@ -30,7 +30,6 @@ except ModuleNotFoundError:
 
 # To enforce this order of the imports we use the directive for the linter below.
 import helpers.hdbg as hdbg  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
-import helpers.henv as henv  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hintrospection as hintros  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hio as hio  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hprint as hprint  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
@@ -326,6 +325,32 @@ def from_file(
     else:
         data = hio.from_file(file_name, encoding=encoding)
     return data
+
+
+# TODO(Grisha): consider extending for the regular file system.
+def copy_file_to_s3(
+    file_path: str,
+    s3_dst_file_path: str,
+    aws_profile: str,
+) -> None:
+    """
+    Copy a local file to S3.
+
+    :param file_path: path to a file to copy
+    :param s3_dst_file_path: S3 path to copy to
+    :param aws_profile: aws profile
+    """
+    hdbg.dassert_file_exists(file_path)
+    dassert_is_s3_path(s3_dst_file_path)
+    dassert_is_valid_aws_profile(s3_dst_file_path, aws_profile)
+    aws_s3_cp_cmd = f"aws s3 cp {file_path} {s3_dst_file_path}"
+    if not hserver.is_inside_ecs_container():
+        # There is no `~/.aws/credentials` file inside an ECS container
+        # but the AWS credentials are received via a task role. So
+        # no need to pass the profile option.
+        aws_s3_cp_cmd += f" --profile {aws_profile}"
+    _LOG.info("Copying from %s to %s", file_path, s3_dst_file_path)
+    hsystem.system(aws_s3_cp_cmd, suppress_output=False)
 
 
 def get_local_or_s3_stream(
@@ -716,16 +741,24 @@ def get_s3fs(aws_profile: AwsProfile) -> s3fs.core.S3FileSystem:
         s3fs_ = s3fs.core.S3FileSystem()
     else:
         if isinstance(aws_profile, str):
-            # From https://stackoverflow.com/questions/62562945
-            aws_credentials = get_aws_credentials(aws_profile)
-            _LOG.debug("%s", pprint.pformat(aws_credentials))
-            s3fs_ = s3fs.core.S3FileSystem(
-                anon=False,
-                key=aws_credentials["aws_access_key_id"],
-                secret=aws_credentials["aws_secret_access_key"],
-                token=aws_credentials["aws_session_token"],
-                client_kwargs={"region_name": aws_credentials["aws_region"]},
-            )
+            # When deploying jobs via ECS the container obtains credentials
+            # based on passed task role specified in the ECS task-definition,
+            # refer to:
+            # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html
+            if aws_profile == "ck" and hserver.is_inside_ecs_container():
+                _LOG.info("Fetching credentials from task IAM role")
+                s3fs_ = s3fs.core.S3FileSystem()
+            else:
+                # From https://stackoverflow.com/questions/62562945
+                aws_credentials = get_aws_credentials(aws_profile)
+                _LOG.debug("%s", pprint.pformat(aws_credentials))
+                s3fs_ = s3fs.core.S3FileSystem(
+                    anon=False,
+                    key=aws_credentials["aws_access_key_id"],
+                    secret=aws_credentials["aws_secret_access_key"],
+                    token=aws_credentials["aws_session_token"],
+                    client_kwargs={"region_name": aws_credentials["aws_region"]},
+                )
         elif isinstance(aws_profile, s3fs.core.S3FileSystem):
             s3fs_ = aws_profile
         else:

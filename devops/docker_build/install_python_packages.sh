@@ -77,6 +77,15 @@ if [[ ! -e /usr/bin/pip ]]; then
     ln -s /usr/bin/pip3 /usr/bin/pip
 fi;
 
+# Install cvxopt outside poetry since it doesn't work with poetry
+# `https://github.com/cvxopt/cvxopt/issues/78#issuecomment-263962654`.
+apt-get install -y libblas-dev liblapack-dev cmake
+apt-get install -y wget
+wget http://faculty.cse.tamu.edu/davis/SuiteSparse/SuiteSparse-4.5.3.tar.gz
+tar -xf SuiteSparse-4.5.3.tar.gz 
+export CVXOPT_SUITESPARSE_SRC_DIR=$(pwd)/SuiteSparse
+pip install cvxopt
+
 # We install cvxpy here after poetry since it doesn't work with poetry
 # ```
 # ERROR: cvxpy-1.2.2-cp38-cp38-manylinux_2_24_x86_64.whl is not a supported wheel on this platform.

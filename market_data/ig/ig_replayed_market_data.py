@@ -1,23 +1,23 @@
-#"""
-#Import as:
+# """
+# Import as:
 #
-#import market_data_lime.ig_replayed_market_data as mdlermada
-#"""
+# import market_data_lime.ig_replayed_market_data as mdlermada
+# """
 #
-#import asyncio
-#import logging
-#from typing import Any, Dict, List, Optional, Union
+# import asyncio
+# import logging
+# from typing import Any, Dict, List, Optional, Union
 #
-#import pandas as pd
+# import pandas as pd
 #
-#import core.real_time as creatime
-#import helpers.hdbg as hdbg
-#import helpers.hpandas as hpandas
-#import helpers.hprint as hprint
-#import market_data as mdata
-#import market_data_lime.ig_real_time_market_data as mdlertmda
+# import core.real_time as creatime
+# import helpers.hdbg as hdbg
+# import helpers.hpandas as hpandas
+# import helpers.hprint as hprint
+# import market_data as mdata
+# import market_data_lime.ig_real_time_market_data as mdlertmda
 #
-#_LOG = logging.getLogger(__name__)
+# _LOG = logging.getLogger(__name__)
 #
 #
 ## #############################################################################
@@ -26,7 +26,7 @@
 #
 #
 ## TODO(gp): IgReplayedMarketDataFromFile or allow to pass a df.
-#class IgReplayedMarketData(mdata.ReplayedMarketData):
+# class IgReplayedMarketData(mdata.ReplayedMarketData):
 #    """
 #    A market data interface that mocks the IG RT DB using data extracted from
 #    the real DB and played back.

@@ -97,7 +97,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         #  CMTask217).
         timezone: str = "America/New_York",
         sleep_in_secs: float = 1.0,
-        time_out_in_secs: int = 60 * 2,
+        time_out_in_secs: Optional[int] = 60 * 2,
         column_remap: Optional[Dict[str, str]] = None,
         filter_data_mode: str = "assert",
     ):
@@ -119,7 +119,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         :param get_wall_clock_time: the wall clock
         :param timezone: timezone to convert normalized output timestamps to
         :param sleep_in_secs, time_out_in_secs: sample every `sleep_in_secs`
-            seconds waiting up to `time_out_in_secs` seconds
+            seconds waiting up to `time_out_in_secs` seconds.
+            If `time_out_in_secs` is None, sample until manual interruption
         :param column_remap: dict of columns to remap the output data or `None` for
             no remapping
         :param filter_data_mode: control class behavior with respect to extra
@@ -156,8 +157,14 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         self._filter_data_mode = filter_data_mode
         # Compute the max number of iterations.
         hdbg.dassert_lt(0, time_out_in_secs)
-        max_iterations = int(time_out_in_secs / sleep_in_secs)
-        hdbg.dassert_lte(1, max_iterations)
+        if time_out_in_secs is not None:
+            max_iterations = int(time_out_in_secs / sleep_in_secs)
+            hdbg.dassert_lte(1, max_iterations)
+        else:
+            max_iterations = None
+            _LOG.warning(
+                "No time limit is set via `max_iterations`. Interrupt manually if needed."
+            )
         self._max_iterations = max_iterations
 
     # /////////////////////////////////////////////////////////////////////////////
@@ -193,6 +200,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         wall_clock_time = self.get_wall_clock_time()
         start_ts = self._process_period(timedelta, wall_clock_time)
         end_ts = wall_clock_time
+        _LOG.debug(hprint.to_str("start_ts end_ts"))
         if ts_col_name is None:
             # By convention to get the last chunk of data we use the start_time
             #  column.
@@ -218,6 +226,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         ts: pd.Timestamp,
         ts_col_name: str,
         asset_ids: Optional[List[int]],
+        *,
+        ignore_delay: bool = False,
     ) -> pd.DataFrame:
         """
         Return price data at a specific timestamp.
@@ -241,6 +251,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             end_ts,
             ts_col_name,
             asset_ids,
+            ignore_delay=ignore_delay,
         )
         # We don't need to remap columns since `get_data_for_interval()` has already
         # done it.
@@ -258,6 +269,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         left_close: bool = True,
         right_close: bool = False,
         limit: Optional[int] = None,
+        ignore_delay: bool = False,
     ) -> pd.DataFrame:
         """
         Return price data for an interval with `start_ts` and `end_ts`
@@ -275,7 +287,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         """
         _LOG.debug(
             hprint.to_str(
-                "start_ts end_ts ts_col_name asset_ids left_close right_close limit"
+                "start_ts end_ts ts_col_name asset_ids left_close right_close limit ignore_delay"
             )
         )
         # Resolve the asset ids.
@@ -295,7 +307,9 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             left_close,
             right_close,
             limit,
+            ignore_delay,
         )
+        _LOG.debug("-> df after _get_data=\n%s", hpandas.df_to_str(df))
         _LOG.debug("get_data_for_interval() columns '%s'", df.columns)
         # If the assets were specified, check that the returned data doesn't contain
         # data that we didn't request.
@@ -307,8 +321,13 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         #  specified already, we might need to apply a filter by asset_ids.
         # Normalize data.
         df = self._normalize_data(df)
+        _LOG.debug("-> df after _normalize_data=\n%s", hpandas.df_to_str(df))
         # Convert start and end timestamps to the timezone specified in the ctor.
         df = self._convert_timestamps_to_timezone(df)
+        _LOG.debug(
+            "-> df after _convert_timestamps_to_timezone=\n%s",
+            hpandas.df_to_str(df),
+        )
         # Check that columns are required ones.
         # TODO(gp): Difference between amp and cmamp.
         if self._columns is not None:
@@ -317,6 +336,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             )
         # Remap result columns to the required names.
         df = self._remap_columns(df)
+        _LOG.debug("-> df after _remap_columns=\n%s", hpandas.df_to_str(df))
         if _TRACE:
             _LOG.trace("-> df=\n%s", hpandas.df_to_str(df))
         hdbg.dassert_isinstance(df, pd.DataFrame)
@@ -386,6 +406,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         ts_col_name: str,
         asset_ids: List[int],
         column: str,
+        *,
+        ignore_delay: bool = False,
     ) -> pd.DataFrame:
         """
         Compute TWAP of the column `column` in (ts_start, ts_end].
@@ -423,6 +445,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             left_close=left_close,
             right_close=right_close,
             limit=None,
+            ignore_delay=ignore_delay,
         )
         # We don't need to remap columns since `get_data_for_interval()` has already
         # done it.
@@ -503,12 +526,14 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         #
         offset = pd.Timedelta(bar_duration_as_pd_str)
         start_time = last_end_time - offset
+        ignore_delay = False
         twap_df = self.get_twap_price(
             start_time,
             last_end_time,
             ts_col_name,
             asset_ids,
             column,
+            ignore_delay=ignore_delay,
         )
         return twap_df
 
@@ -524,19 +549,22 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         timestamp. We return `None` only for replayed time when there is
         no time (e.g., before the market opens).
         """
-        ret = self._get_last_end_time()
-        if ret is not None:
+        last_end_time = self._get_last_end_time()
+        _LOG.debug(hprint.to_str("last_end_time"))
+        if last_end_time is not None:
             # Convert to ET.
             # TODO(Dan): Pass timezone from ctor in CmTask1000.
-            ret = ret.tz_convert("America/New_York")
+            last_end_time = last_end_time.tz_convert("America/New_York")
         if _TRACE:
-            _LOG.trace("-> ret=%s", ret)
-        return ret
+            _LOG.trace("-> ret=%s", last_end_time)
+        return last_end_time
 
     def get_last_price(
         self,
         col_name: str,
         asset_ids: List[int],
+        *,
+        ignore_delay: bool = False,
     ) -> pd.DataFrame:
         """
         Get last price for `asset_ids` using column `col_name` (e.g., "close").
@@ -555,6 +583,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             start_time,
             self._start_time_col_name,
             asset_ids,
+            ignore_delay=ignore_delay,
         )
         # TODO(gp): Print if there are nans.
         return df
@@ -646,7 +675,20 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
                 hprint.log_frame(_LOG, "Waiting on last bar: done")
                 end_sampling_time = wall_clock_time
                 break
-            if num_iter >= self._max_iterations:
+            # Raise timeout if wait time limit is exceeded.
+            if (
+                self._max_iterations is not None
+                and num_iter >= self._max_iterations
+            ):
+                msg = " ".join(
+                    [
+                        f"Timeout after {num_iter} iterations. ",
+                        hprint.to_str(
+                            "self._max_iterations current_bar_timestamp wall_clock_time last_db_end_time"
+                        ),
+                    ]
+                )
+                _LOG.error(msg)
                 raise TimeoutError
             num_iter += 1
             if _TRACE:
@@ -717,6 +759,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         left_close: bool,
         right_close: bool,
         limit: Optional[int],
+        ignore_delay: bool,
     ) -> pd.DataFrame:
         """
         Return data in the interval start_ts, end_ts for certain assets.

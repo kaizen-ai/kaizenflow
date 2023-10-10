@@ -5,7 +5,7 @@ Import as:
 
 import research_amp.cc.crypto_chassis_api as raccchap
 """
-from typing import List, Tuple, Union, Any
+from typing import Any, List, Tuple, Union
 
 import pandas as pd
 import requests

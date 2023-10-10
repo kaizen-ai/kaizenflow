@@ -16,8 +16,8 @@ import dataflow.core as dtfcore
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import oms.portfolio as omportfo
-import oms.process_forecasts_ as oprofore
+import oms.order_processing.process_forecasts_ as oopprfo
+import oms.portfolio.portfolio as oporport
 
 _LOG = logging.getLogger(__name__)
 
@@ -33,11 +33,12 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
         prediction_col: str,
         volatility_col: str,
         spread_col: Optional[str],
-        portfolio: omportfo.Portfolio,
+        portfolio: oporport.Portfolio,
         process_forecasts_dict: Dict[str, Any],
     ) -> None:
         """
-        Parameters have the same meaning as in `oms/process_forecasts_()`.
+        Parameters have the same meaning as in
+        `oms/order_processing/process_forecasts_`.
 
         :param process_forecasts_dict: configures `process_forecasts()`
         """
@@ -64,7 +65,7 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
     async def process_forecasts(self) -> None:
         # Get the latest `df` index value.
         restrictions_df = None
-        await oprofore.process_forecasts(
+        await oopprfo.process_forecasts(
             self._prediction_df,
             self._volatility_df,
             self._portfolio,
@@ -115,13 +116,12 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
 #   This function can become `get_ProcessForecastsNode_dict_example` (without a
 #   number) which signify the innermost / most general builder.
 def get_ProcessForecastsNode_dict_example1(
-    portfolio: omportfo.Portfolio,
+    portfolio: oporport.Portfolio,
     prediction_col: str,
     volatility_col: str,
     spread_col: Optional[str],
-    order_duration_in_mins: int,
-    style: str,
-    compute_target_positions_kwargs: Dict[str, Any],
+    order_config: Dict[str, Any],
+    optimizer_config: Dict[str, Any],
     root_log_dir: Optional[str],
 ) -> Dict[str, Any]:
     """
@@ -132,26 +132,17 @@ def get_ProcessForecastsNode_dict_example1(
         object decides where to save its own data underneath the
         `process_forecasts()` log dir
     """
-    hdbg.dassert_isinstance(portfolio, omportfo.Portfolio)
+    hdbg.dassert_isinstance(portfolio, oporport.Portfolio)
+    hdbg.dassert_isinstance(order_config, dict)
     #
-    order_type = "price@twap"
     if root_log_dir is not None:
         log_dir = os.path.join(root_log_dir, "process_forecasts")
     else:
         log_dir = None
     process_forecasts_dict = {
         # Params for `ForecastProcessor`.
-        "order_config": {
-            "order_type": order_type,
-            "order_duration_in_mins": order_duration_in_mins,
-        },
-        "optimizer_config": {
-            "backend": "pomo",
-            "params": {
-                "style": style,
-                "kwargs": compute_target_positions_kwargs,
-            },
-        },
+        "order_config": order_config,
+        "optimizer_config": optimizer_config,
         # Params for `process_forecasts()`.
         "execution_mode": "real_time",
         "log_dir": log_dir,
