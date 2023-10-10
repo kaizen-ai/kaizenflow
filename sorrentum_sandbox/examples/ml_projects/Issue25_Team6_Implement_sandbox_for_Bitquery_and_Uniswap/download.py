@@ -8,6 +8,9 @@ import sorrentum_sandbox.examples.ml_projects.Issue25_Team6_Implement_sandbox_fo
 
 import logging
 import os
+import time
+from typing import Any, Dict, List
+
 import pandas as pd
 import requests
 
@@ -75,7 +78,7 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
             exchange {
             fullName
             }
-            
+
             baseCurrency {
             symbol
 
@@ -110,10 +113,9 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
     # API endpoint and header
     # Get API Key
     load_dotenv()
-    api_key = os.environ.get('API_KEY')
+    api_key = os.environ.get("API_KEY")
     endpoint = "https://graphql.bitquery.io/"
     headers = {"X-API-KEY": api_key}
-
 
     # Define an empty list to store the results
     results = []
@@ -127,14 +129,16 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
         fractured_query = query % (limit, offset,query_alter_1, query_alter_2,time_format)
 
         # Send the API request and get the response
-        response = requests.post(endpoint, json={'query': fractured_query}, headers=headers)
+        response = requests.post(
+            endpoint, json={"query": fractured_query}, headers=headers
+        )
 
         # Check if the API request was successful
         if response.status_code == 200:
             # Parse the response JSON
             response_json = response.json()
             # Extract the data from the response JSON
-            data = response_json['data']['ethereum']['dexTrades']
+            data = response_json["data"]["ethereum"]["dexTrades"]
 
             # Check if there are no more results
             if len(data) == 0:
@@ -149,9 +153,9 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
             # If the API request failed, raise an exception and exit the loop
             raise Exception(
                 "Query failed and return code is {}.      {}".format(
-                response.status_code, query
-                    )
+                    response.status_code, query
                 )
+            )
 
     # Normalize and convert the results list into a Pandas DataFrame
     df = json_to_df(results)
@@ -161,13 +165,14 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
 
     df = df.rename(str.lower, axis='columns')
     _LOG.info(f"Downloaded data: \n\t {df.head()}")
-    return ssandown.RawData(df)
+    return ssacodow.RawData(df)
+
 
 # Function for converting json to a dataframe
 def json_to_df(data: List[Dict[Any, Any]]) -> pd.DataFrame:
     # normalize and set index to time_interval
     df = pd.json_normalize(data, sep="_")
-    # df = df.set_index("timeInterval_minute") 
+    # df = df.set_index("timeInterval_minute")
     return df
 
 

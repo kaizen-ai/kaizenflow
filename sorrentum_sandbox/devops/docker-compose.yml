@@ -42,6 +42,7 @@ services:
   airflow:
     image: sorrentum/sorrentum:latest
     container_name: airflow_cont
+    depends_on: postgres
     env_file:
       - .env
     restart: always

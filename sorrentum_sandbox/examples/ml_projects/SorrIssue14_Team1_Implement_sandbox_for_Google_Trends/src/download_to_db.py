@@ -4,12 +4,16 @@ Download Time Series Data from Google Trends and save it into the DB.
 """
 import argparse
 import logging
-import src.db as sisebidb
-import src.download as sisebido
+
 from utilities import custom_logger
 
+import src.db as sisebidb
+import src.download as sisebido
+
+
+
 def _add_download_args(
-        parser: argparse.ArgumentParser,
+    parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     """
     Add the command line options for exchange download.
@@ -40,7 +44,7 @@ def _add_download_args(
         action="store",
         required=True,
         type=str,
-        help="Fetch method, swich between using a pre-build Json or using the API"
+        help="Fetch method, swich between using a pre-build Json or using the API",
     )
 
     parser.add_argument(
@@ -48,7 +52,15 @@ def _add_download_args(
         action="store",
         required=True,
         type=str,
-        help="Fetch realtime data / historical"
+        help="Fetch realtime data / historical",
+    )
+
+    parser.add_argument(
+        "--topic",
+        action="store",
+        required=True,
+        type=str,
+        help="Topic to fetch historical data of."
     )
     return parser
 
@@ -74,21 +86,27 @@ def _main(parser: argparse.ArgumentParser) -> None:
     start_timestamp = args.start_timestamp
     end_timestamp = args.end_timestamp
     target_table = args.target_table
+    topic = args.topic.replace("_", " ").lower()
 
     # boolean flags
     use_api = True if args.use_api == "True" else False
     real_time_data = True if args.real_time_data == "True" else False
 
-    # topic to search
-    topic = "washing machines"
-    topic = topic.lower()
+    # # topic to search
+    # topic = "washing machines"
+    # topic = topic.lower()
 
     # initialising a downloader
     downloader = sisebido.OhlcvRestApiDownloader()
 
     # fethcing the data as a dataframe
-    raw_data = downloader.download(topic=topic, start_timestamp=start_timestamp, end_timestamp=end_timestamp,
-                                   use_api=use_api, real_time_data=real_time_data)
+    raw_data = downloader.download(
+        topic=topic,
+        start_timestamp=start_timestamp,
+        end_timestamp=end_timestamp,
+        use_api=use_api,
+        real_time_data=real_time_data,
+    )
 
     # making a DB connection
     db_conn = sisebidb.get_db_connection()
@@ -98,7 +116,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     saver = sisebidb.PostgresDataFrameSaver(db_conn)
 
     # saving the data
-    saver.save(raw_data, target_table)
+    saver.save(raw_data, target_table, topic)
     print("!Done!")
 
     # print df.head

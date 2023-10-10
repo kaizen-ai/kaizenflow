@@ -1,3 +1,13 @@
+v4
+- 2023-04-18
+- Rename okex -> okx
+- The name is adjusted inside the extractor code to fit the API
+
+v4
+- 2023-02-15
+- expand binance data
+- add okex data
+
 v3.1
 - 2022-12-21
 - Expanded to get all available trades data

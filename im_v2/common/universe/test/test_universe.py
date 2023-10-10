@@ -24,7 +24,7 @@ class TestGetUniverseGeneral1(hunitest.TestCase):
         Verify that incorrect vendor name is recognized.
         """
         with self.assertRaises(AssertionError):
-            _ = imvcounun._get_vedor_universe("unknown", "download")
+            _ = imvcounun._get_vendor_universe("unknown", "download")
 
 
 class TestGetUniverseFilePath1_TestCase(hunitest.TestCase):
@@ -80,8 +80,8 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
 
         :param vendor: vendor to apply test to, e.g. CCXT or Talos
         """
-        _ = imvcounun._get_vedor_universe(vendor, "trade")
-        _ = imvcounun._get_vedor_universe(vendor, "trade", version="v1")
+        _ = imvcounun._get_vendor_universe(vendor, "trade")
+        _ = imvcounun._get_vendor_universe(vendor, "trade", version="v1")
 
     def _test_get_universe_invalid_version(
         self, vendor: str, *, version: str = "unknown"
@@ -92,7 +92,7 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         :param vendor: vendor to apply test to, e.g. CCXT or Talos
         """
         with self.assertRaises(AssertionError):
-            _ = imvcounun._get_vedor_universe(
+            _ = imvcounun._get_vendor_universe(
                 vendor, mode="download", version=version
             )
 
@@ -136,3 +136,22 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         self.assertEqual(len(universe_as_full_symbols), len(actual))
         self.assertEqual(actual[0], universe_as_full_symbols[0])
         self.assertEqual(actual[1], universe_as_full_symbols[1])
+
+
+class TestGetUniverseVersions1_TestCase(hunitest.TestCase):
+    def _test_get_universe_versions(
+        self, vendor: str, mode: str, expected_universes_str: str
+    ) -> None:
+        """
+        Verify that download universe versions for the specified vendor
+        are correctly detected and returned.
+
+        :param vendor: vendor to apply test to, e.g. CCXT or Talos
+        :param mode: download or trade universe
+        :param expected_universes_str: string representation of the expected
+            universe versions
+        """
+        actual_universes_str = str(
+            imvcounun.get_universe_versions(vendor, mode)
+        )
+        self.assertEqual(actual_universes_str, expected_universes_str)

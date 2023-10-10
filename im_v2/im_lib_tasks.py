@@ -51,7 +51,7 @@ def get_db_env_path(stage: str, *, idx: Optional[int] = None) -> str:
 # #############################################################################
 
 
-def _get_docker_cmd(stage: str, docker_cmd: str) -> str:
+def _get_docker_run_cmd(stage: str, docker_cmd: str) -> str:
     """
     Construct the `docker-compose' command to run a script inside this
     container Docker component.
@@ -80,7 +80,7 @@ def _get_docker_cmd(stage: str, docker_cmd: str) -> str:
     cmd.append(f"run --rm {service_name}")
     cmd.append(docker_cmd)
     # Convert the list to a multiline command.
-    multiline_docker_cmd = hlitauti._to_multi_line_cmd(cmd)
+    multiline_docker_cmd = hlitauti.to_multi_line_cmd(cmd)
     return multiline_docker_cmd  # type: ignore[no-any-return]
 
 
@@ -94,7 +94,7 @@ def im_docker_cmd(ctx, stage, cmd):  # type: ignore
     """
     hdbg.dassert_ne(cmd, "")
     # Get docker cmd.
-    docker_cmd = _get_docker_cmd(stage, cmd)
+    docker_cmd = _get_docker_run_cmd(stage, cmd)
     # Execute the command.
     hlitauti.run(ctx, docker_cmd, pty=True)
 
@@ -132,7 +132,7 @@ def _get_docker_up_cmd(stage: str, detach: bool) -> str:
         cmd.append("-d")
     service = "im_postgres"
     cmd.append(service)
-    cmd = hlitauti._to_multi_line_cmd(cmd)
+    cmd = hlitauti.to_multi_line_cmd(cmd)
     return cmd  # type: ignore[no-any-return]
 
 
@@ -185,7 +185,7 @@ def _get_docker_down_cmd(stage: str, volumes_remove: bool) -> str:
             "Removing the attached volumes resetting the state of the DB"
         )
         cmd.append("-v")
-    cmd = hlitauti._to_multi_line_cmd(cmd)
+    cmd = hlitauti.to_multi_line_cmd(cmd)
     return cmd  # type: ignore[no-any-return]
 
 
@@ -244,7 +244,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 #         cmd.append("--overwrite")
 #     # Add quotes so that credentials as string are handled properly by invoke.
 #     cmd.append(f"--credentials '\"{credentials}\"'")
-#     multiline_docker_cmd = hlitauti._to_multi_line_cmd(cmd)
+#     multiline_docker_cmd = hlitauti.to_multi_line_cmd(cmd)
 #     return multiline_docker_cmd  # type: ignore[no-any-return]
 #
 #
@@ -309,7 +309,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 #     cmd.append(f"--db-name '{dbname}'")
 #     # Add quotes so that credentials as string are handled properly by invoke.
 #     cmd.append(f"--credentials '\"{credentials}\"'")
-#     multiline_docker_cmd = hlitauti._to_multi_line_cmd(cmd)
+#     multiline_docker_cmd = hlitauti.to_multi_line_cmd(cmd)
 #     return multiline_docker_cmd  # type: ignore[no-any-return]
 #
 #

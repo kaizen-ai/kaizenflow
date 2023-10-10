@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "# Pytho3"
+echo "# Python3"
 python3 --version
 echo "# pip3"
 pip3 --version

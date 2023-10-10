@@ -96,7 +96,6 @@ def get_MockHistoricalByTileClient_example1(
     return im_client
 
 
-# TODO(Dan): Generate hourly data in order to speed up tests.
 def get_MockHistoricalByTileClient_example2(
     self_: Any,
     full_symbols: List[ivcu.FullSymbol],
@@ -107,7 +106,7 @@ def get_MockHistoricalByTileClient_example2(
     # Specify parameters for test data generation and client initialization.
     start_date = "2020-01-01"
     end_date = "2022-01-02"
-    freq = "1T"
+    freq = "1H"
     assets = ",".join(full_symbols)
     asset_col_name = "full_symbol"
     output_type = "cm_task_1103"
@@ -140,7 +139,6 @@ def get_MockHistoricalByTileClient_example2(
     return im_client
 
 
-# TODO(Dan): Generate hourly data in order to speed up tests.
 def get_MockHistoricalByTileClient_example3(
     self_: Any,
     full_symbols: List[ivcu.FullSymbol],
@@ -152,7 +150,7 @@ def get_MockHistoricalByTileClient_example3(
     Build mock client example to test randomly generated intervals.
     """
     # Specify parameters for test data generation and client initialization.
-    freq = "1T"
+    freq = "1H"
     assets = ",".join(full_symbols)
     asset_col_name = "full_symbol"
     output_type = "cm_task_1103"

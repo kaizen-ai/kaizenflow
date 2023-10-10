@@ -7,11 +7,12 @@ import helpers.henv as henv
 import functools
 import logging
 import os
-from typing import Any, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 import helpers.hversion as hversio
 
@@ -33,17 +34,27 @@ def has_module(module: str) -> bool:
     """
     Return whether a Python module can be imported or not.
     """
+    if module == "gluonts" and hserver.is_mac():
+        # Gluonts and mxnet modules are not properly supported on the ARM
+        # architecture yet, see CmTask4886 for details.
+        return False
     code = f"""
 try:
     import {module}
     has_module_ = True
 except ImportError as e:
-    print(_WARNING + ": " + str(e))
+    _LOG.warning("%s: %s", _WARNING, str(e))
     has_module_ = False
 """
     # To make the linter happy.
     has_module_ = True
-    exec(code, globals())
+    locals_: Dict[str, Any] = {}
+    # Need to explicitly declare and pass `locals_`:
+    # https://docs.python.org/3/library/functions.html#exec
+    # `Pass an explicit locals dictionary if you need to see effects
+    # of the code on locals after function exec() returns.`
+    exec(code, globals(), locals_)
+    has_module_ = locals_["has_module_"]
     return has_module_
 
 
@@ -291,6 +302,36 @@ def _git_log(num_commits: int = 5, my_commits: bool = False) -> str:
 # End copy.
 
 
+def _get_git_signature(git_commit_type: str = "all") -> List[str]:
+    """
+    Get information about current branch and latest commits.
+    """
+    txt_tmp: List[str] = []
+    # Get the branch name.
+    cmd = "git branch --show-current"
+    _, branch_name = hsystem.system_to_one_line(cmd)
+    txt_tmp.append(f"branch_name='{branch_name}'")
+    # Get the short Git hash of the current branch.
+    cmd = "git rev-parse --short HEAD"
+    _, hash_ = hsystem.system_to_one_line(cmd)
+    txt_tmp.append(f"hash='{hash_}'")
+    # Add info about the latest commits.
+    num_commits = 3
+    if git_commit_type == "all":
+        txt_tmp.append("# Last commits:")
+        log_txt = _git_log(num_commits=num_commits, my_commits=False)
+        txt_tmp.append(hprint.indent(log_txt))
+    elif git_commit_type == "mine":
+        txt_tmp.append("# Your last commits:")
+        log_txt = _git_log(num_commits=num_commits, my_commits=True)
+        txt_tmp.append(hprint.indent(log_txt))
+    elif git_commit_type == "none":
+        pass
+    else:
+        raise ValueError(f"Invalid value='{git_commit_type}'")
+    return txt_tmp
+
+
 def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     # TODO(gp): This should return a string that we append to the rest.
     container_dir_name = "."
@@ -301,27 +342,18 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     txt.append("# Git")
     txt_tmp: List[str] = []
     try:
-        cmd = "git branch --show-current"
-        _, branch_name = hsystem.system_to_one_line(cmd)
-        txt_tmp.append(f"branch_name='{branch_name}'")
-        #
-        cmd = "git rev-parse --short HEAD"
-        _, hash_ = hsystem.system_to_one_line(cmd)
-        txt_tmp.append(f"hash='{hash_}'")
-        #
-        num_commits = 3
-        if git_commit_type == "all":
-            txt_tmp.append("# Last commits:")
-            log_txt = _git_log(num_commits=num_commits, my_commits=False)
-            txt_tmp.append(hprint.indent(log_txt))
-        elif git_commit_type == "mine":
-            txt_tmp.append("# Your last commits:")
-            log_txt = _git_log(num_commits=num_commits, my_commits=True)
-            txt_tmp.append(hprint.indent(log_txt))
-        elif git_commit_type == "none":
-            pass
-        else:
-            raise ValueError(f"Invalid value='{git_commit_type}'")
+        txt_tmp += _get_git_signature(git_commit_type)
+        # If there is amp as submodule, fetch its git signature.
+        if os.path.exists("amp"):
+            prev_cwd = os.getcwd()
+            try:
+                # Temporarily descend into amp.
+                os.chdir("amp")
+                txt_tmp.append("# Git amp")
+                git_amp_sig = _get_git_signature(git_commit_type)
+                txt_tmp, git_amp_sig = _append(txt_tmp, git_amp_sig)
+            finally:
+                os.chdir(prev_cwd)
     except RuntimeError as e:
         _LOG.error(str(e))
     txt, txt_tmp = _append(txt, txt_tmp)
@@ -375,7 +407,13 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     libs = sorted(libs)
     failed_imports = 0
     for lib in libs:
-        version = _get_library_version(lib)
+        # This is due to Cmamp4924:
+        # WARNING: libarmpl_lp64_mp.so: cannot open shared object file: No such
+        #  file or directory
+        try:
+            version = _get_library_version(lib)
+        except OSError as e:
+            print(_WARNING + ": " + str(e))
         if version.startswith("ERROR"):
             failed_imports += 1
         packages.append((lib, version))

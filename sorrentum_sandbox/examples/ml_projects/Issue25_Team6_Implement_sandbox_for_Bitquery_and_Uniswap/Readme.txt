@@ -22,7 +22,11 @@ database: airflow
 ## In $GIT_ROOT/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap:
 ## In .env, fill in your bitquery API_KEY
 
+<<<<<<< HEAD
 ## go to sorrentum_sandbox directory
+=======
+go to
+>>>>>>> master
 cd ~\sorrentum_sandbox\devops
 docker-compose up -d
 ./init_airflow_setup.sh
@@ -98,13 +102,14 @@ http://localhost:8888/tree/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_
 psql -h localhost -U postgres airflow
 
 # load table names
-\dt 
+\dt
 
 # describe table
-\d <tablename> 
+\d <tablename>
 
 # delete table
 DROP TABLE <tablename>
+<<<<<<< HEAD
 
 ###################################################
 ## Jupyter
@@ -116,3 +121,5 @@ In outside terminal
 
 In local host, navigate to our folder 
 might have to pip install psycopg2
+=======
+>>>>>>> master

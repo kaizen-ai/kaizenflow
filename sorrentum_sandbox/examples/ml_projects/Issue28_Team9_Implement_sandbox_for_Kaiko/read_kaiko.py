@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import sorrentum_sandbox.examples.ml_projects.Issue28_Team9_Implement_sandbox_for_Kaiko.read_kaiko as ssempitisfkrk
+"""
+
 import kaiko
 import numpy as np
 import pandas as pd
@@ -12,6 +18,6 @@ ticktrade = kaiko.TickTrades(
     instrument="btc-usd",
     start_time="2022-1-1",
     end_time="2022-1-2",
-    client=kc
+    client=kc,
 )
 print(ticktrade.df)

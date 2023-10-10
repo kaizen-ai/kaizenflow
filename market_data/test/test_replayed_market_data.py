@@ -480,7 +480,9 @@ class TestReplayedMarketData2(hunitest.TestCase):
         - Ask data in [9:00, 9:40)
         - The returned data is [9:30, 9:40)
         """
-        replayed_delay_in_mins_or_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
+        replayed_delay_in_mins_or_timestamp = pd.Timestamp(
+            "2000-01-01 09:35:00-05:00"
+        )
         start_ts = pd.Timestamp("2000-01-01 09:30:00-05:00")
         end_ts = pd.Timestamp("2000-01-01 09:35:00-05:00")
         ts_col_name = "start_datetime"
@@ -503,7 +505,9 @@ class TestReplayedMarketData2(hunitest.TestCase):
         2000-01-01 09:35:00-05:00      1000  1000.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00
         """
         # pylint: enable=line-too-long
-        _check_get_data(self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str)
+        _check_get_data(
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
+        )
 
     def test_get_data_at_timestamp1(self) -> None:
         """
@@ -662,7 +666,9 @@ class TestReplayedMarketData3(hunitest.TestCase):
             # `wait_for_latest_data()`.
             current_timestamp = market_data.get_wall_clock_time()
             bar_duration_in_secs = 60 * 5
-            hdateti.set_current_bar_timestamp(current_timestamp, bar_duration_in_secs)
+            hdateti.set_current_bar_timestamp(
+                current_timestamp, bar_duration_in_secs
+            )
             # Run the method.
             start_time, end_time, num_iter = hasynci.run(
                 market_data.wait_for_latest_data(),
@@ -718,7 +724,9 @@ class TestReplayedMarketData4(hunitest.TestCase):
             # `wait_for_latest_data()`.
             current_timestamp = market_data.get_wall_clock_time()
             bar_duration_in_secs = 60
-            hdateti.set_current_bar_timestamp(current_timestamp, bar_duration_in_secs)
+            hdateti.set_current_bar_timestamp(
+                current_timestamp, bar_duration_in_secs
+            )
             # Run the method.
             start_time, end_time, num_iter = hasynci.run(
                 market_data.wait_for_latest_data(),

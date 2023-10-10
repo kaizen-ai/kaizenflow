@@ -104,6 +104,8 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         # TODO(gp): -> db_connection
         cls.connection = hsql.get_connection(*connection_info, autocommit=True)
 
+    @pytest.mark.requires_ck_infra
+    @pytest.mark.requires_docker_in_docker
     @classmethod
     def tearDownClass(cls) -> None:
         """

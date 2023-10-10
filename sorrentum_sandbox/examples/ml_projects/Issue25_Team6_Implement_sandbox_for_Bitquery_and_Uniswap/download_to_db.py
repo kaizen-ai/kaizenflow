@@ -15,7 +15,7 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import sorrentum_sandbox.examples.ml_projects.Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap.db as sisebidb
+import sorrentum_sandbox.examples.ml_projects.Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap.db as ssempitisfbaud
 import sorrentum_sandbox.examples.ml_projects.Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap.download as sisebido
 
 _LOG = logging.getLogger(__name__)

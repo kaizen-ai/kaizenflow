@@ -19,7 +19,7 @@ class Test_set_non_ath_to_nan1(hunitest.TestCase):
         df = self._get_df()
         start_time = datetime.time(9, 30)
         end_time = datetime.time(16, 0)
-        act = cfinabla.set_non_ath_to_nan(df, start_time, end_time)
+        act = cfinabla.set_non_ath_to_nan(df, start_time=start_time, end_time=end_time)
         exp = """
                               open   high    low  close        vol
         datetime

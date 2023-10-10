@@ -1,13 +1,12 @@
 """
 Import as:
 
-import sorrentum_sandbox.common.save as sinsasav
+import sorrentum_sandbox.common.save as ssacosav
 """
 
 import abc
 
-import sorrentum_sandbox.common.download as sinsadow
-
+import sorrentum_sandbox.common.download as ssacodow
 
 # #############################################################################
 # DataSaver
@@ -20,7 +19,7 @@ class DataSaver(abc.ABC):
     """
 
     @abc.abstractmethod
-    def save(self, data: sinsadow.RawData) -> None:
+    def save(self, data: ssacodow.RawData) -> None:
         """
         Save data to persistent storage.
 

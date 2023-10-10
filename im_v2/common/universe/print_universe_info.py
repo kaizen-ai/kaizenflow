@@ -72,8 +72,8 @@ def _get_ImClient(im_client: str) -> icdc.ImClient:
     :param im_client: client as string, e.g., `ccxt_realtime`
     """
     if im_client == "ccxt_realtime":
-        resample_1min = False
         env_file = imvimlita.get_db_env_path("dev")
+        universe_version = "infer_from_data"
         # Get login info.
         connection_params = hsql.get_connection_info_from_env_file(env_file)
         # Login.
@@ -84,7 +84,7 @@ def _get_ImClient(im_client: str) -> icdc.ImClient:
         table_name = "ccxt_ohlcv_futures"
         #
         im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, db_connection, table_name
+            universe_version, db_connection, table_name, resample_1min=False
         )
     else:
         raise ValueError(f"Invalid im_client='{im_client}'.")

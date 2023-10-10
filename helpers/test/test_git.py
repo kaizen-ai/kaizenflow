@@ -42,6 +42,8 @@ class Test_git_submodule1(hunitest.TestCase):
         func_call = "hgit.is_inside_submodule()"
         _execute_func_call(func_call)
 
+    # Outside CK infra, the following call hangs, so we skip it.
+    @pytest.mark.requires_ck_infra
     def test_is_amp(self) -> None:
         func_call = "hgit.is_amp()"
         _execute_func_call(func_call)
@@ -171,6 +173,8 @@ class Test_git_repo_name1(hunitest.TestCase):
         exp = "dev_tools"
         self.assert_equal(act, exp)
 
+    # Outside CK infra, the following call hangs, so we skip it.
+    @pytest.mark.requires_ck_infra
     def test_get_all_repo_names1(self) -> None:
         if not hgit.is_in_amp_as_supermodule():
             _LOG.warning(
@@ -179,9 +183,11 @@ class Test_git_repo_name1(hunitest.TestCase):
             return
         mode = "short_name"
         act = hgit.get_all_repo_names(mode)
-        exp = ["amp", "dev_tools"]
+        exp = ["amp", "cmamp", "dev_tools"]
         self.assert_equal(str(act), str(exp))
 
+    # Outside CK infra, the following call hangs, so we skip it.
+    @pytest.mark.requires_ck_infra
     def test_get_all_repo_names2(self) -> None:
         if not hgit.is_in_amp_as_supermodule():
             _LOG.warning(
@@ -190,7 +196,7 @@ class Test_git_repo_name1(hunitest.TestCase):
             return
         mode = "full_name"
         act = hgit.get_all_repo_names(mode)
-        exp = ["alphamatic/amp", "alphamatic/dev_tools"]
+        exp = ["alphamatic/amp", "alphamatic/dev_tools", "cryptokaizen/cmamp"]
         self.assert_equal(str(act), str(exp))
 
     def test_get_repo_name_rountrip1(self) -> None:
@@ -213,6 +219,8 @@ class Test_git_repo_name1(hunitest.TestCase):
         self.assert_equal(act, exp)
 
 
+# Outside CK infra, the following class hangs, so we skip it.
+@pytest.mark.requires_ck_infra
 class Test_git_path1(hunitest.TestCase):
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_supermodule(),
@@ -266,6 +274,8 @@ class Test_git_path1(hunitest.TestCase):
             )
 
 
+# Outside CK infra, the following class hangs, so we skip it.
+@pytest.mark.requires_ck_infra
 @pytest.mark.slow(reason="Around 7s")
 @pytest.mark.skipif(
     not hgit.is_in_amp_as_supermodule(),
@@ -303,6 +313,8 @@ class Test_git_modified_files1(hunitest.TestCase):
 # #############################################################################
 
 
+# Outside CK infra, the following class hangs, so we skip it.
+@pytest.mark.requires_ck_infra
 class Test_find_docker_file1(hunitest.TestCase):
     def test1(self) -> None:
         """

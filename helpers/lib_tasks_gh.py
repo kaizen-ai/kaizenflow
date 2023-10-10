@@ -93,9 +93,12 @@ def _get_workflow_table() -> htable.TableType:
     _LOG.debug(hprint.to_str("txt"))
     # pylint: disable=line-too-long
     # > gh run list
-    # STATUS  NAME                                                        WORKFLOW    BRANCH                                                EVENT              ID          ELAPSED  AGE
-    # X       Amp task1786 integrate 2021118 (#1857)                    Fast tests  master                                                push               1477484584  5m40s    23m
-    # X       Merge branch 'master' into AmpTask1786_Integrate_2021118  Fast tests  AmpTask1786_Integrate_2021118                         pull_request       1477445218  5m52s    34m
+    # STATUS  TITLE                                                          WORKFLOW    BRANCH                                                         EVENT         ID          ELAPSED  AGE
+    # *       AmpTask1786_Integrate_20230518_2                               Fast tests  AmpTask1786_Integrate_20230518_2                               pull_request  5027911519  4m49s    4m
+    # > gh run list | more
+    # completed       success AmpTask1786_Integrate_20230518_2        Fast tests      AmpTask1786_Integrate_20230518_2        pull_request    5027911519      7m17s   10m
+    # in_progress             AmpTask1786_Integrate_20230518_2        Slow tests      AmpTask1786_Integrate_20230518_2        pull_request    5027911518      10m9s   10m
+
     # pylint: enable=line-too-long
     # The output is tab separated, so convert it into CSV.
     first_line = txt.split("\n")[0]
@@ -103,9 +106,9 @@ def _get_workflow_table() -> htable.TableType:
     num_cols = len(first_line.split("\t"))
     _LOG.debug(hprint.to_str("first_line num_cols"))
     cols = [
-        "completed",
-        "status",
-        "name",
+        "completed",  # E.g., completed, in_progress
+        "status",  # E.g., success, failure
+        "name",  # Aka title
         "workflow",
         "branch",
         "event",
@@ -120,11 +123,14 @@ def _get_workflow_table() -> htable.TableType:
     return table
 
 
+
+# TODO(Grisha): seems like GH changed the output format, we should update accordingly,
+# see CmTask #4672 "Slow tests fail (9835540316)" for details.
 @task
 def gh_workflow_list(  # type: ignore
     ctx,
     filter_by_branch="current_branch",
-    filter_by_status="all",
+    filter_by_completed="all",
     report_only_status=True,
     show_stack_trace=False,
 ):
@@ -135,12 +141,14 @@ def gh_workflow_list(  # type: ignore
         - `current_branch` for the current Git branch
         - `master` for master branch
         - `all` for all branches
-    :param filter_by_status: filter table by the status of the workflow
+    :param filter_by_completed: filter table by the status of the workflow
         - E.g., "failure", "success"
     :param show_stack_trace: in case of error run `pytest_repro` reporting also
         the stack trace
     """
-    hlitauti.report_task(txt=hprint.to_str("filter_by_branch filter_by_status"))
+    hlitauti.report_task(
+        txt=hprint.to_str("filter_by_branch filter_by_completed")
+    )
     # Login.
     gh_login(ctx)
     # Get the table.
@@ -152,9 +160,9 @@ def gh_workflow_list(  # type: ignore
         print(f"Filtering table by {field}={value}")
         table = table.filter_rows(field, value)
     # Filter table by the workflow status.
-    if filter_by_status != "all":
-        field = "status"
-        value = filter_by_status
+    if filter_by_completed != "all":
+        field = "completed"
+        value = filter_by_completed
         print(f"Filtering table by {field}={value}")
         table = table.filter_rows(field, value)
     if (
@@ -174,10 +182,13 @@ def gh_workflow_list(  # type: ignore
         print(table_tmp)
         # Find the first success.
         num_rows = table.size()[0]
+        _LOG.debug("num_rows=%s", num_rows)
         for i in range(num_rows):
             status_column = table_tmp.get_column("status")
             _LOG.debug("status_column=%s", str(status_column))
-            hdbg.dassert_lt(i, len(status_column))
+            hdbg.dassert_lt(
+                i, len(status_column), msg="status_column=%s" % status_column
+            )
             status = status_column[i]
             if status == "success":
                 print(f"Workflow '{workflow}' for '{branch_name}' is ok")
@@ -204,6 +215,26 @@ def gh_workflow_list(  # type: ignore
                 hsystem.system(cmd, suppress_output=False, abort_on_error=False)
                 break
             if status == "":
+                if i == (len(status_column) - 1):
+                    # If all the runs in the table are in progress, i.e. there is no
+                    # failed or succesful run, issue a warning and exit. E.g.,
+                    ################################################################################
+                    # Superslow tests
+                    # ################################################################################
+                    # completed   | status | name            | workflow        | branch | event             | id         | elapsed | age |
+                    # ----------- | ------ | --------------- | --------------- | ------ | ----------------- | ---------- | ------- | --- |
+                    # in_progress |        | Superslow tests | Superslow tests | master | workflow_dispatch | 5421740561 | 13m25s  | 13m |
+                    _LOG.warning(
+                        "No failed/successful run found for workflow=%s for branch=%s, all runs are in progress, exiting.",
+                        workflow,
+                        branch_name,
+                    )
+                    break
+                _LOG.debug(
+                    "Workflow=%s for branch %s is in progress, continue looking for a failed/successful run",
+                    workflow,
+                    branch_name,
+                )
                 # It's in progress.
                 pass
             else:
@@ -258,7 +289,6 @@ def _get_repo_full_name_from_cmd(repo_short_name: str) -> Tuple[str, str]:
         ret_repo_short_name = hgit.get_repo_name(
             repo_full_name, in_mode="full_name", include_host_name=False
         )
-
     else:
         # Get the repo name using the short -> full name mapping.
         repo_full_name_with_host = hgit.get_repo_name(
@@ -324,6 +354,12 @@ def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # ty
     Print the title that corresponds to the given issue and repo_short_name.
     E.g., AmpTask1251_Update_GH_actions_for_amp.
 
+    Before running the invoke, one must check their login status on GH by running
+    `gh auth status`.
+
+    :param issue_id: id number of the issue to create the branch for
+    :param repo_short_name: short name of the repo to use for the branch name building.
+        "current" refers to the repo where the call is implemented
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
     hlitauti.report_task(txt=hprint.to_str("issue_id repo_short_name"))

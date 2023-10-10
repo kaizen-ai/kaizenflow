@@ -45,6 +45,21 @@ def get_Market_Price_Real_Time_table_query() -> str:
     return query
 
 
+def get_Market_Price_Forecast_table_query() -> str:
+    """
+    Get SQL query to create Market_Price_Forecast table.
+    """
+    query = """
+    
+    CREATE TABLE IF NOT EXISTS Forecast_Market_Price(
+            id SERIAL PRIMARY KEY,
+            timestamp INT,
+            values DECIMAL
+            )
+            """
+    return query
+
+
 def get_db_connection() -> Any:
     """
     Retrieve connection based on hardcoded values.
@@ -127,6 +142,9 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         cursor.execute(query)
         #
         query = get_Market_Price_Real_Time_table_query()
+        cursor.execute(query)
+	#
+        query = get_Market_Price_Forecast_table_query()
         cursor.execute(query)
 
 
