@@ -44,6 +44,22 @@ class Test_plots(unittest.TestCase):
         srs = pd.Series(samples, index=index, name="test values")
         return srs
 
+    @staticmethod
+    def get_plot_projection1() -> pd.DataFrame:
+        """
+        Generate a test DataFrame for `plot_projection()`.
+        """
+        data = [
+            [1, 1, 0, 1],
+            [0, 1, 0, 1],
+            [0, 0, 1, 1],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+        ]
+        index = pd.date_range(start="2023-01-01", periods=len(data), freq="D")
+        df = pd.DataFrame(data, index=index)
+        return df
+
     def test_plot_histograms_and_lagged_scatterplot1(self) -> None:
         """
         Smoke test for `plot_histograms_and_lagged_scatterplot()`.
@@ -57,11 +73,17 @@ class Test_plots(unittest.TestCase):
         )
 
     def test_plot_time_series_by_period1(self) -> None:
+        """
+        Smoke test for `plot_time_series_by_period()`.
+        """
         test_series = self.get_test_plot_srs1()
         period = "day"
         cplmiplo.plot_time_series_by_period(test_series, period)
 
     def test_plot_time_series_by_period2(self) -> None:
+        """
+        Smoke test for `plot_time_series_by_period()`.
+        """
         test_series = self.get_test_plot_srs1()
         period = "time"
         cplmiplo.plot_time_series_by_period(test_series, period)
@@ -78,7 +100,7 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for `plot_effective_correlation_rank()`.
 
-        - `q_values` is None
+        - `q_values = None`
         """
         test_df = self.get_test_plot_df1()
         cplocorr.plot_effective_correlation_rank(test_df)
@@ -87,7 +109,7 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for `plot_effective_correlation_rank()`.
 
-        - `q_values` is a list of values
+        - `q_values` is a list of values"
         """
         num_q_values = 5
         q_values = np.random.uniform(1, 10, num_q_values).tolist()
@@ -112,16 +134,16 @@ class Test_plots(unittest.TestCase):
 
     def test_plot_spectrum1(self) -> None:
         """
-        Smoke test for `plot_spectrum`.
+        Smoke test for `plot_spectrum()`.
 
-        - `axes` is None
+        - `axes = None`
         """
         test_df = self.get_test_plot_df1()
         cplmiplo.plot_spectrum(test_df)
 
     def test_plot_spectrum2(self) -> None:
         """
-        Smoke test for `plot_spectrum`.
+        Smoke test for `plot_spectrum()`.
 
         - `axes` is a list of Matplotlib axes
         """
@@ -132,7 +154,7 @@ class Test_plots(unittest.TestCase):
 
     def test_plot_cols1(self) -> None:
         """
-        Smoke test for `plot_cols`.
+        Smoke test for `plot_cols()`.
         """
         test_df = self.get_test_plot_df1()
         cplmiplo.plot_cols(test_df)
@@ -144,11 +166,36 @@ class Test_plots(unittest.TestCase):
         test_df = self.get_test_plot_df1()
         cplmiplo.plot_autocorrelation(test_df)
 
+    def test_plot_projection1(self) -> None:
+        """
+        Smoke test for `plot_projection()`.
+        """
+        test_df = self.get_plot_projection1()
+        special_values = [0]
+        cplmiplo.plot_projection(test_df, special_values=special_values)
+
+    def test_plot_projection2(self) -> None:
+        """
+        Smoke test for `plot_projection()`.
+
+        - `mode = "scatter"`
+        - `ax` is used for plotting
+        """
+        # Set input values with some empty values.
+        test_df = self.get_plot_projection1()
+        test_df = test_df.replace({0: None})
+        # Set params.
+        fig = plt.figure()
+        ax = fig.add_axes([0, 0, 1, 1])
+        mode = "scatter"
+        # Run.
+        cplmiplo.plot_projection(test_df, mode=mode, ax=ax)
+
     def test_plot_boxplot1(self) -> None:
         """
-        Smoke test for `plot_boxplot`.
+        Smoke test for `plot_boxplot()`.
 
-        - `grouping` is "by_row"
+        - `grouping= "by_row"`
         - `ylabel` is an empty string
         """
         test_df = self.get_test_plot_df1()
@@ -156,9 +203,9 @@ class Test_plots(unittest.TestCase):
 
     def test_plot_boxplot2(self) -> None:
         """
-        Smoke test for `plot_boxplot`.
+        Smoke test for `plot_boxplot()`.
 
-        - `grouping` is "by_col"
+        - `grouping = "by_col"`
         - `ylabel` is a non-empty string
         """
         test_df = self.get_test_plot_df1()
@@ -177,9 +224,9 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for `plot_qq()`.
 
-        - input series contains NaN values
-        - nan_mode = "drop"
-        - axes are passed
+        - Input series contains NaN values
+        - `nan_mode = "drop"`
+        - Axes are passed
         """
         test_series = self.get_test_plot_srs1()
         test_series[20:50] = np.nan
