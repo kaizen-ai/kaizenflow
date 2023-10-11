@@ -193,10 +193,10 @@ for start_timestamp_as_str, end_timestamp_as_str, mode in system_run_params:
     )
     # Compute research portfolio.
     dag_df_prod = get_prod_dag_output_for_last_node(system_log_path_dict)
-    start_timestamp = omreconc.timestamp_as_str_to_timestamp(
+    start_timestamp = omreconc.str_to_timestamp(
         start_timestamp_as_str
     )
-    end_timestamp = omreconc.timestamp_as_str_to_timestamp(end_timestamp_as_str)
+    end_timestamp = omreconc.str_to_timestamp(end_timestamp_as_str)
     forecast_evaluator_from_prices_dict = reconciliation_config[
         "research_forecast_evaluator_from_prices"
     ]
