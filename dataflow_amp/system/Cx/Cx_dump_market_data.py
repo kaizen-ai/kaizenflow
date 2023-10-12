@@ -18,6 +18,7 @@ import pandas as pd
 
 import dataflow_amp.system.Cx as dtfamsysc
 import helpers.hdbg as hdbg
+import helpers.hdatetime as hdateti
 import helpers.hparser as hparser
 import im_v2.common.universe as ivcu
 import oms
@@ -57,8 +58,8 @@ def dump_market_data_from_db(
     """
     Save market data from the DB to a file.
     """
-    start_timestamp = oms.str_to_timestamp(start_timestamp_as_str)
-    end_timestamp = oms.str_to_timestamp(end_timestamp_as_str)
+    start_timestamp = hdateti.str_to_timestamp(start_timestamp_as_str)
+    end_timestamp = hdateti.str_to_timestamp(end_timestamp_as_str)
     # We need to use exactly the same data that the prod system ran against
     # in production.
     asset_ids = _get_universe()

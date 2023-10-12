@@ -19,6 +19,7 @@ import core.config as cconfig
 import core.plotting as coplotti
 import dataflow.core.dag as dtfcordag
 import helpers.hdbg as hdbg
+import helpers.hdatetime as hdateti
 import helpers.hgit as hgit
 import helpers.hintrospection as hintros
 import helpers.hpandas as hpandas
@@ -233,8 +234,8 @@ def build_multiday_system_reconciliation_config(
     :param end_timestamp_as_str: string representation of timestamp
         at which to end reconcile run, e.g. "20221010_080000"
     """
-    start_timestamp = str_to_timestamp(start_timestamp_as_str)
-    end_timestamp = str_to_timestamp(end_timestamp_as_str)
+    start_timestamp = hdateti.str_to_timestamp(start_timestamp_as_str)
+    end_timestamp = hdateti.str_to_timestamp(end_timestamp_as_str)
     config = {
         "dst_root_dir": dst_root_dir,
         "dag_builder_name": dag_builder_name,
@@ -405,7 +406,7 @@ def get_run_date(start_timestamp_as_str: Optional[str]) -> str:
 
 
 # TODO(Grisha): consider moving to `helpers/hdatetime.py`.
-def str_to_timestamp(
+def timestamp_as_str_to_timestamp(
     timestamp_as_str: str, *, tz: str = "America/New_York"
 ) -> pd.Timestamp:
     """
@@ -592,7 +593,7 @@ def get_system_run_timestamps(
                 system_run_start_timestamp,
                 system_run_end_timestamp,
             ) in system_run_timestamps
-            if str_to_timestamp(system_run_start_timestamp, tz=tz)
+            if hdateti.str_to_timestamp(system_run_start_timestamp, tz=tz)
             >= start_timestamp
         ]
         _LOG.info("Filtered by `start_timestamp`: %s.", system_run_timestamps)
@@ -603,7 +604,7 @@ def get_system_run_timestamps(
                 system_run_start_timestamp,
                 system_run_end_timestamp,
             ) in system_run_timestamps
-            if str_to_timestamp(system_run_start_timestamp, tz=tz)
+            if hdateti.str_to_timestamp(system_run_start_timestamp, tz=tz)
             <= end_timestamp
         ]
         _LOG.info("Filtered by `end_timestamp`: %s.", system_run_timestamps)
