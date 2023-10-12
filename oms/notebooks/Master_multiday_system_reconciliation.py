@@ -35,7 +35,6 @@ import pandas as pd
 import core.config as cconfig
 import core.plotting as coplotti
 import dataflow.model as dtfmod
-import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
@@ -195,9 +194,9 @@ for start_timestamp_as_str, end_timestamp_as_str, mode in system_run_params:
     # Compute research portfolio.
     dag_df_prod = get_prod_dag_output_for_last_node(system_log_path_dict)
     start_timestamp = hdateti.str_to_timestamp(
-        start_timestamp_as_str
+        start_timestamp_as_str, tz = "America/New_York"
     )
-    end_timestamp = hdateti.str_to_timestamp(end_timestamp_as_str)
+    end_timestamp = hdateti.str_to_timestamp(end_timestamp_as_str, tz = "America/New_York")
     forecast_evaluator_from_prices_dict = reconciliation_config[
         "research_forecast_evaluator_from_prices"
     ]
@@ -235,5 +234,3 @@ display(stats_sxs)
 # %%
 # Correlate PnLs.
 portfolio_stats_df[[("prod", "pnl"), ("sim", "pnl"), ("research", "pnl")]].corr()
-
-# %%

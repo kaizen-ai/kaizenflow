@@ -18,8 +18,8 @@ import pandas as pd
 import core.config as cconfig
 import core.plotting as coplotti
 import dataflow.core.dag as dtfcordag
-import helpers.hdbg as hdbg
 import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hintrospection as hintros
 import helpers.hpandas as hpandas
@@ -234,8 +234,12 @@ def build_multiday_system_reconciliation_config(
     :param end_timestamp_as_str: string representation of timestamp
         at which to end reconcile run, e.g. "20221010_080000"
     """
-    start_timestamp = hdateti.str_to_timestamp(start_timestamp_as_str)
-    end_timestamp = hdateti.str_to_timestamp(end_timestamp_as_str)
+    start_timestamp = hdateti.str_to_timestamp(
+        start_timestamp_as_str, tz="America/New_York"
+    )
+    end_timestamp = hdateti.str_to_timestamp(
+        end_timestamp_as_str, tz="America/New_York"
+    )
     config = {
         "dst_root_dir": dst_root_dir,
         "dag_builder_name": dag_builder_name,

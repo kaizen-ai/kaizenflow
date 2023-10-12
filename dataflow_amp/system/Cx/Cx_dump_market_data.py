@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # TODO(Grisha): the script might become more general purpose, e.g. dump any data from db.
 """
-The script saves market data from the DB to a file.
-```
+The script saves market data from the DB to a file. ```
+
 > dataflow_amp/system/Cx/Cx_dump_market_data.py \
     --dst_dir '/shared_data/prod_reconciliation' \
     --start_timestamp_as_str 20221010_060500 \
@@ -17,11 +17,10 @@ from typing import List
 import pandas as pd
 
 import dataflow_amp.system.Cx as dtfamsysc
-import helpers.hdbg as hdbg
 import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import im_v2.common.universe as ivcu
-import oms
 
 _LOG = logging.getLogger(__name__)
 
@@ -58,8 +57,12 @@ def dump_market_data_from_db(
     """
     Save market data from the DB to a file.
     """
-    start_timestamp = hdateti.str_to_timestamp(start_timestamp_as_str)
-    end_timestamp = hdateti.str_to_timestamp(end_timestamp_as_str)
+    start_timestamp = hdateti.str_to_timestamp(
+        start_timestamp_as_str, tz="America/New_York"
+    )
+    end_timestamp = hdateti.str_to_timestamp(
+        end_timestamp_as_str, tz="America/New_York"
+    )
     # We need to use exactly the same data that the prod system ran against
     # in production.
     asset_ids = _get_universe()
