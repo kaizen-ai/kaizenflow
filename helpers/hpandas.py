@@ -433,9 +433,7 @@ def find_gaps_in_dataframes(
     return first_missing_data, second_missing_data
 
 
-# TODO(Grisha): maybe also add `apply_column_mode` at some point.
 # TODO(Grisha): use this idiom everywhere in the codebase, e.g., in `compare_dfs()`.
-# TODO(Grisha): add unit tests.
 def apply_index_mode(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
@@ -475,6 +473,54 @@ def apply_index_mode(
         )
     else:
         raise ValueError(f"Unsupported index_mode={mode}")
+    return df1_copy, df2_copy
+
+
+def apply_columns_mode(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    mode: str,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Process DataFrames according to the column mode.
+
+    :param df1: first input df
+    :param df2: second input df
+    :param mode: method of processing columns
+        - "assert_equal": check that both dfs have equal columns, assert otherwise
+        - "intersect": restrict both dfs to only include common columns
+        - "leave_unchanged": ignore any column mismatches and return dfs as-is
+    :return: transformed copy of the inputs
+    """
+    _LOG.debug("mode=%s", mode)
+    # Input validation.
+    hdbg.dassert_isinstance(df1, pd.DataFrame)
+    hdbg.dassert_isinstance(df2, pd.DataFrame)
+    hdbg.dassert_isinstance(mode, str)
+    # Copy in order not to modify the inputs.
+    df1_copy = df1.copy()
+    df2_copy = df2.copy()
+    if mode == "assert_equal":
+        # Check if columns are equal or not.
+        dassert_columns_equal(df1_copy, df2_copy)
+    elif mode == "intersect":
+        # Filter dataframes based on its common columns.
+        common_columns = df1_copy.columns.intersection(df2_copy.columns)
+        df1_copy = df1_copy[common_columns]
+        df2_copy = df2_copy[common_columns]
+        # Log the string representation of 2 dfs.
+        _LOG.debug("df1 after filtering=\n%s", df_to_str(df1))
+        _LOG.debug("df2 after filtering=\n%s", df_to_str(df2))
+    elif mode == "leave_unchanged":
+        # Ignore mismatch.
+        _LOG.debug(
+            "Ignoring any column missmatch as per user's request.\n"
+            "df1.columns.difference(df2.columns)=\n%s\ndf2.columns.difference(df1.columns)=\n%s",
+            df1.columns.difference(df2.columns),
+            df2.columns.difference(df1.columns),
+        )
+    else:
+        raise ValueError(f"Unsupported column mode: {mode}")
     return df1_copy, df2_copy
 
 
@@ -1119,7 +1165,7 @@ def df_to_str(
         df = df.to_frame(index=False)
     hdbg.dassert_isinstance(df, pd.DataFrame)
     # For some reason there are so-called "negative zeros", but we consider
-    # them equal to `0.0`. 
+    # them equal to `0.0`.
     df = df.copy()
     for col_name in df.select_dtypes(include=[np.float64, float]).columns:
         df[col_name] = df[col_name].where(df[col_name] != -0.0, 0.0)
