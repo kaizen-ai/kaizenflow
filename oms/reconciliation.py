@@ -234,12 +234,12 @@ def build_multiday_system_reconciliation_config(
     :param end_timestamp_as_str: string representation of timestamp
         at which to end reconcile run, e.g. "20221010_080000"
     """
+    # Defined tz to pass time zone into function.
+    tz = "America/New_York"
     start_timestamp = hdateti.str_to_timestamp(
-        start_timestamp_as_str, tz="America/New_York"
-    )
+        start_timestamp_as_str, tz)
     end_timestamp = hdateti.str_to_timestamp(
-        end_timestamp_as_str, tz="America/New_York"
-    )
+        end_timestamp_as_str, tz)
     config = {
         "dst_root_dir": dst_root_dir,
         "dag_builder_name": dag_builder_name,
