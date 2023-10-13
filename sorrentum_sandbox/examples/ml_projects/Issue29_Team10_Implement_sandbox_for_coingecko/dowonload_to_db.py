@@ -1,12 +1,14 @@
 import argparse
 import logging
-
-import Issue29_Team10_Implement_sandbox_for_coingecko.db_coingecko as sisebidb
-import Issue29_Team10_Implement_sandbox_for_coingecko.download_coingecko as sisebido
+from pathlib import Path
 import pandas as pd
+import pendulum
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
+
+import sorrentum_sandbox.examples.ml_projects.Issue29_Team10_Implement_sandbox_for_coingecko.db_coingecko as sisebidb
+import sorrentum_sandbox.examples.ml_projects.Issue29_Team10_Implement_sandbox_for_coingecko.download_coingecko as sisebido
 
 """
 Download data from CoinGecko and save it into the DB.
@@ -44,7 +46,7 @@ def _add_download_args(
     parser.add_argument(
         "--api",
         action="store",
-        default="CoinGeckoAPI()",
+        default='CoinGeckoAPI()',
         type=str,
         help="Base API",
     )
@@ -60,7 +62,7 @@ def _add_download_args(
         action="store",
         required=True,
         type=str,
-        help="Name of coin to load",
+        help="Name of coin to load"
     )
     return parser
 
@@ -79,15 +81,19 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     # Load data.
+    # from_timestamp = str(pendulum.parse(args.from_timestamp).int_timestamp)
+    # to_timestamp = str(pendulum.parse(args.to_timestamp).int_timestamp)
     from_timestamp = str(args.from_timestamp)
     to_timestamp = str(args.to_timestamp)
     id = str(args.id)
-    downloader = sisebido.CGDownloader(api=args.api)
+    downloader = sisebido.CGDownloader()
+
     raw_data = downloader.download(id, from_timestamp, to_timestamp)
     # Save data to DB.
     db_conn = sisebidb.get_db_connection()
     saver = sisebidb.PostgresDataFrameSaver(db_conn)
-    saver.save(raw_data, args.target_table)
+    target_table = str(args.target_table)
+    saver.save(raw_data, target_table)
 
 
 if __name__ == "__main__":

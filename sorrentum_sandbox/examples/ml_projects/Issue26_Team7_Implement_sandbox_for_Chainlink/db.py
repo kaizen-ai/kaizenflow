@@ -53,6 +53,22 @@ def get_chainlink_create_real_time_table_query() -> str:
             """
     return query
 
+def get_chainlink_create_chainlink_compute_table_query() -> str:
+    """
+    Get SQL query to create chainlink_compute table.
+    """
+    query = """
+    CREATE TABLE IF NOT EXISTS chainlink_compute(
+            roundId DECIMAL NOT NULL,
+            price DECIMAL NOT NULL,
+            updatedAt TIMESTAMP,
+            pair VARCHAR(255) NOT NULL,
+            decimals INT,
+            percentage_diff FLOAT
+            )
+            """
+    return query
+
 
 def get_db_connection() -> Any:
     """
@@ -142,6 +158,9 @@ class PostgresDataFrameSaver(ssacosav.DataSaver):
         cursor.execute(query)
         #
         query = get_chainlink_create_real_time_table_query()
+        cursor.execute(query)
+
+        query = get_chainlink_create_chainlink_compute_table_query()
         cursor.execute(query)
 
 

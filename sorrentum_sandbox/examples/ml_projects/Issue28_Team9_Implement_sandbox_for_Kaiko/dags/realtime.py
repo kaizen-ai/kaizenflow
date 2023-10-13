@@ -3,6 +3,7 @@ import datetime
 
 from airflow.models import DAG
 from airflow.operators.bash import BashOperator
+import datetime
 
 mydag = DAG(
     dag_id="realtime",

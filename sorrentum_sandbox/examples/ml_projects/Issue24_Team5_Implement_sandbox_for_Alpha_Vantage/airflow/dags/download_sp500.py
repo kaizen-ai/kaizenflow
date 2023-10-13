@@ -2,7 +2,6 @@
 DAG to download stock market data.
 """
 
-
 import datetime
 import time
 
@@ -16,8 +15,7 @@ from models.time_series import DataType, TimeInterval
 default_args = {
     "owner": "airflow",
     "depends_on_past": False,
-    "start_date": datetime.datetime.now(),
-    "end_date": datetime.datetime(2024, 1, 1),
+    "start_date": days_ago(1),
     "retries": 1,
 }
 
@@ -32,19 +30,33 @@ with DAG(
 
     @task
     def update():
-        """Downloads S&P500 data in one minute intervals"""
+        """Downloads S&P500 data in one minute intervals
+        for the past trading day"""
+
         counter = 0
 
         for symbol in SP500:
             ticker = Ticker(symbol, get_name=False)
-            ticker.get_data(
-                data_type=DataType.INTRADAY, time_interval=TimeInterval.ONE
-            )
+            # Get latest data
+            ticker.get_data(data_type=DataType.INTRADAY,
+                            time_interval=TimeInterval.ONE)
+            # Update DB
             Mongo.save_data(ticker)
-            counter += 1
 
+            # Wait one minute every 5 operations
+            counter += 1
             if counter >= 5:
                 counter = 0
-                time.sleep(61)  # Wait one minute
+                time.sleep(61)
 
-    update()
+    @task
+    def calculate_features():
+        """Calculates RSI and moving averages to save back to DB"""
+
+        tickers = Mongo.download()
+
+        for ticker in tickers:
+            ticker.calculate_stats()
+            Mongo.update_ticker_stats(ticker)
+
+    update() >> calculate_features()
