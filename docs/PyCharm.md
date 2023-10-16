@@ -106,17 +106,17 @@ There are multiple ways to develop on a remote server using PyCharm
 
 - Set-up Deployment
 
-<img src="Pycharm_figs/image3.png" style="width:4.810558836395451in;height:3.51540791776028in" />
+<img src="PyCharm_figs/image3.png" style="width:4.810558836395451in;height:3.51540791776028in" />
 
-<img src="Pycharm_figs/image10.png" style="width:3.9114588801399823in;height:1.6807655293088364in" />
+<img src="PyCharm_figs/image10.png" style="width:3.9114588801399823in;height:1.6807655293088364in" />
 
 - The deployment options are
 
-<img src="Pycharm_figs/image9.png" style="width:3.123700787401575in;height:2.78830271216098in" />
+<img src="PyCharm_figs/image9.png" style="width:3.123700787401575in;height:2.78830271216098in" />
 
 - You can see what file is changed in the file transfer window:
 
-<img src="Pycharm_figs/image14.png" style="width:6.5in;height:1.2083333333333333in" />
+<img src="PyCharm_figs/image14.png" style="width:6.5in;height:1.2083333333333333in" />
 
 pycharm
 
@@ -133,7 +133,7 @@ pycharm
 
 - File | Settings | Tools | SSH Configurations
 
-  - <img src="Pycharm_figs/image7.png" style="width:3.802863079615048in;height:1.4626399825021872in" />
+  - <img src="PyCharm_figs/image7.png" style="width:3.802863079615048in;height:1.4626399825021872in" />
 
 - Once setup, ssh config can be used for all tools in PyCharm.
 
@@ -154,17 +154,17 @@ should apply to them also.
 - To add a new data source in DataGrip, go to the database section in the lower
   left corner.
 
-  - <img src="Pycharm_figs/image4.png" style="width:2.7734372265966756in;height:2.7734372265966756in" />
+  - <img src="PyCharm_figs/image4.png" style="width:2.7734372265966756in;height:2.7734372265966756in" />
 
 - Then pick your desired data source from the dropdown in the upper right
   corner.
 
-  - <img src="Pycharm_figs/image6.png" style="width:4.164062773403325in;height:2.028646106736658in" />
+  - <img src="PyCharm_figs/image6.png" style="width:4.164062773403325in;height:2.028646106736658in" />
 
 - You will be presented with a dummy config that needs to be replaced with
   proper data as shown below.
 
-  - <img src="Pycharm_figs/image8.png" style="width:4.158922790901137in;height:3.0320844269466316in" />
+  - <img src="PyCharm_figs/image8.png" style="width:4.158922790901137in;height:3.0320844269466316in" />
   
 - Before that is done, be sure that proper ssh info is added in SSH/SSL section.
 
@@ -179,12 +179,12 @@ Reload All From Disk . This will upload changes to the remote repo.
 
 - Tools | Deployment | Configuration
 
-  - <img src="Pycharm_figs/image1.png" style="width:4.893396762904637in;height:2.0781255468066493in" />
+  - <img src="PyCharm_figs/image1.png" style="width:4.893396762904637in;height:2.0781255468066493in" />
 
-  - <img src="Pycharm_figs/image12.png" style="width:4.838542213473316in;height:1.1398490813648294in" />
+  - <img src="PyCharm_figs/image12.png" style="width:4.838542213473316in;height:1.1398490813648294in" />
   
 - Tools | Deployment | Options
-  - <img src="Pycharm_figs/image2.png" style="width:4.671411854768154in;height:3.2864588801399823in" />
+  - <img src="PyCharm_figs/image2.png" style="width:4.671411854768154in;height:3.2864588801399823in" />
 
     - Uncheck "Skip external changes" and check "Delete remote files"
 
@@ -193,7 +193,7 @@ Reload All From Disk . This will upload changes to the remote repo.
   - Check it
 
 - Tools | Deployment | Browse Remote Host
-  - <img src="Pycharm_figs/image5.png" style="width:5.394192913385827in;height:1.765625546806649in" />
+  - <img src="PyCharm_figs/image5.png" style="width:5.394192913385827in;height:1.765625546806649in" />
 
 # PUDB - remote debugging - ToDo
 
