@@ -93,7 +93,7 @@ There are multiple ways to develop on a remote server using PyCharm
 
 - CTRL + SHIFT + A -> View Pull Request
 
-- <img src="Pycharm_figs/image13.png" style="width:3.612198162729659in;height:4.932292213473316in" />
+- <img src="PyCharm_figs/image13.png" style="width:3.612198162729659in;height:4.932292213473316in" />
 
 # How to edit remote code
 
@@ -168,7 +168,7 @@ should apply to them also.
   
 - Before that is done, be sure that proper ssh info is added in SSH/SSL section.
 
-  - <img src="Pycharm_figs/image11.png" style="width:2.776042213473316in;height:0.598069772528434in" />
+  - <img src="PyCharm_figs/image11.png" style="width:2.776042213473316in;height:0.598069772528434in" />
 
 # Deployment with remote repository (through sync)
 
