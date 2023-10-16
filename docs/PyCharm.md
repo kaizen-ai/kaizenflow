@@ -336,7 +336,7 @@ Let's say you are connected via VNC.
 ## Reflow
 
 - Set the reflow to reindent
-  - <img src="Pycharm_figs/image15.png" style="width:6.5in;height:4.486111111111111in" />
+  - <img src="PyCharm_figs/image15.png" style="width:6.5in;height:4.486111111111111in" />
 
 # Some recommended plug-ins
 
