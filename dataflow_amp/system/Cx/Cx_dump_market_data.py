@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # TODO(Grisha): the script might become more general purpose, e.g. dump any data from db.
 """
-The script saves market data from the DB to a file. 
-```
+The script saves market data from the DB to a file. ```
+
 > dataflow_amp/system/Cx/Cx_dump_market_data.py \
     --dst_dir '/shared_data/prod_reconciliation' \
     --start_timestamp_as_str 20221010_060500 \
@@ -57,14 +57,9 @@ def dump_market_data_from_db(
     """
     Save market data from the DB to a file.
     """
-    # Defined tz to pass time zone into function.
     tz = "America/New_York"
-    start_timestamp = hdateti.str_to_timestamp(
-        start_timestamp_as_str, tz
-    )
-    end_timestamp = hdateti.str_to_timestamp(
-        end_timestamp_as_str, tz
-    )
+    start_timestamp = hdateti.str_to_timestamp(start_timestamp_as_str, tz)
+    end_timestamp = hdateti.str_to_timestamp(end_timestamp_as_str, tz)
     # We need to use exactly the same data that the prod system ran against
     # in production.
     asset_ids = _get_universe()

@@ -7,7 +7,6 @@ replace_text.py \
   --new "str_to_timestamp" \
   --exclude_dirs "$dir_names"
 
-
 replace_text.py \
   --old "omreconc.timestamp_as_str_to_timestamp" \
   --new "hdateti.str_to_timestamp" \

@@ -194,10 +194,8 @@ for start_timestamp_as_str, end_timestamp_as_str, mode in system_run_params:
     )
     # Compute research portfolio.
     dag_df_prod = get_prod_dag_output_for_last_node(system_log_path_dict)
-    # Defined tz to pass time zone into function.
     tz = "America/New_York"
-    start_timestamp = hdateti.str_to_timestamp(
-        start_timestamp_as_str, tz)
+    start_timestamp = hdateti.str_to_timestamp(start_timestamp_as_str, tz)
     end_timestamp = hdateti.str_to_timestamp(end_timestamp_as_str, tz)
     forecast_evaluator_from_prices_dict = reconciliation_config[
         "research_forecast_evaluator_from_prices"

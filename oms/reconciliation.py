@@ -234,12 +234,9 @@ def build_multiday_system_reconciliation_config(
     :param end_timestamp_as_str: string representation of timestamp
         at which to end reconcile run, e.g. "20221010_080000"
     """
-    # Defined tz to pass time zone into function.
     tz = "America/New_York"
-    start_timestamp = hdateti.str_to_timestamp(
-        start_timestamp_as_str, tz)
-    end_timestamp = hdateti.str_to_timestamp(
-        end_timestamp_as_str, tz)
+    start_timestamp = hdateti.str_to_timestamp(start_timestamp_as_str, tz)
+    end_timestamp = hdateti.str_to_timestamp(end_timestamp_as_str, tz)
     config = {
         "dst_root_dir": dst_root_dir,
         "dag_builder_name": dag_builder_name,
@@ -597,7 +594,7 @@ def get_system_run_timestamps(
                 system_run_start_timestamp,
                 system_run_end_timestamp,
             ) in system_run_timestamps
-            if hdateti.str_to_timestamp(system_run_start_timestamp, tz=tz)
+            if hdateti.str_to_timestamp(system_run_start_timestamp, tz)
             >= start_timestamp
         ]
         _LOG.info("Filtered by `start_timestamp`: %s.", system_run_timestamps)
@@ -608,7 +605,7 @@ def get_system_run_timestamps(
                 system_run_start_timestamp,
                 system_run_end_timestamp,
             ) in system_run_timestamps
-            if hdateti.str_to_timestamp(system_run_start_timestamp, tz=tz)
+            if hdateti.str_to_timestamp(system_run_start_timestamp, tz)
             <= end_timestamp
         ]
         _LOG.info("Filtered by `end_timestamp`: %s.", system_run_timestamps)
