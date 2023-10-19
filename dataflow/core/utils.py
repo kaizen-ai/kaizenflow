@@ -15,6 +15,7 @@ import re
 from typing import Callable, List, Tuple, Union
 
 import pandas as pd
+import numpy as np
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
