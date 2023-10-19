@@ -121,9 +121,9 @@ address.
 ### SSH
 
 Change the placeholder (CM_IP) value in .bashrc
-
+```
 > sudo nano .bashrc
-
+```
 Change the IP address or append new line CM_IP2
 
 export CM_IP=172.30.2.136
@@ -176,19 +176,19 @@ Credentials (View only user): Crypto / 67d767a4b9
 
 By default `htop` command displays the processes sorted by CPU usage. Press F6
 (or >), which will display the column names, select any one, and press Enter.
-
+```
 > htop
-
+```
 ### Command line interface - Docker
 
 List all active docker containers with usage.
-
+```
 > docker stats
-
+```
 Summary of Docker disk usage.
-
+```
 > docker system df
-
+```
 ### Zabbix - Docker / Server's processes
 
 1.  Connect to VPN.
@@ -204,12 +204,12 @@ unused Docker containers.
 We can add more like these in the future.
 
 #### [ADMIN] For killing processes try using CLI if possible.
-
+```
 > sudo kill &lt;&lt;PID of process from htop or pidof command>>
+```
+For example: `> sudo kill -9 process_id_1 process_id_2 process_id_3`
 
-For example: > sudo kill -9 process_id_1 process_id_2 process_id_3
-
-Or: > killall program_name
+Or: `> killall program_name`
 
 #### [ADMIN] If CLI is not available try to use the Zabbix web
 
@@ -260,11 +260,11 @@ The most trustworthy websites are:
 
 ### From CLI
 
-sudo apt install speedtest-cli
+`sudo apt install speedtest-cli`
 
 or
 
-sudo pip3 install speedtest-cli
+`sudo pip3 install speedtest-cli`
 
 ```
 
@@ -362,9 +362,11 @@ Request timeout for icmp_seq 1
 
 You can also do:
 
+```
 > tracert 13.51.59.43 (Windows)
 
 > traceroute 13.51.59.43 (Linux)
+```
 
 ## Solutions to slow Internet
 
