@@ -139,8 +139,6 @@ You can add a new connection and change the IP address following the
 documentation in
 [<span class="underline">Using remote PyCharm / VisualStudio</span>](https://docs.google.com/document/d/1a3fsA613PShd1Lcz_YjOHWg0XXCMAaKOo5UIHaiQ-rk/edit)
 
--
-
 ## Switching between VPNs
 
 You can ping / traceroute between the two VPNs to see which one is closer /
@@ -207,13 +205,17 @@ We can add more like these in the future.
 ```
 > sudo kill &lt;&lt;PID of process from htop or pidof command>>
 ```
-For example: `> sudo kill -9 process_id_1 process_id_2 process_id_3`
+For example: 
+```
+> sudo kill -9 process_id_1 process_id_2 process_id_3
+```
 
-Or: `> killall program_name`
+Or: 
+```
+> killall program_name
+```
 
-#### [ADMIN] If CLI is not available try to use the Zabbix web
-
-interface.
+#### [ADMIN] If CLI is not available try to use the Zabbix web interface.
 
 1.  Connect to VPN
 
@@ -299,8 +301,7 @@ This is to measure how far you are from the AWS data centers
 
 
 
-<span
-class="underline">https://www.cloudping.info/</span>](https://www.cloudping.info/)
+<span class="underline">https://www.cloudping.info/</span>](https://www.cloudping.info/)
 
 <img src="How_to_diagnose_server_network_issues_figs/image5.png" style="width:4.86561in;height:6.74479in" />
 
@@ -364,7 +365,8 @@ You can also do:
 
 ```
 > tracert 13.51.59.43 (Windows)
-
+```
+```
 > traceroute 13.51.59.43 (Linux)
 ```
 
