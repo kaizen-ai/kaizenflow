@@ -110,7 +110,7 @@ Procedure:
 ## Switching between DEV servers
 
 This is basically just changing the IP address. All data in `/home` should be
-shared between DEV servers
+shared between DEV servers.
 
 ### VNC
 
@@ -125,14 +125,15 @@ Change the placeholder (CM_IP) value in .bashrc
 > sudo nano .bashrc
 ```
 Change the IP address or append new line CM_IP2
-
+```
 export CM_IP=172.30.2.136
 
 export CM_IP2=172.30.2.128
-
+```
 Or you can directly change the ip address in command  
+```
 ssh -i ~/.ssh/crypto.pub $CM_USER@172.30.2.128
-
+```
 ### VS Code / PyCharm (gateway)
 
 You can add a new connection and change the IP address following the
@@ -223,22 +224,21 @@ Or:
 
 3.  Go to Administration → Scripts section and click on the Create script button
     in the top right-hand corner or simply clone the existing one.  
+    ```
     Name = Name the script  
     Scope = Manual host action  
     Type = Script  
     Execute on = Zabbix agent  
     Commands = Type here your command (> sudo kill -9 process_id_1 process_id_2
     process_id_3)
-
+    ```
 4.  Go to Monitoring → Hosts section, click on host and you should see there
     options under Scripts section your created script, execute it and do not
     forget to cleanup that script.
 
 Note: sudo commands will work only on DEV1 & DEV2.
 
-#### If nothing works, that means servers are so slow the only
-
-option is restart them from AWS EC2.
+#### If nothing works, that means servers are so slow the only option is restart them from AWS EC2.
 
 # Diagnose the problem
 
@@ -261,12 +261,14 @@ The most trustworthy websites are:
 <img src="How_to_diagnose_server_network_issues_figs/image1.png" style="width:6.5in;height:3.25in" />
 
 ### From CLI
-
-`sudo apt install speedtest-cli`
+```
+sudo apt install speedtest-cli
+```
 
 or
-
-`sudo pip3 install speedtest-cli`
+```
+sudo pip3 install speedtest-cli
+```
 
 ```
 
@@ -297,7 +299,7 @@ Upload: 532.47 Mbit/s
 
 ## Check connection speed to AWS
 
-This is to measure how far you are from the AWS data centers
+This is to measure how far you are from the AWS data centers.
 
 
 
