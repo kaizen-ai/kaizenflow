@@ -156,8 +156,7 @@ When there is a problem like being unable to connect or the wrong
 username/password with your prefered VPN server, try to use another one. Same
 if, for example, when there is a connection problem connecting to DEV servers
 
-Client setup of VPN servers is documented here: [<span
-class="underline">Set up - VPN and dev server access</span>](https://docs.google.com/document/d/1C4Ghrb9p3HjwkWuRCzCDtVV36mk-WR9OzneS6nTPE6Q/edit#heading=h.p9xdh0f4u3qm)
+Client setup of VPN servers is documented here: [<span class="underline">Set up - VPN and dev server access</span>](https://docs.google.com/document/d/1C4Ghrb9p3HjwkWuRCzCDtVV36mk-WR9OzneS6nTPE6Q/edit#heading=h.p9xdh0f4u3qm)
 
 # Connecting to Zabbix
 
@@ -251,15 +250,11 @@ This is about measuring your speed to connect to the closest Internet node.
 
 The most trustworthy websites are:
 
-### From [<span
-
-class="underline">https://speed.measurementlab.net/#/</span>](https://speed.measurementlab.net/#/)
+### From [<span class="underline">https://speed.measurementlab.net/#/</span>](https://speed.measurementlab.net/#/)
 
 <img src="How_to_diagnose_server_network_issues_figs/image4.png" style="width:6.5in;height:3.73611in" />
 
-### From [<span
-
-class="underline">https://www.speedtest.net/</span>](https://www.speedtest.net/)
+### From [<span class="underline">https://www.speedtest.net/</span>](https://www.speedtest.net/)
 
 <img src="How_to_diagnose_server_network_issues_figs/image1.png" style="width:6.5in;height:3.25in" />
 
@@ -302,7 +297,9 @@ Upload: 532.47 Mbit/s
 
 This is to measure how far you are from the AWS data centers
 
-[<span
+
+
+<span
 class="underline">https://www.cloudping.info/</span>](https://www.cloudping.info/)
 
 <img src="How_to_diagnose_server_network_issues_figs/image5.png" style="width:4.86561in;height:6.74479in" />
