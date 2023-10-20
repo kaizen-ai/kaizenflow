@@ -256,7 +256,7 @@ The most trustworthy websites are:
 
 <img src="How_to_diagnose_server_network_issues_figs/image4.png" style="width:6.5in;height:3.73611in" />
 
-### From [<span class="underline">https://www.speedtest.net/</span>](https://www.speedtest.net/)
+### From <a name="speedtest-net"></a>[<span class="underline">https://www.speedtest.net/</span>](https://www.speedtest.net/)
 
 <img src="How_to_diagnose_server_network_issues_figs/image1.png" style="width:6.5in;height:3.25in" />
 
