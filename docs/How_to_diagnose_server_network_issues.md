@@ -251,10 +251,7 @@ Upload: 532.47 Mbit/s
 ## Check connection speed to AWS
 
 - This is to measure how far you are from the AWS data centers.
-
-
-
-[<span class="underline">https://www.cloudping.info/</span>](https://www.cloudping.info/)
+- [<span class="underline">https://www.cloudping.info/</span>](https://www.cloudping.info/)
 
 <img src="How_to_diagnose_server_network_issues_figs/image5.png" style="width:4.86561in;height:6.74479in" />
 
@@ -294,14 +291,14 @@ Request timeout for icmp_seq 1
 13 packets transmitted, 0 packets received, 100.0% packet loss
 ```
 
-You can also do:
+- You can also do:
 
-```bash
-> tracert 13.51.59.43 (Windows)
-```
-```bash
-> traceroute 13.51.59.43 (Linux)
-```
+  ```bash
+  > tracert 13.51.59.43 (Windows)
+  ```
+  ```bash
+  > traceroute 13.51.59.43 (Linux)
+  ```
 
 ## Solutions to slow Internet
 
