@@ -344,6 +344,7 @@ Note: VSCode is more friendly with slow internet than Pycharm.
 
 [<span
 class="underline">crypto-kaizen-infra.kdbx</span>](https://drive.google.com/file/d/15i1NzVDly_Q0SudPIg0ndYVEZIrFsUTY/view?usp=sharing)
+
 Software to use: [<span
 class="underline">https://keepass.info/</span>](https://keepass.info/)
 
