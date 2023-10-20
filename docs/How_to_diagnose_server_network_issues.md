@@ -39,72 +39,46 @@
 # Procedure for handling issues
 
 - Make sure you are not the only one experiencing the issue
-
   - We don't want to distract the team for something that it's specific of your
     setup
-
   - [ ] Do you have a connection working?
-
     - ping google.com, amazon.com
-
     - Do a speed test and compare it to your usual speed
-
     - Can you ping the EU VPN?
-
     - Can you ping the US VPN?
-
   - [ ] Is the problem your VNC?
-
   - [ ] Can you ssh on DEV1 server, or DEV2?
-
   - [ ] Check on Zabbix to see what's the "official view"
-
 - If you are sure that it's not just you
-
   - [ ] Broadcast the problem to TG @all, asking who else is seeing the problem?
 
 # Servers
 
 VPN IPs
-
 - EU (eu-north) - 13.51.59.43
-
 - USA (us-east-1) - 34.200.203.37
-
 - Everybody has a VPN profile for both servers
 
 The current allocation of people on the server is:
 
 - Dev1
-
   - 172.30.2.136
-
   - Dan, Greg, GP, Juraj, Max, Nikola
-
 - Dev2
-
   - 172.30.2.128
-
   - Danya, Grisha, Sonya, Toma
 
 ## Etiquette to switch between servers
 
 Procedure:
-
 - [ ] Try to make sure that it's not just your issue, before raising an alarm
-
 - [ ] Broadcast the issue to Telegram @all, asking if everyone sees the same
       problem
-
 - [ ] If the problem is general ping IT on the channel
-
 - [ ] File a bug about the emergency so we can collect info there
-
 - [ ] See if we can kill some process on the unhealthy server to re-establish
       basic functionality
-
 - [ ] Check what's the status of the other server
-
 - [ ] Tell people that you are switching server
 
 ## Switching between DEV servers
@@ -191,9 +165,7 @@ Summary of Docker disk usage.
 ### Zabbix - Docker / Server's processes
 
 1.  Connect to VPN.
-
 2.  Log in to zabbix with Admin or Crypto account.
-
 3.  Go to _Monitoring → Hosts_ section, click on host and you should see there
     options under Scripts section like Display all processes, List all services,
     List docker containers, etc.
@@ -219,9 +191,7 @@ Or:
 #### [ADMIN] If CLI is not available try to use the Zabbix web interface.
 
 1.  Connect to VPN
-
 2.  Login to Zabbix as Administrator
-
 3.  Go to Administration → Scripts section and click on the Create script button
     in the top right-hand corner or simply clone the existing one.  
     Name = Name the script  
@@ -229,12 +199,10 @@ Or:
     Type = Script  
     Execute on = Zabbix agent  
     Commands = Type here your command (> sudo kill -9 process_id_1 process_id_2
-    process_id_3)
-    
+    process_id_3)    
 4.  Go to Monitoring → Hosts section, click on host and you should see there
     options under Scripts section your created script, execute it and do not
     forget to cleanup that script.
-
 Note: sudo commands will work only on DEV1 & DEV2.
 
 #### If nothing works, that means servers are so slow the only option is restart them from AWS EC2.
@@ -242,7 +210,6 @@ Note: sudo commands will work only on DEV1 & DEV2.
 # Diagnose the problem
 
 You should report all the information below from your client in an issue like
-
 https://github.com/cryptokaizen/cmamp/issues/1370
 
 ## Check Internet speed to your provider
@@ -270,30 +237,19 @@ sudo pip3 install speedtest-cli
 ```
 
 ```
-
 > speedtest-cli
-
 Retrieving speedtest.net configuration...
-
 Testing from Verizon Fios (71.191.84.105)...
-
 Retrieving speedtest.net server list...
-
 Selecting best server based on ping...
-
 Hosted by PhoenixNAP Global IT Services (Ashburn, VA) [25.20 km]:
 7.913 ms
-
 Testing download
 speed................................................................................
-
 Download: 660.01 Mbit/s
-
 Testing upload
 speed......................................................................................................
-
 Upload: 532.47 Mbit/s
-
 ```
 
 ## Check connection speed to AWS
@@ -309,9 +265,7 @@ This is to measure how far you are from the AWS data centers.
 ## Ping our VPN server
 
 IP addresses for tests:
-
 EU (eu-north-1) - 13.51.59.43
-
 USA (us-east-1) - 34.200.203.37
 
 ### Very fast ping
@@ -356,15 +310,10 @@ You can also do:
 ## Solutions to slow Internet
 
 In order of preference:
-
 - ExpressVPN to tunnel your traffic
-
 - Using remote PyCharm / VisualStudio
-
 - Change VNC stream quality to lower frames per second to lower resolution
-
 - Create a CK VPN at a different AWS location
-
   - It depends on which AWS data center is closest
 
 ### Using a VPN connection
@@ -374,7 +323,6 @@ class="underline">https://www.expressvpn.com/vpn-server</span>](https://www.expr
 
 Install the VPN from here [<span
 class="underline">https://www.expressvpn.com/vpn-software</span>](https://www.expressvpn.com/vpn-software)
-
 The activation code is EHLJXHK6G3KD6I9D4NNZ88J
 
 ### Run the speed test
@@ -396,7 +344,6 @@ Note: VSCode is more friendly with slow internet than Pycharm.
 
 [<span
 class="underline">crypto-kaizen-infra.kdbx</span>](https://drive.google.com/file/d/15i1NzVDly_Q0SudPIg0ndYVEZIrFsUTY/view?usp=sharing)
-
 Software to use: [<span
 class="underline">https://keepass.info/</span>](https://keepass.info/)
 
