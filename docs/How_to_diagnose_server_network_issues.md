@@ -20,8 +20,8 @@
       - [If nothing works, that means servers are so slow the only](#if-nothing-works-that-means-servers-are-so-slow-the-only)
 - [Diagnose the problem](#diagnose-the-problem)
   * [Check Internet speed to your provider](#check-internet-speed-to-your-provider)
-    + [From [<span](#from-span)
-    + [From [<span](#from-span-1)
+    + [From Speed Measurement Lab] (#speed-measurement-lab)
+    + [From Speedtest.net/](#speedtest-net)
     + [From CLI](#from-cli)
   * [Check connection speed to AWS](#check-connection-speed-to-aws)
   * [Ping our VPN server](#ping-our-vpn-server)
@@ -252,7 +252,7 @@ This is about measuring your speed to connect to the closest Internet node.
 
 The most trustworthy websites are:
 
-### From [<span class="underline">https://speed.measurementlab.net/#/</span>](https://speed.measurementlab.net/#/)
+### From <a name="speed-measurement-lab"></a>[<span class="underline">https://speed.measurementlab.net/#/</span>](https://speed.measurementlab.net/#/)
 
 <img src="How_to_diagnose_server_network_issues_figs/image4.png" style="width:6.5in;height:3.73611in" />
 
