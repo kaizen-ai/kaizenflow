@@ -19,9 +19,9 @@
       - [[ADMIN] If CLI is not available try to use the Zabbix web](#admin-if-cli-is-not-available-try-to-use-the-zabbix-web)
       - [If nothing works, that means servers are so slow the only](#if-nothing-works-that-means-servers-are-so-slow-the-only)
 - [Diagnose the problem](#diagnose-the-problem)
-  * [Check Internet speed to your provider](#check-internet-speed-to-your-provider)
-    + [From Speed Measurement Lab] (#speed-measurement-lab)
-    + [From Speedtest.net/](#speedtest-net)
+  * [Check Internet speed to your provider](#check-internet-speed-to-your-provider)   
+    - [From Speed Measurement Lab](#speed-measurement-lab)
+    - [From Speedtest.net](#speedtest-net)
     + [From CLI](#from-cli)
   * [Check connection speed to AWS](#check-connection-speed-to-aws)
   * [Ping our VPN server](#ping-our-vpn-server)
@@ -224,14 +224,13 @@ Or:
 
 3.  Go to Administration → Scripts section and click on the Create script button
     in the top right-hand corner or simply clone the existing one.  
-    ```
     Name = Name the script  
     Scope = Manual host action  
     Type = Script  
     Execute on = Zabbix agent  
     Commands = Type here your command (> sudo kill -9 process_id_1 process_id_2
     process_id_3)
-    ```
+    
 4.  Go to Monitoring → Hosts section, click on host and you should see there
     options under Scripts section your created script, execute it and do not
     forget to cleanup that script.
@@ -318,49 +317,31 @@ USA (us-east-1) - 34.200.203.37
 ### Very fast ping
 
 ```
-
 > ping -c 10 34.200.203.37
-
 …
-
 10 packets transmitted, 10 packets received, 0.0% packet loss
-
 round-trip min/avg/max/stddev = 4.289/5.258/6.107/0.551 ms
-
 ```
 
 ### Slow ping
 
 ```
-
 > ping -c 10 13.51.59.43
-
 10 packets transmitted, 10 packets received, 0.0% packet loss
-
 round-trip min/avg/max/stddev = 107.014/107.982/108.762/0.583 ms
-
 ```
 
 ### No ping
 
 ```
-
 (base) Air-Pomazkin:~ pomazking$ ping 13.51.59.43
-
 PING 13.51.59.43 (13.51.59.43): 56 data bytes
-
 Request timeout for icmp_seq 0
-
 Request timeout for icmp_seq 1
-
 …
-
 ^C
-
 --- 13.51.59.43 ping statistics ---
-
 13 packets transmitted, 0 packets received, 100.0% packet loss
-
 ```
 
 You can also do:
