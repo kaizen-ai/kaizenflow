@@ -55,10 +55,9 @@
 # Servers
 
 - VPN IPs
-  - EU (eu-north) - 13.51.59.43
-  - USA (us-east-1) - 34.200.203.37
+  - EU (eu-north): 13.51.59.43
+  - USA (us-east-1): 34.200.203.37
   - Everybody has a VPN profile for both servers
-
 - The current allocation of people on the server is:
   - Dev1
     - 172.30.2.136
