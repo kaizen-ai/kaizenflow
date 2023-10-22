@@ -352,7 +352,7 @@ def get_current_time(
     tz: str,
     # TODO(gp): Add *
     # *,
-    event_loop: Optional[asyncio.AbstractEventLoop] = None
+    event_loop: Optional[asyncio.AbstractEventLoop] = None,
 ) -> pd.Timestamp:
     """
     Return current time in UTC / ET timezone or as a naive time.
