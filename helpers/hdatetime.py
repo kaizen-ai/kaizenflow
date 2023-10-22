@@ -87,6 +87,19 @@ def dassert_is_strict_datetime(datetime_: StrictDatetime) -> None:
     )
 
 
+def _dassert_str_is_date(date: str) -> None:
+    """
+    Check if an input string is a date.
+
+    :param date: date as string, e.g., "20221101"
+    """
+    hdbg.dassert_isinstance(date, str)
+    try:
+        _ = datetime.datetime.strptime(date, "%Y%m%d")
+    except ValueError as e:
+        raise ValueError(f"date='{date}' doesn't have the right format: {e}")
+
+
 # TODO(Grisha): also pass timezone.
 def to_datetime(datetime_: Datetime) -> datetime.datetime:
     """
