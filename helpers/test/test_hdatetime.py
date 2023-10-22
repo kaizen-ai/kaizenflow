@@ -673,3 +673,29 @@ class Test_str_to_timestamp1(hunitest.TestCase):
         actual = str(err.exception)
         expected = "Unknown string format: qwe28abc07-201234 present at position 0"
         self.assert_equal(actual, expected)
+
+# #############################################################################
+# Test__dassert_str_is_date
+# #############################################################################
+
+
+class Test__dassert_str_is_date(hunitest.TestCase):
+    def test_dassert_str_is_date_valid(self) -> None:
+        """
+        Test for valid date string(should pass).
+        """
+        date_str = "20221101"
+        hdateti._dassert_str_is_date(date_str)
+    
+    def test_dassert_str_is_date_invalid(self) -> None:
+        """
+        Test for invalid date that has dashes(should raise an error).
+        """
+        date = "2022-11-01"
+        # Invalid datetime, should raise a ValueError.
+        with self.assertRaises(ValueError) as err:
+            hdateti._dassert_str_is_date(date)
+        actual = str(err.exception)
+        expected = "date='2022-11-01' doesn't have the right format: " \
+           "time data '2022-11-01' does not match format '%Y%m%d'"
+        self.assert_equal(actual, expected)
