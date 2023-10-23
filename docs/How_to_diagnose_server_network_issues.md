@@ -215,11 +215,11 @@ Or:
 
 ### From <a name="speed-measurement-lab"></a>https://speed.measurementlab.net/#/
 
-<img src="How_to_diagnose_server_network_issues_figs/image4.png" style="width:6.5in;height:3.73611in" />
+![speed-measurement-lab-image](How_to_diagnose_server_network_issues_figs/image4.png)
 
 ### From <a name="speedtest-net"></a>https://www.speedtest.net/
 
-<img src="How_to_diagnose_server_network_issues_figs/image1.png" style="width:6.5in;height:3.25in" />
+![speedtest-image](How_to_diagnose_server_network_issues_figs/image1.png)
 
 ### From CLI
 ```bash
@@ -252,7 +252,7 @@ Upload: 532.47 Mbit/s
 - This is to measure how far you are from the AWS data centers.
 - https://www.cloudping.info/
 
-<img src="How_to_diagnose_server_network_issues_figs/image5.png" style="width:4.86561in;height:6.74479in" />
+![cloudping-image](How_to_diagnose_server_network_issues_figs/image5.png)
 
 ## Ping our VPN server
 
@@ -317,11 +317,11 @@ Request timeout for icmp_seq 1
 
 ### Run the speed test
 
-https://www.expressvpn.com/what-is-vpn/vpn-speed-test
+- https://www.expressvpn.com/what-is-vpn/vpn-speed-test
 
-<img src="How_to_diagnose_server_network_issues_figs/image2.png" style="width:2.13293in;height:3.47396in" />
+![expressvpn-home-image](How_to_diagnose_server_network_issues_figs/image1.png)
 
-<img src="How_to_diagnose_server_network_issues_figs/image3.png" style="width:5.79688in;height:5.02934in" />
+![expressvpn-speedtest-image](How_to_diagnose_server_network_issues_figs/image1.png)
 
 ### Using a remote editor
 
