@@ -213,7 +213,7 @@ Or:
 
 - The most trustworthy websites are:
 
-### From https://speed.measurementlab.net/
+### From https://speed.measurementlab.net
 
 ![speed-measurement-lab-image](How_to_diagnose_server_network_issues_figs/image4.png)
 
