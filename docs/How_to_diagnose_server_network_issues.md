@@ -20,8 +20,8 @@
       - [If nothing works, that means servers are so slow the only](#if-nothing-works-that-means-servers-are-so-slow-the-only)
 - [Diagnose the problem](#diagnose-the-problem)
   * [Check Internet speed to your provider](#check-internet-speed-to-your-provider)   
-    - [From Speed Measurement Lab](#speed-measurement-lab)
-    - [From Speedtest.net](#speedtest-net)
+    - [From Speed Measurement Lab](#from-httpsspeedmeasurementlabnet)
+    - [From Speedtest.net](#from-httpswwwspeedtestnet)
     + [From CLI](#from-cli)
   * [Check connection speed to AWS](#check-connection-speed-to-aws)
   * [Ping our VPN server](#ping-our-vpn-server)
@@ -213,12 +213,10 @@ Or:
 
 - The most trustworthy websites are:
 
-<a name="speed-measurement-lab"></a>
 ### From https://speed.measurementlab.net/#/
 
 ![speed-measurement-lab-image](How_to_diagnose_server_network_issues_figs/image4.png)
 
-<a name="speedtest-net"></a>
 ### From https://www.speedtest.net/
 
 ![speedtest-image](How_to_diagnose_server_network_issues_figs/image1.png)
