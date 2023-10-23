@@ -587,7 +587,6 @@ def get_system_run_timestamps(
     tz = "UTC"
     # Filter by start / end timestamps using system run start timestamp.
     if start_timestamp is not None:
-        # TODO(Grisha): use `str_to_timestamp()` from `helpers.hdatetime.py`.
         system_run_timestamps = [
             (system_run_start_timestamp, system_run_end_timestamp)
             for (
