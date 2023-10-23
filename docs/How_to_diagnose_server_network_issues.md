@@ -213,7 +213,7 @@ Or:
 
 - The most trustworthy websites are:
 
-### From https://speed.measurementlab.net/#/
+### From https://speed.measurementlab.net/
 
 ![speed-measurement-lab-image](How_to_diagnose_server_network_issues_figs/image4.png)
 
@@ -332,4 +332,4 @@ Request timeout for icmp_seq 1
 
 - [crypto-kaizen-infra.kdbx](https://drive.google.com/file/d/15i1NzVDly_Q0SudPIg0ndYVEZIrFsUTY/view?usp=sharing)
 - Software to use: https://keepass.info/
-- To get credentials ask GP / Tom
+- To get credentials ask GP
