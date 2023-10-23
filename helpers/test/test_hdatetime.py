@@ -687,19 +687,18 @@ class Test_str_to_timestamp1(hunitest.TestCase):
 
 
 class Test_dassert_str_is_date(hunitest.TestCase):
-    def test_dassert_str_is_date_valid(self) -> None:
+    def test1(self) -> None:
         """
-        Test for valid date string(should pass).
+        Test valid date.
         """
         date_str = "20221101"
         hdateti.dassert_str_is_date(date_str)
 
-    def test_dassert_str_is_date_invalid(self) -> None:
+    def test2(self) -> None:
         """
-        Test for invalid date that has dashes(should raise an error).
+        Test invalid date.
         """
         date = "2022-11-01"
-        # Invalid datetime, should raise a ValueError.
         with self.assertRaises(ValueError) as err:
             hdateti.dassert_str_is_date(date)
         actual = str(err.exception)
