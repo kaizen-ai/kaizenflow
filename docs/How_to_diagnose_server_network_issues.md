@@ -108,7 +108,7 @@ address.
   ```
 ### VS Code / PyCharm (gateway)
 
-- You can add a new connection and change the IP address following the documentation in [<span class="underline">Using remote PyCharm / VisualStudio</span>](https://docs.google.com/document/d/1a3fsA613PShd1Lcz_YjOHWg0XXCMAaKOo5UIHaiQ-rk/edit)
+- You can add a new connection and change the IP address following the documentation in [Using remote PyCharm / VisualStudio](https://docs.google.com/document/d/1a3fsA613PShd1Lcz_YjOHWg0XXCMAaKOo5UIHaiQ-rk/edit)
 
 ## Switching between VPNs
 
@@ -125,16 +125,16 @@ address.
   username/password with your prefered VPN server, try to use another one. Same
   if, for example, when there is a connection problem connecting to DEV servers
 
-- Client setup of VPN servers is documented here: [<span class="underline">Set up - VPN and dev server access</span>](https://docs.google.com/document/d/1C4Ghrb9p3HjwkWuRCzCDtVV36mk-WR9OzneS6nTPE6Q/edit#heading=h.p9xdh0f4u3qm)
+- Client setup of VPN servers is documented here: [Set up - VPN and dev server access](https://docs.google.com/document/d/1C4Ghrb9p3HjwkWuRCzCDtVV36mk-WR9OzneS6nTPE6Q/edit#heading=h.p9xdh0f4u3qm)
 
 # Connecting to Zabbix
 
 - Documentation:
-  [<span class="underline">Zabbix - Frontend sections</span>](https://docs.google.com/document/d/1XUuuCrqujzM5K7h7bu92fq32e4ZDyJnK0-IsaLuseRU/edit?usp=sharing)
+  [Zabbix - Frontend sections](https://docs.google.com/document/d/1XUuuCrqujzM5K7h7bu92fq32e4ZDyJnK0-IsaLuseRU/edit?usp=sharing)
 
 - You need to be on the VPN to have access.
 
-- URL: [<span class="underline">http://172.30.3.65/zabbix</span>](http://172.30.3.65/zabbix)
+- URL: http://172.30.3.65/zabbix
 
 - Credentials (View only user): Crypto / 67d767a4b9
 
@@ -213,11 +213,11 @@ Or:
 
 - The most trustworthy websites are:
 
-### From <a name="speed-measurement-lab"></a>[<span class="underline">https://speed.measurementlab.net/#/</span>](https://speed.measurementlab.net/#/)
+### From <a name="speed-measurement-lab"></a>https://speed.measurementlab.net/#/
 
 <img src="How_to_diagnose_server_network_issues_figs/image4.png" style="width:6.5in;height:3.73611in" />
 
-### From <a name="speedtest-net"></a>[<span class="underline">https://www.speedtest.net/</span>](https://www.speedtest.net/)
+### From <a name="speedtest-net"></a>https://www.speedtest.net/
 
 <img src="How_to_diagnose_server_network_issues_figs/image1.png" style="width:6.5in;height:3.25in" />
 
@@ -250,7 +250,7 @@ Upload: 532.47 Mbit/s
 ## Check connection speed to AWS
 
 - This is to measure how far you are from the AWS data centers.
-- [<span class="underline">https://www.cloudping.info/</span>](https://www.cloudping.info/)
+- https://www.cloudping.info/
 
 <img src="How_to_diagnose_server_network_issues_figs/image5.png" style="width:4.86561in;height:6.74479in" />
 
@@ -310,17 +310,14 @@ Request timeout for icmp_seq 1
 
 ### Using a VPN connection
 
-- Check what is the closest location available to you: [<span
-  class="underline">https://www.expressvpn.com/vpn-server</span>](https://www.expressvpn.com/vpn-server)
+- Check what is the closest location available to you: https://www.expressvpn.com/vpn-server
 
-- Install the VPN from here [<span
-  class="underline">https://www.expressvpn.com/vpn-software</span>](https://www.expressvpn.com/vpn-software)
+- Install the VPN from here https://www.expressvpn.com/vpn-software
 - The activation code is EHLJXHK6G3KD6I9D4NNZ88J
 
 ### Run the speed test
 
-[<span
-class="underline">https://www.expressvpn.com/what-is-vpn/vpn-speed-test</span>](https://www.expressvpn.com/what-is-vpn/vpn-speed-test)
+https://www.expressvpn.com/what-is-vpn/vpn-speed-test
 
 <img src="How_to_diagnose_server_network_issues_figs/image2.png" style="width:2.13293in;height:3.47396in" />
 
@@ -328,11 +325,11 @@ class="underline">https://www.expressvpn.com/what-is-vpn/vpn-speed-test</span>](
 
 ### Using a remote editor
 
-- [<span class="underline">Using remote PyCharm / VisualStudio</span>](https://docs.google.com/document/d/1a3fsA613PShd1Lcz_YjOHWg0XXCMAaKOo5UIHaiQ-rk/edit)
+- [Using remote PyCharm / VisualStudio](https://docs.google.com/document/d/1a3fsA613PShd1Lcz_YjOHWg0XXCMAaKOo5UIHaiQ-rk/edit)
 - Note: VSCode is more friendly with slow internet than Pycharm.
 
 # Keepass
 
-- [<span class="underline">crypto-kaizen-infra.kdbx</span>](https://drive.google.com/file/d/15i1NzVDly_Q0SudPIg0ndYVEZIrFsUTY/view?usp=sharing)
-- Software to use: [<span class="underline">https://keepass.info/</span>](https://keepass.info/)
+- [crypto-kaizen-infra.kdbx](https://drive.google.com/file/d/15i1NzVDly_Q0SudPIg0ndYVEZIrFsUTY/view?usp=sharing)
+- Software to use: https://keepass.info/
 - To get credentials ask GP / Tom
