@@ -387,7 +387,7 @@ def get_run_date(start_timestamp_as_str: Optional[str]) -> str:
         # TODO(Dan): Add assert for `start_timestamp_as_str` regex.
         run_date = start_timestamp_as_str.split("_")[0]
     _LOG.info(hprint.to_str("run_date"))
-    hdateti._dassert_str_is_date(run_date)
+    hdateti.dassert_str_is_date(run_date)
     return run_date
 
 

@@ -682,17 +682,17 @@ class Test_str_to_timestamp1(hunitest.TestCase):
 
 
 # #############################################################################
-# Test__dassert_str_is_date
+# Test_dassert_str_is_date
 # #############################################################################
 
 
-class Test__dassert_str_is_date(hunitest.TestCase):
+class Test_dassert_str_is_date(hunitest.TestCase):
     def test_dassert_str_is_date_valid(self) -> None:
         """
         Test for valid date string(should pass).
         """
         date_str = "20221101"
-        hdateti._dassert_str_is_date(date_str)
+        hdateti.dassert_str_is_date(date_str)
 
     def test_dassert_str_is_date_invalid(self) -> None:
         """
@@ -701,7 +701,7 @@ class Test__dassert_str_is_date(hunitest.TestCase):
         date = "2022-11-01"
         # Invalid datetime, should raise a ValueError.
         with self.assertRaises(ValueError) as err:
-            hdateti._dassert_str_is_date(date)
+            hdateti.dassert_str_is_date(date)
         actual = str(err.exception)
         expected = (
             "date='2022-11-01' doesn't have the right format: "

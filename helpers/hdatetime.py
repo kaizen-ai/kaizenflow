@@ -87,7 +87,7 @@ def dassert_is_strict_datetime(datetime_: StrictDatetime) -> None:
     )
 
 
-def _dassert_str_is_date(date: str) -> None:
+def dassert_str_is_date(date: str) -> None:
     """
     Check if an input string is a date.
 
