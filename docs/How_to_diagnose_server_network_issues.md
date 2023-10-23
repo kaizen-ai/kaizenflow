@@ -319,9 +319,9 @@ Request timeout for icmp_seq 1
 
 - https://www.expressvpn.com/what-is-vpn/vpn-speed-test
 
-![expressvpn-home-image](How_to_diagnose_server_network_issues_figs/image1.png)
+![expressvpn-home-image](How_to_diagnose_server_network_issues_figs/image2.png)
 
-![expressvpn-speedtest-image](How_to_diagnose_server_network_issues_figs/image1.png)
+![expressvpn-speedtest-image](How_to_diagnose_server_network_issues_figs/image3.png)
 
 ### Using a remote editor
 
