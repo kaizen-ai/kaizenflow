@@ -4,32 +4,32 @@
 
 - [Guidelines for describing workflows](#guidelines-for-describing-workflows)
 - [Markdown vs Google Docs](#markdown-vs-google-docs)
-  * [In general](#in-general)
-  * [Markdown pros](#markdown-pros)
-  * [Google Docs pros](#google-docs-pros)
-  * [Rules of thumb](#rules-of-thumb)
-  * [Useful references](#useful-references)
+  - [In general](#in-general)
+  - [Markdown pros](#markdown-pros)
+  - [Google Docs pros](#google-docs-pros)
+  - [Rules of thumb](#rules-of-thumb)
+  - [Useful references](#useful-references)
 - [Style and cosmetic lints](#style-and-cosmetic-lints)
-  * [Always use markdown linter](#always-use-markdown-linter)
-  * [Table of content (TOC)](#table-of-content-toc)
-  * [Use nice 80 columns formatting for txt files](#use-nice-80-columns-formatting-for-txt-files)
-  * [Empty line after heading](#empty-line-after-heading)
-  * [Bullet lists](#bullet-lists)
-  * [Using `code` style](#using-code-style)
-  * [Indenting `code` style](#indenting-code-style)
-  * [Embedding screenshots](#embedding-screenshots)
-  * [Improve your written English](#improve-your-written-english)
-  * [Make sure your markdown looks good](#make-sure-your-markdown-looks-good)
+  - [Always use markdown linter](#always-use-markdown-linter)
+  - [Table of content (TOC)](#table-of-content-toc)
+  - [Use nice 80 columns formatting for txt files](#use-nice-80-columns-formatting-for-txt-files)
+  - [Empty line after heading](#empty-line-after-heading)
+  - [Bullet lists](#bullet-lists)
+  - [Using `code` style](#using-code-style)
+  - [Indenting `code` style](#indenting-code-style)
+  - [Embedding screenshots](#embedding-screenshots)
+  - [Improve your written English](#improve-your-written-english)
+  - [Make sure your markdown looks good](#make-sure-your-markdown-looks-good)
 - [Google docs style conventions](#google-docs-style-conventions)
-  * [Headings](#headings)
-  * [Font](#font)
+  - [Headings](#headings)
+  - [Font](#font)
 - [Convert between Gdocs and Markdown](#convert-between-gdocs-and-markdown)
-  * [Gdocs -> Markdown](#gdocs---markdown)
-    + [Using `convert_docx_to_markdown.py`](#using-convert_docx_to_markdownpy)
-    + [Process](#process)
-    + [Cleaning up converted markdown](#cleaning-up-converted-markdown)
-    + [Other approaches](#other-approaches)
-  * [Markdown -> Gdocs](#markdown---gdocs)
+  - [Gdocs -> Markdown](#gdocs---markdown)
+    - [Using `convert_docx_to_markdown.py`](#using-convert_docx_to_markdownpy)
+    - [Process](#process)
+    - [Cleaning up converted markdown](#cleaning-up-converted-markdown)
+    - [Other approaches](#other-approaches)
+  - [Markdown -> Gdocs](#markdown---gdocs)
 
 <!-- tocstop -->
 
@@ -303,10 +303,10 @@
   ```
   > ../dev_scripts/convert_docx_to_markdown.py --docx_file Tools_Docker.docx --md_file Tools_Docker.md
   ```
-  - This command should be run directly under the target output directory for 
-    the Markdown file, in order to generate correct image links. Otherwise, 
+  - This command should be run directly under the target output directory for
+    the Markdown file, in order to generate correct image links. Otherwise,
     you'll need to manually fix the image links.
-  - File names can't contain any spaces. Therefore, use underscores `_` to 
+  - File names can't contain any spaces. Therefore, use underscores `_` to
     replace any spaces.
 
 ### Cleaning up converted markdown
@@ -327,6 +327,14 @@
         or any other published Markdown format as reference
       - Add missing ``` around code blocks. These could be missing in the
         original Google doc. Also adjust code block indentations if needed
+      - The generated markdown may convert http links as `html` `<span>`
+        objects. This hinders the readability of the `md` file. In this case,
+        manually convert to a standard `http://` link:
+        - `[<span class="underline">https://www.sorrentum.org/</span>](https://www.sorrentum.org/)`
+        -> `https://www.sorrentum.org/`
+      - Replace the `html` `<img>` tag with a markdown link:
+        - `<img src="docs/VisualStudio_Code_figs/image1.png"/>` -> `![alt_text](docs/VisualStudio_Code_figs/image1.png")`
+
 - Remove empty lines manually
   ```
   :'<,'>! perl -ne 'print if /\S/'
@@ -338,7 +346,7 @@
     ```
   - What the linter will do:
     - Build TOC automatically
-    - Adjust the indentation to improve the Markdown's format (but the 
+    - Adjust the indentation to improve the Markdown's format (but the
       precondition is that you have properly adjusted the indentation levels).
     - Remove extra empty lines under headings
     - Adjust text layout
@@ -346,10 +354,10 @@
   - If the linter messes up the text
     - File bugs in `amp` with examples what the linter does incorrectly
 - Last steps
-  - Compare the generated markdown file with the original Gdoc from top to 
+  - Compare the generated markdown file with the original Gdoc from top to
     bottom to ensure accurate rendering.
-  - Review the markdown file on GitHub to make sure it looks good, as it
-    may slightly differ from the preview in your local markdown editor
+  - Review the markdown file on GitHub to make sure it looks good, as it may
+    slightly differ from the preview in your local markdown editor
 - When a gdoc becomes obsolete or it's deleted
   - Add a note at the top of a gdoc explaining what happened
   - Example: "Moved to /new_markdown_file.md"
@@ -371,9 +379,11 @@
   - One needs to accept/reject all suggestions in a gdoc as the extension works
     poorly when a document is edited in the suggestion mode
 - Approach 2 - Online converter:
+
   - [Google-docs-to-markdown/](https://mr0grog.github.io/google-docs-to-markdown/)
 
-- Also need to go through [Cleaning up converted markdown](#cleaning-up-converted-markdown)
+- Also need to go through
+  [Cleaning up converted markdown](#cleaning-up-converted-markdown)
 - You might need to remove artifacts manually
 
 ## Markdown -> Gdocs
