@@ -530,6 +530,11 @@ def str_to_timestamp(
     """
     Convert timestamp as string to `pd.Timestamp`.
 
+    The function localizes input time to the specified timezone,
+    e.g., if `timestamp_as_str=20230523_150513` and:
+    - `tz="UTC"` -> `2023-05-23 15:05:13+0000`
+    - `tz="US/Eastern"` -> `2023-05-23 15:05:13-0400`
+
     :param timestamp_as_str: string datetime (e.g., 20230523_150513)
     :param tz: timezone info (e.g., "US/Eastern")
     :param datetime_format: datetime format (e.g., %Y%m%d_%H%M%S)
