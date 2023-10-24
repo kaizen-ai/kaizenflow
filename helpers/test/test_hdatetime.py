@@ -673,3 +673,14 @@ class Test_str_to_timestamp1(hunitest.TestCase):
         actual = str(err.exception)
         expected = "Unknown string format: qwe28abc07-201234 present at position 0"
         self.assert_equal(actual, expected)
+
+    def test5(self) -> None:
+        """
+        Test valid datetime with UTC timezone.
+        """
+        datetime_str = "20230728_150513"
+        timezone_info = "UTC"
+        format = "%Y%m%d_%H%M%S"
+        actual = hdateti.str_to_timestamp(datetime_str, timezone_info, datetime_format=format)
+        expected = pd.Timestamp('2023-07-28 15:05:13+0000', tz='UTC')
+        self.assertEqual(actual, expected)
