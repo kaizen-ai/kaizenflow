@@ -163,7 +163,7 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Type Hints](docs/Type_hints.md)
 
-- [PyCharm Figs](docs/PyCharm_figs.md)
+- [PyCharm](docs/PyCharm.md)
 
 # DeFi: start developing
 

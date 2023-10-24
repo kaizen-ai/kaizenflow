@@ -637,9 +637,15 @@ class Test_str_to_timestamp1(hunitest.TestCase):
         """
         datetime_str = "20230728_150513"
         timezone_info = "US/Eastern"
+<<<<<<< HEAD
         datetime_format = "%Y%m%d_%H%M%S"
         actual = hdateti.str_to_timestamp(
             datetime_str, timezone_info, datetime_format=datetime_format
+=======
+        format = "%Y%m%d_%H%M%S"
+        actual = hdateti.str_to_timestamp(
+            datetime_str, timezone_info, datetime_format=format
+>>>>>>> master
         )
         expected = pd.Timestamp("2023-07-28 15:05:13-0400", tz="US/Eastern")
         self.assertEqual(actual, expected)
@@ -668,7 +674,11 @@ class Test_str_to_timestamp1(hunitest.TestCase):
         # The datetime format does not match the string representation of datetime.
         with self.assertRaises(ValueError) as err:
             hdateti.str_to_timestamp(
+<<<<<<< HEAD
                 datetime_str, timezone_info, datetime_format=datetime_format
+=======
+                datetime_str, timezone_info, datetime_format=format
+>>>>>>> master
             )
         actual = str(err.exception)
         expected = "time data '28-07-2023 15:05:13' does not match format '%Y%m%d_%H%M%S' (match)"
@@ -698,6 +708,7 @@ class Test_str_to_timestamp1(hunitest.TestCase):
 
 
 class Test_dassert_str_is_date(hunitest.TestCase):
+<<<<<<< HEAD
     """
     Test that the function checks a string representation of date correctly.
     """
@@ -705,6 +716,11 @@ class Test_dassert_str_is_date(hunitest.TestCase):
         """
         Test valid date.
         - date has a valid format
+=======
+    def test1(self) -> None:
+        """
+        Test valid date.
+>>>>>>> master
         """
         date_str = "20221101"
         hdateti.dassert_str_is_date(date_str)
@@ -712,7 +728,10 @@ class Test_dassert_str_is_date(hunitest.TestCase):
     def test2(self) -> None:
         """
         Test invalid date.
+<<<<<<< HEAD
         - date has an invalid format
+=======
+>>>>>>> master
         """
         date = "2022-11-01"
         with self.assertRaises(ValueError) as err:
