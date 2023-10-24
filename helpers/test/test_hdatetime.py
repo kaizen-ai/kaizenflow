@@ -626,15 +626,20 @@ class Test_convert_timestamp_to_unix_epoch(hunitest.TestCase):
 
 
 class Test_str_to_timestamp1(hunitest.TestCase):
+    """
+    Test if string representation of datetime is converted correctly
+    """
     def test1(self) -> None:
         """
         Test valid datetime with format.
+        - `datetime_str` has a valid format
+        - `datetime_format` has a valid pattern for `datetime_str`
         """
         datetime_str = "20230728_150513"
         timezone_info = "US/Eastern"
-        format = "%Y%m%d_%H%M%S"
+        datetime_format = "%Y%m%d_%H%M%S"
         actual = hdateti.str_to_timestamp(
-            datetime_str, timezone_info, datetime_format=format
+            datetime_str, timezone_info, datetime_format=datetime_format
         )
         expected = pd.Timestamp("2023-07-28 15:05:13-0400", tz="US/Eastern")
         self.assertEqual(actual, expected)
@@ -642,6 +647,8 @@ class Test_str_to_timestamp1(hunitest.TestCase):
     def test2(self) -> None:
         """
         Test valid datetime without format.
+        - `datetime_str` has a valid format
+        - `datetime_format` is not defined
         """
         datetime_str = "2023-07-28 15:05:13"
         timezone_info = "US/Eastern"
@@ -652,14 +659,16 @@ class Test_str_to_timestamp1(hunitest.TestCase):
     def test3(self) -> None:
         """
         Test invalid datetime with format.
+        - `datetime_str` has a valid format
+        - `datetime_format` has an invalid pattern for `datetime_str`
         """
         datetime_str = "28-07-2023 15:05:13"
         timezone_info = "US/Eastern"
-        format = "%Y%m%d_%H%M%S"
-        # Invalid datetime, should raise a ValueError.
+        datetime_format = "%Y%m%d_%H%M%S"
+        # The datetime format does not match the string representation of datetime.
         with self.assertRaises(ValueError) as err:
             hdateti.str_to_timestamp(
-                datetime_str, timezone_info, datetime_format=format
+                datetime_str, timezone_info, datetime_format=datetime_format
             )
         actual = str(err.exception)
         expected = "time data '28-07-2023 15:05:13' does not match format '%Y%m%d_%H%M%S' (match)"
@@ -668,6 +677,8 @@ class Test_str_to_timestamp1(hunitest.TestCase):
     def test4(self) -> None:
         """
         Test invalid datetime without format.
+        - `datetime_str` has an invalid format
+        - `datetime_format` is not defined
         """
         datetime_str = "qwe28abc07-201234"
         timezone_info = "US/Eastern"
@@ -687,9 +698,13 @@ class Test_str_to_timestamp1(hunitest.TestCase):
 
 
 class Test_dassert_str_is_date(hunitest.TestCase):
+    """
+    Test that the function checks a string representation of date correctly.
+    """
     def test1(self) -> None:
         """
         Test valid date.
+        - date has a valid format
         """
         date_str = "20221101"
         hdateti.dassert_str_is_date(date_str)
@@ -697,6 +712,7 @@ class Test_dassert_str_is_date(hunitest.TestCase):
     def test2(self) -> None:
         """
         Test invalid date.
+        - date has an invalid format
         """
         date = "2022-11-01"
         with self.assertRaises(ValueError) as err:
