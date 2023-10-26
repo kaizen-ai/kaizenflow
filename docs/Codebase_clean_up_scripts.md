@@ -90,6 +90,17 @@
     will replace it everywhere in the code
   - Note the use of `--ext` flag to specify the file extentions the script
     should work on
+
+- See [SorrIssue584](https://github.com/sorrentum/sorrentum/issues/584) and the
+  related
+  [description](https://github.com/sorrentum/sorrentum/issues/584#issuecomment-1758890258)
+  for reference
+  - We wanted to replace `timestamp_as_str_to_timestamp()` with
+    `str_to_timestamp()` but `def timestamp_as_str_to_timestamp()` should remain
+    as is
+  - Using regex will make replacement successfully
+  - TODO(Samarth): Add script link once it is merged
+  
 - Of course the changes need to be applied in one repo and then propagated to
   all the other repos if the tests are successful
 
