@@ -371,20 +371,6 @@ def load_config_from_pickle(
 # /////////////////////////////////////////////////////////////////////////////
 
 
-# TODO(Grisha): seems more general than this file.
-def _dassert_is_date(date: str) -> None:
-    """
-    Check if an input string is a date.
-
-    :param date: date as string, e.g., "20221101"
-    """
-    hdbg.dassert_isinstance(date, str)
-    try:
-        _ = datetime.datetime.strptime(date, "%Y%m%d")
-    except ValueError as e:
-        raise ValueError(f"date='{date}' doesn't have the right format: {e}")
-
-
 # TODO(Grisha): -> `_get_run_date_from_start_timestamp`.
 def get_run_date(start_timestamp_as_str: Optional[str]) -> str:
     """
@@ -402,7 +388,7 @@ def get_run_date(start_timestamp_as_str: Optional[str]) -> str:
         # TODO(Dan): Add assert for `start_timestamp_as_str` regex.
         run_date = start_timestamp_as_str.split("_")[0]
     _LOG.info(hprint.to_str("run_date"))
-    _dassert_is_date(run_date)
+    hdateti.dassert_str_is_date(run_date)
     return run_date
 
 
