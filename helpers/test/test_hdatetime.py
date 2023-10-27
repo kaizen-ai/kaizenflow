@@ -674,7 +674,7 @@ class Test_str_to_timestamp1(hunitest.TestCase):
 
     def test4(self) -> None:
         """
-        T- `datetime_str` has an invalid format
+        - `datetime_str` has an invalid format
         - `datetime_format` is not defined
         """
         datetime_str = "qwe28abc07-201234"
