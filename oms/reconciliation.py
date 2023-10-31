@@ -580,7 +580,9 @@ def get_system_run_timestamps(
                 system_run_start_timestamp,
                 system_run_end_timestamp,
             ) in system_run_timestamps
-            if hdateti.str_to_timestamp(system_run_start_timestamp, tz, datetime_format=datetime_format)
+            if hdateti.str_to_timestamp(
+                system_run_start_timestamp, tz, datetime_format=datetime_format
+            )
             >= start_timestamp
         ]
         _LOG.info("Filtered by `start_timestamp`: %s.", system_run_timestamps)
@@ -591,7 +593,9 @@ def get_system_run_timestamps(
                 system_run_start_timestamp,
                 system_run_end_timestamp,
             ) in system_run_timestamps
-            if hdateti.str_to_timestamp(system_run_start_timestamp, tz, datetime_format=datetime_format)
+            if hdateti.str_to_timestamp(
+                system_run_start_timestamp, tz, datetime_format=datetime_format
+            )
             <= end_timestamp
         ]
         _LOG.info("Filtered by `end_timestamp`: %s.", system_run_timestamps)
