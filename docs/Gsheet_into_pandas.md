@@ -9,14 +9,32 @@
 
 # Connecting Google Sheets to Pandas
 
-- In order to load a google sheet into a pandas dataframe (or the other way
-  around), one can use a library called `gspread-pandas`.
+- In order to load a Google sheet into a Pandas dataframe (or the other way
+  around), you can use a library called `gspread-pandas`.
+- Documentation for the package is
+  [here](https://gspread-pandas.readthedocs.io/en/latest/index.html)
+
 
 ## Installing gspread-pandas
 
-- The library should be automatically installed in your conda env
-  - The detailed instructions on how to install the library are located here:
-    [Installation/Usage](https://gspread-pandas.readthedocs.io/en/latest/getting_started.html#installation-usage).
+- The library should be automatically installed in the Dev container
+  - In a notebook
+  ```
+  notebook> import gspread; print(gspread.__version__)
+  ```
+  - In the dev container
+  ```
+  docker> python -c "import gspread; print(gspread.__version__)"
+  5.10.0
+  ```
+- Otherwise you can install it in the notebook with
+  ```
+  !pip install gspread-pandas
+  ```
+- Or in the Docker container with:
+  ```
+  sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread)"
+  ```
 
 ## Configuring gspread-pandas
 
@@ -26,6 +44,23 @@
     
   - The process is not complicated but it's not obvious since you need to click
     around in the GUI
+  - The credentials file is a JSON downloaded from Google.
+- `gspread-pandas` leverages `gspread`
+  
+- https://docs.gspread.org/en/latest/oauth2.html
+  
+- Create a project using a name like "gp_gspread"
+- Search for "Drive API" and click on Enable API
+- Search for "Sheets API" and click on Enable API
+- On top click on "+ Create Credentials" and select OAuth client ID
+- Then you are going to get a pop up with "OAuth client created"
+  - Click "Download JSON" at the bottom
+  - The file downloaded is like "client_secret_42164...-00pdvmfnf3lrda....apps.googleusercontent.com"
+- Move the file to `helpers/.google_credentials/client_secrets.json` (Overwrite the existing placeholder file).
+  ```
+  > mv ~/Downloads/client_secret_421642061916-00pdvmfnf3lrdasoh2ccsnqb5akr4v9f.apps.googleusercontent.com.json ~/src/sorrentum1/helpers/.google_credentials/client_secrets.json
+  > chmod 600 ~/src/sorrentum1/helpers/.google_credentials/client_secrets.json
+  ```
 
 - Some gotchas:
   - Make sure to act only under your `...` account.

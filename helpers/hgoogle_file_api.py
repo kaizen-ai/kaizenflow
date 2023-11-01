@@ -13,7 +13,7 @@ from typing import Optional
 # TODO(Henry): This package need to be manually installed until they are added to the container.
 # Run the following line in any notebook would install it:
 # !sudo /bin/bash -c "(source /venv/bin/activate; pip install --upgrade google-api-python-client)"
-
+# Or run the following part in python:
 # import subprocess
 # install_code = subprocess.call(
 # 'sudo /bin/bash -c "(source /venv/bin/activate; pip install --upgrade google-api-python-client)"',
@@ -36,13 +36,13 @@ def get_credentials(
     """
     Get credentials for Google API with service account key.
 
-    :param service_key_path: str, the service account key file path
+    :param service_key_path: str, the service account key file path.
         - Get this file with the following instructions:
         - https://gspread-pandas.readthedocs.io/en/latest/getting_started.html#client-credentials
         - Follow the steps in `Client Credentials`,
         - until you have the JSON file downloaded.
         - If None is given, will use the default service key path.
-    :return: goasea.Credentials the credentials for service account
+    :return: goasea.Credentials the Google credentials retrieved.
     """
     if not service_key_path:
         service_key_path = ".google_credentials/service.json"
@@ -67,8 +67,9 @@ def get_gdrive_service(
     """
     Get Google drive service with current credential.
 
-    :param service_key_path: The service key path. Will use default if None is given.
-    :return: the Google drive service instance created
+    :param service_key_path: The service key path.
+        - Will use default service key path in `get_credentials` if None is given.
+    :return: the Google drive service instance created.
     """
 
     creds = get_credentials(service_key_path=service_key_path)
@@ -131,7 +132,8 @@ def create_google_drive_folder(
 
     :param folder_name: str, the name of the new Google Drive folder.
     :param parent_folder_id: str, the id of the parent folder.
-    :param service: the google drive service instance. Will use default if None is given.
+    :param service: the google drive service instance.
+        - Will use GDrive file service as default if None is given.
     """
     try:
         if service is None:
@@ -177,7 +179,8 @@ def get_folder_id_by_name(name: str) -> Optional[list]:
             folder_list[0].get("id"),
         )
         _LOG.info(
-            "if you want to use another '%s' folder, please change the folder id manually.",
+            "if you want to use another '%s' folder, "
+            "please change the folder id manually.",
             name,
         )
     else:
@@ -194,7 +197,8 @@ def share_google_file(
 
     :param gfile_id: str, the id of the Google file.
     :param user: str, the email address of the user.
-    :param service: the google drive service instance. Will use default if None is given.
+    :param service: the google drive service instance.
+        - Will use GDrive file service as default if None is given.
     """
     if service is None:
         service = get_gdrive_service()
@@ -218,8 +222,9 @@ def _create_new_google_document(
 
     :param doc_name: str, the name of the new Google document.
     :param doc_type: str, the type of the Google document ('sheets' or 'docs').
-    :param service: the google drive service instance. Will use default if None is given.
-    :return: doc_id.
+    :param service: the google drive service instance.
+        - Will auto-choose sheet or doc service as default if None is given.
+    :return: doc_id. The id to the created document in GDrive.
     """
     if service is None:
         creds = get_credentials()
@@ -268,7 +273,8 @@ def _move_gfile_to_dir(
 
     :param gfile_id: str, the id of the Google file.
     :param folder_id: str, the id of the folder.
-    :param service: the google drive service instance. Will use default if None is given.
+    :param service: the google drive service instance.
+        - Will use GDrive file service as default if None is given.
     """
     if service is None:
         service = get_gdrive_service()
@@ -290,7 +296,8 @@ def _get_folders_in_gdrive(*, service: godisc.Resource = None) -> list:
     """
     Get a list of folders in Google drive.
 
-    :param service: the google drive service instance. Will use default if None is given.
+    :param service: the google drive service instance. 
+        - Will use GDrive file service as default if None is given.
     """
     if service is None:
         service = get_gdrive_service()
