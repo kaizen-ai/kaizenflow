@@ -93,6 +93,20 @@ services:
     build: .
     ports:
       - "8888:8888"
+    command: jupyter lab --ip 0.0.0.0 --port 8888  --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''
+
+  dask-scheduler:
+    build: .
+    hostname: scheduler
+    ports:
+      - "8786:8786"
+      - "8787:8787"
+    command: dask-scheduler
+  
+  dask-worker:
+    build: 
+      context: .
+    command: dask-worker scheduler:8786
 
   postgres:
     image: postgres:13

@@ -3097,18 +3097,111 @@ class Test_apply_index_mode(hunitest.TestCase):
         with self.assertRaises(AssertionError) as cm:
             hpandas.apply_index_mode(df1_in, df2_in, mode)
         act = str(cm.exception)
-        # Compare the actual outcome with expected one.
+        # Check the error exception message.
         self.check_string(act)
 
 
 # #############################################################################
 
 
-class Test_get_df_from_iterator(hunitest.TestCase):
-    def test1(self)-> None:
+class Test_apply_column_mode(hunitest.TestCase):
+    """
+    Test that function applies column modes correctly.
+    """
+    @staticmethod
+    def get_test_data() -> Tuple[pd.DataFrame]:
         """
-        Check that a dataframe is correctly built from an iterator of dataframes.
-        """ 
+        Generate toy dataframes for the test.
+        """
+        # Build dataframes with intersecting columns.
+        columns_1 = ["A", "B"]
+        data1 = [
+            [0.21, 0.44],
+            [0.11, 0.42],
+            [1.99, 0.8],
+            [3.1, 0.91],
+            [3.5, 1.4],
+        ]
+        df1 = pd.DataFrame(data1, columns=columns_1)
+        #
+        columns_2 = ["A", "C"]
+        data2 = [
+            [0.1, 0.4],
+            [0.11, 0.2],
+            [1.29, 0.38],
+            [0.1, 0.9],
+            [3.3, 2.4],
+        ]
+        df2 = pd.DataFrame(data2, columns=columns_2)
+        return df1, df2
+
+    def test1(self) -> None:
+        """
+        Check that returned dataframes have columns that are equal to the
+        common ones.
+
+        - `mode="intersect"`
+        """
+        # Get test data.
+        df1_in, df2_in = self.get_test_data()
+        # Use a column intersection mode to transform dataframes.
+        mode = "intersect"
+        df1_out, df2_out = hpandas.apply_columns_mode(df1_in, df2_in, mode)
+        # Check that dfs have equal column names.
+        common_columns = df1_in.columns.intersection(df2_in.columns)
+        common_columns = hpandas.df_to_str(common_columns)
+        columns1 = hpandas.df_to_str(df1_out.columns)
+        self.assert_equal(columns1, common_columns)
+        #
+        columns2 = hpandas.df_to_str(df2_out.columns)
+        self.assert_equal(columns2, common_columns)
+
+    def test2(self) -> None:
+        """
+        Check that dataframes' columns did not change after applying a column
+        mode.
+
+        - `mode="leave_unchanged"`
+        """
+        # Get test data.
+        df1_in, df2_in = self.get_test_data()
+        mode = "leave_unchanged"
+        df1_out, df2_out = hpandas.apply_columns_mode(df1_in, df2_in, mode)
+        # Check that columns are as-is.
+        df1_in_columns = hpandas.df_to_str(df1_in.columns)
+        df1_out_columns = hpandas.df_to_str(df1_out.columns)
+        self.assert_equal(df1_in_columns, df1_out_columns)
+        #
+        df2_in_columns = hpandas.df_to_str(df2_in.columns)
+        df2_out_columns = hpandas.df_to_str(df2_out.columns)
+        self.assert_equal(df2_in_columns, df2_out_columns)
+
+    def test3(self) -> None:
+        """
+        Check that an assertion is raised when columns are not equal.
+
+        - `mode="assert_equal"`
+        """
+        # Get test data.
+        df1_in, df2_in = self.get_test_data()
+        mode = "assert_equal"
+        # Check that both dataframes columns are equal, assert otherwise.
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.apply_columns_mode(df1_in, df2_in, mode)
+        actual = str(cm.exception)
+        # Compare the actual outcome with an expected one.
+        self.check_string(actual)
+
+
+# #############################################################################
+
+
+class Test_get_df_from_iterator(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check that a dataframe is correctly built from an iterator of
+        dataframes.
+        """
         # Build iterator of dataframes for the test.
         data1 = {
             "num_col": [1, 2],
@@ -3119,10 +3212,10 @@ class Test_get_df_from_iterator(hunitest.TestCase):
             "num_col": [3, 4],
             "str_col": ["C", "D"],
         }
-        df2 = pd.DataFrame(data=data2) 
+        df2 = pd.DataFrame(data=data2)
         data3 = {
-             "num_col": [5, 6],
-             "str_col": ["E", "F"],
+            "num_col": [5, 6],
+            "str_col": ["E", "F"],
         }
         df3 = pd.DataFrame(data=data3)
         # Run.
@@ -3272,3 +3365,93 @@ class Test_multiindex_df_info1(hunitest.TestCase):
             rows=2 ['M', 'N']
         """
         self.assert_equal(act, exp, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class Test_dassert_index_is_datetime(hunitest.TestCase):
+    @staticmethod
+    def get_multiindex_df(
+        index_is_datetime: bool,
+    ) -> pd.DataFrame:
+        """
+        Helper function to get test multi-index dataframe.
+        Example of dataframe returned when `index_is_datetime = True`.
+                                            column1     column2
+        index   timestamp
+        index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
+                2022-01-01 21:10:00+00:00   1.303778    -0.288235
+        index2  2022-01-01 21:00:00+00:00   1.237079    1.168012
+                2022-01-01 21:10:00+00:00   1.333692    1.708455
+
+        Example of dataframe returned when `index_is_datetime = False`.
+                            column1     column2
+        index   timestamp
+        index1  string1     -0.122140   -1.949431
+                string2     1.303778    -0.288235
+        index2  string1     1.237079    1.168012
+                string2     1.333692    1.708455
+        """
+        if index_is_datetime:
+            index_inner = [
+                pd.Timestamp("2022-01-01 21:00:00", tz="UTC"),
+                pd.Timestamp("2022-01-01 21:10:00", tz="UTC"),
+            ]
+        else:
+            index_inner = ["string1", "string2"]
+        index_outer = ["index1", "index2"]
+        iterables = [index_outer, index_inner]
+        index = pd.MultiIndex.from_product(
+            iterables, names=["index", "timestamp"]
+        )
+        columns = ["column1", "column2"]
+        nums = np.random.uniform(-2, 2, size=(4, 2))
+        df = pd.DataFrame(nums, index=index, columns=columns)
+        return df
+
+    def test1(self) -> None:
+        """
+        Check that multi-index dataframe index is datetime type.
+        """
+        index_is_datetime = True
+        df = self.get_multiindex_df(index_is_datetime)
+        hpandas.dassert_index_is_datetime(df)
+
+    def test2(self) -> None:
+        """
+        Check that multi-index dataframe index is not datetime type.
+        """
+        index_is_datetime = False
+        df = self.get_multiindex_df(index_is_datetime)
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_index_is_datetime(df)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        cond=False
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Check for empty dataframe.
+        """
+        df = pd.DataFrame()
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_index_is_datetime(df)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        Instance of 'Index([], dtype='object')' is '<class 'pandas.core.indexes.base.Index'>' instead of '<class 'pandas.core.indexes.datetimes.DatetimeIndex'>'
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Check that single-indexed dataframe index is datetime type.
+        """
+        index_is_datetime = True
+        df = self.get_multiindex_df(index_is_datetime)
+        df = df.loc["index1"]
+        hpandas.dassert_index_is_datetime(df)

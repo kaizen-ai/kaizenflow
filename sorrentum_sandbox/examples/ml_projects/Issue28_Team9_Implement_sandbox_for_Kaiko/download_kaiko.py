@@ -18,6 +18,7 @@ class KaikoDownloader(ssandown.DataDownloader):
     Class for downloading kaiko Data using kaiko python library
     """
 
+
     _EXCHANGE = "cbse"
     _UNIVERSE = {
         "kaiko": [
@@ -50,8 +51,7 @@ class KaikoDownloader(ssandown.DataDownloader):
             # Delay for throttling in seconds.
             time.sleep(0.5)
         df = pd.concat(dfs, ignore_index=True)
-        df.columns = [x.replace(" ", "_").lower() for x in list(df.columns)]
-
+        df.columns=[x.replace(' ','_').lower() for x in list(df.columns)]
         _LOG.info(f"Downloaded data: \n\t {df.head()}")
         return ssandown.RawData(df)
 

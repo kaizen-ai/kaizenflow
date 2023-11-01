@@ -5,8 +5,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+import core.plotting.boxplot as cploboxp
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
+import core.plotting.normality as cplonorm
 import core.plotting.visual_stationarity_test as cpvistte
 
 _LOG = logging.getLogger(__name__)
@@ -32,45 +34,38 @@ class Test_plots(unittest.TestCase):
         return df
 
     @staticmethod
-    def get_plot_time_series_by_period1() -> pd.Series:
+    def get_test_plot_srs1() -> pd.Series:
         """
-        Generate a test time series with daily timestamps.
+        Generate a test data with normal distribution series and timestamps.
         """
-        timestamps = pd.date_range(
-            start="2023-07-01", end="2023-07-07", freq="4H"
-        )
-        values = np.random.rand(len(timestamps))
-        test_series = pd.Series(values, index=timestamps)
-        return test_series
-
-    @staticmethod
-    def get_plot_timeseries_distribution1() -> pd.Series:
-        """
-        Get test data for plotting time series distribution.
-        """
-        samples = [0] * 50
-        index = pd.date_range(start="2022-12-31", periods=len(samples), freq="H")
+        rng = np.random.default_rng(seed=0)
+        samples = rng.normal(size=100)
+        index = pd.date_range(start="2023-01-31", periods=len(samples), freq="H")
         srs = pd.Series(samples, index=index, name="test values")
         return srs
 
     @staticmethod
-    def get_plot_histograms_and_lagged_scatterplot1() -> pd.Series:
+    def get_plot_projection1() -> pd.DataFrame:
         """
-        Get a random Gaussian data series for plotting histograms and lagged
-        scatterplot.
+        Generate a test DataFrame for `plot_projection()`.
         """
-        rng = np.random.default_rng(seed=0)
-        samples = rng.normal(size=100)
-        index = pd.date_range(start="2023-01-01", periods=len(samples), freq="D")
-        srs = pd.Series(samples, index=index)
-        return srs
+        data = [
+            [1, 1, 0, 1],
+            [0, 1, 0, 1],
+            [0, 0, 1, 1],
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+        ]
+        index = pd.date_range(start="2023-01-01", periods=len(data), freq="D")
+        df = pd.DataFrame(data, index=index)
+        return df
 
     def test_plot_histograms_and_lagged_scatterplot1(self) -> None:
         """
         Smoke test for `plot_histograms_and_lagged_scatterplot()`.
         """
         # Set inputs.
-        srs = Test_plots.get_plot_histograms_and_lagged_scatterplot1()
+        srs = Test_plots.get_test_plot_srs1()
         lag = 7
         # Plot.
         cpvistte.plot_histograms_and_lagged_scatterplot(
@@ -78,12 +73,18 @@ class Test_plots(unittest.TestCase):
         )
 
     def test_plot_time_series_by_period1(self) -> None:
-        test_series = self.get_plot_time_series_by_period1()
+        """
+        Smoke test for `plot_time_series_by_period()`.
+        """
+        test_series = self.get_test_plot_srs1()
         period = "day"
         cplmiplo.plot_time_series_by_period(test_series, period)
 
     def test_plot_time_series_by_period2(self) -> None:
-        test_series = self.get_plot_time_series_by_period1()
+        """
+        Smoke test for `plot_time_series_by_period()`.
+        """
+        test_series = self.get_test_plot_srs1()
         period = "time"
         cplmiplo.plot_time_series_by_period(test_series, period)
 
@@ -99,7 +100,7 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for `plot_effective_correlation_rank()`.
 
-        - `q_values` is None
+        - `q_values = None`
         """
         test_df = self.get_test_plot_df1()
         cplocorr.plot_effective_correlation_rank(test_df)
@@ -108,7 +109,7 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for `plot_effective_correlation_rank()`.
 
-        - `q_values` is a list of values
+        - `q_values` is a list of values"
         """
         num_q_values = 5
         q_values = np.random.uniform(1, 10, num_q_values).tolist()
@@ -119,7 +120,7 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for 'plot_timeseries_distribution()'.
         """
-        srs = self.get_plot_timeseries_distribution1()
+        srs = self.get_test_plot_srs1()
         datetime_types = ["hour"]
         cplmiplo.plot_timeseries_distribution(srs, datetime_types)
 
@@ -127,22 +128,22 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for 'plot_timeseries_distribution()'.
         """
-        srs = self.get_plot_timeseries_distribution1()
+        srs = self.get_test_plot_srs1()
         datetime_types = ["hour", "month"]
         cplmiplo.plot_timeseries_distribution(srs, datetime_types)
 
     def test_plot_spectrum1(self) -> None:
         """
-        Smoke test for `plot_spectrum`.
+        Smoke test for `plot_spectrum()`.
 
-        - `axes` is None
+        - `axes = None`
         """
         test_df = self.get_test_plot_df1()
         cplmiplo.plot_spectrum(test_df)
 
     def test_plot_spectrum2(self) -> None:
         """
-        Smoke test for `plot_spectrum`.
+        Smoke test for `plot_spectrum()`.
 
         - `axes` is a list of Matplotlib axes
         """
@@ -153,7 +154,7 @@ class Test_plots(unittest.TestCase):
 
     def test_plot_cols1(self) -> None:
         """
-        Smoke test for `plot_cols`.
+        Smoke test for `plot_cols()`.
         """
         test_df = self.get_test_plot_df1()
         cplmiplo.plot_cols(test_df)
@@ -164,3 +165,72 @@ class Test_plots(unittest.TestCase):
         """
         test_df = self.get_test_plot_df1()
         cplmiplo.plot_autocorrelation(test_df)
+
+    def test_plot_projection1(self) -> None:
+        """
+        Smoke test for `plot_projection()`.
+        """
+        test_df = self.get_plot_projection1()
+        special_values = [0]
+        cplmiplo.plot_projection(test_df, special_values=special_values)
+
+    def test_plot_projection2(self) -> None:
+        """
+        Smoke test for `plot_projection()`.
+
+        - `mode = "scatter"`
+        - `ax` is used for plotting
+        """
+        # Set input values with some empty values.
+        test_df = self.get_plot_projection1()
+        test_df = test_df.replace({0: None})
+        # Set params.
+        fig = plt.figure()
+        ax = fig.add_axes([0, 0, 1, 1])
+        mode = "scatter"
+        # Run.
+        cplmiplo.plot_projection(test_df, mode=mode, ax=ax)
+
+    def test_plot_boxplot1(self) -> None:
+        """
+        Smoke test for `plot_boxplot()`.
+
+        - `grouping= "by_row"`
+        - `ylabel` is an empty string
+        """
+        test_df = self.get_test_plot_df1()
+        cploboxp.plot_boxplot(test_df)
+
+    def test_plot_boxplot2(self) -> None:
+        """
+        Smoke test for `plot_boxplot()`.
+
+        - `grouping = "by_col"`
+        - `ylabel` is a non-empty string
+        """
+        test_df = self.get_test_plot_df1()
+        grouping = "by_col"
+        ylabel = "Test Label"
+        cploboxp.plot_boxplot(test_df, grouping=grouping, ylabel=ylabel)
+
+    def test_plot_qq1(self) -> None:
+        """
+        Smoke test for `plot_qq()`.
+        """
+        test_series = self.get_test_plot_srs1()
+        cplonorm.plot_qq(test_series)
+
+    def test_plot_qq2(self) -> None:
+        """
+        Smoke test for `plot_qq()`.
+
+        - Input series contains NaN values
+        - `nan_mode = "drop"`
+        - Axes are passed
+        """
+        test_series = self.get_test_plot_srs1()
+        test_series[20:50] = np.nan
+        _, axes = plt.subplots(1, 1, figsize=(10, 10))
+        dist = "norm"
+        nan_mode = "drop"
+        cplonorm.plot_qq(test_series, ax=axes, dist=dist, nan_mode=nan_mode)

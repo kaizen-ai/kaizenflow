@@ -77,7 +77,7 @@ This contains the absolute minimal amount of info to start developing
 
 # Project management
 
-- [Contributor Scorecard](docs/Contributor_Scorecard.md)
+- [Contributor Scoring](docs/Contributor_Scoring.md)
 
   - How we give feedback to contributors
 
@@ -162,6 +162,8 @@ This contains a set of resources that over time will make 10x more productive
 - [Workflows](docs/Workflows.md)
 
 - [Type Hints](docs/Type_hints.md)
+
+- [PyCharm](docs/PyCharm.md)
 
 # DeFi: start developing
 

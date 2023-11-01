@@ -633,8 +633,10 @@ class Test_str_to_timestamp1(hunitest.TestCase):
         datetime_str = "20230728_150513"
         timezone_info = "US/Eastern"
         format = "%Y%m%d_%H%M%S"
-        actual = hdateti.str_to_timestamp(datetime_str, timezone_info, datetime_format=format)
-        expected = pd.Timestamp('2023-07-28 15:05:13-0400', tz='US/Eastern')
+        actual = hdateti.str_to_timestamp(
+            datetime_str, timezone_info, datetime_format=format
+        )
+        expected = pd.Timestamp("2023-07-28 15:05:13-0400", tz="US/Eastern")
         self.assertEqual(actual, expected)
 
     def test2(self) -> None:
@@ -643,7 +645,7 @@ class Test_str_to_timestamp1(hunitest.TestCase):
         """
         datetime_str = "2023-07-28 15:05:13"
         timezone_info = "US/Eastern"
-        expected = pd.Timestamp('2023-07-28 15:05:13-0400', tz='US/Eastern')
+        expected = pd.Timestamp("2023-07-28 15:05:13-0400", tz="US/Eastern")
         actual = hdateti.str_to_timestamp(datetime_str, timezone_info)
         self.assertEqual(actual, expected)
 
@@ -656,7 +658,9 @@ class Test_str_to_timestamp1(hunitest.TestCase):
         format = "%Y%m%d_%H%M%S"
         # Invalid datetime, should raise a ValueError.
         with self.assertRaises(ValueError) as err:
-            hdateti.str_to_timestamp(datetime_str, timezone_info, datetime_format=format)
+            hdateti.str_to_timestamp(
+                datetime_str, timezone_info, datetime_format=format
+            )
         actual = str(err.exception)
         expected = "time data '28-07-2023 15:05:13' does not match format '%Y%m%d_%H%M%S' (match)"
         self.assert_equal(actual, expected)
@@ -671,5 +675,35 @@ class Test_str_to_timestamp1(hunitest.TestCase):
         with self.assertRaises(ValueError) as err:
             hdateti.str_to_timestamp(datetime_str, timezone_info)
         actual = str(err.exception)
-        expected = "Unknown string format: qwe28abc07-201234 present at position 0"
+        expected = (
+            "Unknown string format: qwe28abc07-201234 present at position 0"
+        )
+        self.assert_equal(actual, expected)
+
+
+# #############################################################################
+# Test_dassert_str_is_date
+# #############################################################################
+
+
+class Test_dassert_str_is_date(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test valid date.
+        """
+        date_str = "20221101"
+        hdateti.dassert_str_is_date(date_str)
+
+    def test2(self) -> None:
+        """
+        Test invalid date.
+        """
+        date = "2022-11-01"
+        with self.assertRaises(ValueError) as err:
+            hdateti.dassert_str_is_date(date)
+        actual = str(err.exception)
+        expected = (
+            "date='2022-11-01' doesn't have the right format: "
+            "time data '2022-11-01' does not match format '%Y%m%d'"
+        )
         self.assert_equal(actual, expected)

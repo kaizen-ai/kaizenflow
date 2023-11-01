@@ -13,9 +13,13 @@ from typing import Any, Dict, List
 
 import pandas as pd
 import requests
-from dotenv import load_dotenv
 
-import sorrentum_sandbox.common.download as ssacodow
+import json
+from typing import Any, Dict, List
+from dotenv import load_dotenv
+from datetime import datetime
+import sorrentum_sandbox.examples.ml_projects.Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap.db as sisebidb
+import sorrentum_sandbox.common.download as ssandown
 
 _LOG = logging.getLogger(__name__)
 
@@ -26,30 +30,39 @@ _LOG = logging.getLogger(__name__)
 
 
 # function for bitquery query
-def run_bitquery_query(start_time: str, end_time: str = None) -> ssacodow.RawData:
+
+def run_bitquery_query(start_time: str, target_table: str, end_time: str = None, live_flag: bool = False) -> ssandown.RawData:
+
     # Query for the API
     limit = 25000
     offset = 0
 
-    time_format = "%Y-%m-%d %H:%M:%S"
-    # Alter query depending on if end_time is present
-    if end_time == None:
+    time_format = '%Y-%m-%d %H:%M:%S'
+
+
+    # Check for live_flag
+    if live_flag:
+        live_date = get_recent_timestamp(target_table)
         query_alter_1 = "since"
-        query_alter_2 = "%s" % start_time
+        query_alter_2 = "\"%s\"" % live_date
+
+    # Alter query depending on if end_time is present
+    elif end_time == None:
+        query_alter_1 = "since"
+        query_alter_2 = "\"%s\"" % start_time
     else:
         query_alter_1 = "between"
-        query_alter_2 = "[%s, %s]" % (start_time, end_time)
+        query_alter_2 = "[\"%s\", \"%s\"]" % (start_time,end_time)
 
-    print(start_time)
-    print(end_time)
     # GraphQL API query to get Uniswap DEX data
     query = """
-    query{
-    ethereum(network: ethereum) {
+       query{
+
+       ethereum(network: ethereum) {
         dexTrades(
             options: {desc: ["block.height", "tradeIndex"], limit: %d, offset: %d}
             protocol: {is: "Uniswap"}
-            date: {%s: "%s"},
+            date: {%s: %s},
         ) {
             timeInterval {
             minute
@@ -61,19 +74,18 @@ def run_bitquery_query(start_time: str, end_time: str = None) -> ssacodow.RawDat
             height
             }
             tradeIndex
-            protocol
+
             exchange {
             fullName
             }
 
             baseCurrency {
             symbol
-            address
+
             }
-            baseAmount(in: USD)
             quoteCurrency {
             symbol
-            address
+
             }
             transaction {
             hash
@@ -81,17 +93,16 @@ def run_bitquery_query(start_time: str, end_time: str = None) -> ssacodow.RawDat
             to {
                 address
             }
+
             txFrom {
                 address
             }
             }
-            quoteAmount(in: USD)
             trades: count
-            quotePrice
-            maximum_price: quotePrice(calculate: maximum)
-            minimum_price: quotePrice(calculate: minimum)
-            open_price: minimum(of: block, get: quote_price)
-            close_price: maximum(of: block, get: quote_price)
+            buyAmount(in: USD)
+            sellAmount(in: USD)
+            tradeAmount(in: USD)
+
         }
     }
     }
@@ -111,18 +122,12 @@ def run_bitquery_query(start_time: str, end_time: str = None) -> ssacodow.RawDat
 
     # # # initialize offset value
     # offset = 0
-
+    
     # Stream in data until there are no more results
     while True:
         # Construct the API query with the current offset
-        fractured_query = query % (
-            limit,
-            offset,
-            query_alter_1,
-            query_alter_2,
-            time_format,
-        )
-        print(fractured_query)
+        fractured_query = query % (limit, offset,query_alter_1, query_alter_2,time_format)
+
         # Send the API request and get the response
         response = requests.post(
             endpoint, json={"query": fractured_query}, headers=headers
@@ -155,8 +160,10 @@ def run_bitquery_query(start_time: str, end_time: str = None) -> ssacodow.RawDat
     # Normalize and convert the results list into a Pandas DataFrame
     df = json_to_df(results)
 
-    # lowercase column names
-    df = df.rename(str.lower, axis="columns")
+
+    # lowercase column names and convert to Raw Data
+
+    df = df.rename(str.lower, axis='columns')
     _LOG.info(f"Downloaded data: \n\t {df.head()}")
     return ssacodow.RawData(df)
 
@@ -167,3 +174,24 @@ def json_to_df(data: List[Dict[Any, Any]]) -> pd.DataFrame:
     df = pd.json_normalize(data, sep="_")
     # df = df.set_index("timeInterval_minute")
     return df
+
+
+def get_recent_timestamp(target_table) -> str:
+    db_conn = sisebidb.get_db_connection()
+
+    # Create a cursor to execute SQL queries
+    cur = db_conn.cursor()
+
+    # Execute a SQL query to retrieve the last row of the table
+    query = "SELECT * FROM %s ORDER BY timeinterval_minute DESC LIMIT 1" % target_table
+    cur.execute(query) 
+
+    # Extract the timestamp from the last row
+    result = cur.fetchone()
+
+    # Convert Datetime to ISO format
+    last_timestamp = result[1].isoformat() 
+
+    cur.close()
+    return last_timestamp
+

@@ -1,3 +1,18 @@
+# cmamp-1.9.0
+- 2023-09-29
+- Promote Python to 3.9
+- Changes from #5439 - Update Python to 3.9 (or even to the latest) version
+
+# cmamp-1.8.0
+- 2023-09-27
+- Remove `mxnet` and `gluonts`
+- Changes from #5466 - Remove mxnet, gluonts and disable related tests
+
+# cmamp-1.7.0
+- 2023-09-05
+- Bump `pytest` to the latest version
+- Changes from #5119 - Pytest teardown error
+
 # cmamp-1.6.0
 - 2023-08-14
 - Add `gspread_pandas`

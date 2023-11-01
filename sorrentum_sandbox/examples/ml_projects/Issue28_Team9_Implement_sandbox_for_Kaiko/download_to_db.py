@@ -50,7 +50,6 @@ def _add_download_args(
 
     return parser
 
-
 def _parse() -> argparse.ArgumentParser:
     hdbg.init_logger(use_exec_path=True)
     parser = argparse.ArgumentParser(
