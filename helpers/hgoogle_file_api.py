@@ -10,20 +10,17 @@ import logging
 import os.path
 from typing import Optional
 
-# TODO: These packages need to be manually installed until they are added to the container.
-# Run the following two lines in any notebook would install them:
-# !sudo /bin/bash -c "(source /venv/bin/activate; pip install --upgrade google-auth google-auth-httplib2 google-auth-oauthlib google-api-python-client)"
-# !sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread-pandas)"
+# TODO(Henry): This package need to be manually installed until they are added to the container.
+# Run the following line in any notebook would install it:
+# !sudo /bin/bash -c "(source /venv/bin/activate; pip install --upgrade google-api-python-client)"
 
 # import subprocess
 # install_code = subprocess.call(
-#     'sudo /bin/bash -c "(source /venv/bin/activate; pip install --upgrade google-auth google-auth-httplib2 google-auth-oauthlib google-api-python-client gspread-pandas)"',
-#     shell=True,
+# 'sudo /bin/bash -c "(source /venv/bin/activate; pip install --upgrade google-api-python-client)"',
+# shell=True,
 # )
 
-import google.auth.transport.requests as gautrreq
-import google_auth_oauthlib.flow as gauoafl
-import google.oauth2.credentials as goacre
+import google.oauth2.service_account as goasea
 import googleapiclient.discovery as godisc
 import googleapiclient.errors as goerro
 
@@ -34,64 +31,47 @@ SCOPES = ["https://www.googleapis.com/auth/drive"]
 
 def get_credentials(
     *,
-    client_secrets_path: str = ".google_credentials/client_secrets.json",
-    token_path: str = ".google_credentials/token.json",
-) -> goacre.Credentials:
+    service_key_path: Optional[str] = ".google_credentials/service.json",
+) -> goasea.Credentials:
     """
-    Get credentials for Google API.
+    Get credentials for Google API with service account key.
 
-    :param client_secret_path: str, get this file with the following instructions:
+    :param service_key_path: str, the service account key file path
+        - Get this file with the following instructions:
         - https://gspread-pandas.readthedocs.io/en/latest/getting_started.html#client-credentials
-        - Follow the steps in `Client Credentials` until you have the JSON file downloaded.
-    :param token_path: str, the file path to write google credentials.
-        - Will load the credentials if the file already exists.
-    :return: goacre.Credentials
+        - Follow the steps in `Client Credentials`,
+        - until you have the JSON file downloaded.
+        - If None is given, will use the default service key path.
+    :return: goasea.Credentials the credentials for service account
     """
+    if not service_key_path:
+        service_key_path = ".google_credentials/service.json"
     creds = None
-    # The file token.json stores the user's access and refresh tokens, and
-    # is created automatically when the authorization flow completes for
-    # the first time.
-    token_path = os.path.join(os.path.dirname(__file__), token_path)
-    if os.path.exists(token_path):
-        creds = goacre.Credentials.from_authorized_user_file(token_path, SCOPES)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        client_secrets_path = os.path.join(
-            os.path.dirname(__file__), client_secrets_path
+    service_key_path = os.path.join(os.path.dirname(__file__), service_key_path)
+    if not os.path.exists(service_key_path):
+        _LOG.info("Failed to read service key file: %s", service_key_path)
+        raise RuntimeError(
+            "Please download service.json from Google API, "
+            "Then save it as helpers/.google_credentials/service.json\n"
+            "Instructions: https://gspread-pandas.readthedocs.io/en/latest/getting_started.html#client-credentials"
         )
-        _LOG.info(client_secrets_path)
-        if not os.path.exists(client_secrets_path):
-            raise RuntimeError(
-                "Please download client_secrets.json from Google API, "
-                "Then save it as helpers/client_secrets.json\n"
-                "Instructions: https://gspread-pandas.readthedocs.io/en/latest/getting_started.html#client-credentials"
-            )
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(gautrreq.Request())
-        else:
-            flow = gauoafl.InstalledAppFlow.from_client_secrets_file(
-                client_secrets_path, SCOPES
-            )
-            creds = flow.run_local_server(
-                bind_addr="0.0.0.0",
-                open_browser=False,
-                port=os.getenv("GOOGLE_OAUTH_PORT"),
-            )
-        # Save the credentials for the next run
-        with open(token_path, "w") as token:
-            token.write(creds.to_json())
+    creds = goasea.Credentials.from_service_account_file(
+        service_key_path, scopes=SCOPES
+    )
     return creds
 
 
-def get_gdrive_service(*, creds: goacre.Credentials = None) -> godisc.Resource:
+def get_gdrive_service(
+    *, service_key_path: Optional[str] = None
+) -> godisc.Resource:
     """
     Get Google drive service with current credential.
 
-    :param creds: use the given credentials. Will use default if None is given.
+    :param service_key_path: The service key path. Will use default if None is given.
     :return: the Google drive service instance created
     """
-    if creds is None:
-        creds = get_credentials()
+
+    creds = get_credentials(service_key_path=service_key_path)
     gdrive_service = godisc.build(
         "drive", "v3", credentials=creds, cache_discovery=False
     )
@@ -135,9 +115,9 @@ def create_empty_google_file(
                 gfile_name,
                 user,
             )
-    #
     except goerro.HttpError as err:
         _LOG.error(err)
+    return
 
 
 def create_google_drive_folder(
@@ -164,10 +144,9 @@ def create_google_drive_folder(
         folder = service.files().create(body=file_metadata, fields="id").execute()
         _LOG.info("Created a new Google Drive folder '%s'.", folder_name)
         _LOG.info("The new folder id is '%s'.", folder.get("id"))
-        return folder.get("id")
-    #
     except goerro.HttpError as err:
         _LOG.error(err)
+    return folder.get("id")
 
 
 def get_folder_id_by_name(name: str) -> Optional[list]:
@@ -183,11 +162,8 @@ def get_folder_id_by_name(name: str) -> Optional[list]:
     for folder in folders:
         if folder.get("name") == name:
             folder_list.append(folder)
-    #
     if len(folder_list) == 1:
         _LOG.info("Found folder: %s", folder_list[0])
-        return folder_list[0]
-    #
     elif len(folder_list) > 1:
         for folder in folder_list:
             _LOG.info(
@@ -195,7 +171,6 @@ def get_folder_id_by_name(name: str) -> Optional[list]:
                 folder.get("name"),
                 folder.get("id"),
             )
-        #
         _LOG.info(
             "Return the first found folder. '%s' '%s' ",
             folder_list[0].get("name"),
@@ -205,11 +180,10 @@ def get_folder_id_by_name(name: str) -> Optional[list]:
             "if you want to use another '%s' folder, please change the folder id manually.",
             name,
         )
-        return folder_list[0]
-    #
     else:
         _LOG.error("Can't find the folder '%s'.", name)
-        return
+        return None
+    return folder_list[0]
 
 
 def share_google_file(
@@ -236,21 +210,25 @@ def share_google_file(
     _LOG.info("The google file is shared to '%s'.", user)
 
 
-def _create_new_google_document(doc_name: str, doc_type: str) -> str:
+def _create_new_google_document(
+    doc_name: str, doc_type: str, *, service: godisc.Resource = None
+) -> str:
     """
     Create a new Google document (Sheet or Doc).
 
     :param doc_name: str, the name of the new Google document.
     :param doc_type: str, the type of the Google document ('sheets' or 'docs').
+    :param service: the google drive service instance. Will use default if None is given.
     :return: doc_id.
     """
-    creds = get_credentials()
-    service = godisc.build(
-        doc_type,
-        "v4" if doc_type == "sheets" else "v1",
-        credentials=creds,
-        cache_discovery=False,
-    )
+    if service is None:
+        creds = get_credentials()
+        service = godisc.build(
+            doc_type,
+            "v4" if doc_type == "sheets" else "v1",
+            credentials=creds,
+            cache_discovery=False,
+        )
     document = {"properties": {"title": doc_name}}
     document = (
         service.spreadsheets()
@@ -260,7 +238,6 @@ def _create_new_google_document(doc_name: str, doc_type: str) -> str:
         )
         .execute()
     )
-    #
     doc_id = document.get(
         "spreadsheetId" if doc_type == "sheets" else "documentId"
     )

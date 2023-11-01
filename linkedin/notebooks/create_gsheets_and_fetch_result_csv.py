@@ -15,14 +15,12 @@
 # %% [markdown]
 # # Import
 
-# %% run_control={"marked": true}
+# %%
 # Before running this notebook, please read the instruction here:
 # https://gspread-pandas.readthedocs.io/en/latest/getting_started.html#client-credentials
 # Follow the steps in `Client Credentials` until you have the JSON file downloaded. 
-# Save that JSON as `client_secrets.json` and put it in `../config/` folder, then you are all set.
-
-# !sudo /bin/bash -c "(source /venv/bin/activate; pip install --upgrade google-auth google-auth-httplib2 google-auth-oauthlib google-api-python-client)"
-# !sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread-pandas)"
+# Save that JSON as `service.json` and put it in `helpers/.google_credentials` folder, then you are all set.
+# !sudo /bin/bash -c "(source /venv/bin/activate; pip install --upgrade google-api-python-client)"
 
 # %%
 import logging
@@ -71,8 +69,10 @@ phantom.get_all_phantoms()
 
 # %%
 # (INPUT) Set the phantom IDs (Choose ID from the above table).
-search_phantom_id = "2862499141527492"
-profile_phantom_id = "3593602419926765"
+# search_phantom_id = "2862499141527492"
+# profile_phantom_id = "3593602419926765"
+search_phantom_id = "3577001783753488"
+profile_phantom_id = "5767607159170031"
 
 # %%
 # Path to save result csv.

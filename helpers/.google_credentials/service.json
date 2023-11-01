@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "sorrentum-linkedin",
+  "private_key_id": "168b58452eb1f4cf7036319aa75155acd427fb76",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCkI57pvQ/LAnng\n7WCaNDGDoJBFsqq4fhoaV9NC76tYHIG/wwQPti1DtT7gJGqTDTReoPH56/pRGU5P\nt2jWZrVcpCuGda9o3XjaaQBL7B7ryssxT1Cn6lwua3RykIxZddwrksbyDgHR3JmJ\n8coaqevd2oonbQ84q1zy+Kr5hBGdxDlF76IZMxB8ox1ETJrDITK5D+/VYQgTv+uC\n72swaS/f3vkUuctvc6+ufbRHcexM9OEbLQI2DRbJQ4HilN1QiXMjl5Qs1HBtUu9s\nkhV6xWrzn8DzkNL6lgt+0DFW63RwwjoU3/cQ6PdHFVu4urVZQzmYkbv1d4OTfmcb\nF3CZUqCFAgMBAAECggEADM+G6KFL6UFRN9/vCToHn0lZ2Ua/klStPt8Z6wB/tAnN\niqTy3TMPx1gPBzlwY/fE3ZncKPBlAg1iklAzS4CKqSdbCkyHGz0l4I4Pat2L8EVM\npJWXKvPcq/bRCNwFSDotq+zxwBSdyb5Y8W5AouIeOZuD6t3VMUwWnhQQbBcFtPVq\nloCZEKyLThJ4YVCUghlsrLRI2qRFW513npyPZ3rzQkpo/ThIzYbsMyc2ot77W1wy\nK+asocbd9Yrj7YC+EuXQrtPrJSu4hg5FhM63bMmngEi6Q5Mi3WggdkzRJDfjeivv\nqXZa2w9j6swDlQ7GufwsQRjpSIjAdT1CavN0uMtkIQKBgQDdoB+BsRfOpHIUlH/p\nH5WXFDQihdDZpY3RbgMsDKyar8aMHh/iomGQXqAKbQ9EPpV2fXeI5xuoCxpQGNUX\nVogbgFO9c37kDHYgp9MnToKnreIAkNUHs5THyKb8kUFWVfBgIDVA05UQv2UCxmKI\n1Ri60iN1OxOqFAU6+5hhZzkh6QKBgQC9mPDuJNw/KTtfFPNKWqCjy6YFhPWHxf19\nH9/iPzIcTsq8W/yN+Mb2axJgIHkRJEQ2nEPi45AzahYaMgR2KqiGzTnUkUBxacgP\nBv+ulej17Mr8re/feE2yGRf3nFKY6/QLCKKwKbI+aA+4vJLxK5WjTBpgFKBb7P6R\n3KMpNWWsPQKBgFVzqNJDqw9E/quKumrzf6UZ6CQrfmR83dqTVWvFk0OtZJuf/eFP\nhNi6c3CxrkI88zoVlGJX4aUAauvZN0hhV+dqql8Qyis51s4uh07PibcHZ22aalkm\n18XUSvZ1N0EHr8AQixfsvLwRX+wa++EQcRGPdpZ76dAZGg8s9QsRVskJAoGATurt\nRkMDhirUcrRWvFlSyjsHRP7d8IDiDYYJ+7OQWSYWzyZ+zl2B+6n/wRFjM1ZkKlML\nEtLj//KldovhPYpuEYY1DxzStSJxyoeAP5xYlpzUtS51TRBXTs2RI1jnLI3yS/Fx\nPmBst/s6qAueIlKg+5K+28VaJklUgURUid+XDYUCgYEAk++VNVBjE1rtqrRXU5U8\nFDpz0/WRVWIgtstbcaFlP0FdeuqakMEhmnGJUAXFLI/PDvwAEFYu0YkwanLGCPN9\n0RgmHG3Fo3PW0jRT11d2AjL/RlTzVq2tLh52OmJtsGN6YFQdMYGzmWYYUTgLH2ZL\nWPC03cGrCf82bZjkGpQcu1c=\n-----END PRIVATE KEY-----\n",
+  "client_email": "hgoogle-test-henry@sorrentum-linkedin.iam.gserviceaccount.com",
+  "client_id": "118062309415202539946",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/hgoogle-test-henry%40sorrentum-linkedin.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

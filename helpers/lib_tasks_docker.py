@@ -30,7 +30,6 @@ import helpers.lib_tasks_utils as hlitauti
 
 _LOG = logging.getLogger(__name__)
 
-
 # pylint: disable=protected-access
 
 
@@ -635,14 +634,12 @@ def _generate_docker_compose_file(
           command: devops/docker_run/run_jupyter_server.sh
           environment:
             - PORT=${PORT}
-            - GOOGLE_OAUTH_PORT=${GOOGLE_OAUTH_PORT}
           extends:
             app
           network_mode: ${NETWORK_MODE:-bridge}
           ports:
             # TODO(gp): Rename `AM_PORT`.
             - "${PORT}:${PORT}"
-            - "${GOOGLE_OAUTH_PORT}:${GOOGLE_OAUTH_PORT}"
 
         # TODO(gp): For some reason the following doesn't work.
         #  jupyter_server_test:
