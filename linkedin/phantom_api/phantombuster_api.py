@@ -1,7 +1,7 @@
 """
 Import as:
 
-import linkedin.phantom_api.phantombuster_api as lpphapia
+import linkedin.phantom_api.phantombuster_api as lpapphap
 """
 
 import json
@@ -78,6 +78,7 @@ class Phantom:
         except requests.exceptions.RequestException as e:
             _LOG.error("%s", e)
             return None
+        response.encoding = "UTF-8"
         hio.to_file(output_path, response.text)
         _LOG.info("Result CSV saved to %s", output_path)
         return None
