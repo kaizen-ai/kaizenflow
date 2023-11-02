@@ -18,6 +18,16 @@
 ## Installing gspread-pandas
 
 - The library should be automatically installed in the Dev container
+- If not you can install it in the notebook with
+  ```
+  notebook> !pip install gspread-pandas
+  ```
+- Or in the Docker container with:
+  ```
+  docker> sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread)"
+  ```
+
+- To check that the library is installed
   - In a notebook
   ```
   notebook> import gspread; print(gspread.__version__)
@@ -27,28 +37,25 @@
   docker> python -c "import gspread; print(gspread.__version__)"
   5.10.0
   ```
-- Otherwise you can install it in the notebook with
-  ```
-  !pip install gspread-pandas
-  ```
-- Or in the Docker container with:
-  ```
-  sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread)"
-  ```
 
 ## Configuring gspread-pandas
 
-- You need to have a service account key that has access to the drive space for modification
-  - Normally the default one `helpers/.google_credentials/service.json` would work.
-  - If you need to modify a Google Drive space where the default service account does not have access to, follow the instruction [here](https://gspread-pandas.readthedocs.io/en/latest/getting_started.html#client-credentials) to get your own `your_service.json`, store it and use it as the service account key path in `hgoogle_file_api.py`.
+- You need to have a service account key that has access to the Google drive
+  space for modification
+  - Normally the default one `helpers/.google_credentials/service.json` would
+    work.
+  - If you need to modify a Google Drive space where the default service account
+    does not have access to, follow the instruction
+    [here](https://gspread-pandas.readthedocs.io/en/latest/getting_started.html#client-credentials)
+    to get your own `your_service.json`, store it and use it as the service
+    account key path in `hgoogle_file_api.py`.
     
   - The process is not complicated but it's not obvious since you need to click
     around in the GUI
   - The credentials file is a JSON downloaded from Google.
 - `gspread-pandas` leverages `gspread`
   
-- https://docs.gspread.org/en/latest/oauth2.html
-  
+- Following the process in https://docs.gspread.org/en/latest/oauth2.html
 - Create a project using a name like "gp_gspread"
 - Search for "Drive API" and click on Enable API
 - Search for "Sheets API" and click on Enable API
@@ -56,7 +63,8 @@
 - Then you are going to get a pop up with "OAuth client created"
   - Click "Download JSON" at the bottom
   - The file downloaded is like "client_secret_42164...-00pdvmfnf3lrda....apps.googleusercontent.com"
-- Move the file to `helpers/.google_credentials/client_secrets.json` (Overwrite the existing placeholder file).
+- Move the file to `helpers/.google_credentials/client_secrets.json` (Overwrite
+  the existing placeholder file).
   ```
   > mv ~/Downloads/client_secret_421642061916-00pdvmfnf3lrdasoh2ccsnqb5akr4v9f.apps.googleusercontent.com.json ~/src/sorrentum1/helpers/.google_credentials/client_secrets.json
   > chmod 600 ~/src/sorrentum1/helpers/.google_credentials/client_secrets.json
@@ -73,6 +81,25 @@
     the longest one.
   - When you are given a choice between `OAuth client ID` and `Service account`,
     choose `Service account`.
+
+## Using `gspread` on the server
+- TODO(gp): Check if this flow works
+- To use the library on the server, the downloaded JSON with the credentials
+  needs to be stored on the server
+  ```bash
+  > export SRC_FILE="~/Downloads/client_secret_4642711342-ib06g3lbv6pa4n622qusqrjk8j58o8k6.apps.googleusercontent.com.json"
+  > export DST_DIR="~/.config/gspread_pandas"
+  > export DST_FILE="$DST_DIR/google_secret.json"
+  > mkdir -p $DST_DIR
+  > mv $SRC_FILE $DST_FILE
+  > chmod 600 $DST_FILE
+  ```
+  and copy that on the server, e.g.,
+  ```bash
+  > ssh research "mkdir -p $DST_DIR"
+  > scp $SRC_FILE research:$DST_FILE
+  > ssh research "chmod 600 $DST_FILE"
+  ```
 
 # Using gspread-pandas
 

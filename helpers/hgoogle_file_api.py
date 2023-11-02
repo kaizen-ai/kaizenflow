@@ -10,7 +10,8 @@ import logging
 import os.path
 from typing import Optional
 
-# TODO(Henry): This package need to be manually installed until they are added to the container.
+# TODO(Henry): This package need to be manually installed until they are added
+# to the container.
 # Run the following line in any notebook would install it:
 # !sudo /bin/bash -c "(source /venv/bin/activate; pip install --upgrade google-api-python-client)"
 # Or run the following part in python:
