@@ -234,8 +234,9 @@ def build_multiday_system_reconciliation_config(
     :param end_timestamp_as_str: string representation of timestamp
         at which to end reconcile run, e.g. "20221010_080000"
     """
-    start_timestamp = timestamp_as_str_to_timestamp(start_timestamp_as_str)
-    end_timestamp = timestamp_as_str_to_timestamp(end_timestamp_as_str)
+    tz = "America/New_York"
+    start_timestamp = hdateti.str_to_timestamp(start_timestamp_as_str, tz)
+    end_timestamp = hdateti.str_to_timestamp(end_timestamp_as_str, tz)
     config = {
         "dst_root_dir": dst_root_dir,
         "dag_builder_name": dag_builder_name,
@@ -570,16 +571,18 @@ def get_system_run_timestamps(
     system_run_timestamps = [tuple(ts.split(".")) for ts in timestamp_dirs]
     # Keep timestamps within the `[start_date, end_date]` range.
     tz = "UTC"
+    datetime_format = "%Y%m%d_%H%M%S"
     # Filter by start / end timestamps using system run start timestamp.
     if start_timestamp is not None:
-        # TODO(Grisha): use `str_to_timestamp()` from `helpers.hdatetime.py`.
         system_run_timestamps = [
             (system_run_start_timestamp, system_run_end_timestamp)
             for (
                 system_run_start_timestamp,
                 system_run_end_timestamp,
             ) in system_run_timestamps
-            if timestamp_as_str_to_timestamp(system_run_start_timestamp, tz=tz)
+            if hdateti.str_to_timestamp(
+                system_run_start_timestamp, tz, datetime_format=datetime_format
+            )
             >= start_timestamp
         ]
         _LOG.info("Filtered by `start_timestamp`: %s.", system_run_timestamps)
@@ -590,7 +593,9 @@ def get_system_run_timestamps(
                 system_run_start_timestamp,
                 system_run_end_timestamp,
             ) in system_run_timestamps
-            if timestamp_as_str_to_timestamp(system_run_start_timestamp, tz=tz)
+            if hdateti.str_to_timestamp(
+                system_run_start_timestamp, tz, datetime_format=datetime_format
+            )
             <= end_timestamp
         ]
         _LOG.info("Filtered by `end_timestamp`: %s.", system_run_timestamps)
