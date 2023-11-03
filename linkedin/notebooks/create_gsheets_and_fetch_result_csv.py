@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -16,11 +16,18 @@
 # # Import
 
 # %%
+# Before running this notebook, please read the instruction here:
+# https://gspread-pandas.readthedocs.io/en/latest/getting_started.html#client-credentials
+# Follow the steps in `Client Credentials` until you have the JSON file downloaded. 
+# Save that JSON as `service.json` and put it in `helpers/.google_credentials` folder, then you are all set.
+# !sudo /bin/bash -c "(source /venv/bin/activate; pip install --upgrade google-api-python-client)"
+
+# %%
 import logging
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import linkedin.phantom_api.phantombuster_api as lpphapia
-import linkedin.google_api.google_drive_api as lggodrapi
+import helpers.hgoogle_file_api as hgofiapi
 
 # %%
 _LOG = logging.getLogger(__name__)
@@ -30,7 +37,6 @@ hdbg.init_logger(use_exec_path=True)
 # # Initial
 
 # %%
-googleapi = lggodrapi.GoogleFileApi()
 phantom = lpphapia.Phantom()
 
 # %% [markdown]
@@ -63,8 +69,10 @@ phantom.get_all_phantoms()
 
 # %%
 # (INPUT) Set the phantom IDs (Choose ID from the above table).
-search_phantom_id = "2862499141527492"
-profile_phantom_id = "3593602419926765"
+# search_phantom_id = "2862499141527492"
+# profile_phantom_id = "3593602419926765"
+search_phantom_id = "3577001783753488"
+profile_phantom_id = "5767607159170031"
 
 # %%
 # Path to save result csv.
@@ -77,12 +85,12 @@ profile_result_csv_path = result_dir + f"{search_name}_profile_result.csv"
 
 # %%
 # Create a folder with search_name in the dir parent folder.
-current_folder_id = googleapi.create_google_drive_folder(search_name, parent_folder_id)
+current_folder_id = hgofiapi.create_google_drive_folder(search_name, parent_folder_id)
 
 # %%
 # Create empty gsheets in the new created folder.
 for gsheet_name in gsheets_name:
-    googleapi.create_empty_google_file(
+    hgofiapi.create_empty_google_file(
         gfile_type = "sheet",
         gfile_name = gsheet_name,
         gdrive_folder_id = current_folder_id,
@@ -120,10 +128,11 @@ profile_export_df.head()
 
 # %%
 def df_to_gsheet(gsheet_name: str, df: pd.DataFrame) -> None:
+    creds = hgofiapi.get_credentials()
     gsheet = gspread_pandas.Spread(
         gsheet_name,
-        sheet="Sheet1",
         create_sheet=True,
+        creds=creds
     )
     gsheet.df_to_sheet(df, index=False)
     _LOG.info("Save to gsheet %s", gsheet_name)
@@ -143,3 +152,5 @@ _LOG.info("Delete file %s", search_result_csv_path)
 # %%
 hio.delete_file(profile_result_csv_path)
 _LOG.info("Delete file %s", profile_result_csv_path)
+
+# %%
