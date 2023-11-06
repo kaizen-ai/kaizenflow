@@ -629,6 +629,7 @@ class Test_str_to_timestamp1(hunitest.TestCase):
     """
     Test if string representation of datetime is converted correctly
     """
+
     def test1(self) -> None:
         """
         - `datetime_str` has a valid format
@@ -695,6 +696,7 @@ class Test_dassert_str_is_date(hunitest.TestCase):
     """
     Test that the function checks a string representation of date correctly.
     """
+    
     def test1(self) -> None:
         """
         - date has a valid format
