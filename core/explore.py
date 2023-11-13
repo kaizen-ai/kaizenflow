@@ -350,9 +350,10 @@ def breakdown_table(
     res = pd.DataFrame(res)
     res.columns = ["count"]
     res.sort_values(["count"], ascending=False, inplace=True)
-    res = res.append(
+    res = pd.concat([
+        res,
         pd.DataFrame([df.shape[0]], index=["Total"], columns=["count"])
-    )
+    ])
     res["pct"] = (100.0 * res["count"]) / df.shape[0]
     # Format.
     res["count"] = [

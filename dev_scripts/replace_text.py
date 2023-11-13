@@ -148,6 +148,8 @@ def _look_for(file_name: str, filter_by: str) -> Tuple[bool, List[str]]:
     res = []
     found = False
     for i, line in enumerate(txt):
+        # TODO(Vlad): It filters files based on content,
+        # but should filter based on a name.
         m = re.search(filter_by, line)
         if m:
             # ./install/create_conda.py:21:import helpers.helper_io as hio

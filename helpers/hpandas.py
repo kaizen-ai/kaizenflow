@@ -1256,7 +1256,7 @@ def df_to_str(
             # Add total row.
             mem_use_df_total = mem_use_df.sum(axis=0)
             mem_use_df_total.name = "Total"
-            mem_use_df = mem_use_df.append(mem_use_df_total.T)
+            mem_use_df = pd.concat([mem_use_df, mem_use_df_total.T])
             # Convert into the desired format.
             if memory_usage_mode == "bytes":
                 pass
