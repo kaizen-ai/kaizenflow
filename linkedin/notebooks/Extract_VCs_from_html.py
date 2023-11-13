@@ -27,6 +27,14 @@ def get_VC_name(content_soup):
         name = "None"
     return name
 
+def get_VC_url(content_soup):
+    url = ""
+    try:
+        url = content_soup.select("div[data-walk-through-id$=-cell-name] .comp-txn-logo-container")[0].parent["href"]
+    except Exception as e:
+        url = "None"
+    return url
+
 def get_VC_score(content_soup):
     score = ""
     try:
@@ -97,7 +105,8 @@ def get_row_content(content_soup):
     VC_stages = get_VC_stages(content_soup)
     VC_sectors = get_VC_sectors(content_soup)
     VC_investment_locations = get_VC_investment_locations(content_soup)
-    row_content_list = [VC_name, VC_score, VC_rounds, VC_portfolio_companies, VC_location, VC_stages, VC_sectors, VC_investment_locations]
+    VC_url = get_VC_url(content_soup)
+    row_content_list = [VC_name, VC_score, VC_rounds, VC_portfolio_companies, VC_location, VC_stages, VC_sectors, VC_investment_locations, VC_url]
     return row_content_list
 
 def get_contents(soup):
@@ -113,7 +122,8 @@ def get_title(soup):
 def get_VCs_from_html(filepath):
     fp = open(filepath)
     soup = BeautifulSoup(fp)
-    title = get_title(soup)
+    titles = get_title(soup)
+    titles.append("Company URL")
     contents = get_contents(soup)
     df = pd.DataFrame(data=np.array(contents), columns=titles)
     fp.close()
@@ -124,6 +134,9 @@ def get_VCs_from_html(filepath):
 # %% run_control={"marked": true}
 filepath = "../data/Tracxn_SeriesA_AI.html"
 df = get_VCs_from_html(filepath)
-df.to_csv()
+df.to_csv("../result_csv/Tracxn_SeriesA_AI.csv", sep=',',index=False)
+
+# %%
+df["Company URL"][0]
 
 # %%
