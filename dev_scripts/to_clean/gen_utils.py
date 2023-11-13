@@ -881,7 +881,7 @@ def report_intraday_stats(rets):
     """
     dbg.dassert_type_is(rets, pd.DataFrame)
     stats_df = []
-    count_by_hour = rets.groupby(lambda x: x.time).count()
+    count_by_hour = rets.groupby(lambda x: x.time()).count()
     for inst_name in count_by_hour.columns:
         row = [inst_name]
         # Find non-null times.
@@ -915,7 +915,7 @@ def plot_intraday_stats(rets):
     for i, inst_name in enumerate(inst_names):
         ax = plt.subplot(len(inst_names) + 1, 1, i + 1)
         rets_tmp = rets[inst_name].astype(float)
-        rets_tmp.groupby(lambda x: x.time).count().plot(ax=ax, title=inst_name)
+        rets_tmp.groupby(lambda x: x.time()).count().plot(ax=ax, title=inst_name)
     plt.plot()
 
 
