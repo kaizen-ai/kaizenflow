@@ -531,7 +531,7 @@ class VolatilityModel(
         dfs, info = self._fit_predict_volatility_model(df, fit=fit)
         df_out = pd.concat(dfs.values(), axis=1)
         df_out = self._apply_col_mode(
-            df_in.drop(df_out.columns.intersection(df_in.columns), 1),
+            df_in.drop(df_out.columns.intersection(df_in.columns), axis=1),
             df_out,
             cols=self._fit_cols,
             col_mode=self._col_mode,
