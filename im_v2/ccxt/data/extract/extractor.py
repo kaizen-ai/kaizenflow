@@ -213,9 +213,9 @@ class CcxtExtractor(imvcdexex.Extractor):
             & (all_bars_df["timestamp"] <= end_timestamp)
         ]
         # It can happen that the received the data are not ordered by timestamp, which would
-        #  make the is_monotonic check fail.
+        #  make the is_monotonic_increasing check fail.
         all_bars_df = all_bars_df.sort_values("timestamp").reset_index(drop=True)
-        hdbg.dassert(all_bars_df.timestamp.is_monotonic)
+        hdbg.dassert(all_bars_df.timestamp.is_monotonic_increasing)
         # TODO(gp): Double check if dataframes are properly concatenated.
         return all_bars_df
 
