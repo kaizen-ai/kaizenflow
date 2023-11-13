@@ -185,8 +185,10 @@ class CcxtExtractor(imvcdexex.Extractor):
             end_timestamp,
         )
         # Convert datetime into ms.
-        start_timestamp = start_timestamp.asm8.astype(int) // 1000000
-        end_timestamp = end_timestamp.asm8.astype(int) // 1000000
+        start_timestamp = hdateti.convert_timestamp_to_unix_epoch(
+            start_timestamp
+        )
+        end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
         duration = self._sync_exchange.parse_timeframe("1m") * 1000
         all_bars = []
         # Iterate over the time period.
