@@ -165,7 +165,7 @@ class Test_apply_nan_mode(hunitest.TestCase):
 
     # Smoke test for empty input.
     def test6(self) -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         hdatafr.apply_nan_mode(series)
 
     @staticmethod

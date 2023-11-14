@@ -3369,7 +3369,6 @@ class Test_multiindex_df_info1(hunitest.TestCase):
 
 # #############################################################################
 
-
 class Test_dassert_index_is_datetime(hunitest.TestCase):
     @staticmethod
     def get_multiindex_df(
@@ -3443,7 +3442,7 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
         act = str(cm.exception)
         exp = r"""
         * Failed assertion *
-        Instance of 'Index([], dtype='object')' is '<class 'pandas.core.indexes.base.Index'>' instead of '<class 'pandas.core.indexes.datetimes.DatetimeIndex'>'
+        Instance of 'RangeIndex(start=0, stop=0, step=1)' is '<class 'pandas.core.indexes.range.RangeIndex'>' instead of '<class 'pandas.core.indexes.datetimes.DatetimeIndex'>'
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 

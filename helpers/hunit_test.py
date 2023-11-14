@@ -729,7 +729,6 @@ def set_pd_default_values() -> None:
     default_pd_values = {
         "chop_threshold": None,
         "colheader_justify": "right",
-        "column_space": 12,
         "date_dayfirst": False,
         "date_yearfirst": False,
         "encoding": "UTF-8",

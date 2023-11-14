@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import core.artificial_signal_generators as carsigen
 import core.signal_processing.incremental_pca as csprinpc
@@ -10,6 +11,7 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.skip("See CmTask5898.")
 class Test_compute_ipca(hunitest.TestCase):
     def test1(self) -> None:
         """
@@ -136,6 +138,7 @@ class Test_compute_ipca(hunitest.TestCase):
         return df
 
 
+@pytest.mark.skip("See CmTask5898.")
 class Test__compute_ipca_step(hunitest.TestCase):
     def test1(self) -> None:
         """

@@ -212,7 +212,7 @@ def count_num_finite_samples(data: pd.Series) -> Union[int, float]:
 
 
 # TODO(Paul): Extend to dataframes.
-def count_num_unique_values(data: pd.Series) -> Union[int, float, np.float]:
+def count_num_unique_values(data: pd.Series) -> Union[int, float]:
     """
     Count number of unique values in the series.
     """

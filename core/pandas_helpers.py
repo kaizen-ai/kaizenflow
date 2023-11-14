@@ -9,8 +9,8 @@ import core.pandas_helpers as cpanh
 # TODO(gp): Merge into helpers/hpandas.py
 
 import collections
+import inspect
 import logging
-import types
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import numpy as np
@@ -118,13 +118,17 @@ def _loop(
         df_tmp = None
         return df_tmp, metadata
     # Apply function.
-    # is_class = inspect.isclass(func)
-    is_class = not isinstance(func, types.FunctionType)
+    hdbg.dassert_callable(func)
+    # See `https://github.com/numpy/numpy/issues/24019#issuecomment-1722174418`.
+    is_routine = inspect.isroutine(func)
     try:
-        if is_class:
-            df_tmp = func(window_df, ts)
-        else:
+        if is_routine:
+            # Apply the function to the dataframe.
             df_tmp = func(window_df)
+        else:
+            # Supply also a timestamp to a callable class instance, e.g.,
+            # `PcaFactorComputer`.
+            df_tmp = func(window_df, ts)
     except (RuntimeError, AssertionError) as e:
         _LOG.error("Caught exception at ts=%s", ts)
         if abort_on_error:

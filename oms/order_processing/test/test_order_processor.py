@@ -122,15 +122,15 @@ class TestOrderProcessor1(omtodh.TestOmsDbHelper):
         num_filled_orders=1
         events=9
         2000-01-01 09:35:00-05:00: start
-        2000-01-01 09:35:00-05:00: wall_clock_time=Timestamp('2000-01-01 09:35:00-0500', tz='America/New_York') termination_condition=Timestamp('2000-01-01 09:40:15-0500', tz='pytz.FixedOffset(-300)') -> wall_clock_time_tmp=Timestamp('2000-01-01 09:35:00-0500', tz='America/New_York') termination_condition_tmp=Timestamp('2000-01-01 09:40:00-0500', tz='pytz.FixedOffset(-300)') -> is_done=False
+        2000-01-01 09:35:00-05:00: wall_clock_time=Timestamp('2000-01-01 09:35:00-0500', tz='America/New_York') termination_condition=Timestamp('2000-01-01 09:40:15-0500', tz='UTC-05:00') -> wall_clock_time_tmp=Timestamp('2000-01-01 09:35:00-0500', tz='America/New_York') termination_condition_tmp=Timestamp('2000-01-01 09:40:00-0500', tz='UTC-05:00') -> is_done=False
         2000-01-01 09:35:00-05:00: Waiting for orders in table self._submitted_orders_table_name='submitted_orders'
         2000-01-01 09:35:02-05:00: diff_num_rows=1
         2000-01-01 09:35:02-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
         2000-01-01 09:35:05-05:00: Wait until fulfillment deadline=2000-01-01 09:40:00-05:00
         2000-01-01 09:40:00-05:00: Received 1 fills:
           Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:40:00-05:00 num_shares=100.0 price=999.9161531095003
-        2000-01-01 09:40:00-05:00: wall_clock_time=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York') termination_condition=Timestamp('2000-01-01 09:40:15-0500', tz='pytz.FixedOffset(-300)') -> wall_clock_time_tmp=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York') termination_condition_tmp=Timestamp('2000-01-01 09:40:00-0500', tz='pytz.FixedOffset(-300)') -> is_done=True
-        2000-01-01 09:40:00-05:00: Exiting loop: target_list_id=1, wall_clock_time=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York'), termination_condition=Timestamp('2000-01-01 09:40:15-0500', tz='pytz.FixedOffset(-300)')
+        2000-01-01 09:40:00-05:00: wall_clock_time=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York') termination_condition=Timestamp('2000-01-01 09:40:15-0500', tz='UTC-05:00') -> wall_clock_time_tmp=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York') termination_condition_tmp=Timestamp('2000-01-01 09:40:00-0500', tz='UTC-05:00') -> is_done=True
+        2000-01-01 09:40:00-05:00: Exiting loop: target_list_id=1, wall_clock_time=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York'), termination_condition=Timestamp('2000-01-01 09:40:15-0500', tz='UTC-05:00')
         """
         self.helper(termination_condition, exp)
 

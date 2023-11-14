@@ -696,7 +696,7 @@ def get_parquet_filters_from_timestamp_interval(
         for date in dates:
             year = date.year
             # https://docs.python.org/3/library/datetime.html#datetime.date.isocalendar
-            weekofyear = date.isocalendar()[1]
+            weekofyear = date.isocalendar().week
             and_filter = [("year", "=", year), ("weekofyear", "=", weekofyear)]
             or_and_filter.append(and_filter)
     else:
@@ -759,7 +759,13 @@ def add_date_partition_columns(
             for column_name in partition_columns:
                 # Extract data corresponding to `column_name` (e.g.,
                 # `df.index.year`).
-                df[column_name] = getattr(df.index, column_name)
+                if column_name == "weekofyear":
+                    # The `weekofyear` attribute has been deprecated in Pandas 
+                    # 2.1.0, so weeks are extracted using a function instead of
+                    # the attribute name.
+                    df["weekofyear"] = df.index.isocalendar().week
+                else:
+                    df[column_name] = getattr(df.index, column_name)
     return df, partition_columns
 
 

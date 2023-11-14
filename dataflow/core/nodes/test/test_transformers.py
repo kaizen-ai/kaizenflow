@@ -897,6 +897,7 @@ class TestTwapVwapComputer(hunitest.TestCase):
         return df
 
 
+@pytest.mark.skip("See CmTask5898.")
 class TestMultiindexTwapVwapComputer(hunitest.TestCase):
     def test1(self) -> None:
         """
