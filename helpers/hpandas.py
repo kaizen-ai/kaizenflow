@@ -1024,9 +1024,6 @@ def drop_duplicated(
     return df
 
 
-# #############################################################################
-
-
 def _display(log_level: int, df: pd.DataFrame) -> None:
     """
     Display a df in a notebook at the given log level.

@@ -1,3 +1,9 @@
+# cmamp-1.10.0
+- 2023-11-13
+- Promote Pandas to 2.1.1
+- Promote Numpy to 1.26.0
+- Changes from #4662 - Promote pandas version
+
 # cmamp-1.9.0
 - 2023-09-29
 - Promote Python to 3.9

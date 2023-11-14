@@ -1,7 +1,7 @@
 """
 Import as:
 
-import oms.portfolio.dataframe_portfolio as opodapor
+import oms.portfolio.dataframe_portfolio as opdapor
 """
 
 import collections
@@ -13,6 +13,7 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import oms.portfolio.portfolio as oporport
 
 _LOG = logging.getLogger(__name__)
@@ -158,6 +159,10 @@ class DataFramePortfolio(oporport.Portfolio):
             fill_rows.append(pd.Series(fill_row))
         #
         if fill_rows:
+            # Infer type and timezone from the first fill since they are the
+            # same across fills.
+            timestamp_type = pd.Series([fill_rows[0]["timestamp"]]).dtype
+            _LOG.debug(hprint.to_str("timestamp_type"))
             fills_df = pd.concat(fill_rows, axis=1).transpose()
             # Coerce numerical data types.
             # - asset_id coercion to int64 may fail if there are NaNs (there
@@ -165,11 +170,15 @@ class DataFramePortfolio(oporport.Portfolio):
             # - in general, num_shares and price should be floats, but without
             #   being this specific, they may get coerced to ints in certain
             #   edge cases
+            # - when transposing a df a timestamp type is lost (i.e. the type
+            #    becomes `object`), refer to
+            #   `https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.transpose.html`.
             fills_df = fills_df.astype(
                 {
                     "asset_id": "int64",
                     "num_shares": "float64",
                     "price": "float64",
+                    "timestamp": timestamp_type,
                 }
             )
         else:
