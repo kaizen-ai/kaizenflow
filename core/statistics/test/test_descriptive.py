@@ -86,7 +86,7 @@ class TestComputeFracZero(hunitest.TestCase):
         index = [0, 1, 2, 3, 4]
         expected = pd.Series(data=data, index=index)
         actual = cstadesc.compute_frac_zero(self._get_df(seed=1))
-        pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
+        pd.testing.assert_series_equal(actual, expected, atol=1e-03)
 
     def test2(self) -> None:
         data = [
@@ -109,7 +109,7 @@ class TestComputeFracZero(hunitest.TestCase):
         index = pd.date_range(start="1-04-2018", periods=15, freq="30T")
         expected = pd.Series(data=data, index=index)
         actual = cstadesc.compute_frac_zero(self._get_df(seed=1), axis=1)
-        pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
+        pd.testing.assert_series_equal(actual, expected, atol=1e-03)
 
     def test3(self) -> None:
         # Equals 20 / 75 = num_zeros / num_points.
@@ -160,7 +160,7 @@ class TestComputeFracNan(hunitest.TestCase):
         index = [0, 1, 2, 3, 4]
         expected = pd.Series(data=data, index=index)
         actual = cstadesc.compute_frac_nan(self._get_df(seed=1))
-        pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
+        pd.testing.assert_series_equal(actual, expected, atol=1e-03)
 
     def test2(self) -> None:
         data = [
@@ -183,7 +183,7 @@ class TestComputeFracNan(hunitest.TestCase):
         index = pd.date_range(start="1-04-2018", periods=15, freq="30T")
         expected = pd.Series(data=data, index=index)
         actual = cstadesc.compute_frac_nan(self._get_df(seed=1), axis=1)
-        pd.testing.assert_series_equal(actual, expected, check_less_precise=3)
+        pd.testing.assert_series_equal(actual, expected, atol=1e-03)
 
     def test3(self) -> None:
         # Equals 15 / 75 = num_nans / num_points.
@@ -512,9 +512,7 @@ class Test_summarize_time_index_info(hunitest.TestCase):
         """
         series = self._get_series(seed=1)
         actual = cstadesc.summarize_time_index_info(series)
-        actual_string = hunitest.convert_df_to_string(
-            actual, index=True, decimals=3
-        )
+        actual_string = hpandas.df_to_str(actual, num_rows=None, precision=3)
         self.check_string(actual_string)
 
     def test2(self) -> None:
@@ -524,9 +522,7 @@ class Test_summarize_time_index_info(hunitest.TestCase):
         series = self._get_series(seed=1)
         series = series.drop(series.index[1:3])
         actual = cstadesc.summarize_time_index_info(series)
-        actual_string = hunitest.convert_df_to_string(
-            actual, index=True, decimals=3
-        )
+        actual_string = hpandas.df_to_str(actual, num_rows=None, precision=3)
         self.check_string(actual_string, fuzzy_match=True)
 
     def test3(self) -> None:
@@ -538,9 +534,7 @@ class Test_summarize_time_index_info(hunitest.TestCase):
         series[-1] = np.nan
         series[5:25] = np.nan
         actual = cstadesc.summarize_time_index_info(series)
-        actual_string = hunitest.convert_df_to_string(
-            actual, index=True, decimals=3
-        )
+        actual_string = hpandas.df_to_str(actual, num_rows=None, precision=3)
         self.check_string(actual_string, fuzzy_match=True)
 
     def test4(self) -> None:
@@ -554,9 +548,7 @@ class Test_summarize_time_index_info(hunitest.TestCase):
         actual = cstadesc.summarize_time_index_info(
             series, nan_mode="fill_with_zero"
         )
-        actual_string = hunitest.convert_df_to_string(
-            actual, index=True, decimals=3
-        )
+        actual_string = hpandas.df_to_str(actual, num_rows=None, precision=3)
         self.check_string(actual_string, fuzzy_match=True)
 
     def test5(self) -> None:
@@ -565,9 +557,7 @@ class Test_summarize_time_index_info(hunitest.TestCase):
         """
         series = self._get_series(seed=1)
         actual = cstadesc.summarize_time_index_info(series, prefix="test_")
-        actual_string = hunitest.convert_df_to_string(
-            actual, index=True, decimals=3
-        )
+        actual_string = hpandas.df_to_str(actual, num_rows=None, precision=3)
         self.check_string(actual_string, fuzzy_match=True)
 
     def test6(self) -> None:
@@ -577,9 +567,7 @@ class Test_summarize_time_index_info(hunitest.TestCase):
         date_range_kwargs = {"start": "1/1/2010", "periods": 40, "freq": "M"}
         series = pd.Series(np.nan, index=pd.date_range(**date_range_kwargs))
         actual = cstadesc.summarize_time_index_info(series)
-        actual_string = hunitest.convert_df_to_string(
-            actual, index=True, decimals=3
-        )
+        actual_string = hpandas.df_to_str(actual, num_rows=None, precision=3)
         self.check_string(actual_string, fuzzy_match=True)
 
     def test7(self) -> None:
@@ -588,9 +576,7 @@ class Test_summarize_time_index_info(hunitest.TestCase):
         """
         series = pd.Series(index=pd.DatetimeIndex([]))
         actual = cstadesc.summarize_time_index_info(series)
-        actual_string = hunitest.convert_df_to_string(
-            actual, index=True, decimals=3
-        )
+        actual_string = hpandas.df_to_str(actual, num_rows=None, precision=3)
         self.check_string(actual_string, fuzzy_match=True)
 
     @staticmethod
