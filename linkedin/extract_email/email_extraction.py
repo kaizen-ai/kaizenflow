@@ -12,7 +12,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from tqdm import tqdm
 
-# Install selenium
+# Install selenium and openpyxl in the virtual environment.
 install_code = subprocess.call(
     'sudo /bin/bash -c "(source /venv/bin/activate; pip install selenium)"',
     shell=True,
