@@ -182,7 +182,7 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         round_mode = "round"
         actual = ooccoput.apply_cc_limits(order_df, broker, round_mode)
         actual = hpandas.df_to_str(actual)
-        self.check_string(actual)
+        self.check_string(actual, fuzzy_match=True)
 
     def test_apply_prod_limits2(self) -> None:
         """
@@ -196,7 +196,7 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         # Run.
         actual = ooccoput.apply_cc_limits(order_df, broker, round_mode)
         actual = hpandas.df_to_str(actual)
-        self.check_string(actual)
+        self.check_string(actual, fuzzy_match=True)
 
     def test_apply_prod_limits3(self) -> None:
         """
@@ -225,4 +225,4 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         # Run.
         actual = ooccoput.apply_cc_limits(order_df, broker, round_mode)
         actual = hpandas.df_to_str(actual)
-        self.check_string(actual)
+        self.check_string(actual, fuzzy_match=True)

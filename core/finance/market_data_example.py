@@ -481,7 +481,7 @@ def generate_random_bars_for_asset(
         start_time=start_time,
         end_time=end_time,
     ).rename("s2")
-    s1 = (s1 * s2).groupby(lambda x: x.date).cumsum().rename("s1")
+    s1 = (s1 * s2).groupby(lambda x: x.date()).cumsum().rename("s1")
     # TODO(Paul): Expose the bar delay.
     bar_delay = "10s"
     df = build_timestamp_df(

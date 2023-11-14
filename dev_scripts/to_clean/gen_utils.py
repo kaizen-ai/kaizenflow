@@ -294,7 +294,7 @@ def find_common_columns(df):
 def min_max_index(obj, tag=None):
     index = get_index(obj)
     dbg.dassert(index.is_unique)
-    dbg.dassert(index.is_monotonic)
+    dbg.dassert(index.is_monotonic_increasing)
     txt = ""
     if tag:
         txt += "%s: " % tag
@@ -312,7 +312,7 @@ def min_max(obj, tag=None):
     if tag:
         txt += "%s: " % tag
     if len(obj) > 0:
-        if hasattr(obj, "is_monotonic"):
+        if hasattr(obj, "is_monotonic_increasing"):
             min_, max_ = obj.values[0], obj.values[-1]
         else:
             min_, max_ = min(obj), max(obj)
@@ -587,7 +587,7 @@ def prepend_df_columns(df, prefix, copy=True):
 
 def align_to_dt_index(idx, dt):
     dbg.dassert_type_is(idx, pd.DatetimeIndex)
-    dbg.dassert(idx.is_monotonic)
+    dbg.dassert(idx.is_monotonic_increasing)
     utc = idx.tz is not None
     dt = pd.to_datetime(dt, utc=utc)
     dt_aligned = idx[bisect.bisect_left(idx, dt)]
@@ -604,7 +604,7 @@ def slice_index(idx, start_dt, end_dt, mode=None):
     - None means no bound
     """
     dbg.dassert_type_is(idx, pd.DatetimeIndex)
-    dbg.dassert(idx.is_monotonic)
+    dbg.dassert(idx.is_monotonic_increasing)
     if mode is None:
         mode = "close"
     utc = idx.tz is not None
@@ -881,7 +881,7 @@ def report_intraday_stats(rets):
     """
     dbg.dassert_type_is(rets, pd.DataFrame)
     stats_df = []
-    count_by_hour = rets.groupby(lambda x: x.time).count()
+    count_by_hour = rets.groupby(lambda x: x.time()).count()
     for inst_name in count_by_hour.columns:
         row = [inst_name]
         # Find non-null times.
@@ -915,7 +915,7 @@ def plot_intraday_stats(rets):
     for i, inst_name in enumerate(inst_names):
         ax = plt.subplot(len(inst_names) + 1, 1, i + 1)
         rets_tmp = rets[inst_name].astype(float)
-        rets_tmp.groupby(lambda x: x.time).count().plot(ax=ax, title=inst_name)
+        rets_tmp.groupby(lambda x: x.time()).count().plot(ax=ax, title=inst_name)
     plt.plot()
 
 

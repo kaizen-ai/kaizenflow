@@ -14,7 +14,7 @@ class TestGetInterarrivalTime(hunitest.TestCase):
 
     # Smoke test for empty input.
     def test1(self) -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstintim.get_interarrival_time(series)
 
     def test2(self) -> None:
@@ -49,7 +49,7 @@ class TestComputeInterarrivalTimeStats(hunitest.TestCase):
 
     # Smoke test for empty input.
     def test1(self) -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstintim.compute_interarrival_time_stats(series)
 
     def test2(self) -> None:

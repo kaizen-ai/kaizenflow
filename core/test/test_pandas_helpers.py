@@ -59,7 +59,7 @@ class TestDfRollingApply(hunitest.TestCase):
         df = pd.read_csv(df_str, index_col=0)
         #
         window = 5
-        func = np.mean
+        func = lambda x: np.mean(x, axis=0)
         df_act = cpanhelp.df_rolling_apply(df, window, func)
         #
         df_exp = df.rolling(window).apply(func, raw=True)
@@ -83,7 +83,7 @@ class TestDfRollingApply(hunitest.TestCase):
         df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=["A", "B"])
         #
         window = 5
-        func = np.mean
+        func = lambda x: np.mean(x, axis=0)
         df_act = cpanhelp.df_rolling_apply(df, window, func)
         #
         df_exp = df.rolling(window).apply(func, raw=True)
@@ -99,7 +99,7 @@ class TestDfRollingApply(hunitest.TestCase):
         df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=["A", "B"])
         #
         window = 5
-        func = lambda x: pd.DataFrame(np.mean(x))
+        func = lambda x: pd.DataFrame(np.mean(x, axis=0))
         df_act = cpanhelp.df_rolling_apply(df, window, func)
         #
         func = np.mean
@@ -118,7 +118,7 @@ class TestDfRollingApply(hunitest.TestCase):
         df = pd.DataFrame(np.random.rand(100, 2).round(2), columns=["A", "B"])
         #
         window = 5
-        func = lambda x: pd.DataFrame([np.mean(x), np.sum(x)])
+        func = lambda x: pd.DataFrame([np.mean(x, axis=0), np.sum(x)])
         df_act = cpanhelp.df_rolling_apply(df, window, func)
         # Check.
         self.check_string(df_act.to_string())
@@ -138,7 +138,7 @@ class TestDfRollingApply(hunitest.TestCase):
         self.assertEqual(len(resampled_index), 6)
         #
         window = 5
-        func = np.mean
+        func = lambda x: np.mean(x, axis=0)
         df_act = cpanhelp.df_rolling_apply(
             df, window, func, timestamps=resampled_index
         )

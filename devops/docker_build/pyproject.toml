@@ -7,7 +7,7 @@ authors = [""]
 [tool.poetry.dependencies]
 async_solipsism = ">= 0.3"
 # The version is frozen due to #339.
-awscli = "1.22.17"
+awscli = "1.29.59"
 boto3 = "*"
 bs4 = "*"
 # It is better to up the version manually for CCXT.
@@ -41,23 +41,19 @@ moto = "*"
 networkx = "*"
 # See https://github.com/Jupyter-contrib/jupyter_nbextensions_configurator/issues/164.
 notebook = "< 7.0.0"
-# TODO(Juraj): The version will be lifted in #CmTask4662.
-numpy = "1.20.3"
-# TODO(Juraj): The version will be lifted in #CmTask4662.
-pandas = "1.5.1"
+numpy = "*"
+pandas = "> 2"
 psutil = "*"
 psycopg2-binary = "*"
 # Frozen because of #CmTask5015.
 pyarrow = "10.0.0"
 pygraphviz = "*"
-pytest = "^6.0.0"
+pytest = "*"
 pytest-cov = "*"
 pytest-instafail = "*"
 pytest-rerunfailures = "*"
 pytest-timeout = "*"
 pytest-xdist = "*"
-# TODO(Nikola): poetry does not work with Python 3.9.* via GH actions,
-#  see "Switch all the build systems to Python 3.9" CmTask #535.
 python = "3.9.*"
 python-dotenv = "*"
 pywavelets = "*"

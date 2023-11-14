@@ -25,7 +25,7 @@ class TestApplyNormalityTest(hunitest.TestCase):
 
     # Smoke test for empty input.
     def test3(self) -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstanorm.apply_normality_test(series)
 
     def test4(self) -> None:
