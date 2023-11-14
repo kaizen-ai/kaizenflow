@@ -14,7 +14,7 @@ class TestTTest1samp(hunitest.TestCase):
 
     # Smoke test for empty input.
     def test1(self) -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstttes.ttest_1samp(series)
 
     def test2(self) -> None:

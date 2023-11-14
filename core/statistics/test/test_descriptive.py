@@ -27,7 +27,7 @@ class TestComputeMoments(hunitest.TestCase):
 
     # Smoke test for empty input.
     def test3(self) -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstadesc.compute_moments(series)
 
     def test4(self) -> None:
@@ -131,7 +131,7 @@ class TestComputeFracZero(hunitest.TestCase):
 
     # Smoke test for empty input.
     def test6(self) -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstadesc.compute_frac_zero(series)
 
     @staticmethod
@@ -205,7 +205,7 @@ class TestComputeFracNan(hunitest.TestCase):
 
     # Smoke test for empty input.
     def test6(self) -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstadesc.compute_frac_nan(series)
 
     @staticmethod
@@ -232,7 +232,7 @@ class TestComputeNumFiniteSamples(hunitest.TestCase):
     @staticmethod
     # Smoke test for empty input.
     def test1() -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstadesc.count_num_finite_samples(series)
 
 
@@ -240,7 +240,7 @@ class TestComputeNumUniqueValues(hunitest.TestCase):
     @staticmethod
     # Smoke test for empty input.
     def test1() -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstadesc.count_num_unique_values(series)
 
 
@@ -248,7 +248,7 @@ class TestComputeDenominatorAndPackage(hunitest.TestCase):
     @staticmethod
     # Smoke test for empty input.
     def test1() -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstadesc._compute_denominator_and_package(reduction=1, data=series)
 
 
@@ -273,7 +273,7 @@ class TestComputeSpecialValueStats(hunitest.TestCase):
 
     # Smoke test for empty input.
     def test3(self) -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstadesc.compute_special_value_stats(series)
 
     @staticmethod
@@ -340,7 +340,7 @@ class Test_compute_jensen_ratio(hunitest.TestCase):
 
     # Smoke test for empty input.
     def test6(self) -> None:
-        signal = pd.Series([])
+        signal = pd.Series(dtype="float64")
         cstadesc.compute_jensen_ratio(signal)
 
     @staticmethod
@@ -401,7 +401,7 @@ class TestComputeZeroDiffProportion(hunitest.TestCase):
 
     # Smoke test for empty input.
     def test7(self) -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstadesc.compute_zero_diff_proportion(series)
 
     def test8(self) -> None:

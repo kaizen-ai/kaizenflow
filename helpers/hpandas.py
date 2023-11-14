@@ -31,18 +31,21 @@ _TRACE = False
 # #############################################################################
 
 
-def to_series(df: pd.DataFrame) -> pd.Series:
+def to_series(df: pd.DataFrame, *, series_dtype: str = "float64") -> pd.Series:
     """
-    Convert a pd.DataFrame with a single column into a pd.Series.
+    Convert a pd.DataFrame with a single column into a pd.Series. The problem
+    is that empty df or df with a single row are not converted correctly to a
+    pd.Series.
 
-    The problem is that empty df or df with a single row are not
-    converted correctly to a pd.Series.
+    :param df: dataframe with a single column to convert to a series
+    :param series_dtype: dtype of the desired series in case a DataFrame
+        is empty, otherwise inherit dtype from a DataFrame
     """
     # See https://stackoverflow.com/questions/33246771
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_eq(df.shape[1], 1, "df=%s doesn't have a single column", df)
     if df.empty:
-        srs = pd.Series()
+        srs = pd.Series(dtype=series_dtype)
     elif df.shape[0] > 1:
         srs = df.squeeze()
     else:
