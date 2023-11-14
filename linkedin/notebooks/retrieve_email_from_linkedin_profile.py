@@ -33,7 +33,7 @@ import requests
 # ### Proxycurl
 
 # %%
-api_key = "QYJhl24azHc6G0Gpw3hCBw"
+api_key = ""
 headers = {"Authorization": "Bearer " + api_key}
 api_endpoint = "https://nubela.co/proxycurl/api/contact-api/personal-email"
 params = {
@@ -45,7 +45,7 @@ response = requests.get(api_endpoint, params=params, headers=headers, timeout=30
 print(response.json())
 
 # %%
-api_key = "QYJhl24azHc6G0Gpw3hCBw"
+api_key = ""
 headers = {"Authorization": "Bearer " + api_key}
 api_endpoint = "https://nubela.co/proxycurl/api/linkedin/profile/email"
 params = {
@@ -59,7 +59,7 @@ print(response.json())
 # ### Hunter.io
 
 # %%
-api_key = "1b16dae54dd5040c19a1e20962bf21cc3e85faa1"
+api_key = ""
 domain = "sequoiacap.com"
 first_name = "Luciana"
 last_name = "Lixandru"
@@ -71,7 +71,7 @@ print(response.json())
 # ### Dropcontact.com
 
 # %%
-api_key = "Vw56pIPdNU63qlHCQb87ctInqRyg8U"
+api_key = ""
 response = requests.post(
     "https://api.dropcontact.io/batch",
     json={
