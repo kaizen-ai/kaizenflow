@@ -185,8 +185,10 @@ class CcxtExtractor(imvcdexex.Extractor):
             end_timestamp,
         )
         # Convert datetime into ms.
-        start_timestamp = start_timestamp.asm8.astype(int) // 1000000
-        end_timestamp = end_timestamp.asm8.astype(int) // 1000000
+        start_timestamp = hdateti.convert_timestamp_to_unix_epoch(
+            start_timestamp
+        )
+        end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
         duration = self._sync_exchange.parse_timeframe("1m") * 1000
         all_bars = []
         # Iterate over the time period.
@@ -213,9 +215,9 @@ class CcxtExtractor(imvcdexex.Extractor):
             & (all_bars_df["timestamp"] <= end_timestamp)
         ]
         # It can happen that the received the data are not ordered by timestamp, which would
-        #  make the is_monotonic check fail.
+        #  make the is_monotonic_increasing check fail.
         all_bars_df = all_bars_df.sort_values("timestamp").reset_index(drop=True)
-        hdbg.dassert(all_bars_df.timestamp.is_monotonic)
+        hdbg.dassert(all_bars_df.timestamp.is_monotonic_increasing)
         # TODO(gp): Double check if dataframes are properly concatenated.
         return all_bars_df
 

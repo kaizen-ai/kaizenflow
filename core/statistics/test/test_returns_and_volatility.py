@@ -35,7 +35,7 @@ class Test_compute_annualized_return_and_volatility(hunitest.TestCase):
 
     # Smoke test for empty input
     def test3(self) -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         csreanvo.compute_annualized_return_and_volatility(series)
 
     @staticmethod

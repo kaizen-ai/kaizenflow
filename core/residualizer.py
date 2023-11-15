@@ -146,7 +146,7 @@ class PcaFactorComputer(FactorComputer):
         eigval_df = eigval_df.T.copy()
         eigval_df.index = ["eigval%s" % i for i in range(eigval_df.shape[0])]
         hdbg.dassert_eq(eigval_df.shape[1], 1)
-        res = res.append(eigval_df.iloc[:, 0])
+        res = pd.concat([res, eigval_df.iloc[:, 0]])
         return res
 
     @staticmethod

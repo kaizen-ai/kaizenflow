@@ -4,6 +4,7 @@ Import as:
 import core.finance.market_impact as cfimaimp
 """
 
+import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
@@ -30,7 +31,8 @@ def estimate_market_order_price(
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_in(price_col, df.columns)
     hdbg.dassert_in(size_col, df.columns)
-    hdbg.dassert_isinstance(df.index, (pd.RangeIndex, pd.Int64Index))
+    # Check that it is an integer index.
+    hdbg.dassert_eq(df.index.dtype.type, np.int64)
     # Compute market impact-related quantities.
     cumulative_size = df[size_col].cumsum()
     notional = df[price_col] * df[size_col]

@@ -32,6 +32,11 @@
   * [Hacky approach to patch up a container](#hacky-approach-to-patch-up-a-container)
 - [How to release a Docker image](#how-to-release-a-docker-image)
   * [Multi-architecture build](#multi-architecture-build)
+    + [Run the dev multi-architecture image release end-to-end](#run-the-dev-multi-architecture-image-release-end-to-end)
+      - [Overview](#overview)
+      - [Pre-release check-list](#pre-release-check-list)
+      - [Command to run the release flow:](#command-to-run-the-release-flow)
+      - [Post-release check-list](#post-release-check-list)
   * [Stages](#stages)
     + [Local](#local)
     + [Dev](#dev)
@@ -149,9 +154,9 @@
 ## Infra container
 
 1. To run infra script, if we only need `boto3` and `moto`, we can
-   - create a Python library
-   - create a script interface
-   - create an `invoke` task that calls `i docker_cmd --cmd ...` reusing the
+   - Create a Python library
+   - Create a script interface
+   - Create an `invoke` task that calls `i docker_cmd --cmd ...` reusing the
      cmamp container, (since that container already has `boto3` and `moto` that
      are dependencies we can't remove)
      - This approach is similar to calling the `linter`
@@ -412,31 +417,100 @@
 
 - To build multi-arch (e.g., `x86`, `arm`) docker image using
   `docker_build_local_image` we should use `--multi-build` flag
-
   - To build for specific platforms specify the platform name:
-
     - For `x86` - `linux/amd64`
     - For `arm` - `linux/arm64`
-
       ```
       > i docker_build_local_image --version <VERSION> --multi-build --platform <PLATFORM NAME>
       ```
-
   - To build for both `arm` and `x86` architectures:
-
     ```
     > i docker_build_local_image --version <VERSION> --multi-build --platform linux/amd64,linux/arm64
     ```
-
   - Multi-arch images are built using `docker buildx` which do not generate any
     local image by default
   - Images are pushed to the remote registry and pulled for testing and usage
-  - To tag the local image as dev and push it to the target registry: 
-    e.g., `aws_ecr.ck` or `dockerhub.sorrentum` , use
-
+  - To tag the local image as dev and push it to the target registry: e.g.,
+    `aws_ecr.ck` or `dockerhub.sorrentum` , use
     ```
     > i docker_tag_push_multi_build_local_image_as_dev --version <VERSION> --target <TARGET>
     ```
+
+### Run the dev multi-architecture image release end-to-end
+
+#### Overview
+
+- Update the `changelog.txt` file with description of new version
+- Build "local" image remotely in the CK AWS ECR registry and pull once it is
+  built
+- Run the `cmamp` regressions using a local image
+- Run QA tests using a local image
+- Tag the image as dev image and push it to the target Docker registries
+
+#### Pre-release check-list
+
+Prerequisites:
+
+- The new image is built locally
+
+Check-list:
+
+Make sure that the regressions are passing when being run using the local image
+because we run the regressions as part of the official release flow, i.e. via
+`docker_release_multi_build_dev_image()`.
+
+- `cmamp`
+  - [ ] Update the `changelog.txt` file
+  - [ ] Fast tests
+  - [ ] Slow tests
+  - [ ] Super-slow test
+  - [ ] QA tests
+
+Running regressions in the `orange` repository is not a part of the official
+image release flow so run them separately.
+
+- `orange`
+  - [ ] Update the `changelog.txt` file
+  - [ ] Fast tests
+  - [ ] Slow tests
+  - [ ] Super-slow test
+
+Example:
+
+```
+i run_fast_tests --version 1.10.0 --stage local
+```
+
+Where `1.10.0` is the new version of the image with stage as local.
+
+#### Command to run the release flow:
+
+```
+> i docker_release_multi_build_dev_image --version <VERSION> --platform <PLATFORM> --target-registries <TARGET_REGISTRIES>
+```
+
+E.g.,
+
+```
+i docker_release_multi_build_dev_image --version 1.6.1 --platform linux/amd64,linux/arm64 --target-registries aws_ecr.ck,dockerhub.sorrentum
+```
+
+TARGET_REGISTRIES: list of target registries to push the image to.
+
+E.g.,
+
+- `aws_ecr.ck` -- private CK AWS Docker registry
+- `dockerhub.sorrentum` -- public Dockerhub registry
+
+All other options are the same as for the `docker_release_dev_image` end-to-end
+flow.
+
+- [End-to-end flow for `dev` image](#end-to-end-flow-for-dev-image)
+
+#### Post-release check-list
+
+- [ ] Make an integration with the `sorrentum` repository in order to copy all
+      the changes from the `cmamp` repository
 
 ## Stages
 
@@ -498,17 +572,14 @@
 
   - Add a new package to `amp/devops/docker_build/pyproject.toml` file to the
     `[tool.poetry.dependencies]` section E.g., to add `pytest-timeout` do:
-
     ```
     [tool.poetry.dependencies]
     ...
     pytest-timeout = "*"
     ...
     ```
-
   - In general we use the latest version of a package (`*`) until the tests fail
     or the system stops working
-
     - If the system fails, we freeze the version of the problematic packages to
       a known-good version to get the tests back to green until the problem is
       solved. We switch back to the latest version once the problem is fixed
@@ -516,18 +587,28 @@
       [official docs](https://python-poetry.org/docs/dependency-specification/),
       and explain in a comment why this is needed making reference to GitHub
       issues
-
   - To verify that package is installed correctly one can
 
-    - build a local image and update poetry
-      ```
-      > i docker_build_local_image --version {new version} --update-poetry
-      ```
-    - run a docker container based on the local image
-      ```
+    - Build a local image. There are two options:
+      - update poetry and upgrade all packages to the latest versions
+        ```
+        > i docker_build_local_image --version {new version} --update-poetry
+        ```
+      - refresh the lock file (e.g., install / update / remove a single package)
+        without upgrading all the packages
+        [Link to the poetry docs](https://python-poetry.org/docs/cli/#options-11).
+        ```
+        > i docker_build_local_image --version {new version} --update-poetry --refresh-only-poetry
+        ```
+    - run a docker container based on the local image ```
+
       > i docker_bash --stage local --version {new version}
+
       ```
-    - verify what package was installed with `pip show {package name}`, e.g.,
+
+      ```
+
+    - Verify what package was installed with `pip show {package name}`, e.g.,
       ```
       > pip show pytest-rerunfailures
       Name: pytest-rerunfailures
@@ -538,7 +619,7 @@
       Requires: pytest, setuptools
       Required-by:
       ```
-    - run regressions for the local image, i.e.
+    - Run regressions for the local image, i.e.
       ```
       > i run_fast_tests --stage local --version {new version}
       > i run_slow_tests --stage local --version {new version}
@@ -581,21 +662,16 @@
 
 - See the [official docs](https://github.com/bndr/pipreqs) for the advanced
   usage.
-
   - Run a bash session inside a Docker container
   - Install `pipreqs` with `sudo pip install pipreqs`
-
     - We install it temporary within a Docker bash session in order to introduce
       another dependency
     - You need to re-install `pipreqs` everytime you create a new Docker bash
       session
-
   - To run for a root dir do:
-
     ```
     pipreqs . --savepath ./tmp.requirements.txt
     ```
-
     - The command above will generate `./tmp.requirements.txt` with the list of
       the imported packages, e.g.,
       ```
@@ -612,7 +688,7 @@
     - You can grep for a package name to see where it is used, e.g.,
       ```
       > jackpy "dill"
-      helpers/hpickle.py:108: 	  import dill
+      helpers/hpickle.py:108:       import dill
       ...
       ```
 
@@ -623,9 +699,9 @@
   install:
   - OS
   - Python
-  - venv + Python packages
-  - jupyter extensions
-  - application-specific packages (e.g., for the linter)
+  - Venv + Python packages
+  - Jupyter extensions
+  - Application-specific packages (e.g., for the linter)
 - To build a local image run:
 
   ```
@@ -674,7 +750,7 @@
   > pip list | tee pip_packages.local.txt
   ```
 
-- or in one command:
+- Or in one command:
 
   ```
   > i docker_cmd --cmd "pip list | tee pip_packages.dev.txt"; i docker_cmd --stage=local --version=1.0.9 --cmd "pip list | tee pip_packages.local.txt"
@@ -684,7 +760,6 @@
 
 - You can move the local image on different servers for testing by pushing it on
   ECR:
-
   ```
   > i docker_login
   > i docker push 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.1.0
@@ -760,10 +835,10 @@
 - The recipe to build a `prod` image is in
   `dev_tools/devops/docker_build/prod.Dockerfile`.
   - The main difference between `dev` image and `prod` image is that
-    - source code is accessed through a bind mount for `dev` image (so that it
+    - Source code is accessed through a bind mount for `dev` image (so that it
       can be easily modified) and copied inside the image for a `prod` image
       (since we want to package the code)
-    - requirements to be installed are different:
+    - Requirements to be installed are different:
       - `dev` image requires packages to develop and run the code
       - `prod` image requires packages only to run the code
 - To build the `prod` image run:
@@ -809,13 +884,11 @@
    - `i docker_push_prod_image --version 1.0.0`
 
 - To run the flow end-to-end do:
-
   ```
   > i docker_release_prod_image --version 1.0.0
   ```
-
-  - same options are available as for `i docker_release_dev_image`
-  - check options `i docker_release_prod_image -h`
+  - Same options are available as for `i docker_release_dev_image`
+  - Check options `i docker_release_prod_image -h`
 
 ## Flow for both dev and prod images
 
@@ -829,9 +902,9 @@
   one can run Docker container (e.g., OMS or IM) inside an isolated `amp`
   container.
 - The problems with this approach are:
-  - dind requires to run the external container in privileged mode, which might
+  - Dind requires to run the external container in privileged mode, which might
     not be possible due to security concerns
-  - the Docker / build cache is not shared across parent and children
+  - The Docker / build cache is not shared across parent and children
     containers, so one needs to pull / build an image every time the outermost
     container is restarted
 - An alternative approach is the "sibling container" approach
@@ -1014,26 +1087,26 @@ for multiple repos that contain Git submodules.
 We decided to use an approach where a `changelog.txt` file contains the latest
 code version
 
-- all test tasks now also use `hversion.get_code_version()` that calls
+- All test tasks now also use `hversion.get_code_version()` that calls
   `hgit.git_describe()` to get latest tag in the repo (1.0.0 in this case)
 
 Agree. git_describe will need to accept a dir to find the tag of the releasable
 dir
 
-- when we are satisfied with local image, we run
+- When we are satisfied with local image, we run
   `i docker_tag_local_image_as_dev`
 
 We will still need to pass --version 1.0.0
 
-- invoke internally tags `local-1.0.0` as `dev-1.0.0`, in addition to `dev`
+- Invoke internally tags `local-1.0.0` as `dev-1.0.0`, in addition to `dev`
 
 Both for Git tags and docker tags
 
-- then we run `i docker_push_dev_image`
+- Then we run `i docker_push_dev_image`
 
 We will still need to pass --version 1.0.0
 
-- invoke internally pushes both `dev-1.0.0` and `dev` images to ECR \*\*AND\*\*
+- Invoke internally pushes both `dev-1.0.0` and `dev` images to ECR \*\*AND\*\*
   pushes local 1.0.0 git tag to remote git repo (github)
 
 `docker_release_dev_image` will do basically the same (will require tag_name).
@@ -1041,11 +1114,11 @@ Of course docker_release... is just a convenience wrapper running all the stages
 
 Now let's assume we want to promote dev image to prod:
 
-- then we run `i docker_build_prod_image`
-- invoke internally checks with `hversion.get_code_version()` and builds
+- Then we run `i docker_build_prod_image`
+- Invoke internally checks with `hversion.get_code_version()` and builds
   `prod-1.0.0` based on `dev-1.0.0`, also tagging `prod-1.0.0` as `prod`
-- then we run ` i docker_push_prod_image`
-- invoke pushes `prod-1.0.0` and `prod` tags to ECR
+- Then we run ` i docker_push_prod_image`
+- Invoke pushes `prod-1.0.0` and `prod` tags to ECR
 
 `docker_release_prod_image` will do basically the same (will require tag_name).
 
@@ -1083,9 +1156,9 @@ Perhaps instead, we could share namespace of git tags between all tags.
 
 E.g. in git repo (github) we will have:
 
-- im-dev-1.0.0
-- cmamp-dev-1.0.0
-- im-prod-1.0.0
+- Im-dev-1.0.0
+- Cmamp-dev-1.0.0
+- Im-prod-1.0.0
 
 GP: Point taken. In fact the code in a releasable dir still needs code from
 other submodules (e.g., helpers). One approach is to put the Git hash in
@@ -1125,12 +1198,12 @@ could use semver but it feels not needed)
 
 A releasable dir has a
 
-- repo_config
+- Repo_config
   - Maybe we should call it component_config since now also dirs can be released
 - README.md or changelog.md
-- devops
-- tasks.py (with the exposed Invoke tasks)
-- lib_tasks.py (with the custom invoke tasks)
+- Devops
+- Tasks.py (with the exposed Invoke tasks)
+- Lib_tasks.py (with the custom invoke tasks)
 
 We want to try to move to helpers/lib_tasks all the "common" code without
 dependencies from the specific sw components. We pass function pointers for
@@ -1174,7 +1247,7 @@ vimdiff /Users/saggese/src/lemonade2/amp/dev_scripts/client_setup/requirements.t
 
 A possible solution is to use Docker-in-Docker
 
-- in this way we don't have to pollute the thin env with a bunch of stuff
+- In this way we don't have to pollute the thin env with a bunch of stuff
 - Talk to Grisha and Vitalii
 
 This works in dev_tools because the code for the import detector is there and we
@@ -1240,15 +1313,14 @@ Next steps:
   corresponding to a Git repo
 
   - The consequence would be:
-    - a multiplication of repos
-    - no implicit sharing of code across different containers
-    - some mechanism to share code (e.g., `helpers`) across repos (e.g., using
+    - A multiplication of repos
+    - No implicit sharing of code across different containers
+    - Some mechanism to share code (e.g., `helpers`) across repos (e.g., using
       bind mount)
-    - not playing nice with Git subrepo mechanism since Docker needs to see the
+    - Not playing nice with Git subrepo mechanism since Docker needs to see the
       entire repo
 
 - So the code would be organized in 4 repos:
-
   ```
   - lemonade / lime
       - helpers
@@ -1256,11 +1328,10 @@ Next steps:
       - oms
       - models in amp
   ```
-
-  - where the dependency between containers are
-    - lemonade -> amp
-    - amp -> optimizer, helpers
-    - optimizer -> helpers, core
+  - Where the dependency between containers are
+    - Lemonade -> amp
+    - Amp -> optimizer, helpers
+    - Optimizer -> helpers, core
 
 ### Multiple containers per Git repo
 
@@ -1356,8 +1427,8 @@ Next steps:
   - It corresponds to a software component (code + library = Docker container)
   - Anything that has a devops dir is "deployable"
 - Each Docker container is run from its corresponding dir, e.g.,
-  - amp container from the amp dir
-  - amp container from the lemonade dir (this is just a shortcut since lemonade
+  - Amp container from the amp dir
+  - Amp container from the lemonade dir (this is just a shortcut since lemonade
     has the same deps right now as amp)
 - Always mount the outermost Git repo under `/app`
 - Set the Docker working dir as the current dir
@@ -1391,9 +1462,9 @@ TODO(gp): Implement this
 - We want to:
   1. (as always) write and run unit tests for the optimizer code in isolation,
      i.e., test the code in the directory `optimizer` by itself
-  2. run all the tests for the entire repo (relying on both containers `amp` and
+  2. Run all the tests for the entire repo (relying on both containers `amp` and
      `optimizer` with a single command invocation)
-  3. be able to run tests belonging to only one of the containers to shorten the
+  3. Be able to run tests belonging to only one of the containers to shorten the
      debugging cycle
 - To achieve this we need to solve the 3 problems below.
 
@@ -1477,9 +1548,9 @@ TODO(gp): Implement this
 
 - We can use dind to run the `opt` container inside a `cmamp` one
   - Cons:
-    - dind complicates the system
-    - dind is not supported everywhere (one needs privileged containers)
-    - dind is slower since there are 2 levels of (relatively fast)
+    - Dind complicates the system
+    - Dind is not supported everywhere (one needs privileged containers)
+    - Dind is slower since there are 2 levels of (relatively fast)
       virtualization
 
 ### Run optimizer tests as part of running unit tests for `cmamp`
@@ -1498,18 +1569,16 @@ TODO(gp): Implement this
   - Inside the code we build the command line
     `cmd = 'docker run -it ... '; system(cmd)`
     - Cons:
-      - there is code replicated between here and the invoke task (e.g., the
+      - There is code replicated between here and the invoke task (e.g., the
         info about the container, ...)
 
 - **Solution 2**
 
   - Call the Dockerized executable using the `docker_cmd` invoke target
-
     ```
     cmd = "invoke opt_docker_cmd -cmd '...'"
     system(cmd)
     ```
-
     - Pros:
       - All the Docker commands go through the same interface inside invoke
     - Cons
@@ -1521,10 +1590,9 @@ TODO(gp): Implement this
 - **Solution 3**
 
   - Call opt_lib_tasks.py `opt_docker_cmd(cmd, ...)`
-
     - Pros
-      - avoid doing a call to invoke
-      - can deal with bash interpolation in Python
+      - Avoid doing a call to invoke
+      - Can deal with bash interpolation in Python
 
 - We should always use Solution 3, although in the code sometimes we use
   Solution 1 and 2 (but we should replace in favor of Solution 3).

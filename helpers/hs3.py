@@ -204,9 +204,16 @@ def listdir(
             paths = [
                 path for path in paths if ".git" not in pathlib.Path(path).parts
             ]
+        bucket, absolute_path = split_path(dir_name)
+        # Basically the goal is to remove `s3://` from the full S3 path.
+        root_path = f"{bucket}{absolute_path}"
+        # Remove redundant separators.
+        paths = set([os.path.normpath(path) for path in paths])
+        # Remove special entries such as `.` (`root_path` in this case) and
+        # bucket name to keep the same return format as in `hio.listdir()`.
+        paths_to_exclude = [bucket, root_path]
+        paths = [path for path in paths if path not in paths_to_exclude]
         if use_relative_paths:
-            bucket, absolute_path = split_path(dir_name)
-            root_path = f"{bucket}{absolute_path}"
             paths = [os.path.relpath(path, start=root_path) for path in paths]
     else:
         paths = hio.listdir(

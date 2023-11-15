@@ -52,7 +52,7 @@ class TestMultipleTests(hunitest.TestCase):
 
     # Smoke test for empty input.
     def test1(self) -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstresta.multipletests(series)
 
     # Test if error is raised with default arguments when input contains NaNs.
@@ -180,7 +180,7 @@ class TestApplyAdfTest(hunitest.TestCase):
 
     # Smoke test for empty input.
     def test6(self) -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstresta.apply_adf_test(series)
 
     def test7(self) -> None:
@@ -240,7 +240,7 @@ class TestApplyKpssTest(hunitest.TestCase):
 
     # Smoke test for empty input.
     def test6(self) -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstresta.apply_kpss_test(series)
 
     def test7(self) -> None:
@@ -310,7 +310,7 @@ class TestApplyLjungBoxTest(hunitest.TestCase):
 
     # Smoke test for empty input.
     def test7(self) -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstresta.apply_ljung_box_test(series)
 
     @pytest.mark.skip(reason="cmamp #654.")
@@ -459,7 +459,7 @@ class TestCalculateHitRate(hunitest.TestCase):
 
     # Smoke test for empty input.
     def test_smoke(self) -> None:
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstresta.calculate_hit_rate(series)
 
     # Smoke test for input of `np.nan`s.
