@@ -3,11 +3,12 @@
 """
 Retrieve emails from LinkedIn profiles that are first-degree connections with
 your LinkedIn account.
+It's advisable to use a 'fake' LinkedIn account for this purpose.
+Ensure to modify the data_file_path, data_sheet_name, linkedin_username, and
+linkedin_password variables in the code accordingly.
 
 Usage:
     python email_extraction.py
-    Change the data_file_path, data_sheet_name, linkedin_username, and
-    linkedin_password in the code.
 """
 import random
 import time
