@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 """
-Extract emails from LinkedIn profile URLs listed in the Excel sheet.
+Retrieve emails from LinkedIn profiles that are first-degree connections with
+your LinkedIn account.
 
 Usage:
     python email_extraction.py
@@ -13,11 +14,18 @@ import time
 from typing import List
 
 import pandas as pd
-from selenium import webdriver
-from selenium.webdriver.common.by import By
 from tqdm import tqdm
 
 import helpers.hsystem as hsystem
+
+# Install selenium and openpyxl in the virtual environment.
+cmd = 'sudo /bin/bash -c "(source /venv/bin/activate; pip install selenium)"'
+hsystem.system(cmd, suppress_output=False, log_level="echo")
+cmd = 'sudo /bin/bash -c "(source /venv/bin/activate; pip install openpyxl)"'
+hsystem.system(cmd, suppress_output=False, log_level="echo")
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
 
 
 def setup_selenium_linkedin(username: str, password: str) -> webdriver.Chrome:
@@ -66,11 +74,12 @@ def get_email_from_url(driver: webdriver.Chrome, url: str) -> str:
 
 def get_email_list(url_list: List, username: str, password: str) -> List[str]:
     """
-    Get email list from the list of LinkedIn profile URLs.
+    Get the email list from the list of LinkedIn profile URLs.
 
     :param url_list: list of LinkedIn profile URLs
     :param username: LinkedIn username
     :param password: LinkedIn password
+    :return: list of emails
     """
     driver = setup_selenium_linkedin(username, password)
     email_list = []
@@ -88,7 +97,7 @@ def add_email_to_sheet(
     email_list: List[str], filepath: str, sheet_name: str
 ) -> None:
     """
-    Add email list to the Excel sheet.
+    Add the email list to the Excel sheet.
 
     :param email_list: List of emails
     :param filepath: Path to the Excel file
@@ -101,18 +110,12 @@ def add_email_to_sheet(
 
 
 if __name__ == "__main__":
-    # Install selenium and openpyxl in the virtual environment.
-    cmd = 'sudo /bin/bash -c "(source /venv/bin/activate; pip install selenium)"'
-    hsystem.system(cmd, suppress_output=False, log_level="echo")
-    cmd = 'sudo /bin/bash -c "(source /venv/bin/activate; pip install openpyxl)"'
-    hsystem.system(cmd, suppress_output=False, log_level="echo")
-    #
     # Source data file.
     data_file_path = (
         "linkedin/extract_email/Search3-VCs_1st_degree_from_GP.LIn.xlsx"
     )
     # Default sheet name is "Sheet1".
-    data_sheet_name = "ExportSearch"
+    data_sheet_name = "Sheet1"
     # Add your LinkedIn username and password here.
     linkedIn_username = "your username"
     linkedIn_password = "your password"
