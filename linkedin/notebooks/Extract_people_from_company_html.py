@@ -32,6 +32,7 @@ def _get_employee_row_content(content_soup: BeautifulSoup) -> List[str]:
     employee_div = content_soup.select(".employeeCard__wrapper")[0]
     employee_name = ""
     employee_linkedin_profile = ""
+    # Get properties of the table.
     try:
         employee_name = employee_div.a.text
     except (AttributeError, IndexError):
@@ -40,6 +41,7 @@ def _get_employee_row_content(content_soup: BeautifulSoup) -> List[str]:
         employee_linkedin_profile = employee_div.a.next_sibling.a["href"]
     except (AttributeError, IndexError):
         employee_linkedin_profile = "None"
+    # Combine the properties as List.
     employee_info_list = [employee_name, employee_linkedin_profile]
     return employee_info_list
 
@@ -76,9 +78,13 @@ def get_employees_from_html(html_file_path: str) -> pd.DataFrame:
         return employee_df
 
 
+# %% [markdown]
+# # Sample usage of the function.
+
 # %%
 employee_html_path = "../data/Sequoia Capital _ Tracxn.html"
 employee_csv_save_path = "../result_csv/Sequoia Capital _ Tracxn.csv"
+# Main function to be called.
 employee_df = get_employees_from_html(employee_html_path)
 employee_df.to_csv(employee_csv_save_path, sep=",", index=False)
 employee_df

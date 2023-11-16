@@ -25,7 +25,7 @@ from bs4 import BeautifulSoup
 
 def _get_VC_name(content_soup: BeautifulSoup) -> str:
     """
-    Private method, see `_get_VC_row_content` for params.
+    Private method to get one property of a given row, see `_get_VC_row_content` for params.
     """
     name = ""
     try:
@@ -39,7 +39,7 @@ def _get_VC_name(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_url(content_soup: BeautifulSoup) -> str:
     """
-    Private method, see `_get_VC_row_content` for params.
+    Private method to get one property of a given row, see `_get_VC_row_content` for params.
     """
     url = ""
     try:
@@ -53,7 +53,7 @@ def _get_VC_url(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_score(content_soup: BeautifulSoup) -> str:
     """
-    Private method, see `_get_VC_row_content` for params.
+    Private method to get one property of a given row, see `_get_VC_row_content` for params.
     """
     score = ""
     try:
@@ -66,6 +66,9 @@ def _get_VC_score(content_soup: BeautifulSoup) -> str:
 
 
 def _get_VC_rounds(content_soup: BeautifulSoup) -> str:
+    """
+    Private method to get one property of a given row, see `_get_VC_row_content` for params.
+    """
     rounds = ""
     try:
         rounds = content_soup.select(
@@ -78,7 +81,7 @@ def _get_VC_rounds(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_portfolio_companies(content_soup: BeautifulSoup) -> str:
     """
-    Private method, see `_get_VC_row_content` for params.
+    Private method to get one property of a given row, see `_get_VC_row_content` for params.
     """
     portfolio_companies = ""
     try:
@@ -96,7 +99,7 @@ def _get_VC_portfolio_companies(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_location(content_soup: BeautifulSoup) -> str:
     """
-    Private method, see `_get_VC_row_content` for params.
+    Private method to get one property of a given row, see `_get_VC_row_content` for params.
     """
     location = ""
     try:
@@ -110,7 +113,7 @@ def _get_VC_location(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_stages(content_soup: BeautifulSoup) -> str:
     """
-    Private method, see `_get_VC_row_content` for params.
+    Private method to get one property of a given row, see `_get_VC_row_content` for params.
     """
     stages = ""
     try:
@@ -125,7 +128,7 @@ def _get_VC_stages(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_sectors(content_soup: BeautifulSoup) -> str:
     """
-    Private method, see `_get_VC_row_content` for params.
+    Private method to get one property of a given row, see `_get_VC_row_content` for params.
     """
     sectors = ""
     try:
@@ -140,7 +143,7 @@ def _get_VC_sectors(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_investment_locations(content_soup: BeautifulSoup) -> str:
     """
-    Private method, see `_get_VC_row_content` for params.
+    Private method to get one property of a given row, see `_get_VC_row_content` for params.
     """
     try:
         investment_locations_div = content_soup.select(
@@ -154,12 +157,13 @@ def _get_VC_investment_locations(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_row_content(content_soup: BeautifulSoup) -> List[str]:
     """
-    Private method, using BeautifulSoup to get one row in the VCs table soup.
+    Private method, using BeautifulSoup to get all properties of one row in the VCs table soup.
     
     :param content_soup: A div soup containing the VCs table.
     :return: A List representing one row of the VCs table.
     """
     row_content_list = []
+    # Getting each property of a given VC row.
     VC_name = _get_VC_name(content_soup)
     VC_score = _get_VC_score(content_soup)
     VC_rounds = _get_VC_rounds(content_soup)
@@ -169,6 +173,7 @@ def _get_VC_row_content(content_soup: BeautifulSoup) -> List[str]:
     VC_sectors = _get_VC_sectors(content_soup)
     VC_investment_locations = _get_VC_investment_locations(content_soup)
     VC_url = _get_VC_url(content_soup)
+    # Build and return list of properties for the given VC row.
     row_content_list = [
         VC_name,
         VC_score,
@@ -190,10 +195,12 @@ def get_VC_contents(soup: BeautifulSoup) -> List[List[str]]:
     :param soup: The BeautifulSoup instance of the VC search result page soup.
     :return: A 2D List representing the table content.
     """
+    # Get the soup of VCs table contents.
     contents_div = soup.find_all(
         "div",
         attrs={"data-walk-through-id": re.compile(r"^gridtable-row-[0-9]*$")},
     )
+    # Map VCs table contents into a 2D List.
     contents_list = list(map(_get_VC_row_content, contents_div))
     return contents_list
 
@@ -205,9 +212,11 @@ def get_VC_title(soup: BeautifulSoup) -> List[str]:
     :param soup: The BeautifulSoup instance of the VC search result page.
     :return: A List representing the table title.
     """
+    # Get VCs table's title soup.
     titles_div = soup.find_all(
         attrs={"data-walk-through-id": "gridtable-column"}
     )[0].children
+    # Map VCs table titles into a List.
     titles = map(
         lambda x: x.select(".comp--gridtable__column-cell--menu-middle")[
             0
@@ -226,16 +235,22 @@ def get_VCs_from_html(html_file_path: str) -> pd.DataFrame:
     """
     with open(html_file_path, encoding="utf-8") as html_fp:
         soup = BeautifulSoup(html_fp)
+        # Get VCs table title as List.
         vc_titles = get_VC_title(soup)
         vc_titles.append("Company URL")
+        # Get VCs table content as List.
         vc_contents = get_VC_contents(soup)
         vc_df = pd.DataFrame(data=vc_contents, columns=vc_titles)
         return vc_df
 
 
+# %% [markdown]
+# # Sample usage of the function.
+
 # %% run_control={"marked": true}
 vc_html_path = "../data/Tracxn_SeriesA_AI.html"
 vc_csv_save_path = "../result_csv/Tracxn_SeriesA_AI.csv"
+# Main function to be called.
 vc_df = get_VCs_from_html(vc_html_path)
 vc_df.to_csv(vc_csv_save_path, sep=",", index=False)
 vc_df
