@@ -22,6 +22,7 @@ from typing import List
 import pandas as pd
 from bs4 import BeautifulSoup
 
+
 def _get_employee_row_content(content_soup: BeautifulSoup) -> List[str]:
     """
     Private method, using BeautifulSoup to get one row in the people table soup.
