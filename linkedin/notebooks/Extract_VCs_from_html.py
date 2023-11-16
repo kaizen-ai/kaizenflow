@@ -23,7 +23,10 @@ import pandas as pd
 from bs4 import BeautifulSoup
 
 
-def get_VC_name(content_soup: BeautifulSoup) -> str:
+def _get_VC_name(content_soup: BeautifulSoup) -> str:
+    """
+    Private method, see `_get_VC_row_content` for params.
+    """
     name = ""
     try:
         name = content_soup.select(
@@ -34,7 +37,10 @@ def get_VC_name(content_soup: BeautifulSoup) -> str:
     return name
 
 
-def get_VC_url(content_soup: BeautifulSoup) -> str:
+def _get_VC_url(content_soup: BeautifulSoup) -> str:
+    """
+    Private method, see `_get_VC_row_content` for params.
+    """
     url = ""
     try:
         url = content_soup.select(
@@ -45,7 +51,10 @@ def get_VC_url(content_soup: BeautifulSoup) -> str:
     return url
 
 
-def get_VC_score(content_soup: BeautifulSoup) -> str:
+def _get_VC_score(content_soup: BeautifulSoup) -> str:
+    """
+    Private method, see `_get_VC_row_content` for params.
+    """
     score = ""
     try:
         score = content_soup.select(
@@ -56,7 +65,7 @@ def get_VC_score(content_soup: BeautifulSoup) -> str:
     return score
 
 
-def get_VC_rounds(content_soup: BeautifulSoup) -> str:
+def _get_VC_rounds(content_soup: BeautifulSoup) -> str:
     rounds = ""
     try:
         rounds = content_soup.select(
@@ -67,7 +76,10 @@ def get_VC_rounds(content_soup: BeautifulSoup) -> str:
     return rounds
 
 
-def get_VC_portfolio_companies(content_soup: BeautifulSoup) -> str:
+def _get_VC_portfolio_companies(content_soup: BeautifulSoup) -> str:
+    """
+    Private method, see `_get_VC_row_content` for params.
+    """
     portfolio_companies = ""
     try:
         portfolio_companies_div = content_soup.select(
@@ -82,7 +94,10 @@ def get_VC_portfolio_companies(content_soup: BeautifulSoup) -> str:
     return portfolio_companies
 
 
-def get_VC_location(content_soup: BeautifulSoup) -> str:
+def _get_VC_location(content_soup: BeautifulSoup) -> str:
+    """
+    Private method, see `_get_VC_row_content` for params.
+    """
     location = ""
     try:
         location = content_soup.select(
@@ -93,7 +108,10 @@ def get_VC_location(content_soup: BeautifulSoup) -> str:
     return location
 
 
-def get_VC_stages(content_soup: BeautifulSoup) -> str:
+def _get_VC_stages(content_soup: BeautifulSoup) -> str:
+    """
+    Private method, see `_get_VC_row_content` for params.
+    """
     stages = ""
     try:
         stages_div = content_soup.select(
@@ -105,7 +123,10 @@ def get_VC_stages(content_soup: BeautifulSoup) -> str:
     return stages
 
 
-def get_VC_sectors(content_soup: BeautifulSoup) -> str:
+def _get_VC_sectors(content_soup: BeautifulSoup) -> str:
+    """
+    Private method, see `_get_VC_row_content` for params.
+    """
     sectors = ""
     try:
         sectors_div = content_soup.select(
@@ -117,7 +138,10 @@ def get_VC_sectors(content_soup: BeautifulSoup) -> str:
     return sectors
 
 
-def get_VC_investment_locations(content_soup: BeautifulSoup) -> str:
+def _get_VC_investment_locations(content_soup: BeautifulSoup) -> str:
+    """
+    Private method, see `_get_VC_row_content` for params.
+    """
     try:
         investment_locations_div = content_soup.select(
             "div[data-walk-through-id$=-cell-investmentLocations] > span"
@@ -128,17 +152,23 @@ def get_VC_investment_locations(content_soup: BeautifulSoup) -> str:
     return investment_locations
 
 
-def get_VC_row_content(content_soup: BeautifulSoup) -> List[str]:
+def _get_VC_row_content(content_soup: BeautifulSoup) -> List[str]:
+    """
+    Private method, using BeautifulSoup to get one row in the VCs table soup.
+    
+    :param content_soup: A div soup containing the VCs table.
+    :return: A List representing one row of the VCs table.
+    """
     row_content_list = []
-    VC_name = get_VC_name(content_soup)
-    VC_score = get_VC_score(content_soup)
-    VC_rounds = get_VC_rounds(content_soup)
-    VC_portfolio_companies = get_VC_portfolio_companies(content_soup)
-    VC_location = get_VC_location(content_soup)
-    VC_stages = get_VC_stages(content_soup)
-    VC_sectors = get_VC_sectors(content_soup)
-    VC_investment_locations = get_VC_investment_locations(content_soup)
-    VC_url = get_VC_url(content_soup)
+    VC_name = _get_VC_name(content_soup)
+    VC_score = _get_VC_score(content_soup)
+    VC_rounds = _get_VC_rounds(content_soup)
+    VC_portfolio_companies = _get_VC_portfolio_companies(content_soup)
+    VC_location = _get_VC_location(content_soup)
+    VC_stages = _get_VC_stages(content_soup)
+    VC_sectors = _get_VC_sectors(content_soup)
+    VC_investment_locations = _get_VC_investment_locations(content_soup)
+    VC_url = _get_VC_url(content_soup)
     row_content_list = [
         VC_name,
         VC_score,
@@ -154,15 +184,27 @@ def get_VC_row_content(content_soup: BeautifulSoup) -> List[str]:
 
 
 def get_VC_contents(soup: BeautifulSoup) -> List[List[str]]:
+    """
+    Extract the table content from a VC search result page.
+    
+    :param soup: The BeautifulSoup instance of the VC search result page soup.
+    :return: A 2D List representing the table content.
+    """
     contents_div = soup.find_all(
         "div",
         attrs={"data-walk-through-id": re.compile(r"^gridtable-row-[0-9]*$")},
     )
-    contents_list = list(map(get_VC_row_content, contents_div))
+    contents_list = list(map(_get_VC_row_content, contents_div))
     return contents_list
 
 
 def get_VC_title(soup: BeautifulSoup) -> List[str]:
+    """
+    Extract the table title from a VC search result page soup.
+    
+    :param soup: The BeautifulSoup instance of the VC search result page.
+    :return: A List representing the table title.
+    """
     titles_div = soup.find_all(
         attrs={"data-walk-through-id": "gridtable-column"}
     )[0].children
@@ -176,6 +218,12 @@ def get_VC_title(soup: BeautifulSoup) -> List[str]:
 
 
 def get_VCs_from_html(html_file_path: str) -> pd.DataFrame:
+    """
+    Get a pandas dataframe containing the table in a VC search result page.
+    
+    :param html_file_path: The path of the VC search page as an html file.
+    :return: A pandas.DataFrame containing the infomation of the VCs table.
+    """
     with open(html_file_path, encoding="utf-8") as html_fp:
         soup = BeautifulSoup(html_fp)
         vc_titles = get_VC_title(soup)
@@ -191,53 +239,5 @@ vc_csv_save_path = "../result_csv/Tracxn_SeriesA_AI.csv"
 vc_df = get_VCs_from_html(vc_html_path)
 vc_df.to_csv(vc_csv_save_path, sep=",", index=False)
 vc_df
-
-
-# %% [markdown]
-# # Get LinkedIn Profile Link from Company Page
-
-# %%
-def get_employee_row_content(content_soup: BeautifulSoup) -> List[str]:
-    employee_div = content_soup.select(".employeeCard__wrapper")[0]
-    employee_name = ""
-    employee_linkedin_profile = ""
-    try:
-        employee_name = employee_div.a.text
-    except (AttributeError, IndexError):
-        employee_name = "None"
-    try:
-        employee_linkedin_profile = employee_div.a.next_sibling.a["href"]
-    except (AttributeError, IndexError):
-        employee_linkedin_profile = "None"
-    employee_info_list = [employee_name, employee_linkedin_profile]
-    return employee_info_list
-
-
-def get_employee_contents(soup: BeautifulSoup) -> List[List[str]]:
-    contents_div = soup.find_all(
-        "div",
-        attrs={"data-walk-through-id": re.compile(r"^gridtable-row-[0-9]*$")},
-    )
-    contents_list = list(map(get_employee_row_content, contents_div))
-    return contents_list
-
-
-def get_employees_from_html(html_file_path: str) -> pd.DataFrame:
-    with open(html_file_path, encoding="utf-8") as employee_fp:
-        soup = BeautifulSoup(employee_fp)
-        employee_titles = ["Name", "LinkedIn Profile"]
-        employee_contents = get_employee_contents(soup)
-        employee_df = pd.DataFrame(
-            data=employee_contents, columns=employee_titles
-        )
-        return employee_df
-
-
-# %%
-employee_html_path = "../data/Sequoia Capital _ Tracxn.html"
-employee_csv_save_path = "../result_csv/Sequoia Capital _ Tracxn.csv"
-employee_df = get_employees_from_html(employee_html_path)
-employee_df.to_csv(employee_csv_save_path, sep=",", index=False)
-employee_df
 
 # %%
