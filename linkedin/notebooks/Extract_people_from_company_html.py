@@ -25,10 +25,10 @@ from bs4 import BeautifulSoup
 
 def _get_employee_row_content(content_soup: BeautifulSoup) -> List[str]:
     """
-    Private method, using BeautifulSoup to get one row in the people table soup.
+    Get one row from the table in an HTML page.
     
-    :param content_soup: A div soup containing the people table.
-    :return: A List representing one row of the people table.
+    :param content_soup: A div soup containing the people table
+    :return: A list containing one row from the table.
     """
     employee_div = content_soup.select(".employeeCard__wrapper")[0]
     employee_name = ""
@@ -51,8 +51,8 @@ def get_employee_contents(soup: BeautifulSoup) -> List[List[str]]:
     """
     Extract the table content from a company's people page.
     
-    :param soup: The BeautifulSoup instance of the VC search result page soup.
-    :return: A 2D List representing the content of the page's people table.
+    :param soup: The BeautifulSoup instance of the VC search result page soup
+    :return: A 2D list containing the people page table content 
     """
     contents_div = soup.find_all(
         "div",
@@ -64,10 +64,10 @@ def get_employee_contents(soup: BeautifulSoup) -> List[List[str]]:
 
 def get_employees_from_html(html_file_path: str) -> pd.DataFrame:
     """
-    Get a pandas dataframe containing the table in a company's people page.
+    Get a pandas dataframe from the table in a company's people page.
     
-    :param html_file_path: The path of the company's people page as an html file.
-    :return: A pandas.DataFrame containing the people's name and LinkedIn profile link.
+    :param html_file_path: The path of the company's people page as an html file
+    :return: A pandas.DataFrame containing the people's name and LinkedIn profile link
     """
     with open(html_file_path, encoding="utf-8") as employee_fp:
         soup = BeautifulSoup(employee_fp)
@@ -83,9 +83,11 @@ def get_employees_from_html(html_file_path: str) -> pd.DataFrame:
 # # Sample usage of the function.
 
 # %%
+# Source data file path.
 employee_html_path = "../data/Sequoia Capital _ Tracxn.html"
+# Destination result file path.
 employee_csv_save_path = "../result_csv/Sequoia Capital _ Tracxn.csv"
-# Main function to be called.
+# Get Dataframe of employees from HTML page.
 employee_df = get_employees_from_html(employee_html_path)
 employee_df.to_csv(employee_csv_save_path, sep=",", index=False)
 employee_df
