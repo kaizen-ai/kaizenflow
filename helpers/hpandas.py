@@ -31,18 +31,21 @@ _TRACE = False
 # #############################################################################
 
 
-def to_series(df: pd.DataFrame) -> pd.Series:
+def to_series(df: pd.DataFrame, *, series_dtype: str = "float64") -> pd.Series:
     """
-    Convert a pd.DataFrame with a single column into a pd.Series.
+    Convert a pd.DataFrame with a single column into a pd.Series. The problem
+    is that empty df or df with a single row are not converted correctly to a
+    pd.Series.
 
-    The problem is that empty df or df with a single row are not
-    converted correctly to a pd.Series.
+    :param df: dataframe with a single column to convert to a series
+    :param series_dtype: dtype of the desired series in case a DataFrame
+        is empty, otherwise inherit dtype from a DataFrame
     """
     # See https://stackoverflow.com/questions/33246771
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_eq(df.shape[1], 1, "df=%s doesn't have a single column", df)
     if df.empty:
-        srs = pd.Series()
+        srs = pd.Series(dtype=series_dtype)
     elif df.shape[0] > 1:
         srs = df.squeeze()
     else:
@@ -1021,9 +1024,6 @@ def drop_duplicated(
     return df
 
 
-# #############################################################################
-
-
 def _display(log_level: int, df: pd.DataFrame) -> None:
     """
     Display a df in a notebook at the given log level.
@@ -1256,7 +1256,7 @@ def df_to_str(
             # Add total row.
             mem_use_df_total = mem_use_df.sum(axis=0)
             mem_use_df_total.name = "Total"
-            mem_use_df = mem_use_df.append(mem_use_df_total.T)
+            mem_use_df = pd.concat([mem_use_df, mem_use_df_total.T])
             # Convert into the desired format.
             if memory_usage_mode == "bytes":
                 pass

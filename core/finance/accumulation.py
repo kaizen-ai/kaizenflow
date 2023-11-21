@@ -65,7 +65,7 @@ def accumulate_returns_and_volatility(
     # Square the volatility column before accumulation.
     df[volatility_col] = np.square(df[volatility_col])
     # Accumulate independently over each day.
-    df = df.groupby(lambda x: x.date).cumsum()
+    df = df.groupby(lambda x: x.date()).cumsum()
     # Recover volatility from variance by taking the square root.
     df[volatility_col] = np.sqrt(df[volatility_col])
     return df
@@ -104,7 +104,7 @@ def reverse_accumulate_returns(
     returns = returns[~to_remove_mask]
     # Independently process each day.
     results = []
-    groupby_obj = returns.groupby(lambda x: x.date)
+    groupby_obj = returns.groupby(lambda x: x.date())
     for _, srs in groupby_obj:
         # Reverse accumulate returns.
         srs = srs.loc[::-1].cumsum()

@@ -320,7 +320,7 @@ class ForecastEvaluatorFromReturns:
         hdbg.dassert_eq(overnight_returns.columns.nlevels, 1)
         # TODO(Paul): Check that the only time is `start_time`.
         max_num_dates = (
-            overnight_returns.groupby(lambda x: x.date).count().max().max()
+            overnight_returns.groupby(lambda x: x.date()).count().max().max()
         )
         hdbg.dassert_eq(max_num_dates, 1)
         num_times = overnight_returns.groupby(lambda x: x.time()).ngroups

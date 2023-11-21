@@ -16,6 +16,7 @@ import core.finance as cofinanc
 import core.signal_processing as csigproc
 import dataflow.core as dtfcore
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
@@ -71,9 +72,9 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
         """
         hdbg.dassert_isinstance(config, cconfig.Config)
         hdbg.dassert_isinstance(weights, pd.Series)
-        # Index must be an Int64Index of consecutive integers starting at 1.
+         # Index must be an pd.Index of consecutive integers starting at 1.
         idx = weights.index
-        hdbg.dassert_isinstance(idx, pd.Int64Index)
+        hdbg.dassert_eq(idx.dtype.type, np.int64)
         # idx_size = idx.size
         # hdbg.dassert_set_eq(weights.index.to_list(), list(range(1, idx_size + 1)))
         # Generate the number of features corresponding to the weights.

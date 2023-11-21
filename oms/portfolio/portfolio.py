@@ -881,10 +881,10 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         Ensure that `initial_holdings_shares` passes basic sanity checks.
         """
         idx = initial_holdings.index
-        # The index must be an Int64Index (asset_id must be an int) with no
+        # The index must be an integer index (asset_id must be an int) with no
         # duplicates. The ID for cash must be present.
         hdbg.dassert(not idx.has_duplicates)
-        hdbg.dassert_isinstance(idx, pd.Int64Index)
+        hdbg.dassert_eq(idx.dtype.type, np.int64)
         hdbg.dassert_in(
             Portfolio.CASH_ID,
             idx,

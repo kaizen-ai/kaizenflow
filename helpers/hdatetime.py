@@ -161,7 +161,15 @@ def dassert_has_specified_tz(
     dassert_has_tz(datetime_)
     # Get the timezone.
     tz_info = datetime_.tzinfo
-    tz_zone = tz_info.zone  # type: ignore
+    # Unlike other timezones UTC is a `datetime.timezone` object not a
+    # `pytz.tzfile`. See CmTask5895 for details.
+    if (
+        isinstance(tz_info, datetime.timezone)
+        and tz_info == datetime.timezone.utc
+    ):
+        tz_zone = "UTC"
+    else:
+        tz_zone = tz_info.zone  # type: ignore        
     has_expected_tz = tz_zone in tz_zones
     hdbg.dassert(
         has_expected_tz,

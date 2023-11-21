@@ -269,7 +269,7 @@ class MarketInterface:
         columns: Optional[List[str]] = None,
     ):
         self._use_cache = use_cache
-        hdbg.dassert(df.index.is_monotonic)
+        hdbg.dassert(df.index.is_monotonic_increasing)
         self._df = df
         if self._use_cache:
             _LOG.info("Caching")
@@ -601,7 +601,7 @@ def compute_pnl_level2(
     prefix: str = "sim2",
 ) -> pd.DataFrame:
     print(df_5mins)
-    hdbg.dassert(df_5mins.index.is_monotonic)
+    hdbg.dassert(df_5mins.index.is_monotonic_increasing)
     # Create the accounting data structure.
     columns = [
         "target_n_shares",
