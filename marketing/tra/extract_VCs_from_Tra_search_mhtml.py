@@ -193,7 +193,7 @@ def get_VC_contents(soup: BeautifulSoup) -> List[List[str]]:
     Extract the table content from a VC search result page.
 
     :param soup: The BeautifulSoup instance of the VC search result page soup
-    :return: A 2D list containing the table content.
+    :return: A 2D list containing the table content
     """
     # Get the soup of VCs table contents.
     contents_div = soup.find_all(

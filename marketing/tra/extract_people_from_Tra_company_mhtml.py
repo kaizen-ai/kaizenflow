@@ -17,7 +17,7 @@ def _get_employee_row_content(content_soup: BeautifulSoup) -> List[str]:
     Get one row from the table in an HTML page.
 
     :param content_soup: A div soup containing the people table
-    :return: A list containing one row from the table.
+    :return: A list containing one row from the table
     """
     employee_div = content_soup.select(".employeeCard__wrapper")[0]
     employee_name = ""
