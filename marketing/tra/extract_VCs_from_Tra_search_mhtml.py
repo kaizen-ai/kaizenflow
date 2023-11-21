@@ -29,7 +29,7 @@ def _get_VC_name(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_url(content_soup: BeautifulSoup) -> str:
     """
-    Get tracxn url of the VC from given row, see `_get_VC_row_content` for
+    Get Tra url of the VC from given row, see `_get_VC_row_content` for
     params.
     """
     url = ""
@@ -44,7 +44,7 @@ def _get_VC_url(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_score(content_soup: BeautifulSoup) -> str:
     """
-    Get tracxn score of the VC from given row, see `_get_VC_row_content` for
+    Get Tra score of the VC from given row, see `_get_VC_row_content` for
     params.
     """
     score = ""
