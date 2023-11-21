@@ -1,21 +1,10 @@
-# ---
-# jupyter:
-#   jupytext:
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.15.2
-#   kernelspec:
-#     display_name: Python 3 (ipykernel)
-#     language: python
-#     name: python3
-# ---
+"""
+Import as:
 
-# %% [markdown]
-# # Get Companies
+import marketing.tra.extract_VCs_from_Tra_search_mhtml as mtevftsmh
+"""
 
-# %% run_control={"marked": true}
+import quopri
 import re
 from typing import List
 
@@ -25,8 +14,8 @@ from bs4 import BeautifulSoup
 
 def _get_VC_name(content_soup: BeautifulSoup) -> str:
     """
-    Get company name of the VC from given row,
-    see `_get_VC_row_content` for params.
+    Get company name of the VC from given row, see `_get_VC_row_content` for
+    params.
     """
     name = ""
     try:
@@ -40,8 +29,8 @@ def _get_VC_name(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_url(content_soup: BeautifulSoup) -> str:
     """
-    Get tracxn url of the VC from given row,
-    see `_get_VC_row_content` for params.
+    Get tracxn url of the VC from given row, see `_get_VC_row_content` for
+    params.
     """
     url = ""
     try:
@@ -55,8 +44,8 @@ def _get_VC_url(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_score(content_soup: BeautifulSoup) -> str:
     """
-    Get tracxn score of the VC from given row,
-    see `_get_VC_row_content` for params.
+    Get tracxn score of the VC from given row, see `_get_VC_row_content` for
+    params.
     """
     score = ""
     try:
@@ -70,8 +59,8 @@ def _get_VC_score(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_rounds(content_soup: BeautifulSoup) -> str:
     """
-    Get the number of rounds of the VC from given row,
-    see `_get_VC_row_content` for params.
+    Get the number of rounds of the VC from given row, see
+    `_get_VC_row_content` for params.
     """
     rounds = ""
     try:
@@ -85,8 +74,8 @@ def _get_VC_rounds(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_portfolio_companies(content_soup: BeautifulSoup) -> str:
     """
-    Get the portfolio companies of the VC from given row,
-    see `_get_VC_row_content` for params.
+    Get the portfolio companies of the VC from given row, see
+    `_get_VC_row_content` for params.
     """
     portfolio_companies = ""
     try:
@@ -95,7 +84,7 @@ def _get_VC_portfolio_companies(content_soup: BeautifulSoup) -> str:
             ".comp-txn-logo-container + span"
         )
         portfolio_companies = ";".join(
-            map(lambda x: x.text, portfolio_companies_div)
+            map(lambda x: str(x.text), portfolio_companies_div)
         )
     except (AttributeError, IndexError):
         portfolio_companies = "None"
@@ -104,8 +93,8 @@ def _get_VC_portfolio_companies(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_location(content_soup: BeautifulSoup) -> str:
     """
-    Get the location of the VC from given row,
-    see `_get_VC_row_content` for params.
+    Get the location of the VC from given row, see `_get_VC_row_content` for
+    params.
     """
     location = ""
     try:
@@ -119,8 +108,8 @@ def _get_VC_location(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_stages(content_soup: BeautifulSoup) -> str:
     """
-    Get the stages of the VC from given row,
-    see `_get_VC_row_content` for params.
+    Get the stages of the VC from given row, see `_get_VC_row_content` for
+    params.
     """
     stages = ""
     try:
@@ -135,8 +124,8 @@ def _get_VC_stages(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_sectors(content_soup: BeautifulSoup) -> str:
     """
-    Get the sectors of investment of the VC from given row,
-    see `_get_VC_row_content` for params.
+    Get the sectors of investment of the VC from given row, see
+    `_get_VC_row_content` for params.
     """
     sectors = ""
     try:
@@ -151,14 +140,16 @@ def _get_VC_sectors(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_investment_locations(content_soup: BeautifulSoup) -> str:
     """
-    Get the investment locations of the VC from given row,
-    see `_get_VC_row_content` for params.
+    Get the investment locations of the VC from given row, see
+    `_get_VC_row_content` for params.
     """
     try:
         investment_locations_div = content_soup.select(
             "div[data-walk-through-id$=-cell-investmentLocations] > span"
         )[0]
-        investment_locations = investment_locations_div.text.replace(",", ";")
+        investment_locations = str(investment_locations_div.text).replace(
+            ",", ";"
+        )
     except (AttributeError, IndexError):
         investment_locations = "None"
     return investment_locations
@@ -167,7 +158,7 @@ def _get_VC_investment_locations(content_soup: BeautifulSoup) -> str:
 def _get_VC_row_content(content_soup: BeautifulSoup) -> List[str]:
     """
     Get all the properties of one row from VCs table.
-    
+
     :param content_soup: A div soup containing the VCs table
     :return: A List representing one row of the VCs table
     """
@@ -200,7 +191,7 @@ def _get_VC_row_content(content_soup: BeautifulSoup) -> List[str]:
 def get_VC_contents(soup: BeautifulSoup) -> List[List[str]]:
     """
     Extract the table content from a VC search result page.
-    
+
     :param soup: The BeautifulSoup instance of the VC search result page soup
     :return: A 2D list containing the table content.
     """
@@ -217,7 +208,7 @@ def get_VC_contents(soup: BeautifulSoup) -> List[List[str]]:
 def get_VC_title(soup: BeautifulSoup) -> List[str]:
     """
     Extract the table title from a VC html page.
-    
+
     :param soup: The BeautifulSoup instance of the VC search result page
     :return: A list containing titles from a table in html page
     """
@@ -227,23 +218,27 @@ def get_VC_title(soup: BeautifulSoup) -> List[str]:
     )[0].children
     # Map VCs table titles into a List.
     titles = map(
-        lambda x: x.select(".comp--gridtable__column-cell--menu-middle")[
-            0
-        ].contents[0]["title"],
+        lambda x: str(
+            x.select(".comp--gridtable__column-cell--menu-middle")[0].contents[0][
+                "title"
+            ]
+        ),
         titles_div,
     )
     return list(titles)
 
 
-def get_VCs_from_html(html_file_path: str) -> pd.DataFrame:
+def get_VCs_from_mhtml(mhtml_file_path: str) -> pd.DataFrame:
     """
     Get a pandas dataframe from the table in a VC search result page.
-    
-    :param html_file_path: The path of the VC search page as an html file
+
+    :param mhtml_file_path: The path of the VC search page as an mhtml file
     :return: A pandas.DataFrame containing the infomation of the VCs table
     """
-    with open(html_file_path, encoding="utf-8") as html_fp:
-        soup = BeautifulSoup(html_fp)
+    with open(mhtml_file_path, "rb") as mhtml_fp:
+        soup = BeautifulSoup(
+            quopri.decodestring(mhtml_fp.read()), features="lxml"
+        )
         # Get VCs table title as List.
         vc_titles = get_VC_title(soup)
         vc_titles.append("Company URL")
@@ -251,19 +246,3 @@ def get_VCs_from_html(html_file_path: str) -> pd.DataFrame:
         vc_contents = get_VC_contents(soup)
         vc_df = pd.DataFrame(data=vc_contents, columns=vc_titles)
         return vc_df
-
-
-# %% [markdown]
-# # Sample usage of the function.
-
-# %% run_control={"marked": true}
-# Source data file path.
-vc_html_path = "../data/Tracxn_SeriesA_AI.html"
-# Destination result file path.
-vc_csv_save_path = "../result_csv/Tracxn_SeriesA_AI.csv"
-# Get Dataframe of VCs from HTML page.
-vc_df = get_VCs_from_html(vc_html_path)
-vc_df.to_csv(vc_csv_save_path, sep=",", index=False)
-vc_df
-
-# %%
