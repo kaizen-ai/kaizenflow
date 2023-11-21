@@ -235,8 +235,11 @@ def get_VCs_from_mhtml(mhtml_file_path: str) -> pd.DataFrame:
     :param mhtml_file_path: The path of the VC search page as an mhtml file
     :return: A pandas.DataFrame containing the infomation of the VCs table
     """
+    # Open with byte to pass as quopri input.
     with open(mhtml_file_path, "rb") as mhtml_fp:
         soup = BeautifulSoup(
+            # MHTML file is MIME quoted-printable.
+            # Need to use `quopri.decode` to remove MIME special characters.
             quopri.decodestring(mhtml_fp.read()), features="lxml"
         )
         # Get VCs table title as List.

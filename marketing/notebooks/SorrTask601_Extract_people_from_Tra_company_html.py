@@ -19,10 +19,8 @@ import marketing.tra.extract_people_from_Tra_company_mhtml as mtepftcmh
 # # Workflow before using this library:
 #
 # 1. Go to a Tra company's people page ("\<company_page\>/people/currentteam")
-# 2. Use the browser's `Save As` button to download the webpage as a `Web page, single file`.
-#     * Or use any other download method that can fulfill the requirement in step 3.
-# 3. If you see the downloaded file format is `.mht` or `.mhtml`, you can process forward. 
-#     * Otherwise you won't be able to bypass the check layer from the website.
+# 2. Use the browser's `Save As` button to download the webpage as a `Web page, single file`. Or use any other download method that can fulfill the requirement in step 3.
+# 3. If you see the downloaded file format is `.mht` or `.mhtml`, you can process forward. Otherwise you won't be able to bypass the check layer from the website.
 # 4. Call the `get_employees_from_html` method with the `.mhtml` file path.
 # 5. Save the returned dataframe to whatever format preferred.
 

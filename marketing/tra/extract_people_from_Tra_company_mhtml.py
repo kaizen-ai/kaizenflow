@@ -58,8 +58,11 @@ def get_employees_from_mhtml(mhtml_file_path: str) -> pd.DataFrame:
     :param mhtml_file_path: The path of the company's people page as an mhtml file
     :return: A pandas.DataFrame containing the people's name and LinkedIn profile link
     """
+    # Open with byte to pass as quopri input.
     with open(mhtml_file_path, "rb") as employee_fp:
         soup = BeautifulSoup(
+            # MHTML file is MIME quoted-printable.
+            # Need to use `quopri.decode` to remove MIME special characters.
             quopri.decodestring(employee_fp.read()), features="lxml"
         )
         employee_titles = ["Name", "LinkedIn Profile"]
