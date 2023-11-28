@@ -1,92 +1,37 @@
-# ---
-# jupyter:
-#   jupytext:
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.15.2
-#   kernelspec:
-#     display_name: Python 3 (ipykernel)
-#     language: python
-#     name: python3
-# ---
+"""
+Import as:
 
-# %% [markdown]
-# This notebook is used to get email from DropContact API using first name,
-# last name and company name. The input data is from a Google Sheet.
+import marketing.dropcontact.find_email as mdrfiema
+"""
 
-# %%
-# !sudo /bin/bash -c "(source /venv/bin/activate; pip install --upgrade google-api-python-client)"
 
-# %% [markdown]
-# # Import
-
-# %%
 import time
 from math import ceil
-from typing import Iterable, List
+from typing import Any, Dict, List, Sequence
 
-import gspread_pandas
 import pandas as pd
 import requests
 from tqdm import tqdm
 
-import helpers.hgoogle_file_api as hgofiapi
 
-# %% [markdown]
-# # Get data from Google Sheet
-
-# %%
-# Set up the Google sheet name.
-gsheet_name = "Search7.AI_VC_in_US_DropContact_Test"
-#
-creds = hgofiapi.get_credentials()
-spread = gspread_pandas.Spread(gsheet_name, creds=creds)
-df = spread.sheet_to_df(index=None)[:10]
-print(df.shape)
-df.head()
-
-# %% [markdown]
-# # Set up
-
-# %%
-# Batch size is how many data we send to the API per request.
-# Batch endpoint can process up to 250 contacts with a single request.
-# One contact data must be less than 10 kB.
-#
-# The API will cost 1 credit per data length.
-batch_size = 10
-# The column titles for first name, last name and company name in Given GSheet.
-first_name_col = "firstName"
-last_name_col = "lastName"
-company_col = "companyName"
-# API key of DropContact.
-api_key = ""
-
-
-# %% [markdown]
-# # DropContact functions
-
-# %%
-def preprocess_data(
-    first_name_list: Iterable[str],
-    last_name_list: Iterable[str],
-    company_list: Iterable[str],
-) -> List:
+def _preprocess_dropcontact_data(
+    first_name_list: Sequence[str],
+    last_name_list: Sequence[str],
+    company_list: Sequence[str],
+) -> List[Dict[str, str]]:
     """
     Preprocess data for DropContact API.
 
     :param first_name_list: List of first names.
     :param last_name_list: List of last names.
     :param company_list: List of company names.
-    :return: A list of dictionaries, each dictionary contains first name, last name and company name.
+    :return: A list of dictionaries with first name, last name and company name.
     """
-    data = []
+    data: List[Dict[str, str]] = []
     # Check the input format.
     if not len(first_name_list) == len(last_name_list) == len(company_list):
         print("Error: length of input data must be the same.")
-        return []
+        return data
     # Format data for dropcontact API.
     for first_name, last_name, company in zip(
         first_name_list, last_name_list, company_list
@@ -101,11 +46,11 @@ def preprocess_data(
     return data
 
 
-def request_dropcontact(batch_data: List[dict], api_key: str) -> dict:
+def _request_dropcontact(batch_data: List[Dict[str, str]], api_key: str) -> Any:
     """
     Send request to DropContact API.
 
-    :param batch_data: List of dictionaries, each dictionary contains first name, last name and company name.
+    :param batch_data: List of dictionaries with first name, last name and company name.
     :param api_key: API key of DropContact.
     :return: A dictionary contains the query result.
     """
@@ -124,12 +69,13 @@ def request_dropcontact(batch_data: List[dict], api_key: str) -> dict:
     return post_response
 
 
-def generate_result_df(query_results: List[dict]) -> pd.DataFrame:
+def _generate_result_df(query_results: List[Dict[str, Any]]) -> pd.DataFrame:
     """
     Generate dataframe from query result.
 
     :param query_results: List of query results.
-    :return: A dataframe with columns: first name, last name, full name, email, phone, pronoun, job title.
+    :return: A dataframe with columns:
+            first name, last name, full name, email, phone, pronoun, job title.
     """
     result_list = []
     result_title = [
@@ -175,13 +121,13 @@ def generate_result_df(query_results: List[dict]) -> pd.DataFrame:
     return pd.DataFrame(data=result_list, columns=result_title)
 
 
-def send_batch_request(
+def _send_batch_request(
     data: List[dict], api_key: str, batch_size: int
 ) -> List[dict]:
     """
     Send batch request to DropContact API.
 
-    :param data: List of dictionaries, each dictionary contains first name, last name and company name.
+    :param data: List of dictionaries with first name, last name and company name.
     :param api_key: API key of DropContact.
     :param batch_size: Batch size.
     :return: A list of dictionaries, each dictionary contains the query result.
@@ -202,14 +148,14 @@ def send_batch_request(
         batch_result = []
         # Send a search query.
         # This request will cost 1 credit per data length.
-        post_response = request_dropcontact(batch_data, api_key)
+        post_response = _request_dropcontact(batch_data, api_key)
         query_id = post_response["request_id"]
         print(f"Batch {str(batch_idx)}: Query ID: {str(query_id)}.")
-        # Wait for query result, 11 seconds per attempt, 55 seconds timeout.
-        for i in range(5):
+        # Wait for query result, 10 seconds per attempt, 120 seconds timeout.
+        for _ in range(12):
             # Get query result using retrieved ID. This request won't cost any credit.
             get_response = requests.get(
-                "https://api.dropcontact.io/batch/{}".format(query_id),
+                f"https://api.dropcontact.io/batch/{query_id}",
                 headers={"X-Access-Token": api_key},
             ).json()
             query_finished = get_response["success"]
@@ -220,13 +166,12 @@ def send_batch_request(
                     f"Batch {str(batch_idx)}: Query finished. Credits left: {str(credits_left)}."
                 )
                 break
-            else:
-                reason = get_response["reason"]
+            reason = get_response["reason"]
             error = get_response["error"]
             if error:
                 print(f"Error detected, reason: {str(reason)}.")
                 break
-            time.sleep(11)
+            time.sleep(10)
         if not batch_result:
             print(f"Batch {str(batch_idx)}: Query failed, reason: timeout.")
             batch_result = [{}] * len(batch_data)
@@ -242,9 +187,9 @@ def send_batch_request(
 
 
 def get_email_from_dropcontact(
-    first_name_list: Iterable[str],
-    last_name_list: Iterable[str],
-    company_list: Iterable[str],
+    first_name_list: Sequence[str],
+    last_name_list: Sequence[str],
+    company_list: Sequence[str],
     api_key: str,
     batch_size: int,
 ) -> pd.DataFrame:
@@ -256,58 +201,14 @@ def get_email_from_dropcontact(
     :param last_name_list: List of last names.
     :param company_list: List of company names.
     :param api_key: API key of DropContact.
-    :return: A dataframe with columns: first name, last name, full name, email, phone, pronoun, job title.
+    :return: A dataframe with the following columns:
+            first name, last name, full name, email, phone, pronoun, job title.
     """
-    data = preprocess_data(first_name_list, last_name_list, company_list)
-    # Send batch request to DropContact API.
-    query_results = send_batch_request(data, api_key, batch_size)
-    # Generate dataframe from query result.
-    result_df = generate_result_df(query_results)
-    return result_df
-
-
-# %% [markdown]
-# # Get emails from DropContact
-
-# %%
-email_df = get_email_from_dropcontact(
-    df[first_name_col], df[last_name_col], df[company_col], api_key, batch_size
-)
-
-# %%
-email_df
-
-
-# %% [markdown]
-# # Write email_df to the same Google Sheet
-
-# %%
-# Fix phone number format.
-def prepare_phone_number_for_sheets(phone_number):
-    if phone_number != "":
-        pattern = r'^'
-        replacement = "'"
-        return re.sub(pattern, replacement, phone_number)
-    else:
-        return phone_number
-
-email_df['phone'] = email_df['phone'].apply(prepare_phone_number_for_sheets)
-
-email_df
-
-
-# %% run_control={"marked": true}
-def df_to_gsheet(gsheet_name: str, df: pd.DataFrame) -> None:
-    # Write to the sheet.
-    # Make sure the sheet "email"(sheet_name) exists in the Google Sheet.
-    sheet_name = "email"
-    spread2 = gspread_pandas.Spread(
-        gsheet_name, sheet=sheet_name, create_sheet=True, creds=creds
+    data = _preprocess_dropcontact_data(
+        first_name_list, last_name_list, company_list
     )
-    spread2.df_to_sheet(df, index=False)
-
-
-#
-df_to_gsheet(gsheet_name, email_df)
-
-# %%
+    # Send batch request to DropContact API.
+    query_results = _send_batch_request(data, api_key, batch_size)
+    # Generate dataframe from query result.
+    result_df = _generate_result_df(query_results)
+    return result_df
