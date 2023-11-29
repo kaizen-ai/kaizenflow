@@ -25,9 +25,9 @@ def extract_investors_from_signal_url(
     page. e.g. https://signal.nfx.com/investor-lists/top-fintech-seed-investors
     Available lists are in this page: https://signal.nfx.com/investor-lists/
 
-    :param baseurl: str, the page url to be extracted
-    :param start_idx: int, the index of the first item to be extracted (start from 0)
-    :param length: int, the number of items to be extracted
+    :param baseurl: The page url to be extracted
+    :param start_idx: The index of the first item to be extracted (start from 0)
+    :param length: The number of items to be extracted
     """
 
     # Returning default text when element not present.
