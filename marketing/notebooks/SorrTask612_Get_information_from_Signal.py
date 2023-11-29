@@ -24,6 +24,7 @@ import marketing.signal.extract_investors_from_signal_list as mseifsili
 investors_csv_save_path = "../result_csv/signal_fintech_investors.csv"
 # Source data page URL.
 baseurl = "https://signal.nfx.com/investor-lists/top-fintech-seed-investors"
+# Specifying the range of data to be extracted.
 start_idx = 0
 length = 40
 # Get Dataframe of investors from Signal page URL.

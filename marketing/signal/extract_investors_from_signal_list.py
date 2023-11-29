@@ -4,7 +4,11 @@ Import as:
 import marketing.signal.extract_investors_from_signal_list as mseifsili
 """
 
+# TODO(Henry): This package need to be manually installed until they are added
+# to the container.
+# Run the following line in any notebook would install it:
 # !sudo /bin/bash -c "(source /venv/bin/activate; pip install --upgrade selenium webdriver-manager)"
+
 import math
 import time
 
@@ -21,9 +25,12 @@ def extract_investors_from_signal_url(
     baseurl: str, start_idx: int, length: int
 ) -> pd.DataFrame:
     """
-    Extract a dataframe of investor information from a signal investors list
-    page. e.g. https://signal.nfx.com/investor-lists/top-fintech-seed-investors
-    Available lists are in this page: https://signal.nfx.com/investor-lists/
+    Extract a dataframe of investor information from a signal investors list page.
+    e.g. https://signal.nfx.com/investor-lists/top-fintech-seed-investors
+    Available lists are in this page: https://signal.nfx.com/investor-lists/ 
+    The page is only loading a few items for one click on the loading button,
+    so please use the params to specify the range of data to be extracted,
+    and avoid an unexpectable waiting time.
 
     :param baseurl: The page url to be extracted
     :param start_idx: The index of the first item to be extracted (start from 0)
