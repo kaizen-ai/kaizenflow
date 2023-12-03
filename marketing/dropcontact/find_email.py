@@ -15,26 +15,26 @@ from tqdm import tqdm
 
 
 def _preprocess_dropcontact_data(
-    first_name_list: Sequence[str],
-    last_name_list: Sequence[str],
-    company_list: Sequence[str],
+    first_names: Sequence[str],
+    last_names: Sequence[str],
+    company_names: Sequence[str],
 ) -> List[Dict[str, str]]:
     """
     Preprocess data for DropContact API.
 
-    :param first_name_list: List of first names.
-    :param last_name_list: List of last names.
-    :param company_list: List of company names.
-    :return: A list of dictionaries with first name, last name and company name.
+    :param first_names: List of first names
+    :param last_names: List of last names
+    :param company_names: List of company names
+    :return: A list of dictionaries with first name, last name and company name
     """
     data: List[Dict[str, str]] = []
     # Check the input format.
-    if not len(first_name_list) == len(last_name_list) == len(company_list):
+    if not len(first_names) == len(last_names) == len(company_names):
         print("Error: length of input data must be the same.")
         return data
     # Format data for dropcontact API.
     for first_name, last_name, company in zip(
-        first_name_list, last_name_list, company_list
+        first_names, last_names, company_names
     ):
         data.append(
             {
@@ -50,9 +50,9 @@ def _request_dropcontact(batch_data: List[Dict[str, str]], api_key: str) -> Any:
     """
     Send request to DropContact API.
 
-    :param batch_data: List of dictionaries with first name, last name and company name.
-    :param api_key: API key of DropContact.
-    :return: A dictionary contains the query result.
+    :param batch_data: List of dictionaries with first name, last name and company name
+    :param api_key: API key of DropContact
+    :return: A dictionary contains the query result
     """
     post_response = requests.post(
         "https://api.dropcontact.io/batch",
@@ -73,9 +73,9 @@ def _generate_result_df(query_results: List[Dict[str, Any]]) -> pd.DataFrame:
     """
     Generate dataframe from query result.
 
-    :param query_results: List of query results.
+    :param query_results: List of query results
     :return: A dataframe with columns:
-            first name, last name, full name, email, phone, pronoun, job title.
+            first name, last name, full name, email, phone, pronoun, job title
     """
     result_list = []
     result_title = [
@@ -127,10 +127,10 @@ def _send_batch_request(
     """
     Send batch request to DropContact API.
 
-    :param data: List of dictionaries with first name, last name and company name.
-    :param api_key: API key of DropContact.
-    :param batch_size: Batch size.
-    :return: A list of dictionaries, each dictionary contains the query result.
+    :param data: List of dictionaries with first name, last name and company name
+    :param api_key: API key of DropContact
+    :param batch_size: Batch size
+    :return: A list of dictionaries, each dictionary contains the query result
     """
     batches = []
     query_results = []
@@ -187,9 +187,9 @@ def _send_batch_request(
 
 
 def get_email_from_dropcontact(
-    first_name_list: Sequence[str],
-    last_name_list: Sequence[str],
-    company_list: Sequence[str],
+    first_names: Sequence[str],
+    last_names: Sequence[str],
+    company_names: Sequence[str],
     api_key: str,
     batch_size: int,
 ) -> pd.DataFrame:
@@ -197,15 +197,15 @@ def get_email_from_dropcontact(
     Get email from DropContact API using first name, last name and company
     name.
 
-    :param first_name_list: List of first names.
-    :param last_name_list: List of last names.
-    :param company_list: List of company names.
-    :param api_key: API key of DropContact.
+    :param first_names: List of first names
+    :param last_names: List of last names
+    :param company_names: List of company names
+    :param api_key: API key of DropContact
     :return: A dataframe with the following columns:
-            first name, last name, full name, email, phone, pronoun, job title.
+            first name, last name, full name, email, phone, pronoun, job title
     """
     data = _preprocess_dropcontact_data(
-        first_name_list, last_name_list, company_list
+        first_names, last_names, company_names
     )
     # Send batch request to DropContact API.
     query_results = _send_batch_request(data, api_key, batch_size)
