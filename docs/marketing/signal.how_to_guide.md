@@ -1,5 +1,15 @@
 # How to extract data from Signal
 
+<!-- toc -->
+
+- [Example Notebook(s)](#example-notebooks)
+- [Dataflow](#dataflow)
+- [Usage](#usage)
+
+<!-- tocstop -->
+
+## Example Notebook(s)
+
 - An example notebook is at
   `marketing/notebooks/SorrTask612_Get_information_from_Signal.ipynb`.
 

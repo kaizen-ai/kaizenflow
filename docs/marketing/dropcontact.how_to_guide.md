@@ -1,5 +1,15 @@
 # How to extract data from Signal
 
+<!-- toc -->
+
+- [Example Notebook(s)](#example-notebooks)
+- [Dataflow](#dataflow)
+- [Usage](#usage)
+
+<!-- tocstop -->
+
+## Example Notebook(s)
+
 - An example notebook is at
   `marketing/notebooks/SorrTask606_Get_email_from_dropcontact.ipynb`. It
   contains a full process for adding extracted data into an existing Google
