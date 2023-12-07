@@ -2,7 +2,7 @@
 
 <!-- toc -->
 
-- [Example Notebook(s)](#example-notebooks)
+- [Locations](#locations)
 - [Dataflow](#dataflow)
   * [Input](#input)
   * [Output](#output)
@@ -11,8 +11,9 @@
 
 <!-- tocstop -->
 
-## Example Notebook(s)
+## Locations
 
+- The module is located at `marketing/tra`
 - Example notebooks are at:
   - `marketing/notebooks/SorrTask601_Extract_people_from_Tra_company_html.ipynb`
   - `marketing/notebooks/SorrTask601_Extract_VCs_from_Tra_search_mhtml.ipynb`
@@ -23,27 +24,27 @@
 
 - An MIME HTML file containing:
   1. A table of VC company names
-  2. A list of investors from the company.
+  2. A list of investors from the company
 
 ### Output
 
 - According to the input type, output can be:
-  1. A pandas dataframe containing the VC names and its information.
+  1. A pandas dataframe containing the VC names and its information
   2. A pandas dataframe containing the investors' `First Name`, `Last Name` and
-     their linkedin profiles link.
+     their linkedin profiles link
 
 ## Download Data
 
 - We want to use only static data as the source of our extraction code. To
   download the data page:
-  1. In any modern browser, open a page containing required data.
+  1. In any modern browser, open a page containing required data
   2. Use the browser's `Save As` button to download the webpage as a
      `Web page, single file`. Or use any other download method that can fulfill
-     the requirement in step 3.
+     the requirement in step 3
   3. If you see the downloaded file format is `.mht` or `.mhtml`, you can
      process forward. Otherwise you won't be able to bypass the check layer from
-     the website.
-  4. Save the `.mhtml` file and its path will work as input data.
+     the website
+  4. Save the `.mhtml` file and its path will work as input data
 
 ## Usage
 

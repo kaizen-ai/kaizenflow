@@ -2,7 +2,7 @@
 
 <!-- toc -->
 
-- [Example Notebook(s)](#example-notebooks)
+- [Locations](#locations)
 - [Dataflow](#dataflow)
   * [Input](#input)
   * [Output](#output)
@@ -10,32 +10,34 @@
 
 <!-- tocstop -->
 
-## Example Notebook(s)
+## Locations
 
+- The module is located at `marketing/signal`
 - An example notebook is at
-  `marketing/notebooks/SorrTask612_Get_information_from_Signal.ipynb`.
+  `marketing/notebooks/SorrTask612_Get_information_from_Signal.ipynb`
 
 ## Dataflow
 
 ### Input
 
-- A url from Signal investors list.
+- A url from Signal investors list
 
 ### Output
 
 - A pandas dataframe with investors' `First Name`, `Last Name` and
-  `Company Name`.
+  `Company Name`
 
 ## Usage
 
-- Select a list in https://signal.nfx.com/investor-lists/ and open its page,
-  copy the url of the list to the notebook. E.g.:
-  `baseurl = https://signal.nfx.com/investor-lists/top-fintech-seed-investors`.
-- You need to first determine the range of data to be extracted in this run by
-  specifying the start index and the length of the data.
+- Import the module using `import marketing.signal as mrksign`
+- Select a list in https://signal.nfx.com/investor-lists/ and open its page
+- The url for the list will work as a input data, for e.g.:
+  `baseurl = https://signal.nfx.com/investor-lists/top-fintech-seed-investors`
+- Determine the range of data to be extracted in a particular run by specifying
+  the start index and the length of the data
   - This is because the page is only loading a few items for one click on the
     loading button and the total length of data is unknown. We don't want the
-    code to run forever.
+    code to run forever
 - In any notebook, run the following script to get a pandas dataframe
   representing the specified data range of the list:
 

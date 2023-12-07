@@ -2,7 +2,7 @@
 
 <!-- toc -->
 
-- [Example Notebook(s)](#example-notebooks)
+- [Locations](#locations)
 - [Dataflow](#dataflow)
   * [Input](#input)
   * [Output](#output)
@@ -10,12 +10,13 @@
 
 <!-- tocstop -->
 
-## Example Notebook(s)
+## Locations
 
+- The module is located at `marketing/dropcontact`
 - An example notebook is at
-  `marketing/notebooks/SorrTask606_Get_email_from_dropcontact.ipynb`.
+  `marketing/notebooks/SorrTask606_Get_email_from_dropcontact.ipynb`
 - It contains a full process for adding extracted data into an existing Google
-  Sheet.
+  Sheet
 
 ## Dataflow
 
@@ -31,10 +32,12 @@
 
 ## Usage
 
-- This module gives a single function for easier use of DropContact API.
+- Import the module using `import marketing.dropcontact as mrkdrop`
+- The module provides a single function for extraction of data for `DropContact`
+  API
 - It takes three Sequence of data (can be python list, pandas column, etc.) and
-  an API key for dropcontact. It will take about 1 minute to process per 50
-  investors.
+  an API key for dropcontact
+- The processing time is ~50 investors per minute
 - In any notebook, run the following script to get a pandas dataframe
   representing the data returned from DropContact:
 
