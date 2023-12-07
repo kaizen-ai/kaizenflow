@@ -1,9 +1,11 @@
-# How to extract data from Signal
+# How to extract data from DropContact
 
 <!-- toc -->
 
 - [Example Notebook(s)](#example-notebooks)
 - [Dataflow](#dataflow)
+  * [Input](#input)
+  * [Output](#output)
 - [Usage](#usage)
 
 <!-- tocstop -->
@@ -11,16 +13,21 @@
 ## Example Notebook(s)
 
 - An example notebook is at
-  `marketing/notebooks/SorrTask606_Get_email_from_dropcontact.ipynb`. It
-  contains a full process for adding extracted data into an existing Google
+  `marketing/notebooks/SorrTask606_Get_email_from_dropcontact.ipynb`.
+- It contains a full process for adding extracted data into an existing Google
   Sheet.
 
 ## Dataflow
 
-- Input: Three sequences representing `First Name`, `Last Name`, `Company Name`;
-  The API key for dropcontact.
-- Output: An dataframe containing all data available from DropContact. Empty
-  string is set for data not present.
+### Input
+
+- Three sequences representing `First Name`, `Last Name`, `Company Name`
+- API key for dropcontact
+
+### Output
+
+- DataFrame containing all data available from DropContact API
+- Empty string is set for data not present
 
 ## Usage
 
@@ -39,4 +46,5 @@
   last_names = <Last Name Sequence>
   company_names = <Company Name Sequence>
   dropcontact_dataframe = mrkdrop.get_email_from_dropcontact(first_names, last_names, company_names, API_KEY)
+
   ```

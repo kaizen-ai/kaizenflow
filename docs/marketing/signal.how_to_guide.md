@@ -4,6 +4,8 @@
 
 - [Example Notebook(s)](#example-notebooks)
 - [Dataflow](#dataflow)
+  * [Input](#input)
+  * [Output](#output)
 - [Usage](#usage)
 
 <!-- tocstop -->
@@ -15,8 +17,13 @@
 
 ## Dataflow
 
-- Input: A url from Signal investors list.
-- Output: A pandas dataframe with investors' `First Name`, `Last Name` and
+### Input
+
+- A url from Signal investors list.
+
+### Output
+
+- A pandas dataframe with investors' `First Name`, `Last Name` and
   `Company Name`.
 
 ## Usage
@@ -39,4 +46,5 @@
   start_idx = <first_item_needed>
   length = <length_of_items_needed>
   signal_dataframe = mrksign.extract_investors_from_signal_url(baseurl, start_idx, length)
+
   ```
