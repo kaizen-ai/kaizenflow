@@ -40,13 +40,11 @@
 # - Rename the csv_file_name variable to the file name
 
 # %%
-#imports 
+# imports
 
-import sys
-import pandas as pd
 import numpy as np
-from gspread_pandas import Spread, Client
-import gspread
+import pandas as pd
+from gspread_pandas import Spread
 
 # %%
 ## Names and external imports
@@ -55,25 +53,25 @@ csv_file_name = "docsend_data.csv"
 
 # %%
 ## load data
-if (gsheets_name != ""):
-    spread = Spread(gsheets_name)    
+if gsheets_name != "":
+    spread = Spread(gsheets_name)
     data = spread.sheets[0].get_values()
     headers = data.pop(0)
-    df#clean data#clean data = pd.DataFrame(data, columns=headers)
+    df = pd.DataFrame(data, columns=headers)
 else:
     df = pd.read_csv(csv_file_name)
 
 # %%
 ## clean data
-df['Duration'] = pd.to_timedelta(df['Duration'])
-df = df.replace(r'^\s*$', np.nan, regex=True)
+df["Duration"] = pd.to_timedelta(df["Duration"])
+df = df.replace(r"^\s*$", np.nan, regex=True)
 df
 
 # %%
 ## compute data
-sorted_by_duration_df = df.sort_values(by='Duration', ascending=False)
-sorted_by_duration_df = sorted_by_duration_df.dropna(subset=['Email'])
-top_ten_emails = sorted_by_duration_df['Email'].unique()[:10]
+sorted_by_duration_df = df.sort_values(by="Duration", ascending=False)
+sorted_by_duration_df = sorted_by_duration_df.dropna(subset=["Email"])
+top_ten_emails = sorted_by_duration_df["Email"].unique()[:10]
 
 # %%
 ## show data
