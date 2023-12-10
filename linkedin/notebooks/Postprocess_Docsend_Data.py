@@ -31,7 +31,7 @@
 #     - Remember to save your credentials to the gspread_pandas folder
 # - Get the email of your service account
 #     - This can be found under Service Accounts header in the Credentials Tab of your project
-# - Share your Google Sheets file with the service account email
+# - Share your Google Sheets file with the service account email(press Share top right)
 # - Rename the gsheets_name variable to the name of the file
 # - Run notebook with Google Sheets mode
 #
