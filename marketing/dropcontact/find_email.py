@@ -191,7 +191,7 @@ def get_email_from_dropcontact(
     last_names: Sequence[str],
     company_names: Sequence[str],
     api_key: str,
-    batch_size: int,
+    batch_size: int = 50,
 ) -> pd.DataFrame:
     """
     Get email from DropContact API using first name, last name and company
@@ -204,9 +204,7 @@ def get_email_from_dropcontact(
     :return: A dataframe with the following columns:
             first name, last name, full name, email, phone, pronoun, job title
     """
-    data = _preprocess_dropcontact_data(
-        first_names, last_names, company_names
-    )
+    data = _preprocess_dropcontact_data(first_names, last_names, company_names)
     # Send batch request to DropContact API.
     query_results = _send_batch_request(data, api_key, batch_size)
     # Generate dataframe from query result.

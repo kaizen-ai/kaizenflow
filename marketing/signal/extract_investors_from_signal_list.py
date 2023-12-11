@@ -4,11 +4,6 @@ Import as:
 import marketing.signal.extract_investors_from_signal_list as mseifsili
 """
 
-# TODO(Henry): This package need to be manually installed until they are added
-# to the container.
-# Run the following line in any notebook would install it:
-# !sudo /bin/bash -c "(source /venv/bin/activate; pip install --upgrade selenium webdriver-manager)"
-
 import math
 import time
 

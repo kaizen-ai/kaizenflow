@@ -13,7 +13,7 @@
 # ---
 
 # %% run_control={"marked": true}
-import marketing.tra.extract_VCs_from_Tra_search_mhtml as mtevftsmh
+import marketing.tra as mrktra
 
 # %% [markdown]
 # # Workflow before using this library:
@@ -33,7 +33,7 @@ vc_mhtml_path = "../data/Investors_VC_Tra.mhtml"
 # Destination result file path.
 vc_csv_save_path = "../result_csv/Investors_VC_Tra.csv"
 # Get Dataframe of VCs from HTML page.
-vc_df = mtevftsmh.get_VCs_from_mhtml(vc_mhtml_path)
+vc_df = mrktra.get_VCs_from_mhtml(vc_mhtml_path)
 vc_df.to_csv(vc_csv_save_path, sep=",", index=False)
 vc_df
 
