@@ -29,7 +29,7 @@ import gspread_pandas
 import pandas as pd
 
 import helpers.hgoogle_file_api as hgofiapi
-import marketing.dropcontact.find_email as mdrfiema
+import marketing.dropcontact as mrkdrop
 
 # %% [markdown]
 # # Get data from Google Sheet
@@ -66,7 +66,7 @@ api_key = os.environ["API_KEY"]
 # # Get emails from DropContact
 
 # %%
-email_df = mdrfiema.get_email_from_dropcontact(
+email_df = mrkdrop.get_email_from_dropcontact(
     df[first_name_col], df[last_name_col], df[company_col], api_key, batch_size
 )
 
