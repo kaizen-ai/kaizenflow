@@ -15,7 +15,8 @@
 - The module is located at `marketing/dropcontact`
 - An example notebook is at
   `marketing/notebooks/SorrTask606_Get_email_from_dropcontact.ipynb`
-- It contains a full process for extracting data using `DropContact` API and adding into an existing Google sheet
+- It contains a full process for extracting data using `DropContact` API and
+  adding into an existing Google sheet
 
 ## Dataflow
 
