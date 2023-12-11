@@ -13,7 +13,7 @@
 # ---
 
 # %%
-import marketing.tra.extract_people_from_Tra_company_mhtml as mtepftcmh
+import marketing.tra as mrktra
 
 # %% [markdown]
 # # Workflow before using this library:
@@ -33,7 +33,7 @@ employee_mhtml_path = "../data/SequoiaCapital_Tra.mhtml"
 # Destination result file path.
 employee_csv_save_path = "../result_csv/SequoiaCapital_Tra.csv"
 # Get Dataframe of employees from HTML page.
-employee_df = mtepftcmh.get_employees_from_mhtml(employee_mhtml_path)
+employee_df = mrktra.get_employees_from_mhtml(employee_mhtml_path)
 employee_df.to_csv(employee_csv_save_path, sep=",", index=False)
 employee_df
 
