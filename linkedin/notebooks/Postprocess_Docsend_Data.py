@@ -17,26 +17,27 @@
 #
 # This notebook is used for prototyping ways to post-process `docsend` data that has been exported to a Google Sheet in GDrive.
 #
-# - Getting the `docsend` data using this zapier connection might be good if used properly in conjunction with the GSheets API: https://zapier.com/apps/docsend/integrations/google-sheets/175058/create-google-sheet-rows-for-new-visits-in-docsend
+# - Getting the `docsend` data using this Zapier connection might be good if used properly in conjunction with the GSheets API: https://zapier.com/apps/docsend/integrations/google-sheets/175058/create-google-sheet-rows-for-new-visits-in-docsend
 
 # %% [markdown]
 # ## Instructions
 #
-# - Run pip install gspread-pandas in terminal
 # - Follow the directions here for *Client Credentials* and follow the *Service Account Route* : https://gspread-pandas.readthedocs.io/en/latest/getting_started.html
 #     - Remember to save your credentials to the gspread_pandas folder
 # - Get the email of your service account
 #     - This can be found under Service Accounts header in the Credentials Tab of your project
 # - Share your Google Sheets file with the service account email(press Share top right)
-# - Rename the gsheets_name variable to the name of the file
+# - Rename the `gsheets_name` variable to the name of the file
 
 # %%
-# imports
+# Install gspread-pandas
+# !sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread-pandas)"
 
+# %%
+# Imports
 import numpy as np
 import pandas as pd
 from gspread_pandas import Spread
-# !sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread-pandas)"
 
 # %%
 ## Google Sheet name
