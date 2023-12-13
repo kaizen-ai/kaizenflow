@@ -15,29 +15,20 @@
 # %% [markdown]
 # # Description
 #
-# This notebook was used for prototyping ways to postprocess docsend data that has been exported to a Google Sheet in GDrive.
+# This notebook is used for prototyping ways to post-process `docsend` data that has been exported to a Google Sheet in GDrive.
 #
-# - getting the docsend data using this zapier connection might be good if used properly in conjunction with the GSheets API: https://zapier.com/apps/docsend/integrations/google-sheets/175058/create-google-sheet-rows-for-new-visits-in-docsend
+# - Getting the `docsend` data using this zapier connection might be good if used properly in conjunction with the GSheets API: https://zapier.com/apps/docsend/integrations/google-sheets/175058/create-google-sheet-rows-for-new-visits-in-docsend
 
 # %% [markdown]
 # ## Instructions
 #
 # - Run pip install gspread-pandas in terminal
-# - Choose between the GSheets and CSV methods
-#
-#
-# ### Method 1 - GSheets
 # - Follow the directions here for *Client Credentials* and follow the *Service Account Route* : https://gspread-pandas.readthedocs.io/en/latest/getting_started.html
 #     - Remember to save your credentials to the gspread_pandas folder
 # - Get the email of your service account
 #     - This can be found under Service Accounts header in the Credentials Tab of your project
 # - Share your Google Sheets file with the service account email(press Share top right)
 # - Rename the gsheets_name variable to the name of the file
-# - Run notebook with Google Sheets mode
-#
-# ### Method 2 - CSV Download
-# - Download the CSV to the current directory(the place where this notebook exists)
-# - Rename the csv_file_name variable to the file name
 
 # %%
 # imports
@@ -45,34 +36,31 @@
 import numpy as np
 import pandas as pd
 from gspread_pandas import Spread
+# !sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread-pandas)"
 
 # %%
-## Names and external imports
+## Google Sheet name
 gsheets_name = "Kaizen - VC presentation - v1.5-export"
-csv_file_name = "docsend_data.csv"
 
 # %%
-## load data
-if gsheets_name != "":
-    spread = Spread(gsheets_name)
-    data = spread.sheets[0].get_values()
-    headers = data.pop(0)
-    df = pd.DataFrame(data, columns=headers)
-else:
-    df = pd.read_csv(csv_file_name)
+## Load data
+spread = Spread(gsheets_name)
+data = spread.sheets[0].get_values()
+headers = data.pop(0)
+df = pd.DataFrame(data, columns=headers)
 
 # %%
-## clean data
+## Clean data
 df["Duration"] = pd.to_timedelta(df["Duration"])
 df = df.replace(r"^\s*$", np.nan, regex=True)
 df
 
 # %%
-## compute data
+## Compute data
 sorted_by_duration_df = df.sort_values(by="Duration", ascending=False)
 sorted_by_duration_df = sorted_by_duration_df.dropna(subset=["Email"])
-top_ten_emails = sorted_by_duration_df["Email"].unique()[:10]
+sorted_emails = sorted_by_duration_df["Email"].unique()
 
 # %%
-## show data
-print(top_ten_emails)
+## Show data
+print(sorted_emails)
