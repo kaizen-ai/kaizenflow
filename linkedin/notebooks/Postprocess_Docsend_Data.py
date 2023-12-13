@@ -31,7 +31,7 @@
 
 # %%
 # Install gspread-pandas
-# !sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread-pandas)"
+!sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread-pandas)"
 
 # %%
 # Imports
