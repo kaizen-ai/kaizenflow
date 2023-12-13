@@ -47,7 +47,6 @@ from gspread_pandas import Spread
 # %%
 # Google Sheet name.
 gsheets_name = "Kaizen - VC presentation - v1.5-export"
-
 spread = Spread(gsheets_name)
 data = spread.sheets[0].get_values()
 headers = data.pop(0)
@@ -62,7 +61,7 @@ df = df.replace(r"^\s*$", np.nan, regex=True)
 df
 
 # %% [markdown]
-# ## Compute data
+# # Compute data
 
 # %%
 sorted_by_duration_df = df.sort_values(by="Duration", ascending=False)
