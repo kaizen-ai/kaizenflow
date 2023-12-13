@@ -30,38 +30,42 @@
 # - Rename the `gsheets_name` variable to the name of the file
 
 # %%
-# Install gspread-pandas
-!sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread-pandas)"
+# Install gspread-pandas.
+# !sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread-pandas)"
+
+# %% [markdown]
+# # Imports
 
 # %%
-# Imports
 import numpy as np
 import pandas as pd
 from gspread_pandas import Spread
 
-# %%
-## Google Sheet name
-gsheets_name = "Kaizen - VC presentation - v1.5-export"
+# %% [markdown]
+# # Load data
 
 # %%
-## Load data
+# Google Sheet name.
+gsheets_name = "Kaizen - VC presentation - v1.5-export"
+
 spread = Spread(gsheets_name)
 data = spread.sheets[0].get_values()
 headers = data.pop(0)
 df = pd.DataFrame(data, columns=headers)
 
+# %% [markdown]
+# # Clean data
+
 # %%
-## Clean data
 df["Duration"] = pd.to_timedelta(df["Duration"])
 df = df.replace(r"^\s*$", np.nan, regex=True)
 df
 
+# %% [markdown]
+# ## Compute data
+
 # %%
-## Compute data
 sorted_by_duration_df = df.sort_values(by="Duration", ascending=False)
 sorted_by_duration_df = sorted_by_duration_df.dropna(subset=["Email"])
 sorted_emails = sorted_by_duration_df["Email"].unique()
-
-# %%
-## Show data
 print(sorted_emails)
