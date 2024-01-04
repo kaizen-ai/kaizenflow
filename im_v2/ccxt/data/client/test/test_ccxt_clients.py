@@ -7,8 +7,8 @@ import pytest
 import helpers.hdatetime as hdateti
 import helpers.henv as henv
 import helpers.hparquet as hparque
-import helpers.hs3 as hs3
 import helpers.hsql as hsql
+import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.client as icdc
@@ -622,17 +622,15 @@ class TestCcxtSqlRealTimeImClient1(
     the parent class.
     """
 
-    def setUp(self) -> None:
-        super().setUp()
+    def set_up_test(self) -> None:
         self._create_test_table()
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(
             self.connection, test_data, "ccxt_ohlcv_spot"
         )
 
-    def tearDown(self) -> None:
+    def tear_down_test(self) -> None:
         hsql.remove_table(self.connection, "ccxt_ohlcv_spot")
-        super().tearDown()
 
     @classmethod
     def get_id(cls) -> int:
@@ -656,6 +654,7 @@ class TestCcxtSqlRealTimeImClient1(
         return expected_column_names
 
     def test_read_data1(self) -> None:
+        self.set_up_test()
         resample_1min = True
         im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
             self.connection, resample_1min
@@ -688,8 +687,10 @@ class TestCcxtSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
+        self.tear_down_test()
 
     def test_read_data2(self) -> None:
+        self.set_up_test()
         resample_1min = True
         im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
             self.connection, resample_1min
@@ -726,8 +727,10 @@ class TestCcxtSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
+        self.tear_down_test()
 
     def test_read_data3(self) -> None:
+        self.set_up_test()
         resample_1min = True
         im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
             self.connection, resample_1min
@@ -766,8 +769,10 @@ class TestCcxtSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
+        self.tear_down_test()
 
     def test_read_data4(self) -> None:
+        self.set_up_test()
         resample_1min = True
         im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
             self.connection, resample_1min
@@ -802,8 +807,10 @@ class TestCcxtSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
+        self.tear_down_test()
 
     def test_read_data5(self) -> None:
+        self.set_up_test()
         resample_1min = True
         im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
             self.connection, resample_1min
@@ -840,16 +847,20 @@ class TestCcxtSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
+        self.tear_down_test()
 
     def test_read_data6(self) -> None:
+        self.set_up_test()
         resample_1min = True
         im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
             self.connection, resample_1min
         )
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
+        self.tear_down_test()
 
     def test_read_data7(self) -> None:
+        self.set_up_test()
         resample_1min = False
         im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
             self.connection, resample_1min
@@ -892,10 +903,12 @@ class TestCcxtSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
+        self.tear_down_test()
 
     # ///////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:
+        self.set_up_test()
         resample_1min = True
         im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
             self.connection, resample_1min
@@ -905,8 +918,10 @@ class TestCcxtSqlRealTimeImClient1(
         self._test_get_start_ts_for_symbol1(
             im_client, full_symbol, expected_start_ts
         )
+        self.tear_down_test()
 
     def test_get_end_ts_for_symbol1(self) -> None:
+        self.set_up_test()
         resample_1min = True
         im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
             self.connection, resample_1min
@@ -914,10 +929,12 @@ class TestCcxtSqlRealTimeImClient1(
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2021-09-09 00:06:00", utc=True)
         self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
+        self.tear_down_test()
 
     # ///////////////////////////////////////////////////////////////////////
 
     def test_get_universe1(self) -> None:
+        self.set_up_test()
         resample_1min = True
         im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
             self.connection, resample_1min
@@ -939,10 +956,12 @@ class TestCcxtSqlRealTimeImClient1(
             expected_first_elements,
             expected_last_elements,
         )
+        self.tear_down_test()
 
     # ///////////////////////////////////////////////////////////////////////
     @pytest.mark.slow
     def test_filter_columns1(self) -> None:
+        self.set_up_test()
         resample_1min = True
         im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
             self.connection, resample_1min
@@ -950,9 +969,11 @@ class TestCcxtSqlRealTimeImClient1(
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         columns = ["full_symbol", "open", "high", "low", "close", "volume"]
         self._test_filter_columns1(im_client, full_symbols, columns)
+        self.tear_down_test()
 
     @pytest.mark.slow
     def test_filter_columns2(self) -> None:
+        self.set_up_test()
         resample_1min = True
         im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
             self.connection, resample_1min
@@ -960,9 +981,11 @@ class TestCcxtSqlRealTimeImClient1(
         full_symbol = "binance::BTC_USDT"
         columns = ["full_symbol", "whatever"]
         self._test_filter_columns2(im_client, full_symbol, columns)
+        self.tear_down_test()
 
     @pytest.mark.slow
     def test_filter_columns3(self) -> None:
+        self.set_up_test()
         resample_1min = True
         im_client = imvcdcccex.get_CcxtSqlRealTimeImClient_example2(
             self.connection, resample_1min
@@ -970,6 +993,7 @@ class TestCcxtSqlRealTimeImClient1(
         full_symbol = "binance::BTC_USDT"
         columns = ["open", "close"]
         self._test_filter_columns3(im_client, full_symbol, columns)
+        self.tear_down_test()
 
     # ///////////////////////////////////////////////////////////////////////
 
@@ -1023,21 +1047,40 @@ class TestCcxtSqlRealTimeImClient1(
 # TestCcxtHistoricalPqByTileClient1
 # #############################################################################
 
-@pytest.mark.requires_aws 
-@pytest.mark.requires_ck_infra 
+
+@pytest.mark.requires_aws
+@pytest.mark.requires_ck_infra
 class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
     the parent class.
     """
 
-    @pytest.mark.requires_aws 
+    def get_im_client(
+        self, resample_1min: bool
+    ) -> imvcdccccl.CcxtHistoricalPqByTileClient:
+        """
+        Get `CcxtHistoricalPqByTileClient` based on data from S3.
+
+        :param resample_1min: whether to resample data to 1 minute or
+            not
+        :return: Ccxt historical client
+        """
+        use_only_test_class = True
+        s3_input_dir = self.get_s3_input_dir(
+            use_only_test_class=use_only_test_class
+        )
+        root_dir = os.path.join(s3_input_dir, "historical.manual.pq")
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
+            root_dir, resample_1min
+        )
+        return im_client
+
+    @pytest.mark.requires_aws
     @pytest.mark.requires_ck_infra
     def test_read_data1(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min
-        )
+        im_client = self.get_im_client(resample_1min)
         full_symbol = "binance::BTC_USDT"
         #
         expected_length = 2881
@@ -1072,9 +1115,7 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
     @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data2(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min
-        )
+        im_client = self.get_im_client(resample_1min)
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         #
         expected_length = 5761
@@ -1111,9 +1152,7 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
     @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data3(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min
-        )
+        im_client = self.get_im_client(resample_1min)
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-18T00:23:00-00:00")
         #
@@ -1152,9 +1191,7 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
     @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data4(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min
-        )
+        im_client = self.get_im_client(resample_1min)
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
@@ -1193,9 +1230,7 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
     @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data5(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min
-        )
+        im_client = self.get_im_client(resample_1min)
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")
         end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
@@ -1235,18 +1270,14 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
 
     def test_read_data6(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min
-        )
+        im_client = self.get_im_client(resample_1min)
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
     @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data7(self) -> None:
         resample_1min = False
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min
-        )
+        im_client = self.get_im_client(resample_1min)
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         #
         expected_length = 4791
@@ -1287,18 +1318,14 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
     @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_filter_columns1(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min
-        )
+        im_client = self.get_im_client(resample_1min)
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         columns = ["full_symbol", "open", "close"]
         self._test_filter_columns1(im_client, full_symbols, columns)
 
     def test_filter_columns2(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min
-        )
+        im_client = self.get_im_client(resample_1min)
         full_symbol = "binance::BTC_USDT"
         columns = ["full_symbol", "whatever"]
         self._test_filter_columns2(im_client, full_symbol, columns)
@@ -1309,9 +1336,7 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
     )
     def test_filter_columns3(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min
-        )
+        im_client = self.get_im_client(resample_1min)
         full_symbol = "binance::BTC_USDT"
         columns = ["open", "close"]
         self._test_filter_columns3(im_client, full_symbol, columns)
@@ -1322,9 +1347,7 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
     )
     def test_filter_columns4(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min
-        )
+        im_client = self.get_im_client(resample_1min)
         full_symbol = "binance::BTC_USDT"
         columns = ["open", "close"]
         self._test_filter_columns4(
@@ -1335,26 +1358,22 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
 
     # ////////////////////////////////////////////////////////////////////////
 
-    @pytest.mark.requires_aws 
-    @pytest.mark.requires_ck_infra 
+    @pytest.mark.requires_aws
+    @pytest.mark.requires_ck_infra
     def test_get_start_ts_for_symbol1(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min
-        )
+        im_client = self.get_im_client(resample_1min)
         full_symbol = "binance::BTC_USDT"
         expected_start_ts = pd.to_datetime("2018-08-17 00:01:00", utc=True)
         self._test_get_start_ts_for_symbol1(
             im_client, full_symbol, expected_start_ts
         )
 
-    @pytest.mark.requires_aws 
-    @pytest.mark.requires_ck_infra 
+    @pytest.mark.requires_aws
+    @pytest.mark.requires_ck_infra
     def test_get_end_ts_for_symbol1(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min
-        )
+        im_client = self.get_im_client(resample_1min)
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2018-08-19 00:01:00", utc=True)
         self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
@@ -1363,9 +1382,7 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
 
     def test_get_universe1(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min
-        )
+        im_client = self.get_im_client(resample_1min)
         expected_length = 3
         expected_first_elements = [
             "binance::BTC_USDT",
@@ -1393,17 +1410,19 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
         """
         data = self._get_unit_test_data()
         partition_columns = ["currency_pair", "year", "month"]
-        aws_profile = "ck"
-        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+        use_only_test_class = True
+        s3_input_dir = self.get_s3_input_dir(
+            use_only_test_class=use_only_test_class
+        )
         dst_dir = os.path.join(
-            s3_bucket_path,
-            "unit_test",
+            s3_input_dir,
             "historical.manual.pq",
             "20220705",
             "ohlcv",
             "ccxt",
         )
         exchange_id_col_name = "exchange_id"
+        aws_profile = "ck"
         for exchange_id, df_exchange_id in data.groupby(exchange_id_col_name):
             exchange_dir = os.path.join(dst_dir, exchange_id)
             df_exchange_id = df_exchange_id.drop(columns="exchange_id")
