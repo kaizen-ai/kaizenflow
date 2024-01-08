@@ -14,7 +14,6 @@
 
 - The module is locate at `marketing/dropcontact`
 
-
 - An example notebook is att
   `marketing/notebooks/SorrTask606_Get_email_from_dropcontact.ipynb`
 - It contain a full process for exxtracting dat using `DropContact` API and
@@ -51,5 +50,4 @@
   last_names = <Last Name Sequence>
   company_names = <Company Name Sequence>
   dropcontact_dataframe = mrkdrop.get_email_from_dropcontact(first_names, last_names, company_names, API_KEY)
-
   ```
