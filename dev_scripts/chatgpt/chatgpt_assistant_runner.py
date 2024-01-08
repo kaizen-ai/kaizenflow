@@ -25,7 +25,9 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument('-o', '--output_file', dest='output_file',
                     help='redirect the output to the given file')
     parser.add_argument('-i', '--input_text', dest='input_text',
-                    help='disable stdin input, takes a text input from command line instead')
+                    help='take a text input from command line as detailed instruction')
+    parser.add_argument('--vim', dest='vim_mode', action='store_true',
+                    help='disable -i (but not -o), take input from stdin and output to stdout forcely')
     hparser.add_verbosity_arg(parser)
     return parser
 
@@ -41,10 +43,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     user_input = args.input_text
     input_file_paths = args.input_file_paths
     output_file = args.output_file
+    vim_mode = args.vim_mode
     hgpt.e2e_assistant_runner(
         assistant_name,
         user_input=user_input,
         model=model,
+        vim_mode=vim_mode,
         input_file_names=input_file_paths,
         output_file_path=output_file
     )

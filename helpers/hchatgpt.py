@@ -17,11 +17,11 @@ import openai
 
 _LOG = logging.getLogger(__name__)
 
-os.environ['OPENAI_API_KEY'] = "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"
+os.environ['OPENAI_API_KEY'] = "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"
 client = openai.OpenAI()
 # The dict of instructions for different scenarios.
 # Only files under the given root directory may be uploaded to openai.
-prefix_to_root = os.path.join('.', '..')
+prefix_to_root = os.path.join(os.path.dirname(__file__), '..')
 
 # =============================================================================
 # Assistant Creation
@@ -154,6 +154,7 @@ def get_gpt_id(path_from_root) -> str:
 # =============================================================================
 
 def _upload_to_gpt_no_set_id(path_from_root: str) -> str:
+    _LOG.info(f"Uploading file {path_from_root} to chatgpt.")
     upload_file_response = client.files.create(
         # Must use 'rb' regardless of file type
         file=open(os.path.join(prefix_to_root, path_from_root), 'rb'),
@@ -224,12 +225,21 @@ def create_thread() -> str:
     return message_thread.id
 
 def create_message_on_thread(thread_id: str, content: str, file_ids: List[str]) -> str:
-    message = client.beta.threads.messages.create(
-        thread_id=thread_id,
-        role="user",
-        content=content,
-        file_ids=file_ids,
-    )
+    if not content:
+        _LOG.error("Message content must not be empty. This will cause an openAI error.")
+    if file_ids:
+        message = client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=content,
+            file_ids=file_ids,
+        )
+    else:
+        message = client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=content,
+        )
     return message.id
     
 def create_message_on_thread_with_file_names(thread_id: str, content: str, file_names: List[str]) -> str:
@@ -264,7 +274,7 @@ def run_thread_on_assistant_by_name(assistant_name, thread_id, model: str = '') 
     else:
         return run_thread_on_assistant(assistant_id, thread_id)
 
-def wait_for_run_result(thread_id: str, run_id: str, timeout: int = 60):
+def wait_for_run_result(thread_id: str, run_id: str, timeout: int = 180):
     finished = False
     _LOG.info("Waiting for chatgpt response...")
     for i in range(math.ceil(timeout/5)):
@@ -290,7 +300,8 @@ def wait_for_run_result(thread_id: str, run_id: str, timeout: int = 60):
 
 def e2e_assistant_runner(
     assistant_name: str,
-    user_input: str = '',
+    user_input: str = 'Run on the given file',
+    vim_mode: bool = False,
     model: str = '',
     input_file_names: List[str] = [],
     output_file_path: str = ''
@@ -302,7 +313,7 @@ def e2e_assistant_runner(
     if not directory_dict:
         directory_dict = path_to_dict(prefix_to_root)
         dump_gpt_ids(directory_dict)
-    if not user_input:
+    if vim_mode:
         user_input = ''.join(sys.stdin.readlines())
     thread_id = create_thread()
     create_message_on_thread_with_file_names(
@@ -316,10 +327,10 @@ def e2e_assistant_runner(
         run_id = run_thread_on_assistant_by_name(assistant_name, thread_id)
     message = wait_for_run_result(thread_id, run_id)
     output = message.data[0].content[0].text.value
+    if vim_mode or not output_file_path:
+        sys.stdout.write(output)
     if output_file_path:
         with open(output_file_path, 'w') as fp:
             fp.write(output)
-    else:
-        sys.stdout.write(output)
     return output
 
