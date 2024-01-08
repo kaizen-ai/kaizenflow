@@ -17,7 +17,9 @@ import openai
 
 _LOG = logging.getLogger(__name__)
 
-os.environ['OPENAI_API_KEY'] = "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"
+# Do not upload your personal API key to github -- openai will revoke it.
+# Set env var in your terminal will be a better approach.
+os.environ['OPENAI_API_KEY'] = ""
 client = openai.OpenAI()
 # The dict of instructions for different scenarios.
 # Only files under the given root directory may be uploaded to openai.
@@ -300,7 +302,7 @@ def wait_for_run_result(thread_id: str, run_id: str, timeout: int = 180):
 
 def e2e_assistant_runner(
     assistant_name: str,
-    user_input: str = 'Run on the given file',
+    user_input: str = '',
     vim_mode: bool = False,
     model: str = '',
     input_file_names: List[str] = [],

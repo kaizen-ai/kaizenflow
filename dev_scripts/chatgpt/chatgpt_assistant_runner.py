@@ -24,7 +24,7 @@ def _parse() -> argparse.ArgumentParser:
                     help='use specific model for this run, overriding existing assistant config')
     parser.add_argument('-o', '--output_file', dest='output_file',
                     help='redirect the output to the given file')
-    parser.add_argument('-i', '--input_text', dest='input_text',
+    parser.add_argument('-i', '--input_text', dest='input_text', default='Run with the given file',
                     help='take a text input from command line as detailed instruction')
     parser.add_argument('--vim', dest='vim_mode', action='store_true',
                     help='disable -i (but not -o), take input from stdin and output to stdout forcely')
