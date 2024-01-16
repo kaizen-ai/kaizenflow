@@ -1033,6 +1033,7 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
 
     @pytest.mark.requires_aws 
     @pytest.mark.requires_ck_infra
+    @pytest.mark.skip(reason="Temporary skipped for cmamp #6674")
     def test_read_data1(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1337,6 +1338,7 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
 
     @pytest.mark.requires_aws 
     @pytest.mark.requires_ck_infra 
+    @pytest.mark.skip(reason="Temporary skipped for cmamp #6674")
     def test_get_start_ts_for_symbol1(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1350,6 +1352,7 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
 
     @pytest.mark.requires_aws 
     @pytest.mark.requires_ck_infra 
+    @pytest.mark.skip(reason="Temporary skipped for cmamp #6674")
     def test_get_end_ts_for_symbol1(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
