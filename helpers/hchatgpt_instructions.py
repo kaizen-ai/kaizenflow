@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.hchatgpt_instructions as hgptinstr
+import helpers.hchatgpt_instructions as hchainst
 """
 
 instructions = {

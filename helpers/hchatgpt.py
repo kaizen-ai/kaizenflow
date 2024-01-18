@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.hchatgpt as hgpt
+import helpers.hchatgpt as hchatgp
 """
 
 
@@ -11,18 +11,30 @@ import math
 import os
 import sys
 import time
+
+import helpers.hio as hio
+
 from typing import Dict, List, Optional
 
-import openai
+try:
+    import openai
+except ImportError:
+    os.system("pip install openai")
+finally:
+    import openai
 
 _LOG = logging.getLogger(__name__)
 
-# Do not upload your personal API key to github -- openai will revoke it.
-# Set env var in your terminal will be a better approach.
-os.environ["OPENAI_API_KEY"] = ""
+# NEVER upload any OpenAI API key to github -- OpenAI will revoke it.
+# Set env var in your terminal will be the correct approach.
+# If you really want to do it with python, copy the following to your code.
+# Make sure to delete it before commit:
+# os.environ["OPENAI_API_KEY"] = "<YOUR_KEY>"
+
 client = openai.OpenAI()
-# The dict of instructions for different scenarios.
-# Only files under the given root directory may be uploaded to openai.
+
+# The OpenAI File ID cache will be saved as `prefix_to_root/gpt_id.json`
+# Only files under the given root directory may be uploaded to OpenAI.
 prefix_to_root = os.path.join(os.path.dirname(__file__), "..")
 
 # =============================================================================
@@ -30,8 +42,7 @@ prefix_to_root = os.path.join(os.path.dirname(__file__), "..")
 # =============================================================================
 
 
-# This method should only be used when a new assistant is needed.
-# Otherwise, use the assistant name to retrieve an existing assistant.
+
 def create_assistant(
     assistant_name: str,
     instructions: str,
@@ -41,6 +52,20 @@ def create_assistant(
     use_code_interpreter: bool = True,
     use_function: Dict = None,
 ) -> str:
+    """
+    Create an OpenAI Assistant to our OpenAI Organization.
+    All configs can still be updated after creation.
+    
+    This method should only be used when a new assistant is needed.
+    Otherwise, use the assistant name to retrieve an existing assistant.
+    
+    :param assistant_name: name of the assistant to be created
+    :param instructions:   instruction string that describes the expected behavior of assistant
+    :param model:          GPT model used by the assistant
+    :param use_retrieval:  enable the retrieval tool from OpenAI
+    :param use_code_interpreter: enable the code interpreter tool from OpenAI
+    :param use_function:   enable the function tool from OpenAI (To be implmented)
+    """
     # Create the assistant
     tools = []
     if use_retrieval:
@@ -63,10 +88,22 @@ def update_assistant_by_id(
     *,
     instructions: str = "",
     name: str = "",
-    tools: List[Dict[str, str]] = [],
+    tools: List[Dict[str, str]] = None,
     model: str = "",
     file_ids: List[str] = [],
 ) -> str:
+    """
+    Update an existing OpenAI Assistant in our OpenAI Organization.
+    
+    :param assistant_id: assistant to be updated
+    :param instructions: instruction string that describes the expected behavior of assistant
+    :param name:         change the name of assistant, no change when empty
+    :param tools:        change the tools of assistant, no change when empty
+    :param model:        change the model of assistant, no change when empty
+    :param file_ids:     change the files linked to assistant, no change when empty
+    """
+    if tools is None:
+        tools = []
     update_config = {
         "instructions": instructions,
         "name": name,
@@ -82,10 +119,16 @@ def update_assistant_by_id(
 
 
 def delete_assistant_by_id(assistant_id: str) -> None:
+    """
+    Delete an assistant from our OpenAI Organization.
+    """
     client.beta.assistants.delete(assistant_id)
 
 
 def get_all_assistants() -> List[openai.types.beta.assistant.Assistant]:
+    """
+    Get all available assistant objects in our OpenAI Organization
+    """
     list_assistants_response = client.beta.assistants.list(
         order="desc",
         limit="100",
@@ -95,11 +138,17 @@ def get_all_assistants() -> List[openai.types.beta.assistant.Assistant]:
 
 
 def get_all_assistant_names() -> List[str]:
+    """
+    Get all available assistant names in our OpenAI Organization
+    """
     assistants = get_all_assistants()
     return [assistant.name for assistant in assistants]
 
 
 def get_assistant_id_by_name(assistant_name) -> str:
+    """
+    Get the id of an assistant by its name.
+    """
     assistant = None
     assistants = get_all_assistants()
     for cur_assistant in assistants:
@@ -113,58 +162,88 @@ def get_assistant_id_by_name(assistant_name) -> str:
 # =============================================================================
 
 
-def path_to_dict(path):
+def _path_to_dict(path) -> Dict:
+    """
+    Generate a dictionary of all files under a given folder.
+    """
     for root, dirs, files in os.walk(path):
-        tree = {d: path_to_dict(os.path.join(root, d)) for d in dirs}
+        tree = {d: _path_to_dict(os.path.join(root, d)) for d in dirs}
         tree.update({f: {"name": f} for f in files})
         return tree
 
 
 # TODO(Henry): We use fileIO here to store the directory structure, which may not be thread-safe.
 #              Should change to use DAO if we have any.
-def dump_gpt_ids(dictionary) -> None:
-    with open(os.path.join(prefix_to_root, "gpt_id.json"), "w") as fp:
-        json.dump(dictionary, fp)
+def _dump_gpt_ids(dictionary) -> None:
+    """
+    Dump a given OpenAI File ID dictionary into a cache file for furture use.
+    """
+    file_path = os.path.join(prefix_to_root, "gpt_id.json")
+    hio.to_json(file_path, dictionary)
 
 
-def load_gpt_ids() -> Optional[Dict]:
+def _load_gpt_ids() -> Optional[Dict]:
+    """
+    Load the OpenAI File ID dictionary from the cache file.
+    """
     try:
-        with open(os.path.join(prefix_to_root, "gpt_id.json"), "r") as f_in:
-            return json.load(f_in)
+        file_path = os.path.join(prefix_to_root, "gpt_id.json")
+        return hio.from_json(file_path)
     except:
-        return None
+        directory_dict = _path_to_dict(prefix_to_root)
+        _dump_gpt_ids(directory_dict)
+        return directory_dict
 
 
-# Will automatically upload file to gpt if not already uploaded.
 def _get_gpt_id_file(dictionary, path_from_root) -> Dict[str, str]:
+    """
+    Get the OpenAI File ID for a given file using a specific cache.
+    If this file has not been uploaded to OpenAI,
+    this method will upload it and generate its OpenAI File ID.
+    """
     cur = dictionary
     path_list = path_from_root.split("/")
     for level in path_list:
         cur = cur[level]
     if "gpt_id" not in cur:
         cur["gpt_id"] = _upload_to_gpt_no_set_id(path_from_root)
-    dump_gpt_ids(dictionary)
+        _dump_gpt_ids(dictionary)
     return cur
 
 
-def set_gpt_id(path_from_root, gpt_id) -> None:
-    gpt_id_dict = load_gpt_ids()
+def _set_gpt_id(path_from_root, gpt_id) -> None:
+    """
+    Manually set the cached OpenAI File ID of a given file.
+    This method should ONLY be called if a file manually uploaded to OpenAI.
+    It will NOT upload the given file to OpenAI.
+    """
+    gpt_id_dict = _load_gpt_ids()
     item = _get_gpt_id_file(gpt_id_dict, path_from_root)
     item["gpt_id"] = gpt_id
-    dump_gpt_ids(gpt_id_dict)
+    _dump_gpt_ids(gpt_id_dict)
 
 
-# Use `remove_from_gpt` to fully remove a file
 def _remove_gpt_id(path_from_root):
-    gpt_id_dict = load_gpt_ids()
+    """
+    This method ONLY removes the cached ID of a given file.
+    It does NOT fully remove a file from OpenAI.
+    Use `remove_from_gpt` to fully remove a file.
+    """
+    gpt_id_dict = _load_gpt_ids()
     item = _get_gpt_id_file(gpt_id_dict, path_from_root)
     if "gpt_id" in item:
         del item["gpt_id"]
-    dump_gpt_ids(gpt_id_dict)
+    _dump_gpt_ids(gpt_id_dict)
 
 
 def get_gpt_id(path_from_root) -> str:
-    gpt_id_dict = load_gpt_ids()
+    """
+    Get the OpenAI File ID from cache for a given file.
+    If this file has not been uploaded to OpenAI,
+    this method will upload it and generate its OpenAI File ID.
+    
+    """
+    gpt_id_dict = _load_gpt_ids()
     return _get_gpt_id_file(gpt_id_dict, path_from_root)["gpt_id"]
 
 
@@ -174,6 +253,10 @@ def get_gpt_id(path_from_root) -> str:
 
 
 def _upload_to_gpt_no_set_id(path_from_root: str) -> str:
+    """
+    Upload a file to OpenAI.
+    This method will NOT set File ID to cache.
+    """
     _LOG.info(f"Uploading file {path_from_root} to chatgpt.")
     upload_file_response = client.files.create(
         # Must use 'rb' regardless of file type
@@ -185,24 +268,38 @@ def _upload_to_gpt_no_set_id(path_from_root: str) -> str:
 
 
 def upload_to_gpt(path_from_root: str) -> str:
+    """
+    Upload a file to OpenAI and set its File ID to cache.
+    """
     gpt_id = _upload_to_gpt_no_set_id(path_from_root)
-    set_gpt_id(path_from_root, gpt_id)
+    _set_gpt_id(path_from_root, gpt_id)
     return gpt_id
 
 
 def remove_from_gpt(path_from_root: str) -> None:
+    """
+    Fully remove a file from OpenAI.
+    This method will first delete the file from OpenAI account,
+    then remove its OpenAI File ID from the cache.
+    """
     gpt_id = get_gpt_id(path_from_root)
     client.files.delete(gpt_id)
     _remove_gpt_id(path_from_root)
 
 
 def get_gpt_file_from_id(gpt_id: str) -> openai.types.file_object.FileObject:
+    """
+    Get a OpenAI File Object using its OpenAI File ID.
+    """
     return client.files.retrieve(gpt_id)
 
 
 def get_gpt_file_from_path(
     path_from_root: str,
 ) -> openai.types.file_object.FileObject:
+    """
+    Get a OpenAI File Object using its file path.
+    """
     gpt_id = get_gpt_id(path_from_root)
     return get_gpt_file_from_id(gpt_id)
 
@@ -210,14 +307,17 @@ def get_gpt_file_from_path(
 # =============================================================================
 # Add/Remove files for an assistant
 # =============================================================================
-# Note that files for assistant are those that should be constantly used by this assistant (like docs/guidelines).
-# For one-time used files, add them to message instead.
+# Note that files for assistant means files constantly used by this assistant (like docs/guidelines).
+# For one-time used files, add them to a message instead.
 # One assistant can have up to 20 files linked to it.
 
 
 def set_assistant_files_by_name(
     assistant_name: str, file_path_list: List[str]
 ) -> str:
+    """
+    Use the given file list to overwrite the file list linked to an assistant.
+    """
     assistant_id = get_assistant_id_by_name(assistant_name)
     file_ids = [get_gpt_id(path) for path in file_path_list]
     return update_assistant_by_id(assistant_id, file_ids=file_ids)
@@ -226,19 +326,26 @@ def set_assistant_files_by_name(
 def add_files_to_assistant_by_name(
     assistant_name: str, file_path_list: List[str]
 ) -> str:
+    """
+    Link all given files to an assistant.
+    An assistant can hold only 20 files, the oldest files will be unlinked automatically.
+    """
     assistant_id = get_assistant_id_by_name(assistant_name)
     assistant_files = client.beta.assistants.files.list(
-        assistant_id="asst_abc123"
+        assistant_id=assistant_id
     ).data
     existing_file_ids = [file.id for file in assistant_files]
     new_file_ids = [get_gpt_id(path) for path in file_path_list]
     file_ids = list(set(existing_file_ids + new_file_ids))
+    file_ids = file_ids[-20:]
     return update_assistant_by_id(assistant_id, file_ids=file_ids)
 
 
-# Unlink a file from an assistant.
-# This will not delete the file from openai account.
 def delete_file_from_assistant_by_id(assistant_id: str, file_id: str) -> None:
+    """
+    Unlink a file from an assistant using assistant id and file id.
+    This method does NOT remove the file from OpenAI account.
+    """
     client.beta.assistants.files.delete(
         assistant_id=assistant_id, file_id=file_id
     )
@@ -247,6 +354,10 @@ def delete_file_from_assistant_by_id(assistant_id: str, file_id: str) -> None:
 def delete_file_from_assistant_by_name(
     assistant_name: str, file_path: str
 ) -> None:
+    """
+    Unlink a file from an assistant using assistant name and file path.
+    This method does NOT remove the file from OpenAI account.
+    """
     gpt_id = get_gpt_id(file_path)
     assistant_id = get_assistant_id_by_name(assistant_name)
     delete_file_from_assistant_by_id(assistant_id, gpt_id)
@@ -265,6 +376,10 @@ def create_thread() -> str:
 def create_message_on_thread(
     thread_id: str, content: str, file_ids: List[str]
 ) -> str:
+    """
+    Create a message on a thread, then link files to the message using file id.
+    Files linked to a message can only be used by ChatGPT in the thread that holds this message.
+    """
     if not content:
         _LOG.error(
             "Message content must not be empty. This will cause an openAI error."
@@ -288,6 +403,10 @@ def create_message_on_thread(
 def create_message_on_thread_with_file_names(
     thread_id: str, content: str, file_names: List[str]
 ) -> str:
+    """
+    Create a message on a thread, then link files to the message using file name.
+    Files linked to a message can only be used by ChatGPT in the thread that holds this message.
+    """
     if file_names:
         file_ids = [get_gpt_id(file) for file in file_names]
     else:
@@ -301,6 +420,9 @@ def create_message_on_thread_with_file_names(
 
 
 def run_thread_on_assistant(assistant_id, thread_id, model: str = "") -> str:
+    """
+    Run a thread on a given assistant id. This is similar to sending a message to ChatGPT.
+    """
     if model:
         run = client.beta.threads.runs.create(
             thread_id=thread_id, assistant_id=assistant_id, model=model
@@ -315,6 +437,9 @@ def run_thread_on_assistant(assistant_id, thread_id, model: str = "") -> str:
 def run_thread_on_assistant_by_name(
     assistant_name, thread_id, model: str = ""
 ) -> str:
+    """
+    Run a thread on a given assistant name. This is similar to sending a message to ChatGPT.
+    """
     assistant_id = get_assistant_id_by_name(assistant_name)
     if model:
         return run_thread_on_assistant(assistant_id, thread_id, model)
@@ -323,6 +448,9 @@ def run_thread_on_assistant_by_name(
 
 
 def wait_for_run_result(thread_id: str, run_id: str, timeout: int = 180):
+    """
+    Wait for the thread to be processed. This is similar to waiting for ChatGPT's typing.
+    """
     finished = False
     _LOG.info("Waiting for chatgpt response...")
     for i in range(math.ceil(timeout / 5)):
@@ -348,18 +476,26 @@ def wait_for_run_result(thread_id: str, run_id: str, timeout: int = 180):
 def e2e_assistant_runner(
     assistant_name: str,
     user_input: str = "",
-    vim_mode: bool = False,
+    *,
     model: str = "",
     input_file_names: List[str] = [],
     output_file_path: str = "",
+    vim_mode: bool = False,
 ) -> str:
+    """
+    Send a message with files to an assistant and wait for its reply.
+    
+    :param assistant_name:   assistant that should process this message
+    :param user_input:       message to be sent to ChatGPT assistant
+    :param model:            change the GPT model used by the assistant, no change when empty
+                             this WILL update the configuration of the assistant
+    :param input_file_names: files to be used in this conversation
+    :param output_file_path: redirect ChatGPT's output to the given file
+    :param vim_mode:         if True, take input from stdin and output to stdout forcely
+    """
     if not assistant_name:
         _LOG.error("No assistant name provided.")
         return None
-    directory_dict = load_gpt_ids()
-    if not directory_dict:
-        directory_dict = path_to_dict(prefix_to_root)
-        dump_gpt_ids(directory_dict)
     if vim_mode:
         user_input = "".join(sys.stdin.readlines())
     thread_id = create_thread()
