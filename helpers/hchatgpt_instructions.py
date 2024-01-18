@@ -27,6 +27,6 @@ instructions = {
         " your can use examples to show the user how they can easily use those codes."
         " For the format of markdown document, you can use files linked to you as reference."
         " You don't need to strictly follow the format,"
-        " the goal is to make the document easy to understand"   
+        " the goal is to make the document easy to understand"
     ),
 }
