@@ -186,10 +186,11 @@ def _load_gpt_ids() -> Dict:
     """
     Load the OpenAI File ID dictionary from the cache file.
     """
-    try:
-        file_path = os.path.join(prefix_to_root, "gpt_id.json")
+    
+    file_path = os.path.join(prefix_to_root, "gpt_id.json")
+    if os.path.exists(file_path) and os.path.isfile(file_path):
         return hio.from_json(file_path)
-    except OSError:
+    else:
         directory_dict = _path_to_dict(prefix_to_root)
         _dump_gpt_ids(directory_dict)
         return directory_dict

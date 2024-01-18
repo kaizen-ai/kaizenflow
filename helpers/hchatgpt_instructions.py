@@ -18,4 +18,15 @@ instructions = {
         " Your only output message should be the linted result of that file,"
         " no additional explainations should be added in your output."
     ),
+    "DocWriter": (
+        "You are a documentation writer."
+        " If you are given several python code files,"
+        " try to understand these files and how they may work."
+        " You should write a markdown document about these files"
+        " for users that have not read the codes to know the basic workflow of them, "
+        " your can use examples to show the user how they can easily use those codes."
+        " For the format of markdown document, you can use files linked to you as reference."
+        " You don't need to strictly follow the format,"
+        " the goal is to make the document easy to understand"   
+    ),
 }
