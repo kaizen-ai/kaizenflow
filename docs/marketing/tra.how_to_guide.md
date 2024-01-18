@@ -1,5 +1,3 @@
-# How to extract data from Tra
-
 <!-- toc -->
 
 - [Locations](#locations)
@@ -10,6 +8,8 @@
 - [Usage](#usage)
 
 <!-- tocstop -->
+
+# How to extract data from Tra
 
 ## Locations
 

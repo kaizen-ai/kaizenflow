@@ -1,5 +1,3 @@
-# How to extract data from Signal
-
 <!-- toc -->
 
 - [Locations](#locations)
@@ -9,6 +7,8 @@
 - [Usage](#usage)
 
 <!-- tocstop -->
+
+# How to extract data from Signal
 
 ## Locations
 
