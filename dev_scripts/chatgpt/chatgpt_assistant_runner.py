@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import dev_scripts.chatgpt.chatgpt_assistant_runner as dsccasru
+"""
+
 import argparse
 import logging
 import os
@@ -68,9 +74,11 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     if not os.environ["OPENAI_API_KEY"]:
-        raise ValueError("Your OpenAI API key is not set. "
-                   "Before running any OpenAI related code, "
-                   "add OPENAI_API_KEY=<YOUR_KEY> into your environment variable.")
+        raise ValueError(
+            "Your OpenAI API key is not set. "
+            "Before running any OpenAI related code, "
+            "add OPENAI_API_KEY=<YOUR_KEY> into your environment variable."
+        )
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     if args.list:
