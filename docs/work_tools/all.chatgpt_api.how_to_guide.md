@@ -66,8 +66,8 @@
   - `helpers/hchatgpt_instructions.py`
 
 - Scripts are under `dev_scripts/chatgpt`, e.g.,
-  - `dev_scripts/chatgpt/chatgpt_assistant_manager.py`
-  - `dev_scripts/chatgpt/chatgpt_assistant_runner.py`
+  - `dev_scripts/chatgpt/manage_chatgpt_assistant.py`
+  - `dev_scripts/chatgpt/run_chatgpt.py`
 
 - Documentaiton is 
   - `docs/work_tools/all.chatgpt_api.how_to_guide.md`
@@ -83,7 +83,31 @@
 - Play safely: do not call update/delete methods if it's not necessary
 
 ### Assistant Manager
-- `dev_scripts/chatgpt/chatgpt_assistant_manager.py -h`
+- To get help
+  ```bash
+  > manage_chatgpt_assistant.py -h
+  Manage the ChatGPT Assistants in our OpenAI Organization
+
+  optional arguments:
+    -h, --help            show this help message and exit
+    --create CREATE_NAME  Name of the assistant to be created
+    --edit EDIT_NAME      Name of the assistant to be edited
+    --delete DELETE_NAME  Name of the assistant to be deleted, will ignore all other arguments
+    --new_name NEW_NAME   New name for the assistant, only used in -e
+    --model MODEL         Model used by the assistant
+    --instruction_name INSTRUCTION_NAME
+                          Name of the instruction for the assistant, as shown in helpers.hchatgpt_instructions
+    --input_files [INPUT_FILE_PATHS ...]
+                          Files needed for the assistant, use relative path from project root
+    --retrieval_tool, --no-retrieval_tool
+                          Enable the retrieval tool. Use --no-r to disable
+    --code_tool, --no-code_tool
+                          Enable the code_interpreter tool. Use --no-c to disable
+    --function FUNCTION   Apply certain function tool to the assistant, not implemented yet
+    -v {TRACE,DEBUG,INFO,WARNING,ERROR,CRITICAL}
+                          Set the logging level
+  ```
+
 - Use this script to create, modify, or delete an assistant in our Org
 - A set of instructions are in `helpers/hchatgpt_instructions.py`
 - Feel free to add more instructions for different tasks here
@@ -91,44 +115,64 @@
   to its instruction name
 
 - E.g., create a doc writer assistant with name `DocWriter-1` and use
-  `instruction=DocWriter` (see `helpers/hchatgpt_instructions.py`)
+  `instruction=DocWriter` from `helpers/hchatgpt_instructions.py`
   ```bash
-  > python chatgpt_assistant_manager.py \
-      -c DocWriter-1 \
-      -m "gpt-4-1106-preview" \
-      -i DocWriter \
-      -f docs/work_tools/all.bfg_repo_cleaner.how_to_guide.md docs/marketing/dropcontact.how_to_guide.md docs/coding/all.hplayback.how_to_guide.md \
-      --r --c
+  > manage_chatgpt_assistant.py \
+      --create DocWriter-1 \
+      --model "gpt-4-1106-preview" \
+      --instruction_name DocWriter \
+      --input_files docs/work_tools/all.bfg_repo_cleaner.how_to_guide.md docs/marketing/dropcontact.how_to_guide.md docs/coding/all.hplayback.how_to_guide.md \
+      --retrieval_tool --code_tool
   ```
 
-### Assistant Runner
+### Running Assistant
 
-- `dev_scripts/chatgpt_assistant_runner.py -h`
-- Use this script to run an assistant
-- `dev_scripts/chatgpt_assistant_runner.py -l` will show all the available
+- The script `dev_scripts/chatgpt/run_chatgpt.py -h` runs an assistant
+
+- To get help:
+  ```bash 
+  > run_chatgpt.py -h
+  Use ChatGPT Assistant to process a file or certain text.
+
+  optional arguments:
+    -h, --help            show this help message and exit
+    --list                Show all currently available assistants and exit
+    --assistant_name ASSISTANT_NAME
+                          Name of the assistant to be used
+    --input_files [INPUT_FILE_PATHS ...]
+                          Files needed in this run, use relative path from project root
+    --model MODEL         Use specific model for this run, overriding existing assistant config
+    --output_file OUTPUT_FILE
+                          Redirect the output to the given file
+    --input_text INPUT_TEXT
+                          Take a text input from command line as detailed instruction
+    --vim                 Disable -i (but not -o), take input from stdin and output to stdout forcely
+    -v {TRACE,DEBUG,INFO,WARNING,ERROR,CRITICAL}
+                          Set the logging level
+
+- `dev_scripts/run_chatgpt.py -l` will show all the available
   assistants in our Org.
 - Refer to `helpers/hchatgpt_instructions.py` to see how they are instructed
 
   ```bash
-  python dev_scripts/chatgpt/chatgpt_assistant_runner.py \
-  -n MarkdownLinter \ # Use the assistant "MarkdownLinter"
-  -f dev_scripts/chatgpt/example_data/corrupted_dropcontact.how_to_guide.md \ # Give this corrupted markdown file
-  -o dev_scripts/chatgpt/example_data/gpt_linted_dropcontact.how_to_guide.md # Redirect its output to this file
+  python dev_scripts/chatgpt/run_chatgpt.py \
+    -n MarkdownLinter \ # Use the assistant "MarkdownLinter"
+    -f dev_scripts/chatgpt/example_data/corrupted_dropcontact.how_to_guide.md \ # Give this corrupted markdown file
+    -o dev_scripts/chatgpt/example_data/gpt_linted_dropcontact.how_to_guide.md # Redirect its output to this file
   ```
 
-## API Wrapper Overview
+# API library
 
 - `helpers/hchatgpt.py` provides methods that wrap and interact with OpenAI API.
 - By using these methods, you can easily build an assistant and chat to it with
   our files.
 
-Key functionalities include:
-
-- Uploading and removing files from OpenAI
-- Adding and removing files for an assistant
-- Creating threads and messages for user input
-- Running threads with certain assistants
-- End-to-end (E2E) communication method between users and the assistant
+- Key functionalities include:
+  - Uploading and removing files from OpenAI
+  - Adding and removing files for an assistant
+  - Creating threads and messages for user input
+  - Running threads with certain assistants
+  - End-to-end communication method between users and the assistant
 
 ## Usage
 
@@ -141,25 +185,25 @@ The following snippets provide a basic overview of the code usage.
   IDs
 - This dictionary will be constantly accessed and saved back to
   `project_root/gpt_id.json`
-- If you find anything buggy, try deleting this cache file and rerun the code --
-  It will be auto generated to a uncorrupted version
+- If you find anything buggy, try deleting this cache file and rerun the code so
+  that it can be regenerated from scratch
 
 ### Uploading and Retrieving Files
 
-To upload a file to OpenAI, which you can later attach to messages/assistants:
+- To upload a file to OpenAI, which you can later attach to messages/assistants:
+  ```python
+  file_id = upload_to_gpt('path_to_your_file')
+  ```
 
-```python
-file_id = upload_to_gpt('path_to_your_file')
-```
-
-If you want to retrieve a file that has been uploaded to OpenAI by its path or
-ID:
-
-```python
-file_object = get_gpt_file_from_path('path_to_your_file')
-# or
-file_object = get_gpt_file_from_id(file_id)
-```
+- If you want to retrieve a file that has been uploaded to OpenAI by its path or
+  ID:
+  ```python
+  file_object = get_gpt_file_from_path('path_to_your_file')
+  ```
+or
+  ```python
+  file_object = get_gpt_file_from_id(file_id)
+  ```
 
 ### Managing Assistants
 
@@ -178,27 +222,26 @@ delete_file_from_assistant_by_name('assistant_name', 'file_path_to_remove')
 
 ### ChatGPT Communication
 
-Create a thread and send a message, with or without attaching files:
+- Create a thread and send a message, with or without attaching files:
+  ```python
+  thread_id = create_thread()
+  message_id = create_message_on_thread_with_file_names(thread_id, 'Your message content', ['file_name_1'])
+  ```
 
-```python
-thread_id = create_thread()
-message_id = create_message_on_thread_with_file_names(thread_id, 'Your message content', ['file_name_1'])
-```
-
-Run a thread on an assistant to get the assistant's response:
-
-```python
-run_id = run_thread_on_assistant_by_name('assistant_name', thread_id)
-response_messages = wait_for_run_result(thread_id, run_id)
-```
+- Run a thread on an assistant to get the Assistant's response:
+  ```python
+  run_id = run_thread_on_assistant_by_name('assistant_name', thread_id)
+  response_messages = wait_for_run_result(thread_id, run_id)
+  ```
 
 ### E2E Assistant Runner
 
-Interact with an assistant conveniently with the `e2e_assistant_runner`
-function. This function can take user input, send it to the assistant, and
-manage file attachments in one call:
-
-```python
-response = e2e_assistant_runner('assistant_name', 'Your question or statement here', input_file_names=['file_name_1'])
-print(response) # Outputs the assistant's response
-```
+- Interact with an assistant conveniently with the `e2e_assistant_runner`
+  function
+- This function can take user input, send it to the assistant, and manage file
+  attachments in one call:
+  ```python
+  response = e2e_assistant_runner('assistant_name', 'Your question or statement here', input_file_names=['file_name_1'])
+  # Outputs the assistant's response.
+  print(response)
+  ```
