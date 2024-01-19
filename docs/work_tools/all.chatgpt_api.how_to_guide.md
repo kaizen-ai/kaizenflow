@@ -6,10 +6,11 @@
   * [What is OpenAI Assistant](#what-is-openai-assistant)
   * [Why using Assistant](#why-using-assistant)
   * [General pattern](#general-pattern)
+  * [Code organization](#code-organization)
   * [How to use](#how-to-use)
     + [Assistant Manager](#assistant-manager)
-    + [Assistant Runner](#assistant-runner)
-  * [API Wrapper Overview](#api-wrapper-overview)
+    + [Running Assistant](#running-assistant)
+- [API library](#api-library)
   * [Usage](#usage)
     + [File Structure](#file-structure)
     + [Uploading and Retrieving Files](#uploading-and-retrieving-files)
@@ -22,12 +23,14 @@
 # OpenAI Assistant Runner & Manager
 
 ## What is OpenAI Assistant
+
 - An assistant is pretty much similar to a modified GPT that has mastered some
   knowledge and will always be able to use them
 - The official OpenAI documentation is at
   https://platform.openai.com/docs/assistants/overview
 
 ## Why using Assistant
+
 - Normally you "chat" with ChatGPT, that means anything you send to it is
   treated as input
 - But GPT forget things really fast: it will forget what you previously said or
@@ -43,6 +46,7 @@
   considered as input, and will be forgotten eventually
 
 ## General pattern
+
 - Creation:
   - Send some `guideline or example files` for one type of task to the Assistant
     itself as knowledge
@@ -69,13 +73,14 @@
   - `dev_scripts/chatgpt/manage_chatgpt_assistant.py`
   - `dev_scripts/chatgpt/run_chatgpt.py`
 
-- Documentaiton is 
+- Documentaiton is
   - `docs/work_tools/all.chatgpt_api.how_to_guide.md`
 
 ## How to use
-  ```
-  > export OPENAI_API_KEY=<your secret key>
-  ```
+```
+> export OPENAI_API_KEY=<your secret key>
+```
+
 - Each API key can be bound to an OpenAI Organization. A key belongs to our Org
   is needed to start
 - Assistants are organization-wide, an assistant created under our Org can be
@@ -83,7 +88,9 @@
 - Play safely: do not call update/delete methods if it's not necessary
 
 ### Assistant Manager
+
 - To get help
+
   ```bash
   > manage_chatgpt_assistant.py -h
   Manage the ChatGPT Assistants in our OpenAI Organization
@@ -130,7 +137,8 @@
 - The script `dev_scripts/chatgpt/run_chatgpt.py -h` runs an assistant
 
 - To get help:
-  ```bash 
+
+  ```bash
   > run_chatgpt.py -h
   Use ChatGPT Assistant to process a file or certain text.
 
@@ -149,9 +157,10 @@
     --vim                 Disable -i (but not -o), take input from stdin and output to stdout forcely
     -v {TRACE,DEBUG,INFO,WARNING,ERROR,CRITICAL}
                           Set the logging level
+  ```
 
-- `dev_scripts/run_chatgpt.py -l` will show all the available
-  assistants in our Org.
+- `dev_scripts/run_chatgpt.py -l` will show all the available assistants in our
+  Org.
 - Refer to `helpers/hchatgpt_instructions.py` to see how they are instructed
 
   ```bash
@@ -191,6 +200,7 @@ The following snippets provide a basic overview of the code usage.
 ### Uploading and Retrieving Files
 
 - To upload a file to OpenAI, which you can later attach to messages/assistants:
+
   ```python
   file_id = upload_to_gpt('path_to_your_file')
   ```
@@ -200,7 +210,7 @@ The following snippets provide a basic overview of the code usage.
   ```python
   file_object = get_gpt_file_from_path('path_to_your_file')
   ```
-or
+  or
   ```python
   file_object = get_gpt_file_from_id(file_id)
   ```
@@ -223,6 +233,7 @@ delete_file_from_assistant_by_name('assistant_name', 'file_path_to_remove')
 ### ChatGPT Communication
 
 - Create a thread and send a message, with or without attaching files:
+
   ```python
   thread_id = create_thread()
   message_id = create_message_on_thread_with_file_names(thread_id, 'Your message content', ['file_name_1'])
