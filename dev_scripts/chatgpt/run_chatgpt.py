@@ -1,8 +1,4 @@
-"""
-Import as:
-
-import dev_scripts.chatgpt.chatgpt_assistant_runner as dsccasru
-"""
+#!/usr/bin/env python
 
 import argparse
 import logging
@@ -21,22 +17,21 @@ def _parse() -> argparse.ArgumentParser:
         description="Use ChatGPT Assistant to process a file or certain text.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    # We prefer not to use short command line options since they are often
+    # unclear.
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
-        "-l",
         "--list",
         dest="list",
         action="store_true",
         help="Show all currently available assistants and exit",
     )
     group.add_argument(
-        "-n",
         "--assistant_name",
         dest="assistant_name",
         help="Name of the assistant to be used",
     )
     parser.add_argument(
-        "-f",
         "--input_files",
         dest="input_file_paths",
         action="extend",
@@ -44,19 +39,16 @@ def _parse() -> argparse.ArgumentParser:
         help="Files needed in this run, use relative path from project root",
     )
     parser.add_argument(
-        "-m",
         "--model",
         dest="model",
         help="Use specific model for this run, overriding existing assistant config",
     )
     parser.add_argument(
-        "-o",
         "--output_file",
         dest="output_file",
         help="Redirect the output to the given file",
     )
     parser.add_argument(
-        "-i",
         "--input_text",
         dest="input_text",
         default="Run with the given file",

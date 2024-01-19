@@ -4,7 +4,6 @@ Import as:
 import helpers.hchatgpt as hchatgp
 """
 
-
 import logging
 import math
 import os
@@ -33,7 +32,7 @@ client = openai.OpenAI()
 prefix_to_root = os.path.join(os.path.dirname(__file__), "..")
 
 # #############################################################################
-# Assistant management
+# Create/update/delete Assistant.
 # #############################################################################
 
 
@@ -53,7 +52,7 @@ def create_assistant(
     This method should only be used when a new Assistant is needed.
     Otherwise, use the Assistant name to retrieve an existing Assistant.
 
-    :param assistant_name: name of the assistant to be created
+    :param assistant_name: name of the Assistant to be created
     :param instructions: instruction string that describes the expected
         behavior of assistant
     :param model: GPT model used by the assistant
@@ -61,7 +60,7 @@ def create_assistant(
     :param use_code_interpreter: enable the code interpreter tool from
         OpenAI
     :param use_function: enable the function tool from OpenAI (To be
-        implmented)
+        implemented)
     """
     # Create the assistant
     tools = []
@@ -92,7 +91,7 @@ def update_assistant_by_id(
     """
     Update an existing OpenAI Assistant in our OpenAI Organization.
 
-    :param assistant_id: assistant to be updated
+    :param assistant_id: Assistant to be updated
     :param instructions: instruction string that describes the expected
         behavior of assistant
     :param name: change the name of assistant, no change when empty
@@ -121,14 +120,14 @@ def update_assistant_by_id(
 
 def delete_assistant_by_id(assistant_id: str) -> None:
     """
-    Delete an assistant from our OpenAI Organization.
+    Delete an Assistant from our OpenAI Organization.
     """
     client.beta.assistants.delete(assistant_id)
 
 
 def get_all_assistants() -> List[openai.types.beta.assistant.Assistant]:
     """
-    Get all available assistant objects in our OpenAI Organization.
+    Get all available Assistant objects in our OpenAI Organization.
     """
     list_assistants_response = client.beta.assistants.list(
         order="desc",
@@ -140,7 +139,7 @@ def get_all_assistants() -> List[openai.types.beta.assistant.Assistant]:
 
 def get_all_assistant_names() -> List[str]:
     """
-    Get all available assistant names in our OpenAI Organization.
+    Get all available Assistant names in our OpenAI Organization.
     """
     assistants = get_all_assistants()
     return [assistant.name for assistant in assistants]
@@ -148,7 +147,7 @@ def get_all_assistant_names() -> List[str]:
 
 def get_assistant_id_by_name(assistant_name) -> str:
     """
-    Get the id of an assistant by its name.
+    Get the id of an Assistant by its name.
     """
     assistant = None
     assistants = get_all_assistants()
@@ -158,9 +157,9 @@ def get_assistant_id_by_name(assistant_name) -> str:
     return assistant.id
 
 
-# =============================================================================
+# #############################################################################
 # Create directory structure storing gpt file ids
-# =============================================================================
+# #############################################################################
 
 
 def _path_to_dict(path: str) -> Dict:
@@ -173,8 +172,8 @@ def _path_to_dict(path: str) -> Dict:
         return tree
 
 
-# TODO(Henry): We use fileIO here to store the directory structure, which may not be thread-safe.
-#              Should change to use DAO if we have any.
+# TODO(Henry): We use fileIO here to store the directory structure, which may
+# not be thread-safe. Should change to use DAO if we have any.
 def _dump_gpt_ids(dictionary: Dict) -> None:
     """
     Dump a given OpenAI File ID dictionary into a cache file for furture use.
@@ -188,7 +187,6 @@ def _load_gpt_ids() -> Dict:
     """
     Load the OpenAI File ID dictionary from the cache file.
     """
-
     file_path = os.path.join(prefix_to_root, "gpt_id.json")
     if os.path.exists(file_path) and os.path.isfile(file_path):
         return hio.from_json(file_path)
@@ -253,9 +251,9 @@ def get_gpt_id(path_from_root: str) -> str:
     return _get_gpt_id_file(gpt_id_dict, path_from_root)["gpt_id"]
 
 
-# =============================================================================
-# Upload file to openai account
-# =============================================================================
+# #############################################################################
+# Upload file to OpenAI account
+# #############################################################################
 
 
 def _upload_to_gpt_no_set_id(path_from_root: str) -> str:
@@ -266,7 +264,7 @@ def _upload_to_gpt_no_set_id(path_from_root: str) -> str:
     """
     _LOG.info(f"Uploading file {path_from_root} to chatgpt.")
     upload_file_response = client.files.create(
-        # Must use 'rb' regardless of file type
+        # Must use 'rb' regardless of file type.
         file=open(os.path.join(prefix_to_root, path_from_root), "rb"),
         purpose="assistants",
     )
@@ -312,12 +310,13 @@ def get_gpt_file_from_path(
     return get_gpt_file_from_id(gpt_id)
 
 
-# =============================================================================
+# #############################################################################
 # Add/Remove files for an assistant
-# =============================================================================
-# Note that files for assistant means files constantly used by this assistant (like guidelines).
-# For one-time used files, add them to a message instead.
-# One assistant can have up to 20 files linked to it.
+# #############################################################################
+
+# Note that files for Assistant means files constantly used by this assistant
+# (like guidelines). For one-time used files, add them to a message instead.
+# One Assistant can have up to 20 files linked to it.
 
 
 def set_assistant_files_by_name(
@@ -337,7 +336,7 @@ def add_files_to_assistant_by_name(
     """
     Link all given files to an assistant.
 
-    An assistant can hold only 20 files, the oldest files will be
+    An Assistant can hold only 20 files, the oldest files will be
     unlinked automatically.
     """
     assistant_id = get_assistant_id_by_name(assistant_name)
@@ -353,7 +352,7 @@ def add_files_to_assistant_by_name(
 
 def delete_file_from_assistant_by_id(assistant_id: str, file_id: str) -> None:
     """
-    Unlink a file from an assistant using assistant id and file id.
+    Unlink a file from an Assistant using Assistant id and file id.
 
     This method does NOT remove the file from OpenAI account.
     """
@@ -366,7 +365,7 @@ def delete_file_from_assistant_by_name(
     assistant_name: str, file_path: str
 ) -> None:
     """
-    Unlink a file from an assistant using assistant name and file path.
+    Unlink a file from an Assistant using Assistant name and file path.
 
     This method does NOT remove the file from OpenAI account.
     """
@@ -375,9 +374,9 @@ def delete_file_from_assistant_by_name(
     delete_file_from_assistant_by_id(assistant_id, gpt_id)
 
 
-# =============================================================================
+# #############################################################################
 # Create Thread and Message from user input
-# =============================================================================
+# #############################################################################
 
 
 def create_thread() -> str:
@@ -396,7 +395,7 @@ def create_message_on_thread(
     """
     if not content:
         _LOG.error(
-            "Message content must not be empty. This will cause an openAI error."
+            "Message content must not be empty. This will cause an OpenAI error."
         )
     if file_ids:
         message = client.beta.threads.messages.create(
@@ -431,14 +430,14 @@ def create_message_on_thread_with_file_names(
     return create_message_on_thread(thread_id, content, file_ids)
 
 
-# =============================================================================
+# #############################################################################
 # Run thread on certain assistant
-# =============================================================================
+# #############################################################################
 
 
 def run_thread_on_assistant(assistant_id, thread_id, model: str = "") -> str:
     """
-    Run a thread on a given assistant id.
+    Run a thread on a given Assistant id.
 
     This is similar to sending a message to ChatGPT.
     """
@@ -457,7 +456,7 @@ def run_thread_on_assistant_by_name(
     assistant_name: str, thread_id: str, model: str = ""
 ) -> str:
     """
-    Run a thread on a given assistant name.
+    Run a thread on a given Assistant name.
 
     This is similar to sending a message to ChatGPT.
     """
@@ -486,14 +485,14 @@ def wait_for_run_result(thread_id: str, run_id: str, timeout: int = 180) -> List
         if finished:
             break
     if not finished:
-        raise TimeoutError("Failed to retrieve response from openai.")
+        raise TimeoutError("Failed to retrieve response from OpenAI.")
     messages = client.beta.threads.messages.list(thread_id=thread_id).data
     return messages
 
 
-# =============================================================================
-# E2E chatgpt runner
-# =============================================================================
+# #############################################################################
+# ChatGPT runner
+# #############################################################################
 
 
 def e2e_assistant_runner(
@@ -506,9 +505,9 @@ def e2e_assistant_runner(
     vim_mode: bool = False,
 ) -> str:
     """
-    Send a message with files to an assistant and wait for its reply.
+    Send a message with files to an Assistant and wait for its reply.
 
-    :param assistant_name: assistant that should process this message
+    :param assistant_name: Assistant that should process this message
     :param user_input: message to be sent to ChatGPT assistant
     :param model: change the GPT model used by the assistant, no change
         when empty this WILL update the configuration of the assistant
@@ -520,7 +519,7 @@ def e2e_assistant_runner(
     if input_file_names is None:
         input_file_names = []
     if not assistant_name:
-        _LOG.error("No assistant name provided.")
+        _LOG.error("No Assistant name provided.")
         return ""
     if vim_mode:
         user_input = "".join(sys.stdin.readlines())

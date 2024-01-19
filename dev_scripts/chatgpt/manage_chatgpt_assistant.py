@@ -1,8 +1,4 @@
-"""
-Import as:
-
-import dev_scripts.chatgpt.chatgpt_assistant_manager as dsccasma
-"""
+#!/usr/bin/env python
 
 import argparse
 import logging
@@ -22,41 +18,37 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     group = parser.add_mutually_exclusive_group(required=True)
+    # We prefer not to use short command line options since they are often
+    # unclear.
     group.add_argument(
-        "-c",
         "--create",
         dest="create_name",
         help="Name of the assistant to be created",
     )
     group.add_argument(
-        "-e",
         "--edit",
         dest="edit_name",
         help="Name of the assistant to be edited",
     )
     group.add_argument(
-        "-d",
         "--delete",
         dest="delete_name",
         help="Name of the assistant to be deleted, will ignore all other arguments",
     )
     parser.add_argument(
-        "-n",
         "--new_name",
         dest="new_name",
         help="New name for the assistant, only used in -e",
     )
     parser.add_argument(
-        "-m", "--model", dest="model", help="Model used by the assistant"
+        "--model", dest="model", help="Model used by the assistant"
     )
     parser.add_argument(
-        "-i",
         "--instruction_name",
         dest="instruction_name",
         help="Name of the instruction for the assistant, as shown in helpers.hchatgpt_instructions",
     )
     parser.add_argument(
-        "-f",
         "--input_files",
         dest="input_file_paths",
         action="extend",
@@ -64,14 +56,12 @@ def _parse() -> argparse.ArgumentParser:
         help="Files needed for the assistant, use relative path from project root",
     )
     parser.add_argument(
-        "--r",
         "--retrieval_tool",
         dest="retrieval_tool",
         action=argparse.BooleanOptionalAction,
         help="Enable the retrieval tool. Use --no-r to disable",
     )
     parser.add_argument(
-        "--c",
         "--code_tool",
         dest="code_tool",
         action=argparse.BooleanOptionalAction,

@@ -22,14 +22,12 @@
 # OpenAI Assistant Runner & Manager
 
 ## What is OpenAI Assistant
-
 - An assistant is pretty much similar to a modified GPT that has mastered some
   knowledge and will always be able to use them
 - The official OpenAI documentation is at
   https://platform.openai.com/docs/assistants/overview
 
 ## Why using Assistant
-
 - Normally you "chat" with ChatGPT, that means anything you send to it is
   treated as input
 - But GPT forget things really fast: it will forget what you previously said or
@@ -45,7 +43,6 @@
   considered as input, and will be forgotten eventually
 
 ## General pattern
-
 - Creation:
   - Send some `guideline or example files` for one type of task to the Assistant
     itself as knowledge
@@ -62,8 +59,23 @@
   - Chatting is not yet implemented in our code, since command line scripts
     cannot save conversations.
 
-## How to use
+## Code organization
 
+- Libraries are under `helpers`, e.g.,
+  - `helpers/hchatgpt.py`
+  - `helpers/hchatgpt_instructions.py`
+
+- Scripts are under `dev_scripts/chatgpt`, e.g.,
+  - `dev_scripts/chatgpt/chatgpt_assistant_manager.py`
+  - `dev_scripts/chatgpt/chatgpt_assistant_runner.py`
+
+- Documentaiton is 
+  - `docs/work_tools/all.chatgpt_api.how_to_guide.md`
+
+## How to use
+  ```
+  > export OPENAI_API_KEY=<your secret key>
+  ```
 - Each API key can be bound to an OpenAI Organization. A key belongs to our Org
   is needed to start
 - Assistants are organization-wide, an assistant created under our Org can be
@@ -71,8 +83,7 @@
 - Play safely: do not call update/delete methods if it's not necessary
 
 ### Assistant Manager
-
-- `dev_scripts/chatgpt_assistant_manager.py -h`
+- `dev_scripts/chatgpt/chatgpt_assistant_manager.py -h`
 - Use this script to create, modify, or delete an assistant in our Org
 - A set of instructions are in `helpers/hchatgpt_instructions.py`
 - Feel free to add more instructions for different tasks here
@@ -82,7 +93,7 @@
 - E.g., create a doc writer assistant with name `DocWriter-1` and use
   `instruction=DocWriter` (see `helpers/hchatgpt_instructions.py`)
   ```bash
-  > python dev_scripts/chatgpt/chatgpt_assistant_manager.py \
+  > python chatgpt_assistant_manager.py \
       -c DocWriter-1 \
       -m "gpt-4-1106-preview" \
       -i DocWriter \
