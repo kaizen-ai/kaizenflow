@@ -1,82 +1,77 @@
+#!/usr/bin/env python
+
 import argparse
 import logging
+import os
 
 import helpers.hchatgpt as hchatgp
 import helpers.hchatgpt_instructions as hchainst
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 
-instructions = hchainst.instructions
-
 _LOG = logging.getLogger(__name__)
 
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Use chatGPT to process a file or certain text.",
+        description="Manage the ChatGPT Assistants in our OpenAI Organization",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     group = parser.add_mutually_exclusive_group(required=True)
+    # We prefer not to use short command line options since they are often
+    # unclear.
     group.add_argument(
-        "-c",
         "--create",
         dest="create_name",
-        help="name of the assistant to be created",
+        help="Name of the assistant to be created",
     )
     group.add_argument(
-        "-e",
         "--edit",
         dest="edit_name",
-        help="name of the assistant to be edited",
+        help="Name of the assistant to be edited",
     )
     group.add_argument(
-        "-d",
         "--delete",
         dest="delete_name",
-        help="name of the assistant to be deleted, will ignore all other arguments",
+        help="Name of the assistant to be deleted, will ignore all other arguments",
     )
     parser.add_argument(
-        "-n",
         "--new_name",
         dest="new_name",
-        help="new name for the assistant, only used in -e",
+        help="New name for the assistant, only used in -e",
     )
     parser.add_argument(
-        "-m", "--model", dest="model", help="model used by the assistant"
+        "--model", dest="model", help="Model used by the assistant"
     )
     parser.add_argument(
-        "-i",
         "--instruction_name",
         dest="instruction_name",
-        help="name of the instruction for the assistant, as shown in helpers.hchatgpt_instructions",
+        help="Name of the instruction for the assistant, as shown in helpers.hchatgpt_instructions",
     )
     parser.add_argument(
-        "-f",
         "--input_files",
         dest="input_file_paths",
         action="extend",
         nargs="*",
-        help="files needed for the assistant, use relative path from project root",
+        help="Files needed for the assistant, use relative path from project root",
     )
     parser.add_argument(
-        "--r",
         "--retrieval_tool",
         dest="retrieval_tool",
         action=argparse.BooleanOptionalAction,
-        help="enable the retrieval tool. Use --no-r to disable",
+        help="Enable the retrieval tool. Use --no-r to disable",
     )
     parser.add_argument(
-        "--c",
         "--code_tool",
         dest="code_tool",
         action=argparse.BooleanOptionalAction,
-        help="enable the code_interpreter tool. Use --no-c to disable",
+        help="Enable the code_interpreter tool. Use --no-c to disable",
     )
     parser.add_argument(
         "--function",
         dest="function",
         action="store",
-        help="apply certain function tool to the assistant, not implemented yet",
+        help="Apply certain function tool to the assistant, not implemented yet",
     )
 
     hparser.add_verbosity_arg(parser)
@@ -84,10 +79,17 @@ def _parse() -> argparse.ArgumentParser:
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
+    if not os.environ["OPENAI_API_KEY"]:
+        raise ValueError(
+            "Your OpenAI API key is not set. "
+            "Before running any OpenAI related code, "
+            "add OPENAI_API_KEY=<YOUR_KEY> into your environment variable."
+        )
+    instructions = hchainst.instructions
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     if args.create_name:
-        # TODO(Henry): Implement the function calling tool in openai API.
+        # TODO(Henry): Implement the function calling tool in OpenAI API.
         hchatgp.create_assistant(
             assistant_name=args.create_name,
             instructions=instructions[args.instruction_name],
@@ -116,6 +118,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     elif args.delete_name:
         assistant_id = hchatgp.get_assistant_id_by_name(args.delete_name)
         hchatgp.delete_assistant_by_id(assistant_id)
+    else:
+        raise ValueError("Unsupported behavior. Please use one of -c, -e or -d")
 
 
 if __name__ == "__main__":
