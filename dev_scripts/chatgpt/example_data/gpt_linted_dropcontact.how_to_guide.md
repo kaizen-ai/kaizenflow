@@ -1,3 +1,16 @@
+
+
+<!-- toc -->
+
+- [How to extract data from DropContact](#how-to-extract-data-from-dropcontact)
+  * [Locations](#locations)
+  * [Dataflow](#dataflow)
+    + [Input](#input)
+    + [Output](#output)
+  * [Usage](#usage)
+
+<!-- tocstop -->
+
 # How to extract data from DropContact
 
 ## Locations

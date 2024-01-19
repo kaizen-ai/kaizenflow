@@ -58,8 +58,10 @@ def create_assistant(
         behavior of assistant
     :param model: GPT model used by the assistant
     :param use_retrieval: enable the retrieval tool from OpenAI
-    :param use_code_interpreter: enable the code interpreter tool from OpenAI
-    :param use_function: enable the function tool from OpenAI (To be implmented)
+    :param use_code_interpreter: enable the code interpreter tool from
+        OpenAI
+    :param use_function: enable the function tool from OpenAI (To be
+        implmented)
     """
     # Create the assistant
     tools = []
@@ -91,11 +93,13 @@ def update_assistant_by_id(
     Update an existing OpenAI Assistant in our OpenAI Organization.
 
     :param assistant_id: assistant to be updated
-    :param instructions: instruction string that describes the expected behavior of assistant
-    :param name:         change the name of assistant, no change when empty
-    :param tools:        change the tools of assistant, no change when empty
-    :param model:        change the model of assistant, no change when empty
-    :param file_ids:     change the files linked to assistant, no change when empty
+    :param instructions: instruction string that describes the expected
+        behavior of assistant
+    :param name: change the name of assistant, no change when empty
+    :param tools: change the tools of assistant, no change when empty
+    :param model: change the model of assistant, no change when empty
+    :param file_ids: change the files linked to assistant, no change
+        when empty
     """
     if tools is None:
         tools = []
@@ -504,13 +508,14 @@ def e2e_assistant_runner(
     """
     Send a message with files to an assistant and wait for its reply.
 
-    :param assistant_name:   assistant that should process this message
-    :param user_input:       message to be sent to ChatGPT assistant
-    :param model:            change the GPT model used by the assistant, no change when empty
-                             this WILL update the configuration of the assistant
+    :param assistant_name: assistant that should process this message
+    :param user_input: message to be sent to ChatGPT assistant
+    :param model: change the GPT model used by the assistant, no change
+        when empty this WILL update the configuration of the assistant
     :param input_file_names: files to be used in this conversation
     :param output_file_path: redirect ChatGPT's output to the given file
-    :param vim_mode:         if True, take input from stdin and output to stdout forcely
+    :param vim_mode: if True, take input from stdin and output to stdout
+        forcely
     """
     if input_file_names is None:
         input_file_names = []

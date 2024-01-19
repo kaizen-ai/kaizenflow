@@ -1,19 +1,21 @@
-<!--toc-->
-   * [OpenAI Assistant Runner &amp; Manager](#openai-assistant-runner--manager)
-      * [What is OpenAI Assistant](#what-is-openai-assistant)
-      * [Why using Assistant](#why-using-assistant)
-      * [General pattern](#general-pattern)
-      * [How to use](#how-to-use)
-         * [Assistant Manager](#assistant-manager)
-         * [Assistant Runner](#assistant-runner)
-      * [API Wrapper Overview](#api-wrapper-overview)
-      * [Usage](#usage)
-         * [File Structure](#file-structure)
-         * [Uploading and Retrieving Files](#uploading-and-retrieving-files)
-         * [Managing Assistants](#managing-assistants)
-         * [ChatGPT Communication](#chatgpt-communication)
-         * [E2E Assistant Runner](#e2e-assistant-runner)
 
+
+<!-- toc -->
+
+- [OpenAI Assistant Runner & Manager](#openai-assistant-runner--manager)
+  * [What is OpenAI Assistant](#what-is-openai-assistant)
+  * [Why using Assistant](#why-using-assistant)
+  * [General pattern](#general-pattern)
+  * [How to use](#how-to-use)
+    + [Assistant Manager](#assistant-manager)
+    + [Assistant Runner](#assistant-runner)
+  * [API Wrapper Overview](#api-wrapper-overview)
+  * [Usage](#usage)
+    + [File Structure](#file-structure)
+    + [Uploading and Retrieving Files](#uploading-and-retrieving-files)
+    + [Managing Assistants](#managing-assistants)
+    + [ChatGPT Communication](#chatgpt-communication)
+    + [E2E Assistant Runner](#e2e-assistant-runner)
 
 <!-- tocstop -->
 
@@ -30,31 +32,31 @@
 
 - Normally you "chat" with ChatGPT, that means anything you send to it is
   treated as input
-- But GPT forget things really fast: it will forget what you previously
-  said or files uploaded, as the total length of the conversation grows
-- By creating an Assistant, you build a new "instance" of ChatGPT and can
-  give it some knowledge to learn
-- These knowledge can be with many formats, and up to 20 files (512MB each)
-  at a time
-- With an instruction string, you define its behavior about how it should
-  make use of those knowledge
+- But GPT forget things really fast: it will forget what you previously said or
+  files uploaded, as the total length of the conversation grows
+- By creating an Assistant, you build a new "instance" of ChatGPT and can give
+  it some knowledge to learn
+- These knowledge can be with many formats, and up to 20 files (512MB each) at a
+  time
+- With an instruction string, you define its behavior about how it should make
+  use of those knowledge
 - When talking to an assistant, you can still add files in the message
-- These files does not count towards its 20 files' knowledge limit, as they
-  are considered as input, and will be forgotten eventually
+- These files does not count towards its 20 files' knowledge limit, as they are
+  considered as input, and will be forgotten eventually
 
 ## General pattern
 
 - Creation:
-  - Send some `guideline or example files` for one type of task to the
-    Assistant itself as knowledge
+  - Send some `guideline or example files` for one type of task to the Assistant
+    itself as knowledge
   - Send an instruction about how it should deal with tasks using those
     knowledge
 - Running:
   - Whenever a specific task comes, send `the task and its data files` in the
     message as input
   - Let the assistant solve the task based on the knowledge it learned
-  - It will forget everything in this task, and be ready for the next task
-    like this one never happens
+  - It will forget everything in this task, and be ready for the next task like
+    this one never happens
 - Chatting:
   - You can continue the conversation if you are not satisfied with its reply
   - Chatting is not yet implemented in our code, since command line scripts
@@ -62,10 +64,10 @@
 
 ## How to use
 
-- Each API key can be bound to an OpenAI Organization. A key belongs to our
-  Org is needed to start
-- Assistants are organization-wide, an assistant created under our Org can
-  be accessed by any API key that belongs to our Org
+- Each API key can be bound to an OpenAI Organization. A key belongs to our Org
+  is needed to start
+- Assistants are organization-wide, an assistant created under our Org can be
+  accessed by any API key that belongs to our Org
 - Play safely: do not call update/delete methods if it's not necessary
 
 ### Assistant Manager
@@ -74,8 +76,8 @@
 - Use this script to create, modify, or delete an assistant in our Org
 - A set of instructions are in `helpers/hchatgpt_instructions.py`
 - Feel free to add more instructions for different tasks here
-- For better understanding, the name of an assistant created should be
-  related to its instruction name
+- For better understanding, the name of an assistant created should be related
+  to its instruction name
 
 - E.g., create a doc writer assistant with name `DocWriter-1` and use
   `instruction=DocWriter` (see `helpers/hchatgpt_instructions.py`)
@@ -105,10 +107,9 @@
 
 ## API Wrapper Overview
 
-- `helpers/hchatgpt.py` provides methods that wrap and interact with OpenAI
-  API.
-- By using these methods, you can easily build an assistant and chat to it
-  with our files.
+- `helpers/hchatgpt.py` provides methods that wrap and interact with OpenAI API.
+- By using these methods, you can easily build an assistant and chat to it with
+  our files.
 
 Key functionalities include:
 
@@ -129,8 +130,8 @@ The following snippets provide a basic overview of the code usage.
   IDs
 - This dictionary will be constantly accessed and saved back to
   `project_root/gpt_id.json`
-- If you find anything buggy, try deleting this cache file and rerun the
-  code -- It will be auto generated to a uncorrupted version
+- If you find anything buggy, try deleting this cache file and rerun the code --
+  It will be auto generated to a uncorrupted version
 
 ### Uploading and Retrieving Files
 
