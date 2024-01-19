@@ -23,11 +23,8 @@ finally:
 
 _LOG = logging.getLogger(__name__)
 
-# NEVER upload any OpenAI API key to github -- OpenAI will revoke it.
-# Set env var in your terminal will be the correct approach.
-# If you really want to do it with python, copy the following to your code.
-# Make sure to delete it before commit:
-# os.environ["OPENAI_API_KEY"] = "<YOUR_KEY>"
+# Setting API as env var in your terminal is the correct approach.
+# NEVER upload any OpenAI API key to GitHub, OpenAI will revoke it.
 
 client = openai.OpenAI()
 
@@ -35,9 +32,9 @@ client = openai.OpenAI()
 # Only files under the given root directory may be uploaded to OpenAI.
 prefix_to_root = os.path.join(os.path.dirname(__file__), "..")
 
-# =============================================================================
-# Assistant Creation
-# =============================================================================
+# #############################################################################
+# Assistant management
+# #############################################################################
 
 
 def create_assistant(
@@ -50,18 +47,19 @@ def create_assistant(
     use_function: Dict = None,
 ) -> str:
     """
-    Create an OpenAI Assistant to our OpenAI Organization. All configs can
+    Create an OpenAI Assistant for your OpenAI Organization. All configs can
     still be updated after creation.
 
-    This method should only be used when a new assistant is needed.
-    Otherwise, use the assistant name to retrieve an existing assistant.
+    This method should only be used when a new Assistant is needed.
+    Otherwise, use the Assistant name to retrieve an existing Assistant.
 
     :param assistant_name: name of the assistant to be created
-    :param instructions:   instruction string that describes the expected behavior of assistant
-    :param model:          GPT model used by the assistant
-    :param use_retrieval:  enable the retrieval tool from OpenAI
+    :param instructions: instruction string that describes the expected
+        behavior of assistant
+    :param model: GPT model used by the assistant
+    :param use_retrieval: enable the retrieval tool from OpenAI
     :param use_code_interpreter: enable the code interpreter tool from OpenAI
-    :param use_function:   enable the function tool from OpenAI (To be implmented)
+    :param use_function: enable the function tool from OpenAI (To be implmented)
     """
     # Create the assistant
     tools = []
