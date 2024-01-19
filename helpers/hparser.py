@@ -31,7 +31,8 @@ def add_bool_arg(
     help_: Optional[str] = None,
 ) -> argparse.ArgumentParser:
     """
-    Add options to a parser like `--xyz` and `--no_xyz`, controlled by `args.xyz`.
+    Add options to a parser like `--xyz` and `--no_xyz`, controlled by
+    `args.xyz`.
 
     E.g., `add_bool_arg(parser, "run_diff_script", default_value=True)` adds
     two options:
@@ -294,7 +295,7 @@ def parse_input_output_args(
     args: argparse.Namespace, clear_screen: bool = False
 ) -> Tuple[str, str]:
     """
-    :return input and output file name
+    :return input and output file name.
     """
     in_file_name = args.in_file_name
     out_file_name = args.out_file_name
@@ -333,6 +334,8 @@ def write_file(txt: List[str], file_name: str) -> None:
     """
     Write txt in a file or stdout (represented by `-`).
     """
+    if isinstance(txt, str):
+        txt = [txt]
     if file_name == "-":
         print("\n".join(txt))
     else:
@@ -344,6 +347,7 @@ def write_file(txt: List[str], file_name: str) -> None:
 # #############################################################################
 # Command line options for parallel processing.
 # #############################################################################
+
 
 # pylint: disable=line-too-long
 # TODO(gp): These should go in hjoblib.py
