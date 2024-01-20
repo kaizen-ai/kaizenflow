@@ -42,7 +42,7 @@ creds = hgofiapi.get_credentials()
 
 # %%
 # Set up the Google sheet name.
-#gsheet_name = "Search4.FinTech_VC_in_US.SalesNavigator"
+# gsheet_name = "Search4.FinTech_VC_in_US.SalesNavigator"
 gsheet_name = "https://docs.google.com/spreadsheets/d/1FqXXx7NfGfO8xDjbNlANqWJx0wmeXX95BaXy115W-9c/edit#gid=41878666"
 #
 spread = gspread_pandas.Spread(gsheet_name, creds=creds)
@@ -83,17 +83,19 @@ email_df
 # %% [markdown]
 # # Write email_df to the same Google Sheet
 
+
 # %%
 # Fix phone number format.
 def prepare_phone_number_for_sheets(phone_number):
     if phone_number != "":
-        pattern = r'^'
+        pattern = r"^"
         replacement = "'"
         return re.sub(pattern, replacement, phone_number)
     else:
         return phone_number
 
-email_df['phone'] = email_df['phone'].apply(prepare_phone_number_for_sheets)
+
+email_df["phone"] = email_df["phone"].apply(prepare_phone_number_for_sheets)
 
 email_df
 

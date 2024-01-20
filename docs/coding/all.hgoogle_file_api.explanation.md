@@ -4,7 +4,9 @@
 
 - [Connecting Google Sheets to Pandas](#connecting-google-sheets-to-pandas)
   * [Installing gspread-pandas](#installing-gspread-pandas)
-  * [Configuring gspread-pandas](#configuring-gspread-pandas)
+  * [Configuring access to your Google Drive](#configuring-access-to-your-google-drive)
+  * [OAuth Client](#oauth-client)
+    + [Gotchas](#gotchas)
   * [Using `gspread` on the server](#using-gspread-on-the-server)
 - [Using gspread-pandas](#using-gspread-pandas)
 
@@ -25,7 +27,6 @@
   notebook> !pip install gspread-pandas
   ```
 - Or in the Docker container with:
-
   ```
   docker> sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread)"
   ```
@@ -44,17 +45,18 @@
 ## Configuring access to your Google Drive
 
 - `gspread-pandas` leverages `gspread` to access Google Drive
-- The most updated instructions on how to create client credentials are 
+- The most updated instructions on how to create client credentials are
   [here](https://gspread-pandas.readthedocs.io/en/latest/getting_started.html#client-credentials)
 - There are two ways to authenticate
   - OAuth Client ID
   - Service account key (preferred)
 
 - More details are in
-  - https://gspread-pandas.readthedocs.io/en/latest/configuration.html
-  - https://docs.gspread.org/en/latest/oauth2.html
+  - Https://gspread-pandas.readthedocs.io/en/latest/configuration.html
+  - Https://docs.gspread.org/en/latest/oauth2.html
 
 - The service account key looks like
+
   ```txt
   > more ~/Downloads/gspread-gp-94afb83adb02.json
   {
@@ -71,12 +73,12 @@
     "universe_domain": "googleapis.com"
   }
   ```
-  
-- cp ~/Downloads/gspread-gp-94afb83adb02.json helpers/.google_credentials/service.json
 
+- Cp ~/Downloads/gspread-gp-94afb83adb02.json
+  helpers/.google_credentials/service.json
 
-- You need to have a service account key that has access to the Google Drive
-  for modification
+- You need to have a service account key that has access to the Google Drive for
+  modification
   - Normally the default one `helpers/.google_credentials/service.json` would
     work.
   - If you need to modify a Google Drive space where the default service account
@@ -87,10 +89,11 @@
   - The process is not complicated, but it's not obvious since you need to click
     around in the GUI
   - The credentials file is a JSON downloaded from Google.
-  
+
 ## OAuth Client
-- Follow the process in https://docs.gspread.org/en/latest/oauth2.html in 
-  the section "Enable API Access for Project"
+
+- Follow the process in https://docs.gspread.org/en/latest/oauth2.html in the
+  section "Enable API Access for Project"
 - Go to the Google Developers Console
   https://console.cloud.google.com/apis/dashboard?pli=1&project=gspread-gp
 - Create a project using a name like "gp_gspread"
@@ -122,16 +125,17 @@
   ```
 
 ### Gotchas
-  - Make sure to act only under your `...` account.
-  - `project/product/application` names don't really matter. It's convenient to
-    pick a name connected to the project so that it's easy to find later.
-  - Whenever you are given a choice of making something generally accessible or
-    accessible only to the members of your organization, choose making it
-    accessible only to the members of your organization.
-  - When you are given a choice of time periods to create something for, choose
-    the longest one.
-  - When you are given a choice between `OAuth client ID` and `Service account`,
-    choose `Service account`.
+
+- Make sure to act only under your `...` account.
+- `project/product/application` names don't really matter. It's convenient to
+  pick a name connected to the project so that it's easy to find later.
+- Whenever you are given a choice of making something generally accessible or
+  accessible only to the members of your organization, choose making it
+  accessible only to the members of your organization.
+- When you are given a choice of time periods to create something for, choose
+  the longest one.
+- When you are given a choice between `OAuth client ID` and `Service account`,
+  choose `Service account`.
 
 ## Using `gspread` on the server
 

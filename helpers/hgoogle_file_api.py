@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 """
-Documentation for this module is at docs/coding/all.hgoogle_file_api.explanation.md
+Documentation for this module is at
+docs/coding/all.hgoogle_file_api.explanation.md.
 
 Import as:
 
@@ -91,10 +92,12 @@ def create_empty_google_file(
     """
     Create a new Google file (sheet or doc).
 
-    :param gfile_type: str, the type of the Google file ('sheet' or 'doc').
+    :param gfile_type: str, the type of the Google file ('sheet' or
+        'doc').
     :param gfile_name: str, the name of the new Google file.
     :param gdrive_folder_id: the id of the Google Drive folder.
-    :param user: str, the email address of the user to share the Google file (Optional).
+    :param user: str, the email address of the user to share the Google
+        file (Optional).
     """
     try:
         if gfile_type == "sheet":
@@ -298,7 +301,7 @@ def _get_folders_in_gdrive(*, service: godisc.Resource = None) -> list:
     """
     Get a list of folders in Google drive.
 
-    :param service: the google drive service instance. 
+    :param service: the google drive service instance.
         - Will use GDrive file service as default if None is given.
     """
     if service is None:

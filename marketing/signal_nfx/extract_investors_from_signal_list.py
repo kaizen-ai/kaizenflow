@@ -20,11 +20,11 @@ def extract_investors_from_signal_url(
     baseurl: str, start_idx: int, length: int
 ) -> pd.DataFrame:
     """
-    Extract a dataframe of investor information from a signal investors list page.
+    Extract a df information from a signal investors list page.
 
     E.g. https://signal.nfx.com/investor-lists/top-fintech-seed-investors
 
-    Available lists are in this page: https://signal.nfx.com/investor-lists/ 
+    Available lists are in this page: https://signal.nfx.com/investor-lists/
     The page is only loading a few items for one click on the loading button,
     so use the params to specify the range of data to be extracted, and avoid
     long waiting time.
@@ -33,9 +33,11 @@ def extract_investors_from_signal_url(
     :param start_idx: The index of the first item to be extracted (start from 0)
     :param length: The number of items to be extracted
     """
+
     # Returning default text when element not present.
     class _emptyText:
         text = "None"
+
     # The xpath of useful elements.
     xpaths = {
         "header": "//tr[@class='header-row']/th",

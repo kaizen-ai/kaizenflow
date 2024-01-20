@@ -191,7 +191,8 @@ def get_VC_contents(soup: BeautifulSoup) -> List[List[str]]:
     """
     Extract the table content from a VC search result page.
 
-    :param soup: The BeautifulSoup instance of the VC search result page soup
+    :param soup: The BeautifulSoup instance of the VC search result page
+        soup
     :return: A 2D list containing the table content
     """
     # Get the soup of VCs table contents.
@@ -231,15 +232,18 @@ def get_VCs_from_mhtml(mhtml_file_path: str) -> pd.DataFrame:
     """
     Get a pandas dataframe from the table in a VC search result page.
 
-    :param mhtml_file_path: The path of the VC search page as an mhtml file
-    :return: A pandas.DataFrame containing the infomation of the VCs table
+    :param mhtml_file_path: The path of the VC search page as an mhtml
+        file
+    :return: A pandas.DataFrame containing the infomation of the VCs
+        table
     """
     # Open with byte to pass as quopri input.
     with open(mhtml_file_path, "rb") as mhtml_fp:
         soup = BeautifulSoup(
             # MHTML file is MIME quoted-printable.
             # Need to use `quopri.decode` to remove MIME special characters.
-            quopri.decodestring(mhtml_fp.read()), features="lxml"
+            quopri.decodestring(mhtml_fp.read()),
+            features="lxml",
         )
         # Get VCs table title as List.
         vc_titles = get_VC_title(soup)
