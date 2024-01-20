@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 """
+Documentation for this module is at docs/coding/all.hgoogle_file_api.explanation.md
+
 Import as:
 
 import helpers.google_file_api as hgofiapi
@@ -47,7 +49,6 @@ def get_credentials(
     """
     if not service_key_path:
         service_key_path = ".google_credentials/service.json"
-    creds = None
     service_key_path = os.path.join(os.path.dirname(__file__), service_key_path)
     if not os.path.exists(service_key_path):
         _LOG.info("Failed to read service key file: %s", service_key_path)

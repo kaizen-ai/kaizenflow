@@ -12,8 +12,8 @@
 
 # Connecting Google Sheets to Pandas
 
-- In order to load a Google sheet into a Pandas dataframe (or the other way
-  around), you can use a library called `gspread-pandas`.
+- In order to load a Google sheet into a Pandas dataframe or the other way
+  around, you can use a library called `gspread-pandas`.
 - Documentation for the package is
   [here](https://gspread-pandas.readthedocs.io/en/latest/index.html)
 
@@ -41,10 +41,42 @@
   5.10.0
   ```
 
-## Configuring gspread-pandas
+## Configuring access to your Google Drive
 
-- You need to have a service account key that has access to the Google drive
-  space for modification
+- `gspread-pandas` leverages `gspread` to access Google Drive
+- The most updated instructions on how to create client credentials are 
+  [here](https://gspread-pandas.readthedocs.io/en/latest/getting_started.html#client-credentials)
+- There are two ways to authenticate
+  - OAuth Client ID
+  - Service account key (preferred)
+
+- More details are in
+  - https://gspread-pandas.readthedocs.io/en/latest/configuration.html
+  - https://docs.gspread.org/en/latest/oauth2.html
+
+- The service account key looks like
+  ```txt
+  > more ~/Downloads/gspread-gp-94afb83adb02.json
+  {
+    "type": "service_account",
+    "project_id": "gspread-gp",
+    "private_key_id": "94afb83adb...",
+    "private_key": "-----BEGIN PRIVATE KEY...",
+    "client_email": "gp-gspread@gspread-gp.iam.gserviceaccount.com",
+    "client_id": "101087234...",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/gp-gspread%40gspread-gp.iam.gserviceaccount.com",
+    "universe_domain": "googleapis.com"
+  }
+  ```
+  
+- cp ~/Downloads/gspread-gp-94afb83adb02.json helpers/.google_credentials/service.json
+
+
+- You need to have a service account key that has access to the Google Drive
+  for modification
   - Normally the default one `helpers/.google_credentials/service.json` would
     work.
   - If you need to modify a Google Drive space where the default service account
@@ -52,28 +84,44 @@
     [here](https://gspread-pandas.readthedocs.io/en/latest/getting_started.html#client-credentials)
     to get your own `your_service.json`, store it and use it as the service
     account key path in `hgoogle_file_api.py`.
-  - The process is not complicated but it's not obvious since you need to click
+  - The process is not complicated, but it's not obvious since you need to click
     around in the GUI
   - The credentials file is a JSON downloaded from Google.
-- `gspread-pandas` leverages `gspread`
-- Following the process in https://docs.gspread.org/en/latest/oauth2.html
+  
+## OAuth Client
+- Follow the process in https://docs.gspread.org/en/latest/oauth2.html in 
+  the section "Enable API Access for Project"
+- Go to the Google Developers Console
+  https://console.cloud.google.com/apis/dashboard?pli=1&project=gspread-gp
 - Create a project using a name like "gp_gspread"
-- Search for "Drive API" and click on Enable API
-- Search for "Sheets API" and click on Enable API
-- On top click on "+ Create Credentials" and select OAuth client ID
+- Search for "Drive API" and click on "Enable API"
+- Search for "Sheets API" and click on "Enable API"
+- Click on "Credentials" and select "OAuth client ID"
+  - Name can be anything (e.g., "Desktop Client 1")
+  - - You should see "Client ID", "Client secrets", ...
 - Then you are going to get a pop up with "OAuth client created"
   - Click "Download JSON" at the bottom
   - The file downloaded is like
-    "client_secret_42164...-00pdvmfnf3lrda....apps.googleusercontent.com"
-- Move the file to `helpers/.google_credentials/client_secrets.json` (Overwrite
-  the existing placeholder file).
-
+    "client_secret_42164...-00pdvmfnf3lrda....apps.googleusercontent.com.json"
+- The downloaded file should look like
+  ```txt
+  > cat ~/Downloads/client_secret_421642061916-...apps.googleusercontent.com.json | python -m json.tool
+  {
+      "installed": {
+          "client_id": "421642061916-00pdvm... .apps.googleusercontent.com",
+          "project_id": "gspread-gp",
+          "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+          "token_uri": "https://oauth2.googleapis.com/token",
+          "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+          "client_secret": "GOCSPX-8yJsZx...",
+          "redirect_uris": [
+              "http://localhost"
+          ]
+      }
+  }
   ```
-  > mv ~/Downloads/client_secret_421642061916-00pdvmfnf3lrdasoh2ccsnqb5akr4v9f.apps.googleusercontent.com.json ~/src/sorrentum1/helpers/.google_credentials/client_secrets.json
-  > chmod 600 ~/src/sorrentum1/helpers/.google_credentials/client_secrets.json
-  ```
 
-- Some gotchas:
+### Gotchas
   - Make sure to act only under your `...` account.
   - `project/product/application` names don't really matter. It's convenient to
     pick a name connected to the project so that it's easy to find later.

@@ -35,10 +35,16 @@ import marketing.dropcontact as mrkdrop
 # # Get data from Google Sheet
 
 # %%
-# Set up the Google sheet name.
-gsheet_name = "Search4.FinTech_VC_in_US.SalesNavigator"
-#
+# !ls .
+
+# %%
 creds = hgofiapi.get_credentials()
+
+# %%
+# Set up the Google sheet name.
+#gsheet_name = "Search4.FinTech_VC_in_US.SalesNavigator"
+gsheet_name = "https://docs.google.com/spreadsheets/d/1FqXXx7NfGfO8xDjbNlANqWJx0wmeXX95BaXy115W-9c/edit#gid=41878666"
+#
 spread = gspread_pandas.Spread(gsheet_name, creds=creds)
 df = spread.sheet_to_df(index=None, sheet="Missing emails")[:10]
 print(df.shape)

@@ -1,3 +1,4 @@
+# %%
 """
 Import as:
 
@@ -5,15 +6,18 @@ import marketing.dropcontact.find_email as mdrfiema
 """
 
 
+# %%
 import time
 from math import ceil
 from typing import Any, Dict, List, Sequence
 
+# %%
 import pandas as pd
 import requests
 from tqdm import tqdm
 
 
+# %%
 def _preprocess_dropcontact_data(
     first_names: Sequence[str],
     last_names: Sequence[str],
@@ -46,6 +50,7 @@ def _preprocess_dropcontact_data(
     return data
 
 
+# %%
 def _request_dropcontact(batch_data: List[Dict[str, str]], api_key: str) -> Any:
     """
     Send request to DropContact API.
@@ -69,6 +74,7 @@ def _request_dropcontact(batch_data: List[Dict[str, str]], api_key: str) -> Any:
     return post_response
 
 
+# %%
 def _generate_result_df(query_results: List[Dict[str, Any]]) -> pd.DataFrame:
     """
     Generate dataframe from query result.
@@ -121,6 +127,7 @@ def _generate_result_df(query_results: List[Dict[str, Any]]) -> pd.DataFrame:
     return pd.DataFrame(data=result_list, columns=result_title)
 
 
+# %%
 def _send_batch_request(
     data: List[dict], api_key: str, batch_size: int
 ) -> List[dict]:
@@ -186,6 +193,7 @@ def _send_batch_request(
     return query_results
 
 
+# %%
 def get_email_from_dropcontact(
     first_names: Sequence[str],
     last_names: Sequence[str],
