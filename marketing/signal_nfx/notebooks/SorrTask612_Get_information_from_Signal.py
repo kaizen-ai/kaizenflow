@@ -17,7 +17,7 @@
 # !sudo /bin/bash -c "(source /venv/bin/activate; pip install --upgrade selenium webdriver-manager)"
 
 # %%
-import marketing.signal as mrksign
+import marketing.signal_nfx as mrksign
 
 # %% run_control={"marked": true}
 # Destination result file path.
@@ -28,7 +28,9 @@ baseurl = "https://signal.nfx.com/investor-lists/top-fintech-seed-investors"
 start_idx = 0
 length = 40
 # Get Dataframe of investors from Signal page URL.
-investors_df = mrksign.extract_investors_from_signal_url(baseurl, start_idx, length)
+investors_df = mrksign.extract_investors_from_signal_url(
+    baseurl, start_idx, length
+)
 investors_df.to_csv(employee_csv_save_path, sep=",", index=False)
 investors_df
 
