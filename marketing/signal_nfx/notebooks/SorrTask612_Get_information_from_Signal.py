@@ -17,7 +17,7 @@
 # !sudo /bin/bash -c "(source /venv/bin/activate; pip install --upgrade selenium webdriver-manager)"
 
 # %%
-import marketing.signal as mrksign
+import marketing.signal_nfx as mrksign
 
 # %% run_control={"marked": true}
 # Destination result file path.

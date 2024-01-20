@@ -40,7 +40,7 @@
 <!-- ####################################################################### -->
 # Tracxn
 
-## Intro
+## Introduction
 
 - Tracxn website is at https://tracxn.com
 - E.g., searching for VC firms that invested in Series seed and A of AI 
@@ -50,6 +50,13 @@ companies
   - https://tracxn.com/a/companies/srAiTt8Aevx0dkPbmrFdUVl21azd7Gx7AOT8J4fO1Zs/ycombinator.com/people/currentteam
   - This page contains information about people working at that company with
     information about LinkedIn and emails
+ 
+## Code
+
+- The module is located at `marketing/tracxn`
+- Example notebooks are at:
+    - `marketing/tracxn/notebooks/SorrTask601_Extract_VCs_from_Tra_search_mhtml.ipynb`
+    - `marketing/tracxn/notebooks/SorrTask601_Extract_people_from_Tra_company_html.ipynb`
 
 ## Workflow
 
@@ -93,22 +100,15 @@ The outputs are in https://drive.google.com/drive/u/2/folders/1MfTeNHR7sxex_rSpy
     LinkedIn Profile    https://linkedin.com/in/matanya-horowitz-87805519
     ```
 
-## Code
-
-- The module is located at `marketing/tracxn`
-- Example notebooks are at:
-  - `marketing/tracxn/notebooks/SorrTask601_Extract_VCs_from_Tra_search_mhtml.ipynb`
-  - `marketing/tracxn/notebooks/SorrTask601_Extract_people_from_Tra_company_html.ipynb`
-
 <!-- ####################################################################### -->
 # Dropcontact
 
-## Intro
+## Introduction
 
 - Dropcontact https://www.dropcontact.com/ is a service to find people's emails 
   from their first and last name
 
-## Locations
+## Code
 
 - The code is located at `marketing/dropcontact`
 - An example notebook is at
@@ -118,17 +118,13 @@ The outputs are in https://drive.google.com/drive/u/2/folders/1MfTeNHR7sxex_rSpy
 
 ## Dataflow
 
-### Input
+- The input is
+    - Three sequences representing `First Name`, `Last Name`, `Company Name`
+    - API key for dropcontact
 
-- Three sequences representing `First Name`, `Last Name`, `Company Name`
-- API key for dropcontact
-
-### Output
-
-- DataFrame containing all data available from DropContact API
-- Empty string is set for data not present
-
-## Usage
+- The output is
+    - DataFrame containing all data available from DropContact API
+    - Empty string is set for data not present
 
 - Import the module using `import marketing.dropcontact as mrkdrop`
 - The module provides a single function for extraction of data for `DropContact`
@@ -153,24 +149,28 @@ The outputs are in https://drive.google.com/drive/u/2/folders/1MfTeNHR7sxex_rSpy
 <!-- ####################################################################### -->
 ## Signal NFX
 
-### Data Source
+## Introduction
 
-- Signal NFX contains many lists, each of them has the
-- Select a Signal investors list URL from
+- Signal NFX contains many lists of investors for different stage (e.g., 
+  pre-seed, seed, Series A) and verticals (e.g., AI), e.g.,
   `https://signal.nfx.com/investor-lists/`
+- 
+## Code
+
+- The module is located at `marketing/signal_nfx`
+- An example notebook is at
+  `marketing/signal_nfx/notebooks/SorrTask612_Get_information_from_Signal.ipynb`
 
 ### Work Flow
 
-- See [signal guide](./signal.how_to_guide.md) for detailed usages
-- `import marketing.signal as mrksign`
-
-1. Signal list URL -> Work info (`Full Name, Company Name, Job Title`) of
-   investors in that field
-
-- `mrksign.extract_investors_from_signal_url`
-- Work info of investors -> investor details (Dropcontact)
-
-## LIN path
-
-- This path is not feasible for automation, as they ban accounts very fast.
-  Even if we are just doing queries manually, but too frequently.
+- Import the module using `import marketing.signal as mrksign`
+- Select a list in https://signal.nfx.com/investor-lists/ and open its page
+- The url for the list will work as a input data, for e.g.:
+  `baseurl = https://signal.nfx.com/investor-lists/top-fintech-seed-investors`
+- Determine the range of data to be extracted in a particular run by specifying
+  the start index and the length of the data
+    - This is because the page is only loading a few items for one click on the
+      loading button and the total length of data is unknown. We don't want the
+      code to run forever
+- A Pandas dataframe with investors' `First Name`, `Last Name` and
+  `Company Name`

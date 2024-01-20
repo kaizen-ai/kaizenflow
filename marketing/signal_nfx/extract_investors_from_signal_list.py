@@ -21,21 +21,21 @@ def extract_investors_from_signal_url(
 ) -> pd.DataFrame:
     """
     Extract a dataframe of investor information from a signal investors list page.
-    e.g. https://signal.nfx.com/investor-lists/top-fintech-seed-investors
+
+    E.g. https://signal.nfx.com/investor-lists/top-fintech-seed-investors
+
     Available lists are in this page: https://signal.nfx.com/investor-lists/ 
     The page is only loading a few items for one click on the loading button,
-    so please use the params to specify the range of data to be extracted,
-    and avoid an unexpectable waiting time.
+    so use the params to specify the range of data to be extracted, and avoid
+    long waiting time.
 
     :param baseurl: The page url to be extracted
     :param start_idx: The index of the first item to be extracted (start from 0)
     :param length: The number of items to be extracted
     """
-
     # Returning default text when element not present.
     class _emptyText:
         text = "None"
-
     # The xpath of useful elements.
     xpaths = {
         "header": "//tr[@class='header-row']/th",
@@ -52,7 +52,6 @@ def extract_investors_from_signal_url(
     driver = webdriver.Chrome(
         service=ChromeService(ChromeDriverManager().install()), options=options
     )
-    investors_list = []
     # Perform page actions.
     try:
         driver.get(baseurl)

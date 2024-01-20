@@ -1,7 +1,7 @@
 """
 Import as:
 
-import marketing.signal as mrksign
+import marketing.signal_nfx as mrksign
 """
 
-from marketing.signal.extract_investors_from_signal_list import *  # pylint: disable=unused-import # NOQA
+from marketing.signal_nfx.extract_investors_from_signal_list import *  # pylint: disable=unused-import # NOQA
