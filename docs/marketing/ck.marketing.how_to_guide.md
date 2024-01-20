@@ -37,7 +37,7 @@
   - Docsend
     - Share and track documentation
 
-# How to extract data from Tracxn
+# Tracxn
 
 ## Intro
 
@@ -50,82 +50,56 @@ companies
   - This page contains information about people working at that company with
     information about LinkedIn and emails
 
-### Workflow
+## Workflow
 
-- `import marketing.tra as mrktra`
+### Company flow
 
-1. Tracxn search query pages
+1. Go to a Tracxn VCs search result page
+2. Use the browser's `Save As` button to download the webpage as a `Web page,
+   single file`.
+3. If you see the downloaded file format is `.mht` or `.mhtml`, you can process
+   forward. Otherwise, you won't be able to bypass the check layer from the
+   website.
+    - The MIME HTML file containing a table of VC company names
+4. Call `get_VCs_from_mhtml()` method with the `.mhtml` file path to extract
+   the result as a Pandas dataframe containing the VC names and its information:
+    ```txt
+    Investor Name                                              Jiangmen Ventures
+    Score                                                                      2
+    #Rounds                                                                   10
+    Portfolio Companies                    DMAI;Bito Robotics;DEEP INFORMATICS++
+    Investor Location                                                   Chaoyang
+    Stages of Entry                                    Series A (8);Seed (6)[+2]
+    Sectors of Investment        Enterprise Applications (10);High Tech (9)[+16]
+    Locations of Investment                     China (27);United States (4)[+3]
+    Company URL                https://tracxn.com/a/companies/3pfRjux26cdu4Aq...
+    ```
+5. Save the returned dataframe to whatever format preferred
 
-    - `mrktra.get_VCs_from_mhtml`
-    - VC names -> investors (PB)
+An example of this flow is
+`marketing/tracxn/notebooks/SorrTask601_Extract_VCs_from_Tra_search_mhtml.ipynb`
 
-2. Tracxn search query pages -> VC detail pages
+The inputs are in https://drive.google.com/drive/u/2/folders/1nT5CYuFWLOxb10ONw7yjfzyobc9VM90-
+The outputs are in https://drive.google.com/drive/u/2/folders/1MfTeNHR7sxex_rSpyp54HeJsxtLjKqy3
 
-- manually open and download the pages
+### People flow
 
-3. VC detail page -> Work info (`Full Name, Company Name, Job Title`) of
-   investors
+- Same flow as above but it converts a page like
+    https://tracxn.com/a/d/investor/srAiTt8Aevx0dkPbmrFdUVl21azd7Gx7AOT8J4fO1Zs/ycombinator.com/people/currentteam
+  into a dataframe like:
+    ```txt
+    Name                                                 Matanya Horowitz
+    LinkedIn Profile    https://linkedin.com/in/matanya-horowitz-87805519
+    ```
 
-- `mrktra.get_employees_from_mhtml`
-- Work info -> investor details (Dropcontact)
+## Code
 
-## Locations
-
-- The module is located at `marketing/tra`
+- The module is located at `marketing/tracxn`
 - Example notebooks are at:
-  - `marketing/notebooks/SorrTask601_Extract_people_from_Tra_company_html.ipynb`
-  - `marketing/notebooks/SorrTask601_Extract_VCs_from_Tra_search_mhtml.ipynb`
+  - `marketing/tracxn/notebooks/SorrTask601_Extract_VCs_from_Tra_search_mhtml.ipynb`
+  - `marketing/tracxn/notebooks/SorrTask601_Extract_people_from_Tra_company_html.ipynb`
 
-## Dataflow
-
-### Input
-
-- An MIME HTML file containing:
-  1. A table of VC company names
-  2. A list of investors from the company
-
-### Output
-
-- According to the input type, output can be:
-  1. A pandas dataframe containing the VC names and its information
-  2. A pandas dataframe containing the investors' `First Name`, `Last Name` and
-     their linkedin profiles link
-
-## Download Data
-
-- We want to use only static data as the source of our extraction code. To
-  download the data page:
-  1. In any modern browser, open a page containing required data
-  2. Use the browser's `Save As` button to download the webpage as a
-     `Web page, single file`. Or use any other download method that can fulfill
-     the requirement in step 3
-  3. If you see the downloaded file format is `.mht` or `.mhtml`, you can
-     process forward. Otherwise you won't be able to bypass the check layer from
-     the website
-  4. Save the `.mhtml` file and its path will work as input data
-
-## Usage
-
-- Import the module using `import marketing.tra as mrktra`
-- Each file in this module only have one public function. It takes the
-  downloaded MIME HTML (`.mhtml`) file path as parameter and returns a pandas
-  dataframe containing the extracted data.
-- In any notebook, run the following script to get a pandas dataframe
-  representing the data:
-
-  ```python
-  import marketing.tra as mrktra
-
-  # For VC extraction:
-  VCs_mhtml_path = "<VCs_mthml_file_path>"
-  VCs_dataframe = mrktra.get_VCs_from_mhtml(VC_mhtml_path)
-  # For employee list extraction:
-  employees_html_path = "<employees_html_path>"
-  employees_dataframe = mrktra.get_employees_from_mhtml(employees_html_path)
-
-  ```
-
-## Signal path
+## Signal NFX path
 
 ### Data Source
 

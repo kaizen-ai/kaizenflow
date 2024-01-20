@@ -12,9 +12,6 @@
 #     name: python3
 # ---
 
-# %%
-import marketing.tra as mrktra
-
 # %% [markdown]
 # # Workflow before using this library:
 #
@@ -24,17 +21,28 @@ import marketing.tra as mrktra
 # 4. Call the `get_employees_from_html` method with the `.mhtml` file path.
 # 5. Save the returned dataframe to whatever format preferred.
 
+# %%
+import marketing.tracxn as mrktra
+
 # %% [markdown]
 # # Sample usage of the library.
 
 # %%
+# !ls ../..
+
+# %%
 # Source data file path.
-employee_mhtml_path = "../data/SequoiaCapital_Tra.mhtml"
+employee_mhtml_path = "../../Sequoia Capital _ Tracxn.mhtml"
+employee_df = mrktra.get_employees_from_mhtml(employee_mhtml_path)
+employee_df
+
+# %%
+employee_df.iloc[0]
+
+# %%
 # Destination result file path.
 employee_csv_save_path = "../result_csv/SequoiaCapital_Tra.csv"
 # Get Dataframe of employees from HTML page.
-employee_df = mrktra.get_employees_from_mhtml(employee_mhtml_path)
 employee_df.to_csv(employee_csv_save_path, sep=",", index=False)
-employee_df
 
 # %%

@@ -12,9 +12,6 @@
 #     name: python3
 # ---
 
-# %% run_control={"marked": true}
-import marketing.tra as mrktra
-
 # %% [markdown]
 # # Workflow before using this library:
 #
@@ -24,17 +21,32 @@ import marketing.tra as mrktra
 # 4. Call `get_VCs_from_mhtml` method with the `.mhtml` file path.
 # 5. Save the returned dataframe to whatever format preferred.
 
+# %% run_control={"marked": true}
+import marketing.tracxn as mrktra
+
 # %% [markdown]
 # # Sample usage of the function.
 
+# %%
+# !ls ../..
+
 # %% run_control={"marked": true}
 # Source data file path.
-vc_mhtml_path = "../data/Investors_VC_Tra.mhtml"
-# Destination result file path.
-vc_csv_save_path = "../result_csv/Investors_VC_Tra.csv"
-# Get Dataframe of VCs from HTML page.
+vc_mhtml_path = "../../Tracxn_VCs_AI_SeriesA_Seed.mht"
 vc_df = mrktra.get_VCs_from_mhtml(vc_mhtml_path)
-vc_df.to_csv(vc_csv_save_path, sep=",", index=False)
 vc_df
 
 # %%
+vc_df.iloc[0]
+
+# %%
+# Destination result file path.
+vc_csv_save_path = "./Investors_VC_Tra.csv"
+# Get Dataframe of VCs from HTML page.
+vc_df.to_csv(vc_csv_save_path, sep=",", index=False)
+
+# %%
+# # !sudo /bin/bash -c "(source /venv/bin/activate; pip install csvkit)"
+
+# %%
+# # !csvlook $vc_csv_save_path
