@@ -1,5 +1,8 @@
+#!/usr/bin/env python
+
 import argparse
 import logging
+import os
 
 import helpers.hchatgpt as hchatgp
 import helpers.hdbg as hdbg
@@ -11,61 +14,63 @@ _LOG = logging.getLogger(__name__)
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Use chatGPT to process a file or certain text.",
+        description="Use ChatGPT Assistant to process a file or certain text.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    # We prefer not to use short command line options since they are often
+    # unclear.
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
-        "-l",
         "--list",
         dest="list",
         action="store_true",
-        help="show all currently available assistants and exit",
+        help="Show all currently available assistants and exit",
     )
     group.add_argument(
-        "-n",
         "--assistant_name",
         dest="assistant_name",
-        help="name of the assistant to be used",
+        help="Name of the assistant to be used",
     )
     parser.add_argument(
-        "-f",
         "--input_files",
         dest="input_file_paths",
         action="extend",
         nargs="*",
-        help="files needed in this run, use relative path from project root",
+        help="Files needed in this run, use relative path from project root",
     )
     parser.add_argument(
-        "-m",
         "--model",
         dest="model",
-        help="use specific model for this run, overriding existing assistant config",
+        help="Use specific model for this run, overriding existing assistant config",
     )
     parser.add_argument(
-        "-o",
         "--output_file",
         dest="output_file",
-        help="redirect the output to the given file",
+        help="Redirect the output to the given file",
     )
     parser.add_argument(
-        "-i",
         "--input_text",
         dest="input_text",
         default="Run with the given file",
-        help="take a text input from command line as detailed instruction",
+        help="Take a text input from command line as detailed instruction",
     )
     parser.add_argument(
         "--vim",
         dest="vim_mode",
         action="store_true",
-        help="disable -i (but not -o), take input from stdin and output to stdout forcely",
+        help="Disable -i (but not -o), take input from stdin and output to stdout forcely",
     )
     hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
+    if not os.environ["OPENAI_API_KEY"]:
+        raise ValueError(
+            "Your OpenAI API key is not set. "
+            "Before running any OpenAI related code, "
+            "add OPENAI_API_KEY=<YOUR_KEY> into your environment variable."
+        )
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     if args.list:
