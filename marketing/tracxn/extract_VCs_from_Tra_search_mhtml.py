@@ -17,7 +17,6 @@ def _get_VC_name(content_soup: BeautifulSoup) -> str:
     Get company name of the VC from given row, see `_get_VC_row_content` for
     params.
     """
-    name = ""
     try:
         name = content_soup.select(
             "div[data-walk-through-id$=-cell-name] .comp-txn-logo-container"
@@ -29,7 +28,7 @@ def _get_VC_name(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_url(content_soup: BeautifulSoup) -> str:
     """
-    Get Tra url of the VC from given row, see `_get_VC_row_content` for
+    Get Tracxn url of the VC from given row, see `_get_VC_row_content` for
     params.
     """
     url = ""
@@ -44,7 +43,7 @@ def _get_VC_url(content_soup: BeautifulSoup) -> str:
 
 def _get_VC_score(content_soup: BeautifulSoup) -> str:
     """
-    Get Tra score of the VC from given row, see `_get_VC_row_content` for
+    Get Tracxn score of the VC from given row, see `_get_VC_row_content` for
     params.
     """
     score = ""
