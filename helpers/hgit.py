@@ -541,7 +541,7 @@ def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
     # From short name to long name.
     repo_map = {
         "amp": "alphamatic/amp",
-        "dev_tools": "alphamatic/dev_tools",
+        "dev_tools": "sorrentum/dev_tools",
     }
     if include_host_name:
         host_name = "github.com"
@@ -635,8 +635,9 @@ def get_all_repo_names(
     """
     Return the names (full or short depending on `mode`) of all the Git repos.
 
-    :param in_mode: if "full_name" return the full names (e.g., "alphamatic/amp")
-        if "short_name" return the short names (e.g., "amp")
+    :param in_mode: if "full_name" return the full names (e.g.,
+        "alphamatic/amp") if "short_name" return the short names (e.g.,
+        "amp")
     """
     repo_map = get_complete_repo_map(in_mode, include_host_name)
     return sorted(list(repo_map.keys()))
@@ -922,8 +923,8 @@ def get_previous_committed_files(
 
     :param dir_name: directory with Git client
     :param num_commits: how many commits in the past to consider
-    :param remove_files_non_present: remove the files that are not currently present
-        in the client
+    :param remove_files_non_present: remove the files that are not
+        currently present in the client
     :return: list of files
     """
     cmd = []
@@ -1141,8 +1142,8 @@ def git_describe(
 
     If there is no tag, this will return short commit hash.
 
-    :param match: e.g., `dev_tools-*`, only consider tags matching the given glob
-        pattern
+    :param match: e.g., `dev_tools-*`, only consider tags matching the
+        given glob pattern
     """
     _LOG.debug("# Looking for version ...")
     cmd = "git describe --tags --always --abbrev=0"
@@ -1205,8 +1206,8 @@ def is_client_clean(
     """
     Return whether there are files modified, added, or removed in `dir_name`.
 
-    :param abort_if_not_clean: if True and the client is not clean, abort reporting
-        the files modified
+    :param abort_if_not_clean: if True and the client is not clean,
+        abort reporting the files modified
     """
     _LOG.debug(hprint.to_str("abort_if_not_clean"))
     files = get_modified_files(dir_name)
@@ -1306,7 +1307,8 @@ def delete_branches(
 
     :param mode: local or remote
     :param branches: list of branches to delete
-    :param confirm_delete: ask the user to confirm before deleting, or just do it
+    :param confirm_delete: ask the user to confirm before deleting, or
+        just do it
     """
     hdbg.dassert_isinstance(branches, list)
     delete_cmd = f"cd {dir_name} && "
