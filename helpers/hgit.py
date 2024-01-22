@@ -539,10 +539,7 @@ def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
     "alphamatic/amp") using the information in `repo_config.py`
     """
     # From short name to long name.
-    repo_map = {
-        "sorr": "sorrentum/sorrentum",
-        "dev_tools": "sorrentum/dev_tools",
-    }
+    repo_map = {}
     if include_host_name:
         host_name = "github.com"
         repo_map = _decorate_with_host_name(repo_map, host_name)
