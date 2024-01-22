@@ -540,8 +540,8 @@ def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
     """
     # From short name to long name.
     repo_map = {
-        "amp": "sorrentum/sorrentum",
-        "dev_tools": "sorrentum/dev_tools",
+        "amp": "alphamatic/amp",
+        "dev_tools": "alphamatic/dev_tools",
     }
     if include_host_name:
         host_name = "github.com"
