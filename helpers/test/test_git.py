@@ -58,7 +58,6 @@ class Test_git_submodule1(hunitest.TestCase):
 
 
 class Test_git_submodule2(hunitest.TestCase):
-
     # def test_get_submodule_hash1(self) -> None:
     #     dir_name = "amp"
     #     _ = hgit._get_submodule_hash(dir_name)
@@ -167,7 +166,7 @@ class Test_git_repo_name1(hunitest.TestCase):
         self.assert_equal(act, exp)
 
     def test_get_repo_name4(self) -> None:
-        full_name = "alphamatic/dev_tools"
+        full_name = "sorrentum/dev_tools"
         mode = "full_name"
         act = hgit.get_repo_name(full_name, mode)
         exp = "dev_tools"
