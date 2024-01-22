@@ -70,6 +70,8 @@ def create_assistant(
         tools.append({"type": "code_interpreter"})
     if use_function:
         tools.append(use_function)
+    if not model:
+        model = "gpt-3.5-turbo-1106"
     assistant = client.beta.assistants.create(
         instructions=instructions,
         name=assistant_name,
