@@ -1,3 +1,4 @@
+pyyaml == 5.3.1 # Added this to support aws cli
 awscli >= 1.19  # For aws CLI.
 boto3 >= 1.20.17
 # Keep in sync with `.github/gh_requirements.txt`, see CmTask6488.
