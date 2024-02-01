@@ -42,12 +42,12 @@ information flow and make the contribution process seamless.
 
 - All the source code should go under ~/src (e.g., /Users/<YOUR_USER>/src on a
   Mac PC)
-- The path to the local repo folder should look like this ~/src/{REPO_NAME}{IDX}
+- The path to the local repo folder should look like this `~/src/{REPO_NAME}{IDX}`
   where
   - IDX is an integer
   - REPO_NAME is a name of the repository
 
-- To clone the repo, use the cloning command described in the Github official
+- To clone the repo, use the cloning command described in the GitHub official
   documentation
 
 - Example of cloning command:
@@ -55,7 +55,7 @@ information flow and make the contribution process seamless.
   ```
   > git clone git@github.com:sorrentum/sorrentum.git ~/src/sorrentum1
   ```
-  - Alternative command.
+  - Alternative command
   ```
   > git clone https://github.com/sorrentum/sorrentum.git ~/src/sorrentum1
   ```
@@ -63,30 +63,30 @@ information flow and make the contribution process seamless.
 ### Building the Thin Environment
 
 - Create a thin environment for running the linter using the Sorrentum Dev
-  Dockercontainer (Dev container, cmamp container).
+  Docker container
 
 - Build the thin environment; this is done once
-```
-> source dev_scripts/client_setup/build.sh
-```
+  ```
+  > source dev_scripts/client_setup/build.sh
+  ```
 
 - Activate the thin environment; make sure it is always activated
-```
-> source dev_scripts/setenv_amp.sh
-```
+  ```
+  > source dev_scripts/setenv_amp.sh
+  ```
 
 - If you see output like this, your environment is successfully built! If not
-  and you encounter any issues, please post them under your designated
-  on-boarding issue
-```
-alias sp='echo '\''source ~/.profile'\''; source ~/.profile'
-alias vi='/usr/bin/vi'
-alias vim='/usr/bin/vi'
-alias vimdiff='/usr/bin/vi -d'
-alias vip='vim -c "source ~/.vimrc_priv"'
-alias w='which'
-==> SUCCESS <==
-```
+  and you encounter any issues, please post them by creating a new issue and
+  assign it to the TA 
+  ```
+  alias sp='echo '\''source ~/.profile'\''; source ~/.profile'
+  alias vi='/usr/bin/vi'
+  alias vim='/usr/bin/vi'
+  alias vimdiff='/usr/bin/vi -d'
+  alias vip='vim -c "source ~/.vimrc_priv"'
+  alias w='which'
+  ==> SUCCESS <==
+  ```
 
 ## 2. Coding Style
 
@@ -96,48 +96,35 @@ alias w='which'
 ## 3. Linter
 
 - The linter is in charge of reformatting the code according to our conventions
-  and reporting potential problems.
+  and reporting potential problems
 
 ### Run the linter and check the linter results
 
 - Run the linter against the changed files in the PR branch
-```
-invoke lint --branch
-```
-
-- Check if the git client is clean
-```
-git status
-```
-
-- If the git client is not clean, abort the execution and the workflow will fail
-- If the git client is clean, the workflow will exit successfully
-
-- Invoke task for this action is:
-```
-invoke lint_check_if_it_was_run
-```
+  ```
+  invoke lint --files "file1 file2..."
+  ```
 
 - More information about Linter -
   [Link](https://github.com/sorrentum/sorrentum/blob/master/docs/infra/linter_gh_workflow.explanation.md)
-- Internalize the guidelines to maintain code consistency.
+- Internalize the guidelines to maintain code consistency
 
 ## 4. Writing and Contributing Code
 
-- Follow these steps when writing and contributing code:
 - Always start with creating an issue first, providing a summary of what you
   want to implement and assign it to yourself and your team
 - Create a branch of your assigned issues/bugs
   - E.g., for a GitHub issue with the name: "Expose the linter container to
     Sorrentum contributors #63", The branch name should be :
-    "SorrTask63_Expose_the_linter_container_to_Sorrentum_contributors"
+    `SorrTask63_Expose_the_linter_container_to_Sorrentum_contributors`
 - Run the linter on your code before pushing
-- Do 'git commit' and 'git push' together so the latest changes are readily
+- Do `git commit` and `git push` together so the latest changes are readily
   visible
 - Make sure your branch is up-to-date with the master branch
-- Create a Pull Request (PR) from your branch - Add your assigned reviewers for
-  your PR so that they are informed of your PR
-- Afterbeing reviewed, the PR will be merged to the master branch by your
+- Create a Pull Request (PR) from your branch
+- Add your assigned reviewers for   your PR so that they are informed of
+  your PR
+- After being reviewed, the PR will be merged to the master branch by your
   reviewers
 
 ## 5. Additional Document links
