@@ -1,7 +1,9 @@
+import csv
 import datetime
 import io
 import logging
 import os
+import re
 import time
 import uuid
 from typing import Any, Dict, List, Optional, Tuple
@@ -17,7 +19,7 @@ import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
-_AWS_PROFILE = "am"
+_AWS_PROFILE = "ck"
 
 
 class Test_dassert_is_unique1(hunitest.TestCase):
@@ -1118,7 +1120,7 @@ class TestDfToStr(hunitest.TestCase):
             "dummy_value_4": [+0.0, -0.0, +0.0, -0.0],
         }
         df = pd.DataFrame(data=test_data)
-        actual = hpandas.df_to_str(df)
+        actual = hpandas.df_to_str(df, handle_signed_zeros=True)
         expected = r"""
             dummy_value_1 dummy_value_2  dummy_value_3  dummy_value_4
         0              1             A              0            0.0
@@ -1138,7 +1140,7 @@ class TestDfToStr(hunitest.TestCase):
             ("B", "Y"): [4.4, -0.0, 5.1],
         }
         df = pd.DataFrame(data=test_data)
-        actual = hpandas.df_to_str(df)
+        actual = hpandas.df_to_str(df, handle_signed_zeros=True)
         expected = r"""
              A     B
              X  Y  X    Y
@@ -1146,6 +1148,244 @@ class TestDfToStr(hunitest.TestCase):
         1  5.0  6  7  0.0
         2  0.0  0  3  5.1"""
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_df_to_str10(self) -> None:
+        """
+        Test common call to `df_to_str` with `print_memory_usage = True`.
+        """
+        df = self.get_test_data()
+        actual = hpandas.df_to_str(df, print_memory_usage=True)
+        expected = r"""
+        * memory=
+                    shallow     deep
+        Index          128.0 b  128.0 b
+        dummy_value_1   24.0 b   24.0 b
+        dummy_value_2   24.0 b  174.0 b
+        dummy_value_3   24.0 b   24.0 b
+        total          200.0 b  350.0 b
+        dummy_value_1 dummy_value_2  dummy_value_3
+        0              1             A              0
+        1              2             B              0
+        2              3             C              0
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+class Test_assemble_df_rows(hunitest.TestCase):
+    """
+    Test assembing df values into a column-row structure.
+    """
+
+    @staticmethod
+    def get_rows_values_example(df_as_str: str) -> hpandas.RowsValues:
+        """
+        Prepare the input.
+        """
+        # Separate the rows.
+        rows = df_as_str.split("\n")
+        # Clean up extra spaces.
+        rows_merged_space = [re.sub(" +", " ", row) for row in rows if len(row)]
+        # Identify individual values in the rows.
+        rows_values = list(csv.reader(rows_merged_space, delimiter=" "))
+        return rows_values
+
+    def test1(self) -> None:
+        """
+        Test unnamed index, compact df.
+        """
+        # Get the input.
+        df_as_str = """
+            col1 col2   col3  col4
+        0   0.1  0.1    0.1   0.1
+        1   0.2  0.2    0.2   0.2"""
+        rows_values = self.get_rows_values_example(df_as_str)
+        # Run.
+        actual = hpandas._assemble_df_rows(rows_values)
+        # Check.
+        expected = [
+            ["", "col1", "col2", "col3", "col4"],
+            ["0", "0.1", "0.1", "0.1", "0.1"],
+            ["1", "0.2", "0.2", "0.2", "0.2"],
+        ]
+        self.assertListEqual(actual, expected)
+
+    def test2(self) -> None:
+        """
+        Test unnamed index, large df.
+        """
+        # Get the input.
+        df_as_str = """
+            column_with_a_very_long_name_1 column_with_a_very_long_name_2   column_with_a_very_long_name_3   column_with_a_very_long_name_4 column_with_a_very_long_name_5
+        0   0.123456789123456789123456789  0.123456789123456789123456789      0.123456789123456789123456789   0.123456789123456789123456789  0.123456789123456789123456789
+        1   0.123456789123456789123456789  0.123456789123456789123456789  0.123456789123456789123456789   0.123456789123456789123456789  0.123456789123456789123456789"""
+        rows_values = self.get_rows_values_example(df_as_str)
+        # Run.
+        actual = hpandas._assemble_df_rows(rows_values)
+        # Check.
+        expected = [
+            [
+                "",
+                "column_with_a_very_long_name_1",
+                "column_with_a_very_long_name_2",
+                "column_with_a_very_long_name_3",
+                "column_with_a_very_long_name_4",
+                "column_with_a_very_long_name_5",
+            ],
+            [
+                "0",
+                "0.123456789123456789123456789",
+                "0.123456789123456789123456789",
+                "0.123456789123456789123456789",
+                "0.123456789123456789123456789",
+                "0.123456789123456789123456789",
+            ],
+            [
+                "1",
+                "0.123456789123456789123456789",
+                "0.123456789123456789123456789",
+                "0.123456789123456789123456789",
+                "0.123456789123456789123456789",
+                "0.123456789123456789123456789",
+            ],
+        ]
+        self.assertListEqual(actual, expected)
+
+    def test3(self) -> None:
+        """
+        Test named index, compact df.
+        """
+        # Get the input.
+        df_as_str = """
+            col1 col2   col3  col4
+        idx
+        0   0.1  0.1    0.1   0.1
+        1   0.2  0.2    0.2   0.2"""
+        rows_values = self.get_rows_values_example(df_as_str)
+        # Run.
+        actual = hpandas._assemble_df_rows(rows_values)
+        # Check.
+        expected = [
+            ["idx", "col1", "col2", "col3", "col4"],
+            ["0", "0.1", "0.1", "0.1", "0.1"],
+            ["1", "0.2", "0.2", "0.2", "0.2"],
+        ]
+        self.assertListEqual(actual, expected)
+
+    def test4(self) -> None:
+        """
+        Test named index, large df.
+        """
+        # Get the input.
+        df_as_str = """
+            column_with_a_very_long_name_1 column_with_a_very_long_name_2   column_with_a_very_long_name_3   column_with_a_very_long_name_4 column_with_a_very_long_name_5
+        idx
+        0   0.123456789123456789123456789  0.123456789123456789123456789      0.123456789123456789123456789   0.123456789123456789123456789  0.123456789123456789123456789
+        1   0.123456789123456789123456789  0.123456789123456789123456789  0.123456789123456789123456789   0.123456789123456789123456789  0.123456789123456789123456789"""
+        rows_values = self.get_rows_values_example(df_as_str)
+        # Run.
+        actual = hpandas._assemble_df_rows(rows_values)
+        # Check.
+        expected = [
+            [
+                "idx",
+                "column_with_a_very_long_name_1",
+                "column_with_a_very_long_name_2",
+                "column_with_a_very_long_name_3",
+                "column_with_a_very_long_name_4",
+                "column_with_a_very_long_name_5",
+            ],
+            [
+                "0",
+                "0.123456789123456789123456789",
+                "0.123456789123456789123456789",
+                "0.123456789123456789123456789",
+                "0.123456789123456789123456789",
+                "0.123456789123456789123456789",
+            ],
+            [
+                "1",
+                "0.123456789123456789123456789",
+                "0.123456789123456789123456789",
+                "0.123456789123456789123456789",
+                "0.123456789123456789123456789",
+                "0.123456789123456789123456789",
+            ],
+        ]
+        self.assertListEqual(actual, expected)
+
+
+class Test_str_to_df(hunitest.TestCase):
+    """
+    Test converting a string representation of a dataframe into a Pandas df.
+    """
+
+    def test1(self) -> None:
+        # Prepare input.
+        df_as_str = """
+            col1 col2   col3   col4
+        0   0.1  a      None   2020-01-01
+        1   0.2  "b c"  None   2021-05-05"""
+        col_to_type = {
+            "__index__": int,
+            "col1": float,
+            "col2": str,
+            "col3": None,
+            "col4": pd.Timestamp,
+        }
+        col_to_name_type: Dict[str, type] = {}
+        # Run.
+        actual = hpandas.str_to_df(df_as_str, col_to_type, col_to_name_type)
+        # Check.
+        expected = pd.DataFrame(
+            {
+                "col1": [0.1, 0.2],
+                "col2": ["a", "b c"],
+                "col3": [None, None],
+                "col4": [pd.Timestamp("2020-01-01"), pd.Timestamp("2021-05-05")],
+            },
+            index=[0, 1],
+        )
+        hunitest.compare_df(actual, expected)
+
+    def test2(self) -> None:
+        """
+        Run a full circle check.
+
+        The df used for testing:
+
+                       1       2
+        end_timestamp
+        2023-08-15     0.21    1.7
+        2023-08-16     0.22    1.8
+        2023-08-17     0.23    1.9
+        """
+        # Create a df from the data.
+        data = {
+            1: [0.21, 0.22, 0.23],
+            2: [1.7, 1.8, 1.9],
+        }
+        timestamps = [
+            pd.Timestamp("2023-08-15"),
+            pd.Timestamp("2023-08-16"),
+            pd.Timestamp("2023-08-17"),
+        ]
+        expected = pd.DataFrame(data, index=timestamps)
+        expected.index.name = "end_timestamp"
+        # Convert the df into a string.
+        df_as_str = hpandas.df_to_str(expected)
+        # Convert the resulting string back into a df.
+        col_to_type = {
+            "__index__": pd.Timestamp,
+            "1": float,
+            "2": float,
+        }
+        col_to_name_type = {
+            "1": int,
+            "2": int,
+        }
+        actual = hpandas.str_to_df(df_as_str, col_to_type, col_to_name_type)
+        # Check that the initial df and the final df are the same.
+        hunitest.compare_df(actual, expected)
 
 
 # #############################################################################
@@ -1326,7 +1566,9 @@ class TestReadDataFromS3(hunitest.TestCase):
     def test_read_csv1(self) -> None:
         s3fs = hs3.get_s3fs(_AWS_PROFILE)
         file_name = os.path.join(
-            hs3.get_s3_bucket_path(_AWS_PROFILE),
+            hs3.get_s3_bucket_path_unit_test(_AWS_PROFILE),
+            # TODO(sonaal): Reorganize all s3 input data, CmampTask5650.
+            "alphamatic-data",
             "data/kibot/all_stocks_1min/RIMG.csv.gz",
         )
         hs3.dassert_path_exists(file_name, s3fs)
@@ -1337,7 +1579,8 @@ class TestReadDataFromS3(hunitest.TestCase):
     def test_read_parquet1(self) -> None:
         s3fs = hs3.get_s3fs(_AWS_PROFILE)
         file_name = os.path.join(
-            hs3.get_s3_bucket_path(_AWS_PROFILE),
+            hs3.get_s3_bucket_path_unit_test(_AWS_PROFILE),
+            "alphamatic-data",
             "data/kibot/pq/sp_500_1min/AAPL.pq",
         )
         hs3.dassert_path_exists(file_name, s3fs)
@@ -3108,6 +3351,7 @@ class Test_apply_column_mode(hunitest.TestCase):
     """
     Test that function applies column modes correctly.
     """
+
     @staticmethod
     def get_test_data() -> Tuple[pd.DataFrame]:
         """
@@ -3369,6 +3613,47 @@ class Test_multiindex_df_info1(hunitest.TestCase):
 
 # #############################################################################
 
+
+class Test_cast_series_to_type(hunitest.TestCase):
+    """
+    Test converting a series into a given type.
+    """
+
+    def test1(self) -> None:
+        series = pd.Series(["1", "2", "3"])
+        series_type = int
+        actual = hpandas.cast_series_to_type(series, series_type)
+        self.assertEqual(actual.dtype.type, np.int64)
+
+    def test2(self) -> None:
+        series = pd.Series(["0.1", "0.2", "0.3"])
+        series_type = float
+        actual = hpandas.cast_series_to_type(series, series_type)
+        self.assertEqual(actual.dtype.type, np.float64)
+
+    def test3(self) -> None:
+        series = pd.Series(["None", "None", "None"])
+        series_type = None
+        actual = hpandas.cast_series_to_type(series, series_type)
+        for i in range(len(actual)):
+            self.assertTrue(actual.iloc[i] is None)
+
+    def test4(self) -> None:
+        series = pd.Series(["2020-01-01", "2020-02-02", "2020-03-03"])
+        series_type = pd.Timestamp
+        actual = hpandas.cast_series_to_type(series, series_type)
+        self.assertEqual(actual.dtype.type, np.datetime64)
+
+    def test5(self) -> None:
+        series = pd.Series(["{}", "{1: 2, 3: 4}", "{'a': 'b'}"])
+        series_type = dict
+        actual = hpandas.cast_series_to_type(series, series_type)
+        for i in range(len(actual)):
+            self.assertEqual(type(actual.iloc[i]), dict)
+
+
+# #############################################################################
+
 class Test_dassert_index_is_datetime(hunitest.TestCase):
     @staticmethod
     def get_multiindex_df(
@@ -3454,3 +3739,16 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
         df = self.get_multiindex_df(index_is_datetime)
         df = df.loc["index1"]
         hpandas.dassert_index_is_datetime(df)
+
+
+# #############################################################################
+
+
+class Test_dassert_approx_eq1(hunitest.TestCase):
+    def test1(self) -> None:
+        hpandas.dassert_approx_eq(1, 1.0000001)
+
+    def test2(self) -> None:
+        srs1 = pd.Series([1, 2.0000001])
+        srs2 = pd.Series([0.999999, 2.0])
+        hpandas.dassert_approx_eq(srs1, srs2, msg="hello world")

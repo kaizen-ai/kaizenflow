@@ -1,12 +1,15 @@
 """
+Methods to introspect and print the state of an object.
+
 Import as:
 
 import helpers.hobject as hobject
 """
 
+import abc
 import logging
 import pprint
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -20,16 +23,23 @@ _LOG = logging.getLogger(__name__)
 _LOG.setLevel(logging.INFO)
 
 # #############################################################################
-# obj_to_str
+# _to_skip*
 # #############################################################################
 
 
 def _to_skip(is_: bool, mode: str) -> bool:
+    """
+    Return whether to skip the attribute.
+
+    :param is_: if `True` the attribute is of the type we are checking
+    :param mode: how to handle the attribute
+    :return: whether to skip the attribute
+    """
     hdbg.dassert_in(mode, ("skip", "only", "all"))
     skip = False
     if mode == "skip":
         if is_:
-            # Skip all the callables.
+            # Skip everything.
             skip = True
     elif mode == "only":
         if not is_:
@@ -44,22 +54,33 @@ def _to_skip(is_: bool, mode: str) -> bool:
 
 
 def _to_skip_callable_attribute(attr_name: Any, mode: str) -> bool:
+    """
+    Decide whether to skip a callable attribute.
+    """
+    # Check whether the attribute is callable.
     is_callable = callable(attr_name)
     skip = _to_skip(is_callable, mode)
     return skip
 
 
 def _to_skip_private_attribute(attr_name: str, mode: str) -> bool:
+    """
+    Decide whether to skip a private attribute.
+    """
     # _Object__hello
     # TODO(gp): This can be improved by passing the name of the object.
     is_dunder = attr_name.startswith("_") and "__" in attr_name
+    # We assume that private attributes start with `_` and are not dunder.
     is_private = not is_dunder and attr_name.startswith("_")
     skip = _to_skip(is_private, mode)
     return skip
 
 
 def _to_skip_dunder_attribute(attr_name: str, mode: str) -> bool:
-    # Is it a double under method, aka dunder?
+    """
+    Decide whether to skip a double under attribute.
+    """
+    # Check if it is a dunder (i.e., double under method). E.g., `__hello__`.
     is_dunder = attr_name.startswith("_") and "__" in attr_name
     skip = _to_skip(is_dunder, mode)
     return skip
@@ -73,6 +94,20 @@ def _to_skip_attribute(
     dunder_mode: str,
     attr_names_to_skip: Optional[List[str]],
 ) -> bool:
+    """
+    Decide whether to skip an attribute.
+
+    :param attr_name: name of the attribute
+    :param attr_value: value of the attribute
+    :param callable_mode: how to handle attributes that are callable methods
+    :param private_mode: how to handle attributes that are private (e.g.,
+        `_hello`)
+    :param dunder_mode: how to handle attributes that are dunder (e.g.,
+        `__hello`)
+    :param attr_names_to_skip: a list of attributes (e.g., private, callable, dunder)
+        to skip. `None` to skip nothing.
+    :return: whether to skip the attribute
+    """
     # Check whether the attribute is one that was requested explicitly to skip.
     if attr_names_to_skip is not None:
         if attr_name in attr_names_to_skip:
@@ -96,18 +131,30 @@ def _to_skip_attribute(
     return False
 
 
-def _type_to_str(attr_value: str) -> str:
+# #############################################################################
+# obj_to_str
+# #############################################################################
+
+
+def _type_to_str(attr_value: Any) -> str:
+    """
+    Print the attribute value together with its type.
+
+    E.g., `a=False <bool>, b=hello <str>, c=3.14 <float>`
+    """
     type_as_str = str(type(attr_value))
+    # Convert from `<class 'str'>` to `str`.
     type_as_str = hstring.remove_prefix(type_as_str, "<class '")
     type_as_str = hstring.remove_suffix(type_as_str, "'>")
+    # Add `<` and `>` around the type.
     type_as_str = f"<{type_as_str}>"
     return type_as_str
 
 
-# #############################################################################
-
-
 def _attr_to_str(attr_value: Any, print_type: bool) -> str:
+    """
+    Print the attribute value handling different types.
+    """
     _LOG.debug("type(attr_value)=%s", type(attr_value))
     if isinstance(attr_value, pd.DataFrame):
         res = f"pd.df({attr_value.shape}"
@@ -117,6 +164,7 @@ def _attr_to_str(attr_value: Any, print_type: bool) -> str:
         res = str(attr_value)
     else:
         res = str(attr_value)
+    # Add the type, if needed.
     if print_type:
         res += " " + _type_to_str(attr_value)
     return res
@@ -134,18 +182,16 @@ def obj_to_str(
     attr_names_to_skip: Optional[List[str]] = None,
 ) -> str:
     """
-    Print attributes of an object.
+    Print the attributes of an object.
 
-    An object is printed as name of the class and the attributes, e.g.,
+    An object is printed as name of its class and its attributes, e.g.,
     ```
-    _Object:
-      a='False'
-      b='hello'
-      c='3.14'
+    _Object1 at 0x...=(a=False, b=hello, c=3.14)
     ```
 
     :param attr_mode: use `__dict__` or `dir()`
         - It doesn't seem to make much difference
+    :sort: sort the attributes in order of name, or not
     :param print_type: print the type of the attribute
     :param callable_mode: how to handle attributes that are callable (i.e.,
         methods)
@@ -156,57 +202,47 @@ def obj_to_str(
         `callable_mode`
     :param dunder_mode: how to handle double under attributes. Same params as
         `callable_mode`
-    :param attr_names_to_skip: a list of attributes (e.g., private, callable, dunder)
-        to skip. This is used to avoid to print data that is redundant (e.g., a
-        cached value)
+    :param attr_names_to_skip: a list of attributes (e.g., private, callable,
+        dunder) to skip. This is used to avoid to print data that is redundant
+        (e.g., a cached value)
     """
     ret = []
     if attr_mode == "__dict__":
+        # Use `__dict__` to get the attributes of the object.
         values = obj.__dict__
-        if sort:
-            values = sorted(values)
-        for attr_name in values:
-            attr_value = obj.__dict__[attr_name]
-            skip = _to_skip_attribute(
-                attr_name,
-                attr_value,
-                callable_mode,
-                private_mode,
-                dunder_mode,
-                attr_names_to_skip,
-            )
-            _LOG.debug(
-                "attr_name=%s attr_value=%s -> skip", attr_name, attr_value, skip
-            )
-            if skip:
-                continue
-            #
-            out = f"{attr_name}=" + _attr_to_str(attr_value, print_type)
-            ret.append(out)
     elif attr_mode == "dir":
+        # Use `dir()` to get the attributes of the object.
         values = dir(obj)
-        if sort:
-            values = sorted(values)
-        for attr_name in values:
-            attr_value = getattr(obj, attr_name)
-            skip = _to_skip_attribute(
-                attr_name,
-                attr_value,
-                callable_mode,
-                private_mode,
-                dunder_mode,
-                attr_names_to_skip,
-            )
-            _LOG.debug(
-                "attr_name=%s attr_value=%s -> skip", attr_name, attr_value, skip
-            )
-            if skip:
-                continue
-            #
-            out = f"{attr_name}=" + _attr_to_str(attr_value, print_type)
-            ret.append(out)
+    elif attr_mode == "config":
+        # Use object method to get the attributes to print info for.
+        values = obj.get_config_attributes()
     else:
-        hdbg.dassert(f"Invalid attr_mode='{attr_mode}'")
+        raise ValueError(f"Invalid attr_mode='{attr_mode}'")
+    if sort:
+        values = sorted(values)
+    for attr_name in values:
+        if attr_mode == "__dict__":
+            attr_value = obj.__dict__[attr_name]
+        elif attr_mode in ["dir", "config"]:
+            attr_value = getattr(obj, attr_name)
+        else:
+            raise ValueError(f"Invalid attr_mode='{attr_mode}'")
+        skip = _to_skip_attribute(
+            attr_name,
+            attr_value,
+            callable_mode,
+            private_mode,
+            dunder_mode,
+            attr_names_to_skip,
+        )
+        _LOG.debug(
+            "attr_name=%s attr_value=%s -> skip", attr_name, attr_value, skip
+        )
+        if skip:
+            continue
+        #
+        out = f"{attr_name}=" + _attr_to_str(attr_value, print_type)
+        ret.append(out)
     #
     txt = hprint.to_object_str(obj) + "="
     txt += "(" + ", ".join(ret) + ")"
@@ -214,9 +250,22 @@ def obj_to_str(
 
 
 # #############################################################################
+# obj_to_repr
+# #############################################################################
 
 
 def _attr_to_repr(attr_name: Any, attr_value: Any, print_type: bool) -> str:
+    """
+    Print an object as name of its class and its attributes.
+
+    E.g.,
+    ```
+    <helpers.test.test_hobject._Object1 at 0x...>:
+          a='False' <bool>
+          b='hello' <str>
+          c='3.14' <float>
+    ```
+    """
     _LOG.debug("type(attr_value)=%s", type(attr_value))
     if isinstance(attr_value, (pd.DataFrame, pd.Series)):
         attr_value_as_str = hpandas.df_to_str(attr_value)
@@ -224,9 +273,10 @@ def _attr_to_repr(attr_name: Any, attr_value: Any, print_type: bool) -> str:
         attr_value_as_str = pprint.pformat(attr_value)
     else:
         attr_value_as_str = repr(attr_value)
+    #
     if len(attr_value_as_str.split("\n")) > 1:
-        # The string representing the attribute value spans multiple lines, so print
-        # like:
+        # The string representing the attribute value spans multiple lines, so
+        # print like:
         # ```
         # attr_name= (type)
         #   attr_value
@@ -263,56 +313,44 @@ def obj_to_repr(
     """
     Same interface and behavior as `obj_to_str()`.
 
-    Use `_attr_to_repr()` instead of a simple `attr_name = attr_value` like in
-    `obj_to_str()`.
+    Use `_attr_to_repr()` instead of a simple `attr_name = attr_value`
+    like in `obj_to_str()`.
     """
     ret = []
+    # TODO(Grisha): factor out the logic in a function `get_class_attributes(attr_mode)`.
     if attr_mode == "__dict__":
         values = obj.__dict__
-        if sort:
-            values = sorted(values)
-        for attr_name in values:
-            attr_value = obj.__dict__[attr_name]
-            skip = _to_skip_attribute(
-                attr_name,
-                attr_value,
-                callable_mode,
-                private_mode,
-                dunder_mode,
-                attr_names_to_skip,
-            )
-            _LOG.debug(
-                "attr_name=%s attr_value=%s -> skip", attr_name, attr_value, skip
-            )
-            if skip:
-                continue
-            #
-            out = _attr_to_repr(attr_name, attr_value, print_type)
-            ret.append(out)
     elif attr_mode == "dir":
         values = dir(obj)
-        if sort:
-            values = sorted(values)
-        for attr_name in values:
-            attr_value = getattr(obj, attr_name)
-            skip = _to_skip_attribute(
-                attr_name,
-                attr_value,
-                callable_mode,
-                private_mode,
-                dunder_mode,
-                attr_names_to_skip,
-            )
-            _LOG.debug(
-                "attr_name=%s attr_value=%s -> skip", attr_name, attr_value, skip
-            )
-            if skip:
-                continue
-            #
-            out = _attr_to_repr(attr_name, attr_value, print_type)
-            ret.append(out)
+    elif attr_mode == "config":
+        values = obj.get_config_attributes()
     else:
-        hdbg.dassert(f"Invalid attr_mode='{attr_mode}'")
+        raise ValueError(f"Invalid attr_mode='{attr_mode}'")
+    if sort:
+        values = sorted(values)
+    for attr_name in values:
+        if attr_mode == "__dict__":
+            attr_value = obj.__dict__[attr_name]
+        elif attr_mode in ["dir", "config"]:
+            attr_value = getattr(obj, attr_name)
+        else:
+            raise ValueError(f"Invalid attr_mode='{attr_mode}'")
+        skip = _to_skip_attribute(
+            attr_name,
+            attr_value,
+            callable_mode,
+            private_mode,
+            dunder_mode,
+            attr_names_to_skip,
+        )
+        _LOG.debug(
+            "attr_name=%s attr_value=%s -> skip", attr_name, attr_value, skip
+        )
+        if skip:
+            continue
+        #
+        out = _attr_to_repr(attr_name, attr_value, print_type)
+        ret.append(out)
     #
     txt = []
     txt.append(hprint.to_object_repr(obj) + ":")
@@ -320,55 +358,127 @@ def obj_to_repr(
     return "\n".join(txt)
 
 
+# #############################################################################
+# PrintableMixin
+# #############################################################################
+
+
 class PrintableMixin:
     """
-    Implement default `__str__()` and `__repr__()` printing the state of an
-    object.
+    Implement `__str__()` and `__repr__()` to print the state of an object.
 
-    - `str()` is:
-        - to be readable
-        - used for creating output for end user
-    - `repr()` is
-        - to be unambiguous
-        - used for debugging and development.
-
-    These methods can be overridden with more specific methods, if needed.
+    These methods can be overridden with more specific methods by
+    derived classes.
     """
 
     def __str__(
         self,
+        *,
         attr_names_to_skip: Optional[List[str]] = None,
     ) -> str:
-        return obj_to_str(
+        """
+        Used for creating output for end user and need to be readable.
+        """
+        txt = obj_to_str(
             self,
             print_type=True,
             private_mode="all",
             attr_names_to_skip=attr_names_to_skip,
         )
+        return txt
 
     def __repr__(
         self,
+        *,
         attr_names_to_skip: Optional[List[str]] = None,
     ) -> str:
-        return obj_to_repr(
+        """
+        Used for debugging and development and need to be unambiguous.
+        """
+        txt = obj_to_repr(
             self,
             print_type=True,
             private_mode="all",
             attr_names_to_skip=attr_names_to_skip,
         )
+        return txt
+
+    @staticmethod
+    @abc.abstractmethod
+    def get_config_attributes() -> List[str]:
+        """
+        Get list of attributes that are relevant to the configuration of each
+        block.
+        """
+        ...
+
+    # TODO(Grisha): decide if we need this method: what are the use-cases?
+    #  Ideally we should just save `SystemConfig` and load it when needed.
+    def to_config_dict(self) -> Dict[str, Any]:
+        """
+        Get class configuration as dict.
+        """
+        res_dict = {}
+        # Get class attribute names to print.
+        attributes = self.get_config_attributes()
+        hdbg.dassert_is_subset(attributes, self.__dict__.keys())
+        # Iterate over attributes and add their state to the dict.
+        for attr in attributes:
+            value = getattr(self, attr)
+            # Get a list of types the value class is derived from.
+            value_parent_classes = value.__class__.__mro__
+            if any(
+                "helpers.hobject.PrintableMixin" in str(parent_class)
+                for parent_class in value_parent_classes
+            ):
+                # Call the function recursively if value is also
+                # a `PrintableMixin` descendant.
+                dict_val = value.to_config_dict()
+            else:
+                dict_val = value
+            # Put value in the result dict.
+            res_dict[attr] = dict_val
+        return res_dict
+
+    def to_config_str(self) -> str:
+        """
+        Get class configuration as string.
+        """
+        attr_mode = "config"
+        config_str = obj_to_repr(
+            self,
+            attr_mode=attr_mode,
+            print_type=True,
+            callable_mode="all",
+            private_mode="all",
+            dunder_mode="skip",
+        )
+        return config_str
 
 
 # #############################################################################
 
 
+# TODO(gp): CleanUp. This is for testing and should be in hobject_test.py.
+# TODO(gp): -> check_object_signature
 def test_object_signature(
     self_: Any, obj: Any, *, remove_lines_regex: Optional[str] = None
 ) -> None:
+    """
+    Print a string representation of an object using both `str()` and `repr()`.
+
+    :param obj: the object to print
+    :param remove_lines_regex: a regex to remove certain lines from the
+        output
+    """
     txt = []
+    #
     txt.append(hprint.frame("str:"))
     txt.append(str(obj))
+    #
     txt.append(hprint.frame("repr:"))
     txt.append(repr(obj))
+    #
     txt = "\n".join(txt)
     # Remove certain lines, if needed.
     if remove_lines_regex:

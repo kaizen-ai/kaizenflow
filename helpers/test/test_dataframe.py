@@ -29,10 +29,10 @@ class Test_filter_data_by_values1(hunitest.TestCase):
         # TODO(gp): Factor out the common code.
         str_output = (
             f"{hprint.frame('data')}\n"
-            f"{hunitest.convert_df_to_string(data, index=True)}\n"
+            f"{hpandas.df_to_str(data)}\n"
             f"{hprint.frame('filters')}\n{filters}\n"
             f"{hprint.frame('filtered_data')}\n"
-            f"{hunitest.convert_df_to_string(filtered_data, index=True)}\n"
+            f"{hpandas.df_to_str(filtered_data)}\n"
             f"{hunitest.convert_info_to_string(info)}"
         )
         self.check_string(str_output)
@@ -45,10 +45,10 @@ class Test_filter_data_by_values1(hunitest.TestCase):
         filtered_data = hdatafr.filter_data_by_values(data, filters, "or", info)
         str_output = (
             f"{hprint.frame('data')}\n"
-            f"{hunitest.convert_df_to_string(data, index=True)}\n"
+            f"{hpandas.df_to_str(data)}\n"
             f"{hprint.frame('filters')}\n{filters}\n"
             f"{hprint.frame('filtered_data')}"
-            f"\n{hunitest.convert_df_to_string(filtered_data, index=True)}\n"
+            f"\n{hpandas.df_to_str(filtered_data)}\n"
             f"{hunitest.convert_info_to_string(info)}"
         )
         self.check_string(str_output)
@@ -65,10 +65,10 @@ class Test_filter_data_by_comparison(hunitest.TestCase):
         )
         str_output = (
             f"{hprint.frame('data')}\n"
-            f"{hunitest.convert_df_to_string(data, index=True)}\n"
+            f"{hpandas.df_to_str(data)}\n"
             f"{hprint.frame('filters')}\n{filters}\n"
             f"{hprint.frame('filtered_data')}\n"
-            f"{hunitest.convert_df_to_string(filtered_data, index=True)}\n"
+            f"{hpandas.df_to_str(filtered_data)}\n"
             f"{hunitest.convert_info_to_string(info)}"
         )
         self.check_string(str_output)
@@ -83,10 +83,10 @@ class Test_filter_data_by_comparison(hunitest.TestCase):
         )
         str_output = (
             f"{hprint.frame('data')}\n"
-            f"{hunitest.convert_df_to_string(data, index=True)}\n"
+            f"{hpandas.df_to_str(data)}\n"
             f"{hprint.frame('filters')}\n{filters}\n"
             f"{hprint.frame('filtered_data')}"
-            f"\n{hunitest.convert_df_to_string(filtered_data, index=True)}\n"
+            f"\n{hpandas.df_to_str(filtered_data)}\n"
             f"{hunitest.convert_info_to_string(info)}"
         )
         self.check_string(str_output)
@@ -112,7 +112,7 @@ class TestFilterDataByMethod(hunitest.TestCase):
         act = hdatafr.filter_data_by_method(
             data=data, filters=filters, mode=mode, info=info
         )
-        act = hunitest.convert_df_to_string(act, decimals=3)
+        act = hpandas.df_to_str(act, precision=3)
         # Check output.
         self.check_string(act, fuzzy_match=True)
 
@@ -124,7 +124,7 @@ class Test_apply_nan_mode(hunitest.TestCase):
         """
         series = self._get_series_with_nans(seed=1)
         actual = hdatafr.apply_nan_mode(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test2(self) -> None:
@@ -133,7 +133,7 @@ class Test_apply_nan_mode(hunitest.TestCase):
         """
         series = self._get_series_with_nans(seed=1)
         actual = hdatafr.apply_nan_mode(series, mode="drop")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test3(self) -> None:
@@ -142,7 +142,7 @@ class Test_apply_nan_mode(hunitest.TestCase):
         """
         series = self._get_series_with_nans(seed=1)
         actual = hdatafr.apply_nan_mode(series, mode="ffill")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test4(self) -> None:
@@ -151,7 +151,7 @@ class Test_apply_nan_mode(hunitest.TestCase):
         """
         series = self._get_series_with_nans(seed=1)
         actual = hdatafr.apply_nan_mode(series, mode="ffill_and_drop_leading")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test5(self) -> None:
@@ -160,7 +160,7 @@ class Test_apply_nan_mode(hunitest.TestCase):
         """
         series = self._get_series_with_nans(seed=1)
         actual = hdatafr.apply_nan_mode(series, mode="fill_with_zero")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     # Smoke test for empty input.

@@ -4,9 +4,11 @@ Import as:
 import helpers.hpandas as hpandas
 """
 
+import csv
 import logging
 import random
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+import re
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -26,6 +28,8 @@ import helpers.hsystem as hsystem
 _LOG = logging.getLogger(__name__)
 # Enable extra verbose debugging. Do not commit.
 _TRACE = False
+
+RowsValues = List[List[str]]
 
 
 # #############################################################################
@@ -296,6 +300,7 @@ def dassert_indices_equal(
     df2: pd.DataFrame,
     *,
     allow_series: bool = False,
+    only_warning: bool = False,
 ) -> None:
     """
     Ensure that `df1` and `df2` share a common index.
@@ -314,6 +319,7 @@ def dassert_indices_equal(
         "df1.index.difference(df2.index)=\n%s\ndf2.index.difference(df1.index)=\n%s",
         df1.index.difference(df2.index),
         df2.index.difference(df1.index),
+        only_warning=only_warning,
     )
 
 
@@ -322,6 +328,7 @@ def dassert_columns_equal(
     df2: pd.DataFrame,
     *,
     sort_cols: bool = False,
+    only_warning: bool = False,
 ) -> None:
     """
     Ensure that `df1` and `df2` have the same columns.
@@ -339,6 +346,7 @@ def dassert_columns_equal(
         "df1.columns.difference(df2.columns)=\n%s\ndf2.columns.difference(df1.columns)=\n%s",
         df1.columns.difference(df2.columns),
         df2.columns.difference(df1.columns),
+        only_warning=only_warning,
     )
 
 
@@ -350,6 +358,32 @@ def dassert_axes_equal(
     """
     dassert_indices_equal(df1, df2)
     dassert_columns_equal(df1, df2, sort_cols=sort_cols)
+
+
+# TODO(Grisha): instead of passing `rtol` and `atol` use `**allclose_kwargs: Dict[str, Any]`.
+def dassert_approx_eq(
+    val1: Any,
+    val2: Any,
+    rtol: float = 1e-05,
+    atol: float = 1e-08,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
+) -> None:
+    # Approximate comparison is not applicable for strings.
+    hdbg.dassert_is_not(type(val1), str)
+    hdbg.dassert_is_not(type(val2), str)
+    # Convert iterable inputs to list in order to comply with numpy.
+    if isinstance(val1, Iterable):
+        val1 = list(val1)
+    if isinstance(val2, Iterable):
+        val2 = list(val2)
+    cond = np.allclose(
+        np.array(val1), np.array(val2), rtol=rtol, atol=atol, equal_nan=True
+    )
+    if not cond:
+        txt = f"'{val1}'\n==\n'{val2}' rtol={rtol}, atol={atol}"
+        hdbg._dfatal(txt, msg, *args, only_warning=only_warning)  # type: ignore
 
 
 # #############################################################################
@@ -947,6 +981,7 @@ def merge_dfs(
     threshold_col_name: str,
     *,
     threshold: float = 0.9,
+    intersecting_columns: Optional[List[str]] = None,
     **pd_merge_kwargs: Any,
 ) -> pd.DataFrame:
     """
@@ -955,7 +990,14 @@ def merge_dfs(
     :param threshold_col_name: a column's name to check the minimum overlap on
     :param threshold: minimum overlap of unique values in a specified column to
         perform the merge
+    :param intersecting_columns: allow certain columns to appear in both dataframes;
+        store both in the resulting df with corresponding suffixes
     """
+    _LOG.debug(
+        hprint.to_str(
+            "threshold_col_name threshold intersecting_columns pd_merge_kwargs"
+        )
+    )
     # Sanity check column types.
     threshold_col1 = df1[threshold_col_name]
     threshold_col2 = df2[threshold_col_name]
@@ -978,9 +1020,20 @@ def merge_dfs(
     )
     hdbg.dassert_lte(threshold, threshold_common_values_share1)
     hdbg.dassert_lte(threshold, threshold_common_values_share2)
-    # Check that there are no common columns.
-    df1_cols = set(df1.columns.to_list()) - set(pd_merge_kwargs["on"])
-    df2_cols = set(df2.columns.to_list()) - set(pd_merge_kwargs["on"])
+    if intersecting_columns is None:
+        # Use an empty set instead of None to perform set difference further.
+        intersecting_columns = set()
+    # Check that there are no common columns except for the ones in `intersecting_columns`.
+    df1_cols = (
+        set(df1.columns.to_list())
+        - set(pd_merge_kwargs["on"])
+        - set(intersecting_columns)
+    )
+    df2_cols = (
+        set(df2.columns.to_list())
+        - set(pd_merge_kwargs["on"])
+        - set(intersecting_columns)
+    )
     hdbg.dassert_not_intersection(df1_cols, df2_cols)
     #
     res_df = df1.merge(df2, **pd_merge_kwargs)
@@ -1022,6 +1075,56 @@ def drop_duplicated(
     df.index.name = old_index_name
     _LOG.debug("after df=\n%s", df_to_str(df))
     return df
+
+
+# #############################################################################
+
+
+def convert_col_to_int(
+    df: pd.DataFrame,
+    col: str,
+) -> pd.DataFrame:
+    """
+    Convert a column to an integer column.
+
+    Example use case: Parquet uses categoricals. If supplied with a
+    categorical-type column, this function will convert it to an integer
+    column.
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_isinstance(col, str)
+    hdbg.dassert_in(col, df.columns)
+    # Attempt the conversion.
+    df[col] = df[col].astype("int64")
+    # Trust, but verify.
+    dassert_series_type_is(df[col], np.int64)
+    return df
+
+
+def cast_series_to_type(
+    series: pd.Series, series_type: Optional[type]
+) -> pd.Series:
+    """
+    Convert a Pandas series to a given type.
+
+    :param series: the input series
+    :param series_type: the type to convert the series into
+        - if None, then the series values are turned into Nones
+    :return: the series in the required type
+    """
+    if series_type is None:
+        # Turn the series values into None.
+        series[:] = None
+    elif series_type is pd.Timestamp:
+        # Convert to timestamp.
+        series = pd.to_datetime(series)
+    elif series_type is dict:
+        # Convert to dict.
+        series = series.apply(lambda x: eval(x))
+    else:
+        # Convert to the specified type.
+        series = series.astype(series_type)
+    return series
 
 
 def _display(log_level: int, df: pd.DataFrame) -> None:
@@ -1072,6 +1175,9 @@ def _df_to_str(
             import tabulate
 
             out.append(tabulate.tabulate(df, headers="keys", tablefmt="psql"))
+        # TODO(Grisha): Add an option to display all rows since if `num_rows`
+        # is `None`, only first and last 5 rows are displayed. Consider using
+        # `df.to_string()` instead of `str(df)`.
         if num_rows is None or df.shape[0] <= num_rows:
             # Print the entire data frame.
             if not is_in_ipynb:
@@ -1119,6 +1225,7 @@ def _df_to_str(
 def df_to_str(
     df: Union[pd.DataFrame, pd.Series, pd.Index],
     *,
+    handle_signed_zeros: bool = False,
     num_rows: Optional[int] = 6,
     print_dtypes: bool = False,
     print_shape_info: bool = False,
@@ -1149,6 +1256,7 @@ def df_to_str(
     _LOG.log(log_level, hpandas.df_to_str(df, num_rows=3, log_level=log_level))
     ```
 
+    :param: handle_signed_zeros: convert `-0.0` to `0.0`
     :param: num_rows: max number of rows to print (half from the top and half from
         the bottom of the dataframe)
         - `None` to print the entire dataframe
@@ -1167,8 +1275,9 @@ def df_to_str(
     # For some reason there are so-called "negative zeros", but we consider
     # them equal to `0.0`.
     df = df.copy()
-    for col_name in df.select_dtypes(include=[np.float64, float]).columns:
-        df[col_name] = df[col_name].where(df[col_name] != -0.0, 0.0)
+    if handle_signed_zeros:
+        for col_name in df.select_dtypes(include=[np.float64, float]).columns:
+            df[col_name] = df[col_name].where(df[col_name] != -0.0, 0.0)
     out = []
     # Print the tag.
     if tag is not None:
@@ -1250,12 +1359,12 @@ def df_to_str(
         if print_memory_usage:
             out.append("* memory=")
             mem_use_df = pd.concat(
-                [df.memory_usage(deep=False), df.memory_usage(deep=True)], axis=1
+                [df.memory_usage(deep=False), df.memory_usage(deep=True)],
+                axis=1,
+                keys=["shallow", "deep"],
             )
-            mem_use_df.columns = ["shallow", "deep"]
             # Add total row.
-            mem_use_df_total = mem_use_df.sum(axis=0)
-            mem_use_df_total.name = "Total"
+            mem_use_df_total = pd.DataFrame({"total": mem_use_df.sum(axis=0)})
             mem_use_df = pd.concat([mem_use_df, mem_use_df_total.T])
             # Convert into the desired format.
             if memory_usage_mode == "bytes":
@@ -1325,6 +1434,123 @@ def df_to_str(
     return txt
 
 
+def _assemble_df_rows(rows_values: RowsValues) -> RowsValues:
+    """
+    Organize dataframe values into a column-row structure.
+
+    - Indentation artifacts are removed
+    - The index placement is handled, i.e.
+      - if the index is named, the name is located and moved to the same
+        row as the column names
+      - if the index is not named, the row with the column names receives
+        a placeholder empty value in its place
+    - Empty columns are dropped
+
+    :param rows_values: row values extracted from a string df representation
+    :return: row values assembled into a valid column-row structure
+    """
+    # Clean up indentation artifacts.
+    if all(row[0] == "" for row in rows_values):
+        # Remove the first empty cell in each row.
+        for row in rows_values:
+            del row[0]
+    # If the index is named, its name is located in the second row,
+    # with an optional extra empty value cell value next to it.
+    if len(rows_values[1]) == 1 or (
+        len(rows_values[1]) == 2 and rows_values[1][1] == ""
+    ):
+        # Move the index name to the row with all the column names.
+        if rows_values[0][0] == "":
+            rows_values[0][0] = rows_values[1][0]
+        else:
+            rows_values[0].insert(0, rows_values[1][0])
+        # Drop the former index name row.
+        del rows_values[1]
+    else:
+        # Add an empty cell for the absent index name.
+        rows_values[0].insert(0, "")
+    # Identify and remove empty columns.
+    min_len_row = min(len(row) for row in rows_values)
+    idxs_to_delete = []
+    for i in range(min_len_row):
+        if all(row[i] == "" for row in rows_values):
+            idxs_to_delete.append(i)
+    for idx in idxs_to_delete:
+        for row in rows_values:
+            del row[idx]
+    # Confirm that all the rows have the same number of values.
+    hdbg.dassert_eq(len({len(row) for row in rows_values}), 1)
+    return rows_values
+
+
+def str_to_df(
+    df_as_str: str,
+    col_to_type: Dict[str, Optional[type]],
+    col_to_name_type: Dict[str, type],
+) -> pd.DataFrame:
+    """
+    Convert a string representation of a dataframe into a Pandas df.
+
+    :param df_as_str: a df as a string
+        - the format of the string is the same as the output of
+          `hpandas.df_to_str()` on a pd.DataFrame, e.g.
+          ```
+              col1 col2   col3   col4
+          0   0.1  a      None   2020-01-01
+          1   0.2  "b c"  None   2021-05-05
+          ```
+        - values (including column names) that contain spaces need
+          to be enclosed in double quotation marks, e.g.
+          "2023-03-15 16:35:41.205000+00:00"
+    :param col_to_type: a mapping between the column names and the
+        types of the values in these columns
+        - if a column is not present in the mapping, its values will
+          remain strings
+        - to indicate the type of index values, use {"__index__": ...}
+          mapping, e.g. {"__index__": pd.Timestamp}
+    :param col_to_name_type: a mapping between the column names and
+        the required types of these column names
+        - same conventions apply as for `col_to_type` (see above)
+    :return: a converted Pandas dataframe
+    """
+    # Separate the rows.
+    rows = df_as_str.split("\n")
+    # Clean up extra spaces.
+    rows_merged_space = [re.sub(" +", " ", row) for row in rows if len(row)]
+    # Identify individual values in the rows.
+    rows_values = list(csv.reader(rows_merged_space, delimiter=" "))
+    # Remove the placeholder ["..."] row.
+    rows_values = [row for row in rows_values if row != ["..."]]
+    # Organize values into a proper column-row structure.
+    rows_values = _assemble_df_rows(rows_values)
+    # Get the column names.
+    column_names = rows_values[0][1:]
+    # Get the index.
+    index_values = [row[0] for row in rows_values[1:]]
+    index_name = rows_values[0][0]
+    # Construct the df.
+    df = pd.DataFrame(
+        [row[1:] for row in rows_values[1:]],
+        columns=column_names,
+        index=index_values,
+    )
+    if index_name != "":
+        df.index.name = index_name
+    # Cast the columns into appropriate types.
+    for col, col_type in col_to_type.items():
+        if col == "__index__":
+            df.index = cast_series_to_type(df.index, col_type)
+        else:
+            df[col] = cast_series_to_type(df[col], col_type)
+    # Cast the column names into appropriate types.
+    for col, col_name_type in col_to_name_type.items():
+        if col == "__index__":
+            df.index = df.index.rename(col_name_type(df.index.name))
+        else:
+            df = df.rename(columns={col: col_name_type(col)})
+    return df
+
+
 def convert_df_to_json_string(
     df: pd.DataFrame,
     n_head: Optional[int] = 10,
@@ -1380,30 +1606,6 @@ def convert_df_to_json_string(
     # Join shape and dataframe to single string.
     output_str = "\n".join([shape, "Head:", head_json, "Tail:", tail_json])
     return output_str
-
-
-# #############################################################################
-
-
-def convert_col_to_int(
-    df: pd.DataFrame,
-    col: str,
-) -> pd.DataFrame:
-    """
-    Convert a column to an integer column.
-
-    Example use case: Parquet uses categoricals. If supplied with a
-    categorical-type column, this function will convert it to an integer
-    column.
-    """
-    hdbg.dassert_isinstance(df, pd.DataFrame)
-    hdbg.dassert_isinstance(col, str)
-    hdbg.dassert_in(col, df.columns)
-    # Attempt the conversion.
-    df[col] = df[col].astype("int64")
-    # Trust, but verify.
-    dassert_series_type_is(df[col], np.int64)
-    return df
 
 
 # #############################################################################

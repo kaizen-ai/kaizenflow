@@ -6,6 +6,7 @@ import helpers.hparquet as hparque
 
 import collections
 import datetime
+import glob
 import logging
 import os
 from typing import Any, Callable, Iterator, List, Optional, Tuple, Union
@@ -472,6 +473,41 @@ def build_year_month_filter(
     return filter_
 
 
+def build_filter_with_only_equalities(
+    start_timestamp: pd.Timestamp, end_timestamp: pd.Timestamp
+) -> list:
+    """
+    Build a list of Parquet filters based on equality conditions for partition
+    columns.
+
+    This function creates a filter for each partition column (year, month, day) based on the
+    equality conditions between components of the timestamp arguments when possible.
+
+    Example:
+    Input args:
+     start_timestamp: 2022-08-31T00:01:00+00:00
+     end-timestamp: 2022-08-31T23:59:59+00:00
+    Output:
+     [("year", "=", 2022), ("month", "=", 8), ("day", "=", 31)]
+
+    These filters enhance performance by allowing to load data quicker when used in tandem with timestamp filters.
+    Less memory will be used because less `.pq` need to be loaded.
+
+    :param start_timestamp: start of the interval.
+    :param end_timestamp: end of the interval:
+    """
+    hdbg.dassert_isinstance(start_timestamp, pd.Timestamp)
+    hdbg.dassert_isinstance(end_timestamp, pd.Timestamp)
+    filters = []
+    if start_timestamp.year == end_timestamp.year:
+        filters.append(("year", "==", start_timestamp.year))
+        if start_timestamp.month == end_timestamp.month:
+            filters.append(("month", "==", start_timestamp.month))
+            if start_timestamp.day == end_timestamp.day:
+                filters.append(("day", "==", start_timestamp.day))
+    return filters
+
+
 def collate_parquet_tile_metadata(
     path: str,
 ) -> pd.DataFrame:
@@ -760,7 +796,7 @@ def add_date_partition_columns(
                 # Extract data corresponding to `column_name` (e.g.,
                 # `df.index.year`).
                 if column_name == "weekofyear":
-                    # The `weekofyear` attribute has been deprecated in Pandas 
+                    # The `weekofyear` attribute has been deprecated in Pandas
                     # 2.1.0, so weeks are extracted using a function instead of
                     # the attribute name.
                     df["weekofyear"] = df.index.isocalendar().week
@@ -886,15 +922,26 @@ def list_and_merge_pq_files(
     if aws_profile is not None:
         filesystem = hs3.get_s3fs(aws_profile)
     else:
-        raise NotImplementedError("Local filesystem is not implemented!")
+        filesystem = None
     # Get full paths to each Parquet file inside root dir.
-    parquet_files = filesystem.glob(f"{root_dir}/**.parquet")
+    if filesystem:
+        # Use specialized S3 filesystem function to list Parquet files efficiently.
+        # since glob.glob() is very slow as it does a lot of accesses to S3.
+        parquet_files = filesystem.glob(f"{root_dir}/**.parquet")
+    else:
+        # For local filesystem, use glob.glob
+        parquet_files = glob.glob(f"{root_dir}/**/*.parquet", recursive=True)
     _LOG.debug("Parquet files: '%s'", parquet_files)
     # Get paths only to the lowest level of dataset folders.
     dataset_folders = set(f.rsplit("/", 1)[0] for f in parquet_files)
     for folder in dataset_folders:
         # Get files per folder and merge if there are multiple ones.
-        folder_files = filesystem.ls(folder)
+        if filesystem:
+            # Use specialized S3 filesystem function to list Parquet files efficiently.
+            folder_files = filesystem.ls(folder)
+        else:
+            # For local filesystem, use os.listdir
+            folder_files = [os.path.join(folder, f) for f in os.listdir(folder)]
         hdbg.dassert_ne(
             len(folder_files), 0, msg=f"Empty folder `{folder}` detected!"
         )
@@ -924,13 +971,19 @@ def list_and_merge_pq_files(
         else:
             hdbg.dfatal("Supported drop duplicates modes: ohlcv, bid_ask")
         data = hdatafr.remove_duplicates(data, duplicate_columns, control_column)
-        # Remove all old files and write new, merged one.
-        filesystem.rm(folder, recursive=True)
-        pq.write_table(
-            pa.Table.from_pandas(data),
-            folder + "/" + file_name,
-            filesystem=filesystem,
-        )
+        # Remove all old files and write the new, merged one.
+        if filesystem:
+            filesystem.rm(folder, recursive=True)
+            pq.write_table(
+                pa.Table.from_pandas(data),
+                folder + "/" + file_name,
+                filesystem=filesystem,
+            )
+        else:
+            # Use os.remove for local filesystem to remove files.
+            for file_path in folder_files:
+                os.remove(file_path)
+            data.to_parquet(os.path.join(folder, file_name))
 
 
 def maybe_cast_to_int(string: str) -> Union[str, int]:

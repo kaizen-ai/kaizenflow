@@ -27,6 +27,9 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(Grisha): Why does it require `ck_infra`?
+@pytest.mark.requires_ck_infra
+@pytest.mark.requires_docker_in_docker
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("has_dind_support()")
     and not henv.execute_repo_config_code("use_docker_sibling_containers()"),
@@ -104,8 +107,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         # TODO(gp): -> db_connection
         cls.connection = hsql.get_connection(*connection_info, autocommit=True)
 
-    @pytest.mark.requires_ck_infra
-    @pytest.mark.requires_docker_in_docker
+    # TODO(Grisha): difference between cmamp and sorrentum.
     @classmethod
     def tearDownClass(cls) -> None:
         """
@@ -148,8 +150,9 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         """
         Return a unique ID to create an OMS instance.
 
-        This ID is used to generate Docker compose / env files and services, so
-        that we can avoid collisions in case of parallel execution.
+        This ID is used to generate Docker compose / env files and
+        services, so that we can avoid collisions in case of parallel
+        execution.
 
         This function is specified by the unit test in a way that is
         unique to each test.
@@ -203,7 +206,6 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
 
 
 class TestImOmsDbHelper(TestDbHelper, abc.ABC):
-
     # TODO(gp): Rewrite building a YAML with a package.
     @classmethod
     def _create_docker_files(cls) -> None:

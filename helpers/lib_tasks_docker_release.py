@@ -21,6 +21,7 @@ import helpers.lib_tasks_docker as hlitadoc
 import helpers.lib_tasks_pytest as hlitapyt
 import helpers.lib_tasks_utils as hlitauti
 
+_DEFAULT_TARGET_REGISTRY = "aws_ecr.ck"
 _LOG = logging.getLogger(__name__)
 
 # pylint: disable=protected-access
@@ -75,6 +76,7 @@ def docker_build_local_image(  # type: ignore
     cache=True,
     base_image="",
     update_poetry=False,
+    refresh_only_poetry=False,
     container_dir_name=".",
     just_do_it=False,
     multi_build=False,
@@ -87,9 +89,14 @@ def docker_build_local_image(  # type: ignore
     :param cache: use the cache
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param update_poetry: run poetry lock to update the packages
+    :param refresh_only_poetry: just refresh the poetry.lock file
+        without updating all the packages. This is useful when the goal
+        is to remove / add / update only a single package without
+        updating everything.
     :param just_do_it: execute the action ignoring the checks
     :param multi_build: build for multiple architectures
-    :param platform: specific platforms to use. E.g.: linux/amd64,linux/arm64
+    :param platform: specific platforms to use. E.g.:
+        linux/amd64,linux/arm64
     """
     hlitauti.report_task(container_dir_name=container_dir_name)
     if just_do_it:
@@ -103,8 +110,16 @@ def docker_build_local_image(  # type: ignore
     )
     dev_version = hlitadoc._to_dev_version(prod_version)
     # Update poetry, if needed.
+    hdbg.dassert_imply(
+        not update_poetry,
+        not refresh_only_poetry,
+        "To only refresh packages, set `update_poetry` to True.",
+    )
     if update_poetry:
-        cmd = "cd devops/docker_build; poetry lock -v"
+        cmd = "cd devops/docker_build; poetry lock -v "
+        if refresh_only_poetry:
+            # See the official docs: https://python-poetry.org/docs/cli/#lock.
+            cmd += " --no-update"
         hlitauti.run(ctx, cmd)
     # Prepare `.dockerignore`.
     docker_ignore = ".dockerignore.dev"
@@ -121,6 +136,8 @@ def docker_build_local_image(  # type: ignore
     opts = "--no-cache" if not cache else ""
     # We want to enable using multiarch and build for both a single arch or more.
     if multi_build:
+        # Login to AWS ECR, because we need to build the local image remotely.
+        hlitadoc.docker_login(ctx)
         hdbg.dassert_ne(
             platform, "", "Platform should be linux/amd64, linux/arm64 or both"
         )
@@ -174,55 +191,6 @@ def docker_build_local_image(  # type: ignore
         hlitauti.run(ctx, cmd)
     # Check image and report stats.
     cmd = f"docker image ls {image_local}"
-    hlitauti.run(ctx, cmd)
-
-
-# TODO(Grisha): `base_image` and `target` are not orthogonal as they both contain information
-# about the target Docker registry.
-@task
-def docker_tag_push_multi_build_local_image_as_dev(  # type: ignore
-    ctx, version, local_base_image="", target="aws_ecr.ck", container_dir_name="."
-):
-    """
-    (ONLY CI/CD) Mark the multi-arch "local" image as "dev" and push it.
-
-    Docker image registry address in the local base image name is ignored 
-    when pushing, instead the `target` param provides a Docker image 
-    registry address to push to.
-
-    :param version: version to tag the image and code with
-    :param local_base_image: base name of a local image,
-        e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
-    :param target: target Docker image registry to push the image to
-        - "dockerhub.sorrentum": public Sorrentum Docker image registry
-        - "aws_ecr.ck": private AWS CK ECR        
-    :param container_dir_name: directory where the Dockerfile is located
-    """
-    hlitadoc.docker_login(ctx, target)
-    hlitauti.report_task(container_dir_name=container_dir_name)
-    prod_version = hlitadoc._resolve_version_value(
-        version, container_dir_name=container_dir_name
-    )
-    dev_version = hlitadoc._to_dev_version(prod_version)
-    image_versioned_local = hlitadoc.get_image(local_base_image, "local", dev_version)
-    if target == "aws_ecr.ck":
-        # Use the default AWS CK Docker registry.
-        dev_base_image = ""
-    if target == "dockerhub.sorrentum":
-        # Use public Sorrentum Docker registry.
-        dev_base_image = "sorrentum/cmamp"
-    else:
-        raise ValueError(f"Invalid target Docker image registry='{target}'")
-    # Tag and push the local image as versioned dev image (e.g., `dev-1.0.0`).
-    image_versioned_dev = hlitadoc.get_image(dev_base_image, "dev", dev_version)
-    cmd = f"docker buildx imagetools create -t {image_versioned_dev} {image_versioned_local}"
-    hlitauti.run(ctx, cmd)
-    # Tag and push local image as dev image.
-    latest_version = None
-    image_dev = hlitadoc.get_image(dev_base_image, "dev", latest_version)
-    cmd = (
-        f"docker buildx imagetools create -t {image_dev} {image_versioned_local}"
-    )
     hlitauti.run(ctx, cmd)
 
 
@@ -320,7 +288,7 @@ def docker_release_dev_image(  # type: ignore
     :param fast_tests: run fast tests, unless all tests skipped
     :param slow_tests: run slow tests, unless all tests skipped
     :param superslow_tests: run superslow tests, unless all tests skipped
-    :param qa_tests: run end-to-end linter tests, unless all tests skipped
+    :param qa_tests: run QA tests (e.g., end-to-end linter tests)
     :param push_to_repo: push the image to the repo_short_name
     :param update_poetry: update package dependencies using poetry
     """
@@ -373,6 +341,162 @@ def docker_release_dev_image(  # type: ignore
     _LOG.info("==> SUCCESS <==")
 
 
+# TODO(Grisha): `base_image` and `target_registry` are not orthogonal as they
+# both contain information about the target Docker registry.
+@task
+def docker_tag_push_multi_build_local_image_as_dev(  # type: ignore
+    ctx,
+    version,
+    local_base_image="",
+    target_registry=_DEFAULT_TARGET_REGISTRY,
+    container_dir_name=".",
+):
+    """
+    (ONLY CI/CD) Mark the multi-arch "local" image as "dev" and push it.
+
+    Docker image registry address in the local base image name is ignored
+    when pushing, instead the `target_registry` param provides a Docker image
+    registry address to push to.
+
+    :param version: version to tag the image and code with
+    :param local_base_image: base name of a local image,
+        e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    :param target_registry: target Docker image registry to push the image to
+        - "dockerhub.sorrentum": public Sorrentum Docker image registry
+        - "aws_ecr.ck": private AWS CK ECR
+    :param container_dir_name: directory where the Dockerfile is located
+    """
+    hlitadoc.docker_login(ctx, target_registry)
+    hlitauti.report_task(container_dir_name=container_dir_name)
+    prod_version = hlitadoc._resolve_version_value(
+        version, container_dir_name=container_dir_name
+    )
+    dev_version = hlitadoc._to_dev_version(prod_version)
+    image_versioned_local = hlitadoc.get_image(
+        local_base_image, "local", dev_version
+    )
+    _LOG.info(
+        "Pushing the local dev image to the target_registry=%s", target_registry
+    )
+    if target_registry == _DEFAULT_TARGET_REGISTRY:
+        # Use the default AWS CK Docker registry.
+        dev_base_image = ""
+    elif target_registry == "dockerhub.sorrentum":
+        # Use public Sorrentum Docker registry.
+        dev_base_image = "sorrentum/cmamp"
+    else:
+        raise ValueError(
+            f"Invalid target Docker image registry='{target_registry}'"
+        )
+    # Tag and push the local image as versioned dev image (e.g., `dev-1.0.0`).
+    image_versioned_dev = hlitadoc.get_image(dev_base_image, "dev", dev_version)
+    cmd = f"docker buildx imagetools create -t {image_versioned_dev} {image_versioned_local}"
+    hlitauti.run(ctx, cmd)
+    # Tag and push local image as dev image.
+    latest_version = None
+    image_dev = hlitadoc.get_image(dev_base_image, "dev", latest_version)
+    cmd = (
+        f"docker buildx imagetools create -t {image_dev} {image_versioned_local}"
+    )
+    hlitauti.run(ctx, cmd)
+
+
+@task
+def docker_release_multi_build_dev_image(  # type: ignore
+    ctx,
+    version,
+    # TODO(Grisha): `platform` -> `platforms`? And in all other places.
+    platform,
+    cache=True,
+    update_poetry=True,
+    refresh_only_poetry=False,
+    skip_tests=False,
+    fast_tests=True,
+    slow_tests=True,
+    superslow_tests=False,
+    qa_tests=True,
+    # TODO(Grisha): use iterable values, see
+    # https://docs.pyinvoke.org/en/stable/concepts/invoking-tasks.html#iterable-flag-values
+    # target_registries=...
+    target_registries=_DEFAULT_TARGET_REGISTRY,
+    container_dir_name=".",
+):
+    """
+    (ONLY CI/CD) Build, test, and release the latest multi-arch "dev" image.
+
+    :param version: version to tag the image and code with
+    :param platform: specific platforms to use. E.g.:
+        linux/amd64,linux/arm64
+    :param cache: use the cache
+    :param skip_tests: skip all the tests and release the dev image
+    :param fast_tests: run fast tests, unless all tests skipped
+    :param slow_tests: run slow tests, unless all tests skipped
+    :param superslow_tests: run superslow tests, unless all tests
+        skipped
+    :param qa_tests: run QA tests (e.g., end-to-end linter tests)
+    :param update_poetry: update package dependencies using poetry
+    :param refresh_only_poetry: just refresh the poetry.lock file
+        without updating all the packages. This is useful when the goal
+        is to remove / add / update only a single package without
+        updating everything.
+    :param target_registries: comma separated list of target Docker
+        image registries to push the image to. E.g.,
+        "aws_ecr.ck,dockerhub.sorrentum". See `docker_login()` for
+        details.
+    :param container_dir_name: directory where the Dockerfile is located
+    """
+    hlitauti.report_task(container_dir_name=container_dir_name)
+    target_registries = target_registries.split(",")
+    # 1) Build "local" image remotely in the CK AWS ECR registry and pull once
+    # it is built.
+    docker_build_local_image(
+        ctx,
+        version,
+        cache=cache,
+        update_poetry=update_poetry,
+        refresh_only_poetry=refresh_only_poetry,
+        container_dir_name=container_dir_name,
+        multi_build=True,
+        platform=platform,
+    )
+    # Run resolve after `docker_build_local_image` so that a proper check
+    # for subsequent version can be made in case `FROM_CHANGELOG` token
+    # is used.
+    prod_version = hlitadoc._resolve_version_value(
+        version, container_dir_name=container_dir_name
+    )
+    dev_version = hlitadoc._to_dev_version(prod_version)
+    # 2) Run tests for the "local" image.
+    if skip_tests:
+        _LOG.warning("Skipping all tests and releasing")
+        fast_tests = False
+        slow_tests = False
+        superslow_tests = False
+        qa_tests = False
+    stage = "local"
+    if fast_tests:
+        hlitapyt.run_fast_tests(ctx, stage=stage, version=dev_version)
+    if slow_tests:
+        hlitapyt.run_slow_tests(ctx, stage=stage, version=dev_version)
+    if superslow_tests:
+        hlitapyt.run_superslow_tests(ctx, stage=stage, version=dev_version)
+    # 3) Run QA tests using the local version of an image.
+    # Use the local image because it is not possible to tag a multi-arch
+    # image as dev without releasing (pushing) it.
+    # The difference between a local and a dev image is just a tag.
+    if qa_tests:
+        hlitapyt.run_qa_tests(ctx, stage="local", version=dev_version)
+    # 4) Tag the image as dev image and push it to the target registries.
+    for target_registry in target_registries:
+        docker_tag_push_multi_build_local_image_as_dev(
+            ctx,
+            version=dev_version,
+            target_registry=target_registry,
+            container_dir_name=container_dir_name,
+        )
+    _LOG.info("==> SUCCESS <==")
+
+
 # #############################################################################
 # PROD image flow:
 # #############################################################################
@@ -394,6 +518,7 @@ def docker_build_prod_image(  # type: ignore
     candidate=False,
     user_tag="",
     container_dir_name=".",
+    tag=None,
 ):
     """
     (ONLY CI/CD) Build a prod image.
@@ -426,12 +551,16 @@ def docker_build_prod_image(  # type: ignore
         image_versioned_prod = hlitadoc.get_image(
             base_image, "prod", latest_version
         )
-        head_hash = hgit.get_head_hash(short_hash=True)
+        if not tag:
+            head_hash = hgit.get_head_hash(short_hash=True)
+        else:
+            head_hash = tag
         # Add user name to the prod image name.
         if user_tag:
             image_versioned_prod += f"-{user_tag}"
         # Add head hash to the prod image name.
         image_versioned_prod += f"-{head_hash}"
+        
     else:
         image_versioned_prod = hlitadoc.get_image(
             base_image, "prod", prod_version
@@ -533,6 +662,7 @@ def docker_release_prod_image(  # type: ignore
     fast_tests=True,
     slow_tests=True,
     superslow_tests=False,
+    qa_tests=True,
     push_to_repo=True,
     container_dir_name=".",
 ):
@@ -549,6 +679,7 @@ def docker_release_prod_image(  # type: ignore
     :param fast_tests: run fast tests, unless all tests skipped
     :param slow_tests: run slow tests, unless all tests skipped
     :param superslow_tests: run superslow tests, unless all tests skipped
+    :param qa_tests: run QA tests (e.g., end-to-end linter tests)
     :param push_to_repo: push the image to the repo_short_name
     """
     hlitauti.report_task(container_dir_name=container_dir_name)
@@ -573,7 +704,10 @@ def docker_release_prod_image(  # type: ignore
         hlitapyt.run_slow_tests(ctx, stage=stage, version=prod_version)
     if superslow_tests:
         hlitapyt.run_superslow_tests(ctx, stage=stage, version=prod_version)
-    # 3) Push prod image.
+    # 3) Run QA tests using the local version of the prod image before pushing it to ECR.
+    if qa_tests:
+        hlitapyt.run_qa_tests(ctx, stage=stage, version=prod_version)
+    # 4) Push prod image.
     if push_to_repo:
         docker_push_prod_image(
             ctx, version=prod_version, container_dir_name=container_dir_name
@@ -672,29 +806,30 @@ def docker_rollback_prod_image(  # type: ignore
 
 
 @task
-def docker_create_candidate_image(ctx, task_definition, user_tag=""):  # type: ignore
+def docker_create_candidate_image(ctx, task_definition, user_tag="", region="eu-north-1"):  # type: ignore
     """
     Create new prod candidate image and update the specified ECS task
     definition such that the Image URL specified in container definition points
     to the new candidate image.
 
-    :param task_definition: the name of the ECS task definition for which an update
-      to container image URL is made, e.g. cmamp-test
-    :param user_tag: the name of the user creating the image, empty parameter means
-      the command was run via gh actions
+    :param task_definition: the name of the ECS task definition for
+        which an update to container image URL is made, e.g. cmamp-test
+    :param user_tag: the name of the user creating the image, empty
+        parameter means the command was run via gh actions
+    :param region: AWS Region, for Tokyo region specify 'ap-northeast-1'
     """
-    # Create new prod image.
-    docker_build_prod_image(
-        ctx,
-        version=hlitadoc._IMAGE_VERSION_FROM_CHANGELOG,
-        candidate=True,
-        user_tag=user_tag,
-    )
     # Get the hash of the image.
     tag = hgit.get_head_hash(".", short_hash=True)
     if user_tag:
         # Add user name to the candidate tag.
         tag = f"{user_tag}-{tag}"
+    # Create new prod image.
+    docker_build_prod_image(
+        ctx,
+        version=hlitadoc._IMAGE_VERSION_FROM_CHANGELOG,
+        candidate=True,
+        tag=tag,
+    )
     # Push candidate image.
     docker_push_prod_candidate_image(ctx, tag)
     exec_name = "im_v2/aws/aws_update_task_definition.py"
@@ -704,13 +839,13 @@ def docker_create_candidate_image(ctx, task_definition, user_tag=""):  # type: i
     hdbg.dassert_file_exists(exec_name)
     _LOG.debug("exec_name=%s", exec_name)
     # Register new task definition revision with updated image URL.
-    cmd = f'invoke docker_cmd -c "{exec_name} -t {task_definition} -i {tag}"'
+    cmd = f'invoke docker_cmd -c "{exec_name} -t {task_definition} -i {tag} -r {region}"'
     hlitauti.run(ctx, cmd)
 
 
 @task
 def docker_update_prod_task_definition(
-    ctx,version, preprod_tag, airflow_dags_s3_path, task_definition
+    ctx, version, preprod_tag, airflow_dags_s3_path, task_definition
 ):  # type: ignore
     """
     Update image in prod task definition to the desired version.

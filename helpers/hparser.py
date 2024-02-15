@@ -330,7 +330,7 @@ def read_file(file_name: str) -> List[str]:
     return txt
 
 
-def write_file(txt: List[str], file_name: str) -> None:
+def write_file(txt: Union[str, List[str]], file_name: str) -> None:
     """
     Write txt in a file or stdout (represented by `-`).
     """
@@ -512,3 +512,15 @@ def read_output_metadata(output_metadata_file: str) -> OutputMetadata:
     """
     output_metadata: OutputMetadata = hio.from_json(output_metadata_file)
     return output_metadata
+
+
+# A custom type function to convert string to bool
+def str_to_bool(value):
+    if value.lower() == "true":
+        return True
+    elif value.lower() == "false":
+        return False
+    else:
+        raise argparse.ArgumentTypeError(
+            "Invalid boolean value. Use 'true' or 'false'."
+        )
