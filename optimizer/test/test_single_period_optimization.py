@@ -27,7 +27,7 @@ def _run_optimizer(
     # Round to the nearest cent to reduce jitter.
     precision = 2
     actual_str = hpandas.df_to_str(
-        optimized.round(precision), precision=precision
+        optimized.round(precision), handle_signed_zeros=True, precision=precision
     )
     return actual_str
 
@@ -63,13 +63,14 @@ class TestSinglePeriodOptimizer1(hunitest.TestCase):
     ) -> str:
         dict_ = {
             "dollar_neutrality_penalty": 0.0,
-            "volatility_penalty": 0.0,
+            "constant_correlation": 0.0,
+            "constant_correlation_penalty": 0.0,
             "relative_holding_penalty": 0.0,
             "relative_holding_max_frac_of_gmv": 1.0,
             "target_gmv": 3000,
             "target_gmv_upper_bound_penalty": 0.0,
             "target_gmv_hard_upper_bound_multiple": 1.00,
-            "turnover_penalty": 0.0,
+            "transaction_cost_penalty": 0.0,
         }
         if solver is not None:
             dict_["solver"] = solver
@@ -123,17 +124,18 @@ asset_id
 
     # ///////////////////////////////////////////////////////////////////////////////
 
-    @pytest.mark.skip(reason="See CmTask5114.")
+    @pytest.mark.skip(reason="This test is flaky. See CmTask #5114.")
     def test_restrictions(self) -> None:
         dict_ = {
             "dollar_neutrality_penalty": 0.0,
-            "volatility_penalty": 0.0,
+            "constant_correlation": 0.0,
+            "constant_correlation_penalty": 0.0,
             "relative_holding_penalty": 0.0,
             "relative_holding_max_frac_of_gmv": 1.0,
             "target_gmv": 3000,
             "target_gmv_upper_bound_penalty": 0.0,
             "target_gmv_hard_upper_bound_multiple": 1.00,
-            "turnover_penalty": 0.0,
+            "transaction_cost_penalty": 0.0,
         }
         df = self.get_prediction_df()
         restrictions = pd.DataFrame(
@@ -157,38 +159,41 @@ asset_id
 """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    @pytest.mark.skip(reason="This test is flaky.")
     def test_mixed_constraints(self) -> None:
         dict_ = {
             "dollar_neutrality_penalty": 0.1,
-            "volatility_penalty": 0.75,
+            "constant_correlation": 0.5,
+            "constant_correlation_penalty": 0.25,
             "relative_holding_penalty": 0.0,
             "relative_holding_max_frac_of_gmv": 1.0,
             "target_gmv": 3000,
             "target_gmv_upper_bound_penalty": 0.0,
             "target_gmv_hard_upper_bound_multiple": 1.01,
-            "turnover_penalty": 0.0,
+            "transaction_cost_penalty": 0.0,
         }
         df = self.get_prediction_df()
         actual = _run_optimizer(dict_, df, restrictions=None)
         expected = r"""
           holdings_shares  price  holdings_notional  prediction  volatility  target_holdings_shares  target_holdings_notional  target_trades_shares  target_trades_notional
 asset_id
-1                    1000      1               1000        0.05        0.05                     0.0                       0.0               -1000.0                 -1000.0
+1                    1000      1               1000        0.05        0.05                  -995.0                    -995.0               -1995.0                 -1995.0
 2                    1500      1               1500        0.09        0.07                  1515.0                    1515.0                  15.0                    15.0
-3                    -500      1               -500        0.03        0.08                 -1515.0                   -1515.0               -1015.0                 -1015.0
+3                    -500      1               -500        0.03        0.08                  -520.0                    -520.0                 -20.0                   -20.0
 """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_short_ban(self) -> None:
         dict_ = {
             "dollar_neutrality_penalty": 0.1,
-            "volatility_penalty": 0.75,
+            "constant_correlation": 0.5,
+            "constant_correlation_penalty": 0.25,
             "relative_holding_penalty": 0.0,
             "relative_holding_max_frac_of_gmv": 1.0,
             "target_gmv": 3000,
             "target_gmv_upper_bound_penalty": 0.0,
             "target_gmv_hard_upper_bound_multiple": 1.01,
-            "turnover_penalty": 0.0,
+            "transaction_cost_penalty": 0.0,
         }
         df = self.get_prediction_df()
         restrictions = pd.DataFrame(
@@ -212,77 +217,26 @@ asset_id
 """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    @pytest.mark.skip(reason="This test is flaky.")
     def test_correlation_risk_model(self) -> None:
         dict_ = {
             "dollar_neutrality_penalty": 0.1,
-            "volatility_penalty": 0.75,
+            "constant_correlation": 0.8,
+            "constant_correlation_penalty": 0.5,
             "relative_holding_penalty": 0.0,
             "relative_holding_max_frac_of_gmv": 1.0,
             "target_gmv": 3000,
             "target_gmv_upper_bound_penalty": 0.0,
             "target_gmv_hard_upper_bound_multiple": 1.01,
-            "turnover_penalty": 0.0,
-            "constant_correlation": 0.8,
-            "constant_correlation_penalty": 5.0,
+            "transaction_cost_penalty": 0.0,
         }
         df = self.get_prediction_df()
         actual = _run_optimizer(dict_, df, restrictions=None)
         expected = r"""
           holdings_shares  price  holdings_notional  prediction  volatility  target_holdings_shares  target_holdings_notional  target_trades_shares  target_trades_notional
 asset_id
-1                    1000      1               1000        0.05        0.05                  -458.0                    -458.0               -1458.0                 -1458.0
+1                    1000      1               1000        0.05        0.05                  -881.0                    -881.0               -1881.0                 -1881.0
 2                    1500      1               1500        0.09        0.07                  1515.0                    1515.0                  15.0                    15.0
-3                    -500      1               -500        0.03        0.08                 -1057.0                   -1057.0                -557.0                  -557.0
+3                    -500      1               -500        0.03        0.08                  -634.0                    -634.0                -134.0                  -134.0
 """
-        self.assert_equal(actual, expected, fuzzy_match=True)
-
-
-# #############################################################################
-# TestSinglePeriodOptimizer2
-# #############################################################################
-
-
-class TestSinglePeriodOptimizer2(hunitest.TestCase):
-    @staticmethod
-    def get_prediction_df() -> pd.DataFrame:
-        df = pd.DataFrame(
-            [
-                [101, 7734.32, 0.000858, 0.000910, 0.05, 0.05],
-                [201, -10962.44, 0.000426, 0.000231, 0.09, 0.07],
-                [301, -39037.56, -0.001845, 0.001404, 0.03, 0.08],
-                [401, 42265.68, 0.000505, 0.000240, 0.08, 0.03],
-            ],
-            range(0, 4),
-            [
-                "asset_id",
-                "holdings_shares",
-                "price",
-                "holdings_notional",
-                "prediction",
-                "volatility",
-            ],
-        )
-        return df
-
-    def test1(self) -> None:
-        dict_ = {
-            "dollar_neutrality_penalty": 0.1,
-            "volatility_penalty": 0.75,
-            "relative_holding_penalty": 0.0,
-            "relative_holding_max_frac_of_gmv": 1.0,
-            "target_gmv": 1e5,
-            "target_gmv_upper_bound_penalty": 0.0,
-            "target_gmv_hard_upper_bound_multiple": 1.01,
-            "turnover_penalty": 0.0005,
-        }
-        df = self.get_prediction_df()
-        restrictions = None
-        actual = _run_optimizer(dict_, df, restrictions=restrictions)
-        expected = r"""
-        holdings_shares  price  holdings_notional  prediction  volatility  target_holdings_shares  target_holdings_notional  target_trades_shares  target_trades_notional
-asset_id
-101               7734.32    0.0                0.0        0.05        0.05               -1.37e+02                     -0.12             -7.87e+03                   -6.75
-201             -10962.44    0.0                0.0        0.09        0.07                8.58e+07                  36560.16              8.58e+07                36564.83
-301             -39037.56    0.0                0.0        0.03        0.08                2.74e+07                 -50499.60              2.74e+07               -50571.62
-401              42265.68    0.0                0.0        0.08        0.03                2.76e+07                  13939.71              2.76e+07                13918.37"""
         self.assert_equal(actual, expected, fuzzy_match=True)

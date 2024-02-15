@@ -16,7 +16,7 @@ import re
 import sys
 import traceback
 import unittest
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import pytest
 
@@ -151,6 +151,49 @@ def pytest_warning(txt: str, prefix: str = "") -> None:
 # #############################################################################
 # Generation and conversion functions.
 # #############################################################################
+
+
+# TODO(gp): -> Deprecated: use hpandas.df_to_str
+def convert_df_to_string(
+    df: Union["pd.DataFrame", "pd.Series"],
+    n_rows: Optional[int] = None,
+    title: Optional[str] = None,
+    index: bool = False,
+    decimals: int = 6,
+) -> str:
+    """
+    Convert DataFrame or Series to string for verifying test results.
+
+    :param df: DataFrame to be verified
+    :param n_rows: number of rows in expected output. If `None` all rows are shown.
+    :param title: title for test output
+    :param decimals: number of decimal points
+    :return: string representation of input
+    """
+    if isinstance(df, pd.Series):
+        df = df.to_frame()
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    output = []
+    # Add title in the beginning if provided.
+    if title is not None:
+        output.append(hprint.frame(title))
+    # Provide context for full representation of data.
+    with pd.option_context(
+        "display.max_colwidth",
+        int(1e6),
+        "display.max_columns",
+        None,
+        "display.max_rows",
+        None,
+        "display.precision",
+        decimals,
+    ):
+        n_rows = n_rows or len(df)
+        # Add N top rows.
+        output.append(df.head(n_rows).to_string(index=index))
+    # Convert into string.
+    output_str = "\n".join(output)
+    return output_str
 
 
 # TODO(gp): Is this dataflow Info? If so it should go somewhere else.
