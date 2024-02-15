@@ -476,7 +476,6 @@ def run_fast_tests(  # type: ignore
     :param allure_dir: directory to save allure results to. If specified, allure
         plugin will be installed on-the-fly and results will be generated
         and saved to the specified directory
-
     :param kwargs: kwargs for `ctx.run`
     """
     hlitauti.report_task()
@@ -1133,9 +1132,11 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
     """
     Rename the test and move its golden outcome.
 
-    E.g., to rename a test class and all the test methods: > i
-    pytest_rename_test TestCacheUpdateFunction1
-    TestCacheUpdateFunction_new
+    E.g., to rename a test class and all the test methods:
+    ```
+    > i pytest_rename_test TestCacheUpdateFunction1 \
+            TestCacheUpdateFunction_new
+    ```
 
     :param old_test_class_name: old class name
     :param new_test_class_name: new class name
