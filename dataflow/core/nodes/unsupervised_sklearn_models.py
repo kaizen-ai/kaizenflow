@@ -88,7 +88,7 @@ class UnsupervisedSkLearnModel(
         Specify the data and sklearn modeling parameters.
 
         :param nid: unique node id
-        :param model_func: an sklearn model
+        :param model_func: a sklearn model
         :param x_vars: indexed by knowledge datetimes
         :param model_kwargs: parameters to forward to the sklearn model
             (e.g., regularization constants)

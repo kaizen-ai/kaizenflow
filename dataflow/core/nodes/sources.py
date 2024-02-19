@@ -144,7 +144,8 @@ def load_data_from_disk(
     else:
         raise ValueError("Invalid file extension='%s'" % ext)
     # Read the data.
-    _LOG.debug("filepath=%s kwargs=%s", file_path, str(kwargs))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("filepath=%s kwargs=%s", file_path, str(kwargs))
     stream, kwargs = hs3.get_local_or_s3_stream(file_path, **kwargs)
     df = read_data(stream, **kwargs)
     # Process the data.
@@ -191,8 +192,9 @@ class DiskDataSource(dtfconobas.DataSource):
         Load the data on the first invocation and then delegate to the base
         class.
 
-        We don't need to implement `predict()` since the data is read only on the
-        first call to `fit()`, so the behavior of the base class is sufficient.
+        We don't need to implement `predict()` since the data is read
+        only on the first call to `fit()`, so the behavior of the base
+        class is sufficient.
 
         :return: dict from output name to DataFrame
         """

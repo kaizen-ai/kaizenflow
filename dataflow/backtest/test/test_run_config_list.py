@@ -77,7 +77,7 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list1()'",
             "--num_threads 'serial'",
-            "--aws_profile 'am'",
+            "--aws_profile 'ck'",
         ]
         #
         exp_pass = True
@@ -93,7 +93,7 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list1()'",
             "--num_threads 2",
-            "--aws_profile 'am'",
+            "--aws_profile 'ck'",
         ]
         #
         exp_pass = True
@@ -139,7 +139,7 @@ class TestRunExperimentFail2(hunitest.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()'",
             "--num_threads serial",
-            "--aws_profile 'am'",
+            "--aws_profile 'ck'",
         ]
         #
         exp_pass = False
@@ -157,7 +157,7 @@ class TestRunExperimentFail2(hunitest.TestCase):
             "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()'",
             "--skip_on_error",
             "--num_threads serial",
-            "--aws_profile 'am'",
+            "--aws_profile 'ck'",
         ]
         #
         exp_pass = True
@@ -176,7 +176,7 @@ class TestRunExperimentFail2(hunitest.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()'",
             "--num_threads 2",
-            "--aws_profile 'am'",
+            "--aws_profile 'ck'",
         ]
         #
         exp_pass = False
@@ -197,7 +197,7 @@ class TestRunExperimentFail2(hunitest.TestCase):
             "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()'",
             "--skip_on_error",
             "--num_threads 2",
-            "--aws_profile 'am'",
+            "--aws_profile 'ck'",
         ]
         #
         exp_pass = True
@@ -227,7 +227,7 @@ class TestRunExperimentArchiveOnS3(hunitest.TestCase):
     # TODO(gp): This test needs write access to S3 for `infra` user. For now we
     #  gave access to the entire bucket. It would be better to give only access to
     #  `tmp`.
-    @umock.patch.dict(hs3.os.environ, {"AM_AWS_PROFILE": "am"})
+    @umock.patch.dict(hs3.os.environ, {"CK_AWS_PROFILE": "ck"})
     def test_serial1(self) -> None:
         """
         Execute:
@@ -235,7 +235,7 @@ class TestRunExperimentArchiveOnS3(hunitest.TestCase):
         - serially
         """
         scratch_dir = self.get_scratch_space()
-        aws_profile = "am"
+        aws_profile = "ck"
         # Actions.
         create_s3_archive = True
         check_s3_archive = True
@@ -261,7 +261,8 @@ class TestRunExperimentArchiveOnS3(hunitest.TestCase):
             # Read the metadata back.
             output_metadata = hparser.read_output_metadata(output_metadata_file)
             s3_path = output_metadata["s3_path"]
-            _LOG.debug("s3_path=%s", s3_path)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("s3_path=%s", s3_path)
         if check_s3_archive:
             # s3_path = "s3://alphamatic-data/tmp/tmp.20210802-121908.scratch.tgz"
             tgz_dst_dir = hs3.retrieve_archived_data_from_s3(
@@ -271,7 +272,8 @@ class TestRunExperimentArchiveOnS3(hunitest.TestCase):
             # Check the content.
             cmd = f"ls -1 {tgz_dst_dir}"
             files = hsystem.system_to_files(cmd)
-            _LOG.debug("Files are:\n%s", files)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("Files are:\n%s", files)
             # TODO(gp): We should check that the output looks like:
             # EXPECTED_OUTCOME = r"""# Dir structure
             #     $SCRATCH_SPACE/result_0

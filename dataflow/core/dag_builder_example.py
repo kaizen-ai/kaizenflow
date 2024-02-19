@@ -20,6 +20,11 @@ import dataflow.core.nodes.volatility_models as dtfcnovomo
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+# LoadPrices_DagBuilder
+# #############################################################################
+
+
 class LoadPrices_DagBuilder(dtfcodabui.DagBuilder):
     """
     Pipeline containing a single node with a data source node factory.
@@ -83,7 +88,8 @@ class LoadPrices_DagBuilder(dtfcodabui.DagBuilder):
         See description in the parent class.
         """
         dag = dtfcordag.DAG(mode=mode)
-        _LOG.debug("%s", config)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("%s", config)
         tail_nid = None
         # # Read data.
         stage = "load_prices"
@@ -96,6 +102,8 @@ class LoadPrices_DagBuilder(dtfcodabui.DagBuilder):
         return dag
 
 
+# #############################################################################
+# Returns_DagBuilder
 # #############################################################################
 
 
@@ -211,7 +219,8 @@ class Returns_DagBuilder(dtfcodabui.DagBuilder):
         See description in the parent class.
         """
         dag = dtfcordag.DAG(mode=mode)
-        _LOG.debug("%s", config)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("%s", config)
         # Set weekends to Nan.
         stage = "rets/filter_weekends"
         nid = self._get_nid(stage)
@@ -267,6 +276,8 @@ class Returns_DagBuilder(dtfcodabui.DagBuilder):
         return dag
 
 
+# #############################################################################
+# ArmaReturnsBuilder
 # #############################################################################
 
 
@@ -396,7 +407,8 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
         See description in the parent class.
         """
         dag = dtfcordag.DAG(mode=mode)
-        _LOG.debug("%s", config)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("%s", config)
         # Read data.
         stage = "rets/read_data"
         nid = self._get_nid(stage)
@@ -458,11 +470,14 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
 
 
 # #############################################################################
+# MvnReturns_DagBuilder
+# #############################################################################
 
 
+# TODO(gp): -> MultivariateReturns_DagBuilder
 class MvnReturns_DagBuilder(dtfcodabui.DagBuilder):
     """
-    Pipeline for generating filtered returns from an Multivariate Normal
+    Pipeline for generating filtered returns from a Multivariate Normal
     process.
     """
 
@@ -587,7 +602,8 @@ class MvnReturns_DagBuilder(dtfcodabui.DagBuilder):
         Generate pipeline DAG.
         """
         dag = dtfcordag.DAG(mode=mode)
-        _LOG.debug("%s", config)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("%s", config)
         #
         stage = "filter_weekends"
         nid = self._get_nid(stage)

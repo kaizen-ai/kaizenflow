@@ -164,7 +164,8 @@ class ExecutionPipeline(dtfcore.DagBuilder):
         self, config: cconfig.Config, mode: str = "strict"
     ) -> dtfcore.DAG:
         dag = dtfcore.DAG(mode=mode)
-        _LOG.debug("%s", config)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("%s", config)
         #
         stage = "load_data"
         nid = self._get_nid(stage)

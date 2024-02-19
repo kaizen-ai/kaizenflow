@@ -26,7 +26,8 @@ class Test_dataflow_core_visualization1(hunitest.TestCase):
         dir_name = self.get_scratch_space()
         file_name = os.path.join(dir_name, "plot.png")
         dtfcorvisu.draw_to_file(dag, file_name)
-        _LOG.debug("file_name=%s", file_name)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("file_name=%s", file_name)
         # Check that the output file exists.
         self.assertTrue(os.path.exists(file_name))
 

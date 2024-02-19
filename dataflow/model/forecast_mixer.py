@@ -77,7 +77,8 @@ class ForecastMixer:
         bar_metrics_dfs = collections.OrderedDict()
         for col in weights.columns:
             weight_srs = weights[col]
-            _LOG.debug("weights=\n%s", weight_srs)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("weights=\n%s", weight_srs)
             # Sum weighted predictions
             dfs = []
             for prediction_col in self._predictions_cols:

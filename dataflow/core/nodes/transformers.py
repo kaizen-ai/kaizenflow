@@ -370,7 +370,10 @@ class GroupedColDfToDfTransformer(dtfconobas.Transformer):
         )
         if self._join_output_with_input:
             df = dtfcorutil.merge_dataframes(df_in, df)
-        info["df_transformed_info"] = dtfcorutil.get_df_info_as_string(df)
+        # TODO(Grisha): Dag execution time increases. See CmTask6664
+        # for details.
+        # info["df_transformed_info"] = dtfcorutil.get_df_info_as_string(df)
+        info["df_transformed_info"] = ""
         return df, info
 
 
@@ -439,9 +442,11 @@ class CrossSectionalDfToDfTransformer(dtfconobas.Transformer):
         func_info = info["func_info"]
         out_dfs = {}
         for key in in_dfs.keys():
-            _LOG.debug("Applying cross-sectional function for key=%s", key)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("Applying cross-sectional function for key=%s", key)
             out_key = self._col_grouping_mapping[key]
-            _LOG.debug("Output key is out_key=%s", out_key)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("Output key is out_key=%s", out_key)
             df_out, key_info = _apply_func_to_data(
                 in_dfs[key],
                 self._transformer_func,
@@ -465,7 +470,10 @@ class CrossSectionalDfToDfTransformer(dtfconobas.Transformer):
         df = dtfconobas.CrossSectionalDfToDfColProcessor.postprocess(out_dfs)
         if self._join_output_with_input:
             df = dtfcorutil.merge_dataframes(df_in, df)
-        info["df_transformed_info"] = dtfcorutil.get_df_info_as_string(df)
+        # TODO(Grisha): Dag execution time increases. See CmTask6664
+        # for details.
+        # info["df_transformed_info"] = dtfcorutil.get_df_info_as_string(df)
+        info["df_transformed_info"] = ""
         return df, info
 
 
@@ -882,7 +890,8 @@ class TwapVwapComputer(dtfconobas.Transformer):
         """
         Calculate TWAP and VWAP prices from price and volume columns.
 
-        This function wraps `compute_twap_vwap()`. Params as in that function.
+        This function wraps `compute_twap_vwap()`. Params as in that
+        function.
 
         :param nid: node identifier
         """

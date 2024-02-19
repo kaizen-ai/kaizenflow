@@ -8,6 +8,7 @@ import dataflow.core.dag_builder_example as dtfcdabuex
 import dataflow.core.dag_runner as dtfcodarun
 import dataflow.core.nodes.sources as dtfconosou
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -34,7 +35,7 @@ class TestArmaReturnsBuilder(hunitest.TestCase):
         df_out = result_bundle.result_df
         str_output = (
             f"{hprint.frame('config')}\n{config}\n"
-            f"{hprint.frame('df_out')}\n{hunitest.convert_df_to_string(df_out, index=True)}\n"
+            f"{hprint.frame('df_out')}\n{hpandas.df_to_str(df_out, num_rows=None)}\n"
         )
         self.check_string(str_output, fuzzy_match=True)
 
@@ -71,7 +72,8 @@ class TestMvnReturnsBuilder(hunitest.TestCase):
         # TODO(Paul): Clean up these calls.
         hdbg.dassert_eq(len(nodes_to_insert), 1)
         stage, node_ctor = nodes_to_insert[0]
-        _LOG.debug(hprint.to_str("stage node_ctor"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("stage node_ctor"))
         head_nid = dag_builder._get_nid(stage)  # pylint: disable=protected-access
         node = node_ctor(
             head_nid,

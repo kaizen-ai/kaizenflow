@@ -29,7 +29,7 @@ class _Node(abc.ABC):
     This class provides:
     - a unique identifier (`nid`) for building graphs of nodes. The `nid` is also
       useful for config purposes.
-    - some convenient introspection (input/output names) accessors and
+    - some convenient introspection (input/output names) accessors
     """
 
     # TODO(gp): Are inputs / output without names useful? If not we can simplify the
@@ -97,8 +97,8 @@ NodeOutput = Dict[str, Any]
 #  used / useful any more.
 class Node(_Node):
     """
-    A node class that stores and retrieves its output values on a "per-method"
-    basis.
+    A node class that stores and retrieves its output values on a per-method
+    basis. (e.g., "fit" or "predict")
 
     E.g., for each method (e.g., "fit" and "predict") returns a value
     for each output.
@@ -152,10 +152,11 @@ class Node(_Node):
         """
         Deallocate all the data stored inside the node.
 
-        Note that this should be called only after the node is not needed anymore.
+        Note that this should be called only after the node is not
+        needed anymore.
 
         :param only_warning=True: raise an assertion or a warning if
-            the memory is not actually reported as deallocated.
+        the memory is not actually reported as deallocated.
         """
         # Minimize the dependencies by importing locally since this is a method
         # called rarely, for now.
@@ -168,7 +169,7 @@ class Node(_Node):
 
         def _log(msg: str) -> None:
             txt.append(msg)
-            # _LOG.debug("%s", msg)
+            # if _LOG.isEnabledFor(logging.DEBUG): _LOG.debug("%s", msg)
             _LOG.info("%s", msg)
 
         # Report the status before.
@@ -182,14 +183,15 @@ class Node(_Node):
             for name in node_output:
                 obj = node_output[name]
                 used_mem_tmp = obj.memory_usage(deep=True).sum()
-                _LOG.debug(
-                    "Removing %s:%s -> type=%s, mem=%s refs=%s",
-                    method,
-                    name,
-                    type(obj),
-                    hintros.format_size(used_mem_tmp),
-                    gc.get_referrers(obj),
-                )
+                if _LOG.isEnabledFor(logging.DEBUG):
+                    _LOG.debug(
+                        "Removing %s:%s -> type=%s, mem=%s refs=%s",
+                        method,
+                        name,
+                        type(obj),
+                        hintros.format_size(used_mem_tmp),
+                        gc.get_referrers(obj),
+                    )
                 rss_used_mem_in_gb += used_mem_tmp / (1024**3)
         # Remove all the outstanding references to the objects.
         del obj

@@ -1,10 +1,10 @@
 """
-Contain functions used by both `run_config_list.py` and `run_notebook.py` to run
-experiments.
+Contain functions used by both `run_config_list.py` and `run_notebook.py` to
+run experiments.
 
 Import as:
 
-import dataflow.backtest.dataflow_backtest_utils as dtfbaexuti
+import dataflow.backtest.dataflow_backtest_utils as dtfbdtfbaut
 """
 
 import argparse
@@ -28,9 +28,11 @@ def add_run_experiment_args(
     dst_dir_default: Optional[str] = None,
 ) -> argparse.ArgumentParser:
     """
-    Add common command line options for `run_config_list.py` and notebooks. It
-    is not used by `run_config_stub.py`
+    Add common command line options for `run_config_list.py` and notebooks.
 
+    It is used in `run_config_list` but not by `run_config_stub.py`.
+
+    :param parser: parser to add the options to
     :param dst_dir_required: whether the user must specify a destination directory
         or not. If not, a default value should be passed through `dst_dir_default`
     :param dst_dir_default: a default destination dir
@@ -86,7 +88,7 @@ def add_run_experiment_args(
 
 def setup_experiment_dir(config: cconfig.Config) -> None:
     """
-    Set up the directory and the book-keeping artifacts for the experiment
+    Set up the directory and the book keeping artifacts for the experiment
     running `config`.
 
     :return: whether we need to run this config or not
@@ -98,7 +100,8 @@ def setup_experiment_dir(config: cconfig.Config) -> None:
     hio.create_dir(experiment_result_dir, incremental=True)
     # Prepare book-keeping files.
     file_name = os.path.join(experiment_result_dir, "config.pkl")
-    _LOG.debug("Saving '%s'", file_name)
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("Saving '%s'", file_name)
     # Remove un-pickleable pieces.
     for key in ("dag_runner_object",):
         if key in config:
@@ -107,7 +110,8 @@ def setup_experiment_dir(config: cconfig.Config) -> None:
     hpickle.to_pickle(config, file_name)
     #
     file_name = os.path.join(experiment_result_dir, "config.txt")
-    _LOG.debug("Saving '%s'", file_name)
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("Saving '%s'", file_name)
     hio.to_file(file_name, str(config))
 
 

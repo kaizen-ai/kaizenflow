@@ -15,6 +15,9 @@ _LOG = logging.getLogger(__name__)
 def build_Mock1_tile_config_list(
     backtest_config: str,
 ) -> dtfsys.SystemConfigList:
+    """
+    Build a `ConfigList` object from a backtest config.
+    """
     system = dtfasmmfsex.get_Mock1_NonTime_ForecastSystem_for_simulation_example1(
         backtest_config
     )

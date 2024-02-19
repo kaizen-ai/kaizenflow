@@ -24,7 +24,9 @@ _LOG = logging.getLogger(__name__)
 
 class ProcessForecastsNode(dtfcore.FitPredictNode):
     """
-    Place trades from a model.
+    A node processing forecasts by invoking `process_forecats()`.
+
+    This adapts a Python function to a node in the DAG.
     """
 
     def __init__(
@@ -42,12 +44,13 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
 
         :param process_forecasts_dict: configures `process_forecasts()`
         """
-        _LOG.debug(
-            hprint.to_str(
-                "nid prediction_col volatility_col "
-                "spread_col portfolio process_forecasts_dict"
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                hprint.to_str(
+                    "nid prediction_col volatility_col "
+                    "spread_col portfolio process_forecasts_dict"
+                )
             )
-        )
         super().__init__(nid)
         self._prediction_col = prediction_col
         self._volatility_col = volatility_col
@@ -74,6 +77,10 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
             restrictions_df=restrictions_df,
         )
 
+    # ///////////////////////////////////////////////////////////////////////////
+    # Private methods
+    # ///////////////////////////////////////////////////////////////////////////
+
     def _compute_forecasts(
         self, df: pd.DataFrame, fit: bool = True
     ) -> Dict[str, pd.DataFrame]:
@@ -85,19 +92,23 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
         #  pred_col and vol_col.
         prediction_df = df[self._prediction_col]
         self._prediction_df = prediction_df
-        _LOG.debug("prediction_df=\n%s", hpandas.df_to_str(prediction_df))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("prediction_df=\n%s", hpandas.df_to_str(prediction_df))
         #
         volatility_df = df[self._volatility_col]
         self._volatility_df = volatility_df
-        _LOG.debug("volatility_df=\n%s", hpandas.df_to_str(volatility_df))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("volatility_df=\n%s", hpandas.df_to_str(volatility_df))
         #
         if self._spread_col is None:
             self._spread_df = None
-            _LOG.debug("spread_df is `None`")
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("spread_df is `None`")
         else:
             spread_df = df[self._spread_col]
             self._spread_df = spread_df
-            _LOG.debug("spread_df=\n%s", hpandas.df_to_str(spread_df))
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("spread_df=\n%s", hpandas.df_to_str(spread_df))
         # Compute stats.
         info = collections.OrderedDict()
         info["df_out_info"] = dtfcore.get_df_info_as_string(df)
@@ -112,7 +123,7 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
 # #############################################################################
 
 
-# TODO(Grisha): @all Move to `system_builder_utils.py` or sink_nodes_example.py
+# TODO(Grisha): @all Move to sink_nodes_example.py
 #   This function can become `get_ProcessForecastsNode_dict_example` (without a
 #   number) which signify the innermost / most general builder.
 def get_ProcessForecastsNode_dict_example1(
@@ -127,10 +138,11 @@ def get_ProcessForecastsNode_dict_example1(
     """
     Get the config for `ProcessForecastNode`.
 
-    :param root_log_dir: the root directory in which to log data. This function
-        saves the data in `$root_log_dir/process_forecasts`, and then each related
-        object decides where to save its own data underneath the
-        `process_forecasts()` log dir
+    Same params as `ProcessForecastsNode()`.
+    :param root_log_dir: the root directory in which to log data. This
+        function saves the data in `$root_log_dir/process_forecasts`,
+        and then each related object decides where to save its own data
+        underneath the `process_forecasts()` log dir
     """
     hdbg.dassert_isinstance(portfolio, oporport.Portfolio)
     hdbg.dassert_isinstance(order_config, dict)

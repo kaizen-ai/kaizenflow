@@ -35,14 +35,8 @@ def get_sp500() -> pd.DataFrame:
     """
     Return SP500 constituents as of 2010-01-01.
 
-    :return: dataframe like
-
-      ticker       date
-    0      A 2010-01-01
-    1   AAPL 2010-01-01
-    2    ABC 2010-01-01
-    3    ABT 2010-01-01
-    4    ACE 2010-01-01
+    :return: dataframe like ticker date 0 A 2010-01-01 1 AAPL 2010-01-01
+        2 ABC 2010-01-01 3 ABT 2010-01-01 4 ACE 2010-01-01
     """
     base = hgit.get_client_root(super_module=True)
     # TODO(gp): Move this file to S3.
@@ -251,6 +245,24 @@ def _get_mock1_universe_v1(n: Optional[int]) -> List[Amid]:
 
 
 # #############################################################################
+# Bloomberg
+# #############################################################################
+
+
+def _get_bloomberg_universe_v1(n: Optional[int]) -> List[Amid]:
+    """
+    Create Bloomberg universe.
+    """
+    vendor = "bloomberg"
+    mode = "trade"
+    full_symbols = ivcu.get_vendor_universe(
+        vendor, mode, version="v1", as_full_symbol=True
+    )
+    full_symbols = _get_top_n(full_symbols, n)
+    return full_symbols
+
+
+# #############################################################################
 # CryptoChassis
 # #############################################################################
 
@@ -302,6 +314,8 @@ def get_universe(universe_str: str) -> List[Amid]:
         ret = _get_kibot_universe_v3(top_n)
     elif universe_version == "mock1_v1":
         ret = _get_mock1_universe_v1(top_n)
+    elif universe_version == "bloomberg_v1":
+        ret = _get_bloomberg_universe_v1(top_n)
     elif universe_version == "ccxt_v3":
         version = "v3"
         ret = _get_ccxt_universe(version, top_n)
@@ -319,6 +333,12 @@ def get_universe(universe_str: str) -> List[Amid]:
         ret = _get_ccxt_universe(version, top_n)
     elif universe_version == "ccxt_v7_3":
         version = "v7.3"
+        ret = _get_ccxt_universe(version, top_n)
+    elif universe_version == "ccxt_v7_4":
+        version = "v7.4"
+        ret = _get_ccxt_universe(version, top_n)
+    elif universe_version == "ccxt_v7_5":
+        version = "v7.5"
         ret = _get_ccxt_universe(version, top_n)
     elif universe_version == "crypto_chassis_v1":
         version = "v1"
@@ -369,6 +389,6 @@ def get_universe(universe_str: str) -> List[Amid]:
 #    Add instrument to model.
 #    """
 #    amids = build_universe(universe_str)
-#    _LOG.debug("Universe has %d amids", len(amids))
+#    if _LOG.isEnabledFor(logging.DEBUG): _LOG.debug("Universe has %d amids", len(amids))
 #    configs = [set_amid(config, amid_key, amid) for amid in amids]
 #    return configs

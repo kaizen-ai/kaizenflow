@@ -21,6 +21,11 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+# Linear regression.
+# #############################################################################
+
+
 class LinearRegression(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
     """
     Fit and predict a linear regression model.
@@ -189,6 +194,11 @@ class LinearRegression(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
             pass
         else:
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
+
+
+# #############################################################################
+# Multi-index linear regression.
+# #############################################################################
 
 
 class MultiindexLinearRegression(dtfconobas.FitPredictNode):

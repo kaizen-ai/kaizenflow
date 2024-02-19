@@ -7,8 +7,8 @@ import pytest
 
 import core.finance as cofinanc
 import dataflow.system as dtfsys
-import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
-import dataflow_amp.system.mock1.mock1_forecast_system_example as dtfasmmfsex
+import dataflow_amp.system.mock1.mock1_forecast_system as dtasmmfosy
+import dataflow_amp.system.mock1.mock1_forecast_system_example as dtasmmfsex
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 
@@ -22,7 +22,7 @@ def _get_test_NonTime_ForecastSystem() -> dtfsys.System:
     # In this system the time periods are set manually, so the value of
     # `time_interval_str` doesn't affect tests.
     backtest_config = "mock1_v1-top2.5T.Jan2000"
-    system = dtfasmmfsex.get_Mock1_NonTime_ForecastSystem_for_simulation_example1(
+    system = dtasmmfsex.get_Mock1_NonTime_ForecastSystem_for_simulation_example1(
         backtest_config
     )
     return system
@@ -141,13 +141,13 @@ class Test_Mock1_NonTime_ForecastSystem_CheckPnl(
 # #############################################################################
 
 
-class Test_Mock1_Time_ForecastSystem1(dtfsys.Test_Time_ForecastSystem_TestCase1): 
+class Test_Mock1_Time_ForecastSystem1(dtfsys.Test_Time_ForecastSystem_TestCase1):
     @pytest.mark.requires_ck_infra
     def test1(self) -> None:
         """
         Verify the contents of DAG prediction.
         """
-        system = dtfasmmfosy.Mock1_Time_ForecastSystem()
+        system = dtasmmfosy.Mock1_Time_ForecastSystem()
         (
             market_data,
             rt_timeout_in_secs_or_time,
@@ -159,6 +159,7 @@ class Test_Mock1_Time_ForecastSystem1(dtfsys.Test_Time_ForecastSystem_TestCase1)
         system.config[
             "market_data_config", "replayed_delay_in_mins_or_timestamp"
         ] = pd.Timestamp("2000-01-01 10:05:00-05:00", tz="America/New_York")
+        system.config["market_data_config", "days"] = 1
         # Exercise the system for multiple 5 minute intervals.
         system.config[
             "dag_runner_config", "rt_timeout_in_secs_or_time"
@@ -193,39 +194,39 @@ class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
     def test1(self) -> None:
         # Build the system.
         data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df1()
-        system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+        system = dtasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
             data, rt_timeout_in_secs_or_time
         )
         # Run.
         self._test1(system)
         # Check some high level property of the Portfolio.
-        expected_last_timestamp = pd.Timestamp("2000-01-01 10:05:06-05:00")
+        expected_last_timestamp = pd.Timestamp("2000-01-01 10:05:05.100000-05:00")
         dtfsys.check_portfolio_state(self, system, expected_last_timestamp)
 
     @pytest.mark.slow("~7 seconds.")
     def test2(self) -> None:
         # Build the system.
         data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df2()
-        system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+        system = dtasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
             data, rt_timeout_in_secs_or_time
         )
         # Run.
         self._test1(system)
         # Check some high level property of the Portfolio.
-        expected_last_timestamp = pd.Timestamp("2000-01-01 10:05:06-05:00")
+        expected_last_timestamp = pd.Timestamp("2000-01-01 10:05:05.100000-05:00")
         dtfsys.check_portfolio_state(self, system, expected_last_timestamp)
 
-    @pytest.mark.slow("~7 seconds.")
+    @pytest.mark.superslow("~32 seconds.")
     def test3(self) -> None:
         # Build the system.
         data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df3()
-        system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+        system = dtasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
             data, rt_timeout_in_secs_or_time
         )
         # Run.
         self._test1(system)
         # Check some high level property of the Portfolio.
-        expected_last_timestamp = pd.Timestamp("2000-01-01 11:25:06-05:00")
+        expected_last_timestamp = pd.Timestamp("2000-01-01 11:25:05.100000-05:00")
         dtfsys.check_portfolio_state(self, system, expected_last_timestamp)
 
 
@@ -245,7 +246,7 @@ class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio2(
     def test_with_liquidate_at_end_of_day1(self) -> None:
         # Build the system.
         data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df1()
-        system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+        system = dtasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
             data, rt_timeout_in_secs_or_time
         )
         # Run.
@@ -275,40 +276,40 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
     def test1(self) -> None:
         # Build the system.
         data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df1()
-        system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+        system = dtasmmfsex.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
             data, rt_timeout_in_secs_or_time
         )
         # Run.
         self._test1(system)
         # Check some high level property of the Portfolio.
-        expected_last_timestamp = pd.Timestamp("2000-01-01 10:05:06-05:00")
+        expected_last_timestamp = pd.Timestamp("2000-01-01 10:05:05.100000-05:00")
         dtfsys.check_portfolio_state(self, system, expected_last_timestamp)
 
     @pytest.mark.slow("~6 seconds.")
     def test2(self) -> None:
         # Build the system.
         data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df2()
-        system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+        system = dtasmmfsex.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
             data, rt_timeout_in_secs_or_time
         )
         # Run.
         self._test1(system)
         # Check some high level property of the Portfolio.
-        expected_last_timestamp = pd.Timestamp("2000-01-01 10:05:06-05:00")
+        expected_last_timestamp = pd.Timestamp("2000-01-01 10:05:05.100000-05:00")
         dtfsys.check_portfolio_state(self, system, expected_last_timestamp)
 
-    #TODO(Grisha): Format golden to be indented for better readability.
+    # TODO(Grisha): Format golden to be indented for better readability.
     @pytest.mark.superslow("~30 seconds.")
     def test3(self) -> None:
         # Build the system.
         data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df3()
-        system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+        system = dtasmmfsex.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
             data, rt_timeout_in_secs_or_time
         )
         # Run.
         self._test1(system)
         # Check some high level property of the Portfolio.
-        expected_last_timestamp = pd.Timestamp("2000-01-01 11:25:06-05:00")
+        expected_last_timestamp = pd.Timestamp("2000-01-01 11:25:05.100000-05:00")
         dtfsys.check_portfolio_state(self, system, expected_last_timestamp)
 
 
@@ -329,19 +330,21 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor2(
     def test1(self) -> None:
         # Build the system.
         data, _ = cofinanc.get_MarketData_df1()
-        _LOG.debug("data=\n%s", hpandas.df_to_str(data))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("data=\n%s", hpandas.df_to_str(data))
         self.assert_equal(str(data.index.min()), "2000-01-01 09:31:00-05:00")
         self.assert_equal(str(data.index.max()), "2000-01-01 10:10:00-05:00")
         # One bar is 5 mins and we want to run for 5 bars.
         rt_timeout_in_secs_or_time = 300 * 5
-        system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+        system = dtasmmfsex.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
             data, rt_timeout_in_secs_or_time
         )
         # Run.
         self._test1(system)
         # Test some properties of the system.
         order_processor = system.order_processor
-        _LOG.debug(hprint.to_str("order_processor.get_execution_signature()"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("order_processor.get_execution_signature()"))
         self.assert_equal(
             str(order_processor.start_timestamp), "2000-01-01 09:35:00-05:00"
         )
@@ -375,10 +378,10 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_v
         Run two systems with DataFrame and Database portfolios and compare.
         """
         # Build the systems to compare.
-        system_with_dataframe_portfolio = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+        system_with_dataframe_portfolio = dtasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
             data, rt_timeout_in_secs_or_time
         )
-        system_with_database_portfolio = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+        system_with_database_portfolio = dtasmmfsex.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
             data, rt_timeout_in_secs_or_time
         )
         # Run.
@@ -439,7 +442,7 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         # so the value of `time_interval_str` (e.g., "2022-01-01_2022-02-01")
         # doesn't affect tests.
         backtest_config = f"mock1_{universe_version}-all.5T.Jan2000"
-        non_time_system = dtfasmmfsex.get_Mock1_NonTime_ForecastSystem_example1(
+        non_time_system = dtasmmfsex.get_Mock1_NonTime_ForecastSystem_example1(
             backtest_config
         )
         return non_time_system
@@ -450,7 +453,7 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         """
         # Load market data for replaying.
         market_data_df, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df5()
-        time_system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_example1()
+        time_system = dtasmmfsex.get_Mock1_Time_ForecastSystem_example1()
         # TODO(Grisha): @Dan Pass "rt_timeout_in_secs_or_time" through kwargs.
         # Make system to run for 3 5-minute intervals.
         time_system.config[

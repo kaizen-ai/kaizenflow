@@ -98,7 +98,8 @@ class SmaModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
             # Prepare `x_vars` in sklearn format.
             x_fit = cdatadap.transform_to_sklearn(df, self._col)
             self._tau = self._learn_tau(x_fit, forward_y_fit)
-        _LOG.debug("tau=%s", self._tau)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("tau=%s", self._tau)
         return self._predict_and_package_results(df_in, idx, df.index, fit=True)
 
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -215,7 +216,8 @@ class SmaModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         x_srs = pd.DataFrame(x.flatten())
         # TODO(Paul): Make `min_periods` configurable.
         min_periods = int(np.rint(self._min_tau_periods * self._tau))
-        _LOG.debug("min_periods=%f", min_periods)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("min_periods=%f", min_periods)
         x_sma = csigproc.compute_smooth_moving_average(
             x_srs,
             tau=self._tau,
@@ -377,7 +379,8 @@ class SingleColumnVolatilityModel(dtfconobas.FitPredictNode):
         :return: ready-to-run DAG
         """
         dag = dtfcordag.DAG(mode="strict")
-        _LOG.debug("%s", config)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("%s", config)
         # Load `df_in`.
         nid = "load_data"
         node = dtfconosou.DfDataSource(nid, df_in)

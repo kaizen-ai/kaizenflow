@@ -3,12 +3,12 @@ from typing import Tuple
 
 import pytest
 
+import core.config as cconfig
+import dataflow.model.model_evaluator as dtfmomoeva
 import dataflow.model.model_plotter as dtfmomoplo
 import dataflow.model.test.test_model_evaluator as cdmttme
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
-import dataflow.model.model_evaluator as dtfmomoeva
-import core.config as cconfig
 
 _LOG = logging.getLogger(__name__)
 
@@ -17,7 +17,9 @@ _LOG = logging.getLogger(__name__)
 #  When we add DataFrame output to the ModelPlotter functions so we can check that.
 
 
-def get_example_model_plotter() -> Tuple[dtfmomoplo.ModelPlotter, dtfmomoeva.ModelEvaluator, cconfig.Config]:
+def get_example_model_plotter() -> Tuple[
+    dtfmomoplo.ModelPlotter, dtfmomoeva.ModelEvaluator, cconfig.Config
+]:
     """
     Get the ModelPlotter for unit testing and gallery demo.
     """

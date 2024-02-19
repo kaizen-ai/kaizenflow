@@ -47,6 +47,8 @@ class LocalLevelModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._fit_predict_helper(df_in, fit=False)
 
+    # ///////////////////////////////////////////////////////////////////////////
+
     def _fit_predict_helper(
         self, df_in: pd.DataFrame, fit: bool
     ) -> Dict[str, pd.DataFrame]:
@@ -67,7 +69,8 @@ class LocalLevelModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         if fit:
             self._tau = tau
         # Compute EWMA.
-        _LOG.debug("Computing ewma with tau=%s", self._tau)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Computing ewma with tau=%s", self._tau)
         ewma = csigproc.compute_smooth_moving_average(srs, tau=self._tau)
         ewma.name = str(col) + "_ewma"
         ewma = ewma.to_frame()

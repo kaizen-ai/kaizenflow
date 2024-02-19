@@ -21,7 +21,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# Abstract node classes with sklearn-style interfaces
+# FitPredictNode
 # #############################################################################
 
 
@@ -29,18 +29,19 @@ class FitPredictNode(dtfcornode.Node, abc.ABC):
     """
     Class with abstract sklearn-style `fit()` and `predict()` functions.
 
-    The class contains an optional state that can be serialized/deserialized with
-    `get_fit_state()` and `set_fit_state()`.
+    The class contains an optional state that can be
+    serialized/deserialized with `get_fit_state()` and
+    `set_fit_state()`.
 
-    Nodes may store a dictionary of information for each method following the
-    method's invocation.
+    Nodes may store a dictionary of information for each method
+    following the method's invocation.
     """
 
     # Represent the output of a `FitPredictNode`, mapping an output name to a
     # dataframe.
     NodeOutput = Dict[str, pd.DataFrame]
 
-    # Represent the state of a `Node`, mapping a
+    # Represent the state of a `Node`.
     NodeState = Dict[str, Any]
 
     def __init__(
@@ -58,6 +59,10 @@ class FitPredictNode(dtfcornode.Node, abc.ABC):
         super().__init__(nid, inputs, outputs)
         self._info: collections.OrderedDict = collections.OrderedDict()
 
+    # //////////////////////////////////////////////////////////////////////////
+    # fit / predict.
+    # //////////////////////////////////////////////////////////////////////////
+
     @abc.abstractmethod
     def fit(self, df_in: pd.DataFrame) -> "FitPredictNode.NodeOutput":
         ...
@@ -72,6 +77,10 @@ class FitPredictNode(dtfcornode.Node, abc.ABC):
 
     def set_fit_state(self, fit_state: "FitPredictNode.NodeState") -> None:
         _ = self, fit_state
+
+    # //////////////////////////////////////////////////////////////////////////
+    # Info.
+    # //////////////////////////////////////////////////////////////////////////
 
     def get_info(
         self, method: dtfcornode.Method
@@ -103,20 +112,22 @@ class FitPredictNode(dtfcornode.Node, abc.ABC):
 
 
 # #############################################################################
+# DataSource
+# #############################################################################
 
 
 # TODO(gp):
 #  In practice we are mixing two behaviors
-#  1) allowing cross-validation through `set_fit_intervals` / `set_predict_intervals`
-#  2) a mechanism in `fit` / `predict` to extract the desired data intervals
+#  1) allowing fit/predict through `set_fit_intervals` / `set_predict_intervals`
+#  2) a mechanism in `fit`/`predict` to extract the desired data intervals
 #  This node requires to have all the data stored in self.df so that `fit()` can
 #   extract the subset to use.
-#  Not all the nodes can / want to load all the data at once (e.g., nodes using Parquet
-#   backend might want to read only the data that is needed for the cross-validation).
+#  Not all the nodes can / want to load all the data at once (e.g., nodes using
+#  Parquet backend might want to read only the data that is needed for the
+#  cross-validation).
 class DataSource(FitPredictNode, abc.ABC):
     """
-    A source node that generates data for cross-validation from the passed data
-    frame.
+    A source node that generates train/test data from the passed data frame.
 
     Derived classes inject the data as a DataFrame in this class at construction
     time (e.g., from a passed DataFrame, reading from a file). This node implements
@@ -146,6 +157,10 @@ class DataSource(FitPredictNode, abc.ABC):
         self._predict_intervals: Optional[dtfcorutil.Intervals] = None
         self._predict_idxs = None
 
+    # //////////////////////////////////////////////////////////////////////////
+    # fit / predict.
+    # //////////////////////////////////////////////////////////////////////////
+
     def set_fit_intervals(
         self, intervals: Optional[dtfcorutil.Intervals]
     ) -> None:
@@ -158,7 +173,8 @@ class DataSource(FitPredictNode, abc.ABC):
               `None` boundary is interpreted as data start/end
             -
         """
-        _LOG.debug("intervals=%s", intervals)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("intervals=%s", intervals)
         if intervals is None:
             dtfcorutil.dassert_valid_intervals(intervals)
         self._fit_intervals = intervals
@@ -230,11 +246,15 @@ class DataSource(FitPredictNode, abc.ABC):
         self._set_info("predict", info)
         return {self.output_names[0]: predict_df}
 
+    # //////////////////////////////////////////////////////////////////////////
+
     def get_df(self) -> pd.DataFrame:
         hdbg.dassert_is_not(self.df, None, "No DataFrame found!")
         return self.df
 
 
+# #############################################################################
+# Transformer
 # #############################################################################
 
 
@@ -268,6 +288,8 @@ class Transformer(FitPredictNode, abc.ABC):
         # Update `info`.
         self._set_info("predict", info)
         return {"df_out": df_out}
+
+    # //////////////////////////////////////////////////////////////////////////
 
     @abc.abstractmethod
     def _transform(
@@ -370,6 +392,9 @@ class YConnector(FitPredictNode):
         return df_out, info
 
 
+# #############################################################################
+
+
 class ColModeMixin:
     """
     Select columns to propagate in output dataframe.
@@ -450,6 +475,8 @@ class ColModeMixin:
 # Column processing helpers
 # #############################################################################
 
+# TODO(gp): -> processors.py
+
 
 class GroupedColDfToDfColProcessor:
     """
@@ -519,13 +546,15 @@ class GroupedColDfToDfColProcessor:
             )
         # Determine output dataframe column names.
         out_col_names = [col_group[-1] for col_group in col_groups]
-        _LOG.debug("out_col_names=%s", out_col_names)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("out_col_names=%s", out_col_names)
         hdbg.dassert_no_duplicates(out_col_names)
         # Sort before accessing leaf columns.
         df_out = df.sort_index(axis=1)
         # Determine keys (i.e., leaf column names).
         keys = df_out[col_groups[0]].columns.to_list()
-        _LOG.debug("keys=%s", keys)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("keys=%s", keys)
         # Ensure all groups have the same keys.
         for col_group in col_groups:
             hdbg.dassert_in(col_group, df_out.columns)
@@ -540,7 +569,8 @@ class GroupedColDfToDfColProcessor:
         roots = [col_group[:-1] for col_group in col_groups]
         # Get rid of any duplicates.
         roots = list(set(roots))
-        _LOG.debug("col group roots=%s", roots)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("col group roots=%s", roots)
         # Generate one dataframe per key.
         dfs = {}
         for key in keys:
@@ -566,13 +596,15 @@ class GroupedColDfToDfColProcessor:
         return _postprocess_dataframe_dict(dfs, col_group)
 
 
+# #############################################################################
+
+
 class CrossSectionalDfToDfColProcessor:
     """
-    Provides dataflow processing wrappers for cross-sectional transformations.
+    Provide dataflow processing wrappers for cross-sectional transformations.
 
-    These helpers are useful when we want to apply an operation such as
-    principal component projection or residualization to a family of
-    instruments.
+    These helpers are useful when we want to apply an operation such as principal
+    component projection or residualization to a family of instruments.
 
     Examples:
     1.  Suppose we want to perform a principal component projection of
@@ -636,8 +668,8 @@ class CrossSectionalDfToDfColProcessor:
         Create a multi-indexed column dataframe from a single-indexed one.
 
         :param dfs: a dictionary of single-level column dataframe
-        :return: a multi-indexed column dataframe, with columns prefixes given
-            by `dfs.keys()`.
+        :return: a multi-indexed column dataframe, with columns prefixes
+            given by `dfs.keys()`.
         """
         hdbg.dassert_isinstance(dfs, dict)
         # Ensure that the dictionary is not empty.
@@ -655,9 +687,12 @@ class CrossSectionalDfToDfColProcessor:
         return df
 
 
+# #############################################################################
+
+
 class SeriesToDfColProcessor:
     """
-    Provides dataflow processing wrappers for series-to-dataframe functions.
+    Provide dataflow processing wrappers for series-to-dataframe functions.
 
     Examples of functions to wrap include:
         - series decompositions (e.g., STL, Fourier coefficients, wavelet
@@ -718,14 +753,16 @@ class SeriesToDfColProcessor:
         return _postprocess_dataframe_dict(dfs, col_group)
 
 
+# #############################################################################
+
+
 class SeriesToSeriesColProcessor:
     """
-    Provides dataflow processing wrappers for series-to-series functions.
+    Provide dataflow processing wrappers for series-to-series functions.
 
     Examples of functions to wrap include:
-        - signal filters (e.g., smooth moving averages, z-scoring, outlier
-          processing)
-        - rolling features (e.g., moments, centered moments)
+    - signal filters (e.g., smooth moving averages, z-scoring, outlier processing)
+    - rolling features (e.g., moments, centered moments)
     """
 
     def __init__(self) -> None:
@@ -754,8 +791,8 @@ class SeriesToSeriesColProcessor:
 
         :param srs: a list of symbols uniquely named (by symbol)
         :param col_group: column levels to add
-        :return: multi-indexed column dataframe with series names as leaf
-            columns
+        :return: multi-indexed column dataframe with series names as
+            leaf columns
         """
         # Perform basic type checks.
         hdbg.dassert_isinstance(srs, list)
@@ -769,6 +806,9 @@ class SeriesToSeriesColProcessor:
         if col_group:
             df = pd.concat([df], axis=1, keys=[col_group])
         return df
+
+
+# #############################################################################
 
 
 def preprocess_multiindex_cols(
@@ -840,9 +880,10 @@ def _postprocess_dataframe_dict(
         if not df.empty:
             idx = df.index
             cols = df.columns
-            _LOG.debug(
-                "Using symbol=`%s` for reference index and columns", symbol
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "Using symbol=`%s` for reference index and columns", symbol
+                )
             break
     hdbg.dassert_is_not(idx, None)
     hdbg.dassert_is_not(cols, None)
@@ -879,6 +920,8 @@ def _postprocess_dataframe_dict(
 # #############################################################################
 # Dataframe stacking/unstacking
 # #############################################################################
+
+# TODO(gp): -> stackers.py
 
 
 class DfStacker:
