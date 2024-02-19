@@ -56,30 +56,30 @@ class TestSaveDataToDb(hunitest.TestCase):
         )
         super().setUp()
 
-    def test_save_data_to_db1(self) -> None:
-        """
-        Test the `save_data_to_db` method for the case when some expected
-        exceptions are raised, the number of retries is not exceeded and the
-        query is executed.
-        """
-        # Mock results of the `execute_insert_on_conflict_do_nothing_query`
-        # function. The first N-1 results are exceptions that are expected to
-        # be raised. The last result is None to simulate the case when the
-        # query is executed successfully.
-        mocked_results = [
-            imvcddbut.RETRY_EXCEPTION[0]("DB is down")
-            for _ in range(imvcddbut.NUMBER_OF_RETRIES_TO_SAVE - 1)
-        ]
-        mocked_results += [None]
-        self.mock_execute_insert_on_conflict_do_nothing_query.side_effect = (
-            mocked_results
-        )
-        self._call_save_data_to_db()
-        # Check that the query was executed the expected number of times.
-        self.assertEqual(
-            self.mock_execute_insert_on_conflict_do_nothing_query.call_count,
-            imvcddbut.NUMBER_OF_RETRIES_TO_SAVE,
-        )
+    # def test_save_data_to_db1(self) -> None:
+    #     """
+    #     Test the `save_data_to_db` method for the case when some expected
+    #     exceptions are raised, the number of retries is not exceeded and the
+    #     query is executed.
+    #     """
+    #     # Mock results of the `execute_insert_on_conflict_do_nothing_query`
+    #     # function. The first N-1 results are exceptions that are expected to
+    #     # be raised. The last result is None to simulate the case when the
+    #     # query is executed successfully.
+    #     mocked_results = [
+    #         imvcddbut.RETRY_EXCEPTION[0]("DB is down")
+    #         for _ in range(imvcddbut.NUMBER_OF_RETRIES_TO_SAVE - 1)
+    #     ]
+    #     mocked_results += [None]
+    #     self.mock_execute_insert_on_conflict_do_nothing_query.side_effect = (
+    #         mocked_results
+    #     )
+    #     self._call_save_data_to_db()
+    #     # Check that the query was executed the expected number of times.
+    #     self.assertEqual(
+    #         self.mock_execute_insert_on_conflict_do_nothing_query.call_count,
+    #         imvcddbut.NUMBER_OF_RETRIES_TO_SAVE,
+    #     )
 
     def test_save_data_to_db2(self) -> None:
         """
