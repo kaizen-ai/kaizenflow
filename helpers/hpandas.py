@@ -1225,7 +1225,9 @@ def _df_to_str(
 def df_to_str(
     df: Union[pd.DataFrame, pd.Series, pd.Index],
     *,
-    handle_signed_zeros: bool = False,
+    # TODO(gp): Remove this hack in the integration.
+    #handle_signed_zeros: bool = False,
+    handle_signed_zeros: bool = True,
     num_rows: Optional[int] = 6,
     print_dtypes: bool = False,
     print_shape_info: bool = False,
