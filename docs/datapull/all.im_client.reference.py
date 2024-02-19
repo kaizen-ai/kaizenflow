@@ -77,6 +77,7 @@ config = {
         "aws_profile": "ck",
         "resample_1min": False,
         "version": "v1_0_0",
+        "download_universe_version": "v7_3",
         "tag": "downloaded_1min",
     },
     "bid_ask_parquet_config": {
@@ -88,6 +89,7 @@ config = {
         "contract_type": "futures",
         "data_snapshot": "",
         "version": "v1_0_0",
+        "download_universe_version": "v7",
         "tag": "resampled_1min",
         "aws_profile": "ck",
     },
