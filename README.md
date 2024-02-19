@@ -102,7 +102,7 @@ This contains the absolute minimal amount of info to start developing
   - How to write guidelines, format documentation, convert Gdocs to markdown
     files and vice versa
 
-- [Imports and packages](docs/documentation_meta/all.writing_docs.how_to_guide.md)
+- [Imports and packages](docs/coding/all.imports_and_packages.how_to_guide.md)
   - How to import code, use packages, and resolve circular dependencies
 
 - [How to integrate repos](docs/coding/all.integrate_repos.how_to_guide.md)
