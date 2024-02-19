@@ -25,8 +25,8 @@
 - Other times we need to integrate "by file"
 
 - There are various interesting Git reference points:
-  1. The branch point for each fork, at which the integration branch was started
-  2. The last integration point for each fork, at which the repos are the same,
+  1. the branch point for each fork, at which the integration branch was started
+  2. the last integration point for each fork, at which the repos are the same,
      or at least aligned
 
 # Invariants for the integration workflows
