@@ -4,6 +4,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as carsigen
 import helpers.henv as henv
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -21,8 +22,8 @@ class TestArmaProcess(hunitest.TestCase):
             burnin=10,
         )
         self.check_string(
-            hunitest.convert_df_to_string(
-                realization, title=realization.name, index=True
+            hpandas.df_to_str(
+                realization, tag=realization.name, num_rows=None
             )
         )
 
@@ -36,8 +37,8 @@ class TestArmaProcess(hunitest.TestCase):
             burnin=5,
         )
         self.check_string(
-            hunitest.convert_df_to_string(
-                realization, title=realization.name, index=True
+            hpandas.df_to_str(
+                realization, tag=realization.name, num_rows=None
             )
         )
 
@@ -51,8 +52,8 @@ class TestArmaProcess(hunitest.TestCase):
             burnin=5,
         )
         self.check_string(
-            hunitest.convert_df_to_string(
-                realization, title=realization.name, index=True
+            hpandas.df_to_str(
+                realization, tag=realization.name, num_rows=None
             )
         )
 
@@ -64,7 +65,7 @@ class TestMultivariateNormalProcess(hunitest.TestCase):
         realization = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
         )
-        self.check_string(hunitest.convert_df_to_string(realization, index=True))
+        self.check_string(hpandas.df_to_str(realization, num_rows=None))
 
     def test2(self) -> None:
         mean = pd.Series([1, 2])
@@ -73,7 +74,7 @@ class TestMultivariateNormalProcess(hunitest.TestCase):
         realization = mn_process.generate_sample(
             {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
         )
-        self.check_string(hunitest.convert_df_to_string(realization, index=True))
+        self.check_string(hpandas.df_to_str(realization, num_rows=None))
 
 
 class Test_generate_arima_signal_and_response(hunitest.TestCase):
@@ -81,7 +82,7 @@ class Test_generate_arima_signal_and_response(hunitest.TestCase):
         srs = carsigen.generate_arima_signal_and_response(
             "2010-01-01", "D", 40, 1
         )
-        self.check_string(hunitest.convert_df_to_string(srs, index=True))
+        self.check_string(hpandas.df_to_str(srs, num_rows=None))
 
 
 if henv.has_module("gluonts"):

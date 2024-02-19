@@ -46,11 +46,23 @@
 
 - Crete the integration branches
 
-  ```
+  ```bash
   > cd cmamp1
+  > git checkout master
   > i integrate_create_branch --dir-basename cmamp1
   > cd sorrentum1
+  > git checkout master
   > i integrate_create_branch --dir-basename sorrentum1
+  ```
+
+- In one line
+  ```bash
+  cd $HOME/cmamp1 && \
+    git checkout master && \
+    i integrate_create_branch --dir-basename cmamp1 && \
+    cd $HOME/sorrentum1 && \
+    git checkout master && \
+    i integrate_create_branch --dir-basename sorrentum1
   ```
 
 - Remove white spaces from both source and destination repos:

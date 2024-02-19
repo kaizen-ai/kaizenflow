@@ -5,11 +5,13 @@ import core.finance.execution as cfinexec
 """
 
 import logging
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
 
 import core.finance.resampling as cfinresa
+import core.statistics as costatis
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
@@ -499,3 +501,57 @@ def compute_trade_vs_limit_execution_quality(
     # Combine computed columns.
     df_out = pd.concat(data, axis=1)
     return df_out
+
+
+def simulate_limit_order_execution(
+    open_price: float,
+    close_price: float,
+    volatility: float,
+    limit_price: float,
+    is_buy: bool,
+    delay_as_frac: float,
+    n_steps: int,
+    seed: int,
+) -> Tuple[int, float]:
+    """
+    Simulate the execution of a limit order.
+
+    Interpolate price between `open_price` and `close_price` using a
+    Brownian bridge and specified `volatility`.
+
+    :param open_price: beginning-of-bar price
+    :param close_price: end-of-bar price
+    :param volatility: close-to-close volatility of return
+    :param limit_price: price of limit order
+    :param is_buy: boolean to indicate side
+    :param delay_as_frac: percentage of bar consumed by order submission
+        latency
+    :param n_steps: number of steps in Brownian bridge
+    :param seed: seed for random increments
+    :return: (step of fill, execution price), or (-1, np.nan) if no fill
+    """
+    bb = costatis.interpolate_with_brownian_bridge(
+        open_price,
+        close_price,
+        volatility,
+        n_steps,
+        seed,
+    )
+    num_steps_to_skip = int(delay_as_frac * n_steps)
+    # If side is "buy", use reflection to convert the problem into an
+    # equivalent "sell" problem, then reflect again to recover the
+    # correct result.
+    if is_buy:
+        step, val = costatis.get_first_threshold_upcrossing(
+            -bb,
+            -limit_price,
+            num_steps_to_skip=num_steps_to_skip,
+        )
+        val *= -1
+    else:
+        step, val = costatis.get_first_threshold_upcrossing(
+            bb,
+            limit_price,
+            num_steps_to_skip=num_steps_to_skip,
+        )
+    return step, val

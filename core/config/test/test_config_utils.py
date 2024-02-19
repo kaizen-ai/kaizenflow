@@ -5,6 +5,7 @@ from typing import Any
 import pandas as pd
 
 import core.config as cconfig
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -106,11 +107,11 @@ class Test_validate_configs1(hunitest.TestCase):
 
 
 # #############################################################################
-# Test_apply_config_overrides1
+# Test_apply_config_overrides_from_command_line1
 # #############################################################################
 
 
-class Test_apply_config_overrides1(hunitest.TestCase):
+class Test_apply_config_overrides_from_command_line1(hunitest.TestCase):
     def test1(self) -> None:
         """
         Verify that config values are updated correctly.
@@ -126,7 +127,7 @@ class Test_apply_config_overrides1(hunitest.TestCase):
             ]
         )
         # Run.
-        actual = cconfig.apply_config_overrides(config, args)
+        actual = cconfig.apply_config_overrides_from_command_line(config, args)
         self.assertEqual(actual["build_model"]["activation"], val1)
         self.assertEqual(actual["build_targets"]["target_asset"], val2)
 
@@ -147,7 +148,7 @@ class Test_apply_config_overrides1(hunitest.TestCase):
             ]
         )
         # Run and check that config values are updated.
-        cconfig.apply_config_overrides(config, args)
+        cconfig.apply_config_overrides_from_command_line(config, args)
         self.assertEqual(config["key1"], val1)
         self.assertEqual(config["key2"]["key2.2"], val2)
         self.assertEqual(config["key2"]["key2.1"]["key3.1"], val3)
@@ -370,7 +371,7 @@ class Test_convert_to_dataframe1(hunitest.TestCase):
         config2 = _get_test_config2()
         # Convert configs to dataframe.
         act = cconfig.convert_to_dataframe([config1, config2])
-        act = hunitest.convert_df_to_string(act, index=True)
+        act = hpandas.df_to_str(act, num_rows=None)
         #
         exp = pd.DataFrame(
             {
@@ -383,7 +384,7 @@ class Test_convert_to_dataframe1(hunitest.TestCase):
                 "meta.experiment_result_dir": ["results.pkl", "results.pkl"],
             }
         )
-        exp = hunitest.convert_df_to_string(exp, index=True)
+        exp = hpandas.df_to_str(exp, num_rows=None)
         self.assert_equal(str(act), str(exp))
 
 
@@ -401,14 +402,14 @@ class Test_build_config_diff_dataframe1(hunitest.TestCase):
         config2 = _get_test_config2()
         #
         act = cconfig.build_config_diff_dataframe({"1": config1, "2": config2})
-        act = hunitest.convert_df_to_string(act, index=True)
+        act = hpandas.df_to_str(act, num_rows=None)
         #
         exp = pd.DataFrame(
             {
                 "build_targets.target_asset": ["Crude Oil", "Gold"],
             }
         )
-        exp = hunitest.convert_df_to_string(exp, index=True)
+        exp = hpandas.df_to_str(exp, num_rows=None)
         self.assert_equal(str(act), str(exp))
 
     def test2(self) -> None:
@@ -418,7 +419,7 @@ class Test_build_config_diff_dataframe1(hunitest.TestCase):
         config1 = _get_test_config1()
         #
         act = cconfig.build_config_diff_dataframe({"1": config1, "2": config1})
-        act = hunitest.convert_df_to_string(act, index=True)
+        act = hpandas.df_to_str(act, num_rows=None)
         #
         exp = """
         Empty DataFrame
@@ -438,7 +439,7 @@ class Test_build_config_diff_dataframe1(hunitest.TestCase):
         act = cconfig.build_config_diff_dataframe(
             {"1": config1, "2": config2, "3": config3}
         )
-        act = hunitest.convert_df_to_string(act, index=True)
+        act = hpandas.df_to_str(act, num_rows=None)
         #
         exp = """
           build_targets.target_asset  hello

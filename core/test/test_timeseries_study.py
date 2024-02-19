@@ -6,6 +6,7 @@ import pandas as pd
 import core.artificial_signal_generators as carsigen
 import core.statistics as costatis
 import core.timeseries_study as ctimstud
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 
@@ -38,7 +39,7 @@ class TestMapDictToDataframeTest1(hunitest.TestCase):
         actual = ctimstud.map_dict_to_dataframe(
             dict_=result_dict, functions=stat_funcs
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test2(self) -> None:
@@ -53,7 +54,7 @@ class TestMapDictToDataframeTest1(hunitest.TestCase):
             functions=stat_funcs,
             add_prefix=False,
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test3(self) -> None:
@@ -68,7 +69,7 @@ class TestMapDictToDataframeTest1(hunitest.TestCase):
             functions=stat_funcs,
             progress_bar=False,
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     @staticmethod

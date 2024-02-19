@@ -6,6 +6,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as carsigen
 import core.statistics.drawdown as cstadraw
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -142,7 +143,7 @@ new_max_drawdown,0.784453
         """
         Smoke test for empty input.
         """
-        series = pd.Series([])
+        series = pd.Series(dtype="float64")
         cstadraw.compute_max_drawdown(series)
 
     @staticmethod
@@ -159,7 +160,7 @@ class Test_compute_drawdown(hunitest.TestCase):
     def test1(self) -> None:
         series = self._get_series(1)
         actual = cstadraw.compute_drawdown(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     @staticmethod
@@ -182,7 +183,7 @@ class Test_compute_time_under_water(hunitest.TestCase):
             "time_under_water"
         )
         output = pd.concat([series, drawdown, time_under_water], axis=1)
-        self.check_string(hunitest.convert_df_to_string(output, index=True))
+        self.check_string(hpandas.df_to_str(output, num_rows=None))
 
     def test2(self) -> None:
         series = Test_compute_time_under_water._get_series(42)
@@ -194,7 +195,7 @@ class Test_compute_time_under_water(hunitest.TestCase):
             "time_under_water"
         )
         output = pd.concat([series, drawdown, time_under_water], axis=1)
-        self.check_string(hunitest.convert_df_to_string(output, index=True))
+        self.check_string(hpandas.df_to_str(output, num_rows=None))
 
     @staticmethod
     def _get_series(seed: int) -> pd.Series:

@@ -5,6 +5,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as carsigen
 import core.statistics.t_test as cstttes
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ class TestTTest1samp(hunitest.TestCase):
         series[:5] = np.nan
         series[8:10] = np.nan
         actual = cstttes.ttest_1samp(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test3(self) -> None:
@@ -32,7 +33,7 @@ class TestTTest1samp(hunitest.TestCase):
         series[:5] = np.nan
         series[8:10] = np.nan
         actual = cstttes.ttest_1samp(series, nan_mode="ffill_and_drop_leading")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     # Smoke test for input of `np.nan`s.

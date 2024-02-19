@@ -9,6 +9,7 @@ import core.plotting.boxplot as cploboxp
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.normality as cplonorm
+import core.plotting.portfolio_binned_stats as cppobist
 import core.plotting.visual_stationarity_test as cpvistte
 
 _LOG = logging.getLogger(__name__)
@@ -58,6 +59,27 @@ class Test_plots(unittest.TestCase):
         ]
         index = pd.date_range(start="2023-01-01", periods=len(data), freq="D")
         df = pd.DataFrame(data, index=index)
+        return df
+
+    @staticmethod
+    def get_plot_portfolio_binned_stats1() -> pd.DataFrame:
+        """
+        Generate a test DataFrame for `plot_portfolio_binned_stats()`.
+        """
+        index = pd.date_range("2000-01-01 14:35:00", periods=10, freq="5T")
+        columns = pd.MultiIndex.from_tuples(
+            [
+                ("prediction", 1467591036),
+                ("prediction", 3303714233),
+                ("holdings_notional", 1467591036),
+                ("holdings_notional", 3303714233),
+                ("pnl", 1467591036),
+                ("pnl", 3303714233),
+            ],
+            names=[None, "asset_id"],
+        )
+        data = np.random.rand(len(index), len(columns))
+        df = pd.DataFrame(data, index=index, columns=columns)
         return df
 
     def test_plot_histograms_and_lagged_scatterplot1(self) -> None:
@@ -195,7 +217,7 @@ class Test_plots(unittest.TestCase):
         """
         Smoke test for `plot_boxplot()`.
 
-        - `grouping= "by_row"`
+        - `grouping = "by_row"`
         - `ylabel` is an empty string
         """
         test_df = self.get_test_plot_df1()
@@ -234,3 +256,34 @@ class Test_plots(unittest.TestCase):
         dist = "norm"
         nan_mode = "drop"
         cplonorm.plot_qq(test_series, ax=axes, dist=dist, nan_mode=nan_mode)
+
+    def test_plot_portfolio_binned_stats1(self) -> None:
+        """
+        Smoke test for `plot_portfolio_binned_stats()`.
+
+        Input is a DataFrame with 2 MultiIndex column levels.
+        """
+        test_df = self.get_plot_portfolio_binned_stats1()
+        proportion_of_data_per_bin = 0.2
+        normalize_prediction_col_values = True
+        y_scale = 4
+        cppobist.plot_portfolio_binned_stats(
+            test_df,
+            proportion_of_data_per_bin,
+            normalize_prediction_col_values=normalize_prediction_col_values,
+            y_scale=y_scale,
+        )
+
+    def test_plot_portfolio_binned_stats2(self) -> None:
+        """
+        Smoke test for `plot_portfolio_binned_stats()`.
+
+        Input is a dict of 2 DataFrames with 2 MultiIndex column levels.
+        """
+        test_df = self.get_plot_portfolio_binned_stats1()
+        test_dict = {
+            "df1": test_df,
+            "df2": test_df * 2,
+        }
+        proportion_of_data_per_bin = 0.2
+        cppobist.plot_portfolio_binned_stats(test_df, proportion_of_data_per_bin)

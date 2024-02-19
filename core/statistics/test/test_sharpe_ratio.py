@@ -7,6 +7,7 @@ import pandas as pd
 import core.artificial_signal_generators as carsigen
 import core.finance as cofinanc
 import core.statistics.sharpe_ratio as cstshrat
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -95,8 +96,8 @@ class TestComputeAnnualizedSharpeRatio(hunitest.TestCase):
         df = pd.DataFrame([srs, srs.shift()]).T
         df.columns = ["Series 1", "Series 2"]
         actual = cstshrat.compute_annualized_sharpe_ratio(df)
-        df_string = hunitest.convert_df_to_string(df, index=True)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        df_string = hpandas.df_to_str(df, num_rows=None)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         txt = f"Input:\n{df_string}\n\n" f"Output:\n{actual_string}\n"
         self.check_string(txt)
 
@@ -174,7 +175,7 @@ class Test_summarize_sharpe_ratio(hunitest.TestCase):
             burnin=5,
         )
         res = cstshrat.summarize_sharpe_ratio(realization)
-        self.check_string(hunitest.convert_df_to_string(res, index=True))
+        self.check_string(hpandas.df_to_str(res, num_rows=None))
 
 
 class Test_zscore_oos_sharpe_ratio(hunitest.TestCase):
@@ -185,9 +186,9 @@ class Test_zscore_oos_sharpe_ratio(hunitest.TestCase):
         output_str = (
             f"OOS start: {oos_start}\n"
             f"{hprint.frame('input series')}\n"
-            f"{hunitest.convert_df_to_string(series, index=True)}\n"
+            f"{hpandas.df_to_str(series, num_rows=None)}\n"
             f"{hprint.frame('output')}\n"
-            f"{hunitest.convert_df_to_string(sr_stats, index=True)}"
+            f"{hpandas.df_to_str(sr_stats, num_rows=None)}"
         )
         self.check_string(output_str)
 
@@ -198,9 +199,9 @@ class Test_zscore_oos_sharpe_ratio(hunitest.TestCase):
         output_str = (
             f"OOS start: {oos_start}\n"
             f"{hprint.frame('input series')}\n"
-            f"{hunitest.convert_df_to_string(series, index=True)}\n"
+            f"{hpandas.df_to_str(series, num_rows=None)}\n"
             f"{hprint.frame('output')}\n"
-            f"{hunitest.convert_df_to_string(sr_stats, index=True)}"
+            f"{hpandas.df_to_str(sr_stats, num_rows=None)}"
         )
         self.check_string(output_str)
 
@@ -214,9 +215,9 @@ class Test_zscore_oos_sharpe_ratio(hunitest.TestCase):
         output_str = (
             f"OOS start: {oos_start}\n"
             f"{hprint.frame('input series')}\n"
-            f"{hunitest.convert_df_to_string(series, index=True)}\n"
+            f"{hpandas.df_to_str(series, num_rows=None)}\n"
             f"{hprint.frame('output')}\n"
-            f"{hunitest.convert_df_to_string(sr_stats, index=True)}"
+            f"{hpandas.df_to_str(sr_stats, num_rows=None)}"
         )
         self.check_string(output_str)
 
@@ -230,9 +231,9 @@ class Test_zscore_oos_sharpe_ratio(hunitest.TestCase):
         output_str = (
             f"OOS start: {oos_start}\n"
             f"{hprint.frame('input series')}\n"
-            f"{hunitest.convert_df_to_string(series, index=True)}\n"
+            f"{hpandas.df_to_str(series, num_rows=None)}\n"
             f"{hprint.frame('output')}\n"
-            f"{hunitest.convert_df_to_string(sr_stats, index=True)}"
+            f"{hpandas.df_to_str(sr_stats, num_rows=None)}"
         )
         self.check_string(output_str)
 
@@ -247,9 +248,9 @@ class Test_zscore_oos_sharpe_ratio(hunitest.TestCase):
         output_str = (
             f"OOS start: {oos_start}\n"
             f"{hprint.frame('input series')}\n"
-            f"{hunitest.convert_df_to_string(series, index=True)}\n"
+            f"{hpandas.df_to_str(series, num_rows=None)}\n"
             f"{hprint.frame('output')}\n"
-            f"{hunitest.convert_df_to_string(sr_stats, index=True)}"
+            f"{hpandas.df_to_str(sr_stats, num_rows=None)}"
         )
         self.check_string(output_str)
 
@@ -264,9 +265,9 @@ class Test_zscore_oos_sharpe_ratio(hunitest.TestCase):
         output_str = (
             f"OOS start: {oos_start}\n"
             f"{hprint.frame('input series')}\n"
-            f"{hunitest.convert_df_to_string(series, index=True)}\n"
+            f"{hpandas.df_to_str(series, num_rows=None)}\n"
             f"{hprint.frame('output')}\n"
-            f"{hunitest.convert_df_to_string(sr_stats, index=True)}"
+            f"{hpandas.df_to_str(sr_stats, num_rows=None)}"
         )
         self.check_string(output_str)
 

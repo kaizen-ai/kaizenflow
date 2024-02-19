@@ -25,7 +25,8 @@ def bin_prediction_annotated_portfolio_df(
     Bin portfolio properties into bins determined by the prediction.
 
     It is assumed that the prediction is approximately standard normal.
-    TODO(Paul): Consider exposing `normalize_bin_col_values`.
+    If the scale of the prediction is not on the unit scale, set
+    `normalize_prediction_col_values=True` for better results.
 
     :param df: `portfolio_df` with "prediction" col, e.g., output of
         `ForecastEvaluatorFromPrices.annotate_forecasts()`
@@ -87,7 +88,10 @@ def _bin_annotated_portfolio_df_helper(
         )
     elif output_col == "pnl_in_bps":
         basis = holdings_notional.abs().shift(1)
-        pnl_in_bps = 1e4 * pnl.divide(basis).rename("pnl_in_bps")
+        pnl_in_bps = 1e4 * pnl.divide(basis).replace(np.nan, 0).replace(
+            [-np.inf, np.inf], np.nan
+        )
+        pnl_in_bps.name = "pnl_in_bps"
         df_to_group = pd.concat([prediction.shift(2), pnl_in_bps], axis=1)
         # This aggregation will be approximate, since we are arithmetically averaging bps.
         grouped = costatis.group_by_bin(
@@ -105,6 +109,16 @@ def _bin_annotated_portfolio_df_helper(
             "prediction",
             proportion_of_data_per_bin,
             "sgn_corr",
+            normalize_prediction_col_values,
+        )
+    elif output_col == "corr":
+        corr = pnl.divide(pnl.std()).rename("corr")
+        df_to_group = pd.concat([prediction.shift(2), corr], axis=1)
+        grouped = costatis.group_by_bin(
+            df_to_group,
+            "prediction",
+            proportion_of_data_per_bin,
+            "corr",
             normalize_prediction_col_values,
         )
     elif output_col == "hit_rate":

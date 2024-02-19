@@ -39,7 +39,10 @@ def compute_kratio(pnl: pd.Series) -> float:
     reg = sm.OLS(cum_rets, x)
     model = reg.fit()
     # Compute k-ratio as slope / std err of slope.
-    kratio = model.params[1] / model.bse[1]
+    slope_name = "x1"
+    hdbg.dassert_in(slope_name, model.params)
+    hdbg.dassert_in(slope_name, model.bse)
+    kratio = model.params[slope_name] / model.bse[slope_name]
     # Adjust k-ratio by the number of observations and points per year.
     ppy = hdatafr.infer_sampling_points_per_year(pnl)
     kratio = kratio * np.sqrt(ppy) / len(pnl)
@@ -279,11 +282,15 @@ def calculate_hit_rate(
     Calculate hit rate statistics.
 
     :param srs: pandas series
-    :param alpha: as in statsmodels.stats.proportion.proportion_confint()
-    :param method: as in statsmodels.stats.proportion.proportion_confint()
-    :param threshold: threshold value around zero to exclude from calculations
+    :param alpha: as in
+        statsmodels.stats.proportion.proportion_confint()
+    :param method: as in
+        statsmodels.stats.proportion.proportion_confint()
+    :param threshold: threshold value around zero to exclude from
+        calculations
     :param prefix: optional prefix for metrics' outcome
-    :return: hit rate statistics: point estimate, lower bound, upper bound
+    :return: hit rate statistics: point estimate, lower bound, upper
+        bound
     """
     alpha = alpha or 0.05
     method = method or "jeffreys"
