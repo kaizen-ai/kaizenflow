@@ -55,72 +55,72 @@ make this experience the best possible for you.
 
 # On-boarding
 
-- [Signing up for Sorrentum](docs/Signing_up_for_Sorrentum.md)
+- [Signing up for Sorrentum](docs/onboarding/sorrentum.signing_up.how_to_guide.md)
 
 # How to start developing
 
 This contains the absolute minimal amount of info to start developing
 
-- [General Rules of Collaboration](docs/General_rules_of_collaboration.md)
+- [General Rules of Collaboration](docs/work_organization/all.team_collaboration.how_to_guide.md)
 
-- [Quick start for developing](docs/Sorrentum_development_setup.md)
+- [Quick start for developing](docs/work_tools/sorrentum.basic_development.how_to_guide.md)
 
-- [How to organize your work](docs/How_to_organize_your_work.md)
+- [How to organize your work](docs/work_organization/all.organize_your_work.how_to_guide.md)
 
-- [First Review Process](docs/First_review_process.md)
+- [First Review Process](docs/coding/all.submit_code_for_review.how_to_guide.md)
 
-- [Sorrentum Python coding style guide](docs/Coding_Style_Guide.md)
+- [Sorrentum Python coding style guide](docs/coding/all.coding_style.how_to_guide.md)
 
-- [Jupyter notebook best practices](docs/Jupyter_notebook_best_practices.md)
+- [Jupyter notebook best practices](docs/coding/all.jupyter_notebook.how_to_guide.md)
 
-- [Unit tests](docs/Unit_tests.md)
+- [Unit tests](docs/coding/all.write_unit_tests.how_to_guide.md)
 
 # Project management
 
-- [Contributor Scoring](docs/Contributor_Scoring.md)
+- [Contributor Scoring](docs/work_organization/all.contributor_scoring.how_to_guide.md)
 
   - How we give feedback to contributors
 
-- [Code review](docs/Code_review.md)
+- [Code review](docs/coding/all.code_review.how_to_guide.md)
 
   - PR review workflow from the code author and code reviewer points of view
 
-- [Development workflow](docs/Development_workflow.md)
+- [Development workflow](docs/deploying/all.model_deployment.how_to_guide.md)
 
   - Extended instructions on how to deploy your working environment and interact
     with it
 
-- [GitHub/ZenHub workflows](docs/GitHub_ZenHub_workflows.md)
+- [GitHub/ZenHub workflows](docs/work_organization/all.use_github_and_zenhub.how_to_guide.md)
 
   - How to use GitHub and ZenHub, file a PR, review GitHub/ZenHub workflows
 
-- [Git workflow and best practices](docs/Git_workflow_and_best_practices.md)
+- [Git workflow and best practices](docs/work_tools/all.git.how_to_guide.md)
 
   - `git` workflows, branch management, troubleshooting, common procedures
 
-- [Documentation about guidelines](docs/Documentation_about_guidelines.md)
+- [Documentation about guidelines](docs/documentation_meta/all.writing_docs.how_to_guide.md)
   - How to write guidelines, format documentation, convert Gdocs to markdown
     files and vice versa
 
-- [Imports and packages](docs/Imports_and_packages.md)
+- [Imports and packages](docs/documentation_meta/all.writing_docs.how_to_guide.md)
   - How to import code, use packages, and resolve circular dependencies
 
-- [How to integrate repos](docs/How_to_integrate_repos.md)
+- [How to integrate repos](docs/coding/all.integrate_repos.how_to_guide.md)
   - Detailed instruction on how to integrate repos
 
 # Learn how to become efficient at developing
 
 This contains a set of resources that over time will make 10x more productive
 
-- [Docker](docs/Docker.md)
+- [Docker](docs/coding/all.integrate_repos.how_to_guide.md)
 
-- [Reading List](docs/Reading_List.md)
+- [Reading List](documentation/general/reading_list.md)
 
-- [Design Philosophy](docs/Design_Philosophy.md)
+- [Design Philosophy](documentation/general/design_philosophy.md)
 
-- [Codebase Clean-up](docs/Codebase_clean_up_scripts.md)
+- [Codebase Clean-up](docs/work_tools/all.replace_text.how_to_guide.md)
 
-- [Scrum Methodology](docs/Scrum_methodology.md)
+- [Scrum Methodology](documentation/general/scrum_methodology.md)
 
 # Technologies used
 
@@ -139,31 +139,31 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Code organization](/code_organization.md)
 
-- [Buildmeister process](/docs/Buildmeister_process.md)
+- [Buildmeister process](docs/work_organization/all.buildmeister.how_to_guide.md)
 
-- [HTMLcov server](/docs/HTMLcov_server.md)
+- [HTMLcov server](docs/infra/ck.use_htmlcov_server.how_to_guide.md)
   
-- [Profiling](/docs/Profiling.md)
+- [Profiling](docs/coding/all.profiling.how_to_guide.md)
 
-- [Visual Studio Code](/docs/Visual_Studio_Code.md)
+- [Visual Studio Code](docs/work_tools/all.visual_studio_code.how_to_guide.md)
 
-- [Telegram](/docs/Telegram.md)
+- [Telegram](docs/onboarding/all.communicate_in_telegram.how_to_guide.md)
 
-- [Gsheet into pandas](/docs/Gsheet_into_pandas.md)
+- [Gsheet into pandas](documentation/technical/gsheet_into_pandas.md)
 
-- [Email](/docs/Email.md)
+- [Email](documentation/general/email.md)
     
-- [Glossary](docs/Glossary.md)
+- [Glossary](docs/general_background/all.glossary.reference.md)
 
-- [DataFlow](docs/DataFlow.md)
+- [DataFlow](docs/dataflow/all.dataflow.explanation.md)
 
-- [DataPull](docs/DataPull.md)
+- [DataPull](docs/datapull/all.datapull_sandbox.explanation.md)
 
-- [Workflows](docs/Workflows.md)
+- [Workflows](docs/kaizenflow/all.kaizenflow_workflow.explanation.md)
 
-- [Type Hints](docs/Type_hints.md)
+- [Type Hints](documentation/general/type_hints.md)
 
-- [PyCharm](docs/PyCharm.md)
+- [PyCharm](docs/work_tools/all.pycharm.how_to_guide.md)
 
 # DeFi: start developing
 
@@ -181,4 +181,4 @@ This contains a set of resources that over time will make 10x more productive
 
 ## How to receive a crypto transfer
 
-- [Receive crypto payment](docs/Receive_crypto_payment.md)
+- [Receive crypto payment](docs/onboarding/all.receive_crypto_payment.how_to_guide.md)
