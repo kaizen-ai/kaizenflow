@@ -161,7 +161,7 @@ def convert_df_to_string(
     index: bool = False,
     decimals: int = 6,
 ) -> str:
-    import hpandas
+    import helpers.hpandas as hpandas
 
     handle_signed_zeros = True
     return hpandas.df_to_str(df, handle_signed_zeros=handle_signed_zeros)
