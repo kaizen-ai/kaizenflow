@@ -10,6 +10,7 @@ import core.artificial_signal_generators as carsigen
 import core.config as cconfig
 import dataflow.core.nodes.regression_models as dtfcnoremo
 import helpers.hio as hio
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -41,13 +42,15 @@ class TestLinearRegression(hunitest.TestCase):
         Check that the randomly generated data is the same as our development
         computers.
         """
-        _LOG.debug("Current seed=%s", np.random.get_state()[1][0])
-        _LOG.debug("Generating data")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Current seed=%s", np.random.get_state()[1][0])
+            _LOG.debug("Generating data")
         data = self._get_data(seed=1)
-        _LOG.debug("Current seed=%s", np.random.get_state()[1][0])
-        _LOG.debug("data=\n%s", str(data))
-        _LOG.debug("Checking against golden")
-        df_str = hunitest.convert_df_to_string(data, index=True, decimals=3)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Current seed=%s", np.random.get_state()[1][0])
+            _LOG.debug("data=\n%s", str(data))
+            _LOG.debug("Checking against golden")
+        df_str = hpandas.df_to_str(data, num_rows=None, precision=3)
         self.check_string(df_str)
 
     def test1(self) -> None:
@@ -71,9 +74,7 @@ class TestLinearRegression(hunitest.TestCase):
         )
         #
         df_out = node.fit(data)["df_out"]
-        actual = hunitest.convert_df_to_string(
-            df_out.round(3), index=True, decimals=3
-        )
+        actual = hpandas.df_to_str(df_out.round(3), num_rows=None, precision=3)
         expected = """
                 y     x1     x2     x3     x4    y.shift_-1  y.shift_-1_hat
 2000-01-03 -0.865  1.074 -1.604  0.966 -0.705  1.771    1.799
@@ -111,9 +112,7 @@ class TestLinearRegression(hunitest.TestCase):
         )
         #
         df_out = node.fit(data)["df_out"]
-        actual = hunitest.convert_df_to_string(
-            df_out.round(3), index=True, decimals=3
-        )
+        actual = hpandas.df_to_str(df_out.round(3), num_rows=None, precision=3)
         expected = """
                 y     x1     x2     x3     x4    y.shift_-1  y.shift_-1_hat
 2000-01-03 -0.865  1.074 -1.604  0.966 -0.705  1.771    1.637
@@ -158,9 +157,7 @@ class TestLinearRegression(hunitest.TestCase):
         #
         node.fit(data_fit)
         df_out = node.predict(data_predict)["df_out"]
-        actual = hunitest.convert_df_to_string(
-            df_out.round(3), index=True, decimals=3
-        )
+        actual = hpandas.df_to_str(df_out.round(3), num_rows=None, precision=3)
         expected = """
                 y     x1     x2     x3     x4    y.shift_-1  y.shift_-1_hat
 2000-01-10  0.863  0.562  0.317 -0.267 -0.741  0.200    1.047
@@ -196,9 +193,7 @@ class TestLinearRegression(hunitest.TestCase):
         )
         #
         df_out = node.fit(data)["df_out"]
-        actual = hunitest.convert_df_to_string(
-            df_out.round(3), index=True, decimals=3
-        )
+        actual = hpandas.df_to_str(df_out.round(3), num_rows=None, precision=3)
         expected = """
                 y     x1     x2     x3     x4  weight    y.shift_-1  y.shift_-1_hat
 2000-01-03 -0.865  1.074 -1.604  0.966 -0.705       1  1.771    0.310
@@ -246,9 +241,7 @@ class TestLinearRegression(hunitest.TestCase):
         #
         node.fit(data_fit)
         df_out = node.predict(data_predict)["df_out"]
-        actual = hunitest.convert_df_to_string(
-            df_out.round(3), index=True, decimals=3
-        )
+        actual = hpandas.df_to_str(df_out.round(3), num_rows=None, precision=3)
         expected = """
                 y     x1     x2     x3     x4  weight    y.shift_-1  y.shift_-1_hat
 2000-01-10  0.863  0.562  0.317 -0.267 -0.741       6  0.200    0.373
@@ -281,9 +274,7 @@ class TestLinearRegression(hunitest.TestCase):
         )
         #
         df_out = node.fit(data)["df_out"]
-        actual = hunitest.convert_df_to_string(
-            df_out.round(3), index=True, decimals=3
-        )
+        actual = hpandas.df_to_str(df_out.round(3), num_rows=None, precision=3)
         expected = """
                 y     x1     x2     x3     x4    y.shift_-1  y.shift_-1_hat
 2000-01-03 -0.865  1.074 -1.604  0.966 -0.705  1.771    0.961
@@ -350,7 +341,8 @@ class TestLinearRegression(hunitest.TestCase):
         """
         dir_name = self.get_input_dir(use_only_test_class=True)
         file_name = os.path.join(dir_name, "data.csv")
-        _LOG.debug("file_name=%s", file_name)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("file_name=%s", file_name)
         return file_name
 
     def _get_frozen_input(self) -> pd.DataFrame:
@@ -439,9 +431,7 @@ end_ts,,,,,,,,
         )
         #
         df_out = node.fit(data)["df_out"]
-        actual = hunitest.convert_df_to_string(
-            df_out.round(3), index=True, decimals=3
-        )
+        actual = hpandas.df_to_str(df_out.round(3), num_rows=None, precision=3)
         expected = r"""
                                     y.shift_-2        y.shift_-2_hat            x1            x2            x3             y
                              MN1    MN2     MN1    MN2    MN1    MN2    MN1    MN2    MN1    MN2    MN1    MN2

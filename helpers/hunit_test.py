@@ -1241,6 +1241,7 @@ class TestCase(unittest.TestCase):
         import helpers.henv as henv
 
         s3_bucket = henv.execute_repo_config_code("get_unit_test_bucket_path()")
+        hdbg.dassert_isinstance(s3_bucket, str)
         # Make the path unique for the test.
         test_path = self.get_input_dir(
             use_only_test_class,
@@ -1248,6 +1249,7 @@ class TestCase(unittest.TestCase):
             test_method_name,
             use_absolute_path,
         )
+        hdbg.dassert_isinstance(test_path, str)
         # Assemble everything in a single path.
         input_dir = os.path.join(s3_bucket, test_path)
         return input_dir
