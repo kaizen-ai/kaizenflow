@@ -112,7 +112,7 @@ This contains the absolute minimal amount of info to start developing
 
 This contains a set of resources that over time will make 10x more productive
 
-- [Docker](docs/coding/all.integrate_repos.how_to_guide.md)
+- [Docker](docs/work_tools/all.docker.how_to_guide.md)
 
 - [Reading List](documentation/general/reading_list.md)
 
