@@ -73,15 +73,15 @@ def line(char: Optional[str] = None, num_chars: Optional[int] = None) -> str:
     return char * num_chars
 
 
-def pprint_pformat(obj: Any) -> str:
+def pprint_pformat(obj: Any, *, sort_dicts: bool = False) -> str:
     """
     Pretty-print in color.
     """
-    from pprint import pformat
     from pygments import highlight
     from pygments.formatters import Terminal256Formatter
     from pygments.lexers import PythonLexer
-    txt = highlight(pformat(obj), PythonLexer(), Terminal256Formatter())
+    txt = pprint.pformat(obj, sort_dicts=sort_dicts)
+    txt = highlight(txt, PythonLexer(), Terminal256Formatter())
     txt = txt.rstrip()
     return txt
 

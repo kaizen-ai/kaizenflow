@@ -63,17 +63,23 @@ def get_wall_clock_time() -> Optional["pd.Timestamp"]:
 # #############################################################################
 
 
-def to_timestamp_str(timestamp: "pd.Timestamp", include_msec: bool = False) -> str:
+def to_timestamp_str(
+    timestamp: "pd.Timestamp", include_msec: bool = False
+) -> str:
     if include_msec:
-        return timestamp.strftime("%Y%m%d_%H%M%S%f")
+        # Chop the last 4 miliseconds digits. This is needed for CcxtBroker_v2.
+        return timestamp.strftime("%Y%m%d_%H%M%S%f")[:-4]
     else:
         return timestamp.strftime("%Y%m%d_%H%M%S")
+
 
 # This is redundant with `hdatetime.get_current_time()` and
 # `hdateti.get_current_timestamp_as_string()` but we keep them to simplify
 # dependencies.
 def get_machine_wall_clock_time(
-    *, as_str: bool = False, include_msec: bool = False,
+    *,
+    as_str: bool = False,
+    include_msec: bool = False,
 ) -> Union[str, datetime.datetime]:
     ret = datetime.datetime.utcnow()
     if as_str:
@@ -99,6 +105,8 @@ def set_current_bar_timestamp(timestamp: "pd.Timestamp") -> None:
     _LOG.debug("timestamp=%s", timestamp)
     global _CURR_BAR_TIMESTAMP
     if _CURR_BAR_TIMESTAMP is not None:
+        # TODO(Grisha): should we relax the check by using
+        # `<=` instead of `<`?
         assert _CURR_BAR_TIMESTAMP < timestamp, (
             "Bar timestamp can only move forward: "
             + f"{_CURR_BAR_TIMESTAMP} <= {timestamp}"
@@ -107,9 +115,9 @@ def set_current_bar_timestamp(timestamp: "pd.Timestamp") -> None:
 
 
 def get_current_bar_timestamp(
-    *, as_str: bool = False
+    *, as_str: bool = False, include_msec: bool = False,
 ) -> Optional[Union[str, "pd.Timestamp"]]:
     ret = _CURR_BAR_TIMESTAMP
     if _CURR_BAR_TIMESTAMP and as_str:
-        ret = to_timestamp_str(ret)
+        ret = to_timestamp_str(ret, include_msec=include_msec)
     return ret

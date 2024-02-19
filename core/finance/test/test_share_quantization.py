@@ -67,7 +67,9 @@ class Test_quantize_shares(hunitest.TestCase):
         shares = self.get_shares()
         quantization = -2
         quantized_shares = cfishqua.quantize_shares(shares, quantization)
-        actual = hpandas.df_to_str(quantized_shares, num_rows=None)
+        actual = hpandas.df_to_str(
+            quantized_shares, handle_signed_zeros=True, num_rows=None
+        )
         expected = r"""
                              101    202
 2000-01-01 09:35:00-05:00    0.0    0.0

@@ -15,6 +15,7 @@ from invoke import task
 # We want to minimize the dependencies from non-standard Python packages since
 # this code needs to run with minimal dependencies and without Docker.
 import helpers.hdbg as hdbg
+import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
@@ -414,6 +415,18 @@ def lint(  # type: ignore
         print(cfile)
     else:
         _LOG.warning("Skipping lint parsing, as per user request")
+
+
+@task
+def lint_check_if_it_was_run(ctx):
+    """
+    Check if the linter was run in the current branch.
+
+    - abort the task with error if the files were modified
+    """
+    hlitauti.report_task()
+    # Check if the files were modified.
+    hgit.is_client_clean(abort_if_not_clean=True)
 
 
 @task
