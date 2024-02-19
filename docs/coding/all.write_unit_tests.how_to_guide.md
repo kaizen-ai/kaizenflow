@@ -1,53 +1,56 @@
-<!--ts-->
-   * [Guidelines about writing unit tests](#guidelines-about-writing-unit-tests)
-         * [<strong>What is a unit test?</strong>](#what-is-a-unit-test)
-         * [<strong>Why is unit testing important?</strong>](#why-is-unit-testing-important)
-      * [Unit testing tips](#unit-testing-tips)
-         * [Tip #1: Test one thing](#tip-1-test-one-thing)
-         * [Tip #2: Keep tests self-contained](#tip-2-keep-tests-self-contained)
-         * [Tip #3: Only specify data related to what is being tested](#tip-3-only-specify-data-related-to-what-is-being-tested)
-         * [Tip #4: Test realistic corner cases](#tip-4-test-realistic-corner-cases)
-         * [Tip #5: Test a typical scenario](#tip-5-test-a-typical-scenario)
-         * [Tip #6: Test executable scripts end-to-end](#tip-6-test-executable-scripts-end-to-end)
-      * [Conventions](#conventions)
-         * [Naming and placement conventions](#naming-and-placement-conventions)
-         * [Our framework to test using input / output data](#our-framework-to-test-using-input--output-data)
-         * [Use text and not pickle files as input](#use-text-and-not-pickle-files-as-input)
-         * [Use self.assert_equal](#use-selfassert_equal)
-         * [How to split unit test code in files](#how-to-split-unit-test-code-in-files)
-         * [Skeleton for unit test](#skeleton-for-unit-test)
-         * [Hierarchical TestCase approach](#hierarchical-testcase-approach)
-         * [Use the appropriate self.assert*](#use-the-appropriate-selfassert)
-         * [Do not use hdbg.dassert](#do-not-use-hdbgdassert)
-         * [Interesting testing functions](#interesting-testing-functions)
-         * [Use set_up_test / tear_down_test](#use-set_up_test--tear_down_test)
-            * [Nested set_up_test / tear_down_test](#nested-set_up_test--tear_down_test)
-         * [Use setUpClass / tearDownClass](#use-setupclass--teardownclass)
-   * [Update test tags](#update-test-tags)
-   * [Mocking](#mocking)
-      * [Refs](#refs)
-      * [Common usage samples](#common-usage-samples)
-      * [Philosophy about mocking](#philosophy-about-mocking)
-      * [Some general suggestions about testing](#some-general-suggestions-about-testing)
-         * [Test from the outside-in](#test-from-the-outside-in)
-         * [We don't need to test all the assertions](#we-dont-need-to-test-all-the-assertions)
-         * [Use strings to compare output instead of data structures](#use-strings-to-compare-output-instead-of-data-structures)
-         * [Use self.check_string() for things that we care about not changing (or are too big to have as strings in the code)](#use-selfcheck_string-for-things-that-we-care-about-not-changing-or-are-too-big-to-have-as-strings-in-the-code)
-         * [Each test method should test a single test case](#each-test-method-should-test-a-single-test-case)
-         * [Each test should be crystal clear on how it is different from the others](#each-test-should-be-crystal-clear-on-how-it-is-different-from-the-others)
-         * [In general, you want to budget the time to write unit tests](#in-general-you-want-to-budget-the-time-to-write-unit-tests)
-         * [Write a skeleton of unit tests and ask for a review if you are not sure how what to test](#write-a-skeleton-of-unit-tests-and-ask-for-a-review-if-you-are-not-sure-how-what-to-test)
-      * [Object patch with return value](#object-patch-with-return-value)
-      * [Path patch with multiple return values](#path-patch-with-multiple-return-values)
-      * [Ways of calling patch and patch.object](#ways-of-calling-patch-and-patchobject)
-      * [Mock object state after test run](#mock-object-state-after-test-run)
-      * [Mock common external calls in hunitest.TestCase class](#mock-common-external-calls-in-hunitesttestcase-class)
-      * [Mocks with specs](#mocks-with-specs)
-      * [Caveats](#caveats)
 
 
+<!-- toc -->
 
-<!--te-->
+- [Guidelines about writing unit tests](#guidelines-about-writing-unit-tests)
+    + [**What is a unit test?**](#what-is-a-unit-test)
+    + [**Why is unit testing important?**](#why-is-unit-testing-important)
+  * [Unit testing tips](#unit-testing-tips)
+    + [Tip #1: Test one thing](#tip-%231-test-one-thing)
+    + [Tip #2: Keep tests self-contained](#tip-%232-keep-tests-self-contained)
+    + [Tip #3: Only specify data related to what is being tested](#tip-%233-only-specify-data-related-to-what-is-being-tested)
+    + [Tip #4: Test realistic corner cases](#tip-%234-test-realistic-corner-cases)
+    + [Tip #5: Test a typical scenario](#tip-%235-test-a-typical-scenario)
+    + [Tip #6: Test executable scripts end-to-end](#tip-%236-test-executable-scripts-end-to-end)
+  * [Conventions](#conventions)
+    + [Naming and placement conventions](#naming-and-placement-conventions)
+    + [Our framework to test using input / output data](#our-framework-to-test-using-input--output-data)
+    + [Use text and not pickle files as input](#use-text-and-not-pickle-files-as-input)
+    + [`check_string` vs `self.assertEqual`](#check_string-vs-selfassertequal)
+    + [Use `self.assert_equal`](#use-selfassert_equal)
+    + [How to split unit test code in files](#how-to-split-unit-test-code-in-files)
+    + [Skeleton for unit test](#skeleton-for-unit-test)
+    + [Hierarchical `TestCase` approach](#hierarchical-testcase-approach)
+    + [Use the appropriate `self.assert*`](#use-the-appropriate-selfassert)
+    + [Do not use `hdbg.dassert`](#do-not-use-hdbgdassert)
+    + [Interesting testing functions](#interesting-testing-functions)
+    + [Use set_up_test / tear_down_test](#use-set_up_test--tear_down_test)
+      - [Nested set_up_test / tear_down_test](#nested-set_up_test--tear_down_test)
+    + [Use setUpClass / tearDownClass](#use-setupclass--teardownclass)
+- [Update test tags](#update-test-tags)
+- [Mocking](#mocking)
+  * [Refs](#refs)
+  * [Common usage samples](#common-usage-samples)
+  * [Philosophy about mocking](#philosophy-about-mocking)
+  * [Some general suggestions about testing](#some-general-suggestions-about-testing)
+    + [Test from the outside-in](#test-from-the-outside-in)
+    + [We don't need to test all the assertions](#we-dont-need-to-test-all-the-assertions)
+    + [Use strings to compare output instead of data structures](#use-strings-to-compare-output-instead-of-data-structures)
+    + [Use `self.check_string()` for things that we care about not changing (or are too big to have as strings in the code)](#use-selfcheck_string-for-things-that-we-care-about-not-changing-or-are-too-big-to-have-as-strings-in-the-code)
+    + [Each test method should test a single test case](#each-test-method-should-test-a-single-test-case)
+    + [Each test should be crystal clear on how it is different from the others](#each-test-should-be-crystal-clear-on-how-it-is-different-from-the-others)
+    + [In general, you want to budget the time to write unit tests](#in-general-you-want-to-budget-the-time-to-write-unit-tests)
+    + [Write a skeleton of unit tests and ask for a review if you are not sure how what to test](#write-a-skeleton-of-unit-tests-and-ask-for-a-review-if-you-are-not-sure-how-what-to-test)
+  * [Object patch with return value](#object-patch-with-return-value)
+  * [Path patch with multiple return values](#path-patch-with-multiple-return-values)
+  * [Ways of calling `patch` and `patch.object`](#ways-of-calling-patch-and-patchobject)
+  * [Mock object state after test run](#mock-object-state-after-test-run)
+  * [Mock common external calls in `hunitest.TestCase` class](#mock-common-external-calls-in-hunitesttestcase-class)
+  * [Mocks with specs](#mocks-with-specs)
+  * [Caveats](#caveats)
+
+<!-- tocstop -->
+
 # Guidelines about writing unit tests
 
 ### **What is a unit test?**
@@ -373,9 +376,12 @@
     classes (e.g., mocking, opening DBs), it can interfere with the inner
     workings of the framework.
   - Instead of `setUp()`, we define a `set_up_test()` method within the test
-    class and then call it at the beginning of each test method.
-  - Similarly, instead of `tearDown()`, we define `tear_down_test()` and call it
+    class and then run it at the beginning of each test method.
+  - Similarly, instead of `tearDown()`, we define `tear_down_test()` and run it
     at the end of each test method.
+  - To make sure both `set_up_test()` and `tear_down_test()` run even if the
+    test itself fails, we wrap them in a
+    [pytest fixture](https://docs.pytest.org/en/6.2.x/fixture.html#yield-fixtures-recommended).
 
     **Bad**:
 
@@ -399,6 +405,15 @@
     **Good**:
 
     ```python
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
     def set_up_test(self) -> None:
         ...
         ... # custom code
@@ -410,9 +425,7 @@
         ...
 
     def test1(self) -> None:
-        self.set_up_test()
         ...
-        self.tear_down_test()
     ```
   - If there is nothing left in `setUp()`/`tearDown()` after removing
     `super().setUp()`/`super.tearDown()`, then `setUp()`/`tearDown()` can be
@@ -471,6 +484,14 @@
 
   ```python
   class TestParent(hunitest.TestCase):
+      @pytest.fixture(autouse=True)
+      def setup_teardown_test(self):
+          # Run before each test.
+          self.set_up_test()
+          yield
+          # Run after each test.
+          self.tear_down_test()
+
       def set_up_test(self) -> None:
           ...
 
@@ -478,11 +499,17 @@
           ...
 
       def test1(self) -> None:
-          self.set_up_test()
           ...
-          self.tear_down_test()
 
   class TestChild(TestParent):
+      @pytest.fixture(autouse=True)
+      def setup_teardown_test(self):
+          # Run before each test.
+          self.set_up_test2()
+          yield
+          # Run after each test.
+          self.tear_down_test2()
+
       def set_up_test2(self) -> None:
           self.set_up_test()
           ...
@@ -492,15 +519,13 @@
           self.tear_down_test()
 
       def test1(self) -> None:
-          self.set_up_test2()
           ...
-          self.tear_down_test2()
   ```
   - TestParent has `setUp()` and `tearDown()`, while TestChild does not. Then,
     in TestParent, `setUp()`/`tearDown()` should be replaced by
     `set_up_test()`/`tear_down_test()` as described above; in TestChild,
-    `set_up_test()`/`tear_down_test()` should also be called in the test
-    methods. For example:
+    `set_up_test()`/`tear_down_test()` will run in the test methods
+    automatically via the inherited fixture. For example:
 
   ```python
   class TestParent(hunitest.TestCase):
@@ -524,6 +549,14 @@
 
   ```python
   class TestParent(hunitest.TestCase):
+      @pytest.fixture(autouse=True)
+      def setup_teardown_test(self):
+          # Run before each test.
+          self.set_up_test()
+          yield
+          # Run after each test.
+          self.tear_down_test()
+
       def set_up_test(self) -> None:
           ...
 
@@ -531,20 +564,34 @@
           ...
 
       def test1(self) -> None:
-          self.set_up_test()
           ...
-          self.tear_down_test()
 
   class TestChild(TestParent):
       def test1(self) -> None:
-          self.set_up_test()
           ...
-          self.tear_down_test()
   ```
+  - If TestParent only has one of the two, either `setUp()` or `tearDown()`,
+    then in both TestParent and TestChild, the test methods should run (from the
+    fixture), respectively, either `set_up_test()` or `tear_down_test()`, e.g.:
 
-  If TestParent only has one of the two, either `setUp()` or `tearDown()`, then
-  in both TestParent and TestChild, the test methods should call, respectively,
-  either `set_up_test()` or `tear_down_test()`.
+        ```python
+        class TestParent(hunitest.TestCase):
+            @pytest.fixture(autouse=True)
+            def setup_teardown_test(self):
+                # Run before each test.
+                self.set_up_test()
+                yield
+
+            def set_up_test(self) -> None:
+                ...
+
+            def test1(self) -> None:
+                ...
+
+        class TestChild(TestParent):
+            def test1(self) -> None:
+                ...
+        ```
   - A combination of the previous two options: TestParent has `setUp()` and
     `tearDown()`, and TestChild has one of them but not the other. Then, in
     TestParent, `setUp()`/`tearDown()` should be replaced by
@@ -552,9 +599,9 @@
     method that was present, `setUp()` or `tearDown()`, should be replaced by
     `set_up_test2()` or `tear_down_test2()`, which should call `set_up_test()`
     or `tear_down_test()` from TestParent; the other method from TestParent,
-    which was absent in TestChild, should be called in the test methods of
-    TestChild directly. For example, for the case when TestChild has `setUp()`
-    but not `tearDown()`:
+    which was absent in TestChild, should be added directly to TestChild's
+    fixture to run in its test methods. For example, for the case when TestChild
+    has `setUp()` but not `tearDown()`:
 
   ```python
   class TestParent(hunitest.TestCase):
@@ -582,6 +629,14 @@
 
   ```python
   class TestParent(hunitest.TestCase):
+      @pytest.fixture(autouse=True)
+      def setup_teardown_test(self):
+          # Run before each test.
+          self.set_up_test()
+          yield
+          # Run after each test.
+          self.tear_down_test()
+
       def set_up_test(self) -> None:
           ...
 
@@ -589,19 +644,23 @@
           ...
 
       def test1(self) -> None:
-          self.set_up_test()
           ...
-          self.tear_down_test()
 
   class TestChild(TestParent):
+      @pytest.fixture(autouse=True)
+      def setup_teardown_test(self):
+          # Run before each test.
+          self.set_up_test2()
+          yield
+          # Run after each test.
+          self.tear_down_test()
+
       def set_up_test2(self) -> None:
           self.set_up_test()
           ...
 
       def test1(self) -> None:
-          self.set_up_test2()
           ...
-          self.tear_down_test()
   ```
   - TestChild has `setUp()` and `tearDown()` (or just one of the two), while
     TestParent does not. Then, in TestChild, `setUp()`/`tearDown()` should be
@@ -634,6 +693,14 @@
           ...
 
   class TestChild(TestParent):
+      @pytest.fixture(autouse=True)
+      def setup_teardown_test(self):
+          # Run before each test.
+          self.set_up_test()
+          yield
+          # Run after each test.
+          self.tear_down_test()
+
       def set_up_test(self) -> None:
           ...
 
@@ -641,9 +708,7 @@
           ...
 
       def test1(self) -> None:
-          self.set_up_test()
           ...
-          self.tear_down_test()
   ```
 
 ### Use setUpClass / tearDownClass

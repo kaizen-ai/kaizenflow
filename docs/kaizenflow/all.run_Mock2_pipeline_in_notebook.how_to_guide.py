@@ -26,17 +26,6 @@
 # %%
 import logging
 
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import sklearn.linear_model as slmode
-
-import core.artificial_signal_generators as carsigen
-import core.config as cconfig
-import core.features as cofeatur
-import core.finance as cofinanc
-import core.finance.market_data_example as cfmadaex
-import core.signal_processing as csigproc
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
 import helpers.hdbg as hdbg
@@ -58,9 +47,9 @@ hprint.config_notebook()
 # - `_get_dag()`: specifies all the DAG Nodes and builds a DAG using these Nodes
 
 # %%
-import dataflow_amp.pipelines.mock2.mock2_pipeline as dtapmmopi
+import dataflow_amp.pipelines.mock2.mock2_pipeline as dapmmopi
 
-dag_builder = dtapmmopi.Mock2_DagBuilder()
+dag_builder = dapmmopi.Mock2_DagBuilder()
 dag_config = dag_builder.get_config_template()
 print(dag_config)
 
@@ -93,10 +82,13 @@ im_client_config_dict = {
     "aws_profile": "ck",
     "resample_1min": False,
     "version": "v1_0_0",
+    "download_universe_version": "v1",
     "tag": "resampled_1min",
 }
 
-im_client = imvcdchpcl.HistoricalPqByCurrencyPairTileClient(**im_client_config_dict)
+im_client = imvcdchpcl.HistoricalPqByCurrencyPairTileClient(
+    **im_client_config_dict
+)
 
 # %%
 # Show how to read the raw data through the `ImClient`.
@@ -104,7 +96,9 @@ full_symbols = ["us_market::MSFT"]
 start_ts = end_ts = None
 columns = None
 filter_data_mode = "assert"
-datapull_data = im_client.read_data(full_symbols, start_ts, end_ts, columns, filter_data_mode)
+datapull_data = im_client.read_data(
+    full_symbols, start_ts, end_ts, columns, filter_data_mode
+)
 display(datapull_data)
 
 # %% [markdown]
@@ -134,7 +128,9 @@ market_data = mdata.get_HistoricalImClientMarketData_example1(
 # %%
 # Print data in market data format.
 timestamp_column_name = "end_ts"
-tmp_data = market_data.get_data_for_interval(start_ts, end_ts, timestamp_column_name, asset_ids)
+tmp_data = market_data.get_data_for_interval(
+    start_ts, end_ts, timestamp_column_name, asset_ids
+)
 display(tmp_data)
 
 # %% [markdown]
