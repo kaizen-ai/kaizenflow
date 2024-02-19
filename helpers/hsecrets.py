@@ -53,7 +53,7 @@ def get_secret(secret_name: str) -> Optional[Dict[str, Any]]:
     except ClientError as e:
         if e.response["Error"]["Code"] == "ResourceNotFoundException":
             # Let user know the secret does not exist.
-            raise ValueError("No such secret:", secret_name) from e
+            raise ValueError("No such secret: %s" % secret_name) from e
         # If not yet implemented handler then just re-raise.
         raise e
     return secret_val
@@ -120,7 +120,6 @@ def dassert_valid_secret(secret_id: str) -> None:
             "huobi",
             "kraken",
             "kucoin",
-            "talos",
             "test",
         ],
     )

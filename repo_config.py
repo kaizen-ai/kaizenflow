@@ -334,10 +334,20 @@ def get_docker_user() -> str:
     Return the user that runs Docker, if any.
     """
     if hserver.is_dev4():
-        val = "sasm"
+        val = "spm-sasm"
     else:
         val = ""
     return val
+
+
+def get_unit_test_bucket_path() -> str:
+    """
+    Return the path to the unit test bucket.
+    """
+    unit_test_bucket = "cryptokaizen-unit-test"
+    # We do not use `os.path.join` since it converts `s3://` to `s3:/`.
+    unit_test_bucket_path = "s3://" + unit_test_bucket
+    return unit_test_bucket_path
 
 
 def get_html_bucket_path() -> str:

@@ -247,7 +247,7 @@ class Playback:
         if self.mode == "check_string":
             if isinstance(func_output, (pd.DataFrame, pd.Series, str)):
                 if not isinstance(func_output, str):
-                    self._append("act = hunitest.convert_df_to_string(act)", 2)
+                    self._append("act = hpandas.df_to_str(act, num_rows=None)", 2)
             if not isinstance(func_output, (str, bytes)):
                 self._append("act = str(act)", 2)
             self._append("# Check output.", 2)
@@ -262,8 +262,8 @@ class Playback:
                 self._append("exp = jsonpickle.decode(exp)", 2)
 
             if isinstance(func_output, (pd.DataFrame, pd.Series)):
-                self._append("act = hunitest.convert_df_to_string(act)", 2)
-                self._append("exp = hunitest.convert_df_to_string(exp)", 2)
+                self._append("act = hpandas.df_to_str(act, num_rows=None)", 2)
+                self._append("exp = hpandas.df_to_str(exp, num_rows=None)", 2)
             self._append("# Compare actual and expected output.", 2)
             self._append("self.assertEqual(act, exp)", 2)
         else:
@@ -274,6 +274,7 @@ class Playback:
         Add the code with imports.
         """
         # Add imports.
+        self._append("import helpers.hpandas as hpandas")
         self._append("import helpers.hunit_test as hunitest")
         self._append("import jsonpickle")
         self._append("import pandas as pd")

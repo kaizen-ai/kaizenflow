@@ -499,9 +499,21 @@ class Test_find_bar_timestamp1(hunitest.TestCase):
         current_timestamp = pd.Timestamp("2021-09-09T07:59:55", tz="UTC")
         self.helper1(current_timestamp)
 
+    def test4(self) -> None:
+        current_timestamp = pd.Timestamp(
+            "2021-09-09 08:01:59.500000+0000", tz="UTC"
+        )
+        bar_duration_in_secs = 1
+        #
+        act = hdateti.find_bar_timestamp(
+            current_timestamp, bar_duration_in_secs, mode="round"
+        )
+        exp = pd.Timestamp("2021-09-09T08:02:00+0000", tz="UTC")
+        self.assert_equal(str(act), str(exp))
+
     # ///////////////////////////////////////////////////////////////////////////
 
-    def test4(self) -> None:
+    def test5(self) -> None:
         current_timestamp = pd.Timestamp("2021-09-09T07:59:20", tz="UTC")
         with self.assertRaises(AssertionError) as cm:
             self.helper1(current_timestamp)
@@ -513,7 +525,7 @@ class Test_find_bar_timestamp1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test5(self) -> None:
+    def test6(self) -> None:
         current_timestamp = pd.Timestamp("2021-09-09T08:10:20", tz="UTC")
         with self.assertRaises(AssertionError) as cm:
             self.helper1(current_timestamp)
@@ -549,6 +561,18 @@ class Test_find_bar_timestamp2(hunitest.TestCase):
             current_timestamp, bar_duration_in_secs, mode="floor"
         )
         exp = pd.Timestamp("2021-09-09T08:00:00", tz="UTC")
+        self.assert_equal(str(act), str(exp))
+
+    def test3(self) -> None:
+        current_timestamp = pd.Timestamp(
+            "2021-09-09 08:01:59.500000+0000", tz="UTC"
+        )
+        bar_duration_in_secs = 1
+        #
+        act = hdateti.find_bar_timestamp(
+            current_timestamp, bar_duration_in_secs, mode="floor"
+        )
+        exp = pd.Timestamp("2021-09-09T08:01:59+0000", tz="UTC")
         self.assert_equal(str(act), str(exp))
 
 
@@ -627,7 +651,7 @@ class Test_convert_timestamp_to_unix_epoch(hunitest.TestCase):
 
 class Test_str_to_timestamp1(hunitest.TestCase):
     """
-    Test if string representation of datetime is converted correctly
+    Test if string representation of datetime is converted correctly.
     """
 
     def test1(self) -> None:
@@ -653,8 +677,10 @@ class Test_str_to_timestamp1(hunitest.TestCase):
         datetime_str = "20230728_150513"
         timezone_info = "UTC"
         format = "%Y%m%d_%H%M%S"
-        actual = hdateti.str_to_timestamp(datetime_str, timezone_info, datetime_format=format)
-        expected = pd.Timestamp('2023-07-28 15:05:13+0000', tz='UTC')
+        actual = hdateti.str_to_timestamp(
+            datetime_str, timezone_info, datetime_format=format
+        )
+        expected = pd.Timestamp("2023-07-28 15:05:13+0000", tz="UTC")
         self.assertEqual(actual, expected)
 
     def test3(self) -> None:
@@ -671,12 +697,7 @@ class Test_str_to_timestamp1(hunitest.TestCase):
                 datetime_str, timezone_info, datetime_format=datetime_format
             )
         actual = str(err.exception)
-        expected = """time data "28-07-2023 15:05:13" doesn't match format "%Y%m%d_%H%M%S", at position 0. You might want to try:
-        - passing `format` if your strings have a consistent format;
-        - passing `format='ISO8601'` if your strings are all ISO8601 but not necessarily in exactly the same format;
-        - passing `format='mixed'`, and the format will be inferred for each element individually. You might want to use `dayfirst` alongside this.
-        """
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.check_string(actual)
 
     def test4(self) -> None:
         """
@@ -689,5 +710,32 @@ class Test_str_to_timestamp1(hunitest.TestCase):
         with self.assertRaises(ValueError) as err:
             hdateti.str_to_timestamp(datetime_str, timezone_info)
         actual = str(err.exception)
-        expected = "Unknown datetime string format, unable to parse: qwe28abc07-201234, at position 0"
-        self.assert_equal(actual, expected)
+        self.check_string(actual)
+
+
+# #############################################################################
+# Test_dassert_str_is_date
+# #############################################################################
+
+
+class Test_dassert_str_is_date(hunitest.TestCase):
+    """
+    Test that the function checks a string representation of date correctly.
+    """
+
+    def test1(self) -> None:
+        """
+        - date has a valid format
+        """
+        date_str = "20221101"
+        hdateti.dassert_str_is_date(date_str)
+
+    def test2(self) -> None:
+        """
+        - date has an invalid format
+        """
+        date = "2022-11-01"
+        with self.assertRaises(ValueError) as err:
+            hdateti.dassert_str_is_date(date)
+        actual = str(err.exception)
+        self.check_string(actual)

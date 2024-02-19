@@ -93,7 +93,7 @@ class Test_compute_prices_from_rets(hunitest.TestCase):
         sample["price_pred"] = cfinretu.compute_prices_from_rets(
             sample.price, sample.ret_1.shift(1), "log_rets"
         )
-        output_txt = hunitest.convert_df_to_string(sample, index=True)
+        output_txt = hpandas.df_to_str(sample, num_rows=None)
         self.check_string(output_txt)
 
     def test6(self) -> None:

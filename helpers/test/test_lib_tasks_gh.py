@@ -7,7 +7,6 @@ import helpers.hgit as hgit
 import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
 import helpers.lib_tasks_gh as hlitagh
-import helpers.test.test_lib_tasks as httestlib
 
 _LOG = logging.getLogger(__name__)
 
@@ -21,7 +20,6 @@ class TestLibTasks1(hunitest.TestCase):
 
     @pytest.mark.skip("CmTask #2362.")
     def test_get_gh_issue_title1(self) -> None:
-        httestlib._gh_login()
         issue_id = 1
         repo = "amp"
         act = hlitagh._get_gh_issue_title(issue_id, repo)
@@ -35,8 +33,8 @@ class TestLibTasks1(hunitest.TestCase):
         not hgit.is_cmamp(),
         reason="CmampTask #683.",
     )
+    @pytest.mark.skip(reason="Waiting on CmTask#1996")
     def test_get_gh_issue_title3(self) -> None:
-        httestlib._gh_login()
         issue_id = 1
         repo = "dev_tools"
         act = hlitagh._get_gh_issue_title(issue_id, repo)
@@ -54,7 +52,6 @@ class TestLibTasks1(hunitest.TestCase):
         reason="Do not pass from sorrentum GH actions. See CmTask5211",
     )
     def test_get_gh_issue_title4(self) -> None:
-        httestlib._gh_login()
         issue_id = 1
         repo = "current"
         _ = hlitagh._get_gh_issue_title(issue_id, repo)

@@ -114,7 +114,7 @@ class TestGetBarData1(hunitest.TestCase):
         act = []
 
         def _add_stats():
-            df_as_str = hunitest.convert_df_to_string(df, n_rows=6, index=True)
+            df_as_str = hpandas.df_to_str(df)
             act_tmp = "## df_as_str=\n%s" % df_as_str
             _LOG.debug("%s", act_tmp)
             act.append(act_tmp)
@@ -273,7 +273,7 @@ class Test_get_cached_bar_data_for_date_interval_perf1(hunitest.TestCase):
             )
         if use_reference:
             self.check_string(
-                hunitest.convert_df_to_string(df)
+                hpandas.df_to_str(df, num_rows=None)
             )  # , use_gzip=True)
 
     @pytest.mark.slow("Takes around 1 minute")
@@ -309,7 +309,7 @@ class Test_get_cached_bar_data_for_date_interval_perf1(hunitest.TestCase):
             )
         if use_reference:
             self.check_string(
-                hunitest.convert_df_to_string(df)
+                hpandas.df_to_str(df, num_rows=None)
             )  # , use_gzip=True)
 
 
@@ -354,7 +354,7 @@ class TestTaqBarsUtils2(hunitest.TestCase):
         )
         _LOG.debug("df2=\n%s", str(df2))
         # Check.
-        act = hunitest.convert_df_to_string(df, n_rows=None, index=True)
+        act = hpandas.df_to_str(df, num_rows=None)
         self.check_string(act)
 
     def test_process_bar_data1(self) -> None:
@@ -365,7 +365,7 @@ class TestTaqBarsUtils2(hunitest.TestCase):
         df2 = imvidchiba.normalize_bar_data(df, tz_zone)
         _LOG.debug("df2=\n%s", str(df2))
         # Check.
-        act = hunitest.convert_df_to_string(df, n_rows=None, index=True)
+        act = hpandas.df_to_str(df, num_rows=None)
         self.check_string(act)
 
     def _get_test_data_file_name(self) -> str:

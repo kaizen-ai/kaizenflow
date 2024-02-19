@@ -14,13 +14,6 @@ from typing import Callable, Iterable, Optional, Tuple, Union, cast
 # TODO(gp): Use hdbg.WARNING
 _WARNING = "\033[33mWARNING\033[0m"
 
-
-try:
-    import dateutil.parser as dparse
-except ModuleNotFoundError:
-    _module = "dateutil"
-    print(_WARNING + f": Can't find {_module}: continuing")
-
 # Avoid dependency from other `helpers` modules to prevent import cycles.
 
 import pandas as pd  # noqa: E402 # pylint: disable=wrong-import-position
@@ -126,6 +119,22 @@ def to_timestamp(datetime_: Datetime) -> pd.Timestamp:
     return timestamp
 
 
+# TODO(Grisha): use `str_to_timestamp()` everywhere and kill the current function.
+def timestamp_as_str_to_timestamp(
+    timestamp_as_str: str, *, tz: str = "America/New_York"
+) -> pd.Timestamp:
+    """
+    Convert the given string UTC timestamp to the ET timezone timestamp.
+    """
+    # TODO(Dan): Add assert for `start_timestamp_as_str` and `end_timestamp_as_str` regex.
+    hdbg.dassert_isinstance(timestamp_as_str, str)
+    timestamp_as_str = timestamp_as_str.replace("_", " ")
+    # Add timezone offset in order to standartize the time.
+    timestamp_as_str = "".join([timestamp_as_str, "+00:00"])
+    timestamp = pd.Timestamp(timestamp_as_str, tz=tz)
+    return timestamp
+
+
 # //////////////////////////////////////////////////////////////////////////////////O
 
 
@@ -169,7 +178,7 @@ def dassert_has_specified_tz(
     ):
         tz_zone = "UTC"
     else:
-        tz_zone = tz_info.zone  # type: ignore        
+        tz_zone = tz_info.zone  # type: ignore
     has_expected_tz = tz_zone in tz_zones
     hdbg.dassert(
         has_expected_tz,
@@ -369,7 +378,8 @@ def get_current_time(
     since it handles both wall-clock time and "simulated" wall-clock
     time through asyncio.
 
-    :param tz: how to represent the returned time (e.g., "UTC", "ET", "naive")
+    :param tz: how to represent the returned time (e.g., "UTC", "ET",
+        "naive")
     """
     if event_loop is not None:
         # We accept only `hasyncio.EventLoop` here. If we are using standard asyncio
@@ -467,8 +477,8 @@ def find_bar_timestamp(
     Compute the bar (a, b] with period `bar_duration_in_secs` including
     `current_timestamp`.
 
-    :param current_timestamp:
-    :param bar_duration_in_secs:
+    :param current_timestamp: current timestamp
+    :param bar_duration_in_secs: bar duration in seconds
     :param mode: how to compute the bar
         - `round`: snap to the closest bar extreme
         - `floor`: pick timestamp to the bar that includes it, returning the lower
@@ -482,11 +492,8 @@ def find_bar_timestamp(
         )
     )
     hdbg.dassert_isinstance(current_timestamp, pd.Timestamp)
-    # Convert bar_duration_in_secs into minutes.
-    grid_time_in_mins = convert_seconds_to_minutes(bar_duration_in_secs)
-    _LOG.debug(hprint.to_str("grid_time_in_mins"))
     # Align.
-    reference_timestamp = f"{grid_time_in_mins}T"
+    reference_timestamp = f"{bar_duration_in_secs}S"
     if mode == "round":
         bar_timestamp = current_timestamp.round(reference_timestamp)
     elif mode == "floor":
@@ -495,9 +502,7 @@ def find_bar_timestamp(
     else:
         raise ValueError(f"Invalid mode='{mode}'")
     _LOG.debug(
-        hprint.to_str(
-            "current_timestamp bar_duration_in_secs grid_time_in_mins bar_timestamp"
-        )
+        hprint.to_str("current_timestamp bar_duration_in_secs bar_timestamp")
     )
     # Sanity check.
     if mode == "round":
@@ -552,6 +557,7 @@ def str_to_timestamp(
     Convert timestamp as string to `pd.Timestamp`.
 
     Localize input time to the specified timezone.
+
     E.g., `timestamp_as_str = "20230523_150513"`:
     - `tz = "UTC"` -> "2023-05-23 15:05:13+0000"
     - `tz = "US/Eastern"` -> "2023-05-23 15:05:13-0400"
@@ -635,8 +641,8 @@ def _handle_incorrect_conversions(
     Change data pre-processing for cases when `pd.to_datetime` is mistaken.
 
     :param date: string date
-    :return: date format and a function to apply to string dates before passing
-        them into `pd.to_datetime()`
+    :return: date format and a function to apply to string dates before
+        passing them into `pd.to_datetime()`
     """
     if len(date) in [7, 8]:
         # "2021-M2" is transformed to '2020-01-01 00:00:01' by
@@ -691,9 +697,13 @@ def _shift_to_period_end(  # pylint: disable=too-many-return-statements
         elif len(date) == 4:
             # "2021" format.
             return shift_to_year_end
-    # "September 2020" of "Sep 2020" format.
+    # "September 2020" or "Sep 2020" format.
     # Get a flat list of month aliases. The full month name comes first.
-    month_aliases = sum(dparse.parserinfo().MONTHS, ())[::-1]
+    # Since the `calendar` is using the natural month order, we need to
+    # shift the month aliases by one to get the correct order.
+    # E.g., `calendar.month_name[1:]` is `['January', 'February', ...]` and
+    # `calendar.month_abbr[1:]` is `['Jan', 'Feb', ...]`.
+    month_aliases = calendar.month_name[1:] + calendar.month_abbr[1:]
     pattern = re.compile("|".join(month_aliases), re.IGNORECASE)
     match = pattern.search(date)
     if match is None:
@@ -852,3 +862,18 @@ def convert_timestamp_to_unix_epoch(
         "1" + unit
     )
     return epoch
+
+
+# TODO(Sameep): Reuse this function across the code base (`jackpy strftime`) when
+# it doesn't make the import graph too complicated.
+def timestamp_to_str(timestamp: pd.Timestamp) -> str:
+    """
+    Convert timestamp to string.
+
+    :param timestamp: timestamp to convert
+    :return: timestamp in string format e.g. `20230727-111057`.
+    """
+    hdbg.dassert_isinstance(timestamp, pd.Timestamp)
+    # Convert timestamp to string.
+    timestamp_format = "%Y%m%d-%H%M%S"
+    return timestamp.strftime(timestamp_format)

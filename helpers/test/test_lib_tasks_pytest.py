@@ -836,7 +836,7 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
         _, act = hsystem.system_to_string(cmd)
         # Filter out the "No module named ..." warnings.
         # TODO(Grisha): add the "no module warning" filtering
-        # to `purify_text()` in `check_string()`.        
+        # to `purify_text()` in `check_string()`.
         regex = "WARN.*No module"
         act = hunitest.filter_text(regex, act)
         # Modify the outcome for reproducibility.

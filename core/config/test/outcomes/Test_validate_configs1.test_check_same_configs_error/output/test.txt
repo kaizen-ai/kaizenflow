@@ -2,38 +2,38 @@
 ################################################################################
 * Failed assertion *
 val1=
-['build_model:\n'
+['build_model: \n'
  '  activation: sigmoid\n'
- 'build_targets:\n'
+ 'build_targets: \n'
  '  target_asset: Crude Oil\n'
- '  preprocessing:\n'
+ '  preprocessing: \n'
  '    preprocessor: tokenizer\n'
- 'meta:\n'
+ 'meta: \n'
  '  experiment_result_dir: results.pkl',
- 'build_model:\n'
+ 'build_model: \n'
  '  activation: sigmoid\n'
- 'build_targets:\n'
+ 'build_targets: \n'
  '  target_asset: Crude Oil\n'
- '  preprocessing:\n'
+ '  preprocessing: \n'
  '    preprocessor: tokenizer\n'
- 'meta:\n'
+ 'meta: \n'
  '  experiment_result_dir: results.pkl',
- 'build_model:\n'
+ 'build_model: \n'
  '  activation: sigmoid\n'
- 'build_targets:\n'
+ 'build_targets: \n'
  '  target_asset: Gold\n'
- '  preprocessing:\n'
+ '  preprocessing: \n'
  '    preprocessor: tokenizer\n'
- 'meta:\n'
+ 'meta: \n'
  '  experiment_result_dir: results.pkl']
 has duplicates
-build_model:
+build_model: 
   activation: sigmoid
-build_targets:
+build_targets: 
   target_asset: Crude Oil
-  preprocessing:
+  preprocessing: 
     preprocessor: tokenizer
-meta:
+meta: 
   experiment_result_dir: results.pkl
 There are duplicate configs in passed list
 ################################################################################

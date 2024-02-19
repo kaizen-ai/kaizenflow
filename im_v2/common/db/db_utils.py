@@ -469,11 +469,11 @@ def drop_db_data_by_age(
 # TODO(Juraj): replace all occurrences of code inserting to db with a call to
 # this function.
 # TODO(Juraj): probabl hsql is a better place for this?
-@hretry.retry(
-    num_attempts=NUMBER_OF_RETRIES_TO_SAVE,
-    exceptions=RETRY_EXCEPTION,
-    retry_delay_in_sec=0.5,
-)
+#@hretry.retry(
+#    num_attempts=NUMBER_OF_RETRIES_TO_SAVE,
+#    exceptions=RETRY_EXCEPTION,
+#    retry_delay_in_sec=0.5,
+#)
 def save_data_to_db(
     data: pd.DataFrame,
     data_type: str,
