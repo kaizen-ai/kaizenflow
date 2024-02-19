@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import pandas as pd
 
+import helpers.hpandas as hpandas
 import core.statistics.forecastability as cstafore
 import helpers.hunit_test as hunitest
 
@@ -15,7 +16,7 @@ class Test_compute_forecastability(hunitest.TestCase):
         actual = cstafore.compute_forecastability(
             signal,
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test2(self) -> None:
@@ -24,7 +25,7 @@ class Test_compute_forecastability(hunitest.TestCase):
             signal,
             mode="periodogram",
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test3(self) -> None:
@@ -33,7 +34,7 @@ class Test_compute_forecastability(hunitest.TestCase):
             signal,
             nan_mode="ffill_and_drop_leading",
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test4(self) -> None:
@@ -42,7 +43,7 @@ class Test_compute_forecastability(hunitest.TestCase):
             signal,
             prefix="commodity_",
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     # Smoke test for empty input.

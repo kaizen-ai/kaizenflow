@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.statistics.random_samples as cstatrs
+import core.statistics.random_samples as cstrasam
 """
 
 import logging
@@ -12,6 +12,7 @@ import pandas as pd
 from tqdm.autonotebook import tqdm
 
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
@@ -53,6 +54,45 @@ def get_iid_rademacher_samples(n_samples: int, seed: int) -> pd.Series:
     return srs
 
 
+def get_iid_samples_from_cdf(
+    cdf: pd.Series, n_samples: int, seed: int
+) -> pd.Series:
+    """
+    Sample from a CDF using the inverse transform sampling method.
+    """
+    hdbg.dassert_isinstance(cdf, pd.Series)
+    # Ensure that all values are nonnegative.
+    hdbg.dassert_lte(0, cdf.min())
+    # Ensure that indices are increasing.
+    hpandas.dassert_increasing_index(cdf)
+    # Ensure that the values are increasing.
+    hdbg.dassert_eq((cdf - cdf.shift(1) < 0).sum(), 0)
+    # Ensure that all values are less than or equal to one,
+    #  within some epsilon tolerance.
+    epsilon = 1e-4
+    hdbg.dassert_lte(cdf.max(), 1 + epsilon)
+    # TODO(Paul): Add a check to ensure that the last value is sufficiently
+    #   close to 1.
+    # Generate IID uniform random samples.
+    rng = np.random.default_rng(seed=seed)
+    uniforms = rng.uniform(size=n_samples)
+    # Perform the inverse transform step for each uniform random sample.
+    samples = []
+    for uniform in uniforms:
+        srs = cdf[cdf >= uniform]
+        if not srs.empty:
+            sample = srs.idxmin()
+        else:
+            sample = cdf.idxmin()
+        samples.append(sample)
+    srs = pd.Series(
+        samples,
+        range(1, n_samples + 1),
+        name=f"n_samples={n_samples}_seed={seed}",
+    )
+    return srs
+
+
 def convert_increments_to_random_walk(srs: pd.Series) -> pd.Series:
     """
     Convert increments to a random walk starting from zero.
@@ -71,6 +111,9 @@ def annotate_random_walk(
 ) -> pd.DataFrame:
     """
     Annotate a random walk with running features.
+
+    "Adjusted" features center the random walk at the origin and divide
+    by the square root of the number of steps (taken so far).
     """
     hdbg.dassert_isinstance(srs, pd.Series)
     srs_list = [srs]
@@ -102,13 +145,22 @@ def annotate_random_walk(
         sqrt_srs = pd.Series(
             [np.sqrt(n) for n in range(1, srs.size + 1)], index=srs.index
         )
-        normalized_max = (running_max / sqrt_srs).rename("adj_high")
+        first_value = srs.iloc[0]
+        normalized_max = ((running_max - first_value) / sqrt_srs).rename(
+            "adj_high"
+        )
         srs_list.append(normalized_max)
-        normalized_min = (running_min / sqrt_srs).rename("adj_low")
+        normalized_min = ((running_min - first_value) / sqrt_srs).rename(
+            "adj_low"
+        )
         srs_list.append(normalized_min)
-        normalized_random_walk = (random_walk / sqrt_srs).rename("adj_close")
+        normalized_random_walk = ((random_walk - first_value) / sqrt_srs).rename(
+            "adj_close"
+        )
         srs_list.append(normalized_random_walk)
-        normalized_mean = (running_mean / sqrt_srs).rename("adj_mean")
+        normalized_mean = ((running_mean - first_value) / sqrt_srs).rename(
+            "adj_mean"
+        )
         srs_list.append(normalized_mean)
         normalized_std = (running_std / sqrt_srs).rename("adj_std")
         srs_list.append(normalized_std)
@@ -178,11 +230,13 @@ def apply_func_to_random_walk(
     """
     Apply function `func` to random walks.
 
-    :param func: a function that accepts a random walk and returns a pd.Series
-    :param sample_sizes: list of sample sizes to use in generating random walks
+    :param func: a function that accepts a random walk and returns a
+        pd.Series
+    :param sample_sizes: list of sample sizes to use in generating
+        random walks
     :param seeds: seeds to iterate over for each sample size
-    :param increment_func: function that accepts a "sample_size" and "seed" to
-        generate random walk increments
+    :param increment_func: function that accepts a "sample_size" and
+        "seed" to generate random walk increments
     """
     if increment_func is None:
         increment_func = get_iid_standard_gaussian_samples
@@ -197,7 +251,9 @@ def apply_func_to_random_walk(
     return df
 
 
-def get_staged_random_walk(stage_steps: int, seed: int) -> Dict[int, pd.Series]:
+def get_staged_random_walk(
+    stage_steps: List[int], seed: int
+) -> Dict[int, pd.Series]:
     """
     Return a random walk split into stages, indexed by stage.
     """
@@ -249,3 +305,56 @@ def generate_permutations(n_elements: int, n_permutations: int, seed: int):
         permutations.append(srs)
     permutations = pd.concat(permutations, axis=1)
     return permutations
+
+
+def interpolate_with_brownian_bridge(
+    initial_value: float,
+    final_value: float,
+    volatility: float,
+    n_steps: int,
+    seed: int,
+) -> pd.Series:
+    """
+    Interpolate two points with a Brownian bridge.
+
+    :param initial_value: first value of Brownian bridge
+    :param final_value: final value of Brownian bridge
+    :param n_steps: number of steps to take in the bridge
+    :param volatility: standard deviation of a Brownian motion running
+        from initial_value to final_value in time 1
+    :param seed: seed for generating increments
+    :return: a Brownian bridge connecting `initial_value` and `final_value`
+        with specific steps and total interval volatility
+    """
+    # Generate iid standard normal increments.
+    increments = get_iid_standard_gaussian_samples(n_steps, seed)
+    # Rescale according to n_steps and volatility.
+    hdbg.dassert_lt(0, volatility)
+    scaling_factor = volatility / np.sqrt(n_steps)
+    _LOG.debug("standard deviation of increments=%f", scaling_factor)
+    increments *= scaling_factor
+    # Convert rescaled increments to random walk.
+    rw = convert_increments_to_random_walk(increments)
+    # Convert random walk to Brownian bridge.
+    steps = pd.Series(range(0, rw.size), index=rw.index)
+    bb = rw - (steps / steps.iloc[-1]) * rw.iloc[-1]
+    hdbg.dassert_eq(
+        bb.iloc[0],
+        bb.iloc[-1],
+        msg="Brownian bridge does not start and end at the same value!",
+    )
+    # Add drift.
+    drift = steps / n_steps * (final_value - initial_value)
+    # Shifted Brownian bridge to reach initial and final values.
+    shifted_bb = initial_value + bb + drift
+    hdbg.dassert_eq(
+        shifted_bb.iloc[0],
+        initial_value,
+        msg="Brownian bridge does not start at `initial_value`!",
+    )
+    hdbg.dassert_eq(
+        shifted_bb.iloc[-1],
+        final_value,
+        msg="Brownian bridge does not end at `final_value`!",
+    )
+    return shifted_bb

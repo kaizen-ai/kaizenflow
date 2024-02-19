@@ -259,11 +259,10 @@ async def _sleep(sleep_in_secs: float) -> None:
     await asyncio.sleep(sleep_in_secs)
 
 
-def align_on_time_grid(
+async def align_on_time_grid(
     get_wall_clock_time: hdateti.GetWallClockTime,
     bar_duration_in_secs: int,
     *,
-    event_loop: Optional[asyncio.AbstractEventLoop],
     use_high_resolution: bool = False,
 ) -> None:
     """
@@ -279,12 +278,11 @@ def align_on_time_grid(
     """
     _LOG.info("Aligning on %s secs", bar_duration_in_secs)
 
-    def _wait(sleep_in_secs: float) -> None:
+    async def _wait(sleep_in_secs: float) -> None:
         _LOG.debug("wall_clock=%s", get_wall_clock_time())
         _LOG.debug("wait for %s secs", sleep_in_secs)
         if sleep_in_secs > 0:
-            coroutine = _sleep(sleep_in_secs)
-            hasynci.run(coroutine, event_loop=event_loop, close_event_loop=False)
+            await asyncio.sleep(sleep_in_secs)
             _LOG.debug("wall_clock=%s", get_wall_clock_time())
 
     # _LOG.debug("Aligning at wall_clock=%s ...", get_wall_clock_time())
@@ -294,10 +292,7 @@ def align_on_time_grid(
     #
     if use_high_resolution:
         # Wait for a bit and then busy wait.
-        hdbg.dassert_is(
-            event_loop, None, "High resolution sleep works only in real-time"
-        )
-        _wait(secs_to_wait - 1)
+        await _wait(secs_to_wait - 1)
         # Busy waiting. Operating system courses say to never do this, but in this
         # case we need a high-resolution wait.
         while True:
@@ -305,7 +300,7 @@ def align_on_time_grid(
             if current_time >= target_time:
                 break
     else:
-        _wait(secs_to_wait)
+        await _wait(secs_to_wait)
     _LOG.debug("Aligning done at wall_clock=%s", get_wall_clock_time())
 
 

@@ -4,6 +4,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as carsigen
 import core.signal_processing.cross_correlation as csprcrco
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -16,9 +17,9 @@ class Test__compute_lagged_cumsum(hunitest.TestCase):
         output_df = csprcrco._compute_lagged_cumsum(input_df, 3)
         self.check_string(
             f"{hprint.frame('input')}\n"
-            f"{hunitest.convert_df_to_string(input_df, index=True)}\n"
+            f"{hpandas.df_to_str(input_df, num_rows=None)}\n"
             f"{hprint.frame('output')}\n"
-            f"{hunitest.convert_df_to_string(output_df, index=True)}"
+            f"{hpandas.df_to_str(output_df, num_rows=None)}"
         )
 
     def test2(self) -> None:
@@ -27,9 +28,9 @@ class Test__compute_lagged_cumsum(hunitest.TestCase):
         output_df = csprcrco._compute_lagged_cumsum(input_df, 3, ["y1", "y2"])
         self.check_string(
             f"{hprint.frame('input')}\n"
-            f"{hunitest.convert_df_to_string(input_df, index=True)}\n"
+            f"{hpandas.df_to_str(input_df, num_rows=None)}\n"
             f"{hprint.frame('output')}\n"
-            f"{hunitest.convert_df_to_string(output_df, index=True)}"
+            f"{hpandas.df_to_str(output_df, num_rows=None)}"
         )
 
     def test_lag_1(self) -> None:
@@ -38,9 +39,9 @@ class Test__compute_lagged_cumsum(hunitest.TestCase):
         output_df = csprcrco._compute_lagged_cumsum(input_df, 1, ["y1", "y2"])
         self.check_string(
             f"{hprint.frame('input')}\n"
-            f"{hunitest.convert_df_to_string(input_df, index=True)}\n"
+            f"{hpandas.df_to_str(input_df, num_rows=None)}\n"
             f"{hprint.frame('output')}\n"
-            f"{hunitest.convert_df_to_string(output_df, index=True)}"
+            f"{hpandas.df_to_str(output_df, num_rows=None)}"
         )
 
     @staticmethod
@@ -61,9 +62,9 @@ class Test_correlate_with_lagged_cumsum(hunitest.TestCase):
         )
         self.check_string(
             f"{hprint.frame('input')}\n"
-            f"{hunitest.convert_df_to_string(input_df, index=True)}\n"
+            f"{hpandas.df_to_str(input_df, num_rows=None)}\n"
             f"{hprint.frame('output')}\n"
-            f"{hunitest.convert_df_to_string(output_df, index=True)}"
+            f"{hpandas.df_to_str(output_df, num_rows=None)}"
         )
 
     def test2(self) -> None:
@@ -73,9 +74,9 @@ class Test_correlate_with_lagged_cumsum(hunitest.TestCase):
         )
         self.check_string(
             f"{hprint.frame('input')}\n"
-            f"{hunitest.convert_df_to_string(input_df, index=True)}\n"
+            f"{hpandas.df_to_str(input_df, num_rows=None)}\n"
             f"{hprint.frame('output')}\n"
-            f"{hunitest.convert_df_to_string(output_df, index=True)}"
+            f"{hpandas.df_to_str(output_df, num_rows=None)}"
         )
 
     @staticmethod
@@ -98,8 +99,8 @@ class Test_correlate_with_lagged_cumsum(hunitest.TestCase):
 class Test_calculate_inverse(hunitest.TestCase):
     def test1(self) -> None:
         df = pd.DataFrame([[1, 2], [3, 4]])
-        inverse_df = hunitest.convert_df_to_string(
-            csprcrco.compute_inverse(df), index=True
+        inverse_df = hpandas.df_to_str(
+            csprcrco.compute_inverse(df)
         )
         self.check_string(inverse_df)
 
@@ -108,7 +109,7 @@ class Test_calculate_inverse(hunitest.TestCase):
 class Test_calculate_presudoinverse(hunitest.TestCase):
     def test1(self) -> None:
         df = pd.DataFrame([[1, 2], [3, 4], [5, 6]])
-        inverse_df = hunitest.convert_df_to_string(
-            csprcrco.compute_pseudoinverse(df), index=True
+        inverse_df = hpandas.df_to_str(
+            csprcrco.compute_pseudoinverse(df)
         )
         self.check_string(inverse_df)

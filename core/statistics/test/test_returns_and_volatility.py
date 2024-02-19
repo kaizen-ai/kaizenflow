@@ -6,6 +6,7 @@ import pandas as pd
 import core.artificial_signal_generators as carsigen
 import core.signal_processing as csigproc
 import core.statistics.returns_and_volatility as csreanvo
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -19,7 +20,7 @@ class Test_compute_annualized_return_and_volatility(hunitest.TestCase):
         """
         series = self._get_series(seed=1)
         actual = csreanvo.compute_annualized_return_and_volatility(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test2(self) -> None:
@@ -30,7 +31,7 @@ class Test_compute_annualized_return_and_volatility(hunitest.TestCase):
         actual = csreanvo.compute_annualized_return_and_volatility(
             series, prefix="test_"
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     # Smoke test for empty input
@@ -59,9 +60,9 @@ class Test_compute_returns_per_bet(hunitest.TestCase):
         rets_pos = pd.concat({"pos": positions, "rets": log_rets}, axis=1)
         output_str = (
             f"{hprint.frame('rets_pos')}\n"
-            f"{hunitest.convert_df_to_string(rets_pos, index=True)}\n"
+            f"{hpandas.df_to_str(rets_pos, num_rows=None)}\n"
             f"{hprint.frame('rets_per_bet')}\n"
-            f"{hunitest.convert_df_to_string(actual, index=True)}"
+            f"{hpandas.df_to_str(actual, num_rows=None)}"
         )
         self.check_string(output_str)
 
@@ -79,9 +80,9 @@ class Test_compute_returns_per_bet(hunitest.TestCase):
         rets_pos = pd.concat({"pos": positions, "rets": log_rets}, axis=1)
         output_str = (
             f"{hprint.frame('rets_pos')}\n"
-            f"{hunitest.convert_df_to_string(rets_pos, index=True)}\n"
+            f"{hpandas.df_to_str(rets_pos, num_rows=None)}\n"
             f"{hprint.frame('rets_per_bet')}\n"
-            f"{hunitest.convert_df_to_string(actual, index=True)}"
+            f"{hpandas.df_to_str(actual, num_rows=None)}"
         )
         self.check_string(output_str)
 

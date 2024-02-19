@@ -12,7 +12,7 @@ import helpers.hdbg as hdbg
 #  `portfolio_df` and `order_df`. Then we can compute underfills from
 #  the target_position_df
 # NOTE: This is probably superseded by
-#  `convert_parent_orders_to_target_position_df()`.
+#  `convert_order_df_to_target_position_df()`.
 def compute_shares_traded(
     portfolio_df: pd.DataFrame,
     order_df: pd.DataFrame,

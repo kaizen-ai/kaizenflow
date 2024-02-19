@@ -16,13 +16,13 @@ class TestComputeMoments(hunitest.TestCase):
     def test1(self) -> None:
         series = self._get_series(seed=1)
         actual = cstadesc.compute_moments(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
         actual = cstadesc.compute_moments(series, prefix="moments_")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
@@ -36,7 +36,7 @@ class TestComputeMoments(hunitest.TestCase):
         series[:5] = np.nan
         series[8:10] = np.nan
         actual = cstadesc.compute_moments(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test5(self) -> None:
@@ -47,7 +47,7 @@ class TestComputeMoments(hunitest.TestCase):
         actual = cstadesc.compute_moments(
             series, nan_mode="ffill_and_drop_leading"
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     # Smoke test for input of `np.nan`s.
@@ -65,7 +65,7 @@ class TestComputeMoments(hunitest.TestCase):
         actual = cstadesc.compute_moments(
             series, nan_mode="ffill_and_drop_leading"
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     @staticmethod
@@ -259,7 +259,7 @@ class TestComputeSpecialValueStats(hunitest.TestCase):
         """
         series = self._get_messy_series(seed=1)
         actual = cstadesc.compute_special_value_stats(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test2(self) -> None:
@@ -268,7 +268,7 @@ class TestComputeSpecialValueStats(hunitest.TestCase):
         """
         series = self._get_messy_series(seed=1)
         actual = cstadesc.compute_special_value_stats(series, prefix="data_")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
@@ -298,7 +298,7 @@ class Test_compute_jensen_ratio(hunitest.TestCase):
         actual = cstadesc.compute_jensen_ratio(
             signal,
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test2(self) -> None:
@@ -307,7 +307,7 @@ class Test_compute_jensen_ratio(hunitest.TestCase):
             signal,
             p_norm=3,
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test3(self) -> None:
@@ -317,7 +317,7 @@ class Test_compute_jensen_ratio(hunitest.TestCase):
             signal,
             inf_mode="drop",
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test4(self) -> None:
@@ -326,7 +326,7 @@ class Test_compute_jensen_ratio(hunitest.TestCase):
             signal,
             nan_mode="ffill",
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test5(self) -> None:
@@ -335,7 +335,7 @@ class Test_compute_jensen_ratio(hunitest.TestCase):
             signal,
             prefix="commodity_",
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
@@ -370,19 +370,19 @@ class TestComputeZeroDiffProportion(hunitest.TestCase):
     def test1(self) -> None:
         series = self._get_series(seed=1)
         actual = cstadesc.compute_zero_diff_proportion(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
         actual = cstadesc.compute_zero_diff_proportion(series, atol=1)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         series = self._get_series(seed=1)
         actual = cstadesc.compute_zero_diff_proportion(series, rtol=0.3)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test5(self) -> None:
@@ -390,13 +390,13 @@ class TestComputeZeroDiffProportion(hunitest.TestCase):
         actual = cstadesc.compute_zero_diff_proportion(
             series, nan_mode="fill_with_zero"
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test6(self) -> None:
         series = self._get_series(seed=1)
         actual = cstadesc.compute_zero_diff_proportion(series, prefix="prefix_")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
@@ -415,9 +415,9 @@ class TestComputeZeroDiffProportion(hunitest.TestCase):
         actual = cstadesc.compute_zero_diff_proportion(series)
         output_str = (
             f"{hprint.frame('input')}\n"
-            f"{hunitest.convert_df_to_string(series, index=True)}\n"
+            f"{hpandas.df_to_str(series, num_rows=None)}\n"
             f"{hprint.frame('output')}\n"
-            f"{hunitest.convert_df_to_string(actual, index=True)}"
+            f"{hpandas.df_to_str(actual, num_rows=None)}"
         )
         self.check_string(output_str)
 
@@ -433,9 +433,9 @@ class TestComputeZeroDiffProportion(hunitest.TestCase):
         actual = cstadesc.compute_zero_diff_proportion(series, nan_mode=nan_mode)
         output_str = (
             f"{hprint.frame('input')}\n"
-            f"{hunitest.convert_df_to_string(series, index=True)}\n"
+            f"{hpandas.df_to_str(series, num_rows=None)}\n"
             f"{hprint.frame(f'output, `nan_mode`=`{nan_mode}`')}\n"
-            f"{hunitest.convert_df_to_string(actual, index=True)}"
+            f"{hpandas.df_to_str(actual, num_rows=None)}"
         )
         self.check_string(output_str)
 
@@ -451,9 +451,9 @@ class TestComputeZeroDiffProportion(hunitest.TestCase):
         actual = cstadesc.compute_zero_diff_proportion(series, nan_mode=nan_mode)
         output_str = (
             f"{hprint.frame('input')}\n"
-            f"{hunitest.convert_df_to_string(series, index=True)}\n"
+            f"{hpandas.df_to_str(series, num_rows=None)}\n"
             f"{hprint.frame(f'output, `nan_mode`=`{nan_mode}`')}\n"
-            f"{hunitest.convert_df_to_string(actual, index=True)}"
+            f"{hpandas.df_to_str(actual, num_rows=None)}"
         )
         self.check_string(output_str)
 
@@ -469,9 +469,9 @@ class TestComputeZeroDiffProportion(hunitest.TestCase):
         actual = cstadesc.compute_zero_diff_proportion(series, nan_mode=nan_mode)
         output_str = (
             f"{hprint.frame('input')}\n"
-            f"{hunitest.convert_df_to_string(series, index=True)}\n"
+            f"{hpandas.df_to_str(series, num_rows=None)}\n"
             f"{hprint.frame(f'output, `nan_mode`=`{nan_mode}`')}\n"
-            f"{hunitest.convert_df_to_string(actual, index=True)}"
+            f"{hpandas.df_to_str(actual, num_rows=None)}"
         )
         self.check_string(output_str)
 
@@ -487,9 +487,9 @@ class TestComputeZeroDiffProportion(hunitest.TestCase):
         actual = cstadesc.compute_zero_diff_proportion(series, nan_mode=nan_mode)
         output_str = (
             f"{hprint.frame('input')}\n"
-            f"{hunitest.convert_df_to_string(series, index=True)}\n"
+            f"{hpandas.df_to_str(series, num_rows=None)}\n"
             f"{hprint.frame(f'output, `nan_mode`=`{nan_mode}`')}\n"
-            f"{hunitest.convert_df_to_string(actual, index=True)}"
+            f"{hpandas.df_to_str(actual, num_rows=None)}"
         )
         self.check_string(output_str)
 

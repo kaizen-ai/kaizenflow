@@ -68,7 +68,9 @@ class Test_quantize_holdings(hunitest.TestCase):
         holdings = self.get_holdings()
         quantization = -2
         holdings = cfinhold.quantize_holdings(holdings, quantization)
-        actual = hpandas.df_to_str(holdings, num_rows=None)
+        actual = hpandas.df_to_str(
+            holdings, handle_signed_zeros=True, num_rows=None
+        )
         expected = r"""
                              101    202
 2000-01-01 09:35:00-05:00    0.0    0.0
@@ -147,7 +149,9 @@ class Test_adjust_holdings_for_overnight(hunitest.TestCase):
             adjust_for_splits,
             ffill_limit,
         )
-        actual = hpandas.df_to_str(holdings, num_rows=None)
+        actual = hpandas.df_to_str(
+            holdings, handle_signed_zeros=True, num_rows=None
+        )
         expected = r"""
                              101    202
 2000-01-01 14:30:00-05:00    0.0    0.0

@@ -5,17 +5,22 @@ import core.finance.target_position_df_processing.combine_with_portfolio_df as c
 """
 
 import logging
+from typing import Tuple
 
-import numpy as np
 import pandas as pd
+
+import core.finance.per_bar_portfolio_metrics as cfpbpome
+import core.finance.portfolio_df_processing.slippage as cfpdprsl
+import core.finance.target_position_df_processing.fill_stats as cftpdpfst
 
 _LOG = logging.getLogger(__name__)
 
 
-def compute_notional_costs(
+# TODO(Paul): Rename this function.
+def compute_execution_quality_df(
     portfolio_df: pd.DataFrame,
     target_position_df: pd.DataFrame,
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Compute notional slippage and underfill costs.
 
@@ -24,45 +29,64 @@ def compute_notional_costs(
     `holdings_shares` is zero (in which case we cannot compute the
     baseline price from `Portfolio`).
     """
-    executed_trades_shares = portfolio_df["executed_trades_shares"]
-    target_trades_shares = target_position_df["target_trades_shares"]
-    underfill_share_count = (
-        target_trades_shares.shift(1).abs() - executed_trades_shares.abs()
-    )
-    # Get baseline price.
-    price = target_position_df["price"]
-    # Compute underfill opportunity cost with respect to baseline price.
-    side = np.sign(target_position_df["target_trades_shares"].shift(2))
-    underfill_notional_cost = (
-        side * underfill_share_count.shift(1) * price.subtract(price.shift(1))
-    )
+    # TODO(Paul): Add sanity-checks for `portfolio_df` and `target_position_df`.
+    # TODO(Paul): We can add consistency checks, e.g., to make sure that
+    #  `portfolio_df` and `target_position_df` are compatible.
+    fill_stats = cftpdpfst.compute_fill_stats(target_position_df)
     # Compute notional slippage.
+    # NOTE: `executed_trades_notional` is the key piece of information needed
+    #  from `portfolio_df` for computing slippage.
+    portfolio_df["executed_trades_notional"]
+    # Get baseline price.
+    price_df = target_position_df["price"]
+    slippage = cfpdprsl.compute_share_prices_and_slippage(
+        portfolio_df, price_df=price_df
+    )
+    # Drop columns that overlap with `fill_stats` columns.
+    # TODO(Paul): Consider cross-checking these with those in `fill_stats`.
+    slippage = slippage.drop(
+        columns=[
+            "is_buy",
+            "is_sell",
+            "is_benchmark_profitable",
+        ]
+    )
+    execution_quality_df = pd.concat([fill_stats, slippage], axis=1)
+    # TODO(Paul): Clean up this temporary fix once the column sets are the
+    #  same.
+    holdings_notional = portfolio_df["holdings_notional"]
     executed_trades_notional = portfolio_df["executed_trades_notional"]
-    slippage_notional = executed_trades_notional - (
-        price * executed_trades_shares
+    cols = holdings_notional.columns.union(executed_trades_notional.columns)
+    holdings_notional = holdings_notional.reindex(columns=cols, fill_value=0)
+    executed_trades_notional = executed_trades_notional.reindex(
+        columns=cols, fill_value=0
     )
-    # Aggregate results.
-    cost_df = pd.concat(
-        {
-            "underfill_notional_cost": underfill_notional_cost,
-            "slippage_notional": slippage_notional,
-        },
-        axis=1,
+    portfolio_stats_df = cfpbpome.compute_bar_metrics(
+        holdings_notional,
+        -executed_trades_notional,
+        portfolio_df["pnl"],
     )
-    return cost_df
+    #
+    summary_cols = [
+        "underfill_opportunity_cost_realized_notional",
+        "slippage_notional",
+    ]
+    stats_df = (
+        execution_quality_df[summary_cols].T.groupby(level=0).sum(min_count=1).T
+    )
+    execution_quality_stats_df = pd.concat([stats_df, portfolio_stats_df], axis=1)
+    return execution_quality_df, execution_quality_stats_df
 
 
+# TODO(Paul): Update this in view of changes to `compute_notional_costs()`.
 def summarize_notional_costs(df: pd.DataFrame, aggregation: str) -> pd.DataFrame:
     """
     Aggregate notional costs by bar or by asset.
 
     :param df: output of `compute_notional_costs()`
     :param aggregation: "by_bar" or "by_asset"
-    :return: dataframe with columns [
-        "slippage_notional",
-        "underfill_notional_cost",
-        "net",
-      ]
+    :return: dataframe with columns ["slippage_notional",
+        "underfill_notional_cost", "net"]
     """
     if aggregation == "by_bar":
         agg = df.groupby(axis=1, level=0).sum(min_count=1)
@@ -73,42 +97,3 @@ def summarize_notional_costs(df: pd.DataFrame, aggregation: str) -> pd.DataFrame
         raise ValueError("Invalid aggregation=%s", aggregation)
     agg["net"] = agg.sum(axis=1, min_count=1)
     return agg
-
-
-def apply_costs_to_baseline(
-    baseline_portfolio_stats_df: pd.DataFrame,
-    portfolio_stats_df: pd.DataFrame,
-    portfolio_df: pd.DataFrame,
-    target_position_df: pd.DataFrame,
-) -> pd.DataFrame:
-    srs = []
-    # Add notional pnls.
-    baseline_pnl = baseline_portfolio_stats_df["pnl"].rename("baseline_pnl")
-    srs.append(baseline_pnl)
-    pnl = portfolio_stats_df["pnl"].rename("pnl")
-    srs.append(pnl)
-    # Compute notional costs.
-    costs = compute_notional_costs(portfolio_df, target_position_df)
-    slippage = costs["slippage_notional"].sum(axis=1).rename("slippage_notional")
-    srs.append(slippage)
-    underfill_cost = (
-        costs["underfill_notional_cost"]
-        .sum(axis=1)
-        .rename("underfill_notional_cost")
-    )
-    srs.append(underfill_cost)
-    # Adjust baseline pnl by costs.
-    baseline_pnl_minus_costs = (baseline_pnl - slippage - underfill_cost).rename(
-        "baseline_pnl_minus_costs"
-    )
-    srs.append(baseline_pnl_minus_costs)
-    # Compare adjusted baseline pnl to pnl.
-    baseline_pnl_minus_costs_minus_pnl = (baseline_pnl_minus_costs - pnl).rename(
-        "baseline_pnl_minus_costs_minus_pnl"
-    )
-    srs.append(baseline_pnl_minus_costs_minus_pnl)
-    # Compare baseline pnl to pnl.
-    baseline_pnl_minus_pnl = (baseline_pnl - pnl).rename("baseline_pnl_minus_pnl")
-    srs.append(baseline_pnl_minus_pnl)
-    df = pd.concat(srs, axis=1)
-    return df
