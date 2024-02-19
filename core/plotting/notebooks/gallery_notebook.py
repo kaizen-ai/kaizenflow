@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.15.0
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -36,6 +36,7 @@ import core.plotting.boxplot as cploboxp
 import core.plotting.correlation as cplocorr
 import core.plotting.misc_plotting as cplmiplo
 import core.plotting.normality as cplonorm
+import core.plotting.portfolio_binned_stats as cppobist
 import core.plotting.test.test_plots as cptetepl
 import core.plotting.visual_stationarity_test as cpvistte
 import dataflow.model.model_plotter as dtfmomoplo
@@ -213,3 +214,31 @@ cplonorm.plot_qq(test_srs)
 test_srs[20:50] = np.nan
 _, axes = plt.subplots(1, 1, figsize=(10, 10))
 cplonorm.plot_qq(test_srs, ax=axes, dist="norm", nan_mode="drop")
+
+# %% [markdown]
+# ## `plot_portfolio_binned_stats()`
+
+# %%
+df = cptetepl.Test_plots.get_plot_portfolio_binned_stats1()
+
+# %%
+proportion_of_data_per_bin = 0.2
+normalize_prediction_col_values = True
+y_scale = 4
+cppobist.plot_portfolio_binned_stats(
+    df,
+    proportion_of_data_per_bin,
+    normalize_prediction_col_values=normalize_prediction_col_values,
+    y_scale=y_scale,
+)
+
+# %%
+test_dict = {
+    "df1": df,
+    "df2": df * 2,
+}
+cppobist.plot_portfolio_binned_stats(
+    test_dict, proportion_of_data_per_bin
+)
+
+# %%

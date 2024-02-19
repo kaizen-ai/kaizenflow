@@ -8,6 +8,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as carsigen
 import core.signal_processing.outliers as csiprout
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -106,19 +107,19 @@ class TestProcessNonfinite1(hunitest.TestCase):
     def test1(self) -> None:
         series = self._get_messy_series(1)
         actual = csiprout.process_nonfinite(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         series = self._get_messy_series(1)
         actual = csiprout.process_nonfinite(series, remove_nan=False)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         series = self._get_messy_series(1)
         actual = csiprout.process_nonfinite(series, remove_inf=False)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     @staticmethod

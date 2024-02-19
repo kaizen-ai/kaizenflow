@@ -127,6 +127,7 @@ def compute_target_positions_longitudinally(
     volatility_to_spread_threshold: float = 0.0,
     volatility_lower_bound: float = 1e-4,
     gamma: float = 0.0,
+    fill_method: str = "zero",
     target_dollar_risk_per_name: float = 1e2,
     spread_lower_bound: float = 1e-4,
     spread: Optional[pd.DataFrame] = None,
@@ -145,6 +146,7 @@ def compute_target_positions_longitudinally(
     :param volatility_lower_bound: threshold for volatility clipping
     :param gamma: prediction.abs() * vol_to_spread threshold; larger is more
         relaxed
+    :param fill_method: forward fill to apply to predictions after masking
     :param target_dollar_risk_per_name: target dollar risk to have on a
         name (not a target notional)
     :param spread_lower_bound: minimum allowable spread estimate
@@ -218,7 +220,14 @@ def compute_target_positions_longitudinally(
     # TODO(Paul): This can arise if nothing is masked out. Revisit and test.
     # if not prediction[mask].isnull().all().all():
     #     prediction[mask] = 0.0
-    prediction = prediction.fillna(0.0)
+    if fill_method == "nan":
+        pass
+    elif fill_method == "zero":
+        prediction = prediction.fillna(0.0)
+    elif fill_method == "ffill":
+        prediction = prediction.ffill()
+    else:
+        raise ValueError("Unrecognized `fill_method`=%s" % fill_method)
     # Add back the all-NaN rows.
     prediction = prediction.reindex(index=idx)
     #

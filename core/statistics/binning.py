@@ -93,7 +93,7 @@ def group_by_bin(
         _LOG.debug("Standardizing bin_col=%s values", bin_col)
     cuts = pd.cut(bin_col_values, bin_boundaries)
     # Group the aggregation column according to the bins.
-    grouped_col_values = df.groupby(cuts)[aggregation_col]
+    grouped_col_values = df.groupby(cuts, observed=False)[aggregation_col]
     # Aggregate the grouped result.
     count = grouped_col_values.count().rename("count")
     mean = grouped_col_values.mean().rename("mean")

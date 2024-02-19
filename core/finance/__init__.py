@@ -8,6 +8,7 @@ import core.finance.portfolio_df_processing  # pylint: disable=unused-import # N
 import core.finance.target_position_df_processing  # pylint: disable=unused-import # NOQA
 from core.finance.ablation import *  # pylint: disable=unused-import # NOQA
 from core.finance.accumulation import *  # pylint: disable=unused-import # NOQA
+from core.finance.asset_slicing import *  # pylint: disable=unused-import # NOQA
 from core.finance.bar_processing import *  # pylint: disable=unused-import # NOQA
 from core.finance.bid_ask import *  # pylint: disable=unused-import # NOQA
 from core.finance.execution import *  # pylint: disable=unused-import # NOQA

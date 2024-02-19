@@ -45,12 +45,12 @@ class Test_align_on_time_grid1(hunitest.TestCase):
             _ = current_time1
             # Align on an even second.
             bar_duration_in_secs = 2
-            creatime.align_on_time_grid(
+            coroutine = creatime.align_on_time_grid(
                 get_wall_clock_time,
                 bar_duration_in_secs,
-                event_loop=event_loop,
                 use_high_resolution=use_high_resolution,
             )
+            hasynci.run(coroutine, event_loop=event_loop, close_event_loop=False)
             # Check.
             current_time2 = get_wall_clock_time()
             _LOG.debug(hprint.to_str("current_time2"))
@@ -179,9 +179,10 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
         # Align on a 2-second boundary, since we want to start always from an even
         # second.
         bar_duration_in_secs = 2
-        creatime.align_on_time_grid(
-            get_wall_clock_time, bar_duration_in_secs, event_loop=event_loop
+        coroutine = creatime.align_on_time_grid(
+            get_wall_clock_time, bar_duration_in_secs
         )
+        hasynci.run(coroutine, event_loop=event_loop, close_event_loop=False)
         #
         coroutine = creatime.execute_all_with_real_time_loop(
             get_wall_clock_time,
