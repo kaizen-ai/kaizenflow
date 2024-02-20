@@ -1,17 +1,25 @@
 import pandas as pd
 import pytest
 
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import im.common.data.types as imcodatyp
-import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
+import im.kibot.data.load.kibot_s3_data_loader as ikdlksdlo
 
 
 @pytest.mark.requires_aws
 @pytest.mark.requires_ck_infra
+@pytest.mark.skip(reason="Kibot Equity Reader not in use ref. #5582.")
 class TestKibotS3DataLoader(hunitest.TestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self._s3_data_loader = imkdlksdlo.KibotS3DataLoader()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+
+    def set_up_test(self) -> None:
+        self._s3_data_loader = ikdlksdlo.KibotS3DataLoader()
 
     @pytest.mark.requires_aws
     @pytest.mark.requires_ck_infra
@@ -41,6 +49,6 @@ class TestKibotS3DataLoader(hunitest.TestCase):
         )
         data.insert(0, "date", data.index)
         # Transform dataframe to string.
-        actual_string = hunitest.convert_df_to_string(data)
+        actual_string = hpandas.df_to_str(data, num_rows=None)
         # Compare with expected.
         self.check_string(actual_string, fuzzy_match=True)

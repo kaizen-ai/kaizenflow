@@ -3,8 +3,8 @@
 A script to backfill DB with bid/ask data.
 
 This script can be used to insert data from an S3 dataset into a database table
-in case there is some data missing for a given time interval
-(e.g. when a realtime downloader experiences an outage).
+in case there is some data missing for a given time interval (e.g. when a
+realtime downloader experiences an outage).
 
 Import as:
 
@@ -35,59 +35,6 @@ import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.db.db_utils as imvcddbut
 
 _LOG = logging.getLogger(__name__)
-
-
-def _parse() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawTextHelpFormatter,
-    )
-    parser = hparser.add_verbosity_arg(parser)
-    parser.add_argument(
-        "--s3_dataset_signature",
-        action="store",
-        required=True,
-        type=str,
-        help="Source dataset used to backfill DB table",
-    )
-    parser.add_argument(
-        "--assert_missing_data",
-        action="store",
-        required=True,
-        type=bool,
-        help="If True, raises an exception if no gaps (missing timestamps)"
-        " in DB data are found in a specified time interval, "
-        " otherwise proceeds without interruption",
-    )
-    parser.add_argument(
-        "--db_table",
-        action="store",
-        required=True,
-        type=str,
-        help="DB table to backfill data into",
-    )
-    parser.add_argument(
-        "--stage",
-        action="store",
-        required=True,
-        type=str,
-        help="Stage to run at: dev, local, pre-prod, prod.",
-    )
-    parser.add_argument(
-        "--start_timestamp",
-        action="store",
-        required=True,
-        type=str,
-        help="Beginning of the datetime interval",
-    )
-    parser.add_argument(
-        "--end_timestamp",
-        action="store",
-        required=True,
-        type=str,
-        help="End of the datetime interval",
-    )
-    return parser
 
 
 def _check_gaps_by_interval_in_db(
@@ -212,6 +159,59 @@ def _run(args: argparse.Namespace) -> None:
         args["db_table"],
         args["stage"],
     )
+
+
+def _parse() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser = hparser.add_verbosity_arg(parser)
+    parser.add_argument(
+        "--s3_dataset_signature",
+        action="store",
+        required=True,
+        type=str,
+        help="Source dataset used to backfill DB table",
+    )
+    parser.add_argument(
+        "--assert_missing_data",
+        action="store",
+        required=True,
+        type=bool,
+        help="If True, raises an exception if no gaps (missing timestamps)"
+        " in DB data are found in a specified time interval, "
+        " otherwise proceeds without interruption",
+    )
+    parser.add_argument(
+        "--db_table",
+        action="store",
+        required=True,
+        type=str,
+        help="DB table to backfill data into",
+    )
+    parser.add_argument(
+        "--stage",
+        action="store",
+        required=True,
+        type=str,
+        help="Stage to run at: dev, local, pre-prod, prod.",
+    )
+    parser.add_argument(
+        "--start_timestamp",
+        action="store",
+        required=True,
+        type=str,
+        help="Beginning of the datetime interval",
+    )
+    parser.add_argument(
+        "--end_timestamp",
+        action="store",
+        required=True,
+        type=str,
+        help="End of the datetime interval",
+    )
+    return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:

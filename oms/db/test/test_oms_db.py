@@ -258,7 +258,8 @@ class TestOmsDbTableInteraction1(omtodh.TestOmsDbHelper):
         """
         Poll a DB for a certain value.
         """
-        _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
         #
         target_value = "hello_world.txt"
         poll_kwargs = {
@@ -270,7 +271,8 @@ class TestOmsDbTableInteraction1(omtodh.TestOmsDbHelper):
             self.connection, target_value, poll_kwargs
         )
         result = await asyncio.gather(coro)
-        _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
         return result
 
     async def _db_writer(
@@ -281,20 +283,24 @@ class TestOmsDbTableInteraction1(omtodh.TestOmsDbHelper):
         """
         table_name = odbomdb.ACCEPTED_ORDERS_TABLE_NAME
         # Sleep.
-        _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
-        _LOG.debug("sleep for %s secs", sleep_in_secs)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
+            _LOG.debug("sleep for %s secs", sleep_in_secs)
         await asyncio.sleep(sleep_in_secs)
         # Insert the row.
-        _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
-        _LOG.debug("insert row ...")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
+            _LOG.debug("insert row ...")
         row = _get_row1()
         hsql.execute_insert_query(self.connection, row, table_name)
-        _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
-        _LOG.debug("insert row ... done")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("get_wall_clock_time=%s", get_wall_clock_time())
+            _LOG.debug("insert row ... done")
         # Show the state of the DB.
         query = f"SELECT * FROM {table_name}"
         df = hsql.execute_query_to_df(self.connection, query)
-        _LOG.debug("df=\n%s", hpandas.df_to_str(df, use_tabulate=False))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("df=\n%s", hpandas.df_to_str(df, use_tabulate=False))
 
 
 # #############################################################################

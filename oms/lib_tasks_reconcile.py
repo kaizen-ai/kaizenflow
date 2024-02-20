@@ -2,27 +2,28 @@
 # Reconciliation
 # #############################################################################
 
-# Logically the reconciliation process:
-# 1) Create reconciliation target dirs
-# 2) Run prod system (done by a separate AirFlow task)
-# 3) Copy prod data to a target folder
-# 4) Dump market data for simulation
-# 5) Run simulation
-# 6) Copy simulation data to a target folder
-# 7) Dump TCA data
-# 8) Run the reconciliation notebook and publish it
-
+# 1. Run production system (done by a separate AirFlow task)
+# 2. Create reconciliation target directories
+# 3. Copy production data to a system reconciliation folder
+# 4. Dump market data for replayed time simulation
+# 5. Run replayed time simulation
+# 6. Run the reconciliation notebook and publish it
 """
 Invokes in the file are runnable from a Docker container only.
 
 E.g., to run for certain date from a Docker container:
 ```
-> invoke reconcile_run_all --dag-builder-name "C1b" --run-mode "prod" --start-timestamp-as-str "20221017_063500" --end-timestamp-as-str "20221017_073500"
-```
-
-to run outside a Docker container:
-```
-> invoke docker_cmd --cmd 'invoke reconcile_run_all --dag-builder-name "C1b" --run-mode "prod" --start-timestamp-as-str "20221017_063500" --end-timestamp-as-str "20221017_073500"'
+> invoke reconcile_run_all \
+    --dag-builder-ctor-as-str "dataflow_orange.pipelines.C1.C1b_pipeline.C1b_DagBuilder" \
+    --run-mode paper_trading \
+    --start-timestamp-as-str "20230828_130500" \
+    --end-timestamp-as-str "20230829_131000" \
+    --mode "scheduled" \
+    --prod-data-source-dir ".../system_reconciliation" \
+    --dst-root-dir ".../prod_reconciliation" \
+    --no-prevent-overwriting \
+    --run-notebook \
+    --mark-as-last-24-hour-run
 ```
 
 Import as:
@@ -39,6 +40,10 @@ from typing import Optional
 import pandas as pd
 from invoke import task
 
+import dataflow.core as dtfcore
+import dataflow.system as dtfsys
+import dataflow_amp.system.common as dtfasc
+import dataflow_amp.system.Cx as dtfasysc
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -48,7 +53,8 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hserver as hserver
 import helpers.hsystem as hsystem
-import oms.reconciliation as omreconc
+import im_v2.common.universe as ivcu
+import reconciliation.sim_prod_reconciliation as rsiprrec
 
 _LOG = logging.getLogger(__name__)
 
@@ -58,7 +64,7 @@ def _system(cmd: str) -> int:
 
 
 def _allow_update(
-    dag_builder_name: str,
+    dag_builder_ctor_as_str: str,
     run_mode: str,
     start_timestamp_as_str: str,
     end_timestamp_as_str: str,
@@ -70,7 +76,10 @@ def _allow_update(
     See `reconcile_run_all()` for params description.
     """
     # Get date-specific target dir.
-    target_dir = omreconc.get_target_dir(
+    dag_builder_name = dtfcore.get_DagBuilder_name_from_string(
+        dag_builder_ctor_as_str
+    )
+    target_dir = rsiprrec.get_target_dir(
         dst_root_dir,
         dag_builder_name,
         run_mode,
@@ -138,81 +147,15 @@ def _copy_result_file(
 
 
 @task
-def reconcile_create_dirs(
-    ctx,
-    dag_builder_name,
-    run_mode,
-    start_timestamp_as_str,
-    end_timestamp_as_str,
-    # TODO(Grisha): should be the 1st param.
-    dst_root_dir,
-    abort_if_exists,
-):  # type: ignore
-    """
-    Create dirs for storing reconciliation data.
-
-    Final dirs layout is:
-    ```
-    {dst_root_dir}/
-        {dag_builder_name}/
-            {run_mode}/
-                {start_timestamp_as_str}.{end_timestamp_as_str}/
-                    prod/
-                    simulation/
-                    tca/
-                    reconciliation_notebook/
-                    ...
-    ```
-
-    See `reconcile_run_all()` for params description.
-
-    :param abort_if_exists: see `hio.create_dir()`
-    """
-    _ = ctx
-    target_dir = omreconc.get_target_dir(
-        dst_root_dir,
-        dag_builder_name,
-        run_mode,
-        start_timestamp_as_str,
-        end_timestamp_as_str,
-    )
-    # Create a dir for reconcilation results.
-    hio.create_dir(target_dir, incremental=True, abort_if_exists=abort_if_exists)
-    # Create dirs for storing prod and simulation results.
-    prod_target_dir = omreconc.get_prod_dir(target_dir)
-    sim_target_dir = omreconc.get_simulation_dir(target_dir)
-    hio.create_dir(
-        prod_target_dir, incremental=True, abort_if_exists=abort_if_exists
-    )
-    hio.create_dir(
-        sim_target_dir, incremental=True, abort_if_exists=abort_if_exists
-    )
-    # Create dir for publishing reconciliation notebook.
-    notebook_target_dir = omreconc.get_reconciliation_notebook_dir(target_dir)
-    hio.create_dir(
-        notebook_target_dir, incremental=True, abort_if_exists=abort_if_exists
-    )
-    # Create dir for dumped TCA data.
-    if run_mode == "prod":
-        # Transaction costs analysis is not applicable when running with a mocked
-        # broker.
-        tca_target_dir = omreconc.get_tca_dir(target_dir)
-        hio.create_dir(
-            tca_target_dir, incremental=True, abort_if_exists=abort_if_exists
-        )
-    # Sanity check the created dirs.
-    cmd = f"ls -lh {target_dir}"
-    _system(cmd)
-
-
-@task
 def reconcile_dump_market_data(
     ctx,
-    dag_builder_name,
+    dag_builder_ctor_as_str,
     run_mode,
     start_timestamp_as_str,
     end_timestamp_as_str,
     dst_root_dir,
+    db_stage,
+    universe_version,
     source_dir=None,
     incremental=False,
     interactive=False,
@@ -241,15 +184,20 @@ def reconcile_dump_market_data(
     hdbg.dassert(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
+    hdbg.dassert_in(db_stage, ("local", "test", "preprod", "prod"))
+    hdbg.dassert_is_not(universe_version, None)
     _ = ctx
-    target_dir = omreconc.get_target_dir(
+    dag_builder_name = dtfcore.get_DagBuilder_name_from_string(
+        dag_builder_ctor_as_str
+    )
+    target_dir = rsiprrec.get_target_dir(
         dst_root_dir,
         dag_builder_name,
         run_mode,
         start_timestamp_as_str,
         end_timestamp_as_str,
     )
-    sim_target_dir = omreconc.get_simulation_dir(target_dir)
+    sim_target_dir = rsiprrec.get_simulation_dir(target_dir)
     if source_dir is None:
         source_dir = "."
     # TODO(Grisha): rename `test_data.csv.gz` -> `market_data.csv.gz`.
@@ -273,6 +221,8 @@ def reconcile_dump_market_data(
             f"--dst_dir {sim_target_dir}",
             f"--start_timestamp_as_str {start_timestamp_as_str}",
             f"--end_timestamp_as_str {end_timestamp_as_str}",
+            f"--db_stage {db_stage}",
+            f"--universe {universe_version}",
         ]
         opts = " ".join(opts)
         opts += " -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt; exit ${PIPESTATUS[0]}"
@@ -298,11 +248,13 @@ def reconcile_dump_market_data(
 @task
 def reconcile_run_sim(
     ctx,
-    dag_builder_name,
+    dag_builder_ctor_as_str,
     run_mode,
     start_timestamp_as_str,
     end_timestamp_as_str,
+    mode,
     dst_root_dir,
+    set_config_values=None,
 ):  # type: ignore
     """
     Run the simulation given an interval [start_timestamp, end_timestamp].
@@ -313,92 +265,60 @@ def reconcile_run_sim(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    # TODO(Nina): consider to save directly to sim dir and not to a root dir;
-    # or delete this dir inside `reconcile_copy_sim_data()`.
-    local_results_dir = "system_log_dir"
-    if os.path.exists(local_results_dir):
-        rm_cmd = f"rm -rf {local_results_dir}"
-        _LOG.warning(
-            "The local_results_dir=%s already exists, removing it.",
-            local_results_dir,
-        )
-        _system(rm_cmd)
-    script_name = os.path.join(
-        "dataflow_orange", "system", "Cx", "Cx_run_prod_system_simulation.py"
+    #
+    dag_builder_name = dtfcore.get_DagBuilder_name_from_string(
+        dag_builder_ctor_as_str
     )
-    # Build market data file path.
-    target_dir = omreconc.get_target_dir(
+    target_dir = rsiprrec.get_target_dir(
         dst_root_dir,
         dag_builder_name,
         run_mode,
         start_timestamp_as_str,
         end_timestamp_as_str,
     )
-    sim_target_dir = omreconc.get_simulation_dir(target_dir)
+    sim_target_dir = rsiprrec.get_simulation_dir(target_dir)
+    system_log_dir = rsiprrec.get_prod_system_log_dir(mode)
+    dst_result_dir = os.path.join(sim_target_dir, system_log_dir)
+    # Build the system.
+    system = dtfasysc.Cx_ProdSystem_v1_20220727(
+        dag_builder_ctor_as_str,
+        run_mode="simulation",
+    )
+    #
+    system.config["trading_period"] = "5T"
+    system.config["market_data_config", "days"] = None
+    # Set the latest universe version.
+    universe_version = ivcu.get_latest_universe_version()
+    system.config["market_data_config", "universe_version"] = universe_version
+    system = dtfsys.apply_Portfolio_config(system)
+    order_config = dtfasysc.get_Cx_order_config_instance1()
+    optimizer_config = dtfasysc.get_Cx_optimizer_config_instance1()
+    process_forecasts_dir = rsiprrec.get_process_forecasts_dir(dst_result_dir)
+    system = dtfasysc.apply_ProcessForecastsNode_config(
+        system, order_config, optimizer_config, process_forecasts_dir
+    )
+    # Build paths to a market data file and a result dir.
     file_name = "test_data.csv.gz"
     market_data_file_path = os.path.join(sim_target_dir, file_name)
-    system_log_dir = "./system_log_dir"
     # Run simulation.
-    cmd_txt = [
-        script_name,
-        f"--dag_builder_name {dag_builder_name}",
-        f"--start_timestamp_as_str {start_timestamp_as_str}",
-        f"--end_timestamp_as_str {end_timestamp_as_str}",
-        f"--market_data_file_path {market_data_file_path}",
-        f"--dst_dir {system_log_dir}",
-        "-v DEBUG 2>&1 | tee reconcile_run_sim_log.txt; exit ${PIPESTATUS[0]}",
-    ]
-    cmd = " ".join(cmd_txt)
-    _system(cmd)
-    # Check that the required dirs were created.
-    hdbg.dassert_dir_exists(os.path.join(local_results_dir, "dag"))
-    hdbg.dassert_dir_exists(os.path.join(local_results_dir, "process_forecasts"))
-    # TODO(Grisha): @Dan Add asserts on the latest files so we confirm that simulation was completed.
-
-
-@task
-def reconcile_copy_sim_data(
-    ctx,
-    dag_builder_name,
-    run_mode,
-    start_timestamp_as_str,
-    end_timestamp_as_str,
-    dst_root_dir,
-    prevent_overwriting=True,
-    aws_profile=None,
-):  # type: ignore
-    """
-    Copy the output of the simulation run to the specified folder.
-
-    See `reconcile_run_all()` for params description.
-    """
-    _ = ctx
-    target_dir = omreconc.get_target_dir(
-        dst_root_dir,
-        dag_builder_name,
-        run_mode,
+    _ = dtfasc.run_simulation(
+        system,
         start_timestamp_as_str,
         end_timestamp_as_str,
+        market_data_file_path,
+        dst_result_dir,
+        set_config_values=set_config_values,
     )
-    sim_target_dir = omreconc.get_simulation_dir(target_dir)
-    # Make sure that the destination dir exists before copying.
-    hdbg.dassert_dir_exists(sim_target_dir)
-    _LOG.info("Copying results to '%s'", sim_target_dir)
-    # Copy the output to the specified folder.
-    system_log_dir = "./system_log_dir"
-    cmd = f"cp -vr {system_log_dir} {sim_target_dir}"
-    _system(cmd)
-    # Copy simulation run logs to the specified folder.
-    pytest_log_file_path = "reconcile_run_sim_log.txt"
-    _copy_result_file(pytest_log_file_path, sim_target_dir, aws_profile)
-    if prevent_overwriting:
-        _prevent_overwriting(sim_target_dir)
+    # Check that the required dirs were created.
+    hdbg.dassert_dir_exists(os.path.join(dst_result_dir, "dag"))
+    hdbg.dassert_dir_exists(os.path.join(dst_result_dir, "process_forecasts"))
+    # TODO(Grisha): @Dan Add asserts on the latest files so we confirm that simulation was completed.
 
 
 @task
 def reconcile_copy_prod_data(
     ctx,
-    dag_builder_name,
+    dag_builder_ctor_as_str,
     run_mode,
     start_timestamp_as_str,
     end_timestamp_as_str,
@@ -406,7 +326,6 @@ def reconcile_copy_prod_data(
     # TODO(Nina): -> "prod_data_source_root_dir".
     prod_data_source_dir,
     mode,
-    stage=None,
     prevent_overwriting=True,
     aws_profile=None,
 ):  # type: ignore
@@ -415,14 +334,14 @@ def reconcile_copy_prod_data(
 
     See `reconcile_run_all()` for params description.
     """
-    if stage is None:
-        stage = "preprod"
-    hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
     hdbg.dassert_in(mode, ("scheduled", "manual"))
     hs3.dassert_path_exists(prod_data_source_dir, aws_profile)
     _ = ctx
+    dag_builder_name = dtfcore.get_DagBuilder_name_from_string(
+        dag_builder_ctor_as_str
+    )
     # `target_dir` is the local dir path where we copy results to.
-    target_dir = omreconc.get_target_dir(
+    target_dir = rsiprrec.get_target_dir(
         dst_root_dir,
         dag_builder_name,
         run_mode,
@@ -431,7 +350,7 @@ def reconcile_copy_prod_data(
         aws_profile=None,
     )
     # Set source log dir.
-    prod_data_source_dir = omreconc.get_target_dir(
+    prod_data_source_dir = rsiprrec.get_target_dir(
         prod_data_source_dir,
         dag_builder_name,
         run_mode,
@@ -439,11 +358,11 @@ def reconcile_copy_prod_data(
         end_timestamp_as_str,
         aws_profile=aws_profile,
     )
-    system_log_subdir = omreconc.get_prod_system_log_dir(mode)
+    system_log_subdir = rsiprrec.get_prod_system_log_dir(mode)
     system_log_dir = os.path.join(prod_data_source_dir, system_log_subdir)
     hs3.dassert_path_exists(system_log_dir, aws_profile)
     # Set target dirs.
-    prod_target_dir = omreconc.get_prod_dir(target_dir)
+    prod_target_dir = rsiprrec.get_prod_dir(target_dir)
     prod_results_target_dir = os.path.join(prod_target_dir, system_log_subdir)
     _LOG.info("Copying prod results to '%s'", prod_results_target_dir)
     # Copy prod run results to the target dir.
@@ -466,7 +385,7 @@ def reconcile_copy_prod_data(
 def reconcile_run_multiday_notebook(
     ctx,
     dst_root_dir,
-    dag_builder_name,
+    dag_builder_ctor_as_str,
     run_mode,
     start_timestamp_as_str,
     end_timestamp_as_str,
@@ -478,7 +397,8 @@ def reconcile_run_multiday_notebook(
 
     See `reconcile_run_all()` for params description.
 
-    :param html_notebook_tag: a tag for a notebook run period, e.g., "last_week"
+    :param html_notebook_tag: a tag for a notebook run period, e.g.,
+        "last_week"
     """
     hdbg.dassert(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
@@ -494,13 +414,16 @@ def reconcile_run_multiday_notebook(
         amp_dir, "dev_scripts", "notebooks", "run_notebook.py"
     )
     # Retrieve the notebook path.
-    notebook_path = omreconc.get_multiday_system_reconciliation_notebook_path()
+    notebook_path = rsiprrec.get_multiday_system_reconciliation_notebook_path()
     # Prepare the config and the notebook params.
     config_builder = (
-        f"amp.oms.build_multiday_system_reconciliation_config"
-        + f'("{dst_root_dir}", "{dag_builder_name}", "{run_mode}", "{start_timestamp_as_str}", "{end_timestamp_as_str}")'
+        f"amp.reconcil.build_multiday_system_reconciliation_config"
+        + f'("{dst_root_dir}", "{dag_builder_ctor_as_str}", "{run_mode}", "{start_timestamp_as_str}", "{end_timestamp_as_str}")'
     )
-    notebook_dir = omreconc.get_multiday_reconciliation_dir(
+    dag_builder_name = dtfcore.get_DagBuilder_name_from_string(
+        dag_builder_ctor_as_str
+    )
+    notebook_dir = rsiprrec.get_multiday_reconciliation_dir(
         dst_root_dir,
         dag_builder_name,
         run_mode,
@@ -536,7 +459,9 @@ def reconcile_run_multiday_notebook(
         only_files,
         use_relative_paths,
     )
-    hdbg.dassert_eq(1, len(html_notebook_path))
+    notebooks_cnt = len(html_notebook_path)
+    msg = f"{notebooks_cnt} html-notebooks were found while should be only one."
+    hdbg.dassert_eq(1, notebooks_cnt, msg=msg)
     #
     html_notebook_path = html_notebook_path[0]
     html_bucket_path = henv.execute_repo_config_code("get_html_bucket_path()")
@@ -551,7 +476,7 @@ def reconcile_run_multiday_notebook(
 def reconcile_run_notebook(
     ctx,
     notebook_run_mode,
-    dag_builder_name,
+    dag_builder_ctor_as_str,
     run_mode,
     start_timestamp_as_str,
     end_timestamp_as_str,
@@ -560,6 +485,7 @@ def reconcile_run_notebook(
     incremental=False,
     mark_as_last_24_hour_run=False,
     prevent_overwriting=True,
+    set_config_values=None,
 ):  # type: ignore
     """
     Run the reconciliation notebook, publish it locally and copy the results to
@@ -567,16 +493,24 @@ def reconcile_run_notebook(
 
     See `reconcile_run_all()` for params description.
 
-    :param notebook_run_mode: same as in `get_system_reconciliation_notebook_path()`
+    :param notebook_run_mode: same as in
+        `get_system_reconciliation_notebook_path()`
     :param incremetal: see `hio.create_dir()`
     """
     hdbg.dassert(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     hdbg.dassert_in(mode, ("scheduled", "manual"))
+    if notebook_run_mode == "slow":
+        # The slow version of the notebook does not compute research portfolio,
+        # thus does not require any overrides to the research portfolio config.
+        hdbg.dassert_is(set_config_values, None)
     _ = ctx
     # Set results destination dir and clear it if is already filled.
-    target_dir = omreconc.get_target_dir(
+    dag_builder_name = dtfcore.get_DagBuilder_name_from_string(
+        dag_builder_ctor_as_str
+    )
+    target_dir = rsiprrec.get_target_dir(
         dst_root_dir,
         dag_builder_name,
         run_mode,
@@ -587,11 +521,13 @@ def reconcile_run_notebook(
     # The common pattern is to save an output locally and copy to the specified
     # folder. However, if a notebook run fails then the copying piece of the
     # code is not executed so saving the output directly to the specified folder.
-    notebook_root_dir = omreconc.get_reconciliation_notebook_dir(target_dir)
-    _LOG.debug(hprint.to_str("notebook_root_dir"))
+    notebook_root_dir = rsiprrec.get_reconciliation_notebook_dir(target_dir)
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(hprint.to_str("notebook_root_dir"))
     # Store the "fast" and the "slow" notebook results separately.
     notebook_dir = os.path.join(notebook_root_dir, notebook_run_mode)
-    _LOG.debug(hprint.to_str("notebook_dir"))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(hprint.to_str("notebook_dir"))
     if os.path.exists(notebook_dir):
         if incremental:
             _LOG.warning(
@@ -614,13 +550,22 @@ def reconcile_run_notebook(
     script_path = os.path.join(
         amp_dir, "dev_scripts", "notebooks", "run_notebook.py"
     )
-    notebook_path = omreconc.get_system_reconciliation_notebook_path(
+    notebook_path = rsiprrec.get_system_reconciliation_notebook_path(
         notebook_run_mode
     )
-    config_builder = (
-        f"amp.oms.reconciliation.build_reconciliation_configs"
-        + f'("{dst_root_dir}", "{dag_builder_name}", "{start_timestamp_as_str}", "{end_timestamp_as_str}", "{run_mode}", "{mode}")'
-    )
+    if set_config_values is None:
+        # Get a string representation of config builder.
+        config_builder = (
+            f"amp.reconciliation.sim_prod_reconciliation.build_reconciliation_configs"
+            + f'("{dst_root_dir}", "{dag_builder_ctor_as_str}", "{start_timestamp_as_str}", "{end_timestamp_as_str}", "{run_mode}", "{mode}")'
+        )
+    else:
+        # Append config values to override to a string representation of config
+        # builder.
+        config_builder = (
+            f"amp.reconciliation.sim_prod_reconciliation.build_reconciliation_configs"
+            + f'("{dst_root_dir}", "{dag_builder_ctor_as_str}", "{start_timestamp_as_str}", "{end_timestamp_as_str}", "{run_mode}", "{mode}", """{set_config_values}""")'
+        )
     opts = "--tee --no_suppress_output --num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
     cmd_run_txt = [
         script_path,
@@ -663,6 +608,17 @@ def reconcile_run_notebook(
         hs3.copy_file_to_s3(html_notebook_path, s3_dst_path, aws_profile)
     if prevent_overwriting:
         _prevent_overwriting(notebook_dir)
+    if s3_dst_dir.startswith(html_bucket_path):
+        dir_to_url = henv.execute_repo_config_code(
+            "get_html_dir_to_url_mapping()"
+        )
+        url_bucket_path = dir_to_url[html_bucket_path]
+        url = s3_dst_path.replace(html_bucket_path, url_bucket_path)
+        cmd = f"""
+        # To open the notebook from a web-browser open a link:
+        {url}
+        """
+        print(hprint.dedent(cmd))
 
 
 # TODO(Grisha): consider moving to a different file.
@@ -670,7 +626,7 @@ def reconcile_run_notebook(
 def run_master_pnl_real_time_observer_notebook(
     ctx,
     prod_data_root_dir,
-    dag_builder_name,
+    dag_builder_ctor_as_str,
     run_mode,
     start_timestamp_as_str=None,
     end_timestamp_as_str=None,
@@ -688,8 +644,8 @@ def run_master_pnl_real_time_observer_notebook(
 
     :param prod_data_root_dir: a dir that stores the production system output,
         e.g., "/shared_data/ecs/preprod/system_reconciliation/"
-    :param dag_builder_name: name of the DAG builder, e.g. "C1b"
-    :param run_mode: prod run mode, e.g. "prod" or "paper_trading"
+    :param dag_builder_ctor_as_str: a pointer to a `DagBuilder` constructor,
+        e.g., `dataflow_orange.pipelines.C1.C1b_pipeline.C1b_DagBuilder`
     :param start_timestamp_as_str: string representation of timestamp
         at which a production run started
     :param end_timestamp_as_str: string representation of timestamp
@@ -711,6 +667,9 @@ def run_master_pnl_real_time_observer_notebook(
     hdbg.dassert_all_defined_or_all_None(
         [start_timestamp_as_str, end_timestamp_as_str, mode]
     )
+    dag_builder_name = dtfcore.get_DagBuilder_name_from_string(
+        dag_builder_ctor_as_str
+    )
     # Check if at least `burn_in_bars` bars are computed, otherwise exit.
     # TODO(Grisha): consider passing the system_log_dir path directly to the
     # config building function.
@@ -726,7 +685,7 @@ def run_master_pnl_real_time_observer_notebook(
         tz = "UTC"
         end_timestamp = hdateti.get_current_time(tz)
         start_timestamp = end_timestamp - pd.Timedelta(days=1)
-        system_run_params = omreconc.get_system_run_parameters(
+        system_run_params = rsiprrec.get_system_run_parameters(
             prod_data_root_dir,
             dag_builder_name,
             run_mode,
@@ -743,19 +702,19 @@ def run_master_pnl_real_time_observer_notebook(
         _LOG.info(
             hprint.to_str("start_timestamp_as_str, end_timestamp_as_str, mode")
         )
-    target_dir = omreconc.get_target_dir(
+    target_dir = rsiprrec.get_target_dir(
         prod_data_root_dir,
         dag_builder_name,
         run_mode,
         start_timestamp_as_str,
         end_timestamp_as_str,
     )
-    system_log_dir = omreconc.get_prod_system_log_dir(mode)
+    system_log_dir = rsiprrec.get_prod_system_log_dir(mode)
     system_log_dir = os.path.join(target_dir, system_log_dir)
     data_type = "orders"
-    orders_dir = omreconc.get_data_type_system_log_path(system_log_dir, data_type)
+    orders_dir = rsiprrec.get_data_type_system_log_path(system_log_dir, data_type)
     # TODO(Grisha): create a separate function to get orders files.
-    order_files = omreconc._get_dag_node_csv_file_names(orders_dir)
+    order_files = dtfcore.get_dag_node_csv_file_names(orders_dir)
     # There is a separate order file for each bar. Assumption: a bar is computed
     # when a corresponding order file exists. We use the number of order files as
     # a proxy for the number of computed bars.
@@ -781,8 +740,8 @@ def run_master_pnl_real_time_observer_notebook(
     html_bucket_path = henv.execute_repo_config_code("get_html_bucket_path()")
     s3_dst_dir = os.path.join(html_bucket_path, "pnl_for_investors")
     config_builder = (
-        f"amp.oms.reconciliation.build_prod_pnl_real_time_observer_configs"
-        + f'("{prod_data_root_dir}", "{dag_builder_name}", "{run_mode}", "{start_timestamp_as_str}", "{end_timestamp_as_str}",  "{mode}", {save_plots_for_investors}, s3_dst_dir="{s3_dst_dir}")'
+        f"amp.reconciliation.sim_prod_reconciliation.build_prod_pnl_real_time_observer_configs"
+        + f'("{prod_data_root_dir}", "{dag_builder_ctor_as_str}", "{run_mode}", "{start_timestamp_as_str}", "{end_timestamp_as_str}",  "{mode}", {save_plots_for_investors}, s3_dst_dir="{s3_dst_dir}")'
     )
     # Since the invoke is run multiple times per day create a subdir for every
     # run and mark it with the current UTC timestamp, e.g.,
@@ -836,7 +795,7 @@ def run_master_pnl_real_time_observer_notebook(
 @task
 def reconcile_ls(
     ctx,
-    dag_builder_name,
+    dag_builder_ctor_as_str,
     run_mode,
     start_timestamp_as_str,
     end_timestamp_as_str,
@@ -848,7 +807,10 @@ def reconcile_ls(
     See `reconcile_run_all()` for params description.
     """
     _ = ctx
-    target_dir = omreconc.get_target_dir(
+    dag_builder_name = dtfcore.get_DagBuilder_name_from_string(
+        dag_builder_ctor_as_str
+    )
+    target_dir = rsiprrec.get_target_dir(
         dst_root_dir,
         dag_builder_name,
         run_mode,
@@ -867,9 +829,10 @@ def reconcile_ls(
 @task
 def reconcile_dump_tca_data(
     ctx,
-    dag_builder_name,
+    dag_builder_ctor_as_str,
     start_timestamp_as_str,
     dst_root_dir,
+    stage,
     incremental=False,
     prevent_overwriting=True,
 ):  # type: ignore
@@ -885,11 +848,14 @@ def reconcile_dump_tca_data(
     )
     _ = ctx
     # TCA is being dumped only for prod run mode.
+    dag_builder_name = dtfcore.get_DagBuilder_name_from_string(
+        dag_builder_ctor_as_str
+    )
     run_mode = "prod"
-    target_dir = omreconc.get_target_dir(
+    target_dir = rsiprrec.get_target_dir(
         dst_root_dir, dag_builder_name, start_timestamp_as_str, run_mode
     )
-    run_date = omreconc.get_run_date(start_timestamp_as_str)
+    run_date = rsiprrec.get_run_date(start_timestamp_as_str)
     run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
     # TODO(Grisha): add as params to the interface.
     end_timestamp = run_date
@@ -909,10 +875,10 @@ def reconcile_dump_tca_data(
     hio.create_dir(local_results_dir, incremental=incremental)
     exchange_id = "binance"
     contract_type = "futures"
-    stage = "preprod"
     account_type = "trading"
     secrets_id = "3"
-    universe = "v7.1"
+    # See the TODO comment in `obrbrexa.get_DataFrameBroker_example1()`.
+    universe = ivcu.get_latest_universe_version()
     opts = [
         f"--exchange_id {exchange_id}",
         f"--contract_type {contract_type}",
@@ -945,35 +911,41 @@ def reconcile_dump_tca_data(
     _system(cmd)
     #
     if prevent_overwriting:
-        tca_dir = omreconc.get_tca_dir(target_dir)
+        tca_dir = rsiprrec.get_tca_dir(target_dir)
         _prevent_overwriting(tca_dir)
 
 
 @task
 def reconcile_run_all(
     ctx,
-    dag_builder_name,
+    dag_builder_ctor_as_str,
     run_mode,
     start_timestamp_as_str,
     end_timestamp_as_str,
     dst_root_dir,
     prod_data_source_dir,
     mode,
+    stage,
     market_data_source_dir=None,
-    stage=None,
     mark_as_last_24_hour_run=False,
     # TODO(Grisha): propagate everywhere below.
     incremental=False,
     prevent_overwriting=True,
     abort_if_exists=True,
+    backup_dir_if_exists=False,
     run_notebook=False,
     allow_update=False,
     aws_profile=None,
+    # TODO(Grisha): Consider using iterable values instead of passing a single
+    #  string separated by `;`, see
+    #  https://docs.pyinvoke.org/en/stable/concepts/invoking-tasks.html#iterable-flag-values.
+    set_config_values=None,
 ):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
 
-    :param dag_builder_name: name of the DAG builder, e.g. "C1b"
+    :param dag_builder_ctor_as_str: a pointer to a `DagBuilder` constructor,
+        e.g., `dataflow_orange.pipelines.C1.C1b_pipeline.C1b_DagBuilder`
     :param run_mode: prod run mode, e.g. "prod" or "paper_trading"
     :param start_timestamp_as_str: string representation of timestamp
         at which to start reconcile run
@@ -982,7 +954,8 @@ def reconcile_run_all(
     :param dst_root_dir: dir to store reconcilation results in
     :param prod_data_source_dir: path to the prod run outcomes
         (i.e. system log dir, logs)
-    :param stage: development stage, e.g., `preprod`
+    :param stage: development stage, e.g., `preprod`. Also applies to a database
+        stage
     :param mark_as_last_24_hour_run: mark the reconciliation run as latest so
         that the latest reconciliation notebook becomes available via a static
         link, e.g., `https://***/system_reconciliation/C3a.last_24hours.html`
@@ -992,66 +965,76 @@ def reconcile_run_all(
     :param prevent_overwriting: if True write permissions are removed otherwise
         a permissions remain as they are
     :param abort_if_exists: see `hio.create_dir()`
+    :param backup_dir_if_exists: see `hio.create_dir()`
     :param run_notebook: if True run the reconcilation notebook otherwise do not run
     :param allow_update: if True allow to overwrite reconcilation outcomes
         otherwise retain permissions as they are
+    :param set_config_values: string representations of config values used
+        to override simulation params and update research portoflio config when
+        running the system reconciliation notebook. Config values are separated
+        with ';' in order to be processed by invoke. E.g.,
+        '("process_forecasts_node_dict","process_forecasts_dict","optimizer_config","params","style"),(str("longitudinal")); \n
+        ("process_forecasts_node_dict","process_forecasts_dict","optimizer_config","params","kwargs"),({"target_dollar_risk_per_name": float(0.1), "prediction_abs_threshold": float(0.35)})'
     :param aws_profile: AWS profile, e.g., "ck"
     """
     hdbg.dassert(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     #
-    reconcile_create_dirs(
-        ctx,
-        dag_builder_name,
+    rsiprrec.reconcile_create_dirs(
+        dag_builder_ctor_as_str,
         run_mode,
         start_timestamp_as_str,
         end_timestamp_as_str,
         dst_root_dir,
         abort_if_exists,
+        backup_dir_if_exists,
     )
     #
     reconcile_copy_prod_data(
         ctx,
-        dag_builder_name,
+        dag_builder_ctor_as_str,
         run_mode,
         start_timestamp_as_str,
         end_timestamp_as_str,
         dst_root_dir,
         prod_data_source_dir,
         mode,
-        stage=stage,
         prevent_overwriting=prevent_overwriting,
         aws_profile=aws_profile,
     )
     #
+    # Check if there is a universe version override.
+    universe_version = rsiprrec.get_universe_version_from_config_overrides(
+        set_config_values
+    )
+    if universe_version is None:
+        # Use the latest version.
+        universe_version = ivcu.get_latest_universe_version()
+    _LOG.debug(hprint.to_str("universe_version"))
     reconcile_dump_market_data(
         ctx,
-        dag_builder_name,
+        dag_builder_ctor_as_str,
         run_mode,
         start_timestamp_as_str,
         end_timestamp_as_str,
         dst_root_dir,
+        stage,
+        universe_version,
         source_dir=market_data_source_dir,
         incremental=incremental,
         prevent_overwriting=prevent_overwriting,
     )
+    #
     reconcile_run_sim(
         ctx,
-        dag_builder_name,
+        dag_builder_ctor_as_str,
         run_mode,
         start_timestamp_as_str,
         end_timestamp_as_str,
+        mode,
         dst_root_dir,
-    )
-    reconcile_copy_sim_data(
-        ctx,
-        dag_builder_name,
-        run_mode,
-        start_timestamp_as_str,
-        end_timestamp_as_str,
-        dst_root_dir,
-        prevent_overwriting=prevent_overwriting,
+        set_config_values=set_config_values,
     )
     # TODO(Grisha): decide do we need to run TCA given that `CcxtBroker` logs
     # the fills.
@@ -1068,7 +1051,7 @@ def reconcile_run_all(
         reconcile_run_notebook(
             ctx,
             notebook_run_mode,
-            dag_builder_name,
+            dag_builder_ctor_as_str,
             run_mode,
             start_timestamp_as_str,
             end_timestamp_as_str,
@@ -1076,12 +1059,13 @@ def reconcile_run_all(
             mode,
             mark_as_last_24_hour_run=mark_as_last_24_hour_run,
             prevent_overwriting=prevent_overwriting,
+            set_config_values=set_config_values,
         )
         notebook_run_mode = "slow"
         reconcile_run_notebook(
             ctx,
             notebook_run_mode,
-            dag_builder_name,
+            dag_builder_ctor_as_str,
             run_mode,
             start_timestamp_as_str,
             end_timestamp_as_str,
@@ -1089,10 +1073,14 @@ def reconcile_run_all(
             mode,
             mark_as_last_24_hour_run=mark_as_last_24_hour_run,
             prevent_overwriting=prevent_overwriting,
+            # The slow version of the notebook does not compute research
+            # portfolio, thus does not require any overrides to the research
+            # portfolio config.
+            set_config_values=None,
         )
     reconcile_ls(
         ctx,
-        dag_builder_name,
+        dag_builder_ctor_as_str,
         run_mode,
         start_timestamp_as_str,
         end_timestamp_as_str,
@@ -1100,7 +1088,7 @@ def reconcile_run_all(
     )
     if allow_update:
         _allow_update(
-            dag_builder_name,
+            dag_builder_ctor_as_str,
             run_mode,
             start_timestamp_as_str,
             end_timestamp_as_str,

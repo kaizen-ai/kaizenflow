@@ -26,6 +26,9 @@ def get_id_mapping(
 ) -> pd.DataFrame:
     """
     Get dataframe with unique "ticker" and "igid" pairs as of `date`.
+
+    :param date:
+    :param root_data_dir:
     """
     # TODO(gp): Maybe factor out as `is_valid_ig_date()`.
     hdbg.dassert_isinstance(date, str)
@@ -52,6 +55,8 @@ def get_id_mapping(
 def rank_igid_by_traded_notional(date: datetime.date) -> pd.DataFrame:
     """
     Return data about igids for a single date ranked by traded notional.
+
+    :param date:
     """
     # Get the data for an entire day.
     igids = None

@@ -36,6 +36,25 @@ import helpers.hprint as hprint
 import helpers.hsecrets as hsecret
 
 # %%
+display(HTML("""
+<style>
+/* Jupyter cell is in normal mode when code mirror */
+.edit_mode .cell.selected .CodeMirror-focused.cm-fat-cursor {
+  /* background-color: #F5F6EB; */
+  background-color: rgba(128, 0, 0, 0.1); 
+}
+/* Jupyter cell is in insert mode when code mirror */
+.edit_mode .cell.selected .CodeMirror-focused:not(.cm-fat-cursor) {
+  /* background-color: #F6EBF1; */
+  background-color: rgba(0, 128, 0, 0.2); 
+}
+</style>
+"""))
+
+# %%
+display(HTML("<style>.container { width:100% !important; }</style>"))
+
+# %%
 hdbg.init_logger(verbosity=logging.INFO)
 
 _LOG = logging.getLogger(__name__)
@@ -43,6 +62,24 @@ _LOG = logging.getLogger(__name__)
 _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
+
+# %%
+# !sudo /bin/bash -c "(source /venv/bin/activate; pip install sagemath)"
+
+# %%
+from typing import Any, Dict, List
+
+def subset_dict(dict_: Dict, keys: List[Any], *, keep_order: bool = True) -> Dict:
+    res = {}
+    if keep_order:
+        for k, v in dict_.items():
+            if k in keys:
+                res[k] = v
+    else:
+        for k in keys:
+            res[k] = dict_[k]
+    return res
+
 
 # %% [markdown]
 # # CCXT
@@ -234,7 +271,8 @@ hprint.pprint_color(exchange.version)
 hprint.pprint_color(exchange.timeframes)
 
 # %%
-hprint.pprint_color(exchange.requiredCredentialsCredentials)
+# Binance doesn't have this method.
+#hprint.pprint_color(exchange.requiredCredentialsCredentials)
 
 # %%
 # Exchange decimal precision.
@@ -330,6 +368,7 @@ hprint.pprint_color(market_id)
 
 # %%
 # Trade instrument within the exchange. This is the internal representation of each exchange.
+market = exchange.markets["ETH/USDT"]
 print(market["id"])
 
 # %%
@@ -488,8 +527,10 @@ var_names = [
     "precision",
     "limits",
 ]
-for var_name in var_names:
-    print(f"--> {var_name}=", hprint.pprint_pformat(market[var_name]))
+# for var_name in var_names:
+#     print(f"--> {var_name}=", hprint.pprint_pformat(market[var_name]))
+hprint.pprint_color(
+    subset_dict(market, var_names))
 
 # %%
 # Print all the symbols in one exchange.
@@ -664,9 +705,10 @@ symbol = "BTC/USDT"
 data = exchange.fetchOrderBook(symbol)
 #data = exchange.fetchL2OrderBook(symbol)
 print("keys=", data.keys())
-for key in ["symbol", "timestamp", "datetime", "nonce", "bids"]:
-    print("# %s" % key)
-    hprint.pprint_color(data[key])
+
+key_names = ["symbol", "timestamp", "datetime", "nonce", "bids"]
+hprint.pprint_color(
+    subset_dict(data, key_names))
 
 # %%
 data = exchange.fetchTrades(symbol)
@@ -780,83 +822,476 @@ hprint.pprint_color(data[:3])
 # # Private API
 #
 # https://docs.ccxt.com/#/README?id=private-api
+#
+# - `fetchBalance`
+# - `createOrder`, `cancelOrder`
+# - `fetchOrder`, `fetchOpenOrder`, `fetchCanceledOrder`, `fetchClosedOrder`
+# - `fetchMyTrades`
+# - `fetchPositions`
+# - `fetchTransactions`
+# - `fetchLedger`
+#
+# ## Authentication
+# - Handled automatically if API key provided
+# - Generate nonce (integer and increasing, e.g., 32-bit Unix Timestamp in seconds)
+# - Append public API key and nonce to the endpoint params, serialize, sign
+# - Append signature to HTTP headers
+#
+# - `apiKey`
+#     - non-secret
+#     - sent over HTTPS
+# - `secret`
+#     - private key
+#     - used to sign requests locally
+#     - used together with the nonce
+#     - signature sent with public key to authenticate
+# - `uid`
+#     - some exchanges generate a user id
+# - `password`
+#     - some exchanges use also password for trading
+
+# %%
+import oms.hsecrets.secret_identifier as ohsseide
+
+exchange_id = "binance"
+#account_type = "sandbox"
+account_type = "trading"
+stage = "preprod"
+#secret_id = "4"
+secret_id = 4
+
+secret_identifier = ohsseide.SecretIdentifier(
+    exchange_id, stage, account_type, secret_id
+    )
+print(secret_identifier)
+
+# Prepare exchange params.
+exchange_params = hsecret.get_secret(str(secret_identifier))
+#print(exchange_params)
+exchange_params["rateLimit"] = False
+exchange_params["options"] = {"defaultType": "future"}
+
+# Build the exchange object.
+ccxt_exchange = getattr(ccxt, exchange_id)
+exchange = ccxt_exchange(exchange_params)
+
+exchange.options["adjustForTimeDifference"] = True
+
+# %%
+# Check what type of authentication an exchange needs.
+hprint.pprint_color(exchange.requiredCredentials)
+
+# %%
+# Check that the credentials work.
+# It throws an `AuthenticationError` if login fails.
+exchange.check_required_credentials()
 
 # %% [markdown]
-# ## Authentication
+# ## Overriding the nonce
+
+# %% [markdown]
+# ## Accounts
+#
+# * `fetchAccounts()`
+# - Return accounts and sub-accounts in a dict.
 
 # %%
-import oms.broker.ccxt.ccxt_broker_utils as obccbrut
-
-exchange = "binance"
-contract_type = "futures"
-stage = "preprod"
-secret_id = 4
-broker = obccbrut.get_broker(exchange, contract_type, stage, secret_id)
-
-# %%
-### Accounts
-
-* `fetchAccounts()`
-- Return the accounts and sub-accounts in a JSON
-
-### Account balance
-
-* `fetchBalance()`
-- Query for balance and get the amount of funds available
-
-### Orders
-
-* Query orders
-- You can query orders by an id or symbol
-
-* Place orders
-- Placing orders:
-  - symbol
-  - side (buy or sell)
-  - type: market or limit
-  - amount (the base currency)
-
-* Market orders
-- Executed immediately
-- You are not guaranteed that the order is executed for the price you observe
-  prior to placing the order
-
-*
-- A trade is also called a "fill"
-- Each trade is a result of order execution
-- One order may result in several trades (i.e., an order can be filled with one
-  or more trades)
-
-### Editing orders
-
-### My trades
-
-* How orders are related to trades
-- Each trade is a result of an order execution (matching opposing orders)
-- An execution of one order can result in several trades (i.e., filled with
-  multiple trades)
-
-* Personal trades
-- Typically exchanges use pagination to return all the trades
-
-### Ledger
-
-### Deposit
-
-### Withdraw
-
-### Transactions
-
-* Trading fees
-- = amount paid to the exchange
-- Typically it is a percentage of volume traded
-
-* Funding fees
-- Fees for depositing and withdrawing
-- Crypto transaction fees
-
-# %%
+# Binance doesn't have.
 # exchange.fetchAccounts()
+
+# %% [markdown]
+# ## Account balance
+#
+# * `fetchBalance()`
+# - Query for balance and get the amount of funds available
+
+# %%
+balance = exchange.fetchBalance()
+
+# %%
+hprint.pprint_color(balance)
+
+# %%
+balance.keys()
+
+# %%
+#print(hprint.to_str('balance["timestamp"] balance["datetime"]'))
+key_names = ["timestamp", "datetime"]
+hprint.pprint_color(
+    subset_dict(balance, key_names))
+
+# %%
+# Coins available for trading.
+hprint.pprint_color(balance["free"])
+
+# %%
+# Coins on hold / locked.
+hprint.pprint_color(balance["used"])
+
+# %%
+# Total coins (=free + used).
+hprint.pprint_color(balance["total"])
+
+# %%
+# Indexed by coins.
+hprint.pprint_color(balance["BTC"])
+
+# %%
+# `info` contains the response (unparsed) from the exchange.
+hprint.pprint_color(balance["info"])
+
+# %%
+balance["info"].keys()
+
+# %%
+# Print info about one asset.
+print(len(balance["info"]["assets"]))
+hprint.pprint_color(balance["info"]["assets"][0])
+
+# %%
+# Print info about one position.
+print(len(balance["info"]["positions"]))
+hprint.pprint_color(balance["info"]["positions"][0])
+
+# %%
+balance["info"]["feeTier"]
+
+# %%
+# for key in ["canTrade", "canDeposit", "canWithdraw"]:
+#     print(hprint.to_str(f'balance["info"]["{key}"]'))
+hprint.pprint_color(
+    subset_dict(
+        balance["info"],
+        ["canTrade", "canDeposit", "canWithdraw"]))
+
+# %%
+balance["info"]["updateTime"]
+
+# %%
+# https://www.binance.com/en/support/faq/leverage-and-margin-of-usd%E2%93%A2-m-futures-360033162192
+# - USD-M futures: margin and settlement in USDT (Tether) and BUSD (Binance Stable coin)
+# - COIN-M futures: margin and settlement in alt-coins
+
+# %%
+# for key in ['totalInitialMargin',
+#             'totalMaintMargin',
+#             'totalWalletBalance', 
+#             'totalUnrealizedProfit',
+#             'totalMarginBalance',
+#             'totalPositionInitialMargin',
+#             'totalOpenOrderInitialMargin',
+#             'totalCrossWalletBalance',
+#             'totalCrossUnPnl', 
+#             'availableBalance', 'maxWithdrawAmount']:
+#     print(hprint.to_str(f'balance["info"]["{key}"]'))
+
+key_names = ['totalInitialMargin',
+             'totalMaintMargin',
+             'totalWalletBalance', 
+             'totalUnrealizedProfit',
+             'totalMarginBalance',
+             'totalPositionInitialMargin',
+             'totalOpenOrderInitialMargin',
+             'totalCrossWalletBalance',
+             'totalCrossUnPnl', 
+             'availableBalance',
+             'maxWithdrawAmount']
+hprint.pprint_color(
+    subset_dict(balance["info"], key_names))
+
+# %% [markdown]
+# ## Orders
+#
+# https://docs.ccxt.com/#/README?id=orders
+#
+# - You can query orders by an id or symbol
+# - Some exchanges might not have all methods
+
+
+# %%
+# for k, v in exchange.has.items():
+#     if "order" in k or "Order" in k:
+#         print(k, v)
+
+hprint.pprint_color(subset_dict(
+    exchange.has, [
+    "fetchOrder", "fetchOrders",
+    "fetchOpenOrder", "fetchOpenOrders",
+    "fetchClosedOrder", "fetchClosedOrders"]))
+
+# %% [markdown]
+# ### Understanding the Orders API design
+#
+# - `fetch{,Open,Canceled}Orders()`
+# - `fetchMyTrades()`: history of settled trades
+# - `createOrder()`
+# - `cancelOrder()`
+#
+# - All methods returning a list of trades / orders, accept a `since` and `limit` arg
+#     - Without `since` the method returns the default set of results from the exchange (e.g., last 24 hours or last N trades
+#     - Some exchanges provide pagination through the `params` arg
+
+# %%
+orders = exchange.fetchOrders("BTC/USDT", limit=2)
+
+# %%
+hprint.pprint_color(orders[0])
+
+# %% [markdown]
+# - closed orders are not trades (aka fills)
+# - an order doesn't have `fee`
+# - trades have `fee` and `cost`
+
+# %%
+closed_orders = exchange.fetchClosedOrders("BTC/USDT", limit=2)
+
+# %%
+hprint.pprint_color(closed_orders[0])
+
+# %% [markdown]
+# ### Order structure
+#
+# https://docs.ccxt.com/#/README?id=order-structure
+
+# %%
+order = orders[0]
+
+# %%
+order.keys()
+
+# %%
+var_names = ["id",
+             # You can tag the order.
+             "clientOrderId",
+             "timestamp",
+             "datetime",
+             "lastTradeTimestamp"]
+hprint.pprint_color(
+    subset_dict(order, var_names, keep_order=False))
+
+# %%
+var_names = [
+    # 
+    'status',
+    'symbol',
+    # E.g., market, limit
+    'type',
+    'timeInForce',
+    'side',
+    # Price in quote currency.
+    'price',
+    # Average filling price.
+    'average',
+    # How much is ordered vs filled vs remaining.
+    'amount',
+    'filled',
+    'remaining',
+    # = filled * price
+    'cost',
+    'fee',
+    'fees',
+    # List of trades.
+    'trades',
+    #
+    'stopPrice',
+    'postOnly',
+    'reduceOnly',
+]
+hprint.pprint_color(subset_dict(order, var_names, keep_order=False))
+
+# %%
+hprint.pprint_color(order["info"])
+
+# %% [markdown]
+# ### Placing orders
+#
+# https://docs.ccxt.com/#/README?id=placing-orders
+#
+# - Limit orders
+#     - Amount in base currency (how much you want to buy / sell)
+#     - Price in quote currency (for which price you want to buy / sell)
+# - Trigger orders
+#     - Wait for a condition on a market (trigger) and then a market order is placed
+# - Stop loss orders / Take profit orders
+#     - Like a special trigger order
+#     - When price passes a certain value, a market / limit order is triggered
+
+# %% [markdown]
+# - `createOrder` is used to place orders:
+#   - symbol
+#   - side
+#       - buy `BTC/USD`, receive quote currency (BTC) for base currency (USD)
+#       - sell `BTC/USD`: receive USD for BTC
+#   - type
+#       - market
+#       - limit
+#   - amount
+#       - Typically expressed in terms of the base currency
+#       - For some exchanges it is dependent on the side of the order
+#   - price
+#       - in units of the quotes currency
+#   - params
+#       - params specific to the exchange API
+#   - a successful order returns an order structure
+#  
+#  
+# - Limit orders
+#     - `create_limit_order`
+#     - `create_buy_limit_order`
+#     - `create_sell_limit_order`
+#     - They are placed on the exchange for a certain price
+#     - They are fullfilled (closed) when:
+#         - there are no orders at a better price
+#         - a market / limit order for a price that matches or exceeds the price of the limit order
+#
+# - Market orders
+#     - Executed immediately using orders from the top of the other side of the book
+#       (i.e., orders are chosen with best price available)
+#     - You are not guaranteed that the order is executed for the price you observe
+#       prior to placing the order because
+#         - network latency
+#         - high loads on the exchange
+#         - price volatility
+#         - order walking the book
+
+
+# %% [markdown]
+# ### Editing orders
+#
+# https://docs.ccxt.com/#/README?id=editing-orders
+#
+# An order can also be edited
+#
+# TODO(gp): Unclear what happens. I believe it's cancelled and placed again
+
+# %% [markdown]
+# ### Canceling orders
+#
+# https://docs.ccxt.com/#/README?id=canceling-orders
+#
+# - `cancelOrder`: cancel a single order
+# - `candelOrders`: cancel multiple orders
+# - `cancelAllOrders`: cancel all the open orders
+#
+# It is possible that an order gets executed while the cancel command is being executed
+#     - Then a `NetworkError` or `OrderNotFound` are thrown
+
+# %% [markdown]
+# ## My trades
+#
+# https://docs.ccxt.com/#/README?id=my-trades
+#
+# ### How orders are related to trades
+# - A trade is also called a "fill"
+# - Each trade is a result of order execution
+# - One order may result in several trades
+#     - i.e., an order can be filled with one or more trades
+#     - one-to-many relationship
+#
+# - Each trade is a result of an order execution (matching opposing orders)
+# - An execution of one order can result in several trades (i.e., filled with
+#   multiple trades)
+#
+# ### Personal trades
+# - Typically exchanges use pagination to return all the trades
+
+# %% [markdown]
+# ### Trade structure
+#
+# https://docs.ccxt.com/#/README?id=trade-structure
+
+# %%
+order_id = None
+trades = exchange.fetch_my_trades(symbol, limit=2)
+
+# %%
+trade = trades[0]
+
+# %%
+hprint.pprint_color(trade)
+
+# %%
+trade.keys()
+
+# %%
+var_names = ["id",
+             "timestamp",
+             "datetime"]
+hprint.pprint_color(
+    subset_dict(trade, var_names, keep_order=False))
+
+# %%
+var_names = ["symbol",
+             "order",
+             "type",
+             "side",
+             "takerOrMaker",
+             # Price in quote currency.
+             "price",
+             # Amount of base currency.
+             "amount",
+             # Total cost, i.e., price * amount.
+             "cost",
+             # Fees.
+             "fee",
+             "fees"]
+hprint.pprint_color(
+    subset_dict(trade, var_names, keep_order=False))
+
+# %%
+# Original decoded JSON from the exchange.
+var_names = ["info"]
+hprint.pprint_color(
+    subset_dict(trade, var_names, keep_order=False))
+
+# %% [markdown]
+# ### Trades by Order id
+
+# %%
+# Not supported by Binance.
+# order_id = "170643031299"
+# trades = exchange.fetch_order_trades(order_id, symbol, limit=2)
+
+# %% [markdown]
+# ## Ledger
+#
+# - = history of changes / actions done by the user affecting the balance
+#
+# - funding (deposits / withdrawals)
+# - profits / losses from trades
+# - trading fees
+# - rebates, etc.
+
+# %%
+# Not supported by Binance.
+# exchange.fetchLedger()
+
+# %% [markdown]
+# ### Ledger entry structure
+#
+# https://docs.ccxt.com/#/README?id=ledger-entry-structure
+
+# %% [markdown]
+# ## Deposit
+#
+# https://docs.ccxt.com/#/README?id=deposit
+
+# %%
+exchange.fetchDeposits()
+
+# %% [markdown]
+# ### Withdraw
+#
+# ### Transactions
+#
+# * Trading fees
+# - = amount paid to the exchange
+# - Typically it is a percentage of volume traded
+#
+# * Funding fees
+# - Fees for depositing and withdrawing
+# - Crypto transaction fees
+#
 
 # %%
 balance = exchange.fetchBalance()

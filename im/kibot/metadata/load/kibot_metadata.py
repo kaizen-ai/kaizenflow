@@ -550,7 +550,7 @@ class FuturesContractLifetimes:
             file_name = os.path.join(self._get_dir_name(), symbol + ".csv")
             hdbg.dassert_path_exists(file_name)
             if hs3.is_s3_path(file_name):
-                s3fs = hs3.get_s3fs("am")
+                s3fs = hs3.get_s3fs("ck")
                 kwargs = {"s3fs": s3fs}
             else:
                 kwargs = {}

@@ -1,3 +1,17 @@
+v8.0
+- 2023-01-29
+- Expand binance futures universe to all available symbols
+- Same coins as for binance in the `download` universe v8.0
+
+v7.5
+- 2024-01-29
+- Only `binance::BTC_USDT` and `binance::ETH_USDT`
+- See CmTask6980
+
+v7.4
+- 2023-11-10
+- Copy of v7.1 but without CRV_USDT
+
 v7.3
 - 2022-09-01
 - Copy of v7.2 with only USDT currency pairs

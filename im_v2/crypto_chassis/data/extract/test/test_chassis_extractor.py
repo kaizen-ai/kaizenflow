@@ -2,6 +2,7 @@ import logging
 import unittest.mock as umock
 
 import pandas as pd
+import pytest
 
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
@@ -38,8 +39,16 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         spec=imvccdexex.CryptoChassisExtractor.convert_currency_pair,
     )
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
         # Create new mocks from patch's start() method.
         self.pandas_read_csv_mock: umock.MagicMock = (
             self.pandas_read_csv_patch.start()
@@ -58,15 +67,13 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
             self.convert_currency_pair_patch.start()
         )
 
-    def tearDown(self) -> None:
+    def tear_down_test(self) -> None:
         self.convert_currency_pair_patch.stop()
         self.build_base_url_patch.stop()
         self.build_query_url_patch.stop()
         self.requests_patch.stop()
         self.coerce_to_numeric_patch.stop()
         self.pandas_read_csv_patch.stop()
-        # Deallocate in reverse order to avoid race conditions.
-        super().tearDown()
 
     def test_initialize_class(self) -> None:
         """
@@ -91,7 +98,6 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         """
         Verify that `_download_bid_ask` is called properly.
         """
-        #
         start_timestamp = pd.Timestamp("2022-08-18T00:00:00", tz="UTC")
         end_timestamp = pd.Timestamp("2022-08-18T23:59:00", tz="UTC")
         exchange_id = "binance"
@@ -502,7 +508,6 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         """
         Verify that `_download_trades` is called properly.
         """
-        #
         start_timestamp = pd.Timestamp("2022-08-18T00:00:00", tz="UTC")
         exchange_id = "binance"
         currency_pair = "btc/usd"

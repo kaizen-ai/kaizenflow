@@ -6,7 +6,7 @@ import pytest
 import helpers.hasyncio as hasynci
 import helpers.hunit_test as hunitest
 import market_data as mdata
-import oms.broker.broker as obrobrok
+import oms.fill as omfill
 import oms.order.order as oordorde
 import oms.order_processing.target_position_and_order_generator as ooptpaoge
 import oms.order_processing.target_position_and_order_generator_example as otpaogeex
@@ -22,7 +22,7 @@ _LOG = logging.getLogger(__name__)
 class TestTargetPositionAndOrderGenerator1(hunitest.TestCase):
     @staticmethod
     def reset() -> None:
-        obrobrok.Fill._fill_id = 0
+        omfill.Fill._fill_id = 0
         oordorde.Order._order_id = 0
 
     def get_target_position_and_order_generator1(
@@ -41,12 +41,19 @@ class TestTargetPositionAndOrderGenerator1(hunitest.TestCase):
             )
         return target_position_and_order_generator
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
         self.reset()
 
-    def tearDown(self) -> None:
-        super().tearDown()
+    def tear_down_test(self) -> None:
         self.reset()
 
     def test_compute(self) -> None:
@@ -73,10 +80,11 @@ Order: order_id=0 creation_timestamp=2000-01-01 09:35:00-05:00 asset_id=101 type
             liquidate_holdings,
         )
         _ = orders
-        _LOG.debug(
-            "target_position_and_order_generator=%s",
-            target_position_and_order_generator,
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "target_position_and_order_generator=%s",
+                target_position_and_order_generator,
+            )
         self.assert_equal(
             str(target_position_and_order_generator),
             expected,
@@ -98,7 +106,7 @@ Order: order_id=0 creation_timestamp=2000-01-01 09:35:00-05:00 asset_id=101 type
 class TestTargetPositionAndOrderGenerator2(hunitest.TestCase):
     @staticmethod
     def reset() -> None:
-        obrobrok.Fill._fill_id = 0
+        omfill.Fill._fill_id = 0
         oordorde.Order._order_id = 0
 
     def get_target_position_and_order_generator2(
@@ -117,12 +125,19 @@ class TestTargetPositionAndOrderGenerator2(hunitest.TestCase):
             )
         return target_position_and_order_generator
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
         self.reset()
 
-    def tearDown(self) -> None:
-        super().tearDown()
+    def tear_down_test(self) -> None:
         self.reset()
 
     def test_compute(self) -> None:
@@ -152,10 +167,11 @@ Order: order_id=1 creation_timestamp=2000-01-01 09:35:00-05:00 asset_id=202 type
             liquidate_holdings,
         )
         _ = orders
-        _LOG.debug(
-            "target_position_and_order_generator=%s",
-            target_position_and_order_generator,
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "target_position_and_order_generator=%s",
+                target_position_and_order_generator,
+            )
         self.assert_equal(
             str(target_position_and_order_generator),
             expected,

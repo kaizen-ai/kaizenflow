@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Script to create IM (Instrument Master) database using the given connection.
-Currently not working due to #CmTask3636
+Currently not working due to #CmTask3636.
 
 # Note: assumes existing database setup, for example using
 #  `invoke im_docker_up -s local`
@@ -19,8 +19,6 @@ import helpers.hparser as hparser
 import helpers.hsql as hsql
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.im_lib_tasks as imvimlita
-
-# TODO(gp): Consider converting create_db and remove_db into invoke tasks.
 
 
 def _parse() -> argparse.ArgumentParser:

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import oms.portfolio.database_portfolio as opdapor
+import oms.portfolio.database_portfolio as opodapor
 """
 
 import collections
@@ -56,10 +56,11 @@ class DatabasePortfolio(oporport.Portfolio):
         Constructor.
 
         :param table_name: current positions table name
-        :param poll_kwargs: polling instruction when waiting for stable current
-            positions
+        :param poll_kwargs: polling instruction when waiting for stable
+            current positions
         """
-        _LOG.debug(hprint.to_str("table_name poll_kwargs"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("table_name poll_kwargs"))
         super().__init__(*args, **kwargs)
         #
         self._db_connection = self.broker._db_connection
@@ -78,7 +79,8 @@ class DatabasePortfolio(oporport.Portfolio):
             )
             self._validate_initial_holdings(self._initial_holdings)
         #
-        _LOG.debug("After initialization:\n%s", repr(self))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("After initialization:\n%s", repr(self))
 
     def log_state(self, log_dir: str, *, num_periods: Optional[int] = 1) -> str:
         super().log_state(log_dir, num_periods=num_periods)
@@ -146,12 +148,14 @@ class DatabasePortfolio(oporport.Portfolio):
         # Get the trade date.
         wall_clock_timestamp = self._get_wall_clock_time()
         trade_date = wall_clock_timestamp.date()
-        _LOG.debug(hprint.to_str("wall_clock_timestamp trade_date"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("wall_clock_timestamp trade_date"))
         where_clause = [f"WHERE tradedate='{trade_date}'"]
         # Restrict query to portfolio universe.
         if restrict_to_universe:
             hdbg.dassert(self.universe, "Universe is empty.")
-            _LOG.debug("universe=\n%s", self.universe)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("universe=\n%s", self.universe)
             universe = tuple(self.universe)
             if len(universe) == 1:
                 universe = str(universe)[:-2] + ")"
@@ -168,10 +172,11 @@ class DatabasePortfolio(oporport.Portfolio):
         # Retrieve the data from the DB.
         snapshot_df = hsql.execute_query_to_df(self._db_connection, query)
         snapshot_df.rename(columns={self._asset_id_col: "asset_id"}, inplace=True)
-        _LOG.debug(
-            "snapshot_df=\n%s",
-            hpandas.df_to_str(snapshot_df, num_rows=None, precision=2),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "snapshot_df=\n%s",
+                hpandas.df_to_str(snapshot_df, num_rows=None, precision=2),
+            )
         if not snapshot_df.empty:
             hdbg.dassert_no_duplicates(
                 snapshot_df["asset_id"],
@@ -214,7 +219,8 @@ class DatabasePortfolio(oporport.Portfolio):
         """
         restrict_to_universe = True
         snapshot_df = self._get_stable_snapshot_df(restrict_to_universe)
-        _LOG.debug("snapshot_df=%s", snapshot_df)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("snapshot_df=%s", snapshot_df)
         # 1) Update cash from snapshot_df.
         wall_clock_timestamp = self._get_wall_clock_time()
         self._update_executed_trades_notional_and_cash(
@@ -224,7 +230,8 @@ class DatabasePortfolio(oporport.Portfolio):
         holdings_shares = snapshot_df[["asset_id", "current_position"]].set_index(
             "asset_id"
         )["current_position"]
-        _LOG.debug(hprint.to_str("holdings_shares"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("holdings_shares"))
         hdbg.dassert_isinstance(holdings_shares, pd.Series)
         holdings_shares = holdings_shares.reindex(
             index=self._initial_universe, copy=False
@@ -233,9 +240,10 @@ class DatabasePortfolio(oporport.Portfolio):
         # If the database does not have an entry for an asset (e.g., as in
         # a mock database without universe initialization), then a NaN is
         # returned.
-        _LOG.debug(
-            "Number of NaN holdings_shares=%d", holdings_shares.isna().sum()
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "Number of NaN holdings_shares=%d", holdings_shares.isna().sum()
+            )
         holdings_shares.fillna(0, inplace=True)
         hdbg.dassert(not holdings_shares.index.has_duplicates)
         self._holdings_shares[wall_clock_timestamp] = holdings_shares
@@ -264,7 +272,8 @@ class DatabasePortfolio(oporport.Portfolio):
         holdings = snapshot_df[["asset_id", "current_position"]].set_index(
             "asset_id"
         )["current_position"]
-        _LOG.debug(hprint.to_str("initial_holdings"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("initial_holdings"))
         hdbg.dassert_isinstance(holdings, pd.Series)
         #
         nonzero_holdings = holdings[holdings != 0]
@@ -306,7 +315,8 @@ class DatabasePortfolio(oporport.Portfolio):
         hdbg.dassert_in("net_cost", snapshot_df.columns)
         # A long position has negative net cost.
         net_cost = -1 * snapshot_df.set_index("asset_id")["net_cost"]
-        _LOG.debug("net_cost (cumulative)=%f", net_cost.sum())
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("net_cost (cumulative)=%f", net_cost.sum())
         return net_cost
 
     def _update_executed_trades_notional_and_cash(
@@ -325,7 +335,8 @@ class DatabasePortfolio(oporport.Portfolio):
         # Get the cash at the previous timestamp.
         prev_cash_ts, prev_cash = self._cash.peek()
         hdbg.dassert_lt(prev_cash_ts, wall_clock_timestamp)
-        _LOG.debug("prev_cash=%s", prev_cash)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("prev_cash=%s", prev_cash)
         hdbg.dassert(np.isfinite(prev_cash), "prev_cash=%s", prev_cash)
         # Get the net cost at the previous timestamp.
         if self._net_cost:
@@ -346,12 +357,14 @@ class DatabasePortfolio(oporport.Portfolio):
         )
         # The cost of the previous transactions is the difference of net cost.
         cost = current_net_cost - prev_net_cost
-        _LOG.debug("cost (net_cost diff)=%f", cost)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("cost (net_cost diff)=%f", cost)
         hdbg.dassert(np.isfinite(cost))
         # The current cash is given by the previous cash and the cash spent in the
         # previous transactions.
         updated_cash = prev_cash - cost
-        _LOG.debug("updated_cash=%s", updated_cash)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("updated_cash=%s", updated_cash)
         # Update the cash and net cost.
         self._cash[wall_clock_timestamp] = updated_cash
         self._net_cost[wall_clock_timestamp] = current_net_costs

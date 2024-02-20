@@ -18,7 +18,7 @@ import helpers.htqdm as htqdm
 
 _LOG = logging.getLogger(__name__)
 
-# _LOG.debug = _LOG.info
+# if _LOG.isEnabledFor(logging.DEBUG): _LOG.debug = _LOG.info
 
 # TODO(gp): Generalize for different intervals, besides 5 mins trading.
 # TODO(gp): Extend for computing PnL on multiple stocks.
@@ -154,7 +154,8 @@ def compute_pnl_level1(
 
     def _update(key: str, value: float) -> None:
         prev_value = accounting[key][-1] if accounting[key] else None
-        _LOG.debug("%s=%s -> %s", key, prev_value, value)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("%s=%s -> %s", key, prev_value, value)
         accounting[key].append(value)
 
     # Initial balance.
@@ -163,9 +164,11 @@ def compute_pnl_level1(
     tqdm_out = htqdm.TqdmToLogger(_LOG, level=logging.INFO)
     num_rows = df_5mins.shape[0] - 2
     for ts, row in tqdm(df_5mins[:-2].iterrows(), total=num_rows, file=tqdm_out):
-        _LOG.debug(hprint.frame("# ts=%s" % _ts_to_str(ts), char1="<"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.frame("# ts=%s" % _ts_to_str(ts), char1="<"))
         pred = row["preds"]
-        _LOG.debug("wealth=%s", wealth)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("wealth=%s", wealth)
         #
         ts_5 = ts + pd.DateOffset(minutes=5)
         hdbg.dassert_in(ts_5, df.index)
@@ -174,7 +177,8 @@ def compute_pnl_level1(
         ts_10 = ts + pd.DateOffset(minutes=10)
         hdbg.dassert_in(ts_10, df.index)
         price_10 = df.loc[ts_10]["price"]
-        _LOG.debug("pred=%s price_5=%s price_10=%s", pred, price_5, price_10)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("pred=%s price_5=%s price_10=%s", pred, price_5, price_10)
         #
         num_shares = wealth / price_5
         # The magnitude of the prediction is interpreted as amount of leverage.
@@ -183,36 +187,40 @@ def compute_pnl_level1(
         if pred > 0:
             # Go long.
             buy_pnl = num_shares * price_5
-            _LOG.debug(
-                "Buy: @ ts_5=%s for price_5=$%s -> buy_pnl=$%s",
-                _ts_to_str(ts_5),
-                price_5,
-                buy_pnl,
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "Buy: @ ts_5=%s for price_5=$%s -> buy_pnl=$%s",
+                    _ts_to_str(ts_5),
+                    price_5,
+                    buy_pnl,
+                )
             sell_pnl = num_shares * price_10
-            _LOG.debug(
-                "Sell: @ ts_10=%s for price_10=$%s -> sell_pnl=$%s",
-                _ts_to_str(ts_10),
-                price_10,
-                sell_pnl,
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "Sell: @ ts_10=%s for price_10=$%s -> sell_pnl=$%s",
+                    _ts_to_str(ts_10),
+                    price_10,
+                    sell_pnl,
+                )
             diff = -buy_pnl + sell_pnl
         elif pred < 0:
             # Short sell.
             sell_pnl = num_shares * price_5
-            _LOG.debug(
-                "Short sell: @ ts_5=%s for price_5=$%s -> sell_pnl=$%s",
-                _ts_to_str(ts_5),
-                price_5,
-                sell_pnl,
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "Short sell: @ ts_5=%s for price_5=$%s -> sell_pnl=$%s",
+                    _ts_to_str(ts_5),
+                    price_5,
+                    sell_pnl,
+                )
             buy_pnl = num_shares * price_10
-            _LOG.debug(
-                "Cover: @ ts_10=%s for price_10=$%s -> buy_pnl=$%s",
-                _ts_to_str(ts_10),
-                price_10,
-                buy_pnl,
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "Cover: @ ts_10=%s for price_10=$%s -> buy_pnl=$%s",
+                    _ts_to_str(ts_10),
+                    price_10,
+                    buy_pnl,
+                )
             diff = sell_pnl - buy_pnl
         elif pred == 0:
             # Stay flat.
@@ -228,7 +236,7 @@ def compute_pnl_level1(
     # semantic of the interval is at the end of the interval.
     col_name = _get_col_name("wealth", prefix)
     wealth_srs = pd.Series([initial_wealth] + df_5mins[col_name].values.tolist())
-    # _LOG.debug("wealth_srs=%s", wealth_srs)
+    # if _LOG.isEnabledFor(logging.DEBUG): _LOG.debug("wealth_srs=%s", wealth_srs)
     col_name = _get_col_name("pnl", prefix)
     df_5mins[col_name] = wealth_srs.pct_change().values[1:]
     # Compute total return.
@@ -251,14 +259,14 @@ def compute_lag_pnl(df_5mins: pd.DataFrame, prefix: str = "lag") -> pd.DataFrame
 # Price computation.
 # #############################################################################
 
-# _LOG.debug = _LOG.info
-# _LOG.debug = lambda *_: 0
+# if _LOG.isEnabledFor(logging.DEBUG): _LOG.debug = _LOG.info
+# if _LOG.isEnabledFor(logging.DEBUG): _LOG.debug = lambda *_: 0
 
 # debug_mode = True
 debug_mode = False
 
 # s/dbg.dassert/if debug_mode: hdbg.dassert/
-# s/_LOG.debug/if debug_mode: _LOG.debug/
+# s/if _LOG.isEnabledFor(logging.DEBUG): _LOG.debug/if debug_mode: if _LOG.isEnabledFor(logging.DEBUG): _LOG.debug/
 
 
 class MarketInterface:
@@ -315,7 +323,8 @@ class MarketInterface:
         hdbg.dassert_in(ts_end, self._df.index)
         prices = self._df[ts_start:ts_end][column]
         prices = prices.iloc[1:]
-        _LOG.debug("prices=\n%s", prices)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("prices=\n%s", prices)
         hdbg.dassert_lte(1, prices.shape[0])
         price: float = prices.mean()
         return price
@@ -409,13 +418,14 @@ class Order:
                 price = (1.0 - perc) * ask_price + perc * bid_price
         else:
             raise ValueError("Invalid type='%s'", type_)
-        _LOG.debug(
-            "type=%s, ts_start=%s, ts_end=%s -> execution_price=%s",
-            type_,
-            ts_start,
-            ts_end,
-            price,
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "type=%s, ts_start=%s, ts_end=%s -> execution_price=%s",
+                type_,
+                ts_start,
+                ts_end,
+                price,
+            )
         return price
 
     def get_execution_price(self) -> float:
@@ -524,7 +534,8 @@ def _append_accounting_df(
     """
     dfs = []
     for key, value in accounting.items():
-        _LOG.debug("key=%s", key)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("key=%s", key)
         num_vals = len(accounting[key])
         buffer = [np.nan] * (df_5mins.shape[0] - num_vals)
         col_name = _get_col_name(key, prefix)
@@ -552,7 +563,7 @@ def get_total_wealth(
     hdbg.dassert(np.isfinite(price), "price=%s", price)
     hdbg.dassert(np.isfinite(holdings), "holdings=%s", holdings)
     holdings_value = holdings * price
-    # _LOG.debug(
+    # if _LOG.isEnabledFor(logging.DEBUG): _LOG.debug(
     #     "Marking at ts=%s holdings=%s at %s -> value=%s",
     #     _ts_to_str(ts),
     #     holdings,
@@ -573,7 +584,8 @@ def _get_orders_to_execute(ts: pd.Timestamp, orders: List[Order]) -> List[Order]
         # hdbg.dassert_eq(len(orders), 1, "%s", orders_to_string(orders))
         assert 0
     orders_to_execute = get_orders_to_execute(orders, ts)
-    _LOG.debug("orders_to_execute=%s", orders_to_string(orders_to_execute))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("orders_to_execute=%s", orders_to_string(orders_to_execute))
     # Merge the orders.
     merged_orders = []
     while orders_to_execute:
@@ -585,11 +597,12 @@ def _get_orders_to_execute(ts: pd.Timestamp, orders: List[Order]) -> List[Order]
                 orders_to_execute_tmp.remove(next_order)
         merged_orders.append(order)
         orders_to_execute = orders_to_execute_tmp
-    _LOG.debug(
-        "After merging:\n  merged_orders=%s\n  orders_to_execute=%s",
-        orders_to_string(merged_orders),
-        orders_to_string(orders_to_execute),
-    )
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(
+            "After merging:\n  merged_orders=%s\n  orders_to_execute=%s",
+            orders_to_string(merged_orders),
+            orders_to_string(orders_to_execute),
+        )
     return merged_orders
 
 
@@ -648,7 +661,8 @@ def _compute_pnl_level2(
 
     def _update(key: str, value: float) -> None:
         prev_value = accounting[key][-1] if accounting[key] else None
-        _LOG.debug("%s=%s -> %s", key, prev_value, value)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("%s=%s -> %s", key, prev_value, value)
         accounting[key].append(value)
 
     orders: List[Order] = []
@@ -664,12 +678,14 @@ def _compute_pnl_level2(
     tqdm_out = htqdm.TqdmToLogger(_LOG, level=logging.INFO)
     num_rows = len(preds)
     for ts, pred in tqdm(preds, total=num_rows, file=tqdm_out):
-        # _LOG.debug(hprint.frame("# ts=%s" % _ts_to_str(ts)))
+        # if _LOG.isEnabledFor(logging.DEBUG): _LOG.debug(hprint.frame("# ts=%s" % _ts_to_str(ts)))
         # 1) Place orders based on the predictions, if needed.
-        _LOG.debug("pred=%s", pred)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("pred=%s", pred)
         hdbg.dassert(np.isfinite(pred), "pred=%s", pred)
         # Mark the portfolio to market.
-        _LOG.debug("# Mark portfolio to market")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("# Mark portfolio to market")
         wealth = get_total_wealth(mi, ts, cash, holdings, price_column)
         hdbg.dassert(np.isfinite(wealth), "wealth=%s", wealth)
         _update("wealth", wealth)
@@ -678,7 +694,8 @@ def _compute_pnl_level2(
             # any more orders.
             continue
         # Use current price to convert forecasts in position intents.
-        _LOG.debug("# Decide how much to trade")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("# Decide how much to trade")
         # Enter position between [0, 5].
         ts_start = ts
         ts_end = ts + offset_5min
@@ -702,28 +719,33 @@ def _compute_pnl_level2(
         else:
             price_0 = mi.get_instantaneous_price(ts, price_column)
             wealth_to_allocate = wealth
-        _LOG.debug("price_0=%s", price_0)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("price_0=%s", price_0)
         target_num_shares = wealth_to_allocate / price_0
         target_num_shares *= pred
         _update("target_n_shares", target_num_shares)
         _update("cash", cash)
         _update("holdings", holdings)
-        _LOG.debug("# Place orders")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("# Place orders")
         diff = target_num_shares - holdings
         _update("diff_n_shares", diff)
         # Create order.
         order = Order(mi, order_type, ts_start, ts_end, diff)
-        _LOG.debug("order=%s", order)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("order=%s", order)
         orders.append(order)
         # 2) Execute the orders.
         # INV: When we get here all the orders for the current timestamp `ts` have
         # been placed since we acted on the predictions for `ts` and we can't place
         # orders in the past.
         # Find all the orders with the current timestamp.
-        _LOG.debug("# Get orders to execute")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("# Get orders to execute")
         merged_orders = _get_orders_to_execute(ts, orders)
         # Execute the merged orders.
-        _LOG.debug("# Execute orders")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("# Execute orders")
         # TODO(gp): We rely on the assumption that order span only one time step.
         #  so we can evaluate an order starting now and ending in the next time step.
         #  A more accurate simulation requires to attach "callbacks" representing
@@ -731,7 +753,8 @@ def _compute_pnl_level2(
         # TODO(gp): For now there should be at most one order.
         hdbg.dassert_lte(len(merged_orders), 1)
         order = merged_orders[0]
-        _LOG.debug("order=%s", order)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("order=%s", order)
         num_shares = order.num_shares
         _update("filled_n_shares", num_shares)
         holdings += num_shares

@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -34,7 +34,7 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import oms
+import reconciliation as reconcil
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -229,7 +229,7 @@ research_portfolio_stats_df = research_portfolio_stats_df.loc[
 prod_portfolio_dir = os.path.join(root_dir, "process_forecasts/portfolio")
 
 # %%
-prod_portfolio_df, prod_portfolio_stats_df = oms.load_portfolio_artifacts(
+prod_portfolio_df, prod_portfolio_stats_df = reconcil.load_portfolio_artifacts(
     prod_portfolio_dir,
     start_timestamp,
     end_timestamp,
@@ -287,7 +287,7 @@ normalized_research_portfolio_df = dtfmod.normalize_portfolio_df(
 )
 
 # %%
-normalized_prod_portfolio_df = oms.normalize_portfolio_df(prod_portfolio_df)
+normalized_prod_portfolio_df = reconcil.normalize_portfolio_df(prod_portfolio_df)
 
 # %%
 portfolio_corrs = dtfmod.compute_correlations(

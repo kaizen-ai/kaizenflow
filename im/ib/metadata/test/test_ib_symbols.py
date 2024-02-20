@@ -29,7 +29,7 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         symbols_str = "\n".join([str(symbol) for symbol in symbols])
         self.check_string(symbols_str)
 
-    @pytest.mark.slow("Parse real large file with symbols. Approx. 15 sec.")
+    @pytest.mark.superslow("Parse real large file with symbols. Approx. > 30 sec via GH actions.")
     def test_parse_symbols_file2(self) -> None:
         """
         Test parsing the real file.

@@ -2,6 +2,7 @@ import asyncio
 from typing import Union
 
 import pandas as pd
+import pytest
 
 import helpers.hasyncio as hasynci
 import helpers.hdatetime as hdateti
@@ -24,15 +25,24 @@ class TestOrderProcessor1(omtodh.TestOmsDbHelper):
         await hasynci.sleep(1, get_wall_clock_time)
         # Create an order.
         order = oororexa.get_order_example1()
+        order_type = order.type_
         # Submit the order to the broker.
-        await broker.submit_orders([order])
+        await broker.submit_orders([order], order_type)
 
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
         # Create OMS tables.
         incremental = False
         self._asset_id_name = "asset_id"
@@ -40,10 +50,9 @@ class TestOrderProcessor1(omtodh.TestOmsDbHelper):
             self.connection, incremental, self._asset_id_name
         )
 
-    def tearDown(self) -> None:
+    def tear_down_test(self) -> None:
         # Remove the OMS tables.
         odbomdb.remove_oms_tables(self.connection)
-        super().tearDown()
 
     def helper(
         self, termination_condition: Union[int, pd.Timestamp], exp: str

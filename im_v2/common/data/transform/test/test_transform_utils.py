@@ -1,13 +1,21 @@
+import os
+
 import pandas as pd
 import pytest
 
+import data_schema.dataset_schema_utils as dsdascut
+import helpers.hdbg as hdbg
+import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
+import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
+import im_v2.common.data.extract.extract_utils as imvcdeexut
+import im_v2.common.data.transform.resample_daily_bid_ask_data as imvcdtrdbad
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 
 class TestGetVendorEpochUnit(hunitest.TestCase):
-
     POSSIBLE_UNITS = ["ms", "s", "ns"]
 
     def test_get_vendor_epoch_unit(self) -> None:
@@ -421,8 +429,8 @@ class TestTransformRawWebsocketData(hunitest.TestCase):
 
     def test_transform_raw_websocket_trades_data(self) -> None:
         """
-        Verify that raw trades dict data received from websocket is
-        transformed to DataFrame of specified format.
+        Verify that raw trades dict data received from websocket is transformed
+        to DataFrame of specified format.
         """
         # Build test data.
         test_exchange = "binance"
@@ -491,3 +499,182 @@ class TestTransformRawWebsocketData(hunitest.TestCase):
             3  1678440475954  buy  1405.2   0.242      ETH/USDT 2022-10-05 15:06:00.019422+00:00     binance"""
         actual = hpandas.df_to_str(actual_df)
         self.assert_equal(expected, actual, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+@pytest.mark.slow
+class TestResampleBidAskData(hmoto.S3Mock_TestCase):
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test2()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test2(self) -> None:
+        self.src_signature = (
+            "periodic_daily.airflow.archived_200ms"
+            ".parquet.bid_ask.futures.v7.ccxt.binance.v1_0_0"
+        )
+        self.dst_signature = (
+            "periodic_daily.airflow.resampled_1min"
+            ".parquet.bid_ask.futures.v7.ccxt.binance.v1_0_0"
+        )
+        self.base_s3_path = f"s3://{self.bucket_name}/"
+        src_dir = imvcdtrdbad._get_s3_path_from_signature(
+            self.src_signature,
+            self.base_s3_path,
+        )
+        self.start_timestamp = "2023-04-01T00:00:00+00:00"
+        self.end_timestamp = "2023-04-01T00:00:01.999999+00:00"
+        self.bid_ask_levels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        data = self.read_data_from_s3(self.start_timestamp, self.end_timestamp)
+        self.set_up_test()
+        #
+        imvcdeexut.save_parquet(
+            data,
+            src_dir,
+            "ms",
+            self.mock_aws_profile,
+            "bid_ask",
+            # The `id` column is most likely not needed once the data is in S3.
+            drop_columns=["id"],
+            mode="append",
+            partition_mode="by_year_month_day",
+        )
+        self.s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
+
+    def get_test_data(self) -> None:
+        """
+        Copy bid-ask data from S3 to a scratch dir.
+        """
+        s3_input_dir = self.get_s3_input_dir()
+        scratch_dir = self.get_scratch_space()
+        aws_profile = "ck"
+        hs3.copy_data_from_s3_to_local_dir(s3_input_dir, scratch_dir, aws_profile)
+
+    def test_resample_bid_ask_data_to_1min(self) -> None:
+        """
+        Verify that raw data 200ms is correctly resampled to 1min.
+        """
+        self.get_test_data()
+        scratch_dir = self.get_scratch_space()
+        # Prepare inputs.
+        file_name = os.path.join(scratch_dir, "SampleBidAskDataLong.csv")
+        data = pd.read_csv(file_name)
+        data["timestamp"] = pd.to_datetime(data["timestamp"])
+        data.set_index("timestamp", inplace=True)
+        # Check results.
+        actual_df = data.groupby("currency_pair").apply(
+            imvcdttrut.resample_bid_ask_data_to_1min
+        )
+
+        expected = r"""
+                                         bid_price.open  bid_size.open  ask_price.open  ask_size.open  bid_price.close  bid_size.close  ask_price.close  ask_size.close  bid_price.high  bid_size.max  ask_price.high  ask_size.max  bid_price.low  bid_size.min  ask_price.low  ask_size.min  bid_price.mean  bid_size.mean  ask_price.mean  ask_size.mean
+currency_pair timestamp
+BTC_USDT      2023-05-05 14:01:00+00:00        29163.70          8.581        29163.80          1.762         29167.90           1.441         29168.20           0.004        29168.00        30.071        29168.20         3.304       29163.60         0.001       29163.80         0.002     29166.42500       9.334000      29166.6375       0.846625
+ETH_USDT      2023-05-05 14:01:00+00:00         1931.65          1.482         1931.67          0.016          1932.96           1.483          1933.01           0.077         1932.99        72.749         1933.01       223.777        1931.64         0.010        1931.67         0.010      1932.38375      12.711875       1932.4075      33.434562
+"""
+        actual = hpandas.df_to_str(actual_df)
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_resample_multilevel_bid_ask_data_to_1min(self) -> None:
+        """
+        Verify that multilevel raw data 200ms is correctly resampled to 1min.
+        """
+        self.get_test_data()
+        scratch_dir = self.get_scratch_space()
+        file_name = os.path.join(scratch_dir, "SampleBidAskDataWide.csv")
+        # Data has 2 levels in wide format.
+        data = pd.read_csv(file_name)
+        data["timestamp"] = pd.to_datetime(data["timestamp"])
+        data.set_index("timestamp", inplace=True)
+        # Run Resampling
+        actual_df = data.groupby("currency_pair").apply(
+            lambda group: imvcdttrut.resample_multilevel_bid_ask_data_to_1min(
+                group, number_levels_of_order_book=2
+            )
+        )
+        actual = hpandas.df_to_str(actual_df)
+        self.check_string(actual)
+
+    def test_resample_daily_bid_ask_data(self) -> None:
+        parser = imvcdtrdbad._parse()
+        args = parser.parse_args(
+            [
+                "--start_timestamp",
+                f"{self.start_timestamp}",
+                "--end_timestamp",
+                f"{self.end_timestamp}",
+                "--src_signature",
+                f"{self.src_signature}",
+                "--src_s3_path",
+                f"{self.base_s3_path}",
+                "--dst_signature",
+                f"{self.dst_signature}",
+                "--dst_s3_path",
+                f"{self.base_s3_path}",
+                "--assert_all_resampled",
+                "--bid_ask_levels",
+                "10",
+            ]
+        )
+        imvcdtrdbad._run(args, aws_profile=self.s3fs_)
+        dst_dir = imvcdtrdbad._get_s3_path_from_signature(
+            self.dst_signature,
+            self.base_s3_path,
+        )
+        actual_df = hparque.from_parquet(dst_dir, aws_profile=self.s3fs_)
+        actual_df = actual_df.reset_index(drop=True)
+        actual_df = actual_df.drop(["knowledge_timestamp"], axis=1)
+        actual = hpandas.df_to_str(actual_df, num_rows=5000, max_colwidth=15000)
+        self.check_string(actual)
+
+    def read_data_from_s3(
+        self, start_timestamp: str, end_timestamp: str
+    ) -> pd.DataFrame:
+        """
+        Dump test data to S3 mock bucket.
+        """
+        # Get signature arguments mapping for source and destination data.
+        dataset_schema = dsdascut.get_dataset_schema()
+        scr_signature_args = dsdascut.parse_dataset_signature_to_args(
+            self.src_signature, dataset_schema
+        )
+        dst_signature_args = dsdascut.parse_dataset_signature_to_args(
+            self.dst_signature, dataset_schema
+        )
+        # Define the unit of the timestamp column.
+        data_type = "bid_ask"
+        epoch_unit = imvcdttrut.get_vendor_epoch_unit(
+            scr_signature_args["vendor"], data_type
+        )
+        # Check that the source and destination data format are parquet.
+        hdbg.dassert_eq(scr_signature_args["data_format"], "parquet")
+        hdbg.dassert_eq(dst_signature_args["data_format"], "parquet")
+        # Define filters for data period.
+        # Note: it's better from Airflow execution perspective
+        # to keep the interval closed: [start, end].
+        # In other words the client takes care of providing the correct interval.
+        filters = imvcdtrdbad._build_parquet_filters(
+            scr_signature_args["action_tag"],
+            start_timestamp,
+            end_timestamp,
+            epoch_unit,
+            self.bid_ask_levels,
+        )
+        filters += [("currency_pair", "in", ["BTC_USDT", "ETH_USDT"])]
+        aws_profile = "ck"
+        s3_bucket = hs3.get_s3_bucket_path_unit_test(aws_profile)
+        src_s3_path = imvcdtrdbad._get_s3_path_from_signature(
+            self.src_signature, s3_bucket
+        )
+        data = hparque.from_parquet(
+            src_s3_path, filters=filters, aws_profile=aws_profile
+        )
+        data = data.reset_index(drop=True)
+        return data

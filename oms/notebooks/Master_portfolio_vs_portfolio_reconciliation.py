@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -33,6 +33,7 @@ import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import oms as oms
+import reconciliation as reconcil
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -108,7 +109,7 @@ hpandas.df_to_str(sim_forecast_df, log_level=logging.INFO)
 # ## Compute forecast prod delay
 
 # %%
-prod_forecast_delay = oms.compute_delay(prod_forecast_df, config["freq"])
+prod_forecast_delay = reconcil.compute_delay(prod_forecast_df, config["freq"])
 hpandas.df_to_str(prod_forecast_delay, log_level=logging.INFO)
 
 # %%
@@ -161,7 +162,7 @@ hpandas.df_to_str(sim_order_df, log_level=logging.INFO)
 # ## Load prod portfolio
 
 # %%
-prod_portfolio_df, prod_portfolio_stats_df = oms.load_portfolio_artifacts(
+prod_portfolio_df, prod_portfolio_stats_df = reconcil.load_portfolio_artifacts(
     config["prod_portfolio_dir"],
     config["start_timestamp"],
     config["end_timestamp"],
@@ -179,7 +180,7 @@ hpandas.df_to_str(prod_portfolio_stats_df, log_level=logging.INFO)
 # ## Load sim portfolio
 
 # %%
-sim_portfolio_df, sim_portfolio_stats_df = oms.load_portfolio_artifacts(
+sim_portfolio_df, sim_portfolio_stats_df = reconcil.load_portfolio_artifacts(
     config["sim_portfolio_dir"],
     config["start_timestamp"],
     config["end_timestamp"],
@@ -197,7 +198,7 @@ hpandas.df_to_str(sim_portfolio_stats_df, log_level=logging.INFO)
 # ## Compute prod portfolio delay
 
 # %%
-prod_portfolio_delay = oms.compute_delay(prod_portfolio_df, config["freq"])
+prod_portfolio_delay = reconcil.compute_delay(prod_portfolio_df, config["freq"])
 
 # %%
 hpandas.df_to_str(prod_portfolio_delay, log_level=logging.INFO)
@@ -273,7 +274,9 @@ hpandas.df_to_str(
 # OMS
 
 # %%
-shares_df = cofinpdp.compute_shares_traded(prod_portfolio_df, prod_order_df, "15T")
+shares_df = cofinpdp.compute_shares_traded(
+    prod_portfolio_df, prod_order_df, "15T"
+)
 
 # %%
 shares_df.columns.levels[0]

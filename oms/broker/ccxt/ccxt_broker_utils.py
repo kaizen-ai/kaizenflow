@@ -7,15 +7,13 @@ import oms.broker.ccxt.ccxt_broker_utils as obccbrut
 """
 import asyncio
 import logging
-import os
-from typing import Dict, Optional
+from typing import Optional
 
 import pandas as pd
 
-import helpers.hdbg as hdbg
-import helpers.hio as hio
-import helpers.hprint as hprint
 import helpers.hasyncio as hasynci
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 import im_v2.common.data.client as icdc
 import im_v2.common.db.db_utils as imvcddbut
 import oms.broker.ccxt.abstract_ccxt_broker as obcaccbr
@@ -25,6 +23,8 @@ import oms.order.order as oordorde
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(Juraj): this is only used in web_apps/monitoring/app.py,
+# consider deprecating.
 def get_broker(
     exchange: str,
     contract_type: str,
@@ -56,77 +56,6 @@ def get_broker(
     return broker
 
 
-def save_to_json_file_and_log(
-    data: Dict[str, float],
-    log_dir: str,
-    enclose_dir: str,
-    exchange: str,
-    contract_type: str,
-    file_type: str,
-) -> None:
-    """
-    Save data to a json file and log the file path.
-
-    :param data: data to save
-    :param log_dir: directory to save the file to
-    :param enclose_dir: directory to enclose the file in
-    :param exchange: exchange name, e.g., "binance"
-    :param contract_type: contract type, e.g., "futures"
-    :param file_type: file type, e.g., "balance" or "open_positions"
-    """
-    hio.create_dir(log_dir, incremental=True, backup_dir_if_exists=True)
-    # Get enclosed balance directory.
-    enclosing_dir = os.path.join(log_dir, enclose_dir)
-    hio.create_dir(enclosing_dir, incremental=True)
-    # Get file name, e.g.
-    #  '/shared_data/system_log_dir/total_balance/'
-    #  'binance_futures_balance_20230419_172022.json'
-    timestamp = pd.Timestamp.now(tz="UTC").strftime("%Y%m%d_%H%M%S")
-    file_name = f"{exchange}_{contract_type}_{file_type}_{timestamp}.json"
-    file_path = os.path.join(enclosing_dir, file_name)
-    # Save.
-    hio.to_json(file_path, data)
-    _LOG.debug("%s saved to %s", enclose_dir, file_path)
-    _LOG.info(hprint.to_pretty_str(data))
-
-
-def get_ccxt_total_balance(
-    broker: obcaccbr.AbstractCcxtBroker,
-    log_dir: str,
-    exchange: str,
-    contract_type: str,
-) -> None:
-    """
-    Get total balance of the account.
-
-    :param broker: broker object
-    :param log_dir: directory to save the balance to
-    :param exchange: exchange name, e.g. 'binance'
-    :param contract_type: 'futures' or 'spot'
-    """
-    # Get total balance.
-    total_balance = broker.get_total_balance()
-    enclose_dir = "total_balance"
-    file_type = "balance"
-    save_to_json_file_and_log(
-        total_balance, log_dir, enclose_dir, exchange, contract_type, file_type
-    )
-
-
-def get_ccxt_open_positions(
-    broker: obcaccbr.AbstractCcxtBroker,
-    log_dir: str,
-    exchange: str,
-    contract_type: str,
-) -> None:
-    open_positions = broker.get_open_positions()
-    enclose_dir = "open_positions"
-    file_type = "open_positions"
-    save_to_json_file_and_log(
-        open_positions, log_dir, enclose_dir, exchange, contract_type, file_type
-    )
-
-
 def flatten_ccxt_account(
     broker: obcaccbr.AbstractCcxtBroker,
     dry_run: bool,
@@ -147,8 +76,10 @@ def flatten_ccxt_account(
     :param dry_run: whether to avoid actual execution
     :param deadline_in_secs: deadline for order to be executed, 60 by default
     """
+    _LOG.info("Total balance before flattening: %s", broker.get_total_balance())
     # Fetch all open positions.
     open_positions = broker.get_open_positions()
+    _LOG.info(hprint.to_str("open_positions"))
     if open_positions:
         # Create orders.
         orders = []
@@ -179,7 +110,12 @@ def flatten_ccxt_account(
             # Set order as reduce-only to close the position.
             order.extra_params["reduce_only"] = True
             orders.append(order)
-        hasynci.run(broker.submit_orders(orders, dry_run=dry_run), asyncio.get_event_loop(), close_event_loop=False)
+        order_type = "market"
+        hasynci.run(
+            broker.submit_orders(orders, order_type, dry_run=dry_run),
+            asyncio.get_event_loop(),
+            close_event_loop=False,
+        )
     else:
         _LOG.warning("No open positions found.")
     _LOG.info("Account flattened. Total balance: %s", broker.get_total_balance())
@@ -194,35 +130,3 @@ def flatten_ccxt_account(
                 f"{hprint.to_str('open_positions')}"
             ),
         )
-
-
-def describe_and_flatten_account(
-    broker: obcaccbr.AbstractCcxtBroker,
-    exchange: str,
-    contract_type: str,
-    log_dir: str,
-    *,
-    assert_on_non_zero_positions: bool = False,
-) -> None:
-    """
-    Describe and flatten the account.
-
-    :param exchange: exchange name, e.g. 'binance'
-    :param contract_type: 'futures' or 'spot'
-    :param log_dir: directory to save the balance to
-    :param assert_on_non_zero_positions: whether to assert on non-zero positions
-    """
-    _LOG.info("Getting balances...")
-    get_ccxt_total_balance(broker, log_dir, exchange, contract_type)
-    _LOG.info("Getting open positions...")
-    get_ccxt_open_positions(broker, log_dir, exchange, contract_type)
-    _LOG.info("Flattening account...")
-    flatten_ccxt_account(
-        broker,
-        dry_run=False,
-        assert_on_non_zero_positions=assert_on_non_zero_positions,
-    )
-    _LOG.info("Getting balances...")
-    get_ccxt_total_balance(broker, log_dir, exchange, contract_type)
-    _LOG.info("Getting open positions...")
-    get_ccxt_open_positions(broker, log_dir, exchange, contract_type)
