@@ -1,7 +1,7 @@
 ################################################################################
 # str
 ################################################################################
-DAG at 0x=(_nx_dag=DiGraph with 2 nodes and 0 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
+DAG at 0x=(_nx_dag=DiGraph with 2 nodes and 0 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _save_node_df_out_stats=False <bool>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
 ################################################################################
 # repr
 ################################################################################
@@ -10,6 +10,7 @@ DAG at 0x=(_nx_dag=DiGraph with 2 nodes and 0 edges <networkx.classes.digraph.Di
   _name='None' <NoneType>
   _mode='strict' <str>
   _save_node_io='' <str>
+  _save_node_df_out_stats='False' <bool>
   _profile_execution='False' <bool>
   _dst_dir='None' <NoneType>
   force_free_nodes='False' <bool>

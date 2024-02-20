@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -24,10 +24,10 @@ import pandas as pd
 
 import core.config as cconfig
 import core.plotting as coplotti
+import dataflow.core as dtfcore
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
-import helpers.hintrospection as hintros
 import helpers.hprint as hprint
 
 # %%
@@ -43,16 +43,22 @@ hprint.config_notebook()
 # # Config
 
 # %%
+# TODO(Grisha): infer dag_builder_names (e.g., "C3a") automatically
+# from `dag_builder_ctors`.
 config = {
     "tiled_results_paths": {
         "C1b": "/shared_data/model/historical/build_tile_configs.C1b.ccxt_v7_1-all.5T.2022-01-01_2023-01-01.run0_rolling/tiled_results",
         "C3a": "/shared_data/model/historical/build_tile_configs.C3a.ccxt_v7_1-all.5T.2019-09-01_2023-02-01.run0_ins/tiled_results",
         "C8b": "/shared_data/model/historical/build_tile_configs.C8b.ccxt_v7_1-all.5T.2019-09-01_2023-02-01.run0_ins/tiled_results",
     },
+    "dag_builder_ctors_as_str": {
+        "C1b": "dataflow_orange.pipelines.C1.C1b_pipeline.C1b_DagBuilder",
+        "C3a": "dataflow_orange.pipelines.C3.C3a_pipeline_tmp.C3a_DagBuilder_tmp",
+        "C8b": "dataflow_orange.pipelines.C8.C8b_pipeline_tmp.C8b_DagBuilder_tmp",
+    },
     "market_data_and_volatilty_dag_builder_name": "C3a",
     "infer_column_names_from_dag_builder": True,
     "column_tags": ["price", "volatility", "prediction"],
-    "system_config_func_as_str": "dataflow_orange.system.Cx.get_Cx_system_config_template_instance",
     "start_date": datetime.date(2022, 1, 1),
     "end_date": datetime.date(2022, 12, 31),
     "asset_id_col": "asset_id",
@@ -71,12 +77,10 @@ config = {
 config["column_names"] = {}
 if config["infer_column_names_from_dag_builder"]:
     # Infer column names from a `DagBuilder` object.
-    for dag_builder_name in config["tiled_results_paths"]:
-        system_config_func_as_str = config["system_config_func_as_str"]
-        # Get a `DagBuilder` object given a `dag_builder_name`.
-        func_as_str = f"{system_config_func_as_str}('{dag_builder_name}')"
-        system_config = hintros.get_function_from_string(func_as_str)
-        dag_builder = system_config["dag_builder_object"]
+    for dag_builder_name, dag_builder_ctor_as_str in config[
+        "dag_builder_ctors_as_str"
+    ].items():
+        dag_builder = dtfcore.get_DagBuilder_from_string(dag_builder_ctor_as_str)
         config["column_names"][
             dag_builder_name
         ] = dag_builder.get_column_names_dict(config["column_tags"])

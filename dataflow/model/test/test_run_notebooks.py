@@ -1,3 +1,4 @@
+import datetime
 import os
 from typing import Any
 
@@ -18,6 +19,64 @@ def build_config() -> cconfig.ConfigList:
     # a config from the caller, which we ignore for now.
     config = {}
     config = cconfig.Config()
+    config_list = cconfig.ConfigList([config])
+    return config_list
+
+
+def build_test_master_research_backtest_analyzer_config(
+    sweep_param: bool,
+) -> cconfig.ConfigList:
+    """
+    Default config builder for testing the Master_research_backtest_analyzer
+    notebook.
+
+    :param sweep_param: if True, add "sweep_param" dict to config
+    :return: config list
+    """
+    amp_dir = hgit.get_amp_abs_path()
+    dir_name = os.path.join(
+        amp_dir,
+        "dataflow/model/test/outcomes/Test_run_master_research_backtest_analyzer/input/tiled_results",
+    )
+    config_dict = {
+        "dir_name": dir_name,
+        "start_date": datetime.date(2000, 1, 1),
+        "end_date": datetime.date(2000, 1, 31),
+        "asset_id_col": "asset_id",
+        "pnl_resampling_frequency": "15T",
+        "annotate_forecasts_kwargs": {
+            "style": "longitudinal",
+            "quantization": 30,
+            "liquidate_at_end_of_day": False,
+            "initialize_beginning_of_day_trades_to_zero": False,
+            "burn_in_bars": 3,
+            "compute_extended_stats": True,
+            "target_dollar_risk_per_name": 1e2,
+            "modulate_using_prediction_magnitude": True,
+        },
+        "column_names": {
+            "price_col": "vwap",
+            "volatility_col": "vwap.ret_0.vol",
+            "prediction_col": "prediction",
+        },
+        "bin_annotated_portfolio_df_kwargs": {
+            "proportion_of_data_per_bin": 0.2,
+            "normalize_prediction_col_values": False,
+        },
+        "load_all_tiles_in_memory": False,
+    }
+    if sweep_param:
+        config_dict["sweep_param"] = {
+            "keys": (
+                "column_names",
+                "price_col",
+            ),
+            "values": (
+                "vwap",
+                "twap",
+            ),
+        }
+    config = cconfig.Config().from_dict(config_dict)
     config_list = cconfig.ConfigList([config])
     return config_list
 
@@ -54,7 +113,9 @@ def _test_save_data(self: Any) -> None:
     hsystem.system(cmd, suppress_output=False)
 
 
-def _test_run_notebook(self: Any, notebook_name: str) -> None:
+def _test_run_notebook(
+    self: Any, notebook_name: str, config_builder: str
+) -> None:
     """
     Run notebook end-to-end without errors.
     """
@@ -66,7 +127,6 @@ def _test_run_notebook(self: Any, notebook_name: str) -> None:
         "notebooks",
         f"{notebook_name}.ipynb",
     )
-    config_builder = "dataflow.model.test.test_run_notebooks.build_config()"
     self._test_run_notebook(notebook_path, config_builder)
 
 
@@ -77,7 +137,8 @@ class Test_run_master_feature_analyzer(dsnrnteca.Test_Run_Notebook_TestCase):
         Test that notebook runs end-to-end without errors.
         """
         notebook_name = "Master_feature_analyzer"
-        _test_run_notebook(self, notebook_name)
+        config_builder = "dataflow.model.test.test_run_notebooks.build_config()"
+        _test_run_notebook(self, notebook_name, config_builder)
 
     @pytest.mark.skip("Run manually.")
     @pytest.mark.requires_ck_infra
@@ -92,13 +153,27 @@ class Test_run_master_feature_analyzer(dsnrnteca.Test_Run_Notebook_TestCase):
 class Test_run_master_research_backtest_analyzer(
     dsnrnteca.Test_Run_Notebook_TestCase
 ):
-    @pytest.mark.superslow("~45 sec.")
-    def test_run_notebook(self) -> None:
+    @pytest.mark.superslow("~60 sec.")
+    def test_run_notebook1(self) -> None:
         """
         Test that notebook runs end-to-end without errors.
+
+        `sweep_param` is not exposed, use only default config.
         """
         notebook_name = "Master_research_backtest_analyzer"
-        _test_run_notebook(self, notebook_name)
+        config_builder = "dataflow.model.test.test_run_notebooks.build_test_master_research_backtest_analyzer_config(False)"
+        _test_run_notebook(self, notebook_name, config_builder)
+
+    @pytest.mark.superslow("~60 sec.")
+    def test_run_notebook2(self) -> None:
+        """
+        Test that notebook runs end-to-end without errors.
+
+        `sweep_param` is exposed, multiple configs are used.
+        """
+        notebook_name = "Master_research_backtest_analyzer"
+        config_builder = "dataflow.model.test.test_run_notebooks.build_test_master_research_backtest_analyzer_config(True)"
+        _test_run_notebook(self, notebook_name, config_builder)
 
     @pytest.mark.skip("Run manually.")
     @pytest.mark.requires_ck_infra

@@ -226,11 +226,12 @@ class ForecastEvaluatorFromReturns:
         if self._remove_weekends:
             df = cofinanc.remove_weekends(df)
         # Filter dateframe by time.
-        _LOG.debug(
-            "Filtering to data between time %s and %s",
-            self._start_time,
-            self._end_time,
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "Filtering to data between time %s and %s",
+                self._start_time,
+                self._end_time,
+            )
         df = df.between_time(self._start_time, self._end_time)
         # Compute naive dollar value risk-adjusted positions.
         returns_predictions = ForecastEvaluatorFromReturns._get_df(
@@ -241,10 +242,11 @@ class ForecastEvaluatorFromReturns:
         )
         # The values of`target_positions` represent cash values.
         target_positions = returns_predictions.divide(volatility)
-        _LOG.debug(
-            "target_positions=\n%s",
-            hpandas.df_to_str(target_positions, num_rows=None),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "target_positions=\n%s",
+                hpandas.df_to_str(target_positions, num_rows=None),
+            )
         target_positions = ForecastEvaluatorFromReturns._apply_dollar_neutrality(
             target_positions, dollar_neutrality
         )
@@ -279,8 +281,8 @@ class ForecastEvaluatorFromReturns:
         :param df: as in `compute_portfolio()`
         :param target_gmv: as in `compute_portfolio()`
         :param dollar_neutrality: as in `compute_portfolio()`
-        :return: multiindexed dataframe with level-0 columns
-            "returns", "volatility", "prediction", "position", "pnl"
+        :return: multiindexed dataframe with level-0 columns "returns",
+            "volatility", "prediction", "position", "pnl"
         """
         positions, pnl, statistics_df = self.compute_portfolio(
             df,
@@ -408,15 +410,17 @@ class ForecastEvaluatorFromReturns:
                 "Unable to enforce dollar neutrality with a single asset.",
             )
             net_asset_value = target_positions.mean(axis=1)
-            _LOG.debug(
-                "net asset value=\n%s"
-                % hpandas.df_to_str(net_asset_value, num_rows=None)
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "net asset value=\n%s"
+                    % hpandas.df_to_str(net_asset_value, num_rows=None)
+                )
             target_positions = target_positions.subtract(net_asset_value, axis=0)
-            _LOG.debug(
-                "dollar neutral target_positions=\n%s"
-                % hpandas.df_to_str(target_positions, num_rows=None)
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "dollar neutral target_positions=\n%s"
+                    % hpandas.df_to_str(target_positions, num_rows=None)
+                )
         elif dollar_neutrality == "side_preserving":
             # This method will not flip the sign of a prediction.
             # Note that in the event that all input signals are on the same
@@ -466,15 +470,17 @@ class ForecastEvaluatorFromReturns:
             hdbg.dassert_lt(0, target_gmv)
             l1_norm = target_positions.abs().sum(axis=1, min_count=1)
             scale_factor = l1_norm / target_gmv
-            _LOG.debug(
-                "scale factor=\n%s",
-                hpandas.df_to_str(scale_factor, num_rows=None),
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "scale factor=\n%s",
+                    hpandas.df_to_str(scale_factor, num_rows=None),
+                )
             target_positions = target_positions.divide(scale_factor, axis=0)
-            _LOG.debug(
-                "gmv scaled target_positions=\n%s",
-                hpandas.df_to_str(target_positions, num_rows=None),
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "gmv scaled target_positions=\n%s",
+                    hpandas.df_to_str(target_positions, num_rows=None),
+                )
         return target_positions
 
     @staticmethod

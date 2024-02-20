@@ -3,7 +3,6 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
-import pytest
 
 import core.finance_data_example as cfidaexa
 import dataflow.model.correlation as dtfmodcorr

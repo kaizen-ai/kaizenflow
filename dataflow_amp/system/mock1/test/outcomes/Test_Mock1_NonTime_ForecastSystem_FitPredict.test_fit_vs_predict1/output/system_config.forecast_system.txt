@@ -113,5 +113,5 @@ object.builder_function:
   market_object: dataflow_amp.system.mock1.mock1_forecast_system._get_market_data
   dag_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag
   dag_runner_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag_runner
-dag_object: DAG at 0x=(_nx_dag=DiGraph with 9 nodes and 8 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
+dag_object: DAG at 0x=(_nx_dag=DiGraph with 9 nodes and 8 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _save_node_df_out_stats=False <bool>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
 dag_runner_object: FitPredictDagRunner at 0x=(config= <core.config.config_.Config>, _column_to_tags_mapping=None <NoneType>, _result_nid=predict <str>)

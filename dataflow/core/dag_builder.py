@@ -49,9 +49,10 @@ class DagBuilder(abc.ABC):
         """
         Constructor.
 
-        :param nid_prefix: a namespace ending with "/" for graph node naming.
-            This may be useful if the DAG built by the builder is either built
-            upon an existing DAG or will be built upon subsequently.
+        :param nid_prefix: a namespace ending with "/" for graph node
+            naming. This may be useful if the DAG built by the builder
+            is either built upon an existing DAG or will be built upon
+            subsequently.
         """
         # If no nid prefix is specified, make it an empty string to simplify
         # the implementation of helpers.
@@ -65,12 +66,20 @@ class DagBuilder(abc.ABC):
             )
             self._nid_prefix += "/"
 
+    # ////////////////////////////////////////////////////////////////////////////
+    # Print.
+    # ////////////////////////////////////////////////////////////////////////////
+
     def __str__(self) -> str:
         txt = []
         txt.append(f"nid_prefix={self._nid_prefix}")
         #
         txt = "\n".join(txt)
         return txt
+
+    # ////////////////////////////////////////////////////////////////////////////
+    # Get specific (derived) parameters.
+    # ////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
     @abc.abstractmethod
@@ -79,24 +88,22 @@ class DagBuilder(abc.ABC):
         Return the name of the column corresponding to `tag`.
         """
 
-    def get_column_names_dict(self, column_names: List[str]) -> Dict[str, str]:
-        """
-        Build a dictionary by a column tag as a key and a column name as a
-        value.
+    # ////////////////////////////////////////////////////////////////////////////
+    # Properties.
+    # ////////////////////////////////////////////////////////////////////////////
 
-        E.g.:
-        {
-            "price": "vwap",
-            "prediction": "feature",
-            ...
-        }
+    @property
+    def nid_prefix(self) -> str:
+        return self._nid_prefix
+
+    @property
+    def methods(self) -> List[str]:
         """
-        hdbg.dassert_isinstance(column_names, list)
-        hdbg.dassert_lte(1, len(column_names))
-        column_names_dict = {}
-        for name in column_names:
-            column_names_dict[name] = self.get_column_name(name)
-        return column_names_dict
+        Methods supported by the DAG.
+        """
+        # TODO(gp): Consider make this an abstractmethod. This should be a property
+        #  of the DAG and not of the builder.
+        return ["fit", "predict"]
 
     def to_string(self) -> str:
         """
@@ -121,9 +128,9 @@ class DagBuilder(abc.ABC):
         txt = "\n".join(txt)
         return txt
 
-    @property
-    def nid_prefix(self) -> str:
-        return self._nid_prefix
+    # ////////////////////////////////////////////////////////////////////////////
+    # Get config template.
+    # ////////////////////////////////////////////////////////////////////////////
 
     @abc.abstractmethod
     def get_config_template(self) -> cconfig.Config:
@@ -134,39 +141,24 @@ class DagBuilder(abc.ABC):
             "dummy" required paths.
         """
 
-    def get_dag(
-        self, config: cconfig.Config, mode: str = "strict", validate: bool = True
-    ) -> dtfcordag.DAG:
+    def get_column_names_dict(self, column_names: List[str]) -> Dict[str, str]:
         """
-        Build DAG given `config`.
+        Build a dictionary by a column tag as a key and a column name as a
+        value.
 
-        :param config: configures DAG. It is up to the client to guarantee
-            compatibility. The result of `self.get_config_template()` should
-            always be compatible following template completion.
-        :param mode: as in `DAG` constructor
-        :return: `dag` with all builder operations applied
+        E.g.:
+        {
+            "price": "vwap",
+            "prediction": "feature",
+            ...
+        }
         """
-        dag = self._get_dag(config, mode=mode)
-        if validate:
-            self._validate_config_and_dag(config, dag)
-        return dag
-
-    def get_fully_built_dag(self) -> dtfcordag.DAG:
-        """
-        Return the DAG for a fully specified (i.e., not template) config.
-        """
-        config = self.get_config_template()
-        dag = self.get_dag(config)
-        return dag
-
-    @property
-    def methods(self) -> List[str]:
-        """
-        Methods supported by the DAG.
-        """
-        # TODO(gp): Consider make this an abstractmethod. This should be a property
-        #  of the DAG and not of the builder.
-        return ["fit", "predict"]
+        hdbg.dassert_isinstance(column_names, list)
+        hdbg.dassert_lte(1, len(column_names))
+        column_names_dict = {}
+        for name in column_names:
+            column_names_dict[name] = self.get_column_name(name)
+        return column_names_dict
 
     # TODO(gp): -> tighten types along the lines of `Dict[Column, ...]`.
     # TODO(gp): Is this needed?
@@ -176,8 +168,8 @@ class DagBuilder(abc.ABC):
         """
         Get a dictionary of result nid column names to semantic tags.
 
-        :return: dictionary keyed by column names and with values that are
-            lists of str tag names
+        :return: dictionary keyed by column names and with values that
+            are lists of str tag names
         """
         _ = self, config
         return None
@@ -204,7 +196,8 @@ class DagBuilder(abc.ABC):
         """
         Return the current trading period.
 
-        :return: string representation of a time interval, e.g., "1T", "5T"
+        :return: string representation of a time interval, e.g., "1T",
+            "5T"
         """
 
     # TODO(Grisha): -> `get_required_lookback_duration()`.
@@ -217,6 +210,10 @@ class DagBuilder(abc.ABC):
         Return the number of days needed to execute pipeline at the frequency
         given by config.
         """
+
+    # ////////////////////////////////////////////////////////////////////////////
+    # Set specific (derived) parameters.
+    # ////////////////////////////////////////////////////////////////////////////
 
     @abc.abstractmethod
     def set_weights(
@@ -234,6 +231,41 @@ class DagBuilder(abc.ABC):
         Convert trading period to fast prod setup.
         """
 
+    # ////////////////////////////////////////////////////////////////////////////
+    # Build DAG.
+    # ////////////////////////////////////////////////////////////////////////////
+
+    def get_dag(
+        self,
+        config: cconfig.Config,
+        *,
+        mode: str = "strict",
+        validate: bool = True,
+    ) -> dtfcordag.DAG:
+        """
+        Build DAG given `config`.
+
+        :param config: configures DAG. It is up to the client to guarantee
+            compatibility. The result of `self.get_config_template()` should
+            always be compatible following template completion.
+        :param mode: as in `DAG` constructor
+        :return: `dag` with all builder operations applied
+        """
+        dag = self._get_dag(config, mode=mode)
+        if validate:
+            self._validate_config_and_dag(config, dag)
+        return dag
+
+    def get_fully_built_dag(self) -> dtfcordag.DAG:
+        """
+        Return the DAG for a fully specified (i.e., not template) config.
+        """
+        config = self.get_config_template()
+        dag = self.get_dag(config)
+        return dag
+
+    # ////////////////////////////////////////////////////////////////////////////
+    # Private methods.
     # ////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
@@ -270,11 +302,11 @@ class DagBuilder(abc.ABC):
         :param tail_nid: the nid of the node to append to. If `None` add only
             without appending. This allows a pattern like:
         """
-        # _LOG.debug("dag before appending=\n%s", str(dag))
+        # if _LOG.isEnabledFor(logging.DEBUG): _LOG.debug("dag before appending=\n%s", str(dag))
         dag.add_node(node)
         if tail_nid is not None:
             dag.connect(tail_nid, node.nid)
-        # _LOG.debug("dag after appending=\n%s", str(dag))
+        # if _LOG.isEnabledFor(logging.DEBUG): _LOG.debug("dag after appending=\n%s", str(dag))
         nid = node.nid
         nid = cast(str, nid)
         return nid

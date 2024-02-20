@@ -16,17 +16,13 @@
 # %load_ext autoreload
 # %autoreload 2
 
-import datetime
 import logging
 
 import pandas as pd
-import s3fs
-from pyarrow import parquet
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import helpers.hsql as hsql
 
 # %%
 hprint.config_notebook()
@@ -62,9 +58,9 @@ hpandas.df_to_str(df, print_shape_info=True)
 # %%
 # The format is like:
 
-# 	asset_id name	start_time	end_time	volume	close	ask	bid	sided_ask_count	sided_bid_count
-# 0	1455235	WINM21	1622496660	1622496720	10374	126140.0	126150.0	126140.0	0	1347
-# 1	1455235	WINM21	1622496720	1622496780	0	NaN	126150.0	126140.0	0	0
+#     asset_id name    start_time    end_time    volume    close    ask    bid    sided_ask_count    sided_bid_count
+# 0    1455235    WINM21    1622496660    1622496720    10374    126140.0    126150.0    126140.0    0    1347
+# 1    1455235    WINM21    1622496720    1622496780    0    NaN    126150.0    126140.0    0    0
 
 # %%
 import vendors_lime.taq_bars.futures_utils as tu

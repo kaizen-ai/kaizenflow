@@ -25,7 +25,7 @@ def get_Mock1_MarketData_example2(
     system: dtfsys.System,
 ) -> mdata.ImClientMarketData:
     """
-    Build a replayed MarketData from an ImClient feeding data from a df.
+    Build a historical ImClientMarketData from a `System.config`.
     """
     im_client = system.config["market_data_config", "im_client"]
     asset_ids = system.config["market_data_config", "asset_ids"]
@@ -57,6 +57,7 @@ def get_Mock1_ProcessForecastsNode_dict_example1(
         "order_type": "price@twap",
         "passivity_factor": None,
         "order_duration_in_mins": 5,
+        "execution_frequency": "1T",
     }
     compute_target_positions_kwargs = {
         "bulk_frac_to_remove": 0.0,
@@ -88,7 +89,9 @@ def get_Mock1_ProcessForecastsNode_dict_example1(
 # #############################################################################
 
 
-def get_Mock1_HistoricalDag_example1(system: dtfsys.System) -> dtfcore.DAG:
+def get_Mock1_HistoricalDag_example1(
+    system: dtfsys.System, timestamp_column_name: str
+) -> dtfcore.DAG:
     """
     Build a DAG with `HistoricalDataSource` for simulation.
     """
@@ -96,15 +99,12 @@ def get_Mock1_HistoricalDag_example1(system: dtfsys.System) -> dtfcore.DAG:
     # Create HistoricalDataSource.
     stage = "read_data"
     market_data = system.market_data
-    # TODO(gp): This in the original code was
-    #  `ts_col_name = "timestamp_db"`.
-    ts_col_name = "end_datetime"
     multiindex_output = True
     col_names_to_remove = ["start_ts"]
     node = dtfsys.HistoricalDataSource(
         stage,
         market_data,
-        ts_col_name,
+        timestamp_column_name,
         multiindex_output,
         col_names_to_remove=col_names_to_remove,
     )
@@ -119,8 +119,10 @@ def get_Mock1_RealtimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     """
     hdbg.dassert_isinstance(system, dtfsys.System)
     # How much history is needed for the DAG to compute.
-    lookback_in_days = 1
-    system = dtfsys.apply_history_lookback(system, days=lookback_in_days)
+    history_lookback = system.config.get_and_mark_as_used(
+        ("market_data_config", "days")
+    )
+    system = dtfsys.apply_history_lookback(system, days=history_lookback)
     dag = dtfsys.add_real_time_data_source(system)
     return dag
 
@@ -131,8 +133,10 @@ def get_Mock1_RealtimeDag_example3(system: dtfsys.System) -> dtfcore.DAG:
     Build a DAG with `RealTimeDataSource` and `ForecastProcessorNode`.
     """
     # How much history is needed for the DAG to compute.
-    lookback_in_days = 7
-    system = dtfsys.apply_history_lookback(system, days=lookback_in_days)
+    history_lookback = system.config.get_and_mark_as_used(
+        ("market_data_config", "history_lookback")
+    )
+    system = dtfsys.apply_history_lookback(system, days=history_lookback)
     dag = dtfsys.add_real_time_data_source(system)
     # Configure a `ProcessForecastNode`.
     # TODO(gp): Factor out this idiom in a function `config_update()`.

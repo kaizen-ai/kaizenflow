@@ -78,7 +78,8 @@ class EventStudyBuilder(DagBuilder):
             returns a new DAG.
         """
         dag = DAG(mode=mode)
-        _LOG.debug("%s", config)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("%s", config)
         # Dummy node for grid data input.
         # - The dataframe with timestamps along a frequency should connect to
         #   this node

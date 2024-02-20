@@ -34,7 +34,8 @@ class _TestDataflowHelper(hunitest.TestCase):
         dir_name = self.get_scratch_space()
         file_name = os.path.join(dir_name, "graph.png")
         dtfcorvisu.draw_to_file(dag, file_name)
-        _LOG.debug("Saved plot to %s", file_name)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Saved plot to %s", file_name)
 
 
 # #############################################################################

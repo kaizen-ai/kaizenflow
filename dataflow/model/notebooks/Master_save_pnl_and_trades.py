@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.15.0
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -50,11 +50,13 @@ import os
 import pandas as pd
 
 import core.config as cconfig
+import core.finance.portfolio_df_processing as cfpdp
 import core.plotting as coplotti
 import dataflow.model as dtfmod
 import dataflow_amp.system.Cx as dtfamsysc
 import helpers.hdbg as hdbg
 import helpers.henv as henv
+import helpers.hio as hio
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import im_v2.common.universe as ivcu
@@ -83,12 +85,13 @@ asset_id_to_share_decimals
 
 # %%
 config = {
-    "dir_name": "/shared_data/model/historical/build_tile_configs.C5b.ccxt_v7_1-all.5T.2019-10-01_2023-07-02.ins.run0/tiled_results",
-    "start_date": datetime.date(2022, 7, 2),
-    "end_date": datetime.date(2023, 7, 2),
+    "dir_name": "/shared_data/model/historical/build_tile_configs.C5b.ccxt_v7_1-all.5T.2022-10-01_2023-10-18.ins.run0/tiled_results",
+    "start_date": datetime.date(2022, 10, 1),
+    "end_date": datetime.date(2023, 10, 18),
     "asset_id_col": "asset_id",
     "pnl_resampling_frequency": "D",
-    "save_data_dst_dir": "/shared_data/marketing/cmtask4688",
+    "universe_version": "v7.1",
+    "save_data_dst_dir": "/shared_data/marketing/cmtask6334",
     "annotate_forecasts_kwargs": {
         "burn_in_bars": 3,
         "style": "longitudinal",
@@ -195,7 +198,7 @@ coplotti.plot_portfolio_stats(
 # Check that the PnL is computed correctly by computing it in different ways
 # and comparing to the reference one.
 # Use the smallest correlation accross instruments to detect an error.
-dtfmod.cross_check_portfolio_pnl(portfolio_df).min()
+cfpdp.cross_check_portfolio_pnl(portfolio_df).min()
 
 # %% [markdown]
 # # Load the asset ids to full symbols mapping
@@ -204,7 +207,7 @@ dtfmod.cross_check_portfolio_pnl(portfolio_df).min()
 vendor = "CCXT"
 mode = "trade"
 full_symbols = ivcu.get_vendor_universe(
-    vendor, mode, version="v7.1", as_full_symbol=True
+    vendor, mode, version=config["universe_version"], as_full_symbol=True
 )
 asset_id_to_full_symbol = ivcu.build_numerical_to_string_id_mapping(full_symbols)
 asset_id_to_full_symbol
@@ -213,13 +216,17 @@ asset_id_to_full_symbol
 # # Sanity check PnL vs target positions
 
 # %%
-universe_version = "v7.1"
 vendor = "CCXT"
 mode = "trade"
 # Get asset ids.
-asset_ids = ivcu.get_vendor_universe_as_asset_ids(universe_version, vendor, mode)
+asset_ids = ivcu.get_vendor_universe_as_asset_ids(
+    config["universe_version"], vendor, mode
+)
 # Get prod `MarketData`.
-market_data = dtfamsysc.get_Cx_RealTimeMarketData_prod_instance1(asset_ids)
+db_stage = "preprod"
+market_data = dtfamsysc.get_Cx_RealTimeMarketData_prod_instance1(
+    asset_ids, db_stage
+)
 # Load and resample OHLCV data.
 start_timestamp = portfolio_df.index.min()
 end_timestamp = portfolio_df.index.max()
@@ -260,38 +267,38 @@ new_pnl.corrwith(portfolio_df["pnl"].loc["2022-01-08 19:05:00-05:00":])
 # %% [markdown]
 # # Save data
 
+# %%
+# Create directory to save analysis results.
+incremental = True
+hio.create_dir(config["save_data_dst_dir"], incremental)
+
+# %%
+idx_name = portfolio_df.index.name
+idx_name
+
 # %% [markdown]
 # ## Target holdings shares
 
 # %%
-idx_name = portfolio_df["holdings_shares"].index.name
-target_holdings_shares = (
-    portfolio_df["holdings_shares"].shift(-1).stack().reset_index()
-)
-# Map asset ids to fulls symbols.
-target_holdings_shares["full_symbol"] = target_holdings_shares["asset_id"].apply(
-    lambda x: asset_id_to_full_symbol[x]
-)
-# Rename the column.
-target_holdings_shares = target_holdings_shares.rename(
-    columns={0: "target_holdings_shares"}
-)
+# Get target holdings shares and prices.
+target_holdings_shares = portfolio_df[["holdings_shares"]].shift(-1)
+price = portfolio_df[["price"]]
+target_holdings_shares_df = pd.concat([target_holdings_shares, price], axis=1)
+# Map asset ids to full symbols.
+target_holdings_shares_df = target_holdings_shares_df.stack().reset_index()
+target_holdings_shares_df["full_symbol"] = target_holdings_shares_df[
+    "asset_id"
+].apply(lambda x: asset_id_to_full_symbol[x])
 # Keep only the relevant columns.
-target_holdings_shares = target_holdings_shares[
-    [idx_name, "full_symbol", "target_holdings_shares"]
+target_holdings_shares_df = target_holdings_shares_df.rename(
+    columns={"holdings_shares": "target_holdings_shares"}
+)
+target_holdings_shares_df = target_holdings_shares_df[
+    [idx_name, "full_symbol", "target_holdings_shares", "price"]
 ]
-_LOG.info("df.shape=%s", target_holdings_shares.shape)
-target_holdings_shares.tail(10)
-
-# %%
-if config["save_data"]:
-    target_holdings_shares_path = os.path.join(
-        config["save_data_dst_dir"], "target_holdings_shares.csv.gz"
-    )
-    target_holdings_shares.to_csv(target_holdings_shares_path, index=False)
-    tmp = pd.read_csv(target_holdings_shares_path)
-    _LOG.info("df.shape=%s", tmp.shape)
-    tmp.tail(10)
+#
+_LOG.info("df.shape=%s", target_holdings_shares_df.shape)
+target_holdings_shares_df.tail(10)
 
 # %% [markdown]
 # ## PnL
@@ -309,10 +316,63 @@ pnl_df = pnl_df[["end_ts", "full_symbol", "pnl"]]
 _LOG.info("df.shape=%s", pnl_df.shape)
 pnl_df.tail(10)
 
+# %% [markdown]
+# ## Compare research PnL with the PnL reconstructed from target holdings and prices
+
+# %%
+target_holdings_pivot = target_holdings_shares_df.pivot(
+    index="end_ts", columns="full_symbol"
+)
+target_holdings_pivot.tail(3)
+
+# %%
+pnl_pivot = pnl_df.pivot(index="end_ts", columns="full_symbol")
+pnl_pivot.tail(3)
+
+# %%
+# Recompute the PnL using `target_holdings_shares` and prices.
+reconstructed_pnl = (
+    target_holdings_pivot["target_holdings_shares"]
+    .shift(2)
+    .multiply(target_holdings_pivot["price"].diff())
+)
+reconstructed_pnl.tail(3)
+
+# %%
+# The correlation coefficient must be close to 1.
+pnl_pivot["pnl"].corrwith(reconstructed_pnl)
+
+# %% [markdown]
+# ## Save data to the disk
+
+# %%
+# TODO(Grisha): factor out the piece that saves a file.
+if config["save_data"]:
+    target_holdings_shares_path = os.path.join(
+        config["save_data_dst_dir"], "target_holdings_shares_and_prices.csv.gz"
+    )
+    target_holdings_shares_df.to_csv(target_holdings_shares_path, index=False)
+    tmp = pd.read_csv(target_holdings_shares_path)
+    _LOG.info("df.shape=%s", tmp.shape)
+    tmp.tail(10)
+
 # %%
 if config["save_data"]:
-    pnl_path = os.path.join(config["save_data_dst_dir"], "pnl.csv.gz")
-    pnl_df.to_csv(pnl_path, index=False)
+    # 1) Save the original PnL.
+    pnl_path = os.path.join(config["save_data_dst_dir"], "pnl.bar_by_bar.csv.gz")
+    pnl_pivot.stack().reset_index().to_csv(pnl_path, index=False)
     tmp = pd.read_csv(pnl_path)
+    _LOG.info("df.shape=%s", tmp.shape)
+    tmp.tail(10)
+    # 2) Save resampled PnL data.
+    pnl_resampled_path = os.path.join(
+        config["save_data_dst_dir"], "pnl.daily.csv.gz"
+    )
+    # Resample PnL to the specified frequency before saving.
+    # Summing is a decent approximation for going from intraday to daily returns.
+    resampled_pnl = pnl_pivot.resample(config["pnl_resampling_frequency"]).sum()
+    resampled_pnl = resampled_pnl.stack().reset_index()
+    resampled_pnl.to_csv(pnl_resampled_path, index=False)
+    tmp = pd.read_csv(pnl_resampled_path)
     _LOG.info("df.shape=%s", tmp.shape)
     tmp.tail(10)

@@ -16,7 +16,10 @@ from typing import Callable, List, Tuple, Union
 
 import pandas as pd
 
+import dataflow.core.dag_builder as dtfcodabui
 import helpers.hdbg as hdbg
+import helpers.hintrospection as hintros
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -330,3 +333,26 @@ def get_DagBuilder_name_from_string(dag_builder_ctor_as_str: str) -> str:
     )
     dag_builder_name = dag_builder_name_match[0]
     return dag_builder_name
+
+
+def get_DagBuilder_from_string(
+    dag_builder_ctor_as_str: str, *dag_builder_args, **dag_builder_kwargs
+) -> dtfcodabui.DagBuilder:
+    """
+    Get a `DagBuilder` object from a string pointer to a ctor.
+
+    :param dag_builder_ctor_as_str: same as in `Cx_NonTime_ForecastSystem`
+    :param dag_builder_args: same as in `Cx_NonTime_ForecastSystem`
+    :param dag_builder_kwargs: same as in `Cx_NonTime_ForecastSystem`
+    """
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(
+            hprint.to_str(
+                "dag_builder_ctor_as_str dag_builder_args dag_builder_kwargs"
+            )
+        )
+    dag_builder_func = hintros.get_function_from_string(dag_builder_ctor_as_str)
+    hdbg.dassert_callable(dag_builder_func)
+    dag_builder = dag_builder_func(*dag_builder_args, **dag_builder_kwargs)
+    hdbg.dassert_isinstance(dag_builder, dtfcodabui.DagBuilder)
+    return dag_builder

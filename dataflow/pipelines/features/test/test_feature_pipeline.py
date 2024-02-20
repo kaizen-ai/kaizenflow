@@ -3,6 +3,7 @@ import logging
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.pipelines.features.pipeline as dtfpifepip
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -21,7 +22,8 @@ class TestFeaturePipeline(hunitest.TestCase):
         # Note: by default the `update_mode` does not allow overwrites,
         # but they are required by the FeaturePipeline.
         config.update_mode = "overwrite"
-        _LOG.debug("config from dag_builder=%s", config)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("config from dag_builder=%s", config)
         # Initialize config.
         config["load_data"] = cconfig.Config.from_dict(
             {
@@ -61,13 +63,14 @@ class TestFeaturePipeline(hunitest.TestCase):
             }
         )
         #
-        _LOG.debug("config after patching=%s", config)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("config after patching=%s", config)
         dag = dag_builder.get_dag(config)
         # Initialize DAG runner.
         dag_runner = dtfcore.FitPredictDagRunner(dag)
         result_bundle = dag_runner.fit()
         df_out = result_bundle.result_df
-        df_str = hunitest.convert_df_to_string(
-            df_out.round(3).dropna(), index=True, decimals=3
+        df_str = hpandas.df_to_str(
+            df_out.round(3).dropna(), num_rows=None, precision=3
         )
         self.check_string(df_str)

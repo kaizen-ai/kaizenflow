@@ -57,6 +57,7 @@ def listdir(
     use_relative_paths: bool,
     *,
     exclude_git_dirs: bool = True,
+    maxdepth: Optional[int] = None,
 ) -> List[str]:
     """
     Find all files and subdirectories under `directory` that match `pattern`.
@@ -66,9 +67,12 @@ def listdir(
     :param only_files: look for only files instead of both files and directories
     :param use_relative_paths: remove `dir_name` from path
     :param exclude_git_dirs: skip `.git` dirs
+    :param maxdepth: limit the depth of directory traversal
     """
     hdbg.dassert_dir_exists(dir_name)
     cmd = [f"find {dir_name}", f'-name "{pattern}"']
+    if maxdepth is not None:
+        cmd.append(f'-maxdepth "{maxdepth}"')
     if only_files:
         cmd.append("-type f")
     if exclude_git_dirs:
@@ -240,19 +244,18 @@ def create_dir(
     """
     Create a directory.
 
-    :param incremental: if False then the directory is deleted and
-        re-created, otherwise the same directory is reused as it is
+    :param incremental: if False then the directory is deleted and re-
+        created, otherwise the same directory is reused as it is
     :param abort_if_exists: abort if the target directory already exists
     :param ask_to_delete: if it is not incremental and the dir exists,
-        asks before deleting.
-        This option is used when we want to start with a clean dir
-        (i.e., incremental=False) but, at the same time, we want to
-        make sure that the user doesn't want to delete the content of the dir.
-        Another approach is to automatically rename
-        the old dir with backup_dir_if_exists.
-    :param backup_dir_if_exists: if the target dir already exists,
-        then rename it using a timestamp (e.g., dir_20231003_080000)
-        and create a new target dir
+        asks before deleting. This option is used when we want to start
+        with a clean dir (i.e., incremental=False) but, at the same
+        time, we want to make sure that the user doesn't want to delete
+        the content of the dir. Another approach is to automatically
+        rename the old dir with backup_dir_if_exists.
+    :param backup_dir_if_exists: if the target dir already exists, then
+        rename it using a timestamp (e.g., dir_20231003_080000) and
+        create a new target dir
     """
     if backup_dir_if_exists:
         if not os.path.exists(dir_name):
@@ -576,8 +579,10 @@ def add_suffix_to_filename(
 
     :param file_name: file name to modify
     :param suffix: index to add to the file name
-    :param before_extension: whether to insert the index before the file extension
-    :param with_underscore: whether to separate the index with an underscore
+    :param before_extension: whether to insert the index before the file
+        extension
+    :param with_underscore: whether to separate the index with an
+        underscore
     :return: modified file name with an index
     """
     suffix = str(suffix)

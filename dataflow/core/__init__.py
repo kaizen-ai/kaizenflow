@@ -8,6 +8,7 @@ from dataflow.core.dag import *  # pylint: disable=unused-import # NOQA
 from dataflow.core.dag_builder import *  # pylint: disable=unused-import # NOQA
 from dataflow.core.dag_builder_example import *  # pylint: disable=unused-import # NOQA
 from dataflow.core.dag_runner import *  # pylint: disable=unused-import # NOQA
+from dataflow.core.dag_statistics import *  # pylint: disable=unused-import # NOQA
 from dataflow.core.node import *  # pylint: disable=unused-import # NOQA
 from dataflow.core.nodes.base import *  # pylint: disable=unused-import # NOQA
 from dataflow.core.nodes.local_level_model import *  # pylint: disable=unused-import # NOQA

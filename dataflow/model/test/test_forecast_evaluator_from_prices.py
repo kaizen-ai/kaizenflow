@@ -129,7 +129,8 @@ class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
             pd.Timestamp("2022-01-03 10:00:00", tz="America/New_York"),
             asset_ids=[101],
         )
-        _LOG.debug("data=\n%s", data)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("data=\n%s", data)
         forecast_evaluator = dtfmfefrpr.ForecastEvaluatorFromPrices(
             price_col="price",
             volatility_col="volatility",
@@ -361,7 +362,8 @@ class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
             pd.Timestamp("2022-01-03 10:00:00", tz="America/New_York"),
             asset_ids=[101, 201, 301],
         )
-        _LOG.debug("data=\n%s", data)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("data=\n%s", data)
         forecast_evaluator = dtfmfefrpr.ForecastEvaluatorFromPrices(
             price_col="price",
             volatility_col="volatility",

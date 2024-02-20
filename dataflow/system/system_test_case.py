@@ -12,6 +12,7 @@ import os
 from typing import Any, Coroutine, List, Optional, Tuple
 
 import pandas as pd
+import pytest
 
 import dataflow.core as dtfcore
 import dataflow.system.system as dtfsyssyst
@@ -141,11 +142,8 @@ def get_test_file_path(self_: Any) -> str:
     """
     Get path to a file with market data; use in unit tests.
     """
-    aws_profile = "ck"
     use_only_test_class = True
-    dst_dir = self_.get_s3_input_dir(
-        aws_profile, use_only_test_class=use_only_test_class
-    )
+    dst_dir = self_.get_s3_input_dir(use_only_test_class=use_only_test_class)
     # TODO(Grisha): consider exposing if needed.
     file_name = "test_data.csv.gz"
     file_path = os.path.join(dst_dir, file_name)
@@ -298,10 +296,10 @@ class NonTime_ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         Check that `predict()` matches `fit()` on the same data, when the model
         is frozen.
 
-        :param n_last_rows_to_burn: the number of rows to remove from the fit and
-            predict results. When a model is fitting it cannot compute a
-            N-steps-ahead target but when a model has been already fit it can
-            compute it
+        :param n_last_rows_to_burn: the number of rows to remove from
+            the fit and predict results. When a model is fitting it
+            cannot compute a N-steps-ahead target but when a model has
+            been already fit it can compute it
         """
         use_unit_test_log_dir = True
         # Fit.
@@ -463,12 +461,13 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         """
         Run a System with a DataframePortfolio.
         """
-        _LOG.debug(
-            hprint.to_str(
-                "trading_end_time liquidate_at_trading_end_time "
-                "add_system_config add_run_signature"
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                hprint.to_str(
+                    "trading_end_time liquidate_at_trading_end_time "
+                    "add_system_config add_run_signature"
+                )
             )
-        )
         # Set `trading_end_time`.
         if trading_end_time is not None:
             system.config[
@@ -504,7 +503,10 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             portfolio = system.portfolio
             has_no_holdings = portfolio.has_no_holdings()
             last_portfolio_timestamp = portfolio.get_last_timestamp()
-            _LOG.debug(hprint.to_str("last_portfolio_timestamp has_no_holdings"))
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    hprint.to_str("last_portfolio_timestamp has_no_holdings")
+                )
             self.assertLess(trading_end_time, last_portfolio_timestamp.time())
             self.assertTrue(has_no_holdings)
         return actual
@@ -569,12 +571,19 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
         self.reset()
 
-    def tearDown(self) -> None:
-        super().tearDown()
+    def tear_down_test(self) -> None:
         self.reset()
 
     # TODO(gp): -> run_system
@@ -651,12 +660,19 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         result_bundle.result_df = result_bundle_df
         return result_bundle
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
         self.reset()
 
-    def tearDown(self) -> None:
-        super().tearDown()
+    def tear_down_test(self) -> None:
         self.reset()
 
     @abc.abstractmethod
@@ -680,7 +696,7 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         txt.append(hprint.frame(col))
         result_df = result_bundle.result_df
         data = result_df[col].dropna(how="all").round(3)
-        data_str = hunitest.convert_df_to_string(data, index=True, decimals=3)
+        data_str = hpandas.df_to_str(data, num_rows=None, precision=3)
         txt.append(data_str)
         #
         res = "\n".join(txt)
@@ -744,10 +760,10 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         The problem is that run time period is set differently for the Systems:
             - `NonTime_ForecastSystem`: using backtest_config,
                 e.g., `ccxt_v7-all.5T.2022-01-01_2022-02-01`
-            - `Time_ForecastSystem`: using `rt_timeout_in_secs_or_time`, 
-                e.g., run start time is `19:00` and `rt_timeout_in_secs_or_time` 
-                (for how long to run the System) is 900 seconds (15 minutes) -> 
-                run stop time is `19:15`.
+            - `Time_ForecastSystem`: using `rt_timeout_in_secs_or_time`,
+                e.g., run start time is `19:00` and `rt_timeout_in_secs_or_time`
+                (for how long to run the System) is 900 seconds (15 minutes) ->
+                run stop time is `19:15`
 
         For the reconciliation tests the System run period must be the same for
         both Systems. Given 2 ways of specifying the run period it is easy to
@@ -930,10 +946,12 @@ class Test_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfolio_Te
             # We create new series because the portfolio times may be
             # disaligned from the research bar times.
             pnl1 = pd.Series(pnl.tail(tail).values)
-            _LOG.debug("portfolio pnl=\n%s", pnl1)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("portfolio pnl=\n%s", pnl1)
             corr_samples = min(tail, pnl1.size)
             pnl2 = pd.Series(research_pnl.tail(corr_samples).values)
-            _LOG.debug("research pnl=\n%s", pnl2)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("research pnl=\n%s", pnl2)
             correlation = pnl1.corr(pnl2)
             actual.append("\n# pnl agreement with research pnl\n")
             actual.append(f"corr = {correlation:.3f}")

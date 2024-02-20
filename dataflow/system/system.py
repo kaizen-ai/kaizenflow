@@ -6,8 +6,9 @@ import dataflow.system.system as dtfsyssyst
 
 import abc
 import logging
-import os
 from typing import Any, Callable, Coroutine
+
+import pandas as pd
 
 import core.config as cconfig
 import dataflow.core as dtfcore
@@ -15,6 +16,7 @@ import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hio as hio
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import market_data as mdata
 import oms as oms
@@ -22,147 +24,41 @@ import oms as oms
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): NonTime -> Batch
+# TODO(gp): Time -> Streaming
+
 # #############################################################################
 # System
 # #############################################################################
 
-# The goal of a `System` class is to:
-# - create a system config describing the entire system, including the DAG
-#   config
-# - expose methods to build the various needed objects, e.g.,
-#   - `DagRunner`
-#   - `Portfolio`
 
-# A `System` is the analogue of `DagBuilder` but for a system
-# - They both have functions to:
-#   - create configs (e.g., `get_template_config()` vs
-#     `get_system_config_template()`)
-#   - create objects (e.g., `get_dag()` vs `get_dag_runner()`)
-
-# The lifecycle of `System` is like:
-#     ```
-#     # Instantiate a System.
-#     system = XYZ_ForecastSystem()
-#     # Get the template config.
-#     system_config = system.get_system_config_template()
-#     # Apply all the changes to the `system_config` to customize the config.
-#     system.config[...] = ...
-#     ...
-#     # Once the system config is complete, build the system.
-#     dag_runner = system.dag_runner
-#     # Run the system.
-#     dag_runner.set_fit_intervals(...)
-#     dag_runner.fit()
-#     ```
-
-# Invariants:
-# - `system_config` should contain all the information needed to build and run
-#   a `System`, like a `dag_config` contains all the information to build a `DAG`
-# - It's ok to save in the config temporary information (e.g., `dag_builder`)
-# - We could add `abc.ABC` to the abstract class definition or not, instead of
-#   relying on inspecting the methods
-#   - No decision yet
-# - We can use stricter or looser types in the interface (e.g.,
-#   `DatabasePortfolio` vs `Portfolio`)
-#   - We prefer the stricter types unless linter gets upset
-
-# A SystemConfig has multiple parts, conceptually one for each piece of the system
-#
-# * Invariants:
-# - objects have the `_object` suffix
-# - the parameters used to build objects have suffix `_config` and should be
-#   `Config`
-
-# * Fields:
-#   - dag_config
-#     - """information to build the DAG"""
-#     - Invariant: one key per DAG node
-#     - It is created through `dag_builder.get_config_template()` and updated
-#   - dag_property_config
-#     - """information about methods to be called on the DAG"""
-#     - debug_mode_config
-#     - save_node_io
-#     - profile_execution
-#     - dst_dir
-#     - force_free_nodes
-#
-#   - dag_builder_object
-#   - dag_builder_config
-#     - """information about methods to be called on the DagBuilder"""
-#     - fast_prod_setup
-#
-#   - market_data_object
-#   - market_data_config
-#     - asset_ids
-#     - replayed_delay_in_mins_or_timestamp
-#
-#   - portfolio_object
-#     - ...
-#     ...
-#
-#   - forecast_node
-#     - ...
-#
-#   - dag_runner_object
-#     - rt_timeout_in_secs_or_time
-#
-#   - backtest_config
-#     - """information about back testing"""
-#     - universe_str
-#     - trading_period_str
-#     - time_interval_str
-#
-#   - cf_config
-
-# Inheritance style conventions:
-# - Each class derives only from interfaces (i.e., classes that have all methods
-#   abstract)
-# - We don't want to use inheritance to share code but we want to explicitly call
-#   shared code
-#   - Related classes need to specify each abstract method of the base class calling
-#     implementations of the methods explicitly, passing `self`, if needed
-#   - This makes the code easier to "resolve" for humans since everything is explicit
-#     and doesn't rely on the class hierarchy
-# - If only one object needs a function we are ok with inlining
-#   - As soon as multiple objects need the same code we don't copy-paste or use
-#     inheritance, but refactor the common code into a function and call it from
-#     everywhere
-
-
-# Scattered thoughts:
-# Why can't DagBuilder only appear inside of `_get_dag()`?
-# - Can we get rid of system_config["dag_builder_object"] and its config?
-#   - Claim: we need info from the DagBuilder to tell MarketData how much data to load
-# => if market data needs to know about the dag builder, then either we should pass
-#    one object to the other (e.g., method in DagBuilder to add a node with market data)
-#    or DagBuilder should be a core concept in System
-# Maybe the key objects for a system are:
-#  - market data
-#  - dag builder
-#     - dag builder should support methods for adding a market data
-#     - dag builder should also have a parameter for the type of data source node
-#  - dag runner
-
-
+# TODO(gp): This should be called a TradingSystem?
+# TODO(gp): A bit confusing since this is a builder, but it's also a system.
 class System(abc.ABC):
     """
-    The simplest possible DataFlow-based system, including:
+    A `System` contains various components, such as:
 
-    - system config
-    - `DagRunner`
-
-    A `System` is a DAG that contains various components, such as:
     - a `MarketData`
-    - a Forecast pipeline (which is often improperly referred to as DAG)
+    - a Forecast pipeline (which is often referred to as a `DAG`)
     - a `Portfolio`
     - a `Broker`
     ...
+
+    This abstract class:
+    - is actually a builder object
+    - implements the simplest possible DataFlow-based system, which includes
+      only a `DagRunner`
+      - The `DagRunner` is accessed through `dag_runner()
+    - contains the logic to instantiate and cache the objects
+    - contains the logic to handle a `SystemConfig`
+      - E.g., `config()`, `set_config()`, `
     """
 
     def __init__(self) -> None:
         self._config = self._get_system_config_template()
         self._config["system_class"] = self.__class__.__name__
-        _LOG.debug("system_config=\n%s", self._config)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("system_config=\n%s", self._config)
         # Default log dir.
         self._config["system_log_dir"] = "./system_log_dir"
 
@@ -196,9 +92,13 @@ class System(abc.ABC):
     def dag_runner(
         self,
     ) -> dtfcore.DagRunner:
+        """
+        Materialize the DagRunner and return it.
+        """
         key = "dag_runner_object"
         if key in self.config:
-            _LOG.debug("Using cached object for '%s'", key)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("Using cached object for '%s'", key)
             dag_runner = self.config[key]
             return dag_runner
         _LOG.info(
@@ -211,7 +111,8 @@ class System(abc.ABC):
         )
         #
         log_dir = self.config["system_log_dir"]
-        hio.create_dir(log_dir, incremental=False)
+        # TODO(Grisha): pass `backup_dir_if_exists` via system.config.
+        hio.create_dir(log_dir, incremental=False, backup_dir_if_exists=True)
         #
         tag = "system_config.input"
         self.config.save_to_file(log_dir, tag)
@@ -239,6 +140,10 @@ class System(abc.ABC):
         self.config.save_to_file(log_dir, tag)
         return dag_runner
 
+    # /////////////////////////////////////////////////////////////////////////
+    # Private methods.
+    # /////////////////////////////////////////////////////////////////////////
+
     @abc.abstractmethod
     def _get_system_config_template(
         self,
@@ -251,7 +156,8 @@ class System(abc.ABC):
         """
         ...
 
-    # TODO(gp): Now a DagRunner runs a System which is a little weird, but maybe ok.
+    # TODO(gp): Now a DagRunner runs a System which is a little weird, but maybe
+    #  ok.
     @abc.abstractmethod
     def _get_dag_runner(
         self,
@@ -277,16 +183,19 @@ class System(abc.ABC):
         Retrieve the object corresponding to `key` if already built, or call
         `builder_func` to build and cache it.
         """
-        _LOG.debug("")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("")
         if key in self.config:
-            _LOG.debug("Using cached object for '%s'", key)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("Using cached object for '%s'", key)
             obj = self.config[key]
         else:
-            _LOG.debug(
-                "No cached object for '%s': calling %s()",
-                key,
-                builder_func.__name__,
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "No cached object for '%s': calling %s()",
+                    key,
+                    builder_func.__name__,
+                )
             obj = builder_func()
             # Build the object.
             hdbg.dassert_not_in(key, self.config)
@@ -301,7 +210,8 @@ class System(abc.ABC):
             key_tmp = ("object.builder_function", key)
             hdbg.dassert_not_in(key_tmp, self.config)
             self.config[key_tmp] = hintros.get_name_from_function(builder_func)
-        _LOG.debug("Object for %s=\n%s", key, obj)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Object for %s=\n%s", key, obj)
         return obj
 
 
@@ -340,6 +250,10 @@ class ForecastSystem(System, abc.ABC):
         dag: dtfcore.DAG = self._get_cached_value("dag_object", self._get_dag)
         return dag
 
+    # /////////////////////////////////////////////////////////////////////////
+    # Private methods.
+    # /////////////////////////////////////////////////////////////////////////
+
     @abc.abstractmethod
     def _get_market_data(
         self,
@@ -357,12 +271,96 @@ class ForecastSystem(System, abc.ABC):
 
 
 # #############################################################################
+# Df_ForecastSystem
+# #############################################################################
+
+
+class Df_ForecastSystem(System, abc.ABC):
+    """
+    A System producing forecasts and comprised of:
+
+    - an input data represented by a df
+    - a Forecast DAG
+
+    The forecasts can then be processed in terms of a PnL through a notebook or
+    other data pipelines.
+    """
+
+    def __init__(self, df: pd.DataFrame) -> None:
+        self._df = df
+        self._validate_input_df()
+        super().__init__()
+
+    @property
+    def df(
+        self,
+    ) -> pd.DataFrame:
+        df: pd.DataFrame = self._get_cached_value("df", self._get_df)
+        return df
+
+    @property
+    def dag(
+        self,
+    ) -> dtfcore.DAG:
+        dag: dtfcore.DAG = self._get_cached_value("dag_object", self._get_dag)
+        return dag
+
+    # /////////////////////////////////////////////////////////////////////////
+    # Private methods.
+    # /////////////////////////////////////////////////////////////////////////
+
+    @abc.abstractmethod
+    def _get_dag(
+        self,
+    ) -> dtfcore.DAG:
+        """
+        Given a completely filled `system_config` build and return the DAG.
+        """
+        ...
+
+    @abc.abstractmethod
+    def _get_df(
+        self,
+    ) -> pd.DataFrame:
+        ...
+
+    # TODO(Grisha): could belong to a more general lib in `dataflow`, e.g.,
+    #  `def dassert_df_is_in_dataflow_format()`.
+    def _validate_input_df(self) -> None:
+        """
+        Validate that input df has correct format.
+
+        Check that input df:
+        - is a DataFrame
+        - is not empty
+        - has MultiIndex columns
+        - has 2 levels of columns
+        - has increasing timestamp index
+        """
+        hdbg.dassert_isinstance(self._df, pd.DataFrame)
+        hdbg.dassert(not self._df.empty)
+        hdbg.dassert_isinstance(self._df.columns, pd.MultiIndex)
+        hdbg.dassert_eq(len(self._df.columns.levels), 2)
+        hpandas.dassert_increasing_index(self._df)
+
+
+# #############################################################################
 # NonTime_ForecastSystem
 # #############################################################################
 
 
+# TODO(gp): Are these types needed?
 class NonTime_ForecastSystem(ForecastSystem, abc.ABC):
-    pass
+    """
+    This is just a convenience type.
+    """
+
+
+# TODO(Grisha): -> `NonTime_ForecastSystem_with_Df`?
+class NonTime_Df_ForecastSystem(Df_ForecastSystem, abc.ABC):
+    """
+    This is just a convenience type.
+    """
 
 
 # #############################################################################
@@ -421,6 +419,10 @@ class _ForecastSystem_with_Portfolio(ForecastSystem, abc.ABC):
             "portfolio_object", self._get_portfolio
         )
         return portfolio
+
+    # /////////////////////////////////////////////////////////////////////////
+    # Private methods.
+    # /////////////////////////////////////////////////////////////////////////
 
     @abc.abstractmethod
     def _get_portfolio(
@@ -561,9 +563,9 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     The System has an event loop that is not `None`.
 
     A system with a `DatabaseBroker` and `OrderProcessor` cannot have a
-    `DataFramePortfolio` because a df cannot be updated by an external coroutine such
-    as the `OrderProcessor`.
-    In practice we use a `DataFramePortfolio` and a `DataFrameBroker` only to
+    `DataFramePortfolio` because a df cannot be updated by an external coroutine
+    such as the `OrderProcessor`.
+    In practice, we use a `DataFramePortfolio` and a `DataFrameBroker` only to
     simulate faster by skipping the interaction with the market through the DB
     interfaces of an OMS system.
     """
@@ -601,6 +603,10 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         )
         hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
         return order_processor_coroutine
+
+    # /////////////////////////////////////////////////////////////////////////
+    # Private methods.
+    # /////////////////////////////////////////////////////////////////////////
 
     @abc.abstractmethod
     def _get_order_processor(self) -> Coroutine:

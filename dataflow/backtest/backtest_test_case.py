@@ -1,5 +1,5 @@
 """
-Run a backtest for a DAG model.
+Code to run a backtest for a Dag and checks its result.
 
 Import as:
 
@@ -12,7 +12,9 @@ import os
 from typing import Any
 
 import core.config as cconfig
+import dataflow.backtest.backtest_api as dtfbabaapi
 import dataflow.model as dtfmod
+import dataflow.system as dtfsys
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hpandas as hpandas
@@ -30,7 +32,7 @@ _LOG = logging.getLogger(__name__)
 
 class Backtest_TestCase(abc.ABC, hunitest.TestCase):
     """
-    Run a backtest for a Dag and checking its result.
+    Run a backtest for a Dag and checks its result.
     """
 
     @staticmethod
@@ -237,4 +239,51 @@ class TiledBacktest_TestCase(Backtest_TestCase):
         tag = "tile_output_signature"
         self.check_string(
             tile_output_signature, fuzzy_match=True, purify_text=True, tag=tag
+        )
+
+    def _run_backtest(self, system: dtfsys.System) -> None:
+        """
+        Run backtest for a given system.
+
+        :param system: the system to run backtest on
+        """
+        # Set dir params.
+        dst_dir = self.get_scratch_space()
+        dst_dir_tag = "run0"
+        clean_dst_dir = True
+        no_confirm = True
+        # Set config params.
+        index = None
+        start_from_index = None
+        config_update = None
+        # Set execution params.
+        abort_on_error = True
+        num_threads = "serial"
+        num_attempts = 1
+        dry_run = False
+        log_level = logging.DEBUG
+        # Set logger.
+        hdbg.init_logger(
+            verbosity=log_level,
+            use_exec_path=True,
+            # report_memory_usage=True,
+        )
+        # Run backtest.
+        dtfbabaapi.run_backtest(
+            # Model params.
+            system,
+            config_update,
+            # Dir params.
+            dst_dir,
+            dst_dir_tag,
+            clean_dst_dir,
+            no_confirm,
+            # Config params.
+            index,
+            start_from_index,
+            # Execution params.
+            abort_on_error,
+            num_threads,
+            num_attempts,
+            dry_run,
         )
