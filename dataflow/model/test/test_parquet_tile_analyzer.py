@@ -44,14 +44,14 @@ class TestParquetTileAnalyzer(hunitest.TestCase):
         expected = r"""
                     file_size
 asset_id year month
-100      2022 1        8.9 KB
-              2        8.0 KB
-200      2022 1        8.9 KB
-              2        8.0 KB
-300      2022 1        8.9 KB
-              2        8.0 KB
-400      2022 1        8.9 KB
-              2        8.0 KB
+100      2022 1        9.1 KB
+              2        8.2 KB
+200      2022 1        9.1 KB
+              2        8.2 KB
+300      2022 1        9.1 KB
+              2        8.2 KB
+400      2022 1        9.1 KB
+              2        8.2 KB
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
@@ -63,12 +63,12 @@ asset_id year month
         metadata_stats = pta.compute_metadata_stats_by_asset_id(metadata)
         actual = hpandas.df_to_str(metadata_stats, num_rows=None, precision=3)
         expected = r"""
-          n_years  n_unique_months  n_files     size
+        n_years n_unique_months n_files    size
 asset_id
-100             1                2        2  16.9 KB
-200             1                2        2  16.9 KB
-300             1                2        2  16.9 KB
-400             1                2        2  16.9 KB"""
+100     1       2               2       17.3 KB
+200     1       2               2       17.3 KB
+300     1       2               2       17.3 KB
+400     1       2               2       17.3 KB"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_compute_universe_size_by_time(self) -> None:
@@ -81,6 +81,6 @@ asset_id
         expected = r"""
             n_asset_ids     size
 year month
-2022 1                4  35.6 KB
-     2                4  32.1 KB"""
+2022 1                4  36.5 KB
+     2                4  32.9 KB"""
         self.assert_equal(actual, expected, fuzzy_match=True)
