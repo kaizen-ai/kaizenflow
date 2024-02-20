@@ -3,6 +3,7 @@ import logging
 import pytest
 
 import dataflow.backtest as dtfmrpmofl
+import dataflow_amp.system.mock1.mock1_forecast_system_example as dtfasmmfsex
 
 _LOG = logging.getLogger(__name__)
 
@@ -38,3 +39,19 @@ class Test_Mock1_NonTime_ForecastSystem_TiledBacktest(
         run_model_extra_opts = ""
         #
         self._test(config_builder, experiment_builder, run_model_extra_opts)
+
+    @pytest.mark.slow("~6 seconds.")
+    def test_mock1_backtest(self) -> None:
+        """
+        Smoke test mock1 model backtest run.
+        """
+        # Set model params.
+        backtest_config = "mock1_v1-top2.5T.2000-01-01_2000-02-01"
+        # Create model.
+        system = (
+            dtfasmmfsex.get_Mock1_NonTime_ForecastSystem_for_simulation_example1(
+                backtest_config=backtest_config
+            )
+        )
+        # Run.
+        self._run_backtest(system)

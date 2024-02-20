@@ -142,7 +142,7 @@ class DataFrameModeler:
         method: cdataf.Method = "fit",
     ) -> DataFrameModeler:
         """
-        Applies dataflow node to dataframe.
+        Apply dataflow node to dataframe.
 
         :param node_class: a dataflow `FitPredictNode`
         :param node_kwargs: kwargs for node initialization

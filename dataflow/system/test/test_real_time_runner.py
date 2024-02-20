@@ -69,9 +69,10 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
             tz="ET", event_loop=event_loop
         )
         bar_duration_in_secs = 1
-        creatime.align_on_time_grid(
-            get_wall_clock_time, bar_duration_in_secs, event_loop=event_loop
+        coroutine = creatime.align_on_time_grid(
+            get_wall_clock_time, bar_duration_in_secs
         )
+        hasynci.run(coroutine, event_loop=event_loop, close_event_loop=False)
         dag_runner_kwargs = {
             "dag": dag,
             "fit_state": None,
@@ -87,8 +88,9 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
         result_bundles = hasynci.run(dag_runner.predict(), event_loop=event_loop)
         events = dag_runner.events
         #
-        _LOG.debug("events=\n%s", events)
-        _LOG.debug("result_bundles=\n%s", result_bundles)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("events=\n%s", events)
+            _LOG.debug("result_bundles=\n%s", result_bundles)
         return events, result_bundles
 
     # TODO(gp): Centralize this.

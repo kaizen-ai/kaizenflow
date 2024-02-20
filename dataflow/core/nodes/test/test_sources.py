@@ -5,6 +5,7 @@ from typing import Any, Optional
 import pandas as pd
 
 import dataflow.core.nodes.sources as dtfconosou
+import helpers.hpandas as hpandas  # pylint: disable=no-name-in-module
 import helpers.hunit_test as hunitest  # pylint: disable=no-name-in-module
 
 _LOG = logging.getLogger(__name__)
@@ -152,7 +153,7 @@ class TestArmaDataSource(hunitest.TestCase):
             seed=0,
         )
         df = node.fit()["df_out"]
-        act = hunitest.convert_df_to_string(df, index=True, decimals=2)
+        act = hpandas.df_to_str(df, num_rows=None, precision=2)
         self.check_string(act)
 
 
@@ -173,5 +174,5 @@ class TestMultivariateNormalDataSource(hunitest.TestCase):
             )
         )
         df = node.fit()["df_out"]
-        act = hunitest.convert_df_to_string(df, index=True, decimals=2)
+        act = hpandas.df_to_str(df, num_rows=None, precision=2)
         self.check_string(act)

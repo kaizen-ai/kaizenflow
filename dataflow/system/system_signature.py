@@ -61,7 +61,10 @@ def get_signature(
     txt.append(hprint.frame(col))
     result_df = result_bundle.result_df
     data = result_df[col].dropna(how="all").round(3)
-    data_str = hunitest.convert_df_to_string(data, index=True, decimals=3)
+    # TODO(Grisha): We should use `hpandas.df_to_str(num_rows=None)` but it displays only
+    # `df.head(5)` and `df.tail(5)` while in the System tests we want to freeze the whole
+    # df. Adjust `hpandas.df_to_str()` accordingly and use it here.
+    data_str = data.round(3).to_string()
     txt.append(data_str)
     #
     res = "\n".join(txt)
@@ -175,7 +178,8 @@ def get_portfolio_signature(
     # 2) Portfolio historical statistics.
     statistics = portfolio.get_historical_statistics(num_periods=num_periods)
     pnl = statistics["pnl"]
-    _LOG.debug("pnl=\n%s", pnl)
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("pnl=\n%s", pnl)
     return actual, pnl
 
 
@@ -219,11 +223,13 @@ def compute_run_signature(
         # We create new series because the portfolio times may be
         # dis-aligned from the research bar times.
         pnl1 = pd.Series(pnl.tail(tail).values)
-        _LOG.debug("portfolio pnl=\n%s", pnl1)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("portfolio pnl=\n%s", pnl1)
         #
         corr_samples = min(tail, pnl1.size)
         pnl2 = pd.Series(research_pnl.tail(corr_samples).values)
-        _LOG.debug("research pnl=\n%s", pnl2)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("research pnl=\n%s", pnl2)
         #
         correlation = pnl1.corr(pnl2)
         actual.append("\n# pnl agreement with research pnl\n")
@@ -252,14 +258,16 @@ def get_research_pnl_signature(
         **forecast_evaluator_from_prices_dict["init"],
     )
     result_df = result_bundle.result_df
-    _LOG.debug("result_df=\n%s", hpandas.df_to_str(result_df))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("result_df=\n%s", hpandas.df_to_str(result_df))
     # 1) Get the signature of the ForecastEvaluator.
     signature = forecast_evaluator.to_str(
         result_df,
         style=forecast_evaluator_from_prices_dict["style"],
         **forecast_evaluator_from_prices_dict["kwargs"],
     )
-    _LOG.debug("signature=\n%s", signature)
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("signature=\n%s", signature)
     actual.append(signature)
     # 2) Get the portfolio.
     dfs = forecast_evaluator.compute_portfolio(
@@ -306,8 +314,8 @@ def check_SystemConfig(self: Any, system: dtfsyssyst.System, tag: str) -> None:
     """
     Check the signature of a System config against a golden reference.
 
-    :param tag: it is used to distinguish multiple configs (e.g., when a test
-        builds multiple Systems and we want to freeze all of them)
+    :param tag: it is used to distinguish multiple configs (e.g., when a
+        test builds multiple Systems and we want to freeze all of them)
     """
     # Ensure that the System was built and thus the config is stable.
     hdbg.dassert(system.is_fully_built)

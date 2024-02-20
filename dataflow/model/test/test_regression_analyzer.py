@@ -28,7 +28,9 @@ class TestRegressionAnalyzer1(hunitest.TestCase):
         )
         stats = ["beta_z_scored", "p_val_2s"]
         moments = regression_analyzer.compute_moments(coefficients, stats)
-        actual = hpandas.df_to_str(moments.round(3), num_rows=None, precision=3)
+        actual = hpandas.df_to_str(
+            moments.round(3), handle_signed_zeros=True, num_rows=None, precision=3
+        )
         expected = r"""
               beta_z_scored                      p_val_2s
            mean    std skew kurtosis     mean    std skew kurtosis

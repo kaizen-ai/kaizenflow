@@ -23,7 +23,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# statsmodels - SARIMAX
+# ContinuousSarimaxModel
 # #############################################################################
 
 
@@ -193,6 +193,8 @@ class ContinuousSarimaxModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin)
         self._set_info("predict", info)
         return {"df_out": df_out}
 
+    # ///////////////////////////////////////////////////////////////////////////
+
     def _predict(
         self, y: pd.DataFrame, x: Optional[pd.DataFrame]
     ) -> pd.DataFrame:
@@ -280,6 +282,11 @@ class ContinuousSarimaxModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin)
             pass
         else:
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
+
+
+# #############################################################################
+# MultihorizonReturnsPredictionProcessor
+# #############################################################################
 
 
 class MultihorizonReturnsPredictionProcessor(dtfconobas.FitPredictNode):
@@ -378,6 +385,9 @@ class MultihorizonReturnsPredictionProcessor(dtfconobas.FitPredictNode):
         cum_rets = pd.concat(cum_rets, axis=1)
         fwd_cum_ret = cum_rets.shift(-self._max_steps_ahead)
         return fwd_cum_ret
+
+
+# #############################################################################
 
 
 def _convert_sarimax_summary_to_dataframe(

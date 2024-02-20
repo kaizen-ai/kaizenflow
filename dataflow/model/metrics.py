@@ -112,7 +112,8 @@ def convert_to_metrics_format(
     metrics_df.
     """
     dassert_is_result_df(result_df)
-    _LOG.debug("result_df=\n%s", hpandas.df_to_str(result_df))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("result_df=\n%s", hpandas.df_to_str(result_df))
     # Drop NaNs.
     drop_kwargs = {
         "drop_infs": True,
@@ -124,7 +125,8 @@ def convert_to_metrics_format(
     #
     metrics_df.index.names = [metrics_df.index.names[0], asset_id_column_name]
     _dassert_is_metrics_df(metrics_df)
-    _LOG.debug("metrics_df=\n%s", hpandas.df_to_str(metrics_df))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("metrics_df=\n%s", hpandas.df_to_str(metrics_df))
     return metrics_df
 
 
@@ -143,9 +145,11 @@ def add_target_var(
     :return: result_df with target variable
     """
     dassert_is_result_df(result_df)
-    _LOG.debug("result_df in=\n%s", hpandas.df_to_str(result_df))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("result_df in=\n%s", hpandas.df_to_str(result_df))
     hdbg.dassert_isinstance(config, cconfig.Config)
-    _LOG.debug("config=\n%s", config)
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("config=\n%s", config)
     dag_builder_name = config["dag_builder_name"]
     if dag_builder_name in ["C1b", "C1c", "C8a"]:
         pass
@@ -192,7 +196,8 @@ def add_target_var(
         )
     else:
         raise ValueError(f"Unsupported dag_builder_name={dag_builder_name}")
-    _LOG.debug("result_df out=\n%s", hpandas.df_to_str(result_df))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("result_df out=\n%s", hpandas.df_to_str(result_df))
     return result_df
 
 
@@ -205,8 +210,8 @@ def _parse_universe_version_str(universe_version_str: str) -> Tuple[str, str]:
     """
     Extract vendor name and universe version from universe version as string.
 
-    :param universe_version_str: universe version as str, e.g., `ccxt_v7_1`
-    :return: vendor name and universe version, e.g., `("ccxt", "v7.1")`
+    :param universe_version_str: universe version as str, e.g., `ccxt_v7_4`
+    :return: vendor name and universe version, e.g., `("ccxt", "v7.4")`
     """
     vendor, universe_version = universe_version_str.split("_", 1)
     # TODO(Grisha): this is specific of ccxt, we should either convert all vendors
@@ -239,7 +244,8 @@ def annotate_metrics_df(
         representing the number of hours is added
     """
     _dassert_is_metrics_df(metrics_df)
-    _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
     hdbg.dassert_isinstance(tag_mode, str)
     hdbg.dassert_isinstance(config, cconfig.Config)
     # Use the standard name based on `tag_mode`.
@@ -302,7 +308,8 @@ def annotate_metrics_df(
         metrics_df[tag_col] = idx_datetime.hour
     else:
         raise ValueError(f"Invalid tag_mode={tag_mode}")
-    _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(metrics_df))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(metrics_df))
     return metrics_df
 
 
@@ -324,8 +331,8 @@ def compute_hit(
     Compute hit.
 
     Hit is 1 when prediction's sign matches target variable's sign,
-    otherwise it is -1.
-    The function returns -1 and 1 for compatibility with `calculate_hit_rate()`.
+    otherwise it is -1. The function returns -1 and 1 for compatibility
+    with `calculate_hit_rate()`.
 
     :param y: target variable
     :param y_hat: predicted value of y
@@ -373,7 +380,8 @@ def apply_metrics(
         - as columns the names of the applied metrics
     """
     _dassert_is_metrics_df(metrics_df)
-    _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
     # Check both index and columns, e.g., `asset_id` is an index but
     # we still can group by it.
     hdbg.dassert_in(tag_col, metrics_df.reset_index().columns)
@@ -438,7 +446,8 @@ def apply_metrics(
             raise ValueError(f"Invalid metric_mode={metric_mode}")
         out_dfs.append(df_tmp)
     out_df = pd.concat(out_dfs, axis=1)
-    _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(out_df))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(out_df))
     return out_df
 
 
@@ -452,8 +461,8 @@ def cross_val_apply_metrics(
     """
     Apply metrics for multiple test set estimates.
 
-    Return an average value of computed metrics across multiple cross validation
-    splits.
+    Return an average value of computed metrics across multiple cross
+    validation splits.
 
     E.g.:
     ```
@@ -461,13 +470,13 @@ def cross_val_apply_metrics(
     all
     all    51.241884        51.124107              51.35965                13904.318774    3.879794
     ```
-
-    :param result_dfs: dfs with prediction for different cross validation splits
+    :param result_dfs: dfs with prediction for different cross
+        validation splits
     :param tag_mode: see `annotate_metrics_df()`
     :param metric_modes: see `apply_metrics()`
     :param config: config that control the metrics parameters
-    :return: an average value of computed metrics across multiple cross validation
-        splits
+    :return: an average value of computed metrics across multiple cross
+        validation splits
     """
     hdbg.dassert_container_type(
         result_dfs, container_type=list, elem_type=pd.DataFrame
@@ -498,7 +507,8 @@ def cross_val_apply_metrics(
     # it is possible to use other stats functions, e.g., median.
     # TODO(gp): return the res_df and then let another function do the operation.
     res_df = out_df.groupby(level=0).mean()
-    _LOG.debug("res_df out=\n%s", hpandas.df_to_str(res_df))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("res_df out=\n%s", hpandas.df_to_str(res_df))
     return res_df
 
 
@@ -506,11 +516,13 @@ def _build_index_from_backtest_config(backtest_config: str) -> pd.Index:
     """
     Build a `DatetimeIndex` given a backtest config.
 
-    :param backtest_config: backtest_config, e.g.,`ccxt_v7-all.5T.2022-09-01_2022-11-30`
-    :return: pandas index with the start, end, freq specified by a backtest
-        config
+    :param backtest_config: backtest_config,
+        e.g.,`ccxt_v7-all.5T.2022-09-01_2022-11-30`
+    :return: pandas index with the start, end, freq specified by a
+        backtest config
     """
-    _LOG.debug(hprint.to_str("backtest_config"))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(hprint.to_str("backtest_config"))
     _, trading_period_str, time_interval_str = cconfig.parse_backtest_config(
         backtest_config
     )

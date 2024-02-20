@@ -33,6 +33,11 @@ class Mock1_NonTime_ForecastSystem(dtfsys.NonTime_ForecastSystem):
     This is used to run an historical simulation of a Mock1 system.
     """
 
+    def __init__(self):
+        super().__init__()
+        # TODO(Grisha): consider exposing to the interface.
+        self.train_test_mode = "ins"
+
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfapmo.Mock1_DagBuilder()
@@ -46,7 +51,11 @@ class Mock1_NonTime_ForecastSystem(dtfsys.NonTime_ForecastSystem):
         return market_data
 
     def _get_dag(self) -> dtfcore.DAG:
-        dag = dtfasmmobu.get_Mock1_HistoricalDag_example1(self)
+        # TODO(Grisha): pass via `System.config` instead.
+        timestamp_column_name = "end_datetime"
+        dag = dtfasmmobu.get_Mock1_HistoricalDag_example1(
+            self, timestamp_column_name
+        )
         return dag
 
     def _get_dag_runner(self) -> dtfcore.DagRunner:

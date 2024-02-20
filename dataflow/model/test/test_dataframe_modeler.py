@@ -8,6 +8,7 @@ import core.artificial_signal_generators as carsigen
 import core.config as cconfig
 import dataflow.core as dtf
 import dataflow.model.dataframe_modeler as dtfmodamod
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -92,8 +93,8 @@ class TestDataFrameModeler(hunitest.TestCase):
         node_class = dtf.ContinuousSkLearnModel
         output = df_modeler.apply_node(node_class, config.to_dict())
         output_df = output.df
-        str_output = hunitest.convert_df_to_string(
-            output_df.round(3), index=True, decimals=3
+        str_output = hpandas.df_to_str(
+            output_df.round(3), num_rows=None, precision=3
         )
         self.check_string(str_output, fuzzy_match=True)
 
@@ -107,8 +108,8 @@ class TestDataFrameModeler(hunitest.TestCase):
             node_class, config.to_dict(), method="predict"
         )
         output_df = output.df
-        str_output = hunitest.convert_df_to_string(
-            output_df.round(3), index=True, decimals=3
+        str_output = hpandas.df_to_str(
+            output_df.round(3), num_rows=None, precision=3
         )
         self.check_string(str_output, fuzzy_match=True)
 
@@ -120,8 +121,8 @@ class TestDataFrameModeler(hunitest.TestCase):
         node_class = dtf.ContinuousSkLearnModel
         output = df_modeler.apply_node(node_class, config.to_dict())
         output_df = output.df
-        str_output = hunitest.convert_df_to_string(
-            output_df.round(3), index=True, decimals=3
+        str_output = hpandas.df_to_str(
+            output_df.round(3), num_rows=None, precision=3
         )
         self.check_string(str_output, fuzzy_match=True)
 
@@ -148,7 +149,7 @@ class TestDataFrameModeler(hunitest.TestCase):
         df = pd.merge(df1, df2, left_index=True, right_index=True)
         pd.testing.assert_frame_equal(dfm.df, df)
         self.assertEqual(dfm.oos_start, pd.Timestamp("2010-01-01"))
-        str_output = hunitest.convert_df_to_string(dfm.df, index=True)
+        str_output = hpandas.df_to_str(dfm.df, num_rows=None)
         self.check_string(str_output)
 
     def _get_config(self, steps_ahead: int) -> cconfig.Config:

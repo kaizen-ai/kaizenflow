@@ -7,7 +7,7 @@ OPTS="$OPTS --num_threads serial"
 # OPTS="$OPTS --dry_run"
 OPTS="$OPTS $*"
 
-# Train test modes. 
+# Train test modes.
 export TRAIN_TEST_MODE="ins"
 # export TRAIN_TEST_MODE="ins_oos"
 # export TRAIN_TEST_MODE="rolling"
@@ -21,11 +21,12 @@ export EXPERIMENT_BUILDER="amp.dataflow.backtest.master_backtest.run_in_sample_t
 # TODO(Grisha): this should become a function of `DAG_BUILDER_CTOR_AS_STR`.
 export DAG_BUILDER_NAME="C3a"
 export DAG_BUILDER_CTOR_AS_STR="dataflow_orange.pipelines.C3.C3a_pipeline_tmp.C3a_DagBuilder_tmp"
-export BACKTEST_CONFIG="ccxt_v7_1-all.5T.2022-06-01_2022-06-02"
+export BACKTEST_CONFIG="ccxt_v7_4-all.5T.2022-06-01_2022-06-02"
 export TAG="run0"
 # Sometimes we want to set `DST_DIR` outside the current script, e.g., for the corresponding unit test.
 # Uncomment when running a simulation.
 # export DST_DIR="build_tile_configs.$DAG_BUILDER_NAME.$BACKTEST_CONFIG.$TRAIN_TEST_MODE.$TAG"
+# export ROOT_DIR="s3://cryptokaizen-data.preprod/v3"
 
 # Specific of models that requires learning.
 export FIT_AT_BEGINNING=None
@@ -33,7 +34,7 @@ export FIT_AT_BEGINNING=None
 # Specific of out-of-sample prediction.
 # export OOS_START_DATE_AS_STR="2022-09-01"
 
-export CONFIG_BUILDER="amp.dataflow_amp.system.Cx.Cx_tile_config_builders.get_Cx_config_builder_for_historical_simulations(\"$DAG_BUILDER_CTOR_AS_STR\",$FIT_AT_BEGINNING,train_test_mode=\"$TRAIN_TEST_MODE\",backtest_config=\"$BACKTEST_CONFIG\")"
+export CONFIG_BUILDER="amp.dataflow_amp.system.Cx.Cx_tile_config_builders.get_Cx_config_builder_for_historical_simulations(\"$DAG_BUILDER_CTOR_AS_STR\",$FIT_AT_BEGINNING,train_test_mode=\"$TRAIN_TEST_MODE\",backtest_config=\"$BACKTEST_CONFIG\",root_dir=\"$ROOT_DIR\")"
 # export CONFIG_BUILDER="amp.dataflow_amp.system.Cx.Cx_tile_config_builders.get_Cx_config_builder_for_historical_simulations(\"$DAG_BUILDER_CTOR_AS_STR\",$FIT_AT_BEGINNING,train_test_mode=\"$TRAIN_TEST_MODE\",backtest_config=\"$BACKTEST_CONFIG\",oos_start_date_as_str=\"$OOS_START_DATE_AS_STR\")"
 
 # Run.

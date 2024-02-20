@@ -24,7 +24,7 @@ def get_Mock1_NonTime_ForecastSystem_for_simulation_example1(
     backtest_config: str,
 ) -> dtfsys.NonTime_ForecastSystem:
     """
-    Get Mock1_NonTime_ForecastSystem object for backtest simulation.
+    Get Mock1_NonTime_ForecastSystem object for backtesting.
     """
     system = dtfasmmfosy.Mock1_NonTime_ForecastSystem()
     system = dtfsys.apply_backtest_config(system, backtest_config)
@@ -82,6 +82,7 @@ def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
     Build a System used for the corresponding unit tests.
     """
     system = dtfasmmfosy.Mock1_Time_ForecastSystem_with_DataFramePortfolio()
+    system.config["trading_period"] = "5T"
     # Market data config.
     system.config["market_data_config", "asset_id_col_name"] = "asset_id"
     system.config["market_data_config", "delay_in_secs"] = 5
@@ -90,6 +91,7 @@ def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
     ] = pd.Timestamp("2000-01-01 09:35:00-05:00", tz="America/New_York")
     system.config["market_data_config", "asset_ids"] = [101]
     system.config["market_data_config", "data"] = market_data_df
+    system.config["market_data_config", "history_lookback"] = pd.Timedelta(days=7)
     # Portfolio config.
     system = dtfsys.apply_Portfolio_config(system)
     # Dag runner config.
@@ -98,7 +100,7 @@ def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
         "dag_runner_config", "rt_timeout_in_secs_or_time"
     ] = rt_timeout_in_secs_or_time
     # PnL config.
-    # TODO(Grisha): use `apply_ForecastEvaluatorFromPrices_config()` instead. 
+    # TODO(Grisha): use `apply_ForecastEvaluatorFromPrices_config()` instead.
     dag_builder = system.config["dag_builder_object"]
     price_col = dag_builder.get_column_name("price")
     volatility_col = dag_builder.get_column_name("volatility")
@@ -136,6 +138,7 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
     system = (
         dtfasmmfosy.Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor()
     )
+    system.config["trading_period"] = "5T"
     # Market data config.
     system.config["market_data_config", "asset_id_col_name"] = "asset_id"
     system.config["market_data_config", "delay_in_secs"] = 5
@@ -145,6 +148,7 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
     system.config["market_data_config", "asset_ids"] = [101]
     # TODO(gp): Use a file to pass the data instead of a df.
     system.config["market_data_config", "data"] = market_data_df
+    system.config["market_data_config", "history_lookback"] = pd.Timedelta(days=7)
     # Portfolio config.
     system = dtfsys.apply_Portfolio_config(system)
     # Dag runner config.
@@ -153,7 +157,7 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
         "dag_runner_config", "rt_timeout_in_secs_or_time"
     ] = rt_timeout_in_secs_or_time
     # PnL config.
-    # TODO(Grisha): use `apply_ForecastEvaluatorFromPrices_config()` instead. 
+    # TODO(Grisha): use `apply_ForecastEvaluatorFromPrices_config()` instead.
     dag_builder = system.config["dag_builder_object"]
     price_col = dag_builder.get_column_name("price")
     volatility_col = dag_builder.get_column_name("volatility")
@@ -258,6 +262,7 @@ def get_Mock1_Time_ForecastSystem_example1() -> dtfsys.ForecastSystem:
     ] = pd.Timestamp("2000-01-01 09:41:00-05:00", tz="America/New_York")
     # Market takes 10 seconds to send the bar.
     system.config["market_data_config", "delay_in_secs"] = 10
+    system.config["market_data_config", "days"] = 1
     #
     # Exercise the system for 3 5-minute intervals.
     system.config["dag_runner_config", "rt_timeout_in_secs_or_time"] = 60 * 5 * 3

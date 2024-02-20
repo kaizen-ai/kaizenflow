@@ -15,6 +15,7 @@ import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
+
 # TODO(gp): -> _detect_outliers
 def detect_outliers(
     df: pd.DataFrame,
@@ -25,7 +26,8 @@ def detect_outliers(
     Find indices of the outliers for the given columns.
 
     :param outlier_columns: columns to process
-    :param outlier_quantiles: see description in `csiprout.process_outliers()`
+    :param outlier_quantiles: see description in
+        `csiprout.process_outliers()`
     :return: list of indices of the outliers for each column
     """
     outlier_idxs = {}
@@ -67,7 +69,8 @@ def remove_outliers(
     idxs_to_remove = list(idxs_to_remove)
     # Remove outliers from initial df.
     df = df.drop(idxs_to_remove)
-    _LOG.debug("Number of outliers dropped = %s", len(idxs_to_remove))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("Number of outliers dropped = %s", len(idxs_to_remove))
     return df
 
 
@@ -93,7 +96,8 @@ def compute_correlations(
     # hpandas.dassert_axes_equal(df1, df2, sort_cols=True)
     if allow_unequal_indices:
         idx = df1.index.intersection(df2.index)
-        _LOG.debug("Index intersection size=%d", idx.size)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Index intersection size=%d", idx.size)
         hdbg.dassert_lt(0, idx.size, "Intersection of indices is empty.")
         # Restrict dataframes to common index.
         df1 = df1.loc[idx]
@@ -107,7 +111,8 @@ def compute_correlations(
     if n_col_levels == 2:
         for col in df1.columns.levels[0]:
             if col in df2.columns.levels[0]:
-                _LOG.debug("Compute correlation for col=%s", col)
+                if _LOG.isEnabledFor(logging.DEBUG):
+                    _LOG.debug("Compute correlation for col=%s", col)
             else:
                 _LOG.info("Skipping col=%s", col)
                 continue
@@ -122,5 +127,7 @@ def compute_correlations(
         corrs.name = "correlation"
         corrs = corrs.to_frame()
     else:
-        raise ("Number of column levels must be 1 or 2 but is=%d", n_col_levels)
+        raise ValueError(
+            "Number of column levels must be 1 or 2 but is=%d", n_col_levels
+        )
     return corrs

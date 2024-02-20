@@ -87,11 +87,13 @@ class RegressionAnalyzer:
         df = df.between_time(start_time, end_time)
         coeffs = {}
         asset_ids = df.columns.levels[1].to_list()
-        _LOG.debug("Num asset_ids=%d", len(asset_ids))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Num asset_ids=%d", len(asset_ids))
         for asset_id in tqdm(asset_ids, desc="Processing assets"):
             asset_df = df.T.xs(asset_id, level=1).T
             if asset_df.empty:
-                _LOG.debug("Empty dataframe for asset_id=%d", asset_id)
+                if _LOG.isEnabledFor(logging.DEBUG):
+                    _LOG.debug("Empty dataframe for asset_id=%d", asset_id)
                 continue
             if self._feature_lag != 0:
                 features = asset_df[self._feature_cols].shift(self._feature_lag)
@@ -117,7 +119,8 @@ class RegressionAnalyzer:
         self._validate_data_df(df)
         df = df[self._df_cols]
         weight_srs = pd.Series(weights, self._feature_cols, name="weight")
-        _LOG.debug("weights=\n%s", weight_srs)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("weights=\n%s", weight_srs)
         predictions = {}
         # TODO(Paul): Consider performing the calculation as in
         #  `ForecastMixer.generate_portfolio_bar_metrics_df()`.
@@ -125,7 +128,8 @@ class RegressionAnalyzer:
         for asset_id in tqdm(asset_ids, desc="Processing assets"):
             asset_df = df.T.xs(asset_id, level=1).T
             if asset_df.empty:
-                _LOG.debug("Empty dataframe for asset_id=%d", asset_id)
+                if _LOG.isEnabledFor(logging.DEBUG):
+                    _LOG.debug("Empty dataframe for asset_id=%d", asset_id)
                 continue
             prediction = (asset_df * weight_srs).sum(axis=1, min_count=1)
             predictions[asset_id] = prediction
