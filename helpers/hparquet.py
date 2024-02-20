@@ -949,7 +949,13 @@ def list_and_merge_pq_files(
             # If there is already single `data.parquet` file, no action is required.
             continue
         # Read all files in target folder.
-        data = pq.ParquetDataset(folder_files, filesystem=filesystem).read()
+        # TODO(Vlad): `use_legacy_dataset=True` is required to read the dataset
+        # without partitioning columns. Need to be refactored since the
+        # parameter will be deprecated in `pyarrow >= 15.0.0`.
+        # See CmTask7209 for details. https://github.com/cryptokaizen/cmamp/issues/7209
+        data = pq.ParquetDataset(
+            folder_files, filesystem=filesystem, use_legacy_dataset=True
+        ).read()
         data = data.to_pandas()
         # Drop duplicates on all non-metadata columns.
         # TODO(gp): hparquet is general and we should pass the columns to remove
