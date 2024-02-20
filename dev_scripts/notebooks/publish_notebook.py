@@ -48,6 +48,7 @@ import helpers.hopen as hopen
 import helpers.hparser as hparser
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
@@ -83,12 +84,12 @@ def _get_file_from_git_branch(git_branch: str, git_path: str) -> str:
     """
     Checkout a file from a git branch and store it in a temporary location.
 
-    :param git_branch: the branch name
-        E.g., `origin/PTask302_download_eurostat_data`
-    :param git_path: the relative path to the file
-        E.g., `core/notebooks/gallery_signal_processing.ipynb`
-    :return: the path to the file retrieved
-        E.g., `/tmp/gallery_signal_processing.ipynb`
+    :param git_branch: the branch name e.g.,
+        `origin/PTask302_download_eurostat_data`
+    :param git_path: the relative path to the file E.g.,
+        `core/notebooks/gallery_signal_processing.ipynb`
+    :return: the path to the file retrieved E.g.,
+        `/tmp/gallery_signal_processing.ipynb`
     """
     dst_file_name = os.path.join(
         tempfile.gettempdir(), os.path.basename(git_path)
@@ -164,6 +165,8 @@ def _post_to_s3(
     """
     Export a notebook as HTML to S3.
 
+    :param local_src_path: the path of the local ipynb to export
+    :param s3_path: full S3 path starting with `s3://`
     :param local_src_path: the path of the local ipynb to export
     :param s3_path: full S3 path starting with `s3://`
     :param aws_profile: the name of an AWS profile or a s3fs filesystem
@@ -264,6 +267,12 @@ def _parse() -> argparse.ArgumentParser:
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
+    # Check that we are running inside the Docker dev container.
+    if False:
+        hdbg.dassert(
+            hserver.is_inside_docker(),
+            "This can be run only inside the Docker dev container",
+        )
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level)
     if args.action == "open":
@@ -297,6 +306,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         html_file_name = _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
         # Try to open.
         hopen.open_file(html_file_name)
+        # Exit the `convert` action.
+        sys.exit(0)
     if args.action == "publish":
         target_dir = args.target_dir
         _LOG.debug("target_dir='%s'", target_dir)

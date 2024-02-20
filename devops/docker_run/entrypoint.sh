@@ -31,9 +31,6 @@ if [[ $AM_ENABLE_DIND == 1 ]]; then
     # TODO(gp): For some reason appending to file directly `>>` doesn't work.
     sudo echo '{ "storage-driver": "vfs" }' | sudo tee -a /etc/docker/daemon.json
     # Start Docker Engine.
-    # TODO(Vlad): Fix ulimit error: https://github.com/docker/cli/issues/4807.
-    # Need to remove after the issue is fixed.
-    sudo sed -i 's/ulimit -Hn/# ulimit -Hn/g' /etc/init.d/docker
     sudo /etc/init.d/docker start
     sudo /etc/init.d/docker status
     # Wait for Docker Engine to be started, otherwise `docker.sock` file is

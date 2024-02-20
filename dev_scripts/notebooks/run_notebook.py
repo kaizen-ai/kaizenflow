@@ -82,7 +82,7 @@ def _run_notebook(
     # Note the quotation marks, `config_builder` should be surrounded by single
     # quotes so that the potential strings in `config_builder` params are
     # parsed correctly. E.g.,
-    # `export __CONFIG_BUILDER__='amp.oms.reconciliation.build_reconciliation_configs("20221128_101500", "20221128_1210", "scheduled")'`.
+    # `export __CONFIG_BUILDER__='amp.reconciliation.sim_prod_reconciliation.build_reconciliation_configs("20221128_101500", "20221128_1210", "scheduled")'`.
     cmd = [
         f"export __CONFIG_BUILDER__='{config_builder}';",
         f'export __CONFIG_IDX__="{idx}";',

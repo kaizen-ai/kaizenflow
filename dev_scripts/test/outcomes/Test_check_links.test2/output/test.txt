@@ -1,0 +1,16 @@
+dev_scripts/test/outcomes/Test_check_links.test2/tmp.scratch/test.md:8: incorrectly formatted link '[./im_v2/common/notebooks/Master_raw_data_gallery.ipynb](./im_v2/common/notebooks/Master_raw_data_gallery.ipynb)'
+dev_scripts/test/outcomes/Test_check_links.test2/tmp.scratch/test.md:9: incorrectly formatted link './im_v2/common/notebooks/Master_raw_data_gallery.ipynb'
+dev_scripts/test/outcomes/Test_check_links.test2/tmp.scratch/test.md:13: incorrectly formatted link 'im_v2/common/data/transform/convert_csv_to_pq.py'
+dev_scripts/test/outcomes/Test_check_links.test2/tmp.scratch/test.md:16: incorrectly formatted link 'im_v2/ccxt/data/qa/notebooks/data_qa_bid_ask.ipynb'
+dev_scripts/test/outcomes/Test_check_links.test2/tmp.scratch/test.md:19: incorrectly formatted link '[/dataflow/model/notebooks/Master_save_pnl_and_trades.ipynb]()'
+dev_scripts/test/outcomes/Test_check_links.test2/tmp.scratch/test.md:23: incorrectly formatted link '[docs/dataflow/ck.master_notebooks.reference.md](docs/dataflow/ck.master_notebooks.reference.md)'
+dev_scripts/test/outcomes/Test_check_links.test2/tmp.scratch/test.md:25: incorrectly formatted link '[datapull/ck.create_airflow_dag.tutorial.md](https://github.com/cryptokaizen/cmamp/blob/master/docs/datapull/ck.create_airflow_dag.tutorial.md)'
+dev_scripts/test/outcomes/Test_check_links.test2/tmp.scratch/test.md:28: incorrectly formatted link '[Master_PnL_real_time_observer](https://github.com/cryptokaizen/cmamp/blob/master/oms/notebooks/Master_PnL_real_time_observer.ipynb)'
+dev_scripts/test/outcomes/Test_check_links.test2/tmp.scratch/test.md:35: 'figs/diataxis/diataxis_summary.png' does not follow the format 'figs/test.md/XYZ'
+dev_scripts/test/outcomes/Test_check_links.test2/tmp.scratch/test.md:35: 'figs/diataxis/diataxis_summary.png' does not exist
+dev_scripts/test/outcomes/Test_check_links.test2/tmp.scratch/test.md:38: 'figs/monitor_system/image1.png' does not follow the format 'figs/test.md/XYZ'
+dev_scripts/test/outcomes/Test_check_links.test2/tmp.scratch/test.md:38: 'figs/monitor_system/image1.png' does not exist
+dev_scripts/test/outcomes/Test_check_links.test2/tmp.scratch/test.md:40: 'docs/datapull/figs/datapull/data_format.png' does not follow the format 'figs/test.md/XYZ'
+dev_scripts/test/outcomes/Test_check_links.test2/tmp.scratch/test.md:40: incorrectly formatted link '![](docs/datapull/figs/datapull/data_format.png)'
+dev_scripts/test/outcomes/Test_check_links.test2/tmp.scratch/test.md:42: '../../defi/papers/sorrentum_figs/image14.png' does not follow the format 'figs/test.md/XYZ'
+dev_scripts/test/outcomes/Test_check_links.test2/tmp.scratch/test.md:42: incorrectly formatted link '![](../../defi/papers/sorrentum_figs/image14.png)'
