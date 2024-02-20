@@ -23,6 +23,7 @@ class Test_env1(hunitest.TestCase):
         """
         self.assertFalse(henv.has_module("no_such_module"))
 
+
 # #############################################################################
 
 

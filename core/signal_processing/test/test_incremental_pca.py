@@ -6,6 +6,7 @@ import pytest
 
 import core.artificial_signal_generators as carsigen
 import core.signal_processing.incremental_pca as csprinpc
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -239,10 +240,10 @@ class Test__compute_ipca_step(hunitest.TestCase):
         """
         Create string output for tests results.
         """
-        u_string = hunitest.convert_df_to_string(u, index=True)
-        v_string = hunitest.convert_df_to_string(v, index=True)
-        u_next_string = hunitest.convert_df_to_string(u_next, index=True)
-        v_next_string = hunitest.convert_df_to_string(v_next, index=True)
+        u_string = hpandas.df_to_str(u, num_rows=None)
+        v_string = hpandas.df_to_str(v, num_rows=None)
+        u_next_string = hpandas.df_to_str(u_next, num_rows=None)
+        v_next_string = hpandas.df_to_str(v_next, num_rows=None)
         txt = (
             f"u:\n{u_string}\n"
             f"v:\n{v_string}\n"

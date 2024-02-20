@@ -61,14 +61,14 @@ class TestMultipleTests(hunitest.TestCase):
         series_with_nans = self._get_series(seed=1)
         series_with_nans[0:5] = np.nan
         actual = cstresta.multipletests(series_with_nans)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         series_with_nans = self._get_series(seed=1)
         series_with_nans[0:5] = np.nan
         actual = cstresta.multipletests(series_with_nans, nan_mode="drop")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     @staticmethod
@@ -92,31 +92,31 @@ class TestMultiTTest(hunitest.TestCase):
     def test2(self) -> None:
         df = self._get_df_of_series(seed=1)
         actual = cstresta.multi_ttest(df)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         df = self._get_df_of_series(seed=1)
         actual = cstresta.multi_ttest(df, prefix="multi_ttest_")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test4(self) -> None:
         df = self._get_df_of_series(seed=1)
         actual = cstresta.multi_ttest(df, popmean=1)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test5(self) -> None:
         df = self._get_df_of_series(seed=1)
         actual = cstresta.multi_ttest(df, nan_mode="fill_with_zero")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test6(self) -> None:
         df = self._get_df_of_series(seed=1)
         actual = cstresta.multi_ttest(df, method="sidak")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     @pytest.mark.xfail()
@@ -124,7 +124,7 @@ class TestMultiTTest(hunitest.TestCase):
         df = self._get_df_of_series(seed=1)
         df.iloc[:, 0] = np.nan
         actual = cstresta.multi_ttest(df)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     @staticmethod
@@ -151,31 +151,31 @@ class TestApplyAdfTest(hunitest.TestCase):
     def test1(self) -> None:
         series = self._get_series(seed=1)
         actual = cstresta.apply_adf_test(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
         actual = cstresta.apply_adf_test(series, regression="ctt")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         series = self._get_series(seed=1)
         actual = cstresta.apply_adf_test(series, maxlag=5)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test4(self) -> None:
         series = self._get_series(seed=1)
         actual = cstresta.apply_adf_test(series, autolag="t-stat")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test5(self) -> None:
         series = self._get_series(seed=1)
         actual = cstresta.apply_adf_test(series, prefix="adf_")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
@@ -187,7 +187,7 @@ class TestApplyAdfTest(hunitest.TestCase):
         series = self._get_series(seed=1)
         series[3:5] = np.nan
         actual = cstresta.apply_adf_test(series, nan_mode="fill_with_zero")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     # Smoke test for input of `np.nan`s.
@@ -211,31 +211,31 @@ class TestApplyKpssTest(hunitest.TestCase):
     def test1(self) -> None:
         series = self._get_series(seed=1)
         actual = cstresta.apply_kpss_test(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
         actual = cstresta.apply_kpss_test(series, regression="ct")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         series = self._get_series(seed=1)
         actual = cstresta.apply_kpss_test(series, nlags="auto")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test4(self) -> None:
         series = self._get_series(seed=1)
         actual = cstresta.apply_kpss_test(series, nlags=5)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test5(self) -> None:
         series = self._get_series(seed=1)
         actual = cstresta.apply_kpss_test(series, prefix="kpss_")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
@@ -247,7 +247,7 @@ class TestApplyKpssTest(hunitest.TestCase):
         series = self._get_series(seed=1)
         series[3:5] = np.nan
         actual = cstresta.apply_kpss_test(series, nan_mode="fill_with_zero")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     # Smoke test for input of `np.nan`s.
@@ -272,40 +272,40 @@ class TestApplyLjungBoxTest(hunitest.TestCase):
     def test1(self) -> None:
         series = self._get_series(seed=1)
         actual = cstresta.apply_ljung_box_test(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
         actual = cstresta.apply_ljung_box_test(series, lags=3)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     @pytest.mark.skip(reason="cmamp #654.")
     def test3(self) -> None:
         series = self._get_series(seed=1)
         actual = cstresta.apply_ljung_box_test(series, model_df=3)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test4(self) -> None:
         series = self._get_series(seed=1)
         actual = cstresta.apply_ljung_box_test(series, period=5)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     @pytest.mark.skip(reason="cmamp #654.")
     def test5(self) -> None:
         series = self._get_series(seed=1)
         actual = cstresta.apply_ljung_box_test(series, prefix="lb_")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     @pytest.mark.skip(reason="cmamp #654.")
     def test6(self) -> None:
         series = self._get_series(seed=1)
         actual = cstresta.apply_ljung_box_test(series, return_df=False)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
@@ -318,7 +318,7 @@ class TestApplyLjungBoxTest(hunitest.TestCase):
         series = self._get_series(seed=1)
         series[3:5] = np.nan
         actual = cstresta.apply_ljung_box_test(series, nan_mode="fill_with_zero")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     # Smoke test for input of `np.nan`s.
@@ -350,7 +350,7 @@ class TestCalculateHitRate(hunitest.TestCase):
         """
         series = self._get_test_series()
         actual = cstresta.calculate_hit_rate(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test2(self) -> None:
@@ -366,7 +366,7 @@ class TestCalculateHitRate(hunitest.TestCase):
         nan_series = pd.Series([np.nan for i in range(len(series))])
         series = pd.concat([series, nan_series])
         actual = cstresta.calculate_hit_rate(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test3(self) -> None:
@@ -383,7 +383,7 @@ class TestCalculateHitRate(hunitest.TestCase):
         inf_series[:5] = -np.inf
         series = pd.concat([series, inf_series])
         actual = cstresta.calculate_hit_rate(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test4(self) -> None:
@@ -399,7 +399,7 @@ class TestCalculateHitRate(hunitest.TestCase):
         zero_series = pd.Series([0 for i in range(len(series))])
         series = pd.concat([series, zero_series])
         actual = cstresta.calculate_hit_rate(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test5(self) -> None:
@@ -413,7 +413,7 @@ class TestCalculateHitRate(hunitest.TestCase):
         """
         series = self._get_test_series()
         actual = cstresta.calculate_hit_rate(series, threshold=10e-3)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test6(self) -> None:
@@ -427,7 +427,7 @@ class TestCalculateHitRate(hunitest.TestCase):
         """
         series = self._get_test_series()
         actual = cstresta.calculate_hit_rate(series, alpha=0.1)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test7(self) -> None:
@@ -441,7 +441,7 @@ class TestCalculateHitRate(hunitest.TestCase):
         """
         series = self._get_test_series()
         actual = cstresta.calculate_hit_rate(series, prefix="hit_")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test8(self) -> None:
@@ -455,7 +455,7 @@ class TestCalculateHitRate(hunitest.TestCase):
         """
         series = self._get_test_series()
         actual = cstresta.calculate_hit_rate(series, method="wilson")
-        self.check_string(hunitest.convert_df_to_string(actual, index=True))
+        self.check_string(hpandas.df_to_str(actual, num_rows=None))
 
     # Smoke test for empty input.
     def test_smoke(self) -> None:
@@ -521,11 +521,11 @@ class Test_compute_bet_stats(hunitest.TestCase):
         act = []
         act.append(hprint.frame("rets_pos"))
         act.append(
-            hunitest.convert_df_to_string(
-                rets_pos_bet_rets, index=True, decimals=3
+            hpandas.df_to_str(
+                rets_pos_bet_rets, num_rows=None, precision=3
             )
         )
         act.append(hprint.frame("stats"))
-        act.append(hunitest.convert_df_to_string(actual, index=True, decimals=3))
+        act.append(hpandas.df_to_str(actual, num_rows=None, precision=3))
         act = "\n".join(act)
         self.check_string(act, fuzzy_match=True)

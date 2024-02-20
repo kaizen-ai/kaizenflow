@@ -1,5 +1,5 @@
 """
-See `documentation/technical/event_study_design.md` for design principles and
+See `docs/dataflow/ck.event_study.explanation.md` for design principles and
 notes on intended usage.
 
 Sketch of flow:
@@ -33,7 +33,7 @@ import core.event_study.core as cevstcor
 
 
 import logging
-from typing import Iterable, Optional, Union
+from typing import Any, Dict, Iterable, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -52,7 +52,7 @@ _LOG = logging.getLogger(__name__)
 def reindex_event_features(
     events: pd.DataFrame,
     grid_data: pd.DataFrame,
-    **kwargs,
+    **kwargs: Dict[str, Any],
 ) -> pd.DataFrame:
     """
     Reindex `events` so that it aligns with `grid_data`.

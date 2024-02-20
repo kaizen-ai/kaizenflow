@@ -16,6 +16,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(Paul): Add unit tests.
+# TODO(Paul): Debug infs in fill rates.
 def compute_fill_stats(target_position_df: pd.DataFrame) -> pd.DataFrame:
     """
     Compare target trades and holdings to realized.
@@ -53,6 +54,8 @@ def compute_fill_stats(target_position_df: pd.DataFrame) -> pd.DataFrame:
     buy = (executed_trades_shares > 0).astype(int)
     sell = (executed_trades_shares < 0).astype(int)
     side = buy - sell
+    # TODO(Paul): Consider having two bool cols instead of a pseudo-ternary
+    #  column.
     # Whether trades executed within the end-of-bar-indexed bar would have
     # been profitable had they been closed out in the subsequent bar.
     is_benchmark_profitable = side * np.sign(
@@ -63,6 +66,10 @@ def compute_fill_stats(target_position_df: pd.DataFrame) -> pd.DataFrame:
         executed_trades_shares
         / target_position_df["target_trades_shares"].shift(1)
     ).abs()
+    # TODO(Paul): Ensure that executed_trades_shares is zero when we do not
+    #  intend to trade.
+    no_trade_loc = target_position_df["target_trades_shares"].shift(1) == 0
+    fill_rate[no_trade_loc] = np.nan
     # Compute underfills.
     underfill_share_count = (
         target_position_df["target_trades_shares"].shift(1).abs()
@@ -70,6 +77,10 @@ def compute_fill_stats(target_position_df: pd.DataFrame) -> pd.DataFrame:
     )
     # Compute underfill notional opportunity cost with respect to baseline price.
     target_side = np.sign(target_position_df["target_trades_shares"].shift(2))
+    underfill_notional = underfill_share_count * target_position_df[
+        "price"
+    ].shift(1)
+    # TODO(Paul): Align the variable name with the column name.
     underfill_notional_cost = (
         target_side
         * underfill_share_count.shift(1)
@@ -89,14 +100,16 @@ def compute_fill_stats(target_position_df: pd.DataFrame) -> pd.DataFrame:
         * tracking_error_notional
         / target_position_df["target_holdings_notional"].shift(1)
     )
+    tracking_error_bps[no_trade_loc] = np.nan
     #
     fills_df = pd.concat(
         {
             "executed_trades_shares": executed_trades_shares,
             "fill_rate": fill_rate,
             "underfill_share_count": underfill_share_count,
-            "underfill_notional_opportunity_cost_realized": underfill_notional_cost,
-            "underfill_notional_opportunity_cost": underfill_notional_cost.shift(
+            "underfill_notional": underfill_notional,
+            "underfill_opportunity_cost_realized_notional": underfill_notional_cost,
+            "underfill_opportunity_cost_notional": underfill_notional_cost.shift(
                 -1
             ),
             "tracking_error_shares": tracking_error_shares,

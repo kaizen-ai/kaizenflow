@@ -61,18 +61,24 @@ class _ResetGlobalCacheHelper(hunitest.TestCase):
     method invocation.
     """
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
         # Create a tag like "TestCacheFeatures::test_without_caching1".
         self.cache_tag = f"{self.__class__.__name__}::{self._testMethodName}"
         # Clean all the caches before this test method is run.
         self._remove_all_caches()
 
-    def tearDown(self) -> None:
+    def tear_down_test(self) -> None:
         # Clean and remove all the caches after the test method is run.
         self._remove_all_caches()
-        #
-        super().tearDown()
 
     def _remove_all_caches(self) -> None:
         """
@@ -433,8 +439,17 @@ class TestGlobalCache1(_ResetGlobalCacheHelper):
 
 
 class _ResetFunctionSpecificCacheHelper(_ResetGlobalCacheHelper):
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test2()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test2(self) -> None:
+        self.set_up_test()
         # Create temp directories to store the cache.
         self.disk_cache_dir = tempfile.mkdtemp()
         # Clear global cache.
@@ -609,6 +624,7 @@ class TestCacheDecorator(_ResetGlobalCacheHelper):
         """
         Test decorator with both caches enabled.
         """
+
         # Define the function inline imitating working in a notebook.
         @hcache.cache(tag=self.cache_tag)
         def add(x: int, y: int) -> int:
@@ -628,6 +644,7 @@ class TestCacheDecorator(_ResetGlobalCacheHelper):
         """
         Test decorator with only disk cache.
         """
+
         # Define the function inline imitating working in a notebook.
         @hcache.cache(tag=self.cache_tag, use_mem_cache=False)
         def add(x: int, y: int) -> int:
@@ -712,8 +729,17 @@ class TestAmpTask1407(_ResetGlobalCacheHelper):
 
 
 class TestCachingOnS3(_ResetFunctionSpecificCacheHelper):
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test3()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test3(self) -> None:
+        self.set_up_test2()
         # Get a directory to store the cache on S3.
         self.disk_cache_dir = self.get_s3_scratch_dir()
         self.aws_profile = "am"

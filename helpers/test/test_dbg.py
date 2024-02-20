@@ -223,7 +223,7 @@ class Test_dassert_misc1(hunitest.TestCase):
         val1=[1, 2, 3]
         has no intersection
         val2=[1, 2, 4]
-        val1 - val2=[3]
+        val1.intersection(val2)=[1, 2]
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 

@@ -30,7 +30,12 @@ services:
       # - CK_HOST_OS_NAME=
       # - CK_PUBLISH_NOTEBOOK_LOCAL_PATH=$CK_PUBLISH_NOTEBOOK_LOCAL_PATH
       - CK_TELEGRAM_TOKEN=$CK_TELEGRAM_TOKEN
+      # TODO(Vlad): consider removing, locally we use our personal tokens from files and
+      # inside GitHub actions we use the `GH_TOKEN` environment variable.
       - GH_ACTION_ACCESS_TOKEN=$GH_ACTION_ACCESS_TOKEN
+      # Inside GitHub Actions we use `GH_TOKEN` environment variable,
+      # see https://cli.github.com/manual/gh_auth_login.
+      - GH_TOKEN=$GH_ACTION_ACCESS_TOKEN
       # This env var is used by GH Action to signal that we are inside the CI.
       - CI=$CI
     image: ${IMAGE}

@@ -535,7 +535,7 @@ def _split_in_child_twap_orders(
                 diff_num_shares,
             )
             child_orders.append(order_tmp)
-        hdbg.dassert_approx_eq(curr_num_shares, order.diff_num_shares)
+        hpandas.dassert_approx_eq(curr_num_shares, order.diff_num_shares)
     return child_orders
 
 

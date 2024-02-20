@@ -20,7 +20,7 @@ class Test_compute_turnover(hunitest.TestCase):
         series[5:10] = np.nan
         actual = cstaturn.compute_turnover(series).rename("output")
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test2(self) -> None:
@@ -30,7 +30,7 @@ class Test_compute_turnover(hunitest.TestCase):
         positive_series = self._get_series(seed=1).abs()
         actual = cstaturn.compute_turnover(positive_series).rename("output")
         output_df = pd.concat([positive_series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test3(self) -> None:
@@ -43,7 +43,7 @@ class Test_compute_turnover(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test4(self) -> None:
@@ -54,7 +54,7 @@ class Test_compute_turnover(hunitest.TestCase):
         series[5:10] = np.nan
         actual = cstaturn.compute_turnover(series, unit="B").rename("output")
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     @staticmethod
@@ -108,8 +108,8 @@ class Test_compute_avg_turnover_and_holding_period(hunitest.TestCase):
         """
         pos = self._get_pos(seed=1)
         actual = cstaturn.compute_avg_turnover_and_holding_period(pos)
-        actual_string = hunitest.convert_df_to_string(
-            actual, index=True, decimals=3
+        actual_string = hpandas.df_to_str(
+            actual, num_rows=None, precision=3
         )
         self.check_string(actual_string)
 
@@ -119,8 +119,8 @@ class Test_compute_avg_turnover_and_holding_period(hunitest.TestCase):
         """
         pos = self._get_pos(seed=1)
         actual = cstaturn.compute_avg_turnover_and_holding_period(pos, unit="M")
-        actual_string = hunitest.convert_df_to_string(
-            actual, index=True, decimals=3
+        actual_string = hpandas.df_to_str(
+            actual, num_rows=None, precision=3
         )
         self.check_string(actual_string, fuzzy_match=True)
 
@@ -133,8 +133,8 @@ class Test_compute_avg_turnover_and_holding_period(hunitest.TestCase):
         actual = cstaturn.compute_avg_turnover_and_holding_period(
             pos, nan_mode="fill_with_zero"
         )
-        actual_string = hunitest.convert_df_to_string(
-            actual, index=True, decimals=3
+        actual_string = hpandas.df_to_str(
+            actual, num_rows=None, precision=3
         )
         self.check_string(actual_string, fuzzy_match=True)
 
@@ -146,8 +146,8 @@ class Test_compute_avg_turnover_and_holding_period(hunitest.TestCase):
         actual = cstaturn.compute_avg_turnover_and_holding_period(
             pos, prefix="test_"
         )
-        actual_string = hunitest.convert_df_to_string(
-            actual, index=True, decimals=3
+        actual_string = hpandas.df_to_str(
+            actual, num_rows=None, precision=3
         )
         self.check_string(actual_string, fuzzy_match=True)
 

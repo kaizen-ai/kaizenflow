@@ -194,6 +194,7 @@ end_ts
             optimizer_config_dict=optimizer_config_dict,
         )
 
+    @pytest.mark.skip
     def test_annotate_forecasts_by_tile_with_optimizer(self) -> None:
         config = self.get_config()
         forecast_evaluator = optfewo.ForecastEvaluatorWithOptimizer

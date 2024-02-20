@@ -271,8 +271,17 @@ class TestDu1(hmoto.S3Mock_TestCase):
 
 
 class TestGenerateAwsFiles(hunitest.TestCase):
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
+        self.setUp()
         os.environ["MOCK_AWS_ACCESS_KEY_ID"] = "mock_access_key"
         os.environ["MOCK_AWS_SECRET_ACCESS_KEY"] = "mock_secret_access_key"
         os.environ["MOCK_AWS_S3_BUCKET"] = "mock_s3_bucket"
@@ -283,13 +292,13 @@ class TestGenerateAwsFiles(hunitest.TestCase):
         os.environ["TEST_AWS_S3_BUCKET"] = "test_s3_bucket"
         os.environ["TEST_AWS_DEFAULT_REGION"] = "test_default_region"
         # Generate AWS files with mock AWS profiles.
-        self._scratch_dir = self.get_scratch_space()
+        self._scratch_test_dir = self.get_scratch_space()
         aws_profiles = ["mock", "test"]
         hs3.generate_aws_files(
-            home_dir=self._scratch_dir, aws_profiles=aws_profiles
+            home_dir=self._scratch_test_dir, aws_profiles=aws_profiles
         )
 
-    def tearDown(self) -> None:
+    def tear_down_test(self) -> None:
         del os.environ["MOCK_AWS_ACCESS_KEY_ID"]
         del os.environ["MOCK_AWS_SECRET_ACCESS_KEY"]
         del os.environ["MOCK_AWS_S3_BUCKET"]
@@ -299,11 +308,10 @@ class TestGenerateAwsFiles(hunitest.TestCase):
         del os.environ["TEST_AWS_SECRET_ACCESS_KEY"]
         del os.environ["TEST_AWS_S3_BUCKET"]
         del os.environ["TEST_AWS_DEFAULT_REGION"]
-        super().tearDown()
 
     def helper(self, file_name: str, expected: str) -> None:
         # Check.
-        target_dir = os.path.join(self._scratch_dir, ".aws")
+        target_dir = os.path.join(self._scratch_test_dir, ".aws")
         actual = hio.from_file(os.path.join(target_dir, file_name))
         self.assert_equal(actual, expected, fuzzy_match=True)
 

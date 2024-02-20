@@ -293,7 +293,8 @@ def _create_dir(
     """
     Create a directory `dir_name` if it doesn't exist.
 
-    Same interface as `create_dir()` but without handling `backup_dir_if_exists`.
+    Same interface as `create_dir()` but without handling
+    `backup_dir_if_exists`.
     """
     _LOG.debug(
         hprint.to_str("dir_name incremental abort_if_exists ask_to_delete")
@@ -603,19 +604,38 @@ def add_suffix_to_filename(
     return ret
 
 
-# TODO(gp): It would be useful to allow also to add suffix before ext.
-def rename_file_if_exists(file_name: str, suffix: str) -> None:
+def rename_file_if_exists(
+    file_path: str,
+    suffix: str,
+    *,
+    before_extension: bool = True,
+) -> None:
     """
     Rename a file if it exists using provided suffix.
 
-    {file_name}.{ext} -> {file_name}.{ext}.{suffix}
-
     Used to avoid overwriting if writing multiple files with the same name.
+
+    :param file_path: a file path to modify
+    :param suffix: index to add to the file name
+    :param before_extension: whether to insert the suffix before the file extension
+        - if True, {file_path}.{ext} -> {file_path}.{suffix}.{ext}
+        - if False, {file_path}.{ext} -> {file_path}.{ext}.{suffix}
     """
-    if os.path.exists(file_name):
-        new_file_name = f"{file_name}.{suffix}"
-        _LOG.debug("renaming %s to %s", file_name, new_file_name)
-        os.rename(file_name, new_file_name)
+    if os.path.exists(file_path):
+        # Add a suffix to a file name.
+        if before_extension:
+            # Add a suffix before an extension, e.g., `file.suffix.csv`.
+            dir_path, file_name = os.path.split(file_path)
+            file_name, ext = os.path.splitext(file_name)
+            hdbg.dassert(ext.startswith("."))
+            new_file_path = f"{file_name}.{suffix}{ext}"
+            new_file_path = os.path.join(dir_path, new_file_path)
+        else:
+            # Add a suffix after an extension, e.g., `file.csv.suffix`.
+            new_file_path = f"{file_path}.{suffix}"
+        hdbg.dassert_path_not_exists(new_file_path)
+        _LOG.debug("renaming %s to %s", file_path, new_file_path)
+        os.rename(file_path, new_file_path)
 
 
 # #############################################################################

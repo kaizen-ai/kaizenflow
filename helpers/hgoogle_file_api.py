@@ -92,12 +92,10 @@ def create_empty_google_file(
     """
     Create a new Google file (sheet or doc).
 
-    :param gfile_type: str, the type of the Google file ('sheet' or
-        'doc').
+    :param gfile_type: str, the type of the Google file ('sheet' or 'doc').
     :param gfile_name: str, the name of the new Google file.
     :param gdrive_folder_id: the id of the Google Drive folder.
-    :param user: str, the email address of the user to share the Google
-        file (Optional).
+    :param user: str, the email address of the user to share the Google file (Optional).
     """
     try:
         if gfile_type == "sheet":

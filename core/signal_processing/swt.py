@@ -4,6 +4,7 @@ Import as:
 import core.signal_processing.swt as csiprswt
 """
 
+import functools
 import logging
 from typing import List, Optional, Tuple, Union
 
@@ -11,6 +12,7 @@ import numpy as np
 import pandas as pd
 import pywt
 
+import core.signal_processing.fir_utils as csprfiut
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
@@ -176,6 +178,54 @@ def apply_swt(
         dfs.append(df)
     df = pd.concat(dfs, axis=1)
     return df
+
+
+def compute_and_combine_swt_levels(
+    sig: pd.Series,
+    weights: List[int],
+    *,
+    norm: bool = True,
+) -> pd.Series:
+    depth = len(weights) - 1
+    swt = get_swt(sig, "haar", depth, output_mode="detail_and_last_smooth")
+    level_idx = swt.columns
+    weight_srs = pd.Series(
+        weights,
+        level_idx,
+    )
+    if not norm:
+        renorm_srs = pd.Series(
+            [2 ** (j / 2) for j in range(1, depth + 1)] + [2 ** (depth / 2)],
+            level_idx,
+        )
+        weight_srs *= renorm_srs
+    combined = (swt * weight_srs).sum(axis=1, skipna=False)
+    combined.name = sig.name
+    return combined
+
+
+def compute_lag_weights(
+    weights: List[int],
+    *,
+    norm: bool = True,
+) -> pd.Series:
+    depth = len(weights) - 1
+    warmup_length = (
+        get_knowledge_time_warmup_lengths(["haar"], depth).loc[depth].squeeze()
+    )
+    srs = pd.Series([0] * (2 * warmup_length))
+    #
+    func = functools.partial(compute_and_combine_swt_levels, norm=norm)
+    filter_weights = csprfiut.extract_fir_filter_weights(
+        srs, func, {"weights": weights}, warmup_length + 1
+    )
+    filter_weights = filter_weights["normalized_weight"][::-1].reset_index(
+        drop=True
+    )
+    filter_weights.index.name = "lag"
+    zero_pad = filter_weights.loc[2**depth :]
+    hdbg.dassert_eq(zero_pad.abs().sum(), 0)
+    return filter_weights.loc[: 2**depth - 1]
 
 
 # #############################################################################
@@ -597,6 +647,27 @@ def _compute_fir_zscore(
     srs = signal / np.sqrt(var)
     srs = srs.replace([-np.inf, np.inf], np.nan)
     return srs
+
+
+def compute_zscored_mra(
+    sig: Union[pd.DataFrame, pd.Series],
+    depth: int,
+) -> pd.DataFrame:
+    swt = get_swt(sig, depth=depth, output_mode="detail_and_last_smooth")
+    var = get_swt(sig**2, depth=depth + 1, output_mode="smooth")
+    detail_levels = range(1, depth + 1)
+    renorm_srs = pd.Series([2 ** (j / 2) for j in detail_levels], detail_levels)
+    shift_srs = get_knowledge_time_warmup_lengths(["haar"], depth + 1)["haar"]
+    mra = pd.DataFrame()
+    for level in detail_levels:
+        mra[level] = swt[level] / np.sqrt(var[level + 1]).shift(shift_srs[level])
+    mra *= renorm_srs
+    mra[f"{depth}_smooth"] = (
+        renorm_srs[depth]
+        * swt[f"{depth}_smooth"]
+        / np.sqrt(var[depth + 1]).shift(shift_srs[depth + 1])
+    )
+    return mra
 
 
 def compute_swt_var_summary(

@@ -5,6 +5,7 @@ import core.finance.portfolio_df_processing.slippage as cfpdprsl
 """
 
 import logging
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -16,9 +17,9 @@ _LOG = logging.getLogger(__name__)
 
 
 def compute_share_prices_and_slippage(
-    df: pd.DataFrame,
+    portfolio_df: pd.DataFrame,
     join_output_with_input: bool = False,
-    # TODO(Paul): Add optional benchmark price df.
+    price_df: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """
     Compare trade prices against benchmark.
@@ -26,7 +27,7 @@ def compute_share_prices_and_slippage(
     NOTE: baseline prices are not available when holdings_shares is zero, and
         this may lead to artificial NaNs in the calculations.
 
-    :param df: a portfolio dataframe, with the following columns for
+    :param portfolio_df: a portfolio dataframe, with the following columns for
         each asset:
         - holdings_notional
         - holdings_shares
@@ -39,36 +40,43 @@ def compute_share_prices_and_slippage(
         - is_benchmark_profitable
     """
     hpandas.dassert_time_indexed_df(
-        df, allow_empty=False, strictly_increasing=True
+        portfolio_df, allow_empty=False, strictly_increasing=True
     )
-    hdbg.dassert_eq(2, df.columns.nlevels)
+    hdbg.dassert_eq(2, portfolio_df.columns.nlevels)
     cols = [
         "holdings_notional",
         "holdings_shares",
         "executed_trades_notional",
         "executed_trades_shares",
     ]
-    hdbg.dassert_is_subset(cols, df.columns.levels[0])
+    hdbg.dassert_is_subset(cols, portfolio_df.columns.levels[0])
     # Compute price per share of holdings (using holdings reference price).
     # We assume that holdings are computed with a benchmark price (e.g., TWAP).
-    holdings_price_per_share = df["holdings_notional"] / df["holdings_shares"]
+    if price_df is None:
+        holdings_price_per_share = (
+            portfolio_df["holdings_notional"] / portfolio_df["holdings_shares"]
+        )
+    else:
+        # TODO(Paul): Perform checks on indices.
+        holdings_price_per_share = price_df
     # We do not expect negative prices.
     hdbg.dassert_lte(0, holdings_price_per_share.min().min())
     # Compute price per share of trades (using execution reference prices).
     trade_price_per_share = (
-        df["executed_trades_notional"] / df["executed_trades_shares"]
+        portfolio_df["executed_trades_notional"]
+        / portfolio_df["executed_trades_shares"]
     )
     hdbg.dassert_lte(0, trade_price_per_share.min().min())
     # Buy = +1, sell = -1.
-    buy = (df["executed_trades_notional"] > 0).astype(int)
-    sell = (df["executed_trades_notional"] < 0).astype(int)
+    buy = (portfolio_df["executed_trades_notional"] > 0).astype(int)
+    sell = (portfolio_df["executed_trades_notional"] < 0).astype(int)
     side = buy - sell
     # Compute notional slippage against benchmark.
     slippage_notional_per_share = side * (
         trade_price_per_share - holdings_price_per_share
     )
     slippage_notional = (
-        slippage_notional_per_share * df["executed_trades_shares"].abs()
+        slippage_notional_per_share * portfolio_df["executed_trades_shares"].abs()
     )
     # Compute slippage in bps.
     slippage_in_bps = 1e4 * slippage_notional_per_share / holdings_price_per_share
@@ -97,5 +105,5 @@ def compute_share_prices_and_slippage(
         axis=1,
     )
     if join_output_with_input:
-        price_df = pd.concat([df, price_df], axis=1)
+        price_df = pd.concat([portfolio_df, price_df], axis=1)
     return price_df

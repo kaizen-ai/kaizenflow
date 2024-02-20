@@ -172,25 +172,6 @@ def dassert_eq(
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
-def dassert_approx_eq(
-    val1: Any,
-    val2: Any,
-    rtol: float = 1e-05,
-    atol: float = 1e-08,
-    msg: Optional[str] = None,
-    *args: Any,
-    only_warning: bool = False,
-) -> None:
-    import numpy as np
-
-    cond = np.allclose(
-        np.array([val1]), np.array([val2]), rtol=rtol, atol=atol, equal_nan=True
-    )
-    if not cond:
-        txt = f"'{val1}'\n==\n'{val2}' rtol={rtol}, atol={atol}"
-        _dfatal(txt, msg, *args, only_warning=only_warning)
-
-
 def dassert_ne(
     val1: Any,
     val2: Any,
@@ -557,7 +538,7 @@ def dassert_not_intersection(
         txt.append("val1=" + _set_to_str(val1))
         txt.append("has no intersection")
         txt.append("val2=" + _set_to_str(val2))
-        txt.append("val1 - val2=" + _set_to_str(val1.difference(val2)))
+        txt.append("val1.intersection(val2)=" + _set_to_str(val1.intersection(val2)))
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 

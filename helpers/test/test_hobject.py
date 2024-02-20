@@ -1,6 +1,6 @@
 import abc
 import logging
-from typing import Any
+from typing import Any, List, Optional
 
 import helpers.hdbg as hdbg
 import helpers.hobject as hobject
@@ -10,43 +10,74 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
-def _to_signature(self_: Any, obj: Any, **kwargs: Any) -> None:
-    txt = []
-    txt.append(hprint.frame("str:"))
-    txt.append(hobject.obj_to_str(obj, **kwargs))
-    txt.append(hprint.frame("repr:"))
-    txt.append(hobject.obj_to_repr(obj, **kwargs))
-    txt = "\n".join(txt)
-    #
-    self_.check_string(txt, purify_text=True)
-
-
+# Note that we can't derive this class from `hunitest.TestCase` otherwise the
+# unit test framework will try to run the tests in this class.
 class _Obj_to_str_TestCase(abc.ABC):
+    """
+    Test case for testing `obj_to_str()` and `obj_to_repr()`.
+    """
+
     @abc.abstractmethod
     def get_object(self) -> Any:
+        """
+        Build object to test.
+        """
         ...
 
-    def helper(self, **kwargs: Any) -> None:
+    def helper(self, *, exp: Optional[str] = None, **kwargs: Any) -> None:
         obj = self.get_object()
         hdbg.dassert_is_not(obj, None)
-        _to_signature(self, obj, **kwargs)
+        #
+        txt: List[str] = []
+        # Get `str()`.
+        txt.append(hprint.frame("str:"))
+        txt.append(hobject.obj_to_str(obj, **kwargs))
+        # Get `repr()`.
+        txt.append(hprint.frame("repr:"))
+        txt.append(hobject.obj_to_repr(obj, **kwargs))
+        # Concat.
+        txt = "\n".join(txt)
+        # Check.
+        if exp is None:
+            self.check_string(txt, purify_text=True)
+        else:
+            hdbg.dassert_isinstance(exp, str)
+            self.assert_equal(txt, exp, purify_text=True, fuzzy_match=True)
 
-    def test1(self) -> None:
-        self.helper(attr_mode="__dict__")
+    def test1(self, exp: str) -> None:
+        """
+        Use `__dict__` to extract the attributes.
+        """
+        self.helper(exp=exp, attr_mode="__dict__")
 
-    def test2(self) -> None:
-        self.helper(attr_mode="dir")
+    def test2(self, exp: str) -> None:
+        """
+        Use `dir` to extract the attributes.
+        """
+        self.helper(exp=exp, attr_mode="dir")
 
-    def test3(self) -> None:
-        self.helper(print_type=True)
+    def test3(self, exp: str) -> None:
+        """
+        Use `__dict__` and print the type of the attributes.
+        """
+        self.helper(exp=exp, print_type=True)
 
     def test4(self) -> None:
+        """
+        Print only callable attributes.
+        """
         self.helper(callable_mode="all")
 
     def test5(self) -> None:
+        """
+        Print only private attributes.
+        """
         self.helper(private_mode="all")
 
     def test6(self) -> None:
+        """
+        Print only dunder attributes.
+        """
         self.helper(dunder_mode="all")
 
 
@@ -57,7 +88,7 @@ class _Obj_to_str_TestCase(abc.ABC):
 
 class _Object1:
     """
-    Object storing only scalar members but not other objects.
+    Object storing only scalar members and not other nested objects.
     """
 
     def __init__(self) -> None:
@@ -73,6 +104,54 @@ class Test_obj_to_str1(hunitest.TestCase, _Obj_to_str_TestCase):
     def get_object(self) -> Any:
         obj = _Object1()
         return obj
+
+    def test1(self) -> None:
+        exp = r"""
+        ################################################################################
+        str:
+        ################################################################################
+        _Object1 at 0x=(a=False, b=hello, c=3.14)
+        ################################################################################
+        repr:
+        ################################################################################
+        <helpers.test.test_hobject._Object1 at 0x>:
+          a='False'
+          b='hello'
+          c='3.14'
+        """
+        super().test1(exp)
+
+    def test2(self) -> None:
+        exp = r"""
+        ################################################################################
+        str:
+        ################################################################################
+        _Object1 at 0x=(a=False, b=hello, c=3.14)
+        ################################################################################
+        repr:
+        ################################################################################
+        <helpers.test.test_hobject._Object1 at 0x>:
+          a='False'
+          b='hello'
+          c='3.14'
+        """
+        super().test2(exp)
+
+    def test3(self) -> None:
+        exp = r"""
+        ################################################################################
+        str:
+        ################################################################################
+        _Object1 at 0x=(a=False <bool>, b=hello <str>, c=3.14 <float>)
+        ################################################################################
+        repr:
+        ################################################################################
+        <helpers.test.test_hobject._Object1 at 0x>:
+          a='False' <bool>
+          b='hello' <str>
+          c='3.14' <float>
+        """
+        super().test3(exp)
 
 
 # #############################################################################
@@ -112,3 +191,138 @@ class Test_obj_to_str2(hunitest.TestCase, _Obj_to_str_TestCase):
     def get_object(self) -> Any:
         obj = _Object3()
         return obj
+
+    def test1(self) -> None:
+        # TODO(gp): object2 in repr should be printed recursively as repr, but
+        # it's not.
+        exp = r"""
+        ################################################################################
+        str:
+        ################################################################################
+        _Object3 at 0x=(p=p, q=q, object2=_Object2 at 0x=(x=True, y=world, z=6.28))
+        ################################################################################
+        repr:
+        ################################################################################
+        <helpers.test.test_hobject._Object3 at 0x>:
+          p='p'
+          q='q'
+          object2='_Object2 at 0x=(x=True, y=world, z=6.28)'
+        """
+        super().test1(exp)
+
+    def test2(self) -> None:
+        exp = r"""
+        ################################################################################
+        str:
+        ################################################################################
+        _Object3 at 0x=(object2=_Object2 at 0x=(x=True, y=world, z=6.28), p=p, q=q)
+        ################################################################################
+        repr:
+        ################################################################################
+        <helpers.test.test_hobject._Object3 at 0x>:
+          object2='_Object2 at 0x=(x=True, y=world, z=6.28)'
+          p='p'
+          q='q'
+        """
+        super().test2(exp)
+
+    def test3(self) -> None:
+        exp = r"""
+        ################################################################################
+        str:
+        ################################################################################
+        _Object3 at 0x=(p=p <str>, q=q <str>, object2=_Object2 at 0x=(x=True, y=world, z=6.28) <helpers.test.test_hobject._Object2>)
+        ################################################################################
+        repr:
+        ################################################################################
+        <helpers.test.test_hobject._Object3 at 0x>:
+          p='p' <str>
+          q='q' <str>
+          object2='_Object2 at 0x=(x=True, y=world, z=6.28)' <helpers.test.test_hobject._Object2>
+        """
+        super().test3(exp)
+
+
+# #############################################################################
+# Test_PrintableMixin_to_config_str
+# #############################################################################
+
+
+class _Abstract_ClassA(abc.ABC, hobject.PrintableMixin):
+    """
+    Abstract class descending from `PrintableMixin`.
+    """
+
+    def __init__(self) -> None:
+        self._arg0 = 0
+        self._arg1 = "one"
+        self._arg2 = 2
+
+    @staticmethod
+    def get_config_attributes() -> List[str]:
+        return ["_arg1", "_arg2"]
+
+
+class _ClassB(hobject.PrintableMixin):
+    """
+    Class descending from `PrintableMixin`.
+    """
+
+    def __init__(self) -> None:
+        self._arg5 = {"key1": "five", "key2": 5}
+
+    @staticmethod
+    def get_config_attributes() -> List[str]:
+        return ["_arg5"]
+
+
+class _ClassA(_Abstract_ClassA):
+    """
+    Class descending from `_AbstractClassA` and embedding `_ClassB`.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._arg3 = [3, 3, 3]
+        self._arg4 = _ClassB()
+
+    def get_config_attributes(self) -> List[str]:
+        config_attributes = super().get_config_attributes()
+        child_class_attributes = ["_arg3", "_arg4"]
+        config_attributes.extend(child_class_attributes)
+        return config_attributes
+
+
+class Test_PrintableMixin_to_config_str(hunitest.TestCase):
+    def check_test_class_str(self, test_class: Any, exp: str) -> None:
+        act = test_class.to_config_str()
+        act = hunitest.purify_txt_from_client(act)
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test1(self) -> None:
+        """
+        Print `_Abstract_ClassA`.
+        """
+        test_class = _Abstract_ClassA()
+        exp = r"""
+        <helpers.test.test_hobject._Abstract_ClassA at 0x>:
+            _arg1='one' <str>
+            _arg2='2' <int>
+        """
+        self.check_test_class_str(test_class, exp)
+
+    def test2(self) -> None:
+        """
+        Print `_ClassA`.
+        """
+        test_class = _ClassA()
+        exp = r"""
+        <helpers.test.test_hobject._ClassA at 0x>:
+            _arg1='one' <str>
+            _arg2='2' <int>
+            _arg3='[3, 3, 3]' <list>
+            _arg4= <helpers.test.test_hobject._ClassB>
+                <helpers.test.test_hobject._ClassB at 0x>:
+                _arg5='{'key1': 'five', 'key2': 5}' <dict>
+        """
+        self.check_test_class_str(test_class, exp)

@@ -5,6 +5,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as carsigen
 import core.statistics.signed_runs as cstsirun
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -17,9 +18,9 @@ class Test_compute_bet_starts(hunitest.TestCase):
         actual = cstsirun.compute_signed_run_starts(positions)
         output_str = (
             f"{hprint.frame('positions')}\n"
-            f"{hunitest.convert_df_to_string(positions, index=True)}\n"
+            f"{hpandas.df_to_str(positions, num_rows=None)}\n"
             f"{hprint.frame('bet_lengths')}\n"
-            f"{hunitest.convert_df_to_string(actual, index=True)}"
+            f"{hpandas.df_to_str(actual, num_rows=None)}"
         )
         self.check_string(output_str)
 
@@ -31,9 +32,9 @@ class Test_compute_bet_starts(hunitest.TestCase):
         actual = cstsirun.compute_signed_run_starts(positions)
         output_str = (
             f"{hprint.frame('positions')}\n"
-            f"{hunitest.convert_df_to_string(positions, index=True)}\n"
+            f"{hpandas.df_to_str(positions, num_rows=None)}\n"
             f"{hprint.frame('bet_lengths')}\n"
-            f"{hunitest.convert_df_to_string(actual, index=True)}"
+            f"{hpandas.df_to_str(actual, num_rows=None)}"
         )
         self.check_string(output_str)
 
@@ -127,9 +128,9 @@ class Test_compute_run_ends(hunitest.TestCase):
         actual = cstsirun.compute_signed_run_ends(positions)
         output_str = (
             f"{hprint.frame('positions')}\n"
-            f"{hunitest.convert_df_to_string(positions, index=True)}\n"
+            f"{hpandas.df_to_str(positions, num_rows=None)}\n"
             f"{hprint.frame('run_lengths')}\n"
-            f"{hunitest.convert_df_to_string(actual, index=True)}"
+            f"{hpandas.df_to_str(actual, num_rows=None)}"
         )
         self.check_string(output_str)
 
@@ -141,9 +142,9 @@ class Test_compute_run_ends(hunitest.TestCase):
         actual = cstsirun.compute_signed_run_ends(positions)
         output_str = (
             f"{hprint.frame('positions')}\n"
-            f"{hunitest.convert_df_to_string(positions, index=True)}\n"
+            f"{hpandas.df_to_str(positions, num_rows=None)}\n"
             f"{hprint.frame('run_lengths')}\n"
-            f"{hunitest.convert_df_to_string(actual, index=True)}"
+            f"{hpandas.df_to_str(actual, num_rows=None)}"
         )
         self.check_string(output_str)
 
@@ -240,9 +241,9 @@ class Test_compute_signed_run_lengths(hunitest.TestCase):
         actual = cstsirun.compute_signed_run_lengths(positions)
         output_str = (
             f"{hprint.frame('positions')}\n"
-            f"{hunitest.convert_df_to_string(positions, index=True)}\n"
+            f"{hpandas.df_to_str(positions, num_rows=None)}\n"
             f"{hprint.frame('bet_lengths')}\n"
-            f"{hunitest.convert_df_to_string(actual, index=True)}"
+            f"{hpandas.df_to_str(actual, num_rows=None)}"
         )
         self.check_string(output_str)
 
@@ -254,9 +255,9 @@ class Test_compute_signed_run_lengths(hunitest.TestCase):
         actual = cstsirun.compute_signed_run_lengths(positions)
         output_str = (
             f"{hprint.frame('positions')}\n"
-            f"{hunitest.convert_df_to_string(positions, index=True)}\n"
+            f"{hpandas.df_to_str(positions, num_rows=None)}\n"
             f"{hprint.frame('bet_lengths')}\n"
-            f"{hunitest.convert_df_to_string(actual, index=True)}"
+            f"{hpandas.df_to_str(actual, num_rows=None)}"
         )
         self.check_string(output_str)
 
@@ -355,9 +356,9 @@ class Test_compute_signed_run_lengths(hunitest.TestCase):
         actual = cstsirun.compute_signed_run_lengths(positions)
         output_str = (
             f"{hprint.frame('positions')}\n"
-            f"{hunitest.convert_df_to_string(positions, index=True)}\n"
+            f"{hpandas.df_to_str(positions, num_rows=None)}\n"
             f"{hprint.frame('bet_lengths')}\n"
-            f"{hunitest.convert_df_to_string(actual, index=True)}"
+            f"{hpandas.df_to_str(actual, num_rows=None)}"
         )
         self.check_string(output_str)
 
@@ -369,9 +370,9 @@ class Test_compute_signed_run_lengths(hunitest.TestCase):
         actual = cstsirun.compute_signed_run_lengths(positions)
         output_str = (
             f"{hprint.frame('positions')}\n"
-            f"{hunitest.convert_df_to_string(positions, index=True)}\n"
+            f"{hpandas.df_to_str(positions, num_rows=None)}\n"
             f"{hprint.frame('bet_lengths')}\n"
-            f"{hunitest.convert_df_to_string(actual, index=True)}"
+            f"{hpandas.df_to_str(actual, num_rows=None)}"
         )
         self.check_string(output_str)
 

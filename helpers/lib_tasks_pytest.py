@@ -107,6 +107,8 @@ def _build_run_command_line(
     collect_only: bool,
     tee_to_file: bool,
     n_threads: str,
+    *,
+    allure_dir: Optional[str] = None,
 ) -> str:
     """
     Build the pytest run command.
@@ -132,6 +134,9 @@ def _build_run_command_line(
     :param custom_marker: specify a space separated list of
         `pytest` markers to skip (e.g., `optimizer` for the optimizer
         tests, see `pytest.ini`). Empty means no marker to skip
+    :param allure_dir: directory to save allure results to. If specified, allure
+        plugin will be installed on-the-fly and results will be generated
+        and saved to the specified directory
     """
     hdbg.dassert_in(
         test_list_name, _TEST_TIMEOUTS_IN_SECS, "Invalid test_list_name"
@@ -188,12 +193,22 @@ def _build_run_command_line(
     # Indicate the number of threads for parallelization.
     if n_threads != "serial":
         pytest_opts_tmp.append(f"-n {str(n_threads)}")
+    if allure_dir is not None:
+        pytest_opts_tmp.append(f"--alluredir={allure_dir}")
     # Concatenate the options.
     _LOG.debug("pytest_opts_tmp=\n%s", str(pytest_opts_tmp))
     pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
     # TODO(gp): Use to_multi_line_cmd()
     pytest_opts = " ".join([po.rstrip().lstrip() for po in pytest_opts_tmp])
     cmd = f"pytest {pytest_opts}"
+    if allure_dir is not None:
+        # Install the `allure-pytest` before running the tests. This is needed
+        # to generate Allure results which serve as an input for generating
+        # Allure HTML reports.
+        # Excluding the command `"source /venv/bin/activate"` because post-activation,
+        # the `PATH` variable lacks necessary values, causing a failure in a test
+        # associated with `publish_notebook.py`.
+        cmd = f"sudo /venv/bin/pip install allure-pytest && {cmd}"
     if tee_to_file:
         cmd += f" 2>&1 | tee tmp.pytest.{test_list_name}.log"
     return cmd
@@ -272,6 +287,7 @@ def _run_tests(
     git_clean_: bool,
     *,
     start_coverage_script: bool = False,
+    allure_dir: Optional[str] = None,
     # TODO(Grisha): do we need to expose ctx kwargs to the invoke targets?
     # E.g., to `run_fast_tests`. See CmTask3602 "All tests fail".
     **ctx_run_kwargs: Any,
@@ -292,6 +308,7 @@ def _run_tests(
         collect_only,
         tee_to_file,
         n_threads,
+        allure_dir=allure_dir,
     )
     # Execute the command line.
     rc = _run_test_cmd(
@@ -323,6 +340,7 @@ def run_tests(  # type: ignore
     tee_to_file=False,
     n_threads="serial",
     git_clean_=False,
+    allure_dir=None,
     **kwargs,
 ):
     """
@@ -345,6 +363,7 @@ def run_tests(  # type: ignore
             n_threads,
             git_clean_,
             warn=True,
+            allure_dir=allure_dir,
             **kwargs,
         )
         if rc != 0:
@@ -373,8 +392,9 @@ def _get_custom_marker(
     Get a custom pytest marker from comma-separated string representations of
     test lists to run or skip.
 
-    :param run_only_test_list: a string of comma-separated markers to run,
-        e.g. `run_only_test_list = "requires_ck_infra,requires_aws"`
+    :param run_only_test_list: a string of comma-separated markers to
+        run, e.g. `run_only_test_list =
+        "requires_ck_infra,requires_aws"`
     :param skip_test_list: a string of comma-separated markers to skip
     :return: custom pytest marker
     """
@@ -435,6 +455,7 @@ def run_fast_tests(  # type: ignore
     tee_to_file=False,
     n_threads="serial",
     git_clean_=False,
+    allure_dir=None,
 ):
     """
     Run fast tests. check `gh auth status` before invoking to avoid auth
@@ -452,6 +473,9 @@ def run_fast_tests(  # type: ignore
     :param n_threads: the number of threads to run the tests with
         - "auto": distribute the tests across all the available CPUs
     :param git_clean_: run `invoke git_clean --fix-perms` before running the tests
+    :param allure_dir: directory to save allure results to. If specified, allure
+        plugin will be installed on-the-fly and results will be generated
+        and saved to the specified directory
     :param kwargs: kwargs for `ctx.run`
     """
     hlitauti.report_task()
@@ -477,6 +501,7 @@ def run_fast_tests(  # type: ignore
         tee_to_file,
         n_threads,
         git_clean_,
+        allure_dir=allure_dir,
     )
     return rc
 
@@ -487,12 +512,15 @@ def run_slow_tests(  # type: ignore
     stage="dev",
     version="",
     pytest_opts="",
+    run_only_test_list="",
+    skip_test_list="",
     skip_submodules=False,
     coverage=False,
     collect_only=False,
     tee_to_file=False,
     n_threads="serial",
     git_clean_=False,
+    allure_dir=None,
 ):
     """
     Run slow tests.
@@ -501,7 +529,10 @@ def run_slow_tests(  # type: ignore
     """
     hlitauti.report_task()
     test_list_name = "slow_tests"
-    custom_marker = ""
+    # Convert cmd line marker lists to a pytest marker list.
+    custom_marker = _get_custom_marker(
+        run_only_test_list=run_only_test_list, skip_test_list=skip_test_list
+    )
     rc = _run_tests(
         ctx,
         test_list_name,
@@ -515,6 +546,7 @@ def run_slow_tests(  # type: ignore
         tee_to_file,
         n_threads,
         git_clean_,
+        allure_dir=allure_dir,
     )
     return rc
 
@@ -525,12 +557,15 @@ def run_superslow_tests(  # type: ignore
     stage="dev",
     version="",
     pytest_opts="",
+    run_only_test_list="",
+    skip_test_list="",
     skip_submodules=False,
     coverage=False,
     collect_only=False,
     tee_to_file=False,
     n_threads="serial",
     git_clean_=False,
+    allure_dir=None,
 ):
     """
     Run superslow tests.
@@ -539,7 +574,10 @@ def run_superslow_tests(  # type: ignore
     """
     hlitauti.report_task()
     test_list_name = "superslow_tests"
-    custom_marker = ""
+    # Convert cmd line marker lists to a pytest marker list.
+    custom_marker = _get_custom_marker(
+        run_only_test_list=run_only_test_list, skip_test_list=skip_test_list
+    )
     rc = _run_tests(
         ctx,
         test_list_name,
@@ -553,6 +591,7 @@ def run_superslow_tests(  # type: ignore
         tee_to_file,
         n_threads,
         git_clean_,
+        allure_dir=allure_dir,
     )
     return rc
 
@@ -570,6 +609,7 @@ def run_fast_slow_tests(  # type: ignore
     tee_to_file=False,
     n_threads="serial",
     git_clean_=False,
+    allure_dir=None,
 ):
     """
     Run fast and slow tests back-to-back.
@@ -594,6 +634,7 @@ def run_fast_slow_tests(  # type: ignore
         tee_to_file,
         n_threads,
         git_clean_,
+        allure_dir,
     )
     return rc
 
@@ -611,6 +652,7 @@ def run_fast_slow_superslow_tests(  # type: ignore
     tee_to_file=False,
     n_threads="serial",
     git_clean_=False,
+    allure_dir=None,
 ):
     """
     Run fast, slow, superslow tests back-to-back.
@@ -635,6 +677,7 @@ def run_fast_slow_superslow_tests(  # type: ignore
         tee_to_file,
         n_threads,
         git_clean_,
+        allure_dir,
     )
     return rc
 
@@ -1090,7 +1133,10 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
     Rename the test and move its golden outcome.
 
     E.g., to rename a test class and all the test methods:
-    > i pytest_rename_test TestCacheUpdateFunction1 TestCacheUpdateFunction_new
+    ```
+    > i pytest_rename_test TestCacheUpdateFunction1 \
+            TestCacheUpdateFunction_new
+    ```
 
     :param old_test_class_name: old class name
     :param new_test_class_name: new class name
@@ -1206,8 +1252,8 @@ def pytest_compare_logs(  # type: ignore
     Diff two log files removing the irrelevant parts (e.g., timestamps, object
     pointers).
 
-    :param remove_line_numbers: remove line numbers from function calls (e.g.,
-        `abstract_market_data.py get_data_for_interval:259`
+    :param remove_line_numbers: remove line numbers from function calls
+        (e.g., `abstract_market_data.py get_data_for_interval:259`
     :param grep_regex: select lines based on a regex
     """
     suffix = "tmp"
