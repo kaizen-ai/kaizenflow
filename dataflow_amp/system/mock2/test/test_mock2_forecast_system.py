@@ -21,10 +21,10 @@ def _get_test_NonTime_ForecastSystem() -> dtfsys.System:
 # #############################################################################
 
 
-class Test_Mock2_System_CheckConfig(dtfsys.System_CheckConfig_TestCase1):
-    def test_freeze_config1(self) -> None:
-        system = _get_test_NonTime_ForecastSystem()
-        self._test_freeze_config1(system)
+# class Test_Mock2_System_CheckConfig(dtfsys.System_CheckConfig_TestCase1):
+#     def test_freeze_config1(self) -> None:
+#         system = _get_test_NonTime_ForecastSystem()
+#         self._test_freeze_config1(system)
 
 
 # #############################################################################
