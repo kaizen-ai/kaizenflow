@@ -1,3 +1,9 @@
+# cmamp-1.12.0
+- 2024-02-20
+- Promote `pyarrow` to 14.0.2
+- Changes from:
+- #7097 - Update pyarrow package
+
 # cmamp-1.11.0
 - 2024-01-16
 - Promote CCXT to 4.2.13
