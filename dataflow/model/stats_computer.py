@@ -148,6 +148,7 @@ class StatsComputer:
         a portfolio name then compute stats for each portfolio name.
         """
         hdbg.dassert_isinstance(df, pd.DataFrame)
+        hdbg.dassert_isinstance(df.index, pd.DatetimeIndex)
         if df.columns.nlevels == 1:
             return self._compute_portfolio_stats(
                 df,
@@ -234,14 +235,14 @@ class StatsComputer:
         Compute financially meaningful statistics.
 
         :param returns_col: returns realized at indexed timestamp
-        :param volatility_col: volatility forecast or realized available at
-            timestamp
-        :param prediction_col: 2-step-ahead predictions of
-            volatility-normalized available returns based on data at indexed
+        :param volatility_col: volatility forecast or realized available
+            at timestamp
+        :param prediction_col: 2-step-ahead predictions of volatility-
+            normalized available returns based on data at indexed
             timestamp
         :param position_col: positions at indexed timestamp, informed by
-            predictions from the previous timestamp and subject to returns
-            realized at the next timestamp
+            predictions from the previous timestamp and subject to
+            returns realized at the next timestamp
         :param pnl_col: PnL realized at indexed timestamp
         """
         hdbg.dassert(not isinstance(df.columns, pd.MultiIndex))
