@@ -169,17 +169,7 @@ def from_parquet(
             # `read_table()`.
             # See https://arrow.apache.org/docs/python/parquet.html#reading-and-writing-single-files.
             table = dataset.read_pandas(columns=columns)
-            # Convert timestamp columns to `ns` resolution to keep the old
-            # behaviour with pyarrow=10.0.0 as opposed to pyarrow>=14.0.0
-            # which preserves the returned resolution.
-            # See CmTask7097 for details. https://github.com/cryptokaizen/cmamp/issues/7097
-            df = table.to_pandas(coerce_temporal_nanoseconds=True)
-            # Convert timestamp indices to `ns` resolution to keep the old
-            # behaviour with pyarrow=10.0.0 as opposed to pyarrow>=14.0.0
-            # which preserves the returned resolution.
-            # See CmTask7097 for details. https://github.com/cryptokaizen/cmamp/issues/7097
-            if isinstance(df.index, pd.DatetimeIndex):
-                df.index = df.index.as_unit("ns")
+            df = table.to_pandas()
     # Report stats about the df.
     _LOG.debug("df.shape=%s", str(df.shape))
     mem = df.memory_usage().sum()
