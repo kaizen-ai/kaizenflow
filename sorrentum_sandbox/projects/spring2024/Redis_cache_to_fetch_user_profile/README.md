@@ -1,13 +1,24 @@
-# Redis cache to fetch user profile
 
-## Author info
+
+<!-- toc -->
+
+- [Redis cache to fetch user profile](#redis-cache-to-fetch-user-profile)
+  * [1. Technologies](#1-technologies)
+    + [1.1 Redis: In-Memory Data Structure Store](#11-redis-in-memory-data-structure-store)
+    + [1.2. Docker: Containerization for Portability](#12-docker-containerization-for-portability)
+  * [2. Docker System Logic and Implementation](#2-docker-system-logic-and-implementation)
+  * [3. Python Script Overview](#3-python-script-overview)
+  * [4. Mock Database Schema](#4-mock-database-schema)
+  * [5. Project Diagram](#5-project-diagram)
+  * [6. Conclusion](#6-conclusion)
+
+<!-- tocstop -->
+
+# Redis cache to fetch user profile
 
 - Author: Shaunak Dhande
 - GitHub account: Shaunak01
-- UMD email: sdhande@umd.edu
-- Personal email: sdhande@umd.edu
-
-## Description
+- Email: sdhande@umd.edu
 
 This is a Python based project that exemplifies a straightforward implementation
 of user profile caching using Redis. This efficient mechanism aims to enhance the
@@ -18,74 +29,72 @@ data structure store.
 
 ### Redis: In-Memory Data Structure Store
 
-- Redis is an advanced key-value store known for its speed and versatility
-- Functioning as an in-memory data structure store, Redis holds data in RAM,
-  allowing for fast read and write operations
-- It supports various data structures, including strings, hashes, lists, and
-  sets, making it suitable for a wide range of use cases
-- Redis is often used as a caching mechanism to boost the performance of
-  applications by reducing the time it takes to retrieve frequently accessed
-  data
-- Additionally, its support for advanced features like pub/sub messaging and
-  transactions makes it a valuable tool for building scalable and responsive
-  systems.
+Redis is an advanced key-value store known for its exceptional speed and
+versatility. Functioning as an in-memory data structure store, Redis holds data
+in RAM, allowing for lightning-fast read and write operations. It supports
+various data structures, including strings, hashes, lists, and sets, making it
+suitable for a wide range of use cases. Redis is often used as a caching
+mechanism to boost the performance of applications by reducing the time it takes
+to retrieve frequently accessed data. Additionally, its support for advanced
+features like pub/sub messaging and transactions makes it a valuable tool for
+building scalable and responsive systems.
 
-- Redis serves as the backbone of this project, providing an in-memory data
-  structure for key-value pair storage and retrieval. In the context of the
-  project, Redis is employed as a caching mechanism
-- The speed of data retrieval from Redis significantly outpaces traditional
-  databases, making it an ideal choice for scenarios where rapid access to
-  frequently used data, such as user profiles, is paramount.
+Redis serves as the backbone of this project, providing an in-memory data
+structure store that excels in key-value pair storage and retrieval. In the
+context of the project, Redis is employed as a caching mechanism. The speed of
+data retrieval from Redis significantly outpaces traditional databases, making
+it an ideal choice for scenarios where rapid access to frequently used data,
+such as user profiles, is paramount.
 
-- The function that retrieved user profiles showcases the power of Redis caching.
-- It first checks if the user's profile is already present in the Redis cache
-  - If found, the profile is retrieved directly from Redis
-  - If not found, the script fetches the profile from the mock database, stores
-    it in Redis for future use, and then returns the profile
-- This use of Redis caching optimizes the overall performance of the application
-  by reducing the load on the underlying data source
+The function that retrieved user profiles showcases the power of Redis caching.
+It first checks if the user's profile is already present in the Redis cache. If
+found, the profile is retrieved directly from Redis. If not found, the script
+fetches the profile from the mock database, stores it in Redis for future use,
+and then returns the profile. This elegant use of Redis caching optimizes the
+overall performance of the application by reducing the load on the underlying
+data source.
 
 ### Docker: Containerization for Portability
 
-- Docker is a containerization platform that simplifies the process of
-  developing, deploying, and running applications
-- It allows developers to package an application and its dependencies into a
-  lightweight, portable container
-- These containers can run consistently across different environments, ensuring
-  that the application behaves the same way in development, testing, and
-  production
-- Docker provides a standardized way to encapsulate and distribute applications,
-  making it easier to manage dependencies, streamline deployment, and enhance
-  collaboration among development teams.
+Docker is a containerization platform that simplifies the process of developing,
+deploying, and running applications. It allows developers to package an
+application and its dependencies into a lightweight, portable container. These
+containers can run consistently across different environments, ensuring that the
+application behaves the same way in development, testing, and production. Docker
+provides a standardized way to encapsulate and distribute applications, making
+it easier to manage dependencies, streamline deployment, and enhance
+collaboration among development teams.
 
-- The Dockerfile specifies the use of an official Python runtime as the base
-  image, installs the Redis server, and copies the Python script and mock
-  database file into the container. The resulting Docker image encapsulates the
-  entire project, making it easily deployable and scalable.
+Docker containerization is employed to encapsulate the entire project, ensuring
+a consistent and reproducible environment across different systems. The
+Dockerfile specifies the use of an official Python runtime as the base image,
+installs the Redis server, and copies the Python script and mock database file
+into the container. The resulting Docker image encapsulates the entire project,
+making it easily deployable and scalable.
 
-- By using Docker, the project achieves portability and encapsulation, allowing
-  developers to run the application in any environment with minimal setup.
+By using Docker, the project achieves portability and encapsulation, allowing
+developers to run the application in any environment with minimal setup.
 
-## Docker implementation
+## 2. Docker System Logic and Implementation
 
-- The Docker system designed for this project follows a logical sequence to
-  ensure a smooth and consistent environment for both development and deployment
-
-- Let's delve into the intricacies of the Docker system logic:
+The Docker system designed for the Redis Cache to Fetch User Profiles project
+follows a logical sequence to ensure a smooth and consistent environment for
+both development and deployment. Let's delve into the intricacies of the Docker
+system logic:
 
 - Project Setup:
   - Begin with organizing your project files within a directory structure. The
     main files include:
-    - `Redis_cache_to_fetch_user_profile.ipynb`: Contains the Jupyter Notebook
+    - Redis_cache_to_fetch_user_profile.ipynb: Contains the Jupyter Notebook
       code for fetching user profiles with Redis caching.
-    - `Dockerfile`: Includes instructions for building a Docker image for the
+    - Dockerfile: Includes instructions for building a Docker image for the
       project.
-    - `Docker-compose.yaml`: Defines services, networks, and volumes for Docker
+    - Docker-compose.yaml: Defines services, networks, and volumes for Docker
       containers.
 
 - Dockerfile Configuration:
   - Start by setting up the Dockerfile with the following steps:
-    - Utilize an official Python runtime as the base image `python:3.8-slim`
+    - Utilize an official Python runtime as the base image (python:3.8-slim).
     - Set the working directory in the container to `/app`.
     - Copy the project files into the container.
     - Install necessary dependencies (redis and notebook) using pip.

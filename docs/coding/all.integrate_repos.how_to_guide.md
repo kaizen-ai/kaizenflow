@@ -180,9 +180,9 @@
   ... Only in .../cmamp1/.../alpha_numeric_data_snapshots: alpha
   ... Only in .../amp1/.../alpha_numeric_data_snapshots: latest
   ```
-- You can accept the `cmamp1` side with:
+- You can accept one side with:
   ```bash
-  > invoke integrate_rsync .../cmamp1/.../alpha_numeric_data_snapshots/
+  > invoke integrate_rsync $(pwd)/marketing
   ```
 - This corresponds to:
   ```bash
