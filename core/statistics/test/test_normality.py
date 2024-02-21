@@ -5,6 +5,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as carsigen
 import core.statistics.normality as cstanorm
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -14,13 +15,13 @@ class TestApplyNormalityTest(hunitest.TestCase):
     def test1(self) -> None:
         series = self._get_series(seed=1)
         actual = cstanorm.apply_normality_test(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test2(self) -> None:
         series = self._get_series(seed=1)
         actual = cstanorm.apply_normality_test(series, prefix="norm_test_")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     # Smoke test for empty input.
@@ -34,7 +35,7 @@ class TestApplyNormalityTest(hunitest.TestCase):
         series[:5] = np.nan
         series[8:10] = np.nan
         actual = cstanorm.apply_normality_test(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test5(self) -> None:
@@ -45,7 +46,7 @@ class TestApplyNormalityTest(hunitest.TestCase):
         actual = cstanorm.apply_normality_test(
             series, nan_mode="ffill_and_drop_leading"
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     # Smoke test for input of `np.nan`s.

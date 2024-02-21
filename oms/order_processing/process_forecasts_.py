@@ -109,11 +109,15 @@ async def process_forecasts(
               (used in real-time mode)
         - `log_dir`: directory for logging state
     """
-    _LOG.debug("\n%s", hprint.frame("process_forecast"))
-    _LOG.debug("prediction_df=\n%s", hpandas.df_to_str(prediction_df))
-    _LOG.debug("volatility_df=\n%s", hpandas.df_to_str(volatility_df))
-    _LOG.debug("portfolio=\n%s", portfolio)
-    _LOG.debug("config=\n%s", config)
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("\n%s", hprint.frame("process_forecast"))
+        _LOG.debug("prediction_df=\n%s", hpandas.df_to_str(prediction_df))
+        _LOG.debug("volatility_df=\n%s", hpandas.df_to_str(volatility_df))
+        _LOG.debug("portfolio=\n%s", portfolio)
+        _LOG.debug("config=\n%s", config)
+    #
+    # 1) Check the validity of the inputs.
+    #
     # TODO(gp): Move all this in a _validate method
     # Check `predictions_df`.
     hpandas.dassert_time_indexed_df(
@@ -139,6 +143,9 @@ async def process_forecasts(
     # Check `restrictions`.
     if restrictions_df is None:
         _LOG.info("restrictions_df is `None`; no restrictions will be enforced")
+    #
+    # 2) Extract the relevant parameters from `config`.
+    #
     # See https://stackoverflow.com/questions/21706609/where-is-the-nonetype-located
     NoneType = type(None)
     # Create an `order_dict` from `config` elements.
@@ -182,6 +189,12 @@ async def process_forecasts(
     )
     # Get execution mode ("real_time" or "batch").
     execution_mode = hdict.typed_get(config, "execution_mode", expected_type=str)
+    # Get log dir.
+    log_dir = config.get("log_dir", None)
+    _LOG.info("log_dir=%s", log_dir)
+    #
+    # 3) Process the predictions.
+    #
     if execution_mode == "real_time":
         prediction_df = prediction_df.tail(1)
     elif execution_mode == "batch":
@@ -194,17 +207,16 @@ async def process_forecasts(
         prediction_df = cofinanc.remove_weekends(prediction_df)
         volatility_df = cofinanc.remove_weekends(volatility_df)
         spread_df = cofinanc.remove_weekends(spread_df)
-    # Get log dir.
-    log_dir = config.get("log_dir", None)
-    _LOG.info("log_dir=%s", log_dir)
-    _LOG.debug(
-        "predictions_df=%s\n%s",
-        str(prediction_df.shape),
-        hpandas.df_to_str(prediction_df),
-    )
-    _LOG.debug("predictions_df.index=%s", str(prediction_df.index))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(
+            "predictions_df=%s\n%s",
+            str(prediction_df.shape),
+            hpandas.df_to_str(prediction_df),
+        )
+        _LOG.debug("predictions_df.index=%s", str(prediction_df.index))
     num_rows = len(prediction_df)
-    _LOG.debug("Number of rows in `prediction_df`=%d", num_rows)
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("Number of rows in `prediction_df`=%d", num_rows)
     #
     get_wall_clock_time = portfolio.market_data.get_wall_clock_time
     tqdm_out = htqdm.TqdmToLogger(_LOG, level=logging.INFO)
@@ -245,13 +257,14 @@ async def process_forecasts(
         # current bar is 08:00.
         hdbg.dassert_lte(timestamp, current_bar_timestamp)
         current_bar_time = current_bar_timestamp.time()
-        _LOG.debug(
-            "\n%s",
-            hprint.frame(
-                "# idx=%s timestamp=%s current_bar_time=%s"
-                % (idx, timestamp, current_bar_time)
-            ),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "\n%s",
+                hprint.frame(
+                    "# idx=%s timestamp=%s current_bar_time=%s"
+                    % (idx, timestamp, current_bar_time)
+                ),
+            )
         # Wait until get_wall_clock_time() == timestamp.
         if get_wall_clock_time() > timestamp:
             # E.g., it's 10:21:51, we computed the forecast for [10:20, 10:25]
@@ -259,20 +272,25 @@ async def process_forecasts(
             # it's later, either assert or log it as a problem.
             hdbg.dassert_lte(get_wall_clock_time(), timestamp + offset_min)
         else:
-            _LOG.debug("async_wait_until")
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("async_wait_until")
             await hasynci.async_wait_until(timestamp, get_wall_clock_time)
         # Get the wall clock timestamp.
         wall_clock_timestamp = get_wall_clock_time()
-        _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
         # if execution_mode == "batch":
         #     if idx == len(predictions_df) - 1:
         #         # For the last timestamp we only need to mark to market, but not
         #         # post any more orders.
         #         continue
-        # Wait 1 second to give all open orders sufficient time to close.
-        _LOG.debug("Event: awaiting asyncio.sleep()...")
-        await asyncio.sleep(1)
-        _LOG.debug("Event: awaiting asyncio.sleep() done.")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Event: awaiting asyncio.sleep()...")
+        # TODO(Grisha): check if the System needs to go to sleep at all.
+        # Wait a bit to give all open orders sufficient time to close.
+        await asyncio.sleep(0.1)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Event: awaiting asyncio.sleep() done.")
         skip_generating_orders = _skip_generating_orders(
             current_bar_time,
             ath_start_time,
@@ -281,14 +299,15 @@ async def process_forecasts(
             trading_end_time,
         )
         # 1) Compute the target positions.
-        _LOG.debug(
-            "\n%s",
-            hprint.frame(
-                "1) Computing target positions: timestamp=%s current_bar_time=%s"
-                % (get_wall_clock_time(), current_bar_time),
-                char1="#",
-            ),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "\n%s",
+                hprint.frame(
+                    "1) Computing target positions: timestamp=%s current_bar_time=%s"
+                    % (get_wall_clock_time(), current_bar_time),
+                    char1="#",
+                ),
+            )
         if skip_generating_orders:
             _LOG.warning("Skipping generating orders")
             # Keep logging the state and marking to market even if we don't submit
@@ -306,15 +325,17 @@ async def process_forecasts(
         liquidate_holdings = False
         if liquidate_at_trading_end_time:
             hdbg.dassert_is_not(trading_end_time, None)
-            _LOG.debug(
-                "liquidate_at_trading_end_time: "
-                + hprint.to_str("trading_end_time current_bar_time")
-            )
-            if current_bar_time >= trading_end_time:
+            if _LOG.isEnabledFor(logging.DEBUG):
                 _LOG.debug(
-                    "Liquidating holdings: "
+                    "liquidate_at_trading_end_time: "
                     + hprint.to_str("trading_end_time current_bar_time")
                 )
+            if current_bar_time >= trading_end_time:
+                if _LOG.isEnabledFor(logging.DEBUG):
+                    _LOG.debug(
+                        "Liquidating holdings: "
+                        + hprint.to_str("trading_end_time current_bar_time")
+                    )
                 liquidate_holdings = True
         # Generate orders.
         volatility = volatility_df.loc[timestamp]
@@ -326,22 +347,28 @@ async def process_forecasts(
             liquidate_holdings,
         )
         # 2) Submit orders.
-        _LOG.debug(
-            "\n%s",
-            hprint.frame(
-                "2) Submitting orders: timestamp=%s current_bar_time=%s"
-                % (get_wall_clock_time(), current_bar_time),
-                char1="#",
-            ),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "\n%s",
+                hprint.frame(
+                    "2) Submitting orders: timestamp=%s current_bar_time=%s"
+                    % (get_wall_clock_time(), current_bar_time),
+                    char1="#",
+                ),
+            )
         await target_position_and_order_generator.submit_orders(
             orders, **order_dict
         )
-        _LOG.debug(
-            "TargetPositionAndOrderGenerator=\n%s",
-            str(target_position_and_order_generator),
-        )
-    _LOG.debug("Event: exiting process_forecasts() for loop.")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "TargetPositionAndOrderGenerator=\n%s",
+                str(target_position_and_order_generator),
+            )
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("Event: exiting process_forecasts() for loop.")
+
+
+# /////////////////////////////////////////////////////////////////////////////
 
 
 def _validate_trading_time(
@@ -383,11 +410,12 @@ def _skip_generating_orders(
     This decision is based on the current time and on the ATH / trading
     time limits.
     """
-    _LOG.debug(
-        hprint.to_str(
-            "time ath_start_time ath_end_time trading_start_time trading_end_time"
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(
+            hprint.to_str(
+                "time ath_start_time ath_end_time trading_start_time trading_end_time"
+            )
         )
-    )
     # TODO(gp): Not sure about this.
     # Sanity check: all values are defined together or are all `None`.
     trading_time_list = [
@@ -402,33 +430,38 @@ def _skip_generating_orders(
     if all_defined_cond:
         # Filter based on ATH.
         if time < ath_start_time:
-            _LOG.debug(
-                "time=%s < ath_start_time=%s, skipping bar ...",
-                time,
-                ath_start_time,
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "time=%s < ath_start_time=%s, skipping bar ...",
+                    time,
+                    ath_start_time,
+                )
             skip_bar_cond = True
         if time > ath_end_time:
-            _LOG.debug(
-                "time=%s > ath_end_time=%s, skipping bar ...",
-                time,
-                ath_end_time,
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "time=%s > ath_end_time=%s, skipping bar ...",
+                    time,
+                    ath_end_time,
+                )
             skip_bar_cond = True
         # Filter based on trading times.
         if time < trading_start_time:
-            _LOG.debug(
-                "time=%s < trading_start_time=%s, skipping bar ...",
-                time,
-                trading_start_time,
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "time=%s < trading_start_time=%s, skipping bar ...",
+                    time,
+                    trading_start_time,
+                )
             skip_bar_cond = True
         if time > trading_end_time:
-            _LOG.debug(
-                "time=%s > trading_end_time=%s, skipping bar ...",
-                time,
-                trading_end_time,
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "time=%s > trading_end_time=%s, skipping bar ...",
+                    time,
+                    trading_end_time,
+                )
             skip_bar_cond = True
-    _LOG.debug(hprint.to_str("skip_bar_cond"))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(hprint.to_str("skip_bar_cond"))
     return skip_bar_cond

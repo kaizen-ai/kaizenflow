@@ -1,3 +1,4 @@
+import os
 from typing import List
 
 import pandas as pd
@@ -194,6 +195,37 @@ class TestImClientMarketData1(mdata.MarketData_get_data_TestCase):
             expected_column_unique_values,
             exp_df_as_str,
         )
+
+    def test_get_data_at_timestamp2(self) -> None:
+        """
+        Test that an empty dataframe is returned when timestamp is not aligned
+        to 1-minute frequency, e.g., "2018-08-17T00:05:10+00:00".
+        """
+        # Prepare inputs.
+        resample_1min = True
+        im_client = icdcl.get_CcxtParquetByAssetClient_example1(resample_1min)
+        asset_ids = [3187272957, 1467591036]
+        columns = None
+        column_remap = None
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
+        )
+        ts = pd.Timestamp("2018-08-17T00:05:10+00:00")
+        # Check.
+        with self.assertRaises(AssertionError) as e:
+            ts_col_name = "end_ts"
+            _ = market_data.get_data_at_timestamp(ts, ts_col_name, asset_ids)
+        exp = """
+        ################################################################################
+        * Failed assertion *
+        0 < 0
+        Empty df=
+        Empty DataFrame
+        Columns: [full_symbol, open, high, low, close, volume]
+        Index: []
+        ################################################################################
+        """
+        self.assert_equal(str(e.exception), exp, fuzzy_match=True)
 
     @pytest.mark.skip(
         reason="CmTask #1633 Add unit test for universe in MarketData."
@@ -500,19 +532,28 @@ class TestImClientMarketData1(mdata.MarketData_get_data_TestCase):
         #
         expected_length = 2
         expected_unique_values = None
-        exp_srs_as_str = r"""
-                      close
-        asset_id
-        1467591036  6342.95
-        3187272957   292.16
+        expected_column_names = [
+            "asset_id",
+            "close",
+        ]
+        exp_as_str = r"""
+        # df=
+        index=[2018-08-16 21:39:00-04:00, 2018-08-16 21:39:00-04:00]
+        columns=close,asset_id
+        shape=(2, 2)
+                                        close    asset_id
+        end_ts
+        2018-08-16 21:39:00-04:00      6342.95  1467591036
+        2018-08-16 21:39:00-04:00       292.16  3187272957
         """
         # Run.
         self._test_get_last_price1(
             market_data,
             asset_ids,
             expected_length,
+            expected_column_names,
             expected_unique_values,
-            exp_srs_as_str,
+            exp_as_str,
         )
 
     # //////////////////////////////////////////////////////////////////////////////
@@ -1020,19 +1061,28 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         #
         expected_length = 2
         expected_unique_values = None
-        exp_srs_as_str = r"""
-                      close
-        asset_id
-        1467591036  100.0
-        3303714233  100.0
+        expected_column_names = [
+            "asset_id",
+            "close",
+        ]
+        exp_as_str = r"""
+        # df=
+        index=[2000-01-01 12:10:00-05:00, 2000-01-01 12:10:00-05:00]
+        columns=close,asset_id
+        shape=(2, 2)
+                                close    asset_id
+        end_ts
+        2000-01-01 12:10:00-05:00  100.0  1467591036
+        2000-01-01 12:10:00-05:00  100.0  3303714233
         """
         # Run.
         self._test_get_last_price1(
             market_data,
             asset_ids,
             expected_length,
+            expected_column_names,
             expected_unique_values,
-            exp_srs_as_str,
+            exp_as_str,
         )
 
     # //////////////////////////////////////////////////////////////////////////////
@@ -1086,6 +1136,26 @@ class TestImClientMarketData3(mdata.MarketData_get_data_TestCase):
         ]
         return expected_column_names
 
+    def get_im_client(
+        self, resample_1min: bool
+    ) -> icdcl.CcxtHistoricalPqByTileClient:
+        """
+        Get `CcxtHistoricalPqByTileClient` based on data from S3.
+
+        :param resample_1min: whether to resample data to 1 minute or
+            not
+        :return: Ccxt historical client
+        """
+        use_only_test_class = True
+        s3_input_dir = self.get_s3_input_dir(
+            use_only_test_class=use_only_test_class
+        )
+        root_dir = os.path.join(s3_input_dir, "historical.manual.pq")
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(
+            root_dir, resample_1min
+        )
+        return im_client
+
     # //////////////////////////////////////////////////////////////////////////////
 
     def test_is_online1(self) -> None:
@@ -1095,7 +1165,7 @@ class TestImClientMarketData3(mdata.MarketData_get_data_TestCase):
         column_remap = None
         filter_data_mode = "assert"
         resample_1min = False
-        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
+        im_client = self.get_im_client(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client,
             asset_ids,
@@ -1116,7 +1186,7 @@ class TestImClientMarketData3(mdata.MarketData_get_data_TestCase):
         column_remap = None
         filter_data_mode = "assert"
         resample_1min = False
-        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
+        im_client = self.get_im_client(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client,
             asset_ids,
@@ -1169,7 +1239,7 @@ class TestImClientMarketData3(mdata.MarketData_get_data_TestCase):
         column_remap = None
         filter_data_mode = "assert"
         resample_1min = False
-        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
+        im_client = self.get_im_client(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client,
             asset_ids,
@@ -1201,7 +1271,7 @@ class TestImClientMarketData3(mdata.MarketData_get_data_TestCase):
         column_remap = None
         filter_data_mode = "assert"
         resample_1min = False
-        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
+        im_client = self.get_im_client(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client,
             asset_ids,
@@ -1229,7 +1299,7 @@ class TestImClientMarketData3(mdata.MarketData_get_data_TestCase):
         column_remap = None
         filter_data_mode = "assert"
         resample_1min = False
-        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
+        im_client = self.get_im_client(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client,
             asset_ids,
@@ -1247,7 +1317,7 @@ class TestImClientMarketData3(mdata.MarketData_get_data_TestCase):
         column_remap = None
         filter_data_mode = "warn_and_trim"
         resample_1min = False
-        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
+        im_client = self.get_im_client(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client,
             asset_ids,

@@ -18,4 +18,5 @@ from core.signal_processing.incremental_pca import *  # pylint: disable=unused-i
 from core.signal_processing.misc_transformations import *  # pylint: disable=unused-import # NOQA
 from core.signal_processing.outliers import *  # pylint: disable=unused-import # NOQA
 from core.signal_processing.special_functions import *  # pylint: disable=unused-import # NOQA
+from core.signal_processing.summation import *  # pylint: disable=unused-import # NOQA
 from core.signal_processing.swt import *  # pylint: disable=unused-import # NOQA

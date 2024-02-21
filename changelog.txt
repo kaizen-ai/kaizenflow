@@ -1,3 +1,17 @@
+# cmamp-1.12.0
+- 2024-02-20
+- Promote `pyarrow` to 14.0.2
+- Changes from:
+- #7097 - Update pyarrow package
+
+# cmamp-1.11.0
+- 2024-01-16
+- Promote CCXT to 4.2.13
+- Upgrade AWS CLI to V2
+- Changes from:
+- #526 - Update to AWS CLI v2
+- #6756 - Adapt recommendations given by ccxt for bid ask
+
 # cmamp-1.10.0
 - 2023-11-13
 - Promote Pandas to 2.1.1

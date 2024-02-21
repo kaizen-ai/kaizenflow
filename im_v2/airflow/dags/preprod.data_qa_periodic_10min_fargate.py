@@ -1,6 +1,6 @@
 # This is a utility DAG to conduct QA on real time data download
-# The task compares the downloaded data with the contents of
-# of the database, to confirm a match or show discrepancies.
+# The task analyzes the downloaded data stored inside an RDS database with the contents,
+# to confirm expected attributes of the data
 
 # IMPORTANT NOTES:
 # Make sure to set correct dag schedule `schedule_interval`` parameter.
@@ -12,8 +12,9 @@ import datetime
 import os
 
 import airflow
+import airflow_utils.ecs.operator as aiutecop
+import airflow_utils.misc as aiutmisc
 import airflow_utils.telegram.operator as aiutteop
-from airflow.contrib.operators.ecs_operator import ECSOperator
 from airflow.models import Variable
 from airflow.operators.dummy_operator import DummyOperator
 
@@ -23,23 +24,17 @@ _FILENAME = os.path.basename(__file__)
 # names of Airflow configuration variables, allow to switch from test to preprod/prod
 # in one line (in best case scenario).
 # _STAGE = _FILENAME.split(".")[0]
-_STAGE = _FILENAME.split(".")[0]
-assert _STAGE in ["prod", "preprod", "test"]
+_STAGE = aiutmisc.get_stage_from_filename(_FILENAME)
 
 # Used for seperations of deployment environments
 # ignored when executing on prod/preprod.
 _USERNAME = ""
 
-# Deployment type, if the task should be run via fargate (serverless execution)
-# or EC2 (machines deployed in our auto-scaling group)
-_LAUNCH_TYPE = "fargate"
-assert _LAUNCH_TYPE in ["ec2", "fargate"]
-
-_DAG_ID = _FILENAME.rsplit(".", 1)[0]
+_DAG_ID = aiutmisc.get_dag_id_from_filename(_FILENAME)
 # List of dataset signatures to perform QA on. i.e.:
 # "periodic_daily.airflow.downloaded_1min.parquet.ohlcv.futures.v7.ccxt.binance.v1_0_0"
 _QA_JOBS = [
-    "realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v7.ccxt.binance.v1_0_0",
+    "realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v7_3.ccxt.binance.v1_0_0",
 ]
 # Shared location to store the reconciliaiton notebook into
 _QA_NB_DST_DIR = os.path.join(
@@ -50,28 +45,7 @@ _DAG_DESCRIPTION = (
 )
 _SCHEDULE = Variable.get(f"{_DAG_ID}_schedule")
 
-# Used for container overrides inside DAG task definition.
-# If this is a test DAG don't forget to add your username to container suffix.
-# i.e. cmamp-test-juraj since we try to follow the convention of container having
-# the same name as task-definition if applicable
-# Set to the name your task definition is suffixed with i.e. cmamp-test-juraj,
-_CONTAINER_SUFFIX = f"-{_STAGE}" if _STAGE in ["preprod", "test"] else ""
-_CONTAINER_SUFFIX += f"-{_USERNAME}" if _STAGE == "test" else ""
-_CONTAINER_NAME = f"cmamp{_CONTAINER_SUFFIX}"
-
-ecs_cluster = Variable.get(f"{_STAGE}_ecs_cluster")
-# The naming convention is set such that this value is then reused
-# in log groups, stream prefixes and container names to minimize
-# convolution and maximize simplicity.
-ecs_task_definition = _CONTAINER_NAME
-
-# Subnets and security group is not needed for EC2 deployment but
-# we keep the configuration header unified for convenience/reusability.
-ecs_subnets = [Variable.get("ecs_subnet1")]
-ecs_security_group = [Variable.get("ecs_security_group")]
-ecs_awslogs_group = f"/ecs/{ecs_task_definition}"
-ecs_awslogs_stream_prefix = f"ecs/{ecs_task_definition}"
-s3_bucket = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}"
+_ECS_TASK_DEFINITION = aiutecop.get_task_definition(_STAGE, False, _USERNAME)
 
 # Pass default parameters for the DAG.
 default_args = {
@@ -91,9 +65,12 @@ dag = airflow.DAG(
     schedule_interval=_SCHEDULE,
     catchup=False,
     start_date=datetime.datetime(2023, 1, 24, 0, 0, 0),
+    tags=[_STAGE],
 )
 
 invoke_cmd = [
+    "mkdir /.dockerenv",
+    "&&",
     "invoke run_single_dataset_qa_notebook",
     f"--stage '{_STAGE}'",
     "--start-timestamp '{{ data_interval_start.replace(second=0) - macros.timedelta(minutes=5) }}'",
@@ -105,51 +82,27 @@ invoke_cmd = [
 
 start_comparison = DummyOperator(task_id="start_comparison", dag=dag)
 end_comparison = DummyOperator(task_id="end_comparison", dag=dag)
+end_dag = DummyOperator(task_id="end_dag", dag=dag)
 
 for dataset_signature in _QA_JOBS:
     # Do a deepcopy of the bash cmd list so we can reformat params on each iteration.
     curr_invoke_cmd = copy.deepcopy(invoke_cmd)
-    curr_invoke_cmd[4] = curr_invoke_cmd[4].format(dataset_signature)
+    curr_invoke_cmd[-3] = curr_invoke_cmd[-3].format(dataset_signature)
 
-    # We first execute the notebook which finishes successfully regardless of the success of
-    #  the reconciliation (unless the notebook execution itself fails, in which case we get
-    #  notified). Afterwards a script is executed, return code of the command will inform
-    #  Airflow which can send a notification upon failure.
-    kwargs = {}
-    kwargs["network_configuration"] = {
-        "awsvpcConfiguration": {
-            "securityGroups": ecs_security_group,
-            "subnets": ecs_subnets,
-        },
-    }
-
-    comparing_task = ECSOperator(
-        task_id=f"data_qa.{dataset_signature}",
-        dag=dag,
-        aws_conn_id=None,
-        cluster=ecs_cluster,
-        task_definition=ecs_task_definition,
-        launch_type=_LAUNCH_TYPE.upper(),
-        overrides={
-            "containerOverrides": [
-                {
-                    "name": _CONTAINER_NAME,
-                    "command": curr_invoke_cmd,
-                }
-            ],
-            "cpu": "512",
-            "memory": "2048",
-        },
-        awslogs_group=ecs_awslogs_group,
-        awslogs_stream_prefix=ecs_awslogs_stream_prefix,
-        execution_timeout=datetime.timedelta(minutes=15),
-        **kwargs,
+    comparing_task = aiutecop.get_ecs_run_task_operator(
+        dag,
+        _STAGE,
+        f"data_qa.{dataset_signature}",
+        curr_invoke_cmd,
+        _ECS_TASK_DEFINITION,
+        512,
+        2048,
     )
 
-    start_comparison >> comparing_task >> end_comparison
+    start_comparison >> comparing_task >> end_comparison >> end_dag
 
 if _STAGE != "test":
     telegram_notification_task = aiutteop.get_telegram_operator(
-        dag, _STAGE, _DAG_ID, "{{ run_id }}"
+        dag, _STAGE, "datapull", _DAG_ID, "{{ run_id }}"
     )
-    end_comparison >> telegram_notification_task
+    end_comparison >> telegram_notification_task >> end_dag

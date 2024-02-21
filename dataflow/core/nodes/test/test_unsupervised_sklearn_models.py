@@ -11,6 +11,7 @@ import core.finance as cofinanc
 import dataflow.core.nodes.test.helpers as cdnth
 import dataflow.core.nodes.transformers as dtfconotra
 import dataflow.core.nodes.unsupervised_sklearn_models as dtfcnuskmo
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ class TestUnsupervisedSkLearnModel(hunitest.TestCase):
         node = dtfcnuskmo.UnsupervisedSkLearnModel("sklearn", **config.to_dict())
         # Fit model.
         df_out = node.fit(data)["df_out"]
-        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True)
+        df_str = hpandas.df_to_str(df_out.round(3), num_rows=None)
         self.check_string(df_str)
 
     def test2(self) -> None:
@@ -53,7 +54,7 @@ class TestUnsupervisedSkLearnModel(hunitest.TestCase):
         node.fit(data.loc["2000-01-03":"2000-01-31"])  # type: ignore[misc]
         # Predict.
         df_out = node.predict(data.loc["2000-02-01":"2000-02-25"])["df_out"]  # type: ignore[misc]
-        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True)
+        df_str = hpandas.df_to_str(df_out.round(3), num_rows=None)
         self.check_string(df_str)
 
     def test3(self) -> None:
@@ -105,7 +106,7 @@ class TestMultiindexUnsupervisedSkLearnModel(hunitest.TestCase):
             "sklearn", **config.to_dict()
         )
         df_out = node.fit(data)["df_out"]
-        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True)
+        df_str = hpandas.df_to_str(df_out.round(3), num_rows=None)
         self.check_string(df_str)
 
     def test2(self) -> None:
@@ -127,7 +128,7 @@ class TestMultiindexUnsupervisedSkLearnModel(hunitest.TestCase):
         node.fit(data.loc["2000-01-03":"2000-01-31"])  # type: ignore[misc]
         # Predict.
         df_out = node.predict(data.loc["2000-02-01":"2000-02-25"])["df_out"]  # type: ignore[misc]
-        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True)
+        df_str = hpandas.df_to_str(df_out.round(3), num_rows=None)
         self.check_string(df_str)
 
     def test3(self) -> None:
@@ -182,7 +183,7 @@ class TestResidualizer(hunitest.TestCase):
         node = dtfcnuskmo.Residualizer("sklearn", **config.to_dict())
         #
         df_out = node.fit(data)["df_out"]
-        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True)
+        df_str = hpandas.df_to_str(df_out.round(3), num_rows=None)
         self.check_string(df_str)
 
     def test2(self) -> None:
@@ -197,7 +198,7 @@ class TestResidualizer(hunitest.TestCase):
         node.fit(data.loc["2000-01-03":"2000-01-31"])  # type: ignore[misc]
         # Predict.
         df_out = node.predict(data.loc["2000-02-01":"2000-02-25"])["df_out"]  # type: ignore[misc]
-        df_str = hunitest.convert_df_to_string(df_out.round(3), index=True)
+        df_str = hpandas.df_to_str(df_out.round(3), num_rows=None)
         self.check_string(df_str)
 
     def test3(self) -> None:
@@ -254,7 +255,7 @@ class TestResidualizer2(hunitest.TestCase):
         df_out = node.fit(data)["df_out"]
         #
         pca_residual = df_out["pca_residual"]
-        df_str = hunitest.convert_df_to_string(pca_residual.round(5), index=True)
+        df_str = hpandas.df_to_str(pca_residual.round(5), num_rows=None)
         self.check_string(df_str)
 
     def test2(self) -> None:
@@ -270,7 +271,7 @@ class TestResidualizer2(hunitest.TestCase):
         df_out = node.fit(data)["df_out"]
         #
         pca_residual = df_out["pca_residual"]
-        df_str = hunitest.convert_df_to_string(pca_residual.round(5), index=True)
+        df_str = hpandas.df_to_str(pca_residual.round(5), num_rows=None)
         self.check_string(df_str)
 
     def test3(self) -> None:
@@ -287,7 +288,7 @@ class TestResidualizer2(hunitest.TestCase):
         df_out = node.predict(data)["df_out"]
         #
         pca_residual = df_out["pca_residual"]
-        df_str = hunitest.convert_df_to_string(pca_residual.round(5), index=True)
+        df_str = hpandas.df_to_str(pca_residual.round(5), num_rows=None)
         self.check_string(df_str)
 
     def test4(self) -> None:
@@ -304,7 +305,7 @@ class TestResidualizer2(hunitest.TestCase):
         df_out = node.predict(data)["df_out"]
         #
         pca_residual = df_out["pca_residual"]
-        df_str = hunitest.convert_df_to_string(pca_residual.round(5), index=True)
+        df_str = hpandas.df_to_str(pca_residual.round(5), num_rows=None)
         self.check_string(df_str)
 
     def get_data(self) -> pd.DataFrame:

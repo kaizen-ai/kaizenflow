@@ -22,6 +22,9 @@ _LOG = logging.getLogger(__name__)
 NodeInfo = Dict[dtfcornode.NodeId, Dict[dtfcornode.Method, Any]]
 
 
+# #############################################################################
+
+
 def extract_info(
     dag: dtfcordag.DAG, methods: List[dtfcornode.Method]
 ) -> NodeInfo:

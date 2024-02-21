@@ -36,7 +36,7 @@
 #        #
 #        df = vldaliut.get_liquidity_data(*args, **kwargs)
 #        #
-#        df_as_str = hunitest.convert_df_to_string(df.T, index=True)
+#        df_as_str = hpandas.df_to_str(df.T, num_rows=None)
 #        # TODO(Paul): Add summary stats to test.
 #        actual = []
 #        actual_tmp = "## transposed df_as_str=\n%s" % df_as_str

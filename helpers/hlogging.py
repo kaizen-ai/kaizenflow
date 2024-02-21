@@ -166,8 +166,8 @@ def shutup_chatty_modules(
     """
     Reduce the verbosity for external modules that are very chatty.
 
-    :param verbosity: level of verbosity used for chatty modules: the higher the
-        better
+    :param verbosity: level of verbosity used for chatty modules: the
+        higher the better
     :param verbose: print extra information
     """
     module_names = [
@@ -221,12 +221,11 @@ class _LocalTimeZoneFormatter:
         try:
             # TODO(gp): Automatically detect the time zone. It might be complicated in
             #  Docker.
-            from dateutil import tz
+            import pytz
 
-            # self._tzinfo = pytz.timezone('America/New_York')
-            self._tzinfo = tz.gettz("America/New_York")
+            self._tzinfo = pytz.timezone("America/New_York")
         except ModuleNotFoundError as e:
-            print(f"Can't import dateutil: using UTC\n{str(e)}")
+            print(f"Can't import pytz: using UTC\n{str(e)}")
             self._tzinfo = None
 
     def converter(self, timestamp: float) -> datetime.datetime:
@@ -553,11 +552,11 @@ class CustomFormatter(logging.Formatter):
         try:
             # TODO(gp): Automatically detect the time zone. It might be complicated
             #  in Docker.
-            from dateutil import tz
+            import pytz
 
-            self._tzinfo = tz.gettz("America/New_York")
+            self._tzinfo = pytz.timezone("America/New_York")
         except ModuleNotFoundError as e:
-            print(f"Can't import dateutil: using UTC\n{str(e)}")
+            print(f"Can't import pytz: using UTC\n{str(e)}")
             self._tzinfo = None
         #
         self._report_memory_usage = report_memory_usage

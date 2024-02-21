@@ -10,10 +10,6 @@ Run a list of experiments consisting of multiple model runs based on the passed:
     --config_builder "dataflow_lm.RH1E.config.build_15min_model_configs()" \
     --dst_dir experiment1 \
     --num_threads 2
-
-Import as:
-
-import dataflow.backtest.run_config_list as dtfmoruexp
 """
 
 
@@ -46,12 +42,13 @@ def _run_config_stub(
     num_attempts: int,
 ) -> int:
     """
-    Run a pipeline for a specific `Config` calling `run_config_stub.py`.
+    Run a specific `Config` calling `run_config_stub.py`.
+
+    This is the interface between Python and the executable `run_config_stub.py`.
 
     :param config: config for the experiment
-    :param num_attempts: maximum number of times to attempt running the
-        notebook
-    :return: rc from executing the pipeline
+    :param num_attempts: maximum number of times to attempt
+    :return: return code from executing the
     """
     hdbg.dassert_eq(1, num_attempts, "Multiple attempts not supported yet")
     _ = incremental
@@ -60,7 +57,6 @@ def _run_config_stub(
     # Prepare command line to execute the experiment.
     file_name = "run_config_stub.py"
     exec_name = hgit.find_file_in_git_tree(file_name, super_module=True)
-    #
     # TODO(gp): Rename id -> idx everywhere with `jackpy "backtest_config" | grep id | grep config`
     idx = config[("backtest_config", "id")]
     _LOG.info("\n%s", hprint.frame(f"Executing experiment for config {idx}"))
@@ -89,15 +85,14 @@ def _run_config_stub(
         cmd, output_file=log_file, suppress_output=False, abort_on_error=False
     )
     _LOG.info("Executed cmd")
-    # TODO(gp): We don't really have to catch the error and rethrow since the outer
-    #  layer handles the exceptions.
+    # TODO(gp): We don't really have to catch the error and rethrow since the
+    # outer layer handles the exceptions.
     if rc != 0:
         # The notebook run wasn't successful.
         msg = f"Execution failed for experiment {idx}"
         _LOG.error(msg)
         raise RuntimeError(msg)
     # Mark as success.
-    # if rc == 0:
     dtfbdtfbaut.mark_config_as_success(experiment_result_dir)
     rc = cast(int, rc)
     return rc
@@ -202,14 +197,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.archive_on_S3:
         _LOG.info("Archiving results to S3")
         aws_profile = hs3.get_aws_profile(args.aws_profile)
-        _LOG.debug("aws_profile='%s'", aws_profile)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("aws_profile='%s'", aws_profile)
         # Get the S3 path from command line.
         s3_path = args.s3_path
-        _LOG.debug("s3_path=%s", s3_path)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("s3_path=%s", s3_path)
         if s3_path is None:
-            # The user didn't specified the path, so we derive it from the
+            # The user didn't specify the path, so we derive it from the
             # credentials or from the env vars.
-            _LOG.debug("Getting s3_path from credentials file")
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("Getting s3_path from credentials file")
             s3_path = hs3.get_s3_bucket_path(aws_profile, add_s3_prefix=False)
             hdbg.dassert(not s3_path.startswith("s3://"), "Invalid value '%s'")
             s3_path = "s3://" + s3_path + "/experiments"

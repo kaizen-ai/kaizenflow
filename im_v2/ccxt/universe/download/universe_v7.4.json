@@ -87,6 +87,28 @@
         "ATOM_USDT",
         "XMR_USDT",
         "BCH_USDT"
-    ]
+    ],
+    "cryptocom": [
+          "ETH_USD",
+          "BTC_USD",
+          "SAND_USD",
+          "STORJ_USD",
+          "GMT_USD",
+          "AVAX_USD",
+          "APE_USD",
+          "MATIC_USD",
+          "DYDX_USD",
+          "DOT_USD",
+          "LINK_USD",
+          "XRP_USD",
+          "RUNE_USD",
+          "NEAR_USD",
+          "FTM_USD",
+          "WAVES_USD",
+          "AXS_USD",
+          "OGN_USD",
+          "DOGE_USD",
+          "SOL_USD"
+     ]
    }
  }

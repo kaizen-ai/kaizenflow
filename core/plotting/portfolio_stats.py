@@ -59,27 +59,33 @@ def plot_portfolio_stats(
     gmv = df.T.xs("gmv", level=1).T
     # Zero-GMV "bars" lead to noise in some plots. Remove these.
     gmv = gmv.replace(0, np.nan)
+    rolling_gmv = gmv.expanding().mean()
+    #
+    gross_volume = df.T.xs("gross_volume", level=1).T
+    gross_volume = gross_volume.replace(0, np.nan)
     # TODO(Paul): Make the unit configurable.
-    pnl_rel = pnl.divide(gmv)
-    (1e4 * pnl_rel).plot(ax=axes[1], title="Bar PnL", ylabel="bps")
+    pnl_rel_volume = pnl.divide(gross_volume)
+    (1e4 * pnl_rel_volume).plot(
+        ax=axes[1], title="Bar PnL/Gross Volume", ylabel="bps"
+    )
     # Cumulative PnL.
     pnl.cumsum().plot(ax=axes[2], title="Cumulative PnL", ylabel="dollars")
-    (1e2 * pnl_rel).cumsum().plot(
-        ax=axes[3], title="Cumulative PnL", ylabel="% GMV"
+    # TODO(Paul): Make this a GMV-weighted average.
+    (1e2 * pnl.cumsum().divide(rolling_gmv)).plot(
+        ax=axes[3], title="Cumulative PnL/GMV", ylabel="%"
     )
     # Volume/turnover.
-    gross_volume = df.T.xs("gross_volume", level=1).T
-    gross_volume.cumsum().plot(
+    gross_volume.cumsum().ffill().plot(
         ax=axes[4],
         title="Cumulative Gross Volume",
         ylabel="dollars",
     )
     #
-    turnover = 100 * gross_volume.divide(gmv)
+    turnover = 100 * gross_volume.divide(rolling_gmv)
     turnover.plot(ax=axes[5], title="Bar Turnover", ylabel="% GMV")
     # Net volume/imbalance.
     net_volume = df.T.xs("net_volume", level=1).T
-    net_volume.cumsum().plot(
+    net_volume.cumsum().ffill().plot(
         ax=axes[6],
         title="Cumulative Net Volume",
         ylabel="dollars",
@@ -88,8 +94,8 @@ def plot_portfolio_stats(
     imbalance.plot(ax=axes[7], title="Bar Net Volume", ylabel="% GMV")
     # GMV.
     gmv.plot(ax=axes[8], title="GMV", ylabel="dollars")
-    (gmv / gmv.mean()).plot(
-        ax=axes[9], title="GMV deviation from mean", ylabel="ratio"
+    (gmv / rolling_gmv).plot(
+        ax=axes[9], title="GMV deviation from expanding mean", ylabel="ratio"
     )
     # NMV.
     nmv = df.T.xs("nmv", level=1).T

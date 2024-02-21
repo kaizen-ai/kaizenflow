@@ -7,22 +7,23 @@ import im_v2.common.data.extract.extractor as ivcdexex
 """
 
 import abc
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import pandas as pd
 
 import helpers.hdbg as hdbg
 
 
+# TODO(gp): -> MarketDataExtractor and descends from Data
 class Extractor(abc.ABC):
     """
-    Abstract class for downloading raw data from all vendors.
+    Abstract class for downloading raw data from vendors.
     """
 
     def __init__(self) -> None:
         super().__init__()
 
-    # TODO(Juraj): refactor to download_data_rest to clarify after addition of
+    # TODO(Juraj): rename `download_data_rest` to clarify after addition of
     #  websocket based download in #CmTask2912.
     def download_data(
         self, data_type: str, exchange_id: str, currency_pair: str, **kwargs: Any
@@ -30,8 +31,13 @@ class Extractor(abc.ABC):
         """
         Download exchange data using REST API based download.
 
-        :param data_type: the type of data, e.g. `bid_ask`
-        :return: exchange data
+        :param data_type: the type of data, e.g. `ohlcv`, `bid_ask`, `trades`
+            This is used to dispatch the call to abstract methods from the other
+            derived classes.
+        :param exchange_id: exchange to get data from, e.g. `binance`
+        :param currency_pair: currency_pair to get data about, e.g. `ETH_USDT`
+        :param kwargs: passed to the downloading method
+        :return: exchange data as dataframe
         """
         if data_type == "ohlcv":
             data = self._download_ohlcv(
@@ -44,23 +50,22 @@ class Extractor(abc.ABC):
         elif data_type == "trades":
             data = self._download_trades(exchange_id, currency_pair, **kwargs)
         else:
-            hdbg.dfatal(
-                f"Unknown data type {data_type}. Possible data types: ohlcv, bid_ask, trades"
-            )
+            hdbg.dfatal(f"Unknown data type {data_type}.")
         return data
+
+    # #############################################################################
 
     def download_websocket_data(
         self, data_type: str, exchange_id: str, currency_pair: str, **kwargs: Any
     ) -> Dict:
         """
-        Download exchange data using websocket based approach assuming the
-        websocket corresponding to the particular exchange and currency_pair
-        has been subscribed to via subscribe_to_websocket_data.
+        Download exchange data using websocket.
 
-        :param data_type: the type of data, e.g. `bid_ask`
-        :param exchange_id: exchange to get data from, e.g. `binance`
-        :param currency_pair: currency_pair to get data about, e.g. `ETH_USDT`
-        :return: exchange data
+        This assumes that the websocket corresponding to the particular
+        `exchange_id` and `currency_pair` has been subscribed to via
+        `subscribe_to_websocket_data()`.
+
+        Same parameters as `download_data()`.
         """
         if data_type == "ohlcv":
             data = self._download_websocket_ohlcv(
@@ -77,9 +82,7 @@ class Extractor(abc.ABC):
                 exchange_id, currency_pair, **kwargs
             )
         else:
-            hdbg.dfatal(
-                f"Unknown data type {data_type}. Possible data types: ohlcv, bid_ask, trades"
-            )
+            hdbg.dfatal(f"Unknown data type {data_type}")
         return data
 
     async def subscribe_to_websocket_data(
@@ -87,12 +90,9 @@ class Extractor(abc.ABC):
     ) -> None:
         """
         Subscribe to websocket based data stream for a particular exchange
-        exchange_id and currency pair currency_pair.
+        `exchange_id` and `currency_pair`.
 
-        :param data_type: the type of data, e.g. `bid_ask`
-        :param exchange_id: exchange to subscribe to, e.g. `binance`
-        :param currency_pair: currency_pair to get data about, e.g. `ETH_USDT`
-        :return: exchange data
+        Same parameters as `download_websocket_data()`.
         """
         if data_type == "ohlcv":
             await self._subscribe_to_websocket_ohlcv(
@@ -109,9 +109,11 @@ class Extractor(abc.ABC):
                 exchange_id, currency_pair, **kwargs
             )
         else:
-            hdbg.dfatal(
-                f"Unknown data type {data_type}. Possible data types: ohlcv, bid_ask, trades"
-            )
+            hdbg.dfatal(f"Unknown data type {data_type}")
+
+    # #############################################################################
+    # Private methods.
+    # #############################################################################
 
     @abc.abstractmethod
     def _download_ohlcv(
@@ -158,6 +160,12 @@ class Extractor(abc.ABC):
     @abc.abstractmethod
     def _subscribe_to_websocket_bid_ask(
         self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        ...
+    
+    @abc.abstractmethod
+    def _subscribe_to_websocket_bid_ask_multiple_symbols(
+        self, exchange_id: str, currency_pair: List[str], **kwargs: Any
     ) -> Dict:
         ...
 

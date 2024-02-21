@@ -2,9 +2,9 @@ import datetime
 import logging
 import os
 from typing import Any, Optional
-import pytest
 
 import pandas as pd
+import pytest
 
 import core.config as cconfig
 import core.finance_data_example as cfidaexa
@@ -14,7 +14,7 @@ import helpers.hgit as hgit
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hunit_test as hunitest
-import optimizer.forecast_evaluator_with_optimizer as optfewo
+import optimizer.forecast_evaluator_with_optimizer as ofevwiop
 
 _LOG = logging.getLogger(__name__)
 
@@ -194,18 +194,20 @@ end_ts
             optimizer_config_dict=optimizer_config_dict,
         )
 
+    @pytest.mark.skip(reason="Small values.")
     def test_annotate_forecasts_by_tile_with_optimizer(self) -> None:
         config = self.get_config()
-        forecast_evaluator = optfewo.ForecastEvaluatorWithOptimizer
+        forecast_evaluator = ofevwiop.ForecastEvaluatorWithOptimizer
         optimizer_config_dict = {
             "dollar_neutrality_penalty": 0.9,
-            "volatility_penalty": 1.0,
-            "relative_holding_penalty": 3.0,
+            "constant_correlation": 0.0,
+            "constant_correlation_penalty": 0.01,
+            "relative_holding_penalty": 0.0,
             "relative_holding_max_frac_of_gmv": 0.6,
-            "target_gmv": 1e4,
+            "target_gmv": 1e5,
             "target_gmv_upper_bound_penalty": 0.95,
             "target_gmv_hard_upper_bound_multiple": 1.00,
-            "turnover_penalty": 0.09,
+            "transaction_cost_penalty": 0.01,
             "solver": "ECOS",
         }
         exp = r"""

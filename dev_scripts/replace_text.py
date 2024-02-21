@@ -1,43 +1,7 @@
 #!/usr/bin/env python
 
-r"""
-- Replace an instance of text in all:
-    - `.py` file contents
-    - `.ipynb` file contents
-    - `.txt` file contents
-    - filenames
-- Git rename the names of files based on certain criteria.
-
-# Replace an import with a new one:
-> replace_text.py \
-        --old "import core.fin" \
-        --new "import core.finance" \
-        --preview
-
-# Custom flow:
-> replace_text.py --custom_flow _custom1
-
-# Custom flow for AmpTask14
-> replace_text.py --custom_flow _custom2 --revert_all
-
-# Replace text in a specific directory:
-> replace_text.py \
-        --old "exec " \
-        --new "execute " \
-        --preview \
-        --dirs dev_scripts \
-        --exts None
-
-# To revert all files but this one:
-> gs -s | \
-        grep -v dev_scripts/replace_text.py | \
-        grep -v "\?" | \
-        awk '{print $2}' | \
-        xargs git checkout --
-
-Import as:
-
-import dev_scripts.replace_text as dscretex
+"""
+Instructions at docs/work_tools/all.replace_text.how_to_guide.md.
 """
 
 import argparse
@@ -87,7 +51,8 @@ def _get_all_files(dirs: List[str], extensions: Optional[List[str]]) -> List[str
         only_files = False
         use_relative_paths = False
         if extensions is not None:
-            # Extensions are specified: find all the files with the given extensions.
+            # Extensions are specified: find all the files with the given
+            # extensions.
             for extension in extensions:
                 pattern = "*." + extension
                 file_names_tmp = hio.listdir(
@@ -106,7 +71,8 @@ def _get_all_files(dirs: List[str], extensions: Optional[List[str]]) -> List[str
                 d, pattern, only_files, use_relative_paths
             )
             _LOG.debug(
-                "extensions=%s -> found %s files", extensions, len(file_names_tmp)
+                "extensions=%s -> found %s files", extensions,
+                len(file_names_tmp)
             )
             file_names.extend(file_names_tmp)
     # Exclude some files.
@@ -148,8 +114,8 @@ def _look_for(file_name: str, filter_by: str) -> Tuple[bool, List[str]]:
     res = []
     found = False
     for i, line in enumerate(txt):
-        # TODO(Vlad): It filters files based on content,
-        # but should filter based on a name.
+        # TODO(Vlad): It filters files based on content, but it should filter
+        # based on a name.
         m = re.search(filter_by, line)
         if m:
             # ./install/create_conda.py:21:import helpers.helper_io as hio
@@ -297,7 +263,7 @@ def _replace_repeated_lines(file_name: str, new_regex: str) -> None:
 
 
 # #############################################################################
-# Custom scripts.
+# Custom flows.
 # #############################################################################
 
 
@@ -584,7 +550,7 @@ def _parse() -> argparse.ArgumentParser:
         "--ext",
         action="store",
         type=str,
-        default="py,ipynb,txt,sh",
+        default="py,ipynb,txt,md,sh",
         help="Extensions to process. `_all_` for all files",
     )
     parser.add_argument(
@@ -737,9 +703,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
             action_processed = True
         if args.action in ("rename", "replace_rename"):
             # Get the files to rename. The files are selected if the `filter_by`
-            # regex is found in a part of their name determined by `args.filter_on`.
-            # Then the `args.old` regex is replaced with the `args.new` regex in the
-            # part of their name determined by `args.replace_in`.
+            # regex is found in a part of their name determined by
+            # `args.filter_on`. Then the `args.old` regex is replaced with the
+            # `args.new` regex in the part of their name determined by
+            # `args.replace_in`.
             file_names_to_process, file_map = _get_files_to_rename(
                 file_names,
                 args.old,

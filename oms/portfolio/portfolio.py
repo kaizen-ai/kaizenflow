@@ -34,7 +34,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Ideally log_dir should be passed to the constructor.
 class Portfolio(abc.ABC, hobject.PrintableMixin):
     """
-    Store holdings_shares over time, e.g., how many shares of each asset are
+    Store `holdings_shares` over time, e.g., how many shares of each asset are
     owned at any time. Cash is treated as just another asset to keep code
     uniform.
 
@@ -96,16 +96,17 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         :param max_num_bars: maximum number of market data bars to store in memory;
             if `None`, then impose no restriction
         """
-        _LOG.debug(
-            hprint.to_str(
-                "broker "
-                "mark_to_market_col "
-                "pricing_method "
-                "initial_holdings_shares "
-                "retrieve_initial_holdings_from_db "
-                "max_num_bars"
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                hprint.to_str(
+                    "broker "
+                    "mark_to_market_col "
+                    "pricing_method "
+                    "initial_holdings_shares "
+                    "retrieve_initial_holdings_from_db "
+                    "max_num_bars"
+                )
             )
-        )
         # Set and unpack broker.
         hdbg.dassert_issubclass(broker, obrobrok.Broker)
         self.broker = broker
@@ -170,7 +171,12 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
             Portfolio.CASH_ID
         )
         #
-        _LOG.debug("After initialization:\n%s", repr(self))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("After initialization:\n%s", repr(self))
+
+    # /////////////////////////////////////////////////////////////////////////////
+    # Print
+    # /////////////////////////////////////////////////////////////////////////////
 
     def __str__(self, num_periods: Optional[int] = None) -> str:
         """
@@ -189,6 +195,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
             "# holdings_shares=\n%s"
             % hpandas.df_to_str(
                 self.get_historical_holdings_shares(num_periods),
+                handle_signed_zeros=True,
                 num_rows=None,
                 precision=precision,
             )
@@ -197,6 +204,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
             "# holdings_notional=\n%s"
             % hpandas.df_to_str(
                 self.get_historical_holdings_notional(num_periods),
+                handle_signed_zeros=True,
                 num_rows=None,
                 precision=precision,
             )
@@ -205,6 +213,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
             "# executed_trades_shares=\n%s"
             % hpandas.df_to_str(
                 self.get_historical_executed_trades_shares(num_periods),
+                handle_signed_zeros=True,
                 num_rows=None,
                 precision=precision,
             )
@@ -213,6 +222,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
             "# executed_trades_notional=\n%s"
             % hpandas.df_to_str(
                 self.get_historical_executed_trades_notional(num_periods),
+                handle_signed_zeros=True,
                 num_rows=None,
                 precision=precision,
             )
@@ -221,6 +231,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
             "# pnl=\n%s"
             % hpandas.df_to_str(
                 self.get_historical_pnl(num_periods),
+                handle_signed_zeros=True,
                 num_rows=None,
                 precision=precision,
             )
@@ -229,6 +240,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
             "# statistics=\n%s"
             % hpandas.df_to_str(
                 self.get_historical_statistics(num_periods),
+                handle_signed_zeros=True,
                 num_rows=None,
                 precision=precision,
             )
@@ -281,8 +293,8 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         """
         Read and process logged Portfolio state.
 
-        :param log_dir: store the state of a Portfolio in terms of its components,
-            one per dir
+        :param log_dir: store the state of a Portfolio in terms of its
+            components, one per dir
         """
         holdings_shares_df = Portfolio._load_df_from_files(
             log_dir, "holdings_shares", tz
@@ -336,11 +348,11 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         """
         Initialize a Portfolio with only cash (i.e., without non-cash assets).
 
-        :param initial_cash: the initial desired cash, typically a non-negative
-            amount
-        :param asset_ids: the non-cash assets that the Portfolio should track
-        :param *args, **kwargs: params passed to the Portfolio constructor of the
-            derived class
+        :param initial_cash: the initial desired cash, typically a non-
+            negative amount
+        :param asset_ids: the non-cash assets that the Portfolio should
+            track :param *args, **kwargs: params passed to the Portfolio
+            constructor of the derived class
         """
         if initial_cash < 0:
             _LOG.warning("Initial cash=%0.2f", initial_cash)
@@ -415,12 +427,14 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         holdings_shares_odict = self._holdings_shares.get_ordered_dict(
             num_periods
         )
-        _LOG.debug(hprint.to_str("holdings_shares_odict"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("holdings_shares_odict"))
         # The
         hdbg.dassert_isinstance(holdings_shares_odict, dict)
         hdbg.dassert_eq(len(holdings_shares_odict), 1)
         timestamp, holdings_srs = holdings_shares_odict.popitem()
-        _LOG.debug(hprint.to_str("timestamp"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("timestamp"))
         hdbg.dassert_isinstance(timestamp, pd.Timestamp)
         hdbg.dassert_isinstance(holdings_srs, pd.Series)
         # Test whether all holdings_shares in shares are exactly zero.
@@ -456,7 +470,8 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
 
         :return: dataframe with HOLDINGS and PRICE columns
         """
-        _LOG.debug("Marking to market...")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Marking to market...")
         # The first time this function is called we set the "initial holdings_shares".
         # TODO(Paul): See if `_set_holdings_shares()` can call into `mark_to_market()`
         #     or vice versa.
@@ -482,7 +497,10 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
             hdbg.dassert_eq(len(self._holdings_shares), len(self._statistics))
         #
         df = self.get_cached_mark_to_market()
-        _LOG.debug("mark_to_market_df=\n%s", hpandas.df_to_str(df, num_rows=None))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "mark_to_market_df=\n%s", hpandas.df_to_str(df, num_rows=None)
+            )
         return df
 
     def get_cached_mark_to_market(self) -> pd.DataFrame:
@@ -497,7 +515,8 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         hdbg.dassert(self._holdings_shares, "No cached information available.")
         # Get latest timestamp available.
         timestamp, holdings_shares = self._holdings_shares.peek()
-        _LOG.debug("Retrieving holdings_shares at timestamp=%s", timestamp)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Retrieving holdings_shares at timestamp=%s", timestamp)
         # Create a `holdings_df` with assets and cash.
         holdings_shares_df = holdings_shares.reset_index()
         cash_df = Portfolio._create_holdings_df_from_cash(
@@ -591,6 +610,11 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         # having "float" type.
         holdings_notional.fillna(np.nan, inplace=True)
         holdings_notional = holdings_notional.astype("float")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "holdings_notional=\n%s",
+                hpandas.df_to_str(holdings_notional, print_shape_info=True),
+            )
         return holdings_notional
 
     def get_historical_executed_trades_shares(
@@ -627,8 +651,19 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
             executed_trades_notional_odict
         ).transpose()
         executed_trades_notional.columns.name = self._asset_id_col
+        # Explicitly cast to float. This makes the string representation of
+        # the dataframe more uniform and better.
+        # We replace NaNs with numpy NaNs, since numpy NaNs are recognized as
+        # having "float" type.
         executed_trades_notional.fillna(np.nan, inplace=True)
         executed_trades_notional = executed_trades_notional.astype("float")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "executed_trades_notional=\n%s",
+                hpandas.df_to_str(
+                    executed_trades_notional, print_shape_info=True
+                ),
+            )
         return executed_trades_notional
 
     def get_historical_pnl(self, num_periods: Optional[int] = 10) -> pd.DataFrame:
@@ -715,7 +750,8 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         else:
             raise ValueError(f"Invalid pricing_type='{self._pricing_type}'")
         hdbg.dassert_isinstance(prices_df, pd.DataFrame)
-        _LOG.debug("prices_df=%s", hpandas.df_to_str(prices_df))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("prices_df=%s", hpandas.df_to_str(prices_df))
         # Convert to series.
         prices_srs = self.market_data.to_price_series(
             prices_df, self._mark_to_market_col
@@ -820,12 +856,9 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
     ) -> pd.DataFrame:
         hdbg.dassert_not_in(Portfolio.CASH_ID, holdings_notional.columns)
         hdbg.dassert_not_in(Portfolio.CASH_ID, executed_trades_notional.columns)
-        #
-        cols = holdings_notional.columns.union(executed_trades_notional.columns)
-        holdings_notional = holdings_notional.reindex(columns=cols, fill_value=0)
-        executed_trades_notional = executed_trades_notional.reindex(
-            columns=cols, fill_value=0
-        )
+        # TODO(Grisha): enable the check, see "Add missing assets to the
+        # executed_trades_notional" CmTask5223 for details.
+        # hpandas.dassert_columns_equal(holdings_notional, executed_trades_notional)
         # Get per-bar flows and compute PnL.
         pnl = holdings_notional.diff().subtract(executed_trades_notional)
         return pnl
@@ -915,30 +948,38 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         """
         # Get the timestamp from the wall clock.
         timestamp = self._get_wall_clock_time()
-        _LOG.debug("timestamp=%s", timestamp)
-        _LOG.debug("Setting asset_holdings...")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("timestamp=%s", timestamp)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Setting asset_holdings...")
         asset_holdings = holdings_shares[
             holdings_shares.index != Portfolio.CASH_ID
         ]
         asset_holdings.name = timestamp
         hdbg.dassert_isinstance(asset_holdings, pd.Series)
-        _LOG.debug("`asset_holdings`=\n%s", hpandas.df_to_str(asset_holdings))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("`asset_holdings`=\n%s", hpandas.df_to_str(asset_holdings))
         hdbg.dassert(not asset_holdings.index.has_duplicates)
         self._holdings_shares[timestamp] = asset_holdings
-        _LOG.debug("asset_holdings set.")
-        _LOG.debug("Setting cash...")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("asset_holdings set.")
+            _LOG.debug("Setting cash...")
         cash = holdings_shares.loc[Portfolio.CASH_ID]
-        _LOG.debug("`cash`=%0.2f", cash)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("`cash`=%0.2f", cash)
         self._cash[timestamp] = cash
-        _LOG.debug("cash set.")
-        _LOG.debug("Setting assets_marked_to_market...")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("cash set.")
+            _LOG.debug("Setting assets_marked_to_market...")
         # Price the assets at the initial timestamp.
         self._price_assets(asset_holdings)
-        _LOG.debug("assets_marked_to_market set.")
-        _LOG.debug("Calculating statistics...")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("assets_marked_to_market set.")
+            _LOG.debug("Calculating statistics...")
         # Compute the initial portfolio statistics.
         self._compute_statistics()
-        _LOG.debug("statistics calculated.")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("statistics calculated.")
 
     @abc.abstractmethod
     def _observe_holdings_shares(self) -> None:
@@ -964,12 +1005,14 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         """
         Access the underlying market_data to price assets.
 
-        :param holding_shares: series of share counts indexed by asset id
+        :param holding_shares: series of share counts indexed by asset
+            id
         :return: series of asset values
         """
         # This is the timestamp of the last snapshot.
         as_of_timestamp, _ = self._holdings_shares.peek()
-        _LOG.debug("as_of_timestamp=%s", as_of_timestamp)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("as_of_timestamp=%s", as_of_timestamp)
         hdbg.dassert_isinstance(holding_shares, pd.Series)
         holding_shares_list = holding_shares.index.to_list()
         if not holding_shares_list:

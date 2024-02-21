@@ -7,7 +7,7 @@ import im_v2.ccxt.data.extract.extractor as ivcdexex
 import copy
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import ccxt
 import ccxt.pro as ccxtpro
@@ -16,6 +16,7 @@ import tqdm
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import im_v2.ccxt.utils as imv2ccuti
 import im_v2.common.data.extract.extractor as imvcdexex
 
 _LOG = logging.getLogger(__name__)
@@ -34,7 +35,8 @@ class CcxtExtractor(imvcdexex.Extractor):
         """
         Construct CCXT extractor.
 
-        :param exchange_id: CCXT exchange id to log into (e.g., 'binance')
+        :param exchange_id: CCXT exchange id to log into (e.g.,
+            'binance')
         :param contract_type: spot or futures contracts to extract
         """
         _LOG.info("CCXT version: %s", ccxt.__version__)
@@ -55,42 +57,13 @@ class CcxtExtractor(imvcdexex.Extractor):
         self.currency_pairs = self.get_exchange_currency_pairs()
         self.vendor = "CCXT"
 
-    def convert_currency_pair(
-        self, currency_pair: str, *, exchange_id: str = None
-    ) -> str:
-        """
-        Convert currency pair used for getting data from exchange.
-        """
-        # TODO(Vlad): This is a temporary fix for OKX. We should
-        #   implement a more general solution.
-        #   Also seems like it works for websocket and don't work for
-        #   REST API(bid_ask) - need to investigate.
-        if exchange_id == "okx":
-            # E.g., USD_BTC -> USD-BTC.
-            return currency_pair.replace("_", "-")
-        else:
-            if self.contract_type == "futures":
-                # TODO(Juraj): unify in #CmTask4986.
-                # In the newer CCXT version symbols are specified using the following format:
-                # BTC/USDT:USDT - the :USDT refers to the currency in which the futures contract
-                # are settled.
-                settlement_coin = currency_pair.split("_")[1]
-                currency_pair = currency_pair.replace("_", "/")
-                currency_pair =  f"{currency_pair}:{settlement_coin}"
-            else: 
-                # E.g., USD_BTC -> USD/BTC.
-                currency_pair = currency_pair.replace("_", "/")
-            return currency_pair
-
-    def log_into_exchange(
-        self, async_: bool
-    ) -> ccxt.Exchange:
+    def log_into_exchange(self, async_: bool) -> ccxt.Exchange:
         """
         Log into an exchange via CCXT (or CCXT pro) and return the
         corresponding `Exchange` object.
 
-        :param async_: if True, returns CCXT pro Exchange with async support,
-         classic, sync ccxt Exchange otherwise.
+        :param async_: if True, returns CCXT pro Exchange with async
+            support, classic, sync ccxt Exchange otherwise.
         """
         exchange_params: Dict[str, Any] = {}
         # Enable rate limit.
@@ -103,6 +76,22 @@ class CcxtExtractor(imvcdexex.Extractor):
         exchange = exchange_class(exchange_params)
         return exchange
 
+    def convert_currency_pair(self, currency_pair: str) -> str:
+        """
+        Converts a currency pair used for retrieving data from an exchange.
+
+        Examples:
+            - When contract_type is "spot":
+                convert_currency_pair("BTC_USD") -> "BTC/USD"
+
+            - When contract_type is "futures":
+                convert_currency_pair("BTC_USD") -> "BTC/USD:USD"
+        """
+        currency_pair = imv2ccuti.convert_currency_pair_to_ccxt_format(
+            currency_pair, self.exchange_id, self.contract_type
+        )
+        return currency_pair
+
     def get_exchange_currency_pairs(self) -> List[str]:
         """
         Get all the currency pairs available for the exchange.
@@ -111,8 +100,8 @@ class CcxtExtractor(imvcdexex.Extractor):
 
     def _is_latest_kline_present(self, data: list) -> bool:
         """
-        Check if the last minute timestamp is present in the
-            raw websocket data.
+        Check if the last minute timestamp is present in the raw websocket
+        data.
 
         :param data: list of OHLCV bars
         :return: True if the last minute timestamp is found in the data
@@ -151,11 +140,9 @@ class CcxtExtractor(imvcdexex.Extractor):
         :param sleep_time_in_secs: time in seconds between iterations
         :return: OHLCV data from CCXT
         """
-        # TODO(Vlad): Temporary fix for OKX REST. Need to refactor.
-        if exchange_id == "okx":
-            currency_pair = currency_pair.replace("-", "/")
         # Assign exchange_id to make it symmetrical to other vendors.
         _ = exchange_id
+        currency_pair = self.convert_currency_pair(currency_pair)
         hdbg.dassert(
             self._sync_exchange.has["fetchOHLCV"],
             "Exchange %s doesn't has fetch_ohlcv method",
@@ -166,6 +153,13 @@ class CcxtExtractor(imvcdexex.Extractor):
             self.currency_pairs,
             "Currency pair is not present in exchange",
         )
+        if self.exchange_id == 'okx':
+            # CCXT with okx has a bug, it does not return correct dates 
+            # if the limit is more than 100.
+            bar_per_iteration = min(bar_per_iteration, 100)
+            _LOG.warning(
+                f"Reducing bar per iteration to {bar_per_iteration} due to okx API limit."
+            )
         # Get the latest bars if no timestamp is provided.
         if end_timestamp is None and start_timestamp is None:
             return self._fetch_ohlcv(
@@ -185,9 +179,7 @@ class CcxtExtractor(imvcdexex.Extractor):
             end_timestamp,
         )
         # Convert datetime into ms.
-        start_timestamp = hdateti.convert_timestamp_to_unix_epoch(
-            start_timestamp
-        )
+        start_timestamp = hdateti.convert_timestamp_to_unix_epoch(start_timestamp)
         end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
         duration = self._sync_exchange.parse_timeframe("1m") * 1000
         all_bars = []
@@ -228,24 +220,24 @@ class CcxtExtractor(imvcdexex.Extractor):
         since: int,
         *,
         timeframe: str = "1m",
-        limit: Optional[int] = 5,
+        limit: Optional[int] = 10,
         **kwargs: Any,
     ) -> None:
         """
         Wrapper to subscribe to OHLCV data via watchOHLCV websocket based
         approach.
 
-        :param exchange_id: exchange to download from
-         (not used, kept for compatibility with parent class).
+        :param exchange_id: exchange to download from (not used, kept
+            for compatibility with parent class).
         :param currency_pair: currency pair, e.g. "BTC_USDT"
-        :param since: from when is data fetched in UNIX epoch milliseconds
+        :param since: from when is data fetched in UNIX epoch
+            milliseconds
         :param timeframe: fetch data for certain timeframe
-        :param limit: number of bars to return when getting OHLCV data from the
-         websocket stream via ohlcvs dict, e.g. exchange.ohlcvs['currency_pair']
+        :param limit: number of bars to return when getting OHLCV data
+            from the websocket stream via ohlcvs dict, e.g.
+            exchange.ohlcvs['currency_pair']
         """
-        converted_pair = self.convert_currency_pair(
-            currency_pair, exchange_id=exchange_id
-        )
+        converted_pair = self.convert_currency_pair(currency_pair)
         await self._async_exchange.watchOHLCV(
             converted_pair, timeframe=timeframe, since=since, limit=limit
         )
@@ -261,16 +253,39 @@ class CcxtExtractor(imvcdexex.Extractor):
         Wrapper to subscribe to bid/ask (order book) data via CCXT pro
         watchOrderBook websocket based approach.
 
-        :param exchange_id: exchange to download from
-         (not used, kept for compatibility with parent class).
+        :param exchange_id: exchange to download from (not used, kept
+            for compatibility with parent class).
         :param currency_pair: currency pair, e.g. "BTC_USDT"
         :param bid_ask_depth: how many levels of order book to download
         """
-        currency_pair = self.convert_currency_pair(
-            currency_pair, exchange_id=exchange_id
-        )
+        currency_pair = self.convert_currency_pair(currency_pair)
         await self._async_exchange.watchOrderBook(
             currency_pair, limit=bid_ask_depth
+        )
+
+    async def _subscribe_to_websocket_bid_ask_multiple_symbols(
+        self,
+        exchange_id: str,
+        currency_pairs: List[str],
+        bid_ask_depth: int,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Wrapper to subscribe to bid/ask (order book) data via CCXT pro
+        watchOrderBook websocket based approach.
+
+        :param exchange_id: exchange to download from (not used, kept
+            for compatibility with parent class).
+        :param currency_pair: currency pairs, e.g. ["BTC_USDT",
+            "ETH_USDT"]
+        :param bid_ask_depth: how many levels of order book to download
+        """
+        currency_pairs = [
+            self.convert_currency_pair(currency_pair)
+            for currency_pair in currency_pairs
+        ]
+        await self._async_exchange.watch_order_book_for_symbols(
+            currency_pairs, limit=bid_ask_depth
         )
 
     async def _subscribe_to_websocket_trades(
@@ -285,9 +300,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         :param since:: from when is data fetched in UNIX epoch milliseconds
          websocket stream via trades dict, e.g. exchange.trades['currency_pair']
         """
-        converted_pair = self.convert_currency_pair(
-            currency_pair, exchange_id=exchange_id
-        )
+        converted_pair = self.convert_currency_pair(currency_pair)
         await self._async_exchange.watchTrades(converted_pair, since=since)
 
     def _pad_bids_asks_to_equal_len(
@@ -310,19 +323,12 @@ class CcxtExtractor(imvcdexex.Extractor):
         Get the most recent websocket data for a specified currency pair and
         data type.
 
-        :return Dict representing snapshot of the data for a specified symbol and data type.
-        TODO(Juraj): show example
+        :return Dict representing snapshot of the data for a specified
+            symbol and data type. TODO(Juraj): show example
         """
         data = {}
         try:
-            pair = self.convert_currency_pair(
-                currency_pair, exchange_id=exchange_id
-            )
-            # TODO(Vlad): This is a temporary fix for OKX, which uses a different
-            #  symbol format than the rest of the exchanges.
-            #  Need to be refactored to a more general solution.
-            if exchange_id == "okx":
-                pair = pair.replace("-", "/")
+            pair = self.convert_currency_pair(currency_pair)
             if data_type == "ohlcv":
                 data = copy.deepcopy(self._async_exchange.ohlcvs[pair])
                 # One of the returned key:value pairs is:
@@ -339,7 +345,7 @@ class CcxtExtractor(imvcdexex.Extractor):
                         f" currency_pair={currency_pair}."
                     )
                 data["ohlcv"] = ohlcv
-                data["currency_pair"] = pair
+                data["currency_pair"] = currency_pair
             elif data_type == "bid_ask":
                 if self._async_exchange.orderbooks.get(pair):
                     # CCXT uses their own 'dict-like' structure for storing the data
@@ -386,7 +392,7 @@ class CcxtExtractor(imvcdexex.Extractor):
                     data = None
             else:
                 raise ValueError(
-                    f"{data_type} not supported. Supported data types: ohlcv, bid_ask"
+                    f"{data_type} not supported. Supported data types: ohlcv, bid_ask, trades"
                 )
             if data:
                 data["end_download_timestamp"] = str(
@@ -406,8 +412,8 @@ class CcxtExtractor(imvcdexex.Extractor):
         """
         Get the most recent OHLCV data for a given currency pair.
 
-        :return Dict representing snapshot of the data for a specified symbol and data type.
-        TODO(Juraj): show example
+        :return Dict representing snapshot of the data for a specified
+            symbol and data type. TODO(Juraj): show example
         """
         return self._download_websocket_data(exchange_id, currency_pair, "ohlcv")
 
@@ -420,9 +426,9 @@ class CcxtExtractor(imvcdexex.Extractor):
         Get the most recent bid/ask (order book) data for a given currency pair
         for levels up to the specified limit.
 
-        :return Dict representing snapshot of the order book
-         for a specified currency pair up to limit-th level.
-        TODO(Juraj): show example
+        :return Dict representing snapshot of the order book  for a
+            specified currency pair up to limit-th level. TODO(Juraj): show
+            example
         """
         return self._download_websocket_data(
             exchange_id, currency_pair, "bid_ask"
@@ -434,14 +440,11 @@ class CcxtExtractor(imvcdexex.Extractor):
         """
         Download bid-ask data from CCXT.
 
-        :param exchange_id: exchange to download from
-         (not used, kept for compatibility with parent class).
+        :param exchange_id: exchange to download from (not used, kept
+            for compatibility with parent class).
         :param currency_pair: currency pair to download, i.e. BTC_USDT.
         :param depth: depth of the order book to download.
         """
-        # TODO(Vlad): Temporary fix for OKX REST. Need to refactor.
-        if exchange_id == "okx":
-            currency_pair = currency_pair.replace("-", "/")
         # TODO(Juraj): can we get rid of this duplication of information?
         # exchange_id is set in constructor.
         # Assign exchange_id to make it symmetrical to other vendors.
@@ -452,9 +455,7 @@ class CcxtExtractor(imvcdexex.Extractor):
             self._sync_exchange,
         )
         # Convert symbol to CCXT format, e.g. "BTC_USDT" -> "BTC/USDT".
-        currency_pair = self.convert_currency_pair(
-            currency_pair,
-        )
+        currency_pair = self.convert_currency_pair(currency_pair)
         hdbg.dassert_in(
             currency_pair,
             self.currency_pairs,
@@ -545,22 +546,20 @@ class CcxtExtractor(imvcdexex.Extractor):
         """
         Download trades data from CCXT.
 
-        :param exchange_id: exchange to download from
-         (not used, kept for compatibility with parent class)
+        :param exchange_id: exchange to download from (not used, kept
+            for compatibility with parent class)
         :param currency_pair: currency pair to download, i.g. BTC_USDT
         :param start_timestamp: start timestamp of the data to download
         :param end_timestamp: end timestamp of the data to download
-        :param sleep_time_in_secs: time to sleep between iterations
-            It's not necessary to sleep, but it's a good idea to avoid
+        :param sleep_time_in_secs: time to sleep between iterations. It's
+            not necessary to sleep, but it's a good idea to avoid
             overloading the exchange.
-        :param trade_per_iteration: number of trades to download per iteration
-            Add trade_per_iteration gain more control over the number of trades.
+        :param trade_per_iteration: number of trades to download per
+            iteration Add trade_per_iteration gain more control over the
+            number of trades.
         :return: trades data
         """
-        # TODO(Vlad): Temporary fix for OKX REST. Need to refactor.
-        if exchange_id == "okx":
-            currency_pair = currency_pair.replace("-", "/")
-        elif exchange_id == "kraken":
+        if exchange_id == "kraken":
             # Check if sleep time is not too low.
             # https://support.kraken.com/hc/en-us/articles/206548367-What-are-the-API-rate-limits-
             if sleep_time_in_secs < 1:
@@ -578,9 +577,7 @@ class CcxtExtractor(imvcdexex.Extractor):
             self._sync_exchange,
         )
         # Convert symbol to CCXT format, e.g. "BTC_USDT" -> "BTC/USDT".
-        currency_pair = self.convert_currency_pair(
-            currency_pair,
-        )
+        currency_pair = self.convert_currency_pair(currency_pair)
         hdbg.dassert_in(
             currency_pair,
             self.currency_pairs,
@@ -624,12 +621,11 @@ class CcxtExtractor(imvcdexex.Extractor):
         :param timeframe: fetch data for certain timeframe
         :param since: from when is data fetched in milliseconds
         :param bar_per_iteration: number of bars per iteration
-
         :return: OHLCV data from CCXT that looks like:
             ```
-                 timestamp      open      high       low     close    volume            end_download_timestamp
-        0    1631145600000  46048.31  46050.00  46002.02  46005.10  55.12298  2022-02-22 18:00:06.091652+00:00
-        1    1631145660000  46008.34  46037.70  45975.59  46037.70  70.45695  2022-02-22 18:00:06.091652+00:00
+                    timestamp      open      high       low     close    volume            end_download_timestamp
+            0    1631145600000  46048.31  46050.00  46002.02  46005.10  55.12298  2022-02-22 18:00:06.091652+00:00
+            1    1631145660000  46008.34  46037.70  45975.59  46037.70  70.45695  2022-02-22 18:00:06.091652+00:00
             ```
         """
         # Change currency pair to CCXT format.
@@ -664,7 +660,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         :param end_timestamp: end timestamp of the data to download.
         :param sleep_time_in_secs: time to sleep between iterations
         :param limit: number of trades per iteration
-        :return: trades data from CCXT that looks like:
+        :return: trades data from CCXT that looks like: 
             ```
                 timestamp      symbol      side    price     amount           end_download_timestamp
             0   1631145600000  BTC/USDT    buy     46048.31  0.001  2022-02-22 18:00:06.091652+00:00

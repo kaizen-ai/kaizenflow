@@ -7,6 +7,7 @@ try:
 except ModuleNotFoundError:
     print("Can't find ib_insync")
 import pandas as pd
+import pytest
 
 import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
@@ -54,15 +55,22 @@ class IbExtractionTest(hunitest.TestCase):
     def setUpClass(cls):
         hdbg.shutup_chatty_modules()
 
-    def setUp(self):
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self):
         self.ib = imidegaut.ib_connect(
             sum(bytes(self._get_test_name(), encoding="UTF-8")), is_notebook=False
         )
 
-    def tearDown(self):
+    def tear_down_test(self):
         self.ib.disconnect()
-        super().tearDown()
 
     def _req_historical_data_helper(self, end_ts, use_rth) -> Tuple[str, str]:
         """

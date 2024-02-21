@@ -101,7 +101,7 @@ class BinanceExtractor(ivcdexex.Extractor):
         if hasattr(self, "tmp_dir_path") and os.path.exists(self.tmp_dir_path):
             hio.delete_dir(self.tmp_dir_path)
 
-    def convert_currency_pair(self, currency_pair: str, **kwargs) -> str:
+    def convert_currency_pair(self, currency_pair: str) -> str:
         """
         Convert currency pair to Binance native format.
 
@@ -425,10 +425,9 @@ class BinanceExtractor(ivcdexex.Extractor):
         end_timestamp: pd.Timestamp,
     ) -> pd.DataFrame:
         """
-        Post-process Binance data.
-            It's necessary to post-process the data because the data from
-            Binance is not in the correct format.
-            We need to:
+        Post-process Binance data. It's necessary to post-process the data
+        because the data from Binance is not in the correct format. We need to:
+
                 - rename the columns
                 - add the side column
                 - add the end_download_timestamp column
@@ -792,6 +791,26 @@ class BinanceExtractor(ivcdexex.Extractor):
     ) -> None:
         """
         Subscribe to trades data from Binance.
+
+        :param exchange_id: parameter for compatibility with other extractors
+          always set to `binance`
+        :param currency_pair: currency pair to get data for, e.g. `BTC_USDT`
+        :param start_timestamp: start timestamp
+        :param end_timestamp: end timestamp
+        """
+        raise NotImplementedError("This method is not implemented yet.")
+    
+    def _subscribe_to_websocket_bid_ask_multiple_symbols(
+        self,
+        exchange_id: str,
+        currency_pair: List[str],
+        *,
+        start_timestamp: Optional[pd.Timestamp] = None,
+        end_timestamp: Optional[pd.Timestamp] = None,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Subscribe to bid-ask data from Binance.
 
         :param exchange_id: parameter for compatibility with other extractors
           always set to `binance`

@@ -8,6 +8,7 @@ import pytest
 import core.artificial_signal_generators as carsigen
 import core.statistics.regression as cstaregr
 import helpers.hio as hio
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ class TestComputeRegressionCoefficients1(hunitest.TestCase):
         _LOG.debug("Current seed=%s", np.random.get_state()[1][0])
         _LOG.debug("data=\n%s", str(data))
         _LOG.debug("Checking against golden")
-        df_str = hunitest.convert_df_to_string(data, index=True, decimals=3)
+        df_str = hpandas.df_to_str(data, num_rows=None, precision=3)
         self.check_string(df_str)
 
     def test1(self) -> None:
@@ -67,8 +68,8 @@ class TestComputeRegressionCoefficients1(hunitest.TestCase):
             x_cols=list(range(0, 9)),
             y_col=9,
         )
-        actual_string = hunitest.convert_df_to_string(
-            actual.round(3), index=True, decimals=3
+        actual_string = hpandas.df_to_str(
+            actual.round(3), num_rows=None, precision=3
         )
         self.check_string(actual_string, fuzzy_match=True)
 
@@ -147,7 +148,7 @@ class TestComputeRegressionCoefficients2(hunitest.TestCase):
         _LOG.debug("Current seed=%s", np.random.get_state()[1][0])
         _LOG.debug("data=\n%s", str(data))
         _LOG.debug("Checking against golden")
-        df_str = hunitest.convert_df_to_string(data, index=True, decimals=3)
+        df_str = hpandas.df_to_str(data, num_rows=None, precision=3)
         self.check_string(df_str)
 
     def test1(self) -> None:
@@ -158,8 +159,8 @@ class TestComputeRegressionCoefficients2(hunitest.TestCase):
             x_cols=list(range(1, 5)),
             y_col=0,
         )
-        actual_string = hunitest.convert_df_to_string(
-            actual.round(3), index=True, decimals=3
+        actual_string = hpandas.df_to_str(
+            actual.round(3), num_rows=None, precision=3
         )
         self.check_string(actual_string, fuzzy_match=True)
 

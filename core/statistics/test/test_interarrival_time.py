@@ -5,6 +5,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as carsigen
 import core.statistics.interarrival_time as cstintim
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -20,13 +21,13 @@ class TestGetInterarrivalTime(hunitest.TestCase):
     def test2(self) -> None:
         series = self._get_series(seed=1)
         actual = cstintim.get_interarrival_time(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test3(self) -> None:
         series = self._get_series(seed=1)
         actual = cstintim.get_interarrival_time(series, nan_mode="fill_with_zero")
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     @staticmethod
@@ -55,7 +56,7 @@ class TestComputeInterarrivalTimeStats(hunitest.TestCase):
     def test2(self) -> None:
         series = self._get_series(seed=1)
         actual = cstintim.compute_interarrival_time_stats(series)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test3(self) -> None:
@@ -63,7 +64,7 @@ class TestComputeInterarrivalTimeStats(hunitest.TestCase):
         actual = cstintim.compute_interarrival_time_stats(
             series, nan_mode="ffill"
         )
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     @staticmethod

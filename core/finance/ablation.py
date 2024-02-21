@@ -154,7 +154,7 @@ def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
 def remove_weekends(
     df: pd.DataFrame,
     # TODO(gp): Add *
-    # *, 
+    # *,
     bypass: bool = False
 ) -> pd.DataFrame:
     """

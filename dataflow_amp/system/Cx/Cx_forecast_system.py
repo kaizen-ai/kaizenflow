@@ -5,41 +5,16 @@ import dataflow_amp.system.Cx.Cx_forecast_system as dtfasccfosy
 """
 
 import logging
-from typing import Coroutine
+from typing import Any, Coroutine
 
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
 import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
-import helpers.hdbg as hdbg
-import helpers.hintrospection as hintros
-import helpers.hprint as hprint
 import market_data as mdata
-import oms as oms
+import oms
 
 _LOG = logging.getLogger(__name__)
-
-
-def get_DagBuilder_from_string(
-    dag_builder_ctor_as_str: str, *dag_builder_args, **dag_builder_kwargs
-) -> dtfcore.DagBuilder:
-    """
-    Get a `DagBuilder` object from a string pointer to a ctor.
-
-    :param dag_builder_ctor_as_str: same as in `Cx_NonTime_ForecastSystem`
-    :param dag_builder_args: same as in `Cx_NonTime_ForecastSystem`
-    :param dag_builder_kwargs: same as in `Cx_NonTime_ForecastSystem`
-    """
-    _LOG.debug(
-        hprint.to_str(
-            "dag_builder_ctor_as_str dag_builder_args dag_builder_kwargs"
-        )
-    )
-    dag_builder_func = hintros.get_function_from_string(dag_builder_ctor_as_str)
-    hdbg.dassert_callable(dag_builder_func)
-    dag_builder = dag_builder_func(*dag_builder_args, **dag_builder_kwargs)
-    hdbg.dassert_isinstance(dag_builder, dtfcore.DagBuilder)
-    return dag_builder
 
 
 # #############################################################################
@@ -51,9 +26,9 @@ class Cx_NonTime_ForecastSystem(dtfsys.ForecastSystem):
     """
     Create a System with:
 
-    - a HistoricalMarketData
+    - a `HistoricalMarketData`
     - a non-timed Cx DAG
-    - a FitPredictDagRunner
+    - a `FitPredictDagRunner`
 
     This is used to run a historical simulation for a Cx system.
     """
@@ -62,26 +37,29 @@ class Cx_NonTime_ForecastSystem(dtfsys.ForecastSystem):
         self,
         # TODO(Grisha): consider passing an already built `DagBuilder` object.
         dag_builder_ctor_as_str: str,
-        *dag_builder_args,
+        *dag_builder_args: Any,
+        # TODO(gp): Why is this not before dag_builder_args?
         train_test_mode: str,
-        **dag_builder_kwargs,
+        **dag_builder_kwargs: Any,
     ) -> None:
         """
-        Ctor.
+        Build the object.
 
         :param dag_builder_ctor_as_str: a pointer to a `DagBuilder` constructor,
             e.g., `dataflow_orange.pipelines.C1.C1b_pipeline.C1b_DagBuilder`
         :param dag_builder_args: positional args for a `DagBuilder` ctor
         :param train_test_mode: how to perform the prediction
             - "ins": fit and predict using the same data
-            - "ins_oos": fit using a train dataset and predict using a test dataset
+            - "ins_oos": fit using a train dataset and predict using a test
+              dataset
             - "rolling": see `RollingFitPredictDagRunner` for description
         :param dag_builder_kwargs: keyword args for a `DagBuilder` ctor
         """
-        self._dag_builder = get_DagBuilder_from_string(
+        self._dag_builder = dtfcore.get_DagBuilder_from_string(
             dag_builder_ctor_as_str, *dag_builder_args, **dag_builder_kwargs
         )
-        # This needs to be initialized before the other constructor.
+        # This needs to be initialized before the constructor of the parent
+        # class.
         self.train_test_mode = train_test_mode
         super().__init__()
 
@@ -133,8 +111,8 @@ class Cx_Time_ForecastSystem(dtfsys.Time_ForecastSystem):
     def __init__(
         self,
         dag_builder_ctor_as_str: str,
-        *dag_builder_args,
-        **dag_builder_kwargs,
+        *dag_builder_args: Any,
+        **dag_builder_kwargs: Any,
     ) -> None:
         """
         Ctor.
@@ -144,7 +122,7 @@ class Cx_Time_ForecastSystem(dtfsys.Time_ForecastSystem):
         :param dag_builder_kwargs: same as in `Cx_NonTime_ForecastSystem`
         """
         # This needs to be initialized before the other constructor.
-        self._dag_builder = get_DagBuilder_from_string(
+        self._dag_builder = dtfcore.get_DagBuilder_from_string(
             dag_builder_ctor_as_str, *dag_builder_args, **dag_builder_kwargs
         )
         super().__init__()
@@ -197,18 +175,18 @@ class Cx_Time_ForecastSystem_with_DataFramePortfolio(
     def __init__(
         self,
         dag_builder_ctor_as_str: str,
-        *dag_builder_args,
-        **dag_builder_kwargs,
+        *dag_builder_args: Any,
+        **dag_builder_kwargs: Any,
     ) -> None:
         """
-        Ctor.
+        Build the object.
 
         :param dag_builder_ctor_as_str: same as in `Cx_NonTime_ForecastSystem`
         :param dag_builder_args: same as in `Cx_NonTime_ForecastSystem`
         :param dag_builder_kwargs: same as in `Cx_NonTime_ForecastSystem`
         """
         # This needs to be initialized before the other constructor.
-        self._dag_builder = get_DagBuilder_from_string(
+        self._dag_builder = dtfcore.get_DagBuilder_from_string(
             dag_builder_ctor_as_str, *dag_builder_args, **dag_builder_kwargs
         )
         super().__init__()
@@ -264,18 +242,18 @@ class Cx_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     def __init__(
         self,
         dag_builder_ctor_as_str: str,
-        *dag_builder_args,
-        **dag_builder_kwargs,
+        *dag_builder_args: Any,
+        **dag_builder_kwargs: Any,
     ) -> None:
         """
-        Ctor.
+        Build the object.
 
         :param dag_builder_ctor_as_str: same as in `Cx_NonTime_ForecastSystem`
         :param dag_builder_args: same as in `Cx_NonTime_ForecastSystem`
         :param dag_builder_kwargs: same as in `Cx_NonTime_ForecastSystem`
         """
         # This needs to be initialized before the other constructor.
-        self._dag_builder = get_DagBuilder_from_string(
+        self._dag_builder = dtfcore.get_DagBuilder_from_string(
             dag_builder_ctor_as_str, *dag_builder_args, **dag_builder_kwargs
         )
         super().__init__()

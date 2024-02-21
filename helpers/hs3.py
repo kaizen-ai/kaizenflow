@@ -171,6 +171,7 @@ def listdir(
     *,
     exclude_git_dirs: bool = True,
     aws_profile: Optional[AwsProfile] = None,
+    maxdepth: Optional[int] = None,
 ) -> List[str]:
     """
     Counterpart to `hio.listdir` with S3 support.
@@ -178,6 +179,7 @@ def listdir(
     :param dir_name: S3 or local path
     :param aws_profile: AWS profile to use if and only if using an S3 path,
         otherwise `None` for local path
+    :param maxdepth: limit the depth of directory traversal
     """
     dassert_is_valid_aws_profile(dir_name, aws_profile)
     if is_s3_path(dir_name):
@@ -190,7 +192,9 @@ def listdir(
         # One star in glob will use `maxdepth=1`.
         pattern = pattern.replace("*", "**")
         # Detailed S3 objects in dict form with metadata.
-        path_objects = s3fs_.glob(f"{dir_name}/{pattern}", detail=True)
+        path_objects = s3fs_.glob(
+            f"{dir_name}/{pattern}", detail=True, maxdepth=maxdepth
+        )
         if only_files:
             # Original `path_objects` must not be changed during loop.
             temp_path_objects = copy.deepcopy(list(path_objects.values()))
@@ -222,6 +226,7 @@ def listdir(
             only_files,
             use_relative_paths,
             exclude_git_dirs=exclude_git_dirs,
+            maxdepth=maxdepth,
         )
     return paths
 
@@ -334,6 +339,7 @@ def from_file(
     return data
 
 
+# TODO(Nina): consider adding support for handling dirs.
 # TODO(Grisha): consider extending for the regular file system.
 def copy_file_to_s3(
     file_path: str,
@@ -423,6 +429,20 @@ def get_s3_bucket_path(aws_profile: str, add_s3_prefix: bool = True) -> str:
         env_var,
         s3_bucket,
     )
+    if add_s3_prefix:
+        s3_bucket = "s3://" + s3_bucket
+    return s3_bucket
+
+
+# TODO(sonaal): Do we really need aws profile as argument or
+# we can use default? Ref. https://github.com/cryptokaizen/cmamp/pull/6045#discussion_r1380392748
+def get_s3_bucket_path_unit_test(
+    aws_profile: str, *, add_s3_prefix: bool = True
+) -> str:
+    if aws_profile == "ck":
+        s3_bucket = "cryptokaizen-unit-test"
+    else:
+        hdbg.dfatal(f"Invalid aws_profile={aws_profile}")
     if add_s3_prefix:
         s3_bucket = "s3://" + s3_bucket
     return s3_bucket
@@ -525,8 +545,8 @@ def _get_aws_file_text(key_to_env_var: Dict[str, str]) -> List[str]:
     aws_s3_bucket=***
     ```
 
-    :param key_to_env_var: aws settings names to the corresponding env var names
-        mapping
+    :param key_to_env_var: aws settings names to the corresponding env
+        var names mapping
     :return: AWS file text
     """
     txt = []
@@ -851,6 +871,25 @@ def archive_data_on_s3(
     s3fs_.put(dst_path, s3_file_path)
     _LOG.info("Data archived on S3 to '%s'", s3_file_path)
     return s3_file_path
+
+
+def copy_data_from_s3_to_local_dir(
+    src_s3_dir: str, dst_local_dir: str, aws_profile: str
+) -> None:
+    """
+    Copy data from S3 to a local dir.
+
+    :param src_s3_dir: path on S3 storing the data to copy
+    :param scratch_space_path: local path on scratch space
+    :param aws_profile: AWS profile to use
+    """
+    _LOG.debug(
+        "Copying input data from %s to %s",
+        src_s3_dir,
+        dst_local_dir,
+    )
+    cmd = f"aws s3 sync {src_s3_dir} {dst_local_dir} --profile {aws_profile}"
+    hsystem.system(cmd, suppress_output=False, log_level="echo")
 
 
 def retrieve_archived_data_from_s3(

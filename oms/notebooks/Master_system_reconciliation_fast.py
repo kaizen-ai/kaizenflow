@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.15.0
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -30,21 +30,19 @@
 import logging
 import os
 
-import numpy as np
 import pandas as pd
 
 import core.config as cconfig
-import core.finance as cofinanc
-import core.finance.portfolio_df_processing.slippage as cfpdprsl
 import core.finance.target_position_df_processing as cftpdp
 import core.plotting as coplotti
-import core.statistics as costatis
+import dataflow.core as dtfcore
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import oms as oms
+import reconciliation as reconcil
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -69,18 +67,22 @@ else:
     # Specify the config directly when running the notebook manually.
     # Below is just an example.
     dst_root_dir = "/shared_data/ecs/preprod/prod_reconciliation/"
-    dag_builder_name = "C3a"
-    start_timestamp_as_str = "20230802_154500"
-    end_timestamp_as_str = "20230802_160000"
-    run_mode = "prod"
+    dag_builder_ctor_as_str = (
+        "dataflow_orange.pipelines.C3.C3a_pipeline_tmp.C3a_DagBuilder_tmp"
+    )
+    start_timestamp_as_str = "20231103_131000"
+    end_timestamp_as_str = "20231104_130500"
+    run_mode = "paper_trading"
     mode = "scheduled"
-    config_list = oms.build_reconciliation_configs(
+    set_config_values = None
+    config_list = reconcil.build_reconciliation_configs(
         dst_root_dir,
-        dag_builder_name,
+        dag_builder_ctor_as_str,
         start_timestamp_as_str,
         end_timestamp_as_str,
         run_mode,
         mode,
+        set_config_values=set_config_values,
     )
     config = config_list[0]
 print(config)
@@ -95,19 +97,23 @@ system_log_path_dict = dict(config["system_log_path"].to_dict())
 # %%
 # This dict points to `system_log_dir/dag/node_io/node_io.data` for different experiments.
 data_type = "dag_data"
-dag_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type)
+dag_path_dict = reconcil.get_system_log_paths(
+    system_log_path_dict, data_type, only_warning=True
+)
 dag_path_dict
 
 # %%
 # This dict points to `system_log_dir/process_forecasts/portfolio` for different experiments.
 data_type = "portfolio"
-portfolio_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type)
+portfolio_path_dict = reconcil.get_system_log_paths(
+    system_log_path_dict, data_type
+)
 portfolio_path_dict
 
 # %%
 # This dict points to `system_log_dir/process_forecasts/orders` for different experiments.
 data_type = "orders"
-orders_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type)
+orders_path_dict = reconcil.get_system_log_paths(system_log_path_dict, data_type)
 orders_path_dict
 
 # %%
@@ -119,10 +125,24 @@ if config["meta"]["run_tca"]:
     hdbg.dassert_file_exists(tca_csv)
 
 # %% [markdown]
-# # Compare configs (prod vs vim)
+# # Configs
+
+# %% [markdown]
+# ## Load and display configs
 
 # %%
-configs = oms.load_config_from_pickle(system_log_path_dict)
+configs = reconcil.load_config_dict_from_pickle(system_log_path_dict)
+# This is a hack to display a config that was made from unpickled dict.
+print(configs["prod"].to_string("only_values").replace("\\n", "\n"))
+
+# %%
+# TODO(Grisha): understand why it does not work without removing `\\n`.
+print(configs["sim"].to_string("only_values").replace("\\n", "\n"))
+
+# %% [markdown]
+# ## Compare configs (prod vs vim)
+
+# %%
 # Diff configs.
 # TODO(Grisha): the output is only on subconfig level, we should
 # compare value vs value instead.
@@ -142,15 +162,17 @@ diff_config.T
 
 # %%
 # Get DAG node names.
-dag_node_names = oms.get_dag_node_names(dag_path_dict["prod"])
+get_dag_output_mode = config["meta"]["get_dag_output_mode"]
+dag_path = reconcil.get_dag_output_path(dag_path_dict, get_dag_output_mode)
+dag_node_names = dtfcore.get_dag_node_names(dag_path)
 _LOG.info(
     "First node='%s' / Last node='%s'", dag_node_names[0], dag_node_names[-1]
 )
 
 # %%
 # Get timestamps for the last DAG node.
-dag_node_timestamps = oms.get_dag_node_timestamps(
-    dag_path_dict["prod"], dag_node_names[-1], as_timestamp=True
+dag_node_timestamps = dtfcore.get_dag_node_timestamps(
+    dag_path, dag_node_names[-1], as_timestamp=True
 )
 _LOG.info(
     "First timestamp='%s'/ Last timestamp='%s'",
@@ -160,10 +182,9 @@ _LOG.info(
 
 # %%
 # Get DAG output for the last node and the last timestamp.
-dag_df_prod = oms.load_dag_outputs(dag_path_dict["prod"], dag_node_names[-1])
-dag_df_sim = oms.load_dag_outputs(dag_path_dict["sim"], dag_node_names[-1])
+dag_df = dtfcore.load_dag_outputs(dag_path, dag_node_names[-1])
 _LOG.info("Output of the last node:\n")
-hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
+hpandas.df_to_str(dag_df, num_rows=5, log_level=logging.INFO)
 
 # %% [markdown]
 # ## Check DAG io self-consistency
@@ -182,16 +203,22 @@ compare_dfs_kwargs = {
 # %%
 # Run for the last timestamp only as a sanity check.
 bar_timestamp = dag_node_timestamps[-1][0]
-_LOG.info("Running the DAG self-consistency check for=%s", bar_timestamp)
-# Compare DAG output at T with itself at time T-1.
-oms.check_dag_output_self_consistency(
-    dag_path_dict["prod"],
-    dag_node_names[-1],
-    bar_timestamp,
-    trading_freq=config["meta"]["bar_duration"],
-    diff_threshold=diff_threshold,
-    **compare_dfs_kwargs,
+dag_builder_name = dtfcore.get_DagBuilder_name_from_string(
+    config["dag_builder_ctor_as_str"]
 )
+if dag_builder_name not in ["C11a", "C12a"]:
+    # Self-consistency check fails for C11a. See CmTask6519
+    # for more details. Also for C12a, see CmTask7053.
+    _LOG.info("Running the DAG self-consistency check for=%s", bar_timestamp)
+    # Compare DAG output at T with itself at time T-1.
+    dtfcore.check_dag_output_self_consistency(
+        dag_path,
+        dag_node_names[-1],
+        bar_timestamp,
+        trading_freq=config["meta"]["bar_duration"],
+        diff_threshold=diff_threshold,
+        **compare_dfs_kwargs,
+    )
 
 # %% [markdown]
 # ## Compare DAG io (prod vs sim)
@@ -205,7 +232,7 @@ _LOG.info(
     node_name,
     bar_timestamp,
 )
-oms.compare_dag_outputs(
+_ = dtfcore.compare_dag_outputs(
     dag_path_dict,
     node_name,
     bar_timestamp,
@@ -218,8 +245,10 @@ oms.compare_dag_outputs(
 # The functions assumes that it is possible to keep all the DAG output in memory which is
 # not always true.
 if False:
-    dag_diff_df = oms.compute_dag_outputs_diff(dag_df_dict, **compare_dfs_kwargs)
-    dag_diff_detailed_stats = oms.compute_dag_output_diff_detailed_stats(
+    dag_diff_df = dtfcore.compute_dag_outputs_diff(
+        dag_df_dict, **compare_dfs_kwargs
+    )
+    dag_diff_detailed_stats = dtfcore.compute_dag_output_diff_detailed_stats(
         dag_diff_df
     )
 
@@ -241,20 +270,20 @@ if False:
 # ## Compute DAG execution time
 
 # %%
-df_dag_execution_time = oms.get_execution_time_for_all_dag_nodes(
-    dag_path_dict["prod"]
-)
+df_dag_execution_time = dtfcore.get_execution_time_for_all_dag_nodes(dag_path)
 _LOG.info("DAG execution time:")
 hpandas.df_to_str(df_dag_execution_time, num_rows=5, log_level=logging.INFO)
 
 # %%
-oms.plot_dag_execution_stats(df_dag_execution_time, report_stats=True)
+dtfcore.plot_dag_execution_stats(df_dag_execution_time, report_stats=True)
 
 # %%
 # The time is an approximation of how long it takes to process a bar. Technically the time
 # is a distance (in secs) between wall clock time when an order is executed and a bar
 # timestamp. The assumption is that order execution is the very last stage.
-df_order_execution_time = oms.get_orders_execution_time(orders_path_dict["prod"])
+df_order_execution_time = dtfcore.get_orders_execution_time(
+    orders_path_dict["prod"]
+)
 # TODO(Grisha): consider adding an assertion that checks that the time does not
 # exceed one minute.
 _LOG.info(
@@ -267,13 +296,13 @@ _LOG.info(
 
 # %%
 # Use a results df's size to measure memory consumption.
-dag_df_out_size = oms.get_dag_df_out_size_for_all_nodes(dag_path_dict["prod"])
+dag_df_out_size = dtfcore.get_dag_df_out_size_for_all_nodes(dag_path)
 _LOG.info("DAG results df size:")
 hpandas.df_to_str(dag_df_out_size, num_rows=5, log_level=logging.INFO)
 
 # %%
 # Display the results df size distribution over the DAG nodes.
-oms.plot_dag_df_out_size_stats(dag_df_out_size, report_stats=False)
+dtfcore.plot_dag_df_out_size_stats(dag_df_out_size, report_stats=False)
 
 # %% [markdown]
 # # Portfolio
@@ -305,8 +334,19 @@ fep = dtfmod.ForecastEvaluatorFromPrices(
 annotate_forecasts_kwargs = config["research_forecast_evaluator_from_prices"][
     "annotate_forecasts_kwargs"
 ].to_dict()
+# Get dag data path for research portfolio.
+compute_research_portfolio_mode = config["meta"][
+    "compute_research_portfolio_mode"
+]
+computation_dag_path = reconcil.get_dag_output_path(
+    dag_path_dict, compute_research_portfolio_mode
+)
+# Get computation dataframe for research portfolio.
+research_portfolio_input_df = dtfcore.load_dag_outputs(
+    computation_dag_path, dag_node_names[-1]
+)
 research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
-    dag_df_prod,
+    research_portfolio_input_df,
     **annotate_forecasts_kwargs,
     compute_extended_stats=True,
 )
@@ -324,7 +364,7 @@ hpandas.df_to_str(research_portfolio_stats_df, num_rows=5, log_level=logging.INF
 # ## Load logged portfolios (prod & sim)
 
 # %%
-portfolio_dfs, portfolio_stats_dfs = oms.load_portfolio_dfs(
+portfolio_dfs, portfolio_stats_dfs = reconcil.load_portfolio_dfs(
     portfolio_path_dict,
     config["meta"]["bar_duration"],
 )
@@ -343,7 +383,9 @@ hpandas.df_to_str(portfolio_stats_df, num_rows=5, log_level=logging.INFO)
 # ## Compute Portfolio statistics (prod vs research vs sim)
 
 # %%
-bars_to_burn = 1
+bars_to_burn = config["research_forecast_evaluator_from_prices"][
+    "annotate_forecasts_kwargs"
+]["burn_in_bars"]
 coplotti.plot_portfolio_stats(portfolio_stats_df.iloc[bars_to_burn:])
 
 # %%
@@ -371,7 +413,7 @@ compare_dfs_kwargs = {
     "remove_inf": True,
     "assert_diff_threshold": None,
 }
-portfolio_diff_df = oms.compare_portfolios(
+portfolio_diff_df = reconcil.compare_portfolios(
     portfolio_dfs,
     report_stats=report_stats,
     display_plot=display_plot,
@@ -425,14 +467,14 @@ if False:
 # ## Load target positions (prod)
 
 # %%
-prod_target_position_df = oms.load_target_positions(
+prod_target_position_df = reconcil.load_target_positions(
     portfolio_path_dict["prod"].strip("portfolio"),
     config["meta"]["bar_duration"],
 )
 hpandas.df_to_str(prod_target_position_df, num_rows=5, log_level=logging.INFO)
 if False:
     # TODO(Grisha): compare prod vs sim at some point.
-    sim_target_position_df = oms.load_target_positions(
+    sim_target_position_df = reconcil.load_target_positions(
         portfolio_path_dict["sim"].strip("portfolio"),
         config["meta"]["bar_duration"],
     )
@@ -585,98 +627,21 @@ hpandas.df_to_str(sim_order_df, num_rows=5, log_level=logging.INFO)
 # TODO(Grisha): add comparison using the usual `pct_change` approach.
 
 # %% [markdown]
-# # Fills statistics
+# # Compute execution quality
 
 # %%
-fills = cftpdp.compute_fill_stats(prod_target_position_df)
-hpandas.df_to_str(fills, num_rows=5, log_level=logging.INFO)
-
-# %%
-col = "fill_rate"
-coplotti.plot_boxplot(fills[col], "by_row", ylabel=col)
-
-# %%
-col = "fill_rate"
-coplotti.plot_boxplot(fills[col], "by_col", ylabel=col)
-
-# %% [markdown]
-# # Slippage
-
-# %%
-slippage = cfpdprsl.compute_share_prices_and_slippage(portfolio_dfs["prod"])
-hpandas.df_to_str(slippage, num_rows=5, log_level=logging.INFO)
-
-# %%
-col = "slippage_in_bps"
-coplotti.plot_boxplot(slippage[col], "by_row", ylabel=col)
-
-# %%
-col = "slippage_in_bps"
-coplotti.plot_boxplot(slippage[col], "by_col", ylabel=col)
-
-# %%
-stacked = slippage[["slippage_in_bps", "is_benchmark_profitable"]].stack()
-slippage_when_benchmark_profitable = stacked[
-    stacked["is_benchmark_profitable"] > 0
-]["slippage_in_bps"].rename("slippage_when_benchmark_profitable")
-slippage_when_not_benchmark_profitable = stacked[
-    stacked["is_benchmark_profitable"] <= 0
-]["slippage_in_bps"].rename("slippage_when_not_benchmark_profitable")
-slippage_when_benchmark_profitable.hist(bins=31, edgecolor="black", color="green")
-slippage_when_not_benchmark_profitable.hist(
-    bins=31, alpha=0.7, edgecolor="black", color="red"
-)
-
-# %%
-slippage_benchmark_profitability_ecdfs = (
-    costatis.compute_and_combine_empirical_cdfs(
-        [
-            slippage_when_benchmark_profitable,
-            slippage_when_not_benchmark_profitable,
-        ]
-    )
-)
-slippage_benchmark_profitability_ecdfs.plot(yticks=np.arange(0, 1.1, 0.1))
-
-# %% [markdown]
-# # Total cost accounting
-
-# %%
-notional_costs = cftpdp.compute_notional_costs(
+(
+    execution_quality_df,
+    execution_quality_stats_df,
+) = cftpdp.compute_execution_quality_df(
     portfolio_dfs["prod"],
     prod_target_position_df,
 )
-hpandas.df_to_str(notional_costs, num_rows=5, log_level=logging.INFO)
+hpandas.df_to_str(execution_quality_df, num_rows=5, log_level=logging.INFO)
+hpandas.df_to_str(execution_quality_stats_df, num_rows=5, log_level=logging.INFO)
 
 # %%
-cftpdp.summarize_notional_costs(notional_costs, "by_bar").plot(kind="bar")
+coplotti.plot_execution_stats(execution_quality_stats_df)
 
 # %%
-cftpdp.summarize_notional_costs(notional_costs, "by_asset").plot(kind="bar")
-
-# %%
-cftpdp.summarize_notional_costs(notional_costs, "by_bar").sum()
-
-# %%
-cost_df = cftpdp.apply_costs_to_baseline(
-    portfolio_stats_dfs["research"],
-    portfolio_stats_dfs["prod"],
-    portfolio_dfs["prod"],
-    prod_target_position_df,
-)
-hpandas.df_to_str(cost_df, num_rows=5, log_level=logging.INFO)
-
-# %%
-cost_df[["pnl", "baseline_pnl_minus_costs", "baseline_pnl"]].plot()
-cost_df[["pnl", "baseline_pnl_minus_costs"]].plot()
-
-# %% [markdown]
-# # TCA
-
-# %%
-if config["meta"]["run_tca"]:
-    tca = cofinanc.load_and_normalize_tca_csv(tca_csv)
-    tca = cofinanc.compute_tca_price_annotations(tca, True)
-    tca = cofinanc.pivot_and_accumulate_holdings(tca, "")
-
-# %%
+coplotti.plot_execution_ecdfs(execution_quality_df)

@@ -23,7 +23,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# gluon-ts - DeepAR
+# ContinuousDeepArModel
 # #############################################################################
 
 
@@ -181,6 +181,11 @@ class ContinuousDeepArModel(dtfconobas.FitPredictNode):
         self._set_info("predict", info)
         hdbg.dassert_no_duplicates(df_out.columns)
         return {"df_out": df_out}
+
+
+# #############################################################################
+# DeepARGlobalModel
+# #############################################################################
 
 
 class DeepARGlobalModel(dtfconobas.FitPredictNode):

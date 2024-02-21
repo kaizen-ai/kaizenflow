@@ -121,6 +121,7 @@ async def gather_coroutines_with_wall_clock(
 def run(
     coroutine: Coroutine,
     event_loop: Optional[asyncio.AbstractEventLoop],
+    *,
     close_event_loop: bool = True,
 ) -> Any:
     """
@@ -271,7 +272,8 @@ def sync_poll(
     tag: Optional[str] = None,
 ) -> Tuple[int, Any]:
     """
-    Same interface and behavior of `poll()` but using a synchronous implementation.
+    Same interface and behavior of `poll()` but using a synchronous
+    implementation.
     """
     _LOG.debug(hprint.to_str("polling_func sleep_in_secs timeout_in_secs tag"))
     if tag is None:
@@ -415,6 +417,12 @@ def _wait_until(
     *,
     tag: Optional[str] = None,
 ) -> float:
+    """
+    Return amount of seconds to wait for.
+
+    More accurate version of _wait_until, uses total_seconds() which
+    allows for returning fractional second values.
+    """
     if tag is None:
         # Use the name of the function calling this function.
         tag = hintros.get_function_name(count=2)
@@ -434,7 +442,7 @@ def _wait_until(
         )
         time_in_secs = 0
     else:
-        time_in_secs = (wait_until_timestamp - curr_timestamp).seconds
+        time_in_secs = (wait_until_timestamp - curr_timestamp).total_seconds()
         _LOG.debug(
             "%s: wall_clock_time=%s: sleep for %s secs",
             tag,
@@ -452,9 +460,14 @@ def sync_wait_until(
 ) -> None:
     """
     Synchronous wait until the wall clock time is `timestamp`.
+
+    More accurate version of sync_wait_until allowing to wait for
+    fractional seconds.
     """
     # Sync wait.
-    time_in_secs = _wait_until(wait_until_timestamp, get_wall_clock_time, tag=tag)
+    time_in_secs = _wait_until(
+        wait_until_timestamp, get_wall_clock_time, tag=tag
+    )
     hdbg.dassert_lte(0, time_in_secs)
     # TODO(gp): Consider using part of align_on_time_grid for high-precision clock.
     time.sleep(time_in_secs)

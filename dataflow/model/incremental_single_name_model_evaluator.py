@@ -15,7 +15,7 @@ import pandas as pd
 import core.finance as cofinanc
 import core.signal_processing as csigproc
 import core.statistics as costatis
-import dataflow.model.dataflow_model_utils as dtfmoexuti
+import dataflow.model.dataflow_model_utils as dtfmdtfmout
 import dataflow.model.stats_computer as dtfmostcom
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -37,15 +37,15 @@ def compute_stats_for_single_name_artifacts(
     """
     Generates single-name stats.
 
-    This function only requires maintaining at most one result bundle in-memory
-    at a time.
+    This function only requires maintaining at most one result bundle
+    in-memory at a time.
 
     :return: dataframe of stats, with keys as column names and a row
         multiindex for grouped stats
     """
     stats = collections.OrderedDict()
     load_rb_kwargs = {"columns": list([prediction_col, target_col])}
-    iterator = dtfmoexuti.yield_experiment_artifacts(
+    iterator = dtfmdtfmout.yield_experiment_artifacts(
         src_dir,
         file_name,
         load_rb_kwargs=load_rb_kwargs,
@@ -53,10 +53,11 @@ def compute_stats_for_single_name_artifacts(
         aws_profile=aws_profile,
     )
     for key, artifact in iterator:
-        _LOG.debug(
-            "compute_stats_for_single_name_artifacts: memory_usage=%s",
-            hloggin.get_memory_usage_as_str(None),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "compute_stats_for_single_name_artifacts: memory_usage=%s",
+                hloggin.get_memory_usage_as_str(None),
+            )
         # Extract df and restrict to [start, end].
         df_for_key = artifact.result_df.loc[start:end].copy()
         # Compute (intraday) PnL.
@@ -106,7 +107,7 @@ def aggregate_single_name_models(
         target_col,
     ]
     load_rb_kwargs = {"columns": expected_columns}
-    iterator = dtfmoexuti.yield_experiment_artifacts(
+    iterator = dtfmdtfmout.yield_experiment_artifacts(
         src_dir,
         file_name,
         load_rb_kwargs=load_rb_kwargs,
@@ -157,7 +158,7 @@ def load_result_dfs(
     This function should be used judiciously on large runs due to the memory
     requirements.
     """
-    iterator = dtfmoexuti.yield_experiment_artifacts(
+    iterator = dtfmdtfmout.yield_experiment_artifacts(
         src_dir,
         file_name,
         load_rb_kwargs=load_rb_kwargs,
@@ -269,7 +270,7 @@ def load_info(
     :return: dict keyed by experiment, with value equal to `info`
         restricted to `info_path`
     """
-    iterator = dtfmoexuti.yield_experiment_artifacts(
+    iterator = dtfmdtfmout.yield_experiment_artifacts(
         src_dir,
         file_name,
         load_rb_kwargs={"columns": []},

@@ -19,8 +19,8 @@ class TestIgHistoricalPqByDateTaqBarClient1(hunitest.TestCase):
         # Execute.
         vendor = "ig"
         resample_1min = False
-        root_dir = "s3://alphamatic-data/unit_test/ig_parquet"
-        aws_profile = "am"
+        root_dir = "s3://cryptokaizen-unit-test/alphamatic-data/unit_test/ig_parquet"
+        aws_profile = "ck"
         full_symbol_col_name = "igid"
         im_client = imvidcihpbdtbc.IgHistoricalPqByDateTaqBarClient(
             vendor, resample_1min, root_dir, aws_profile, full_symbol_col_name

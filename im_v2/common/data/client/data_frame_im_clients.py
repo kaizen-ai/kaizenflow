@@ -10,14 +10,16 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import im_v2.common.data.client.base_im_clients as imvcdcbimcl
+import im_v2.common.data.client.abstract_im_clients as imvcdcaimcl
 import im_v2.common.universe as ivcu
 
 
-class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
+class DataFrameImClient(imvcdcaimcl.ImClientReadingMultipleSymbols):
     """
     `ImClient` that serves data from a passed dataframe indexed with
     timestamps.
+
+    This is used to feed synthetic data to the `ImClient` interface.
     """
 
     def __init__(
@@ -74,6 +76,10 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         See description in the parent class.
         """
         return self._universe
+
+    # ///////////////////////////////////////////////////////////////////////////
+    # Private interface.
+    # ///////////////////////////////////////////////////////////////////////////
 
     # TODO(Dan): Implement usage of `columns` parameter.
     def _read_data_for_multiple_symbols(

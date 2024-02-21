@@ -120,19 +120,22 @@ class ModelEvaluator:
         data_dict: Dict[Key, pd.DataFrame] = {}
         # Convert each `ResultBundle` dict into a `ResultBundle` class object.
         for key, result_bundle in result_bundle_dict.items():
-            _LOG.debug("Loading key=%s", key)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("Loading key=%s", key)
             try:
-                _LOG.debug(
-                    "memory_usage=%s", hloggin.get_memory_usage_as_str(None)
-                )
+                if _LOG.isEnabledFor(logging.DEBUG):
+                    _LOG.debug(
+                        "memory_usage=%s", hloggin.get_memory_usage_as_str(None)
+                    )
                 df = result_bundle.result_df
                 hdbg.dassert_is_not(df, None)
-                _LOG.debug(
-                    "result_df.memory_usage=%s",
-                    hintros.format_size(
-                        df.memory_usage(index=True, deep=True).sum()
-                    ),
-                )
+                if _LOG.isEnabledFor(logging.DEBUG):
+                    _LOG.debug(
+                        "result_df.memory_usage=%s",
+                        hintros.format_size(
+                            df.memory_usage(index=True, deep=True).sum()
+                        ),
+                    )
                 # Extract the needed columns.
                 hdbg.dassert_in(target_col, df.columns)
                 hdbg.dassert_in(predictions_col, df.columns)
@@ -302,7 +305,8 @@ class ModelEvaluator:
         )
         stats_dict = {}
         for key in tqdm(pnl_dict.keys(), desc="Calculating stats"):
-            _LOG.debug("key=%s", key)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("key=%s", key)
             if pnl_dict[key].empty:
                 _LOG.warning("PnL series for key=%i is empty", key)
                 continue
@@ -351,7 +355,8 @@ class ModelEvaluator:
         """
         keys = self.get_keys(keys)
         # Extract and align the returns.
-        _LOG.debug("Process returns")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Process returns")
         returns = {}
         for key in keys:
             hdbg.dassert_in(self.target_col, self._data[key].columns)
@@ -363,7 +368,8 @@ class ModelEvaluator:
             _validate_series(srs)
             returns[key] = srs
         # Extract and align the predictions.
-        _LOG.debug("Process predictions")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Process predictions")
         predictions = {}
         for key in keys:
             hdbg.dassert_in(self.prediction_col, self._data[key].columns)
@@ -375,10 +381,12 @@ class ModelEvaluator:
             _validate_series(srs)
             predictions[key] = srs
         # Compute the positions.
-        _LOG.debug("Process positions")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Process positions")
         positions = {}
         for key in tqdm(returns.keys(), "Calculating positions"):
-            _LOG.debug("Process key=%s", key)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("Process key=%s", key)
             position_computer = PositionComputer(
                 returns=returns[key],
                 predictions=predictions[key],
@@ -388,24 +396,28 @@ class ModelEvaluator:
                 target_volatility=target_volatility,
             ).rename("positions")
         # Compute PnLs.
-        _LOG.debug("Process PnLs")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Process PnLs")
         pnls = {}
         for key in tqdm(positions.keys(), "Calculating PnL"):
-            _LOG.debug("Process key=%s", key)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("Process key=%s", key)
             pnl_computer = PnlComputer(
                 returns=returns[key],
                 positions=positions[key],
             )
             pnls[key] = pnl_computer.compute_pnl().rename("pnl")
         # Assemble the results into a dictionary of dataframes.
-        _LOG.debug("Assemble results into pnl_dict")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Assemble results into pnl_dict")
         pnl_dict = {}
         for key in keys:
             pnl_dict[key] = pd.concat(
                 [returns[key], predictions[key], positions[key], pnls[key]],
                 axis=1,
             )
-        _LOG.debug("Trim pnl_dict")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Trim pnl_dict")
         pnl_dict = self._trim_time_range(pnl_dict, mode=mode)
         _LOG.info("memory_usage=%s", hloggin.get_memory_usage_as_str(None))
         return pnl_dict
@@ -511,7 +523,8 @@ class PositionComputer:
 
         :param returns: financial returns
         :param predictions: returns predictions (aligned with returns)
-        :param oos_start: optional end of in-sample/start of out-of-sample.
+        :param oos_start: optional end of in-sample/start of out-of-
+            sample.
         """
         self.oos_start = oos_start
         _validate_series(returns, self.oos_start)
@@ -533,10 +546,12 @@ class PositionComputer:
         """
         Compute positions from returns and predictions.
 
-        :param target_volatility: generate positions to achieve target volatility
-            on in-sample region
-        :param prediction_strategy: "raw" (default), "kernel", "squash", "binarize"
-        :param volatility_strategy: "rescale", "rolling" (not yet implemented)
+        :param target_volatility: generate positions to achieve target
+            volatility on in-sample region
+        :param prediction_strategy: "raw" (default), "kernel", "squash",
+            "binarize"
+        :param volatility_strategy: "rescale", "rolling" (not yet
+            implemented)
         :param mode: "all_available", "ins", or "oos"
         :return: series of positions
         """
@@ -674,5 +689,6 @@ def compute_volatility_normalization_factor(
     ppy = hdatafr.infer_sampling_points_per_year(srs)
     srs = hdatafr.apply_nan_mode(srs, mode="fill_with_zero")
     scale_factor: float = target_volatility / (np.sqrt(ppy) * srs.std())
-    _LOG.debug("scale_factor=%f", scale_factor)
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("scale_factor=%f", scale_factor)
     return scale_factor

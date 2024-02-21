@@ -7,8 +7,8 @@ import core.information_bars.test.test_bars as bttbar
 import os
 
 import core.information_bars.bars as cinbabar
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
-
 
 class TestBars(hunitest.TestCase):
     def test_get_tick_bars(self) -> None:
@@ -17,7 +17,7 @@ class TestBars(hunitest.TestCase):
         """
         file_path = self._get_input_file_path()
         actual = cinbabar.get_tick_bars(file_path, threshold=10)
-        actual_string = hunitest.convert_df_to_string(actual, decimals=3)
+        actual_string = hpandas.df_to_str(actual, num_rows=None, precision=3)
         self.check_string(actual_string, fuzzy_match=True)
 
     def test_get_volume_bars(self) -> None:
@@ -26,7 +26,7 @@ class TestBars(hunitest.TestCase):
         """
         file_path = self._get_input_file_path()
         actual = cinbabar.get_volume_bars(file_path, threshold=10)
-        actual_string = hunitest.convert_df_to_string(actual, decimals=3)
+        actual_string = hpandas.df_to_str(actual, num_rows=None, precision=3)
         self.check_string(actual_string, fuzzy_match=True)
 
     def test_get_dollar_bars(self) -> None:
@@ -35,7 +35,7 @@ class TestBars(hunitest.TestCase):
         """
         file_path = self._get_input_file_path()
         actual = cinbabar.get_dollar_bars(file_path, threshold=10)
-        actual_string = hunitest.convert_df_to_string(actual, decimals=3)
+        actual_string = hpandas.df_to_str(actual, num_rows=None, precision=3)
         self.check_string(actual_string, fuzzy_match=True)
 
     def _get_input_file_path(self) -> str:

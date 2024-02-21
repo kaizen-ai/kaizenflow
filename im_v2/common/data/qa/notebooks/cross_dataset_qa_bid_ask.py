@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -223,11 +223,11 @@ cross_dataset_validator = imvcdqdava.DataFrameDatasetValidator(
 try:
     # TODO(Juraj): bid/ask data quality is very variable when collected in realtime for a big universe.
     # _LOG.info("First dataset QA:")
-    # dataset_validator1.run_all_checks([data1], _LOG)
+    # dataset_validator1.run_all_checks([data1])
     _LOG.info("Second dataset QA:")
-    dataset_validator2.run_all_checks([data2], _LOG)
+    dataset_validator2.run_all_checks([data2])
     _LOG.info("Cross dataset QA:")
-    cross_dataset_validator.run_all_checks(datasets, _LOG)
+    cross_dataset_validator.run_all_checks(datasets)
 except Exception as e:
     # Pass information about success or failure of the QA
     #  back to the task that invoked it.

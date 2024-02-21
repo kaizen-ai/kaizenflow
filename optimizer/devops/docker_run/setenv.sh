@@ -22,12 +22,12 @@ export PATH=.:$PATH
 export PATH=$AMP:$PATH
 export PATH=$AMP/dev_scripts:$PATH
 export PATH=$AMP/dev_scripts/aws:$PATH
+export PATH=$AMP/dev_scripts/documentation:$PATH
 export PATH=$AMP/dev_scripts/git:$PATH
 export PATH=$AMP/dev_scripts/infra:$PATH
 export PATH=$AMP/dev_scripts/install:$PATH
 export PATH=$AMP/dev_scripts/notebooks:$PATH
 export PATH=$AMP/dev_scripts/testing:$PATH
-export PATH=$AMP/documentation/scripts:$PATH
 
 export PATH=$(echo $PATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
 echo "PATH=$PATH"

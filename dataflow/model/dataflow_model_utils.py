@@ -1,6 +1,6 @@
 """
-Contain functions used by both `run_config_list.py` and `run_notebook.py` to run
-experiments.
+Contain functions used by both `run_config_list.py` and `run_notebook.py` to
+run experiments.
 
 Import as:
 
@@ -112,7 +112,8 @@ def _get_experiment_subdirs(
             tgz_file = src_dir
         # Expand.
         src_dir = hs3.expand_archived_data(tgz_file, scratch_dir)
-        _LOG.debug("src_dir=%s", src_dir)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("src_dir=%s", src_dir)
     # Retrieve all the subdirectories in `src_dir` that store results.
     hdbg.dassert_dir_exists(src_dir)
     subdirs = [d for d in glob.glob(f"{src_dir}/result_*") if os.path.isdir(d)]
@@ -120,7 +121,8 @@ def _get_experiment_subdirs(
     # Build a mapping from `config_idx` to `experiment_dir`.
     config_idx_to_dir: Dict[int, str] = {}
     for subdir in subdirs:
-        _LOG.debug("subdir='%s'", subdir)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("subdir='%s'", subdir)
         # E.g., `result_123"
         m = re.match(r"^result_(\d+)$", os.path.basename(subdir))
         hdbg.dassert(m)
@@ -220,7 +222,8 @@ def yield_experiment_artifacts(
         # Build the name of the file.
         hdbg.dassert_dir_exists(subdir)
         file_name_tmp = os.path.join(subdir, file_name)
-        _LOG.debug("Loading '%s'", file_name_tmp)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Loading '%s'", file_name_tmp)
         if not os.path.exists(file_name_tmp):
             _LOG.warning("Can't find '%s': skipping", file_name_tmp)
             continue
@@ -239,8 +242,8 @@ def _yield_rolling_experiment_out_of_sample_df(
     """
     Return in experiment dirs under `src_dir` matching `file_name_prefix*`.
 
-    This function stitches together out-of-sample predictions from consecutive runs
-    to form a single out-of-sample dataframe.
+    This function stitches together out-of-sample predictions from
+    consecutive runs to form a single out-of-sample dataframe.
 
     Same inputs as `load_experiment_artifacts()`.
     """
@@ -263,7 +266,8 @@ def _yield_rolling_experiment_out_of_sample_df(
         dfs = []
         # Iterate over OOS chunks.
         for file_name_tmp in files:
-            _LOG.debug("Loading '%s'", file_name_tmp)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("Loading '%s'", file_name_tmp)
             if not os.path.exists(file_name_tmp):
                 _LOG.warning("Can't find '%s': skipping", file_name_tmp)
                 continue

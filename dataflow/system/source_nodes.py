@@ -146,6 +146,7 @@ def load_kibot_data(
 
 # TODO(gp): Maybe consolidate KibotDataReader and KibotColumnReader.
 
+
 # TODO(gp): -> KibotFuturesDataReader
 class KibotDataReader(dtfcore.DataSource):
     def __init__(
@@ -316,21 +317,26 @@ class KibotEquityReader(dtfcore.DataSource):
                 nrows=self._nrows,
             )
             n_rows = data.shape[0]
-            _LOG.debug("Read %d rows for symbol=%s", n_rows, symbol)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("Read %d rows for symbol=%s", n_rows, symbol)
             data = data.loc[self._start_date : self._end_date]
-            _LOG.debug(
-                "Retained %s rows for symbol=%s after time filtering (%.2f)",
-                data.shape[0],
-                symbol,
-                data.shape[0] / n_rows,
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "Retained %s rows for symbol=%s after time filtering (%.2f)",
+                    data.shape[0],
+                    symbol,
+                    data.shape[0] / n_rows,
+                )
             hdbg.dassert(
                 not data.empty, "No data for %s in requested time range", symbol
             )
             # Rename column for volume so that it adheres with our conventions.
             data = data.rename(columns={"vol": "volume"})
             # Print some info about the data.
-            _LOG.debug(hpandas.df_to_str(data, print_shape_info=True, tag="data"))
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    hpandas.df_to_str(data, print_shape_info=True, tag="data")
+                )
             # Ensure data is on a uniform frequency grid.
             data = cofinanc.resample_ohlcv_bars(data, rule=self._frequency.value)
             dfs[symbol] = data
@@ -375,10 +381,11 @@ def _convert_to_multiindex(df: pd.DataFrame, asset_id_col: str) -> pd.DataFrame:
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_lte(1, df.shape[0])
     # Copied from `_load_multiple_instrument_data()`.
-    _LOG.debug(
-        "Before multiindex conversion:\n%s",
-        hpandas.df_to_str(df.head()),
-    )
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(
+            "Before multiindex conversion:\n%s",
+            hpandas.df_to_str(df.head()),
+        )
     # Remove duplicates if any.
     df = hpandas.drop_duplicated(df, subset=[asset_id_col])
     #
@@ -393,16 +400,18 @@ def _convert_to_multiindex(df: pd.DataFrame, asset_id_col: str) -> pd.DataFrame:
         hdbg.dassert_not_in(asset_id, dfs.keys())
         dfs[asset_id] = df
     # Reorganize the data into the desired format.
-    _LOG.debug("keys=%s", str(dfs.keys()))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("keys=%s", str(dfs.keys()))
     df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
     df = df.swaplevel(i=0, j=1, axis=1)
     df.sort_index(axis=1, level=0, inplace=True)
     # Remove the asset_id column, since it's redundant.
     del df[asset_id_col]
-    _LOG.debug(
-        "After multiindex conversion:\n%s",
-        hpandas.df_to_str(df.head()),
-    )
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(
+            "After multiindex conversion:\n%s",
+            hpandas.df_to_str(df.head()),
+        )
     return df
 
 
@@ -430,17 +439,22 @@ class RealTimeDataSource(dtfcore.DataSource):
         """
         Constructor.
 
-        :param timedelta: how much history is needed from the real-time node. See
-            `MarketData.get_data()` for details.
+        :param timedelta: how much history is needed from the real-time
+            node. See `MarketData.get_data()` for details.
         """
-        _LOG.debug(hprint.to_str("nid market_data timedelta multiindex_output"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                hprint.to_str("nid market_data timedelta multiindex_output")
+            )
         super().__init__(nid)
         hdbg.dassert_isinstance(market_data, mdata.MarketData)
         self._market_data = market_data
         hdbg.dassert_isinstance(timedelta, pd.Timedelta)
         self._timedelta = timedelta
         self._asset_id_col = market_data.asset_id_col
+        hdbg.dassert_isinstance(ts_col_name, str)
         self._ts_col_name = ts_col_name
+        hdbg.dassert_isinstance(multiindex_output, bool)
         self._multiindex_output = multiindex_output
 
     # TODO(gp): Can we use a run and move it inside fit?
@@ -461,7 +475,8 @@ class RealTimeDataSource(dtfcore.DataSource):
     def _get_data(self) -> None:
         # TODO(gp): This approach of communicating params through the state
         #  makes the code difficult to understand.
-        _LOG.debug("timedelta=%s", self._timedelta)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("timedelta=%s", self._timedelta)
         self.df = self._market_data.get_data_for_last_period(
             self._timedelta, ts_col_name=self._ts_col_name
         )
@@ -498,7 +513,8 @@ class HistoricalDataSource(dtfcore.DataSource):
         """
         super().__init__(nid)
         hdbg.dassert_isinstance(market_data, mdata.MarketData)
-        _LOG.debug(hprint.to_str("market_data ts_col_name multiindex_output"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("market_data ts_col_name multiindex_output"))
         self._market_data = market_data
         self._asset_id_col = market_data.asset_id_col
         self._ts_col_name = ts_col_name
@@ -506,19 +522,21 @@ class HistoricalDataSource(dtfcore.DataSource):
         self._col_names_to_remove = col_names_to_remove
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:
-        _LOG.debug(
-            "wall_clock_time=%s",
-            self._market_data.get_wall_clock_time(),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "wall_clock_time=%s",
+                self._market_data.get_wall_clock_time(),
+            )
         intervals = self._fit_intervals
         self.df = self._get_data(intervals)
         return super().fit()  # type: ignore[no-any-return]
 
     def predict(self) -> Optional[Dict[str, pd.DataFrame]]:
-        _LOG.debug(
-            "wall_clock_time=%s",
-            self._market_data.get_wall_clock_time(),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "wall_clock_time=%s",
+                self._market_data.get_wall_clock_time(),
+            )
         intervals = self._predict_intervals
         self.df = self._get_data(intervals)
         return super().predict()  # type: ignore[no-any-return]
@@ -527,7 +545,8 @@ class HistoricalDataSource(dtfcore.DataSource):
         """
         Get data for the requested [a, b] interval.
         """
-        _LOG.debug(hprint.to_str("intervals"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("intervals"))
         # For simplicity's sake we get a slice of the data that includes all the
         # requested intervals, relying on parent's `fit()` and `predict()` to
         # extract the data strictly needed.
@@ -535,7 +554,8 @@ class HistoricalDataSource(dtfcore.DataSource):
             min_timestamp,
             max_timestamp,
         ) = dtfcore.find_min_max_timestamps_from_intervals(intervals)
-        _LOG.debug(hprint.to_str("min_timestamp max_timestamp"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("min_timestamp max_timestamp"))
         # From ArmaDataSource._lazy_load():
         #   ```
         #   self.df = df.loc[self._start_date : self._end_date]
@@ -556,20 +576,22 @@ class HistoricalDataSource(dtfcore.DataSource):
         )
         # Remove the columns that are not needed.
         if self._col_names_to_remove is not None:
-            _LOG.debug(
-                "Before column removal\n:%s",
-                hpandas.df_to_str(df.head()),
-            )
-            _LOG.debug(
-                "Removing %s from %s", self._col_names_to_remove, df.columns
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "Before column removal\n:%s",
+                    hpandas.df_to_str(df.head()),
+                )
+                _LOG.debug(
+                    "Removing %s from %s", self._col_names_to_remove, df.columns
+                )
             for col_name in self._col_names_to_remove:
                 hdbg.dassert_in(col_name, df.columns)
                 del df[col_name]
-            _LOG.debug(
-                "After column removal\n:%s",
-                hpandas.df_to_str(df.head()),
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "After column removal\n:%s",
+                    hpandas.df_to_str(df.head()),
+                )
         if self._multiindex_output:
             df = _convert_to_multiindex(df, self._asset_id_col)
         return df

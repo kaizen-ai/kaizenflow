@@ -40,7 +40,8 @@ def _get_result_data() -> pd.DataFrame:
     df = pd.DataFrame(data, index=idx)
     df.columns.set_names("asset_id", level=1)
     df.index.name = "end_ts"
-    _LOG.debug("result_df=\n%s", hpandas.df_to_str(df))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("result_df=\n%s", hpandas.df_to_str(df))
     return df
 
 
@@ -51,7 +52,8 @@ def _get_metrics_df() -> pd.DataFrame:
     metrics_df = dtfmodmetr.convert_to_metrics_format(
         df, y_column_name, y_hat_column_name
     )
-    _LOG.debug("metrics_df=\n%s", hpandas.df_to_str(df))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("metrics_df=\n%s", hpandas.df_to_str(df))
     return metrics_df
 
 

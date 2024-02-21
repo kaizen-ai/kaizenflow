@@ -14,6 +14,7 @@ MAX_ROWS = 500
 @pytest.mark.requires_ck_infra
 class TestKibotMetadata(hunitest.TestCase):
     
+    @pytest.mark.slow("~6 seconds.")
     @pytest.mark.requires_aws 
     @pytest.mark.requires_ck_infra
     def test_get_metadata_slow1(self) -> None:
@@ -40,6 +41,7 @@ class TestKibotMetadata(hunitest.TestCase):
             for column in df.keys():
                 self.assertIn(column, exp_columns)
 
+    @pytest.mark.slow("~6 seconds.")
     @pytest.mark.requires_aws 
     @pytest.mark.requires_ck_infra
     def test_get_metadata_slow2(self) -> None:
@@ -52,6 +54,7 @@ class TestKibotMetadata(hunitest.TestCase):
             act = len(cls.get_metadata().index)
             self.assertLessEqual(exp, act)
 
+    @pytest.mark.slow("~6 seconds.")
     @pytest.mark.requires_aws 
     @pytest.mark.requires_ck_infra
     def test_get_metadata_slow3(self) -> None:
@@ -64,6 +67,7 @@ class TestKibotMetadata(hunitest.TestCase):
             act = len(cls.get_metadata("tick-bid-ask").index)
             self.assertLessEqual(exp, act)
 
+    @pytest.mark.slow("~6 seconds.")
     @pytest.mark.requires_aws 
     @pytest.mark.requires_ck_infra
     def test_get_futures_slow1(self) -> None:
@@ -76,6 +80,7 @@ class TestKibotMetadata(hunitest.TestCase):
             act = len(cls.get_futures())
             self.assertLessEqual(exp, act)
 
+    @pytest.mark.slow("~6 seconds.")
     @pytest.mark.requires_aws 
     @pytest.mark.requires_ck_infra
     def test_get_futures_slow2(self) -> None:
@@ -88,6 +93,7 @@ class TestKibotMetadata(hunitest.TestCase):
             act = len(cls.get_futures("tick-bid-ask"))
             self.assertLess(exp, act)
 
+    @pytest.mark.slow("~6 seconds.")
     @pytest.mark.requires_aws 
     @pytest.mark.requires_ck_infra
     def test_get_expiry_contract_slow1(self) -> None:

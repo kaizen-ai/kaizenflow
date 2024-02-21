@@ -1,6 +1,6 @@
 import pytest
 
-import helpers.hunit_test as hunitest
+import helpers.hpandas as hpandas
 import im.common.data.transform.transform as imcdatrtr
 import im.common.data.types as imcodatyp
 import im.common.test.utils as ictuti
@@ -16,8 +16,17 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
     Test migrating data from S3 to SQL for IB provider.
     """
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test2()
+        yield
+        # Run after each test.
+        self.tear_down_test2()
+
+    def set_up_test2(self) -> None:
+        self.set_up_test()
         # Initialize writer class to test.
         self._writer = imibsqwri.IbSqlWriter(
             dbname=self._dbname,
@@ -36,9 +45,9 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
             port=self._port,
         )
 
-    def tearDown(self) -> None:
+    def tear_down_test2(self) -> None:
         self._sql_data_loader.close()
-        super().tearDown()
+        self.tear_down_test()
 
     def test_insert_daily_data_from_s3_1(self) -> None:
         """
@@ -220,6 +229,6 @@ class TestReadFromS3WriteToSql(ictuti.SqlWriterBackendTestCase):
         )
         # Convert dataframe to string.
         # df.drop(columns=["id"], inplace=True)
-        txt = hunitest.convert_df_to_string(df)
+        txt = hpandas.df_to_str(df, num_rows=None)
         # Check the output against the golden.
         self.check_string(txt, fuzzy_match=True)

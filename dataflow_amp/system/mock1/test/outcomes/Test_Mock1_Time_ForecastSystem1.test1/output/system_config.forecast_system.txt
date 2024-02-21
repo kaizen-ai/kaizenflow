@@ -87,6 +87,7 @@ market_data_config:
     2000-01-01 10:29:00-05:00 2000-01-01 10:28:00-05:00 2000-01-01 10:29:00-05:00 2000-01-01 10:29:00-05:00  100.0       101     100      -1.0
     2000-01-01 10:30:00-05:00 2000-01-01 10:29:00-05:00 2000-01-01 10:30:00-05:00 2000-01-01 10:30:00-05:00  100.0       101     100      -1.0
   replayed_delay_in_mins_or_timestamp: 2000-01-01 10:05:00-05:00
+  days: 1
   history_lookback: 1 days 00:00:00
 dag_runner_config:
   rt_timeout_in_secs_or_time: 900
@@ -97,7 +98,7 @@ object.builder_function:
   market_object: dataflow_amp.system.mock1.mock1_forecast_system._get_market_data
   dag_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag
   dag_runner_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag_runner
-dag_object: DAG at 0x=(_nx_dag=DiGraph with 9 nodes and 8 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
+dag_object: DAG at 0x=(_nx_dag=DiGraph with 9 nodes and 8 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _save_node_df_out_stats=False <bool>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
 dag_runner_object:
   RealTimeDagRunner at 0x=(config= <core.config.config_.Config>, _column_to_tags_mapping=None <NoneType>, _result_nid=predict <str>, _execute_rt_loop_kwargs={'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
     _asset_id_col='asset_id' <str>

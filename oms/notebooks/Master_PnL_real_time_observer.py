@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -28,15 +28,15 @@ import pandas as pd
 
 import core.config as cconfig
 import core.plotting as coplotti
+import dataflow.core as dtfcore
 import dataflow.model as dtfmod
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.henv as henv
-import helpers.hintrospection as hintros
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import oms as oms
+import reconciliation as reconcil
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -62,7 +62,9 @@ else:
     # Specify the config directly when running the notebook manually.
     # Below is just an example.
     prod_data_root_dir = "/shared_data/ecs/preprod/system_reconciliation"
-    dag_builder_name = "C3a"
+    dag_builder_ctor_as_str = (
+        "dataflow_orange.pipelines.C3.C3a_pipeline_tmp.C3a_DagBuilder_tmp"
+    )
     run_mode = "paper_trading"
     start_timestamp_as_str = "20230716_131000"
     end_timestamp_as_str = "20230717_130500"
@@ -70,9 +72,9 @@ else:
     save_plots_for_investors = True
     html_bucket_path = henv.execute_repo_config_code("get_html_bucket_path()")
     s3_dst_dir = os.path.join(html_bucket_path, "pnl_for_investors")
-    config_list = oms.build_prod_pnl_real_time_observer_configs(
+    config_list = reconcil.build_prod_pnl_real_time_observer_configs(
         prod_data_root_dir,
-        dag_builder_name,
+        dag_builder_ctor_as_str,
         run_mode,
         start_timestamp_as_str,
         end_timestamp_as_str,
@@ -89,25 +91,25 @@ print(config)
 # %%
 # Points to `system_log_dir/dag/node_io/node_io.data`.
 data_type = "dag_data"
-dag_data_path = oms.get_data_type_system_log_path(
+dag_data_path = reconcil.get_data_type_system_log_path(
     config["system_log_dir"], data_type
 )
 _LOG.info("dag_data_path=%s", dag_data_path)
 # Points to `system_log_dir/dag/node_io/node_io.prof`.
 data_type = "dag_stats"
-dag_info_path = oms.get_data_type_system_log_path(
+dag_info_path = reconcil.get_data_type_system_log_path(
     config["system_log_dir"], data_type
 )
 _LOG.info("dag_info_path=%s", dag_info_path)
 # Points to `system_log_dir/process_forecasts/portfolio`.
 data_type = "portfolio"
-portfolio_path = oms.get_data_type_system_log_path(
+portfolio_path = reconcil.get_data_type_system_log_path(
     config["system_log_dir"], data_type
 )
 _LOG.info("portfolio_path=%s", portfolio_path)
 # Points to `system_log_dir/process_forecasts/orders`.
 data_type = "orders"
-orders_path = oms.get_data_type_system_log_path(
+orders_path = reconcil.get_data_type_system_log_path(
     config["system_log_dir"], data_type
 )
 _LOG.info("orders_path=%s", orders_path)
@@ -117,10 +119,11 @@ _LOG.info("orders_path=%s", orders_path)
 
 # %%
 # TODO(Grisha): Load the system config as df instead of just printing the DAG config.
-system_config = hintros.get_function_from_string(
-    config["system_config_func_as_str"]
+dag_builder = dtfcore.get_DagBuilder_from_string(
+    config["dag_builder_ctor_as_str"]
 )
-print(system_config)
+dag_config = dag_builder.get_config_template()
+print(dag_config)
 
 # %% [markdown]
 # # DAG io
@@ -130,14 +133,14 @@ print(system_config)
 
 # %%
 # Get DAG node names.
-dag_node_names = oms.get_dag_node_names(dag_data_path)
+dag_node_names = dtfcore.get_dag_node_names(dag_data_path)
 _LOG.info(
     "First node='%s' / Last node='%s'", dag_node_names[0], dag_node_names[-1]
 )
 
 # %%
 # Get timestamps for the last DAG node.
-dag_node_timestamps = oms.get_dag_node_timestamps(
+dag_node_timestamps = dtfcore.get_dag_node_timestamps(
     dag_data_path, dag_node_names[-1], as_timestamp=True
 )
 _LOG.info(
@@ -148,7 +151,7 @@ _LOG.info(
 
 # %%
 # Get DAG output for the last node and the last timestamp.
-dag_df_prod = oms.load_dag_outputs(dag_data_path, dag_node_names[-1])
+dag_df_prod = dtfcore.load_dag_outputs(dag_data_path, dag_node_names[-1])
 _LOG.info("Output of last node:")
 hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 
@@ -156,18 +159,20 @@ hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 # ## Compute DAG execution time
 
 # %%
-df_dag_execution_time = oms.get_execution_time_for_all_dag_nodes(dag_data_path)
+df_dag_execution_time = dtfcore.get_execution_time_for_all_dag_nodes(
+    dag_data_path
+)
 _LOG.info("DAG execution time:")
 hpandas.df_to_str(df_dag_execution_time, num_rows=5, log_level=logging.INFO)
 
 # %%
-oms.plot_dag_execution_stats(df_dag_execution_time, report_stats=False)
+dtfcore.plot_dag_execution_stats(df_dag_execution_time, report_stats=False)
 
 # %%
 # The time is an approximation of how long it takes to process a bar. Technically the time
 # is a distance (in secs) between wall clock time when an order is executed and a bar
 # timestamp. The assumption is that order execution is the very last stage.
-df_order_execution_time = oms.get_orders_execution_time(orders_path)
+df_order_execution_time = dtfcore.get_orders_execution_time(orders_path)
 # TODO(Grisha): consider adding an assertion that checks that the time does not
 # exceed one minute.
 _LOG.info(
@@ -214,7 +219,7 @@ hpandas.df_to_str(research_portfolio_stats_df, num_rows=5, log_level=logging.INF
 # ## Load logged portfolios (prod & research)
 
 # %%
-portfolio_dfs, portfolio_stats_dfs = oms.load_portfolio_dfs(
+portfolio_dfs, portfolio_stats_dfs = reconcil.load_portfolio_dfs(
     {"prod": portfolio_path},
     config["meta"]["bar_duration"],
 )

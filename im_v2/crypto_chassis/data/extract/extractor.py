@@ -193,6 +193,7 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
             pd.Timestamp,
         )
         hdbg.dassert_lte(start_timestamp, end_timestamp)
+        currency_pair = self.convert_currency_pair(currency_pair, exchange_id)
         # Verify that date parameters are of correct format.
         if depth:
             hdbg.dassert_lgt(1, depth, 10, True, True)
@@ -272,7 +273,7 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         *,
         interval: Optional[str] = "1m",
         include_realtime: bool = False,
-        **kwargs,
+        **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
         Download snapshot of ohlcv.
@@ -308,6 +309,7 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
             end_timestamp = hdateti.convert_timestamp_to_unix_epoch(
                 end_timestamp, unit="s"
             )
+        currency_pair = self.convert_currency_pair(currency_pair, exchange_id)
         # Set an exchange ID for futures, if applicable.
         if self.contract_type == "futures":
             hdbg.dassert_eq(
@@ -406,6 +408,7 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
                 pd.Timestamp,
             )
             start_timestamp = start_timestamp.strftime("%Y-%m-%dT%XZ")
+        currency_pair = self.convert_currency_pair(currency_pair, exchange_id)
         # Set an exchange ID for futures, if applicable.
         if self.contract_type == "futures":
             hdbg.dassert_in(
@@ -521,6 +524,13 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
 
     def _subscribe_to_websocket_trades(
         self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for CryptoChassis vendor yet."
+        )
+    
+    def _subscribe_to_websocket_bid_ask_multiple_symbols(
+        self, exchange_id: str, currency_pair: List[str], **kwargs: Any
     ) -> Dict:
         raise NotImplementedError(
             "This method is not implemented for CryptoChassis vendor yet."

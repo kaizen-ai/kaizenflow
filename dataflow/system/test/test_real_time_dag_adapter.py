@@ -14,7 +14,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_adapt_dag_to_real_time1(hunitest.TestCase):
-
     # TODO(gp): Add a test for Mock1 and factor out the code below.
 
     def testMvnReturnsBuilder1(self) -> None:
@@ -29,7 +28,8 @@ class Test_adapt_dag_to_real_time1(hunitest.TestCase):
         txt.append(hprint.indent(str(dag_builder)))
         # Build initial DAG.
         config = dag_builder.get_config_template()
-        _LOG.debug("config=\n%s", config)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("config=\n%s", config)
         dag = dag_builder.get_dag(config)
         # Print the initial DAG.
         file_name = os.path.join(self.get_scratch_space(), "initial_dag.png")

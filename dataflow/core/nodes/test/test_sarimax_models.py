@@ -11,6 +11,7 @@ import core.config as cconfig
 import core.signal_processing as csigproc
 import dataflow.core.nodes.sarimax_models as dtfcnosamo
 import dataflow.core.nodes.sklearn_models as dtfcnoskmo
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -119,7 +120,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
             f"{hprint.frame('sklearn_config')}\n{sklearn_config}\n"
             f"{hprint.frame('sarimax_config')}\n{sarimax_config}\n"
             f"{hprint.frame('df_out')}\n"
-            f"{hunitest.convert_df_to_string(df_out, index=True)}"
+            f"{hpandas.df_to_str(df_out, num_rows=None)}"
         )
         self.check_string(act, fuzzy_match=True)
 
@@ -166,7 +167,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
             f"{hprint.frame('sklearn_config')}\n{sklearn_config}\n"
             f"{hprint.frame('sarimax_config')}\n{sarimax_config}\n"
             f"{hprint.frame('df_out')}\n"
-            f"{hunitest.convert_df_to_string(df_out, index=True)}"
+            f"{hpandas.df_to_str(df_out, num_rows=None)}"
         )
         self.check_string(act, fuzzy_match=True)
 
@@ -249,7 +250,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
             axis=1,
         )
         self.check_string(
-            hunitest.convert_df_to_string(df_out, index=True), fuzzy_match=True
+            hpandas.df_to_str(df_out, num_rows=None), fuzzy_match=True
         )
 
     @pytest.mark.slow("~5 seconds.")
@@ -307,9 +308,9 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         # TODO(gp): Use the idiom like `_check_results()` instead of all
         #  these unreadable f-strings.
         act = (
-            f"{hunitest.convert_df_to_string(info['info'], index=True)}\n"
-            f"{hunitest.convert_df_to_string(info['tests'], index=True)}\n"
-            f"{hunitest.convert_df_to_string(info['coefs'], index=True)}"
+            f"{hpandas.df_to_str(info['info'], num_rows=None)}\n"
+            f"{hpandas.df_to_str(info['tests'], num_rows=None)}\n"
+            f"{hpandas.df_to_str(info['coefs'], num_rows=None)}"
         )
         self.check_string(act)
 
@@ -396,9 +397,9 @@ class TestMultihorizonReturnsPredictionProcessor(hunitest.TestCase):
         act = (
             f"{hprint.frame('config')}\n{config}\n"
             f"{hprint.frame('df_in')}\n"
-            f"{hunitest.convert_df_to_string(model_output, index=True)}\n"
+            f"{hpandas.df_to_str(model_output, num_rows=None)}\n"
             f"{hprint.frame('df_out')}\n"
-            f"{hunitest.convert_df_to_string(cum_y_yhat, index=True)}\n"
+            f"{hpandas.df_to_str(cum_y_yhat, num_rows=None)}\n"
         )
         self.check_string(act, fuzzy_match=True)
 
@@ -420,7 +421,7 @@ class TestMultihorizonReturnsPredictionProcessor(hunitest.TestCase):
         fwd_ret_0 = ret_0.shift(-1).rename("cumret.shift_-1_original")
         ret_0_from_result = cum_y_yhat[["cumret.shift_-1"]]
         df_out = ret_0_from_result.join(fwd_ret_0, how="outer")
-        act = hunitest.convert_df_to_string(df_out, index=True)
+        act = hpandas.df_to_str(df_out, num_rows=None)
         self.check_string(act, fuzzy_match=True)
 
     def test_invert_zret_3_zscoring1(self) -> None:
@@ -447,7 +448,7 @@ class TestMultihorizonReturnsPredictionProcessor(hunitest.TestCase):
         #
         cumret_3_from_result = cum_y_yhat[["cumret.shift_-3"]]
         df_out = cumret_3_from_result.join(fwd_cumret_3, how="outer")
-        act = hunitest.convert_df_to_string(df_out, index=True)
+        act = hpandas.df_to_str(df_out, num_rows=None)
         self.check_string(act, fuzzy_match=True)
 
     @staticmethod

@@ -117,7 +117,7 @@ run_date = "{{ data_interval_end.date() | string | replace('-', '') }}"
 run_mode_for_log = "{{ '' if 'scheduled' in run_id else '.manual' }}"
 log_name_specifier = f"{dag_run_mode}.{start_timestamp}.{end_timestamp}"
 system_run_cmd = [
-    "/app/dataflow_orange/system/Cx/run_Cx_prod_system.py",
+    "/app/amp/dataflow_amp/system/Cx/scripts/run_Cx_prod_system.py",
     # By Airflow's scheduling logic we need to actually the date of
     # the end of the interval.
     "--strategy '{}'",

@@ -3,6 +3,7 @@ Import as:
 
 import core.finance.bid_ask as cfibiask
 """
+import itertools
 import logging
 from typing import Dict, List, Optional, Union
 
@@ -81,6 +82,7 @@ def process_bid_ask(
     requested_cols = set(requested_cols)
     #
     results: Dict[str, Union[pd.Series, pd.DataFrame]] = {}
+
     def _append_feature_srs(
         tag: str, srs: Union[pd.Series, pd.DataFrame]
     ) -> None:
@@ -149,17 +151,17 @@ def process_bid_ask(
     return out_df
 
 
-# TODO(Juraj): the function name should be more clear, i.e.,
-# transform_bid_ask_long_to_wide.
 def transform_bid_ask_long_data_to_wide(
     df: pd.DataFrame,
     timestamp_col: str,
     *,
     bid_prefix: str = "bid_",
     ask_prefix: str = "ask_",
+    final_col_format: str = "{0[0]}_l{0[1]}",
 ) -> pd.DataFrame:
     """
-    Transform data with multiple bid-ask levels from a long form to a wide form.
+    Transform data with multiple bid-ask levels from a long form to a wide
+    form.
 
     E.g.,
     ```
@@ -171,10 +173,18 @@ def transform_bid_ask_long_data_to_wide(
     ```
     to:
     ```
-                                    knowledge_timestamp  bid_price_l1  bid_price_l2  bid_price_3
+                                    knowledge_timestamp  bid_price_l1  bid_price_l2  bid_price_l3
     timestamp
     2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00         2.31         3.22         2.33
     ```
+    :param df: dataframe with bid-ask data in long form
+    :param timestamp_col: name of the timestamp column
+    :param bid_prefix: prefix for bid columns
+    :param ask_prefix: prefix for ask columns
+    :param final_col_format: format for the final column names, pandas' df.pivot by
+        default uses column naming matrix like so: columns x values.
+        E.g. {bid_size, bid_price ...} x {1, 2, 3 ...} = {bid_size1, bid_size2 ...}).
+    :return: dataframe with bid-ask data in wide format
     """
     _LOG.debug(hprint.to_str("timestamp_col bid_prefix ask_prefix"))
     hdbg.dassert_in(timestamp_col, df.reset_index().columns)
@@ -198,8 +208,98 @@ def transform_bid_ask_long_data_to_wide(
         values=bid_ask_cols,
     )
     # Rename the columns to a desired {value}_{level} format.
-    pivoted_data.columns = pivoted_data.columns.map("{0[0]}_l{0[1]}".format)
+    pivoted_data.columns = pivoted_data.columns.map(final_col_format.format)
     # Fix indices.
     df = pivoted_data.reset_index()
     df = df.set_index(timestamp_col)
     return df
+
+
+def get_bid_ask_columns_by_level(
+    level: int,
+    *,
+    level_prefix: str = "level_",
+    bid_prefix: str = "bid_",
+    ask_prefix: str = "ask_",
+    price_name: str = "price",
+    size_name: str = "size",
+    price_features: Optional[List[str]] = None,
+    size_features: Optional[List[str]] = None,
+) -> List[str]:
+    """
+    Get bid/ask column names based on the specified order book depth.
+
+    :param level: get column names up to a certain `level` (including), e.g.,
+        if `level=2` return columns for level 1 and 2
+    :return: list of column names, e.g. `["level_1.bid_price.open", "level_1.bid_price.high"...]`
+    """
+    hdbg.dassert_isinstance(level, int)
+    hdbg.dassert_lte(1, level)
+    _LOG.debug(hprint.to_str("level"))
+    if price_features is None:
+        price_features = ["open", "high", "low", "close", "mean"]
+    if size_features is None:
+        size_features = ["open", "max", "min", "close", "mean"]
+    # Associate prices/sizes with the corresponding features, e.g., for prices
+    # we use `high/low` while for sizes we use `min/max` notation.
+    bid_ask_feature_mapping = {
+        f"{bid_prefix}{price_name}": price_features,
+        f"{bid_prefix}{size_name}": size_features,
+        f"{ask_prefix}{price_name}": price_features,
+        f"{ask_prefix}{size_name}": size_features,
+    }
+    bid_ask_columns = []
+    # Generate column names given order book depth.
+    for i in range(1, level + 1):
+        for key, val in bid_ask_feature_mapping.items():
+            for bid_ask_col, feature in itertools.product([key], val):
+                # E.g., `level_1.bid_price.open`.
+                bid_ask_columns.append(
+                    f"{level_prefix}{i}.{bid_ask_col}.{feature}"
+                )
+    return bid_ask_columns
+
+
+# TODO(Paul): Add more refined bid/ask vol calculations.
+def compute_bid_ask_metrics(
+    bid_ask_data: pd.DataFrame, n_data_points: int
+) -> pd.DataFrame:
+    """
+    Compute bid-ask metrics.
+
+    - half spread
+    - bid-ask midpoint
+    - half spread bps
+    - bid volume bps
+    - ask volume bps
+    """
+    half_spread = 0.5 * (
+        bid_ask_data["level_1.ask_price.close"]
+        - bid_ask_data["level_1.bid_price.close"]
+    )
+    bid_ask_data["half_spread"] = half_spread
+    bid_ask_midpoint = 0.5 * (
+        bid_ask_data["level_1.ask_price.close"]
+        + bid_ask_data["level_1.bid_price.close"]
+    )
+    bid_ask_data["bid_ask_midpoint"] = bid_ask_midpoint
+    bid_ask_data["half_spread_bps"] = 1e4 * half_spread / bid_ask_midpoint
+    # TODO(Paul): Add more refined bid/ask vol calculations.
+    n_data_points = 30
+    bid_vol = (
+        bid_ask_data.groupby("full_symbol")["level_1.bid_price.close"]
+        .ffill()
+        .pct_change()
+        .rolling(n_data_points)
+        .std()
+    )
+    bid_ask_data["bid_vol_bps"] = 1e4 * bid_vol
+    ask_vol = (
+        bid_ask_data.groupby("full_symbol")["level_1.ask_price.close"]
+        .ffill()
+        .pct_change()
+        .rolling(n_data_points)
+        .std()
+    )
+    bid_ask_data["ask_vol_bps"] = 1e4 * ask_vol
+    return bid_ask_data

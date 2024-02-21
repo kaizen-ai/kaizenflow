@@ -12,6 +12,7 @@ import logging
 import os
 import re
 import time
+from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterator, List, Optional, Union
 
@@ -22,6 +23,9 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
+import helpers.htimer as htimer
+import im_v2.ccxt.data.extract.cryptocom_extractor as imvcdecrex
+import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.common.data.extract.extractor as ivcdexex
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.db.db_utils as imvcddbut
@@ -31,20 +35,31 @@ from helpers.hthreading import timeout
 _LOG = logging.getLogger(__name__)
 
 SUPPORTED_DOWNLOAD_METHODS = ["rest", "websocket"]
-# Provides parameters for handling websocket download.
+
+# Provide parameters for handling websocket download.
 #  - sleep_between_iter_in_ms: time to sleep between iterations in miliseconds.
 #  - max_buffer_size: specifies number of websocket
 #    messages to cache before attempting DB insert.
-
 WEBSOCKET_CONFIG = {
     "ohlcv": {
-        # Buffer size is 0 for OHLCV because we want to insert after round of receival
-        #  from websockets.
+        # Buffer size is 0 for OHLCV because we want to insert after round of
+        # receival from websockets.
         "max_buffer_size": 0,
         "sleep_between_iter_in_ms": 60000,
+        # How many consecutive iterations can happen for a given symbol
+        # without receiving new data before resubscribing to the websocket feed.
+        "resubscription_threshold_in_iter": 5,
     },
-    "bid_ask": {"max_buffer_size": 250, "sleep_between_iter_in_ms": 200},
-    "trades": {"max_buffer_size": 250, "sleep_between_iter_in_ms": 200},
+    "bid_ask": {
+        "max_buffer_size": 250,
+        "sleep_between_iter_in_ms": 200,
+        "resubscription_threshold_in_iter": 3,
+    },
+    "trades": {
+        "max_buffer_size": 250,
+        "sleep_between_iter_in_ms": 200,
+        "resubscription_threshold_in_iter": 3,
+    },
 }
 
 
@@ -109,7 +124,7 @@ def _add_common_download_args(
         action="store",
         required=True,
         type=str,
-        help="Type of contract, spot or futures",
+        help="Type of contract, spot, swap or futures",
     )
     parser.add_argument(
         "--bid_ask_depth",
@@ -133,6 +148,15 @@ def _add_common_download_args(
         type=str,
         help="Path to the directory where the data will be \
             downloaded locally (e.g. '/User/Output').",
+    )
+    parser.add_argument(
+        "--pq_save_mode",
+        action="store",
+        required=False,
+        type=str,
+        default="append",
+        choices=["list_and_merge", "append"],
+        help="mode used to save data into a parquet file",
     )
     return parser
 
@@ -158,12 +182,13 @@ def add_exchange_download_args(
         type=str,
         help="End of the downloaded period",
     )
-    parser.add_argument(
-        "--incremental",
-        action="store_true",
-        required=False,
-        help="Append data instead of overwriting it",
-    )
+    # Deprecated in CmTask5432.
+    # parser.add_argument(
+    #     "--incremental",
+    #     action="store_true",
+    #     required=False,
+    #     help="Append data instead of overwriting it",
+    # )
     return parser
 
 
@@ -314,15 +339,12 @@ def download_exchange_data_to_db(
         )
     # Download data for specified time period.
     for currency_pair in currency_pairs:
-        # Currency pair used for getting data from exchange should not be used
-        # as column value as it can slightly differ.
-        currency_pair_for_download = exchange.convert_currency_pair(currency_pair)
         # Download data.
         #  Note: timestamp arguments are ignored since historical data is absent
         #  from CCXT and only current state can be downloaded.
         data = exchange.download_data(
             data_type=data_type,
-            currency_pair=currency_pair_for_download,
+            currency_pair=currency_pair,
             exchange_id=exchange_id,
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
@@ -367,6 +389,135 @@ def _download_exchange_data_to_db_with_timeout(
     download_exchange_data_to_db(args, exchange_class)
 
 
+def _is_fresh_data_point(
+    currency_pair: str,
+    data_point: Dict[Any, Any],
+    data_type: str,
+    timestamps_dict: Dict[str, str],
+) -> Union[bool, Dict]:
+    """
+    Check if a data point is valid based on its current timestamp and the
+    already downloaded latest timestamp. This function has a side effect of
+    updating timestamps_dict with the latest timestamp.
+
+    This function has another side_effect of updating data_point for
+    data_type == "ohlcv", this is needed because we want to filter out
+    some data in the data_point.
+
+    This function rejects the data point if it is None. For "bid_ask"
+    data type, it additionally rejects the data point if the timestamp
+    is None or if both the bid and ask sizes in the data point are zero.
+
+    :param currency_pair: currency_pair of the data_point needs to be
+        validated
+    :param data_point: downloaded data from the exchange
+    :param data_type: "bid_ask" or "OHLCV"
+    :param timestamps_dict: dict to store the latest_downloaded
+        timestamp for the currency_pair
+    """
+    # TODO(Sonaal): Make it compatible for data_type=="trades".
+    if data_type == "trades":
+        return True, timestamps_dict, data_point
+    if data_point is None:
+        return False, timestamps_dict, data_point
+    if data_type == "bid_ask":
+        if data_point["timestamp"] is None or (
+            len(data_point["bids"]) == 0 and len(data_point["asks"]) == 0
+        ):
+            return False, timestamps_dict, data_point
+        latest_download_timestamp = data_point["timestamp"]
+        if (
+            currency_pair not in timestamps_dict
+            or timestamps_dict[currency_pair] < latest_download_timestamp
+        ):
+            timestamps_dict[currency_pair] = latest_download_timestamp
+            return True, timestamps_dict, data_point
+    elif data_type == "ohlcv":
+        # Example format of an OHLCV data point:
+        # data_point["ohlcv"] = [
+        #    [1695120600000, 1645.08, 1645.23, 1643.83, 1643.97, 1584.69],
+        #    [1695120600000, 1646.08, 1641.23, 1643.31, 1643.57, 1584.59],
+        #    [1695120601000, 1648.08, 1643.23, 1643.84, 1643.67, 1584.49]
+        # ]
+        # Handle potential unfinished cases in OHLCV data, where we may receive
+        # incomplete data in one iteration and then complete one in the next
+        # iteration. So, check the `end_download_timestamp` value and compare
+        # it with all previous values. Keep only those values which are not already
+        # added in db (check using timestamp dict) and they have download timestamp
+        # greater than 1 minute (60000ms) than the timestamp.
+        new_data_point = deepcopy(data_point)
+        new_data_point["ohlcv"] = []
+        end_download_timestamp = pd.Timestamp(
+            data_point["end_download_timestamp"]
+        )
+        end_download_timestamp_unix = hdateti.convert_timestamp_to_unix_epoch(
+            end_download_timestamp
+        )
+        for ohlcv_data in data_point["ohlcv"]:
+            timestamp = ohlcv_data[0]
+            # Check download timestamp greater than 1 minute (60000ms) than the timestamp.
+            if timestamp + 60000 <= end_download_timestamp_unix:
+                if (
+                    currency_pair not in timestamps_dict
+                    or timestamps_dict[currency_pair] < timestamp
+                ):
+                    new_data_point["ohlcv"].append(ohlcv_data)
+                    timestamps_dict[currency_pair] = timestamp
+        if len(new_data_point["ohlcv"]) > 0:
+            return True, timestamps_dict, new_data_point
+    else:
+        raise ValueError(f"Invalid data_type {data_type}")
+    return False, timestamps_dict, data_point
+
+
+async def _subscribe_to_websocket_data(
+    args: Dict[str, Any],
+    exchange: ivcdexex.Extractor,
+    currency_pairs: List[str],
+    bid_ask_depth: int,
+    *,
+    tz="UTC",
+):
+    """
+    Subscribe to WebSocket data for the specified exchange, data type, and
+    currency pairs.
+
+    :param args: arguments passed on script run
+    :param currency_pair: List of symbols to subscribe
+    :param bid_ask_depth: how many levels of order book to download
+    """
+    data_type = args["data_type"]
+    vendor = args["vendor"]
+    exchange_id = args["exchange_id"]
+    # Multiple symbols subscription is only supported by vendor CCXT.
+    use_concurrent = False
+    if vendor == "ccxt":
+        # Check if the exchange supports multiple symbols subscription.
+        use_concurrent = exchange._async_exchange.describe()["has"].get(
+            "watchOrderBookForSymbols", False
+        )
+    if data_type == "bid_ask" and use_concurrent:
+        await exchange._subscribe_to_websocket_bid_ask_multiple_symbols(
+            exchange, currency_pairs, bid_ask_depth
+        )
+    else:
+        subscribe_tasks = []
+        for currency_pair in currency_pairs:
+            task = exchange.subscribe_to_websocket_data(
+                data_type,
+                exchange_id,
+                currency_pair,
+                since=hdateti.convert_timestamp_to_unix_epoch(
+                    pd.Timestamp.now(tz)
+                ),
+                # The following arguments are only applied for
+                # the corresponding data type
+                bid_ask_depth=bid_ask_depth,
+            )
+            subscribe_tasks.append(task)
+        await asyncio.gather(*subscribe_tasks)
+
+
 # TODO(Juraj): refactor names to get rid of "_for_one_exchange" part of the
 #  functions' names since it spreads across the codebase. Docstring and the
 #  method signature should sufficiently explain what the function does.
@@ -391,23 +542,21 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
     )
     exchange_id = args["exchange_id"]
     currency_pairs = universe[exchange_id]
+    await _subscribe_to_websocket_data(
+        args,
+        exchange,
+        currency_pairs,
+        bid_ask_depth=args.get("bid_ask_depth"),
+        tz=tz,
+    )
+    _LOG.info("Subscribed to %s websocket data successfully", exchange_id)
     db_connection = imvcddbut.DbConnectionManager.get_connection(args["db_stage"])
     db_table = args["db_table"]
-    for currency_pair in currency_pairs:
-        await exchange.subscribe_to_websocket_data(
-            data_type,
-            exchange_id,
-            currency_pair,
-            # The following arguments are only applied for
-            # the corresponding data type
-            bid_ask_depth=args.get("bid_ask_depth"),
-            since=hdateti.convert_timestamp_to_unix_epoch(pd.Timestamp.now(tz)),
-        )
-    _LOG.info("Subscribed to %s websocket data successfully", exchange_id)
     # In order not to bombard the database with many small insert operations
     # a buffer is created, its size is determined by the config specific to each
     # data type.
     data_buffer = []
+    data_buffer_to_resample: List[pd.DataFrame] = []
     # Sync to the specified start_time.
     start_delay = max(0, ((start_time - datetime.now(tz)).total_seconds()))
     _LOG.info("Syncing with the start time, waiting for %s seconds", start_delay)
@@ -415,26 +564,79 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
     #  to ensure websocket ping-pong messages are exchanged in a timely fashion.
     #  The method expects value in miliseconds.
     await exchange._async_exchange.sleep(start_delay * 1000)
-    # Start data collection
+    # Start data collection.
+    timestamps_dict = {}
+    # If bid/ask data is resampled alongside side raw data collection, the resampling is done exactly after
+    # a given minutes ends.
+    next_bid_ask_resampling_threshold = pd.Timestamp.now(tz).replace(
+        second=0, microsecond=0
+    ) + pd.Timedelta(minutes=1)
     while pd.Timestamp.now(tz) < stop_time:
+        if data_type == "bid_ask":
+            try:
+                await _subscribe_to_websocket_data(
+                    args,
+                    exchange,
+                    currency_pairs,
+                    bid_ask_depth=args.get("bid_ask_depth"),
+                    tz=tz,
+                )
+            except Exception as e:
+                _LOG.info("Subscription to symbols failed %s", e)
+                # Handling potential issues: Sometimes the order book may fall out of sync,
+                # leading to an error like "handleOrderBook received an out-of-order nonce".
+                # Sleeping for 1 second to allow the system to catch up and get back in sync.
+                # ref. https://github.com/ccxt/ccxt/issues/17827#issuecomment-1537532598
+                await exchange._async_exchange.sleep(1000)
         iter_start_time = pd.Timestamp.now(tz)
         for curr_pair in currency_pairs:
             data_point = exchange.download_websocket_data(
                 data_type, exchange_id, curr_pair
             )
-            if data_point != None:
+            # Check if the data point is not a duplicate one.
+            is_fresh, timestamps_dict, data_point = _is_fresh_data_point(
+                curr_pair, data_point, data_type, timestamps_dict
+            )
+            if is_fresh:
                 data_buffer.append(data_point)
+        download_time = (
+            pd.Timestamp.now(tz) - iter_start_time
+        ).total_seconds() * 1000
         # If the buffer is full or this is the last iteration, process and save buffered data.
-        if (
+        is_buffer_full = (
             len(data_buffer) >= WEBSOCKET_CONFIG[data_type]["max_buffer_size"]
-            or pd.Timestamp.now(tz) >= stop_time
-        ):
+        )
+        is_last_iteration = pd.Timestamp.now(tz) >= stop_time
+        is_non_empty_buffer = len(data_buffer) > 0
+        # Save the data if the download was faster.
+        is_download_fast = (
+            download_time
+            < WEBSOCKET_CONFIG[data_type]["sleep_between_iter_in_ms"] / 2
+            and args["db_saving_mode"] == "on_sufficient_time"
+        )
+        if (
+            is_buffer_full or is_last_iteration or is_download_fast
+        ) and is_non_empty_buffer:
             df = imvcdttrut.transform_raw_websocket_data(
                 data_buffer, data_type, exchange_id
             )
+            # TODO(Juraj): experimental feature, the problem is speed for now.
+            # data_buffer_to_resample.append(df)
             imvcddbut.save_data_to_db(
                 df, data_type, db_connection, db_table, str(tz)
             )
+            # TODO(Juraj): experimental feature, the problem is speed for now.
+            # if args.resample_bid_ask_data_to_1min and pd.Timestamp.now(tz) > next_bid_ask_resampling_threshold:
+            #    with htimer.TimedScope(logging.DEBUG, "# Resample 1-minute of raw data"):
+            #        df_resampled = imvcdttrut.transform_and_resample_rt_bid_ask_data2(
+            #            pd.concat(data_buffer_to_resample)
+            #        )
+            # imvcddbut.save_data_to_db(
+            #    df_resampled, data_type, db_connection, db_resampled_table, str(tz), add_knowledge_timestamp=False
+            # )
+            # Reset resampling variables to start over.
+            # data_buffer_to_resample = []
+            # next_bid_ask_resampling_threshold += pd.Timedelta(minutes=1)
             # Empty buffer after persisting the data.
             data_buffer = []
         # Determine actual sleep time needed based on the difference
@@ -454,6 +656,7 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
         )
         await exchange._async_exchange.sleep(actual_sleep_time)
     _LOG.info("Websocket download finished at %s", pd.Timestamp.now(tz))
+    await exchange._async_exchange.close()
 
 
 def _download_rest_realtime_for_one_exchange_periodically(
@@ -599,7 +802,8 @@ def save_csv(
     data: pd.DataFrame,
     exchange_folder_path: str,
     currency_pair: str,
-    incremental: bool,
+    # Deprecated in CmTask5432.
+    # incremental: bool,
     aws_profile: Optional[str],
 ) -> None:
     """
@@ -613,19 +817,20 @@ def save_csv(
     full_target_path = os.path.join(
         exchange_folder_path, f"{currency_pair}.csv.gz"
     )
-    if incremental:
-        hs3.dassert_path_exists(full_target_path, aws_profile)
-        original_data = pd.read_csv(full_target_path)
-        # Append new data and drop duplicates.
-        hdbg.dassert_is_subset(data.columns, original_data.columns)
-        data = data[original_data.columns.to_list()]
-        data = pd.concat([original_data, data])
-        # Drop duplicates on non-metadata columns.
-        metadata_columns = ["end_download_timestamp", "knowledge_timestamp"]
-        non_metadata_columns = data.drop(
-            metadata_columns, axis=1, errors="ignore"
-        ).columns.to_list()
-        data = data.drop_duplicates(subset=non_metadata_columns)
+    # Deprecated in #CmTask5432
+    # if incremental:
+    hs3.dassert_path_exists(full_target_path, aws_profile)
+    original_data = pd.read_csv(full_target_path)
+    # Append new data and drop duplicates.
+    hdbg.dassert_is_subset(data.columns, original_data.columns)
+    data = data[original_data.columns.to_list()]
+    data = pd.concat([original_data, data])
+    # Drop duplicates on non-metadata columns.
+    metadata_columns = ["end_download_timestamp", "knowledge_timestamp"]
+    non_metadata_columns = data.drop(
+        metadata_columns, axis=1, errors="ignore"
+    ).columns.to_list()
+    data = data.drop_duplicates(subset=non_metadata_columns)
     data.to_csv(full_target_path, index=False, compression="gzip")
 
 
@@ -681,18 +886,20 @@ def save_parquet(
             drop_duplicates_mode=data_type,
         )
 
+
 def handle_empty_data(assert_on_missing_data: bool, currency_pair: str) -> None:
     """
     Handle an empty data and raise an error or log a warning.
 
     :param assert_on_missing_data: assert on missing data
-    :currency_pair: currency pair, e.g. "BTC_USDT"
+    :param currency_pair: currency pair, e.g. "BTC_USDT"
     """
     base_message = "No data for currency_pair='%s' was downloaded."
     if assert_on_missing_data:
         raise RuntimeError(base_message, currency_pair)
     else:
         _LOG.warning(base_message + " Continuing.", currency_pair)
+
 
 def process_downloaded_historical_data(
     data: Union[pd.DataFrame, Iterator[pd.DataFrame]],
@@ -726,7 +933,7 @@ def process_downloaded_historical_data(
         return
     if data.empty:
         handle_empty_data(args["assert_on_missing_data"], currency_pair)
-        return   
+        return
     # Assign pair and exchange columns.
     data["currency_pair"] = currency_pair
     data["exchange_id"] = args["exchange_id"]
@@ -741,7 +948,8 @@ def process_downloaded_historical_data(
             if not os.path.exists(args["dst_dir"]):
                 os.makedirs(args["dst_dir"])
             full_target_path = os.path.join(
-                args["dst_dir"], f"{start_timestamp}_{end_timestamp}.csv")
+                args["dst_dir"], f"{start_timestamp}_{end_timestamp}.csv"
+            )
             data.to_csv(full_target_path, index=False)
         # TODO: Add elif to handle parquet data format.
         else:
@@ -758,7 +966,7 @@ def process_downloaded_historical_data(
                 args["unit"],
                 args["aws_profile"],
                 args["data_type"],
-                mode="append",
+                mode=args["pq_save_mode"],
                 partition_mode=partition_mode,
             )
         elif args["data_format"] == "csv":
@@ -766,7 +974,8 @@ def process_downloaded_historical_data(
                 data,
                 path_to_dataset,
                 currency_pair,
-                args["incremental"],
+                # Deprecated in CmTask5432.
+                # args["incremental"],
                 args["aws_profile"],
             )
         else:
@@ -778,9 +987,9 @@ def _split_crypto_chassis_universe(universe: List[str], universe_part: int):
     Split the universe into groups of 10 symbols and return only universe_part-
     th group.
 
-    CryptoChassis imposed a API limit of 10 requests per endpoint per IP.
-    This helps us only obtain a subset of universe such that download can go through
-    successfully.
+    CryptoChassis imposed a API limit of 10 requests per endpoint per
+    IP. This helps us only obtain a subset of universe such that
+    download can go through successfully.
 
     :oaram universe: universe of currency pairs
     :param universe_part: nth set of 10 to return
@@ -806,7 +1015,7 @@ def download_historical_data(
 
     :param args: arguments passed on script run
     :param exchange_class: which exchange class is used in script run
-     e.g. "CcxtExtractor" or "TalosExtractor"
+        e.g. "CcxtExtractor"
     """
     # Convert Namespace object with processing arguments to dict format.
     # TODO(Juraj): refactor cmd line arguments to accept `asset_type`
@@ -820,11 +1029,12 @@ def download_historical_data(
         path_to_dataset = dsdascut.build_s3_dataset_path_from_args(
             args["s3_path"], args
         )
+        # Deprecated in CmTask5432.
         # Verify that data exists for incremental mode to work.
-        if args["incremental"]:
-            hs3.dassert_path_exists(path_to_dataset, args["aws_profile"])
-        elif not args["incremental"]:
-            hs3.dassert_path_not_exists(path_to_dataset, args["aws_profile"])
+        # if args["incremental"]:
+        #     hs3.dassert_path_exists(path_to_dataset, args["aws_profile"])
+        # elif not args["incremental"]:
+        #     hs3.dassert_path_not_exists(path_to_dataset, args["aws_profile"])
     # Load currency pairs.
     mode = "download"
     universe = ivcu.get_vendor_universe(
@@ -845,16 +1055,11 @@ def download_historical_data(
     start_timestamp = pd.Timestamp(args["start_timestamp"])
     end_timestamp = pd.Timestamp(args["end_timestamp"])
     for currency_pair in currency_pairs:
-        # Currency pair used for getting data from exchange should not be used
-        # as column value as it can slightly differ.
-        converted_currency_pair = exchange.convert_currency_pair(
-            currency_pair, exchange_id=args["exchange_id"]
-        )
         # Download data.
         data = exchange.download_data(
             args["data_type"],
             args["exchange_id"],
-            converted_currency_pair,
+            currency_pair,
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
             # If data_type = ohlcv, depth is ignored.
@@ -898,10 +1103,30 @@ def verify_schema(data: pd.DataFrame, data_type: str) -> pd.DataFrame:
         actual_type = str(data[column].dtype)
         # Compare types.
         if actual_type != expected_type:
-            # Log the error.
-            error_msg.append(
-                f"Invalid dtype of `{column}` column: expected type `{expected_type}`, found `{actual_type}`"
-            )
+            # TODO(Grisha): extract timezone from `DATASET_SCHEMA` instead
+            # of hard-coding `UTC`.
+            if (
+                "datetime64" in expected_type
+                and "datetime64" in actual_type
+                and "UTC" in actual_type
+            ):
+                # Datetime objects should not perfectly match, it is sufficient
+                # to check timezones and that type is `datetime64`. E.g.,
+                # `actual_type = datetime64[us, UTC]` and `expected_type =
+                # datetime64[ns, UTC]` are considered equal in this case.
+                # See CmTask5918 for details.
+                _LOG.warning(
+                    "Actual type=%s != expected type=%s because of the "
+                    "different unit, continuing.",
+                    actual_type,
+                    expected_type,
+                )
+            else:
+                # Log the error.
+                error_msg.append(
+                    f"Invalid dtype of `{column}` column: expected type"
+                    f" `{expected_type}`, found `{actual_type}`"
+                )
     if error_msg:
         hdbg.dfatal(message="\n".join(error_msg))
     return data
@@ -911,6 +1136,7 @@ def resample_rt_bid_ask_data_periodically(
     db_stage: str,
     src_table: str,
     dst_table: str,
+    exchange_id: str,
     start_ts: pd.Timestamp,
     end_ts: pd.Timestamp,
 ) -> None:
@@ -921,6 +1147,7 @@ def resample_rt_bid_ask_data_periodically(
     :param db_stage: DB stage to use
     :param src_table: Source table to get raw data from
     :param dst_table: Destination table to insert resampled data into
+    :param exchange_id: which exchange to use data from
     :param start_ts: start of the time interval
     :param end_ts: end of the time interval
     """
@@ -937,21 +1164,28 @@ def resample_rt_bid_ask_data_periodically(
     # Start resampling.
     while pd.Timestamp.now(tz) < end_ts:
         iter_start_time = pd.Timestamp.now(tz)
-        df_raw = imvcddbut.fetch_last_minute_bid_ask_rt_db_data(
-            db_connection, src_table, str(tz)
-        )
+        with htimer.TimedScope(logging.INFO, "# Load last minute of raw data"):
+            #TODO(Juraj): the function uses `bid_ask_levels` internally, 
+            #expose `bid_ask_levels` as a cmdline parameter.
+            df_raw = imvcddbut.fetch_last_minute_bid_ask_rt_db_data(
+                db_connection, src_table, str(tz), exchange_id
+            )
         if df_raw.empty:
             _LOG.warning("Empty Dataframe, nothing to resample")
         else:
-            df_resampled = imvcdttrut.transform_and_resample_rt_bid_ask_data(
-                df_raw
-            )
+            with htimer.TimedScope(
+                logging.INFO, "# Resample last minute of raw data"
+            ):
+                df_resampled = imvcdttrut.transform_and_resample_rt_bid_ask_data2(
+                    df_raw
+                )
             imvcddbut.save_data_to_db(
                 df_resampled,
                 "bid_ask",
                 db_connection,
                 dst_table,
                 str(start_ts.tz),
+                add_knowledge_timestamp=False,
             )
         # Determine actual sleep time needed based on the difference
         # between value set in config and actual time it took to complete
@@ -959,9 +1193,24 @@ def resample_rt_bid_ask_data_periodically(
         iter_length = (pd.Timestamp.now(tz) - iter_start_time).total_seconds()
         actual_sleep_time = max(0, 60 - iter_length)
         _LOG.info(
-            "Resampling iteration took %i s, waiting between iterations for %i s",
+            "Resampling iteration took %f s, waiting between iterations for %f s",
             iter_length,
             actual_sleep_time,
         )
         time.sleep(actual_sleep_time)
     _LOG.info("Resampling finished at %s", pd.Timestamp.now(tz))
+
+
+def get_CcxtExtractor(exchange_id: str, contract_type: str) -> ivcdexex.Extractor:
+    """
+    Helper function to build the correct extractor depending on the
+    exchange_id.
+
+    :param exchange_id: Name of exchange to download data from
+    :param contract_type: Type of contract, spot, swap or futures
+    """
+    if exchange_id == "cryptocom":
+        exchange = imvcdecrex.CryptocomCcxtExtractor(exchange_id, contract_type)
+    else:
+        exchange = imvcdexex.CcxtExtractor(exchange_id, contract_type)
+    return exchange

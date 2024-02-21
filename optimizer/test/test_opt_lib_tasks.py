@@ -27,18 +27,25 @@ def _get_default_params() -> Dict[str, str]:
 
 class _OptLibTasksTestCase(hunitest.TestCase):
     """
-    Test class injecting default parameters in the `opt_lib_tasks` singleton on
-    `setUp()` and cleaning up the singleton on `tearDown()`.
+    Test class injecting default parameters in the `opt_lib_tasks` singleton in
+    `set_up_test()` and cleaning up the singleton in `tear_down_test()`.
     """
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
         params = _get_default_params()
         hlitauti.set_default_params(params)
 
-    def tearDown(self) -> None:
+    def tear_down_test(self) -> None:
         hlitauti.reset_default_params()
-        super().tearDown()
 
 
 @pytest.mark.skipif(hgit.is_amp(), reason="Doesn't run in amp")

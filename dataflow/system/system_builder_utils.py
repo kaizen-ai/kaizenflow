@@ -7,6 +7,7 @@ import dataflow.system.system_builder_utils as dtfssybuut
 import datetime
 import logging
 import os
+import re
 from typing import Any, Callable, Coroutine, Dict, Optional, Tuple, Union
 
 import pandas as pd
@@ -67,6 +68,27 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
+# Helpers
+# #############################################################################
+
+
+# TODO(Grisha): Consider expanding the range of permissible frequencies
+# beyond minutes.
+def _dassert_is_valid_trading_period(trading_period_str: str) -> None:
+    """
+    Verify that the trading frequency is at a minute interval, e.g., `1T`,
+    `5T`, `15T`.
+
+    :param trading_period_str: trading frequency
+    """
+    regex = "\d+T"
+    hdbg.dassert(
+        re.match(regex, trading_period_str),
+        msg=f"The trading period should be in minutes (e.g., 1T, 2T, 5T), received {trading_period_str}.",
+    )
+
+
+# #############################################################################
 # System config
 # #############################################################################
 
@@ -104,10 +126,13 @@ def apply_backtest_config(
         time_interval_str,
     ) = cconfig.parse_backtest_config(backtest_config)
     # Fill system config.
-    hdbg.dassert_in(trading_period_str, ("1T", "5T", "15T"))
-    system.config[
-        "dag_config", "resample", "transformer_kwargs", "rule"
-    ] = trading_period_str
+    # Check that trading period is valid.
+    _dassert_is_valid_trading_period(trading_period_str)
+    # Not any model does the resampling.
+    if "resample" in system.config["dag_config"]:
+        system.config[
+            "dag_config", "resample", "transformer_kwargs", "rule"
+        ] = trading_period_str
     system.config["backtest_config", "universe_str"] = universe_str
     system.config["backtest_config", "trading_period_str"] = trading_period_str
     system.config["backtest_config", "time_interval_str"] = time_interval_str
@@ -122,8 +147,8 @@ def apply_backtest_tile_config(
 
     See `build_config_list_varying_tiled_periods()`.
     """
-    # TODO(Grisha): consider passing params via cmd line instead of
-    # hard-wiring.
+    # TODO(Grisha): the function should accepts values via interface and apply
+    # them to the `SystemConfig` instead of setting them.
     system.config["backtest_config", "freq_as_pd_str"] = "M"
     system.config["backtest_config", "lookback_as_pd_str"] = "90D"
     return system
@@ -200,6 +225,10 @@ def build_ImClient_from_System(system: dtfsyssyst.System) -> icdc.ImClient:
 def apply_ImClient_config(
     system: dtfsyssyst.System,
     universe_version: str,
+    root_dir: str,
+    data_snapshot: str,
+    version: str,
+    download_universe_version: str,
 ) -> dtfsyssyst.System:
     """
     Fill IM client config and pass it to the system config.
@@ -207,14 +236,19 @@ def apply_ImClient_config(
     # TODO(Grisha): consider exposing both `im_client_ctor` and `im_client_config`.
     system.config[
         "market_data_config", "im_client_ctor"
-    ] = icdcl.get_CcxtHistoricalPqByTileClient_example1
+    ] = icdcl.CcxtHistoricalPqByTileClient
     im_client_config = {
-        "data_version": "v3",
         "universe_version": universe_version,
+        "root_dir": root_dir,
+        "partition_mode": "by_year_month",
         "dataset": "ohlcv",
         "contract_type": "futures",
-        # Data snapshot is not applicable for data version = "v3".
-        "data_snapshot": "",
+        "data_snapshot": data_snapshot,
+        "aws_profile": "ck",
+        "resample_1min": False,
+        "version": version,
+        "download_universe_version": download_universe_version,
+        "tag": "downloaded_1min",
     }
     system.config[
         "market_data_config", "im_client_config"
@@ -223,18 +257,32 @@ def apply_ImClient_config(
 
 
 # TODO(Grisha): -> `apply_ImClientMarketData_config()`?
-def apply_MarketData_config(
-    system: dtfsyssyst.ForecastSystem,
-) -> dtfsyssyst.ForecastSystem:
+def apply_MarketData_config(system: dtfsyssyst.System) -> dtfsyssyst.System:
     """
     Convert full symbol universe to asset ids and fill market data config.
     """
+    hdbg.dassert_isinstance(system, dtfsyssyst.ForecastSystem)
+    # Set ImClient and get asset ids.
     im_client = build_ImClient_from_System(system)
     universe_str = system.config["backtest_config", "universe_str"]
     full_symbols = dtfuniver.get_universe(universe_str)
     asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
-    #
+    # Set market data config values.
     system.config["market_data_config", "im_client"] = im_client
+    system.config["market_data_config", "asset_ids"] = asset_ids
+    system.config["market_data_config", "asset_id_col_name"] = "asset_id"
+    return system
+
+
+def apply_Df_MarketData_config(system: dtfsyssyst.System) -> dtfsyssyst.System:
+    """
+    Fill market data config using input df from Df_ForecastSystem.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.Df_ForecastSystem)
+    # Get market data and asset ids.
+    df = system.df
+    asset_ids = df.columns.get_level_values(1).unique().to_list()
+    # Set market data config values.
     system.config["market_data_config", "asset_ids"] = asset_ids
     system.config["market_data_config", "asset_id_col_name"] = "asset_id"
     return system
@@ -267,6 +315,8 @@ def apply_history_lookback(
         market_data_history_lookback = days
     else:
         raise ValueError(f"Unsupported lookback duration type={type(days)}")
+    # TODO(Grisha): `history_lookback` belongs to `dag_config` since the
+    # param is needed to instantiate a source node, i.e. `RealTimeDataSource`.
     system.config[
         "market_data_config", "history_lookback"
     ] = market_data_history_lookback
@@ -388,6 +438,98 @@ def apply_ReplayedMarketData_from_file_config(
     return system
 
 
+# TODO(Grisha): it should be more general than OHLCV and bid/ask.
+def get_StitchedMarketData_from_System(
+    system: dtfsyssyst.System,
+) -> mdata.MarketData:
+    """
+    Build `StitchedMarketData` from System.
+    """
+    # - Build OHLCV `ImClient`.
+    # TODO(Grisha): somehow re-use `build_ImClient_from_System()`.
+    ohlcv_ctor = system.config[
+        "market_data_config", "ohlcv_market_data", "im_client_ctor"
+    ]
+    hdbg.dassert_isinstance(ohlcv_ctor, Callable)
+    ohlcv_params = system.config[
+        "market_data_config", "ohlcv_market_data", "im_client_config"
+    ]
+    ohlcv_im_client = ohlcv_ctor(**ohlcv_params)
+    # - Build OHLCV `MarketData`.
+    asset_ids = system.config[
+        "market_data_config", "ohlcv_market_data", "asset_ids"
+    ]
+    columns = system.config["market_data_config", "ohlcv_market_data", "columns"]
+    column_remap = system.config[
+        "market_data_config", "ohlcv_market_data", "column_remap"
+    ]
+    wall_clock_time = system.config[
+        "market_data_config", "ohlcv_market_data", "wall_clock_time"
+    ]
+    filter_data_mode = system.config[
+        "market_data_config", "ohlcv_market_data", "filter_data_mode"
+    ]
+    # TODO(Grisha): do not use examples as they hide some params, use the class itself.
+    ohlcv_market_data = mdata.get_HistoricalImClientMarketData_example1(
+        ohlcv_im_client,
+        asset_ids,
+        columns,
+        column_remap,
+        wall_clock_time=wall_clock_time,
+        filter_data_mode=filter_data_mode,
+    )
+    # - Build bid/ask `ImClient`.
+    # TODO(Grisha): somehow re-use `build_ImClient_from_System()`.
+    bid_ask_ctor = system.config[
+        "market_data_config", "bid_ask_market_data", "im_client_ctor"
+    ]
+    hdbg.dassert_isinstance(bid_ask_ctor, Callable)
+    bid_ask_params = system.config[
+        "market_data_config", "bid_ask_market_data", "im_client_config"
+    ]
+    bid_ask_im_client = bid_ask_ctor(**bid_ask_params)
+    # - Build bid/ask `MarketData`.
+    asset_ids = system.config[
+        "market_data_config", "bid_ask_market_data", "asset_ids"
+    ]
+    columns = system.config[
+        "market_data_config", "bid_ask_market_data", "columns"
+    ]
+    column_remap = system.config[
+        "market_data_config", "bid_ask_market_data", "column_remap"
+    ]
+    wall_clock_time = system.config[
+        "market_data_config", "bid_ask_market_data", "wall_clock_time"
+    ]
+    filter_data_mode = system.config[
+        "market_data_config", "bid_ask_market_data", "filter_data_mode"
+    ]
+    # TODO(Grisha): do not use examples as they hide some params, use the class itself.
+    bid_ask_market_data = mdata.get_HistoricalImClientMarketData_example1(
+        bid_ask_im_client,
+        asset_ids,
+        columns,
+        column_remap,
+        wall_clock_time=wall_clock_time,
+        filter_data_mode=filter_data_mode,
+    )
+    # - Build `StitchedMarketData`.
+    asset_ids = system.config["market_data_config", "asset_ids"]
+    columns = system.config["market_data_config", "columns"]
+    column_remap = system.config["market_data_config", "column_remap"]
+    filter_data_mode = system.config["market_data_config", "filter_data_mode"]
+    # TODO(Grisha): do not use examples as they hide some params, use the class itself.
+    market_data = mdata.get_HorizontalStitchedMarketData_example1(
+        ohlcv_market_data,
+        bid_ask_market_data,
+        asset_ids,
+        columns,
+        column_remap,
+        filter_data_mode=filter_data_mode,
+    )
+    return market_data
+
+
 # #############################################################################
 # DAG
 # #############################################################################
@@ -423,6 +565,22 @@ def build_HistoricalDag_from_System(system: dtfsyssyst.System) -> dtfcore.DAG:
     return dag
 
 
+def build_Dag_with_DfDataSource_from_System(
+    system: dtfsyssyst.System,
+) -> dtfcore.DAG:
+    """
+    Build a DAG with a `DfDataSource` for simulation.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.Df_ForecastSystem)
+    # Create DfDataSource.
+    stage = "read_data"
+    df = system.df
+    node = dtfcore.DfDataSource(stage, df)
+    #
+    dag = build_dag_with_data_source_node(system, node)
+    return dag
+
+
 def apply_dag_property(
     dag: dtfcore.DAG, system: dtfsyssyst.System
 ) -> dtfsyssyst.System:
@@ -440,7 +598,8 @@ def apply_dag_property(
     fast_prod_setup = system.config.get_and_mark_as_used(
         ("dag_builder_config", "fast_prod_setup"), default_value=False
     )
-    _LOG.debug(hprint.to_str("fast_prod_setup"))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(hprint.to_str("fast_prod_setup"))
     if fast_prod_setup:
         _LOG.warning("Setting fast prod setup")
         system.config["dag_config"] = dag_builder.convert_to_fast_prod_setup(
@@ -451,7 +610,8 @@ def apply_dag_property(
     debug_mode_config = system.config.get(
         ("dag_property_config", "debug_mode_config"), default_value=None
     )
-    _LOG.debug(hprint.to_str("debug_mode_config"))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(hprint.to_str("debug_mode_config"))
     if debug_mode_config:
         _LOG.warning("Setting debug mode")
         hdbg.dassert_not_in("dst_dir", debug_mode_config)
@@ -475,7 +635,8 @@ def apply_dag_property(
     force_free_nodes = system.config.get_and_mark_as_used(
         ("dag_property_config", "force_free_nodes"), default_value=False
     )
-    _LOG.debug(hprint.to_str("force_free_nodes"))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(hprint.to_str("force_free_nodes"))
     if force_free_nodes:
         _LOG.warning("Setting force free nodes")
         dag.force_free_nodes = force_free_nodes
@@ -538,10 +699,12 @@ def add_ProcessForecastsNode(
     """
     Append `ProcessForecastsNode` to a DAG.
     """
-    _LOG.debug("")
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("")
     hdbg.dassert_isinstance(system, dtfsyssyst.System)
     stage = "process_forecasts"
-    _LOG.debug("stage=%s", stage)
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("stage=%s", stage)
     node = dtfsysinod.ProcessForecastsNode(
         stage,
         **system.config["process_forecasts_node_dict"].to_dict(),
@@ -708,6 +871,9 @@ def apply_Portfolio_config(
     # TODO(Grisha): @Dan do not hard-wire the values inside the function.
     system.config["portfolio_config", "mark_to_market_col"] = "close"
     system.config["portfolio_config", "pricing_method"] = "twap.5T"
+    system.config["portfolio_config", "broker_config"] = cconfig.Config()
+    # TODO(Grisha): should we move `column_remap` to `broker_config` since it
+    # is needed to instantiate the `Broker`.
     column_remap = {
         "bid": "bid",
         "ask": "ask",
@@ -883,7 +1049,8 @@ def _get_trading_period_str_and_bar_duration_in_secs(
     trading_period_str = dag_builder.get_trading_period(
         dag_config, mark_key_as_used
     )
-    hdbg.dassert_in(trading_period_str, ["1T", "2T", "5T", "15T"])
+    # Check that trading period is valid.
+    _dassert_is_valid_trading_period(trading_period_str)
     #
     bar_duration_in_secs = pd.Timedelta(trading_period_str).seconds
     return trading_period_str, bar_duration_in_secs
@@ -961,7 +1128,8 @@ def apply_DagRunner_config_for_equities(
     else:
         raise ValueError(f"Invalid trading_period_str='{trading_period_str}'")
     wake_up_timestamp = wake_up_timestamp.tz_convert("America/New_York")
-    _LOG.debug(hprint.to_str("wake_up_timestamp"))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(hprint.to_str("wake_up_timestamp"))
     # Get minutes for a time at which the real time loop should be terminated.
     # E.g., for trading period 2 minutes the system must shut down 2 minutes
     # before the market closes, i.e. at 15:58.
@@ -996,7 +1164,9 @@ def apply_RealtimeDagRunner_config(
     trading_period_str = dag_builder.get_trading_period(
         dag_config, mark_key_as_used
     )
-    hdbg.dassert_in(trading_period_str, ("1T", "2T", "5T", "15T"))
+    # TODO(Grisha): minute assumption is flimsy, we might want to use other
+    # bar durations, e.g., "1S".
+    # hdbg.dassert_in(trading_period_str, ("1T", "2T", "5T", "15T"))
     system.config["dag_runner_config", "bar_duration_in_secs"] = int(
         pd.Timedelta(trading_period_str).total_seconds()
     )
@@ -1042,14 +1212,25 @@ def get_RealTimeDagRunner_from_System(
     get_wall_clock_time = market_data.get_wall_clock_time
     # TODO(gp): This should become a builder method injecting values inside the
     #  config.
-    _LOG.debug("system.config=\n%s", str(system.config))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("system.config=\n%s", str(system.config))
     # TODO(Grisha): do not use default values.
     wake_up_timestamp = system.config.get_and_mark_as_used(
         ("dag_runner_config", "wake_up_timestamp"), default_value=None
     )
-    bar_duration_in_secs = system.config.get_and_mark_as_used(
-        ("dag_runner_config", "bar_duration_in_secs"), default_value=None
-    )
+    if "bar_duration_in_secs" in system.config["dag_runner_config"].keys():
+        # Infer bar duration the from System config.
+        bar_duration_in_secs = system.config[
+            "dag_runner_config", "bar_duration_in_secs"
+        ]
+    else:
+        # Use `trading_period` in case `("dag_runner_config", "bar_duration_in_secs")`
+        # is not specified explicitly.
+        trading_period = system.config.get_and_mark_as_used("trading_period")
+        bar_duration_in_secs = int(pd.Timedelta(trading_period).total_seconds())
+        system.config[
+            "dag_runner_config", "bar_duration_in_secs"
+        ] = bar_duration_in_secs
     rt_timeout_in_secs_or_time = system.config.get_and_mark_as_used(
         ("dag_runner_config", "rt_timeout_in_secs_or_time")
     )
@@ -1076,7 +1257,7 @@ def get_RealTimeDagRunner_from_System(
         "bar_duration_in_secs": bar_duration_in_secs,
         "max_distance_in_secs": max_distance_in_secs,
     }
-    # _LOG.debug("system=\n%s", str(system.config))
+    # if _LOG.isEnabledFor(logging.DEBUG): _LOG.debug("system=\n%s", str(system.config))
     dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
     return dag_runner
 

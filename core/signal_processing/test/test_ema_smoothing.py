@@ -7,6 +7,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as carsigen
 import core.signal_processing.ema_smoothing as cspremsm
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -53,8 +54,8 @@ class Test_extract_smooth_moving_average_weights(hunitest.TestCase):
             tau=1.4,
             index_location=15,
         )
-        actual = hunitest.convert_df_to_string(
-            weights.round(5), index=True, decimals=5
+        actual = hpandas.df_to_str(
+            weights.round(5), num_rows=None, precision=5
         )
         self.check_string(actual)
 
@@ -68,8 +69,8 @@ class Test_extract_smooth_moving_average_weights(hunitest.TestCase):
             tau=16,
             index_location=15,
         )
-        actual = hunitest.convert_df_to_string(
-            weights.round(5), index=True, decimals=5
+        actual = hpandas.df_to_str(
+            weights.round(5), num_rows=None, precision=5
         )
         self.check_string(actual)
 
@@ -85,8 +86,8 @@ class Test_extract_smooth_moving_average_weights(hunitest.TestCase):
             max_depth=2,
             index_location=15,
         )
-        actual = hunitest.convert_df_to_string(
-            weights.round(5), index=True, decimals=5
+        actual = hpandas.df_to_str(
+            weights.round(5), num_rows=None, precision=5
         )
         self.check_string(actual)
 
@@ -102,8 +103,8 @@ class Test_extract_smooth_moving_average_weights(hunitest.TestCase):
             tau=16,
             index_location=datetime.datetime(2001, 1, 24),
         )
-        actual = hunitest.convert_df_to_string(
-            weights.round(5), index=True, decimals=5
+        actual = hpandas.df_to_str(
+            weights.round(5), num_rows=None, precision=5
         )
         self.check_string(actual)
 
@@ -119,8 +120,8 @@ class Test_extract_smooth_moving_average_weights(hunitest.TestCase):
             tau=252,
             index_location=datetime.datetime(2001, 1, 24),
         )
-        actual = hunitest.convert_df_to_string(
-            weights.round(5), index=True, decimals=5
+        actual = hpandas.df_to_str(
+            weights.round(5), num_rows=None, precision=5
         )
         self.check_string(actual)
 
@@ -135,8 +136,8 @@ class Test_extract_smooth_moving_average_weights(hunitest.TestCase):
             df,
             tau=252,
         )
-        actual = hunitest.convert_df_to_string(
-            weights.round(5), index=True, decimals=5
+        actual = hpandas.df_to_str(
+            weights.round(5), num_rows=None, precision=5
         )
         self.check_string(actual)
 
@@ -152,8 +153,8 @@ class Test_extract_smooth_moving_average_weights(hunitest.TestCase):
             tau=252,
             index_location=datetime.datetime(2001, 2, 1),
         )
-        actual = hunitest.convert_df_to_string(
-            weights.round(5), index=True, decimals=5
+        actual = hpandas.df_to_str(
+            weights.round(5), num_rows=None, precision=5
         )
         self.check_string(actual)
 
@@ -349,7 +350,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([heaviside, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_default_values2(self) -> None:
@@ -361,7 +362,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([heaviside, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_arma_clean1(self) -> None:
@@ -371,7 +372,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
         series = self._get_arma_series(seed=1)
         actual = cspremsm.compute_rolling_zscore(series, tau=20).rename("output")
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_arma_nan1(self) -> None:
@@ -382,7 +383,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
         series[:5] = np.nan
         actual = cspremsm.compute_rolling_zscore(series, tau=20).rename("output")
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_arma_nan2(self) -> None:
@@ -393,7 +394,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
         series[5:10] = np.nan
         actual = cspremsm.compute_rolling_zscore(series, tau=20).rename("output")
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_arma_zero1(self) -> None:
@@ -404,7 +405,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
         series[:5] = 0
         actual = cspremsm.compute_rolling_zscore(series, tau=20).rename("output")
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_arma_zero2(self) -> None:
@@ -415,7 +416,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
         series[5:10] = 0
         actual = cspremsm.compute_rolling_zscore(series, tau=20).rename("output")
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_arma_atol1(self) -> None:
@@ -428,7 +429,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_arma_inf1(self) -> None:
@@ -439,7 +440,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
         series[:5] = np.inf
         actual = cspremsm.compute_rolling_zscore(series, tau=20).rename("output")
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_arma_inf2(self) -> None:
@@ -450,7 +451,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
         series[5:10] = np.inf
         actual = cspremsm.compute_rolling_zscore(series, tau=20).rename("output")
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_delay1_arma_clean1(self) -> None:
@@ -462,7 +463,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_delay1_arma_nan1(self) -> None:
@@ -475,7 +476,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_delay1_arma_nan2(self) -> None:
@@ -488,7 +489,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_delay1_arma_zero1(self) -> None:
@@ -501,7 +502,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_delay1_arma_zero2(self) -> None:
@@ -514,7 +515,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_delay1_arma_atol1(self) -> None:
@@ -527,7 +528,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             series, tau=2, delay=1, atol=0.01
         ).rename("output")
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_delay1_arma_inf1(self) -> None:
@@ -540,7 +541,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_delay1_arma_inf2(self) -> None:
@@ -553,7 +554,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_delay2_arma_clean1(self) -> None:
@@ -565,7 +566,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_delay2_arma_nan1(self) -> None:
@@ -578,7 +579,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_delay2_arma_nan2(self) -> None:
@@ -591,7 +592,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_delay2_arma_zero1(self) -> None:
@@ -604,7 +605,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_delay2_arma_zero2(self) -> None:
@@ -617,7 +618,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_delay2_arma_atol1(self) -> None:
@@ -630,7 +631,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             series, tau=2, delay=2, atol=0.01
         ).rename("output")
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_delay2_arma_inf1(self) -> None:
@@ -643,7 +644,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     def test_delay2_arma_inf2(self) -> None:
@@ -656,7 +657,7 @@ class Test_compute_rolling_zscore1(hunitest.TestCase):
             "output"
         )
         output_df = pd.concat([series, actual], axis=1)
-        output_df_string = hunitest.convert_df_to_string(output_df, index=True)
+        output_df_string = hpandas.df_to_str(output_df, num_rows=None)
         self.check_string(output_df_string)
 
     @staticmethod
@@ -682,4 +683,4 @@ class Test_compute_rolling_annualized_sharpe_ratio(hunitest.TestCase):
         rolling_sr = cspremsm.compute_rolling_annualized_sharpe_ratio(
             realization, tau=16, points_per_year=260.875
         )
-        self.check_string(hunitest.convert_df_to_string(rolling_sr, index=True))
+        self.check_string(hpandas.df_to_str(rolling_sr, num_rows=None))

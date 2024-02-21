@@ -230,6 +230,87 @@ def resample_portfolio_bar_metrics(
     return resampled_df
 
 
+def build_repeating_pattern_srs(
+    df: pd.DataFrame, pattern: List[Any]
+) -> pd.Series:
+    """
+    Build a series of repeating pattern values aligned with input df index.
+
+    Alignment to the input df index means:
+    - output series has the same index as the input df index
+    - the input pattern of values repeats (cyclical)
+    - the input pattern should start at the 1st minute offset
+
+    :param df: input DataFrame to use for alignment
+    :param pattern: pattern of values to repeat
+    :return: series of repeating pattern values
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    index = df.index
+    hdbg.dassert(index.freq, "Index has no specified freq.")
+    hdbg.dassert_eq(index.freq, "1T")
+    # Get pattern and index lengths.
+    pattern_len = len(pattern)
+    index_len = len(index)
+    # 1) Build the 1st part of the output preceding full pattern repeats.
+    first_index = index[0]
+    # Dividing remainder of the number of minutes in the 1st index value
+    # by the pattern length indicates how many minutes precede
+    # the 1st minute offset in the input index.
+    first_index_remainder = first_index.minute % pattern_len
+    _LOG.debug("first_index_remainder=%s", first_index_remainder)
+    # Add pattern values corresponding to the first indices preceding
+    # the 1st minute offset.
+    res_values = pattern[first_index_remainder - 1 :]
+    # 2) Add the middle part of the output with full repeating patterns.
+    remaining_index_len = index_len - len(res_values)
+    # Compute how many times the pattern will repeat within the remaining
+    # index timeframe.
+    num_repeats = remaining_index_len // pattern_len
+    _LOG.debug("num_repeats=%s", num_repeats)
+    # Add repeating patterns to the result.
+    res_values.extend(pattern * num_repeats)
+    # 3) Add the last part of the output for remaining tail of indices.
+    num_tail = remaining_index_len % pattern_len
+    _LOG.debug("num_tails=%s", num_tail)
+    res_values.extend(pattern[:num_tail])
+    # Check that the count of result values matches index length.
+    hdbg.dassert_eq(len(res_values), index_len)
+    # Build result series.
+    res = pd.Series(data=res_values, index=index)
+    return res
+
+
+def resample_with_weights(
+    df: pd.DataFrame,
+    rule: str,
+    col: str,
+    weights: List[float],
+) -> pd.DataFrame:
+    """
+    Resample data to a weighted average of values.
+
+    :param df: input data
+    :param rule: resampling frequency with pandas convention (e.g., "5T")
+    :param col: column name with values to resample
+    :param weights: list of weights to apply to resampler group values
+    :return: df[col] resampled with `rule` and weighted by `weights`
+    """
+    # Check that number of weights equals the rule length in minutes.
+    n_minutes_rule = pd.Timedelta(rule).total_seconds() // 60
+    hdbg.dassert_eq(n_minutes_rule, len(weights))
+    # Get weights series aligned to the input data index.
+    weight_srs = build_repeating_pattern_srs(df, weights)
+    weight_srs.name = "weight"
+    # Get resampled data using VWAP computation approach.
+    combined_df = pd.concat([df[col], weight_srs], axis=1)
+    weight_col = "weight"
+    resampled_srs = compute_vwap(combined_df, rule, col, weight_col)
+    resampled_srs.name = col
+    resampled_df = resampled_srs.to_frame()
+    return resampled_df
+
+
 # TODO(Paul): Consider deprecating.
 # This provides some sensible defaults for `resample_bars()`, but may not be
 # worth the additional complexity.

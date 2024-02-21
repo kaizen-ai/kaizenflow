@@ -202,7 +202,7 @@ df_1min_out = (
 # mask = df_1min_out < 0.40
 # df_1min_out = df_1min_out[~mask]
 
-df_1min_out.fillna(method="ffill", limit=None, inplace=True)
+df_1min_out.ffill(limit=None, inplace=True)
 # .sum(min_count=1) #.replace(np.nan, 0)
 
 df_1min_out.columns = ["price", "bid", "ask"]

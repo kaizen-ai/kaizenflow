@@ -2,6 +2,7 @@ import unittest.mock as umock
 
 import pandas as pd
 import psycopg2 as psycop
+import pytest
 
 import helpers.hunit_test as hunitest
 import im_v2.common.db.db_utils as imvcddbut
@@ -10,7 +11,14 @@ DB_STAGE = "test"
 
 
 class TestDbConnectionManager(hunitest.TestCase):
-    def setUp(self) -> None:
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+
+    def set_up_test(self) -> None:
         self.mock_cursor = umock.MagicMock()
         self.mock_cursor.execute = umock.MagicMock(return_value=None)
         self.mock_connection = umock.MagicMock()
@@ -23,7 +31,6 @@ class TestDbConnectionManager(hunitest.TestCase):
         imvcddbut.hsql.get_connection_from_env_vars = (
             self.mock_get_connection_from_env_vars
         )
-        super().setUp()
 
     def test_get_connection1(self) -> None:
         """
@@ -49,12 +56,18 @@ class TestDbConnectionManager(hunitest.TestCase):
 
 
 class TestSaveDataToDb(hunitest.TestCase):
-    def setUp(self) -> None:
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+
+    def set_up_test(self) -> None:
         self.mock_execute_insert_on_conflict_do_nothing_query = umock.MagicMock()
         imvcddbut.hsql.execute_insert_on_conflict_do_nothing_query = (
             self.mock_execute_insert_on_conflict_do_nothing_query
         )
-        super().setUp()
 
     def test_save_data_to_db1(self) -> None:
         """

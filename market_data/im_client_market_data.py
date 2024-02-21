@@ -7,7 +7,6 @@ import market_data.im_client_market_data as mdimcmada
 import logging
 from typing import Any, List, Optional, cast
 
-import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
@@ -39,7 +38,7 @@ class ImClientMarketData(mdabmada.MarketData):
         self,
         col_name: str,
         asset_ids: List[int],
-    ) -> pd.Series:
+    ) -> pd.DataFrame:
         """
         Override parent method in `MarketData`.
 
@@ -58,14 +57,8 @@ class ImClientMarketData(mdabmada.MarketData):
         # Convert the df of data into a series.
         hdbg.dassert_in(col_name, df.columns)
         last_price = df[[col_name, self._asset_id_col]]
-        last_price.set_index(self._asset_id_col, inplace=True)
-        last_price_srs = hpandas.to_series(last_price)
-        hdbg.dassert_isinstance(last_price_srs, pd.Series)
-        last_price_srs.index.name = self._asset_id_col
-        last_price_srs.name = col_name
-        hpandas.dassert_series_type_in(last_price_srs, [np.float64, np.int64])
         # TODO(gp): Print if there are nans.
-        return last_price_srs
+        return last_price
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         """
@@ -234,7 +227,7 @@ class ImClientMarketData(mdabmada.MarketData):
         if df.empty:
             wall_clock_time = self.get_wall_clock_time()
             _LOG.warning(
-                "No data found near wall_clock_time=%s", self.wall_clock_time
+                "No data found near wall_clock_time=%s", wall_clock_time
             )
             ret = None
         else:

@@ -47,13 +47,8 @@ export PATH=.:$PATH
 
 export PATH=$AMP:$PATH
 
-export PATH=$AMP/dev_scripts:$PATH
-export PATH=$AMP/dev_scripts/aws:$PATH
-export PATH=$AMP/dev_scripts/git:$PATH
-export PATH=$AMP/dev_scripts/infra:$PATH
-export PATH=$AMP/dev_scripts/install:$PATH
-export PATH=$AMP/dev_scripts/notebooks:$PATH
-export PATH=$AMP/dev_scripts/testing:$PATH
+# Add to the PATH all the first level directory under `dev_scripts`.
+export PATH="$(find "$(pwd)/dev_scripts" -maxdepth 1 -type d -not -path "$(pwd)" | tr '\n' ':' | sed 's/:$//'):$PATH"
 
 # Remove duplicates.
 export PATH=$(echo $PATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')

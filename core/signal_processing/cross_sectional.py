@@ -64,6 +64,8 @@ def gaussian_rank(
             df[mask] = 0.0
         elif bulk_fill_method == "ffill":
             df = df.ffill()
+        else:
+            raise ValueError("Unrecognized `bulk_fill_method`=%s" % bulk_fill_method)
         # Add back the all-NaN rows.
         df = df.reindex(index=idx)
     return df

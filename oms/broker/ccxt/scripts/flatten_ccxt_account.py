@@ -12,15 +12,18 @@ Example use:
     --contract_type 'futures' \
     --stage 'preprod' \
     --secret_id 4 \
+    --universe "v7.4" \
     --assert_on_non_zero
 """
 import argparse
-import asyncio
 import logging
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
+import oms.broker.ccxt.ccxt_broker_instances as obccbrin
 import oms.broker.ccxt.ccxt_broker_utils as obccbrut
+import oms.broker.ccxt.ccxt_utils as obccccut
+import oms.hsecrets.secret_identifier as ohsseide
 
 _LOG = logging.getLogger(__name__)
 
@@ -31,46 +34,12 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--exchange",
-        action="store",
-        required=True,
-        type=str,
-        help="Name of the exchange, e.g. 'binance'.",
-    )
-    parser.add_argument(
-        "--contract_type",
-        action="store",
-        required=True,
-        type=str,
-        help="'futures' or 'spot'. Note: only futures contracts are supported.",
-    )
-    parser.add_argument(
-        "--stage",
-        action="store",
-        required=True,
-        type=str,
-        help="Stage to run at: local, preprod, prod.",
-    )
-    parser.add_argument(
-        "--secret_id",
-        action="store",
-        required=True,
-        type=int,
-        help="ID of the API Keys to use as they are stored in AWS SecretsManager.",
-    )
-    parser.add_argument(
-        "--log_dir",
-        action="store",
-        type=str,
-        required=True,
-        help="Log dir to save open positions info.",
-    )
-    parser.add_argument(
         "--assert_on_non_zero_positions",
         action="store_true",
         required=False,
         help="Assert if the open positions failed to close completely.",
     )
+    parser = obccccut.add_CcxtBroker_cmd_line_args(parser)
     parser = hparser.add_verbosity_arg(parser)
     return parser
 
@@ -80,17 +49,21 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = vars(args)
     hdbg.init_logger(verbosity=args["log_level"], use_exec_path=True)
     exchange = args["exchange"]
-    contract_type = args["contract_type"]
+    args["contract_type"]
     stage = args["stage"]
     log_dir = args["log_dir"]
     secret_id = args["secret_id"]
+    universe_version = args["universe"]
     assert_on_non_zero_positions = args["assert_on_non_zero_positions"]
-    broker = obccbrut.get_broker(exchange, contract_type, stage, secret_id, db_stage=args["stage"])
-    obccbrut.describe_and_flatten_account(
+    secret_identifier = ohsseide.SecretIdentifier(
+        exchange, stage, "trading", secret_id
+    )
+    broker = obccbrin.get_CcxtBroker_exchange_only_instance1(
+        universe_version, secret_identifier, log_dir,
+    )
+    obccbrut.flatten_ccxt_account(
         broker,
-        exchange,
-        contract_type,
-        log_dir,
+        dry_run=False,
         assert_on_non_zero_positions=assert_on_non_zero_positions,
     )
 

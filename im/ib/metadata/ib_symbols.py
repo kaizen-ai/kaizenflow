@@ -50,7 +50,8 @@ class IbSymbolUniverse(imcomesym.SymbolUniverse):
         _LOG.info("Reading symbols from %s", symbols_file)
         # Prevent to transform values from "NA" to `np.nan`.
         if hs3.is_s3_path(symbols_file):
-            s3fs = hs3.get_s3fs("am")
+            # TODO(sonaal): confirm with juraj
+            s3fs = hs3.get_s3fs("ck")
             kwargs = {"s3fs": s3fs}
         else:
             kwargs = {}

@@ -28,7 +28,7 @@ def adapt_dag_to_real_time(
     process_forecasts_node_dict: Dict[str, Any],
     # TODO(gp): Move after market_data_history_lookback.
     ts_col_name: str,
-):
+) -> dtfcore.DAG:
     """
     Insert a `RealTimeDataSource` node at the beginning of a DAG and a
     `ProcessForecasts` at the end of a DAG. The DAG needs to have a single
@@ -39,7 +39,7 @@ def adapt_dag_to_real_time(
     `DagBuilder`.
     """
     hdbg.dassert_isinstance(process_forecasts_node_dict, dict)
-    # Add the DataSource node.
+    # Add the `DataSource` node.
     stage = "read_data"
     multiindex_output = True
     # ts_col_name = "timestamp_db"
@@ -52,9 +52,10 @@ def adapt_dag_to_real_time(
         multiindex_output,
     )
     dag.insert_at_head(node)
-    # Create and append the ProcessForecast node.
+    # Add the `ProcessForecast` node.
     stage = "process_forecasts"
-    _LOG.debug(hprint.to_str("stage process_forecasts_node_dict"))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(hprint.to_str("stage process_forecasts_node_dict"))
     node = dtfsysinod.ProcessForecastsNode(stage, **process_forecasts_node_dict)
     dag.append_to_tail(node)
     return dag

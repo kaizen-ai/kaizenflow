@@ -1,14 +1,3 @@
-<!--ts-->
-   * [Buildmeister process](#buildmeister-process)
-   * [General](#general)
-   * [Notification system](#notification-system)
-   * [Buildmeister instructions](#buildmeister-instructions)
-   * [Allure Reports Analysis](#allure-reports-analysis)
-   * [Post-mortem analysis (TBD)](#post-mortem-analysis-tbd)
-
-
-
-<!--te-->
 # Buildmeister process
 
 <!-- toc -->
@@ -16,7 +5,8 @@
 - [General](#general)
 - [Notification system](#notification-system)
 - [Buildmeister instructions](#buildmeister-instructions)
-  - [`update_amp_submodule` fails](#update_amp_submodule-fails)
+    + [`update_amp_submodule` fails](#update_amp_submodule-fails)
+- [Buildmeister dashboard](#buildmeister-dashboard)
 - [Allure Reports Analysis](#allure-reports-analysis)
 - [Post-mortem analysis (TBD)](#post-mortem-analysis-tbd)
 
@@ -30,28 +20,15 @@
   - Each rotation should be confirmed by a 'handshake' between the outgoing
     Buildmeister and the new one in the related Telegram chat
 - The Buildmeister is responsible for:
+  - Check build status using the
+    [buildmeister dashboard](#buildmeister-dashboard) everyday
   - Pushing team members to fix broken tests
   - Conducting post-mortem analysis
     - Why did the break happen?
     - How can we avoid the problem next time, through process and automation?
-- Testing workflows are available via GitHub actions:
-  - Testing workflows that need to be checked:
-    - `cmamp:
-      - [Fast tests](https://github.com/cryptokaizen/cmamp/actions/workflows/fast_tests.yml)
-      - [Slow tests](https://github.com/cryptokaizen/cmamp/actions/workflows/slow_tests.yml)
-      - [Test Coverage](https://github.com/cryptokaizen/cmamp/actions/workflows/test_coverage.yml)
-    - Dev_tools:
-      - [Fast tests](https://github.com/alphamatic/dev_tools/actions/workflows/fast_tests.yml)
-      - [Slow tests](https://github.com/alphamatic/dev_tools/actions/workflows/slow_tests.yml)
-    - Orange:
-      - [Fast tests](https://github.com/cryptokaizen/orange/actions/workflows/fast_tests.yml)
-      - [Slow tests](https://github.com/cryptokaizen/orange/actions/workflows/slow_tests.yml)
-    - Lemonade:
-      - [Fast tests](https://github.com/cryptokaizen/orange/actions/workflows/fast_tests.yml)
-      - [Slow tests](https://github.com/cryptokaizen/orange/actions/workflows/slow_tests.yml)
-  - Refer to `.github` dir in the repo for update schedule of GH actions
-  - Additional information about the
-    [tests](/docs/coding/all.unit_tests.how_to_guide.md)
+- Refer to `.github` dir in the repo for update schedule of GH actions
+- Additional information about the
+  [tests](/docs/coding/all.unit_tests.how_to_guide.md)
 
 # Notification system
 
@@ -170,6 +147,13 @@ Example:
 
 - There is also an invoke target `git_roll_amp_forward` that does an equivalent
   operation
+
+# Buildmeister dashboard
+
+The Buildmeister dashboard is a tool that provides a quick overview of the
+current state of the results of all GitHub Actions workflows. See
+[run and publish the buildmeister dashboard](/docs/infra/ck.gh_workflows.explanation.md#run-and-publish-the-buildmeister-dashboard)
+for detailed information.
 
 # Allure Reports Analysis
 

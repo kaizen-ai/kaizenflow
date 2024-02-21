@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-Download data from Crypto-Chassis/CCXT and save to S3 in a Parquet/CSV format.
-The script is meant to run daily for in collaboration with realtime data QA or
-downloading bulk data snapshots.
+Download historical data form a provider (e.g., Crypto-Chassis, CCXT, Binance)
+and save to S3 in a Parquet/CSV format. The script is meant to run daily in
+collaboration with realtime data QA or downloading bulk data snapshots.
 
 Use as:
 
@@ -33,12 +33,11 @@ import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import im_v2.binance.data.extract.extractor as imvbdexex
-import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.data.qa.validate_input_args as imvcdqviar
 import im_v2.common.data.transform.transform_utils as imvcdttrut
-import im_v2.common.data.qa.validate_input_args as imvcdqviar
 import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
+import im_v2.ccxt.data.extract.cryptocom_extractor as imvcdecrex
 
 _LOG = logging.getLogger(__name__)
 
@@ -70,6 +69,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     return parser  # type: ignore[no-any-return]
 
+
 def _run(args: argparse.Namespace) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     args = vars(args)
@@ -77,9 +77,13 @@ def _run(args: argparse.Namespace) -> None:
     args["unit"] = imvcdttrut.get_vendor_epoch_unit(vendor, args["data_type"])
     imvcdqviar.validate_vendor_arg(vendor=vendor, args=args)
     if vendor == "crypto_chassis":
+        if not args.get("universe_part"):
+            raise RuntimeError(
+                f"--universe_part argument is mandatory for {vendor}"
+            )
         exchange = imvccdexex.CryptoChassisExtractor(args["contract_type"])
     elif vendor == "ccxt":
-        exchange = imvcdexex.CcxtExtractor(
+        exchange = imvcdeexut.get_CcxtExtractor(
             args["exchange_id"], args["contract_type"]
         )
     elif vendor == "binance":

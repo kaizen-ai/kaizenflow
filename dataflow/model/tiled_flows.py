@@ -135,6 +135,7 @@ def yield_processed_parquet_tile_dict(
             dfs[idx] = df
         yield dfs
 
+
 # TODO(ShaopengZ): Clean up the classes by initializing `forecast_evaluator`
 # objects outside the tiling function.
 def annotate_forecasts_by_tile(
@@ -445,7 +446,8 @@ def process_parquet_read_df(
 
     :param df: dataframe in "long" format
     :param asset_id_col: asset id column to pivot on
-    :return: multiindexed dataframe with asset id's at the inner column level
+    :return: multiindexed dataframe with asset id's at the inner column
+        level
     """
     # Convert the asset id column to an integer column.
     df = hpandas.convert_col_to_int(df, asset_id_col)
@@ -486,7 +488,8 @@ def load_mix_evaluate(
     :param dollar_neutrality: dollar neutrality constraint for forecast
         evaluation, e.g.,
     :return: a portfolio bar metrics dataframe (see
-        dtfmofomix.get_portfolio_bar_metrics_dataframe() for an example).
+        dtfmofomix.get_portfolio_bar_metrics_dataframe() for an
+        example).
     """
     hdbg.dassert_isinstance(weights, pd.DataFrame)
     hdbg.dassert_set_eq(weights.index, feature_cols)
@@ -550,7 +553,8 @@ def regress(
         file_name
     )
     asset_ids = parquet_tile_metadata.index.levels[0].to_list()
-    _LOG.debug("Num assets=%d", len(asset_ids))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("Num assets=%d", len(asset_ids))
     if num_autoregression_lags > 0:
         lagged_cols = [
             target_col + f"_lag_{lag}"
@@ -617,7 +621,8 @@ def compute_bar_col_abs_stats(
         file_name
     )
     asset_ids = parquet_tile_metadata.index.levels[0].to_list()
-    _LOG.debug("Num assets=%d", len(asset_ids))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("Num assets=%d", len(asset_ids))
     results = []
     tile_iter = hparque.yield_parquet_tiles_by_assets(
         file_name,

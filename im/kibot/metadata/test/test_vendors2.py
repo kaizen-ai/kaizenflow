@@ -43,7 +43,7 @@
 #        _LOG.debug("df3=%s", df3.head())
 #        pd.testing.assert_frame_equal(df, df3)
 #        #
-#        self.check_string(hunitest.convert_df_to_string(df, index=True))
+#        self.check_string(hpandas.df_to_str(df, num_rows=None))
 #
 #    @pytest.mark.slow
 #    def test_read_data_csv1(self) -> None:
@@ -65,25 +65,25 @@
 #        _LOG.debug("df3=%s", df3.head())
 #        pd.testing.assert_frame_equal(df, df3)
 #        #
-#        self.check_string(hunitest.convert_df_to_string(df, index=True))
+#        self.check_string(hpandas.df_to_str(df, num_rows=None))
 #
 #    @pytest.mark.skip(reason="PTask2117")
 #    def test_read_metadata1(self) -> None:
 #        df = kut.read_1min_contract_metadata()
-#        self.check_string(hunitest.convert_df_to_string(df))
+#        self.check_string(hpandas.df_to_str(df, num_rows=None))
 #
 #    @pytest.mark.skip(reason="PTask2117")
 #    def test_read_metadata2(self) -> None:
 #        df = kut.read_daily_contract_metadata()
-#        self.check_string(hunitest.convert_df_to_string(df))
+#        self.check_string(hpandas.df_to_str(df, num_rows=None))
 #
 #    def test_read_metadata3(self) -> None:
 #        df = kut.read_tickbidask_contract_metadata()
-#        self.check_string(hunitest.convert_df_to_string(df))
+#        self.check_string(hpandas.df_to_str(df, num_rows=None))
 #
 #    def test_read_metadata4(self) -> None:
 #        df = kut.read_continuous_contract_metadata()
-#        self.check_string(hunitest.convert_df_to_string(df))
+#        self.check_string(hpandas.df_to_str(df, num_rows=None))
 #
 #
 ## TODO(gp, Julia): Fix this.
@@ -179,7 +179,7 @@
 #    def test_get_metadata_tick1(self) -> None:
 #        kmd = kut.KibotMetadata()
 #        df = kmd.get_metadata("tick-bid-ask")
-#        str_df = hunitest.convert_df_to_string(df)
+#        str_df = hpandas.df_to_str(df, num_rows=None)
 #        self.check_string(str_df)
 #
 #    @pytest.mark.slow()
