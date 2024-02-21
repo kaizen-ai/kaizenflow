@@ -6,19 +6,17 @@
   * [1. Technologies](#1-technologies)
     + [1.1 Redis: In-Memory Data Structure Store](#11-redis-in-memory-data-structure-store)
     + [1.2. Docker: Containerization for Portability](#12-docker-containerization-for-portability)
-  * [2. Docker System Logic for Redis Cache to Fetch User Profiles Project](#2-docker-system-logic-for-redis-cache-to-fetch-user-profiles-project)
-  * [3. Running the Redis Cache to Fetch User Profiles System Using Docker](#3-running-the-redis-cache-to-fetch-user-profiles-system-using-docker)
-  * [4. Redis Cache to Fetch User Profiles Script Overview](#4-redis-cache-to-fetch-user-profiles-script-overview)
-    + [5. Mock Database Schema:](#5-mock-database-schema)
-    + [6. Project Diagram](#6-project-diagram)
-    + [7. Conclusion](#7-conclusion)
+  * [2. Docker System Logic and Implementation](#2-docker-system-logic-and-implementation)
+  * [3. Python Script Overview](#3-python-script-overview)
+  * [4. Mock Database Schema](#4-mock-database-schema)
+  * [5. Project Diagram](#5-project-diagram)
+  * [6. Conclusion](#6-conclusion)
 
 <!-- tocstop -->
 
 # Redis cache to fetch user profile
 
-Author: Shaunak Dhande GitHub account: Shaunak01 Email: sdhande@umd.edu Date:
-05/01/2001 Issue: SorrTaskX Complexity: 1
+Author: Shaunak Dhande GitHub account: Shaunak01 Email: sdhande@umd.edu
 
 The Redis Cache to Fetch User Profiles project is a Python based project that
 exemplifies a straightforward implementation of user profile caching using
@@ -45,11 +43,6 @@ context of the project, Redis is employed as a caching mechanism. The speed of
 data retrieval from Redis significantly outpaces traditional databases, making
 it an ideal choice for scenarios where rapid access to frequently used data,
 such as user profiles, is paramount.
-
-The project establishes a connection to a Redis server running on
-localhost:6379. The redis.StrictRedis library in Python facilitates this
-connection, enabling seamless communication between the Python script and the
-Redis server.
 
 The function that retrieved user profiles showcases the power of Redis caching.
 It first checks if the user's profile is already present in the Redis cache. If
@@ -78,138 +71,74 @@ into the container. The resulting Docker image encapsulates the entire project,
 making it easily deployable and scalable.
 
 By using Docker, the project achieves portability and encapsulation, allowing
-developers to run the application in any environment with minimal setup. The
-EXPOSE directive in the Dockerfile exposes the default Redis port, making it
-accessible for external applications if needed.
+developers to run the application in any environment with minimal setup.
 
-## 2. Docker System Logic for Redis Cache to Fetch User Profiles Project
+## 2. Docker System Logic and Implementation
 
 The Docker system designed for the Redis Cache to Fetch User Profiles project
 follows a logical sequence to ensure a smooth and consistent environment for
 both development and deployment. Let's delve into the intricacies of the Docker
 system logic:
 
-- Base Image Selection:
+- Project Setup:
+  - Begin with organizing your project files within a directory structure. The
+    main files include:
+    - Redis_cache_to_fetch_user_profile.ipynb: Contains the Jupyter Notebook
+      code for fetching user profiles with Redis caching.
+    - Dockerfile: Includes instructions for building a Docker image for the
+      project.
+    - Docker-compose.yaml: Defines services, networks, and volumes for Docker
+      containers.
 
-  The foundation of the Docker system is laid with the selection of an official
-  Python runtime as the base image. This choice provides a standardized and
-  well-supported environment, ensuring compatibility with the project's Python
-  script and dependencies.
+- Dockerfile Configuration:
+  - Start by setting up the Dockerfile with the following steps:
+    - Utilize an official Python runtime as the base image (python:3.8-slim).
+    - Set the working directory in the container to `/app`.
+    - Copy the project files into the container.
+    - Install necessary dependencies (redis and notebook) using pip.
+    - `Expose port 8888` for the Jupyter Notebook server.
+    - Specify the default command to run the Jupyter Notebook server.
 
-- Working Directory Configuration:
+- Docker-compose.yaml Configuration:
+  - Configure the docker-compose.yaml file to define the services required for
+    the project:
+    - Define two services: redis and notebook.
+    - Configure the redis service:
+      - Use the official redis:latest image.
+      - Map `port 6378` on the host to `port 6379` in the container.
+      - Set the container name as redis-server.
+    - Configure the notebook service:
+      - Use the custom Docker image built from the Dockerfile.
+      - Map `port 8888` on the host to `port 8888` in the container.
+      - Set the `REDIS_HOST` environment variable to redis.
+      - Make it dependent on the redis service.
+      - Specify the container name as `notebook-server`.
+      - Mount the project directory into the container at `/app`.
 
-  The working directory is set to /app to establish a designated space for the
-  project files within the container. This simplifies subsequent file operations
-  and ensures a clean project structure.
+- Building the Docker Image:
+  - Execute `docker build -t <your_image_name> .` to build the Docker image
+    using the Dockerfile.
+  - Replace `<your_image_name>` with a suitable name for the Docker image.
 
-- Copying Project Files:
+- Running the Docker Containers:
+  - Start the Docker containers with `docker-compose up`.
+  - Docker Compose will create and launch containers for the redis and notebook
+    services.
+  - Access the Jupyter Notebook server at `http://localhost:8888` in a web
+    browser.
 
-  The COPY directive is employed to transfer the contents of the local directory
-  (containing the project files) into the /app directory within the Docker
-  container. This step includes the Python script, the mock database JSON file
-  (user_profiles1.json), and any other necessary files.
+- Accessing the Jupyter Notebook Server:
+  - Navigate to `http://localhost:8888` in a web browser to access the Jupyter
+    Notebook interface.
+  - Interact with your notebook file (Redis_cache_to_fetch_user_profile.ipynb)
+    to execute code for fetching user profiles using Redis caching.
 
-- Redis and Python Package Installation:
+- Stopping the Docker Containers:
+  - To stop containers, press `Ctrl + C` in the terminal running
+    `docker-compose up`.
+  - Alternatively, use `docker-compose down` to stop and remove containers.
 
-  The Dockerfile executes commands to install the Redis server and the required
-  Python packages. This includes updating the package list, installing the Redis
-  server, and using pip to install the redis Python package.
-
-- Exposing Redis Port:
-
-  The EXPOSE directive is used to expose the default Redis port (6379) within
-  the Docker container. This step ensures that the Redis server running inside
-  the container is accessible to external applications if needed.
-
-- Mock Database File Copying:
-
-  Another COPY directive is employed to transfer the mock database JSON file
-  (user_profiles1.json) into the /app directory within the Docker container.
-  This ensures that the mock database is readily available for the Python
-  script.
-
-- Redis Server Initialization:
-
-  The Dockerfile concludes by specifying the command to run the Redis server.
-  This command (CMD ["redis-server"]) initializes the Redis server within the
-  Docker container, ensuring that it is ready to accept connections.
-
-- Python Script Execution:
-
-  The final command (CMD ["python", "Redis cache to fetch user profiles.ipynb"])
-  specifies the execution of the Python script within the Docker container. This
-  ensures that the Redis Cache to Fetch User Profiles script runs seamlessly
-  within the configured Docker environment.
-
-## 3. Running the Redis Cache to Fetch User Profiles System Using Docker
-
-To execute the Redis Cache to Fetch User Profiles system, Docker provides a
-straightforward and efficient approach. The following steps outline how to run
-the container system, ensuring a seamless deployment of the project:
-
-- Prerequisites:
-
-  Before running the Docker container, ensure that Docker is installed on your
-  system. You can download and install Docker from the official Docker website.
-
-- Build the Docker Image:
-
-  Navigate to the directory containing the project files, including the
-  Dockerfile. Open a terminal and run the following command to build the Docker
-  image:
-  ```
-  docker build -t redis-cache-system
-  ```
-
-  This command instructs Docker to build an image named redis-cache-system using
-  the instructions provided in the Dockerfile. The -t flag allows you to tag the
-  image for easier reference.
-
-- Run the Docker Container:
-
-  Once the image is built, you can run a Docker container based on this image.
-  Execute the following command:
-  ```
-  docker run -p 6379:6379 redis-cache-system
-  ```
-
-  The -p flag maps the container's Redis port (6379) to the same port on the
-  host system, allowing external access to the Redis server. This step starts
-  both the Redis server and the Python script within the Docker container.
-
-- Verify System Operation:
-
-  With the container running, the system is now operational. You can verify its
-  functionality by executing the provided example usage of the Python script.
-  Open a new terminal window and run:
-  ```
-  docker exec -it $(docker ps -q) python "Redis cache to fetch user profiles.ipynb"
-  ```
-
-  This command accesses the running Docker container ($(docker ps -q)) and
-  executes the Python script within it. Ensure that the script fetches and
-  displays the user profile as expected.
-
-- Interacting with Redis:
-
-  To interact directly with the Redis server within the Docker container, you
-  can use a Redis client. For example, you can use the following command to
-  connect to the Redis server running in the Docker container:
-  ```
-  docker exec -it $(docker ps -q) redis-cli
-  ```
-
-  This opens a Redis command-line interface where you can run Redis commands to
-  inspect and manipulate data stored in the Redis cache.
-
-Running the Redis Cache to Fetch User Profiles system using Docker involves
-building the Docker image, running the Docker container, verifying system
-operation through the Python script, and interacting with the Redis server. This
-Dockerized system ensures consistency across different environments, facilitates
-easy deployment, and optimizes the performance of user profile retrieval through
-Redis caching.
-
-## 4. Redis Cache to Fetch User Profiles Script Overview
+## 3. Python Script Overview
 
 The Redis Cache to Fetch User Profiles script demonstrates an efficient approach
 to user profile caching using Redis. The script is structured to fetch user
@@ -218,16 +147,18 @@ seamless integration of Docker for containerization.
 
 The script is primarily divided into three sections:
 
-- Set up Redis Connection: Establishes a connection to a Redis server running on
-  localhost:6379.
+- Set up Redis Connection: The script begins by establishing a connection to a
+  Redis server to enable caching of user profiles.The `REDIS_HOST` environment
+  variable is utilized to dynamically specify the host address of the Redis
+  server.
 
-- Mock Database: Utilizes a static JSON file named user_profiles1.json as the
-  mock database, containing user profiles for demonstration purposes.
+- Mock Database: The json data is saved in a variable in the script. User can
+  also include an externl json file.
 
 - Fetch User Profile Function:
-  - Implements the fetch_user_profile function to read the mock database file
+  - Implements the `fetch_user_profile` function to read the mock database file
     and retrieve a user's profile based on their ID.
-  - Implements the get_user_profile function to check if the user's profile is
+  - Implements the `get_user_profile` function to check if the user's profile is
     in the Redis cache, fetches it if present, or retrieves it from the mock
     database, stores it in the cache, and returns the profile.
 
@@ -253,11 +184,11 @@ The script is primarily divided into three sections:
     Fetched user profile: {'user_id': '123', 'name': 'Shaunak Dhande', 'email': 'shaunakdhande4000@gmail.com', 'age': 22}
     ```
 
-### 5. Mock Database Schema:
+## 4. Mock Database Schema
 
-The mock database (user_profiles1.json) follows a simple JSON structure where
-each user profile is represented as a dictionary. The schema includes the user's
-ID, name, email, and age.
+The mock database follows a simple JSON structure where each user profile is
+represented as a dictionary. The schema includes the user's ID, name, email, and
+age.
 ```
 {
   "123": {
@@ -276,7 +207,7 @@ ID, name, email, and age.
 }
 ```
 
-### 6. Project Diagram
+## 5. Project Diagram
 
 ```mermaid
 sequenceDiagram
@@ -298,7 +229,7 @@ sequenceDiagram
     Script-->>User: Return user profile
 ```
 
-### 7. Conclusion
+## 6. Conclusion
 
 The Redis Cache to Fetch User Profiles project establishes an effective synergy
 between Redis caching, Python scripting, and Docker containerization. By
