@@ -66,7 +66,7 @@ class DatasetValidator(abc.ABC):
         self.qa_checks = qa_checks
 
     @abc.abstractmethod
-    def run_all_checks(self, datasets: List[Any], *args: Any) -> bool:
+    def run_all_checks(self, datasets: List[Any], *, abort_on_error: bool=True) -> bool:
         """
         Run all checks.
 
@@ -81,7 +81,8 @@ class DatasetValidator(abc.ABC):
 
 
 class SingleDatasetValidator(DatasetValidator):
-    def run_all_checks(self, datasets: List) -> None:
+
+    def run_all_checks(self, datasets: List[Any], *, abort_on_error: bool=True) -> None:
         error_msgs: List[str] = []
         hdbg.dassert_eq(len(datasets), 1)
         _LOG.info("Running all QA checks:")
