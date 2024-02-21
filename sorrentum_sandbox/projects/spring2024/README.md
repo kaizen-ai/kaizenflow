@@ -34,15 +34,27 @@ the project is not considered working
 - Each project will need to be checked in https://github.com/sorrentum/sorrentum
   filing bugs, with PR, etc like in an open source project
 
-The layout of each project is the following
-sorrentum_sandbox/projects/spring2024/SorrTaskXYZ_... docker description.md
+- The layout of each project is the following
+  sorrentum_sandbox/projects/spring2024/SorrTaskXYZ_...
+    README.md
+    docker
 
-# Project assignment template
+- The tag of your projects follows the schema
+  `Spring{year}_{project_title_without_spaces}`
+- E.g., if the project title is "Redis cache to fetch user profiles", the name of
+  `Spring2024_Redis_cache_to_fetch_user_profiles`
 
-## Task description
+- Create a GitHub issue with the project tag (e.g.,
+  `Spring2024_Redis_cache_to_fetch_user_profiles`) and assign the issue to
+  yourself
+  - We will use this issue to communicate
 
-## Difficulty: from 1 (very easy) to 3 (difficult):
+- Create a branch in Git named after your project (e.g.,
+  `SorrTask645_Redis_cache_to_fetch_user_profiles`)
+- You should add files only under the directory corresponding to your project
+  `{GIT_ROOT}/sorrentum_sandbox/projects/{project_tag}`, e.g.,
+  `{GIT_ROOT}/sorrentum_sandbox/projects/Spring2024_Redis_cache_to_fetch_user_profiles`
+  - E.g., on the dir cloned on my laptop the dir is named
+    `~/src/sorrentum1/sorrentum_sandbox/projects/SorrTask645_Redis_cache_to_fetch_user_profiles`
 
-## Requirements
-
-## Refs
+- Copy the files from 
