@@ -719,6 +719,7 @@ def from_json(file_name: str, *, use_types: bool = False) -> Dict:
     :param use_types: whether to use jsonpickle to load the file
     :return: dict with data
     """
+    hdbg.dassert(file_name)
     if not file_name.endswith(".json"):
         _LOG.warning("The file '%s' doesn't end in .json", file_name)
     # Read file as text.

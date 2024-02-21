@@ -29,9 +29,9 @@ class TestCreateDb1(imvcddbut.TestImDbHelper):
         imvcddbut.create_all_tables(self.connection)
         expected = sorted(
             [
-                "ccxt_bid_ask_raw",
                 "ccxt_bid_ask_futures_raw",
                 "ccxt_bid_ask_resampled_1min",
+                "ccxt_bid_ask_spot_raw",
                 "ccxt_bid_ask_futures_resampled_1min",
                 "ccxt_ohlcv_spot",
                 "ccxt_ohlcv_futures",

@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -89,10 +89,30 @@ data = reader.read_data_head()
 _LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
 
 # %% [markdown]
+# ## realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7_6.ccxt.okx.v1_0_0
+
+# %%
+# This works with stage 'preprod'
+signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7_6.ccxt.okx.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature)
+data = reader.read_data_head()
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown]
 # ## realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v7.ccxt.binance.v1_0_0
 
 # %%
 signature = "realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v7.ccxt.binance.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature)
+data = reader.read_data_head()
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown]
+# ## realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v7_6.ccxt.okx.v1_0_0
+
+# %%
+# This works with stage 'preprod'
+signature = "realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v7_6.ccxt.okx.v1_0_0"
 reader = imvcdcimrdc.RawDataReader(signature)
 data = reader.read_data_head()
 _LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
@@ -259,6 +279,20 @@ start_timestamp = pd.Timestamp(
 end_timestamp = start_timestamp + datetime.timedelta(minutes=10)
 currency_pairs = ["BTC_USDT", "ETH_USDT"]
 reader = imvcdcimrdc.RawDataReader(signature)
+data = reader.read_data(
+    start_timestamp, end_timestamp, currency_pairs=currency_pairs
+)
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %%
+# This works with stage preprod.
+signature = "periodic_daily.airflow.downloaded_1min.parquet.ohlcv.futures.v7_6.ccxt.okx.v1_0_0"
+start_timestamp = pd.Timestamp(
+    datetime.datetime.utcnow() - datetime.timedelta(minutes=10, days=1), tz="UTC"
+)
+end_timestamp = start_timestamp + datetime.timedelta(minutes=10)
+currency_pairs = ["BTC_USDT", "ETH_USDT"]
+reader = imvcdcimrdc.RawDataReader(signature, stage='preprod')
 data = reader.read_data(
     start_timestamp, end_timestamp, currency_pairs=currency_pairs
 )

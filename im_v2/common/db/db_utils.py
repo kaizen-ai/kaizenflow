@@ -10,12 +10,13 @@ import argparse
 import logging
 import os
 from datetime import timedelta
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import pandas as pd
 import psycopg2 as psycop
 
 import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hretry as hretry
@@ -30,8 +31,8 @@ import im_v2.im_lib_tasks as imvimlita
 _LOG = logging.getLogger(__name__)
 
 
-# Set of columns which are unique row-wise across db tables for
-#  corresponding data type
+# Set of columns which are unique row-wise across db tables for corresponding
+# data type.
 BASE_UNIQUE_COLUMNS = ["timestamp", "exchange_id", "currency_pair"]
 BID_ASK_UNIQUE_COLUMNS = []
 TRADES_UNIQUE_COLUMNS = []
@@ -56,7 +57,7 @@ class DbConnectionManager:
     Create and store DB connection.
 
     Provide a singleton-like functionality in order to avoid overhead of
-    many shortlived DB connection. For simplicity the class only
+    many short-lived DB connection. For simplicity the class only
     supports setting up a DB connection to exactly one stage.
     """
 
@@ -69,9 +70,9 @@ class DbConnectionManager:
         Get a database connection. If the connection exists, return the object,
         otherwise create it.
 
-        :param stage: DB stage to create connection to. The stage is only considered
-         if environment variables for connection are not passed, otherwise it is only
-         stored as an information.
+        :param db_stage: DB stage to create connection to. The stage is
+            only considered if environment variables for connection are
+            not passed, otherwise it is only stored as an information.
         :return: DbConnection
         """
         if cls.db_stage is not None and cls.db_stage != db_stage:
@@ -87,12 +88,16 @@ class DbConnectionManager:
         cls.db_stage = db_stage
         return cls.connection
 
+    # #########################################################################
+    # Private helpers.
+    # #########################################################################
+
     @classmethod
     def _is_connection_alive(cls) -> bool:
         """
-        Check if the connection is alive.
-        Based on the SO: 
-        https://stackoverflow.com/questions/1281875/making-sure-that-psycopg2-database-connection-alive
+        Check if the connection is alive. Based on the SO:
+        https://stackoverflow.com/questions/1281875/making-sure-that-
+        psycopg2-database-connection-alive.
 
         :return: True if the connection is alive, False otherwise.
         """
@@ -142,6 +147,9 @@ class DbConnectionManager:
                 connection = hsql.get_connection_from_aws_secret(stage=db_stage)
         _LOG.info("Created %s DB connection: \n %s", db_stage, cls.connection)
         return connection
+
+
+# #############################################################################
 
 
 def add_db_args(
@@ -274,9 +282,9 @@ def delete_duplicate_rows_from_ohlcv_table(db_stage: str, db_table: str) -> None
     Delete duplicate data rows from a db table which uses a standard OHLCV
     table format.
 
-    In this context, a row is considered duplicate, when
-    there exists another row which has identical timestamp, currency pair
-    and exchange ID but different row ID and knowledge timestamp.
+    In this context, a row is considered duplicate, when there exists
+    another row which has identical timestamp, currency pair and
+    exchange ID but different row ID and knowledge timestamp.
 
     :param db_stage: database stage to connect to
     :param db_table: database table to delete duplicates from
@@ -300,20 +308,32 @@ def delete_duplicate_rows_from_ohlcv_table(db_stage: str, db_table: str) -> None
 
 
 def fetch_last_minute_bid_ask_rt_db_data(
-    db_connection: hsql.DbConnection, src_table: str, time_zone: str
+    db_connection: hsql.DbConnection,
+    src_table: str,
+    time_zone: str,
+    exchange_id: str,
 ) -> pd.Timestamp:
     """
-    Fetch last full minute of bid/ask RT data.
+    Fetch last full minute of bid/ask RT data as an left-closed interval.
 
-    E.g. when the script is called at 9:05:05AM, The functions
-    return data where timestamp is in interval [9:04:00, 9:05).
+    E.g. when the script is called at 9:05:05AM, The functions return
+    data where timestamp is in interval [9:04:00, 9:05).
 
     This is a convenience wrapper function to make the most likely use
     case easier to execute.
     """
     end_ts = hdateti.get_current_time(time_zone).floor("min")
     start_ts = end_ts - timedelta(minutes=1)
-    return load_db_data(db_connection, src_table, start_ts, end_ts)
+    # TODO(Juraj): expose `bid_ask_levels` as a parameter.
+    return load_db_data(
+        db_connection,
+        src_table,
+        start_ts,
+        end_ts,
+        bid_ask_levels=[1],
+        exchange_id=exchange_id,
+        time_interval_closed="left"
+    )
 
 
 def fetch_bid_ask_rt_db_data(
@@ -336,9 +356,9 @@ def fetch_bid_ask_rt_db_data(
     start_ts_unix = hdateti.convert_timestamp_to_unix_epoch(start_ts)
     end_ts_unix = hdateti.convert_timestamp_to_unix_epoch(end_ts)
     select_query = f"""
-                    SELECT * FROM {src_table} WHERE timestamp >= {start_ts_unix}
-                    AND timestamp < {end_ts_unix};
-                    """
+                SELECT * FROM {src_table} WHERE timestamp >= {start_ts_unix}
+                AND timestamp < {end_ts_unix};
+                """
     return hsql.execute_query_to_df(db_connection, select_query)
 
 
@@ -352,9 +372,11 @@ def load_db_data(
     currency_pairs: Optional[List[str]] = None,
     limit: Optional[int] = None,
     bid_ask_levels: Optional[List[int]] = None,
+    exchange_id: Optional[str] = None,
+    time_interval_closed: Union[bool, str] = True
 ) -> pd.DataFrame:
     """
-    Load database data from a specified table given a opened DB connection.
+    Load database data from a specified table given an opened DB connection.
 
     The method allows filtering by:
         - timestamp interval (assuming `timestamp`
@@ -367,36 +389,43 @@ def load_db_data(
     :param db_connection: a database connection object
     :param src_table: name of the table to select from
     :param start_ts: start of the filtered interval
-    :param timestamp: end of the filtered interval
+    :param end_ts: end of the filtered interval
     :param currency_pairs: currency_pairs to select, if None, all pairs are loaded
     :param limit: return first `limit` rows, ordered by timestamp in descending order
     :param bid_ask_levels: which levels of bid_ask data to load, if None,
      all levels are loaded
+    :param exchange_id: data from which exchange to load, if None all exchange are
+     loaded
+    :param time_interval_closed: determines `start_ts` and `end_ts` is applied:
+     True: <start_ts, end_ts>
+     False: (start_ts, end_ts)
+     "left": <start_ts, end_ts)
+     "right": (start_ts, end_ts>
     :return DataFrame with data loaded from `src_table`
     """
+    hdbg.dassert_in(time_interval_closed, [True, False, "left", "right"])
     query = f"SELECT * FROM {src_table}"
-    apply_and = False
-    if any([start_ts, end_ts, currency_pairs, bid_ask_levels]):
+    and_query = []
+    if any([start_ts, end_ts, currency_pairs, bid_ask_levels, exchange_id]):
         query += " WHERE "
     if start_ts:
         start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts, unit="ms")
-        query += f"timestamp >= {start_ts}"
-        apply_and = True
+        sign = ">=" if time_interval_closed in [True, "left"] else ">"
+        and_query.append(f"timestamp {sign} {start_ts}")
     if end_ts:
         end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts, unit="ms")
-        query += " AND " if apply_and else ""
-        apply_and = True
-        query += f"timestamp <= {end_ts}"
+        sign = "<=" if time_interval_closed in [True, "right"] else "<"
+        and_query.append(f"timestamp {sign} {end_ts}")
     if currency_pairs:
-        query += " AND " if apply_and else ""
-        apply_and = True
         pairs = [f"'{p}'" for p in currency_pairs]
         pairs = ", ".join(pairs)
-        query += f"currency_pair IN ({pairs})"
+        and_query.append(f"currency_pair IN ({pairs})")
     if bid_ask_levels:
-        query += " AND " if apply_and else ""
         levels = ", ".join(map(str, bid_ask_levels))
-        query += f"level IN ({levels})"
+        and_query.append(f"level IN ({levels})")
+    if exchange_id:
+        and_query.append(f"exchange_id = '{exchange_id}'")
+    query += " AND ".join(and_query)
     if limit:
         query += f" ORDER BY timestamp DESC LIMIT {limit}"
     _LOG.info(f"Executing query: \n\t{query}")
@@ -411,23 +440,58 @@ def fetch_data_by_age(
     exchange_id: str,
 ) -> pd.DataFrame:
     """
-    Fetch data strictly older than a specified timestamp from a db table.
+    Fetch data strictly older than a specified timestamp from a DB table.
 
-    Age is determined based on a specified column, i.e.
-    when
+    Age is determined based on a specified column, i.e. when
+    - TODO(gp): Finish this comment
 
     :param db_connection: a database connection object
     :param db_table: name of the table to select from
     :param table_timestamp_column: name of the column to apply the comparison on
     :param timestamp: timestamp to filter on
     :param exchange_id: exchange_id to filter on
-    :return DataFrame with data older than the specified `timestamp` based
-     on `table_column` value.
+    :return DataFrame with data older than the specified `timestamp` based on
+        `table_column` value.
     """
     ts_unix = hdateti.convert_timestamp_to_unix_epoch(timestamp)
     select_query = f"""
                     SELECT * FROM {db_table}
                     WHERE {table_timestamp_column} < {ts_unix}
+                    AND EXCHANGE_ID = '{exchange_id}';
+                    """
+    return hsql.execute_query_to_df(db_connection, select_query)
+
+
+def fetch_data_within_age(
+    start_timestamp: pd.Timestamp,
+    end_timestamp: pd.Timestamp,
+    db_connection: hsql.DbConnection,
+    db_table: str,
+    table_timestamp_column: str,
+    exchange_id: str,
+) -> pd.DataFrame:
+    """
+    Fetch data strictly between start and end timestamp from a DB table.
+
+    Age is determined based on a specified column, i.e. when
+    - TODO(gp): Finish this comment
+
+    :param db_connection: a database connection object
+    :param db_table: name of the table to select from
+    :param table_timestamp_column: name of the column to apply the comparison on
+    :param start_timestamp: minimum timestamp to begin the filtering process
+    :param end_timestamp: maximum timestamp to begin the filtering process
+    :param exchange_id: exchange_id to filter on
+    :return DataFrame with data between `start_timestamp` and `end_timestamp`
+        based on `table_column` value.
+    """
+    # TODO(Sonaal): Confirm if we have to do [start, end] or (start, end).
+    start_ts_unix = hdateti.convert_timestamp_to_unix_epoch(start_timestamp)
+    end_ts_unix = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
+    select_query = f"""
+                    SELECT * FROM {db_table}
+                    WHERE {table_timestamp_column} >= {start_ts_unix}
+                    AND {table_timestamp_column} <= {end_ts_unix}
                     AND EXCHANGE_ID = '{exchange_id}';
                     """
     return hsql.execute_query_to_df(db_connection, select_query)
@@ -450,7 +514,7 @@ def drop_db_data_by_age(
     :param table_column: name of the column to apply the comparison on
     :param timestamp: timestamp to filter on
     :param exchange_id: exchange_id to filter on
-    :return number of deleted rows
+    :return: number of deleted rows
     """
     ts_unix = hdateti.convert_timestamp_to_unix_epoch(timestamp)
     delete_query = f"""
@@ -466,14 +530,53 @@ def drop_db_data_by_age(
     return num_deleted
 
 
+def drop_db_data_within_age(
+    start_timestamp: pd.Timestamp,
+    end_timestamp: pd.Timestamp,
+    db_connection: hsql.DbConnection,
+    db_table: str,
+    table_column: str,
+    exchange_id: str,
+) -> int:
+    """
+    Delete data strictly between start and end timestamp from a db table..
+
+    Age is determined based on a specified column.
+
+    :param db_connection: a database connection object
+    :param db_table: name of the table to delete from
+    :param table_column: name of the column to apply the comparison on
+    :param start_timestamp: minimum timestamp to begin the filtering
+        process
+    :param end_timestamp: maximum timestamp to begin the filtering
+        process
+    :param exchange_id: exchange_id to filter on :return number of
+        deleted rows
+    """
+    start_ts_unix = hdateti.convert_timestamp_to_unix_epoch(start_timestamp)
+    end_ts_unix = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
+    delete_query = f"""
+                    WITH deleted AS (
+                    DELETE FROM {db_table}
+                    WHERE {table_column} >= {start_ts_unix}
+                    AND {table_column} <= {end_ts_unix}
+                    AND EXCHANGE_ID = '{exchange_id}'
+                    RETURNING *)
+                    SELECT COUNT(*) FROM deleted;
+                    """
+    result = hsql.execute_query(db_connection, delete_query)
+    num_deleted = result[0][0]
+    return num_deleted
+
+
 # TODO(Juraj): replace all occurrences of code inserting to db with a call to
-# this function.
+#   this function.
 # TODO(Juraj): probabl hsql is a better place for this?
-#@hretry.retry(
-#    num_attempts=NUMBER_OF_RETRIES_TO_SAVE,
-#    exceptions=RETRY_EXCEPTION,
-#    retry_delay_in_sec=0.5,
-#)
+@hretry.sync_retry(
+    num_attempts=NUMBER_OF_RETRIES_TO_SAVE,
+    exceptions=RETRY_EXCEPTION,
+    retry_delay_in_sec=0.5,
+)
 def save_data_to_db(
     data: pd.DataFrame,
     data_type: str,
@@ -481,6 +584,8 @@ def save_data_to_db(
     db_table: str,
     # TODO(Vlad, Juraj): Implement the time_zone
     time_zone: str,
+    *,
+    add_knowledge_timestamp: bool = True,
 ) -> None:
     """
     Save data into specified database table.
@@ -491,12 +596,14 @@ def save_data_to_db(
     :param data_type: the type of the data, (e.g., `bid_ask` or `ohlcv`)
     :param db_connection: a database connection object
     :param db_table: name of the table to insert to.
+    :param add_knowledge_timestamp: if True, adds a column with the value of current time
     :param time_zone: time zone used to add correct knowledge_timestamp to the data
     """
     if data.empty:
-        _LOG.warning("The DataFame is empty, nothing to insert.")
+        _LOG.warning("The DataFrame is empty, nothing to insert.")
         return
-    data = imvcdttrut.add_knowledge_timestamp_col(data, "UTC")
+    if add_knowledge_timestamp:
+        data = imvcdttrut.add_knowledge_timestamp_col(data, "UTC")
     if data_type == "ohlcv":
         unique_columns = OHLCV_UNIQUE_COLUMNS
     elif data_type == "bid_ask":

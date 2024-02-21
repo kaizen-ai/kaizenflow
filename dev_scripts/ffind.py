@@ -42,13 +42,15 @@ def _parse() -> argparse.ArgumentParser:
         help="First param is regex, optional second param is dirname",
     )
     parser.add_argument("--only_files", action="store_true", help="Only files")
+    parser.add_argument("--log", action="store_true", help="Only files")
     hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    hdbg.init_logger(verbosity=args.log_level)
+    if args.log:
+        hdbg.init_logger(verbosity=args.log_level)
     positional = args.positional
     # Error check.
     if len(positional) < 1:
@@ -71,8 +73,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     cmd += ' -iname "%s"' % name
     cmd += " | sort"
     cmd += " | grep -v .ipynb_checkpoints"
-    print(cmd)
-    print()
+    if args.log:
+        print(cmd)
+        print()
     os.system(cmd)
 
 

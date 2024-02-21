@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -34,10 +34,11 @@ import logging
 
 import pandas as pd
 
+import dataflow.core as dtfcore
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
-import oms as oms
+import reconciliation as reconcil
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -61,10 +62,10 @@ system_log_path_dict
 # %%
 data_type = "dag_data"
 dag_path_dict = {
-    "lookback_4_days": oms.get_data_type_system_log_path(
+    "lookback_4_days": reconcil.get_data_type_system_log_path(
         system_log_path_dict["lookback_4_days"], data_type
     ),
-    "lookback_15_minutes": oms.get_data_type_system_log_path(
+    "lookback_15_minutes": reconcil.get_data_type_system_log_path(
         system_log_path_dict["lookback_15_minutes"], data_type
     ),
 }
@@ -74,18 +75,20 @@ dag_path_dict
 # # Compare DAG execution time
 
 # %%
-df_dag_execution_time_4_days = oms.get_execution_time_for_all_dag_nodes(
+df_dag_execution_time_4_days = dtfcore.get_execution_time_for_all_dag_nodes(
     dag_path_dict["lookback_4_days"]
 )
-df_dag_execution_time_15_minutes = oms.get_execution_time_for_all_dag_nodes(
+df_dag_execution_time_15_minutes = dtfcore.get_execution_time_for_all_dag_nodes(
     dag_path_dict["lookback_15_minutes"]
 )
 
 # %%
-oms.plot_dag_execution_stats(df_dag_execution_time_4_days, report_stats=True)
+dtfcore.plot_dag_execution_stats(df_dag_execution_time_4_days, report_stats=True)
 
 # %%
-oms.plot_dag_execution_stats(df_dag_execution_time_15_minutes, report_stats=True)
+dtfcore.plot_dag_execution_stats(
+    df_dag_execution_time_15_minutes, report_stats=True
+)
 
 # %% [markdown]
 # # Sanity check the DAG node output size
@@ -97,7 +100,7 @@ timestamp_lookback_15_minutes = pd.Timestamp("2023-04-17 10:35:00")
 timestamp_lookback_lookback_4_days = pd.Timestamp("2023-04-13 10:35:00")
 
 # %%
-read_data_4_days = oms.get_dag_node_output(
+read_data_4_days = dtfcore.get_dag_node_output(
     dag_path_dict["lookback_4_days"],
     read_data_node,
     timestamp_lookback_lookback_4_days,
@@ -109,7 +112,7 @@ _LOG.info(
 )
 
 # %%
-read_data_15_minutes = oms.get_dag_node_output(
+read_data_15_minutes = dtfcore.get_dag_node_output(
     dag_path_dict["lookback_15_minutes"],
     read_data_node,
     timestamp_lookback_15_minutes,
@@ -121,7 +124,7 @@ _LOG.info(
 )
 
 # %%
-resample_4_days = oms.get_dag_node_output(
+resample_4_days = dtfcore.get_dag_node_output(
     dag_path_dict["lookback_4_days"],
     resample_node,
     timestamp_lookback_lookback_4_days,
@@ -133,7 +136,7 @@ _LOG.info(
 )
 
 # %%
-resample_15_minutes = oms.get_dag_node_output(
+resample_15_minutes = dtfcore.get_dag_node_output(
     dag_path_dict["lookback_15_minutes"],
     resample_node,
     timestamp_lookback_15_minutes,

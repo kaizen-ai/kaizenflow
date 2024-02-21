@@ -8,6 +8,14 @@
 
 set -e
 
+# Check if AWS CLI V2 is already installed.
+if command -v aws &>/dev/null; then
+    aws_version=$(aws --version)
+else
+    echo "AWS CLI is not installed. Please install it and try again."
+    exit 1
+fi;
+
 echo "which python="$(which python 2>&1)
 echo "python -v="$(python --version 2>&1)
 echo "which python3="$(which python3)
@@ -41,8 +49,7 @@ source $VENV_DIR/bin/activate
 python3 -m pip install --upgrade pip
 pip3 install -r dev_scripts/client_setup/requirements.txt
 
-AWS_VER=$(aws --version)
-echo "# aws=$AWS_VER"
+echo "# aws=$aws_version"
 INVOKE_VER=$(invoke --version)
 echo "# invoke=$INVOKE_VER"
 POETRY_VER=$(poetry --version)

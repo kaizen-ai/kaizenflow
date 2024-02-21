@@ -49,7 +49,6 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "exchange_id": "binance",
             "contract_type": "spot",
             "universe": "v3",
-            "incremental": False,
             "aws_profile": "ck",
             "s3_path": "s3://cryptokaizen-data-test/",
             "log_level": "INFO",
@@ -58,6 +57,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "universe_part": 1,
             "assert_on_missing_data": False,
             "dst_dir": None,
+            "pq_save_mode": "append",
         }
         self.assertDictEqual(actual, expected)
 
@@ -92,7 +92,6 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "exchange_id": "binance",
             "contract_type": "spot",
             "data_format": "parquet",
-            "incremental": False,
             "log_level": "INFO",
             "s3_path": "s3://mock_bucket",
             "aws_profile": "ck",

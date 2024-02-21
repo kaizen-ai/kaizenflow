@@ -431,9 +431,11 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
             "get_last_price:" + hprint.to_str("col_name asset_ids"),
         )
         # Run.
-        srs = market_data.get_last_price(col_name, asset_ids).round(2)
+        df = market_data.get_last_price(col_name, asset_ids)
+        # Round for stability.
+        df[col_name] = df[col_name].round(2)
         # Check output.
-        self.check_srs_output(srs, *args, **kwargs)
+        self.check_df_output(df, *args, **kwargs)
 
     # //////////////////////////////////////////////////////////////////////////////
 

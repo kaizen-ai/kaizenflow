@@ -2,8 +2,8 @@
 """
 Script to remove IM database using connection.
 
-# Remove a DB named 'test_db' using environment variables: >
-remove_db.py --db_name 'test_db'
+# Remove a DB named 'test_db' using environment variables:
+> remove_db.py --db_name 'test_db'
 
 Import as:
 

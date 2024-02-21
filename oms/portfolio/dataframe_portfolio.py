@@ -78,7 +78,8 @@ class DataFramePortfolio(oporport.Portfolio):
         # There should be no more than one row per asset.
         hdbg.dassert_no_duplicates(fills_df["asset_id"].to_list())
         # All share values should be finite.
-        _LOG.debug("fills_df=%s", fills_df)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("fills_df=%s", fills_df)
         hdbg.dassert(
             np.isfinite(fills_df["num_shares"]).all(),
             "All share values must be finite.",
@@ -91,7 +92,11 @@ class DataFramePortfolio(oporport.Portfolio):
         """
         # Get fills.
         fills_df = self._get_fills()
-        # _LOG.debug("fills_df=%s", fills_df)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "fills_df=\n%s",
+                hpandas.df_to_str(fills_df, print_shape_info=True),
+            )
         # Get latest holdings_shares
         (
             prev_asset_holdings_ts,
@@ -103,6 +108,11 @@ class DataFramePortfolio(oporport.Portfolio):
         new_cash = prev_cash
         # Update holdings_shares using the `fills_df`.
         new_holdings_shares = prev_holdings_shares.copy()
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "new_holdings_shares=\n%s",
+                hpandas.df_to_str(new_holdings_shares, print_shape_info=True),
+            )
         executed_trades_notional = pd.Series([], dtype="float64")
         if fills_df is not None:
             DataFramePortfolio._validate_fills_df(fills_df)
@@ -110,22 +120,58 @@ class DataFramePortfolio(oporport.Portfolio):
             hdbg.dassert_lte(prev_asset_holdings_ts, fills_df["timestamp"].min())
             hdbg.dassert_lte(fills_df["timestamp"].max(), wall_clock_timestamp)
             executed_trades_shares = fills_df.set_index("asset_id")["num_shares"]
-            # _LOG.debug("executed_trades_shares=%s", executed_trades_shares)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "executed_trades_shares=\n%s",
+                    hpandas.df_to_str(
+                        executed_trades_shares, print_shape_info=True
+                    ),
+                )
             trades_price_per_share = fills_df.set_index("asset_id")["price"]
-            # _LOG.debug("trades_price_per_shares=%s", trades_price_per_share)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "trades_price_per_share=\n%s",
+                    hpandas.df_to_str(
+                        trades_price_per_share, print_shape_info=True
+                    ),
+                )
             executed_trades_notional = (
                 executed_trades_shares * trades_price_per_share
             )
-            # _LOG.debug("executed_trades_notional=%s", executed_trades_notional)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "executed_trades_notional=\n%s",
+                    hpandas.df_to_str(
+                        executed_trades_notional, print_shape_info=True
+                    ),
+                )
             cash_diff = -executed_trades_notional.sum()
             hdbg.dassert(np.isfinite(cash_diff))
             new_holdings_shares = new_holdings_shares.add(
                 executed_trades_shares, fill_value=0
             )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "new_holdings_shares=\n%s",
+                    hpandas.df_to_str(new_holdings_shares, print_shape_info=True),
+                )
             new_cash += cash_diff
         hdbg.dassert(not new_holdings_shares.index.has_duplicates)
         self._holdings_shares[wall_clock_timestamp] = new_holdings_shares
+        # Executed trades notional are computed from fills and if there are no trades
+        # for an asset, executed trades notional will not be computed for this asset.
+        # Keep all the assets by imputing zeros for those with no trades.
+        executed_trades_notional = executed_trades_notional.reindex(
+            index=prev_holdings_shares.index, fill_value=0
+        )
         hdbg.dassert(not executed_trades_notional.index.has_duplicates)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "executed_trades_notional=\n%s",
+                hpandas.df_to_str(
+                    executed_trades_notional, print_shape_info=True
+                ),
+            )
         self._executed_trades_notional[
             wall_clock_timestamp
         ] = executed_trades_notional
@@ -145,13 +191,15 @@ class DataFramePortfolio(oporport.Portfolio):
 
         :return: fills_df
         """
-        _LOG.debug("")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("")
         # Get the fills from the broker.
         fills = self.broker.get_fills()
         # Convert the fills into a `fills_df`.
         fill_rows = []
         for fill in fills:
-            _LOG.debug("# Processing fill=%s", fill)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("# Processing fill=%s", fill)
             # Copy contents of the fill.
             fill_row: Dict[str, Any] = collections.OrderedDict()
             fill_row.update(fill.to_dict())
@@ -162,7 +210,8 @@ class DataFramePortfolio(oporport.Portfolio):
             # Infer type and timezone from the first fill since they are the
             # same across fills.
             timestamp_type = pd.Series([fill_rows[0]["timestamp"]]).dtype
-            _LOG.debug(hprint.to_str("timestamp_type"))
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(hprint.to_str("timestamp_type"))
             fills_df = pd.concat(fill_rows, axis=1).transpose()
             # Coerce numerical data types.
             # - asset_id coercion to int64 may fail if there are NaNs (there
@@ -183,8 +232,9 @@ class DataFramePortfolio(oporport.Portfolio):
             )
         else:
             fills_df = None
-        _LOG.debug(
-            "fills_df=\n%s",
-            hpandas.df_to_str(fills_df, num_rows=None, precision=2),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "fills_df=\n%s",
+                hpandas.df_to_str(fills_df, num_rows=None, precision=2),
+            )
         return fills_df

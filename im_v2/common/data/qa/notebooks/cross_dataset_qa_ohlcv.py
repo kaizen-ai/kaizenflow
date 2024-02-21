@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -23,7 +23,6 @@
 # ## Imports and logging
 
 # %%
-import argparse
 import logging
 
 import pandas as pd
@@ -35,7 +34,6 @@ import helpers.henv as henv
 import helpers.hio as hio
 import helpers.hprint as hprint
 import im_v2.common.data.client.im_raw_data_client as imvcdcimrdc
-import im_v2.common.data.extract.data_qa as imvcdedaqa
 import im_v2.common.data.qa.dataset_validator as imvcdqdava
 import im_v2.common.data.qa.qa_check as imvcdqqach
 import im_v2.common.universe.universe as imvcounun
@@ -62,7 +60,18 @@ env_var_name = "CK_DATA_RECONCILIATION_CONFIG"
 config = cconfig.Config.from_env_var(env_var_name)
 
 # %%
-config = config.to_dict()
+if config:
+    config = config.to_dict()
+else:
+    config = {
+        "stage": "preprod",
+        "start_timestamp": "2024-01-03T20:12:00+00:00",
+        "end_timestamp": "2024-01-03T20:50:00+00:00",
+        "aws_profile": "ck",
+        "dataset_signature1": "realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v7_3.ccxt.binance.v1_0_0",
+        "dataset_signature2": "periodic_daily.airflow.downloaded_1min.parquet.ohlcv.futures.v7_3.ccxt.binance.v1_0_0",
+        "bid_ask_accuracy": 1,
+    }
 # bid_ask_accuracy needs to be cast to int if its defined
 config["bid_ask_accuracy"] = (
     int(config["bid_ask_accuracy"]) if config["bid_ask_accuracy"] else None
@@ -190,6 +199,7 @@ for signature in signatures:
         imvcdqqach.NaNChecks(),
         imvcdqqach.OhlcvLogicalValuesCheck(),
         imvcdqqach.FullUniversePresentCheck(universe_list),
+        imvcdqqach.DuplicateDifferingOhlcvCheck(),
     ]
     qa_check_lists.append(qa_check_list)
 
@@ -197,7 +207,7 @@ for signature in signatures:
 # ### Cross dataset checks
 
 # %%
-cross_qa_check_list = [imvcdqqach.IdenticalDataFramesCheck()]
+cross_qa_check_list = [imvcdqqach.OuterCrossOHLCVDataCheck()]
 
 # %% [markdown]
 # ## Initialize QA validators
@@ -213,21 +223,32 @@ cross_dataset_validator = imvcdqdava.DataFrameDatasetValidator(
 # ## Run QA
 
 # %%
-try:
-    _LOG.info("First dataset QA:")
-    dataset_validator1.run_all_checks([data1], _LOG)
-    _LOG.info("Second dataset QA:")
-    dataset_validator1.run_all_checks([data2], _LOG)
-    _LOG.info("Cross dataset QA:")
-    cross_dataset_validator.run_all_checks(datasets, _LOG)
-except Exception as e:
-    # Pass information about success or failure of the QA
-    #  back to the task that invoked it.
-    data_qa_outcome = str(e)
-    raise e
+status = "SUCCESS"
+_LOG.info("First dataset QA:")
+error_msgs = dataset_validator1.run_all_checks([data1], abort_on_error=False)
+if error_msgs:
+    _LOG.info(error_msgs)
+    status = "FAILED"
+_LOG.info("Second dataset QA:")
+error_msgs = dataset_validator1.run_all_checks([data2], abort_on_error=False)
+if error_msgs:
+    _LOG.info(error_msgs)
+    status = "FAILED"
+_LOG.info("Cross dataset QA:")
+error_msgs = cross_dataset_validator.run_all_checks(datasets, abort_on_error=False)
+if error_msgs:
+    _LOG.info(error_msgs)
+    status = "FAILED"
 # If no exception was raised mark the QA as successful.
-data_qa_outcome = "SUCCESS"
+data_qa_outcome = status
+
+# %%
+if data_qa_outcome == "FAILED":
+    hdbg.dfatal("QA Check unsuccessful for atleast one of the dataset")
+
 
 # %%
 # This can be read by the invoke task to find out if QA was successful.
 hio.to_file("/app/ck_data_reconciliation_outcome.txt", data_qa_outcome)
+
+# %%

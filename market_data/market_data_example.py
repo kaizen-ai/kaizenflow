@@ -162,7 +162,10 @@ def get_ReplayedTimeMarketData_example2(
     df = cofinanc.generate_random_price_data(
         start_datetime, end_datetime, columns, asset_ids
     )
-    (market_data, get_wall_clock_time,) = get_ReplayedTimeMarketData_from_df(
+    (
+        market_data,
+        get_wall_clock_time,
+    ) = get_ReplayedTimeMarketData_from_df(
         event_loop,
         replayed_delay_in_mins_or_timestamp,
         df,
@@ -201,7 +204,10 @@ def get_ReplayedTimeMarketData_example3(
     delay_in_secs = 0
     sleep_in_secs = 30
     time_out_in_secs = 60 * 5
-    (market_data, get_wall_clock_time,) = get_ReplayedTimeMarketData_from_df(
+    (
+        market_data,
+        get_wall_clock_time,
+    ) = get_ReplayedTimeMarketData_from_df(
         event_loop,
         replayed_delay_in_mins_or_timestamp,
         df=df,
@@ -248,6 +254,8 @@ def get_ReplayedTimeMarketData_example5(
     end_datetime: pd.Timestamp,
     asset_ids: List[int],
     *,
+    # TODO(Nina): propagate `generate_random_top_of_book_bars()` kwargs
+    # to the params.
     replayed_delay_in_mins_or_timestamp: Union[int, pd.Timestamp] = 0,
     use_midpoint_as_price: bool = False,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
@@ -267,7 +275,9 @@ def get_ReplayedTimeMarketData_example5(
     """
     # Generate random price data.
     df = cofinanc.generate_random_top_of_book_bars(
-        start_datetime, end_datetime, asset_ids
+        start_datetime,
+        end_datetime,
+        asset_ids,
     )
     if use_midpoint_as_price:
         df["price"] = df["midpoint"]

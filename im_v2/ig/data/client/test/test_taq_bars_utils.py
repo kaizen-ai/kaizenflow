@@ -15,8 +15,8 @@ import im_v2.ig.ig_utils as imvigigut
 
 _LOG = logging.getLogger(__name__)
 
-_ROOT_DATA_DIR = "s3://alphamatic-data/unit_test/ig_parquet"
-_AWS_PROFILE = "am"
+_ROOT_DATA_DIR = "s3://cryptokaizen-unit-test/alphamatic-data/unit_test/ig_parquet"
+_AWS_PROFILE = "ck"
 
 # Start date for mock data.
 _IG_START_DATE = "2019-01-07"

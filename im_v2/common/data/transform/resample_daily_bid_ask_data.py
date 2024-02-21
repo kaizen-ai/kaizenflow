@@ -20,10 +20,11 @@ import im_v2.common.data.transform.resample_daily_bid_ask_data as imvcdtrdba
 """
 import argparse
 import logging
+from typing import Callable, List, Optional, Tuple
 
-import numpy as np
 import pandas as pd
 
+import core.finance.bid_ask as cfibiask
 import data_schema.dataset_schema_utils as dsdascut
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -36,6 +37,80 @@ import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
+
+
+# TODO(Juraj): temporary function until interfaces get unified.
+def _get_resampling_tools(dataset_action_tag: str) -> Tuple[List[str], Callable]:
+    """
+    Return correct resampling tools based on action tag of the dataset.
+
+    `downloaded_1sec` and `archived_200ms` can use different values/functions
+
+    :return: tuple of column set to deduplicate on and a function to use for resampling
+    """
+    if dataset_action_tag == "downloaded_1sec":
+        return [
+            "timestamp",
+            "exchange_id",
+            "currency_pair",
+        ], imvcdttrut.resample_multilevel_bid_ask_data_from_1sec_to_1min
+    elif dataset_action_tag == "archived_200ms":
+        return [
+            "timestamp",
+            "exchange_id",
+            "currency_pair",
+            "level",
+        ], imvcdttrut.resample_multilevel_bid_ask_data_to_1min
+    else:
+        raise RuntimeError("Invalid action tag for resampling")
+
+
+def _build_parquet_filters(
+    dataset_action_tag: str,
+    start: str,
+    end: str,
+    epoch_unit: str,
+    bid_ask_levels: Optional[List[int]],
+) -> List[Tuple]:
+    """
+    Build parquet filters from timestamps.
+
+    This functions includes optimizations to load data faster for
+    certain type of parquet tiling.
+    """
+    # Convert dates to unix timestamps.
+    start, end = pd.Timestamp(start), pd.Timestamp(end)
+    start_as_ts = hdateti.convert_timestamp_to_unix_epoch(start, unit=epoch_unit)
+    end_as_ts = hdateti.convert_timestamp_to_unix_epoch(end, unit=epoch_unit)
+    filters = []
+    # Improve performance when fetching data by applying filters on tiles.
+    if dataset_action_tag == "archived_200ms":
+        if bid_ask_levels:
+            filters.append(("level", "in", bid_ask_levels))
+        if start.year == end.year:
+            filters.append(("year", "=", start.year))
+            if start.month == end.month:
+                filters.append(("month", "=", start.month))
+                if start.day == end.day:
+                    filters.append(("day", "=", start.day))
+    filters.extend(
+        [("timestamp", ">=", start_as_ts), ("timestamp", "<=", end_as_ts)]
+    )
+    _LOG.info(filters)
+    return filters
+
+
+def _preprocess_src_data(
+    dataset_action_tag: str, data: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Apply dataset specifying preprocessing operations.
+    """
+    if dataset_action_tag == "archived_200ms":
+        # Timestamp is in the index, column is obsolete
+        data = data.drop("timestamp", axis=1)
+        data = cfibiask.transform_bid_ask_long_data_to_wide(data, "timestamp")
+    return data
 
 
 def _get_s3_path_from_signature(signature: str, base_s3_path: str) -> str:
@@ -69,28 +144,33 @@ def _run(args: argparse.Namespace, aws_profile: hs3.AwsProfile = "ck") -> None:
     # Check that the source and destination data format are parquet.
     hdbg.dassert_eq(scr_signature_args["data_format"], "parquet")
     hdbg.dassert_eq(dst_signature_args["data_format"], "parquet")
-    # Convert dates to unix timestamps.
-    start = hdateti.convert_timestamp_to_unix_epoch(
-        pd.Timestamp(args.start_timestamp), unit=epoch_unit
-    )
-    end = hdateti.convert_timestamp_to_unix_epoch(
-        pd.Timestamp(args.end_timestamp), unit=epoch_unit
-    )
     # Define filters for data period.
     # Note(Juraj): it's better from Airflow execution perspective
     #  to keep the interval closed: [start, end].
-    filters = [("timestamp", ">=", start), ("timestamp", "<=", end)]
+    #  AKA the client takes care of providing the correct interval.
+    bid_ask_levels = list(range(1, args.bid_ask_levels + 1))
+    filters = _build_parquet_filters(
+        scr_signature_args["action_tag"],
+        args.start_timestamp,
+        args.end_timestamp,
+        epoch_unit,
+        bid_ask_levels,
+    )
+    # filters = [("timestamp", ">=", start), ("timestamp", "<=", end)]
     src_s3_path = _get_s3_path_from_signature(
         args.src_signature, args.src_s3_path
     )
     data = hparque.from_parquet(
         src_s3_path, filters=filters, aws_profile=aws_profile
     )
+    _LOG.info("Source data loaded.")
+    duplicate_cols_subset, resampling_function = _get_resampling_tools(
+        scr_signature_args["action_tag"]
+    )
     # Ensure there are no duplicates, in this case
     #  using duplicates would compute the wrong resampled values.
-    data = data.drop_duplicates(
-        subset=["timestamp", "exchange_id", "currency_pair"]
-    )
+    data = data.drop_duplicates(subset=duplicate_cols_subset)
+    data = _preprocess_src_data(scr_signature_args["action_tag"], data)
     data_resampled = []
     input_currency_pairs = data["currency_pair"].unique()
     for currency_pair in input_currency_pairs:
@@ -103,10 +183,8 @@ def _run(args: argparse.Namespace, aws_profile: hs3.AwsProfile = "ck") -> None:
                 args.end_timestamp,
             )
             continue
-        data_resampled_single = (
-            imvcdttrut.resample_multilevel_bid_ask_data_from_1sec_to_1min(
-                data_single
-            )
+        data_resampled_single = resampling_function(
+            data_single, number_levels_of_order_book=args.bid_ask_levels
         )
         if not data_resampled_single.empty:
             data_resampled_single["currency_pair"] = currency_pair
@@ -151,8 +229,16 @@ def _run(args: argparse.Namespace, aws_profile: hs3.AwsProfile = "ck") -> None:
         dst_s3_path = _get_s3_path_from_signature(
             args.dst_signature, args.dst_s3_path
         )
+        # We sometimes run batch resampling tasks, for that it is more convenient to
+        # set mode as "append", in the default mode concurrent access to the single
+        # parquet file might no be possible if two processes need it at the same time.
         imvcdeexut.save_parquet(
-            data_resampled, dst_s3_path, epoch_unit, aws_profile, "bid_ask"
+            data_resampled,
+            dst_s3_path,
+            epoch_unit,
+            aws_profile,
+            "bid_ask",
+            mode="append",
         )
     else:
         _LOG.warning("Resampled dataset is empty!")
@@ -211,6 +297,14 @@ def _parse() -> argparse.ArgumentParser:
         default=False,
         help="Raise an exception if the set of symbols in the input is not"
         " equal to the set of symbols in the output data.",
+    )
+    parser.add_argument(
+        "--bid_ask_levels",
+        default=10,
+        action="store",
+        required=False,
+        type=int,
+        help='Filter data to get top "n" levels of bid-ask data.',
     )
     parser = hparser.add_verbosity_arg(parser)
     return parser

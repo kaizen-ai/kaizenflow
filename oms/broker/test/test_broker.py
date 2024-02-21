@@ -1,8 +1,8 @@
-import asyncio
 import logging
 from typing import List
 
 import pandas as pd
+import pytest
 
 import helpers.hasyncio as hasynci
 import helpers.hpandas as hpandas
@@ -10,12 +10,8 @@ import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms.broker.broker as obrobrok
-import oms.broker.broker_example as obrbrexa
-import oms.db.oms_db as odbomdb
+import oms.fill as omfill
 import oms.order.order as oordorde
-import oms.order.order_example as oororexa
-import oms.order_processing.order_processor as ooprorpr
-import oms.test.oms_db_helper as omtodh
 
 _LOG = logging.getLogger(__name__)
 
@@ -28,14 +24,11 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Add more testing based on the coverage.
 class Test_fill_orders1(hunitest.TestCase):
     @staticmethod
-    def get_order_example(type_: str) -> oordorde.Order:
-        creation_timestamp = pd.Timestamp(
-            "2000-01-01 09:30:00-05:00", tz="America/New_York"
-        )
+    def get_order_example(
+        type_: str, start_timestamp: pd.Timestamp
+    ) -> oordorde.Order:
+        creation_timestamp = start_timestamp
         asset_id = 101
-        start_timestamp = pd.Timestamp(
-            "2000-01-01 09:30:00-05:00", tz="America/New_York"
-        )
         end_timestamp = pd.Timestamp(
             "2000-01-01 09:35:00-05:00", tz="America/New_York"
         )
@@ -57,20 +50,27 @@ class Test_fill_orders1(hunitest.TestCase):
 
     @staticmethod
     def reset() -> None:
-        obrobrok.Fill._fill_id = 0
+        omfill.Fill._fill_id = 0
         oordorde.Order._order_id = 0
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
         self.reset()
 
-    def tearDown(self) -> None:
-        super().tearDown()
+    def tear_down_test(self) -> None:
         self.reset()
 
     def helper(
         self, asset_ids: List[int], order: oordorde.Order, mode: str, exp: str
-    ) -> List[obrobrok.Fill]:
+    ) -> List[omfill.Fill]:
         # We need to reset the counter to get Fills and Orders independent on
         # the previous runs.
         self.reset()
@@ -92,7 +92,7 @@ class Test_fill_orders1(hunitest.TestCase):
                 2000-01-01 09:39:00-05:00 2000-01-01 09:38:00-05:00 2000-01-01 09:39:01-05:00  999.71  999.72   999.715    1009       101  999.715
                 """
             elif asset_ids == [101, 102]:
-                exp_data = """
+                exp_data = r"""
                                                      start_datetime              timestamp_db      bid      ask  midpoint  volume  asset_id     price
                 end_datetime
                 2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:01-05:00   998.90   998.96   998.930     994       101   998.930
@@ -119,7 +119,10 @@ class Test_fill_orders1(hunitest.TestCase):
             replayed_delay_in_mins_or_timestamp = pd.Timestamp(
                 "2000-01-01 09:40:00-05:00"
             )
-            (market_data, _,) = mdata.get_ReplayedTimeMarketData_example5(
+            (
+                market_data,
+                _,
+            ) = mdata.get_ReplayedTimeMarketData_example5(
                 event_loop,
                 start_datetime,
                 end_datetime,
@@ -161,6 +164,8 @@ class Test_fill_orders1(hunitest.TestCase):
                 )
             else:
                 raise ValueError(f"Invalid mode='{mode}'")
+            for fill in fills:
+                fill.price = fill.price.round(3)
             # Check.
             act = "\n".join([str(order), str(fills)])
             self.assert_equal(act, exp, fuzzy_match=True, ignore_line_breaks=True)
@@ -175,14 +180,17 @@ class Test_fill_orders1(hunitest.TestCase):
         - mode = "fill_orders_fully_at_once"
         """
         type_ = "price@twap"
-        mode = "fill_orders_fully_at_once"
-        order = self.get_order_example(type_)
+        start_timestamp = pd.Timestamp(
+            "2000-01-01 09:30:00-05:00", tz="America/New_York"
+        )
+        order = self.get_order_example(type_, start_timestamp)
         #
         exp = r"""
         Order: order_id=0 creation_timestamp=2000-01-01 09:30:00-05:00 asset_id=101 type_=price@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York extra_params={}
         [Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=997.93]
         """
         asset_ids = [101]
+        mode = "fill_orders_fully_at_once"
         fills = self.helper(asset_ids, order, mode, exp)
         #                                      start_datetime              timestamp_db     bid     ask  midpoint  volume  asset_id    price
         # end_datetime
@@ -207,14 +215,17 @@ class Test_fill_orders1(hunitest.TestCase):
         - mode = "fill_orders_fully_at_once"
         """
         type_ = "price@end"
-        mode = "fill_orders_fully_at_once"
-        order = self.get_order_example(type_)
+        start_timestamp = pd.Timestamp(
+            "2000-01-01 09:30:00-05:00", tz="America/New_York"
+        )
+        order = self.get_order_example(type_, start_timestamp)
         #
         exp = r"""
         Order: order_id=0 creation_timestamp=2000-01-01 09:30:00-05:00 asset_id=101 type_=price@end start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York extra_params={}
         [Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=997.425]
         """
         asset_ids = [101]
+        mode = "fill_orders_fully_at_once"
         fills = self.helper(asset_ids, order, mode, exp)
         #                                      start_datetime              timestamp_db     bid     ask  midpoint  volume  asset_id    price
         # end_datetime
@@ -232,8 +243,10 @@ class Test_fill_orders1(hunitest.TestCase):
         - mode = "fill_orders_fully_at_once"
         """
         type_ = "midpoint@end"
-        mode = "fill_orders_fully_at_once"
-        order = self.get_order_example(type_)
+        start_timestamp = pd.Timestamp(
+            "2000-01-01 09:30:00-05:00", tz="America/New_York"
+        )
+        order = self.get_order_example(type_, start_timestamp)
         #
         exp = r"""
         Order: order_id=0 creation_timestamp=2000-01-01 09:30:00-05:00 asset_id=101
@@ -243,12 +256,46 @@ class Test_fill_orders1(hunitest.TestCase):
         [Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=997.425]
         """
         asset_ids = [101]
+        mode = "fill_orders_fully_at_once"
         fills = self.helper(asset_ids, order, mode, exp)
         #                                      start_datetime              timestamp_db     bid     ask  midpoint  volume  asset_id    price
         # end_datetime
         # 2000-01-01 09:35:00-05:00 2000-01-01 09:34:00-05:00 2000-01-01 09:35:01-05:00  997.41  997.44   997.425     978       101  997.425
         self.assertEqual(len(fills), 1)
         self.assertAlmostEqual(fills[0].price, 997.425)
+        # There should be no difference.
+        asset_ids = [101, 102]
+        self.helper(asset_ids, order, mode, exp)
+
+    def test_fill_orders_fully_at_once4(self) -> None:
+        """
+        Test that `Order` is filled when timestamp is not aligned to 1-minute
+        frequency, e.g., "2000-01-01 09:31:10-05:00".
+
+        - `type_ = "price@start"`
+        - `mode = "fill_orders_fully_at_once"`
+        """
+        type_ = "price@start"
+        start_timestamp = pd.Timestamp(
+            "2000-01-01 09:31:10-05:00", tz="America/New_York"
+        )
+        order = self.get_order_example(type_, start_timestamp)
+        #
+        exp = r"""
+        Order: order_id=0 creation_timestamp=2000-01-01 09:31:10-05:00 asset_id=101
+            type_=price@start start_timestamp=2000-01-01 09:31:10-05:00
+            end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0
+            diff_num_shares=100.0 tz=America/New_York extra_params={}
+        [Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.93]
+        """
+        mode = "fill_orders_fully_at_once"
+        asset_ids = [101]
+        fills = self.helper(asset_ids, order, mode, exp)
+        #                                      start_datetime              timestamp_db     bid     ask  midpoint  volume  asset_id    price
+        # end_datetime
+        # 2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:01-05:00  998.90  998.96   998.930     994       101  998.930
+        self.assertEqual(len(fills), 1)
+        self.assertAlmostEqual(fills[0].price, 998.93)
         # There should be no difference.
         asset_ids = [101, 102]
         self.helper(asset_ids, order, mode, exp)
@@ -262,8 +309,10 @@ class Test_fill_orders1(hunitest.TestCase):
         - mode = "fill_orders_fully_twap"
         """
         type_ = "price@twap"
-        mode = "fill_orders_fully_twap"
-        order = self.get_order_example(type_)
+        start_timestamp = pd.Timestamp(
+            "2000-01-01 09:30:00-05:00", tz="America/New_York"
+        )
+        order = self.get_order_example(type_, start_timestamp)
         #
         exp = r"""
         Order: order_id=0 creation_timestamp=2000-01-01 09:30:00-05:00
@@ -271,9 +320,9 @@ class Test_fill_orders1(hunitest.TestCase):
             end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0
             diff_num_shares=100.0 tz=America/New_York extra_params={}
         [Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:31:00-05:00
-        num_shares=20.0 price=998.9300000000001,
+        num_shares=20.0 price=998.93,
         Fill: asset_id=101 fill_id=1 timestamp=2000-01-01 09:32:00-05:00
-        num_shares=20.0 price=998.1800000000001,
+        num_shares=20.0 price=998.18,
         Fill: asset_id=101 fill_id=2 timestamp=2000-01-01 09:33:00-05:00
         num_shares=20.0 price=997.415,
         Fill: asset_id=101 fill_id=3 timestamp=2000-01-01 09:34:00-05:00
@@ -282,6 +331,7 @@ class Test_fill_orders1(hunitest.TestCase):
         num_shares=20.0 price=997.425]
         """
         asset_ids = [101]
+        mode = "fill_orders_fully_twap"
         fills = self.helper(asset_ids, order, mode, exp)
         #                                      start_datetime              timestamp_db     bid     ask  midpoint  volume  asset_id    price
         # end_datetime
@@ -294,272 +344,3 @@ class Test_fill_orders1(hunitest.TestCase):
         # There should be no difference.
         asset_ids = [101, 102]
         self.helper(asset_ids, order, mode, exp)
-
-
-# #############################################################################
-# TestDataFrameBroker1
-# #############################################################################
-
-
-class TestDataFrameBroker1(hunitest.TestCase):
-    async def get_broker_coroutine(
-        self, event_loop: asyncio.AbstractEventLoop
-    ) -> None:
-        """
-        Submit orders to a DataFrameBroker.
-        """
-        # Build a DataFrameBroker.
-        broker = obrbrexa.get_DataFrameBroker_example1(event_loop)
-        # Submit an order.
-        order = oororexa.get_order_example2()
-        orders = [order]
-        await broker.submit_orders(orders)
-        # Check fills.
-        fills = broker.get_fills()
-        self.assertEqual(len(fills), 1)
-        actual_fills = str(fills[0])
-        expected_fills = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=1000.3449750508295
-        """
-        self.assert_equal(actual_fills, expected_fills, fuzzy_match=True)
-
-    def test_submit_and_fill1(self) -> None:
-        event_loop = None
-        coro = self.get_broker_coroutine(event_loop)
-        hasynci.run(coro, event_loop=event_loop)
-
-
-# #############################################################################
-# TestDataFrameBroker2
-# #############################################################################
-
-
-async def _get_broker_coroutine(
-    broker: obrobrok.Broker,
-    order: oordorde.Order,
-) -> List[obrobrok.Fill]:
-    """
-    Submit an order through the Broker and wait for fills.
-    """
-    # Wait 1 sec.
-    get_wall_clock_time = broker.market_data.get_wall_clock_time
-    await hasynci.sleep(1, get_wall_clock_time)
-    # Submit orders to the broker.
-    orders = [order]
-    await broker.submit_orders(orders)
-    # Wait until order fulfillment.
-    fulfillment_deadline = order.end_timestamp
-    await hasynci.async_wait_until(fulfillment_deadline, get_wall_clock_time)
-    # Check fills.
-    fills = broker.get_fills()
-    return fills
-
-
-class TestDataFrameBroker2(hunitest.TestCase):
-    def helper(self, order: oordorde.Order, expected_fills: str) -> None:
-        with hasynci.solipsism_context() as event_loop:
-            # Build a coroutine with the Broker.
-            start_datetime = pd.Timestamp(
-                "2000-01-01 09:30:00-05:00", tz="America/New_York"
-            )
-            end_datetime = pd.Timestamp(
-                "2000-01-01 09:50:00-05:00", tz="America/New_York"
-            )
-            asset_ids = [101]
-            market_data, _ = mdata.get_ReplayedTimeMarketData_example5(
-                event_loop,
-                start_datetime,
-                end_datetime,
-                asset_ids,
-            )
-            broker = obrbrexa.get_DataFrameBroker_example1(
-                event_loop, market_data=market_data
-            )
-            broker_coroutine = _get_broker_coroutine(broker, order)
-            # Run.
-            coroutines = [broker_coroutine]
-            results = hasynci.run(
-                asyncio.gather(*coroutines), event_loop=event_loop
-            )
-            # Check.
-            fills = results[0]
-            self.assertEqual(len(fills), 1)
-            actual = str(fills[0])
-            self.assert_equal(actual, expected_fills, fuzzy_match=True)
-
-    def test_collect_spread_buy(self) -> None:
-        order = oororexa.get_order_example3(0.0)
-        expected_order = r"""
-        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.0@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York extra_params={}
-        """
-        self.assert_equal(str(order), expected_order, fuzzy_match=True)
-        #
-        expected_fills = r"""
-        Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.03
-        """
-        self.helper(order, expected_fills)
-
-    def test_collect_spread_sell(self) -> None:
-        order = oororexa.get_order_example3(0.0, -100)
-        expected_order = """
-        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.0@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=-100.0 tz=America/New_York extra_params={}
-        """
-        self.assert_equal(str(order), expected_order, fuzzy_match=True)
-        #
-        expected_fills = r"""
-        Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.0575
-        """
-        self.helper(order, expected_fills)
-
-    def test_cross_spread_buy(self) -> None:
-        order = oororexa.get_order_example3(1.0)
-        expected_order = """
-        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_1.0@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York extra_params={}
-        """
-        self.assert_equal(str(order), expected_order, fuzzy_match=True)
-        #
-        expected_fills = r"""
-        Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.0575
-        """
-        self.helper(order, expected_fills)
-
-    def test_cross_spread_sell(self) -> None:
-        order = oororexa.get_order_example3(1.0, -100)
-        expected_order = """
-        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_1.0@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=-100.0 tz=America/New_York extra_params={}
-        """
-        self.assert_equal(str(order), expected_order, fuzzy_match=True)
-        #
-        expected_fills = r"""
-        Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.03
-        """
-        self.helper(order, expected_fills)
-
-    def test_midpoint_buy(self) -> None:
-        order = oororexa.get_order_example3(0.5)
-        expected_order = """
-        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.5@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York extra_params={}
-        """
-        self.assert_equal(str(order), expected_order, fuzzy_match=True)
-        #
-        expected_fills = r"""
-        Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.04375
-        """
-        self.helper(order, expected_fills)
-
-    def test_midpoint_sell(self) -> None:
-        order = oororexa.get_order_example3(0.5, -100)
-        expected_order = """
-        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.5@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=-100.0 tz=America/New_York extra_params={}
-        """
-        self.assert_equal(str(order), expected_order, fuzzy_match=True)
-        #
-        expected_fills = r"""
-        Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.04375
-        """
-        self.helper(order, expected_fills)
-
-    def test_quarter_spread_buy(self) -> None:
-        order = oororexa.get_order_example3(0.75)
-        expected_order = """
-        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.75@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York extra_params={}
-        """
-        self.assert_equal(str(order), expected_order, fuzzy_match=True)
-        #
-        expected_fills = r"""
-        Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.0506250000001
-        """
-        self.helper(order, expected_fills)
-
-    def test_quarter_spread_sell(self) -> None:
-        order = oororexa.get_order_example3(0.75, -100)
-        expected_order = """
-        Order: order_id=0 creation_timestamp=2000-01-01 09:29:00-05:00 asset_id=101 type_=partial_spread_0.75@twap start_timestamp=2000-01-01 09:30:00-05:00 end_timestamp=2000-01-01 09:35:00-05:00 curr_num_shares=0.0 diff_num_shares=-100.0 tz=America/New_York extra_params={}
-        """
-        self.assert_equal(str(order), expected_order, fuzzy_match=True)
-        #
-        expected_fills = r"""
-        Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.036875
-        """
-        self.helper(order, expected_fills)
-
-
-# #############################################################################
-# TestDatabaseBroker1
-# #############################################################################
-
-
-class TestDatabaseBroker1(omtodh.TestOmsDbHelper):
-    @classmethod
-    def get_id(cls) -> int:
-        return hash(cls.__name__) % 10000
-
-    def setUp(self) -> None:
-        super().setUp()
-        # Create OMS tables.
-        asset_id_name = "asset_id"
-        incremental = False
-        odbomdb.create_oms_tables(self.connection, incremental, asset_id_name)
-
-    def tearDown(self) -> None:
-        # Remove the OMS tables.
-        odbomdb.remove_oms_tables(self.connection)
-        super().tearDown()
-
-    async def get_order_processor_coroutine(
-        self, broker: obrobrok.DatabaseBroker
-    ) -> None:
-        """
-        Create an OrderProcessor and wait for submitted orders.
-        """
-        bar_duration_in_secs = 300
-        # Dummy value.
-        termination_condition = 3
-        delay_to_accept_in_secs = 2
-        delay_to_fill_in_secs = 1
-        max_wait_time_for_order_in_secs = 10
-        asset_id_name = "asset_id"
-        order_processor = ooprorpr.OrderProcessor(
-            self.connection,
-            bar_duration_in_secs,
-            termination_condition,
-            max_wait_time_for_order_in_secs,
-            delay_to_accept_in_secs,
-            delay_to_fill_in_secs,
-            broker,
-            asset_id_name,
-        )
-        await order_processor._enqueue_orders()
-
-    def helper(self, order: oordorde.Order, expected_fills: str) -> None:
-        with hasynci.solipsism_context() as event_loop:
-            # Create the coroutines.
-            broker = obrbrexa.get_DatabaseBroker_example1(
-                event_loop, self.connection
-            )
-            order_processor_coroutine = self.get_order_processor_coroutine(broker)
-            broker_coroutine = _get_broker_coroutine(broker, order)
-            coroutines = [order_processor_coroutine, broker_coroutine]
-            # Run.
-            results = hasynci.run(
-                asyncio.gather(*coroutines), event_loop=event_loop
-            )
-            # Check.
-            fills = results[1]
-            self.assertEqual(len(fills), 1)
-            actual_fills = str(fills[0])
-            self.assert_equal(actual_fills, expected_fills, fuzzy_match=True)
-
-    def test1(self) -> None:
-        """
-        Test submitting orders to a DatabaseBroker.
-        """
-        order = oororexa.get_order_example1()
-        expected_order = """
-        Order: order_id=0 creation_timestamp=2000-01-01 09:30:00-05:00 asset_id=101 type_=price@twap start_timestamp=2000-01-01 09:35:00-05:00 end_timestamp=2000-01-01 09:40:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York extra_params={}
-        """
-        self.assert_equal(str(order), expected_order, fuzzy_match=True)
-        #
-        expected_fills = r"""
-        Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:40:00-05:00 num_shares=100.0 price=999.9161531095003
-        """
-        self.helper(order, expected_fills)

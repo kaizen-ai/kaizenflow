@@ -4,7 +4,10 @@ Import as:
 import alembic.env as alenv
 """
 
-import logging
+# Explicitly importing `logging.config` due to an issue observed in certain environments where
+# "import logging" doesn't allow access to the `logging.config` submodule, potentially due to
+# module shadowing, path issues, or environment-specific configurations. Issue #CmTask5500
+import logging.config
 
 import sqlalchemy
 from alembic import context

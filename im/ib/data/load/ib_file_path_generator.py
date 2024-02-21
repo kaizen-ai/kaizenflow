@@ -16,7 +16,7 @@ import im.common.data.types as imcodatyp
 import im.ib.data.config as imibdacon
 
 _LOG = logging.getLogger(__name__)
-
+_AWS_PROFILE = 'ck'
 
 class IbFilePathGenerator(imcdlfpage.FilePathGenerator):
     """
@@ -39,7 +39,7 @@ class IbFilePathGenerator(imcdlfpage.FilePathGenerator):
         Get the latest available file with symbols on S3.
         """
         file_prefix = os.path.join(imibdacon.S3_METADATA_PREFIX, "symbols-")
-        s3fs = hs3.get_s3fs("am")
+        s3fs = hs3.get_s3fs(_AWS_PROFILE)
         files = s3fs.glob(file_prefix + "*")
         # E.g., files=
         #   ['alphamatic-data/data/ib/metadata/symbols-2021-04-01-143112738505.csv']

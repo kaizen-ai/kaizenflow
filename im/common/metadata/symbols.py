@@ -159,7 +159,7 @@ class SymbolUniverse(abc.ABC):
                     ext=imcodatyp.Extension.CSV,
                 )
                 # TODO(*): Generalize this so we don't have to rely on S3.
-                s3fs = hs3.get_s3fs("am")
+                s3fs = hs3.get_s3fs("ck")
                 if not s3fs.exists(path):
                     _LOG.debug(
                         "symbol=%s doesn't have the corresponding file %s",

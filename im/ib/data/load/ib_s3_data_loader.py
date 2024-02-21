@@ -170,7 +170,7 @@ class IbS3DataLoader(imcdladalo.AbstractS3DataLoader):
             ext=imcodatyp.Extension.CSV,
         )
         # Check that file exists.
-        aws_profile = "am"
+        aws_profile = "ck"
         s3fs = hs3.get_s3fs(aws_profile)
         if hs3.is_s3_path(file_path):
             hdbg.dassert(

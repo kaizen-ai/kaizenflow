@@ -1,14 +1,62 @@
 import logging
-from typing import List
+import pprint
+import unittest.mock as umock
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
+import pytest
 
+import helpers.hdatetime as hdateti
 import helpers.hunit_test as hunitest
 import oms.broker.ccxt.ccxt_utils as obccccut
+import oms.hsecrets.secret_identifier as ohsseide
 import oms.order.order as oordorde
 
 _LOG = logging.getLogger(__name__)
+
+
+# The value is reused in various place for interface reasons.
+_UNIVERSE_VERSION = "v7"
+
+# Columns returned by RawDataReader.
+_TEST_RAW_BID_ASK_COLS = [
+    "timestamp",
+    "currency_pair",
+    "exchange_id",
+    "bid_size_l1",
+    "ask_size_l1",
+    "bid_price_l1",
+    "ask_price_l1",
+    "end_download_timestamp",
+    "knowledge_timestamp",
+]
+
+_TEST_BID_ASK_COLS = [
+    "id",
+    "timestamp",
+    "asset_id",
+    "bid_size_l1",
+    "ask_size_l1",
+    "bid_price_l1",
+    "ask_price_l1",
+    "full_symbol",
+    "end_download_timestamp",
+    "knowledge_timestamp",
+]
+
+_ASSET_ID_SYMBOL_MAPPING = {
+    1464553467: "binance::ETH_USDT",
+    1467591036: "binance::BTC_USDT",
+    6051632686: "binance::APE_USDT",
+}
+
+
+_DUMMY_MARKET_INFO = {
+    1464553467: {"amount_precision": 3, "max_leverage": 1},
+    1467591036: {"amount_precision": 3, "max_leverage": 1},
+    6051632686: {"amount_precision": 3, "max_leverage": 1},
+}
 
 
 # #############################################################################
@@ -225,6 +273,62 @@ def get_test_bid_ask_data() -> pd.DataFrame:
     return df
 
 
+def _generate_raw_data_reader_bid_ask_data(
+    start_ts: pd.Timestamp,
+    end_ts: pd.Timestamp,
+    *,
+    bid_ask_levels: List[int] = None,
+    random_seed: int = 0,
+    # This function is used to mock RawDataReader's load_db_table,
+    # the parameters are added to match its signature.
+    deduplicate: bool = True,
+    subset: Optional[List[str]],
+) -> pd.DataFrame:
+    """
+    Return dummy bid/ask data for the given period.
+
+    The function emulates what RawDataReader
+    returns for dataset signature
+    realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7.ccxt.binance.v1_0_0.
+    (except for the universe size).
+    See Master_raw_data_gallery notebook to preview what the format should look like.
+
+    :param start_ts: start of the interval to generate
+    :param end_ts: end of the interval to generate
+    """
+    # Set seed to generate predictable values.
+    np.random.seed(random_seed)
+    # Default value of bid ask level should be None, so setting default value expicitly.
+    # ref. https://stackoverflow.com/questions/18141652/python-function-with-default-list-argument
+    bid_ask_levels = [1] if bid_ask_levels is None else bid_ask_levels
+    start_ts_unix = hdateti.convert_timestamp_to_unix_epoch(start_ts)
+    end_ts_unix = hdateti.convert_timestamp_to_unix_epoch(end_ts)
+    data = []
+    for asset_id, full_symbol in _ASSET_ID_SYMBOL_MAPPING.items():
+        currency_pair = full_symbol.lstrip("binance::")
+        bid_size_l1, ask_size_l1, bid_price_l1, ask_price_l1 = (
+            np.random.randint(10, 40) for _ in range(4)
+        )
+        # Generate row at every 500 miliseconds timestmap.
+        for ts_unix in range(start_ts_unix, end_ts_unix + 500, 500):
+            row = [
+                ts_unix,
+                currency_pair,
+                "binance",
+                bid_size_l1,
+                ask_size_l1,
+                bid_price_l1,
+                ask_price_l1,
+                hdateti.convert_unix_epoch_to_timestamp(ts_unix),
+                hdateti.convert_unix_epoch_to_timestamp(ts_unix),
+            ]
+            data.append(row)
+    df = pd.DataFrame(columns=_TEST_RAW_BID_ASK_COLS, data=data).set_index(
+        "timestamp"
+    )
+    return df
+
+
 # #############################################################################
 
 
@@ -295,7 +399,7 @@ class Test_roll_up_child_order_fills_into_parent(hunitest.TestCase):
             obccccut.roll_up_child_order_fills_into_parent(
                 parent_order, child_order_fills
             )
-    
+
     def test5(self) -> None:
         """
         Test child order fills aggregation for "sell", with specified rounding.
@@ -312,3 +416,98 @@ class Test_roll_up_child_order_fills_into_parent(hunitest.TestCase):
         )
         self.assertEqual(fill_amount, -0.28)
         self.assertEqual(fill_price, 1791.73)
+
+
+class Test_create_ccxt_exchange(hunitest.TestCase):
+    get_secret_patch = umock.patch.object(obccccut.hsecret, "get_secret")
+    ccxt_patch = umock.patch.object(obccccut, "ccxt", spec=obccccut.ccxt)
+    ccxtpro_patch = umock.patch.object(obccccut, "ccxtpro", spec=obccccut.ccxtpro)
+
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
+        # Create new mocks from patch's `start()` method.
+        self.get_secret_mock: umock.MagicMock = self.get_secret_patch.start()
+        # The order initialization matters here -> since ccxt.pro is included in ccxt
+        #  it needs to go first.
+        self.ccxtpro_mock: umock.MagicMock = self.ccxtpro_patch.start()
+        self.ccxt_mock: umock.MagicMock = self.ccxt_patch.start()
+        # Set dummy credentials for all tests.
+        self.get_secret_mock.return_value = {"apiKey": "test", "secret": "test"}
+
+    def tear_down_test(self) -> None:
+        self.get_secret_patch.stop()
+        self.ccxtpro_patch.stop()
+        self.ccxt_patch.stop()
+
+    def test_log_into_exchange1(self) -> None:
+        """
+        Verify that login is done correctly with `spot` contract type.
+        """
+        self._test_log_into_exchange_class("trading", "spot")
+
+    def test_log_into_exchange2(self) -> None:
+        """
+        Verify that login is done correctly with `futures` contract type.
+        """
+        self._test_log_into_exchange_class("trading", "futures")
+
+    def test_log_into_exchange3(self) -> None:
+        """
+        Verify that login is done correctly with `sandbox` account type.
+        """
+        self._test_log_into_exchange_class("sandbox", "futures")
+
+    def _test_log_into_exchange_class(
+        self,
+        account_type: str,
+        contract_type: str,
+        *,
+        secret_id: int = 1,
+    ) -> None:
+        """
+        Verify login is performed correctly.
+
+        - Verify that login is done correctly with given contract type.
+        - Verify constructed secret for obtaining credentials from AWS secrets.
+        - Verify that `sandbox` mode is set where applicable.
+        """
+        exchange_id = "binance"
+        stage = "preprod"
+        exchange_mock = self.ccxt_mock.binance
+        secret_identifier = ohsseide.SecretIdentifier(
+            exchange_id, stage, account_type, secret_id
+        )
+        sync_exchange, async_exchange = obccccut.create_ccxt_exchanges(
+            secret_identifier,
+            contract_type,
+            exchange_id,
+            account_type,
+        )
+        # Check exchange mock assertions.
+        actual_args = pprint.pformat(tuple(exchange_mock.call_args))
+        call_args_dict = {"apiKey": "test", "rateLimit": False, "secret": "test"}
+        if contract_type == "futures":
+            call_args_dict["options"] = {"defaultType": "future"}
+        expected_args = pprint.pformat(((call_args_dict,), {}))
+        self.assert_equal(actual_args, expected_args, fuzzy_match=True)
+        # We initialize both _sync and _async object using single function call
+        # hence ``get_secret()`` should be called once.
+        self.assertEqual(self.get_secret_mock.call_count, 1)
+        actual_args = tuple(self.get_secret_mock.call_args)
+        expected_args = ((f"binance.preprod.{account_type}.{secret_id}",), {})
+        self.assertEqual(actual_args, expected_args)
+        # Check broker assertions.
+        actual_method_calls = str(async_exchange.method_calls)
+        expected_method_call = "call.set_sandbox_mode(True)"
+        if account_type == "sandbox":
+            self.assertIn(expected_method_call, actual_method_calls)
+        else:
+            self.assertNotIn(expected_method_call, actual_method_calls)

@@ -22,14 +22,15 @@ def _get_test_data_row_from_s3(
     """
     Build test bid_ask 1 minute row.
 
-    :param start_timestamp:  start date and time
+    :param start_timestamp: start date and time
     :param minute: number of minute to generate
     :return: generated data for the minute
     """
+    number_levels_of_order_book = 10
     names_generator = itertools.product(
         ["bid", "ask"],
         ["size", "price"],
-        range(1, imvcdttrut.NUMBER_LEVELS_OF_ORDER_BOOK + 1),
+        range(1, number_levels_of_order_book + 1),
     )
     names = [
         f"{bid_ask}_{size_price}_l{level}"
@@ -79,7 +80,7 @@ def _get_test_data_row_for_db(
     """
     Build test bid_ask 1 minute row for DB format.
 
-    :param start_timestamp:  start date and time
+    :param start_timestamp: start date and time
     :param minute: number of minute to generate
     :param level: level of the orderbook
     :return: generated data
@@ -123,6 +124,10 @@ def _get_test_data_for_db(
 
 
 @pytest.mark.slow("Setup test DB ~ 5 seconds.")
+@pytest.mark.skip(
+    "Skip because the flow is not working because CryptoChassis deprecation0"
+    "It might be re-enabled once binance order book history is available"
+)
 class TestBackfillBidAskDbData(imvcddbut.TestImDbHelper, hmoto.S3Mock_TestCase):
     @classmethod
     def get_id(cls) -> int:
@@ -250,13 +255,14 @@ class TestBackfillBidAskDbData(imvcddbut.TestImDbHelper, hmoto.S3Mock_TestCase):
             return_value=self.connection,
         ):
             imvcdebbadd._run(namespace)
+        number_levels_of_order_book = 10
         self.assertEqual(
             # Explanation:
             # - initially there are 10 minutes generated
             # - after backfilling 10 more items added
             # - each minute will generate as many records as defined
-            # in the imvcdttrut.NUMBER_LEVELS_OF_ORDER_BOOK constant (10)
-            (10 + 10) * imvcdttrut.NUMBER_LEVELS_OF_ORDER_BOOK,
+            # in the number_levels_of_order_book constant (10)
+            (10 + 10) * number_levels_of_order_book,
             hsql.get_num_rows(
                 self.connection, "ccxt_bid_ask_futures_resampled_1min"
             ),

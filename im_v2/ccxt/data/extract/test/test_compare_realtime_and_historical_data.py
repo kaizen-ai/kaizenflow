@@ -9,7 +9,6 @@ import helpers.hdatetime as hdateti
 import helpers.henv as henv
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.db.db_utils as imvcddbut
@@ -41,14 +40,21 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
         # Initialize database.
         ccxt_ohlcv_table_query = imvccdbut.get_ccxt_ohlcv_create_table_query()
         hsql.execute_query(self.connection, ccxt_ohlcv_table_query)
 
-    def tearDown(self) -> None:
-        super().tearDown()
+    def tear_down_test(self) -> None:
         # Drop table used in tests.
         ccxt_ohlcv_drop_query = "DROP TABLE IF EXISTS ccxt_ohlcv_spot;"
         hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)

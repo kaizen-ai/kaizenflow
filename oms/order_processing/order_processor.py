@@ -19,6 +19,7 @@ import helpers.hprint as hprint
 import helpers.hsql as hsql
 import oms.broker.broker as obrobrok
 import oms.db.oms_db as odbomdb
+import oms.fill as omfill
 import oms.order.order as oordorde
 
 _LOG = logging.getLogger(__name__)
@@ -66,42 +67,43 @@ class OrderProcessor(hobject.PrintableMixin):
         :param termination_condition: when to terminate polling the table of
             submitted orders
             - pd.timestamp: when this object should stop checking for orders. This
-                can create deadlocks if this timestamp is set after the broker stops
-                submitting orders.
+              can create deadlocks if this timestamp is set after the broker stops
+              submitting orders.
             - int: number of orders to accept before shut down
-        :param max_wait_time_for_order_in_secs: how long to wait for an order to be
-            received, once this object starts waiting. This is typically set to be
-            the same duration of a bar, even though the order is placed close
+        :param max_wait_time_for_order_in_secs: how long to wait for an order to
+            be received, once this object starts waiting. This is typically set to
+            be the same duration of a bar, even though the order is placed close
             to the beginning of the bar
-        :param delay_to_accept_in_secs: delay after the order is submitted for this
-            object to update the accepted orders table
-        :param delay_to_fill_in_secs: delay after the order is accepted to update the
-            position table with the filled positions
+        :param delay_to_accept_in_secs: delay after the order is submitted for
+            this object to update the accepted orders table
+        :param delay_to_fill_in_secs: delay after the order is accepted to update
+            the position table with the filled positions
         :param broker: broker object connected to the market
         :param asset_id_name: name of the asset IDs column, e.g. "asset_id"
-        :param *_orders_table_name: name of the DB tables used to store the various
-            information.
+        :param *_orders_table_name: name of the DB tables used to store the
+            various information.
             - Typically we use `OrderProcessor` in unit tests, we have control
-              over the DB, and we can use names chosen by us, so we use the standard
-              table names as defaults
+              over the DB, and we can use names chosen by us, so we use the
+              standard table names as defaults
         :param fill_mode: represent how orders are filled
             - `at_once`: all the orders are filled at once after
         """
-        _LOG.debug(
-            hprint.to_str(
-                "db_connection "
-                "bar_duration_in_secs "
-                "termination_condition "
-                "max_wait_time_for_order_in_secs "
-                "delay_to_accept_in_secs "
-                "delay_to_fill_in_secs "
-                "broker "
-                "asset_id_name "
-                "submitted_orders_table_name "
-                "accepted_orders_table_name "
-                "current_positions_table_name"
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                hprint.to_str(
+                    "db_connection "
+                    "bar_duration_in_secs "
+                    "termination_condition "
+                    "max_wait_time_for_order_in_secs "
+                    "delay_to_accept_in_secs "
+                    "delay_to_fill_in_secs "
+                    "broker "
+                    "asset_id_name "
+                    "submitted_orders_table_name "
+                    "accepted_orders_table_name "
+                    "current_positions_table_name"
+                )
             )
-        )
         self._db_connection = db_connection
         hdbg.dassert_lte(
             1, hdateti.convert_seconds_to_minutes(bar_duration_in_secs)
@@ -142,7 +144,12 @@ class OrderProcessor(hobject.PrintableMixin):
         # List of free-form events to represent the execution of this object.
         self.events = []
         #
-        _LOG.debug("After initialization:\n%s", repr(self))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("After initialization:\n%s", repr(self))
+
+    # ///////////////////////////////////////////////////////////////////////////
+    # Print.
+    # ///////////////////////////////////////////////////////////////////////////
 
     def __str__(
         self,
@@ -182,6 +189,8 @@ class OrderProcessor(hobject.PrintableMixin):
         # Assemble in a single string.
         txt = "\n".join(txt)
         return txt
+
+    # ///////////////////////////////////////////////////////////////////////////
 
     async def run_loop(
         self,
@@ -252,7 +261,12 @@ class OrderProcessor(hobject.PrintableMixin):
     def _add_event(self, txt: str) -> None:
         wall_clock_time = self._get_wall_clock_time()
         self.events.append((wall_clock_time, txt))
-        _LOG.debug("%s", txt)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("%s", txt)
+
+    # /////////////////////////////////////////////////////////////////////////////
+    # Private methods.
+    # /////////////////////////////////////////////////////////////////////////////
 
     # - All the logic for handling the fills is in the Broker, while the
     #   OrderProcessor just executes
@@ -276,7 +290,8 @@ class OrderProcessor(hobject.PrintableMixin):
         """
         Poll for submitted orders, accept orders, and enqueue for execution.
         """
-        _LOG.debug("enqueue")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("enqueue")
         # 1) Wait for orders to be written in `submitted_orders_table_name`:
         #    ```
         #    filename      timestamp_db        order_as_csv
@@ -300,13 +315,15 @@ class OrderProcessor(hobject.PrintableMixin):
         msg = hprint.to_str("diff_num_rows")
         self._add_event(msg)
         # Extract the latest file_name after order submission is complete.
-        _LOG.debug("Executing query for submitted orders filename...")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Executing query for submitted orders filename...")
         query = f"""
             SELECT filename, timestamp_db
                 FROM {self._submitted_orders_table_name}
                 ORDER BY timestamp_db"""
         df = hsql.execute_query_to_df(self._db_connection, query)
-        _LOG.debug("df=\n%s", hpandas.df_to_str(df))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("df=\n%s", hpandas.df_to_str(df))
         hdbg.dassert_lte(
             diff_num_rows,
             len(df),
@@ -316,7 +333,8 @@ class OrderProcessor(hobject.PrintableMixin):
         # TODO(gp): For now we accept only one order list.
         hdbg.dassert_eq(diff_num_rows, 1)
         file_name = df.tail(1).squeeze()["filename"]
-        _LOG.debug("file_name=%s", file_name)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("file_name=%s", file_name)
         # 2) Wait to simulate the submission being parsed and accepted.
         # TODO(gp): -> _wait_to_accept_submitted_orders
         msg = (
@@ -357,13 +375,15 @@ class OrderProcessor(hobject.PrintableMixin):
         )
         self.num_accepted_target_lists += 1
         # 4) Add the new orders to the internal queue.
-        _LOG.debug("Executing query for unfilled submitted orders...")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Executing query for unfilled submitted orders...")
         query = f"""
             SELECT filename, timestamp_db, orders_as_txt
                 FROM {self._submitted_orders_table_name}
                 ORDER BY timestamp_db"""
         df = hsql.execute_query_to_df(self._db_connection, query)
-        _LOG.debug("df=\n%s", hpandas.df_to_str(df))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("df=\n%s", hpandas.df_to_str(df))
         hdbg.dassert_eq(file_name, df.tail(1).squeeze()["filename"])
         orders_as_txt = df.tail(1).squeeze()["orders_as_txt"]
         orders = oordorde.orders_from_string(orders_as_txt)
@@ -375,11 +395,14 @@ class OrderProcessor(hobject.PrintableMixin):
         """
         Dequeue orders and apply fills.
         """
-        _LOG.debug("dequeue")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("dequeue")
         orders = await self._orders.get()
-        _LOG.debug(hprint.to_str("orders"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("orders"))
         fulfillment_deadline = max([order.end_timestamp for order in orders])
-        _LOG.debug("Order fulfillment deadline=%s", fulfillment_deadline)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Order fulfillment deadline=%s", fulfillment_deadline)
         # Wait until the order fulfillment deadline to return fill.
         # TODO(gp): We should query the Broker for fills and keep updating the table
         #  as we go, instead of updating in one shot.
@@ -390,7 +413,8 @@ class OrderProcessor(hobject.PrintableMixin):
             fulfillment_deadline, self._get_wall_clock_time
         )
         # Get the fills from the Broker.
-        _LOG.debug("Getting fills from the Broker")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Getting fills from the Broker")
         fills = self._broker.get_fills()
         self.num_filled_orders += len(fills)
         fills_as_str = "\n".join([str(fill) for fill in fills])
@@ -398,12 +422,13 @@ class OrderProcessor(hobject.PrintableMixin):
         self._add_event(msg)
         self._apply_fills(fills)
 
-    def _apply_fills(self, fills: List[obrobrok.Fill]) -> None:
+    def _apply_fills(self, fills: List[omfill.Fill]) -> None:
         """
         Update current positions based on fills.
         """
         for fill in fills:
-            _LOG.debug("fill=\n%s", str(fill))
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("fill=\n%s", str(fill))
             # Extract the fill info.
             id_ = fill.order.order_id
             trade_date = fill.timestamp.date()
@@ -411,7 +436,8 @@ class OrderProcessor(hobject.PrintableMixin):
             num_shares = fill.num_shares
             #
             cost = fill.price * fill.num_shares
-            _LOG.debug("cost=%f" % cost)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("cost=%f" % cost)
             # 1) Get the current positions for `asset_id`.
             # TODO(gp): All the DB changes should be done in a single atomic
             #  transaction instead of multiple ones.
@@ -425,7 +451,8 @@ class OrderProcessor(hobject.PrintableMixin):
             query = "\n".join(query)
             positions_df = hsql.execute_query_to_df(self._db_connection, query)
             hdbg.dassert_lte(positions_df.shape[0], 1)
-            _LOG.debug("positions_df=%s", hpandas.df_to_str(positions_df))
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("positions_df=%s", hpandas.df_to_str(positions_df))
             # 2) Delete the row from the positions table.
             query = []
             query.append(f"DELETE FROM {self._current_positions_table_name}")
@@ -465,7 +492,8 @@ class OrderProcessor(hobject.PrintableMixin):
                 """
                 row = hsql.csv_to_series(txt, sep=",")
             row = row.convert_dtypes()
-            _LOG.debug("Insert row is=\n%s", hpandas.df_to_str(row))
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("Insert row is=\n%s", hpandas.df_to_str(row))
             hsql.execute_insert_query(
                 self._db_connection, row, self._current_positions_table_name
             )

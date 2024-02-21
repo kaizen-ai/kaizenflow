@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 """
-Load raw bid/ask data from specified DB table every minute, resample to 1 minute and insert
-back in a specified time interval. Currently resamples only top of the book.
+Load raw bid/ask data from specified DB table every minute, resample to 1
+minute and insert back in a specified time interval. Currently resamples only
+top of the book.
 
 # Usage sample:
 > im_v2/common/data/transform/resample_rt_bid_ask_data_periodically.py \
-    --db_stage 'dev' \
+    --db_stage 'test' \
     --src_table 'ccxt_bid_ask_futures_raw_test' \
     --dst_table 'ccxt_bid_ask_futures_resampled_1min_test' \
     --start_ts '2022-10-12 16:05:05+00:00' \
-    --end_ts '2022-10-12 18:30:00+00:00'
-
+    --end_ts '2022-10-12 18:30:00+00:00' \
+    --exchange_id 'binance'
 """
 import argparse
 import logging
@@ -50,6 +51,13 @@ def _parse() -> argparse.ArgumentParser:
         help="DB table to insert resampled data into",
     )
     parser.add_argument(
+        "--exchange_id",
+        action="store",
+        type=str,
+        required=True,
+        help="Which exchange to fetch data from",
+    )
+    parser.add_argument(
         "--start_ts",
         required=True,
         action="store",
@@ -75,6 +83,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         args["db_stage"],
         args["src_table"],
         args["dst_table"],
+        args["exchange_id"],
         pd.Timestamp(args["start_ts"]),
         pd.Timestamp(args["end_ts"]),
     )
