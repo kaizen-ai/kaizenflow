@@ -1,0 +1,37 @@
+---
+vpn_client_action: 'add' # can be 'add' or 'remove'
+
+vpn_region: eu
+easyrsa_dir: /usr/share/easy-rsa/
+easyrsa_pki_dir: /opt/pki
+easyrsa_pki_ca_cert: "{{ easyrsa_pki_dir }}/ca.crt"
+easyrsa_pki_path_certs: "{{ easyrsa_pki_dir }}/issued"
+easyrsa_pki_path_keys: "{{ easyrsa_pki_dir }}/private"
+
+openvpn_path: "/etc/openvpn"
+openvpn_path_ccd: "{{ openvpn_path }}/ccd" 
+openvpn_path_ovpn: "{{ openvpn_path }}/ovpn"
+
+openvpn_ta_key: "{{ openvpn_path }}/ta-{{ openvpn_server_port }}.key"
+openvpn_server_client_extra_options: []
+openvpn_data_ciphers: "AES-128-GCM"
+openvpn_data_ciphers_fallback: "AES-128-GCM"
+openvpn_auth_digest: "SHA256"
+
+openvpn_client_username:
+openvpn_client_password: 
+openvpn_client_pem_passphrase: 
+openvpn_client_p12_passphrase: "{{ openvpn_client_pem_passphrase }}"
+easyrsa_pki_client_cert: "{{ easyrsa_pki_path_certs }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}.crt"
+easyrsa_pki_client_key: "{{ easyrsa_pki_path_keys }}/{{ openvpn_client_username }}@{{ openvpn_server_common_name }}.key"
+
+# Password Management
+vpn_client_export_bundle_dir: "/opt/crypto_vpn/{{ openvpn_client_username }}"
+password_directory: "{{ vpn_client_export_bundle_dir }}/user_credentials"
+password_file_path: "{{ password_directory }}/{{ openvpn_server_common_name }}_password.txt"
+pem_passphrase_file_path: "{{ password_directory }}/{{ openvpn_server_common_name }}_pem_passphrase.txt"
+
+gauth_username: gauth
+gauth_group: gauth
+gauth_dir: /etc/openvpn/google-authenticator
+

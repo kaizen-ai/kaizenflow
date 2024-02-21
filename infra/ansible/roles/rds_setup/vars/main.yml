@@ -1,0 +1,12 @@
+# Using the 'ck' profile to access AWS Secrets Manager
+profile: "ck"
+
+# Fetching the secret
+airflow_secrets: "{{ lookup('amazon.aws.secretsmanager_secret', 'ansible/airflow_secrets', region='eu-north-1', aws_profile=profile) }}"
+
+db_root_user: "{{ airflow_secrets.rds_db_username }}"
+db_root_password: "{{ airflow_secrets.rds_db_password }}"
+db_rw_user: "{{ airflow_secrets.db_rw_user }}"
+db_rw_password: "{{ airflow_secrets.db_rw_password }}"
+db_ro_user: "{{ airflow_secrets.db_ro_user }}"
+db_ro_password: "{{ airflow_secrets.db_ro_password }}"

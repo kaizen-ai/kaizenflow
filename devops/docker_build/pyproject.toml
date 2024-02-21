@@ -43,8 +43,8 @@ numpy = "*"
 pandas = ">= 2.1.1"
 psutil = "*"
 psycopg2-binary = "*"
-# Frozen because of #CmTask5015.
-pyarrow = "10.0.0"
+# Frozen because of #CmTask7288.
+pyarrow = "14.0.2"
 pygraphviz = "*"
 pytest = "*"
 pytest-cov = "*"

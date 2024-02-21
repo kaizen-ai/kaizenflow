@@ -77,9 +77,7 @@ def _preprocess_data(data: pd.DataFrame) -> pd.DataFrame:
     for _, symbol_data in preprocessed_data.groupby("full_symbol"):
         symbol_data = hpandas.resample_df(symbol_data, "T")
         hpandas.dassert_strictly_increasing_index(symbol_data)
-        symbol_data["full_symbol"] = symbol_data["full_symbol"].fillna(
-            method="bfill"
-        )
+        symbol_data["full_symbol"] = symbol_data["full_symbol"].bfill()
         resampled_symbol_data.append(symbol_data)
     preprocessed_data = pd.concat(resampled_symbol_data)
     #
