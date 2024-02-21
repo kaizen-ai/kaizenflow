@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -29,17 +29,10 @@
 # %%
 import datetime
 import logging
-from typing import List, Optional
-
-import dataflow_orange.system.Cx as dtfosc
-import pandas as pd
 
 import core.config as cconfig
-import core.plotting as coplotti
-import core.statistics.cross_validation as cstcrval
 import dataflow.core as dtfcore
 import dataflow.model as dtfmod
-import dataflow_amp.system.Cx as dtfamsysc
 import helpers.hdataframe as hdatafr
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -63,6 +56,7 @@ config = {
     "dir_name": "/shared_data/model/historical/build_tile_configs.C1b.ccxt_v7_1-all.5T.2019-10-01_2023-02-13.ins/tiled_results/",
     "asset_id_col": "asset_id",
     "dag_builder_name": "C1b",
+    "dag_builder_ctor_as_str": "dataflow_orange.pipelines.C1.C1b_pipeline.C1b_DagBuilder",
     "backtest_config": "ccxt_v7_1-all.5T.2019-10-01_2023-02-13",
     "start_date": datetime.date(2019, 10, 1),
     "end_date": datetime.date(2023, 2, 13),
@@ -81,10 +75,10 @@ config = {
     },
 }
 # Add `Daguilder` column names to the config.
-system_config = dtfosc.get_Cx_system_config_template_instance(
-    config["dag_builder_name"]
+dag_builder = dtfcore.get_DagBuilder_from_string(
+    config["dag_builder_ctor_as_str"]
 )
-dag_builder = system_config["dag_builder_object"]
+dag_config = dag_builder.get_config_template()
 column_tags = ["price", "volatility", "target_variable", "prediction"]
 config["column_names"] = dag_builder.get_column_names_dict(column_tags)
 # Add `vol_adj_returns` column if needed.
@@ -101,7 +95,7 @@ else:
     config["start_date"] = start_ts.date()
     config["end_date"] = end_ts.date()
 # Add time scaling to the metrics config.
-freq = system_config["dag_config"]["resample"]["transformer_kwargs"]["rule"]
+freq = dag_config["resample"]["transformer_kwargs"]["rule"]
 time_scaling = hdatafr.compute_points_per_year_for_given_freq(freq)
 config["metrics"]["time_scaling"] = time_scaling
 #
@@ -184,5 +178,3 @@ stats_by_pred_magnitude["total_pnl"].plot(kind="bar")
 
 # %%
 stats_by_pred_magnitude["SR"].plot(kind="bar")
-
-# %%

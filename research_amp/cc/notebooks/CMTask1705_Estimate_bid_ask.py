@@ -187,6 +187,6 @@ display(processed_data.shape)
 display(processed_data)
 
 # %% [markdown]
-# Now, this data is in the format that is compatible for working with CCXT/Talos OHLCV data.
+# Now, this data is in the format that is compatible for working with CCXT OHLCV data.
 #
 # It takes ±1.5mins to load and process data for 1 month (30 days), so it shouldn't take much time to load big chunks of historical data.

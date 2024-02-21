@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -30,13 +30,13 @@
 import datetime
 import logging
 
-import dataflow_orange.system.Cx as dtfosc
 import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config as cconfig
 import core.finance.portfolio_df_processing as cofinpdp
 import core.plotting as coplotti
+import dataflow.core as dtfcore
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -60,6 +60,7 @@ config = {
     "dir_name": "/shared_data/model/historical/build_tile_configs.C1b.ccxt_v7_1-all.5T.2019-10-01_2023-02-13.ins/tiled_results/",
     "asset_id_col": "asset_id",
     "dag_builder_name": "C1b",
+    "dag_builder_ctor_as_str": "dataflow_orange.pipelines.C1.C1b_pipeline.C1b_DagBuilder",
     "start_date": datetime.date(2019, 10, 1),
     "end_date": datetime.date(2023, 2, 13),
     "plot_portfolio_stats_freq": "D",
@@ -75,10 +76,9 @@ config = {
     },
 }
 # Add `DagBuilder` column names to the config.
-system_config = dtfosc.get_Cx_system_config_template_instance(
-    config["dag_builder_name"]
+dag_builder = dtfcore.get_DagBuilder_from_string(
+    config["dag_builder_ctor_as_str"]
 )
-dag_builder = system_config["dag_builder_object"]
 column_tags = ["price", "volatility", "prediction"]
 config["column_names"] = dag_builder.get_column_names_dict(column_tags)
 config = cconfig.Config().from_dict(config)
@@ -171,5 +171,3 @@ for metric in metric_modes:
     else:
         plt.axhline(y=0.0, color="b", linestyle="-")
     plt.show()
-
-# %%

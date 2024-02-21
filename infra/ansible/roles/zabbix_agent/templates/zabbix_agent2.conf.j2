@@ -1,0 +1,20 @@
+PidFile=/var/run/zabbix/zabbix_agent2.pid
+LogFile=/var/log/zabbix/zabbix_agent2.log
+ControlSocket=/run/zabbix/agent.sock
+PluginSocket=/run/zabbix/agent.plugin.sock
+LogFileSize=0
+Server={{ zabbix_server_host }}
+ListenPort=10050
+Hostname={{ ansible_fqdn }}
+Timeout=21
+ListenIP=0.0.0.0
+Include=/etc/zabbix/zabbix_agent2.d/*.conf
+
+{% if 'docker.service' in services %}
+Plugins.Docker.Endpoint=unix:///var/run/docker.sock
+Plugins.Docker.Timeout=21
+{% endif %}
+
+# For active checks
+ServerActive={{ zabbix_server_host }}
+HostnameItem=system.hostname

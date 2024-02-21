@@ -1,0 +1,107 @@
+---
+- name: Zabbix agent | Remove old zabbix-agent
+  ansible.builtin.package:
+    name: zabbix-agent2
+    state: absent
+  become: true
+
+- name: Zabbix agent | Remove old zabbix-agent configuration file
+  ansible.builtin.file:
+    path: /etc/zabbix/zabbix_agent2.conf
+    state: absent
+  become: true
+
+- name: Zabbix agent | Remove old zabbix-agent configuration file
+  ansible.builtin.file:
+    path: /var/log/zabbix/zabbix_agent2.log
+    state: absent
+  become: true
+
+# Adding Zabbix official repository for Debian/Ubuntu
+- name: Add Zabbix APT key
+  ansible.builtin.apt_key:
+    url: "https://repo.zabbix.com/zabbix-official-repo.key"
+    state: present
+  become: true
+
+- name: Add Zabbix Official Repository
+  ansible.builtin.get_url:
+    url: "{{ zabbix_package_url }}"
+    dest: "/tmp/zabbix-release.deb"
+  become: true
+
+- name: Install Zabbix deb
+  ansible.builtin.apt:
+    deb: "/tmp/zabbix-release.deb"
+    state: present
+  become: true
+
+- name: Install Zabbix agent and related packages
+  ansible.builtin.apt:
+    name:
+      - zabbix-agent2
+      - zabbix-agent2-plugin-*
+    state: present
+    update_cache: true
+  become: true
+
+- name: Ensure Zabbix agent is running and enabled at boot
+  ansible.builtin.systemd:
+    name: zabbix-agent2
+    state: started
+    enabled: yes
+  become: true
+
+- name: Gather service facts
+  ansible.builtin.service_facts:
+
+- name: Ensure Docker daemon is running
+  ansible.builtin.debug:
+    msg: Docker installed!
+  when: "'docker.service' in services"
+
+- name: Create Zabbix groups for Docker
+  ansible.builtin.group:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - zabbix
+    - docker
+  become: true
+  when: "'docker.service' in services"
+
+- name: Ensure Zabbix user exists
+  ansible.builtin.user:
+    name: zabbix
+    state: present
+  become: true
+
+- name: Add Zabbix user to Docker group for access
+  ansible.builtin.user:
+    name: zabbix
+    state: present
+    groups: docker
+    append: yes
+  become: true
+  when: "'docker.service' in services"
+
+- name: Ensure Zabbix directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: zabbix
+    group: zabbix
+    mode: '0755'
+  loop:
+    - /var/run/zabbix
+    - /var/log/zabbix
+  become: true
+
+- name: Configure Zabbix Agent
+  ansible.builtin.template:
+    src: zabbix_agent2.conf.j2
+    dest: /etc/zabbix/zabbix_agent2.conf
+    mode: '0644'
+  become: true
+  notify:
+    - Restart Zabbix Agent

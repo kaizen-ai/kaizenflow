@@ -1,0 +1,82 @@
+---
+# User Addition Tasks
+- name: User Addition Tasks
+  block:
+
+  - name: Ensure the dedicated user group exists
+    ansible.builtin.group:
+      name: "{{ os_username }}"
+      state: present
+
+  - name: Ensure a directory exists for password storage
+    ansible.builtin.file:
+      path: "{{ password_directory }}"
+      state: directory
+
+  - name: Create and configure user account
+    ansible.builtin.user:
+      name: "{{ os_username }}"
+      group: "{{ os_username }}"    # Set primary group to user's own group
+      shell: /bin/bash
+      append: yes
+      home: "{{ home_dir }}"
+      password: "{{ lookup('password', password_file_path) | password_hash('sha512') }}"
+
+  - name: Gather service facts
+    ansible.builtin.service_facts:
+
+  - name: Ensure Docker daemon is running
+    ansible.builtin.debug:
+      msg: Docker installed!
+    when: "'docker.service' in services"
+
+  - name: Add user to Docker group if Docker service exists
+    ansible.builtin.user:
+      name: "{{ os_username }}"
+      group: docker
+      append: yes
+    when: "'docker.service' in services"
+
+  - name: Configure user's home directory permissions
+    ansible.builtin.file:
+      path: "{{ home_dir }}"
+      state: directory
+      owner: "{{ os_username }}"
+      group: "{{ os_username }}"
+      mode: 0700
+
+  - name: Append user's public key to authorized_keys
+    ansible.posix.authorized_key:
+      user: "{{ os_username }}"
+      key: "{{ lookup('file', pub_key_path) }}"
+      state: present
+
+  - name: Record server IPs
+    ansible.builtin.lineinfile:
+      path: "{{ server_ip_file_path }}"
+      line: "{{ groups['server_user'] | map('extract', hostvars, ['ansible_default_ipv4', 'address']) | join('\n') }}"
+      create: yes
+    run_once: true
+    delegate_to: localhost
+
+  become: true
+  when: server_user_action == "add"
+
+# User Removal Tasks
+- name: User Removal Tasks
+  block:
+
+  - name: Remove the user and optionally their /home directory
+    ansible.builtin.user:
+      name: "{{ os_username }}"
+      state: absent
+      remove: "{{ os_include_user_home_directory | default(false) | bool }}"
+
+  - name: Remove the user's home directory from /data if required
+    ansible.builtin.file:
+      path: "{{ home_dir }}"
+      state: absent
+    when: os_include_user_home_directory | default(false) | bool
+
+  become: true
+  when: server_user_action == "remove"

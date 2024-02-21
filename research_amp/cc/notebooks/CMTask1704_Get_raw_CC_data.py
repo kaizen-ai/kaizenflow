@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -35,7 +35,6 @@ import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.im_lib_tasks as imvimlita
-import im_v2.talos.data.client.talos_clients as imvtdctacl
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -282,98 +281,6 @@ display(data_hist_ccxt.shape)
 display(data_hist_ccxt.head(3))
 
 # %% [markdown]
-# ## Talos
-
-# %% [markdown]
-# ### Real-time
-
-# %%
-# Specify params.
-resample_1min = True
-db_connection = config["load"]["connection"]
-table_name = "talos_ohlcv"
-
-talos_rt_client = imvtdctacl.TalosSqlRealTimeImClient(
-    resample_1min, db_connection, table_name
-)
-
-# %% [markdown]
-# #### Universe
-
-# %%
-# Specify the universe.
-rt_universe_talos = sorted(talos_rt_client.get_universe())
-len(rt_universe_talos)
-
-# %%
-# Choose cc for analysis.
-full_symbols = rt_universe_talos[2:4]
-full_symbols
-
-# %% [markdown]
-# #### Data Loader
-
-# %%
-# Specify the period.
-start_date = config["data"]["start_date_rt"]
-end_date = config["data"]["end_date_rt"]
-
-# Load the data.
-data_rt_talos = talos_rt_client.read_data(full_symbols, start_date, end_date)
-display(data_rt_talos.shape)
-display(data_rt_talos.head(3))
-
-# %% [markdown]
-# ### Historical
-
-# %%
-# Specify params.
-universe_version = "v1"
-resample_1min = True
-root_dir = config["load"]["data_dir_hist"]
-partition_mode = config["load"]["partition_mode"]
-data_snapshot = config["load"]["data_snapshot"]
-aws_profile = config["load"]["aws_profile"]
-
-talos_hist_client = imvtdctacl.TalosHistoricalPqByTileClient(
-    universe_version,
-    resample_1min,
-    root_dir,
-    partition_mode,
-    data_snapshot=data_snapshot,
-    aws_profile=aws_profile,
-)
-
-# %% [markdown]
-# #### Universe
-
-# %%
-# Specify the universe.
-hist_universe_talos = talos_hist_client.get_universe()
-# Choose cc for analysis.
-full_symbols_hist_talos = hist_universe_talos[0:2]
-full_symbols_hist_talos
-
-# %% [markdown]
-# #### Data Loader
-
-# %% run_control={"marked": false}
-# Specify the period.
-start_date = config["data"]["start_date_hist"]
-end_date = config["data"]["end_date_hist"]
-
-# Load the data.
-data_hist_talos = talos_hist_client.read_data(
-    full_symbols_hist_talos, start_date, end_date
-)
-# Hardcoded solution to convert OHLCV to the 'float' type for the further use.
-for cols in data_hist_talos.columns[1:]:
-    data_hist_talos[cols] = data_hist_talos[cols].astype(float)
-# Show the data.
-display(data_hist_talos.shape)
-display(data_hist_talos.head(3))
-
-# %% [markdown]
 # # Calculate VWAP, TWAP and returns in `Dataflow` style
 
 # %% [markdown]
@@ -398,29 +305,6 @@ bnb_ex = vwap_twap_rets_df.swaplevel(axis=1)
 bnb_ex = bnb_ex["binance::BNB_USDT"][["close.ret_0", "twap.ret_0", "vwap.ret_0"]]
 display(bnb_ex.corr())
 bnb_ex.plot()
-
-# %% [markdown]
-# ## Talos
-
-# %%
-# VWAP, TWAP transformation.
-resampling_rule = config["transform"]["resampling_rule"]
-vwap_twap_df_talos = calculate_vwap_twap(data_hist_talos, resampling_rule)
-
-# Returns calculation.
-rets_type = config["transform"]["rets_type"]
-vwap_twap_rets_df_talos = calculate_returns(vwap_twap_df_talos, rets_type)
-
-# %%
-# Show the snippet.
-vwap_twap_rets_df_talos.head(3)
-
-# %%
-# Stats and vizualisation to check the outcomes.
-ada_ex = vwap_twap_rets_df_talos.swaplevel(axis=1)
-ada_ex = ada_ex["binance::ADA_USDT"][["close.ret_0", "twap.ret_0", "vwap.ret_0"]]
-display(ada_ex.corr())
-ada_ex.plot()
 
 
 # %% [markdown]

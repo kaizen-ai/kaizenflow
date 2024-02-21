@@ -29,7 +29,6 @@ import logging
 import os
 
 import core.config.config_ as cconconf
-import core.config.config_utils as ccocouti
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
@@ -51,6 +50,7 @@ hprint.config_notebook()
 # %% [markdown]
 # # Configs
 
+
 # %%
 def get_master_cross_vendor_qa_config() -> cconconf.Config:
     """
@@ -68,6 +68,7 @@ def get_master_cross_vendor_qa_config() -> cconconf.Config:
                 "partition_mode": "by_year_month",
                 "dataset": "ohlcv",
                 "contract_type": "spot",
+                "download_universe_version": "v7_3",
                 "aws_profile": "ck",
             },
             "crypto_chassis": {

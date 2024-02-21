@@ -1,0 +1,24 @@
+client
+remote {{ openvpn_server_remote_host }} {{ openvpn_server_port }} {{ openvpn_server_proto }}
+
+{% for item in openvpn_server_client_extra_options %}
+{{ item }}
+{% endfor %}
+
+dev tun
+cipher {{ openvpn_data_ciphers }}
+ncp-ciphers {{ openvpn_data_ciphers_fallback }}
+auth {{ openvpn_auth_digest }}
+auth-user-pass
+auth-nocache
+reneg-sec 0
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+remote-cert-tls server
+verify-x509-name "server@{{ openvpn_server_common_name }}" name
+tls-client
+tls-version-min 1.2
+key-direction 1
+verb 3

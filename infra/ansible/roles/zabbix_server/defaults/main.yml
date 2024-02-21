@@ -1,0 +1,6 @@
+zabbix_version: "6.4"
+php_version: "7.4"
+zabbix_php_timezone: Europe/Stockholm
+zabbix_db_host: localhost
+zabbix_db_port: 3306
+zabbix_db_name: zabbix
