@@ -1,0 +1,6 @@
+---
+- name: Restart Zabbix Agent
+  ansible.builtin.systemd:
+    name: zabbix-agent2
+    state: restarted
+  become: true

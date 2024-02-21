@@ -1,0 +1,85 @@
+---
+- name: Update APT cache and upgrade all packages
+  ansible.builtin.apt:
+    upgrade: dist
+    update_cache: true
+  become: true
+
+- name: Install required packages
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+      - gnupg
+      - lsb-release
+      - git
+    state: present
+  become: true
+
+- name: Add Docker's official GPG key
+  ansible.builtin.apt_key:
+    url: "{{ docker_apt_key_url }}"
+    state: present
+  become: true
+
+- name: Add Docker APT repo
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64] {{ docker_apt_url }} focal stable"
+    state: present
+  become: true
+
+- name: Install Docker CE
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+    state: present
+    update_cache: true
+  become: true
+
+- name: Install Docker Compose
+  ansible.builtin.get_url:
+    url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-Linux-x86_64"
+    dest: "/usr/local/bin/docker-compose"
+    mode: '0755'
+  become: true
+
+- name: Ensure Docker service is enabled and started
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+  become: true
+  notify: Restart Docker
+
+- name: Check if cmamp repo exists
+  ansible.builtin.stat:
+    path: "/home/{{ ansible_user }}/cmamp"
+  register: cmamp_repo_check
+
+- name: Clone/Update cmamp repo if it doesn't exist
+  ansible.builtin.git:
+    repo: "{{ cmamp_repo_url }}"
+    dest: "/home/{{ ansible_user }}/cmamp"
+    update: true  # Pulls new changes
+  when: not cmamp_repo_check.stat.exists
+  no_log: true  # This is to ensure the PAT doesn't get logged
+
+- name: Debug directory structure
+  ansible.builtin.command: ls -la /home/{{ ansible_user }}
+  register: dir_output
+  changed_when: false
+
+- name: Debug directory structure
+  ansible.builtin.debug:
+    var: dir_output.stdout_lines
+
+# NOTE: Disabling the firewall on the instance can be a security risk if not handled properly. (not recommended without other security in place)
+- name: Disable UFW
+  community.general.ufw:
+    state: disabled
+  when: firewall_disable
+  become: true

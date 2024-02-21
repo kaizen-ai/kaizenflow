@@ -1,0 +1,20 @@
+# Using the 'ck' profile to access AWS Secrets Manager
+profile: "ck"
+
+# Fetching the secret
+airflow_secrets: "{{ lookup('amazon.aws.secretsmanager_secret', 'ansible/airflow_secrets', region='eu-north-1', aws_profile=profile) }}"
+
+postgres_user: "{{ airflow_secrets.postgres_user }}"
+postgres_password: "{{ airflow_secrets.postgres_password }}"
+airflow_fernet_key: "{{ airflow_secrets.airflow_fernet_key }}"
+airflow_webserver_key: "{{ airflow_secrets.airflow_webserver_key }}"
+airflow_username: "{{ airflow_secrets.airflow_username }}"
+airflow_password: "{{ airflow_secrets.airflow_password }}"
+airflow_smtp_user: "{{ airflow_secrets.airflow_smtp_user }}"
+airflow_smtp_pass: "{{ airflow_secrets.airflow_smtp_pass }}"
+
+airflow_uid: "{{ ansible_user_uid }}"
+
+telegram_bot_token: "{{ airflow_secrets.telegram_bot_token }}"
+telegram_prod_room_id: "{{ airflow_secrets.telegram_prod_room_id }}"
+telegram_preprod_room_id: "{{ airflow_secrets.telegram_preprod_room_id }}"

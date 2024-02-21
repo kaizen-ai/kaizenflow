@@ -1,0 +1,151 @@
+---
+- name: Setup .env configurations
+  ansible.builtin.template:
+    src: .env.j2
+    dest: "/home/{{ ansible_user }}/cmamp/sorrentum_sandbox/devops/.env"
+    owner: "{{ ansible_user }}"
+    mode: '0644'
+  become: true
+
+- name: Set AIRFLOW_UID environment variable
+  ansible.builtin.lineinfile:
+    path: "/home/{{ ansible_user }}/cmamp/sorrentum_sandbox/devops/.env"
+    line: "AIRFLOW_UID={{ ansible_user_uid }}"
+  become: true
+
+- name: Setup docker-compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "/home/{{ ansible_user }}/cmamp/sorrentum_sandbox/devops/docker-compose.yml"
+    owner: "{{ ansible_user }}"
+    mode: '0644'
+  become: true
+
+- name: Debug file paths
+  ansible.builtin.debug:
+    msg: "File path for .env is /home/{{ ansible_user }}/cmamp/sorrentum_sandbox/devops/.env"
+
+- name: Debug directory structure
+  ansible.builtin.command: ls -la /home/{{ ansible_user }}/cmamp
+  register: dir_output
+  changed_when: false
+
+- name: Debug directory structure
+  ansible.builtin.debug:
+    var: dir_output.stdout_lines
+
+- name: Spin up Airflow
+  ansible.builtin.command: docker-compose up -d
+  args:
+    chdir: "/home/{{ ansible_user }}/cmamp/sorrentum_sandbox/devops"
+  become: true
+  environment:
+    COMPOSE_HTTP_TIMEOUT: 90
+
+- name: Wait for PostgreSQL to be active
+  ansible.builtin.wait_for:
+    host: localhost
+    port: 5532
+    delay: 3
+    timeout: 9
+    state: started
+
+- name: Ensure NFS utilities are installed
+  ansible.builtin.apt:
+    name: nfs-common
+    state: present
+  become: true
+
+- name: Mount EFS for Pre-prod DAG storage
+  ansible.posix.mount:
+    path: "/data/shared/"
+    src: "{{ efs_dns_name }}:/"
+    fstype: nfs
+    opts: "nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2"
+    state: mounted
+  become: true
+
+- name: Check if EFS is available
+  ansible.builtin.ping:
+    data: "efs-mount"
+  register: efs_ping
+  failed_when: efs_ping.ping != 'efs-mount'
+
+- name: Ensure airflow_data/dags/ directory exists
+  ansible.builtin.file:
+    path: "/home/{{ ansible_user }}/airflow_data/dags/"
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    recurse: yes
+  become: true
+
+- name: Copy DAGs and related files for Production
+  ansible.builtin.command: cp -r /data/shared/airflow_preprod_new/dags/. /home/{{ ansible_user }}/airflow_data/dags/
+  when: deployment_env == 'prod'
+  notify: Restart Airflow
+  become: true
+
+- name: Ensure airflow/ directory exists
+  ansible.builtin.file:
+    path: "/home/{{ ansible_user }}/airflow/"
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    recurse: yes
+  become: true
+  when: deployment_env == 'preprod'
+
+- name: Create symbolic link for DAGs in Pre-prod
+  ansible.builtin.file:
+    src: "/data/shared/airflow_preprod_new/dags"
+    dest: "/home/{{ ansible_user }}/airflow/dags"
+    state: link
+    force: yes
+  become: true
+  when: deployment_env == 'preprod'
+
+- name: Install required Airflow Telegram provider packages
+  ansible.builtin.shell: docker exec airflow_cont /usr/local/bin/pip install python-telegram-bot apache-airflow-providers-telegram && docker exec airflow_scheduler_cont /usr/local/bin/pip install python-telegram-bot apache-airflow-providers-telegram
+  become: true
+  notify: Restart Airflow
+
+- name: Check if 'prod_telegram_conn' already exists
+  ansible.builtin.command:
+    cmd: docker exec airflow_cont airflow connections list | grep prod_telegram_conn
+  become: true
+  register: check_prod_conn
+  changed_when: false
+  failed_when: false
+  no_log: true
+  when: deployment_env == 'prod'
+
+- name: Create Telegram connection for Prod
+  ansible.builtin.command:
+    cmd: docker exec airflow_cont airflow connections add 'prod_telegram_conn' --conn-type 'http' --conn-host '{{ telegram_prod_room_id }}' --conn-password '{{ telegram_bot_token }}'
+  become: true
+  no_log: true
+  when:
+    - deployment_env == 'prod'
+    - check_prod_conn.rc != 0
+
+- name: Check if 'preprod_telegram_conn' already exists
+  ansible.builtin.command:
+    cmd: docker exec airflow_cont airflow connections list | grep preprod_telegram_conn
+  become: true
+  register: check_preprod_conn
+  changed_when: false
+  failed_when: false
+  no_log: true
+  when: deployment_env == 'preprod'
+
+- name: Create Telegram connection for Preprod
+  ansible.builtin.command:
+    cmd: docker exec airflow_cont airflow connections add 'preprod_telegram_conn' --conn-type 'http' --conn-host '{{ telegram_preprod_room_id }}' --conn-password '{{ telegram_bot_token }}'
+  become: true
+  no_log: true
+  when:
+    - deployment_env == 'preprod'
+    - check_preprod_conn.rc != 0

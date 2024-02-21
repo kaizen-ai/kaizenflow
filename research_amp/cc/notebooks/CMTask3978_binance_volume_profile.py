@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -43,7 +43,6 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.client as icdc
 import im_v2.crypto_chassis.data.client as iccdc
-import oms
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -179,10 +178,10 @@ resampled_ohlcv.head()
 
 # %%
 # Extract BTC and ETH dataframes.
-resampled_ohlcv_btc = oms.get_asset_slice(
+resampled_ohlcv_btc = cofinanc.get_asset_slice(
     resampled_ohlcv, "binance::BTC_USDT"
 ).reset_index()
-resampled_ohlcv_eth = oms.get_asset_slice(
+resampled_ohlcv_eth = cofinanc.get_asset_slice(
     resampled_ohlcv, "binance::ETH_USDT"
 ).reset_index()
 
@@ -379,13 +378,13 @@ def calculate_and_apply_weights(resampled_bid_ask: pd.DataFrame):
     """
     # Get corresponding hour for each 1-hour entry.
     # Slice asset-specific dataframes.
-    resampled_bid_ask_btc = oms.get_asset_slice(
+    resampled_bid_ask_btc = cofinanc.get_asset_slice(
         resampled_bid_ask, "binance::BTC_USDT"
     ).reset_index()
     resampled_bid_ask_btc["hour"] = resampled_bid_ask_btc.reset_index()[
         "timestamp"
     ].dt.hour
-    resampled_bid_ask_eth = oms.get_asset_slice(
+    resampled_bid_ask_eth = cofinanc.get_asset_slice(
         resampled_bid_ask, "binance::ETH_USDT"
     ).reset_index()
     resampled_bid_ask_eth["hour"] = resampled_bid_ask_eth.reset_index()[
@@ -433,8 +432,12 @@ def apply_weights_to_execution_pipeline(df_out: pd.DataFrame):
     """
     Apply normalized volume weights to hourly execution quality data.
     """
-    df_out_btc = oms.get_asset_slice(df_out, "binance::BTC_USDT").reset_index()
-    df_out_eth = oms.get_asset_slice(df_out, "binance::ETH_USDT").reset_index()
+    df_out_btc = cofinanc.get_asset_slice(
+        df_out, "binance::BTC_USDT"
+    ).reset_index()
+    df_out_eth = cofinanc.get_asset_slice(
+        df_out, "binance::ETH_USDT"
+    ).reset_index()
     df_out_btc["hour"] = df_out_btc.reset_index().timestamp.dt.hour
     df_out_eth["hour"] = df_out_eth.reset_index().timestamp.dt.hour
     # Convert weights to dicts by asset.
