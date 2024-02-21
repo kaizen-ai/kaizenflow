@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.15.0
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -32,15 +32,13 @@ import core.plotting as coplotti
 import core.statistics as costatis
 import dataflow.core as dtfcore
 import dataflow.pipelines.execution.execution_pipeline as dtfpexexpi
+import dataflow_amp.system.Cx as dtfamsysc
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
-import im_v2.common.data.client.im_raw_data_client as imvcdcimrdc
-import im_v2.common.universe.universe_utils as imvcuunut
-import oms
 import oms.broker.ccxt.ccxt_aggregation_functions as obccagfu
 import oms.broker.ccxt.ccxt_execution_quality as obccexqu
-import oms.broker.ccxt.ccxt_logs_reader as obcclore
+import oms.broker.ccxt.ccxt_logger as obcccclo
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -61,55 +59,116 @@ if config:
     # in the system reconciliation flow.
     _LOG.info("Using config from env vars")
 else:
-    system_log_dir = "/shared_data/ecs/test/twap_experiment/20230814_1"
+    system_log_dir = "/shared_data/ecs/test/system_reconciliation/C11a/prod/20240123_110000.20240123_154800/system_log_dir.manual/process_forecasts"
     use_historical = False
+    bar_duration = "12T"
+    test_asset_id = 1030828978
     config_dict = {
-        "meta": {
-            "use_historical": use_historical
-        },
-        "system_log_dir": system_log_dir
+        "meta": {"use_historical": use_historical},
+        "universe": {"test_asset_id": test_asset_id},
+        "execution_parameters": {"bar_duration": bar_duration},
+        "system_log_dir": system_log_dir,
     }
     config = cconfig.Config.from_dict(config_dict)
 print(config)
 
 # %%
 system_log_dir = config["system_log_dir"]
-bar_duration = "5T"
+bar_duration = config.get_and_mark_as_used(
+    ("execution_parameters", "bar_duration")
+)
+test_asset_id = config.get_and_mark_as_used(("universe", "test_asset_id"))
 id_col = "asset_id"
+# TODO(Sonaal): This should become an attribute for order.
+child_order_execution_freq = "1T"
+resample_freq = "100ms"
 
 # %%
-ccxt_log_reader = obcclore.CcxtLogsReader(system_log_dir)
+ccxt_log_reader = obcccclo.CcxtLogger(system_log_dir)
+data = ccxt_log_reader.load_all_data(
+    convert_to_dataframe=True, abort_on_missing_data=False
+)
 
 # %%
-btc_usdt_id = 1467591036
+# Print the Broker config.
+if "broker_config" in data:
+    print(hprint.to_pretty_str(data["broker_config"]))
+else:
+    _LOG.warning("broker_config file not present in %s", system_log_dir)
+
+# %%
+# Print the used Config, if any.
+experiment_config = obcccclo.load_config_for_execution_analysis(system_log_dir)
+print(experiment_config)
 
 # %%
 # Use historical data for experiment runs older than 48h.
 use_historical = config["meta"]["use_historical"]
 
+# %%
+# Colums containing price data for analysis.
+active_cols = ["buy_limit_order_price", "buy_trade_price"]
+
 # %% [markdown]
-# # Load order responses and fills
+# # Load data
+
+# %% [markdown]
+# ## Load CCXT data
 
 # %%
-ccxt_order_response_df = ccxt_log_reader.load_ccxt_order_response_df()
-ccxt_executed_trades_df = ccxt_log_reader.load_ccxt_trades_df()
+ccxt_order_response_df = data["ccxt_order_responses"]
+ccxt_executed_trades_df = data["ccxt_trades"]
 
 # %%
-ccxt_executed_trades_df.head()
+ccxt_order_response_df.head(3)
 
 # %%
+ccxt_executed_trades_df.head(3)
+
+# %%
+oms_child_order_df = data["oms_child_orders"]
+
+# %%
+oms_child_order_df.iloc[oms_child_order_df["latest_bid_price"].argmax()][
+    "extra_params"
+]["stats"]
+
+# %% [markdown]
+# ## Aggregate CCXT data
+
+# %%
+# Aggregated executed trades (fills) by bar.
 executed_trades_prices = obccagfu.compute_buy_sell_prices_by_bar(
     ccxt_executed_trades_df, bar_duration, groupby_id_col=id_col
 )
 
 # %%
-oms_child_order_df = ccxt_log_reader.load_oms_child_order_df()
+# Get execution event timestamps by child order.
+test_asset_orders = (
+    obcccclo.process_child_order_timestamps_and_prices_for_single_asset(
+        oms_child_order_df, ccxt_executed_trades_df, test_asset_id, resample_freq
+    )
+)
 
 # %%
-ccxt_order_response_df.head(3)
+test_asset_events = test_asset_orders.sort_index(axis=0)
+
+# %%
+test_asset_events.head(10)
 
 # %% [markdown]
-# # Load bid-ask data
+# ## Load bid-ask data
+
+
+# %%
+def get_data():
+    """
+    The simulation section of the notebook contains a definition of a DAG with
+    a FunctionDataSource source node which requires a function rather than an
+    object, so this function returns an object built inside the notebook.
+    """
+    return bid_ask
+
 
 # %%
 # TODO(Paul): Refine the cuts around the first and last bars.
@@ -118,74 +177,87 @@ _LOG.info("start_timestamp=%s", start_timestamp)
 end_timestamp = ccxt_executed_trades_df["datetime"].max()
 _LOG.info("end_timestamp=%s", end_timestamp)
 
-
 # %%
-def load_bid_ask_data(
+bid_ask = obccagfu.load_bid_ask_data(
     start_timestamp,
     end_timestamp,
-    use_historical,
-    asset_ids,
-) -> pd.DataFrame:
-    if use_historical:
-        signature = "periodic_daily.airflow.archived_200ms.parquet.bid_ask.futures.v7.ccxt.binance.v1_0_0"
-        reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
-    else:
-        signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7.ccxt.binance.v1_0_0"
-        reader = imvcdcimrdc.RawDataReader(signature)
-    bad = reader.read_data(start_timestamp, end_timestamp)
-    hdbg.dassert(not bad.empty, "Requested bid-ask data not available.")
-    #
-    currency_pair_to_full_symbol = {
-        x: "binance::" + x for x in bad["currency_pair"].unique()
-    }
-    asset_id_to_full_symbol = imvcuunut.build_numerical_to_string_id_mapping(
-        currency_pair_to_full_symbol.values()
-    )
-    full_symbol_mapping_to_asset_id = {
-        v: k for k, v in asset_id_to_full_symbol.items()
-    }
-    currency_pair_to_asset_id = {
-        x: full_symbol_mapping_to_asset_id[currency_pair_to_full_symbol[x]]
-        for x in bad["currency_pair"].unique()
-    }
-    # Add asset_ids
-    list(currency_pair_to_asset_id.values())
-    bad_asset_id = bad["currency_pair"].apply(
-        lambda x: currency_pair_to_asset_id[x]
-    )
-    bad["asset_id"] = bad_asset_id
-    #
-    if asset_ids is not None:
-        bad = bad[bad["asset_id"].isin(asset_ids)]
-    if not use_historical:
-        bad = bad[
-            ["bid_price_l1", "ask_price_l1", "asset_id", "knowledge_timestamp"]
-        ].rename(
-            columns={"bid_price_l1": "bid_price", "ask_price_l1": "ask_price"},
-        )
-        bad = bad.pivot_table(columns=["asset_id"], index="knowledge_timestamp")
-    else:
-        bad = bad[["bid_price_l1", "ask_price_l1", "asset_id"]].rename(
-            columns={"bid_price_l1": "bid_price", "ask_price_l1": "ask_price"},
-        )
-        bad = bad.pivot(columns=["asset_id"])
-    bad.index = bad.index.ceil("1s")
-    bad = bad.resample("1s").mean().ffill()
-    # if use_historical:
-    #     bad.index.tz_localize("utc")
-    return bad
-
-
-# %%
-bad = load_bid_ask_data(
-    start_timestamp,
-    end_timestamp,
+    ccxt_log_reader,
     use_historical,
     executed_trades_prices.columns.levels[1],
+    child_order_execution_freq,
 )
 
+# %% [markdown]
+# ## Load OHLCV data
+
 # %%
-bad.head()
+# We get the end timestamp from ccxt_trades_df which is not the exact time at which the run was completed.
+# This created misalignment in the graphs of bid/ask data and OHLCV. Hence we rectify this by re-defining
+# end_timestamp based on the bid/ask data.
+actual_ohlcv_end_timestamp = bid_ask.index.max().round("min")
+
+# %%
+ohlcv_bar_duration = bar_duration
+db_stage = data["broker_config"]["stage"]
+# Get prod `MarketData`.
+market_data = dtfamsysc.get_Cx_RealTimeMarketData_prod_instance1(
+    [test_asset_id], db_stage=db_stage
+)
+# Load and resample OHLCV data.
+ohlcv_bars = dtfamsysc.load_and_resample_ohlcv_data(
+    market_data,
+    start_timestamp,
+    actual_ohlcv_end_timestamp,
+    ohlcv_bar_duration,
+)
+ohlcv_bars.head(3)
+
+# %%
+ohlcv_price_df = {
+    "high": ohlcv_bars["high"],
+    "low": ohlcv_bars["low"],
+}
+ohlcv_price_df = pd.concat(ohlcv_price_df, axis=1)
+# Slice data for a test asset id.
+test_asset_slice_ohlcv = cofinanc.get_asset_slice(ohlcv_price_df, test_asset_id)
+test_asset_slice_ohlcv.head(3)
+
+# %% [markdown]
+# # Plot bid/ask and OHLCV data
+
+# %%
+bid_ask.head(3)
+
+# %%
+bid_ask["bid_price"][test_asset_id].tail(10000).plot()
+
+# %%
+test_asset_tob = cofinanc.get_asset_slice(bid_ask, test_asset_id)
+
+# %%
+test_asset_tob[["ask_price", "bid_price"]].plot()
+
+# %%
+test_asset_tob[["ask_size", "bid_size"]].plot()
+
+# %%
+# Plot bid-ask prices together with high and low prices.
+test_asset_slice_tob_ohlcv = (
+    pd.concat([test_asset_tob, test_asset_slice_ohlcv]).sort_index().bfill()
+)
+#
+test_asset_slice_tob_ohlcv[["ask_price", "bid_price", "high", "low"]].plot()
+
+# %%
+pd.merge(
+    cofinanc.get_asset_slice(
+        test_asset_events, test_asset_id, strictly_increasing=False
+    ),
+    test_asset_tob,
+    left_index=True,
+    right_index=True,
+    how="inner",
+).dropna(subset=["event"])
 
 # %% [markdown]
 # # Replay limit orders and simulate trades
@@ -198,22 +270,18 @@ bad.head()
 # ## Extract the actual limit orders
 
 # %%
-bad.columns.levels[1]
+bid_ask.columns.levels[1]
 
 # %%
 oms_child_order_df_restricted = oms_child_order_df[
-    oms_child_order_df["asset_id"].isin(bad.columns.levels[1])
+    oms_child_order_df["asset_id"].isin(bid_ask.columns.levels[1])
 ]
+oms_child_order_df_restricted.head(3)
 
 # %%
-oms_child_order_df_restricted.head()
-
-# %%
-# Forward fill to represent the time-in-force of the underlying order
+# Forward fill to represent the time-in-force of the underlying order.
 limit_prices = obccexqu.get_limit_order_price(oms_child_order_df_restricted)
-
-# limit_prices.index = limit_prices.index.tz_localize("UTC")
-limit_prices.head()
+limit_prices.head(3)
 
 # %%
 buy_order_num = np.sign(limit_prices["buy_limit_order_price"]).abs().cumsum()
@@ -234,8 +302,8 @@ limit_prices = pd.concat(
 # ## Join limit orders with bid-ask data and simulate trades
 
 # %%
-in_df = pd.concat([limit_prices, bad], axis=1)
-in_df.head()
+in_df = pd.concat([limit_prices, bid_ask], axis=1)
+in_df.head(3)
 
 # %%
 node = dtfcore.GroupedColDfToDfTransformer(
@@ -269,10 +337,8 @@ simulated_execution_df = node.fit(in_df)["df_out"]
 simulated_execution_df.columns.levels[0].to_list()
 
 # %%
-btc_exec = oms.get_asset_slice(simulated_execution_df, btc_usdt_id)
-
-# %%
-btc_exec.loc[~btc_exec["buy_trade_price"].isna()][
+test_asset_exec = cofinanc.get_asset_slice(simulated_execution_df, test_asset_id)
+test_asset_exec.loc[~test_asset_exec["buy_trade_price"].isna()][
     [
         "buy_trade_price",
         "buy_limit_order_price",
@@ -288,16 +354,13 @@ simulated_execution_df["buy_trade_price"].resample(
 ).mean()
 
 # %%
-active_cols = ["buy_limit_order_price", "buy_trade_price"]
+test_asset_slice = cofinanc.get_asset_slice(simulated_execution_df, test_asset_id)
 
 # %%
-btc_slice = oms.get_asset_slice(simulated_execution_df, btc_usdt_id)
+test_asset_slice[active_cols].plot()
 
 # %%
-btc_slice[active_cols].plot()
-
-# %%
-btc_slice["buy_trade_price"].ffill(limit=59).plot()
+test_asset_slice["buy_trade_price"].ffill(limit=59).plot()
 
 # %% [markdown]
 # ## Compute simulated trade execution quality against bid-ask benchmarks
@@ -332,19 +395,14 @@ simulated_execution_quality_df = simulated_execution_quality_node.fit(
 simulated_execution_quality_df.columns.levels[0].to_list()
 
 # %%
-active_cols = ["buy_limit_order_price", "buy_trade_price"]
-
-# %%
-btc_slice = oms.get_asset_slice(simulated_execution_quality_df, btc_usdt_id)
-
-# %%
-btc_slice[active_cols].dropna(how="all")
+test_asset_slice = cofinanc.get_asset_slice(
+    simulated_execution_quality_df, test_asset_id
+)
+test_asset_slice[active_cols].dropna(how="all")
 
 # %%
 col = "buy_trade_midpoint_slippage_bps"
-coplotti.plot_boxplot(
-    simulated_execution_quality_df[col], "by_col", ylabel=col
-)
+coplotti.plot_boxplot(simulated_execution_quality_df[col], "by_col", ylabel=col)
 
 # %%
 simulated_execution_quality_df["buy_trade_midpoint_slippage_bps"].unstack().hist(
@@ -353,9 +411,7 @@ simulated_execution_quality_df["buy_trade_midpoint_slippage_bps"].unstack().hist
 
 # %%
 col = "sell_trade_midpoint_slippage_bps"
-coplotti.plot_boxplot(
-    simulated_execution_quality_df[col], "by_col", ylabel=col
-)
+coplotti.plot_boxplot(simulated_execution_quality_df[col], "by_col", ylabel=col)
 
 # %%
 simulated_execution_quality_df["sell_trade_midpoint_slippage_bps"].unstack().hist(
@@ -383,7 +439,7 @@ simulated_execution_df["sell_limit_order_price"].resample(
     closed="right",
     label="right",
     offset="8s",
-).mean().head()
+).mean().head(3)
 
 # %%
 executed_trades_prices = obccagfu.compute_buy_sell_prices_by_bar(
@@ -392,7 +448,7 @@ executed_trades_prices = obccagfu.compute_buy_sell_prices_by_bar(
     offset="8s",
     groupby_id_col="asset_id",
 )
-executed_trades_prices.head()
+executed_trades_prices.head(3)
 
 # %%
 resampled_simulated_execution_df = simulated_execution_df.resample(
@@ -401,72 +457,32 @@ resampled_simulated_execution_df = simulated_execution_df.resample(
     label="right",
     offset="8s",
 ).mean()
-resampled_simulated_execution_df.head()
+resampled_simulated_execution_df.head(3)
 
 # %%
 actual_executed_trades_prices = obccagfu.compute_buy_sell_prices_by_bar(
     ccxt_executed_trades_df, "1s", offset="0s", groupby_id_col="asset_id"
 )
 
-
-# %%
-def combine_sim_and_actual_trades(simulated_execution_df, fills, freq, offset):
-    #
-    actual_executed_trades_prices = obccagfu.compute_buy_sell_prices_by_bar(
-        fills,
-        freq,
-        offset=offset,
-        groupby_id_col="asset_id",
-    )
-    resampled_simulated_execution_df = simulated_execution_df.resample(
-        freq,
-        closed="right",
-        label="right",
-        offset=offset,
-    ).mean()
-    #
-    col_set = actual_executed_trades_prices.columns.levels[1].union(
-        resampled_simulated_execution_df.columns.levels[1]
-    )
-    col_set = col_set.sort_values()
-    #
-    trade_price_dict = {
-        "actual_buy_trade_price": actual_executed_trades_prices[
-            "buy_trade_price"
-        ].reindex(columns=col_set),
-        "actual_sell_trade_price": actual_executed_trades_prices[
-            "sell_trade_price"
-        ].reindex(columns=col_set),
-        "simulated_buy_trade_price": resampled_simulated_execution_df[
-            "buy_trade_price"
-        ].reindex(columns=col_set),
-        "simulated_sell_trade_price": resampled_simulated_execution_df[
-            "sell_trade_price"
-        ].reindex(columns=col_set),
-    }
-    simulated_and_actual_trade_price_df = pd.concat(trade_price_dict, axis=1)
-    return simulated_and_actual_trade_price_df
-
-
 # %%
 actual_vs_sim_trade_price_resampling_freq = "5T"
 
 # %%
-simulated_and_actual_trade_price_df = combine_sim_and_actual_trades(
+simulated_and_actual_trade_price_df = obccagfu.combine_sim_and_actual_trades(
     simulated_execution_df,
     ccxt_executed_trades_df,
     actual_vs_sim_trade_price_resampling_freq,
     offset="8s",
 )
-simulated_and_actual_trade_price_df.head()
+simulated_and_actual_trade_price_df.head(3)
 
 # %%
-oms.get_asset_slice(simulated_and_actual_trade_price_df, btc_usdt_id)[
+cofinanc.get_asset_slice(simulated_and_actual_trade_price_df, test_asset_id)[
     ["actual_buy_trade_price", "simulated_buy_trade_price"]
 ].dropna(how="all")
 
 # %%
-oms.get_asset_slice(simulated_and_actual_trade_price_df, btc_usdt_id)[
+cofinanc.get_asset_slice(simulated_and_actual_trade_price_df, test_asset_id)[
     ["actual_sell_trade_price", "simulated_sell_trade_price"]
 ].dropna(how="all")
 
@@ -500,7 +516,7 @@ sim_vs_actual_execution_quality_df = execution_quality_node.fit(
 sim_vs_actual_execution_quality_df.columns.levels[0].to_list()
 
 # %%
-oms.get_asset_slice(sim_vs_actual_execution_quality_df, btc_usdt_id)
+cofinanc.get_asset_slice(sim_vs_actual_execution_quality_df, test_asset_id)
 
 # %%
 col = "buy_trade_slippage_bps"
@@ -531,10 +547,6 @@ sim_vs_actual_execution_quality_df["sell_trade_slippage_bps"].unstack().hist(
 # - Specify buy/sell aggressiveness parameters
 # - Specify repricing frequency and time-in-force
 # - Simulate average execution prices and percentage of bars filled
-
-# %%
-def get_data():
-    return bad
 
 
 # %%
@@ -580,10 +592,8 @@ bid_ask_sim_flow_df = dag.run_leq_node(
 bid_ask_sim_flow_df.columns.levels[0].to_list()
 
 # %%
-btc_df = oms.get_asset_slice(bid_ask_sim_flow_df, btc_usdt_id)
-
-# %%
-btc_df[
+test_asset_df = cofinanc.get_asset_slice(bid_ask_sim_flow_df, test_asset_id)
+test_asset_df[
     [
         "bid_price",
         "ask_price",
@@ -594,32 +604,21 @@ btc_df[
 ]
 
 # %%
-bid_ask_sim_flow_df.head()
+bid_ask_sim_flow_df.head(3)
 
 # %%
-oms.get_asset_slice(bid_ask_sim_flow_df, btc_usdt_id)[
+cofinanc.get_asset_slice(bid_ask_sim_flow_df, test_asset_id)[
     ["buy_trade_price", "sell_trade_price"]
 ].plot()
 
 # %%
-oms.get_asset_slice(bid_ask_sim_flow_df, btc_usdt_id).head()
+cofinanc.get_asset_slice(bid_ask_sim_flow_df, test_asset_id).head(3)
 
 # %%
-btc_simulated_prices = oms.get_asset_slice(bid_ask_sim_flow_df, btc_usdt_id)
-
-# %%
-active_cols = ["buy_limit_order_price", "buy_trade_price"]
-
-# %%
-btc_simulated_prices[active_cols].dropna(how="all").plot()
-
-# %%
-# col = "buy_trade_midpoint_slippage_bps"
-# coplotti.plot_boxplot(df_out[col], "by_row", ylabel=col)
-
-# %%
-# col = "sell_trade_midpoint_slippage_bps"
-# coplotti.plot_boxplot(df_out[col], "by_row", ylabel=col)
+test_asset_simulated_prices = cofinanc.get_asset_slice(
+    bid_ask_sim_flow_df, test_asset_id
+)
+test_asset_simulated_prices[active_cols].dropna(how="all").plot()
 
 # %%
 costatis.compute_moments(
@@ -636,15 +635,11 @@ costatis.compute_moments(
 
 # %%
 simulated_buy_limits = bid_ask_sim_flow_df["buy_limit_order_price"]
-
-# %%
-simulated_buy_limits.head()
+simulated_buy_limits.head(3)
 
 # %%
 actual_buy_limits = in_df["buy_limit_order_price"]
-
-# %%
-actual_buy_limits.head()
+actual_buy_limits.head(3)
 
 # %%
 lim_vs_lim = pd.concat(
@@ -661,12 +656,12 @@ lim_vs_lim = pd.concat(
 lim_vs_lim.columns.levels[1]
 
 # %%
-oms.get_asset_slice(lim_vs_lim, lim_vs_lim.columns.levels[1][3]).dropna(
+cofinanc.get_asset_slice(lim_vs_lim, lim_vs_lim.columns.levels[1][1]).dropna(
     how="all"
 ).plot()
 
 # %%
-oms.get_asset_slice(lim_vs_lim, lim_vs_lim.columns.levels[1][0]).dropna(
+cofinanc.get_asset_slice(lim_vs_lim, lim_vs_lim.columns.levels[1][0]).dropna(
     how="all"
 ).plot()
 

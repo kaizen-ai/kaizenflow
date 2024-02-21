@@ -1,3 +1,13 @@
+v8.0
+- 2023-09-16
+- Expand binance futures universe to all available symbols
+
+v7.6
+- 2024-02-07
+- Expand OKX universe with symbols with high liquidity
+- 2024-02-01
+- Delete WAVES_USDT from OKX universe, since it is no longer supported
+
 v7.5
 - 2023-06-20
 - Test extend binance up to 100 new symbols

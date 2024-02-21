@@ -6,7 +6,8 @@ archive is saved as a `parquet` dataset with multiple .pq files.
 Use as:
 > im_v2/ccxt/db/archive_db_data_to_s3.py \
    --db_stage 'dev' \
-   --timestamp '2022-10-20 15:46:00+00:00' \
+   --start_timestamp '2023-10-20 15:46:00+00:00' \
+   --end_timestamp '2023-10-30 15:46:00+00:00' \
    --dataset_signature 'periodic_daily.airflow.downloaded_200ms.postgres.bid_ask.futures.v7_3.ccxt.binance.v1_0_0' \
    --s3_path 's3://cryptokaizen-data-test/' \
    --dry_run
@@ -63,24 +64,26 @@ def _assert_db_args(
     table_columns = hsql.get_table_columns(connection, db_table)
     hdbg.dassert_in(table_timestamp_column, table_columns)
 
+# Deprecated in CmTask5432.
+# def _assert_archival_mode(
+#     # Deprecated in CmTask5432.
+#     # incremental: bool,
+#     s3_path: str,
+# ) -> None:
+#     """
+#     Assert that the path corresponding to the DB stage and DB table exists if
+#     incremental is True, assert the path doesn't exist.
 
-def _assert_archival_mode(
-    incremental: bool,
-    s3_path: str,
-) -> None:
-    """
-    Assert that the path corresponding to the DB stage and DB table exists if
-    incremental is True, assert the path doesn't exist.
-
-    :param incremental: if True, the path must exist
-    :param s3_path: path to the S3 folder
-    """
-    if incremental:
-        # The profile won't change for the foreseeable future so
-        # so we can keep hardcoded.
-        hs3.dassert_path_exists(s3_path, aws_profile=_AWS_PROFILE)
-    else:
-        hs3.dassert_path_not_exists(s3_path, aws_profile=_AWS_PROFILE)
+#     :param incremental: if True, the path must exist
+#     :param s3_path: path to the S3 folder
+#     """
+#     # Deprecated in CmTask5432.
+#     # if incremental:
+#     #     # The profile won't change for the foreseeable future so
+#     #     # so we can keep hardcoded.
+#     #     hs3.dassert_path_exists(s3_path, aws_profile=_AWS_PROFILE)
+#     # else:
+#     hs3.dassert_path_not_exists(s3_path, aws_profile=_AWS_PROFILE)
 
 
 # TODO(Juraj): Create a mechanism to check data continuity.
@@ -114,7 +117,8 @@ def _assert_correct_archival(db_data: pd.DataFrame, s3_path: str) -> None:
 
 
 def _delete_data_from_db(
-    min_age_timestamp: pd.Timestamp,
+    start_timestamp: pd.Timestamp,
+    end_timestamp: pd.Timestamp,
     db_conn: hsql.DbConnection,
     db_table: str,
     table_timestamp_column: str,
@@ -129,12 +133,13 @@ def _delete_data_from_db(
     :param table_timestamp_column: name of the column containing timestamp
     :param dry_run: if True, the data are not deleted
     """
+    # TODO(Sonaal): Should we remove this, it is not getting called. 
     if dry_run:
         _LOG.info("Dry run. Data not deleted.")
         return
     # Delete data from DB.
-    num_deleted = imvcddbut.drop_db_data_by_age(
-        min_age_timestamp, db_conn, db_table, table_timestamp_column, exchange_id
+    num_deleted = imvcddbut.drop_db_data_within_age(
+        start_timestamp, end_timestamp, db_conn, db_table, table_timestamp_column, exchange_id
     )
     _LOG.info("Deleted %d rows from DB.", num_deleted)
 
@@ -146,7 +151,8 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
     """
     # Transform and assign args for readability.
     (
-        incremental,
+        # Deprecated in CmTask5432.
+        # incremental,
         s3_path,
         db_stage,
         dataset_signature,
@@ -155,7 +161,8 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
         skip_time_continuity_assertion,
         mode,
     ) = (
-        args.incremental,
+        # Deprecated in CmTask5432.
+        # args.incremental,
         args.s3_path,
         args.db_stage,
         args.dataset_signature,
@@ -182,17 +189,20 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
     s3_dataset_path = dsdascut.build_s3_dataset_path_from_args(
         s3_path, args_from_signature
     )
-    min_age_timestamp = pd.Timestamp(args.timestamp, tz="UTC")
+    start_timestamp = pd.Timestamp(args.start_timestamp, tz="UTC")
+    end_timestamp = pd.Timestamp(args.end_timestamp, tz="UTC")
     # Get database connection.
     db_conn = imvcddbut.DbConnectionManager.get_connection(db_stage)
     # Perform argument assertions.
     _assert_db_args(db_conn, db_table, table_timestamp_column)
-    _assert_archival_mode(incremental, s3_dataset_path)
+    # TODO(Sameep): Verify with Juraj if we need this. Deprecated in CmTask5432.
+    # _assert_archival_mode(incremental, s3_dataset_path)
     # Fetch DB data.
     db_data = pd.DataFrame()
     if mode in ("archive_only", "archive_and_delete"):
-        db_data = imvcddbut.fetch_data_by_age(
-            min_age_timestamp,
+        db_data = imvcddbut.fetch_data_within_age(
+            start_timestamp,
+            end_timestamp,
             db_conn,
             db_table,
             table_timestamp_column,
@@ -200,17 +210,19 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
         )
         if db_data.empty:
             _LOG.warning(
-                f"There is no data older than '{min_age_timestamp}' in '{db_table}' table."
+                f"There is no data between '{start_timestamp}' and \
+                '{end_timestamp}' in '{db_table}' table."
             )
         else:
             _LOG.info(f"Fetched {db_data.shape[0]} rows from '{db_table}'.")
-    # Fetch latest S3 row upon incremental archival.
-    if incremental:
-        # TODO(Juraj): CmTask#3087 think about a HW resource friendly solution to this.
-        # latest_row = _fetch_latest_row_from_s3(s3_path, timestamp)
-        # Assert time continuity of both datasets.
-        # _assert_data_continuity(latest_row, skip_time_continuity_assertion)
-        pass
+    # Deprecated in CmTask5432.
+    # # Fetch latest S3 row upon incremental archival.
+    # if incremental:
+    #     # TODO(Juraj): CmTask#3087 think about a HW resource friendly solution to this.
+    #     # latest_row = _fetch_latest_row_from_s3(s3_path, timestamp)
+    #     # Assert time continuity of both datasets.
+    #     # _assert_data_continuity(latest_row, skip_time_continuity_assertion)
+    #     pass
     if dry_run:
         _LOG.info("Dry run of data archival finished successfully.")
     else:
@@ -241,7 +253,8 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
         # Drop DB data.
         if mode in ("archive_and_delete", "delete_only"):
             _delete_data_from_db(
-                min_age_timestamp,
+                start_timestamp,
+                end_timestamp,
                 db_conn,
                 db_table,
                 table_timestamp_column,
@@ -280,12 +293,20 @@ def _parse() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
-        "--timestamp",
+        "--start_timestamp",
         action="store",
         required=True,
         type=str,
         help="Time threshold for archival. Data for which"
-        + "`table_timestamp_column` > `timestamp`, gets archived and dropped",
+        + "`table_timestamp_column` > `start_timestamp`, gets archived and dropped",
+    )
+    parser.add_argument(
+        "--end_timestamp",
+        action="store",
+        required=True,
+        type=str,
+        help="Time threshold for archival. Data for which"
+        + "`table_timestamp_column` < `end_timestamp`, gets archived and dropped",
     )
     parser.add_argument(
         "--db_stage",
@@ -324,13 +345,14 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="S3 location to archive data into",
     )
-    parser.add_argument(
-        "--incremental",
-        action="store_true",
-        required=False,
-        help="Archival mode, if True the script fails if there is no archive yet \
-            for the specified table at specified path, vice versa for False",
-    )
+    # Deprecated in CmTask5432.
+    # parser.add_argument(
+    #     "--incremental",
+    #     action="store_true",
+    #     required=False,
+    #     help="Archival mode, if True the script fails if there is no archive yet \
+    #         for the specified table at specified path, vice versa for False",
+    # )
     parser.add_argument(
         "--skip_time_continuity_assertion",
         action="store_true",

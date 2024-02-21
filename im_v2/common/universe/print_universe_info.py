@@ -91,37 +91,6 @@ def _get_ImClient(im_client: str) -> icdc.ImClient:
     return im_client
 
 
-def _parse() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawTextHelpFormatter,
-    )
-    parser.add_argument(
-        "--action",
-        action="store",
-        required=True,
-        type=str,
-        choices=_ACTIONS,
-        help=f"Choose action to perfom: {_ACTIONS}",
-    )
-    parser.add_argument(
-        "--asset_id",
-        action="store",
-        required=False,
-        type=int,
-        help="Required if --action is convert_to_full_symbol",
-    )
-    parser.add_argument(
-        "--im_client",
-        action="store",
-        required=True,
-        type=str,
-        help="",
-    )
-    hparser.add_verbosity_arg(parser)
-    return parser
-
-
 def _run(args: argparse.Namespace) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     im_client = _get_ImClient(args.im_client)
@@ -156,6 +125,40 @@ def _run(args: argparse.Namespace) -> None:
         )
     else:
         raise ValueError(f"Unsupported action={args.action}")
+
+
+# #############################################################################
+
+
+def _parse() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument(
+        "--action",
+        action="store",
+        required=True,
+        type=str,
+        choices=_ACTIONS,
+        help=f"Choose action to perfom: {_ACTIONS}",
+    )
+    parser.add_argument(
+        "--asset_id",
+        action="store",
+        required=False,
+        type=int,
+        help="Required if --action is convert_to_full_symbol",
+    )
+    parser.add_argument(
+        "--im_client",
+        action="store",
+        required=True,
+        type=str,
+        help="",
+    )
+    hparser.add_verbosity_arg(parser)
+    return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:

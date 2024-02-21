@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -32,11 +32,12 @@ import logging
 import pandas as pd
 
 import core.plotting as coplotti
+import dataflow.core as dtfcore
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import oms
+import reconciliation as reconcil
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -63,13 +64,15 @@ system_log_path_dict
 # %%
 # This dict points to `system_log_dir/dag/node_io/node_io.data` for different experiments.
 data_type = "dag_data"
-dag_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type)
+dag_path_dict = reconcil.get_system_log_paths(system_log_path_dict, data_type)
 dag_path_dict
 
 # %%
 # This dict points to `system_log_dir/process_forecasts/portfolio` for different experiments.
 data_type = "portfolio"
-portfolio_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type)
+portfolio_path_dict = reconcil.get_system_log_paths(
+    system_log_path_dict, data_type
+)
 portfolio_path_dict
 
 # %% [markdown]
@@ -84,13 +87,13 @@ node_name = "predict.5.process_forecasts"
 bar_timestamp = pd.Timestamp("2023-04-18 14:00:00-0400", tz="America/New_York")
 
 # %%
-dag_prod_df = oms.get_dag_node_output(
+dag_prod_df = dtfcore.get_dag_node_output(
     dag_path_dict["prod"], node_name, bar_timestamp
 )
 hpandas.df_to_str(dag_prod_df, num_rows=5, log_level=logging.INFO)
 
 # %%
-dag_candidate_df = oms.get_dag_node_output(
+dag_candidate_df = dtfcore.get_dag_node_output(
     dag_path_dict["candidate"], node_name, bar_timestamp
 )
 hpandas.df_to_str(dag_candidate_df, num_rows=3, log_level=logging.INFO)
@@ -114,14 +117,14 @@ max_diff
 # By using shorter history lookback period we expect the execution time to drop. Indeed, the total execution time dropped ~3x.
 
 # %%
-df_dag_execution_time_prod = oms.get_execution_time_for_all_dag_nodes(
+df_dag_execution_time_prod = dtfcore.get_execution_time_for_all_dag_nodes(
     dag_path_dict["prod"]
 )
 _LOG.info("DAG execution time:")
 hpandas.df_to_str(df_dag_execution_time_prod, num_rows=3, log_level=logging.INFO)
 
 # %%
-df_dag_execution_time_candidate = oms.get_execution_time_for_all_dag_nodes(
+df_dag_execution_time_candidate = dtfcore.get_execution_time_for_all_dag_nodes(
     dag_path_dict["candidate"]
 )
 _LOG.info("DAG execution time:")
@@ -130,13 +133,15 @@ hpandas.df_to_str(
 )
 
 # %%
-oms.plot_dag_execution_stats(df_dag_execution_time_prod, report_stats=True)
+dtfcore.plot_dag_execution_stats(df_dag_execution_time_prod, report_stats=True)
 
 # %% [markdown]
 # There are some outliers which is due to the fact that the system was run on the dev server.
 
 # %% run_control={"marked": true}
-oms.plot_dag_execution_stats(df_dag_execution_time_candidate, report_stats=True)
+dtfcore.plot_dag_execution_stats(
+    df_dag_execution_time_candidate, report_stats=True
+)
 
 # %% [markdown]
 # # Compare DAG memory consumption
@@ -145,14 +150,14 @@ oms.plot_dag_execution_stats(df_dag_execution_time_candidate, report_stats=True)
 # DAG memory consumption is expected to drop. Indeed, the difference is 400x. Use a results df's size to measure memory consumption.
 
 # %%
-dag_df_out_size_prod = oms.get_dag_df_out_size_for_all_nodes(
+dag_df_out_size_prod = dtfcore.get_dag_df_out_size_for_all_nodes(
     dag_path_dict["prod"]
 )
 _LOG.info("DAG results df size:")
 hpandas.df_to_str(dag_df_out_size_prod, num_rows=5, log_level=logging.INFO)
 
 # %%
-dag_df_out_size_candidate = oms.get_dag_df_out_size_for_all_nodes(
+dag_df_out_size_candidate = dtfcore.get_dag_df_out_size_for_all_nodes(
     dag_path_dict["candidate"]
 )
 _LOG.info("DAG results df size:")
@@ -160,11 +165,11 @@ hpandas.df_to_str(dag_df_out_size_candidate, num_rows=5, log_level=logging.INFO)
 
 # %%
 # Display the results df size distribution over the DAG nodes.
-oms.plot_dag_df_out_size_stats(dag_df_out_size_prod, report_stats=False)
+dtfcore.plot_dag_df_out_size_stats(dag_df_out_size_prod, report_stats=False)
 
 # %%
 # Display the results df size distribution over the DAG nodes.
-oms.plot_dag_df_out_size_stats(dag_df_out_size_candidate, report_stats=False)
+dtfcore.plot_dag_df_out_size_stats(dag_df_out_size_candidate, report_stats=False)
 
 # %% [markdown]
 # # Compare PnL
@@ -174,7 +179,7 @@ oms.plot_dag_df_out_size_stats(dag_df_out_size_candidate, report_stats=False)
 
 # %%
 bar_duration = "5T"
-portfolio_dfs, portfolio_stats_dfs = oms.load_portfolio_dfs(
+portfolio_dfs, portfolio_stats_dfs = reconcil.load_portfolio_dfs(
     portfolio_path_dict,
     bar_duration,
 )

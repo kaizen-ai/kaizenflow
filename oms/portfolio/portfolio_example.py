@@ -13,9 +13,9 @@ import pandas as pd
 
 import helpers.hsql as hsql
 import market_data as mdata
-import oms.broker.broker as obrobrok
 import oms.broker.broker_example as obrbrexa
 import oms.broker.ccxt.dataframe_ccxt_broker as obcdccbr
+import oms.broker.dataframe_broker as obdabro
 import oms.db.oms_db as odbomdb
 import oms.portfolio.database_portfolio as opdapor
 import oms.portfolio.dataframe_portfolio as opodapor
@@ -85,7 +85,7 @@ def get_DataFramePortfolio_example2(
     exposing all the parameters for creating these objects.
     """
     # Build DataFrameBroker.
-    broker = obrobrok.DataFrameBroker(
+    broker = obdabro.DataFrameBroker(
         strategy_id,
         market_data,
         account=account,

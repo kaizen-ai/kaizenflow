@@ -34,25 +34,35 @@ AssetId = int
 # #############################################################################
 
 
-# TODO(gp): We should use the column_remap as we do for broker. E.g., we tell the
-#  remap what's the mapping from the column names to the official names.
+# TODO(gp): CleanUp. We should use the column_remap as we do for broker.
+#  E.g., we tell the remap what's the mapping from the column names to the
+#  "official" names. The remap right after the data is retrieved from the
+#  ImClient.
 #  Instead now we specify the name of each column through `start_time_col_name`
 #  and `end_time_col_name`.
 #  The remap approach has the benefit of tending to make the naming more stable.
+
 # TODO(gp): One can use start or end of an interval to work on. It's unclear how
-#  the knowledge time is handled. It seems that it is handled by the derived classes.
+#  the knowledge time is handled. It seems that it is handled by the derived
+#  classes.
 class MarketData(abc.ABC, hobject.PrintableMixin):
     """
     Implement an interface to an historical / real-time source of price data.
 
-    `market_data/data_pipeline_architecture.md` discusses the design principles.
+    Clients pass values that are typically fixed across the life of `MarketData`
+    through the constructor. Some of the class methods allow to optionally
+    override the values passed to the constructor.
+
+    `MarketData` allows to query for intervals of data with different open/close
+    semantics, using different columns (e.g., start or end time of a data
+    interval) as the timestamp, but always preventing future peeking.
 
     # Responsibilities:
-    - Delegate to a data backend in `ImClient` to retrieve historical and real-time
-      data
+    - Delegate to a data backend in `ImClient` to retrieve historical and
+      real-time data. Derived classes implement `_get_data()`.
     - Model data in terms of interval `start_timestamp`, `end_timestamp`
         - `ImClient` models data in terms of end timestamp of the interval
-    - Implement RT behaviors (e.g, `is_last_bar_available`, wall_clock, ...)
+    - Implement RT behaviors (e.g, `is_last_bar_available`, wall clock, ...)
     - Implement knowledge time and delay
         - `ImClient` doesn't have this view of the data
     - Stitch together different data representations (e.g., historical / RT)
@@ -63,15 +73,15 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
     - Handle timezones, i.e. convert all timestamp to the provided timezone
 
     # Non-responsibilities:
-    - In general do not access data directly but rely on `ImClient` objects to
-      retrieve the data from different backends
+    - Do not access data directly but rely on `ImClient` objects to retrieve the
+      data from different backends
     - The knowledge time is handled by the derived classes.
 
     # Output format
     - The class normalizes the data by:
         - sorting by the columns that correspond to `end_time` and `asset_id`
-        - indexing by the column that corresponds to `end_time`, so that it is suitable
-          to DataFlow computation
+        - indexing by the column that corresponds to `end_time`, so that it is
+          suitable to DataFlow computation
     - E.g.,
     ```
                             asset_id                start_time    close   volume
@@ -112,19 +122,21 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         before the remapping.
 
         :param asset_id_col: the name of the column used to select the asset ids
-        :param asset_ids: as described in the class docstring
+        :param asset_ids: list of ids to access
         :param start_time_col_name: the name of the column storing the `start_time`
         :param end_time_col_name: the name of the column storing the `end_time`
-        :param columns: columns to return. `None` means all available
+        :param columns: columns to return.
+            - `None` means all the available columns
         :param get_wall_clock_time: the wall clock
         :param timezone: timezone to convert normalized output timestamps to
         :param sleep_in_secs, time_out_in_secs: sample every `sleep_in_secs`
             seconds waiting up to `time_out_in_secs` seconds.
             If `time_out_in_secs` is None, sample until manual interruption
-        :param column_remap: dict of columns to remap the output data or `None` for
-            no remapping
+        :param column_remap: dict of columns to remap the output data
+            - `None` for no remapping
         :param filter_data_mode: control class behavior with respect to extra
-            or missing columns, like in `hpandas.check_and_filter_matching_columns()`
+            or missing columns, like in
+            `hpandas.check_and_filter_matching_columns()`
         """
         _LOG.debug(
             hprint.to_str(
@@ -138,7 +150,9 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         # TODO(gp): Some tests pass asset_ids=None which is not ideal.
         # hdbg.dassert_is_not(asset_ids, None)
         self._asset_ids = asset_ids
+        # This needs `self._asset_ids` to be initialized.
         self._dassert_valid_asset_ids(asset_ids)
+        #
         self._start_time_col_name = start_time_col_name
         self._end_time_col_name = end_time_col_name
         self._columns = columns
@@ -150,37 +164,125 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         self._sleep_in_secs = sleep_in_secs
         #
         self._timezone = timezone
+        #
         if column_remap is not None:
             hdbg.dassert_isinstance(column_remap, dict)
         self._column_remap = column_remap
         #
         self._filter_data_mode = filter_data_mode
-        # Compute the max number of iterations.
+        # Compute the max number of iterations based on the timeout.
         hdbg.dassert_lt(0, time_out_in_secs)
         if time_out_in_secs is not None:
             max_iterations = int(time_out_in_secs / sleep_in_secs)
             hdbg.dassert_lte(1, max_iterations)
         else:
             max_iterations = None
-            _LOG.warning(
-                "No time limit is set via `max_iterations`. Interrupt manually if needed."
-            )
+            _LOG.warning("No time limit is set via `max_iterations`.")
         self._max_iterations = max_iterations
 
-    # /////////////////////////////////////////////////////////////////////////////
+    # TODO(gp): Who needs this? It seems an implementation detail.
+    @property
+    def asset_id_col(self) -> str:
+        return self._asset_id_col
+
+    # ////////////////////////////////////////////////////////////////////////////
+
+    def get_data_for_interval(
+        self,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        ts_col_name: str,
+        asset_ids: Optional[List[int]],
+        *,
+        left_close: bool = True,
+        right_close: bool = False,
+        # TODO(gp): Cleanup. Remove limit, since this is a DB implementation.
+        limit: Optional[int] = None,
+        ignore_delay: bool = False,
+    ) -> pd.DataFrame:
+        """
+        Return data for an interval with `start_ts` and `end_ts` boundaries.
+
+        All the `get_data_*` functions should go through this function since it
+        is in charge of converting the data to the right timezone and performing
+        the column name remapping.
+
+        :param ts_col_name: the name of the column (before the remapping) to
+            filter on
+        :param asset_ids: list of asset ids to filter on. `None` for all asset
+            ids.
+        :param left_close, right_close: represent the type of interval
+            - E.g., [start_ts, end_ts), or (start_ts, end_ts]
+        """
+        _LOG.debug(
+            hprint.to_str(
+                "start_ts end_ts ts_col_name asset_ids left_close right_close "
+                "limit ignore_delay"
+            )
+        )
+        # Resolve the asset ids.
+        if asset_ids is None:
+            asset_ids = self._asset_ids
+        self._dassert_valid_asset_ids(asset_ids)
+        # Sanity check the requested interval.
+        hdateti.dassert_is_valid_interval(
+            start_ts, end_ts, left_close, right_close
+        )
+        # Delegate to the derived classes to retrieve the data.
+        df = self._get_data(
+            start_ts,
+            end_ts,
+            ts_col_name,
+            asset_ids,
+            left_close,
+            right_close,
+            limit,
+            ignore_delay,
+        )
+        _LOG.debug("-> df after _get_data=\n%s", hpandas.df_to_str(df))
+        _LOG.debug("get_data_for_interval() columns '%s'", df.columns)
+        # If the assets were specified, check that the returned data doesn't
+        # contain data that we didn't request.
+        # TODO(Danya): How do we handle NaNs?
+        hdbg.dassert_is_subset(
+            df[self._asset_id_col].dropna().unique(), asset_ids
+        )
+        # TODO(gp): If asset_ids was specified but the backend has a universe
+        #  specified already, we might need to apply a filter by asset_ids.
+        # Normalize data.
+        df = self._normalize_data(df)
+        _LOG.debug("-> df after _normalize_data=\n%s", hpandas.df_to_str(df))
+        # Convert start and end timestamps to the timezone specified in the ctor.
+        df = self._convert_timestamps_to_timezone(df)
+        _LOG.debug(
+            "-> df after _convert_timestamps_to_timezone=\n%s",
+            hpandas.df_to_str(df),
+        )
+        # Check that columns are the required ones.
+        # TODO(gp): Difference between amp and cmamp.
+        if self._columns is not None:
+            df = hpandas.check_and_filter_matching_columns(
+                df, self._columns, self._filter_data_mode
+            )
+        # Remap result columns to the required names.
+        df = self._remap_columns(df)
+        _LOG.debug("-> df after _remap_columns=\n%s", hpandas.df_to_str(df))
+        if _TRACE:
+            _LOG.trace("-> df=\n%s", hpandas.df_to_str(df))
+        hdbg.dassert_isinstance(df, pd.DataFrame)
+        return df
 
     def get_data_for_last_period(
         self,
         timedelta: pd.Timedelta,
         *,
         ts_col_name: Optional[str] = None,
-        # TODO(gp): @Grisha not sure limit is really needed. We could move it
-        #  to the DB implementation.
+        # TODO(gp): Cleanup. Not sure limit is really needed in the abstract
+        #  interface. We could move it to the DB implementation.
         limit: Optional[int] = None,
     ) -> pd.DataFrame:
         """
-        Get an amount of data `timedelta` in the past before the current
-        timestamp.
+        Get data up to `timedelta` in the past before the current timestamp.
 
         This is used during real-time execution to evaluate a model.
 
@@ -189,7 +291,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         configured upstream when this object was built.
 
         :param timedelta: length of last time period
-        :param ts_col_name: name of timestamp column, None to use start_timestamp
+        :param ts_col_name: name of timestamp column
+            - `None` to use start_timestamp from the constructor
         :param limit: max number of rows to output
         :return: DataFrame with data for last given period
         """
@@ -203,20 +306,19 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         _LOG.debug(hprint.to_str("start_ts end_ts"))
         if ts_col_name is None:
             # By convention to get the last chunk of data we use the start_time
-            #  column.
+            # column.
             # TODO(Danya): Make passing of ts_col_name mandatory.
             ts_col_name = self._start_time_col_name
-        asset_ids = self._asset_ids
         # Get the data.
         df = self.get_data_for_interval(
             start_ts,
             end_ts,
             ts_col_name,
-            asset_ids,
+            self._asset_ids,
             limit=limit,
         )
-        # We don't need to remap columns since `get_data_for_interval()` has already
-        # done it.
+        # We don't need to remap columns since `get_data_for_interval()` has
+        # already done it.
         if _TRACE:
             _LOG.trace("-> df=\n%s", hpandas.df_to_str(df))
         return df
@@ -232,10 +334,11 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         """
         Return price data at a specific timestamp.
 
-        :param ts_col_name: the name of the column (before the remapping) to filter
-            on and use as index
         :param ts: the timestamp to filter on
-        :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
+        :param ts_col_name: the name of the column (before the remapping) to
+            filter on and use as index
+        :param asset_ids: list of asset ids to filter on. `None` for all asset
+            ids.
         :return: df with results, e.g.,
         ```
                                              start_datetime              timestamp_db     bid     ask  midpoint  volume  asset_id   price
@@ -253,93 +356,10 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             asset_ids,
             ignore_delay=ignore_delay,
         )
-        # We don't need to remap columns since `get_data_for_interval()` has already
-        # done it.
+        # We don't need to remap columns since `get_data_for_interval()` has
+        # already done it.
         if _TRACE:
             _LOG.trace("-> df=\n%s", hpandas.df_to_str(df))
-        return df
-
-    def get_data_for_interval(
-        self,
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-        ts_col_name: str,
-        asset_ids: Optional[List[int]],
-        *,
-        left_close: bool = True,
-        right_close: bool = False,
-        limit: Optional[int] = None,
-        ignore_delay: bool = False,
-    ) -> pd.DataFrame:
-        """
-        Return price data for an interval with `start_ts` and `end_ts`
-        boundaries.
-
-        All the `get_data_*` functions should go through this function since
-        it is in charge of converting the data to the right timezone and
-        performing the column name remapping.
-
-        :param ts_col_name: the name of the column (before the remapping) to filter
-            on
-        :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
-        :param left_close, right_close: represent the type of interval
-            - E.g., [start_ts, end_ts), or (start_ts, end_ts]
-        """
-        _LOG.debug(
-            hprint.to_str(
-                "start_ts end_ts ts_col_name asset_ids left_close right_close limit ignore_delay"
-            )
-        )
-        # Resolve the asset ids.
-        if asset_ids is None:
-            asset_ids = self._asset_ids
-        self._dassert_valid_asset_ids(asset_ids)
-        # Check the requested interval.
-        hdateti.dassert_is_valid_interval(
-            start_ts, end_ts, left_close, right_close
-        )
-        # Delegate to the derived classes to retrieve the data.
-        df = self._get_data(
-            start_ts,
-            end_ts,
-            ts_col_name,
-            asset_ids,
-            left_close,
-            right_close,
-            limit,
-            ignore_delay,
-        )
-        _LOG.debug("-> df after _get_data=\n%s", hpandas.df_to_str(df))
-        _LOG.debug("get_data_for_interval() columns '%s'", df.columns)
-        # If the assets were specified, check that the returned data doesn't contain
-        # data that we didn't request.
-        # TODO(Danya): How do we handle NaNs?
-        hdbg.dassert_is_subset(
-            df[self._asset_id_col].dropna().unique(), asset_ids
-        )
-        # TODO(gp): If asset_ids was specified but the backend has a universe
-        #  specified already, we might need to apply a filter by asset_ids.
-        # Normalize data.
-        df = self._normalize_data(df)
-        _LOG.debug("-> df after _normalize_data=\n%s", hpandas.df_to_str(df))
-        # Convert start and end timestamps to the timezone specified in the ctor.
-        df = self._convert_timestamps_to_timezone(df)
-        _LOG.debug(
-            "-> df after _convert_timestamps_to_timezone=\n%s",
-            hpandas.df_to_str(df),
-        )
-        # Check that columns are required ones.
-        # TODO(gp): Difference between amp and cmamp.
-        if self._columns is not None:
-            df = hpandas.check_and_filter_matching_columns(
-                df, self._columns, self._filter_data_mode
-            )
-        # Remap result columns to the required names.
-        df = self._remap_columns(df)
-        _LOG.debug("-> df after _remap_columns=\n%s", hpandas.df_to_str(df))
-        if _TRACE:
-            _LOG.trace("-> df=\n%s", hpandas.df_to_str(df))
-        hdbg.dassert_isinstance(df, pd.DataFrame)
         return df
 
     def get_wall_clock_time(self) -> pd.Timestamp:
@@ -356,10 +376,6 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         )
         return wall_clock_time_correct_timezone
 
-    @property
-    def asset_id_col(self) -> str:
-        return self._asset_id_col
-
     # /////////////////////////////////////////////////////////////////////////////
 
     def to_price_series(
@@ -374,7 +390,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             end_datetime
             2000-01-01 09:35:00-05:00 2000-01-01 09:34:00-05:00 2000-01-01 09:35:01-05:00  997.41  997.44    997.42     978       101  997.42
             ```
-        into a series that indexed by asset_id:
+        into a series that is indexed by `asset_id`:
             ```
                        price
             asset_id
@@ -391,7 +407,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         hdbg.dassert_no_duplicates(
             price_df.index.to_list(), "price_df=%s", price_df
         )
-        # Ensure that there is a single.
+        # Convert into a series.
         price_srs = hpandas.to_series(price_df)
         hdbg.dassert_isinstance(price_srs, pd.Series)
         price_srs.index.name = self._asset_id_col
@@ -417,8 +433,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         This function should be called `get_twa_price()` or `get_twap()`, but alas
         TWAP is often used as an adjective for price.
 
-        :param start_ts, end_ts: beginning and end of the time period as (`ts_start`,
-            `ts_end`]
+        :param start_ts: beginning of the time period
+        :param end_ts: end of the time period
         :param ts_col_name: column to use to index (e.g., `start_datetime` or
             `end_datetime`)
         :param column: column to use to compute the TWAP (e.g., `bid`, `ask`,
@@ -447,8 +463,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             limit=None,
             ignore_delay=ignore_delay,
         )
-        # We don't need to remap columns since `get_data_for_interval()` has already
-        # done it.
+        # We don't need to remap columns since `get_data_for_interval()` has
+        # already done it.
         hdbg.dassert_in(column, prices.columns)
         # Compute the mean value.
         if _TRACE:
@@ -543,11 +559,11 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
 
     def get_last_end_time(self) -> Optional[pd.Timestamp]:
         """
-        Return the last `end_time` present in the RT DB.
+        Return the last `end_time` present from a real time data source.
 
         In the actual RT DB there is always some data, so we return a
-        timestamp. We return `None` only for replayed time when there is
-        no time (e.g., before the market opens).
+        timestamp. The only case when we return `None` only for replayed
+        time when there is no time (e.g., before the market opens).
         """
         last_end_time = self._get_last_end_time()
         _LOG.debug(hprint.to_str("last_end_time"))
@@ -599,8 +615,9 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         """
         Return whether the DB is on-line at the current time.
 
-        This is useful to avoid to wait on a DB that is off-line. We
-        check this by checking if there was data in the last minute.
+        This is useful to avoid to wait on a real-time source (e.g., a
+        DB) that is off-line. We check this property by checking if
+        there was data in the last minute.
         """
         # Check if the data in the last minute is empty.
         if _TRACE:
@@ -635,19 +652,20 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
     ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
         """
         Wait until the bar with `end_time` == `current_bar_timestamp` is
-        present in the RT DB.
+        available.
 
-        :return:
+        :return: a triple
             - start_sampling_time: timestamp when the sampling started
             - end_sampling_time: timestamp when the sampling ended, since the bar
               was ready
-            - num_iter: number of iterations before the last bar was ready
+            - num_iter: number of iterations until the last bar was ready
         """
         start_sampling_time = self.get_wall_clock_time()
         current_bar_timestamp = hwacltim.get_current_bar_timestamp()
         _LOG.debug(hprint.to_str("start_sampling_time current_bar_timestamp"))
-        # We should start sampling for a bar inside the bar interval. Sometimes we start a
-        # second before or after due to wall-clock drift so we round to the nearest minute.
+        # We should start sampling for a bar inside the bar interval. Sometimes
+        # we start a second before or after due to wall-clock drift so we round
+        # to the nearest minute.
         hdbg.dassert_lte(start_sampling_time.round("1T"), current_bar_timestamp)
         if _TRACE:
             _LOG.trace("DB on-line: %s", self.is_online())
@@ -657,7 +675,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         while True:
             wall_clock_time = self.get_wall_clock_time()
             last_db_end_time = self.get_last_end_time()
-            # TODO(gp): We should use the new hasynci.poll().
+            # TODO(gp): Cleanup. We should use the new hasynci.poll().
             _LOG.debug(
                 "\n### waiting on last bar: "
                 "num_iter=%s/%s: current_bar_timestamp=%s wall_clock_time=%s last_db_end_time=%s",
@@ -680,13 +698,9 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
                 self._max_iterations is not None
                 and num_iter >= self._max_iterations
             ):
-                msg = " ".join(
-                    [
-                        f"Timeout after {num_iter} iterations. ",
-                        hprint.to_str(
-                            "self._max_iterations current_bar_timestamp wall_clock_time last_db_end_time"
-                        ),
-                    ]
+                msg = f"Timeout after {num_iter} iterations. " + hprint.to_str(
+                    "self._max_iterations current_bar_timestamp "
+                    "wall_clock_time last_db_end_time"
                 )
                 _LOG.error(msg)
                 raise TimeoutError
@@ -703,6 +717,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
 
     # /////////////////////////////////////////////////////////////////////////////
 
+    # TODO(gp): Cleanup. Use a better name _get_XYZ.
     @staticmethod
     def _process_period(
         timedelta: pd.Timedelta, wall_clock_time: pd.Timestamp
@@ -758,23 +773,24 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         asset_ids: Optional[List[int]],
         left_close: bool,
         right_close: bool,
+        # TODO(gp): Cleanup. Not sure limit is really needed in the abstract.
         limit: Optional[int],
         ignore_delay: bool,
     ) -> pd.DataFrame:
         """
-        Return data in the interval start_ts, end_ts for certain assets.
+        Return data in the interval start_ts, end_ts for the given assets.
 
-        This should be the only entrypoint to get data from the derived
-        classes.
+        This is the only entrypoint to get data from the derived classes.
 
         :param start_ts: beginning of the time interval to select data for
         :param end_ts: end of the time interval to select data for
-        :param ts_col_name: the name of the column (before the remapping) to filter
-            on
+        :param ts_col_name: the name of the column (before the remapping) to
+            filter on
         :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
         :param left_close, right_close: represent the type of interval
             - E.g., [start_ts, end_ts), or (start_ts, end_ts]
         :param limit: keep only top N records
+        :param ignore_delay: TODO
         """
         ...
 
@@ -794,10 +810,9 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
 
     def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Transform df from real-time DB into data similar to the historical TAQ
-        bars.
+        Transform data from `ImClient` output format to `MarketData` format.
 
-        The input df looks like:
+        The input df (in `ImClient` format) looks like:
         ```
           asset_id           start_time             end_time     close   volume
 
@@ -809,11 +824,11 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
 
         The output df looks like:
         ```
-                                asset_id                start_time    close   volume
+                                 asset_id                 start_time    close   volume
         end_time
-        2021-07-20 09:31:00-04:00  17085 2021-07-20 09:30:00-04:00  143.990  1524506
-        2021-07-20 09:32:00-04:00  17085 2021-07-20 09:31:00-04:00  143.310   586654
-        2021-07-20 09:33:00-04:00  17085 2021-07-20 09:32:00-04:00  143.535   667639
+        2021-07-20 09:31:00-04:00   17085  2021-07-20 09:30:00-04:00  143.990  1524506
+        2021-07-20 09:32:00-04:00   17085  2021-07-20 09:31:00-04:00  143.310   586654
+        2021-07-20 09:33:00-04:00   17085  2021-07-20 09:32:00-04:00  143.535   667639
         ```
         """
         # Sort in increasing time order and reindex.
@@ -837,8 +852,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         """
         Remap column names with provided mapping.
 
-        :param df: input dataframe
-        :return: dataframe with remapped column names
+        :param df: input data
+        :return: df with remapped column names
         """
         if self._column_remap:
             hpandas.dassert_valid_remap(df.columns.tolist(), self._column_remap)
@@ -850,7 +865,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         Convert start and end timestamps to the specified timezone.
 
         :param df: normalized data
-        :return: data with start and end dates in specified timezone
+        :return: df with start and end dates in specified timezone
         """
         if df.empty:
             return df
@@ -858,7 +873,6 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         hpandas.dassert_index_is_datetime(df)
         df.index = df.index.tz_convert(self._timezone)
         # Convert start timestamp column values.
-        df[self._start_time_col_name] = df[
-            self._start_time_col_name
-        ].dt.tz_convert(self._timezone)
+        srs = df[self._start_time_col_name].dt.tz_convert(self._timezone)
+        df[self._start_time_col_name] = srs
         return df

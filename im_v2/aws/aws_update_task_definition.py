@@ -26,30 +26,24 @@ import helpers.hparser as hparser
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Nikola): Deprecate in favor of `haws` one.
-def _update_task_definition(task_definition: str, image_tag: str) -> None:
+def _update_task_definition(
+    task_definition: str, image_tag: str, region: str
+) -> None:
     """
     Create the new revision of specified ECS task definition and point Image
     URL specified to the new candidate image.
 
-    :param task_definition: the name of the ECS task definition for which an update
-    to container image URL is made, e.g. cmamp-test
-    :param image_tag: the hash of the new candidate image, e.g. 13538588e
+    :param task_definition: the name of the ECS task definition for
+        which an update to container image URL is made, e.g. cmamp-test
+    :param image_tag: the hash of the new candidate image, e.g.
+        13538588e
     """
-    client = haws.get_ecs_client("ck")
-    # Get the last revision of the task definition.
-    task_description = client.describe_task_definition(
-        taskDefinition=task_definition
+    old_image_url = haws.get_task_definition_image_url(
+        task_definition, region=region
     )
-    task_def = task_description["taskDefinition"]
-    # TODO(Nikola): Currently original image URL is untouched and only tag is changed.
-    #   This is a problem if we need to use different ECR base path.
-    #   For now, on ECR base path change, task definitions must be updated manually.
-    #   `*.dkr.ecr.us-east-1.*/cmamp:prod-12a45` -> `*.dkr.ecr.eu-north-1.*/cmamp:prod-12a45`
-    old_image_url = task_def["containerDefinitions"][0]["image"]
     # Edit container version, e.g. cmamp:prod-12a45 - > cmamp:prod-12b46`
     new_image_url = re.sub("prod-(.+)$", f"prod-{image_tag}", old_image_url)
-    haws.update_task_definition(task_definition, new_image_url)
+    haws.update_task_definition(task_definition, new_image_url, region=region)
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -68,6 +62,12 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="the hash of the new candidate image",
     )
+    parser.add_argument(
+        "-r",
+        "--region",
+        type=str,
+        help="aws region",
+    )
     hparser.add_verbosity_arg(parser)
     return parser
 
@@ -75,7 +75,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    _update_task_definition(args.task_definition, args.image_tag)
+    _update_task_definition(args.task_definition, args.image_tag, args.region)
 
 
 if __name__ == "__main__":

@@ -3,10 +3,11 @@ import datetime
 import pandas as pd
 import pytest
 
+import helpers.hpandas as hpandas
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
 import im.common.data.types as imcodatyp
-import im.kibot.data.load.kibot_sql_data_loader as ikdlksdlo
+import im.kibot.data.load.kibot_sql_data_loader as imkdlksdlo
 import im.kibot.sql_writer as imkisqwri
 import im_v2.common.db.db_utils as imvcddbut
 
@@ -17,8 +18,16 @@ class TestSqlDataLoader1(hunitest.TestCase):
     Test writing operation to PostgreSQL Kibot DB.
     """
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
         # Get PostgreSQL connection parameters.
         self._connection = hsql.get_connection_from_env_vars()
         self._new_db = self._get_test_name().replace("/", "").replace(".", "")
@@ -36,16 +45,15 @@ class TestSqlDataLoader1(hunitest.TestCase):
         self._prepare_tables(writer)
         writer.close()
         # Create loader.
-        self._loader = ikdlksdlo.KibotSqlDataLoader(
+        self._loader = imkdlksdlo.KibotSqlDataLoader(
             self._new_db, self._user, self._password, self._host, self._port
         )
 
-    def tearDown(self) -> None:
+    def tear_down_test(self) -> None:
         # Close connection.
         self._loader.conn.close()
         # Remove created database.
         hsql.remove_database(connection=self._connection, dbname=self._new_db)
-        super().tearDown()
 
     def test_get_symbol_id1(self) -> None:
         """
@@ -102,7 +110,7 @@ class TestSqlDataLoader1(hunitest.TestCase):
             "CME", "ZYX9", imcodatyp.Frequency.Minutely
         )
         # Convert to string.
-        actual_string = hunitest.convert_df_to_string(actual)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         # Compare with golden.
         self.check_string(actual_string, fuzzy_match=True)
 
@@ -113,7 +121,7 @@ class TestSqlDataLoader1(hunitest.TestCase):
         # Get data.
         actual = self._loader._read_data("LSE", "ZYX9", imcodatyp.Frequency.Daily)
         # Convert to string.
-        actual_string = hunitest.convert_df_to_string(actual)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         # Compare with golden.
         self.check_string(actual_string, fuzzy_match=True)
 

@@ -45,7 +45,8 @@ class CcxtImClient(icdc.ImClient):
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
-        Override the implementation by taking care of special timing semantic of the data (e.g., for Binance).
+        Override the implementation by taking care of special timing semantic
+        of the data (e.g., for Binance).
         """
         exchange_to_full_symbols_unique = self._split_full_symbols_by_exchanges(
             full_symbols
@@ -54,8 +55,15 @@ class CcxtImClient(icdc.ImClient):
         # Collect exchange-specific dataframes.
         exchange_dfs = []
         for exchange, full_symbols in exchange_to_full_symbols_unique.items():
-            if exchange == "binance":
-                # Account for the fact that for Binance `timestamp` is the start of the
+            binance_cond = exchange == "binance"
+            # For Parquet readers use `_dataset` attribute to get dataset type.
+            ohlcv_pq_cond = getattr(self, "_dataset", "") == "ohlcv"
+            # For DB readers use table name to get dataset type, e.g., `ccxt_ohlcv_futures`.
+            ohlcv_db_cond = "ohlcv" in getattr(self, "_table_name", "")
+            # The assumption is that the reader is either Parquet or DB one.
+            ohlcv_cond = ohlcv_pq_cond or ohlcv_db_cond
+            if binance_cond and ohlcv_cond:
+                # Account for the fact that for CCXT OHLCV Binance `timestamp` is the start of the
                 # sampling interval. E.g., to get data for [17:00, 17:02] (end of sampling
                 # interval) one needs to query for [16:59, 17:01] (start of sampling interval).
                 # TODO(Grisha): the assumption is that data resolution is 1 minute, is it
@@ -404,6 +412,7 @@ class CcxtHistoricalPqByTileClient(
     It can read data from local or S3 filesystem as backend.
     """
 
+    # TODO(Grisha): use `*args` and `**kwargs` in order not to repeat the base class params.
     def __init__(
         self,
         universe_version: str,
@@ -414,6 +423,7 @@ class CcxtHistoricalPqByTileClient(
         data_snapshot: str,
         *,
         version: str = "",
+        download_universe_version: str = "",
         tag: str = "",
         aws_profile: Optional[str] = None,
         resample_1min: bool = False,
@@ -433,6 +443,7 @@ class CcxtHistoricalPqByTileClient(
             contract_type,
             data_snapshot,
             version=version,
+            download_universe_version=download_universe_version,
             tag=tag,
             aws_profile=aws_profile,
             resample_1min=resample_1min,

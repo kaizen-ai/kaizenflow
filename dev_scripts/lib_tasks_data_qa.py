@@ -39,6 +39,7 @@ from typing import Any, Dict
 from invoke import task
 
 import core.config as cconfig
+import data_schema.dataset_schema_utils as dsdascut
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import oms.lib_tasks_reconcile as olitarec
@@ -95,7 +96,12 @@ def _create_dir_for_data_qa(
     start_timestamp = start_timestamp.replace("T", "_")
     end_timestamp = end_timestamp.replace("T", "_")
     timestamp_dst_dir = f"{start_timestamp}.{end_timestamp}"
-    target_dir = os.path.join(base_dst_dir, timestamp_dst_dir, db_table)
+    # Using only the date component of the timestamp to designate a directory for
+    # storing results from a specific date. 20221101_000200 -> 20221101.
+    date_dst_dir = start_timestamp[:8]
+    target_dir = os.path.join(
+        base_dst_dir, date_dst_dir, timestamp_dst_dir, db_table
+    )
     # Create a dir for QA results.
     hio.create_dir(target_dir, incremental=True, abort_if_exists=abort_if_exists)
     # Sanity check the created dirs.
@@ -110,11 +116,12 @@ def _run_data_qa_notebook(
     """
     Run data QA notebook and store it in a specified location.
 
-    The function encapsulates common behavior, concrete QA flows parametrize
-    it for particular use cases.
+    The function encapsulates common behavior, concrete QA flows
+    parametrize it for particular use cases.
 
     :param base_dst_dir: top most directory to store data QA into
-    :param notebook_path: relative path to the notebook to execute, assuming amp is a submodule.
+    :param notebook_path: relative path to the notebook to execute,
+        assuming amp is a submodule.
     """
     # TODO(Juraj): this does not work in the cmamp prod container when ran
     #  via AWS ECS.
@@ -192,6 +199,8 @@ def run_single_dataset_qa_notebook(
     stage,
     aws_profile=None,
     bid_ask_accuracy=None,
+    bid_ask_depth=1,
+    bid_ask_frequency_sec="60S",
 ):
     """
     Run single data QA notebook and store it in a specified location.
@@ -208,9 +217,20 @@ def run_single_dataset_qa_notebook(
         "aws_profile": aws_profile,
         "dataset_signature": dataset_signature,
         "bid_ask_accuracy": bid_ask_accuracy,
+        "bid_ask_depth": bid_ask_depth,
+        "bid_ask_frequency_sec": bid_ask_frequency_sec,
     }
     _ = ctx
-    notebook_path = "amp/im_v2/ccxt/data/qa/notebooks/data_qa_ohlcv.ipynb"
+    dataset_schema = dsdascut.get_dataset_schema()
+    dataset_signature_as_dict = dsdascut.parse_dataset_signature_to_args(
+        dataset_signature, dataset_schema
+    )
+    if dataset_signature_as_dict["data_type"] == "ohlcv":
+        notebook_path = "amp/im_v2/ccxt/data/qa/notebooks/data_qa_ohlcv.ipynb"
+    elif dataset_signature_as_dict["data_type"] == "bid_ask":
+        notebook_path = "amp/im_v2/ccxt/data/qa/notebooks/data_qa_bid_ask.ipynb"
+    else:
+        raise NotImplementedError
     _run_data_qa_notebook(config_dict, base_dst_dir, notebook_path)
 
 

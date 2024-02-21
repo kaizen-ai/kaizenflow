@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -19,13 +19,11 @@
 import datetime
 import logging
 
+import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
-
-
-import dataflow.model as dtfmod
-import oms
+import reconciliation as reconcil
 
 # %load_ext autoreload
 # %autoreload 2
@@ -43,17 +41,17 @@ hprint.config_notebook()
 # # Current and yesterday
 
 # %% hidden=true
-import oms
 
 
 # Load portfolio stats.
 portfolio_dir = "/shared_data/ecs/preprod/system_reconciliation/C1b/20230512/system_log_dir.scheduled.20230512_131000.20230513_130500/process_forecasts/portfolio"
-_, stats_df = oms.load_portfolio_artifacts(portfolio_dir)
+_, stats_df = reconcil.load_portfolio_artifacts(portfolio_dir)
 # Compute cumulative PnL.
 cumulative_pnl = stats_df["pnl"].cumsum()
 
 # %% hidden=true
 import pandas as pd
+
 pd.Series(cumulative_pnl.index).agg(["min", "max"])
 
 # %% hidden=true
@@ -74,9 +72,9 @@ start_date = datetime.date(2019, 9, 1)
 end_date = datetime.date(2023, 5, 15)
 asset_id_col = "asset_id"
 data_cols = {
-  "price": "vwap",
-  "volatility":  "garman_klass_vol",
-  "prediction": "feature"
+    "price": "vwap",
+    "volatility": "garman_klass_vol",
+    "prediction": "feature",
 }
 data_cols_list = list(data_cols.values())
 iter_ = dtfmod.yield_processed_parquet_tiles_by_year(
@@ -99,11 +97,11 @@ fep = dtfmod.ForecastEvaluatorFromPrices(
 # %%
 _, bar_metrics = fep.annotate_forecasts(
     df_res,
-    quantization= "no_quantization",
+    quantization="no_quantization",
     burn_in_bars=3,
     style="longitudinal",
-    liquidate_at_end_of_day= False,
-    initialize_beginning_of_day_trades_to_zero=False
+    liquidate_at_end_of_day=False,
+    initialize_beginning_of_day_trades_to_zero=False,
 )
 
 # %%

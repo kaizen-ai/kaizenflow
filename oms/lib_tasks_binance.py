@@ -9,53 +9,23 @@ import logging
 import pandas as pd
 from invoke import task
 
-import dataflow_amp.system.Cx as dtfamsysc
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hserver as hserver
-import helpers.hsql as hsql
-
 import helpers.hsystem as hsystem
 import oms.broker.ccxt.ccxt_broker_instances as obccbrin
-import im_v2.common.data.client as icdc
-import im_v2.common.db.db_utils as imvcddbut
-import im_v2.im_lib_tasks as imvimlita
-import oms.broker.ccxt.ccxt_broker_v1 as obccbrv1
-import oms.hsecrets as omssec
 
 _LOG = logging.getLogger(__name__)
 
 
-def _get_CcxtBroker(secret_id: int) -> obccbrv1.CcxtBroker_v1:
-    """
-    Get a `CcxtBroker` instance.
-    """
-    # `MarketData` is not strictly needed to talk to exchange, but since it is
-    #  required to init the `Broker` we pass something to make it work.
-    asset_ids = None
-    market_data = dtfamsysc.get_Cx_RealTimeMarketData_prod_instance1(asset_ids)
-    universe_version = "v7.1"
-    strategy_id = "C1b"
-    exchange_id = "binance"
-    stage = "preprod"
-    account_type = "trading"
-    log_dir = "system_log_dir"
-    secret_identifier = omssec.SecretIdentifier(
-        exchange_id, stage, account_type, secret_id
-    )
-    ccxt_broker = obccbrin.get_CcxtBroker_v1_prod_instance1(
-        strategy_id, market_data, universe_version, secret_identifier, log_dir
-    )
-    return ccxt_broker
-
-
 @task
-def binance_display_open_positions(ctx, secret_id):  # type: ignore
+def binance_display_open_positions(ctx, secret_id, universe):  # type: ignore
     """
     Get current open positions from binance and display in a human-readable
     format.
 
     :param secret_id: same as in `CcxtBroker`
+    :param universe: version of the universe
     """
     hdbg.dassert(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
@@ -63,7 +33,17 @@ def binance_display_open_positions(ctx, secret_id):  # type: ignore
     _ = ctx
     hdbg.dassert(secret_id.isnumeric())
     secret_id = int(secret_id)
-    ccxt_broker = _get_CcxtBroker(secret_id)
+    log_dir = ""
+    # Broker config.
+    broker_config = {
+        "limit_price_computer_type": "LimitPriceComputerUsingSpread",
+        "limit_price_computer_kwargs": {
+            "passivity_factor": None,
+        }
+    }
+    ccxt_broker = obccbrin.get_CcxtBroker(
+        secret_id, log_dir, universe, broker_config
+    )
     open_positions = ccxt_broker.get_open_positions()
     columns = ["symbol", "side", "contracts", "contractSize", "notional"]
     df = pd.DataFrame(data=open_positions, columns=columns)

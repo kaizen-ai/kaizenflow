@@ -4,12 +4,16 @@ Import as:
 import oms.broker.ccxt.ccxt_aggregation_functions as obccagfu
 """
 import logging
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
 
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import im_v2.common.universe.universe_utils as imvcuunut
+import oms.broker.ccxt.ccxt_logger as obcccclo
+import oms.broker.replayed_data_reader as obredare
 
 _LOG = logging.getLogger(__name__)
 
@@ -124,8 +128,9 @@ def aggregate_child_limit_orders_by_bar(
     """
     Summarize OMS child orders by bar and instrument.
 
-    This is similar to `aggregate_ccxt_orders_by_bar()`, is a separate function
-    due to different column name conventions and expected fields.
+    This is similar to `aggregate_ccxt_orders_by_bar()`, but it's a
+    separate function due to different column name conventions and
+    expected fields.
 
     :param df: result of `load_child_order_df()`
     :param freq: bar duration as a string, e.g, `"5T"`
@@ -245,9 +250,9 @@ def compute_buy_sell_prices_by_bar(
     :param df: a fills DataFrame as returned by
         `convert_fills_json_to_dataframe()`
     :param freq: bar frequency
-    :return: DataFrame indexed by bar end datetimes and multilevel columns;
-        outer level consists of "buy_trade_price", "sell_trade_price", and
-        inner level consists of symbols
+    :return: DataFrame indexed by bar end datetimes and multilevel
+        columns; outer level consists of "buy_trade_price",
+        "sell_trade_price", and inner level consists of symbols
     """
     hdbg.dassert_in(groupby_id_col, ["asset_id", "symbol"])
     df = aggregate_fills_by_order(df)
@@ -356,3 +361,156 @@ def _aggregate_fills(df: pd.DataFrame) -> pd.Series:
         }
     )
     return aggregated
+
+
+def combine_sim_and_actual_trades(
+    simulated_execution_df: pd.DataFrame,
+    fills: pd.DataFrame,
+    freq: str,
+    offset: str,
+) -> pd.DataFrame:
+    """
+    Combine simulated and actual trades.
+
+    :param simulated_execution_df: simulated execution DataFrame
+    :param fills: fills DataFrame
+    :param freq: bar frequency
+    :param offset: bar offset
+    """
+    actual_executed_trades_prices = compute_buy_sell_prices_by_bar(
+        fills,
+        freq,
+        offset=offset,
+        groupby_id_col="asset_id",
+    )
+    resampled_simulated_execution_df = simulated_execution_df.resample(
+        freq,
+        closed="right",
+        label="right",
+        offset=offset,
+    ).mean()
+    #
+    col_set = actual_executed_trades_prices.columns.levels[1].union(
+        resampled_simulated_execution_df.columns.levels[1]
+    )
+    col_set = col_set.sort_values()
+    #
+    trade_price_dict = {
+        "actual_buy_trade_price": actual_executed_trades_prices[
+            "buy_trade_price"
+        ].reindex(columns=col_set),
+        "actual_sell_trade_price": actual_executed_trades_prices[
+            "sell_trade_price"
+        ].reindex(columns=col_set),
+        "simulated_buy_trade_price": resampled_simulated_execution_df[
+            "buy_trade_price"
+        ].reindex(columns=col_set),
+        "simulated_sell_trade_price": resampled_simulated_execution_df[
+            "sell_trade_price"
+        ].reindex(columns=col_set),
+    }
+    simulated_and_actual_trade_price_df = pd.concat(trade_price_dict, axis=1)
+    return simulated_and_actual_trade_price_df
+
+
+# #############################################################################
+# Load bid-ask data
+# #############################################################################
+
+
+def load_bid_ask_data(
+    start_timestamp: pd.Timestamp,
+    end_timestamp: pd.Timestamp,
+    ccxt_log_reader: obcccclo.CcxtLogger,
+    use_historical: bool,
+    asset_ids: Optional[List[int]],
+    child_order_execution_freq: str,
+) -> pd.DataFrame:
+    """
+    Load bid/ask data from the DB/S3 location.
+
+    :param start_timestamp: start timestamp
+    :param end_timestamp: end timestamp
+    :param ccxt_log_reader: CCXT log reader
+    :param use_historical: to use real-time or archived data. Use 'True'
+        for experiments older than 3 days, 'False' otherwise.
+    :param asset_ids: list of asset ids to load
+    :param child_order_execution_freq: child order execution frequency
+    """
+    # Load the input bid/ask data from the DB/ S3 location.
+    # Commented out since we are using replayed data.
+    # To be removed after the correctness of the replayed data is established.
+    # if use_historical:
+    #     signature = "periodic_daily.airflow.archived_200ms.parquet.bid_ask.futures.v7.ccxt.binance.v1_0_0"
+    #     reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
+    # else:
+    #     signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7.ccxt.binance.v1_0_0"
+    #     reader = imvcdcimrdc.RawDataReader(signature)
+    # bid_ask = reader.read_data(start_timestamp, end_timestamp, bid_ask_levels=[1])
+    bid_ask_files = ccxt_log_reader.load_bid_ask_files()
+    bid_ask_reader = obredare.ReplayDataReader(bid_ask_files)
+    dataframes = []
+    for file in bid_ask_files:
+        df = bid_ask_reader._read_csv_file(file)
+        dataframes.append(df)
+    bid_ask = pd.concat(dataframes)
+    hdbg.dassert(not bid_ask.empty, "Requested bid-ask data not available.")
+    #
+    currency_pair_to_full_symbol = {
+        x: "binance::" + x for x in bid_ask["currency_pair"].unique()
+    }
+    asset_id_to_full_symbol = imvcuunut.build_numerical_to_string_id_mapping(
+        currency_pair_to_full_symbol.values()
+    )
+    full_symbol_mapping_to_asset_id = {
+        v: k for k, v in asset_id_to_full_symbol.items()
+    }
+    currency_pair_to_asset_id = {
+        x: full_symbol_mapping_to_asset_id[currency_pair_to_full_symbol[x]]
+        for x in bid_ask["currency_pair"].unique()
+    }
+    # Add asset_ids.
+    bid_ask_asset_ids = bid_ask["currency_pair"].apply(
+        lambda x: currency_pair_to_asset_id[x]
+    )
+    bid_ask["asset_id"] = bid_ask_asset_ids
+    #
+    if asset_ids is not None:
+        bid_ask = bid_ask[bid_ask["asset_id"].isin(asset_ids)]
+    #
+    if not use_historical:
+        asset_ids = bid_ask["asset_id"].unique()
+        bid_ask_dfs = []
+        for asset_id in asset_ids:
+            asset_bid_ask = bid_ask[bid_ask["asset_id"] == asset_id].copy()
+            asset_bid_ask.index = pd.to_datetime(
+                1000000 * asset_bid_ask.index, utc=True
+            )
+            asset_bid_ask = asset_bid_ask[
+                ["bid_price_l1", "ask_price_l1", "bid_size_l1", "ask_size_l1"]
+            ].rename(
+                columns={
+                    "bid_price_l1": "bid_price",
+                    "ask_price_l1": "ask_price",
+                    "bid_size_l1": "bid_size",
+                    "ask_size_l1": "ask_size",
+                },
+            )
+            asset_bid_ask = pd.concat([asset_bid_ask], axis=1, keys=[asset_id])
+            asset_bid_ask = (
+                asset_bid_ask.resample("100ms").last().ffill(limit=100)
+            )
+            bid_ask_dfs.append(asset_bid_ask)
+        bid_ask = pd.concat(bid_ask_dfs, axis=1)
+        bid_ask = bid_ask.swaplevel(axis=1)
+    else:
+        raise NotImplementedError
+    # Verify that the bid/ask data contains the start/end timestamp range.
+    # A CCXT order can be processed during a child order execution wave,
+    # after the input bid/ask data is logged, so we account for the child order wave duration.
+    hdateti.dassert_timestamp_lte(bid_ask.index.min(), start_timestamp)
+    child_order_execution_freq = pd.Timedelta(child_order_execution_freq)
+    hdateti.dassert_timestamp_lte(
+        end_timestamp, bid_ask.index.max() + child_order_execution_freq
+    )
+    return bid_ask

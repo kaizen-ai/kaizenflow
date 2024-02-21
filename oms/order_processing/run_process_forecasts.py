@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# TODO(gp): Move to backtest/scripts
+
 """
 Execute `process_forecasts.py` over a tiled backtest.
 """

@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -36,11 +36,12 @@ import os
 import pandas as pd
 
 import core.config as cconfig
+import core.finance as cofinanc
+import dataflow.core as dtfcore
 import helpers.hdbg as hdbg
 import helpers.henv as henv
-import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import oms
+import reconciliation as reconcil
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -68,7 +69,7 @@ else:
         "dst_root_dir": "/shared_data/ecs/preprod/system_reconciliation",
         "dag_builder_name": "C5b",
         "run_mode": "paper_trading",
-        "start_timestamp_as_str": "20230713_131000", 
+        "start_timestamp_as_str": "20230713_131000",
         "end_timestamp_as_str": "20230714_130500",
         "mode": "scheduled",
         "node_name": "predict.9.process_forecasts",
@@ -83,29 +84,29 @@ print(config)
 # # Specify data to load
 
 # %%
-target_dir = oms.get_target_dir(
+target_dir = reconcil.get_target_dir(
     config["dst_root_dir"],
     config["dag_builder_name"],
     config["run_mode"],
     config["start_timestamp_as_str"],
     config["end_timestamp_as_str"],
 )
-system_log_dir = oms.get_prod_system_log_dir(config["mode"])
+system_log_dir = reconcil.get_prod_system_log_dir(config["mode"])
 system_log_dir = os.path.join(target_dir, system_log_dir)
 _LOG.info("system_log_dir=%s", system_log_dir)
 
 # %%
-dag_data_dir = oms.get_data_type_system_log_path(system_log_dir, "dag_data")
+dag_data_dir = reconcil.get_data_type_system_log_path(system_log_dir, "dag_data")
 _LOG.info("dag_data_dir=%s", dag_data_dir)
 
 # %%
 # Get DAG node names.
-dag_node_names = oms.get_dag_node_names(dag_data_dir)
+dag_node_names = dtfcore.get_dag_node_names(dag_data_dir)
 dag_node_names
 
 # %%
 # Get timestamps for the specified DAG node.
-dag_node_timestamps = oms.get_dag_node_timestamps(
+dag_node_timestamps = dtfcore.get_dag_node_timestamps(
     dag_data_dir, config["node_name"], as_timestamp=True
 )
 _LOG.info(
@@ -119,14 +120,16 @@ _LOG.info(
 
 # %%
 # Load data for a given DAG node and a bar timestmap.
-node_df = oms.get_dag_node_output(
+node_df = dtfcore.get_dag_node_output(
     dag_data_dir, config["node_name"], config["bar_timestamp"]
 )
 node_df.tail(3)
 
 # %%
 # Filter by specified asset and display only relevant columns.
-slice_df = oms.get_asset_slice(node_df, config["asset_id"])[config["columns"]]
+slice_df = cofinanc.get_asset_slice(node_df, config["asset_id"])[
+    config["columns"]
+]
 slice_df.tail(3)
 
 # %%

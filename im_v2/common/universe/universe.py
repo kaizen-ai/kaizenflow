@@ -19,7 +19,7 @@ def _get_universe_dir(vendor: str, mode: str) -> str:
     """
     Get the dir containing universe files for the specified vendor and mode.
 
-    :param vendor: vendor to load data for (e.g., CCXT, Talos)
+    :param vendor: vendor to load data for (e.g., CCXT)
     :param mode: download or trade universe
     :return: universe dir
     """
@@ -51,7 +51,7 @@ def _get_universe_file_path(
     """
     Get universe file path.
 
-    :param vendor: vendor to load data for (e.g., CCXT, Talos)
+    :param vendor: vendor to load data for (e.g., CCXT)
     :param mode: download or trade universe
     :param version: universe version (e.g., "v01")
         - If `None`, it uses the latest version available
@@ -76,7 +76,7 @@ def get_universe_versions(vendor: str, mode: str) -> List[str]:
     """
     Get all the universe versions for the specified vendor and mode.
 
-    :param vendor: vendor to load data for (e.g., CCXT, Talos)
+    :param vendor: vendor to load data for (e.g., CCXT)
     :param mode: download or trade universe
     :return: universe versions (e.g., `["v1", "v2", "v2.1"]`)
     """
@@ -96,6 +96,24 @@ def get_universe_versions(vendor: str, mode: str) -> List[str]:
     return universe_versions
 
 
+# TODO(Grisha): maybe `get_prod_universe_version()` since it is not always the
+# latest one, it is the universe version that we want to trade with.
+def get_latest_universe_version() -> str:
+    """
+    Fetch the latest CCXT trade universe version.
+
+    This function should be manually updated after transitioning to the
+    new universe version.
+
+    :return: the latest universe version
+    """
+    # TODO(Grisha): consider inferring universe version from file names
+    # as it is done in `get_universe_versions()`.
+    # The version corresponds to `CCXT` trade universe.
+    version = "v7.4"
+    return version
+
+
 # #############################################################################
 
 
@@ -108,7 +126,7 @@ def _get_vendor_universe(
     """
     Load universe specific of a vendor.
 
-    :param vendor: vendor to load data for (e.g., CCXT/Talos)
+    :param vendor: vendor to load data for (e.g., CCXT)
     :return: trade universe as a nested dictionary of
       exchange name (e.g., binance) to list of symbols e.g.,
         {
@@ -154,7 +172,7 @@ def get_vendor_universe(
         full symbols e.g. gateio::XRP_USDT
     :return: vendor universe as a list of symbol or list of full symbols e.g.:
         {
-            "talos": {
+            "CCXT": {
                 "binance": [
                 "ADA_USDT",
                 "AVAX_USDT",
@@ -194,8 +212,8 @@ def get_vendor_universe_as_asset_ids(
 
     :param vendor: vendor to load data for, e.g., "CCXT"
     :param mode: download or trade universe
-    :return: a list of asset ids for given universe version, vendor and mode,
-        e.g., [9872743573, 3065029174, 5118394986]
+    :return: a list of asset ids for given universe version, vendor and
+        mode, e.g., [9872743573, 3065029174, 5118394986]
     """
     # Get vendor universe as full symbols.
     vendor = vendor.lower()

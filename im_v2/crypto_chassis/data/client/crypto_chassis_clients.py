@@ -46,6 +46,7 @@ class CryptoChassisHistoricalPqByTileClient(
         See the parent class for parameters description.
         """
         vendor = "crypto_chassis"
+        download_universe_version = "v3"
         super().__init__(
             vendor,
             universe_version,
@@ -55,6 +56,7 @@ class CryptoChassisHistoricalPqByTileClient(
             contract_type,
             data_snapshot,
             version=version,
+            download_universe_version=download_universe_version,
             tag=tag,
             aws_profile=aws_profile,
             resample_1min=resample_1min,

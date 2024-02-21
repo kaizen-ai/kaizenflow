@@ -18,6 +18,9 @@ _LOG = logging.getLogger(__name__)
 def resample_taq_bars(df: pd.DataFrame, rule: str) -> pd.DataFrame:
     """
     Resample (a subset of) TAQ bar columns to `rule`.
+
+    :param df: TAQ bar data for a single name indexed by datetime.
+    :param rule:
     """
     hpandas.dassert_time_indexed_df(
         df, allow_empty=False, strictly_increasing=True

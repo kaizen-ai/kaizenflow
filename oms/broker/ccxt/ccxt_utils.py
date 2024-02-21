@@ -3,16 +3,23 @@ Import as:
 
 import oms.broker.ccxt.ccxt_utils as obccccut
 """
+import argparse
 import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import ccxt
+import ccxt.pro as ccxtpro
 import numpy as np
 import pandas as pd
 
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
+import helpers.hlogging as hloggin
+import helpers.hsecrets as hsecret
+import oms.hsecrets as omssec
 import oms.order.order as oordorde
 
 _LOG = logging.getLogger(__name__)
@@ -28,13 +35,15 @@ def roll_up_child_order_fills_into_parent(
     Aggregate fill amount and price from child orders into an equivalent parent
     order.
 
-    Fill amount is calculated as sum of fills for all orders.
-    Price is calculated as VWAP for each passed child order, based on their fill
+    Fill amount is calculated as sum of fills for all orders. Price is
+    calculated as VWAP for each passed child order, based on their fill
     amount.
 
     :param parent_order: parent order to get fill amount and price for
-    :param ccxt_child_order_fills: CCXT order structures for child orders
-    :param price_quantization: number of decimals to round the price of parent order
+    :param ccxt_child_order_fills: CCXT order structures for child
+        orders
+    :param price_quantization: number of decimals to round the price of
+        parent order
     :return: fill amount, fill price
     """
     # Get the total fill from all child orders.
@@ -131,3 +140,204 @@ def load_market_data_info() -> Dict[int, Dict[str, Union[float, int]]]:
     # Convert to int, because asset ids are strings.
     market_info = {int(k): v for k, v in market_info.items()}
     return market_info
+
+
+def _assert_exchange_methods_present(
+    exchange: Union[ccxt.Exchange, ccxtpro.Exchange],
+    exchange_id: str,
+    *,
+    additional_methods: List[str] = None,
+) -> None:
+    # Assert that the requested exchange supports all methods necessary to
+    # make placing/fetching orders possible.
+    methods = [
+        "createOrder",
+        "fetchClosedOrders",
+        "fetchPositions",
+        "fetchBalance",
+        "fetchLeverageTiers",
+        "setLeverage",
+        "fetchMyTrades",
+    ]
+    if additional_methods is not None:
+        methods.extend(additional_methods)
+    abort = False
+    for method in methods:
+        if not exchange.has[method]:
+            _LOG.error("Method %s is unsupported for %s.", method, exchange_id)
+            abort = True
+    if abort:
+        raise ValueError(
+            f"The {exchange_id} exchange does not support all the"
+            " required methods for placing orders."
+        )
+
+
+def create_ccxt_exchanges(
+    secret_identifier: omssec.SecretIdentifier,
+    contract_type: str,
+    exchange_id: str,
+    account_type: str,
+) -> Tuple[ccxt.Exchange, ccxtpro.Exchange]:
+    """
+    Log into the exchange and return tuple of sync and async `ccxt.Exchange`
+    objects.
+
+    :param secret_identifier: a SecretIdentifier holding a full name of secret
+            to look for in AWS SecretsManager
+    :param contract_type: "spot" or "futures"
+    :param exchange_id: name of the exchange to initialize the broker for
+            (e.g., Binance)
+    :param account_type:
+            - "trading" launches the broker in trading environment
+            - "sandbox" launches the broker in sandbox environment (not
+               supported for every exchange)
+    :return: tuple of sync and async exchange
+    """
+    secrets_id = str(secret_identifier)
+    # Select credentials for provided exchange.
+    # TODO(Juraj): the problem is that we are mixing DB stage and credential
+    # stage and also the intended nomenclature for the secrets id not really
+    # valid/useful.
+    if ".prod" in secrets_id:
+        secrets_id = secrets_id.replace("prod", "preprod")
+    exchange_params = hsecret.get_secret(secrets_id)
+    # Disable rate limit.
+    # Automatic rate limitation is disabled to control submission of orders.
+    # If enabled, CCXT can reject an order silently, which we want to avoid.
+    # See CMTask4113.
+    exchange_params["rateLimit"] = False
+    # Log into futures/spot market.
+    if contract_type == "futures":
+        exchange_params["options"] = {"defaultType": "future"}
+    elif contract_type == "swap":
+        exchange_params["options"] = {"defaultType": "swap"}
+    # Create both sync and async exchange.
+    sync_async_exchange = []
+    for module in [ccxt, ccxtpro]:
+        # Create a CCXT Exchange class object.
+        ccxt_exchange = getattr(module, exchange_id)
+        exchange = ccxt_exchange(exchange_params)
+        # TODO(Danya): Temporary fix, CMTask4971.
+        # Set exchange properties.
+        if exchange_id == "binance":
+            # Necessary option to avoid time out of sync error
+            # (CmTask2670 Airflow system run error "Timestamp for this
+            # request is outside of the recvWindow.")
+            # TODO(Juraj): CmTask5194.
+            # exchange.options["adjustForTimeDifference"] = True
+            exchange.options["recvWindow"] = 5000
+        if account_type == "sandbox":
+            _LOG.warning("Running in sandbox mode")
+            exchange.set_sandbox_mode(True)
+        hdbg.dassert(
+            exchange.checkRequiredCredentials(),
+            msg="Required credentials not passed",
+        )
+        if module == ccxtpro:
+            _assert_exchange_methods_present(
+                exchange, exchange_id, additional_methods=["cancelAllOrders"]
+            )
+        else:
+            _assert_exchange_methods_present(exchange, exchange_id)
+        # CCXT registers the logger after it's built, so we need to reduce its
+        # logger verbosity.
+        hloggin.shutup_chatty_modules()
+        sync_async_exchange.append(exchange)
+    return tuple(sync_async_exchange)
+
+
+def create_parent_orders_from_json(
+    parent_order_list: List[Dict[str, Any]],
+    num_parent_orders_per_bar: int,
+    *,
+    update_time: bool = True,
+) -> List[oordorde.Order]:
+    """
+    Convert parent orders inside the list from Dict to Order type.
+
+    :param parent_order_list: list of parent orders in List[Dict[...]]
+        format which we want to convert to List of Order objects
+    :param num_parent_orders_per_bar: number of parent orders to be
+        executed for each bar. This parameter is used to update the
+        timestamp of parent orders with respect to their bar time
+    :return: List of Order objects
+    """
+    # Converting parent orders from JSON format to Order object.
+    parent_orders_csv = []
+    for orders in parent_order_list:
+        order_dicts = [dict(item) for item in [orders]]
+        for order_dict in order_dicts:
+            order_string = f"Order: order_id={order_dict['order_id']} creation_timestamp={order_dict['creation_timestamp']} asset_id={order_dict['asset_id']} type_={order_dict['type_']} start_timestamp={order_dict['start_timestamp']} end_timestamp={order_dict['end_timestamp']} curr_num_shares={order_dict['curr_num_shares']} diff_num_shares={order_dict['diff_num_shares']} tz={order_dict['tz']} extra_params={{}}"
+            parent_orders_csv.append(order_string)
+    parent_orders_string = "\n".join(parent_orders_csv)
+    orders = oordorde.orders_from_string(parent_orders_string)
+    # Updating timestamps of the log orders.
+    order_id = 0
+    # Adding 1 minute of buffer time to the start time of parent order so that
+    # when the `ReplayedCcxtExchange` object  is initialized and the order is
+    # called it has not passed the wall clock time.
+    # TODO(Sameep): Remove this code once all tests are changed with the
+    # new mocked market data updates. Covered in CmTask5984.
+    if update_time:
+        start_timestamp = hdateti.get_current_time("ET") + pd.Timedelta(minutes=1)
+        for order in orders:
+            order_id = order_id + 1
+            order.creation_timestamp = start_timestamp
+            order.end_timestamp = start_timestamp + (
+                order.end_timestamp - order.start_timestamp
+            )
+            order.start_timestamp = start_timestamp
+            if order_id % num_parent_orders_per_bar == 0:
+                start_timestamp = order.end_timestamp
+    return orders
+
+
+def add_CcxtBroker_cmd_line_args(
+    parser: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
+    """
+    Add the command line options for broker.
+    """
+    parser.add_argument(
+        "--exchange",
+        action="store",
+        required=True,
+        type=str,
+        help="Name of the exchange, e.g. 'binance'.",
+    )
+    parser.add_argument(
+        "--contract_type",
+        action="store",
+        required=True,
+        type=str,
+        help="'futures' or 'spot'. Note: only futures contracts are supported.",
+    )
+    parser.add_argument(
+        "--stage",
+        action="store",
+        required=True,
+        type=str,
+        help="Stage to run at: local, preprod, prod.",
+    )
+    parser.add_argument(
+        "--secret_id",
+        action="store",
+        required=True,
+        type=int,
+        help="ID of the API Keys to use as they are stored in AWS SecretsManager.",
+    )
+    parser.add_argument(
+        "--log_dir",
+        action="store",
+        type=str,
+        required=True,
+        help="Log dir to save data.",
+    )
+    parser.add_argument(
+        "--universe",
+        type=str,
+        required=False,
+        help="Version of the universe, e.g. 'v7.4'",
+    )
+    return parser

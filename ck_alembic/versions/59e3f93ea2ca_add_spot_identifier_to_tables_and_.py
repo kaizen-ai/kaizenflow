@@ -6,7 +6,6 @@ Create Date: 2023-03-13 17:37:05.603636+00:00
 
 """
 import os
-
 import alembic
 
 # revision identifiers, used by Alembic.

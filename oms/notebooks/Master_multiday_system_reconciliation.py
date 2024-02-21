@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.15.0
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -34,13 +34,14 @@ import pandas as pd
 
 import core.config as cconfig
 import core.plotting as coplotti
+import dataflow.core as dtfcore
 import dataflow.model as dtfmod
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import oms.reconciliation as omreconc
+import reconciliation.sim_prod_reconciliation as rsiprrec
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -69,7 +70,7 @@ else:
     run_mode = "paper_trading"
     start_timestamp_as_str = "20230716_000000"
     end_timestamp_as_str = "20230723_000000"
-    config = omreconc.build_multiday_system_reconciliation_config(
+    config = rsiprrec.build_multiday_system_reconciliation_config(
         dst_root_dir,
         dag_builder_name,
         run_mode,
@@ -84,7 +85,8 @@ print(config)
 # # Functions
 
 # %%
-# TODO(Grisha): move all functions under `oms/reconciliation.py`.
+# TODO(Grisha): move all functions under `reconciliation/sim_prod_reconciliation.py`.
+
 
 # %%
 # TODO(Grisha): can we use this idiom in the other system reconciliation
@@ -95,16 +97,17 @@ def get_prod_dag_output_for_last_node(
     """
     Load DAG data for a specified node for all bar timestamps.
 
-    :param system_log_path_dict: system log dirs paths for different experiments
+    :param system_log_path_dict: system log dirs paths for different
+        experiments
     """
     data_type = "dag_data"
-    dag_path_dict = omreconc.get_system_log_paths(system_log_path_dict, data_type)
+    dag_path_dict = rsiprrec.get_system_log_paths(system_log_path_dict, data_type)
     hdbg.dassert_in("prod", dag_path_dict.keys())
     hdbg.dassert_path_exists(dag_path_dict["prod"])
     # Get DAG node names.
-    dag_node_names = omreconc.get_dag_node_names(dag_path_dict["prod"])
+    dag_node_names = dtfcore.get_dag_node_names(dag_path_dict["prod"])
     # Get DAG output for the last node and the last timestamp.
-    dag_df_prod = omreconc.load_dag_outputs(
+    dag_df_prod = dtfcore.load_dag_outputs(
         dag_path_dict["prod"], dag_node_names[-1]
     )
     return dag_df_prod
@@ -158,7 +161,7 @@ def compute_research_portfolio(
 # # Load portfolio stats
 
 # %%
-system_run_params = omreconc.get_system_run_parameters(
+system_run_params = rsiprrec.get_system_run_parameters(
     config["dst_root_dir"],
     config["dag_builder_name"],
     config["run_mode"],
@@ -172,7 +175,7 @@ portfolio_stats = []
 bar_duration = None
 for start_timestamp_as_str, end_timestamp_as_str, mode in system_run_params:
     # Build system reconciliation config.
-    config_list = omreconc.build_reconciliation_configs(
+    config_list = rsiprrec.build_reconciliation_configs(
         config["dst_root_dir"],
         config["dag_builder_name"],
         start_timestamp_as_str,
@@ -185,18 +188,30 @@ for start_timestamp_as_str, end_timestamp_as_str, mode in system_run_params:
     bar_duration = reconciliation_config["meta"]["bar_duration"]
     # Load prod and sim portfolios.
     data_type = "portfolio"
-    portfolio_path_dict = omreconc.get_system_log_paths(
+    portfolio_path_dict = rsiprrec.get_system_log_paths(
         system_log_path_dict, data_type
     )
-    portfolio_dfs, portfolio_stats_dfs = omreconc.load_portfolio_dfs(
+    portfolio_dfs, portfolio_stats_dfs = rsiprrec.load_portfolio_dfs(
         portfolio_path_dict,
         bar_duration,
     )
     # Compute research portfolio.
     dag_df_prod = get_prod_dag_output_for_last_node(system_log_path_dict)
+    # We add timezone info to `start_timestamp_as_str` and `end_timestamp_as_str`
+    # because they are passed in the "UTC" timezone.
+    tz = "UTC"
+    datetime_format = "%Y%m%d_%H%M%S"
+    start_timestamp = hdateti.str_to_timestamp(
+        start_timestamp_as_str, tz, datetime_format=datetime_format
+    )
+    end_timestamp = hdateti.str_to_timestamp(
+        end_timestamp_as_str, tz, datetime_format=datetime_format
+    )
+    # Convert timestamps to a timezone in which prod Portfolio was computed.
+    # TODO(Grisha): pass timezone via config instead of setting it manually.
     tz = "America/New_York"
-    start_timestamp = hdateti.str_to_timestamp(start_timestamp_as_str, tz)
-    end_timestamp = hdateti.str_to_timestamp(end_timestamp_as_str, tz)
+    start_timestamp = start_timestamp.tz_convert(tz)
+    end_timestamp = end_timestamp.tz_convert(tz)
     forecast_evaluator_from_prices_dict = reconciliation_config[
         "research_forecast_evaluator_from_prices"
     ]

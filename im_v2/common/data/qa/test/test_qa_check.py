@@ -251,3 +251,58 @@ class TestIdenticalDataFramesCheck(QAChecksTestCase):
                 for minutes_delta in range(minutes + 1)
             ]
         )
+
+
+class TestDuplicateDifferingOhlcvCheck(QAChecksTestCase):
+    def test_duplicates_with_same_ohlcv(self) -> None:
+        """
+        Test case to check for records with identical ohlcv values
+        along with identical `timestamp` and `currecny_pair`.
+        """
+        # Prepare data.
+        start_timestamp = pd.Timestamp("2023-01-15T00:00:00+00:00")
+        data_len = 5
+        dataset = self._get_data(start_timestamp, data_len)
+        dataset = pd.concat([dataset, dataset])
+        # Execute.
+        check_instance = imvcdqqach.DuplicateDifferingOhlcvCheck()
+        check_result = check_instance.check([dataset])
+        # Check results.
+        self.assertTrue(check_result)
+        self.assertIn("PASSED", check_instance.get_status())
+
+    def test_no_duplicates(self) -> None:
+        """
+        Test case to assert that no duplicates are present.
+        """
+        # Prepare data.
+        start_timestamp = pd.Timestamp("2023-01-15T00:00:00+00:00")
+        data_len = 5
+        dataset = self._get_data(start_timestamp, data_len)
+        # Execute.
+        check_instance = imvcdqqach.DuplicateDifferingOhlcvCheck()
+        check_result = check_instance.check([dataset])
+        # Check results.
+        self.assertTrue(check_result)
+        self.assertIn("PASSED", check_instance.get_status())
+    
+    def test_duplicates_with_different_ohlcv(self) -> None:
+        """
+        Test case to check for records with the same 'timestamp' 
+        and 'currency_pair' values, but differing OHLCV data.
+        """
+        # Prepare data.
+        start_timestamp = pd.Timestamp("2023-01-15T00:00:00+00:00")
+        data_len = 5
+        dataset = self._get_data(start_timestamp, data_len)
+        dataset_copy = dataset.copy()
+        dataset = pd.concat([dataset, dataset_copy], ignore_index=True)
+        # Change one value in a row.
+        row_num = 5
+        dataset.loc[row_num, "volume"] = 100
+        # Execute.
+        check_instance = imvcdqqach.DuplicateDifferingOhlcvCheck()
+        check_result = check_instance.check([dataset])
+        # Check results.
+        self.assertFalse(check_result)
+        self.assertIn("FAILED", check_instance.get_status())

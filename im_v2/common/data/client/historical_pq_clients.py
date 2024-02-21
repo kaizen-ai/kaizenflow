@@ -13,11 +13,12 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import im_v2.common.data.client.base_im_clients as imvcdcbimcl
+import im_v2.common.data.client.abstract_im_clients as imvcdcaimcl
 import im_v2.common.data_snapshot as icdds
 import im_v2.common.universe as ivcu
 
@@ -28,9 +29,10 @@ _LOG = logging.getLogger(__name__)
 # HistoricalPqByTileClient
 # #############################################################################
 
-# TODO(Dan): "Consolidate HistoricalPqByTileClients CmTask #1961."
+
+# TODO(Dan): Consolidate HistoricalPqByTileClients CmTask #1961.
 class HistoricalPqByTileClient(
-    imvcdcbimcl.ImClientReadingMultipleSymbols, abc.ABC
+    imvcdcaimcl.ImClientReadingMultipleSymbols, abc.ABC
 ):
     """
     Read historical data stored as Parquet by-tile.
@@ -60,13 +62,15 @@ class HistoricalPqByTileClient(
 
         See the parent class for parameters description.
 
-        :param root_dir: either a local root path (e.g., `/app/im`) or
-            an S3 root path (e.g., `s3://<ck-data>/reorg/historical.manual.pq`)
-            to the tiled Parquet data
-        :param partition_mode: how the data is partitioned, e.g., "by_year_month"
-        :param infer_exchange_id: use the last part of a dir to indicate the exchange
-            originating the data. This allows to merging multiple Parquet files on
-            exchange. See CmTask #1533 "Add exchange to the ParquetDataset partition".
+        :param root_dir: root path to the tiled Parquet data
+            - either local, e.g., "/app/im"
+            - or on S3, e.g., "s3://<ck-data>/reorg/historical.manual.pq"
+        :param partition_mode: how the data is partitioned, e.g.,
+            "by_year_month"
+        :param infer_exchange_id: use the last part of a dir to indicate
+            the exchange originating the data. This allows to merging
+            multiple Parquet files on exchange. See CmTask #1533 "Add
+            exchange to the ParquetDataset partition".
         :param aws_profile: AWS profile, e.g., "ck"
         """
         super().__init__(
@@ -88,7 +92,11 @@ class HistoricalPqByTileClient(
         """
         raise NotImplementedError
 
-    # TODO(Grisha): factor out the column names in the child classes, see `CCXT`, `Talos`.
+    # ///////////////////////////////////////////////////////////////////////////
+    # Private methods.
+    # ///////////////////////////////////////////////////////////////////////////
+
+    # TODO(Grisha): factor out the column names in the child classes, see `CCXT`.
     @staticmethod
     def _get_columns_for_query(
         full_symbol_col_name: str, columns: Optional[List[str]]
@@ -277,6 +285,7 @@ class HistoricalPqByTileClient(
 # #############################################################################
 
 
+# TODO(gp): CurrencyPair -> Asset
 class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
     """
     Read historical data for vendor specific assets stored as Parquet dataset.
@@ -300,7 +309,10 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         *,
         download_mode: str = "periodic_daily",
         downloading_entity: str = "airflow",
+        # TODO(Grisha): -> `data_version`.
         version: str = "",
+        # TODO(Dan): Use `None` default value instead of an empty string.
+        download_universe_version: str = "",
         tag: str = "",
         aws_profile: Optional[str] = None,
         resample_1min: bool = False,
@@ -315,7 +327,10 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         :param download_mode: data download mode
         :param downloading_entity: entity used to download data
         :param version: data version
-        :param tag: resample type, e.g., "resampled_1min", "downloaded_1sec"
+        :param download_universe_version: version of download universe
+            file
+        :param tag: resample type, e.g., "resampled_1min",
+            "downloaded_1sec"
         """
         infer_exchange_id = True
         super().__init__(
@@ -330,7 +345,6 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         hdbg.dassert_in(
             dataset, ["bid_ask", "ohlcv"], f"Invalid dataset type='{dataset}'"
         )
-        self._universe_version = universe_version
         # TODO(Grisha): @Dan `dataset` -> `data_type`.
         self._dataset = dataset
         hdbg.dassert_in(
@@ -350,6 +364,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         self._download_mode = download_mode
         self._downloading_entity = downloading_entity
         self._version = version
+        self._download_universe_version = download_universe_version
         # TODO(Grisha): @Dan `tag` -> `action_tag`.
         self._tag = tag
         self._data_format = "parquet"
@@ -360,6 +375,10 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         See description in the parent class.
         """
         raise NotImplementedError
+
+    # ///////////////////////////////////////////////////////////////////////////
+    # Private methods.
+    # ///////////////////////////////////////////////////////////////////////////
 
     @staticmethod
     def _get_columns_for_query(
@@ -465,13 +484,17 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         """
         # Set condition for reorg and unit test subdirs approach.
         s3_bucket_path = hs3.get_s3_bucket_path(self._aws_profile)
+        s3_unit_test_bucket_path = henv.execute_repo_config_code(
+            "get_unit_test_bucket_path()"
+        )
         reorg_root_dir = os.path.join(s3_bucket_path, "reorg")
-        unit_test_root_dir = os.path.join(s3_bucket_path, "unit_test")
-        # The "unit_test" folder has the same structure as "reorg".
-        is_reorg_dir = self._root_dir.startswith(
-            reorg_root_dir
-        ) | self._root_dir.startswith(unit_test_root_dir)
-        if is_reorg_dir:
+        # We check `s3://cryptokaizen-unit-test/outcomes/` because most of the tests
+        # use reorg dir pattern path `s3://cryptokaizen-data/reorg`,
+        # while `Mock2` tests use v3 dir pattern `s3://cryptokaizen-unit-test/v3/bulk`.
+        unit_test_s3_dir = os.path.join(s3_unit_test_bucket_path, "outcomes")
+        is_reorg_dir = self._root_dir.startswith(reorg_root_dir)
+        is_unit_test_s3_dir = self._root_dir.startswith(unit_test_s3_dir)
+        if is_reorg_dir or is_unit_test_s3_dir:
             filter_root_dir = self._get_filter_root_dir_reorg()
         else:
             filter_root_dir = self._get_filter_root_dir_v3()
@@ -505,17 +528,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         """
         Build a v3 filter root dir.
         """
-        vendor = self._vendor.lower()
-        # TODO(Grisha): expose `download_universe_version` as a param.
-        # The universe version is overwritten because in the dir path download
-        # universe version is used, while `universe_version` is a trade universe
-        # version.
-        if vendor == "ccxt":
-            universe_version = "v7"
-        elif vendor == "crypto_chassis":
-            universe_version = "v3"
-        else:
-            raise ValueError(f"Invalid vendor='{self._vendor}'")
+        hdbg.dassert_is_not(self._download_universe_version, "")
         filter_root_dir = os.path.join(
             self._root_dir,
             self._download_mode,
@@ -524,8 +537,8 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             self._data_format,
             self._dataset,
             self._contract_type,
-            universe_version,
-            vendor,
+            self._download_universe_version,
+            self._vendor.lower(),
         )
         return filter_root_dir
 
@@ -537,7 +550,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
 
 # TODO(gp): This is very similar to HistoricalPqByTile. Can we unify?
 class HistoricalPqByDateClient(
-    imvcdcbimcl.ImClientReadingMultipleSymbols, abc.ABC
+    imvcdcaimcl.ImClientReadingMultipleSymbols, abc.ABC
 ):
     """
     Read historical data stored as Parquet by-date.
@@ -560,6 +573,10 @@ class HistoricalPqByDateClient(
             resample_1min=resample_1min,
         )
         self._read_func = read_func
+
+    # ///////////////////////////////////////////////////////////////////////////
+    # Private methods.
+    # ///////////////////////////////////////////////////////////////////////////
 
     def _read_data_for_multiple_symbols(
         self,

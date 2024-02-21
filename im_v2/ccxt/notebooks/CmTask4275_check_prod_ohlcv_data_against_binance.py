@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -28,6 +28,7 @@ import logging
 
 import pandas as pd
 
+import dataflow.core as dtfcore
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -38,7 +39,6 @@ import im_v2.common.db.db_utils as imvcddbut
 import im_v2.common.universe as ivcu
 import im_v2.common.universe.universe_utils as imvcuunut
 import market_data as mdata
-import oms
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -173,7 +173,7 @@ btc_ohlcv_data_with_timing_fix
 dag_dir = "/shared_data/ecs/preprod/system_reconciliation/C3a/20230511/system_log_dir.scheduled.20230511_131000.20230512_130500/dag/node_io/node_io.data"
 node_name = "predict.0.read_data"
 bar_timestamp = pd.Timestamp("2023-05-12 06:40:00")
-df = oms.get_dag_node_output(dag_dir, node_name, bar_timestamp)
+df = dtfcore.get_dag_node_output(dag_dir, node_name, bar_timestamp)
 df.tail(5)["close"]
 
 # %% [markdown]

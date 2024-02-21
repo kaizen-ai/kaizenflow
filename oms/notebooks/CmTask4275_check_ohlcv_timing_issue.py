@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -44,7 +44,6 @@ import helpers.hprint as hprint
 import im_v2.common.data.client.im_raw_data_client as imvcdcimrdc
 import im_v2.common.universe as ivcu
 import im_v2.common.universe.universe_utils as imvcuunut
-import oms
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -157,7 +156,7 @@ _LOG.info("dag_data_dir=%s", dag_data_dir)
 node_name = "predict.0.read_data"
 dfs = []
 for timestamp in timestamps:
-    curr_df = oms.get_dag_node_output(dag_data_dir, node_name, timestamp)
+    curr_df = dtfcore.get_dag_node_output(dag_data_dir, node_name, timestamp)
     bar_duration_int = int(bar_duration.strip("T"))
     curr_df = curr_df.sort_index(ascending=True)
     # Resolution is 1 minute for the `read_data` node, load the last 5 rows to get
@@ -172,7 +171,7 @@ dag_read_data_df_out.head(3)
 node_name = "predict.2.resample"
 dfs = []
 for timestamp in timestamps:
-    curr_df = oms.get_dag_node_output(dag_data_dir, node_name, timestamp)
+    curr_df = dtfcore.get_dag_node_output(dag_data_dir, node_name, timestamp)
     # Resolution = `bar_duration` so load only the last row.
     curr_df = curr_df.sort_index(ascending=True)
     curr_df = curr_df.tail(1)
