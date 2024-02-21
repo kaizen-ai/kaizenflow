@@ -11,13 +11,15 @@
 ## Project assignment
 
 - Each project requires the following steps
-  - Create a Docker container installing the needed tools (e.g., Redis and `redis-py`)
-  - You should use Docker Compose to build single or multi-container systems
-  - Jupyter notebook (if possible), otherwise a Python script implementing the project
-  - Only Python3 on Linux is allowed
+
+- Create a Docker container installing the needed tools (e.g., Redis and `redis-py`)
+- You should use Docker Compose to build single or multi-container systems
+- Jupyter notebook (if possible), otherwise a Python script implementing the project
+- Only Python3 on Linux should be used
+- You can always communicate with the tech using Python libraries or HTTP APIs
 
 ### Documentation
-- Write a 5 to 10-page report in markdown covering
+- Write a 5 to 10-page report in markdown covering:
   - At least 1 page (60 lines): short description of the technology used (e.g.,
     Redis)
   - At least 1 page (60 lines): describe and explain the logic of the Docker
@@ -28,16 +30,14 @@
     the output, using diagrams (e.g., use `mermaid`), describe the schema used in
     the DB, etc
 
-The script/notebook should be able to run end-to-end without errors, otherwise
-the project is not considered working
+- The script/notebook should be able to run end-to-end without errors, otherwise
+  the project is not considered working
+  - We are not going to debug your code
+  - If there are problems we will use the GitHub issue to communicate and we
+    expect you to fix the problem
 
 - Each project will need to be checked in https://github.com/sorrentum/sorrentum
   filing bugs, with PR, etc like in an open source project
-
-- The layout of each project is the following
-  sorrentum_sandbox/projects/spring2024/SorrTaskXYZ_...
-    README.md
-    docker
 
 - The tag of your projects follows the schema
   `Spring{year}_{project_title_without_spaces}`
@@ -57,4 +57,11 @@ the project is not considered working
   - E.g., on the dir cloned on my laptop the dir is named
     `~/src/sorrentum1/sorrentum_sandbox/projects/SorrTask645_Redis_cache_to_fetch_user_profiles`
 
-- Copy the files from 
+- Copy the files from the template to your project
+  ```bash
+  > cd $GIT_ROOT
+  > git cp -r sorrentum_sandbox/projects/project_template sorrentum_sandbox/projects/{project_tag}
+  ```
+
+- The layout of each project should follow the examples
+  - `sorrentum_sandbox/projects/spring2024/SorrTask645_Redis_cache_to_fetch_user_profiles`
