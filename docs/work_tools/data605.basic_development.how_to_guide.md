@@ -30,6 +30,12 @@ information flow and make the contribution process seamless.
 ### Supporting OS
 
 - We support Mac x86, Apple Silicon and Linux Ubuntu
+- Install `docker-cli` in MAC using
+  ```bash
+  brew install docker
+  brew link docker
+  brew install colima
+  ```
 - If you are using Windows,
   - Install VMWare software -
     [Reference video for installing ubuntu on VMWare software ](https://youtu.be/NhlhJFKmzpk?si=4MMOYzLnhyP4eSj2)
