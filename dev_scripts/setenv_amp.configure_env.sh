@@ -12,8 +12,10 @@ export CK_AWS_PROFILE="ck"
 # These variables are propagated to Docker.
 export AM_ECR_BASE_PATH="665840871993.dkr.ecr.us-east-1.amazonaws.com"
 export AM_AWS_S3_BUCKET="alphamatic-data"
-# TODO(gp): Difference between amp and cmamp.
-export CK_ECR_BASE_PATH="623860924167.dkr.ecr.eu-north-1.amazonaws.com"
+# TODO(Grisha): Difference between `amp`, `cmamp` and `sorrentum`.
+# Note: Do not modify during integration. Necessary for users with no access to
+# AWS ECR, pulling images from DockerHub.
+export CK_ECR_BASE_PATH="sorrentum"
 export CK_AWS_S3_BUCKET="cryptokaizen-data"
 
 export DEV1="172.30.2.136"
