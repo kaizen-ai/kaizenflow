@@ -119,7 +119,8 @@ class TestReplayedCcxtExchange1(hunitest.TestCase):
         # Check result.
         actual_error = str(fail.exception)
         self.assert_equal(actual_error, expected, fuzzy_match=True)
-
+        
+    @pytest.mark.requires_ck_infra    
     def test_create_order1(self) -> None:
         """
         Check proper return of Orders.
@@ -253,6 +254,7 @@ class TestReplayedCcxtExchange1(hunitest.TestCase):
             fill_percents,
         )
 
+    @pytest.mark.requires_ck_infra  
     def test_create_order3(self) -> None:
         """
         Check that error is raised when arguments that does not match data are
@@ -280,6 +282,7 @@ class TestReplayedCcxtExchange1(hunitest.TestCase):
             fill_percents,
         )
 
+    @pytest.mark.requires_ck_infra  
     def test_create_order4(self) -> None:
         """
         Check that error is raised when arguments that does not match data are
@@ -307,6 +310,7 @@ class TestReplayedCcxtExchange1(hunitest.TestCase):
             fill_percents,
         )
 
+    @pytest.mark.requires_ck_infra
     def test_create_order5(self) -> None:
         """
         Check that error is raised when arguments that does not match data are
@@ -334,6 +338,7 @@ class TestReplayedCcxtExchange1(hunitest.TestCase):
             fill_percents,
         )
 
+    @pytest.mark.requires_ck_infra
     def test_create_order6(self) -> None:
         """
         Check that error is raised when arguments that does not match data are
@@ -361,6 +366,7 @@ class TestReplayedCcxtExchange1(hunitest.TestCase):
             fill_percents,
         )
 
+    @pytest.mark.requires_ck_infra
     def test_create_order7(self) -> None:
         """
         Check that error is raised when arguments that does not match data are
@@ -466,6 +472,7 @@ class TestReplayedCcxtExchange2(hunitest.TestCase):
         )
         return replayed_ccxt_exchange
 
+    @pytest.mark.requires_ck_infra
     def test_create_order1(self) -> None:
         """
         Check proper return of Orders in the desired sequence.
@@ -676,6 +683,7 @@ class TestReplayedCcxtExchange2(hunitest.TestCase):
         """
         self.assert_equal(actual_string, expected, fuzzy_match=True)
 
+    @pytest.mark.requires_ck_infra
     def test_create_order2(self) -> None:
         """
         Check proper return of Orders in case wrong symbol is provided.
@@ -702,6 +710,7 @@ class TestReplayedCcxtExchange2(hunitest.TestCase):
         """
         self.assert_equal(actual_error, expected, fuzzy_match=True)
 
+    @pytest.mark.requires_ck_infra
     def test_create_order3(self) -> None:
         """
         Check proper return of Orders in case the wrong sequence of order is

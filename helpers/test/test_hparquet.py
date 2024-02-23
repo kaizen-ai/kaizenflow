@@ -85,8 +85,6 @@ def _compare_dfs(self: Any, df1: pd.DataFrame, df2: pd.DataFrame) -> str:
 
 # #############################################################################
 
-
-@pytest.mark.skip(reason="Not passing in Sorrentum")
 class TestParquet1(hunitest.TestCase):
     def test_get_df1(self) -> None:
         """
@@ -242,6 +240,7 @@ class TestParquet1(hunitest.TestCase):
             "datetime64[ns, UTC]",
         )
 
+    @pytest.mark.requires_ck_infra
     def test_save_read_concat_data(self) -> None:
         """
         Verify that data produced by different version of Pandas preserves

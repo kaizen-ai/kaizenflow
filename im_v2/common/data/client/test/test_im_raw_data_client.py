@@ -171,6 +171,7 @@ class TestImRawDataClient2(imvcddbut.TestImDbHelper):
                 """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    @pytest.mark.requires_ck_infra
     @umock.patch.object(
         imvcdcimrdc.imvcddbut.DbConnectionManager, "get_connection"
     )
@@ -721,6 +722,7 @@ class TestImRawDataClient4(hunitest.TestCase):
     Testing functionality of `RawDataReader` to load data from CSV file.
     """
 
+    @pytest.mark.requires_ck_infra
     @umock.patch.object(imvcdcimrdc.RawDataReader, "_build_s3_csv_file_path")
     @umock.patch.object(imvcdcimrdc.RawDataReader, "_get_partition_mode")
     def test_load_csv1(
@@ -780,6 +782,7 @@ class TestImRawDataClient4(hunitest.TestCase):
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    @pytest.mark.requires_ck_infra
     @umock.patch.object(imvcdcimrdc.RawDataReader, "_build_s3_csv_file_path")
     @umock.patch.object(imvcdcimrdc.RawDataReader, "_get_partition_mode")
     def test_load_csv2(
@@ -814,6 +817,7 @@ class TestImRawDataClient4(hunitest.TestCase):
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    @pytest.mark.requires_ck_infra
     @umock.patch.object(imvcdcimrdc.RawDataReader, "_build_s3_csv_file_path")
     @umock.patch.object(imvcdcimrdc.RawDataReader, "_get_partition_mode")
     def test_load_csv3(
@@ -922,6 +926,7 @@ class TestImRawDataClient5(hunitest.TestCase):
     Testing functionality of `RawDataReader` to load data from parquet file.
     """
 
+    @pytest.mark.requires_ck_infra
     def test_load_parquet1(
         self,
     ) -> None:
@@ -941,6 +946,7 @@ class TestImRawDataClient5(hunitest.TestCase):
             test_class_name="TestImRawDataClient5",
         )
 
+    @pytest.mark.requires_ck_infra
     def test_load_parquet2(
         self,
     ) -> None:
@@ -960,6 +966,7 @@ class TestImRawDataClient5(hunitest.TestCase):
             test_class_name="TestImRawDataClient5",
         )
 
+    @pytest.mark.requires_ck_infra
     def test_load_parquet3(
         self,
     ) -> None:
@@ -979,6 +986,7 @@ class TestImRawDataClient5(hunitest.TestCase):
             test_class_name="TestImRawDataClient5",
         )
 
+    @pytest.mark.requires_ck_infra
     def test_load_parquet4(
         self,
     ) -> None:
@@ -1033,6 +1041,7 @@ class TestImRawDataClient5(hunitest.TestCase):
             test_class_name="TestImRawDataClient5",
         )
 
+    @pytest.mark.requires_ck_infra
     @umock.patch.object(imvcdcimrdc.RawDataReader, "_build_s3_pq_file_path")
     @umock.patch.object(imvcdcimrdc.RawDataReader, "_get_partition_mode")
     def test_load_parquet_head(
@@ -1060,6 +1069,7 @@ class TestImRawDataClient5(hunitest.TestCase):
             test_class_name="TestImRawDataClient5",
         )
 
+    @pytest.mark.requires_ck_infra
     @umock.patch.object(imvcdcimrdc.RawDataReader, "_build_s3_pq_file_path")
     @umock.patch.object(imvcdcimrdc.RawDataReader, "_get_partition_mode")
     def test_read_data_head1(
@@ -1087,6 +1097,7 @@ class TestImRawDataClient5(hunitest.TestCase):
             test_class_name="TestImRawDataClient5",
         )
 
+    @pytest.mark.requires_ck_infra
     @umock.patch.object(imvcdcimrdc.RawDataReader, "_build_s3_pq_file_path")
     @umock.patch.object(imvcdcimrdc.RawDataReader, "_get_partition_mode")
     def test_read_data1(
