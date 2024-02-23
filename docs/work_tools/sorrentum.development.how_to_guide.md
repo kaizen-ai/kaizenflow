@@ -1,3 +1,5 @@
+
+
 <!-- toc -->
 
 - [Supporting OS](#supporting-os)
@@ -11,6 +13,12 @@
 # Supporting OS
 
 - We support Mac x86, Apple Silicon and Linux Ubuntu
+- Install `docker-cli` in MAC using
+  ```bash
+  brew install docker
+  brew link docker
+  brew install colima
+  ```
 - If you are using Windows,
   - Install VMWare software
   - Reference video for installing
@@ -62,7 +70,6 @@
 - To clone the repo, use the cloning command described in
   [the Github official documentation](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository-from-github/cloning-a-repository)
 - Example of cloning command:
-
   ```
   # Sometimes it does not work.
   > git clone git@github.com:sorrentum/sorrentum.git ~/src/sorrentum1
@@ -76,20 +83,17 @@
   https://docs.docker.com/get-started/overview/)
 
 - We work in a Docker container that has all the required dependencies installed
-
   - You can use PyCharm / VS code on your laptop to edit code, but you want to
     run code inside the dev container since this makes sure everyone is running
     with the same system, and it makes it easy to share code and reproduce
     problems
 
 - Install Docker Desktop on your PC
-
   - Links:
     - [Mac](https://docs.docker.com/desktop/install/mac-install/)
     - [Linux](https://docs.docker.com/desktop/install/linux-install/)
     - [Windows](https://docs.docker.com/desktop/install/windows-install/)
   - Check the installation by running:
-
     ```
     > docker pull hello-world
     Using default tag: latest
@@ -100,20 +104,16 @@
     ```
 
 - Common problems with Docker
-
   - Mac DNS problem, try step 5 from the
     [article](https://medium.com/freethreads/mac-os-docker-error-response-from-daemon-net-http-request-canceled-while-waiting-for-connection-7d1069eb4ca9)
     and repeat the cmd below:
-
     ```
     > docker pull hello-world
     Error response from daemon: net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)
     ```
-
   - Linux sudo problem, see
     [here](https://stackoverflow.com/questions/48568172/docker-sock-permission-denied)
     for the solution
-
     ```
     > docker pull hello-world
     Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get   http://%2Fvar%2Frun%2Fdocker.sock/v1.40/containers/json: dial unix /var/run/docker.sock: connect: permission denied
@@ -122,13 +122,11 @@
 - Thin environment
 
   1. Build the thin environment; this is done once
-
      ```
      > source dev_scripts/client_setup/build.sh
      ```
 
   2. Activate the thin environment; make sure it is always activated
-
      ```
      > source dev_scripts/setenv_amp.sh
      ```
@@ -136,7 +134,6 @@
   3. If you see output like this, your environment is successfully built! If not
      and you encounter any issues, please post them under your designated
      on-boarding issue
-
      ```
      alias sp='echo '\''source ~/.profile'\''; source ~/.profile'
      alias vi='/usr/bin/vi'
@@ -150,7 +147,6 @@
 - Docker image
 
   1. Pull the latest cmamp image; this is done once
-
      ```
      > i docker_pull
      or
@@ -158,7 +154,6 @@
      ```
 
   2. Pull the latest dev_tools image; this is done onec
-
      ```
      > i docker_pull_dev_tools
      or
@@ -168,7 +163,6 @@
 - Git
 
   1. Get the latest version of `master`
-
      ```
      # To update your feature branch with the latest changes from master run
      # the cmd below from a feature branch, i.e. not from master.
@@ -180,13 +174,11 @@
 - Basic Docker commands
 
   1. Start a Docker container
-
      ```
      > i docker_bash
      ```
 
   Ignore all the warnings that do not prevent you from running the tests, e.g.,
-
   ```
   WARNING: The AM_AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
   WARNING: The AM_AWS_DEFAULT_REGION variable is not set. Defaulting to a blank string.
@@ -197,7 +189,6 @@
   WARNING: The CK_AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
   WARNING: The CK_TELEGRAM_TOKEN variable is not set. Defaulting to a blank string.
   ```
-
   ```
   -----------------------------------------------------------------------------
   This code is not in sync with the container:
@@ -209,13 +200,11 @@
   ```
 
   2. Start a Jupyter server
-
      ```
      > i docker_jupyter
      ```
 
   To open a Jupyter notebook in a local web-browser:
-
   - In the output from the cmd above find an assigned port, e.g.,
     `[I 14:52:26.824 NotebookApp] http://0044e866de8d:10091/` -> port is `10091`
   - Add the port to the link like so: `http://localhost:10091/` or
