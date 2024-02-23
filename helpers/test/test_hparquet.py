@@ -240,7 +240,7 @@ class TestParquet1(hunitest.TestCase):
             "datetime64[ns, UTC]",
         )
 
-    @pytest.mark.requires_ck_infra
+    @pytest.mark.requires_ck_infra("Requires access to CK unit-test S3 bucket")
     def test_save_read_concat_data(self) -> None:
         """
         Verify that data produced by different version of Pandas preserves
