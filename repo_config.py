@@ -200,7 +200,7 @@ def has_dind_support() -> bool:
     if check_repo:
         if hserver.is_cmamp_prod():
             assert not has_dind, "Not expected privileged mode"
-        elif get_name() in ("//dev_tools",):
+        elif get_name() in ("//dev_tools", "//sorr"):
             assert not has_dind, "Not expected privileged mode"
         else:
             if hserver.is_mac() or hserver.is_dev_ck() or hserver.is_inside_ci():
@@ -399,6 +399,7 @@ def skip_submodules_test() -> bool:
 
 # Copied from hprint to avoid import cycles.
 
+
 # TODO(gp): It should use *.
 def indent(txt: str, num_spaces: int = 2) -> str:
     """
@@ -417,6 +418,7 @@ def indent(txt: str, num_spaces: int = 2) -> str:
 
 
 # End copy.
+
 
 # This function can't be in `helpers.hserver` since it creates circular import
 # and `helpers.hserver` should not depend on anything.
