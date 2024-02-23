@@ -129,8 +129,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if args.input_files:
         files_to_process = []
         for input_file in args.input_files:
-            hdbg.dassert_path_exists(args.input_file)
-            hdbg.dassert_file_extension(args.input_file, ".ipynb")
+            hdbg.dassert_path_exists(input_file)
+            hdbg.dassert_file_extension(input_file, ".ipynb")
             files_to_process.append(input_file)
     elif args.input_dir:
         hdbg.dassert_dir_exists(args.input_dir)
