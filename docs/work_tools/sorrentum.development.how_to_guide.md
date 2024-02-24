@@ -2,13 +2,16 @@
 
 <!-- toc -->
 
+- [Initial Setup](#initial-setup)
 - [Sorrentum Dev Docker container (aka dev container, cmamp container)](#sorrentum-dev-docker-container-aka-dev-container-cmamp-container)
 - [Getting a first issue to work on (aka warm-up issue)](#getting-a-first-issue-to-work-on-aka-warm-up-issue)
 
 <!-- tocstop -->
 
+# Initial Setup
+
 Refer to
-[docs/work_tools/data605.basic_development.how_to_guide.md](docs/work_tools/data605.basic_development.how_to_guide.md)
+[/docs/work_tools/data605.basic_development.how_to_guide.md](/docs/work_tools/data605.basic_development.how_to_guide.md)
 for initial setup and guidance, then transition to this document for further
 instructions
 
