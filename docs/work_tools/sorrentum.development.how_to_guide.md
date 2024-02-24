@@ -2,80 +2,15 @@
 
 <!-- toc -->
 
-- [Supporting OS](#supporting-os)
-- [Getting a first issue to work on (aka warm-up issue)](#getting-a-first-issue-to-work-on-aka-warm-up-issue)
-- [How to contribute code (short version)](#how-to-contribute-code-short-version)
-- [Cloning the code](#cloning-the-code)
 - [Sorrentum Dev Docker container (aka dev container, cmamp container)](#sorrentum-dev-docker-container-aka-dev-container-cmamp-container)
+- [Getting a first issue to work on (aka warm-up issue)](#getting-a-first-issue-to-work-on-aka-warm-up-issue)
 
 <!-- tocstop -->
 
-# Supporting OS
-
-- We support Mac x86, Apple Silicon and Linux Ubuntu
-- Install `docker-cli` in MAC using
-  ```bash
-  brew install docker
-  brew link docker
-  brew install colima
-  ```
-- If you are using Windows,
-  - Install VMWare software
-  - Reference video for installing
-    [ubuntu](https://www.youtube.com/watch?v=NhlhJFKmzpk&ab_channel=ProgrammingKnowledge)
-    on VMWare software
-  - Make sure you set up your git and github
-  - Install
-    [docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
-    on your Ubuntu VM
-
-# Getting a first issue to work on (aka warm-up issue)
-
-- The goal is to get comfortable with the development system
-
-- We mark certain bugs as "good-as-first-bug"
-
-- Typical warm-up issues are:
-  - Write unit tests
-  - Copy-paste-modify (ideally refactor and then change) code
-  - Simple refactoring
-
-# How to contribute code (short version)
-
-- Make sure you are familiar with our coding style
-- Create a branch of your assigned issues/bugs
-  - E.g., for a GitHub issue with the name "Expose the linter container to
-    Sorrentum contributors #63", the branch name should be
-    `SorrTask63_Expose_the_linter_container_to_Sorrentum_contributors`
-  - This step is automated through the `invoke` flow (see docs for more info)
-- Run the
-  [linter](https://github.com/cryptokaizen/cmamp/blob/master/docs/coding/all.submit_code_for_review.how_to_guide.md#run-linter)
-  on your code before pushing.
-- Do `git commit` and `git push` together so the latest changes are readily
-  visible
-- Make sure your branch is up-to-date with the master branch
-- Create a Pull Request (PR) from your branch
-- Add your assigned reviewers for your PR so that they are informed of your PR
-- After being reviewed, the PR will be merged to the master branch by your
-  reviewers
-
-# Cloning the code
-
-- All the source code should go under `~/src` (e.g., `/Users/<YOUR_USER>/src` on
-  a Mac PC)
-- The path to the local repo folder should look like this
-  `~/src/{REPO_NAME}{IDX}` where
-  - `IDX` is an integer
-  - `REPO_NAME` is a name of the repository
-- To clone the repo, use the cloning command described in
-  [the Github official documentation](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository-from-github/cloning-a-repository)
-- Example of cloning command:
-  ```
-  # Sometimes it does not work.
-  > git clone git@github.com:sorrentum/sorrentum.git ~/src/sorrentum1
-  # Alternative command.
-  > git clone https://github.com/sorrentum/sorrentum.git ~/src/sorrentum1
-  ```
+Refer to
+[docs/work_tools/data605.basic_development.how_to_guide.md](docs/work_tools/data605.basic_development.how_to_guide.md)
+for initial setup and guidance, then transition to this document for further
+instructions
 
 # Sorrentum Dev Docker container (aka dev container, cmamp container)
 
@@ -118,31 +53,6 @@
     > docker pull hello-world
     Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get   http://%2Fvar%2Frun%2Fdocker.sock/v1.40/containers/json: dial unix /var/run/docker.sock: connect: permission denied
     ```
-
-- Thin environment
-
-  1. Build the thin environment; this is done once
-     ```
-     > source dev_scripts/client_setup/build.sh
-     ```
-
-  2. Activate the thin environment; make sure it is always activated
-     ```
-     > source dev_scripts/setenv_amp.sh
-     ```
-
-  3. If you see output like this, your environment is successfully built! If not
-     and you encounter any issues, please post them under your designated
-     on-boarding issue
-     ```
-     alias sp='echo '\''source ~/.profile'\''; source ~/.profile'
-     alias vi='/usr/bin/vi'
-     alias vim='/usr/bin/vi'
-     alias vimdiff='/usr/bin/vi -d'
-     alias vip='vim -c "source ~/.vimrc_priv"'
-     alias w='which'
-     ==> SUCCESS <==
-     ```
 
 - Docker image
 
@@ -210,3 +120,14 @@
   - Add the port to the link like so: `http://localhost:10091/` or
     `http://127.0.0.1:10091`
   - Copy-paste the link into a web-browser and update the page
+
+# Getting a first issue to work on (aka warm-up issue)
+
+- The goal is to get comfortable with the development system
+
+- We mark certain bugs as "good-as-first-bug"
+
+- Typical warm-up issues are:
+  - Write unit tests
+  - Copy-paste-modify (ideally refactor and then change) code
+  - Simple refactoring

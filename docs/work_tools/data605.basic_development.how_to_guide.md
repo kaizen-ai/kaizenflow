@@ -12,7 +12,6 @@
   * [3. Linter](#3-linter)
     + [Run the linter and check the linter results](#run-the-linter-and-check-the-linter-results)
   * [4. Writing and Contributing Code](#4-writing-and-contributing-code)
-  * [5. Additional Document links](#5-additional-document-links)
       - [By adhering to these conventions, we aim to create a collaborative and efficient coding environment for all contributors. Happy coding!](#by-adhering-to-these-conventions-we-aim-to-create-a-collaborative-and-efficient-coding-environment-for-all-contributors-happy-coding)
 
 <!-- tocstop -->
@@ -30,26 +29,28 @@ information flow and make the contribution process seamless.
 ### Supporting OS
 
 - We support Mac x86, Apple Silicon and Linux Ubuntu
-- Install `docker-cli` in MAC using
+- Install `docker-cli` On Mac using
   ```bash
-  brew install docker
-  brew link docker
-  brew install colima
+  > brew install docker
+  > brew link docker
+  > brew install colima
   ```
 - If you are using Windows,
-  - Install VMWare software -
-    [Reference video for installing ubuntu on VMWare software ](https://youtu.be/NhlhJFKmzpk?si=4MMOYzLnhyP4eSj2)
+  - Install VMWare software
+  - Reference video for installing
+    [ubuntu](https://www.youtube.com/watch?v=NhlhJFKmzpk&ab_channel=ProgrammingKnowledge)
+    on VMWare software
+  - Make sure you set up your git and github
   - Install
     [docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
     on your Ubuntu VM
-- Make sure you set up your git and github
 
 ### Cloning the Code
 
 - All the source code should go under ~/src (e.g., /Users/<YOUR_USER>/src on a
   Mac PC)
-- The path to the local repo folder should look like this `~/src/{REPO_NAME}{IDX}`
-  where
+- The path to the local repo folder should look like this
+  `~/src/{REPO_NAME}{IDX}` where
   - IDX is an integer
   - REPO_NAME is a name of the repository
 
@@ -83,7 +84,7 @@ information flow and make the contribution process seamless.
 
 - If you see output like this, your environment is successfully built! If not
   and you encounter any issues, please post them by creating a new issue and
-  assign it to the TA 
+  assign it to the TA
   ```
   alias sp='echo '\''source ~/.profile'\''; source ~/.profile'
   alias vi='/usr/bin/vi'
@@ -117,31 +118,20 @@ information flow and make the contribution process seamless.
 
 ## 4. Writing and Contributing Code
 
-- Always start with creating an issue first, providing a summary of what you
-  want to implement and assign it to yourself and your team
+- If needed, always start with creating an issue first, providing a summary of
+  what you want to implement and assign it to yourself and your team
 - Create a branch of your assigned issues/bugs
   - E.g., for a GitHub issue with the name: "Expose the linter container to
     Sorrentum contributors #63", The branch name should be :
     `SorrTask63_Expose_the_linter_container_to_Sorrentum_contributors`
+- Implement the code based on the requirements in the assigned issue
 - Run the linter on your code before pushing
 - Do `git commit` and `git push` together so the latest changes are readily
   visible
 - Make sure your branch is up-to-date with the master branch
 - Create a Pull Request (PR) from your branch
-- Add your assigned reviewers for   your PR so that they are informed of
-  your PR
+- Add your assigned reviewers for your PR so that they are informed of your PR
 - After being reviewed, the PR will be merged to the master branch by your
   reviewers
-
-## 5. Additional Document links
-
-Refer the below links for a detailed description of every step mentioned
-
-- Introduction to Sorrentum -
-  [Link](https://github.com/sorrentum/sorrentum/blob/master/docs/onboarding/all.sorrentum_intro.reference.md)
-- Sign up for Sorrentum Project -
-  [Link](https://github.com/sorrentum/sorrentum/blob/master/docs/onboarding/all.sign_up_for_sorrentum.how_to_guide.md)
-- Sorrentum Development Guide -
-  [Link](https://github.com/sorrentum/sorrentum/blob/master/docs/work_tools/all.sorrentum_development.how_to_guide.md)
 
 #### By adhering to these conventions, we aim to create a collaborative and efficient coding environment for all contributors. Happy coding!
