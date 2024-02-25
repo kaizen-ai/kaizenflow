@@ -332,12 +332,16 @@ def _docker_login_ecr() -> None:
 @task
 def docker_login(ctx, target_registry="aws_ecr.ck"):  # type: ignore
     """
-    Log in the target registry.
+    Log in the target registry and skip if we are in sorrentum.
 
     :param target_registry: target Docker image registry to log in to
         - "dockerhub.sorrentum": public Sorrentum Docker image registry
         - "aws_ecr.ck": private AWS CK ECR
     """
+    # No login required as sorrentum container is accessible on the public DockerHub registry.
+    if henv.execute_repo_config_code("get_name()") == "//sorr":
+        _LOG.warning("Skipping logging in for Sorrentum")
+        return
     hlitauti.report_task()
     # We run everything using `hsystem.system(...)` but `ctx` is needed
     # to make the function work as an invoke target.
