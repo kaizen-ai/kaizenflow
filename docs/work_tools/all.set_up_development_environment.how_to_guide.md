@@ -41,7 +41,61 @@ Happy coding!
   can refer to [The Missing Semester of Your CS
   Education](https://missing.csail.mit.edu/)
 
-## Docker
+## Clone the code
+
+- To clone the repo, use the cloning command described in the GitHub official
+  documentation
+
+- Example of cloning command:
+  ```bash
+  > git clone git@github.com:sorrentum/sorrentum.git ~/src/sorrentum1
+  ```
+  - The previous command might not work sometimes and an alternative command
+    using HTTP instead of SSH
+  ```bash
+  > git clone https://github.com/sorrentum/sorrentum.git ~/src/sorrentum1
+  ```
+
+- All the source code should go under `~/src` (e.g., `/Users/<YOUR_USER>/src` on a
+  Mac)
+- The path to the local repo folder should look like this
+  `~/src/{REPO_NAME}{IDX}` where
+  - `REPO_NAME` is a name of the repository
+  - IDX is an integer
+
+## Building the thin environment
+
+- Create the "thin environment" which contains the minimum set of dependencies
+  needed for running the Sorrentum Dev Docker container
+
+- Build the thin environment; this is done once per client
+  ```bash
+  > cd $GIT_ROOT
+  > source dev_scripts/client_setup/build.sh
+  ```
+
+- Activate the thin environment; make sure it is always activated
+  ```
+  > source dev_scripts/setenv_amp.sh
+  ```
+
+- If you see output like below, your environment is successfully built!
+  ```
+  ...
+  alias sp='echo '\''source ~/.profile'\''; source ~/.profile'
+  alias vi='/usr/bin/vi'
+  alias vim='/usr/bin/vi'
+  alias vimdiff='/usr/bin/vi -d'
+  alias vip='vim -c "source ~/.vimrc_priv"'
+  alias w='which'
+  ==> SUCCESS <==
+  ```
+- If you encounter any issues, please post them by creating a new issue on GitHub
+  and assign it to the `gsaggese`
+  - You should report as much information as possible: what was the command, what
+    is your platform, output of the command
+
+## Install and test Docker
 
 ### Supported OS
 
@@ -64,6 +118,18 @@ Happy coding!
 
 - Get familiar with Docker if you are not, e.g.,
   https://docs.docker.com/get-started/overview/
+
+- We work in a Docker container that has all the required dependencies installed
+  - You can use PyCharm / VS code on your laptop to edit code, but you want to
+    run code inside the dev container since this makes sure everyone is running
+    with the same system, and it makes it easy to share code and reproduce
+    problems
+
+- Install Docker Desktop on your PC
+  - Links:
+    - [Mac](https://docs.docker.com/desktop/install/mac-install/)
+    - [Linux](https://docs.docker.com/desktop/install/linux-install/)
+    - [Windows](https://docs.docker.com/desktop/install/windows-install/)
 
 - Follow https://docs.docker.com/engine/install/
 
@@ -109,18 +175,9 @@ Happy coding!
     GitCommit:        de40ad0
     ```
 
-- We work in a Docker container that has all the required dependencies installed
-  - You can use PyCharm / VS code on your laptop to edit code, but you want to
-    run code inside the dev container since this makes sure everyone is running
-    with the same system, and it makes it easy to share code and reproduce
-    problems
+### Checking Docker installation
 
-- Install Docker Desktop on your PC
-  - Links:
-    - [Mac](https://docs.docker.com/desktop/install/mac-install/)
-    - [Linux](https://docs.docker.com/desktop/install/linux-install/)
-    - [Windows](https://docs.docker.com/desktop/install/windows-install/)
-  - Check the installation by running:
+- Check the installation by running:
     ```
     > docker pull hello-world
     Using default tag: latest
@@ -130,58 +187,82 @@ Happy coding!
     docker.io/library/hello-world:latest
     ```
 
+### Docker installation troubleshooting
+
 - Common problems with Docker
   - Mac DNS problem, try step 5 from the
     [article](https://medium.com/freethreads/mac-os-docker-error-response-from-daemon-net-http-request-canceled-while-waiting-for-connection-7d1069eb4ca9)
     and repeat the cmd below:
-    ```
+    ```bash
     > docker pull hello-world
     Error response from daemon: net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)
     ```
   - Linux sudo problem, see
     [here](https://stackoverflow.com/questions/48568172/docker-sock-permission-denied)
     for the solution
-    ```
+    ```bash
     > docker pull hello-world
     Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get   http://%2Fvar%2Frun%2Fdocker.sock/v1.40/containers/json: dial unix /var/run/docker.sock: connect: permission denied
     ```
 
-- Docker image
-
-  1. Pull the latest cmamp image; this is done once
-     ```
-     > i docker_pull
-     or
-     > docker pull sorrentum/cmamp:latest
-     ```
-
-  2. Pull the latest dev_tools image; this is done onec
-     ```
-     > i docker_pull_dev_tools
-     or
-     > docker pull sorrentum/dev_tools:prod
-     ```
-
-- Git
-
-  1. Get the latest version of `master`
-     ```
-     # To update your feature branch with the latest changes from master run
-     # the cmd below from a feature branch, i.e. not from master.
-     > i git_merge_master
-     # If you are on `master` just pull the remote changes.
-     > i git_pull
-     ```
-
-- Basic Docker commands
-
-  1. Start a Docker container
-     ```
-     > i docker_bash
-     ```
-
-  Ignore all the warnings that do not prevent you from running the tests, e.g.,
+## Tmux
+- To create the standard tmux view on a cloned environment run
+  ```bash
+  > go_amp.sh sorrentum 1
   ```
+
+- You need to create the tmux environment once per Git client and then you can
+  re-connect with:
+  ```bash
+  # Check the available environments.
+  > tmux ls
+  cmamp1: 4 windows (created Fri Dec  3 18:27:09 2021) (attached)
+
+  # Attach an environment.
+  > tmux attach -t cmamp1
+  ```
+
+- You can re-run `go_amp.sh` when your tmux gets corrupted and you want to
+  restart. Of course this doesn't impact the underlying Git repo
+
+## Some useful workflows
+
+- Check the installation by running:
+  ```bash
+  > docker pull hello-world
+  Using default tag: latest
+  ```
+
+- Pull the latest Sorrentum image; this is done once
+   ```bash
+   > i docker_pull
+   or
+   > docker pull sorrentum/cmamp:latest
+   ```
+
+- Pull the latest `dev_tools` image containing the linter; this is done once
+   ```
+   > i docker_pull_dev_tools
+   or
+   > docker pull sorrentum/dev_tools:prod
+   ```
+
+- Get the latest version of `master`
+   ```
+   # To update your feature branch with the latest changes from master run
+   # the cmd below from a feature branch, i.e. not from master.
+   > i git_merge_master
+   # If you are on `master` just pull the remote changes.
+   > i git_pull
+   ```
+
+- Start a Docker container
+   ```bash
+   > i docker_bash
+   ```
+
+- You can ignore all the warnings that do not prevent you from running the tests, e.g.,
+  ```bash
   WARNING: The AM_AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
   WARNING: The AM_AWS_DEFAULT_REGION variable is not set. Defaulting to a blank string.
   WARNING: The AM_AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
@@ -201,72 +282,21 @@ Happy coding!
   - pull the latest container with `invoke docker_pull`
   ```
 
-  2. Start a Jupyter server
-     ```
-     > i docker_jupyter
-     ```
+- Start a Jupyter server
+   ```bash
+   > i docker_jupyter
+   ```
 
-  To open a Jupyter notebook in a local web-browser:
+- To open a Jupyter notebook in a local web-browser:
   - In the output from the cmd above find an assigned port, e.g.,
     `[I 14:52:26.824 NotebookApp] http://0044e866de8d:10091/` -> port is `10091`
   - Add the port to the link like so: `http://localhost:10091/` or
     `http://127.0.0.1:10091`
   - Copy-paste the link into a web-browser and update the page
 
-## Cloning the Code
-
-- To clone the repo, use the cloning command described in the GitHub official
-  documentation
-
-- Example of cloning command:
-  ```
-  > git clone git@github.com:sorrentum/sorrentum.git ~/src/sorrentum1
-  ```
-  - The previous command might not work sometimes and an alternative command
-    using HTTP instead of SSH
-  ```
-  > git clone https://github.com/sorrentum/sorrentum.git ~/src/sorrentum1
-  ```
-
-- All the source code should go under `~/src` (e.g., `/Users/<YOUR_USER>/src` on a
-  Mac)
-- The path to the local repo folder should look like this
-  `~/src/{REPO_NAME}{IDX}` where
-  - `REPO_NAME` is a name of the repository
-  - IDX is an integer
-
-## Building the thin environment
-
-- Create a thin environment for running the Sorrentum Dev Docker container
-
-- Build the thin environment; this is done once per client
-  ```
-  > source dev_scripts/client_setup/build.sh
-  ```
-
-- Activate the thin environment; make sure it is always activated
-  ```
-  > source dev_scripts/setenv_amp.sh
-  ```
-
-- If you see output like this, your environment is successfully built! If not
-  and you encounter any issues, please post them by creating a new issue and
-  assign it to the TA
-  ```
-  ...
-  alias sp='echo '\''source ~/.profile'\''; source ~/.profile'
-  alias vi='/usr/bin/vi'
-  alias vim='/usr/bin/vi'
-  alias vimdiff='/usr/bin/vi -d'
-  alias vip='vim -c "source ~/.vimrc_priv"'
-  alias w='which'
-  ==> SUCCESS <==
-  ```
-
 ## Coding Style
 
-- Adopt the coding style outlined -
-  [here](/docs/coding/all.coding_style.how_to_guide.md).
+- Adopt the coding style outlined [here](/docs/coding/all.coding_style.how_to_guide.md)
 
 ## Linter
 
@@ -276,8 +306,8 @@ Happy coding!
 ### Run the linter and check the linter results
 
 - Run the linter against the changed files in the PR branch
-  ```
-  invoke lint --files "file1 file2..."
+  ```bash
+  > invoke lint --files "file1 file2..."
   ```
 
 - More information about Linter -
@@ -290,8 +320,8 @@ Happy coding!
   what you want to implement and assign it to yourself and your team
 - Create a branch of your assigned issues/bugs
   - E.g., for a GitHub issue with the name: "Expose the linter container to
-    Sorrentum contributors #63", The branch name should be :
-    `SorrTask63_Expose_the_linter_container_to_Sorrentum_contributors`
+    Sorrentum contributors #63", The GitHub issue and the branch name should be
+    called `SorrTask63_Expose_the_linter_container_to_Sorrentum_contributors`
 - Implement the code based on the requirements in the assigned issue
 - Run the linter on your code before pushing
 - Do `git commit` and `git push` together so the latest changes are readily

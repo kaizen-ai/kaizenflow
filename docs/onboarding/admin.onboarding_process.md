@@ -15,9 +15,9 @@
         * Quick review if the person is decent or not
         * Assign to a shepherd
             * If interns -> DanY / Samarth
-            * If full-time candidate -> shepherd based on 
-                * 
-                * 
+            * If full-time candidate -> shepherd based on
+                *
+                *
             * If not clear ask GP
 2. The shepherd reviews the CV to get a sense if they are decent or not
     * It posts a quick summary of pros and cons
@@ -26,7 +26,7 @@
     * The goal is to avoid on-boarding people that will likely disappoint us
 3. If the candidate is a no go, GP sends an email of rejection
 4. The on-boarding shepherd is in charge of updating the Asana task with every interesting event
-5. We start the on-boarding process as per 
+5. We start the on-boarding process as per
     * Update the [Contributor List. ](https://docs.google.com/spreadsheets/d/1eRZJaj5-1g6W7w_Ay4UhJEdtAvrTTM1V94cKj6_Vwoc/edit#gid=1253964093)Copy the information from [Contributor Info ](https://docs.google.com/spreadsheets/d/13Mxj5ZIydMQHSmJUDCpURB5w-50RPXC0AjgKWYcMZnw/edit#gid=2038824432)response sheet to the [Contributor List ](https://docs.google.com/spreadsheets/d/1eRZJaj5-1g6W7w_Ay4UhJEdtAvrTTM1V94cKj6_Vwoc/edit#gid=1253964093) as it is a master sheet for all the collaborators
     * Ping GP on the asana task for that collaborator for invitation to the repo
     * Add Contributor email as Commenter to the [Sorrentum - Contributors gdrive](https://drive.google.com/drive/u/0/folders/1LXwKpmaFWJI-887IoA50sVC8-dw_1L8I)

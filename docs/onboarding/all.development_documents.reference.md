@@ -76,7 +76,7 @@ This contains a set of resources that over time will make 10x more productive
 - [Buildmeister process](/docs/work_organization/all.buildmeister.how_to_guide.md)
 
 - [HTMLcov server](/docs/infra/ck.use_htmlcov_server.how_to_guide.md)
-  
+
 - [Profiling](/docs/coding/all.profiling.how_to_guide.md)
 
 - [Visual Studio Code](/docs/work_tools/all.visual_studio_code.how_to_guide.md)
@@ -86,7 +86,7 @@ This contains a set of resources that over time will make 10x more productive
 - [Gsheet into pandas](/docs/coding/all.gsheet_into_pandas.how_to_guide.md)
 
 - [Email](/docs/onboarding/all.organize_email.how_to_guide.md)
-    
+
 - [Glossary](/docs/general_background/all.glossary.reference.md)
 
 - [DataFlow](/docs/dataflow/ck.dataflow.explanation.md)
