@@ -1,3 +1,16 @@
+
+
+<!-- toc -->
+
+- [On-boarding](#on-boarding)
+- [How to start developing](#how-to-start-developing)
+- [Project management](#project-management)
+- [Learn how to become efficient at developing](#learn-how-to-become-efficient-at-developing)
+- [In-depth docs](#in-depth-docs)
+- [DeFi](#defi)
+
+<!-- tocstop -->
+
 <img width="100" alt="image" src="https://user-images.githubusercontent.com/33238329/216777823-851b28ed-7d7a-4b52-9d71-ab38d146edc3.png">
 
 # On-boarding
@@ -25,24 +38,19 @@ This contains the absolute minimal amount of info to start developing
 # Project management
 
 - [Contributor Scoring](/docs/work_organization/all.contributor_scoring.how_to_guide.md)
-
   - How we give feedback to contributors
 
 - [Code review](/docs/coding/all.code_review.how_to_guide.md)
-
   - PR review workflow from the code author and code reviewer points of view
 
 - [Development workflow](/docs/work_tools/all.development.how_to_guide.md)
-
   - Extended instructions on how to deploy your working environment and interact
     with it
 
 - [GitHub/ZenHub workflows](/docs/work_organization/all.use_github_and_zenhub.how_to_guide.md)
-
   - How to use GitHub and ZenHub, file a PR, review GitHub/ZenHub workflows
 
 - [Git workflow and best practices](/docs/work_tools/all.git.how_to_guide.md)
-
   - `git` workflows, branch management, troubleshooting, common procedures
 
 - [Documentation about guidelines](/docs/documentation_meta/all.writing_docs.how_to_guide.md)

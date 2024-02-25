@@ -1,11 +1,20 @@
+
+
+<!-- toc -->
+
+- [Commitment to contribute](#commitment-to-contribute)
+
+<!-- tocstop -->
+
 <img width="100" alt="image" src="https://user-images.githubusercontent.com/33238329/216777823-851b28ed-7d7a-4b52-9d71-ab38d146edc3.png">
 
-Hello! Nice to meet you.
+# Hello! Nice to meet you
 
 We are very happy that you are interested in the
 [Sorrentum Project](https://www.sorrentum.org/)!
 
 Sorrentum is an open-source project to build:
+
 - Machine learning and AI geared towards finance and economics
 - Web3 / DeFi protocol
 
@@ -15,8 +24,8 @@ Stanford / Berkeley / MIT / etc, where every student seems to be trying to start
 a company on the side.
 
 Our goal is to bootstrap the same virtuous cycle outside Silicon Valley so that
-instead of just looking for a job, you create your own. We are still figuring out
-things as we go, and we are working with University of Maryland and other
+instead of just looking for a job, you create your own. We are still figuring
+out things as we go, and we are working with University of Maryland and other
 interested parties to provide internships, research assistantships, and
 development grants.
 

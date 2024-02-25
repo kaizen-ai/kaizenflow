@@ -2,17 +2,23 @@
 
 <!-- toc -->
 
-- [Convention Documentation](#convention-documentation)
+- [Set up Sorrentum development environment](#set-up-sorrentum-development-environment)
   * [Introduction](#introduction)
-  * [1. Building the Coding Environment](#1-building-the-coding-environment)
-    + [Supporting OS](#supporting-os)
-    + [Cloning the Code](#cloning-the-code)
-    + [Building the Thin Environment](#building-the-thin-environment)
-  * [2. Coding Style](#2-coding-style)
-  * [3. Linter](#3-linter)
+  * [Technologies used](#technologies-used)
+  * [Clone the code](#clone-the-code)
+  * [Building the thin environment](#building-the-thin-environment)
+  * [Install and test Docker](#install-and-test-docker)
+    + [Supported OS](#supported-os)
+    + [Install Docker](#install-docker)
+    + [Checking Docker installation](#checking-docker-installation)
+    + [Docker installation troubleshooting](#docker-installation-troubleshooting)
+  * [Tmux](#tmux)
+  * [Some useful workflows](#some-useful-workflows)
+  * [Coding Style](#coding-style)
+  * [Linter](#linter)
     + [Run the linter and check the linter results](#run-the-linter-and-check-the-linter-results)
-  * [4. Writing and Contributing Code](#4-writing-and-contributing-code)
-      - [By adhering to these conventions, we aim to create a collaborative and efficient coding environment for all contributors. Happy coding!](#by-adhering-to-these-conventions-we-aim-to-create-a-collaborative-and-efficient-coding-environment-for-all-contributors-happy-coding)
+  * [Writing and Contributing Code](#writing-and-contributing-code)
+  * [How to receive a crypto transfer](#how-to-receive-a-crypto-transfer)
 
 <!-- tocstop -->
 
@@ -21,9 +27,9 @@
 ## Introduction
 
 This document outlines the development set up to be followed by Sorrentum
-contributors. By documenting the set up, we aim to streamline the
-information flow and make the contribution process seamless by creating a
-collaborative and efficient coding environment for all contributors.
+contributors. By documenting the set up, we aim to streamline the information
+flow and make the contribution process seamless by creating a collaborative and
+efficient coding environment for all contributors.
 
 Happy coding!
 
@@ -38,8 +44,8 @@ Happy coding!
 - You can go through the lectures and tutorials on a per-need basis, depending
   on what it's useful for you to develop
 - As an additional resource to become proficient in using Linux and shell, you
-  can refer to [The Missing Semester of Your CS
-  Education](https://missing.csail.mit.edu/)
+  can refer to
+  [The Missing Semester of Your CS Education](https://missing.csail.mit.edu/)
 
 ## Clone the code
 
@@ -47,17 +53,19 @@ Happy coding!
   documentation
 
 - Example of cloning command:
+
   ```bash
   > git clone git@github.com:sorrentum/sorrentum.git ~/src/sorrentum1
   ```
   - The previous command might not work sometimes and an alternative command
     using HTTP instead of SSH
+
   ```bash
   > git clone https://github.com/sorrentum/sorrentum.git ~/src/sorrentum1
   ```
 
-- All the source code should go under `~/src` (e.g., `/Users/<YOUR_USER>/src` on a
-  Mac)
+- All the source code should go under `~/src` (e.g., `/Users/<YOUR_USER>/src` on
+  a Mac)
 - The path to the local repo folder should look like this
   `~/src/{REPO_NAME}{IDX}` where
   - `REPO_NAME` is a name of the repository
@@ -69,6 +77,7 @@ Happy coding!
   needed for running the Sorrentum Dev Docker container
 
 - Build the thin environment; this is done once per client
+
   ```bash
   > cd $GIT_ROOT
   > source dev_scripts/client_setup/build.sh
@@ -90,19 +99,19 @@ Happy coding!
   alias w='which'
   ==> SUCCESS <==
   ```
-- If you encounter any issues, please post them by creating a new issue on GitHub
-  and assign it to the `gsaggese`
-  - You should report as much information as possible: what was the command, what
-    is your platform, output of the command
+- If you encounter any issues, please post them by creating a new issue on
+  GitHub and assign it to the `gsaggese`
+  - You should report as much information as possible: what was the command,
+    what is your platform, output of the command
 
 ## Install and test Docker
 
 ### Supported OS
 
 - Sorrentum supports Mac (both x86 and Apple Silicon) and Linux Ubuntu
-- We do not support Windows and WSL: we have tried several times to port the tool
-  chain to it, but there are always subtle incompatible behaviors that drive
-  everyone crazy
+- We do not support Windows and WSL: we have tried several times to port the
+  tool chain to it, but there are always subtle incompatible behaviors that
+  drive everyone crazy
   - If you are using Windows, we suggest to use dual boot with Linux or use a
     virtual machine with Linux
   - Install VMWare software
@@ -134,6 +143,7 @@ Happy coding!
 - Follow https://docs.docker.com/engine/install/
 
 - For Mac you can also install `docker-cli` without the GUI using
+
   ```bash
   > brew install docker
   > brew link docker
@@ -142,6 +152,7 @@ Happy coding!
 
 - After installing make sure Docker works on your laptop (of course the version
   will be newer)
+
   ```bash
   > docker version
   Client:
@@ -173,19 +184,19 @@ Happy coding!
    docker-init:
     Version:          0.19.0
     GitCommit:        de40ad0
-    ```
+  ```
 
 ### Checking Docker installation
 
 - Check the installation by running:
-    ```
-    > docker pull hello-world
-    Using default tag: latest
-    latest: Pulling from library/hello-world
-    Digest: sha256:fc6cf906cbfa013e80938cdf0bb199fbdbb86d6e3e013783e5a766f50f5dbce0
-    Status: Image is up to date for hello-world:latest
-    docker.io/library/hello-world:latest
-    ```
+  ```
+  > docker pull hello-world
+  Using default tag: latest
+  latest: Pulling from library/hello-world
+  Digest: sha256:fc6cf906cbfa013e80938cdf0bb199fbdbb86d6e3e013783e5a766f50f5dbce0
+  Status: Image is up to date for hello-world:latest
+  docker.io/library/hello-world:latest
+  ```
 
 ### Docker installation troubleshooting
 
@@ -206,13 +217,16 @@ Happy coding!
     ```
 
 ## Tmux
+
 - To create the standard tmux view on a cloned environment run
+
   ```bash
   > go_amp.sh sorrentum 1
   ```
 
 - You need to create the tmux environment once per Git client and then you can
   re-connect with:
+
   ```bash
   # Check the available environments.
   > tmux ls
@@ -228,40 +242,45 @@ Happy coding!
 ## Some useful workflows
 
 - Check the installation by running:
+
   ```bash
   > docker pull hello-world
   Using default tag: latest
   ```
 
 - Pull the latest Sorrentum image; this is done once
-   ```bash
-   > i docker_pull
-   or
-   > docker pull sorrentum/cmamp:latest
-   ```
+
+  ```bash
+  > i docker_pull
+  or
+  > docker pull sorrentum/cmamp:latest
+  ```
 
 - Pull the latest `dev_tools` image containing the linter; this is done once
-   ```
-   > i docker_pull_dev_tools
-   or
-   > docker pull sorrentum/dev_tools:prod
-   ```
+  ```bash
+  > i docker_pull_dev_tools
+  or
+  > docker pull sorrentum/dev_tools:prod
+  ```
 
 - Get the latest version of `master`
-   ```
-   # To update your feature branch with the latest changes from master run
-   # the cmd below from a feature branch, i.e. not from master.
-   > i git_merge_master
-   # If you are on `master` just pull the remote changes.
-   > i git_pull
-   ```
+  ```bash
+  # To update your feature branch with the latest changes from master run
+  # the cmd below from a feature branch, i.e. not from master.
+  > i git_merge_master
+  # If you are on `master` just pull the remote changes.
+  > i git_pull
+  ```
 
 - Start a Docker container
-   ```bash
-   > i docker_bash
-   ```
 
-- You can ignore all the warnings that do not prevent you from running the tests, e.g.,
+  ```bash
+  > i docker_bash
+  ```
+
+- You can ignore all the warnings that do not prevent you from running the
+  tests, e.g.,
+
   ```bash
   WARNING: The AM_AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
   WARNING: The AM_AWS_DEFAULT_REGION variable is not set. Defaulting to a blank string.
@@ -283,9 +302,10 @@ Happy coding!
   ```
 
 - Start a Jupyter server
-   ```bash
-   > i docker_jupyter
-   ```
+
+  ```bash
+  > i docker_jupyter
+  ```
 
 - To open a Jupyter notebook in a local web-browser:
   - In the output from the cmd above find an assigned port, e.g.,
@@ -296,7 +316,8 @@ Happy coding!
 
 ## Coding Style
 
-- Adopt the coding style outlined [here](/docs/coding/all.coding_style.how_to_guide.md)
+- Adopt the coding style outlined
+  [here](/docs/coding/all.coding_style.how_to_guide.md)
 
 ## Linter
 
@@ -306,6 +327,7 @@ Happy coding!
 ### Run the linter and check the linter results
 
 - Run the linter against the changed files in the PR branch
+
   ```bash
   > invoke lint --files "file1 file2..."
   ```
