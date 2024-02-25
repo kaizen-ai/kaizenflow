@@ -189,7 +189,7 @@ Happy coding!
 ### Checking Docker installation
 
 - Check the installation by running:
-  ```
+  ```bash
   > docker pull hello-world
   Using default tag: latest
   latest: Pulling from library/hello-world
@@ -257,6 +257,7 @@ Happy coding!
   ```
 
 - Pull the latest `dev_tools` image containing the linter; this is done once
+
   ```bash
   > i docker_pull_dev_tools
   or
@@ -264,6 +265,7 @@ Happy coding!
   ```
 
 - Get the latest version of `master`
+
   ```bash
   # To update your feature branch with the latest changes from master run
   # the cmd below from a feature branch, i.e. not from master.
@@ -290,8 +292,6 @@ Happy coding!
   WARNING: The CK_AWS_DEFAULT_REGION variable is not set. Defaulting to a blank string.
   WARNING: The CK_AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
   WARNING: The CK_TELEGRAM_TOKEN variable is not set. Defaulting to a blank string.
-  ```
-  ```
   -----------------------------------------------------------------------------
   This code is not in sync with the container:
   code_version='1.4.1' != container_version='1.4.0'
