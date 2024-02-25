@@ -28,51 +28,94 @@ information flow and make the contribution process seamless.
 
 ### Supporting OS
 
-- We support Mac x86, Apple Silicon and Linux Ubuntu
-- Install `docker-cli` On Mac using
+- We support Mac (both x86, Apple Silicon) and Linux Ubuntu
+- We do not support Windows and WSL: we have tried several times to port the
+  toolchain to it, but there are always subtle incompatible behaviors that drive
+  everyone crazy
+  - If you are using Windows, we suggest to use dual boot with Linux or use a
+    virtual machine with Linux
+    - Install VMWare software
+    - Reference video for installing
+      [ubuntu](https://www.youtube.com/watch?v=NhlhJFKmzpk&ab_channel=ProgrammingKnowledge)
+      on VMWare software
+    - Make sure you set up your git and github
+    - Install
+      [docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
+      on your Ubuntu VM
+
+### Install Docker
+
+- Follow https://docs.docker.com/engine/install/
+
+- For Mac you can also install `docker-cli` without the GUI using
   ```bash
   > brew install docker
   > brew link docker
   > brew install colima
   ```
-- If you are using Windows,
-  - Install VMWare software
-  - Reference video for installing
-    [ubuntu](https://www.youtube.com/watch?v=NhlhJFKmzpk&ab_channel=ProgrammingKnowledge)
-    on VMWare software
-  - Make sure you set up your git and github
-  - Install
-    [docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
-    on your Ubuntu VM
+
+- After installing make sure Docker works on your laptop (of course the version
+  will be newer)
+  ```bash
+  > docker version
+  Client:
+   Cloud integration: v1.0.24
+   Version:           20.10.17
+   API version:       1.41
+   Go version:        go1.17.11
+   Git commit:        100c701
+   Built:             Mon Jun  6 23:04:45 2022
+   OS/Arch:           darwin/amd64
+   Context:           default
+   Experimental:      true
+
+  Server: Docker Desktop 4.10.1 (82475)
+   Engine:
+    Version:          20.10.17
+    API version:      1.41 (minimum version 1.12)
+    Go version:       go1.17.11
+    Git commit:       a89b842
+    Built:            Mon Jun  6 23:01:23 2022
+    OS/Arch:          linux/amd64
+    Experimental:     false
+   containerd:
+    Version:          1.6.6
+    GitCommit:        10c12954828e7c7c9b6e0ea9b0c02b01407d3ae1
+   runc:
+    Version:          1.1.2
+    GitCommit:        v1.1.2-0-ga916309
+   docker-init:
+    Version:          0.19.0
+    GitCommit:        de40ad0
+    ```
 
 ### Cloning the Code
-
-- All the source code should go under ~/src (e.g., /Users/<YOUR_USER>/src on a
-  Mac PC)
-- The path to the local repo folder should look like this
-  `~/src/{REPO_NAME}{IDX}` where
-  - IDX is an integer
-  - REPO_NAME is a name of the repository
 
 - To clone the repo, use the cloning command described in the GitHub official
   documentation
 
 - Example of cloning command:
-  - The following command might not work sometimes
   ```
   > git clone git@github.com:sorrentum/sorrentum.git ~/src/sorrentum1
   ```
-  - Alternative command
+  - The previous command might not work sometimes and an alternative command
+    using HTTP instead of SSH
   ```
   > git clone https://github.com/sorrentum/sorrentum.git ~/src/sorrentum1
   ```
 
+- All the source code should go under `~/src` (e.g., `/Users/<YOUR_USER>/src` on a
+  Mac)
+- The path to the local repo folder should look like this
+  `~/src/{REPO_NAME}{IDX}` where
+  - `REPO_NAME` is a name of the repository
+  - IDX is an integer
+
 ### Building the Thin Environment
 
-- Create a thin environment for running the linter using the Sorrentum Dev
-  Docker container
+- Create a thin environment for running the Sorrentum Dev Docker container
 
-- Build the thin environment; this is done once
+- Build the thin environment; this is done once per client
   ```
   > source dev_scripts/client_setup/build.sh
   ```
@@ -86,6 +129,7 @@ information flow and make the contribution process seamless.
   and you encounter any issues, please post them by creating a new issue and
   assign it to the TA
   ```
+  ...
   alias sp='echo '\''source ~/.profile'\''; source ~/.profile'
   alias vi='/usr/bin/vi'
   alias vim='/usr/bin/vi'
