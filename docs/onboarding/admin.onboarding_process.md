@@ -61,7 +61,7 @@
      ```
      - [ ] Acknowledge the pledge to put effort and time in the project [here](https://github.com/sorrentum/sorrentum/blob/master/README.md#commitment-to-contribute)
      - [ ] Fork, star, watch the Sorrentum repo so that GitHub promotes our repo (we gotta work the system)
-     - [ ] Read and execute [set up development environment](https://github.com/sorrentum/sorrentum/blob/master/docs/docs/work_tools/sorrentum.set_up_development_environment.how_to_guide.md)
+     - [ ] Read and execute [set up development environment](https://github.com/sorrentum/sorrentum/blob/master/docs/docs/onboarding/sorrentum.set_up_development_environment.how_to_guide.md)
      - [ ] Read and start internalizing [Sorrentum Python coding style guide](https://github.com/sorrentum/sorrentum/blob/master/docs/coding/all.coding_style.how_to_guide.md)
      - [ ] Read about your [first code review](https://github.com/sorrentum/sorrentum/blob/master/docs/coding/all.submit_code_for_review.how_to_guide.md)
      - [ ] Peruse the map of [all the documentation](https://github.com/sorrentum/sorrentum/blob/master/docs/onboarding/all.development_documents.reference.md)
