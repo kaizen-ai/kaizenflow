@@ -8,9 +8,9 @@
 
 set -e
 
-# Note: Keep it commented during integration as sorrentum people do not
-# require aws installation.
-#
+# Difference btw Sorrentum and cmamp. Sorrentum people do not require aws
+# installation.
+# TODO(gp): Once we need to share data on S3 will need to re-enable.
 # Check if AWS CLI V2 is already installed.
 # if command -v aws &>/dev/null; then
 #     aws_version=$(aws --version)
