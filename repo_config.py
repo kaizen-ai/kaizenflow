@@ -199,7 +199,7 @@ def has_dind_support() -> bool:
     check_repo = os.environ.get("AM_REPO_CONFIG_CHECK", "True") != "False"
     if check_repo:
         if hserver.is_inside_ci():
-            # dind should be supported on Mac, dev_ck, and GH Actions.
+            # Docker-in-docker is needed for GH actions. For all other builds is optional.
             assert has_dind, (
                 f"Expected privileged mode: has_dind={has_dind}\n"
                 + hserver.setup_to_str()
