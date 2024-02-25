@@ -44,10 +44,10 @@
 5. We start the on-boarding process as per
 
    - Update the
-     [Contributor List](https://docs.google.com/spreadsheets/d/1eRZJaj5-1g6W7w_Ay4UhJEdtAvrTTM1V94cKj6_Vwoc/edit#gid=1253964093)Copy
-     the information from
-     [Contributor Info](https://docs.google.com/spreadsheets/d/13Mxj5ZIydMQHSmJUDCpURB5w-50RPXC0AjgKWYcMZnw/edit#gid=2038824432)response
-     sheet to the
+     [Contributor List](https://docs.google.com/spreadsheets/d/1eRZJaj5-1g6W7w_Ay4UhJEdtAvrTTM1V94cKj6_Vwoc/edit#gid=1253964093)
+   - Copy the information from
+     [Contributor Info](https://docs.google.com/spreadsheets/d/13Mxj5ZIydMQHSmJUDCpURB5w-50RPXC0AjgKWYcMZnw/edit#gid=2038824432)
+     response sheet to the
      [Contributor List](https://docs.google.com/spreadsheets/d/1eRZJaj5-1g6W7w_Ay4UhJEdtAvrTTM1V94cKj6_Vwoc/edit#gid=1253964093)
      as it is a master sheet for all the collaborators
    - Ping GP on the Asana task for that collaborator for invitation to the repo
@@ -56,25 +56,26 @@
 
 6. When the collaborator is ready to be on-boarded, file an issue like
    "On-board <FIRST NAME LAST NAME>"
-   - The content of the issue will be the following checklist.
-   - Admins need to keep track on the progress being made by the collaborator.
+   - The content of the issue will be the following checklist (note that GitHub
+     needs full paths to point to the documentation from an issue)
      ```
-     - [ ] Acknowledge the pledge to put effort and time in the project [here](/README.md#commitment-to-contribute)
+     - [ ] Acknowledge the pledge to put effort and time in the project [here](https://github.com/sorrentum/sorrentum/blob/master/README.md#commitment-to-contribute)
      - [ ] Fork, star, watch the Sorrentum repo so that GitHub promotes our repo (we gotta work the system)
-     - [ ] Read and execute [set up development environment](/docs/docs/work_tools/sorrentum.set_up_development_environment.how_to_guide.md)
-     - [ ] Read and start internalizing [Sorrentum Python coding style guide](/docs/coding/all.coding_style.how_to_guide.md)
-     - [ ] Read about your [first code review](/docs/coding/all.submit_code_for_review.how_to_guide.md)
-     - [ ] Peruse the map of [all the documentation](docs/onboarding/all.development_documents.reference.md)
-     - [ ] Learn about our [org process](/docs/work_organization/all.team_collaboration.how_to_guide.md)
+     - [ ] Read and execute [set up development environment](https://github.com/sorrentum/sorrentum/blob/master/docs/docs/work_tools/sorrentum.set_up_development_environment.how_to_guide.md)
+     - [ ] Read and start internalizing [Sorrentum Python coding style guide](https://github.com/sorrentum/sorrentum/blob/master/docs/coding/all.coding_style.how_to_guide.md)
+     - [ ] Read about your [first code review](https://github.com/sorrentum/sorrentum/blob/master/docs/coding/all.submit_code_for_review.how_to_guide.md)
+     - [ ] Peruse the map of [all the documentation](https://github.com/sorrentum/sorrentum/blob/master/docs/onboarding/all.development_documents.reference.md)
+     - [ ] Learn about our [org process](https://github.com/sorrentum/sorrentum/blob/master/docs/work_organization/all.team_collaboration.how_to_guide.md)
      - [ ] Get assigned a warm-up issue
      - If you are graduating soon and you would like to get a full-time job in
        one of the companies in the Sorrentum ecosystem reach out to GP at
        gp@sorrentum.org
      ```
+   - Admins need to keep track on the progress being made by the collaborator.
 
 7. We score candidates every two weeks
-   - (Public gsheet)[https://docs.google.com/spreadsheets/d/1a8ypuO2ODOzjp9BaRN23HWa5P7ruTKs_gHZWaPYsvy4]
-   - (Private gsheet)[https://docs.google.com/spreadsheets/d/1Qr2-Uo8YxkShrfGY43PV_E1W1Trkc-c5SiNelxLBKwE]
+   - [Public gsheet](https://docs.google.com/spreadsheets/d/1a8ypuO2ODOzjp9BaRN23HWa5P7ruTKs_gHZWaPYsvy4)
+   - [Private gsheet](https://docs.google.com/spreadsheets/d/1Qr2-Uo8YxkShrfGY43PV_E1W1Trkc-c5SiNelxLBKwE)
 
 # Off-boarding process
 
