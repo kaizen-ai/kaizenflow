@@ -68,6 +68,9 @@ These activities are mapped in `KaizenFlow` as follows:
 - General intro to `DataPull`
   - [/docs/datapull/ck.datapull.explanation.md](/docs/datapull/ck.datapull.explanation.md)
   - [/docs/datapull/all.datapull_qa_flow.explanation.md](/docs/datapull/all.datapull_qa_flow.explanation.md)
+  - [/docs/datapull/all.datapull_client_stack.explanation.md](/docs/datapull/all.datapull_client_stack.explanation.md)
+  - [/docs/datapull/all.datapull_sandbox.explanation.md](/docs/datapull/all.datapull_sandbox.explanation.md)
+  - [/docs/datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md](/docs/datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md)
 
 - Analyze universe metadata
   - [/im_v2/common/universe/notebooks/Master_universe_analysis.ipynb](/im_v2/common/universe/notebooks/Master_universe_analysis.ipynb)
@@ -85,6 +88,10 @@ These activities are mapped in `KaizenFlow` as follows:
 - Convert data types
   - [/im_v2/common/data/transform/convert_csv_to_pq.py](/im_v2/common/data/transform/convert_csv_to_pq.py)
   - [/im_v2/common/data/transform/convert_pq_to_csv.py](/im_v2/common/data/transform/convert_pq_to_csv.py)
+
+- Data download piplines explanation
+  - [/docs/datapull/ck.binance_bid_ask_data_pipeline.explanation.md](/docs/datapull/ck.binance_bid_ask_data_pipeline.explanation.md)
+  - [/docs/datapull/ck.binance_ohlcv_data_pipeline.explanation.md](/docs/datapull/ck.binance_ohlcv_data_pipeline.explanation.md)
 
 - Download data in bulk
   - TODO(gp): generalize to source other than crypto
@@ -105,7 +112,8 @@ These activities are mapped in `KaizenFlow` as follows:
   - [/im_v2/ccxt/db/archive_db_data_to_s3.py](/im_v2/ccxt/db/archive_db_data_to_s3.py)
 
 - Resampling data
-  - TODO(gp): Generalize outside crypto data)
+  - TODO(gp): Generalize outside crypto data
+  - [/docs/datapull/all.datapull_derived_data.explanation.md](/docs/datapull/all.datapull_derived_data.explanation.md)
   - [/im_v2/common/data/transform/resample_daily_bid_ask_data.py](/im_v2/common/data/transform/resample_daily_bid_ask_data.py)
 
 - ImClient
@@ -115,13 +123,14 @@ These activities are mapped in `KaizenFlow` as follows:
   - [/docs/datapull/all.market_data.reference.ipynb](/docs/datapull/all.market_data.reference.ipynb)
 
 - How to QA data
-  - [im_v2/ccxt/data/qa/notebooks/data_qa_bid_ask.ipynb](/im_v2/ccxt/data/qa/notebooks/data_qa_bid_ask.ipynb)
-  - [im_v2/ccxt/data/qa/notebooks/data_qa_ohlcv.ipynb](/im_v2/ccxt/data/qa/notebooks/data_qa_ohlcv.ipynb)
-  - [im_v2/common/data/qa/notebooks/cross_dataset_qa_ohlcv.ipynb](/im_v2/common/data/qa/notebooks/cross_dataset_qa_ohlcv.ipynb)
-  - [im_v2/common/data/qa/notebooks/cross_dataset_qa_bid_ask.ipynb](/im_v2/common/data/qa/notebooks/cross_dataset_qa_bid_ask.ipynb)
-  - [research_amp/cc/notebooks/Master_single_vendor_qa.ipynb](/research_amp/cc/notebooks/Master_single_vendor_qa.ipynb)
-  - [research_amp/cc/notebooks/Master_cross_vendor_qa.ipynb](/research_amp/cc/notebooks/Master_cross_vendor_qa.ipynb)
-  - [research_amp/cc/notebooks/compare_qa.periodic.airflow.downloaded_websocket_EOD.all.bid_ask.futures.all.ccxt_cryptochassis.all.v1_0_0.ipynb](/research_amp/cc/notebooks/compare_qa.periodic.airflow.downloaded_websocket_EOD.all.bid_ask.futures.all.ccxt_cryptochassis.all.v1_0_0.ipynb)
+  - [/docs/datapull/ck.datapull_data_quality_assurance.reference.md](/docs/datapull/ck.datapull_data_quality_assurance.reference.md)
+  - [/im_v2/ccxt/data/qa/notebooks/data_qa_bid_ask.ipynb](/im_v2/ccxt/data/qa/notebooks/data_qa_bid_ask.ipynb)
+  - [/im_v2/ccxt/data/qa/notebooks/data_qa_ohlcv.ipynb](/im_v2/ccxt/data/qa/notebooks/data_qa_ohlcv.ipynb)
+  - [/im_v2/common/data/qa/notebooks/cross_dataset_qa_ohlcv.ipynb](/im_v2/common/data/qa/notebooks/cross_dataset_qa_ohlcv.ipynb)
+  - [/im_v2/common/data/qa/notebooks/cross_dataset_qa_bid_ask.ipynb](/im_v2/common/data/qa/notebooks/cross_dataset_qa_bid_ask.ipynb)
+  - [/research_amp/cc/notebooks/Master_single_vendor_qa.ipynb](/research_amp/cc/notebooks/Master_single_vendor_qa.ipynb)
+  - [/research_amp/cc/notebooks/Master_cross_vendor_qa.ipynb](/research_amp/cc/notebooks/Master_cross_vendor_qa.ipynb)
+  - [/research_amp/cc/notebooks/compare_qa.periodic.airflow.downloaded_websocket_EOD.all.bid_ask.futures.all.ccxt_cryptochassis.all.v1_0_0.ipynb](/research_amp/cc/notebooks/compare_qa.periodic.airflow.downloaded_websocket_EOD.all.bid_ask.futures.all.ccxt_cryptochassis.all.v1_0_0.ipynb)
 
 - How to load `Bloomberg` data
   - [/im_v2/common/notebooks/CmTask5424_market_data.ipynb](/im_v2/common/notebooks/CmTask5424_market_data.ipynb)
@@ -166,12 +175,16 @@ These activities are mapped in `KaizenFlow` as follows:
     - [/docs/dataflow/all.dataflow.explanation.md](/docs/dataflow/all.dataflow.explanation.md)
   - Conventions for representing time series
     - [/docs/dataflow/all.time_series.explanation.md](/docs/dataflow/all.time_series.explanation.md)
+  - Explanation of how to debug a DAG
+    - [/docs/dataflow/all.dag.explanation.md](/docs/dataflow/all.dag.explanation.md)
 
 - Learn how to build a `DAG`
   - Build a `DAG` with two nodes
     - [/docs/dataflow/all.build_first_dag.tutorial.ipynb](/docs/dataflow/all.build_first_dag.tutorial.ipynb)
   - Build a more complex `DAG` implementing a simple risk model
     - [/docs/dataflow/all.build_simple_risk_model_dag.tutorial.ipynb](/docs/dataflow/all.build_simple_risk_model_dag.tutorial.ipynb)
+  - Best practices to follow while building `DAG`
+    - [/docs/dataflow/all.best_practice_for_building_dags.explanation.md](/docs/dataflow/all.best_practice_for_building_dags.explanation.md)
 
 - Learn how to run a `DAG`
   - Overview, DagBuilder, Dag, DagRunner
@@ -191,6 +204,8 @@ These activities are mapped in `KaizenFlow` as follows:
     - TODO(gp): Review
   - Phases of evaluation of `Dag`s
     - [/docs/dataflow/all.train_and_predict_phases.explanation.md](/docs/dataflow/all.train_and_predict_phases.explanation.md)
+  - Event study explanation
+    - [/docs/dataflow/ck.event_study.explanation.md](/docs/dataflow/ck.event_study.explanation.md)
 
 - Run a simulation of a `DataFlow` system
   - Overview, Basic concepts, Implementation details
@@ -199,6 +214,10 @@ These activities are mapped in `KaizenFlow` as follows:
     backtesting, How to run replayed time simulation, Running experiments
     - [/docs/dataflow/ck.run_backtest.how_to_guide.md](/docs/dataflow/ck.run_backtest.how_to_guide.md)
     - TODO(gp): Review
+  - Simulation sweep tutorial
+    - [/docs/dataflow/all.run_simulation_sweeps.tutorial.md](/docs/dataflow/all.run_simulation_sweeps.tutorial.md)
+  - Simulation output explanation
+    - [/docs/dataflow/all.simulation_output.reference.md](/docs/dataflow/all.simulation_output.reference.md)
 
 - Run a simulation sweep using a list of `Config`
   - \# TODO(gp): @grisha do we have anything here? It's like the stuff that Dan
@@ -302,13 +321,14 @@ These activities are mapped in `KaizenFlow` as follows:
   - [/docs/datapull/ck.dataset_onboarding_checklist.reference.md](/docs/datapull/ck.dataset_onboarding_checklist.reference.md)
     - TODO(Juraj):
   - [/docs/datapull/ck.add_new_data_source.how_to_guide.md](/docs/datapull/ck.add_new_data_source.how_to_guide.md)
-
+- How to update CCXT version
+  - [/docs/datapull/all.update_CCXT_version.how_to_guide.md](/docs/datapull/all.update_CCXT_version.how_to_guide.md)
 - Download `DataPull` historical data
 
 - Put a `DataPull` source in production with Airflow
   - [/docs/datapull/ck.create_airflow_dag.tutorial.md](/docs/datapull/ck.create_airflow_dag.tutorial.md)
     - TODO(gp, Juraj): double check
-  - ./docs/datapull/ck.add_ETL_production_dag.how_to_guide.md
+  - [/docs/datapull/ck.develop_an_airflow_dag_for_production.explanation.md](/docs/datapull/ck.develop_an_airflow_dag_for_production.explanation.md)
     - TODO(Juraj): See https://github.com/cryptokaizen/cmamp/issues/6444
 
 - Add QA for a `DataPull` source
@@ -326,7 +346,7 @@ These activities are mapped in `KaizenFlow` as follows:
 ## DataFlow
 
 - All software components
-  - [docs/dataflow/ck.data_pipeline_architecture.reference.md](docs/dataflow/ck.data_pipeline_architecture.reference.md)
+  - [/docs/dataflow/ck.data_pipeline_architecture.reference.md](/docs/dataflow/ck.data_pipeline_architecture.reference.md)
 
 ## Deploying
 
