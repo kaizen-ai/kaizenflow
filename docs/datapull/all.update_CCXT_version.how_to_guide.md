@@ -12,7 +12,7 @@
 
 # Testing CCXT Stability Before Docker Container Update
 
-In order to ensure the stability of our code following the ccxt update, a
+In order to ensure the stability of our code following a CCXT update, a
 thorough testing process is required. Prior to constructing a new container, we
 will update the ccxt version locally and execute tests on the actual API to
 verify the reliability of our codebase.
