@@ -82,7 +82,7 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Buildmeister process](/docs/work_organization/all.buildmeister.how_to_guide.md)
 
-- [HTMLcov server](/docs/infra/ck.use_htmlcov_server.how_to_guide.md)
+- HTMLcov server
 
 - [Profiling](/docs/coding/all.profiling.how_to_guide.md)
 
@@ -96,9 +96,9 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Glossary](/docs/general_background/all.glossary.reference.md)
 
-- [DataFlow](/docs/dataflow/all.dataflow.explanation.md)
+- DataFlow
 
-- [DataPull](/docs/datapull/all.datapull_client_stack.explanation.md)
+- DataPull
 
 - [Type Hints](/docs/coding/all.type_hints.how_to_guide.md)
 
