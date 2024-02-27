@@ -162,8 +162,8 @@ class TestSmaModel(hunitest.TestCase):
 class TestSingleColumnVolatilityModel(hunitest.TestCase):
     @pytest.mark.skipif(
         not hserver.is_inside_ci(),
-        reason="Different goldends locally and in the GH Actions"
-    )    
+        reason="Different goldends locally and in the GH Actions",
+    )
     def test1(self) -> None:
         """
         Perform a typical `fit()` call.
