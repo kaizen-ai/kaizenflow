@@ -72,7 +72,7 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Design Philosophy](/docs/coding/all.code_design.how_to_guide.md)
 
-- [Codebase Clean-up](/docs/coding/all.clean_up_codebase_with_scripts.how_to_guide.md)
+- [Codebase Clean-up](/docs/work_tools/all.codebase_clean_up.how_to_guide.md)
 
 - [Scrum Methodology](/docs/work_organization/all.scrum.explanation.md)
 
