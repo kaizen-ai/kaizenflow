@@ -330,7 +330,6 @@
 - If you are a part of _@all_ mailing group you should be able to access this calendar with your company email
 - Create an event in it, whenever you have planned time off in order to let your colleagues know in advance
 
-
 ## Improve your English!
 
 - Make sure you have English checker in all your tools:
