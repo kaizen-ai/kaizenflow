@@ -1,5 +1,6 @@
+<img width="100" alt="image" src="https://user-images.githubusercontent.com/33238329/216777823-851b28ed-7d7a-4b52-9d71-ab38d146edc3.png">
 
-
+# Documenation Outline:
 <!-- toc -->
 
 - [On-boarding](#on-boarding)
@@ -11,11 +12,9 @@
 
 <!-- tocstop -->
 
-<img width="100" alt="image" src="https://user-images.githubusercontent.com/33238329/216777823-851b28ed-7d7a-4b52-9d71-ab38d146edc3.png">
-
 # On-boarding
 
-- [Signing up for Sorrentum](/docs/onboarding/all.sign_up_for_sorrentum.how_to_guide.md)
+- [Signing up for Sorrentum](/docs/onboarding/sorrentum.signing_up.how_to_guide.md)
 
 # How to start developing
 
@@ -23,9 +22,9 @@ This contains the absolute minimal amount of info to start developing
 
 - [General Rules of Collaboration](/docs/work_organization/all.team_collaboration.how_to_guide.md)
 
-- [Quick start for developing](/docs/work_tools/all.sorrentum_development.how_to_guide.md)
+- [Quick start for developing](/docs/onboarding/sorrentum.set_up_development_environment.how_to_guide.md)
 
-- [How to organize your work](/docs/work_organization/all.organize_your_work.how_to_guide.md)
+- [How to organize your work](/docs/work_organization/sorrentum.organize_your_work.how_to_guide.md)
 
 - [First Review Process](/docs/coding/all.submit_code_for_review.how_to_guide.md)
 
@@ -33,7 +32,7 @@ This contains the absolute minimal amount of info to start developing
 
 - [Jupyter notebook best practices](/docs/coding/all.jupyter_notebook.how_to_guide.md)
 
-- [Unit tests](/docs/coding/all.unit_tests.how_to_guide.md)
+- [Unit tests](/docs/coding/all.write_unit_tests.how_to_guide.md)
 
 # Project management
 
@@ -97,9 +96,9 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Glossary](/docs/general_background/all.glossary.reference.md)
 
-- [DataFlow](/docs/dataflow/ck.dataflow.explanation.md)
+- [DataFlow](/docs/dataflow/all.dataflow.explanation.md)
 
-- [DataPull](/docs/datapull/ck.datapull.explanation.md)
+- [DataPull](/docs/datapull/all.datapull_client_stack.explanation.md)
 
 - [Type Hints](/docs/coding/all.type_hints.how_to_guide.md)
 
