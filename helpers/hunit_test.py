@@ -16,7 +16,7 @@ import re
 import sys
 import traceback
 import unittest
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import pytest
 
@@ -151,20 +151,6 @@ def pytest_warning(txt: str, prefix: str = "") -> None:
 # #############################################################################
 # Generation and conversion functions.
 # #############################################################################
-
-
-# TODO(gp): -> Deprecated: use hpandas.df_to_str
-def convert_df_to_string(
-    df: Union["pd.DataFrame", "pd.Series"],
-    n_rows: Optional[int] = None,
-    title: Optional[str] = None,
-    index: bool = False,
-    decimals: int = 6,
-) -> str:
-    import helpers.hpandas as hpandas
-
-    handle_signed_zeros = True
-    return hpandas.df_to_str(df, handle_signed_zeros=handle_signed_zeros)
 
 
 # TODO(gp): Is this dataflow Info? If so it should go somewhere else.
