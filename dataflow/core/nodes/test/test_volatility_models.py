@@ -14,6 +14,7 @@ import dataflow.core.nodes.test.helpers as cdnth
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
 from dataflow.core.nodes.volatility_models import (
     MultiindexVolatilityModel,
@@ -159,6 +160,10 @@ class TestSmaModel(hunitest.TestCase):
 
 
 class TestSingleColumnVolatilityModel(hunitest.TestCase):
+    @pytest.mark.skipif(
+        not hserver.is_inside_ci(),
+        reason="Different goldends locally and in the GH Actions"
+    )    
     def test1(self) -> None:
         """
         Perform a typical `fit()` call.
