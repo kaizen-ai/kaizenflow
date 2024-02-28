@@ -235,7 +235,7 @@ def is_in_amp_as_supermodule() -> bool:
     Return whether we are in the `amp` repo and it's a super-module, i.e.,
     `amp` by itself.
     """
-    return (_is_repo("amp") or _is_repo("cmamp")) and not is_inside_submodule(".")
+    return is_amp() and not is_inside_submodule(".")
 
 
 def is_amp_present(*, dir_name: str = ".") -> bool:

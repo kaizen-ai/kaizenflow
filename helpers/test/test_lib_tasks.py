@@ -353,8 +353,9 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         self._check_output(target)
 
     def test_git_branch_create2(self) -> None:
+        # Difference between `cmamp` and `sorrentum`.
         target = (
-            "git_branch_create(ctx, issue_id=1, repo_short_name='cmamp', "
+            "git_branch_create(ctx, issue_id=1, repo_short_name='sorr', "
             "only_branch_from_master=False)"
         )
         self._check_output(target)
