@@ -1,5 +1,4 @@
 
-
 <!-- toc -->
 
 - [On-boarding](#on-boarding)
@@ -15,7 +14,7 @@
 
 # On-boarding
 
-- [Signing up for Sorrentum](/docs/onboarding/all.sign_up_for_sorrentum.how_to_guide.md)
+- [Signing up for Sorrentum](/docs/onboarding/sorrentum.signing_up.how_to_guide.md)
 
 # How to start developing
 
@@ -23,9 +22,9 @@ This contains the absolute minimal amount of info to start developing
 
 - [General Rules of Collaboration](/docs/work_organization/all.team_collaboration.how_to_guide.md)
 
-- [Quick start for developing](/docs/work_tools/all.sorrentum_development.how_to_guide.md)
+- [Quick start for developing](/docs/onboarding/sorrentum.set_up_development_environment.how_to_guide.md)
 
-- [How to organize your work](/docs/work_organization/all.organize_your_work.how_to_guide.md)
+- [How to organize your work](/docs/work_organization/sorrentum.organize_your_work.how_to_guide.md)
 
 - [First Review Process](/docs/coding/all.submit_code_for_review.how_to_guide.md)
 
@@ -33,7 +32,7 @@ This contains the absolute minimal amount of info to start developing
 
 - [Jupyter notebook best practices](/docs/coding/all.jupyter_notebook.how_to_guide.md)
 
-- [Unit tests](/docs/coding/all.unit_tests.how_to_guide.md)
+- [Unit tests](/docs/coding/all.write_unit_tests.how_to_guide.md)
 
 # Project management
 
@@ -73,7 +72,7 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Design Philosophy](/docs/coding/all.code_design.how_to_guide.md)
 
-- [Codebase Clean-up](/docs/coding/all.clean_up_codebase_with_scripts.how_to_guide.md)
+- [Codebase Clean-up](/docs/work_tools/all.codebase_clean_up.how_to_guide.md)
 
 - [Scrum Methodology](/docs/work_organization/all.scrum.explanation.md)
 
@@ -82,8 +81,6 @@ This contains a set of resources that over time will make 10x more productive
 - [Code organization](/docs/kaizenflow/all.amp_code_organization.reference.md)
 
 - [Buildmeister process](/docs/work_organization/all.buildmeister.how_to_guide.md)
-
-- [HTMLcov server](/docs/infra/ck.use_htmlcov_server.how_to_guide.md)
 
 - [Profiling](/docs/coding/all.profiling.how_to_guide.md)
 
@@ -96,10 +93,6 @@ This contains a set of resources that over time will make 10x more productive
 - [Email](/docs/onboarding/all.organize_email.how_to_guide.md)
 
 - [Glossary](/docs/general_background/all.glossary.reference.md)
-
-- [DataFlow](/docs/dataflow/ck.dataflow.explanation.md)
-
-- [DataPull](/docs/datapull/ck.datapull.explanation.md)
 
 - [Type Hints](/docs/coding/all.type_hints.how_to_guide.md)
 
