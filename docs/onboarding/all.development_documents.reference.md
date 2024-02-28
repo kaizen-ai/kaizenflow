@@ -82,8 +82,6 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Buildmeister process](/docs/work_organization/all.buildmeister.how_to_guide.md)
 
-- HTMLcov server
-
 - [Profiling](/docs/coding/all.profiling.how_to_guide.md)
 
 - [Visual Studio Code](/docs/work_tools/all.visual_studio_code.how_to_guide.md)
@@ -95,10 +93,6 @@ This contains a set of resources that over time will make 10x more productive
 - [Email](/docs/onboarding/all.organize_email.how_to_guide.md)
 
 - [Glossary](/docs/general_background/all.glossary.reference.md)
-
-- DataFlow
-
-- DataPull
 
 - [Type Hints](/docs/coding/all.type_hints.how_to_guide.md)
 
