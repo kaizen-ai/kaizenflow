@@ -353,7 +353,3 @@ Happy coding!
 - Add your assigned reviewers for your PR so that they are informed of your PR
 - After being reviewed, the PR will be merged to the master branch by your
   reviewers
-
-## How to receive a crypto transfer
-
-- [Receive crypto payment](/docs/onboarding/all.receive_crypto_payment.how_to_guide.md)
