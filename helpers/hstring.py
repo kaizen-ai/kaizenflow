@@ -78,7 +78,7 @@ def get_docstring_line_indices(lines: List[str]) -> List[int]:
     :return: the indices of docstrings
     """
     docstring_line_indices = []
-    quotes = {'"""': False, "'''": False}
+    quotes = {'"""': False, "'''": False, "```": False}
     for i, line in enumerate(lines):
         # Determine if the current line is inside a (doc)string.
         for quote in quotes:
