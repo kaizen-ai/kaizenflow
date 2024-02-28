@@ -11,7 +11,7 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
-class test_get_aws_resource(hunitest.TestCase):
+class test_get_service_resource(hunitest.TestCase):
 
     @pytest.fixture(autouse=True, scope="class")
     def aws_credentials(self):
