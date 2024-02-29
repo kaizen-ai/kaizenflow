@@ -11,9 +11,9 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
-class test_get_service_resource(hunitest.TestCase):
+class Test_get_service_resource(hunitest.TestCase):
     @pytest.fixture(autouse=True, scope="class")
-    def aws_credentials(self):
+    def aws_credentials(self) -> None:
         """
         Mocked AWS Credentials for moto.
         """
@@ -24,9 +24,10 @@ class test_get_service_resource(hunitest.TestCase):
         os.environ["MOCK_AWS_DEFAULT_REGION"] = "us-east-1"
 
     @mock_s3
-    def test_s3_resource(self):
+    def test1(self) -> None:
         """
-        Test that get_service_resource correctly retrieves an S3 resource.
+        Test that haws.get_service_resource() correctly retrieves an S3
+        resource.
         """
         aws_profile = "__mock__"
         service_name = "s3"
