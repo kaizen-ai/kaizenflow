@@ -31,15 +31,11 @@ class Test_get_service_resource(hunitest.TestCase):
         """
         aws_profile = "__mock__"
         service_name = "s3"
-
         # Creating a mock s3 bucket.
         s3 = boto3.resource("s3")
         s3.create_bucket(Bucket="my-test-bucket")
-
         s3_resource = haws.get_service_resource(aws_profile, service_name)
-
         buckets = list(s3_resource.buckets.all())
         bucket_names = [bucket.name for bucket in buckets]
-
         # Assert
         self.assertIn("my-test-bucket", bucket_names)
