@@ -13,9 +13,6 @@
 
 <!-- tocstop -->
 
-<!--ts-->
-
-<!--te-->
 
 # DATA605 Class Projects
 
