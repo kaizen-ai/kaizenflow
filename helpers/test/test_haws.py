@@ -12,7 +12,7 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
-class Test_update_task_definition(hunitest.TestCase):
+class TestUpdateTaskDefinition(hunitest.TestCase):
     @pytest.fixture(autouse=True, scope="class")
     def aws_credentials(self) -> None:
         """
@@ -26,14 +26,14 @@ class Test_update_task_definition(hunitest.TestCase):
 
     @mock_ecs
     @patch('helpers.haws.get_ecs_client')
-    def test1(self, mock_get_ecs_client) -> None:
+    def test_update_task_definition(self, mock_get_ecs_client) -> None:
         # Mock data
         task_definition_name = "my-task-definition"
         old_image_url = "old_image_url"
         new_image_url = "new_image_url"
         region = "us-east-1"
 
-        # Mock the return value of get_ecs_client
+        # Create a mock ECS client
         mock_client = boto3.client("ecs", region_name=region)
         mock_get_ecs_client.return_value = mock_client
 
@@ -50,7 +50,7 @@ class Test_update_task_definition(hunitest.TestCase):
             memory="512",
         )
 
-        # Update task definition
+        # Call the function under test
         haws.update_task_definition(
             task_definition_name, new_image_url, region=region
         )
@@ -59,7 +59,5 @@ class Test_update_task_definition(hunitest.TestCase):
         task_description = mock_client.describe_task_definition(
             taskDefinition=task_definition_name
         )
-        updated_image_url = task_description["taskDefinition"][
-            "containerDefinitions"
-        ][0]["image"]
-        self.assertEqual(updated_image_url, new_image_url)
+        updated_image_url = task_description["taskDefinition"]["containerDefinitions"][0]["image"]
+        assert updated_image_url == new_image_url, f"Expected image URL: {new_image_url}, Actual image URL: {updated_image_url}"
