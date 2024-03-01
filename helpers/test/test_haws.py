@@ -4,6 +4,7 @@ import os
 import boto3
 import pytest
 from moto import mock_ecs
+from botocore.config import Config
 
 import helpers.haws as haws
 import helpers.hunit_test as hunitest
@@ -32,7 +33,7 @@ class Test_update_task_definition(hunitest.TestCase):
         region = "us-east-1"
 
         # Create ECS client using boto3
-        ecs_client = boto3.client("ecs", region_name=region)
+        ecs_client = boto3.client("ecs", region_name=region, config=Config(region_name=region))
 
         # Create a mock task definition
         ecs_client.register_task_definition(
@@ -60,3 +61,4 @@ class Test_update_task_definition(hunitest.TestCase):
             "containerDefinitions"
         ][0]["image"]
         self.assertEqual(updated_image_url, new_image_url)
+
