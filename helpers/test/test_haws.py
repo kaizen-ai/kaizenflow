@@ -29,7 +29,7 @@ class Test_update_task_definition(hunitest.TestCase):
         task_definition_name = "my-task-definition"
         old_image_url = "old_image_url"
         new_image_url = "new_image_url"
-        region = "us-west-1"
+        region = "us-east-1"
 
         # Create ECS client using boto3
         ecs_client = boto3.client("ecs", region_name=region)
