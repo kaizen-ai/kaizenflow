@@ -188,6 +188,6 @@
   - `sorrentum_sandbox/projects/spring2024/SorrTask645_Redis_cache_to_fetch_user_profiles`
 
 - Study and execute the example project
-  - Https://github.com/sorrentum/sorrentum/tree/master/sorrentum_sandbox/projects/spring2024/SorrTask645_Redis_cache_to_fetch_user_profiles
+  - https://github.com/sorrentum/sorrentum/tree/master/sorrentum_sandbox/projects/spring2024/SorrTask645_Redis_cache_to_fetch_user_profiles
 
 - Look at the tutorials from class
