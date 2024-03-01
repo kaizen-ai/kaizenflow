@@ -1,9 +1,22 @@
+
+
+<!-- toc -->
+
+- [DATA605 Class Projects](#data605-class-projects)
+  * [Choosing a project](#choosing-a-project)
+  * [Working](#working)
+  * [Pre-requisites](#pre-requisites)
+  * [Project assignment](#project-assignment)
+    + [Documentation](#documentation)
+    + [Submitting project](#submitting-project)
+  * [Example of a class project](#example-of-a-class-project)
+
+<!-- tocstop -->
+
 <!--ts-->
 
-
-
-
 <!--te-->
+
 # DATA605 Class Projects
 
 - The goal of the class project is to learn cutting-edge modern big data
