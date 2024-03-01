@@ -18,7 +18,8 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestRepoConfig_Amp(hunitest.TestCase):
-    expected_repo_name = "//cmamp"
+    # Difference between `cmamp` and `sorrentum`.
+    expected_repo_name = "//sorr"
 
     def test_repo_name1(self) -> None:
         """
