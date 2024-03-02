@@ -13,17 +13,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestUpdateTaskDefinition(hunitest.TestCase):
-    @pytest.fixture(autouse=True, scope="class")
-    def aws_credentials(self) -> None:
-        """
-        Mocked AWS Credentials for moto.
-        """
-        os.environ["MOCK_AWS_ACCESS_KEY_ID"] = "testing"
-        os.environ["MOCK_AWS_SECRET_ACCESS_KEY"] = "testing"
-        os.environ["MOCK_AWS_SECURITY_TOKEN"] = "testing"
-        os.environ["MOCK_AWS_SESSION_TOKEN"] = "testing"
-        os.environ["MOCK_AWS_DEFAULT_REGION"] = "us-east-1"
-
     @mock_ecs
     @patch('helpers.haws.get_ecs_client')
     def test_update_task_definition(self, mock_get_ecs_client) -> None:
