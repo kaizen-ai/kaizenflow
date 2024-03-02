@@ -6,6 +6,7 @@ import pytest
 from moto import mock_s3
 
 import helpers.haws as haws
+import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -15,7 +16,7 @@ class Test_get_service_resource(hunitest.TestCase):
     @pytest.fixture(autouse=True, scope="class")
     def aws_credentials(self) -> None:
         """
-        Mocked AWS Credentials for moto.
+        Mocked AWS credentials for moto.
         """
         os.environ["MOCK_AWS_ACCESS_KEY_ID"] = "testing"
         os.environ["MOCK_AWS_SECRET_ACCESS_KEY"] = "testing"
@@ -26,16 +27,17 @@ class Test_get_service_resource(hunitest.TestCase):
     @mock_s3
     def test1(self) -> None:
         """
-        Test that haws.get_service_resource() correctly retrieves an S3
+        Test that `haws.get_service_resource()` correctly retrieves a s3
         resource.
         """
         aws_profile = "__mock__"
         service_name = "s3"
-        # Creating a mock s3 bucket.
+        # Create mock s3 bucket.
         s3 = boto3.resource("s3")
         s3.create_bucket(Bucket="my-test-bucket")
         s3_resource = haws.get_service_resource(aws_profile, service_name)
+        # Get all `s3` buckets.
         buckets = list(s3_resource.buckets.all())
         bucket_names = [bucket.name for bucket in buckets]
-        # Assert
-        self.assertIn("my-test-bucket", bucket_names)
+        # Check.
+        hdbg.dassert_in("my-test-bucket", bucket_names)
