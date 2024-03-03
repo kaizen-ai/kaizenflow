@@ -217,7 +217,7 @@ def is_amp() -> bool:
     Either as super module, or a sub module depending on a current
     working directory.
     """
-    return _is_repo("amp") or _is_repo("cmamp")
+    return _is_repo("amp") or _is_repo("cmamp") or _is_repo("sorr")
 
 
 # TODO(gp): Be consistent with submodule and sub-module in the code. Same for

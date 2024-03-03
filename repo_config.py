@@ -198,23 +198,16 @@ def has_dind_support() -> bool:
     # dind is supported on both Mac and GH Actions.
     check_repo = os.environ.get("AM_REPO_CONFIG_CHECK", "True") != "True"
     if check_repo:
-        if hserver.is_cmamp_prod():
-            assert not has_dind, "Not expected privileged mode"
-        elif get_name() in ("//dev_tools",):
-            assert not has_dind, "Not expected privileged mode"
+        if hserver.is_inside_ci():
+            # Docker-in-docker is needed for GH actions. For all other builds is optional.
+            assert has_dind, (
+                f"Expected privileged mode: has_dind={has_dind}\n"
+                + hserver.setup_to_str()
+            )
         else:
-            if hserver.is_mac() or hserver.is_dev_ck() or hserver.is_inside_ci():
-                # dind should be supported on Mac, dev_ck, and GH Actions.
-                assert has_dind, (
-                    f"Expected privileged mode: has_dind={has_dind}\n"
-                    + hserver.setup_to_str()
-                )
-            elif hserver.is_dev4() or hserver.is_ig_prod():
-                assert not has_dind, "Not expected privileged mode"
-            else:
-                only_warning = True
-                _raise_invalid_host(only_warning)
-                return False
+            only_warning = True
+            _raise_invalid_host(only_warning)
+            return False
     else:
         am_repo_config = os.environ.get("AM_REPO_CONFIG_CHECK", "True")
         print(
@@ -399,6 +392,7 @@ def skip_submodules_test() -> bool:
 
 # Copied from hprint to avoid import cycles.
 
+
 # TODO(gp): It should use *.
 def indent(txt: str, num_spaces: int = 2) -> str:
     """
@@ -417,6 +411,7 @@ def indent(txt: str, num_spaces: int = 2) -> str:
 
 
 # End copy.
+
 
 # This function can't be in `helpers.hserver` since it creates circular import
 # and `helpers.hserver` should not depend on anything.
