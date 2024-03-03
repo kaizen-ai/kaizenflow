@@ -27,17 +27,16 @@ class Test_update_task_definition(hunitest.TestCase):
     @mock_ecs
     @patch('helpers.haws.get_ecs_client')
     def test1(self, mock_get_ecs_client) -> None:
-        # Mock data
+        # Mock data.
         task_definition_name = "my-task-definition"
         old_image_url = "old_image_url"
         new_image_url = "new_image_url"
         region = "us-east-1"
-
-        # Mock the return value of get_ecs_client
+        # Mock the return value of get_ecs_client.
         mock_client = boto3.client("ecs", region_name=region)
         mock_get_ecs_client.return_value = mock_client
 
-        # Create a mock task definition
+        # Create a mock task definition.
         mock_client.register_task_definition(
             family=task_definition_name,
             containerDefinitions=[
@@ -50,12 +49,12 @@ class Test_update_task_definition(hunitest.TestCase):
             memory="512",
         )
 
-        # Update task definition
+        # Update task definition.
         haws.update_task_definition(
             task_definition_name, new_image_url, region=region
         )
 
-        # Check if the task definition is updated
+        # Check if the task definition is updated.
         task_description = mock_client.describe_task_definition(
             taskDefinition=task_definition_name
         )
