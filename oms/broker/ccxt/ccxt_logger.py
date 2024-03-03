@@ -1,9 +1,14 @@
+# %%
+# %matplotlib inline
+
+# %% [markdown]
 """
 Import as:
 
 import oms.broker.ccxt.ccxt_logger as obcccclo
 """
 
+# %%
 import logging
 import os
 from typing import Any, Callable, Dict, List, Optional, Union
@@ -1879,10 +1884,12 @@ class CcxtLogger:
         return data_list
 
 
-# #############################################################################
+
+# %% [markdown]
 # Config loading
 # #############################################################################
 
+# %%
 
 def load_config_for_execution_analysis(system_log_dir: str) -> pd.DataFrame:
     """
@@ -1918,10 +1925,12 @@ def load_config_for_execution_analysis(system_log_dir: str) -> pd.DataFrame:
     return config
 
 
-# #############################################################################
+
+# %% [markdown]
 # Child order timestamp processing
 # #############################################################################
 
+# %%
 
 def process_timestamps_and_prices_for_a_single_order(
     child_order: pd.Series, fills_df: pd.DataFrame, resample_freq: str
@@ -2214,3 +2223,5 @@ def process_child_order_timestamps_and_prices_for_single_asset(
         processed_orders.append(processed_order)
     result = pd.concat(processed_orders, axis=0)
     return result
+
+# %%

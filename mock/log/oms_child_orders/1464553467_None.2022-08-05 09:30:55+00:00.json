@@ -1,0 +1,140 @@
+{
+    "py/reduce": [
+        {
+            "py/type": "collections.OrderedDict"
+        },
+        {
+            "py/tuple": []
+        },
+        null,
+        null,
+        {
+            "py/tuple": [
+                {
+                    "py/tuple": [
+                        "order_id",
+                        0
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "creation_timestamp",
+                        {
+                            "py/object": "pandas._libs.tslibs.timestamps.Timestamp",
+                            "values": "",
+                            "txt": true,
+                            "meta": {
+                                "isoformat": "2022-08-05T10:36:44.976104-04:00"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "asset_id",
+                        1464553467
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "type_",
+                        "market"
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "start_timestamp",
+                        {
+                            "py/object": "pandas._libs.tslibs.timestamps.Timestamp",
+                            "values": "",
+                            "txt": true,
+                            "meta": {
+                                "isoformat": "2022-08-05T10:36:44.976104-04:00"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "end_timestamp",
+                        {
+                            "py/object": "pandas._libs.tslibs.timestamps.Timestamp",
+                            "values": "",
+                            "txt": true,
+                            "meta": {
+                                "isoformat": "2022-08-05T10:38:44.976104-04:00"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "curr_num_shares",
+                        0.0
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "diff_num_shares",
+                        0.121
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "tz",
+                        {
+                            "py/reduce": [
+                                {
+                                    "py/function": "pytz._p"
+                                },
+                                {
+                                    "py/tuple": [
+                                        "America/New_York",
+                                        -14400,
+                                        3600,
+                                        "EDT"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "extra_params",
+                        {
+                            "stats": {
+                                "_submit_single_order_to_ccxt::start.timestamp": {
+                                    "py/object": "unittest.mock.MagicMock",
+                                    "py/iterator": []
+                                },
+                                "_submit_single_order_to_ccxt::attempt_num": 1,
+                                "_submit_single_order_to_ccxt::all_attempts_end.timestamp": {
+                                    "py/id": 7
+                                }
+                            },
+                            "ccxt_id": [
+                                -1
+                            ],
+                            "error_msg": "(<Mock id='281473124391184'>, '\"code\":-4131,')"
+                        }
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "limit_price",
+                        null
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "ccxt_id",
+                        {
+                            "py/id": 8
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

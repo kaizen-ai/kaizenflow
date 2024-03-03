@@ -196,7 +196,7 @@ def has_dind_support() -> bool:
     rc = os.system(cmd)
     _print("cmd=%s -> rc=%s" % (cmd, rc))
     # dind is supported on both Mac and GH Actions.
-    check_repo = os.environ.get("AM_REPO_CONFIG_CHECK", "True") != "False"
+    check_repo = os.environ.get("AM_REPO_CONFIG_CHECK", "True") != "True"
     if check_repo:
         if hserver.is_cmamp_prod():
             assert not has_dind, "Not expected privileged mode"

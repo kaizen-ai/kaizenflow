@@ -1,0 +1,99 @@
+dag_config (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+  filter_weekends (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    in_col_groups (marked_as_used=False, writer=None, val_type=list): [('close',), ('high',), ('low',), ('open',), ('volume',)]
+    out_col_group (marked_as_used=False, writer=None, val_type=tuple): ()
+    join_output_with_input (marked_as_used=False, writer=None, val_type=bool): False
+  filter_ath (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    in_col_groups (marked_as_used=False, writer=None, val_type=list): [('close',), ('high',), ('low',), ('open',), ('volume',)]
+    out_col_group (marked_as_used=False, writer=None, val_type=tuple): ()
+    transformer_kwargs (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+      start_time (marked_as_used=False, writer=None, val_type=datetime.time): 09:30:00
+      end_time (marked_as_used=False, writer=None, val_type=datetime.time): 16:00:00
+    join_output_with_input (marked_as_used=False, writer=None, val_type=bool): False
+  resample (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    in_col_groups (marked_as_used=False, writer=None, val_type=list): [('open',), ('high',), ('low',), ('close',), ('volume',)]
+    out_col_group (marked_as_used=False, writer=None, val_type=tuple): ()
+    transformer_kwargs (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+      rule (marked_as_used=False, writer=None, val_type=str): 5T
+      resampling_groups (marked_as_used=False, writer=None, val_type=list): [({'close': 'close'}, 'last', {}), ({'high': 'high'}, 'max', {}), ({'low': 'low'}, 'min', {}), ({'open': 'open'}, 'first', {}), ({'volume': 'volume'}, 'sum', {'min_count': 1}), ({'close': 'twap'}, 'mean', {})]
+      vwap_groups (marked_as_used=False, writer=None, val_type=list): [('close', 'volume', 'vwap')]
+    reindex_like_input (marked_as_used=False, writer=None, val_type=bool): False
+    join_output_with_input (marked_as_used=False, writer=None, val_type=bool): False
+  compute_ret_0 (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    in_col_groups (marked_as_used=False, writer=None, val_type=list): [('close',), ('vwap',), ('twap',)]
+    out_col_group (marked_as_used=False, writer=None, val_type=tuple): ()
+    transformer_kwargs (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+      mode (marked_as_used=False, writer=None, val_type=str): pct_change
+    col_mapping (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+      close (marked_as_used=False, writer=None, val_type=str): close.ret_0
+      vwap (marked_as_used=False, writer=None, val_type=str): vwap.ret_0
+      twap (marked_as_used=False, writer=None, val_type=str): twap.ret_0
+  compute_vol (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    in_col_groups (marked_as_used=False, writer=None, val_type=list): [('vwap.ret_0',)]
+    out_col_group (marked_as_used=False, writer=None, val_type=tuple): ()
+    transformer_kwargs (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+      tau (marked_as_used=False, writer=None, val_type=int): 32
+    col_mapping (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+      vwap.ret_0 (marked_as_used=False, writer=None, val_type=str): vwap.ret_0.vol
+  adjust_rets (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    in_col_groups (marked_as_used=False, writer=None, val_type=list): [('vwap.ret_0',), ('vwap.ret_0.vol',)]
+    out_col_group (marked_as_used=False, writer=None, val_type=tuple): ()
+    transformer_kwargs (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+      term1_col (marked_as_used=False, writer=None, val_type=str): vwap.ret_0
+      term2_col (marked_as_used=False, writer=None, val_type=str): vwap.ret_0.vol
+      out_col (marked_as_used=False, writer=None, val_type=str): vwap.ret_0.vol_adj
+      term2_delay (marked_as_used=False, writer=None, val_type=int): 2
+      operation (marked_as_used=False, writer=None, val_type=str): div
+    drop_nans (marked_as_used=False, writer=None, val_type=bool): True
+  clip (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    in_col_groups (marked_as_used=False, writer=None, val_type=list): [('vwap.ret_0.vol_adj',)]
+    out_col_group (marked_as_used=False, writer=None, val_type=tuple): ()
+    col_mapping (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+      vwap.ret_0.vol_adj (marked_as_used=False, writer=None, val_type=str): vwap.ret_0.vol_adj.c
+dag_builder_object (marked_as_used=False, writer=None, val_type=dataflow_amp.pipelines.mock2.mock2_pipeline.Mock2_DagBuilder): nid_prefix=
+dag_builder_class (marked_as_used=False, writer=None, val_type=str): Mock2_DagBuilder
+system_class (marked_as_used=False, writer=None, val_type=str): Mock2_NonTime_ForecastSystem
+system_log_dir (marked_as_used=False, writer=None, val_type=str): ./system_log_dir
+backtest_config (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+  universe_str (marked_as_used=False, writer=None, val_type=str): bloomberg_v1-top1
+  trading_period_str (marked_as_used=False, writer=None, val_type=str): 5T
+  time_interval_str (marked_as_used=False, writer=None, val_type=str): 2023-08-10_2023-08-31
+  freq_as_pd_str (marked_as_used=False, writer=None, val_type=str): M
+  lookback_as_pd_str (marked_as_used=False, writer=None, val_type=str): 1D
+  start_timestamp_with_lookback (marked_as_used=False, writer=None, val_type=pandas._libs.tslibs.timestamps.Timestamp): 2023-07-31 00:00:00+00:00
+  start_timestamp (marked_as_used=False, writer=None, val_type=pandas._libs.tslibs.timestamps.Timestamp): 2023-08-01 00:00:00+00:00
+  end_timestamp (marked_as_used=False, writer=None, val_type=pandas._libs.tslibs.timestamps.Timestamp): 2023-08-31 23:59:59+00:00
+  id (marked_as_used=False, writer=None, val_type=int): 0
+  config_builder (marked_as_used=False, writer=None, val_type=str): dataflow_amp.system.mock2.mock2_tile_config_builders.build_Mock2_tile_config_list_for_unit_test("bloomberg_v1-top1.5T.2023-08-10_2023-08-31")
+  dst_dir (marked_as_used=False, writer=None, val_type=str): /app/dataflow_amp/system/mock2/test/outcomes/Test_Mock2_NonTime_ForecastSystem_TiledBacktest.test1/tmp.scratch/run_model
+  experiment_builder (marked_as_used=False, writer=None, val_type=str): dataflow.backtest.master_backtest.run_in_sample_tiled_backtest
+  experiment_result_dir (marked_as_used=False, writer=None, val_type=str): /app/dataflow_amp/system/mock2/test/outcomes/Test_Mock2_NonTime_ForecastSystem_TiledBacktest.test1/tmp.scratch/run_model/result_0
+market_data_config (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+  im_client_ctor (marked_as_used=False, writer=None, val_type=abc.ABCMeta): <class 'im_v2.common.data.client.historical_pq_clients.HistoricalPqByCurrencyPairTileClient'>
+  im_client_config (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    vendor (marked_as_used=False, writer=None, val_type=str): bloomberg
+    universe_version (marked_as_used=False, writer=None, val_type=str): v1
+    root_dir (marked_as_used=False, writer=None, val_type=str): s3://cryptokaizen-unit-test/v3/bulk
+    partition_mode (marked_as_used=False, writer=None, val_type=str): by_year_month
+    dataset (marked_as_used=False, writer=None, val_type=str): ohlcv
+    contract_type (marked_as_used=False, writer=None, val_type=str): spot
+    data_snapshot (marked_as_used=False, writer=None, val_type=str): 
+    download_mode (marked_as_used=False, writer=None, val_type=str): manual
+    downloading_entity (marked_as_used=False, writer=None, val_type=str): 
+    aws_profile (marked_as_used=False, writer=None, val_type=str): ck
+    resample_1min (marked_as_used=False, writer=None, val_type=bool): False
+    version (marked_as_used=False, writer=None, val_type=str): v1_0_0
+    download_universe_version (marked_as_used=False, writer=None, val_type=str): v1
+    tag (marked_as_used=False, writer=None, val_type=str): resampled_1min
+  im_client (marked_as_used=False, writer=None, val_type=im_v2.common.data.client.historical_pq_clients.HistoricalPqByCurrencyPairTileClient): HistoricalPqByCurrencyPairTileClient at 0xffff5a054280=(_vendor=bloomberg <str>, _universe_version=v1 <str>, _resample_1min=False <bool>, _timestamp_col_name=timestamp <str>, _full_symbol_col_name=None <NoneType>, _asset_id_to_full_symbol_mapping={1343146433: 'us_market::MSFT'} <dict>, _root_dir=s3://cryptokaizen-unit-test/v3/bulk <str>, _infer_exchange_id=True <bool>, _partition_mode=by_year_month <str>, _aws_profile=ck <str>, _dataset=ohlcv <str>, _contract_type=spot <str>, _data_snapshot= <str>, _download_mode=manual <str>, _downloading_entity= <str>, _version=v1_0_0 <str>, _download_universe_version=v1 <str>, _tag=resampled_1min <str>, _data_format=parquet <str>)
+  asset_ids (marked_as_used=False, writer=None, val_type=list): [1343146433]
+  asset_id_col_name (marked_as_used=False, writer=None, val_type=str): asset_id
+research_forecast_evaluator_from_prices (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+  style (marked_as_used=False, writer=None, val_type=str): cross_sectional
+  init (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    price_col (marked_as_used=False, writer=None, val_type=str): vwap
+    volatility_col (marked_as_used=False, writer=None, val_type=str): vwap.ret_0.vol
+    prediction_col (marked_as_used=False, writer=None, val_type=str): vwap.ret_0.vol_adj.c
+  kwargs (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    target_gmv (marked_as_used=False, writer=None, val_type=float): 100000.0
+    liquidate_at_end_of_day (marked_as_used=False, writer=None, val_type=bool): False

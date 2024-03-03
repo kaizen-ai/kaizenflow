@@ -1,0 +1,18 @@
+
+################################################################################
+1/1 (20240226-114630)
+################################################################################
+
+tag=1/1 (20240226-114630)
+workload_func=run_backtest_for_single_config
+func_name=run_backtest_for_single_config
+args=(<dataflow.system.system_config_list.SystemConfigList object at 0xffff1df12340>,
+ 'ins')
+kwargs={}
+exception='Execution failed for backtest 0'
+func_res=
+  None
+elapsed_time_in_secs=0.017
+start_ts=20240226-114630
+end_ts=20240226-114630
+error=True

@@ -1,0 +1,17 @@
+
+################################################################################
+1/1 (20240226-114641)
+################################################################################
+
+tag=1/1 (20240226-114641)
+workload_func=run_backtest_for_single_config
+func_name=run_backtest_for_single_config
+args=(<dataflow.system.system_config_list.SystemConfigList object at 0xffff1f7c2850>,
+ 'ins')
+kwargs={}
+func_res=
+  None
+elapsed_time_in_secs=0.43
+start_ts=20240226-114641
+end_ts=20240226-114641
+error=False

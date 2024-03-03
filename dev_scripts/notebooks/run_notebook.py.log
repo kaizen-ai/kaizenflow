@@ -1,0 +1,123 @@
+11:50:00 hdbg.py init_logger:1013                            11:50:00 hdbg.py init_logger:1013                            Effective logging level=10
+11:50:00 hlogging.py shutup_chatty_modules:198               11:50:00 hlogging.py shutup_chatty_modules:198               Shut up 116 modules: botocore.httpsession, matplotlib.image, botocore.monitoring, matplotlib.category, botocore.history, asyncio, boto3.resources.factory, urllib3.util.retry, botocore.client, matplotlib.artist, matplotlib.lines, botocore.handlers, botocore.retryhandler, botocore.configprovider, matplotlib.style, boto3.resources.model, botocore.session, botocore.paginate, botocore.loaders, matplotlib, matplotlib.dviread, matplotlib.axes, botocore.tokens, boto3.resources.base, urllib3, botocore.endpoint_provider, matplotlib.text, botocore.awsrequest, urllib3.poolmanager, matplotlib.colorbar, urllib3.connectionpool, matplotlib._afm, botocore.retries.standard, matplotlib.font_manager, matplotlib.textpath, matplotlib.dates, matplotlib.axes._axes, botocore.response, botocore.auth, matplotlib._layoutgrid, botocore.hooks, botocore.retries.special, urllib3.response, botocore.parsers, urllib3.connection, botocore.utils, matplotlib.style.core, botocore.credentials, fsspec, matplotlib.backend_bases, botocore, botocore.regions, boto3.resources.collection, matplotlib.figure, matplotlib.ticker, botocore.retries, boto3.resources.action, botocore.args, matplotlib.gridspec, botocore.compress, boto3, matplotlib.axis, invoke, botocore.discovery, botocore.waiter, urllib3.util, matplotlib.texmanager, botocore.httpchecksum, matplotlib.pyplot, botocore.endpoint, botocore.retries.adaptive, matplotlib.axes._base, s3fs, boto3.resources, botocore.compat, matplotlib.mathtext, matplotlib._constrained_layout
+11:50:00 hparser.py parse_dst_dir_arg:144                    11:50:00 hparser.py parse_dst_dir_arg:144                    dst_dir=/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch
+11:50:00 hparser.py parse_dst_dir_arg:158                    11:50:00 hparser.py parse_dst_dir_arg:158                    clean_dst_dir=False
+11:50:00 - [36mINFO [0m config_builder.py get_config_list_from_builder:35      11:50:00 - [36mINFO [0m config_builder.py get_config_list_from_builder:35      Executing function 'core.plotting.test.test_gallery_notebook.build_config_list()'
+11:50:00 config_builder.py get_config_list_from_builder:45                       11:50:00 config_builder.py get_config_list_from_builder:45                       import=core.plotting.test.test_gallery_notebook
+11:50:00 config_builder.py get_config_list_from_builder:46                       11:50:00 config_builder.py get_config_list_from_builder:46                       function=build_config_list
+11:50:00 config_builder.py get_config_list_from_builder:47                       11:50:00 config_builder.py get_config_list_from_builder:47                       args=
+11:50:00 config_builder.py get_config_list_from_builder:54                       11:50:00 config_builder.py get_config_list_from_builder:54                       executing 'imp.build_config_list()'
+11:50:00 config_builder.py get_config_list_from_builder:56                       11:50:00 config_builder.py get_config_list_from_builder:56                       type(config_list)=<class 'core.config.config_list.ConfigList'>
+11:50:00 - [36mINFO [0m dataflow_backtest_utils.py get_config_list_from_command_line:208 11:50:00 - [36mINFO [0m dataflow_backtest_utils.py get_config_list_from_command_line:208 Generated 1 configs from the builder
+11:50:00 - [36mINFO [0m dataflow_backtest_utils.py select_config:181           11:50:00 - [36mINFO [0m dataflow_backtest_utils.py select_config:181           Selected 1 configs
+11:50:00 - [36mINFO [0m dataflow_backtest_utils.py get_config_list_from_command_line:223 11:50:00 - [36mINFO [0m dataflow_backtest_utils.py get_config_list_from_command_line:223 Selected 1 configs from command line
+11:50:00 - [36mINFO [0m dataflow_backtest_utils.py get_config_list_from_command_line:229 11:50:00 - [36mINFO [0m dataflow_backtest_utils.py get_config_list_from_command_line:229 Removed 0 configs since already executed
+11:50:00 - [36mINFO [0m dataflow_backtest_utils.py get_config_list_from_command_line:230 11:50:00 - [36mINFO [0m dataflow_backtest_utils.py get_config_list_from_command_line:230 Need to execute 1 configs
+11:50:00 hjoblib.py validate_task:181                        11:50:00 hjoblib.py validate_task:181                        task.args=(figsize (marked_as_used=False, writer=None, val_type=tuple): (20, 10)
+backtest_config (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+  id (marked_as_used=False, writer=None, val_type=int): 0
+  config_builder (marked_as_used=False, writer=None, val_type=str): core.plotting.test.test_gallery_notebook.build_config_list()
+  dst_dir (marked_as_used=False, writer=None, val_type=str): /app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch
+  experiment_result_dir (marked_as_used=False, writer=None, val_type=str): /app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/result_0,
+ '/app/core/plotting/notebooks/gallery_notebook.ipynb',
+ False,
+ False,
+ False,
+ False)
+11:50:00 hjoblib.py validate_task:183                        11:50:00 hjoblib.py validate_task:183                        task.kwargs={}
+11:50:00 - [36mINFO [0m run_notebook.py _main:277                              11:50:00 - [36mINFO [0m run_notebook.py _main:277                              log_file='/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/log.20240226-115000.txt'
+11:50:00 - [36mINFO [0m hjoblib.py parallel_execute:549                        11:50:00 - [36mINFO [0m hjoblib.py parallel_execute:549                        dry_run=False, num_threads='serial', incremental=True, num_attempts=1, abort_on_error=True
+11:50:00 hjoblib.py validate_task:181                        11:50:00 hjoblib.py validate_task:181                        task.args=(figsize (marked_as_used=False, writer=None, val_type=tuple): (20, 10)
+backtest_config (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+  id (marked_as_used=False, writer=None, val_type=int): 0
+  config_builder (marked_as_used=False, writer=None, val_type=str): core.plotting.test.test_gallery_notebook.build_config_list()
+  dst_dir (marked_as_used=False, writer=None, val_type=str): /app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch
+  experiment_result_dir (marked_as_used=False, writer=None, val_type=str): /app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/result_0,
+ '/app/core/plotting/notebooks/gallery_notebook.ipynb',
+ False,
+ False,
+ False,
+ False)
+11:50:00 hjoblib.py validate_task:183                        11:50:00 hjoblib.py validate_task:183                        task.kwargs={}
+11:50:00 - [36mINFO [0m hjoblib.py parallel_execute:557                        11:50:00 - [36mINFO [0m hjoblib.py parallel_execute:557                        Saving log info in '/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/log.20240226-115000.txt'
+11:50:00 - [36mINFO [0m hjoblib.py parallel_execute:558                        11:50:00 - [36mINFO [0m hjoblib.py parallel_execute:558                        Number of executing threads=1 (serial)
+11:50:00 - [36mINFO [0m hjoblib.py parallel_execute:563                        11:50:00 - [36mINFO [0m hjoblib.py parallel_execute:563                        Number of tasks=1
+11:50:00 - [36mINFO [0m htqdm.py flush:42                  11:50:00 - [36mINFO [0m htqdm.py flush:42                  num_threads=serial backend=loky:   0%|          | 0/1 [00:00<?, ?it/s]
+11:50:00 hjoblib.py parallel_execute:585                     11:50:00 hjoblib.py parallel_execute:585                     
+################################################################################
+Task 1 / 1
+################################################################################
+11:50:00 hjoblib.py validate_task:181                        11:50:00 hjoblib.py validate_task:181                        task.args=(figsize (marked_as_used=False, writer=None, val_type=tuple): (20, 10)
+backtest_config (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+  id (marked_as_used=False, writer=None, val_type=int): 0
+  config_builder (marked_as_used=False, writer=None, val_type=str): core.plotting.test.test_gallery_notebook.build_config_list()
+  dst_dir (marked_as_used=False, writer=None, val_type=str): /app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch
+  experiment_result_dir (marked_as_used=False, writer=None, val_type=str): /app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/result_0,
+ '/app/core/plotting/notebooks/gallery_notebook.ipynb',
+ False,
+ False,
+ False,
+ False)
+11:50:00 hjoblib.py validate_task:183                        11:50:00 hjoblib.py validate_task:183                        task.kwargs={}
+11:50:00 hjoblib.py validate_task:181                        11:50:00 hjoblib.py validate_task:181                        task.args=(figsize (marked_as_used=False, writer=None, val_type=tuple): (20, 10)
+backtest_config (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+  id (marked_as_used=False, writer=None, val_type=int): 0
+  config_builder (marked_as_used=False, writer=None, val_type=str): core.plotting.test.test_gallery_notebook.build_config_list()
+  dst_dir (marked_as_used=False, writer=None, val_type=str): /app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch
+  experiment_result_dir (marked_as_used=False, writer=None, val_type=str): /app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/result_0,
+ '/app/core/plotting/notebooks/gallery_notebook.ipynb',
+ False,
+ False,
+ False,
+ False)
+11:50:00 hjoblib.py validate_task:183                        11:50:00 hjoblib.py validate_task:183                        task.kwargs={}
+11:50:00 htimer.py dtimer_start:133                          11:50:00 htimer.py dtimer_start:133                          Execute '_run_notebook' ...
+11:50:00 - [36mINFO [0m dataflow_backtest_utils.py setup_experiment_dir:99     11:50:00 - [36mINFO [0m dataflow_backtest_utils.py setup_experiment_dir:99     Creating experiment dir '/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/result_0'
+11:50:00 dataflow_backtest_utils.py setup_experiment_dir:104                     11:50:00 dataflow_backtest_utils.py setup_experiment_dir:104                     Saving '/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/result_0/config.pkl'
+11:50:00 htimer.py dtimer_start:133                          11:50:00 htimer.py dtimer_start:133                          Pickling to '/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/result_0/config.pkl' ...
+11:50:00 htimer.py dtimer_stop:150                           11:50:00 htimer.py dtimer_stop:150                           Pickling to '/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/result_0/config.pkl' done (0.000 s)
+11:50:00 hpickle.py to_pickle:103                            11:50:00 hpickle.py to_pickle:103                            Saved '/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/result_0/config.pkl' (size=856.0 b, time=0.0s)
+11:50:00 dataflow_backtest_utils.py setup_experiment_dir:114                     11:50:00 dataflow_backtest_utils.py setup_experiment_dir:114                     Saving '/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/result_0/config.txt'
+11:50:00 - [36mINFO [0m run_notebook.py _run_notebook:77                       11:50:00 - [36mINFO [0m run_notebook.py _run_notebook:77                       dst_file=/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/result_0/gallery_notebook.0.ipynb
+11:50:00 - [36mINFO [0m run_notebook.py _run_notebook:103                      11:50:00 - [36mINFO [0m run_notebook.py _run_notebook:103                      log_file=/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/result_0/run_notebook.0.log
+11:50:00 - [36mINFO [0m run_notebook.py _run_notebook:116                      11:50:00 - [36mINFO [0m run_notebook.py _run_notebook:116                      cmd='export __CONFIG_BUILDER__='core.plotting.test.test_gallery_notebook.build_config_list()'; export __CONFIG_IDX__="0"; export __CONFIG_DST_DIR__="/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch" ; jupyter nbconvert /app/core/plotting/notebooks/gallery_notebook.ipynb --execute --to notebook --output /app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/result_0/gallery_notebook.0.ipynb --ExecutePreprocessor.kernel_name=python --ExecutePreprocessor.timeout=-1 --ExecutePreprocessor.allow_errors=False'
+11:50:00 hsystem.py _system:224                              11:50:00 hsystem.py _system:224                              > (export __CONFIG_BUILDER__='core.plotting.test.test_gallery_notebook.build_config_list()'; export __CONFIG_IDX__="0"; export __CONFIG_DST_DIR__="/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch" ; jupyter nbconvert /app/core/plotting/notebooks/gallery_notebook.ipynb --execute --to notebook --output /app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/result_0/gallery_notebook.0.ipynb --ExecutePreprocessor.kernel_name=python --ExecutePreprocessor.timeout=-1 --ExecutePreprocessor.allow_errors=False) 2>&1 >/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/result_0/run_notebook.0.log
+11:50:13 - [36mINFO [0m run_notebook.py _run_notebook:126                      11:50:13 - [36mINFO [0m run_notebook.py _run_notebook:126                      Running notebook was successful
+11:50:13 - [36mINFO [0m dataflow_backtest_utils.py mark_config_as_success:242  11:50:13 - [36mINFO [0m dataflow_backtest_utils.py mark_config_as_success:242  Creating file_name='/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/result_0/success.txt'
+11:50:13 htimer.py dtimer_stop:150                           11:50:13 htimer.py dtimer_stop:150                           Execute '_run_notebook' done (12.621 s)
+11:50:13 hjoblib.py _parallel_execute_decorator:491                              11:50:13 hjoblib.py _parallel_execute_decorator:491                              txt=
+
+  ################################################################################
+  1/1 (20240226-115000)
+  ################################################################################
+
+  tag=1/1 (20240226-115000)
+  workload_func=_run_notebook
+  func_name=_run_notebook
+  args=(figsize (marked_as_used=False, writer=None, val_type=tuple): (20, 10)
+  backtest_config (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    id (marked_as_used=False, writer=None, val_type=int): 0
+    config_builder (marked_as_used=False, writer=None, val_type=str): core.plotting.test.test_gallery_notebook.build_config_list()
+    dst_dir (marked_as_used=False, writer=None, val_type=str): /app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch
+    experiment_result_dir (marked_as_used=False, writer=None, val_type=str): /app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/result_0,
+   '/app/core/plotting/notebooks/gallery_notebook.ipynb',
+   False,
+   False,
+   False,
+   False)
+  kwargs={}
+  func_res=
+    0
+  elapsed_time_in_secs=12.621
+  start_ts=20240226-115000
+  end_ts=20240226-115013
+  error=False
+11:50:13 - [36mINFO [0m htqdm.py flush:42                  11:50:13 - [36mINFO [0m htqdm.py flush:42                  num_threads=serial backend=loky: 100%|##########| 1/1 [00:12<00:00, 12.62s/it]
+11:50:13 - [36mINFO [0m htqdm.py flush:42                  11:50:13 - [36mINFO [0m htqdm.py flush:42                  num_threads=serial backend=loky: 100%|##########| 1/1 [00:12<00:00, 12.62s/it]
+11:50:13 - [36mINFO [0m hjoblib.py parallel_execute:669                        11:50:13 - [36mINFO [0m hjoblib.py parallel_execute:669                        Saved log info in '/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/log.20240226-115000.txt'
+11:50:13 - [36mINFO [0m run_notebook.py _main:289                              11:50:13 - [36mINFO [0m run_notebook.py _main:289                              dst_dir='/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch'
+11:50:13 - [36mINFO [0m run_notebook.py _main:290                              11:50:13 - [36mINFO [0m run_notebook.py _main:290                              log_file='/app/core/plotting/test/outcomes/TestGalleryNotebook.test_run_notebook/tmp.scratch/log.20240226-115000.txt'
+11:50:13 - [36mINFO [0m hcache.py clear_global_cache:294                       11:50:13 - [36mINFO [0m hcache.py clear_global_cache:294                       Before clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem', size=nan
+11:50:13 - [41mWARN [0m hcache.py clear_global_cache:295                       11:50:13 - [41mWARN [0m hcache.py clear_global_cache:295                       Resetting 'global mem' cache '/mnt/tmpfs/tmp.cache.mem'
+11:50:13 - [41mWARN [0m hcache.py clear_global_cache:305                       11:50:13 - [41mWARN [0m hcache.py clear_global_cache:305                       Destroying '/mnt/tmpfs/tmp.cache.mem' ...
+11:50:13 - [36mINFO [0m hcache.py clear_global_cache:321                       11:50:13 - [36mINFO [0m hcache.py clear_global_cache:321                       After clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem', size=nan

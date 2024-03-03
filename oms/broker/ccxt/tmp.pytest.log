@@ -1,0 +1,5 @@
+13:01:19 hsystem.py _system:224                              > (du -d 0 /mnt/tmpfs/tmp.cache.mem | awk '{print $1}') 2>&1
+13:01:19 - [36mINFO [0m hcache.py clear_global_cache:294                       13:01:19 - [36mINFO [0m hcache.py clear_global_cache:294                       Before clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem', size=36.0 KB
+13:01:19 - [41mWARN [0m hcache.py clear_global_cache:295                       13:01:19 - [41mWARN [0m hcache.py clear_global_cache:295                       Resetting 'global mem' cache '/mnt/tmpfs/tmp.cache.mem'
+13:01:19 - [41mWARN [0m hcache.py clear_global_cache:305                       13:01:19 - [41mWARN [0m hcache.py clear_global_cache:305                       Destroying '/mnt/tmpfs/tmp.cache.mem' ...
+13:01:19 - [36mINFO [0m hcache.py clear_global_cache:321                       13:01:19 - [36mINFO [0m hcache.py clear_global_cache:321                       After clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem', size=nan

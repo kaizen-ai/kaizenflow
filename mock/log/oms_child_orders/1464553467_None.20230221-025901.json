@@ -1,0 +1,302 @@
+{
+    "py/reduce": [
+        {
+            "py/type": "collections.OrderedDict"
+        },
+        {
+            "py/tuple": []
+        },
+        null,
+        null,
+        {
+            "py/tuple": [
+                {
+                    "py/tuple": [
+                        "order_id",
+                        8
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "creation_timestamp",
+                        {
+                            "py/object": "pandas._libs.tslibs.timestamps.Timestamp",
+                            "values": "",
+                            "txt": true,
+                            "meta": {
+                                "isoformat": "2023-02-21T02:58:59.800000-05:00"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "asset_id",
+                        1464553467
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "type_",
+                        "limit"
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "start_timestamp",
+                        {
+                            "py/id": 1
+                        }
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "end_timestamp",
+                        {
+                            "py/object": "pandas._libs.tslibs.timestamps.Timestamp",
+                            "values": "",
+                            "txt": true,
+                            "meta": {
+                                "isoformat": "2023-02-21T02:59:00-05:00"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "curr_num_shares",
+                        0.0
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "diff_num_shares",
+                        -0.001
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "tz",
+                        {
+                            "py/reduce": [
+                                {
+                                    "py/function": "pytz._p"
+                                },
+                                {
+                                    "py/tuple": [
+                                        "America/New_York",
+                                        -18000,
+                                        0,
+                                        "EST"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "extra_params",
+                        {
+                            "stats": {
+                                "_submit_twap_child_order::wave_id": 4,
+                                "_submit_twap_child_order::get_open_positions.done": {
+                                    "py/object": "pandas._libs.tslibs.timestamps.Timestamp",
+                                    "values": "",
+                                    "txt": true,
+                                    "meta": {
+                                        "isoformat": "2023-02-21T02:58:59.800000-05:00"
+                                    }
+                                },
+                                "_submit_twap_child_order::bid_ask_market_data.start": {
+                                    "py/object": "pandas._libs.tslibs.timestamps.Timestamp",
+                                    "values": "",
+                                    "txt": true,
+                                    "meta": {
+                                        "isoformat": "2023-02-21T02:58:59.800000-05:00"
+                                    }
+                                },
+                                "_submit_twap_child_order::bid_ask_market_data.done": {
+                                    "py/object": "pandas._libs.tslibs.timestamps.Timestamp",
+                                    "values": "",
+                                    "txt": true,
+                                    "meta": {
+                                        "isoformat": "2023-02-21T02:58:59.800000-05:00"
+                                    }
+                                },
+                                "_submit_twap_child_order::child_order.created": {
+                                    "py/object": "pandas._libs.tslibs.timestamps.Timestamp",
+                                    "values": "",
+                                    "txt": true,
+                                    "meta": {
+                                        "isoformat": "2023-02-21T02:58:59.800000-05:00"
+                                    }
+                                },
+                                "_submit_twap_child_order::child_order.limit_price_calculated": {
+                                    "py/object": "pandas._libs.tslibs.timestamps.Timestamp",
+                                    "values": "",
+                                    "txt": true,
+                                    "meta": {
+                                        "isoformat": "2023-02-21T02:58:59.800000-05:00"
+                                    }
+                                },
+                                "_submit_single_order_to_ccxt::start.timestamp": {
+                                    "py/object": "pandas._libs.tslibs.timestamps.Timestamp",
+                                    "values": "",
+                                    "txt": true,
+                                    "meta": {
+                                        "isoformat": "2023-02-21T02:58:59.800000-05:00"
+                                    }
+                                },
+                                "_submit_single_order_to_ccxt::attempt_num": 1,
+                                "_submit_single_order_to_ccxt::all_attempts_end.timestamp": {
+                                    "py/object": "pandas._libs.tslibs.timestamps.Timestamp",
+                                    "values": "",
+                                    "txt": true,
+                                    "meta": {
+                                        "isoformat": "2023-02-21T02:59:01.800000-05:00"
+                                    }
+                                },
+                                "_submit_twap_child_order::child_order.submitted": {
+                                    "py/object": "pandas._libs.tslibs.timestamps.Timestamp",
+                                    "values": "",
+                                    "txt": true,
+                                    "meta": {
+                                        "isoformat": "2023-02-21T02:59:01.800000-05:00"
+                                    }
+                                }
+                            },
+                            "oms_parent_order_id": 0,
+                            "ccxt_id": [
+                                8
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "passivity_factor",
+                        0.5
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "wave_id",
+                        4
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "latest_bid_price",
+                        31
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "latest_ask_price",
+                        10
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "bid_price_mean",
+                        31.0
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "ask_price_mean",
+                        10.0
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "used_bid_price",
+                        "latest_bid_price"
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "used_ask_price",
+                        "latest_ask_price"
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "num_data_points",
+                        121
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "exchange_timestamp",
+                        {
+                            "py/object": "pandas._libs.tslibs.timestamps.Timestamp",
+                            "values": "",
+                            "txt": true,
+                            "meta": {
+                                "isoformat": "2024-02-26T16:43:12.605000+00:00"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "knowledge_timestamp",
+                        {
+                            "py/object": "pandas._libs.tslibs.timestamps.Timestamp",
+                            "values": "",
+                            "txt": true,
+                            "meta": {
+                                "isoformat": "2024-02-26T16:43:12.605000+00:00"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "end_download_timestamp",
+                        {
+                            "py/object": "pandas._libs.tslibs.timestamps.Timestamp",
+                            "values": "",
+                            "txt": true,
+                            "meta": {
+                                "isoformat": "2024-02-26T16:43:12.605000+00:00"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "latest_bid_size",
+                        22
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "latest_ask_size",
+                        25
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "limit_price",
+                        {
+                            "py/object": "numpy.float64",
+                            "dtype": "float64",
+                            "value": 20.5
+                        }
+                    ]
+                },
+                {
+                    "py/tuple": [
+                        "ccxt_id",
+                        {
+                            "py/id": 14
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

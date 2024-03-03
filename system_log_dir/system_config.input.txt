@@ -1,0 +1,112 @@
+dag_config (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+  filter_ath (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    col_mode (marked_as_used=False, writer=None, val_type=str): replace_all
+    transformer_kwargs (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+      start_time (marked_as_used=False, writer=None, val_type=datetime.time): 09:30:00
+      end_time (marked_as_used=False, writer=None, val_type=datetime.time): 16:00:00
+  resample (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    in_col_groups (marked_as_used=False, writer=None, val_type=list): [('close',), ('volume',), ('feature1',)]
+    out_col_group (marked_as_used=False, writer=None, val_type=tuple): ()
+    transformer_kwargs (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+      rule (marked_as_used=False, writer=None, val_type=str): 5T
+      resampling_groups (marked_as_used=False, writer=None, val_type=list): [({'close': 'close'}, 'last', {}), ({'close': 'twap', 'feature1': 'feature1'}, 'mean', {})]
+      vwap_groups (marked_as_used=False, writer=None, val_type=list): [('close', 'volume', 'vwap')]
+    reindex_like_input (marked_as_used=False, writer=None, val_type=bool): False
+    join_output_with_input (marked_as_used=False, writer=None, val_type=bool): False
+  compute_ret_0 (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    in_col_groups (marked_as_used=False, writer=None, val_type=list): [('close',), ('vwap',), ('twap',)]
+    out_col_group (marked_as_used=False, writer=None, val_type=tuple): ()
+    transformer_kwargs (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+      mode (marked_as_used=False, writer=None, val_type=str): log_rets
+    col_mapping (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+      close (marked_as_used=False, writer=None, val_type=str): close.ret_0
+      vwap (marked_as_used=False, writer=None, val_type=str): vwap.ret_0
+      twap (marked_as_used=False, writer=None, val_type=str): twap.ret_0
+  compute_vol (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    in_col_group (marked_as_used=False, writer=None, val_type=tuple): ('vwap.ret_0',)
+    out_col_group (marked_as_used=False, writer=None, val_type=tuple): ('vwap.ret_0.vol',)
+    drop_nans (marked_as_used=False, writer=None, val_type=bool): True
+    permitted_exceptions (marked_as_used=False, writer=None, val_type=tuple): (<class 'ValueError'>,)
+  adjust_rets (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    in_col_groups (marked_as_used=False, writer=None, val_type=list): [('vwap.ret_0',), ('vwap.ret_0.vol',)]
+    out_col_group (marked_as_used=False, writer=None, val_type=tuple): ()
+    transformer_kwargs (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+      term1_col (marked_as_used=False, writer=None, val_type=str): vwap.ret_0
+      term2_col (marked_as_used=False, writer=None, val_type=str): vwap.ret_0.vol
+      out_col (marked_as_used=False, writer=None, val_type=str): vwap.ret_0.vol_adj
+      term2_delay (marked_as_used=False, writer=None, val_type=int): 2
+      operation (marked_as_used=False, writer=None, val_type=str): div
+    drop_nans (marked_as_used=False, writer=None, val_type=bool): True
+  compress_rets (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    in_col_groups (marked_as_used=False, writer=None, val_type=list): [('vwap.ret_0.vol_adj',)]
+    out_col_group (marked_as_used=False, writer=None, val_type=tuple): ()
+    col_mapping (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+      vwap.ret_0.vol_adj (marked_as_used=False, writer=None, val_type=str): vwap.ret_0.vol_adj.c
+  add_lags (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    in_col_groups (marked_as_used=False, writer=None, val_type=list): [('vwap.ret_0.vol_adj.c',)]
+    out_col_group (marked_as_used=False, writer=None, val_type=tuple): ()
+    transformer_kwargs (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+      lag_delay (marked_as_used=False, writer=None, val_type=int): 0
+      num_lags (marked_as_used=False, writer=None, val_type=int): 4
+      first_lag (marked_as_used=False, writer=None, val_type=int): 0
+      separator (marked_as_used=False, writer=None, val_type=str): .
+    drop_nans (marked_as_used=False, writer=None, val_type=bool): True
+  predict (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    in_col_groups (marked_as_used=False, writer=None, val_type=list): [('vwap.ret_0.vol_adj.c.lag0',), ('vwap.ret_0.vol_adj.c.lag1',), ('vwap.ret_0.vol_adj.c.lag2',), ('vwap.ret_0.vol_adj.c.lag3',)]
+    out_col_group (marked_as_used=False, writer=None, val_type=tuple): ()
+    transformer_kwargs (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+      weights (marked_as_used=False, writer=None, val_type=pandas.core.series.Series): 
+        index=[vwap.ret_0.vol_adj.c.lag0, vwap.ret_0.vol_adj.c.lag3]
+        columns=prediction
+        shape=(4, 1)
+                                   prediction
+        vwap.ret_0.vol_adj.c.lag0      -0.209
+        vwap.ret_0.vol_adj.c.lag1      -0.223
+        vwap.ret_0.vol_adj.c.lag2       0.304
+        vwap.ret_0.vol_adj.c.lag3      -0.264
+      convert_to_dataframe (marked_as_used=False, writer=None, val_type=bool): True
+    drop_nans (marked_as_used=False, writer=None, val_type=bool): True
+dag_builder_object (marked_as_used=False, writer=None, val_type=dataflow_amp.pipelines.mock1.mock1_pipeline.Mock1_DagBuilder): nid_prefix=
+dag_builder_class (marked_as_used=False, writer=None, val_type=str): Mock1_DagBuilder
+system_class (marked_as_used=False, writer=None, val_type=str): Mock1_NonTime_ForecastSystem
+system_log_dir (marked_as_used=False, writer=None, val_type=str): ./system_log_dir
+backtest_config (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+  universe_str (marked_as_used=False, writer=None, val_type=str): mock1_v1-top2
+  trading_period_str (marked_as_used=False, writer=None, val_type=str): 5T
+  time_interval_str (marked_as_used=False, writer=None, val_type=str): 2000-01-01_2000-02-01
+  freq_as_pd_str (marked_as_used=False, writer=None, val_type=str): M
+  lookback_as_pd_str (marked_as_used=False, writer=None, val_type=str): 10D
+  start_timestamp_with_lookback (marked_as_used=False, writer=None, val_type=pandas._libs.tslibs.timestamps.Timestamp): 1999-12-22 00:00:00+00:00
+  start_timestamp (marked_as_used=False, writer=None, val_type=pandas._libs.tslibs.timestamps.Timestamp): 2000-01-01 00:00:00+00:00
+  end_timestamp (marked_as_used=False, writer=None, val_type=pandas._libs.tslibs.timestamps.Timestamp): 2000-01-31 23:59:59+00:00
+  id (marked_as_used=False, writer=None, val_type=int): 0
+  dst_dir (marked_as_used=False, writer=None, val_type=str): /app/dataflow_amp/system/mock1/test/outcomes/Test_Mock1_NonTime_ForecastSystem_TiledBacktest.test_mock1_backtest/tmp.scratch.run0
+  experiment_result_dir (marked_as_used=False, writer=None, val_type=str): /app/dataflow_amp/system/mock1/test/outcomes/Test_Mock1_NonTime_ForecastSystem_TiledBacktest.test_mock1_backtest/tmp.scratch.run0/result_0
+market_data_config (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+  im_client_ctor (marked_as_used=False, writer=None, val_type=function): <function get_DataFrameImClient_example1>
+  im_client_config (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    df (marked_as_used=False, writer=None, val_type=pandas.core.frame.DataFrame): 
+      index=[2000-01-01 14:31:00+00:00, 2000-01-01 17:10:00+00:00]
+      columns=full_symbol,open,high,low,close,volume,feature1
+      shape=(320, 7)
+                                       full_symbol  open  high  low  close  volume  feature1
+      timestamp                                                                             
+      2000-01-01 14:31:00+00:00  binance::ADA_USDT   100   101   99  101.0       0       1.0
+      2000-01-01 14:31:00+00:00  binance::BTC_USDT   100   101   99  101.0       0       1.0
+      2000-01-01 14:32:00+00:00  binance::ADA_USDT   100   101   99  101.0       1       1.0
+      ...
+      2000-01-01 17:09:00+00:00  binance::BTC_USDT   100   101   99  100.0     158      -1.0
+      2000-01-01 17:10:00+00:00  binance::ADA_USDT   100   101   99  100.0     159      -1.0
+      2000-01-01 17:10:00+00:00  binance::BTC_USDT   100   101   99  100.0     159      -1.0
+  im_client (marked_as_used=False, writer=None, val_type=im_v2.common.data.client.data_frame_im_clients.DataFrameImClient): DataFrameImClient at 0xffff93f8c7c0=(_universe=['binance::ADA_USDT', 'binance::BTC_USDT'] <list>, _vendor=data_frame <str>, _universe_version=None <NoneType>, _resample_1min=False <bool>, _timestamp_col_name=timestamp <str>, _full_symbol_col_name=None <NoneType>, _asset_id_to_full_symbol_mapping={3303714233: 'binance::ADA_USDT', 1467591036: 'binance::BTC_USDT'} <dict>, _df=pd.df((320, 7) <pandas.core.frame.DataFrame>)
+  asset_ids (marked_as_used=False, writer=None, val_type=list): [3303714233, 1467591036]
+  asset_id_col_name (marked_as_used=False, writer=None, val_type=str): asset_id
+research_forecast_evaluator_from_prices (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+  style (marked_as_used=False, writer=None, val_type=str): cross_sectional
+  init (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    price_col (marked_as_used=False, writer=None, val_type=str): vwap
+    volatility_col (marked_as_used=False, writer=None, val_type=str): vwap.ret_0.vol
+    prediction_col (marked_as_used=False, writer=None, val_type=str): prediction
+  kwargs (marked_as_used=False, writer=None, val_type=core.config.config_.Config): 
+    target_gmv (marked_as_used=False, writer=None, val_type=float): 100000.0
+    liquidate_at_end_of_day (marked_as_used=False, writer=None, val_type=bool): False
