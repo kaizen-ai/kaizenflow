@@ -4,13 +4,12 @@ import os
 import boto3
 import pytest
 from moto import mock_ecs
-from unittest.mock import patch
+import unittest.mock as umock
 
 import helpers.haws as haws
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
-
 
 class Test_update_task_definition(hunitest.TestCase):
     @pytest.fixture(autouse=True, scope="class")
@@ -25,7 +24,7 @@ class Test_update_task_definition(hunitest.TestCase):
         os.environ["MOCK_AWS_DEFAULT_REGION"] = "us-east-1"
 
     @mock_ecs
-    @patch('helpers.haws.get_ecs_client')
+    @umock.patch('helpers.haws.get_ecs_client')
     def test1(self, mock_get_ecs_client) -> None:
         # Mock data.
         task_definition_name = "my-task-definition"
