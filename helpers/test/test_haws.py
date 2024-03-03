@@ -34,7 +34,6 @@ class Test_update_task_definition(hunitest.TestCase):
         # Mock the return value of get_ecs_client.
         mock_client = boto3.client("ecs", region_name=region)
         mock_get_ecs_client.return_value = mock_client
-
         # Create a mock task definition.
         mock_client.register_task_definition(
             family=task_definition_name,
@@ -47,12 +46,10 @@ class Test_update_task_definition(hunitest.TestCase):
             cpu="256",
             memory="512",
         )
-
         # Update task definition.
         haws.update_task_definition(
             task_definition_name, new_image_url, region=region
         )
-
         # Check if the task definition is updated.
         task_description = mock_client.describe_task_definition(
             taskDefinition=task_definition_name
