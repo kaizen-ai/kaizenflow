@@ -163,7 +163,6 @@
   which is like `{GIT_ROOT}/sorrentum_sandbox/projects/{project_tag}`
   - E.g., on the dir cloned on my laptop the dir is named
     `~/src/sorrentum1/sorrentum_sandbox/projects/SorrTask645_Redis_cache_to_fetch_user_profiles`
-  - The idea is that each
 
 - You always need to create a PR from your branch and add your TA and
   `gpsaggese` as reviewers
