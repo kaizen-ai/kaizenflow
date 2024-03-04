@@ -7,6 +7,7 @@ from moto import mock_ecs
 import unittest.mock as umock
 
 import helpers.haws as haws
+import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ class Test_update_task_definition(hunitest.TestCase):
         old_image_url = "old_image_url"
         new_image_url = "new_image_url"
         region = "us-east-1"
-        # Mock the return value of get_ecs_client.
+        # Mock the return value of `get_ecs_client`.
         mock_client = boto3.client("ecs", region_name=region)
         mock_get_ecs_client.return_value = mock_client
         # Create a mock task definition.
@@ -57,4 +58,4 @@ class Test_update_task_definition(hunitest.TestCase):
         updated_image_url = task_description["taskDefinition"][
             "containerDefinitions"
         ][0]["image"]
-        self.assertEqual(updated_image_url, new_image_url)
+        hdbg.dassert_eq(updated_image_url, new_image_url)
