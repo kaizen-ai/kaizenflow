@@ -1,4 +1,3 @@
-import logging
 import os
 
 import boto3
@@ -8,8 +7,6 @@ from moto import mock_s3
 import helpers.haws as haws
 import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
-
-_LOG = logging.getLogger(__name__)
 
 
 class Test_get_service_resource(hunitest.TestCase):
