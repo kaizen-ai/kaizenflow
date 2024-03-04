@@ -10,8 +10,6 @@ import helpers.haws as haws
 import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
 
-_LOG = logging.getLogger(__name__)
-
 class Test_update_task_definition(hunitest.TestCase):
     @pytest.fixture(autouse=True, scope="class")
     def aws_credentials(self) -> None:
