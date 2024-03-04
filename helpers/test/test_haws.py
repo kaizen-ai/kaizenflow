@@ -15,7 +15,7 @@ class Test_update_task_definition(hunitest.TestCase):
     @pytest.fixture(autouse=True, scope="class")
     def aws_credentials(self) -> None:
         """
-        Mocked AWS Credentials for moto.
+        Mocked AWS credentials for moto.
         """
         os.environ["MOCK_AWS_ACCESS_KEY_ID"] = "testing"
         os.environ["MOCK_AWS_SECRET_ACCESS_KEY"] = "testing"
