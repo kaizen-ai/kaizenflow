@@ -48,3 +48,52 @@ class Test_get_DagBuilder_name_from_string(hunitest.TestCase):
         act = dtfcorutil.get_DagBuilder_name_from_string(dag_builder_ctor_as_str)
         exp = "C5b"
         self.assert_equal(act, exp)
+
+
+class Test_convert_to_multiindex(hunitest.TestCase):
+    @staticmethod
+    def get_test_data() -> pd.DataFrame:
+        data = {
+            "id": [13684, 17085, 13684, 17085, 13684],
+            "close": [None, None, None, None, None],
+            "volume": [0, 0, 0, 0, 0],
+        }
+        index = pd.to_datetime(
+            ["2022-01-04 09:01:00-05:00"] * 2
+            + ["2022-01-04 09:02:00-05:00"] * 2
+            + ["2022-01-04 09:03:00-05:00"]
+        )
+        df = pd.DataFrame(data, index=index)
+        return df
+
+    def test1(self) -> None:
+        """
+        Test that the function transforms the DataFrame correctly.
+        """
+        df = self.get_test_data()
+        asset_id_col = "id"
+        result_df = dtfcorutil.convert_to_multiindex(df, asset_id_col)
+
+        expected_columns = pd.MultiIndex.from_product(
+            [["close", "volume"], [13684, 17085]], names=[None, "id"]
+        )
+        self.assert_equal(
+            str(expected_columns.to_list()), str(result_df.columns.to_list())
+        )
+
+    def test2(self) -> None:
+        """
+        Test that the function handles a DataFrame with duplicate rows
+        correctly.
+        """
+        df = self.get_test_data()
+        asset_id_col = "id"
+
+        df = pd.concat([df, df.head(1)])
+        result_df = dtfcorutil.convert_to_multiindex(df, asset_id_col)
+        expected_columns = pd.MultiIndex.from_product(
+            [["close", "volume"], [13684, 17085]], names=[None, "id"]
+        )
+        self.assert_equal(
+            str(expected_columns.to_list()), str(result_df.columns.to_list())
+        )
