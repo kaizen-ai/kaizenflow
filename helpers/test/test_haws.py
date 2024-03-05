@@ -2,8 +2,8 @@ import os
 import unittest.mock as umock
 
 import boto3
-import mock_ecs
 import pytest
+from moto import mock_ecs
 
 import helpers.haws as haws
 import helpers.hdbg as hdbg
