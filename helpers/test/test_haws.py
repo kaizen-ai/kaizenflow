@@ -2,12 +2,13 @@ import os
 import unittest.mock as umock
 
 import boto3
+import mock_ecs
 import pytest
-from moto import mock_ecs
 
 import helpers.haws as haws
 import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
+
 
 class Test_get_task_definition_image_url(hunitest.TestCase):
     @pytest.fixture(autouse=True, scope="class")
@@ -23,7 +24,7 @@ class Test_get_task_definition_image_url(hunitest.TestCase):
 
     @mock_ecs
     @umock.patch("helpers.haws.get_service_client")
-    def test1(self, mock_get_service_client) -> None:
+    def test1(self, mock_get_service_client: umock.Mock) -> None:
         """
         Test that `get_task_definition_image_url` retrieves correct image URL.
         """
