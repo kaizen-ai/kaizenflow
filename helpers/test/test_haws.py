@@ -24,8 +24,8 @@ class Test_update_task_definition(hunitest.TestCase):
         os.environ["MOCK_AWS_DEFAULT_REGION"] = "us-east-1"
 
     @mock_ecs
-    @umock.patch("helpers.haws.get_ecs_client")
-    def test1(self, mock_get_ecs_client: BaseClient) -> None:
+    @umock.patch('helpers.haws.get_ecs_client')
+    def test1(self, mock_get_ecs_client: umock.MagicMock) -> None:
         """
         Test updating a task definition with a new image URL.
         """
