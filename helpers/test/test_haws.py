@@ -22,17 +22,17 @@ class Test_update_task_definition(hunitest.TestCase):
 
     @mock_ecs
     @umock.patch('helpers.haws.get_ecs_client')
-    def test1(self, mock_get_ecs_client) -> None:
+    def test1(self, mock_get_ecs_client: umock.MagicMock) -> None:
         """
         Test updating a task definition with a new image URL.
         """
         # Mock data.
-        task_definition_name = "my-task-definition"
-        old_image_url = "old_image_url"
-        new_image_url = "new_image_url"
-        region = "us-east-1"
+        task_definition_name: str = "my-task-definition"
+        old_image_url: str = "old_image_url"
+        new_image_url: str = "new_image_url"
+        region: str = "us-east-1"
         # Mock the return value of `get_ecs_client`.
-        mock_client = boto3.client("ecs", region_name=region)
+        mock_client: boto3.client = boto3.client("ecs", region_name=region)
         mock_get_ecs_client.return_value = mock_client
         # Create a mock task definition.
         mock_client.register_task_definition(
@@ -51,10 +51,10 @@ class Test_update_task_definition(hunitest.TestCase):
             task_definition_name, new_image_url, region=region
         )
         # Check if the task definition is updated.
-        task_description = mock_client.describe_task_definition(
+        task_description: dict = mock_client.describe_task_definition(
             taskDefinition=task_definition_name
         )
-        updated_image_url = task_description["taskDefinition"][
+        updated_image_url: str = task_description["taskDefinition"][
             "containerDefinitions"
         ][0]["image"]
         hdbg.dassert_eq(updated_image_url, new_image_url)
