@@ -23,6 +23,9 @@ class Test_update_task_definition(hunitest.TestCase):
     @mock_ecs
     @umock.patch('helpers.haws.get_ecs_client')
     def test1(self, mock_get_ecs_client) -> None:
+        """
+        Test updating a task definition with a new image URL.
+        """
         # Mock data.
         task_definition_name = "my-task-definition"
         old_image_url = "old_image_url"
