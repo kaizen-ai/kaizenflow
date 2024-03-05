@@ -1,12 +1,14 @@
 import os
+import unittest.mock as umock
+
 import boto3
 import pytest
 from moto import mock_ecs
-import unittest.mock as umock
 
 import helpers.haws as haws
 import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
+
 
 class Test_update_task_definition(hunitest.TestCase):
     @pytest.fixture(autouse=True, scope="class")
@@ -21,7 +23,7 @@ class Test_update_task_definition(hunitest.TestCase):
         os.environ["MOCK_AWS_DEFAULT_REGION"] = "us-east-1"
 
     @mock_ecs
-    @umock.patch('helpers.haws.get_ecs_client')
+    @umock.patch("helpers.haws.get_ecs_client")
     def test1(self, mock_get_ecs_client: umock.MagicMock) -> None:
         """
         Test updating a task definition with a new image URL.
