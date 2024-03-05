@@ -9,7 +9,6 @@ import helpers.haws as haws
 import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
 
-
 class Test_get_task_definition_image_url(hunitest.TestCase):
     @pytest.fixture(autouse=True, scope="class")
     def aws_credentials(self) -> None:
