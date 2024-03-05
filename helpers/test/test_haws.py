@@ -2,7 +2,7 @@ import os
 
 import boto3
 import pytest
-from moto import mock_aws
+from moto import mock_s3
 
 import helpers.haws as haws
 import helpers.hdbg as hdbg
@@ -30,7 +30,7 @@ class Test_haws(hunitest.TestCase):
         del os.environ["MOCK_AWS_S3_BUCKET"]
         del os.environ["MOCK_AWS_DEFAULT_REGION"]
 
-    @mock_aws
+    @mock_s3
     def test_get_session1(self) -> None:
         """
         Test that `haws.get_session` correctly return a session without region parameter.
