@@ -48,9 +48,9 @@ class Test_haws(hunitest.TestCase):
         # Get all s3 buckets in session.
         s3_client = session.client("s3")
         response = s3_client.list_buckets()
-        bucket_names = response.get('Buckets', [])
+        bucket_names = [bucket['Name'] for bucket in response.get('Buckets', [])]
         # Check if they are matched.
-        hdbg.dassert_eq("my-bucket", bucket_names)
+        hdbg.dassert_in("my-bucket", bucket_names)
     
     @mock_s3
     def test_get_session2(self) -> None:
@@ -71,7 +71,7 @@ class Test_haws(hunitest.TestCase):
         # Get all s3 buckets in session.
         s3_client = session.client("s3")
         response = s3_client.list_buckets()
-        bucket_names = response.get('Buckets', [])
+        bucket_names = [bucket['Name'] for bucket in response.get('Buckets', [])]
         # Check if they are matched.
-        hdbg.dassert_eq("my-bucket", bucket_names)
+        hdbg.dassert_in("my-bucket", bucket_names)
 
