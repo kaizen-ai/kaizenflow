@@ -9,4 +9,5 @@ IMAGE_NAME=jupyter
 # Build container.
 #export DOCKER_BUILDKIT=1
 export DOCKER_BUILDKIT=0
+export DOCKER_BUILD_MULTI_ARCH=1
 build_container_image
