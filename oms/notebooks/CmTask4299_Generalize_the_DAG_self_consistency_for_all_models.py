@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -24,10 +24,11 @@ from typing import List, Tuple
 
 import pandas as pd
 
+import dataflow.core as dtfcore
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
-import oms
+import reconciliation as reconcil
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -50,7 +51,7 @@ start_timestamp_as_str = "20230501_131000"
 end_timestamp_as_str = "20230502_130500"
 run_mode = "paper_trading"
 mode = "scheduled"
-config_list = oms.build_reconciliation_configs(
+config_list = reconcil.build_reconciliation_configs(
     dst_root_dir,
     dag_builder_name,
     start_timestamp_as_str,
@@ -68,14 +69,14 @@ print(config)
 prod_system_log_dir = config["system_log_path"]["prod"]
 prod_dag_path = os.path.join(prod_system_log_dir, "dag/node_io/node_io.data")
 # Get DAG node names.
-dag_node_names = oms.get_dag_node_names(prod_dag_path)
+dag_node_names = dtfcore.get_dag_node_names(prod_dag_path)
 _LOG.info(
     "First node='%s' / Last node='%s'", dag_node_names[0], dag_node_names[-1]
 )
 
 # %%
 # Get timestamps for the last DAG node.
-dag_node_timestamps = oms.get_dag_node_timestamps(
+dag_node_timestamps = dtfcore.get_dag_node_timestamps(
     prod_dag_path, dag_node_names[-1], as_timestamp=True
 )
 _LOG.info(
@@ -93,10 +94,14 @@ def load_dag_outputs(
     node_name: str, timestamps: List[pd.Timestamp]
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     # Load DAG output at `bar_timestamp = t`.
-    current_df = oms.get_dag_node_output(prod_dag_path, node_name, timestamps[1])
+    current_df = dtfcore.get_dag_node_output(
+        prod_dag_path, node_name, timestamps[1]
+    )
     current_df = current_df.sort_index()
     # Load DAG output at `bar_timestamp = t-1`.
-    previous_df = oms.get_dag_node_output(prod_dag_path, node_name, timestamps[0])
+    previous_df = dtfcore.get_dag_node_output(
+        prod_dag_path, node_name, timestamps[0]
+    )
     previous_df = previous_df.sort_index()
     return previous_df, current_df
 

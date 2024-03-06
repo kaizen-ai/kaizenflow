@@ -21,7 +21,7 @@ import helpers.hs3 as hs3  # noqa: E402 module level import not at top of file  
 import helpers.hunit_test as hunitest  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
 
-@pytest.mark.requires_aws 
+@pytest.mark.requires_aws
 @pytest.mark.requires_ck_infra
 class S3Mock_TestCase(hunitest.TestCase):
     # Mocked AWS credentials.
@@ -42,7 +42,16 @@ class S3Mock_TestCase(hunitest.TestCase):
     #   Used in some tests that are obtaining data from 3rd party providers.
     binance_secret = None
 
-    def setUp(self) -> None:
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
         # Getting necessary secret before boto3 is mocked.
         if self.binance_secret is None:
             import helpers.hsecrets as hsecret
@@ -62,10 +71,8 @@ class S3Mock_TestCase(hunitest.TestCase):
         buckets = s3_test_client.list_buckets()["Buckets"]
         self.assertEqual(len(buckets), 1)
         self.assertEqual(buckets[0]["Name"], self.bucket_name)
-        #
-        super().setUp()
 
-    def tearDown(self) -> None:
+    def tear_down_test(self) -> None:
         # Empty the bucket otherwise deletion will fail.
         s3 = boto3.resource("s3")
         hdbg.dassert_eq(self.bucket_name, "mock_bucket")
@@ -77,5 +84,3 @@ class S3Mock_TestCase(hunitest.TestCase):
         # Stop moto.
         self.mock_aws_credentials_patch.stop()
         self.mock_s3.stop()
-        # Deallocate in reverse order to avoid race conditions.
-        super().tearDown()

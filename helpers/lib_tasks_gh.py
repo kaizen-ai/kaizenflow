@@ -8,15 +8,18 @@ import json
 import logging
 import os
 import re
-from typing import Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from invoke import task
 
 # We want to minimize the dependencies from non-standard Python packages since
 # this code needs to run with minimal dependencies and without Docker.
 import helpers.hdbg as hdbg
+import helpers.henv as henv
 import helpers.hgit as hgit
+import helpers.hio as hio
 import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 import helpers.htable as htable
 import helpers.lib_tasks_utils as hlitauti
@@ -123,7 +126,6 @@ def _get_workflow_table() -> htable.TableType:
     return table
 
 
-
 # TODO(Grisha): seems like GH changed the output format, we should update accordingly,
 # see CmTask #4672 "Slow tests fail (9835540316)" for details.
 @task
@@ -218,9 +220,9 @@ def gh_workflow_list(  # type: ignore
                 if i == (len(status_column) - 1):
                     # If all the runs in the table are in progress, i.e. there is no
                     # failed or succesful run, issue a warning and exit. E.g.,
-                    ################################################################################
+                    # #########################################################
                     # Superslow tests
-                    # ################################################################################
+                    # #########################################################
                     # completed   | status | name            | workflow        | branch | event             | id         | elapsed | age |
                     # ----------- | ------ | --------------- | --------------- | ------ | ----------------- | ---------- | ------- | --- |
                     # in_progress |        | Superslow tests | Superslow tests | master | workflow_dispatch | 5421740561 | 13m25s  | 13m |
@@ -236,7 +238,6 @@ def gh_workflow_list(  # type: ignore
                     branch_name,
                 )
                 # It's in progress.
-                pass
             else:
                 raise ValueError(f"Invalid status='{status}'")
 
@@ -354,13 +355,15 @@ def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # ty
     Print the title that corresponds to the given issue and repo_short_name.
     E.g., AmpTask1251_Update_GH_actions_for_amp.
 
-    Before running the invoke, one must check their login status on GH by running
-    `gh auth status`.
+    Before running the invoke, one must check their login status on GH
+    by running `gh auth status`.
 
     :param issue_id: id number of the issue to create the branch for
-    :param repo_short_name: short name of the repo to use for the branch name building.
-        "current" refers to the repo where the call is implemented
-    :param pbcopy: save the result into the system clipboard (only on macOS)
+    :param repo_short_name: short name of the repo to use for the branch
+        name building. "current" refers to the repo where the call is
+        implemented
+    :param pbcopy: save the result into the system clipboard (only on
+        macOS)
     """
     hlitauti.report_task(txt=hprint.to_str("issue_id repo_short_name"))
     # Login.
@@ -455,3 +458,260 @@ def gh_create_pr(  # type: ignore
 
 
 # TODO(gp): Add gh_open_pr to jump to the PR from this branch.
+
+# TODO(Grisha): probably the section deserves a separate lib.
+# #############################################################################
+# Buildmeister dashboard
+# #############################################################################
+
+
+@task
+def gh_publish_buildmeister_dashboard_to_s3(ctx, mark_as_latest=True):  # type: ignore
+    """
+    Run the buildmeister dashboard notebook and publish it to S3.
+
+    :param mark_as_latest: if True, mark the dashboard as `latest`, otherwise
+        just publish a timestamped copy
+    """
+    hlitauti.report_task()
+    # Login to GH CLI.
+    if hserver.is_inside_ci():
+        _LOG.info("Skipping login since running inside CI")
+    else:
+        gh_login(ctx)
+    # Run and publish the Buildmeister dashboard Jupyter notebook locally.
+    amp_abs_path = hgit.get_amp_abs_path()
+    run_notebook_script_path = os.path.join(
+        amp_abs_path, "dev_scripts/notebooks/run_notebook.py"
+    )
+    notebook_path = os.path.join(
+        amp_abs_path, "devops/notebooks/Master_buildmeister_dashboard.ipynb"
+    )
+    dst_local_dir = os.path.join(amp_abs_path, "tmp.notebooks")
+    cmd_run_txt = [
+        run_notebook_script_path,
+        f"--notebook {notebook_path}",
+        # The notebook does not require a config, so using a random dummy config.
+        # TODO(Grisha): consider creating a separate config builder for the notebook.
+        "--config_builder 'im_v2.common.data.qa.qa_check.build_dummy_data_reconciliation_config()'",
+        f"--dst_dir '{dst_local_dir}'",
+        "--publish",
+        "--num_threads serial",
+    ]
+    cmd_run_txt = " ".join(cmd_run_txt)
+    hsystem.system(cmd_run_txt)
+    # To avoid the dependency on `helpers.hs3`.
+    import helpers.hs3 as hs3
+
+    # Get HTML file name.
+    tmp_local_dir_name = os.path.join(amp_abs_path, "tmp.notebooks")
+    pattern = "Master_buildmeister_dashboard.0*.html"
+    only_files = True
+    use_relative_paths = False
+    local_html_files = hio.listdir(
+        tmp_local_dir_name,
+        pattern,
+        only_files=only_files,
+        use_relative_paths=use_relative_paths,
+    )
+    # Assert if more than 1 file is returned.
+    hdbg.dassert_eq(
+        len(local_html_files),
+        1,
+        f"Found more than one file in {tmp_local_dir_name} - {local_html_files}",
+    )
+    local_html_file = local_html_files[0]
+    s3_build_path = os.path.join(
+        henv.execute_repo_config_code("get_html_bucket_path()"),
+        "build/buildmeister_dashboard",
+    )
+    aws_profile = "ck"
+    if mark_as_latest:
+        # Copy the dashboard notebook to S3 as latest build.
+        s3_latest_build_path = os.path.join(
+            s3_build_path, "Master_buildmeister_dashboard.latest.html"
+        )
+        hs3.copy_file_to_s3(local_html_file, s3_latest_build_path, aws_profile)
+    # Copy the timestamped version of the dashboard notebook to S3.
+    # Need to add a trailing slash to the path to copy the file into the folder.
+    # https://docs.python.org/3/library/os.path.html#os.path.join
+    s3_build_path_folder = os.path.join(s3_build_path, "")
+    hs3.copy_file_to_s3(local_html_file, s3_build_path_folder, aws_profile)
+
+
+def gh_get_open_prs(repo: str) -> List[Dict[str, Any]]:
+    """
+    Return a list of open PRs.
+
+    :param repo: repo name in the format "organization/repo", e.g.,
+        "cryptokaizen/cmamp"
+    """
+    cmd = f"gh pr list --state 'open' --json id --repo {repo}"
+    pull_requests = _gh_run_and_get_json(cmd)
+    return pull_requests
+
+
+def gh_get_details_for_all_workflows(repo_list: List[str]) -> "pd.DataFrame":
+    """
+    Get status for all the workflows.
+
+    :param repo_list: list of repos to get the status for e.g.,
+        ["cryptokaizen/cmamp", "cryptokaizen/orange"]
+    :return: a table with the status of all the workflows, e.g.,
+    ```
+                    Repo            workflowName                                                url     status
+    0    cryptokaizen/cmamp       Allure fast tests  https://github.com/cryptokaizen/cmamp/actions/...  completed
+    1    cryptokaizen/cmamp       Allure slow tests  https://github.com/cryptokaizen/cmamp/actions/...  completed
+    ```
+    """
+    # TODO(Grisha): expose cols to the interface, i.e. a caller decides what to do.
+    gh_cols = ["workflowName", "url", "status", "conclusion"]
+    # Import locally in order not to introduce external dependencies to the lib.
+    import pandas as pd
+
+    repo_dfs = []
+    for repo_name in repo_list:
+        # Get all workflow names for the given repo.
+        workflow_names = gh_get_workflow_type_names(repo_name)
+        # For each workflow find the last run.
+        for workflow_name in workflow_names:
+            # Get at least a few runs to compute the status; this is useful when the latest run is in progress, in this case
+            # the run before the latest one tells the status for a workflow.
+            limit = 2
+            workflow_statuses = gh_get_workflow_details(
+                repo_name, workflow_name, gh_cols, limit
+            )
+            if len(workflow_statuses) < limit:
+                # TODO(Grisha): should we just insert empty rows as placeholders so that
+                # we know that such workflows exist?
+                _LOG.warning(
+                    "Not enough runs to compute status for '%s', repo '%s', skipping the workflow",
+                    workflow_name,
+                    repo_name,
+                )
+                continue
+            if workflow_statuses[0]["status"] == "in_progress":
+                workflow_status = [workflow_statuses[1]]
+            else:
+                workflow_status = [workflow_statuses[0]]
+            hdbg.dassert_eq(1, len(workflow_status))
+            # Access the info of latest workflow run.
+            workflow_status = pd.DataFrame(workflow_status)
+            workflow_status["repo_name"] = repo_name
+            repo_dfs.append(workflow_status)
+    # Collect per-repo tables into a single DataFrame.
+    df = pd.concat(repo_dfs, ignore_index=True)
+    # Rename the columns.
+    df = df.drop(columns=["status"])
+    df = df.rename(columns={"workflowName": "workflow_name"})
+    return df
+
+
+def gh_get_overall_build_status_for_repo(
+    repo_df: "pd.Dataframe",
+    *,
+    use_colors: bool = True,
+) -> str:
+    """
+    Return the overall status of the workflows for a repo.
+
+    :param repo_df: table with the status of the workflows for a repo
+    :param use_colors: if True, return the status with colors
+    :return: overall status of the build for a repo
+    """
+    if use_colors:
+        hdbg.dassert(
+            hsystem.is_running_in_ipynb(),
+            msg="The use_colors option is applicable only when running inside a Jupyter notebook",
+        )
+        # See: https://stackoverflow.com/questions/19746350/how-to-change-color-in-markdown-cells-ipython-jupyter-notebook
+        failed_status = '<span style="color:red">Failed</span>'
+        success_status = '<span style="color:green">Success</span>'
+    else:
+        failed_status = "Failed"
+        success_status = "Success"
+    if "failure" in repo_df["conclusion"].values:
+        # The build is failed if at least one workflow is failed.
+        overall_status = failed_status
+    else:
+        overall_status = success_status
+    return overall_status
+
+
+def gh_get_workflow_type_names(repo_name: str, *, sort: bool = True) -> List[str]:
+    """
+    Get a list of workflow names for a given repo.
+
+    :param repo_name: git repo name in the format "organization/repo",
+        e.g., "cryptokaizen/cmamp"
+    :param sort: if True, sort the list of workflow names
+    :return: list of workflow names, e.g., ["Fast tests", "Slow tests"]
+    """
+    hdbg.dassert_isinstance(repo_name, str)
+    _LOG.debug(hprint.to_str("repo_name"))
+    # Get the workflow list.
+    cmd = f"gh workflow list --json name --repo {repo_name}"
+    workflow_types = _gh_run_and_get_json(cmd)
+    workflow_names = [workflow["name"] for workflow in workflow_types]
+    if sort:
+        workflow_names = sorted(workflow_names)
+    return workflow_names
+
+
+def gh_get_workflow_details(
+    repo_name: str, workflow_name: str, fields: List[str], limit: int
+) -> List[Dict[str, Any]]:
+    """
+    Return the stats for a given workflow.
+
+    :param repo_name: git repo name in the format "organization/repo",
+        e.g., "cryptokaizen/cmamp"
+    :param workflow_name: workflow name, e.g., "Fast tests"
+    :param fields: list of fields to return, e.g., ["workflowName", "status"]
+    :param limit: number of runs to return
+    :return: workflow stats
+        Example output:
+        ```
+        [
+            {
+                "conclusion": "success",
+                "status": "completed",
+                "url": "https://github.com/cryptokaizen/cmamp/actions/runs/7757345960",
+                "workflowName": "Slow tests"
+            }
+        ]
+        ```
+    """
+    hdbg.dassert_isinstance(repo_name, str)
+    hdbg.dassert_isinstance(workflow_name, str)
+    hdbg.dassert_container_type(fields, List, str)
+    _LOG.debug(hprint.to_str("repo_name workflow_name fields"))
+    # Fetch the latest `limit` runs for status calculation.
+    cmd = f"""
+    gh run list \
+        --json {",".join(fields)} \
+        --repo {repo_name} \
+        --branch master \
+        --limit {limit} \
+        --workflow "{workflow_name}"
+    """
+    workflow_statuses = _gh_run_and_get_json(cmd)
+    # We still want to return the statuses even there are less runs than requested. E.g., there is a new workflow with a few runs or there is a workflow that was never run.
+    hdbg.dassert_eq(len(workflow_statuses), limit, only_warning=True)
+    _LOG.debug("workflow_statuses=\n%s", workflow_statuses)
+    return workflow_statuses
+
+
+def _gh_run_and_get_json(cmd: str) -> List[Dict[str, Any]]:
+    """
+    Run a `gh` command and remove colors when running inside a notebook.
+
+    :param cmd: `gh` command to run
+    :return: parsed JSON output of a command
+    """
+    _, _txt = hsystem.system_to_string(cmd)
+    if hsystem.is_running_in_ipynb():
+        # Remove the colors from the text.
+        _txt = re.sub(r"\x1b\[((1;)*[0-9]{2})*m", "", _txt)
+    _LOG.debug(hprint.to_str("_txt"))
+    return json.loads(_txt)

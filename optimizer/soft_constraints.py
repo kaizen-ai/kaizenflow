@@ -147,6 +147,19 @@ class SpreadCost(SoftConstraint):
         return expr
 
 
+class TransactionCost(SoftConstraint):
+    def __init__(self, volatility: pd.Series, gamma: float = 1.0) -> None:
+        hdbg.dassert_isinstance(volatility, pd.Series)
+        self._volatility = volatility
+        super().__init__(gamma)
+
+    def _estimate(self, target_weights, target_weight_diffs, gmv) -> opbase.EXPR:
+        _ = target_weights
+        _ = gmv
+        expr = self._volatility.values @ cvx.abs(target_weight_diffs).T
+        return expr
+
+
 # #############################################################################
 # Soft constraints.
 # #############################################################################

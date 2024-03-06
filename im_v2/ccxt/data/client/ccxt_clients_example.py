@@ -116,6 +116,7 @@ def get_CcxtParquetByAssetClient_example1(
 # #############################################################################
 
 
+# TODO(Grisha): consider deprecating.
 def get_CcxtHistoricalPqByTileClient_example1(
     data_version: str,
     universe_version: str,
@@ -136,10 +137,15 @@ def get_CcxtHistoricalPqByTileClient_example1(
     if data_version == "v2":
         root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
         version = ""
+        download_universe_version = ""
         tag = ""
     elif data_version == "v3":
+        # TODO(Grisha): expose the stage.
+        s3_bucket_path = ".".join([s3_bucket_path, "preprod"])
         root_dir = os.path.join(s3_bucket_path, "v3")
         version = "v1_0_0"
+        # TODO(Dan): expose download universe version since it is applicable for OHLCV futures only.
+        download_universe_version = "v7_3"
         tag = "downloaded_1min"
     else:
         raise ValueError(f"Invalid data version='{data_version}'.")
@@ -155,12 +161,14 @@ def get_CcxtHistoricalPqByTileClient_example1(
         aws_profile=aws_profile,
         resample_1min=resample_1min,
         version=version,
+        download_universe_version=download_universe_version,
         tag=tag,
     )
     return ccxt_parquet_client
 
 
 def get_CcxtHistoricalPqByTileClient_example2(
+    root_dir: str,
     resample_1min: bool,
 ) -> imvcdccccl.CcxtHistoricalPqByTileClient:
     """
@@ -174,13 +182,12 @@ def get_CcxtHistoricalPqByTileClient_example2(
     # TODO(gp): express this guy in terms of get_CcxtHistoricalPqByTileClient_example1
     #  but the problem is that this uses "unit_test" instead of "reorg".
     universe_version = "small"
-    aws_profile = "ck"
-    s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-    root_dir = os.path.join(s3_bucket_path, "unit_test", "historical.manual.pq")
     partition_mode = "by_year_month"
     dataset = "ohlcv"
     contract_type = "spot"
     data_snapshot = "20220705"
+    download_universe_version = "v7_3"
+    aws_profile = "ck"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
         universe_version,
         root_dir,
@@ -188,6 +195,7 @@ def get_CcxtHistoricalPqByTileClient_example2(
         dataset,
         contract_type,
         data_snapshot,
+        download_universe_version=download_universe_version,
         aws_profile=aws_profile,
         resample_1min=resample_1min,
     )
@@ -216,18 +224,20 @@ def get_CcxtSqlRealTimeImClient_example1(
     return client
 
 
+# TODO(Juraj, Grisha): Consider merging _example1 with _example2 or even using
+# CcxtSqlRealTimeImClient directly.
 def get_CcxtSqlRealTimeImClient_example2(
-    db_connection: hsql.DbConnection, resample_1min: bool
+    db_connection: hsql.DbConnection, resample_1min: bool, table_name: str
 ) -> imvcdccccl.CcxtSqlRealTimeImClient:
     """
     Get a real-time DB client for CCXT data for unit testing.
 
     :param db_connection: DB connection
     :param resample_1min: whether to resample data to 1 minute or not
+    :param table_name: name of the DB table to connect to
     :return: CCXT real-time client
     """
     universe_version = "infer_from_data"
-    table_name = "ccxt_ohlcv_spot"
     client = imvcdccccl.CcxtSqlRealTimeImClient(
         universe_version, db_connection, table_name, resample_1min=resample_1min
     )

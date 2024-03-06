@@ -13,10 +13,19 @@ import im.ib.data.extract.gateway.utils as imidegaut
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip(msg="See alphamatic/dev_tools#282")
+@pytest.mark.skip(reason="See alphamatic/dev_tools#282")
 class Test_utils1(iidegt.IbExtractionTest):
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test2()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test2(self) -> None:
+        self.set_up_test()
         self._truncate_df = pd.DataFrame(
             {
                 "date": [

@@ -64,7 +64,8 @@ class DAG(hobject.PrintableMixin):
               is useful for interactive notebooks and debugging
         :param get_wall_clock_time: the function that returns the wall clock
         """
-        _LOG.debug(hprint.to_str("name mode"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("name mode"))
         self._nx_dag = networ.DiGraph()
         # Store the DAG name.
         if name is not None:
@@ -82,14 +83,19 @@ class DAG(hobject.PrintableMixin):
             )
         hdbg.dassert_isinstance(get_wall_clock_time, Callable)
         self._get_wall_clock_time = get_wall_clock_time
-        # Set default debug/logging parameters.
+        # Set debug parameters so no debugging info is dumped by default.
         self._save_node_io = ""
+        self._save_node_df_out_stats = False
         self._profile_execution = False
         self._dst_dir: Optional[str] = None
-        self.force_free_nodes = False
         self.set_debug_mode(
-            self._save_node_io, self._profile_execution, self._dst_dir
+            self._save_node_io,
+            self._save_node_df_out_stats,
+            self._profile_execution,
+            self._dst_dir,
         )
+        # Disable freeing nodes.
+        self.force_free_nodes = False
 
     def __repr__(self) -> str:
         """
@@ -130,6 +136,7 @@ class DAG(hobject.PrintableMixin):
     def set_debug_mode(
         self,
         save_node_io: str,
+        save_node_df_out_stats: bool,
         profile_execution: bool,
         dst_dir: Optional[str],
     ) -> None:
@@ -143,10 +150,11 @@ class DAG(hobject.PrintableMixin):
             into a directory `dst_dir`. Disclaimer: the amount of data generate can
             be huge
             - ``: save no information
-            - `stats`: save high level information about the node interface
             - `df_as_csv`: save the full content of the node interface, using CSV for
               dataframes
             - `df_as_parquet`: like `df_as_csv` but using Parquet for dataframes
+        :param save_node_df_out_stats: save high level information about the output DataFrame, e.g.,
+            dtype info, shape info, memory usage, nans info
         :param profile_execution: if not `None`, store information about the
             execution of the nodes
         :param dst_dir: directory to save node interface and execution profiling info
@@ -155,24 +163,42 @@ class DAG(hobject.PrintableMixin):
             save_node_io,
             ("", "stats", "df_as_csv", "df_as_pq", "df_as_csv_and_pq"),
         )
-        _LOG.debug(hprint.to_str("save_node_io profile_execution dst_dir"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                hprint.to_str(
+                    "save_node_io save_node_df_out_stats profile_execution dst_dir"
+                )
+            )
         self._save_node_io = save_node_io
         # To process the profiling info in a human consumable form:
         # ```
         # ls -tr -1 tmp.dag_profile/*after* | xargs -n 1 -i sh -c 'echo; echo; echo "# {}"; cat {}'
         # ```
+        self._save_node_df_out_stats = save_node_df_out_stats
         self._profile_execution = profile_execution
         self._dst_dir = dst_dir
         if self._dst_dir:
             hio.create_dir(self._dst_dir, incremental=False)
-        if self._save_node_io or self._profile_execution:
+        if any(
+            [
+                self._save_node_io,
+                self._save_node_df_out_stats,
+                self._profile_execution,
+            ]
+        ):
             _LOG.warning(
                 "Setting up debug mode: %s",
-                hprint.to_str("save_node_io profile_execution dst_dir"),
+                hprint.to_str(
+                    "save_node_io save_node_df_out_stats profile_execution dst_dir"
+                ),
             )
             hdbg.dassert_is_not(
                 dst_dir, None, "Need to specify a directory to save the data"
             )
+
+    # /////////////////////////////////////////////////////////////////////////////
+    # Accessor.
+    # /////////////////////////////////////////////////////////////////////////////
 
     @property
     def nx_dag(self) -> networ.DiGraph:
@@ -188,6 +214,8 @@ class DAG(hobject.PrintableMixin):
     def mode(self) -> str:
         return self._mode
 
+    # /////////////////////////////////////////////////////////////////////////////
+    # Build DAG.
     # /////////////////////////////////////////////////////////////////////////////
 
     def add_node(self, node: dtfcornode.Node) -> None:
@@ -205,7 +233,7 @@ class DAG(hobject.PrintableMixin):
         # identifying nodes. Because our `Node`s are objects whose hashes can
         # change as operations are performed, we use the `Node.nid` as the
         # NetworkX node and the `Node` instance as a `node attribute`, which we
-        # identifying internally with the keyword `stage`.
+        # identify internally with the keyword `stage`.
         #
         # Note that this usage requires that `nid`'s be unique within a given
         # DAG.
@@ -272,14 +300,15 @@ class DAG(hobject.PrintableMixin):
 
         Raise if the requested edge is invalid or forms a cycle.
 
-        If this is called multiple times on the same nid's but with different
-        output/input pairs, the additional input/output pairs are simply added
-        to the existing edge (the previous ones are not overwritten).
+        If this is called multiple times on the same nid's but with
+        different output/input pairs, the additional input/output pairs
+        are simply added to the existing edge (the previous ones are not
+        overwritten).
 
-        :param parent: tuple of the form (nid, output) or nid if it has a single
-            output
-        :param child: tuple of the form (nid, input) or just nid if it has a single
-            input
+        :param parent: tuple of the form (nid, output) or nid if it has
+            a single output
+        :param child: tuple of the form (nid, input) or just nid if it
+            has a single input
         """
         # Automatically infer output name when the parent has only one output.
         # Ensure that parent node belongs to DAG (through `get_node` call).
@@ -348,6 +377,8 @@ class DAG(hobject.PrintableMixin):
         else:
             hdbg.dfatal("Invalid mode='%s'", self.mode)
 
+    # /////////////////////////////////////////////////////////////////////////////
+    # Query DAG.
     # /////////////////////////////////////////////////////////////////////////////
 
     def get_sources(self) -> List[dtfcornode.NodeId]:
@@ -449,6 +480,8 @@ class DAG(hobject.PrintableMixin):
             self.connect(sink_nid, source_nid)
 
     # /////////////////////////////////////////////////////////////////////////////
+    # Execute DAG.
+    # /////////////////////////////////////////////////////////////////////////////
 
     def run_dag(self, method: dtfcornode.Method) -> DagOutput:
         """
@@ -495,13 +528,16 @@ class DAG(hobject.PrintableMixin):
         if progress_bar:
             nids = tqdm(list(nids), desc="run_leq_node")
         for id_, pred_nid in enumerate(nids):
-            _LOG.debug("Executing node '%s'", pred_nid)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("Executing node '%s'", pred_nid)
             self._run_node(id_, pred_nid, method)
         # Retrieve the output the node.
         node = self.get_node(nid)
         node_output = node.get_outputs(method)
         return node_output
 
+    # /////////////////////////////////////////////////////////////////////////////
+    # Private methods.
     # /////////////////////////////////////////////////////////////////////////////
 
     def _to_json(self) -> str:
@@ -584,7 +620,8 @@ class DAG(hobject.PrintableMixin):
         )
         file_name = os.path.join(dst_dir, "node_io.prof", filename)
         hio.to_file(file_name, txt)
-        _LOG.debug("Saved log file '%s'", file_name)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Saved log file '%s'", file_name)
 
     def _write_node_interface_to_dst_dir(
         self,
@@ -624,17 +661,17 @@ class DAG(hobject.PrintableMixin):
             obj = pd.DataFrame(obj)
         if isinstance(obj, pd.DataFrame):
             df = obj
-            # Save high level description about the df.
-            # TODO(Grisha): should we save the df stats only if `self._profile_execution`
-            # is True?
-            txt = hpandas.df_to_str(
-                df,
-                print_dtypes=True,
-                print_shape_info=True,
-                print_memory_usage=True,
-                print_nan_info=True,
-            )
-            hio.to_file(file_name + ".txt", txt)
+            if self._save_node_df_out_stats:
+                # Save high level description about the df.
+                _LOG.debug("Saving node df out stats...")
+                txt = hpandas.df_to_str(
+                    df,
+                    print_dtypes=True,
+                    print_shape_info=True,
+                    print_memory_usage=True,
+                    print_nan_info=True,
+                )
+                hio.to_file(file_name + ".txt", txt)
             # Save content of the df.
             if self._save_node_io == "df_as_csv":
                 csv_file_name = f"{file_name}.csv.gz"
@@ -649,7 +686,8 @@ class DAG(hobject.PrintableMixin):
                 hparque.to_parquet(df, parquet_file_name)
             else:
                 raise ValueError(f"Invalid save_node_io='{self._save_node_io}'")
-            _LOG.debug("Saved log dir in '%s'", file_name)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("Saved log dir in '%s'", file_name)
         else:
             _LOG.warning(
                 "Can't save node input / output of type '%s': %s",
@@ -668,13 +706,14 @@ class DAG(hobject.PrintableMixin):
 
         This method DOES NOT run (or re-run) ancestors of `nid`.
         """
-        _LOG.debug(
-            "\n%s",
-            hprint.frame(
-                "Executing method '%s' for node topological_id=%s nid='%s' ..."
-                % (method, topological_id, nid)
-            ),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "\n%s",
+                hprint.frame(
+                    "Executing method '%s' for node topological_id=%s nid='%s' ..."
+                    % (method, topological_id, nid)
+                ),
+            )
         # Save system info before execution of the node.
         if self._profile_execution:
             file_tag = "before_execution"
@@ -687,7 +726,8 @@ class DAG(hobject.PrintableMixin):
         kwargs = {}
         for pred_nid in self._nx_dag.predecessors(nid):
             kvs = self._nx_dag.edges[[pred_nid, nid]]
-            _LOG.debug("pred_nid=%s, nid=%s", pred_nid, nid)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("pred_nid=%s, nid=%s", pred_nid, nid)
             pred_node = self.get_node(pred_nid)
             for input_name, value in kvs.items():
                 # Retrieve output from store.
@@ -701,7 +741,8 @@ class DAG(hobject.PrintableMixin):
                     # this check is not needed.
                     pred_node.free()
             # TODO(gp): Save info for inputs, if needed.
-        _LOG.debug("kwargs are %s", kwargs)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("kwargs are %s", kwargs)
         # Execute `node.method()`.
         with htimer.TimedScope(logging.DEBUG, "node_execution") as ts:
             node = self.get_node(nid)
@@ -800,9 +841,12 @@ def load_node_df_out_stats_from_dst_dir(
     :param bar_timestamp_as_str: bar timestamp to load the information for
     :return: text with a node's results df statistics
     """
-    _LOG.debug(
-        hprint.to_str("dst_dir topological_id nid method bar_timestamp_as_str")
-    )
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(
+            hprint.to_str(
+                "dst_dir topological_id nid method bar_timestamp_as_str"
+            )
+        )
     node_data_dir = os.path.join(dst_dir, "node_io.data")
     hdbg.dassert_dir_exists(node_data_dir)
     # Do include the `wall_clock_timestamp_as_str` to simplify the interface, rather
@@ -814,7 +858,8 @@ def load_node_df_out_stats_from_dst_dir(
     cmd = f"find '{node_data_dir}' -name {file_name_pattern}"
     # TODO(Grisha): check that there is exactly one file.
     _, file_name = hsystem.system_to_string(cmd)
-    _LOG.debug(hprint.to_str("file_name"))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(hprint.to_str("file_name"))
     file_path = os.path.join(node_data_dir, file_name)
     txt = hio.from_file(file_path)
     return txt

@@ -1,4 +1,6 @@
 """
+This is the library backing `run_process_forecasts.py`.
+
 Import as:
 
 import oms.order_processing.run_tiled_process_forecasts as ooprtprfo
@@ -19,7 +21,6 @@ import oms.portfolio.portfolio as oporport
 import oms.portfolio.portfolio_example as opopoexa
 
 _LOG = logging.getLogger(__name__)
-
 
 # TODO(Paul): @all Move to portfolio_example.py
 def get_portfolio(market_data: mdata.MarketData) -> oporport.Portfolio:
@@ -48,6 +49,7 @@ def get_portfolio(market_data: mdata.MarketData) -> oporport.Portfolio:
     return portfolio
 
 
+# TODO(gp): Move this to `run_process_forecasts.py`.
 async def run_tiled_process_forecasts(
     event_loop: asyncio.AbstractEventLoop,
     market_data_tile_dict: Dict[str, Any],

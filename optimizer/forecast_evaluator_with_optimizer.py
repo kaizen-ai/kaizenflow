@@ -1,10 +1,10 @@
 """
 Import as:
 
-import optimizer.forecast_evaluator_with_optimizer as optfewo
+import optimizer.forecast_evaluator_with_optimizer as ofevwiop
 """
 import logging
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 from tqdm.autonotebook import tqdm
@@ -82,6 +82,7 @@ class ForecastEvaluatorWithOptimizer:
         act.append(
             hpandas.df_to_str(
                 dfs["holdings_shares"].round(round_precision),
+                handle_signed_zeros=True,
                 num_rows=None,
                 precision=precision,
                 log_level=logging.INFO,
@@ -91,6 +92,7 @@ class ForecastEvaluatorWithOptimizer:
         act.append(
             hpandas.df_to_str(
                 dfs["holdings_notional"].round(round_precision),
+                handle_signed_zeros=True,
                 num_rows=None,
                 precision=precision,
                 log_level=logging.INFO,
@@ -100,6 +102,7 @@ class ForecastEvaluatorWithOptimizer:
         act.append(
             hpandas.df_to_str(
                 dfs["executed_trades_shares"].round(round_precision),
+                handle_signed_zeros=True,
                 num_rows=None,
                 precision=precision,
                 log_level=logging.INFO,
@@ -109,6 +112,7 @@ class ForecastEvaluatorWithOptimizer:
         act.append(
             hpandas.df_to_str(
                 dfs["executed_trades_notional"].round(round_precision),
+                handle_signed_zeros=True,
                 num_rows=None,
                 precision=precision,
                 log_level=logging.INFO,
@@ -118,6 +122,7 @@ class ForecastEvaluatorWithOptimizer:
         act.append(
             hpandas.df_to_str(
                 dfs["pnl"].round(round_precision),
+                handle_signed_zeros=True,
                 num_rows=None,
                 precision=precision,
                 log_level=logging.INFO,
@@ -127,6 +132,7 @@ class ForecastEvaluatorWithOptimizer:
         act.append(
             hpandas.df_to_str(
                 dfs["stats"].round(round_precision),
+                handle_signed_zeros=True,
                 num_rows=None,
                 precision=precision,
                 log_level=logging.INFO,
@@ -148,7 +154,7 @@ class ForecastEvaluatorWithOptimizer:
         burn_in_days: int = 0,
         compute_extended_stats: bool = False,
         asset_id_to_share_decimals: Optional[Dict[int, int]] = None,
-        **kwargs,
+        **kwargs: Dict[str, Any],
     ) -> Dict[str, pd.DataFrame]:
         _LOG.debug("df=\n%s", hpandas.df_to_str(df, print_shape_info=True))
         self._validate_df(df)
@@ -205,13 +211,15 @@ class ForecastEvaluatorWithOptimizer:
             next_timestamp_is_eod = False
             if (
                 next_timestamp is not None
-                and eod_timestamps.loc[next_timestamp.date()][0] == next_timestamp
+                and eod_timestamps.loc[next_timestamp.date()].iloc[0]
+                == next_timestamp
             ):
                 next_timestamp_is_eod = True
             next_timestamp_is_bod = False
             if (
                 next_timestamp is not None
-                and bod_timestamps.loc[next_timestamp.date()][0] == next_timestamp
+                and bod_timestamps.loc[next_timestamp.date()].iloc[0]
+                == next_timestamp
             ):
                 next_timestamp_is_bod = True
             dag_slice = self._extract_and_normalize_slice(dag_data)
@@ -294,12 +302,13 @@ class ForecastEvaluatorWithOptimizer:
     def annotate_forecasts(
         self,
         df: pd.DataFrame,
-        **kwargs,
+        **kwargs: Dict[str, Any],
     ) -> Tuple[pd.DataFrame, pd.DataFrame, Dict[str, pd.DataFrame]]:
         """
         Compute target positions, PnL, and portfolio stats.
 
-        :param df: multiindexed dataframe with predictions, price, volatility
+        :param df: multiindexed dataframe with predictions, price,
+            volatility
         """
         derived_dfs = self.compute_portfolio(df, **kwargs)
         dfs = {

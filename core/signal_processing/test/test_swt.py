@@ -478,6 +478,36 @@ class Test_get_swt_3(hunitest.TestCase):
         return swt
 
 
+class Test_compute_lag_weights(hunitest.TestCase):
+    def test1(self) -> None:
+        weights = [-1, -1, 1]
+        actual = csiprswt.compute_lag_weights(weights)
+        actual = hpandas.df_to_str(actual, num_rows=None)
+        expected = r"""
+     normalized_weight
+lag
+0                  1.0
+1                  0.0
+2                  0.0
+3                  0.0
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test2(self) -> None:
+        weights = [-1 / np.sqrt(2), -1 / 2, 1 / 2]
+        actual = csiprswt.compute_lag_weights(weights, norm=False)
+        actual = hpandas.df_to_str(actual, num_rows=None)
+        expected = r"""
+     normalized_weight
+lag
+0                  1.0
+1                  0.0
+2                  0.0
+3                  0.0
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
 # #############################################################################
 # Low/high pass filters
 # #############################################################################

@@ -1,0 +1,4 @@
+---
+deployment_env: 'prod'          # can be 'preprod' or 'prod'
+rds_endpoint: "${RDS_ENDPOINT}" # This should be overridden with the endpoint output from Terraform
+db_name_prefix: "im_data_db"    # Will resolve to something like prod.im_data_db or preprod.im_data_db

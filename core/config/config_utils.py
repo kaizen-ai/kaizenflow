@@ -16,6 +16,7 @@ import pandas as pd
 import core.config.config_ as cconconf
 import helpers.hdbg as hdbg
 import helpers.hdict as hdict
+import helpers.hpickle as hpickle
 import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
@@ -104,34 +105,59 @@ def sort_config_string(txt: str) -> str:
     return chunks
 
 
-def apply_config_overrides(
+def load_config_from_pickle(config_path: str) -> cconconf.Config:
+    """
+    Load config from pickle file.
+    """
+    hdbg.dassert_path_exists(config_path)
+    _LOG.debug("Reading config from %s", config_path)
+    config_pkl = hpickle.from_pickle(config_path)
+    config = cconconf.Config.from_dict(config_pkl)
+    return config
+
+
+def apply_config(
     config: cconconf.Config,
-    args: argparse.Namespace,
+    set_config_values: Optional[List[str]],
+    *,
+    clobber_mode: str = "assert_on_write_after_use",
 ) -> cconconf.Config:
     """
-    Update the values in a config using the command line options.
+    Update the values in a config with the passed values.
 
     The change is done inplace.
 
     :param config: config to update
-    :param args: cmd line parameters
+    :param set_config_values: string representation of 2 tuples separated
+        by comma. The first tuple has 1 or more string keys separated by commas.
+        The second tuple contains a string representation of a value to replace.
+        Pattern: '("key1, key2, ..."),("value_to_replace")'
+        E.g.,
+        `("target_gmv"),(int(10000))`
+        `("portfolio", "style"),("longitudinal")`
+        `("portfolio", "val"),(int(3))`
+    :param ignore_clobber_mode: allow to overwrite used values in the config if
+        set to True, overwise do not
     :return: updated version of a config
     """
-    args_dict = vars(args)
-    _LOG.debug("args_dict=%s", args_dict)
-    if args_dict["set_config_value"] is not None:
+    _LOG.debug("set_config_values=%s", set_config_values)
+    if set_config_values is not None:
         # Allow to overwrite config values for the function execution.
         initial_config_update_mode = config.update_mode
         config.update_mode = "overwrite"
-        for arg_as_str in args_dict["set_config_value"]:
-            _LOG.debug("arg_as_str=%s", arg_as_str)
+        initial_clobber_mode = config.clobber_mode
+        if clobber_mode != initial_clobber_mode:
+            _LOG.debug("changing config.clobber_mode from %s to %s", initial_clobber_mode, clobber_mode)
+            config.clobber_mode = clobber_mode
+        for config_val in set_config_values:
+            _LOG.debug("config_val=%s", config_val)
             # E.g., `("foo","bar"),(bool("True"))``.
             re_pattern = r"^\(([^()]+)\),\((.*)\)$"
-            match = re.match(re_pattern, arg_as_str)
+            match = re.match(re_pattern, config_val)
             hdbg.dassert_ne(
                 match,
                 None,
-                msg=f"No match is found for config_val={arg_as_str}.",
+                msg=f"No match is found for config_val={config_val}.",
             )
             n_groups_matches = len(match.groups())
             hdbg.dassert_eq(
@@ -169,28 +195,44 @@ def apply_config_overrides(
                 )
             # TODO(Grisha): use `config.update()` instead of `config[key] = value`.
             config[key] = new_value
+        if initial_clobber_mode != clobber_mode:
+            _LOG.debug("changing config.clobber_mode from %s to %s", clobber_mode, initial_clobber_mode)
+            config.clobber_mode = initial_clobber_mode
         # Set back the initial config update mode.
         config.update_mode = initial_config_update_mode
     return config
 
 
+def apply_config_overrides_from_command_line(
+    config: cconconf.Config,
+    args: argparse.Namespace,
+) -> cconconf.Config:
+    """
+    Update the values in a config using the command line options.
+
+    The change is done inplace.
+
+    :param config: config to update
+    :param args: cmd line parameters, see `apply_config()` for
+        "set_config_value" arg format
+    :return: updated version of a config
+    """
+    args_dict = vars(args)
+    _LOG.debug("args_dict=%s", args_dict)
+    if "set_config_value" in args_dict:
+        set_config_value = args_dict["set_config_value"]
+        _LOG.info("set_config_value=%s", set_config_value)
+        config = apply_config(config, set_config_value)
+    return config
+
+
 def add_config_override_args(
-    parser: argparse.ArgumentParser
+    parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     parser.add_argument(
         "--set_config_value",
         action="append",
-        # TODO(Dan): Add unit tests for provided examples.
-        help="""
-        A string representation of 2 tuples separated by comma.
-        The first tuple has 1 or more string keys separated by commas.
-        The second tuple contains a string representation of a value to replace.
-        Pattern: '("key1, key2, ..."),("value_to_replace")'
-        E.g.,
-        `("target_gmv"),(int(10000))`
-        `("portfolio", "style"),("longitudinal")`
-        `("portfolio", "val"),(int(3))`
-        """,
+        help="See `apply_config()` for detailed description.",
         type=str,
     )
     return parser

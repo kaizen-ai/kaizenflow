@@ -11,19 +11,24 @@ import helpers.hdbg as hdbg
 import helpers.hs3 as hs3
 
 
+# TODO(gp): not super clear what it does.
 def get_data_snapshot(
     root_dir: str,
     data_snapshot: str,
     aws_profile: Optional[str],
 ) -> str:
     """
-    Get data snapshot:
+    Resolve and check data snapshot based on `root_dir`, `aws_profile` and
+    `data_snapshot`.
+
+    :param root_dir: the base root for a 
+    :param data_snapshot: `latest`, date, or empty
 
     - Historical data: the latest available historical snapshot
 
         E.g.:
         ```
-        root_dir = s3://cryptokaizen-data/reorg/historical.manual.pq
+        root_dir = "s3://cryptokaizen-data/reorg/historical.manual.pq"
         data_snapshot = "latest"
         im_client = ImClient(root_dir, ..., data_snapshot, ...)
         ```
@@ -32,7 +37,7 @@ def get_data_snapshot(
 
          E.g.:
          ```
-         root_dir = s3://cryptokaizen-data/reorg/historical.manual.pq
+         root_dir = "s3://cryptokaizen-data/reorg/historical.manual.pq"
          data_snapshot = "20220508"
          im_client = ImClient(root_dir, ..., data_snapshot, ...)
          ```
@@ -41,10 +46,13 @@ def get_data_snapshot(
 
          E.g.:
          ```
-         root_dir = s3://cryptokaizen-data/reorg/daily_staged.airflow.pq
+         root_dir = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq"
          data_snapshot = ""
          im_client = ImClient(root_dir, ..., data_snapshot, ...)
          ```
+    :param aws_profile: needed AWS profile
+
+    :return: return the data snapshot
     """
     # TODO(Toma): commented out since CmTask2704, should think about
     # whether we really need this check here.
@@ -52,6 +60,8 @@ def get_data_snapshot(
     if data_snapshot == "latest":
         # Find only dirs that are numeric representation of a date, e.g.,
         # "20230524".
+        # Note that we can't use a more compact regex like `\d{8}` in
+        # `hs3.listdir`.
         pattern = "[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]"
         only_files = False
         use_relatives_paths = True
@@ -74,11 +84,12 @@ def get_data_snapshot(
             )
         ]
         data_snapshot = max(dirs)
-    dassert_is_valid_data_snapshot(data_snapshot)
+    # Check.
+    _dassert_is_valid_data_snapshot(data_snapshot)
     return data_snapshot
 
 
-def dassert_is_valid_data_snapshot(data_snapshot: str) -> None:
+def _dassert_is_valid_data_snapshot(data_snapshot: str) -> None:
     """
     Check if data snapshot is either an 8-digit or an empty string.
     """
@@ -104,7 +115,7 @@ def _dassert_is_valid_root_dir(aws_profile: Optional[str], root_dir: str) -> Non
         )
         # Root dir containing fixed data snapshots for unit testing.
         unit_test_historical_manual_root_dir = (
-            "s3://cryptokaizen-data/unit_test/historical.manual.pq"
+            "s3://cryptokaizen-unit-test/outcomes/data/historical.manual.pq"
         )
         hdbg.dassert_in(
             root_dir,

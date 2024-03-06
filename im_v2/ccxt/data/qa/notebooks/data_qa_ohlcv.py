@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -152,7 +152,7 @@ dataset_validator = imvcdqdava.DataFrameDatasetValidator(qa_check_list)
 
 # %%
 try:
-    dataset_validator.run_all_checks([data], _LOG)
+    dataset_validator.run_all_checks([data])
 except Exception as e:
     # Pass information about success or failure of the QA
     #  back to the task that invoked it.

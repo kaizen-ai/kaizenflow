@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -151,6 +151,22 @@ asset_ids
 full_symbols = list(universe_mapping.keys())
 full_symbols
 
+# %% [markdown]
+# ## v7.4
+
 # %%
+universe_version = "v7.4"
+universe_mapping = load_universe(universe_version)
+universe_mapping
+
+# %%
+# Universe as asset ids.
+asset_ids = list(universe_mapping.values())
+asset_ids
+
+# %%
+# Universe as Full symbols.
+full_symbols = list(universe_mapping.keys())
+full_symbols
 
 # %%

@@ -16,7 +16,7 @@ import re
 import sys
 import traceback
 import unittest
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import pytest
 
@@ -151,49 +151,6 @@ def pytest_warning(txt: str, prefix: str = "") -> None:
 # #############################################################################
 # Generation and conversion functions.
 # #############################################################################
-
-
-# TODO(gp): -> Deprecated: use hpandas.df_to_str
-def convert_df_to_string(
-    df: Union["pd.DataFrame", "pd.Series"],
-    n_rows: Optional[int] = None,
-    title: Optional[str] = None,
-    index: bool = False,
-    decimals: int = 6,
-) -> str:
-    """
-    Convert DataFrame or Series to string for verifying test results.
-
-    :param df: DataFrame to be verified
-    :param n_rows: number of rows in expected output. If `None` all rows are shown.
-    :param title: title for test output
-    :param decimals: number of decimal points
-    :return: string representation of input
-    """
-    if isinstance(df, pd.Series):
-        df = df.to_frame()
-    hdbg.dassert_isinstance(df, pd.DataFrame)
-    output = []
-    # Add title in the beginning if provided.
-    if title is not None:
-        output.append(hprint.frame(title))
-    # Provide context for full representation of data.
-    with pd.option_context(
-        "display.max_colwidth",
-        int(1e6),
-        "display.max_columns",
-        None,
-        "display.max_rows",
-        None,
-        "display.precision",
-        decimals,
-    ):
-        n_rows = n_rows or len(df)
-        # Add N top rows.
-        output.append(df.head(n_rows).to_string(index=index))
-    # Convert into string.
-    output_str = "\n".join(output)
-    return output_str
 
 
 # TODO(gp): Is this dataflow Info? If so it should go somewhere else.
@@ -417,9 +374,9 @@ def purify_from_environment(txt: str) -> str:
     Replace environment variables with placeholders.
 
     The performed transformations are:
-    1) Replace the Git path with `$GIT_ROOT`
-    2) Replace the path of current working dir with `$PWD`
-    3) Replace the current user name with `$USER_NAME`
+    1. Replace the Git path with `$GIT_ROOT`
+    2. Replace the path of current working dir with `$PWD`
+    3. Replace the current user name with `$USER_NAME`
     """
     # 1) Remove references to Git modules starting from the innermost one.
     # Make sure that the path is not followed by a word character.
@@ -1047,6 +1004,10 @@ class TestCase(unittest.TestCase):
         """
         Execute before any test method.
         """
+        # Set up the base class in case it does something, current
+        # implementation does nothing, see
+        # https://docs.python.org/3/library/unittest.html#unittest.TestCase.setUp.
+        super().setUp()
         # Print banner to signal the start of a new test.
         func_name = f"{self.__class__.__name__}.{self._testMethodName}"
         _LOG.info("\n%s", hprint.frame(func_name))
@@ -1112,6 +1073,10 @@ class TestCase(unittest.TestCase):
             else:
                 _LOG.debug("Deleting %s", self._scratch_dir)
                 hio.delete_dir(self._scratch_dir)
+        # Tear down the base class in case it does something, current
+        # implementation does nothing, see
+        # https://docs.python.org/3/library/unittest.html#unittest.TestCase.tearDown.
+        super().tearDown()
 
     def set_base_dir_name(self, base_dir_name: str) -> None:
         """
@@ -1246,32 +1211,33 @@ class TestCase(unittest.TestCase):
         # Assemble everything in a single path.
         import helpers.hs3 as hs3
 
-        aws_profile = "am"
-        s3_bucket = hs3.get_s3_bucket_path(aws_profile)
+        aws_profile = "ck"
+        s3_bucket = hs3.get_s3_bucket_path_unit_test(aws_profile)
         scratch_dir = f"{s3_bucket}/tmp/cache.unit_test/{dir_name}.{test_path}"
         return scratch_dir
 
     def get_s3_input_dir(
         self,
-        aws_profile: str,
         *,
         use_only_test_class: bool = False,
         test_class_name: Optional[str] = None,
         test_method_name: Optional[str] = None,
+        use_absolute_path: bool = False,
     ) -> str:
+        import helpers.henv as henv
+
+        s3_bucket = henv.execute_repo_config_code("get_unit_test_bucket_path()")
+        hdbg.dassert_isinstance(s3_bucket, str)
         # Make the path unique for the test.
-        use_absolute_path = False
-        test_path = self._get_current_path(
+        test_path = self.get_input_dir(
             use_only_test_class,
             test_class_name,
             test_method_name,
             use_absolute_path,
         )
+        hdbg.dassert_isinstance(test_path, str)
         # Assemble everything in a single path.
-        import helpers.hs3 as hs3
-
-        s3_bucket = hs3.get_s3_bucket_path(aws_profile)
-        input_dir = os.path.join(s3_bucket, "unit_test", test_path, "input")
+        input_dir = os.path.join(s3_bucket, test_path)
         return input_dir
 
     # ///////////////////////////////////////////////////////////////////////
@@ -1294,9 +1260,9 @@ class TestCase(unittest.TestCase):
         Return if `actual` and `expected` are different and report the
         difference.
 
-        Implement a better version of `self.assertEqual()` that reports mismatching
-        strings with sdiff and save them to files for further analysis with
-        vimdiff.
+        Implement a better version of `self.assertEqual()` that reports
+        mismatching strings with sdiff and save them to files for
+        further analysis with vimdiff.
 
         The interface is similar to `check_string()`.
         """
@@ -1670,6 +1636,10 @@ class TestCase(unittest.TestCase):
             - If `None`, skip the check
         :param expected_signature: expected outcome series as string
         """
+        # Import `hpandas` dynamically to exclude `pandas` from the thin client
+        # requirements. See CmTask6613 for details.
+        import helpers.hpandas as hpandas
+
         hdbg.dassert_isinstance(actual_srs, pd.Series)
         if expected_length:
             # Verify that output length is correct.
@@ -1681,7 +1651,7 @@ class TestCase(unittest.TestCase):
                 str(sorted(expected_unique_values)),
             )
         # Build signature.
-        actual_signature = convert_df_to_string(actual_srs, index=True)
+        actual_signature = hpandas.df_to_str(actual_srs, num_rows=None)
         _LOG.debug("\n%s", actual_signature)
         # Check signature.
         if expected_signature == "__CHECK_STRING__":

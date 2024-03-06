@@ -8,7 +8,7 @@ class TestFilePathGenerator(hunitest.TestCase):
     def test1(self) -> None:
         args = dict(
             symbol="TEST",
-            aws_profile="am",
+            aws_profile="ck",
             asset_class=imcodatyp.AssetClass.Futures,
             contract_type=imcodatyp.ContractType.Continuous,
             frequency=imcodatyp.Frequency.Daily,
@@ -20,7 +20,7 @@ class TestFilePathGenerator(hunitest.TestCase):
     def test2(self) -> None:
         args = dict(
             symbol="TEST",
-            aws_profile="am",
+            aws_profile="ck",
             asset_class=imcodatyp.AssetClass.Futures,
             contract_type=imcodatyp.ContractType.Continuous,
             frequency=imcodatyp.Frequency.Daily,
@@ -32,7 +32,7 @@ class TestFilePathGenerator(hunitest.TestCase):
     def test3(self) -> None:
         args = dict(
             symbol="TEST",
-            aws_profile="am",
+            aws_profile="ck",
             asset_class=imcodatyp.AssetClass.Futures,
             contract_type=imcodatyp.ContractType.Expiry,
             frequency=imcodatyp.Frequency.Daily,
@@ -44,7 +44,7 @@ class TestFilePathGenerator(hunitest.TestCase):
     def test4(self) -> None:
         args = dict(
             symbol="TEST",
-            aws_profile="am",
+            aws_profile="ck",
             asset_class=imcodatyp.AssetClass.Futures,
             contract_type=imcodatyp.ContractType.Expiry,
             frequency=imcodatyp.Frequency.Minutely,
@@ -60,7 +60,7 @@ class TestFilePathGenerator(hunitest.TestCase):
         """
         args = dict(
             symbol="TEST",
-            aws_profile="am",
+            aws_profile="ck",
             asset_class=imcodatyp.AssetClass.Stocks,
             frequency=imcodatyp.Frequency.Minutely,
             ext=imcodatyp.Extension.Parquet,
@@ -78,7 +78,7 @@ class TestFilePathGenerator(hunitest.TestCase):
         """
         args = dict(
             symbol="TEST",
-            aws_profile="am",
+            aws_profile="ck",
             asset_class=imcodatyp.AssetClass.Stocks,
             unadjusted=True,
             frequency=imcodatyp.Frequency.Minutely,
@@ -93,7 +93,7 @@ class TestFilePathGenerator(hunitest.TestCase):
         """
         args = dict(
             symbol="TEST",
-            aws_profile="am",
+            aws_profile="ck",
             asset_class=imcodatyp.AssetClass.ETFs,
             unadjusted=True,
             frequency=imcodatyp.Frequency.Minutely,
@@ -105,7 +105,7 @@ class TestFilePathGenerator(hunitest.TestCase):
     def test8(self) -> None:
         args = dict(
             symbol="TEST",
-            aws_profile="am",
+            aws_profile="ck",
             asset_class=imcodatyp.AssetClass.Futures,
             contract_type=imcodatyp.ContractType.Continuous,
             frequency=imcodatyp.Frequency.Tick,
@@ -117,7 +117,7 @@ class TestFilePathGenerator(hunitest.TestCase):
     def test9(self) -> None:
         args = dict(
             symbol="TEST",
-            aws_profile="am",
+            aws_profile="ck",
             asset_class=imcodatyp.AssetClass.Forex,
             frequency=imcodatyp.Frequency.Minutely,
             ext=imcodatyp.Extension.CSV,
@@ -128,7 +128,7 @@ class TestFilePathGenerator(hunitest.TestCase):
     def test10(self) -> None:
         args = dict(
             symbol="TEST",
-            aws_profile="am",
+            aws_profile="ck",
             asset_class=imcodatyp.AssetClass.Forex,
             frequency=imcodatyp.Frequency.Daily,
             ext=imcodatyp.Extension.CSV,
@@ -139,7 +139,7 @@ class TestFilePathGenerator(hunitest.TestCase):
     def test11(self) -> None:
         args = dict(
             symbol="TEST",
-            aws_profile="am",
+            aws_profile="ck",
             asset_class=imcodatyp.AssetClass.Stocks,
             unadjusted=False,
             frequency=imcodatyp.Frequency.Minutely,
@@ -151,7 +151,7 @@ class TestFilePathGenerator(hunitest.TestCase):
     def test12(self) -> None:
         args = dict(
             symbol="TEST",
-            aws_profile="am",
+            aws_profile="ck",
             asset_class=imcodatyp.AssetClass.ETFs,
             unadjusted=False,
             frequency=imcodatyp.Frequency.Minutely,
@@ -163,7 +163,7 @@ class TestFilePathGenerator(hunitest.TestCase):
     def test13(self) -> None:
         args = dict(
             symbol="TEST",
-            aws_profile="am",
+            aws_profile="ck",
             asset_class=imcodatyp.AssetClass.SP500,
             unadjusted=False,
             frequency=imcodatyp.Frequency.Tick,
@@ -175,7 +175,7 @@ class TestFilePathGenerator(hunitest.TestCase):
     def test14(self) -> None:
         args = dict(
             symbol="TEST",
-            aws_profile="am",
+            aws_profile="ck",
             asset_class=imcodatyp.AssetClass.SP500,
             unadjusted=True,
             frequency=imcodatyp.Frequency.Tick,
@@ -187,6 +187,6 @@ class TestFilePathGenerator(hunitest.TestCase):
     def _assert_file_path(self, args: dict, expected_file_path: str) -> None:
         generator = imkdlkfpge.KibotFilePathGenerator()
         actual = generator.generate_file_path(**args)
-        s3_prefix = imkidacon.get_s3_prefix("am")
+        s3_prefix = imkidacon.get_s3_prefix("ck")
         expected = f"{s3_prefix}/{expected_file_path}"
         self.assertEqual(actual, expected)

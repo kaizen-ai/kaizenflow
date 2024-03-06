@@ -20,8 +20,7 @@ Usage sample:
      --src_dir 's3://<ck-data>/historical/binance/' \
      --dst_dir 's3://<ck-data>/historical/binance_parquet/' \
      --datetime_col 'timestamp' \
-     --asset_col 'currency_pair' \
-     --aws_profile 'ck'
+     --asset_col 'currency_pair'
 """
 
 import argparse
@@ -39,17 +38,16 @@ import im_v2.common.data.transform.transform_utils as imvcdttrut
 _LOG = logging.getLogger(__name__)
 
 
-def _run(args: argparse.Namespace) -> None:
-    if args.aws_profile is not None:
-        hs3.get_s3fs(args.aws_profile)
-    else:
-        hparser.create_incremental_dir(args.dst_dir, args)
+def _run(args: argparse.Namespace, *, aws_profile: hs3.AwsProfile) -> None:
+    # Check that the `aws_profile` is valid.
+    if aws_profile:
+        _ = hs3.get_s3fs(aws_profile)
     files = hs3.listdir(
         args.src_dir,
         "*.csv*",
         only_files=True,
         use_relative_paths=True,
-        aws_profile=args.aws_profile,
+        aws_profile=aws_profile,
     )
     _LOG.info("Files found at %s:\n%s", args.src_dir, "\n".join(files))
     for file in files:
@@ -66,9 +64,10 @@ def _run(args: argparse.Namespace) -> None:
             df,
             [args.asset_col] + partition_cols,
             args.dst_dir,
-            aws_profile=args.aws_profile,
+            aws_profile=aws_profile,
+            partition_filename=None,
         )
-    hparque.list_and_merge_pq_files(args.dst_dir, aws_profile="ck")
+    hparque.list_and_merge_pq_files(args.dst_dir, aws_profile=aws_profile)
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -122,7 +121,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    _run(args)
+    _run(args, aws_profile=args.aws_profile)
 
 
 if __name__ == "__main__":

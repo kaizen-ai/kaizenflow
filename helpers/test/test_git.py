@@ -182,7 +182,8 @@ class Test_git_repo_name1(hunitest.TestCase):
             return
         mode = "short_name"
         act = hgit.get_all_repo_names(mode)
-        exp = ["amp", "cmamp", "dev_tools"]
+        # Difference between `cmamp` and `sorrentum`.
+        exp = ["amp", "dev_tools", "sorr"]
         self.assert_equal(str(act), str(exp))
 
     # Outside CK infra, the following call hangs, so we skip it.
@@ -195,7 +196,8 @@ class Test_git_repo_name1(hunitest.TestCase):
             return
         mode = "full_name"
         act = hgit.get_all_repo_names(mode)
-        exp = ["alphamatic/amp", "alphamatic/dev_tools", "cryptokaizen/cmamp"]
+        # Difference between `cmamp` and `sorrentum`.
+        exp = ["alphamatic/amp", "sorrentum/dev_tools", "sorrentum/sorrentum"]
         self.assert_equal(str(act), str(exp))
 
     def test_get_repo_name_rountrip1(self) -> None:
@@ -281,11 +283,17 @@ class Test_git_path1(hunitest.TestCase):
     reason="Run only in amp as super-module",
 )
 class Test_git_modified_files1(hunitest.TestCase):
-    def setUp(self) -> None:
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+
+    def set_up_test(self) -> None:
         """
         All these tests need a reference to Git master branch.
         """
-        super().setUp()
         hgit.fetch_origin_master_if_needed()
 
     def test_get_modified_files1(self) -> None:

@@ -50,6 +50,7 @@
       - [Usage](#usage)
   * [How to build a local image](#how-to-build-a-local-image)
   * [Testing the local image](#testing-the-local-image)
+  * [Pass the local image to another user for testing](#pass-the-local-image-to-another-user-for-testing)
   * [Tag `local` image as `dev`](#tag-local-image-as-dev)
   * [Push image](#push-image)
   * [End-to-end flow for `dev` image](#end-to-end-flow-for-dev-image)
@@ -771,6 +772,42 @@ flow.
   > i docker push 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.1.0
   ```
 
+## Pass the local image to another user for testing
+
+- Push the local image built by a user to ECR registry. For e.g., if the image
+  is built by user `gsaggese`
+  ```
+  > i docker_login
+  > i docker push 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.1.0
+  ```
+
+- From user session who wants to test: pull the local image from ECR
+  ```
+  > i docker pull 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.1.0
+  ```
+
+- Tag the local image from user `gsaggese`, who built the image, as
+  `local-currentuser-1.1.0` for user `currentuser` who wants to test it
+  ```
+  > i docker tag 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.1.0 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-currentuser-1.1.0
+  ```
+
+- Run any kind of test using the local image. For e.g., to run fast tests
+  ```
+  > i run_fast_tests --stage local --version 1.1.0
+  ```
+
+- Check something inside the container
+  ```
+  > i docker_bash --stage local --version 1.1.0
+  docker > pip freeze | grep pandas
+  ```
+- After testing and making sure the regressions are green, make sure to tag the
+  image built by the initial user as `dev` and not the one tagged for the
+  `current-user`
+- This will make sure image is tagged for both `arm` and `x86` architecture on
+  the remote registries
+
 ## Tag `local` image as `dev`
 
 - Docker tag is just a way of referring to an image. A good analogy is how Git
@@ -1005,8 +1042,14 @@ flow.
   - Specify what was changed
   - Pick the release version accordingly
     - We use [semantic versioning](https://semver.org/) convention
-      - For example, adding a package to the image would mean bumping up version
-        1.0.0 to 1.0.1
+      - For example for version `1.2.3`:
+        - 1 is major, 2 is minor, 3 is patch
+      - We keep `dev` and `prod` image version major and minor versions in sync
+        `prod` gets patches -> i.e. we go from `prod-1.1.0` to `prod-1.1.1` upon
+        a bug fix documented in the `changelog.txt`.
+        - In this manner, it cannot happen we have `dev-1.1.0` and `prod-1.2.0`
+          at any point in time, but `dev-1.1.0` and `prod-1.1.2` are perfectly
+          fine.
 - Test the change using the local release flow
   `i docker_build_local_image -v ${version}`
   - If a new package is added run `docker_build_local_image` with

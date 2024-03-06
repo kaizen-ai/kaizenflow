@@ -14,6 +14,21 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
+def _get_test_data(
+    start_ts_str: str,
+    periods: int,
+) -> pd.DataFrame:
+    """
+    Build test DataFrame with minutely timestamp index.
+    """
+    freq = "1T"
+    timestamps = pd.date_range(start_ts_str, periods=periods, freq=freq)
+    data = list(range(periods))
+    df = pd.DataFrame(data, index=timestamps)
+    df.columns = ["price"]
+    return df
+
+
 # #############################################################################
 # Resampling.
 # #############################################################################
@@ -31,9 +46,9 @@ class Test_resample_time_bars1(hunitest.TestCase):
         df_out = self._resample_helper(df, rule)
         # Check output.
         act = self._compute_actual_output(df, df_out)
-        exp = """
-        df
-                             close      vol     ret_0
+        exp = r"""
+        # df=
+                            close      vol     ret_0
         datetime
         2016-01-04 09:30:00  94.70  1867590       NaN
         2016-01-04 09:31:00  94.98   349119  0.002957
@@ -45,7 +60,7 @@ class Test_resample_time_bars1(hunitest.TestCase):
         2016-01-04 09:37:00  95.48   293074  0.002836
         2016-01-04 09:38:00  95.95   581584  0.004922
         2016-01-04 09:39:00  96.07   554872  0.001251
-        df_out
+        # df_out=
                                 ret_0  close      vol
         datetime
         2016-01-04 09:30:00       NaN  94.70  1867590
@@ -71,9 +86,9 @@ class Test_resample_time_bars1(hunitest.TestCase):
         df_out = self._resample_helper(df, rule)
         # Check output.
         act = self._compute_actual_output(df, df_out)
-        exp = """
-        df
-                             close      vol     ret_0
+        exp = r"""
+        # df=
+                            close      vol     ret_0
         datetime
         2016-01-04 09:30:00  94.70  1867590       NaN
         2016-01-04 09:31:00  94.98   349119  0.002957
@@ -85,7 +100,7 @@ class Test_resample_time_bars1(hunitest.TestCase):
         2016-01-04 09:37:00  95.48   293074  0.002836
         2016-01-04 09:38:00  95.95   581584  0.004922
         2016-01-04 09:39:00  96.07   554872  0.001251
-        df_out
+        # df_out=
                                 ret_0    close      vol
         datetime
         2016-01-04 09:30:00       NaN  94.7000  1867590
@@ -193,10 +208,8 @@ datetime,close,vol,ret_0
     @staticmethod
     def _compute_actual_output(df: pd.DataFrame, df_out: pd.DataFrame) -> str:
         act = []
-        act.append(hunitest.convert_df_to_string(df, index=True, title="df"))
-        act.append(
-            hunitest.convert_df_to_string(df_out, index=True, title="df_out")
-        )
+        act.append(hpandas.df_to_str(df, num_rows=None, tag="df"))
+        act.append(hpandas.df_to_str(df_out, num_rows=None, tag="df_out"))
         act = "\n".join(act)
         return act
 
@@ -224,8 +237,8 @@ class Test_resample_ohlcv_bars1(hunitest.TestCase):
         # Compute output.
         act = self._compute_actual_output(df_out)
         exp = r"""
-        df_out
-                              open   high    low  close      vol
+        # df_out=
+                            open   high    low  close      vol
         datetime
         2016-01-04 09:30:00  95.23  95.23  94.66  94.70  1867590
         2016-01-04 09:35:00  94.72  95.43  94.67  94.97  1776479
@@ -269,8 +282,8 @@ class Test_resample_ohlcv_bars1(hunitest.TestCase):
         # Compute output.
         act = self._compute_actual_output(df_out)
         exp = r"""
-        df_out
-                              open   high    low  close      vol
+        # df_out=
+                            open   high    low  close      vol
         datetime
         2016-01-04 10:00:00  95.23  96.23  94.66  95.61  8414217
         """
@@ -344,9 +357,7 @@ datetime,open,high,low,close,vol
     @staticmethod
     def _compute_actual_output(df_out: pd.DataFrame) -> str:
         act = []
-        act.append(
-            hunitest.convert_df_to_string(df_out, index=True, title="df_out")
-        )
+        act.append(hpandas.df_to_str(df_out, num_rows=None, tag="df_out"))
         act = "\n".join(act)
         return act
 
@@ -362,9 +373,9 @@ class Test_compute_twap_vwap1(hunitest.TestCase):
         df_out = self._helper(df, rule)
         # Compute output.
         act = self._compute_actual_output(df_out)
-        exp = """
-        df_out
-                              vwap   twap
+        exp = r"""
+        # df_out=
+                            vwap   twap
         datetime
         2016-01-04 09:30:00  94.70  94.70
         2016-01-04 09:31:00  94.98  94.98
@@ -404,8 +415,8 @@ class Test_compute_twap_vwap1(hunitest.TestCase):
         # Compute output.
         act = self._compute_actual_output(df_out)
         exp = r"""
-        df_out
-                                  vwap     twap
+        # df_out=
+                                vwap     twap
         datetime
         2016-01-04 09:30:00  94.700000  94.7000
         2016-01-04 09:35:00  95.051943  95.0400
@@ -459,9 +470,9 @@ class Test_compute_twap_vwap1(hunitest.TestCase):
         df_out = self._helper(df, rule)
         # Compute output.
         act = self._compute_actual_output(df_out)
-        exp = """
-        df_out
-                              vwap   twap
+        exp = r"""
+        # df_out=
+                            vwap   twap
         datetime
         2016-01-04 09:30:00    NaN    NaN
         2016-01-04 09:31:00    NaN  94.98
@@ -497,8 +508,8 @@ class Test_compute_twap_vwap1(hunitest.TestCase):
         # Compute output.
         act = self._compute_actual_output(df_out)
         exp = r"""
-        df_out
-                                  vwap       twap
+        # df_out=
+                                vwap       twap
         datetime
         2016-01-04 09:30:00        NaN        NaN
         2016-01-04 09:35:00  95.069539  95.040000
@@ -519,8 +530,8 @@ class Test_compute_twap_vwap1(hunitest.TestCase):
         # Compute output.
         act = self._compute_actual_output(df_out)
         exp = r"""
-        df_out
-                                  vwap       twap
+        # df_out=
+                                vwap       twap
         datetime
         2016-01-04 09:31:00  94.744098  94.840000
         2016-01-04 09:36:00  95.091617  95.086000
@@ -649,9 +660,7 @@ datetime,close,vol
     @staticmethod
     def _compute_actual_output(df_out: pd.DataFrame) -> str:
         act = []
-        act.append(
-            hunitest.convert_df_to_string(df_out, index=True, title="df_out")
-        )
+        act.append(hpandas.df_to_str(df_out, num_rows=None, tag="df_out"))
         act = "\n".join(act)
         return act
 
@@ -748,7 +757,6 @@ class TestResamplePortfolioBarMetrics1(hunitest.TestCase):
 
 
 class Test_resample_srs(hunitest.TestCase):
-
     # TODO(gp): Replace `check_string()` with `assert_equal()` to tests that benefit
     #  from seeing / freezing the results, using a command like:
     # ```
@@ -980,12 +988,10 @@ class Test_resample_srs(hunitest.TestCase):
         """
         Create string output for tests results.
         """
-        input_string = hunitest.convert_df_to_string(input_data, index=True)
-        output_default_string = hunitest.convert_df_to_string(
-            output_default, index=True
-        )
-        output_closed_left_string = hunitest.convert_df_to_string(
-            output_closed_left, index=True
+        input_string = hpandas.df_to_str(input_data, num_rows=None)
+        output_default_string = hpandas.df_to_str(output_default, num_rows=None)
+        output_closed_left_string = hpandas.df_to_str(
+            output_closed_left, num_rows=None
         )
         txt = (
             f"Input:\n{input_string}\n\n"
@@ -996,7 +1002,6 @@ class Test_resample_srs(hunitest.TestCase):
 
 
 class Test_resample_df(hunitest.TestCase):
-
     # Converting days to other units.
     def test_day_to_year1(self) -> None:
         """
@@ -1219,12 +1224,10 @@ class Test_resample_df(hunitest.TestCase):
         """
         Create string output for tests results.
         """
-        input_string = hunitest.convert_df_to_string(input_data, index=True)
-        output_default_string = hunitest.convert_df_to_string(
-            output_default, index=True
-        )
-        output_closed_left_string = hunitest.convert_df_to_string(
-            output_closed_left, index=True
+        input_string = hpandas.df_to_str(input_data, num_rows=None)
+        output_default_string = hpandas.df_to_str(output_default, num_rows=None)
+        output_closed_left_string = hpandas.df_to_str(
+            output_closed_left, num_rows=None
         )
         txt = (
             f"Input:\n{input_string}\n\n"
@@ -1232,3 +1235,55 @@ class Test_resample_df(hunitest.TestCase):
             f"Output with closed='left':\n{output_closed_left_string}\n"
         )
         return txt
+
+
+class Test_build_repeating_pattern_srs(hunitest.TestCase):
+    def test1(self) -> None:
+        # Set inputs.
+        start_ts_str = "2023-06-11 09:44:00+00"
+        periods = 10
+        data = _get_test_data(start_ts_str, periods)
+        weights = [1, 2, 3, 4, 5]
+        # Test.
+        srs = cfinresa.build_repeating_pattern_srs(data, weights)
+        actual = hpandas.df_to_str(srs, num_rows=None)
+        expected = r"""
+                                0
+        2023-06-11 09:44:00+00:00  4
+        2023-06-11 09:45:00+00:00  5
+        2023-06-11 09:46:00+00:00  1
+        2023-06-11 09:47:00+00:00  2
+        2023-06-11 09:48:00+00:00  3
+        2023-06-11 09:49:00+00:00  4
+        2023-06-11 09:50:00+00:00  5
+        2023-06-11 09:51:00+00:00  1
+        2023-06-11 09:52:00+00:00  2
+        2023-06-11 09:53:00+00:00  3
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+class Test_resample_with_weights(hunitest.TestCase):
+    def test1(self) -> None:
+        # Set inputs.
+        start_ts_str = "2023-06-11 09:44:00+00"
+        periods = 20
+        data = _get_test_data(start_ts_str, periods)
+        #
+        rule = "5T"
+        col = "price"
+        weights = [1, 2, 3, 4, 5]
+        # Test.
+        resampled_data = cfinresa.resample_with_weights(
+            data, rule, col, weights
+        )
+        actual = hpandas.df_to_str(resampled_data, num_rows=None)
+        expected = r"""
+                                            price
+        2023-06-11 09:45:00+00:00        0.555556
+        2023-06-11 09:50:00+00:00        4.666667
+        2023-06-11 09:55:00+00:00        9.666667
+        2023-06-11 10:00:00+00:00       14.666667
+        2023-06-11 10:05:00+00:00       18.333333
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)

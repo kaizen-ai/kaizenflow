@@ -33,14 +33,17 @@ import dev_scripts.lib_tasks_data_qa as dsltdaqa
 
 import logging
 import os
-import re
 from typing import Any, Dict
 
+import pandas as pd
 from invoke import task
 
 import core.config as cconfig
+import data_schema.dataset_schema_utils as dsdascut
+import dev_scripts.lib_tasks_run_model_experiment_notebooks as dsltrmeno
 import helpers.hdbg as hdbg
 import helpers.hio as hio
+import helpers.hs3 as hs3
 import oms.lib_tasks_reconcile as olitarec
 
 _LOG = logging.getLogger(__name__)
@@ -88,14 +91,15 @@ def _create_dir_for_data_qa(
     #  i.e. 2022-11-01T00:02:00+00:00 -> 20221101_000200
     #  the context isn't lost since the raw args are present in the saved notebook
     #  and also chances of using anything else as UTC are low.
-    start_timestamp = start_timestamp.replace("+00:00", "")
-    end_timestamp = end_timestamp.replace("+00:00", "")
-    start_timestamp = re.sub(r"[^A-Za-z0-9 ]+", "", start_timestamp)
-    end_timestamp = re.sub(r"[^A-Za-z0-9 ]+", "", end_timestamp)
-    start_timestamp = start_timestamp.replace("T", "_")
-    end_timestamp = end_timestamp.replace("T", "_")
+    start_timestamp = pd.Timestamp(start_timestamp).strftime("%Y%m%d_%H%M%S")
+    end_timestamp = pd.Timestamp(end_timestamp).strftime("%Y%m%d_%H%M%S")
     timestamp_dst_dir = f"{start_timestamp}.{end_timestamp}"
-    target_dir = os.path.join(base_dst_dir, timestamp_dst_dir, db_table)
+    # Using only the date component of the timestamp to designate a directory for
+    # storing results from a specific date. 20221101_000200 -> 20221101.
+    date_dst_dir = start_timestamp[:8]
+    target_dir = os.path.join(
+        base_dst_dir, date_dst_dir, timestamp_dst_dir, db_table
+    )
     # Create a dir for QA results.
     hio.create_dir(target_dir, incremental=True, abort_if_exists=abort_if_exists)
     # Sanity check the created dirs.
@@ -105,16 +109,23 @@ def _create_dir_for_data_qa(
 
 
 def _run_data_qa_notebook(
-    config_dict: Dict[str, Any], base_dst_dir: str, notebook_path: str
+    config_dict: Dict[str, Any],
+    base_dst_dir: str,
+    notebook_path: str,
+    s3_publish_dst_dir: str,
 ) -> None:
     """
     Run data QA notebook and store it in a specified location.
 
-    The function encapsulates common behavior, concrete QA flows parametrize
-    it for particular use cases.
+    The function encapsulates common behavior, concrete QA flows
+    parametrize it for particular use cases.
 
+    :param config_dict: dictionary of configs
     :param base_dst_dir: top most directory to store data QA into
-    :param notebook_path: relative path to the notebook to execute, assuming amp is a submodule.
+    :param notebook_path: relative path to the notebook to execute,
+        assuming amp is a submodule.
+    :param s3_publish_dst_dir: s3 path to save and publish ipynb.html
+        file
     """
     # TODO(Juraj): this does not work in the cmamp prod container when ran
     #  via AWS ECS.
@@ -168,6 +179,24 @@ def _run_data_qa_notebook(
     _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
     cmd = f"cp -vr {results_dir} {target_dir}"
     olitarec._system(cmd)
+    if s3_publish_dst_dir is not None:
+        hdbg.dassert(hs3.is_s3_path(s3_publish_dst_dir))
+        # Move the ipynb.html file to s3.
+        notebook_name = os.path.basename(notebook_path)
+        notebook_name = os.path.splitext(notebook_name)[0]
+        # Using year, month and date component of the timestamp to designate a
+        # dir path for storing results from a specific date.
+        # E.g. s3://data_qa" -> s3://data_qa/2024/01/31"
+        timestamp = pd.Timestamp(config_dict["start_timestamp"])
+        year = timestamp.strftime("%Y")
+        month = timestamp.strftime("%m")
+        day = timestamp.strftime("%d")
+        target_publish_dst_dir = os.path.join(
+            s3_publish_dst_dir, year, month, day
+        )
+        dsltrmeno.find_and_move_html_file_to_s3(
+            notebook_name, results_dir, target_publish_dst_dir
+        )
     # This is a workaround to get outcome of the data reconciliation from the notebook.
     reconc_outcome = hio.from_file("/app/ck_data_reconciliation_outcome.txt")
     if reconc_outcome.strip() == "SUCCESS":
@@ -192,6 +221,9 @@ def run_single_dataset_qa_notebook(
     stage,
     aws_profile=None,
     bid_ask_accuracy=None,
+    bid_ask_depth=1,
+    bid_ask_frequency_sec="60S",
+    s3_publish_dst_dir="s3://cryptokaizen-html/notebooks/data_qa",
 ):
     """
     Run single data QA notebook and store it in a specified location.
@@ -200,6 +232,7 @@ def run_single_dataset_qa_notebook(
     reconcilation params description.
 
     :param base_dst_dir: dir to store data reconciliation
+    :param s3_publish_dst_dir: s3 path to save and publish ipynb.html file
     """
     config_dict = {
         "stage": stage,
@@ -208,10 +241,23 @@ def run_single_dataset_qa_notebook(
         "aws_profile": aws_profile,
         "dataset_signature": dataset_signature,
         "bid_ask_accuracy": bid_ask_accuracy,
+        "bid_ask_depth": bid_ask_depth,
+        "bid_ask_frequency_sec": bid_ask_frequency_sec,
     }
     _ = ctx
-    notebook_path = "amp/im_v2/ccxt/data/qa/notebooks/data_qa_ohlcv.ipynb"
-    _run_data_qa_notebook(config_dict, base_dst_dir, notebook_path)
+    dataset_schema = dsdascut.get_dataset_schema()
+    dataset_signature_as_dict = dsdascut.parse_dataset_signature_to_args(
+        dataset_signature, dataset_schema
+    )
+    if dataset_signature_as_dict["data_type"] == "ohlcv":
+        notebook_path = "amp/im_v2/ccxt/data/qa/notebooks/data_qa_ohlcv.ipynb"
+    elif dataset_signature_as_dict["data_type"] == "bid_ask":
+        notebook_path = "amp/im_v2/ccxt/data/qa/notebooks/data_qa_bid_ask.ipynb"
+    else:
+        raise NotImplementedError
+    _run_data_qa_notebook(
+        config_dict, base_dst_dir, notebook_path, s3_publish_dst_dir
+    )
 
 
 # TODO(Juraj): temporary solution, the refactoring will be completed to use
@@ -227,6 +273,7 @@ def run_cross_dataset_qa_notebook(
     stage,
     aws_profile=None,
     bid_ask_accuracy=None,
+    s3_publish_dst_dir="s3://cryptokaizen-html/notebooks/data_qa",
 ):  # type: ignore
     """
     Run cross dataset reconciliation notebook and store it in a specified
@@ -236,6 +283,7 @@ def run_cross_dataset_qa_notebook(
     reconcilation params description.
 
     :param base_dst_dir: dir to store data reconciliation
+    :param s3_publish_dst_dir: s3 path to save and publish ipynb.html file
     """
     config_dict = {
         "stage": stage,
@@ -252,4 +300,6 @@ def run_cross_dataset_qa_notebook(
     notebook_path = (
         f"amp/im_v2/common/data/qa/notebooks/cross_dataset_qa_{data_type}.ipynb"
     )
-    _run_data_qa_notebook(config_dict, base_dst_dir, notebook_path)
+    _run_data_qa_notebook(
+        config_dict, base_dst_dir, notebook_path, s3_publish_dst_dir
+    )

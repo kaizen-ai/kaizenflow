@@ -31,7 +31,7 @@ _LOG = logging.getLogger(__name__)
 
 class ResultBundle(abc.ABC):
     """
-    Abstract class for storing DAG results.
+    Abstract class for storing `DAG` execution results.
     """
 
     def __init__(
@@ -76,6 +76,10 @@ class ResultBundle(abc.ABC):
         self._info = info
         self._payload = payload
 
+    # ///////////////////////////////////////////////////////////////////////////
+    # Print.
+    # ///////////////////////////////////////////////////////////////////////////
+
     def __str__(self) -> str:
         """
         Return a string representation.
@@ -90,7 +94,11 @@ class ResultBundle(abc.ABC):
         """
         return str(self)
 
-    # TODO(gp): Use classmethod.
+    # ///////////////////////////////////////////////////////////////////////////
+    # Virtual constructors.
+    # ///////////////////////////////////////////////////////////////////////////
+
+    # TODO(gp): Use `@classmethod`.
     @staticmethod
     def from_dict(result_bundle_dict: collections.OrderedDict) -> "ResultBundle":
         """
@@ -103,7 +111,7 @@ class ResultBundle(abc.ABC):
         )
         return result_bundle
 
-    # TODO(gp): Use classmethod.
+    # TODO(gp): Use `@classmethod`.
     @staticmethod
     def from_pickle(
         file_name: str,
@@ -113,6 +121,7 @@ class ResultBundle(abc.ABC):
         """
         Deserialize the current `ResultBundle`.
 
+        :param file_name: name of the file to load
         :param use_pq: load multiple files storing the data
         :param columns: columns of `result_df` to load
         """
@@ -176,7 +185,9 @@ class ResultBundle(abc.ABC):
             obj = hpickle.from_pickle(file_name, log_level=logging.DEBUG)
         return obj  # type: ignore
 
+    # //////////////////////////////////////////////////////////////////////////
     # Accessors.
+    # //////////////////////////////////////////////////////////////////////////
 
     @property
     def config(self) -> cconfig.Config:
@@ -225,7 +236,9 @@ class ResultBundle(abc.ABC):
     def get_columns_for_tag(self, tag: Any) -> Optional[List[Any]]:
         return ResultBundle._search_mapping(tag, self.tag_to_columns)
 
+    # //////////////////////////////////////////////////////////////////////////
     # Setters.
+    # //////////////////////////////////////////////////////////////////////////
 
     @result_df.setter  # type: ignore
     def result_df(self, value: pd.DataFrame) -> None:
@@ -235,7 +248,9 @@ class ResultBundle(abc.ABC):
     def payload(self, value: Optional[cconfig.Config]) -> None:
         self._payload = value
 
-    # Methods to serialize to / from strings.
+    # //////////////////////////////////////////////////////////////////////////
+    # Serialize to / from strings.
+    # //////////////////////////////////////////////////////////////////////////
 
     # TODO(gp): Not sure if all the serialization would work also for derived classes,
     #  e.g., `PredictionResultBundle`.
@@ -295,12 +310,15 @@ class ResultBundle(abc.ABC):
         dict_ = cast(collections.OrderedDict, dict_)
         return dict_
 
-    # Methods to serialize to / from disk.
+    # //////////////////////////////////////////////////////////////////////////
+    # Serialize to / from disk.
+    # //////////////////////////////////////////////////////////////////////////
 
     def to_pickle(self, file_name: str, use_pq: bool = True) -> List[str]:
         """
         Serialize the current `ResultBundle`.
 
+        :param file_name: file to save
         :param use_pq: save the `result_df` dataframe using Parquet.
             If False, everything is saved as a single pickle object.
         :return: list with names of the files saved
@@ -502,6 +520,7 @@ def _trim_df_trading_hours(df: pd.DataFrame) -> pd.DataFrame:
     df_time = df.index.time
     # TODO(gp): We should extend this to handle the overnight return.
     mask = (df_time >= datetime.time(9, 30)) & (df_time <= datetime.time(16, 0))
-    _LOG.debug(mask.sum() / len(mask))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(mask.sum() / len(mask))
     hdbg.dassert_eq(len(df[~mask].dropna()), 0)
     return df[mask]

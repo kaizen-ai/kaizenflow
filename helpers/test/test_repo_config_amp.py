@@ -18,8 +18,8 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestRepoConfig_Amp(hunitest.TestCase):
-
-    expected_repo_name = "//cmamp"
+    # Difference between `cmamp` and `sorrentum`.
+    expected_repo_name = "//sorr"
 
     def test_repo_name1(self) -> None:
         """
@@ -249,6 +249,7 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
             get_docker_shared_group=''
             get_docker_user=''
             get_host_name='github.com'
+            get_html_dir_to_url_mapping='{'s3://cryptokaizen-html': 'http://172.30.2.44'}'
             get_invalid_words='[]'
             get_shared_data_dirs='None'
             has_dind_support='True'

@@ -622,8 +622,8 @@ class TestSeriesToSeriesTransformer2(hunitest.TestCase):
         )
         node = dtfconotra.SeriesToSeriesTransformer("sklearn", **config.to_dict())
         df_out = node.fit(data)["df_out"]
-        df_str = hunitest.convert_df_to_string(
-            df_out.round(3), index=True, decimals=3
+        df_str = hpandas.df_to_str(
+            df_out.round(3), num_rows=None, precision=3
         )
         self.check_string(df_str)
 
@@ -847,8 +847,8 @@ class TestTwapVwapComputer(hunitest.TestCase):
         )
         node = dtfconotra.TwapVwapComputer("twapvwap", **config.to_dict())
         df_out = node.fit(data)["df_out"]
-        df_str = hunitest.convert_df_to_string(
-            df_out.round(3), index=True, decimals=3
+        df_str = hpandas.df_to_str(
+            df_out.round(3), num_rows=None, precision=3
         )
         self.check_string(df_str)
 
@@ -897,8 +897,8 @@ class TestTwapVwapComputer(hunitest.TestCase):
         return df
 
 
-@pytest.mark.skip("See CmTask5898.")
 class TestMultiindexTwapVwapComputer(hunitest.TestCase):
+    @pytest.mark.skip("See CmTask5898.")
     def test1(self) -> None:
         """
         Test building 5-min TWAP/VWAP bars from 1-min close/volume bars.
@@ -916,8 +916,8 @@ class TestMultiindexTwapVwapComputer(hunitest.TestCase):
             "twapvwap", **config.to_dict()
         )
         df_out = node.fit(data)["df_out"]
-        df_str = hunitest.convert_df_to_string(
-            df_out.round(3), index=True, decimals=3
+        df_str = hpandas.df_to_str(
+            df_out.round(3), num_rows=None, precision=3
         )
         self.check_string(df_str)
 

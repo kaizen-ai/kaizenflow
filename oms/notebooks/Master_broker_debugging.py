@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.15.0
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -31,14 +31,14 @@
 
 import logging
 
-import pandas as pd
-
 import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
+import im_v2.common.universe as ivcu
 import oms.broker.ccxt.ccxt_aggregation_functions as obccagfu
-import oms.broker.ccxt.ccxt_logs_reader as obcclore
+import oms.broker.ccxt.ccxt_execution_quality as obccexqu
+import oms.broker.ccxt.ccxt_logger as obcccclo
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -52,30 +52,43 @@ hprint.config_notebook()
 # %%
 config = cconfig.get_config_from_env()
 if config:
-    # Get config from env when running the notebook via the `run_notebook.py` script, e.g.,
+    # Get config from env when running the notebook via the `run_notebook.py` script, e.g.
     # in the system reconciliation flow.
     _LOG.info("Using config from env vars")
 else:
-    system_log_dir = "/shared_data/ecs/test/twap_experiment/20230814_1"
+    system_log_dir = (
+        "/shared_data/ecs/test/tokyo_broker_only/2024/01/09/20240109_2/"
+    )
     config_dict = {"system_log_dir": system_log_dir}
     config = cconfig.Config.from_dict(config_dict)
 print(config)
 
 # %% run_control={"marked": false}
 log_dir = config["system_log_dir"]
-ccxt_log_reader = obcclore.CcxtLogsReader(log_dir)
+ccxt_log_reader = obcccclo.CcxtLogger(log_dir)
 #
-data = ccxt_log_reader.load_all_data()
+data = ccxt_log_reader.load_all_data(
+    convert_to_dataframe=True, abort_on_missing_data=False
+)
 ccxt_order_response_df = data["ccxt_order_responses"]
 ccxt_trades_df = data["ccxt_trades"]
 oms_child_order_df = data["oms_child_orders"]
 oms_parent_order_df = data["oms_parent_orders"]
 
 # %%
-ccxt_order_response_df.head(3)
+# Print the Broker config.
+if "broker_config" in data:
+    print(hprint.to_pretty_str(data["broker_config"]))
+else:
+    _LOG.warning("broker_config file not present in %s", log_dir)
 
 # %%
-oms_parent_order_df.iloc[0]["extra_params"]
+# Print the used Config, if any.
+experiment_config = obcccclo.load_config_for_execution_analysis(log_dir)
+print(experiment_config)
+
+# %%
+ccxt_order_response_df.head(3)
 
 # %% [markdown]
 # ## Child order responses
@@ -87,28 +100,10 @@ ccxt_order_response_df.info()
 # ## Child orders
 
 # %%
-# If the value of total child orders is lower than expected,
 oms_child_order_df.info()
 
 # %%
 oms_child_order_df.head(3)
-
-# %% [markdown]
-# ### Verify that OMS child orders have maximum of one CCXT order ID
-
-# %% [markdown]
-# Originally the CCXT IDs are loaded as `List[str]`. Each child order should correspond to 1 CCXT ID (`-1` in case the order was not submitted).
-#
-# Exceptions to this rule indicate a serious error in accounting.
-
-# %%
-all(oms_child_order_df["ccxt_id"].apply(lambda x: len(x)) == 1)
-
-# %%
-# Unpack single CCXT IDs from lists.
-oms_child_order_df["ccxt_id_as_single_str"] = oms_child_order_df["ccxt_id"].apply(
-    lambda x: str(x[0])
-)
 
 # %% [markdown]
 # ### Extract the OMS parent order ID
@@ -129,11 +124,11 @@ oms_child_order_df["parent_order_id"].value_counts().value_counts()
 # %%
 # Select the OMS child orders with no CCXT ID and check their error messages.
 not_submitted_oms_child_order_df = oms_child_order_df.loc[
-    oms_child_order_df["ccxt_id_as_single_str"] == "-1"
+    oms_child_order_df["ccxt_id"] == -1
 ]
 print(
-    "Number of not submitted OMS child orders=%s out of total orders=%s"
-    % (not_submitted_oms_child_order_df.shape[0], oms_child_order_df.shape[0])
+    f"Number of not submitted OMS child orders={not_submitted_oms_child_order_df.shape[0]} \
+    out of total orders={oms_child_order_df.shape[0]}"
 )
 
 # %%
@@ -141,7 +136,36 @@ print(
 not_submitted_oms_child_order_df["error_msg"] = not_submitted_oms_child_order_df[
     "extra_params"
 ].apply(lambda x: x["error_msg"])
-not_submitted_oms_child_order_df["error_msg"].value_counts()
+
+
+# %%
+# Display error messages grouped by symbol.
+# Get the universe to map asset_id's.
+universe = ivcu.get_vendor_universe("CCXT", "trade", as_full_symbol=True)
+asset_id_to_symbol_mapping = ivcu.build_numerical_to_string_id_mapping(universe)
+not_submitted_oms_child_order_df[
+    "full_symbol"
+] = not_submitted_oms_child_order_df["asset_id"].map(asset_id_to_symbol_mapping)
+# Get value counts of error messages.
+error_msg = not_submitted_oms_child_order_df.groupby("full_symbol")[
+    "error_msg"
+].value_counts()
+error_msg
+
+# %% [markdown]
+# ### Check the buy and sell orders with max notional
+
+# %% run_control={"marked": true}
+oms_child_order_notionals = (
+    oms_child_order_df["diff_num_shares"] * oms_child_order_df["limit_price"]
+)
+max_sell_notional = oms_child_order_notionals[oms_child_order_notionals < 0].min()
+max_buy_notional = oms_child_order_notionals[oms_child_order_notionals > 0].max()
+_LOG.info(
+    "Max sell notional: %s\nMax buy notional: %s",
+    max_sell_notional,
+    max_buy_notional,
+)
 
 # %% [markdown]
 # ## Parent orders
@@ -150,6 +174,7 @@ not_submitted_oms_child_order_df["error_msg"].value_counts()
 oms_parent_order_df.head(3)
 
 # %%
+# Extract `ccxt_id` of child orders into a separate column.
 oms_parent_order_df["child_order_ccxt_ids"] = oms_parent_order_df[
     "extra_params"
 ].apply(lambda x: x["ccxt_id"])
@@ -186,7 +211,7 @@ all(ccxt_trades_df["order"].isin(ccxt_order_response_df["order"]))
 # This verifies that there is a consistency between a CCXT order, OMS order and
 # a CCXT trade. If a trade has no associated OMS child order `ccxt_id`, it means
 # that an unexpected trade was executed, for example, by a different actor on the same account.
-all(ccxt_trades_df["order"].isin(oms_child_order_df["ccxt_id_as_single_str"]))
+all(ccxt_trades_df["order"].isin(oms_child_order_df["ccxt_id"]))
 
 # %% [markdown]
 # ### Check orders that do not correspond to any trades
@@ -194,29 +219,24 @@ all(ccxt_trades_df["order"].isin(oms_child_order_df["ccxt_id_as_single_str"]))
 # %% run_control={"marked": true}
 # Existence of such orders is not necessarily a bug.
 # It means that a given OMS child order was not filled.
-child_orders_with_no_trades = ~oms_child_order_df["ccxt_id_as_single_str"].isin(
+child_orders_with_no_trades = ~oms_child_order_df["ccxt_id"].isin(
     ccxt_trades_df["order"]
 )
 child_orders_with_no_trades.sum()
 
-# %%
-oms_child_order_df.loc[child_orders_with_no_trades]
-
 # %% [markdown]
 # ### Check the correctness of trade amount
-# - Sum of `amount` of all trades related to a single child order should not exceed the total amount for that order.
-#
 
 # %% run_control={"marked": false}
 # If the traded amount is larger than the order, it means that an extra trade
 # is executed and the order is filled for a larger amount.
 # This can mean an accounting error on the exchange side.
-trade_amount_by_order = ccxt_trades_df.groupby("order").agg({"amount": sum})
+trade_amount_by_order = ccxt_trades_df.groupby("order").agg({"amount": "sum"})
 accepted_child_order_df = oms_child_order_df.loc[
-    oms_child_order_df["ccxt_id_as_single_str"] != "-1"
+    oms_child_order_df["ccxt_id"] != -1
 ]
 trade_amount_by_order["child_order_amount"] = accepted_child_order_df.set_index(
-    "ccxt_id_as_single_str"
+    "ccxt_id"
 )["diff_num_shares"].abs()
 
 # %%
@@ -224,6 +244,19 @@ mask = (
     trade_amount_by_order["amount"] > trade_amount_by_order["child_order_amount"]
 )
 trade_amount_by_order.loc[mask]
+
+# %%
+# Check the difference between the filled amount and the agg child order quantities.
+trade_amount_by_order["diff"] = (
+    trade_amount_by_order["child_order_amount"] - trade_amount_by_order["amount"]
+)
+trade_amount_by_order = trade_amount_by_order.rename(
+    {"amount": "aggregated_trades_quantity"}, axis=1
+)
+trade_amount_by_order = trade_amount_by_order[
+    ["child_order_amount", "aggregated_trades_quantity", "diff"]
+]
+trade_amount_by_order[trade_amount_by_order["diff"] > 0]
 
 # %% [markdown]
 # ### Verify that CCXT IDs are equal in both child orders and responses
@@ -234,8 +267,8 @@ trade_amount_by_order.loc[mask]
 # We expect all retrieved responses to be a subset of CCXT IDs
 # connected to the OMS child orders.
 submitted_oms_orders_ccxt_ids = set(
-    oms_child_order_df.loc[oms_child_order_df["ccxt_id_as_single_str"] != "-1"][
-        "ccxt_id_as_single_str"
+    oms_child_order_df.loc[oms_child_order_df["ccxt_id"] != -1][
+        "ccxt_id"
     ].unique()
 )
 ccxt_response_ids = set(ccxt_order_response_df["order"].unique())
@@ -246,7 +279,6 @@ ccxt_response_ids.issubset(submitted_oms_orders_ccxt_ids)
 
 # %%
 # Aggregate fills by order.
-# TODO(Danya): Rename to `aggregate_trades_by_order`
 ccxt_trades_by_order = obccagfu.aggregate_fills_by_order(ccxt_trades_df)
 ccxt_trades_by_order.head(3)
 
@@ -254,59 +286,21 @@ ccxt_trades_by_order.head(3)
 # # Time profiling for child orders
 
 # %%
-oms_child_order_df = ccxt_log_reader.load_oms_child_order_df(
-    unpack_extra_params=True
+oms_child_order_df_unpacked = ccxt_log_reader.load_oms_child_order(
+    unpack_extra_params=True, convert_to_dataframe=True
 )
 
+# %% run_control={"marked": true}
+# Get the number of child orders per wave as determined by the number of unique assets.
+wave = obccexqu.get_oms_child_order_timestamps(oms_child_order_df_unpacked)
 
 # %%
-
-def get_oms_child_order_timestamps(df, order_wave: int):
-    stats = df["stats"].apply(
-        pd.Series
-    )
-    # Select bid/ask timestamp columns from the DB.
-    bid_ask_timestamp_cols = [
-        "exchange_timestamp",
-        "end_download_timestamp",
-        "knowledge_timestamp",
-    ]
-    bid_ask_timestamps_df = df[bid_ask_timestamp_cols]
-    # Combine all timestamp info into single dataframe.
-    out_df = pd.concat([bid_ask_timestamps_df, stats], axis=1)
-    timing_cols = submission_timestamp_cols = [
-        f"_submit_twap_child_order::bid_ask_market_data.start.{order_wave}",
-        f"_submit_twap_child_order::bid_ask_market_data.done.{order_wave}",
-        f"_submit_twap_child_order::get_open_positions.done.{order_wave}",
-        f"_submit_twap_child_order::child_order.created.{order_wave}",
-        f"_submit_twap_child_order::child_order.limit_price_calculated.{order_wave}",
-        "_submit_single_order_to_ccxt_with_retry::start.timestamp",
-        "_submit_single_order_to_ccxt_with_retry::end.timestamp",
-        f"_submit_twap_child_order::child_order.submitted.{order_wave}", 
-    ]
-    timing_cols = bid_ask_timestamp_cols + submission_timestamp_cols
-    out_df = out_df[timing_cols].dropna(subset=submission_timestamp_cols)
-    return out_df
-
-def get_time_delay_between_events(df):
-    """
-    For each timestamp, get delay in seconds before the previous timestammp.
-    """
-    delays = df.subtract(df["exchange_timestamp"], axis=0)
-    delays = delays.apply(lambda x: x.dt.total_seconds())
-    # Verify that the timestamps increase left to right.
-    hdbg.dassert_eq((delays.diff(axis=1) < 0).sum().sum(), 0)
-    return delays
-
+wave.head(3)
 
 # %%
-wave = get_oms_child_order_timestamps(oms_child_order_df, 0)
-
-# %%
-wave.info()
-
-# %%
-time_delays = get_time_delay_between_events(wave)
+# Sort the events (column names) in chronological order.
+wave = wave.sort_values(wave.first_valid_index(), axis=1)
+time_delays = obccexqu.get_time_delay_between_events(wave)
 
 # %%
 time_delays.boxplot(rot=45, ylabel="Time delay")

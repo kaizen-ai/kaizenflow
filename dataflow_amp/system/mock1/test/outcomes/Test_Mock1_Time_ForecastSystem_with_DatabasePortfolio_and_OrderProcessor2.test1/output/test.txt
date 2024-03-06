@@ -72,6 +72,7 @@ dag_config:
 dag_builder_object: nid_prefix=
 dag_builder_class: Mock1_DagBuilder
 system_class: Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor
+trading_period: 5T
 market_data_config:
   asset_id_col_name: asset_id
   delay_in_secs: 5
@@ -93,6 +94,8 @@ market_data_config:
 portfolio_config:
   mark_to_market_col: close
   pricing_method: twap.5T
+  broker_config:
+
   column_remap:
     bid: bid
     ask: ask
@@ -125,46 +128,46 @@ object.builder_function:
 portfolio_object:
   <oms.portfolio.database_portfolio.DatabasePortfolio at 0x>
     # holdings_shares=
-    asset_id                      101
-    2000-01-01 09:35:06-05:00     0.0
-    2000-01-01 09:40:06-05:00   990.1
-    2000-01-01 09:45:06-05:00 -1000.0
-    2000-01-01 09:50:06-05:00   990.1
-    2000-01-01 09:55:06-05:00 -1000.0
+    asset_id                             101
+    2000-01-01 09:35:05.100000-05:00     0.0
+    2000-01-01 09:40:05.100000-05:00   990.1
+    2000-01-01 09:45:05.100000-05:00 -1000.0
+    2000-01-01 09:50:05.100000-05:00   990.1
+    2000-01-01 09:55:05.100000-05:00 -1000.0
     # holdings_notional=
-    asset_id                        101
-    2000-01-01 09:35:06-05:00       0.0
-    2000-01-01 09:40:06-05:00   99009.9
-    2000-01-01 09:45:06-05:00 -101000.0
-    2000-01-01 09:50:06-05:00   99009.9
-    2000-01-01 09:55:06-05:00 -101000.0
+    asset_id                               101
+    2000-01-01 09:35:05.100000-05:00       0.0
+    2000-01-01 09:40:05.100000-05:00   99009.9
+    2000-01-01 09:45:05.100000-05:00 -101000.0
+    2000-01-01 09:50:05.100000-05:00   99009.9
+    2000-01-01 09:55:05.100000-05:00 -101000.0
     # executed_trades_shares=
-    asset_id                      101
-    2000-01-01 09:35:06-05:00     0.0
-    2000-01-01 09:40:06-05:00   990.1
-    2000-01-01 09:45:06-05:00 -1990.1
-    2000-01-01 09:50:06-05:00  1990.1
-    2000-01-01 09:55:06-05:00 -1990.1
+    asset_id                             101
+    2000-01-01 09:35:05.100000-05:00     0.0
+    2000-01-01 09:40:05.100000-05:00   990.1
+    2000-01-01 09:45:05.100000-05:00 -1990.1
+    2000-01-01 09:50:05.100000-05:00  1990.1
+    2000-01-01 09:55:05.100000-05:00 -1990.1
     # executed_trades_notional=
-    asset_id                        101
-    2000-01-01 09:40:06-05:00   99009.9
-    2000-01-01 09:45:06-05:00 -201000.0
-    2000-01-01 09:50:06-05:00  199009.9
-    2000-01-01 09:55:06-05:00 -201000.0
+    asset_id                               101
+    2000-01-01 09:40:05.100000-05:00   99009.9
+    2000-01-01 09:45:05.100000-05:00 -201000.0
+    2000-01-01 09:50:05.100000-05:00  199009.9
+    2000-01-01 09:55:05.100000-05:00 -201000.0
     # pnl=
-    asset_id                      101
-    2000-01-01 09:35:06-05:00     NaN
-    2000-01-01 09:40:06-05:00     0.0
-    2000-01-01 09:45:06-05:00   990.1
-    2000-01-01 09:50:06-05:00  1000.0
-    2000-01-01 09:55:06-05:00   990.1
+    asset_id                             101
+    2000-01-01 09:35:05.100000-05:00     NaN
+    2000-01-01 09:40:05.100000-05:00     0.0
+    2000-01-01 09:45:05.100000-05:00   990.1
+    2000-01-01 09:50:05.100000-05:00  1000.0
+    2000-01-01 09:55:05.100000-05:00   990.1
     # statistics=
-                                  pnl  gross_volume  net_volume       gmv       nmv      cash  net_wealth  leverage
-    2000-01-01 09:35:06-05:00     NaN           0.0         0.0       0.0       0.0  1.00e+06    1.00e+06       0.0
-    2000-01-01 09:40:06-05:00     0.0       99009.9     99009.9   99009.9   99009.9  9.01e+05    1.00e+06       0.1
-    2000-01-01 09:45:06-05:00   990.1      201000.0   -201000.0  101000.0 -101000.0  1.10e+06    1.00e+06       0.1
-    2000-01-01 09:50:06-05:00  1000.0      199009.9    199009.9   99009.9   99009.9  9.03e+05    1.00e+06       0.1
-    2000-01-01 09:55:06-05:00   990.1      201000.0   -201000.0  101000.0 -101000.0  1.10e+06    1.00e+06       0.1
+                                         pnl  gross_volume  net_volume       gmv       nmv      cash  net_wealth  leverage
+    2000-01-01 09:35:05.100000-05:00     NaN           0.0         0.0       0.0       0.0  1.00e+06    1.00e+06       0.0
+    2000-01-01 09:40:05.100000-05:00     0.0       99009.9     99009.9   99009.9   99009.9  9.01e+05    1.00e+06       0.1
+    2000-01-01 09:45:05.100000-05:00   990.1      201000.0   -201000.0  101000.0 -101000.0  1.10e+06    1.00e+06       0.1
+    2000-01-01 09:50:05.100000-05:00  1000.0      199009.9    199009.9   99009.9   99009.9  9.03e+05    1.00e+06       0.1
+    2000-01-01 09:55:05.100000-05:00   990.1      201000.0   -201000.0  101000.0 -101000.0  1.10e+06    1.00e+06       0.1
 process_forecasts_node_dict:
   prediction_col: feature1
   volatility_col: vwap.ret_0.vol
@@ -172,51 +175,52 @@ process_forecasts_node_dict:
   portfolio:
     <oms.portfolio.database_portfolio.DatabasePortfolio at 0x>
       # holdings_shares=
-      asset_id                      101
-      2000-01-01 09:35:06-05:00     0.0
-      2000-01-01 09:40:06-05:00   990.1
-      2000-01-01 09:45:06-05:00 -1000.0
-      2000-01-01 09:50:06-05:00   990.1
-      2000-01-01 09:55:06-05:00 -1000.0
+      asset_id                             101
+      2000-01-01 09:35:05.100000-05:00     0.0
+      2000-01-01 09:40:05.100000-05:00   990.1
+      2000-01-01 09:45:05.100000-05:00 -1000.0
+      2000-01-01 09:50:05.100000-05:00   990.1
+      2000-01-01 09:55:05.100000-05:00 -1000.0
       # holdings_notional=
-      asset_id                        101
-      2000-01-01 09:35:06-05:00       0.0
-      2000-01-01 09:40:06-05:00   99009.9
-      2000-01-01 09:45:06-05:00 -101000.0
-      2000-01-01 09:50:06-05:00   99009.9
-      2000-01-01 09:55:06-05:00 -101000.0
+      asset_id                               101
+      2000-01-01 09:35:05.100000-05:00       0.0
+      2000-01-01 09:40:05.100000-05:00   99009.9
+      2000-01-01 09:45:05.100000-05:00 -101000.0
+      2000-01-01 09:50:05.100000-05:00   99009.9
+      2000-01-01 09:55:05.100000-05:00 -101000.0
       # executed_trades_shares=
-      asset_id                      101
-      2000-01-01 09:35:06-05:00     0.0
-      2000-01-01 09:40:06-05:00   990.1
-      2000-01-01 09:45:06-05:00 -1990.1
-      2000-01-01 09:50:06-05:00  1990.1
-      2000-01-01 09:55:06-05:00 -1990.1
+      asset_id                             101
+      2000-01-01 09:35:05.100000-05:00     0.0
+      2000-01-01 09:40:05.100000-05:00   990.1
+      2000-01-01 09:45:05.100000-05:00 -1990.1
+      2000-01-01 09:50:05.100000-05:00  1990.1
+      2000-01-01 09:55:05.100000-05:00 -1990.1
       # executed_trades_notional=
-      asset_id                        101
-      2000-01-01 09:40:06-05:00   99009.9
-      2000-01-01 09:45:06-05:00 -201000.0
-      2000-01-01 09:50:06-05:00  199009.9
-      2000-01-01 09:55:06-05:00 -201000.0
+      asset_id                               101
+      2000-01-01 09:40:05.100000-05:00   99009.9
+      2000-01-01 09:45:05.100000-05:00 -201000.0
+      2000-01-01 09:50:05.100000-05:00  199009.9
+      2000-01-01 09:55:05.100000-05:00 -201000.0
       # pnl=
-      asset_id                      101
-      2000-01-01 09:35:06-05:00     NaN
-      2000-01-01 09:40:06-05:00     0.0
-      2000-01-01 09:45:06-05:00   990.1
-      2000-01-01 09:50:06-05:00  1000.0
-      2000-01-01 09:55:06-05:00   990.1
+      asset_id                             101
+      2000-01-01 09:35:05.100000-05:00     NaN
+      2000-01-01 09:40:05.100000-05:00     0.0
+      2000-01-01 09:45:05.100000-05:00   990.1
+      2000-01-01 09:50:05.100000-05:00  1000.0
+      2000-01-01 09:55:05.100000-05:00   990.1
       # statistics=
-                                    pnl  gross_volume  net_volume       gmv       nmv      cash  net_wealth  leverage
-      2000-01-01 09:35:06-05:00     NaN           0.0         0.0       0.0       0.0  1.00e+06    1.00e+06       0.0
-      2000-01-01 09:40:06-05:00     0.0       99009.9     99009.9   99009.9   99009.9  9.01e+05    1.00e+06       0.1
-      2000-01-01 09:45:06-05:00   990.1      201000.0   -201000.0  101000.0 -101000.0  1.10e+06    1.00e+06       0.1
-      2000-01-01 09:50:06-05:00  1000.0      199009.9    199009.9   99009.9   99009.9  9.03e+05    1.00e+06       0.1
-      2000-01-01 09:55:06-05:00   990.1      201000.0   -201000.0  101000.0 -101000.0  1.10e+06    1.00e+06       0.1
+                                           pnl  gross_volume  net_volume       gmv       nmv      cash  net_wealth  leverage
+      2000-01-01 09:35:05.100000-05:00     NaN           0.0         0.0       0.0       0.0  1.00e+06    1.00e+06       0.0
+      2000-01-01 09:40:05.100000-05:00     0.0       99009.9     99009.9   99009.9   99009.9  9.01e+05    1.00e+06       0.1
+      2000-01-01 09:45:05.100000-05:00   990.1      201000.0   -201000.0  101000.0 -101000.0  1.10e+06    1.00e+06       0.1
+      2000-01-01 09:50:05.100000-05:00  1000.0      199009.9    199009.9   99009.9   99009.9  9.03e+05    1.00e+06       0.1
+      2000-01-01 09:55:05.100000-05:00   990.1      201000.0   -201000.0  101000.0 -101000.0  1.10e+06    1.00e+06       0.1
   process_forecasts_dict:
     order_config:
       order_type: price@twap
       passivity_factor: None
       order_duration_in_mins: 5
+      execution_frequency: 1T
     optimizer_config:
       backend: pomo
       params:
@@ -232,7 +236,7 @@ process_forecasts_node_dict:
     trading_end_time: 15:55:00
     liquidate_at_trading_end_time: False
     share_quantization: 9
-dag_object: DAG at 0x=(_nx_dag=DiGraph with 10 nodes and 9 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
+dag_object: DAG at 0x=(_nx_dag=DiGraph with 10 nodes and 9 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _save_node_df_out_stats=False <bool>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
 dag_runner_object:
   RealTimeDagRunner at 0x=(config= <core.config.config_.Config>, _column_to_tags_mapping=None <NoneType>, _result_nid=process_forecasts <str>, _execute_rt_loop_kwargs={'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
     _asset_id_col='asset_id' <str>
@@ -274,46 +278,46 @@ num_it=5 current_time='2000-01-01 09:55:00-05:00'
 
 <oms.portfolio.database_portfolio.DatabasePortfolio at 0x>
   # holdings_shares=
-  asset_id                      101
-  2000-01-01 09:35:06-05:00     0.0
-  2000-01-01 09:40:06-05:00   990.1
-  2000-01-01 09:45:06-05:00 -1000.0
-  2000-01-01 09:50:06-05:00   990.1
-  2000-01-01 09:55:06-05:00 -1000.0
+  asset_id                             101
+  2000-01-01 09:35:05.100000-05:00     0.0
+  2000-01-01 09:40:05.100000-05:00   990.1
+  2000-01-01 09:45:05.100000-05:00 -1000.0
+  2000-01-01 09:50:05.100000-05:00   990.1
+  2000-01-01 09:55:05.100000-05:00 -1000.0
   # holdings_notional=
-  asset_id                        101
-  2000-01-01 09:35:06-05:00       0.0
-  2000-01-01 09:40:06-05:00   99009.9
-  2000-01-01 09:45:06-05:00 -101000.0
-  2000-01-01 09:50:06-05:00   99009.9
-  2000-01-01 09:55:06-05:00 -101000.0
+  asset_id                               101
+  2000-01-01 09:35:05.100000-05:00       0.0
+  2000-01-01 09:40:05.100000-05:00   99009.9
+  2000-01-01 09:45:05.100000-05:00 -101000.0
+  2000-01-01 09:50:05.100000-05:00   99009.9
+  2000-01-01 09:55:05.100000-05:00 -101000.0
   # executed_trades_shares=
-  asset_id                      101
-  2000-01-01 09:35:06-05:00     0.0
-  2000-01-01 09:40:06-05:00   990.1
-  2000-01-01 09:45:06-05:00 -1990.1
-  2000-01-01 09:50:06-05:00  1990.1
-  2000-01-01 09:55:06-05:00 -1990.1
+  asset_id                             101
+  2000-01-01 09:35:05.100000-05:00     0.0
+  2000-01-01 09:40:05.100000-05:00   990.1
+  2000-01-01 09:45:05.100000-05:00 -1990.1
+  2000-01-01 09:50:05.100000-05:00  1990.1
+  2000-01-01 09:55:05.100000-05:00 -1990.1
   # executed_trades_notional=
-  asset_id                        101
-  2000-01-01 09:40:06-05:00   99009.9
-  2000-01-01 09:45:06-05:00 -201000.0
-  2000-01-01 09:50:06-05:00  199009.9
-  2000-01-01 09:55:06-05:00 -201000.0
+  asset_id                               101
+  2000-01-01 09:40:05.100000-05:00   99009.9
+  2000-01-01 09:45:05.100000-05:00 -201000.0
+  2000-01-01 09:50:05.100000-05:00  199009.9
+  2000-01-01 09:55:05.100000-05:00 -201000.0
   # pnl=
-  asset_id                      101
-  2000-01-01 09:35:06-05:00     NaN
-  2000-01-01 09:40:06-05:00     0.0
-  2000-01-01 09:45:06-05:00   990.1
-  2000-01-01 09:50:06-05:00  1000.0
-  2000-01-01 09:55:06-05:00   990.1
+  asset_id                             101
+  2000-01-01 09:35:05.100000-05:00     NaN
+  2000-01-01 09:40:05.100000-05:00     0.0
+  2000-01-01 09:45:05.100000-05:00   990.1
+  2000-01-01 09:50:05.100000-05:00  1000.0
+  2000-01-01 09:55:05.100000-05:00   990.1
   # statistics=
-                                pnl  gross_volume  net_volume       gmv       nmv      cash  net_wealth  leverage
-  2000-01-01 09:35:06-05:00     NaN           0.0         0.0       0.0       0.0  1.00e+06    1.00e+06       0.0
-  2000-01-01 09:40:06-05:00     0.0       99009.9     99009.9   99009.9   99009.9  9.01e+05    1.00e+06       0.1
-  2000-01-01 09:45:06-05:00   990.1      201000.0   -201000.0  101000.0 -101000.0  1.10e+06    1.00e+06       0.1
-  2000-01-01 09:50:06-05:00  1000.0      199009.9    199009.9   99009.9   99009.9  9.03e+05    1.00e+06       0.1
-  2000-01-01 09:55:06-05:00   990.1      201000.0   -201000.0  101000.0 -101000.0  1.10e+06    1.00e+06       0.1
+                                       pnl  gross_volume  net_volume       gmv       nmv      cash  net_wealth  leverage
+  2000-01-01 09:35:05.100000-05:00     NaN           0.0         0.0       0.0       0.0  1.00e+06    1.00e+06       0.0
+  2000-01-01 09:40:05.100000-05:00     0.0       99009.9     99009.9   99009.9   99009.9  9.01e+05    1.00e+06       0.1
+  2000-01-01 09:45:05.100000-05:00   990.1      201000.0   -201000.0  101000.0 -101000.0  1.10e+06    1.00e+06       0.1
+  2000-01-01 09:50:05.100000-05:00  1000.0      199009.9    199009.9   99009.9   99009.9  9.03e+05    1.00e+06       0.1
+  2000-01-01 09:55:05.100000-05:00   990.1      201000.0   -201000.0  101000.0 -101000.0  1.10e+06    1.00e+06       0.1
 
 # forecast_evaluator_from_prices signature=
 
@@ -353,37 +357,37 @@ events=33
 2000-01-01 09:35:00-05:00: start
 2000-01-01 09:35:00-05:00: wall_clock_time=Timestamp('xxx', tz='America/New_York') termination_condition=Timestamp('2000-01-01 10:00:05-0500', tz='America/New_York') -> wall_clock_time_tmp=Timestamp('2000-01-01 09:35:00-0500', tz='America/New_York') termination_condition_tmp=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York') -> is_done=False
 2000-01-01 09:35:00-05:00: Waiting for orders in table self._submitted_orders_table_name='submitted_orders'
-2000-01-01 09:35:07-05:00: diff_num_rows=1
-2000-01-01 09:35:07-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
-2000-01-01 09:35:10-05:00: Wait until fulfillment deadline=2000-01-01 09:40:00-05:00
+2000-01-01 09:35:06-05:00: diff_num_rows=1
+2000-01-01 09:35:06-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
+2000-01-01 09:35:09-05:00: Wait until fulfillment deadline=2000-01-01 09:40:00-05:00
 2000-01-01 09:40:00-05:00: Received 1 fills:
   Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:40:00-05:00 num_shares=990.099009901 price=100.0
 2000-01-01 09:40:00-05:00: wall_clock_time=Timestamp('xxx', tz='America/New_York') termination_condition=Timestamp('2000-01-01 10:00:05-0500', tz='America/New_York') -> wall_clock_time_tmp=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York') termination_condition_tmp=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York') -> is_done=False
 2000-01-01 09:40:00-05:00: Waiting for orders in table self._submitted_orders_table_name='submitted_orders'
-2000-01-01 09:40:07-05:00: diff_num_rows=1
-2000-01-01 09:40:07-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
-2000-01-01 09:40:10-05:00: Wait until fulfillment deadline=2000-01-01 09:45:00-05:00
+2000-01-01 09:40:06-05:00: diff_num_rows=1
+2000-01-01 09:40:06-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
+2000-01-01 09:40:09-05:00: Wait until fulfillment deadline=2000-01-01 09:45:00-05:00
 2000-01-01 09:45:00-05:00: Received 1 fills:
   Fill: asset_id=101 fill_id=1 timestamp=2000-01-01 09:45:00-05:00 num_shares=-1990.099009901 price=101.0
 2000-01-01 09:45:00-05:00: wall_clock_time=Timestamp('xxx', tz='America/New_York') termination_condition=Timestamp('2000-01-01 10:00:05-0500', tz='America/New_York') -> wall_clock_time_tmp=Timestamp('2000-01-01 09:45:00-0500', tz='America/New_York') termination_condition_tmp=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York') -> is_done=False
 2000-01-01 09:45:00-05:00: Waiting for orders in table self._submitted_orders_table_name='submitted_orders'
-2000-01-01 09:45:07-05:00: diff_num_rows=1
-2000-01-01 09:45:07-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
-2000-01-01 09:45:10-05:00: Wait until fulfillment deadline=2000-01-01 09:50:00-05:00
+2000-01-01 09:45:06-05:00: diff_num_rows=1
+2000-01-01 09:45:06-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
+2000-01-01 09:45:09-05:00: Wait until fulfillment deadline=2000-01-01 09:50:00-05:00
 2000-01-01 09:50:00-05:00: Received 1 fills:
   Fill: asset_id=101 fill_id=2 timestamp=2000-01-01 09:50:00-05:00 num_shares=1990.099009901 price=100.0
 2000-01-01 09:50:00-05:00: wall_clock_time=Timestamp('xxx', tz='America/New_York') termination_condition=Timestamp('2000-01-01 10:00:05-0500', tz='America/New_York') -> wall_clock_time_tmp=Timestamp('2000-01-01 09:50:00-0500', tz='America/New_York') termination_condition_tmp=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York') -> is_done=False
 2000-01-01 09:50:00-05:00: Waiting for orders in table self._submitted_orders_table_name='submitted_orders'
-2000-01-01 09:50:07-05:00: diff_num_rows=1
-2000-01-01 09:50:07-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
-2000-01-01 09:50:10-05:00: Wait until fulfillment deadline=2000-01-01 09:55:00-05:00
+2000-01-01 09:50:06-05:00: diff_num_rows=1
+2000-01-01 09:50:06-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
+2000-01-01 09:50:09-05:00: Wait until fulfillment deadline=2000-01-01 09:55:00-05:00
 2000-01-01 09:55:00-05:00: Received 1 fills:
   Fill: asset_id=101 fill_id=3 timestamp=2000-01-01 09:55:00-05:00 num_shares=-1990.099009901 price=101.0
 2000-01-01 09:55:00-05:00: wall_clock_time=Timestamp('xxx', tz='America/New_York') termination_condition=Timestamp('2000-01-01 10:00:05-0500', tz='America/New_York') -> wall_clock_time_tmp=Timestamp('2000-01-01 09:55:00-0500', tz='America/New_York') termination_condition_tmp=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York') -> is_done=False
 2000-01-01 09:55:00-05:00: Waiting for orders in table self._submitted_orders_table_name='submitted_orders'
-2000-01-01 09:55:07-05:00: diff_num_rows=1
-2000-01-01 09:55:07-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
-2000-01-01 09:55:10-05:00: Wait until fulfillment deadline=2000-01-01 10:00:00-05:00
+2000-01-01 09:55:06-05:00: diff_num_rows=1
+2000-01-01 09:55:06-05:00: Waiting 3 seconds to simulate the delay for accepting the order list submission
+2000-01-01 09:55:09-05:00: Wait until fulfillment deadline=2000-01-01 10:00:00-05:00
 2000-01-01 10:00:00-05:00: Received 1 fills:
   Fill: asset_id=101 fill_id=4 timestamp=2000-01-01 10:00:00-05:00 num_shares=1990.099009901 price=100.0
 2000-01-01 10:00:00-05:00: wall_clock_time=Timestamp('xxx', tz='America/New_York') termination_condition=Timestamp('2000-01-01 10:00:05-0500', tz='America/New_York') -> wall_clock_time_tmp=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York') termination_condition_tmp=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York') -> is_done=True

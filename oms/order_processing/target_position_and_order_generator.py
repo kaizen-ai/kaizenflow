@@ -22,8 +22,6 @@ import helpers.hobject as hobject
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hwall_clock_time as hwacltim
-import oms.broker.ccxt.abstract_ccxt_broker as obcaccbr
-import oms.broker.ccxt.ccxt_broker_v1 as obccbrv1
 import oms.broker.ccxt.ccxt_utils as obccccut
 import oms.optimizer.call_optimizer as oopcaopt
 import oms.optimizer.cc_optimizer_utils as ooccoput
@@ -39,8 +37,8 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
 
     - Retrieve the Portfolio holdings
     - Perform optimization on the forecasts
-    - Generate orders
-    - Submit orders
+    - Generate the orders
+    - Submit the orders through `Broker`
     """
 
     def __init__(
@@ -90,6 +88,11 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         self._order_duration_in_mins = hdict.typed_get(
             order_dict, "order_duration_in_mins", expected_type=int
         )
+        # Depending on `order_type` it could be `str` or `None`, so the type
+        # is not checked.
+        self._execution_frequency = hdict.checked_get(
+            order_dict, "execution_frequency"
+        )
         # Save optimizer config.
         _ = hdict.typed_get(optimizer_dict, "backend", expected_type=str)
         self._optimizer_dict = optimizer_dict
@@ -101,6 +104,10 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         self._target_positions = cksoordi.KeySortedOrderedDict(pd.Timestamp)
         # Dict from timestamp to orders.
         self._orders = cksoordi.KeySortedOrderedDict(pd.Timestamp)
+
+    # //////////////////////////////////////////////////////////////////////////
+    # Print.
+    # //////////////////////////////////////////////////////////////////////////
 
     def __str__(self) -> str:
         """
@@ -139,6 +146,10 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         act = "\n".join(txt)
         return act
 
+    # //////////////////////////////////////////////////////////////////////////
+    #
+    # //////////////////////////////////////////////////////////////////////////
+
     @staticmethod
     def load_target_positions(
         log_dir: str,
@@ -148,12 +159,12 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
     ) -> pd.DataFrame:
         """
         Parse logged `target_position` dataframes.
-
         :return a dataframe indexed by datetimes and with two column levels. E.g.,
-            ```
-         asset_id     curr_num_shares   price   position      wall_clock_timestamp prediction   volatility   spread  target_position   target_notional_trade  diff_num_shares_before_quantization  diff_num_shares
+
+        ```
+        asset_id     curr_num_shares   price   position      wall_clock_timestamp prediction   volatility   spread  target_position   target_notional_trade  diff_num_shares_before_quantization  diff_num_shares
             10365                -4.0   305.6    -1222.6 2022-10-05 15:30:02-04:00     0.355         0.002        0            435.7                  1658.3                5.4                                5.0
-            ```
+        ```
         """
         sub_dir = "target_positions"
         files = TargetPositionAndOrderGenerator._get_files(log_dir, sub_dir)
@@ -216,6 +227,8 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         df = df.set_index("order_id")
         return df
 
+    # //////////////////////////////////////////////////////////////////////////
+
     def compute_target_positions_and_generate_orders(
         self,
         predictions: pd.Series,
@@ -226,13 +239,15 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         """
         Translate returns and volatility forecasts into a list of orders.
 
-        :param predictions: returns forecasts
+        :param predictions: return forecasts
         :param volatility: volatility forecasts
         :param spread: spread forecasts
-        :param liquidate_holdings: force liquidating all the current holdings
+        :param liquidate_holdings: force liquidating all the current
+            holdings
         :return: a list of orders to execute
         """
-        _LOG.debug(hprint.to_str("liquidate_holdings"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("liquidate_holdings"))
         # Convert forecasts into target positions.
         target_positions = self._compute_target_holdings_shares(
             predictions, volatility, spread, liquidate_holdings
@@ -241,23 +256,7 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         orders = self._generate_orders_wrapper(target_positions)
         return orders
 
-    # TODO(gp): mark_to_market -> mark_to_market_portfolio
-    def log_state(self, mark_to_market: bool) -> None:
-        """
-        Log the state of this object and Portfolio to log_dir.
-
-        This is typically triggered by `submit_orders()` and in some flows by
-        `process_forecasts()`.
-
-        :param mark_to_market: mark Portfolio to market before logging the state.
-        """
-        _LOG.debug("log_state")
-        if mark_to_market:
-            self._portfolio.mark_to_market()
-        # Log the state of this object and Portfolio.
-        if self._log_dir:
-            self._log_state()
-            self._portfolio.log_state(os.path.join(self._log_dir, "portfolio"))
+    # //////////////////////////////////////////////////////////////////////////
 
     async def submit_orders(self, orders: List[oordorde.Order], **kwargs) -> None:
         """
@@ -265,31 +264,52 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         state.
 
         :param orders: list of orders to execute
-        :param *args: args for `submit_order`, like `order_type` and `passivity_factor`
+        :param **kargs: args for `submit_order`, like `order_type` and
+            `passivity_factor`
         """
-        # TODO(gp): This part of the code should go in Broker and call
-        # _submit_twap_orders or _submit_market_orders
         # Submit orders.
         order_type = kwargs["order_type"]
-        if orders:
-            broker = self._portfolio.broker
+        if not orders:
+            _LOG.warning("No orders to submit to broker.")
+        broker = self._portfolio.broker
+        if _LOG.isEnabledFor(logging.DEBUG):
             _LOG.debug("Event: awaiting broker.submit_orders()...")
-            if order_type == "price@custom_twap":
-                hdbg.dassert_in("passivity_factor", kwargs)
-                passivity_factor = kwargs["passivity_factor"]
-                hdbg.dassert_isinstance(broker, obcaccbr.AbstractCcxtBroker)
-                await broker.submit_twap_orders(orders, passivity_factor)
-            else:
-                await broker.submit_orders(orders)
-        else:
-            _LOG.debug("No orders to submit to broker.")
-        _LOG.debug("Event: awaiting broker.submit_orders() done.")
+        # Call `submit_orders()` regardless of `orders` being empty or not. The
+        # reason is that broker needs to update its internal state to reflect
+        # that no orders were submited for a given bar.
+        await broker.submit_orders(
+            orders, order_type, execution_freq=self._execution_frequency
+        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Event: awaiting broker.submit_orders() done.")
         # Log the entire state after submitting the orders.
         # We don't need to mark to market since `generate_orders()` takes care of
         # marking to market the Portfolio.
         mark_to_market = False
         self.log_state(mark_to_market)
 
+    # TODO(gp): mark_to_market -> mark_to_market_portfolio
+    def log_state(self, mark_to_market: bool) -> None:
+        """
+        Log the state of this object and Portfolio to log_dir.
+
+        This is typically executed after `submit_orders()` and in some
+        flows by `process_forecasts()`.
+
+        :param mark_to_market: mark Portfolio to market before logging
+            the state.
+        """
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("log_state")
+        if mark_to_market:
+            self._portfolio.mark_to_market()
+        # Log the state of this object and Portfolio.
+        if self._log_dir:
+            self._log_state()
+            self._portfolio.log_state(os.path.join(self._log_dir, "portfolio"))
+
+    # /////////////////////////////////////////////////////////////////////////////
+    # Private methods.
     # /////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
@@ -307,6 +327,58 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         # Add enclosing dir.
         files = [os.path.join(dir_name, file_name) for file_name in files]
         return files
+
+    # TODO(Grisha): consider moving to a lib as a separate function.
+    @staticmethod
+    def _sanity_check_target_positions(target_positions: pd.DataFrame) -> None:
+        """
+        Perform a battery of self-consistency checks on target position data.
+        """
+        # Check that necessary column names are present in the dataframe.
+        cols = (
+            "price",
+            "holdings_shares",
+            "holdings_notional",
+            "target_holdings_shares",
+            "target_holdings_notional",
+            "target_trades_shares",
+            "target_trades_notional",
+        )
+        hdbg.dassert_is_subset(cols, target_positions.columns)
+        # Set values.
+        price = target_positions["price"]
+        holdings_shares = target_positions["holdings_shares"]
+        holdings_notional = target_positions["holdings_notional"]
+        target_holdings_shares = target_positions["target_holdings_shares"]
+        target_holdings_notional = target_positions["target_holdings_notional"]
+        target_trades_shares = target_positions["target_trades_shares"]
+        target_trades_notional = target_positions["target_trades_notional"]
+        # 1) Verify that values in shares multiplied by corresponding prices
+        # are equal to their notional counterparts.
+        # `hpandas.dassert_approx_eq()` is used for checks instead of `dassert_eq()`
+        # in order to avoid decimal precision issue.
+        atol = 1e-04
+        hpandas.dassert_approx_eq(
+            holdings_notional, holdings_shares * price, atol=atol
+        )
+        hpandas.dassert_approx_eq(
+            target_holdings_notional, target_holdings_shares * price, atol=atol
+        )
+        hpandas.dassert_approx_eq(
+            target_trades_notional, target_trades_shares * price, atol=atol
+        )
+        # 2) Verify that `target_holdings` is the sum of `holdings`
+        # and `target_trades`.
+        hpandas.dassert_approx_eq(
+            target_holdings_shares,
+            holdings_shares + target_trades_shares,
+            atol=atol,
+        )
+        hpandas.dassert_approx_eq(
+            target_holdings_notional,
+            holdings_notional + target_trades_notional,
+            atol=atol,
+        )
 
     # TODO(gp): -> _log_internal_state or _log_object_state?
     def _log_state(self) -> None:
@@ -363,14 +435,16 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         # to calling an optimizer.
         # TODO(Paul): Align with ForecastEvaluator and update callers.
         backend = self._optimizer_dict["backend"]
-        _LOG.debug("backend=%s", backend)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("backend=%s", backend)
         if backend == "cc_pomo":
             market_info = self._portfolio.broker.market_info
             # TODO(Grisha): CmTask4826 "Expose `asset_ids_to_decimal`".
             asset_ids_to_decimals = obccccut.subset_market_info(
                 market_info, "amount_precision"
             )
-            _LOG.debug("asset_ids_to_decimals=%s", asset_ids_to_decimals)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("asset_ids_to_decimals=%s", asset_ids_to_decimals)
         else:
             asset_ids_to_decimals = None
         if backend == "pomo" or backend == "cc_pomo":
@@ -409,7 +483,8 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
                 asset_id_to_share_decimals=asset_ids_to_decimals,
                 liquidate_holdings=liquidate_holdings,
             )
-            _LOG.debug("df=\n%s", hpandas.df_to_str(df))
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("df=\n%s", hpandas.df_to_str(df))
             df = df.merge(
                 assets_and_predictions.set_index("asset_id")[
                     ["price", "holdings_shares"]
@@ -441,8 +516,14 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
             )
             df["target_trades_shares"] = target_trades_shares
             df["target_trades_notional"] = target_trades_notional
+            # After liquidation holdings turn to zero.
+            df["target_holdings_shares"] = 0.0
+            df["target_holdings_notional"] = 0.0
         df["spread"] = assets_and_predictions.set_index("asset_id")["spread"]
-        _LOG.debug("df=\n%s", hpandas.df_to_str(df))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("df=\n%s", hpandas.df_to_str(df))
+        # Sanity check target positions metrics.
+        self._sanity_check_target_positions(df)
         return df
 
     # TODO(gp): This should go before.
@@ -493,10 +574,11 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         # (imputing 0's for the holdings).
         unpriced_assets = predictions.index.difference(marked_to_market_df.index)
         if not unpriced_assets.empty:
-            _LOG.debug(
-                "Unpriced assets by id=\n%s",
-                "\n".join(map(str, unpriced_assets.to_list())),
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "Unpriced assets by id=\n%s",
+                    "\n".join(map(str, unpriced_assets.to_list())),
+                )
             prices = self._portfolio.price_assets(unpriced_assets.values)
             mtm_extension = pd.DataFrame(
                 index=unpriced_assets,
@@ -509,10 +591,11 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
                 [marked_to_market_df, mtm_extension], axis=0
             )
         marked_to_market_df.reset_index(inplace=True)
-        _LOG.debug(
-            "marked_to_market dataframe=\n%s",
-            hpandas.df_to_str(marked_to_market_df),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "marked_to_market dataframe=\n%s",
+                hpandas.df_to_str(marked_to_market_df),
+            )
         marked_to_market_df.rename(
             columns={
                 "curr_num_shares": "holdings_shares",
@@ -534,9 +617,10 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         Normalize series with `index`, NaN-filling, and df conversion.
         """
         hdbg.dassert_isinstance(series, pd.Series)
-        _LOG.debug("Number of values=%i", series.size)
-        _LOG.debug("Number of non-NaN values=%i", series.count())
-        _LOG.debug("Number of NaN values=%i", series.isna().sum())
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Number of values=%i", series.size)
+            _LOG.debug("Number of non-NaN values=%i", series.count())
+            _LOG.debug("Number of NaN values=%i", series.isna().sum())
         # Ensure that `series` does not include the cash id.
         hdbg.dassert_not_in(self._portfolio.CASH_ID, series.index)
         # Ensure that `index` includes `series.index`.
@@ -559,7 +643,8 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         df.columns = [name]
         df.index.name = "asset_id"
         df = df.reset_index()
-        _LOG.debug("df=\n%s", hpandas.df_to_str(df))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("df=\n%s", hpandas.df_to_str(df))
         return df
 
     def _merge_predictions(
@@ -602,13 +687,17 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
             on="asset_id",
             how="outer",
         )
-        _LOG.debug(
-            "Number of NaNs in `holdings_shares` post-merge=`%i`",
-            merged_df["holdings_shares"].isna().sum(),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "Number of NaNs in `holdings_shares` post-merge=`%i`",
+                merged_df["holdings_shares"].isna().sum(),
+            )
         merged_df = merged_df.convert_dtypes()
         merged_df = merged_df.fillna(0.0)
-        _LOG.debug("After merge: merged_df=\n%s", hpandas.df_to_str(merged_df))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "After merge: merged_df=\n%s", hpandas.df_to_str(merged_df)
+            )
         return merged_df
 
     # /////////////////////////////////////////////////////////////////////////////
@@ -621,16 +710,18 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         """
         # Get the wall clock timestamp and internally log `target_positions`.
         wall_clock_timestamp = self._get_wall_clock_time()
-        _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
         self._target_positions[wall_clock_timestamp] = target_positions
         # Generate orders from target positions.
-        _LOG.debug(
-            "\n%s",
-            hprint.frame(
-                "Generating orders: timestamp=%s" % wall_clock_timestamp,
-                char1="#",
-            ),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "\n%s",
+                hprint.frame(
+                    "Generating orders: timestamp=%s" % wall_clock_timestamp,
+                    char1="#",
+                ),
+            )
         # Create a config for `Order`.
         # Enter position between now and the end of the current bar.
         order_timestamp_start = wall_clock_timestamp
@@ -680,7 +771,8 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         :param order_dict: common parameters used to initialize `Order`
         :return: a list of nontrivial orders (i.e., no zero-share orders)
         """
-        _LOG.debug("# Generate orders")
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("# Generate orders")
         hdbg.dassert_isinstance(order_dict, dict)
         hdbg.dassert_is_subset(
             ("holdings_shares", "target_trades_shares"), shares_df.columns
@@ -694,11 +786,12 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
                 "The curr_num_share value must be finite.",
             )
             if not np.isfinite(diff_num_shares):
-                _LOG.debug(
-                    "`diff_num_shares`=%f for `asset_id`=%i",
-                    diff_num_shares,
-                    asset_id,
-                )
+                if _LOG.isEnabledFor(logging.DEBUG):
+                    _LOG.debug(
+                        "`diff_num_shares`=%f for `asset_id`=%i",
+                        diff_num_shares,
+                        asset_id,
+                    )
                 diff_num_shares = 0.0
             diff_num_shares = self._enforce_restrictions(
                 asset_id, curr_num_shares, diff_num_shares
@@ -712,9 +805,11 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
                 diff_num_shares=diff_num_shares,
                 **order_dict,
             )
-            _LOG.debug("order=%s", order.order_id)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("order=%s", order.order_id)
             orders.append(order)
-        _LOG.debug("Number of orders generated=%i", len(orders))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("Number of orders generated=%i", len(orders))
         return orders
 
     def _enforce_restrictions(

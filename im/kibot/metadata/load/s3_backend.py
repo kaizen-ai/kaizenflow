@@ -28,6 +28,7 @@ _LOG = logging.getLogger("amp" + __name__)
 
 # TODO(gp): Might make sense to cache the metadata too to avoid S3 access.
 
+_AWS_PROFILE = "ck"
 
 class S3Backend:
     def __init__(self, max_rows: Optional[int] = None):
@@ -37,7 +38,7 @@ class S3Backend:
     def read_kibot_exchange_mapping() -> pd.DataFrame:
         file_name = os.path.join(imkimecon.S3_PREFIX, "kibot_to_exchange.csv")
         hs3.dassert_is_s3_path(file_name)
-        s3fs = hs3.get_s3fs("am")
+        s3fs = hs3.get_s3fs(_AWS_PROFILE)
         stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         kibot_to_cme_mapping = hpandas.read_csv_to_df(
             stream, index_col="Kibot_symbol", **kwargs
@@ -68,7 +69,7 @@ class S3Backend:
 
         aws_csv_gz_dir = os.path.join(imkidacon.S3_PREFIX, data_type)
         # List all existing csv gz files on S3.
-        s3fs = hs3.get_s3fs("am")
+        s3fs = hs3.get_s3fs(_AWS_PROFILE)
         csv_gz_s3_file_paths = [
             filename
             for filename in s3fs.ls(aws_csv_gz_dir)
@@ -104,7 +105,7 @@ class S3Backend:
             imkimecon.S3_PREFIX, "All_Futures_Contracts_1min.csv.gz"
         )
         _LOG.debug("file_name=%s", file_name)
-        s3fs = hs3.get_s3fs("am")
+        s3fs = hs3.get_s3fs(_AWS_PROFILE)
         stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         df = hpandas.read_csv_to_df(
             stream,
@@ -140,7 +141,7 @@ class S3Backend:
         )
         hs3.dassert_is_s3_path(file_name)
         _LOG.debug("file_name=%s", file_name)
-        s3fs = hs3.get_s3fs("am")
+        s3fs = hs3.get_s3fs(_AWS_PROFILE)
         stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         df = hpandas.read_csv_to_df(
             stream, index_col=0, nrows=self._max_rows, **kwargs
@@ -174,7 +175,7 @@ class S3Backend:
         file_name = os.path.join(imkimecon.S3_PREFIX, "Futures_tickbidask.txt.gz")
         _LOG.debug("file_name=%s", file_name)
         hs3.dassert_is_s3_path(file_name)
-        s3fs = hs3.get_s3fs("am")
+        s3fs = hs3.get_s3fs(_AWS_PROFILE)
         stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         df = hpandas.read_csv_to_df(
             stream,
@@ -224,7 +225,7 @@ class S3Backend:
         )
         _LOG.debug("file_name=%s", file_name)
         hs3.dassert_is_s3_path(file_name)
-        s3fs = hs3.get_s3fs("am")
+        s3fs = hs3.get_s3fs(_AWS_PROFILE)
         stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         df = hpandas.read_csv_to_df(
             stream,

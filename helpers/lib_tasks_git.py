@@ -283,7 +283,8 @@ def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
     """
     Print the status of the files in the previous commit.
 
-    :param pbcopy: save the result into the system clipboard (only on macOS)
+    :param pbcopy: save the result into the system clipboard (only on
+        macOS)
     """
     cmd = 'git log -1 --name-status --pretty=""'
     hlitauti.run(ctx, cmd)
@@ -431,7 +432,7 @@ def git_branch_create(  # type: ignore
                 f"You should branch from master and not from '{curr_branch}'"
             )
     # Fetch master.
-    cmd = "git pull --autostash"
+    cmd = "git pull --autostash --rebase"
     hlitauti.run(ctx, cmd)
     # git checkout -b LmTask169_Get_GH_actions_working_on_lm
     cmd = f"git checkout -b {branch_name}"
@@ -578,8 +579,6 @@ def git_branch_copy(  # type: ignore
     """
     hdbg.dassert(not use_patch, "Patch flow not implemented yet")
     #
-    cmd = "invoke fix_perms"
-    hlitauti.run(ctx, cmd)
     cmd = "git clean -fd"
     hlitauti.run(ctx, cmd)
     #

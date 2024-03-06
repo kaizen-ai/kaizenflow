@@ -1,0 +1,4 @@
+{% include "client_common.ovpn.j2" %}
+
+pkcs12 {{ openvpn_client_username }}@{{ openvpn_server_common_name }}.p12
+tls-crypt ta-{{ openvpn_server_port }}.key

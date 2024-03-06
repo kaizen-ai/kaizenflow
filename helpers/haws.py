@@ -5,6 +5,7 @@ import helpers.haws as haws
 """
 
 import logging
+from typing import Optional
 
 import boto3
 from boto3.resources.base import ServiceResource
@@ -23,9 +24,13 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def get_session(aws_profile: str) -> boto3.session.Session:
+def get_session(
+    aws_profile: str, *, region: Optional[str] = None
+) -> boto3.session.Session:
     """
     Return connected Boto3 session.
+
+    :param region: aws region, if None get region from aws credentials.
     """
     hdbg.dassert_isinstance(aws_profile, str)
     # When deploying jobs via ECS the container obtains credentials based on
@@ -40,6 +45,8 @@ def get_session(aws_profile: str) -> boto3.session.Session:
         credentials = credentials.copy()
         # Boto session expects `region_name`.
         credentials["region_name"] = credentials.pop("aws_region")
+        if region:
+            credentials["region_name"] = region
         # TODO(gp): a better approach is to just extract what boto.Session needs rather
         #  then passing everything.
         if "aws_s3_bucket" in credentials:
@@ -49,11 +56,15 @@ def get_session(aws_profile: str) -> boto3.session.Session:
     return session
 
 
-def get_service_client(aws_profile: str, service_name: str) -> BaseClient:
+def get_service_client(
+    aws_profile: str, service_name: str, *, region: Optional[str] = None
+) -> BaseClient:
     """
     Return client to work with desired service in the specific region.
+
+    For params look at `get_session()`
     """
-    session = get_session(aws_profile)
+    session = get_session(aws_profile, region=region)
     client = session.client(service_name=service_name)
     return client
 
@@ -73,25 +84,33 @@ def get_service_resource(aws_profile: str, service_name: str) -> ServiceResource
 
 
 # TODO(Toma): Deprecate in favor of `get_service_client`.
-def get_ecs_client(aws_profile: str) -> BaseClient:
+def get_ecs_client(
+    aws_profile: str, *, region: Optional[str] = None
+) -> BaseClient:
     """
     Return client to work with Elastic Container Service in the specific
     region.
+
+    For params look at `get_session()`
     """
-    session = get_session(aws_profile)
+    session = get_session(aws_profile, region=region)
     client = session.client(service_name="ecs")
     return client
 
 
-def get_task_definition_image_url(task_definition_name: str) -> str:
+def get_task_definition_image_url(
+    task_definition_name: str, *, region: Optional[str] = None
+) -> str:
     """
     Get ECS task definition by name and return only image URL.
 
-    :param task_definition_name: the name of the ECS task definition, e.g., cmamp-test
+    :param task_definition_name: the name of the ECS task definition,
+        e.g., cmamp-test
+    :param region: look at `get_session()`
     """
     aws_profile = "ck"
     service_name = "ecs"
-    client = get_service_client(aws_profile, service_name)
+    client = get_service_client(aws_profile, service_name, region=region)
     # Get the last revision of the task definition.
     task_description = client.describe_task_definition(
         taskDefinition=task_definition_name
@@ -102,16 +121,23 @@ def get_task_definition_image_url(task_definition_name: str) -> str:
 
 
 # TODO(Nikola): Pass a dict config instead, so any part can be updated.
-def update_task_definition(task_definition_name: str, new_image_url: str) -> None:
+def update_task_definition(
+    task_definition_name: str, new_image_url: str, *, region: Optional[str] = None
+) -> None:
     """
     Create the new revision of specified ECS task definition.
 
-    :param task_definition_name: the name of the ECS task definition for which
-        an update to container image URL is made, e.g., cmamp-test
-    :param new_image_url: New image url for task definition.
-        e.g., `***.dkr.ecr.***/cmamp:prod`
+    If region is different then the default one, it is assumed 
+    that ECR replication is enabled from the default region to the
+    target region.
+
+    :param task_definition_name: the name of the ECS task definition for
+        which an update to container image URL is made, e.g., cmamp-test
+    :param new_image_url: New image url for task definition. e.g.,
+        `***.dkr.ecr.***/cmamp:prod`
+    :param region: look at `get_session()`
     """
-    client = get_ecs_client("ck")
+    client = get_ecs_client("ck", region=region)
     # Get the last revision of the task definition.
     task_description = client.describe_task_definition(
         taskDefinition=task_definition_name

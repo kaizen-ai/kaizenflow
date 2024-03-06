@@ -33,13 +33,15 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): At hindsight a `DagRunner` just calls methods on a DAG so we could
 #  merge the code into the DAG to simplify the class system. If we wanted to
 #  keep the behaviors separated, we could use mixins like `FitPredictDag`.
+# TODO(gp): This has specific code for `fit` and `predict` so we should rename
+#  appropriately (_FitPredictDagRunnerMixin?). Maybe we just need a `DagRunner(
+#  abc.ABC)` as placeholder.
 class DagRunner(abc.ABC, hobject.PrintableMixin):
     """
     Abstract class with the common code to all `DagRunner`s.
 
-    A `DagRunner` receives a `DAG` or a `DagBuilder` and allows to run `fit()`
-    and `predict()` on it. If a `DagBuilder` is passed, then it is used to
-    build a `DAG`.
+    A `DagRunner` receives a `DAG` and allows to run methods on it (e.g., `fit()`
+    and `predict()`).
 
     There is not a method common to all `DagRunner`s that is abstract,
     so we use `abc.ABC` to guarantee that this class is not instantiated
@@ -62,7 +64,12 @@ class DagRunner(abc.ABC, hobject.PrintableMixin):
         self._column_to_tags_mapping = None
         # Extract the sink node.
         self._result_nid = self.dag.get_unique_sink()
-        _LOG.debug("_result_nid=%s", self._result_nid)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("_result_nid=%s", self._result_nid)
+
+    # ///////////////////////////////////////////////////////////////////////////
+    # Print.
+    # ///////////////////////////////////////////////////////////////////////////
 
     def __str__(
         self,
@@ -90,16 +97,22 @@ class DagRunner(abc.ABC, hobject.PrintableMixin):
         )
         return super().__repr__(attr_names_to_skip=attr_names_to_skip)
 
+    # ///////////////////////////////////////////////////////////////////////////
+    # Private methods.
+    # ///////////////////////////////////////////////////////////////////////////
+
     def _set_fit_predict_intervals(
         self, method: dtfcornode.Method, intervals: Optional[dtfcorutil.Intervals]
     ) -> None:
         """
         Set fit or predict intervals for all the source nodes.
 
+        :param method: method to run
         :param intervals: as in `DataSource` node, but allowing `None` to mean no
             interval
         """
-        _LOG.debug(hprint.to_str("method intervals"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("method intervals"))
         if intervals is None:
             return
         # Propagate the intervals to all source nodes.
@@ -118,7 +131,9 @@ class DagRunner(abc.ABC, hobject.PrintableMixin):
         """
         Run the DAG for the given method.
 
-        :return: the dataframe for the only output and the associated Info
+        :param method: method to run
+        :return: the dataframe for the only output and the associated
+            Info
         """
         nid = self._result_nid
         # TODO(gp): Add a check for `df_out`.
@@ -194,11 +209,17 @@ class FitPredictDagRunner(DagRunner):
         method = "predict"
         return self._run_dag(method)
 
+    # ///////////////////////////////////////////////////////////////////////////
+    # Private methods.
+    # ///////////////////////////////////////////////////////////////////////////
+
     def _run_dag(self, method: dtfcornode.Method) -> dtfcorebun.ResultBundle:
         df_out, info = self._run_dag_helper(method)
         return self._to_result_bundle(method, df_out, info)
 
 
+# #############################################################################
+# PredictionDagRunner
 # #############################################################################
 
 
@@ -258,8 +279,8 @@ class PredictionDagRunner(FitPredictDagRunner):
 # ...
 
 # fit_start_dt, fit_end_dt (e.g., [2019-12-01, 2020-01-01])
-#   the only constrain on how data beside the tile is provided is just to accommodate
-#   on the first tile
+#   the only constraint on how data beside the tile is provided is just to
+#   accommodate on the first tile
 # retraining_freq (e.g., 1W)
 # retraining_lookback
 
@@ -268,7 +289,7 @@ class PredictionDagRunner(FitPredictDagRunner):
 
 class RollingFitPredictDagRunner(DagRunner):
     """
-    Run a DAG by periodic fitting on previous history and evaluating on new
+    Run a `DAG` by periodic fitting on previous history and evaluating on new
     data.
     """
 
@@ -287,7 +308,7 @@ class RollingFitPredictDagRunner(DagRunner):
         :param predict_end_timestamp: end of predict window
         :param retraining_freq: how often to retrain using Pandas frequency
             convention (e.g., `2B`). The frequency should be such that it's
-            independent from `predict_start_timestamp` and `predict_end_timestamp`
+            independent of `predict_start_timestamp` and `predict_end_timestamp`
             (since we want the retraining grid to be independent on the tiling).
             E.g., "7D" is not the same as "1W" because with "7D" Pandas starts
             sampling from predict_start_timestamp, while "1W" aligns on Sundays
@@ -325,16 +346,18 @@ class RollingFitPredictDagRunner(DagRunner):
         """
         Generate an index of retraining dates based on specs.
 
-        The input parameters have the same meaning as in the constructor.
+        The input parameters have the same meaning as in the
+        constructor.
 
         :return: (re)training dates
         """
-        _LOG.debug(
-            hprint.to_str(
-                "predict_start_timestamp predict_end_timestamp "
-                "retraining_freq retraining_lookback"
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                hprint.to_str(
+                    "predict_start_timestamp predict_end_timestamp "
+                    "retraining_freq retraining_lookback"
+                )
             )
-        )
         # Only certain retraining frequencies are supported.
         retraining_freq_tail = retraining_freq[-1]
         hdbg.dassert_in(
@@ -347,9 +370,11 @@ class RollingFitPredictDagRunner(DagRunner):
         retraining_lookback_timedelta = (
             retraining_lookback * retraining_freq_timedelta
         )
-        _LOG.debug(
-            "Amount of training data required=%s", retraining_lookback_timedelta
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "Amount of training data required=%s",
+                retraining_lookback_timedelta,
+            )
         # Generate a date series based upon predict start/end timestamps and the
         #  required amount of training data.
         normalized_predict_start_timestamp = (
@@ -362,8 +387,9 @@ class RollingFitPredictDagRunner(DagRunner):
                 predict_end_timestamp, retraining_freq
             )
         )
-        _LOG.debug("date_range start=%s", normalized_predict_start_timestamp)
-        _LOG.debug("date_range end=%s", normalized_predict_end_timestamp)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("date_range start=%s", normalized_predict_start_timestamp)
+            _LOG.debug("date_range end=%s", normalized_predict_end_timestamp)
         # Compute the start datetimes for prediction.
         predict_start_datetimes = pd.date_range(
             normalized_predict_start_timestamp,
@@ -372,10 +398,11 @@ class RollingFitPredictDagRunner(DagRunner):
         )
         predict_start_datetimes = pd.Series(data=predict_start_datetimes)
         predict_start_datetimes.name = "predict_start"
-        _LOG.debug(
-            "predict_start_datetimes=%s",
-            hpandas.df_to_str(predict_start_datetimes),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "predict_start_datetimes=%s",
+                hpandas.df_to_str(predict_start_datetimes),
+            )
         # Compute the end datetimes for prediction.
         predict_end_datetimes = pd.date_range(
             normalized_predict_start_timestamp + retraining_freq_timedelta,
@@ -384,23 +411,29 @@ class RollingFitPredictDagRunner(DagRunner):
         ) - pd.Timedelta("1D")
         predict_end_datetimes = pd.Series(data=predict_end_datetimes)
         predict_end_datetimes.name = "predict_end"
-        _LOG.debug(
-            "predict_start_datetimes=%s", hpandas.df_to_str(predict_end_datetimes)
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "predict_start_datetimes=%s",
+                hpandas.df_to_str(predict_end_datetimes),
+            )
         # Compute the start datetimes for fitting.
         fit_start_datetimes = (
             predict_start_datetimes - retraining_lookback_timedelta
         )
         fit_start_datetimes = pd.Series(data=fit_start_datetimes)
         fit_start_datetimes.name = "fit_start"
-        _LOG.debug(
-            "fit_start_datetimes=%s", hpandas.df_to_str(fit_start_datetimes)
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "fit_start_datetimes=%s", hpandas.df_to_str(fit_start_datetimes)
+            )
         # Compute the end datetimes for fitting.
         fit_end_datetimes = predict_start_datetimes - pd.Timedelta("1D")
         fit_end_datetimes = pd.Series(data=fit_end_datetimes)
         fit_end_datetimes.name = "fit_end"
-        _LOG.debug("fit_end_datetimes=%s", hpandas.df_to_str(fit_end_datetimes))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "fit_end_datetimes=%s", hpandas.df_to_str(fit_end_datetimes)
+            )
         #
         df = pd.concat(
             [
@@ -411,7 +444,8 @@ class RollingFitPredictDagRunner(DagRunner):
             ],
             axis=1,
         )
-        _LOG.debug("df=%s", hpandas.df_to_str(df))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("df=%s", hpandas.df_to_str(df))
         return df
 
     def fit_predict(self) -> Generator:
@@ -420,13 +454,15 @@ class RollingFitPredictDagRunner(DagRunner):
 
         :return: the training time, fit `ResultBundle`, predict `ResultBundle`
         """
-        _LOG.debug(
-            "retraining_datetimes=%s",
-            hpandas.df_to_str(self._retraining_datetimes),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "retraining_datetimes=%s",
+                hpandas.df_to_str(self._retraining_datetimes),
+            )
         for row in self._retraining_datetimes.iterrows():
-            _LOG.debug("row=%s", row)
-            _LOG.debug("fit/predict cycle=%d", row[0])
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("row=%s", row)
+                _LOG.debug("fit/predict cycle=%d", row[0])
             #
             fit_start = row[1].fit_start
             fit_end = row[1].fit_end
@@ -440,6 +476,10 @@ class RollingFitPredictDagRunner(DagRunner):
             # TODO(gp): Better to return a pd.Timestamp rather than its representation.
             training_datetime_str = fit_start.strftime("%Y%m%d_%H%M%S")
             yield training_datetime_str, fit_result_bundle, predict_result_bundle
+
+    # ///////////////////////////////////////////////////////////////////////////
+    # Private methods.
+    # ///////////////////////////////////////////////////////////////////////////
 
     @staticmethod
     def _left_align_timestamp_on_grid(
@@ -458,11 +498,12 @@ class RollingFitPredictDagRunner(DagRunner):
             .last()
             .index[0]
         )
-        _LOG.debug(
-            "timestamp `%s` left aligned to `%s`",
-            timestamp,
-            left_aligned_timestamp,
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "timestamp `%s` left aligned to `%s`",
+                timestamp,
+                left_aligned_timestamp,
+            )
         return left_aligned_timestamp
 
     def _fit(

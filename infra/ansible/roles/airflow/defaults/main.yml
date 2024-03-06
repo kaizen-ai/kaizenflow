@@ -1,0 +1,3 @@
+deployment_env: 'prod' # can be 'preprod' or 'prod'
+efs_dns_name: "${EFS_DNS_NAME}"
+airflow_webserver_ip: "172.30.2.114"

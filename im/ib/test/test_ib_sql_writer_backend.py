@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-import helpers.hunit_test as hunitest
+import helpers.hpandas as hpandas
 import im.common.data.types as imcodatyp
 import im.common.test.utils as ictuti
 import im.ib.sql_writer as imibsqwri
@@ -13,8 +13,15 @@ class TestIbSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
     Test writing operation to PostgreSQL IM db.
     """
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test2()
+        yield
+
+    def set_up_test2(self) -> None:
+        self.set_up_test()
         # Initialize writer class to test.
         self._writer = imibsqwri.IbSqlWriter(
             dbname=self._dbname,
@@ -73,7 +80,7 @@ class TestIbSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):
             frequency=imcodatyp.Frequency.Daily,
         )
         # Convert dataframe to string.
-        txt = hunitest.convert_df_to_string(df)
+        txt = hpandas.df_to_str(df, num_rows=None)
         # Check the output against the golden.
         self.check_string(txt, fuzzy_match=True)
 

@@ -4,6 +4,7 @@ Import as:
 import helpers.hunit_test_utils as hunteuti
 """
 
+import abc
 import glob
 import logging
 import os
@@ -70,7 +71,8 @@ class UnitTestRenamer:
         """
         Rename the directory that contains test outcomes.
 
-        :param path: the path to the test directory, e.g. `cmamp1/helpers/test/`
+        :param path: the path to the test directory, e.g.
+            `cmamp1/helpers/test/`
         """
         outcomes_path = os.path.join(path, "outcomes")
         dir_items = os.listdir(outcomes_path)
@@ -255,8 +257,8 @@ class UnitTestRenamer:
         Rename a class in a Python file.
 
         :param content: the content of the file
-        :return: the content of the file with the class name replaced, the number
-          of substitutions replaced
+        :return: the content of the file with the class name replaced,
+            the number of substitutions replaced
         """
         lines = content.split("\n")
         docstring_line_indices = hstring.get_docstring_line_indices(lines)
@@ -283,7 +285,8 @@ class UnitTestRenamer:
         Rename the method of the class.
 
         :param content: the content of the file
-        :return: content of the file with the method renamed, the number of substitutions made
+        :return: content of the file with the method renamed, the number
+            of substitutions made
         """
         lines = content.split("\n")
         # Flag that informs if the class border was found.
@@ -362,7 +365,8 @@ def get_test_directories(root_dir: str) -> List[str]:
     """
     Get paths of all the directories that contain unit tests.
 
-    :param root_dir: the dir to start the search from, e.g. `/src/cmamp1/helpers`
+    :param root_dir: the dir to start the search from, e.g.
+        `/src/cmamp1/helpers`
     :return: paths of test directories
     """
     paths = []
@@ -372,6 +376,39 @@ def get_test_directories(root_dir: str) -> List[str]:
             paths.append(path)
     hdbg.dassert_lte(1, len(paths))
     return paths
+
+
+# #############################################################################
+
+
+class Obj_to_str_TestCase(abc.ABC):
+    """
+    Test case for testing `obj_to_str()` and `obj_to_repr()`.
+    """
+
+    def run_test_repr(self, obj: Any, expected_str: str) -> None:
+        """
+        Check that `__repr__` is printed correctly.
+        """
+        method_name = "__repr__"
+        self._test_method(obj, method_name, expected_str)
+
+    def run_test_str(self, obj: Any, expected_str: str) -> None:
+        """
+        Check that `__str__` is printed correctly.
+        """
+        method_name = "__str__"
+        self._test_method(obj, method_name, expected_str)
+
+    def _test_method(self, obj: Any, method_name: str, expected_str: str) -> None:
+        """
+        Common method for testing `__repr__` and `__str__`.
+        """
+        hdbg.dassert_is_not(obj, None)
+        actual_str = getattr(obj, method_name)()
+        self.assert_equal(
+            actual_str, expected_str, purify_text=True, fuzzy_match=True
+        )
 
 
 # #############################################################################

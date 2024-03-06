@@ -2,16 +2,14 @@
 name = "amp"
 version = "0.1.0"
 description = ""
-authors = [""]
+authors = ["GP Saggese <gp@kaizen-tech.io>"]
 
 [tool.poetry.dependencies]
 async_solipsism = ">= 0.3"
-# The version is frozen due to #339.
-awscli = "1.29.59"
 boto3 = "*"
 bs4 = "*"
 # It is better to up the version manually for CCXT.
-ccxt = "4.0.53"
+ccxt = "4.2.13"
 # poetry can't install cvxopt so we install it as pip package later in the flow.
 #cvxopt = ">= 1.3.0"
 # poetry can't install cvxpy so we install it as pip package later in the flow.
@@ -42,11 +40,11 @@ networkx = "*"
 # See https://github.com/Jupyter-contrib/jupyter_nbextensions_configurator/issues/164.
 notebook = "< 7.0.0"
 numpy = "*"
-pandas = "> 2"
+pandas = ">= 2.1.1"
 psutil = "*"
 psycopg2-binary = "*"
-# Frozen because of #CmTask5015.
-pyarrow = "10.0.0"
+# Frozen because of #CmTask7288.
+pyarrow = "14.0.2"
 pygraphviz = "*"
 pytest = "*"
 pytest-cov = "*"
@@ -54,7 +52,8 @@ pytest-instafail = "*"
 pytest-rerunfailures = "*"
 pytest-timeout = "*"
 pytest-xdist = "*"
-python = "3.9.*"
+# TODO(Vlad): The version should be restricted to 3.9.*.
+python = ">=3.9,<3.10.dev0"
 python-dotenv = "*"
 pywavelets = "*"
 requests = "*"

@@ -330,24 +330,28 @@ def _docker_login_ecr() -> None:
 
 
 @task
-def docker_login(ctx, target="aws_ecr.ck"):  # type: ignore
+def docker_login(ctx, target_registry="aws_ecr.ck"):  # type: ignore
     """
-    Log in the target registry.
+    Log in the target registry and skip if we are in sorrentum.
 
-    :param target: target Docker image registry to log in to
+    :param target_registry: target Docker image registry to log in to
         - "dockerhub.sorrentum": public Sorrentum Docker image registry
         - "aws_ecr.ck": private AWS CK ECR
     """
+    # No login required as sorrentum container is accessible on the public DockerHub registry.
+    if henv.execute_repo_config_code("get_name()") == "//sorr":
+        _LOG.warning("Skipping logging in for Sorrentum")
+        return
     hlitauti.report_task()
     # We run everything using `hsystem.system(...)` but `ctx` is needed
     # to make the function work as an invoke target.
     _ = ctx
-    if target == "aws_ecr.ck":
+    if target_registry == "aws_ecr.ck":
         _docker_login_ecr()
-    elif target == "dockerhub.sorrentum":
+    elif target_registry == "dockerhub.sorrentum":
         _docker_login_dockerhub()
     else:
-        raise ValueError(f"Invalid Docker image registry='{target}'")
+        raise ValueError(f"Invalid Docker image registry='{target_registry}'")
 
 
 # ////////////////////////////////////////////////////////////////////////////////
@@ -502,7 +506,12 @@ def _generate_docker_compose_file(
           # - CK_HOST_OS_NAME=
           # - CK_PUBLISH_NOTEBOOK_LOCAL_PATH=$CK_PUBLISH_NOTEBOOK_LOCAL_PATH
           - CK_TELEGRAM_TOKEN=$CK_TELEGRAM_TOKEN
+          # TODO(Vlad): consider removing, locally we use our personal tokens from files and
+          # inside GitHub actions we use the `GH_TOKEN` environment variable.
           - GH_ACTION_ACCESS_TOKEN=$GH_ACTION_ACCESS_TOKEN
+          # Inside GitHub Actions we use `GH_TOKEN` environment variable,
+          # see https://cli.github.com/manual/gh_auth_login.
+          - GH_TOKEN=$GH_ACTION_ACCESS_TOKEN
           # This env var is used by GH Action to signal that we are inside the CI.
           - CI=$CI
         image: ${{IMAGE}}
@@ -855,8 +864,14 @@ def _dassert_is_subsequent_version(
 # ////////////////////////////////////////////////////////////////////////////////
 
 
-_INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)*[a-z]{2,}"
-_IMAGE_BASE_NAME_RE = r"[a-z0-9_-]+"
+# This pattern aims to match the full image name including
+# both registry and image path.
+# Examples of valid matches include:
+# - '623860924167.dkr.ecr.eu-north-1.amazonaws.com/cmamp'
+# - 'ghcr.io/cryptokaizen/cmamp'
+# This change is introduced to match the GHCR registry path,
+# since it already includes `/` in the registry name itself.
+_FULL_IMAGE_NAME_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)*[a-z]{2,}(\/[a-z0-9_-]+){1,2}"
 _IMAGE_USER_RE = r"[a-z0-9_-]+"
 # For candidate prod images which have added hash for easy identification.
 _IMAGE_HASH_RE = r"[a-z0-9]{9}"
@@ -886,14 +901,13 @@ def _dassert_is_image_name_valid(image: str) -> None:
     *****.dkr.ecr.us-east-1.amazonaws.com/amp:dev
     *****.dkr.ecr.us-east-1.amazonaws.com/amp:local-saggese-1.0.0
     *****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0
+    ghcr.io/cryptokaizen/cmamp:dev
     """
     regex = "".join(
         [
-            # E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/`
-            # or `sorrentum/`.
-            rf"^{_INTERNET_ADDRESS_RE}\/",
-            # E.g., `amp`.
-            rf"{_IMAGE_BASE_NAME_RE}",
+            # E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/cmamp`
+            # or `sorrentum/cmamp` or ghcr.io/cryptokaizen/cmamp.
+            rf"^{_FULL_IMAGE_NAME_RE}",
             # E.g., `:local-saggese`.
             rf"(:{_IMAGE_STAGE_RE})?",
             # E.g., `-1.0.0`.
@@ -909,9 +923,9 @@ def _dassert_is_base_image_name_valid(base_image: str) -> None:
     """
     Check that the base image is valid, i.e. looks like below.
 
-    *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    *****.dkr.ecr.us-east-1.amazonaws.com/amp ghcr.io/cryptokaizen/cmamp
     """
-    regex = rf"^{_INTERNET_ADDRESS_RE}\/{_IMAGE_BASE_NAME_RE}$"
+    regex = rf"^{_FULL_IMAGE_NAME_RE}$"
     _LOG.debug("regex=%s", regex)
     m = re.match(regex, base_image)
     hdbg.dassert(m, "Invalid base_image: '%s'", base_image)
@@ -1350,7 +1364,8 @@ def docker_cmd(  # type: ignore
     Execute the command `cmd` inside a container corresponding to a stage.
 
     :param as_user: pass the user / group id or not
-    :param generate_docker_compose_file: generate or reuse the Docker compose file
+    :param generate_docker_compose_file: generate or reuse the Docker
+        compose file
     :param use_bash: run command through a shell
     """
     hlitauti.report_task(container_dir_name=container_dir_name)
@@ -1410,12 +1425,15 @@ def docker_jupyter(  # type: ignore
     port=None,
     self_test=False,
     container_dir_name=".",
+    skip_pull=False,
 ):
     """
     Run jupyter notebook server.
 
-    :param auto_assign_port: use the UID of the user and the inferred number of the
-        repo (e.g., 4 for `~/src/amp4`) to get a unique port
+    :param auto_assign_port: use the UID of the user and the inferred
+        number of the repo (e.g., 4 for `~/src/amp4`) to get a unique
+        port
+    :param skip_pull: if True skip pulling the docker image
     """
     hlitauti.report_task(container_dir_name=container_dir_name)
     if port is None:
@@ -1442,7 +1460,7 @@ def docker_jupyter(  # type: ignore
         self_test,
         print_docker_config=print_docker_config,
     )
-    _docker_cmd(ctx, docker_cmd_)
+    _docker_cmd(ctx, docker_cmd_, skip_pull=skip_pull)
 
 
 def _get_docker_dash_app_cmd(
@@ -1484,8 +1502,9 @@ def docker_dash_app(  # type: ignore
     """
     Run dash app.
 
-    :param auto_assign_port: use the UID of the user and the inferred number of the
-        repo (e.g., 4 for `~/src/amp4`) to get a unique port
+    :param auto_assign_port: use the UID of the user and the inferred
+        number of the repo (e.g., 4 for `~/src/amp4`) to get a unique
+        port
     """
     hlitauti.report_task(container_dir_name=container_dir_name)
     if port is None:

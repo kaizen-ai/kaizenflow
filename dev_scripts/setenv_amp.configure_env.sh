@@ -13,6 +13,8 @@ export CK_AWS_PROFILE="ck"
 export AM_ECR_BASE_PATH="665840871993.dkr.ecr.us-east-1.amazonaws.com"
 export AM_AWS_S3_BUCKET="alphamatic-data"
 # TODO(Grisha): Difference between `amp`, `cmamp` and `sorrentum`.
+# Note: Do not modify during integration. Necessary for users with no access to
+# AWS ECR, pulling images from DockerHub.
 export CK_ECR_BASE_PATH="sorrentum"
 export CK_AWS_S3_BUCKET="cryptokaizen-data"
 
@@ -36,3 +38,6 @@ alias il="invoke --list"
 
 # Print the aliases.
 alias
+
+# Add autocomplete for `invoke`.
+source $AMP/dev_scripts/invoke_completion.sh

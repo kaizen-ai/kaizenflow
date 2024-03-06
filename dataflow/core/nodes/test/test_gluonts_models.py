@@ -9,6 +9,7 @@ import core.artificial_signal_generators as carsigen
 import core.config as cconfig
 import dataflow.core.dag as dtfcordag
 import helpers.henv as henv
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -38,7 +39,7 @@ if henv.has_module("gluonts"):
             dag = self._get_dag()
             #
             df_out = dag.run_leq_node("deepar", "fit")["df_out"]
-            df_str = hunitest.convert_df_to_string(df_out, index=True, decimals=1)
+            df_str = hpandas.df_to_str(df_out, num_rows=None, precision=1)
             self.check_string(df_str, fuzzy_match=True)
 
         @pytest.mark.slow("~10 seconds.")
@@ -47,7 +48,7 @@ if henv.has_module("gluonts"):
             #
             dag.run_leq_node("deepar", "fit")
             df_out = dag.run_leq_node("deepar", "predict")["df_out"]
-            df_str = hunitest.convert_df_to_string(df_out, index=True, decimals=1)
+            df_str = hpandas.df_to_str(df_out, num_rows=None, precision=1)
             self.check_string(df_str, fuzzy_match=True)
 
         def _get_dag(self) -> dtfcordag.DAG:
@@ -127,7 +128,7 @@ if henv.has_module("gluonts"):
             dag.add_node(deepar)
             dag.connect("local_ts", "deepar")
             df_out = dag.run_leq_node("deepar", "fit")["df_out"]
-            df_str = hunitest.convert_df_to_string(df_out, index=True, decimals=1)
+            df_str = hpandas.df_to_str(df_out, num_rows=None, precision=1)
             expected_shape = (self._n_periods * (self._grid_len - 1), 1)
             self.assertEqual(df_out.shape, expected_shape)
             self.check_string(df_str)

@@ -1,0 +1,6 @@
+---
+- name: Restart Airflow
+  ansible.builtin.command: docker-compose restart
+  args:
+    chdir: /home/{{ ansible_user }}/cmamp/sorrentum_sandbox/devops/
+  become: true

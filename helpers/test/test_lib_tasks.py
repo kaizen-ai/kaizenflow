@@ -9,7 +9,6 @@ from typing import Dict
 import invoke
 import pytest
 
-import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hprint as hprint
 import helpers.hserver as hserver
@@ -38,18 +37,25 @@ def _get_default_params() -> Dict[str, str]:
 
 class _LibTasksTestCase(hunitest.TestCase):
     """
-    Test class injecting default parameters in the `lib_tasks` singleton on
-    `setUp()` and cleaning up the singleton on `tearDown()`.
+    Test class injecting default parameters in the `lib_tasks` singleton in
+    `set_up_test()` and cleaning up the singleton in `tear_down_test()`.
     """
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
         params = _get_default_params()
         hlitauti.set_default_params(params)
 
-    def tearDown(self) -> None:
+    def tear_down_test(self) -> None:
         hlitauti.reset_default_params()
-        super().tearDown()
 
 
 # #############################################################################
@@ -96,57 +102,6 @@ class _CheckDryRunTestCase(hunitest.TestCase):
 # #############################################################################
 
 
-def _gh_login() -> None:
-    """
-    Log in inside GitHub.
-
-    This is needed by GitHub actions.
-    """
-    env_var = "GH_ACTION_ACCESS_TOKEN"
-    if os.environ.get(env_var, None):
-        # If the env var exists and it's not None.
-        _LOG.warning("Using env var '%s' to log in GitHub", env_var)
-        # For debugging only (see AmpTask1864).
-        if False:
-
-            def _cmd(cmd):
-                hsystem.system(
-                    cmd,
-                    suppress_output=False,
-                    log_level="echo",
-                    abort_on_error=False,
-                )
-
-            for cmd in [
-                "ls -l $HOME/.config",
-                "ls -l $HOME/.config/gh",
-                "ls -l $HOME/.config/gh/config.yml",
-                "touch $HOME/.config/gh/config.yml",
-                "ls -l $HOME/.config/gh/config.yml",
-            ]:
-                _cmd(cmd)
-        cmd = "echo $GH_ACTION_ACCESS_TOKEN | gh auth login --with-token"
-        hsystem.system(cmd)
-    # Check that we are logged in.
-    cmd = "gh auth status"
-    hsystem.system(cmd)
-
-
-# TODO(ShaopengZ): fails when running Sorrentum on ck server. `gh auth login`
-# issue.
-@pytest.mark.skipif(
-    henv.execute_repo_config_code("get_name()") == "//sorr"
-    and hserver.is_inside_ci(),
-    reason="Do not pass from sorrentum GH actions. See CmTask5211",
-)
-class TestGhLogin1(hunitest.TestCase):
-    def test_gh_login(self) -> None:
-        _gh_login()
-
-
-# #############################################################################
-
-
 # TODO(gp): We should group the tests by what is tested and not how it's
 # tested. E.g. TestDryRunTasks1::test_print_setup and
 # TestDryRunTasks2::test_print_setup should go together in a class.
@@ -182,7 +137,7 @@ class TestDryRunTasks1(hunitest.TestCase):
         # TODO(Grisha): add the "no module warning" filtering
         # to `purify_text()` in `check_string()`.
         regex = "WARN.*No module"
-        act = hunitest.filter_text(regex, act)        
+        act = hunitest.filter_text(regex, act)
         if check_string:
             self.check_string(act)
 
@@ -340,7 +295,6 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         reason="Only run in amp as supermodule",
     )
     def test_gh_create_pr1(self) -> None:
-        _gh_login()
         target = "gh_create_pr(ctx, repo_short_name='amp', title='test')"
         self._check_output(target)
 
@@ -351,7 +305,6 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         reason="Only run in amp as supermodule",
     )
     def test_gh_create_pr2(self) -> None:
-        _gh_login()
         target = "gh_create_pr(ctx, body='hello_world', repo_short_name='amp', title='test')"
         self._check_output(target)
 
@@ -362,14 +315,12 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         reason="Only run in amp as supermodule",
     )
     def test_gh_create_pr3(self) -> None:
-        _gh_login()
         target = (
             "gh_create_pr(ctx, draft=False, repo_short_name='amp', title='test')"
         )
         self._check_output(target)
 
     def test_gh_issue_title(self) -> None:
-        _gh_login()
         target = "gh_issue_title(ctx, 1)"
         self._check_output(target)
 
@@ -377,7 +328,6 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(not hgit.is_amp(), reason="Only run in amp")
     def test_gh_workflow_list(self) -> None:
-        _gh_login()
         target = "gh_workflow_list(ctx, filter_by_branch='master')"
         self._check_output(target)
 
@@ -396,7 +346,6 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         self._check_output(target)
 
     def test_git_branch_create1(self) -> None:
-        _gh_login()
         target = (
             "git_branch_create(ctx, branch_name='AmpTask123_test', "
             "only_branch_from_master=False)"
@@ -404,9 +353,9 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         self._check_output(target)
 
     def test_git_branch_create2(self) -> None:
-        _gh_login()
+        # Difference between `cmamp` and `sorrentum`.
         target = (
-            "git_branch_create(ctx, issue_id=1, repo_short_name='cmamp', "
+            "git_branch_create(ctx, issue_id=1, repo_short_name='sorr', "
             "only_branch_from_master=False)"
         )
         self._check_output(target)

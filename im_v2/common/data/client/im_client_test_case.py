@@ -9,6 +9,7 @@ from typing import Any, List
 import pandas as pd
 
 import helpers.hunit_test as hunitest
+import helpers.hunit_test_utils as hunteuti
 import im_v2.common.data.client as icdc
 import im_v2.common.universe as ivcu
 
@@ -17,7 +18,8 @@ import im_v2.common.universe as ivcu
 # #############################################################################
 
 
-class ImClientTestCase(hunitest.TestCase):
+# Inherit from `Obj_to_str_TestCase` to also exercise `__str()__` and `__repr()__`.
+class ImClientTestCase(hunitest.TestCase, hunteuti.Obj_to_str_TestCase):
     """
     Help test classes for classes derived from `ImClient` by implementing
     template test methods for the interface methods in any `ImClient`.

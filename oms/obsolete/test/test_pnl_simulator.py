@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import oms.obsolete.pnl_simulator as oobpnsim
@@ -18,7 +19,7 @@ class TestPnlSimulatorFunctions1(hunitest.TestCase):
         Freeze the output of `_get_data()` as reference for other unit tests.
         """
         df = self._get_data()
-        actual_result = hunitest.convert_df_to_string(df, index=True)
+        actual_result = hpandas.df_to_str(df, num_rows=None)
         expected_result = """
                                   price         ask         bid    midpoint
         2021-09-12 09:30:00  100.496714  100.722490  100.381066  100.551778
@@ -326,9 +327,9 @@ class TestPnlSimulator1(hunitest.TestCase):
         - the total return from the different approaches matches
         """
         act = []
-        act.append("df=\n%s" % hunitest.convert_df_to_string(df, index=True))
+        act.append("df=\n%s" % hpandas.df_to_str(df, num_rows=None))
         act.append(
-            "df_5mins=\n%s" % hunitest.convert_df_to_string(df_5mins, index=True)
+            "df_5mins=\n%s" % hpandas.df_to_str(df_5mins, num_rows=None)
         )
         # Compute pnl using simulation level 1.
         initial_wealth = 1000.0
@@ -341,13 +342,13 @@ class TestPnlSimulator1(hunitest.TestCase):
         act.append("# tot_ret=%s" % tot_ret)
         act.append(
             "After pnl simulation level 1: df_5mins=\n%s"
-            % hunitest.convert_df_to_string(df_5mins, index=True)
+            % hpandas.df_to_str(df_5mins, num_rows=None)
         )
         # Compute pnl using lags.
         tot_ret_lag, df_5mins = oobpnsim.compute_lag_pnl(df_5mins)
         act.append(
             "After pnl lag computation: df_5mins=\n%s"
-            % hunitest.convert_df_to_string(df_5mins, index=True)
+            % hpandas.df_to_str(df_5mins, num_rows=None)
         )
         act.append("# tot_ret_lag=%s" % tot_ret_lag)
         # Compute pnl using simulation level 2.
@@ -361,7 +362,7 @@ class TestPnlSimulator1(hunitest.TestCase):
         df_5mins = _compute_pnl_level2(self, df, df_5mins, initial_wealth, config)
         act.append(
             "After pnl simulation level 2: df_5mins=\n%s"
-            % hunitest.convert_df_to_string(df_5mins, index=True)
+            % hpandas.df_to_str(df_5mins, num_rows=None)
         )
         #
         act = "\n".join(act)
@@ -464,7 +465,7 @@ class TestPnlSimulator2(hunitest.TestCase):
         act = []
         df_5mins = _compute_pnl_level2(self, df, df_5mins, initial_wealth, config)
         act.append(
-            "df_5mins=\n%s" % hunitest.convert_df_to_string(df_5mins, index=True)
+            "df_5mins=\n%s" % hpandas.df_to_str(df_5mins, num_rows=None)
         )
         # Check.
         act = "\n".join(act)

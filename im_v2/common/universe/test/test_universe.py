@@ -35,9 +35,9 @@ class TestGetUniverseFilePath1_TestCase(hunitest.TestCase):
         A smoke test to test correct file path return when correct version is
         provided.
 
-        :param vendor: vendor to apply test to, e.g. CCXT or Talos
+        :param vendor: vendor to apply test to, e.g. CCXT
         :param version: version to test (should be present for a given vendor)
-         e.g. Talos -> v1, CCXT -> v1/v2/v3
+         e.g. CCXT -> v1/v2/v3
         """
         # These should already exist in the filesystem.
         expected_part = "im_v2/{}/universe/{}/universe_{}.json"
@@ -53,7 +53,7 @@ class TestGetUniverseFilePath1_TestCase(hunitest.TestCase):
         Verify that the max universe version is correctly detected and
         returned.
 
-        :param vendor: vendor to apply test to, e.g. CCXT or Talos
+        :param vendor: vendor to apply test to, e.g. CCXT
         """
         # Future proof this test when new versions are added.
         # Assuming we won't have more versions :).
@@ -78,7 +78,7 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         """
         A smoke test to verify that universe loads correctly.
 
-        :param vendor: vendor to apply test to, e.g. CCXT or Talos
+        :param vendor: vendor to apply test to, e.g. CCXT 
         """
         _ = imvcounun._get_vendor_universe(vendor, "trade")
         _ = imvcounun._get_vendor_universe(vendor, "trade", version="v1")
@@ -89,7 +89,7 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         """
         Verify that incorrect universe version is recognized.
 
-        :param vendor: vendor to apply test to, e.g. CCXT or Talos
+        :param vendor: vendor to apply test to, e.g. CCXT 
         """
         with self.assertRaises(AssertionError):
             _ = imvcounun._get_vendor_universe(
@@ -103,7 +103,7 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         Test that vendor universe is loaded correctly as dict using small
         universe file.
 
-        :param vendor: vendor to apply test to, e.g. CCXT or Talos
+        :param vendor: vendor to apply test to, e.g. CCXT 
         :param exchange: exchange to load currency pairs for
         :param currency_pair: currency pair in format: SYMBOL_SYMBOL
         """
@@ -126,7 +126,7 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         Test that universe as full symbols is received correctly from small
         universe.
 
-        :param vendor: vendor to apply test to, e.g. CCXT or Talos
+        :param vendor: vendor to apply test to, e.g. CCXT 
         :param universe_as_full_symbols: list of currency pairs as
             full symbols in format exchange_id::SYMBOL_SYMBOL
         """
@@ -146,7 +146,7 @@ class TestGetUniverseVersions1_TestCase(hunitest.TestCase):
         Verify that download universe versions for the specified vendor
         are correctly detected and returned.
 
-        :param vendor: vendor to apply test to, e.g. CCXT or Talos
+        :param vendor: vendor to apply test to, e.g. CCXT 
         :param mode: download or trade universe
         :param expected_universes_str: string representation of the expected
             universe versions

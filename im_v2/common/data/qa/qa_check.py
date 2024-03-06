@@ -10,6 +10,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 
 import core.config as cconfig
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import im_v2.common.data.transform.transform_utils as imvcdttrut
@@ -96,15 +97,19 @@ class GapsInTimeIntervalBySymbolsCheck(ssacoval.QaCheck):
         start_timestamp: pd.Timestamp,
         end_timestamp: pd.Timestamp,
         data_frequency: str,
+        *,
+        align: bool = False,
     ) -> None:
         """
         :param start_timestamp: start datetime to check
         :param end_timestamp: end datetime to check
-        :param data_frequency: "S" - second, "T" for minute.
+        :param data_frequency: "S" - second, "T" for minute
+        :param align: whether to align the "timestamp" column to its nearest frequency
         """
         self.start_timestamp = start_timestamp
         self.end_timestamp = end_timestamp
         self.data_frequency = data_frequency
+        self.align = align
 
     def check(self, datasets: List[pd.DataFrame]) -> bool:
         """
@@ -117,7 +122,10 @@ class GapsInTimeIntervalBySymbolsCheck(ssacoval.QaCheck):
         :param datasets: list of pandas dataframes to check
         :return: result of checking
         """
+        status = []
         for data in datasets:
+            if self.align:
+                data = self._align(data.copy(), freq=self.data_frequency)
             if data.empty:
                 self._status = "FAILED: The dataset is empty."
                 return False
@@ -129,13 +137,31 @@ class GapsInTimeIntervalBySymbolsCheck(ssacoval.QaCheck):
                     data_frequency=self.data_frequency,
                 )
                 if not gaps_check.check(datasets=[current_data]):
-                    self._status = (
+                    status.append(
                         f"{gaps_check.get_status()}. "
                         f"Currency pair = {currency_pair}."
                     )
-                    return False
+        if len(status) > 0:
+            self._status = "\n".join(status)
+            return False
         self._status = "PASSED"
         return True
+
+    def _align(self, df: pd.DataFrame, freq: str) -> pd.DataFrame:
+        """
+        Align the "timestamp" column in df to nearest freq.
+        
+        :param df: pandas dataframe to align
+        :param freq: frequency string to which the timestamp column should be rounded, eg. "60S"
+        :return: dataframe with the 'timestamp' column aligned to the specified frequency
+        """
+        df.reset_index(inplace=True)
+        if str(df["timestamp"].dtype) in ["int32", "int64"]:
+            df["timestamp"] = df["timestamp"].apply(
+                lambda x: hdateti.convert_unix_epoch_to_timestamp(x)
+            )
+        df["timestamp"] = df["timestamp"].dt.round(freq)
+        return df
 
 
 class NaNChecks(ssacoval.QaCheck):
@@ -201,9 +227,9 @@ class OhlcvLogicalValuesCheck(ssacoval.QaCheck):
         """
         Check single dataset.
 
-        :param dataset: pandas dataframe to check
-        :return: list of the checks results like:
-          {"name_of_the_check1": <boolean check result>}
+        :param data: pandas dataframe to check
+        :return: list of the checks results like: {"name_of_the_check1":
+            <boolean check result>}
         """
         return {
             # TODO(Juraj): temporarily disable this check since it can seldom
@@ -258,10 +284,12 @@ class IdenticalDataFramesCheck(ssacoval.QaCheck):
 
     def check(self, datasets: List[pd.DataFrame]) -> bool:
         """
-        The method assumes two datasets in pd.DataFrame format.
+        The method assumes two datasets in pd.DataFrame format which 
+        are identical in shape.
 
         :param datasets: list of pandas dataframes to check
-        :return: True if DataFrames contain no differing rows, False otherwise
+        :return: True if DataFrames contain no differing rows, False
+            otherwise
         """
         hdbg.dassert_eq(len(datasets), 2)
         # Compare dataframe contents.
@@ -279,6 +307,42 @@ class IdenticalDataFramesCheck(ssacoval.QaCheck):
         self._status = "PASSED"
         return True
 
+class OuterCrossOHLCVDataCheck(ssacoval.QaCheck):
+    """
+    Check that two DataFrames have similar OHLCV data using outer join.
+
+    This QA check performs a full outer join on two DataFrames based on the 
+    'timestamp' and 'currency_pair' columns. It compares the OHLCV data in 
+    the joined DataFrame, and if any differences are found, the check fails.
+    """
+
+    def check(self, datasets: List[pd.DataFrame]) -> bool:
+        """
+        :param datasets: List of Pandas dataframe
+        :return: True if both datasets are similar, False
+            otherwise.
+        """
+        hdbg.dassert_eq(len(datasets), 2)
+        # Perform a full outer join
+        merged_df = pd.merge(datasets[0], datasets[1], on=['timestamp', 'currency_pair'], how='outer', suffixes=('_A', '_B'))
+        merged_df["QAcheck"] = merged_df.apply(self._is_valid_row, axis=1)
+        qa_check_failed = merged_df[merged_df["QAcheck"] == False]
+        if len(qa_check_failed) > 0:
+            qa_check_failed = qa_check_failed.to_string()
+            self._status = f"FAILED: Different data found:\n\t{qa_check_failed}"
+            return False
+        self._status = "PASSED"
+        return True
+
+    def _is_valid_row(self, row: pd.Series) -> bool:
+        """
+        Check if the OHLCV is similar.
+        """
+        cols = ["open", "high", "low", "close", "volume"]
+        for col in cols:
+            if row[col + "_A"] != row[col + "_B"]:
+                return False
+        return True
 
 class BidAskDataFramesSimilarityCheck(ssacoval.QaCheck):
     """
@@ -292,9 +356,10 @@ class BidAskDataFramesSimilarityCheck(ssacoval.QaCheck):
         """
         Constructor.
 
-        :param accuracy_threshold_dict: dict in a format: column : threshold, where
-         column is one of bid/ask data column from level 1 up to level 10, e.g. bid_price_l1.
-         Threshold is a float between 0 and 1.
+        :param accuracy_threshold_dict: dict in a format: column :
+            threshold, where column is one of bid/ask data column from
+            level 1 up to level 10, e.g. bid_price_l1. Threshold is a
+            float between 0 and 1.
         """
         self.accuracy_threshold_dict = accuracy_threshold_dict
 
@@ -370,3 +435,56 @@ class BidAskDataFramesSimilarityCheck(ssacoval.QaCheck):
         # Move the same metrics from two vendors together.
         data = data.reindex(sorted(data.columns), axis=1)
         return data
+
+
+class DuplicateDifferingOhlcvCheck(ssacoval.QaCheck):
+    """
+    Check for duplicate records in the DataFrame, specifically those with the
+    same 'timestamp' and 'currency_pair' columns but differing OHLCV (Open,
+    High, Low, Close, Volume) data.
+
+    E.g.,
+    - This check should pass for records with identical OHLCV values:
+        ```
+        timestamp currency_pair open high low ...
+        123            BTC/USDT   10   12   9
+        123            BTC/USDT   10   12   9
+        ```
+    - This check should fail for records with the same 'timestamp' and
+      'currency_pair' values, but differing OHLCV data:
+        ```
+        timestamp currency_pair open high low ...
+        123            BTC/USDT   10   12   9
+        123            BTC/USDT   10   13   9
+        ```
+    """
+
+    def check(self, datasets: List[pd.DataFrame]) -> bool:
+        """
+        :param datasets: List of Pandas dataframe
+        :return: True if DataFrame contains no duplicate rows with
+            differing values, False otherwise
+        """
+        for dataset in datasets:
+            dataset = dataset.drop_duplicates(
+                subset=[
+                    "timestamp",
+                    "currency_pair",
+                    "open",
+                    "high",
+                    "low",
+                    "close",
+                    "volume",
+                ]
+            )
+            duplicates = dataset[
+                dataset.duplicated(["timestamp", "currency_pair"], keep=False)
+            ]
+            if not duplicates.empty:
+                duplicates_str = duplicates.to_string()
+                self._status = (
+                    f"FAILED: Duplicate table contents:\n\t{duplicates_str}"
+                )
+                return False
+        self._status = "PASSED"
+        return True

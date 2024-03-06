@@ -25,8 +25,8 @@
 - Other times we need to integrate "by file"
 
 - There are various interesting Git reference points:
-  1. The branch point for each fork, at which the integration branch was started
-  2. The last integration point for each fork, at which the repos are the same,
+  1. the branch point for each fork, at which the integration branch was started
+  2. the last integration point for each fork, at which the repos are the same,
      or at least aligned
 
 # Invariants for the integration workflows
@@ -46,11 +46,23 @@
 
 - Crete the integration branches
 
-  ```
+  ```bash
   > cd cmamp1
+  > git checkout master
   > i integrate_create_branch --dir-basename cmamp1
   > cd sorrentum1
+  > git checkout master
   > i integrate_create_branch --dir-basename sorrentum1
+  ```
+
+- In one line
+  ```bash
+  cd $HOME/cmamp1 && \
+    git checkout master && \
+    i integrate_create_branch --dir-basename cmamp1 && \
+    cd $HOME/sorrentum1 && \
+    git checkout master && \
+    i integrate_create_branch --dir-basename sorrentum1
   ```
 
 - Remove white spaces from both source and destination repos:
@@ -180,9 +192,9 @@
   ... Only in .../cmamp1/.../alpha_numeric_data_snapshots: alpha
   ... Only in .../amp1/.../alpha_numeric_data_snapshots: latest
   ```
-- You can accept the `cmamp1` side with:
+- You can accept one side with:
   ```bash
-  > invoke integrate_rsync .../cmamp1/.../alpha_numeric_data_snapshots/
+  > invoke integrate_rsync $(pwd)/marketing
   ```
 - This corresponds to:
   ```bash

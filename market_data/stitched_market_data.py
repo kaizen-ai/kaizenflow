@@ -256,7 +256,6 @@ class IgStitchedMarketData(mdabmada.MarketData):
 # #############################################################################
 
 
-# TODO(Grisha): @Dan CmTask2572 "Add gallery `MarketData`."
 class HorizontalStitchedMarketData(mdabmada.MarketData):
     """
     Stitch together 2 `ImClientMarketData` objects horizontally.
@@ -360,12 +359,51 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
         pd_merge_kwargs = {}
         pd_merge_kwargs["how"] = "outer"
         pd_merge_kwargs["on"] = cols_to_merge_on
+        pd_merge_kwargs["suffixes"] = ("_df1", "_df2")
+        # TODO(Grisha): do not hard-wire column name, pass via interface instead.
+        knowledge_timestamp_column_name = "knowledge_timestamp"
+        # TODO(Grisha): consider factoring out and extending for other columns, e.g.,
+        # `end_download_timestamp`.
+        if (
+            knowledge_timestamp_column_name in market_data_df1.columns
+            and knowledge_timestamp_column_name in market_data_df2.columns
+        ):
+            # Allow to have `knowledge_timestamp` in both dataframes.
+            intersecting_columns = [knowledge_timestamp_column_name]
+        else:
+            intersecting_columns = None
+        # Merge dataframes.
         market_data_df = hpandas.merge_dfs(
             market_data_df1,
             market_data_df2,
             self._end_time_col_name,
+            intersecting_columns=intersecting_columns,
             **pd_merge_kwargs,
         )
+        # TODO(Grisha): consider factoring out and extending for other columns, e.g.,
+        # `end_download_timestamp`.
+        if intersecting_columns is not None:
+            hdbg.dassert_eq(len(pd_merge_kwargs["suffixes"]), 2)
+            # Keep the latest knowledge_timestamp of the two.
+            knowledge_timestamp_column_name_df1 = (
+                knowledge_timestamp_column_name + pd_merge_kwargs["suffixes"][0]
+            )
+            knowledge_timestamp_column_name_df2 = (
+                knowledge_timestamp_column_name + pd_merge_kwargs["suffixes"][1]
+            )
+            market_data_df[knowledge_timestamp_column_name] = market_data_df[
+                [
+                    knowledge_timestamp_column_name_df1,
+                    knowledge_timestamp_column_name_df2,
+                ]
+            ].max(axis=1)
+            # Drop the repeating columns.
+            market_data_df = market_data_df.drop(
+                columns=[
+                    knowledge_timestamp_column_name_df1,
+                    knowledge_timestamp_column_name_df2,
+                ]
+            )
         return market_data_df
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:

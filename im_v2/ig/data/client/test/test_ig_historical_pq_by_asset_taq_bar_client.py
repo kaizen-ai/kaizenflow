@@ -26,8 +26,8 @@ class TestIgHistoricalPqByTileTaqBarClient1(icdc.ImClientTestCase):
         # root_dir_name = "/cache/tiled.bar_data.all.2010.weekofyear"
         # partition_mode = "by_year_week"
         # aws s3 ls --profile am s3://alphamatic-data/unit_test/tiled_data/tiled.bar_data.all.2010_2022.20220204/igid\=13684
-        root_dir_name = "s3://alphamatic-data/unit_test/tiled_data/tiled.bar_data.all.2010_2022.20220204"
-        aws_profile = "am"
+        root_dir_name = "s3://cryptokaizen-unit-test/alphamatic-data/unit_test/tiled_data/tiled.bar_data.all.2010_2022.20220204"
+        aws_profile = "ck"
         partition_mode = "by_year_month"
         im_client = imvidcihpbatbc.IgHistoricalPqByTileTaqBarClient(
             vendor, root_dir_name, aws_profile, partition_mode

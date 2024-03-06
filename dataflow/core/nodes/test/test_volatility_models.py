@@ -12,7 +12,9 @@ import core.config as cconfig
 import core.signal_processing as csigproc
 import dataflow.core.nodes.test.helpers as cdnth
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
 from dataflow.core.nodes.volatility_models import (
     MultiindexVolatilityModel,
@@ -29,7 +31,8 @@ class TestSmaModel(hunitest.TestCase):
     def test1(self) -> None:
         # Load test data.
         data = self._get_data()
-        _LOG.debug("data=\n%s", str(data))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("data=\n%s", str(data))
         config = cconfig.Config.from_dict(
             {
                 "col": ["vol_sq"],
@@ -150,13 +153,17 @@ class TestSmaModel(hunitest.TestCase):
         Convert inputs to a string and check it against golden reference.
         """
         decimals = 3
-        actual = hunitest.convert_df_to_string(
-            df.round(decimals), index=True, decimals=decimals
+        actual = hpandas.df_to_str(
+            df.round(decimals), num_rows=None, precision=decimals
         )
         self.check_string(actual, fuzzy_match=True)
 
 
 class TestSingleColumnVolatilityModel(hunitest.TestCase):
+    @pytest.mark.skipif(
+        not hserver.is_inside_ci(),
+        reason="Different goldends locally and in the GH Actions",
+    )
     def test1(self) -> None:
         """
         Perform a typical `fit()` call.
@@ -249,9 +256,7 @@ class TestSingleColumnVolatilityModel(hunitest.TestCase):
         act.append(hprint.frame("info"))
         act.append(str(cconfig.Config.from_dict(info)))
         act.append(hprint.frame("df_out"))
-        act.append(
-            hunitest.convert_df_to_string(df_out.round(2), index=True, decimals=2)
-        )
+        act.append(hpandas.df_to_str(df_out.round(2), num_rows=None, precision=2))
         act = "\n".join(act)
         return act
 
@@ -568,7 +573,7 @@ class TestVolatilityModel(hunitest.TestCase):
         act.append(hprint.frame("info"))
         act.append(str(cconfig.Config.from_dict(info)))
         act.append(hprint.frame("df_out"))
-        act.append(hunitest.convert_df_to_string(df_out, index=True))
+        act.append(hpandas.df_to_str(df_out, num_rows=None))
         act = "\n".join(act)
         return act
 
@@ -582,7 +587,7 @@ class TestVolatilityModel(hunitest.TestCase):
         act.append(hprint.frame("state"))
         act.append(str(state))
         act.append(hprint.frame("df_out"))
-        act.append(hunitest.convert_df_to_string(df_out, index=True))
+        act.append(hpandas.df_to_str(df_out, num_rows=None))
         act = "\n".join(act)
         return act
 
@@ -706,9 +711,7 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         act.append(hprint.frame("info"))
         act.append(str(cconfig.Config.from_dict(rounded_info)))
         act.append(hprint.frame("df_out"))
-        act.append(
-            hunitest.convert_df_to_string(df_out.round(2), index=True, decimals=2)
-        )
+        act.append(hpandas.df_to_str(df_out.round(2), num_rows=None, precision=2))
         act = "\n".join(act)
         return act
 

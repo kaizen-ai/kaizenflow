@@ -1,0 +1,17 @@
+{% include "client_common.ovpn.j2" %}
+
+<ca>
+{{ easyrsa_pki_ca_cert_content }}
+</ca>
+
+<cert>
+{{ easyrsa_pki_client_cert_content }}
+</cert>
+
+<key>
+{{ easyrsa_pki_client_key_content }}
+</key>
+
+<tls-crypt>
+{{ openvpn_ta_key_content }}
+</tls-crypt>

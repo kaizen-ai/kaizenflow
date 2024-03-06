@@ -55,7 +55,6 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
             "universe": "v3",
             "db_stage": "dev",
             "db_table": "ccxt_ohlcv_spot",
-            "incremental": False,
             "log_level": "INFO",
             "aws_profile": "ck",
             "data_format": "postgres",
@@ -63,6 +62,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
             "bid_ask_depth": None,
             "s3_path": None,
             "dst_dir": None,
+            "pq_save_mode": "append",
         }
         self.assertDictEqual(actual, expected)
 
@@ -91,7 +91,6 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
             "universe": "v3",
             "db_stage": "local",
             "db_table": "ccxt_ohlcv_spot",
-            "incremental": False,
             "log_level": "INFO",
             "aws_profile": "ck",
             "data_format": "postgres",

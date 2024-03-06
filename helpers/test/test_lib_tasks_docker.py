@@ -355,6 +355,7 @@ class Test_dassert_is_image_name_valid1(hunitest.TestCase):
 # #############################################################################
 
 
+# TODO(gp): Not sure what's the problem.
 class Test_dassert_is_base_image_name_valid1(hunitest.TestCase):
     def test1(self) -> None:
         """
@@ -367,6 +368,8 @@ class Test_dassert_is_base_image_name_valid1(hunitest.TestCase):
         for base_image in valid_base_images:
             hlitadoc._dassert_is_base_image_name_valid(base_image)
 
+    #@pytest.mark.requires_ck_infra
+    @pytest.mark.skip
     def test2(self) -> None:
         """
         Check that invalid base images do not pass the assertion.

@@ -16,7 +16,6 @@ import core.finance as cofinanc
 import core.signal_processing as csigproc
 import dataflow.core as dtfcore
 import helpers.hdbg as hdbg
-import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
@@ -72,7 +71,7 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
         """
         hdbg.dassert_isinstance(config, cconfig.Config)
         hdbg.dassert_isinstance(weights, pd.Series)
-         # Index must be an pd.Index of consecutive integers starting at 1.
+        # Index must be an pd.Index of consecutive integers starting at 1.
         idx = weights.index
         hdbg.dassert_eq(idx.dtype.type, np.int64)
         # idx_size = idx.size
@@ -227,7 +226,8 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
         mode: str = "strict",
     ) -> dtfcore.DAG:
         dag = dtfcore.DAG(mode=mode)
-        _LOG.debug("%s", config)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("%s", config)
         #
         stage = "filter_ath"
         nid = self._get_nid(stage)
@@ -286,7 +286,8 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
         dag.append_to_tail(node)
         #
         stage = "add_lags"
-        _LOG.debug("stage=%s", stage)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("stage=%s", stage)
         nid = self._get_nid(stage)
         node = dtfcore.GroupedColDfToDfTransformer(
             nid,
@@ -296,7 +297,8 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
         dag.append_to_tail(node)
         #
         stage = "predict"
-        _LOG.debug("stage=%s", stage)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("stage=%s", stage)
         nid = self._get_nid(stage)
         node = dtfcore.GroupedColDfToDfTransformer(
             nid,

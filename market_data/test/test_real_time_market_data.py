@@ -1,6 +1,7 @@
 import logging
-import pytest
+
 import pandas as pd
+import pytest
 
 import helpers.hpandas as hpandas
 import helpers.hsql as hsql
@@ -10,31 +11,41 @@ import market_data.market_data_example as mdmadaex
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(Shaopeng Z): hangs when outside CK infra.
-@pytest.mark.requires_ck_infra
-class TestRealTimeMarketData2(
-    imvcddbut.TestImDbHelper,
-):
+#TODO(Grisha): CmTask7237.
+class TestRealTimeMarketData_TestCase(imvcddbut.TestImDbHelper):
+    # Override this in a child class to test using a specific table.
+    _TABLE_NAME = None
+
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
         # Create test table.
         universe_version = "infer_from_data"
         im_client = icdc.get_mock_realtime_client(
-            universe_version, self.connection, resample_1min=True
+            universe_version,
+            self.connection,
+            self._TABLE_NAME,
+            resample_1min=True,
         )
         # Set up market data client.
         self.market_data = mdmadaex.get_RealtimeMarketData2_example1(im_client)
 
-    def tearDown(self) -> None:
+    def tear_down_test(self) -> None:
         # Delete the table.
         hsql.remove_table(self.connection, "mock2_marketdata")
-        super().tearDown()
 
-    def test_get_data_for_last_period1(self) -> None:
+    def _test_get_data_for_last_period1(self, expected_df_as_str: str) -> None:
         """
         Test get_data_for_last_period() all conditional periods.
         """
@@ -45,6 +56,88 @@ class TestRealTimeMarketData2(
             timedelta,
             ts_col_name=ts_col_name,
         )
+        # pylint: enable=line-too-long
+        self._check_dataframe(actual, expected_df_as_str)
+
+    def _test_get_data_for_interval1(self, expected_df_as_str: str) -> None:
+        """
+        - Ask data for [9:30, 9:45]
+        """
+        # Specify processing parameters.
+        start_ts = pd.Timestamp("2022-04-22 09:30:00-05:00")
+        end_ts = pd.Timestamp("2022-04-22 09:45:00-05:00")
+        ts_col_name = "timestamp"
+        asset_ids = None
+        actual = self.market_data.get_data_for_interval(
+            start_ts, end_ts, ts_col_name, asset_ids
+        )
+        self._check_dataframe(actual, expected_df_as_str)
+
+    def _test_get_data_for_interval2(self, expected_df_as_str: str) -> None:
+        """
+        - Ask data for [10:30, 12:00]
+        """
+        # Set up processing parameters.
+        start_ts = pd.Timestamp("2022-04-22 10:30:00-05:00")
+        end_ts = pd.Timestamp("2022-04-22 12:00:00-05:00")
+        ts_col_name = "timestamp"
+        asset_ids = None
+        actual = self.market_data.get_data_for_interval(
+            start_ts, end_ts, ts_col_name, asset_ids
+        )
+        self._check_dataframe(actual, expected_df_as_str)
+
+    def _test_get_data_at_timestamp1(self, expected_df_as_str: str) -> None:
+        """
+        - Ask data for 9:35
+        - The returned data is for 9:35
+        """
+        # Set up processing parameters.
+        ts = pd.Timestamp("2022-04-22 09:30:00-05:00")
+        ts_col_name = "timestamp"
+        asset_ids = None
+        actual = self.market_data.get_data_at_timestamp(
+            ts, ts_col_name, asset_ids
+        )
+        self._check_dataframe(actual, expected_df_as_str)
+
+    def _check_dataframe(
+        self,
+        actual_df: pd.DataFrame,
+        expected_df_as_str: str,
+    ) -> None:
+        """
+        Check test results for Pandas dataframe format.
+
+        We call it `_check_dataframe` and not `check_dataframe` to avoid overriding
+        the method of the base class `TestCase`.
+
+        :param actual_df: the result dataframe
+        :param expected_df_as_str: expected result in string format
+        """
+        # Check.
+        actual_df = actual_df[sorted(actual_df.columns)]
+        actual_df_as_str = hpandas.df_to_str(
+            actual_df, print_shape_info=True, tag="df"
+        )
+        _LOG.info("-> %s", actual_df_as_str)
+        self.assert_equal(
+            actual_df_as_str,
+            expected_df_as_str,
+            dedent=True,
+            fuzzy_match=True,
+        )
+
+
+# TODO(Shaopeng Z): hangs when outside CK infra.
+@pytest.mark.requires_ck_infra
+class TestRealTimeMarketData2_forOhlcv(TestRealTimeMarketData_TestCase):
+    _TABLE_NAME = "ccxt_ohlcv_futures"
+
+    def test_get_data_for_last_period1(self) -> None:
+        """
+        Test get_data_for_last_period() all conditional periods.
+        """
         # pylint: disable=line-too-long
         expected_df_as_str = r"""
         # df=
@@ -62,20 +155,12 @@ class TestRealTimeMarketData2(
         2022-04-22 12:30:00-04:00 1464553467 65.0 2022-04-22 00:00:00+00:00 binance::ETH_USDT 45.0 4.0 2022-04-22 00:00:00+00:00 55.0 35.0 2022-04-22 12:29:00-04:00 75.0 75.0
         """
         # pylint: enable=line-too-long
-        self._check_dataframe(actual, expected_df_as_str)
+        self._test_get_data_for_last_period1(expected_df_as_str)
 
     def test_get_data_for_interval1(self) -> None:
         """
         - Ask data for [9:30, 9:45]
         """
-        # Specify processing parameters.
-        start_ts = pd.Timestamp("2022-04-22 09:30:00-05:00")
-        end_ts = pd.Timestamp("2022-04-22 09:45:00-05:00")
-        ts_col_name = "timestamp"
-        asset_ids = None
-        actual = self.market_data.get_data_for_interval(
-            start_ts, end_ts, ts_col_name, asset_ids
-        )
         # pylint: disable=line-too-long
         expected_df_as_str = r"""
         # df=
@@ -87,20 +172,12 @@ class TestRealTimeMarketData2(
         2022-04-22 10:30:00-04:00 1464553467 60.0 2022-04-22 00:00:00+00:00 binance::ETH_USDT 40.0 0 2022-04-22 00:00:00+00:00 50.0 30.0 2022-04-22 10:29:00-04:00 80.0 70.0
         """
         # pylint: enable=line-too-long
-        self._check_dataframe(actual, expected_df_as_str)
+        self._test_get_data_for_interval1(expected_df_as_str)
 
     def test_get_data_for_interval2(self) -> None:
         """
         - Ask data for [10:30, 12:00]
         """
-        # Set up processing parameters.
-        start_ts = pd.Timestamp("2022-04-22 10:30:00-05:00")
-        end_ts = pd.Timestamp("2022-04-22 12:00:00-05:00")
-        ts_col_name = "timestamp"
-        asset_ids = None
-        actual = self.market_data.get_data_for_interval(
-            start_ts, end_ts, ts_col_name, asset_ids
-        )
         # pylint: disable=line-too-long
         expected_df_as_str = r"""
         # df=
@@ -112,23 +189,16 @@ class TestRealTimeMarketData2(
         2022-04-22 12:30:00-04:00 1464553467 65.0 2022-04-22 00:00:00+00:00 binance::ETH_USDT 45.0 4 2022-04-22 00:00:00+00:00 55.0 35.0 2022-04-22 12:29:00-04:00 75.0 75.0
         """
         # pylint: enable=line-too-long
-        self._check_dataframe(actual, expected_df_as_str)
+        self._test_get_data_for_interval2(expected_df_as_str)
 
     def test_get_data_at_timestamp1(self) -> None:
         """
         - Ask data for 9:35
         - The returned data is for 9:35
         """
-        # Set up processing parameters.
-        ts = pd.Timestamp("2022-04-22 09:30:00-05:00")
-        ts_col_name = "timestamp"
-        asset_ids = None
-        actual = self.market_data.get_data_at_timestamp(
-            ts, ts_col_name, asset_ids
-        )
         # pylint: disable=line-too-long
         expected_df_as_str = r"""
-       # df=
+        # df=
         index=[2022-04-22 10:30:00-04:00, 2022-04-22 10:30:00-04:00]
         columns=asset_id,close,end_download_timestamp,full_symbol,high,id,knowledge_timestamp,low,open,start_timestamp,ticks,volume
         shape=(1, 12)
@@ -137,7 +207,7 @@ class TestRealTimeMarketData2(
         2022-04-22 10:30:00-04:00 1464553467 60.0 2022-04-22 00:00:00+00:00 binance::ETH_USDT 40.0 0 2022-04-22 00:00:00+00:00 50.0 30.0 2022-04-22 10:29:00-04:00 80.0 70.0
         """
         # pylint: enable=line-too-long
-        self._check_dataframe(actual, expected_df_as_str)
+        self._test_get_data_at_timestamp1(expected_df_as_str)
 
     def test_get_twap_price1(self) -> None:
         """
@@ -175,29 +245,82 @@ class TestRealTimeMarketData2(
             expected_signature=expected_df_as_str,
         )
 
-    def _check_dataframe(
-        self,
-        actual_df: pd.DataFrame,
-        expected_df_as_str: str,
-    ) -> None:
-        """
-        Check test results for Pandas dataframe format.
 
-        We call it `_check_dataframe` and not `check_dataframe` to avoid overriding
-        the method of the base class `TestCase`.
+# TODO(Shaopeng Z): hangs when outside CK infra.
+@pytest.mark.requires_ck_infra
+class TestRealTimeMarketData2_forBidAskResampled(TestRealTimeMarketData_TestCase):
+    _TABLE_NAME = "ccxt_bid_ask_futures_resampled_1min"
 
-        :param actual_df: the result dataframe
-        :param expected_df_as_str: expected result in string format
+    def test_get_data_for_last_period1(self) -> None:
         """
-        # Check.
-        actual_df = actual_df[sorted(actual_df.columns)]
-        actual_df_as_str = hpandas.df_to_str(
-            actual_df, print_shape_info=True, tag="df"
-        )
-        _LOG.info("-> %s", actual_df_as_str)
-        self.assert_equal(
-            actual_df_as_str,
-            expected_df_as_str,
-            dedent=True,
-            fuzzy_match=True,
-        )
+        Test get_data_for_last_period() all conditional periods.
+        """
+        # pylint: disable=line-too-long
+        expected_df_as_str = r"""
+        # df=
+        index=[2022-04-22 10:30:00-04:00, 2022-04-22 12:30:00-04:00]
+        columns=asset_id,end_download_timestamp,full_symbol,knowledge_timestamp,level_1.ask_price.close,level_1.ask_price.high,level_1.ask_price.low,level_1.ask_price.mean,level_1.ask_price.open,level_1.ask_size.close,level_1.ask_size.max,level_1.ask_size.mean,level_1.ask_size.min,level_1.ask_size.open,level_1.bid_price.close,level_1.bid_price.high,level_1.bid_price.low,level_1.bid_price.mean,level_1.bid_price.open,level_1.bid_size.close,level_1.bid_size.max,level_1.bid_size.mean,level_1.bid_size.min,level_1.bid_size.open,start_timestamp
+        shape=(121, 25)
+        asset_id end_download_timestamp full_symbol knowledge_timestamp level_1.ask_price.close level_1.ask_price.high level_1.ask_price.low level_1.ask_price.mean level_1.ask_price.open level_1.ask_size.close level_1.ask_size.max level_1.ask_size.mean level_1.ask_size.min level_1.ask_size.open level_1.bid_price.close level_1.bid_price.high level_1.bid_price.low level_1.bid_price.mean level_1.bid_price.open level_1.bid_size.close level_1.bid_size.max level_1.bid_size.mean level_1.bid_size.min level_1.bid_size.open start_timestamp
+        end_timestamp
+        2022-04-22 10:30:00-04:00 1464553467 2022-04-22 00:00:00+00:00 binance::ETH_USDT 2022-04-22 00:00:00+00:00 30.0 40.0 50.0 60.0 60.0 60.0 40.0 50.0 30.0 50.0 50.0 60.0 30.0 40.0 40.0 10.0 20.0 30.0 15.0 5.0 2022-04-22 10:29:00-04:00
+        2022-04-22 10:31:00-04:00 1464553467 NaT binance::ETH_USDT NaT NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 2022-04-22 10:30:00-04:00
+        2022-04-22 10:32:00-04:00 1464553467 NaT binance::ETH_USDT NaT NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 2022-04-22 10:31:00-04:00
+        ...
+        2022-04-22 12:28:00-04:00 1464553467 NaT binance::ETH_USDT NaT NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 2022-04-22 12:27:00-04:00
+        2022-04-22 12:29:00-04:00 1464553467 NaT binance::ETH_USDT NaT NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 2022-04-22 12:28:00-04:00
+        2022-04-22 12:30:00-04:00 1464553467 2022-04-22 00:00:00+00:00 binance::ETH_USDT 2022-04-22 00:00:00+00:00 71.0 31.0 41.0 51.0 61.0 71.0 41.0 51.0 31.0 61.0 71.0 31.0 41.0 51.0 61.0 21.0 41.0 51.0 31.0 11.0 2022-04-22 12:29:00-04:00
+        """
+        self._test_get_data_for_last_period1(expected_df_as_str)
+
+    def test_get_data_for_interval1(self) -> None:
+        """
+        - Ask data for [9:30, 9:45]
+        """
+        # pylint: disable=line-too-long
+        expected_df_as_str = r"""
+        # df=
+        index=[2022-04-22 10:30:00-04:00, 2022-04-22 10:30:00-04:00]
+        columns=asset_id,end_download_timestamp,full_symbol,knowledge_timestamp,level_1.ask_price.close,level_1.ask_price.high,level_1.ask_price.low,level_1.ask_price.mean,level_1.ask_price.open,level_1.ask_size.close,level_1.ask_size.max,level_1.ask_size.mean,level_1.ask_size.min,level_1.ask_size.open,level_1.bid_price.close,level_1.bid_price.high,level_1.bid_price.low,level_1.bid_price.mean,level_1.bid_price.open,level_1.bid_size.close,level_1.bid_size.max,level_1.bid_size.mean,level_1.bid_size.min,level_1.bid_size.open,start_timestamp
+        shape=(1, 25)
+        asset_id end_download_timestamp full_symbol knowledge_timestamp level_1.ask_price.close level_1.ask_price.high level_1.ask_price.low level_1.ask_price.mean level_1.ask_price.open level_1.ask_size.close level_1.ask_size.max level_1.ask_size.mean level_1.ask_size.min level_1.ask_size.open level_1.bid_price.close level_1.bid_price.high level_1.bid_price.low level_1.bid_price.mean level_1.bid_price.open level_1.bid_size.close level_1.bid_size.max level_1.bid_size.mean level_1.bid_size.min level_1.bid_size.open start_timestamp
+        end_timestamp
+        2022-04-22 10:30:00-04:00 1464553467 2022-04-22 00:00:00+00:00 binance::ETH_USDT 2022-04-22 00:00:00+00:00 30.0 40.0 50.0 60.0 60.0 60.0 40.0 50.0 30.0 50.0 50.0 60.0 30.0 40.0 40.0 10.0 20.0 30.0 15.0 5.0 2022-04-22 10:29:00-04:00
+        """
+        # pylint: enable=line-too-long
+        self._test_get_data_for_interval1(expected_df_as_str)
+
+    def test_get_data_for_interval2(self) -> None:
+        """
+        - Ask data for [10:30, 12:00]
+        """
+        # pylint: disable=line-too-long
+        expected_df_as_str = r"""
+        # df=
+        index=[2022-04-22 12:30:00-04:00, 2022-04-22 12:30:00-04:00]
+        columns=asset_id,end_download_timestamp,full_symbol,knowledge_timestamp,level_1.ask_price.close,level_1.ask_price.high,level_1.ask_price.low,level_1.ask_price.mean,level_1.ask_price.open,level_1.ask_size.close,level_1.ask_size.max,level_1.ask_size.mean,level_1.ask_size.min,level_1.ask_size.open,level_1.bid_price.close,level_1.bid_price.high,level_1.bid_price.low,level_1.bid_price.mean,level_1.bid_price.open,level_1.bid_size.close,level_1.bid_size.max,level_1.bid_size.mean,level_1.bid_size.min,level_1.bid_size.open,start_timestamp
+        shape=(1, 25)
+        asset_id end_download_timestamp full_symbol knowledge_timestamp level_1.ask_price.close level_1.ask_price.high level_1.ask_price.low level_1.ask_price.mean level_1.ask_price.open level_1.ask_size.close level_1.ask_size.max level_1.ask_size.mean level_1.ask_size.min level_1.ask_size.open level_1.bid_price.close level_1.bid_price.high level_1.bid_price.low level_1.bid_price.mean level_1.bid_price.open level_1.bid_size.close level_1.bid_size.max level_1.bid_size.mean level_1.bid_size.min level_1.bid_size.open start_timestamp
+        end_timestamp
+        2022-04-22 12:30:00-04:00 1464553467 2022-04-22 00:00:00+00:00 binance::ETH_USDT 2022-04-22 00:00:00+00:00 71.0 31.0 41.0 51.0 61.0 71.0 41.0 51.0 31.0 61.0 71.0 31.0 41.0 51.0 61.0 21.0 41.0 51.0 31.0 11.0 2022-04-22 12:29:00-04:00
+        """
+        # pylint: enable=line-too-long
+        self._test_get_data_for_interval2(expected_df_as_str)
+
+    def test_get_data_at_timestamp1(self) -> None:
+        """
+        - Ask data for 9:35
+        - The returned data is for 9:35
+        """
+        # pylint: disable=line-too-long
+        expected_df_as_str = r"""
+        # df=
+        index=[2022-04-22 10:30:00-04:00, 2022-04-22 10:30:00-04:00]
+        columns=asset_id,end_download_timestamp,full_symbol,knowledge_timestamp,level_1.ask_price.close,level_1.ask_price.high,level_1.ask_price.low,level_1.ask_price.mean,level_1.ask_price.open,level_1.ask_size.close,level_1.ask_size.max,level_1.ask_size.mean,level_1.ask_size.min,level_1.ask_size.open,level_1.bid_price.close,level_1.bid_price.high,level_1.bid_price.low,level_1.bid_price.mean,level_1.bid_price.open,level_1.bid_size.close,level_1.bid_size.max,level_1.bid_size.mean,level_1.bid_size.min,level_1.bid_size.open,start_timestamp
+        shape=(1, 25)
+        asset_id end_download_timestamp full_symbol knowledge_timestamp level_1.ask_price.close level_1.ask_price.high level_1.ask_price.low level_1.ask_price.mean level_1.ask_price.open level_1.ask_size.close level_1.ask_size.max level_1.ask_size.mean level_1.ask_size.min level_1.ask_size.open level_1.bid_price.close level_1.bid_price.high level_1.bid_price.low level_1.bid_price.mean level_1.bid_price.open level_1.bid_size.close level_1.bid_size.max level_1.bid_size.mean level_1.bid_size.min level_1.bid_size.open start_timestamp
+        end_timestamp
+        2022-04-22 10:30:00-04:00 1464553467 2022-04-22 00:00:00+00:00 binance::ETH_USDT 2022-04-22 00:00:00+00:00 30.0 40.0 50.0 60.0 60.0 60.0 40.0 50.0 30.0 50.0 50.0 60.0 30.0 40.0 40.0 10.0 20.0 30.0 15.0 5.0 2022-04-22 10:29:00-04:00
+        """
+        # pylint: enable=line-too-long
+        self._test_get_data_at_timestamp1(expected_df_as_str)

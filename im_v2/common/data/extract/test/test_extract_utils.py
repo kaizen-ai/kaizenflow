@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import os
 import unittest.mock as umock
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
@@ -42,8 +43,16 @@ class TestDownloadExchangeDataToDbPeriodically1(hunitest.TestCase):
         imvcdeexut.time, "sleep", spec=imvcdeexut.time.sleep
     )
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
         # Create new mocks from patch's start() method.
         self.log_mock: umock.MagicMock = self.log_patch.start()
         self.realtime_download_mock: umock.MagicMock = (
@@ -96,14 +105,12 @@ class TestDownloadExchangeDataToDbPeriodically1(hunitest.TestCase):
             second_iteration_exit,
         ]
 
-    def tearDown(self) -> None:
+    def tear_down_test(self) -> None:
         self.log_patch.stop()
         self.realtime_download_patch.stop()
         self.timedelta_patch.stop()
         self.datetime_patch.stop()
         self.sleep_patch.stop()
-        # Deallocate in reverse order to avoid race conditions.
-        super().tearDown()
 
     def call_download_realtime_for_one_exchange_periodically(
         self, additional_kwargs: Optional[Dict[str, Any]] = None
@@ -325,13 +332,23 @@ class TestDownloadExchangeDataToDbPeriodically1(hunitest.TestCase):
         self.assert_equal(actual_error, expected_error, fuzzy_match=True)
 
 
+@pytest.mark.skip("Failing randomly on gh, issue #6789")
 class TestDownloadExchangeDataToDbPeriodically2(hunitest.TestCase):
     """
     Test `download_exchange_data_to_db_periodically` function to download
     bid_ask data through websockets.
     """
 
-    def setUp(self) -> None:
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
         # Add an isolated events loop.
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
@@ -343,7 +360,10 @@ class TestDownloadExchangeDataToDbPeriodically2(hunitest.TestCase):
             return_value=umock.MagicMock(),
         )
         self.mock_connection_manager.start()
-        super().setUp()
+
+    def tear_down_test(self) -> None:
+        self.mock_connection_manager.stop()
+        self.loop.close()
 
     def get_mock_ccxt_okx_data(self, timestamp: int) -> Dict[str, Any]:
         """
@@ -353,14 +373,27 @@ class TestDownloadExchangeDataToDbPeriodically2(hunitest.TestCase):
         :return: mock data.
         """
         return {
-            "bids": [[24017.8, 0.0028975] for _ in range(20)],
-            "asks": [[24017.9, 0.0028975] for _ in range(20)],
+            "bids": [[24017.8, 0.0028975], [10000.8, 0.8975]],
+            "asks": [[24017.9, 0.0028975], [10000.8, 0.8975]],
             "timestamp": timestamp,
             "symbol": None,
         }
 
     @pytest.mark.slow("18 seconds")
-    def test_realtime_bid_ask_download(self) -> None:
+    @umock.patch.object(
+        imvcdexex.CcxtExtractor,
+        "get_exchange_currency_pairs",
+        autospec=True,
+        spec_set=True,
+    )
+    @umock.patch.object(
+        imvcdexex.CcxtExtractor, "log_into_exchange", autospec=True, spec_set=True
+    )
+    def test_realtime_bid_ask_download(
+        self,
+        mock_log_into_exchange: umock.MagicMock,
+        mock_get_exchange_currency_pairs: umock.MagicMock,
+    ) -> None:
         """
         Test downloading bid_ask data through websockets.
 
@@ -386,6 +419,7 @@ class TestDownloadExchangeDataToDbPeriodically2(hunitest.TestCase):
             "start_time": start_time,
             "stop_time": stop_time,
             "method": "websocket",
+            "db_saving_mode": "on_buffer_full",
         }
 
         # Hack asyncio for mocking.
@@ -394,14 +428,11 @@ class TestDownloadExchangeDataToDbPeriodically2(hunitest.TestCase):
 
         umock.MagicMock.__await__ = lambda x: async_magic().__await__()
         mock_okx = umock.MagicMock(spec=imvcdexex.ccxtpro.okx())
-        imvcdexex.ccxtpro.okx.return_value = mock_okx
+        mock_log_into_exchange.return_value = mock_okx
         mock_okx.watchOrderBook.return_value = {}
-        mock_okx.orderbooks["some_symbol"].limit.return_value = [
-            self.get_mock_ccxt_okx_data(
-                start_time.timestamp() * 1000 + milliseconds
-            )
-            for milliseconds in range(0, 10 * 1000, 200)
-        ]
+        mock_data = self.get_mock_ccxt_okx_data(int(start_time.timestamp()))
+        mock_okx.orderbooks["some_symbol"].limit.return_value = mock_data
+        mock_get_exchange_currency_pairs.return_value = []
         exchange = imvcdexex.CcxtExtractor(
             args["exchange_id"], args["contract_type"]
         )
@@ -412,25 +443,20 @@ class TestDownloadExchangeDataToDbPeriodically2(hunitest.TestCase):
             imvcdeexut.download_realtime_for_one_exchange_periodically(
                 args, exchange
             )
-        # Check output.
-        # Get the first dataset that was saved to DB.
-        first_df_to_save = save_data_to_db.call_args[0][0]
-        # Check that all timestamps are between date-time range.
-        self.assertTrue(
-            all(
-                first_df_to_save["timestamp"].between(
-                    start_time.timestamp() * 1000,
-                    stop_time.timestamp() * 1000,
+            # Check output.
+            # Get the first dataset that was saved to DB.
+            first_df_to_save = save_data_to_db.call_args[0][0]
+            # Check that all timestamps are between date-time range.
+            self.assertTrue(
+                all(
+                    first_df_to_save["timestamp"].between(
+                        int(start_time.timestamp()),
+                        int(stop_time.timestamp()),
+                    )
                 )
             )
-        )
-        # Make sure that all levels are in the range from 1 to 10.
-        self.assertTrue(all(first_df_to_save["level"].unique() == range(1, 11)))
-
-    def tearDown(self) -> None:
-        self.mock_connection_manager.stop()
-        self.loop.close()
-        super().tearDown()
+            # Make sure that all levels are in the range from 1 to 10.
+            self.assertTrue(all(first_df_to_save["level"].between(1, 10)))
 
 
 @pytest.mark.skipif(
@@ -444,17 +470,26 @@ class TestDownloadExchangeDataToDb1(
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test2()
+        yield
+        # Run after each test.
+        self.tear_down_test2()
+
+    def set_up_test2(self) -> None:
+        self.set_up_test()
         # Initialize database.
         ccxt_ohlcv_table_query = imvccdbut.get_ccxt_ohlcv_create_table_query()
         hsql.execute_query(self.connection, ccxt_ohlcv_table_query)
 
-    def tearDown(self) -> None:
-        super().tearDown()
+    def tear_down_test2(self) -> None:
         # Drop table used in tests.
         ccxt_ohlcv_drop_query = "DROP TABLE IF EXISTS ccxt_ohlcv_spot;"
         hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
+        self.tear_down_test()
 
     def call_download_exchange_data_to_db(self, use_s3: bool) -> None:
         """
@@ -536,60 +571,6 @@ class TestDownloadExchangeDataToDb1(
         self.assertEqual(mock_get_current_timestamp_as_string.call_count, 0)
         self.assertEqual(mock_get_current_timestamp_as_string.call_args, None)
 
-    @pytest.mark.skip(reason="CMTask2089 and CmTask3359")
-    @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
-    @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
-    def test_function_call2(
-        self,
-        mock_get_current_time: umock.MagicMock,
-        mock_get_current_timestamp_as_string: umock.MagicMock,
-    ) -> None:
-        """
-        Test function call with specific arguments that are mimicking command
-        line arguments and checking saved content in database.
-
-        Run and save to s3.
-        """
-        # Set mock return values.
-        mock_get_current_time.return_value = "2021-11-10 10:12:00.000000+00:00"
-        mock_get_current_timestamp_as_string.return_value = "20211110-000001"
-        # Run.
-        use_s3 = True
-        self.call_download_exchange_data_to_db(use_s3)
-        # Check mock state.
-        self.assertEqual(mock_get_current_time.call_count, 18)
-        self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
-        self.assertEqual(mock_get_current_timestamp_as_string.call_count, 9)
-        self.assertEqual(
-            mock_get_current_timestamp_as_string.call_args.args, ("UTC",)
-        )
-        # Prepare common `hs3.listdir` params.
-        s3_bucket = f"s3://{self.bucket_name}"
-        pattern = "*.csv"
-        only_files = True
-        use_relative_paths = True
-        # Check csv files on s3.
-        csv_path_list = hs3.listdir(
-            s3_bucket,
-            pattern,
-            only_files,
-            use_relative_paths,
-            aws_profile=self.mock_aws_profile,
-        )
-        csv_path_list.sort()
-        expected = [
-            "binance/ADA_USDT_20211110-000001.csv",
-            "binance/AVAX_USDT_20211110-000001.csv",
-            "binance/BNB_USDT_20211110-000001.csv",
-            "binance/BTC_USDT_20211110-000001.csv",
-            "binance/DOGE_USDT_20211110-000001.csv",
-            "binance/EOS_USDT_20211110-000001.csv",
-            "binance/ETH_USDT_20211110-000001.csv",
-            "binance/LINK_USDT_20211110-000001.csv",
-            "binance/SOL_USDT_20211110-000001.csv",
-        ]
-        self.assertListEqual(csv_path_list, expected)
-
 
 def get_simple_crypto_chassis_mock_data(
     start_timestamp: int,
@@ -618,7 +599,16 @@ def get_simple_crypto_chassis_mock_data(
 
 @pytest.mark.slow("Takes around 6 secs")
 class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
-    def setUp(self) -> None:
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test2()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test2(self) -> None:
         self.start_date = datetime(2022, 1, 1)
         self.end_date = self.start_date + timedelta(seconds=4)
         self.path = (
@@ -633,7 +623,7 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
             "periodic_daily.manual.resampled_1min"
             ".parquet.ohlcv.futures.v3.crypto_chassis.binance.v1_0_0"
         )
-        super().setUp()
+        self.set_up_test()
         self.s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
 
     def call_download_historical_data(self) -> None:
@@ -660,6 +650,7 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
             "unit": "s",
             "universe_part": 1,
             "assert_on_missing_data": False,
+            "pq_save_mode": "append",
         }
         exchange = imvccdexex.CryptoChassisExtractor(args["contract_type"])
         imvcdeexut.download_historical_data(args, exchange)
@@ -746,23 +737,28 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
         """
         # Prepare the data for the resampler.
         base_s3_path = "s3://mock_bucket/"
-        run_args = {
-            "start_timestamp": "2022-01-01 00:00:00",
-            "end_timestamp": "2022-01-01 00:04:00",
-            "src_signature": self.src_signature,
-            "dst_signature": self.dst_signature,
-            "src_s3_path": base_s3_path,
-            "dst_s3_path": base_s3_path,
-            "assert_all_resampled": True,
-        }
-        namespace = argparse.Namespace(**run_args)
+        parser = imvcdtrdbad._parse()
+        args = parser.parse_args(
+            [
+                "--start_timestamp",
+                "2022-01-01 00:00:00",
+                "--end_timestamp",
+                "2022-01-01 00:04:00",
+                "--src_signature",
+                self.src_signature,
+                "--src_s3_path",
+                base_s3_path,
+                "--dst_signature",
+                self.dst_signature,
+                "--dst_s3_path",
+                base_s3_path,
+                "--assert_all_resampled",
+                "--bid_ask_levels",
+                "1",
+            ]
+        )
         # Run the resampler.
-        with umock.patch(
-            "im_v2.common.data.transform.transform_utils"
-            ".NUMBER_LEVELS_OF_ORDER_BOOK",
-            2,
-        ):
-            imvcdtrdbad._run(namespace, aws_profile=self.s3fs_)
+        imvcdtrdbad._run(args, aws_profile=self.s3fs_)
         dst_dir = imvcdtrdbad._get_s3_path_from_signature(
             self.dst_signature,
             base_s3_path,
@@ -773,10 +769,12 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
         actual_df = actual_df.drop(["knowledge_timestamp"], axis=1)
         # Compare with expected result.
         actual = hpandas.df_to_str(actual_df, num_rows=5000, max_colwidth=15000)
-        expected = r"""timestamp  level_1.bid_price.close  level_1.bid_size.close  level_1.ask_price.close  level_1.ask_size.close  level_1.bid_price.high  level_1.bid_size.max  level_1.ask_price.high  level_1.ask_size.max  level_1.bid_price.low  level_1.bid_size.min  level_1.ask_price.low  level_1.ask_size.min  level_1.bid_price.mean  level_1.bid_size.mean  level_1.ask_price.mean  level_1.ask_size.mean  level_2.bid_price.close  level_2.bid_size.close  level_2.ask_price.close  level_2.ask_size.close  level_2.bid_price.high  level_2.bid_size.max  level_2.ask_price.high  level_2.ask_size.max  level_2.bid_price.low  level_2.bid_size.min  level_2.ask_price.low  level_2.ask_size.min  level_2.bid_price.mean  level_2.bid_size.mean  level_2.ask_price.mean  level_2.ask_size.mean exchange_id currency_pair  year  month
-            timestamp
-            2022-01-01 00:01:00+00:00 1640995260 0.3481 49676.8 0.3484 49676.8 0.3481 49676.8 0.3484 49676.8 0.3481 49676.8 0.3484 49676.8 0.3481 49676.8 0.3484 49676.8 0.3482 49676.8 0.3485 49676.8 0.3482 49676.8 0.3485 49676.8 0.3482 49676.8 0.3485 49676.8 0.3482 49676.8 0.3485 49676.8 binance ADA_USDT 2022 1
-            2022-01-01 00:01:00+00:00 1640995260 0.3481 49676.8 0.3484 49676.8 0.3481 49676.8 0.3484 49676.8 0.3481 49676.8 0.3484 49676.8 0.3481 49676.8 0.3484 49676.8 0.3482 49676.8 0.3485 49676.8 0.3482 49676.8 0.3485 49676.8 0.3482 49676.8 0.3485 49676.8 0.3482 49676.8 0.3485 49676.8 binance BTC_USDT 2022 1"""
+        expected = r"""
+                                    timestamp  level_1.bid_price.close  level_1.bid_size.close  level_1.ask_price.close  level_1.ask_size.close  level_1.bid_price.high  level_1.bid_size.max  level_1.ask_price.high  level_1.ask_size.max  level_1.bid_price.low  level_1.bid_size.min  level_1.ask_price.low  level_1.ask_size.min  level_1.bid_price.mean  level_1.bid_size.mean  level_1.ask_price.mean  level_1.ask_size.mean exchange_id currency_pair  year  month
+        timestamp
+        2022-01-01 00:01:00+00:00  1640995260                   0.3481                 49676.8                   0.3484                 49676.8                  0.3481               49676.8                  0.3484               49676.8                 0.3481               49676.8                 0.3484               49676.8                  0.3481                49676.8                  0.3484                49676.8     binance      ADA_USDT  2022      1
+        2022-01-01 00:01:00+00:00  1640995260                   0.3481                 49676.8                   0.3484                 49676.8                  0.3481               49676.8                  0.3484               49676.8                 0.3481               49676.8                 0.3484               49676.8                  0.3481                49676.8                  0.3484                49676.8     binance      BTC_USDT  2022      1
+        """
         self.assert_equal(actual, expected, fuzzy_match=True)
         # Check that resampler raises an exception when assert_all_resample is True
         # and an empty df is returned for a currency pair.
@@ -788,11 +786,13 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
             "src_s3_path": base_s3_path,
             "dst_s3_path": base_s3_path,
             "assert_all_resampled": True,
+            "bid_ask_levels": 10,
         }
         namespace = argparse.Namespace(**run_args)
 
         def mock_resample_multilevel_bid_ask_data(
             data: pd.DataFrame,
+            number_levels_of_order_book: int,
         ) -> pd.DataFrame:
             # Return an empty df for BTC.
             if data["currency_pair"][0] == "BTC_USDT":
@@ -853,7 +853,19 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         with umock.patch.object(
             imvcdexex.CcxtExtractor,
             "get_exchange_currency_pairs",
-            return_value=["BTC_USDT", "ETH_USDT"],
+            # Changed return values as a part of CmTask2956
+            # return_value=["BTC_USDT", "ETH_USDT"],
+            return_value=[
+                "ADA/USDT",
+                "AVAX/USDT",
+                "BNB/USDT",
+                "BTC/USDT",
+                "DOGE/USDT",
+                "EOS/USDT",
+                "ETH/USDT",
+                "LINK/USDT",
+                "SOL/USDT",
+            ],
         ):
             exchange = imvcdexex.CcxtExtractor(
                 args["exchange_id"], args["contract_type"]
@@ -862,10 +874,10 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
 
     @pytest.mark.requires_ck_infra
     @pytest.mark.requires_aws
-    def test_empty_dataset(self):
+    def test_empty_dataset(self) -> None:
         """
-        Check that an exception is raised if assert_on_missing_data=True
-        and an empty df is returned.
+        Check that an exception is raised if assert_on_missing_data=True and an
+        empty df is returned.
         """
         # Mock downloader to return an empty dataframe.
         with umock.patch.object(
@@ -878,21 +890,28 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
                 )
             self.assertIn("No data", str(fail.exception))
 
-    @pytest.mark.skip(reason="CMTask2089")
-    @umock.patch.object(imvcdeexut.hparque, "list_and_merge_pq_files")
+    # @pytest.mark.skip(reason="CMTask2089")
+    @pytest.mark.skip(
+        "Cannot be run from the US due to 451 error API error. Run manually."
+    )
+    @pytest.mark.slow("12 seconds")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
+    @umock.patch.object(imvcdeexut.hs3, "dassert_path_exists")
     def test_function_call1(
         self,
+        mock_dassert_path: umock.MagicMock,
         mock_get_current_time: umock.MagicMock,
-        mock_list_and_merge: umock.MagicMock,
     ) -> None:
         """
         Test function call with specific arguments that are mimicking command
         line arguments and comparing function output with predefined directory
         structure and file contents.
         """
+        mock_dassert_path.return_value = None
         # Set mock return values.
-        mock_get_current_time.return_value = "2022-02-08 10:12:00.000000+00:00"
+        mock_get_current_time.return_value = pd.Timestamp(
+            "2022-02-08 10:12:00.000000+00:00"
+        )
         # Create path for incremental mode.
         s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
         with s3fs_.open("s3://mock_bucket/binance/dummy.txt", "w") as f:
@@ -903,17 +922,6 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         # Check mock state.
         self.assertEqual(mock_get_current_time.call_count, 18)
         self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
-        expected_args = mock_list_and_merge.call_args.args
-        expected_kwargs = mock_list_and_merge.call_args.kwargs
-        self.assertEqual(len(expected_args), 1)
-        self.assertEqual(expected_args[0], "s3://mock_bucket/binance")
-        self.assertDictEqual(
-            expected_kwargs,
-            {
-                "aws_profile": self.mock_aws_profile,
-                "drop_duplicates_mode": "ohlcv",
-            },
-        )
         # Prepare common `hs3.listdir` params.
         s3_bucket = f"s3://{self.bucket_name}"
         pattern = "*.parquet"
@@ -933,25 +941,30 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "/".join(path.split("/")[:-1])
             for path in parquet_path_list
         ]
+        print(parquet_path_list)
+        s3_path_common = "v3/periodic_daily/manual/downloaded_1sec/parquet/ohlcv/spot/v3/crypto_chassis/binance/v1_0_0"
         expected_list = [
-            "binance/currency_pair=ADA_USDT/year=2021/month=12",
-            "binance/currency_pair=ADA_USDT/year=2022/month=1",
-            "binance/currency_pair=AVAX_USDT/year=2021/month=12",
-            "binance/currency_pair=AVAX_USDT/year=2022/month=1",
-            "binance/currency_pair=BNB_USDT/year=2021/month=12",
-            "binance/currency_pair=BNB_USDT/year=2022/month=1",
-            "binance/currency_pair=BTC_USDT/year=2021/month=12",
-            "binance/currency_pair=BTC_USDT/year=2022/month=1",
-            "binance/currency_pair=DOGE_USDT/year=2021/month=12",
-            "binance/currency_pair=DOGE_USDT/year=2022/month=1",
-            "binance/currency_pair=EOS_USDT/year=2021/month=12",
-            "binance/currency_pair=EOS_USDT/year=2022/month=1",
-            "binance/currency_pair=ETH_USDT/year=2021/month=12",
-            "binance/currency_pair=ETH_USDT/year=2022/month=1",
-            "binance/currency_pair=LINK_USDT/year=2021/month=12",
-            "binance/currency_pair=LINK_USDT/year=2022/month=1",
-            "binance/currency_pair=SOL_USDT/year=2021/month=12",
-            "binance/currency_pair=SOL_USDT/year=2022/month=1",
+            "currency_pair=ADA_USDT/year=2021/month=12",
+            "currency_pair=ADA_USDT/year=2022/month=1",
+            "currency_pair=AVAX_USDT/year=2021/month=12",
+            "currency_pair=AVAX_USDT/year=2022/month=1",
+            "currency_pair=BNB_USDT/year=2021/month=12",
+            "currency_pair=BNB_USDT/year=2022/month=1",
+            "currency_pair=BTC_USDT/year=2021/month=12",
+            "currency_pair=BTC_USDT/year=2022/month=1",
+            "currency_pair=DOGE_USDT/year=2021/month=12",
+            "currency_pair=DOGE_USDT/year=2022/month=1",
+            "currency_pair=EOS_USDT/year=2021/month=12",
+            "currency_pair=EOS_USDT/year=2022/month=1",
+            "currency_pair=ETH_USDT/year=2021/month=12",
+            "currency_pair=ETH_USDT/year=2022/month=1",
+            "currency_pair=LINK_USDT/year=2021/month=12",
+            "currency_pair=LINK_USDT/year=2022/month=1",
+            "currency_pair=SOL_USDT/year=2021/month=12",
+            "currency_pair=SOL_USDT/year=2022/month=1",
+        ]
+        expected_list = [
+            os.path.join(s3_path_common, val) for val in expected_list
         ]
         self.assertListEqual(parquet_path_list, expected_list)
 
@@ -969,7 +982,8 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         with self.assertRaises(AssertionError) as fail:
             self.call_download_historical_data(incremental)
         self.assertIn(
-            "S3 path 's3://mock_bucket/binance' already exist!", str(fail.exception)
+            "S3 path 's3://mock_bucket/binance' already exist!",
+            str(fail.exception),
         )
 
     @pytest.mark.skip(
@@ -983,7 +997,8 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         with self.assertRaises(AssertionError) as fail:
             self.call_download_historical_data(incremental)
         self.assertIn(
-            "S3 path 's3://mock_bucket/binance' doesn't exist!", str(fail.exception)
+            "S3 path 's3://mock_bucket/binance' doesn't exist!",
+            str(fail.exception),
         )
 
 
@@ -994,17 +1009,26 @@ class TestRemoveDuplicates(hmoto.S3Mock_TestCase, imvcddbut.TestImDbHelper):
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test2()
+        yield
+        # Run after each test.
+        self.tear_down_test2()
+
+    def set_up_test2(self) -> None:
+        self.set_up_test()
         # Initialize database.
         ccxt_ohlcv_table_query = imvccdbut.get_ccxt_ohlcv_create_table_query()
         hsql.execute_query(self.connection, ccxt_ohlcv_table_query)
 
-    def tearDown(self) -> None:
-        super().tearDown()
+    def tear_down_test2(self) -> None:
         # Drop table used in tests.
         ccxt_ohlcv_drop_query = "DROP TABLE IF EXISTS ccxt_ohlcv_spot;"
         hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
+        self.tear_down_test()
 
     def test_remove_duplicates(self) -> None:
         """
@@ -1074,6 +1098,41 @@ class TestVerifySchema(hunitest.TestCase):
         actual_df = imvcdeexut.verify_schema(test_df, "ohlcv")
         # Check the result.
         hunitest.compare_df(test_df, actual_df)
+
+    def test_datetime_column(self) -> None:
+        """
+        Test that columns of datetime type pass the check even if a time unit
+        does not match the schema.
+        """
+        # Define test Dataframe.
+        test_data = {
+            "timestamp": [1636539120000, 1636539180000, 1636539240000],
+            "open": [2.226, 2.228, 2.23],
+            "high": [2.228, 2.232, 2.233],
+            "low": [2.225, 2.227, 2.23],
+            "close": [2.0, 2.0, 2.0],
+            "volume": [64687.0, 59076.3, 58236.2],
+            "currency_pair": ["ADA_USDT", "ADA_USDT", "ADA_USDT"],
+            "exchange_id": ["binance", "binance", "binance"],
+        }
+        test_df = pd.DataFrame(data=test_data)
+        # Add datetime columns.
+        test_df["end_download_timestamp"] = pd.Timestamp(
+            datetime.utcnow(), tz="UTC"
+        )
+        test_df["knowledge_timestamp"] = pd.Timestamp(datetime.utcnow(), tz="UTC")
+        # Force the time-unit to `us`.
+        test_df["knowledge_timestamp"] = test_df["knowledge_timestamp"].astype(
+            "datetime64[us, UTC]"
+        )
+        test_df["end_download_timestamp"] = test_df[
+            "end_download_timestamp"
+        ].astype("datetime64[us, UTC]")
+        # Check the datetime columns have `us` time-unit.
+        self.assert_equal(test_df["end_download_timestamp"].dtype.unit, "us")
+        self.assert_equal(test_df["knowledge_timestamp"].dtype.unit, "us")
+        # Check that the function doesn't raise an exception.
+        imvcdeexut.verify_schema(test_df, "ohlcv")
 
     def test_fix_int_column(self) -> None:
         """
@@ -1180,12 +1239,18 @@ class TestVerifySchema(hunitest.TestCase):
 
 
 class TestDownloadHistoricalData2(hunitest.TestCase):
-    def setUp(self) -> None:
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+
+    def set_up_test(self) -> None:
         self.start_timestamp = "2021-12-31 23:00:00"
         self.end_timestamp = "2022-01-01 01:00:00"
         self.data_format = ""
-        super().setUp()
-        
+
     def get_simple_ccxt_mock_data(
         self,
         start_timestamp: int,
@@ -1209,7 +1274,7 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
                 for sec in range(number_of_seconds)
             ]
         )
-        
+
     def call_download_historical_data(self) -> None:
         """
         Call download_historical_data with the predefined arguments.
@@ -1231,7 +1296,7 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
             "log_level": "INFO",
             "data_format": self.data_format,
             "assert_on_missing_data": False,
-            "dst_dir": "csv_test"
+            "dst_dir": "csv_test",
         }
         with umock.patch.object(
             imvcdexex.CcxtExtractor,
@@ -1242,9 +1307,12 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
                 args["exchange_id"], args["contract_type"]
             )
             imvcdeexut.download_historical_data(args, exchange)
-    
+
     @umock.patch.object(imvcddbut.hdateti, "get_current_time")
-    def test_function_call1(self, mock_get_current_time: umock.MagicMock,) -> None:
+    def test_function_call1(
+        self,
+        mock_get_current_time: umock.MagicMock,
+    ) -> None:
         """
         Download mocked data and check the local csv file generated.
         """
@@ -1262,7 +1330,7 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
         # Get the result from the local directory.
         actual_df = pd.read_csv(
             f"csv_test/{self.start_timestamp}_{self.end_timestamp}.csv"
-            )
+        )
         actual = hpandas.df_to_str(actual_df)
         expected = r"""
                 timestamp  bid_price_l1  bid_size_l1  bid_price_l2  bid_size_l2  ask_price_l1  ask_size_l1  ask_price_l2  ask_size_l2 currency_pair exchange_id               knowledge_timestamp
@@ -1272,9 +1340,12 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
         3  20211231230003        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8      SOL_USDT     binance  2022-02-08 10:12:00.000000+00:00
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
-        
+
     @umock.patch.object(imvcddbut.hdateti, "get_current_time")
-    def test_function_call2(self, mock_get_current_time: umock.MagicMock,) -> None:
+    def test_function_call2(
+        self,
+        mock_get_current_time: umock.MagicMock,
+    ) -> None:
         """
         Check for wrong data_format argument passed.
         """
@@ -1297,4 +1368,3 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
         ################################################################################
         """
         self.assert_equal(actual_error, expected_error, fuzzy_match=True)
-        

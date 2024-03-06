@@ -25,14 +25,22 @@ import helpers.hprint as hprint
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): -> backtest_drivers.py
+
+
 def _get_single_system_config(
     system_config_list: dtfsys.SystemConfigList,
 ) -> dtfsys.System:
+    """
+    Return the single System from a list of System configs.
+    """
     # Create the DAG runner customizing the System with the specific config.
     hdbg.dassert_isinstance(system_config_list, dtfsys.SystemConfigList)
-    _LOG.debug("system_config_list=\n%s", system_config_list)
-    system = system_config_list.system
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("system_config_list=\n%s", system_config_list)
     system_config = system_config_list.get_only_config()
+    #
+    system = system_config_list.system
     system.set_config(system_config)
     return system
 
@@ -40,12 +48,13 @@ def _get_single_system_config(
 def _save_tiled_output(
     system_config: cconfig.Config,
     result_df: pd.DataFrame,
+    *,
     tag: Optional[str] = None,
 ) -> None:
     """
     Serialize the results of a tiled experiment.
 
-    :param result_bundle: DAG results to save
+    :param result_df: DAG results to save
     """
     start_timestamp = system_config["backtest_config", "start_timestamp"]
     end_timestamp = system_config["backtest_config", "end_timestamp"]
@@ -60,9 +69,9 @@ def _save_tiled_output(
         start_timestamp,
         end_timestamp,
     )
-    # Extract the part of the simulation for this tile (i.e., [start_timestamp,
-    # end_timestamp]) discarding the warm up period (i.e., the data in
-    # [start_timestamp_with_lookback, start_timestamp]).
+    # Extract the part of the simulation for this tile `[start_timestamp,
+    # end_timestamp]` discarding the warm-up period, i.e., the data in
+    # `[start_timestamp_with_lookback, start_timestamp]`
     # Note that we need to save the resulting data with the same timezone as the
     # tile boundaries to ensure that there is no overlap.
     # E.g., assume that the resulting data for a tile falls into
@@ -96,21 +105,24 @@ def _save_tiled_output(
 # #############################################################################
 
 
+# TODO(gp): -> run_ins_tiled_backtest
 def run_in_sample_tiled_backtest(
     system_config_list: dtfsys.SystemConfigList,
 ) -> None:
     """
-    Run a backtest by:
+    Run a backtest in in-sample mode.
 
+    This is done by:
     - creating a DAG from the passed `system.config`
-    - running the DAG: fit and predict on the same dataset (i.e. in-sample prediction)
+    - running the DAG: fit and predict on the same dataset (i.e. in-sample
+      prediction)
     - saving the generated `ResultBundle`
 
     All parameters are passed through a `system.config`.
     """
-    # Create the DAG runner customizing the System with the specific config.
+    # Create the `System`.
     system = _get_single_system_config(system_config_list)
-    #
+    # Prepare the `DagRunner`.
     dag_runner = system.dag_runner
     hdbg.dassert_isinstance(dag_runner, dtfcore.FitPredictDagRunner)
     # TODO(gp): Even this should go in the DAG creation in the builder.
@@ -122,6 +134,7 @@ def run_in_sample_tiled_backtest(
             )
         ],
     )
+    # Run.
     fit_result_bundle = dag_runner.fit()
     # Save results.
     result_df = fit_result_bundle.result_df
@@ -135,8 +148,9 @@ def run_in_sample_tiled_backtest(
 
 def run_ins_oos_tiled_backtest(system_config_list: cconfig.ConfigList) -> None:
     """
-    Run a backtest by:
+    Run a backtest in in-sample / out-of-sample mode.
 
+    This is done by:
     - creating a DAG from the passed `system.config`
     - running the DAG: fit on a train dataset, predict on a test dataset
     - saving the generated `ResultBundle` for both fit and predict stages
@@ -144,7 +158,7 @@ def run_ins_oos_tiled_backtest(system_config_list: cconfig.ConfigList) -> None:
     An example of a dir layout is:
 
     ```
-    /build_tile_configs.C1b.ccxt_v7_1-all.5T.2022-01-01_2022-07-01.run0
+    /build_tile_configs.C1b.ccxt_v7_4-all.5T.2022-01-01_2022-07-01.run0
         /result0
         /tiled_results.fit
         /tiled_results.predict
@@ -152,8 +166,9 @@ def run_ins_oos_tiled_backtest(system_config_list: cconfig.ConfigList) -> None:
 
     All parameters are passed through a `system.config`.
     """
+    # Create the `System`.
     system = _get_single_system_config(system_config_list)
-    # Build the dag runner.
+    # Prepare the `DagRunner`.
     dag_runner = system.dag_runner
     hdbg.dassert_isinstance(dag_runner, dtfcore.FitPredictDagRunner)
     hdbg.dassert_eq(system.train_test_mode, "ins_oos")
@@ -188,8 +203,9 @@ def run_rolling_tiled_backtest(
     system_config_list: dtfsys.SystemConfigList,
 ) -> None:
     """
-    Run a backtest by:
+    Run a backtest in rolling mode.
 
+    This is done by:
     - creating a DAG from the passed `system.config`
     - running the DAG by periodic fitting on previous history and evaluating
          on new data, see `RollingFitPredictDagRunner` for details
@@ -221,10 +237,12 @@ def run_rolling_tiled_backtest(
     ...
     ```
     """
+    # Create the `System`.
     system = _get_single_system_config(system_config_list)
-    # Build the dag runner.
+    # Prepare the `DagRunner`.
     dag_runner = system.dag_runner
     hdbg.dassert_isinstance(dag_runner, dtfcore.RollingFitPredictDagRunner)
+    #
     dst_dir = os.path.join(
         system.config["backtest_config", "dst_dir"], "fit_results"
     )
@@ -233,13 +251,15 @@ def run_rolling_tiled_backtest(
     pred_rbs = []
     for idx, data in enumerate(dag_runner.fit_predict()):
         training_datetime_str, fit_rb, pred_rb = data
-        _LOG.debug(hprint.to_str("idx training_datetime_str"))
-        _LOG.debug("fit_rb df=\n%s", hpandas.df_to_str(fit_rb.result_df))
-        _LOG.debug("pred_rb df=\n%s", hpandas.df_to_str(pred_rb.result_df))
-        # After each training session, we want to save all the info from training
-        # and the model stats (including weights) into an extra directory.
-        # Note that the fit result_df don't form a tile (since they overlap) so we
-        # just save them as they are.
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("idx training_datetime_str"))
+            _LOG.debug("fit_rb df=\n%s", hpandas.df_to_str(fit_rb.result_df))
+            _LOG.debug("pred_rb df=\n%s", hpandas.df_to_str(pred_rb.result_df))
+        # After each training session, we want to save all the info from
+        # training and the model stats (including weights) into an extra
+        # directory.
+        # Note that the fit `result_df` form overlapping tiles so save them as
+        # they are.
         dag = dag_runner.dag
         fit_state = dtfcore.get_fit_state(dag)
         dst_dir_tmp = os.path.join(dst_dir, f"fit_{idx}_{training_datetime_str}")
@@ -251,14 +271,13 @@ def run_rolling_tiled_backtest(
         file_name = os.path.join(dst_dir_tmp, "fit_result_df.parquet")
         result_df = fit_rb.result_df
         hparque.to_parquet(result_df, file_name, log_level=logging.DEBUG)
-        #
+        # Save predict data.
         file_name = os.path.join(dst_dir_tmp, "predict_result_df.parquet")
         result_df = pred_rb.result_df
         hparque.to_parquet(result_df, file_name, log_level=logging.DEBUG)
         # Concat prediction output to convert into a tile.
         pred_rbs.append(pred_rb.result_df)
-    # The invariant is that concatenating all the OOS prediction you get exactly a
-    # tile.
+    # Concatenating all the OOS prediction one should get exactly a tile.
     pred_rb = pd.concat(pred_rbs, axis=0)
     # Save results.
     _save_tiled_output(system.config, pred_rb)

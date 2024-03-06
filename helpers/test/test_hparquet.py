@@ -85,7 +85,6 @@ def _compare_dfs(self: Any, df1: pd.DataFrame, df2: pd.DataFrame) -> str:
 
 # #############################################################################
 
-
 class TestParquet1(hunitest.TestCase):
     def test_get_df1(self) -> None:
         """
@@ -208,12 +207,88 @@ class TestParquet1(hunitest.TestCase):
         2020-01-01 16:00:00-05:00    0     A    48    49"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    def test_load_timestamps(self) -> None:
+        """
+        Check that regardless of the original `pd.Timestamp` unit, the unit
+        after reading the data is `ns` (nanoseconds).
+
+        See
+        https://arrow.apache.org/docs/python/pandas.html#arrow-pandas-conversion
+        for details.
+        """
+        # Generate artificial test data.
+        file_path = os.path.join(self.get_scratch_space(), "dummy.parquet")
+        ts = pd.Timestamp(datetime.datetime.utcnow(), tz="UTC")
+        initial_df = pd.DataFrame([1, 2, 3])
+        initial_df["knowledge_timestamp"] = ts
+        # Force the timestamp's unit to be `us`.
+        initial_df["knowledge_timestamp"] = initial_df[
+            "knowledge_timestamp"
+        ].astype("datetime64[us, UTC]")
+        # Check that the initial timestamp's unit is `us`.
+        self.assertEqual(
+            str(initial_df["knowledge_timestamp"].dtype),
+            "datetime64[us, UTC]",
+        )
+        # Save test data to the scratch dir.
+        hparque.to_parquet(initial_df, file_path)
+        # Read test data from the scratch dir.
+        actual_df = hparque.from_parquet(file_path)
+        # Check that the timestamp's unit has changed to `ns`.
+        self.assert_equal(
+            str(actual_df["knowledge_timestamp"].dtype),
+            "datetime64[ns, UTC]",
+        )
+
+    @pytest.mark.requires_ck_infra("Requires access to CK unit-test S3 bucket")
+    def test_save_read_concat_data(self) -> None:
+        """
+        Verify that data produced by different version of Pandas preserves
+        types when reading/writing to/from Parquet.
+        """
+        # Copy sample data that saved with the Pandas v.1.5.1 from S3 to the
+        # scratch dir.
+        s3_path = self.get_s3_input_dir()
+        local_path = self.get_scratch_space()
+        aws_profile = "ck"
+        hs3.copy_data_from_s3_to_local_dir(s3_path, local_path, aws_profile)
+        # Read sample data from the scratch dir.
+        sample_data = hparque.from_parquet(local_path)
+        # Generate artificial test data.
+        data = {
+            "timestamp": [1696896000000],
+            "open": [27578.4],
+            "high": [27584.3],
+            "low": [27571.2],
+            "close": [27571.3],
+            "volume": [154.933],
+            "exchange_id": ["binance"],
+            "knowledge_timestamp": [
+                pd.Timestamp("2023-11-06 14:15:11.241716+0000", tz="UTC")
+            ],
+        }
+        index = pd.Series(
+            [pd.Timestamp("2023-10-10T00:00:00+00:00")], name="timestamp"
+        )
+        test_data = pd.DataFrame(data, index=index)
+        # Concatenate sample and test data and save it to the scratch dir.
+        combined_test_data = pd.concat([sample_data, test_data])
+        local_combined_file_path = os.path.join(
+            local_path, "combined_dummy.parquet"
+        )
+        hparque.to_parquet(combined_test_data, local_combined_file_path)
+        # Read the data back from the scratch dir.
+        actual_df = hparque.from_parquet(local_combined_file_path)
+        # Check that the data types the same as in the sample data.
+        dtypes_sample = str(sample_data.dtypes)
+        dtypes_actual = str(actual_df.dtypes)
+        self.assert_equal(dtypes_sample, dtypes_actual, fuzzy_match=True)
+
 
 # #############################################################################
 
 
 class TestPartitionedParquet1(hunitest.TestCase):
-
     # From https://arrow.apache.org/docs/python/dataset.html#reading-partitioned-data
     # A dataset can exploit a nested structure, where the sub-dir names hold
     # information about which subset of the data is stored in that dir
@@ -1055,3 +1130,54 @@ class TestYieldParquetTiles(hunitest.TestCase):
         max_date = df.index.max()
         self.assertEqual(max_date.month, end_month)
         self.assertEqual(max_date.year, end_year)
+
+
+# #############################################################################
+
+
+class TestBuildFilterWithOnlyEqualities(hunitest.TestCase):
+    def test_year_month_day_equality(self) -> None:
+        """
+        Test interval with same year, month and day.
+        """
+        start_ts = pd.Timestamp("2022-12-02 09:31:00+00:00")
+        end_ts = pd.Timestamp("2022-12-02 21:31:00+00:00")
+        filters = hparque.build_filter_with_only_equalities(start_ts, end_ts)
+        actual = str(filters)
+        expected = (
+            r"[('year', '==', 2022), ('month', '==', 12), ('day', '==', 2)]"
+        )
+        self.assert_equal(actual, expected)
+
+    def test_year_month_equality(self) -> None:
+        """
+        Test interval with same year and month.
+        """
+        start_ts = pd.Timestamp("2022-12-02 09:31:00+00:00")
+        end_ts = pd.Timestamp("2022-12-28 21:31:00+00:00")
+        filters = hparque.build_filter_with_only_equalities(start_ts, end_ts)
+        actual = str(filters)
+        expected = r"[('year', '==', 2022), ('month', '==', 12)]"
+        self.assert_equal(actual, expected)
+
+    def test_year_equality(self) -> None:
+        """
+        Test interval with same year.
+        """
+        start_ts = pd.Timestamp("2022-10-02 09:31:00+00:00")
+        end_ts = pd.Timestamp("2022-12-02 21:31:00+00:00")
+        filters = hparque.build_filter_with_only_equalities(start_ts, end_ts)
+        actual = str(filters)
+        expected = r"[('year', '==', 2022)]"
+        self.assert_equal(actual, expected)
+
+    def test_no_equality(self) -> None:
+        """
+        Test interval with different start and end years.
+        """
+        start_ts = pd.Timestamp("2021-10-02 09:31:00+00:00")
+        end_ts = pd.Timestamp("2022-10-02 21:31:00+00:00")
+        filters = hparque.build_filter_with_only_equalities(start_ts, end_ts)
+        actual = str(filters)
+        expected = r"[]"
+        self.assert_equal(actual, expected)

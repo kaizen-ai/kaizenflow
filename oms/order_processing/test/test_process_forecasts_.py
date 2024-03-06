@@ -11,6 +11,7 @@ import core.finance as cofinanc
 import core.finance_data_example as cfidaexa
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms.db.oms_db as odbomdb
@@ -53,6 +54,7 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
             "order_config": {
                 "order_type": "price@twap",
                 "order_duration_in_mins": 5,
+                "execution_frequency": "1T",
             },
             "optimizer_config": {
                 "backend": "pomo",
@@ -124,38 +126,38 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
             restrictions_df=restrictions_df,
         )
         actual = str(portfolio)
-        expected = r"""
-<oms.portfolio.dataframe_portfolio.DataFramePortfolio at 0x>
-  # holdings_shares=
-  asset_id                     101    202
-  2000-01-01 09:35:01-05:00   0.00   0.00
-  2000-01-01 09:40:01-05:00 -49.98  49.98
-  2000-01-01 09:45:01-05:00 -49.99  49.99
-  # holdings_notional=
-  asset_id                        101       202
-  2000-01-01 09:35:01-05:00      0.00      0.00
-  2000-01-01 09:40:01-05:00 -49994.47  49994.47
-  2000-01-01 09:45:01-05:00 -49985.86  49985.86
-  # executed_trades_shares=
-  asset_id                        101       202
-  2000-01-01 09:35:01-05:00  0.00e+00  0.00e+00
-  2000-01-01 09:40:01-05:00 -5.00e+01  5.00e+01
-  2000-01-01 09:45:01-05:00 -5.53e-03  5.53e-03
-  # executed_trades_notional=
-  asset_id                        101       202
-  2000-01-01 09:40:01-05:00 -49980.22  49980.22
-  2000-01-01 09:45:01-05:00     -5.53      5.53
-  # pnl=
-  asset_id                     101    202
-  2000-01-01 09:35:01-05:00    NaN    NaN
-  2000-01-01 09:40:01-05:00 -14.26  14.26
-  2000-01-01 09:45:01-05:00  14.14 -14.14
-  # statistics=
-                             pnl  gross_volume  net_volume       gmv  nmv       cash  net_wealth  leverage
-  2000-01-01 09:35:01-05:00  NaN          0.00         0.0      0.00  0.0  1000000.0   1000000.0       0.0
-  2000-01-01 09:40:01-05:00  0.0      99960.44         0.0  99988.95  0.0  1000000.0   1000000.0       0.1
-  2000-01-01 09:45:01-05:00  0.0         11.05         0.0  99971.72  0.0  1000000.0   1000000.0       0.1
-"""
+        expected = exp = r"""
+        <oms.portfolio.dataframe_portfolio.DataFramePortfolio at 0x>
+        # holdings_shares=
+        asset_id                            101    202
+        2000-01-01 09:35:00.100000-05:00   0.00   0.00
+        2000-01-01 09:40:00.100000-05:00 -49.98  49.98
+        2000-01-01 09:45:00.100000-05:00 -49.99  49.99
+        # holdings_notional=
+        asset_id                               101       202
+        2000-01-01 09:35:00.100000-05:00      0.00      0.00
+        2000-01-01 09:40:00.100000-05:00 -49994.47  49994.47
+        2000-01-01 09:45:00.100000-05:00 -49985.86  49985.86
+        # executed_trades_shares=
+        asset_id                               101       202
+        2000-01-01 09:35:00.100000-05:00  0.00e+00  0.00e+00
+        2000-01-01 09:40:00.100000-05:00 -5.00e+01  5.00e+01
+        2000-01-01 09:45:00.100000-05:00 -5.53e-03  5.53e-03
+        # executed_trades_notional=
+        asset_id                               101       202
+        2000-01-01 09:40:00.100000-05:00 -49980.22  49980.22
+        2000-01-01 09:45:00.100000-05:00     -5.53      5.53
+        # pnl=
+        asset_id                            101    202
+        2000-01-01 09:35:00.100000-05:00    NaN    NaN
+        2000-01-01 09:40:00.100000-05:00 -14.26  14.26
+        2000-01-01 09:45:00.100000-05:00  14.14 -14.14
+        # statistics=
+                                            pnl  gross_volume  net_volume       gmv  nmv       cash  net_wealth  leverage
+        2000-01-01 09:35:00.100000-05:00  NaN          0.00         0.0      0.00  0.0  1000000.0   1000000.0       0.0
+        2000-01-01 09:40:00.100000-05:00  0.0      99960.44         0.0  99988.95  0.0  1000000.0   1000000.0       0.1
+        2000-01-01 09:45:00.100000-05:00  0.0         11.05         0.0  99971.72  0.0  1000000.0   1000000.0       0.1
+        """
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
 
@@ -204,6 +206,7 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
             "order_config": {
                 "order_type": "price@twap",
                 "order_duration_in_mins": 5,
+                "execution_frequency": "1T",
             },
             "optimizer_config": {
                 "backend": "pomo",
@@ -317,6 +320,7 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
             "order_config": {
                 "order_type": "partial_spread_0.25@twap",
                 "order_duration_in_mins": 5,
+                "execution_frequency": "1T",
             },
             "optimizer_config": {
                 "backend": "pomo",
@@ -388,37 +392,37 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
         )
         actual = str(portfolio)
         expected = r"""
-<oms.portfolio.dataframe_portfolio.DataFramePortfolio at 0x>
-  # holdings_shares=
-  asset_id                     101    202
-  2000-01-01 09:35:01-05:00   0.00   0.00
-  2000-01-01 09:40:01-05:00 -50.13  49.91
-  2000-01-01 09:45:01-05:00 -50.04  49.96
-  # holdings_notional=
-  asset_id                        101       202
-  2000-01-01 09:35:01-05:00      0.00      0.00
-  2000-01-01 09:40:01-05:00 -50091.23  49944.85
-  2000-01-01 09:45:01-05:00 -49854.64  50080.69
-  # executed_trades_shares=
-  asset_id                     101    202
-  2000-01-01 09:35:01-05:00   0.00   0.00
-  2000-01-01 09:40:01-05:00 -50.13  49.91
-  2000-01-01 09:45:01-05:00   0.09   0.06
-  # executed_trades_notional=
-  asset_id                        101       202
-  2000-01-01 09:40:01-05:00 -50070.28  49991.02
-  2000-01-01 09:45:01-05:00     91.07     55.25
-  # pnl=
-  asset_id                      101    202
-  2000-01-01 09:35:01-05:00     NaN    NaN
-  2000-01-01 09:40:01-05:00  -20.95 -46.17
-  2000-01-01 09:45:01-05:00  145.52  80.60
-  # statistics=
-                                pnl  gross_volume  net_volume        gmv     nmv      cash  net_wealth  leverage
-  2000-01-01 09:35:01-05:00     NaN          0.00        0.00       0.00    0.00  1.00e+06    1.00e+06       0.0
-  2000-01-01 09:40:01-05:00  -67.12     100061.30      -79.26  100036.08 -146.38  1.00e+06    1.00e+06       0.1
-  2000-01-01 09:45:01-05:00  226.12        146.31      146.31   99935.34  226.05  1.00e+06    1.00e+06       0.1
-"""
+        <oms.portfolio.dataframe_portfolio.DataFramePortfolio at 0x>
+        # holdings_shares=
+        asset_id                            101    202
+        2000-01-01 09:35:00.100000-05:00   0.00   0.00
+        2000-01-01 09:40:00.100000-05:00 -50.12  49.89
+        2000-01-01 09:45:00.100000-05:00 -50.01  49.87
+        # holdings_notional=
+        asset_id                               101       202
+        2000-01-01 09:35:00.100000-05:00      0.00      0.00
+        2000-01-01 09:40:00.100000-05:00 -50103.24  50020.21
+        2000-01-01 09:45:00.100000-05:00 -49878.97  50008.48
+        # executed_trades_shares=
+        asset_id                            101    202
+        2000-01-01 09:35:00.100000-05:00   0.00   0.00
+        2000-01-01 09:40:00.100000-05:00 -50.12  49.89
+        2000-01-01 09:45:00.100000-05:00   0.10  -0.02
+        # executed_trades_notional=
+        asset_id                               101       202
+        2000-01-01 09:40:00.100000-05:00 -50053.97  49986.47
+        2000-01-01 09:45:00.100000-05:00    103.03    -20.21
+        # pnl=
+        asset_id                             101    202
+        2000-01-01 09:35:00.100000-05:00     NaN    NaN
+        2000-01-01 09:40:00.100000-05:00  -49.27  33.74
+        2000-01-01 09:45:00.100000-05:00  121.24   8.48
+        # statistics=
+                                            pnl  gross_volume  net_volume        gmv     nmv      cash  net_wealth  leverage
+        2000-01-01 09:35:00.100000-05:00     NaN          0.00        0.00       0.00    0.00  1.00e+06    1.00e+06       0.0
+        2000-01-01 09:40:00.100000-05:00  -15.53     100040.44      -67.50  100123.45  -83.03  1.00e+06    1.00e+06       0.1
+        2000-01-01 09:45:00.100000-05:00  129.72        123.24       82.83   99887.45  129.51  1.00e+06    1.00e+06       0.1
+        """
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
 
@@ -506,6 +510,7 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
             "order_config": {
                 "order_type": "price@twap",
                 "order_duration_in_mins": 5,
+                "execution_frequency": "1T",
             },
             "optimizer_config": {
                 "backend": "pomo",
@@ -541,37 +546,37 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
         # TODO(Paul): Factor out a test that compares simulation and mock.
         actual = str(portfolio)
         expected = r"""
-<oms.portfolio.database_portfolio.DatabasePortfolio at 0x>
-  # holdings_shares=
-  asset_id                     101    202
-  2000-01-01 09:35:01-05:00   0.00   0.00
-  2000-01-01 09:40:01-05:00 -49.98  49.98
-  2000-01-01 09:45:01-05:00 -49.99  49.99
-  # holdings_notional=
-  asset_id                        101       202
-  2000-01-01 09:35:01-05:00      0.00      0.00
-  2000-01-01 09:40:01-05:00 -49994.47  49994.47
-  2000-01-01 09:45:01-05:00 -49985.86  49985.86
-  # executed_trades_shares=
-  asset_id                        101       202
-  2000-01-01 09:35:01-05:00  0.00e+00  0.00e+00
-  2000-01-01 09:40:01-05:00 -5.00e+01  5.00e+01
-  2000-01-01 09:45:01-05:00 -5.53e-03  5.53e-03
-  # executed_trades_notional=
-  asset_id                        101       202
-  2000-01-01 09:40:01-05:00 -49980.22  49980.22
-  2000-01-01 09:45:01-05:00     -5.53      5.53
-  # pnl=
-  asset_id                     101    202
-  2000-01-01 09:35:01-05:00    NaN    NaN
-  2000-01-01 09:40:01-05:00 -14.26  14.26
-  2000-01-01 09:45:01-05:00  14.14 -14.14
-  # statistics=
-                             pnl  gross_volume  net_volume       gmv  nmv       cash  net_wealth  leverage
-  2000-01-01 09:35:01-05:00  NaN          0.00         0.0      0.00  0.0  1000000.0   1000000.0       0.0
-  2000-01-01 09:40:01-05:00  0.0      99960.44         0.0  99988.95  0.0  1000000.0   1000000.0       0.1
-  2000-01-01 09:45:01-05:00  0.0         11.05         0.0  99971.72  0.0  1000000.0   1000000.0       0.1
-"""
+        <oms.portfolio.database_portfolio.DatabasePortfolio at 0x>
+        # holdings_shares=
+        asset_id                            101    202
+        2000-01-01 09:35:00.100000-05:00   0.00   0.00
+        2000-01-01 09:40:00.100000-05:00 -49.98  49.98
+        2000-01-01 09:45:00.100000-05:00 -49.99  49.99
+        # holdings_notional=
+        asset_id                               101       202
+        2000-01-01 09:35:00.100000-05:00      0.00      0.00
+        2000-01-01 09:40:00.100000-05:00 -49994.47  49994.47
+        2000-01-01 09:45:00.100000-05:00 -49985.86  49985.86
+        # executed_trades_shares=
+        asset_id                               101       202
+        2000-01-01 09:35:00.100000-05:00  0.00e+00  0.00e+00
+        2000-01-01 09:40:00.100000-05:00 -5.00e+01  5.00e+01
+        2000-01-01 09:45:00.100000-05:00 -5.53e-03  5.53e-03
+        # executed_trades_notional=
+        asset_id                               101       202
+        2000-01-01 09:40:00.100000-05:00 -49980.22  49980.22
+        2000-01-01 09:45:00.100000-05:00     -5.53      5.53
+        # pnl=
+        asset_id                            101    202
+        2000-01-01 09:35:00.100000-05:00    NaN    NaN
+        2000-01-01 09:40:00.100000-05:00 -14.26  14.26
+        2000-01-01 09:45:00.100000-05:00  14.14 -14.14
+        # statistics=
+                                            pnl  gross_volume  net_volume       gmv  nmv       cash  net_wealth  leverage
+        2000-01-01 09:35:00.100000-05:00  NaN          0.00         0.0      0.00  0.0  1000000.0   1000000.0       0.0
+        2000-01-01 09:40:00.100000-05:00  0.0      99960.44         0.0  99988.95  0.0  1000000.0   1000000.0       0.1
+        2000-01-01 09:45:00.100000-05:00  0.0         11.05         0.0  99971.72  0.0  1000000.0   1000000.0       0.1
+        """
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
 
@@ -721,7 +726,9 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
     def _append(
         list_: List[str], label: str, data: Union[pd.Series, pd.DataFrame]
     ) -> None:
-        data_str = hunitest.convert_df_to_string(data, index=True, decimals=3)
+        data_str = hpandas.df_to_str(
+            data, handle_signed_zeros=True, num_rows=None, precision=3
+        )
         list_.append(f"{label}=\n{data_str}")
 
     def _run_coroutines(
@@ -793,6 +800,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
             "order_config": {
                 "order_type": "price@twap",
                 "order_duration_in_mins": 5,
+                "execution_frequency": "1T",
             },
             "optimizer_config": {
                 "backend": "pomo",

@@ -9,7 +9,9 @@ import functools
 import logging
 import os
 import pprint
+import random
 import re
+import string
 from typing import Dict, List, Match, Optional, Tuple, cast
 
 import helpers.hdbg as hdbg
@@ -215,7 +217,7 @@ def is_amp() -> bool:
     Either as super module, or a sub module depending on a current
     working directory.
     """
-    return _is_repo("amp") or _is_repo("cmamp")
+    return _is_repo("amp") or _is_repo("cmamp") or _is_repo("sorr")
 
 
 # TODO(gp): Be consistent with submodule and sub-module in the code. Same for
@@ -236,14 +238,18 @@ def is_in_amp_as_supermodule() -> bool:
     return is_amp() and not is_inside_submodule(".")
 
 
-def is_amp_present() -> bool:
+def is_amp_present(*, dir_name: str = ".") -> bool:
     """
     Return whether the `amp` dir exists.
 
     This is a bit of an hacky way of knowing if there is the amp
     submodule.
+
+    :param dir_name: path to the directory where we want to
+      check the existence of `amp`.
     """
-    return os.path.exists("amp")
+    amp_path = os.path.join(dir_name, "amp")
+    return os.path.exists(amp_path)
 
 
 # Using these functions is the last resort to skip / change the tests depending
@@ -843,6 +849,16 @@ def get_head_hash(dir_name: str = ".", short_hash: bool = False) -> str:
     cmd = f"cd {dir_name} && git rev-parse {opts}HEAD"
     data: Tuple[int, str] = hsystem.system_to_one_line(cmd)
     _, output = data
+    # Check whether we are building an orange image. If the condition
+    # is True, add './amp' hash to the tag as well.
+    if is_amp_present(dir_name=dir_name):
+        amp_hash = get_head_hash(os.path.join(dir_name, "amp"), short_hash=True)
+        output = output + "-" + amp_hash
+    else:
+        random_string = "".join(
+            random.choices(string.ascii_lowercase + string.digits, k=3)
+        )
+        output = output + "-" + random_string
     return output
 
 
@@ -1201,7 +1217,8 @@ def fetch_origin_master_if_needed() -> None:
 
 
 def is_client_clean(
-    dir_name: str = ".", abort_if_not_clean: bool = False
+    dir_name: str = ".",
+    abort_if_not_clean: bool = False,
 ) -> bool:
     """
     Return whether there are files modified, added, or removed in `dir_name`.

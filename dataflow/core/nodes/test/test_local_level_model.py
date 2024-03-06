@@ -4,6 +4,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as carsigen
 import dataflow.core.nodes.local_level_model as dtfcnllemo
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -21,8 +22,8 @@ class TestLocalLevelModel(hunitest.TestCase):
         )
         #
         df_out = node.fit(data)["df_out"]
-        df_str = hunitest.convert_df_to_string(
-            df_out.round(3), index=True, decimals=3
+        df_str = hpandas.df_to_str(
+            df_out.round(3), num_rows=None, precision=3
         )
         self.check_string(df_str)
 

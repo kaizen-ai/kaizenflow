@@ -111,7 +111,8 @@ class FeaturePipeline(dtfcore.DagBuilder):
         self, config: cconfig.Config, mode: str = "strict"
     ) -> dtfcore.DAG:
         dag = dtfcore.DAG(mode=mode)
-        _LOG.debug("%s", config)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("%s", config)
         tail_nid = None
         #
         stage = "load_data"

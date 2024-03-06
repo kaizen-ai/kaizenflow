@@ -6,7 +6,7 @@ import oms.optimizer.call_optimizer as oopcaopt
 
 import logging
 import os
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import invoke
 import numpy as np
@@ -28,18 +28,19 @@ def compute_target_holdings_and_trades_notional(
     df: pd.DataFrame,
     *,
     style: str,
-    **kwargs,
+    **kwargs: Dict[str, Any],
 ) -> pd.DataFrame:
     """
     Compute target trades from holdings (dollar-valued) and predictions.
 
-    This is a stand-in for optimization. This function does not have access to
-    prices and so does not perform any conversions to or from shares. It also
-    needs to be told the id associated with cash.
+    This is a stand-in for optimization. This function does not have
+    access to prices and so does not perform any conversions to or from
+    shares. It also needs to be told the id associated with cash.
 
-    :param df: a dataframe with current positions (in dollars) and predictions
-    :return: a dataframe with target positions and trades (denominated in
-        dollars)
+    :param df: a dataframe with current positions (in dollars) and
+        predictions
+    :return: a dataframe with target positions and trades (denominated
+        in dollars)
     """
     # Sanity-check the dataframe.
     hdbg.dassert_isinstance(df, pd.DataFrame)
@@ -85,20 +86,22 @@ def compute_target_holdings_and_trades_notional(
         name="target_holdings_notional",
         dtype="float",
     )
-    _LOG.debug(
-        "`target_holdings_notional`=\n%s",
-        hpandas.df_to_str(
-            target_holdings_notional, print_dtypes=True, print_shape_info=True
-        ),
-    )
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(
+            "`target_holdings_notional`=\n%s",
+            hpandas.df_to_str(
+                target_holdings_notional, print_dtypes=True, print_shape_info=True
+            ),
+        )
     # These positions are expressed in dollars.
     holdings_notional = df["holdings_notional"]
-    _LOG.debug(
-        "`holdings_notional`=\n%s",
-        hpandas.df_to_str(
-            holdings_notional, print_dtypes=True, print_shape_info=True
-        ),
-    )
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(
+            "`holdings_notional`=\n%s",
+            hpandas.df_to_str(
+                holdings_notional, print_dtypes=True, print_shape_info=True
+            ),
+        )
     target_trades_notional = target_holdings_notional - holdings_notional
     df["target_holdings_notional"] = target_holdings_notional
     df["target_trades_notional"] = target_trades_notional
@@ -146,34 +149,39 @@ def convert_target_holdings_and_trades_to_shares_and_adjust_notional(
         asset_id_to_decimals=asset_id_to_decimals,
     )
     # hdbg.dassert(np.isfinite(target_trades_shares).all())
-    _LOG.debug(
-        "Post-quantization target_trades_shares adjusted from %s to %s",
-        hpandas.df_to_str(target_trades_shares_before_quantization),
-        hpandas.df_to_str(target_trades_shares),
-    )
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(
+            "Post-quantization target_trades_shares adjusted from %s to %s",
+            hpandas.df_to_str(target_trades_shares_before_quantization),
+            hpandas.df_to_str(target_trades_shares),
+        )
     df["target_trades_shares"] = target_trades_shares
     # Update `target_trades_notional` post-quantization.
     target_trades_notional = target_trades_shares * df["price"]
-    _LOG.debug(
-        "Post-quantization target_trades_notional adjusted from %s to %s",
-        hpandas.df_to_str(df["target_trades_notional"]),
-        hpandas.df_to_str(target_trades_notional),
-    )
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(
+            "Post-quantization target_trades_notional adjusted from %s to %s",
+            hpandas.df_to_str(df["target_trades_notional"]),
+            hpandas.df_to_str(target_trades_notional),
+        )
     df["target_trades_notional"] = target_trades_notional
     # Computer `target_holdings_shares` post-quantization.
     holdings_shares = df["holdings_shares"]
     target_holdings_shares = holdings_shares + target_trades_shares
-    _LOG.debug(
-        "`target_holdings_shares`=%s", hpandas.df_to_str(target_trades_notional)
-    )
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(
+            "`target_holdings_shares`=%s",
+            hpandas.df_to_str(target_trades_notional),
+        )
     df["target_holdings_shares"] = target_holdings_shares
     # Update `target_holdings_notional` post-quantization.
     target_holdings_notional = target_holdings_shares * df["price"]
-    _LOG.debug(
-        "Post-quantization target_holdings_notional adjusted from %s to %s",
-        hpandas.df_to_str(df["target_holdings_notional"]),
-        hpandas.df_to_str(target_holdings_notional),
-    )
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(
+            "Post-quantization target_holdings_notional adjusted from %s to %s",
+            hpandas.df_to_str(df["target_holdings_notional"]),
+            hpandas.df_to_str(target_holdings_notional),
+        )
     df["target_holdings_notional"] = target_holdings_notional
     return df
 

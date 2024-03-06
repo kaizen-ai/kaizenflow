@@ -4,14 +4,14 @@ Import as:
 import oms.broker.ccxt.ccxt_execution_quality as obccexqu
 """
 import logging
-from typing import Tuple
+from typing import Dict, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
+import core.statistics as costatis
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.hunit_test as hunitest
 import oms.broker.ccxt.ccxt_aggregation_functions as obccagfu
 
 _LOG = logging.getLogger(__name__)
@@ -166,7 +166,7 @@ def compute_filled_order_execution_quality(
 def _check_buy_sell_overlap(fills_df: pd.DataFrame) -> None:
     """
     Check that `buy_count` and `sell_count` values don't overlap in the same
-    timestamp index & are non-negative.
+    timestamp index and are non-negative.
 
     There are 2 valid cases:
       - one is more that zero, another one is zero
@@ -182,14 +182,14 @@ def _check_buy_sell_overlap(fills_df: pd.DataFrame) -> None:
         hdbg.dassert(
             valid.all(),
             f"Invalid buy/sell overlap at `{timestamp}`:\n\
-            {hunitest.convert_df_to_string(sub_df, index=True)}",
+            {hpandas.df_to_str(sub_df, num_rows=None)}",
         )
         # Check that buy and sell counts are non-negative.
         no_negative = (sub_df["buy_count"] >= 0) & (sub_df["sell_count"] >= 0)
         hdbg.dassert(
             no_negative.all(),
             f"Negative buy/sell count at `{timestamp}`:\n\
-            {hunitest.convert_df_to_string(sub_df, index=True)}",
+            {hpandas.df_to_str(sub_df, num_rows=None)}",
         )
 
 
@@ -202,8 +202,8 @@ def convert_bar_fills_to_portfolio_df(
 
     :param fills_df: a fills dataframe aggregated by bar
     :param price_df: a bar reference price (e.g., TWAP or VWAP)
-    :return: a portfolio-style dataframe, with holdings and trades in both
-        shares and notional
+    :return: a portfolio-style dataframe, with holdings and trades in
+        both shares and notional
     """
     cols = [
         "buy_count",
@@ -219,6 +219,9 @@ def convert_bar_fills_to_portfolio_df(
         price_df, allow_empty=False, strictly_increasing=True
     )
     hdbg.dassert_eq(2, fills_df.index.nlevels)
+    # The frequency of `price_df` should not be `None`.
+    hdbg.dassert(price_df.index.freq)
+    freq = price_df.index.freq
     _check_buy_sell_overlap(fills_df)
     buy = (fills_df["buy_count"] > 0).astype(int)
     sell = (fills_df["sell_count"] > 0).astype(int)
@@ -226,28 +229,37 @@ def convert_bar_fills_to_portfolio_df(
     side = buy - sell
     # Compute "executed_trades_notional".
     signed_cost = side * fills_df["cost"]
-    executed_trades_notional = signed_cost.unstack().fillna(0)
+    executed_trades_notional = (
+        signed_cost.unstack().resample(freq).last().fillna(0)
+    )
+    hdbg.dassert(executed_trades_notional.index.freq)
     # Compute "executed_trades_shares".
     signed_amount = side * fills_df["amount"]
-    executed_trades_shares = signed_amount.unstack().fillna(0)
+    executed_trades_shares = (
+        signed_amount.unstack().resample(freq).last().fillna(0)
+    )
+    hdbg.dassert(executed_trades_shares.index.freq)
     # Compute "holdings_shares" by cumulatively summing executed trades.
     holdings_shares = executed_trades_shares.cumsum()
+    hdbg.dassert(holdings_shares.index.freq)
     # Compute "holdings_notional" by multiplying holdings in shares by
     #   reference price.
     holdings_notional = holdings_shares.multiply(price_df)[
         holdings_shares.columns
-    ].fillna(0)
+    ]
+    hdbg.dassert(holdings_notional.index.freq)
     # Compute PnL.
     pnl = holdings_notional.subtract(
         holdings_notional.shift(1), fill_value=0
-    ).subtract(executed_trades_notional, fill_value=0)
+    ).subtract(executed_trades_notional)
+    hdbg.dassert(pnl.index.freq)
     # Construct the portfolio dataframe.
     portfolio_df = pd.concat(
         {
-            "holdings_notional": holdings_notional,
             "holdings_shares": holdings_shares,
-            "executed_trades_notional": executed_trades_notional,
+            "holdings_notional": holdings_notional,
             "executed_trades_shares": executed_trades_shares,
+            "executed_trades_notional": executed_trades_notional,
             "pnl": pnl,
         },
         axis=1,
@@ -255,68 +267,21 @@ def convert_bar_fills_to_portfolio_df(
     return portfolio_df
 
 
-def convert_parent_orders_to_target_position_df(
-    parent_order_df: pd.DataFrame,
-    price_df: pd.DataFrame,
-) -> pd.DataFrame:
+def get_adjusted_close_price(
+    close: float, open: float, volatility: float
+) -> float:
     """
-    Create a target position dataframe from a parent orders dataframe.
+    Compute volatility-adjusted close price.
 
-    :param parent_order_df: a parent order dataframe (bar-level)
-    :param price_df: a bar reference price (e.g., TWAP or VWAP)
-    :return: a target position-style dataframe
+    :param close: is defined as the `open` price of the next child order within
+    the same parent. This means that for the last child order in the parent,
+     or if there was a single child order executed successfully, close == NaN
+    :param open: the mid price of the child order
+    :param volatility: is calculated by the volatility-based price computer
+    :return: volatility-adjusted close price
     """
-    cols = [
-        "asset_id",
-        "curr_num_shares",
-        "diff_num_shares",
-    ]
-    hdbg.dassert_is_subset(cols, parent_order_df.columns)
-    hpandas.dassert_time_indexed_df(
-        price_df, allow_empty=False, strictly_increasing=True
-    )
-    price_df_freq = price_df.index.freq
-    hdbg.dassert(price_df_freq is not None)
-    # Extract holdings and shift index so that end-of-bar holdings are
-    # reflected.
-    holdings_shares = parent_order_df.pivot(
-        index="end_timestamp", columns="asset_id", values="curr_num_shares"
-    ).ffill()
-    holdings_shares.index.freq = price_df_freq
-    holdings_shares.index = holdings_shares.index.shift(-1)
-    # Multiply by end-of-bar price to get notional holdings.
-    holdings_notional = holdings_shares.multiply(price_df)[
-        holdings_shares.columns
-    ]
-    #
-    target_trades_shares = parent_order_df.pivot(
-        index="end_timestamp", columns="asset_id", values="diff_num_shares"
-    ).fillna(0)
-    target_trades_shares.index.freq = price_df_freq
-    target_trades_shares.index = target_trades_shares.index.shift(-1)
-    #
-    target_holdings_shares = holdings_shares.shift(1).add(
-        target_trades_shares, fill_value=0
-    )
-    target_holdings_notional = target_holdings_shares.multiply(price_df)[
-        target_trades_shares.columns
-    ].fillna(0)
-    target_position_df = pd.concat(
-        {
-            "holdings_notional": holdings_notional,
-            "holdings_shares": holdings_shares,
-            "price": price_df,
-            "target_holdings_notional": target_holdings_notional,
-            "target_holdings_shares": target_holdings_shares,
-            "target_trades_shares": target_trades_shares,
-        },
-        axis=1,
-    )
-    # This can (and should) raise an error if the index cannot be conformed.
-    target_position_df.index.freq = price_df_freq
-    # Trim last end-of-bar artifact.
-    target_position_df = target_position_df.iloc[:-1]
-    return target_position_df
+    adjusted_close = (close - open) / volatility
+    return adjusted_close
 
 
 # #############################################################################
@@ -330,13 +295,10 @@ def generate_fee_summary(
     """
     Summarize fees according to `group_by_col`.
 
-    :param fills_df: the input DataFrame.
-    :param group_by_col: one of
-        ["is_buy", "is_maker", "is_positive_realized_pnl"].
+    :param fills_df: the input DataFrame
+    :param group_by_col: one of ["is_buy", "is_maker",
+        "is_positive_realized_pnl", "wave_id"]
     """
-    hdbg.dassert_in(
-        group_by_col, ["is_buy", "is_maker", "is_positive_realized_pnl"]
-    )
     fills_df_copy = fills_df.copy()
     fills_df_copy["is_buy"] = fills_df["side"] == "buy"
     fills_df_copy["is_maker"] = fills_df["takerOrMaker"] == "maker"
@@ -402,3 +364,297 @@ def generate_fee_summary(
     #
     df = pd.concat(srs_list, axis=1).T
     return df
+
+
+# #############################################################################
+# Time profiling
+# #############################################################################
+
+
+def get_oms_child_order_timestamps(
+    oms_child_order_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Get timing columns from oms child order DataFrame.
+
+    :return: child order submission timestamps per child order
+    """
+    # Select bid/ask timestamp columns from the DB.
+    bid_ask_timestamp_cols = [
+        "exchange_timestamp",
+        "end_download_timestamp",
+        "knowledge_timestamp",
+    ]
+    timing_cols = submission_timestamp_cols = [
+        "stats__submit_twap_child_order::bid_ask_market_data.start",
+        "stats__submit_twap_child_order::bid_ask_market_data.done",
+        "stats__submit_twap_child_order::get_open_positions.done",
+        "stats__submit_twap_child_order::child_order.created",
+        "stats__submit_twap_child_order::child_order.limit_price_calculated",
+        "stats__submit_single_order_to_ccxt::start.timestamp",
+        "stats__submit_single_order_to_ccxt::all_attempts_end.timestamp",
+        "stats__submit_twap_child_order::child_order.submitted",
+    ]
+    timing_cols = bid_ask_timestamp_cols + submission_timestamp_cols
+    out_df = oms_child_order_df[timing_cols]
+    # Convert to UTC.
+    # The conversion is done using a loop since the DF is expected
+    # to be indexed by `order_id`, i.e. not a datetime index.
+    for timing_col in timing_cols:
+        out_df[timing_col] = out_df[timing_col].dt.tz_convert("UTC")
+    out_df = out_df.dropna(subset=submission_timestamp_cols)
+    return out_df
+
+
+def get_time_delay_between_events(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    For each timestamp, get delay in seconds before the previous timestamp.
+
+    :param df: output of `get_oms_child_order_timestamps`
+    """
+    delays = df.subtract(df["exchange_timestamp"], axis=0)
+    delays = delays.apply(lambda x: x.dt.total_seconds())
+    # Verify that the timestamps increase left to right.
+    # We expect the input DF to contain the data timestamps, e.g.
+    # `exchange_timestamp`, `end_download_timestamp`, `knowledge_timestamp`,
+    # and event timestamps, with labels starting with `stats_`. In rare cases
+    # earliest `stats_` timestamp can be earlier than `knowledge_timestamp`,
+    # which is not considered a bug, since new data could have appeared after
+    # the first `stats_` event.
+    stats_columns = [col for col in delays.columns if col.startswith("stats_")]
+    data_columns = [col for col in delays.columns if col not in stats_columns]
+    # Verify that stats timestamps strictly increase.
+    hdbg.dassert_eq((delays[stats_columns].diff(axis=1) < 0).sum().sum(), 0)
+    # Verify that data columns strictly increase.
+    hdbg.dassert_eq((delays[data_columns].diff(axis=1) < 0).sum().sum(), 0)
+    return delays
+
+
+# #############################################################################
+# Time-to-fill eCDF
+# #############################################################################
+
+
+def compute_time_to_fill(
+    fills_df: pd.DataFrame,
+    ccxt_order_response_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Compute time it took from the submission of the order to get a first fill.
+
+    Note: it is not implied that the order was completely filled, but
+    how much time it took from the acceptance of the order at the exchange
+    before the first fill (trade) happened.
+
+    :param fills_df: output of `CcxtLogger.load_ccxt_trades_df`
+    :param ccxt_order_response_df: output of
+        `CcxtLogger.load_ccxt_order_response_df`
+    :return: CCXT fills and CCXT responses joined on `order`, with added
+        'time_to_fill' and 'secs_to_fill' columns
+    """
+    # TODO(Danya): Convert order to int at the loading stage.
+    ccxt_order_response_df["order"] = ccxt_order_response_df["order"].astype(int)
+    # Join CCXT responses and trades on the `ccxt_id`.
+    # Note: meaning of `order` in CCXT responses is identical to `ccxt_id`
+    # elsewhere.
+    df = (
+        fills_df.groupby("order")
+        .first()
+        .join(
+            ccxt_order_response_df.set_index("order"), rsuffix="order_response_"
+        )
+    )
+    hdbg.dassert_in("wave_id", df.columns)
+    # Get the seconds it took to conduct the trade, from the order's
+    # acceptance at the exchange to the timestamp of the trade.
+    df["time_to_fill"] = df["timestamp"] - df["order_update_datetime"]
+    df["secs_to_fill"] = df["time_to_fill"].apply(lambda x: x.total_seconds())
+    return df
+
+
+def annotate_ccxt_order_response_df(
+    ccxt_order_response_df: pd.DataFrame, oms_child_order_df: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Add OMS child order df columns to CCXT order responses.
+
+    The order responses are annotated with:
+    - `asset_id`
+    - `wave_id` (for the child order wave of the corresponding order)
+
+    :param ccxt_order_response_df: output of
+        `CcxtLogger.load_ccxt_order_response_df`
+    :param oms_child_order_df: output of
+        `CcxtLogger.oms_child_order_df`
+    :return: annotated ccxt_order_response_df, identical to the output of
+        `CcxtLogger.load_ccxt_order_response_df`, but annotated with `wave_id`
+        and `asset_id` columns
+    """
+    # Get child order df indexed by `ccxt_id`.
+    submitted_child_orders = oms_child_order_df[
+        oms_child_order_df["ccxt_id"] != -1
+    ]
+    # Get annotation columns.
+    annotation_columns = ["asset_id"]
+    # Add wave_id to annotation.
+    # Child orders were not annotated with wave_id in earlier experiments,
+    # so the column is optional.
+    if "wave_id" in oms_child_order_df.columns:
+        annotation_columns.append("wave_id")
+    else:
+        _LOG.warning("'wave_id' column not in OMS child order df columns.")
+    ccxt_id_to_asset_id_srs = submitted_child_orders.set_index("ccxt_id")[
+        annotation_columns
+    ]
+    #
+    ccxt_order_response_df = ccxt_order_response_df.copy()
+    # TODO(Danya): Convert order to int at the loading stage.
+    ccxt_order_response_df["order"] = ccxt_order_response_df["order"].astype(int)
+    # Add `asset_id` column.
+    ccxt_order_response_df = ccxt_order_response_df.join(
+        ccxt_id_to_asset_id_srs, on="order"
+    )
+    return ccxt_order_response_df
+
+
+def annotate_fills_df_with_wave_id(
+    fills_df: pd.DataFrame, oms_child_order_df: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Annotate fills df with `wave_id` from child order df.
+
+    Each trade is assigned a wave_id of the corresponding child order based
+    on the order's ccxt_id.
+
+    :param fills_df: output of `CcxtLogger.load_ccxt_trades_df`
+    :param oms_child_order_df: output of
+        `CcxtLogger.oms_child_order_df`
+    :return: fills_df with appended `wave_id` column
+    """
+    # Get wave_id indexed by the ccxt_id.
+    # Get successfully submitted child orders.
+    child_orders = oms_child_order_df[oms_child_order_df["ccxt_id"] != -1]
+    # Get wave_id as Series.
+    wave_ids = child_orders.set_index("ccxt_id")["wave_id"]
+    # Annotate fills_df by ccxt_id of the order.
+    #
+    annotated_fills_df = fills_df.copy()
+    # Temporarily set index as ccxt_id of the corresponding child order.
+    annotated_fills_df = fills_df.set_index("order", drop=False)
+    # Add wave_id column.
+    annotated_fills_df["wave_id"] = wave_ids
+    # Restore timestamp index.
+    annotated_fills_df = annotated_fills_df.reset_index(drop=True).set_index(
+        "timestamp", drop=False
+    )
+    return annotated_fills_df
+
+
+def compute_adj_fill_ecdfs(
+    fills_df: pd.DataFrame,
+    ccxt_order_response_df: pd.DataFrame,
+    oms_child_order_df: pd.DataFrame,
+    *,
+    by_wave: bool = False,
+) -> Union[pd.DataFrame, Dict[int, pd.DataFrame]]:
+    """
+    Compute time-to-fill eCDFs by asset_id adjusted for underfills.
+
+    :param fills_df: output of `CcxtLogger.load_ccxt_trades_df`
+    :param ccxt_order_response_df: output of
+        `CcxtLogger.load_ccxt_order_response_df`
+    :param oms_child_order_df: output of
+        `CcxtLogger.oms_child_order_df`
+    :param by_wave: compute multiple ECDFs by child order wave ID
+    :return: time-to-fill eCDFs DataFrame, or a dict if `by_wave` is enabled,
+    for example:
+        5115052901  1528092593  2484635488
+    0.000    0.055375     0.02454    0.057143
+    0.003    0.055375     0.02454    0.057143
+    0.011    0.055375     0.02454    0.057143
+    0.015    0.055375     0.02454    0.057143
+    0.016    0.055375     0.02454    0.057143
+    """
+    # Add `asset_id` to CCXT order response DataFrame.
+    ccxt_order_response_df = annotate_ccxt_order_response_df(
+        ccxt_order_response_df, oms_child_order_df
+    )
+    # Add time to fill.
+    time_to_fill_df = compute_time_to_fill(fills_df, ccxt_order_response_df)
+    asset_id_col = "asset_id"
+    if by_wave:
+        # Get a dict of ECDFs by wave.
+        hdbg.dassert_in("wave_id", oms_child_order_df.columns)
+        hdbg.dassert_in("wave_id", ccxt_order_response_df.columns)
+        hdbg.dassert_in("wave_id", time_to_fill_df.columns)
+        adj_ecdf = {}
+        waves = sorted(oms_child_order_df.wave_id.unique())
+        for wave in waves:
+            wave_responses = ccxt_order_response_df.loc[
+                ccxt_order_response_df["wave_id"] == wave
+            ]
+            wave_time_to_fill = time_to_fill_df.loc[
+                time_to_fill_df["wave_id"] == wave
+            ]
+            wave_fills = fills_df.loc[
+                fills_df["order"].isin(wave_time_to_fill.index)
+            ]
+            adj_ecdf[wave] = _compute_adj_fill_ecdfs_for_single_df(
+                wave_time_to_fill, wave_responses, wave_fills, asset_id_col
+            )
+    else:
+        # Get ECDFs over all waves.
+        adj_ecdf = _compute_adj_fill_ecdfs_for_single_df(
+            time_to_fill_df, ccxt_order_response_df, fills_df, asset_id_col
+        )
+    return adj_ecdf
+
+
+def _compute_adj_fill_ecdfs_for_single_df(
+    time_to_fill_df: pd.DataFrame,
+    ccxt_order_response_df: pd.DataFrame,
+    fills_df: pd.DataFrame,
+    asset_id_col: str,
+) -> pd.DataFrame:
+    """
+    Generate a single ECDFs DataFrame.
+
+    :return: time-to-fill eCDFs DataFrame, e.g.
+        5115052901  1528092593  2484635488
+    0.000    0.055375     0.02454    0.057143
+    0.003    0.055375     0.02454    0.057143
+    0.011    0.055375     0.02454    0.057143
+    0.015    0.055375     0.02454    0.057143
+    0.016    0.055375     0.02454    0.057143
+    """
+    num = time_to_fill_df[asset_id_col].value_counts()
+    denom = (
+        fills_df[asset_id_col].value_counts()
+        - time_to_fill_df[asset_id_col].value_counts()
+        + ccxt_order_response_df[asset_id_col].value_counts()
+    )
+    frac = num / denom
+    # Compute eCDF by symbol.
+    ecdfs = {}
+    for symbol in time_to_fill_df[asset_id_col].unique():
+        ecdf = costatis.compute_empirical_cdf(
+            time_to_fill_df[time_to_fill_df[asset_id_col] == symbol][
+                "secs_to_fill"
+            ]
+        )
+        ecdf.name = symbol
+        ecdfs[symbol] = ecdf
+    adj_ecdfs = {}
+    for symbol in ecdfs:
+        adj_ecdfs[symbol] = ecdfs[symbol] * frac.loc[symbol]
+    #
+    if adj_ecdfs:
+        adj_ecdf_df = (
+            pd.concat(list(adj_ecdfs.values()), axis=1)
+            .sort_index()
+            .ffill()
+            .fillna(0)
+        )
+    else:
+        adj_ecdf_df = pd.DataFrame()
+    return adj_ecdf_df

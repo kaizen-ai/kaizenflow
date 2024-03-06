@@ -8,7 +8,7 @@ import helpers.hasyncio as hasynci
 import helpers.hpandas as hpandas
 import helpers.hsql as hsql
 import oms.db.oms_db as odbomdb
-import oms.portfolio.database_portfolio as opdapor
+import oms.portfolio.database_portfolio as opodapor
 import oms.portfolio.portfolio_example as opopoexa
 import oms.test.oms_db_helper as omtodh
 
@@ -84,7 +84,7 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
-    async def coroutine1(self, portfolio: opdapor.DatabasePortfolio) -> None:
+    async def coroutine1(self, portfolio: opodapor.DatabasePortfolio) -> None:
         portfolio.mark_to_market()
         await asyncio.sleep(60 * 5)
         portfolio.mark_to_market()
@@ -149,7 +149,7 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
 
     # //////////////////////////////////////////////////////////////////////////////
 
-    async def coroutine2(self, portfolio: opdapor.DatabasePortfolio):
+    async def coroutine2(self, portfolio: opodapor.DatabasePortfolio):
         portfolio.mark_to_market()
         await asyncio.sleep(60 * 5)
         portfolio.mark_to_market()
@@ -223,7 +223,7 @@ class TestDatabasePortfolio2(omtodh.TestOmsDbHelper):
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
-    async def coroutine1(self, portfolio: opdapor.DatabasePortfolio) -> None:
+    async def coroutine1(self, portfolio: opodapor.DatabasePortfolio) -> None:
         portfolio.mark_to_market()
         await asyncio.sleep(60 * 5)
         portfolio.mark_to_market()
@@ -241,7 +241,9 @@ class TestDatabasePortfolio2(omtodh.TestOmsDbHelper):
         #
         precision = 2
         #
-        portfolio_df_str = hpandas.df_to_str(portfolio_df, precision=precision)
+        portfolio_df_str = hpandas.df_to_str(
+            portfolio_df, handle_signed_zeros=True, precision=precision
+        )
         expected_portfolio_df_str = r"""
                           holdings_shares holdings_notional  executed_trades_shares executed_trades_notional   pnl
                                       101               101                     101                      101   101
@@ -304,7 +306,7 @@ class TestDatabasePortfolio3(omtodh.TestOmsDbHelper):
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
-    async def coroutine1(self, portfolio: opdapor.DatabasePortfolio) -> None:
+    async def coroutine1(self, portfolio: opodapor.DatabasePortfolio) -> None:
         portfolio.mark_to_market()
         await asyncio.sleep(60 * 5)
         portfolio.mark_to_market()

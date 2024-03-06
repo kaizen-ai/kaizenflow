@@ -5,7 +5,7 @@ import optimizer.single_period_optimization as osipeopt
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -34,7 +34,7 @@ _LOG = logging.getLogger(__name__)
 def optimize(
     config_dict: dict,
     df: pd.DataFrame,
-    **kwargs,
+    **kwargs: Dict[str, Any],
 ) -> pd.DataFrame:
     """
     Wrapper around `SinglePeriodOptimizer`.
@@ -65,8 +65,7 @@ class SinglePeriodOptimizer:
         """
         # Process `config_dict` and extract parameters.
         self._dollar_neutrality_penalty = config_dict["dollar_neutrality_penalty"]
-        self._volatility_penalty = config_dict["volatility_penalty"]
-        self._turnover_penalty = config_dict["turnover_penalty"]
+        self._transaction_cost_penalty = config_dict["transaction_cost_penalty"]
         self._target_gmv = config_dict["target_gmv"]
         self._target_gmv_upper_bound_penalty = config_dict[
             "target_gmv_upper_bound_penalty"
@@ -269,7 +268,7 @@ class SinglePeriodOptimizer:
         target_weights = current_weights + target_weight_diffs
         # Create a placeholder for predicted returns (to maximize subject to
         # constraints).
-        predictions = self._df["prediction"]
+        predictions = self._df["prediction"] * self._df["volatility"]
         predicted_returns = cvx.multiply(predictions.values, target_weights)
         mu = cvx.sum(predicted_returns)
         hdbg.dassert(mu.is_concave())
@@ -305,12 +304,7 @@ class SinglePeriodOptimizer:
     def _get_soft_constraints(self) -> List[opbase.Expression]:
         # Create soft constraints
         soft_constraints = []
-        # Add diagonal risk soft constraint.
         volatility = self._df["volatility"]
-        diagonal_risk = osofcons.VolatilityRiskModel(
-            volatility, self._volatility_penalty
-        )
-        soft_constraints.append(diagonal_risk)
         # Maybe add constant correlation risk constraint.
         if "constant_correlation" in self._config_dict:
             constant_correlation = self._config_dict["constant_correlation"]
@@ -323,7 +317,7 @@ class SinglePeriodOptimizer:
                 constant_correlation_penalty,
             )
             soft_constraints.append(constant_correlation_risk)
-        # Add GMV contraint.
+        # Add GMV constraint.
         target_gmv_constraint = osofcons.TargetGmvUpperBoundSoftConstraint(
             self._target_gmv_upper_bound_penalty
         )
@@ -338,9 +332,12 @@ class SinglePeriodOptimizer:
             self._relative_holding_penalty
         )
         soft_constraints.append(relative_holding)
-        # Add turnover soft constraint.
-        turnover = osofcons.TurnoverSoftConstraint(self._turnover_penalty)
-        soft_constraints.append(turnover)
+        # Add transaction cost penalty.
+        transaction_cost_penalty = osofcons.TransactionCost(
+            volatility,
+            self._transaction_cost_penalty,
+        )
+        soft_constraints.append(transaction_cost_penalty)
         return soft_constraints
 
     def _get_hard_constraints(self) -> List[opbase.Expression]:
@@ -392,10 +389,10 @@ class SinglePeriodOptimizer:
         Translate optimized weights into positions and notional trades.
 
         :param target_weights: target weights, normalized by current GMV
-        :param target_weight_diffs: target weight diffs, normalized by current
-            GMV
-        :return: dataframe of target positions and notional trades, in addition
-            to the raw weights and weight diffs.
+        :param target_weight_diffs: target weight diffs, normalized by
+            current GMV
+        :return: dataframe of target positions and notional trades, in
+            addition to the raw weights and weight diffs.
         """
         # Collect series.
         srs_list = []

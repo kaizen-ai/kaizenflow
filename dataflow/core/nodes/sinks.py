@@ -185,12 +185,13 @@ def consolidate_dfs(df_iter: Iterable[Tuple[str, pd.DataFrame]]) -> pd.DataFrame
         # It is expected that `df2` will have at least one index value not in
         # `df1`.
         new_idx_vals = df2.index.difference(df1.index)
-        _LOG.debug(
-            "Number of index values in `%s` not in `%s` is=%s",
-            k2,
-            k1,
-            len(new_idx_vals),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "Number of index values in `%s` not in `%s` is=%s",
+                k2,
+                k1,
+                len(new_idx_vals),
+            )
         dropped_idx_vals = df1.index.difference(df2.index)
         if len(dropped_idx_vals) > 0:
             _LOG.warning(
@@ -209,9 +210,11 @@ def consolidate_dfs(df_iter: Iterable[Tuple[str, pd.DataFrame]]) -> pd.DataFrame
                 k1,
                 len(df_diff.index),
             )
-            _LOG.debug(
-                "Index value(s) where dataframes differ=`%s`", str(df_diff.index)
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "Index value(s) where dataframes differ=`%s`",
+                    str(df_diff.index),
+                )
         # Generate a combined dataframe. In the event that the dataframes
         # disagree, on an overlap, we use the latest dataframe as the
         # reference.

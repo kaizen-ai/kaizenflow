@@ -1,0 +1,5 @@
+---
+- name: Add/Remove OpenVPN Client
+  hosts: vpn_server
+  roles:
+    - vpn_client

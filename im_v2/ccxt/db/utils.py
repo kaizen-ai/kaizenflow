@@ -70,7 +70,7 @@ def get_ccxt_create_bid_ask_raw_table_query() -> str:
     Get SQL query to create CCXT bid/ask raw spot data table.
     """
     query = """
-    CREATE TABLE IF NOT EXISTS ccxt_bid_ask_raw(
+    CREATE TABLE IF NOT EXISTS ccxt_bid_ask_spot_raw(
             id BIGSERIAL PRIMARY KEY,
             timestamp BIGINT NOT NULL,
             bid_size NUMERIC,
@@ -140,15 +140,31 @@ def get_ccxt_create_bid_ask_futures_resampled_1min_table_query() -> str:
     CREATE TABLE IF NOT EXISTS ccxt_bid_ask_futures_resampled_1min(
             id SERIAL PRIMARY KEY,
             timestamp BIGINT NOT NULL,
-            bid_size NUMERIC,
-            bid_price NUMERIC,
-            ask_size NUMERIC,
-            ask_price NUMERIC,
+            "bid_size_open" NUMERIC,
+            "bid_size_close" NUMERIC,
+            "bid_size_min" NUMERIC,
+            "bid_size_max" NUMERIC,
+            "bid_size_mean" NUMERIC,
+            "bid_price_open" NUMERIC,
+            "bid_price_close" NUMERIC,
+            "bid_price_high" NUMERIC,
+            "bid_price_low" NUMERIC,
+            "bid_price_mean" NUMERIC,
+            "ask_size_open" NUMERIC,
+            "ask_size_close" NUMERIC,
+            "ask_size_min" NUMERIC,
+            "ask_size_max" NUMERIC,
+            "ask_size_mean" NUMERIC,
+            "ask_price_open" NUMERIC,
+            "ask_price_close" NUMERIC,
+            "ask_price_high" NUMERIC,
+            "ask_price_low" NUMERIC,
+            "ask_price_mean" NUMERIC,
             currency_pair VARCHAR(255) NOT NULL,
             exchange_id VARCHAR(255) NOT NULL,
             level INTEGER NOT NULL,
             end_download_timestamp TIMESTAMP WITH TIME ZONE,
-            knowledge_timestamp TIMESTAMP WITH TIME ZONE
+            knowledge_timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             )
             """
     return query
@@ -185,7 +201,7 @@ def get_currency_pair_create_table_query() -> str:
 #  the DB until we find a suitable solution to #CmTask3146.
 def get_ccxt_create_bid_ask_futures_raw_index_query() -> str:
     """
-    Get SQL query to define index on timestamp column
+    Get SQL query to define index on timestamp column.
     """
     query = """
     CREATE INDEX IF NOT EXISTS ccxt_bid_ask_futures_raw_timestamp_index

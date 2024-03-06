@@ -12,8 +12,16 @@ import im_v2.common.db.db_utils as imvcddbut
 
 
 class TestExtractDataFromDb1(imvcddbut.TestImDbHelper):
-    def setUp(self) -> None:
-        super().setUp()
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
         ccxt_ohlcv_table_query = imvccdbut.get_ccxt_ohlcv_create_table_query()
         ccxt_ohlcv_insert_query = """
         INSERT INTO ccxt_ohlcv_spot
@@ -28,8 +36,7 @@ class TestExtractDataFromDb1(imvcddbut.TestImDbHelper):
         hsql.execute_query(self.connection, ccxt_ohlcv_table_query)
         hsql.execute_query(self.connection, ccxt_ohlcv_insert_query)
 
-    def tearDown(self) -> None:
-        super().tearDown()
+    def tear_down_test(self) -> None:
         ccxt_ohlcv_drop_query = """
         DROP TABLE IF EXISTS ccxt_ohlcv_spot;
         """

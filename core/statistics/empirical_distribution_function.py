@@ -33,10 +33,17 @@ def compute_empirical_cdf(srs: pd.Series) -> pd.Series:
     sorted_data_counts = nonan_srs.value_counts().sort_index()
     # The new index comes from the sorted values. Rename for clarity.
     new_idx = sorted_data_counts.index
-    # Create the values representing cumulative percentage seen.
-    increment = 1 / nonan_srs.count()
-    new_values = (sorted_data_counts * increment).cumsum()
-    ecdf = pd.Series(new_values, new_idx, name=srs.name + ".ecdf")
+    if srs.name is None:
+        name = "ecdf"
+    else:
+        name = srs.name + ".ecdf"
+    if nonan_srs.count() == 0:
+        ecdf = pd.Series(name=name, dtype="float64")
+    else:
+        # Create the values representing cumulative percentage seen.
+        increment = 1 / nonan_srs.count()
+        new_values = (sorted_data_counts * increment).cumsum()
+        ecdf = pd.Series(new_values, new_idx, name=name)
     return ecdf
 
 
@@ -49,14 +56,19 @@ def combine_empirical_cdfs(ecdfs: List[pd.Series]) -> pd.DataFrame:
         the indices
     """
     hdbg.dassert_container_type(ecdfs, list, pd.Series)
+    valid_ecdfs = []
     for ecdf in ecdfs:
+        if ecdf.empty:
+            _LOG.debug("Omitting empty series `%s`", ecdf.name)
+            continue
         hpandas.dassert_increasing_index(ecdf)
         hdbg.dassert(not ecdf.isna().any())
         values_are_sorted = np.all(ecdf.values[:-1] <= ecdf.values[1:])
         hdbg.dassert(values_are_sorted)
         hdbg.dassert_lte(0, ecdf.min())
         hdbg.dassert_lte(abs(1 - ecdf.max()), 1e-9)
-    combined_ecdfs = pd.concat(ecdfs, axis=1).sort_index().ffill().fillna(0)
+        valid_ecdfs.append(ecdf)
+    combined_ecdfs = pd.concat(valid_ecdfs, axis=1).sort_index().ffill().fillna(0)
     return combined_ecdfs
 
 

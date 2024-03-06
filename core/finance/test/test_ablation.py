@@ -7,6 +7,7 @@ import pandas as pd
 import core.artificial_signal_generators as carsigen
 import core.finance.ablation as cfinabla
 import helpers.hunit_test as hunitest
+import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
@@ -116,7 +117,7 @@ class Test_set_weekends_to_nan(hunitest.TestCase):
             {"start": "2020-01-01", "periods": 40, "freq": "D"}, seed=1
         )
         actual = cfinabla.set_weekends_to_nan(df)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
     def test2(self) -> None:
@@ -129,7 +130,7 @@ class Test_set_weekends_to_nan(hunitest.TestCase):
             {"start": "2020-01-05 23:00:00", "periods": 100, "freq": "T"}, seed=1
         )
         actual = cfinabla.set_weekends_to_nan(df)
-        actual_string = hunitest.convert_df_to_string(actual, index=True)
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
 
 

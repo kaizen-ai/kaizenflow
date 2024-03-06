@@ -25,6 +25,7 @@ def get_TargetPositionAndOrderGenerator_example1(
     order_dict = {
         "order_type": "price@twap",
         "order_duration_in_mins": 5,
+        "execution_frequency": "1T",
     }
     optimizer_dict = {
         "backend": "pomo",

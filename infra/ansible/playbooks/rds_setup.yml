@@ -1,0 +1,6 @@
+---
+- name: Set up and Configure RDS instance
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - role: rds_setup

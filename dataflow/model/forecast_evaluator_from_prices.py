@@ -6,7 +6,7 @@ import dataflow.model.forecast_evaluator_from_prices as dtfmfefrpr
 import collections
 import logging
 import os
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -54,12 +54,13 @@ class ForecastEvaluatorFromPrices:
             - the `prediction_col` is a prediction of vol-adjusted returns
               (presumably with volatility given by `volatility_col`)
         """
-        _LOG.debug(
-            hprint.to_str(
-                "price_col volatility_col prediction_col spread_col buy_price_col"
-                " sell_price_col"
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                hprint.to_str(
+                    "price_col volatility_col prediction_col spread_col buy_price_col"
+                    " sell_price_col"
+                )
             )
-        )
         # Initialize dataframe columns.
         hdbg.dassert_isinstance(price_col, str)
         self._price_col = price_col
@@ -72,7 +73,8 @@ class ForecastEvaluatorFromPrices:
         # Process optional columns.
         if spread_col is not None:
             hdbg.dassert_isinstance(spread_col, str)
-            _LOG.debug("Initialized with spread_col=%s", spread_col)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("Initialized with spread_col=%s", spread_col)
         self._spread_col = spread_col
         #
         if buy_price_col is not None:
@@ -80,7 +82,8 @@ class ForecastEvaluatorFromPrices:
             # If `buy_price_col` is not `None`, then `sell_price_col` must also
             # not be `None`.
             hdbg.dassert_isinstance(sell_price_col, str)
-            _LOG.debug("Initialized with buy_price_col=%s", buy_price_col)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("Initialized with buy_price_col=%s", buy_price_col)
         self._buy_price_col = buy_price_col
         #
         if sell_price_col is not None:
@@ -88,7 +91,8 @@ class ForecastEvaluatorFromPrices:
             # If `sell_price_col` is not `None`, then `buy_price_col` must also
             # not be `None`.
             hdbg.dassert_isinstance(buy_price_col, str)
-            _LOG.debug("Initialized with sell_price_col=%s", sell_price_col)
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug("Initialized with sell_price_col=%s", sell_price_col)
         self._sell_price_col = sell_price_col
 
     @staticmethod
@@ -174,7 +178,7 @@ class ForecastEvaluatorFromPrices:
         self,
         df: pd.DataFrame,
         log_dir: str,
-        **kwargs,
+        **kwargs: Dict[str, Any],
     ) -> str:
         """
         Save portfolio state to the file system.
@@ -248,7 +252,7 @@ class ForecastEvaluatorFromPrices:
     def to_str(
         self,
         df: pd.DataFrame,
-        **kwargs,
+        **kwargs: Dict[str, Any],
     ) -> str:
         """
         Return the state of the Portfolio as a string.
@@ -332,7 +336,7 @@ class ForecastEvaluatorFromPrices:
         burn_in_days: int = 0,
         compute_extended_stats: bool = False,
         asset_id_to_share_decimals: Optional[Dict[int, int]] = None,
-        **kwargs,
+        **kwargs: Dict[str, Any],
     ) -> Dict[str, pd.DataFrame]:
         """
         Compute target positions, PnL, and portfolio stats.
@@ -371,7 +375,8 @@ class ForecastEvaluatorFromPrices:
             ["holdings_shares", "holdings_notional", "executed_trades_shares",
              "executed_trades_notional", "pnl", "stats"]
         """
-        _LOG.debug("df=\n%s", hpandas.df_to_str(df, print_shape_info=True))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("df=\n%s", hpandas.df_to_str(df, print_shape_info=True))
         self._validate_df(df)
         # Record index in case we reindex the results.
         if reindex_like_input:
@@ -442,7 +447,7 @@ class ForecastEvaluatorFromPrices:
     def annotate_forecasts(
         self,
         df: pd.DataFrame,
-        **kwargs,
+        **kwargs: Dict[str, Any],
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Wraps `compute_portfolio()`, returns a single multiindexed dataframe.
@@ -586,7 +591,8 @@ class ForecastEvaluatorFromPrices:
             price)
           - first index with both a returns prediction and a volatility
         """
-        _LOG.debug("df.shape=%s", str(df.shape))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("df.shape=%s", str(df.shape))
         # Restrict to required columns.
         cols = [self._price_col, self._volatility_col, self._prediction_col]
         optional_cols = [
@@ -598,39 +604,45 @@ class ForecastEvaluatorFromPrices:
             if col is not None:
                 cols += [col]
         df = df[cols]
-        _LOG.debug("cols=%s", cols)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("cols=%s", cols)
         active_index = cofinanc.infer_active_bars(df[self._price_col])
         # Drop rows with no prices (this is an approximate way to handle weekends,
         # market holidays, and shortened trading sessions).
         df = df.reindex(index=active_index)
-        _LOG.debug("after active_index: df.shape=%s", df.shape)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("after active_index: df.shape=%s", df.shape)
         # Drop indices with prices that precede any returns prediction or
         # volatility computation.
         first_valid_prediction_index = df[
             self._prediction_col
         ].first_valid_index()
         hdbg.dassert_is_not(first_valid_prediction_index, None)
-        _LOG.debug(hprint.to_str("first_valid_prediction_index"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("first_valid_prediction_index"))
         #
         first_valid_volatility_index = df[
             self._volatility_col
         ].first_valid_index()
         hdbg.dassert_is_not(first_valid_volatility_index, None)
-        _LOG.debug(hprint.to_str("first_valid_volatility_index"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(hprint.to_str("first_valid_volatility_index"))
         #
         first_valid_index = max(
             first_valid_prediction_index, first_valid_volatility_index
         )
         df = df.loc[first_valid_index:]
-        _LOG.debug("df.shape=%s", str(df.shape))
-        _LOG.debug("trimmed df=\n%s", hpandas.df_to_str(df))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("df.shape=%s", str(df.shape))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("trimmed df=\n%s", hpandas.df_to_str(df))
         return df
 
     def _compute_target_holdings_notional(
         self,
         df: pd.DataFrame,
         style: str,
-        **kwargs,
+        **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
         Compute target positions using returns and volatility predictions.
@@ -645,11 +657,13 @@ class ForecastEvaluatorFromPrices:
         prediction_df = ForecastEvaluatorFromPrices._get_df(
             df, self._prediction_col
         )
-        _LOG.debug("prediction_df=\n%s", hpandas.df_to_str(prediction_df))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("prediction_df=\n%s", hpandas.df_to_str(prediction_df))
         volatility_df = ForecastEvaluatorFromPrices._get_df(
             df, self._volatility_col
         )
-        _LOG.debug("volatility_df=\n%s", hpandas.df_to_str(volatility_df))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("volatility_df=\n%s", hpandas.df_to_str(volatility_df))
         spread_df = None
         if self._spread_col is not None:
             spread_df = ForecastEvaluatorFromPrices._get_df(df, self._spread_col)
@@ -766,10 +780,11 @@ class ForecastEvaluatorFromPrices:
         executed_trades_shares = holdings_shares.subtract(
             holdings_shares.shift(1), fill_value=0
         )
-        _LOG.debug(
-            "`executed_trades_shares pre-adjusted`=\n%s",
-            hpandas.df_to_str(executed_trades_shares),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "`executed_trades_shares pre-adjusted`=\n%s",
+                hpandas.df_to_str(executed_trades_shares),
+            )
         # In equity markets with corporate actions, the previous end-of-day
         # share counts may differ from the beginning-of-day share counts even
         # though no trades have taken place. This can be remedied by resetting
@@ -783,10 +798,11 @@ class ForecastEvaluatorFromPrices:
             )
             # Set overnight trades to zero.
             executed_trades_shares.loc[bod_timestamps["timestamp"]] *= 0
-        _LOG.debug(
-            "`executed_trades_shares adjusted`=\n%s",
-            hpandas.df_to_str(executed_trades_shares),
-        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                "`executed_trades_shares adjusted`=\n%s",
+                hpandas.df_to_str(executed_trades_shares),
+            )
         return executed_trades_shares
 
     def _compute_executed_trades_notional(
@@ -821,8 +837,8 @@ class ForecastEvaluatorFromPrices:
 
         :param df: as in `compute_portfolio()`
         :param executed_trades_shares:
-        :return: end-of-bar indexed dataframe of prices to use to value cash
-            outflows/inflows for the buying/selling of shares
+        :return: end-of-bar indexed dataframe of prices to use to value
+            cash outflows/inflows for the buying/selling of shares
         """
         mark_to_market_price_df = ForecastEvaluatorFromPrices._get_df(
             df, self._price_col
@@ -881,8 +897,10 @@ class ForecastEvaluatorFromPrices:
 
         :param df: as in `compute_portfolio()`
         :param holdings_notional: from `_compute_holdings_notional()`
-        :param executed_trades_notional: from `_compute_executed_trades_notional()`
-        :return: end-of-bar indexed dataframe of per-instrument dollar PnL
+        :param executed_trades_notional: from
+            `_compute_executed_trades_notional()`
+        :return: end-of-bar indexed dataframe of per-instrument dollar
+            PnL
         """
         _ = df
         pnl = holdings_notional.subtract(
@@ -950,58 +968,6 @@ class ForecastEvaluatorFromPrices:
 
 
 # #############################################################################
-
-
-def cross_check_portfolio_pnl(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Compute the PnL using multiple generally equivalent calculations.
-
-    Computations may legitimately differ in some cases due to overnight
-    holdings, corporate actions, and special beginning-of-day/end-of-day
-    settings.
-
-    Computations may also differ if trades were calculation using separate
-    execution prices (`buy_price_col`, `sell_price_col`).
-
-    :param df: `portfolio_df` output of `ForecastEvaluatorFromPrices.annotate_forecasts()`
-    :return: multiindexed dataframe with PnL correlations
-    """
-    # Reference PnL (nominal).
-    reference_pnl = df["pnl"]
-    # PnL computed from notional position changes and notional in/outflows.
-    holdings_notional_diff_minus_trades_notional = (
-        df["holdings_notional"].diff().subtract(df["executed_trades_notional"])
-    )
-    # PnL computed from share counts and price differences.
-    holdings_shares_times_price_diff = (
-        df["holdings_shares"].shift(1).multiply(df["price"].diff())
-    )
-    # PnL computed from notional position changes and recomputed notional trades.
-    holdings_notional_minus_trade_times_price = (
-        df["holdings_notional"]
-        .diff()
-        .subtract(df["price"].multiply(df["holdings_shares"].diff()))
-    )
-    # PnL computed from notional positions and percentage price changes.
-    holdings_notional_times_pct_price_change = (
-        df["holdings_notional"].shift(1).multiply(df["price"].pct_change())
-    )
-    # Organize PnL calculations into a multiindexed dataframe.
-    pnl_dict = {
-        "reference_pnl": reference_pnl,
-        "holdings_notional_diff_minus_trades_notional": holdings_notional_diff_minus_trades_notional,
-        "holdings_times_price_diff": holdings_shares_times_price_diff,
-        "holdings_notional_minus_trade_times_price": holdings_notional_minus_trade_times_price,
-        "holdings_notional_times_pct_price_change": holdings_notional_times_pct_price_change,
-    }
-    pnl_df = pd.concat(pnl_dict.values(), axis=1, keys=pnl_dict.keys())
-    pnl_df = pnl_df.swaplevel(i=0, j=1, axis=1)
-    # Compute per-instrument correlations of various PnL calculations.
-    pnl_corrs = {}
-    for col in pnl_df.columns.levels[0]:
-        pnl_corrs[col] = pnl_df[col].corr()
-    pnl_corr_df = pd.concat(pnl_corrs.values(), keys=pnl_corrs.keys())
-    return pnl_corr_df
 
 
 def normalize_portfolio_df(df: pd.DataFrame) -> pd.DataFrame:

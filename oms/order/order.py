@@ -65,11 +65,13 @@ class Order:
             - This is needed to track that we are aware of the current position
         :param diff_num_shares: the number of shares to buy / sell to reach the
             desired target position
-        :param extra_params: order auxiliary parameters, e.g., "ccxt_id"
+        :param extra_params: auxiliary order parameters, e.g., `ccxt_id`
+        :param order_id: unique ID of the order or `None` to auto-generate it
         """
         if order_id is None:
             order_id = self._get_next_order_id()
         self.order_id = order_id
+        #
         hdbg.dassert_isinstance(creation_timestamp, pd.Timestamp)
         hdateti.dassert_has_tz(creation_timestamp)
         self.creation_timestamp = creation_timestamp
@@ -82,7 +84,7 @@ class Order:
             start_timestamp,
             msg="An order should not start in the past",
         )
-        #
+        # The order is in [start_timestamp, end_timestamp).
         hdbg.dassert_isinstance(start_timestamp, pd.Timestamp)
         hdateti.dassert_has_tz(start_timestamp)
         hdbg.dassert_isinstance(end_timestamp, pd.Timestamp)
@@ -100,21 +102,29 @@ class Order:
         hdateti.dassert_have_same_tz(creation_timestamp, end_timestamp)
         # TODO(gp): Why do we store the timezone?
         self.tz = creation_timestamp.tz
+        # Auxiliary parameters.
         if extra_params is None:
             extra_params = {}
         hdbg.dassert_isinstance(extra_params, dict)
         self.extra_params = extra_params
 
-    # TODO(gp): Do not allow orders to be changed in place or check that the
-    #  invariants (e.g., timestamp with timezones are verified)
+    # TODO(gp): Do not allow orders to be changed in place disabling setters, or
+    # check that the invariants (e.g., timestamp with timezones) are still
+    # verified
+
+    # //////////////////////////////////////////////////////////////////////////
+    # Print.
+    # //////////////////////////////////////////////////////////////////////////
 
     def __str__(self) -> str:
         """
         Get string representation of the Order object, e.g.,
 
-          "Order: order_id=0 creation_timestamp=2023-02-21 02:55:44.508525-05:00 asset_id=3303714233 \
-          type_=price@twap start_timestamp=2023-02-21 02:55:44.508525-05:00 end_timestamp=2023-02-21 \
-          03:00:00-05:00 curr_num_shares=0.0 diff_num_shares=-16.0 tz=America/New_York extra_params={}"
+        "Order: order_id=0 creation_timestamp=2023-02-21
+        02:55:44.508525-05:00   asset_id=3303714233 type_=price@twap
+        start_timestamp=2023-02-21 02:55:44.508525-05:00
+        end_timestamp=2023-02-21 03:00:00-05:00   curr_num_shares=0.0
+        diff_num_shares=-16.0   tz=America/New_York extra_params={}"
         """
         # Store the representation.
         txt: List[str] = []
@@ -129,16 +139,16 @@ class Order:
         """
         Grt an unambiguous string representation of the Order object, e.g.:
 
-          Order: order_id=0
-          creation_timestamp=2000-01-01 09:30:00-05:00
-          asset_id=101
-          type_=price@twap
-          start_timestamp=2000-01-01 09:35:00-05:00
-          end_timestamp=2000-01-01 09:40:00-05:00
-          curr_num_shares=0.0
-          diff_num_shares=100.0
-          tz=America/New_York
-          extra_params={}
+        Order: order_id=0
+        creation_timestamp=2000-01-01 09:30:00-05:00
+        asset_id=101
+        type_=price@twap
+        start_timestamp=2000-01-01 09:35:00-05:00
+        end_timestamp=2000-01-01 09:40:00-05:00
+        curr_num_shares=0.0
+        diff_num_shares=100.0
+        tz=America/New_York
+        extra_params={}
         """
         # Store the representation.
         txt: List[str] = []
@@ -204,6 +214,8 @@ class Order:
         dict_["extra_params"] = self.extra_params
         return dict_
 
+    # //////////////////////////////////////////////////////////////////////////
+
     def is_mergeable(self, rhs: "Order") -> bool:
         """
         Return whether this order can be merged (i.e., internal crossed) with
@@ -236,9 +248,13 @@ class Order:
         )
         return order
 
+    # //////////////////////////////////////////////////////////////////////////
+
     def copy(self) -> "Order":
         # TODO(gp): This is dangerous since we might copy the MarketData too.
         return copy.copy(self)
+
+    # //////////////////////////////////////////////////////////////////////////
 
     @staticmethod
     def _get_next_order_id() -> int:
@@ -248,9 +264,13 @@ class Order:
 
 
 # #############################################################################
+# Orders.
+# #############################################################################
+
+# TODO(gp): Consider moving this code to orders.py
 
 
-def orders_to_string(orders: List[Order], mode: str="str") -> str:
+def orders_to_string(orders: List[Order], mode: str = "str") -> str:
     """
     Get the string representations of a list of Orders.
     """
@@ -275,9 +295,15 @@ def orders_from_string(txt: str) -> List[Order]:
     orders: List[Order] = []
     for line in txt.split("\n"):
         order = Order.from_string(line)
-        _LOG.debug("line='%s'\n-> order=%s", line, order)
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug("line='%s'\n-> order=%s", line, order)
         orders.append(order)
     return orders
+
+
+# /////////////////////////////////////////////////////////////////////////////
+
+# TODO(gp): Likely obsolete since it is used only in oms/obsolete/pnl_simulator.py
 
 
 def _get_orders_to_execute(
@@ -306,7 +332,8 @@ def get_orders_to_execute(
         # hdbg.dassert_eq(len(orders), 1, "%s", orders_to_string(orders))
         assert 0
     orders_to_execute = _get_orders_to_execute(orders, timestamp)
-    _LOG.debug("orders_to_execute=%s", orders_to_string(orders_to_execute))
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("orders_to_execute=%s", orders_to_string(orders_to_execute))
     # Merge the orders.
     merged_orders = []
     while orders_to_execute:
@@ -318,9 +345,10 @@ def get_orders_to_execute(
                 orders_to_execute_tmp.remove(next_order)
         merged_orders.append(order)
         orders_to_execute = orders_to_execute_tmp
-    _LOG.debug(
-        "After merging:\n  merged_orders=%s\n  orders_to_execute=%s",
-        orders_to_string(merged_orders),
-        orders_to_string(orders_to_execute),
-    )
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(
+            "After merging:\n  merged_orders=%s\n  orders_to_execute=%s",
+            orders_to_string(merged_orders),
+            orders_to_string(orders_to_execute),
+        )
     return merged_orders

@@ -1,0 +1,7 @@
+---
+- name: Deploy Airflow and Setup Zabbix Agent
+  hosts: airflow
+  roles:
+    - common
+    - airflow
+    - zabbix_agent

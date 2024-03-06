@@ -23,7 +23,8 @@ def _apply_cc_limits(
     round_mode: str,
 ) -> pd.Series:
     hdbg.dassert_isinstance(order, pd.Series)
-    _LOG.debug("Order before adjustments: %s", order)
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("Order before adjustments: %s", order)
     #
     min_amount = asset_market_info["min_amount"]
     price = order["price"]
@@ -71,20 +72,28 @@ def _apply_cc_limits(
         if round_mode == "round":
             # Round the number.
             final_order_amount = rounded_order_amount
-            _LOG.debug(
-                "Rounding order amount to %s decimal points. Result: %s",
-                amount_precision,
-                final_order_amount,
-            )
+            if _LOG.isEnabledFor(logging.DEBUG):
+                _LOG.debug(
+                    "Rounding order amount to %s decimal points. Result: %s",
+                    amount_precision,
+                    final_order_amount,
+                )
         elif round_mode == "check":
             # Check that the number of digits is the correct one according
             # to exchange rules.
             hdbg.dassert_eq(final_order_amount, rounded_order_amount)
         else:
             raise ValueError(f"Unsupported round_mode={round_mode}")
+    else:
+        # 3) In case of no trades keep holdings unchanged.
+        order["target_holdings_notional"] = order["holdings_notional"]
+        order["target_holdings_shares"] = order["holdings_shares"]
+        # No trades in shares implies no trades notional.
+        order["target_trades_notional"] = 0.0
     #
     order["target_trades_shares"] = final_order_amount
-    _LOG.debug("Order after adjustments: %s", order)
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug("Order after adjustments: %s", order)
     return order
 
 
@@ -94,8 +103,10 @@ def apply_cc_limits(
     """
     Apply notional limits for DataFrame of multiple orders.
 
-    Target amount of order shares is set to 0 if its actual values are below
-    the notional limits.
+    If target trades absolute values are below the exchange limits:
+        - target trades (shares and notional) are set to 0
+        - holdings (shares and notional) remain unchanged
+          (i.e. target holdings = current holdings)
 
     :param forecast_df: DataFrame with forecasts, e.g.
         ```
@@ -111,18 +122,28 @@ def apply_cc_limits(
         "check": check with an assertion whether target shares are rounded or not
     :return: DataFrame with updated orders
     """
-    _LOG.debug(
-        "Order df before adjustments: forecast_df=\n%s",
-        hpandas.df_to_str(forecast_df, num_rows=None),
-    )
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(
+            "Order df before adjustments: forecast_df=\n%s",
+            hpandas.df_to_str(forecast_df, num_rows=None),
+        )
     hdbg.dassert_in("target_trades_shares", forecast_df.columns)
     stage = broker.stage
     hdbg.dassert_in(stage, ["local", "prod", "preprod"])
     market_info = broker.market_info
     #
     # Save shares before limits application.
+    forecast_df["target_holdings_shares.before_apply_cc_limits"] = forecast_df[
+        "target_holdings_shares"
+    ]
+    forecast_df["target_holdings_notional.before_apply_cc_limits"] = forecast_df[
+        "target_holdings_notional"
+    ]
     forecast_df["target_trades_shares.before_apply_cc_limits"] = forecast_df[
         "target_trades_shares"
+    ]
+    forecast_df["target_trades_notional.before_apply_cc_limits"] = forecast_df[
+        "target_trades_notional"
     ]
     forecast_df_tmp = []
     # Apply exchange restrictions to individual orders.
@@ -134,8 +155,9 @@ def apply_cc_limits(
     forecast_df_tmp.index.name = forecast_df.index.name
     hdbg.dassert_eq(str(forecast_df.shape), str(forecast_df_tmp.shape))
     forecast_df = forecast_df_tmp
-    _LOG.debug(
-        "Order df after adjustments: forecast_df=\n%s",
-        hpandas.df_to_str(forecast_df, num_rows=None),
-    )
+    if _LOG.isEnabledFor(logging.DEBUG):
+        _LOG.debug(
+            "Order df after adjustments: forecast_df=\n%s",
+            hpandas.df_to_str(forecast_df, num_rows=None),
+        )
     return forecast_df

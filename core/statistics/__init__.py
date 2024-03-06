@@ -13,6 +13,7 @@ from core.statistics.drawdown import *  # pylint: disable=unused-import # NOQA
 from core.statistics.empirical_distribution_function import *  # pylint: disable=unused-import # NOQA
 from core.statistics.entropy import *  # pylint: disable=unused-import # NOQA
 from core.statistics.forecastability import *  # pylint: disable=unused-import # NOQA
+from core.statistics.hitting_time import *  # pylint: disable=unused-import # NOQA
 from core.statistics.interarrival_time import *  # pylint: disable=unused-import # NOQA
 from core.statistics.local_level_model import *  # pylint: disable=unused-import # NOQA
 from core.statistics.normality import *  # pylint: disable=unused-import # NOQA

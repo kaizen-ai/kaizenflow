@@ -19,11 +19,12 @@ import dataflow_amp.system.Cx.Cx_forecast_system as dtfasccfosy
 # #############################################################################
 
 
-def _get_Cx_NonTime_ForecastSystem_example(
+def get_Cx_NonTime_ForecastSystem_example(
     dag_builder_ctor_as_str: str,
     *dag_builder_args,
     train_test_mode: str,
     backtest_config: str,
+    root_dir: str,
     # TODO(Grisha): P1, should become `**train_test_kwargs`.
     oos_start_date_as_str: Optional[str] = None,
     **dag_builder_kwargs,
@@ -35,6 +36,8 @@ def _get_Cx_NonTime_ForecastSystem_example(
     :param dag_builder_args: same as in `Cx_NonTime_ForecastSystem`
     :param train_test_mode: same as in `Cx_NonTime_ForecastSystem`
     :param backtest_config: see `apply_backtest_config()`
+    :param root_dir: either a local root path (e.g., `/app/im`) or an S3 root
+        path (e.g., `s3://<ck-data>/reorg/historical.manual.pq`) to `CCXT` data
     :param oos_start_date_as_str: used only for train_test_mode="ins_oos",
         see `apply_ins_oos_backtest_config()`
     :param dag_builder_kwargs: same as in `Cx_NonTime_ForecastSystem`
@@ -74,31 +77,21 @@ def _get_Cx_NonTime_ForecastSystem_example(
     # without a vendor name).
     universe_version, _ = cconfig.parse_universe_str(universe_str)
     universe_version = universe_version.split("_", 1)[-1].replace("_", ".")
-    system = dtfsys.apply_ImClient_config(system, universe_version)
+    data_snapshot = ""
+    version = "v1_0_0"
+    # TODO(Dan): expose download universe version since it is applicable for OHLCV futures only.
+    download_universe_version = "v7_3"
+    #
+    system = dtfsys.apply_ImClient_config(
+        system,
+        universe_version,
+        root_dir,
+        data_snapshot,
+        version,
+        download_universe_version,
+    )
     # 6) Apply `MarketData` config.
     system = dtfsys.apply_MarketData_config(system)
-    return system
-
-
-def get_Cx_NonTime_ForecastSystem_for_simulation_example1(
-    dag_builder_ctor_as_str: str,
-    *dag_builder_args,
-    train_test_mode: str,
-    backtest_config: str,
-    oos_start_date_as_str: Optional[str] = None,
-    **dag_builder_kwargs,
-) -> dtfsys.NonTime_ForecastSystem:
-    """
-    Get `Cx_NonTime_ForecastSystem` object for backtest simulation.
-    """
-    system = _get_Cx_NonTime_ForecastSystem_example(
-        dag_builder_ctor_as_str,
-        *dag_builder_args,
-        train_test_mode=train_test_mode,
-        backtest_config=backtest_config,
-        oos_start_date_as_str=oos_start_date_as_str,
-        **dag_builder_kwargs,
-    )
     return system
 
 
@@ -109,13 +102,13 @@ def get_Cx_NonTime_ForecastSystem_for_unit_tests_example1(
     """
     Get `Cx_NonTime_ForecastSystem` object for unit tests.
     """
-    fit_at_beginning = False
+    root_dir = "s3://cryptokaizen-unit-test/v3"
     train_test_mode = "ins"
-    system = _get_Cx_NonTime_ForecastSystem_example(
+    system = get_Cx_NonTime_ForecastSystem_example(
         dag_builder_ctor_as_str,
-        fit_at_beginning,
         train_test_mode=train_test_mode,
         backtest_config=backtest_config,
+        root_dir=root_dir,
     )
     return system
 
@@ -220,7 +213,28 @@ def get_Cx_Time_ForecastSystem_with_DataFramePortfolio_example1(
         *dag_builder_args,
         **dag_builder_kwargs,
     )
+    system.config["trading_period"] = "5T"
+    order_config = dtfasccxbu.get_Cx_order_config_instance1()
+    #
+    compute_target_positions_kwargs = {
+        "bulk_frac_to_remove": 0.0,
+        "bulk_fill_method": "zero",
+        "target_gmv": 1e5,
+    }
+    optimizer_config = {
+        "backend": "pomo",
+        "params": {
+            "style": "cross_sectional",
+            "kwargs": compute_target_positions_kwargs,
+        },
+    }
+    #
+    root_log_dir = None
+    system = dtfasccxbu.apply_ProcessForecastsNode_config(
+        system, order_config, optimizer_config, root_log_dir
+    )
     # 2) Apply `ReplayedMarketData_from_file` config.
+    system.config["market_data_config", "days"] = None
     system = dtfsys.apply_ReplayedMarketData_from_file_config(
         system, file_path, replayed_delay_in_mins_or_timestamp, delay_in_secs
     )
@@ -270,7 +284,28 @@ def get_Cx_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example
         *dag_builder_args,
         **dag_builder_kwargs,
     )
+    system.config["trading_period"] = "5T"
+    order_config = dtfasccxbu.get_Cx_order_config_instance1()
+    #
+    compute_target_positions_kwargs = {
+        "bulk_frac_to_remove": 0.0,
+        "bulk_fill_method": "zero",
+        "target_gmv": 1e5,
+    }
+    optimizer_config = {
+        "backend": "pomo",
+        "params": {
+            "style": "cross_sectional",
+            "kwargs": compute_target_positions_kwargs,
+        },
+    }
+    #
+    root_log_dir = None
+    system = dtfasccxbu.apply_ProcessForecastsNode_config(
+        system, order_config, optimizer_config, root_log_dir
+    )
     # 2) Apply `ReplayedMarketData_from_file` config.
+    system.config["market_data_config", "days"] = None
     system = dtfsys.apply_ReplayedMarketData_from_file_config(
         system, file_path, replayed_delay_in_mins_or_timestamp, delay_in_secs
     )
