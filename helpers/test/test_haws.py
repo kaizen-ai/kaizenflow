@@ -40,7 +40,7 @@ class Test_haws(hunitest.TestCase):
         # Create mock session.
         mock_session = boto3.session.Session(aws_access_key_id = "mock_access_key", 
                                         aws_secret_access_key = "mock_secret_access_key", 
-                                        region_name = "mock_default_region")
+                                        region_name = "us-east-1")
         # Using mock session to create a s3 bucket.
         s3_resource = mock_session.resource("s3")
         s3_resource.create_bucket(Bucket="my-bucket")
