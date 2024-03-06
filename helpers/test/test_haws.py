@@ -22,7 +22,7 @@ class Test_haws(hunitest.TestCase):
         os.environ["MOCK_AWS_ACCESS_KEY_ID"] = "mock_access_key"
         os.environ["MOCK_AWS_SECRET_ACCESS_KEY"] = "mock_secret_access_key"
         os.environ["MOCK_AWS_S3_BUCKET"] = "mock_s3_bucket"
-        os.environ["MOCK_AWS_DEFAULT_REGION"] = "mock_default_region"
+        os.environ["MOCK_AWS_DEFAULT_REGION"] = "us-east-1"
 
     def tear_down_test(self) -> None:
         del os.environ["MOCK_AWS_ACCESS_KEY_ID"]
@@ -48,7 +48,7 @@ class Test_haws(hunitest.TestCase):
         # Get all s3 buckets in session.
         s3_client = session.client("s3")
         response = s3_client.list_buckets()
-        bucket_names = [bucket.name for bucket in response['Buckets']]
+        bucket_names = [bucket.name for bucket in response.get('Buckets', [])]
         # Check if they are matched.
         hdbg.dassert_eq("my-bucket", bucket_names)
     
@@ -71,7 +71,7 @@ class Test_haws(hunitest.TestCase):
         # Get all s3 buckets in session.
         s3_client = session.client("s3")
         response = s3_client.list_buckets()
-        bucket_names = [bucket.name for bucket in response['Buckets']]
+        bucket_names = [bucket.name for bucket in response.get('Buckets', [])]
         # Check if they are matched.
         hdbg.dassert_eq("my-bucket", bucket_names)
 
