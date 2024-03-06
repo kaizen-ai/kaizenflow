@@ -9,7 +9,7 @@ import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
 
 class Test_haws(hunitest.TestCase):
-    @pytest.fixture(autouse=True, scope="class")
+    @pytest.fixture(autouse=True)
     def setup_teardown_test(self):
         # Run before each test.
         self.set_up_test()
@@ -52,7 +52,7 @@ class Test_haws(hunitest.TestCase):
         # Check if they are matched.
         hdbg.dassert_eq("my-bucket", bucket_names)
     
-    @mock_aws
+    @mock_s3
     def test_get_session2(self) -> None:
         """
         Test that `haws.get_session` correctly return a session with region parameter.
