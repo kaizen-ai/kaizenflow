@@ -218,8 +218,8 @@ def dassert_time_indexed_df(
 
     :param df: dataframe to validate
     :param allow_empty: allow empty data frames
-    :param strictly_increasing: if True the index needs to be strictly increasing,
-      instead of just increasing
+    :param strictly_increasing: if True the index needs to be strictly
+        increasing, instead of just increasing
     """
     # Verify that Pandas dataframe is passed as input.
     hdbg.dassert_isinstance(df, pd.DataFrame)
@@ -578,9 +578,10 @@ def find_gaps_in_time_series(
     :param start_timestamp: start of the time interval to check
     :param end_timestamp: end of the time interval to check
     :param freq: distance between two data points on the interval.
-      Aliases correspond to pandas.date_range's freq parameter,
-      i.e. "S" -> second, "T" -> minute.
-    :return: pd.Series representing missing points in the source time series.
+        Aliases correspond to pandas.date_range's freq parameter, i.e.
+        "S" -> second, "T" -> minute.
+    :return: pd.Series representing missing points in the source time
+        series.
     """
     _time_series = time_series
     if str(time_series.dtype) in ["int32", "int64"]:
@@ -761,8 +762,8 @@ def drop_axis_with_all_nans(
     """
     Remove columns and rows not containing information (e.g., with only nans).
 
-    The operation is not performed in place and the resulting df is returned.
-    Assume that the index is timestamps.
+    The operation is not performed in place and the resulting df is
+    returned. Assume that the index is timestamps.
 
     :param df: dataframe to process
     :param drop_rows: remove rows with only nans
@@ -987,11 +988,13 @@ def merge_dfs(
     """
     Wrap `pd.merge`.
 
-    :param threshold_col_name: a column's name to check the minimum overlap on
-    :param threshold: minimum overlap of unique values in a specified column to
-        perform the merge
-    :param intersecting_columns: allow certain columns to appear in both dataframes;
-        store both in the resulting df with corresponding suffixes
+    :param threshold_col_name: a column's name to check the minimum
+        overlap on
+    :param threshold: minimum overlap of unique values in a specified
+        column to perform the merge
+    :param intersecting_columns: allow certain columns to appear in both
+        dataframes; store both in the resulting df with corresponding
+        suffixes
     """
     _LOG.debug(
         hprint.to_str(
@@ -1226,7 +1229,7 @@ def df_to_str(
     df: Union[pd.DataFrame, pd.Series, pd.Index],
     *,
     # TODO(gp): Remove this hack in the integration.
-    #handle_signed_zeros: bool = False,
+    # handle_signed_zeros: bool = False,
     handle_signed_zeros: bool = True,
     num_rows: Optional[int] = 6,
     print_dtypes: bool = False,
@@ -1934,6 +1937,7 @@ def compare_dfs(
     zero_vs_zero_is_zero: bool = True,
     remove_inf: bool = True,
     log_level: int = logging.DEBUG,
+    only_warning: bool = True,
 ) -> pd.DataFrame:
     """
     Compare two dataframes.
@@ -1960,8 +1964,13 @@ def compare_dfs(
     :param log_level: logging level
     :return: a singe dataframe with differences as values
     """
+    # Check value of `assert_diff_threshold` if exists.
     hdbg.dassert_isinstance(df1, pd.DataFrame)
     hdbg.dassert_isinstance(df2, pd.DataFrame)
+    if assert_diff_threshold:
+        hdbg.dassert_lte(assert_diff_threshold, 1.0)
+        hdbg.dassert_lte(0.0, assert_diff_threshold)
+
     # TODO(gp): Factor out this logic and use it for both compare_visually_dfs
     #  and
     if row_mode == "equal":
@@ -1983,47 +1992,46 @@ def compare_dfs(
         df2 = df2[col_names]
     else:
         raise ValueError(f"Invalid column_mode='{column_mode}'")
-    close_to_zero_threshold_mask = lambda x: abs(x) < close_to_zero_threshold
     # Round small numbers to 0 to exclude them from the diff computation.
+    close_to_zero_threshold_mask = lambda x: abs(x) < close_to_zero_threshold
     df1[close_to_zero_threshold_mask] = df1[close_to_zero_threshold_mask].round(0)
     df2[close_to_zero_threshold_mask] = df2[close_to_zero_threshold_mask].round(0)
-    if compare_nans:
-        # Compare NaN values in dataframes.
-        nan_diff_df = compare_nans_in_dataframes(df1, df2)
-        _LOG.log(
-            log_level,
-            "Dataframe with NaN differences=\n%s",
-            df_to_str(nan_diff_df, log_level=log_level),
-        )
-        # TODO(Grisha): add the `only_warning` switch to the function.
-        msg = "There are NaN values in one of the dataframes that are not in the other one."
-        hdbg.dassert_eq(0, nan_diff_df.shape[0], msg=msg)
     # Compute the difference df.
     if diff_mode == "diff":
-        df_diff = df1 - df2
+        try:
+            pd.testing.assert_frame_equal(df1, df2, check_like=True)
+        except AssertionError as e:
+            hdbg._dfatal(txt=e, msg=None, only_warning=only_warning)
+        finally:
+            df_diff = df1 - df2
+            if remove_inf:
+                df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
     elif diff_mode == "pct_change":
-        df_diff = 100 * (df1 - df2) / df2
+        df_diff = 100 * (df1 - df2) / df2.abs()
         if zero_vs_zero_is_zero:
             # When comparing 0 to 0 set the diff (which is NaN by default) to 0.
             df1_mask = df1 == 0
             df2_mask = df2 == 0
             zero_vs_zero_mask = df1_mask & df2_mask
             df_diff[zero_vs_zero_mask] = 0
-    else:
-        raise ValueError(f"diff_mode={diff_mode}")
-    df_diff = df_diff.add_suffix(f".{diff_mode}")
-    if diff_mode == "pct_change" and assert_diff_threshold is not None:
-        # TODO(Grisha): generalize for the other modes.
-        # Report max diff.
-        max_diff = df_diff.abs().max().max()
-        _LOG.log(log_level, "Max difference factor: %s", max_diff)
+        if remove_inf:
+            df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
+        nan_mask = df_diff.isna()
         if assert_diff_threshold is not None:
-            hdbg.dassert_lte(assert_diff_threshold, 1.0)
-            hdbg.dassert_lte(0.0, assert_diff_threshold)
-            # TODO(Grisha): it works only if `remove_inf` is True.
-            hdbg.dassert_lte(max_diff, assert_diff_threshold)
-    if remove_inf:
-        df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
+            nan_mask = df_diff.isna()
+            within_threshold = (df_diff.abs() <= assert_diff_threshold) | nan_mask
+            expected = pd.DataFrame(
+                True,
+                index=within_threshold.index,
+                columns=within_threshold.columns,
+            )
+            try:
+                pd.testing.assert_frame_equal(
+                    within_threshold, expected, check_exact=True
+                )
+            except AssertionError as e:
+                hdbg._dfatal(txt=e, msg=None, only_warning=only_warning)
+    df_diff = df_diff.add_suffix(f".{diff_mode}")
     return df_diff
 
 
@@ -2292,13 +2300,13 @@ def to_gsheet(
     Save a dataframe to a Google sheet.
 
     :param df: the dataframe to save to a Google sheet
-    :param gsheet_name: the name of the Google sheet to save the df into;
-        the Google sheet with this name must already exist on the
+    :param gsheet_name: the name of the Google sheet to save the df
+        into; the Google sheet with this name must already exist on the
         Google Drive
     :param gsheet_sheet_name: the name of the sheet in the Google sheet
-    :param overwrite: if True, the contents of the sheet are erased before saving
-        the dataframe into it;
-        if False, the dataframe is appended to the contents of the sheet
+    :param overwrite: if True, the contents of the sheet are erased
+        before saving the dataframe into it; if False, the dataframe is
+        appended to the contents of the sheet
     """
     import gspread_pandas
 
