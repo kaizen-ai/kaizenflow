@@ -48,7 +48,7 @@ class Test_haws(hunitest.TestCase):
         # Get all s3 buckets in session.
         s3_client = session.client("s3")
         response = s3_client.list_buckets()
-        bucket_names = [bucket.name for bucket in response.get('Buckets', [])]
+        bucket_names = response.get('Buckets', [])
         # Check if they are matched.
         hdbg.dassert_eq("my-bucket", bucket_names)
     
@@ -71,7 +71,7 @@ class Test_haws(hunitest.TestCase):
         # Get all s3 buckets in session.
         s3_client = session.client("s3")
         response = s3_client.list_buckets()
-        bucket_names = [bucket.name for bucket in response.get('Buckets', [])]
+        bucket_names = response.get('Buckets', [])
         # Check if they are matched.
         hdbg.dassert_eq("my-bucket", bucket_names)
 
