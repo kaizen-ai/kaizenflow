@@ -1,10 +1,26 @@
+
+
+<!-- toc -->
+
+- [DATA605 Class Projects](#data605-class-projects)
+  * [Choosing a project](#choosing-a-project)
+  * [Working](#working)
+  * [Pre-requisites](#pre-requisites)
+  * [Project assignment](#project-assignment)
+    + [Documentation](#documentation)
+    + [Submitting project](#submitting-project)
+  * [Example of a class project](#example-of-a-class-project)
+
+<!-- tocstop -->
+
+
 # DATA605 Class Projects
 
 - The goal of the class project is to learn cutting-edge modern big data
   technology and write a (small) example of a system using it
 - Each class project is similar in spirit to the tutorials for various
   technologies (e.g., Git, Docker, SQL, Mongo, Airflow, Dask) we have looked and
-  studied in classes 
+  studied in classes
 
 ## Choosing a project
 
@@ -36,7 +52,8 @@
   developers on Sorrentum) contribute to a project
 
 - Each step of the project is delivered through committing code to your the dir
-  corresponding to your project (more below) and doing a GitHub Pull Request (PR)
+  corresponding to your project (more below) and doing a GitHub Pull Request
+  (PR)
   - You can / should commit regularly and not only once at the end
   - This allows us to review intermediate results and give you feedback (like
     companies adopting an Agile methodology do)
@@ -52,7 +69,8 @@
 - Install Docker on your computer
   - Ok to use Docker natively on Mac and Linux
   - Use VMware if Windows
-    - If you have problems installing it on your laptop, use one computer from UMD or your friends
+    - If you have problems installing it on your laptop, use one computer from
+      UMD or your friends
 - After signing up for a project accept invitation to collaborate sent to the
   email that you used to register your GitHub account, or check
   [here](https://github.com/sorrentum/sorrentum/invitations)
@@ -65,7 +83,8 @@
   - Create a Docker container installing all the needed tools (e.g., Redis and
     `redis-py`)
   - You should use Docker Compose to build single or multi-container systems
-  - Jupyter notebook (if possible), otherwise a Python script implementing the project
+  - Jupyter notebook (if possible), otherwise a Python script implementing the
+    project
   - Only Python3 on Linux/Max should be used
   - You can always communicate with the tech using Python libraries or HTTP APIs
 
@@ -77,12 +96,12 @@
 - Make sure there is a way of building your project with Python, Docker
 
 ### Documentation
+
 - Write a 5 to 10-page report in markdown covering your project
   - At least 1 page (60 lines): short description of the technology used (e.g.,
-    Redis), e.g., 
+    Redis), e.g.,
     - What it does
-    - Why it's different than other technologies solving a similar
-      problem
+    - Why it's different than other technologies solving a similar problem
     - Pros and cons of their approach
     - Relate it to what we have studied in class
     - Cite sources of where you have found this info
@@ -113,8 +132,9 @@
 
 ### Submitting project
 
-- Each project will need to be checked in https://github.com/sorrentum/sorrentum,
-  filing bugs, with PRs, etc like in an open source project
+- Each project will need to be checked in
+  https://github.com/sorrentum/sorrentum, filing bugs, with PRs, etc like in an
+  open source project
 
 - The tag of your projects follows the schema
   `Spring{year}_{project_title_without_spaces}`
@@ -132,8 +152,8 @@
   - E.g., `SorrTask645_Redis_cache_to_fetch_user_profiles`
   ```
   > cd $HOME/src
-  > git clone git@github.com:sorrentum/sorrentum.git sorrentum
-  > cd $HOME/src/sorrentum
+  > git clone git@github.com:sorrentum/sorrentum.git sorrentum1
+  > cd $HOME/src/sorrentum1
   > git checkout master
   > git checkout -b SorrTask645_Redis_cache_to_fetch_user_profiles
   ...
@@ -143,14 +163,14 @@
   which is like `{GIT_ROOT}/sorrentum_sandbox/projects/{project_tag}`
   - E.g., on the dir cloned on my laptop the dir is named
     `~/src/sorrentum1/sorrentum_sandbox/projects/SorrTask645_Redis_cache_to_fetch_user_profiles`
-  - The idea is that each 
 
-- You always need to create a PR from your branch and add your TA and `gpsaggese`
-  as reviewers
+- You always need to create a PR from your branch and add your TA and
+  `gpsaggese` as reviewers
   - Remember you can't push directly to `master`
   - You can only push code to your branch
 
 - Copy the files from the template project to your project
+
   ```bash
   > cd $GIT_ROOT
   > cp -r sorrentum_sandbox/projects/project_template sorrentum_sandbox/projects/{project_tag}
@@ -158,7 +178,7 @@
   ```
 
 - You can use consecutive branch and PR names as you make progress
-  - E.g., `SorrTask645_Redis_cache_to_fetch_user_profiles_1`, 
+  - E.g., `SorrTask645_Redis_cache_to_fetch_user_profiles_1`,
     `SorrTask645_Redis_cache_to_fetch_user_profiles_2`, ...
 
 ## Example of a class project
