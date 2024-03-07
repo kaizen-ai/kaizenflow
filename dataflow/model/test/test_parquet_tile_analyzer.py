@@ -44,15 +44,15 @@ class TestParquetTileAnalyzer(hunitest.TestCase):
         expected = r"""
                     file_size
 asset_id year month
-100      2022 1        9.1 KB
-              2        8.2 KB
-200      2022 1        9.1 KB
-              2        8.2 KB
-300      2022 1        9.1 KB
-              2        8.2 KB
-400      2022 1        9.1 KB
-              2        8.2 KB
-        """
+100      2022 1        9.9 KB
+              2        9.0 KB
+200      2022 1        9.9 KB
+              2        9.0 KB
+300      2022 1        9.9 KB
+              2        9.0 KB
+400      2022 1        9.9 KB
+              2        9.0 KB
+                      """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_compute_metadata_stats_by_asset_id(self) -> None:
@@ -65,10 +65,10 @@ asset_id year month
         expected = r"""
         n_years n_unique_months n_files    size
 asset_id
-100     1       2               2       17.3 KB
-200     1       2               2       17.3 KB
-300     1       2               2       17.3 KB
-400     1       2               2       17.3 KB"""
+100     1       2               2       18.8 KB
+200     1       2               2       18.8 KB
+300     1       2               2       18.8 KB
+400     1       2               2       18.8 KB"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_compute_universe_size_by_time(self) -> None:
@@ -81,6 +81,6 @@ asset_id
         expected = r"""
             n_asset_ids     size
 year month
-2022 1                4  36.5 KB
-     2                4  32.9 KB"""
+2022 1                4  39.5 KB
+     2                4  35.8 KB"""
         self.assert_equal(actual, expected, fuzzy_match=True)
