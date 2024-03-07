@@ -21,7 +21,7 @@ import helpers.hsystem as hsystem
 _LOG = logging.getLogger(__name__)
 
 # Define the root directory where Markdown files are located
-DOCS_DIR = "/docs"
+DOCS_DIR = "/src/sorrentum1/docs"
 
 
 def _parse() -> argparse.ArgumentParser:
