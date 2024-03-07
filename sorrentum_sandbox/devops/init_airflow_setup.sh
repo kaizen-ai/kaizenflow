@@ -12,7 +12,7 @@ echo "# Initializing Airflow DB setup"
 docker exec \
     -ti \
     $CONTAINER_NAME \
-    airflow db init && \
+    airflow db migrate && \
     echo "Initialized airflow DB"
 
 echo "# Setting up Admin user with username $AIRFLOW_USER"
