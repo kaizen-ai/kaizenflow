@@ -42,5 +42,5 @@ class Test_get_task_definition_image_url(hunitest.TestCase):
                 {"name": "my-container", "image": mock_image_url}
             ],
         )
-        image_url: str = haws.get_task_definition_image_url(task_definition_name)
+        image_url = haws.get_task_definition_image_url(task_definition_name)
         hdbg.dassert_eq(image_url, mock_image_url)
