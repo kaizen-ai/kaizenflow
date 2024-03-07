@@ -1,0 +1,5 @@
+exp = r"""
+completed failure Lint    Run_linter
+completed       success Lint    Fast_tests
+completed       success Lint    Slow_tests
+"""

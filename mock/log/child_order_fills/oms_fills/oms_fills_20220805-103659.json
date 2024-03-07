@@ -1,0 +1,63 @@
+[
+    {
+        "py/reduce": [
+            {
+                "py/type": "collections.OrderedDict"
+            },
+            {
+                "py/tuple": []
+            },
+            null,
+            null,
+            {
+                "py/tuple": [
+                    {
+                        "py/tuple": [
+                            "asset_id",
+                            1464553467
+                        ]
+                    },
+                    {
+                        "py/tuple": [
+                            "fill_id",
+                            1
+                        ]
+                    },
+                    {
+                        "py/tuple": [
+                            "timestamp",
+                            {
+                                "py/object": "pandas._libs.tslibs.timestamps.Timestamp",
+                                "values": "",
+                                "txt": true,
+                                "meta": {
+                                    "isoformat": "2022-08-05T14:36:01.800000+00:00"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "py/tuple": [
+                            "num_shares",
+                            {
+                                "py/object": "numpy.float64",
+                                "dtype": "float64",
+                                "value": 0.85
+                            }
+                        ]
+                    },
+                    {
+                        "py/tuple": [
+                            "price",
+                            {
+                                "py/object": "numpy.float64",
+                                "dtype": "float64",
+                                "value": 20.5
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]
