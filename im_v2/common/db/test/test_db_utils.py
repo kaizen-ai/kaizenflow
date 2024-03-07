@@ -1,9 +1,11 @@
+import sqlite3
 import unittest.mock as umock
 
 import pandas as pd
 import psycopg2 as psycop
 import pytest
 
+import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
 import im_v2.common.db.db_utils as imvcddbut
 
@@ -144,3 +146,52 @@ class TestSaveDataToDb(hunitest.TestCase):
         imvcddbut.save_data_to_db(
             data, data_type, db_connection, db_table, time_zone
         )
+
+
+class TestSaveDataToRealDb(hunitest.TestCase):
+    """
+    This class tests im_v2.common.db.db_utils.save_data_to_db on real database, not mock.
+    Very similar to TestSaveDataToDb class above - maybe up to redundant-level similar.
+    """
+
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+
+    def set_up_test(self) -> None:
+        self.db = psycop.connect(
+            database="postgres", user='postgres', password='password', host='127.0.0.1', port= '5432'
+        )
+        cursor = self.db.cursor()
+        self.table_name = "sample"
+        cursor.execute(f"""DROP TABLE IF EXISTS {self.table_name}""")
+        create_table_query = f"""
+        CREATE TABLE {self.table_name}(
+                       id BIGSERIAL PRIMARY KEY,
+                       timestamp BIGINT NOT NULL,
+                       exchange_id VARCHAR(255) NOT NULL
+                       )
+                       """
+        cursor.execute(create_table_query)
+        self.db.commit()
+
+    def test_save_data_to_db(self) -> None:
+        self._call_save_data_to_db("ohlcv")
+        num_rows = hsql.get_num_rows(self.db, self.table_name)
+        self.assertEqual(num_rows, 3)
+
+    def _call_save_data_to_db(self, data_type: str) -> None:
+        """
+        Call the `save_data_to_db` method with the stub data.
+        """
+        # Prepare the stub data.
+        data = pd.DataFrame({"timestamp": [10000, 20000, 30000], "enchange_id": ["someid1", "someid2", "someid3"]})
+        time_zone = "UTC"
+        # Call the method under test.
+        imvcddbut.save_data_to_db(
+            data, data_type, self.db, self.table_name, time_zone
+        )
+
