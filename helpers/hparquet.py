@@ -9,7 +9,7 @@ import datetime
 import glob
 import logging
 import os
-from typing import Any, Callable, Iterator, List, Optional, Tuple, Union
+from typing import Any, Iterator, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -160,7 +160,6 @@ def from_parquet(
                 filesystem=filesystem,
                 filters=filters,
                 partitioning=partitioning,
-                use_legacy_dataset=False,
             )
             if columns:
                 # Note: `schema.names` also includes and index.
@@ -820,7 +819,6 @@ def to_partitioned_parquet(
     partition_columns: List[str],
     dst_dir: str,
     *,
-    partition_filename: Union[Callable, None] = lambda x: "data.parquet",
     aws_profile: hs3.AwsProfile = None,
 ) -> None:
     """
@@ -830,7 +828,6 @@ def to_partitioned_parquet(
     :param df: dataframe
     :param partition_columns: partitioning columns
     :param dst_dir: location of partitioned dataset
-    :param partition_filename: a callable to override standard partition names. None for `uuid`.
     :param aws_profile: the name of an AWS profile or a s3fs filesystem
 
     E.g., in case of partition using `date`, the file layout looks like:
@@ -887,7 +884,6 @@ def to_partitioned_parquet(
             table,
             dst_dir,
             partition_cols=partition_columns,
-            partition_filename_cb=partition_filename,
             filesystem=filesystem,
         )
 
@@ -959,12 +955,11 @@ def list_and_merge_pq_files(
             # If there is already single `data.parquet` file, no action is required.
             continue
         # Read all files in target folder.
-        # TODO(Vlad): `use_legacy_dataset=True` is required to read the dataset
-        # without partitioning columns. Need to be refactored since the
-        # parameter will be deprecated in `pyarrow >= 15.0.0`.
-        # See CmTask7209 for details. https://github.com/cryptokaizen/cmamp/issues/7209
+        # `partitioning=None` is required to read the dataset without
+        # partitioning columns. See CmTask7324 for details.
+        # https://github.com/cryptokaizen/cmamp/issues/7324
         data = pq.ParquetDataset(
-            folder_files, filesystem=filesystem, use_legacy_dataset=True
+            folder_files, filesystem=filesystem, partitioning=None
         ).read()
         data = data.to_pandas()
         # Drop duplicates on all non-metadata columns.

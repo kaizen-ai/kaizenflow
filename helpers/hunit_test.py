@@ -531,6 +531,36 @@ def purify_white_spaces(txt: str) -> str:
     return txt
 
 
+def purify_parquet_file_names(txt: str) -> str:
+    """
+    Replace UUIDs file names to `data.parquet` in the goldens.
+    Some tests are expecting in the goldens the Parquet files with the names
+    `data.parquet`.
+    Example:
+        Initial text:
+        ```
+        s3://some_bucket/root/currency_pair=BTC_USDT/year=2024/month=1/ea5e3faed73941a2901a2128abeac4ca-0.parquet
+        s3://some_bucket/root/currency_pair=BTC_USDT/year=2024/month=2/f7a39fefb69b40e0987cec39569df8ed-0.parquet
+        ```
+        Purified text:
+        ```
+        s3://some_bucket/root/currency_pair=BTC_USDT/year=2024/month=1/data.parquet
+        s3://some_bucket/root/currency_pair=BTC_USDT/year=2024/month=2/data.parquet
+        ```
+    """
+    pattern = r"""
+        [0-9a-f]{32}-[0-9].* # GUID pattern.
+        (?=\.parquet) # positive lookahead assertion that matches a position followed by ".parquet" without consuming it.
+    """
+    # TODO(Vlad): Need to change the replacement to `$FILE_NAME` as in the
+    # `purify_from_environment()` function. For now, some tests are expecting
+    # `data.parquet` files.
+    replacement = "data"
+    # flags=re.VERBOSE allows us to use whitespace and comments in the pattern.
+    txt = re.sub(pattern, replacement, txt, flags=re.VERBOSE)
+    return txt
+
+
 def purify_txt_from_client(txt: str) -> str:
     """
     Remove from a string all the information of a specific run.
@@ -542,6 +572,7 @@ def purify_txt_from_client(txt: str) -> str:
     txt = purify_object_representation(txt)
     txt = purify_today_date(txt)
     txt = purify_white_spaces(txt)
+    txt = purify_parquet_file_names(txt)    
     return txt
 
 
