@@ -40,8 +40,8 @@ def _to_skip_on_update_outcomes() -> bool:
     """
     Determine whether to skip on `--update_outcomes`.
 
-    Some tests can't pass with `--update_outcomes`, since they exercise the
-    logic in `--update_outcomes` itself.
+    Some tests can't pass with `--update_outcomes`, since they exercise
+    the logic in `--update_outcomes` itself.
 
     We can't always use `@pytest.mark.skipif(hunitest.get_update_tests)`
     since pytest decides which tests need to be run before the variable
@@ -913,6 +913,23 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
         txt = "/tmp/subdir1"
         exp = txt
         act = hunitest.purify_txt_from_client(txt)
+        self.assertEqual(act, exp)
+
+    def test_purify_parquet_file_names(self) -> None:
+        """
+        Test purification of Parquet file names.
+        The Parquet file names with the
+        GUID have to be replaced with the `data.parquet` string.
+        """
+        txt = """
+        s3://some_bucket/root/currency_pair=BTC_USDT/year=2024/month=1/ea5e3faed73941a2901a2128abeac4ca-0.parquet
+        s3://some_bucket/root/currency_pair=BTC_USDT/year=2024/month=2/f7a39fefb69b40e0987cec39569df8ed-0.parquet
+        """
+        exp = """
+        s3://some_bucket/root/currency_pair=BTC_USDT/year=2024/month=1/data.parquet
+        s3://some_bucket/root/currency_pair=BTC_USDT/year=2024/month=2/data.parquet
+        """
+        act = hunitest.purify_parquet_file_names(txt)
         self.assertEqual(act, exp)
 
 
