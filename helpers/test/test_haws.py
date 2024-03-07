@@ -29,11 +29,11 @@ class Test_get_task_definition_image_url(hunitest.TestCase):
         Test that `get_task_definition_image_url` retrieves correct image URL.
         """
         # Mock data.
-        task_definition_name: str = "my-task-definition"
-        mock_image_url: str = "old_image_url"
-        region: str = "us-east-1"
+        task_definition_name = "my-task-definition"
+        mock_image_url = "old_image_url"
+        region = "us-east-1"
         # Mock the return value of `get_service_client`.
-        mock_client: boto3.client = boto3.client("ecs", region_name=region)
+        mock_client = boto3.client("ecs", region_name=region)
         mock_get_service_client.return_value = mock_client
         # Create a mock task definition.
         mock_client.register_task_definition(
