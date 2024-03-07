@@ -47,7 +47,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     if found_in_files:
         print("Input found in the following Markdown files:")
         for file_path, line_num in found_in_files:
-            url = f"https://github.com/sorrentum/sorrentum/blob/master/{file_path[len(DOCS_DIR) + 1:]}?plain=1#L{line_num}"
+            url = f"https://github.com/sorrentum/sorrentum/blob/master/docs/{file_path[len(DOCS_DIR) + 1:]}?plain=1#L{line_num}"
             print(url)
     else:
         print("Input not found in any Markdown files.")
