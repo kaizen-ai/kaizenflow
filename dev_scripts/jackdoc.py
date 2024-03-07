@@ -14,9 +14,7 @@ import dev_scripts.jackdoc as jackdoc
 import argparse
 import logging
 import os
-
-# import helpers.hdbg as hdbg
-import helpers.hsystem as hsystem
+import urllib.parse
 
 _LOG = logging.getLogger(__name__)
 
@@ -40,16 +38,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
         for file in files:
             if file.endswith(".md"):
                 md_file = os.path.join(root, file)
-                # Use jackmd tool to search for the search term in the current Markdown file
-                result = hsystem.system_to_string(f"jackmd '{search_term}' '{md_file}'")
-                # If the search term is found in the file, append the file path to the list
-                if result:
-                    found_in_files.append(md_file)
+                with open(md_file, 'r') as f:
+                    lines = f.readlines()
+                    for line_num, line in enumerate(lines, start=1):
+                        if search_term in line:
+                            found_in_files.append((md_file, line_num))
 
     if found_in_files:
         print("Input found in the following Markdown files:")
-        for file_path in found_in_files:
-            print(f"- {file_path}")
+        for file_path, line_num in found_in_files:
+            url = f"https://github.com/sorrentum/sorrentum/blob/master/{file_path[len(DOCS_DIR) + 1:]}?plain=1#L{line_num}"
+            print(url)
     else:
         print("Input not found in any Markdown files.")
 
