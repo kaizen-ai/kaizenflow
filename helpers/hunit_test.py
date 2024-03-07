@@ -549,7 +549,6 @@ def purify_parquet_file_names(txt: str) -> str:
         ```
     """
     pattern = r"""
-        (?<=\/) # positive lookbehind assertion that matches a position preceded by "/".
         [0-9a-f]{32}-[0-9].* # GUID pattern.
         (?=\.parquet) # positive lookahead assertion that matches a position followed by ".parquet" without consuming it.
     """

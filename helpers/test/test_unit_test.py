@@ -915,9 +915,15 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
         act = hunitest.purify_txt_from_client(txt)
         self.assertEqual(act, exp)
 
-    def test_purify_parquet_file_names(self) -> None:
+
+# #############################################################################
+
+
+class Test_unit_test2(hunitest.TestCase):
+    def test_purify_parquet_file_names1(self) -> None:
         """
-        Test purification of Parquet file names.
+        Test purification of Parquet file names with the path.
+
         The Parquet file names with the
         GUID have to be replaced with the `data.parquet` string.
         """
@@ -930,7 +936,20 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
         s3://some_bucket/root/currency_pair=BTC_USDT/year=2024/month=2/data.parquet
         """
         act = hunitest.purify_parquet_file_names(txt)
-        self.assertEqual(act, exp)
+        hdbg.dassert_eq(act, exp)
+
+    def test_purify_parquet_file_names2(self) -> None:
+        """
+        Test purification of Parquet file name without the path.
+        """
+        txt = """
+        ffa39fffb69b40e0987cec39569df8ed-0.parquet
+        """
+        exp = """
+        data.parquet
+        """
+        act = hunitest.purify_parquet_file_names(txt)
+        hdbg.dassert_eq(act, exp)
 
 
 # #############################################################################
