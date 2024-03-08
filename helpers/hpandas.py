@@ -218,8 +218,8 @@ def dassert_time_indexed_df(
 
     :param df: dataframe to validate
     :param allow_empty: allow empty data frames
-    :param strictly_increasing: if True the index needs to be strictly increasing,
-      instead of just increasing
+    :param strictly_increasing: if True the index needs to be strictly
+        increasing, instead of just increasing
     """
     # Verify that Pandas dataframe is passed as input.
     hdbg.dassert_isinstance(df, pd.DataFrame)
@@ -578,9 +578,10 @@ def find_gaps_in_time_series(
     :param start_timestamp: start of the time interval to check
     :param end_timestamp: end of the time interval to check
     :param freq: distance between two data points on the interval.
-      Aliases correspond to pandas.date_range's freq parameter,
-      i.e. "S" -> second, "T" -> minute.
-    :return: pd.Series representing missing points in the source time series.
+        Aliases correspond to pandas.date_range's freq parameter, i.e.
+        "S" -> second, "T" -> minute.
+    :return: pd.Series representing missing points in the source time
+        series.
     """
     _time_series = time_series
     if str(time_series.dtype) in ["int32", "int64"]:
@@ -761,8 +762,8 @@ def drop_axis_with_all_nans(
     """
     Remove columns and rows not containing information (e.g., with only nans).
 
-    The operation is not performed in place and the resulting df is returned.
-    Assume that the index is timestamps.
+    The operation is not performed in place and the resulting df is
+    returned. Assume that the index is timestamps.
 
     :param df: dataframe to process
     :param drop_rows: remove rows with only nans
@@ -987,11 +988,13 @@ def merge_dfs(
     """
     Wrap `pd.merge`.
 
-    :param threshold_col_name: a column's name to check the minimum overlap on
-    :param threshold: minimum overlap of unique values in a specified column to
-        perform the merge
-    :param intersecting_columns: allow certain columns to appear in both dataframes;
-        store both in the resulting df with corresponding suffixes
+    :param threshold_col_name: a column's name to check the minimum
+        overlap on
+    :param threshold: minimum overlap of unique values in a specified
+        column to perform the merge
+    :param intersecting_columns: allow certain columns to appear in both
+        dataframes; store both in the resulting df with corresponding
+        suffixes
     """
     _LOG.debug(
         hprint.to_str(
@@ -1226,7 +1229,7 @@ def df_to_str(
     df: Union[pd.DataFrame, pd.Series, pd.Index],
     *,
     # TODO(gp): Remove this hack in the integration.
-    #handle_signed_zeros: bool = False,
+    # handle_signed_zeros: bool = False,
     handle_signed_zeros: bool = True,
     num_rows: Optional[int] = 6,
     print_dtypes: bool = False,
@@ -2292,13 +2295,13 @@ def to_gsheet(
     Save a dataframe to a Google sheet.
 
     :param df: the dataframe to save to a Google sheet
-    :param gsheet_name: the name of the Google sheet to save the df into;
-        the Google sheet with this name must already exist on the
+    :param gsheet_name: the name of the Google sheet to save the df
+        into; the Google sheet with this name must already exist on the
         Google Drive
     :param gsheet_sheet_name: the name of the sheet in the Google sheet
-    :param overwrite: if True, the contents of the sheet are erased before saving
-        the dataframe into it;
-        if False, the dataframe is appended to the contents of the sheet
+    :param overwrite: if True, the contents of the sheet are erased
+        before saving the dataframe into it; if False, the dataframe is
+        appended to the contents of the sheet
     """
     import gspread_pandas
 
