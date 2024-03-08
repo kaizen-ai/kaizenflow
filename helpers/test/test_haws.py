@@ -7,7 +7,6 @@ from botocore.client import BaseClient
 from moto import mock_ecs
 
 import helpers.haws as haws
-import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
 
 
@@ -60,4 +59,4 @@ class Test_update_task_definition(hunitest.TestCase):
         updated_image_url = task_description["taskDefinition"][
             "containerDefinitions"
         ][0]["image"]
-        hdbg.dassert_eq(updated_image_url, new_image_url)
+        self.assertEqual(updated_image_url, new_image_url)
