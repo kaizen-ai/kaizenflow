@@ -56,6 +56,8 @@ services:
       - ./airflow_data/plugins:/opt/airflow/plugins
       - ./airflow_data/log_volume:/opt/airflow/log
       - ../..:/cmamp
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:postgres@host.docker.internal:5532/airflow
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -79,6 +81,7 @@ services:
       # TODO(Juraj): this is a quick hack to get through
       # `hserver._dassert_setup_consistency()`.
       - CK_IN_PROD_CMAMP_CONTAINER=True
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:postgres@host.docker.internal:5532/airflow
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
