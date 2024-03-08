@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 import boto3
 import pytest
@@ -31,30 +32,35 @@ class Test_haws(hunitest.TestCase):
         del os.environ["MOCK_AWS_S3_BUCKET"]
         del os.environ["MOCK_AWS_DEFAULT_REGION"]
 
-    @mock_s3
-    def test_get_session1(self) -> None:
-        """
-        Test that `haws.get_session` correctly return a session without region
-        parameter.
-        """
+    def mock_session(self, region: Optional[str] = None) -> None:
         aws_profile = "__mock__"
-
         # Create mock session.
         mock_session = boto3.session.Session(
             aws_access_key_id="mock_access_key",
             aws_secret_access_key="mock_secret_access_key",
             region_name="us-east-1",
         )
-        # Using mock session to create a s3 bucket.
+        # Using mock session to create a S3 bucket.
         s3_resource = mock_session.resource("s3")
         s3_resource.create_bucket(Bucket="my-bucket")
-        session = haws.get_session(aws_profile)
-        # Get all s3 buckets in session.
+        if region:
+            session = haws.get_session(aws_profile, region = region)
+        else:
+            session = haws.get_session(aws_profile)
+        # Get all S3 buckets in session.
         s3_client = session.client("s3")
         response = s3_client.list_buckets()
         bucket_names = [bucket["Name"] for bucket in response.get("Buckets", [])]
         # Check if they are matched.
-        hdbg.dassert_in("my-bucket", bucket_names)
+        self.assertIn("my-bucket", bucket_names)
+    
+    @mock_s3
+    def test_get_session1(self) -> None:
+        """
+        Test that `haws.get_session` correctly return a session without region
+        parameter.
+        """
+        self.mock_session()
 
     @mock_s3
     def test_get_session2(self) -> None:
@@ -62,22 +68,4 @@ class Test_haws(hunitest.TestCase):
         Test that `haws.get_session` correctly return a session with region
         parameter.
         """
-        aws_profile = "__mock__"
-
-        region = "us-east-1"
-        # Create mock session.
-        mock_session = boto3.session.Session(
-            aws_access_key_id="mock_access_key",
-            aws_secret_access_key="mock_secret_access_key",
-            region_name="us-east-1",
-        )
-        # Using mock session to create a s3 bucket.
-        s3_resource = mock_session.resource("s3")
-        s3_resource.create_bucket(Bucket="my-bucket")
-        session = haws.get_session(aws_profile, region=region)
-        # Get all s3 buckets in session.
-        s3_client = session.client("s3")
-        response = s3_client.list_buckets()
-        bucket_names = [bucket["Name"] for bucket in response.get("Buckets", [])]
-        # Check if they are matched.
-        hdbg.dassert_in("my-bucket", bucket_names)
+        self.mock_session(region="us-east-1")
