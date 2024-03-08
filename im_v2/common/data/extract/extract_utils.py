@@ -875,7 +875,6 @@ def save_parquet(
         data,
         ["currency_pair"] + partition_cols,
         path_to_dataset,
-        partition_filename=None,
         aws_profile=aws_profile,
     )
     # Merge all new parquet into a single `data.parquet`.

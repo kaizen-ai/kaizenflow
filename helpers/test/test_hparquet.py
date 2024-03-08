@@ -317,7 +317,6 @@ class TestPartitionedParquet1(hunitest.TestCase):
             table,
             dir_name,
             partition_cols,
-            partition_filename_cb=lambda x: "data.parquet",
         )
         # Check dir signature.
         if exp_dir_signature is not None:
@@ -326,7 +325,12 @@ class TestPartitionedParquet1(hunitest.TestCase):
             dir_signature = hunitest.get_dir_signature(
                 dir_name, include_file_content, remove_dir_name=remove_dir_name
             )
-            self.assert_equal(dir_signature, exp_dir_signature, fuzzy_match=True)
+            self.assert_equal(
+                dir_signature,
+                exp_dir_signature,
+                fuzzy_match=True,
+                purify_text=True,
+            )
         return dir_name
 
     def write_and_read_helper(
@@ -963,12 +967,15 @@ class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
         # Add extra parquet files and rename existing one.
         # e.g., `dummy.parquet`, `dummy_new.parquet`.
         # Every second file is left intact to replicate ready out-of-the-box folder.
-        # e.g., `asset=A/year=2022/month=2/data.parquet`.
+        # e.g., `asset=A/year=2022/month=2/77a2534aaf9649fab6511cea53a6bf7f-0.parquet`.
         for path in parquet_path_list_before[::2]:
             original_path = f"{s3_bucket}/{path}"
-            renamed_path = original_path.replace("data.parquet", "dummy.parquet")
+            original_file_name = os.path.basename(original_path)
+            renamed_path = original_path.replace(
+                original_file_name, "dummy.parquet"
+            )
             additional_path = original_path.replace(
-                "data.parquet", "dummy_new.parquet"
+                original_file_name, "dummy_new.parquet"
             )
             s3fs_.rename(original_path, renamed_path)
             s3fs_.copy(renamed_path, additional_path)
@@ -977,9 +984,7 @@ class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
             s3_bucket, pattern, only_files, use_relative_paths, aws_profile=s3fs_
         )
         data_parquet_path_list = [
-            path
-            for path in updated_parquet_path_list
-            if path.endswith("/data.parquet")
+            path for path in updated_parquet_path_list if "dummy" not in path
         ]
         self.assertEqual(len(updated_parquet_path_list), 9)
         self.assertEqual(len(data_parquet_path_list), 3)
