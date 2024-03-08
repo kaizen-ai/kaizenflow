@@ -9,6 +9,7 @@ import helpers.haws as haws
 import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
 
+
 class Test_get_session(hunitest.TestCase):
     @pytest.fixture(autouse=True)
     def setup_teardown_test(self):
@@ -43,7 +44,7 @@ class Test_get_session(hunitest.TestCase):
         s3_resource = mock_session.resource("s3")
         s3_resource.create_bucket(Bucket="my-bucket")
         if region:
-            session = haws.get_session(aws_profile, region = region)
+            session = haws.get_session(aws_profile, region=region)
         else:
             session = haws.get_session(aws_profile)
         # Get all S3 buckets in session.
@@ -52,7 +53,7 @@ class Test_get_session(hunitest.TestCase):
         bucket_names = [bucket["Name"] for bucket in response.get("Buckets", [])]
         # Check if they are matched.
         self.assertIn("my-bucket", bucket_names)
-    
+
     @mock_s3
     def test_get_session1(self) -> None:
         """
@@ -68,6 +69,7 @@ class Test_get_session(hunitest.TestCase):
         parameter.
         """
         self.mock_session(region="us-east-1")
+
 
 class Test_get_service_resource(hunitest.TestCase):
     @pytest.fixture(autouse=True, scope="class")
