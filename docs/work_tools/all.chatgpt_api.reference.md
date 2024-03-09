@@ -20,10 +20,7 @@
 
 <!-- tocstop -->
 
-## How to use
-```
-> export OPENAI_API_KEY=<your secret key>
-```
+# Quick start
 
 # OpenAI Assistant Runner & Manager
 
@@ -78,7 +75,7 @@
   - `dev_scripts/chatgpt/manage_chatgpt_assistant.py`
   - `dev_scripts/chatgpt/run_chatgpt.py`
 
-- Documentation is
+- Documentaiton is
   - `docs/work_tools/all.chatgpt_api.how_to_guide.md`
 
 ## How to use
@@ -169,8 +166,8 @@
 - Refer to `helpers/hchatgpt_instructions.py` to see how they are instructed
 
   ```bash
- # Use the assistant "MarkdownLinter"
-# Give this corrupted markdown file
+\ # Use the assistant "MarkdownLinter"
+ \ # Give this corrupted markdown file
  # Redirect its output to this file
   > python dev_scripts/chatgpt/run_chatgpt.py \
       -n MarkdownLinter 
@@ -205,7 +202,7 @@ The following snippets provide a basic overview of the code usage.
 - If you find anything buggy, try deleting this cache file and rerun the code so
   that it can be regenerated from scratch
 
-### Uploading and retrieving Files
+### Uploading and Retrieving Files
 
 - To upload a file to OpenAI, which you can later attach to messages/assistants:
 

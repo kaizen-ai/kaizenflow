@@ -34,7 +34,7 @@ RUN pip3 install \
     pymongo \
     s3fs \
     seaborn \
-    tqdm \	
+    tqdm \
     dask \
     prophet \
     distributed \
