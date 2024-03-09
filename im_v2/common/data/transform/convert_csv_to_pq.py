@@ -65,7 +65,6 @@ def _run(args: argparse.Namespace, *, aws_profile: hs3.AwsProfile) -> None:
             [args.asset_col] + partition_cols,
             args.dst_dir,
             aws_profile=aws_profile,
-            partition_filename=None,
         )
     hparque.list_and_merge_pq_files(args.dst_dir, aws_profile=aws_profile)
 
