@@ -1,5 +1,7 @@
 # Adapted from https://github.com/resdevd/docker-compose-airflow/blob/main/Dockerfile.
-FROM apache/airflow:2.2.2
+#FROM apache/airflow:2.2.2
+#FROM apache/airflow:latest
+FROM apache/airflow:2.8.0-python3.9
 
 USER root
 

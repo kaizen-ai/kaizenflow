@@ -167,7 +167,7 @@
   - `spring2024`: class projects for Spring 2024 DATA605 class (individual
     projects about building examples of big data technologies)
 
-# Running the Sorrentum Jupyter container
+# Sorrentum Jupyter container
 
 - We use Python and Jupyter for all the research projects
 
@@ -180,6 +180,11 @@
   languages in addition to Python
 
 ## Building the container
+
+- Build with
+  ```
+  > docker_build.sh
+  ```
 
 ## Running Jupyter
 
