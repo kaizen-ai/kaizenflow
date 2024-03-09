@@ -1,52 +1,16 @@
--   [Sorrentum Sandbox](#sorrentum-sandbox){#toc-sorrentum-sandbox}
--   [Running the Sorrentum Jupyter
-    container](#running-the-sorrentum-jupyter-container){#toc-running-the-sorrentum-jupyter-container}
-    -   [Running Jupyter](#running-jupyter){#toc-running-jupyter}
-    -   [Running bash](#running-bash){#toc-running-bash}
--   [Sorrentum system
-    container](#sorrentum-system-container){#toc-sorrentum-system-container}
-    -   [High-level
-        description](#high-level-description){#toc-high-level-description}
-    -   [Scripts](#scripts){#toc-scripts}
-    -   [Sorrentum app
-        container](#sorrentum-app-container){#toc-sorrentum-app-container}
-    -   [Bring up Sorrentum data
-        node](#bring-up-sorrentum-data-node){#toc-bring-up-sorrentum-data-node}
-    -   [Check the Airflow
-        status](#check-the-airflow-status){#toc-check-the-airflow-status}
-    -   [Pausing Airflow
-        service](#pausing-airflow-service){#toc-pausing-airflow-service}
-    -   [Restarting the
-        services](#restarting-the-services){#toc-restarting-the-services}
-    -   [Tutorial Airflow](#tutorial-airflow){#toc-tutorial-airflow}
--   [Sorrentum system
-    examples](#sorrentum-system-examples){#toc-sorrentum-system-examples}
-    -   [Binance](#binance){#toc-binance}
-        -   [Run system in standalone
-            mode](#run-system-in-standalone-mode){#toc-run-system-in-standalone-mode}
-        -   [Run inside
-            Airflow](#run-inside-airflow){#toc-run-inside-airflow}
-    -   [Reddit](#reddit){#toc-reddit}
-    -   [Running outside
-        Airflow](#running-outside-airflow){#toc-running-outside-airflow}
-        -   [Download data](#download-data-1){#toc-download-data-1}
-        -   [Load, QA and
-            Transform](#load-qa-and-transform){#toc-load-qa-and-transform}
-    -   [Running inside
-        Airflow](#running-inside-airflow){#toc-running-inside-airflow}
-
 # Sorrentum Sandbox
 
 - This dir `sorrentum_sandbox` contains examples for Sorrentum data nodes
-  - The code can be run on a local machine with `Docker`, without the need of
+  - It allows to experiment with and prototype Sorrentum nodes, which are
+    comprised of multiple services (e.g., Airflow, MongoDB, Postgres)
+  - All the code can be run on a local machine with `Docker`, without the need of
     any cloud production infrastructure
-  - It allows to experiment with and prototype Sorrentum nodes
 
 - The current structure of the `sorrentum_sandbox` directory is as follows:
-  ```
-  > cd $GIT_ROOT/sorrentum_sandbox && $GIT_ROOT/dev_scripts/tree.sh
+  ```markdown
+  > $GIT_ROOT/dev_scripts/tree.sh -p sorrentum_sandbox
 
-  ./
+  sorrentum_sandbox/
   |-- common/
   |   |-- __init__.py
   |   |-- client.py
@@ -58,68 +22,37 @@
   |   |   |-- dags/
   |   |   |   |-- __init__.py
   |   |   |   |-- airflow_tutorial.py
-  |   |   |   |-- download_periodic_1min_postgres_ohlcv_binance.py
-  |   |   |   |-- download_periodic_5min_mongo_posts_reddit.py
-  |   |   |   |-- validate_and_extract_features_periodic_5min_mongo_posts_reddit.py
-  |   |   |   `-- validate_and_resample_periodic_1min_postgres_ohlcv_binance.py
+  |   |   |   |-- download_forecast_bitcoin_prices.py
+  ...
   |   |   `-- __init__.py
   |   |-- Dockerfile
   |   |-- __init__.py
   |   |-- docker-compose.yml
   |   |-- docker_bash.sh*
   |   |-- docker_build.sh*
-  |   |-- docker_clean.sh*
-  |   |-- docker_clean_all.sh*
+  |   |-- docker_clean.sh
   |   |-- docker_cmd.sh*
   |   |-- docker_exec.sh*
+  |   |-- docker_kill.sh
+  |   |-- docker_name.sh
+  |   |-- docker_prune.sh*
+  |   |-- docker_prune_all.sh*
   |   |-- docker_pull.sh*
   |   |-- docker_push.sh*
   |   |-- init_airflow_setup.sh*
   |   |-- reset_airflow_setup.sh*
   |   `-- setenv.sh
   |-- docker_common/
+  |   |-- README.md
   |   |-- bashrc
   |   |-- create_links.sh*
   |   |-- etc_sudoers
   |   |-- install_jupyter_extensions.sh*
+  |   |-- repo_diff.sh*
   |   |-- update.sh*
   |   |-- utils.sh
   |   `-- version.sh*
   |-- examples/
-  |   |-- altdata_notebooks/
-  |   |   |-- Blockchain.com.ipynb
-  |   |   |-- Blockchain.com.py
-  |   |   |-- Chainlink.ipynb
-  |   |   |-- Chainlink.py
-  |   |   |-- CoinGecko.ipynb
-  |   |   |-- CoinGecko.py
-  |   |   |-- CoinMarketCap.ipynb
-  |   |   |-- CoinMarketCap.py
-  |   |   |-- Glassnode.ipynb
-  |   |   |-- Glassnode.py
-  |   |   |-- Kibot.ipynb
-  |   |   |-- Kibot.py
-  |   |   |-- YahooFinance.ipynb
-  |   |   |-- YahooFinance.py
-  |   |   |-- __init__.py
-  |   |   |-- bitquery_uniswap.ipynb
-  |   |   |-- bitquery_uniswap.py
-  |   |   |-- github.com.ipynb
-  |   |   |-- github.com.py
-  |   |   |-- google_trends.ipynb
-  |   |   |-- google_trends.py
-  |   |   |-- kaiko.com.ipynb
-  |   |   |-- kaiko.com.py
-  |   |   |-- twitter.com.ipynb
-  |   |   `-- twitter.com.py
-  |   |-- ml_projects/
-  |   |   |-- SorrIssue14_Team1_Implement_sandbox_for_Google_Trends/
-  |   |   |-- SorrIssue1_Predict_large_asset_movements_with_NLP/
-  |   |   |-- SorrIssue2_Cross_exchange_arbitrage_CEX_CEX/
-  |   |   |-- SorrIssue3_Implement_Avellaneda_model/
-  |   |   |-- SorrIssue4_Predict_bid_ask_movements_with_order_book_data/
-  |   |   `-- SorrIssue8_Predict_Intraday_Trading_Volume/
-  |   |       `-- intraday_volume_task1.ipynb
   |   |-- systems/
   |   |   |-- binance/
   |   |   |   |-- test/
@@ -142,7 +75,7 @@
   |   |   |   `-- validate.py
   |   |   `-- __init__.py
   |   |-- Dockerfile
-  |   |-- README.md
+  |   |-- __init__.py
   |   |-- bashrc
   |   |-- docker_bash.sh*
   |   |-- docker_build.sh*
@@ -158,66 +91,74 @@
   |   |-- tutorial_jupyter.ipynb
   |   `-- version.sh*
   |-- projects/
-  |   |-- SorrIssue1_Predict_large_asset_movements_with_NLP/
-  |   |   `-- task_1_compute_returns.ipynb
-  |   `-- SorrIssue2_Cross_exchange_arbitrage_CEX_CEX/
-  |       |-- Making Single Dataframe.ipynb
-  |       |-- Merging_Dfs.ipynb
-  |       `-- Single_Dataframe.ipynb
+  |   |-- research/
+  ...
+  |   |-- spring2023/
+  |   |   |-- altdata_notebooks/
+  ...
+  |   |   `-- ml_projects/
+  ...
+  |   `-- spring2024/
+  |       |-- SorrTask645_Redis_cache_to_fetch_user_profiles/
+  |       |   |-- docker/
+  |       |   |   |-- Dockerfile
+  |       |   |   |-- Redis_cache_to_fetch_user_profiles.ipynb
+  |       |   |   `-- docker-compose.yaml
+  |       |   `-- README.md
+  |       |-- project_template/
+  |       |   `-- README.md
+  |       `-- README.md
   |-- README.md
   `-- __init__.py
 
-  21 directories, 98 files
+  70 directories, 342 files
   ```
 
 - Focusing on the directory structure:
   ```
-  > tree . -d --charset unicode
-  .
+  > tree --dirsfirst -d -n -F --charset unicode sorrentum_sandbox
+  sorrentum_sandbox
   |-- common
   |-- devops
   |   `-- airflow_data
   |       `-- dags
   |-- docker_common
   |-- examples
-  |   |-- altdata_notebooks
-  |   |-- ml_projects
-  |   |   |-- SorrIssue14_Team1_Implement_sandbox_for_Google_Trends
-  |   |   |-- SorrIssue1_Predict_large_asset_movements_with_NLP
-  |   |   |-- SorrIssue2_Cross_exchange_arbitrage_CEX_CEX
-  |   |   |-- SorrIssue3_Implement_Avellaneda_model
-  |   |   |-- SorrIssue4_Predict_bid_ask_movements_with_order_book_data
-  |   |   `-- SorrIssue8_Predict_Intraday_Trading_Volume
   |   `-- systems
   |       |-- binance
   |       |   `-- test
   |       `-- reddit
-
-  21 directories
+  `-- projects
+      |-- research
+      |-- spring2023
+      `-- spring2024
+          |-- SorrTask645_Redis_cache_to_fetch_user_profiles
+          |   `-- docker
+          `-- project_template
   ```
 
 - `common/`: contains abstract system interfaces for the different blocks of the 
-   ETL pipeline
+   Sorrentum ETL pipeline
   - Read the code top to bottom to get familiar with the interfaces
     ```
     > vi $GIT_ROOT/sorrentum_sandbox/common/*.py
     ```
-
-- `docker_common/`: common code for Docker tasks
-
 - `devops/`: contains the Dockerized Sorrentum data node
   - it contains the Airflow task scheduler and its DAGs
   - it can run any Sorrentum data nodes, like the ones in `examples/systems`
-
+- `docker_common/`: common code for Docker tasks
 - `examples/`:
-  - `altdata_notebooks`: contains notebooks showing the API of multiple
-    datasources
-  - `ml_projects`: contains machine learning projects
   - `systems`: contains several examples of end-to-end Sorrentum data nodes
     - E.g., downloading price data from Binance and posts/comments from Reddit
     - Each system implements the interfaces in `common`
+- `projects`: code for various projects
+  - `research`: Sorrentum research projects
+  - `spring2023`: class projects for Spring 2023 (team projects about building
+    Sorrentum systems)
+  - `spring2024`: class projects for Spring 2024 DATA605 class (individual
+    projects about building examples of big data technologies)
 
-# Running the Sorrentum Jupyter container
+# Sorrentum Jupyter container
 
 - We use Python and Jupyter for all the research projects
 
@@ -228,6 +169,13 @@
 - A few years ago, the Notebook functionality was forked off as a separate project,
   called [Jupyter](http://jupyter.org/). Jupyter provides support for many other
   languages in addition to Python
+
+## Building the container
+
+- Build with
+  ```
+  > docker_build.sh
+  ```
 
 ## Running Jupyter
 
@@ -285,14 +233,12 @@
   ```
 
 <!--  ///////////////////////////////////////////////////////////////////////////////////////////// -->
-<!--  ///////////////////////////////////////////////////////////////////////////////////////////// -->
-<!--  ///////////////////////////////////////////////////////////////////////////////////////////// -->
 
 # Sorrentum system container
 
 ## High-level description
 
-- The Docker container contains several services:
+- This system contains several services:
   - Airflow
   - Postgres
   - MongoDB
@@ -305,9 +251,9 @@
   ```
 
 - The system needs three Docker images:
-  - `postgres`: prebuilt image for PostgreSQL, downloaded directly from
+  - `postgres`: pre-built image for PostgreSQL, downloaded directly from
     DockerHub
-  - `mongo`: prebuilt image for Mongo, downloaded directly from DockerHub
+  - `mongo`: pre-built image for Mongo, downloaded directly from DockerHub
   - `sorrentum/sorrentum`: the image can be either built locally or downloaded
     from DockerHub
     - It is used to run Airflow and the Sorrentum application
@@ -329,12 +275,12 @@
     `docker_bash.sh` or `docker_exec.sh`
 
 - To configure the environment run:
-  ```
+  ```bash
   > cd $GIT_ROOT/sorrentum_sandbox/devops
   > source $GIT_ROOT/sorrentum_sandbox/devops/setenv.sh
   ```
 
-- There are several scripts that allow to connect to Airflow container:
+- There are several scripts that allow to use the Airflow container:
   - `docker_prune.sh`: remove all the Sorrentum images
   - `docker_prune_all.sh`: remove all the images needed for the Sorrentum node
   - `docker_pull.sh`: pull image of the Sorrentum app container
@@ -349,13 +295,26 @@
   ```
   > docker_bash.sh
   docker> airflow version
-  2.2.2
+  2.8.2
   ```
 
 ## Sorrentum app container
 
-- The Sorrentum app container image is already pre-built and should be
-  automatically downloaded from DockerHub `sorrentum/sorrentum`
+### Pull image from Dockerhub
+
+- The Sorrentum app container image is already pre-built and can be downloaded
+  from DockerHub `sorrentum/sorrentum`
+  ```
+  > docker_pull.sh
+  ```
+
+- You can see the public available images on https://hub.docker.com/u/sorrentum
+  or from command line
+  ```
+  > curl -s "https://hub.docker.com/v2/repositories/sorrentum/?page_size=100" | jq '.results|.[]|.name'
+  ```
+
+### Build image locally
  
 - You can also build manually the Sorrentum container using Docker
   ```
@@ -363,7 +322,8 @@
   > docker_build.sh
   ```
 - Building the container takes a few minutes
-- There can be warnings but as long as the build process terminates with:
+- There can be warnings but it's fine as long as the build process terminates
+  with something along the lines of:
   ```
   Successfully built a7ca17283abb
   Successfully tagged sorrentum/sorrentum:latest
@@ -373,10 +333,9 @@
   REPOSITORY            TAG       IMAGE ID       CREATED         SIZE
   sorrentum/sorrentum   latest    a7ca17283abb   2 seconds ago   2.2GB
   ```
-  it's fine
 
-- Note that Docker-compose automates also the building phases of the entire
-  system
+- Note that `docker-compose` automates the building phases of the entire system,
+  by building, pulling images according to the compose file
   ```
   > cd $GIT_ROOT/sorrentum_sandbox/devops
   > docker-compose build
@@ -384,10 +343,11 @@
   
 ## Bring up Sorrentum data node
 
-- The best approach is to see the Airflow logs at the same time as running other
-  commands:
-  - Run Airflow server in one terminal window
-  - Run other tools in other windows (e.g., using tmux) using `docker_exec.sh`,
+- The best approach is to see the Airflow logs in one window at the same time as
+  running other commands in a different windows:
+  - Run Airflow server in one terminal window using `docker_bash.sh`
+  - Run other tools in other windows using `docker_exec.sh`
+- You can use `tmux` to allow multiple windows in the same shell
 
 - After the containers are ready, you can bring up the service with:
   ```

@@ -30,16 +30,19 @@ services:
     image: mongo
     container_name: mongo_cont
     environment:
+      # Pass env vars to control credentials.
       - MONGO_INITDB_ROOT_USERNAME=mongo
       - MONGO_INITDB_ROOT_PASSWORD=mongo
-    ports:
-      - "27017:27017"
     volumes:
       - ./mongo_data:/data/db
+    ports:
+      # Access Mongo from outside the container on port 27017.
+      - "27017:27017"
 
   # Airflow.
 
   airflow:
+    # This is a container built locally and storing the current app.
     image: sorrentum/sorrentum:latest
     container_name: airflow_cont
     depends_on: postgres
@@ -47,8 +50,6 @@ services:
       - .env
     restart: always
     command: webserver
-    depends_on:
-      - postgres
     ports:
       - "8091:8080"
     volumes:
@@ -62,7 +63,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   airflow-scheduler:
-    # Let's force to use a pre-built image.
+    # Force to use a pre-built image, by commenting the previous line.
     # build: .
     image: sorrentum/sorrentum:latest
     container_name: airflow_scheduler_cont
@@ -84,13 +85,6 @@ services:
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:postgres@host.docker.internal:5532/airflow
     extra_hosts:
       - "host.docker.internal:host-gateway"
-
-  #redis:
-  #  image: redis:latest
-  #  container_name: redis_cont
-  #  restart: always
-  #  ports:
-  #    - "6379:6379"
 
   #airflow-worker1:
   #  build: .
@@ -153,6 +147,15 @@ services:
   #  command: celery flower
   #  ports:
   #    - "5555:5555"
+
+  # Redis.
+
+  #redis:
+  #  image: redis:latest
+  #  container_name: redis_cont
+  #  restart: always
+  #  ports:
+  #    - "6379:6379"
 
 volumes:
   airflow-database-data:
