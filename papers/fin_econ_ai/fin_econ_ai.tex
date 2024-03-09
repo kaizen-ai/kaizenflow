@@ -1,0 +1,564 @@
+\documentclass[11pt, reqno]{amsart}
+\usepackage{amsfonts, amssymb, amscd, amsrefs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{slashed}
+\usepackage{fullpage}
+% Prevent table repositioning.
+\usepackage{float}
+% For textcolor.
+\usepackage{xcolor}
+% For blackboard bold `1`.
+\usepackage{bbold}
+
+% TODO(gp): It aborts with
+% ! Undefined control sequence.
+%<argument> ...on\endcsname \protect \@secnumpunct
+%
+%l.164 \subsection{Breaking the symmetry}
+% https://tex.stackexchange.com/questions/165930/bold-and-italic-subsection-title-with-custom-font-size
+%\usepackage{titlesec}
+%\titleformat{\section}
+%{\normalfont\fontfamily{phv}\fontsize{12}{17}\bfseries}{\thesection}{1em}{}
+%\titleformat{\subsection}
+%{\normalfont\fontfamily{phv}\fontsize{12}{17}\bfseries\itshape}{\thesubsection}{1em}{}
+%\titleformat{\subsection}
+%  {\normalfont\fontsize{12}{17}\sffamily\bfseries\slshape}
+%  {\thesubsection}
+%  {1em}
+%  {}
+
+%\usepackage{titlesec}
+
+%\titleformat*{\section}{\LARGE\bfseries}
+%\titleformat*{\subsection}{\Large\bfseries}
+%\titleformat*{\subsubsection}{\large\bfseries}
+%\titleformat*{\paragraph}{\large\bfseries}
+%\titleformat*{\subparagraph}{\large\bfseries}
+
+% https://ctan.math.washington.edu/tex-archive/macros/latex/required/amscls/doc/amsthdoc.pdf
+\newtheorem{thm}{Theorem}
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}[subsection]
+\newtheorem{problem}{Problem}[subsection]
+\theoremstyle{remark}
+\newtheorem{exmp}{Example}[subsection]
+\newtheorem{rmk}{Remark}[subsection]
+
+\newcommand{\bidbtc}{\mathrm{bid}_\mathrm{BTC}}
+\newcommand{\askbtc}{\mathrm{ask}_\mathrm{BTC}}
+\newcommand{\bideth}{\mathrm{bid}_\mathrm{ETH}}
+\newcommand{\asketh}{\mathrm{ask}_\mathrm{ETH}}
+
+\newcommand{\bidbase}{\mathrm{bid}_\mathrm{quote\;token}}
+\newcommand{\askbase}{\mathrm{ask}_\mathrm{quote\;token}}
+\newcommand{\bidquote}{\mathrm{bid}_\mathrm{base\;token}}
+\newcommand{\askquote}{\mathrm{ask}_\mathrm{base\;token}}
+% Use teletype for tokens (\texttt{...}), but do not allow italics
+%  (\textnormal{...}).
+\newcommand{\BTC}{\textnormal{\texttt{wBTC}}}
+\newcommand{\ETH}{\textnormal{\texttt{ETH}}}
+\newcommand{\DAI}{\textnormal{\texttt{DAI}}}
+\newcommand{\USDC}{\textnormal{\texttt{USDC}}}
+\newcommand{\USDT}{\textnormal{\texttt{USDT}}}
+\newcommand{\tA}{\textnormal{\texttt{A}}}
+\newcommand{\tB}{\textnormal{\texttt{B}}}
+% Use non-italic teletype for order attributes in order notation.
+\newcommand{\timestamp}{\textnormal{\texttt{timestamp}}}
+\newcommand{\action}{\textnormal{\texttt{action}}}
+\newcommand{\quantity}{\textnormal{\texttt{quantity}}}
+\newcommand{\basetoken}{\textnormal{\texttt{base\_token}}}
+\newcommand{\limitprice}{\textnormal{\texttt{limit\_price}}}
+\newcommand{\quotetoken}{\textnormal{\texttt{quote\_token}}}
+\newcommand{\depositaddress}{\textnormal{\texttt{deposit\_address}}}
+\newcommand{\zkpcomplexity}{\textnormal{\texttt{zkp\_complexity}}}
+\newcommand{\zkpdeadline}{\textnormal{\texttt{zkp\_deadline}}}
+%
+\newcommand{\buy}{\textnormal{\texttt{buy}}}
+\newcommand{\sell}{\textnormal{\texttt{sell}}}
+\newcommand{\nan}{\textnormal{\texttt{nan}}}
+%
+\newcommand{\midpoint}{\mathrm{midpoint}}
+% Table icons.
+\newcommand{\trm}{\textcolor{red}{-}}
+\newcommand{\tyo}{\textcolor{yellow}{o}}
+\newcommand{\tgp}{\textcolor{green}{+}}
+
+% Use this if using `\contrib[]{...}`.
+%\makeatletter\let\@wraptoccontribs\wraptoccontribs\makeatother
+% https://tex.stackexchange.com/questions/418547/equal-contribution-using-thanks-with-llncs-class#418563
+\makeatletter
+\newcommand{\printfnsymbol}[1]{%
+\textsuperscript{\@fnsymbol{#1}}%
+}
+\makeatother
+
+\begin{document}
+	\title{A Path Towards Artificial General Intelligence in Finance}
+
+	\author{Giacinto Paolo Saggese$^{*}$}
+	\author{Paul Smith$^{*}$}
+	\thanks{$^{*}$ Authors listed alphabetically.}
+
+	\date{\today}
+
+	\begin{abstract}
+		This is draft v0.1.
+	\end{abstract}
+
+	\maketitle
+
+	\setcounter{tocdepth}{2}
+	\tableofcontents
+
+	% ###############################################################################
+	\section{Introduction}
+
+    This paper proposes an approach to forecast financial and economic
+    variables combining several emerging technologies:
+		\begin{enumerate}
+			\item Deep-learning based AI, in particular large language models (LLMs)
+
+			\item Knowledge graphs (KGs)
+
+			\item Bayesian inference for probabilistic reasoning
+
+			\item High-performance streaming computing
+		\end{enumerate}
+
+    The proposed approach allows to deal with most of the problems plaguing
+    financial and economic forecasting such as:
+    \begin{itemize}
+      \item Small and noisy datasets
+      \item Need for interpretability of forecasts
+      \item Need for estimation of confidence in prediction
+      \item Complex, time-varying relationships between variables
+    \end{itemize}
+
+    It also allows to deal with problems of:
+    \begin{itemize}
+      \item LLM hallucinations
+      \item Lack of fit (overfit or underfit) in machine learning models
+    \end{itemize}
+
+	% ###############################################################################
+	\section{A possible definition of AGI for financial applications}
+
+	We define AGI as a computer system able to perform tasks better than a
+	human can do.
+
+	Out approach to developing AGI, with an initial focus on finance,
+	reflects a strategic pathway towards achieving broader artificial general
+	intelligence capabilities. Here's an analysis of your approach and its implications:
+
+	\begin{itemize}
+		\item \textbf{Domain-Specific Expertise as a Foundation for AGI}: Focusing
+			on finance initially leverages the concept that substantial domain-specific
+			knowledge is essential for creating super-human performance. Finance,
+			with its complexity and data-rich environment, provides a fertile
+			ground for developing and refining AI algorithms. This sector demands
+			precision, adaptability, and the ability to process vast amounts of data
+			– attributes that are foundational for AGI.
+
+		\item \textbf{Stepping Stone Approach}: By mastering one domain, you
+			establish a methodology and technological base that can be adapted
+			and expanded to other domains. This step-by-step approach is pragmatic,
+			reducing the initial complexity that would come with attempting to
+			create a multi-domain AGI from the start. Each domain mastered adds another
+			layer of complexity and capability to the AGI, gradually moving
+			towards true general intelligence.
+
+		\item \textbf{Superhuman Performance in Finance}: An AGI with superhuman
+			capabilities in finance would handle tasks such as predictive analytics,
+			risk assessment, market trend analysis, and financial forecasting
+			with unprecedented accuracy and speed. This would not only revolutionize
+			the financial industry but also serve as a proof of concept for AGI's
+			potential in other areas.
+
+		\item \textbf{Integration of Diverse Data Sources and Techniques}: The ability
+			to integrate and analyze data from various sources using advanced modeling
+			techniques is crucial. This includes real-time processing of global
+			market data, news, economic indicators, and even sociopolitical events.
+			Such integrative capacity is essential for AGI, as it mirrors the multifaceted
+			nature of human intelligence.
+
+		\item \textbf{Addressing the Certainty and Hallucination Problem}: In AI,
+			hallucination refers to generating or inferring information that isn't
+			supported by data. An essential feature of your AGI system in finance
+			would be its ability to estimate and report the level of certainty in
+			its predictions and decisions. This is a significant challenge in AI
+			development, as it requires the system to not only analyze data but also
+			understand and communicate the limits of its knowledge and the confidence
+			in its conclusions.
+
+		\item \textbf{Ethical and Practical Implications}: As your AGI system advances,
+			it's important to consider ethical implications, particularly in sensitive
+			areas like finance. Issues such as data privacy, security, and the
+			potential impact on employment and economic systems are vital
+			considerations. Additionally, the system's decisions and predictions
+			should be transparent and explainable, especially when they significantly
+			impact financial markets or individual investments.
+	\end{itemize}
+
+	Questions should be answered estimating a measure of certainty (this is related
+	to the problem of hallucination)
+
+	The goal is a system that can automatically answer questions with super-human
+	accuracy like:
+	\begin{itemize}
+		\item Can you analyze the recent performance of [specific stock or
+			sector]?
+
+		\item How do interest rate changes affect the bond market right now?
+
+		\item What will the rate of inflation in the next year in Italy?
+            The current answer from ChatGPT is:
+            ```Predicting the exact rate of inflation for the next year in any
+            country, including Italy, is a complex task that involves analyzing
+            a multitude of economic indicators, current monetary policies,
+            global economic trends, and unforeseen events. As of my last update
+            in April 2023, I don't have real-time data or the ability to
+            predict future economic conditions.```
+
+		\item Can you predict the risk of a specific stock, such as Apple, in the
+			next 15 minutes based on real-time market data, recent company news, and
+			advanced predictive analytics? \\
+            The current answer from ChatGPT is: ```You
+			are an expert economist. Can you predict the risk of a specific stock,
+			such as Apple, in the next 15 minutes based on real-time market data,
+			recent company news, and advanced predictive analytics? Answer in 30 words```
+			ChatGPT: As an AI, I don't have real-time market data or the ability to
+			predict short-term stock movements. Accurate 15-minute forecasts
+			require live data and are highly speculative due to market volatility.
+
+		\item What would be the global economic impact of a sudden 2\% increase
+			in the U.S. Federal Reserve interest rate today?
+
+		\item What portfolio composition would maximize returns for a given risk
+			level over the next year, considering global economic forecasts and
+			market volatility predictions? ChatGPT: Optimal portfolio composition
+			varies; it depends on risk tolerance, market trends, and diversification
+			across asset classes, considering economic forecasts and volatility
+			projections.
+
+		\item Which industries are most likely to see significant mergers and acquisitions
+			in the next year, and what will be the potential impact on the market?
+
+		\item What are the predicted movements of major currencies in the forex
+			market over the next quarter, based on current geopolitical
+			situations, trade relations, and economic policies? ChatGPT:
+			Predicting forex market movements involves analyzing geopolitical
+			tensions, trade agreements, central bank policies, and economic indicators,
+			but it's inherently uncertain due to the market's volatility and
+			unforeseen events.
+	\end{itemize}
+
+	% ================================================================================
+	\subsection{The need for incorporating certainty}
+
+	Implementing a measure of certainty in AGI responses, particularly in a complex
+	field like finance, is therefore not just a technical feature, but a fundamental
+	aspect that enhances the utility, reliability, and ethical use of the system.
+
+	Incorporating a measure of certainty in the responses of an AGI,
+	especially in the context of finance, is crucial for several reasons:
+
+	\begin{itemize}
+		\item \textbf{Reducing the Risk of Hallucination}: AI systems,
+			including AGIs, can sometimes "hallucinate", meaning they generate
+			responses or predictions that are not grounded in the data they have
+			processed. By quantifying the certainty of its answers, an AGI can
+			indicate the reliability of its predictions, helping users differentiate
+			between high-confidence insights and those that are more speculative.
+
+		\item \textbf{Enhancing Decision-Making}: In finance, decisions often
+			hinge on the level of risk and uncertainty. An AGI that can estimate and
+			communicate the degree of certainty in its analysis provides invaluable
+			information for risk assessment. This allows users to make more
+			informed decisions, weighing the potential risks and rewards more accurately.
+
+		\item \textbf{Building Trust}: A system that acknowledges the limits of
+			its knowledge and provides certainty estimates can build greater trust
+			with its users. In fields like finance, where decisions can have significant
+			consequences, trust in the system's output is essential.
+
+		\item \textbf{Dynamic Learning and Improvement}: By quantifying certainty,
+			the AGI can also identify areas where its models may need improvement.
+			Lower certainty in certain types of predictions can signal the need for
+			additional data, refinement of models, or reevaluation of the algorithms
+			used.
+
+		\item \textbf{Managing Complex Systems}: Finance is a complex, dynamic
+			system influenced by a multitude of factors. Providing a measure of certainty
+			helps in understanding the impact of various elements and their interplay,
+			acknowledging that some aspects of the financial world are inherently
+			unpredictable.
+
+		\item \textbf{Ethical and Responsible AI}: This approach aligns with ethical
+			AI practices, where transparency and accountability are key. Users should
+			be aware of both the capabilities and limitations of the AGI, and a
+			measure of certainty facilitates this understanding.
+	\end{itemize}
+
+	% ================================================================================
+	\subsection{Why focusing on finance?}
+
+	The application of AGI in finance and economics is not only a test of its
+	predictive capabilities but also an exploration into understanding complex,
+	human-centric systems. The success in these fields can have far-reaching implications,
+	both in terms of technological advancement and societal benefits.
+
+	Building Artificial General Intelligence (AGI) in the field of finance
+	and economics is meaningful for several reasons:
+
+	\begin{itemize}
+		\item \textbf{Understanding Complex Systems}: Finance and economics are
+			intricate fields characterized by non-linear, interdependent
+			variables. AGI systems could offer advanced understanding of these complexities,
+			allowing for better predictions and insights. This is particularly valuable
+			as financial systems are influenced by a myriad of factors including human
+			behavior, market trends, political climates, and global events.
+
+		\item \textbf{Dynamic Prediction Capabilities}: AGI in finance isn't just
+			about static analysis but involves dynamic prediction in real-time.
+			Financial markets are constantly evolving, and an AGI system can adapt
+			to these changes, offering predictions and analyses that reflect
+			current realities. This dynamic environment is a robust testing ground
+			for AGI capabilities.
+
+		\item \textbf{Managing Uncertainty and Noise}: Financial data is often noisy
+			and uncertain. An AGI system's ability to sift through this noise and
+			make accurate predictions despite uncertainty is a testament to its
+			understanding of complex, real-world environments. This capability
+			could significantly reduce risks and improve decision-making
+			processes.
+
+		\item \textbf{Immediate Practical Benefits}: Enhancements in economic and
+			financial decision-making directly translate to benefits for the human
+			race. Better financial predictions and economic models can lead to
+			more stable economies, improved allocation of resources, reduced
+			risks of financial crises, and overall economic growth. This can
+			improve living standards and contribute to societal well-being.
+
+		\item \textbf{Understanding Human Nature}: Since finance and economics are
+			deeply intertwined with human behavior, an AGI capable of navigating
+			these fields would necessarily gain insights into human psychology
+			and behavior. This is crucial for building AGI that truly understands
+			and interacts effectively with human-centric environments.
+
+		\item \textbf{Ethical and Societal Implications}: Working in these domains
+			also necessitates dealing with ethical considerations, such as
+			privacy, security, and fairness. Successfully navigating these issues
+			in the realm of finance and economics can set precedents for AGI applications
+			in other areas, leading to more responsible and ethical AI
+			development.
+	\end{itemize}
+
+	% ================================================================================
+	\subsection{The problem with applying machine learning in economics and
+	finance}
+
+	Applying machine learning in economics and finance presents several
+	challenges due to the unique nature of these fields, besides the traditional
+	problems of overfitting (i.e., fitting the noise in the training data
+	instead of capturing the underlying true dynamics, leading to poor generalization)
+	and underfitting (i.e., oversimplified models may fail to capture the complexities
+	of financial data, resulting in inaccurate predictions)
+
+	Some specific reasons that make machine learning difficult to apply in
+	economics and finance are:
+
+	\begin{enumerate}
+		\item \textbf{Data Quality and Availability}:
+			\begin{itemize}
+				\item \textbf{Noise in Data}: Economic and financial data are often
+					noisy and non-stationary. Market sentiments, geopolitical events,
+					and economic policies can rapidly change, affecting the quality and
+					relevance of data.
+
+				\item \textbf{Limited Access}: High-quality, granular data can be
+					expensive or restricted, limiting the scope of analysis.
+					Proprietary data sources and privacy concerns add to this
+					challenge.
+			\end{itemize}
+
+		\item \textbf{Complexity of Financial Markets}:
+			\begin{itemize}
+				\item \textbf{Non-Linear Relationships}: Financial markets are influenced
+					by a complex web of interrelated factors. The relationships
+					between these factors are often non-linear and can change over
+					time.
+
+				\item \textbf{Market Efficiency}: Efficient Market Hypothesis suggests
+					that current asset prices reflect all available information.
+					Predicting future movements based on historical data can be
+					challenging as past patterns might not predict future movements.
+
+				\item \textbf{Regime Shifts}: Economic conditions and policies can change,
+					leading to regime shifts. Models trained on data from one economic
+					regime might perform poorly in another.
+
+				\item \textbf{Black Swan Events}: Unpredictable events (like the
+					2008 financial crisis or the COVID-19 pandemic) can dramatically shift
+					economic trends, rendering existing models ineffective.
+
+				\item \textbf{Behavioral Factors}: Economic and financial decisions
+					are often influenced by human behavior, which can be irrational
+					and hard to predict. Modeling these behaviors accurately is a significant
+					challenge.
+
+				\item \textbf{Non-stationarity}: non-stationarity refers to data whose
+					statistical properties, (e.g., mean and variance), change over time,
+					making it challenging to model and predict due to evolving trends,
+					cycles, and unexpected events like market crashes or economic
+					booms. \textbf{Non-Gaussianity}: non-Gaussianity of random variable
+					distributions reflects irregular, often extreme events, like market
+					crashes, which are not well-described by the normal distribution's
+					bell curve, leading to heavier tails and more pronounced risks than
+					Gaussian models would suggest.
+			\end{itemize}
+
+		\item \textbf{Regulatory and Ethical Considerations}:
+			\begin{itemize}
+				\item Financial models are subject to regulatory scrutiny. Machine
+					learning models, often seen as `black boxes', can raise concerns
+					about transparency, accountability, and fairness.
+
+				\item Ethical concerns, such as the risk of amplifying biases in
+					financial decision-making, are also significant.
+			\end{itemize}
+
+		\item \textbf{Time Series Analysis Challenges}: Economic and financial data
+			are typically time-series, which have their own challenges like
+			autocorrelation, trend/cycle extraction, and handling of non-stationary
+			data.
+
+		\item \textbf{Generalization and Scalability}: Models trained on data from
+			specific markets or periods may not generalize well across different contexts
+			or times.
+
+		\item \textbf{Feedback Loops}: Actions based on model predictions can influence
+			the market, creating a feedback loop that can invalidate the model's
+			assumptions.
+
+		\item \textbf{Model Interpretability}: There's often a trade-off between
+			model complexity and interpretability. In finance and economics, understanding
+			the `why' behind a prediction can be as important as the prediction itself.
+	\end{enumerate}
+
+	% ###############################################################################
+    \section{Description of the architecture}
+
+    - Offline pass
+      - Step 1: generate a domain-specific knowledge graphs
+        - We investigate automatic ways (e.g., using LLMs to generate a knowledge
+          graphs of the domain)
+        - The knowledge graph contains dependencies:
+          - Causal or correlation
+          - Formula representing the type of relationship (sign, linear)
+          - Strength of the relationship (in terms of belief)
+        - Human to "regularize", inspect it, improve it
+
+    - Online pass
+      - Step 1: user poses a question to system
+      - Step 2: an LLM answers a question by extracting a subset of the KG
+      - Step 3: the subset of KG is converted into a Bayesian network
+      - Step 4: Bayesian model is built and evaluated
+        - Timeseries data is accessed
+        - E.g., we use KaizenFlow framework to build, test, and deploy
+      - Step 5: the answer to the question is returned together with estimates
+        about the error and the epistemological conviction
+
+	% ###############################################################################
+	\section{Large language models}
+
+	% ###############################################################################
+	\section{Knowledge graphs}
+
+    Knowledge graphs (KGs) store structured knowledge as a collection of triples
+    $$KG = \{(h, r, t) \subset \Epsilon \times R \times E\}$$
+    where
+    - $E$ is a set of entities
+    - $R$ is a set of relations
+
+    Domain-specific KGs are constructued to represent knowledge in a specific
+    domain (e.g., medical, biology, and finance)
+
+    % TODO(gp): Describe
+
+	% ###############################################################################
+	\section{Merging large Language models and knowledge graphs}
+
+    \subsection{Pros and cons of LLMs}
+
+    Large language models, pre-trained on large-scale corpora, have shown great
+    performance in many natural language processing (NLP) tasks. By increasing
+    model size, LLMs with billions of parameters (e.g., ChatGPT and PaLM2) have
+    shown a surprising emergent ability and generalizability.
+
+    Despite their success in many applications, LLMs have been criticized for
+    several limitations.
+
+    Advantages of LLMs
+    - General knowledge
+    - Language processing
+    - Generalizability
+
+    Limitations of LLMs
+    - Black-box: lack of interpretability
+    - Implicit knowledge: LLMs are black-box models, which fall short of
+      capturing and accessing factual knowledge
+    - Hallucination
+    - Indecisiveness (reasoning happens through probabilistic process)
+    - Lack of domain-specific knowledge
+    - Lack of new knowledge
+
+    \subsection{Pros and cons of KGs}
+
+    A potential solution is to incorporate knowledge graphs (KGs) into LLMs.
+    
+    Advantages of KGs
+    - Structural knowledge
+    - Accuracy
+    - Decisiveness
+    - Interpretability
+    - Domain-specific knowledge
+    - Evolving knowledge
+
+    Limitations of KGs
+    - Incomplete knowledge
+    - Lack language understanding
+    - Unseen facts
+
+    LLMs and KGs are two inherently complementary techniques, which should be
+    unified into a general framework to mutually enhance each other.
+
+	% ###############################################################################
+	\section{Bayesian networks}
+
+    % TODO(gp): Describe
+
+	% ###############################################################################
+	\section{Building Bayesian model}
+
+    % TODO(gp): Describe
+
+	% ###############################################################################
+	\section{Running the model}
+
+    % TODO(gp): Describe
+
+	% ###############################################################################
+	\bibliography{Bib}
+	\bibliographystyle{amsplain}
+
+	\begin{thebibliography}{10}
+		\bib{TrDeProv23}{article}{ author={Trace}, title={Decentralized Proving, Proof Markets, and ZK Infrastructure}, date={June 2023}, eprint={https://figmentcapital.medium.com/decentralized-proving-proof-markets-and-zk-infrastructure-f4cce2c58596} }
+
+		%    \bib{}{article}{
+		%      author={,},
+		%      title={},
+		%      date={},
+		%    }
+	\end{thebibliography}
+\end{document}
