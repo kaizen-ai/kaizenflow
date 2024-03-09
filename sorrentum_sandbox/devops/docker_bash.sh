@@ -15,7 +15,7 @@ fi;
 source $DOCKER_NAME
 
 docker image ls $FULL_IMAGE_NAME
-#docker manifest inspect $FULL_IMAGE_NAME | grep arch
+# docker manifest inspect $FULL_IMAGE_NAME | grep arch
 
 CONTAINER_NAME=$IMAGE_NAME
 docker run \
