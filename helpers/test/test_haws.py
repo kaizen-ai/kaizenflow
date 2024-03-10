@@ -43,3 +43,4 @@ class Test_get_task_definition_image_url(hunitest.TestCase):
         )
         image_url = haws.get_task_definition_image_url(task_definition_name)
         self.assertEqual(image_url, mock_image_url)
+

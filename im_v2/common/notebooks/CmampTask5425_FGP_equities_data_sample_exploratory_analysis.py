@@ -16,7 +16,7 @@
 # ## Process input file
 
 # %% [markdown]
-# In this notebook we will load sample trades data (https://drive.google.com/file/d/1up5otVlfw-RX1S6K8o4d2nNRPP-lKran/view), resample them and store on S3 in a parquet tiled format 
+# In this notebook we will load sample trades data (https://drive.google.com/file/d/1up5otVlfw-RX1S6K8o4d2nNRPP-lKran/view), resample them and store on S3 in a parquet tiled format
 
 # %% [markdown]
 # Assuming the tar archive is in the root of the repository
@@ -146,7 +146,6 @@ hparque.to_partitioned_parquet(
     data,
     ["currency_pair"] + partition_cols,
     s3_path,
-    partition_filename=None,
     aws_profile=aws_profile,
 )
 
