@@ -4,7 +4,7 @@
 jackdoc: A tool to search for input in Markdown files and provide links to the files where the input was found.
 
 Example usage:
-jackdoc "search_term"
+jackdoc "search_term" [--skip-toc]
 
 Import as:
 
@@ -29,7 +29,9 @@ def _parse():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("search_term", help="Input to search in Markdown files (can be a regex)")
+    parser.add_argument("--skip-toc", action="store_true", help="Skip results in the table of contents (TOC)")
     return parser
+
 
 def _get_git_root():
     try:
@@ -43,11 +45,13 @@ def _get_git_root():
 def _main(parser):
     args = parser.parse_args()
     search_term = args.search_term
+    skip_toc = args.skip_toc
 
     git_root = _get_git_root()
     docs_path = os.path.join(git_root, DOCS_DIR)
 
     found_in_files = []
+
     for root, dirs, files in os.walk(docs_path):
         for file in files:
             if file.endswith(".md"):
@@ -55,7 +59,20 @@ def _main(parser):
                 # Read the content of the Markdown file
                 content = hio.from_file(md_file)
                 lines = content.split('\n')
+                toc_flag = False  # Flag to indicate if we are within the TOC
                 for line_num, line in enumerate(lines, start=1):
+                    if "<!-- toc -->" in line:
+                        toc_flag = True
+                        if skip_toc:
+                            break  # Skip searching if --skip-toc is enabled
+                        continue
+                    elif "<!-- tocstop -->" in line:
+                        toc_flag = False
+                        continue
+
+                    if toc_flag and skip_toc:
+                        continue  # Skip lines within the TOC if --skip-toc is enabled
+
                     if re.search(search_term, line):
                         found_in_files.append((md_file, line_num))
 
@@ -66,6 +83,7 @@ def _main(parser):
             print(url)
     else:
         print("Input not found in any Markdown files.")
+
 
 if __name__ == "__main__":
     _main(_parse())
