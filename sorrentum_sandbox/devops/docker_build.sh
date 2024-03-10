@@ -1,9 +1,6 @@
 #!/bin/bash -e
 
 GIT_ROOT=$(git rev-parse --show-toplevel)
-echo "GIT_ROOT=$GIT_ROOT"
-
-echo $GIT_ROOT/docker_common/utils.sh
 source $GIT_ROOT/docker_common/utils.sh
 
 # Find the name of the container.
@@ -21,4 +18,4 @@ export DOCKER_BUILDKIT=1
 export DOCKER_BUILD_MULTI_ARCH=1
 #export DOCKER_BUILD_MULTI_ARCH=0
 
-build_container_image2
+build_container_image
