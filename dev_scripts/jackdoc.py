@@ -30,7 +30,7 @@ def _parse():
     )
     parser.add_argument("search_term", help="Input to search in Markdown files (can be a regex)")
     parser.add_argument("--skip-toc", action="store_true", help="Skip results in the table of contents (TOC)")
-    parser.add_argument("--sections-only", action="store_true", help="Search only in sections (lines starting with #+)")
+    parser.add_argument("--sections-only", action="store_true", help="Search only in sections (lines starting with '#')")
     return parser
 
 
@@ -75,8 +75,8 @@ def _main(parser):
                     if toc_flag and skip_toc:
                         continue  # Skip lines within the TOC if --skip-toc is enabled
 
-                    if sections_only and not line.startswith("#+"):
-                        continue  # Skip lines if --sections-only is enabled and line doesn't start with #+
+                    if sections_only and not re.match(r'^#+\s', line):
+                        continue  # Skip lines if --sections-only is enabled and not a section heading
 
                     if re.search(search_term, line):
                         found_in_files.append((md_file, line_num))
