@@ -12,25 +12,11 @@ import helpers.hunit_test as hunitest
 
 class Test_get_session(hunitest.TestCase):
     @pytest.fixture(autouse=True)
-    def setup_teardown_test(self):
-        # Run before each test.
-        self.set_up_test()
-        yield
-        # Run after each test.
-        self.tear_down_test()
-
-    def set_up_test(self) -> None:
-        self.setUp()
+    def setup_test(self):
         os.environ["MOCK_AWS_ACCESS_KEY_ID"] = "mock_access_key"
         os.environ["MOCK_AWS_SECRET_ACCESS_KEY"] = "mock_secret_access_key"
         os.environ["MOCK_AWS_S3_BUCKET"] = "mock_s3_bucket"
         os.environ["MOCK_AWS_DEFAULT_REGION"] = "us-east-1"
-
-    def tear_down_test(self) -> None:
-        del os.environ["MOCK_AWS_ACCESS_KEY_ID"]
-        del os.environ["MOCK_AWS_SECRET_ACCESS_KEY"]
-        del os.environ["MOCK_AWS_S3_BUCKET"]
-        del os.environ["MOCK_AWS_DEFAULT_REGION"]
 
     def mock_session(self, region: Optional[str] = None) -> None:
         aws_profile = "__mock__"
