@@ -1,5 +1,5 @@
-# Adapted from https://github.com/resdevd/docker-compose-airflow/blob/main/Dockerfile.
 FROM apache/airflow:latest
+#FROM apache/airflow:2.8.0-python3.9
 
 USER root
 
@@ -20,7 +20,7 @@ USER airflow
 
 # Update pip.
 RUN /usr/local/bin/python -m pip install --upgrade pip
-RUN /usr/local/bin/python -m pip install prophet
+#RUN /usr/local/bin/python -m pip install prophet
 
 # Install Python packages.
 RUN pip3 install \
@@ -29,23 +29,29 @@ RUN pip3 install \
     jupyter \
     jupyter-contrib-core \
     jupyter-contrib-nbextensions \
-    praw \
     psycopg2 \
     pymongo \
     s3fs \
-    seaborn \
     tqdm \	
-    dask \
-    prophet \
-    distributed \
-    dask_xgboost \
-    xgboost \
-    dask_ml \
-    dask_xgboost \
     yapf
+
+  #praw \
+  #seaborn \
+  #dask \
+  #prophet \
+  #distributed \
+  #dask_xgboost \
+  #xgboost \
+  #dask_ml \
+  #dask_xgboost \
 
 # Part of the original DockerFile.
 RUN pip3 install \
     python-dotenv \
-    apache-airflow-providers-http==2.0.1 \
-    apache-airflow-providers-postgres==2.2.0
+    apache-airflow-providers-http \
+    apache-airflow-providers-postgres
+
+# apache-airflow-providers-http==2.0.1 \
+# apache-airflow-providers-postgres==2.2.0
+
+#RUN airflow db init
