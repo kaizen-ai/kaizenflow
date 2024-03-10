@@ -1,5 +1,5 @@
-FROM apache/airflow:latest
-#FROM apache/airflow:2.8.0-python3.9
+#FROM apache/airflow:latest
+FROM apache/airflow:2.8.0-python3.9
 
 USER root
 
@@ -50,8 +50,3 @@ RUN pip3 install \
     python-dotenv \
     apache-airflow-providers-http \
     apache-airflow-providers-postgres
-
-# apache-airflow-providers-http==2.0.1 \
-# apache-airflow-providers-postgres==2.2.0
-
-#RUN airflow db init
