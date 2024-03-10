@@ -15,8 +15,8 @@ import argparse
 import logging
 import os
 import subprocess
-import urllib.parse
 import re
+import helpers.hio as hio
 
 _LOG = logging.getLogger(__name__)
 
@@ -52,11 +52,12 @@ def _main(parser):
         for file in files:
             if file.endswith(".md"):
                 md_file = os.path.join(root, file)
-                with open(md_file, 'r') as f:
-                    lines = f.readlines()
-                    for line_num, line in enumerate(lines, start=1):
-                        if re.search(search_term, line):
-                            found_in_files.append((md_file, line_num))
+                # Read the content of the Markdown file
+                content = hio.from_file(md_file)
+                lines = content.split('\n')
+                for line_num, line in enumerate(lines, start=1):
+                    if re.search(search_term, line):
+                        found_in_files.append((md_file, line_num))
 
     if found_in_files:
         print("Input found in the following Markdown files:")
