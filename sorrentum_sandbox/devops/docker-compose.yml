@@ -49,8 +49,9 @@ x-airflow-common:
   # In order to add custom dependencies or upgrade provider packages you can use your extended image.
   # Comment the image line, place your Dockerfile in the directory where you placed the docker-compose.yaml
   # and uncomment the "build" line below, Then run `docker-compose build` to build the images.
-  image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.8.2}
+  #image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.8.2}
   # build: .
+  image: sorrentum/sorrentum:latest
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
@@ -59,7 +60,7 @@ x-airflow-common:
     AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
     AIRFLOW__CORE__FERNET_KEY: ''
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
-    AIRFLOW__CORE__LOAD_EXAMPLES: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
     # yamllint disable rule:line-length
     # Use simple http server on scheduler for health checks
@@ -69,11 +70,14 @@ x-airflow-common:
     # WARNING: Use _PIP_ADDITIONAL_REQUIREMENTS option ONLY for a quick checks
     # for other purpose (development, test and especially production usage) build/extend Airflow image.
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
+    # Python.
+    PYTHONPATH: /cmamp:${PYTHONPATH}
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
+    - ../..:/cmamp
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
@@ -279,5 +283,43 @@ services:
       airflow-init:
         condition: service_completed_successfully
 
+  # Postgres.
+
+  postgres2:
+    # Use prebuilt image.
+    image: postgres:14.0
+    container_name: postgres_cont
+    environment:
+      # Pass env vars to control credentials.
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      # We reuse the Airflow DB also for client data.
+      # TODO(gp): Ideally we should separate infra from application.
+      - POSTGRES_DB=airflow
+      - POSTGRES_PORT=5432
+    volumes:
+      # Map volume backing the DB to a local dir.
+      - airflow-database-data:/var/lib/postgresql/data/
+    ports:
+      # Access PostgreSQL from outside the container on port 5532.
+      - "5532:5432"
+
+  # Mongo.
+
+  mongo:
+    # Use prebuilt image.
+    image: mongo
+    container_name: mongo_cont
+    environment:
+      # Pass env vars to control credentials.
+      - MONGO_INITDB_ROOT_USERNAME=mongo
+      - MONGO_INITDB_ROOT_PASSWORD=mongo
+    volumes:
+      - ./mongo_data:/data/db
+    ports:
+      # Access Mongo from outside the container on port 27017.
+      - "27017:27017"
+
 volumes:
   postgres-db-volume:
+  airflow-database-data:
