@@ -16,10 +16,13 @@ fi;
 source $DOCKER_NAME
 
 # Print Sorrentum images.
+echo "# Docker images to delete"
 docker image ls | grep $FULL_IMAGE_NAME
 
 # Remove images.
+echo "# Removing image"
 docker image ls | grep $FULL_IMAGE_NAME | awk '{print $1}' | xargs -n 1 -t docker image rm -f
 
 # Print all images.
+echo "# Docker images"
 docker image ls
