@@ -281,6 +281,7 @@
   ```
 
 - There are several scripts that allow to use the Airflow container:
+  - `docker_ls.sh`: show the Sorrentum containers
   - `docker_prune.sh`: remove the Sorrentum app image
   - `docker_prune_all.sh`: remove all the images needed for the Sorrentum node
     (e.g., mongo, postgres, ...)
@@ -303,9 +304,7 @@
 
 ### Clean up
 
-- You might have some images from previous runs
-
-- E.g.,
+- You might have some images from previous runs, e.g.,
   ```bash
   > docker images | grep sorrentum
   sorrentum/sorrentum             latest            d298b34ae6db   43 minutes ago   4.03GB
@@ -322,9 +321,25 @@
   > docker images | grep airflow
   ```
 
-- You can clean up your Docker system from the images
-docker_prune_all.sh
+- There is also a convenient script
+  ```bash
+  > docker_ls.sh
+  # Sorrentum
+  sorrentum/sorrentum           latest            d298b34ae6db   12 hours ago    4.03GB
+  sorrentum/jupyter             latest            360b1d8a2f7e   3 days ago      1.38GB
+  sorrentum/cmamp               dev               e61ee1b8c77a   2 weeks ago     3.31GB
+  sorrentum/sorrentum           Spring2023        0a0b62706879   10 months ago   2.42GB
+  # Mongo
+  mongo                         latest            35e5c11c442d   9 days ago      721MB
+  # Postgres
+  postgres                      14.0              01b2dbb34042   2 years ago     354MB
+  # Airflow
+  ```
 
+- You can clean up your Docker system from the images
+  ```
+  > docker_prune_all.sh
+  ```
 
 ### Pull image from Dockerhub
 
