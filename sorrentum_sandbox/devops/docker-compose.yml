@@ -51,6 +51,7 @@ x-airflow-common:
   # and uncomment the "build" line below, Then run `docker-compose build` to build the images.
   #image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.8.2}
   # build: .
+  # GP: the Sorrentum image is built on top of Airflow image.
   image: sorrentum/sorrentum:latest
   environment:
     &airflow-common-env
@@ -70,13 +71,14 @@ x-airflow-common:
     # WARNING: Use _PIP_ADDITIONAL_REQUIREMENTS option ONLY for a quick checks
     # for other purpose (development, test and especially production usage) build/extend Airflow image.
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
-    # Python.
+    # GP: Add Python to find code (e.g., `helpers`).
     PYTHONPATH: /cmamp:${PYTHONPATH}
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
+    # GP: Add to find code (e.g., `helpers`).
     - ../..:/cmamp
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
@@ -87,6 +89,8 @@ x-airflow-common:
       condition: service_healthy
 
 services:
+
+  # Postgres maintaining the state of Airflow.
   postgres:
     image: postgres:13
     environment:
@@ -102,6 +106,7 @@ services:
       start_period: 5s
     restart: always
 
+  # Redis for Airflow.
   redis:
     image: redis:latest
     expose:
@@ -114,6 +119,7 @@ services:
       start_period: 30s
     restart: always
 
+  # Airflow webserver.
   airflow-webserver:
     <<: *airflow-common
     command: webserver
@@ -184,6 +190,7 @@ services:
       airflow-init:
         condition: service_completed_successfully
 
+  # Initialize the DB.
   airflow-init:
     <<: *airflow-common
     entrypoint: /bin/bash
@@ -248,6 +255,7 @@ services:
     volumes:
       - ${AIRFLOW_PROJ_DIR:-.}:/sources
 
+  # Airflow command line interface.
   airflow-cli:
     <<: *airflow-common
     profiles:
@@ -283,7 +291,8 @@ services:
       airflow-init:
         condition: service_completed_successfully
 
-  # Postgres.
+  # Postgres for user data.
+  # TODO(gp): Find a better name.
 
   postgres2:
     # Use prebuilt image.
@@ -304,8 +313,7 @@ services:
       # Access PostgreSQL from outside the container on port 5532.
       - "5532:5432"
 
-  # Mongo.
-
+  # Mongo for user data.
   mongo:
     # Use prebuilt image.
     image: mongo
