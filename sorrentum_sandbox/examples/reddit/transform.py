@@ -3,7 +3,7 @@ Transformation data for Reddit.
 
 Import as:
 
-import sorrentum_sandbox.examples.systems.reddit.transform as ssesretr
+import sorrentum_sandbox.examples.reddit.transform as ssesretr
 """
 import logging
 import re

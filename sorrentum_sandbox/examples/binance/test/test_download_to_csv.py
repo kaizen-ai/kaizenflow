@@ -6,7 +6,7 @@ import pandas as pd
 
 import helpers.hunit_test as hunitest
 import sorrentum_sandbox.common.download as ssacodow
-import sorrentum_sandbox.examples.systems.binance.download_to_csv as ssesbdtcs
+import sorrentum_sandbox.examples.binance.download_to_csv as ssesbdtcs
 
 
 def _fake_binance_response() -> List[List[Any]]:
