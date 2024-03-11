@@ -39,7 +39,7 @@ dag = airflow.DAG(
 bash_command = [
     "/usr/bin/python3 /cmamp/sorrentum_sandbox/examples/ml_projects/Issue23_Team4_Implement_sandbox_for_Blockchain_2/download_db_all.py",
     "--target_table 'get_diff",
-    "-v DEBUG"
+    "-v DEBUG",
 ]
 
 
