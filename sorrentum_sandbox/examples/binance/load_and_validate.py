@@ -22,7 +22,7 @@ import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import sorrentum_sandbox.common.client as ssacocli
 import sorrentum_sandbox.common.validate as ssacoval
-import sorrentum_sandbox.examples.systems.binance.validate as ssesbiva
+import sorrentum_sandbox.examples.binance.validate as ssesbiva
 
 _LOG = logging.getLogger(__name__)
 

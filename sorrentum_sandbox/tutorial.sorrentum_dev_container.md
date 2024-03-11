@@ -42,109 +42,7 @@
 
   ```markdown
   > $GIT_ROOT/dev_scripts/tree.sh -p sorrentum_sandbox
-
-  sorrentum_sandbox/
-  |-- common/
-  |   |-- __init__.py
-  |   |-- client.py
-  |   |-- download.py
-  |   |-- save.py
-  |   `-- validate.py
-  |-- devops/
-  |   |-- airflow_data/
-  |   |   |-- dags/
-  |   |   |   |-- __init__.py
-  |   |   |   |-- airflow_tutorial.py
-  |   |   |   |-- download_forecast_bitcoin_prices.py
   ...
-  |   |   `-- __init__.py
-  |   |-- Dockerfile
-  |   |-- __init__.py
-  |   |-- docker-compose.yml
-  |   |-- docker_bash.sh*
-  |   |-- docker_build.sh*
-  |   |-- docker_clean.sh
-  |   |-- docker_cmd.sh*
-  |   |-- docker_exec.sh*
-  |   |-- docker_kill.sh
-  |   |-- docker_name.sh
-  |   |-- docker_prune.sh*
-  |   |-- docker_prune_all.sh*
-  |   |-- docker_pull.sh*
-  |   |-- docker_push.sh*
-  |   |-- init_airflow_setup.sh*
-  |   |-- reset_airflow_setup.sh*
-  |   `-- setenv.sh
-  |-- docker_common/
-  |   |-- README.md
-  |   |-- bashrc
-  |   |-- create_links.sh*
-  |   |-- etc_sudoers
-  |   |-- install_jupyter_extensions.sh*
-  |   |-- repo_diff.sh*
-  |   |-- update.sh*
-  |   |-- utils.sh
-  |   `-- version.sh*
-  |-- examples/
-  |   |-- systems/
-  |   |   |-- binance/
-  |   |   |   |-- test/
-  |   |   |   |   `-- test_download_to_csv.py
-  |   |   |   |-- __init__.py
-  |   |   |   |-- db.py
-  |   |   |   |-- download.py
-  |   |   |   |-- download_to_csv.py*
-  |   |   |   |-- download_to_db.py*
-  |   |   |   |-- load_and_validate.py*
-  |   |   |   |-- load_validate_transform.py*
-  |   |   |   `-- validate.py
-  |   |   |-- reddit/
-  |   |   |   |-- __init__.py
-  |   |   |   |-- db.py
-  |   |   |   |-- download.py
-  |   |   |   |-- download_to_db.py*
-  |   |   |   |-- load_validate_transform.py*
-  |   |   |   |-- transform.py
-  |   |   |   `-- validate.py
-  |   |   `-- __init__.py
-  |   |-- Dockerfile
-  |   |-- __init__.py
-  |   |-- bashrc
-  |   |-- docker_bash.sh*
-  |   |-- docker_build.sh*
-  |   |-- docker_build.version.log
-  |   |-- docker_clean.sh*
-  |   |-- docker_exec.sh*
-  |   |-- docker_jupyter.sh*
-  |   |-- docker_push.sh*
-  |   |-- etc_sudoers
-  |   |-- install_jupyter_extensions.sh*
-  |   |-- run_jupyter.sh*
-  |   |-- set_env.sh
-  |   |-- tutorial_jupyter.ipynb
-  |   `-- version.sh*
-  |-- projects/
-  |   |-- research/
-  ...
-  |   |-- spring2023/
-  |   |   |-- altdata_notebooks/
-  ...
-  |   |   `-- ml_projects/
-  ...
-  |   `-- spring2024/
-  |       |-- SorrTask645_Redis_cache_to_fetch_user_profiles/
-  |       |   |-- docker/
-  |       |   |   |-- Dockerfile
-  |       |   |   |-- Redis_cache_to_fetch_user_profiles.ipynb
-  |       |   |   `-- docker-compose.yaml
-  |       |   `-- README.md
-  |       |-- project_template/
-  |       |   `-- README.md
-  |       `-- README.md
-  |-- README.md
-  `-- __init__.py
-
-  70 directories, 342 files
   ```
 
 - Focusing on the directory structure:
@@ -153,21 +51,44 @@
   sorrentum_sandbox
   |-- common
   |-- devops
-  |   `-- airflow_data
-  |       `-- dags
+  |   |-- config
+  |   |-- dags
+  |   |   |-- Spring2023
+  |   |-- logs
+  |   |   |-- dag_processor_manager
+  |   |-- mongo_data
+  |   `-- plugins
   |-- docker_common
   |-- examples
-  |   `-- systems
-  |       |-- binance
-  |       |   `-- test
-  |       `-- reddit
-  `-- projects
-      |-- research
-      |-- spring2023
-      `-- spring2024
-          |-- SorrTask645_Redis_cache_to_fetch_user_profiles
-          |   `-- docker
-          `-- project_template
+  |   |-- binance
+  |   |-- reddit
+  |-- research
+  |   |-- SorrIssue1_Predict_large_asset_movements_with_NLP
+  |   `-- SorrIssue8_Predict_Intraday_Trading_Volume
+  |-- spring2023
+  |   |-- altdata_notebooks
+  |   `-- ml_projects
+  |       |-- Issue22_Team3_Implement_sandbox_for_Coinmarketcap
+  |       |-- Issue23_Team4_Implement_sandbox_for_Blockchain
+  |       |-- Issue23_Team4_Implement_sandbox_for_Blockchain_2
+  |       |-- Issue24_Team5_Implement_sandbox_for_Alpha_Vantage
+  |       |-- Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap
+  |       |-- Issue26_Team7_Implement_sandbox_for_Chainlink
+  |       |-- Issue27_Team8_Implement_sandbox_for_Yahoo_Finance
+  |       |-- Issue28_Team9_Implement_sandbox_for_Kaiko
+  |       |-- Issue29_Team10_Implement_sandbox_for_coingecko
+  |       |-- SorrIssue14_Team1_Implement_sandbox_for_Google_Trends
+  |       |-- SorrIssue1_Predict_large_asset_movements_with_NLP
+  |       |-- SorrIssue21_Team2_Implement_sandbox_for_GitHub_2
+  |       |-- SorrIssue2_Cross_exchange_arbitrage_CEX_CEX
+  |       |-- SorrIssue3_Implement_Avellaneda_model
+  |       |-- SorrIssue4_Predict_bid_ask_movements_with_order_book_data
+  |       `-- SorrIssue8_Predict_Intraday_Trading_Volume
+  `-- spring2024
+      |-- SorrTask645_Redis_cache_to_fetch_user_profiles
+      `-- project_template
+
+  104 directories
   ```
 
 - `common/`: contains abstract system interfaces for the different blocks of the
@@ -180,16 +101,14 @@
   - It contains the Airflow task scheduler and its DAGs
   - It can run any Sorrentum data nodes, like the ones in `examples/systems`
 - `docker_common/`: common code for Docker tasks
-- `examples/`:
-  - `systems`: contains several examples of end-to-end Sorrentum data nodes
+- `examples/`: - contains several examples of end-to-end Sorrentum data nodes
     - E.g., downloading price data from Binance and posts/comments from Reddit
     - Each system implements the interfaces in `common`
-- `projects`: code for various projects
-  - `research`: Sorrentum research projects
-  - `spring2023`: class projects for Spring 2023 (team projects about building
-    Sorrentum systems)
-  - `spring2024`: class projects for Spring 2024 DATA605 class (individual
-    projects about building examples of big data technologies)
+- `research/`: Sorrentum research projects
+- `spring2023/`: class projects for Spring 2023 (team projects about building
+  Sorrentum systems)
+- `spring2024/`: class projects for Spring 2024 DATA605 class (individual projects
+  about building examples of big data technologies)
 
 <!-- ############################################################################### -->
 <!-- ############################################################################### -->
@@ -211,10 +130,10 @@
   behind the scenes
   ```
   > cd $GIT_ROOT/sorrentum_sandbox/devops
-  > vi docker-compose.yml Dockerfile .env
+  > vi docker-compose.yml Dockerfile
   ```
 
-- The system needs three Docker images:
+- The system needs several Docker images and several containers
   - `postgres`: pre-built image for PostgreSQL, downloaded directly from
     DockerHub
   - `mongo`: pre-built image for Mongo, downloaded directly from DockerHub
@@ -265,10 +184,6 @@
   docker> airflow version
   2.8.2
   ```
-
-<!-- ############################################################################### -->
-<!-- ############################################################################### -->
-<!-- ############################################################################### -->
 
 ## Sorrentum app container
 
@@ -358,9 +273,9 @@
 
 - The best approach is to see the Airflow logs in one window at the same time as
   running other commands in a different windows:
-  - Run Airflow server in one terminal window using `docker_bash.sh`
+  - Run Airflow server in one terminal window using `docker compose up`
   - Run other tools in other windows using `docker_exec.sh`
-- You can use `tmux` to allow multiple windows in the same shell
+  - You can use `tmux` to allow multiple windows in the same shell
 
 - After the containers are ready, you can bring up the service with:
   ```
@@ -398,9 +313,8 @@
 ## Check the Airflow status
 
 - Check that the Airflow service is up by going with your browser to
-  `localhost:8091`
-  - You should see the Airflow login
-  - You can't log in since you don't have username / password yet
+  `localhost:8080`
+  - You should see the Airflow login with user `airflow` and password `airflow`
 
 - You can see the services running as Docker containers:
   ```
@@ -423,24 +337,6 @@
   local     sorrentum_data_node_airflow-log-volume
   ```
 
-- When starting the Airflow container for the first time you need to initialize
-  Airflow
-- Take a look at the script that configures Airflow
-  ```
-  > cd $GIT_ROOT/sorrentum_sandbox/devops
-  > vi ./init_airflow_setup.sh
-  ```
-- In a different terminal window outside the Docker container, run:
-  ```
-  > cd $GIT_ROOT/sorrentum_sandbox/devops
-  > ./init_airflow_setup.sh
-  ...
-  [2023-01-22 01:07:31,578] {manager.py:214} INFO - Added user airflow
-  User "airflow" created with role "Admin"
-  ```
-
-- Now if you go to the browser to `localhost:8091` on your local machine you can
-  log in with the default login credentials `airflow`:`airflow`
 - Upon successful login you should see the Airflow UI
   ![image](https://user-images.githubusercontent.com/49269742/215845132-6ca56974-495d-4ca2-9656-32000033f341.png)
 - To enable a DAG and start executing it based on provided interval, flip the
@@ -451,13 +347,18 @@
 ## Pausing Airflow service
 
 - You can bring down the Sorrentum service (persisting the state) with:
-  ```
+  ```bash
   > docker compose down
-  Container mongo_cont                 Removed
-  Container airflow_cont               Removed
-  Container airflow_scheduler_cont     Removed
-  Container postgres_cont              Removed
-  Network sorrentum_data_node_default  Removed
+  [+] Running 9/9
+   ✔ Container devops-airflow-worker-1     Stopped
+   ✔ Container mongo_cont                  Stopped
+   ✔ Container devops-airflow-triggerer-1  Stopped
+   ✔ Container devops-airflow-scheduler-1  Stopped
+   ✔ Container devops-airflow-webserver-1  Stopped
+   ✔ Container postgres_cont               Stopped
+   ✔ Container devops-airflow-init-1       Stopped
+   ✔ Container devops-postgres-1           Stopped
+   ✔ Container devops-redis-1              Stopped
   ```
 - You can see in the Airflow window that the service has stopped
 
@@ -482,16 +383,21 @@
 
 - To remove all the containers and volumes, which corresponds to resetting
   completely the system
-  ```
+  ```bash
   > docker-compose down -v --rmi all
-  Removing airflow_scheduler_cont ... done
-  Removing airflow_cont           ... done
-  Removing postgres_cont          ... done
-  Removing network airflow_default
-  Removing volume airflow_ck-airflow-database-data
-  Removing volume airflow_ck-airflow-log-volume
-  Removing image postgres:14.0
-  Removing image resdev-airflow:latest
+  [+] Running 12/12
+   ✔ Container devops-airflow-webserver-1  Removed
+   ✔ Container devops-airflow-triggerer-1  Removed
+   ✔ Container devops-airflow-worker-1     Removed
+   ✔ Container devops-airflow-scheduler-1  Removed
+   ✔ Container postgres_cont               Removed
+   ✔ Container mongo_cont                  Removed
+   ✔ Container devops-airflow-init-1       Removed
+   ✔ Container devops-postgres-1           Removed
+   ✔ Container devops-redis-1              Removed
+   ✔ Volume devops_postgres-db-volume      Removed
+   ✔ Volume devops_airflow-database-data   Removed
+   ✔ Network devops_default                Removed
 
   > docker container ls
   > docker volume ls
@@ -501,7 +407,7 @@
   `./init_airflow_setup.sh`
 
 - To rebuild after trying out some changes in dockerfile/compose file
-  ```
+  ```bash
   > docker-compose up --build --force-recreate
   ```
 
@@ -509,15 +415,15 @@
 <!-- ############################################################################### -->
 <!-- ############################################################################### -->
 
-# Sorrentum system examples
+# Sorrentum examples
 
-- The following examples under `sorrentum_sandbox/examples/systems` demonstrate
+- The following examples under `sorrentum_sandbox/examples` demonstrate
   small standalone Sorrentum data nodes
 - Each example implements concrete classes from the interfaces specified in
   `sorrentum_sandbox/common`, upon which command line scripts are built
 - Initially, we want to run the systems directly
   - The actual execution of scripts can be orchestrated by Apache Airflow
-- The code relies on the Sorretum Airflow container described in the session
+- The code relies on the Sorrentum Airflow container described in the session
   below
 
 ## Binance
