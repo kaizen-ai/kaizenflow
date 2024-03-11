@@ -4,7 +4,7 @@
 jackdoc: A tool to search for input in Markdown files and provide links to the files where the input was found.
 
 Example usage:
-jackdoc "search_term" [--skip-toc] [--sections-only]
+jackdoc "search_term" [--skip-toc] [--sections-only] [--subdir <subdirectory>]
 
 Import as:
 
@@ -28,9 +28,10 @@ def _parse():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("search_term", help="Input to search in Markdown files (can be a regex)")
+    parser.add_argument("search_term", help="Regex pattern to search in Markdown files")
     parser.add_argument("--skip-toc", action="store_true", help="Skip results in the table of contents (TOC)")
     parser.add_argument("--sections-only", action="store_true", help="Search only in sections (lines starting with '#')")
+    parser.add_argument("--subdir", help="Subdirectory to search within")
     return parser
 
 
@@ -48,9 +49,13 @@ def _main(parser):
     search_term = args.search_term
     skip_toc = args.skip_toc
     sections_only = args.sections_only
+    subdir = args.subdir
 
     git_root = _get_git_root()
     docs_path = os.path.join(git_root, DOCS_DIR)
+
+    if subdir:
+        docs_path = os.path.join(docs_path, subdir)
 
     found_in_files = []
 
