@@ -648,7 +648,7 @@ user Hopeful_Leek_4710
 - Test the connection to Reddit
   ```bash
   docker> cd /cmamp/sorrentum_sandbox/examples/reddit
-  docker> ./test_reddit.py
+  docker> ./sanity_check_reddit.py
   <praw.reddit.Reddit object at 0xffffb6e71f10>
   None
   Sunday Daily Thread: What's everyone working on this week?
@@ -665,7 +665,7 @@ user Hopeful_Leek_4710
 
 - Test the connection to Mongo
   ```bash
-  > ./test_mongo.py
+  > ./sanity_check_mongo.py
   Empty DataFrame
   Columns: []
   Index: []
