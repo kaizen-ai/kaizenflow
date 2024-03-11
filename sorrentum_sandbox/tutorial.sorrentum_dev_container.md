@@ -266,10 +266,6 @@
   2.8.2
   ```
 
-<!-- ############################################################################### -->
-<!-- ############################################################################### -->
-<!-- ############################################################################### -->
-
 ## Sorrentum app container
 
 ### Clean up
@@ -358,9 +354,9 @@
 
 - The best approach is to see the Airflow logs in one window at the same time as
   running other commands in a different windows:
-  - Run Airflow server in one terminal window using `docker_bash.sh`
+  - Run Airflow server in one terminal window using `docker compose up`
   - Run other tools in other windows using `docker_exec.sh`
-- You can use `tmux` to allow multiple windows in the same shell
+  - You can use `tmux` to allow multiple windows in the same shell
 
 - After the containers are ready, you can bring up the service with:
   ```
@@ -398,9 +394,8 @@
 ## Check the Airflow status
 
 - Check that the Airflow service is up by going with your browser to
-  `localhost:8091`
-  - You should see the Airflow login
-  - You can't log in since you don't have username / password yet
+  `localhost:8080`
+  - You should see the Airflow login with user `airflow` and password `airflow`
 
 - You can see the services running as Docker containers:
   ```
@@ -423,24 +418,6 @@
   local     sorrentum_data_node_airflow-log-volume
   ```
 
-- When starting the Airflow container for the first time you need to initialize
-  Airflow
-- Take a look at the script that configures Airflow
-  ```
-  > cd $GIT_ROOT/sorrentum_sandbox/devops
-  > vi ./init_airflow_setup.sh
-  ```
-- In a different terminal window outside the Docker container, run:
-  ```
-  > cd $GIT_ROOT/sorrentum_sandbox/devops
-  > ./init_airflow_setup.sh
-  ...
-  [2023-01-22 01:07:31,578] {manager.py:214} INFO - Added user airflow
-  User "airflow" created with role "Admin"
-  ```
-
-- Now if you go to the browser to `localhost:8091` on your local machine you can
-  log in with the default login credentials `airflow`:`airflow`
 - Upon successful login you should see the Airflow UI
   ![image](https://user-images.githubusercontent.com/49269742/215845132-6ca56974-495d-4ca2-9656-32000033f341.png)
 - To enable a DAG and start executing it based on provided interval, flip the
@@ -451,7 +428,7 @@
 ## Pausing Airflow service
 
 - You can bring down the Sorrentum service (persisting the state) with:
-  ```
+  ```bash
   > docker compose down
   Container mongo_cont                 Removed
   Container airflow_cont               Removed
@@ -482,7 +459,7 @@
 
 - To remove all the containers and volumes, which corresponds to resetting
   completely the system
-  ```
+  ```bash
   > docker-compose down -v --rmi all
   Removing airflow_scheduler_cont ... done
   Removing airflow_cont           ... done
@@ -501,7 +478,7 @@
   `./init_airflow_setup.sh`
 
 - To rebuild after trying out some changes in dockerfile/compose file
-  ```
+  ```bash
   > docker-compose up --build --force-recreate
   ```
 
