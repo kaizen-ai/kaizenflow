@@ -211,10 +211,10 @@
   behind the scenes
   ```
   > cd $GIT_ROOT/sorrentum_sandbox/devops
-  > vi docker-compose.yml Dockerfile .env
+  > vi docker-compose.yml Dockerfile
   ```
 
-- The system needs three Docker images:
+- The system needs several Docker images and several containers
   - `postgres`: pre-built image for PostgreSQL, downloaded directly from
     DockerHub
   - `mongo`: pre-built image for Mongo, downloaded directly from DockerHub
@@ -430,11 +430,16 @@
 - You can bring down the Sorrentum service (persisting the state) with:
   ```bash
   > docker compose down
-  Container mongo_cont                 Removed
-  Container airflow_cont               Removed
-  Container airflow_scheduler_cont     Removed
-  Container postgres_cont              Removed
-  Network sorrentum_data_node_default  Removed
+  [+] Running 9/9
+   ✔ Container devops-airflow-worker-1     Stopped
+   ✔ Container mongo_cont                  Stopped
+   ✔ Container devops-airflow-triggerer-1  Stopped
+   ✔ Container devops-airflow-scheduler-1  Stopped
+   ✔ Container devops-airflow-webserver-1  Stopped
+   ✔ Container postgres_cont               Stopped
+   ✔ Container devops-airflow-init-1       Stopped
+   ✔ Container devops-postgres-1           Stopped
+   ✔ Container devops-redis-1              Stopped
   ```
 - You can see in the Airflow window that the service has stopped
 
@@ -461,14 +466,19 @@
   completely the system
   ```bash
   > docker-compose down -v --rmi all
-  Removing airflow_scheduler_cont ... done
-  Removing airflow_cont           ... done
-  Removing postgres_cont          ... done
-  Removing network airflow_default
-  Removing volume airflow_ck-airflow-database-data
-  Removing volume airflow_ck-airflow-log-volume
-  Removing image postgres:14.0
-  Removing image resdev-airflow:latest
+  [+] Running 12/12
+   ✔ Container devops-airflow-webserver-1  Removed
+   ✔ Container devops-airflow-triggerer-1  Removed
+   ✔ Container devops-airflow-worker-1     Removed
+   ✔ Container devops-airflow-scheduler-1  Removed
+   ✔ Container postgres_cont               Removed
+   ✔ Container mongo_cont                  Removed
+   ✔ Container devops-airflow-init-1       Removed
+   ✔ Container devops-postgres-1           Removed
+   ✔ Container devops-redis-1              Removed
+   ✔ Volume devops_postgres-db-volume      Removed
+   ✔ Volume devops_airflow-database-data   Removed
+   ✔ Network devops_default                Removed
 
   > docker container ls
   > docker volume ls
