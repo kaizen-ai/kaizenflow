@@ -24,7 +24,7 @@
 ## Building the container
 
 - Build with
-  ```
+  ```bash
   > docker_build.sh
   ```
 
@@ -34,7 +34,7 @@
   all the needed dependencies
 
 - To start Jupyter do:
-  ```
+  ```bash
   > cd $GIT_ROOT/sorrentum_sandbox/examples
   > docker_jupyter.sh
   ++ git rev-parse --show-toplevel
@@ -79,6 +79,6 @@
 ## Running bash
 
 - You can run bash in the Sorrentum Jupyter container with:
-  ```
+  ```bash
   > docker_bash.sh
   ```
