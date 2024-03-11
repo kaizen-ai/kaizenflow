@@ -1,12 +1,45 @@
+
+
+<!-- toc -->
+
+- [Sorrentum Sandbox](#sorrentum-sandbox)
+- [Sorrentum system container](#sorrentum-system-container)
+  * [High-level description](#high-level-description)
+  * [Scripts](#scripts)
+  * [Sorrentum app container](#sorrentum-app-container)
+    + [Clean up](#clean-up)
+    + [Pull image from Dockerhub](#pull-image-from-dockerhub)
+    + [Build image locally](#build-image-locally)
+  * [Bring up Sorrentum data node](#bring-up-sorrentum-data-node)
+  * [Check the Airflow status](#check-the-airflow-status)
+  * [Pausing Airflow service](#pausing-airflow-service)
+  * [Restarting the services](#restarting-the-services)
+- [Sorrentum system examples](#sorrentum-system-examples)
+  * [Binance](#binance)
+    + [Run system in standalone mode](#run-system-in-standalone-mode)
+      - [Download data](#download-data)
+      - [Run QA](#run-qa)
+      - [Run unit tests](#run-unit-tests)
+      - [Run ETL pipeline](#run-etl-pipeline)
+    + [Run inside Airflow](#run-inside-airflow)
+  * [Reddit](#reddit)
+  * [Running outside Airflow](#running-outside-airflow)
+    + [Download data](#download-data-1)
+    + [Load, QA and Transform](#load-qa-and-transform)
+  * [Running inside Airflow](#running-inside-airflow)
+
+<!-- tocstop -->
+
 # Sorrentum Sandbox
 
 - This dir `sorrentum_sandbox` contains examples for Sorrentum data nodes
   - It allows to experiment with and prototype Sorrentum nodes, which are
     comprised of multiple services (e.g., Airflow, MongoDB, Postgres)
-  - All the code can be run on a local machine with `Docker`, without the need of
-    any cloud production infrastructure
+  - All the code can be run on a local machine with `Docker`, without the need
+    of any cloud production infrastructure
 
 - The current structure of the `sorrentum_sandbox` directory is as follows:
+
   ```markdown
   > $GIT_ROOT/dev_scripts/tree.sh -p sorrentum_sandbox
 
@@ -137,15 +170,15 @@
           `-- project_template
   ```
 
-- `common/`: contains abstract system interfaces for the different blocks of the 
-   Sorrentum ETL pipeline
+- `common/`: contains abstract system interfaces for the different blocks of the
+  Sorrentum ETL pipeline
   - Read the code top to bottom to get familiar with the interfaces
     ```
     > vi $GIT_ROOT/sorrentum_sandbox/common/*.py
     ```
 - `devops/`: contains the Dockerized Sorrentum data node
-  - it contains the Airflow task scheduler and its DAGs
-  - it can run any Sorrentum data nodes, like the ones in `examples/systems`
+  - It contains the Airflow task scheduler and its DAGs
+  - It can run any Sorrentum data nodes, like the ones in `examples/systems`
 - `docker_common/`: common code for Docker tasks
 - `examples/`:
   - `systems`: contains several examples of end-to-end Sorrentum data nodes
@@ -171,7 +204,8 @@
   - Postgres
   - MongoDB
 
-- It is modeled after https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html
+- It is modeled after
+  https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html
 
 - Inspect the Dockerfile and the compose file to understand what's happening
   behind the scenes
@@ -194,8 +228,9 @@
   // cd ~/src/sorrentum1/sorrentum_sandbox/devops
   // docker run --rm -it --name dcv -v $(pwd):/input pmsipilot/docker-compose-viz render -m image docker-compose.yml --no-volumes --force
   -->
+
   ![image](https://user-images.githubusercontent.com/33238329/223691802-0f0ec9ce-9854-48a7-9a30-1a8d452f77ce.png)
-  
+
 ## Scripts
 
 - Remember that commands prepended with:
@@ -205,6 +240,7 @@
     `docker_bash.sh` or `docker_exec.sh`
 
 - To configure the environment run:
+
   ```bash
   > cd $GIT_ROOT/sorrentum_sandbox/devops
   > source $GIT_ROOT/sorrentum_sandbox/devops/setenv.sh
@@ -239,6 +275,7 @@
 ### Clean up
 
 - You might have some images from previous runs, e.g.,
+
   ```bash
   > docker images | grep sorrentum
   sorrentum/sorrentum             latest            d298b34ae6db   43 minutes ago   4.03GB
@@ -256,6 +293,7 @@
   ```
 
 - There is also a convenient script
+
   ```bash
   > docker_ls.sh
   # Sorrentum
@@ -290,7 +328,7 @@
   ```
 
 ### Build image locally
- 
+
 - You can also build manually the Sorrentum container using Docker
   ```
   > cd $GIT_ROOT/sorrentum_sandbox/devops
@@ -315,7 +353,7 @@
   > cd $GIT_ROOT/sorrentum_sandbox/devops
   > docker-compose build
   ```
-  
+
 ## Bring up Sorrentum data node
 
 - The best approach is to see the Airflow logs in one window at the same time as
@@ -332,8 +370,8 @@
 
 - Starting the system can take some time
 
-- Note that there can be some errors / warnings, but things are good as long 
-  as you see Airflow starting like below:
+- Note that there can be some errors / warnings, but things are good as long as
+  you see Airflow starting like below:
   ```
   airflow_scheduler_cont  |   ____________       _____________
   airflow_scheduler_cont  |  ____    |__( )_________  __/__  /________      __
@@ -352,7 +390,7 @@
   airflow_scheduler_cont  | [2022-11-10 17:09:29 +0000] [22] [INFO] Booting worker with pid: 22
   ```
 
-- The Airflow service provided in the container uses `LocalExecutor` which is 
+- The Airflow service provided in the container uses `LocalExecutor` which is
   suitable for test / dev environments
   - For more robust deployments it is possible to add more components to the
     docker-compose (e.g., `Celery` and `Redis`)
@@ -407,8 +445,8 @@
   ![image](https://user-images.githubusercontent.com/49269742/215845132-6ca56974-495d-4ca2-9656-32000033f341.png)
 - To enable a DAG and start executing it based on provided interval, flip the
   switch next to the DAG name
-  - E.g., you can enable the DAG `download_periodic_1min_postgres_ohlcv_binance` which
-    downloads OHLCV data from Binance and saves it into Postgres
+  - E.g., you can enable the DAG `download_periodic_1min_postgres_ohlcv_binance`
+    which downloads OHLCV data from Binance and saves it into Postgres
 
 ## Pausing Airflow service
 
@@ -437,11 +475,12 @@
   > docker container ls
   > docker volume ls
   ```
+
 - The containers are restarted
 
 ## Restarting the services
 
-- To remove all the containers and volumes, which corresponds to resetting 
+- To remove all the containers and volumes, which corresponds to resetting
   completely the system
   ```
   > docker-compose down -v --rmi all
@@ -457,6 +496,7 @@
   > docker container ls
   > docker volume ls
   ```
+
 - Since you are starting from scratch here you need to re-run
   `./init_airflow_setup.sh`
 
@@ -485,7 +525,6 @@
 - In this example we utilize Binance REST API, available free of charge
 - We build a small ETL pipeline used to download and transform OHLCV market data
   for selected cryptocurrencies
-
   ```
   > (cd $GIT_ROOT/sorrentum_sandbox/examples/systems/binance && $GIT_ROOT/dev_scripts/tree.sh)
   ./
@@ -507,20 +546,21 @@
 
 - There are various files:
   - `db.py`: contains the interface to load / save Binance raw data to Postgres
-    - i.e., "Load stage" of an ETL pipeline
+    - I.e., "Load stage" of an ETL pipeline
   - `download.py`: implement the logic to download the data from Binance
-    - i.e., "Extract stage"
+    - I.e., "Extract stage"
   - `download_to_csv.py`: implement Extract stage to CSV
   - `download_to_db.py`: implement Extract stage to PostgreSQL
-  - `load_and_validate.py`: implement a pipeline loading data into a
-    CSV file and then validating data
-  - `load_validate_transform.py`: implement a pipeline loading data
-    into DB, validating data, processing data, and saving data back to DB
+  - `load_and_validate.py`: implement a pipeline loading data into a CSV file
+    and then validating data
+  - `load_validate_transform.py`: implement a pipeline loading data into DB,
+    validating data, processing data, and saving data back to DB
   - `validate.py`: implement simple QA pipeline
 
 #### Download data
 
-- To get to know what type of data we are working with in this example you can run:
+- To get to know what type of data we are working with in this example you can
+  run:
   ```
   > docker_bash.sh
   docker> cd /cmamp/sorrentum_sandbox/examples/systems/binance
@@ -551,25 +591,25 @@
 
 - An example of an OHLCV data snapshot:
 
-  |currency_pair|open          |high          |low           |close         |volume    |timestamp    |end_download_timestamp          |
-  |-------------|--------------|--------------|--------------|--------------|----------|-------------|--------------------------------|
-  |ETH_USDT     |1295.95000000 |1297.34000000 |1295.95000000 |1297.28000000 |1.94388000|1666260060000|2023-01-13 13:01:53.101034+00:00|
-  |BTC_USDT     |19185.10000000|19197.71000000|19183.13000000|19186.63000000|1.62299500|1666260060000|2023-01-13 13:01:54.508880+00:00|
-
+  | currency_pair | open           | high           | low            | close          | volume     | timestamp     | end_download_timestamp           |
+  | ------------- | -------------- | -------------- | -------------- | -------------- | ---------- | ------------- | -------------------------------- |
+  | ETH_USDT      | 1295.95000000  | 1297.34000000  | 1295.95000000  | 1297.28000000  | 1.94388000 | 1666260060000 | 2023-01-13 13:01:53.101034+00:00 |
+  | BTC_USDT      | 19185.10000000 | 19197.71000000 | 19183.13000000 | 19186.63000000 | 1.62299500 | 1666260060000 | 2023-01-13 13:01:54.508880+00:00 |
   - Each row represents the state of an asset for a given minute
   - In the above example we have data points for two currency pairs `ETH_USDT`
     and `BTC_USDT` for a given minute denoted by UNIX timestamp 1666260060000
-    (`2022-10-20 10:01:00+00:00`), which in Sorrentum protocol notation represents
-    time interval `[2022-10-20 10:00:00+00:00, 2022-10-20 10:00:59.99+00:00)`
+    (`2022-10-20 10:01:00+00:00`), which in Sorrentum protocol notation
+    represents time interval
+    `[2022-10-20 10:00:00+00:00, 2022-10-20 10:00:59.99+00:00)`
   - Within this timeframe `ETH_USDT` started trading at `1295.95`, reached the
-    highest (lowest) price of `1297.34`(`1295.95`) and ended at `1297.28`.  
+    highest (lowest) price of `1297.34`(`1295.95`) and ended at `1297.28`.
 
 #### Run QA
- 
+
 - To familiarize yourself with the concepts of data quality assurance /
-  validation you can proceed with the example script
-  `load_and_validate.py` which runs a trivial data QA operations (i.e.
-  checking the dataset is not empty)
+  validation you can proceed with the example script `load_and_validate.py`
+  which runs a trivial data QA operations (i.e. checking the dataset is not
+  empty)
   ```
   docker> ./load_and_validate.py \
           --start_timestamp '2022-10-20 12:00:00+00:00' \
@@ -596,15 +636,15 @@
   ```
   > vi $GIT_ROOT/sorrentum_sandbox/devops/airflow_data/dags/*binance*.py
   ```
+  - `download_periodic_1min_postgres_ohlcv_binance`:
+    - Scheduled to run every minute
+    - Download the last minute worth of OHLCV data using
+      `examples/binance/download_to_db.py`
+  - `validate_and_resample_periodic_1min_postgres_ohlcv_binance`
+    - Scheduled to run every 5 minutes
+    - Load data from a postgres table, resample it, and save back the data using
+      `examples/binance/load_validate_transform.py`
 
-   - `download_periodic_1min_postgres_ohlcv_binance`:
-     - scheduled to run every minute
-     - download the last minute worth of OHLCV data using
-       `examples/binance/download_to_db.py`
-   - `validate_and_resample_periodic_1min_postgres_ohlcv_binance`
-     - scheduled to run every 5 minutes
-     - load data from a postgres table, resample it, and save back the data
-       using `examples/binance/load_validate_transform.py`
 - A few minutes after enabling the DAGs in Airflow, you can check the PostgreSQL
   database to preview the results of the data pipeline
   - The default password is `postgres`
@@ -622,9 +662,8 @@
 - In this example we use Reddit REST API, available free of charge, to build a
   small ETL pipeline to download and transform Reddit posts and comments for
   selected subreddits
-- A prerequisite to use this code is to obtain [Reddit
-  API](https://www.reddit.com/wiki/api/) keys (client ID and secret)
-
+- A prerequisite to use this code is to obtain
+  [Reddit API](https://www.reddit.com/wiki/api/) keys (client ID and secret)
   ```
   > examples/reddit
   |-- __init__.py
@@ -651,7 +690,7 @@
     validating data, processing raw data (computing features), and saving
     transformed data back to DB
   - `validate.py`: implement simple QA pipeline
-  - `transform.py`: implement simple feature computation utilities from raw data 
+  - `transform.py`: implement simple feature computation utilities from raw data
 
 ### Download data
 
@@ -663,7 +702,8 @@
   REDDIT_CLIENT_ID=some_client_id
   REDDIT_SECRET=some_secret
   ```
-- To explore the data structure run (assumes having mongo container up and running):
+- To explore the data structure run (assumes having mongo container up and
+  running):
   ```bash
   > cd /cmamp/sorrentum_sandbox/examples/reddit/
   docker> ./download_to_db.py \
@@ -713,7 +753,7 @@
 
 ### Load, QA and Transform
 
-- The Second step is extracting features. Run as: 
+- The Second step is extracting features. Run as:
   ```
   > cd /cmamp/sorrentum_sandbox/examples/reddit/
   docker> ./load_validate_transform.py \
@@ -721,17 +761,48 @@
       --end_timestamp '2022-10-21 15:30:00+00:00'
   ```
 - In MongoDB it can be found in the `processed_posts` collection
-- To query the DB use the same code as above, in the **download data** section, specifying `processed_posts` in the `dataset_signature` argument
+- To query the DB use the same code as above, in the **download data** section,
+  specifying `processed_posts` in the `dataset_signature` argument
 
 - Example:
   ```json
   {
-    "_id": {"$oid": "63bd461de978f68eae1c4e11"},
+    "_id": { "$oid": "63bd461de978f68eae1c4e11" },
     "cross_symbols": ["USDT"],
     "reddit_post_id": "\"108455o\"",
     "symbols": ["ETH", "USDT"],
     "top_most_comment_body": "\"Pro & con info are in the collapsed comments below for the following topics: [Crypto.com(CRO)](/r/CryptoCurrency/comments/108455o/cryptocom_is_delisting_usdt_what_do_they_know/j3q51fa/), [Tether](/r/CryptoCurrency/comments/108455o/cryptocom_is_delisting_usdt_what_do_they_know/j3q52ab/).\"",
-    "top_most_comment_tokens": ["con", "pro", "cro", "collapsed", "are", "tether", "j3q51fa", "r", "usdt", "is", "comments", "topics", "for", "in", "com", "cryptocom", "delisting", "they", "know", "crypto", "what", "do", "j3q52ab", "cryptocurrency", "info", "108455o", "below", "following", "the"]
+    "top_most_comment_tokens": [
+      "con",
+      "pro",
+      "cro",
+      "collapsed",
+      "are",
+      "tether",
+      "j3q51fa",
+      "r",
+      "usdt",
+      "is",
+      "comments",
+      "topics",
+      "for",
+      "in",
+      "com",
+      "cryptocom",
+      "delisting",
+      "they",
+      "know",
+      "crypto",
+      "what",
+      "do",
+      "j3q52ab",
+      "cryptocurrency",
+      "info",
+      "108455o",
+      "below",
+      "following",
+      "the"
+    ]
   }
   ```
 
@@ -751,12 +822,11 @@
 - There are two Airflow DAGs preloaded for this example stored in the dir
   `$GIT_ROOT/sorrentum_sandbox/devops/airflow_data/dags`
   - `download_periodic_5min_mongo_posts_reddit`:
-    - scheduled to run every 5 minutes
-    - download new posts submitted in the last 5 minutes from chosen subreddits
+    - Scheduled to run every 5 minutes
+    - Download new posts submitted in the last 5 minutes from chosen subreddits
       (in this example `r/Cryptocurrency` and `r/CryptoMarkets`) using
       `examples/reddit/download_to_db.py`
   - `validate_and_extract_features_periodic_5min_mongo_posts_reddit`
-    - scheduled to run every 5 minutes
-    - load data from a MongoDB collection, compute feature, and save back to the
+    - Scheduled to run every 5 minutes
+    - Load data from a MongoDB collection, compute feature, and save back to the
       database using `examples/reddit/load_validate_transform.py`
-

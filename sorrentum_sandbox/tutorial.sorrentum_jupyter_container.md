@@ -1,14 +1,25 @@
+
+
+<!-- toc -->
+
+- [Sorrentum Jupyter container](#sorrentum-jupyter-container)
+  * [Building the container](#building-the-container)
+  * [Running Jupyter](#running-jupyter)
+  * [Running bash](#running-bash)
+
+<!-- tocstop -->
+
 # Sorrentum Jupyter container
 
 - We use Python and Jupyter for all the research projects
 
-- IPython Notebook / Jupyter is an enhanced command shell for Python, that offers
-  enhanced introspection, rich media, tab completion, and history
+- IPython Notebook / Jupyter is an enhanced command shell for Python, that
+  offers enhanced introspection, rich media, tab completion, and history
 - IPython Notebook started as a web browser-based interface to IPython and
   proved especially popular with data scientists
-- A few years ago, the Notebook functionality was forked off as a separate project,
-  called [Jupyter](http://jupyter.org/). Jupyter provides support for many other
-  languages in addition to Python
+- A few years ago, the Notebook functionality was forked off as a separate
+  project, called [Jupyter](http://jupyter.org/). Jupyter provides support for
+  many other languages in addition to Python
 
 ## Building the container
 
@@ -56,10 +67,10 @@
   ```
 
 - This will start a Jupyter server in the container listening on port 8888
-    - As discussed above, the Docker start command maps the 8888 port on the
-      container to the 8888 port on the host
-    - You can access it from the host, by pointing your browser to
-      `localhost:8888` or `http://127.0.0.1:8888`
+  - As discussed above, the Docker start command maps the 8888 port on the
+    container to the 8888 port on the host
+  - You can access it from the host, by pointing your browser to
+    `localhost:8888` or `http://127.0.0.1:8888`
 
 - Navigate to `/data` to see the directories mounted on Docker
 
@@ -71,5 +82,3 @@
   ```
   > docker_bash.sh
   ```
-
-

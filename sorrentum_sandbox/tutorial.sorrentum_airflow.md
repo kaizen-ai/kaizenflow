@@ -1,14 +1,24 @@
+
+
+<!-- toc -->
+
+- [Tutorial Airflow](#tutorial-airflow)
+  * [Interacting with Airflow](#interacting-with-airflow)
+
+<!-- tocstop -->
+
 # Tutorial Airflow
 
-- From [official tutorial](https://airflow.apache.org/docs/apache-airflow/2.2.2/tutorial.html)
+- From
+  [official tutorial](https://airflow.apache.org/docs/apache-airflow/2.2.2/tutorial.html)
 
 - The code of the tutorial is at
-  ```
+  ```bash
   > vi $GIT_ROOT/sorrentum_sandbox/devops/airflow_data/dags/airflow_tutorial.py
   ```
 
 - Start the Sorrentum container with Airflow inside
-  ```
+  ```bash
   > cd $GIT_ROOT/sorrentum_sandbox/devops
   > docker-compose up
   ```
@@ -21,13 +31,13 @@
   interface
 
 - Make sure that the pipeline is parsed successfully
-  ```
+  ```bash
   > docker_exec.sh
   docker> python /opt/airflow/dags/airflow_tutorial.py
   ```
 
 - Print the list of active DAGs
-  ```
+  ```bash
   docker> airflow dags list
   dag_id                                                        | filepath                                                         | owner   | paused
   ==============================================================+==================================================================+=========+=======
@@ -36,6 +46,7 @@
   tutorial                                                      | airflow_tutorial.py                                              | airflow | False
   validate_and_extract_features_periodic_5min_mongo_posts_reddit | validate_and_extract_features_periodic_5min_mongo_posts_reddit.py | airflow | True
   validate_and_resample_periodic_1min_postgres_ohlcv_binance    | validate_and_resample_periodic_1min_postgres_ohlcv_binance.py    | airflow | True
+  ```
 
 - Print the list of tasks in the "tutorial" DAG
   ```
@@ -46,15 +57,16 @@
   ```
 
 - Print the hierarchy of tasks in the "tutorial" DAG.
-  ```
+  ```bash
   docker> airflow tasks list tutorial --tree
   <Task(BashOperator): print_date>
     <Task(BashOperator): sleep>
     <Task(BashOperator): templated>
   ```
 
-- Testing `print_date` task by executing with a logical / execution date in the past:
-  ```
+- Testing `print_date` task by executing with a logical / execution date in the
+  past:
+  ```bash
   docker> airflow tasks test tutorial print_date 2015-06-01
   [2023-01-23 10:15:34,862] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags
   [2023-01-23 10:15:34,949] {taskinstance.py:1035} INFO - Dependencies all met for <TaskInstance: tutorial.print_date None [None]>
@@ -73,7 +85,7 @@
   ```
 
 - Testing `sleep` task
-  ```
+  ```bash
   docker> airflow tasks test tutorial sleep 2015-06-01
   [2023-01-23 10:16:01,653] {dagbag.py:500} INFO - Filling up the DagBag from /opt/airflow/dags
   [2023-01-23 10:16:01,731] {taskinstance.py:1035} INFO - Dependencies all met for <TaskInstance: tutorial.sleep None [None]>
@@ -91,7 +103,7 @@
   ```
 
 - Let's run a backfill for a week:
-  ```
+  ```bash
   docker> airflow dags backfill tutorial \
     --start-date 2015-06-01 \
     --end-date 2015-06-07
@@ -107,5 +119,3 @@
 - On the web-server you can see that all the DAG executions completed
   successfully
   ![image](https://user-images.githubusercontent.com/89211724/214028156-8bc0acac-7559-46aa-9ce5-2825957aa190.png)
-
-

@@ -8,9 +8,7 @@ import airflow
 from airflow.operators.bash import BashOperator
 
 _DAG_ID = "download_periodic_1min_postgres_uniswap"
-_DAG_DESCRIPTION = (
-    "Download uniswap data every minute and save to Postgres"
-)
+_DAG_DESCRIPTION = "Download uniswap data every minute and save to Postgres"
 # Specify when often to execute the DAG.
 _SCHEDULE = "* * * * *"
 
@@ -37,12 +35,14 @@ dag = airflow.DAG(
 
 bash_command = [
     # Sleep 5 seconds to ensure the bar is finished.
-    "sleep 5","&&","pwd",
+    "sleep 5",
+    "&&",
+    "pwd",
     "&&",
     "python3 /cmamp/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap/download_to_db.py",
     "--start_timestamp {{ data_interval_start }}",
     "--target_table uniswap_table",
-    "--live_flag"
+    "--live_flag",
 ]
 
 downloading_task = BashOperator(
