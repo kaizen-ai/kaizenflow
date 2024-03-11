@@ -1962,11 +1962,12 @@ def compare_dfs(
         if True, otherwise keep the actual result
     :param remove_inf: replace +-inf with `np.nan`
     :param log_level: logging level
+    :param only_warning: when `True` the function issues a warning instead of aborting
     :return: a singe dataframe with differences as values
     """
-    # Check value of `assert_diff_threshold` if exists.
     hdbg.dassert_isinstance(df1, pd.DataFrame)
     hdbg.dassert_isinstance(df2, pd.DataFrame)
+    # Check value of `assert_diff_threshold` if exists.
     if assert_diff_threshold:
         hdbg.dassert_lte(assert_diff_threshold, 1.0)
         hdbg.dassert_lte(0.0, assert_diff_threshold)
