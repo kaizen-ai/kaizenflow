@@ -651,7 +651,8 @@ class Test_trim_df2(Test_trim_df1):
         """
         Get the data for experiments.
 
-        :param set_as_index: whether to set the filtering values as index
+        :param set_as_index: whether to set the filtering values as
+            index
         :param sort: whether to sort the filtering values
         :return: the df to trim, the parameters for trimming
         """
@@ -681,13 +682,15 @@ class Test_trim_df2(Test_trim_df1):
         """
         Confirm that the trimmed df matches what is expected.
 
-        The trimmed df is compared to the one produced by `hpandas.trim_df()`
-        with lower and upper boundaries included. Thus, it is ensured that all the
-        trimming methods produce the same output.
+        The trimmed df is compared to the one produced by
+        `hpandas.trim_df()` with lower and upper boundaries included.
+        Thus, it is ensured that all the trimming methods produce the
+        same output.
 
         See param descriptions in `hpandas.trim_df()`.
 
-        :param df: the df trimmed in a test, to compare with the `hpandas.trim_df()` one
+        :param df: the df trimmed in a test, to compare with the
+            `hpandas.trim_df()` one
         """
         # Clean up the df from the test.
         if df.index.nlevels > 1:
@@ -2465,7 +2468,7 @@ class Test_compare_dfs(hunitest.TestCase):
 
     def test8(self) -> None:
         """
-        compare_nans = True
+        compare_nans = True.
         """
         # Build test dataframes.
         df1 = pd.DataFrame(
@@ -2483,7 +2486,9 @@ class Test_compare_dfs(hunitest.TestCase):
         # Check.
         with self.assertRaises(AssertionError) as cm:
             compare_nans = True
-            hpandas.compare_dfs(df1, df2, compare_nans=compare_nans, only_warning = False)
+            hpandas.compare_dfs(
+                df1, df2, compare_nans=compare_nans, only_warning=False
+            )
         act = str(cm.exception)
         exp = r"""
         * Failed assertion *
@@ -2526,7 +2531,8 @@ class Test_compare_dfs(hunitest.TestCase):
 
     def test10(self) -> None:
         """
-        Check `assert_diff_threshold` functionality in presence of NaN values in df_diff.
+        Check `assert_diff_threshold` functionality in presence of NaN values
+        in df_diff.
         """
         timestamp_index = [
             pd.Timestamp("2022-01-01 21:01:00+00:00"),
@@ -2562,7 +2568,8 @@ class Test_compare_dfs(hunitest.TestCase):
 
     def test11(self) -> None:
         """
-        Check functionality for `remove_inf = True` in presence of `diff_mode = 'pct_change'`.
+        Check functionality for `remove_inf = True` in presence of `diff_mode =
+        'pct_change'`.
         """
         timestamp_index = [
             pd.Timestamp("2022-01-01 21:01:00+00:00"),
@@ -2598,7 +2605,8 @@ class Test_compare_dfs(hunitest.TestCase):
 
     def test12(self) -> None:
         """
-        Check functionality for `remove_inf = True` in presence of `diff_mode = 'pct_change'`.
+        Check functionality for `remove_inf = True` in presence of `diff_mode =
+        'pct_change'`.
         """
         timestamp_index = [
             pd.Timestamp("2022-01-01 21:01:00+00:00"),
@@ -2621,9 +2629,9 @@ class Test_compare_dfs(hunitest.TestCase):
             hpandas.compare_dfs(
                 df1,
                 df2,
-                diff_mode = 'pct_change',
-                remove_inf = False,
-                only_warning = False,
+                diff_mode="pct_change",
+                remove_inf=False,
+                only_warning=False,
             )
 
     def test13(self) -> None:
@@ -3830,28 +3838,25 @@ class Test_cast_series_to_type(hunitest.TestCase):
 
 # #############################################################################
 
+
 class Test_dassert_index_is_datetime(hunitest.TestCase):
     @staticmethod
     def get_multiindex_df(
         index_is_datetime: bool,
     ) -> pd.DataFrame:
         """
-        Helper function to get test multi-index dataframe.
-        Example of dataframe returned when `index_is_datetime = True`.
-                                            column1     column2
-        index   timestamp
-        index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
-                2022-01-01 21:10:00+00:00   1.303778    -0.288235
-        index2  2022-01-01 21:00:00+00:00   1.237079    1.168012
-                2022-01-01 21:10:00+00:00   1.333692    1.708455
+        Helper function to get test multi-index dataframe. Example of dataframe
+        returned when `index_is_datetime = True`. column1     column2 index
+        timestamp index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
+        2022-01-01 21:10:00+00:00   1.303778    -0.288235 index2  2022-01-01
+        21:00:00+00:00   1.237079    1.168012 2022-01-01 21:10:00+00:00
+        1.333692    1.708455.
 
         Example of dataframe returned when `index_is_datetime = False`.
-                            column1     column2
-        index   timestamp
-        index1  string1     -0.122140   -1.949431
-                string2     1.303778    -0.288235
-        index2  string1     1.237079    1.168012
-                string2     1.333692    1.708455
+        column1     column2 index   timestamp index1  string1
+        -0.122140   -1.949431         string2     1.303778    -0.288235
+        index2  string1     1.237079    1.168012         string2
+        1.333692    1.708455
         """
         if index_is_datetime:
             index_inner = [
