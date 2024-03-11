@@ -9,9 +9,7 @@ import airflow
 from airflow.operators.bash import BashOperator
 
 _DAG_ID = "download_forecast_periodic_5mins_postgres_prices_bitcoin"
-_DAG_DESCRIPTION = (
-    "Download Bitcoin market prices every day and save to dbs"
-)
+_DAG_DESCRIPTION = "Download Bitcoin market prices every day and save to dbs"
 # Specify when to execute the DAG.
 _SCHEDULE = "*/5 * * * *"
 
@@ -48,7 +46,7 @@ bash_command = [
     "--api 'https://api.blockchain.info/charts'",
     "--chart_name 'market-price'",
     "--target_table_forecast 'Forecast_Market_Price'",
-    "-v DEBUG"
+    "-v DEBUG",
 ]
 
 # Create task to run the code download_to_db_forecast.py based on the bash command and the dag previously defined.
