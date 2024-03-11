@@ -2,7 +2,7 @@
 Implementation of load part of the ETL and QA pipeline.
 
 Import as:
-import sorrentum_sandbox.examples.systems.binance.db as sisebidb
+import sorrentum_sandbox.examples.binance.db as sisebidb
 """
 
 from typing import Any, Optional

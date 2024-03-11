@@ -42,109 +42,7 @@
 
   ```markdown
   > $GIT_ROOT/dev_scripts/tree.sh -p sorrentum_sandbox
-
-  sorrentum_sandbox/
-  |-- common/
-  |   |-- __init__.py
-  |   |-- client.py
-  |   |-- download.py
-  |   |-- save.py
-  |   `-- validate.py
-  |-- devops/
-  |   |-- airflow_data/
-  |   |   |-- dags/
-  |   |   |   |-- __init__.py
-  |   |   |   |-- airflow_tutorial.py
-  |   |   |   |-- download_forecast_bitcoin_prices.py
   ...
-  |   |   `-- __init__.py
-  |   |-- Dockerfile
-  |   |-- __init__.py
-  |   |-- docker-compose.yml
-  |   |-- docker_bash.sh*
-  |   |-- docker_build.sh*
-  |   |-- docker_clean.sh
-  |   |-- docker_cmd.sh*
-  |   |-- docker_exec.sh*
-  |   |-- docker_kill.sh
-  |   |-- docker_name.sh
-  |   |-- docker_prune.sh*
-  |   |-- docker_prune_all.sh*
-  |   |-- docker_pull.sh*
-  |   |-- docker_push.sh*
-  |   |-- init_airflow_setup.sh*
-  |   |-- reset_airflow_setup.sh*
-  |   `-- setenv.sh
-  |-- docker_common/
-  |   |-- README.md
-  |   |-- bashrc
-  |   |-- create_links.sh*
-  |   |-- etc_sudoers
-  |   |-- install_jupyter_extensions.sh*
-  |   |-- repo_diff.sh*
-  |   |-- update.sh*
-  |   |-- utils.sh
-  |   `-- version.sh*
-  |-- examples/
-  |   |-- systems/
-  |   |   |-- binance/
-  |   |   |   |-- test/
-  |   |   |   |   `-- test_download_to_csv.py
-  |   |   |   |-- __init__.py
-  |   |   |   |-- db.py
-  |   |   |   |-- download.py
-  |   |   |   |-- download_to_csv.py*
-  |   |   |   |-- download_to_db.py*
-  |   |   |   |-- load_and_validate.py*
-  |   |   |   |-- load_validate_transform.py*
-  |   |   |   `-- validate.py
-  |   |   |-- reddit/
-  |   |   |   |-- __init__.py
-  |   |   |   |-- db.py
-  |   |   |   |-- download.py
-  |   |   |   |-- download_to_db.py*
-  |   |   |   |-- load_validate_transform.py*
-  |   |   |   |-- transform.py
-  |   |   |   `-- validate.py
-  |   |   `-- __init__.py
-  |   |-- Dockerfile
-  |   |-- __init__.py
-  |   |-- bashrc
-  |   |-- docker_bash.sh*
-  |   |-- docker_build.sh*
-  |   |-- docker_build.version.log
-  |   |-- docker_clean.sh*
-  |   |-- docker_exec.sh*
-  |   |-- docker_jupyter.sh*
-  |   |-- docker_push.sh*
-  |   |-- etc_sudoers
-  |   |-- install_jupyter_extensions.sh*
-  |   |-- run_jupyter.sh*
-  |   |-- set_env.sh
-  |   |-- tutorial_jupyter.ipynb
-  |   `-- version.sh*
-  |-- projects/
-  |   |-- research/
-  ...
-  |   |-- spring2023/
-  |   |   |-- altdata_notebooks/
-  ...
-  |   |   `-- ml_projects/
-  ...
-  |   `-- spring2024/
-  |       |-- SorrTask645_Redis_cache_to_fetch_user_profiles/
-  |       |   |-- docker/
-  |       |   |   |-- Dockerfile
-  |       |   |   |-- Redis_cache_to_fetch_user_profiles.ipynb
-  |       |   |   `-- docker-compose.yaml
-  |       |   `-- README.md
-  |       |-- project_template/
-  |       |   `-- README.md
-  |       `-- README.md
-  |-- README.md
-  `-- __init__.py
-
-  70 directories, 342 files
   ```
 
 - Focusing on the directory structure:
@@ -153,21 +51,44 @@
   sorrentum_sandbox
   |-- common
   |-- devops
-  |   `-- airflow_data
-  |       `-- dags
+  |   |-- config
+  |   |-- dags
+  |   |   |-- Spring2023
+  |   |-- logs
+  |   |   |-- dag_processor_manager
+  |   |-- mongo_data
+  |   `-- plugins
   |-- docker_common
   |-- examples
-  |   `-- systems
-  |       |-- binance
-  |       |   `-- test
-  |       `-- reddit
-  `-- projects
-      |-- research
-      |-- spring2023
-      `-- spring2024
-          |-- SorrTask645_Redis_cache_to_fetch_user_profiles
-          |   `-- docker
-          `-- project_template
+  |   |-- binance
+  |   |-- reddit
+  |-- research
+  |   |-- SorrIssue1_Predict_large_asset_movements_with_NLP
+  |   `-- SorrIssue8_Predict_Intraday_Trading_Volume
+  |-- spring2023
+  |   |-- altdata_notebooks
+  |   `-- ml_projects
+  |       |-- Issue22_Team3_Implement_sandbox_for_Coinmarketcap
+  |       |-- Issue23_Team4_Implement_sandbox_for_Blockchain
+  |       |-- Issue23_Team4_Implement_sandbox_for_Blockchain_2
+  |       |-- Issue24_Team5_Implement_sandbox_for_Alpha_Vantage
+  |       |-- Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap
+  |       |-- Issue26_Team7_Implement_sandbox_for_Chainlink
+  |       |-- Issue27_Team8_Implement_sandbox_for_Yahoo_Finance
+  |       |-- Issue28_Team9_Implement_sandbox_for_Kaiko
+  |       |-- Issue29_Team10_Implement_sandbox_for_coingecko
+  |       |-- SorrIssue14_Team1_Implement_sandbox_for_Google_Trends
+  |       |-- SorrIssue1_Predict_large_asset_movements_with_NLP
+  |       |-- SorrIssue21_Team2_Implement_sandbox_for_GitHub_2
+  |       |-- SorrIssue2_Cross_exchange_arbitrage_CEX_CEX
+  |       |-- SorrIssue3_Implement_Avellaneda_model
+  |       |-- SorrIssue4_Predict_bid_ask_movements_with_order_book_data
+  |       `-- SorrIssue8_Predict_Intraday_Trading_Volume
+  `-- spring2024
+      |-- SorrTask645_Redis_cache_to_fetch_user_profiles
+      `-- project_template
+
+  104 directories
   ```
 
 - `common/`: contains abstract system interfaces for the different blocks of the
@@ -180,16 +101,14 @@
   - It contains the Airflow task scheduler and its DAGs
   - It can run any Sorrentum data nodes, like the ones in `examples/systems`
 - `docker_common/`: common code for Docker tasks
-- `examples/`:
-  - `systems`: contains several examples of end-to-end Sorrentum data nodes
+- `examples/`: - contains several examples of end-to-end Sorrentum data nodes
     - E.g., downloading price data from Binance and posts/comments from Reddit
     - Each system implements the interfaces in `common`
-- `projects`: code for various projects
-  - `research`: Sorrentum research projects
-  - `spring2023`: class projects for Spring 2023 (team projects about building
-    Sorrentum systems)
-  - `spring2024`: class projects for Spring 2024 DATA605 class (individual
-    projects about building examples of big data technologies)
+- `research/`: Sorrentum research projects
+- `spring2023/`: class projects for Spring 2023 (team projects about building
+  Sorrentum systems)
+- `spring2024/`: class projects for Spring 2024 DATA605 class (individual projects
+  about building examples of big data technologies)
 
 <!-- ############################################################################### -->
 <!-- ############################################################################### -->
@@ -496,15 +415,15 @@
 <!-- ############################################################################### -->
 <!-- ############################################################################### -->
 
-# Sorrentum system examples
+# Sorrentum examples
 
-- The following examples under `sorrentum_sandbox/examples/systems` demonstrate
+- The following examples under `sorrentum_sandbox/examples` demonstrate
   small standalone Sorrentum data nodes
 - Each example implements concrete classes from the interfaces specified in
   `sorrentum_sandbox/common`, upon which command line scripts are built
 - Initially, we want to run the systems directly
   - The actual execution of scripts can be orchestrated by Apache Airflow
-- The code relies on the Sorretum Airflow container described in the session
+- The code relies on the Sorrentum Airflow container described in the session
   below
 
 ## Binance
