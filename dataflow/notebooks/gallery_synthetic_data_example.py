@@ -31,7 +31,6 @@ import core.artificial_signal_generators as carsigen
 import core.finance as cofinanc
 import core.finance.market_data_example as cfmadaex
 import dataflow.core as dtfcore
-import dataflow.core.utils as dtfcorutil
 import dataflow.system as dtfsys
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
@@ -75,7 +74,7 @@ df = cfmadaex.generate_random_price_data(
 )
 
 df = df.set_index("timestamp_db").drop(columns=["start_datetime", "end_datetime"])
-df = dtfcorutil.convert_to_multiindex(df, "asset_id")
+df = dtfcore.utils.convert_to_multiindex(df, "asset_id")
 
 # %%
 # Calculate returns.
@@ -180,7 +179,7 @@ df = cfmadaex.generate_random_bars(
 )
 
 df = df.set_index("timestamp_db").drop(columns=["start_datetime", "end_datetime"])
-df = dtfcorutil.convert_to_multiindex(df, "asset_id")
+df = dtfcore.utils.convert_to_multiindex(df, "asset_id")
 
 # %%
 # Show prices.
