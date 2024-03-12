@@ -39,8 +39,8 @@ bash_command = [
     "&&",
     "/cmamp/sorrentum_sandbox/examples/binance/download_to_db.py",
     "--target_table 'binance_ohlcv_spot_downloaded_1min'",
-    "--start_timestamp {{ data_interval_start }} ",
-    "--end_timestamp {{ data_interval_end }}",
+    "--start_timestamp '{{ data_interval_start }}' ",
+    "--end_timestamp '{{ data_interval_end }}'",
     "-v DEBUG",
 ]
 
