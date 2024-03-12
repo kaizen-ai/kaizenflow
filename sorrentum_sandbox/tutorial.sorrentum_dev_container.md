@@ -417,22 +417,26 @@
 
 # Sorrentum examples
 
-- The following examples under `sorrentum_sandbox/examples` demonstrate
-  small standalone Sorrentum data nodes
+- The following examples under `sorrentum_sandbox/examples` demonstrate small
+  standalone Sorrentum data nodes
 - Each example implements concrete classes from the interfaces specified in
   `sorrentum_sandbox/common`, upon which command line scripts are built
 - Initially, we want to run the systems directly
-  - The actual execution of scripts can be orchestrated by Apache Airflow
+  - The actual execution of scripts will be orchestrated by Apache Airflow
 - The code relies on the Sorrentum Airflow container described in the session
   below
 
 ## Binance
 
+### Run system in standalone mode
+
 - In this example we utilize Binance REST API, available free of charge
 - We build a small ETL pipeline used to download and transform OHLCV market data
   for selected cryptocurrencies
-  ```
-  > (cd $GIT_ROOT/sorrentum_sandbox/examples/systems/binance && $GIT_ROOT/dev_scripts/tree.sh)
+
+- The example code can be found in `sorrentum_sandbox/examples/binance`
+  ```bash
+  > dev_scripts/tree.sh -p $GIT_ROOT/sorrentum_sandbox/examples/binance -c
   ./
   |-- test/
   |   `-- test_download_to_csv.py
@@ -446,9 +450,10 @@
   `-- validate.py
   ```
 
-### Run system in standalone mode
-
-- The example code can be found in `sorrentum_sandbox/examples/systems/binance`
+- Let's look at the files one by one
+  ```bash
+  > vi $GIT_ROOT/sorrentum_sandbox/examples/binance/*.py
+  ```
 
 - There are various files:
   - `db.py`: contains the interface to load / save Binance raw data to Postgres
@@ -467,9 +472,9 @@
 
 - To get to know what type of data we are working with in this example you can
   run:
-  ```
+  ```bash
   > docker_bash.sh
-  docker> cd /cmamp/sorrentum_sandbox/examples/systems/binance
+  docker> cd /cmamp/sorrentum_sandbox/examples/binance
   docker> ./download_to_csv.py --start_timestamp '2022-10-20 10:00:00+00:00' --end_timestamp '2022-10-21 15:30:00+00:00' --target_dir 'binance_data'
   INFO: > cmd='/cmamp/sorrentum_sandbox/examples/binance/download_to_csv.py --start_timestamp 2022-10-20 10:00:00+00:00 --end_timestamp 2022-10-21 15:30:00+00:00 --target_dir binance_data' report_memory_usage=False report_cpu_usage=False
   INFO: Saving log to file '/cmamp/sorrentum_sandbox/examples/binance/download_to_csv.py.log'
@@ -493,6 +498,7 @@
   ETH_USDT,1295.95000000,1297.34000000,1295.95000000,1297.28000000,1.94388000,1666260060000,2023-01-23 11:45:22.729119+00:00
   ETH_USDT,1297.28000000,1297.28000000,1297.28000000,1297.28000000,0.00000000,1666260120000,2023-01-23 11:45:22.729188+00:00
   ETH_USDT,1297.28000000,1297.28000000,1297.28000000,1297.28000000,0.00000000,1666260180000,2023-01-23 11:45:22.729201+00:00
+  ...
   ```
 
 - An example of an OHLCV data snapshot:
@@ -516,31 +522,34 @@
   validation you can proceed with the example script `load_and_validate.py`
   which runs a trivial data QA operations (i.e. checking the dataset is not
   empty)
-  ```
+  ```bash
   docker> ./load_and_validate.py \
           --start_timestamp '2022-10-20 12:00:00+00:00' \
           --end_timestamp '2022-10-21 12:00:00+00:00' \
           --source_dir 'binance_data' \
           --dataset_signature 'bulk.manual.download_1min.csv.ohlcv.spot.v7.binance.binance.v1_0_0'
-  INFO: Saving log to file '/cmamp/sorrentum_sandbox/examples/systems/binance/load_and_validate.py.log'
+  INFO: Saving log to file '/cmamp/sorrentum_sandbox/examples/binance/load_and_validate.py.log'
   06:05:21 - INFO  validate.py run_all_checks:87                          Running all QA checks:
   06:05:21 - INFO  validate.py run_all_checks:90                          EmptyDatasetCheck: PASSED
   06:05:21 - INFO  validate.py run_all_checks:90                          GapsInTimestampCheck: PASSED
   ```
-
-#### Run unit tests
+- This can be considered as part of the T in ETL, even if it's just read-only
+  operation
 
 #### Run ETL pipeline
 
 ### Run inside Airflow
 
 - Bring up the services via docker-compose as described above
-- Visit `localhost:8091/home`
+  ```bash
+  > docker compose up
+  ```
+- Visit `localhost:8080/home`
 - Sign in using the default credentials `airflow`:`airflow`
 - There are two Airflow DAGs preloaded for this example stored in the dir
-  `$GIT_ROOT/sorrentum_sandbox/devops/airflow_data/dags`
+  `$GIT_ROOT/sorrentum_sandbox/devops/dags`
   ```
-  > vi $GIT_ROOT/sorrentum_sandbox/devops/airflow_data/dags/*binance*.py
+  > vi $GIT_ROOT/sorrentum_sandbox/devops/dags/*binance*.py
   ```
   - `download_periodic_1min_postgres_ohlcv_binance`:
     - Scheduled to run every minute
@@ -553,8 +562,8 @@
 
 - A few minutes after enabling the DAGs in Airflow, you can check the PostgreSQL
   database to preview the results of the data pipeline
-  - The default password is `postgres`
-  ```
+- The default password is `postgres`
+  ```bash
   > docker_exec.sh
   docker> psql -U postgres -p 5532 -d airflow -h host.docker.internal -c 'SELECT * FROM binance_ohlcv_spot_downloaded_1min LIMIT 5'
 
@@ -570,8 +579,8 @@
   selected subreddits
 - A prerequisite to use this code is to obtain
   [Reddit API](https://www.reddit.com/wiki/api/) keys (client ID and secret)
-  ```
-  > examples/reddit
+  ```bash
+  > dev_scripts/tree.sh -p $GIT_ROOT/sorrentum_sandbox/examples/reddit -c
   |-- __init__.py
   |-- db.py
   |-- download.py
@@ -598,41 +607,113 @@
   - `validate.py`: implement simple QA pipeline
   - `transform.py`: implement simple feature computation utilities from raw data
 
+### Creating a Reddit API key
+
+https://github.com/reddit-archive/reddit/wiki/OAuth2-Quick-Start-Example
+
+name: My_app
+script
+description: empty
+about url: empty
+redirect uri: http://www.example.com/unused/redirect/uri
+
+https://www.reddit.com/prefs/apps
+
+```
+My_app
+personal use script
+-TW...Nw
+change icon
+secret	oU...67Q
+name	My_app
+description
+about url	
+redirect uri	http://www.example.com/unused/redirect/uri
+user Hopeful_Leek_4710
+```
+
 ### Download data
 
 - Make sure to specify Reddit API credentials in
   `$GIT_ROOT/sorrentum_sandbox/devops/.env` in the section labeled as `Reddit`
   before running the scripts
-  ```
+  ```verbatim
   # Reddit.
   REDDIT_CLIENT_ID=some_client_id
   REDDIT_SECRET=some_secret
   ```
+- Then enter the container with `docker_exec.sh`
+  - You need to run in the existing container and not a new one created by
+    `docker_bash.sh`
+- Test the connection to Reddit
+  ```bash
+  docker> cd /cmamp/sorrentum_sandbox/examples/reddit
+  docker> ./sanity_check_reddit.py
+  <praw.reddit.Reddit object at 0xffffb6e71f10>
+  None
+  Sunday Daily Thread: What's everyone working on this week?
+  Monday Daily Thread: Project ideas!
+  Geospatial Big Data Visualization with Python
+  Fuzzy process matching
+  I Built a Squaredle Bot
+  I shared a Python Exploratory Data Analysis Project on YouTube
+  Introducing thread: Extending the built-in threading module
+  How often do you find yourself ditching wrapper libraries?
+  Github Copilot Lies to me
+  Stockdex: Python Package to Extract Financial Insights From Multiple Sources
+  ```
+
+- Test the connection to Mongo
+  ```bash
+  > ./sanity_check_mongo.py
+  Empty DataFrame
+  Columns: []
+  Index: []
+  ```
+- It is initially empty
+
 - To explore the data structure run (assumes having mongo container up and
   running):
   ```bash
-  > cd /cmamp/sorrentum_sandbox/examples/reddit/
-  docker> ./download_to_db.py \
-      --start_timestamp '2022-10-20 10:00:00+00:00' \
-      --end_timestamp '2022-10-21 15:30:00+00:00'
+  docker> cd /cmamp/sorrentum_sandbox/examples/reddit/
+  docker> ./download_to_db.py --start_timestamp '2024-03-10 10:00:00+00:00' --end_timestamp '2024-03-11 15:30:00+00:00'
+  INFO: Saving log to file '/cmamp/sorrentum_sandbox/examples/reddit/download_to_db.py.log'
+  07:48:50 - INFO  download.py download:82            Subreddit (Cryptocurrency) is downloading...
+  07:48:51 - INFO  download.py download:94            Post: (Swapped BNB smartchain to ETHEREUM ) is downloading...
+  07:48:51 - INFO  download.py download:94            Post: (Loopring (LRC) Receives a Very Bullish Rating Monday: Is it Time to Get on Board?) is downloading...
+  07:48:52 - INFO  download.py download:94            Post: (Cheapest and easiest way to convert 2.4 million FLOKI coin I forgot I had?) is downloading...
+  07:48:52 - INFO  download.py download:94            Post: (How long does TRC20 transfers take?) is downloading...
+  07:48:52 - INFO  download.py download:94            Post: (UK regulator to allow crypto exchange-traded notes for professional investors) is downloading...
+  07:48:53 - INFO  download.py download:82            Subreddit (CryptoMarkets) is downloading...
+  07:48:53 - INFO  download.py download:94            Post: (Bitcoin Price Enters Uncharted Territories with New ATH above $71K. What's Next? Listen to Dr. Emmett Brown: "ROADS?! WHERE WE'RE GOING WE DON'T NEED ROADS!!!") is downloading...
+  07:48:53 - INFO  download.py download:94            Post: (What do you think about trading robots?) is downloading...
+  07:48:53 - INFO  download.py download:94            Post: (Why This Student-Led Investment Fund Poured 7% of its Holdings into Bitcoin) is downloading...
+  07:48:54 - INFO  download.py download:94            Post: (Bitcoin (BTC) Surges to $71,000, Sets New All-Time High) is downloading...
+  07:48:54 - INFO  download.py download:94            Post: (KuCoin is illegally withholding delisted tokens) is downloading...
+  07:48:54 - INFO  download.py download:98            Reddit download finished.
+  07:48:54 - INFO  download_to_db.py _main:35                             Connecting to Mongo
+  07:48:54 - INFO  download_to_db.py _main:45                             Saving 10 records into Mongo
   ```
 - Since the script is setup to download new posts, it's optimal to specify as
   recent timestamps as possible
 - Connect to a MongoDB and query some documents from the `posts` collection
   ```bash
-  docker> python
-  >>> import sorrentum_sandbox.examples.reddit.db as ssexredb
-  >>> import pymongo; import pandas as pd
-  >>> mongodb_client = pymongo.MongoClient(
-  ...     host=ssexredb.MONGO_HOST, port=27017, username="mongo", password="mongo"
-  ... )
-  >>> reddit_mongo_client = ssexredb.MongoClient(mongodb_client, "reddit")
-  >>> data = reddit_mongo_client.load(
-  ...     dataset_signature="posts",
-  ... )
-  >>> data
-  >>> <<output truncated for readability, example below>>
+  > ./test_mongo.py
+                          _id comment_limit  comment_sort  ... post_hint                                            preview                                           comments
+  0  65eeefa662d92a6d84baaab5          2048  "confidence"  ...       NaN                                                NaN                                                NaN
+  1  65eeefa662d92a6d84baaab6          2048  "confidence"  ...    "link"  {"images": [{"source": {"url": "https://extern...  [{'_replies': '?', '_submission': '?', '_reddi...
+  2  65eeefa662d92a6d84baaab7          2048  "confidence"  ...       NaN                                                NaN  [{'_replies': '?', '_submission': '?', '_reddi...
+  3  65eeefa662d92a6d84baaab8          2048  "confidence"  ...       NaN                                                NaN  [{'_replies': '?', '_submission': '?', '_reddi...
+  4  65eeefa662d92a6d84baaab9          2048  "confidence"  ...    "link"  {"images": [{"source": {"url": "https://extern...  [{'_replies': '?', '_submission': '?', '_reddi...
+  5  65eeefa662d92a6d84baaaba          2048  "confidence"  ...   "image"  {"images": [{"source": {"url": "https://previe...  [{'_replies': '?', '_submission': '?', '_reddi...
+  6  65eeefa662d92a6d84baaabb          2048  "confidence"  ...       NaN                                                NaN  [{'_replies': '?', '_submission': '?', '_reddi...
+  7  65eeefa662d92a6d84baaabc          2048  "confidence"  ...    "link"  {"images": [{"source": {"url": "https://extern...                                                NaN
+  8  65eeefa662d92a6d84baaabd          2048  "confidence"  ...    "self"  {"images": [{"source": {"url": "https://extern...                                                NaN
+  9  65eeefa662d92a6d84baaabe          2048  "confidence"  ...       NaN                                                NaN  [{'_replies': '?', '_submission': '?', '_reddi...
+
+  [10 rows x 120 columns]
   ```
+
 - An example database entry (truncated for readability) is below:
   ```json
     {
@@ -659,9 +740,9 @@
 
 ### Load, QA and Transform
 
-- The Second step is extracting features. Run as:
-  ```
-  > cd /cmamp/sorrentum_sandbox/examples/reddit/
+- The second step is extracting features. Run as:
+  ```bash
+  docker> cd /cmamp/sorrentum_sandbox/examples/reddit/
   docker> ./load_validate_transform.py \
       --start_timestamp '2022-10-20 10:00:00+00:00' \
       --end_timestamp '2022-10-21 15:30:00+00:00'
@@ -726,7 +807,7 @@
 - Visit `localhost:8091/home`
 - Sign in using the default credentials airflow:airflow
 - There are two Airflow DAGs preloaded for this example stored in the dir
-  `$GIT_ROOT/sorrentum_sandbox/devops/airflow_data/dags`
+  `$GIT_ROOT/sorrentum_sandbox/devops/dags`
   - `download_periodic_5min_mongo_posts_reddit`:
     - Scheduled to run every 5 minutes
     - Download new posts submitted in the last 5 minutes from chosen subreddits
