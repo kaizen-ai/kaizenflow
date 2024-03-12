@@ -47,48 +47,19 @@
 
 - Focusing on the directory structure:
   ```
-  > tree --dirsfirst -d -n -F --charset unicode sorrentum_sandbox
-  sorrentum_sandbox
-  |-- common
-  |-- devops
-  |   |-- config
-  |   |-- dags
-  |   |   |-- Spring2023
-  |   |-- logs
-  |   |   |-- dag_processor_manager
-  |   |-- mongo_data
-  |   `-- plugins
-  |-- docker_common
-  |-- examples
-  |   |-- binance
-  |   |-- reddit
-  |-- research
-  |   |-- SorrIssue1_Predict_large_asset_movements_with_NLP
-  |   `-- SorrIssue8_Predict_Intraday_Trading_Volume
-  |-- spring2023
-  |   |-- altdata_notebooks
-  |   `-- ml_projects
-  |       |-- Issue22_Team3_Implement_sandbox_for_Coinmarketcap
-  |       |-- Issue23_Team4_Implement_sandbox_for_Blockchain
-  |       |-- Issue23_Team4_Implement_sandbox_for_Blockchain_2
-  |       |-- Issue24_Team5_Implement_sandbox_for_Alpha_Vantage
-  |       |-- Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap
-  |       |-- Issue26_Team7_Implement_sandbox_for_Chainlink
-  |       |-- Issue27_Team8_Implement_sandbox_for_Yahoo_Finance
-  |       |-- Issue28_Team9_Implement_sandbox_for_Kaiko
-  |       |-- Issue29_Team10_Implement_sandbox_for_coingecko
-  |       |-- SorrIssue14_Team1_Implement_sandbox_for_Google_Trends
-  |       |-- SorrIssue1_Predict_large_asset_movements_with_NLP
-  |       |-- SorrIssue21_Team2_Implement_sandbox_for_GitHub_2
-  |       |-- SorrIssue2_Cross_exchange_arbitrage_CEX_CEX
-  |       |-- SorrIssue3_Implement_Avellaneda_model
-  |       |-- SorrIssue4_Predict_bid_ask_movements_with_order_book_data
-  |       `-- SorrIssue8_Predict_Intraday_Trading_Volume
-  `-- spring2024
-      |-- SorrTask645_Redis_cache_to_fetch_user_profiles
-      `-- project_template
-
-  104 directories
+  > $GIT_ROOT/dev_scripts/tree.sh -p $GIT_ROOT/sorrentum_sandbox -d 1 -c
+  /Users/saggese/src/sorrentum2/sorrentum_sandbox/
+  |-- common/
+  |-- devops/
+  |-- docker_common/
+  |-- examples/
+  |-- research/
+  |-- spring2023/
+  |-- spring2024/
+  |-- __init__.py
+  |-- tutorial.sorrentum_airflow.md
+  |-- tutorial.sorrentum_dev_container.md
+  `-- tutorial.sorrentum_jupyter_container.md
   ```
 
 - `common/`: contains abstract system interfaces for the different blocks of the
@@ -99,7 +70,8 @@
     ```
 - `devops/`: contains the Dockerized Sorrentum data node
   - It contains the Airflow task scheduler and its DAGs
-  - It can run any Sorrentum data nodes, like the ones in `examples/systems`
+  - It can run any Sorrentum data nodes, like the ones in
+    `$GIT_ROOT/sorrentum_sandobox/examples`
 - `docker_common/`: common code for Docker tasks
 - `examples/`: - contains several examples of end-to-end Sorrentum data nodes
     - E.g., downloading price data from Binance and posts/comments from Reddit
