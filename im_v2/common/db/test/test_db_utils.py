@@ -7,7 +7,6 @@ import pytest
 import helpers.hunit_test as hunitest
 import im_v2.common.db.db_utils as imvcddbut
 
-
 DB_STAGE = "test"
 
 
