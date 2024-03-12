@@ -80,6 +80,7 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
     # GP: Add to find code (e.g., `helpers`).
     - ../..:/cmamp
+  # GP: Use the env file.
   env_file:
     - .env
   user: "${AIRFLOW_UID:-50000}:0"
