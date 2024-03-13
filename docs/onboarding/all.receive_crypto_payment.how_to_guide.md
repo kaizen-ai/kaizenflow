@@ -1,19 +1,20 @@
-<!--ts-->
-   * [Choose a crypto wallet type](#choose-a-crypto-wallet-type)
-      * [Public / private keys](#public--private-keys)
-      * [What do people in the team use](#what-do-people-in-the-team-use)
-         * [Beginner](#beginner)
-         * [Advanced](#advanced)
-   * [Choose a crypto currency to receive money in](#choose-a-crypto-currency-to-receive-money-in)
-   * [Send a crypto wallet address](#send-a-crypto-wallet-address)
-   * [Do a test transfer](#do-a-test-transfer)
-   * [Cash out crypto](#cash-out-crypto)
-      * [Bank account](#bank-account)
-      * [Cash](#cash)
 
 
+<!-- toc -->
 
-<!--te-->
+- [Choose a crypto wallet type](#choose-a-crypto-wallet-type)
+  * [Public / private keys](#public--private-keys)
+  * [What do people in the team use](#what-do-people-in-the-team-use)
+    + [Beginner](#beginner)
+    + [Advanced](#advanced)
+- [Choose a crypto currency to receive money in](#choose-a-crypto-currency-to-receive-money-in)
+- [Send a crypto wallet address](#send-a-crypto-wallet-address)
+- [Do a test transfer](#do-a-test-transfer)
+- [Cash out crypto](#cash-out-crypto)
+  * [Bank account](#bank-account)
+  * [Cash](#cash)
+
+<!-- tocstop -->
 
 # Choose a crypto wallet type
 
@@ -97,8 +98,7 @@ money to your bank account
 
 E.g.,
 
-- [Built-in Exodus crypto withdrawal
-  service](https://www.exodus.com/support/article/2435-sell-crypto-moonpay#mobile)
+- [Built-in Exodus crypto withdrawal service](https://www.exodus.com/support/article/2435-sell-crypto-moonpay#mobile)
 - [Coinbase cash out serivce](https://help.coinbase.com/en/coinbase/trading-and-funding/buying-selling-or-converting-crypto/how-do-i-sell-or-cash-out-my-digital-currency)
 - [Binance P2P](https://p2p.binance.com/en/trade/all-payments/USDT?fiat=USD)
 
