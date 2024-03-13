@@ -16,7 +16,7 @@ import logging
 import os
 import subprocess
 import re
-import helpers.hio as hio
+import helpers.hio as hio  
 
 _LOG = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ _LOG = logging.getLogger(__name__)
 DOCS_DIR = "docs"
 
 
-def _parse():
+def parse_arguments():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -32,10 +32,10 @@ def _parse():
     parser.add_argument("--skip-toc", action="store_true", help="Skip results in the table of contents (TOC)")
     parser.add_argument("--sections-only", action="store_true", help="Search only in sections (lines starting with '#')")
     parser.add_argument("--subdir", help="Subdirectory to search within")
-    return parser
+    return parser.parse_args()
 
 
-def _get_git_root():
+def get_git_root():
     try:
         # Run git command to get the root directory of the repository
         git_root = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).decode().strip()
@@ -44,56 +44,51 @@ def _get_git_root():
         raise RuntimeError("Not a Git repository or Git is not installed.")
 
 
-def _main(parser):
-    args = parser.parse_args()
-    search_term = args.search_term
-    skip_toc = args.skip_toc
-    sections_only = args.sections_only
-    subdir = args.subdir
+def remove_toc(content):
+    # Remove everything between <!-- toc --> and <!-- tocstop -->
+    toc_pattern = r"<!--\s*toc\s*-->(.*?)<!--\s*tocstop\s*-->"
+    return re.sub(toc_pattern, "", content, flags=re.DOTALL)
 
-    git_root = _get_git_root()
-    docs_path = os.path.join(git_root, DOCS_DIR)
 
-    if subdir:
-        docs_path = os.path.join(docs_path, subdir)
-
+def search_in_markdown_files(git_root, search_term, skip_toc=False, sections_only=False, subdir=None):
     found_in_files = []
+    docs_path = os.path.join(git_root, DOCS_DIR, subdir) if subdir else os.path.join(git_root, DOCS_DIR)
 
-    for root, dirs, files in os.walk(docs_path):
+    for root, _, files in os.walk(docs_path):
         for file in files:
             if file.endswith(".md"):
                 md_file = os.path.join(root, file)
                 # Read the content of the Markdown file
                 content = hio.from_file(md_file)
+                # If --skip-toc is enabled, remove TOC from the content
+                content = remove_toc(content) if skip_toc else content
                 lines = content.split('\n')
-                toc_flag = False  # Flag to indicate if we are within the TOC
                 for line_num, line in enumerate(lines, start=1):
-                    if "<!-- toc -->" in line:
-                        toc_flag = True
-                        if skip_toc:
-                            break  # Skip searching if --skip-toc is enabled
-                        continue
-                    elif "<!-- tocstop -->" in line:
-                        toc_flag = False
-                        continue
-
-                    if toc_flag and skip_toc:
-                        continue  # Skip lines within the TOC if --skip-toc is enabled
-
-                    if sections_only and not re.match(r'^#+\s', line):
+                    if sections_only and not line.startswith('#'):
                         continue  # Skip lines if --sections-only is enabled and not a section heading
 
                     if re.search(search_term, line):
                         found_in_files.append((md_file, line_num))
 
+    return found_in_files
+
+
+def main():
+    args = parse_arguments()
+    git_root = get_git_root()
+    found_in_files = search_in_markdown_files(
+        git_root, args.search_term, args.skip_toc, args.sections_only, args.subdir
+    )
+
     if found_in_files:
         print("Input found in the following Markdown files:")
         for file_path, line_num in found_in_files:
-            url = "{}/{}#L{}".format(git_root, file_path[len(git_root) + 1:], line_num)
+            relative_path = os.path.relpath(file_path, git_root)
+            url = f"{git_root}/{relative_path}#L{line_num}"
             print(url)
     else:
         print("Input not found in any Markdown files.")
 
 
 if __name__ == "__main__":
-    _main(_parse())
+    main()
