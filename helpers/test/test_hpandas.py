@@ -3664,18 +3664,22 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
         index_is_datetime: bool,
     ) -> pd.DataFrame:
         """
-        Helper function to get test multi-index dataframe. Example of dataframe
-        returned when `index_is_datetime = True`. column1     column2 index
-        timestamp index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
-        2022-01-01 21:10:00+00:00   1.303778    -0.288235 index2  2022-01-01
-        21:00:00+00:00   1.237079    1.168012 2022-01-01 21:10:00+00:00
-        1.333692    1.708455.
+        Helper function to get test multi-index dataframe.
+        Example of dataframe returned when `index_is_datetime = True`.
+                                            column1     column2
+        index   timestamp
+        index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
+                2022-01-01 21:10:00+00:00   1.303778    -0.288235
+        index2  2022-01-01 21:00:00+00:00   1.237079    1.168012
+                2022-01-01 21:10:00+00:00   1.333692    1.708455
 
         Example of dataframe returned when `index_is_datetime = False`.
-        column1     column2 index   timestamp index1  string1
-        -0.122140   -1.949431         string2     1.303778    -0.288235
-        index2  string1     1.237079    1.168012         string2
-        1.333692    1.708455
+                            column1     column2
+        index   timestamp
+        index1  string1     -0.122140   -1.949431
+                string2     1.303778    -0.288235
+        index2  string1     1.237079    1.168012
+                string2     1.333692    1.708455
         """
         if index_is_datetime:
             index_inner = [
