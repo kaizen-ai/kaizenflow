@@ -1,17 +1,16 @@
 """
-DAG to download data from uniswap.
+DAG to download OHLCV data from Binance.
 """
 
-from datetime import datetime, timedelta
+import datetime
+
 import airflow
 from airflow.operators.bash import BashOperator
 
-_DAG_ID = "download_periodic_1hr_postgres_uniswap"
-_DAG_DESCRIPTION = (
-    "Download uniswap data every minute and save to Postgres"
-)
+_DAG_ID = "download_periodic_1min_postgres_ohlcv_binance"
+_DAG_DESCRIPTION = "Download Binance OHLCV data every minute and save to Postgres"
 # Specify when often to execute the DAG.
-_SCHEDULE = timedelta(hours=1)
+_SCHEDULE = "* * * * *"
 
 # Pass default parameters for the DAG.
 default_args = {
@@ -31,21 +30,22 @@ dag = airflow.DAG(
     default_args=default_args,
     schedule_interval=_SCHEDULE,
     catchup=False,
-    start_date=datetime(2023, 4, 27, 0, 0, 0),
+    start_date=datetime.datetime(2022, 12, 23, 0, 0, 0),
 )
 
 bash_command = [
     # Sleep 5 seconds to ensure the bar is finished.
     "sleep 5",
     "&&",
-    "python3 /cmamp/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap/download_to_db.py",
-    "--start_timestamp {{ data_interval_start }}",
-    "--target_table uniswap_table",
-    "--live_flag"
+    "/cmamp/sorrentum_sandbox/examples/binance/download_to_db.py",
+    "--target_table 'binance_ohlcv_spot_downloaded_1min'",
+    "--start_timestamp '{{ data_interval_start }}' ",
+    "--end_timestamp '{{ data_interval_end }}'",
+    "-v DEBUG",
 ]
 
 downloading_task = BashOperator(
-    task_id="download.periodic_1hr.postgres.uniswap",
+    task_id="download.periodic_1min.postgres.ohlcv.binance",
     depends_on_past=False,
     bash_command=" ".join(bash_command),
     dag=dag,

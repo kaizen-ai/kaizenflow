@@ -3,7 +3,7 @@ Extract part of the ETL and QA pipeline.
 
 Import as:
 
-import sorrentum_sandbox.examples.systems.binance.download as ssexbido
+import sorrentum_sandbox.examples.binance.download as ssexbido
 """
 
 import logging
@@ -106,7 +106,6 @@ class OhlcvRestApiDownloader(ssacodow.DataDownloader):
                         for row in response.json()
                     ]
                 )
-
                 dfs.append(data)
                 # Delay for throttling in seconds.
                 time.sleep(0.5)

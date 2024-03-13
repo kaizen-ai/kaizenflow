@@ -15,8 +15,8 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import sorrentum_sandbox.examples.systems.binance.db as ssesbidb
-import sorrentum_sandbox.examples.systems.binance.download as ssesbido
+import sorrentum_sandbox.examples.binance.db as ssesbidb
+import sorrentum_sandbox.examples.binance.download as ssesbido
 
 _LOG = logging.getLogger(__name__)
 
