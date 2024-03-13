@@ -228,15 +228,36 @@ class Test_get_ecs_client(hunitest.TestCase):
         with ECS.
         """
         aws_profile = "__mock__"
-        test_cluster_name = "TEST-CLUSTER"
+        test_cluster_name = "test-cluster"
         region = "us-east-1"
         # Create mock ECS client.
         ecs_client = boto3.client("ecs", region_name=region)
         _ = ecs_client.create_cluster(clusterName=test_cluster_name)
-        # Create a client using tested function.
+        # Create ECS client.
         test_client = haws.get_ecs_client(aws_profile, region=region)
         # Get the created cluster.
         cluster_name = test_client.list_clusters()["clusterArns"][0]
-        # Check if the region and cluster name in the created cluster.
+        # Check region and cluster name.
+        self.assertIn(test_cluster_name, cluster_name)
+        self.assertIn(region, cluster_name)
+        
+    @mock_ecs
+    def test2(self) -> None:
+        """
+        Test that `haws.get_ecs_client()` correctly return a client to work
+        with ECS.
+        Without assigned a region to the created ECS client.
+        """
+        aws_profile = "__mock__"
+        test_cluster_name = "test-cluster"
+        region = "us-east-1"
+        # Create mock ECS client.
+        ecs_client = boto3.client("ecs", region_name=region)
+        _ = ecs_client.create_cluster(clusterName=test_cluster_name)
+        # Create ECS client.
+        test_client = haws.get_ecs_client(aws_profile)
+        # Get the created cluster.
+        cluster_name = test_client.list_clusters()["clusterArns"][0]
+        # Check region and cluster name.
         self.assertIn(test_cluster_name, cluster_name)
         self.assertIn(region, cluster_name)
