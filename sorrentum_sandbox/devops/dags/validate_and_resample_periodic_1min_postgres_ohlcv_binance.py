@@ -47,8 +47,8 @@ bash_command = [
     "/cmamp/sorrentum_sandbox/examples/binance/load_validate_transform.py",
     "--source_table 'binance_ohlcv_spot_downloaded_1min'",
     "--target_table 'binance_ohlcv_spot_resampled_5min'",
-    "--start_timestamp {{ data_interval_start }} ",
-    "--end_timestamp {{ data_interval_end }}",
+    "--start_timestamp '{{ data_interval_start }}' ",
+    "--end_timestamp '{{ data_interval_end }}'",
     "-v DEBUG",
 ]
 

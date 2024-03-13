@@ -43,8 +43,8 @@ bash_command = [
     "sleep 5",
     "&&",
     "/cmamp/sorrentum_sandbox/examples/reddit/download_to_db.py",
-    "--start_timestamp {{ data_interval_start }}",
-    "--end_timestamp {{ data_interval_end }}",
+    "--start_timestamp '{{ data_interval_start }}'",
+    "--end_timestamp '{{ data_interval_end }}'",
     "-v DEBUG",
 ]
 
