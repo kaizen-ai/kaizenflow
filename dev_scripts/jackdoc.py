@@ -42,9 +42,9 @@ def remove_toc(content):
     return re.sub(toc_pattern, "", content, flags=re.DOTALL)
 
 
-def search_in_markdown_files(client_root, search_term, skip_toc=False, sections_only=False, subdir=None):
+def search_in_markdown_files(git_root, search_term, skip_toc=False, sections_only=False, subdir=None):
     found_in_files = []
-    docs_path = os.path.join(client_root, DOCS_DIR, subdir) if subdir else os.path.join(client_root, DOCS_DIR)
+    docs_path = os.path.join(git_root, DOCS_DIR, subdir) if subdir else os.path.join(git_root, DOCS_DIR)
 
     for root, _, files in os.walk(docs_path):
         for file in files:
@@ -67,16 +67,16 @@ def search_in_markdown_files(client_root, search_term, skip_toc=False, sections_
 
 def main():
     args = parse_arguments()
-    client_root = hgit.get_client_root()
+    git_root = hgit.get_client_root(super_module=True)
     found_in_files = search_in_markdown_files(
-        client_root, args.search_term, args.skip_toc, args.sections_only, args.subdir
+        git_root, args.search_term, args.skip_toc, args.sections_only, args.subdir
     )
 
     if found_in_files:
         print("Input found in the following Markdown files:")
         for file_path, line_num in found_in_files:
-            relative_path = os.path.relpath(file_path, client_root)
-            url = f"{client_root}/{relative_path}#L{line_num}"
+            relative_path = os.path.relpath(file_path, git_root)
+            url = f"{git_root}/{relative_path}#L{line_num}"
             print(url)
     else:
         print("Input not found in any Markdown files.")
