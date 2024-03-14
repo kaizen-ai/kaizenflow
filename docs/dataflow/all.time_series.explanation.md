@@ -1,13 +1,12 @@
+<!--ts-->
+      * [Overview](#overview)
+      * [Guiding principles and conventions](#guiding-principles-and-conventions)
+      * [Prices and returns](#prices-and-returns)
+      * [Aligning predictors and responses](#aligning-predictors-and-responses)
 
 
-<!-- toc -->
 
-- [Overview](#overview)
-- [Guiding principles and conventions](#guiding-principles-and-conventions)
-- [Prices and returns](#prices-and-returns)
-- [Aligning predictors and responses](#aligning-predictors-and-responses)
-
-<!-- tocstop -->
+<!--te-->
 
 ## Overview
 
@@ -27,8 +26,8 @@
 1. The primary time associated with a value should be the "knowledge time"
    - Some time series naturally have multiple times associated with them, e.g.,
      end of collection period, publication time, our knowledge time
-     - E.g., EIA data is natively labeled according to the survey week, which is
-       not made available until the following week
+     - E.g., EIA data is natively labeled according to the survey week, which
+       is not made available until the following week
    - Adopting knowledge times by default affords protection against
      future-peeking
    - Unfortunately, knowledge times for historical data may need to be

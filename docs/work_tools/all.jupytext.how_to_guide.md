@@ -1,31 +1,30 @@
+<!--ts-->
+   * [Jupytext](#jupytext)
+      * [Why Jupytext?](#why-jupytext)
+      * [Reference documentation](#reference-documentation)
+      * [Installation](#installation)
+      * [Using Jupytext](#using-jupytext)
+      * [Example of uses](#example-of-uses)
+         * [Test that the conversion works {#test-that-the-conversion-works}](#test-that-the-conversion-works-test-that-the-conversion-works)
+         * [Automatic syncing when using the server](#automatic-syncing-when-using-the-server)
+         * [Make sure that a notebook has a companion](#make-sure-that-a-notebook-has-a-companion)
+         * [Manual sync](#manual-sync)
+         * [To convert a notebook to script](#to-convert-a-notebook-to-script)
+         * [To convert a script into a notebook](#to-convert-a-script-into-a-notebook)
+         * [Linter](#linter)
+         * [Refresh all the scripts](#refresh-all-the-scripts)
 
 
-<!-- toc -->
 
-- [Jupytext](#jupytext)
-  * [Why Jupytext?](#why-jupytext)
-  * [Reference documentation](#reference-documentation)
-  * [Installation](#installation)
-  * [Using Jupytext](#using-jupytext)
-  * [Example of uses](#example-of-uses)
-    + [Test that the conversion works {#test-that-the-conversion-works}](#test-that-the-conversion-works-%23test-that-the-conversion-works)
-    + [Manual sync](#manual-sync)
-    + [Automatic syncing when using the Jupyter server](#automatic-syncing-when-using-the-jupyter-server)
-    + [Convert a notebook to script](#convert-a-notebook-to-script)
-    + [Convert a script into a notebook](#convert-a-script-into-a-notebook)
-    + [Remove metadata from a notebook](#remove-metadata-from-a-notebook)
-    + [Linter](#linter)
-    + [Refresh all the scripts](#refresh-all-the-scripts)
-
-<!-- tocstop -->
+<!--te-->
 
 # Jupytext
 
 ## Why Jupytext?
 
 - In few words [Jupytext](https://github.com/mwouts/jupytext) associates a
-  Python representation to a notebook, which is kept in sync with the notebook
-  in a sensible way
+  Python representation to a notebook, which is kept in sync with the notebook in
+  a sensible way
 
 - Jupytext allows to:
   - Edit notebooks with your favorite editor (hopefully) vi or PyCharm
@@ -40,7 +39,6 @@
 - [https://jupytext.readthedocs.io/en/latest/faq.html](https://jupytext.readthedocs.io/en/latest/faq.html)
 
 ## Installation
-
 - Check what version you have:
 
   ```bash
@@ -76,16 +74,15 @@
 
 - Now you need to restart the notebook server to pick up Jupytext
 - We use the "percent" format where cells are delimited by a `%%` comment
-  - Pycharm, black, and other tools understand / respect that this is a
-    delimiter for jupyter cells
+  - Pycharm, black, and other tools understand / respect that this is a delimiter
+    for jupyter cells
 
 ## Using Jupytext
 
-- Now when you `git add` a `.ipynb` file you always need to add also the paired
-  `.py` file
+- Now when you `git add` a `.ipynb` file you always need to add also the
+  paired `.py` file
 - Same thing if you rename with `git mv` or delete a notebook
-  - You need to explicitly take care of renaming and deleting also the `.py`
-    file
+  - You need to explicitly take care of renaming and deleting also the `.py` file
 
 ## Example of uses
 
@@ -131,9 +128,9 @@
 
 ### Convert a script into a notebook
 
-```bash
-> jupytext --to notebook XYZ.py
-```
+  ```bash
+  > jupytext --to notebook XYZ.py
+  ```
 
 ### Remove metadata from a notebook
 

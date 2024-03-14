@@ -1,14 +1,9 @@
+<!--ts-->
 
 
-<!-- toc -->
 
-- [Meta](#meta)
-- [Processes](#processes)
-- [Software components](#software-components)
-- [Papers](#papers)
 
-<!-- tocstop -->
-
+<!--te-->
 This file contains rules and conventions for all the documentation under `docs`.
 
 Please keep the directory in a conceptual order.
@@ -16,12 +11,10 @@ Please keep the directory in a conceptual order.
 The current dir structure is:
 
 # Meta
-
 - `documentation_meta`
   - How to write documentation for code and workflows.
 
 # Processes
-
 - `onboarding`
   - Practicalities of on-boarding new team members
   - All the info about something typically done only once at the beginning of
@@ -43,17 +36,15 @@ The current dir structure is:
   - Guidelines and good practices for coding and code-adjacent activities (such
     as code review)
   - This includes general tips and tricks that are useful for anybody writing
-    any code (e.g., how to use type hints) as well as in-depth descriptions of
-    specific functions and libraries.
-  - TODO(gp): unclear what is the difference with `work_organization` and
-    `work_tools`.
+    any code (e.g., how to use type hints) as well as in-depth descriptions
+    of specific functions and libraries.
+  - TODO(gp): unclear what is the difference with `work_organization` and `work_tools`.
     - A proposal is:
       - `work_organization`: processes not related to coding
       - `coding`: any process related to only coding
       - `work_tools`: any tool (internal or external)
-
+  
 # Software components
-
 - `kaizenflow`
   - Docs related to high-level packages that are used across the codebase (e.g.,
     `helpers`, `config`), as well as overall codebase organization.
@@ -74,7 +65,6 @@ The current dir structure is:
     monitoring, server administration, etc.
 
 # Papers
-
 - `papers`
   - Papers written by the team members about the company's products and
     know-how.

@@ -1,17 +1,15 @@
+<!--ts-->
+   * [The property of tilability](#the-property-of-tilability)
+      * [Temporal tiling](#temporal-tiling)
+      * [Cross-sectional tiling](#cross-sectional-tiling)
+      * [Temporal and cross-sectional tiling](#temporal-and-cross-sectional-tiling)
+      * [Detecting incorrect tiled computations](#detecting-incorrect-tiled-computations)
+      * [Benefits of tiled computation](#benefits-of-tiled-computation)
+   * [Batch vs streaming](#batch-vs-streaming)
 
 
-<!-- toc -->
 
-- [The property of tilability](#the-property-of-tilability)
-  * [Temporal tiling](#temporal-tiling)
-  * [Cross-sectional tiling](#cross-sectional-tiling)
-  * [Temporal and cross-sectional tiling](#temporal-and-cross-sectional-tiling)
-  * [Detecting incorrect tiled computations](#detecting-incorrect-tiled-computations)
-  * [Benefits of tiled computation](#benefits-of-tiled-computation)
-- [Batch vs streaming](#batch-vs-streaming)
-
-<!-- tocstop -->
-
+<!--te-->
 # The property of tilability
 
 The working principle of a DataFlow computation is that nodes should be able to

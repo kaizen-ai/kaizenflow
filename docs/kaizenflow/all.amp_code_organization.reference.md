@@ -1,27 +1,26 @@
+<!--ts-->
+   * [Code organization of amp](#code-organization-of-amp)
+      * [Conventions](#conventions)
+      * [Finding deps](#finding-deps)
+         * [Using grep](#using-grep)
+         * [Using Pydeps](#using-pydeps)
+      * [Component dirs](#component-dirs)
+      * [dataflow dependencies](#dataflow-dependencies)
+      * [Top level dirs](#top-level-dirs)
+         * [helpers](#helpers)
+         * [core](#core)
+         * [dataflow](#dataflow)
+         * [im](#im)
+         * [market_data](#market_data)
+         * [oms](#oms)
+         * [research_amp](#research_amp)
+   * [All Python files](#all-python-files)
+   * [Invariants](#invariants)
+   * [Misc](#misc)
 
 
-<!-- toc -->
 
-- [Code organization of `amp`](#code-organization-of-amp)
-  * [Conventions](#conventions)
-  * [Finding deps](#finding-deps)
-    + [Using `invoke find_dependency`](#using-invoke-find_dependency)
-    + [Using grep](#using-grep)
-    + [Using Pydeps](#using-pydeps)
-  * [Component dirs](#component-dirs)
-    + [`helpers/`](#helpers)
-    + [`core/`](#core)
-    + [`devops/`](#devops)
-    + [`dev_scripts/`](#dev_scripts)
-    + [`im/`](#im)
-    + [`market_data/`](#market_data)
-    + [`dataflow/`](#dataflow)
-  * [dataflow dependencies](#dataflow-dependencies)
-  * [Top level dirs](#top-level-dirs)
-- [Invariants](#invariants)
-- [Misc](#misc)
-
-<!-- tocstop -->
+<!--te-->
 
 # Code organization of `amp`
 
@@ -67,9 +66,10 @@
 ## Finding deps
 
 ### Using `invoke find_dependency`
-```
-> i find_dependency --module-name "amp.dataflow.model" --mode "find_lev2_deps" --ignore-helpers --only-module dataflow
-```
+
+  ```
+  > i find_dependency --module-name "amp.dataflow.model" --mode "find_lev2_deps" --ignore-helpers --only-module dataflow
+  ```
 
 ### Using grep
 
@@ -114,12 +114,10 @@ im_v2/ccxt/data/
 ```
 
 ### `helpers/`
-
 - `helpers/`
   - """Low-level helpers that are general and not specific of this project"""
 
 ### `core/`
-
 - `core/`
   - """Low-level helpers that are specific of this project"""
   - `/config`
@@ -133,17 +131,14 @@ im_v2/ccxt/data/
   - `statistics.py`
 
 ### `devops/`
-
 - `devops/`
   - TODO(gp): reorg
 
 ### `dev_scripts/`
-
 - `/dev_scripts`
   - TODO(gp): reorg
 
 ### `im/`
-
 - `sorrentum_sandbox/`
   - `common/`
     - `validate.py`: implement `QaCheck` and `DatasetValidator`
@@ -151,7 +146,7 @@ im_v2/ccxt/data/
 
 - `im/`
   - TODO(gp): Merge with im_v2
-
+ 
 - `im_v2/`
   - TODO(gp): Rename `im_v2` to `datapull`
   - `airflow/`

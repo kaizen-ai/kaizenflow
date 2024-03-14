@@ -1,32 +1,18 @@
+<!--ts-->
+   * [Conda bloat](#conda-bloat)
+      * [Minimize conda bloat](#minimize-conda-bloat)
+   * [Conda environment lifecycle](#conda-environment-lifecycle)
+      * [Experimental conda environment](#experimental-conda-environment)
+      * [Releasing a new conda environment](#releasing-a-new-conda-environment)
+   * [Conda maintenance (only for admins)](#conda-maintenance-only-for-admins)
+      * [Updating conda itself](#updating-conda-itself)
+      * [Cleaning conda packages](#cleaning-conda-packages)
 
 
-<!-- toc -->
 
-- [Conda flow](#conda-flow)
-  * [(optional) Install anaconda](#optional-install-anaconda)
-  * [Configure anaconda](#configure-anaconda)
-  * [Create conda environment](#create-conda-environment)
-  * [Check conda environment](#check-conda-environment)
-  * [Configure conda environment](#configure-conda-environment)
-  * [Delete / recreate environment](#delete--recreate-environment)
-    + [Overwrite a conda environment with `create_conda.py`](#overwrite-a-conda-environment-with-create_condapy)
-    + [Manually delete a conda environment](#manually-delete-a-conda-environment)
-    + [To delete the entire conda installation (advanced users)](#to-delete-the-entire-conda-installation-advanced-users)
-  * [Update anaconda](#update-anaconda)
-  * [Configure user credentials](#configure-user-credentials)
-  * [Be patient](#be-patient)
-- [Conda bloat](#conda-bloat)
-  * [Minimize conda bloat](#minimize-conda-bloat)
-- [Conda environment lifecycle](#conda-environment-lifecycle)
-  * [Experimental conda environment](#experimental-conda-environment)
-  * [Releasing a new conda environment](#releasing-a-new-conda-environment)
-- [Conda maintenance (only for admins)](#conda-maintenance-only-for-admins)
-  * [Updating conda itself](#updating-conda-itself)
-  * [Cleaning conda packages](#cleaning-conda-packages)
+<!--te-->
 
-<!-- tocstop -->
-
-_THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
+*THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER*
 
 # Conda flow
 
@@ -165,10 +151,9 @@ _THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
 
 ## Configure user credentials
 
-- For now this topic is obsolete. All development with AWS is running on a
-  server side (or locally) in a docker container. Here you can find the
-  documentation
-  [the link](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_tools/all.docker.how_to_guide.md)
+- For now this topic is obsolete. All development with AWS is running on a server
+side (or locally) in a docker container. Here you can find the documentation
+[the link](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_tools/all.docker.how_to_guide.md)
 
 - Update the user credential files in `amp/helpers/user_credentials.py`
   - Commit this so all your clients are configured

@@ -1,30 +1,27 @@
+<!--ts-->
+   * [Config](#config)
+      * [Config builders](#config-builders)
+   * [DAG builders](#dag-builders)
+      * [DAG builder methods](#dag-builder-methods)
+      * [DAG and Nodes](#dag-and-nodes)
+      * [Keeping config and DagBuilder in sync](#keeping-config-and-dagbuilder-in-sync)
+      * [Invariants](#invariants)
+      * [Make code easy to wrap code into Nodes](#make-code-easy-to-wrap-code-into-nodes)
+      * [ColumnTransformer](#columntransformer)
+      * [One vs multiple graphs](#one-vs-multiple-graphs)
+      * [How to handle multiple features for a single instrument](#how-to-handle-multiple-features-for-a-single-instrument)
+      * [How to handle multiple instruments?](#how-to-handle-multiple-instruments)
+      * [How to handle multiple features with multiple instruments](#how-to-handle-multiple-features-with-multiple-instruments)
+      * [Irregular DAGs](#irregular-dags)
+      * [Namespace vs hierarchical config](#namespace-vs-hierarchical-config)
+      * [How to know what is configurable](#how-to-know-what-is-configurable)
+      * [DAG extension vs copying](#dag-extension-vs-copying)
+      * [Reusing parameters across nodes' configs](#reusing-parameters-across-nodes-configs)
+      * [Composing vs deriving objects](#composing-vs-deriving-objects)
 
 
-<!-- toc -->
 
-- [Config](#config)
-  * [Config builders](#config-builders)
-- [DAG builders](#dag-builders)
-  * [DAG builder methods](#dag-builder-methods)
-  * [DAG and Nodes](#dag-and-nodes)
-  * [Keeping `config` and `DagBuilder` in sync](#keeping-config-and-dagbuilder-in-sync)
-  * [`DagBuilder` idiom](#dagbuilder-idiom)
-  * [Invariants](#invariants)
-  * [Make code easy to wrap code into `Nodes`](#make-code-easy-to-wrap-code-into-nodes)
-  * [`ColumnTransformer`](#columntransformer)
-  * [One vs multiple graphs](#one-vs-multiple-graphs)
-  * [How to handle multiple features for a single instrument](#how-to-handle-multiple-features-for-a-single-instrument)
-  * [How to handle multiple instruments?](#how-to-handle-multiple-instruments)
-  * [How to handle multiple features with multiple instruments](#how-to-handle-multiple-features-with-multiple-instruments)
-  * [Irregular DAGs](#irregular-dags)
-  * [Namespace vs hierarchical config](#namespace-vs-hierarchical-config)
-  * [How to know what is configurable](#how-to-know-what-is-configurable)
-  * [DAG extension vs copying](#dag-extension-vs-copying)
-  * [Reusing parameters across nodes' configs](#reusing-parameters-across-nodes-configs)
-  * [Composing vs deriving objects](#composing-vs-deriving-objects)
-
-<!-- tocstop -->
-
+<!--te-->
 # Config
 
 ## Config builders

@@ -1,26 +1,25 @@
+<!--ts-->
+   * [Design Philosophy](#design-philosophy)
+      * [Measure seven times, cut once (Russian proverb)](#measure-seven-times-cut-once-russian-proverb)
+      * [Hacker laws](#hacker-laws)
+      * [Keep it simple](#keep-it-simple)
+      * [Tips from a pro](#tips-from-a-pro)
+         * [Designing software systems is tricky](#designing-software-systems-is-tricky)
+         * [Get Advice Early!](#get-advice-early)
+         * [Interfaces](#interfaces)
+   * [Architecture](#architecture)
+      * [Use design patterns](#use-design-patterns)
+   * [Functions](#functions)
+      * [Avoid modifying the function input](#avoid-modifying-the-function-input)
+      * [Prefer pure functions by default](#prefer-pure-functions-by-default)
+   * [Invariants](#invariants)
+      * [Our approach to doing things](#our-approach-to-doing-things)
+         * [Roles and responsibilities](#roles-and-responsibilities)
+         * [Good practices](#good-practices)
 
 
-<!-- toc -->
 
-- [Design Philosophy](#design-philosophy)
-  * [Measure seven times, cut once (Russian proverb)](#measure-seven-times-cut-once-russian-proverb)
-  * [Hacker laws](#hacker-laws)
-  * [Keep it simple](#keep-it-simple)
-  * [Tips from a pro](#tips-from-a-pro)
-    + [Designing software systems is tricky](#designing-software-systems-is-tricky)
-    + [Get Advice Early!](#get-advice-early)
-    + [Interfaces](#interfaces)
-- [Architecture](#architecture)
-  * [Use design patterns](#use-design-patterns)
-- [Functions](#functions)
-  * [Avoid modifying the function input](#avoid-modifying-the-function-input)
-  * [Prefer pure functions by default](#prefer-pure-functions-by-default)
-- [Invariants](#invariants)
-  * [Our approach to doing things](#our-approach-to-doing-things)
-    + [Roles and responsibilities](#roles-and-responsibilities)
-    + [Good practices](#good-practices)
-
-<!-- tocstop -->
+<!--te-->
 
 # Design Philosophy
 
@@ -159,7 +158,6 @@
 - If, for example, a function `f` accepts a dataframe `df` as its (sole)
   argument, then, ideally, `f(df)` will not modify `df`. If modifications are
   desired, then instead one can do:
-
   ```python
   def f(df):
     df = df.copy()

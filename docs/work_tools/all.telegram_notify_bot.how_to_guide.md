@@ -1,17 +1,16 @@
+<!--ts-->
+   * [telegram-notify](#telegram-notify)
+      * [Configuring the Bot](#configuring-the-bot)
+         * [Getting token and chat id](#getting-token-and-chat-id)
+         * [Modifying config for your token and chat id](#modifying-config-for-your-token-and-chat-id)
+      * [How to use](#how-to-use)
+         * [Command line](#command-line)
+         * [TelegramNotify](#telegramnotify)
+         * [Logging](#logging)
 
 
-<!-- toc -->
 
-- [telegram-notify](#telegram-notify)
-  * [Configuring the Bot](#configuring-the-bot)
-    + [Getting token and chat id](#getting-token-and-chat-id)
-    + [Modifying config for your token and chat id](#modifying-config-for-your-token-and-chat-id)
-  * [How to use](#how-to-use)
-    + [Command line](#command-line)
-    + [TelegramNotify](#telegramnotify)
-    + [Logging](#logging)
-
-<!-- tocstop -->
+<!--te-->
 
 # telegram-notify
 

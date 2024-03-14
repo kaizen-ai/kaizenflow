@@ -1,12 +1,16 @@
+<!--ts-->
+   * [Roll-out process](#roll-out-process)
+   * [Roll-out documentation](#roll-out-documentation)
+   * [An example of roll-out email](#an-example-of-roll-out-email)
+      * [Intended audience](#intended-audience)
+      * [What it is about](#what-it-is-about)
+      * [What you need to do](#what-you-need-to-do)
+      * [What has changed](#what-has-changed)
+      * [Reference documentation](#reference-documentation)
 
 
-<!-- toc -->
 
-- [Roll-out process](#roll-out-process)
-- [Roll-out documentation](#roll-out-documentation)
-- [An example of roll-out email](#an-example-of-roll-out-email)
-
-<!-- tocstop -->
+<!--te-->
 
 # Roll-out process
 
@@ -35,6 +39,7 @@
   - Whom to ask for help
 
 # An example of roll-out email
+
 ```
 Hello team,
 

@@ -1,41 +1,39 @@
+<!--ts-->
+   * [Setting up Git credentials](#setting-up-git-credentials)
+      * [Preamble](#preamble)
+      * [Check Git credentials](#check-git-credentials)
+      * [Setting Git credentials](#setting-git-credentials)
+      * [Enforcing Git credentials](#enforcing-git-credentials)
+   * [Create the env](#create-the-env)
+   * [Playback](#playback)
+   * [Publish a notebook](#publish-a-notebook)
+      * [Detailed instructions](#detailed-instructions)
+      * [Publish notebooks](#publish-notebooks)
+      * [Open a published notebook](#open-a-published-notebook)
+         * [Start a server](#start-a-server)
+         * [Using the dev box](#using-the-dev-box)
+         * [Using Windows browser](#using-windows-browser)
+   * [How to create a private fork](#how-to-create-a-private-fork)
+   * [Integrate public to private: amp -&gt; cmamp](#integrate-public-to-private-amp---cmamp)
+      * [Set-up](#set-up)
+      * [Ours vs theirs](#ours-vs-theirs)
+      * [Sync the repos (after double integration)](#sync-the-repos-after-double-integration)
+      * [Updated sync](#updated-sync)
+      * [Check that things are fine](#check-that-things-are-fine)
+      * [Integrate private to public: cmamp -&gt; amp](#integrate-private-to-public-cmamp---amp)
+      * [Squash commit of everything in the branch](#squash-commit-of-everything-in-the-branch)
+   * [Double integration cmamp &lt; -- &gt; amp](#double-integration-cmamp------amp)
+      * [Script set-up](#script-set-up)
+      * [Manual set-up branches](#manual-set-up-branches)
+      * [High-level plan](#high-level-plan)
+      * [Sync im cmamp -&gt; amp](#sync-im-cmamp---amp)
+      * [Sync everything](#sync-everything)
+      * [Files that need to be different](#files-that-need-to-be-different)
+         * [Testing](#testing)
 
 
-<!-- toc -->
 
-- [Setting up Git credentials](#setting-up-git-credentials)
-  * [Preamble](#preamble)
-  * [Check Git credentials](#check-git-credentials)
-  * [Setting Git credentials](#setting-git-credentials)
-  * [Enforcing Git credentials](#enforcing-git-credentials)
-- [Create the env](#create-the-env)
-- [Playback](#playback)
-- [Publish a notebook](#publish-a-notebook)
-  * [Detailed instructions](#detailed-instructions)
-  * [Publish notebooks](#publish-notebooks)
-  * [Open a published notebook](#open-a-published-notebook)
-    + [Start a server](#start-a-server)
-    + [Using the dev box](#using-the-dev-box)
-    + [Using Windows browser](#using-windows-browser)
-- [How to create a private fork](#how-to-create-a-private-fork)
-- [Integrate public to private: `amp` -> `cmamp`](#integrate-public-to-private-amp---cmamp)
-  * [Set-up](#set-up)
-  * [Ours vs theirs](#ours-vs-theirs)
-  * [Sync the repos (after double integration)](#sync-the-repos-after-double-integration)
-  * [Updated sync](#updated-sync)
-  * [Check that things are fine](#check-that-things-are-fine)
-  * [Integrate private to public: `cmamp` -> `amp`](#integrate-private-to-public-cmamp---amp)
-  * [Squash commit of everything in the branch](#squash-commit-of-everything-in-the-branch)
-- [Double integration `cmamp` `amp`](#double-integration-cmamp--amp)
-  * [Script set-up](#script-set-up)
-  * [Manual set-up branches](#manual-set-up-branches)
-  * [High-level plan](#high-level-plan)
-  * [Sync `im` `cmamp` -> `amp`](#sync-im-cmamp---amp)
-  * [Sync everything](#sync-everything)
-  * [Files that need to be different](#files-that-need-to-be-different)
-    + [Testing](#testing)
-
-<!-- tocstop -->
-
+<!--te-->
 # Setting up Git credentials
 
 ## Preamble
@@ -268,7 +266,7 @@
 
 # How to create a private fork
 
-- Https://stackoverflow.com/questions/10065526/github-how-to-make-a-fork-of-public-repository-private
+- https://stackoverflow.com/questions/10065526/github-how-to-make-a-fork-of-public-repository-private
 - From
   https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/duplicating-a-repository
 
