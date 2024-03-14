@@ -28,13 +28,14 @@ CcxtData = Dict[str, Any]
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): This should go after CcxtLogger.
 def load_oms_fills(logs_dir: str) -> List[List[omfill.Fill]]:
     """
     Load OMS `Fill`.
 
     :param logs_dir: same as in `CcxtLogger`
-    :return: OMS `Fill`, where the inner-most list contains per-asset `Fill`
-        and the outer-most list contains per-bar `Fill`
+    :return: OMS `Fill`, where the innermost list contains per-asset `Fill`
+        and the outermost list contains per-bar `Fill`
     """
     # Initialize logger.
     logger = CcxtLogger(logs_dir, mode="read")
@@ -77,14 +78,15 @@ def load_oms_fills(logs_dir: str) -> List[List[omfill.Fill]]:
 
 class CcxtLogger:
     """
-    Write and read logs for the CcxtBroker.
+    Write and read logs for `CcxtBroker`.
 
     The logs include:
     - `oms.Fills` for all the CCXT trades
     - CCXT order responses for all children orders
     - Submitted child orders
 
-    For more info on logs structure, see `docs/trade_execution/ck.ccxt_broker_logs_schema.reference.md`
+    For more info on logs structure, see
+    `docs/trade_execution/ck.ccxt_broker_logs_schema.reference.md`
     """
 
     # Default locations of log files.
@@ -96,6 +98,10 @@ class CcxtLogger:
     OMS_CHILD_ORDERS = "oms_child_orders"
     OMS_PARENT_ORDERS = "oms_parent_orders"
     BID_ASK = "bid_ask"
+    # This location contains bid/ask data used for the full experiment.
+    # This is in contrast with BID_ASK, which stores files per each child order
+    # wave(see CmampTask7262)
+    BID_ASK_FULL = "bid_ask_full"
     POSITIONS = "positions"
     EXCHANGE_MARKETS = "exchange_markets"
     LEVERAGE_INFO = "leverage_info"
@@ -108,11 +114,10 @@ class CcxtLogger:
         Constructor.
 
         :param log_dir: target directory to put logs in,
-          e.g. "/shared_data/system_log_dir_20230315_30minutes/".
-        :param mode: For now there are two modes:
-                    - write: the logger will write log files in `log_dir`
-                    - read: the logger will initialise functions to read
-                        log files from `log_dir`
+            e.g. "/shared_data/system_log_dir_20230315_30minutes/".
+        :param mode: there are two modes:
+            - write: the logger will write log files in `log_dir`
+            - read: the logger will read log files from `log_dir`
         """
         self._log_dir = log_dir
         hdbg.dassert_is_not(self._log_dir, None)
@@ -150,28 +155,34 @@ class CcxtLogger:
 
     def log_broker_config(self, broker_configuration: Dict[str, Any]) -> None:
         """
-        Log the broker configuration. The config is saved as a JSON file in the
-        root log directory, e.g. `{log_dir}/broker_config.json`
+        Log the broker configuration.
+
+        The config is saved as a JSON file in the root log directory, e.g.
+        `{log_dir}/broker_config.json`
 
         :param broker_configuration: broker config as dict, e.g.
         ```
-        {'bid_ask_lookback': '60S',
-        'child_order_quantity_computer': {'object_type': 'StaticSchedulingChildOrderQuantityComputer'},
-        'limit_price_computer': {'max_deviation': 0.01,
-                                'object_type': 'LimitPriceComputerUsingSpread',
-                                'passivity_factor': 0.55},
-        'log_dir': '/app/system_log_dir',
-        'raw_data_reader_signature': 'realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7.ccxt.binance.v1_0_0',
-        'secret_identifier': 'binance.preprod.trading.4',
-        'stage': 'preprod',
-        'universe_version': 'v7.4'}
+        {
+            "bid_ask_lookback": "60S",
+            "child_order_quantity_computer": {
+                "object_type": "StaticSchedulingChildOrderQuantityComputer"
+            },
+            "limit_price_computer": {
+                "max_deviation": 0.01,
+                "object_type": "LimitPriceComputerUsingSpread",
+                "passivity_factor": 0.55
+            },
+            "log_dir": "/app/system_log_dir",
+            "raw_data_reader_signature": "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7.ccxt.binance.v1_0_0",
+            "secret_identifier": "binance.preprod.trading.4",
+            "stage": "preprod",
+            "universe_version": "v7.4"
+        }
         ```
         """
         file_path = os.path.join(self._log_dir, self.BROKER_CONFIG)
         hio.to_json(file_path, broker_configuration)
 
-    # TODO(Danya): Refactor to accept lists of OMS / CCXT child orders.
-    # TODO(Danya): Pass get_wall_clock_time as the logger attribute.
     def log_child_order(
         self,
         get_wall_clock_time: Callable,
@@ -182,29 +193,29 @@ class CcxtLogger:
         """
         Log a child order with CCXT order info and additional parameters.
 
-        :param log_dir: dir to store logs in
-            - OMS child order information is saved into a CSV file, while the
-            corresponding order response from CCXT is saved into a JSON dir, in a
-            format like:
-                ```
-                {log_dir}/oms_child_orders/...
-                {log_dir}/ccxt_child_order_responses/...
-                ```
-        :param get_wall_clock_time: retrieve the current wall clock time
+        OMS child order information and corresponding CCXT order response are
+        saved into a JSON file in a format like:
+            ```
+            {log_dir}/oms_child_orders/...
+            {log_dir}/ccxt_child_order_responses/...
+            ```
+
+        :param get_wall_clock_time: function to retrieve the current wall clock
+            time
         :param oms_child_order: an order to be logged
         :param ccxt_child_order_response: CCXT order structure from the exchange,
             corresponding to the child order
         :param extra_info: values to include into the logged order, for example
             `{'bid': 0.277, 'ask': 0.279}`
         """
-        # Save reduce-only order in a separate subdirectory.
-        # This is done to separate market orders used for flattening the account
-        # from child orders generated by the system.
         if "reduce_only" in oms_child_order.extra_params:
+            # Save reduce-only order in a separate subdirectory. This is done to
+            # separate market orders used for flattening the account from child
+            # orders generated by the system.
             child_orders_log_dir = os.path.join(self._log_dir, "reduce_only")
         else:
             child_orders_log_dir = self._log_dir
-        # Add extra_info.
+        # Add `extra_info` to the OMS child order.
         logged_oms_child_order = oms_child_order.to_dict()
         hdbg.dassert_not_intersection(
             logged_oms_child_order.keys(),
@@ -216,7 +227,7 @@ class CcxtLogger:
         logged_oms_child_order["ccxt_id"] = logged_oms_child_order[
             "extra_params"
         ].get("ccxt_id", -1)
-        # Generate file name.
+        # Get current timestamp and bar.
         wall_clock_time_str = hdateti.timestamp_to_str(get_wall_clock_time())
         bar_timestamp = hwacltim.get_current_bar_timestamp(
             as_str=True, include_msec=True
@@ -252,7 +263,6 @@ class CcxtLogger:
             hprint.to_str("response_file_name"),
         )
 
-    # TODO(gp): P0, @all can we remove the extra dir `child_order_fills`?
     def log_ccxt_fills(
         self,
         get_wall_clock_time: Callable,
@@ -443,6 +453,8 @@ class CcxtLogger:
         self,
         get_wall_clock_time: Callable,
         bid_ask_data: pd.DataFrame,
+        *,
+        log_full_experiment_data: bool = False,
     ) -> None:
         """
         Log bid_ask data for replay the CCXT exchange. The logging happens
@@ -459,7 +471,7 @@ class CcxtLogger:
         )
         bid_ask_log_filename = os.path.join(
             self._log_dir,
-            self.BID_ASK,
+            self.BID_ASK_FULL if log_full_experiment_data else self.BID_ASK,
             f"{bar_timestamp}.{wall_clock_time}.csv",
         )
         # Create enclosing dir.
@@ -715,9 +727,7 @@ class CcxtLogger:
         # Read all the files.
         parent_orders = []
         # Load individual orders as pd.Series.
-        for path in tqdm(
-            files, desc=f"Loading files from '{self._oms_parent_orders_dir}'"
-        ):
+        for path in tqdm(files, desc=f"Loading '{self._oms_parent_orders_dir}'"):
             # Load parent order files from JSON format.
             data = hio.from_json(path, use_types=True)
             parent_orders.extend(data)
@@ -1052,7 +1062,12 @@ class CcxtLogger:
             )
         return ccxt_fills
 
-    def load_bid_ask_files(self, *, abort_on_missing_data: bool = True) -> List:
+    def load_bid_ask_files(
+        self,
+        *,
+        abort_on_missing_data: bool = True,
+        load_data_for_full_period: bool = False,
+    ) -> List:
         """
         Load the list of bid ask file paths.
 
@@ -1060,6 +1075,9 @@ class CcxtLogger:
         directly from `RawDataReader` prior to any transformations.
 
         :param abort_on_missing_data: same interface as `load_all_data()`.
+        :param load_data_for_full_period: if True loads data fetched for the
+         entire experiment independently of the run, otherwise loads data logged during
+         the experiment run.
 
         Example of data returned:
         [
@@ -1069,11 +1087,18 @@ class CcxtLogger:
         "log/bid_ask/20231009_212500.20231009-172800.csv",
         ]
         """
-        data_key = "bid_ask_files"
+        data_key = (
+            "bid_ask_full_files" if load_data_for_full_period else "bid_ask_files"
+        )
+        bid_ask_dir = (
+            self._bid_ask_full_dir
+            if load_data_for_full_period
+            else self._bid_ask_dir
+        )
         if not self._has_data[data_key]:
             self._fatal_missing_data(data_key, abort_on_missing_data)
             return []
-        files = self._get_files(self._bid_ask_dir)
+        files = self._get_files(bid_ask_dir)
         return files
 
     def load_exchange_markets(
@@ -1545,6 +1570,13 @@ class CcxtLogger:
         if self._path_exists(bid_ask_dir):
             self._has_data["bid_ask_files"] = True
             self._bid_ask_dir = bid_ask_dir
+        # Get subdirectory for bid ask data for the full
+        # experiment period.
+        # E.g. 'system_log_dir_20230315_30minutes/bid_ask_full/'.
+        bid_ask_dir_full = os.path.join(self._log_dir, self.BID_ASK_FULL)
+        if self._path_exists(bid_ask_dir):
+            self._has_data["bid_ask_full_files"] = True
+            self._bid_ask_full_dir = bid_ask_dir_full
         # Get subdirectory for exchange markets.
         # E.g. 'system_log_dir_20230315_30minutes/exchange_markets/'.
         exchange_markets_dir = os.path.join(self._log_dir, self.EXCHANGE_MARKETS)
@@ -1870,7 +1902,7 @@ class CcxtLogger:
         """
         files = self._get_files(dir_name)
         data_list = []
-        for path in tqdm(files, desc=f"Loading `{dir_name}` files..."):
+        for path in tqdm(files, desc=f"Loading '{dir_name}'"):
             data = hio.from_json(path, use_types=True)
             if append_list:
                 data_list.append(data)

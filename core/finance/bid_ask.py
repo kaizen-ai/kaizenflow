@@ -193,7 +193,8 @@ def transform_bid_ask_long_data_to_wide(
     bid_ask_cols = [
         col
         for col in df.columns
-        if col.startswith(bid_prefix) or col.startswith(ask_prefix)
+        # TODO(Juraj): ad-hoc hack, address properly in #CmTask7387.
+        if col.startswith((bid_prefix, ask_prefix, "log", "half"))
     ]
     # Index of pivoted data shouldn't also contain `level` (used as columns) and `id` (creates duplicates).
     non_bid_ask_cols = [
@@ -215,6 +216,7 @@ def transform_bid_ask_long_data_to_wide(
     return df
 
 
+# TODO(Juraj): update after new columns addition in #7224.
 def get_bid_ask_columns_by_level(
     level: int,
     *,
@@ -223,11 +225,20 @@ def get_bid_ask_columns_by_level(
     ask_prefix: str = "ask_",
     price_name: str = "price",
     size_name: str = "size",
+    bid_ask_midpoint_name: str = "bid_ask_midpoint",
+    log_size_imbalance_name: str = "log_size_imbalance",
+    var_suffix: str = "_var",
+    autocovar_suffix: str = "_autocovar",
     price_features: Optional[List[str]] = None,
     size_features: Optional[List[str]] = None,
+    extra_features: Optional[List[str]] = None,
 ) -> List[str]:
     """
-    Get bid/ask column names based on the specified order book depth.
+    Get resampled bid/ask data column names based on the specified order book
+    depth.
+
+    The column set depends on how the resampling is done in
+    core/finance/bid_ask.py::resample_bid_ask_data_to_1min
 
     :param level: get column names up to a certain `level` (including), e.g.,
         if `level=2` return columns for level 1 and 2
@@ -240,6 +251,8 @@ def get_bid_ask_columns_by_level(
         price_features = ["open", "high", "low", "close", "mean"]
     if size_features is None:
         size_features = ["open", "max", "min", "close", "mean"]
+    if extra_features is None:
+        extra_features = ["100ms"]
     # Associate prices/sizes with the corresponding features, e.g., for prices
     # we use `high/low` while for sizes we use `min/max` notation.
     bid_ask_feature_mapping = {
@@ -247,6 +260,13 @@ def get_bid_ask_columns_by_level(
         f"{bid_prefix}{size_name}": size_features,
         f"{ask_prefix}{price_name}": price_features,
         f"{ask_prefix}{size_name}": size_features,
+        bid_ask_midpoint_name: size_features,
+        f"{bid_ask_midpoint_name}{var_suffix}": extra_features,
+        f"{bid_ask_midpoint_name}{autocovar_suffix}": extra_features,
+        log_size_imbalance_name: size_features,
+        f"{log_size_imbalance_name}{var_suffix}": extra_features,
+        f"{log_size_imbalance_name}{autocovar_suffix}": extra_features,
+        "half_spread": size_features,
     }
     bid_ask_columns = []
     # Generate column names given order book depth.
@@ -258,48 +278,3 @@ def get_bid_ask_columns_by_level(
                     f"{level_prefix}{i}.{bid_ask_col}.{feature}"
                 )
     return bid_ask_columns
-
-
-# TODO(Paul): Add more refined bid/ask vol calculations.
-def compute_bid_ask_metrics(
-    bid_ask_data: pd.DataFrame, n_data_points: int
-) -> pd.DataFrame:
-    """
-    Compute bid-ask metrics.
-
-    - half spread
-    - bid-ask midpoint
-    - half spread bps
-    - bid volume bps
-    - ask volume bps
-    """
-    half_spread = 0.5 * (
-        bid_ask_data["level_1.ask_price.close"]
-        - bid_ask_data["level_1.bid_price.close"]
-    )
-    bid_ask_data["half_spread"] = half_spread
-    bid_ask_midpoint = 0.5 * (
-        bid_ask_data["level_1.ask_price.close"]
-        + bid_ask_data["level_1.bid_price.close"]
-    )
-    bid_ask_data["bid_ask_midpoint"] = bid_ask_midpoint
-    bid_ask_data["half_spread_bps"] = 1e4 * half_spread / bid_ask_midpoint
-    # TODO(Paul): Add more refined bid/ask vol calculations.
-    n_data_points = 30
-    bid_vol = (
-        bid_ask_data.groupby("full_symbol")["level_1.bid_price.close"]
-        .ffill()
-        .pct_change()
-        .rolling(n_data_points)
-        .std()
-    )
-    bid_ask_data["bid_vol_bps"] = 1e4 * bid_vol
-    ask_vol = (
-        bid_ask_data.groupby("full_symbol")["level_1.ask_price.close"]
-        .ffill()
-        .pct_change()
-        .rolling(n_data_points)
-        .std()
-    )
-    bid_ask_data["ask_vol_bps"] = 1e4 * ask_vol
-    return bid_ask_data

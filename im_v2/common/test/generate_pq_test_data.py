@@ -20,6 +20,12 @@ Generate Parquet files for testing.
 .../tiled.bar_data/asset_id=10690/year=2021/month=11
 .../tiled.bar_data/asset_id=10690/year=2021/month=11/data.parquet
 ```
+
+# TODO(Grisha): consider moving out from `*/test` since importing `test` folders
+# is not a good practice.
+Import as:
+
+import im_v2.common.test.generate_pq_test_data as imvctgptd
 """
 
 import argparse
@@ -106,6 +112,8 @@ class ParquetDataFrameGenerator:
         Create core dataframes that are updated according to the output type.
 
         :return: list of core dataframes for specified assets with string values
+        Example:
+
         ```
                      asset
         2000-01-01       A
@@ -131,6 +139,8 @@ class ParquetDataFrameGenerator:
         Update core dataframes with additional columns.
 
         :return: updated core dataframe as presented below
+        Example:
+
         ```
                     idx asset  val1  val2
         2000-01-01    0     A    00    00
@@ -160,6 +170,8 @@ class ParquetDataFrameGenerator:
         Update core dataframes with additional columns.
 
         :return: update core dataframe as presented below
+        Example:
+
         ```
         vendor_date  interval  start_time    end_time ticker currency  open    id
          2021-11-24        60  1637762400  1637762460      A      USD   100     1
@@ -199,6 +211,8 @@ class ParquetDataFrameGenerator:
         Update core dataframes with additional columns.
 
         :return: updated core dataframe as presented below
+        Example:
+
         ```
                     full_symbol   close
         2000-01-01        10689     100
@@ -226,21 +240,21 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         type=str,
         required=True,
-        help="Location that will be used to store generated data",
+        help="Destination dir for generated data",
     )
     parser.add_argument(
         "--start_date",
         action="store",
         type=str,
         required=True,
-        help="From when is data going to be created, value included",
+        help="Date from which the data is generated, value included",
     )
     parser.add_argument(
         "--end_date",
         action="store",
         type=str,
         required=True,
-        help="Until when is data going to be created, value excluded",
+        help="Date until which the data is generated, value excluded",
     )
     parser.add_argument(
         "--freq",
@@ -260,6 +274,7 @@ def _parse() -> argparse.ArgumentParser:
         "--asset_col_name",
         action="store",
         type=str,
+        required=True,
         help="Name of the column that stores assets",
     )
     parser.add_argument(
@@ -274,7 +289,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         type=str,
         default="by_date",
-        help="Partition Parquet dataframe by time",
+        help="Partition mode for parquet DataFrame, default by date",
     )
     parser.add_argument(
         "--custom_partition_cols",
@@ -292,25 +307,41 @@ def _parse() -> argparse.ArgumentParser:
     return parser
 
 
-def _run(parser: argparse.ArgumentParser) -> None:
-    # Parse args.
-    args = parser.parse_args()
-    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+def generate_parquet_files(
+    start_date: str,
+    end_date: str,
+    assets: List[Union[str, int]],
+    asset_col_name: str,
+    dst_dir: str,
+    *,
+    freq: str = "1H",
+    output_type: str = "basic",
+    partition_mode: str = "by_date",
+    custom_partition_cols: str = None,
+    reset_index: bool = False,
+) -> None:
+    """
+    Generate parquet files for testing.
+
+    :param start_date: date from which the data is generated, value
+        included
+    :param end_date: date until which the data is generated, value
+        excluded
+    :param assets: list of assets that can be either names or ids
+    :param asset_col_name: name of the column that stores assets
+    :param dst_dir: destination dir for generated data
+    :param freq: frequency of data generation
+    :param output_type: type of data that is generated
+    :param partition_mode: Partition mode for parquet DataFrame, default
+        by date
+    :param custom_partition_cols: overrides default partition by time
+    :param reset_index: reset dataframe index to default sequential
+        integer values
+    """
     # Generate timespan.
-    start_date = args.start_date
-    end_date = args.end_date
     hdbg.dassert_lt(start_date, end_date)
     timespan = pd.date_range(start_date, end_date)
     hdbg.dassert_lt(2, len(timespan))
-    # Obtain remaining args.
-    freq = args.freq
-    output_type = args.output_type
-    partition_mode = args.partition_mode
-    assets = args.assets
-    assets = assets.split(",")
-    asset_col_name = args.asset_col_name
-    custom_partition_cols = args.custom_partition_cols
-    dst_dir = args.dst_dir
     # Run dataframe generation.
     pdg = ParquetDataFrameGenerator(
         start_date, end_date, output_type, assets, asset_col_name, freq
@@ -328,7 +359,7 @@ def _run(parser: argparse.ArgumentParser) -> None:
         hdbg.dassert_is_subset(partition_cols, custom_partition_cols)
         partition_cols = custom_partition_cols
     # Partition and write dataset.
-    if args.reset_index:
+    if reset_index:
         df = df.reset_index(drop=True)
     # TODO(Nikola): When direct run is possible, expose usage of `aws_profile`
     #   so generator can be used in conjunction with `helpers.hmoto.S3Mock_TestCase`.
@@ -336,5 +367,24 @@ def _run(parser: argparse.ArgumentParser) -> None:
     hparque.to_partitioned_parquet(df, partition_cols, dst_dir)
 
 
+def _main(parser: argparse.ArgumentParser) -> None:
+    # Parse args.
+    args = parser.parse_args()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    assets = args.assets.split(",")
+    generate_parquet_files(
+        args.start_date,
+        args.end_date,
+        assets,
+        args.asset_col_name,
+        args.dst_dir,
+        freq=args.freq,
+        output_type=args.output_type,
+        partition_mode=args.partition_mode,
+        custom_partition_cols=args.custom_partition_cols,
+        reset_index=args.reset_index,
+    )
+
+
 if __name__ == "__main__":
-    _run(_parse())
+    _main(_parse())

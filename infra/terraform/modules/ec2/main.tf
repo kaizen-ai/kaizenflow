@@ -28,6 +28,13 @@ resource "aws_instance" "EC2Instance" {
   }
 }
 
+resource "aws_route" "EC2InstanceRoute" {
+  count                  = length(var.instance_routes)
+  destination_cidr_block = var.instance_routes[count.index].destination_cidr_block
+  instance_id            = lookup(local.instance_name_to_id, var.instance_routes[count.index].instance_id, "")
+  route_table_id         = lookup(var.rt_name_to_id, var.instance_routes[count.index].route_table_name, "")
+}
+
 resource "aws_key_pair" "EC2KeyPair" {
   count      = length(var.ec2_configs)
   key_name   = var.ec2_configs[count.index].key_pair_name

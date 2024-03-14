@@ -1,0 +1,22 @@
+---
+######################################
+## Airflow LOGs PersistentVolumeClaim
+######################################
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: airflow-logs-pvc
+  namespace: airflow
+  labels:
+    tier: airflow
+    component: logs-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc
+  resources:
+    requests:
+      storage: 21Gi
+  selector:
+    matchLabels:
+      component: logs-pv

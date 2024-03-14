@@ -1,0 +1,23 @@
+---
+######################################
+## Airflow LOGs PersistentVolume
+######################################
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: airflow-logs-pv
+  namespace: airflow
+  labels:
+    tier: airflow
+    component: logs-pv
+spec:
+  capacity:
+    storage: 21Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: efs-sc
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: fs-0822d9a874beee46f:/airflow/logs
