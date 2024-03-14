@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 
 import core.real_time as creatime
+import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
@@ -1940,7 +1941,7 @@ class TestCcxtLogger2(hunitest.TestCase):
             "reduce_only",
             logger.OMS_CHILD_ORDERS,
         )
-        cmd = f"find {child_order_log_dir} -type f -name *.json"
+        cmd = f"find {child_order_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read log.
         data = hio.from_json(path, use_types=True)
@@ -1968,7 +1969,7 @@ class TestCcxtLogger2(hunitest.TestCase):
             "reduce_only",
             logger.CCXT_CHILD_ORDER_RESPONSE,
         )
-        cmd = f"find {child_order_log_dir} -type f -name *.json"
+        cmd = f"find {child_order_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read log.
         data = hio.from_json(path, use_types=True)
@@ -2036,7 +2037,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         logger.log_ccxt_fills(get_wall_clock_time, fills)
         # Find a JSON file where CCXT fills are saved.
         ccxt_fills_log_dir = os.path.join(log_dir, logger.CCXT_FILLS)
-        cmd = f"find {ccxt_fills_log_dir} -type f -name *.json"
+        cmd = f"find {ccxt_fills_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read.
         data = hio.from_json(path, use_types=True)
@@ -2148,7 +2149,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         ccxt_trades_log_dir = os.path.join(
             log_dir, logger.CCXT_CHILD_ORDER_TRADES
         )
-        cmd = f"find {ccxt_trades_log_dir} -type f -name *.json"
+        cmd = f"find {ccxt_trades_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read log.
         data = hio.from_json(path, use_types=True)
@@ -2231,7 +2232,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         logger.log_oms_fills(get_wall_clock_time, oms_fills)
         # Find OMS fills json log file.
         oms_fills_log_dir = os.path.join(log_dir, logger.OMS_FILLS)
-        cmd = f"find {oms_fills_log_dir} -type f -name *.json"
+        cmd = f"find {oms_fills_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read log.
         data = hio.from_json(path, use_types=True)
@@ -2266,10 +2267,13 @@ class TestCcxtLogger2(hunitest.TestCase):
         oms_parent_orders = self._create_oms_parent_orders()
         # Log OMS parent order data.
         logger.log_oms_parent_orders(get_wall_clock_time, oms_parent_orders)
+        # TODO(gp): Factor out this snippet of code in a function.
         # Find OMS parent order json log file.
         oms_parent_order_log_dir = os.path.join(log_dir, logger.OMS_PARENT_ORDERS)
-        cmd = f"find {oms_parent_order_log_dir} -type f -name *.json"
+        hdbg.dassert_dir_exists(oms_parent_order_log_dir)
+        cmd = f"find {oms_parent_order_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
+        hdbg.dassert_lte(1, len(path), "No JSON files in %s", oms_parent_order_log_dir)
         # Read log.
         data = hio.from_json(path, use_types=True)
         act = pprint.pformat(data)
@@ -2367,7 +2371,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         )
         # Find exchange markets JSON log file.
         exchange_markets_log_dir = os.path.join(log_dir, logger.EXCHANGE_MARKETS)
-        cmd = f"find {exchange_markets_log_dir} -type f -name *.json"
+        cmd = f"find {exchange_markets_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read log.
         data = hio.from_json(path, use_types=True)
@@ -2425,7 +2429,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
         # Find leverage info JSON log file.
         leverage_info_log_dir = os.path.join(log_dir, logger.LEVERAGE_INFO)
-        cmd = f"find {leverage_info_log_dir} -type f -name *.json"
+        cmd = f"find {leverage_info_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read log.
         data = hio.from_json(path, use_types=True)
@@ -2498,7 +2502,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         logger.log_positions(get_wall_clock_time, positions)
         # Find positions json log file.
         positions_log_dir = os.path.join(log_dir, logger.POSITIONS)
-        cmd = f"find {positions_log_dir} -type f -name *.json"
+        cmd = f"find {positions_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read log.
         data = hio.from_json(path, use_types=True)
@@ -2601,7 +2605,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         logger.log_balance(get_wall_clock_time, balance)
         # Find balances json log file.
         balances_log_dir = os.path.join(log_dir, logger.BALANCES)
-        cmd = f"find {balances_log_dir} -type f -name *.json"
+        cmd = f"find {balances_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read log.
         data = hio.from_json(path, use_types=True)
@@ -2773,7 +2777,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         # Build a path to a child orders log dir.
         child_order_log_dir = os.path.join(log_dir, logger.OMS_CHILD_ORDERS)
         # Find a csv file where child order information is saved.
-        cmd = f"find {child_order_log_dir} -type f -name *.json"
+        cmd = f"find {child_order_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         data = hio.from_json(path, use_types=True)
         actual = pprint.pformat(data)
@@ -2781,7 +2785,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         # Build a path to a CCXT order response log dir.
         ccxt_log_dir = os.path.join(log_dir, logger.CCXT_CHILD_ORDER_RESPONSE)
         # Find a csv file where CCXT order response information is saved.
-        cmd = f"find {ccxt_log_dir} -type f -name *.json"
+        cmd = f"find {ccxt_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         data = hio.from_json(path, use_types=True)
         actual = pprint.pformat(data)
