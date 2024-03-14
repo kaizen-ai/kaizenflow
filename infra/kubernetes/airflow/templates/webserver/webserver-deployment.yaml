@@ -1,0 +1,127 @@
+---
+################################
+## Airflow Webserver Deployment
+#################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-webserver
+  namespace: airflow
+  labels:
+    tier: airflow
+    component: webserver
+spec:
+  replicas: 1
+  strategy:
+    # Here we define the rolling update strategy
+    # - maxSurge define how many pod we can add at a time
+    # - maxUnavailable define how many pod can be unavailable
+    #   during the rolling update
+    # Setting maxUnavailable to 0 would make sure we have the appropriate
+    # capacity during the rolling update.
+    # You can also use percentage based value instead of integer.
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      tier: airflow
+      component: webserver
+  template:
+    metadata:
+      labels:
+        tier: airflow
+        component: webserver
+    spec:
+      serviceAccountName: airflow-webserver
+      nodeSelector:
+        {}
+      restartPolicy: Always
+      securityContext:
+        runAsUser: 50000
+        fsGroup: 0
+      initContainers:
+        - name: volume-logs-permissions
+          image: busybox
+          command: [ "sh", "-c", "chown -R 50000:0 /opt/airflow/logs/" ]
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - mountPath: /opt/airflow/logs/
+              name: logs
+        - name: volume-dags-permissions
+          image: busybox
+          command: [ "sh", "-c", "chown -R 50000:0 /opt/airflow/dags/" ]
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - mountPath: /opt/airflow/dags/
+              name: dags
+      containers:
+        - name: airflow-webserver
+          image: apache/airflow:2.7.1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          args:
+            - bash
+            - -c
+            - exec airflow webserver
+          resources:
+            {}
+          volumeMounts:
+            - name: logs
+              mountPath: "/opt/airflow/logs"
+            - name: dags
+              mountPath: "/opt/airflow/dags"
+          ports:
+            - name: airflow-ui
+              containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 5
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 20
+            failureThreshold: 6
+            periodSeconds: 10
+          envFrom:
+            - secretRef:
+                name: airflow-secret
+            - configMapRef:
+                name: airflow-config
+          env:
+            []
+            # Dynamically created environment variables
+            # Dynamically created secret envs
+            # Extra env          
+            # Hard Coded Airflow Envs
+      volumes:
+        - name: logs
+          persistentVolumeClaim:
+            claimName: airflow-logs-pvc
+        - name: dags
+          persistentVolumeClaim:
+            claimName: airflow-dags-pvc

@@ -178,7 +178,7 @@ def from_parquet(
             # which preserves the returned resolution.
             # See CmTask7097 for details. https://github.com/cryptokaizen/cmamp/issues/7097
             if isinstance(df.index, pd.DatetimeIndex):
-                df.index = df.index.as_unit("ns")            
+                df.index = df.index.as_unit("ns")
     # Report stats about the df.
     _LOG.debug("df.shape=%s", str(df.shape))
     mem = df.memory_usage().sum()

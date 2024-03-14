@@ -93,7 +93,6 @@ export TERM=xterm-256color
 # These are set in `dev_scripts/setenv_amp.sh`.
 #export AM_ECR_BASE_PATH="665840871993.dkr.ecr.us-east-1.amazonaws.com"
 #export AM_S3_BUCKET="alphamatic-data"
-export AM_TELEGRAM_TOKEN="885497142:AAHOe-Uabi2BIU-eof3Pyyjkq1bbPn1v5do"
 
 export IP_US=3.209.10.219
 export IP_EU=13.53.135.255

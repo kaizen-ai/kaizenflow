@@ -27,6 +27,7 @@ import market_data as mdata
 import oms.broker.broker as obrobrok
 import oms.broker.ccxt.abstract_ccxt_broker as obcaccbr
 import oms.broker.ccxt.ccxt_broker as obccccbr
+import oms.broker.ccxt.ccxt_broker_instances as obccbrin
 import oms.broker.ccxt.ccxt_logger as obcccclo
 import oms.broker.ccxt.ccxt_utils as obccccut
 import oms.broker.ccxt.test.test_ccxt_utils as obcttcut
@@ -1436,20 +1437,27 @@ class TestSaveBrokerData1(hunitest.TestCase):
         _LOG.debug("asset_fees dict '%s' ...", fees_info)
         self._save_broker_data(fees_info)
 
-    @staticmethod
-    def _get_test_broker() -> obcaccbr.AbstractCcxtBroker:
+    def _get_test_broker(self) -> obcaccbr.AbstractCcxtBroker:
         # Initialize broker.
-        universe_version = "v7.4"
+        # Use v8 universe as it is a super-set of all the universes that we use
+        # (e.g., v7.4, v7.5, v8.1, v8.2).
+        # TODO(Grisha): Ideally save information about all currently listed
+        # names.
+        universe_version = "v8"
+        exchange = "binance"
+        stage = "preprod"
         account_type = "trading"
-        contract_type = "futures"
-        secret_id = 3
-        bid_ask_im_client = None
-        broker = _get_test_broker(
+        secret_id = 4
+        secret_identifier = ohsseide.SecretIdentifier(
+            exchange, stage, account_type, secret_id
+        )
+        log_dir = self.get_scratch_space()
+        # Use the exchange-only Broker because we only need to fetch Binance
+        # limits.
+        broker = obccbrin.get_CcxtBroker_exchange_only_instance1(
             universe_version,
-            account_type,
-            contract_type,
-            secret_id,
-            bid_ask_im_client,
+            secret_identifier,
+            log_dir,
         )
         return broker
 
