@@ -73,14 +73,15 @@ def main():
     )
 
     if found_in_files:
-        print("Input found in the following Markdown files:")
+        _LOG.info("Input found in the following Markdown files:")
         for file_path, line_num in found_in_files:
             relative_path = os.path.relpath(file_path, git_root)
             url = f"{git_root}/{relative_path}#L{line_num}"
-            print(url)
+            _LOG.info(url)
     else:
-        print("Input not found in any Markdown files.")
+        _LOG.info("Input not found in any Markdown files.")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)  
     main()
