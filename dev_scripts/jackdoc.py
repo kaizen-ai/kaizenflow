@@ -16,7 +16,8 @@ import logging
 import os
 import subprocess
 import re
-import helpers.hio as hio  
+import helpers.hio as hio
+import helpers.hgit as hgit
 
 _LOG = logging.getLogger(__name__)
 
@@ -35,24 +36,15 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def get_git_root():
-    try:
-        # Run git command to get the root directory of the repository
-        git_root = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).decode().strip()
-        return git_root
-    except subprocess.CalledProcessError:
-        raise RuntimeError("Not a Git repository or Git is not installed.")
-
-
 def remove_toc(content):
     # Remove everything between <!-- toc --> and <!-- tocstop -->
     toc_pattern = r"<!--\s*toc\s*-->(.*?)<!--\s*tocstop\s*-->"
     return re.sub(toc_pattern, "", content, flags=re.DOTALL)
 
 
-def search_in_markdown_files(git_root, search_term, skip_toc=False, sections_only=False, subdir=None):
+def search_in_markdown_files(client_root, search_term, skip_toc=False, sections_only=False, subdir=None):
     found_in_files = []
-    docs_path = os.path.join(git_root, DOCS_DIR, subdir) if subdir else os.path.join(git_root, DOCS_DIR)
+    docs_path = os.path.join(client_root, DOCS_DIR, subdir) if subdir else os.path.join(client_root, DOCS_DIR)
 
     for root, _, files in os.walk(docs_path):
         for file in files:
@@ -75,16 +67,16 @@ def search_in_markdown_files(git_root, search_term, skip_toc=False, sections_onl
 
 def main():
     args = parse_arguments()
-    git_root = get_git_root()
+    client_root = hgit.get_client_root()
     found_in_files = search_in_markdown_files(
-        git_root, args.search_term, args.skip_toc, args.sections_only, args.subdir
+        client_root, args.search_term, args.skip_toc, args.sections_only, args.subdir
     )
 
     if found_in_files:
         print("Input found in the following Markdown files:")
         for file_path, line_num in found_in_files:
-            relative_path = os.path.relpath(file_path, git_root)
-            url = f"{git_root}/{relative_path}#L{line_num}"
+            relative_path = os.path.relpath(file_path, client_root)
+            url = f"{client_root}/{relative_path}#L{line_num}"
             print(url)
     else:
         print("Input not found in any Markdown files.")
