@@ -14,10 +14,10 @@ import dev_scripts.jackdoc as jackdoc
 import argparse
 import logging
 import os
-import subprocess
 import re
-import helpers.hio as hio
+
 import helpers.hgit as hgit
+import helpers.hio as hio
 
 _LOG = logging.getLogger(__name__)
 
@@ -29,9 +29,19 @@ def parse_arguments():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("search_term", help="Regex pattern to search in Markdown files")
-    parser.add_argument("--skip-toc", action="store_true", help="Skip results in the table of contents (TOC)")
-    parser.add_argument("--sections-only", action="store_true", help="Search only in sections (lines starting with '#')")
+    parser.add_argument(
+        "search_term", help="Regex pattern to search in Markdown files"
+    )
+    parser.add_argument(
+        "--skip-toc",
+        action="store_true",
+        help="Skip results in the table of contents (TOC)",
+    )
+    parser.add_argument(
+        "--sections-only",
+        action="store_true",
+        help="Search only in sections (lines starting with '#')",
+    )
     parser.add_argument("--subdir", help="Subdirectory to search within")
     return parser.parse_args()
 
@@ -42,9 +52,15 @@ def remove_toc(content):
     return re.sub(toc_pattern, "", content, flags=re.DOTALL)
 
 
-def search_in_markdown_files(git_root, search_term, skip_toc=False, sections_only=False, subdir=None):
+def search_in_markdown_files(
+    git_root, search_term, skip_toc=False, sections_only=False, subdir=None
+):
     found_in_files = []
-    docs_path = os.path.join(git_root, DOCS_DIR, subdir) if subdir else os.path.join(git_root, DOCS_DIR)
+    docs_path = (
+        os.path.join(git_root, DOCS_DIR, subdir)
+        if subdir
+        else os.path.join(git_root, DOCS_DIR)
+    )
 
     for root, _, files in os.walk(docs_path):
         for file in files:
@@ -54,9 +70,9 @@ def search_in_markdown_files(git_root, search_term, skip_toc=False, sections_onl
                 content = hio.from_file(md_file)
                 # If --skip-toc is enabled, remove TOC from the content
                 content = remove_toc(content) if skip_toc else content
-                lines = content.split('\n')
+                lines = content.split("\n")
                 for line_num, line in enumerate(lines, start=1):
-                    if sections_only and not line.startswith('#'):
+                    if sections_only and not line.startswith("#"):
                         continue  # Skip lines if --sections-only is enabled and not a section heading
 
                     if re.search(search_term, line):
@@ -83,5 +99,5 @@ def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)  
+    logging.basicConfig(level=logging.INFO)
     main()
