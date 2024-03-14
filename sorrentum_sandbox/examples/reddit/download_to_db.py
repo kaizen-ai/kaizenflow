@@ -32,6 +32,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         start_timestamp=start_timestamp, end_timestamp=end_timestamp
     )
     if len(raw_data.get_data()) > 0:
+        _LOG.info("Connecting to Mongo")
         mongo_saver = ssexredb.MongoDataSaver(
             mongo_client=pymongo.MongoClient(
                 host=ssexredb.MONGO_HOST,
@@ -41,10 +42,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
             ),
             db_name="reddit",
         )
+        _LOG.info("Saving %s records into Mongo", len(raw_data.get_data()))
         mongo_saver.save(data=raw_data, collection_name=args.collection_name)
     else:
         _LOG.info(
-            "Empty output for datetime range: %s -  %s",
+            "Empty output for datetime range: %s - %s",
             args.start_timestamp,
             args.end_timestamp,
         )
