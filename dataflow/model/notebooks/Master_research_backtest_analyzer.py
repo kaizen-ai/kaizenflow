@@ -30,18 +30,23 @@
 import datetime
 import logging
 import os
-from typing import Dict
+from typing import Dict, List
 
 import pandas as pd
 
 import core.config as cconfig
+import core.finance as cofinanc
 import core.plotting as coplotti
+import dataflow.core as dtfcore
 import dataflow.model as dtfmod
+import dataflow_amp.system.Cx as dtfamsysc
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
+import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
+import market_data as mdata
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -55,6 +60,7 @@ hprint.config_notebook()
 
 # %% [markdown]
 # # Functions
+
 
 # %%
 # TODO(Dan): Move to a lib.
@@ -70,7 +76,7 @@ def build_research_backtest_analyzer_config_dict(
         sweep_param_keys = default_config["sweep_param", "keys"]
         hdbg.dassert_isinstance(sweep_param_keys, tuple)
         sweep_param_values = default_config["sweep_param", "values"]
-        hdbg.dassert_isinstance(sweep_param_values, tuple)
+        hdbg.dassert_isinstance(sweep_param_values, list)
         # Build config dict.
         config_dict = {}
         for val in sweep_param_values:
@@ -104,14 +110,31 @@ else:
     amp_dir = hgit.get_amp_abs_path()
     dir_name = os.path.join(
         amp_dir,
-        "dataflow/model/test/outcomes/Test_run_master_research_backtest_analyzer/input/tiled_results",
+        "/shared_data/backtest.danya/build_tile_configs.C11a.ccxt_v8_1-all.6T.2023-06-01_2024-01-31.ins.run0/tiled_results",
     )
     default_config_dict = {
         "dir_name": dir_name,
-        "start_date": datetime.date(2000, 1, 1),
-        "end_date": datetime.date(2000, 1, 31),
+        "start_date": datetime.date(2023, 6, 1),
+        "end_date": datetime.date(2024, 1, 31),
         "asset_id_col": "asset_id",
-        "pnl_resampling_frequency": "15T",
+        "pnl_resampling_frequency": "D",
+        "rule": "6T",
+        "im_client_config": {
+            "vendor": "ccxt",
+            "universe_version": "v8.1",
+            "root_dir": "s3://cryptokaizen-data.preprod/v3",
+            "partition_mode": "by_year_month",
+            "dataset": "ohlcv",
+            "contract_type": "futures",
+            "data_snapshot": "",
+            "aws_profile": "ck",
+            "version": "v1_0_0",
+            "download_universe_version": "v8",
+            "tag": "downloaded_1min",
+            "download_mode": "periodic_daily",
+            "downloading_entity": "airflow",
+            "resample_1min": False,
+        },
         "annotate_forecasts_kwargs": {
             "style": "longitudinal",
             "quantization": 30,
@@ -119,26 +142,32 @@ else:
             "initialize_beginning_of_day_trades_to_zero": False,
             "burn_in_bars": 3,
             "compute_extended_stats": True,
-            "target_dollar_risk_per_name": 1e2,
-            "modulate_using_prediction_magnitude": True,
+            "target_dollar_risk_per_name": 1.0,
+            "modulate_using_prediction_magnitude": False,
+            "prediction_abs_threshold": 0.3,
         },
         "column_names": {
-            "price_col": "vwap",
-            "volatility_col": "vwap.ret_0.vol",
-            "prediction_col": "prediction",
+            "price_col": "open",
+            "volatility_col": "garman_klass_vol",
+            "prediction_col": "feature",
         },
         "bin_annotated_portfolio_df_kwargs": {
             "proportion_of_data_per_bin": 0.2,
             "normalize_prediction_col_values": False,
         },
-        "load_all_tiles_in_memory": False,
+        "load_all_tiles_in_memory": True,
+        "sweep_param": {
+            "keys": (
+                "column_names",
+                "price_col",
+            ),
+            "values": [
+                "open",
+            ],
+        },
     }
     default_config = cconfig.Config().from_dict(default_config_dict)
 print(default_config)
-
-# %%
-config_dict = build_research_backtest_analyzer_config_dict(default_config)
-print(config_dict.keys())
 
 # %% [markdown]
 # # Load tiled results
@@ -184,6 +213,14 @@ asset_tile = next(
 )
 
 # %%
+# Trim tile to the specified time interval.
+asset_tile = asset_tile[
+    (asset_tile.index >= pd.Timestamp(default_config["start_date"], tz="UTC"))
+    & (asset_tile.index <= pd.Timestamp(default_config["end_date"], tz="UTC"))
+]
+len(asset_tile)
+
+# %%
 tile_df = dtfmod.process_parquet_read_df(
     asset_tile, default_config["asset_id_col"]
 )
@@ -195,7 +232,114 @@ tile_df.columns.levels[0].to_list()
 tile_df.head(3)
 
 # %% [markdown]
+# ## Add weighted resampling price column
+
+# %%
+im_client = imvcdchpcl.HistoricalPqByCurrencyPairTileClient(
+    **default_config["im_client_config"]
+)
+columns = None
+columns_remap = None
+wall_clock_time = pd.Timestamp("2100-01-01T00:00:00+00:00")
+market_data = mdata.get_HistoricalImClientMarketData_example1(
+    im_client,
+    asset_ids,
+    columns,
+    columns_remap,
+    wall_clock_time=wall_clock_time,
+)
+#
+bar_duration = "1T"
+ohlcv_data = dtfamsysc.load_and_resample_ohlcv_data(
+    market_data,
+    pd.Timestamp(default_config["start_date"], tz="UTC"),
+    pd.Timestamp(default_config["end_date"], tz="UTC"),
+    bar_duration,
+)
+ohlcv_data.index = ohlcv_data.index.tz_convert("UTC")
+ohlcv_data.index.freq = pd.infer_freq(ohlcv_data.index)
+ohlcv_data.head(10)
+
+# %%
+_LOG.info("start_date=%s", default_config["start_date"])
+_LOG.info("end_date=%s", default_config["end_date"])
+_LOG.info("ohlcv_data min index=%s", ohlcv_data.index.min())
+_LOG.info("ohlcv_data max index=%s", ohlcv_data.index.max())
+_LOG.info("tile_df min index=%s", tile_df.index.min())
+_LOG.info("tile_df max index=%s", tile_df.index.max())
+
+
+# %%
+def resample_with_weights_ohlcv_bars(
+    df_ohlcv: pd.DataFrame,
+    price_col: str,
+    bar_duration: str,
+    weights: List[float],
+) -> pd.DataFrame:
+    """
+    Resample 1-minute data to `bar_duration` with weights.
+    """
+    resampling_node = dtfcore.GroupedColDfToDfTransformer(
+        "resample",
+        transformer_func=cofinanc.resample_with_weights,
+        **{
+            "in_col_groups": [
+                (price_col,),
+            ],
+            "out_col_group": (),
+            "transformer_kwargs": {
+                "rule": bar_duration,
+                "col": price_col,
+                "weights": weights,
+            },
+            "reindex_like_input": False,
+            "join_output_with_input": False,
+        },
+    )
+    resampled_ohlcv = resampling_node.fit(df_ohlcv)["df_out"]
+    return resampled_ohlcv
+
+
+# %%
+rule = default_config["rule"]
+rule_n_minutes = int(pd.Timedelta(rule).total_seconds() / 60)
+rule_n_minutes
+
+# %%
+weights_dict = {
+    "first_min_past": [0.0] * 1 + [1.0] + [0.0] * (rule_n_minutes - 2),
+    "second_min_past": [0.0] * 2 + [1.0] + [0.0] * (rule_n_minutes - 3),
+    "third_min_past": [0.0] * 3 + [1.0] + [0.0] * (rule_n_minutes - 4),
+}
+
+# %%
+for weight_rule, weights in weights_dict.items():
+    #
+    resampled_price_col = resample_with_weights_ohlcv_bars(
+        ohlcv_data,
+        default_config["column_names", "price_col"],
+        rule,
+        weights,
+    )
+    # Rename the resampled price column.
+    res_price_col = "_".join(
+        ["resampled", weight_rule, default_config["column_names", "price_col"]]
+    )
+    resampled_price_col.columns = resampled_price_col.columns.set_levels(
+        [res_price_col], level=0
+    )
+    # Extend sweep param config values.
+    default_config["sweep_param"]["values"].append(res_price_col)
+    # Append new column to data.
+    tile_df = pd.concat([tile_df, resampled_price_col], axis=1)
+tile_df.head()
+
+# %% [markdown]
 # # Compute portfolio bar metrics
+
+# %%
+config_dict = build_research_backtest_analyzer_config_dict(default_config)
+print(config_dict.keys())
 
 # %%
 portfolio_df_dict = {}

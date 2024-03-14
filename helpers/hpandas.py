@@ -5,6 +5,7 @@ import helpers.hpandas as hpandas
 """
 
 import csv
+import dataclasses
 import logging
 import random
 import re
@@ -218,8 +219,8 @@ def dassert_time_indexed_df(
 
     :param df: dataframe to validate
     :param allow_empty: allow empty data frames
-    :param strictly_increasing: if True the index needs to be strictly increasing,
-      instead of just increasing
+    :param strictly_increasing: if True the index needs to be strictly
+        increasing, instead of just increasing
     """
     # Verify that Pandas dataframe is passed as input.
     hdbg.dassert_isinstance(df, pd.DataFrame)
@@ -578,9 +579,10 @@ def find_gaps_in_time_series(
     :param start_timestamp: start of the time interval to check
     :param end_timestamp: end of the time interval to check
     :param freq: distance between two data points on the interval.
-      Aliases correspond to pandas.date_range's freq parameter,
-      i.e. "S" -> second, "T" -> minute.
-    :return: pd.Series representing missing points in the source time series.
+        Aliases correspond to pandas.date_range's freq parameter, i.e.
+        "S" -> second, "T" -> minute.
+    :return: pd.Series representing missing points in the source time
+        series.
     """
     _time_series = time_series
     if str(time_series.dtype) in ["int32", "int64"]:
@@ -761,8 +763,8 @@ def drop_axis_with_all_nans(
     """
     Remove columns and rows not containing information (e.g., with only nans).
 
-    The operation is not performed in place and the resulting df is returned.
-    Assume that the index is timestamps.
+    The operation is not performed in place and the resulting df is
+    returned. Assume that the index is timestamps.
 
     :param df: dataframe to process
     :param drop_rows: remove rows with only nans
@@ -987,11 +989,13 @@ def merge_dfs(
     """
     Wrap `pd.merge`.
 
-    :param threshold_col_name: a column's name to check the minimum overlap on
-    :param threshold: minimum overlap of unique values in a specified column to
-        perform the merge
-    :param intersecting_columns: allow certain columns to appear in both dataframes;
-        store both in the resulting df with corresponding suffixes
+    :param threshold_col_name: a column's name to check the minimum
+        overlap on
+    :param threshold: minimum overlap of unique values in a specified
+        column to perform the merge
+    :param intersecting_columns: allow certain columns to appear in both
+        dataframes; store both in the resulting df with corresponding
+        suffixes
     """
     _LOG.debug(
         hprint.to_str(
@@ -1225,9 +1229,7 @@ def _df_to_str(
 def df_to_str(
     df: Union[pd.DataFrame, pd.Series, pd.Index],
     *,
-    # TODO(gp): Remove this hack in the integration.
-    #handle_signed_zeros: bool = False,
-    handle_signed_zeros: bool = True,
+    handle_signed_zeros: bool = False,
     num_rows: Optional[int] = 6,
     print_dtypes: bool = False,
     print_shape_info: bool = False,
@@ -2292,13 +2294,13 @@ def to_gsheet(
     Save a dataframe to a Google sheet.
 
     :param df: the dataframe to save to a Google sheet
-    :param gsheet_name: the name of the Google sheet to save the df into;
-        the Google sheet with this name must already exist on the
+    :param gsheet_name: the name of the Google sheet to save the df
+        into; the Google sheet with this name must already exist on the
         Google Drive
     :param gsheet_sheet_name: the name of the sheet in the Google sheet
-    :param overwrite: if True, the contents of the sheet are erased before saving
-        the dataframe into it;
-        if False, the dataframe is appended to the contents of the sheet
+    :param overwrite: if True, the contents of the sheet are erased
+        before saving the dataframe into it; if False, the dataframe is
+        appended to the contents of the sheet
     """
     import gspread_pandas
 
@@ -2312,3 +2314,95 @@ def to_gsheet(
         combined_df = pd.concat([sheet_contents, df])
         df = combined_df.drop_duplicates()
     spread.df_to_sheet(df, index=False)
+
+
+# #############################################################################
+# CheckSummary
+# #############################################################################
+
+
+@dataclasses.dataclass
+class _SummaryRow:
+    """
+    Output of a check corresponding to a row of the summary df.
+    """
+
+    # Description of the check.
+    description: str
+    # Description of the output.
+    comment: str
+    # Whether the check was successful or not.
+    is_ok: bool
+
+
+class CheckSummary:
+    """
+    Collect and report the results of several checks performed in a notebook.
+    """
+
+    def __init__(self, *, title: Optional[str] = ""):
+        self.title = title
+        #
+        self._array: List[_SummaryRow] = []
+
+    def add(self, description: str, comment: str, is_ok: bool) -> None:
+        """
+        Add the result of a single check.
+        """
+        summary_row = _SummaryRow(description, comment, is_ok)
+        self._array.append(summary_row)
+
+    def is_ok(self) -> bool:
+        """
+        Compute whether all the checks were succesfull or not.
+        """
+        is_ok = all(sr.is_ok for sr in self._array)
+        return is_ok
+
+    def report_outcome(
+        self, *, notebook_output: bool = True, assert_on_error: bool = True
+    ) -> Optional[str]:
+        """
+        Report the result of the entire check.
+
+        :param notebook_output: report the result of the checks for a
+            notebook or as a string
+        :param assert_on_error: assert if one check failed
+        """
+        df = pd.DataFrame(self._array)
+
+        # Compute result as a string.
+        result = []
+        if self.title:
+            result.append("# " + self.title)
+        result.append(str(df))
+        is_ok = self.is_ok()
+        result.append(f"is_ok={is_ok}")
+        result = "\n".join(result)
+        # Display on a notebook, if needed.
+        if notebook_output:
+            if self.title:
+                print(self.title)
+
+            # Convert DataFrame to HTML with colored rows based on 'is_ok' column.
+            def _color_rows(row: bool) -> str:
+                """
+                Apply red/green color based on boolean value in `row["is_ok"]`.
+                """
+                is_ok = row["is_ok"]
+                color = "#FA6B84" if not is_ok else "#ACF3AE"
+                return [f"background-color: {color}"] * len(row)
+
+            df_html = df.style.apply(_color_rows, axis=1)
+            from IPython.display import display
+
+            display(df_html)
+            print(f"is_ok={is_ok}")
+        # Assert if at least one of the check failed.
+        if not is_ok and assert_on_error:
+            raise ValueError("The checks have failed:\n" + result)
+        # For notebooks, we want to return None, since the outcome was
+        # already displayed.
+        if notebook_output:
+            result = None
+        return result

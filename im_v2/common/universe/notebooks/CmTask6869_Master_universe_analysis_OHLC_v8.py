@@ -32,6 +32,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import scipy
 
 import core.config as cconfig
 import core.finance as cofinanc
@@ -57,19 +58,6 @@ hprint.config_notebook()
 
 
 # %% [markdown]
-# # Functions
-
-
-# %%
-def plot_standardized(data: pd.DataFrame, title: str) -> None:
-    """
-    Standardize data levels and plot.
-    """
-    data_standardized = (data - data.mean()) / data.std()
-    data_standardized.plot(title=title)
-
-
-# %% [markdown]
 # # Config
 
 # %%
@@ -84,18 +72,17 @@ else:
     config = {
         "universe": {
             "vendor": "CCXT",
-            "mode": "download",
+            "mode": "trade",
             "version": universe_version,
             "as_full_symbol": True,
         },
         "ohlcv_data": {
-            "start_timestamp": pd.Timestamp("2023-07-17T23:00:00+00:00"),
-            "end_timestamp": pd.Timestamp("2023-09-17T23:59:00+00:00"),
-            "bar_duration": "1T",
+            "start_timestamp": pd.Timestamp("2024-01-01T00:00:00+00:00"),
+            "end_timestamp": pd.Timestamp("2024-02-29T23:59:00+00:00"),
             "im_client_config": {
                 "vendor": "ccxt",
                 "universe_version": universe_version,
-                "root_dir": "s3://cryptokaizen-data-test/v3",
+                "root_dir": "s3://cryptokaizen-data.preprod/v3",
                 "resample_1min": False,
                 "partition_mode": "by_year_month",
                 "dataset": "ohlcv",
@@ -105,8 +92,8 @@ else:
                 "version": "v1_0_0",
                 "download_universe_version": "v8",
                 "tag": "downloaded_1min",
-                "download_mode": "bulk",
-                "downloading_entity": "manual",
+                "download_mode": "periodic_daily",
+                "downloading_entity": "airflow",
             },
             "market_data_config": {
                 "columns": None,
@@ -120,7 +107,7 @@ else:
         },
         "bid_ask_data": {
             "start_timestamp": pd.Timestamp("2024-01-23T00:00:00+00:00"),
-            "end_timestamp": pd.Timestamp("2024-02-16T00:00:00+00:00"),
+            "end_timestamp": pd.Timestamp("2024-02-19T00:00:00+00:00"),
             "im_client_config": {
                 "universe_version": "v8",
                 "root_dir": "s3://cryptokaizen-data-test/v3",
@@ -140,14 +127,26 @@ else:
                 "wall_clock_time": wall_clock_time,
                 "filter_data_mode": "assert",
             },
+            "rolling_window": 30,
             "column_names": {
                 "timestamp": "timestamp",
-                "full_symbol_column": "full_symbol",
+                "full_symbol": "full_symbol",
                 "close": "close",
                 "volume": "volume",
                 "volume_notional": "volume_notional",
+                "ask_price": "level_1.ask_price.close",
+                "bid_price": "level_1.bid_price.close",
             },
         },
+        "liquidity_metrics": {
+            "half_spread_bps_mean": "half_spread_bps_mean",
+            "ask_vol_bps_mean": "ask_vol_bps_mean",
+            "bid_vol_bps_mean": "bid_vol_bps_mean",
+            "bid_vol_to_half_spread_mean": "bid_vol_to_half_spread_mean",
+            "bid_vol_to_half_spread_bucket": "bid_vol_to_half_spread_bucket",
+            "half_spread_bucket": "half_spread_bucket",
+        },
+        "US_equities_tz": "America/New_York",
         "plot_kwargs": {
             "kind": "barh",
             "logx": True,
@@ -194,12 +193,11 @@ market_data = mdata.get_HistoricalImClientMarketData_example1(
 )
 
 # %%
-# Load and resample OHLCV data.
-ohlcv_data = dtfamsysc.load_and_resample_ohlcv_data(
+# Load OHLCV data.
+ohlcv_data = dtfamsysc.load_ohlcv_data(
     market_data,
     config["ohlcv_data"]["start_timestamp"],
     config["ohlcv_data"]["end_timestamp"],
-    config["ohlcv_data"]["bar_duration"],
 )
 hpandas.df_to_str(ohlcv_data, num_rows=5, log_level=logging.INFO)
 
@@ -213,13 +211,13 @@ hpandas.df_to_str(volume_notional, log_level=logging.INFO)
 
 # %%
 # Compute mean daily notional volume.
-mdv_notional = volume_notional.resample("D").sum().mean()
+mdv_notional = volume_notional.resample("D").sum().mean().rename("mdv_notional")
 mdv_notional = mdv_notional.sort_values(ascending=False).round(2)
 # Replace asset ids with full symbols.
 mdv_notional.index = [
     asset_id_to_full_symbol_mapping[idx] for idx in mdv_notional.index
 ]
-mdv_notional.name = "mdv_notional"
+# Full symbols with 0 MDV also have 0 volume and constant price in the observed time period.
 hpandas.df_to_str(mdv_notional, log_level=logging.INFO)
 
 # %%
@@ -232,9 +230,10 @@ mdv_notional.plot(
 )
 
 # %%
+# Convert to ET to be able to compare with US equities active trading hours.
 ohlcv_volume = ohlcv_data[
     config["ohlcv_data"]["column_names"]["volume"]
-].tz_convert("US/Eastern")
+].tz_convert(config["US_equities_tz"])
 ohlcv_volume = ohlcv_volume.rename(
     columns={
         col: asset_id_to_full_symbol_mapping[col] for col in ohlcv_volume.columns
@@ -247,14 +246,16 @@ mean_hourly_volume = ohlcv_volume.groupby(lambda x: x.hour).mean()
 hpandas.df_to_str(mean_hourly_volume, num_rows=5, log_level=logging.INFO)
 
 # %%
-plot_standardized(mean_hourly_volume, "Mean hourly volume")
+title = "Mean hourly volume (Z-score)"
+mean_hourly_volume.apply(scipy.stats.zscore).plot(title=title, legend=False)
 
 # %%
 mean_minutely_volume = ohlcv_volume.groupby(lambda x: x.minute).mean()
 hpandas.df_to_str(mean_minutely_volume, num_rows=5, log_level=logging.INFO)
 
 # %%
-plot_standardized(mean_minutely_volume, "Mean minutely volume")
+title = "Mean minutely volume (Z-score)"
+mean_minutely_volume.apply(scipy.stats.zscore).plot(title=title, legend=False)
 
 # %%
 # Days of the week are numbered as follows:
@@ -263,7 +264,8 @@ mean_weekday_volume = ohlcv_volume.groupby(ohlcv_volume.index.weekday).mean()
 hpandas.df_to_str(mean_weekday_volume, num_rows=5, log_level=logging.INFO)
 
 # %%
-plot_standardized(mean_weekday_volume, "Mean weekday volume")
+title = "Mean weekday volume (Z-score)"
+mean_weekday_volume.apply(scipy.stats.zscore).plot(title=title, legend=False)
 
 # %% [markdown]
 # # Bid / ask price changes
@@ -287,39 +289,31 @@ bid_ask_data = bid_ask_market_data.get_data_for_interval(
     config["bid_ask_data"]["column_names"]["timestamp"],
     asset_ids,
 )
-bid_ask_data.head()
+# Convert to ET to be able to compare with US equities active trading hours.
+bid_ask_data.index = bid_ask_data.index.tz_convert(config["US_equities_tz"])
+hpandas.df_to_str(bid_ask_data, num_rows=5, log_level=logging.INFO)
 
 # %%
-# Remove duplicates.
-use_index = True
-duplicate_columns = [config["bid_ask_data"]["column_names"]["full_symbol_column"]]
-_LOG.info(
-    "The number of rows before removing duplicates=%s", bid_ask_data.shape[0]
-)
-bid_ask_data = hpandas.drop_duplicates(
-    bid_ask_data,
-    column_subset=duplicate_columns,
-    use_index=use_index,
-)
-_LOG.info(
-    "The number of rows after removing duplicates=%s", bid_ask_data.shape[0]
-)
+# Set input parameters.
+rolling_window = config["bid_ask_data"]["rolling_window"]
+full_symbol_col = config["bid_ask_data"]["column_names"]["full_symbol"]
+ask_price_col = config["bid_ask_data"]["column_names"]["ask_price"]
+bid_price_col = config["bid_ask_data"]["column_names"]["bid_price"]
+# Get ask and bid prices for all instruments.
+# TODO(Dan): ideally we should use `HistoricalDataSource` so that it converts the data to the DataFlow format.
+ask_price_df = bid_ask_data.pivot(columns=full_symbol_col, values=ask_price_col)
+bid_price_df = bid_ask_data.pivot(columns=full_symbol_col, values=bid_price_col)
 
 # %%
-n_data_points = 30
-bid_ask_data = cofinanc.compute_bid_ask_metrics(bid_ask_data, n_data_points)
-hpandas.df_to_str(bid_ask_data, log_level=logging.INFO)
-
-# %%
-half_spread_bps_df = bid_ask_data.pivot(
-    columns="full_symbol", values="half_spread_bps"
-)
+# TODO(Dan): since this is pretty common, factor out in a lib or even create a DagBuilder objects to do that.
+bid_ask_midpoint_df = 0.5 * (ask_price_df + bid_price_df)
+half_spread_df = 0.5 * (ask_price_df - bid_price_df) / bid_ask_midpoint_df
+half_spread_bps_df = 1e4 * half_spread_df
 hpandas.df_to_str(half_spread_bps_df, log_level=logging.INFO)
 
-# %%
-half_spread_bps_mean = (
-    half_spread_bps_df.mean().sort_values().rename("half_spread_bps_mean")
-)
+# %% run_control={"marked": false}
+half_spread_bps_mean = half_spread_bps_df.mean().sort_values()
+half_spread_bps_mean.name = config["liquidity_metrics"]["half_spread_bps_mean"]
 #
 title = "Half bid/ask spread"
 ylabel = "bps"
@@ -330,11 +324,35 @@ half_spread_bps_mean.plot(
 )
 
 # %%
-bid_vol_bps_df = bid_ask_data.pivot(columns="full_symbol", values="bid_vol_bps")
+ask_vol_df = ask_price_df.ffill().pct_change().rolling(rolling_window).std()
+ask_vol_bps_df = 1e4 * ask_vol_df
+hpandas.df_to_str(ask_vol_bps_df, log_level=logging.INFO)
+
+# %%
+ask_vol_bps_mean = ask_vol_bps_df.mean().sort_values()
+ask_vol_bps_mean.name = config["liquidity_metrics"]["ask_vol_bps_mean"]
+#
+title = "ask vol"
+ylabel = "bps"
+ask_vol_bps_mean.plot(
+    title=title,
+    ylabel=ylabel,
+    **config["plot_kwargs"],
+)
+
+# %%
+mean_hourly_ask_vol = ask_vol_bps_df.groupby(lambda x: x.hour).mean()
+title = "Mean hourly ask vol (Z-score)"
+mean_hourly_ask_vol.apply(scipy.stats.zscore).plot(title=title, legend=False)
+
+# %%
+bid_vol_df = bid_price_df.ffill().pct_change().rolling(rolling_window).std()
+bid_vol_bps_df = 1e4 * bid_vol_df
 hpandas.df_to_str(bid_vol_bps_df, log_level=logging.INFO)
 
 # %%
-bid_vol_bps_mean = bid_vol_bps_df.mean().sort_values().rename("bid_vol_bps_mean")
+bid_vol_bps_mean = bid_vol_bps_df.mean().sort_values()
+bid_vol_bps_mean.name = config["liquidity_metrics"]["bid_vol_bps_mean"]
 #
 title = "bid vol"
 ylabel = "bps"
@@ -345,14 +363,25 @@ bid_vol_bps_mean.plot(
 )
 
 # %%
+mean_hourly_bid_vol = bid_vol_bps_df.groupby(lambda x: x.hour).mean()
+title = "Mean hourly bid vol (Z-score)"
+mean_hourly_bid_vol.apply(scipy.stats.zscore).plot(title=title, legend=False)
+
+# %%
 bid_vol_to_half_spread = bid_vol_bps_df.divide(half_spread_bps_df)
 hpandas.df_to_str(bid_vol_to_half_spread, log_level=logging.INFO)
 
 # %%
-bid_vol_to_half_spread_mean = (
-    bid_vol_to_half_spread.mean()
-    .sort_values(ascending=False)
-    .rename("bid_vol_to_half_spread_mean")
+bid_vol_to_half_spread_mean = bid_vol_to_half_spread.mean().sort_values(
+    ascending=False
+)
+bid_vol_to_half_spread_mean.name = config["liquidity_metrics"][
+    "bid_vol_to_half_spread_mean"
+]
+# `binance::DUSK_USDT` half-spread is 0.0 due to equal bid and ask prices in the input data.
+# Dropping the symbol for now.
+bid_vol_to_half_spread_mean = bid_vol_to_half_spread_mean.drop(
+    index="binance::DUSK_USDT"
 )
 #
 title = "Bid vol / half spread"
@@ -362,25 +391,21 @@ bid_vol_to_half_spread_mean.plot(
 )
 
 # %%
-ask_vol_bps_df = bid_ask_data.pivot(columns="full_symbol", values="ask_vol_bps")
-hpandas.df_to_str(ask_vol_bps_df, log_level=logging.INFO)
-
-# %%
-total_vol = np.sqrt(bid_vol_bps_df**2 + ask_vol_bps_df**2).tz_convert(
-    "US/Eastern"
-)
+total_vol = np.sqrt(bid_vol_bps_df**2 + ask_vol_bps_df**2)
 mean_hourly_total_vol = total_vol.groupby(lambda x: x.hour).mean()
 hpandas.df_to_str(mean_hourly_total_vol, log_level=logging.INFO)
 
 # %%
-plot_standardized(mean_hourly_total_vol, "Mean hourly total volume")
+title = "Mean hourly total vol (Z-score)"
+mean_hourly_total_vol.apply(scipy.stats.zscore).plot(title=title, legend=False)
 
 # %%
 mean_minutely_total_vol = total_vol.groupby(lambda x: x.minute).mean()
 hpandas.df_to_str(mean_minutely_total_vol, log_level=logging.INFO)
 
 # %%
-plot_standardized(mean_minutely_total_vol, "Mean minutely total volume")
+title = "Mean minutely total vol (Z-score)"
+mean_minutely_total_vol.apply(scipy.stats.zscore).plot(title=title, legend=False)
 
 # %%
 # Days of the week are numbered as follows:
@@ -389,7 +414,106 @@ mean_weekday_total_vol = total_vol.groupby(total_vol.index.weekday).mean()
 hpandas.df_to_str(mean_weekday_total_vol, log_level=logging.INFO)
 
 # %%
-plot_standardized(mean_weekday_total_vol, "Mean weekday total volume")
+title = "Mean weekday total vol (Z-score)"
+mean_weekday_total_vol.apply(scipy.stats.zscore).plot(title=title, legend=False)
+
+# %% [markdown]
+# # Partitioning by vol
+
+# %% [markdown]
+# ## by `bid_vol_to_half_spread_mean`
+
+# %%
+bid_vol_to_half_spread_mean_df = bid_vol_to_half_spread_mean.sort_values(
+    ascending=False
+).to_frame()
+hpandas.df_to_str(bid_vol_to_half_spread_mean_df, log_level=logging.INFO)
+
+# %%
+cutpoints = [-float("inf"), 1, 5, 10, 25, 250, float("inf")]
+labels = ["(-inf, 1]", "(1, 5]", "(5, 10]", "(10, 25]", "(25, 250]", "(250, inf)"]
+#
+bid_vol_to_half_spread_bucket = pd.cut(
+    bid_vol_to_half_spread_mean_df[
+        config["liquidity_metrics"]["bid_vol_to_half_spread_mean"]
+    ],
+    bins=cutpoints,
+    labels=labels,
+)
+bid_vol_to_half_spread_bucket.name = config["liquidity_metrics"][
+    "bid_vol_to_half_spread_bucket"
+]
+bid_vol_to_half_spread_mean_df = pd.concat(
+    [bid_vol_to_half_spread_mean_df, bid_vol_to_half_spread_bucket], axis=1
+)
+hpandas.df_to_str(bid_vol_to_half_spread_mean_df, log_level=logging.INFO)
+
+# %%
+bid_vol_to_half_spread_mean_df[
+    config["liquidity_metrics"]["bid_vol_to_half_spread_bucket"]
+].value_counts().sort_index().plot(kind="bar", rot=0)
+
+# %%
+bid_vol_to_half_spread_mean_df[
+    bid_vol_to_half_spread_mean_df[
+        config["liquidity_metrics"]["bid_vol_to_half_spread_bucket"]
+    ]
+    == "(250, inf)"
+]
+
+# %%
+bid_vol_to_half_spread_mean_df[
+    bid_vol_to_half_spread_mean_df[
+        config["liquidity_metrics"]["bid_vol_to_half_spread_bucket"]
+    ]
+    == "(25, 250]"
+]
+
+# %% [markdown]
+# ## by `half_spread_bps_mean`
+
+# %%
+half_spread_bps_mean_df = half_spread_bps_mean.sort_values().to_frame()
+hpandas.df_to_str(half_spread_bps_mean_df, log_level=logging.INFO)
+
+# %%
+cutpoints = [-float("inf"), 0.05, 0.5, 1.0, 2.0, 10.0, float("inf")]
+labels = [
+    "(-inf, 0.05]",
+    "(0.05, 0.5]",
+    "(0.5, 1.0]",
+    "(1.0, 2.0]",
+    "(2.0, 10.0]",
+    "(10.0, inf)",
+]
+#
+half_spread_bucket = pd.cut(
+    half_spread_bps_mean_df[config["liquidity_metrics"]["half_spread_bps_mean"]],
+    bins=cutpoints,
+    labels=labels,
+)
+half_spread_bucket.name = config["liquidity_metrics"]["half_spread_bucket"]
+half_spread_bps_mean_df = pd.concat(
+    [half_spread_bps_mean_df, half_spread_bucket], axis=1
+)
+hpandas.df_to_str(half_spread_bps_mean_df, log_level=logging.INFO)
+
+# %%
+half_spread_bps_mean_df[
+    config["liquidity_metrics"]["half_spread_bucket"]
+].value_counts().sort_index().plot(kind="bar", rot=0)
+
+# %%
+half_spread_bps_mean_df[
+    half_spread_bps_mean_df[config["liquidity_metrics"]["half_spread_bucket"]]
+    == "(-inf, 0.05]"
+]
+
+# %%
+half_spread_bps_mean_df[
+    half_spread_bps_mean_df[config["liquidity_metrics"]["half_spread_bucket"]]
+    == "(0.05, 0.5]"
+]
 
 # %% [markdown]
 # # Compute rank correlation
@@ -399,6 +523,7 @@ liquidity_metrics_df = pd.concat(
     [
         mdv_notional,
         half_spread_bps_mean,
+        ask_vol_bps_mean,
         bid_vol_bps_mean,
         bid_vol_to_half_spread_mean,
     ],
@@ -411,5 +536,64 @@ liquidity_metrics_df.corr(method="spearman")
 
 # %%
 liquidity_metrics_df.corr(method="kendall")
+
+# %% [markdown]
+# # Combine liquidity metrics
+
+# %%
+combined_liquidity_metrics_df = pd.concat(
+    [liquidity_metrics_df, half_spread_bucket, bid_vol_to_half_spread_bucket],
+    axis=1,
+)
+combined_liquidity_metrics_df = combined_liquidity_metrics_df.sort_values(
+    by=config["liquidity_metrics"]["bid_vol_to_half_spread_mean"], ascending=False
+)
+combined_liquidity_metrics_df
+
+# %% [markdown]
+# # Create universe
+
+# %%
+# TODO(Dan): this is not a part of the master notebook.
+
+# %% [markdown]
+# ## v8.1
+
+# %%
+v8_1_metrics_df = combined_liquidity_metrics_df[
+    (combined_liquidity_metrics_df["half_spread_bucket"] == "(0.05, 0.5]")
+    & (
+        combined_liquidity_metrics_df["bid_vol_to_half_spread_bucket"]
+        == "(25, 250]"
+    )
+]
+v8_1_metrics_df
+
+# %%
+v8_1_universe = sorted(list(v8_1_metrics_df.index))
+v8_1_universe
+
+# %% [markdown]
+# ## v8.2
+
+# %%
+v8_2_metrics_df = combined_liquidity_metrics_df[
+    (
+        combined_liquidity_metrics_df["half_spread_bucket"].isin(
+            ["(0.05, 0.5]", "(0.5, 1.0]"]
+        )
+    )
+    & (
+        combined_liquidity_metrics_df["bid_vol_to_half_spread_bucket"].isin(
+            ["(25, 250]", "(10, 25]"]
+        )
+    )
+    & (~combined_liquidity_metrics_df.index.isin(v8_1_universe))
+]
+v8_2_metrics_df
+
+# %%
+v8_2_universe = sorted(list(v8_2_metrics_df.index))
+v8_2_universe
 
 # %%

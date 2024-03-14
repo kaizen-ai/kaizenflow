@@ -7,7 +7,9 @@ import core.signal_processing.fir_utils as csprfiut
 import logging
 from typing import Any, Callable, Dict, Optional, Union
 
+import numpy as np
 import pandas as pd
+import scipy as sp
 
 import helpers.hdbg as hdbg
 
@@ -97,3 +99,34 @@ def extract_fir_filter_weights(
     weights.index = signal.loc[:index_location].index
     # Extend `weights` with NaNs if necessary.
     return weights.reindex(idx)
+
+
+def fit_ema_to_fir_filter(
+    filter_lag_weights: pd.Series,
+) -> pd.Series:
+    """
+    Approximate a given FIR filter with an EMA.
+
+    :param filter_lag_weights: weights of a FIR filter in terms of lags
+    :return: series of EMA weights by lagged, named with best-fit center of
+        mass
+    """
+    hdbg.dassert_isinstance(filter_lag_weights, pd.Series)
+    # Define normalized EMA.
+    def func(x, a):
+        return (1 / a) * np.exp(-x / a)
+
+    # Find the best center of mass corresponding to `filter_lag_weights`.
+    popt, pcov = sp.optimize.curve_fit(
+        func, filter_lag_weights.index, filter_lag_weights.values
+    )
+    # Extract the center of mass.
+    com = popt[0]
+    _LOG.debug("Best com=%f", com)
+    # Generate the EMA weights using the given COM.
+    ema = pd.Series(
+        [(1 / com) * np.exp(-x / com) for x in filter_lag_weights.index],
+        filter_lag_weights.index,
+    )
+    ema.name = "com=" + str(com.round(3))
+    return ema

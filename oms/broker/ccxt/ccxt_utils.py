@@ -18,6 +18,7 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hlogging as hloggin
+import helpers.hpandas as hpandas
 import helpers.hsecrets as hsecret
 import oms.hsecrets as omssec
 import oms.order.order as oordorde
@@ -100,6 +101,60 @@ def roll_up_child_order_fills_into_parent(
             parent_order_fill_price = float(parent_order_fill_price)
         hdbg.dassert_type_in(parent_order_fill_price, [float, np.float64])
     return parent_order_signed_fill_num_shares, parent_order_fill_price
+
+
+# #############################################################################
+
+
+def drop_bid_ask_duplicates(
+    bid_ask_data: pd.DataFrame, *, max_num_dups: Optional[int] = 1
+) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
+    """
+    Identify and drop duplicated bid/ask data.
+
+    There should be a single data point for a timestamp/asset_id combo.
+    Currently we assume that the last data point is the correct one. If
+    the number of duplicates exceeds the limit, raise.
+
+    :param bid_ask_data: bid/ask data to be deduplicated
+    :param max_num_dups: max allowed number of duplicated entries, None
+        for no limit.
+    :return: deduplicated data and duplicated rows
+    """
+    subset = ["timestamp", "currency_pair"]
+    # Get duplicated values keeping the last one.
+    # Note: the assumption is the last data point will contain fuller info,
+    # since it is expected to have a later `knowledge_timestamp`.
+    bid_ask_data = bid_ask_data.reset_index()
+    duplicates = bid_ask_data.duplicated(subset=subset, keep="last")
+    num_duplicates = duplicates.sum()
+    if num_duplicates:
+        # Check if the number of duplicates is not above the limit.
+        if max_num_dups:
+            hdbg.dassert_lte(
+                num_duplicates,
+                max_num_dups,
+                msg=f"Number of duplicated rows over {max_num_dups}",
+            )
+        # Return duplicates and deduplicated data.
+        duplicated_rows = bid_ask_data.loc[duplicates].set_index("timestamp")
+        # Display the dropped duplicated value.
+        _LOG.warning(
+            "Duplicate entry found and dropped:\n%s",
+            hpandas.df_to_str(duplicated_rows),
+        )
+        # Display the duplicated value that is kept.
+        kept_duplicates = bid_ask_data.duplicated(subset=subset, keep="first")
+        _LOG.warning(
+            "Duplicated entry that is kept:\n%s",
+            hpandas.df_to_str(kept_duplicates),
+        )
+        # Return deduplicated data.
+        bid_ask_data = bid_ask_data.loc[~duplicates].set_index("timestamp")
+    else:
+        bid_ask_data = bid_ask_data.set_index("timestamp")
+        duplicated_rows = None
+    return bid_ask_data, duplicated_rows
 
 
 # #############################################################################

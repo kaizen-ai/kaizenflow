@@ -151,6 +151,8 @@ process_forecasts_node_dict:
       execution_frequency: 1T
     optimizer_config:
       backend: pomo
+      asset_class: equities
+      apply_cc_limits: None
       params:
         style: cross_sectional
         kwargs:

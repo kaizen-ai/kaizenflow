@@ -52,14 +52,14 @@ if config:
 else:
     config_dict = {
         "stage": "preprod",
-        "start_timestamp": "2024-01-03T18:00:00+00:00",
-        "end_timestamp": "2024-01-03T18:30:00+00:00",
+        "start_timestamp": "2024-02-28T14:40:00+00:00",
+        "end_timestamp": "2024-02-28T14:50:00+00:00",
         "aws_profile": "ck",
-        "dataset_signature": "periodic_daily.airflow.downloaded_200ms.postgres.bid_ask.futures.v7_3.ccxt.binance.v1_0_0",
+        "dataset_signature": "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7_3.ccxt.binance.v1_0_0",
         "bid_ask_accuracy": 1,
         "data_type": "bid_ask",
         "bid_ask_depth": 1,
-        "bid_ask_frequency_sec": "10S",
+        "bid_ask_frequency_sec": "60S",
     }
     config = cconfig.Config.from_dict(config_dict)
 print(config)
@@ -87,25 +87,6 @@ data = raw_data_client.read_data(
 )
 
 # %%
-# Preprocessing.
-data.reset_index(inplace=True)
-cols_to_keep = [
-    "timestamp",
-    "currency_pair",
-    "exchange_id",
-    "end_download_timestamp",
-    "knowledge_timestamp",
-]
-for i in range(1, config["bid_ask_depth"] + 1):
-    cols_to_keep += [
-        f"bid_size_l{i}",
-        f"ask_size_l{i}",
-        f"bid_price_l{i}",
-        f"ask_price_l{i}",
-    ]
-data = data[cols_to_keep]
-
-# %%
 data.head()
 
 # %%
@@ -117,18 +98,6 @@ version = dataset_signature_as_dict["universe"].replace("_", ".")
 exchange_id = dataset_signature_as_dict["exchange_id"]
 universe = imvcounun.get_vendor_universe(vendor_name, mode, version=version)
 universe_list = universe[exchange_id]
-
-
-# %%
-# Bid ask data is aligned to the nearest grid so adjust the
-# end_timestamp to avoid the corner case.
-def adjust_end_timestamp(timestamp_str):
-    timestamp = pd.Timestamp(timestamp_str) - pd.Timedelta(seconds=1)
-    return str(timestamp)
-
-
-# %%
-adjust_end_timestamp(config["end_timestamp"])
 
 # %%
 qa_check_list = [

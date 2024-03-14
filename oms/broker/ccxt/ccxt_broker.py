@@ -49,7 +49,7 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
         ccxt_order_structures = [
             i for i in ccxt_order_structures if i is not None
         ]
-        _LOG.debug(
+        _LOG.info(
             "CCXT fills loaded timestamp=%s",
             self.market_data.get_wall_clock_time(),
         )
@@ -188,7 +188,7 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
             hdbg.dassert_lte(
                 num_waves, len(self._limit_price_computer._volatility_multiple)
             )
-        _LOG.debug(hprint.to_str("num_waves"))
+        _LOG.info(hprint.to_str("num_waves"))
         quantity_computer = self._child_order_quantity_computer
         # Pass parameters to child quantity computer.
         quantity_computer.set_instance_params(
@@ -196,9 +196,11 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
         )
         child_orders = []
         for wave_id in range(num_waves):
+            wave_start_time = self._get_wall_clock_time()
+            _LOG.info(hprint.to_str("wave_id wave_start_time"))
             # Get all the open positions to determine `curr_num_shares`.
             open_positions = self.get_open_positions()
-            _LOG.debug(hprint.to_str("open_positions"))
+            _LOG.info(hprint.to_str("open_positions"))
             get_open_positions_timestamp = self.market_data.get_wall_clock_time()
             # TODO(Danya): Factor out into a helper.
             for order in parent_orders_copy:
@@ -226,8 +228,7 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
             )
             child_orders.extend(child_orders_iter)
             await self._cancel_orders_and_sync_with_next_wave_start(
-                parent_orders_ccxt_symbols,
-                execution_freq,
+                parent_orders_ccxt_symbols, execution_freq, wave_start_time
             )
             # Log time of alignment with the next wave.
             next_wave_sync_timestamp = self.market_data.get_wall_clock_time()
@@ -242,11 +243,11 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
                 await self._log_last_wave_results(child_orders_iter)
             # Break if the time is up.
             current_wall_clock_time = self.market_data.get_wall_clock_time()
-            _LOG.debug(
+            _LOG.info(
                 hprint.to_str("current_wall_clock_time execution_end_timestamp")
             )
             if current_wall_clock_time >= execution_end_timestamp:
-                _LOG.debug(
+                _LOG.info(
                     "Time is up: current_time=%s parent_order_end_time=%s",
                     self.market_data.get_wall_clock_time(),
                     execution_end_timestamp,
@@ -260,7 +261,7 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
         #    ...]
         # ```
         self._previous_parent_orders = parent_orders_copy
-        _LOG.debug(hprint.to_str("self._previous_parent_orders"))
+        _LOG.info(hprint.to_str("self._previous_parent_orders"))
         # TODO(Danya): Factor out the loading and logging of oms.Fills
         #  into a separate method.
         oms_fills = await self.get_fills_async()
@@ -302,7 +303,10 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
     #         return result
 
     async def _cancel_orders_and_sync_with_next_wave_start(
-        self, parent_orders_ccxt_symbols: List[str], execution_freq: pd.Timedelta
+        self,
+        parent_orders_ccxt_symbols: List[str],
+        execution_freq: pd.Timedelta,
+        wave_start_time: pd.Timestamp,
     ) -> None:
         """
         Wait until the end of current wave, cancel orders and sync to next wave
@@ -315,20 +319,26 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
 
         :param parent_orders_ccxt_symbols: symbols to cancel orders for
         :param execution_freq: wave execution frequency as pd.Timedelta
+        :param wave_start_time: start time of the wave to cancel orders for
         """
-        wait_until = self._get_wall_clock_time().ceil(execution_freq)
+        # This approach is safer than wave_start_time.ceil(execution_freq).
+        # In case ceil was applied on a precisely rounded start timestamp
+        # such as 12:00:00.00 it would simply return the same value.
+        wait_until = (wave_start_time + pd.Timedelta(execution_freq)).floor(
+            execution_freq
+        )
         # In order to avoid occasional closing of an order "too late" (
         # after the end of the bar), we add a delay to complete the order
         # cancellation before the bar ends. See CmTask5129.
         # Note that the length of the delay increases with the distance
         # of the trading server from the exchange's servers.
-        wait_until = wait_until - pd.Timedelta(seconds=0.2)
+        wait_until_modified = wait_until - pd.Timedelta(seconds=0.2)
         await hasynci.async_wait_until(
-            wait_until,
+            wait_until_modified,
             self._get_wall_clock_time,
         )
         await self.cancel_open_orders_for_symbols(parent_orders_ccxt_symbols)
-        _LOG.debug(
+        _LOG.info(
             "Orders cancelled timestamp=%s",
             self.market_data.get_wall_clock_time(),
         )
@@ -338,7 +348,7 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
             wait_until,
             self._get_wall_clock_time,
         )
-        _LOG.debug(
+        _LOG.info(
             "After syncing with next child wave=%s",
             self.market_data.get_wall_clock_time(),
         )
@@ -359,7 +369,7 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
             self._get_wall_clock_time,
             ccxt_trades,
         )
-        _LOG.debug(
+        _LOG.info(
             "CCXT fills and trades logging finished=%s",
             self.market_data.get_wall_clock_time(),
         )
@@ -404,9 +414,9 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
         # If no open position is found, Binance doesn't return as a key,
         # so we count that as 0.
         curr_num_shares = open_positions.get(currency_pair, 0)
-        _LOG.debug(hprint.to_str("currency_pair curr_num_shares"))
+        _LOG.info(hprint.to_str("currency_pair curr_num_shares"))
         type_ = "limit"
-        _LOG.debug(
+        _LOG.info(
             hprint.to_str(
                 "creation_timestamp asset_id type_ execution_start_timestamp"
                 " execution_end_timestamp curr_num_shares"
@@ -435,7 +445,7 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
         child_order.extra_params[parent_order_id_key] = parent_order.order_id
         # Transfer parent order timing logs related to the child order.
         # These include the getting the bid/ask data and open positions.
-        _LOG.debug(parent_order.extra_params["stats"])
+        _LOG.info(parent_order.extra_params["stats"])
         self._update_stats_for_order(
             child_order,
             f"get_open_positions.done",
@@ -478,7 +488,7 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
             f"child_order.limit_price_calculated",
             self.market_data.get_wall_clock_time(),
         )
-        _LOG.debug(hprint.to_str("price_dict"))
+        _LOG.info(hprint.to_str("price_dict"))
         (
             child_order,
             ccxt_child_order_response,
@@ -522,7 +532,7 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
                 child_order_ccxt_id, parent_order.extra_params["ccxt_id"]
             )
             parent_order.extra_params["ccxt_id"].append(child_order_ccxt_id)
-            _LOG.debug(hprint.to_str("is_submitted_order"))
+            _LOG.info(hprint.to_str("is_submitted_order"))
         else:
             _LOG.warning(
                 "Order is not submitted to CCXT, %s",
@@ -551,7 +561,7 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
         get_bid_ask_start_timestamp = self.market_data.get_wall_clock_time()
         bid_ask_data = self.get_bid_ask_data_for_last_period()
         get_bid_ask_end_timestamp = self.market_data.get_wall_clock_time()
-        _LOG.debug(hpandas.df_to_str(bid_ask_data, num_rows=None))
+        _LOG.info(hpandas.df_to_str(bid_ask_data, num_rows=None))
         #
         coroutines = []
         for order in parent_orders_tmp:
@@ -587,7 +597,7 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
         ) as ts:
             # order_submissions= await custom_gather(coroutines)
             child_orders = await asyncio.gather(*coroutines)
-            _LOG.debug(
+            _LOG.info(
                 "all_coroutines_finished=%s",
                 self.market_data.get_wall_clock_time(),
             )
@@ -613,13 +623,13 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
         #
         ccxt_id = self._get_ccxt_id_from_child_order(order)
         if ccxt_id == -1:
-            _LOG.debug("Order=%s has no CCXT ID.", str(order))
+            _LOG.info("Order=%s has no CCXT ID.", str(order))
             ccxt_order = None
         else:
             # Get the order status by its CCXT ID.
             # ccxt_order = hasynci.run(self._exchange.fetch_order(
             #     id=str(ccxt_id), symbol=symbol), asyncio.get_event_loop(), close_event_loop=False)
-            _LOG.debug(str(order))
+            _LOG.info(str(order))
             ccxt_order = await self._async_exchange.fetch_order(
                 id=str(ccxt_id), symbol=symbol
             )

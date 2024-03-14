@@ -9,6 +9,7 @@ import dataflow.system as dtfsys
 import dataflow_amp.system.risk_model_estimation.rme_forecast_system as dtfasrmerfs
 import helpers.hdbg as hdbg
 
+
 # TODO(Grisha): could go to a more general lib, e.g., `core/finance/market_data_example.py`.
 def get_random_data(
     n_assets: int,
@@ -79,8 +80,9 @@ if __name__ == "__main__":
     num_threads = "serial"
     num_attempts = 1
     dry_run = False
-    log_level = logging.DEBUG
+    backend = "asyncio_threading"
     # Set logger.
+    log_level = logging.DEBUG
     hdbg.init_logger(
         verbosity=log_level,
         use_exec_path=True,
@@ -128,4 +130,5 @@ if __name__ == "__main__":
         num_threads,
         num_attempts,
         dry_run,
+        backend,
     )

@@ -124,16 +124,6 @@ variable "nat_gateway_routes" {
   default = []
 }
 
-variable "instance_routes" {
-  description = "List of EC2 Instance routes to create in the route table"
-  type = list(object({
-    destination_cidr_block = string
-    instance_id            = string
-    route_table_index      = number
-  }))
-  default = []
-}
-
 variable "subnet_route_table_associations" {
   description = "Associations between subnets and route tables"
   type = list(object({
@@ -141,9 +131,4 @@ variable "subnet_route_table_associations" {
     route_table_index = number
   }))
   default = []
-}
-
-variable "instance_name_to_id" {
-  description = "Mapping from subnet names to IDs"
-  type        = map(string)
 }

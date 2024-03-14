@@ -258,6 +258,8 @@ class CcxtExtractor(imvcdexex.Extractor):
         :param currency_pair: currency pair, e.g. "BTC_USDT"
         :param bid_ask_depth: how many levels of order book to download
         """
+        # Minimum depth expected by binance to return is 10.
+        bid_ask_depth = max(bid_ask_depth, 10)
         currency_pair = self.convert_currency_pair(currency_pair)
         await self._async_exchange.watchOrderBook(
             currency_pair, limit=bid_ask_depth
@@ -284,6 +286,8 @@ class CcxtExtractor(imvcdexex.Extractor):
             self.convert_currency_pair(currency_pair)
             for currency_pair in currency_pairs
         ]
+        # Minimum depth expected by binance to return is 10.
+        bid_ask_depth = max(bid_ask_depth, 10)
         await self._async_exchange.watch_order_book_for_symbols(
             currency_pairs, limit=bid_ask_depth
         )

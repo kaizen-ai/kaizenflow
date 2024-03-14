@@ -5,7 +5,7 @@ import dataflow_amp.system.Cx.Cx_forecast_system_example as dtfasccfsex
 """
 
 import datetime
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import pandas as pd
 
@@ -13,6 +13,7 @@ import core.config as cconfig
 import dataflow.system as dtfsys
 import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 import dataflow_amp.system.Cx.Cx_forecast_system as dtfasccfosy
+import helpers.hdbg as hdbg
 
 # #############################################################################
 # Cx_NonTime_ForecastSystem_example
@@ -24,7 +25,7 @@ def get_Cx_NonTime_ForecastSystem_example(
     *dag_builder_args,
     train_test_mode: str,
     backtest_config: str,
-    root_dir: str,
+    im_client_config: Dict[str, Any],
     # TODO(Grisha): P1, should become `**train_test_kwargs`.
     oos_start_date_as_str: Optional[str] = None,
     **dag_builder_kwargs,
@@ -36,8 +37,7 @@ def get_Cx_NonTime_ForecastSystem_example(
     :param dag_builder_args: same as in `Cx_NonTime_ForecastSystem`
     :param train_test_mode: same as in `Cx_NonTime_ForecastSystem`
     :param backtest_config: see `apply_backtest_config()`
-    :param root_dir: either a local root path (e.g., `/app/im`) or an S3 root
-        path (e.g., `s3://<ck-data>/reorg/historical.manual.pq`) to `CCXT` data
+    :param im_client_config: `ImClient` config
     :param oos_start_date_as_str: used only for train_test_mode="ins_oos",
         see `apply_ins_oos_backtest_config()`
     :param dag_builder_kwargs: same as in `Cx_NonTime_ForecastSystem`
@@ -67,6 +67,8 @@ def get_Cx_NonTime_ForecastSystem_example(
             system, oos_start_date_as_str
         )
     # 5) Apply `ImClient` config.
+    hdbg.dassert_in("universe_version", im_client_config)
+    # Check that `ImClient` config universe version matches the one from backtest config.
     universe_str = system.config.get_and_mark_as_used(
         ("backtest_config", "universe_str")
     )
@@ -77,39 +79,10 @@ def get_Cx_NonTime_ForecastSystem_example(
     # without a vendor name).
     universe_version, _ = cconfig.parse_universe_str(universe_str)
     universe_version = universe_version.split("_", 1)[-1].replace("_", ".")
-    data_snapshot = ""
-    version = "v1_0_0"
-    # TODO(Dan): expose download universe version since it is applicable for OHLCV futures only.
-    download_universe_version = "v7_3"
-    #
-    system = dtfsys.apply_ImClient_config(
-        system,
-        universe_version,
-        root_dir,
-        data_snapshot,
-        version,
-        download_universe_version,
-    )
+    hdbg.dassert_eq(universe_version, im_client_config["universe_version"])
+    system = dtfsys.apply_ImClient_config(system, im_client_config)
     # 6) Apply `MarketData` config.
     system = dtfsys.apply_MarketData_config(system)
-    return system
-
-
-def get_Cx_NonTime_ForecastSystem_for_unit_tests_example1(
-    dag_builder_ctor_as_str: str,
-    backtest_config: str,
-) -> dtfsys.NonTime_ForecastSystem:
-    """
-    Get `Cx_NonTime_ForecastSystem` object for unit tests.
-    """
-    root_dir = "s3://cryptokaizen-unit-test/v3"
-    train_test_mode = "ins"
-    system = get_Cx_NonTime_ForecastSystem_example(
-        dag_builder_ctor_as_str,
-        train_test_mode=train_test_mode,
-        backtest_config=backtest_config,
-        root_dir=root_dir,
-    )
     return system
 
 
@@ -223,6 +196,8 @@ def get_Cx_Time_ForecastSystem_with_DataFramePortfolio_example1(
     }
     optimizer_config = {
         "backend": "pomo",
+        "asset_class": "crypto",
+        "apply_cc_limits": False,
         "params": {
             "style": "cross_sectional",
             "kwargs": compute_target_positions_kwargs,
@@ -294,6 +269,8 @@ def get_Cx_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example
     }
     optimizer_config = {
         "backend": "pomo",
+        "asset_class": "crypto",
+        "apply_cc_limits": False,
         "params": {
             "style": "cross_sectional",
             "kwargs": compute_target_positions_kwargs,

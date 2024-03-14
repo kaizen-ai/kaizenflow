@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 
 import helpers.hdatetime as hdateti
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import oms.broker.ccxt.ccxt_utils as obccccut
 import oms.hsecrets.secret_identifier as ohsseide
@@ -511,3 +512,89 @@ class Test_create_ccxt_exchange(hunitest.TestCase):
             self.assertIn(expected_method_call, actual_method_calls)
         else:
             self.assertNotIn(expected_method_call, actual_method_calls)
+
+
+class Test_drop_bid_ask_duplicates(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Verify that bid/ask data with no duplicates is not altered.
+        """
+        # Generate data.
+        start_ts = pd.Timestamp(
+            "2024-02-20 10:35:46-04:00", tz="America/New_York"
+        )
+        end_ts = pd.Timestamp("2024-02-20 10:35:47-04:00", tz="America/New_York")
+        bid_ask_data = _generate_raw_data_reader_bid_ask_data(
+            start_ts, end_ts, subset=None
+        )
+        # Drop duplicates.
+        bid_ask_processed, duplicated_rows = obccccut.drop_bid_ask_duplicates(
+            bid_ask_data
+        )
+        # Verify that the dataframe is not altered.
+        bid_ask_processed = hpandas.df_to_str(bid_ask_processed)
+        bid_ask_data = hpandas.df_to_str(bid_ask_data)
+        # Check.
+        self.assertEqual(bid_ask_processed, bid_ask_data)
+        self.assertEqual(duplicated_rows, None)
+
+    def test2(self) -> None:
+        """
+        Verify that a single bid/ask data duplicate is dropped.
+        """
+        # Generate data.
+        start_ts = pd.Timestamp(
+            "2024-02-20 10:35:46-04:00", tz="America/New_York"
+        )
+        end_ts = pd.Timestamp("2024-02-20 10:35:47-04:00", tz="America/New_York")
+        bid_ask_data = _generate_raw_data_reader_bid_ask_data(
+            start_ts, end_ts, subset=None
+        )
+        # Add duplicate.
+        duplicate = bid_ask_data.iloc[0:1]
+        bid_ask_data_duplicated = pd.concat([bid_ask_data, duplicate])
+        # Drop duplicates.
+        non_duplicated_rows, duplicated_rows = obccccut.drop_bid_ask_duplicates(
+            bid_ask_data_duplicated
+        )
+        # Convert to string for comparison.
+        act_duplicated_rows = hpandas.df_to_str(duplicated_rows)
+        exp_duplicated_rows = hpandas.df_to_str(duplicate)
+        # Check.
+        self.assertEqual(act_duplicated_rows, exp_duplicated_rows)
+
+    def test3(self) -> None:
+        """
+        Verify that the error is raised if number of duplicates is above limit.
+        """
+        # Generate data.
+        start_ts = pd.Timestamp(
+            "2024-02-20 10:35:46-04:00", tz="America/New_York"
+        )
+        end_ts = pd.Timestamp("2024-02-20 10:35:47-04:00", tz="America/New_York")
+        bid_ask_data = _generate_raw_data_reader_bid_ask_data(
+            start_ts, end_ts, subset=None
+        )
+        # Add duplicate.
+        duplicate = bid_ask_data.iloc[0:3]
+        bid_ask_data_duplicated = pd.concat([bid_ask_data, duplicate])
+        # Check.
+        # Verify that the method raises the assertion.
+        with self.assertRaises(AssertionError):
+            obccccut.drop_bid_ask_duplicates(
+                bid_ask_data_duplicated, max_num_dups=2
+            )
+        # Check the assertion message content.
+        try:
+            obccccut.drop_bid_ask_duplicates(
+                bid_ask_data_duplicated, max_num_dups=2
+            )
+        except AssertionError as e:
+            exp_error = r"""
+################################################################################
+* Failed assertion *
+3 <= 2
+Number of duplicated rows over 2
+################################################################################
+            """
+            self.assert_equal(str(e), exp_error)

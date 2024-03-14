@@ -11,14 +11,13 @@ import pytest
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv
-import helpers.hgit as hgit
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
+import im_v2.common.test as imvct
 
 _LOG = logging.getLogger(__name__)
 
@@ -84,6 +83,7 @@ def _compare_dfs(self: Any, df1: pd.DataFrame, df2: pd.DataFrame) -> str:
 
 
 # #############################################################################
+
 
 class TestParquet1(hunitest.TestCase):
     def test_get_df1(self) -> None:
@@ -240,7 +240,6 @@ class TestParquet1(hunitest.TestCase):
             "datetime64[ns, UTC]",
         )
 
-    @pytest.mark.requires_ck_infra("Requires access to CK unit-test S3 bucket")
     def test_save_read_concat_data(self) -> None:
         """
         Verify that data produced by different version of Pandas preserves
@@ -927,22 +926,22 @@ class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
         """
         Upload test daily Parquet files for 3 days to the mocked S3 bucket.
         """
+        start_date = "2022-02-02"
+        end_date = "2022-02-04"
+        assets = ["A", "B", "C", "D", "E", "F"]
+        asset_col_name = "asset"
         test_dir = self.get_scratch_space()
-        cmd = []
-        file_path = os.path.join(
-            hgit.get_amp_abs_path(),
-            "im_v2/common/test/generate_pq_test_data.py",
+        partition_mode = "by_year_month"
+        custom_partition_cols = "asset,year,month"
+        imvct.generate_parquet_files(
+            start_date,
+            end_date,
+            assets,
+            asset_col_name,
+            test_dir,
+            partition_mode=partition_mode,
+            custom_partition_cols=custom_partition_cols,
         )
-        cmd.append(file_path)
-        cmd.append("--start_date 2022-02-02")
-        cmd.append("--end_date 2022-02-04")
-        cmd.append("--assets A,B,C,D,E,F")
-        cmd.append("--asset_col_name asset")
-        cmd.append("--partition_mode by_year_month")
-        cmd.append("--custom_partition_cols asset,year,month")
-        cmd.append(f"--dst_dir {test_dir}")
-        cmd = " ".join(cmd)
-        hsystem.system(cmd)
         s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
         s3_bucket = f"s3://{self.bucket_name}"
         s3fs_.put(test_dir, s3_bucket, recursive=True)

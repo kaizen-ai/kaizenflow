@@ -4,7 +4,7 @@ Import as:
 import oms.broker.ccxt.ccxt_aggregation_functions as obccagfu
 """
 import logging
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -13,6 +13,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import im_v2.common.universe.universe_utils as imvcuunut
 import oms.broker.ccxt.ccxt_logger as obcccclo
+import oms.broker.ccxt.ccxt_utils as obccccut
 import oms.broker.replayed_data_reader as obredare
 
 _LOG = logging.getLogger(__name__)
@@ -422,32 +423,41 @@ def load_bid_ask_data(
     start_timestamp: pd.Timestamp,
     end_timestamp: pd.Timestamp,
     ccxt_log_reader: obcccclo.CcxtLogger,
-    use_historical: bool,
+    data_source: str,
     asset_ids: Optional[List[int]],
     child_order_execution_freq: str,
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
     """
     Load bid/ask data from the DB/S3 location.
 
     :param start_timestamp: start timestamp
     :param end_timestamp: end timestamp
     :param ccxt_log_reader: CCXT log reader
-    :param use_historical: to use real-time or archived data. Use 'True'
-        for experiments older than 3 days, 'False' otherwise.
+    :param data_source: source of the bid/ask data: S3 - archived data, "logged_during_experiment"
+     - data logged before each wave (possible gaps in full system runs if there are no trades sent to
+     broker during run), "logged_after_experiment" - data logged after experiment using
+     `im_v2/ccxt/db/log_experiment_data.py`
     :param asset_ids: list of asset ids to load
     :param child_order_execution_freq: child order execution frequency
+    :return: deduplicated bid/ask data, and a dataframe of duplicated
+        data or None
     """
+    hdbg.dassert_in(
+        data_source, ["S3", "logged_during_experiment", "logged_after_experiment"]
+    )
     # Load the input bid/ask data from the DB/ S3 location.
     # Commented out since we are using replayed data.
     # To be removed after the correctness of the replayed data is established.
-    # if use_historical:
+    # if data_source == "S3":
     #     signature = "periodic_daily.airflow.archived_200ms.parquet.bid_ask.futures.v7.ccxt.binance.v1_0_0"
     #     reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
     # else:
     #     signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7.ccxt.binance.v1_0_0"
     #     reader = imvcdcimrdc.RawDataReader(signature)
     # bid_ask = reader.read_data(start_timestamp, end_timestamp, bid_ask_levels=[1])
-    bid_ask_files = ccxt_log_reader.load_bid_ask_files()
+    bid_ask_files = ccxt_log_reader.load_bid_ask_files(
+        load_data_for_full_period=data_source == "logged_after_experiment"
+    )
     bid_ask_reader = obredare.ReplayDataReader(bid_ask_files)
     dataframes = []
     for file in bid_ask_files:
@@ -455,7 +465,10 @@ def load_bid_ask_data(
         dataframes.append(df)
     bid_ask = pd.concat(dataframes)
     hdbg.dassert(not bid_ask.empty, "Requested bid-ask data not available.")
-    #
+    # Check bid/ask data for duplicates and drop if present.
+    bid_ask, duplicates = obccccut.drop_bid_ask_duplicates(
+        bid_ask, max_num_dups=None
+    )
     currency_pair_to_full_symbol = {
         x: "binance::" + x for x in bid_ask["currency_pair"].unique()
     }
@@ -478,7 +491,7 @@ def load_bid_ask_data(
     if asset_ids is not None:
         bid_ask = bid_ask[bid_ask["asset_id"].isin(asset_ids)]
     #
-    if not use_historical:
+    if data_source != "S3":
         asset_ids = bid_ask["asset_id"].unique()
         bid_ask_dfs = []
         for asset_id in asset_ids:
@@ -513,4 +526,4 @@ def load_bid_ask_data(
     hdateti.dassert_timestamp_lte(
         end_timestamp, bid_ask.index.max() + child_order_execution_freq
     )
-    return bid_ask
+    return bid_ask, duplicates

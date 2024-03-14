@@ -51,15 +51,6 @@ def _parse() -> argparse.ArgumentParser:
     parser = hs3.add_s3_args(parser)
     parser = hparser.add_verbosity_arg(parser)
     parser.add_argument(
-        "--universe_part",
-        action="store",
-        required=False,
-        type=int,
-        help="Only applicable if vendor = 'crypto_chassis'. The universe is split into \
-            groups of 10 pairs. Denote which part should be downloaded \
-            (e.g. 1 - first 10 symbols)",
-    )
-    parser.add_argument(
         "--assert_on_missing_data",
         required=False,
         default=False,
