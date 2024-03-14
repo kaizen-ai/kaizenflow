@@ -1,18 +1,19 @@
-<!--ts-->
-   * [KaizenFlow computing](#kaizenflow-computing)
-      * [Introduction](#introduction)
-      * [DAG Node](#dag-node)
-         * [DAG node examples](#dag-node-examples)
-      * [DataFrame as unit of computation](#dataframe-as-unit-of-computation)
-   * [DAG execution](#dag-execution)
-      * [Simulation kernel](#simulation-kernel)
-      * [Implementation of simulation kernel](#implementation-of-simulation-kernel)
-      * [Nodes ordering for execution](#nodes-ordering-for-execution)
-      * [Heuristics for splitting code in nodes](#heuristics-for-splitting-code-in-nodes)
 
 
+<!-- toc -->
 
-<!--te-->
+- [KaizenFlow computing](#kaizenflow-computing)
+  * [Introduction](#introduction)
+  * [DAG Node](#dag-node)
+    + [DAG node examples](#dag-node-examples)
+  * [DataFrame as unit of computation](#dataframe-as-unit-of-computation)
+- [DAG execution](#dag-execution)
+  * [Simulation kernel](#simulation-kernel)
+  * [Implementation of simulation kernel](#implementation-of-simulation-kernel)
+  * [Nodes ordering for execution](#nodes-ordering-for-execution)
+  * [Heuristics for splitting code in nodes](#heuristics-for-splitting-code-in-nodes)
+
+<!-- tocstop -->
 
 # KaizenFlow computing
 

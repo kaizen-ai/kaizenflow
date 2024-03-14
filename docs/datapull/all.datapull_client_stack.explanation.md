@@ -1,20 +1,23 @@
-<!--ts-->
-   * [Data client stack](#data-client-stack)
-      * [Interfaces](#interfaces)
-      * [Transformations](#transformations)
-         * [Output format of ImClient](#output-format-of-imclient)
-         * [Transformations by classes derived from MarketData](#transformations-by-classes-derived-from-marketdata)
-         * [Transformations by abstract class MarketData](#transformations-by-abstract-class-marketdata)
-         * [Output format of MarketData](#output-format-of-marketdata)
-      * [Asset ids format](#asset-ids-format)
-         * [Handling of asset_ids](#handling-of-asset_ids)
-      * [Data](#data)
-         * [Handling of filtering by time](#handling-of-filtering-by-time)
-         * [Handling timezone](#handling-timezone)
 
 
+<!-- toc -->
 
-<!--te-->
+- [Data client stack](#data-client-stack)
+  * [Interfaces](#interfaces)
+  * [Transformations](#transformations)
+    + [Output format of `ImClient`](#output-format-of-imclient)
+    + [Transformations by classes derived from `MarketData`](#transformations-by-classes-derived-from-marketdata)
+    + [Transformations by abstract class `MarketData`](#transformations-by-abstract-class-marketdata)
+    + [Output format of `MarketData`](#output-format-of-marketdata)
+  * [Asset ids format](#asset-ids-format)
+    + [`ImClient` asset ids](#imclient-asset-ids)
+    + [`MarketData` asset ids](#marketdata-asset-ids)
+    + [Handling of `asset_ids`](#handling-of-asset_ids)
+  * [Data](#data)
+    + [Handling of filtering by time](#handling-of-filtering-by-time)
+    + [Handling timezone](#handling-timezone)
+
+<!-- tocstop -->
 
 # Data client stack
 

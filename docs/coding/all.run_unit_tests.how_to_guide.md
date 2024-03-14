@@ -1,35 +1,37 @@
-<!--ts-->
-   * [Run unit tests](#run-unit-tests)
-      * [Test lists](#test-lists)
-      * [Using invoke](#using-invoke)
-         * [Docker image stage and version](#docker-image-stage-and-version)
-         * [Specifying pytest options](#specifying-pytest-options)
-         * [Running in debug mode](#running-in-debug-mode)
-         * [Save test output to a file](#save-test-output-to-a-file)
-         * [Show the tests but do not run](#show-the-tests-but-do-not-run)
-         * [Skip submodules](#skip-submodules)
-         * [Compute test coverage](#compute-test-coverage)
-      * [Timeout](#timeout)
-      * [Rerunning timeout-ed tests](#rerunning-timeout-ed-tests)
-      * [Compute test coverage](#compute-test-coverage-1)
-         * [An example coverage session](#an-example-coverage-session)
-         * [An example with customized pytest-cov html run](#an-example-with-customized-pytest-cov-html-run)
-         * [Generate coverage report with invoke](#generate-coverage-report-with-invoke)
-            * [Common usage](#common-usage)
-         * [Publishing HTML report on S3](#publishing-html-report-on-s3)
-   * [Running pytest directly](#running-pytest-directly)
-      * [Usage and Invocations reference](#usage-and-invocations-reference)
-      * [Custom pytest options behaviors](#custom-pytest-options-behaviors)
-         * [Enable logging](#enable-logging)
-         * [Update golden outcomes](#update-golden-outcomes)
-         * [Incremental test mode](#incremental-test-mode)
-      * [Debugging Notebooks](#debugging-notebooks)
-   * [Running tests on GH Actions](#running-tests-on-gh-actions)
-      * [How to run a single test on GH Action](#how-to-run-a-single-test-on-gh-action)
 
 
+<!-- toc -->
 
-<!--te-->
+- [Run unit tests](#run-unit-tests)
+  * [Test lists](#test-lists)
+  * [Using `invoke`](#using-invoke)
+    + [Docker image stage and version](#docker-image-stage-and-version)
+    + [Specifying `pytest` options](#specifying-pytest-options)
+    + [Running in debug mode](#running-in-debug-mode)
+    + [Save test output to a file](#save-test-output-to-a-file)
+    + [Show the tests but do not run](#show-the-tests-but-do-not-run)
+    + [Skip submodules](#skip-submodules)
+    + [Compute test coverage](#compute-test-coverage)
+  * [Timeout](#timeout)
+  * [Rerunning timeout-ed tests](#rerunning-timeout-ed-tests)
+  * [Compute test coverage](#compute-test-coverage-1)
+    + [An example coverage session](#an-example-coverage-session)
+    + [An example with customized `pytest-cov` html run](#an-example-with-customized-pytest-cov-html-run)
+    + [Generate coverage report with `invoke`](#generate-coverage-report-with-invoke)
+      - [Common usage](#common-usage)
+    + [Publishing HTML report on S3](#publishing-html-report-on-s3)
+- [Running `pytest` directly](#running-pytest-directly)
+  * [Usage and Invocations reference](#usage-and-invocations-reference)
+  * [Custom `pytest` options behaviors](#custom-pytest-options-behaviors)
+    + [Enable logging](#enable-logging)
+    + [Update golden outcomes](#update-golden-outcomes)
+    + [Incremental test mode](#incremental-test-mode)
+  * [Debugging Notebooks](#debugging-notebooks)
+- [Running tests on GH Actions](#running-tests-on-gh-actions)
+  * [How to run a single test on GH Action](#how-to-run-a-single-test-on-gh-action)
+
+<!-- tocstop -->
+
 # Run unit tests
 
 - We use `pytest` and `unittest` as testing framework
@@ -72,6 +74,7 @@
   ```
 
 - To see the options use `--help` option, e.g. `i --help run_fast_tests`:
+
   ```bash
   Usage: inv[oke] [--core-opts] run_fast_tests [--options] [other tasks here ...]
 

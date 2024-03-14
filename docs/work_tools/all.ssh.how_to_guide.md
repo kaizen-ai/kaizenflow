@@ -1,11 +1,12 @@
-<!--ts-->
-   * [What is SSH?](#what-is-ssh)
-   * [How we use ssh in our company?](#how-we-use-ssh-in-our-company)
-   * [Public key for authorization?](#public-key-for-authorization)
 
 
+<!-- toc -->
 
-<!--te-->
+- [What is SSH?](#what-is-ssh)
+- [How we use ssh in our company?](#how-we-use-ssh-in-our-company)
+- [Public key for authorization?](#public-key-for-authorization)
+
+<!-- tocstop -->
 
 # What is SSH?
 
@@ -14,8 +15,8 @@ From the Wikipedia
 > Secure Shell (SSH) is a cryptographic network protocol for operating network
 > services securely over an unsecured network.[1] Typical applications include
 > remote command-line, login, and remote command execution, but any network
-> service can be secured with SSH.
-More details [here](https://en.wikipedia.org/wiki/Secure_Shell)
+> service can be secured with SSH. More details
+> [here](https://en.wikipedia.org/wiki/Secure_Shell)
 
 # How we use ssh in our company?
 

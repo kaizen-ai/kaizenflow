@@ -1,16 +1,17 @@
-<!--ts-->
-   * [Cache](#cache)
-      * [How to use Cache](#how-to-use-cache)
-      * [How the Cache works](#how-the-cache-works)
-      * [Disk level](#disk-level)
-      * [Memory level](#memory-level)
-      * [Global cache](#global-cache)
-         * [Tagged global cache](#tagged-global-cache)
-      * [Function-specific cache](#function-specific-cache)
 
 
+<!-- toc -->
 
-<!--te-->
+- [Cache](#cache)
+  * [How to use `Cache`](#how-to-use-cache)
+  * [How the `Cache` works](#how-the-cache-works)
+  * [Disk level](#disk-level)
+  * [Memory level](#memory-level)
+  * [Global cache](#global-cache)
+    + [Tagged global cache](#tagged-global-cache)
+  * [Function-specific cache](#function-specific-cache)
+
+<!-- tocstop -->
 
 # Cache
 
