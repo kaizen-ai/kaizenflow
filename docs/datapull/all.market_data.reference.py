@@ -29,7 +29,6 @@ import logging
 import pandas as pd
 
 import core.config as cconfig
-import core.finance.bid_ask as cfibiask
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
@@ -126,12 +125,12 @@ ohlcv_data.head(3)
 
 # %%
 stitched_market_data_config = {
-    "start_timestamp": pd.Timestamp("2023-09-11T00:00:00", tz="UTC"),
-    "end_timestamp": pd.Timestamp("2023-09-11T04:00:00", tz="UTC"),
+    "start_timestamp": pd.Timestamp("2023-05-01T00:00:00", tz="UTC"),
+    "end_timestamp": pd.Timestamp("2023-05-10T04:00:00", tz="UTC"),
     "ohlcv_market_data": {
         "im_client": {
             "universe_version": universe_version,
-            "root_dir": "s3://cryptokaizen-data-test/v3",
+            "root_dir": "s3://cryptokaizen-unit-test/outcomes/Test_run_all_market_data_reference_notebook/v3/",
             "partition_mode": "by_year_month",
             "dataset": "ohlcv",
             "contract_type": "futures",
@@ -157,11 +156,12 @@ stitched_market_data_config = {
             "data_snapshot": "",
             "universe_version": universe_version,
             # Data currently residing in the test bucket
-            "root_dir": "s3://cryptokaizen-data-test/v3",
+            "root_dir": "s3://cryptokaizen-unit-test/outcomes/Test_run_all_market_data_reference_notebook/v3/",
             "partition_mode": "by_year_month",
             "dataset": "bid_ask",
             "contract_type": "futures",
-            "version": "v1_0_0",
+            # v2_0_0 is used due to addition of new column in #CmTask7224.
+            "version": "v2_0_0",
             "download_universe_version": "v7",
             "tag": "resampled_1min",
             "aws_profile": "ck",
@@ -169,8 +169,10 @@ stitched_market_data_config = {
         "ts_col_name": "timestamp",
         # TODO(Grisha): for some reason the current filtering mechanism filters out `asset_ids` which
         # makes it impossible to stitch the 2 market data dfs. So adding the necessary columns manually.
-        "columns": cfibiask.get_bid_ask_columns_by_level(1)
-        + ["asset_id", "full_symbol", "start_ts", "knowledge_timestamp"],
+        # Note(Juraj): we currently resampled only top of the book so no need to filter the columns
+        # "columns": cfibiask.get_bid_ask_columns_by_level(1)
+        # + ["asset_id", "full_symbol", "start_ts", "knowledge_timestamp"],
+        "columns": None,
         "column_remap": None,
         "filter_data_mode": "assert",
     },
