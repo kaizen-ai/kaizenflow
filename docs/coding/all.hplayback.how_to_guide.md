@@ -1,11 +1,13 @@
+
+
 <!-- toc -->
 
-* [Playback](#playback)
-* [Code and tests](#code-and-tests)
-* [Using playback](#using-playback)
-* [Quick start](#quick-start)
-* [Example 1: testing get_sum()](#example-1-testing-get_sum)
-* [Example 2: testing \_render_plantuml() from render_md.py](#example-2-testing-_render_plantuml-from-render_mdpy)
+- [Playback](#playback)
+  * [Code and tests](#code-and-tests)
+  * [Using playback](#using-playback)
+    + [Quick start](#quick-start)
+    + [Example 1: testing `get_sum()`](#example-1-testing-get_sum)
+    + [Example 2: testing `_render_plantuml()` from `render_md.py`](#example-2-testing-_render_plantuml-from-render_mdpy)
 
 <!-- tocstop -->
 
