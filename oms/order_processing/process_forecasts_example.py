@@ -15,6 +15,8 @@ def get_process_forecasts_dict_example1() -> Dict[str, Any]:
         },
         "optimizer_config": {
             "backend": "batch_optimizer",
+            "asset_class": "equities",
+            "apply_cc_limits": None,
             "dollar_neutrality_penalty": 0.1,
             "volatility_penalty": 0.5,
             "turnover_penalty": 0.0,

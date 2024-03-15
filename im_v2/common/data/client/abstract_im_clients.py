@@ -223,11 +223,11 @@ class ImClient(abc.ABC, hobject.PrintableMixin):
             timestamp_col = self._timestamp_col_name
             # The following transformations are needed to unify df format
             # when loading RDS vs. S3 Parquet.
-            # E.g. "bid_price_close" (RDS) -> "bid_price.close" (S3 parquet)
-            # but only for bid_* and ask_* columns.
+            # E.g. apply "bid_price_close" (RDS) -> "bid_price.close" (S3 parquet)
+            # for bid_*, ask_* and log_*, half_* columns.
             rename_value_col = (
                 lambda col: ".".join(col.rsplit("_", 1))
-                if col.startswith(("bid", "ask"))
+                if col.startswith(("bid", "ask", "log", "half"))
                 else col
             )
             df = df.rename(columns=rename_value_col)

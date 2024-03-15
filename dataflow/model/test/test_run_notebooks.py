@@ -153,6 +153,9 @@ class Test_run_master_feature_analyzer(dsnrnteca.Test_Run_Notebook_TestCase):
 class Test_run_master_research_backtest_analyzer(
     dsnrnteca.Test_Run_Notebook_TestCase
 ):
+    @pytest.mark.skip(
+        "CMTask7481: temporarily disabled due to new notebook promotion."
+    )
     @pytest.mark.superslow("~60 sec.")
     def test_run_notebook1(self) -> None:
         """
@@ -164,6 +167,9 @@ class Test_run_master_research_backtest_analyzer(
         config_builder = "dataflow.model.test.test_run_notebooks.build_test_master_research_backtest_analyzer_config(False)"
         _test_run_notebook(self, notebook_name, config_builder)
 
+    @pytest.mark.skip(
+        "CMTask7481: temporarily disabled due to new notebook promotion."
+    )
     @pytest.mark.superslow("~60 sec.")
     def test_run_notebook2(self) -> None:
         """

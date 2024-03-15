@@ -485,6 +485,8 @@ process_forecasts_node_dict:
       order_duration_in_mins: 5
     optimizer_config:
       backend: pomo
+      asset_class: equities
+      apply_cc_limits: None
       params:
         style: cross_sectional
         kwargs:
