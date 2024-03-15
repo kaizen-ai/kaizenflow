@@ -268,7 +268,7 @@
 
 # How to create a private fork
 
-- Https://stackoverflow.com/questions/10065526/github-how-to-make-a-fork-of-public-repository-private
+- https://stackoverflow.com/questions/10065526/github-how-to-make-a-fork-of-public-repository-private
 - From
   https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/duplicating-a-repository
 
