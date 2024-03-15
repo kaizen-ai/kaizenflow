@@ -99,9 +99,9 @@
 
 ### Manual sync
 
-    ```bash
-    > jupytext --sync --to py:percent XYZ.ipynb
-    ```
+  ```bash
+  > jupytext --sync --to py:percent XYZ.ipynb
+  ```
 
 ### Automatic syncing when using the Jupyter server
 
@@ -125,9 +125,9 @@
 
 ### Convert a notebook to script
 
-    ```bash
-    > jupytext --to py:percent XYZ.ipynb
-    ```
+  ```bash
+  > jupytext --to py:percent XYZ.ipynb
+  ```
 
 ### Convert a script into a notebook
 
