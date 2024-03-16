@@ -531,9 +531,19 @@ def purify_white_spaces(txt: str) -> str:
     return txt
 
 
+# TODO(Grisha): move to `purify_txt_from_client`.
+def purify_line_number(txt: str) -> str:
+    """
+    Replace line number with `$LINE_NUMBER`.
+    """
+    txt = re.sub(r"\.py::\d+", ".py::$LINE_NUMBER", txt, flags=re.MULTILINE)
+    return txt
+
+
 def purify_parquet_file_names(txt: str) -> str:
     """
     Replace UUIDs file names to `data.parquet` in the goldens.
+
     Some tests are expecting in the goldens the Parquet files with the names
     `data.parquet`.
     Example:
@@ -572,7 +582,7 @@ def purify_txt_from_client(txt: str) -> str:
     txt = purify_object_representation(txt)
     txt = purify_today_date(txt)
     txt = purify_white_spaces(txt)
-    txt = purify_parquet_file_names(txt)    
+    txt = purify_parquet_file_names(txt)
     return txt
 
 

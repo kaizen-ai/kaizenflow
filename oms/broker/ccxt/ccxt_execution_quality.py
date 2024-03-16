@@ -384,6 +384,7 @@ def get_oms_child_order_timestamps(
         "exchange_timestamp",
         "end_download_timestamp",
         "knowledge_timestamp",
+        "end_order_timestamp",
     ]
     timing_cols = submission_timestamp_cols = [
         "stats__submit_twap_child_order::bid_ask_market_data.start",

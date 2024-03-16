@@ -431,15 +431,28 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         hdbg.dassert_not_in(
             self._portfolio.CASH_ID, assets_and_predictions["asset_id"].to_list()
         )
+        # Extract params from the config.
+        backend = hdict.checked_get(self._optimizer_dict, "backend")
+        optimizer_params = self._optimizer_dict["params"]
+        asset_class = hdict.checked_get(self._optimizer_dict, "asset_class")
+        apply_cc_limits = hdict.checked_get(
+            self._optimizer_dict, "apply_cc_limits"
+        )
+        if _LOG.isEnabledFor(logging.DEBUG):
+            _LOG.debug(
+                hprint.to_str(
+                    "backend optimizer_params asset_class apply_cc_limits"
+                )
+            )
         # Compute the target positions in notional. This conceptually corresponds
         # to calling an optimizer.
         # TODO(Paul): Align with ForecastEvaluator and update callers.
-        backend = self._optimizer_dict["backend"]
-        if _LOG.isEnabledFor(logging.DEBUG):
-            _LOG.debug("backend=%s", backend)
-        if backend == "cc_pomo":
+        if asset_class == "crypto" and apply_cc_limits:
+            # The information is available only via CcxtBroker so extract the info only
+            # when working with CcxtBroker, be it `DataFrameCcxtBroker` or `CcxtBroker`.
             market_info = self._portfolio.broker.market_info
-            # TODO(Grisha): CmTask4826 "Expose `asset_ids_to_decimal`".
+            # TODO(Grisha): consider exposing `asset_ids_to_decimals` to the ctor or
+            # to the `optimizer_dict`, see CmTask4826.
             asset_ids_to_decimals = obccccut.subset_market_info(
                 market_info, "amount_precision"
             )
@@ -447,9 +460,9 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
                 _LOG.debug("asset_ids_to_decimals=%s", asset_ids_to_decimals)
         else:
             asset_ids_to_decimals = None
-        if backend == "pomo" or backend == "cc_pomo":
-            style = self._optimizer_dict["params"]["style"]
-            kwargs = self._optimizer_dict["params"]["kwargs"]
+        if backend == "pomo":
+            style = optimizer_params["style"]
+            kwargs = optimizer_params["kwargs"]
             df = oopcaopt.compute_target_holdings_and_trades_notional(
                 assets_and_predictions,
                 style=style,
@@ -460,21 +473,11 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
                 quantization=self._share_quantization,
                 asset_id_to_decimals=asset_ids_to_decimals,
             )
-            if backend == "cc_pomo":
-                # Apply notional limits to all the orders.
-                #  Note: target amount of order shares is set to 0 if its actual
-                #  values are below limits.
-                # TODO(Grisha): ideally we should remove rounding from `apply_cc_limits()`
-                # and use `quantize_shares()` only.
-                round_mode = "check"
-                df = ooccoput.apply_cc_limits(
-                    df, self._portfolio.broker, round_mode
-                )
         elif backend == "batch_optimizer":
             import optimizer.single_period_optimization as osipeopt
 
             spo = osipeopt.SinglePeriodOptimizer(
-                self._optimizer_dict,
+                optimizer_params,
                 assets_and_predictions,
                 restrictions=self._restrictions,
             )
@@ -485,14 +488,6 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
             )
             if _LOG.isEnabledFor(logging.DEBUG):
                 _LOG.debug("df=\n%s", hpandas.df_to_str(df))
-            df = df.merge(
-                assets_and_predictions.set_index("asset_id")[
-                    ["price", "holdings_shares"]
-                ],
-                how="outer",
-                left_index=True,
-                right_index=True,
-            )
         elif backend == "dind_optimizer":
             # Call docker optimizer stub.
             raise NotImplementedError
@@ -500,6 +495,15 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
             raise NotImplementedError
         else:
             raise ValueError("Unsupported `backend`=%s", backend)
+        if asset_class == "crypto" and apply_cc_limits:
+            # Apply notional limits to all the orders. Target amount of order shares
+            # is set to 0 if its actual values are below limits. This is specific to
+            # crypto Binance.
+            # TODO(Grisha): ideally we should remove rounding from `apply_cc_limits()`
+            # and use `quantize_shares()` only.
+            _LOG.info("Applying notional limits to all the orders.")
+            round_mode = "check"
+            df = ooccoput.apply_cc_limits(df, self._portfolio.broker, round_mode)
         # Package the output df.
         if liquidate_holdings:
             # If we want to liquidate all the holdings, we want to trade to flatten

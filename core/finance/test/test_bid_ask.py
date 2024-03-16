@@ -1,5 +1,6 @@
 import io
 import logging
+import pprint
 from typing import List
 
 import numpy as np
@@ -311,30 +312,10 @@ class Test_get_bid_ask_columns_by_level(hunitest.TestCase):
         expected columns for a level 1.
         """
         level = 1
-        expected_outcome = [
-            "level_1.bid_price.open",
-            "level_1.bid_price.high",
-            "level_1.bid_price.low",
-            "level_1.bid_price.close",
-            "level_1.bid_price.mean",
-            "level_1.bid_size.open",
-            "level_1.bid_size.max",
-            "level_1.bid_size.min",
-            "level_1.bid_size.close",
-            "level_1.bid_size.mean",
-            "level_1.ask_price.open",
-            "level_1.ask_price.high",
-            "level_1.ask_price.low",
-            "level_1.ask_price.close",
-            "level_1.ask_price.mean",
-            "level_1.ask_size.open",
-            "level_1.ask_size.max",
-            "level_1.ask_size.min",
-            "level_1.ask_size.close",
-            "level_1.ask_size.mean",
-        ]
-        actual_outcome = cfibiask.get_bid_ask_columns_by_level(level)
-        self.assertEqual(actual_outcome, expected_outcome)
+        actual_outcome = pprint.pformat(
+            cfibiask.get_bid_ask_columns_by_level(level)
+        )
+        self.check_string(actual_outcome)
 
     def test_level_3(self) -> None:
         """
@@ -342,67 +323,7 @@ class Test_get_bid_ask_columns_by_level(hunitest.TestCase):
         expected columns for a level 3.
         """
         level = 3
-        expected_outcome = [
-            "level_1.bid_price.open",
-            "level_1.bid_price.high",
-            "level_1.bid_price.low",
-            "level_1.bid_price.close",
-            "level_1.bid_price.mean",
-            "level_1.bid_size.open",
-            "level_1.bid_size.max",
-            "level_1.bid_size.min",
-            "level_1.bid_size.close",
-            "level_1.bid_size.mean",
-            "level_1.ask_price.open",
-            "level_1.ask_price.high",
-            "level_1.ask_price.low",
-            "level_1.ask_price.close",
-            "level_1.ask_price.mean",
-            "level_1.ask_size.open",
-            "level_1.ask_size.max",
-            "level_1.ask_size.min",
-            "level_1.ask_size.close",
-            "level_1.ask_size.mean",
-            "level_2.bid_price.open",
-            "level_2.bid_price.high",
-            "level_2.bid_price.low",
-            "level_2.bid_price.close",
-            "level_2.bid_price.mean",
-            "level_2.bid_size.open",
-            "level_2.bid_size.max",
-            "level_2.bid_size.min",
-            "level_2.bid_size.close",
-            "level_2.bid_size.mean",
-            "level_2.ask_price.open",
-            "level_2.ask_price.high",
-            "level_2.ask_price.low",
-            "level_2.ask_price.close",
-            "level_2.ask_price.mean",
-            "level_2.ask_size.open",
-            "level_2.ask_size.max",
-            "level_2.ask_size.min",
-            "level_2.ask_size.close",
-            "level_2.ask_size.mean",
-            "level_3.bid_price.open",
-            "level_3.bid_price.high",
-            "level_3.bid_price.low",
-            "level_3.bid_price.close",
-            "level_3.bid_price.mean",
-            "level_3.bid_size.open",
-            "level_3.bid_size.max",
-            "level_3.bid_size.min",
-            "level_3.bid_size.close",
-            "level_3.bid_size.mean",
-            "level_3.ask_price.open",
-            "level_3.ask_price.high",
-            "level_3.ask_price.low",
-            "level_3.ask_price.close",
-            "level_3.ask_price.mean",
-            "level_3.ask_size.open",
-            "level_3.ask_size.max",
-            "level_3.ask_size.min",
-            "level_3.ask_size.close",
-            "level_3.ask_size.mean",
-        ]
-        actual_outcome = cfibiask.get_bid_ask_columns_by_level(level)
-        self.assertEqual(actual_outcome, expected_outcome)
+        actual_outcome = pprint.pformat(
+            cfibiask.get_bid_ask_columns_by_level(level)
+        )
+        self.check_string(actual_outcome)

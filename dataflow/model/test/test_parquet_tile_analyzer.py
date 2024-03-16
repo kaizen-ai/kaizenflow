@@ -52,7 +52,7 @@ asset_id year month
               2        9.0 KB
 400      2022 1        9.9 KB
               2        9.0 KB
-                      """
+        """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_compute_metadata_stats_by_asset_id(self) -> None:

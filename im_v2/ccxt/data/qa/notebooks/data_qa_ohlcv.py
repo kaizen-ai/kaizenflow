@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.15.0
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -23,7 +23,6 @@
 # ## Imports and logging
 
 # %%
-import argparse
 import logging
 
 import pandas as pd
@@ -35,7 +34,6 @@ import helpers.henv as henv
 import helpers.hio as hio
 import helpers.hprint as hprint
 import im_v2.common.data.client.im_raw_data_client as imvcdcimrdc
-import im_v2.common.data.extract.data_qa as imvcdedaqa
 import im_v2.common.data.qa.dataset_validator as imvcdqdava
 import im_v2.common.data.qa.qa_check as imvcdqqach
 import im_v2.common.universe.universe as imvcounun
@@ -62,13 +60,25 @@ env_var_name = "CK_DATA_RECONCILIATION_CONFIG"
 config = cconfig.Config.from_env_var(env_var_name)
 
 # %%
-config = config.to_dict()
-# bid_ask_accuracy needs to be cast to int if its defined
-config["bid_ask_accuracy"] = (
-    int(config["bid_ask_accuracy"]) if config["bid_ask_accuracy"] else None
-)
-# bid_ask_depth needs to be cast to int if its defined
-# config["bid_ask_depth"] = int(config["bid_ask_depth"]) if config["bid_ask_depth"] else None
+if config:
+    config = config.to_dict()
+    # bid_ask_accuracy needs to be cast to int if its defined
+    config["bid_ask_accuracy"] = (
+        int(config["bid_ask_accuracy"]) if config["bid_ask_accuracy"] else None
+    )
+    # bid_ask_depth needs to be cast to int if its defined
+    # config["bid_ask_depth"] = int(config["bid_ask_depth"]) if config["bid_ask_depth"] else None
+    _LOG.warning("Using config from env vars")
+else:
+    config_dict = {
+        "stage": "test",
+        "start_timestamp": "2024-02-12T00:00:00+00:00",
+        "end_timestamp": "2024-02-13T00:00:00+00:00",
+        "aws_profile": "ck",
+        "dataset_signature": "periodic_daily.manual.downloaded_1min.postgres.ohlcv.futures.v8.ccxt.okx.v1_0_0",
+        "data_type": "ohlcv",
+    }
+    config = cconfig.Config.from_dict(config_dict)
 config
 
 # %% [markdown]
@@ -126,7 +136,7 @@ data.head()
 data_frequency = "T" if "1min" in dataset_signature_as_dict["action_tag"] else "S"
 vendor_name = dataset_signature_as_dict["vendor"].upper()
 mode = "download"
-version = dataset_signature_as_dict["universe"].replace("_",".")
+version = dataset_signature_as_dict["universe"].replace("_", ".")
 exchange_id = dataset_signature_as_dict["exchange_id"]
 universe = imvcounun.get_vendor_universe(vendor_name, mode, version=version)
 universe_list = universe[exchange_id]

@@ -3,7 +3,7 @@
         "download_mode.downloading_entity.action_tag.data_format.data_type.asset_type.universe.vendor.exchange_id.version",
     "token_separator_character": ".",
     "allowed_values": {
-        "download_mode": ["bulk", "periodic_daily", "realtime"],
+        "download_mode": ["bulk", "periodic_daily", "periodic_10min", "realtime"],
         "downloading_entity": ["airflow", "manual"],
         "action_tag": [
             "downloaded_all",
@@ -22,7 +22,7 @@
         "asset_type": ["futures", "spot"],
         "universe": [],
         "vendor": ["ccxt", "crypto_chassis", "binance"],
-        "exchange_id": ["binance", "binanceus", "okx", "kraken"],
+        "exchange_id": ["binance", "binanceus", "okx", "kraken", "cryptocom"],
         "version": ["v1_0_0", "v2_0_0"]
     }
 }

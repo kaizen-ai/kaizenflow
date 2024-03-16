@@ -1,0 +1,37 @@
+---
+################################
+## Airflow ConfigMap
+#################################
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airflow-config
+  namespace: airflow
+  labels:
+    tier: airflow
+    component: config
+data:
+  # These are system-specified config overrides.
+  AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://postgres:postgres@prod-airflow-backend-db.cgywa1htv8lp.eu-west-2.rds.amazonaws.com:5432/prod_airflow_backend_db"
+  AIRFLOW__CORE__EXECUTOR: "KubernetesExecutor"
+  AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+  AIRFLOW__KUBERNETES_EXECUTOR__NAMESPACE: "airflow"
+  AIRFLOW__KUBERNETES_EXECUTOR__IN_CLUSTER: "True"
+  AIRFLOW__KUBERNETES_EXECUTOR__WORKER_CONTAINER_REPOSITORY: "apache/airflow"
+  AIRFLOW__KUBERNETES_EXECUTOR__WORKER_CONTAINER_TAG: "2.7.1"
+  AIRFLOW__KUBERNETES_EXECUTOR__POD_TEMPLATE_FILE: "/opt/airflow/dags/pod_templates/worker-pod_template.yaml"
+  AIRFLOW__SECRETS__USE_CACHE: "True"
+  AIRFLOW__SECRETS__CACHE_TTL_SECONDS: "600"
+  AIRFLOW__WEBSERVER__RBAC: "True"
+  AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "True"
+  AIRFLOW__WEBSERVER__INSTANCE_NAME: "K8s PreProd Environment"
+  AIRFLOW__WEBSERVER__BASE_URL: "http://172.32.0.0:8080"
+  _AIRFLOW_DB_MIGRATE: "true"
+  _AIRFLOW_WWW_USER_CREATE: "true"
+  AIRFLOW__EMAIL__EMAIL_BACKEND: "airflow.utils.email.send_email_smtp"
+  AIRFLOW__SMTP__SMTP_HOST: "email-smtp.eu-north-1.amazonaws.com"
+  AIRFLOW__SMTP__SMTP_STARTTLS: "True"
+  AIRFLOW__SMTP__SMTP_SSL: "False"
+  AIRFLOW__SMTP__SMTP_PORT: "587"
+  AIRFLOW__SMTP__SMTP_MAIL_FROM: "infra@crypto-kaizen.com"
+  PYTHONPATH: "/usr/bin/python3"

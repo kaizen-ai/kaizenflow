@@ -62,3 +62,8 @@ output "subnet_name_to_id" {
   description = "Map of subnet names to their IDs"
   value       = local.subnet_name_to_id
 }
+
+output "rt_name_to_id" {
+  description = "Map of route table names to their IDs"
+  value       = local.rt_name_to_id
+}

@@ -8,9 +8,11 @@ import os
 
 import dataflow.system as dtfsys
 import dataflow_amp.system.common.system_simulation_utils as dtfascssiut
-import helpers.hgit as hgit
+
+# TODO(Grisha): `dataflow_amp/system/common` should not depend on
+# `dataflow_amp/system/Cx`.
+import dataflow_amp.system.Cx as dtfamsysc
 import helpers.hs3 as hs3
-import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 
@@ -22,36 +24,6 @@ class Test_Replayed_Time_Simulation_TestCase(hunitest.TestCase):
     Test case for replayed time simulation.
     """
 
-    @staticmethod
-    def _dump_market_data(
-        dst_root_dir: str,
-        start_timestamp_as_str: str,
-        end_timestamp_as_str: str,
-    ) -> None:
-        """
-        Dump market data to have an input for the simulation.
-
-        See `amp/dataflow_amp/system/Cx/Cx_dump_market_data.py` for params
-        description.
-        """
-        db_stage = "preprod"
-        universe_version = "v7.4"
-        opts = [
-            f"--dst_dir {dst_root_dir}",
-            f"--start_timestamp_as_str {start_timestamp_as_str}",
-            f"--end_timestamp_as_str {end_timestamp_as_str}",
-            f"--db_stage {db_stage}",
-            f"--universe {universe_version}",
-        ]
-        # Save market data to the dir with the inputs.
-        amp_dir = hgit.get_amp_abs_path()
-        opts = " ".join(opts)
-        script_name = os.path.join(
-            amp_dir, "dataflow_amp", "system", "Cx", "Cx_dump_market_data.py"
-        )
-        cmd = " ".join([script_name, opts])
-        hsystem.system(cmd, suppress_output=False)
-
     def _test_save_market_data(
         self, start_timestamp_as_str: str, end_timestamp_as_str: str
     ) -> None:
@@ -60,14 +32,18 @@ class Test_Replayed_Time_Simulation_TestCase(hunitest.TestCase):
         """
         scratch_dir = self.get_scratch_space()
         # Dump market data for a given interval.
-        _ = self._dump_market_data(
-            scratch_dir,
+        db_stage = "preprod"
+        universe_version = "v7.4"
+        # TODO(Grisha): rename `test_data.csv.gz` -> `market_data.csv.gz`.
+        market_data_file_path = os.path.join(scratch_dir, "test_data.csv.gz")
+        dtfamsysc.dump_market_data_from_db(
+            market_data_file_path,
             start_timestamp_as_str,
             end_timestamp_as_str,
+            db_stage,
+            universe_version,
         )
         # Copy data to the test S3 input dir.
-        market_data_file_name = "test_data.csv.gz"
-        market_data_file_path = os.path.join(scratch_dir, market_data_file_name)
         s3_input_dir = self.get_s3_input_dir()
         aws_profile = "ck"
         hs3.copy_file_to_s3(market_data_file_path, s3_input_dir, aws_profile)

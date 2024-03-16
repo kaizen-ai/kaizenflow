@@ -71,7 +71,7 @@ def _allow_update(
     dst_root_dir: str,
 ) -> None:
     """
-    Allow to overwrite reconcilation outcomes in the date-specific target dir.
+    Allow to overwrite reconciliation outcomes in the date-specific target dir.
 
     See `reconcile_run_all()` for params description.
     """
@@ -215,22 +215,14 @@ def reconcile_dump_market_data(
         _copy_result_file(market_data_file_path, sim_target_dir, aws_profile)
         _LOG.warning("Skipping generating %s", market_data_file_path)
     else:
-        # TODO(Grisha): @Dan Copy logs to the specified folder.
-        opts = [
-            # TODO(Grisha): consider saving locally as it is done for the other files / dirs.
-            f"--dst_dir {sim_target_dir}",
-            f"--start_timestamp_as_str {start_timestamp_as_str}",
-            f"--end_timestamp_as_str {end_timestamp_as_str}",
-            f"--db_stage {db_stage}",
-            f"--universe {universe_version}",
-        ]
-        opts = " ".join(opts)
-        opts += " -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt; exit ${PIPESTATUS[0]}"
-        amp_dir = hgit.get_amp_abs_path()
-        script_name = "dataflow_amp/system/Cx/Cx_dump_market_data.py"
-        script_name = os.path.join(amp_dir, script_name)
-        cmd = " ".join([script_name, opts])
-        _system(cmd)
+        market_data_file_path = os.path.join(sim_target_dir, market_data_file)
+        dtfasysc.dump_market_data_from_db(
+            market_data_file_path,
+            start_timestamp_as_str,
+            end_timestamp_as_str,
+            db_stage,
+            universe_version,
+        )
     # Check the market data file.
     # TODO(Nina): enable once the function is extended to handle S3 files.
     # _sanity_check_data(market_data_file_path)

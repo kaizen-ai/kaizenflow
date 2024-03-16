@@ -173,13 +173,14 @@ def remove_unfinished_ohlcv_bars(data: pd.DataFrame) -> pd.DataFrame:
 
 
 def _transform_bid_ask_websocket_dataframe(
-    df: pd.DataFrame, exchange_id: str
+    df: pd.DataFrame, exchange_id: str, max_num_levels: int
 ) -> pd.DataFrame:
     """
     Transform bid/ask raw DataFrame to DataFrame representation suitable for
     database insertion.
 
     :param df: DataFrame formed from raw bid/ask dict data.
+    :param max_num_levels: filter bid ask data on level <= max_num_levels
     :return: transformed DataFrame
     """
     df = df.explode(["asks", "bids"])
@@ -221,6 +222,8 @@ def _transform_bid_ask_websocket_dataframe(
     df = df.drop_duplicates(non_metadata_columns)
     # For clarity, add +1 so the levels start from 1.
     df["level"] = df.groupby(groupby_cols).cumcount().add(1)
+    _LOG.info(f"Filtering bid ask data until level {max_num_levels}")
+    df = df[df["level"] <= max_num_levels]
     # Check for NaNs in the timestamp column and drop them.
     if df["timestamp"].isnull().any():
         _LOG.warning(
@@ -296,7 +299,8 @@ def transform_trades_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def transform_raw_websocket_data(
-    raw_data: List[Dict], data_type: str, exchange_id: str
+    raw_data: List[Dict], data_type: str, exchange_id: str,
+    *, max_num_levels: int = 10,
 ) -> pd.DataFrame:
     """
     Transform list of raw websocket data into a DataFrame with columns
@@ -305,13 +309,16 @@ def transform_raw_websocket_data(
     :param data: data to be transformed
     :param data_type: type of data, e.g. OHLCV
     :param exchange_id: ID of the exchange where the data come from
+    :param max_num_levels: Bid ask downloads minimum of 10 levels of data but with
+        increasing universe it is impractical to dump all the levels. This flag when
+        set will filter bid ask data till level <= max_num_levels
     :return: database compliant DataFrame formed from raw data
     """
     df = pd.DataFrame(raw_data)
     if data_type == "ohlcv":
         df = _transform_ohlcv_websocket_dataframe(df)
     elif data_type == "bid_ask":
-        df = _transform_bid_ask_websocket_dataframe(df, exchange_id)
+        df = _transform_bid_ask_websocket_dataframe(df, exchange_id, max_num_levels)
     elif data_type == "trades":
         df = transform_trades_websocket_dataframe(df)
     else:
@@ -377,14 +384,13 @@ def calculate_vwap(
     return calculated_price
 
 
-# TODO(Juraj): this is deprecated - delete.
-# TODO(Juraj): We might get back to this in CmTask4874.
 def resample_bid_ask_data_to_1min(
     data: pd.DataFrame,
     time_resolution_in_ms: int = 200,
 ) -> pd.DataFrame:
     """
-    Resample bid/ask data to 1 minute interval for single symbol.
+    Resample single level of bid/ask data to 1 minute interval for single
+    symbol.
 
     The method expects data in the following format:
             bid_size, bid_price, ask_size, ask_price
@@ -394,23 +400,44 @@ def resample_bid_ask_data_to_1min(
         point-in-time
     :return: data resampled to 1 minute bars
     """
-    # Set resample arguments according to our data invariant [a, b) and
-    #  set label to 'b';
     try:
         hdbg.dassert_isinstance(data, pd.DataFrame)
         cols = ["bid_price", "bid_size", "ask_price", "ask_size"]
-        hdbg.dassert_is_subset(cols, data.columns)
+        hdbg.dassert_set_eq(cols, data.columns, "")
         for col in cols:
             hpandas.dassert_series_type_is(data[col], np.float64)
     except ValueError:
         _LOG.error("Input format is wrong")
+    # Compute point-in-time derived columns.
+    bid_ask_midpoint = 0.5 * (data["ask_price"] + data["bid_price"])
+    half_spread = 0.5 * (data["ask_price"] - data["bid_price"])
+    log_size_imbalance = np.log(data["bid_size"]) - np.log(data["ask_size"])
+    # Insert new columns.
+    data["bid_ask_midpoint"] = bid_ask_midpoint
+    data["half_spread"] = half_spread
+    data["log_size_imbalance"] = log_size_imbalance
     # TODO(Juraj): There is a potential issue which will be analysed during
     #  CmTask4874, where we do not receive updated order book if it remained unchanged
     # for several sampling periods.
     # Forward fill.
     rule = str(int(time_resolution_in_ms / 2)) + "ms"
     # TODO(Paul): Consider parametrizing `limit`.
-    cfinresa.resample(data, rule=rule).last().ffill(limit=100)
+    data = cfinresa.resample(data, rule=rule).last().ffill(limit=601)
+    # Compute derived columns with time diff. We do this after resampling
+    # everything on a uniform grid.
+    bid_ask_midpoint_var = data["bid_ask_midpoint"].diff() ** 2
+    bid_ask_midpoint_autocovar = data["bid_ask_midpoint"].diff() * data[
+        "bid_ask_midpoint"
+    ].diff().shift(1)
+    log_size_imbalance_var = data["log_size_imbalance"] ** 2
+    log_size_imbalance_autocovar = data["log_size_imbalance"] * data[
+        "log_size_imbalance"
+    ].shift(1)
+    # Insert new columns.
+    data["bid_ask_midpoint_var"] = bid_ask_midpoint_var
+    data["bid_ask_midpoint_autocovar"] = bid_ask_midpoint_autocovar
+    data["log_size_imbalance_var"] = log_size_imbalance_var
+    data["log_size_imbalance_autocovar"] = log_size_imbalance_autocovar
     # Resample to 1 minute.
     resampling_groups_1min = [
         (
@@ -419,6 +446,9 @@ def resample_bid_ask_data_to_1min(
                 "bid_size": "bid_size.open",
                 "ask_price": "ask_price.open",
                 "ask_size": "ask_size.open",
+                "bid_ask_midpoint": "bid_ask_midpoint.open",
+                "half_spread": "half_spread.open",
+                "log_size_imbalance": "log_size_imbalance.open",
             },
             "first",
             {},
@@ -429,6 +459,9 @@ def resample_bid_ask_data_to_1min(
                 "bid_size": "bid_size.close",
                 "ask_price": "ask_price.close",
                 "ask_size": "ask_size.close",
+                "bid_ask_midpoint": "bid_ask_midpoint.close",
+                "half_spread": "half_spread.close",
+                "log_size_imbalance": "log_size_imbalance.close",
             },
             "last",
             {},
@@ -439,6 +472,9 @@ def resample_bid_ask_data_to_1min(
                 "bid_size": "bid_size.max",
                 "ask_price": "ask_price.high",
                 "ask_size": "ask_size.max",
+                "bid_ask_midpoint": "bid_ask_midpoint.max",
+                "half_spread": "half_spread.max",
+                "log_size_imbalance": "log_size_imbalance.max",
             },
             "max",
             {},
@@ -449,6 +485,9 @@ def resample_bid_ask_data_to_1min(
                 "bid_size": "bid_size.min",
                 "ask_price": "ask_price.low",
                 "ask_size": "ask_size.min",
+                "bid_ask_midpoint": "bid_ask_midpoint.min",
+                "half_spread": "half_spread.min",
+                "log_size_imbalance": "log_size_imbalance.min",
             },
             "min",
             {},
@@ -459,114 +498,26 @@ def resample_bid_ask_data_to_1min(
                 "bid_size": "bid_size.mean",
                 "ask_price": "ask_price.mean",
                 "ask_size": "ask_size.mean",
+                "bid_ask_midpoint": "bid_ask_midpoint.mean",
+                "half_spread": "half_spread.mean",
+                "log_size_imbalance": "log_size_imbalance.mean",
             },
             "mean",
+            {},
+        ),
+        (
+            {
+                "bid_ask_midpoint_var": f"bid_ask_midpoint_var.{rule}",
+                "bid_ask_midpoint_autocovar": f"bid_ask_midpoint_autocovar.{rule}",
+                "log_size_imbalance_var": f"log_size_imbalance_var.{rule}",
+                "log_size_imbalance_autocovar": f"log_size_imbalance_autocovar.{rule}",
+            },
+            "sum",
             {},
         ),
     ]
     data_1min = cfinresa.resample_bars(
         data,
-        "1T",
-        resampling_groups_1min,
-        vwap_groups=[],
-        resample_kwargs={},
-    )
-    return data_1min
-
-
-def resample_bid_ask_data_from_1sec_to_1min(data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Resample bid/ask data to 1 minute interval for single symbol.
-
-    The method expects data in the following format:
-            bid_size, bid_price, ask_size, ask_price
-    timestamp 2022-11-16T00:00:01+00:00 5450, 13.50, 5200, 13.25
-
-    The method expects data coming from a single exchange.
-
-    :return: data resampled to 1 minute.
-    """
-    # Set resample arguments according to our data invariant [a, b) and
-    #  set label to 'b';
-    try:
-        hdbg.dassert_isinstance(data, pd.DataFrame)
-        cols = ["bid_price", "bid_size", "ask_price", "ask_size"]
-        hdbg.dassert_is_subset(cols, data.columns)
-        for col in cols:
-            hpandas.dassert_series_type_is(data[col], np.float64)
-    except ValueError:
-        _LOG.error("Input format is wrong")
-    # First resample to 1 second.
-    resampling_groups_1sec = [
-        (
-            {
-                "bid_price": "bid_price",
-                "bid_size": "bid_size",
-                "ask_price": "ask_price",
-                "ask_size": "ask_size",
-            },
-            "mean",
-            {},
-        ),
-    ]
-    resampling_kwargs_1sec = {
-        "closed": "left",
-        "label": "right",
-    }
-    data_1sec = cfinresa.resample_bars(
-        data,
-        "1s",
-        resampling_groups_1sec,
-        vwap_groups=[],
-        resample_kwargs=resampling_kwargs_1sec,
-    )
-    # Forward fill.
-    data_1sec = data_1sec.ffill()
-    # Resample to 1 minute.
-    resampling_groups_1min = [
-        (
-            {
-                "bid_price": "bid_price.close",
-                "bid_size": "bid_size.close",
-                "ask_price": "ask_price.close",
-                "ask_size": "ask_size.close",
-            },
-            "last",
-            {},
-        ),
-        (
-            {
-                "bid_price": "bid_price.high",
-                "bid_size": "bid_size.max",
-                "ask_price": "ask_price.high",
-                "ask_size": "ask_size.max",
-            },
-            "max",
-            {},
-        ),
-        (
-            {
-                "bid_price": "bid_price.low",
-                "bid_size": "bid_size.min",
-                "ask_price": "ask_price.low",
-                "ask_size": "ask_size.min",
-            },
-            "min",
-            {},
-        ),
-        (
-            {
-                "bid_price": "bid_price.mean",
-                "bid_size": "bid_size.mean",
-                "ask_price": "ask_price.mean",
-                "ask_size": "ask_size.mean",
-            },
-            "mean",
-            {},
-        ),
-    ]
-    data_1min = cfinresa.resample_bars(
-        data_1sec,
         "1T",
         resampling_groups_1min,
         vwap_groups=[],
@@ -639,110 +590,7 @@ def resample_multisymbol_multilevel_bid_ask_data_to_1min(
     return data_resampled
 
 
-# TODO(Juraj): Make sure this is well-tested then deprecate in favour of more general
-# resample_multilevel_bid_ask_data_to_1min
-def resample_multilevel_bid_ask_data_from_1sec_to_1min(
-    data: pd.DataFrame,
-    *,
-    number_levels_of_order_book: int = 10,
-) -> pd.DataFrame:
-    """
-    Resample multilevel bid/ask data to 1 minute interval for single symbol.
-
-    The method expects data in the following format:
-            exchange_id, bid_size_l1,bid_price_l1,ask_size_l1,ask_price_l1...
-    timestamp 2022-11-16T00:00:01+00:00 binance, 5450, 13.50, 5200, 13.25...
-
-    The method assumes NUMBER_LEVELS_OF_ORDER_BOOK levels of order book
-    and a data coming from single exchange.
-
-    :return: DataFrame resampled to 1 minute.
-    """
-    all_levels_resampled = []
-    for i in range(1, number_levels_of_order_book + 1):
-        bid_ask_cols_level = list(map(lambda x: f"{x}_l{i}", BID_ASK_COLS))
-        data_one_level = data[bid_ask_cols_level]
-        # Canonize column name for resampling function.
-        data_one_level.columns = BID_ASK_COLS
-        data_one_level = resample_bid_ask_data_from_1sec_to_1min(data_one_level)
-        # Uncanonize the column levels back.
-        data_one_level = data_one_level.rename(columns=lambda x: f"level_{i}.{x}")
-        all_levels_resampled.append(data_one_level)
-    # Drop duplicate columns because a vetical concatenation follows.
-    data_resampled = pd.concat(all_levels_resampled, axis=1)
-    # Insert exchange_id column
-    data_resampled["exchange_id"] = data["exchange_id"].iloc[0]
-    return data_resampled
-
-
-# TODO(Juraj): Deprecate this.
 def transform_and_resample_rt_bid_ask_data(
-    df_raw: pd.DataFrame,
-) -> pd.DataFrame:
-    """
-    Transform raw bid/ask realtime data and resample to 1 min.
-
-    The function expects raw bid/ask data from a single exchange
-    sampled multiple times per second.
-    - In the first step the raw data
-    get resampled to 1 sec by applying mean(). The second step performs
-    resampling to 1 min via sum for sizes and VWAP for prices.
-
-    :param df_raw: real-time bid/ask data from a single exchange
-    """
-    # Remove duplicates, keep the latest record.
-    df_raw = df_raw.sort_values("knowledge_timestamp", ascending=False)
-    df_raw = df_raw.drop_duplicates(
-        ["timestamp", "exchange_id", "currency_pair", "level"]
-    )
-    # Convert timestamp to pd.Timestamp and set as index before sending for resampling.
-    df_raw["timestamp"] = df_raw["timestamp"].map(
-        hdateti.convert_unix_epoch_to_timestamp
-    )
-    df_raw = df_raw.set_index("timestamp")
-    dfs_resampled = []
-    # Resample to 1 sec.
-    #  to match resample_bid_ask_data_from_1sec_to_1min() interface.
-    df_raw = (
-        df_raw.groupby(["exchange_id", "currency_pair", "level"])
-        .resample(rule="S", closed="left", label="left")
-        .mean()
-    )
-    # Drop level column, it's already in index
-    df_raw = df_raw.drop("level", axis=1)
-    # Resample to 1 min.
-    for group_cols, group in df_raw.groupby(
-        ["exchange_id", "currency_pair", "level"]
-    ):
-        df_part = resample_bid_ask_data_from_1sec_to_1min(
-            group.reset_index().set_index("timestamp")
-        )
-        # For DB we keep only mean columns.
-        mean_cols = list(filter(lambda col: "mean" in col, df_part.columns))
-        df_part = df_part[mean_cols]
-        df_part.columns = list(
-            map(lambda col: col.replace(".mean", ""), df_part.columns)
-        )
-        # Add the removed columns back.
-        df_part[["exchange_id", "currency_pair", "level"]] = group_cols
-        dfs_resampled.append(df_part)
-    df_resampled = pd.concat(dfs_resampled)
-    # Convert back to unix timestamp after resampling
-    df_resampled = df_resampled.reset_index()
-    df_resampled["timestamp"] = df_resampled["timestamp"].map(
-        hdateti.convert_timestamp_to_unix_epoch
-    )
-    # This data is only reloaded from our DB so end_download_timestamp is None.
-    df_resampled["end_download_timestamp"] = None
-    # Round column values for readability.
-    round_cols_dict = {
-        col: 8 for col in ["bid_size", "bid_price", "ask_size", "ask_price"]
-    }
-    df_resampled = df_resampled.round(decimals=round_cols_dict)
-    return df_resampled
-
-
-def transform_and_resample_rt_bid_ask_data2(
     df_raw: pd.DataFrame,
 ) -> pd.DataFrame:
     """

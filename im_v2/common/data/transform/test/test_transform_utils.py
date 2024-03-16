@@ -1,4 +1,5 @@
 import os
+import unittest.mock as umock
 
 import pandas as pd
 import pytest
@@ -548,60 +549,6 @@ class TestResampleBidAskData(hmoto.S3Mock_TestCase):
         )
         self.s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
 
-    def get_test_data(self) -> None:
-        """
-        Copy bid-ask data from S3 to a scratch dir.
-        """
-        s3_input_dir = self.get_s3_input_dir()
-        scratch_dir = self.get_scratch_space()
-        aws_profile = "ck"
-        hs3.copy_data_from_s3_to_local_dir(s3_input_dir, scratch_dir, aws_profile)
-
-    def test_resample_bid_ask_data_to_1min(self) -> None:
-        """
-        Verify that raw data 200ms is correctly resampled to 1min.
-        """
-        self.get_test_data()
-        scratch_dir = self.get_scratch_space()
-        # Prepare inputs.
-        file_name = os.path.join(scratch_dir, "SampleBidAskDataLong.csv")
-        data = pd.read_csv(file_name)
-        data["timestamp"] = pd.to_datetime(data["timestamp"])
-        data.set_index("timestamp", inplace=True)
-        # Check results.
-        actual_df = data.groupby("currency_pair").apply(
-            imvcdttrut.resample_bid_ask_data_to_1min
-        )
-
-        expected = r"""
-                                         bid_price.open  bid_size.open  ask_price.open  ask_size.open  bid_price.close  bid_size.close  ask_price.close  ask_size.close  bid_price.high  bid_size.max  ask_price.high  ask_size.max  bid_price.low  bid_size.min  ask_price.low  ask_size.min  bid_price.mean  bid_size.mean  ask_price.mean  ask_size.mean
-currency_pair timestamp
-BTC_USDT      2023-05-05 14:01:00+00:00        29163.70          8.581        29163.80          1.762         29167.90           1.441         29168.20           0.004        29168.00        30.071        29168.20         3.304       29163.60         0.001       29163.80         0.002     29166.42500       9.334000      29166.6375       0.846625
-ETH_USDT      2023-05-05 14:01:00+00:00         1931.65          1.482         1931.67          0.016          1932.96           1.483          1933.01           0.077         1932.99        72.749         1933.01       223.777        1931.64         0.010        1931.67         0.010      1932.38375      12.711875       1932.4075      33.434562
-"""
-        actual = hpandas.df_to_str(actual_df)
-        self.assert_equal(actual, expected, fuzzy_match=True)
-
-    def test_resample_multilevel_bid_ask_data_to_1min(self) -> None:
-        """
-        Verify that multilevel raw data 200ms is correctly resampled to 1min.
-        """
-        self.get_test_data()
-        scratch_dir = self.get_scratch_space()
-        file_name = os.path.join(scratch_dir, "SampleBidAskDataWide.csv")
-        # Data has 2 levels in wide format.
-        data = pd.read_csv(file_name)
-        data["timestamp"] = pd.to_datetime(data["timestamp"])
-        data.set_index("timestamp", inplace=True)
-        # Run Resampling
-        actual_df = data.groupby("currency_pair").apply(
-            lambda group: imvcdttrut.resample_multilevel_bid_ask_data_to_1min(
-                group, number_levels_of_order_book=2
-            )
-        )
-        actual = hpandas.df_to_str(actual_df)
-        self.check_string(actual)
-
     def test_resample_daily_bid_ask_data(self) -> None:
         parser = imvcdtrdbad._parse()
         args = parser.parse_args(
@@ -678,3 +625,151 @@ ETH_USDT      2023-05-05 14:01:00+00:00         1931.65          1.482         1
         )
         data = data.reset_index(drop=True)
         return data
+
+
+@pytest.mark.slow
+class TestResampleBidAskData2(hunitest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self._get_test_data()
+
+    def test_resample_bid_ask_data_to_1min(self) -> None:
+        """
+        Verify that raw data 200ms is correctly resampled to 1min.
+        """
+        scratch_dir = self.get_scratch_space()
+        # Prepare inputs.
+        # SampleBidAskDataLong.csv contains short sample of top 2
+        # orderbook levels for BTC_USDT and ETH_USDT.
+        file_name = os.path.join(scratch_dir, "SampleBidAskDataLong.csv")
+        data = pd.read_csv(file_name)
+        data["timestamp"] = pd.to_datetime(data["timestamp"])
+        data = data.set_index("timestamp")
+        # Choose only one level as the function expects.
+        data = data[data["level"] == 1]
+        # Check results.
+        bid_ask_cols = ["bid_size", "bid_price", "ask_size", "ask_price"]
+        actual_df = data.groupby("currency_pair")[bid_ask_cols].apply(
+            imvcdttrut.resample_bid_ask_data_to_1min
+        )
+
+        expected = r"""
+        bid_price.open bid_size.open ask_price.open ask_size.open bid_ask_midpoint.open half_spread.open log_size_imbalance.open bid_price.close bid_size.close ask_price.close ask_size.close bid_ask_midpoint.close half_spread.close log_size_imbalance.close bid_price.high bid_size.max ask_price.high ask_size.max bid_ask_midpoint.max half_spread.max log_size_imbalance.max bid_price.low bid_size.min ask_price.low ask_size.min bid_ask_midpoint.min half_spread.min log_size_imbalance.min bid_price.mean bid_size.mean ask_price.mean ask_size.mean bid_ask_midpoint.mean half_spread.mean log_size_imbalance.mean bid_ask_midpoint_var.100ms bid_ask_midpoint_autocovar.100ms log_size_imbalance_var.100ms log_size_imbalance_autocovar.100ms
+        currency_pair timestamp
+        BTC_USDT 2023-05-05 14:01:00+00:00 29163.70 8.581 29163.80 1.762 29163.75 0.05 1.583101 29168.00 18.547 29168.1 1.650 29168.050 0.050 2.419533 29168.00 30.071 29168.1 2.276 29168.050 0.10 8.677610 29163.70 5.552 29163.80 0.002 29163.75 0.050 0.891739 29166.250000 14.608643 29166.364286 1.026071 29166.307143 0.057143 3.66105 4.535000 0.0 270.096097 225.892178
+        ETH_USDT 2023-05-05 14:01:00+00:00 1931.65 1.482 1931.67 0.016 1931.66 0.01 4.528559 1932.99 2.884 1933.0 223.777 1932.995 0.005 -4.351472 1932.99 72.749 1933.0 223.777 1932.995 0.01 6.476819 1931.65 1.482 1931.67 0.010 1931.66 0.005 -4.351472 1932.253077 24.094615 1932.264615 30.164231 1932.258846 0.005769 1.71967 0.472225 0.0 156.028250 44.467921
+        """
+        actual = hpandas.df_to_str(actual_df)
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_resample_bid_ask_data_to_1min2(self) -> None:
+        """
+        Verify that ffill() inside resample_bid_ask_data_to_1min() behaves as
+        expected.
+        """
+        scratch_dir = self.get_scratch_space()
+        # Prepare inputs.
+        file_name = os.path.join(scratch_dir, "SampleBidAskDataLong.csv")
+        data = pd.read_csv(file_name)
+        data["timestamp"] = pd.to_datetime(data["timestamp"])
+        data = data.set_index("timestamp")
+        # Choose only one level as the function expects.
+        data = data[data["level"] == 1]
+        # Choose only single symbol to simplify test.
+        data = data[data["currency_pair"] == "BTC_USDT"]
+
+        with umock.patch.object(
+            imvcdttrut.cfinresa, "resample_bars"
+        ) as resample_bars:
+            bid_ask_cols = ["bid_size", "bid_price", "ask_size", "ask_price"]
+            imvcdttrut.resample_bid_ask_data_to_1min(data[bid_ask_cols])
+            self.assertEqual(resample_bars.call_count, 1)
+            # Get the dataset passed to resampler.
+            # call_args_list has the following structure:
+            # [call((pd.DataFrame(...),), ...), call(...)]
+            # That's why triple indexing is needed to fetch the DF itself.
+            ffilled_data = resample_bars.call_args_list[0][0][0]
+
+            # Confirm that the data was forward filled to the expected length
+            # AKA the input to cnfiresa.resample_bars is what we expect.
+            actual = hpandas.df_to_str(ffilled_data)
+            self.check_string(actual)
+
+    def test_resample_bid_ask_data_to_1min3(self) -> None:
+        """
+        Verify that assertion fails if we pass incorrectly formatted data.
+
+        The function expects single level of data, if multiple levels
+        are passed the assertion should fail.
+        """
+        scratch_dir = self.get_scratch_space()
+        # Prepare inputs.
+        file_name = os.path.join(scratch_dir, "SampleBidAskDataLong.csv")
+        data = pd.read_csv(file_name)
+        data["timestamp"] = pd.to_datetime(data["timestamp"])
+        data = data.set_index("timestamp")
+        # Check assertion.
+        with self.assertRaises(AssertionError) as ae:
+            data.groupby("currency_pair").apply(
+                imvcdttrut.resample_bid_ask_data_to_1min
+            )
+        exp = r"""
+        ################################################################################
+        * Failed assertion *
+        val1 - val2=[]
+        val2 - val1=['currency_pair', 'level']
+        val1=['ask_price', 'ask_size', 'bid_price', 'bid_size']
+        set eq
+        val2=['ask_price', 'ask_size', 'bid_price', 'bid_size', 'currency_pair', 'level']
+        ################################################################################
+        """
+        act = str(ae.exception)
+        self.assert_equal(exp, act, fuzzy_match=True)
+
+    def test_resample_multilevel_bid_ask_data_to_1min(self) -> None:
+        """
+        Verify that multilevel raw data 200ms is correctly resampled to 1min.
+        """
+        scratch_dir = self.get_scratch_space()
+        file_name = os.path.join(scratch_dir, "SampleBidAskDataWide.csv")
+        # Data has 2 levels in wide format.
+        data = pd.read_csv(file_name)
+        data["timestamp"] = pd.to_datetime(data["timestamp"])
+        data = data.set_index("timestamp")
+        # Run Resampling
+        actual_df = data.groupby("currency_pair").apply(
+            lambda group: imvcdttrut.resample_multilevel_bid_ask_data_to_1min(
+                group, number_levels_of_order_book=2
+            )
+        )
+        actual = hpandas.df_to_str(actual_df)
+        self.check_string(actual)
+
+    def test_resample_multisymbol_multilevel_bid_ask_data_to_1min(self) -> None:
+        """
+        Verify that multisymbol multilevel raw data 200ms is correctly
+        resampled to 1min.
+        """
+        scratch_dir = self.get_scratch_space()
+        file_name = os.path.join(scratch_dir, "SampleBidAskDataWide.csv")
+        # Data has 2 levels in wide format.
+        data = pd.read_csv(file_name)
+        data["timestamp"] = pd.to_datetime(data["timestamp"])
+        data.set_index("timestamp", inplace=True)
+        # Run Resampling.
+        actual_df = (
+            imvcdttrut.resample_multisymbol_multilevel_bid_ask_data_to_1min(
+                data, number_levels_of_order_book=2
+            )
+        )
+        actual = hpandas.df_to_str(actual_df)
+        self.check_string(actual)
+
+    def _get_test_data(self) -> None:
+        """
+        Copy bid-ask data from S3 to a scratch dir.
+        """
+        s3_input_dir = self.get_s3_input_dir(use_only_test_class=True)
+        scratch_dir = self.get_scratch_space()
+        aws_profile = "ck"
+        hs3.copy_data_from_s3_to_local_dir(s3_input_dir, scratch_dir, aws_profile)
