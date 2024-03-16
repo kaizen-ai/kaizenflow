@@ -37,6 +37,16 @@ variable "ec2_configs" {
   default = []
 }
 
+variable "instance_routes" {
+  description = "List of EC2 Instance routes to create in the route table"
+  type = list(object({
+    destination_cidr_block = string
+    instance_id            = string
+    route_table_name       = string
+  }))
+  default = []
+}
+
 
 
 # <--- ./modules/vpc --->
@@ -162,16 +172,6 @@ variable "nat_gateway_routes" {
   default = []
 }
 
-variable "instance_routes" {
-  description = "List of EC2 Instance routes to create in the route table"
-  type = list(object({
-    destination_cidr_block = string
-    instance_id            = string
-    route_table_index      = number
-  }))
-  default = []
-}
-
 variable "subnet_route_table_associations" {
   description = "Associations between subnets and route tables"
   type = list(object({
@@ -184,6 +184,39 @@ variable "subnet_route_table_associations" {
 
 
 # <--- ./modules/rds --->
+
+variable "rds_configs" {
+  description = "List of configurations for RDS instances."
+  type = list(object({
+    db_identifier                          = string
+    db_allocated_storage                   = number
+    db_instance_class                      = string
+    db_engine                              = string
+    db_name                                = string
+    db_backup_window                       = string
+    db_backup_retention_period             = number
+    db_availability_zone                   = string
+    db_maintenance_window                  = string
+    db_multi_az                            = bool
+    db_engine_version                      = string
+    db_auto_minor_version_upgrade          = bool
+    db_license_model                       = string
+    db_iops                                = number
+    db_publicly_accessible                 = bool
+    db_storage_type                        = string
+    db_port                                = number
+    db_storage_encrypted                   = bool
+    db_kms_key_id                          = string
+    db_copy_tags_to_snapshot               = bool
+    db_monitoring_interval                 = number
+    db_iam_database_authentication_enabled = bool
+    db_deletion_protection                 = bool
+    performance_insights_enabled           = bool
+    rds_security_group_ids                 = list(string)
+    skip_final_snapshot                    = bool
+  }))
+  default = []
+}
 
 variable "rds_subnet_group_desc" {
   description = "The description for the RDS subnet group"
@@ -198,131 +231,6 @@ variable "rds_subnet_group_name" {
 variable "rds_subnet_ids" {
   description = "List of subnet IDs to associate with the RDS DB"
   type        = list(string)
-}
-
-variable "db_identifier" {
-  description = "The name of the RDS instance"
-  type        = string
-}
-
-variable "db_allocated_storage" {
-  description = "The allocated storage size for the RDS instance"
-  type        = number
-}
-
-variable "db_instance_class" {
-  description = "The instance type of the RDS instance"
-  type        = string
-}
-
-variable "db_engine" {
-  description = "The name of the database engine to be used for the RDS instance"
-  type        = string
-}
-
-variable "db_backup_window" {
-  description = "Preferred backup window for the RDS instance"
-  type        = string
-}
-
-variable "db_backup_retention_period" {
-  description = "Number of days to retain backups for"
-  type        = number
-}
-
-variable "db_availability_zone" {
-  description = "The AZ where the RDS instance will be created"
-  type        = string
-}
-
-variable "db_maintenance_window" {
-  description = "Preferred maintenance window for the RDS instance"
-  type        = string
-}
-
-variable "db_multi_az" {
-  description = "Specifies if the RDS instance is multi-AZ"
-  type        = bool
-}
-
-variable "db_engine_version" {
-  description = "The engine version to use"
-  type        = string
-}
-
-variable "db_auto_minor_version_upgrade" {
-  description = "Indicates that minor engine upgrades will be applied automatically to the DB instance during the maintenance window"
-  type        = bool
-}
-
-variable "db_license_model" {
-  description = "License model information for the RDS instance"
-  type        = string
-}
-
-variable "db_iops" {
-  description = "The amount of provisioned IOPS"
-  type        = number
-}
-
-variable "db_publicly_accessible" {
-  description = "Specifies the accessibility options for the DB instance"
-  type        = bool
-}
-
-variable "db_storage_type" {
-  description = "The storage type for the DB instance"
-  type        = string
-}
-
-variable "db_port" {
-  description = "The port on which the DB accepts connections"
-  type        = number
-}
-
-variable "db_storage_encrypted" {
-  description = "Specifies whether the DB instance is encrypted"
-  type        = bool
-}
-
-variable "db_kms_key_id" {
-  description = "The ARN for the KMS encryption key"
-  type        = string
-}
-
-variable "db_copy_tags_to_snapshot" {
-  description = "Specifies whether tags are copied to snapshots"
-  type        = bool
-}
-
-variable "db_monitoring_interval" {
-  description = "The interval, in seconds, between points when Enhanced Monitoring metrics are collected for the DB instance"
-  type        = number
-}
-
-variable "db_iam_database_authentication_enabled" {
-  description = "Specifies whether mapping of AWS Identity and Access Management (IAM) accounts to database accounts is enabled"
-  type        = bool
-}
-
-variable "db_deletion_protection" {
-  description = "Specifies whether the DB instance should have deletion protection enabled"
-  type        = bool
-}
-
-variable "performance_insights_enabled" {
-  description = "Specifies whether Performance Insights are enabled"
-  type        = bool
-}
-
-variable "rds_security_group_ids" {
-  description = "List of VPC security groups to associate"
-  type        = list(string)
-}
-
-variable "skip_final_snapshot" {
-  description = "Specifies whether the DB instance should skip the final snapshot"
-  type        = bool
 }
 
 
@@ -389,9 +297,20 @@ variable "iam_policies" {
 }
 
 variable "iam_role_policies" {
-  description = "Map of IAM roles and their corresponding policies"
-  type        = map(any)
-  default     = {}
+  description = "Map of IAM roles to their corresponding policies, allowing either policy names or ARNs"
+  type = map(list(object({
+    name = optional(string), // Policy name for internally managed policies
+    arn  = optional(string)  // ARN for externally managed policies
+  })))
+  default = {}
+}
+
+variable "iam_instance_profile" {
+  description = "IAM Instance Profiles to be created"
+  type = map(object({
+    tags = string
+  }))
+  default = {}
 }
 
 
@@ -470,6 +389,310 @@ variable "buckets" {
     }))
   }))
   default = {}
+}
+
+
+
+# <--- ./modules/eks --->
+
+variable "cluster_name" {
+  description = "Name of the EKS cluster"
+  type        = string
+}
+
+variable "eks_cluster_version" {
+  description = "Version of the EKS cluster"
+  type        = string
+}
+
+variable "enabled_cluster_log_types" {
+  description = "List of the desired control plane logging to enable."
+  type        = list(string)
+}
+
+variable "eks_cluster_role" {
+  description = "The ARN of the EKS cluster role"
+  type        = string
+}
+
+variable "eks_cluster_subnet_ids" {
+  description = "List of subnet IDs for the EKS cluster"
+  type        = list(string)
+}
+
+variable "eks_cluster_security_group_ids" {
+  description = "List of security group IDs for the EKS cluster"
+  type        = list(string)
+}
+
+variable "eks_endpoint_private_access" {
+  description = "Whether the private API server endpoint is enabled"
+  type        = bool
+}
+
+variable "eks_endpoint_public_access" {
+  description = "Whether the public API server endpoint is enabled"
+  type        = bool
+}
+
+variable "eks_public_access_cidrs" {
+  description = "List of CIDR blocks that can access the EKS public API server endpoint"
+  type        = list(string)
+}
+
+variable "eks_node_group_security_group_ids" {
+  description = "List of security group IDs for the EKS Node Group"
+  type        = list(string)
+}
+
+variable "tag_specifications" {
+  description = "Tag specifications for different resource types in the launch template"
+  type = list(object({
+    resource_type = string
+  }))
+  default = []
+}
+
+variable "node_group_name" {
+  description = "Name of the EKS node group"
+  type        = string
+}
+
+variable "eks_node_role" {
+  description = "The ARN of the EKS Node group role"
+  type        = string
+}
+
+variable "eks_node_group_subnet_ids" {
+  description = "List of subnet IDs for the EKS Node group"
+  type        = list(string)
+}
+
+variable "node_desired_size" {
+  description = "Desired number of nodes in the node group"
+  type        = number
+}
+
+variable "node_max_size" {
+  description = "Maximum number of nodes in the node group"
+  type        = number
+}
+
+variable "node_min_size" {
+  description = "Minimum number of nodes in the node group"
+  type        = number
+}
+
+variable "node_max_unavailable" {
+  description = "Maximum number of unavailable nodes during node group update"
+  type        = number
+}
+
+variable "node_ami_type" {
+  description = "Type of Amazon Machine Image (AMI) associated with the EKS Node Group"
+  type        = string
+}
+
+variable "node_capacity_type" {
+  description = "Type of capacity associated with the EKS Node Group"
+  type        = string
+}
+
+variable "node_disk_size" {
+  description = "The size of the volume in gigabytes for nodes."
+  type        = number
+}
+
+variable "node_disk_type" {
+  description = "The volume type for nodes"
+  type        = string
+}
+
+variable "node_disk_iops" {
+  description = "The amount of provisioned IOPS."
+  type        = number
+}
+
+variable "node_disk_delete_on_termination" {
+  description = "Whether the volume should be destroyed on node termination."
+  type        = bool
+}
+
+variable "node_disk_device_mapping_name" {
+  description = "The name of the device to mount."
+  type        = string
+}
+
+variable "node_metadata_http_tokens" {
+  description = "Whether or not the metadata service requires session tokens (IMDSv2)."
+  type        = string
+}
+
+variable "node_http_put_response_hop_limit" {
+  description = "The desired HTTP PUT response hop limit for instance metadata requests."
+  type        = number
+}
+
+variable "node_instance_types" {
+  description = "List of instance types associated with the EKS Node Group"
+  type        = list(string)
+}
+
+
+
+# <--- ./modules/client_vpn_endpoint --->
+
+variable "endpoint_CIDR" {
+  description = "IP address range, in CIDR notation, from which to assign client IP addresses"
+  type        = string
+}
+
+variable "endpoint_description" {
+  description = "Description for the Client VPN endpoint"
+  type        = string
+}
+
+variable "dns_servers" {
+  description = "DNS servers for the Client VPN endpoint, if any"
+  type        = list(string)
+  default     = [null]
+}
+
+variable "sec_group" {
+  description = "Security group to apply to the endpoint"
+  type        = set(string)
+}
+
+variable "self_service" {
+  description = "Enable or disable self service"
+  type        = string
+}
+
+variable "server_cert_arn" {
+  description = "Server certificate ARN"
+  type        = string
+}
+
+variable "sesh_timeout" {
+  description = "Session timeout in hours"
+  type        = number
+}
+
+variable "split_tunnel" {
+  description = "Enable or disable split tunnel"
+  type        = bool
+}
+
+variable "endpoint_name" {
+  description = "Name of the Client VPN endpoint"
+  type        = string
+}
+
+variable "transport_protocol" {
+  description = "Transport protocol (TCP/UDP)"
+  type        = string
+}
+
+variable "vpc_id" {
+  description = "VPC ID in which the endpoint will be created"
+  type        = string
+}
+
+variable "vpn_port" {
+  description = "Port through which the connection will be established"
+  type        = number
+}
+
+variable "active_directory_id" {
+  description = "Active Directory ID, if needed"
+  type        = string
+  default     = null
+}
+
+variable "root_cert_chain_arn" {
+  description = "Root Certificate chain ARN"
+  type        = string
+}
+
+variable "saml_provider_arn" {
+  description = "SAML provider ARN, if needed"
+  type        = string
+  default     = null
+}
+
+variable "self_service_saml_provider_arn" {
+  description = "Self service SAML provider ARN, if needed"
+  type        = string
+  default     = null
+}
+
+variable "auth_type" {
+  description = "Type of authentication when connecting to the VPN"
+  type        = string
+}
+
+variable "enable_client_connect" {
+  description = "Whether or not to use client connect"
+  type        = bool
+}
+
+variable "lambda_function_arn" {
+  description = "Lambda function ARN"
+  type        = string
+  default     = null
+}
+
+variable "banner_text" {
+  description = "Banner text to show"
+  type        = string
+  default     = null
+}
+
+variable "enable_banner" {
+  description = "Enable banner text"
+  type        = bool
+}
+
+variable "cloudwatch_log_group" {
+  description = "Cloudwatch log group"
+  type        = string
+}
+
+variable "cloudwatch_log_stream" {
+  description = "Cloudwatch log stream"
+  type        = string
+}
+
+variable "enable_connection_log" {
+  description = "Enable connection log"
+  type        = bool
+}
+
+
+variable "endpoint_subnet_id" {
+  description = "Endpoint subnet id"
+  type        = string
+}
+
+variable "access_group_id" {
+  description = "Access group id"
+  type        = string
+  default     = null
+}
+
+variable "authorize_all_groups" {
+  description = "Authorize all groups"
+  type        = bool
+}
+
+variable "auth_rule_description" {
+  description = "Description of the authorization rule"
+  type        = string
+}
+
+variable "target_network_cidr" {
+  description = "Destination CIDR range for the authorization rule"
+  type        = string
 }
 
 

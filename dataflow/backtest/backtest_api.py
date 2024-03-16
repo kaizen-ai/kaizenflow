@@ -1,7 +1,7 @@
 """
 Import as:
 
-import dataflow.backtest.backtest_api as dtfbrebaut
+import dataflow.backtest.backtest_api as dtfbabaapi
 """
 
 import logging
@@ -230,9 +230,11 @@ def run_backtest(
     # TODO(Grisha): make sure that aborting on error works.
     # Probably it does not work out of the box.
     abort_on_error: bool,
+    # TODO(Grisha): make sure it works with multiple parallel threads.
     num_threads: int,
     num_attempts: int,
     dry_run: bool,
+    backend: str,
 ) -> None:
     """
     Run backtest and save the results.
@@ -253,14 +255,9 @@ def run_backtest(
         - If False, the execution continues in case of failing errors
     :param num_threads: how many threads to use
     :param dry_run: if True, print the workload and exit without executing it
+    :param backend: same as in `joblib.Parallel()`
     """
     hdbg.dassert_isinstance(system, dtfsyssyst.System)
-    # TODO(Grisha): make it work with multiple parallel threads.
-    hdbg.dassert_eq(
-        "serial",
-        num_threads,
-        "Multiple execution threads are not supported yet.",
-    )
     # Set destination dir.
     if not dst_dir:
         # Use the default destination dir, if not specified.
@@ -291,10 +288,6 @@ def run_backtest(
     log_file = os.path.join(dst_dir, f"log.{timestamp}.txt")
     _LOG.info("log_file='%s'", log_file)
     # Execute.
-    # backend = "loky"
-    # TODO(gp): Is this the correct backend? It might not matter since we spawn
-    # a process with system.
-    backend = "asyncio_threading"
     hjoblib.parallel_execute(
         workload,
         dry_run,

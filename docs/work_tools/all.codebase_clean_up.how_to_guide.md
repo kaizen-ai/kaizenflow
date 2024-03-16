@@ -1,22 +1,23 @@
-<!--ts-->
-   * [Codebase clean-up scripts](#codebase-clean-up-scripts)
-      * [Problem](#problem)
-      * [Solution: script approach](#solution-script-approach)
-      * [Using the script approach](#using-the-script-approach)
-   * [How to use replace_text.py](#how-to-use-replace_textpy)
-      * [Rename a file](#rename-a-file)
-      * [Replace an import with a new one](#replace-an-import-with-a-new-one)
-      * [Replace text in a specific directory](#replace-text-in-a-specific-directory)
-      * [Revert all files but this one](#revert-all-files-but-this-one)
-      * [Custom flows](#custom-flows)
-   * [Usage examples](#usage-examples)
-      * [Instructions for the PR author](#instructions-for-the-pr-author)
-         * [Example](#example)
-      * [Instructions for the subrepo integrator](#instructions-for-the-subrepo-integrator)
 
 
+<!-- toc -->
 
-<!--te-->
+- [Codebase clean-up scripts](#codebase-clean-up-scripts)
+  * [Problem](#problem)
+  * [Solution: script approach](#solution-script-approach)
+  * [Using the script approach](#using-the-script-approach)
+- [How to use `replace_text.py`](#how-to-use-replace_textpy)
+  * [Rename a file](#rename-a-file)
+  * [Replace an import with a new one](#replace-an-import-with-a-new-one)
+  * [Replace text in a specific directory](#replace-text-in-a-specific-directory)
+  * [Revert all files but this one](#revert-all-files-but-this-one)
+  * [Custom flows](#custom-flows)
+- [Usage examples](#usage-examples)
+  * [Instructions for the PR author](#instructions-for-the-pr-author)
+    + [Example](#example)
+  * [Instructions for the subrepo integrator](#instructions-for-the-subrepo-integrator)
+
+<!-- tocstop -->
 
 # Codebase clean-up scripts
 
@@ -91,6 +92,7 @@
 - The goal of the script is to replace an instance of text in the content of all
   the files with extensions `.py`, `.ipynb`, `.txt`, `.md` and to do a `git mv`
   for files based on certain criteria
+
 ## Rename a file
 
 - Preview the change

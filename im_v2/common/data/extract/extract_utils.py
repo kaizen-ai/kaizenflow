@@ -130,6 +130,7 @@ def _add_common_download_args(
         "--bid_ask_depth",
         action="store",
         required=False,
+        default=10,
         type=int,
         help="Specifies depth of order book to \
             download (applies when data_type=bid_ask).",
@@ -157,6 +158,16 @@ def _add_common_download_args(
         default="append",
         choices=["list_and_merge", "append"],
         help="mode used to save data into a parquet file",
+    )
+    parser.add_argument(
+        "--universe_part",
+        action="store",
+        required=False,
+        type=int,
+        nargs=2,
+        help="Pass two int argument x,y. Split universe into N chunks each contains X symbols. \
+            groups of 10 pairs, 'y' denotes which part should be downloaded \
+            (e.g. 10, 1 - download first 10 symbols)"
     )
     return parser
 
@@ -237,6 +248,10 @@ DATASET_SCHEMA = {
     # TODO(Juraj): bid_ask and ohlcv contain each other's columns as well,
     #  needs cleanup:
     "bid_ask": {
+        "bid_ask_midpoint": "float64",
+        "half_spread": "float64",
+        "log_size_imbalance": "float64",
+        "bid_ask_midpoint_var": "float",
         "ask_price": "float64",
         "ask_size": "float64",
         "bid_price": "float64",
@@ -491,7 +506,11 @@ async def _subscribe_to_websocket_data(
     exchange_id = args["exchange_id"]
     # Multiple symbols subscription is only supported by vendor CCXT.
     use_concurrent = False
-    if vendor == "ccxt":
+    # Multiple symbols methods on error block the system for 6-9mins,
+    # refer. ccxt/ccxt/issues/20911.
+    # Tokyo region seems to be working fine with multiple symbols but Stockholm was
+    # facing ping-pong inactive errors ref. cryptokaizen/cmamp/issues/7322.
+    if vendor == "ccxt" and args.get("watch_multiple_symbols", False):
         # Check if the exchange supports multiple symbols subscription.
         use_concurrent = exchange._async_exchange.describe()["has"].get(
             "watchOrderBookForSymbols", False
@@ -542,6 +561,10 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
     )
     exchange_id = args["exchange_id"]
     currency_pairs = universe[exchange_id]
+    if args.get("universe_part"):
+        currency_pairs = _split_universe(
+            currency_pairs, args["universe_part"][0], args["universe_part"][1]
+        )
     await _subscribe_to_websocket_data(
         args,
         exchange,
@@ -618,7 +641,10 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
             is_buffer_full or is_last_iteration or is_download_fast
         ) and is_non_empty_buffer:
             df = imvcdttrut.transform_raw_websocket_data(
-                data_buffer, data_type, exchange_id
+                data_buffer,
+                data_type,
+                exchange_id,
+                max_num_levels=args.get("bid_ask_depth"),
             )
             # TODO(Juraj): experimental feature, the problem is speed for now.
             # data_buffer_to_resample.append(df)
@@ -628,7 +654,7 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
             # TODO(Juraj): experimental feature, the problem is speed for now.
             # if args.resample_bid_ask_data_to_1min and pd.Timestamp.now(tz) > next_bid_ask_resampling_threshold:
             #    with htimer.TimedScope(logging.DEBUG, "# Resample 1-minute of raw data"):
-            #        df_resampled = imvcdttrut.transform_and_resample_rt_bid_ask_data2(
+            #        df_resampled = imvcdttrut.transform_and_resample_rt_bid_ask_data(
             #            pd.concat(data_buffer_to_resample)
             #        )
             # imvcddbut.save_data_to_db(
@@ -981,28 +1007,49 @@ def process_downloaded_historical_data(
             hdbg.dfatal(f"Unsupported `{args['data_format']}` format!")
 
 
-def _split_crypto_chassis_universe(universe: List[str], universe_part: int):
+def _split_universe(universe: List[str], group_size: int, universe_part: int) -> List[str]:
     """
-    Split the universe into groups of 10 symbols and return only universe_part-
+    Split the universe into groups of group_size symbols and return only universe_part-
     th group.
 
-    CryptoChassis imposed a API limit of 10 requests per endpoint per
-    IP. This helps us only obtain a subset of universe such that
-    download can go through successfully.
+    If the split is not even, then the last group is the smaller than the rest.
+
+    Examples:
+    universe = [
+                "ALICE_USDT",
+                "GALA_USDT",
+                "FLOW_USDT",
+                "HBAR_USDT",
+                "INJ_USDT",
+                "NEAR_USDT"
+    ]
+
+    group_size = 2, universe_part = 1 returns  
+    ["ALICE_USDT", "GALA_USDT"]
+    group_size = 3, universe_part = 2  returns
+    ["HBAR_USDT", "INJ_USDT", "NEAR_USDT"]
+
 
     :oaram universe: universe of currency pairs
-    :param universe_part: nth set of 10 to return
+    :param group_size: number of symbols in  each group
+    :param universe_part: which part after the split to return
+    :return: subgroup of the original universe
     """
-    lower_bound = (universe_part - 1) * 10
+    lower_bound = (universe_part - 1) * group_size
     # If no such part exists raise an error, i.e. user asks for 3rd part of
     #  universe with 18 symbols.
     if lower_bound > len(universe):
         raise RuntimeError(
-            f"Universe does not have {universe_part} parts. \
+            f"Universe does not have {universe_part} parts of {group_size} pairs. \
             It has {len(universe)} symbols."
         )
     upper_bound = min(len(universe), (universe_part * 10))
-    return universe[lower_bound:upper_bound]
+    universe_subset = universe[lower_bound:upper_bound]
+    _LOG.warning(
+        f"Using only part {universe_part} of the universe:"
+        f"\t {universe_subset}"
+    )
+    return universe_subset
 
 
 # TODO(Juraj): rename based on sorrentum protocol conventions.
@@ -1042,14 +1089,9 @@ def download_historical_data(
     currency_pairs = universe[args["exchange_id"]]
     if args["vendor"] == "crypto_chassis":
         # A hack introduced to overcme strict API call restrictions.
-        currency_pairs = _split_crypto_chassis_universe(
-            currency_pairs, args["universe_part"]
+        currency_pairs = _split_universe(
+            currency_pairs, 10, args["universe_part"]
         )
-        _LOG.info(
-            f"Using part {args['universe_part']} of {args['vendor']}"
-            + f" universe {args['universe']}:"
-        )
-        _LOG.info(f"\t {currency_pairs}")
     # Convert timestamps.
     start_timestamp = pd.Timestamp(args["start_timestamp"])
     end_timestamp = pd.Timestamp(args["end_timestamp"])
@@ -1081,7 +1123,10 @@ def verify_schema(data: pd.DataFrame, data_type: str) -> pd.DataFrame:
         _LOG.warning("Extracted Dataframe contains NaNs")
 
     # Regex match if the column name contains one of the bid/ask column names`.
-    regex = re.compile(r"(bid_size|bid_price|ask_price|ask_size)")
+    regex = re.compile(
+        "(bid_size|bid_price|ask_price|ask_size|bid_ask_midpoint|half_spread|"
+        "log_size_imbalance|log_size_imbalance_var|bid_ask_midpoint_var)"
+    )
     for column in data.columns:
         # There is a variety of Bid/Ask related columns, for
         #  simplicity, only the base names are stored in the schema.
@@ -1153,19 +1198,19 @@ def resample_rt_bid_ask_data_periodically(
     # Peform timestamp assertions.
     hdateti.dassert_have_same_tz(start_ts, end_ts)
     tz = start_ts.tz
-    hdbg.dassert_lt(datetime.now(tz), start_ts, "start_ts is in the past")
+    hdbg.dassert_lt(pd.Timestamp.now(tz), start_ts, "start_ts is in the past")
     hdbg.dassert_lt(start_ts, end_ts, "end_ts is less than start_time")
     db_connection = imvcddbut.DbConnectionManager.get_connection(db_stage)
     tz = start_ts.tz
-    start_delay = (start_ts - datetime.now(tz)).total_seconds()
+    start_delay = (start_ts - pd.Timestamp.now(tz)).total_seconds()
     _LOG.info("Syncing with the start time, waiting for %s seconds", start_delay)
     time.sleep(start_delay)
     # Start resampling.
     while pd.Timestamp.now(tz) < end_ts:
         iter_start_time = pd.Timestamp.now(tz)
         with htimer.TimedScope(logging.INFO, "# Load last minute of raw data"):
-            #TODO(Juraj): the function uses `bid_ask_levels` internally, 
-            #expose `bid_ask_levels` as a cmdline parameter.
+            # TODO(Juraj): the function uses `bid_ask_levels` internally,
+            # expose `bid_ask_levels` as a cmdline parameter.
             df_raw = imvcddbut.fetch_last_minute_bid_ask_rt_db_data(
                 db_connection, src_table, str(tz), exchange_id
             )
@@ -1175,9 +1220,10 @@ def resample_rt_bid_ask_data_periodically(
             with htimer.TimedScope(
                 logging.INFO, "# Resample last minute of raw data"
             ):
-                df_resampled = imvcdttrut.transform_and_resample_rt_bid_ask_data2(
+                df_resampled = imvcdttrut.transform_and_resample_rt_bid_ask_data(
                     df_raw
                 )
+            df_resampled["end_download_timestamp"] = pd.Timestamp.now(tz)
             imvcddbut.save_data_to_db(
                 df_resampled,
                 "bid_ask",

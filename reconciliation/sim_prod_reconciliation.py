@@ -154,6 +154,8 @@ def build_reconciliation_configs(
             "volatility_col": dag_builder.get_column_name("volatility"),
         }
         quantization = None
+        # TODO(Grisha): consider exposing file path to config instead of
+        # storing the whole mapping in the config.
         market_info = obccccut.load_market_data_info()
         asset_id_to_share_decimals = obccccut.subset_market_info(
             market_info, "amount_precision"

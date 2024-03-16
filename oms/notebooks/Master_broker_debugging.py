@@ -28,6 +28,7 @@
 # %% run_control={"marked": false}
 # %load_ext autoreload
 # %autoreload 2
+# %matplotlib inline
 
 import logging
 
@@ -56,9 +57,7 @@ if config:
     # in the system reconciliation flow.
     _LOG.info("Using config from env vars")
 else:
-    system_log_dir = (
-        "/shared_data/ecs/test/tokyo_broker_only/2024/01/09/20240109_2/"
-    )
+    system_log_dir = "/shared_data/ecs/test/system_reconciliation/C11a/prod/20240312_220000.20240312_225500/system_log_dir.manual/process_forecasts"
     config_dict = {"system_log_dir": system_log_dir}
     config = cconfig.Config.from_dict(config_dict)
 print(config)
@@ -74,6 +73,7 @@ ccxt_order_response_df = data["ccxt_order_responses"]
 ccxt_trades_df = data["ccxt_trades"]
 oms_child_order_df = data["oms_child_orders"]
 oms_parent_order_df = data["oms_parent_orders"]
+ccxt_fills = data["ccxt_fills"]
 
 # %%
 # Print the Broker config.
@@ -290,19 +290,89 @@ oms_child_order_df_unpacked = ccxt_log_reader.load_oms_child_order(
     unpack_extra_params=True, convert_to_dataframe=True
 )
 
-# %% run_control={"marked": true}
-# Get the number of child orders per wave as determined by the number of unique assets.
-wave = obccexqu.get_oms_child_order_timestamps(oms_child_order_df_unpacked)
+# %%
+# Add timestamp of when the order was closed.
+order_lifespan_end = ccxt_fills.set_index("order")[
+    "order_update_datetime"
+].to_dict()
+oms_child_order_df_unpacked["end_order_timestamp"] = oms_child_order_df_unpacked[
+    "ccxt_id"
+].apply(lambda x: order_lifespan_end.get(x))
 
 # %%
-wave.head(3)
+# Get the timestamps of events for each child order
+events = obccexqu.get_oms_child_order_timestamps(oms_child_order_df_unpacked)
+events = events.sort_values(events.first_valid_index(), axis=1)
 
 # %%
-# Sort the events (column names) in chronological order.
-wave = wave.sort_values(wave.first_valid_index(), axis=1)
-time_delays = obccexqu.get_time_delay_between_events(wave)
+events.head(3)
+
+# %%
+# Get the difference between event timestamps.
+time_delays = obccexqu.get_time_delay_between_events(events)
 
 # %%
 time_delays.boxplot(rot=45, ylabel="Time delay")
+
+# %% [markdown]
+# ## Plot zero and non-zero waves separately
+
+# %% [markdown]
+# ### Plot zero wave
+
+# %%
+# Since wave 0 begins execution later due to portfolio computation,
+# we plot the time delays for it separately.
+wave_zero = oms_child_order_df_unpacked[
+    oms_child_order_df_unpacked["wave_id"] == 0
+]
+# Get the timestamps of events for each child order
+wave_zero_events = obccexqu.get_oms_child_order_timestamps(wave_zero)
+wave_zero_events = wave_zero_events.sort_values(
+    wave_zero_events.first_valid_index(), axis=1
+)
+
+# %%
+wave_zero_events.head(3)
+
+# %%
+# Get the difference between event timestamps.
+time_delays = obccexqu.get_time_delay_between_events(wave_zero_events)
+
+# %%
+time_delays.boxplot(rot=45, ylabel="Time delay").set_title(
+    "Time delay between events for wave 0"
+)
+
+# %% [markdown]
+# ### Plot the rest of the waves
+
+# %% run_control={"marked": false}
+# Plot non-zero wave time to get the "average" time of the
+# order submission, without computing portfolio and forecasts.
+non_wave_zero_events = oms_child_order_df_unpacked[
+    oms_child_order_df_unpacked["wave_id"] > 0
+]
+# Get the timestamps of events for each child order
+non_wave_zero_events = obccexqu.get_oms_child_order_timestamps(
+    non_wave_zero_events
+)
+non_wave_zero_events = non_wave_zero_events.sort_values(
+    non_wave_zero_events.first_valid_index(), axis=1
+)
+
+# %%
+non_wave_zero_events.head(3)
+
+# %%
+# Get the difference between event timestamps.
+time_delays = obccexqu.get_time_delay_between_events(non_wave_zero_events)
+
+# %%
+time_delays.boxplot(rot=45, ylabel="Time delay").set_title(
+    "Time delay between events for waves >0"
+)
+
+# %%
 
 # %%

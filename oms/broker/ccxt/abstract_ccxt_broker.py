@@ -21,7 +21,6 @@ import dev_scripts.git.git_hooks.utils as dsgghout
 import helpers.hasyncio as hasynci
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hretry as hretry
 import im_v2.ccxt.utils as imv2ccuti
@@ -257,9 +256,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
             start_timestamp,
             end_timestamp,
             bid_ask_levels=[1],
-            # We deduplicate the data at this point, if later down the pipeline an
-            # assertion for duplicates is raised, it implies problem with the
-            # data.
+            # At this point we drop fully duplicated data entries.
             deduplicate=True,
             subset=[
                 "timestamp",
@@ -272,8 +269,8 @@ class AbstractCcxtBroker(obrobrok.Broker):
             ],
         )
         self._logger.log_bid_ask_data(self._get_wall_clock_time, bid_ask_data)
-        _LOG.debug(hpandas.df_to_str(bid_ask_data, num_rows=None))
-        #
+        # Drop duplicates from the bid/ask data.
+        bid_ask_data, _ = obccccut.drop_bid_ask_duplicates(bid_ask_data)
         # Filter loaded data to only the broker's universe symbols.
         # Convert currency pairs to full CCXT symbol format, e.g. 'BTC_USDT' ->
         # 'BTC/USDT:USDT'
@@ -321,18 +318,18 @@ class AbstractCcxtBroker(obrobrok.Broker):
 
         :param order: parent order to fetch fills for.
         """
-        _LOG.debug("Getting fills for order=%s", str(order))
+        _LOG.info("Getting fills for order=%s", str(order))
         asset_id = order.asset_id
         order_id = order.order_id
         symbol = self.asset_id_to_ccxt_symbol_mapping[asset_id]
         # Get CCXT ID of the children orders corresponding to the parent
         # order.
         child_order_ccxt_ids = order.extra_params.get("ccxt_id", [])
-        _LOG.debug(hprint.to_str("child_order_ccxt_ids"))
+        _LOG.info(hprint.to_str("child_order_ccxt_ids"))
         hdbg.dassert_isinstance(child_order_ccxt_ids, list)
         if not child_order_ccxt_ids:
             # If no child orders were accepted, consider `Fill` to be empty.
-            _LOG.debug(
+            _LOG.info(
                 "No child orders found for parent order_id=%s",
                 order_id,
             )
@@ -355,7 +352,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
             for child_order in child_orders
             if int(child_order["id"]) in child_order_ccxt_ids
         ]
-        _LOG.debug(hprint.to_str("child_orders"))
+        _LOG.info(hprint.to_str("child_orders"))
         # Calculate fill amount based on child orders.
         (
             order_fill_signed_num_shares,
@@ -363,7 +360,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
         ) = obccccut.roll_up_child_order_fills_into_parent(order, child_orders)
         # Skip the parent order if it has not been filled at all.
         if order_fill_signed_num_shares == 0:
-            _LOG.debug(
+            _LOG.info(
                 "Empty fill for parent order: %s",
                 hprint.to_str("order child_orders"),
             )
@@ -385,7 +382,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
             order_fill_signed_num_shares,
             order_price,
         )
-        _LOG.debug("fill=%s", str(fill))
+        _LOG.info("fill=%s", str(fill))
         return fill
 
     # ////////////////////////////////////////////////////////////////////////
@@ -410,7 +407,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
         #   orders with separate CCXT IDs
         submitted_parent_orders = self._previous_parent_orders
         if submitted_parent_orders is None:
-            _LOG.debug(
+            _LOG.info(
                 "No parent orders sent in the previous execution: "
                 "returning no fills"
             )
@@ -418,11 +415,11 @@ class AbstractCcxtBroker(obrobrok.Broker):
         if self.previous_parent_orders_timestamp is None:
             # If there was no parent order in previous execution, then there is
             # no fill.
-            _LOG.debug("No last order execution timestamp: returning no fills")
+            _LOG.info("No last order execution timestamp: returning no fills")
             return fills
         # Get asset ids for the (parent) orders sent in previous execution.
         asset_ids = [oms_order.asset_id for oms_order in submitted_parent_orders]
-        _LOG.debug(hprint.to_str("asset_ids"))
+        _LOG.info(hprint.to_str("asset_ids"))
         hdbg.dassert_lt(0, len(asset_ids))
         get_fills_tasks = [
             self.get_fills_for_order(parent_order)
@@ -487,7 +484,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
         trades = await asyncio.gather(*tasks)
         # Each task returns a list of trades, flatten it via list comprehension.
         trades = [trade for symbol_trades in trades for trade in symbol_trades]
-        _LOG.debug(
+        _LOG.info(
             "CCXT trades loaded timestamp=%s",
             self.market_data.get_wall_clock_time(),
         )
@@ -528,7 +525,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
                 hdbg.dassert_eq(open_positions, exchange_open_positions)
             # Return cached value.
             open_positions = self._cached_open_positions
-        _LOG.debug(hprint.to_str("open_positions"))
+        _LOG.info(hprint.to_str("open_positions"))
         return open_positions
 
     @hretry.async_retry(
@@ -689,7 +686,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
             prefix = dsgghout.get_function_name(count=1)
         # Construct the full tag, e.g., "start" -> "submit_twap_orders::start".
         tag = f"{prefix}::{tag}"
-        _LOG.debug("order=%s tag=%s value=%s", str(order), tag, value)
+        _LOG.info("order=%s tag=%s value=%s", str(order), tag, value)
         # Assign the value.
         if "stats" not in order.extra_params:
             order.extra_params["stats"] = {}
@@ -757,7 +754,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
         #   'side': 'short',
         #   'hedged': False,
         #   'percentage': -33.17}]
-        _LOG.debug("No cached value for open positions: accessing exchange")
+        _LOG.info("No cached value for open positions: accessing exchange")
         positions = self._sync_exchange.fetch_positions()
         self._logger.log_positions(self._get_wall_clock_time, positions)
         # Map from symbol to the amount currently owned if different than zero,
@@ -853,7 +850,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
         self._logger.log_exchange_markets(
             self._get_wall_clock_time, exchange_markets, leverage_info
         )
-        _LOG.debug(hprint.to_str("leverage_info"))
+        _LOG.info(hprint.to_str("leverage_info"))
         for asset_id, symbol in self.asset_id_to_ccxt_symbol_mapping.items():
             minimal_order_limits[asset_id] = {}
             currency_market = exchange_markets[symbol]
@@ -1049,7 +1046,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
         if self._is_child_order_shares_correct(
             child_order_diff_signed_num_shares
         ):
-            _LOG.debug(
+            _LOG.info(
                 "Child order for parent_order=%s not sent, %s",
                 str(parent_order),
                 hprint.to_str("child_order_diff_signed_num_shares"),
@@ -1157,7 +1154,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
         asset_id = self.ccxt_symbol_to_asset_id_mapping[symbol]
         symbol_trades_with_asset_ids = []
         for symbol_fill in symbol_trades:
-            _LOG.debug(hprint.to_str("symbol_fill"))
+            _LOG.info(hprint.to_str("symbol_fill"))
             # Get the position of the full symbol field
             # to paste the asset id after it.
             hdbg.dassert_in("symbol", symbol_fill.keys())
@@ -1165,7 +1162,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
             # Add asset id.
             symbol_fill = list(symbol_fill.items())
             symbol_fill.insert(idx, ("asset_id", asset_id))
-            _LOG.debug(hprint.to_str("symbol_fill"))
+            _LOG.info(hprint.to_str("symbol_fill"))
             symbol_trades_with_asset_ids.append(dict(symbol_fill))
 
         return symbol_trades_with_asset_ids
@@ -1204,7 +1201,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
         for symbol in symbols:
             if end_timestamp - start_timestamp <= day_in_millisecs:
                 # Download all trades if period is less than 24 hours.
-                _LOG.debug(
+                _LOG.info(
                     "Downloading period=%s, %s", start_timestamp, end_timestamp
                 )
                 symbol_trades = self._sync_exchange.fetchMyTrades(
@@ -1218,7 +1215,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
                 for timestamp in range(
                     start_timestamp, end_timestamp + 1, day_in_millisecs
                 ):
-                    _LOG.debug(
+                    _LOG.info(
                         "Downloading period=%s, %s", timestamp, day_in_millisecs
                     )
                     day_trades = self._sync_exchange.fetchMyTrades(
@@ -1262,7 +1259,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
             asset_id = self.ccxt_symbol_to_asset_id_mapping[symbol]
             trades_with_asset_ids = []
             for symbol_trade in symbol_trades:
-                _LOG.debug("symbol_trade=%s", symbol_trade)
+                _LOG.info("symbol_trade=%s", symbol_trade)
                 # Get the position of the full symbol field to paste the asset id
                 # after it.
                 hdbg.dassert_in("symbol", symbol_trade.keys())
@@ -1270,7 +1267,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
                 # Add asset id.
                 symbol_trade = list(symbol_trade.items())
                 symbol_trade.insert(idx, ("asset_id", asset_id))
-                _LOG.debug("after transformation: symbol_trade=%s", symbol_trade)
+                _LOG.info("after transformation: symbol_trade=%s", symbol_trade)
                 # Accumulate.
                 trades_with_asset_ids.append(dict(symbol_trade))
             # Accumulate.
@@ -1332,7 +1329,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
                 # but since we only use it for quick liquidation,
                 # keeping this assertion here.
                 hdbg.dassert_eq(order_type, "market")
-                _LOG.debug("Creating reduceOnly order: %s", str(submitted_order))
+                _LOG.info("Creating reduceOnly order: %s", str(submitted_order))
                 # TODO(Danya): Not sure if async-supported, but probably irrelevant,
                 # since it is only used to flatten accounts.
                 ccxt_order_response = (
@@ -1367,7 +1364,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
                 )
             else:
                 raise ValueError(f"Invalid order_type='{order_type}'")
-            _LOG.debug(hprint.to_str("ccxt_order_response"))
+            _LOG.info(hprint.to_str("ccxt_order_response"))
             # Assign parent order CCXT ID.
             if not ccxt_order_response:
                 submitted_order = self._handle_exchange_exception(
@@ -1425,7 +1422,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
          - CCXT order structure: https://docs.ccxt.com/en/latest/manual.html#order-structure
         """
         hdbg.dassert_in(order_type, ["market", "limit"])
-        _LOG.debug("Submitting order=%s", order)
+        _LOG.info("Submitting order=%s", order)
         # Extract the info from the order.
         symbol = self.asset_id_to_ccxt_symbol_mapping[order.asset_id]
         side = "buy" if order.diff_num_shares > 0 else "sell"
@@ -1440,7 +1437,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
             self.market_data.get_wall_clock_time(),
         )
         for attempt_num in range(1, self._max_exchange_request_retries + 1):
-            _LOG.debug(
+            _LOG.info(
                 "Order submission attempt: %s / %s",
                 attempt_num,
                 self._max_exchange_request_retries,
@@ -1470,9 +1467,9 @@ class AbstractCcxtBroker(obrobrok.Broker):
             self._update_stats_for_order(
                 submitted_order, f"exception_on_retry.{attempt_num}", str(e)
             )
-            _LOG.debug("Sleeping for %s secs: start", wait_time_in_secs)
+            _LOG.info("Sleeping for %s secs: start", wait_time_in_secs)
             await asyncio.sleep(wait_time_in_secs)
-            _LOG.debug("Sleeping for %s secs: done", wait_time_in_secs)
+            _LOG.info("Sleeping for %s secs: done", wait_time_in_secs)
         # Log order stats.
         self._update_stats_for_order(
             submitted_order,
@@ -1497,7 +1494,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
         # Get the actual start time for TWAP execution.
         current_timestamp = self.market_data.get_wall_clock_time()
         if current_timestamp < parent_order_start_time:
-            _LOG.debug("Aligning time with parent order start time")
+            _LOG.info("Aligning time with parent order start time")
             await hasynci.async_wait_until(
                 parent_order_start_time, self._get_wall_clock_time
             )
@@ -1577,5 +1574,5 @@ class AbstractCcxtBroker(obrobrok.Broker):
         # and we don't need to wait for the order being accepted.
         submitted_order_id = self._get_next_submitted_order_id()
         receipt = f"order_{submitted_order_id}"
-        _LOG.debug("orders=%s", oordorde.orders_to_string(orders))
+        _LOG.info("orders=%s", oordorde.orders_to_string(orders))
         return receipt, sent_orders

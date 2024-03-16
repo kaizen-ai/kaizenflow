@@ -59,12 +59,14 @@ if config:
     # in the system reconciliation flow.
     _LOG.info("Using config from env vars")
 else:
-    system_log_dir = "/shared_data/ecs/test/system_reconciliation/C11a/prod/20240123_110000.20240123_154800/system_log_dir.manual/process_forecasts"
-    use_historical = False
-    bar_duration = "12T"
-    test_asset_id = 1030828978
+    system_log_dir = "/shared_data/ecs/test/system_reconciliation/C12a/prod/20240226_103300.20240226_113000/system_log_dir.manual/process_forecasts"
+    # Use "logged_during_experiment" to use data logged from inside broker during the experiment.
+    # (In full system run might result in gaps in data if no trades were generated for one or more bars).
+    bid_ask_data_source = "logged_during_experiment"
+    bar_duration = "3T"
+    test_asset_id = 1464553467
     config_dict = {
-        "meta": {"use_historical": use_historical},
+        "meta": {"bid_ask_data_source": bid_ask_data_source},
         "universe": {"test_asset_id": test_asset_id},
         "execution_parameters": {"bar_duration": bar_duration},
         "system_log_dir": system_log_dir,
@@ -90,6 +92,9 @@ data = ccxt_log_reader.load_all_data(
 )
 
 # %%
+ccxt_log_reader._bid_ask_full_dir
+
+# %%
 # Print the Broker config.
 if "broker_config" in data:
     print(hprint.to_pretty_str(data["broker_config"]))
@@ -100,10 +105,6 @@ else:
 # Print the used Config, if any.
 experiment_config = obcccclo.load_config_for_execution_analysis(system_log_dir)
 print(experiment_config)
-
-# %%
-# Use historical data for experiment runs older than 48h.
-use_historical = config["meta"]["use_historical"]
 
 # %%
 # Colums containing price data for analysis.
@@ -132,6 +133,14 @@ oms_child_order_df = data["oms_child_orders"]
 oms_child_order_df.iloc[oms_child_order_df["latest_bid_price"].argmax()][
     "extra_params"
 ]["stats"]
+
+# %% run_control={"marked": true}
+# Check if `test_asset_id` is present
+# If the `test_asset_id` is not present, choose the first traded asset.
+traded_asset_ids = sorted(set(oms_child_order_df["asset_id"]))
+if test_asset_id not in traded_asset_ids:
+    test_asset_id = traded_asset_ids[0]
+_LOG.info("test_asset_id=%s", test_asset_id)
 
 # %% [markdown]
 # ## Aggregate CCXT data
@@ -178,14 +187,17 @@ end_timestamp = ccxt_executed_trades_df["datetime"].max()
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 # %%
-bid_ask = obccagfu.load_bid_ask_data(
+bid_ask, duplicated_rows = obccagfu.load_bid_ask_data(
     start_timestamp,
     end_timestamp,
     ccxt_log_reader,
-    use_historical,
+    config["meta"]["bid_ask_data_source"],
     executed_trades_prices.columns.levels[1],
     child_order_execution_freq,
 )
+
+if duplicated_rows is not None:
+    display(duplicated_rows)
 
 # %% [markdown]
 # ## Load OHLCV data

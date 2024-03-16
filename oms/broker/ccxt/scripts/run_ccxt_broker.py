@@ -564,12 +564,18 @@ def _main(parser: argparse.ArgumentParser) -> None:
             parent_order_duration_in_min / child_order_duration_in_min
         )
         hdbg.dassert_lte(max_num_child_orders, len(volatility_multiple))
+    broker_config = {
+        "limit_price_computer_type": "LimitPriceComputerUsingVolatility",
+        "limit_price_computer_kwargs": {
+            "volatility_multiple": args.volatility_multiple,
+        }
+    }
     broker = obccbrin.get_CcxtBroker(
         secret_id,
         log_dir,
-        universe=args.universe,
+        args.universe,
+        broker_config,
         stage=args.db_stage,
-        volatility_multiple=volatility_multiple,
     )
     symbol_to_price_dict = _generate_prices_from_data_reader(
         broker._contract_type, args.db_stage
