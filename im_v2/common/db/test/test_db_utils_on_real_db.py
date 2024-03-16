@@ -1,5 +1,6 @@
 import datetime
 
+import logging
 import pandas as pd
 import psycopg2 as psycop
 import pytest
@@ -8,6 +9,8 @@ import helpers.hdatetime as hdateti
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
 import im_v2.common.db.db_utils as imvcddbut
+
+_LOG = logging.getLogger(__name__)
 
 TIME_ZONE = "UTC"
 TABLE_NAME = "sample"
@@ -75,7 +78,7 @@ class TestSaveDataToDb(hunitest.TestCase):
         try:
             self.db.close()  # Close the database connection
         except Exception as e:
-            print("Error during teardown:", e)  # Log any errors
+            _LOG.error("Error during teardown: %s", str(e)) # Log any errors
 
     def test_save_data_to_db_ohlcv(self) -> None:
         """
@@ -132,7 +135,7 @@ class TestLoadDbData(hunitest.TestCase):
         try:
             self.db.close()  # Close the database connection
         except Exception as e:
-            print("Error during teardown:", e)  # Log any errors
+            _LOG.error("Error during teardown: %s", str(e)) # Log any errors
 
     def test_load_db_data_select_all(self) -> None:
         """
@@ -200,7 +203,7 @@ class TestFetchLastMinuteBidAskRtDbData(hunitest.TestCase):
         try:
             self.db.close()  # Close the database connection
         except Exception as e:
-            print("Error during teardown:", e)  # Log any errors
+            _LOG.error("Error during teardown: %s", str(e)) # Log any errors
 
     def _save_last_and_current_minute_data_to_db(self):
         """
