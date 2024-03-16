@@ -3,6 +3,7 @@
 import logging
 import os
 
+import core.config as cconfig
 import dataflow.backtest as dtfbcktst
 import dataflow_amp.system.Cx.Cx_forecast_system_example as dtfasccfsex
 import helpers.hdbg as hdbg
@@ -32,26 +33,33 @@ if __name__ == "__main__":
     # Set config params.
     index = None
     start_from_index = None
-    config_update = None
-    # config_update = cconfig.Config.from_dict(
-    #     {
-    #         "dag_builder_class": "C1b_DagBuilder",
-    #         "dag_config": {
-    #             "resample": {
-    #                 "transformer_kwargs": {
-    #                     "rule": "1T",
-    #                 },
-    #             },
-    #         },
-    #     },
-    # )
+    # Introduce a switch instead of commenting out, otherwise the Linter
+    # removes the `cconfig` import.
+    update_config_switch = False
+    if update_config_switch:
+        # Below there is just an example.
+        config_update = cconfig.Config.from_dict(
+            {
+                "dag_builder_class": "C1b_DagBuilder",
+                "dag_config": {
+                    "resample": {
+                        "transformer_kwargs": {
+                            "rule": "1T",
+                        },
+                    },
+                },
+            },
+        )
+    else:
+        config_update = None
     # Set execution params.
     abort_on_error = True
     num_threads = "serial"
     num_attempts = 1
     dry_run = False
-    log_level = logging.DEBUG
+    backend = "asyncio_threading"
     # Set logger.
+    log_level = logging.DEBUG
     hdbg.init_logger(
         verbosity=log_level,
         use_exec_path=True,
@@ -83,4 +91,5 @@ if __name__ == "__main__":
         num_threads,
         num_attempts,
         dry_run,
+        backend,
     )

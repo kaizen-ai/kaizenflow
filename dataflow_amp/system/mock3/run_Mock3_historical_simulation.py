@@ -35,8 +35,9 @@ if __name__ == "__main__":
     num_threads = "serial"
     num_attempts = 1
     dry_run = False
-    log_level = logging.DEBUG
+    backend = "asyncio_threading"
     # Set logger.
+    log_level = logging.DEBUG
     hdbg.init_logger(
         verbosity=log_level,
         use_exec_path=True,
@@ -64,4 +65,5 @@ if __name__ == "__main__":
         num_threads,
         num_attempts,
         dry_run,
+        backend,
     )

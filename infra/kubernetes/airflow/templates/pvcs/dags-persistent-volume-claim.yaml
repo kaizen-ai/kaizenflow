@@ -1,0 +1,22 @@
+---
+######################################
+## Airflow DAGs PersistentVolumeClaim
+######################################
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: airflow-dags-pvc
+  namespace: airflow
+  labels:
+    tier: airflow
+    component: dags-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc
+  resources:
+    requests:
+      storage: 21Gi
+  selector:
+    matchLabels:
+      component: dags-pv
