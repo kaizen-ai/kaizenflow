@@ -1,14 +1,15 @@
-<!--ts-->
-   * [Phases of evaluation of Dag](#phases-of-evaluation-of-dag)
-      * [1. In-sample only experiment](#1-in-sample-only-experiment)
-      * [2. Train/test experiment](#2-traintest-experiment)
-      * [3. Train/validate/test experiment](#3-trainvalidatetest-experiment)
-      * [4. Cross-Validation Experiment](#4-cross-validation-experiment)
-      * [5. Rolling Train/Test Experiment](#5-rolling-traintest-experiment)
 
 
+<!-- toc -->
 
-<!--te-->
+- [Phases of evaluation of Dag](#phases-of-evaluation-of-dag)
+  * [1. In-sample only experiment](#1-in-sample-only-experiment)
+  * [2. Train/test experiment](#2-traintest-experiment)
+  * [3. Train/validate/test experiment](#3-trainvalidatetest-experiment)
+  * [4. Cross-Validation Experiment](#4-cross-validation-experiment)
+  * [5. Rolling Train/Test Experiment](#5-rolling-traintest-experiment)
+
+<!-- tocstop -->
 
 # Phases of evaluation of Dag
 
