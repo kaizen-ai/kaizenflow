@@ -2499,6 +2499,23 @@ class Test_compare_dfs(hunitest.TestCase):
         [left]:  [1.1, nan, 3.1, nan, inf, inf]
         [right]: [3.0, 2.2, nan, nan, nan, inf]
         At positional index 0, first diff: 1.1 != 3.0
+        df1=
+             A  B
+        0  1.1  0
+        1  NaN  0
+        2  3.1  0
+        3  NaN  0
+        4  inf  0
+        5  inf  0
+        and df2=
+             A  B
+        0  3.0  0
+        1  2.2  0
+        2  NaN  0
+        3  NaN  0
+        4  NaN  0
+        5  inf  0
+        don't have compatible size
         """
         self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
 
