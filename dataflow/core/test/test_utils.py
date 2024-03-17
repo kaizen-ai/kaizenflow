@@ -71,7 +71,6 @@ class Test_convert_to_multiindex(hunitest.TestCase):
         expected_df_columns = pd.MultiIndex.from_product(
             [["close", "volume"], [13684, 17085]], names=[None, "id"]
         )
-
         return df, expected_df_columns
     
     @staticmethod
@@ -92,7 +91,7 @@ class Test_convert_to_multiindex(hunitest.TestCase):
     def assert_multiindex_columns_equal(self,
                                         expected_df_columns: pd.MultiIndex,
                                         actual_df: pd.DataFrame
-                                        ):
+                                        ) -> None:
         """
         Compares the list of columns of actual df and and expected df.
         """
@@ -108,10 +107,8 @@ class Test_convert_to_multiindex(hunitest.TestCase):
         # Prepare input and expected output.
         df, expected_df_columns = self.get_test_data()
         asset_id_col = "id"
-
         # Prepare the actual output by running function.
         actual_df = dtfcorutil.convert_to_multiindex(df, asset_id_col)
-
         # Compare the result.
         self.assert_multiindex_columns_equal(expected_df_columns, actual_df)
 
@@ -124,10 +121,8 @@ class Test_convert_to_multiindex(hunitest.TestCase):
         df, expected_df_columns = self.get_test_data()
         asset_id_col = "id"
         df = pd.concat([df, df.head(1)])
-
         # Prepare the actual output by running function.
         actual_df = dtfcorutil.convert_to_multiindex(df, asset_id_col)
-    
         # Compare the result.
         self.assert_multiindex_columns_equal(expected_df_columns, actual_df)
 
@@ -138,13 +133,12 @@ class Test_convert_to_multiindex(hunitest.TestCase):
         # Creating empty data frame for input.
         df = pd.DataFrame(columns=['id', 'close', 'volume'])
         asset_id_col = 'id'
-
-        # Method is successfully passing test case if it's throwing Error on empty df. 
-        try:
+        # Method is successfully passing test case if it's returning error message that is similar to expected error message.
+        with self.assertRaises(AssertionError) as context:
             actual_df = dtfcorutil.convert_to_multiindex(df, asset_id_col)
-        except AssertionError:
-            return True
-        return False
+        actual_error_message = str(context.exception)
+        expected_error_message = '\n################################################################################\n* Failed assertion *\n1 <= 0\n################################################################################\n'
+        self.assert_equal(actual_error_message, expected_error_message)
     
     def test4(self) -> None:
         """
@@ -153,10 +147,8 @@ class Test_convert_to_multiindex(hunitest.TestCase):
         # Prepare input and expected output.
         df, expected_df_columns = self.get_test_data_single_asset()
         asset_id_col = 'id'
-
         # Prepare the actual output by running function.
         actual_df = dtfcorutil.convert_to_multiindex(df, asset_id_col)
-
         # Compare the result.
         self.assert_multiindex_columns_equal(expected_df_columns, actual_df)
 
@@ -167,13 +159,13 @@ class Test_convert_to_multiindex(hunitest.TestCase):
         # Prepare input and expected output.
         df = self.get_test_data_single_asset()
         asset_id_col = 'nonexistent_column'
-
-        # Method is successfully passing test case if it's throwing Error. 
-        try:
+        # Method is successfully passing test case if it's returning error message that is similar to expected error message.
+        with self.assertRaises(AssertionError) as context:
             actual_df = dtfcorutil.convert_to_multiindex(df, asset_id_col)
-        except AssertionError:
-            return True
-        return False
+        # Get the actual error message
+        actual_error_message = str(context.exception)
+        expected_error_message = "\n################################################################################\n* Failed assertion *\nInstance of '(                              id close  volume\n2022-01-04 09:01:00-05:00  13684  None       0\n2022-01-04 09:02:00-05:00  13684  None       0\n2022-01-04 09:03:00-05:00  13684  None       0, MultiIndex([( 'close', 13684),\n            ('volume', 13684)],\n           names=[None, 'id']))' is '<class 'tuple'>' instead of '<class 'pandas.core.frame.DataFrame'>'\n################################################################################\n"
+        self.assert_equal(actual_error_message, expected_error_message)
     
     def test6(self) -> None:
         """
@@ -183,10 +175,8 @@ class Test_convert_to_multiindex(hunitest.TestCase):
         df , expected_df_columns= self.get_test_data_single_asset()
         asset_id_col = 'id'
         df = df.reset_index(drop=True)
-
         # Prepare the actual output by running function.
         actual_df = dtfcorutil.convert_to_multiindex(df, asset_id_col)
-
         # Compare the result.
         self.assert_multiindex_columns_equal(expected_df_columns, actual_df)
 
