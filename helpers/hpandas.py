@@ -1971,7 +1971,6 @@ def compare_dfs(
     if assert_diff_threshold:
         hdbg.dassert_lte(assert_diff_threshold, 1.0)
         hdbg.dassert_lte(0.0, assert_diff_threshold)
-
     # TODO(gp): Factor out this logic and use it for both compare_visually_dfs
     #  and
     if row_mode == "equal":
@@ -1999,14 +1998,26 @@ def compare_dfs(
     df2[close_to_zero_threshold_mask] = df2[close_to_zero_threshold_mask].round(0)
     # Compute the difference df.
     if diff_mode == "diff":
+        # Test and convert the assertion into a boolean.
+        is_ok = True
         try:
-            pd.testing.assert_frame_equal(df1, df2, check_like=True)
+            pd.testing.assert_frame_equal(df1, df2, check_like=True, check_dtype=False)
         except AssertionError as e:
-            hdbg._dfatal(txt=e, msg=None, only_warning=only_warning)
-        finally:
-            df_diff = df1 - df2
-            if remove_inf:
-                df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
+            is_ok = False
+            assertion = e
+        # Check `is_ok` and raise an assertion depending on `only_warning`
+        if not is_ok:
+            hdbg._dfatal(
+                assertion,
+                "df1=\n%s\n and df2=\n%s\n don't have compatible size",
+                df_to_str(df1, log_level=log_level),
+                df_to_str(df2, log_level=log_level),
+                only_warning=only_warning,
+            )
+        # Calculate the difference.
+        df_diff = df1 - df2
+        if remove_inf:
+            df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
     elif diff_mode == "pct_change":
         df_diff = 100 * (df1 - df2) / df2.abs()
         if zero_vs_zero_is_zero:
@@ -2017,7 +2028,7 @@ def compare_dfs(
             df_diff[zero_vs_zero_mask] = 0
         if remove_inf:
             df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
-        nan_mask = df_diff.isna()
+        # Check if `pct_change` exceeds `assert_diff_threshold`
         if assert_diff_threshold is not None:
             nan_mask = df_diff.isna()
             within_threshold = (df_diff.abs() <= assert_diff_threshold) | nan_mask
@@ -2026,12 +2037,26 @@ def compare_dfs(
                 index=within_threshold.index,
                 columns=within_threshold.columns,
             )
+            # Test and convert the assertion into boolean.
+            is_ok = True
             try:
                 pd.testing.assert_frame_equal(
                     within_threshold, expected, check_exact=True
                 )
             except AssertionError as e:
-                hdbg._dfatal(txt=e, msg=None, only_warning=only_warning)
+                is_ok = False
+                assertion = e
+            # Check `is_ok` and raise assertion depending on `only_warning`.
+            if not is_ok:
+                hdbg._dfatal(
+                    assertion,
+                    "df1=\n%s\n and df2=\n%s\n don't have compatible size",
+                    df_to_str(df1, log_level=log_level),
+                    df_to_str(df2, log_level=log_level),
+                    only_warning=only_warning,
+                )
+    else:
+        raise ValueError(f"diff_mode={diff_mode}")
     df_diff = df_diff.add_suffix(f".{diff_mode}")
     return df_diff
 
