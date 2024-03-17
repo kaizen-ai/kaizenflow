@@ -1,9 +1,10 @@
-<!--ts-->
-   * [Code organization](#code-organization)
 
 
+<!-- toc -->
 
-<!--te-->
+- [Code organization](#code-organization)
+
+<!-- tocstop -->
 
 - See changelog in `version.txt`
 

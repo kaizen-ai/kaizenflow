@@ -146,3 +146,63 @@ def compute_mean_pearson_correlation_by_group(
     # TODO(Paul): Consider performing a Fisher transformation before taking the mean.
     mean_corr = pd.concat(corrs).groupby(level=1).mean()
     return mean_corr
+
+
+def compute_correlation_confidence_density_approximation(
+    rho: float,
+    n_samples: int,
+    *,
+    grid_size: float = 0.0001,
+) -> pd.Series:
+    """
+    Compute an approximate posterior density for correlation.
+
+    For more context and some discussion on the (relatively high) accuracy
+    of this approximation, see
+      Taraldsen, G. The Confidence Density for Correlation. Sankhya A 85,
+      600–616 (2023). https://doi.org/10.1007/s13171-021-00267-y
+
+    :param rho: empirical correlation
+    :param n_samples: number of samples used to compute the correlation
+    :param grid_size: granularity of density approximation
+    :return: series with correlation grid points as index (on original, not
+        Fisher-transformed scale) and pdf density as values.
+    """
+    # Ensure the correlation `rho` is between -1 and 1.
+    hdbg.dassert_lte(-1.0, rho)
+    hdbg.dassert_lte(rho, 1.0)
+    # Ensure there are sufficiently many samples.
+    hdbg.dassert_lte(4, n_samples, msg="At least 4 samples are required.")
+    # Take the Fisher transformation.
+    loc = np.arctanh(rho)
+    _LOG.debug("Fisher transformation of correlation `rho` equals %.5f" % loc)
+    # Set the degrees of freedom assuming unknown mean.
+    nu = n_samples - 1
+    dof = nu - 2
+    _LOG.debug("Degrees of freedom (assuming unknown mean) equals %d" % dof)
+    scale = 1 / np.sqrt(dof)
+    _LOG.debug(
+        "Standard deviation of transformed correlation distribution is %.5f"
+        % scale
+    )
+    # Compute the density.
+    x_vals = np.linspace(
+        sp.stats.norm.ppf(grid_size, loc=loc, scale=scale),
+        sp.stats.norm.ppf(1 - grid_size, loc=loc, scale=scale),
+        int(np.ceil(1 / grid_size)),
+    )
+    c1 = np.sqrt((nu - 2) / (2 * np.pi))
+    vals = [
+        c1
+        * (1 / (1 - x**2))
+        * np.exp(
+            ((2 - nu) / 8)
+            * (np.log((1 + x) * (1 - rho) / ((1 - x) * (1 + rho)))) ** 2
+        )
+        for x in np.tanh(x_vals)
+    ]
+    # Undo the transformation.
+    confidence_density = pd.Series(
+        vals, index=np.tanh(x_vals), name="confidence_density"
+    )
+    return confidence_density

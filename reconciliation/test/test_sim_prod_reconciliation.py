@@ -310,61 +310,7 @@ class Test_build_reconciliation_configs(hunitest.TestCase):
             mode,
         )
         actual = str(config)
-        expected = r"""
-        # ConfigList at 0x
-        # 1/1
-            meta:
-            date_str: 20230802
-            asset_class: crypto
-            run_tca: False
-            bar_duration: 5T
-            compute_research_portfolio_mode: automatic
-            get_dag_output_mode: automatic
-            system_log_path:
-            prod: $GIT_ROOT/reconciliation/test/outcomes/Test_build_reconciliation_configs.test1/tmp.scratch/Mock1/prod/20230802_154500.20230802_160000/prod/system_log_dir.scheduled
-            sim: $GIT_ROOT/reconciliation/test/outcomes/Test_build_reconciliation_configs.test1/tmp.scratch/Mock1/prod/20230802_154500.20230802_160000/simulation/system_log_dir.scheduled
-            dag_builder_ctor_as_str: dataflow_amp.pipelines.mock1.mock1_pipeline.Mock1_DagBuilder
-            research_forecast_evaluator_from_prices:
-            init:
-                price_col: vwap
-                prediction_col: feature1
-                volatility_col: vwap.ret_0.vol
-            annotate_forecasts_kwargs:
-                quantization: None
-                liquidate_at_end_of_day: False
-                initialize_beginning_of_day_trades_to_zero: False
-                burn_in_bars: 3
-                asset_id_to_share_decimals:
-                6051632686: 0
-                8717633868: 0
-                2540896331: 0
-                1528092593: 0
-                8968126878: 2
-                1467591036: 3
-                2476706208: 1
-                5115052901: 0
-                3065029174: 0
-                1891737434: 1
-                3401245610: 1
-                1464553467: 3
-                1966583502: 0
-                1030828978: 0
-                2601760471: 2
-                2683705052: 0
-                9872743573: 0
-                2484635488: 0
-                2099673105: 0
-                4516629366: 0
-                2237530510: 0
-                2425308589: 0
-                1776791608: 1
-                2384892553: 1
-                5118394986: 1
-                style: cross_sectional
-                bulk_frac_to_remove: 0.0
-                target_gmv: 3000.0
-        """
-        self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True)
+        self.check_string(actual, purify_text=True)
 
     def test2(self) -> None:
         """
@@ -401,61 +347,7 @@ class Test_build_reconciliation_configs(hunitest.TestCase):
             set_config_values,
         )
         actual = str(config)
-        expected = r"""
-        # ConfigList at 0x
-        # 1/1
-        meta:
-            date_str: 20230802
-            asset_class: crypto
-            run_tca: False
-            bar_duration: 5T
-            compute_research_portfolio_mode: automatic
-            get_dag_output_mode: automatic
-        system_log_path:
-            prod: $GIT_ROOT/reconciliation/test/outcomes/Test_build_reconciliation_configs.test2/tmp.scratch/Mock1/prod/20230802_154500.20230802_160000/prod/system_log_dir.scheduled
-            sim: $GIT_ROOT/reconciliation/test/outcomes/Test_build_reconciliation_configs.test2/tmp.scratch/Mock1/prod/20230802_154500.20230802_160000/simulation/system_log_dir.scheduled
-        dag_builder_ctor_as_str: dataflow_amp.pipelines.mock1.mock1_pipeline.Mock1_DagBuilder
-        research_forecast_evaluator_from_prices:
-            init:
-                price_col: vwap
-                prediction_col: feature1
-                volatility_col: vwap.ret_0.vol
-            annotate_forecasts_kwargs:
-                quantization: None
-                liquidate_at_end_of_day: False
-                initialize_beginning_of_day_trades_to_zero: False
-                burn_in_bars: 3
-                asset_id_to_share_decimals:
-                6051632686: 0
-                8717633868: 0
-                2540896331: 0
-                1528092593: 0
-                8968126878: 2
-                1467591036: 3
-                2476706208: 1
-                5115052901: 0
-                3065029174: 0
-                1891737434: 1
-                3401245610: 1
-                1464553467: 3
-                1966583502: 0
-                1030828978: 0
-                2601760471: 2
-                2683705052: 0
-                9872743573: 0
-                2484635488: 0
-                2099673105: 0
-                4516629366: 0
-                2237530510: 0
-                2425308589: 0
-                1776791608: 1
-                2384892553: 1
-                5118394986: 1
-            style: longitudinal
-            target_dollar_risk_per_name: 1.0
-            prediction_abs_threshold: 0.3
-        """
-        self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True)
+        self.check_string(actual, purify_text=True)
 
 
 class Test_Extract_Bar_Duration_from_pkl_Config(hunitest.TestCase):

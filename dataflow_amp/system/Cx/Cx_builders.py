@@ -41,7 +41,7 @@ def get_Cx_HistoricalMarketData_example1(
     """
     Build a `MarketData` client backed with the data defined by `ImClient`.
     """
-    im_client = system.config["market_data_config", "im_client"]
+    im_client = dtfsys.build_ImClient_from_System(system)
     asset_ids = system.config["market_data_config", "asset_ids"]
     columns = None
     columns_remap = None
@@ -203,7 +203,9 @@ def get_Cx_optimizer_config_instance1() -> cconfig.Config:
     Get a default optimizer config.
     """
     optimizer_config = {
-        "backend": "cc_pomo",
+        "backend": "pomo",
+        "asset_class": "crypto",
+        "apply_cc_limits": True,
         "params": {
             "style": "cross_sectional",
             "kwargs": {
@@ -310,53 +312,6 @@ def get_Cx_dag_prod_instance1(system: dtfsys.System) -> dtfcore.DAG:
     #
     dag = _get_Cx_RealTimeDag(
         system,
-        share_quantization,
-    )
-    return dag
-
-
-# TODO(Dan): Not used, deprecate.
-# TODO(Grisha): somehow pass params via a cmd line instead of
-# creating multiple prod instances.
-def get_Cx_dag_prod_instance2(system: dtfsys.System) -> dtfcore.DAG:
-    """
-    Build the DAG for a prod run from a system config.
-
-    Compte target posisions style is "longitudinal".
-    """
-    order_config = {
-        "order_type": "price@twap",
-        "order_duration_in_mins": 5,
-    }
-    #
-    compute_target_positions_kwargs = {
-        "prediction_abs_threshold": 0.0,
-        "volatility_to_spread_threshold": 0.0,
-        "volatility_lower_bound": 1e-4,
-        "gamma": 0.0,
-        "target_dollar_risk_per_name": 1.0,
-        "spread_lower_bound": 1e-4,
-        "modulate_using_prediction_magnitude": False,
-        "constant_decorrelation_coefficient": 0.0,
-    }
-    optimizer_config = {
-        "backend": "pomo",
-        "params": {
-            "style": "longitudinal",
-            "kwargs": compute_target_positions_kwargs,
-        },
-    }
-    #
-    root_log_dir = system.config.get_and_mark_as_used(
-        ("system_log_dir"), default_value=None
-    )
-    share_quantization = None
-    #
-    dag = _get_Cx_RealTimeDag(
-        system,
-        order_config,
-        optimizer_config,
-        root_log_dir,
         share_quantization,
     )
     return dag

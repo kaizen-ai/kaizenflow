@@ -1,15 +1,16 @@
-<!--ts-->
-   * [Data QA workflows](#data-qa-workflows)
-      * [Quality-assurance metrics](#quality-assurance-metrics)
-         * [Bulk data single-dataset QA metrics](#bulk-data-single-dataset-qa-metrics)
-         * [Periodic QA metrics](#periodic-qa-metrics)
-         * [Cross-datasets QA metrics](#cross-datasets-qa-metrics)
-      * [Historical vs real-time QA flow](#historical-vs-real-time-qa-flow)
-      * [Data QA workflow naming scheme](#data-qa-workflow-naming-scheme)
 
 
+<!-- toc -->
 
-<!--te-->
+- [Data QA workflows](#data-qa-workflows)
+  * [Quality-assurance metrics](#quality-assurance-metrics)
+    + [Bulk data single-dataset QA metrics](#bulk-data-single-dataset-qa-metrics)
+    + [Periodic QA metrics](#periodic-qa-metrics)
+    + [Cross-datasets QA metrics](#cross-datasets-qa-metrics)
+  * [Historical vs real-time QA flow](#historical-vs-real-time-qa-flow)
+  * [Data QA workflow naming scheme](#data-qa-workflow-naming-scheme)
+
+<!-- tocstop -->
 
 # Data QA workflows
 
@@ -80,6 +81,7 @@ A QA workflow has a name that represents its characteristics in the format:
 ```
 
 i.e.,
+
 ```markdown
 production_qa.{download_mode}.{downloading_entity}.{action_tag}.{data_format}.{data_type}.{asset_type}.{universe}.{vendor}.{exchange}.{version\[-snapshot\]}.{asset}.{extension}
 ```
@@ -110,6 +112,7 @@ E.g., a comparison between the datasets
 - `periodic.1day.postgres.ohlcv.futures.1minute.ccxt.binance`
 
 is called:
+
 ```markdown
 compare_qa.periodic.1minute-1day.postgres.ohlcv.futures.1minute.ccxt.binance
 ```

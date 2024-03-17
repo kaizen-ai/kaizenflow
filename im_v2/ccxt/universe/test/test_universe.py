@@ -55,7 +55,7 @@ class TestGetUniverseVersions1(imvcountt.TestGetUniverseVersions1_TestCase):
         """
         vendor = "CCXT"
         mode = "trade"
-        expected_universes_str = "['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v7.1', 'v7.2', 'v7.3', 'v7.4', 'v7.5', 'v8']"
+        expected_universes_str = "['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v7.1', 'v7.2', 'v7.3', 'v7.4', 'v7.5', 'v8', 'v8.1', 'v8.2']"
         self._test_get_universe_versions(vendor, mode, expected_universes_str)
 
     def test_get_universe_versions2(self) -> None:

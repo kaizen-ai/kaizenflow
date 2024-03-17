@@ -9,10 +9,7 @@ import im_v2.common.data.extract.download_bulk as imvcdedobu
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 
-@pytest.mark.skipif(
-    not henv.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available",
-)
+@pytest.mark.skip("CryptoChassis is a deprecated data source")
 class TestDownloadHistoricalData1(hunitest.TestCase):
     def test_parser(self) -> None:
         """
@@ -53,7 +50,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "s3_path": "s3://cryptokaizen-data-test/",
             "log_level": "INFO",
             "data_format": "parquet",
-            "bid_ask_depth": None,
+            "bid_ask_depth": 10,
             "universe_part": 1,
             "assert_on_missing_data": False,
             "dst_dir": None,

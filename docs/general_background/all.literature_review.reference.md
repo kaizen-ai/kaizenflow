@@ -1,22 +1,23 @@
-<!--ts-->
-      * [Meta](#meta)
-      * [To cut and paste](#to-cut-and-paste)
-   * [News for commodity prediction](#news-for-commodity-prediction)
-      * [2015 - The role of news in commodity markets](#2015---the-role-of-news-in-commodity-markets)
-   * [Social sentiment](#social-sentiment)
-      * [2015, Predicting global economic activity with media analytics](#2015-predicting-global-economic-activity-with-media-analytics)
-      * [2018 - Twitter, Investor Sentiment and Capital Markets, what do we know?](#2018---twitter-investor-sentiment-and-capital-markets-what-do-we-know)
-   * [Time series](#time-series)
-      * [On-Line Learning of Linear Dynamical Systems: Exponential Forgetting in Kalman Filters](#on-line-learning-of-linear-dynamical-systems-exponential-forgetting-in-kalman-filters)
-      * [Predictive State Smoothing (PRESS): Scalable non-parametric regression for high-dimensional data with variable selection](#predictive-state-smoothing-press-scalable-non-parametric-regression-for-high-dimensional-data-with-variable-selection)
-      * [2019, High-Dimensional Multivariate Forecasting with Low-Rank Gaussian Copula Processes](#2019-high-dimensional-multivariate-forecasting-with-low-rank-gaussian-copula-processes)
-      * [2014, The topology of macro financial flow using stochastic flow diagrams](#2014-the-topology-of-macro-financial-flow-using-stochastic-flow-diagrams)
-   * [Computer engineering](#computer-engineering)
-      * [2015, Hidden technical debt in machine learning systems](#2015-hidden-technical-debt-in-machine-learning-systems)
 
 
+<!-- toc -->
 
-<!--te-->
+  * [Meta](#meta)
+  * [To cut and paste](#to-cut-and-paste)
+- [News for commodity prediction](#news-for-commodity-prediction)
+  * [2015 - The role of news in commodity markets](#2015---the-role-of-news-in-commodity-markets)
+- [Social sentiment](#social-sentiment)
+  * [2015, Predicting global economic activity with media analytics](#2015-predicting-global-economic-activity-with-media-analytics)
+  * [2018 - Twitter, Investor Sentiment and Capital Markets, what do we know?](#2018---twitter-investor-sentiment-and-capital-markets-what-do-we-know)
+- [Time series](#time-series)
+  * [On-Line Learning of Linear Dynamical Systems: Exponential Forgetting in Kalman Filters](#on-line-learning-of-linear-dynamical-systems-exponential-forgetting-in-kalman-filters)
+  * [Predictive State Smoothing (PRESS): Scalable non-parametric regression for high-dimensional data with variable selection](#predictive-state-smoothing-press-scalable-non-parametric-regression-for-high-dimensional-data-with-variable-selection)
+  * [2019, High-Dimensional Multivariate Forecasting with Low-Rank Gaussian Copula Processes](#2019-high-dimensional-multivariate-forecasting-with-low-rank-gaussian-copula-processes)
+  * [2014, The topology of macro financial flow using stochastic flow diagrams](#2014-the-topology-of-macro-financial-flow-using-stochastic-flow-diagrams)
+- [Computer engineering](#computer-engineering)
+  * [2015, Hidden technical debt in machine learning systems](#2015-hidden-technical-debt-in-machine-learning-systems)
+
+<!-- tocstop -->
 
 ## Meta
 

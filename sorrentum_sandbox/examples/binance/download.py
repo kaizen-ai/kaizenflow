@@ -106,7 +106,6 @@ class OhlcvRestApiDownloader(ssacodow.DataDownloader):
                         for row in response.json()
                     ]
                 )
-
                 dfs.append(data)
                 # Delay for throttling in seconds.
                 time.sleep(0.5)

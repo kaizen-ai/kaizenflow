@@ -24,6 +24,8 @@ def get_execution_analysis_configs_Cmtask4881(
     system_log_dir: str,
     bar_duration: str,
     universe_version: str,
+    *,
+    test_asset_id: int = 1464553467,
 ) -> cconfig.ConfigList:
     """
     Build execution analysis config with default values and provided system log
@@ -33,12 +35,12 @@ def get_execution_analysis_configs_Cmtask4881(
       e.g., ../system_log_dir.manual/process_forecasts
     :param bar_duration: length of bar in time, e.g., `5T`
     :param universe_version: version of the universe, e.g., `v7.4`
+    :param test_asset_id: asset id to use as example
     """
     #
     id_col = "asset_id"
     vendor = "CCXT"
     mode = "trade"
-    test_asset_id = 1464553467
     child_order_execution_freq = "1T"
     use_historical = True
     config_list = build_execution_analysis_configs(
@@ -114,17 +116,25 @@ def build_execution_analysis_configs(
 def get_bid_ask_execution_analysis_configs_Cmtask4881(
     system_log_dir: str,
     bar_duration: str,
+    bid_ask_data_source: str,
     *,
     test_asset_id: int = 1464553467,
 ) -> cconfig.ConfigList:
     """
     Build default config for `Master_bid_ask_execution_analysis` using real-
     time data with provided system log dir.
+
+    :param system_log_dir: directory of the experiment
+    :param bar_duration: as pd.Timedelta-compatible string, e.g. '5T'
+        for 5 minutes
     """
     hdbg.dassert_path_exists(system_log_dir)
-    use_historical = False
+    hdbg.dassert_in(
+        bid_ask_data_source,
+        ["S3", "logged_during_experiment", "logged_after_experiment"],
+    )
     config_dict = {
-        "meta": {"use_historical": use_historical},
+        "meta": {"bid_ask_data_source": bid_ask_data_source},
         "universe": {"test_asset_id": test_asset_id},
         "execution_parameters": {"bar_duration": bar_duration},
         "system_log_dir": system_log_dir,

@@ -19,12 +19,16 @@ import oms.broker.ccxt.ccxt_logger as obcccclo
 import oms.fill as omfill
 import oms.order.order as oordorde
 
+# #############################################################################
+# Child order responses.
+# #############################################################################
 
-def _get_child_order_responses() -> List[obcccclo.CcxtData]:
+
+def _get_dummy_ccxt_child_order_responses() -> List[obcccclo.CcxtData]:
     """
-    Build and return JSON objects with CCXT child order responses.
+    Return two CCXT child order responses.
     """
-    order_resp1 = {
+    ccxt_order_resp1 = {
         "info": {
             "orderId": "7954906695",
             "symbol": "APEUSDT",
@@ -71,7 +75,7 @@ def _get_child_order_responses() -> List[obcccclo.CcxtData]:
         "trades": [],
         "fees": [],
     }
-    order_resp2 = {
+    ccxt_order_resp2 = {
         "info": {
             "orderId": "14412582631",
             "symbol": "AVAXUSDT",
@@ -118,14 +122,14 @@ def _get_child_order_responses() -> List[obcccclo.CcxtData]:
         "trades": [],
         "fees": [],
     }
-    return [order_resp1, order_resp2]
+    return [ccxt_order_resp1, ccxt_order_resp2]
 
 
-def _get_reduce_only_child_order_responses() -> List[obcccclo.CcxtData]:
+def _get_dummy_reduce_only_ccxt_child_order_responses() -> obcccclo.CcxtData:
     """
-    Generate JSON objects with CCXT reduce only child order responses.
+    Return a dictionary with CCXT reduce-only child order responses.
     """
-    order_resp1 = {
+    ccxt_order_resp1 = {
         "info": {
             "orderId": "7954906695",
             "symbol": "APEUSDT",
@@ -172,14 +176,19 @@ def _get_reduce_only_child_order_responses() -> List[obcccclo.CcxtData]:
         "trades": [],
         "fees": [],
     }
-    return order_resp1
+    return ccxt_order_resp1
 
 
-def _get_ccxt_trades() -> List[List[obcccclo.CcxtData]]:
+# #############################################################################
+# CCXT trades.
+# #############################################################################
+
+
+def _get_dummy_ccxt_trades() -> List[List[obcccclo.CcxtData]]:
     """
-    Build and return JSON objects with CCXT trades.
+    Return CCXT trades.
     """
-    ccxt_trades_json1 = [
+    ccxt_trades1 = [
         {
             "info": {
                 "symbol": "APEUSDT",
@@ -247,7 +256,8 @@ def _get_ccxt_trades() -> List[List[obcccclo.CcxtData]]:
             "fees": [{"currency": "USDT", "cost": 0.01644}],
         },
     ]
-    ccxt_trades_json2 = [
+    #
+    ccxt_trades2 = [
         {
             "info": {
                 "symbol": "AVAXUSDT",
@@ -315,7 +325,8 @@ def _get_ccxt_trades() -> List[List[obcccclo.CcxtData]]:
             "fees": [{"currency": "USDT", "cost": 0.0124552}],
         },
     ]
-    ccxt_trades_json3 = [
+    #
+    ccxt_trades3 = [
         {
             "info": {
                 "symbol": "APEUSDT",
@@ -383,7 +394,8 @@ def _get_ccxt_trades() -> List[List[obcccclo.CcxtData]]:
             "fees": [{"currency": "USDT", "cost": 0.0097344}],
         },
     ]
-    ccxt_trades_json4 = [
+    #
+    ccxt_trades4 = [
         {
             "info": {
                 "symbol": "APEUSDT",
@@ -452,16 +464,21 @@ def _get_ccxt_trades() -> List[List[obcccclo.CcxtData]]:
         },
     ]
     return [
-        ccxt_trades_json1,
-        ccxt_trades_json2,
-        ccxt_trades_json3,
-        ccxt_trades_json4,
+        ccxt_trades1,
+        ccxt_trades2,
+        ccxt_trades3,
+        ccxt_trades4,
     ]
 
 
-def _get_ccxt_fills() -> List[List[obcccclo.CcxtData]]:
+# #############################################################################
+# CCXT fills.
+# #############################################################################
+
+
+def _get_dummy_ccxt_fills() -> List[List[obcccclo.CcxtData]]:
     """
-    Build and return JSON objects with CCXT fills.
+    Return two examples of CCXT fills.
     """
     ccxt_fills1 = [
         {
@@ -658,9 +675,14 @@ def _get_ccxt_fills() -> List[List[obcccclo.CcxtData]]:
     return [ccxt_fills1, ccxt_fills2]
 
 
-def _get_oms_fills() -> List[List[obcccclo.CcxtData]]:
+# #############################################################################
+# OMS fills.
+# #############################################################################
+
+
+def _get_dummy_oms_fills() -> List[List[obcccclo.CcxtData]]:
     """
-    Build and return JSON objects with OMS fills.
+    Return two OMS fills.
     """
     oms_fills1 = [
         {
@@ -697,9 +719,14 @@ def _get_oms_fills() -> List[List[obcccclo.CcxtData]]:
     return [oms_fills1, oms_fills2]
 
 
-def _get_oms_parent_orders() -> List[obcccclo.CcxtData]:
+# #############################################################################
+# OMS parent orders.
+# #############################################################################
+
+
+def _get_dummy_oms_parent_orders() -> List[obcccclo.CcxtData]:
     """
-    Build and return JSON objects with OMS parent orders.
+    Return two OMS parent orders.
     """
     parent_order1 = {
         "order_id": 0,
@@ -728,9 +755,14 @@ def _get_oms_parent_orders() -> List[obcccclo.CcxtData]:
     return [parent_order1, parent_order2]
 
 
-def _get_oms_child_orders() -> List[obcccclo.CcxtData]:
+# #############################################################################
+# OMS child orders.
+# #############################################################################
+
+
+def _get_dummy_oms_child_orders() -> List[obcccclo.CcxtData]:
     """
-    Build and return JSON objects with OMS child orders.
+    Return two OMS child orders.
     """
     child_order1 = {
         "order_id": 20,
@@ -751,26 +783,6 @@ def _get_oms_child_orders() -> List[obcccclo.CcxtData]:
         "used_ask_price": "latest_ask_price",
         "limit_price": np.float64(4.12045),
         "ccxt_id": [np.int64(7954906695)],
-    }
-    child_order2 = {
-        "order_id": 21,
-        "creation_timestamp": pd.Timestamp("2023-03-15 12:35:38.718960-04:00"),
-        "asset_id": np.int64(8717633868),
-        "type_": "limit",
-        "start_timestamp": pd.Timestamp("2023-03-15 12:35:38.718960-04:00"),
-        "end_timestamp": pd.Timestamp("2023-03-15 12:36:38.718960-04:00"),
-        "curr_num_shares": np.float64(0.0),
-        "diff_num_shares": np.float64(-1.0),
-        "tz": "America/New_York",
-        "passivity_factor": np.float64(0.55),
-        "latest_bid_price": np.float64(15.804),
-        "latest_ask_price": np.float64(15.805),
-        "bid_price_mean": np.float64(15.81816216216216),
-        "ask_price_mean": np.float64(15.819432432432428),
-        "used_bid_price": "latest_bid_price",
-        "used_ask_price": "latest_ask_price",
-        "limit_price": np.float64(15.804549999999999),
-        "ccxt_id": [np.int64(14412582631)],
     }
     child_order1_extra_params = {
         "stats": {
@@ -798,6 +810,27 @@ def _get_oms_child_orders() -> List[obcccclo.CcxtData]:
         "ccxt_id": [11381353660],
     }
     child_order1["extra_params"] = child_order1_extra_params
+    #
+    child_order2 = {
+        "order_id": 21,
+        "creation_timestamp": pd.Timestamp("2023-03-15 12:35:38.718960-04:00"),
+        "asset_id": np.int64(8717633868),
+        "type_": "limit",
+        "start_timestamp": pd.Timestamp("2023-03-15 12:35:38.718960-04:00"),
+        "end_timestamp": pd.Timestamp("2023-03-15 12:36:38.718960-04:00"),
+        "curr_num_shares": np.float64(0.0),
+        "diff_num_shares": np.float64(-1.0),
+        "tz": "America/New_York",
+        "passivity_factor": np.float64(0.55),
+        "latest_bid_price": np.float64(15.804),
+        "latest_ask_price": np.float64(15.805),
+        "bid_price_mean": np.float64(15.81816216216216),
+        "ask_price_mean": np.float64(15.819432432432428),
+        "used_bid_price": "latest_bid_price",
+        "used_ask_price": "latest_ask_price",
+        "limit_price": np.float64(15.804549999999999),
+        "ccxt_id": [np.int64(14412582631)],
+    }
     child_order2_extra_params = {
         "stats": {
             "order_generated_timestamp": datetime.datetime(
@@ -827,9 +860,14 @@ def _get_oms_child_orders() -> List[obcccclo.CcxtData]:
     return [child_order1, child_order2]
 
 
-def _get_bid_ask_data() -> pd.DataFrame:
+# #############################################################################
+# Bid ask data.
+# #############################################################################
+
+
+def _get_dummy_bid_ask_data() -> pd.DataFrame:
     """
-    Build and return CSV objects with bid ask data.
+    Return a dataframe with bid ask data.
     """
     data = [
         {
@@ -871,9 +909,14 @@ def _get_bid_ask_data() -> pd.DataFrame:
     return bid_ask_data
 
 
-def _get_exchange_markets() -> List[Dict[str, Any]]:
+# #############################################################################
+# CCXT exchange market info.
+# #############################################################################
+
+
+def _get_dummy_ccxt_exchange_markets() -> List[Dict[str, Any]]:
     """
-    Build and return JSON objects with exchange markets.
+    Return dictionary with CCXT exchange markets info.
     """
     exchange_markets = {
         "ETH/BTC": {
@@ -932,7 +975,12 @@ def _get_exchange_markets() -> List[Dict[str, Any]]:
     return exchange_markets
 
 
-def _get_leverage_info() -> List[Dict[str, Any]]:
+# #############################################################################
+# CCXT leverage info.
+# #############################################################################
+
+
+def _get_dummy_ccxt_leverage_info() -> List[Dict[str, Any]]:
     """
     Build and return JSON objects with leverage info.
     """
@@ -1009,9 +1057,14 @@ def _get_leverage_info() -> List[Dict[str, Any]]:
     return leverage_info
 
 
-def _get_positions() -> List[obcccclo.CcxtData]:
+# #############################################################################
+# CCXT positions.
+# #############################################################################
+
+
+def _get_dummy_ccxt_positions() -> List[obcccclo.CcxtData]:
     """
-    Build and return JSON objects with positions.
+    Return dictionary with CCXT positions.
     """
     positions = [
         {
@@ -1104,9 +1157,14 @@ def _get_positions() -> List[obcccclo.CcxtData]:
     return positions
 
 
-def get_balance() -> List[Dict[str, Any]]:
+# #############################################################################
+# CCXT balance.
+# #############################################################################
+
+
+def _get_dummy_ccxt_balance() -> List[Dict[str, Any]]:
     """
-    Generate JSON objects with balances.
+    Return object storing CCXT balance.
     """
     balance = {
         "BTC": {"free": 0.01920606, "used": 0.0, "total": 0.0},
@@ -1161,6 +1219,11 @@ def get_balance() -> List[Dict[str, Any]]:
     return balance
 
 
+# #############################################################################
+# Write CcxtLogger data.
+# #############################################################################
+
+
 def _write_ccxt_trades(target_dir: str) -> None:
     """
     Generate and save JSON files with CCXT trades.
@@ -1170,15 +1233,15 @@ def _write_ccxt_trades(target_dir: str) -> None:
         ccxt_trades_json2,
         ccxt_trades_json3,
         ccxt_trades_json4,
-    ) = _get_ccxt_trades()
-    # Create JSON scratch directory.
+    ) = _get_dummy_ccxt_trades()
+    # Create directory.
     scratch_fills_path = os.path.join(
         target_dir, obcccclo.CcxtLogger.CCXT_CHILD_ORDER_TRADES
     )
-    file_name_prefix = "ccxt_trades_"
     incremental = False
     hio.create_dir(scratch_fills_path, incremental)
     # Save JSON files.
+    file_name_prefix = "ccxt_trades_"
     trades1_path = os.path.join(
         scratch_fills_path,
         f"{file_name_prefix}20230315_123830_20230315_123500.json",
@@ -1203,10 +1266,10 @@ def _write_ccxt_trades(target_dir: str) -> None:
 
 def _write_ccxt_child_order_responses(target_dir: str) -> None:
     """
-    Generate and save JSON files with CCXT child order responses.
+    Save JSON files with CCXT child order responses.
     """
-    order_resp1, order_resp2 = _get_child_order_responses()
-    # Create order responses scratch directory.
+    order_resp1, order_resp2 = _get_dummy_ccxt_child_order_responses()
+    # Create directory.
     scratch_order_resp_space = os.path.join(
         target_dir, obcccclo.CcxtLogger.CCXT_CHILD_ORDER_RESPONSE
     )
@@ -1227,14 +1290,13 @@ def _write_ccxt_child_order_responses(target_dir: str) -> None:
 
 def _write_oms_child_orders(target_dir: str) -> None:
     """
-    Generate and save individual OMS child orders as CSV files.
+    Save individual OMS child orders.
     """
-    child_order1, child_order2 = _get_oms_child_orders()
-    # Generate subdir name and add extra params.
+    child_order1, child_order2 = _get_dummy_oms_child_orders()
+    # Create directory.
     oms_orders_scratch_space = os.path.join(
         target_dir, obcccclo.CcxtLogger.OMS_CHILD_ORDERS
     )
-    # Create child orders scratch directory.
     incremental = False
     hio.create_dir(oms_orders_scratch_space, incremental)
     # Save JSON files.
@@ -1252,9 +1314,9 @@ def _write_oms_child_orders(target_dir: str) -> None:
 
 def _write_oms_parent_orders(target_dir: str) -> None:
     """
-    Generate and save JSON file with OMS parent orders.
+    Save JSON file with OMS parent orders.
     """
-    parent_orders = _get_oms_parent_orders()
+    parent_orders = _get_dummy_oms_parent_orders()
     # Create OMS parent orders child directory.
     oms_parent_orders_scratch_space = os.path.join(
         target_dir, obcccclo.CcxtLogger.OMS_PARENT_ORDERS
@@ -1271,13 +1333,13 @@ def _write_oms_parent_orders(target_dir: str) -> None:
 
 def _write_ccxt_fills(target_dir: str) -> None:
     """
-    Generate and save JSON files with CCXT fills.
+    Save JSON files with CCXT fills.
     """
-    ccxt_fills1, ccxt_fills2 = _get_ccxt_fills()
+    ccxt_fills1, ccxt_fills2 = _get_dummy_ccxt_fills()
+    # Create directory.
     ccxt_fills_scratch_space = os.path.join(
         target_dir, obcccclo.CcxtLogger.CCXT_FILLS
     )
-    # Create child orders scratch directory.
     incremental = False
     hio.create_dir(ccxt_fills_scratch_space, incremental)
     # Save JSON files.
@@ -1295,13 +1357,13 @@ def _write_ccxt_fills(target_dir: str) -> None:
 
 def _write_oms_fills(target_dir: str) -> None:
     """
-    Generate and save JSON files with OMS fills.
+    Save JSON files with OMS fills.
     """
-    oms_fills1, oms_fills2 = _get_oms_fills()
+    oms_fills1, oms_fills2 = _get_dummy_oms_fills()
+    # Create directory.
     oms_fills_scratch_space = os.path.join(
         target_dir, obcccclo.CcxtLogger.OMS_FILLS
     )
-    # Create child orders scratch directory.
     incremental = False
     hio.create_dir(oms_fills_scratch_space, incremental)
     # Save CSV files.
@@ -1319,13 +1381,14 @@ def _write_oms_fills(target_dir: str) -> None:
 
 def _write_bid_ask_data(target_dir: str) -> None:
     """
-    Generate and save CSV files with bid ask data.
+    Save CSV files with bid ask data.
     """
-    bid_ask_data = _get_bid_ask_data()
+    bid_ask_data = _get_dummy_bid_ask_data()
+    # Create directory.
     bid_ask_scratch_space = os.path.join(target_dir, obcccclo.CcxtLogger.BID_ASK)
-    # Create bid ask data scratch directory.
     incremental = False
     hio.create_dir(bid_ask_scratch_space, incremental)
+    # Save data.
     bid_ask_data.to_csv(
         os.path.join(bid_ask_scratch_space, "mock.csv"), index=False
     )
@@ -1333,13 +1396,13 @@ def _write_bid_ask_data(target_dir: str) -> None:
 
 def _write_exchange_markets(target_dir: str) -> None:
     """
-    Generate and save JSON files with exchange markets.
+    Save JSON files with exchange markets.
     """
-    exchange_markets = _get_exchange_markets()
+    exchange_markets = _get_dummy_ccxt_exchange_markets()
+    # Create directory.
     exchange_markets_scratch_space = os.path.join(
         target_dir, obcccclo.CcxtLogger.EXCHANGE_MARKETS
     )
-    # Create exchange markets scratch directory.
     incremental = False
     hio.create_dir(exchange_markets_scratch_space, incremental)
     # Save JSON files.
@@ -1352,13 +1415,13 @@ def _write_exchange_markets(target_dir: str) -> None:
 
 def _write_leverage_info(target_dir: str) -> None:
     """
-    Generate and save JSON files with leverage info.
+    Save JSON files with leverage info.
     """
-    leverage_info = _get_leverage_info()
+    leverage_info = _get_dummy_ccxt_leverage_info()
+    # Create directory.
     leverage_info_scratch_space = os.path.join(
         target_dir, obcccclo.CcxtLogger.LEVERAGE_INFO
     )
-    # Create leverage info scratch directory.
     incremental = False
     hio.create_dir(leverage_info_scratch_space, incremental)
     # Save JSON files.
@@ -1374,11 +1437,11 @@ def _write_positions(target_dir: str) -> None:
     Generate and save JSON files with positions.
     """
     # TODO(Sameep): CmTask5723 make the dir static in logger.
-    positions = _get_positions()
+    positions = _get_dummy_ccxt_positions()
+    # Create directory.
     positions_scratch_space = os.path.join(
         target_dir, obcccclo.CcxtLogger.POSITIONS
     )
-    # Create leverage info scratch directory.
     incremental = False
     hio.create_dir(positions_scratch_space, incremental)
     # Save JSON files.
@@ -1391,14 +1454,14 @@ def _write_positions(target_dir: str) -> None:
 
 def _write_balances(target_dir: str) -> None:
     """
-    Generate and save JSON files with balances.
+    Save JSON files with balances.
     """
     # TODO(Sameep): CmTask5723 make the dir static in logger.
-    balance = get_balance()
+    balance = _get_dummy_ccxt_balance()
+    # Create directory.
     balances_scratch_space = os.path.join(
         target_dir, obcccclo.CcxtLogger.BALANCES
     )
-    # Create leverage info scratch directory.
     incremental = False
     hio.create_dir(balances_scratch_space, incremental)
     # Save JSON files.
@@ -1411,10 +1474,10 @@ def _write_balances(target_dir: str) -> None:
 
 def _write_reduce_only_order_responses(target_dir: str) -> None:
     """
-    Generate and save JSON files with CCXT reduce only order responses.
+    Save JSON files with CCXT reduce only order responses.
     """
-    order_resp1 = _get_reduce_only_child_order_responses()
-    # Create order responses scratch directory.
+    order_resp1 = _get_dummy_reduce_only_ccxt_child_order_responses()
+    # Create directory.
     scratch_order_resp_space = os.path.join(
         target_dir, "reduce_only", obcccclo.CcxtLogger.CCXT_CHILD_ORDER_RESPONSE
     )
@@ -1430,8 +1493,9 @@ def _write_reduce_only_order_responses(target_dir: str) -> None:
 
 def _write_args_file(target_dir: str) -> None:
     """
-    Generate and save JSON with args data.
+    Save JSON with args data.
     """
+    args_file_path = os.path.join(target_dir, obcccclo.CcxtLogger.ARGS_FILE)
     args = {
         "secret_id": 4,
         "max_parent_order_notional": 100,
@@ -1448,14 +1512,16 @@ def _write_args_file(target_dir: str) -> None:
         "incremental": False,
         "log_level": "DEBUG",
     }
-    args_file_path = os.path.join(target_dir, obcccclo.CcxtLogger.ARGS_FILE)
     hio.to_json(args_file_path, args)
 
 
 def _write_broker_config(target_dir: str) -> None:
     """
-    Generate and save JSON with Broker config.
+    Save JSON with Broker config.
     """
+    broker_config_path = os.path.join(
+        target_dir, obcccclo.CcxtLogger.BROKER_CONFIG
+    )
     broker_config = {
         "universe_version": "v7.4",
         "stage": "preprod",
@@ -1472,51 +1538,39 @@ def _write_broker_config(target_dir: str) -> None:
         },
         "raw_data_reader": "RawDataReader",
     }
-    broker_config_path = os.path.join(
-        target_dir, obcccclo.CcxtLogger.BROKER_CONFIG
-    )
     hio.to_json(broker_config_path, broker_config)
 
 
 def _write_test_data(target_dir: str) -> None:
     """
-    Write test data into the scratch directory.
+    Write test data into the target directory.
 
     :param target_dir: the target directory to write into
     """
-    # Generate and save args.
     _write_args_file(target_dir)
-    # Generate and save broker configs.
     _write_broker_config(target_dir)
-    # Generate and save CCXT trades.
     _write_ccxt_trades(target_dir)
-    # Generate and save CCXT order responses.
     _write_ccxt_child_order_responses(target_dir)
-    # Generate and save OMS child orders.
     _write_oms_child_orders(target_dir)
-    # Generate and save OMS parent orders.
     _write_oms_parent_orders(target_dir)
-    # Generate and save CCXT fills.
     _write_ccxt_fills(target_dir)
-    # Generate and save OMS fills.
     _write_oms_fills(target_dir)
-    # Generate and save bid ask data.
     _write_bid_ask_data(target_dir)
-    # Generate and save exchange markets.
     _write_exchange_markets(target_dir)
-    # Generate and save leverage info.
     _write_leverage_info(target_dir)
-    # Generate and save positions.
     _write_positions(target_dir)
-    # Generate and save balances.
     _write_balances(target_dir)
-    # Generate and save CCXT reduce only order responses.
     _write_reduce_only_order_responses(target_dir)
 
 
 def _check(self_: Any, actual: pd.DataFrame, expected: str) -> None:
     actual = hpandas.df_to_str(actual, num_rows=None)
     self_.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
+# TestCcxtLogger1
+# #############################################################################
 
 
 class TestCcxtLogger1(hunitest.TestCase):
@@ -1561,7 +1615,7 @@ class TestCcxtLogger1(hunitest.TestCase):
         expected_oms_fills_dir = os.path.join(target_dir, reader.OMS_FILLS)
         self.assertEqual(reader._oms_fills_dir, expected_oms_fills_dir)
 
-    def test_get_files1(self) -> None:
+    def test_get_dummy_files1(self) -> None:
         """
         Verify that files in the scratch space for CcxtBroker are listed
         correctly.
@@ -1753,7 +1807,6 @@ class TestCcxtLogger1(hunitest.TestCase):
             self.assertFalse(df.empty)
 
 
-@pytest.mark.skip(reason="Fails in Sorrentum")
 class TestCcxtLogger2(hunitest.TestCase):
     def test_log_child_order1(self) -> None:
         """
@@ -1761,12 +1814,12 @@ class TestCcxtLogger2(hunitest.TestCase):
         parameters is logged correctly.
         """
         # Get an order and set a CCXT id.
-        order = self._get_test_order("price@twap")[0]
+        order = self._get_dummy_test_order("price@twap")[0]
         order = obcaccbr.AbstractCcxtBroker._set_ccxt_id_to_child_order(
             order, 7954906695
         )
         # Get a child order response.
-        child_order_response = _get_child_order_responses()[0]
+        child_order_response = _get_dummy_ccxt_child_order_responses()[0]
         # Check.
         exp_child_order = r"""
         OrderedDict([('order_id', 0),
@@ -1839,7 +1892,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         logged without a CCXT ID.
         """
         # Get an order and a CCXT id is absent.
-        order = self._get_test_order("price@twap")[0]
+        order = self._get_dummy_test_order("price@twap")[0]
         # Get a child order response.
         child_order_response = {}
         #
@@ -1872,12 +1925,12 @@ class TestCcxtLogger2(hunitest.TestCase):
         # Create logger and wall_clock_time.
         log_dir = self.get_scratch_space()
         creation_timestamp = pd.Timestamp("2022-08-05 10:35:55-04:00")
-        logger, get_wall_clock_time = self._get_logger_and_wall_clock_time(
+        logger, get_wall_clock_time = self._get_dummy_logger_and_wall_clock_time(
             log_dir, creation_timestamp
         )
         # Get dummy child order and child order response data.
-        child_order = self._get_test_reduce_only_order("price@twap")[0]
-        child_order_response = _get_reduce_only_child_order_responses()
+        child_order = self._get_dummy_test_reduce_only_order("price@twap")[0]
+        child_order_response = _get_dummy_reduce_only_ccxt_child_order_responses()
         # Log child order and child order response data.
         logger.log_child_order(
             get_wall_clock_time, child_order, child_order_response, {}
@@ -1888,7 +1941,7 @@ class TestCcxtLogger2(hunitest.TestCase):
             "reduce_only",
             logger.OMS_CHILD_ORDERS,
         )
-        cmd = f"find {child_order_log_dir} -type f -name *.json"
+        cmd = f"find {child_order_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read log.
         data = hio.from_json(path, use_types=True)
@@ -1916,7 +1969,7 @@ class TestCcxtLogger2(hunitest.TestCase):
             "reduce_only",
             logger.CCXT_CHILD_ORDER_RESPONSE,
         )
-        cmd = f"find {child_order_log_dir} -type f -name *.json"
+        cmd = f"find {child_order_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read log.
         data = hio.from_json(path, use_types=True)
@@ -1973,18 +2026,18 @@ class TestCcxtLogger2(hunitest.TestCase):
         Verify that CCXT fills are logged correctly.
         """
         # Get dummy CCXT fills data.
-        fills = _get_ccxt_fills()[0]
-        _get_ccxt_trades()[0]
+        fills = _get_dummy_ccxt_fills()[0]
+        _get_dummy_ccxt_trades()[0]
         log_dir = self.get_scratch_space()
         creation_timestamp = pd.Timestamp("2022-08-05 10:35:55-04:00")
         # Log test order fills.
-        logger, get_wall_clock_time = self._get_logger_and_wall_clock_time(
+        logger, get_wall_clock_time = self._get_dummy_logger_and_wall_clock_time(
             log_dir, creation_timestamp
         )
         logger.log_ccxt_fills(get_wall_clock_time, fills)
         # Find a JSON file where CCXT fills are saved.
         ccxt_fills_log_dir = os.path.join(log_dir, logger.CCXT_FILLS)
-        cmd = f"find {ccxt_fills_log_dir} -type f -name *.json"
+        cmd = f"find {ccxt_fills_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read.
         data = hio.from_json(path, use_types=True)
@@ -2084,11 +2137,11 @@ class TestCcxtLogger2(hunitest.TestCase):
         Verify that CCXT fills are logged correctly.
         """
         # Get dummy CCXT trades data.
-        trades = _get_ccxt_trades()[0]
+        trades = _get_dummy_ccxt_trades()[0]
         log_dir = self.get_scratch_space()
         creation_timestamp = pd.Timestamp("2022-08-05 10:35:55-04:00")
         # Log test order fills.
-        logger, get_wall_clock_time = self._get_logger_and_wall_clock_time(
+        logger, get_wall_clock_time = self._get_dummy_logger_and_wall_clock_time(
             log_dir, creation_timestamp
         )
         logger.log_ccxt_trades(get_wall_clock_time, trades)
@@ -2096,7 +2149,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         ccxt_trades_log_dir = os.path.join(
             log_dir, logger.CCXT_CHILD_ORDER_TRADES
         )
-        cmd = f"find {ccxt_trades_log_dir} -type f -name *.json"
+        cmd = f"find {ccxt_trades_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read log.
         data = hio.from_json(path, use_types=True)
@@ -2170,7 +2223,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         # Create logger and wall_clock_time.
         log_dir = self.get_scratch_space()
         creation_timestamp = pd.Timestamp("2022-08-05 10:35:55-04:00")
-        logger, get_wall_clock_time = self._get_logger_and_wall_clock_time(
+        logger, get_wall_clock_time = self._get_dummy_logger_and_wall_clock_time(
             log_dir, creation_timestamp
         )
         # Get dummy OMS fills data.
@@ -2179,7 +2232,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         logger.log_oms_fills(get_wall_clock_time, oms_fills)
         # Find OMS fills json log file.
         oms_fills_log_dir = os.path.join(log_dir, logger.OMS_FILLS)
-        cmd = f"find {oms_fills_log_dir} -type f -name *.json"
+        cmd = f"find {oms_fills_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read log.
         data = hio.from_json(path, use_types=True)
@@ -2207,17 +2260,20 @@ class TestCcxtLogger2(hunitest.TestCase):
         # Create logger and wall_clock_time.
         log_dir = self.get_scratch_space()
         creation_timestamp = pd.Timestamp("2022-08-05 10:35:55-04:00")
-        logger, get_wall_clock_time = self._get_logger_and_wall_clock_time(
+        logger, get_wall_clock_time = self._get_dummy_logger_and_wall_clock_time(
             log_dir, creation_timestamp
         )
         # Get dummy OMS parent order data.
         oms_parent_orders = self._create_oms_parent_orders()
         # Log OMS parent order data.
         logger.log_oms_parent_orders(get_wall_clock_time, oms_parent_orders)
+        # TODO(gp): Factor out this snippet of code in a function.
         # Find OMS parent order json log file.
         oms_parent_order_log_dir = os.path.join(log_dir, logger.OMS_PARENT_ORDERS)
-        cmd = f"find {oms_parent_order_log_dir} -type f -name *.json"
+        hdbg.dassert_dir_exists(oms_parent_order_log_dir)
+        cmd = f"find {oms_parent_order_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
+        hdbg.dassert_lte(1, len(path), "No JSON files in %s", oms_parent_order_log_dir)
         # Read log.
         data = hio.from_json(path, use_types=True)
         act = pprint.pformat(data)
@@ -2264,11 +2320,11 @@ class TestCcxtLogger2(hunitest.TestCase):
         # Create logger and wall_clock_time.
         log_dir = self.get_scratch_space()
         creation_timestamp = pd.Timestamp("2022-08-05 10:35:55-04:00")
-        logger, get_wall_clock_time = self._get_logger_and_wall_clock_time(
+        logger, get_wall_clock_time = self._get_dummy_logger_and_wall_clock_time(
             log_dir, creation_timestamp
         )
         # Get dummy bid ask data.
-        bid_ask_data = _get_bid_ask_data()
+        bid_ask_data = _get_dummy_bid_ask_data()
         # Log bid ask data.
         logger.log_bid_ask_data(get_wall_clock_time, bid_ask_data)
         # Find bid ask data CSV log file.
@@ -2303,19 +2359,19 @@ class TestCcxtLogger2(hunitest.TestCase):
         # Create logger and wall_clock_time.
         log_dir = self.get_scratch_space()
         creation_timestamp = pd.Timestamp("2022-08-05 10:35:55-04:00")
-        logger, get_wall_clock_time = self._get_logger_and_wall_clock_time(
+        logger, get_wall_clock_time = self._get_dummy_logger_and_wall_clock_time(
             log_dir, creation_timestamp
         )
         # Get dummy exchange markets and leverage info.
-        exchange_markets_data = _get_exchange_markets()
-        leverage_info_data = _get_leverage_info()
+        exchange_markets_data = _get_dummy_ccxt_exchange_markets()
+        leverage_info_data = _get_dummy_ccxt_leverage_info()
         # Log exchange markets and leverage info.
         logger.log_exchange_markets(
             get_wall_clock_time, exchange_markets_data, leverage_info_data
         )
         # Find exchange markets JSON log file.
         exchange_markets_log_dir = os.path.join(log_dir, logger.EXCHANGE_MARKETS)
-        cmd = f"find {exchange_markets_log_dir} -type f -name *.json"
+        cmd = f"find {exchange_markets_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read log.
         data = hio.from_json(path, use_types=True)
@@ -2373,7 +2429,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
         # Find leverage info JSON log file.
         leverage_info_log_dir = os.path.join(log_dir, logger.LEVERAGE_INFO)
-        cmd = f"find {leverage_info_log_dir} -type f -name *.json"
+        cmd = f"find {leverage_info_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read log.
         data = hio.from_json(path, use_types=True)
@@ -2437,16 +2493,16 @@ class TestCcxtLogger2(hunitest.TestCase):
         # Create logger and wall_clock_time.
         log_dir = self.get_scratch_space()
         creation_timestamp = pd.Timestamp("2022-08-05 10:35:55-04:00")
-        logger, get_wall_clock_time = self._get_logger_and_wall_clock_time(
+        logger, get_wall_clock_time = self._get_dummy_logger_and_wall_clock_time(
             log_dir, creation_timestamp
         )
         # Get dummy positions data.
-        positions = _get_positions()
+        positions = _get_dummy_ccxt_positions()
         # Log positions data.
         logger.log_positions(get_wall_clock_time, positions)
         # Find positions json log file.
         positions_log_dir = os.path.join(log_dir, logger.POSITIONS)
-        cmd = f"find {positions_log_dir} -type f -name *.json"
+        cmd = f"find {positions_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read log.
         data = hio.from_json(path, use_types=True)
@@ -2540,16 +2596,16 @@ class TestCcxtLogger2(hunitest.TestCase):
         # Create logger and wall_clock_time.
         log_dir = self.get_scratch_space()
         creation_timestamp = pd.Timestamp("2022-08-05 10:35:55-04:00")
-        logger, get_wall_clock_time = self._get_logger_and_wall_clock_time(
+        logger, get_wall_clock_time = self._get_dummy_logger_and_wall_clock_time(
             log_dir, creation_timestamp
         )
         # Get dummy balances data.
-        balance = get_balance()
+        balance = _get_dummy_ccxt_balance()
         # Log balances data.
         logger.log_balance(get_wall_clock_time, balance)
         # Find balances json log file.
         balances_log_dir = os.path.join(log_dir, logger.BALANCES)
-        cmd = f"find {balances_log_dir} -type f -name *.json"
+        cmd = f"find {balances_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         # Read log.
         data = hio.from_json(path, use_types=True)
@@ -2596,7 +2652,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def _get_test_order(self, order_type: str) -> List[oordorde.Order]:
+    def _get_dummy_test_order(self, order_type: str) -> List[oordorde.Order]:
         """
         Build toy list of 1 order for tests.
         """
@@ -2609,7 +2665,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         orders = oordorde.orders_from_string(order_str)
         return orders
 
-    def _get_test_reduce_only_order(
+    def _get_dummy_test_reduce_only_order(
         self, order_type: str
     ) -> List[oordorde.Order]:
         """
@@ -2624,7 +2680,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         orders = oordorde.orders_from_string(order_str)
         return orders
 
-    def _get_logger_and_wall_clock_time(
+    def _get_dummy_logger_and_wall_clock_time(
         self, log_dir: str, initial_replayed_timestamp: pd.Timestamp
     ) -> Tuple[obcccclo.CcxtLogger, callable]:
         """
@@ -2650,7 +2706,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         """
         Create list of orders object from dummy OMS parent orders data.
         """
-        parent_orders = _get_oms_parent_orders()
+        parent_orders = _get_dummy_oms_parent_orders()
         oms_parent_orders = []
         for p_order in parent_orders:
             order = oordorde.Order(
@@ -2671,7 +2727,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         """
         Create list of OMS fills object from dummy OMS fills data.
         """
-        fills = _get_oms_fills()[0]
+        fills = _get_dummy_oms_fills()[0]
         oms_fills = []
         for fill_data in fills:
             order = oordorde.Order(
@@ -2711,7 +2767,7 @@ class TestCcxtLogger2(hunitest.TestCase):
             order response logs
         """
         log_dir = self.get_scratch_space()
-        logger, get_wall_clock_time = self._get_logger_and_wall_clock_time(
+        logger, get_wall_clock_time = self._get_dummy_logger_and_wall_clock_time(
             log_dir, order.creation_timestamp
         )
         extra_info = {}
@@ -2721,7 +2777,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         # Build a path to a child orders log dir.
         child_order_log_dir = os.path.join(log_dir, logger.OMS_CHILD_ORDERS)
         # Find a csv file where child order information is saved.
-        cmd = f"find {child_order_log_dir} -type f -name *.json"
+        cmd = f"find {child_order_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         data = hio.from_json(path, use_types=True)
         actual = pprint.pformat(data)
@@ -2729,7 +2785,7 @@ class TestCcxtLogger2(hunitest.TestCase):
         # Build a path to a CCXT order response log dir.
         ccxt_log_dir = os.path.join(log_dir, logger.CCXT_CHILD_ORDER_RESPONSE)
         # Find a csv file where CCXT order response information is saved.
-        cmd = f"find {ccxt_log_dir} -type f -name *.json"
+        cmd = f"find {ccxt_log_dir} -type f -name '*.json'"
         _, path = hsystem.system_to_string(cmd)
         data = hio.from_json(path, use_types=True)
         actual = pprint.pformat(data)

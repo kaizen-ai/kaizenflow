@@ -20,6 +20,10 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestTargetPositionAndOrderGenerator1(hunitest.TestCase):
+    """
+    Exercise target positions generation with the POMO optimizer.
+    """
+
     @staticmethod
     def reset() -> None:
         omfill.Fill._fill_id = 0
@@ -58,14 +62,14 @@ class TestTargetPositionAndOrderGenerator1(hunitest.TestCase):
 
     def test_compute(self) -> None:
         expected = r"""
-<oms.order_processing.target_position_and_order_generator.TargetPositionAndOrderGenerator at 0x>
-# last target positions=
-          holdings_shares        price  holdings_notional wall_clock_timestamp  prediction  volatility  spread  target_holdings_notional  target_trades_notional  target_trades_shares  target_holdings_shares
-asset_id
-101                     0  1000.311925                  0                  0.0           1      0.0001    0.01             100031.192549           100031.192549                 100.0                   100.0
-# last orders=
-Order: order_id=0 creation_timestamp=2000-01-01 09:35:00-05:00 asset_id=101 type_=price@twap start_timestamp=2000-01-01 09:35:00-05:00 end_timestamp=2000-01-01 09:40:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York extra_params={}
-"""
+        <oms.order_processing.target_position_and_order_generator.TargetPositionAndOrderGenerator at 0x>
+        # last target positions=
+                holdings_shares        price  holdings_notional wall_clock_timestamp  prediction  volatility  spread  target_holdings_notional  target_trades_notional  target_trades_shares  target_holdings_shares
+        asset_id
+        101                     0  1000.311925                  0                  0.0           1      0.0001    0.01             100031.192549           100031.192549                 100.0                   100.0
+        # last orders=
+        Order: order_id=0 creation_timestamp=2000-01-01 09:35:00-05:00 asset_id=101 type_=price@twap start_timestamp=2000-01-01 09:35:00-05:00 end_timestamp=2000-01-01 09:40:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York extra_params={}
+        """
         target_position_and_order_generator = (
             self.get_target_position_and_order_generator1()
         )
@@ -98,12 +102,11 @@ Order: order_id=0 creation_timestamp=2000-01-01 09:35:00-05:00 asset_id=101 type
 # #############################################################################
 
 
-# TODO(gp): The error is
-#   File "/app/oms/order_processing/target_position_and_order_generator.py", line 632, in _generate_orders_wrapper
-#   target_positions[["holdings_shares", "target_trades_shares"]],
-# KeyError: "['holdings_shares'] not in index"
-@pytest.mark.skip("AmpTask1786_Integrate_20230104")
 class TestTargetPositionAndOrderGenerator2(hunitest.TestCase):
+    """
+    Exercise target positions generation with the `SinglePeriodOptimizer`.
+    """
+
     @staticmethod
     def reset() -> None:
         omfill.Fill._fill_id = 0
@@ -142,16 +145,16 @@ class TestTargetPositionAndOrderGenerator2(hunitest.TestCase):
 
     def test_compute(self) -> None:
         expected = r"""
-<oms.order_processing.target_position_and_order_generator.TargetPositionAndOrderGenerator at 0x>
-# last target positions=
-          holdings_shares        price  holdings_notional wall_clock_timestamp  prediction  volatility  spread  target_holdings_shares  target_holdings_notional  target_trades_shares  target_trades_notional
-asset_id
-101                     0  1000.311925                  0                  0.0           1      0.0001    0.01                    50.0              50015.596275                  50.0            50015.596275
-202                     0  1000.311925                  0                  0.0          -1     0.00005    0.02                   -50.0             -50015.596275                 -50.0           -50015.596275
-# last orders=
-Order: order_id=0 creation_timestamp=2000-01-01 09:35:00-05:00 asset_id=101 type_=price@twap start_timestamp=2000-01-01 09:35:00-05:00 end_timestamp=2000-01-01 09:40:00-05:00 curr_num_shares=0.0 diff_num_shares=50.0 tz=America/New_York
-Order: order_id=1 creation_timestamp=2000-01-01 09:35:00-05:00 asset_id=202 type_=price@twap start_timestamp=2000-01-01 09:35:00-05:00 end_timestamp=2000-01-01 09:40:00-05:00 curr_num_shares=0.0 diff_num_shares=-50.0 tz=America/New_York
-"""
+        <oms.order_processing.target_position_and_order_generator.TargetPositionAndOrderGenerator at 0x>
+        # last target positions=
+                holdings_shares        price  holdings_notional wall_clock_timestamp  prediction  volatility  spread  target_holdings_shares  target_holdings_notional  target_trades_shares  target_trades_notional
+        asset_id
+        101                     0  1000.311925                  0                  0.0           1      0.0001    0.01                    50.0              50015.596275                  50.0            50015.596275
+        202                     0  1000.311925                  0                  0.0          -1     0.00005    0.02                   -50.0             -50015.596275                 -50.0           -50015.596275
+        # last orders=
+        Order: order_id=0 creation_timestamp=2000-01-01 09:35:00-05:00 asset_id=101 type_=price@twap start_timestamp=2000-01-01 09:35:00-05:00 end_timestamp=2000-01-01 09:40:00-05:00 curr_num_shares=0.0 diff_num_shares=50.0 tz=America/New_York extra_params={}
+        Order: order_id=1 creation_timestamp=2000-01-01 09:35:00-05:00 asset_id=202 type_=price@twap start_timestamp=2000-01-01 09:35:00-05:00 end_timestamp=2000-01-01 09:40:00-05:00 curr_num_shares=0.0 diff_num_shares=-50.0 tz=America/New_York extra_params={}
+        """
         target_position_and_order_generator = (
             self.get_target_position_and_order_generator2()
         )

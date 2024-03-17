@@ -27,7 +27,7 @@ def get_Mock1_MarketData_example2(
     """
     Build a historical ImClientMarketData from a `System.config`.
     """
-    im_client = system.config["market_data_config", "im_client"]
+    im_client = dtfsys.build_ImClient_from_System(system)
     asset_ids = system.config["market_data_config", "asset_ids"]
     # TODO(gp): Specify only the columns that are needed.
     columns = None
@@ -66,6 +66,8 @@ def get_Mock1_ProcessForecastsNode_dict_example1(
     }
     optimizer_config = {
         "backend": "pomo",
+        "asset_class": "equities",
+        "apply_cc_limits": None,
         "params": {
             "style": "cross_sectional",
             "kwargs": compute_target_positions_kwargs,

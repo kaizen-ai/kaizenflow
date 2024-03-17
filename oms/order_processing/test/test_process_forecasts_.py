@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Tuple, Union
 import pandas as pd
 import pytest
 
-import core.config as cconfig
 import core.finance as cofinanc
 import core.finance_data_example as cfidaexa
 import helpers.hasyncio as hasynci
@@ -48,35 +47,6 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
         )
         return portfolio
 
-    @staticmethod
-    def get_process_forecasts_dict() -> Dict[str, Any]:
-        dict_ = {
-            "order_config": {
-                "order_type": "price@twap",
-                "order_duration_in_mins": 5,
-                "execution_frequency": "1T",
-            },
-            "optimizer_config": {
-                "backend": "pomo",
-                "params": {
-                    "style": "cross_sectional",
-                    "kwargs": {
-                        "bulk_frac_to_remove": 0.0,
-                        "bulk_fill_method": "zero",
-                        "target_gmv": 1e5,
-                    },
-                },
-            },
-            "execution_mode": "batch",
-            "ath_start_time": datetime.time(9, 30),
-            "trading_start_time": datetime.time(9, 35),
-            "ath_end_time": datetime.time(16, 00),
-            "trading_end_time": datetime.time(15, 55),
-            "liquidate_at_trading_end_time": False,
-            "share_quantization": 30,
-        }
-        return dict_
-
     def test_initialization1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
             hasynci.run(
@@ -113,7 +83,8 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
         # Build a Portfolio.
         portfolio = self.get_portfolio(event_loop, asset_ids)
         # Get process forecasts config.
-        dict_ = self.get_process_forecasts_dict()
+        order_type = "price@twap"
+        dict_ = _get_process_forecasts_dict(order_type)
         spread_df = None
         restrictions_df = None
         # Run.
@@ -126,7 +97,7 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
             restrictions_df=restrictions_df,
         )
         actual = str(portfolio)
-        expected = exp = r"""
+        expected = r"""
         <oms.portfolio.dataframe_portfolio.DataFramePortfolio at 0x>
         # holdings_shares=
         asset_id                            101    202
@@ -200,35 +171,6 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
         )
         return portfolio
 
-    @staticmethod
-    def get_process_forecasts_dict() -> Dict[str, Any]:
-        dict_ = {
-            "order_config": {
-                "order_type": "price@twap",
-                "order_duration_in_mins": 5,
-                "execution_frequency": "1T",
-            },
-            "optimizer_config": {
-                "backend": "pomo",
-                "params": {
-                    "style": "cross_sectional",
-                    "kwargs": {
-                        "bulk_frac_to_remove": 0.0,
-                        "bulk_fill_method": "zero",
-                        "target_gmv": 1e5,
-                    },
-                },
-            },
-            "execution_mode": "batch",
-            "ath_start_time": datetime.time(9, 30),
-            "trading_start_time": datetime.time(9, 35),
-            "ath_end_time": datetime.time(16, 00),
-            "trading_end_time": datetime.time(15, 55),
-            "liquidate_at_trading_end_time": False,
-            "share_quantization": 30,
-        }
-        return dict_
-
     @pytest.mark.slow("~8 seconds")
     def test_initialization1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
@@ -263,7 +205,8 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
         portfolio = self.get_portfolio(
             event_loop, start_datetime, end_datetime, asset_ids
         )
-        dict_ = self.get_process_forecasts_dict()
+        order_type = "price@twap"
+        dict_ = _get_process_forecasts_dict(order_type)
         spread_df = None
         restrictions_df = None
         # Run.
@@ -313,36 +256,6 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
         )
         return portfolio
 
-    @staticmethod
-    def get_process_forecasts_dict() -> cconfig.Config:
-        # TODO(gp): Factor this out.
-        dict_ = {
-            "order_config": {
-                "order_type": "partial_spread_0.25@twap",
-                "order_duration_in_mins": 5,
-                "execution_frequency": "1T",
-            },
-            "optimizer_config": {
-                "backend": "pomo",
-                "params": {
-                    "style": "cross_sectional",
-                    "kwargs": {
-                        "bulk_frac_to_remove": 0.0,
-                        "bulk_fill_method": "zero",
-                        "target_gmv": 1e5,
-                    },
-                },
-            },
-            "execution_mode": "batch",
-            "ath_start_time": datetime.time(9, 30),
-            "trading_start_time": datetime.time(9, 35),
-            "ath_end_time": datetime.time(16, 00),
-            "trading_end_time": datetime.time(15, 55),
-            "liquidate_at_trading_end_time": False,
-            "share_quantization": 30,
-        }
-        return dict_
-
     def test_initialization1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
             hasynci.run(
@@ -378,7 +291,8 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
         # Build a Portfolio.
         portfolio = self.get_portfolio(event_loop, asset_ids)
         # Get process forecasts config.
-        dict_ = self.get_process_forecasts_dict()
+        order_type = "partial_spread_0.25@twap"
+        dict_ = _get_process_forecasts_dict(order_type)
         spread_df = None
         restrictions_df = None
         # Run.
@@ -514,6 +428,8 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
             },
             "optimizer_config": {
                 "backend": "pomo",
+                "asset_class": "equities",
+                "apply_cc_limits": None,
                 "params": {
                     "style": "cross_sectional",
                     "kwargs": {
@@ -804,6 +720,8 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
             },
             "optimizer_config": {
                 "backend": "pomo",
+                "asset_class": "equities",
+                "apply_cc_limits": None,
                 "params": {
                     "style": "cross_sectional",
                     "kwargs": {
@@ -860,3 +778,39 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         actual.append(portfolio)
         actual = "\n".join(map(str, actual))
         self.check_string(actual, purify_text=True)
+
+
+def _get_process_forecasts_dict(order_type: str) -> Dict[str, Any]:
+    """
+    Build process forecasts config.
+
+    :param order_type: The type of order. E.g., `price@twap`.
+    """
+    dict_ = {
+        "order_config": {
+            "order_type": order_type,
+            "order_duration_in_mins": 5,
+            "execution_frequency": "1T",
+        },
+        "optimizer_config": {
+            "backend": "pomo",
+            "asset_class": "equities",
+            "apply_cc_limits": None,
+            "params": {
+                "style": "cross_sectional",
+                "kwargs": {
+                    "bulk_frac_to_remove": 0.0,
+                    "bulk_fill_method": "zero",
+                    "target_gmv": 1e5,
+                },
+            },
+        },
+        "execution_mode": "batch",
+        "ath_start_time": datetime.time(9, 30),
+        "trading_start_time": datetime.time(9, 35),
+        "ath_end_time": datetime.time(16, 00),
+        "trading_end_time": datetime.time(15, 55),
+        "liquidate_at_trading_end_time": False,
+        "share_quantization": 30,
+    }
+    return dict_

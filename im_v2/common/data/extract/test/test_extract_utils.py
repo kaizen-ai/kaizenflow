@@ -15,7 +15,7 @@ import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
-import im_v2.ccxt.data.extract.extractor as imvcdexex
+import im_v2.ccxt.data.extract.extractor as ivcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.data.transform.resample_daily_bid_ask_data as imvcdtrdbad
@@ -63,7 +63,7 @@ class TestDownloadExchangeDataToDbPeriodically1(hunitest.TestCase):
         self.sleep_mock: umock.MagicMock = self.sleep_patch.start()
         # Commonly used extractor mock.
         self.extractor_mock = umock.create_autospec(
-            imvcdexex.CcxtExtractor, instance=True
+            ivcdexex.CcxtExtractor, instance=True
         )
         # Commonly used kwargs across the tests.
         self.kwargs = {
@@ -381,13 +381,13 @@ class TestDownloadExchangeDataToDbPeriodically2(hunitest.TestCase):
 
     @pytest.mark.slow("18 seconds")
     @umock.patch.object(
-        imvcdexex.CcxtExtractor,
+        ivcdexex.CcxtExtractor,
         "get_exchange_currency_pairs",
         autospec=True,
         spec_set=True,
     )
     @umock.patch.object(
-        imvcdexex.CcxtExtractor, "log_into_exchange", autospec=True, spec_set=True
+        ivcdexex.CcxtExtractor, "log_into_exchange", autospec=True, spec_set=True
     )
     def test_realtime_bid_ask_download(
         self,
@@ -427,13 +427,13 @@ class TestDownloadExchangeDataToDbPeriodically2(hunitest.TestCase):
             pass
 
         umock.MagicMock.__await__ = lambda x: async_magic().__await__()
-        mock_okx = umock.MagicMock(spec=imvcdexex.ccxtpro.okx())
+        mock_okx = umock.MagicMock(spec=ivcdexex.ccxtpro.okx())
         mock_log_into_exchange.return_value = mock_okx
         mock_okx.watchOrderBook.return_value = {}
         mock_data = self.get_mock_ccxt_okx_data(int(start_time.timestamp()))
         mock_okx.orderbooks["some_symbol"].limit.return_value = mock_data
         mock_get_exchange_currency_pairs.return_value = []
-        exchange = imvcdexex.CcxtExtractor(
+        exchange = ivcdexex.CcxtExtractor(
             args["exchange_id"], args["contract_type"]
         )
         # Run.
@@ -511,7 +511,7 @@ class TestDownloadExchangeDataToDb1(
             "s3_path": None,
             "connection": self.connection,
         }
-        extractor = imvcdexex.CcxtExtractor(
+        extractor = ivcdexex.CcxtExtractor(
             kwargs["exchange_id"], kwargs["contract_type"]
         )
         if use_s3:
@@ -546,7 +546,7 @@ class TestDownloadExchangeDataToDb1(
         "Cannot be run from the US due to 451 error API error. Run manually."
     )
     @pytest.mark.slow
-    @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
+    @umock.patch.object(ivcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcddbut.hdateti, "get_current_time")
     def test_function_call1(
         self,
@@ -598,6 +598,9 @@ def get_simple_crypto_chassis_mock_data(
 
 
 @pytest.mark.slow("Takes around 6 secs")
+@pytest.mark.skip(
+    "TODO(Juraj): CmTask7314 chassis data is deprecated, redo with archived_200ms"
+)
 class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
     # This will be run before and after each test.
     @pytest.fixture(autouse=True)
@@ -851,7 +854,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "universe_part": 1,
         }
         with umock.patch.object(
-            imvcdexex.CcxtExtractor,
+            ivcdexex.CcxtExtractor,
             "get_exchange_currency_pairs",
             # Changed return values as a part of CmTask2956
             # return_value=["BTC_USDT", "ETH_USDT"],
@@ -867,7 +870,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
                 "SOL/USDT",
             ],
         ):
-            exchange = imvcdexex.CcxtExtractor(
+            exchange = ivcdexex.CcxtExtractor(
                 args["exchange_id"], args["contract_type"]
             )
             imvcdeexut.download_historical_data(args, exchange)
@@ -881,7 +884,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         """
         # Mock downloader to return an empty dataframe.
         with umock.patch.object(
-            imvcdexex.CcxtExtractor, "download_data", return_value=pd.DataFrame()
+            ivcdexex.CcxtExtractor, "download_data", return_value=pd.DataFrame()
         ):
             # Check for an exception raising.
             with self.assertRaises(RuntimeError) as fail:
@@ -1299,11 +1302,11 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
             "dst_dir": "csv_test",
         }
         with umock.patch.object(
-            imvcdexex.CcxtExtractor,
+            ivcdexex.CcxtExtractor,
             "get_exchange_currency_pairs",
             return_value=["ADA_USDT", "BTC_USDT"],
         ):
-            exchange = imvcdexex.CcxtExtractor(
+            exchange = ivcdexex.CcxtExtractor(
                 args["exchange_id"], args["contract_type"]
             )
             imvcdeexut.download_historical_data(args, exchange)
@@ -1319,7 +1322,7 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
         mock_get_current_time.return_value = "2022-02-08 10:12:00.000000+00:00"
         self.data_format = "csv"
         with umock.patch.object(
-            imvcdexex.CcxtExtractor,
+            ivcdexex.CcxtExtractor,
             "download_data",
             return_value=self.get_simple_ccxt_mock_data(
                 start_timestamp=int("20211231230000"),
@@ -1352,7 +1355,7 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
         mock_get_current_time.return_value = "2022-02-08 10:12:00.000000+00:00"
         self.data_format = "test"
         with umock.patch.object(
-            imvcdexex.CcxtExtractor,
+            ivcdexex.CcxtExtractor,
             "download_data",
             return_value=self.get_simple_ccxt_mock_data(
                 start_timestamp=int("20211231230000"),
@@ -1368,3 +1371,370 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
         ################################################################################
         """
         self.assert_equal(actual_error, expected_error, fuzzy_match=True)
+
+
+# #############################################################################
+# Test bid/ask resampling
+# #############################################################################
+
+# @pytest.mark.slow
+# class TestResampleRtBidAskDataPeriodically(imvcddbut.TestImDbHelper):
+#    # This will be run before and after each test.
+#    @pytest.fixture(autouse=True)
+#    def setup_teardown_test(self):
+#        # Run before each test.
+#        self.set_up_test()
+#        yield
+#
+#        def set_up_test(self) -> None:
+#        self.start_timestamp = "2021-12-31 23:00:00"
+#        self.end_timestamp = "2022-01-01 01:00:00"
+#        self.data_format = ""
+#
+#        @classmethod
+#    def get_id(cls) -> int:
+#        return hash(cls.__name__) % 10000
+#
+#    # This will be run before and after each test.
+#    @pytest.fixture(autouse=True)
+#    def setup_teardown_test(self):
+#        # Run before each test.
+#        self.set_up_test()
+#        yield
+#        # Run after each test.
+#        self.tear_down_test2()
+#
+#    def set_up_test(self) -> None:
+#        self.set_up_test()
+#        # Initialize database tables.
+#        query1 = imvccdbut.get_ccxt_create_bid_ask_futures_raw_table_query()
+#        query2 = imvccdbut.get_ccxt_create_bid_ask_futures_resampled_1min_table_query()
+#        hsql.execute_query(self.connection, query1)
+#        hsql.execute_query(self.connection, query2)
+#
+#    def tear_down_test(self) -> None:
+#        # Drop table used in tests.
+#        query1 = "DROP TABLE IF EXISTS ccxt_bid_ask_futures_resampled_1min;"
+#        query2 = "DROP TABLE IF EXISTS ccxt_bid_ask_futures_resampled_1min;"
+#        hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
+#        self.tear_down_test()
+#
+
+
+@pytest.mark.slow
+class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
+        # Mock DB connection.
+        self.mock_connection_manager = umock.patch.object(
+            imvcdeexut.imvcddbut,
+            "DbConnectionManager",
+            autospec=True,
+            return_value=umock.MagicMock(),
+        )
+        self.mock_connection_manager.start()
+
+    def tear_down_test(self) -> None:
+        self.mock_connection_manager.stop()
+
+    @umock.patch.object(imvcdeexut.pd.Timestamp, "now")
+    @umock.patch.object(
+        imvcdeexut.imvcddbut, "fetch_last_minute_bid_ask_rt_db_data"
+    )
+    @umock.patch.object(imvcdeexut.time, "sleep")
+    def test_resample_rt_bid_ask_data_periodically(
+        self, mock_sleep, mock_fetch_data, mock_now
+    ) -> None:
+        """
+        Test resampling realtime bid/ask data.
+
+        This test mocks interaction with database. Data that would be
+        fetched from database are injected via mock and we capture the
+        data that would be saved to DB to check their correctness.
+        """
+        # Create our own passage of time.
+        mock_now.side_effect = [
+            pd.Timestamp(
+                "2024-02-20T18:00:00+00:00"
+            ),  # Pass the assertion on start time.
+            pd.Timestamp("2024-02-20T18:00:00+00:00"),  # Calculating start delay.
+            # While loop check
+            pd.Timestamp("2024-02-20T18:00:00.200+00:00"),
+            # First iteration.
+            pd.Timestamp("2024-02-20T18:00:00.200+00:00"),  # Iter start time.
+            pd.Timestamp(
+                "2024-02-20T18:00:01+00:00"
+            ),  # Set `end_download_timestamp`.
+            pd.Timestamp("2024-02-20T18:00:02+00:00"),  # Iter end time.
+            # While loop check.
+            pd.Timestamp("2024-02-20T18:01:00.200+00:00"),
+            # Second Iteration.
+            pd.Timestamp("2024-02-20T18:01:00.200+00:00"),  # Iter start time.
+            pd.Timestamp(
+                "2024-02-20T18:01:01+00:00"
+            ),  # Set `end_download_timestamp`.
+            pd.Timestamp("2024-02-20T18:01:02+00:00"),  # Iter end time.
+            # While loop check (Should end the loop).
+            pd.Timestamp("2024-02-20T18:02:00.200+00:00"),
+            # Log message
+            pd.Timestamp("2024-02-20T18:02:00.200+00:00"),
+        ]
+        # Mock data that would otherwise be fetched from the DB.
+        mock_fetch_data.side_effect = [
+            pd.DataFrame(
+                columns=[
+                    "id",
+                    "timestamp",
+                    "bid_size",
+                    "bid_price",
+                    "ask_size",
+                    "ask_price",
+                    "currency_pair",
+                    "exchange_id",
+                    "level",
+                    "end_download_timestamp",
+                    "knowledge_timestamp",
+                ],
+                data=[
+                    (
+                        46894844861,
+                        1709148545396,
+                        2.094,
+                        61506.7,
+                        4.633,
+                        61506.8,
+                        "BTC_USDT",
+                        "binance",
+                        1,
+                        "2024-02-28 19:29:05.563288+00",
+                        "2024-02-28 19:29:05.596422+00",
+                    ),
+                    (
+                        46894845111,
+                        1709148545699,
+                        0.707,
+                        61514.3,
+                        3.649,
+                        61514.4,
+                        "BTC_USDT",
+                        "binance",
+                        1,
+                        "2024-02-28 19:29:05.863101+00",
+                        "2024-02-28 19:29:05.90287+00",
+                    ),
+                    (
+                        46894845361,
+                        1709148546002,
+                        2.831,
+                        61515.2,
+                        2.636,
+                        61515.3,
+                        "BTC_USDT",
+                        "binance",
+                        1,
+                        "2024-02-28 19:29:06.215614+00",
+                        "2024-02-28 19:29:06.254028+00",
+                    ),
+                    (
+                        46894845611,
+                        1709148546508,
+                        2.315,
+                        61509.3,
+                        0.918,
+                        61509.4,
+                        "BTC_USDT",
+                        "binance",
+                        1,
+                        "2024-02-28 19:29:06.681618+00",
+                        "2024-02-28 19:29:06.738986+00",
+                    ),
+                ],
+            ),
+            pd.DataFrame(
+                columns=[
+                    "id",
+                    "timestamp",
+                    "bid_size",
+                    "bid_price",
+                    "ask_size",
+                    "ask_price",
+                    "currency_pair",
+                    "exchange_id",
+                    "level",
+                    "end_download_timestamp",
+                    "knowledge_timestamp",
+                ],
+                data=[
+                    (
+                        46894844861,
+                        1709148545396,
+                        2.094,
+                        61506.7,
+                        4.633,
+                        61506.8,
+                        "BTC_USDT",
+                        "binance",
+                        1,
+                        "2024-02-28 19:29:05.563288+00",
+                        "2024-02-28 19:29:05.596422+00",
+                    ),
+                    (
+                        46894845111,
+                        1709148545699,
+                        0.707,
+                        61514.3,
+                        3.649,
+                        61514.4,
+                        "BTC_USDT",
+                        "binance",
+                        1,
+                        "2024-02-28 19:29:05.863101+00",
+                        "2024-02-28 19:29:05.90287+00",
+                    ),
+                    (
+                        46894845361,
+                        1709148546002,
+                        2.831,
+                        61515.2,
+                        2.636,
+                        61515.3,
+                        "BTC_USDT",
+                        "binance",
+                        1,
+                        "2024-02-28 19:29:06.215614+00",
+                        "2024-02-28 19:29:06.254028+00",
+                    ),
+                    (
+                        46894845611,
+                        1709148546508,
+                        2.315,
+                        61509.3,
+                        0.918,
+                        61509.4,
+                        "BTC_USDT",
+                        "binance",
+                        1,
+                        "2024-02-28 19:29:06.681618+00",
+                        "2024-02-28 19:29:06.738986+00",
+                    ),
+                    (
+                        46894845611,
+                        1709148546508,
+                        2.315,
+                        61507.3,
+                        0.918,
+                        61509.6,
+                        "BTC_USDT",
+                        "binance",
+                        2,
+                        "2024-02-28 19:29:06.681618+00",
+                        "2024-02-28 19:29:06.738986+00",
+                    ),
+                    (
+                        47007459918,
+                        1709281403886,
+                        1.617,
+                        3384.71,
+                        109.136,
+                        3384.72,
+                        "ETH_USDT",
+                        "binance",
+                        1,
+                        "2024-03-01 08:23:24.026219+00",
+                        "2024-03-01 08:23:24.0729+00",
+                    ),
+                    (
+                        47007460168,
+                        1709281404500,
+                        0.61,
+                        3384.7,
+                        129.577,
+                        3384.71,
+                        "ETH_USDT",
+                        "binance",
+                        1,
+                        "2024-03-01 08:23:24.676729+00",
+                        "2024-03-01 08:23:25.052838+00",
+                    ),
+                    (
+                        47007460418,
+                        1709281404907,
+                        0.629,
+                        3384.63,
+                        79.098,
+                        3384.64,
+                        "ETH_USDT",
+                        "binance",
+                        1,
+                        "2024-03-01 08:23:25.10708+00",
+                        "2024-03-01 08:23:25.159238+00",
+                    ),
+                    (
+                        47007460668,
+                        1709281405312,
+                        34.431,
+                        3384.4,
+                        48.92,
+                        3384.41,
+                        "ETH_USDT",
+                        "binance",
+                        1,
+                        "2024-03-01 08:23:25.468818+00",
+                        "2024-03-01 08:23:25.520151+00",
+                    ),
+                ],
+            ),
+        ]
+
+        start_ts = pd.Timestamp("2024-02-20T18:00:00.200+00:00")
+        end_ts = pd.Timestamp("2024-02-20T18:02:00+00:00")
+        # Run.
+        with umock.patch.object(
+            imvcdeexut.imvcddbut, "save_data_to_db"
+        ) as save_data_to_db:
+            imvcdeexut.resample_rt_bid_ask_data_periodically(
+                "mock_stage",
+                "mock_table",
+                "mock_table",
+                "mock_exchange",
+                start_ts,
+                end_ts,
+            )
+            self.assertEqual(save_data_to_db.call_count, 2)
+            # Get the datasets.
+            # call_args_list has the following structure:
+            # [call((pd.DataFrame(...),), ...), call(...)]
+            # That's why triple indexing is needed to fetch the DF itself.
+            resampled_df1 = save_data_to_db.call_args_list[0][0][0]
+            resampled_df2 = save_data_to_db.call_args_list[1][0][0]
+
+            # Compare dfs
+            exp_df1 = r"""
+            # df=
+            index=[0, 0]
+            columns=timestamp,bid_price_open,bid_size_open,ask_price_open,ask_size_open,bid_ask_midpoint_open,half_spread_open,log_size_imbalance_open,bid_price_close,bid_size_close,ask_price_close,ask_size_close,bid_ask_midpoint_close,half_spread_close,log_size_imbalance_close,bid_price_high,bid_size_max,ask_price_high,ask_size_max,bid_ask_midpoint_max,half_spread_max,log_size_imbalance_max,bid_price_low,bid_size_min,ask_price_low,ask_size_min,bid_ask_midpoint_min,half_spread_min,log_size_imbalance_min,bid_price_mean,bid_size_mean,ask_price_mean,ask_size_mean,bid_ask_midpoint_mean,half_spread_mean,log_size_imbalance_mean,bid_ask_midpoint_var_100ms,bid_ask_midpoint_autocovar_100ms,log_size_imbalance_var_100ms,log_size_imbalance_autocovar_100ms,exchange_id,currency_pair,level,end_download_timestamp
+            shape=(1, 44)
+            timestamp bid_price_open bid_size_open ask_price_open ask_size_open bid_ask_midpoint_open half_spread_open log_size_imbalance_open bid_price_close bid_size_close ask_price_close ask_size_close bid_ask_midpoint_close half_spread_close log_size_imbalance_close bid_price_high bid_size_max ask_price_high ask_size_max bid_ask_midpoint_max half_spread_max log_size_imbalance_max bid_price_low bid_size_min ask_price_low ask_size_min bid_ask_midpoint_min half_spread_min log_size_imbalance_min bid_price_mean bid_size_mean ask_price_mean ask_size_mean bid_ask_midpoint_mean half_spread_mean log_size_imbalance_mean bid_ask_midpoint_var_100ms bid_ask_midpoint_autocovar_100ms log_size_imbalance_var_100ms log_size_imbalance_autocovar_100ms exchange_id currency_pair level end_download_timestamp
+            0 1709148600000 61506.7 2.094 61506.8 4.633 61506.75 0.05 -0.794128 61509.3 2.315 61509.4 0.918 61509.35 0.05 0.924968 61515.2 2.831 61515.3 4.633 61515.25 0.05 0.924968 61506.7 0.707 61506.8 0.918 61506.75 0.05 -1.641178 61512.507692 1.967692 61512.607692 3.276385 61512.557692 0.05 -0.589638 93.38 0.0 13.54681 10.614239 binance BTC_USDT 1 2024-02-20 18:00:01+00:00
+            """
+            self.check_df_output(resampled_df1, None, None, None, exp_df1)
+
+            # Currently we resample only top of the book data.
+            exp_df2 = r"""
+            # df=
+            index=[0, 1]
+            columns=timestamp,bid_price_open,bid_size_open,ask_price_open,ask_size_open,bid_ask_midpoint_open,half_spread_open,log_size_imbalance_open,bid_price_close,bid_size_close,ask_price_close,ask_size_close,bid_ask_midpoint_close,half_spread_close,log_size_imbalance_close,bid_price_high,bid_size_max,ask_price_high,ask_size_max,bid_ask_midpoint_max,half_spread_max,log_size_imbalance_max,bid_price_low,bid_size_min,ask_price_low,ask_size_min,bid_ask_midpoint_min,half_spread_min,log_size_imbalance_min,bid_price_mean,bid_size_mean,ask_price_mean,ask_size_mean,bid_ask_midpoint_mean,half_spread_mean,log_size_imbalance_mean,bid_ask_midpoint_var_100ms,bid_ask_midpoint_autocovar_100ms,log_size_imbalance_var_100ms,log_size_imbalance_autocovar_100ms,exchange_id,currency_pair,level,end_download_timestamp
+            shape=(2, 44)
+            timestamp bid_price_open bid_size_open ask_price_open ask_size_open bid_ask_midpoint_open half_spread_open log_size_imbalance_open bid_price_close bid_size_close ask_price_close ask_size_close bid_ask_midpoint_close half_spread_close log_size_imbalance_close bid_price_high bid_size_max ask_price_high ask_size_max bid_ask_midpoint_max half_spread_max log_size_imbalance_max bid_price_low bid_size_min ask_price_low ask_size_min bid_ask_midpoint_min half_spread_min log_size_imbalance_min bid_price_mean bid_size_mean ask_price_mean ask_size_mean bid_ask_midpoint_mean half_spread_mean log_size_imbalance_mean bid_ask_midpoint_var_100ms bid_ask_midpoint_autocovar_100ms log_size_imbalance_var_100ms log_size_imbalance_autocovar_100ms exchange_id currency_pair level end_download_timestamp
+            0 1709148600000 61506.70 2.094 61506.80 4.633 61506.750 0.050 -0.794128 61509.3 2.315 61509.40 0.918 61509.350 0.050 0.924968 61515.20 2.831 61515.30 4.633 61515.250 0.050 0.924968 61506.7 0.707 61506.80 0.918 61506.750 0.050 -1.641178 61512.507692 1.967692 61512.607692 3.276385 61512.557692 0.050 -0.589638 93.3800 0.0 13.546810 10.614239 binance BTC_USDT 1 2024-02-20 18:01:01+00:00
+            1 1709281440000 3384.71 1.617 3384.72 109.136 3384.715 0.005 -4.212022 3384.4 34.431 3384.41 48.920 3384.405 0.005 -0.351229 3384.71 34.431 3384.72 129.577 3384.715 0.005 -0.351229 3384.4 0.610 3384.41 48.920 3384.405 0.005 -5.358572 3384.667500 3.106187 3384.677500 104.250812 3384.672500 0.005 -4.484592 0.0579 0.0 343.623874 323.847900 binance ETH_USDT 1 2024-02-20 18:01:01+00:00
+            """
+            self.check_df_output(resampled_df2, None, None, None, exp_df2)

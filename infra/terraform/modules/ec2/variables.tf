@@ -21,6 +21,16 @@ variable "ec2_configs" {
   default = []
 }
 
+variable "instance_routes" {
+  description = "List of EC2 Instance routes to create in the route table"
+  type = list(object({
+    destination_cidr_block = string
+    instance_id            = string
+    route_table_name       = string
+  }))
+  default = []
+}
+
 variable "subnet_name_to_id" {
   description = "Mapping from subnet names to IDs"
   type        = map(string)
@@ -28,5 +38,10 @@ variable "subnet_name_to_id" {
 
 variable "sg_name_to_id" {
   description = "Mapping from security group names to IDs"
+  type        = map(string)
+}
+
+variable "rt_name_to_id" {
+  description = "Mapping from route table names to IDs"
   type        = map(string)
 }
