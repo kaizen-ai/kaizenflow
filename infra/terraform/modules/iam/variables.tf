@@ -15,9 +15,20 @@ variable "iam_policies" {
 }
 
 variable "iam_role_policies" {
-  description = "Map of IAM roles and their corresponding policies"
-  type        = map(list(string))
-  default     = {}
+  description = "Map of IAM roles to their corresponding policies, allowing either policy names or ARNs"
+  type = map(list(object({
+    name = optional(string), // Policy name for internally managed policies
+    arn  = optional(string)  // ARN for externally managed policies
+  })))
+  default = {}
+}
+
+variable "iam_instance_profile" {
+  description = "IAM Instance Profiles to be created"
+  type = map(object({
+    tags = string
+  }))
+  default = {}
 }
 
 variable "vpc_id" {

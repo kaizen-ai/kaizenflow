@@ -1,0 +1,21 @@
+---
+################################
+## Airflow Webserver Service
+#################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow-webserver
+  namespace: airflow
+  labels:
+    tier: airflow
+    component: webserver
+spec:
+  type: LoadBalancer
+  selector:
+    tier: airflow
+    component: webserver
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080

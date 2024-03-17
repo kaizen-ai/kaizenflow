@@ -1,6 +1,8 @@
 import abc
 import logging
-from typing import Any, List, Optional
+from typing import Any, Callable, List, Optional
+
+import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hobject as hobject
@@ -268,12 +270,24 @@ class _ClassB(hobject.PrintableMixin):
     Class descending from `PrintableMixin`.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, get_wall_clock_time: Callable) -> None:
         self._arg5 = {"key1": "five", "key2": 5}
+        self._arg6 = "abc"
+        self._get_wall_clock_time = get_wall_clock_time
 
     @staticmethod
     def get_config_attributes() -> List[str]:
-        return ["_arg5"]
+        return ["_arg5", "_get_wall_clock_time"]
+
+    def get_wall_clock_time(self) -> pd.Timestamp:
+        """
+        Return wall clock time in the timezone specified in the ctor.
+
+        Initially wall clock time can be in any timezone, but cannot be
+        timezone-naive.
+        """
+        wall_clock_time = self._get_wall_clock_time()
+        return wall_clock_time
 
 
 class _ClassA(_Abstract_ClassA):
@@ -284,11 +298,19 @@ class _ClassA(_Abstract_ClassA):
     def __init__(self) -> None:
         super().__init__()
         self._arg3 = [3, 3, 3]
-        self._arg4 = _ClassB()
+        get_wall_clock_time = lambda: pd.Timestamp(
+            "2022-04-23", tz="America/New_York"
+        )
+        helper_class = _ClassB(get_wall_clock_time)
+        self._arg4 = helper_class
+        self._arg10 = {
+            "key": 1,
+            "get_wall_clock_time": helper_class.get_wall_clock_time,
+        }
 
     def get_config_attributes(self) -> List[str]:
         config_attributes = super().get_config_attributes()
-        child_class_attributes = ["_arg3", "_arg4"]
+        child_class_attributes = ["_arg3", "_arg4", "_arg10"]
         config_attributes.extend(child_class_attributes)
         return config_attributes
 
@@ -321,8 +343,13 @@ class Test_PrintableMixin_to_config_str(hunitest.TestCase):
             _arg1='one' <str>
             _arg2='2' <int>
             _arg3='[3, 3, 3]' <list>
-            _arg4= <helpers.test.test_hobject._ClassB>
-                <helpers.test.test_hobject._ClassB at 0x>:
+            _arg4=<helpers.test.test_hobject._ClassB at 0x>:
                 _arg5='{'key1': 'five', 'key2': 5}' <dict>
+                _get_wall_clock_time='<function _ClassA.__init__.<locals>.<lambda> at 0x>' <function>
+            _arg10= <dict>
+                {'get_wall_clock_time': <bound method _ClassB.get_wall_clock_time of <helpers.test.test_hobject._ClassB at 0x>:
+                    _arg5='{'key1': 'five', 'key2': 5}' <dict>
+                    _arg6='abc' <str>>,
+                    'key': 1}
         """
         self.check_test_class_str(test_class, exp)

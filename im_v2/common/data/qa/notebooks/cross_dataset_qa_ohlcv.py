@@ -223,28 +223,33 @@ cross_dataset_validator = imvcdqdava.DataFrameDatasetValidator(
 # ## Run QA
 
 # %%
+full_error_msgs = []
 status = "SUCCESS"
 _LOG.info("First dataset QA:")
 error_msgs = dataset_validator1.run_all_checks([data1], abort_on_error=False)
 if error_msgs:
+    full_error_msgs.append(error_msgs)
     _LOG.info(error_msgs)
     status = "FAILED"
 _LOG.info("Second dataset QA:")
 error_msgs = dataset_validator1.run_all_checks([data2], abort_on_error=False)
 if error_msgs:
+    full_error_msgs.append(error_msgs)
     _LOG.info(error_msgs)
     status = "FAILED"
 _LOG.info("Cross dataset QA:")
 error_msgs = cross_dataset_validator.run_all_checks(datasets, abort_on_error=False)
 if error_msgs:
+    full_error_msgs.append(error_msgs)
     _LOG.info(error_msgs)
     status = "FAILED"
 # If no exception was raised mark the QA as successful.
 data_qa_outcome = status
+full_error_msgs = '\n'.join(full_error_msgs)
 
 # %%
 if data_qa_outcome == "FAILED":
-    hdbg.dfatal("QA Check unsuccessful for atleast one of the dataset")
+    hdbg.dfatal(f"QA Check unsuccessful for atleast one of the dataset, with the following errors:\n {full_error_msgs}")
 
 
 # %%

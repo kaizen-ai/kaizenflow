@@ -3846,21 +3846,28 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
     ) -> pd.DataFrame:
         """
         Helper function to get test multi-index dataframe.
-        Example of dataframe returned when `index_is_datetime = True`.
+
+        Example of dataframe returned when `index_is_datetime = True`:
+
+        ```
                                             column1     column2
         index   timestamp
         index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
                 2022-01-01 21:10:00+00:00   1.303778    -0.288235
         index2  2022-01-01 21:00:00+00:00   1.237079    1.168012
                 2022-01-01 21:10:00+00:00   1.333692    1.708455
+        ```
 
-        Example of dataframe returned when `index_is_datetime = False`.
+        Example of dataframe returned when `index_is_datetime = False`:
+
+        ```
                             column1     column2
         index   timestamp
         index1  string1     -0.122140   -1.949431
                 string2     1.303778    -0.288235
         index2  string1     1.237079    1.168012
                 string2     1.333692    1.708455
+        ```
         """
         if index_is_datetime:
             index_inner = [
@@ -3937,3 +3944,60 @@ class Test_dassert_approx_eq1(hunitest.TestCase):
         srs1 = pd.Series([1, 2.0000001])
         srs2 = pd.Series([0.999999, 2.0])
         hpandas.dassert_approx_eq(srs1, srs2, msg="hello world")
+
+
+# #############################################################################
+
+
+class Test_CheckSummary(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        All the tests have passed.
+        """
+        # Prepare inputs.
+        obj = hpandas.CheckSummary()
+        obj.add(
+            "hello",
+            "Number of not submitted OMS child orders=0 / 73 = 0.00%",
+            True,
+        )
+        obj.add("hello2", "ok", True)
+        # Check.
+        is_ok = obj.is_ok()
+        self.assertTrue(is_ok)
+        #
+        act = obj.report_outcome(notebook_output=False, assert_on_error=False)
+        self.check_string(act)
+        # No assertion expected.
+        obj.report_outcome()
+
+    def test2(self) -> None:
+        """
+        Not all the tests have passed.
+        """
+        # Prepare inputs.
+        obj = hpandas.CheckSummary()
+        obj.add(
+            "hello",
+            "Number of not submitted OMS child orders=0 / 73 = 0.00%",
+            True,
+        )
+        obj.add("hello2", "not_ok", False)
+        # Check.
+        is_ok = obj.is_ok()
+        self.assertFalse(is_ok)
+        #
+        act = obj.report_outcome(notebook_output=False, assert_on_error=False)
+        self.check_string(act)
+        #
+        with self.assertRaises(ValueError) as e:
+            act = obj.report_outcome()
+        actual_exception = str(e.exception)
+        expected_exception = r"""
+        The checks have failed:
+          description                                            comment  is_ok
+        0       hello  Number of not submitted OMS child orders=0 / 7...   True
+        1      hello2                                             not_ok  False
+        is_ok=False
+        """
+        self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)

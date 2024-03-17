@@ -85,7 +85,7 @@
   - You should use Docker Compose to build single or multi-container systems
   - Jupyter notebook (if possible), otherwise a Python script implementing the
     project
-  - Only Python3 on Linux/Max should be used
+  - Only Python3 on Linux/Mac should be used
   - You can always communicate with the tech using Python libraries or HTTP APIs
 
 - Only Python should be used together with the needed configs for the specific

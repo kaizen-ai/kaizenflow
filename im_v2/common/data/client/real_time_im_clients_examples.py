@@ -13,6 +13,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsql as hsql
 import helpers.hsql_implementation as hsqlimpl
+import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.client as icdc
 
 # #############################################################################
@@ -77,6 +78,25 @@ _BID_ASK_RESAMPLED_COLUMNS = [
     "ask_price_high",
     "ask_price_low",
     "ask_price_mean",
+    "bid_ask_midpoint_open",
+    "half_spread_open",
+    "log_size_imbalance_open",
+    "bid_ask_midpoint_close",
+    "half_spread_close",
+    "log_size_imbalance_close",
+    "bid_ask_midpoint_min",
+    "half_spread_min",
+    "log_size_imbalance_min",
+    "bid_ask_midpoint_max",
+    "half_spread_max",
+    "log_size_imbalance_max",
+    "bid_ask_midpoint_mean",
+    "half_spread_mean",
+    "log_size_imbalance_mean",
+    "bid_ask_midpoint_var_100ms",
+    "bid_ask_midpoint_autocovar_100ms",
+    "log_size_imbalance_var_100ms",
+    "log_size_imbalance_autocovar_100ms",
     "currency_pair",
     "exchange_id",
     "level",
@@ -86,12 +106,12 @@ _BID_ASK_RESAMPLED_COLUMNS = [
 # fmt: off
 # pylint: disable=line-too-long
 _BID_ASK_RESAMPLED_DATA = [
-    [0, 1650637800000, 5, 10, 15, 20, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, "ETH_USDT", "binance", 1, pd.Timestamp("2022-04-22"), pd.Timestamp("2022-04-22")],
-    [1, 1650638400000, 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, "BTC_USDT", "binance", 1, pd.Timestamp("2022-04-22"), pd.Timestamp("2022-04-22")],
-    [2, 1650639600000, 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, "ETH_USDT", "binance", 1, pd.Timestamp("2022-04-22"), pd.Timestamp("2022-04-22")],
-    [3, 1650641400000, 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, "BTC_USDT", "binance", 1, pd.Timestamp("2022-04-22"), pd.Timestamp("2022-04-22")],
-    [4, 1650645000000, 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, "ETH_USDT", "binance", 1, pd.Timestamp("2022-04-22"), pd.Timestamp("2022-04-22")],
-    [5, 1650647400000, 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, "BTC_USDT", "binance", 1, pd.Timestamp("2022-04-22"), pd.Timestamp("2022-04-22")],
+    [0, 1650637800000, 5, 10, 15, 20, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 5, 10, 15, 20, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, "ETH_USDT", "binance", 1, pd.Timestamp("2022-04-22"), pd.Timestamp("2022-04-22")],
+    [1, 1650638400000, 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 5, 10, 15, 20, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, "BTC_USDT", "binance", 1, pd.Timestamp("2022-04-22"), pd.Timestamp("2022-04-22")],
+    [2, 1650639600000, 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 5, 10, 15, 20, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, "ETH_USDT", "binance", 1, pd.Timestamp("2022-04-22"), pd.Timestamp("2022-04-22")],
+    [3, 1650641400000, 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 5, 10, 15, 20, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, "BTC_USDT", "binance", 1, pd.Timestamp("2022-04-22"), pd.Timestamp("2022-04-22")],
+    [4, 1650645000000, 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 5, 10, 15, 20, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, "ETH_USDT", "binance", 1, pd.Timestamp("2022-04-22"), pd.Timestamp("2022-04-22")],
+    [5, 1650647400000, 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 5, 10, 15, 20, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, "BTC_USDT", "binance", 1, pd.Timestamp("2022-04-22"), pd.Timestamp("2022-04-22")],
 ]
 # pylint: enable=line-too-long
 
@@ -187,9 +207,7 @@ def _create_mock1_sql_data() -> pd.DataFrame:
 # TODO(gp): Is this related to Mock2 system? If it is we should call it Mock2
 #  and also rename some of the functions from `mock_` to `Mock2_`
 
-#TODO(Grisha, Juraj): it's not ideal that this is decoupled from
-# functions in im_v2.ccxt.db.utils we should consider fetching the query from there
-# and str.replace() the name of the table in the query if that's preferred for the sake of tests.
+#TODO(Juraj): #CmTask7390.
 def _get_mock2_create_table_query(table_name: str) -> str:
     """
     Get SQL query to create a test table.
@@ -199,6 +217,7 @@ def _get_mock2_create_table_query(table_name: str) -> str:
 
     :param table_name: determines what kind of table
     """
+
     if table_name == "ccxt_ohlcv_futures":
         query = """
         CREATE TABLE IF NOT EXISTS mock2_marketdata(
@@ -217,37 +236,8 @@ def _get_mock2_create_table_query(table_name: str) -> str:
                 )
                 """
     elif table_name == "ccxt_bid_ask_futures_resampled_1min":
-        query = """
-            CREATE TABLE IF NOT EXISTS mock2_marketdata(
-            id SERIAL PRIMARY KEY,
-            timestamp BIGINT NOT NULL,
-            "bid_size_open" NUMERIC,
-            "bid_size_close" NUMERIC,
-            "bid_size_min" NUMERIC,
-            "bid_size_max" NUMERIC,
-            "bid_size_mean" NUMERIC,
-            "bid_price_open" NUMERIC,
-            "bid_price_close" NUMERIC,
-            "bid_price_high" NUMERIC,
-            "bid_price_low" NUMERIC,
-            "bid_price_mean" NUMERIC,
-            "ask_size_open" NUMERIC,
-            "ask_size_close" NUMERIC,
-            "ask_size_min" NUMERIC,
-            "ask_size_max" NUMERIC,
-            "ask_size_mean" NUMERIC,
-            "ask_price_open" NUMERIC,
-            "ask_price_close" NUMERIC,
-            "ask_price_high" NUMERIC,
-            "ask_price_low" NUMERIC,
-            "ask_price_mean" NUMERIC,
-            currency_pair VARCHAR(255) NOT NULL,
-            exchange_id VARCHAR(255) NOT NULL,
-            level INTEGER NOT NULL,
-            end_download_timestamp TIMESTAMP WITH TIME ZONE,
-            knowledge_timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            )
-            """
+        query = imvccdbut.get_ccxt_create_bid_ask_futures_resampled_1min_table_query()
+        query = query.replace(table_name, "mock2_marketdata")
     return query
 
 

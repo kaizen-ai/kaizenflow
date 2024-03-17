@@ -1,9 +1,11 @@
-<!--ts-->
-      * [DataFlow Data Format](#dataflow-data-format)
 
 
+<!-- toc -->
 
-<!--te-->
+- [DataFlow Data Format](#dataflow-data-format)
+
+<!-- tocstop -->
+
 ## DataFlow Data Format
 
 As explained in

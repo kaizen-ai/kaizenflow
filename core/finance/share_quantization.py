@@ -1,12 +1,11 @@
 """
 Import as:
 
-import core.finance.share_quantization as cfinquant
+import core.finance.share_quantization as cfishqua
 """
 import logging
 from typing import Dict, Optional, Union
 
-import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
@@ -32,6 +31,7 @@ def quantize_shares(
     :param asset_id_to_decimals: a dict with asset ids as keys and the number
         of decimal places to round the corresponding shares to as values
     """
+    _LOG.debug("`shares` before quantization=\n%s", hpandas.df_to_str(shares))
     # Perform sanity-checks.
     hdbg.dassert_type_in(shares, [pd.Series, pd.DataFrame])
     #

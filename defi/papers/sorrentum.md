@@ -366,7 +366,7 @@ the 20% / yr we made
 
 - Crypto-bots (e.g., Pionex)
 
-- Amber / FalconX / Talos
+- Amber / FalconX
 
 - HummingbirdBot
 

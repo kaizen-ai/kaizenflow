@@ -79,7 +79,6 @@ market_data_config:
     version: v1_0_0
     download_universe_version: v1
     tag: resampled_1min
-  im_client: HistoricalPqByCurrencyPairTileClient at 0x=(_vendor=bloomberg <str>, _universe_version=v1 <str>, _resample_1min=False <bool>, _timestamp_col_name=timestamp <str>, _full_symbol_col_name=None <NoneType>, _asset_id_to_full_symbol_mapping={1343146433: 'us_market::MSFT'} <dict>, _root_dir=s3://cryptokaizen-unit-test/v3/bulk <str>, _infer_exchange_id=True <bool>, _partition_mode=by_year_month <str>, _aws_profile=ck <str>, _dataset=ohlcv <str>, _contract_type=spot <str>, _data_snapshot= <str>, _download_mode=manual <str>, _downloading_entity= <str>, _version=v1_0_0 <str>, _download_universe_version=v1 <str>, _tag=resampled_1min <str>, _data_format=parquet <str>)
   asset_ids: [1343146433]
   asset_id_col_name: asset_id
 research_forecast_evaluator_from_prices:

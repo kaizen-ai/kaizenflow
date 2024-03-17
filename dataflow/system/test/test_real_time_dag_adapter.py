@@ -58,6 +58,8 @@ class Test_adapt_dag_to_real_time1(hunitest.TestCase):
         }
         optimizer_config = {
             "backend": "pomo",
+            "asset_class": "equities",
+            "apply_cc_limits": None,
             "params": {
                 "style": "cross_sectional",
                 "kwargs": compute_target_positions_kwargs,

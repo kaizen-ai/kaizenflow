@@ -5,10 +5,10 @@
 - [Set up Sorrentum development environment](#set-up-sorrentum-development-environment)
   * [Introduction](#introduction)
   * [Technologies used](#technologies-used)
+  * [Supported OS](#supported-os)
   * [Clone the code](#clone-the-code)
   * [Building the thin environment](#building-the-thin-environment)
   * [Install and test Docker](#install-and-test-docker)
-    + [Supported OS](#supported-os)
     + [Install Docker](#install-docker)
     + [Checking Docker installation](#checking-docker-installation)
     + [Docker installation troubleshooting](#docker-installation-troubleshooting)
@@ -46,6 +46,23 @@ Happy coding!
 - As an additional resource to become proficient in using Linux and shell, you
   can refer to
   [The Missing Semester of Your CS Education](https://missing.csail.mit.edu/)
+
+## Supported OS
+
+- Sorrentum supports Mac (both x86 and Apple Silicon) and Linux Ubuntu
+- We do not support Windows and WSL: we have tried several times to port the
+  tool chain to it, but there are always subtle incompatible behaviors that
+  drive everyone crazy
+  - If you are using Windows, we suggest to use dual boot with Linux or use a
+    virtual machine with Linux
+  - Install VMWare software
+  - Reference video for installing
+    [ubuntu](https://www.youtube.com/watch?v=NhlhJFKmzpk&ab_channel=ProgrammingKnowledge)
+    on VMWare software
+  - Make sure you set up your git and github
+  - Install
+    [docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
+    on your Ubuntu VM
 
 ## Clone the code
 
@@ -105,23 +122,6 @@ Happy coding!
     what is your platform, output of the command
 
 ## Install and test Docker
-
-### Supported OS
-
-- Sorrentum supports Mac (both x86 and Apple Silicon) and Linux Ubuntu
-- We do not support Windows and WSL: we have tried several times to port the
-  tool chain to it, but there are always subtle incompatible behaviors that
-  drive everyone crazy
-  - If you are using Windows, we suggest to use dual boot with Linux or use a
-    virtual machine with Linux
-  - Install VMWare software
-  - Reference video for installing
-    [ubuntu](https://www.youtube.com/watch?v=NhlhJFKmzpk&ab_channel=ProgrammingKnowledge)
-    on VMWare software
-  - Make sure you set up your git and github
-  - Install
-    [docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
-    on your Ubuntu VM
 
 ### Install Docker
 

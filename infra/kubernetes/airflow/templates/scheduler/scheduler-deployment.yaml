@@ -1,0 +1,116 @@
+---
+################################
+## Airflow Scheduler Deployment
+#################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-scheduler
+  namespace: airflow
+  labels:
+    tier: airflow
+    component: scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: airflow
+      component: scheduler
+  template:
+    metadata:
+      labels:
+        tier: airflow
+        component: scheduler
+    spec:
+      nodeSelector:
+        {}
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 10
+      serviceAccountName: airflow-scheduler
+      securityContext:
+        runAsUser: 50000
+        fsGroup: 0
+      initContainers:
+        - name: volume-logs-permissions
+          image: busybox
+          command: [ "sh", "-c", "chown -R 50000:0 /opt/airflow/logs/" ]
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - mountPath: /opt/airflow/logs/
+              name: logs
+        - name: volume-dags-permissions
+          image: busybox
+          command: [ "sh", "-c", "chown -R 50000:0 /opt/airflow/dags/" ]
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - mountPath: /opt/airflow/dags/
+              name: dags
+      containers:
+        # Always run the main scheduler container.
+        - name: airflow-scheduler
+          image: apache/airflow:2.7.1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          args:
+            - bash
+            - -c
+            - exec airflow scheduler
+          envFrom:
+            - secretRef:
+                name: airflow-secret
+            - configMapRef:
+                name: airflow-config
+          env:
+            []
+            # Dynamically created environment variables
+            # Dynamically created secret envs
+            # Extra env
+            # Hard Coded Airflow Envs
+          livenessProbe:
+            initialDelaySeconds: 10
+            timeoutSeconds: 20
+            failureThreshold: 5
+            periodSeconds: 60
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  CONNECTION_CHECK_MAX_COUNT=0 AIRFLOW__LOGGING__LOGGING_LEVEL=ERROR exec /entrypoint \
+                  airflow jobs check --job-type SchedulerJob --local
+          startupProbe:
+            timeoutSeconds: 20
+            failureThreshold: 6
+            periodSeconds: 10
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  CONNECTION_CHECK_MAX_COUNT=0 AIRFLOW__LOGGING__LOGGING_LEVEL=ERROR exec /entrypoint \
+                  airflow jobs check --job-type SchedulerJob --local
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "512m"
+            limits:
+              memory: "3Gi"
+              cpu: "768m"
+          volumeMounts:
+            - name: logs
+              mountPath: "/opt/airflow/logs"
+            - name: dags
+              mountPath: "/opt/airflow/dags"
+      volumes:
+        - name: logs
+          persistentVolumeClaim:
+            claimName: airflow-logs-pvc
+        - name: dags
+          persistentVolumeClaim:
+            claimName: airflow-dags-pvc

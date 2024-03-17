@@ -1,3 +1,17 @@
+locals {
+  # Create a map for IAM role names to their ARNs
+  iam_role_to_arn = { for iam_role in aws_iam_role.IAMRole : iam_role.name => iam_role.arn }
+
+  flattened_role_policies = merge([
+    for role, policies in var.iam_role_policies : {
+      for idx, policy in policies : "${role}.${idx}" => {
+        role_name  = role,
+        policy_arn = try(policy.arn, null) != null ? policy.arn : aws_iam_policy.IAMPolicy[policy.name].arn
+      }
+    }
+  ]...)
+}
+
 resource "aws_iam_role" "IAMRole" {
   for_each           = var.iam_roles
   name               = each.key
@@ -13,20 +27,17 @@ resource "aws_iam_policy" "IAMPolicy" {
 }
 
 resource "aws_iam_role_policy_attachment" "IAMRolePolicy" {
-  for_each = {
-    for pair in flatten([for role, policies in var.iam_role_policies : [for policy in policies : {
-      role_name   = role
-      policy_name = policy
-    }]]) :
-    "${pair.role_name}.${pair.policy_name}" => pair
-  }
+  for_each = local.flattened_role_policies
 
   role       = aws_iam_role.IAMRole[each.value.role_name].name
-  policy_arn = aws_iam_policy.IAMPolicy[each.value.policy_name].arn
+  policy_arn = each.value.policy_arn
 }
 
 resource "aws_iam_instance_profile" "IAMInstanceProfile" {
-  for_each = var.iam_roles
+  for_each = var.iam_instance_profile
   name     = each.key
   role     = aws_iam_role.IAMRole[each.key].name
+  tags = {
+    Name = each.value.tags
+  }
 }

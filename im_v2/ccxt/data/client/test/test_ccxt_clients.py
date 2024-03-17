@@ -4,6 +4,7 @@ from typing import List
 import pandas as pd
 import pytest
 
+import core.finance as cofinanc
 import helpers.hdatetime as hdateti
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
@@ -1097,30 +1098,11 @@ class TestCcxtSqlRealTimeImClient2(
         """
         Return a list of expected column names.
         """
-        expected_column_names = [
-            "level_1.bid_size.open",
-            "level_1.bid_size.close",
-            "level_1.bid_size.min",
-            "level_1.bid_size.max",
-            "level_1.bid_size.mean",
-            "level_1.bid_price.open",
-            "level_1.bid_price.close",
-            "level_1.bid_price.high",
-            "level_1.bid_price.low",
-            "level_1.bid_price.mean",
-            "level_1.ask_size.open",
-            "level_1.ask_size.close",
-            "level_1.ask_size.min",
-            "level_1.ask_size.max",
-            "level_1.ask_size.mean",
-            "level_1.ask_price.open",
-            "level_1.ask_price.close",
-            "level_1.ask_price.high",
-            "level_1.ask_price.low",
-            "level_1.ask_price.mean",
+        level = 1
+        expected_column_names = cofinanc.get_bid_ask_columns_by_level(level) + [
             "end_download_timestamp",
-            "knowledge_timestamp",
             "full_symbol",
+            "knowledge_timestamp",
         ]
         return expected_column_names
 
@@ -1138,15 +1120,15 @@ class TestCcxtSqlRealTimeImClient2(
         expected_signature = r"""
         # df=
         index=[2021-09-09 00:01:00+00:00, 2021-09-09 00:05:00+00:00]
-        columns=end_download_timestamp,knowledge_timestamp,full_symbol,level_1.bid_size.open,level_1.bid_size.close,level_1.bid_size.min,level_1.bid_size.max,level_1.bid_size.mean,level_1.bid_price.open,level_1.bid_price.close,level_1.bid_price.high,level_1.bid_price.low,level_1.bid_price.mean,level_1.ask_size.open,level_1.ask_size.close,level_1.ask_size.min,level_1.ask_size.max,level_1.ask_size.mean,level_1.ask_price.open,level_1.ask_price.close,level_1.ask_price.high,level_1.ask_price.low,level_1.ask_price.mean
-        shape=(5, 23)
-        end_download_timestamp knowledge_timestamp full_symbol level_1.bid_size.open level_1.bid_size.close level_1.bid_size.min level_1.bid_size.max level_1.bid_size.mean level_1.bid_price.open level_1.bid_price.close level_1.bid_price.high level_1.bid_price.low level_1.bid_price.mean level_1.ask_size.open level_1.ask_size.close level_1.ask_size.min level_1.ask_size.max level_1.ask_size.mean level_1.ask_price.open level_1.ask_price.close level_1.ask_price.high level_1.ask_price.low level_1.ask_price.mean
+        columns=end_download_timestamp,knowledge_timestamp,full_symbol,level_1.bid_size.open,level_1.bid_size.close,level_1.bid_size.min,level_1.bid_size.max,level_1.bid_size.mean,level_1.bid_price.open,level_1.bid_price.close,level_1.bid_price.high,level_1.bid_price.low,level_1.bid_price.mean,level_1.ask_size.open,level_1.ask_size.close,level_1.ask_size.min,level_1.ask_size.max,level_1.ask_size.mean,level_1.ask_price.open,level_1.ask_price.close,level_1.ask_price.high,level_1.ask_price.low,level_1.ask_price.mean,level_1.bid_ask_midpoint.open,level_1.half_spread.open,level_1.log_size_imbalance.open,level_1.bid_ask_midpoint.close,level_1.half_spread.close,level_1.log_size_imbalance.close,level_1.bid_ask_midpoint.min,level_1.half_spread.min,level_1.log_size_imbalance.min,level_1.bid_ask_midpoint.max,level_1.half_spread.max,level_1.log_size_imbalance.max,level_1.bid_ask_midpoint.mean,level_1.half_spread.mean,level_1.log_size_imbalance.mean,level_1.bid_ask_midpoint_var.100ms,level_1.bid_ask_midpoint_autocovar.100ms,level_1.log_size_imbalance_var.100ms,level_1.log_size_imbalance_autocovar.100ms
+        shape=(5, 42)
+        end_download_timestamp knowledge_timestamp full_symbol level_1.bid_size.open level_1.bid_size.close level_1.bid_size.min level_1.bid_size.max level_1.bid_size.mean level_1.bid_price.open level_1.bid_price.close level_1.bid_price.high level_1.bid_price.low level_1.bid_price.mean level_1.ask_size.open level_1.ask_size.close level_1.ask_size.min level_1.ask_size.max level_1.ask_size.mean level_1.ask_price.open level_1.ask_price.close level_1.ask_price.high level_1.ask_price.low level_1.ask_price.mean level_1.bid_ask_midpoint.open level_1.half_spread.open level_1.log_size_imbalance.open level_1.bid_ask_midpoint.close level_1.half_spread.close level_1.log_size_imbalance.close level_1.bid_ask_midpoint.min level_1.half_spread.min level_1.log_size_imbalance.min level_1.bid_ask_midpoint.max level_1.half_spread.max level_1.log_size_imbalance.max level_1.bid_ask_midpoint.mean level_1.half_spread.mean level_1.log_size_imbalance.mean level_1.bid_ask_midpoint_var.100ms level_1.bid_ask_midpoint_autocovar.100ms level_1.log_size_imbalance_var.100ms level_1.log_size_imbalance_autocovar.100ms
         timestamp
-        2021-09-09 00:01:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0
-        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
-        2021-09-09 00:03:00+00:00 NaT NaT binance::BTC_USDT NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-        2021-09-09 00:04:00+00:00 NaT NaT binance::BTC_USDT NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-        2021-09-09 00:05:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
+        2021-09-09 00:01:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
+        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
+        2021-09-09 00:03:00+00:00 NaT NaT binance::BTC_USDT NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
+        2021-09-09 00:04:00+00:00 NaT NaT binance::BTC_USDT NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
+        2021-09-09 00:05:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
         """
         # pylint: enable=line-too-long
         self._test_read_data1(
@@ -1174,17 +1156,17 @@ class TestCcxtSqlRealTimeImClient2(
         expected_signature = r"""
         # df=
         index=[2021-09-09 00:01:00+00:00, 2021-09-09 00:05:00+00:00]
-        columns=end_download_timestamp,knowledge_timestamp,full_symbol,level_1.bid_size.open,level_1.bid_size.close,level_1.bid_size.min,level_1.bid_size.max,level_1.bid_size.mean,level_1.bid_price.open,level_1.bid_price.close,level_1.bid_price.high,level_1.bid_price.low,level_1.bid_price.mean,level_1.ask_size.open,level_1.ask_size.close,level_1.ask_size.min,level_1.ask_size.max,level_1.ask_size.mean,level_1.ask_price.open,level_1.ask_price.close,level_1.ask_price.high,level_1.ask_price.low,level_1.ask_price.mean
-        shape=(9, 23)
-        end_download_timestamp knowledge_timestamp full_symbol level_1.bid_size.open level_1.bid_size.close level_1.bid_size.min level_1.bid_size.max level_1.bid_size.mean level_1.bid_price.open level_1.bid_price.close level_1.bid_price.high level_1.bid_price.low level_1.bid_price.mean level_1.ask_size.open level_1.ask_size.close level_1.ask_size.min level_1.ask_size.max level_1.ask_size.mean level_1.ask_price.open level_1.ask_price.close level_1.ask_price.high level_1.ask_price.low level_1.ask_price.mean
+        columns=end_download_timestamp,knowledge_timestamp,full_symbol,level_1.bid_size.open,level_1.bid_size.close,level_1.bid_size.min,level_1.bid_size.max,level_1.bid_size.mean,level_1.bid_price.open,level_1.bid_price.close,level_1.bid_price.high,level_1.bid_price.low,level_1.bid_price.mean,level_1.ask_size.open,level_1.ask_size.close,level_1.ask_size.min,level_1.ask_size.max,level_1.ask_size.mean,level_1.ask_price.open,level_1.ask_price.close,level_1.ask_price.high,level_1.ask_price.low,level_1.ask_price.mean,level_1.bid_ask_midpoint.open,level_1.half_spread.open,level_1.log_size_imbalance.open,level_1.bid_ask_midpoint.close,level_1.half_spread.close,level_1.log_size_imbalance.close,level_1.bid_ask_midpoint.min,level_1.half_spread.min,level_1.log_size_imbalance.min,level_1.bid_ask_midpoint.max,level_1.half_spread.max,level_1.log_size_imbalance.max,level_1.bid_ask_midpoint.mean,level_1.half_spread.mean,level_1.log_size_imbalance.mean,level_1.bid_ask_midpoint_var.100ms,level_1.bid_ask_midpoint_autocovar.100ms,level_1.log_size_imbalance_var.100ms,level_1.log_size_imbalance_autocovar.100ms
+        shape=(9, 42)
+        end_download_timestamp knowledge_timestamp full_symbol level_1.bid_size.open level_1.bid_size.close level_1.bid_size.min level_1.bid_size.max level_1.bid_size.mean level_1.bid_price.open level_1.bid_price.close level_1.bid_price.high level_1.bid_price.low level_1.bid_price.mean level_1.ask_size.open level_1.ask_size.close level_1.ask_size.min level_1.ask_size.max level_1.ask_size.mean level_1.ask_price.open level_1.ask_price.close level_1.ask_price.high level_1.ask_price.low level_1.ask_price.mean level_1.bid_ask_midpoint.open level_1.half_spread.open level_1.log_size_imbalance.open level_1.bid_ask_midpoint.close level_1.half_spread.close level_1.log_size_imbalance.close level_1.bid_ask_midpoint.min level_1.half_spread.min level_1.log_size_imbalance.min level_1.bid_ask_midpoint.max level_1.half_spread.max level_1.log_size_imbalance.max level_1.bid_ask_midpoint.mean level_1.half_spread.mean level_1.log_size_imbalance.mean level_1.bid_ask_midpoint_var.100ms level_1.bid_ask_midpoint_autocovar.100ms level_1.log_size_imbalance_var.100ms level_1.log_size_imbalance_autocovar.100ms
         timestamp
-        2021-09-09 00:01:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0
-        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
-        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
+        2021-09-09 00:01:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
+        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
+        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
         ...
-        2021-09-09 00:04:00+00:00 NaT NaT binance::ETH_USDT NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-        2021-09-09 00:05:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
-        2021-09-09 00:05:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
+        2021-09-09 00:04:00+00:00 NaT NaT binance::ETH_USDT NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
+        2021-09-09 00:05:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
+        2021-09-09 00:05:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
         """
         # pylint: enable=line-too-long
         self._test_read_data2(
@@ -1213,17 +1195,17 @@ class TestCcxtSqlRealTimeImClient2(
         expected_signature = r"""
         # df=
         index=[2021-09-09 00:01:00+00:00, 2021-09-09 00:05:00+00:00]
-        columns=end_download_timestamp,knowledge_timestamp,full_symbol,level_1.bid_size.open,level_1.bid_size.close,level_1.bid_size.min,level_1.bid_size.max,level_1.bid_size.mean,level_1.bid_price.open,level_1.bid_price.close,level_1.bid_price.high,level_1.bid_price.low,level_1.bid_price.mean,level_1.ask_size.open,level_1.ask_size.close,level_1.ask_size.min,level_1.ask_size.max,level_1.ask_size.mean,level_1.ask_price.open,level_1.ask_price.close,level_1.ask_price.high,level_1.ask_price.low,level_1.ask_price.mean
-        shape=(9, 23)
-        end_download_timestamp knowledge_timestamp full_symbol level_1.bid_size.open level_1.bid_size.close level_1.bid_size.min level_1.bid_size.max level_1.bid_size.mean level_1.bid_price.open level_1.bid_price.close level_1.bid_price.high level_1.bid_price.low level_1.bid_price.mean level_1.ask_size.open level_1.ask_size.close level_1.ask_size.min level_1.ask_size.max level_1.ask_size.mean level_1.ask_price.open level_1.ask_price.close level_1.ask_price.high level_1.ask_price.low level_1.ask_price.mean
+        columns=end_download_timestamp,knowledge_timestamp,full_symbol,level_1.bid_size.open,level_1.bid_size.close,level_1.bid_size.min,level_1.bid_size.max,level_1.bid_size.mean,level_1.bid_price.open,level_1.bid_price.close,level_1.bid_price.high,level_1.bid_price.low,level_1.bid_price.mean,level_1.ask_size.open,level_1.ask_size.close,level_1.ask_size.min,level_1.ask_size.max,level_1.ask_size.mean,level_1.ask_price.open,level_1.ask_price.close,level_1.ask_price.high,level_1.ask_price.low,level_1.ask_price.mean,level_1.bid_ask_midpoint.open,level_1.half_spread.open,level_1.log_size_imbalance.open,level_1.bid_ask_midpoint.close,level_1.half_spread.close,level_1.log_size_imbalance.close,level_1.bid_ask_midpoint.min,level_1.half_spread.min,level_1.log_size_imbalance.min,level_1.bid_ask_midpoint.max,level_1.half_spread.max,level_1.log_size_imbalance.max,level_1.bid_ask_midpoint.mean,level_1.half_spread.mean,level_1.log_size_imbalance.mean,level_1.bid_ask_midpoint_var.100ms,level_1.bid_ask_midpoint_autocovar.100ms,level_1.log_size_imbalance_var.100ms,level_1.log_size_imbalance_autocovar.100ms
+        shape=(9, 42)
+        end_download_timestamp knowledge_timestamp full_symbol level_1.bid_size.open level_1.bid_size.close level_1.bid_size.min level_1.bid_size.max level_1.bid_size.mean level_1.bid_price.open level_1.bid_price.close level_1.bid_price.high level_1.bid_price.low level_1.bid_price.mean level_1.ask_size.open level_1.ask_size.close level_1.ask_size.min level_1.ask_size.max level_1.ask_size.mean level_1.ask_price.open level_1.ask_price.close level_1.ask_price.high level_1.ask_price.low level_1.ask_price.mean level_1.bid_ask_midpoint.open level_1.half_spread.open level_1.log_size_imbalance.open level_1.bid_ask_midpoint.close level_1.half_spread.close level_1.log_size_imbalance.close level_1.bid_ask_midpoint.min level_1.half_spread.min level_1.log_size_imbalance.min level_1.bid_ask_midpoint.max level_1.half_spread.max level_1.log_size_imbalance.max level_1.bid_ask_midpoint.mean level_1.half_spread.mean level_1.log_size_imbalance.mean level_1.bid_ask_midpoint_var.100ms level_1.bid_ask_midpoint_autocovar.100ms level_1.log_size_imbalance_var.100ms level_1.log_size_imbalance_autocovar.100ms
         timestamp
-        2021-09-09 00:01:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0
-        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
-        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
+        2021-09-09 00:01:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
+        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
+        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
         ...
-        2021-09-09 00:04:00+00:00 NaT NaT binance::ETH_USDT NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
-        2021-09-09 00:05:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
-        2021-09-09 00:05:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
+        2021-09-09 00:04:00+00:00 NaT NaT binance::ETH_USDT NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN
+        2021-09-09 00:05:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
+        2021-09-09 00:05:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
         """
         # pylint: enable=line-too-long
         self._test_read_data3(
@@ -1253,13 +1235,13 @@ class TestCcxtSqlRealTimeImClient2(
         expected_signature = r"""
         # df=
         index=[2021-09-09 00:01:00+00:00, 2021-09-09 00:02:00+00:00]
-        columns=end_download_timestamp,knowledge_timestamp,full_symbol,level_1.bid_size.open,level_1.bid_size.close,level_1.bid_size.min,level_1.bid_size.max,level_1.bid_size.mean,level_1.bid_price.open,level_1.bid_price.close,level_1.bid_price.high,level_1.bid_price.low,level_1.bid_price.mean,level_1.ask_size.open,level_1.ask_size.close,level_1.ask_size.min,level_1.ask_size.max,level_1.ask_size.mean,level_1.ask_price.open,level_1.ask_price.close,level_1.ask_price.high,level_1.ask_price.low,level_1.ask_price.mean
-        shape=(3, 23)
-        end_download_timestamp knowledge_timestamp full_symbol level_1.bid_size.open level_1.bid_size.close level_1.bid_size.min level_1.bid_size.max level_1.bid_size.mean level_1.bid_price.open level_1.bid_price.close level_1.bid_price.high level_1.bid_price.low level_1.bid_price.mean level_1.ask_size.open level_1.ask_size.close level_1.ask_size.min level_1.ask_size.max level_1.ask_size.mean level_1.ask_price.open level_1.ask_price.close level_1.ask_price.high level_1.ask_price.low level_1.ask_price.mean
+        columns=end_download_timestamp,knowledge_timestamp,full_symbol,level_1.bid_size.open,level_1.bid_size.close,level_1.bid_size.min,level_1.bid_size.max,level_1.bid_size.mean,level_1.bid_price.open,level_1.bid_price.close,level_1.bid_price.high,level_1.bid_price.low,level_1.bid_price.mean,level_1.ask_size.open,level_1.ask_size.close,level_1.ask_size.min,level_1.ask_size.max,level_1.ask_size.mean,level_1.ask_price.open,level_1.ask_price.close,level_1.ask_price.high,level_1.ask_price.low,level_1.ask_price.mean,level_1.bid_ask_midpoint.open,level_1.half_spread.open,level_1.log_size_imbalance.open,level_1.bid_ask_midpoint.close,level_1.half_spread.close,level_1.log_size_imbalance.close,level_1.bid_ask_midpoint.min,level_1.half_spread.min,level_1.log_size_imbalance.min,level_1.bid_ask_midpoint.max,level_1.half_spread.max,level_1.log_size_imbalance.max,level_1.bid_ask_midpoint.mean,level_1.half_spread.mean,level_1.log_size_imbalance.mean,level_1.bid_ask_midpoint_var.100ms,level_1.bid_ask_midpoint_autocovar.100ms,level_1.log_size_imbalance_var.100ms,level_1.log_size_imbalance_autocovar.100ms
+        shape=(3, 42)
+        end_download_timestamp knowledge_timestamp full_symbol level_1.bid_size.open level_1.bid_size.close level_1.bid_size.min level_1.bid_size.max level_1.bid_size.mean level_1.bid_price.open level_1.bid_price.close level_1.bid_price.high level_1.bid_price.low level_1.bid_price.mean level_1.ask_size.open level_1.ask_size.close level_1.ask_size.min level_1.ask_size.max level_1.ask_size.mean level_1.ask_price.open level_1.ask_price.close level_1.ask_price.high level_1.ask_price.low level_1.ask_price.mean level_1.bid_ask_midpoint.open level_1.half_spread.open level_1.log_size_imbalance.open level_1.bid_ask_midpoint.close level_1.half_spread.close level_1.log_size_imbalance.close level_1.bid_ask_midpoint.min level_1.half_spread.min level_1.log_size_imbalance.min level_1.bid_ask_midpoint.max level_1.half_spread.max level_1.log_size_imbalance.max level_1.bid_ask_midpoint.mean level_1.half_spread.mean level_1.log_size_imbalance.mean level_1.bid_ask_midpoint_var.100ms level_1.bid_ask_midpoint_autocovar.100ms level_1.log_size_imbalance_var.100ms level_1.log_size_imbalance_autocovar.100ms
         timestamp
-        2021-09-09 00:01:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0
-        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
-        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
+        2021-09-09 00:01:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
+        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
+        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
         """
         # pylint: enable=line-too-long
         self._test_read_data4(
@@ -1290,13 +1272,13 @@ class TestCcxtSqlRealTimeImClient2(
         expected_signature = r"""
         # df=
         index=[2021-09-09 00:01:00+00:00, 2021-09-09 00:02:00+00:00]
-        columns=end_download_timestamp,knowledge_timestamp,full_symbol,level_1.bid_size.open,level_1.bid_size.close,level_1.bid_size.min,level_1.bid_size.max,level_1.bid_size.mean,level_1.bid_price.open,level_1.bid_price.close,level_1.bid_price.high,level_1.bid_price.low,level_1.bid_price.mean,level_1.ask_size.open,level_1.ask_size.close,level_1.ask_size.min,level_1.ask_size.max,level_1.ask_size.mean,level_1.ask_price.open,level_1.ask_price.close,level_1.ask_price.high,level_1.ask_price.low,level_1.ask_price.mean
-        shape=(3, 23)
-        end_download_timestamp knowledge_timestamp full_symbol level_1.bid_size.open level_1.bid_size.close level_1.bid_size.min level_1.bid_size.max level_1.bid_size.mean level_1.bid_price.open level_1.bid_price.close level_1.bid_price.high level_1.bid_price.low level_1.bid_price.mean level_1.ask_size.open level_1.ask_size.close level_1.ask_size.min level_1.ask_size.max level_1.ask_size.mean level_1.ask_price.open level_1.ask_price.close level_1.ask_price.high level_1.ask_price.low level_1.ask_price.mean
+        columns=end_download_timestamp,knowledge_timestamp,full_symbol,level_1.bid_size.open,level_1.bid_size.close,level_1.bid_size.min,level_1.bid_size.max,level_1.bid_size.mean,level_1.bid_price.open,level_1.bid_price.close,level_1.bid_price.high,level_1.bid_price.low,level_1.bid_price.mean,level_1.ask_size.open,level_1.ask_size.close,level_1.ask_size.min,level_1.ask_size.max,level_1.ask_size.mean,level_1.ask_price.open,level_1.ask_price.close,level_1.ask_price.high,level_1.ask_price.low,level_1.ask_price.mean,level_1.bid_ask_midpoint.open,level_1.half_spread.open,level_1.log_size_imbalance.open,level_1.bid_ask_midpoint.close,level_1.half_spread.close,level_1.log_size_imbalance.close,level_1.bid_ask_midpoint.min,level_1.half_spread.min,level_1.log_size_imbalance.min,level_1.bid_ask_midpoint.max,level_1.half_spread.max,level_1.log_size_imbalance.max,level_1.bid_ask_midpoint.mean,level_1.half_spread.mean,level_1.log_size_imbalance.mean,level_1.bid_ask_midpoint_var.100ms,level_1.bid_ask_midpoint_autocovar.100ms,level_1.log_size_imbalance_var.100ms,level_1.log_size_imbalance_autocovar.100ms
+        shape=(3, 42)
+        end_download_timestamp knowledge_timestamp full_symbol level_1.bid_size.open level_1.bid_size.close level_1.bid_size.min level_1.bid_size.max level_1.bid_size.mean level_1.bid_price.open level_1.bid_price.close level_1.bid_price.high level_1.bid_price.low level_1.bid_price.mean level_1.ask_size.open level_1.ask_size.close level_1.ask_size.min level_1.ask_size.max level_1.ask_size.mean level_1.ask_price.open level_1.ask_price.close level_1.ask_price.high level_1.ask_price.low level_1.ask_price.mean level_1.bid_ask_midpoint.open level_1.half_spread.open level_1.log_size_imbalance.open level_1.bid_ask_midpoint.close level_1.half_spread.close level_1.log_size_imbalance.close level_1.bid_ask_midpoint.min level_1.half_spread.min level_1.log_size_imbalance.min level_1.bid_ask_midpoint.max level_1.half_spread.max level_1.log_size_imbalance.max level_1.bid_ask_midpoint.mean level_1.half_spread.mean level_1.log_size_imbalance.mean level_1.bid_ask_midpoint_var.100ms level_1.bid_ask_midpoint_autocovar.100ms level_1.log_size_imbalance_var.100ms level_1.log_size_imbalance_autocovar.100ms
         timestamp
-        2021-09-09 00:01:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0
-        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
-        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
+        2021-09-09 00:01:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
+        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
+        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
         """
         # pylint: enable=line-too-long
         self._test_read_data5(
@@ -1342,16 +1324,16 @@ class TestCcxtSqlRealTimeImClient2(
         expected_signature = r"""
         # df=
         index=[2021-09-09 00:01:00+00:00, 2021-09-09 00:05:00+00:00]
-        columns=end_download_timestamp,knowledge_timestamp,full_symbol,level_1.bid_size.open,level_1.bid_size.close,level_1.bid_size.min,level_1.bid_size.max,level_1.bid_size.mean,level_1.bid_price.open,level_1.bid_price.close,level_1.bid_price.high,level_1.bid_price.low,level_1.bid_price.mean,level_1.ask_size.open,level_1.ask_size.close,level_1.ask_size.min,level_1.ask_size.max,level_1.ask_size.mean,level_1.ask_price.open,level_1.ask_price.close,level_1.ask_price.high,level_1.ask_price.low,level_1.ask_price.mean
-        shape=(6, 23)
-        end_download_timestamp knowledge_timestamp full_symbol level_1.bid_size.open level_1.bid_size.close level_1.bid_size.min level_1.bid_size.max level_1.bid_size.mean level_1.bid_price.open level_1.bid_price.close level_1.bid_price.high level_1.bid_price.low level_1.bid_price.mean level_1.ask_size.open level_1.ask_size.close level_1.ask_size.min level_1.ask_size.max level_1.ask_size.mean level_1.ask_price.open level_1.ask_price.close level_1.ask_price.high level_1.ask_price.low level_1.ask_price.mean
+        columns=end_download_timestamp,knowledge_timestamp,full_symbol,level_1.bid_size.open,level_1.bid_size.close,level_1.bid_size.min,level_1.bid_size.max,level_1.bid_size.mean,level_1.bid_price.open,level_1.bid_price.close,level_1.bid_price.high,level_1.bid_price.low,level_1.bid_price.mean,level_1.ask_size.open,level_1.ask_size.close,level_1.ask_size.min,level_1.ask_size.max,level_1.ask_size.mean,level_1.ask_price.open,level_1.ask_price.close,level_1.ask_price.high,level_1.ask_price.low,level_1.ask_price.mean,level_1.bid_ask_midpoint.open,level_1.half_spread.open,level_1.log_size_imbalance.open,level_1.bid_ask_midpoint.close,level_1.half_spread.close,level_1.log_size_imbalance.close,level_1.bid_ask_midpoint.min,level_1.half_spread.min,level_1.log_size_imbalance.min,level_1.bid_ask_midpoint.max,level_1.half_spread.max,level_1.log_size_imbalance.max,level_1.bid_ask_midpoint.mean,level_1.half_spread.mean,level_1.log_size_imbalance.mean,level_1.bid_ask_midpoint_var.100ms,level_1.bid_ask_midpoint_autocovar.100ms,level_1.log_size_imbalance_var.100ms,level_1.log_size_imbalance_autocovar.100ms
+        shape=(6, 42)
+        end_download_timestamp knowledge_timestamp full_symbol level_1.bid_size.open level_1.bid_size.close level_1.bid_size.min level_1.bid_size.max level_1.bid_size.mean level_1.bid_price.open level_1.bid_price.close level_1.bid_price.high level_1.bid_price.low level_1.bid_price.mean level_1.ask_size.open level_1.ask_size.close level_1.ask_size.min level_1.ask_size.max level_1.ask_size.mean level_1.ask_price.open level_1.ask_price.close level_1.ask_price.high level_1.ask_price.low level_1.ask_price.mean level_1.bid_ask_midpoint.open level_1.half_spread.open level_1.log_size_imbalance.open level_1.bid_ask_midpoint.close level_1.half_spread.close level_1.log_size_imbalance.close level_1.bid_ask_midpoint.min level_1.half_spread.min level_1.log_size_imbalance.min level_1.bid_ask_midpoint.max level_1.half_spread.max level_1.log_size_imbalance.max level_1.bid_ask_midpoint.mean level_1.half_spread.mean level_1.log_size_imbalance.mean level_1.bid_ask_midpoint_var.100ms level_1.bid_ask_midpoint_autocovar.100ms level_1.log_size_imbalance_var.100ms level_1.log_size_imbalance_autocovar.100ms
         timestamp
-        2021-09-09 00:01:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0
-        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
-        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
-        2021-09-09 00:05:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
-        2021-09-09 00:05:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
-        2021-09-09 00:05:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 kucoin::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0
+        2021-09-09 00:01:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
+        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
+        2021-09-09 00:02:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
+        2021-09-09 00:05:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
+        2021-09-09 00:05:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
+        2021-09-09 00:05:00+00:00 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 kucoin::ETH_USDT 11.0 21.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 61.0 71.0 31.0 41.0 51.0 5.0 10.0 15.0 20.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0 60.0 30.0 40.0 50.0
         """
         # pylint: enable=line-too-long
         self._test_read_data7(
@@ -1468,6 +1450,25 @@ class TestCcxtSqlRealTimeImClient2(
                 "ask_price_high",
                 "ask_price_low",
                 "ask_price_mean",
+                "bid_ask_midpoint_open",
+                "half_spread_open",
+                "log_size_imbalance_open",
+                "bid_ask_midpoint_close",
+                "half_spread_close",
+                "log_size_imbalance_close",
+                "bid_ask_midpoint_min",
+                "half_spread_min",
+                "log_size_imbalance_min",
+                "bid_ask_midpoint_max",
+                "half_spread_max",
+                "log_size_imbalance_max",
+                "bid_ask_midpoint_mean",
+                "half_spread_mean",
+                "log_size_imbalance_mean",
+                "bid_ask_midpoint_var_100ms",
+                "bid_ask_midpoint_autocovar_100ms",
+                "log_size_imbalance_var_100ms",
+                "log_size_imbalance_autocovar_100ms",
                 "currency_pair",
                 "exchange_id",
                 "level",
@@ -1477,12 +1478,12 @@ class TestCcxtSqlRealTimeImClient2(
             # fmt: off
             # pylint: disable=line-too-long
             data=[
-                [1, pd.Timestamp("2021-09-09 00:01:00+00:00"), 5, 10, 15, 20, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, "BTC_USDT", "binance", 1, end_download_timestamp, end_download_timestamp],
-                [2, pd.Timestamp("2021-09-09 00:02:00+00:00"), 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, "BTC_USDT", "binance", 1, end_download_timestamp, end_download_timestamp],
-                [3, pd.Timestamp("2021-09-09 00:02:00+00:00"), 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, "ETH_USDT", "binance", 1, end_download_timestamp, end_download_timestamp],
-                [4, pd.Timestamp("2021-09-09 00:05:00+00:00"), 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, "BTC_USDT", "binance", 1, end_download_timestamp, end_download_timestamp],
-                [5, pd.Timestamp("2021-09-09 00:05:00+00:00"), 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, "ETH_USDT", "binance", 1, end_download_timestamp, end_download_timestamp],
-                [6, pd.Timestamp("2021-09-09 00:05:00+00:00"), 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, "ETH_USDT", "kucoin", 1, end_download_timestamp, end_download_timestamp],
+                [1, pd.Timestamp("2021-09-09 00:01:00+00:00"), 5, 10, 15, 20, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 5, 10, 15, 20, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, "BTC_USDT", "binance", 1, end_download_timestamp, end_download_timestamp],
+                [2, pd.Timestamp("2021-09-09 00:02:00+00:00"), 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 5, 10, 15, 20, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, "BTC_USDT", "binance", 1, end_download_timestamp, end_download_timestamp],
+                [3, pd.Timestamp("2021-09-09 00:02:00+00:00"), 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 5, 10, 15, 20, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, "ETH_USDT", "binance", 1, end_download_timestamp, end_download_timestamp],
+                [4, pd.Timestamp("2021-09-09 00:05:00+00:00"), 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 5, 10, 15, 20, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, "BTC_USDT", "binance", 1, end_download_timestamp, end_download_timestamp],
+                [5, pd.Timestamp("2021-09-09 00:05:00+00:00"), 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 5, 10, 15, 20, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, "ETH_USDT", "binance", 1, end_download_timestamp, end_download_timestamp],
+                [6, pd.Timestamp("2021-09-09 00:05:00+00:00"), 11, 21, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 61, 71, 31, 41, 51, 5, 10, 15, 20, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, 60, 30, 40, 50, "ETH_USDT", "kucoin", 1, end_download_timestamp, end_download_timestamp],
             ]
             # pylint: enable=line-too-long
             # fmt: on

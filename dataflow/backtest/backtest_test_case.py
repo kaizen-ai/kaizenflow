@@ -65,10 +65,10 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         """
         Invoke `run_config_list.py` on a config.
 
-        :param config_builder, experiment_builder: we cannot pass function
-            pointers to the builders or the result of the building to an executable
-            `amp/core/dataflow/backtest/run_config_list.py`, so we only can accept
-            strings representing static functions in the code.
+        We cannot pass function pointers to the builders or the result
+        of the building to an executable
+        `amp/core/dataflow/backtest/run_config_list.py`, so we only can
+        accept strings representing static functions in the code.
         """
         # Execute a command line like:
         # ```
@@ -194,13 +194,15 @@ class TiledBacktest_TestCase(Backtest_TestCase):
         """
         Run the entire backtest flow.
 
-        See the explanation of why we need string pointers in `_run_model()`.
+        See the explanation of why we need string pointers in
+        `_run_model()`.
 
-        :param config_builder: string pointer to the function used to build
-            configs
-        :param experiment_builder: string pointer to the function used to build
-            an experiment
-        :param run_model_extra_opts: extra options passed to a model run command
+        :param config_builder: string pointer to the function used to
+            build configs
+        :param experiment_builder: string pointer to the function used
+            to build an experiment
+        :param run_model_extra_opts: extra options passed to a model run
+            command
         """
         scratch_dir = self.get_scratch_space()
         # 1) Check the configs against frozen representation.
@@ -261,8 +263,9 @@ class TiledBacktest_TestCase(Backtest_TestCase):
         num_threads = "serial"
         num_attempts = 1
         dry_run = False
-        log_level = logging.DEBUG
+        backend = "asyncio_threading"
         # Set logger.
+        log_level = logging.DEBUG
         hdbg.init_logger(
             verbosity=log_level,
             use_exec_path=True,
@@ -286,4 +289,5 @@ class TiledBacktest_TestCase(Backtest_TestCase):
             num_threads,
             num_attempts,
             dry_run,
+            backend,
         )
