@@ -143,11 +143,7 @@ class Test_convert_to_multiindex(hunitest.TestCase):
         with self.assertRaises(AssertionError) as context:
             dtfcorutil.convert_to_multiindex(df, asset_id_col)
         actual_error_message = str(context.exception)
-        expected_error_message = """
-        ################################################################################
-        * Failed assertion *
-        <= 0\n################################################################################
-        """
+        expected_error_message = '\n################################################################################\n* Failed assertion *\n1 <= 0\n################################################################################\n'
         self.assert_equal(actual_error_message, expected_error_message)
 
     def test4(self) -> None:
@@ -174,17 +170,7 @@ class Test_convert_to_multiindex(hunitest.TestCase):
             dtfcorutil.convert_to_multiindex(df, asset_id_col)
         # Get the actual error message
         actual_error_message = str(context.exception)
-        expected_error_message = """
-        ################################################################################
-        * Failed assertion *
-        Instance of '(                              id close  volume
-        2022-01-04 09:01:00-05:00  13684  None       0
-        2022-01-04 09:02:00-05:00  13684  None       0
-        2022-01-04 09:03:00-05:00  13684  None       0, MultiIndex([( 'close', 13684),
-                                ('volume', 13684)],
-                                                      names=[None, 'id']))' is '<class 'tuple'>' instead of '<class 'pandas.core.frame.DataFrame'>'
-                                                      ################################################################################
-                                                      """
+        expected_error_message = "\n################################################################################\n* Failed assertion *\nInstance of '(                              id close  volume\n2022-01-04 09:01:00-05:00  13684  None       0\n2022-01-04 09:02:00-05:00  13684  None       0\n2022-01-04 09:03:00-05:00  13684  None       0, MultiIndex([( 'close', 13684),\n            ('volume', 13684)],\n           names=[None, 'id']))' is '<class 'tuple'>' instead of '<class 'pandas.core.frame.DataFrame'>'\n################################################################################\n"
         self.assert_equal(actual_error_message, expected_error_message)
 
     def test6(self) -> None:
