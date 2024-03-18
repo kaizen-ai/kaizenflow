@@ -185,7 +185,9 @@ def validate_df_indices(df: pd.DataFrame) -> None:
 
 def convert_to_multiindex(df: pd.DataFrame, asset_id_col: str) -> pd.DataFrame:
     """
-    Transform a df like: ```
+    Transform a df like: 
+    
+    ```
 
     :                            id close  volume
     end_time

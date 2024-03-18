@@ -1,0 +1,197 @@
+The AM_AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
+The AM_AWS_DEFAULT_REGION variable is not set. Defaulting to a blank string.
+The AM_AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
+The AM_FORCE_TEST_FAIL variable is not set. Defaulting to a blank string.
+The AM_TELEGRAM_TOKEN variable is not set. Defaulting to a blank string.
+The CK_AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
+The CK_AWS_DEFAULT_REGION variable is not set. Defaulting to a blank string.
+The CK_AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
+The CK_TELEGRAM_TOKEN variable is not set. Defaulting to a blank string.
+Creating compose_linter_run ... 
+Creating compose_linter_run ... done
+##> devops/docker_run/entrypoint.sh
+UID=1000
+GID=1000
+# Activate environment
+##> /app/devops/docker_run/setenv.sh
+# Set PATH
+PATH=/app:/app/linters:/app/dev_scripts_devto/notebooks:/app/documentation_devto/scripts:/app/amp/documentation/scripts:/app/amp/dev_scripts/testing:/app/amp/dev_scripts/notebooks:/app/amp/dev_scripts/install:/app/amp/dev_scripts/infra:/app/amp/dev_scripts/git:/app/amp/dev_scripts/aws:/app/amp/dev_scripts:/app/amp:.:/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+# Set PYTHONPATH
+PYTHONPATH=/app:/app/amp:
+# Configure env
+git --version: git version 2.25.1
+/src
+[33mWARNING[0m: AWS credential check failed: can't find /home/.aws/credentials file.
+[33mWARNING[0m: AWS credential check failed: can't find /home/.aws/config file.
+# Check AWS authentication setup
+
+The config profile (am) could not be found
+      Name                    Value             Type    Location
+      ----                    -----             ----    --------
+   profile                       am           manual    --profile
+AM_CONTAINER_VERSION='1.4.0'
+which python: /venv/bin/python
+python -V: Python 3.9.5
+pandas: 2.0.3
+helpers: <module 'helpers' from '/src/helpers/__init__.py'>
+PATH=/app:/app/linters:/app/dev_scripts_devto/notebooks:/app/documentation_devto/scripts:/app/amp/documentation/scripts:/app/amp/dev_scripts/testing:/app/amp/dev_scripts/notebooks:/app/amp/dev_scripts/install:/app/amp/dev_scripts/infra:/app/amp/dev_scripts/git:/app/amp/dev_scripts/aws:/app/amp/dev_scripts:/app/amp:.:/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PYTHONPATH=/app:/app/amp:
+entrypoint.sh: 'pre-commit run -c /app/.pre-commit-config.yaml --files dataflow/core/test/test_utils.py'
+One and only one set-up config should be true:
+is_cmamp_prod=False
+is_dev4=False
+is_dev_ck=False
+is_ig_prod=False
+is_inside_ci=False
+is_mac=False
+[0m[36mINFO[0m: > cmd='/venv/bin/invoke print_env'
+00:13:43 - [41mWARN [0m henv.py get_repo_config_file:502                       Using value '/app/repo_config.py' for AM_REPO_CONFIG_PATH from env var
+00:13:43 - [41mWARN [0m <string> _raise_invalid_host:148                       Don't recognize host: host_os_name=Linux, am_host_os_name=Linux
+00:13:43 - [41mWARN [0m <string> _raise_invalid_host:148                       Don't recognize host: host_os_name=Linux, am_host_os_name=Linux
+00:13:43 - [41mWARN [0m <string> _raise_invalid_host:148                       Don't recognize host: host_os_name=Linux, am_host_os_name=Linux
+[31m-----------------------------------------------------------------------------
+This code is not in sync with the container:
+code_version='1.12.0' != container_version='1.4.0'
+-----------------------------------------------------------------------------
+You need to:
+- merge origin/master into your branch with `invoke git_merge_master`
+- pull the latest container with `invoke docker_pull`[0m
+# Repo config:
+  enable_privileged_mode='False'
+  get_docker_base_image_name='dev_tools'
+  get_docker_shared_group=''
+  get_docker_user=''
+  get_host_name='github.com'
+  get_invalid_words='[]'
+  get_name='//dev_tools'
+  get_repo_map='{'cmamp': 'cryptokaizen/cmamp'}'
+  get_shared_data_dirs='None'
+  has_dind_support='False'
+  has_docker_sudo='False'
+  is_AM_S3_available='True'
+  is_CK_S3_available='True'
+  is_dev4='False'
+  is_dev_ck='False'
+  is_inside_ci='False'
+  is_inside_docker='True'
+  is_mac='False'
+  run_docker_as_root='False'
+  skip_submodules_test='True'
+  use_docker_network_mode_host='False'
+  use_docker_sibling_containers='False'
+# System signature:
+  # Git
+    branch_name='SorrTask542_Make__convert_to_multiindex_public_and_move_to_a_general_lib_final'
+    hash='b1f8ab8d6'
+    # Last commits:
+      * b1f8ab8d6 Jd8111997 removing empty spaces                                             (  24 hours ago) Sun Mar 17 04:38:31 2024  (HEAD -> SorrTask542_Make__convert_to_multiindex_public_and_move_to_a_general_lib_final, origin/SorrTask542_Make__convert_to_multiindex_public_and_move_to_a_general_lib_final)
+      * 2aef59780 Jd8111997 updating changes in test utils                                    (  24 hours ago) Sun Mar 17 04:36:48 2024           
+      * a31485789 Jd8111997 updating function calls                                           (    6 days ago) Mon Mar 11 19:19:13 2024           
+  # Machine info
+    system=Linux
+    node name=1cb19a380de0
+    release=5.15.0-100-generic
+    version=#110~20.04.1-Ubuntu SMP Tue Feb 13 14:25:03 UTC 2024
+    machine=x86_64
+    processor=x86_64
+    cpu count=4
+    cpu freq=scpufreq(current=1568.366, min=500.0, max=2900.0)
+    memory=svmem(total=8189825024, available=1390018560, percent=83.0, used=5633466368, free=374386688, active=3040006144, inactive=4107096064, buffers=60993536, cached=2120978432, shared=866582528, slab=309821440)
+    disk usage=sdiskusage(total=56126914560, used=42812514304, free=10437066752, percent=80.4)
+  # Packages
+    python: 3.9.5
+    cvxopt: ?
+    cvxpy: ?
+    gluonnlp: ?
+    gluonts: ?
+    joblib: 1.3.2
+    mxnet: ?
+    numpy: 1.24.4
+    pandas: 2.0.3
+    pyarrow: ?
+    scipy: 1.10.1
+    seaborn: ?
+    sklearn: ?
+    statsmodels: 0.14.0
+# Env vars:
+  AM_AWS_ACCESS_KEY_ID=undef
+  AM_AWS_DEFAULT_REGION=undef
+  AM_AWS_PROFILE='am'
+  AM_AWS_S3_BUCKET='alphamatic-data'
+  AM_AWS_SECRET_ACCESS_KEY=undef
+  AM_ECR_BASE_PATH='665840871993.dkr.ecr.us-east-1.amazonaws.com'
+  AM_ENABLE_DIND='0'
+  AM_FORCE_TEST_FAIL=''
+  AM_HOST_NAME='jd81197-Latitude-E7250'
+  AM_HOST_OS_NAME='Linux'
+  AM_HOST_USER_NAME='jd81197'
+  AM_HOST_VERSION='5.15.0-100-generic'
+  AM_REPO_CONFIG_CHECK='True'
+  AM_REPO_CONFIG_PATH='/app/repo_config.py'
+  AM_TELEGRAM_TOKEN=empty
+  CI=''
+  CK_AWS_ACCESS_KEY_ID=empty
+  CK_AWS_DEFAULT_REGION=''
+  CK_AWS_S3_BUCKET='cryptokaizen-data'
+  CK_AWS_SECRET_ACCESS_KEY=empty
+  CK_ECR_BASE_PATH='sorrentum'
+  GH_ACTION_ACCESS_TOKEN=empty
+
+Check for merge conflicts................................................Passed
+Trim Trailing Whitespace.................................................Passed
+Fix End of Files.........................................................Passed
+Check for added large files..............................................Passed
+CRLF end-lines remover...................................................Passed
+Tabs remover.............................................................Passed
+autoflake................................................................Passed
+add_python_init_files....................................................Passed
+amp_lint_md..........................................(no files to check)Skipped
+amp_doc_formatter........................................................Passed
+amp_isort................................................................Failed
+- hook id: amp_isort
+- files were modified by this hook
+
+One and only one set-up config should be true:
+is_cmamp_prod=False
+is_dev4=False
+is_dev_ck=False
+is_ig_prod=False
+is_inside_ci=False
+is_mac=False
+[0m[36mINFO[0m: > cmd='/app/linters/amp_isort.py dataflow/core/test/test_utils.py'
+
+amp_class_method_order...................................................Failed
+- hook id: amp_class_method_order
+- files were modified by this hook
+
+One and only one set-up config should be true:
+is_cmamp_prod=False
+is_dev4=False
+is_dev_ck=False
+is_ig_prod=False
+is_inside_ci=False
+is_mac=False
+[0m[36mINFO[0m: > cmd='/app/linters/amp_class_method_order.py dataflow/core/test/test_utils.py'
+
+amp_normalize_import.....................................................Passed
+amp_format_separating_line...............................................Passed
+amp_black................................................................Failed
+- hook id: amp_black
+- files were modified by this hook
+
+One and only one set-up config should be true:
+is_cmamp_prod=False
+is_dev4=False
+is_dev_ck=False
+is_ig_prod=False
+is_inside_ci=False
+is_mac=False
+[0m[36mINFO[0m: > cmd='/app/linters/amp_black.py dataflow/core/test/test_utils.py'
+
+amp_processjupytext......................................................Passed
+amp_check_filename.......................................................Passed
+amp_warn_incorrectly_formatted_todo......................................Passed
+amp_flake8...............................................................Passed
+amp_pylint...............................................................Passed
+amp_mypy.................................................................Passed
+1
