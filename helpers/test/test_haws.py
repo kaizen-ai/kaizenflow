@@ -221,24 +221,29 @@ class Test_get_ecs_client(hunitest.TestCase):
         os.environ["MOCK_AWS_SESSION_TOKEN"] = "testing"
         os.environ["MOCK_AWS_DEFAULT_REGION"] = "us-east-1"
 
+    def mock_ecs_client(self, region: Optional[str] = None) -> None:
+        aws_profile = "__mock__"
+        test_cluster_name = "test-cluster"
+        # Create mock ECS client.
+        ecs_client = boto3.client("ecs", region_name="us-east-1")
+        ecs_client.create_cluster(clusterName=test_cluster_name)
+        # Get ECS client.
+        if region:
+            test_client = haws.get_ecs_client(aws_profile, region=region)
+        else:
+            test_client = haws.get_ecs_client(aws_profile)
+        # Get the created cluster.
+        cluster_name = test_client.list_clusters()["clusterArns"][0]
+        # Check region and cluster name.
+        self.assertIn(test_cluster_name, cluster_name)
+
     @mock_ecs
     def test1(self) -> None:
         """
         Test that `haws.get_ecs_client()` correctly return a client to work 
         with ECS within a specified region.
         """
-        aws_profile = "__mock__"
-        test_cluster_name = "test-cluster"
-        region = "us-east-1"
-        # Create mock ECS client.
-        ecs_client = boto3.client("ecs", region_name=region)
-        _ = ecs_client.create_cluster(clusterName=test_cluster_name)
-        # Get ECS client.
-        test_client = haws.get_ecs_client(aws_profile, region=region)
-        # Get the created cluster.
-        cluster_name = test_client.list_clusters()["clusterArns"][0]
-        # Check region and cluster name.
-        self.assertIn(test_cluster_name, cluster_name)
+        self.mock_ecs_client(region="us-east-1")
         
     @mock_ecs
     def test2(self) -> None:
@@ -246,15 +251,4 @@ class Test_get_ecs_client(hunitest.TestCase):
         Test that `haws.get_ecs_client()` correctly return a client to work 
         with ECS without a specified region.
         """
-        aws_profile = "__mock__"
-        test_cluster_name = "test-cluster"
-        region = "us-east-1"
-        # Create mock ECS client.
-        ecs_client = boto3.client("ecs", region_name=region)
-        _ = ecs_client.create_cluster(clusterName=test_cluster_name)
-        # Get ECS client.
-        test_client = haws.get_ecs_client(aws_profile)
-        # Get the created cluster.
-        cluster_name = test_client.list_clusters()["clusterArns"][0]
-        # Check region and cluster name.
-        self.assertIn(test_cluster_name, cluster_name)
+        self.mock_ecs_client()
