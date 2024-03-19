@@ -53,9 +53,9 @@ class Test_get_DagBuilder_name_from_string(hunitest.TestCase):
 
 class Test_convert_to_multiindex(hunitest.TestCase):
     @staticmethod
-    def get_test_data() -> Tuple[pd.DataFrame, pd.MultiIndex]:
+    def get_test_data_multiple_asset() -> Tuple[pd.DataFrame, pd.MultiIndex]:
         """
-        Function that returns dummy dataframe with multiple asset id and
+        Function that return dummy dataframe with multiple asset id and
         Multiindex.
         """
         data = {
@@ -77,7 +77,7 @@ class Test_convert_to_multiindex(hunitest.TestCase):
     @staticmethod
     def get_test_data_single_asset() -> Tuple[pd.DataFrame, pd.MultiIndex]:
         """
-        " Function that returns dummy dataframe with single asset id and
+        Function that return dummy dataframe with single asset id and
         Multiindex.
         """
         data = {
@@ -113,7 +113,7 @@ class Test_convert_to_multiindex(hunitest.TestCase):
         Test that a function transforms the DataFrame correctly.
         """
         # Prepare input and expected output.
-        df, expected_df_columns = self.get_test_data()
+        df, expected_df_columns = self.get_test_data_multiple_asset()
         asset_id_col = "id"
         # Prepare the actual output by running function.
         actual_df = dtfcorutil.convert_to_multiindex(df, asset_id_col)
@@ -125,7 +125,7 @@ class Test_convert_to_multiindex(hunitest.TestCase):
         Test that a function handles a DataFrame with duplicate rows correctly.
         """
         # Prepare input and expected output.
-        df, expected_df_columns = self.get_test_data()
+        df, expected_df_columns = self.get_test_data_multiple_asset()
         asset_id_col = "id"
         df = pd.concat([df, df.head(1)])
         # Prepare the actual output by running function.
