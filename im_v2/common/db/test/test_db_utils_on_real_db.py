@@ -59,7 +59,6 @@ def initialize_database() -> psycop._psycopg.connection:
 class TestSaveDataToDb(hunitest.TestCase):
     """
     This class tests im_v2.common.db.db_utils.save_data_to_db on real database, not a mock.
-    Very similar to TestSaveDataToDb class above - maybe up to redundant-level similar.
     """
 
     # This will be run before and after each test.
