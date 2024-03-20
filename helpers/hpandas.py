@@ -1968,7 +1968,7 @@ def compare_dfs(
     """
     hdbg.dassert_isinstance(df1, pd.DataFrame)
     hdbg.dassert_isinstance(df2, pd.DataFrame)
-    # Check value of `assert_diff_threshold` if exists.
+    # Check value of `assert_diff_threshold`, if it was passed.
     if assert_diff_threshold:
         hdbg.dassert_lte(assert_diff_threshold, 1.0)
         hdbg.dassert_lte(0.0, assert_diff_threshold)
@@ -2002,15 +2002,17 @@ def compare_dfs(
         # Test and convert the assertion into a boolean.
         is_ok = True
         try:
-            pd.testing.assert_frame_equal(df1, df2, check_like=True, check_dtype=False)
+            pd.testing.assert_frame_equal(
+                df1, df2, check_like=True, check_dtype=False
+            )
         except AssertionError as e:
             is_ok = False
-            assertion = e
-        # Check `is_ok` and raise an assertion depending on `only_warning`
+            _ = e
+        # Check `is_ok` and raise an assertion depending on `only_warning`.
         if not is_ok:
             hdbg._dfatal(
-                assertion,
-                "df1=\n%s\n and df2=\n%s\n don't have compatible size",
+                _,
+                "df1=\n%s\n and df2=\n%s\n are not equal.",
                 df_to_str(df1, log_level=log_level),
                 df_to_str(df2, log_level=log_level),
                 only_warning=only_warning,
@@ -2051,7 +2053,7 @@ def compare_dfs(
             if not is_ok:
                 hdbg._dfatal(
                     assertion,
-                    "df1=\n%s\n and df2=\n%s\n don't have compatible size",
+                    "df1=\n%s\n and df2=\n%s\n are not equal.",
                     df_to_str(df1, log_level=log_level),
                     df_to_str(df2, log_level=log_level),
                     only_warning=only_warning,
