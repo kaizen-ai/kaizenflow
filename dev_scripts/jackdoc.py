@@ -22,13 +22,13 @@ _LOG = logging.getLogger(__name__)
 DOCS_DIR = "docs"
 
 
-def parse_arguments():
+def _parse():
     # Parse command line arguments.
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "search_term", help="Regex pattern to search in Markdown files"
+        "search_term", help="Term to search in Markdown files"
     )
     parser.add_argument(
         "--skip-toc",
@@ -41,16 +41,16 @@ def parse_arguments():
         help="Search only in sections (lines starting with '#')",
     )
     parser.add_argument("--subdir", help="Subdirectory to search within")
-    return parser.parse_args()
+    return parser
 
 
-def remove_toc(content):
+def _remove_toc(content):
     # Remove table of contents from Markdown content.
     toc_pattern = r"<!--\s*toc\s*-->(.*?)<!--\s*tocstop\s*-->"
     return re.sub(toc_pattern, "", content, flags=re.DOTALL)
 
 
-def search_in_markdown_files(
+def _search_in_markdown_files(
     git_root, search_term, skip_toc=False, sections_only=False, subdir=None
 ):
     found_in_files = []
@@ -65,21 +65,20 @@ def search_in_markdown_files(
             if file.endswith(".md"):
                 md_file = os.path.join(root, file)
                 content = hio.from_file(md_file)
-                content = remove_toc(content) if skip_toc else content
+                content = _remove_toc(content) if skip_toc else content
                 lines = content.split("\n")
                 for line_num, line in enumerate(lines, start=1):
                     if sections_only and not line.startswith("#"):
                         continue
                     if re.search(search_term, line):
                         found_in_files.append((md_file, line_num))
-
     return found_in_files
 
 
-def main():
-    args = parse_arguments()
+def _main(parser):
+    args = parser.parse_args()
     git_root = hgit.get_client_root(super_module=True)
-    found_in_files = search_in_markdown_files(
+    found_in_files = _search_in_markdown_files(
         git_root, args.search_term, args.skip_toc, args.sections_only, args.subdir
     )
 
@@ -95,4 +94,4 @@ def main():
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    main()
+    _main(_parse())
