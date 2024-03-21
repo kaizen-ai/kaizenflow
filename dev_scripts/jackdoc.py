@@ -12,6 +12,7 @@ import argparse
 import logging
 import os
 import re
+from typing import List, Optional, Tuple
 
 import helpers.hgit as hgit
 import helpers.hio as hio
@@ -19,10 +20,10 @@ import helpers.hio as hio
 _LOG = logging.getLogger(__name__)
 
 # Define the relative path to the docs directory.
-DOCS_DIR = "docs"
+DOCS_DIR: str = "docs"
 
 
-def _parse():
+def _parse() -> argparse.ArgumentParser:
     # Parse command line arguments.
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -44,17 +45,21 @@ def _parse():
     return parser
 
 
-def _remove_toc(content):
+def _remove_toc(content: str) -> str:
     # Remove table of contents from Markdown content.
-    toc_pattern = r"<!--\s*toc\s*-->(.*?)<!--\s*tocstop\s*-->"
+    toc_pattern: str = r"<!--\s*toc\s*-->(.*?)<!--\s*tocstop\s*-->"
     return re.sub(toc_pattern, "", content, flags=re.DOTALL)
 
 
 def _search_in_markdown_files(
-    git_root, search_term, skip_toc=False, sections_only=False, subdir=None
-):
-    found_in_files = []
-    docs_path = (
+    git_root: str,
+    search_term: str,
+    skip_toc: bool = False,
+    sections_only: bool = False,
+    subdir: Optional[str] = None
+) -> List[Tuple[str, int]]:
+    found_in_files: List[Tuple[str, int]] = []
+    docs_path: str = (
         os.path.join(git_root, DOCS_DIR, subdir)
         if subdir
         else os.path.join(git_root, DOCS_DIR)
@@ -63,10 +68,10 @@ def _search_in_markdown_files(
     for root, _, files in os.walk(docs_path):
         for file in files:
             if file.endswith(".md"):
-                md_file = os.path.join(root, file)
-                content = hio.from_file(md_file)
-                content = _remove_toc(content) if skip_toc else content
-                lines = content.split("\n")
+                md_file: str = os.path.join(root, file)
+                content: str = hio.from_file(md_file)
+                content: str = _remove_toc(content) if skip_toc else content
+                lines: List[str] = content.split("\n")
                 for line_num, line in enumerate(lines, start=1):
                     if sections_only and not line.startswith("#"):
                         continue
@@ -75,18 +80,18 @@ def _search_in_markdown_files(
     return found_in_files
 
 
-def _main(parser):
-    args = parser.parse_args()
-    git_root = hgit.get_client_root(super_module=True)
-    found_in_files = _search_in_markdown_files(
+def _main(parser: argparse.ArgumentParser) -> None:
+    args: argparse.Namespace = parser.parse_args()
+    git_root: str = hgit.get_client_root(super_module=True)
+    found_in_files: List[Tuple[str, int]] = _search_in_markdown_files(
         git_root, args.search_term, args.skip_toc, args.sections_only, args.subdir
     )
 
     if found_in_files:
         _LOG.info("Input found in the following Markdown files:")
         for file_path, line_num in found_in_files:
-            relative_path = os.path.relpath(file_path, git_root)
-            url = f"{git_root}/{relative_path}#L{line_num}"
+            relative_path: str = os.path.relpath(file_path, git_root)
+            url: str = f"{git_root}/{relative_path}#L{line_num}"
             _LOG.info(url)
     else:
         _LOG.info("Input not found in any Markdown files.")
