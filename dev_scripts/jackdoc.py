@@ -35,7 +35,7 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--skip-toc",
         action="store_true",
-        help="Skip results in the table of contents (TOC)",
+        help="Skip search results from the table of contents (TOC)",
     )
     parser.add_argument(
         "--sections-only",
@@ -58,9 +58,22 @@ def get_github_info() -> Tuple[str, str]:
 
 
 def _remove_toc(content: str) -> str:
-    # Remove table of contents from Markdown content.
+    # Skip search results from the table of contents (TOC).
     toc_pattern: str = r"<!--\s*toc\s*-->(.*?)<!--\s*tocstop\s*-->"
-    return re.sub(toc_pattern, "", content, flags=re.DOTALL)
+    toc_match = re.search(toc_pattern, content, flags=re.DOTALL)
+    if toc_match:
+        toc_content = toc_match.group(1)
+        # Split the TOC content into lines and collect line numbers to be excluded
+        toc_lines = toc_content.split("\n")
+        excluded_lines = set()
+        for toc_line in toc_lines:
+            # Exclude lines that are part of the TOC
+            excluded_lines.add(content.count(toc_line, 0, toc_match.start(1)) + 1)
+        # Remove TOC lines from the content
+        content_lines = content.split("\n")
+        filtered_content = [line for i, line in enumerate(content_lines, start=1) if i not in excluded_lines]
+        return "\n".join(filtered_content)
+    return content
 
 
 def _search_in_markdown_files(
@@ -82,7 +95,8 @@ def _search_in_markdown_files(
             if file.endswith(".md"):
                 md_file: str = os.path.join(root, file)
                 content: str = hio.from_file(md_file)
-                content: str = _remove_toc(content) if skip_toc else content
+                if skip_toc:
+                    content = _remove_toc(content)
                 lines: List[str] = content.split("\n")
                 for line_num, line in enumerate(lines, start=1):
                     if sections_only and not line.startswith("#"):
@@ -104,9 +118,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.info("Input found in the following Markdown files:")
         for file_path, line_num in found_in_files:
             relative_path: str = os.path.relpath(file_path, git_root)
-            # Constructing the GitHub URL based on --sections-only flag.
+            # Constructing the GitHub URL based on --sections-only flag
             if args.sections_only:
-                # Extracting section name using regular expression.
+                # Extracting section name using regular expression
                 with open(file_path, 'r', encoding='utf-8') as file:
                     content = file.read()
                 section_match = re.search(r'^#+\s*(.*)$', content.splitlines()[line_num - 1])
@@ -114,7 +128,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 # Sanitize section name
                 section_name = re.sub(r"[^\w\s-]", "", section_name)
                 section_name = section_name.replace(" ", "-")
-                section_name = section_name.replace("--", "-")  
+                section_name = section_name.replace("--", "-")  # Handle double hyphens
+                # Replace multiple consecutive hyphens with a single hyphen
                 section_name = re.sub(r"-+", "-", section_name)
                 url = f"https://github.com/{username}/{repo}/blob/master/{relative_path}#{section_name}"
             else:
