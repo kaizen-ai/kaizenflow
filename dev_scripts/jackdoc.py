@@ -1,11 +1,9 @@
 #!/usr/bin/env python
-
 """
-jackdoc: Locate input from md files in docs dir and generate corresponding file links.
+jackdoc: Locate input from Markdown files in the docs directory and generate corresponding file links.
 
 Example usage:
-jackdoc "search_term" [--skip-toc] [--sections-only] [--subdir <subdirectory>]
-
+jackdoc "search_term" [--skip-toc] [--line-only] [--subdir <subdirectory>]
 """
 
 import argparse
@@ -13,7 +11,6 @@ import logging
 import os
 import re
 import subprocess
-from typing import List, Optional, Tuple
 
 import helpers.hgit as hgit
 import helpers.hio as hio
@@ -21,10 +18,10 @@ import helpers.hio as hio
 _LOG = logging.getLogger(__name__)
 
 # Define the relative path to the docs directory.
-DOCS_DIR: str = "docs"
+DOCS_DIR = "docs"
 
 
-def _parse() -> argparse.ArgumentParser:
+def _parse():
     # Parse command line arguments.
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -38,15 +35,15 @@ def _parse() -> argparse.ArgumentParser:
         help="Skip search results from the table of contents (TOC)",
     )
     parser.add_argument(
-        "--sections-only",
+        "--line-only",
         action="store_true",
-        help="Search only in sections (lines starting with '#')",
+        help="Search terms through the document and generate links with line numbers",
     )
     parser.add_argument("--subdir", help="Subdirectory to search within")
     return parser
 
 
-def get_github_info() -> Tuple[str, str]:
+def _get_github_info():
     try:
         remote_url = subprocess.check_output(["git", "config", "--get", "remote.origin.url"]).decode().strip()
         match = re.match(r'^https://github.com/(.*)/(.*)\.git$', remote_url)
@@ -57,83 +54,62 @@ def get_github_info() -> Tuple[str, str]:
     raise ValueError("Not a GitHub repository")
 
 
-def _remove_toc(content: str) -> str:
+def _remove_toc(content):
     # Skip search results from the table of contents (TOC).
-    toc_pattern: str = r"<!--\s*toc\s*-->(.*?)<!--\s*tocstop\s*-->"
+    toc_pattern = r"<!--\s*toc\s*-->(.*?)<!--\s*tocstop\s*-->"
     toc_match = re.search(toc_pattern, content, flags=re.DOTALL)
     if toc_match:
         toc_content = toc_match.group(1)
-        # Split the TOC content into lines and collect line numbers to be excluded
         toc_lines = toc_content.split("\n")
-        excluded_lines = set()
-        for toc_line in toc_lines:
-            # Exclude lines that are part of the TOC
-            excluded_lines.add(content.count(toc_line, 0, toc_match.start(1)) + 1)
-        # Remove TOC lines from the content
+        excluded_lines = {content.count(toc_line, 0, toc_match.start(1)) + 1 for toc_line in toc_lines}
         content_lines = content.split("\n")
         filtered_content = [line for i, line in enumerate(content_lines, start=1) if i not in excluded_lines]
         return "\n".join(filtered_content)
     return content
 
 
-def _search_in_markdown_files(
-    git_root: str,
-    search_term: str,
-    skip_toc: bool = False,
-    sections_only: bool = False,
-    subdir: Optional[str] = None
-) -> List[Tuple[str, int]]:
-    found_in_files: List[Tuple[str, int]] = []
-    docs_path: str = (
-        os.path.join(git_root, DOCS_DIR, subdir)
-        if subdir
-        else os.path.join(git_root, DOCS_DIR)
-    )
+def _search_in_markdown_files(git_root, search_term, skip_toc=False, line_only=False, subdir=None):
+    found_in_files = []
+    docs_path = os.path.join(git_root, DOCS_DIR, subdir) if subdir else os.path.join(git_root, DOCS_DIR)
+
+    def search_content(content):
+        if skip_toc:
+            content = _remove_toc(content)
+        if line_only:
+            return [(md_file, line_num) for line_num, line in enumerate(content.split("\n"), start=1) if re.search(search_term, line)]
+
+        sections = re.findall(r'^#+\s+(.*)$', content, flags=re.MULTILINE)
+        return [(md_file, section) for section in sections if re.search(search_term, section)]
 
     for root, _, files in os.walk(docs_path):
         for file in files:
             if file.endswith(".md"):
-                md_file: str = os.path.join(root, file)
-                content: str = hio.from_file(md_file)
-                if skip_toc:
-                    content = _remove_toc(content)
-                lines: List[str] = content.split("\n")
-                for line_num, line in enumerate(lines, start=1):
-                    if sections_only and not line.startswith("#"):
-                        continue
-                    if re.search(search_term, line):
-                        found_in_files.append((md_file, line_num))
+                md_file = os.path.join(root, file)
+                content = hio.from_file(md_file)
+                found_in_files.extend(search_content(content))
     return found_in_files
 
 
-def _main(parser: argparse.ArgumentParser) -> None:
-    args: argparse.Namespace = parser.parse_args()
-    git_root: str = hgit.get_client_root(super_module=True)
-    username, repo = get_github_info()
-    found_in_files: List[Tuple[str, int]] = _search_in_markdown_files(
-        git_root, args.search_term, args.skip_toc, args.sections_only, args.subdir
+def _main(parser):
+    args = parser.parse_args()
+    git_root = hgit.get_client_root(super_module=True)
+    username, repo = _get_github_info()
+    found_items = _search_in_markdown_files(
+        git_root, args.search_term, args.skip_toc, args.line_only, args.subdir
     )
 
-    if found_in_files:
-        _LOG.info("Input found in the following Markdown files:")
-        for file_path, line_num in found_in_files:
-            relative_path: str = os.path.relpath(file_path, git_root)
-            # Constructing the GitHub URL based on --sections-only flag
-            if args.sections_only:
-                # Extracting section name using regular expression
-                with open(file_path, 'r', encoding='utf-8') as file:
-                    content = file.read()
-                section_match = re.search(r'^#+\s*(.*)$', content.splitlines()[line_num - 1])
-                section_name = section_match.group(1).strip() if section_match else f"line_{line_num}"
-                # Sanitize section name
-                section_name = re.sub(r"[^\w\s-]", "", section_name)
-                section_name = section_name.replace(" ", "-")
-                section_name = section_name.replace("--", "-")  # Handle double hyphens
-                # Replace multiple consecutive hyphens with a single hyphen
+    if found_items:
+        _LOG.info("Input found in the following items:")
+        for item in found_items:
+            file_path, item_ref = item
+            relative_path = os.path.relpath(file_path, git_root)
+            if args.line_only:
+                url = f"https://github.com/{username}/{repo}/blob/master/{relative_path}?plain=1#L{item_ref}"
+            else:
+                section_name = re.sub(r"[^\w\s-]", "", item_ref)
+                section_name = section_name.replace(" ", "-").replace("--", "-")
                 section_name = re.sub(r"-+", "-", section_name)
                 url = f"https://github.com/{username}/{repo}/blob/master/{relative_path}#{section_name}"
-            else:
-                url = f"https://github.com/{username}/{repo}/blob/master/{relative_path}?plain=1#L{line_num}"
             _LOG.info(url)
     else:
         _LOG.info("Input not found in any Markdown files.")
