@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 
 """
-jackdoc: A tool to search for input in Markdown files and provide links to the files where the input was found.
+jackdoc: Locate input from md files in docs dir and generate corresponding file links.
 
 Example usage:
 jackdoc "search_term" [--skip-toc] [--sections-only] [--subdir <subdirectory>]
 
-Import as:
-
-import dev_scripts.jackdoc as jackdoc
 """
 
 import argparse
@@ -21,11 +18,12 @@ import helpers.hio as hio
 
 _LOG = logging.getLogger(__name__)
 
-# Define the relative path to the docs directory
+# Define the relative path to the docs directory.
 DOCS_DIR = "docs"
 
 
 def parse_arguments():
+    # Parse command line arguments.
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -47,7 +45,7 @@ def parse_arguments():
 
 
 def remove_toc(content):
-    # Remove everything between <!-- toc --> and <!-- tocstop -->
+    # Remove table of contents from Markdown content.
     toc_pattern = r"<!--\s*toc\s*-->(.*?)<!--\s*tocstop\s*-->"
     return re.sub(toc_pattern, "", content, flags=re.DOTALL)
 
@@ -66,15 +64,12 @@ def search_in_markdown_files(
         for file in files:
             if file.endswith(".md"):
                 md_file = os.path.join(root, file)
-                # Read the content of the Markdown file
                 content = hio.from_file(md_file)
-                # If --skip-toc is enabled, remove TOC from the content
                 content = remove_toc(content) if skip_toc else content
                 lines = content.split("\n")
                 for line_num, line in enumerate(lines, start=1):
                     if sections_only and not line.startswith("#"):
-                        continue  # Skip lines if --sections-only is enabled and not a section heading
-
+                        continue
                     if re.search(search_term, line):
                         found_in_files.append((md_file, line_num))
 
