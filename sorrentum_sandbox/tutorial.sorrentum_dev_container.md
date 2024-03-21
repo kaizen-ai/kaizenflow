@@ -375,9 +375,6 @@
   > docker volume ls
   ```
 
-- Since you are starting from scratch here you need to re-run
-  `./init_airflow_setup.sh`
-
 - To rebuild after trying out some changes in dockerfile/compose file
   ```bash
   > docker-compose up --build --force-recreate

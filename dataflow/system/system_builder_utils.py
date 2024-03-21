@@ -25,6 +25,7 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
+import im_v2.common.universe as ivcu
 import market_data as mdata
 import oms
 
@@ -222,34 +223,18 @@ def build_ImClient_from_System(system: dtfsyssyst.System) -> icdc.ImClient:
     return im_client
 
 
+# TODO(Grisha): use the function for the real-time Systems also.
 def apply_ImClient_config(
     system: dtfsyssyst.System,
-    universe_version: str,
-    root_dir: str,
-    data_snapshot: str,
-    version: str,
-    download_universe_version: str,
+    im_client_config: Dict[str, Any],
 ) -> dtfsyssyst.System:
     """
-    Fill IM client config and pass it to the system config.
+    Pass IM client config to the system config.
     """
-    # TODO(Grisha): consider exposing both `im_client_ctor` and `im_client_config`.
+    # TODO(Grisha): consider exposing `im_client_ctor`.
     system.config[
         "market_data_config", "im_client_ctor"
     ] = icdcl.CcxtHistoricalPqByTileClient
-    im_client_config = {
-        "universe_version": universe_version,
-        "root_dir": root_dir,
-        "partition_mode": "by_year_month",
-        "dataset": "ohlcv",
-        "contract_type": "futures",
-        "data_snapshot": data_snapshot,
-        "aws_profile": "ck",
-        "resample_1min": False,
-        "version": version,
-        "download_universe_version": download_universe_version,
-        "tag": "downloaded_1min",
-    }
     system.config[
         "market_data_config", "im_client_config"
     ] = cconfig.Config.from_dict(im_client_config)
@@ -262,13 +247,12 @@ def apply_MarketData_config(system: dtfsyssyst.System) -> dtfsyssyst.System:
     Convert full symbol universe to asset ids and fill market data config.
     """
     hdbg.dassert_isinstance(system, dtfsyssyst.ForecastSystem)
-    # Set ImClient and get asset ids.
-    im_client = build_ImClient_from_System(system)
     universe_str = system.config["backtest_config", "universe_str"]
     full_symbols = dtfuniver.get_universe(universe_str)
-    asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
+    asset_ids = [
+        ivcu.string_to_numerical_id(full_symbol) for full_symbol in full_symbols
+    ]
     # Set market data config values.
-    system.config["market_data_config", "im_client"] = im_client
     system.config["market_data_config", "asset_ids"] = asset_ids
     system.config["market_data_config", "asset_id_col_name"] = "asset_id"
     return system

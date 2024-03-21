@@ -8,32 +8,31 @@ import helpers.hgit as hgit
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 import im_v2.common.data.transform.transform_pq_by_date_to_by_asset as imvcdttpbdtba
+import im_v2.common.test as imvct
 
 
-@pytest.mark.skip("TODO(gp): Need to update this tests after transform v1.3")
+@pytest.mark.skip(
+    reason="TODO(gp): Need to update this tests after transform v1.3."
+    "See CmampTask7538 for details."
+)
 class TestPqByDateToByAsset1(hunitest.TestCase):
     def generate_test_data(self, verbose: bool) -> Tuple[str, str]:
         """
         Generate test data in form of daily Parquet files.
         """
+        start_date = "2021-12-30"
+        end_date = "2022-01-01"
+        assets = ["A", "B", "C"]
+        asset_col_name = "ticker"
         test_dir = self.get_scratch_space()
         by_date_dir = os.path.join(test_dir, "by_date")
-        cmd = []
-        file_path = os.path.join(
-            hgit.get_amp_abs_path(),
-            "im_v2/common/test/generate_pq_test_data.py",
-        )
-        cmd.append(file_path)
-        cmd.append("--start_date 2021-12-30")
-        cmd.append("--end_date 2022-01-02")
-        cmd.append("--assets A,B,C")
-        cmd.append("--asset_col_name ticker")
-        cmd.append(f"--dst_dir {by_date_dir}")
+        kwargs = {}
         if verbose:
-            cmd.append("--output_type verbose_open")
-            cmd.append("--reset_index")
-        cmd = " ".join(cmd)
-        hsystem.system(cmd)
+            kwargs["output_type"] = "verbose_open"
+            kwargs["reset_index"] = True
+        imvct.generate_parquet_files(
+            start_date, end_date, assets, asset_col_name, by_date_dir, **kwargs
+        )
         return test_dir, by_date_dir
 
     def check_directory_structure_with_file_contents(
@@ -45,7 +44,8 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         for any differences.
 
         :param by_date_dir: daily PQ files before conversion
-        :param by_asset_dir: daily PQ files after conversion in by asset format
+        :param by_asset_dir: daily PQ files after conversion in by asset
+            format
         """
         include_file_content = True
         by_date_signature = hunitest.get_dir_signature(

@@ -11,7 +11,7 @@ import pandas as pd
 
 import dataflow.core as dtfcore
 import dataflow.model as dtfmod
-import helpers.hgit as hgit
+import dataflow_amp.system.Cx.utils as dtfasycxut
 import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
@@ -120,6 +120,7 @@ class Test_Cx_ProdReconciliation_TestCase(hunitest.TestCase):
         txt.append(hprint.frame(tag))
         txt.append(config)
         txt = "\n".join(txt)
+        txt = hunitest.purify_line_number(txt)
         self.check_string(txt, tag=tag, purify_text=True, fuzzy_match=True)
 
     def _get_portfolio_stats(self, system_log_dir_paths: Dict[str, str]) -> None:
@@ -186,19 +187,15 @@ class Test_Cx_ProdReconciliation_TestCase(hunitest.TestCase):
             "20220101_130500"
         """
         dst_root_dir = self.get_s3_input_dir()
+        # TODO(Grisha): rename `test_data.csv.gz` -> `market_data.csv.gz`.
+        market_data_file_path = os.path.join(dst_root_dir, "test_data.csv.gz")
         db_stage = "preprod"
         universe_version = ivcu.get_latest_universe_version()
-        opts = [
-            f"--dst_dir {dst_root_dir}",
-            f"--start_timestamp_as_str {start_timestamp_as_str}",
-            f"--end_timestamp_as_str {end_timestamp_as_str}",
-            f"--db_stage {db_stage}",
-            f"--universe {universe_version}",
-        ]
         # Save market data to the dir with the inputs.
-        amp_dir = hgit.get_amp_abs_path()
-        opts = " ".join(opts)
-        script_name = "dataflow_amp/system/Cx/Cx_dump_market_data.py"
-        script_name = os.path.join(amp_dir, script_name)
-        cmd = " ".join([script_name, opts])
-        hsystem.system(cmd, suppress_output=False)
+        dtfasycxut.dump_market_data_from_db(
+            market_data_file_path,
+            start_timestamp_as_str,
+            end_timestamp_as_str,
+            db_stage,
+            universe_version,
+        )

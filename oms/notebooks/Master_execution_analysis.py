@@ -192,6 +192,24 @@ parent_order_df.head(3)
 parent_order_df.info()
 
 # %% [markdown]
+# ### CCXT fills
+
+# %%
+ccxt_fills = data["ccxt_fills"]
+ccxt_fills.head(3)
+
+# %%
+ccxt_fills.info()
+
+# %%
+# Check if `test_asset_id` is present
+# If the `test_asset_id` is not present, choose the first traded asset.
+traded_asset_ids = sorted(set(child_order_df["asset_id"]))
+if test_asset_id not in traded_asset_ids:
+    test_asset_id = traded_asset_ids[0]
+_LOG.info("test_asset_id=%s", test_asset_id)
+
+# %% [markdown]
 # ## Aggregate CCXT Data
 
 # %%
@@ -494,7 +512,10 @@ group_by_col = "wave_id"
 obccexqu.generate_fee_summary(test_fills, group_by_col)
 
 # %% [markdown]
-# # Time to fill ECDFs
+# # Time to fill
+
+# %% [markdown]
+# ## ECDFs
 
 # %%
 # Compute and plot time to fill ECDFs.
@@ -511,6 +532,34 @@ if "wave_id" in child_order_df.columns:
         ccxt_order_response_df,
         child_order_df,
     )
+
+# %% [markdown]
+# ## Average order lifespan in seconds
+
+# %% run_control={"marked": false}
+# Map symbol to asset ID.
+ccxt_fills["asset_id"] = ccxt_fills["symbol"].apply(
+    lambda x: binance_full_symbol_to_asset_id_mapping[x]
+)
+# Convert `datetime` column from string to timestamp.
+ccxt_fills["datetime"] = ccxt_fills["datetime"].apply(
+    lambda x: pd.to_datetime(x, utc=True)
+)
+
+# %%
+# `datetime` is the time the order appeared on the exchange.
+# `order_update_datetime` is the time the order was closed.
+# Calculate average order lifespan by asset based on the exchange data.
+ccxt_fills["lifespan_in_seconds"] = (
+    ccxt_fills["order_update_datetime"] - ccxt_fills["datetime"]
+).apply(lambda x: x.total_seconds())
+ccxt_fills.groupby("asset_id").apply(lambda x: x["lifespan_in_seconds"].mean())
+
+# %% run_control={"marked": true}
+order_to_lifespan = ccxt_fills.set_index("order")["lifespan_in_seconds"].to_dict()
+child_order_df["lifespan_in_seconds"] = child_order_df["ccxt_id"].apply(
+    lambda x: order_to_lifespan.get(x)
+)
 
 # %% [markdown]
 # # Execution quality
@@ -625,7 +674,11 @@ hpandas.df_to_str(
 actual_vs_ohlcv_execution_df.columns.levels[0].to_list()
 
 # %%
-cofinanc.get_asset_slice(actual_and_ohlcv_price_df, test_asset_id).plot()
+# Some values can be missing in `buy_trade_price` and `sell_trade_price` columns.
+# Interpolate missing values to build continuous line.
+cofinanc.get_asset_slice(actual_and_ohlcv_price_df, test_asset_id).interpolate(
+    method="zero"
+).plot()
 
 # %% [markdown]
 # ## Spread and High-Low Range
@@ -801,15 +854,15 @@ execution_quality_df["underfill_share_count"].abs().sum().round(9)
 
 # %%
 # Total slippage.
-execution_quality_df["slippage_notional"].abs().sum().sum().round(9)
+execution_quality_df["slippage_notional"].sum().sum().round(9)
 
 # %%
 # Notional slippage by asset.
-execution_quality_df["slippage_notional"].abs().sum().round(9)
+execution_quality_df["slippage_notional"].sum().round(9)
 
 # %%
 # Slippage in bps by timestamp.
-execution_quality_df["slippage_notional"].abs().sum(axis=1).round(9)
+execution_quality_df["slippage_notional"].sum(axis=1).round(9)
 
 # %% [markdown]
 # ### Slippage in bps adjusted by total executed volume
@@ -818,17 +871,17 @@ execution_quality_df["slippage_notional"].abs().sum(axis=1).round(9)
 # Total.
 execution_quality_df[
     "slippage_notional"
-].abs().sum().sum() * 1e4 / executed_volume_notional.sum().round(9)
+].sum().sum() * 1e4 / executed_volume_notional.sum().round(9)
 
 # %%
 # By asset.
 execution_quality_df[
     "slippage_notional"
-].abs().sum() * 1e4 / executed_volume_notional.round(9)
+].sum() * 1e4 / executed_volume_notional.round(9)
 
 # %%
 # By timestamp.
-execution_quality_df["slippage_notional"].abs().sum(axis=1) * 1e4 / portfolio_df[
+execution_quality_df["slippage_notional"].sum(axis=1) * 1e4 / portfolio_df[
     "executed_trades_notional"
 ].abs().sum(axis=1).round(9)
 
