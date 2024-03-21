@@ -77,7 +77,7 @@ def _search_in_markdown_files(
         else os.path.join(git_root, DOCS_DIR)
     )
 
-    # Check if docs_path exists
+    # Check if docs_path exists.
     hdbg.dassert_dir_exists(docs_path)
 
     def search_content(content: str) -> List[Tuple[str, str]]:
