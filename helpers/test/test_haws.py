@@ -175,18 +175,7 @@ class Test_update_task_definition(Haws_test_case):
         self.assertEqual(updated_image_url, new_image_url)
 
 
-class Test_get_ecs_client(hunitest.TestCase):
-    @pytest.fixture(autouse=True, scope="class")
-    def aws_credentials(self) -> None:
-        """
-        Mocked AWS credentials for moto.
-        """
-        os.environ["MOCK_AWS_ACCESS_KEY_ID"] = "testing"
-        os.environ["MOCK_AWS_SECRET_ACCESS_KEY"] = "testing"
-        os.environ["MOCK_AWS_SECURITY_TOKEN"] = "testing"
-        os.environ["MOCK_AWS_SESSION_TOKEN"] = "testing"
-        os.environ["MOCK_AWS_DEFAULT_REGION"] = "us-east-1"
-
+class Test_get_ecs_client(Haws_test_case):
     def mock_ecs_client(self, region: Optional[str] = None) -> None:
         aws_profile = "__mock__"
         test_cluster_name = "test-cluster"
@@ -200,7 +189,7 @@ class Test_get_ecs_client(hunitest.TestCase):
             test_client = haws.get_ecs_client(aws_profile)
         # Get the created cluster.
         cluster_name = test_client.list_clusters()["clusterArns"][0]
-        # Check region and cluster name.
+        # Check cluster name.
         self.assertIn(test_cluster_name, cluster_name)
 
     @mock_ecs
