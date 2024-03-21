@@ -12,6 +12,7 @@ import argparse
 import logging
 import os
 import re
+import subprocess
 from typing import List, Optional, Tuple
 
 import helpers.hgit as hgit
@@ -43,6 +44,17 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument("--subdir", help="Subdirectory to search within")
     return parser
+
+
+def get_github_info() -> Tuple[str, str]:
+    try:
+        remote_url = subprocess.check_output(["git", "config", "--get", "remote.origin.url"]).decode().strip()
+        match = re.match(r'^https://github.com/(.*)/(.*)\.git$', remote_url)
+        if match:
+            return match.group(1), match.group(2)
+    except (subprocess.CalledProcessError, IndexError) as exc:
+        raise RuntimeError('Unable to get remote URL from git configuration') from exc
+    raise ValueError("Not a GitHub repository")
 
 
 def _remove_toc(content: str) -> str:
@@ -83,6 +95,7 @@ def _search_in_markdown_files(
 def _main(parser: argparse.ArgumentParser) -> None:
     args: argparse.Namespace = parser.parse_args()
     git_root: str = hgit.get_client_root(super_module=True)
+    username, repo = get_github_info()
     found_in_files: List[Tuple[str, int]] = _search_in_markdown_files(
         git_root, args.search_term, args.skip_toc, args.sections_only, args.subdir
     )
@@ -91,7 +104,21 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.info("Input found in the following Markdown files:")
         for file_path, line_num in found_in_files:
             relative_path: str = os.path.relpath(file_path, git_root)
-            url: str = f"{git_root}/{relative_path}#L{line_num}"
+            # Constructing the GitHub URL based on --sections-only flag.
+            if args.sections_only:
+                # Extracting section name using regular expression.
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    content = file.read()
+                section_match = re.search(r'^#+\s*(.*)$', content.splitlines()[line_num - 1])
+                section_name = section_match.group(1).strip() if section_match else f"line_{line_num}"
+                # Sanitize section name
+                section_name = re.sub(r"[^\w\s-]", "", section_name)
+                section_name = section_name.replace(" ", "-")
+                section_name = section_name.replace("--", "-")  
+                section_name = re.sub(r"-+", "-", section_name)
+                url = f"https://github.com/{username}/{repo}/blob/master/{relative_path}#{section_name}"
+            else:
+                url = f"https://github.com/{username}/{repo}/blob/master/{relative_path}?plain=1#L{line_num}"
             _LOG.info(url)
     else:
         _LOG.info("Input not found in any Markdown files.")
