@@ -13,33 +13,14 @@ import re
 import subprocess
 from typing import List, Optional, Tuple
 
+import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
 
 _LOG = logging.getLogger(__name__)
 
 # Define the relative path to the docs directory.
-DOCS_DIR: str = "docs"
-
-
-def _parse() -> argparse.ArgumentParser:
-    # Parse command line arguments.
-    parser: argparse.ArgumentParser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument("search_term", help="Term to search in Markdown files")
-    parser.add_argument(
-        "--skip-toc",
-        action="store_true",
-        help="Skip search results from the table of contents (TOC)",
-    )
-    parser.add_argument(
-        "--line-only",
-        action="store_true",
-        help="Search terms through the document and generate links with line numbers",
-    )
-    parser.add_argument("--subdir", help="Subdirectory to search within")
-    return parser
+DOCS_DIR = "docs"
 
 
 def _get_github_info() -> Tuple[str, str]:
@@ -96,6 +77,9 @@ def _search_in_markdown_files(
         else os.path.join(git_root, DOCS_DIR)
     )
 
+    # Check if docs_path exists
+    hdbg.dassert_dir_exists(docs_path)
+
     def search_content(content: str) -> List[Tuple[str, str]]:
         if skip_toc:
             content = _remove_toc(content)
@@ -145,6 +129,26 @@ def _main(parser: argparse.ArgumentParser) -> None:
             _LOG.info(url)
     else:
         _LOG.info("Input not found in any Markdown files.")
+
+
+def _parse() -> argparse.ArgumentParser:
+    # Parse command line arguments.
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("search_term", help="Term to search in Markdown files")
+    parser.add_argument(
+        "--skip-toc",
+        action="store_true",
+        help="Skip search results from the table of contents (TOC)",
+    )
+    parser.add_argument(
+        "--line-only",
+        action="store_true",
+        help="Search terms through the document and generate links with line numbers",
+    )
+    parser.add_argument("--subdir", help="Subdirectory to search within")
+    return parser
 
 
 if __name__ == "__main__":
