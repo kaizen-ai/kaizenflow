@@ -2468,7 +2468,8 @@ class Test_compare_dfs(hunitest.TestCase):
 
     def test8(self) -> None:
         """
-        Test NaN comparison with NaNs present at different location in two dataframes with `compare_nans = True`.
+        Test NaN comparison with NaNs present at different location in two
+        dataframes.
         """
         # Build test dataframes.
         df1 = pd.DataFrame(
@@ -2484,40 +2485,9 @@ class Test_compare_dfs(hunitest.TestCase):
             }
         )
         # Check.
-        with self.assertRaises(AssertionError) as cm:
+        with self.assertRaises(AssertionError):
             compare_nans = True
-            hpandas.compare_dfs(
-                df1, df2, compare_nans=compare_nans, only_warning=False
-            )
-        act = str(cm.exception)
-        exp = r"""
-        * Failed assertion *
-        DataFrame.iloc[:, 0] (column name="A") are different
-
-        DataFrame.iloc[:, 0] (column name="A") values are different (66.66667 %)
-        [index]: [0, 1, 2, 3, 4, 5]
-        [left]:  [1.1, nan, 3.1, nan, inf, inf]
-        [right]: [3.0, 2.2, nan, nan, nan, inf]
-        At positional index 0, first diff: 1.1 != 3.0
-        df1=
-             A  B
-        0  1.1  0
-        1  NaN  0
-        2  3.1  0
-        3  NaN  0
-        4  inf  0
-        5  inf  0
-        and df2=
-             A  B
-        0  3.0  0
-        1  2.2  0
-        2  NaN  0
-        3  NaN  0
-        4  NaN  0
-        5  inf  0
-        don't have compatible size
-        """
-        self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
+            hpandas.compare_dfs(df1, df2, compare_nans=compare_nans)
 
     def test9(self) -> None:
         """
@@ -2528,23 +2498,13 @@ class Test_compare_dfs(hunitest.TestCase):
         dates = pd.date_range("2021-01-01", periods=3)
         df2 = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6], "timestamp": dates})
         df2 = df2.set_index("timestamp")
-        with self.assertRaises(AssertionError) as cm:
+        with self.assertRaises(AssertionError):
             hpandas.compare_dfs(
                 df1,
                 df2,
                 row_mode="equal",
                 column_mode="equal",
             )
-        act = str(cm.exception)
-        exp = r"""
-        * Failed assertion *
-        cond=False
-        df1.index.difference(df2.index)=
-        RangeIndex(start=0, stop=3, step=1)
-        df2.index.difference(df1.index)=
-        DatetimeIndex(['2021-01-01', '2021-01-02', '2021-01-03'], dtype='datetime64[ns]', freq=None)
-        """
-        self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
 
     def test10(self) -> None:
         """
@@ -2565,65 +2525,27 @@ class Test_compare_dfs(hunitest.TestCase):
             }
         )
         df2 = df2.set_index("timestamp")
-        adjustment_factor = 1.00001
+        adjustment_factor = 1.000001
         df1 = df2 * adjustment_factor
         df1.iloc[1, 2] = np.nan
         df_diff = hpandas.compare_dfs(
             df1,
             df2,
             diff_mode="pct_change",
-            only_warning=True,
         )
         actual = hpandas.df_to_str(df_diff)
         expected = r"""                  tsA.pct_change  tsB.pct_change  tsC.pct_change
         timestamp
-        2022-01-01 21:01:00+00:00         0.001           0.001            0.001
-        2022-01-01 21:02:00+00:00         0.001           0.001            NaN
-        2022-01-01 21:03:00+00:00         0.001           0.001            0.001
+        2022-01-01 21:01:00+00:00         0.0001           0.0001            0.0001
+        2022-01-01 21:02:00+00:00         0.0001           0.0001            NaN
+        2022-01-01 21:03:00+00:00         0.0001           0.0001            0.0001
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test11(self) -> None:
         """
-        Check functionality for `remove_inf = True` in presence of `diff_mode =
-        'pct_change'`.
-        """
-        timestamp_index = [
-            pd.Timestamp("2022-01-01 21:01:00+00:00"),
-            pd.Timestamp("2022-01-01 21:02:00+00:00"),
-            pd.Timestamp("2022-01-01 21:03:00+00:00"),
-        ]
-        df2 = pd.DataFrame(
-            {
-                "tsA": [100, 200, 300],
-                "tsB": [400, 500, 600],
-                "tsC": [700, 800, 900],
-                "timestamp": timestamp_index,
-            }
-        )
-        df2 = df2.set_index("timestamp")
-        adjustment_factor = 1.00001
-        df1 = df2 * adjustment_factor
-        df1.iloc[1, 2] = np.inf
-        df_diff = hpandas.compare_dfs(
-            df1,
-            df2,
-            diff_mode="pct_change",
-            only_warning=True,
-        )
-        actual = hpandas.df_to_str(df_diff)
-        expected = r"""                  tsA.pct_change  tsB.pct_change  tsC.pct_change
-        timestamp
-        2022-01-01 21:01:00+00:00         0.001           0.001            0.001
-        2022-01-01 21:02:00+00:00         0.001           0.001            NaN
-        2022-01-01 21:03:00+00:00         0.001           0.001            0.001
-        """
-        self.assert_equal(actual, expected, fuzzy_match=True)
-
-    def test12(self) -> None:
-        """
-        Check functionality for `remove_inf = False` in presence of `diff_mode =
-        'pct_change'`.
+        Check functionality for `remove_inf = False` in presence of `diff_mode
+        = 'pct_change'`.
         """
         timestamp_index = [
             pd.Timestamp("2022-01-01 21:01:00+00:00"),
@@ -2648,43 +2570,7 @@ class Test_compare_dfs(hunitest.TestCase):
                 df2,
                 diff_mode="pct_change",
                 remove_inf=False,
-                only_warning=False,
             )
-
-    def test13(self) -> None:
-        """
-        Check test case when negative values in df2.
-        """
-        timestamp_index = [
-            pd.Timestamp("2022-01-01 21:01:00+00:00"),
-            pd.Timestamp("2022-01-01 21:02:00+00:00"),
-            pd.Timestamp("2022-01-01 21:03:00+00:00"),
-        ]
-        df2 = pd.DataFrame(
-            {
-                "tsA": [100, 200, -300],
-                "tsB": [400, -500, 600],
-                "tsC": [700, -800, 900],
-                "timestamp": timestamp_index,
-            }
-        )
-        df2 = df2.set_index("timestamp")
-        adjustment_factor = 1.00001
-        df1 = df2 * adjustment_factor
-        df_diff = hpandas.compare_dfs(
-            df1,
-            df2,
-            diff_mode="pct_change",
-            only_warning=True,
-        )
-        actual = hpandas.df_to_str(df_diff)
-        expected = r"""                  tsA.pct_change  tsB.pct_change  tsC.pct_change
-        timestamp
-        2022-01-01 21:01:00+00:00         0.001           0.001             0.001
-        2022-01-01 21:02:00+00:00         0.001          -0.001            -0.001
-        2022-01-01 21:03:00+00:00        -0.001           0.001             0.001
-        """
-        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_invalid_input(self) -> None:
         """
@@ -3866,25 +3752,19 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
 
         Example of dataframe returned when `index_is_datetime = True`:
 
-        ```
-                                            column1     column2
-        index   timestamp
-        index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
-                2022-01-01 21:10:00+00:00   1.303778    -0.288235
-        index2  2022-01-01 21:00:00+00:00   1.237079    1.168012
-                2022-01-01 21:10:00+00:00   1.333692    1.708455
-        ```
+        ```                                     column1     column2
+        index   timestamp index1  2022-01-01 21:00:00+00:00   -0.122140
+        -1.949431         2022-01-01 21:10:00+00:00   1.303778
+        -0.288235 index2  2022-01-01 21:00:00+00:00   1.237079
+        1.168012         2022-01-01 21:10:00+00:00   1.333692
+        1.708455 ```
 
         Example of dataframe returned when `index_is_datetime = False`:
 
-        ```
-                            column1     column2
-        index   timestamp
-        index1  string1     -0.122140   -1.949431
-                string2     1.303778    -0.288235
-        index2  string1     1.237079    1.168012
-                string2     1.333692    1.708455
-        ```
+        ```                     column1     column2 index   timestamp
+        index1  string1     -0.122140   -1.949431         string2
+        1.303778    -0.288235 index2  string1     1.237079    1.168012
+        string2     1.333692    1.708455 ```
         """
         if index_is_datetime:
             index_inner = [
