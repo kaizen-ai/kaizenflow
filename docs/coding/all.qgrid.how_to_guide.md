@@ -1,11 +1,13 @@
-<!--ts-->
-   * [Qgrid](#qgrid)
-      * [Some documentation](#some-documentation)
-      * [Testing](#testing)
 
 
+<!-- toc -->
 
-<!--te-->
+- [Qgrid](#qgrid)
+  * [Some documentation](#some-documentation)
+  * [Testing](#testing)
+
+<!-- tocstop -->
+
 # Qgrid
 
 ## Some documentation

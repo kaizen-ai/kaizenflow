@@ -1,4 +1,6 @@
-<!--ts-->
+
+
+<!-- toc -->
 
 - [Description of the forecast system](#description-of-the-forecast-system)
 - [Description of the System](#description-of-the-system)
@@ -6,7 +8,7 @@
   * [Explanation of the backtesting script](#explanation-of-the-backtesting-script)
 - [Analyze the results](#analyze-the-results)
 
-<!--te-->
+<!-- tocstop -->
 
 The goal is to run a simple system (Mock2) end-to-end in batch mode and compute
 PnL. This is the typical flow that Quants run to estimate performance of a

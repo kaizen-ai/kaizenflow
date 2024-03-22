@@ -400,6 +400,13 @@ class Obj_to_str_TestCase(abc.ABC):
         method_name = "__str__"
         self._test_method(obj, method_name, expected_str)
 
+    def run_test_to_config_str(self, obj: Any, expected_str: str) -> None:
+        """
+        Check that `to_config_str()` is printed correctly.
+        """
+        method_name = "to_config_str"
+        self._test_method(obj, method_name, expected_str)
+
     def _test_method(self, obj: Any, method_name: str, expected_str: str) -> None:
         """
         Common method for testing `__repr__` and `__str__`.

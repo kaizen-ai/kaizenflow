@@ -44,6 +44,49 @@ class TestDataFrameBroker1(hunitest.TestCase):
         coro = self.get_broker_coroutine(event_loop)
         hasynci.run(coro, event_loop=event_loop)
 
+    def test_submit_market_orders(self) -> None:
+        """
+        Test `_submit_market_orders()` when an empty order list is passed.
+        """
+        event_loop = None
+        # Build a DataFrameBroker.
+        broker = obrbrexa.get_DataFrameBroker_example1(event_loop)
+        # Initialize test variables.
+        order = []
+        wall_clock_timestamp = pd.Timestamp("2024-02-28T12:00:00+00:00")
+        dry_run = True
+        # Check.
+        actual = str(
+            hasynci.run(
+                broker._submit_market_orders(
+                    order, wall_clock_timestamp, dry_run=dry_run
+                ),
+                event_loop,
+            )
+        )
+        expected = r"""
+        ('dummy_order_receipt', Empty DataFrame
+        Columns: []
+        Index: [])
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_submit_twap_orders(self) -> None:
+        """
+        Test `_submit_twap_orders()` when an empty order list is passed.
+        """
+        event_loop = None
+        # Build a DataFrameBroker.
+        broker = obrbrexa.get_DataFrameBroker_example1(event_loop)
+        # Initialize test variables.
+        order = []
+        # Check.
+        actual = str(hasynci.run(broker._submit_twap_orders(order), event_loop))
+        expected = r"""
+        ('dummy_order_receipt', [])
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
 
 # #############################################################################
 # TestDataFrameBroker2

@@ -435,7 +435,8 @@ class PrintableMixin:
                 # a `PrintableMixin` descendant.
                 dict_val = value.to_config_dict()
             else:
-                dict_val = value
+                # Get attribute value representation.
+                dict_val = _attr_to_repr(attr, value, print_type=True)
             # Put value in the result dict.
             res_dict[attr] = dict_val
         return res_dict
@@ -444,16 +445,27 @@ class PrintableMixin:
         """
         Get class configuration as string.
         """
-        attr_mode = "config"
-        config_str = obj_to_repr(
-            self,
-            attr_mode=attr_mode,
-            print_type=True,
-            callable_mode="all",
-            private_mode="all",
-            dunder_mode="skip",
-        )
-        return config_str
+        ret = []
+        attributes = self.get_config_attributes()
+        hdbg.dassert_is_subset(attributes, self.__dict__.keys())
+        # Iterate over attributes and add their state to the dict.
+        for attr in attributes:
+            value = getattr(self, attr)
+            if isinstance(value, PrintableMixin):
+                # Call the function recursively if value is also
+                # a `PrintableMixin` descendant.
+                dict_val = value.to_config_str()
+                # Add attribute name for string representation.
+                dict_val = f"{attr}={dict_val}"
+            else:
+                dict_val = _attr_to_repr(attr, value, print_type=True)
+            # Put value in the result dict.
+            ret.append(dict_val)
+        txt = []
+        txt.append(hprint.to_object_repr(self) + ":")
+        txt.append(hprint.indent("\n".join(ret)))
+        txt = "\n".join(txt)
+        return txt
 
 
 # #############################################################################

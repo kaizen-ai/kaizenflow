@@ -1,3 +1,15 @@
+# cmamp-1.14.0
+- 2024-03-06
+- Promote `pyarrow` to 15.0.0
+- Changes from:
+- #7292 - DEV_TOOLS - Docker - Update pyarrow to latest version
+
+# cmamp-1.13.0
+- 2024-02-26
+- Install AWS CLI for Linux and Mac architectures
+- Changes from:
+- #7280 - aws CLI doesn't work in Sorrentum dev_tools ARM container
+
 # cmamp-1.12.0
 - 2024-02-20
 - Promote `pyarrow` to 14.0.2

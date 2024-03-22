@@ -39,32 +39,6 @@ import im_v2.common.data.transform.transform_utils as imvcdttrut
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Juraj): temporary function until interfaces get unified.
-def _get_resampling_tools(dataset_action_tag: str) -> Tuple[List[str], Callable]:
-    """
-    Return correct resampling tools based on action tag of the dataset.
-
-    `downloaded_1sec` and `archived_200ms` can use different values/functions
-
-    :return: tuple of column set to deduplicate on and a function to use for resampling
-    """
-    if dataset_action_tag == "downloaded_1sec":
-        return [
-            "timestamp",
-            "exchange_id",
-            "currency_pair",
-        ], imvcdttrut.resample_multilevel_bid_ask_data_from_1sec_to_1min
-    elif dataset_action_tag == "archived_200ms":
-        return [
-            "timestamp",
-            "exchange_id",
-            "currency_pair",
-            "level",
-        ], imvcdttrut.resample_multilevel_bid_ask_data_to_1min
-    else:
-        raise RuntimeError("Invalid action tag for resampling")
-
-
 def _build_parquet_filters(
     dataset_action_tag: str,
     start: str,
@@ -164,9 +138,14 @@ def _run(args: argparse.Namespace, aws_profile: hs3.AwsProfile = "ck") -> None:
         src_s3_path, filters=filters, aws_profile=aws_profile
     )
     _LOG.info("Source data loaded.")
-    duplicate_cols_subset, resampling_function = _get_resampling_tools(
-        scr_signature_args["action_tag"]
-    )
+    # TODO(Juraj): we are aware of duplicate data problem #7230 but for the
+    # sake of resampled data availability we allow occasional duplicate with different values.
+    duplicate_cols_subset = [
+            "timestamp",
+            "exchange_id",
+            "currency_pair",
+            "level",
+    ] 
     # Ensure there are no duplicates, in this case
     #  using duplicates would compute the wrong resampled values.
     data = data.drop_duplicates(subset=duplicate_cols_subset)
@@ -183,7 +162,7 @@ def _run(args: argparse.Namespace, aws_profile: hs3.AwsProfile = "ck") -> None:
                 args.end_timestamp,
             )
             continue
-        data_resampled_single = resampling_function(
+        data_resampled_single = imvcdttrut.resample_multilevel_bid_ask_data_to_1min(
             data_single, number_levels_of_order_book=args.bid_ask_levels
         )
         if not data_resampled_single.empty:

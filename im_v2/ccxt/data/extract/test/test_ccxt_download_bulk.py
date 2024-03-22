@@ -52,7 +52,7 @@ class TestDownloadBulkData1(hunitest.TestCase):
             "s3_path": "s3://cryptokaizen-data-test/",
             "log_level": "INFO",
             "data_format": "parquet",
-            "bid_ask_depth": None,
+            "bid_ask_depth": 10,
             "universe_part": None,
             "assert_on_missing_data": False,
             "dst_dir": None,

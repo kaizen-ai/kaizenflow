@@ -11,14 +11,13 @@ import pytest
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv
-import helpers.hgit as hgit
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
+import im_v2.common.test as imvct
 
 _LOG = logging.getLogger(__name__)
 
@@ -84,6 +83,7 @@ def _compare_dfs(self: Any, df1: pd.DataFrame, df2: pd.DataFrame) -> str:
 
 
 # #############################################################################
+
 
 class TestParquet1(hunitest.TestCase):
     def test_get_df1(self) -> None:
@@ -240,7 +240,6 @@ class TestParquet1(hunitest.TestCase):
             "datetime64[ns, UTC]",
         )
 
-    @pytest.mark.requires_ck_infra("Requires access to CK unit-test S3 bucket")
     def test_save_read_concat_data(self) -> None:
         """
         Verify that data produced by different version of Pandas preserves
@@ -317,7 +316,6 @@ class TestPartitionedParquet1(hunitest.TestCase):
             table,
             dir_name,
             partition_cols,
-            partition_filename_cb=lambda x: "data.parquet",
         )
         # Check dir signature.
         if exp_dir_signature is not None:
@@ -326,7 +324,12 @@ class TestPartitionedParquet1(hunitest.TestCase):
             dir_signature = hunitest.get_dir_signature(
                 dir_name, include_file_content, remove_dir_name=remove_dir_name
             )
-            self.assert_equal(dir_signature, exp_dir_signature, fuzzy_match=True)
+            self.assert_equal(
+                dir_signature,
+                exp_dir_signature,
+                fuzzy_match=True,
+                purify_text=True,
+            )
         return dir_name
 
     def write_and_read_helper(
@@ -923,22 +926,22 @@ class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
         """
         Upload test daily Parquet files for 3 days to the mocked S3 bucket.
         """
+        start_date = "2022-02-02"
+        end_date = "2022-02-04"
+        assets = ["A", "B", "C", "D", "E", "F"]
+        asset_col_name = "asset"
         test_dir = self.get_scratch_space()
-        cmd = []
-        file_path = os.path.join(
-            hgit.get_amp_abs_path(),
-            "im_v2/common/test/generate_pq_test_data.py",
+        partition_mode = "by_year_month"
+        custom_partition_cols = "asset,year,month"
+        imvct.generate_parquet_files(
+            start_date,
+            end_date,
+            assets,
+            asset_col_name,
+            test_dir,
+            partition_mode=partition_mode,
+            custom_partition_cols=custom_partition_cols,
         )
-        cmd.append(file_path)
-        cmd.append("--start_date 2022-02-02")
-        cmd.append("--end_date 2022-02-04")
-        cmd.append("--assets A,B,C,D,E,F")
-        cmd.append("--asset_col_name asset")
-        cmd.append("--partition_mode by_year_month")
-        cmd.append("--custom_partition_cols asset,year,month")
-        cmd.append(f"--dst_dir {test_dir}")
-        cmd = " ".join(cmd)
-        hsystem.system(cmd)
         s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
         s3_bucket = f"s3://{self.bucket_name}"
         s3fs_.put(test_dir, s3_bucket, recursive=True)
@@ -963,12 +966,15 @@ class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
         # Add extra parquet files and rename existing one.
         # e.g., `dummy.parquet`, `dummy_new.parquet`.
         # Every second file is left intact to replicate ready out-of-the-box folder.
-        # e.g., `asset=A/year=2022/month=2/data.parquet`.
+        # e.g., `asset=A/year=2022/month=2/77a2534aaf9649fab6511cea53a6bf7f-0.parquet`.
         for path in parquet_path_list_before[::2]:
             original_path = f"{s3_bucket}/{path}"
-            renamed_path = original_path.replace("data.parquet", "dummy.parquet")
+            original_file_name = os.path.basename(original_path)
+            renamed_path = original_path.replace(
+                original_file_name, "dummy.parquet"
+            )
             additional_path = original_path.replace(
-                "data.parquet", "dummy_new.parquet"
+                original_file_name, "dummy_new.parquet"
             )
             s3fs_.rename(original_path, renamed_path)
             s3fs_.copy(renamed_path, additional_path)
@@ -977,9 +983,7 @@ class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
             s3_bucket, pattern, only_files, use_relative_paths, aws_profile=s3fs_
         )
         data_parquet_path_list = [
-            path
-            for path in updated_parquet_path_list
-            if path.endswith("/data.parquet")
+            path for path in updated_parquet_path_list if "dummy" not in path
         ]
         self.assertEqual(len(updated_parquet_path_list), 9)
         self.assertEqual(len(data_parquet_path_list), 3)

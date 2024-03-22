@@ -1,0 +1,55 @@
+---
+################################
+## Airflow Worker Deployment
+#################################
+apiVersion: v1
+kind: Pod
+metadata:
+  name: worker
+  namespace: airflow
+  labels:
+    tier: airflow
+    component: worker
+spec:
+  nodeSelector:
+    {}
+  restartPolicy: Never
+  serviceAccountName: airflow-scheduler
+  securityContext:
+    runAsUser: 50000
+    fsGroup: 0
+  containers:
+    - name: base
+      image: apache/airflow:2.7.1
+      imagePullPolicy: IfNotPresent
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+      resources:
+        {}
+      volumeMounts:
+        - name: logs
+          mountPath: "/opt/airflow/logs"
+        - name: dags
+          mountPath: "/opt/airflow/dags"
+      envFrom:
+        - secretRef:
+            name: airflow-secret
+        - configMapRef:
+            name: airflow-config
+      env:
+        []
+        # Only signal the main process, not the process group, to make Warm Shutdown work properly
+        # Dynamically created environment variables
+        # Dynamically created secret envs
+        # Extra env
+        # Hard Coded Airflow Envs
+  volumes:
+    - name: logs
+      persistentVolumeClaim:
+        claimName: airflow-logs-pvc
+    - name: dags
+      persistentVolumeClaim:
+        claimName: airflow-dags-pvc
