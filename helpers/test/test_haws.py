@@ -176,7 +176,7 @@ class Test_update_task_definition(Haws_test_case):
 
 
 class Test_get_ecs_client(Haws_test_case):
-    def mock_ecs_client(self, region: Optional[str] = None) -> None:
+    def mock_ecs_client(self, *, region: Optional[str] = None) -> None:
         aws_profile = "__mock__"
         test_cluster_name = "test-cluster"
         # Create mock ECS client.
