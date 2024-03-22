@@ -173,3 +173,37 @@ class Test_update_task_definition(Haws_test_case):
             "containerDefinitions"
         ][0]["image"]
         self.assertEqual(updated_image_url, new_image_url)
+
+
+class Test_get_ecs_client(Haws_test_case):
+    def mock_ecs_client(self, *, region: Optional[str] = None) -> None:
+        aws_profile = "__mock__"
+        test_cluster_name = "test-cluster"
+        # Create mock ECS client.
+        ecs_client = boto3.client("ecs", region_name="us-east-1")
+        ecs_client.create_cluster(clusterName=test_cluster_name)
+        # Get ECS client.
+        if region:
+            test_client = haws.get_ecs_client(aws_profile, region=region)
+        else:
+            test_client = haws.get_ecs_client(aws_profile)
+        # Get the created cluster.
+        cluster_name = test_client.list_clusters()["clusterArns"][0]
+        # Check cluster name.
+        self.assertIn(test_cluster_name, cluster_name)
+
+    @mock_ecs
+    def test1(self) -> None:
+        """
+        Test that `haws.get_ecs_client()` correctly return a client to work 
+        with ECS within a specified region.
+        """
+        self.mock_ecs_client(region="us-east-1")
+        
+    @mock_ecs
+    def test2(self) -> None:
+        """
+        Test that `haws.get_ecs_client()` correctly return a client to work 
+        with ECS without a specified region.
+        """
+        self.mock_ecs_client()
