@@ -143,8 +143,15 @@ class Test_convert_to_multiindex(hunitest.TestCase):
         with self.assertRaises(AssertionError) as context:
             dtfcorutil.convert_to_multiindex(df, asset_id_col)
         actual_error_message = str(context.exception)
-        expected_error_message = r"""\n################################################################################\n* Failed assertion *\n1 <= 0\n################################################################################\n"""
-        self.assert_equal(actual_error_message, expected_error_message, fuzzy_match=True)
+        exp = r"""
+
+        ################################################################################
+        * Failed assertion *
+        1 <= 0
+        ################################################################################
+
+        """
+        self.assert_equal(actual_error_message, exp, fuzzy_match=True)
 
     def test4(self) -> None:
         """
