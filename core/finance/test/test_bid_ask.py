@@ -270,19 +270,26 @@ class Test_transform_bid_ask_long_data_to_wide(hunitest.TestCase):
             pd.Timestamp("2022-09-08 21:01:15+00:00"),
         ]
         values = {
-            "level": [1, 2, 3],
+            "level": [1, 1, 1],
+            "currency_pair": ["XRP_USDT", "WAVES_USDT", "UNFI_USDT"],
             "bid_price": pd.Series([2.31, 3.22, 2.33]),
             "bid_size": pd.Series([1.1, 2.2, 3.3]),
             "ask_price": pd.Series([2.34, 3.24, 2.35]),
             "ask_size": pd.Series([4.4, 5.5, 6.6]),
             "knowledge_timestamp": knowledge_timestamp,
             "timestamp": timestamp_index,
+            "half_spread": pd.Series([0.005, 0.02, 0.02]),
+            "log_size": pd.Series([0.01, 0.03, 0.01]),
         }
         df = pd.DataFrame(data=values)
         df = df.set_index("timestamp")
         return df
 
     def test1(self) -> None:
+        """
+        Test the transformation of long bid-ask data to wide format with
+        deafult agrmunet value of `value_col_prefix`.
+        """
         long_levels_df = self.get_df_with_long_levels()
         #
         timestamp_col = "timestamp"
@@ -291,9 +298,40 @@ class Test_transform_bid_ask_long_data_to_wide(hunitest.TestCase):
         )
         #
         expected_outcome = r"""
-                                        knowledge_timestamp  bid_price_l1  bid_price_l2  bid_price_l3  bid_size_l1  bid_size_l2  bid_size_l3  ask_price_l1  ask_price_l2  ask_price_l3  ask_size_l1  ask_size_l2  ask_size_l3
+        currency_pair   knowledge_timestamp   bid_price_l1   bid_size_l1   ask_price_l1   ask_size_l1   half_spread_l1   log_size_l1
         timestamp
-        2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00         2.31         3.22         2.33         1.1         2.2         3.3         2.34         3.24         2.35         4.4         5.5         6.6
+        2022-09-08 21:01:00+00:00   UNFI_USDT   2022-09-08 21:01:15+00:00   2.33   3.3   2.35   6.6   0.020   0.01
+        2022-09-08 21:01:00+00:00   WAVES_USDT   2022-09-08 21:01:15+00:00   3.22   2.2   3.24   5.5   0.020   0.03
+        2022-09-08 21:01:00+00:00   XRP_USDT   2022-09-08 21:01:15+00:00   2.31   1.1   2.34   4.4   0.005   0.01
+        """
+        #
+        actual_df = hpandas.df_to_str(wide_levels_df)
+        self.assert_equal(
+            actual_df,
+            expected_outcome,
+            dedent=True,
+            fuzzy_match=True,
+        )
+
+    def test2(self) -> None:
+        """
+        Test the transformation of long bid-ask data to wide format with custom
+        agrmunet value of `value_col_prefix`.
+        """
+        long_levels_df = self.get_df_with_long_levels()
+        long_levels_df["new_close"] = [0.01, 0.03, 0.01]
+        #
+        timestamp_col = "timestamp"
+        wide_levels_df = cfibiask.transform_bid_ask_long_data_to_wide(
+            long_levels_df, timestamp_col, value_col_prefix=["new", "log", "half"]
+        )
+        #
+        expected_outcome = r"""
+        currency_pair   knowledge_timestamp   bid_price_l1   bid_size_l1   ask_price_l1   ask_size_l1   half_spread_l1   log_size_l1   new_close_l1
+        timestamp
+        2022-09-08 21:01:00+00:00   UNFI_USDT   2022-09-08 21:01:15+00:00   2.33   3.3   2.35   6.6   0.020   0.01   0.01
+        2022-09-08 21:01:00+00:00   WAVES_USDT   2022-09-08 21:01:15+00:00   3.22   2.2   3.24   5.5   0.020   0.03   0.03
+        2022-09-08 21:01:00+00:00   XRP_USDT   2022-09-08 21:01:15+00:00   2.31   1.1   2.34   4.4   0.005   0.01   0.01
         """
         #
         actual_df = hpandas.df_to_str(wide_levels_df)
