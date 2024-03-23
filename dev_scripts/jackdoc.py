@@ -1,18 +1,15 @@
 #!/usr/bin/env python
 """
 jackdoc: Locate input from Markdown files in the docs directory and generate corresponding file links.
-
 Example usage:
 jackdoc "search_term" [--skip-toc] [--line-only] [--subdir <subdirectory>]
 """
-
 import argparse
 import logging
 import os
 import re
 import subprocess
 from typing import List, Optional, Tuple
-
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
@@ -22,10 +19,12 @@ _LOG = logging.getLogger(__name__)
 # Define the relative path to the docs directory.
 DOCS_DIR = "docs"
 
-
 def _get_github_info() -> Tuple[str, str]:
+    """
+    Get GitHub repository information.
+    """
     try:
-        remote_url: str = (
+        remote_url = (
             subprocess.check_output(
                 ["git", "config", "--get", "remote.origin.url"]
             )
@@ -41,13 +40,14 @@ def _get_github_info() -> Tuple[str, str]:
         ) from exc
     raise ValueError("Not a GitHub repository")
 
-
 def _remove_toc(content: str) -> str:
-    # Skip search results from the table of contents (TOC).
-    toc_pattern: str = r"<!--\s*toc\s*-->(.*?)<!--\s*tocstop\s*-->"
+    """
+    Remove table of contents (TOC) from Markdown content.
+    """
+    toc_pattern = r"<!--\s*toc\s*-->(.*?)<!--\s*tocstop\s*-->"
     toc_match = re.search(toc_pattern, content, flags=re.DOTALL)
     if toc_match:
-        toc_content: str = toc_match.group(1)
+        toc_content = toc_match.group(1)
         toc_lines = toc_content.split("\n")
         excluded_lines = {
             content.count(toc_line, 0, toc_match.start(1)) + 1
@@ -62,7 +62,6 @@ def _remove_toc(content: str) -> str:
         return "\n".join(filtered_content)
     return content
 
-
 def _search_in_markdown_files(
     git_root: str,
     search_term: str,
@@ -70,16 +69,16 @@ def _search_in_markdown_files(
     line_only: bool = False,
     subdir: Optional[str] = None,
 ) -> List[Tuple[str, str]]:
+    """
+    Search for a term in Markdown files.
+    """
     found_in_files = []
     docs_path = (
-        os.path.join(git_root, DOCS_DIR, subdir)
-        if subdir
+        os.path.join(git_root, DOCS_DIR, subdir) if subdir is not None
         else os.path.join(git_root, DOCS_DIR)
     )
-
     # Check if docs_path exists.
     hdbg.dassert_dir_exists(docs_path)
-
     def search_content(content: str) -> List[Tuple[str, str]]:
         if skip_toc:
             content = _remove_toc(content)
@@ -105,10 +104,12 @@ def _search_in_markdown_files(
                 found_in_files.extend(search_content(content))
     return found_in_files
 
-
 def _main(parser: argparse.ArgumentParser) -> None:
+    """
+    Main function to parse command-line arguments and execute search.
+    """
     args = parser.parse_args()
-    git_root: str = hgit.get_client_root(super_module=True)
+    git_root = hgit.get_client_root(super_module=True)
     username, repo = _get_github_info()
     found_items = _search_in_markdown_files(
         git_root, args.search_term, args.skip_toc, args.line_only, args.subdir
@@ -130,10 +131,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     else:
         _LOG.info("Input not found in any Markdown files.")
 
-
 def _parse() -> argparse.ArgumentParser:
+    """
+    Parse command-line arguments.
+    """
     # Parse command line arguments.
-    parser: argparse.ArgumentParser = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("search_term", help="Term to search in Markdown files")
@@ -149,7 +152,6 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument("--subdir", help="Subdirectory to search within")
     return parser
-
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
