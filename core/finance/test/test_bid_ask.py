@@ -288,7 +288,7 @@ class Test_transform_bid_ask_long_data_to_wide(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test the transformation of long bid-ask data to wide format with
-        deafult agrmunet value of `value_col_prefix`.
+        default argument value of `value_col_prefixes`.
         """
         long_levels_df = self.get_df_with_long_levels()
         #
@@ -316,14 +316,14 @@ class Test_transform_bid_ask_long_data_to_wide(hunitest.TestCase):
     def test2(self) -> None:
         """
         Test the transformation of long bid-ask data to wide format with custom
-        agrmunet value of `value_col_prefix`.
+        argument value of `value_col_prefixes`.
         """
         long_levels_df = self.get_df_with_long_levels()
         long_levels_df["new_close"] = [0.01, 0.03, 0.01]
         #
         timestamp_col = "timestamp"
         wide_levels_df = cfibiask.transform_bid_ask_long_data_to_wide(
-            long_levels_df, timestamp_col, value_col_prefix=["new", "log", "half"]
+            long_levels_df, timestamp_col, value_col_prefixes=["new", "log", "half"]
         )
         #
         expected_outcome = r"""
