@@ -91,7 +91,6 @@ def _search_in_markdown_files(
     )
     # Check if the docs_path exists.
     hdbg.dassert_dir_exists(docs_path)
-
     def search_content(content: str) -> List[Tuple[str, str]]:
         # Function to search for the term in content.
         if skip_toc:
