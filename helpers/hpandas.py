@@ -1938,7 +1938,7 @@ def compare_dfs(
     zero_vs_zero_is_zero: bool = True,
     remove_inf: bool = True,
     log_level: int = logging.DEBUG,
-    only_warning: bool = False,
+    only_warning: bool = True,
 ) -> pd.DataFrame:
     """
     Compare two dataframes.
