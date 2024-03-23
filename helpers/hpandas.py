@@ -1938,7 +1938,7 @@ def compare_dfs(
     zero_vs_zero_is_zero: bool = True,
     remove_inf: bool = True,
     log_level: int = logging.DEBUG,
-    only_warning: bool = True,
+    only_warning: bool = False,
 ) -> pd.DataFrame:
     """
     Compare two dataframes.
@@ -2048,12 +2048,12 @@ def compare_dfs(
                 )
             except AssertionError as e:
                 is_ok = False
-                assertion = e
+                _ = e
             # Check `is_ok` and raise assertion depending on `only_warning`.
             if not is_ok:
                 hdbg._dfatal(
-                    assertion,
-                    "df1=\n%s\n and df2=\n%s\n are not equal.",
+                    _,
+                    "df1=\n%s\n and df2=\n%s\n have pct_change more than `assert_diff_threshold`.",
                     df_to_str(df1, log_level=log_level),
                     df_to_str(df2, log_level=log_level),
                     only_warning=only_warning,
