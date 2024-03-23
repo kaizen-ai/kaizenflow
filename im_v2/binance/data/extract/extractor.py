@@ -1,26 +1,39 @@
 """
-Binance native data extractor. https://github.com/binance/binance-public-data/
+Binance native data extractor.
+
+This module provides functionalities to extract data from Binance,
+including historical data download from Binance public data repository
+available at https://github.com/binance/binance-public-data/.
+
+Real-time data capabilities of this class include WebSocket data download
+for OHLCV, bid/ask, and trade data. The real-time data extraction
+functionality is sourced from the Binance Futures Connector Python library,
+accessible at https://github.com/binance/binance-futures-connector-python/.
 
 Import as:
 
 import im_v2.binance.data.extract.extractor as imvbdexex
 """
+import asyncio
+import copy
 import enum
 import glob
 import json
 import logging
 import os
 import sys
+import time
 import urllib.error as urlerr
 import urllib.request as urlreq
 import uuid
-from typing import Any, Iterator, List, Optional, Union
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hio as hio
+import im_v2.binance.websocket.websocket_client as imvbwwecl
 import im_v2.common.data.extract.extractor as ivcdexex
 
 _LOG = logging.getLogger(__name__)
@@ -59,6 +72,7 @@ class BinanceExtractor(ivcdexex.Extractor):
         self,
         contract_type: str,
         time_period: BinanceNativeTimePeriod,
+        data_type: str,
         allow_data_gaps: Optional[bool] = False,
     ) -> None:
         """
@@ -91,6 +105,20 @@ class BinanceExtractor(ivcdexex.Extractor):
         self.contract_type = contract_type
         self.vendor = "Binance"
         self.time_period = time_period
+        self._ohlcv = {}
+        self._trades = {}
+        self._websocket_data_buffer = {}
+        if data_type == "bid_ask":
+            message_handler = self._handle_orderbook_message
+        elif data_type == "trades":
+            message_handler = self._handle_trades_message
+        elif data_type == "ohlcv":
+            message_handler = self._handle_ohlcv_message
+        else:
+            raise NotImplementedError
+        self._client = imvbwwecl.UMFuturesWebsocketClient(
+            on_message=message_handler, on_error=self._handle_error
+        )
         super().__init__()
 
     def __del__(self) -> None:
@@ -109,6 +137,80 @@ class BinanceExtractor(ivcdexex.Extractor):
         :return: converted currency pair, e.g. `BTCUSDT`
         """
         return currency_pair.replace("_", "")
+
+    async def sleep(self, time: int):
+        """
+        :param time: sleep time in milliseconds
+        """
+        await asyncio.sleep(time / 1000)
+
+    def close(self):
+        """
+        Close the connection of exchange.
+        """
+        self._client.stop()
+
+    def _handle_error(self, _, exception) -> None:
+        raise exception
+
+    def _handle_orderbook_message(self, _, message: str) -> None:
+        """
+        Handle single orderbook message.
+        """
+        message = json.loads(message)
+        # Convert back to our default format:
+        if "s" in message:
+            info = {}
+            symbol = message["s"]
+            info["timestamp"] = message["T"]
+            info["bids"] = message["b"]
+            info["asks"] = message["a"]
+            info["symbol"] = symbol
+            self._websocket_data_buffer[symbol].append(info)
+        else:
+            # TODO(Sonaal): Find out a neat way to handle errors.
+            self._websocket_data_buffer["error"] = message
+
+    def _handle_ohlcv_message(self, _, message):
+        """
+        Handle single ohlcv message.
+        """
+        info = json.loads(message)
+        if "s" in info:
+            ohlcv_data = info["k"]
+            currency_pair = info["s"]
+            self._ohlcv[currency_pair][ohlcv_data["t"]] = [
+                ohlcv_data["t"],
+                ohlcv_data["o"],
+                ohlcv_data["h"],
+                ohlcv_data["l"],
+                ohlcv_data["c"],
+                ohlcv_data["v"],
+            ]
+        else:
+            self._ohlcv["error"] = message
+
+    def _handle_trades_message(self, _, message):
+        """
+        Handle single trades message.
+        """
+        info = json.loads(message)
+        if "s" in info:
+            currency_pair = info["s"]
+            id = info["t"]
+            side = "sell" if info["m"] is False else "buy"
+            if info["X"] == "MARKET":
+                self._trades[currency_pair].append(
+                    {
+                        "id": id,
+                        "timestamp": info["T"],
+                        "side": side,
+                        "price": info["p"],
+                        "amount": info["q"],
+                    }
+                )
+        else:
+            self._trades["error"] = message
 
     def _make_tmp_dir(self) -> str:
         """
@@ -463,8 +565,8 @@ class BinanceExtractor(ivcdexex.Extractor):
         Get iterator over the Binance data.
 
         :param src_path: path to the files to extract data from
-        :return: iterator over Binance data that return pandas
-            DataFrame with the data splitted by days
+        :return: iterator over Binance data that return pandas DataFrame
+            with the data splitted by days
         """
         search_path = f"{src_path}/**/*.zip"
         # There is 3 levels of iteration:
@@ -492,8 +594,8 @@ class BinanceExtractor(ivcdexex.Extractor):
         :param currency_pair: currency pair to download
         :param start_timestamp: start timestamp
         :param end_timestamp: end timestamp
-        :return: iterator over trades grouped by days that return
-            pandas DataFrame with the data splitted by days
+        :return: iterator over trades grouped by days that return pandas
+            DataFrame with the data splitted by days
         """
         # Make temporary directory.
         tmp_dir = self._make_tmp_dir()
@@ -693,7 +795,23 @@ class BinanceExtractor(ivcdexex.Extractor):
         :param end_timestamp: end timestamp
         :return: exchange data
         """
-        raise NotImplementedError("This method is not implemented yet.")
+        symbol = self.convert_currency_pair(currency_pair)
+        if len(self._websocket_data_buffer[symbol]) > 0:
+            data = copy.deepcopy(self._websocket_data_buffer[symbol][-1])
+        else:
+            data = {}
+            data["timestamp"] = None
+            data["bids"] = []
+            data["asks"] = []
+        self._websocket_data_buffer[symbol] = []
+        data["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+        data["symbol"] = currency_pair
+        if data.get("bids") != None and data.get("asks") != None:
+            (
+                data["bids"],
+                data["asks"],
+            ) = self._pad_bids_asks_to_equal_len(data["bids"], data["asks"])
+        return data
 
     def _download_websocket_ohlcv(
         self,
@@ -703,7 +821,7 @@ class BinanceExtractor(ivcdexex.Extractor):
         start_timestamp: Optional[pd.Timestamp] = None,
         end_timestamp: Optional[pd.Timestamp] = None,
         **kwargs: Any,
-    ) -> pd.DataFrame:
+    ) -> Dict:
         """
         Download OHLCV data from Binance.
 
@@ -714,7 +832,14 @@ class BinanceExtractor(ivcdexex.Extractor):
         :param end_timestamp: end timestamp
         :return: exchange data
         """
-        raise NotImplementedError("This method is not implemented yet.")
+        data = {}
+        data["currency_pair"] = currency_pair
+        currency_pair = self.convert_currency_pair(currency_pair)
+        data["ohlcv"] = list(self._ohlcv[currency_pair].values())
+        data["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+        if len(data["ohlcv"]) == 0:
+            return None
+        return data
 
     def _download_websocket_trades(
         self,
@@ -735,10 +860,16 @@ class BinanceExtractor(ivcdexex.Extractor):
         :param end_timestamp: end timestamp
         :return: exchange data
         """
-        raise NotImplementedError(
-            "This extractor for historical data download only. "
-            "It can't be used for the real-time data downloading."
-        )
+        data = {}
+        data["currency_pair"] = currency_pair
+        currency_pair = self.convert_currency_pair(currency_pair)
+        data["data"] = copy.deepcopy(list(self._trades[currency_pair]))
+        self._trades[currency_pair] = []
+        data["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+        data["exchange_id"] = "binance"
+        if len(data["data"]) == 0:
+            return None
+        return data
 
     def _subscribe_to_websocket_bid_ask(
         self,
@@ -799,23 +930,106 @@ class BinanceExtractor(ivcdexex.Extractor):
         :param end_timestamp: end timestamp
         """
         raise NotImplementedError("This method is not implemented yet.")
-    
-    def _subscribe_to_websocket_bid_ask_multiple_symbols(
+
+    async def _subscribe_to_websocket_bid_ask_multiple_symbols(
         self,
         exchange_id: str,
-        currency_pair: List[str],
-        *,
-        start_timestamp: Optional[pd.Timestamp] = None,
-        end_timestamp: Optional[pd.Timestamp] = None,
+        currency_pairs: List[str],
+        bid_ask_depth: int,
         **kwargs: Any,
     ) -> None:
         """
-        Subscribe to bid-ask data from Binance.
+        #TODO(Juraj): Add docstring.
 
-        :param exchange_id: parameter for compatibility with other extractors
-          always set to `binance`
-        :param currency_pair: currency pair to get data for, e.g. `BTC_USDT`
-        :param start_timestamp: start timestamp
-        :param end_timestamp: end timestamp
+        :param exchange_id: exchange to download from (not used, kept
+            for compatibility with parent class).
+        :param currency_pairs: currency pairs, e.g. ["BTC_USDT",
+            "ETH_USDT"]
+        :param bid_ask_depth: how many levels of order book to download
         """
-        raise NotImplementedError("This method is not implemented yet.")
+        if bid_ask_depth is None:
+            bid_ask_depth = 10
+        # Binance has a rate limit of 10 incoming messages per secnd
+        throttle_counter = 0
+        for currency_pair in currency_pairs:
+            _LOG.info(f"subscribe: {self.convert_currency_pair(currency_pair)}")
+            self._client.partial_book_depth(
+                symbol=self.convert_currency_pair(currency_pair),
+                level=bid_ask_depth,
+                speed=100,
+            )
+            self._websocket_data_buffer[
+                self.convert_currency_pair(currency_pair)
+            ] = []
+            throttle_counter += 1
+            if throttle_counter == 10:
+                time.sleep(1)
+                throttle_counter = 0
+
+    async def _subscribe_to_websocket_ohlcv_multiple_symbols(
+        self,
+        exchange_id: str,
+        currency_pairs: List[str],
+        **kwargs: Any,
+    ) -> None:
+        """
+        #TODO(Juraj): Add docstring.
+
+        :param exchange_id: exchange to download from (not used, kept
+            for compatibility with parent class).
+        :param currency_pairs: currency pairs, e.g. ["BTC_USDT",
+            "ETH_USDT"]
+        """
+        # Binance has a rate limit of 10 incoming messages per secnd
+        throttle_counter = 0
+        for currency_pair in currency_pairs:
+            _LOG.info(f"subscribe: {self.convert_currency_pair(currency_pair)}")
+            self._client.kline(
+                symbol=self.convert_currency_pair(currency_pair),
+                interval="1m",
+            )
+            self._ohlcv[self.convert_currency_pair(currency_pair)] = {}
+            throttle_counter += 1
+            if throttle_counter == 10:
+                time.sleep(1)
+                throttle_counter = 0
+
+    async def _subscribe_to_websocket_trades_multiple_symbols(
+        self,
+        exchange_id: str,
+        currency_pairs: List[str],
+        **kwargs: Any,
+    ) -> None:
+        """
+        #TODO(Juraj): Add docstring.
+
+        :param exchange_id: exchange to download from (not used, kept
+            for compatibility with parent class).
+        :param currency_pairs: currency pairs, e.g. ["BTC_USDT",
+            "ETH_USDT"]
+        """
+        # Binance has a rate limit of 10 incoming messages per secnd
+        throttle_counter = 0
+        for currency_pair in currency_pairs:
+            _LOG.info(f"subscribe: {self.convert_currency_pair(currency_pair)}")
+            self._client.trade(
+                symbol=self.convert_currency_pair(currency_pair),
+            )
+            self._trades[self.convert_currency_pair(currency_pair)] = []
+            throttle_counter += 1
+            if throttle_counter == 10:
+                time.sleep(1)
+                throttle_counter = 0
+
+    def _pad_bids_asks_to_equal_len(
+        self, bids: List[List], asks: List[List]
+    ) -> Tuple[List[List], List[List]]:
+        """
+        Pad list of bids and asks to the same length.
+        """
+        max_len = max(len(bids), len(asks))
+        pad_bids_num = max_len - len(bids)
+        pad_asks_num = max_len - len(asks)
+        bids = bids + [[None, None]] * pad_bids_num
+        asks = asks + [[None, None]] * pad_asks_num
+        return bids, asks
