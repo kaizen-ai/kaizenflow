@@ -2022,6 +2022,16 @@ def compare_dfs(
         if remove_inf:
             df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
     elif diff_mode == "pct_change":
+        # Compare NaN values in dataframes.
+        nan_diff_df = compare_nans_in_dataframes(df1, df2)
+        _LOG.log(
+            log_level,
+            "Dataframe with NaN differences=\n%s",
+            df_to_str(nan_diff_df, log_level=log_level),
+        )
+        msg = "There are NaN values in one of the dataframes that are not in the other one."
+        hdbg.dassert_eq(0, nan_diff_df.shape[0], msg=msg)
+        # Compute pct_change.
         df_diff = 100 * (df1 - df2) / df2.abs()
         if zero_vs_zero_is_zero:
             # When comparing 0 to 0 set the diff (which is NaN by default) to 0.
