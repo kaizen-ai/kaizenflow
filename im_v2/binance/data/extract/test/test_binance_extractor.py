@@ -46,21 +46,27 @@ class TestBinanceExtractor(hunitest.TestCase):
         # Mock downloading files and extracting data from them.
         ivbdexex.hio = umock.MagicMock()
         contract_type = "futures"
-        binance_extractor = ivbdexex.BinanceExtractor(
-            contract_type, ivbdexex.BinanceNativeTimePeriod.DAILY
-        )
-        binance_extractor._download_binance_files = umock.MagicMock()
-        binance_extractor._extract_data_from_binance_files = umock.MagicMock(
-            return_value=self._get_mock_trades()
-        )
-        # Prepare parameters.
-        currency_pair = "BTCUSDT"
-        start_date = pd.Timestamp("2020-01-01 00:00:00")
-        end_date = pd.Timestamp("2020-01-03 23:59:00")
-        # Run.
-        actual_df = binance_extractor._fetch_trades(
-            currency_pair, start_date, end_date
-        )
+        data_type = "trades"
+        try:
+            binance_extractor = ivbdexex.BinanceExtractor(
+                contract_type, ivbdexex.BinanceNativeTimePeriod.DAILY, data_type
+            )
+            binance_extractor._download_binance_files = umock.MagicMock()
+            binance_extractor._extract_data_from_binance_files = umock.MagicMock(
+                return_value=self._get_mock_trades()
+            )
+            # Prepare parameters.
+            currency_pair = "BTCUSDT"
+            start_date = pd.Timestamp("2020-01-01 00:00:00")
+            end_date = pd.Timestamp("2020-01-03 23:59:00")
+            # Run.
+            actual_df = binance_extractor._fetch_trades(
+                currency_pair, start_date, end_date
+            )
+        except Exception as e:
+            raise e
+        finally:
+            binance_extractor.close()
         # Compare results.
         actual = hpandas.df_to_str(
             actual_df.drop(columns=["end_download_timestamp"])
