@@ -56,6 +56,12 @@ def _parse() -> argparse.ArgumentParser:
         "on_buffer_full: Save data to the database when the buffer is full. \n"
         "on_sufficient_time: Save data to the database based on a predefined time interval.",
     )
+    parser.add_argument(
+        "--watch_multiple_symbols",
+        action="store_true",
+        required=False,
+        help="Specifies if we want to subscribe for multiple symbols at once for bid ask. \n"
+    )
     parser = imvcdeexut.add_periodical_download_args(parser)
     parser = hparser.add_verbosity_arg(parser)
     parser = imvcddbut.add_db_args(parser)

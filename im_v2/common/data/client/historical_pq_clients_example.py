@@ -7,45 +7,9 @@ import im_v2.common.data.client.historical_pq_clients_example as imvcdchpce
 import os
 from typing import Any, List
 
-import helpers.hgit as hgit
-import helpers.hsystem as hsystem
 import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
+import im_v2.common.test as imvct
 import im_v2.common.universe as ivcu
-
-
-def _generate_test_data(
-    test_data_dir: str,
-    start_date: str,
-    end_date: str,
-    freq: str,
-    assets: str,
-    asset_col_name: str,
-    output_type: str,
-    partition_mode: str,
-) -> None:
-    """
-    The parameters are the test data dir and the same as the script
-    `im_v2/common/test/generate_pq_test_data.py`.
-    """
-    tiled_bar_data_dir = os.path.join(test_data_dir, "tiled.bar_data")
-    # TODO(gp): @all replace the script with calling the library directly
-    #  CmTask1490.
-    cmd = []
-    file_path = os.path.join(
-        hgit.get_amp_abs_path(),
-        "im_v2/common/test/generate_pq_test_data.py",
-    )
-    cmd.append(file_path)
-    cmd.append(f"--start_date {start_date}")
-    cmd.append(f"--end_date {end_date}")
-    cmd.append(f"--freq {freq}")
-    cmd.append(f"--assets {assets}")
-    cmd.append(f"--asset_col_name {asset_col_name}")
-    cmd.append(f"--partition_mode {partition_mode}")
-    cmd.append(f"--dst_dir {tiled_bar_data_dir}")
-    cmd.append(f"--output_type {output_type}")
-    cmd = " ".join(cmd)
-    hsystem.system(cmd)
 
 
 class MockHistoricalByTileClient(imvcdchpcl.HistoricalPqByTileClient):
@@ -64,22 +28,23 @@ def get_MockHistoricalByTileClient_example1(
     # Specify parameters for test data generation and client initialization.
     start_date = "2021-12-30"
     end_date = "2022-01-02"
-    freq = "1T"
-    assets = ",".join(full_symbols)
+    assets = full_symbols
     asset_col_name = "full_symbol"
+    test_data_dir = self_.get_scratch_space()
+    tiled_bar_data_dir = os.path.join(test_data_dir, "tiled.bar_data")
+    freq = "1T"
     output_type = "cm_task_1103"
     partition_mode = "by_year_month"
-    test_data_dir = self_.get_scratch_space()
     # Generate test data.
-    _generate_test_data(
-        test_data_dir,
+    imvct.generate_parquet_files(
         start_date,
         end_date,
-        freq,
         assets,
         asset_col_name,
-        output_type,
-        partition_mode,
+        tiled_bar_data_dir,
+        freq=freq,
+        output_type=output_type,
+        partition_mode=partition_mode,
     )
     # Init client for testing.
     vendor = "mock"
@@ -106,22 +71,23 @@ def get_MockHistoricalByTileClient_example2(
     # Specify parameters for test data generation and client initialization.
     start_date = "2020-01-01"
     end_date = "2022-01-02"
-    freq = "1H"
-    assets = ",".join(full_symbols)
+    assets = full_symbols
     asset_col_name = "full_symbol"
+    test_data_dir = self_.get_scratch_space()
+    tiled_bar_data_dir = os.path.join(test_data_dir, "tiled.bar_data")
+    freq = "1H"
     output_type = "cm_task_1103"
     partition_mode = "by_year_month"
-    test_data_dir = self_.get_scratch_space()
     # Generate test data.
-    _generate_test_data(
-        test_data_dir,
+    imvct.generate_parquet_files(
         start_date,
         end_date,
-        freq,
         assets,
         asset_col_name,
-        output_type,
-        partition_mode,
+        tiled_bar_data_dir,
+        freq=freq,
+        output_type=output_type,
+        partition_mode=partition_mode,
     )
     # Init client for testing.
     vendor = "mock"
@@ -150,22 +116,23 @@ def get_MockHistoricalByTileClient_example3(
     Build mock client example to test randomly generated intervals.
     """
     # Specify parameters for test data generation and client initialization.
-    freq = "1H"
-    assets = ",".join(full_symbols)
+    assets = full_symbols
     asset_col_name = "full_symbol"
+    test_data_dir = self_.get_scratch_space()
+    tiled_bar_data_dir = os.path.join(test_data_dir, "tiled.bar_data")
+    freq = "1H"
     output_type = "cm_task_1103"
     partition_mode = "by_year_month"
-    test_data_dir = self_.get_scratch_space()
     # Generate test data.
-    _generate_test_data(
-        test_data_dir,
+    imvct.generate_parquet_files(
         start_date,
         end_date,
-        freq,
         assets,
         asset_col_name,
-        output_type,
-        partition_mode,
+        tiled_bar_data_dir,
+        freq=freq,
+        output_type=output_type,
+        partition_mode=partition_mode,
     )
     # Init client for testing.
     vendor = "mock"

@@ -40,8 +40,8 @@ def _to_skip_on_update_outcomes() -> bool:
     """
     Determine whether to skip on `--update_outcomes`.
 
-    Some tests can't pass with `--update_outcomes`, since they exercise the
-    logic in `--update_outcomes` itself.
+    Some tests can't pass with `--update_outcomes`, since they exercise
+    the logic in `--update_outcomes` itself.
 
     We can't always use `@pytest.mark.skipif(hunitest.get_update_tests)`
     since pytest decides which tests need to be run before the variable
@@ -919,6 +919,42 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
 # #############################################################################
 
 
+class Test_unit_test2(hunitest.TestCase):
+    def test_purify_parquet_file_names1(self) -> None:
+        """
+        Test purification of Parquet file names with the path.
+
+        The Parquet file names with the
+        GUID have to be replaced with the `data.parquet` string.
+        """
+        txt = """
+        s3://some_bucket/root/currency_pair=BTC_USDT/year=2024/month=1/ea5e3faed73941a2901a2128abeac4ca-0.parquet
+        s3://some_bucket/root/currency_pair=BTC_USDT/year=2024/month=2/f7a39fefb69b40e0987cec39569df8ed-0.parquet
+        """
+        exp = """
+        s3://some_bucket/root/currency_pair=BTC_USDT/year=2024/month=1/data.parquet
+        s3://some_bucket/root/currency_pair=BTC_USDT/year=2024/month=2/data.parquet
+        """
+        act = hunitest.purify_parquet_file_names(txt)
+        hdbg.dassert_eq(act, exp)
+
+    def test_purify_parquet_file_names2(self) -> None:
+        """
+        Test purification of Parquet file name without the path.
+        """
+        txt = """
+        ffa39fffb69b40e0987cec39569df8ed-0.parquet
+        """
+        exp = """
+        data.parquet
+        """
+        act = hunitest.purify_parquet_file_names(txt)
+        hdbg.dassert_eq(act, exp)
+
+
+# #############################################################################
+
+
 class Test_get_dir_signature1(hunitest.TestCase):
     def helper(self, include_file_content: bool) -> str:
         in_dir = self.get_input_dir()
@@ -1238,3 +1274,29 @@ class Test_purify_from_environment1(hunitest.TestCase):
         input_ = "/app"
         exp = "$GIT_ROOT"
         self.check_helper(input_, exp)
+
+
+# #############################################################################
+
+
+class Test_purify_line_number(hunitest.TestCase):
+    """
+    Check that `purify_line_number` is working as expected.
+    """
+
+    def test1(self) -> None:
+        """
+        Check that the text is purified from line numbers correctly.
+        """
+        txt = """
+        dag_config (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        in_col_groups (marked_as_used=True, writer=$GIT_ROOT/dataflow/system/system_builder_utils.py::286::apply_history_lookback, val_type=list): [('close',), ('volume',)]
+        out_col_group (marked_as_used=True, writer=$GIT_ROOT/dataflow/system/system_builder_utils.py::286::apply_history_lookback, val_type=tuple): ()
+        """
+        expected = r"""
+        dag_config (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        in_col_groups (marked_as_used=True, writer=$GIT_ROOT/dataflow/system/system_builder_utils.py::$LINE_NUMBER::apply_history_lookback, val_type=list): [('close',), ('volume',)]
+        out_col_group (marked_as_used=True, writer=$GIT_ROOT/dataflow/system/system_builder_utils.py::$LINE_NUMBER::apply_history_lookback, val_type=tuple): ()
+        """
+        actual = hunitest.purify_line_number(txt)
+        self.assert_equal(actual, expected, fuzzy_match=True)

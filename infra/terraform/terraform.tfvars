@@ -202,6 +202,13 @@ security_groups = [
         protocol        = "tcp"
         description     = "Allow db access from servers in VPC"
         security_groups = ["int-sg-1"]
+      },
+      {
+        from_port       = 5432
+        to_port         = 5432
+        protocol        = "tcp"
+        description     = "Allow the specific database port from the Node Group Security Group. This lets the worker nodes access the database."
+        security_groups = ["eks-node-group-sg-1"]
       }
     ]
     egress = [
@@ -216,7 +223,7 @@ security_groups = [
   },
   {
     name        = "efs-sg-1"
-    description = "EFS sg"
+    description = "EFS Security Group"
     tags        = { Name = "efs-sg-1" }
     ingress = [
       {
@@ -232,7 +239,14 @@ security_groups = [
         protocol        = "tcp"
         description     = "Allow mount to instances in int-sg-1"
         security_groups = ["int-sg-1"]
-      }
+      },
+      {
+        from_port       = 2049
+        to_port         = 2049
+        protocol        = "tcp"
+        description     = "Allow NFS from the Node Group Security Group. This allows nodes to mount EFS volumes."
+        security_groups = ["eks-node-group-sg-1"]
+      },
     ]
     egress = [
       {
@@ -251,14 +265,114 @@ security_groups = [
       }
     ]
   },
+  {
+    name        = "ecs-sg-1"
+    description = "ECS Security Group"
+    tags        = { Name = "ecs-sg-1" }
+    ingress = [
+      {
+        from_port       = 0
+        to_port         = 0
+        protocol        = "-1"
+        description     = "Allow all traffic from the Node Group Security Group. This enables communication between worker nodes and ECS."
+        security_groups = ["eks-node-group-sg-1"]
+      },
+      {
+        from_port       = 0
+        to_port         = 0
+        protocol        = "-1"
+        description     = "Allow ECS containers to download/store data via HTTP(S), Websockets and RDS."
+        security_groups = ["int-sg-1"]
+      }
+    ]
+    egress = [
+      {
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        description = "Allow all outbound traffic to maintain connectivity with AWS services and the internet."
+        cidr_blocks = ["0.0.0.0/0"]
+      }
+    ]
+  },
+  {
+    name        = "eks-control-plane-sg-1"
+    description = "Control Plane Security Group"
+    tags        = { Name = "eks-control-plane-sg-1" }
+    ingress = [
+      {
+        from_port   = 443
+        to_port     = 443
+        protocol    = "tcp"
+        description = "Allow HTTPS (port 443) from you network or VPN. This is for API server access."
+        cidr_blocks = ["0.0.0.0/0"]
+      },
+      {
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        description = "Allow all traffic from the VPC CIDR. This is for communication within the VPC."
+        cidr_blocks = ["0.0.0.0/0"]
+      }
+    ]
+    egress = [
+      {
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        description = "Allow all traffic to the VPC CIDR. This is for communication within the VPC."
+        cidr_blocks = ["172.30.0.0/16"]
+      },
+      {
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        description = "Allow all outbound traffic to maintain connectivity with AWS services and the internet."
+        cidr_blocks = ["0.0.0.0/0"]
+      },
+    ]
+  },
+  {
+    name        = "eks-node-group-sg-1"
+    description = "Node Group Security Group"
+    tags        = { Name = "eks-node-group-sg-1" }
+    ingress = [
+      {
+        from_port       = 0
+        to_port         = 0
+        protocol        = "-1"
+        description     = "Allow all traffic from the Control Plane Security Group. This enables communication between worker nodes and the control plane."
+        security_groups = ["eks-control-plane-sg-1"]
+      },
+      {
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        description = "Allow all traffic from the VPC CIDR. This is for communication within the VPC."
+        cidr_blocks = ["0.0.0.0/0"]
+      }
+    ]
+    egress = [
+      {
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        description = "Allow all traffic to the VPC CIDR and the internet. This allows nodes to communicate within the VPC and to reach the internet, if necessary."
+        cidr_blocks = ["172.30.0.0/16"]
+      }
+    ]
+  },
 ]
-subnet_availability_zones = ["eu-north-1c", "eu-north-1c", "eu-north-1b", "eu-north-1b"]
-subnet_cidr_blocks        = ["172.30.1.0/24", "172.30.2.0/24", "172.30.3.0/24", "172.30.254.0/24"]
+subnet_availability_zones = ["eu-north-1c", "eu-north-1c", "eu-north-1b", "eu-north-1b", "eu-north-1b", "eu-north-1a", "eu-north-1a"]
+subnet_cidr_blocks        = ["172.30.1.0/24", "172.30.2.0/24", "172.30.3.0/24", "172.30.254.0/24", "172.30.4.0/24", "172.30.5.0/24", "172.30.6.0/24"]
 subnet_tags = [
   { Name = "public-subnet-1", Created_by = "terraform" },
   { Name = "private-subnet-1", Created_by = "terraform" },
   { Name = "private-subnet-2", Created_by = "terraform" },
   { Name = "vpn-subnet-1", Created_by = "terraform" },
+  { Name = "public-subnet-2", Created_by = "terraform" },
+  { Name = "private-subnet-3", Created_by = "terraform" },
+  { Name = "public-subnet-3", Created_by = "terraform" },
 ]
 subnet_map_public_ip_on_launch = false
 internet_gateway_tags          = { Name = "internet-gw-1" }
@@ -285,24 +399,14 @@ nat_gateway_routes = [
     route_table_index      = 1
   }
 ]
-instance_routes = [
-  {
-    destination_cidr_block = "172.30.254.0/24",
-    instance_id            = "VPN-terraform",
-    route_table_index      = 1
-  },
-  {
-    destination_cidr_block = "172.30.254.0/24",
-    instance_id            = "VPN-terraform",
-    route_table_index      = 0
-  }
-]
-
 subnet_route_table_associations = [
   { subnet_index = 0, route_table_index = 0 },
   { subnet_index = 1, route_table_index = 1 },
   { subnet_index = 2, route_table_index = 1 },
   { subnet_index = 3, route_table_index = 1 },
+  { subnet_index = 4, route_table_index = 0 },
+  { subnet_index = 5, route_table_index = 1 },
+  { subnet_index = 6, route_table_index = 0 },
 ]
 
 
@@ -366,38 +470,84 @@ ec2_configs = [
   },
 ]
 
+instance_routes = [
+  {
+    destination_cidr_block = "172.30.254.0/24",
+    instance_id            = "VPN-terraform",
+    route_table_name       = "internal-rt-1",
+  },
+  {
+    destination_cidr_block = "172.30.254.0/24",
+    instance_id            = "VPN-terraform",
+    route_table_name       = "external-rt-1",
+  }
+]
+
 
 
 # <--- ./modules/rds --->
 
-rds_subnet_group_desc                  = "RDS Subnet group - Created by terraform"
-rds_subnet_group_name                  = "default-subnet-group"
-rds_subnet_ids                         = ["private-subnet-1", "private-subnet-2"]
-db_identifier                          = "prod-im-db"
-db_allocated_storage                   = 300
-db_instance_class                      = "db.r6g.large"
-db_engine                              = "postgres"
-db_backup_window                       = "06:13-06:43"
-db_backup_retention_period             = 0
-db_availability_zone                   = "eu-north-1c"
-db_maintenance_window                  = "sun:02:29-sun:02:59"
-db_multi_az                            = false
-db_engine_version                      = "13.10"
-db_auto_minor_version_upgrade          = true
-db_license_model                       = "postgresql-license"
-db_iops                                = 3000
-db_publicly_accessible                 = false
-db_storage_type                        = "io1"
-db_port                                = 5432
-db_storage_encrypted                   = true
-db_kms_key_id                          = ""
-db_copy_tags_to_snapshot               = true
-db_monitoring_interval                 = 0
-db_iam_database_authentication_enabled = false
-db_deletion_protection                 = false
-performance_insights_enabled           = false
-rds_security_group_ids                 = ["int-sg-1", "int-db-1"]
-skip_final_snapshot                    = true
+rds_configs = [
+  {
+    db_identifier                          = "prod-im-db"
+    db_allocated_storage                   = 300
+    db_instance_class                      = "db.r6g.large"
+    db_engine                              = "postgres"
+    db_name                                = "prod_im_data_db"
+    db_backup_window                       = "06:13-06:43"
+    db_backup_retention_period             = 0
+    db_availability_zone                   = "eu-north-1c"
+    db_maintenance_window                  = "sun:02:29-sun:02:59"
+    db_multi_az                            = false
+    db_engine_version                      = "13.10"
+    db_auto_minor_version_upgrade          = true
+    db_license_model                       = "postgresql-license"
+    db_iops                                = 3000
+    db_publicly_accessible                 = false
+    db_storage_type                        = "io1"
+    db_port                                = 5432
+    db_storage_encrypted                   = true
+    db_kms_key_id                          = ""
+    db_copy_tags_to_snapshot               = true
+    db_monitoring_interval                 = 0
+    db_iam_database_authentication_enabled = false
+    db_deletion_protection                 = false
+    performance_insights_enabled           = false
+    rds_security_group_ids                 = ["int-sg-1", "int-db-1"]
+    skip_final_snapshot                    = true
+  },
+  {
+    db_identifier                          = "prod-airflow-db"
+    db_allocated_storage                   = 45
+    db_instance_class                      = "db.t4g.medium"
+    db_engine                              = "postgres"
+    db_name                                = "prod_airflow_backend_db"
+    db_backup_window                       = "06:13-06:43"
+    db_backup_retention_period             = 0
+    db_availability_zone                   = "eu-north-1c"
+    db_maintenance_window                  = "sun:02:29-sun:02:59"
+    db_multi_az                            = false
+    db_engine_version                      = "13.10"
+    db_auto_minor_version_upgrade          = true
+    db_license_model                       = "postgresql-license"
+    db_iops                                = null
+    db_publicly_accessible                 = false
+    db_storage_type                        = "gp3"
+    db_port                                = 5432
+    db_storage_encrypted                   = true
+    db_kms_key_id                          = ""
+    db_copy_tags_to_snapshot               = true
+    db_monitoring_interval                 = 0
+    db_iam_database_authentication_enabled = false
+    db_deletion_protection                 = false
+    performance_insights_enabled           = false
+    rds_security_group_ids                 = ["int-sg-1", "int-db-1"]
+    skip_final_snapshot                    = true
+  },
+]
+rds_subnet_group_desc = "RDS Subnet group - Created by terraform"
+rds_subnet_group_name = "default-subnet-group"
+rds_subnet_ids        = ["private-subnet-1", "private-subnet-2"]
 
 
 
@@ -426,8 +576,10 @@ efs_mount_targets = [
 # <--- ./modules/iam --->
 
 iam_roles = {
-  ProdAirflowEC2Role = { description = "Allows EC2 instance hosting Airflow to call necessary services - CloudWatch, ECS, allow role pass" }
-  s3InstanceRole     = { description = "Allows S3 to call AWS services on your behalf." }
+  ProdAirflowEC2Role  = { description = "Allows EC2 instance hosting Airflow to call necessary services - CloudWatch, ECS, allow role pass" }
+  s3InstanceRole      = { description = "Allows S3 to call AWS services on your behalf." }
+  eksClusterRole      = { description = "Allows access for the Kubernetes control plane to make calls to AWS API operations on your behalf." }
+  eksNodeInstanceRole = { description = "Allows EKS Node Group to call AWS services on your behalf." }
 }
 iam_policies = {
   MFA-ON-CONSOLE_API-VIA-INTERNAL_CLOUDWATCH-RO_VPC            = { description = "Allow access to cloudwatch when request from prod-vpc-1" },
@@ -435,17 +587,37 @@ iam_policies = {
   MFA-ON-CONSOLE_API-VIA-INTERNAL_ECSAllowTaskExeucionRolePass = { description = "" },
   AllowS3Replication                                           = { description = "Access policy which grants privileges to replicate data from production s3 bucket to preprod s3 bucket" },
   S3AllowBatchReplication                                      = { description = "" },
+  AmazonEKSELBPermissionsPolicy                                = { description = "" },
+  AmazonEKSCloudWatchMetricsPolicy                             = { description = "" },
 }
 iam_role_policies = {
   ProdAirflowEC2Role = [
-    "MFA-ON-CONSOLE_API-VIA-INTERNAL_CLOUDWATCH-RO_VPC",
-    "MFA-ON-CONSOLE_API-VIA-INTERNAL_ECS-FULL-VPC",
-    "MFA-ON-CONSOLE_API-VIA-INTERNAL_ECSAllowTaskExeucionRolePass"
+    { name = "MFA-ON-CONSOLE_API-VIA-INTERNAL_CLOUDWATCH-RO_VPC" },
+    { name = "MFA-ON-CONSOLE_API-VIA-INTERNAL_ECS-FULL-VPC" },
+    { name = "MFA-ON-CONSOLE_API-VIA-INTERNAL_ECSAllowTaskExeucionRolePass" },
   ]
   s3InstanceRole = [
-    "AllowS3Replication",
-    "S3AllowBatchReplication"
+    { name = "AllowS3Replication" },
+    { name = "S3AllowBatchReplication" },
   ]
+  eksClusterRole = [
+    { arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy" },
+    { arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy" },
+    { arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController" },
+    { name = "AmazonEKSELBPermissionsPolicy" },
+    { name = "AmazonEKSCloudWatchMetricsPolicy" },
+  ]
+  eksNodeInstanceRole = [
+    { arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy" },
+    { arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy" },
+    { arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly" },
+    { arn = "arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess" },
+    { arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore" },
+  ]
+}
+iam_instance_profile = {
+  ProdAirflowEC2Role  = { tags = "ProdAirflowEC2Role" },
+  eksNodeInstanceRole = { tags = "eksNodeInstanceRole" },
 }
 
 
@@ -644,6 +816,83 @@ buckets = {
     ]
   }
 }
+
+
+
+# <--- ./modules/eks --->
+
+cluster_name                      = "preprod-airflow-cluster"
+eks_cluster_role                  = "eksClusterRole"
+eks_cluster_version               = "1.29"
+enabled_cluster_log_types         = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+eks_cluster_security_group_ids    = ["eks-control-plane-sg-1"]
+eks_cluster_subnet_ids            = ["public-subnet-1", "public-subnet-2", "public-subnet-3", "private-subnet-1", "private-subnet-2", "private-subnet-3"]
+eks_endpoint_private_access       = true
+eks_endpoint_public_access        = true
+eks_public_access_cidrs           = ["0.0.0.0/0"]
+eks_node_group_security_group_ids = ["eks-node-group-sg-1"]
+tag_specifications = [
+  {
+    resource_type = "instance"
+  },
+  {
+    resource_type = "volume"
+  },
+  {
+    resource_type = "network-interface"
+  }
+]
+node_group_name                  = "airflow-nodegroup"
+eks_node_role                    = "eksNodeInstanceRole"
+node_desired_size                = 3
+node_max_size                    = 4
+node_min_size                    = 2
+node_max_unavailable             = 1
+node_ami_type                    = "AL2_x86_64" # AL2_x86_64, AL2_x86_64_GPU, AL2_ARM_64, CUSTOM
+node_capacity_type               = "ON_DEMAND"  # ON_DEMAND or SPOT
+node_disk_size                   = 21
+node_instance_types              = ["m5.large"]
+eks_node_group_subnet_ids        = ["private-subnet-1", "private-subnet-2", "private-subnet-3"]
+node_disk_delete_on_termination  = true
+node_disk_device_mapping_name    = "/dev/xvda"
+node_disk_iops                   = 3000
+node_disk_type                   = "gp3"
+node_http_put_response_hop_limit = 2
+node_metadata_http_tokens        = "required"
+
+
+
+# <--- ./modules/client_vpn_endpoint --->
+
+endpoint_CIDR                  = "172.30.4.0/22"
+endpoint_description           = "Allows access from Russia"
+dns_servers                    = null
+sec_group                      = ["sg-01b3b2a53c72d5048"]
+self_service                   = "disabled"
+server_cert_arn                = "arn:aws:acm:eu-north-1:623860924167:certificate/603388dd-3874-41fc-86d7-12842456a2a2"
+sesh_timeout                   = 24
+split_tunnel                   = true
+endpoint_name                  = "vpn-endpoint-1"
+transport_protocol             = "tcp"
+vpc_id                         = "vpc-04ac0882178376ba8"
+vpn_port                       = 443
+active_directory_id            = null
+root_cert_chain_arn            = "arn:aws:acm:eu-north-1:623860924167:certificate/cad318e6-1cf9-45f8-be3e-938fc7436dfb"
+saml_provider_arn              = null
+self_service_saml_provider_arn = null
+auth_type                      = "certificate-authentication"
+enable_client_connect          = false
+lambda_function_arn            = null
+banner_text                    = null
+enable_banner                  = false
+cloudwatch_log_group           = "client_vpn"
+cloudwatch_log_stream          = "cvpn-endpoint-0971aede3c089338d-eu-north-1-2023/10/05-IgipJlbOztbX"
+enable_connection_log          = true
+endpoint_subnet_id             = "subnet-0d7a4957ff09e7cc5"
+access_group_id                = null
+authorize_all_groups           = true
+auth_rule_description          = "Allows access to resources in VPC"
+target_network_cidr            = "172.30.0.0/16"
 
 
 

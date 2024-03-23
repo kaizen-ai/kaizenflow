@@ -193,6 +193,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(
             "log_level": "INFO",
             "websocket_data_buffer_size": None,
             "db_saving_mode": "on_buffer_full",
+            "bid_ask_depth": 10,
         }
         namespace = argparse.Namespace(**kwargs)
         mock_argument_parser.parse_args.return_value = namespace

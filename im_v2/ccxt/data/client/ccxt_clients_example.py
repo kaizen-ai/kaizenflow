@@ -5,6 +5,7 @@ import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 """
 
 import os
+from typing import Any, Dict
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
@@ -28,6 +29,52 @@ def get_test_data_dir() -> str:
     )
     hdbg.dassert_dir_exists(test_data_dir)
     return test_data_dir
+
+
+def get_CcxtOhlcvHistoricalPqByTileClient_config_example1() -> Dict[str, Any]:
+    """
+    Get OHLCV historical ImClient config for unit tests.
+    """
+    im_client_config = {
+        "universe_version": "v7",
+        # The data at the unit test bucket is a copy of that from the preprod
+        # bucket. The original data is at
+        # `s3://cryptokaizen-data.preprod/v3/periodic_daily/airflow/downloaded_1min/parquet/ohlcv/futures/v7_3/ccxt/binance/v1_0_0/`.
+        "root_dir": "s3://cryptokaizen-unit-test/v3",
+        "partition_mode": "by_year_month",
+        "dataset": "ohlcv",
+        "contract_type": "futures",
+        "data_snapshot": "",
+        "aws_profile": "ck",
+        "resample_1min": False,
+        "version": "v1_0_0",
+        "download_universe_version": "v7_3",
+        "tag": "downloaded_1min",
+    }
+    return im_client_config
+
+
+def get_CcxtBidAskHistoricalPqByTileClient_config_example1() -> Dict[str, Any]:
+    """
+    Get bid-ask historical ImClient config for unit tests.
+    """
+    im_client_config = {
+        "universe_version": "v7.4",
+        # The data at the unit test bucket is a copy of that from the preprod
+        # bucket but only for Jan-March 2024. The original data is at
+        # `s3://cryptokaizen-data.preprod/v3/periodic_daily/airflow/resampled_1min/parquet/bid_ask/futures/v7/ccxt/binance/v2_0_0/`.
+        "root_dir": "s3://cryptokaizen-unit-test/v3",
+        "partition_mode": "by_year_month",
+        "dataset": "bid_ask",
+        "contract_type": "futures",
+        "data_snapshot": "",
+        "aws_profile": "ck",
+        "resample_1min": False,
+        "version": "v2_0_0",
+        "download_universe_version": "v7",
+        "tag": "resampled_1min",
+    }
+    return im_client_config
 
 
 # #############################################################################

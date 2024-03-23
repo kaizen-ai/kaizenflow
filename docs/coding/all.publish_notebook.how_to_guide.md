@@ -1,11 +1,13 @@
-<!--ts-->
-      * [What it is about](#what-it-is-about)
-      * [Opening a notebook](#opening-a-notebook)
-      * [What has changed](#what-has-changed)
 
 
+<!-- toc -->
 
-<!--te-->
+- [What it is about](#what-it-is-about)
+- [Opening a notebook](#opening-a-notebook)
+- [What has changed](#what-has-changed)
+
+<!-- tocstop -->
+
 ## What it is about
 
 - `publish_notebook.py` is a little tool that allows to:

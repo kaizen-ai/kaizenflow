@@ -16,7 +16,7 @@
 # ## Process input file
 
 # %% [markdown]
-# In this notebook we will load sample trades data (https://drive.google.com/file/d/1up5otVlfw-RX1S6K8o4d2nNRPP-lKran/view), resample them and store on S3 in a parquet tiled format 
+# In this notebook we will load sample trades data (https://drive.google.com/file/d/1up5otVlfw-RX1S6K8o4d2nNRPP-lKran/view), resample them and store on S3 in a parquet tiled format
 
 # %% [markdown]
 # Assuming the tar archive is in the root of the repository
@@ -31,16 +31,14 @@
 # ## Imports
 
 # %%
-import datetime
 import logging
 
 import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv
-import helpers.hpandas as hpandas
-import helpers.hprint as hprint
 import helpers.hparquet as hparque
+import helpers.hprint as hprint
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -65,7 +63,7 @@ data.head()
 # Drop columns with all NaNs
 
 # %%
-data = data.dropna(axis=1, how='all')
+data = data.dropna(axis=1, how="all")
 
 # %%
 data.head()
@@ -110,10 +108,14 @@ data = data[["EVT_TRADE_PRICE", "EVT_TRADE_SIZE"]]
 # 06:41:00
 
 # %%
-data_ohlcv = data["EVT_TRADE_PRICE"].resample("1T", closed="left", label="right").ohlc()
+data_ohlcv = (
+    data["EVT_TRADE_PRICE"].resample("1T", closed="left", label="right").ohlc()
+)
 
 # %%
-data_volume = data["EVT_TRADE_SIZE"].resample("1T", closed="left", label="right").sum()
+data_volume = (
+    data["EVT_TRADE_SIZE"].resample("1T", closed="left", label="right").sum()
+)
 data_volume.name = "volume"
 
 # %%
@@ -139,14 +141,11 @@ s3_path = "s3://cryptokaizen-data-test/v3/bulk/manual/resampled_1min/parquet/ohl
 aws_profile = "ck"
 
 # %%
-data, partition_cols = hparque.add_date_partition_columns(
-        data, partition_mode
-    )
+data, partition_cols = hparque.add_date_partition_columns(data, partition_mode)
 hparque.to_partitioned_parquet(
     data,
     ["currency_pair"] + partition_cols,
     s3_path,
-    partition_filename=None,
     aws_profile=aws_profile,
 )
 

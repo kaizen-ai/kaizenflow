@@ -1,8 +1,18 @@
 v8.0
+- 2024-03-14
+- Removed "FTT_USDT", "SC_USDT", "BTS_USDT", "SRM_USDT", "COCOS_USDT",
+"BTCST_USDT", "HNT_USDT",  "TOMO_USDT" because they are "inactive" 
+	- that means they are in the list of symbols returned by the market info API
+	- but we cannot obtain any data for them, this causes trouble when running QA
+- Adding symbols newly listed since the last update
+
+v8.0
 - 2023-09-16
 - Expand binance futures universe to all available symbols
 
 v7.6
+- 2024-02-20
+- Delete YFII_USDT from OKX universe, it got delisted #CmTask7293
 - 2024-02-07
 - Expand OKX universe with symbols with high liquidity
 - 2024-02-01

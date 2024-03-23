@@ -1,22 +1,23 @@
-<!--ts-->
-   * [Time semantics](#time-semantics)
-   * [How clock is handled](#how-clock-is-handled)
-      * [Asynchronous mode](#asynchronous-mode)
-      * [Synchronous mode](#synchronous-mode)
-      * [Async vs sync simulation](#async-vs-sync-simulation)
-      * [Some cross-products of the 3 directions](#some-cross-products-of-the-3-directions)
-      * [Research mode](#research-mode)
-      * [Real-time mode](#real-time-mode)
-      * [Historical](#historical)
-   * [Flows](#flows)
-      * [Forecast flow](#forecast-flow)
-      * [Pnl (profit and loss) flow](#pnl-profit-and-loss-flow)
-      * [Research flow](#research-flow)
-      * [Real-time flow](#real-time-flow)
 
 
+<!-- toc -->
 
-<!--te-->
+- [Time semantics](#time-semantics)
+- [How clock is handled](#how-clock-is-handled)
+  * [Asynchronous mode](#asynchronous-mode)
+  * [Synchronous mode](#synchronous-mode)
+  * [Async vs sync simulation](#async-vs-sync-simulation)
+  * [Some cross-products of the 3 directions](#some-cross-products-of-the-3-directions)
+  * [Research mode](#research-mode)
+  * [Real-time mode](#real-time-mode)
+  * [Historical](#historical)
+- [Flows](#flows)
+  * [Forecast flow](#forecast-flow)
+  * [Pnl (profit and loss) flow](#pnl-profit-and-loss-flow)
+  * [Research flow](#research-flow)
+  * [Real-time flow](#real-time-flow)
+
+<!-- tocstop -->
 
 # Time semantics
 

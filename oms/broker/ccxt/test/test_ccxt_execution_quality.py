@@ -18,10 +18,10 @@ def _check(self_: Any, actual: pd.DataFrame) -> None:
     self_.check_string(actual)
 
 
-def _load_data_from_s3(self_: Any) -> obcccclo.CcxtLogger:
-    # The downloaded sample is a copy of `ecs/test/system_reconciliation/C5b/prod/20231124_093000.20231124_102500/system_log_dir.manual/process_forecasts`.
+def _load_data_from_s3(
+    self_: Any, use_only_test_class: bool
+) -> obcccclo.CcxtLogger:
     # Load the data from S3.
-    use_only_test_class = True
     s3_input_dir = self_.get_s3_input_dir(use_only_test_class=use_only_test_class)
     scratch_dir = self_.get_scratch_space()
     aws_profile = "ck"
@@ -48,6 +48,7 @@ def _load_oms_child_order_df(self_: Any) -> pd.DataFrame:
             "exchange_timestamp",
             "knowledge_timestamp",
             "end_download_timestamp",
+            "end_order_timestamp",
             "stats__submit_twap_child_order::get_open_positions.done",
             "stats__submit_twap_child_order::bid_ask_market_data.start",
             "stats__submit_twap_child_order::bid_ask_market_data.done",
@@ -69,12 +70,20 @@ class Test_get_limit_order_price(hunitest.TestCase):
 
     @pytest.mark.slow("~7 sec.")
     def test1(self) -> None:
-        logger = _load_data_from_s3(self)
+        """
+        Test using the real data.
+        """
+        # Load the data.
+        use_only_test_class = True
+        logger = _load_data_from_s3(self, use_only_test_class)
+        #
         oms_child_order_df = logger.load_oms_child_order(
             convert_to_dataframe=True
         )
         freq = "T"
+        # Run.
         actual = obccexqu.get_limit_order_price(oms_child_order_df, freq=freq)
+        # Check.
         _check(self, actual)
 
 
@@ -88,12 +97,15 @@ class Test_align_ccxt_orders_and_fills(hunitest.TestCase):
         """
         Check filled Dataframe.
         """
-        logger = _load_data_from_s3(self)
+        # Load the data.
+        use_only_test_class = True
+        logger = _load_data_from_s3(self, use_only_test_class)
         #
         fills_df = logger.load_ccxt_trades(convert_to_dataframe=True)
         ccxt_order_response_df = logger.load_ccxt_order_response(
             convert_to_dataframe=True
         )
+        # Run.
         filled_df, _ = obccexqu.align_ccxt_orders_and_fills(
             ccxt_order_response_df, fills_df
         )
@@ -105,12 +117,15 @@ class Test_align_ccxt_orders_and_fills(hunitest.TestCase):
         """
         Check unfilled Dataframe.
         """
-        logger = _load_data_from_s3(self)
+        # Load the data.
+        use_only_test_class = True
+        logger = _load_data_from_s3(self, use_only_test_class)
         #
         fills_df = logger.load_ccxt_trades(convert_to_dataframe=True)
         ccxt_order_response_df = logger.load_ccxt_order_response(
             convert_to_dataframe=True
         )
+        # Run.
         _, unfilled_df = obccexqu.align_ccxt_orders_and_fills(
             ccxt_order_response_df, fills_df
         )
@@ -125,13 +140,20 @@ class Test_annotate_fills_df_with_wave_id(hunitest.TestCase):
 
     @pytest.mark.slow("~7 sec.")
     def test1(self) -> None:
-        logger = _load_data_from_s3(self)
+        """
+        Test using the real data.
+        """
+        # Load the data.
+        use_only_test_class = True
+        logger = _load_data_from_s3(self, use_only_test_class)
         #
         fills_df = logger.load_ccxt_trades(convert_to_dataframe=True)
         child_order_df = logger.load_oms_child_order(convert_to_dataframe=True)
+        # Run.
         annotated_fills_df = obccexqu.annotate_fills_df_with_wave_id(
             fills_df, child_order_df
         )
+        # Check.
         _check(self, annotated_fills_df)
 
 
@@ -142,7 +164,12 @@ class Test_compute_filled_order_execution_quality(hunitest.TestCase):
 
     @pytest.mark.slow("~7 sec.")
     def test1(self) -> None:
-        logger = _load_data_from_s3(self)
+        """
+        Test using the real data.
+        """
+        # Load the data.
+        use_only_test_class = True
+        logger = _load_data_from_s3(self, use_only_test_class)
         #
         fills_df = logger.load_ccxt_trades(convert_to_dataframe=True)
         ccxt_order_response_df = logger.load_ccxt_order_response(
@@ -153,9 +180,11 @@ class Test_compute_filled_order_execution_quality(hunitest.TestCase):
             ccxt_order_response_df, fills_df
         )
         tick_decimals = 2
+        # Run.
         actual = obccexqu.compute_filled_order_execution_quality(
             filled_ccxt_orders, tick_decimals
         )
+        # Check.
         _check(self, actual)
 
 
@@ -168,26 +197,63 @@ class Test_convert_bar_fills_to_portfolio_df(hunitest.TestCase):
     @pytest.mark.slow("~7 sec.")
     # TODO(Sonya): Inline the result dataframe.
     def test1(self) -> None:
-        logger = _load_data_from_s3(self)
+        """
+        Test using the real data.
+        """
+        # Load the data.
+        use_only_test_class = False
+        # The downloaded sample is a copy of
+        # `ecs/test/system_reconciliation/C5b/prod/20231124_093000.20231124_102500/system_log_dir.manual/process_forecasts`.
+        logger = _load_data_from_s3(self, use_only_test_class)
+        #
         fills_df = logger.load_ccxt_trades(convert_to_dataframe=True)
         bar_duration = "5T"
         bar_fills = obccagfu.aggregate_fills_by_bar(
             fills_df, bar_duration, groupby_id_col="asset_id"
         )
-        price_df = self._load_bar_price_reference()
+        # Use `twap` price.
+        price_df = self._load_bar_price_reference(bar_duration)
+        # Run.
         portfolio_df = obccexqu.convert_bar_fills_to_portfolio_df(
             bar_fills, price_df
         )
+        # Check.
         _check(self, portfolio_df)
 
-    def _load_bar_price_reference(self):
+    @pytest.mark.slow("~7 sec.")
+    def test2(self) -> None:
+        """
+        Test on data that contains bars with 0 trades.
+        """
+        # Load the data.
+        use_only_test_class = False
+        # The downloaded sample is a copy of
+        # `/data/shared/ecs/test/system_reconciliation/C12a/prod/20240212_150000.20240212_155700/system_log_dir.manual/process_forecasts`.
+        logger = _load_data_from_s3(self, use_only_test_class)
+        #
+        fills_df = logger.load_ccxt_trades(convert_to_dataframe=True)
+        bar_duration = "3T"
+        bar_fills = obccagfu.aggregate_fills_by_bar(
+            fills_df, bar_duration, groupby_id_col="asset_id"
+        )
+        # Use `close` price.
+        price_df = self._load_bar_price_reference(bar_duration)
+        # Run.
+        portfolio_df = obccexqu.convert_bar_fills_to_portfolio_df(
+            bar_fills, price_df
+        )
+        # Check.
+        _check(self, portfolio_df)
+
+    def _load_bar_price_reference(self, index_freq: str):
         """
         Load bar reference price from CSV file.
         """
+        # It is assumed that price data is copied from S3 to the scratch dir.
+        scratch_dir = self.get_scratch_space()
         # Get path to prices.
-        price_df_path = os.path.join(
-            self._base_dir_name, "mock/bar_reference_price.csv"
-        )
+        # This is a dump of OHLCV data from the pre-prod db. The time period must match one in `fills_df`.
+        price_df_path = os.path.join(scratch_dir, "bar_reference_price.csv")
         # Price Dataframe is stored in database so we have the copy on github for the test purposes.
         price_df = pd.read_csv(
             price_df_path,
@@ -195,7 +261,7 @@ class Test_convert_bar_fills_to_portfolio_df(hunitest.TestCase):
             index_col="end_timestamp",
         )
         price_df.index = price_df.index.tz_convert("America/New_York")
-        price_df.index.freq = "5T"
+        price_df.index.freq = index_freq
         price_df.columns = price_df.columns.astype(int)
         return price_df
 
@@ -210,10 +276,15 @@ class Test_generate_fee_summary(hunitest.TestCase):
         """
         Test grouping by takerOrMaker to get fee summary.
         """
-        logger = _load_data_from_s3(self)
+        # Load the data.
+        use_only_test_class = True
+        logger = _load_data_from_s3(self, use_only_test_class)
+        #
         fills_df = logger.load_ccxt_trades(convert_to_dataframe=True)
         group_by_col = "is_maker"
+        # Run.
         actual = obccexqu.generate_fee_summary(fills_df, group_by_col)
+        # Check.
         _check(self, actual)
 
     @pytest.mark.slow("~6 sec.")
@@ -221,10 +292,15 @@ class Test_generate_fee_summary(hunitest.TestCase):
         """
         Test grouping by takerOrMaker to get fee summary.
         """
-        logger = _load_data_from_s3(self)
+        # Load the data.
+        use_only_test_class = True
+        logger = _load_data_from_s3(self, use_only_test_class)
+        #
         fills_df = logger.load_ccxt_trades(convert_to_dataframe=True)
         group_by_col = "is_positive_realized_pnl"
+        # Run.
         actual = obccexqu.generate_fee_summary(fills_df, group_by_col)
+        # Check.
         _check(self, actual)
 
     @pytest.mark.slow("~7 sec.")
@@ -232,10 +308,15 @@ class Test_generate_fee_summary(hunitest.TestCase):
         """
         Test grouping by takerOrMaker to get fee summary.
         """
-        logger = _load_data_from_s3(self)
+        # Load the data.
+        use_only_test_class = True
+        logger = _load_data_from_s3(self, use_only_test_class)
+        #
         fills_df = logger.load_ccxt_trades(convert_to_dataframe=True)
         group_by_col = "is_positive_realized_pnl"
+        # Run.
         actual = obccexqu.generate_fee_summary(fills_df, group_by_col)
+        # Check.
         _check(self, actual)
 
     @pytest.mark.slow("~7 sec.")
@@ -243,15 +324,19 @@ class Test_generate_fee_summary(hunitest.TestCase):
         """
         Test grouping by wave_id to get fee summary.
         """
-        logger = _load_data_from_s3(self)
+        # Load the data.
+        use_only_test_class = True
+        logger = _load_data_from_s3(self, use_only_test_class)
+        #
         fills_df = logger.load_ccxt_trades(convert_to_dataframe=True)
         child_order_df = logger.load_oms_child_order(convert_to_dataframe=True)
-        #
         fills_df = obccexqu.annotate_fills_df_with_wave_id(
             fills_df, child_order_df
         )
         group_by_col = "wave_id"
+        # Run.
         actual = obccexqu.generate_fee_summary(fills_df, group_by_col)
+        # Check.
         _check(self, actual)
 
 
@@ -265,7 +350,9 @@ class Test_compute_adj_fill_ecdfs(hunitest.TestCase):
         """
         Test using the real data.
         """
-        logger = _load_data_from_s3(self)
+        # Load the data.
+        use_only_test_class = True
+        logger = _load_data_from_s3(self, use_only_test_class)
         #
         fills_df = logger.load_ccxt_trades(convert_to_dataframe=True)
         oms_child_order_df = logger.load_oms_child_order(
@@ -286,7 +373,9 @@ class Test_compute_adj_fill_ecdfs(hunitest.TestCase):
         """
         Test using the real data, separated by wave.
         """
-        logger = _load_data_from_s3(self)
+        # Load the data.
+        use_only_test_class = True
+        logger = _load_data_from_s3(self, use_only_test_class)
         #
         fills_df = logger.load_ccxt_trades(convert_to_dataframe=True)
         oms_child_order_df = logger.load_oms_child_order(
@@ -314,8 +403,9 @@ class Test_compute_adj_fill_ecdfs(hunitest.TestCase):
         """
         Test using the real data with empty fills, separated by wave.
         """
-        # Load the data from S3.
-        logger = _load_data_from_s3(self)
+        # Load the data.
+        use_only_test_class = True
+        logger = _load_data_from_s3(self, use_only_test_class)
         #
         fills_df = logger.load_ccxt_trades(convert_to_dataframe=True)
         oms_child_order_df = logger.load_oms_child_order(
@@ -349,24 +439,31 @@ class Test_get_oms_child_order_timestamps(hunitest.TestCase):
         """
         Test using valid data.
         """
+        # Load the data.
         oms_child_order_df = _load_oms_child_order_df(self)
+        # Run.
         actual = obccexqu.get_oms_child_order_timestamps(oms_child_order_df)
         actual_str = hpandas.df_to_str(actual)
+        # Check.
         self.check_string(actual_str)
 
     def test2(self) -> None:
         """
         Test with missing columns.
         """
+        # Load the data.
         oms_child_order_df = _load_oms_child_order_df(self)
+        #
         oms_child_order_df = oms_child_order_df.drop(
             columns=[
                 "stats__submit_twap_child_order::bid_ask_market_data.start",
                 "exchange_timestamp",
             ]
         )
+        # Run.
         with self.assertRaises(KeyError) as cm:
             obccexqu.get_oms_child_order_timestamps(oms_child_order_df)
+        # Check.
         exp = r"""
         "['exchange_timestamp', 'stats__submit_twap_child_order::bid_ask_market_data.start'] not in index"
         """
@@ -383,26 +480,30 @@ class Test_get_time_delay_between_events(hunitest.TestCase):
         """
         Test using unsorted data.
         """
+        # Prepare the data.
         oms_child_order_df = _load_oms_child_order_df(self)
         wave = obccexqu.get_oms_child_order_timestamps(oms_child_order_df)
+        # Run.
         with self.assertRaises(AssertionError) as cm:
             obccexqu.get_time_delay_between_events(wave)
+        # Check.
         exp = r"""
         * Failed assertion *
         '5'
         ==
         '0'
         """
-        # Check.
         self.assert_equal(str(cm.exception), exp, fuzzy_match=True)
 
     def test2(self) -> None:
         """
         Test using sorted data.
         """
+        # Prepare the data.
         oms_child_order_df = _load_oms_child_order_df(self)
         wave = obccexqu.get_oms_child_order_timestamps(oms_child_order_df)
         wave = wave.sort_values(wave.first_valid_index(), axis=1)
+        # Run.
         time_delays = obccexqu.get_time_delay_between_events(wave)
         # Convert DataFrame to string and check.
         actual = hpandas.df_to_str(time_delays)
@@ -413,6 +514,7 @@ class Test_get_time_delay_between_events(hunitest.TestCase):
         Test using data where earliest `stats_` have earlier timestamp than
         `knowledge_timestamp`.
         """
+        # Prepare the data.
         oms_child_order_df = _load_oms_child_order_df(self)
         wave = obccexqu.get_oms_child_order_timestamps(oms_child_order_df)
         wave = wave.sort_values(wave.first_valid_index(), axis=1)
@@ -420,6 +522,7 @@ class Test_get_time_delay_between_events(hunitest.TestCase):
         wave["knowledge_timestamp"] = wave["knowledge_timestamp"] + pd.Timedelta(
             seconds=0.1
         )
+        # Run.
         time_delays = obccexqu.get_time_delay_between_events(wave)
         # Convert DataFrame to string and check.
         actual = hpandas.df_to_str(time_delays)
