@@ -2566,7 +2566,7 @@ class Test_compare_dfs(hunitest.TestCase):
             }
         )
         df2 = df2.set_index("timestamp")
-        adjustment_factor = 1.00001
+        adjustment_factor = 1.000001
         df1 = df2 * adjustment_factor
         df1.iloc[1, 2] = np.nan
         df_diff = hpandas.compare_dfs(
@@ -2578,9 +2578,9 @@ class Test_compare_dfs(hunitest.TestCase):
         actual = hpandas.df_to_str(df_diff)
         expected = r"""                  tsA.pct_change  tsB.pct_change  tsC.pct_change
         timestamp
-        2022-01-01 21:01:00+00:00         0.001           0.001            0.001
-        2022-01-01 21:02:00+00:00         0.001           0.001            NaN
-        2022-01-01 21:03:00+00:00         0.001           0.001            0.001
+        2022-01-01 21:01:00+00:00         0.0001           0.0001            0.0001
+        2022-01-01 21:02:00+00:00         0.0001           0.0001            NaN
+        2022-01-01 21:03:00+00:00         0.0001           0.0001            0.0001
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
