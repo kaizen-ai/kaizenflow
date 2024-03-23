@@ -26,6 +26,7 @@ def _get_github_info() -> Tuple[str, str]:
     Get GitHub repository information.
     """
     try:
+        # Get the remote URL of the git repository.
         remote_url = (
             subprocess.check_output(
                 ["git", "config", "--get", "remote.origin.url"]
@@ -33,6 +34,7 @@ def _get_github_info() -> Tuple[str, str]:
             .decode()
             .strip()
         )
+        # Extract username and repository name from the remote URL.
         match = re.match(r"^https://github.com/(.*)/(.*)\.git$", remote_url)
         if match:
             username = match.group(1)
@@ -54,11 +56,13 @@ def _remove_toc(content: str) -> str:
     if toc_match:
         toc_content = toc_match.group(1)
         toc_lines = toc_content.split("\n")
+        # Find the line numbers of TOC content.
         excluded_lines = {
             content.count(toc_line, 0, toc_match.start(1)) + 1
             for toc_line in toc_lines
         }
         content_lines = content.split("\n")
+        # Filter out TOC content from the original content.
         filtered_content = [
             line
             for i, line in enumerate(content_lines, start=1)
@@ -79,24 +83,28 @@ def _search_in_markdown_files(
     Search for a term in Markdown files.
     """
     found_in_files = []
+    # Construct the path to the docs directory.
     docs_path = (
         os.path.join(git_root, DOCS_DIR, subdir)
         if subdir is not None
         else os.path.join(git_root, DOCS_DIR)
     )
-    # Check if docs_path exists.
+    # Check if the docs_path exists.
     hdbg.dassert_dir_exists(docs_path)
 
     def search_content(content: str) -> List[Tuple[str, str]]:
+        # Function to search for the term in content.
         if skip_toc:
+            # Remove Table of Contents from the content if specified.
             content = _remove_toc(content)
         if line_only:
+            # Search for the term in each line of the content.
             return [
                 (md_file, str(line_num))
                 for line_num, line in enumerate(content.split("\n"), start=1)
                 if re.search(search_term, line)
             ]
-
+        # Search for the term in section headers.
         sections = re.findall(r"^#+\s+(.*)$", content, flags=re.MULTILINE)
         return [
             (md_file, section)
@@ -104,11 +112,13 @@ def _search_in_markdown_files(
             if re.search(search_term, section)
         ]
 
+    # Recursively walk through the docs directory.
     for root, _, files in os.walk(docs_path):
         for file in files:
             if file.endswith(".md"):
                 md_file = os.path.join(root, file)
                 content = hio.from_file(md_file)
+                # Search for the term in each markdown file.
                 found_in_files.extend(search_content(content))
     return found_in_files
 
@@ -118,20 +128,24 @@ def _main(parser: argparse.ArgumentParser) -> None:
     Main function to parse command-line arguments and execute search.
     """
     args = parser.parse_args()
+    # Get the root directory of the git repository.
     git_root = hgit.get_client_root(super_module=True)
+    # Get GitHub repository information.
     username, repo = _get_github_info()
+    # Search for the term in markdown files.
     found_items = _search_in_markdown_files(
         git_root, args.search_term, args.skip_toc, args.line_only, args.subdir
     )
-
     if found_items:
         _LOG.info("Input found in the following items:")
         for item in found_items:
             file_path, item_ref = item
             relative_path = os.path.relpath(file_path, git_root)
             if args.line_only:
+                # Generate GitHub URL with line number.
                 url = f"https://github.com/{username}/{repo}/blob/master/{relative_path}?plain=1#L{item_ref}"
             else:
+                # Generate GitHub URL with section anchor.
                 section_name = re.sub(r"[^\w\s-]", "", item_ref)
                 section_name = section_name.replace(" ", "-").replace("--", "-")
                 section_name = re.sub(r"-+", "-", section_name)
@@ -166,4 +180,5 @@ def _parse() -> argparse.ArgumentParser:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
+    # Parse command-line arguments and execute the search.
     _main(_parse())
