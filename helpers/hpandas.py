@@ -2030,7 +2030,7 @@ def compare_dfs(
             df_to_str(nan_diff_df, log_level=log_level),
         )
         msg = "There are NaN values in one of the dataframes that are not in the other one."
-        hdbg.dassert_eq(0, nan_diff_df.shape[0], msg=msg)
+        hdbg.dassert_eq(0, nan_diff_df.shape[0], msg=msg, only_warning=only_warning)
         # Compute pct_change.
         df_diff = 100 * (df1 - df2) / df2.abs()
         if zero_vs_zero_is_zero:
