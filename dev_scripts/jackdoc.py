@@ -10,6 +10,7 @@ import os
 import re
 import subprocess
 from typing import List, Optional, Tuple
+
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
@@ -18,6 +19,7 @@ _LOG = logging.getLogger(__name__)
 
 # Define the relative path to the docs directory.
 DOCS_DIR = "docs"
+
 
 def _get_github_info() -> Tuple[str, str]:
     """
@@ -33,12 +35,15 @@ def _get_github_info() -> Tuple[str, str]:
         )
         match = re.match(r"^https://github.com/(.*)/(.*)\.git$", remote_url)
         if match:
-            return match.group(1), match.group(2)
+            username = match.group(1)
+            repo = match.group(2)
+            return username, repo
     except (subprocess.CalledProcessError, IndexError) as exc:
         raise RuntimeError(
             "Unable to get remote URL from git configuration"
         ) from exc
     raise ValueError("Not a GitHub repository")
+
 
 def _remove_toc(content: str) -> str:
     """
@@ -62,6 +67,7 @@ def _remove_toc(content: str) -> str:
         return "\n".join(filtered_content)
     return content
 
+
 def _search_in_markdown_files(
     git_root: str,
     search_term: str,
@@ -74,11 +80,13 @@ def _search_in_markdown_files(
     """
     found_in_files = []
     docs_path = (
-        os.path.join(git_root, DOCS_DIR, subdir) if subdir is not None
+        os.path.join(git_root, DOCS_DIR, subdir)
+        if subdir is not None
         else os.path.join(git_root, DOCS_DIR)
     )
     # Check if docs_path exists.
     hdbg.dassert_dir_exists(docs_path)
+
     def search_content(content: str) -> List[Tuple[str, str]]:
         if skip_toc:
             content = _remove_toc(content)
@@ -103,6 +111,7 @@ def _search_in_markdown_files(
                 content = hio.from_file(md_file)
                 found_in_files.extend(search_content(content))
     return found_in_files
+
 
 def _main(parser: argparse.ArgumentParser) -> None:
     """
@@ -131,6 +140,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     else:
         _LOG.info("Input not found in any Markdown files.")
 
+
 def _parse() -> argparse.ArgumentParser:
     """
     Parse command-line arguments.
@@ -152,6 +162,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument("--subdir", help="Subdirectory to search within")
     return parser
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
