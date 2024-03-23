@@ -2469,7 +2469,7 @@ class Test_compare_dfs(hunitest.TestCase):
     def test8(self) -> None:
         """
         Test NaN comparison with NaNs present at different location in two
-        dataframes with `compare_nans = True`.
+        dataframes.
         """
         # Build test dataframes.
         df1 = pd.DataFrame(
