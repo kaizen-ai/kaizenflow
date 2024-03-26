@@ -92,7 +92,7 @@ def _search_in_markdown_files(
     :param skip_toc: flag indicating whether to skip the table of contents (TOC). Defaults to false.
     :param line_only: flag indicating whether to search through lines only and generate links with line numbers. Defaults to False.
     :param subdir: subdirectory to search within. Defaults to None.
-    :return: list of tuples containing the file path and the found item reference.  
+    :return: list of tuples containing the file path and the found item reference.
     """
     found_in_files = []
     # Construct the path to the docs directory.
