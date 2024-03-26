@@ -4,10 +4,8 @@
 
 - [Redis Cache Optimization](#redis-cache-optimization)
   * [1. How to run the Project](#1-how-to-run-the-project)
-  * [2. Code files and Datasets](#2-code-files-and-datasets)
-    + [Redis_cache_Mongo.ipynb](#redis_cache_mongoipynb)
-    + [Prediction_for_cache.ipynb](#prediction_for_cacheipynb)
-    + [shaunak_ecommerce.json](#shaunak_ecommercejson)
+  * [2. Code file and Datasets](#2-code-file-and-datasets)
+    + [Python Script](#python-script)
     + [product_data.csv](#product_datacsv)
   * [3. Project Diagrams](#3-project-diagrams)
     + [Redis Cache with MongoDB to fetch user data](#redis-cache-with-mongodb-to-fetch-user-data)
@@ -77,9 +75,9 @@ To run the Dockerized version of the project, follow these steps:
 By following these steps, you can easily run and review the project within a
 Docker container, ensuring isolation and portability of the environment.
 
-## 2. Code files and Datasets
+## 2. Code file and Datasets
 
-### Redis_cache_Mongo.ipynb
+### Python Script
 
 This Python script implements a caching mechanism using Redis for a MongoDB
 database with e-commerce data. It includes functionalities for data insertion
@@ -91,34 +89,17 @@ in real-time to maintain cache consistency. The script is part of a larger
 project aimed at optimizing data retrieval performance and ensuring efficient
 resource usage in the e-commerce platform.
 
-### Prediction_for_cache.ipynb
-
-This file focuses on optimizing Redis caching through predictive classification
-of product data. The code preprocesses a dataset containing product information,
-identifying the top-selling products and creating a binary classification target
-variable ('Cache') based on sales volume and ratings. Machine learning models,
-including Logistic Regression, Random Forest, and SVM, are trained to predict
-the likelihood of caching. The Random Forest model is chosen for its predictive
-performance. Additionally, an example product instance is constructed and passed
-through the trained Random Forest model to determine whether it should be cached
-in Redis or not. This project encapsulates a practical application of
-classification techniques for caching optimization in memory systems.
-
-### shaunak_ecommerce.json
-
-The provided JSON dataset named 'shaunak_ecommerce.json' represents customer
-profiles and their interactions within an e-commerce platform. Each entry
-includes details such as customer ID, name, contact information, address,
-billing information, interactions (including viewed products, wishlist, cart
-contents, and loyalty program details), and order history. Under interactions,
-customers' engagements with various product categories like electronics,
-clothing, and groceries are outlined, including products viewed, added to
-wishlist, or placed in the cart. Additionally, the dataset captures customers'
-membership levels and points within a loyalty program. The order history section
-details each customer's past purchases, including order ID, date, total amount,
-and specific items purchased. This dataset is comprehensive and can be leveraged
-for various analyses, including customer behavior, product preferences, and
-sales trends within the e-commerce platform.
+This next part focuses on optimizing Redis caching through predictive
+classification of product data. The code preprocesses a dataset containing
+product information, identifying the top-selling products and creating a binary
+classification target variable ('Cache') based on sales volume and ratings.
+Machine learning models, including Logistic Regression, Random Forest, and SVM,
+are trained to predict the likelihood of caching. The Random Forest model is
+chosen for its predictive performance. Additionally, an example product instance
+is constructed and passed through the trained Random Forest model to determine
+whether it should be cached in Redis or not. This project encapsulates a
+practical application of classification techniques for caching optimization in
+memory systems.
 
 ### product_data.csv
 
