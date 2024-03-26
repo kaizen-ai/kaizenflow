@@ -89,10 +89,12 @@ def _search_in_markdown_files(
         if subdir is not None
         else os.path.join(git_root, DOCS_DIR)
     )
-    # Check if the docs_path exists.
+    # Check if the `docs_path` exists.
     hdbg.dassert_dir_exists(docs_path)
     def search_content(content: str) -> List[Tuple[str, str]]:
-        # Function to search for the term in content.
+        """
+        Function to search for the term in content.
+        """
         if skip_toc:
             # Remove Table of Contents from the content if specified.
             content = _remove_toc(content)
@@ -110,7 +112,6 @@ def _search_in_markdown_files(
             for section in sections
             if re.search(search_term, section)
         ]
-
     # Recursively walk through the docs directory.
     for root, _, files in os.walk(docs_path):
         for file in files:
@@ -123,9 +124,6 @@ def _search_in_markdown_files(
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
-    """
-    Main function to parse command-line arguments and execute search.
-    """
     args = parser.parse_args()
     # Get the root directory of the git repository.
     git_root = hgit.get_client_root(super_module=True)
@@ -158,7 +156,6 @@ def _parse() -> argparse.ArgumentParser:
     """
     Parse command-line arguments.
     """
-    # Parse command line arguments.
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
