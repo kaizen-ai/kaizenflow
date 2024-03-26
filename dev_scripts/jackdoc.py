@@ -54,7 +54,7 @@ def _remove_toc(content: str) -> str:
     Remove table of contents (TOC) from Markdown content.
 
     :param content: the markdown content from which TOC needs to be removed.
-    :return: the Markdown content with TOC removed.
+    :return: the markdown content with TOC removed.
     """
     toc_pattern = r"<!--\s*toc\s*-->(.*?)<!--\s*tocstop\s*-->"
     toc_match = re.search(toc_pattern, content, flags=re.DOTALL)
