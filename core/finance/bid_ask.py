@@ -198,7 +198,6 @@ def transform_bid_ask_long_data_to_wide(
     bid_ask_cols = [
         col
         for col in df.columns
-        # TODO(Juraj): ad-hoc hack, address properly in #CmTask7387.
         if any(col.startswith(prefix) for prefix in prefixes)
     ]
     # Index of pivoted data shouldn't also contain `level` (used as columns) and `id` (creates duplicates).
