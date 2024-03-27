@@ -45,12 +45,14 @@ class TextBinanceWebsocket(hunitest.TestCase):
 
     def test_download_websocket_ohlcv(self):
         mock_data = {'open': 100, 'high': 120, 'low': 90, 'close': 110, 'volume': 1000}
+        pass
 
     def test_download_websocket_trades(self):
         mock_data = [{'timestamp': 123456789, 'price': 100, 'quantity': 10, 'side': 'buy'}]
+        pass
 
 class TestBinanceExtractor(hunitest.TestCase):
-    def _get_mock_bids(self) -> pd.DataFrame:
+    def _get_mock_trades(self) -> pd.DataFrame:
         """
         Returns a mock trades dataframe.
         """
@@ -71,7 +73,11 @@ class TestBinanceExtractor(hunitest.TestCase):
                         pd.Timestamp("2020-01-04 10:00:00")
                     ),
                 ],
-                
+                "price": [100, 200, 300, 400],
+                "qty": [1, 2, 3, 4],
+                "is_buyer_maker": [True, False, True, False],
+                "quote_qty": [100, 400, 900, 300],
+                "id": [1, 2, 3, 4], 
             }
         )
 
@@ -87,7 +93,10 @@ class TestBinanceExtractor(hunitest.TestCase):
             binance_extractor = ivbdexex.BinanceExtractor(
                 contract_type, ivbdexex.BinanceNativeTimePeriod.DAILY, data_type
             )
-            
+            binance_extractor._download_binance_files = umock.MagicMock()
+            binance_extractor._extract_data_from_binance_files = umock.MagicMock(
+                return_value=self._get_mock_trades()
+            )
             # Prepare parameters.
             currency_pair = "BTCUSDT"
             start_date = pd.Timestamp("2020-01-01 00:00:00")
