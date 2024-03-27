@@ -291,15 +291,8 @@ class Test_transform_bid_ask_long_data_to_wide(hunitest.TestCase):
         """
         Test transformation with one symbol and one level.
         """
-        long_levels_df = self.get_df_with_long_levels(
-            ["XRP_USDT", "XRP_USDT", "XRP_USDT"], [1, 1, 1]
-        )
-        #
-        timestamp_col = "timestamp"
-        wide_levels_df = cfibiask.transform_bid_ask_long_data_to_wide(
-            long_levels_df, timestamp_col
-        )
-        #
+        symbols = ["XRP_USDT", "XRP_USDT", "XRP_USDT"]
+        levels = [1, 1, 1]
         expected_outcome = r"""
         currency_pair knowledge_timestamp bid_price_l1 bid_size_l1 ask_price_l1 ask_size_l1 half_spread_l1 log_size_l1
         timestamp
@@ -307,29 +300,15 @@ class Test_transform_bid_ask_long_data_to_wide(hunitest.TestCase):
         2022-09-09 21:01:00+00:00 XRP_USDT 2022-09-08 21:01:15+00:00 3.22 2.2 3.24 5.5 0.020 0.03
         2022-09-10 21:01:00+00:00 XRP_USDT 2022-09-08 21:01:15+00:00 2.33 3.3 2.35 6.6 0.020 0.01
         """
-        #
-        actual_df = hpandas.df_to_str(wide_levels_df)
-        self.assert_equal(
-            actual_df,
-            expected_outcome,
-            dedent=True,
-            fuzzy_match=True,
-        )
+        self._test(symbols, levels, expected_outcome=expected_outcome)
 
     def test2(self) -> None:
         """
         Test transformation with multiple symbols and one level with default
         argument value of `value_col_prefixes`.
         """
-        long_levels_df = self.get_df_with_long_levels(
-            ["UNFI_USDT", "WAVES_USDT", "XRP_USDT"], [1, 1, 1]
-        )
-        #
-        timestamp_col = "timestamp"
-        wide_levels_df = cfibiask.transform_bid_ask_long_data_to_wide(
-            long_levels_df, timestamp_col
-        )
-        #
+        symbols = ["UNFI_USDT", "WAVES_USDT", "XRP_USDT"]
+        levels = [1, 1, 1]
         expected_outcome = r"""
         currency_pair knowledge_timestamp bid_price_l1 bid_size_l1 ask_price_l1 ask_size_l1 half_spread_l1 log_size_l1
         timestamp
@@ -337,32 +316,16 @@ class Test_transform_bid_ask_long_data_to_wide(hunitest.TestCase):
         2022-09-09 21:01:00+00:00 WAVES_USDT 2022-09-08 21:01:15+00:00 3.22 2.2 3.24 5.5 0.020 0.03
         2022-09-10 21:01:00+00:00 XRP_USDT 2022-09-08 21:01:15+00:00 2.33 3.3 2.35 6.6 0.020 0.01
         """
-        #
-        actual_df = hpandas.df_to_str(wide_levels_df)
-        self.assert_equal(
-            actual_df,
-            expected_outcome,
-            dedent=True,
-            fuzzy_match=True,
-        )
+        self._test(symbols, levels, expected_outcome=expected_outcome)
 
     def test3(self) -> None:
         """
         Test transformation with one symbol and multiple levels with custom
         argument value of `value_col_prefixes`.
         """
-        long_levels_df = self.get_df_with_long_levels(
-            ["XRP_USDT", "XRP_USDT", "XRP_USDT"], [1, 2, 3]
-        )
-        long_levels_df["new_close"] = [0.01, 0.03, 0.01]
-        #
-        timestamp_col = "timestamp"
-        wide_levels_df = cfibiask.transform_bid_ask_long_data_to_wide(
-            long_levels_df,
-            timestamp_col,
-            value_col_prefixes=["new", "log", "half"],
-        )
-        #
+        symbols = ["XRP_USDT", "XRP_USDT", "XRP_USDT"]
+        levels = [1, 2, 3]
+        extra_col = [0.01, 0.03, 0.01]
         expected_outcome = r"""
         currency_pair knowledge_timestamp bid_price_l1 bid_price_l2 bid_price_l3 bid_size_l1 bid_size_l2 bid_size_l3 ask_price_l1 ask_price_l2 ask_price_l3 ask_size_l1 ask_size_l2 ask_size_l3 half_spread_l1 half_spread_l2 half_spread_l3 log_size_l1 log_size_l2 log_size_l3 new_close_l1 new_close_l2 new_close_l3
         timestamp
@@ -370,13 +333,12 @@ class Test_transform_bid_ask_long_data_to_wide(hunitest.TestCase):
         2022-09-09 21:01:00+00:00 XRP_USDT 2022-09-08 21:01:15+00:00 NaN 3.22 NaN NaN 2.2 NaN NaN 3.24 NaN NaN 5.5 NaN NaN 0.02 NaN NaN 0.03 NaN NaN 0.03 NaN
         2022-09-10 21:01:00+00:00 XRP_USDT 2022-09-08 21:01:15+00:00 NaN NaN 2.33 NaN NaN 3.3 NaN NaN 2.35 NaN NaN 6.6 NaN NaN 0.02 NaN NaN 0.01 NaN NaN 0.01
         """
-        #
-        actual_df = hpandas.df_to_str(wide_levels_df)
-        self.assert_equal(
-            actual_df,
-            expected_outcome,
-            dedent=True,
-            fuzzy_match=True,
+        self._test(
+            symbols,
+            levels,
+            value_col_prefixes=["new", "log", "half"],
+            expected_outcome=expected_outcome,
+            extra_col=extra_col,
         )
 
     def test4(self) -> None:
@@ -384,15 +346,8 @@ class Test_transform_bid_ask_long_data_to_wide(hunitest.TestCase):
         Test transformation with multiple symbols and multiple levels with
         default argument value of `value_col_prefixes`.
         """
-        long_levels_df = self.get_df_with_long_levels(
-            ["UNFI_USDT", "WAVES_USDT", "XRP_USDT"], [1, 2, 3]
-        )
-        #
-        timestamp_col = "timestamp"
-        wide_levels_df = cfibiask.transform_bid_ask_long_data_to_wide(
-            long_levels_df, timestamp_col
-        )
-        #
+        symbols = ["UNFI_USDT", "WAVES_USDT", "XRP_USDT"]
+        levels = [1, 2, 3]
         expected_outcome = r"""
         currency_pair knowledge_timestamp bid_price_l1 bid_price_l2 bid_price_l3 bid_size_l1 bid_size_l2 bid_size_l3 ask_price_l1 ask_price_l2 ask_price_l3 ask_size_l1 ask_size_l2 ask_size_l3 half_spread_l1 half_spread_l2 half_spread_l3 log_size_l1 log_size_l2 log_size_l3
         timestamp
@@ -400,32 +355,16 @@ class Test_transform_bid_ask_long_data_to_wide(hunitest.TestCase):
         2022-09-09 21:01:00+00:00 WAVES_USDT 2022-09-08 21:01:15+00:00 NaN 3.22 NaN NaN 2.2 NaN NaN 3.24 NaN NaN 5.5 NaN NaN 0.02 NaN NaN 0.03 NaN
         2022-09-10 21:01:00+00:00 XRP_USDT 2022-09-08 21:01:15+00:00 NaN NaN 2.33 NaN NaN 3.3 NaN NaN 2.35 NaN NaN 6.6 NaN NaN 0.02 NaN NaN 0.01
         """
-        #
-        actual_df = hpandas.df_to_str(wide_levels_df)
-        self.assert_equal(
-            actual_df,
-            expected_outcome,
-            dedent=True,
-            fuzzy_match=True,
-        )
+        self._test(symbols, levels, expected_outcome=expected_outcome)
 
     def test5(self) -> None:
         """
         Test transformation with multiple symbols and one level with custom
         argument value of `value_col_prefixes`.
         """
-        long_levels_df = self.get_df_with_long_levels(
-            ["UNFI_USDT", "WAVES_USDT", "XRP_USDT"], [1, 1, 1]
-        )
-        long_levels_df["new_close"] = [0.01, 0.03, 0.01]
-        #
-        timestamp_col = "timestamp"
-        wide_levels_df = cfibiask.transform_bid_ask_long_data_to_wide(
-            long_levels_df,
-            timestamp_col,
-            value_col_prefixes=["new", "log", "half"],
-        )
-        #
+        symbols = ["UNFI_USDT", "WAVES_USDT", "XRP_USDT"]
+        levels = [1, 1, 1]
+        extra_col = [0.01, 0.03, 0.01]
         expected_outcome = r"""
         currency_pair  knowledge_timestamp  bid_price_l1  bid_size_l1  ask_price_l1  ask_size_l1  half_spread_l1  log_size_l1  new_close_l1
         timestamp
@@ -433,6 +372,30 @@ class Test_transform_bid_ask_long_data_to_wide(hunitest.TestCase):
         2022-09-09 21:01:00+00:00  WAVES_USDT  2022-09-08 21:01:15+00:00  3.22  2.2  3.24  5.5  0.020  0.03  0.03
         2022-09-10 21:01:00+00:00  XRP_USDT  2022-09-08 21:01:15+00:00  2.33  3.3  2.35  6.6  0.020  0.01  0.01
         """
+        self._test(
+            symbols,
+            levels,
+            value_col_prefixes=["new", "log", "half"],
+            expected_outcome=expected_outcome,
+            extra_col=extra_col,
+        )
+
+    def _test(
+        self,
+        symbols: list,
+        levels: list,
+        value_col_prefixes: list = None,
+        expected_outcome: str = None,
+        extra_col: list = None,
+    ) -> None:
+        long_levels_df = self.get_df_with_long_levels(symbols, levels)
+        if extra_col is not None:
+            long_levels_df["new_close"] = extra_col
+        #
+        timestamp_col = "timestamp"
+        wide_levels_df = cfibiask.transform_bid_ask_long_data_to_wide(
+            long_levels_df, timestamp_col, value_col_prefixes=value_col_prefixes
+        )
         #
         actual_df = hpandas.df_to_str(wide_levels_df)
         self.assert_equal(
