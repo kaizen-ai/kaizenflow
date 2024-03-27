@@ -1229,8 +1229,9 @@ def _df_to_str(
 def df_to_str(
     df: Union[pd.DataFrame, pd.Series, pd.Index],
     *,
-     handle_signed_zeros: bool = False,
-
+    # TODO(gp): Remove this hack in the integration.
+    # handle_signed_zeros: bool = False,
+    handle_signed_zeros: bool = True,
     num_rows: Optional[int] = 6,
     print_dtypes: bool = False,
     print_shape_info: bool = False,
@@ -1937,6 +1938,7 @@ def compare_dfs(
     zero_vs_zero_is_zero: bool = True,
     remove_inf: bool = True,
     log_level: int = logging.DEBUG,
+    only_warning: bool = True,
 ) -> pd.DataFrame:
     """
     Compare two dataframes.
@@ -1961,10 +1963,15 @@ def compare_dfs(
         if True, otherwise keep the actual result
     :param remove_inf: replace +-inf with `np.nan`
     :param log_level: logging level
+    :param only_warning: when `True` the function issues a warning instead of aborting
     :return: a singe dataframe with differences as values
     """
     hdbg.dassert_isinstance(df1, pd.DataFrame)
     hdbg.dassert_isinstance(df2, pd.DataFrame)
+    # Check value of `assert_diff_threshold`, if it was passed.
+    if assert_diff_threshold:
+        hdbg.dassert_lte(assert_diff_threshold, 1.0)
+        hdbg.dassert_lte(0.0, assert_diff_threshold)
     # TODO(gp): Factor out this logic and use it for both compare_visually_dfs
     #  and
     if row_mode == "equal":
@@ -1986,11 +1993,35 @@ def compare_dfs(
         df2 = df2[col_names]
     else:
         raise ValueError(f"Invalid column_mode='{column_mode}'")
-    close_to_zero_threshold_mask = lambda x: abs(x) < close_to_zero_threshold
     # Round small numbers to 0 to exclude them from the diff computation.
+    close_to_zero_threshold_mask = lambda x: abs(x) < close_to_zero_threshold
     df1[close_to_zero_threshold_mask] = df1[close_to_zero_threshold_mask].round(0)
     df2[close_to_zero_threshold_mask] = df2[close_to_zero_threshold_mask].round(0)
-    if compare_nans:
+    # Compute the difference df.
+    if diff_mode == "diff":
+        # Test and convert the assertion into a boolean.
+        is_ok = True
+        try:
+            pd.testing.assert_frame_equal(
+                df1, df2, check_like=True, check_dtype=False
+            )
+        except AssertionError as e:
+            is_ok = False
+            _ = e
+        # Check `is_ok` and raise an assertion depending on `only_warning`.
+        if not is_ok:
+            hdbg._dfatal(
+                _,
+                "df1=\n%s\n and df2=\n%s\n are not equal.",
+                df_to_str(df1, log_level=log_level),
+                df_to_str(df2, log_level=log_level),
+                only_warning=only_warning,
+            )
+        # Calculate the difference.
+        df_diff = df1 - df2
+        if remove_inf:
+            df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
+    elif diff_mode == "pct_change":
         # Compare NaN values in dataframes.
         nan_diff_df = compare_nans_in_dataframes(df1, df2)
         _LOG.log(
@@ -1998,35 +2029,48 @@ def compare_dfs(
             "Dataframe with NaN differences=\n%s",
             df_to_str(nan_diff_df, log_level=log_level),
         )
-        # TODO(Grisha): add the `only_warning` switch to the function.
         msg = "There are NaN values in one of the dataframes that are not in the other one."
-        hdbg.dassert_eq(0, nan_diff_df.shape[0], msg=msg)
-    # Compute the difference df.
-    if diff_mode == "diff":
-        df_diff = df1 - df2
-    elif diff_mode == "pct_change":
-        df_diff = 100 * (df1 - df2) / df2
+        hdbg.dassert_eq(0, nan_diff_df.shape[0], msg=msg, only_warning=only_warning)
+        # Compute pct_change.
+        df_diff = 100 * (df1 - df2) / df2.abs()
         if zero_vs_zero_is_zero:
             # When comparing 0 to 0 set the diff (which is NaN by default) to 0.
             df1_mask = df1 == 0
             df2_mask = df2 == 0
             zero_vs_zero_mask = df1_mask & df2_mask
             df_diff[zero_vs_zero_mask] = 0
+        if remove_inf:
+            df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
+        # Check if `df_diff` values are less than `assert_diff_threshold`.
+        if assert_diff_threshold is not None:
+            nan_mask = df_diff.isna()
+            within_threshold = (df_diff.abs() <= assert_diff_threshold) | nan_mask
+            expected = pd.DataFrame(
+                True,
+                index=within_threshold.index,
+                columns=within_threshold.columns,
+            )
+            # Test and convert the assertion into boolean.
+            is_ok = True
+            try:
+                pd.testing.assert_frame_equal(
+                    within_threshold, expected, check_exact=True
+                )
+            except AssertionError as e:
+                is_ok = False
+                _ = e
+            # Check `is_ok` and raise assertion depending on `only_warning`.
+            if not is_ok:
+                hdbg._dfatal(
+                    _,
+                    "df1=\n%s\n and df2=\n%s\n have pct_change more than `assert_diff_threshold`.",
+                    df_to_str(df1, log_level=log_level),
+                    df_to_str(df2, log_level=log_level),
+                    only_warning=only_warning,
+                )
     else:
         raise ValueError(f"diff_mode={diff_mode}")
     df_diff = df_diff.add_suffix(f".{diff_mode}")
-    if diff_mode == "pct_change" and assert_diff_threshold is not None:
-        # TODO(Grisha): generalize for the other modes.
-        # Report max diff.
-        max_diff = df_diff.abs().max().max()
-        _LOG.log(log_level, "Max difference factor: %s", max_diff)
-        if assert_diff_threshold is not None:
-            hdbg.dassert_lte(assert_diff_threshold, 1.0)
-            hdbg.dassert_lte(0.0, assert_diff_threshold)
-            # TODO(Grisha): it works only if `remove_inf` is True.
-            hdbg.dassert_lte(max_diff, assert_diff_threshold)
-    if remove_inf:
-        df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
     return df_diff
 
 
