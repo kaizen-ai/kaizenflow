@@ -190,7 +190,7 @@ def transform_bid_ask_long_data_to_wide(
     """
     _LOG.debug(hprint.to_str("timestamp_col bid_prefix ask_prefix"))
     if value_col_prefixes is None:
-        value_col_prefixes = ["log","half"]
+        value_col_prefixes = ["log", "half"]
     hdbg.dassert_in(timestamp_col, df.reset_index().columns)
     df = df.reset_index()
     prefixes = [bid_prefix, ask_prefix] + list(value_col_prefixes)
