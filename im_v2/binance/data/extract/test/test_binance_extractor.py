@@ -20,7 +20,6 @@ class TextBinanceWebsocket(hunitest.TestCase):
         return mock_data
     
     def test_download_websocket_bid_ask(self):
-        mock_data = {'bid': 100, 'ask': 110}
         ivbdexex.hio = umock.MagicMock()
         contract_type = "futures"
         data_type = "trades"
