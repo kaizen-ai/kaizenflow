@@ -27,7 +27,7 @@ def _get_github_info() -> Tuple[str, str]:
     Get GitHub repository information.
 
     :return: list of tuples containing the file path and the found item
-        reference.
+        reference
     """
     try:
         # Get the remote URL of the git repository.
@@ -56,8 +56,8 @@ def _remove_toc(content: str) -> str:
     Remove table of contents (TOC) from Markdown content.
 
     :param content: the markdown content from which TOC needs to be
-        removed.
-    :return: the markdown content with TOC removed.
+        removed
+    :return: the markdown content with TOC removed
     """
     toc_pattern = r"<!--\s*toc\s*-->(.*?)<!--\s*tocstop\s*-->"
     toc_match = re.search(toc_pattern, content, flags=re.DOTALL)
@@ -90,15 +90,15 @@ def _search_in_markdown_files(
     """
     Search for a term in Markdown files.
 
-    :param git_root: the root directory of the git repository.
-    :param search_term: the term to search in Markdown files.
+    :param git_root: the root directory of the git repository
+    :param search_term: the term to search in Markdown files
     :param skip_toc: flag indicating whether to skip the table of
-        contents (TOC). Defaults to false.
+        contents (TOC)
     :param line_only: flag indicating whether to search through lines
-        only and generate links with line numbers. Defaults to False.
-    :param subdir: subdirectory to search within. Defaults to None.
+        only and generate links with line numbers
+    :param subdir: subdirectory to search within
     :return: list of tuples containing the file path and the found item
-        reference.
+        reference
     """
     found_in_files = []
     # Construct the path to the docs directory.
@@ -114,9 +114,9 @@ def _search_in_markdown_files(
         """
         Function to search for the term in content.
 
-        :param content: the content to search for the term.
+        :param content: the content to search for the term
         :return: list of tuples containing the file path and the found
-            item reference.
+            item reference
         """
         if skip_toc:
             # Remove Table of Contents from the content if specified.
@@ -181,7 +181,7 @@ def _parse() -> argparse.ArgumentParser:
     """
     Parse command-line arguments.
 
-    :return: the argument parser object.
+    :return: the argument parser object
     """
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -203,5 +203,4 @@ def _parse() -> argparse.ArgumentParser:
 
 
 if __name__ == "__main__":
-    # Parse command-line arguments and execute the search.
     _main(_parse())
