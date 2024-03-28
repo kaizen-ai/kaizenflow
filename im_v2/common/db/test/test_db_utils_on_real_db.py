@@ -60,7 +60,10 @@ class TestSaveDataToDb(imvcddbut.TestImDbHelper, hunitest.TestCase):
     """
     This class tests im_v2.common.db.db_utils.save_data_to_db on real database, not a mock.
     """
-    
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
+
     def test_save_data_to_db_ohlcv(self) -> None:
         """
         Test the `save_data_to_db` method for the case when inserting data for 'ohlcv' data type.
