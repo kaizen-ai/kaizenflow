@@ -96,36 +96,19 @@ class TestSaveDataToDb(imvcddbut.TestImDbHelper, hunitest.TestCase):
             imvcddbut.save_data_to_db(SAMPLE_DATA, "unknown", self.connection, TABLE_NAME, TIME_ZONE)
 
 
-class TestLoadDbData(hunitest.TestCase):
+class TestLoadDbData(imvcddbut.TestImDbHelper, hunitest.TestCase):
     """
     This class tests im_v2.common.db.db_utils.load_db_data from a real database, not a mock.
     """
-
-    # This will be run before and after each test.
-    @pytest.fixture(autouse=True)
-    def setup_teardown_test(self):
-        # Run before each test.
-        self.set_up_test()
-        yield
-        self.teardown_test()
-
-    def set_up_test(self) -> None:
-        # Initialize database
-        self.db = initialize_database()
-        # Fill the database with sample data
-        imvcddbut.save_data_to_db(SAMPLE_DATA, "ohlcv", self.db, TABLE_NAME, TIME_ZONE)
-
-    def teardown_test(self):
-        try:
-            self.db.close()  # Close the database connection
-        except Exception as e:
-            _LOG.error("Error during teardown: %s", str(e)) # Log any errors
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
 
     def test_load_db_data_select_all(self) -> None:
         """
         Test the `load_db_data` method when selecting no timestamps.
         """
-        data = imvcddbut.load_db_data(self.db, TABLE_NAME, None, None)
+        data = imvcddbut.load_db_data(self.connection, TABLE_NAME, None, None)
         self.assertEqual(data.shape[0], 3)
 
     def test_load_db_data_select_time_interval_open(self) -> None:
@@ -134,7 +117,7 @@ class TestLoadDbData(hunitest.TestCase):
         """
         start_ts = pd.Timestamp(10000, unit="ms")
         end_ts = pd.Timestamp(20000, unit="ms")
-        data = imvcddbut.load_db_data(self.db, TABLE_NAME, start_ts, end_ts, time_interval_closed=False)
+        data = imvcddbut.load_db_data(self.connection, TABLE_NAME, start_ts, end_ts, time_interval_closed=False)
         self.assertEqual(data.shape[0], 0)
 
     def test_load_db_data_select_time_interval_closed(self) -> None:
@@ -143,7 +126,7 @@ class TestLoadDbData(hunitest.TestCase):
         """
         start_ts = pd.Timestamp(10000, unit="ms")
         end_ts = pd.Timestamp(20000, unit="ms")
-        data = imvcddbut.load_db_data(self.db, TABLE_NAME, start_ts, end_ts)
+        data = imvcddbut.load_db_data(self.connection, TABLE_NAME, start_ts, end_ts)
         self.assertEqual(data.shape[0], 2)
 
     def test_load_db_data_select_none(self) -> None:
@@ -152,7 +135,7 @@ class TestLoadDbData(hunitest.TestCase):
         """
         start_ts = pd.Timestamp(500000, unit="ms")
         end_ts = pd.Timestamp(500001, unit="ms")
-        data = imvcddbut.load_db_data(self.db, TABLE_NAME, start_ts, end_ts)
+        data = imvcddbut.load_db_data(self.connection, TABLE_NAME, start_ts, end_ts)
         self.assertEqual(data.shape[0], 0)
 
     def test_load_db_data_select_currency_pairs(self) -> None:
@@ -160,34 +143,25 @@ class TestLoadDbData(hunitest.TestCase):
         Test the `load_db_data` method when selecting specific currency pairs.
         """
         currency_pairs = ["abc"]
-        data = imvcddbut.load_db_data(self.db, TABLE_NAME, None, None, currency_pairs=currency_pairs)
+        data = imvcddbut.load_db_data(self.connection, TABLE_NAME, None, None, currency_pairs=currency_pairs)
         self.assertEqual(data.shape[0], 1)
 
 
-class TestFetchLastMinuteBidAskRtDbData(hunitest.TestCase):
+class TestFetchLastMinuteBidAskRtDbData(imvcddbut.TestImDbHelper, hunitest.TestCase):
     """
         This class tests im_v2.common.db.db_utils.load_db_data from a real database, not a mock.
         """
 
-    # This will be run before and after each test.
-    @pytest.fixture(autouse=True)
-    def setup_teardown_test(self):
-        # Run before each test.
-        self.set_up_test()
-        yield
-        self.teardown_test()
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
 
-    def set_up_test(self) -> None:
-        # Initialize database
-        self.db = initialize_database()
-        # Fill the database with sample data
-        imvcddbut.save_data_to_db(SAMPLE_DATA, "ohlcv", self.db, TABLE_NAME, TIME_ZONE)
-
-    def teardown_test(self):
-        try:
-            self.db.close()  # Close the database connection
-        except Exception as e:
-            _LOG.error("Error during teardown: %s", str(e)) # Log any errors
+    def test_load_db_data_select_all(self) -> None:
+        """
+        Test the `load_db_data` method when selecting no timestamps.
+        """
+        data = imvcddbut.load_db_data(self.connection, TABLE_NAME, None, None)
+        self.assertEqual(data.shape[0], 3)
 
     def _save_last_and_current_minute_data_to_db(self):
         """
@@ -210,19 +184,19 @@ class TestFetchLastMinuteBidAskRtDbData(hunitest.TestCase):
                              "level": [1, 1, 1],
                              "exchange_id": ["someid1", "someid2", "someid3"]})
 
-        imvcddbut.save_data_to_db(data, "ohlcv", self.db, TABLE_NAME, TIME_ZONE)
+        imvcddbut.save_data_to_db(data, "ohlcv", self.connection, TABLE_NAME, TIME_ZONE)
 
     def test_fetch_last_minute_bid_ask_rt_db_data(self):
         """
         Test the `fetch_last_minute_bid_ask_rt_db_data` method when there are some last minute data in database.
         """
         self._save_last_and_current_minute_data_to_db()
-        data = imvcddbut.fetch_last_minute_bid_ask_rt_db_data(self.db, TABLE_NAME, TIME_ZONE, "")
+        data = imvcddbut.fetch_last_minute_bid_ask_rt_db_data(self.connection, TABLE_NAME, TIME_ZONE, "")
         self.assertEqual(data.shape[0], 2)
 
     def test_fetch_last_minute_bid_ask_rt_db_data_no_results(self):
         """
         Test the `fetch_last_minute_bid_ask_rt_db_data` method when no last minute data are in database.
         """
-        data = imvcddbut.fetch_last_minute_bid_ask_rt_db_data(self.db, TABLE_NAME, TIME_ZONE, "")
+        data = imvcddbut.fetch_last_minute_bid_ask_rt_db_data(self.connection, TABLE_NAME, TIME_ZONE, "")
         self.assertEqual(data.shape[0], 0)
