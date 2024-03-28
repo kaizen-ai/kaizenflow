@@ -14,6 +14,7 @@ from typing import List, Optional, Tuple
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
+import helpers.hparser as hparser
 
 _LOG = logging.getLogger(__name__)
 
@@ -25,7 +26,8 @@ def _get_github_info() -> Tuple[str, str]:
     """
     Get GitHub repository information.
 
-    :return: list of tuples containing the file path and the found item reference.
+    :return: list of tuples containing the file path and the found item
+        reference.
     """
     try:
         # Get the remote URL of the git repository.
@@ -53,7 +55,8 @@ def _remove_toc(content: str) -> str:
     """
     Remove table of contents (TOC) from Markdown content.
 
-    :param content: the markdown content from which TOC needs to be removed.
+    :param content: the markdown content from which TOC needs to be
+        removed.
     :return: the markdown content with TOC removed.
     """
     toc_pattern = r"<!--\s*toc\s*-->(.*?)<!--\s*tocstop\s*-->"
@@ -89,10 +92,13 @@ def _search_in_markdown_files(
 
     :param git_root: the root directory of the git repository.
     :param search_term: the term to search in Markdown files.
-    :param skip_toc: flag indicating whether to skip the table of contents (TOC). Defaults to false.
-    :param line_only: flag indicating whether to search through lines only and generate links with line numbers. Defaults to False.
+    :param skip_toc: flag indicating whether to skip the table of
+        contents (TOC). Defaults to false.
+    :param line_only: flag indicating whether to search through lines
+        only and generate links with line numbers. Defaults to False.
     :param subdir: subdirectory to search within. Defaults to None.
-    :return: list of tuples containing the file path and the found item reference.
+    :return: list of tuples containing the file path and the found item
+        reference.
     """
     found_in_files = []
     # Construct the path to the docs directory.
@@ -103,12 +109,14 @@ def _search_in_markdown_files(
     )
     # Check if the `docs_path` exists.
     hdbg.dassert_dir_exists(docs_path)
+
     def search_content(content: str) -> List[Tuple[str, str]]:
         """
         Function to search for the term in content.
 
         :param content: the content to search for the term.
-        :return: list of tuples containing the file path and the found item reference.
+        :return: list of tuples containing the file path and the found
+            item reference.
         """
         if skip_toc:
             # Remove Table of Contents from the content if specified.
@@ -127,6 +135,7 @@ def _search_in_markdown_files(
             for section in sections
             if re.search(search_term, section)
         ]
+
     # Recursively walk through the docs directory.
     for root, _, files in os.walk(docs_path):
         for file in files:
@@ -140,6 +149,7 @@ def _search_in_markdown_files(
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
+    hdbg.init_logger(args.log_level)
     # Get the root directory of the git repository.
     git_root = hgit.get_client_root(super_module=True)
     # Get GitHub repository information.
@@ -171,7 +181,7 @@ def _parse() -> argparse.ArgumentParser:
     """
     Parse command-line arguments.
 
-    :return:the argument parser object.
+    :return: the argument parser object.
     """
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -188,10 +198,10 @@ def _parse() -> argparse.ArgumentParser:
         help="Search terms through the document and generate links with line numbers",
     )
     parser.add_argument("--subdir", help="Subdirectory to search within")
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     # Parse command-line arguments and execute the search.
     _main(_parse())
