@@ -56,51 +56,33 @@ def initialize_database() -> psycop._psycopg.connection:
     return db
 
 
-class TestSaveDataToDb(hunitest.TestCase):
+class TestSaveDataToDb(imvcddbut.TestImDbHelper, hunitest.TestCase):
     """
     This class tests im_v2.common.db.db_utils.save_data_to_db on real database, not a mock.
     """
-
-    # This will be run before and after each test.
-    @pytest.fixture(autouse=True)
-    def setup_teardown_test(self):
-        # Run before each test.
-        self.set_up_test()
-        yield
-        self.teardown_test()
-
-    def set_up_test(self) -> None:
-        # Connect to database
-        self.db = initialize_database()
-
-    def teardown_test(self):
-        try:
-            self.db.close()  # Close the database connection
-        except Exception as e:
-            _LOG.error("Error during teardown: %s", str(e)) # Log any errors
-
+    
     def test_save_data_to_db_ohlcv(self) -> None:
         """
         Test the `save_data_to_db` method for the case when inserting data for 'ohlcv' data type.
         """
-        imvcddbut.save_data_to_db(SAMPLE_DATA, "ohlcv", self.db, TABLE_NAME, TIME_ZONE)
-        num_rows = hsql.get_num_rows(self.db, TABLE_NAME)
+        imvcddbut.save_data_to_db(SAMPLE_DATA, "ohlcv", self.connection, TABLE_NAME, TIME_ZONE)
+        num_rows = hsql.get_num_rows(self.connection, TABLE_NAME)
         self.assertEqual(num_rows, 3)
 
     def test_save_data_to_db_bid_ask(self) -> None:
         """
         Test the `save_data_to_db` method for the case when inserting data for 'bid_ask' data type.
         """
-        imvcddbut.save_data_to_db(SAMPLE_DATA, "bid_ask", self.db, TABLE_NAME, TIME_ZONE)
-        num_rows = hsql.get_num_rows(self.db, TABLE_NAME)
+        imvcddbut.save_data_to_db(SAMPLE_DATA, "bid_ask", self.connection, TABLE_NAME, TIME_ZONE)
+        num_rows = hsql.get_num_rows(self.connection, TABLE_NAME)
         self.assertEqual(num_rows, 3)
 
     def test_save_data_to_db_trades(self) -> None:
         """
         Test the `save_data_to_db` method for the case when inserting data for 'trades' data type.
         """
-        imvcddbut.save_data_to_db(SAMPLE_DATA, "trades", self.db, TABLE_NAME, TIME_ZONE)
-        num_rows = hsql.get_num_rows(self.db, TABLE_NAME)
+        imvcddbut.save_data_to_db(SAMPLE_DATA, "trades", self.connection, TABLE_NAME, TIME_ZONE)
+        num_rows = hsql.get_num_rows(self.connection, TABLE_NAME)
         self.assertEqual(num_rows, 3)
 
     def test_save_data_to_db_unknown_data_type(self) -> None:
@@ -108,7 +90,7 @@ class TestSaveDataToDb(hunitest.TestCase):
         Test the `save_data_to_db` method for the case when inserting data for unknown data type.
         """
         with self.assertRaises(ValueError):
-            imvcddbut.save_data_to_db(SAMPLE_DATA, "unknown", self.db, TABLE_NAME, TIME_ZONE)
+            imvcddbut.save_data_to_db(SAMPLE_DATA, "unknown", self.connection, TABLE_NAME, TIME_ZONE)
 
 
 class TestLoadDbData(hunitest.TestCase):
