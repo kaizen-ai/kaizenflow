@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-jackdoc: Locate input from Markdown files in the docs directory and generate corresponding file links.
+jackdoc: Locate input from Markdown files in the docs directory 
+    and generate corresponding file links.
 Example usage:
 jackdoc "search_term" [--skip-toc] [--line-only] [--subdir <subdirectory>]
 """
@@ -112,7 +113,7 @@ def _search_in_markdown_files(
 
     def search_content(content: str) -> List[Tuple[str, str]]:
         """
-        Function to search for the term in content.
+        Search for the term in content.
 
         :param content: the content to search for the term
         :return: list of tuples containing the file path and the found
