@@ -12,6 +12,7 @@ import pandas as pd
 
 import core.finance as cofinanc
 import dataflow.core as dtfcore
+import dataflow.core.utils as dtfcorutil
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
@@ -415,7 +416,7 @@ class RealTimeDataSource(dtfcore.DataSource):
             self._timedelta, ts_col_name=self._ts_col_name
         )
         if self._multiindex_output:
-            self.df = dtfcore.utils.convert_to_multiindex(self.df, self._asset_id_col)
+            self.df = dtfcorutil.convert_to_multiindex(self.df, self._asset_id_col)
 
 
 # #############################################################################
@@ -527,5 +528,5 @@ class HistoricalDataSource(dtfcore.DataSource):
                     hpandas.df_to_str(df.head()),
                 )
         if self._multiindex_output:
-            df = dtfcore.utils.convert_to_multiindex(df, self._asset_id_col)
+            df = dtfcorutil.convert_to_multiindex(df, self._asset_id_col)
         return df
