@@ -1,8 +1,8 @@
 version: '3.8'
 
 services:
-  # Jupyter service configuration.
-  jupyter:
+  # Cache prediction service configuration.
+  cache_prediction:
     build: .
     ports:
       - "8888:8888"
@@ -43,3 +43,4 @@ networks:
 
 volumes:
   mongodb_data:
+

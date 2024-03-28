@@ -55,12 +55,12 @@ To run the project, follow these steps:
   your terminal.
 - Run the following command to build and launch the Docker container:
   ```
-  docker-compose up
+  > docker-compose up
   ```
 - When you run docker-compose up, it orchestrates the deployment of the project
   within Docker containers, ensuring portability and isolation of the
   environment. The command launches three containers
-  - Jupyter Notebook Server Container: This container hosts the Jupyter Notebook
+  - Cache Prediction Container: This container hosts the Jupyter Notebook
     interface, providing a web-based environment for running and interacting
     with project code.
   - MongoDB Container: Hosts the MongoDB database, responsible for storing
@@ -74,15 +74,15 @@ To run the project, follow these steps:
 - Click on the provided link to access the Jupyter Notebook interface in your
   web browser. If the notebook does not display anything initially, open the
   link in a private browser/window to avoid cache issues.
-- Once inside the Jupyter Notebook interface, you'll find the .ipynb file
+- Once inside the Jupyter Notebook interface, you'll find the `.ipynb` file
   containing the code for the project.
-- Open the .ipynb file to review the project code and functionalities.
+- Open the `.ipynb` file to review the project code and functionalities.
 - Run the cells in the notebooks to execute the code and observe the results.
 - After reviewing the projects and functionalities, you can stop the Docker
   container by pressing `Ctrl + C ` in the terminal where it's running, and then
   typing
   ```
-  docker-compose down
+  > docker-compose down
   ```
 
 By following these steps, you can easily run and review the project within a
@@ -90,9 +90,9 @@ Docker container, ensuring isolation and portability of the environment.
 
 ## 2. Code files and Datasets
 
-### `Python Script`
+### `Redis_cache_to_fetch_profile.ipynb`
 
-This Python script implements a caching mechanism using Redis for a MongoDB
+This script implements a caching mechanism using Redis for a MongoDB
 database with e-commerce data. It includes functionalities for data insertion
 into MongoDB, retrieval with rate limiting and caching, and cache invalidation
 based on database changes. The script establishes connections to both MongoDB
@@ -142,8 +142,8 @@ environment, facilitating easy deployment and reproducibility.
 ### `docker-compose.yml`
 
 This `docker-compose.yml` file defines a multi-service Docker environment for a
-project. It specifies three services: `jupyter`, `mongodb`, and `redis`. The
-`jupyter` service builds an image from the current directory, exposes port 8888
+project. It specifies three services: `cache_prediction`, `mongodb`, and `redis`. The
+`cache_prediction` service builds an image from the current directory, exposes port 8888
 for the Jupyter Notebook server, mounts the current directory as a volume in the
 container, sets an environment variable for Python buffering, and runs the
 Jupyter Notebook server command upon container launch. The `mongodb` service
