@@ -7,4 +7,5 @@ poetry
 pytest >= "6.0.0"
 s3fs  # For tools like `publish_notebook.py`.
 tqdm
-pyyaml == 5.3.1
+# TODO(gp): It was reported that this package is sometimes needed.
+# pyyaml == 5.3.1
