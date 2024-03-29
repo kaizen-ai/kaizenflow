@@ -15,7 +15,6 @@ class TestLoadDBData(hunitest.TestCase):
         # Prepare mock data
         mock_df_result = pd.DataFrame({'column1': [1, 2], 'column2': ['value1', 'value2']})
         mock_execute_query_to_df.return_value = mock_df_result
-
         db_connection = umock.MagicMock()
         src_table = "test_table"
         start_ts = pd.Timestamp("2024-01-01")
@@ -25,7 +24,7 @@ class TestLoadDBData(hunitest.TestCase):
         bid_ask_levels = [1, 2]
         exchange_id = "Exchange1"
         time_interval_closed = True
-
+        # Test the load_db_data method by passing mock db_connection object.
         result = imvcddbut.load_db_data(db_connection, src_table, start_ts, end_ts,
                                        currency_pairs=currency_pairs, limit=limit,
                                        bid_ask_levels=bid_ask_levels, exchange_id=exchange_id,
