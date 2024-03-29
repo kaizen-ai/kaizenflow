@@ -1,4 +1,4 @@
-import unittest.mock as umock
+import unittest.mock as umock, patch
 
 import pandas as pd
 import psycopg2 as psycop
@@ -8,6 +8,39 @@ import helpers.hunit_test as hunitest
 import im_v2.common.db.db_utils as imvcddbut
 
 DB_STAGE = "test"
+
+class TestLoadDBData(hunitest.TestCase):
+    @patch('im_v2.common.db.db_utils.hsql.execute_query_to_df')
+    def test_load_db_data(self, mock_execute_query_to_df):
+        # Prepare mock data
+        mock_df_result = pd.DataFrame({'column1': [1, 2], 'column2': ['value1', 'value2']})
+        mock_execute_query_to_df.return_value = mock_df_result
+
+        db_connection = umock.MagicMock()
+        src_table = "test_table"
+        start_ts = pd.Timestamp("2024-01-01")
+        end_ts = pd.Timestamp("2024-01-31")
+        currency_pairs = ["BTC_USDT"]
+        limit = 100
+        bid_ask_levels = [1, 2]
+        exchange_id = "Exchange1"
+        time_interval_closed = True
+
+        result = imvcddbut.load_db_data(db_connection, src_table, start_ts, end_ts,
+                                       currency_pairs=currency_pairs, limit=limit,
+                                       bid_ask_levels=bid_ask_levels, exchange_id=exchange_id,
+                                       time_interval_closed=time_interval_closed)
+        expected_query = (
+            f"SELECT * FROM {src_table} WHERE timestamp >= {start_ts.value} AND timestamp <= {end_ts.value} "
+            f"AND currency_pair IN ('BTC_USDT') AND level IN (1, 2) AND exchange_id = 'Exchange1' "
+            f"ORDER BY timestamp DESC LIMIT 100"
+        )
+        mock_execute_query_to_df.assert_called_once_with(db_connection, expected_query)
+        
+        # Assert that the function returns the expected DataFrame
+        pd.testing.assert_frame_equal(result, mock_df_result)
+
+
 
 
 class TestDbConnectionManager(hunitest.TestCase):
