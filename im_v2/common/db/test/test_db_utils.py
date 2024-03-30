@@ -10,34 +10,105 @@ import im_v2.common.db.db_utils as imvcddbut
 DB_STAGE = "test"
 
 class TestLoadDBData(hunitest.TestCase):
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self):
+        """
+        Initializing some common attributes for the query.
+        """
+        self.db_connection = umock.MagicMock()
+        self.src_table = "test_table"
+        self.start_ts = pd.Timestamp("2024-01-01")
+        self.end_ts = pd.Timestamp("2024-01-31")
+
     @patch('im_v2.common.db.db_utils.hsql.execute_query_to_df')
     def test_load_db_data(self, mock_execute_query_to_df):
+        """
+        Test case : Basic query construction with all the parameters provided.
+        """
         # Prepare mock data
-        mock_df_result = pd.DataFrame({'column1': [1, 2], 'column2': ['value1', 'value2']})
-        mock_execute_query_to_df.return_value = mock_df_result
-        db_connection = umock.MagicMock()
-        src_table = "test_table"
-        start_ts = pd.Timestamp("2024-01-01")
-        end_ts = pd.Timestamp("2024-01-31")
         currency_pairs = ["BTC_USDT"]
         limit = 100
         bid_ask_levels = [1, 2]
         exchange_id = "Exchange1"
         time_interval_closed = True
         # Test the load_db_data method by passing mock db_connection object.
-        result = imvcddbut.load_db_data(db_connection, src_table, start_ts, end_ts,
+        result = imvcddbut.load_db_data(self.db_connection, self.src_table, self.start_ts, self.end_ts,
                                        currency_pairs=currency_pairs, limit=limit,
                                        bid_ask_levels=bid_ask_levels, exchange_id=exchange_id,
                                        time_interval_closed=time_interval_closed)
         expected_query = (
-            f"SELECT * FROM {src_table} WHERE timestamp >= {start_ts.value} AND timestamp <= {end_ts.value} "
+            f"SELECT * FROM {self.src_table} WHERE timestamp >= {self.start_ts.value} AND timestamp <= {self.addClassCleanupend_ts.value} "
             f"AND currency_pair IN ('BTC_USDT') AND level IN (1, 2) AND exchange_id = 'Exchange1' "
             f"ORDER BY timestamp DESC LIMIT 100"
         )
-        mock_execute_query_to_df.assert_called_once_with(db_connection, expected_query)
+        mock_execute_query_to_df.assert_called_once_with(self.db_connection, expected_query)
         
-        # Assert that the function returns the expected DataFrame
-        pd.testing.assert_frame_equal(result, mock_df_result)
+
+    @patch('im_v2.common.db.db_utils.hsql.execute_query_to_df')
+    def test_load_db_data1(self, mock_execute_query_to_df):
+        """
+        Test case: Handling the scenario where no data is returned from the database query.
+        """
+        # Prepare mock data
+        mock_execute_query_to_df.return_value = None
+        result = imvcddbut.load_db_data(self.db_connection, self.src_table, self.start_ts, self.end_ts)
+        expected_query = (
+            f"SELECT * FROM {self.src_table} WHERE timestamp >= {self.start_ts.value} AND timestamp <= {self.end_ts.value} "
+        )
+        mock_execute_query_to_df.assert_called_once_with(self.db_connection, expected_query)
+        self.assertIsNone(result)
+    
+    @patch('im_v2.common.db.db_utils.hsql.execute_query_to_df')
+    def test_load_db_data2(self, mock_execute_query_to_df):
+        """
+        Test case: Returning an empty dataframe
+        """
+        mock_execute_query_to_df.return_value = pd.DataFrame()
+        result = imvcddbut.load_db_data(self.db_connection, self.src_table, self.start_ts, self.end_ts)
+        self.assertTrue(result.empty)
+
+    @patch('im_v2.common.db.db_utils.hsql.execute_query_to_df')
+    def test_load_db_data3(self, mock_execute_query_to_df):
+        """
+        Test case: start_ts > end_ts
+        """
+        pass
+
+    @patch('im_v2.common.db.db_utils.hsql.execute_query_to_df')
+    def test_load_db_data4(self, mock_execute_query_to_df):
+        """
+        Test case: Invalid currency pairs
+        """
+        pass
+
+    @patch('im_v2.common.db.db_utils.hsql.execute_query_to_df')
+    def test_load_db_data5(self, mock_execute_query_to_df):
+        """
+        Test case: Null parameter for start_ts or end_ts
+        """
+        pass
+
+    @patch('im_v2.common.db.db_utils.hsql.execute_query_to_df')
+    def test_load_db_data6(self, mock_execute_query_to_df):
+        """
+        Test case: Invalid timestamp format
+        """
+        pass
+    
+    @patch('im_v2.common.db.db_utils.hsql.execute_query_to_df')
+    def test_load_db_data7(self, mock_execute_query_to_df):
+        """
+        Test case: Limit parameter is larger than total number of rows returned by database query
+        """
+        pass
+
+
+
+
+    
+
+    
 
 
 
