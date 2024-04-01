@@ -168,15 +168,14 @@ def from_parquet(
             # `read_table()`.
             # See https://arrow.apache.org/docs/python/parquet.html#reading-and-writing-single-files.
             table = dataset.read_pandas(columns=columns)
-            # Convert timestamp columns to `ns` resolution to keep the old
-            # behaviour with pyarrow=10.0.0 as opposed to pyarrow>=14.0.0
-            # which preserves the returned resolution.
-            # See CmTask7097 for details. https://github.com/cryptokaizen/cmamp/issues/7097
+            # Convert the Pandas Dataframe timestamp columns and index to `ns`
+            # resolution. The general approach is to preserve the time unit
+            # information after reading data back from Parquet files.
+            # Currently, it's challenging to resolve this issue since Parquet
+            # data is mixed with data from CSV files, which convert the time
+            # unit to `ns` by default. Refer to CmampTask7331 for details.
+            # https://github.com/cryptokaizen/cmamp/issues/7331
             df = table.to_pandas(coerce_temporal_nanoseconds=True)
-            # Convert timestamp indices to `ns` resolution to keep the old
-            # behaviour with pyarrow=10.0.0 as opposed to pyarrow>=14.0.0
-            # which preserves the returned resolution.
-            # See CmTask7097 for details. https://github.com/cryptokaizen/cmamp/issues/7097
             if isinstance(df.index, pd.DatetimeIndex):
                 df.index = df.index.as_unit("ns")
     # Report stats about the df.
@@ -267,11 +266,16 @@ def to_parquet(
         # pyarrow.lib.ArrowInvalid: Casting from timestamp[ns, tz=America/New_York]
         #   to timestamp[us] would lose data: 1663595160000000030
         # ```
-        parquet_args = {
-            "coerce_timestamps": "us",
-            "allow_truncated_timestamps": True,
-        }
-        pq.write_table(table, file_name, filesystem=filesystem, **parquet_args)
+        # No need to cast to `us` since pyarrow >= 15.0.0.
+        # See
+        # https://github.com/cryptokaizen/cmamp/blob/master/docs/infra/all.parquet.explanation.md#time-unit-conversion-when-writing-to-parquet
+        # for details.
+        # parquet_args = {
+        #     "coerce_timestamps": "us",
+        #     "allow_truncated_timestamps": True,
+        # }
+        # pq.write_table(table, file_name, filesystem=filesystem, **parquet_args)
+        pq.write_table(table, file_name, filesystem=filesystem)
     # Report stats about the Parquet file size.
     if report_stats:
         file_size = hs3.du(file_name, human_format=True, aws_profile=aws_profile)
