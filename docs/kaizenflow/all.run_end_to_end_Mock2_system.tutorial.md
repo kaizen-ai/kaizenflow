@@ -377,7 +377,6 @@ When executing the `ProcessForecastsNode` the System:
 
 ```markdown
 # last target positions=
-
           holdings_shares    price  holdings_notional      wall_clock_timestamp  prediction  volatility  spread  target_holdings_notional  target_trades_notional  target_trades_shares  target_holdings_shares
 asset_id
 0                       0   983.66                  0 2023-08-15 11:00:11-04:00      0.9674    0.000967       0              586609.98842            586609.98842             596.35442               596.35442
@@ -402,7 +401,6 @@ Order: order_id=9 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=9 type_=
 ```
 
 Then the `System` goes to sleep waiting for the next bar to start:
-
 ```markdown
 08:39:37 rss=0.296GB vms=1.325GB mem_pct=1%% Task-3 process_forecasts_.py process_forecasts:353 Event: exiting process_forecasts() for loop.
 08:39:37 rss=0.296GB vms=1.325GB mem_pct=1% Task-3 real_time_dag_runner.py _run_dag:264 Waiting on node 'process_forecasts': done

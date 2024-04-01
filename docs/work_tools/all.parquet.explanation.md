@@ -10,6 +10,9 @@
   * [Change log](#change-log)
     + [2024-02-26: cmamp-1.14.0](#2024-02-26-cmamp-1140)
       - [Rationale](#rationale)
+    + [2024-03-11: CmampTask7331 Remove `ns vs us` hacks related to Pyarrow 14.0.2](#2024-03-11-cmamptask7331-remove-ns-vs-us-hacks-related-to-pyarrow-1402)
+      - [Time unit conversion when writing to Parquet](#time-unit-conversion-when-writing-to-parquet)
+      - [Time unit conversion when reading from Parquet](#time-unit-conversion-when-reading-from-parquet)
 
 <!-- tocstop -->
 
@@ -61,7 +64,7 @@ Parquet files using the pyarrow library.
 
 ### Reading Parquet
 
-- `to_parquet()`
+- `from_parquet()`
   - Reads a Parquet file or partitional Parquet files into a Pandas DataFrame
 
 ## Change log
@@ -78,7 +81,7 @@ Parquet files using the pyarrow library.
 - In the `list_and_merge_pq_files()`
   - In the `pq.ParquetDataset()` change `use_legacy_dataset=True` to
     `partitioning=None`
-- Indroduce `purify_parquet_file_names()` in the `helpers/hunit_test.py`
+- Introduce `purify_parquet_file_names()` in the `helpers/hunit_test.py`
 
 #### Rationale
 
@@ -99,3 +102,45 @@ Parquet files using the pyarrow library.
   - Some tests expect the Parquet files with the name `data.parquet`. The
     `purify_parquet_file_names()` changes the names of the Parquet files to
     `data.parquet` in the goldens
+
+### 2024-03-11: CmampTask7331 Remove `ns vs us` hacks related to Pyarrow 14.0.2
+
+- Remove time unit casting to `us` in the `to_parquet()`
+- Keep time unit casting to `ns` in the `from_parquet()`
+
+#### Time unit conversion when writing to Parquet
+
+- **Context**: Before the upgrade to pyarrow 15.0.0, casting the time unit to
+  `us` was necessary to avoid the `pyarrow.lib.ArrowInvalid` exception.
+- **Problem**: In pyarrow 15.0.0, this exception is no longer raised, and the
+  time unit is preserved correctly.
+- **Insight**: Casting the time unit to `us` in the `to_parquet()` function is
+  no longer necessary and can be removed. At the same time, casting to `us` in
+  the `to_parquet()` function does not make sense since the time unit will be
+  converted back to `ns` in the `from_parquet()` function.
+- **Solution**: Remove the casting of the time unit to `us` in the
+  `to_parquet()` function.
+
+#### Time unit conversion when reading from Parquet
+
+- **Context**: The pyarrow version prior to 15.0.0 did not correctly preserve
+  the time unit information when reading data back from Parquet files. That's
+  why casting the time unit to `ns` was necessary in the `from_parquet()`
+  function.
+- **Problem**: Since the upgrade to pyarrow 15.0.0, casting the time unit to
+  `ns` is no longer necessary, as the new version of pyarrow correctly preserves
+  the time unit. See the Pyarrow issue for details:
+  https://github.com/apache/arrow/issues/33321 When reading Parquet files with a
+  time unit that is not in ['us', 'ns'], the `pyarrow.lib.ArrowInvalid`
+  exception could be raised. This could occur when Pyarrow attempts to cast the
+  time unit to a lower resolution. This behavior is tested in the
+  `test_parquet_files_with_mixed_time_units_2` test. In this case, the
+  alphabetical order of the files is important. The data from the first file
+  will be cast to the time unit of the rest of the files.
+- **Insight**: The general approach is to preserve the time unit information
+  after reading data back from Parquet files. Currently, resolving this issue is
+  challenging because Parquet data is mixed with data from CSV files, which
+  convert the time unit to `ns` by default. Refer to CmampTask7331 for details.
+  https://github.com/cryptokaizen/cmamp/issues/7331
+- **Solution**: Retain the casting of the time unit to `ns` in the
+  `from_parquet()` function.
