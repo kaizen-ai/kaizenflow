@@ -47,6 +47,7 @@ def get_CcxtPortfolio_prod_instance1(
     asset_ids: Optional[List[int]],
     broker_config: Dict[str, Any],
     log_dir: str,
+    mark_to_market_col: str,
 ) -> CcxtPortfolio:
     """
     Initialize the `CcxtPortfolio` with cash using `CcxtBroker`.
@@ -110,7 +111,6 @@ def get_CcxtPortfolio_prod_instance1(
     else:
         raise ValueError(f"Invalid run_mode='{run_mode}'")
     # Build CcxtPortfolio.
-    mark_to_market_col = "close"
     initial_cash = 700
     portfolio = CcxtPortfolio.from_cash(
         broker,

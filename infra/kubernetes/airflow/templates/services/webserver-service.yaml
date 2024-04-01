@@ -10,6 +10,8 @@ metadata:
   labels:
     tier: airflow
     component: webserver
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
 spec:
   type: LoadBalancer
   selector:

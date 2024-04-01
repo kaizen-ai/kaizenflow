@@ -477,10 +477,11 @@ class TestCcxtBroker_V2_UsingFakeExchange(obcctmetc.MockExchangeTestCase):
         '_submit_twap_child_order::child_order.created': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.limit_price_calculated': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.logged': Timestamp('2022-08-05 05:31:02-0400', tz='America/New_York'),
+        '_submit_twap_child_order::child_order.submission_started': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.submitted': Timestamp('2022-08-05 05:31:02-0400', tz='America/New_York'),
         '_submit_twap_child_order::get_open_positions.done': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::wave_id': 0,
-        '_submit_twap_orders::aligned_with_next_wave.end': Timestamp('2022-08-05 05:32:00-0400', tz='America/New_York')}}]
+        '_submit_twap_orders::aligned_with_next_wave.end': Timestamp('2022-08-05 05:31:58-0400', tz='America/New_York')}}]
         """
         actual_orders = pprint.pformat(orders)
         self.assert_equal(actual_orders, exp, fuzzy_match=True)
@@ -1195,10 +1196,11 @@ class TestCcxtBroker_V2_UsingFakeExchangeWithErrors(
         '_submit_twap_child_order::child_order.created': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.limit_price_calculated': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.logged': Timestamp('2022-08-05 05:31:04.500000-0400', tz='America/New_York'),
+        '_submit_twap_child_order::child_order.submission_started': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.submitted': Timestamp('2022-08-05 05:31:04.500000-0400', tz='America/New_York'),
         '_submit_twap_child_order::get_open_positions.done': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::wave_id': 0,
-        '_submit_twap_orders::aligned_with_next_wave.end': Timestamp('2022-08-05 05:32:00-0400', tz='America/New_York')}}]
+        '_submit_twap_orders::aligned_with_next_wave.end': Timestamp('2022-08-05 05:31:58-0400', tz='America/New_York')}}]
         """
         submitted_expected_orders = r"""
         [Order:
@@ -1276,10 +1278,11 @@ class TestCcxtBroker_V2_UsingFakeExchangeWithErrors(
         '_submit_twap_child_order::child_order.created': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.limit_price_calculated': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.logged': Timestamp('2022-08-05 05:31:07-0400', tz='America/New_York'),
+        '_submit_twap_child_order::child_order.submission_started': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.submitted': Timestamp('2022-08-05 05:31:07-0400', tz='America/New_York'),
         '_submit_twap_child_order::get_open_positions.done': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::wave_id': 0,
-        '_submit_twap_orders::aligned_with_next_wave.end': Timestamp('2022-08-05 05:32:00-0400', tz='America/New_York')}}]
+        '_submit_twap_orders::aligned_with_next_wave.end': Timestamp('2022-08-05 05:31:58-0400', tz='America/New_York')}}]
         """
         submitted_expected_orders = r"""
         [Order:
@@ -1360,10 +1363,11 @@ class TestCcxtBroker_V2_UsingFakeExchangeWithErrors(
         '_submit_twap_child_order::child_order.created': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.limit_price_calculated': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.logged': Timestamp('2022-08-05 05:31:07.500000-0400', tz='America/New_York'),
+        '_submit_twap_child_order::child_order.submission_started': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.submitted': Timestamp('2022-08-05 05:31:07.500000-0400', tz='America/New_York'),
         '_submit_twap_child_order::get_open_positions.done': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::wave_id': 0,
-        '_submit_twap_orders::aligned_with_next_wave.end': Timestamp('2022-08-05 05:32:00-0400', tz='America/New_York')}}]
+        '_submit_twap_orders::aligned_with_next_wave.end': Timestamp('2022-08-05 05:31:58-0400', tz='America/New_York')}}]
         """
         submitted_expected_orders = r"""
         [Order:
@@ -1444,10 +1448,11 @@ class TestCcxtBroker_V2_UsingFakeExchangeWithErrors(
         '_submit_twap_child_order::child_order.created': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.limit_price_calculated': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.logged': Timestamp('2022-08-05 05:31:07-0400', tz='America/New_York'),
+        '_submit_twap_child_order::child_order.submission_started': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.submitted': Timestamp('2022-08-05 05:31:07-0400', tz='America/New_York'),
         '_submit_twap_child_order::get_open_positions.done': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::wave_id': 0,
-        '_submit_twap_orders::aligned_with_next_wave.end': Timestamp('2022-08-05 05:32:00-0400', tz='America/New_York')}}]
+        '_submit_twap_orders::aligned_with_next_wave.end': Timestamp('2022-08-05 05:31:58-0400', tz='America/New_York')}}]
         """
         submitted_expected_orders = r"""
         [Order:
@@ -1530,10 +1535,11 @@ class TestCcxtBroker_V2_UsingFakeExchangeWithErrors(
         '_submit_twap_child_order::child_order.created': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.limit_price_calculated': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.logged': Timestamp('2022-08-05 05:31:07-0400', tz='America/New_York'),
+        '_submit_twap_child_order::child_order.submission_started': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::child_order.submitted': Timestamp('2022-08-05 05:31:07-0400', tz='America/New_York'),
         '_submit_twap_child_order::get_open_positions.done': Timestamp('2022-08-05 05:31:00-0400', tz='America/New_York'),
         '_submit_twap_child_order::wave_id': 0,
-        '_submit_twap_orders::aligned_with_next_wave.end': Timestamp('2022-08-05 05:32:00-0400', tz='America/New_York')}}]
+        '_submit_twap_orders::aligned_with_next_wave.end': Timestamp('2022-08-05 05:31:58-0400', tz='America/New_York')}}]
         """
         submitted_expected_orders = r"""
         [Order:

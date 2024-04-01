@@ -25,6 +25,7 @@ class BinanceWebsocketClient:
         on_error=None,
         on_ping=None,
         on_pong=None,
+        on_disconnect=None,
         logger=None,
         proxies: Optional[dict] = None,
     ):
@@ -39,6 +40,7 @@ class BinanceWebsocketClient:
             on_error,
             on_ping,
             on_pong,
+            on_disconnect,
             logger,
             proxies,
         )
@@ -106,6 +108,7 @@ class BinanceWebsocketClient:
         on_error,
         on_ping,
         on_pong,
+        on_disconnect,
         logger,
         proxies,
     ):
@@ -117,6 +120,7 @@ class BinanceWebsocketClient:
             on_error=on_error,
             on_ping=on_ping,
             on_pong=on_pong,
+            on_disconnect=on_disconnect,
             logger=logger,
             proxies=proxies,
         )
@@ -140,6 +144,7 @@ class UMFuturesWebsocketClient(BinanceWebsocketClient):
         on_error=None,
         on_ping=None,
         on_pong=None,
+        on_disconnect=None,
         is_combined=False,
         proxies: Optional[dict] = None,
     ):
@@ -155,6 +160,7 @@ class UMFuturesWebsocketClient(BinanceWebsocketClient):
             on_error=on_error,
             on_ping=on_ping,
             on_pong=on_pong,
+            on_disconnect=on_disconnect,
             proxies=proxies,
         )
 

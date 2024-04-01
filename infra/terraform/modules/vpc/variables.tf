@@ -93,6 +93,11 @@ variable "nat_gateway_name" {
   type        = string
 }
 
+variable "eip_name" {
+  description = "The Name to assign to the EIP"
+  type        = string
+}
+
 variable "vpc_id" {
   description = "The ID of the VPC"
   type        = string

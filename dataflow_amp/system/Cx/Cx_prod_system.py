@@ -135,12 +135,16 @@ class Cx_ProdSystem_v1_20220727(_Cx_ProdSystemMixin):
             # a System object, but since we call the builder inside analysis
             # notebooks that do not have a System object, we pass it to the
             # interface as a work-around.
+            table_name = self.config.get_and_mark_as_used(
+                ("market_data_config", "im_client_config", "table_name")
+            )
             sleep_in_secs = self.config.get_and_mark_as_used(
                 ("market_data_config", "sleep_in_secs")
             )
             market_data = dtfasccxbu.get_Cx_RealTimeMarketData_prod_instance1(
                 asset_ids,
                 db_stage,
+                table_name=table_name,
                 sleep_in_secs=sleep_in_secs,
             )
         elif self._run_mode in ["simulation", "simulation_with_replayed_fills"]:
@@ -227,6 +231,10 @@ def get_Cx_ProdSystem_instance_v1_20220727(
     run_mode = args.run_mode
     system = Cx_ProdSystem_v1_20220727(dag_builder_ctor_as_str, run_mode=run_mode)
     # - Market data.
+    # - Set table name.
+    system.config[
+        "market_data_config", "im_client_config", "table_name"
+    ] = "ccxt_ohlcv_futures"
     # In production Systems we want to get the data ASAP, so there is no reason
     # to go sleep for long.
     system.config["market_data_config", "sleep_in_secs"] = 0.1

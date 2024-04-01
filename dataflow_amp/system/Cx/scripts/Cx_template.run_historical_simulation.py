@@ -59,16 +59,18 @@ if __name__ == "__main__":
         config_update = None
     # Set execution params.
     abort_on_error = True
-    num_threads = "serial"
+    num_threads = 2
     num_attempts = 1
     dry_run = False
-    backend = "asyncio_threading"
+    # Use `backend = "threading"` since it supports memory deallocation
+    # and avoids OOM error (see CmampTask5854).
+    backend = "threading"
     # Set logger.
     log_level = logging.DEBUG
     hdbg.init_logger(
         verbosity=log_level,
         use_exec_path=True,
-        # report_memory_usage=True,
+        report_memory_usage=True,
     )
     # Create system.
     system = dtfasccfsex.get_Cx_NonTime_ForecastSystem_example(

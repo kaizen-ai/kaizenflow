@@ -150,6 +150,7 @@ def _get_test_broker(
             log_dir=log_dir,
             logger=logger,
             limit_price_computer=limit_price_computer,
+            max_order_submit_retries=3,
             child_order_quantity_computer=child_order_quantity_computer,
             sync_exchange=mock_exchange,
             async_exchange=mock_exchange,

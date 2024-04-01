@@ -1,17 +1,19 @@
 #!/usr/bin/env python
 """
 Load bid/ask data from DB and convert into the same format as data logged
-during an experiment using CcxtLogger. The data is used during 
-Master_bid_ask_execution_analysis as an alternative to the data logged
-during an experiment. In the full system run experiment there can be
-a bar with no trades, which results in no bid/ask being logged for that period
-(bid/ask data is logged only before child order execution).
+during an experiment using CcxtLogger. The data is used during
+Master_bid_ask_execution_analysis as an alternative to the data logged during
+an experiment. In the full system run experiment there can be a bar with no
+trades, which results in no bid/ask being logged for that period (bid/ask data
+is logged only before child order execution).
 
 Use as:
 > ./im_v2/ccxt/db/log_experiment_data.py \
    --db_stage 'preprod' \
    --start_timestamp_as_str '20240220_124800' \
    --end_timestamp_as_str '20240220_131500' \
+   --universe 'v7.5'
+   --data_vendor 'CCXT'
    --log_dir 'tmp_log_dir'
 """
 import argparse
@@ -38,7 +40,7 @@ def _log_experiment_data(args) -> None:
         args.end_timestamp_as_str
     )
     bid_ask_raw_data_reader = imvcdcimrdc.get_bid_ask_realtime_raw_data_reader(
-        args.db_stage
+        args.db_stage, args.data_vendor, args.universe
     )
     # TODO(Juraj): this should match exactly what happens in ccxt_broker.py
     # consider unifyig through lib function.
@@ -106,6 +108,20 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         type=str,
         help="Base path to log data into",
+    )
+    parser.add_argument(
+        "--universe",
+        action="store",
+        required=True,
+        type=str,
+        help="Universe used for the bid/ask data",
+    ),
+    parser.add_argument(
+        "--data_vendor",
+        action="store",
+        required=True,
+        type=str,
+        help="Vendor of the bid/ask data, e.g. CCXT or Binance",
     )
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]

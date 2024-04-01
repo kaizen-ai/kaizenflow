@@ -115,7 +115,7 @@ else:
                 "dataset": "bid_ask",
                 "contract_type": "futures",
                 "data_snapshot": "",
-                "version": "v1_0_0",
+                "version": "v2_0_0",
                 "download_universe_version": "v8",
                 "tag": "resampled_1min",
                 "aws_profile": "ck",
@@ -136,6 +136,8 @@ else:
                 "volume_notional": "volume_notional",
                 "ask_price": "level_1.ask_price.close",
                 "bid_price": "level_1.bid_price.close",
+                "bid_ask_midpoint": "level_1.bid_ask_midpoint.close",
+                "half_spread": "level_1.half_spread.close",
             },
         },
         "liquidity_metrics": {
@@ -193,8 +195,8 @@ market_data = mdata.get_HistoricalImClientMarketData_example1(
 )
 
 # %%
-# Load OHLCV data.
-ohlcv_data = dtfamsysc.load_ohlcv_data(
+# Load market data.
+ohlcv_data = dtfamsysc.load_market_data(
     market_data,
     config["ohlcv_data"]["start_timestamp"],
     config["ohlcv_data"]["end_timestamp"],
@@ -305,13 +307,21 @@ ask_price_df = bid_ask_data.pivot(columns=full_symbol_col, values=ask_price_col)
 bid_price_df = bid_ask_data.pivot(columns=full_symbol_col, values=bid_price_col)
 
 # %%
-# TODO(Dan): since this is pretty common, factor out in a lib or even create a DagBuilder objects to do that.
-bid_ask_midpoint_df = 0.5 * (ask_price_df + bid_price_df)
-half_spread_df = 0.5 * (ask_price_df - bid_price_df) / bid_ask_midpoint_df
-half_spread_bps_df = 1e4 * half_spread_df
+bid_ask_midpoint_col = config["bid_ask_data"]["column_names"]["bid_ask_midpoint"]
+bid_ask_midpoint_df = bid_ask_data.pivot(
+    columns=full_symbol_col, values=bid_ask_midpoint_col
+)
+hpandas.df_to_str(bid_ask_midpoint_df, log_level=logging.INFO)
+
+# %%
+half_spread_col = config["bid_ask_data"]["column_names"]["half_spread"]
+half_spread_df = bid_ask_data.pivot(
+    columns=full_symbol_col, values=half_spread_col
+)
+half_spread_bps_df = 1e4 * half_spread_df / bid_ask_midpoint_df
 hpandas.df_to_str(half_spread_bps_df, log_level=logging.INFO)
 
-# %% run_control={"marked": false}
+# %%
 half_spread_bps_mean = half_spread_bps_df.mean().sort_values()
 half_spread_bps_mean.name = config["liquidity_metrics"]["half_spread_bps_mean"]
 #

@@ -173,19 +173,38 @@ else:
     system_log_dir = (
         "/shared_data/CmTask6032/system_log_dir.manual/process_forecasts"
     )
-    # Get system config from the logged pickle file.
+    # Load pickled SystemConfig.
     config_file_name = "system_config.output.values_as_strings.pkl"
     system_config_dir = system_log_dir.rstrip("/process_forecasts")
-    # Get universe version from the system config.
-    universe_version = rsiprrec.extract_universe_version_from_pkl_config(
-        system_config_dir
-    )
+    system_config_path = os.path.join(system_config_dir, config_file_name)
+    system_config = cconfig.load_config_from_pickle(system_config_path)
+    # TODO(Dan): Deprecate after switch to updated config logs CmTask6627.
+    hdbg.dassert_in("dag_runner_config", system_config)
+    if isinstance(system_config["dag_runner_config"], tuple):
+        bar_duration = rsiprrec.extract_bar_duration_from_pkl_config(
+            system_config_dir
+        )
+        universe_version = rsiprrec.extract_universe_version_from_pkl_config(
+            system_config_dir
+        )
+        price_column_name = rsiprrec.extract_price_column_name_from_pkl_config(
+            system_config_dir
+        )
+    else:
+        hdbg.dassert_isinstance(system_config, cconfig.Config)
+        universe_version = system_config["market_data_config"][
+            "im_client_config"
+        ]["universe_version"]
+        bar_duration_in_secs = system_config["dag_runner_config"][
+            "bar_duration_in_secs"
+        ]
+        bar_duration_in_mins = int(bar_duration_in_secs / 60)
+        bar_duration = f"{bar_duration_in_mins}T"
+        price_column_name = system_config["portfolio_config"][
+            "mark_to_market_col"
+        ]
     vendor = "CCXT"
     mode = "trade"
-    # Get bar duration from the system config.
-    bar_duration = rsiprrec.extract_bar_duration_from_pkl_config(
-        system_config_dir
-    )
     config_dict = {
         "id_col": id_col,
         "system_log_dir": system_log_dir,
@@ -194,7 +213,7 @@ else:
             "mode": mode,
             "universe_version": universe_version,
         },
-        "price_column_name": "close",
+        "price_column_name": price_column_name,
         "bar_duration": bar_duration,
         "share_asset_ids_with_no_fills": 0.3,
         "n_index_elements_to_ignore": 2,

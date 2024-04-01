@@ -20,7 +20,7 @@ spec:
     fsGroup: 0
   containers:
     - name: base
-      image: apache/airflow:2.7.1
+      image: 623860924167.dkr.ecr.eu-north-1.amazonaws.com/cmamp:preprod-airflow-k8s
       imagePullPolicy: IfNotPresent
       securityContext:
         allowPrivilegeEscalation: false

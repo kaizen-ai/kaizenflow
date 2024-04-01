@@ -38,8 +38,8 @@ security_groups = [
         from_port   = 22
         to_port     = 22
         protocol    = "tcp"
-        description = "ssh shayan workaround"
-        cidr_blocks = ["0.0.0.0/0"]
+        description = "SSH Shayan"
+        cidr_blocks = ["151.71.9.208/32"]
       },
       {
         from_port   = 1194
@@ -223,7 +223,7 @@ security_groups = [
   },
   {
     name        = "efs-sg-1"
-    description = "EFS Security Group"
+    description = "EFS sg"
     tags        = { Name = "efs-sg-1" }
     ingress = [
       {
@@ -267,7 +267,7 @@ security_groups = [
   },
   {
     name        = "ecs-sg-1"
-    description = "ECS Security Group"
+    description = "Allow ECS containers to download/store data via HTTP(S), Websockets and RDS"
     tags        = { Name = "ecs-sg-1" }
     ingress = [
       {
@@ -364,7 +364,7 @@ security_groups = [
   },
 ]
 subnet_availability_zones = ["eu-north-1c", "eu-north-1c", "eu-north-1b", "eu-north-1b", "eu-north-1b", "eu-north-1a", "eu-north-1a"]
-subnet_cidr_blocks        = ["172.30.1.0/24", "172.30.2.0/24", "172.30.3.0/24", "172.30.254.0/24", "172.30.4.0/24", "172.30.5.0/24", "172.30.6.0/24"]
+subnet_cidr_blocks        = ["172.30.1.0/24", "172.30.2.0/24", "172.30.3.0/24", "172.30.254.0/24", "172.30.5.0/24", "172.30.4.0/24", "172.30.6.0/24"]
 subnet_tags = [
   { Name = "public-subnet-1", Created_by = "terraform" },
   { Name = "private-subnet-1", Created_by = "terraform" },
@@ -378,6 +378,7 @@ subnet_map_public_ip_on_launch = false
 internet_gateway_tags          = { Name = "internet-gw-1" }
 nat_gateway_name               = "nat-gw-1"
 nat_gateway_subnet_id          = "public-subnet-1"
+eip_name                       = "NAT Gateway EIP"
 route_tables = [
   {
     tags = { Name = "external-rt-1" }
@@ -589,6 +590,7 @@ iam_policies = {
   S3AllowBatchReplication                                      = { description = "" },
   AmazonEKSELBPermissionsPolicy                                = { description = "" },
   AmazonEKSCloudWatchMetricsPolicy                             = { description = "" },
+  FullClusterAutoscalerFeaturesPolicy                          = { description = "Permissions required when using ASG Autodiscovery and Dynamic EC2 List Generation." },
 }
 iam_role_policies = {
   ProdAirflowEC2Role = [
@@ -613,6 +615,8 @@ iam_role_policies = {
     { arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly" },
     { arn = "arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess" },
     { arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore" },
+    { arn = "arn:aws:iam::aws:policy/AmazonECS_FullAccess" },
+    { name = "FullClusterAutoscalerFeaturesPolicy" },
   ]
 }
 iam_instance_profile = {
@@ -821,7 +825,7 @@ buckets = {
 
 # <--- ./modules/eks --->
 
-cluster_name                      = "preprod-airflow-cluster"
+cluster_name                      = "preprod-k8s-cluster"
 eks_cluster_role                  = "eksClusterRole"
 eks_cluster_version               = "1.29"
 enabled_cluster_log_types         = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
@@ -842,11 +846,11 @@ tag_specifications = [
     resource_type = "network-interface"
   }
 ]
-node_group_name                  = "airflow-nodegroup"
+node_group_name                  = "preprod-airflow-nodegroup"
 eks_node_role                    = "eksNodeInstanceRole"
 node_desired_size                = 3
-node_max_size                    = 4
-node_min_size                    = 2
+node_max_size                    = 5
+node_min_size                    = 3
 node_max_unavailable             = 1
 node_ami_type                    = "AL2_x86_64" # AL2_x86_64, AL2_x86_64_GPU, AL2_ARM_64, CUSTOM
 node_capacity_type               = "ON_DEMAND"  # ON_DEMAND or SPOT
@@ -893,6 +897,47 @@ access_group_id                = null
 authorize_all_groups           = true
 auth_rule_description          = "Allows access to resources in VPC"
 target_network_cidr            = "172.30.0.0/16"
+
+
+
+# <--- ./modules/ecs --->
+
+stage                          = "test"
+containerInsights_value        = "enabled"
+execution_role_arn_td          = "arn:aws:iam::623860924167:role/ecsTaskExecutionRole"
+task_role_arn_td               = "arn:aws:iam::623860924167:role/ecsTaskInstanceRole"
+host_path_td_efs               = null
+name_td_efs                    = "efs"
+file_system_id_td_efs          = "fs-0341af9c333cc9e3b"
+root_directory_td_efs          = "/" # `/` has the same effect as omitting the paramater
+transit_encryption_td_efs      = "ENABLED"
+transit_encryption_port_td_efs = null
+access_point_id_td_efs         = "fsap-0cccf2da06edc0872"
+iam_td_efs                     = "DISABLED"
+image                          = "623860924167.dkr.ecr.eu-north-1.amazonaws.com/cmamp:prod-1.4.3"
+links                          = []
+logDriver                      = "awslogs"
+awslogsGroup                   = "/ecs/cmamp"
+awslogsRegion                  = "eu-north-1"
+awslogsStreamPrefix            = "ecs"
+containerPath                  = "/data/shared/ecs"
+readOnly                       = false
+sourceVolume                   = "efs"
+taskDefinitionName             = "cmamp"
+portMappings                   = []
+systemControls                 = []
+volumesFrom                    = []
+AM_AWS_S3_BUCKET               = "alphamatic-data"
+AM_ECR_BASE_PATH               = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
+AM_ENABLE_DIND                 = "0"
+CK_AWS_DEFAULT_REGION          = "eu-north-1"
+CK_AWS_S3_BUCKET               = "cryptokaizen-data"
+CK_ECR_BASE_PATH               = "623860924167.dkr.ecr.eu-north-1.amazonaws.com"
+POSTGRES_DB                    = "prod.im_data_db"
+POSTGRES_HOST                  = "prod-im-db.cpox8ul7pzan.eu-north-1.rds.amazonaws.com"
+POSTGRES_PORT                  = "5432"
+POSTGRES_PASSWORD              = "arn:aws:secretsmanager:eu-north-1:623860924167:secret:prod.im_data_db-cRNgT1:password::"
+POSTGRES_USER                  = "arn:aws:secretsmanager:eu-north-1:623860924167:secret:prod.im_data_db-cRNgT1:username::"
 
 
 
