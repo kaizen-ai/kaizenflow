@@ -172,10 +172,10 @@ def subset_market_info(
     hdbg.dassert_in(info_type, available_info)
     market_info_keys = list(market_info.keys())
     _LOG.debug("market_info keys=%s", market_info_keys)
-    asset_ids_to_decimals = {
+    market_info_subset = {
         key: market_info[key][info_type] for key in market_info_keys
     }
-    return asset_ids_to_decimals
+    return market_info_subset
 
 
 def load_market_data_info() -> Dict[int, Dict[str, Union[float, int]]]:
@@ -195,6 +195,16 @@ def load_market_data_info() -> Dict[int, Dict[str, Union[float, int]]]:
     # Convert to int, because asset ids are strings.
     market_info = {int(k): v for k, v in market_info.items()}
     return market_info
+
+
+def get_asset_id_to_share_decimals() -> Dict[int, int]:
+    """
+    Get mapping asset ids to the number of decimal places.
+    """
+    market_info = load_market_data_info()
+    info_type = "amount_precision"
+    asset_ids_to_decimals = subset_market_info(market_info, info_type)
+    return asset_ids_to_decimals
 
 
 def _assert_exchange_methods_present(

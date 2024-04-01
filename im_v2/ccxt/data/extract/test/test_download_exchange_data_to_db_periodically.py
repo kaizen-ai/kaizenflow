@@ -479,9 +479,12 @@ class TestDownloadRealtimeForOneExchangePeriodically2(hunitest.TestCase):
         ):
             with umock.patch.object(
                 imvcdededtdp.imvcdeexut.imvcdexex,
-                "CcxtExtractor",
-                return_value=[],
-            ):
+                "CcxtExtractor"
+            ) as mock_ccxt_extractor:
+                # Mock the `close()` method of CcxtExtractor
+                mock_ccxt_extractor_instance = mock_ccxt_extractor.return_value
+                mock_ccxt_extractor_instance.close = umock.MagicMock()
+                # Run.
                 imvcdededtdp._main(mock_argument_parser)
                 actual_buffer_size = imvcdededtdp.imvcdeexut.WEBSOCKET_CONFIG[
                     "ohlcv"

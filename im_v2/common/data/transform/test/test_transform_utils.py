@@ -437,11 +437,12 @@ class TestTransformRawWebsocketData(hunitest.TestCase):
         test_exchange = "binance"
         test_timestamp = pd.Timestamp("2022-10-05 15:06:00.019422+00:00")
 
-        def get_nested_test_data(timestamp: int) -> dict:
+        def get_nested_test_data(timestamp: int, id: int) -> dict:
             """
             Return a nested dict with test data.
 
             :param timestamp: timestamp of the test data
+            :param int: trade id of the test data
             :return: nested dict with test data
             """
             return {
@@ -449,7 +450,7 @@ class TestTransformRawWebsocketData(hunitest.TestCase):
                 "timestamp": timestamp,
                 "datetime": "2023-03-10T09:27:55.951Z",
                 "symbol": "ETH/USDT",
-                "id": "1",
+                "id": id,
                 "order": None,
                 "type": None,
                 "side": "buy",
@@ -477,14 +478,14 @@ class TestTransformRawWebsocketData(hunitest.TestCase):
         test_data = [
             get_test_record(
                 [
-                    get_nested_test_data(1678440475951),
-                    get_nested_test_data(1678440475952),
+                    get_nested_test_data(1678440475951, 1),
+                    get_nested_test_data(1678440475952, 2),
                 ]
             ),
             get_test_record(
                 [
-                    get_nested_test_data(1678440475953),
-                    get_nested_test_data(1678440475954),
+                    get_nested_test_data(1678440475953, 3),
+                    get_nested_test_data(1678440475954, 4),
                 ]
             ),
         ]
@@ -493,13 +494,15 @@ class TestTransformRawWebsocketData(hunitest.TestCase):
             test_data, "trades", test_exchange
         ).reset_index(drop=True)
         # Verify results.
-        expected = """timestamp side   price  amount currency_pair           end_download_timestamp exchange_id
-            0  1678440475951  buy  1405.2   0.242      ETH/USDT 2022-10-05 15:06:00.019422+00:00     binance
-            1  1678440475952  buy  1405.2   0.242      ETH/USDT 2022-10-05 15:06:00.019422+00:00     binance
-            2  1678440475953  buy  1405.2   0.242      ETH/USDT 2022-10-05 15:06:00.019422+00:00     binance
-            3  1678440475954  buy  1405.2   0.242      ETH/USDT 2022-10-05 15:06:00.019422+00:00     binance"""
+        expected = r"""
+            id      timestamp side   price  amount currency_pair           end_download_timestamp exchange_id
+        0   1  1678440475951  buy  1405.2   0.242      ETH/USDT 2022-10-05 15:06:00.019422+00:00     binance
+        1   2  1678440475952  buy  1405.2   0.242      ETH/USDT 2022-10-05 15:06:00.019422+00:00     binance
+        2   3  1678440475953  buy  1405.2   0.242      ETH/USDT 2022-10-05 15:06:00.019422+00:00     binance
+        3   4  1678440475954  buy  1405.2   0.242      ETH/USDT 2022-10-05 15:06:00.019422+00:00     binance
+        """
         actual = hpandas.df_to_str(actual_df)
-        self.assert_equal(expected, actual, fuzzy_match=True)
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
 
 # #############################################################################

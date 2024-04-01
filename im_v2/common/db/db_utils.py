@@ -35,7 +35,7 @@ _LOG = logging.getLogger(__name__)
 # data type.
 BASE_UNIQUE_COLUMNS = ["timestamp", "exchange_id", "currency_pair"]
 BID_ASK_UNIQUE_COLUMNS = []
-TRADES_UNIQUE_COLUMNS = []
+TRADES_UNIQUE_COLUMNS = ["id"]
 NUMBER_OF_RETRIES_TO_SAVE = 3
 OHLCV_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + [
     "open",

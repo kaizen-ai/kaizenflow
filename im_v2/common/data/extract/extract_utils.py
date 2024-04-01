@@ -19,6 +19,7 @@ from typing import Any, Dict, Iterator, List, Optional, Union
 import pandas as pd
 
 import data_schema.dataset_schema_utils as dsdascut
+import helpers.hasyncio as hasynci
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
@@ -56,7 +57,7 @@ WEBSOCKET_CONFIG = {
         "resubscription_threshold_in_iter": 3,
     },
     "trades": {
-        "max_buffer_size": 250,
+        "max_buffer_size": 0,
         "sleep_between_iter_in_ms": 200,
         "resubscription_threshold_in_iter": 3,
     },
@@ -167,7 +168,7 @@ def _add_common_download_args(
         nargs=2,
         help="Pass two int argument x,y. Split universe into N chunks each contains X symbols. \
             groups of 10 pairs, 'y' denotes which part should be downloaded \
-            (e.g. 10, 1 - download first 10 symbols)"
+            (e.g. 10, 1 - download first 10 symbols)",
     )
     return parser
 
@@ -430,11 +431,10 @@ def _is_fresh_data_point(
     :param timestamps_dict: dict to store the latest_downloaded
         timestamp for the currency_pair
     """
-    # TODO(Sonaal): Make it compatible for data_type=="trades".
-    if data_type == "trades":
-        return True, timestamps_dict, data_point
     if data_point is None:
         return False, timestamps_dict, data_point
+    if data_type == "trades":
+        return True, timestamps_dict, data_point
     if data_type == "bid_ask":
         if data_point["timestamp"] is None or (
             len(data_point["bids"]) == 0 and len(data_point["asks"]) == 0
@@ -510,14 +510,21 @@ async def _subscribe_to_websocket_data(
     # refer. ccxt/ccxt/issues/20911.
     # Tokyo region seems to be working fine with multiple symbols but Stockholm was
     # facing ping-pong inactive errors ref. cryptokaizen/cmamp/issues/7322.
-    if vendor == "ccxt" and args.get("watch_multiple_symbols", False):
+    if (
+        vendor == "ccxt"
+        and args.get("watch_multiple_symbols", False)
+        and data_type == "bid_ask"
+    ):
         # Check if the exchange supports multiple symbols subscription.
         use_concurrent = exchange._async_exchange.describe()["has"].get(
             "watchOrderBookForSymbols", False
         )
-    if data_type == "bid_ask" and use_concurrent:
-        await exchange._subscribe_to_websocket_bid_ask_multiple_symbols(
-            exchange, currency_pairs, bid_ask_depth
+    # Binance extractor supports multiple subscription for all the data types.
+    if vendor == "binance":
+        use_concurrent = True
+    if use_concurrent:
+        await exchange.subscribe_to_websocket_data_multiple_symbols(
+            data_type, exchange, currency_pairs, bid_ask_depth=bid_ask_depth
         )
     else:
         subscribe_tasks = []
@@ -586,7 +593,7 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
     # Exchange.sleep() method is needed instead of built in python time.sleep()
     #  to ensure websocket ping-pong messages are exchanged in a timely fashion.
     #  The method expects value in miliseconds.
-    await exchange._async_exchange.sleep(start_delay * 1000)
+    await exchange.sleep(start_delay * 1000)
     # Start data collection.
     timestamps_dict = {}
     # If bid/ask data is resampled alongside side raw data collection, the resampling is done exactly after
@@ -595,7 +602,7 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
         second=0, microsecond=0
     ) + pd.Timedelta(minutes=1)
     while pd.Timestamp.now(tz) < stop_time:
-        if data_type == "bid_ask":
+        if data_type == "bid_ask" and args.get("vendor") == "ccxt":
             try:
                 await _subscribe_to_websocket_data(
                     args,
@@ -610,7 +617,7 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
                 # leading to an error like "handleOrderBook received an out-of-order nonce".
                 # Sleeping for 1 second to allow the system to catch up and get back in sync.
                 # ref. https://github.com/ccxt/ccxt/issues/17827#issuecomment-1537532598
-                await exchange._async_exchange.sleep(1000)
+                await exchange.sleep(1000)
         iter_start_time = pd.Timestamp.now(tz)
         for curr_pair in currency_pairs:
             data_point = exchange.download_websocket_data(
@@ -646,6 +653,10 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
                 exchange_id,
                 max_num_levels=args.get("bid_ask_depth"),
             )
+            # Store the names of currency pairs that were successfully downloaded
+            # to log missing symbols every iteration.
+            downloaded_currency_pairs = df['currency_pair'].unique().tolist()
+            hdbg.dassert_set_eq(currency_pairs, downloaded_currency_pairs, only_warning=True)
             # TODO(Juraj): experimental feature, the problem is speed for now.
             # data_buffer_to_resample.append(df)
             imvcddbut.save_data_to_db(
@@ -680,9 +691,8 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
             iter_length,
             actual_sleep_time,
         )
-        await exchange._async_exchange.sleep(actual_sleep_time)
+        await exchange.sleep(actual_sleep_time)
     _LOG.info("Websocket download finished at %s", pd.Timestamp.now(tz))
-    await exchange._async_exchange.close()
 
 
 def _download_rest_realtime_for_one_exchange_periodically(
@@ -1007,10 +1017,12 @@ def process_downloaded_historical_data(
             hdbg.dfatal(f"Unsupported `{args['data_format']}` format!")
 
 
-def _split_universe(universe: List[str], group_size: int, universe_part: int) -> List[str]:
+def _split_universe(
+    universe: List[str], group_size: int, universe_part: int
+) -> List[str]:
     """
-    Split the universe into groups of group_size symbols and return only universe_part-
-    th group.
+    Split the universe into groups of group_size symbols and return only
+    universe_part- th group.
 
     If the split is not even, then the last group is the smaller than the rest.
 
@@ -1024,7 +1036,7 @@ def _split_universe(universe: List[str], group_size: int, universe_part: int) ->
                 "NEAR_USDT"
     ]
 
-    group_size = 2, universe_part = 1 returns  
+    group_size = 2, universe_part = 1 returns
     ["ALICE_USDT", "GALA_USDT"]
     group_size = 3, universe_part = 2  returns
     ["HBAR_USDT", "INJ_USDT", "NEAR_USDT"]
@@ -1043,7 +1055,7 @@ def _split_universe(universe: List[str], group_size: int, universe_part: int) ->
             f"Universe does not have {universe_part} parts of {group_size} pairs. \
             It has {len(universe)} symbols."
         )
-    upper_bound = min(len(universe), (universe_part * 10))
+    upper_bound = min(len(universe), (universe_part * group_size))
     universe_subset = universe[lower_bound:upper_bound]
     _LOG.warning(
         f"Using only part {universe_part} of the universe:"
@@ -1202,12 +1214,14 @@ def resample_rt_bid_ask_data_periodically(
     hdbg.dassert_lt(start_ts, end_ts, "end_ts is less than start_time")
     db_connection = imvcddbut.DbConnectionManager.get_connection(db_stage)
     tz = start_ts.tz
-    start_delay = (start_ts - pd.Timestamp.now(tz)).total_seconds()
-    _LOG.info("Syncing with the start time, waiting for %s seconds", start_delay)
-    time.sleep(start_delay)
+    _LOG.info("Syncing with the start time.")
+    hasynci.sync_wait_until(
+        start_ts, lambda: pd.Timestamp.now(tz), log_verbosity=logging.INFO
+    )
     # Start resampling.
+    next_iter_start_time = start_ts
     while pd.Timestamp.now(tz) < end_ts:
-        iter_start_time = pd.Timestamp.now(tz)
+        next_iter_start_time += pd.Timedelta(seconds=60)
         with htimer.TimedScope(logging.INFO, "# Load last minute of raw data"):
             # TODO(Juraj): the function uses `bid_ask_levels` internally,
             # expose `bid_ask_levels` as a cmdline parameter.
@@ -1223,26 +1237,21 @@ def resample_rt_bid_ask_data_periodically(
                 df_resampled = imvcdttrut.transform_and_resample_rt_bid_ask_data(
                     df_raw
                 )
-            df_resampled["end_download_timestamp"] = pd.Timestamp.now(tz)
-            imvcddbut.save_data_to_db(
-                df_resampled,
-                "bid_ask",
-                db_connection,
-                dst_table,
-                str(start_ts.tz),
-                add_knowledge_timestamp=False,
-            )
-        # Determine actual sleep time needed based on the difference
-        # between value set in config and actual time it took to complete
-        # an iteration, this provides an "time align" mechanism.
-        iter_length = (pd.Timestamp.now(tz) - iter_start_time).total_seconds()
-        actual_sleep_time = max(0, 60 - iter_length)
-        _LOG.info(
-            "Resampling iteration took %f s, waiting between iterations for %f s",
-            iter_length,
-            actual_sleep_time,
+            with htimer.TimedScope(logging.INFO, "# Save resampled data to DB"):
+                df_resampled["end_download_timestamp"] = pd.Timestamp.now(tz)
+                imvcddbut.save_data_to_db(
+                    df_resampled,
+                    "bid_ask",
+                    db_connection,
+                    dst_table,
+                    str(start_ts.tz),
+                    add_knowledge_timestamp=False,
+                )
+        hasynci.sync_wait_until(
+            next_iter_start_time,
+            lambda: pd.Timestamp.now(tz),
+            log_verbosity=logging.INFO,
         )
-        time.sleep(actual_sleep_time)
     _LOG.info("Resampling finished at %s", pd.Timestamp.now(tz))
 
 

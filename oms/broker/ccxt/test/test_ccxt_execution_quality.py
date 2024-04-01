@@ -48,7 +48,6 @@ def _load_oms_child_order_df(self_: Any) -> pd.DataFrame:
             "exchange_timestamp",
             "knowledge_timestamp",
             "end_download_timestamp",
-            "end_order_timestamp",
             "stats__submit_twap_child_order::get_open_positions.done",
             "stats__submit_twap_child_order::bid_ask_market_data.start",
             "stats__submit_twap_child_order::bid_ask_market_data.done",
@@ -56,6 +55,7 @@ def _load_oms_child_order_df(self_: Any) -> pd.DataFrame:
             "stats__submit_twap_child_order::child_order.limit_price_calculated",
             "stats__submit_single_order_to_ccxt::start.timestamp",
             "stats__submit_single_order_to_ccxt::all_attempts_end.timestamp",
+            "stats__submit_twap_child_order::child_order.submission_started",
             "stats__submit_twap_child_order::child_order.submitted",
         ],
     )
@@ -489,7 +489,7 @@ class Test_get_time_delay_between_events(hunitest.TestCase):
         # Check.
         exp = r"""
         * Failed assertion *
-        '5'
+        '10'
         ==
         '0'
         """
