@@ -1151,8 +1151,17 @@ class TestImClientMarketData3(mdata.MarketData_get_data_TestCase):
             use_only_test_class=use_only_test_class
         )
         root_dir = os.path.join(s3_input_dir, "historical.manual.pq")
+        dataset = "ohlcv"
+        contract_type = "spot"
+        data_snapshot = "20220705"
+        download_universe_version = "v7_3"
         im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(
-            root_dir, resample_1min
+            root_dir,
+            resample_1min,
+            dataset,
+            contract_type,
+            data_snapshot,
+            download_universe_version,
         )
         return im_client
 

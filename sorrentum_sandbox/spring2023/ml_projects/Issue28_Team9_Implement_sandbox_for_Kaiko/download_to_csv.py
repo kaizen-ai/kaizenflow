@@ -108,7 +108,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     end_timestamp = pd.Timestamp(args.end_timestamp)
 
     downloader = sisebido.KaikoDownloader()
-r
     raw_data = downloader.download(start_timestamp, end_timestamp)
     # Save data as CSV.
     saver = CsvDataFrameSaver(args.target_dir)
