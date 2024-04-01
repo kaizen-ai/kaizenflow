@@ -126,7 +126,7 @@ class Test_annotate_forecasts_by_tile(hunitest.TestCase):
         amp_dir = hgit.get_amp_abs_path()
         dir_name = os.path.join(
             amp_dir,
-            "dataflow/model/test/outcomes/Test_run_master_research_backtest_analyzer/input/tiled_results",
+            "dataflow/model/test/outcomes/Test_annotate_forecasts_by_tile/input/tiled_results",
         )
         config = {
             "dir_name": dir_name,

@@ -111,8 +111,12 @@ def load_config_from_pickle(config_path: str) -> cconconf.Config:
     """
     hdbg.dassert_path_exists(config_path)
     _LOG.debug("Reading config from %s", config_path)
-    config_pkl = hpickle.from_pickle(config_path)
-    config = cconconf.Config.from_dict(config_pkl)
+    config = hpickle.from_pickle(config_path)
+    # TODO(Dan): `config` should be a `cconconf.Config` but previously it
+    #  used to be dict, so keeping both for back-compatibility, see CmTask6627.
+    if isinstance(config, dict):
+        _LOG.warning("Found Config v1.0 flow: converting")
+        config = cconconf.Config.from_dict(config)
     return config
 
 
@@ -147,7 +151,11 @@ def apply_config(
         config.update_mode = "overwrite"
         initial_clobber_mode = config.clobber_mode
         if clobber_mode != initial_clobber_mode:
-            _LOG.debug("changing config.clobber_mode from %s to %s", initial_clobber_mode, clobber_mode)
+            _LOG.debug(
+                "changing config.clobber_mode from %s to %s",
+                initial_clobber_mode,
+                clobber_mode,
+            )
             config.clobber_mode = clobber_mode
         for config_val in set_config_values:
             _LOG.debug("config_val=%s", config_val)
@@ -196,7 +204,11 @@ def apply_config(
             # TODO(Grisha): use `config.update()` instead of `config[key] = value`.
             config[key] = new_value
         if initial_clobber_mode != clobber_mode:
-            _LOG.debug("changing config.clobber_mode from %s to %s", clobber_mode, initial_clobber_mode)
+            _LOG.debug(
+                "changing config.clobber_mode from %s to %s",
+                clobber_mode,
+                initial_clobber_mode,
+            )
             config.clobber_mode = initial_clobber_mode
         # Set back the initial config update mode.
         config.update_mode = initial_config_update_mode

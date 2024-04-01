@@ -30,7 +30,7 @@
 import datetime
 import logging
 import os
-from typing import Dict, List
+from typing import List
 
 import pandas as pd
 
@@ -47,6 +47,7 @@ import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 import market_data as mdata
+import oms.broker.ccxt.ccxt_utils as obccccut
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -56,44 +57,6 @@ _LOG = logging.getLogger(__name__)
 _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
-
-
-# %% [markdown]
-# # Functions
-
-
-# %%
-# TODO(Dan): Move to a lib.
-def build_research_backtest_analyzer_config_dict(
-    default_config: cconfig.Config,
-) -> Dict[str, cconfig.Config]:
-    """
-    Build a dict of configs to run a backtest analysis.
-    """
-    if "sweep_param" in default_config:
-        hdbg.dassert_isinstance(default_config["sweep_param"], cconfig.Config)
-        # Set param values to sweep and corressponding config keys.
-        sweep_param_keys = default_config["sweep_param", "keys"]
-        hdbg.dassert_isinstance(sweep_param_keys, tuple)
-        sweep_param_values = default_config["sweep_param", "values"]
-        hdbg.dassert_isinstance(sweep_param_values, list)
-        # Build config dict.
-        config_dict = {}
-        for val in sweep_param_values:
-            # Update new config value.
-            config = default_config.copy()
-            config.update_mode = "overwrite"
-            config[sweep_param_keys] = val
-            config.update_mode = "assert_on_overwrite"
-            # Set updated config key for config dict.
-            config_dict_key = ":".join(sweep_param_keys)
-            config_dict_key = " = ".join([config_dict_key, str(val)])
-            # Add new config to the config dict.
-            config_dict[config_dict_key] = config
-    else:
-        # Put single input config to a dict.
-        config_dict = {"default_config": default_config}
-    return config_dict
 
 
 # %% [markdown]
@@ -166,6 +129,19 @@ else:
             ],
         },
     }
+    # Add asset_id_to_share_decimals based on the `quantization` parameter:
+    if not default_config_dict["annotate_forecasts_kwargs"]["quantization"]:
+        asset_id_to_share_decimals = obccccut.get_asset_id_to_share_decimals(
+            "amount_precision"
+        )
+        default_config_dict["annotate_forecasts_kwargs"][
+            "asset_id_to_share_decimals"
+        ] = asset_id_to_share_decimals
+    else:
+        default_config_dict["annotate_forecasts_kwargs"][
+            "asset_id_to_share_decimals"
+        ] = None
+    # Build config from dict.
     default_config = cconfig.Config().from_dict(default_config_dict)
 print(default_config)
 
@@ -230,6 +206,34 @@ tile_df.columns.levels[0].to_list()
 
 # %%
 tile_df.head(3)
+
+# %% [markdown]
+# ### Check NaNs in the price column
+
+# %%
+# Since the Optimizer cannot work with NaN values in the price column,
+# check the presence of NaN values and return the first and last date
+# where NaNs are encountered.
+price_col = default_config["column_names"]["price_col"]
+price_df = tile_df[price_col]
+try:
+    hdbg.dassert_eq(price_df.isna().sum().sum(), 0)
+except AssertionError as e:
+    min_nan_idx = price_df[price_df.isnull().any(axis=1)].index.min()
+    max_nan_idx = price_df[price_df.isnull().any(axis=1)].index.max()
+    _LOG.warning("NaN values found between %s and %s", min_nan_idx, max_nan_idx)
+    raise e
+
+# %% [markdown]
+# ### Check NaNs in the feature column
+
+# %% run_control={"marked": true}
+# If NaNs in the feature column are found, replace them with 0.
+feature_col = default_config["column_names"]["prediction_col"]
+tile_df[feature_col].isna().sum()
+
+# %%
+tile_df[feature_col] = tile_df[feature_col].fillna(0)
 
 # %% [markdown]
 # ## Add weighted resampling price column
@@ -338,7 +342,7 @@ tile_df.head()
 # # Compute portfolio bar metrics
 
 # %%
-config_dict = build_research_backtest_analyzer_config_dict(default_config)
+config_dict = dtfmod.build_research_backtest_analyzer_config_sweep(default_config)
 print(config_dict.keys())
 
 # %%

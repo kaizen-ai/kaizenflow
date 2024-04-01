@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 import pandas as pd
 
 import core.signal_processing.fir_utils as csprfiut
@@ -150,3 +151,21 @@ class Test_extract_fir_filter_weights(hunitest.TestCase):
 7 -0.091506          -0.077350        -1.000000
 """
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+class Test_fit_ema_to_fir_filter(hunitest.TestCase):
+    def test1(self) -> None:
+        lag_weights = pd.Series([1, 0.5, 0.25, 0.125])
+        actual = csprfiut.fit_ema_to_fir_filter(lag_weights)
+        actual_0 = hpandas.df_to_str(actual[0], num_rows=None)
+        actual_1 = actual[1]
+        expected_0 = r"""
+   com=1.022
+0   0.978454
+1   0.367793
+2   0.138250
+3   0.051967
+"""
+        self.assert_equal(actual_0, expected_0, fuzzy_match=True)
+        expected_1 = 1.0220205693130382
+        np.testing.assert_almost_equal(actual_1, expected_1)
