@@ -12,10 +12,6 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hio as hio
-import common.download as sinsadow
-
-import download_kaiko as sisebido
-import common.save as sinsasav
 
 _LOG = logging.getLogger(__name__)
 

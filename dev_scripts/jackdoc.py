@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-jackdoc: Locate input from Markdown files in the docs directory 
+jackdoc: Locate input from Markdown files in the docs directory
     and generate corresponding file links.
 Example usage:
 jackdoc "search_term" [--skip-toc] [--line-only] [--subdir <subdirectory>]
