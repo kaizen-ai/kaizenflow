@@ -878,7 +878,8 @@ class TestReplayedCcxtExchange3(hunitest.TestCase):
             log_data["oms_parent_orders"], 2, update_time=False
         )
         secret_id = 3
-        log_dir = "mock/log"
+        scratch_dir = self.get_scratch_space()
+        log_dir = os.path.join(scratch_dir, "mock", "log")
         universe = "v7.4"
         creation_timestamp = parent_orders[0].creation_timestamp
         with hasynci.solipsism_context() as event_loop:
@@ -926,7 +927,7 @@ class TestReplayedCcxtExchange3(hunitest.TestCase):
                 "limit_price_computer_type": "LimitPriceComputerUsingVolatility",
                 "limit_price_computer_kwargs": {
                     "volatility_multiple": [0.75, 0.7, 0.6, 0.8, 1.0]
-                }
+                },
             }
             broker = obccbrin.get_CcxtBroker(
                 secret_id,

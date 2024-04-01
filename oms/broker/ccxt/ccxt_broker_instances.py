@@ -137,7 +137,7 @@ def get_CcxtBroker_prod_instance1(
     )
     # Build bid_ask_raw_data_reader.
     bid_ask_raw_data_reader = imvcdcimrdc.get_bid_ask_realtime_raw_data_reader(
-        stage
+        stage, "CCXT", universe_version
     )
     max_order_submit_retries = 1
     # Build LimitPriceComputer.

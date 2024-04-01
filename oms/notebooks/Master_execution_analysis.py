@@ -411,7 +411,9 @@ no_response_orders["error_msg"] = no_response_orders["extra_params"].apply(
 # Check the error messages for child orders that did not come through.
 # Display error messages grouped by symbol.
 # Get the universe to map asset_id's.
-universe = ivcu.get_vendor_universe("CCXT", "trade", as_full_symbol=True)
+universe = ivcu.get_vendor_universe(
+    "CCXT", "trade", version=universe_version, as_full_symbol=True
+)
 asset_id_to_symbol_mapping = ivcu.build_numerical_to_string_id_mapping(universe)
 no_response_orders["full_symbol"] = no_response_orders["asset_id"].map(
     asset_id_to_symbol_mapping
@@ -894,6 +896,19 @@ execution_quality_df["slippage_in_bps"].mean() / average_spread_bps
 
 # %% [markdown]
 # ## Compute vol-adjusted close price
+
+# %%
+zero_vol = child_order_df_by_parent[child_order_df_by_parent["total_vol"] == 0]
+if not zero_vol.empty:
+    _LOG.warning(
+        "%d `total_vol` values will be replaces with NaN",
+        len(zero_vol),
+    )
+    display(zero_vol)
+    # Replace zeros with NaN to avoid division by zero.
+    child_order_df_by_parent["total_vol"] = child_order_df_by_parent[
+        "total_vol"
+    ].replace(0, np.nan)
 
 # %%
 # Get `close` price as defined in `get_adjusted_close_price` docstring.

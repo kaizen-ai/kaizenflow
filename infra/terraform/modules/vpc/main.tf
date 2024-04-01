@@ -45,7 +45,10 @@ resource "aws_route_table_association" "EC2SubnetRouteTableAssociation" {
 }
 
 resource "aws_eip" "EC2EIP" {
-  vpc = true
+  vpc  = true
+  tags = {
+    Name = var.eip_name
+  }
 }
 
 resource "aws_nat_gateway" "EC2NatGateway" {

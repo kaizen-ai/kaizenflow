@@ -31,6 +31,7 @@
 # because most of the code is a copy-paste from the
 # `Master_system_reconciliation_fast.py`.
 import logging
+import os
 
 import pandas as pd
 
@@ -63,8 +64,13 @@ hprint.config_notebook()
 system_log_dir = "/shared_data/Samarth/CmTask7253_Run_sim_with_the_optimizer/C12a/simulation/20240228_190000.20240305_19000/system_log_dir/"
 system_log_path_dict = {"sim": system_log_dir}
 configs = reconcil.load_config_dict_from_pickle(system_log_path_dict)
-# This is a hack to display a config that was made from unpickled dict.
-print(configs["sim"].to_string("only_values").replace("\\n", "\n"))
+# TODO(Dan): Deprecate after switch to updated config logs CmTask6627.
+hdbg.dassert_in("dag_runner_config", configs["sim"])
+if isinstance(configs["sim"]["dag_runner_config"], tuple):
+    # This is a hack to display a config that was made from unpickled dict.
+    print(configs["sim"].to_string("only_values").replace("\\n", "\n"))
+else:
+    print(configs["sim"])
 
 # %% [markdown]
 # # Build config
@@ -74,9 +80,21 @@ dag_data_dir = reconcil.get_data_type_system_log_path(system_log_dir, "dag_data"
 portfolio_dir = reconcil.get_data_type_system_log_path(
     system_log_dir, "portfolio"
 )
-# Extract values from the config.
-bar_duration = reconcil.extract_bar_duration_from_pkl_config(system_log_dir)
-
+# Load pickled SystemConfig.
+config_file_name = "system_config.output.values_as_strings.pkl"
+system_config_path = os.path.join(system_log_dir, config_file_name)
+system_config = cconfig.load_config_from_pickle(system_config_path)
+# TODO(Dan): Deprecate after switch to updated config logs CmTask6627.
+hdbg.dassert_in("dag_runner_config", system_config)
+if isinstance(system_config["dag_runner_config"], tuple):
+    bar_duration = reconcil.extract_bar_duration_from_pkl_config(system_log_dir)
+else:
+    hdbg.dassert_isinstance(system_config, cconfig.Config)
+    bar_duration_in_secs = system_config["dag_runner_config"][
+        "bar_duration_in_secs"
+    ]
+    bar_duration_in_mins = int(bar_duration_in_secs / 60)
+    bar_duration = f"{bar_duration_in_mins}T"
 # %%
 dag_builder_ctor_as_str = (
     "dataflow_lemonade.pipelines.C12.C12a_pipeline.C12a_DagBuilder"

@@ -57,7 +57,8 @@ if config:
     # in the system reconciliation flow.
     _LOG.info("Using config from env vars")
 else:
-    system_log_dir = "/shared_data/ecs/test/system_reconciliation/C11a/prod/20240312_220000.20240312_225500/system_log_dir.manual/process_forecasts"
+    system_log_dir = "/shared_data/toma/CmTask7440_1"
+
     config_dict = {"system_log_dir": system_log_dir}
     config = cconfig.Config.from_dict(config_dict)
 print(config)
@@ -79,8 +80,10 @@ ccxt_fills = data["ccxt_fills"]
 # Print the Broker config.
 if "broker_config" in data:
     print(hprint.to_pretty_str(data["broker_config"]))
+    universe_version = data["broker_config"]["universe_version"]
 else:
     _LOG.warning("broker_config file not present in %s", log_dir)
+    universe_version = None
 
 # %%
 # Print the used Config, if any.
@@ -141,7 +144,9 @@ not_submitted_oms_child_order_df["error_msg"] = not_submitted_oms_child_order_df
 # %%
 # Display error messages grouped by symbol.
 # Get the universe to map asset_id's.
-universe = ivcu.get_vendor_universe("CCXT", "trade", as_full_symbol=True)
+universe = ivcu.get_vendor_universe(
+    "CCXT", "trade", version=universe_version, as_full_symbol=True
+)
 asset_id_to_symbol_mapping = ivcu.build_numerical_to_string_id_mapping(universe)
 not_submitted_oms_child_order_df[
     "full_symbol"
@@ -262,6 +267,8 @@ trade_amount_by_order[trade_amount_by_order["diff"] > 0]
 # ### Verify that CCXT IDs are equal in both child orders and responses
 
 # %%
+
+# %%
 # Verify that we are not logging any CCXT orders that are not a part
 # of the experiment, i.e. have no OMS order associated with it.
 # We expect all retrieved responses to be a subset of CCXT IDs
@@ -289,15 +296,6 @@ ccxt_trades_by_order.head(3)
 oms_child_order_df_unpacked = ccxt_log_reader.load_oms_child_order(
     unpack_extra_params=True, convert_to_dataframe=True
 )
-
-# %%
-# Add timestamp of when the order was closed.
-order_lifespan_end = ccxt_fills.set_index("order")[
-    "order_update_datetime"
-].to_dict()
-oms_child_order_df_unpacked["end_order_timestamp"] = oms_child_order_df_unpacked[
-    "ccxt_id"
-].apply(lambda x: order_lifespan_end.get(x))
 
 # %%
 # Get the timestamps of events for each child order
@@ -372,7 +370,5 @@ time_delays = obccexqu.get_time_delay_between_events(non_wave_zero_events)
 time_delays.boxplot(rot=45, ylabel="Time delay").set_title(
     "Time delay between events for waves >0"
 )
-
-# %%
 
 # %%

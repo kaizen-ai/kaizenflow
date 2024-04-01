@@ -228,7 +228,10 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
             )
             child_orders.extend(child_orders_iter)
             await self._cancel_orders_and_sync_with_next_wave_start(
-                parent_orders_ccxt_symbols, execution_freq, wave_start_time
+                parent_orders_ccxt_symbols,
+                execution_freq,
+                wave_start_time,
+                is_last_wave=wave_id == num_waves - 1,
             )
             # Log time of alignment with the next wave.
             next_wave_sync_timestamp = self.market_data.get_wall_clock_time()
@@ -307,6 +310,8 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
         parent_orders_ccxt_symbols: List[str],
         execution_freq: pd.Timedelta,
         wave_start_time: pd.Timestamp,
+        *,
+        is_last_wave=False,
     ) -> None:
         """
         Wait until the end of current wave, cancel orders and sync to next wave
@@ -320,6 +325,9 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
         :param parent_orders_ccxt_symbols: symbols to cancel orders for
         :param execution_freq: wave execution frequency as pd.Timedelta
         :param wave_start_time: start time of the wave to cancel orders for
+        :param is_last_wave: True if the current wave is the last one for the
+         current parent order, waiting times are handled differently
+         in the last wave.
         """
         # This approach is safer than wave_start_time.ceil(execution_freq).
         # In case ceil was applied on a precisely rounded start timestamp
@@ -332,7 +340,13 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
         # cancellation before the bar ends. See CmTask5129.
         # Note that the length of the delay increases with the distance
         # of the trading server from the exchange's servers.
-        wait_until_modified = wait_until - pd.Timedelta(seconds=0.2)
+        # From the system POV it's important that the bar ends before the
+        # next one starts, AKA doesn't leak to the next bar. To facilitate
+        # that, we cancer earlier for in the last wave.
+        early_cancel_delay = 2 if is_last_wave else 0.2
+        wait_until_modified = wait_until - pd.Timedelta(
+            seconds=early_cancel_delay
+        )
         await hasynci.async_wait_until(
             wait_until_modified,
             self._get_wall_clock_time,
@@ -343,15 +357,17 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
             self.market_data.get_wall_clock_time(),
         )
         # Wait again in case the order cancellation was faster than expected
-        # and we are still in the same wave time-wise.
-        await hasynci.async_wait_until(
-            wait_until,
-            self._get_wall_clock_time,
-        )
-        _LOG.info(
-            "After syncing with next child wave=%s",
-            self.market_data.get_wall_clock_time(),
-        )
+        # and we are still in the same wave time-wise, but only if it is not
+        # last wave.
+        if not is_last_wave:
+            await hasynci.async_wait_until(
+                wait_until,
+                self._get_wall_clock_time,
+            )
+            _LOG.info(
+                "After syncing with next child wave=%s",
+                self.market_data.get_wall_clock_time(),
+            )
 
     async def _log_last_wave_results(
         self, child_orders: List[oordorde.Order]
@@ -489,6 +505,11 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
             self.market_data.get_wall_clock_time(),
         )
         _LOG.info(hprint.to_str("price_dict"))
+        self._update_stats_for_order(
+            child_order,
+            f"child_order.submission_started",
+            self.market_data.get_wall_clock_time(),
+        )
         (
             child_order,
             ccxt_child_order_response,

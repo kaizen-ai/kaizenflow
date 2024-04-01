@@ -422,6 +422,58 @@ class Test_Extract_Bar_Duration_from_pkl_Config(hunitest.TestCase):
 
 
 # #############################################################################
+# Check `extract_price_column_name_from_pkl_config()`.
+# #############################################################################
+
+
+class Test_extract_price_column_name_from_pkl_config(hunitest.TestCase):
+    """
+    Check that `extract_price_column_name_from_pkl_config()` works correctly.
+    """
+
+    def save_config_to_file(self, config_dict: Dict[str, Any]) -> None:
+        """
+        Save text and pickled config file in `dst_dir`.
+        """
+        # Dir to store config files.
+        dst_dir = self.get_scratch_space()
+        config = cconfig.Config.from_dict(config_dict)
+        tag = "system_config.output"
+        # Save config to `txt` and `pkl` file.
+        config.save_to_file(dst_dir, tag)
+
+    def test1(self) -> None:
+        """
+        Test the function when the `mark_to_market_col` appears at the
+        beginning of the `portfolio_config` config.
+        """
+        config_dict = {
+            "portfolio_config": {
+                "mark_to_market_col": "close",
+            }
+        }
+        self.save_config_to_file(config_dict)
+        dst_dir = self.get_scratch_space()
+        actual = rsiprrec.extract_price_column_name_from_pkl_config(dst_dir)
+        expected = "close"
+        self.assert_equal(actual, expected)
+
+    def test2(self) -> None:
+        """
+        Test that the function raises exception when the `mark_to_market_col`
+        is not present in `portfolio_config` config.
+        """
+        config_dict = {"portfolio_config": {}}
+        self.save_config_to_file(config_dict)
+        dst_dir = self.get_scratch_space()
+        with self.assertRaises(AssertionError) as cm:
+            rsiprrec.extract_price_column_name_from_pkl_config(dst_dir)
+        # Check output.
+        actual = str(cm.exception)
+        self.check_string(actual, purify_text=True)
+
+
+# #############################################################################
 # Check `extract_universe_version_from_pkl_config()`.
 # #############################################################################
 
@@ -506,6 +558,88 @@ class Test_extract_universe_version_from_pkl_config(hunitest.TestCase):
         # Check output.
         actual = str(cm.exception)
         self.check_string(actual, purify_text=True)
+
+
+class Test_extract_execution_freq_from_pkl_config(hunitest.TestCase):
+    """
+    Check that `extract_execution_freq_from_pkl_config()` works correctly.
+    """
+
+    def test1(self) -> None:
+        """
+        Test the function when the `execution_frequency` appears at the
+        beginning of the `process_forecasts_node_dict` config.
+        """
+        config_dict = {
+            "process_forecasts_node_dict": {
+                "execution_frequency": "1T",
+                "prediction_col": "feature",
+                "volatility_col": "garman_klass_vol",
+            }
+        }
+        self._save_config_to_file(config_dict)
+        expected = "1T"
+        self._check_execution_freq(expected)
+
+    def test2(self) -> None:
+        """
+        Test the function when the `execution_frequency` appears at the end of
+        the `process_forecasts_node_dict` config.
+        """
+        config_dict = {
+            "process_forecasts_node_dict": {
+                "prediction_col": "feature",
+                "volatility_col": "garman_klass_vol",
+                "execution_frequency": "1T",
+            }
+        }
+        self._save_config_to_file(config_dict)
+        expected = "1T"
+        self._check_execution_freq(expected)
+
+    def test3(self) -> None:
+        """
+        Test that the function raises exception when the `execution_frequency`
+        is not present in `process_forecasts_node_dict` config.
+        """
+        config_dict = {
+            "process_forecasts_node_dict": {
+                "prediction_col": "feature",
+                "volatility_col": "garman_klass_vol",
+            }
+        }
+        # Dir to store config files.
+        dst_dir = self.get_scratch_space()
+        self._save_config_to_file(config_dict)
+        with self.assertRaises(AssertionError) as cm:
+            rsiprrec.extract_execution_freq_from_pkl_config(dst_dir)
+        # Check output.
+        actual = str(cm.exception)
+        self.check_string(actual, purify_text=True)
+
+    def _save_config_to_file(self, config_dict: Dict[str, Any]) -> None:
+        """
+        Save text and pickled config file in `dst_dir`.
+        """
+        # Dir to store config files.
+        dst_dir = self.get_scratch_space()
+        config = cconfig.Config.from_dict(config_dict)
+        tag = "system_config.output"
+        # Save config to `txt` and `pkl` file.
+        config.save_to_file(dst_dir, tag)
+
+    def _check_execution_freq(self, expected: str) -> None:
+        """
+        Check that the universe version returned from function is same as
+        expected.
+
+        :param dst_dir: dir with config files
+        :param expected: expected output
+        """
+        # Dir to get config files.
+        dst_dir = self.get_scratch_space()
+        actual = rsiprrec.extract_execution_freq_from_pkl_config(dst_dir)
+        self.assert_equal(actual, expected)
 
 
 class Test_get_dag_output_path(hunitest.TestCase):

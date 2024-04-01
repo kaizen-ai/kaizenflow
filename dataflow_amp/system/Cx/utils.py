@@ -28,18 +28,17 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def load_ohlcv_data(
+def load_market_data(
     market_data: mdata.MarketData,
     start_timestamp: pd.Timestamp,
     end_timestamp: pd.Timestamp,
 ) -> pd.DataFrame:
     """
-    Load OHLCV data using OHLCV `MarketData`.
+    Load market data.
 
     :param market_data: `MarketData` backed by the production DB
     :param start_timestamp: the earliest date timestamp to load data for
     :param end_timestamp: the latest date timestamp to load data for
-    :return: load OHLCV dataframe
     """
     nid = "read_data"
     timestamp_col_name = "end_timestamp"
@@ -58,8 +57,8 @@ def load_ohlcv_data(
     fit_intervals = [(start_timestamp, end_timestamp)]
     _LOG.info("fit_intervals=%s", fit_intervals)
     historical_data_source.set_fit_intervals(fit_intervals)
-    df_ohlcv = historical_data_source.fit()["df_out"]
-    return df_ohlcv
+    market_data_df = historical_data_source.fit()["df_out"]
+    return market_data_df
 
 
 def resample_ohlcv_data(
@@ -73,6 +72,8 @@ def resample_ohlcv_data(
     :param resampling_frequency: resampling frequency
     :return: resampled OHLCV dataframe
     """
+    df_columns = ohlcv_df.columns.get_level_values(0).tolist()
+    hdbg.dassert_is_subset(["close", "high", "low", "open", "volume"], df_columns)
     resampling_node = dtfcore.GroupedColDfToDfTransformer(
         "resample",
         transformer_func=cofinanc.resample_bars,
@@ -124,17 +125,17 @@ def load_and_resample_ohlcv_data(
     bar_duration: str,
 ) -> pd.DataFrame:
     """
-    Load OHLCV data and resample it.
+    Load market data and resample it.
 
-    :param market_data: same as in `load_ohlcv_data()`
-    :param start_timestamp: same as in `load_ohlcv_data()`
-    :param end_timestamp: same as in `load_ohlcv_data()`
+    :param market_data: same as in `load_market_data()`
+    :param start_timestamp: same as in `load_market_data()`
+    :param end_timestamp: same as in `load_market_data()`
     :param bar_duration: bar duration as pandas string
-    :return: resampled OHLCV dataframe
+    :return: resampled market data dataframe
     """
-    ohlcv_data = load_ohlcv_data(market_data, start_timestamp, end_timestamp)
-    resampled_ohlcv = resample_ohlcv_data(ohlcv_data, bar_duration)
-    return resampled_ohlcv
+    market_data_df = load_market_data(market_data, start_timestamp, end_timestamp)
+    resampled_data = resample_ohlcv_data(market_data_df, bar_duration)
+    return resampled_data
 
 
 # TODO(Grisha): consider passing `MarketData` object to interface and moving to
