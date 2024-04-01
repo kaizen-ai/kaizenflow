@@ -180,6 +180,13 @@ def apply_swt(
     return df
 
 
+def get_mra_renormalization_srs(depth: int) -> pd.Series:
+    detail_levels = range(1, depth + 1)
+    renorm_srs = pd.Series([2 ** (j / 2) for j in detail_levels], detail_levels)
+    renorm_srs[f"{depth}_smooth"] = renorm_srs[depth]
+    return renorm_srs
+
+
 def compute_and_combine_swt_levels(
     sig: pd.Series,
     weights: List[int],
@@ -194,10 +201,7 @@ def compute_and_combine_swt_levels(
         level_idx,
     )
     if not norm:
-        renorm_srs = pd.Series(
-            [2 ** (j / 2) for j in range(1, depth + 1)] + [2 ** (depth / 2)],
-            level_idx,
-        )
+        renorm_srs = get_mra_renormalization_srs(depth)
         weight_srs *= renorm_srs
     combined = (swt * weight_srs).sum(axis=1, skipna=False)
     combined.name = sig.name
@@ -656,17 +660,15 @@ def compute_zscored_mra(
     swt = get_swt(sig, depth=depth, output_mode="detail_and_last_smooth")
     var = get_swt(sig**2, depth=depth + 1, output_mode="smooth")
     detail_levels = range(1, depth + 1)
-    renorm_srs = pd.Series([2 ** (j / 2) for j in detail_levels], detail_levels)
     shift_srs = get_knowledge_time_warmup_lengths(["haar"], depth + 1)["haar"]
     mra = pd.DataFrame()
     for level in detail_levels:
         mra[level] = swt[level] / np.sqrt(var[level + 1]).shift(shift_srs[level])
+    mra[f"{depth}_smooth"] = swt[f"{depth}_smooth"] / np.sqrt(
+        var[depth + 1]
+    ).shift(shift_srs[depth + 1])
+    renorm_srs = get_mra_renormalization_srs(depth)
     mra *= renorm_srs
-    mra[f"{depth}_smooth"] = (
-        renorm_srs[depth]
-        * swt[f"{depth}_smooth"]
-        / np.sqrt(var[depth + 1]).shift(shift_srs[depth + 1])
-    )
     return mra
 
 

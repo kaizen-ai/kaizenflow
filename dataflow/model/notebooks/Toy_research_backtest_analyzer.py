@@ -73,7 +73,7 @@ def build_research_backtest_analyzer_config_dict(
         sweep_param_keys = default_config["sweep_param", "keys"]
         hdbg.dassert_isinstance(sweep_param_keys, tuple)
         sweep_param_values = default_config["sweep_param", "values"]
-        hdbg.dassert_isinstance(sweep_param_values, tuple)
+        hdbg.dassert_isinstance(sweep_param_values, list)
         # Build config dict.
         config_dict = {}
         for val in sweep_param_values:
