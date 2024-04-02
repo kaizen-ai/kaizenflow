@@ -41,9 +41,6 @@ RUN wget http://mirror.ctan.org/support/latexindent.zip && \
     cd latexindent && \
     chmod +x latexindent.pl && \
     mv latexindent.pl LatexIndent defaultSettings.yaml /usr/local/bin/
-
-# Installing prettier.
-RUN npm install --save-dev --save-exact prettier
 EOF
 docker build -f /tmp/tmp.dockerfile -t $IMAGE .
 

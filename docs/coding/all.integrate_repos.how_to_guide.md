@@ -3,12 +3,12 @@
 <!-- toc -->
 
 - [Concepts](#concepts)
-- [Invariants for the integration set-up](#invariants-for-the-integration-set-up)
+- [Invariants for the integration workflows](#invariants-for-the-integration-workflows)
 - [Integration process](#integration-process)
-  - [Preparation](#preparation)
-  - [Integration](#integration)
-  - [Double-check the integration](#double-check-the-integration)
-  - [Run tests](#run-tests)
+  * [Preparation](#preparation)
+  * [Integration](#integration)
+  * [Double-check the integration](#double-check-the-integration)
+  * [Run tests](#run-tests)
 
 <!-- tocstop -->
 
@@ -25,8 +25,8 @@
 - Other times we need to integrate "by file"
 
 - There are various interesting Git reference points:
-  1. the branch point for each fork, at which the integration branch was started
-  2. the last integration point for each fork, at which the repos are the same,
+  1. The branch point for each fork, at which the integration branch was started
+  2. The last integration point for each fork, at which the repos are the same,
      or at least aligned
 
 # Invariants for the integration workflows
@@ -56,6 +56,7 @@
   ```
 
 - In one line
+
   ```bash
   cd $HOME/cmamp1 && \
     git checkout master && \
@@ -71,7 +72,6 @@
   > dev_scripts/clean_up_text_files.sh
   > git commit -am "Remove white spaces"; git push
   ```
-
   - One should still run the regressions out of paranoia since some golden
     outcomes can be changed
     ```
@@ -84,7 +84,6 @@
   ```bash
   > find . -type f -empty -print | grep -v .git | grep -v __init__ | grep -v ".log$" | grep -v ".txt$" | xargs git rm
   ```
-
   - TODO(gp): Add this step to `dev_scripts/clean_up_text_files.sh`
 
 - Align `lib_tasks.py`:
@@ -110,7 +109,6 @@
   > FILES=$(cat files.txt)
   > i lint --only-format -f "$FILES"
   ```
-
   - This should be done as a single separated PR to be reviewed separately
 
 - Align `lib_tasks.py`:
