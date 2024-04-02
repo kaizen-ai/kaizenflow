@@ -1,3 +1,3 @@
 #!/bin/bash -xe
-FILE_NAME=papers/financial_agi/financial_agi.tex
-amp/dev_scripts/latex/lint_latex.sh $FILE_NAME
+FILE_NAME=papers/fin_econ_ai/fin_econ_ai.tex
+dev_scripts/latex/lint_latex2.sh $FILE_NAME

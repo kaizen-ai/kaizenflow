@@ -95,6 +95,7 @@ def color_format(val: str, status_color_mapping: Dict[str, str]) -> str:
 repo_list = [
     "cryptokaizen/cmamp",
     "cryptokaizen/orange",
+    "cryptokaizen/lemonade",
     "sorrentum/dev_tools",
     "sorrentum/sorrentum",
 ]

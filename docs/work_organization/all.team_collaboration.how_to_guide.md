@@ -124,7 +124,7 @@
   interesting docs that are of general interest and relevance
 - Please make sure to read the docs carefully and internalize what we suggest to
   do and, especially, the rationale of the proposed solutions
-- It's ok to acknowledge the email replying to `all@crypto-kaizen.com`
+- It's ok to acknowledge the email replying to `all@kaizen-tech.io`
 
 ### Synchronization point
 
@@ -146,7 +146,7 @@
 
 ### Morning email
 
-- First thing in the morning, send an email to `all@crypto-kaizen.com` if you
+- First thing in the morning, send an email to `all@kaizen-tech.io` if you
   are **full-time** or to `contributors@crypto-kaizen.com` if you are **interns
   or collaborators** to broadcast what you are planning to work on during that
   day

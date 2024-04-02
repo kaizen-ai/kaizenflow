@@ -26,7 +26,7 @@
 
 <!-- tocstop -->
 
-# KaizenFlow Workflow Explanation
+# KaizenFlow workflow explanation
 
 This document is a roadmap of most activities that Quants, Quant devs, and
 Devops can perform using `KaizenFlow`.
@@ -104,30 +104,26 @@ These activities are mapped in `KaizenFlow` as follows:
   - [/im_v2/common/data/transform/convert_csv_to_pq.py](/im_v2/common/data/transform/convert_csv_to_pq.py)
   - [/im_v2/common/data/transform/convert_pq_to_csv.py](/im_v2/common/data/transform/convert_pq_to_csv.py)
 
-- Data download piplines explanation
+- Data download pipelines explanation
   - [/docs/datapull/ck.binance_bid_ask_data_pipeline.explanation.md](/docs/datapull/ck.binance_bid_ask_data_pipeline.explanation.md)
   - [/docs/datapull/ck.binance_ohlcv_data_pipeline.explanation.md](/docs/datapull/ck.binance_ohlcv_data_pipeline.explanation.md)
 
 - Download data in bulk
-  - TODO(gp): generalize to source other than crypto
   - [/im_v2/common/data/extract/download_bulk.py](/im_v2/common/data/extract/download_bulk.py)
   - [/im_v2/ccxt/data/extract/download_exchange_data_to_db.py](/im_v2/ccxt/data/extract/download_exchange_data_to_db.py)
   - TODO(Juraj): technically this could be joined into one script and also
     generalized for more sources
 
 - Download data in real time over a given time interval
-  - TODO(gp): generalize to source other than crypto
   - [/im_v2/ccxt/data/extract/download_exchange_data_to_db_periodically.py](/im_v2/ccxt/data/extract/download_exchange_data_to_db_periodically.py)
 
 - Archive data
-  - TODO(gp): Currently overfitted to CCXT, but generalization is possible
   - Helps with optimizing data storage performance/costs by transferring older
     data from a storage like postgres to S3
   - Suitable to apply to high frequency high volume realtime orderbook data
   - [/im_v2/ccxt/db/archive_db_data_to_s3.py](/im_v2/ccxt/db/archive_db_data_to_s3.py)
 
 - Resampling data
-  - TODO(gp): Generalize outside crypto data
   - [/docs/datapull/all.datapull_derived_data.explanation.md](/docs/datapull/all.datapull_derived_data.explanation.md)
   - [/im_v2/common/data/transform/resample_daily_bid_ask_data.py](/im_v2/common/data/transform/resample_daily_bid_ask_data.py)
 
@@ -217,14 +213,14 @@ These activities are mapped in `KaizenFlow` as follows:
 - Learn how to run a `DAG`
   - Overview, DagBuilder, Dag, DagRunner
     - [/docs/dataflow/ck.run_batch_computation_dag.explanation.md](/docs/dataflow/ck.run_batch_computation_dag.explanation.md)
-  - Configure a simple risk model, Build a DAG, Generate data and connect data
-    source to the DAG, Run the DAG
+  - Configure a simple risk model, build a DAG, generate data and connect data
+    source to the DAG, run the DAG
     - [/docs/dataflow/ck.run_batch_computation_dag.tutorial.ipynb](/docs/dataflow/ck.run_batch_computation_dag.tutorial.ipynb)
   - Build a DAG from a Mock2 DagBuilder and run it
     - [/docs/kaizenflow/all.run_Mock2_pipeline_in_notebook.how_to_guide.ipynb](/docs/kaizenflow/all.run_Mock2_pipeline_in_notebook.how_to_guide.ipynb)
 
 - General intro about model simulation
-  - Property of tilability, Batch vs streaming
+  - Property of tilability, batch vs streaming
     - [/docs/dataflow/all.batch_and_streaming_mode_using_tiling.explanation.md](/docs/dataflow/all.batch_and_streaming_mode_using_tiling.explanation.md)
     - TODO(gp): @paul Review
   - Time semantics, How clock is handled, Flows
@@ -238,7 +234,7 @@ These activities are mapped in `KaizenFlow` as follows:
 - Run a simulation of a `DataFlow` system
   - Overview, Basic concepts, Implementation details
     - [/docs/dataflow/ck.run_backtest.explanation.md](/docs/dataflow/ck.run_backtest.explanation.md)
-  - How to build a system, Run research backtesting, Process results of
+  - How to build a system, run research backtesting, Process results of
     backtesting, How to run replayed time simulation, Running experiments
     - [/docs/dataflow/ck.run_backtest.how_to_guide.md](/docs/dataflow/ck.run_backtest.how_to_guide.md)
     - TODO(gp): Review

@@ -5,6 +5,7 @@ import pytest
 import core.config as cconfig
 import dev_scripts.notebooks.run_notebook_test_case as dsnrnteca
 import helpers.hgit as hgit
+import helpers.hserver as hserver
 
 
 def build_config() -> cconfig.ConfigList:
@@ -20,6 +21,10 @@ def build_config() -> cconfig.ConfigList:
 class Test_Master_buildmeister_dashboard_notebook(
     dsnrnteca.Test_Run_Notebook_TestCase
 ):
+    @pytest.mark.skipif(
+        not hserver.is_inside_ci(),
+        reason="No access to data from `lemonade` repo locally",
+    )
     @pytest.mark.superslow("~42 sec.")
     def test1(self) -> None:
         amp_dir = hgit.get_amp_abs_path()
