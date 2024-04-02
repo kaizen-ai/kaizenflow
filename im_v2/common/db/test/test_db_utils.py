@@ -1,4 +1,4 @@
-import unittest.mock as umock, patch
+import unittest.mock as umock
 
 import pandas as pd
 import psycopg2 as psycop
@@ -10,21 +10,28 @@ import im_v2.common.db.db_utils as imvcddbut
 DB_STAGE = "test"
 
 class TestLoadDBData(hunitest.TestCase):
-    # This will be run before and after each test.
-    @pytest.fixture(autouse=True)
-    def setup_teardown_test(self):
+    def setUp(self):
         """
-        Initializing some common attributes for the query.
+        Set up common attributes for the test cases.
         """
-        self.db_connection = umock.MagicMock()
-        self.src_table = "test_table"
-        self.start_ts = pd.Timestamp("2024-01-01")
-        self.end_ts = pd.Timestamp("2024-01-31")
+        db_connection = umock.MagicMock()
+        src_table = "test_table"
+        start_ts = pd.Timestamp("2024-01-01")
+        end_ts = pd.Timestamp("2024-01-31")
 
-    @patch('im_v2.common.db.db_utils.hsql.execute_query_to_df')
+    @pytest.fixture
+    def mock_execute_query_to_df(self):
+        """
+        Fixture for mocking execute_query_to_df function.
+        """
+        with umock.patch('im_v2.common.db.db_utils.hsql.execute_query_to_df') as mock_execute_query_to_df:
+            yield mock_execute_query_to_df
+
     def test_load_db_data(self, mock_execute_query_to_df):
         """
         Test case : Basic query construction with all the parameters provided.
+
+        This test case checks if the query construction is done correctly when all parameters are provided.
         """
         # Prepare mock data
         currency_pairs = ["BTC_USDT"]
@@ -44,11 +51,11 @@ class TestLoadDBData(hunitest.TestCase):
         )
         mock_execute_query_to_df.assert_called_once_with(self.db_connection, expected_query)
         
-
-    @patch('im_v2.common.db.db_utils.hsql.execute_query_to_df')
     def test_load_db_data1(self, mock_execute_query_to_df):
         """
         Test case: Handling the scenario where no data is returned from the database query.
+
+        This test checks if the function behaves correctly when no data is returned from the database query.
         """
         # Prepare mock data
         mock_execute_query_to_df.return_value = None
@@ -59,57 +66,80 @@ class TestLoadDBData(hunitest.TestCase):
         mock_execute_query_to_df.assert_called_once_with(self.db_connection, expected_query)
         self.assertIsNone(result)
     
-    @patch('im_v2.common.db.db_utils.hsql.execute_query_to_df')
     def test_load_db_data2(self, mock_execute_query_to_df):
         """
         Test case: Returning an empty dataframe
+
+        This test checks if the function returns an empty dataframe when no data is found in the database.
         """
+        # Prepare mock data
         mock_execute_query_to_df.return_value = pd.DataFrame()
         result = imvcddbut.load_db_data(self.db_connection, self.src_table, self.start_ts, self.end_ts)
         self.assertTrue(result.empty)
 
-    @patch('im_v2.common.db.db_utils.hsql.execute_query_to_df')
     def test_load_db_data3(self, mock_execute_query_to_df):
         """
         Test case: start_ts > end_ts
-        """
-        pass
 
-    @patch('im_v2.common.db.db_utils.hsql.execute_query_to_df')
+        This test checks if the function handles the scenario where the start timestamp is greater than the end timestamp.
+        """
+        # Swap start_ts and end_ts
+        start_ts, end_ts = self.end_ts, self.start_ts  
+        result = imvcddbut.load_db_data(self.db_connection, self.src_table, start_ts, end_ts)
+        # Assert that the query is not executed
+        mock_execute_query_to_df.assert_not_called()
+        # Assert that the result is None
+        self.assertIsNone(result) 
+
     def test_load_db_data4(self, mock_execute_query_to_df):
         """
         Test case: Invalid currency pairs
-        """
-        pass
 
-    @patch('im_v2.common.db.db_utils.hsql.execute_query_to_df')
+        This test checks if the function raises a ValueError when invalid currency pairs are provided.
+        """
+        # Invalid currency pairs
+        invalid_currency_pairs = None
+        # Assert that a ValueError is raised
+        with self.assertRaises(ValueError):
+            imvcddbut.load_db_data(self.db_connection, self.src_table, self.start_ts, self.end_ts, currency_pairs=invalid_currency_pairs)
+
     def test_load_db_data5(self, mock_execute_query_to_df):
         """
-        Test case: Null parameter for start_ts or end_ts
-        """
-        pass
+        Test case: Null parameter for start_ts
 
-    @patch('im_v2.common.db.db_utils.hsql.execute_query_to_df')
+        This test checks if the function raises a ValueError when null parameters are provided for start timestamp.
+        """
+        # Null timestamp
+        start_ts = None
+        # Assert that ValueError is raised
+        with self.assertRaises(ValueError):
+            imvcddbut.load_db_data(self.db_connection, self.src_table, start_ts, self.end_ts)
+
     def test_load_db_data6(self, mock_execute_query_to_df):
         """
         Test case: Invalid timestamp format
+
+        This test checks if the function raises a TypeError when an invalid timestamp format is provided.
         """
-        pass
+        # Invalid timestamp format
+        invalid_ts = "invalid_timestamp"
+        # Assert that a TypeError is raised
+        with self.assertRaises(TypeError):
+            imvcddbut.load_db_data(self.db_connection, self.src_table, invalid_ts, self.end_ts)
     
-    @patch('im_v2.common.db.db_utils.hsql.execute_query_to_df')
     def test_load_db_data7(self, mock_execute_query_to_df):
         """
         Test case: Limit parameter is larger than total number of rows returned by database query
+
+        This test checks if the function raises a ValueError when the limit parameter is larger than the total number of rows returned by the database query
         """
-        pass
-
-
-
-
-    
-
-    
-
+        # Empty DataFrame returned from query
+        mock_execute_query_to_df.return_value = pd.DataFrame()
+        # Limit is set to very large value
+        limit = 1000000
+        # Assert that a ValueError is raised
+        with self.assertRaises(ValueError):
+            imvcddbut.load_db_data(self.db_connection, self.src_table, self.start_ts, self.end_ts, limit=limit)
 
 
 
