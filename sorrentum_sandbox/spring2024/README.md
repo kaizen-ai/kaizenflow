@@ -24,34 +24,53 @@
 
 ## Choosing a project
 
-- Each student should pick one of the projects from the sign up sheet
-  [here](https://docs.google.com/spreadsheets/d/1nwjIvXgEaxH_M21k8hYebVbFPLWh7UNglLUlh11psAs)
+- Each student should pick one of the projects from the signup sheet
   - The difficulty of the project does affect the final grade, but we want to
     give a way for everyone to select a project based on their level of computer
     literacy
   - You will need to give us some information including your GitHub name so we
     can add you to the repo
-- A description of the projects is on Google Doc
-  [here](https://docs.google.com/document/d/1GEOmfpBUXiCua18wR1Hx1OMUVlku-1of)
 
 - The project is individual
-  - Students can discuss and help each others (they will do that even if we say
+  - Students can discuss and help each other (they will do that even if we say
     not to)
-  - Students should not pick the same one on the sign up sheet
+  - Students should not have exactly the same project
   - If there are no more projects left for any reason, then we will add more
 
 - The goal is to get your hands dirty and figure things out
   - Often working is all about trying different approaches until one works out
-  - Google and ChatGPT are your friend, but don't abuse them: copy-pasting
+  - Google and ChatGPT are your friends, but don't abuse them: copy-pasting
     without understanding doesn't help you
-  - Make sure you understand what, how, why a piece of code does
+  - Make sure you understand what, how, and why a piece of code does
+ 
+- On the sign-up sheet, you will find several baseline project proposals
+  suggested by us. You can either choose from the given projects or propose your
+  own project. You can improve, change, and add other technologies and components
+  to enhance your project
+- Your project choice should align with your learning goals and interests,
+  presenting an excellent opportunity to explore various technologies and enhance
+  your resume.
+
+
+- If you choose one of the projects from the sign-up sheet, fill out the
+  corresponding information promptly. If you decide to propose a modification,
+  send us an email with the desired information and we will update the sign-up
+  sheet and Google Doc for you.
+
+- Please note that you are required to finalize your project selection within
+  one week
+- The project duration is approximately four weeks, so timely selection is
+  crucial for effective planning and execution.
+
+- Your grades will be influenced by factors such as project complexity, your
+  efforts and understanding, and adherence to given project guidelines.
 
 ## Working
 
 - You will work in the same way open-source developers (and specifically
   developers on Sorrentum) contribute to a project
 
-- Each step of the project is delivered through committing code to your the dir
+- Each step of the project is delivered by committing code to your dir
   corresponding to your project (more below) and doing a GitHub Pull Request
   (PR)
   - You can / should commit regularly and not only once at the end
@@ -60,7 +79,7 @@
 - We will do a review of the project in the middle of the project and give you
   some feedback on what to improve
 
-- You can model your working set up after contributors to Sorrentum
+- You can model your working setup after contributors to Sorrentum
   https://github.com/sorrentum/sorrentum/blob/master/docs/onboarding/sorrentum.set_up_development_environment.how_to_guide.md
 
 ## Pre-requisites
@@ -68,10 +87,10 @@
 - Watch, star, and fork the Sorrentum repo
 - Install Docker on your computer
   - Ok to use Docker natively on Mac and Linux
-  - Use VMware if Windows
+  - Use VMware in Windows
     - If you have problems installing it on your laptop, use one computer from
       UMD or your friends
-- After signing up for a project accept invitation to collaborate sent to the
+- After signing up for a project accept the invitation to collaborate sent to the
   email that you used to register your GitHub account, or check
   [here](https://github.com/sorrentum/sorrentum/invitations)
 - Check your GitHub issue on https://github.com/sorrentum/sorrentum/issues
@@ -181,12 +200,12 @@
   - E.g., `SorrTask645_Redis_cache_to_fetch_user_profiles_1`,
     `SorrTask645_Redis_cache_to_fetch_user_profiles_2`, ...
 
-## Example of a class project
+## Examples of a class project
 
-- The layout of each project should follow the example
-  - `sorrentum_sandbox/projects/spring2024/SorrTask645_Redis_cache_to_fetch_user_profiles`
-
-- Study and execute the example project
-  - https://github.com/sorrentum/sorrentum/tree/master/sorrentum_sandbox/projects/spring2024/SorrTask645_Redis_cache_to_fetch_user_profiles
-
-- Look at the tutorials from class
+- The layout of each project should follow the example in
+  https://github.com/sorrentum/sorrentum/tree/master/sorrentum_sandbox/projects/spring2024/SorrTask645_Redis_cache_to_fetch_user_profiles
+- Examples for Binance and Reddit in
+  https://github.com/sorrentum/sorrentum/tree/master/sorrentum_sandbox/examples
+- Projects from 2023
+  https://github.com/sorrentum/sorrentum/tree/master/sorrentum_sandbox/spring2023
+- The tutorials from DATA605 class
