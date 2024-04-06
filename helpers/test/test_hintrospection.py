@@ -66,6 +66,11 @@ class Test_is_pickleable1(hunitest.TestCase):
         _LOG.debug("act_pickled=%s", act_pickled)
         _LOG.debug("exp_pickled=%s", exp_pickled)
         self.assertEqual(act_pickled, exp_pickled)
+        #type_search to pickle
+        act_pickled = hintros.is_pickleable(obj)
+        _LOG.debug("act_pickled=%s", act_pickled)
+        _LOG.debug("exp_pickled=%s", exp_pickled)
+        self.assertEqual(act_pickled, exp_pickled)
 
     def test_lambda1(self) -> None:
         # Local lambda.
@@ -160,6 +165,29 @@ class Test_is_pickleable1(hunitest.TestCase):
         exp_pickled = True
         self.helper(func, exp_str, exp_bound, exp_lambda, exp_pickled)
 
+    def test_not_callable1(self) -> None:
+        # int.
+        int_ = 42
+        func = int_
+        exp_str = r"42"
+        # An int is bound to an object.
+        exp_bound = True
+        exp_lambda = False
+        # An int is pickleable.
+        exp_pickled = True
+        self.helper(func, exp_str, exp_bound, exp_lambda, exp_pickled)
+
+    def test_not_callable2(self) -> None:
+        # str.
+        str_ = "hello"
+        func = str_
+        exp_str = r"hello"
+        # A str is bound to an object.
+        exp_bound = True
+        exp_lambda = False
+        # A str is pickleable.
+        exp_pickled = True
+        self.helper(func, exp_str, exp_bound, exp_lambda, exp_pickled)
 
 # #############################################################################
 # Test_get_function_name1
