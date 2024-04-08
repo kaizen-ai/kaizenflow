@@ -30,6 +30,24 @@ class Hello:
         print("Hello")
 
 
+class _ClassPickleable:
+    """
+    Class with pickleable param values.
+    """
+
+    def __init__(self) -> None:
+        self._arg1 = 1
+        self._arg2 = ["2", 3]
+
+class _ClassNonPickleable:
+    """
+    Class with non-pickleable param values.
+    """
+
+    def __init__(self) -> None:
+        self._arg1 = lambda x: x
+        self._arg2 = 2
+
 class Test_is_pickleable1(hunitest.TestCase):
     def helper(
         self,
@@ -165,8 +183,8 @@ class Test_is_pickleable1(hunitest.TestCase):
         exp_pickled = True
         self.helper(func, exp_str, exp_bound, exp_lambda, exp_pickled)
 
-    def test_not_callable1(self) -> None:
-        # int.
+    def test_int(self) -> None:
+        # Not callable: int.
         int_ = 42
         func = int_
         exp_str = r"42"
@@ -177,8 +195,8 @@ class Test_is_pickleable1(hunitest.TestCase):
         exp_pickled = True
         self.helper(func, exp_str, exp_bound, exp_lambda, exp_pickled)
 
-    def test_not_callable2(self) -> None:
-        # str.
+    def test_str(self) -> None:
+        # Not callable: str.
         str_ = "hello"
         func = str_
         exp_str = r"hello"
@@ -187,6 +205,26 @@ class Test_is_pickleable1(hunitest.TestCase):
         exp_lambda = False
         # A str is pickleable.
         exp_pickled = True
+        self.helper(func, exp_str, exp_bound, exp_lambda, exp_pickled)
+
+    def test_class1(self) -> None:
+        # A class object with pickleable param values.
+        class_instance = _ClassPickleable()
+        func = class_instance
+        exp_str = r"<__main__._ClassPickleable object at 0x104786bb0>"
+        exp_bound = True
+        exp_lambda = False
+        exp_pickled = True
+        self.helper(func, exp_str, exp_bound, exp_lambda, exp_pickled)
+
+    def test_class2(self) -> None:
+        # A class object with non-pickleable param values.
+        class_instance = _ClassNonPickleable()
+        func = class_instance
+        exp_str = r"<__main__._ClassNonPickleable object at 0x100afd610>"
+        exp_bound = True
+        exp_lambda = False
+        exp_pickled = False
         self.helper(func, exp_str, exp_bound, exp_lambda, exp_pickled)
 
 # #############################################################################
