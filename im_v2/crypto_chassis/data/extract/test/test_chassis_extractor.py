@@ -13,32 +13,34 @@ _LOG = logging.getLogger(__name__)
 
 @pytest.mark.skip(reason="cmamp #7778.")
 class TestCryptoChassisExtractor1(hunitest.TestCase):
-    # pandas_read_csv_patch = umock.patch.object(
-    #     imvccdexex.pd, "read_csv", spec=imvccdexex.pd.read_csv
-    # )
-    # coerce_to_numeric_patch = umock.patch.object(
-    #     imvccdexex.CryptoChassisExtractor,
-    #     "coerce_to_numeric",
-    #     spec=imvccdexex.CryptoChassisExtractor.coerce_to_numeric,
-    # )
-    # requests_patch = umock.patch.object(
-    #     imvccdexex, "requests", spec=imvccdexex.requests
-    # )
-    # build_query_url_patch = umock.patch.object(
-    #     imvccdexex.CryptoChassisExtractor,
-    #     "_build_query_url",
-    #     spec=imvccdexex.CryptoChassisExtractor._build_query_url,
-    # )
-    # build_base_url_patch = umock.patch.object(
-    #     imvccdexex.CryptoChassisExtractor,
-    #     "_build_base_url",
-    #     spec=imvccdexex.CryptoChassisExtractor._build_base_url,
-    # )
-    # convert_currency_pair_patch = umock.patch.object(
-    #     imvccdexex.CryptoChassisExtractor,
-    #     "convert_currency_pair",
-    #     spec=imvccdexex.CryptoChassisExtractor.convert_currency_pair,
-    # )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pandas_read_csv_patch = umock.patch.object(
+            imvccdexex.pd, "read_csv", spec=imvccdexex.pd.read_csv
+        )
+        self.coerce_to_numeric_patch = umock.patch.object(
+            imvccdexex.CryptoChassisExtractor,
+            "coerce_to_numeric",
+            spec=imvccdexex.CryptoChassisExtractor.coerce_to_numeric,
+        )
+        self.requests_patch = umock.patch.object(
+            imvccdexex, "requests", spec=imvccdexex.requests
+        )
+        self.build_query_url_patch = umock.patch.object(
+            imvccdexex.CryptoChassisExtractor,
+            "_build_query_url",
+            spec=imvccdexex.CryptoChassisExtractor._build_query_url,
+        )
+        self.build_base_url_patch = umock.patch.object(
+            imvccdexex.CryptoChassisExtractor,
+            "_build_base_url",
+            spec=imvccdexex.CryptoChassisExtractor._build_base_url,
+        )
+        self.convert_currency_pair_patch = umock.patch.object(
+            imvccdexex.CryptoChassisExtractor,
+            "convert_currency_pair",
+            spec=imvccdexex.CryptoChassisExtractor.convert_currency_pair,
+        )
 
     # This will be run before and after each test.
     @pytest.fixture(autouse=True)

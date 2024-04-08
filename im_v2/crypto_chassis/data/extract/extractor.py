@@ -1,16 +1,10 @@
 """
+Download data from Crypto-Chassis: https://github.com/crypto-chassis.
+
 Import as:
 
 import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
 """
-
-# """
-# Download data from Crypto-Chassis: https://github.com/crypto-chassis.
-
-# Import as:
-
-# import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
-# """
 # import logging
 # from typing import Any, Dict, List, Optional
 
