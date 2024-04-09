@@ -1,17 +1,23 @@
 import unittest.mock as umock
+from typing import Any, Generator
 
 import pandas as pd
 import psycopg2 as psycop
 import pytest
 
-import helpers.hunit_test as hunitest
 import helpers.hdatetime as hdateti
+import helpers.hsql as hsql
+import helpers.hunit_test as hunitest
 import im_v2.common.db.db_utils as imvcddbut
 
 DB_STAGE = "test"
 
+
 class TestLoadDBData(hunitest.TestCase):
-    def setUp(self):
+    # Mock call to execute query function.
+    mock_execute_query_df = umock.patch.object(hsql, "execute_query_to_df")
+
+    def setUp(self) -> None:
         """
         Set up common attributes for the test cases.
         """
@@ -20,127 +26,175 @@ class TestLoadDBData(hunitest.TestCase):
         self.src_table = "test_table"
         self.start_date = pd.Timestamp("2024-01-01")
         self.end_date = pd.Timestamp("2024-01-31")
-        self.start_ts = hdateti.convert_timestamp_to_unix_epoch(self.start_date, unit="ms")
-        self.end_ts = hdateti.convert_timestamp_to_unix_epoch(self.end_date, unit="ms")
+        self.start_ts = hdateti.convert_timestamp_to_unix_epoch(
+            self.start_date, unit="ms"
+        )
+        self.end_ts = hdateti.convert_timestamp_to_unix_epoch(
+            self.end_date, unit="ms"
+        )
 
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self) -> Generator[Any, Any, Any]:
+        # Run before each test.
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
 
-    def test_load_db_data(self):
+    def set_up_test(self) -> None:
+        # Create new mocks from patch's start() method.
+        self.query_mock: umock.MagicMock = self.mock_execute_query_df.start()
+
+    def tear_down_test(self) -> None:
+        self.mock_execute_query_df.stop()
+
+    def test1(self) -> None:
         """
-        Test if the query construction is done correctly when all parameters are provided.
+        Test if the query construction is done correctly when all parameters
+        are provided.
         """
-        # Prepare mock data
+        # Prepare mock data.
         currency_pairs = ["BTC_USDT"]
         limit = 100
         bid_ask_levels = [1, 2]
         exchange_id = "Exchange1"
         time_interval_closed = True
-        # Mocking execute_query_to_df method
-        with umock.patch('im_v2.common.db.db_utils.hsql.execute_query_to_df') as mock_execute_query_to_df:
-            result = imvcddbut.load_db_data(self.db_connection, self.src_table, self.start_date, self.end_date,
-                                            currency_pairs=currency_pairs, limit=limit,
-                                            bid_ask_levels=bid_ask_levels, exchange_id=exchange_id,
-                                            time_interval_closed=time_interval_closed)
-            expected_query = (
-                f"SELECT * FROM {self.src_table} WHERE timestamp >= {self.start_ts} AND timestamp <= {self.end_ts} "
-                f"AND currency_pair IN ('BTC_USDT') AND level IN (1, 2) AND exchange_id = 'Exchange1' "
-                f"ORDER BY timestamp DESC LIMIT 100"
-            )
-            # Assert that an expected_query is called.
-            mock_execute_query_to_df.assert_called_once_with(self.db_connection, expected_query)
-        
-    def test_load_db_data1(self):
-        """
-        Test if the function behaves correctly when no data is returned from the database query.
-        """
-        # Mocking execute_query_to_df method
-        with umock.patch('im_v2.common.db.db_utils.hsql.execute_query_to_df') as mock_execute_query_to_df:
-            mock_execute_query_to_df.return_value = None
-            result = imvcddbut.load_db_data(self.db_connection, self.src_table, self.start_date, self.end_date)
-            expected_query = (
-            f"SELECT * FROM {self.src_table} WHERE timestamp >= {self.start_ts} AND timestamp <= {self.end_ts}"
-            )
-            mock_execute_query_to_df.assert_called_once_with(self.db_connection, expected_query)
-            # Assert that function is returning None.
-            self.assertIsNone(result)
-    
-    def test_load_db_data2(self):
-        """
-        Test if the function returns an empty dataframe when no data is found in the database.
-        """
-        # Mocking execute_query_to_df method
-        with umock.patch('im_v2.common.db.db_utils.hsql.execute_query_to_df') as mock_execute_query_to_df:
-            mock_execute_query_to_df.return_value = pd.DataFrame()
-            result = imvcddbut.load_db_data(self.db_connection, self.src_table, self.start_date, self.end_date)
-            # Assert that function is returning empty dataframe
-            self.assertTrue(result.empty)
 
-    def test_load_db_data3(self):
+        result = imvcddbut.load_db_data(
+            self.db_connection,
+            self.src_table,
+            self.start_date,
+            self.end_date,
+            currency_pairs=currency_pairs,
+            limit=limit,
+            bid_ask_levels=bid_ask_levels,
+            exchange_id=exchange_id,
+            time_interval_closed=time_interval_closed,
+        )
+        expected_query = (
+            f"SELECT * FROM {self.src_table} WHERE timestamp >= {self.start_ts} AND timestamp <= {self.end_ts} "
+            f"AND currency_pair IN ('BTC_USDT') AND level IN (1, 2) AND exchange_id = 'Exchange1' "
+            f"ORDER BY timestamp DESC LIMIT 100"
+        )
+        # Assert that an expected query is called.
+        self.query_mock.assert_called_once_with(
+            self.db_connection, expected_query
+        )
+
+    def test2(self) -> None:
         """
-        Test if the function handles the scenario where the start timestamp is greater than the end timestamp.
+        Test if the function behaves correctly when no data is returned from
+        the database query.
         """
-        # Swap start_ts and end_ts
+        # Mock the query.
+        self.query_mock.return_value = None
+        result = imvcddbut.load_db_data(
+            self.db_connection, self.src_table, self.start_date, self.end_date
+        )
+        expected_query = f"SELECT * FROM {self.src_table} WHERE timestamp >= {self.start_ts} AND timestamp <= {self.end_ts}"
+        self.query_mock.assert_called_once_with(
+            self.db_connection, expected_query
+        )
+        # Assert that function is returning None.
+        self.assertIsNone(result)
+
+    def test3(self) -> None:
+        """
+        Test if the function returns an empty dataframe when no data is found
+        in the database.
+        """
+        # Mock the query.
+        self.query_mock.return_value = pd.DataFrame()
+        result = imvcddbut.load_db_data(
+            self.db_connection, self.src_table, self.start_date, self.end_date
+        )
+        # Assert that function is returning empty dataframe.
+        self.assertTrue(result.empty)
+
+    def test4(self) -> None:
+        """
+        Test if the function handles the scenario where the start timestamp is
+        greater than the end timestamp.
+        """
+        # Swap start_ts and end_ts.
         start_ts, end_ts = self.end_date, self.start_date
-        # Mocking execute_query_to_df method
-        with umock.patch('im_v2.common.db.db_utils.hsql.execute_query_to_df') as mock_execute_query_to_df:
-            mock_execute_query_to_df.side_effect = ValueError
-            # Assert that function is raising ValueError
-            with self.assertRaises(ValueError): 
-                result = imvcddbut.load_db_data(self.db_connection, self.src_table, start_ts, end_ts) 
+        # Mock the query.
+        self.query_mock.side_effect = ValueError
+        # Assert that function is raising ValueError.
+        with self.assertRaises(ValueError):
+            imvcddbut.load_db_data(
+                self.db_connection, self.src_table, start_ts, end_ts
+            )
 
-    def test_load_db_data4(self):
+    def test5(self) -> None:
         """
-        Test if the function raises a ValueError when invalid currency pairs are provided.
+        Test if the function raises a ValueError when invalid currency pairs
+        are provided.
         """
-        # Invalid currency pairs
+        # Invalid currency pairs.
         invalid_currency_pairs = None
-        # Mocking execute_query_to_df method
-        with umock.patch('im_v2.common.db.db_utils.hsql.execute_query_to_df') as mock_execute_query_to_df:
-            mock_execute_query_to_df.side_effect = ValueError
-            # Assert that function is raising ValueError
-            with self.assertRaises(ValueError):
-                mock_execute_query_to_df.side_effect = ValueError
-                imvcddbut.load_db_data(self.db_connection, self.src_table, self.start_date, self.end_date, currency_pairs=invalid_currency_pairs)
+        # Mock the query.
+        self.query_mock.side_effect = ValueError
+        # Assert that function is raising ValueError.
+        with self.assertRaises(ValueError):
+            imvcddbut.load_db_data(
+                self.db_connection,
+                self.src_table,
+                self.start_date,
+                self.end_date,
+                currency_pairs=invalid_currency_pairs,
+            )
 
-    def test_load_db_data5(self):
+    def test6(self) -> None:
         """
-        Test if the function raises a ValueError when null parameters are provided for start timestamp.
+        Test if the function raises a ValueError when null parameters are
+        provided for start timestamp.
         """
-        # Null timestamp
+        # Null timestamp.
         start_ts = None
-        # Mocking execute_query_to_df method
-        with umock.patch('im_v2.common.db.db_utils.hsql.execute_query_to_df') as mock_execute_query_to_df:
-            mock_execute_query_to_df.side_effect = ValueError
-            # Assert that function is raising ValueError
-            with self.assertRaises(ValueError):
-                imvcddbut.load_db_data(self.db_connection, self.src_table, start_ts, self.end_date)
+        # Mock the query.
+        self.query_mock.side_effect = ValueError
+        # Assert that function is raising ValueError.
+        with self.assertRaises(ValueError):
+            imvcddbut.load_db_data(
+                self.db_connection, self.src_table, start_ts, self.end_date
+            )
 
-    def test_load_db_data6(self):
+    def test7(self) -> None:
         """
-        Test if the function raises a AttributeError when an invalid timestamp format is provided.
+        Test if the function raises a AttributeError when an invalid timestamp
+        format is provided.
         """
-        # Invalid timestamp format
+        # Invalid timestamp format.
         invalid_ts = "invalid_timestamp"
-        # Mocking execute_query_to_df method
-        with umock.patch('im_v2.common.db.db_utils.hsql.execute_query_to_df') as mock_execute_query_to_df:
-            mock_execute_query_to_df.side_effect = AttributeError
-            # Assert that function is raising AttributeError
-            with self.assertRaises(AttributeError):
-                imvcddbut.load_db_data(self.db_connection, self.src_table, invalid_ts, self.end_date)
-    
-    def test_load_db_data7(self):
-        """
-        Test if functions returns ValueError when Limit parameter is larger than total number of rows returned by database query
-        """
-        # Mocking execute_query_to_df method
-        with umock.patch('im_v2.common.db.db_utils.hsql.execute_query_to_df') as mock_execute_query_to_df:
-            mock_execute_query_to_df.return_value = pd.DataFrame()
-            mock_execute_query_to_df.side_effect = ValueError
-            # Limit is set to very large value
-            limit = 1000000
-            # Assert that a ValueError is raised
-            with self.assertRaises(ValueError):
-                imvcddbut.load_db_data(self.db_connection, self.src_table, self.start_date, self.end_date, limit=limit)
+        # Mock the query.
+        self.query_mock.side_effect = AttributeError
+        # Assert that function is raising AttributeError.
+        with self.assertRaises(AttributeError):
+            imvcddbut.load_db_data(
+                self.db_connection, self.src_table, invalid_ts, self.end_date
+            )
 
+    def test8(self) -> None:
+        """
+        Test if functions returns ValueError when Limit parameter is larger
+        than total number of rows returned by database query.
+        """
+        # Mock the query.
+        self.query_mock.return_value = pd.DataFrame()
+        self.query_mock.side_effect = ValueError
+        # Limit is set to very large value.
+        limit = 1000000
+        # Assert that a ValueError is raised.
+        with self.assertRaises(ValueError):
+            imvcddbut.load_db_data(
+                self.db_connection,
+                self.src_table,
+                self.start_date,
+                self.end_date,
+                limit=limit,
+            )
 
 
 class TestDbConnectionManager(hunitest.TestCase):
