@@ -721,3 +721,16 @@ class CcxtExtractor(imvcdexex.Extractor):
         # Cut the data if it exceeds the end timestamp.
         trades_df = trades_df[trades_df["timestamp"] < end_timestamp]
         return trades_df
+    
+    async def sleep(self, time:int):
+        """
+        :param time: sleep time in milliseconds
+        """
+        await self._async_exchange.sleep(time)
+
+    def close(self):
+        """
+        Close the connection of exchange
+        """
+        # CCXT handles closing connections implicitly.
+        pass

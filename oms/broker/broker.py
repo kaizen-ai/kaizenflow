@@ -119,8 +119,20 @@ def _get_price_per_share(
         # TODO(Grisha): unclear if we should round here or delegate it to
         # `MarketData`.
         bar_duration_in_secs = 60
+        # Allow order generation to take some time. E.g., a bar starts at
+        # 08:15:00 and orders are generated at 08:15:20, then it is okay that
+        # there is a 20 seconds distance between the order creation timestamp
+        # and bar start timestamp. But ensure that it does not spill over in
+        # the next minute.
+        max_distance_in_secs = 60
+        # Round down to the last bar, because rounding up leads to future
+        # peeking. E.g., at 16:45:45 use prices that correspond to 16:45:00.
+        mode = "floor"
         start_timestamp = hdateti.find_bar_timestamp(
-            start_timestamp, bar_duration_in_secs
+            start_timestamp,
+            bar_duration_in_secs,
+            mode=mode,
+            max_distance_in_secs=max_distance_in_secs,
         )
         prices_df = market_data.get_data_at_timestamp(
             start_timestamp, timestamp_col_name, asset_ids

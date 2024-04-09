@@ -30,6 +30,7 @@ import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
+import im_v2.binance.data.extract.extractor as imvbdexex
 
 _LOG = logging.getLogger(__name__)
 
@@ -86,14 +87,22 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # e.g. `ohlcv` and `futures` in `ccxt_ohlcv_futures`.
     hdbg.dassert_in(args.data_type, args.db_table)
     hdbg.dassert_in(args.contract_type, args.db_table)
-    # Initialize the Extractor class.
-    exchange = imvcdeexut.get_CcxtExtractor(args.exchange_id, args.contract_type)
+    hdbg.dassert_in(args.vendor, args.db_table)
+    if args.vendor == "ccxt":
+        # Initialize the Extractor class.
+        exchange = imvcdeexut.get_CcxtExtractor(args.exchange_id, args.contract_type)
+    elif args.vendor == "binance":
+        exchange = imvbdexex.BinanceExtractor("futures", imvbdexex.BinanceNativeTimePeriod.DAILY, data_type=args.data_type)
     args = vars(args)
-    # The vendor argument is added for compatibility so for CCXT-specific
-    #  scripts it should be 'ccxt'.
-    hdbg.dassert_eq(args["vendor"], "ccxt")
-    imvcdeexut.download_realtime_for_one_exchange_periodically(args, exchange)
-
+    try:
+        imvcdeexut.download_realtime_for_one_exchange_periodically(args, exchange)
+    except Exception as e:
+        # Current hacky solution, because the UMFuturesWebsocketClient uses threading internally
+        # The script does not exit when an exception is raised.
+        raise e
+    finally:
+        exchange.close()
+        
 
 if __name__ == "__main__":
     _main(_parse())

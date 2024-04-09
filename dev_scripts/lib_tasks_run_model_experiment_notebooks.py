@@ -23,12 +23,14 @@ import os
 
 from invoke import task
 
+import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
+import im_v2.common.universe as ivcu
 import reconciliation.sim_prod_reconciliation as rsiprrec
 
 _LOG = logging.getLogger(__name__)
@@ -200,19 +202,58 @@ def run_notebooks(
     # The assumption is that a full System run saves SystemConfig which is not
     # the case for broker-only runs.
     is_full_system_run = os.path.exists(config_path)
+    # For broker only runs we are guaranteed to capture all bid/ask data
+    # during experiment itself.
+    bid_ask_data_source = "logged_during_experiment"
     if is_full_system_run:
-        # Extract run parameters (e.g., universe_version, bar_duration) from
-        # SystemConfig.
-        bar_duration = rsiprrec.extract_bar_duration_from_pkl_config(
-            full_system_log_dir
-        )
+        # Load pickled SystemConfig.
+        config_file_name = "system_config.output.values_as_strings.pkl"
+        system_config_path = os.path.join(full_system_log_dir, config_file_name)
+        system_config = cconfig.load_config_from_pickle(system_config_path)
+        hdbg.dassert_in("dag_runner_config", system_config)
+        if isinstance(system_config["dag_runner_config"], tuple):
+            _LOG.warning("Reading Config v1.0")
+            bar_duration = rsiprrec.extract_bar_duration_from_pkl_config(
+                full_system_log_dir
+            )
+            universe_version = rsiprrec.extract_universe_version_from_pkl_config(
+                full_system_log_dir
+            )
+            child_order_execution_freq = (
+                rsiprrec.extract_execution_freq_from_pkl_config(
+                    full_system_log_dir
+                )
+            )
+        else:
+            # TODO(Grisha): preserve types when reading SystemConfig back and
+            #  remove all the post-processing.
+            _LOG.warning("Reading Config v2.0")
+            hdbg.dassert_isinstance(system_config, cconfig.Config)
+            # Extract bar duration in seconds from a loaded system config.
+            bar_duration_in_secs = system_config["dag_runner_config"][
+                "bar_duration_in_secs"
+            ]
+            # Convert to a string representation of bar duration in minutes
+            # in order to use it in the pipeline.
+            bar_duration_in_mins = int(bar_duration_in_secs / 60)
+            bar_duration = f"{bar_duration_in_mins}T"
+            universe_version = system_config["market_data_config"][
+                "im_client_config"
+            ]["universe_version"]
+            child_order_execution_freq = system_config[
+                "process_forecasts_node_dict"
+            ]["process_forecasts_dict"]["order_config"]["execution_frequency"]
         _LOG.debug("Using bar_duration=%s from SystemConfig", bar_duration)
-        universe_version = rsiprrec.extract_universe_version_from_pkl_config(
-            full_system_log_dir
-        )
         _LOG.debug(
             "Using universe_version=%s from SystemConfig", universe_version
         )
+        _LOG.debug(
+            "Using child_order_execution_freq=%s from SystemConfig",
+            child_order_execution_freq,
+        )
+        # For full system runs, the default method is to use bid/ask data
+        # Logged after the experiment to avoid potential gaps.
+        bid_ask_data_source = "logged_after_experiment"
     else:
         args_logfile = os.path.join(system_log_dir, "args.json")
         hdbg.dassert_file_exists(args_logfile)
@@ -223,17 +264,31 @@ def run_notebooks(
         hdbg.dassert_in("universe", args_dict.keys())
         universe_version = args_dict["universe"]
         _LOG.debug("Using universe_version from Broker only args")
+        hdbg.dassert_in("child_order_execution_freq", args_dict.keys())
+        child_order_execution_freq = args_dict["child_order_execution_freq"]
+        _LOG.debug("Using child_order_execution_freq from Broker only args")
     _LOG.info("bar_duration=%s", bar_duration)
     _LOG.info("universe_version=%s", universe_version)
+    # Get a random `test_asset_id` from the universe.
+    vendor = "CCXT"
+    mode = "trade"
+    asset_ids = sorted(
+        ivcu.get_vendor_universe_as_asset_ids(universe_version, vendor, mode)
+    )
+    test_asset_id = asset_ids[0]
     bid_ask = (
         "amp/oms/notebooks/Master_bid_ask_execution_analysis.ipynb",
         "amp.oms.execution_analysis_configs."
-        + f'get_bid_ask_execution_analysis_configs_Cmtask4881("{system_log_dir}", "{bar_duration}")',
+        + f'get_bid_ask_execution_analysis_configs("{system_log_dir}", "{bar_duration}", "{bid_ask_data_source}", test_asset_id={test_asset_id})',
     )
     master_exec = (
         "amp/oms/notebooks/Master_execution_analysis.ipynb",
         "amp.oms.execution_analysis_configs."
-        + f'get_execution_analysis_configs_Cmtask4881("{system_log_dir}", "{bar_duration}", "{universe_version}")',
+        + f'get_execution_analysis_configs_Cmtask4881("{system_log_dir}", \
+            "{bar_duration}", \
+            "{universe_version}", \
+            "{child_order_execution_freq}", \
+            test_asset_id={test_asset_id})',
     )
     broker_debug = (
         "amp/oms/notebooks/Master_broker_debugging.ipynb",

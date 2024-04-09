@@ -1449,7 +1449,7 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
     @umock.patch.object(
         imvcdeexut.imvcddbut, "fetch_last_minute_bid_ask_rt_db_data"
     )
-    @umock.patch.object(imvcdeexut.time, "sleep")
+    @umock.patch.object(imvcdeexut.hasynci.time, "sleep")
     def test_resample_rt_bid_ask_data_periodically(
         self, mock_sleep, mock_fetch_data, mock_now
     ) -> None:
@@ -1461,27 +1461,33 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
         data that would be saved to DB to check their correctness.
         """
         # Create our own passage of time.
+        # Within each hasynci.sync_wait_until call pd.Timestamp.now()
+        # is called three times.
         mock_now.side_effect = [
-            pd.Timestamp(
-                "2024-02-20T18:00:00+00:00"
-            ),  # Pass the assertion on start time.
-            pd.Timestamp("2024-02-20T18:00:00+00:00"),  # Calculating start delay.
+            # Pass the assertion on start time.
+            pd.Timestamp("2024-02-20T18:00:00+00:00"),
+            # Calculating start delay.
+            pd.Timestamp("2024-02-20T18:00:00+00:00"),
+            pd.Timestamp("2024-02-20T18:00:00+00:00"),
+            pd.Timestamp("2024-02-20T18:00:00+00:00"),
             # While loop check
             pd.Timestamp("2024-02-20T18:00:00.200+00:00"),
             # First iteration.
-            pd.Timestamp("2024-02-20T18:00:00.200+00:00"),  # Iter start time.
-            pd.Timestamp(
-                "2024-02-20T18:00:01+00:00"
-            ),  # Set `end_download_timestamp`.
-            pd.Timestamp("2024-02-20T18:00:02+00:00"),  # Iter end time.
+            # Set `end_download_timestamp`.
+            pd.Timestamp("2024-02-20T18:00:01+00:00"),
+            # Wait until next iteration.
+            pd.Timestamp("2024-02-20T18:00:01+00:00"),
+            pd.Timestamp("2024-02-20T18:00:01+00:00"),
+            pd.Timestamp("2024-02-20T18:00:01+00:00"),
             # While loop check.
             pd.Timestamp("2024-02-20T18:01:00.200+00:00"),
             # Second Iteration.
-            pd.Timestamp("2024-02-20T18:01:00.200+00:00"),  # Iter start time.
-            pd.Timestamp(
-                "2024-02-20T18:01:01+00:00"
-            ),  # Set `end_download_timestamp`.
-            pd.Timestamp("2024-02-20T18:01:02+00:00"),  # Iter end time.
+            # Set `end_download_timestamp`.
+            pd.Timestamp("2024-02-20T18:01:01+00:00"),
+            # Wait until next iteration.
+            pd.Timestamp("2024-02-20T18:01:02+00:00"),
+            pd.Timestamp("2024-02-20T18:01:02+00:00"),
+            pd.Timestamp("2024-02-20T18:01:02+00:00"),
             # While loop check (Should end the loop).
             pd.Timestamp("2024-02-20T18:02:00.200+00:00"),
             # Log message

@@ -323,7 +323,7 @@ class TestImRawDataClient2(imvcddbut.TestImDbHelper):
         """
         Verify that the data fetched from the DB with filters is correct.
         """
-        signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7.ccxt.okx.v1_0_0"
+        signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7_3.ccxt.okx.v1_0_0"
         # Mock connection for RawDataReader.
         mock_get_connection.return_value = self.connection
         reader = imvcdcimrdc.RawDataReader(signature)
@@ -359,7 +359,7 @@ class TestImRawDataClient2(imvcddbut.TestImDbHelper):
         """
         Verify that the data fetched from the DB with filters is correct.
         """
-        signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7.ccxt.okx.v1_0_0"
+        signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7_3.ccxt.okx.v1_0_0"
         # Mock connection for RawDataReader.
         mock_get_connection.return_value = self.connection
         reader = imvcdcimrdc.RawDataReader(signature)
@@ -409,7 +409,7 @@ class TestImRawDataClient2(imvcddbut.TestImDbHelper):
         """
         Verify that the data fetched from the DB with filters is correct.
         """
-        signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7.ccxt.okx.v1_0_0"
+        signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7_3.ccxt.okx.v1_0_0"
         # Mock connection for RawDataReader.
         mock_get_connection.return_value = self.connection
         reader = imvcdcimrdc.RawDataReader(signature)

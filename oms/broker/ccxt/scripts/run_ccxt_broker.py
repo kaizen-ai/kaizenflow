@@ -51,37 +51,10 @@ import oms.order.order as oordorde
 _LOG = logging.getLogger(__name__)
 
 _BINANCE_MIN_NOTIONAL = 10
-_UNIVERSE_VERSION = "v7.3"
 _VENDOR = "ccxt"
 _EXCHANGE = "binance"
 # TODO(Juraj): a hacky way to make progress, implement this as one of the run modes.
-_NEXT_ORDER_SIDE_PER_ASSET = {
-    "BTC/USDT:USDT": None,
-    "ETH/USDT:USDT": None,
-    "XRP/USDT:USDT": None,
-    "APE/USDT:USDT": None,
-    "AVAX/USDT:USDT": None,
-    "AXS/USDT:USDT": None,
-    "BAKE/USDT:USDT": None,
-    "BNB/USDT:USDT": None,
-    "CRV/USDT:USDT": None,
-    "CTK/USDT:USDT": None,
-    "DOGE/USDT:USDT": None,
-    "DOT/USDT:USDT": None,
-    "DYDX/USDT:USDT": None,
-    "FTM/USDT:USDT": None,
-    "GMT/USDT:USDT": None,
-    "LINK/USDT:USDT": None,
-    "MATIC/USDT:USDT": None,
-    "NEAR/USDT:USDT": None,
-    "OGN/USDT:USDT": None,
-    "RUNE/USDT:USDT": None,
-    "SAND/USDT:USDT": None,
-    "SOL/USDT:USDT": None,
-    "STORJ/USDT:USDT": None,
-    "UNFI/USDT:USDT": None,
-    "WAVES/USDT:USDT": None,
-}
+_NEXT_ORDER_SIDE_PER_ASSET = {}
 
 
 def _get_symbols(
@@ -108,6 +81,9 @@ def _get_symbols(
         )
         for symbol in universe[exchange]
     ]
+    # TODO(Juraj): Remove global var #CmTask7601.
+    global _NEXT_ORDER_SIDE_PER_ASSET
+    _NEXT_ORDER_SIDE_PER_ASSET = {symbol: None for symbol in symbols}
     return symbols
 
 
@@ -129,7 +105,7 @@ def _get_asset_ids(
     if number_asset_ids is None:
         number_asset_ids = np.random.randint(5, 10)
     top_symbols = _get_symbols(
-        _UNIVERSE_VERSION, _VENDOR, _EXCHANGE, broker._contract_type
+        broker._universe_version, _VENDOR, _EXCHANGE, broker._contract_type
     )
     btc_usdt = "BTC/USDT:USDT"
     if not include_btc_usdt and btc_usdt in top_symbols:
@@ -257,6 +233,7 @@ def _get_random_orders(
             continue
         # Set order direction for the current order.
         symbol = asset_id["symbol"]
+        _LOG.debug(_NEXT_ORDER_SIDE_PER_ASSET)
         order_diretion = (
             orders_direction
             if orders_direction is not None
@@ -504,14 +481,14 @@ def _execute_one_bar_using_twap(
 
 
 def _generate_prices_from_data_reader(
-    contract_type: str, db_stage: str
+    contract_type: str, db_stage: str, universe_version: str
 ) -> Dict[str, float]:
     """
     Generate prices for all the currency pairs in the universe.
     """
-    signature = "realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v7_3.ccxt.binance.v1_0_0"
+    signature = f"realtime.airflow.downloaded_1min.postgres.ohlcv.futures.{universe_version.replace('.', '_')}.ccxt.binance.v1_0_0"
     universe = ivcu.get_vendor_universe(
-        _VENDOR, "trade", version=_UNIVERSE_VERSION
+        _VENDOR, "trade", version=universe_version
     )
     currency_pairs = universe[_EXCHANGE]
     # Get latest price for currency from database.
@@ -568,7 +545,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         "limit_price_computer_type": "LimitPriceComputerUsingVolatility",
         "limit_price_computer_kwargs": {
             "volatility_multiple": args.volatility_multiple,
-        }
+        },
     }
     broker = obccbrin.get_CcxtBroker(
         secret_id,
@@ -578,7 +555,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         stage=args.db_stage,
     )
     symbol_to_price_dict = _generate_prices_from_data_reader(
-        broker._contract_type, args.db_stage
+        broker._contract_type, args.db_stage, args.universe
     )
     # Clean up before running the script.
     if args.clean_up_before_run:

@@ -22,7 +22,7 @@ import dataflow.model as dtfmod
 import helpers.hio as hio
 import helpers.hpandas as hpandas
 import im_v2.common.universe as ivcu
-import oms
+import reconciliation as reconcil
 
 DEFAULT_START_DATE = datetime.datetime(2019, 9, 1)
 
@@ -35,7 +35,8 @@ dbc_css = (
 APP_THEME = dbc.themes.MORPH
 DEBUG_MODE = os.environ.get("DASH_DEBUG_MODE", "1") == "1"
 BASE_PATH = "/shared_data/ecs/preprod/system_reconciliation/C3a"
-UNIVERSE_VERSION = "v7.1"
+# See the TODO comment in `obrbrexa.get_DataFrameBroker_example1()`.
+UNIVERSE_VERSION = ivcu.get_latest_universe_version()
 # Because ECS container only see past /data/shared/ecs There is a softlink:
 # ln -s /data/shared/model/historical/pnl_for_website/ /data/shared/ecs/pnl_for_website
 HISTORICAL_PATH = (
@@ -135,7 +136,7 @@ def get_last_trades_dict(pnl_date: datetime.datetime) -> Dict:
     Get the last placed trades.
     """
     portfolio_dir = _get_pnl_path(pnl_date)
-    portfolio_df, _ = oms.load_portfolio_artifacts(portfolio_dir)
+    portfolio_df, _ = reconcil.load_portfolio_artifacts(portfolio_dir)
     executed_trades_notional = portfolio_df["executed_trades_notional"]
     # Executed trades for the last bar are stored in the last row.
     executed_trades_notional_current_bar = executed_trades_notional.tail(1)
@@ -211,7 +212,7 @@ def get_cumulative_pnl(pnl_date: datetime.datetime = None) -> pd.Series:
     :return: cumulative PnL as a pandas Series
     """
     path = _get_pnl_path(pnl_date)
-    _, stats_df = oms.load_portfolio_artifacts(path)
+    _, stats_df = reconcil.load_portfolio_artifacts(path)
     return stats_df["pnl"].cumsum() * 1000
 
 
@@ -397,9 +398,7 @@ app.layout = dash.html.Div(
         header,
         info_card,
         tabs,
-        dash.dcc.Interval(
-            id="1-second-interval", interval=1000, n_intervals=0
-        ),
+        dash.dcc.Interval(id="1-second-interval", interval=1000, n_intervals=0),
         dash.dcc.Interval(
             id="5-minute-interval", interval=1000 * 300, n_intervals=0
         ),

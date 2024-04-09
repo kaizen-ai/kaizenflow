@@ -14,6 +14,7 @@ module "vpc" {
   internet_gateway_tags           = var.internet_gateway_tags
   nat_gateway_subnet_id           = var.nat_gateway_subnet_id
   nat_gateway_name                = var.nat_gateway_name
+  eip_name                        = var.eip_name
   vpc_id                          = module.vpc.vpc_id
   route_tables                    = var.route_tables
   internet_gateway_routes         = var.internet_gateway_routes
@@ -145,5 +146,64 @@ module "client_vpn_endpoint" {
   endpoint_subnet_id    = var.endpoint_subnet_id
   endpoint_CIDR         = var.endpoint_CIDR
   sesh_timeout          = var.sesh_timeout
+
+}
+
+module "ecs" {
+  source = "./modules/ecs"
+
+  stage                          = var.stage
+  tags_cluster                   = var.tags_cluster
+  tags_all_cluster               = var.tags_all_cluster
+  containerInsights_value        = var.containerInsights_value
+  cpu_td                         = var.cpu_td
+  execution_role_arn_td          = var.execution_role_arn_td
+  ipc_mode_td                    = var.ipc_mode_td
+  memory_td                      = var.memory_td
+  network_mode_td                = var.network_mode_td
+  pid_mode_td                    = var.pid_mode_td
+  requires_compatibilities_td    = var.requires_compatibilities_td
+  skip_destroy_td                = var.skip_destroy_td
+  tags_td                        = var.tags_td
+  tags_all_td                    = var.tags_all_td
+  task_role_arn_td               = var.task_role_arn_td
+  track_latest_td                = var.track_latest_td
+  host_path_td_efs               = var.host_path_td_efs
+  name_td_efs                    = var.name_td_efs
+  file_system_id_td_efs          = var.file_system_id_td_efs
+  root_directory_td_efs          = var.root_directory_td_efs
+  transit_encryption_td_efs      = var.transit_encryption_td_efs
+  transit_encryption_port_td_efs = var.transit_encryption_port_td_efs
+  access_point_id_td_efs         = var.access_point_id_td_efs
+  iam_td_efs                     = var.iam_td_efs
+  cpu_cd                         = var.cpu_cd
+  dnsSearchDomains               = var.dnsSearchDomains
+  dnsServers                     = var.dnsServers
+  dockerSecurityOptions          = var.dockerSecurityOptions
+  essential                      = var.essential
+  image                          = var.image
+  links                          = var.links
+  logDriver                      = var.logDriver
+  awslogsGroup                   = var.awslogsGroup
+  awslogsRegion                  = var.awslogsRegion
+  awslogsStreamPrefix            = var.awslogsStreamPrefix
+  containerPath                  = var.containerPath
+  readOnly                       = var.readOnly
+  sourceVolume                   = var.sourceVolume
+  taskDefinitionName             = var.taskDefinitionName
+  portMappings                   = var.portMappings
+  systemControls                 = var.systemControls
+  volumesFrom                    = var.volumesFrom
+  AM_AWS_S3_BUCKET               = var.AM_AWS_S3_BUCKET
+  AM_ECR_BASE_PATH               = var.AM_ECR_BASE_PATH
+  AM_ENABLE_DIND                 = var.AM_ENABLE_DIND
+  CK_AWS_DEFAULT_REGION          = var.CK_AWS_DEFAULT_REGION
+  CK_AWS_S3_BUCKET               = var.CK_AWS_S3_BUCKET
+  CK_ECR_BASE_PATH               = var.CK_ECR_BASE_PATH
+  POSTGRES_DB                    = var.POSTGRES_DB
+  POSTGRES_HOST                  = var.POSTGRES_HOST
+  POSTGRES_PORT                  = var.POSTGRES_PORT
+  POSTGRES_PASSWORD              = var.POSTGRES_PASSWORD
+  POSTGRES_USER                  = var.POSTGRES_USER
 
 }

@@ -79,12 +79,18 @@ def _run(args: argparse.Namespace) -> None:
         )
     elif vendor == "binance":
         # For the bulk download, we allow data gaps.
-        exchange = imvbdexex.BinanceExtractor(
-            args["contract_type"],
-            allow_data_gaps=True,
-            # TODO(Vlad): Temporary stick to daily data for Binance.
-            time_period=imvbdexex.BinanceNativeTimePeriod.DAILY,
-        )
+        try:
+            exchange = imvbdexex.BinanceExtractor(
+                args["contract_type"],
+                allow_data_gaps=True,
+                data_type=args["data_type"],
+                # TODO(Vlad): Temporary stick to daily data for Binance.
+                time_period=imvbdexex.BinanceNativeTimePeriod.DAILY,
+            )
+        except Exception as e:
+            raise e
+        finally:
+            exchange.close()
     else:
         hdbg.dfatal(f"Vendor {vendor} is not supported.")
     imvcdqviar.validate_dst_dir_arg(args)

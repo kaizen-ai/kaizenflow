@@ -21,6 +21,7 @@ import helpers.hs3 as hs3
 import helpers.hsql_implementation as hsqlimpl
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.db.db_utils as imvcddbut
+import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
 
@@ -61,6 +62,12 @@ class RawDataReader:
         self.dataset_epoch_unit = imvcdttrut.get_vendor_epoch_unit(
             self.args["vendor"], self.args["data_type"]
         )
+        universe_list = imvcounun.get_vendor_universe(
+            self.args["vendor"],
+            "download",
+            version=self.args["universe"].replace("_", "."),
+        )
+        self.universe_list = universe_list[self.args["exchange_id"]]
         if self.args["data_format"] == "parquet":
             self.partition_mode = self._get_partition_mode()
         elif self.args["data_format"] == "postgres":
@@ -99,6 +106,8 @@ class RawDataReader:
         :param bid_ask_levels: which levels of bid_ask data to load, if
             None, all levels are loaded
         """
+        if currency_pairs:
+            hdbg.dassert_is_subset(set(currency_pairs), set(self.universe_list))
         if self.args["data_format"] == "parquet":
             # Load the data from Parquet.
             data = self.load_parquet(
@@ -166,6 +175,10 @@ class RawDataReader:
         Refer to `read_data()` for parameter docs.
         """
         hdbg.dassert_in(bid_ask_format, ["wide", "long"])
+        if not currency_pairs:
+            # Database can store different universes, determine the set based
+            # on current signature's universe.
+            currency_pairs = self.universe_list
         data = imvcddbut.load_db_data(
             self.db_connection,
             self.table_name,
@@ -376,7 +389,9 @@ class RawDataReader:
 # TODO(gp): -> raw_data_client_examples.py
 
 
-def get_bid_ask_realtime_raw_data_reader(stage: str) -> RawDataReader:
+def get_bid_ask_realtime_raw_data_reader(
+    stage: str, data_vendor: str, universe_version: str
+) -> RawDataReader:
     """
     Get raw data reader for the real-time bid/ask price data.
 
@@ -384,7 +399,13 @@ def get_bid_ask_realtime_raw_data_reader(stage: str) -> RawDataReader:
 
     :param stage: which stage to execute in, determines which DB stage
         or S3 bucket is used.
+    :param data_vendor: provider of the realtime data, e.g. CCXT or
+        Binance
+    :param universe_version: version of the universe
+    :return: RawDataReader initialized for the realtime bid/ask data
     """
-    bid_ask_db_signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7.ccxt.binance.v1_0_0"
+    universe_version = universe_version.replace(".", "_")
+    data_vendor = data_vendor.lower()
+    bid_ask_db_signature = f"realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.{universe_version}.{data_vendor}.binance.v1_0_0"
     bid_ask_raw_data_reader = RawDataReader(bid_ask_db_signature, stage=stage)
     return bid_ask_raw_data_reader

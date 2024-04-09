@@ -71,7 +71,7 @@ class Test_generate_compose_file1(hunitest.TestCase):
     def test3(self) -> None:
         self.helper(stage="prod", use_main_network=True)
 
-    # TODO(ShaopengZ): This hangs outside CK infra, so we skip it. 
+    # TODO(ShaopengZ): This hangs outside CK infra, so we skip it.
     @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(
         hgit.is_in_amp_as_submodule(), reason="Only run in amp directly"
@@ -79,7 +79,7 @@ class Test_generate_compose_file1(hunitest.TestCase):
     def test4(self) -> None:
         self.helper(stage="dev")
 
-    # TODO(ShaopengZ): This hangs outside CK infra, so we skip it. 
+    # TODO(ShaopengZ): This hangs outside CK infra, so we skip it.
     @pytest.mark.requires_ck_infra
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
@@ -91,7 +91,7 @@ class Test_generate_compose_file1(hunitest.TestCase):
 # #############################################################################
 
 
-# TODO(ShaopengZ): This hangs outside CK infra, so we skip it. 
+# TODO(ShaopengZ): This hangs outside CK infra, so we skip it.
 @pytest.mark.requires_ck_infra
 class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
     """

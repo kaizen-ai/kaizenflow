@@ -45,8 +45,10 @@ class TestRunReplayedCcxtBroker1(hunitest.TestCase):
             argparse.ArgumentParser, spec_set=True
         )
         # Assign args to call the function.
+        scratch_dir = self.get_scratch_space()
+        log_dir = os.path.join(scratch_dir, "mock", "test_log")
         kwargs = {
-            "log_dir": "mock/test_log",
+            "log_dir": log_dir,
             "universe": "v7.4",
             "secret_id": 4,
             "replayed_dir": log_data_dir,

@@ -20,7 +20,7 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 # Ensure the script is run from the root directory
-if [[ ! -d "${DEPLOY_DIR}/terraform" || ! -d "${DEPLOY_DIR}/ansible" ]]; then
+if [[ ! -d "${DEPLOY_DIR}/terraform" || ! -d "${DEPLOY_DIR}/ansible" || ! -d "${DEPLOY_DIR}/kubernetes" ]]; then
     echo -e "${RED}Please run the script from the project's root directory.${NC}"
     exit 1
 fi
@@ -176,6 +176,9 @@ function deploy_k8s_infrastructure() {
     echo ""
     sleep 3
 
+    # Capture the EFS DNS name from Terraform outputs
+    EFS_DNS_NAME=$(terraform output -json efs_dns_name | jq -r .)
+
     echo "Moving to main K8s directory..."
     cd "${DEPLOY_DIR}/kubernetes"
     K8S_TEMPLATES_DIR="${DEPLOY_DIR}/kubernetes/airflow/templates"
@@ -209,6 +212,14 @@ function deploy_k8s_infrastructure() {
     echo ""
     sleep 3
 
+    echo "Updating Persistent Volume YAML files with EFS DNS Name..."
+    # Replace the volumeHandle with the actual EFS filesystem ID for DAGs
+    sed -i "s|volumeHandle:.*|volumeHandle: ${EFS_DNS_NAME}:/airflow/dags|" "${K8S_TEMPLATES_DIR}/pvcs/dags-persistent-volume.yaml"
+    # Replace the volumeHandle with the actual EFS filesystem ID for Logs
+    sed -i "s|volumeHandle:.*|volumeHandle: ${EFS_DNS_NAME}:/airflow/logs|" "${K8S_TEMPLATES_DIR}/pvcs/logs-persistent-volume.yaml"
+    echo ""
+    sleep 1
+
     echo "Applying persistent volume and claims for airflow logs and dags storage..."
     kubectl apply -f "$K8S_TEMPLATES_DIR/pvcs/logs-persistent-volume.yaml" -n airflow
     kubectl apply -f "$K8S_TEMPLATES_DIR/pvcs/logs-persistent-volume-claim.yaml" -n airflow
@@ -231,12 +242,12 @@ function deploy_k8s_infrastructure() {
     helm repo add external-secrets https://charts.external-secrets.io
     helm install external-secrets external-secrets/external-secrets -n external-secrets --create-namespace
     echo ""
-    sleep 1
+    sleep 6
 
     echo "Applying ESO secret store configuration..."
     kubectl apply -f "$K8S_TEMPLATES_DIR/secrets/eso-secretstore.yaml" -n airflow
     echo ""
-    sleep 1
+    sleep 3
 
     echo "Applying secrets configuration..."
     kubectl apply -f "$K8S_TEMPLATES_DIR/secrets/secrets.yaml" -n airflow

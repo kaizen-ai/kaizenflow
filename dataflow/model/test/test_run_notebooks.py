@@ -30,7 +30,6 @@ def build_test_master_research_backtest_analyzer_config(
     Default config builder for testing the Master_research_backtest_analyzer
     notebook.
 
-    :param sweep_param: if True, add "sweep_param" dict to config
     :return: config list
     """
     amp_dir = hgit.get_amp_abs_path()
@@ -40,10 +39,11 @@ def build_test_master_research_backtest_analyzer_config(
     )
     config_dict = {
         "dir_name": dir_name,
-        "start_date": datetime.date(2000, 1, 1),
-        "end_date": datetime.date(2000, 1, 31),
+        "start_date": datetime.date(2024, 1, 1),
+        "end_date": datetime.date(2024, 1, 31),
         "asset_id_col": "asset_id",
-        "pnl_resampling_frequency": "15T",
+        "pnl_resampling_frequency": "D",
+        "rule": "6T",
         "annotate_forecasts_kwargs": {
             "style": "longitudinal",
             "quantization": 30,
@@ -51,19 +51,36 @@ def build_test_master_research_backtest_analyzer_config(
             "initialize_beginning_of_day_trades_to_zero": False,
             "burn_in_bars": 3,
             "compute_extended_stats": True,
-            "target_dollar_risk_per_name": 1e2,
-            "modulate_using_prediction_magnitude": True,
+            "target_dollar_risk_per_name": 1.0,
+            "modulate_using_prediction_magnitude": False,
+            "prediction_abs_threshold": 0.3,
+        },
+        "im_client_config": {
+            "vendor": "ccxt",
+            "universe_version": "v7.5",
+            "root_dir": "s3://cryptokaizen-unit-test/v3",
+            "partition_mode": "by_year_month",
+            "dataset": "ohlcv",
+            "contract_type": "futures",
+            "data_snapshot": "",
+            "aws_profile": "ck",
+            "version": "v1_0_0",
+            "download_universe_version": "v8",
+            "tag": "downloaded_1min",
+            "download_mode": "periodic_daily",
+            "downloading_entity": "airflow",
+            "resample_1min": False,
         },
         "column_names": {
-            "price_col": "vwap",
-            "volatility_col": "vwap.ret_0.vol",
-            "prediction_col": "prediction",
+            "price_col": "open",
+            "volatility_col": "garman_klass_vol",
+            "prediction_col": "feature",
         },
         "bin_annotated_portfolio_df_kwargs": {
             "proportion_of_data_per_bin": 0.2,
             "normalize_prediction_col_values": False,
         },
-        "load_all_tiles_in_memory": False,
+        "load_all_tiles_in_memory": True,
     }
     if sweep_param:
         config_dict["sweep_param"] = {
@@ -71,10 +88,9 @@ def build_test_master_research_backtest_analyzer_config(
                 "column_names",
                 "price_col",
             ),
-            "values": (
-                "vwap",
-                "twap",
-            ),
+            "values": [
+                "open",
+            ],
         }
     config = cconfig.Config().from_dict(config_dict)
     config_list = cconfig.ConfigList([config])
@@ -153,10 +169,7 @@ class Test_run_master_feature_analyzer(dsnrnteca.Test_Run_Notebook_TestCase):
 class Test_run_master_research_backtest_analyzer(
     dsnrnteca.Test_Run_Notebook_TestCase
 ):
-    @pytest.mark.skip(
-        "CMTask7481: temporarily disabled due to new notebook promotion."
-    )
-    @pytest.mark.superslow("~60 sec.")
+    @pytest.mark.superslow("~80 sec.")
     def test_run_notebook1(self) -> None:
         """
         Test that notebook runs end-to-end without errors.
@@ -164,12 +177,31 @@ class Test_run_master_research_backtest_analyzer(
         `sweep_param` is not exposed, use only default config.
         """
         notebook_name = "Master_research_backtest_analyzer"
+        config_builder = "dataflow.model.test.test_run_notebooks.build_test_master_research_backtest_analyzer_config(True)"
+        _test_run_notebook(self, notebook_name, config_builder)
+
+    @pytest.mark.skip("Run manually.")
+    @pytest.mark.requires_ck_infra
+    @pytest.mark.slow("~17 sec.")
+    def test_save_data(self) -> None:
+        """
+        Save test data.
+        """
+        _test_save_data(self)
+
+
+class Test_toy_research_backtest_analyzer(dsnrnteca.Test_Run_Notebook_TestCase):
+    @pytest.mark.superslow("~60 sec.")
+    def test_run_notebook1(self) -> None:
+        """
+        Test that notebook runs end-to-end without errors.
+
+        `sweep_param` is not exposed, use only default config.
+        """
+        notebook_name = "Toy_research_backtest_analyzer"
         config_builder = "dataflow.model.test.test_run_notebooks.build_test_master_research_backtest_analyzer_config(False)"
         _test_run_notebook(self, notebook_name, config_builder)
 
-    @pytest.mark.skip(
-        "CMTask7481: temporarily disabled due to new notebook promotion."
-    )
     @pytest.mark.superslow("~60 sec.")
     def test_run_notebook2(self) -> None:
         """
@@ -177,7 +209,7 @@ class Test_run_master_research_backtest_analyzer(
 
         `sweep_param` is exposed, multiple configs are used.
         """
-        notebook_name = "Master_research_backtest_analyzer"
+        notebook_name = "Toy_research_backtest_analyzer"
         config_builder = "dataflow.model.test.test_run_notebooks.build_test_master_research_backtest_analyzer_config(True)"
         _test_run_notebook(self, notebook_name, config_builder)
 

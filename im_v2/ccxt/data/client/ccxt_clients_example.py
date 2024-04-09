@@ -214,26 +214,26 @@ def get_CcxtHistoricalPqByTileClient_example1(
     return ccxt_parquet_client
 
 
+# TODO(Nina): Think about updating the name to get_..._small_universe().
 def get_CcxtHistoricalPqByTileClient_example2(
     root_dir: str,
     resample_1min: bool,
+    dataset: str,
+    contract_type: str,
+    data_snapshot: str,
+    download_universe_version: str,
 ) -> imvcdccccl.CcxtHistoricalPqByTileClient:
     """
     Get `CcxtHistoricalPqByTileClient` object for the tests reading data
     snippets created for unit tests.
 
-    Client is initialized to process CCXT data for:
-    - universe version: "small"
-    - contract type: "spot"
+    The client uses `universe_version = small` and the remaining params are the
+    same as `CcxtHistoricalPqByTileClient`.
     """
     # TODO(gp): express this guy in terms of get_CcxtHistoricalPqByTileClient_example1
     #  but the problem is that this uses "unit_test" instead of "reorg".
     universe_version = "small"
     partition_mode = "by_year_month"
-    dataset = "ohlcv"
-    contract_type = "spot"
-    data_snapshot = "20220705"
-    download_universe_version = "v7_3"
     aws_profile = "ck"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
         universe_version,

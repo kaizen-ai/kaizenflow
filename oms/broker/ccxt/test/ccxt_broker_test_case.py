@@ -1327,6 +1327,7 @@ class TestCcxtBroker_TestCase(hunitest.TestCase, abc.ABC):
             limit_price_computer=oliprcom.LimitPriceComputerUsingSpread(
                 passivity_factor
             ),
+            max_order_submit_retries=3,
             bid_ask_raw_data_reader=mock_data_reader,
             sync_exchange=sync_exchange,
             async_exchange=async_exchange,

@@ -63,6 +63,9 @@ def get_Cx_RealTimeMarketData_prod_instance1(
     asset_ids: List[int],
     db_stage: str,
     *,
+    # TODO(Grisha): remove the default value once the analysis notebooks
+    # are updated, see CmTask7511.
+    table_name: str = "ccxt_ohlcv_futures",
     sleep_in_secs: float = 1.0,
 ) -> mdata.MarketData:
     """
@@ -77,7 +80,6 @@ def get_Cx_RealTimeMarketData_prod_instance1(
     # Get DB connection.
     db_connection = imvcddbut.DbConnectionManager.get_connection(db_stage)
     # Get the real-time `ImClient`.
-    table_name = "ccxt_ohlcv_futures"
     # TODO(Grisha): @Dan pass as much as possible via `system.config`.
     resample_1min = False
     im_client = imvcdccccl.CcxtSqlRealTimeImClient(
@@ -358,6 +360,9 @@ def get_Cx_portfolio_prod_instance1(
     broker_config = system.config.get_and_mark_as_used(
         ("portfolio_config", "broker_config")
     ).to_dict()
+    mark_to_market_col = system.config.get_and_mark_as_used(
+        ("portfolio_config", "mark_to_market_col")
+    )
     portfolio = obccccpo.get_CcxtPortfolio_prod_instance1(
         run_mode,
         cf_config_strategy,
@@ -369,6 +374,7 @@ def get_Cx_portfolio_prod_instance1(
         asset_ids,
         broker_config,
         log_dir,
+        mark_to_market_col,
     )
     return portfolio
 

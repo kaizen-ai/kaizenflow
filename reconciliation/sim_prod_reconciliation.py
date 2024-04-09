@@ -156,10 +156,7 @@ def build_reconciliation_configs(
         quantization = None
         # TODO(Grisha): consider exposing file path to config instead of
         # storing the whole mapping in the config.
-        market_info = obccccut.load_market_data_info()
-        asset_id_to_share_decimals = obccccut.subset_market_info(
-            market_info, "amount_precision"
-        )
+        asset_id_to_share_decimals = obccccut.get_asset_id_to_share_decimals()
         gmv = 3000.0
         liquidate_at_end_of_day = False
         initialize_beginning_of_day_trades_to_zero = False
@@ -455,14 +452,13 @@ def extract_bar_duration_from_pkl_config(system_log_dir: str) -> str:
     # Get string representation of `DagRunner` config.
     # Bar duration should not depend on the resampling rule
     # from `dag_config` so we take its value from `DagRunner` config.
-    dag_runner_config_str = system_config_pkl["dag_runner_config"]
+    dag_runner_config_str = str(system_config_pkl["dag_runner_config"])
     # Infer `bar_duration_in_secs`.
     # TODO(Nina): Get value from config directly instead of parsing string,
     # see CmTask6627.
     # Config from a pickle file has only string values that require
     # string processing to extract actual config values from it.
-    config_values = " ".join(dag_runner_config_str[-1].split("\n"))
-    match = re.search(r"bar_duration_in_secs:\s*(\d+)", config_values)
+    match = re.search(r"bar_duration_in_secs:\s*(\d+)", dag_runner_config_str)
     if match is not None:
         bar_duration_in_secs = int(match.group(1))
         # Convert bar duration into minutes.
@@ -471,6 +467,41 @@ def extract_bar_duration_from_pkl_config(system_log_dir: str) -> str:
     else:
         raise ValueError("Cannot parse `bar_duration_in_secs` from the config")
     return bar_duration_in_mins_as_str
+
+
+# TODO(Nina): consider removing once CmTask6627 is implemented.
+def extract_price_column_name_from_pkl_config(system_log_dir: str) -> str:
+    """
+    Get price column from pickled system config.
+
+    :param system_log_dir: dir containing
+        `system_config.output.values_as_strings.pkl` file
+         e.g., ".../system_log_dir.scheduled"
+    :return: price column, e.g., "close"
+    """
+    # Get string representation of portfolio config.
+    config_file_name = "system_config.output.values_as_strings.pkl"
+    system_config_path = os.path.join(system_log_dir, config_file_name)
+    system_config_pkl = cconfig.load_config_from_pickle(system_config_path)
+    # Transform tuple into a string for regex.
+    portfolio_config_str = str(system_config_pkl["portfolio_config"])
+    _LOG.debug(hprint.to_str("portfolio_config_str"))
+    # Get price column name.
+    # TODO(Dan): Fix after CmTask6627 is implemented.
+    # Config from a pickle file has only string values that require
+    # string processing to extract actual config values from it.
+    #
+    # `mark_to_market_col` inside `portfolio_config` appears in the pickled
+    # Config as: "('False', 'None', 'mark_to_market_col: close\\npricing_method:".
+    #
+    re_pattern = r"mark_to_market_col:\s?([^\s\\']+)"
+    match = re.search(re_pattern, portfolio_config_str)
+    msg = f"Cannot parse `mark_to_market_col` from the Config stored at={system_config_path}"
+    hdbg.dassert_ne(match, None, msg=msg)
+    # There should be exactly one match.
+    hdbg.dassert_eq(1, len(match.groups()))
+    price_column_name = match.group(1)
+    return price_column_name
 
 
 def extract_universe_version_from_pkl_config(system_log_dir: str) -> str:
@@ -507,6 +538,34 @@ def extract_universe_version_from_pkl_config(system_log_dir: str) -> str:
     hdbg.dassert_eq(1, len(match.groups()))
     universe_version = match.group(1)
     return universe_version
+
+
+def extract_execution_freq_from_pkl_config(system_log_dir: str) -> str:
+    """
+    Get child order execution frequency from pickled system config.
+
+    :param system_log_dir: dir containing
+        `system_config.output.values_as_strings.pkl` file
+         e.g., ".../system_log_dir.scheduled"
+    :return: child order execution frequency, e.g., "1T"
+    """
+    # Get string representation of market data config.
+    config_file_name = "system_config.output.values_as_strings.pkl"
+    system_config_path = os.path.join(system_log_dir, config_file_name)
+    system_config_pkl = cconfig.load_config_from_pickle(system_config_path)
+    # Transform tuple into a string for regex.
+    process_forecasts_node_dict = str(
+        system_config_pkl["process_forecasts_node_dict"]
+    )
+    _LOG.debug(hprint.to_str("process_forecasts_node_dict"))
+    re_pattern = r"execution_frequency:\s?([^\s\\']+)"
+    match = re.search(re_pattern, process_forecasts_node_dict)
+    msg = f"Cannot parse `execution_frequency` from the Config stored at={system_config_path}"
+    hdbg.dassert_ne(match, None, msg=msg)
+    # There should be exactly one match.
+    hdbg.dassert_eq(1, len(match.groups()))
+    execution_frequency = match.group(1)
+    return execution_frequency
 
 
 def get_universe_version_from_config_overrides(
