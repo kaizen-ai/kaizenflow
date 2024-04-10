@@ -108,6 +108,11 @@ class BinanceExtractor(ivcdexex.Extractor):
         self._ohlcv = {}
         self._trades = {}
         self._websocket_data_buffer = {}
+        # Store the list of currency pairs which got subscribed, in case of disconnect
+        # we would like to subscribe again.
+        self.currency_pairs = []
+        self.bid_ask_depth = None
+        self.data_type = data_type
         if data_type == "bid_ask":
             message_handler = self._handle_orderbook_message
         elif data_type == "trades":
@@ -117,7 +122,9 @@ class BinanceExtractor(ivcdexex.Extractor):
         else:
             raise NotImplementedError
         self._client = imvbwwecl.UMFuturesWebsocketClient(
-            on_message=message_handler, on_error=self._handle_error
+            on_message=message_handler,
+            on_error=self._handle_error,
+            on_disconnect=self._handle_disconnect,
         )
         super().__init__()
 
@@ -149,6 +156,25 @@ class BinanceExtractor(ivcdexex.Extractor):
         Close the connection of exchange.
         """
         self._client.stop()
+
+    def _handle_disconnect(self, _) -> None:
+        _LOG.warning("Websocket connection closed, subscribing again.")
+        exchange_id = "Binance"
+        if self.data_type == "bid_ask":
+            coroutine = self._subscribe_to_websocket_bid_ask_multiple_symbols(
+                exchange_id, self.currency_pairs, bid_ask_depth=self.bid_ask_depth
+            )
+        elif self.data_type == "ohlcv":
+            coroutine = self._subscribe_to_websocket_ohlcv_multiple_symbols(
+                exchange_id, self.currency_pairs
+            )
+        elif self.data_type == "trades":
+            coroutine = self._subscribe_to_websocket_trades_multiple_symbols(
+                exchange_id, self.currency_pairs
+            )
+        else:
+            raise NotImplementedError
+        asyncio.run(coroutine)
 
     def _handle_error(self, _, exception) -> None:
         raise exception
@@ -947,8 +973,14 @@ class BinanceExtractor(ivcdexex.Extractor):
             "ETH_USDT"]
         :param bid_ask_depth: how many levels of order book to download
         """
-        if bid_ask_depth is None:
-            bid_ask_depth = 10
+        self.currency_pairs = currency_pairs
+        self.bid_ask_depth = bid_ask_depth
+        # Binance only supports depth 5, 10 or 20
+        if bid_ask_depth not in [5, 10, 20]:
+            _LOG.warning(
+                f"Bid/Ask depth {bid_ask_depth} not supported by binance, setting downloader depth to 5"
+            )
+            bid_ask_depth = 5
         # Binance has a rate limit of 10 incoming messages per secnd
         throttle_counter = 0
         for currency_pair in currency_pairs:
@@ -980,6 +1012,7 @@ class BinanceExtractor(ivcdexex.Extractor):
         :param currency_pairs: currency pairs, e.g. ["BTC_USDT",
             "ETH_USDT"]
         """
+        self.currency_pairs = currency_pairs
         # Binance has a rate limit of 10 incoming messages per secnd
         throttle_counter = 0
         for currency_pair in currency_pairs:
@@ -1008,6 +1041,7 @@ class BinanceExtractor(ivcdexex.Extractor):
         :param currency_pairs: currency pairs, e.g. ["BTC_USDT",
             "ETH_USDT"]
         """
+        self.currency_pairs = currency_pairs
         # Binance has a rate limit of 10 incoming messages per secnd
         throttle_counter = 0
         for currency_pair in currency_pairs:

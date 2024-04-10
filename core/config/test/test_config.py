@@ -1812,9 +1812,13 @@ class Test_to_pickleable_string(hunitest.TestCase):
         """
         value = "val1"
         # TODO(Danya): Do we want to keep `mark_as_used` in pickleable strings?
-        expected = r"""{'key1': ('False', 'None', 'val1'), 'key2': ('False', 'None', 'key3:
-        key4:
-        ')}"""
+        expected = r"""
+        key1: val1
+        key2:
+          key3:
+            key4:
+
+        """
         should_be_pickleable_before = True
         actual = self.helper(
             value,
@@ -1829,9 +1833,12 @@ class Test_to_pickleable_string(hunitest.TestCase):
         # Set non-pickle-able value.
         value = lambda x: x
         expected = r"""
-        {'key1': ('False', 'None', '<function Test_to_pickleable_string.test2.<locals>.<lambda> at 0x>'), 'key2': ('False', 'None', 'key3:
-        key4:
-        ')}"""
+        key1: <function Test_to_pickleable_string.test2.<locals>.<lambda>>
+        key2:
+          key3:
+            key4:
+
+        """
         should_be_pickleable_before = False
         actual = self.helper(
             value,

@@ -2,25 +2,40 @@
 
 <!-- toc -->
 
-- [Meta](#meta)
-- [Processes](#processes)
-- [Software components](#software-components)
-- [Papers](#papers)
+- [Current dir structure](#current-dir-structure)
+  * [Meta](#meta)
+  * [Processes](#processes)
+  * [Software components](#software-components)
+  * [Papers](#papers)
 
 <!-- tocstop -->
 
-This file contains rules and conventions for all the documentation under `docs`.
+- `docs/meta.md`
+  - This file contains rules and conventions for all the documentation under
+    `docs`.
+
+- `docs/all.code_organization.reference.md`
+  - Describe how the code is organized in terms of components, libraries, and
+    directories
+
+- `docs/all.software_components.reference.md`
+  - List of all the software components in the codebase
+
+- `docs/all.workflow.explanation.md`
+  - Describe all the workflows for quants, quant devs, devops
+
+# Current dir structure
 
 Please keep the directory in a conceptual order.
 
-The current dir structure is:
+The current dir structure of `docs` is:
 
-# Meta
+## Meta
 
 - `documentation_meta`
   - How to write documentation for code and workflows.
 
-# Processes
+## Processes
 
 - `onboarding`
   - Practicalities of on-boarding new team members
@@ -52,7 +67,7 @@ The current dir structure is:
       - `coding`: any process related to only coding
       - `work_tools`: any tool (internal or external)
 
-# Software components
+## Software components
 
 - `kaizenflow`
   - Docs related to high-level packages that are used across the codebase (e.g.,
@@ -73,7 +88,7 @@ The current dir structure is:
   - Docs related to the company’s infrastructure: AWS services, code deployment,
     monitoring, server administration, etc.
 
-# Papers
+## Papers
 
 - `papers`
   - Papers written by the team members about the company's products and

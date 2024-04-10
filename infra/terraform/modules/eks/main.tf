@@ -21,42 +21,6 @@ resource "aws_eks_cluster" "EKSCluster" {
   }
 }
 
-resource "aws_launch_template" "EKSNodeGroupLaunchTemplate" {
-  name_prefix = "${var.cluster_name}-${var.node_group_name}"
-  description = "Launch Template for EKS Node Group ${var.node_group_name}"
-  vpc_security_group_ids = concat(
-    [for sg_name in var.eks_node_group_security_group_ids : lookup(var.sg_name_to_id, sg_name, "")],
-    [local.cluster_security_group_id]
-  )
-
-  block_device_mappings {
-    device_name = var.node_disk_device_mapping_name
-
-    ebs {
-      volume_size           = var.node_disk_size
-      volume_type           = var.node_disk_type
-      iops                  = var.node_disk_iops
-      delete_on_termination = var.node_disk_delete_on_termination
-    }
-  }
-
-  metadata_options {
-    http_tokens                 = var.node_metadata_http_tokens
-    http_put_response_hop_limit = var.node_http_put_response_hop_limit
-  }
-
-  dynamic "tag_specifications" {
-    for_each = var.tag_specifications
-
-    content {
-      resource_type = tag_specifications.value["resource_type"]
-      tags = {
-        Name = var.node_group_name
-      }
-    }
-  }
-}
-
 resource "aws_eks_node_group" "EKSNodeGroup" {
   cluster_name    = aws_eks_cluster.EKSCluster.name
   node_group_name = var.node_group_name
@@ -89,4 +53,67 @@ resource "aws_eks_node_group" "EKSNodeGroup" {
   labels = {
     Name = var.node_group_name
   }
+}
+
+resource "aws_launch_template" "EKSNodeGroupLaunchTemplate" {
+  name_prefix = "${var.cluster_name}-${var.node_group_name}"
+  description = "Launch Template for EKS Node Group ${var.node_group_name}"
+  vpc_security_group_ids = concat(
+    [for sg_name in var.eks_node_group_security_group_ids : lookup(var.sg_name_to_id, sg_name, "")],
+    [local.cluster_security_group_id]
+  )
+  key_name = aws_key_pair.NodeGroupKeyPair.key_name
+
+  block_device_mappings {
+    device_name = var.node_disk_device_mapping_name
+
+    ebs {
+      volume_size           = var.node_disk_size
+      volume_type           = var.node_disk_type
+      iops                  = var.node_disk_iops
+      delete_on_termination = var.node_disk_delete_on_termination
+    }
+  }
+
+  metadata_options {
+    http_tokens                 = var.node_metadata_http_tokens
+    http_put_response_hop_limit = var.node_http_put_response_hop_limit
+  }
+
+  dynamic "tag_specifications" {
+    for_each = var.tag_specifications
+
+    content {
+      resource_type = tag_specifications.value["resource_type"]
+      tags = {
+        Name = var.node_group_name
+      }
+    }
+  }
+}
+
+resource "aws_key_pair" "NodeGroupKeyPair" {
+  key_name   = "${var.node_group_name}-keypair"
+  public_key = tls_private_key.TLSKey.public_key_openssh
+  tags = {
+    Name       = var.node_group_name
+    Created_by = "terraform"
+  }
+}
+
+resource "tls_private_key" "TLSKey" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "local_file" "public_key" {
+  content         = tls_private_key.TLSKey.public_key_openssh
+  filename        = "${path.module}/${var.node_group_name}-keypair.pub"
+  file_permission = "0600"
+}
+
+resource "local_file" "private_key" {
+  sensitive_content = tls_private_key.TLSKey.private_key_pem
+  filename          = "${path.module}/${var.node_group_name}-keypair.pem"
+  file_permission   = "0600"
 }

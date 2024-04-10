@@ -7,6 +7,7 @@ import oms.execution_analysis_configs as oexancon
 """
 
 import logging
+import os
 
 import core.config as cconfig
 import helpers.hdbg as hdbg
@@ -24,6 +25,7 @@ def get_execution_analysis_configs_Cmtask4881(
     system_log_dir: str,
     bar_duration: str,
     universe_version: str,
+    child_order_execution_freq: str,
     *,
     test_asset_id: int = 1464553467,
 ) -> cconfig.ConfigList:
@@ -35,13 +37,13 @@ def get_execution_analysis_configs_Cmtask4881(
       e.g., ../system_log_dir.manual/process_forecasts
     :param bar_duration: length of bar in time, e.g., `5T`
     :param universe_version: version of the universe, e.g., `v7.4`
+    :param child_order_execution_freq: execution frequency of child order, e.g. `1T`
     :param test_asset_id: asset id to use as example
     """
     #
     id_col = "asset_id"
     vendor = "CCXT"
     mode = "trade"
-    child_order_execution_freq = "1T"
     use_historical = True
     config_list = build_execution_analysis_configs(
         system_log_dir,
@@ -113,40 +115,10 @@ def build_execution_analysis_configs(
 # #############################################################################
 
 
-def get_bid_ask_execution_analysis_configs_Cmtask4881(
-    system_log_dir: str,
-    bar_duration: str,
-    bid_ask_data_source: str,
-    *,
-    test_asset_id: int = 1464553467,
-) -> cconfig.ConfigList:
-    """
-    Build default config for `Master_bid_ask_execution_analysis` using real-
-    time data with provided system log dir.
-
-    :param system_log_dir: directory of the experiment
-    :param bar_duration: as pd.Timedelta-compatible string, e.g. '5T'
-        for 5 minutes
-    """
-    hdbg.dassert_path_exists(system_log_dir)
-    hdbg.dassert_in(
-        bid_ask_data_source,
-        ["S3", "logged_during_experiment", "logged_after_experiment"],
-    )
-    config_dict = {
-        "meta": {"bid_ask_data_source": bid_ask_data_source},
-        "universe": {"test_asset_id": test_asset_id},
-        "execution_parameters": {"bar_duration": bar_duration},
-        "system_log_dir": system_log_dir,
-    }
-    config = cconfig.Config.from_dict(config_dict)
-    config_list = cconfig.ConfigList([config])
-    return config_list
-
-
 def get_bid_ask_execution_analysis_configs(
     system_log_dir: str,
     bar_duration: str,
+    bid_ask_data_source: str,
     *,
     test_asset_id: int = 1464553467,
     use_historical: bool = False,
@@ -155,15 +127,24 @@ def get_bid_ask_execution_analysis_configs(
     Build default config for `Master_bid_ask_execution_analysis` using real-
     time data with provided system log dir.
 
-    :param system_log_dir: path to execution logs
-    :param test_asset_id: asset id to use as example
+    :param system_log_dir: directory of the experiment
     :param bar_duration: as pd.Timedelta-compatible string, e.g. '5T'
+        for 5 minutes
+    :param bid_ask_data_source: source of bid-ask data
+    :param test_asset_id: asset id to use as example
     :param use_historical: to use real-time or archived OHLCV data. Use
         'True' for experiments older than 3 days, 'False' otherwise.
     """
     hdbg.dassert_path_exists(system_log_dir)
+    hdbg.dassert_in(
+        bid_ask_data_source,
+        ["S3", "logged_during_experiment", "logged_after_experiment"],
+    )
     config_dict = {
-        "meta": {"use_historical": use_historical},
+        "meta": {
+            "bid_ask_data_source": bid_ask_data_source,
+            "use_historical": use_historical,
+        },
         "universe": {"test_asset_id": test_asset_id},
         "execution_parameters": {"bar_duration": bar_duration},
         "system_log_dir": system_log_dir,
@@ -269,15 +250,41 @@ def get_broker_portfolio_reconciliation_configs_Cmtask5690(
     """
     id_col = "asset_id"
     system_config_dir = system_log_dir.rstrip("/process_forecasts")
-    universe_version = reconcil.extract_universe_version_from_pkl_config(
-        system_config_dir
-    )
-    price_column_name = "close"
+    # Load pickled SystemConfig.
+    config_file_name = "system_config.output.values_as_strings.pkl"
+    system_config_path = os.path.join(system_config_dir, config_file_name)
+    system_config = cconfig.load_config_from_pickle(system_config_path)
+    hdbg.dassert_in("dag_runner_config", system_config)
+    if isinstance(system_config["dag_runner_config"], tuple):
+        _LOG.warning("Reading Config v1.0")
+        bar_duration = reconcil.extract_bar_duration_from_pkl_config(
+            system_config_dir
+        )
+        universe_version = reconcil.extract_universe_version_from_pkl_config(
+            system_config_dir
+        )
+        price_column_name = reconcil.extract_price_column_name_from_pkl_config(
+            system_config_dir
+        )
+    else:
+        # TODO(Grisha): preserve types when reading SystemConfig back and
+        #  remove all the post-processing.
+        _LOG.warning("Reading Config v2.0")
+        hdbg.dassert_isinstance(system_config, cconfig.Config)
+        universe_version = system_config["market_data_config"][
+            "im_client_config"
+        ]["universe_version"]
+        bar_duration_in_secs = system_config["dag_runner_config"][
+            "bar_duration_in_secs"
+        ]
+        bar_duration_in_mins = int(bar_duration_in_secs / 60)
+        bar_duration = f"{bar_duration_in_mins}T"
+        price_column_name = system_config["portfolio_config"][
+            "mark_to_market_col"
+        ]
     vendor = "CCXT"
     mode = "trade"
-    bar_duration = reconcil.extract_bar_duration_from_pkl_config(
-        system_config_dir
-    )
+    #
     config_list = build_broker_portfolio_reconciliation_configs(
         system_log_dir,
         id_col,

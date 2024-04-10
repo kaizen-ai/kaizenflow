@@ -31,17 +31,25 @@ spec:
         runAsUser: 50000
         fsGroup: 0
       initContainers:
-        - name: volume-logs-permissions
+        - name: logs-volume-setup
           image: busybox
-          command: [ "sh", "-c", "chown -R 50000:0 /opt/airflow/logs/" ]
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - >
+              mkdir -p /opt/airflow/logs &&
+              chown -R 50000:0 /opt/airflow/logs;
           securityContext:
             runAsUser: 0
           volumeMounts:
             - mountPath: /opt/airflow/logs/
               name: logs
-        - name: volume-dags-permissions
+        - name: dags-volume-setup
           image: busybox
-          command: [ "sh", "-c", "chown -R 50000:0 /opt/airflow/dags/" ]
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - >
+              mkdir -p /opt/airflow/dags &&
+              chown -R 50000:0 /opt/airflow/dags;
           securityContext:
             runAsUser: 0
           volumeMounts:
@@ -50,7 +58,7 @@ spec:
       containers:
         # Always run the main scheduler container.
         - name: airflow-scheduler
-          image: apache/airflow:2.7.1
+          image: 623860924167.dkr.ecr.eu-north-1.amazonaws.com/cmamp:preprod-airflow-k8s
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -73,9 +81,9 @@ spec:
             # Extra env
             # Hard Coded Airflow Envs
           livenessProbe:
-            initialDelaySeconds: 10
-            timeoutSeconds: 20
-            failureThreshold: 5
+            initialDelaySeconds: 21
+            timeoutSeconds: 36
+            failureThreshold: 6
             periodSeconds: 60
             exec:
               command:
@@ -85,7 +93,7 @@ spec:
                   CONNECTION_CHECK_MAX_COUNT=0 AIRFLOW__LOGGING__LOGGING_LEVEL=ERROR exec /entrypoint \
                   airflow jobs check --job-type SchedulerJob --local
           startupProbe:
-            timeoutSeconds: 20
+            timeoutSeconds: 36
             failureThreshold: 6
             periodSeconds: 10
             exec:
@@ -98,10 +106,10 @@ spec:
           resources:
             requests:
               memory: "2Gi"
-              cpu: "512m"
+              cpu: "1024m"
             limits:
-              memory: "3Gi"
-              cpu: "768m"
+              memory: "4Gi"
+              cpu: "2048m"
           volumeMounts:
             - name: logs
               mountPath: "/opt/airflow/logs"

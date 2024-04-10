@@ -37,7 +37,7 @@ import oms.order.order as oordorde
 _LOG = logging.getLogger(__name__)
 
 # Max number of order submission retries.
-_MAX_EXCHANGE_REQUEST_RETRIES = 3
+_MAX_EXCHANGE_REQUEST_RETRIES = 1
 
 # Sleep time in sec between request retries.
 _REQUEST_RETRY_SLEEP_TIME_IN_SEC = 0.5
@@ -106,7 +106,9 @@ class AbstractCcxtBroker(obrobrok.Broker):
             _LOG.warning(
                 "No logging directory is provided, so not saving orders or fills."
             )
-        # TODO(Juraj): we use this in decorator whr
+        # TODO(Juraj): This is a nasty hack, address properlly in #CmTask7688
+        global _MAX_EXCHANGE_REQUEST_RETRIES
+        _MAX_EXCHANGE_REQUEST_RETRIES = max_order_submit_retries
         self._max_exchange_request_retries = max_order_submit_retries
         self._exchange_id = exchange_id
         #
@@ -318,7 +320,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
 
         :param order: parent order to fetch fills for.
         """
-        _LOG.info("Getting fills for order=%s", str(order))
+        _LOG.debug("Getting fills for order=%s", str(order))
         asset_id = order.asset_id
         order_id = order.order_id
         symbol = self.asset_id_to_ccxt_symbol_mapping[asset_id]
@@ -352,7 +354,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
             for child_order in child_orders
             if int(child_order["id"]) in child_order_ccxt_ids
         ]
-        _LOG.info(hprint.to_str("child_orders"))
+        _LOG.debug(hprint.to_str("child_orders"))
         # Calculate fill amount based on child orders.
         (
             order_fill_signed_num_shares,
@@ -686,7 +688,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
             prefix = dsgghout.get_function_name(count=1)
         # Construct the full tag, e.g., "start" -> "submit_twap_orders::start".
         tag = f"{prefix}::{tag}"
-        _LOG.info("order=%s tag=%s value=%s", str(order), tag, value)
+        _LOG.debug("order=%s tag=%s value=%s", str(order), tag, value)
         # Assign the value.
         if "stats" not in order.extra_params:
             order.extra_params["stats"] = {}
@@ -1047,6 +1049,10 @@ class AbstractCcxtBroker(obrobrok.Broker):
             child_order_diff_signed_num_shares
         ):
             _LOG.info(
+                "Parent order ID: %s",
+                parent_order.order_id,
+            )
+            _LOG.debug(
                 "Child order for parent_order=%s not sent, %s",
                 str(parent_order),
                 hprint.to_str("child_order_diff_signed_num_shares"),

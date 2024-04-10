@@ -186,8 +186,8 @@ def _poll_iterate(
     """
     Execute an iteration of the polling loop.
 
-    :return: the number of iterations executed and the output of the polling
-        function (sucess, return value)
+    :return: the number of iterations executed and the output of the
+        polling function (sucess, return value)
     :raises: TimeoutError in case of timeout
     """
     _LOG.debug(
@@ -388,8 +388,8 @@ def get_seconds_to_align_to_grid(
 
     E.g., current_time=9:31:02am, bar_duration_in_secs=120 -> return 58
 
-    :param add_buffer_in_secs: number of seconds to add to make sure we are right
-        after the grid time
+    :param add_buffer_in_secs: number of seconds to add to make sure we
+        are right after the grid time
     """
     hdbg.dassert_lte(0, add_buffer_in_secs)
     current_time = get_wall_clock_time()
@@ -457,6 +457,7 @@ def sync_wait_until(
     get_wall_clock_time: hdateti.GetWallClockTime,
     *,
     tag: Optional[str] = None,
+    log_verbosity: int = logging.DEBUG,
 ) -> None:
     """
     Synchronous wait until the wall clock time is `timestamp`.
@@ -465,15 +466,17 @@ def sync_wait_until(
     fractional seconds.
     """
     # Sync wait.
-    time_in_secs = _wait_until(
-        wait_until_timestamp, get_wall_clock_time, tag=tag
-    )
+    time_in_secs = _wait_until(wait_until_timestamp, get_wall_clock_time, tag=tag)
     hdbg.dassert_lte(0, time_in_secs)
     # TODO(gp): Consider using part of align_on_time_grid for high-precision clock.
     time.sleep(time_in_secs)
     #
     hprint.log_frame(
-        _LOG, "%s: wall_clock_time=%s: done waiting", tag, get_wall_clock_time()
+        _LOG,
+        "%s: wall_clock_time=%s: done waiting",
+        tag,
+        get_wall_clock_time(),
+        verbosity=log_verbosity,
     )
 
 

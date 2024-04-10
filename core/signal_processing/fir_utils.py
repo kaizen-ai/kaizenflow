@@ -5,7 +5,7 @@ import core.signal_processing.fir_utils as csprfiut
 """
 
 import logging
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -103,13 +103,21 @@ def extract_fir_filter_weights(
 
 def fit_ema_to_fir_filter(
     filter_lag_weights: pd.Series,
-) -> pd.Series:
+) -> Tuple[pd.Series, float]:
     """
     Approximate a given FIR filter with an EMA.
 
+    Assumes the EMA weights are positive. If `filter_lag_weights` are
+    predominately negative, then better results may be achieved by
+    first multiplying the weights by -1 and then multiplying the
+    resulting EMA weights again by -1.
+
+    Returns both the EMA weights, with length equal to the length of
+    `filter_lag_weights`, and the EMA com.
+
     :param filter_lag_weights: weights of a FIR filter in terms of lags
     :return: series of EMA weights by lagged, named with best-fit center of
-        mass
+        mass, and best-fit center of mass
     """
     hdbg.dassert_isinstance(filter_lag_weights, pd.Series)
     # Define normalized EMA.
@@ -129,4 +137,4 @@ def fit_ema_to_fir_filter(
         filter_lag_weights.index,
     )
     ema.name = "com=" + str(com.round(3))
-    return ema
+    return ema, com

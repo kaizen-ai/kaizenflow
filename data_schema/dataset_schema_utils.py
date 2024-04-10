@@ -26,8 +26,9 @@ def _get_dataset_schema_file_path(*, version: Optional[str] = None) -> str:
     Get dataset schema file path based on version.
 
     :param version: dataset schema version (e.g. "v01"). If None it uses
-      the latest version available
-    :return: file path to the dataset schema file corresponding to the specified version
+        the latest version available
+    :return: file path to the dataset schema file corresponding to the
+        specified version
     """
     # TODO(Juraj): Implement dynamic version resolving and remove hardcoded logic.
     ds_file_path = os.path.join(
@@ -44,9 +45,10 @@ def get_dataset_schema(*, version: Optional[str] = None) -> Dict[str, Any]:
     Get dataset schema for a specified version, if version is None fetch the
     latest version of the schema.
 
-    :param version: dataset schema version (e.g. "v01") to load. If None,
-        the latest version is loaded.
+    :param version: dataset schema version (e.g. "v01") to load. If
+        None, the latest version is loaded.
     :return: dataset schema as a nested dictionary, e.g.
+        ```
         {
             "dataset_signature":
                 "download_mode.downloading_entity.action_tag",
@@ -58,6 +60,7 @@ def get_dataset_schema(*, version: Optional[str] = None) -> Dict[str, Any]:
             }
             "version": "v3"
         }
+        ```
     """
     # TODO(Juraj): Implement loading custom version of schema.
     if version is not None:
@@ -87,7 +90,8 @@ def _validate_dataset_signature_syntax(
 
     :param signature: dataset signature to validate
     :param dataset_schema: dataset schema to validate against
-    :return: True if the signature is syntactically well-formed, False otherwise
+    :return: True if the signature is syntactically well-formed, False
+        otherwise
     """
     token_separator_char = dataset_schema["token_separator_character"]
     signature_list = signature.split(token_separator_char)
@@ -114,7 +118,8 @@ def _validate_dataset_signature_semantics(
 
     :param signature: dataset signature to validate
     :param dataset_schema: dataset schema to validate against
-    :return: True if the signature is semantically correct, False otherwise
+    :return: True if the signature is semantically correct, False
+        otherwise
     """
     # TODO(Juraj): syntax checks starts the same, avoid duplication
     #  according to DRY.
@@ -131,6 +136,7 @@ def _validate_dataset_signature_semantics(
     # Check if the version is supported for the given vendor.
     if "vendor" in tokens_values and "universe" in tokens_values:
         try:
+            # TODO(Juraj): #CmTask7605 support checking both download and trade universe.
             mode = "download"
             vendor = tokens_values["vendor"]
             # Convert universe version to the format used in the vendor.
@@ -166,7 +172,8 @@ def validate_dataset_signature(
 
     :param signature: dataset signature to validate
     :param dataset_schema: dataset schema to validate against
-    :return: True if the signature is syntactically AND semantically correct, False otherwise
+    :return: True if the signature is syntactically AND semantically
+        correct, False otherwise
     """
     # TODO(Juraj): Ideally this function should
     #  encapsulate a final state machine-like validator
@@ -268,11 +275,15 @@ def build_s3_dataset_path_from_args(
     Build an S3 path given a bucket and a dict of arguments based on dataset
     schema of the given version.
 
-    If the provided arguments form an invalid signature an exception is raised.
+    If the provided arguments form an invalid signature an exception is
+    raised.
 
-    :param s3_base_path: Base S3 path to use, i.e. s3://cryptokaizen-data
+    :param s3_base_path: Base S3 path to use, i.e.
+        's3://cryptokaizen-data'
+    :param s3_base_path: Base S3 path to use, i.e. 's3://cryptokaizen-data'
     :param args: arguments to build the dataset signature from
-    :param version: version of the dataset schema to use, if None, latest version
+    :param version: version of the dataset schema to use, if None,
+        latest version
     """
     _args = copy.deepcopy(args)
     s3_path = s3_base_path
@@ -320,4 +331,6 @@ def get_im_db_table_name_from_signature(
     else:
         if args["data_type"] == "bid_ask":
             table_name += "_raw"
+        elif args["data_type"] == "trades":
+            table_name += f"_{action_tag}"
     return table_name
