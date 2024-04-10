@@ -17,26 +17,20 @@ class TestLoadDBData(hunitest.TestCase):
     # Mock call to execute query function.
     mock_execute_query_df = umock.patch.object(hsql, "execute_query_to_df")
 
-    def setUp(self) -> None:
-        """
-        Set up common attributes for the test cases.
-        """
-        super().setUp()
-        self.db_connection = umock.MagicMock()
-        self.src_table = "test_table"
-        self.start_date = pd.Timestamp("2024-01-01")
-        self.end_date = pd.Timestamp("2024-01-31")
-        self.start_ts = hdateti.convert_timestamp_to_unix_epoch(
-            self.start_date, unit="ms"
-        )
-        self.end_ts = hdateti.convert_timestamp_to_unix_epoch(
-            self.end_date, unit="ms"
-        )
-
     # This will be run before and after each test.
     @pytest.fixture(autouse=True)
     def setup_teardown_test(self) -> Generator[Any, Any, Any]:
         # Run before each test.
+        self.db_connection = umock.MagicMock()
+        self.src_table = "test_table"
+        self.start_timestamp = pd.Timestamp("2024-01-01")
+        self.end_timestamp = pd.Timestamp("2024-01-31")
+        self.start_ts = hdateti.convert_timestamp_to_unix_epoch(
+            self.start_timestamp, unit="ms"
+        )
+        self.end_ts = hdateti.convert_timestamp_to_unix_epoch(
+            self.end_timestamp, unit="ms"
+        )
         self.set_up_test()
         yield
         # Run after each test.
@@ -64,8 +58,8 @@ class TestLoadDBData(hunitest.TestCase):
         result = imvcddbut.load_db_data(
             self.db_connection,
             self.src_table,
-            self.start_date,
-            self.end_date,
+            self.start_timestamp,
+            self.end_timestamp,
             currency_pairs=currency_pairs,
             limit=limit,
             bid_ask_levels=bid_ask_levels,
@@ -90,7 +84,10 @@ class TestLoadDBData(hunitest.TestCase):
         # Mock the query.
         self.query_mock.return_value = None
         result = imvcddbut.load_db_data(
-            self.db_connection, self.src_table, self.start_date, self.end_date
+            self.db_connection,
+            self.src_table,
+            self.start_timestamp,
+            self.end_timestamp,
         )
         expected_query = f"SELECT * FROM {self.src_table} WHERE timestamp >= {self.start_ts} AND timestamp <= {self.end_ts}"
         self.query_mock.assert_called_once_with(
@@ -107,7 +104,10 @@ class TestLoadDBData(hunitest.TestCase):
         # Mock the query.
         self.query_mock.return_value = pd.DataFrame()
         result = imvcddbut.load_db_data(
-            self.db_connection, self.src_table, self.start_date, self.end_date
+            self.db_connection,
+            self.src_table,
+            self.start_timestamp,
+            self.end_timestamp,
         )
         # Assert that function is returning empty dataframe.
         self.assertTrue(result.empty)
@@ -118,7 +118,7 @@ class TestLoadDBData(hunitest.TestCase):
         greater than the end timestamp.
         """
         # Swap start_ts and end_ts.
-        start_ts, end_ts = self.end_date, self.start_date
+        start_ts, end_ts = self.end_timestamp, self.start_timestamp
         # Mock the query.
         self.query_mock.side_effect = ValueError
         # Assert that function is raising ValueError.
@@ -141,8 +141,8 @@ class TestLoadDBData(hunitest.TestCase):
             imvcddbut.load_db_data(
                 self.db_connection,
                 self.src_table,
-                self.start_date,
-                self.end_date,
+                self.start_timestamp,
+                self.end_timestamp,
                 currency_pairs=invalid_currency_pairs,
             )
 
@@ -158,7 +158,7 @@ class TestLoadDBData(hunitest.TestCase):
         # Assert that function is raising ValueError.
         with self.assertRaises(ValueError):
             imvcddbut.load_db_data(
-                self.db_connection, self.src_table, start_ts, self.end_date
+                self.db_connection, self.src_table, start_ts, self.end_timestamp
             )
 
     def test7(self) -> None:
@@ -173,7 +173,7 @@ class TestLoadDBData(hunitest.TestCase):
         # Assert that function is raising AttributeError.
         with self.assertRaises(AttributeError):
             imvcddbut.load_db_data(
-                self.db_connection, self.src_table, invalid_ts, self.end_date
+                self.db_connection, self.src_table, invalid_ts, self.end_timestamp
             )
 
     def test8(self) -> None:
@@ -191,8 +191,8 @@ class TestLoadDBData(hunitest.TestCase):
             imvcddbut.load_db_data(
                 self.db_connection,
                 self.src_table,
-                self.start_date,
-                self.end_date,
+                self.start_timestamp,
+                self.end_timestamp,
                 limit=limit,
             )
 
