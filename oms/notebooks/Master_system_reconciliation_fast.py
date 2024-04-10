@@ -70,8 +70,8 @@ else:
     dag_builder_ctor_as_str = (
         "dataflow_orange.pipelines.C3.C3a_pipeline_tmp.C3a_DagBuilder_tmp"
     )
-    start_timestamp_as_str = "20231103_131000"
-    end_timestamp_as_str = "20231104_130500"
+    start_timestamp_as_str = "20240305_131000"
+    end_timestamp_as_str = "20240306_130500"
     run_mode = "paper_trading"
     mode = "scheduled"
     set_config_values = None
@@ -132,12 +132,22 @@ if config["meta"]["run_tca"]:
 
 # %%
 configs = reconcil.load_config_dict_from_pickle(system_log_path_dict)
-# This is a hack to display a config that was made from unpickled dict.
-print(configs["prod"].to_string("only_values").replace("\\n", "\n"))
+# TODO(Dan): Deprecate after switch to updated config logs CmTask6627.
+hdbg.dassert_in("dag_runner_config", configs["prod"])
+if isinstance(configs["prod"]["dag_runner_config"], tuple):
+    # This is a hack to display a config that was made from unpickled dict.
+    print(configs["prod"].to_string("only_values").replace("\\n", "\n"))
+else:
+    print(configs["prod"])
 
 # %%
-# TODO(Grisha): understand why it does not work without removing `\\n`.
-print(configs["sim"].to_string("only_values").replace("\\n", "\n"))
+# TODO(Dan): Deprecate after switch to updated config logs CmTask6627.
+hdbg.dassert_in("dag_runner_config", configs["sim"])
+if isinstance(configs["sim"]["dag_runner_config"], tuple):
+    # This is a hack to display a config that was made from unpickled dict.
+    print(configs["sim"].to_string("only_values").replace("\\n", "\n"))
+else:
+    print(configs["sim"])
 
 # %% [markdown]
 # ## Compare configs (prod vs vim)

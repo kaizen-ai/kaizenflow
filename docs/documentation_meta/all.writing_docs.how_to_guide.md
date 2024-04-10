@@ -1,34 +1,34 @@
 <!-- toc -->
 
-   - [Documentation about guidelines](#documentation-about-guidelines)
-   - [Guidelines for describing workflows](#guidelines-for-describing-workflows)
-   - [Markdown vs Google Docs](#markdown-vs-google-docs)
-      * [In general](#in-general)
-      * [Markdown pros](#markdown-pros)
-      * [Google Docs pros](#google-docs-pros)
-      * [Rules of thumb](#rules-of-thumb)
-      * [Useful references](#useful-references)
-   - [Style and cosmetic lints](#style-and-cosmetic-lints)
-      * [Always use markdown linter](#always-use-markdown-linter)
-      * [Table of content (TOC)](#table-of-content-toc)
-      * [Use nice 80 columns formatting for txt files](#use-nice-80-columns-formatting-for-txt-files)
-      * [Empty line after heading](#empty-line-after-heading)
-      * [Bullet lists](#bullet-lists)
-      * [Using code style](#using-code-style)
-      * [Indenting code style](#indenting-code-style)
-      * [Embedding screenshots](#embedding-screenshots)
-      * [Improve your written English](#improve-your-written-english)
-      * [Make sure your markdown looks good](#make-sure-your-markdown-looks-good)
-   - [Google docs style conventions](#google-docs-style-conventions)
-      * [Headings](#headings)
-      * [Font](#font)
-   - [Convert between Gdocs and Markdown](#convert-between-gdocs-and-markdown)
-      * [Gdocs -&gt; Markdown](#gdocs---markdown)
-         + [Using convert_docx_to_markdown.py](#using-convert_docx_to_markdownpy)
-         + [Process](#process)
-         + [Cleaning up converted markdown](#cleaning-up-converted-markdown)
-         + [Other approaches](#other-approaches)
-      * [Markdown -&gt; Gdocs](#markdown---gdocs)
+- [Documentation about guidelines](#documentation-about-guidelines)
+- [Guidelines for describing workflows](#guidelines-for-describing-workflows)
+- [Markdown vs Google Docs](#markdown-vs-google-docs)
+* [In general](#in-general)
+* [Markdown pros](#markdown-pros)
+* [Google Docs pros](#google-docs-pros)
+* [Rules of thumb](#rules-of-thumb)
+* [Useful references](#useful-references)
+  - [Style and cosmetic lints](#style-and-cosmetic-lints)
+* [Always use markdown linter](#always-use-markdown-linter)
+* [Table of content (TOC)](#table-of-content-toc)
+* [Use nice 80 columns formatting for txt files](#use-nice-80-columns-formatting-for-txt-files)
+* [Empty line after heading](#empty-line-after-heading)
+* [Bullet lists](#bullet-lists)
+* [Using code style](#using-code-style)
+* [Indenting code style](#indenting-code-style)
+* [Embedding screenshots](#embedding-screenshots)
+* [Improve your written English](#improve-your-written-english)
+* [Make sure your markdown looks good](#make-sure-your-markdown-looks-good)
+  - [Google docs style conventions](#google-docs-style-conventions)
+* [Headings](#headings)
+* [Font](#font)
+  - [Convert between Gdocs and Markdown](#convert-between-gdocs-and-markdown)
+* [Gdocs -&gt; Markdown](#gdocs---markdown) +
+  [Using convert_docx_to_markdown.py](#using-convert_docx_to_markdownpy) +
+  [Process](#process) +
+  [Cleaning up converted markdown](#cleaning-up-converted-markdown) +
+  [Other approaches](#other-approaches)
+* [Markdown -&gt; Gdocs](#markdown---gdocs)
 
 <!-- tocstop -->
 
@@ -299,10 +299,9 @@
 - Download Google document as `docx`
 - Move the file in place
   ```markdown
-  > FILE_NAME=docs/dataflow/all.best_practice_for_building_dags.explanation mv
-  > /Users/saggese/Downloads/Blank.docx $FILE_NAME.docx
-  > convert_docx_to_markdown.py --docx_file $FILE_NAME.docx --md_file
-  > $FILE_NAME.md
+  > FILE_NAME=docs/dataflow/all.best_practice_for_building_dags.explanation
+  > mv /Users/saggese/Downloads/Blank.docx $FILE_NAME.docx
+  > convert_docx_to_markdown.py --docx_file $FILE_NAME.docx --md_file $FILE_NAME.md
   ```
 - Convert it to markdown using `convert_docx_to_markdown.py`
 - Usage:

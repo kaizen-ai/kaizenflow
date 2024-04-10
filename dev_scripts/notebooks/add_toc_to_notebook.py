@@ -2,6 +2,9 @@
 
 """
 Add a table of contents to an IPython Notebook file.
+
+See full description and instructions at
+`docs/work_tools/all.add_toc_to_notebook.how_to_guide.md`.
 """
 
 import argparse

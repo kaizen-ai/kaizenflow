@@ -1007,12 +1007,13 @@ class Config:
         Transform this Config into a pickle-able one where all values are
         replaced with their string representation.
         """
-        config_out = {}
-        for k, v in self._config.items():
-            if isinstance(v, Config):
-                config_out[k] = v.to_pickleable_string()
+        config_out = Config()
+        # TODO(Grisha): do we need to save `writer_info` and `mark_as_used`?
+        for key, (_, _, val) in self._config.items():
+            if isinstance(val, Config):
+                config_out[key] = val.to_pickleable_string()
             else:
-                config_out[k] = hpickle.to_pickleable(v)
+                config_out[key] = hpickle.to_pickleable(val)
         return config_out
 
     # /////////////////////////////////////////////////////////////////////////////
@@ -1039,7 +1040,8 @@ class Config:
         """
         Return python code that builds, when executed, the current object.
 
-        :param check: check that the Config can be serialized/deserialized correctly.
+        :param check: check that the Config can be
+            serialized/deserialized correctly.
         """
         config_as_str = str(self.to_dict())
         # We don't need `cconfig.` since we are inside the config module.
@@ -1311,10 +1313,11 @@ class Config:
         report an informative message reporting the entire config on
         `KeyError`.
 
-        This method is a helper for `__getitem__()` and `get_marked_as_used()`.
+        This method is a helper for `__getitem__()` and
+        `get_marked_as_used()`.
 
-        :param get_marked_as_used: if True, return if the value is marked as
-            used, instead of the value itself.
+        :param get_marked_as_used: if True, return if the value is
+            marked as used, instead of the value itself.
         :return: value associated to the key (or mark_as_used)
         """
         _LOG.debug("key=%s level=%s self=\n%s", key, level, self)

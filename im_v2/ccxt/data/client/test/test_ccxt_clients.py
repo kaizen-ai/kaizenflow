@@ -1531,8 +1531,17 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
             use_only_test_class=use_only_test_class
         )
         root_dir = os.path.join(s3_input_dir, "historical.manual.pq")
+        dataset = "ohlcv"
+        contract_type = "spot"
+        data_snapshot = "20220705"
+        download_universe_version = "v7_3"
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
-            root_dir, resample_1min
+            root_dir,
+            resample_1min,
+            dataset,
+            contract_type,
+            data_snapshot,
+            download_universe_version,
         )
         return im_client
 
@@ -1969,3 +1978,377 @@ class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
         # Artificially create gaps in data in order test resampling.
         data = pd.concat([data[:100], data[115:]])
         return data
+
+
+# #############################################################################
+# TestCcxtHistoricalPqByTileClient2
+# #############################################################################
+
+
+@pytest.mark.requires_aws
+@pytest.mark.requires_ck_infra
+class TestCcxtHistoricalPqByTileClient2(icdc.ImClientTestCase):
+    """
+    For all the test methods see description of corresponding private method in
+    the parent class.
+    """
+
+    def get_im_client(
+        self, resample_1min: bool
+    ) -> imvcdccccl.CcxtHistoricalPqByTileClient:
+        """
+        Get `CcxtHistoricalPqByTileClient` based on data from S3.
+
+        :param resample_1min: whether to resample data to 1 minute or
+            not
+        :return: Ccxt historical client
+        """
+        use_only_test_class = True
+        s3_input_dir = self.get_s3_input_dir(
+            use_only_test_class=use_only_test_class
+        )
+        root_dir = os.path.join(s3_input_dir, "historical.manual.pq")
+        dataset = "bid_ask"
+        contract_type = "futures"
+        data_snapshot = "20240314"
+        download_universe_version = "v8"
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
+            root_dir,
+            resample_1min,
+            dataset,
+            contract_type,
+            data_snapshot,
+            download_universe_version,
+        )
+        return im_client
+
+    def get_expected_column_names(self) -> List[str]:
+        """
+        Return a list of expected column names.
+        """
+        level = 1
+        expected_column_names = cofinanc.get_bid_ask_columns_by_level(level)
+        # Add remaining bid/ask columns.
+        expected_column_names.extend(
+            ["day", "full_symbol", "knowledge_timestamp"]
+        )
+        return expected_column_names
+
+    def test_read_data1(self) -> None:
+        resample_1min = True
+        im_client = self.get_im_client(resample_1min)
+        full_symbol = "binance::BTC_USDT"
+        #
+        expected_length = 1320
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2024-03-13 00:01:00+00:00, 2024-03-13 22:00:00+00:00]
+        columns=full_symbol,level_1.bid_price.open,level_1.bid_size.open,level_1.ask_price.open,level_1.ask_size.open,level_1.bid_ask_midpoint.open,level_1.half_spread.open,level_1.log_size_imbalance.open,level_1.bid_price.close,level_1.bid_size.close,level_1.ask_price.close,level_1.ask_size.close,level_1.bid_ask_midpoint.close,level_1.half_spread.close,level_1.log_size_imbalance.close,level_1.bid_price.high,level_1.bid_size.max,level_1.ask_price.high,level_1.ask_size.max,level_1.bid_ask_midpoint.max,level_1.half_spread.max,level_1.log_size_imbalance.max,level_1.bid_price.low,level_1.bid_size.min,level_1.ask_price.low,level_1.ask_size.min,level_1.bid_ask_midpoint.min,level_1.half_spread.min,level_1.log_size_imbalance.min,level_1.bid_price.mean,level_1.bid_size.mean,level_1.ask_price.mean,level_1.ask_size.mean,level_1.bid_ask_midpoint.mean,level_1.half_spread.mean,level_1.log_size_imbalance.mean,level_1.bid_ask_midpoint_var.100ms,level_1.bid_ask_midpoint_autocovar.100ms,level_1.log_size_imbalance_var.100ms,level_1.log_size_imbalance_autocovar.100ms,knowledge_timestamp,day
+        shape=(1320, 42)
+                                        full_symbol  level_1.bid_price.open  level_1.bid_size.open  level_1.ask_price.open  level_1.ask_size.open  level_1.bid_ask_midpoint.open  level_1.half_spread.open  level_1.log_size_imbalance.open  level_1.bid_price.close  level_1.bid_size.close  level_1.ask_price.close  level_1.ask_size.close  level_1.bid_ask_midpoint.close  level_1.half_spread.close  level_1.log_size_imbalance.close  level_1.bid_price.high  level_1.bid_size.max  level_1.ask_price.high  level_1.ask_size.max  level_1.bid_ask_midpoint.max  level_1.half_spread.max  level_1.log_size_imbalance.max  level_1.bid_price.low  level_1.bid_size.min  level_1.ask_price.low  level_1.ask_size.min  level_1.bid_ask_midpoint.min  level_1.half_spread.min  level_1.log_size_imbalance.min  level_1.bid_price.mean  level_1.bid_size.mean  level_1.ask_price.mean  level_1.ask_size.mean  level_1.bid_ask_midpoint.mean  level_1.half_spread.mean  level_1.log_size_imbalance.mean  level_1.bid_ask_midpoint_var.100ms  level_1.bid_ask_midpoint_autocovar.100ms  level_1.log_size_imbalance_var.100ms  level_1.log_size_imbalance_autocovar.100ms              knowledge_timestamp  day
+        timestamp
+        2024-03-13 00:01:00+00:00  binance::BTC_USDT                 71503.2                  4.613                 71503.3                  2.160                       71503.25                      0.05                         0.758770                  71507.2                   1.771                  71507.3                   3.577                        71507.25                       0.05                         -0.702980                 71538.9                13.562                 71539.0                 8.355                      71538.95                     1.20                        7.910040                71498.2                 0.002                71498.3                 0.002                      71498.25                     0.05                       -6.867974            71519.596167               2.652090            71519.705167               2.629605                   71519.650667                   0.05450                         0.087658                            2107.300                                      12.4                           3080.938649                                 2696.843371 2024-03-14 04:35:36.984166+00:00   14
+        2024-03-13 00:02:00+00:00  binance::BTC_USDT                 71507.2                  2.340                 71507.3                  0.573                       71507.25                      0.05                         1.407020                  71455.3                   4.710                  71455.4                   0.931                        71455.35                       0.05                          1.621184                 71525.9                10.329                 71526.0                11.394                      71525.95                     0.75                        8.458080                71455.3                 0.012                71455.4                 0.001                      71455.35                     0.05                       -4.902184            71473.833333               2.219057            71473.938333               2.837353                   71473.885833                   0.05250                        -0.353664                            1269.015                                       0.0                           1728.386403                                 1533.673228 2024-03-14 04:35:36.984166+00:00   14
+        2024-03-13 00:03:00+00:00  binance::BTC_USDT                 71455.3                  4.710                 71455.4                  0.931                       71455.35                      0.05                         1.621184                  71438.2                   1.329                  71438.3                   5.168                        71438.25                       0.05                         -1.358059                 71480.0                12.137                 71480.1                11.489                      71480.05                     0.10                        4.866457                71438.2                 0.004                71438.3                 0.030                      71438.25                     0.05                       -7.552552            71453.718167               2.773778            71453.818667               3.715337                   71453.768417                   0.05025                        -0.576860                             605.495                                       0.0                           1867.603551                                 1743.911817 2024-03-14 04:35:36.984166+00:00   14
+        ...
+        2024-03-13 21:58:00+00:00  binance::BTC_USDT                 73249.9                  7.923                 73250.0                 19.181                       73249.95                      0.05                        -0.884150                  73290.5                   7.995                  73290.6                   3.922                        73290.55                       0.05                          0.712215                 73340.2                27.635                 73340.3                19.550                      73340.25                     0.35                        6.646131                73249.9                 0.002                73250.0                 0.002                      73249.95                     0.05                       -7.893572            73284.654333               7.382797            73284.756333               6.623362                   73284.705333                  0.051000                         0.687182                             665.480                                       0.0                           4852.708846                                 4676.402791 2024-03-14 04:35:36.984166+00:00   14
+        2024-03-13 21:59:00+00:00  binance::BTC_USDT                 73290.5                  7.995                 73290.6                  3.922                       73290.55                      0.05                         0.712215                  73274.3                   0.158                  73274.4                   7.834                        73274.35                       0.05                         -3.903633                 73363.2                16.619                 73363.3                12.625                      73363.25                     0.25                        6.106546                73274.3                 0.002                73274.4                 0.024                      73274.35                     0.05                       -7.508239            73322.903167               3.971838            73323.004500               2.869648                   73322.953833                  0.050667                         0.048252                             873.760                                       0.0                           4077.218668                                 3905.985184 2024-03-14 04:35:36.984166+00:00   14
+        2024-03-13 22:00:00+00:00  binance::BTC_USDT                 73274.3                  0.158                 73274.4                  7.834                       73274.35                      0.05                        -3.903633                  73295.3                   9.108                  73295.4                   0.496                        73295.35                       0.05                          2.910332                 73317.2                11.144                 73317.3                15.331                      73317.25                     0.20                        5.573104                73269.8                 0.066                73269.9                 0.028                      73269.85                     0.05                       -5.199166            73294.692821               2.852848            73294.793823               2.553706                   73294.743322                  0.050501                         0.219826                             414.325                                       0.0                           2556.872853                                 2403.056904 2024-03-14 04:35:36.984166+00:00   14
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data1(
+            im_client,
+            full_symbol,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    @pytest.mark.slow("Slow via GH, but fast on the server")
+    def test_read_data2(self) -> None:
+        resample_1min = True
+        im_client = self.get_im_client(resample_1min)
+        full_symbols = ["okx::ETH_USDT", "binance::BTC_USDT"]
+        #
+        expected_length = 2760
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["okx::ETH_USDT", "binance::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2024-03-08 00:01:00+00:00, 2024-03-13 22:00:00+00:00]
+        columns=full_symbol,level_1.bid_price.open,level_1.bid_size.open,level_1.ask_price.open,level_1.ask_size.open,level_1.bid_ask_midpoint.open,level_1.half_spread.open,level_1.log_size_imbalance.open,level_1.bid_price.close,level_1.bid_size.close,level_1.ask_price.close,level_1.ask_size.close,level_1.bid_ask_midpoint.close,level_1.half_spread.close,level_1.log_size_imbalance.close,level_1.bid_price.high,level_1.bid_size.max,level_1.ask_price.high,level_1.ask_size.max,level_1.bid_ask_midpoint.max,level_1.half_spread.max,level_1.log_size_imbalance.max,level_1.bid_price.low,level_1.bid_size.min,level_1.ask_price.low,level_1.ask_size.min,level_1.bid_ask_midpoint.min,level_1.half_spread.min,level_1.log_size_imbalance.min,level_1.bid_price.mean,level_1.bid_size.mean,level_1.ask_price.mean,level_1.ask_size.mean,level_1.bid_ask_midpoint.mean,level_1.half_spread.mean,level_1.log_size_imbalance.mean,level_1.bid_ask_midpoint_var.100ms,level_1.bid_ask_midpoint_autocovar.100ms,level_1.log_size_imbalance_var.100ms,level_1.log_size_imbalance_autocovar.100ms,knowledge_timestamp,day
+        shape=(2760, 42)
+                                    full_symbol  level_1.bid_price.open  level_1.bid_size.open  level_1.ask_price.open  level_1.ask_size.open  level_1.bid_ask_midpoint.open  level_1.half_spread.open  level_1.log_size_imbalance.open  level_1.bid_price.close  level_1.bid_size.close  level_1.ask_price.close  level_1.ask_size.close  level_1.bid_ask_midpoint.close  level_1.half_spread.close  level_1.log_size_imbalance.close  level_1.bid_price.high  level_1.bid_size.max  level_1.ask_price.high  level_1.ask_size.max  level_1.bid_ask_midpoint.max  level_1.half_spread.max  level_1.log_size_imbalance.max  level_1.bid_price.low  level_1.bid_size.min  level_1.ask_price.low  level_1.ask_size.min  level_1.bid_ask_midpoint.min  level_1.half_spread.min  level_1.log_size_imbalance.min  level_1.bid_price.mean  level_1.bid_size.mean  level_1.ask_price.mean  level_1.ask_size.mean  level_1.bid_ask_midpoint.mean  level_1.half_spread.mean  level_1.log_size_imbalance.mean  level_1.bid_ask_midpoint_var.100ms  level_1.bid_ask_midpoint_autocovar.100ms  level_1.log_size_imbalance_var.100ms  level_1.log_size_imbalance_autocovar.100ms              knowledge_timestamp  day
+        timestamp
+        2024-03-08 00:01:00+00:00  okx::ETH_USDT                 3869.58                 1087.0                 3869.59                  113.0                       3869.585                     0.005                         2.263789                  3871.25                   186.0                  3871.26                   206.0                        3871.255                      0.005                         -0.102129                 3873.35                3132.0                 3873.36                2070.0                      3873.355                    0.005                        6.786717                3869.58                   3.0                3869.59                   1.0                      3869.585                    0.005                       -5.194807              3871.65191             454.336683              3871.66191             220.216080                     3871.65691                     0.005                         0.829527                              9.9679                                       0.0                           3941.583737                                 3437.835537 2024-03-09 22:06:27.427441+00:00   14
+        2024-03-08 00:02:00+00:00  okx::ETH_USDT                 3871.25                  186.0                 3871.26                  206.0                       3871.255                     0.005                        -0.102129                  3870.00                   121.0                  3870.01                   556.0                        3870.005                      0.005                         -1.524978                 3872.92                1102.0                 3872.93                1146.0                      3872.925                    0.005                        5.393628                3870.00                   1.0                3870.01                   1.0                      3870.005                    0.005                       -6.940222              3871.66015             188.198333              3871.67015             265.551667                     3871.66515                     0.005                        -0.504806                              9.8447                                       0.0                           3724.277692                                 3406.674270 2024-03-09 22:06:27.427441+00:00   14
+        2024-03-08 00:03:00+00:00  okx::ETH_USDT                 3870.00                  121.0                 3870.01                  556.0                       3870.005                     0.005                        -1.524978                  3872.57                   140.0                  3872.58                   347.0                        3872.575                      0.005                         -0.907682                 3872.67                 621.0                 3872.68                1021.0                      3872.675                    0.005                        5.620401                3868.17                   1.0                3868.18                   1.0                      3868.175                    0.005                       -5.707110              3870.58240             204.788333              3870.59240             202.790000                     3870.58740                     0.005                         0.047173                              6.9937                                       0.0                           3444.733496                                 3183.616285 2024-03-09 22:06:27.427441+00:00   14
+        ...
+        2024-03-13 21:58:00+00:00  binance::BTC_USDT                 73249.9                  7.923                 73250.0                 19.181                       73249.95                      0.05                        -0.884150                  73290.5                   7.995                  73290.6                   3.922                        73290.55                       0.05                          0.712215                 73340.2                27.635                 73340.3                19.550                      73340.25                     0.35                        6.646131                73249.9                 0.002                73250.0                 0.002                      73249.95                     0.05                       -7.893572            73284.654333               7.382797            73284.756333               6.623362                   73284.705333                  0.051000                         0.687182                             665.480                                       0.0                           4852.708846                                 4676.402791 2024-03-14 04:35:36.984166+00:00   14
+        2024-03-13 21:59:00+00:00  binance::BTC_USDT                 73290.5                  7.995                 73290.6                  3.922                       73290.55                      0.05                         0.712215                  73274.3                   0.158                  73274.4                   7.834                        73274.35                       0.05                         -3.903633                 73363.2                16.619                 73363.3                12.625                      73363.25                     0.25                        6.106546                73274.3                 0.002                73274.4                 0.024                      73274.35                     0.05                       -7.508239            73322.903167               3.971838            73323.004500               2.869648                   73322.953833                  0.050667                         0.048252                             873.760                                       0.0                           4077.218668                                 3905.985184 2024-03-14 04:35:36.984166+00:00   14
+        2024-03-13 22:00:00+00:00  binance::BTC_USDT                 73274.3                  0.158                 73274.4                  7.834                       73274.35                      0.05                        -3.903633                  73295.3                   9.108                  73295.4                   0.496                        73295.35                       0.05                          2.910332                 73317.2                11.144                 73317.3                15.331                      73317.25                     0.20                        5.573104                73269.8                 0.066                73269.9                 0.028                      73269.85                     0.05                       -5.199166            73294.692821               2.852848            73294.793823               2.553706                   73294.743322                  0.050501                         0.219826                             414.325                                       0.0                           2556.872853                                 2403.056904 2024-03-14 04:35:36.984166+00:00   14
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data2(
+            im_client,
+            full_symbols,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    @pytest.mark.slow("Slow via GH, but fast on the server")
+    def test_read_data3(self) -> None:
+        resample_1min = True
+        im_client = self.get_im_client(resample_1min)
+        full_symbols = ["binance::BTC_USDT"]
+        start_ts = pd.Timestamp("2024-03-13T21:58:00+00:00")
+        #
+        expected_length = 3
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2024-03-13 21:58:00+00:00, 2024-03-13 22:00:00+00:00]
+        columns=full_symbol,level_1.bid_price.open,level_1.bid_size.open,level_1.ask_price.open,level_1.ask_size.open,level_1.bid_ask_midpoint.open,level_1.half_spread.open,level_1.log_size_imbalance.open,level_1.bid_price.close,level_1.bid_size.close,level_1.ask_price.close,level_1.ask_size.close,level_1.bid_ask_midpoint.close,level_1.half_spread.close,level_1.log_size_imbalance.close,level_1.bid_price.high,level_1.bid_size.max,level_1.ask_price.high,level_1.ask_size.max,level_1.bid_ask_midpoint.max,level_1.half_spread.max,level_1.log_size_imbalance.max,level_1.bid_price.low,level_1.bid_size.min,level_1.ask_price.low,level_1.ask_size.min,level_1.bid_ask_midpoint.min,level_1.half_spread.min,level_1.log_size_imbalance.min,level_1.bid_price.mean,level_1.bid_size.mean,level_1.ask_price.mean,level_1.ask_size.mean,level_1.bid_ask_midpoint.mean,level_1.half_spread.mean,level_1.log_size_imbalance.mean,level_1.bid_ask_midpoint_var.100ms,level_1.bid_ask_midpoint_autocovar.100ms,level_1.log_size_imbalance_var.100ms,level_1.log_size_imbalance_autocovar.100ms,knowledge_timestamp,day
+        shape=(3, 42)
+                                        full_symbol  level_1.bid_price.open  level_1.bid_size.open  level_1.ask_price.open  level_1.ask_size.open  level_1.bid_ask_midpoint.open  level_1.half_spread.open  level_1.log_size_imbalance.open  level_1.bid_price.close  level_1.bid_size.close  level_1.ask_price.close  level_1.ask_size.close  level_1.bid_ask_midpoint.close  level_1.half_spread.close  level_1.log_size_imbalance.close  level_1.bid_price.high  level_1.bid_size.max  level_1.ask_price.high  level_1.ask_size.max  level_1.bid_ask_midpoint.max  level_1.half_spread.max  level_1.log_size_imbalance.max  level_1.bid_price.low  level_1.bid_size.min  level_1.ask_price.low  level_1.ask_size.min  level_1.bid_ask_midpoint.min  level_1.half_spread.min  level_1.log_size_imbalance.min  level_1.bid_price.mean  level_1.bid_size.mean  level_1.ask_price.mean  level_1.ask_size.mean  level_1.bid_ask_midpoint.mean  level_1.half_spread.mean  level_1.log_size_imbalance.mean  level_1.bid_ask_midpoint_var.100ms  level_1.bid_ask_midpoint_autocovar.100ms  level_1.log_size_imbalance_var.100ms  level_1.log_size_imbalance_autocovar.100ms              knowledge_timestamp  day
+        timestamp
+        2024-03-13 21:58:00+00:00  binance::BTC_USDT                 73249.9                  7.923                 73250.0                 19.181                       73249.95                      0.05                        -0.884150                  73290.5                   7.995                  73290.6                   3.922                        73290.55                       0.05                          0.712215                 73340.2                27.635                 73340.3                19.550                      73340.25                     0.35                        6.646131                73249.9                 0.002                73250.0                 0.002                      73249.95                     0.05                       -7.893572            73284.654333               7.382797            73284.756333               6.623362                   73284.705333                  0.051000                         0.687182                             665.480                                       0.0                           4852.708846                                 4676.402791 2024-03-14 04:35:36.984166+00:00   14
+        2024-03-13 21:59:00+00:00  binance::BTC_USDT                 73290.5                  7.995                 73290.6                  3.922                       73290.55                      0.05                         0.712215                  73274.3                   0.158                  73274.4                   7.834                        73274.35                       0.05                         -3.903633                 73363.2                16.619                 73363.3                12.625                      73363.25                     0.25                        6.106546                73274.3                 0.002                73274.4                 0.024                      73274.35                     0.05                       -7.508239            73322.903167               3.971838            73323.004500               2.869648                   73322.953833                  0.050667                         0.048252                             873.760                                       0.0                           4077.218668                                 3905.985184 2024-03-14 04:35:36.984166+00:00   14
+        2024-03-13 22:00:00+00:00  binance::BTC_USDT                 73274.3                  0.158                 73274.4                  7.834                       73274.35                      0.05                        -3.903633                  73295.3                   9.108                  73295.4                   0.496                        73295.35                       0.05                          2.910332                 73317.2                11.144                 73317.3                15.331                      73317.25                     0.20                        5.573104                73269.8                 0.066                73269.9                 0.028                      73269.85                     0.05                       -5.199166            73294.692821               2.852848            73294.793823               2.553706                   73294.743322                  0.050501                         0.219826                             414.325                                       0.0                           2556.872853                                 2403.056904 2024-03-14 04:35:36.984166+00:00   14
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data3(
+            im_client,
+            full_symbols,
+            start_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    @pytest.mark.slow("Slow via GH, but fast on the server")
+    def test_read_data4(self) -> None:
+        resample_1min = True
+        im_client = self.get_im_client(resample_1min)
+        full_symbols = ["binance::BTC_USDT"]
+        end_ts = pd.Timestamp("2024-03-13T00:04:00+00:00")
+        #
+        expected_length = 4
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2024-03-13 00:01:00+00:00, 2024-03-13 00:04:00+00:00]
+        columns=full_symbol,level_1.bid_price.open,level_1.bid_size.open,level_1.ask_price.open,level_1.ask_size.open,level_1.bid_ask_midpoint.open,level_1.half_spread.open,level_1.log_size_imbalance.open,level_1.bid_price.close,level_1.bid_size.close,level_1.ask_price.close,level_1.ask_size.close,level_1.bid_ask_midpoint.close,level_1.half_spread.close,level_1.log_size_imbalance.close,level_1.bid_price.high,level_1.bid_size.max,level_1.ask_price.high,level_1.ask_size.max,level_1.bid_ask_midpoint.max,level_1.half_spread.max,level_1.log_size_imbalance.max,level_1.bid_price.low,level_1.bid_size.min,level_1.ask_price.low,level_1.ask_size.min,level_1.bid_ask_midpoint.min,level_1.half_spread.min,level_1.log_size_imbalance.min,level_1.bid_price.mean,level_1.bid_size.mean,level_1.ask_price.mean,level_1.ask_size.mean,level_1.bid_ask_midpoint.mean,level_1.half_spread.mean,level_1.log_size_imbalance.mean,level_1.bid_ask_midpoint_var.100ms,level_1.bid_ask_midpoint_autocovar.100ms,level_1.log_size_imbalance_var.100ms,level_1.log_size_imbalance_autocovar.100ms,knowledge_timestamp,day
+        shape=(4, 42)
+                                        full_symbol  level_1.bid_price.open  level_1.bid_size.open  level_1.ask_price.open  level_1.ask_size.open  level_1.bid_ask_midpoint.open  level_1.half_spread.open  level_1.log_size_imbalance.open  level_1.bid_price.close  level_1.bid_size.close  level_1.ask_price.close  level_1.ask_size.close  level_1.bid_ask_midpoint.close  level_1.half_spread.close  level_1.log_size_imbalance.close  level_1.bid_price.high  level_1.bid_size.max  level_1.ask_price.high  level_1.ask_size.max  level_1.bid_ask_midpoint.max  level_1.half_spread.max  level_1.log_size_imbalance.max  level_1.bid_price.low  level_1.bid_size.min  level_1.ask_price.low  level_1.ask_size.min  level_1.bid_ask_midpoint.min  level_1.half_spread.min  level_1.log_size_imbalance.min  level_1.bid_price.mean  level_1.bid_size.mean  level_1.ask_price.mean  level_1.ask_size.mean  level_1.bid_ask_midpoint.mean  level_1.half_spread.mean  level_1.log_size_imbalance.mean  level_1.bid_ask_midpoint_var.100ms  level_1.bid_ask_midpoint_autocovar.100ms  level_1.log_size_imbalance_var.100ms  level_1.log_size_imbalance_autocovar.100ms              knowledge_timestamp  day
+        timestamp
+        2024-03-13 00:01:00+00:00  binance::BTC_USDT                 71503.2                  4.613                 71503.3                  2.160                       71503.25                      0.05                         0.758770                  71507.2                   1.771                  71507.3                   3.577                        71507.25                       0.05                         -0.702980                 71538.9                13.562                 71539.0                 8.355                      71538.95                     1.20                        7.910040                71498.2                 0.002                71498.3                 0.002                      71498.25                     0.05                       -6.867974            71519.596167               2.652090            71519.705167               2.629605                   71519.650667                  0.054500                         0.087658                            2107.300                                      12.4                           3080.938649                                 2696.843371 2024-03-14 04:35:36.984166+00:00   14
+        2024-03-13 00:02:00+00:00  binance::BTC_USDT                 71507.2                  2.340                 71507.3                  0.573                       71507.25                      0.05                         1.407020                  71455.3                   4.710                  71455.4                   0.931                        71455.35                       0.05                          1.621184                 71525.9                10.329                 71526.0                11.394                      71525.95                     0.75                        8.458080                71455.3                 0.012                71455.4                 0.001                      71455.35                     0.05                       -4.902184            71473.833333               2.219057            71473.938333               2.837353                   71473.885833                  0.052500                        -0.353664                            1269.015                                       0.0                           1728.386403                                 1533.673228 2024-03-14 04:35:36.984166+00:00   14
+        2024-03-13 00:03:00+00:00  binance::BTC_USDT                 71455.3                  4.710                 71455.4                  0.931                       71455.35                      0.05                         1.621184                  71438.2                   1.329                  71438.3                   5.168                        71438.25                       0.05                         -1.358059                 71480.0                12.137                 71480.1                11.489                      71480.05                     0.10                        4.866457                71438.2                 0.004                71438.3                 0.030                      71438.25                     0.05                       -7.552552            71453.718167               2.773778            71453.818667               3.715337                   71453.768417                  0.050250                        -0.576860                             605.495                                       0.0                           1867.603551                                 1743.911817 2024-03-14 04:35:36.984166+00:00   14
+        2024-03-13 00:04:00+00:00  binance::BTC_USDT                 71438.2                  1.502                 71438.3                  4.864                       71438.25                      0.05                        -1.175064                  71454.7                   4.142                  71454.8                   0.586                        71454.75                       0.05                          1.955614                 71454.7                13.447                 71454.8                 9.953                      71454.75                     0.60                        7.365180                71428.6                 0.047                71428.7                 0.005                      71428.65                     0.05                       -5.207624            71443.204500               3.809635            71443.308167               2.949135                   71443.256333                  0.051833                         0.689349                             497.885                                       0.0                           3928.258336                                 3705.618175 2024-03-14 04:35:36.984166+00:00   14
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data4(
+            im_client,
+            full_symbols,
+            end_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    @pytest.mark.slow("Slow via GH, but fast on the server")
+    def test_read_data5(self) -> None:
+        resample_1min = True
+        im_client = self.get_im_client(resample_1min)
+        full_symbols = ["binance::BTC_USDT"]
+        start_ts = pd.Timestamp("2024-03-13T00:01:00-00:00")
+        end_ts = pd.Timestamp("2024-03-13T00:04:00-00:00")
+        #
+        expected_length = 4
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2024-03-13 00:01:00+00:00, 2024-03-13 00:04:00+00:00]
+        columns=full_symbol,level_1.bid_price.open,level_1.bid_size.open,level_1.ask_price.open,level_1.ask_size.open,level_1.bid_ask_midpoint.open,level_1.half_spread.open,level_1.log_size_imbalance.open,level_1.bid_price.close,level_1.bid_size.close,level_1.ask_price.close,level_1.ask_size.close,level_1.bid_ask_midpoint.close,level_1.half_spread.close,level_1.log_size_imbalance.close,level_1.bid_price.high,level_1.bid_size.max,level_1.ask_price.high,level_1.ask_size.max,level_1.bid_ask_midpoint.max,level_1.half_spread.max,level_1.log_size_imbalance.max,level_1.bid_price.low,level_1.bid_size.min,level_1.ask_price.low,level_1.ask_size.min,level_1.bid_ask_midpoint.min,level_1.half_spread.min,level_1.log_size_imbalance.min,level_1.bid_price.mean,level_1.bid_size.mean,level_1.ask_price.mean,level_1.ask_size.mean,level_1.bid_ask_midpoint.mean,level_1.half_spread.mean,level_1.log_size_imbalance.mean,level_1.bid_ask_midpoint_var.100ms,level_1.bid_ask_midpoint_autocovar.100ms,level_1.log_size_imbalance_var.100ms,level_1.log_size_imbalance_autocovar.100ms,knowledge_timestamp,day
+        shape=(4, 42)
+                                        full_symbol  level_1.bid_price.open  level_1.bid_size.open  level_1.ask_price.open  level_1.ask_size.open  level_1.bid_ask_midpoint.open  level_1.half_spread.open  level_1.log_size_imbalance.open  level_1.bid_price.close  level_1.bid_size.close  level_1.ask_price.close  level_1.ask_size.close  level_1.bid_ask_midpoint.close  level_1.half_spread.close  level_1.log_size_imbalance.close  level_1.bid_price.high  level_1.bid_size.max  level_1.ask_price.high  level_1.ask_size.max  level_1.bid_ask_midpoint.max  level_1.half_spread.max  level_1.log_size_imbalance.max  level_1.bid_price.low  level_1.bid_size.min  level_1.ask_price.low  level_1.ask_size.min  level_1.bid_ask_midpoint.min  level_1.half_spread.min  level_1.log_size_imbalance.min  level_1.bid_price.mean  level_1.bid_size.mean  level_1.ask_price.mean  level_1.ask_size.mean  level_1.bid_ask_midpoint.mean  level_1.half_spread.mean  level_1.log_size_imbalance.mean  level_1.bid_ask_midpoint_var.100ms  level_1.bid_ask_midpoint_autocovar.100ms  level_1.log_size_imbalance_var.100ms  level_1.log_size_imbalance_autocovar.100ms              knowledge_timestamp  day
+        timestamp
+        2024-03-13 00:01:00+00:00  binance::BTC_USDT                 71503.2                  4.613                 71503.3                  2.160                       71503.25                      0.05                         0.758770                  71507.2                   1.771                  71507.3                   3.577                        71507.25                       0.05                         -0.702980                 71538.9                13.562                 71539.0                 8.355                      71538.95                     1.20                        7.910040                71498.2                 0.002                71498.3                 0.002                      71498.25                     0.05                       -6.867974            71519.596167               2.652090            71519.705167               2.629605                   71519.650667                  0.054500                         0.087658                            2107.300                                      12.4                           3080.938649                                 2696.843371 2024-03-14 04:35:36.984166+00:00   14
+        2024-03-13 00:02:00+00:00  binance::BTC_USDT                 71507.2                  2.340                 71507.3                  0.573                       71507.25                      0.05                         1.407020                  71455.3                   4.710                  71455.4                   0.931                        71455.35                       0.05                          1.621184                 71525.9                10.329                 71526.0                11.394                      71525.95                     0.75                        8.458080                71455.3                 0.012                71455.4                 0.001                      71455.35                     0.05                       -4.902184            71473.833333               2.219057            71473.938333               2.837353                   71473.885833                  0.052500                        -0.353664                            1269.015                                       0.0                           1728.386403                                 1533.673228 2024-03-14 04:35:36.984166+00:00   14
+        2024-03-13 00:03:00+00:00  binance::BTC_USDT                 71455.3                  4.710                 71455.4                  0.931                       71455.35                      0.05                         1.621184                  71438.2                   1.329                  71438.3                   5.168                        71438.25                       0.05                         -1.358059                 71480.0                12.137                 71480.1                11.489                      71480.05                     0.10                        4.866457                71438.2                 0.004                71438.3                 0.030                      71438.25                     0.05                       -7.552552            71453.718167               2.773778            71453.818667               3.715337                   71453.768417                  0.050250                        -0.576860                             605.495                                       0.0                           1867.603551                                 1743.911817 2024-03-14 04:35:36.984166+00:00   14
+        2024-03-13 00:04:00+00:00  binance::BTC_USDT                 71438.2                  1.502                 71438.3                  4.864                       71438.25                      0.05                        -1.175064                  71454.7                   4.142                  71454.8                   0.586                        71454.75                       0.05                          1.955614                 71454.7                13.447                 71454.8                 9.953                      71454.75                     0.60                        7.365180                71428.6                 0.047                71428.7                 0.005                      71428.65                     0.05                       -5.207624            71443.204500               3.809635            71443.308167               2.949135                   71443.256333                  0.051833                         0.689349                             497.885                                       0.0                           3928.258336                                 3705.618175 2024-03-14 04:35:36.984166+00:00   14
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data5(
+            im_client,
+            full_symbols,
+            start_ts,
+            end_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_read_data6(self) -> None:
+        resample_1min = True
+        im_client = self.get_im_client(resample_1min)
+        full_symbol = "unsupported_exchange::unsupported_currency"
+        self._test_read_data6(im_client, full_symbol)
+
+    @pytest.mark.slow("Slow via GH, but fast on the server")
+    def test_read_data7(self) -> None:
+        resample_1min = False
+        im_client = self.get_im_client(resample_1min)
+        full_symbols = ["okx::ETH_USDT", "binance::BTC_USDT"]
+        #
+        expected_length = 2760
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["okx::ETH_USDT", "binance::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2024-03-08 00:01:00+00:00, 2024-03-13 22:00:00+00:00]
+        columns=full_symbol,level_1.bid_price.open,level_1.bid_size.open,level_1.ask_price.open,level_1.ask_size.open,level_1.bid_ask_midpoint.open,level_1.half_spread.open,level_1.log_size_imbalance.open,level_1.bid_price.close,level_1.bid_size.close,level_1.ask_price.close,level_1.ask_size.close,level_1.bid_ask_midpoint.close,level_1.half_spread.close,level_1.log_size_imbalance.close,level_1.bid_price.high,level_1.bid_size.max,level_1.ask_price.high,level_1.ask_size.max,level_1.bid_ask_midpoint.max,level_1.half_spread.max,level_1.log_size_imbalance.max,level_1.bid_price.low,level_1.bid_size.min,level_1.ask_price.low,level_1.ask_size.min,level_1.bid_ask_midpoint.min,level_1.half_spread.min,level_1.log_size_imbalance.min,level_1.bid_price.mean,level_1.bid_size.mean,level_1.ask_price.mean,level_1.ask_size.mean,level_1.bid_ask_midpoint.mean,level_1.half_spread.mean,level_1.log_size_imbalance.mean,level_1.bid_ask_midpoint_var.100ms,level_1.bid_ask_midpoint_autocovar.100ms,level_1.log_size_imbalance_var.100ms,level_1.log_size_imbalance_autocovar.100ms,knowledge_timestamp,day
+        shape=(2760, 42)
+                                    full_symbol  level_1.bid_price.open  level_1.bid_size.open  level_1.ask_price.open  level_1.ask_size.open  level_1.bid_ask_midpoint.open  level_1.half_spread.open  level_1.log_size_imbalance.open  level_1.bid_price.close  level_1.bid_size.close  level_1.ask_price.close  level_1.ask_size.close  level_1.bid_ask_midpoint.close  level_1.half_spread.close  level_1.log_size_imbalance.close  level_1.bid_price.high  level_1.bid_size.max  level_1.ask_price.high  level_1.ask_size.max  level_1.bid_ask_midpoint.max  level_1.half_spread.max  level_1.log_size_imbalance.max  level_1.bid_price.low  level_1.bid_size.min  level_1.ask_price.low  level_1.ask_size.min  level_1.bid_ask_midpoint.min  level_1.half_spread.min  level_1.log_size_imbalance.min  level_1.bid_price.mean  level_1.bid_size.mean  level_1.ask_price.mean  level_1.ask_size.mean  level_1.bid_ask_midpoint.mean  level_1.half_spread.mean  level_1.log_size_imbalance.mean  level_1.bid_ask_midpoint_var.100ms  level_1.bid_ask_midpoint_autocovar.100ms  level_1.log_size_imbalance_var.100ms  level_1.log_size_imbalance_autocovar.100ms              knowledge_timestamp  day
+        timestamp
+        2024-03-08 00:01:00+00:00  okx::ETH_USDT                 3869.58                 1087.0                 3869.59                  113.0                       3869.585                     0.005                         2.263789                  3871.25                   186.0                  3871.26                   206.0                        3871.255                      0.005                         -0.102129                 3873.35                3132.0                 3873.36                2070.0                      3873.355                    0.005                        6.786717                3869.58                   3.0                3869.59                   1.0                      3869.585                    0.005                       -5.194807              3871.65191             454.336683              3871.66191             220.216080                     3871.65691                     0.005                         0.829527                              9.9679                                       0.0                           3941.583737                                 3437.835537 2024-03-09 22:06:27.427441+00:00   14
+        2024-03-08 00:02:00+00:00  okx::ETH_USDT                 3871.25                  186.0                 3871.26                  206.0                       3871.255                     0.005                        -0.102129                  3870.00                   121.0                  3870.01                   556.0                        3870.005                      0.005                         -1.524978                 3872.92                1102.0                 3872.93                1146.0                      3872.925                    0.005                        5.393628                3870.00                   1.0                3870.01                   1.0                      3870.005                    0.005                       -6.940222              3871.66015             188.198333              3871.67015             265.551667                     3871.66515                     0.005                        -0.504806                              9.8447                                       0.0                           3724.277692                                 3406.674270 2024-03-09 22:06:27.427441+00:00   14
+        2024-03-08 00:03:00+00:00  okx::ETH_USDT                 3870.00                  121.0                 3870.01                  556.0                       3870.005                     0.005                        -1.524978                  3872.57                   140.0                  3872.58                   347.0                        3872.575                      0.005                         -0.907682                 3872.67                 621.0                 3872.68                1021.0                      3872.675                    0.005                        5.620401                3868.17                   1.0                3868.18                   1.0                      3868.175                    0.005                       -5.707110              3870.58240             204.788333              3870.59240             202.790000                     3870.58740                     0.005                         0.047173                              6.9937                                       0.0                           3444.733496                                 3183.616285 2024-03-09 22:06:27.427441+00:00   14
+        ...
+        2024-03-13 21:58:00+00:00  binance::BTC_USDT                 73249.9                  7.923                 73250.0                 19.181                       73249.95                      0.05                        -0.884150                  73290.5                   7.995                  73290.6                   3.922                        73290.55                       0.05                          0.712215                 73340.2                27.635                 73340.3                19.550                      73340.25                     0.35                        6.646131                73249.9                 0.002                73250.0                 0.002                      73249.95                     0.05                       -7.893572            73284.654333               7.382797            73284.756333               6.623362                   73284.705333                  0.051000                         0.687182                             665.480                                       0.0                           4852.708846                                 4676.402791 2024-03-14 04:35:36.984166+00:00   14
+        2024-03-13 21:59:00+00:00  binance::BTC_USDT                 73290.5                  7.995                 73290.6                  3.922                       73290.55                      0.05                         0.712215                  73274.3                   0.158                  73274.4                   7.834                        73274.35                       0.05                         -3.903633                 73363.2                16.619                 73363.3                12.625                      73363.25                     0.25                        6.106546                73274.3                 0.002                73274.4                 0.024                      73274.35                     0.05                       -7.508239            73322.903167               3.971838            73323.004500               2.869648                   73322.953833                  0.050667                         0.048252                             873.760                                       0.0                           4077.218668                                 3905.985184 2024-03-14 04:35:36.984166+00:00   14
+        2024-03-13 22:00:00+00:00  binance::BTC_USDT                 73274.3                  0.158                 73274.4                  7.834                       73274.35                      0.05                        -3.903633                  73295.3                   9.108                  73295.4                   0.496                        73295.35                       0.05                          2.910332                 73317.2                11.144                 73317.3                15.331                      73317.25                     0.20                        5.573104                73269.8                 0.066                73269.9                 0.028                      73269.85                     0.05                       -5.199166            73294.692821               2.852848            73294.793823               2.553706                   73294.743322                  0.050501                         0.219826                             414.325                                       0.0                           2556.872853                                 2403.056904 2024-03-14 04:35:36.984166+00:00   14
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data7(
+            im_client,
+            full_symbols,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    # ////////////////////////////////////////////////////////////////////////
+
+    def test_repr1(self) -> None:
+        resample_1min = True
+        im_client = self.get_im_client(resample_1min)
+        expected_str = r"""
+        <im_v2.ccxt.data.client.ccxt_clients.CcxtHistoricalPqByTileClient at 0x>:
+        _vendor='CCXT' <str>
+        _universe_version='small' <str>
+        _resample_1min='True' <bool>
+        _timestamp_col_name='timestamp' <str>
+        _full_symbol_col_name='None' <NoneType>
+        _asset_id_to_full_symbol_mapping= <dict>
+            {1467591036: 'binance::BTC_USDT',
+            2002879833: 'gateio::XRP_USDT',
+            3187272957: 'kucoin::ETH_USDT'}
+        _root_dir='s3://cryptokaizen-unit-test/outcomes/TestCcxtHistoricalPqByTileClient2/input/historical.manual.pq' <str>
+        _infer_exchange_id='True' <bool>
+        _partition_mode='by_year_month' <str>
+        _aws_profile='ck' <str>
+        _dataset='bid_ask' <str>
+        _contract_type='futures' <str>
+        _data_snapshot='20240314' <str>
+        _download_mode='periodic_daily' <str>
+        _downloading_entity='airflow' <str>
+        _version='' <str>
+        _download_universe_version='v8' <str>
+        _tag='' <str>
+        _data_format='parquet' <str>
+        """
+        self.run_test_repr(im_client, expected_str)
+
+    def test_str1(self) -> None:
+        resample_1min = True
+        im_client = self.get_im_client(resample_1min)
+        expected_str = r"""
+        CcxtHistoricalPqByTileClient at 0x=(_vendor=CCXT <str>, _universe_version=small <str>, _resample_1min=True <bool>, _timestamp_col_name=timestamp <str>, _full_symbol_col_name=None <NoneType>, _asset_id_to_full_symbol_mapping={1467591036: 'binance::BTC_USDT', 2002879833: 'gateio::XRP_USDT', 3187272957: 'kucoin::ETH_USDT'} <dict>, _root_dir=s3://cryptokaizen-unit-test/outcomes/TestCcxtHistoricalPqByTileClient2/input/historical.manual.pq <str>, _infer_exchange_id=True <bool>, _partition_mode=by_year_month <str>, _aws_profile=ck <str>, _dataset=bid_ask <str>, _contract_type=futures <str>, _data_snapshot=20240314 <str>, _download_mode=periodic_daily <str>, _downloading_entity=airflow <str>, _version= <str>, _download_universe_version=v8 <str>, _tag= <str>, _data_format=parquet <str>)
+        """
+        self.run_test_str(im_client, expected_str)
+
+    # ////////////////////////////////////////////////////////////////////////
+
+    @pytest.mark.slow("Slow via GH, but fast on the server")
+    def test_filter_columns1(self) -> None:
+        resample_1min = True
+        im_client = self.get_im_client(resample_1min)
+        full_symbols = ["binance::BTC_USDT"]
+        columns = [
+            "full_symbol",
+            "level_1.bid_price.open",
+            "level_1.bid_price.close",
+        ]
+        self._test_filter_columns1(im_client, full_symbols, columns)
+
+    def test_filter_columns2(self) -> None:
+        resample_1min = True
+        im_client = self.get_im_client(resample_1min)
+        full_symbol = "binance::BTC_USDT"
+        columns = ["full_symbol", "mock_column"]
+        self._test_filter_columns2(im_client, full_symbol, columns)
+
+    # ////////////////////////////////////////////////////////////////////////
+
+    def test_get_start_ts_for_symbol1(self) -> None:
+        resample_1min = True
+        im_client = self.get_im_client(resample_1min)
+        full_symbol = "binance::BTC_USDT"
+        expected_start_ts = pd.to_datetime("2024-03-13 00:01:00+00:00", utc=True)
+        self._test_get_start_ts_for_symbol1(
+            im_client, full_symbol, expected_start_ts
+        )
+
+    def test_get_end_ts_for_symbol1(self) -> None:
+        resample_1min = True
+        im_client = self.get_im_client(resample_1min)
+        full_symbol = "binance::BTC_USDT"
+        expected_end_ts = pd.to_datetime("2024-03-13 22:00:00+00:00", utc=True)
+        self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
+
+    # ////////////////////////////////////////////////////////////////////////
+
+    def test_get_universe1(self) -> None:
+        resample_1min = True
+        im_client = self.get_im_client(resample_1min)
+        expected_length = 3
+        expected_first_elements = [
+            "binance::BTC_USDT",
+            "gateio::XRP_USDT",
+            "kucoin::ETH_USDT",
+        ]
+        expected_last_elements = [
+            "binance::BTC_USDT",
+            "gateio::XRP_USDT",
+            "kucoin::ETH_USDT",
+        ]
+        self._test_get_universe1(
+            im_client,
+            expected_length,
+            expected_first_elements,
+            expected_last_elements,
+        )

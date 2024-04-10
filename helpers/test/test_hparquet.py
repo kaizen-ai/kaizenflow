@@ -63,6 +63,32 @@ def _get_df(date: datetime.date, seed: int = 42) -> pd.DataFrame:
     return df
 
 
+def _get_test_df_with_timestamps() -> pd.DataFrame:
+    """
+    Create a DataFrame with timestamps.
+    """
+    timestamp = pd.Timestamp("2022-01-01 00:00:00.123456", tz="America/New_York")
+    index = [timestamp for _ in range(6)]
+    df = pd.DataFrame(
+        {
+            "n_legs": [2, 2, 4, 4, 5, 100],
+            "animal": [
+                "Flamingo",
+                "Parrot",
+                "Dog",
+                "Horse",
+                "Brittle stars",
+                "Centipede",
+            ],
+            "year": [2001, 2002, 2001, 2003, 2003, 2001],
+        },
+        index=index,
+    )
+    knowledge_timestamp = pd.Timestamp.now(tz="UTC")
+    df["knowledge_timestamp"] = knowledge_timestamp
+    return df
+
+
 def _get_df_example1() -> pd.DataFrame:
     date = datetime.date(2020, 1, 1)
     df = _get_df(date)
@@ -207,38 +233,42 @@ class TestParquet1(hunitest.TestCase):
         2020-01-01 16:00:00-05:00    0     A    48    49"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_load_timestamps(self) -> None:
+    def test_write_and_read_partition_parquet_files_with_unit(self) -> None:
         """
-        Check that regardless of the original `pd.Timestamp` unit, the unit
-        after reading the data is `ns` (nanoseconds).
+        Write the Pandas DataFrame to partitioned Parquet files and read it
+        back, verifying the retention of time unit information in the index.
+        """
+        # Prepare test data.
+        dst_dir = os.path.join(self.get_scratch_space(), "tmp.partition_parquet")
+        initial_df = _get_test_df_with_timestamps()
+        initial_df.index = initial_df.index.as_unit("us")
+        partition_columns = initial_df.columns.tolist()
+        # The `to_partitioned_parquet` saves the given dataframe as Parquet
+        # files partitioned along the given columns.
+        hparque.to_partitioned_parquet(initial_df, partition_columns, dst_dir)
+        df_from_parquet_files = hparque.from_parquet(dst_dir)
+        # Check that the time unit is ns.
+        self.assert_equal("ns", df_from_parquet_files.index.unit)
+        # TODO(Vlad): Refactor after CmampTask7331 is resolved.
+        # self.assert_equal(initial_df.index.unit, df.index.unit)
 
-        See
-        https://arrow.apache.org/docs/python/pandas.html#arrow-pandas-conversion
-        for details.
+    def test_write_and_read_parquet_file_with_unit(self) -> None:
         """
-        # Generate artificial test data.
-        file_path = os.path.join(self.get_scratch_space(), "dummy.parquet")
-        ts = pd.Timestamp(datetime.datetime.utcnow(), tz="UTC")
-        initial_df = pd.DataFrame([1, 2, 3])
-        initial_df["knowledge_timestamp"] = ts
-        # Force the timestamp's unit to be `us`.
-        initial_df["knowledge_timestamp"] = initial_df[
-            "knowledge_timestamp"
-        ].astype("datetime64[us, UTC]")
-        # Check that the initial timestamp's unit is `us`.
-        self.assertEqual(
-            str(initial_df["knowledge_timestamp"].dtype),
-            "datetime64[us, UTC]",
+        Write the provided DataFrame to Parquet file and read it back,
+        verifying the retention of time unit information in the index.
+        """
+        test_parquet_file = os.path.join(
+            self.get_scratch_space(), "tmp_dummy.parquet"
         )
-        # Save test data to the scratch dir.
-        hparque.to_parquet(initial_df, file_path)
-        # Read test data from the scratch dir.
-        actual_df = hparque.from_parquet(file_path)
-        # Check that the timestamp's unit has changed to `ns`.
-        self.assert_equal(
-            str(actual_df["knowledge_timestamp"].dtype),
-            "datetime64[ns, UTC]",
-        )
+        initial_df = _get_test_df_with_timestamps()
+        initial_df.index = initial_df.index.as_unit("us")
+        # The `to_parquet` function writes a DF to a single parquet file without
+        # any partition.
+        hparque.to_parquet(initial_df, test_parquet_file)
+        df = hparque.from_parquet(test_parquet_file)
+        self.assert_equal("ns", df.index.unit)
+        # TODO(Vlad): Refactor after CmampTask7331 is resolved.
+        # self.assert_equal(initial_df.index.unit, df.index.unit)
 
     def test_save_read_concat_data(self) -> None:
         """
@@ -563,6 +593,60 @@ class TestPartitionedParquet1(hunitest.TestCase):
         2020-01-01 16:00:00-05:00    4     E    96    75"""
         self.assert_equal(df_as_str, exp, fuzzy_match=True)
         self.assert_equal(df_as_str, exp, fuzzy_match=True)
+
+    def test_write_and_read_mixed_units_partition_dataset_1(self) -> None:
+        """
+        Write two DataFrames with different time units to a partitioned Parquet
+        dataset and read it back.
+
+        The combination `ns` and `us` should not raise an error.
+        See CmampTask7331 for details.
+        """
+        self._run_write_and_read_mixed_units_partitioned_dataset("ns", "us")
+
+    @pytest.mark.skip(
+        reason="Since names and order the files is not guaranteed, the test is "
+        "flaky, decided to skip it for now.",
+    )
+    def test_write_and_read_mixed_units_partition_dataset_2(self) -> None:
+        """
+        Write two DataFrames with different time units to a partitioned Parquet
+        dataset and read it back.
+
+        The combination `ms` and `us` should raise an error.
+        """
+        with self.assertRaises(pyarrow.lib.ArrowInvalid):
+            self._run_write_and_read_mixed_units_partitioned_dataset("ms", "us")
+
+    def _run_write_and_read_mixed_units_partitioned_dataset(
+        self, first_unit: str, second_unit: str
+    ) -> None:
+        """
+        Write two DataFrames with different time units to a partitioned Parquet
+        dataset and read it back.
+
+        :param first_unit: time unit of the first DataFrame
+        :param second_unit: time unit of the second DataFrame
+        """
+        initial_df = _get_test_df_with_timestamps()
+        partition_columns = ["n_legs", "animal", "year"]
+        dst_dir = os.path.join(self.get_scratch_space(), "tmp.pp_mixed_units")
+        # Write first DF as partitioned parquet.
+        first_df = initial_df.copy()
+        first_df.index = first_df.index.as_unit(first_unit)
+        first_df["knowledge_timestamp"] = first_df["knowledge_timestamp"].astype(
+            f"datetime64[{first_unit}, UTC]"
+        )
+        hparque.to_partitioned_parquet(first_df, partition_columns, dst_dir)
+        # Write second DF as partitioned parquet.
+        second_df = initial_df.copy()
+        second_df.index = second_df.index.as_unit(second_unit)
+        second_df["knowledge_timestamp"] = second_df[
+            "knowledge_timestamp"
+        ].astype(f"datetime64[{second_unit}, UTC]")
+        hparque.to_partitioned_parquet(second_df, partition_columns, dst_dir)
+        # Read it back.
+        _ = hparque.from_parquet(dst_dir)
 
 
 # #############################################################################
@@ -1029,6 +1113,70 @@ class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
         hparque.list_and_merge_pq_files(self.bucket_name, aws_profile=s3fs_)
         df = hparque.from_parquet(original_sample_path, aws_profile=s3fs_)
         self.assertEqual(len(df), 1)
+
+
+# #############################################################################
+
+
+class TestListAndMergePqFilesMixedUnits(hunitest.TestCase):
+    def test_parquet_files_with_mixed_time_units_1(self) -> None:
+        """
+        Test merging Parquet files with the `ns` and `us`.
+        """
+        first_unit = "ns"
+        second_unit = "us"
+        self._list_and_merge_mixed_units_pq_files(first_unit, second_unit)
+
+    def test_parquet_files_with_mixed_time_units_2(self) -> None:
+        """
+        Test merging Parquet files with the `ms` and `ns`.
+
+        It should raise an error. See CmampTask7331 for details.
+
+        The test will not raise an asserion when the time units is `ms` and
+        `us`. The reason is that we do not lose data when converting from
+        the first time unit, which is `ms`, to the second time unit, which
+        is `us`, transitioning from low resolution to high resolution.
+        """
+        first_unit = "us"
+        second_unit = "ms"
+        with self.assertRaises(pyarrow.lib.ArrowInvalid):
+            self._list_and_merge_mixed_units_pq_files(first_unit, second_unit)
+
+    def _list_and_merge_mixed_units_pq_files(
+        self, first_unit: str, second_unit: str
+    ) -> None:
+        """
+        Run `list_and_merge_pq_files` with different time units in the same
+        column and index.
+
+        :param first_unit: first time unit.
+        :param second_unit: second time unit.
+        """
+        # Prepare test data.
+        dst_dir = os.path.join(self.get_scratch_space(), "tmp.list_and_merge")
+        first_file_name = os.path.join(dst_dir, "tmp.1first.parquet")
+        second_file_name = os.path.join(dst_dir, "tmp.2second.parquet")
+        merged_file_name = os.path.join(dst_dir, "tmp.merged.parquet")
+        # Write first DF with the `first_unit`.
+        initial_df = _get_test_df_with_timestamps()
+        first_df = initial_df.copy()
+        first_df.index = first_df.index.as_unit(first_unit)
+        first_df["knowledge_timestamp"] = first_df["knowledge_timestamp"].astype(
+            f"datetime64[{first_unit}, UTC]"
+        )
+        hparque.to_parquet(first_df, first_file_name)
+        # Write second DF with the `second_unit`.
+        second_df = initial_df.copy()
+        second_df.index = second_df.index.as_unit(second_unit)
+        second_df["knowledge_timestamp"] = second_df[
+            "knowledge_timestamp"
+        ].astype(f"datetime64[{second_unit}, UTC]")
+        hparque.to_parquet(second_df, second_file_name)
+        # List and merge.
+        hparque.list_and_merge_pq_files(dst_dir, file_name="tmp.merged.parquet")
+        # Read it back.
+        _ = hparque.from_parquet(merged_file_name)
 
 
 # #############################################################################

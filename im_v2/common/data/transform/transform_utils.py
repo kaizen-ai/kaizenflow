@@ -288,6 +288,7 @@ def transform_trades_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df = df.join(pd.json_normalize(df.pop("data")))
     return df[
         [
+            "id",
             "timestamp",
             "side",
             "price",

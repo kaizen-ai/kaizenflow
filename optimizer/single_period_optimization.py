@@ -168,6 +168,15 @@ class SinglePeriodOptimizer:
         target_trades_shares = (
             target_holdings_shares - input_df["holdings_shares"]
         ).rename("target_trades_shares")
+        # Additionally quantize shares to avoid floating point issues, e.g.,
+        # `0.42000000000000004`. This is important because the broker imposes
+        # restrictions on trades precision.
+        target_trades_shares = cofinanc.quantize_shares(
+            target_trades_shares,
+            quantization,
+            asset_id_to_decimals=asset_id_to_share_decimals,
+        )
+        # Recompute `target_trades_notional` from shares and price.
         target_trades_notional = (
             target_trades_shares * input_df["price"]
         ).rename("target_trades_notional")

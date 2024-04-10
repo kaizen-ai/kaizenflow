@@ -110,6 +110,32 @@ class Extractor(abc.ABC):
             )
         else:
             hdbg.dfatal(f"Unknown data type {data_type}")
+    
+    async def subscribe_to_websocket_data_multiple_symbols(
+        self, data_type: str, exchange_id: str, currency_pairs: List[str], **kwargs: Any
+    ):
+        """
+        Subscribe to websocket based data stream for a particular exchange
+        `exchange_id` and multiple currency_pairs.
+
+        Same parameters as `download_websocket_data()`.
+        """
+        if data_type == "ohlcv":
+            await self._subscribe_to_websocket_ohlcv_multiple_symbols(
+                exchange_id,
+                currency_pairs,
+                **kwargs,
+            )
+        elif data_type == "bid_ask":
+            await self._subscribe_to_websocket_bid_ask_multiple_symbols(
+                exchange_id, currency_pairs, **kwargs
+            )
+        elif data_type == "trades":
+            await self._subscribe_to_websocket_trades_multiple_symbols(
+                exchange_id, currency_pairs, **kwargs
+            )
+        else:
+            hdbg.dfatal(f"Unknown data type {data_type}")
 
     # #############################################################################
     # Private methods.

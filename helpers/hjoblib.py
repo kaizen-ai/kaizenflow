@@ -10,6 +10,10 @@ import math
 import os
 import pprint
 import random
+import sys
+import traceback
+from functools import wraps
+from multiprocessing import Process, Queue
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import joblib
@@ -316,7 +320,7 @@ def workload_to_string(workload: Workload, *, use_pprint: bool = True) -> str:
     func_name=_LimeTask317_process_chunk
     # task 1 / 3
     args=([('./tmp.s3/20220110/data.parquet',
-       './tmp.s3_out/./tmp.s3/20220110/data.parquet')],)
+        './tmp.s3_out/./tmp.s3/20220110/data.parquet')],)
     kwargs={}
     # task 2 / 3
     args=([('./tmp.s3/20220111/data.parquet',
@@ -355,7 +359,8 @@ def _workload_function(*args: Any, **kwargs: Any) -> str:
     Execute the function task.
 
     :raises: in case of error
-    :return: string representing information about the cached function execution.
+    :return: string representing information about the cached function
+        execution
     """
     _ = args
     incremental = kwargs.pop("incremental")
@@ -402,6 +407,56 @@ def get_num_executing_threads(args_num_threads: Union[str, int]) -> int:
     return num_executing_threads
 
 
+# TODO(grisha): Add type hints, add unit test to understand the behavior.
+# From https://gist.github.com/schlamar/2311116
+# Note that this is not going to work with joblib.parallel with
+# backend="multiprocessing" returning an error
+# AssertionError: daemonic processes are not allowed to have children
+def processify(func):
+    """
+    Decorator to run a function as a process.
+
+    Be sure that every argument and the return value is *pickable*. The
+    created process is joined, so the code does not run in parallel.
+    """
+
+    def process_func(q: Queue, *args: Any, **kwargs: Any) -> None:
+        """
+        Run function as a process and store output in the input Queue.
+        """
+        _LOG.debug("pid after processify=", os.getpid())
+        try:
+            ret = func(*args, **kwargs)
+        except Exception:
+            # Store error logs in the queue.
+            ex_type, ex_value, tb = sys.exc_info()
+            error = ex_type, ex_value, "".join(traceback.format_tb(tb))
+            ret = None
+        else:
+            error = None
+        q.put((ret, error))
+
+    # Register original function with different name in `sys.modules` so it is
+    # pickable.
+    process_func.__name__ = func.__name__ + "processify_func"
+    setattr(sys.modules[__name__], process_func.__name__, process_func)
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        q = Queue()
+        p = Process(target=process_func, args=[q] + list(args), kwargs=kwargs)
+        p.start()
+        ret, error = q.get()
+        p.join()
+        if error:
+            ex_type, ex_value, tb_str = error
+            message = "%s (in subprocess)\n%s" % (ex_value.message, tb_str)
+            raise ex_type(message)
+        return ret
+
+    return wrapper
+
+
 def _parallel_execute_decorator(
     task_idx: int,
     task_len: int,
@@ -412,6 +467,7 @@ def _parallel_execute_decorator(
     # TODO(gp): Pass these parameters first.
     workload_func: Callable,
     func_name: str,
+    processify_func: bool,
     task: Task,
 ) -> Any:
     """
@@ -424,7 +480,7 @@ def _parallel_execute_decorator(
               propagated and the return value is `None`
             - if `abort_on_error=False` the exception is not propagated, but the
               return value is the string representation of the exception
-
+    :param processify_func: switch to enable wrapping a function into a process
     :return: the return value of the workload function or the exception string
     """
     # Validate very carefully all the parameters.
@@ -469,6 +525,13 @@ def _parallel_execute_decorator(
         logging.DEBUG, f"Execute '{workload_func.__name__}'"
     ) as ts:
         try:
+            if processify_func:
+                _LOG.debug("Using processify")
+                # Wrap the function into a process to enforce de-allocating
+                # memory at the end of the execution (see
+                # CmampTask5854: Resolve backtest memory leakage).
+                _LOG.debug("pid before processify=%s", os.getpid())
+                workload_func = processify(workload_func)
             res = workload_func(*args, **kwargs)
             error = False
         except Exception as e:  # pylint: disable=broad-except
@@ -578,6 +641,16 @@ def parallel_execute(
         file=tqdm_out,
         desc=f"num_threads={num_threads} backend={backend}",
     )
+    if backend == "threading":
+        # Enable wrapping a function into a process for threading backend
+        # to force memory de-allocation.
+        # TODO(Grisha): unclear if there are cases when we want to use
+        #  `False` with `threading` backends, consider exposing to the
+        #  interface.
+        # TODO(Grisha): should we enable the switch for `num_threads="serial"`? will it work?
+        processify_func = True
+    else:
+        processify_func = False
     if num_threads == "serial":
         # Execute the tasks serially.
         res = []
@@ -594,6 +667,7 @@ def parallel_execute(
                 #
                 workload_func,
                 func_name,
+                processify_func,
                 task,
             )
             res.append(res_tmp)
@@ -605,8 +679,6 @@ def parallel_execute(
         if backend in ("loky", "threading", "multiprocessing"):
             # from joblib.externals.loky import set_loky_pickler
             # set_loky_pickler('cloudpickle')
-            # backend = "threading"
-            # backend = "multiprocessing"
             res = joblib.Parallel(
                 n_jobs=num_threads, backend=backend, verbose=200
             )(
@@ -620,6 +692,7 @@ def parallel_execute(
                     #
                     workload_func,
                     func_name,
+                    processify_func,
                     task,
                 )
                 # We can't use `tqdm_iter` since this only shows the submission of
@@ -643,6 +716,7 @@ def parallel_execute(
                 #
                 workload_func,
                 func_name,
+                processify_func,
                 args_[1],
             )
             args = list(enumerate(tasks))
