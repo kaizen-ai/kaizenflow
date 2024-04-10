@@ -2,10 +2,6 @@ import logging
 import os
 from typing import Any, Callable
 
-import sys
-sys.path.append('/Users/tianlulu/src/sorrentum1/')
-print(sys.path)
-
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hintrospection as hintros
