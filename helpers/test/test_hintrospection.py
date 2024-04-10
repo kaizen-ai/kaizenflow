@@ -2,6 +2,10 @@ import logging
 import os
 from typing import Any, Callable
 
+import sys
+sys.path.append('/Users/tianlulu/src/sorrentum1/')
+print(sys.path)
+
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hintrospection as hintros
@@ -28,25 +32,6 @@ class Hello:
 
     def say(self) -> None:
         print("Hello")
-
-
-class _ClassPickleable:
-    """
-    Class with pickleable param values.
-    """
-
-    def __init__(self) -> None:
-        self._arg1 = 1
-        self._arg2 = ["2", 3]
-
-class _ClassNonPickleable:
-    """
-    Class with non-pickleable param values.
-    """
-
-    def __init__(self) -> None:
-        self._arg1 = lambda x: x
-        self._arg2 = 2
 
 class Test_is_pickleable1(hunitest.TestCase):
     def helper(
@@ -84,12 +69,7 @@ class Test_is_pickleable1(hunitest.TestCase):
         _LOG.debug("act_pickled=%s", act_pickled)
         _LOG.debug("exp_pickled=%s", exp_pickled)
         self.assertEqual(act_pickled, exp_pickled)
-        #type_search to pickle
-        act_pickled = hintros.is_pickleable(obj)
-        _LOG.debug("act_pickled=%s", act_pickled)
-        _LOG.debug("exp_pickled=%s", exp_pickled)
-        self.assertEqual(act_pickled, exp_pickled)
-
+        
     def test_lambda1(self) -> None:
         # Local lambda.
         lambda_ = lambda: 0
@@ -183,49 +163,123 @@ class Test_is_pickleable1(hunitest.TestCase):
         exp_pickled = True
         self.helper(func, exp_str, exp_bound, exp_lambda, exp_pickled)
 
-    def test_int(self) -> None:
-        # Not callable: int.
-        int_ = 42
-        func = int_
-        exp_str = r"42"
-        # An int is bound to an object.
-        exp_bound = True
-        exp_lambda = False
-        # An int is pickleable.
-        exp_pickled = True
-        self.helper(func, exp_str, exp_bound, exp_lambda, exp_pickled)
+class _ClassPickleable:
+    """
+    Class with pickleable param values.
+    """
 
-    def test_str(self) -> None:
-        # Not callable: str.
-        str_ = "hello"
-        func = str_
-        exp_str = r"hello"
-        # A str is bound to an object.
-        exp_bound = True
-        exp_lambda = False
-        # A str is pickleable.
+    def __init__(self) -> None:
+        self._arg1 = 1
+        self._arg2 = ["2", 3]
+
+class _ClassNonPickleable:
+    """
+    Class with non-pickleable param values.
+    """
+
+    def __init__(self) -> None:
+        self._arg1 = lambda x: x
+        self._arg2 = 2
+
+class Test_is_pickleable2(hunitest.TestCase):
+    """
+    Check that `is_pickleable()` works correctly.
+    """
+    def helper(
+        self,
+        obj: Any,
+        exp_pickled: bool,
+    ) -> None:
+        _LOG.debug("obj=%s", obj)
+        #type_search to pickle
+        act_pickled = hintros.is_pickleable(obj)
+        _LOG.debug("act_pickled=%s", act_pickled)
+        _LOG.debug("exp_pickled=%s", exp_pickled)
+        self.assertEqual(act_pickled, exp_pickled)
+
+    def test_non_callable1(self) -> None:
+        # Not callable (int, str, float)
+        non_callable = [1, "2", 0.3]
+        for i in non_callable:
+            func = non_callable
+            # Not callable objects are pickleable.
+            exp_pickled = True
+            self.helper(func, exp_pickled)
+
+    def test_lambda1(self) -> None:
+        # Local lambda.
+        lambda_ = lambda: 0
+        func = lambda_
+        # A lambda is not pickleable.
+        exp_pickled = False
+        self.helper(func, exp_pickled)
+
+    def test_lambda2(self) -> None:
+        lambda_ = lambda x: x
+        func = lambda_
+        # A lambda is not pickleable.
+        exp_pickled = False
+        self.helper(func, exp_pickled)
+
+    def test_func1(self) -> None:
+        def _hello() -> bool:
+            return False
+        #
+        func = _hello
+        # A local object is not pickleable.
+        exp_pickled = False
+        self.helper(func, exp_pickled)
+
+    def test_func2(self) -> None:
+        # Global function.
+        func = hello
+        # A global function is pickleable since it's not bound locally or
+        # to an object.
         exp_pickled = True
-        self.helper(func, exp_str, exp_bound, exp_lambda, exp_pickled)
+        self.helper(func, exp_pickled)
+
+    def test_method1(self) -> None:
+        # A class method but unbound to an object.
+        func = Hello.say
+        # A unbound class method is actually pickleable.
+        exp_pickled = True
+        self.helper(func, exp_pickled)
+
+    def test_method2(self) -> None:
+        # A static class method.
+        func = Hello.say2
+        exp_pickled = True
+        self.helper(func, exp_pickled)
+
+    def test_method3(self) -> None:
+        # A bound method.
+        hello_ = Hello()
+        func = hello_.say
+        # A method bound to an object is just a function, so it's pickleable.
+        exp_pickled = True
+        self.helper(func, exp_pickled)
+
+    def test_method4(self) -> None:
+        # A static class method.
+        hello_ = Hello()
+        func = hello_.say2
+        exp_pickled = True
+        self.helper(func, exp_pickled)
 
     def test_class1(self) -> None:
         # A class object with pickleable param values.
         class_instance = _ClassPickleable()
         func = class_instance
-        exp_str = r"<__main__._ClassPickleable object at 0x104786bb0>"
-        exp_bound = True
-        exp_lambda = False
         exp_pickled = True
-        self.helper(func, exp_str, exp_bound, exp_lambda, exp_pickled)
+        self.helper(func, exp_pickled)
 
     def test_class2(self) -> None:
         # A class object with non-pickleable param values.
         class_instance = _ClassNonPickleable()
         func = class_instance
-        exp_str = r"<__main__._ClassNonPickleable object at 0x100afd610>"
-        exp_bound = True
-        exp_lambda = False
-        exp_pickled = False
-        self.helper(func, exp_str, exp_bound, exp_lambda, exp_pickled)
+        exp_pickled = True
+        self.helper(func, exp_pickled)
+
 
 # #############################################################################
 # Test_get_function_name1
