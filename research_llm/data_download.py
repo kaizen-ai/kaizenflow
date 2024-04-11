@@ -27,8 +27,20 @@
 import requests
 import logging
 import json
+import pandas as pd
+import numpy as np
+import re
+from datetime import datetime
 
 _LOG = logging.getLogger(__name__)
+
+# %%
+# Set the display options for the dataframes
+pd.set_option('display.max_columns', None)  
+pd.set_option('display.max_colwidth', None)  
+pd.set_option('display.expand_frame_repr', False)
+pd.set_option('display.colheader_justify', 'right')
+pd.set_option('display.width', 100)
 
 
 # %% [markdown]
@@ -83,12 +95,54 @@ class goperigonPipeline:
             self.endpoint = endpoint
         else:
             raise ValueError(f"Invalid endpoint: {endpoint}")
+    
+    def __process_data(self, response) -> pd.DataFrame:
+        """
+        Clean and store the JSON response in a DataFrame.
         
-    def fetch_data(self) -> dict:
+        :param response: JSON response of the API request.
+        :return: Dataframe of the JSON response.
+        """
+        # Convert the JSON response into a dataframe.
+        for article in response['articles']:
+            for column in ['title', 'description', 'summary']:
+                if article[column] is not None:
+                    # Replace newline characters with space.
+                    article[column] = article[column].replace("\n", " ")
+                    # Replace multiple spaces with a single space.
+                    article[column] = re.sub(r"\s+", " ", article[column])
+                    # Strip leading and trailing spaces.
+                    article[column] = article[column].strip()
+        df = pd.json_normalize(response['articles'])
+        # Convert dates to datetime objects.
+        for column in ['pubDate', 'addDate', 'refreshDate']:
+            df[column] = pd.to_datetime(df[column])
+            # Check if datetime objects are tz-aware; if not, localize to UTC before converting.
+            if df[column].dt.tz is None:
+                df[column] = df[column].dt.tz_localize('UTC')
+            df[column] = df[column].dt.tz_convert(None)
+        # Unpack column values.
+        for column in ['keywords', 'topics', 'categories', 'entities']:
+            exploded_df = df.explode(column)
+            # Normalize the data in column.
+            normalized_df = pd.json_normalize(exploded_df[column])
+            # Format strings to be enclosed in double quotes.
+            normalized_df = normalized_df.map(lambda x: f'"{x}"')
+            # Aggregate the values by the index.
+            aggregated = normalized_df.groupby(by=exploded_df.index).agg(list)
+            # Rename the columns to follow the format "{column}.{key}".
+            aggregated.columns = [column + "." + col for col in aggregated.columns]
+            # Drop the original column.
+            df = df.drop(column, axis=1)
+            # Merge or concatenate this aggregated data back to your original DataFrame
+            df = df.join(aggregated)
+        return df 
+        
+    def fetch_data(self) -> pd.DataFrame:
         """
         Fetches data from a specified endpoint of the goperigon.com API.
 
-        :return: The JSON response from the API.
+        :return: Dataframe of the JSON response from the API.
         """
         # Create the URL to fetch the data specifying the endpoint.
         url = self.base_url + self.endpoint
@@ -98,11 +152,14 @@ class goperigonPipeline:
             _LOG.debug(f"Fetching data from {response.request.url}")
             response.raise_for_status()
             _LOG.info("Data fetched successfully.")
-            return response.json()
+            self.json_response = response.json()
         except requests.RequestException as e:
             _LOG.error(f"Error fetching data: {e}")
             raise
-
+        # Compile the data in a dataframe.
+        df = self.__process_data(self.json_response)
+        return df
+        
 
 
 # %% [markdown]
@@ -112,8 +169,8 @@ class goperigonPipeline:
 # %%
 datapipeline_1 = goperigonPipeline()
 datapipeline_1.set_query_params()
-response_1 = datapipeline_1.fetch_data()
-print(json.dumps(response_1, indent = 4))
+df1 = datapipeline_1.fetch_data()
+df1.head()
 
 
 # %% [markdown]
@@ -157,7 +214,35 @@ class newsdataPipeline:
         if endpoint in ['news', 'crypto', 'archive', 'sources']:
             self.endpoint = endpoint
         else:
-            raise ValueError(f"Invalid endpoint: {endpoint}")    
+            raise ValueError(f"Invalid endpoint: {endpoint}")   
+    
+    def __process_data(self, response) -> pd.DataFrame:
+        """
+        Clean and store the JSON response in a DataFrame.
+        
+        :param response: JSON response of the API request.
+        :return: Dataframe of the JSON response.
+        """
+        # Convert the JSON response into a dataframe.
+        for article in response['results']:
+            for column in ['title', 'description', 'content']:
+                if article[column] is not None:
+                    # Replace newline characters with space
+                    article[column] = article[column].replace("\n", " ")
+                    # Replace multiple spaces with a single space
+                    article[column] = re.sub(r"\s+", " ", article[column])
+                    # Strip leading and trailing spaces
+                    article[column] = article[column].strip()
+        df = pd.json_normalize(response['results'])
+        # Convert dates to datetime objects.
+        for column in ['pubDate']:
+            df[column] = pd.to_datetime(df[column])
+            # Check if datetime objects are tz-aware; if not, localize to UTC before converting
+            if df[column].dt.tz is None:
+                df[column] = df[column].dt.tz_localize('UTC')
+            df[column] = df[column].dt.tz_convert(None)
+        return df 
+        
 
     def fetch_data(self) -> dict:
         """
@@ -173,10 +258,13 @@ class newsdataPipeline:
             _LOG.debug(f"Fetching data from {response.request.url}")
             response.raise_for_status()
             _LOG.info("Data fetched successfully.")
-            return response.json()
+            self.json_response = response.json()
         except requests.RequestException as e:
             _LOG.error(f"Error fetching data: {e}")
             raise
+        # Compile the data in a dataframe.
+        df = self.__process_data(self.json_response)
+        return df
 
 
 
@@ -186,8 +274,8 @@ class newsdataPipeline:
 # %%
 datapipeline_2 = newsdataPipeline()
 datapipeline_2.set_query_params()
-response_2 = datapipeline_2.fetch_data()
-print(json.dumps(response_2, indent=4))
+df_newsdata = datapipeline_2.fetch_data()
+df_newsdata.head()
 
 
 # %% [markdown]
@@ -238,6 +326,33 @@ class newsapiPipeline:
             self.endpoint = endpoint
         else:
             raise ValueError(f"Invalid endpoint: {endpoint}")    
+     
+    def __process_data(self, response) -> pd.DataFrame:
+        """
+        Clean and store the JSON response in a DataFrame.
+        
+        :param response: JSON response of the API request.
+        :return: Dataframe of the JSON response.
+        """
+        # Convert the JSON response into a dataframe.
+        for article in response['data']:
+            for column in ['title', 'description', 'snippet']:
+                if article[column] is not None:
+                    # Replace newline characters with space
+                    article[column] = article[column].replace("\n", " ")
+                    # Replace multiple spaces with a single space
+                    article[column] = re.sub(r"\s+", " ", article[column])
+                    # Strip leading and trailing spaces
+                    article[column] = article[column].strip()
+        df = pd.json_normalize(response['data'])
+        # Convert dates to datetime objects.
+        for column in ['published_at']:
+            df[column] = pd.to_datetime(df[column])
+            # Check if datetime objects are tz-aware; if not, localize to UTC before converting
+            if df[column].dt.tz is None:
+                df[column] = df[column].dt.tz_localize('UTC')
+            df[column] = df[column].dt.tz_convert(None)
+        return df
 
     def fetch_data(self, uuid: str=None) -> dict:
         """
@@ -260,10 +375,12 @@ class newsapiPipeline:
             _LOG.debug(f"Fetching data from {response.request.url}")
             response.raise_for_status()
             _LOG.info("Data fetched successfully.")
-            return response.json()
+            self.json_response = response.json()
         except requests.RequestException as e:
             _LOG.error(f"Error fetching data: {e}")
             raise
+        df = self.__process_data(self.json_response)
+        return df
 
 
 
@@ -273,8 +390,8 @@ class newsapiPipeline:
 # %%
 datapipeline_3 = newsapiPipeline()
 datapipeline_3.set_query_params()
-response_3 = datapipeline_3.fetch_data()
-print(json.dumps(response_3, indent=4))
+df_newsapi = datapipeline_3.fetch_data()
+df_newsapi.head()
 
 
 # %% [markdown]
@@ -333,8 +450,84 @@ class marketauxPipeline:
             self.endpoint = endpoint
         else:
             raise ValueError(f"Invalid endpoint: {endpoint}")    
-
-    def fetch_data(self, uuid: str=None) -> dict:
+        
+    def __process_data(self, response) -> pd.DataFrame:
+        """
+        Clean and store the JSON response in a DataFrame.
+        
+        :param response: JSON response of the API request.
+        :return: Dataframe of the JSON response.
+        """
+        # Convert the JSON response into a dataframe.
+        df = pd.json_normalize(response['data'])
+        # Convert dates to datetime objects.
+        for column in ['published_at']:
+            df[column] = pd.to_datetime(df[column])
+            # Check if datetime objects are tz-aware; if not, localize to UTC before converting.
+            if df[column].dt.tz is None:
+                df[column] = df[column].dt.tz_localize('UTC')
+            df[column] = df[column].dt.tz_convert(None)
+        # Unpack column values.
+        for column in ['entities']:
+            exploded_df = df.explode(column)
+            df_list = []
+            for idx, row in exploded_df.iterrows():
+                # Check if the value is a dictionary and contains 'highlights'.
+                if pd.notna(row[column]) and isinstance(row[column], dict) and 'highlights' in row[column]:
+                    # Normalize the highlights columns.
+                    highlights_df = pd.json_normalize(row[column], 'highlights')
+                    # Create a copy of the row and normalize rest of the columns, except highlight.
+                    row_data = row[column].copy()
+                    del row_data['highlights']
+                    row_df = pd.json_normalize(row_data)
+                    # Process 'highlights'.
+                    if not highlights_df.empty:
+                        # Clean the text in highlights.
+                        highlights_df['highlight'] = highlights_df['highlight'].str.replace("\n", " ", regex=True)
+                        highlights_df['highlight'] = highlights_df['highlight'].str.replace('<.*?>', '', regex=True)
+                        highlights_df['highlight'] = highlights_df['highlight'].str.replace(r"\s+", " ", regex=True)
+                        highlights_df['highlight'] = highlights_df['highlight'].str.strip()
+                        highlights_df = highlights_df.map(lambda x: f'"{x}"')
+                        # Change column names to indicate hierarchy.
+                        highlights_df.columns = ['highlights.' + col for col in highlights_df.columns]
+                        # Combine the row values into a single list for each column.
+                        highlights_df = {col: [highlights_df[col].tolist()] for col in highlights_df}
+                        highlights_df = pd.DataFrame(highlights_df)
+                        # Merge the `row_df` and `highlights_df` to form a complete row.
+                        row_df = pd.concat([row_df]*len(highlights_df), ignore_index=True)
+                    else:
+                        highlights_df = pd.DataFrame(index=[0])
+                    combined_df = pd.concat([row_df, highlights_df], axis=1)
+                elif pd.notna(row[column]):
+                    # Normalize non-dictionary values.
+                    combined_df = pd.json_normalize(row[column] if isinstance(row[column], dict) else {})
+                else:
+                    # Handle NaN or None.
+                    combined_df = pd.DataFrame(index=[0])
+                combined_df.index = [idx] * len(combined_df)
+                df_list.append(combined_df)
+            # Combine all the rows into a single dataframe.
+            normalized_df = pd.concat(df_list)
+            normalized_df = normalized_df.map(lambda x: f'"{x}"' if isinstance(x, str) else x)
+            # Group by index and aggregate lists.
+            aggregated = normalized_df.groupby(by=normalized_df.index).agg(list)
+            # Change column name to highlight hierarchy.
+            aggregated.columns = [column + "." + col for col in aggregated.columns]
+            df = df.drop(column, axis=1)
+            df = df.join(aggregated)
+        # Cleaning data.
+        for column in ['title', 'description', 'snippet']:
+            if df[column] is not None:
+                # Replace newline characters with space.
+                df[column] = df[column].replace("\n", " ")
+                # Replace multiple spaces with a single space.
+                df[column] = df[column].replace(r"\s+", " ", regex=True)
+                df[column] = df[column].str.replace('<.*?>', '', regex=True)
+                # Strip leading and trailing spaces.
+                df[column] = df[column].str.strip()
+        return df 
+        
+    def fetch_data(self, uuid: str=None) -> pd.DataFrame:
         """
         Fetches top news data from marketaux.com.
         
@@ -355,10 +548,12 @@ class marketauxPipeline:
             _LOG.debug(f"Fetching data from {response.request.url}")
             response.raise_for_status()
             _LOG.info("Data fetched successfully.")
-            return response.json()
+            self.json_response = response.json()
         except requests.RequestException as e:
             _LOG.error(f"Error fetching data: {e}")
             raise
+        df = self.__process_data(self.json_response)
+        return df
 
 
 
@@ -368,7 +563,7 @@ class marketauxPipeline:
 # %%
 datapipeline_4 = marketauxPipeline()
 datapipeline_4.set_query_params()
-response_4 = datapipeline_4.fetch_data()
-print(json.dumps(response_4, indent=4))
+df_marketaux = datapipeline_4.fetch_data()
+df_marketaux.head()
 
 # %%
