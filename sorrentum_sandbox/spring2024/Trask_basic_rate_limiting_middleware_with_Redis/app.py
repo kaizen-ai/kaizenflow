@@ -2,7 +2,7 @@ from flask import Flask
 import redis
 from datetime import timedelta
 
-r = redis.Redis(host='localhost', port=6379, db=0)
+r = redis.Redis(host='redis', port=6379, db=0)
 
 def request_is_limited(r: redis.Redis, key: str, limit: int, period: timedelta):
     period_in_seconds = int(period.total_seconds())
