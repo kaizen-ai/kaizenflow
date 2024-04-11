@@ -109,7 +109,7 @@ class TestLoadDBData(hunitest.TestCase):
             self.start_timestamp,
             self.end_timestamp,
         )
-        # Assert that function is returning empty dataframe.
+        # Assert that function is returning an empty dataframe.
         self.assertTrue(result.empty)
 
     def test4(self) -> None:
@@ -120,24 +120,30 @@ class TestLoadDBData(hunitest.TestCase):
         # Swap start_ts and end_ts.
         start_ts, end_ts = self.end_timestamp, self.start_timestamp
         # Mock the query.
-        self.query_mock.side_effect = ValueError
-        # Assert that function is raising ValueError.
-        with self.assertRaises(ValueError):
+        self.query_mock.side_effect = psycop.OperationalError(
+            "datetime_field_overflow"
+        )
+        # Assert that function is raising an Error for date time overflow.
+        with self.assertRaises(psycop.Error) as e:
             imvcddbut.load_db_data(
                 self.db_connection, self.src_table, start_ts, end_ts
             )
+        actual = str(e.exception)
+        expected = "datetime_field_overflow"
+        self.assert_equal(actual, expected)
 
     def test5(self) -> None:
         """
-        Test if the function raises a ValueError when invalid currency pairs
-        are provided.
+        Test if the function raises an exception when currency pair is null.
         """
         # Invalid currency pairs.
         invalid_currency_pairs = None
         # Mock the query.
-        self.query_mock.side_effect = ValueError
-        # Assert that function is raising ValueError.
-        with self.assertRaises(ValueError):
+        self.query_mock.side_effect = psycop.OperationalError(
+            "null_value_no_indicator_parameter"
+        )
+        # Assert that function is raising an Error when currency is null.
+        with self.assertRaises(psycop.Error) as e:
             imvcddbut.load_db_data(
                 self.db_connection,
                 self.src_table,
@@ -145,56 +151,29 @@ class TestLoadDBData(hunitest.TestCase):
                 self.end_timestamp,
                 currency_pairs=invalid_currency_pairs,
             )
+        actual = str(e.exception)
+        expected = "null_value_no_indicator_parameter"
+        self.assert_equal(actual, expected)
 
     def test6(self) -> None:
         """
-        Test if the function raises a ValueError when null parameters are
-        provided for start timestamp.
+        Test if the function raises an exception when start timestamp is in
+        invalid format.
         """
-        # Null timestamp.
-        start_ts = None
+        # Invalid timestamp.
+        start_ts = pd.Timestamp("31/01/2024")
         # Mock the query.
-        self.query_mock.side_effect = ValueError
-        # Assert that function is raising ValueError.
-        with self.assertRaises(ValueError):
+        self.query_mock.side_effect = psycop.OperationalError(
+            "invalid_datetime_format"
+        )
+        # Assert that function is raising Error when timestamp is invalid.
+        with self.assertRaises(psycop.Error) as e:
             imvcddbut.load_db_data(
                 self.db_connection, self.src_table, start_ts, self.end_timestamp
             )
-
-    def test7(self) -> None:
-        """
-        Test if the function raises a AttributeError when an invalid timestamp
-        format is provided.
-        """
-        # Invalid timestamp format.
-        invalid_ts = "invalid_timestamp"
-        # Mock the query.
-        self.query_mock.side_effect = AttributeError
-        # Assert that function is raising AttributeError.
-        with self.assertRaises(AttributeError):
-            imvcddbut.load_db_data(
-                self.db_connection, self.src_table, invalid_ts, self.end_timestamp
-            )
-
-    def test8(self) -> None:
-        """
-        Test if functions returns ValueError when Limit parameter is larger
-        than total number of rows returned by database query.
-        """
-        # Mock the query.
-        self.query_mock.return_value = pd.DataFrame()
-        self.query_mock.side_effect = ValueError
-        # Limit is set to very large value.
-        limit = 1000000
-        # Assert that a ValueError is raised.
-        with self.assertRaises(ValueError):
-            imvcddbut.load_db_data(
-                self.db_connection,
-                self.src_table,
-                self.start_timestamp,
-                self.end_timestamp,
-                limit=limit,
-            )
+        actual = str(e.exception)
+        expected = "invalid_datetime_format"
+        self.assert_equal(actual, expected)
 
 
 class TestDbConnectionManager(hunitest.TestCase):
