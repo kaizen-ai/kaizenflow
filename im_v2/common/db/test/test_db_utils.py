@@ -54,7 +54,7 @@ class TestLoadDBData(hunitest.TestCase):
         bid_ask_levels = [1, 2]
         exchange_id = "Exchange1"
         time_interval_closed = True
-
+        # Run test.
         result = imvcddbut.load_db_data(
             self.db_connection,
             self.src_table,
@@ -66,12 +66,12 @@ class TestLoadDBData(hunitest.TestCase):
             exchange_id=exchange_id,
             time_interval_closed=time_interval_closed,
         )
+        # Check results.
         expected_query = (
             f"SELECT * FROM {self.src_table} WHERE timestamp >= {self.start_ts} AND timestamp <= {self.end_ts} "
             f"AND currency_pair IN ('BTC_USDT') AND level IN (1, 2) AND exchange_id = 'Exchange1' "
             f"ORDER BY timestamp DESC LIMIT 100"
         )
-        # Assert that an expected query is called.
         self.query_mock.assert_called_once_with(
             self.db_connection, expected_query
         )
@@ -81,19 +81,20 @@ class TestLoadDBData(hunitest.TestCase):
         Test if the function behaves correctly when no data is returned from
         the database query.
         """
-        # Mock the query.
+        # Prepare mock data.
         self.query_mock.return_value = None
+        # Run test.
         result = imvcddbut.load_db_data(
             self.db_connection,
             self.src_table,
             self.start_timestamp,
             self.end_timestamp,
         )
+        # Check results.
         expected_query = f"SELECT * FROM {self.src_table} WHERE timestamp >= {self.start_ts} AND timestamp <= {self.end_ts}"
         self.query_mock.assert_called_once_with(
             self.db_connection, expected_query
         )
-        # Assert that function is returning None.
         self.assertIsNone(result)
 
     def test3(self) -> None:
@@ -101,15 +102,16 @@ class TestLoadDBData(hunitest.TestCase):
         Test if the function returns an empty dataframe when no data is found
         in the database.
         """
-        # Mock the query.
+        # Prepare mock data.
         self.query_mock.return_value = pd.DataFrame()
+        # Run test.
         result = imvcddbut.load_db_data(
             self.db_connection,
             self.src_table,
             self.start_timestamp,
             self.end_timestamp,
         )
-        # Assert that function is returning an empty dataframe.
+        # Check results.
         self.assertTrue(result.empty)
 
     def test4(self) -> None:
@@ -117,9 +119,8 @@ class TestLoadDBData(hunitest.TestCase):
         Test if the function handles the scenario where the start timestamp is
         greater than the end timestamp.
         """
-        # Swap start_ts and end_ts.
+        # Prepare mock data.
         start_ts, end_ts = self.end_timestamp, self.start_timestamp
-        # Mock the query.
         self.query_mock.side_effect = psycop.OperationalError(
             "datetime_field_overflow"
         )
@@ -128,6 +129,7 @@ class TestLoadDBData(hunitest.TestCase):
             imvcddbut.load_db_data(
                 self.db_connection, self.src_table, start_ts, end_ts
             )
+        # Check results.
         actual = str(e.exception)
         expected = "datetime_field_overflow"
         self.assert_equal(actual, expected)
@@ -136,9 +138,8 @@ class TestLoadDBData(hunitest.TestCase):
         """
         Test if the function raises an exception when currency pair is null.
         """
-        # Invalid currency pairs.
+        # Prepare mock data.
         invalid_currency_pairs = None
-        # Mock the query.
         self.query_mock.side_effect = psycop.OperationalError(
             "null_value_no_indicator_parameter"
         )
@@ -151,6 +152,7 @@ class TestLoadDBData(hunitest.TestCase):
                 self.end_timestamp,
                 currency_pairs=invalid_currency_pairs,
             )
+        # Check results.
         actual = str(e.exception)
         expected = "null_value_no_indicator_parameter"
         self.assert_equal(actual, expected)
@@ -160,9 +162,8 @@ class TestLoadDBData(hunitest.TestCase):
         Test if the function raises an exception when start timestamp is in
         invalid format.
         """
-        # Invalid timestamp.
+        # Prepare mock data.
         start_ts = pd.Timestamp("31/01/2024")
-        # Mock the query.
         self.query_mock.side_effect = psycop.OperationalError(
             "invalid_datetime_format"
         )
@@ -171,6 +172,7 @@ class TestLoadDBData(hunitest.TestCase):
             imvcddbut.load_db_data(
                 self.db_connection, self.src_table, start_ts, self.end_timestamp
             )
+        # Check results.
         actual = str(e.exception)
         expected = "invalid_datetime_format"
         self.assert_equal(actual, expected)
