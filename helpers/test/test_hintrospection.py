@@ -29,6 +29,32 @@ class Hello:
     def say(self) -> None:
         print("Hello")
 
+class _ClassPickleable:
+    """
+    Class with pickleable param values.
+    """
+
+    def __init__(self) -> None:
+        self._arg1 = 1
+        self._arg2 = ["2", 3]
+
+    @staticmethod
+    def say2(self) -> None:
+        print("Hello")
+
+    def say(self) -> None:
+        print("Hello")
+
+
+class _ClassNonPickleable:
+    """
+    Class with non-pickleable param values.
+    """
+
+    def __init__(self) -> None:
+        self._arg1 = lambda x: x
+        self._arg2 = 2
+
 class Test_is_pickleable1(hunitest.TestCase):
     def helper(
         self,
@@ -159,118 +185,117 @@ class Test_is_pickleable1(hunitest.TestCase):
         exp_pickled = True
         self.helper(func, exp_str, exp_bound, exp_lambda, exp_pickled)
 
-class _ClassPickleable:
-    """
-    Class with pickleable param values.
-    """
-
-    def __init__(self) -> None:
-        self._arg1 = 1
-        self._arg2 = ["2", 3]
-
-class _ClassNonPickleable:
-    """
-    Class with non-pickleable param values.
-    """
-
-    def __init__(self) -> None:
-        self._arg1 = lambda x: x
-        self._arg2 = 2
-
 class Test_is_pickleable2(hunitest.TestCase):
     """
-    Check that `is_pickleable()` works correctly.
+    Test that `is_pickleable()` works correctly.
     """
     def helper(
         self,
         obj: Any,
         exp_pickled: bool,
     ) -> None:
+        """
+        Run is_pickleable() function and verify the outcome.
+        """
         _LOG.debug("obj=%s", obj)
-        #type_search to pickle
         act_pickled = hintros.is_pickleable(obj)
         _LOG.debug("act_pickled=%s", act_pickled)
         _LOG.debug("exp_pickled=%s", exp_pickled)
         self.assertEqual(act_pickled, exp_pickled)
 
     def test_non_callable1(self) -> None:
-        # Not callable (int, str, float)
-        non_callable = [1, "2", 0.3]
-        for i in non_callable:
-            func = non_callable
-            # Not callable objects are pickleable.
-            exp_pickled = True
-            self.helper(func, exp_pickled)
-
-    def test_lambda1(self) -> None:
-        # Local lambda.
-        lambda_ = lambda: 0
-        func = lambda_
-        # A lambda is not pickleable.
-        exp_pickled = False
+        """
+        Check that a non-callable is pickleable.
+        """
+        non_callable = 1
+        func = non_callable
+        exp_pickled = True
         self.helper(func, exp_pickled)
 
-    def test_lambda2(self) -> None:
+    def test_non_callable2(self) -> None:
+        """
+        Check that a non-callable Iterable is pickleable.
+        """
+        non_callable = [1, "2", 0.3]
+        func = non_callable
+        exp_pickled = True
+        self.helper(func, exp_pickled)
+
+    def test_lambda1(self) -> None:
+        """
+        Check that a lambda function is not pickleable.
+        """
         lambda_ = lambda x: x
         func = lambda_
-        # A lambda is not pickleable.
         exp_pickled = False
         self.helper(func, exp_pickled)
 
     def test_func1(self) -> None:
+        """
+        Check that a local object is not pickleable. 
+        """
         def _hello() -> bool:
             return False
-        #
+        
         func = _hello
-        # A local object is not pickleable.
         exp_pickled = False
         self.helper(func, exp_pickled)
 
     def test_func2(self) -> None:
-        # Global function.
+        """
+        Check that a global object is pickleable. 
+        """
         func = hello
-        # A global function is pickleable since it's not bound locally or
-        # to an object.
         exp_pickled = True
         self.helper(func, exp_pickled)
 
     def test_method1(self) -> None:
-        # A class method but unbound to an object.
-        func = Hello.say
-        # A unbound class method is actually pickleable.
+        """
+        Check that a unbound class method is pickleable. 
+        """
+        func = _ClassPickleable.say
         exp_pickled = True
         self.helper(func, exp_pickled)
 
     def test_method2(self) -> None:
-        # A static class method.
-        func = Hello.say2
+        """
+        Check that a static class method is pickleable. 
+        """
+        func = _ClassPickleable.say2
         exp_pickled = True
         self.helper(func, exp_pickled)
 
     def test_method3(self) -> None:
-        # A bound method.
-        hello_ = Hello()
-        func = hello_.say
-        # A method bound to an object is just a function, so it's pickleable.
+        """
+        Check that a bound method is pickleable. 
+        """
+        class_instance = _ClassPickleable()
+        func = class_instance.say
         exp_pickled = True
         self.helper(func, exp_pickled)
 
     def test_method4(self) -> None:
-        # A static class method.
-        hello_ = Hello()
-        func = hello_.say2
+        """
+        Check that a static class method is pickleable. 
+        """
+        class_instance = _ClassPickleable()
+        func = class_instance.say2
         exp_pickled = True
         self.helper(func, exp_pickled)
 
     def test_class1(self) -> None:
-        # A class object with pickleable param values.
+        """
+        Check that a class with pickleable param values is considered pickleable.
+        """
         class_instance = _ClassPickleable()
         func = class_instance
         exp_pickled = True
         self.helper(func, exp_pickled)
 
     def test_class2(self) -> None:
-        # A class object with non-pickleable param values.
+        """
+        Check that a class with not pickleable param values is considered pickleable.
+        """
         class_instance = _ClassNonPickleable()
         func = class_instance
         exp_pickled = True
