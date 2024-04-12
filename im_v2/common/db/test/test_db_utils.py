@@ -1,13 +1,181 @@
 import unittest.mock as umock
+from typing import Any, Generator
 
 import pandas as pd
 import psycopg2 as psycop
 import pytest
 
+import helpers.hdatetime as hdateti
+import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
 import im_v2.common.db.db_utils as imvcddbut
 
 DB_STAGE = "test"
+
+
+class TestLoadDBData(hunitest.TestCase):
+    # Mock call to execute query function.
+    mock_execute_query_df = umock.patch.object(hsql, "execute_query_to_df")
+
+    # This will be run before and after each test.
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self) -> Generator[Any, Any, Any]:
+        # Run before each test.
+        self.db_connection = umock.MagicMock()
+        self.src_table = "test_table"
+        self.start_timestamp = pd.Timestamp("2024-01-01")
+        self.end_timestamp = pd.Timestamp("2024-01-31")
+        self.start_ts = hdateti.convert_timestamp_to_unix_epoch(
+            self.start_timestamp, unit="ms"
+        )
+        self.end_ts = hdateti.convert_timestamp_to_unix_epoch(
+            self.end_timestamp, unit="ms"
+        )
+        self.set_up_test()
+        yield
+        # Run after each test.
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
+        # Create new mocks from patch's start() method.
+        self.query_mock: umock.MagicMock = self.mock_execute_query_df.start()
+
+    def tear_down_test(self) -> None:
+        self.mock_execute_query_df.stop()
+
+    def test1(self) -> None:
+        """
+        Test if the query construction is done correctly when all parameters
+        are provided.
+        """
+        # Prepare mock data.
+        currency_pairs = ["BTC_USDT"]
+        limit = 100
+        bid_ask_levels = [1, 2]
+        exchange_id = "Exchange1"
+        time_interval_closed = True
+        # Run test.
+        result = imvcddbut.load_db_data(
+            self.db_connection,
+            self.src_table,
+            self.start_timestamp,
+            self.end_timestamp,
+            currency_pairs=currency_pairs,
+            limit=limit,
+            bid_ask_levels=bid_ask_levels,
+            exchange_id=exchange_id,
+            time_interval_closed=time_interval_closed,
+        )
+        # Check results.
+        expected_query = (
+            f"SELECT * FROM {self.src_table} WHERE timestamp >= {self.start_ts} AND timestamp <= {self.end_ts} "
+            f"AND currency_pair IN ('BTC_USDT') AND level IN (1, 2) AND exchange_id = 'Exchange1' "
+            f"ORDER BY timestamp DESC LIMIT 100"
+        )
+        self.query_mock.assert_called_once_with(
+            self.db_connection, expected_query
+        )
+
+    def test2(self) -> None:
+        """
+        Test if the function behaves correctly when no data is returned from
+        the database query.
+        """
+        # Prepare mock data.
+        self.query_mock.return_value = None
+        # Run test.
+        result = imvcddbut.load_db_data(
+            self.db_connection,
+            self.src_table,
+            self.start_timestamp,
+            self.end_timestamp,
+        )
+        # Check results.
+        expected_query = f"SELECT * FROM {self.src_table} WHERE timestamp >= {self.start_ts} AND timestamp <= {self.end_ts}"
+        self.query_mock.assert_called_once_with(
+            self.db_connection, expected_query
+        )
+        self.assertIsNone(result)
+
+    def test3(self) -> None:
+        """
+        Test if the function returns an empty dataframe when no data is found
+        in the database.
+        """
+        # Prepare mock data.
+        self.query_mock.return_value = pd.DataFrame()
+        # Run test.
+        result = imvcddbut.load_db_data(
+            self.db_connection,
+            self.src_table,
+            self.start_timestamp,
+            self.end_timestamp,
+        )
+        # Check results.
+        self.assertTrue(result.empty)
+
+    def test4(self) -> None:
+        """
+        Test if the function handles the scenario where the start timestamp is
+        greater than the end timestamp.
+        """
+        # Prepare mock data.
+        start_ts, end_ts = self.end_timestamp, self.start_timestamp
+        self.query_mock.side_effect = psycop.OperationalError(
+            "datetime_field_overflow"
+        )
+        # Assert that function is raising an Error for date time overflow.
+        with self.assertRaises(psycop.Error) as e:
+            imvcddbut.load_db_data(
+                self.db_connection, self.src_table, start_ts, end_ts
+            )
+        # Check results.
+        actual = str(e.exception)
+        expected = "datetime_field_overflow"
+        self.assert_equal(actual, expected)
+
+    def test5(self) -> None:
+        """
+        Test if the function raises an exception when currency pair is null.
+        """
+        # Prepare mock data.
+        invalid_currency_pairs = None
+        self.query_mock.side_effect = psycop.OperationalError(
+            "null_value_no_indicator_parameter"
+        )
+        # Assert that function is raising an Error when currency is null.
+        with self.assertRaises(psycop.Error) as e:
+            imvcddbut.load_db_data(
+                self.db_connection,
+                self.src_table,
+                self.start_timestamp,
+                self.end_timestamp,
+                currency_pairs=invalid_currency_pairs,
+            )
+        # Check results.
+        actual = str(e.exception)
+        expected = "null_value_no_indicator_parameter"
+        self.assert_equal(actual, expected)
+
+    def test6(self) -> None:
+        """
+        Test if the function raises an exception when start timestamp is in
+        invalid format.
+        """
+        # Prepare mock data.
+        start_ts = pd.Timestamp("31/01/2024")
+        self.query_mock.side_effect = psycop.OperationalError(
+            "invalid_datetime_format"
+        )
+        # Assert that function is raising Error when timestamp is invalid.
+        with self.assertRaises(psycop.Error) as e:
+            imvcddbut.load_db_data(
+                self.db_connection, self.src_table, start_ts, self.end_timestamp
+            )
+        # Check results.
+        actual = str(e.exception)
+        expected = "invalid_datetime_format"
+        self.assert_equal(actual, expected)
 
 
 class TestDbConnectionManager(hunitest.TestCase):
