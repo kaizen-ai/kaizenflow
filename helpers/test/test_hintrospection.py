@@ -2,6 +2,10 @@ import logging
 import os
 from typing import Any, Callable
 
+import sys
+sys.path.append('/Users/tianlulu/src/sorrentum1/')
+print(sys.path)
+
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hintrospection as hintros
@@ -17,17 +21,8 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def hello() -> bool:
+def class_pickleable() -> bool:
     return False
-
-
-class Hello:
-    @staticmethod
-    def say2(self) -> None:
-        print("Hello")
-
-    def say(self) -> None:
-        print("Hello")
 
 class _ClassPickleable:
     """
@@ -120,11 +115,11 @@ class Test_is_pickleable1(hunitest.TestCase):
         self.helper(func, exp_str, exp_bound, exp_lambda, exp_pickled)
 
     def test_func1(self) -> None:
-        def _hello() -> bool:
+        def _class_pickleable() -> bool:
             return False
 
         #
-        func = _hello
+        func = _class_pickleable
         exp_str = (
             r"<function Test_is_pickleable1.test_func1.<locals>._hello at 0x>"
         )
@@ -136,7 +131,7 @@ class Test_is_pickleable1(hunitest.TestCase):
 
     def test_func2(self) -> None:
         # Global function.
-        func = hello
+        func = class_pickleable
         exp_str = r"<function hello at 0x>"
         exp_bound = False
         exp_lambda = False
@@ -147,7 +142,7 @@ class Test_is_pickleable1(hunitest.TestCase):
 
     def test_method1(self) -> None:
         # A class method but unbound to an object.
-        func = Hello.say
+        func = _ClassPickleable.say
         exp_str = r"<function Hello.say at 0x>"
         exp_bound = False
         exp_lambda = False
@@ -157,7 +152,7 @@ class Test_is_pickleable1(hunitest.TestCase):
 
     def test_method2(self) -> None:
         # A static class method.
-        func = Hello.say2
+        func = _ClassPickleable.say2
         exp_str = r"<function Hello.say2 at 0x>"
         exp_bound = False
         exp_lambda = False
@@ -166,8 +161,8 @@ class Test_is_pickleable1(hunitest.TestCase):
 
     def test_method3(self) -> None:
         # A bound method.
-        hello_ = Hello()
-        func = hello_.say
+        class_instance = _ClassPickleable()
+        func = class_instance.say
         exp_str = r"<bound method Hello.say of <helpers.test.test_hintrospection.Hello object at 0x>>"
         exp_bound = True
         exp_lambda = False
@@ -177,8 +172,8 @@ class Test_is_pickleable1(hunitest.TestCase):
 
     def test_method4(self) -> None:
         # A static class method.
-        hello_ = Hello()
-        func = hello_.say2
+        class_instance = _ClassPickleable()
+        func = class_instance.say2
         exp_str = r"<function Hello.say2 at 0x>"
         exp_bound = False
         exp_lambda = False
@@ -186,16 +181,13 @@ class Test_is_pickleable1(hunitest.TestCase):
         self.helper(func, exp_str, exp_bound, exp_lambda, exp_pickled)
 
 class Test_is_pickleable2(hunitest.TestCase):
-    """
-    Test that `is_pickleable()` works correctly.
-    """
     def helper(
         self,
         obj: Any,
         exp_pickled: bool,
     ) -> None:
         """
-        Run is_pickleable() function and verify the outcome.
+        Run the function and verify the outcome.
         """
         _LOG.debug("obj=%s", obj)
         act_pickled = hintros.is_pickleable(obj)
@@ -234,24 +226,24 @@ class Test_is_pickleable2(hunitest.TestCase):
         """
         Check that a local object is not pickleable. 
         """
-        def _hello() -> bool:
+        def _class_pickleable() -> bool:
             return False
         
-        func = _hello
-        exp_pickled = False
+        func = _class_pickleable
+        exp_pickled = True
         self.helper(func, exp_pickled)
 
     def test_func2(self) -> None:
         """
         Check that a global object is pickleable. 
         """
-        func = hello
+        func = class_pickleable
         exp_pickled = True
         self.helper(func, exp_pickled)
 
     def test_method1(self) -> None:
         """
-        Check that a unbound class method is pickleable. 
+        Check that an unbound class method is pickleable. 
         """
         func = _ClassPickleable.say
         exp_pickled = True
@@ -267,11 +259,11 @@ class Test_is_pickleable2(hunitest.TestCase):
 
     def test_method3(self) -> None:
         """
-        Check that a bound method is pickleable. 
+        Check that a bound method is not pickleable. 
         """
         class_instance = _ClassPickleable()
         func = class_instance.say
-        exp_pickled = True
+        exp_pickled = False
         self.helper(func, exp_pickled)
 
     def test_method4(self) -> None:
