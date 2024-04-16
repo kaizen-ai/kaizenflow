@@ -776,3 +776,25 @@ class TestResampleBidAskData2(hunitest.TestCase):
         scratch_dir = self.get_scratch_space()
         aws_profile = "ck"
         hs3.copy_data_from_s3_to_local_dir(s3_input_dir, scratch_dir, aws_profile)
+
+
+# #############################################################################
+
+
+class TestCalculateVwap(hunitest.TestCase):
+
+    def generate_test_data(self):
+        """
+        Fetch data for price and volume columns with timestamp index
+        returns: pandas dataframe with timestamp index, price column and volume column
+        """
+    
+    def test_calculate_vwap_with_resample_kwargs(self) -> None:
+        """
+        Verify calculated price for given volume from data WITH resample rules
+        """
+
+    def test_calculate_vwap_no_resample_kwargs(self) -> None:
+        """
+        Verify calculated price for given volume from data WITHOUT resample rules
+        """
