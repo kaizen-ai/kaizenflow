@@ -1,1 +1,37 @@
-
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>World Wondors</title>
+        <link rel="icon" type="image/png" href="{{ url_for('static', filename='bodarnn.png') }}">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/reset.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/style.css') }}">
+    </head>
+    <body>
+        <header>
+            <a href="/"><h1>World Wondors</h1></a>
+            <form>
+                <select id="select" aria-label="Select" onchange="update(this.value)">
+                    <option selected disabled hidden>Select</option>
+                    <option value="0">Great Pyramid of Giza</option>
+                    <option value="1">Colossus of Rhodes</option>
+                    <option value="2">Hanging Gardens of Babylon</option>
+                    <option value="3">Lighthouse of Alexandria</option>
+                    <option value="4">Mausoleum at Halicarnassus</option>
+                    <option value="5">Statue of Zeus at Olympia</option>
+                    <option value="6">Temple of Artemis</option>
+                </select>
+                <input type="button" value="Random" onclick="update()">
+            </form>
+        </header>
+        <main id="main">
+            <p>Welcome to the World Wondors dashboard!</p>
+            <p>Use the drop-down menu to select a World Wonder.</p>
+            <p>Or click the random button if you're feeling lucky!</p>
+            <p>Click the title to reset the dashboard.</p>
+        </main>
+        <footer></footer>
+        <script src="{{ url_for('static', filename='script.js') }}"></script>
+    </body>
+</html>
