@@ -11,7 +11,8 @@
       prod: $GIT_ROOT/reconciliation/test/outcomes/Test_build_reconciliation_configs.test2/tmp.scratch/Mock1/prod/20230802_154500.20230802_160000/prod/system_log_dir.scheduled
       sim: $GIT_ROOT/reconciliation/test/outcomes/Test_build_reconciliation_configs.test2/tmp.scratch/Mock1/prod/20230802_154500.20230802_160000/simulation/system_log_dir.scheduled
     dag_builder_ctor_as_str: dataflow_amp.pipelines.mock1.mock1_pipeline.Mock1_DagBuilder
-    research_forecast_evaluator_from_prices:
+    forecast_evaluator_config:
+      forecast_evaluator_type: ForecastEvaluatorFromPrices
       init:
         price_col: vwap
         prediction_col: feature1

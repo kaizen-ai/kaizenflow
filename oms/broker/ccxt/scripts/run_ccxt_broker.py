@@ -544,7 +544,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     broker_config = {
         "limit_price_computer_type": "LimitPriceComputerUsingVolatility",
         "limit_price_computer_kwargs": {
-            "volatility_multiple": args.volatility_multiple,
+            "volatility_multiple": volatility_multiple,
         },
     }
     broker = obccbrin.get_CcxtBroker(

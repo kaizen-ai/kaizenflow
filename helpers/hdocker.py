@@ -7,7 +7,9 @@ import helpers.hdocker as hdocker
 import logging
 
 import helpers.hdbg as hdbg
+import helpers.henv as henv
 import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
@@ -33,6 +35,28 @@ def volume_rm(volume_name: str) -> None:
     cmd = f"docker volume rm {volume_name}"
     hsystem.system(cmd)
     _LOG.debug("docker volume '%s' deleted", volume_name)
+
+
+def replace_shared_root_path(path: str) -> str:
+    """
+    Replace root path of the shared directory based on the mapping.
+
+    :param path: path to replace, e.g., `/data/shared`
+    :return: replaced shared data dir root path, e.g., `/shared_data`
+    """
+    # Inside ECS we keep the original shared data path and replace it only when
+    # running inside Docker on the dev server.
+    if hserver.is_inside_docker() and not hserver.is_inside_ecs_container():
+        shared_data_dirs = henv.execute_repo_config_code("get_shared_data_dirs()")
+        for shared_dir, docker_shared_dir in shared_data_dirs.items():
+            path = path.replace(shared_dir, docker_shared_dir)
+            _LOG.debug(
+                "Running inside Docker on the dev server, thus replacing %s "
+                "with %s", shared_dir, docker_shared_dir,
+            )
+    else:
+        _LOG.debug("No replacement found, returning path as-is: %s", path)
+    return path
 
 
 # import argparse

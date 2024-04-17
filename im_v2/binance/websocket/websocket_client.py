@@ -28,6 +28,7 @@ class BinanceWebsocketClient:
         on_disconnect=None,
         logger=None,
         proxies: Optional[dict] = None,
+        max_attempts=0,
     ):
         if not logger:
             logger = logging.getLogger(__name__)
@@ -43,6 +44,7 @@ class BinanceWebsocketClient:
             on_disconnect,
             logger,
             proxies,
+            max_attempts,
         )
 
         # start the thread
@@ -111,6 +113,7 @@ class BinanceWebsocketClient:
         on_disconnect,
         logger,
         proxies,
+        max_attempts,
     ):
         return imvbwbsoma.BinanceSocketManager(
             stream_url,
@@ -123,6 +126,7 @@ class BinanceWebsocketClient:
             on_disconnect=on_disconnect,
             logger=logger,
             proxies=proxies,
+            max_attempts=max_attempts,
         )
 
     def _single_stream(self, stream):
@@ -147,6 +151,7 @@ class UMFuturesWebsocketClient(BinanceWebsocketClient):
         on_disconnect=None,
         is_combined=False,
         proxies: Optional[dict] = None,
+        max_attempts=0,
     ):
         if is_combined:
             stream_url = stream_url + "/stream"
@@ -162,6 +167,7 @@ class UMFuturesWebsocketClient(BinanceWebsocketClient):
             on_pong=on_pong,
             on_disconnect=on_disconnect,
             proxies=proxies,
+            max_attempts=max_attempts,
         )
 
     def agg_trade(self, symbol: str, id=None, action=None, **kwargs):
