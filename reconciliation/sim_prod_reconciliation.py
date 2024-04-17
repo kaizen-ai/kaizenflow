@@ -10,13 +10,14 @@ import logging
 import os
 import pprint
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config as cconfig
 import dataflow.core as dtfcore
+import dataflow.model as dtfmod
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
@@ -29,6 +30,7 @@ import helpers.hsystem as hsystem
 import oms.broker.ccxt.ccxt_utils as obccccut
 import oms.order_processing.target_position_and_order_generator as ooptpaog
 import oms.portfolio.portfolio as oporport
+import optimizer.forecast_evaluator_with_optimizer as ofevwiop
 
 _LOG = logging.getLogger(__name__)
 
@@ -206,7 +208,8 @@ def build_reconciliation_configs(
         },
         "system_log_path": system_log_path_dict,
         "dag_builder_ctor_as_str": dag_builder_ctor_as_str,
-        "research_forecast_evaluator_from_prices": {
+        "forecast_evaluator_config": {
+            "forecast_evaluator_type": "ForecastEvaluatorFromPrices",
             "init": fep_init_dict,
             "annotate_forecasts_kwargs": {
                 "quantization": quantization,
@@ -217,7 +220,6 @@ def build_reconciliation_configs(
             },
         },
     }
-    config = cconfig.Config.from_dict(config_dict)
     # Set the default optimizer config values.
     style = "cross_sectional"
     optimizer_config_kwargs = {
@@ -225,51 +227,85 @@ def build_reconciliation_configs(
         "target_gmv": gmv,
     }
     #
-    if set_config_values is not None:
-        # Check if optimizer config is in set_config_values.
-        is_optimizer_config = "optimizer_config" in set_config_values
-        if is_optimizer_config:
-            # Create a config with the passed from cmd values.
-            set_config_values = set_config_values.split(";")
-            override_config = cconfig.Config()
-            override_config = cconfig.apply_config(
-                override_config, set_config_values
-            )
-            # Extract optimizer config params to update.
-            # Expected optimizer config outlook:
-            # {
-            #     "optimizer_config": {
-            #         "backend": "cc_pomo",
-            #         "params": {
-            #             "style": "longitudinal",
-            #             "kwargs": {
-            #                 "target_dollar_risk_per_name": 0.1,
-            #                 "prediction_abs_threshold": 0.35,
-            #             },
-            #         },
-            #     },
-            # }
-            optimizer_config_params = override_config[
-                "process_forecasts_node_dict"
-            ]["process_forecasts_dict"]["optimizer_config"]["params"]
-            if "style" in optimizer_config_params:
-                style = optimizer_config_params["style"]
-            if "kwargs" in optimizer_config_params:
-                optimizer_config_kwargs = optimizer_config_params["kwargs"]
-    update_dict = {
-        "research_forecast_evaluator_from_prices": {
+    optimizer_dict = {
+        "forecast_evaluator_config": {
             "annotate_forecasts_kwargs": {
                 "style": style,
                 **optimizer_config_kwargs,
             }
         }
     }
-    update_config = cconfig.Config.from_dict(update_dict)
-    config.update(update_config)
+    # Create default optimizer config.
+    config = cconfig.Config.from_dict(config_dict)
+    optimizer_config = cconfig.Config.from_dict(optimizer_dict)
+    config.update(optimizer_config)
+    #
+    if set_config_values is not None and "optimizer_config" in set_config_values:
+        # Update optimizer config for a `ForecastEvaluator` using the
+        # SystemConfig overrides.
+        config = build_optimizer_config_from_config_overrides(
+            config_dict, set_config_values
+        )
+    else:
+        _LOG.debug("No optimzer config overrides found, using the default config")
     # Put config in a config list for compatability with the `run_notebook.py`
     # script.
     config_list = cconfig.ConfigList([config])
     return config_list
+
+
+# TODO(Grisha): read optimizer parameters from SystemConfig instead of
+# inferring them from `set_config_values`. See CmTask7725 for details.
+def build_optimizer_config_from_config_overrides(
+    config_dict: Dict[str, Any],
+    set_config_values: str,
+) -> cconfig.Config:
+    """
+    Create a config with optimizer overrides using the values passed from the
+    cmd line.
+
+    :param config_dict: config params
+    :param set_config_values: values to override in the config
+    :return: reconciliation notebook config with optimizer overrides
+    """
+    set_config_values_list = set_config_values.split(";")
+    override_config = cconfig.Config()
+    override_config = cconfig.apply_config(
+        override_config, set_config_values_list
+    )
+    # Get optimizer config params from config overrides.
+    optimizer_config = override_config["process_forecasts_node_dict"][
+        "process_forecasts_dict"
+    ]["optimizer_config"]
+    optimizer_config_params = optimizer_config["params"]
+    #
+    if "batch_optimizer" in set_config_values:
+        # Set `batch_optimizer` config params in the config.
+        config_dict["forecast_evaluator_config"][
+            "forecast_evaluator_type"
+        ] = "ForecastEvaluatorWithOptimizer"
+        optimizer_config_params["verbose"] = False
+        optimizer_config_dict = {"optimizer_config_dict": optimizer_config_params}
+        config_dict["forecast_evaluator_config"]["init"].update(
+            optimizer_config_dict
+        )
+        # Create config with `batch_optimizer`.
+        config = cconfig.Config.from_dict(config_dict)
+    else:
+        # Set `pomo_optimizer` config params in the config.
+        if "style" in optimizer_config_params:
+            style = optimizer_config_params["style"]
+        if "kwargs" in optimizer_config_params:
+            optimizer_config_kwargs = optimizer_config_params["kwargs"]
+        config_dict["forecast_evaluator_config"]["annotate_forecasts_kwargs"][
+            "style"
+        ] = style
+        config_dict["forecast_evaluator_config"][
+            "annotate_forecasts_kwargs"
+        ].update(optimizer_config_kwargs)
+        # Override config for `pomo` optimizer from command line.
+        config = cconfig.Config.from_dict(config_dict)
+    return config
 
 
 def build_multiday_system_reconciliation_config(
@@ -538,6 +574,34 @@ def extract_universe_version_from_pkl_config(system_log_dir: str) -> str:
     hdbg.dassert_eq(1, len(match.groups()))
     universe_version = match.group(1)
     return universe_version
+
+
+# TODO(Nina): consider removing once CmTask6627 is implemented.
+def extract_table_name_from_pkl_config(system_log_dir: str) -> str:
+    """
+    Get table name from pickled system config.
+
+    :param system_log_dir: dir containing
+        `system_config.output.values_as_strings.pkl` file
+        e.g., ".../system_log_dir.scheduled"
+    :return: table name, e.g., "ccxt_ohlcv_futures"
+    """
+    # Get string representation of market data config.
+    config_file_name = "system_config.output.values_as_strings.pkl"
+    system_config_path = os.path.join(system_log_dir, config_file_name)
+    system_config_pkl = cconfig.load_config_from_pickle(system_config_path)
+    # Transform tuple into a string for regex.
+    market_data_config_str = str(system_config_pkl["market_data_config"])
+    _LOG.debug(hprint.to_str("market_data_config_str"))
+    # Get table name.
+    re_pattern = r"table_name:\s?([^\s\\']+)"
+    match = re.search(re_pattern, market_data_config_str)
+    msg = f"Cannot parse `table_name` from the Config stored at={system_config_path}"
+    hdbg.dassert_ne(match, None, msg=msg)
+    # There should be exactly one match.
+    hdbg.dassert_eq(1, len(match.groups()))
+    table_name = match.group(1)
+    return table_name
 
 
 def extract_execution_freq_from_pkl_config(system_log_dir: str) -> str:
@@ -1273,6 +1337,41 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
     _LOG.info("DAG parquet path=%s", dag_parquet_path)
     dag_df = hparque.from_parquet(dag_parquet_path)
     return dag_df
+
+
+# #############################################################################
+# Forecast Evaluator
+# #############################################################################
+
+
+# TODO(Grisha): unclear where it should be, `ForecastEvaluatorFromPrices` is in
+# `amp/dataflow` and `ForecastEvaluatorWithOptimizer` is in `amp/optimizer`.
+def get_forecast_evaluator_instance1(
+    forecast_evaluator_type: str,
+    forecast_evaluator_kwargs: Dict[str, Any],
+) -> Union[
+    ofevwiop.ForecastEvaluatorWithOptimizer, dtfmod.ForecastEvaluatorFromPrices
+]:
+    """
+    Instantiate forecast evaluator object from a optimizer backend.
+
+    :param forecast_evaluator_type: type of forecast evaluator
+    :param forecast_evaluator_kwargs: required arguments to pass to the
+        forecast evaluator
+    """
+    if forecast_evaluator_type == "ForecastEvaluatorFromPrices":
+        forecast_evaluator = dtfmod.ForecastEvaluatorFromPrices(
+            **forecast_evaluator_kwargs
+        )
+    elif forecast_evaluator_type == "ForecastEvaluatorWithOptimizer":
+        forecast_evaluator = ofevwiop.ForecastEvaluatorWithOptimizer(
+            **forecast_evaluator_kwargs
+        )
+    else:
+        raise ValueError(
+            "forecast_evaluator_type='%s' not supported" % forecast_evaluator_type
+        )
+    return forecast_evaluator
 
 
 # #############################################################################

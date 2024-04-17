@@ -4,21 +4,25 @@ Import as:
 import optimizer.forecast_evaluator_with_optimizer as ofevwiop
 """
 import logging
+import os
 from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 from tqdm.autonotebook import tqdm
 
 import core.finance as cofinanc
+import dataflow.model.abstract_forecast_evaluator as dtfmabfoev
 import helpers.hdbg as hdbg
+import helpers.hio as hio
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import optimizer.single_period_optimization as osipeopt
 
 _LOG = logging.getLogger(__name__)
 
 
-class ForecastEvaluatorWithOptimizer:
+class ForecastEvaluatorWithOptimizer(dtfmabfoev.AbstractForecastEvaluator):
     """
     Evaluate returns/volatility forecasts.
     """
@@ -57,6 +61,81 @@ class ForecastEvaluatorWithOptimizer:
         self._prediction_col = prediction_col
         #
         self._optimizer_config_dict = optimizer_config_dict
+
+    def save_portfolio(
+        self,
+        df: pd.DataFrame,
+        log_dir: str,
+        **kwargs: Dict[str, Any],
+    ) -> str:
+        """
+        Save portfolio state to the file system.
+
+        The dir structure of the data output is:
+        ```
+        - holdings_shares
+        - holdings_notional
+        - executed_trades_shares
+        - executed_trades_notional
+        - pnl
+        - prediction
+        - price
+        - statistics
+        - volatility
+        ```
+
+        :param df: as in `compute_portfolio()`
+        :param log_dir: directory for writing log files of portfolio state
+        :param kwargs: forwarded to `compute_portfolio()`
+        :return: name of log files with timestamp
+        """
+        hdbg.dassert(log_dir, "Must specify `log_dir` to log portfolio.")
+        derived_dfs = self.compute_portfolio(
+            df,
+            **kwargs,
+        )
+        last_timestamp = df.index[-1]
+        hdbg.dassert_isinstance(last_timestamp, pd.Timestamp)
+        last_timestamp_str = last_timestamp.strftime("%Y%m%d_%H%M%S")
+        file_name = f"{last_timestamp_str}.parquet"
+        #
+        ForecastEvaluatorWithOptimizer._write_df(
+            df[self._price_col], log_dir, "price", file_name
+        )
+        ForecastEvaluatorWithOptimizer._write_df(
+            df[self._volatility_col], log_dir, "volatility", file_name
+        )
+        ForecastEvaluatorWithOptimizer._write_df(
+            df[self._prediction_col], log_dir, "prediction", file_name
+        )
+        ForecastEvaluatorWithOptimizer._write_df(
+            derived_dfs["holdings_shares"], log_dir, "holdings_shares", file_name
+        )
+        ForecastEvaluatorWithOptimizer._write_df(
+            derived_dfs["holdings_notional"],
+            log_dir,
+            "holdings_notional",
+            file_name,
+        )
+        ForecastEvaluatorWithOptimizer._write_df(
+            derived_dfs["executed_trades_shares"],
+            log_dir,
+            "executed_trades_shares",
+            file_name,
+        )
+        ForecastEvaluatorWithOptimizer._write_df(
+            derived_dfs["executed_trades_notional"],
+            log_dir,
+            "executed_trades_notional",
+            file_name,
+        )
+        ForecastEvaluatorWithOptimizer._write_df(
+            derived_dfs["pnl"], log_dir, "pnl", file_name
+        )
+        ForecastEvaluatorWithOptimizer._write_df(
+            derived_dfs["stats"], log_dir, "statistics", file_name
+        )
+        return file_name
 
     def to_str(
         self,
@@ -325,9 +404,15 @@ class ForecastEvaluatorWithOptimizer:
         return portfolio_df, derived_dfs["stats"]
 
     @staticmethod
-    def _build_multiindex_df(dfs: Dict[str, pd.DataFrame]) -> pd.DataFrame:
-        portfolio_df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
-        return portfolio_df
+    def _write_df(
+        df: pd.DataFrame,
+        log_dir: str,
+        name: str,
+        file_name: str,
+    ) -> None:
+        path = os.path.join(log_dir, name, file_name)
+        hio.create_enclosing_dir(path, incremental=True)
+        hparque.to_parquet(df, path)
 
     def _compute_holdings_notional(
         self,

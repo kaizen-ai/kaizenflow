@@ -28,9 +28,9 @@ import logging
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
+import im_v2.binance.data.extract.extractor as imvbdexex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
-import im_v2.binance.data.extract.extractor as imvbdexex
 
 _LOG = logging.getLogger(__name__)
 
@@ -61,7 +61,17 @@ def _parse() -> argparse.ArgumentParser:
         "--watch_multiple_symbols",
         action="store_true",
         required=False,
-        help="Specifies if we want to subscribe for multiple symbols at once for bid ask. \n"
+        help="Specifies if we want to subscribe for multiple symbols at once for bid ask. \n",
+    )
+    parser.add_argument(
+        "--ohlcv_download_method",
+        action="store",
+        required=False,
+        default="from_exchange",
+        choices=["from_exchange", "from_trades"],
+        help=" Specify download method for OHLCV data\n"
+        "from_exchange: Download OHLCV data computed by exchange which could be slower. \n"
+        "from_trades: Download OHLCV data sampled from trades in realtime",
     )
     parser = imvcdeexut.add_periodical_download_args(parser)
     parser = hparser.add_verbosity_arg(parser)
@@ -87,12 +97,25 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # e.g. `ohlcv` and `futures` in `ccxt_ohlcv_futures`.
     hdbg.dassert_in(args.data_type, args.db_table)
     hdbg.dassert_in(args.contract_type, args.db_table)
+    # TODO(Sonaal): Have a different script which will download and sample OHLCV from trades.
+    #   instead of this hack.
+    if args.data_type == "ohlcv" and args.ohlcv_download_method == "from_trades":
+        _LOG.warning(
+            "Downloading OHLCV data by sampling from trades, Setting data_type to ohlcv_from_trades"
+        )
+        args.data_type = "ohlcv_from_trades"
     hdbg.dassert_in(args.vendor, args.db_table)
     if args.vendor == "ccxt":
         # Initialize the Extractor class.
-        exchange = imvcdeexut.get_CcxtExtractor(args.exchange_id, args.contract_type)
+        exchange = imvcdeexut.get_CcxtExtractor(
+            args.exchange_id, args.contract_type
+        )
     elif args.vendor == "binance":
-        exchange = imvbdexex.BinanceExtractor("futures", imvbdexex.BinanceNativeTimePeriod.DAILY, data_type=args.data_type)
+        exchange = imvbdexex.BinanceExtractor(
+            "futures",
+            imvbdexex.BinanceNativeTimePeriod.DAILY,
+            data_type=args.data_type,
+        )
     args = vars(args)
     try:
         imvcdeexut.download_realtime_for_one_exchange_periodically(args, exchange)
@@ -102,7 +125,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         raise e
     finally:
         exchange.close()
-        
+
 
 if __name__ == "__main__":
     _main(_parse())

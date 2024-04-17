@@ -6,6 +6,7 @@ import im_v2.ccxt.data.extract.extractor as ivcdexex
 
 import copy
 import logging
+import math
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -56,6 +57,122 @@ class CcxtExtractor(imvcdexex.Extractor):
         self._sync_exchange = self.log_into_exchange(async_=False)
         self.currency_pairs = self.get_exchange_currency_pairs()
         self.vendor = "CCXT"
+        # Increase trade limits of the exchange. This is necessary for calculating OHLCV
+        # data from trades. The default limit is set to 1000, which can be insufficient,
+        # especially when dealing with high-frequency trading data. By setting the trades
+        # limit to 60000, we ensure that we capture all trades within a minute time interval,
+        # avoiding data loss. CCXT follows the FIFO (First In, First Out) approach to store trades,
+        # and insufficient limit can result in missed data points.
+        self._async_exchange.options["tradesLimit"] = 60000
+
+    def build_ohlcvc(
+        self,
+        currency_pair: str,
+        trades: List[Dict[str, Any]],
+        *,
+        timeframe: str = "1m",
+        since: float = 0,
+        limit: float = 2147483647,
+    ):
+        """
+        This implementation is taken from ccxt. Ref. https://github.com/ccxt/ccxt/blob/3d232b961b6c16253244bd8e218099d79ff05b56/python/ccxt/base/exchange.py#L3611
+
+        Original implementation is modified to filter out trades which are not placed on `MARKET`
+        """
+        # This is the pandas implemention which turned out to be slower.
+        if False:
+            trades_df = pd.DataFrame.from_records(trades)
+            remove_idx = trades_df[trades_df["timestamp"] > since].index.min()
+            trades_df = trades_df[trades_df["timestamp"] > since]
+            trades_df = trades_df[
+                trades_df["info"].apply(lambda x: x["X"] == "MARKET")
+            ]
+            trades_df["datetime"] = pd.to_datetime(trades_df["datetime"])
+            trades_df.set_index("datetime", inplace=True)
+            ohlc = trades_df["price"].resample(timeframe).ohlc()
+            v = trades_df["amount"].resample(timeframe).sum()
+            ohlcv = pd.concat([ohlc, v], axis=1)
+            ohlcv.reset_index(inplace=True)
+            ohlcv["datetime"] = ohlcv["datetime"].apply(
+                lambda x: hdateti.convert_timestamp_to_unix_epoch(x)
+            )
+            ohlcv = [
+                list(record) for record in list(ohlcv.to_records(index=False))
+            ]
+            pair = self.convert_currency_pair(currency_pair)
+            self._async_exchange.trades[pair] = self._async_exchange.trades[pair][
+                remove_idx:
+            ]
+            return ohlcv
+        # given a sorted arrays of trades(recent last) and a timeframe builds an array of OHLCV candles
+        # note, default limit value(2147483647) is max int32 value
+        ms = self._sync_exchange.parse_timeframe(timeframe) * 1000
+        ohlcvs = []
+        i_timestamp = 0
+        # open = 1
+        i_high = 2
+        i_low = 3
+        i_close = 4
+        i_volume = 5
+        i_count = 6
+        tradesLength = len(trades)
+        oldest = min(tradesLength, limit)
+        # remove the trades which are already used and will get filtered by `since`
+        # this will save time in for loop.
+        remove_idx = -1
+        for i in range(0, oldest):
+            trade = trades[i]
+            ts = trade["timestamp"]
+            if ts < since:
+                remove_idx = i
+                continue
+            if trade["info"]["X"] != "MARKET":
+                continue
+            openingTime = (
+                int(math.floor(ts / ms)) * ms
+            )  # shift to the edge of m/h/d(but not M)
+            if (
+                openingTime < since
+            ):  # we don't need bars, that have opening time earlier than requested
+                continue
+            ohlcv_length = len(ohlcvs)
+            candle = ohlcv_length - 1
+            if (candle == -1) or (
+                openingTime
+                >= self._sync_exchange.sum(ohlcvs[candle][i_timestamp], ms)
+            ):
+                # moved to a new timeframe -> create a new candle from opening trade
+                ohlcvs.append(
+                    [
+                        openingTime,  # timestamp
+                        trade["price"],  # O
+                        trade["price"],  # H
+                        trade["price"],  # L
+                        trade["price"],  # C
+                        trade["amount"],  # V
+                        1,  # count
+                    ]
+                )
+            else:
+                # still processing the same timeframe -> update opening trade
+                ohlcvs[candle][i_high] = max(
+                    ohlcvs[candle][i_high], trade["price"]
+                )
+                ohlcvs[candle][i_low] = min(ohlcvs[candle][i_low], trade["price"])
+                ohlcvs[candle][i_close] = trade["price"]
+                ohlcvs[candle][i_volume] = self._sync_exchange.sum(
+                    ohlcvs[candle][i_volume], trade["amount"]
+                )
+                ohlcvs[candle][i_count] = self._sync_exchange.sum(
+                    ohlcvs[candle][i_count], 1
+                )
+        # Remove trades which are already sampled to OHLCV,
+        if remove_idx > -1:
+            pair = self.convert_currency_pair(currency_pair)
+            self._async_exchange.trades[pair] = self._async_exchange.trades[pair][
+                remove_idx + 1 :
+            ]
+        return ohlcvs
 
     def log_into_exchange(self, async_: bool) -> ccxt.Exchange:
         """
@@ -97,6 +214,19 @@ class CcxtExtractor(imvcdexex.Extractor):
         Get all the currency pairs available for the exchange.
         """
         return list(self._sync_exchange.load_markets().keys())
+
+    async def sleep(self, time: int):
+        """
+        :param time: sleep time in milliseconds
+        """
+        await self._async_exchange.sleep(time)
+
+    def close(self):
+        """
+        Close the connection of exchange.
+        """
+        # CCXT handles closing connections implicitly.
+        pass
 
     def _is_latest_kline_present(self, data: list) -> bool:
         """
@@ -153,8 +283,8 @@ class CcxtExtractor(imvcdexex.Extractor):
             self.currency_pairs,
             "Currency pair is not present in exchange",
         )
-        if self.exchange_id == 'okx':
-            # CCXT with okx has a bug, it does not return correct dates 
+        if self.exchange_id == "okx":
+            # CCXT with okx has a bug, it does not return correct dates
             # if the limit is more than 100.
             bar_per_iteration = min(bar_per_iteration, 100)
             _LOG.warning(
@@ -328,7 +458,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         data type.
 
         :return Dict representing snapshot of the data for a specified
-            symbol and data type. TODO(Juraj): show example
+        symbol and data type. TODO(Juraj): show example
         """
         data = {}
         try:
@@ -394,6 +524,16 @@ class CcxtExtractor(imvcdexex.Extractor):
                     data["currency_pair"] = pair
                 else:
                     data = None
+            elif data_type == "ohlcv_from_trades":
+                if self._async_exchange.trades.get(pair):
+                    # In case of trades, the data is stored in a list of dicts.
+                    # We convert it to a dict of lists for easier processing.
+                    trades = self._async_exchange.trades[pair]
+                    data["trades"] = trades
+                    data["currency_pair"] = currency_pair
+                    data["trades_endtimestamp"] = trades[-1]["timestamp"]
+                else:
+                    data = None
             else:
                 raise ValueError(
                     f"{data_type} not supported. Supported data types: ohlcv, bid_ask, trades"
@@ -410,6 +550,21 @@ class CcxtExtractor(imvcdexex.Extractor):
             )
             raise e
 
+    def _download_websocket_ohlcv_from_trades(
+        self, exchange_id: str, currency_pair: str
+    ) -> Dict:
+        """
+        Get the OHLCV data for a given currency pair from trades.
+
+        Download trades data and use that data to build OHLCV bars.
+        :return Dict representing snapshot of the data for   a specified
+        symbol and data type. TODO(Juraj): show example
+        """
+        data_type = "ohlcv_from_trades"
+        return self._download_websocket_data(
+            exchange_id, currency_pair, data_type
+        )
+
     def _download_websocket_ohlcv(
         self, exchange_id: str, currency_pair: str
     ) -> Dict:
@@ -417,7 +572,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         Get the most recent OHLCV data for a given currency pair.
 
         :return Dict representing snapshot of the data for a specified
-            symbol and data type. TODO(Juraj): show example
+        symbol and data type. TODO(Juraj): show example
         """
         return self._download_websocket_data(exchange_id, currency_pair, "ohlcv")
 
@@ -431,8 +586,8 @@ class CcxtExtractor(imvcdexex.Extractor):
         for levels up to the specified limit.
 
         :return Dict representing snapshot of the order book  for a
-            specified currency pair up to limit-th level. TODO(Juraj): show
-            example
+        specified currency pair up to limit-th level. TODO(Juraj): show
+        example
         """
         return self._download_websocket_data(
             exchange_id, currency_pair, "bid_ask"
@@ -555,8 +710,8 @@ class CcxtExtractor(imvcdexex.Extractor):
         :param currency_pair: currency pair to download, i.g. BTC_USDT
         :param start_timestamp: start timestamp of the data to download
         :param end_timestamp: end timestamp of the data to download
-        :param sleep_time_in_secs: time to sleep between iterations. It's
-            not necessary to sleep, but it's a good idea to avoid
+        :param sleep_time_in_secs: time to sleep between iterations.
+            It's not necessary to sleep, but it's a good idea to avoid
             overloading the exchange.
         :param trade_per_iteration: number of trades to download per
             iteration Add trade_per_iteration gain more control over the
@@ -721,16 +876,3 @@ class CcxtExtractor(imvcdexex.Extractor):
         # Cut the data if it exceeds the end timestamp.
         trades_df = trades_df[trades_df["timestamp"] < end_timestamp]
         return trades_df
-    
-    async def sleep(self, time:int):
-        """
-        :param time: sleep time in milliseconds
-        """
-        await self._async_exchange.sleep(time)
-
-    def close(self):
-        """
-        Close the connection of exchange
-        """
-        # CCXT handles closing connections implicitly.
-        pass

@@ -57,6 +57,8 @@ class TestDownloadBulkData1(hunitest.TestCase):
             "assert_on_missing_data": False,
             "dst_dir": None,
             "pq_save_mode": "append",
+            "version": "v1_0_0",
+            "download_period": "daily"
         }
         self.assertDictEqual(actual, expected)
 
