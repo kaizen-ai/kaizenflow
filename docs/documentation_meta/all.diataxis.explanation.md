@@ -1,3 +1,15 @@
+
+
+<!-- toc -->
+
+- [Diataxis: a framework to write documentation](#diataxis-a-framework-to-write-documentation)
+- [Tutorial](#tutorial)
+- [How-to guide](#how-to-guide)
+- [Reference](#reference)
+- [Explanation](#explanation)
+
+<!-- tocstop -->
+
 # Diataxis: a framework to write documentation
 
 For more information look [https://diataxis.fr/](https://diataxis.fr/)
@@ -22,7 +34,8 @@ There are 4 modes of documentation
 - Food analogy: teaching a child how to cook starting from cutting carrots,
   celery, and onions for lasagna "battuto"
 - File suffix: `.tutorial.md`
-- Example: [datapull/ck.create_airflow_dag.tutorial.md](https://github.com/cryptokaizen/cmamp/blob/master/docs/datapull/ck.create_airflow_dag.tutorial.md)
+- Example:
+  [datapull/ck.create_airflow_dag.tutorial.md](https://github.com/cryptokaizen/cmamp/blob/master/docs/datapull/ck.create_airflow_dag.tutorial.md)
 
 # How-to guide
 
@@ -31,7 +44,8 @@ There are 4 modes of documentation
 - Assumes the user has some knowledge about the background of used technology
 - Food analogy: a recipe for cooking lasagna
 - File suffix: `.how_to_guide.md`
-- Example: [work_tools/all.pycharm.how_to_guide.md](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_tools/all.pycharm.how_to_guide.md)
+- Example:
+  [work_tools/all.pycharm.how_to_guide.md](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_tools/all.pycharm.how_to_guide.md)
 
 # Reference
 
@@ -43,7 +57,8 @@ There are 4 modes of documentation
 - Food analogy: a reference encyclopaedia article about ingredients used in
   lasagna (e.g., tomatoes, basil)
 - File suffix: `.reference.md`
-- Example: [datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md](https://github.com/cryptokaizen/cmamp/blob/master/docs/datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md)
+- Example:
+  [datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md](https://github.com/cryptokaizen/cmamp/blob/master/docs/datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md)
 
 # Explanation
 
@@ -55,4 +70,5 @@ There are 4 modes of documentation
 - Does not provide specifications or instruction
 - Food analogy: an article on culinary social history
 - File suffix: `.explanation.md`
-- Example: [documentation_meta/all.architecture_diagrams.explanation.md](https://github.com/cryptokaizen/cmamp/blob/master/docs/documentation_meta/all.architecture_diagrams.explanation.md)
+- Example:
+  [documentation_meta/all.architecture_diagrams.explanation.md](https://github.com/cryptokaizen/cmamp/blob/master/docs/documentation_meta/all.architecture_diagrams.explanation.md)
