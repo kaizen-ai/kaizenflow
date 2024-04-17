@@ -10,6 +10,97 @@ import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
+class Test_sign_normalize(hunitest.TestCase):
+    """
+    Test that values in Series and DataFrame are normalized correctly
+    """
+    def test_Series_1(self) -> None:
+        """
+        - Test on Series: all elements are in positive values
+        - atol = 0
+        """
+        signal = pd.Series([1, 2, 3, 4, 5])
+        # atol = 0
+        actual = csprmitr.sign_normalize(signal).all()
+        expected = pd.Series([1, 1, 1, 1, 1]).all()
+        self.assertEqual(actual, expected)
+
+    def test_Series_2(self) -> None:
+        """
+        - Test on Series: elements are in positive and negative values
+        - atol = 0
+        """
+        signal = pd.Series([-1, -2, -3, 4, 5])
+        atol = 0
+        actual = csprmitr.sign_normalize(signal,atol).all()
+        expected = pd.Series([-1, -1, -1, 1, 1]).all()
+        self.assertEqual(actual, expected)
+
+    def test_Series_3(self) -> None:
+        """
+        - Test on Series: all elements are in negative values
+        - atol = 0
+        """
+        signal = pd.Series([-1, -2, -3, -4, -5])
+        atol = 0
+        actual = csprmitr.sign_normalize(signal,atol).all()
+        expected = pd.Series([-1, -1, -1, -1, -1]).all()
+        self.assertEqual(actual, expected)
+
+    def test_Series_4(self) -> None:
+        """
+        - Test on Series
+        - atol = 2
+        """
+        signal = pd.Series([-4, -3, -2, -1, 0, 1, 2, 3, 4])
+        atol = 2
+        actual = csprmitr.sign_normalize(signal,atol).all()
+        expected = pd.Series([-1, -1, -1, 0, 0, 0, 1, 1, 1]).all()
+        self.assertEqual(actual, expected)
+
+    def test_DataFrame_1(self) -> None:
+        """
+        - Test on 1-dimensional DataFrame: all elements are in positive values
+        - atol = 0
+        """
+        signal = pd.DataFrame([1, 2, 3, 4, 5])
+        # atol = 0
+        actual = csprmitr.sign_normalize(signal)
+        expected = pd.DataFrame([1, 1, 1, 1, 1])
+        self.assertTrue(actual.equals(expected))
+
+    def test_DataFrame_2(self) -> None:
+        """
+        - Test on 1-dimensional DataFrame: elements are in positive and negative values
+        - atol = 0
+        """
+        signal = pd.DataFrame([-1, -2, -3, 4, 5])
+        atol = 0
+        actual = csprmitr.sign_normalize(signal,atol)
+        expected = pd.DataFrame([-1, -1, -1, 1, 1])
+        self.assertTrue(actual.equals(expected))
+
+    def test_DataFrame_3(self) -> None:
+        """
+        - Test on 1-dimensional DataFrame: all elements are in negative values
+        - atol = 0
+        """
+        signal = pd.DataFrame([-1, -2, -3, -4, -5])
+        atol = 0
+        actual = csprmitr.sign_normalize(signal,atol)
+        expected = pd.DataFrame([-1, -1, -1, -1, -1])
+        self.assertTrue(actual.equals(expected))
+
+    def test_DataFrame_4(self) -> None:
+        """
+        - Test on DataFrame
+        - atol = 2
+        """
+        signal = pd.DataFrame([-4, -3, -2, -1, 0, 1, 2, 3, 4])
+        atol = 2
+        actual = csprmitr.sign_normalize(signal,atol)
+        expected = pd.DataFrame([-1, -1, -1, 0, 0, 0, 1, 1, 1])
+        self.assertTrue(actual.equals(expected))
 
 class Test_get_symmetric_equisized_bins(hunitest.TestCase):
     def test_zero_in_bin_interior_false(self) -> None:
