@@ -2,7 +2,7 @@
 
 <!-- toc -->
 
-- [Set up Kaizenflow development environment](#set-up-sorrentum-development-environment)
+- [Set up Kaizenflow development environment](#set-up-kaizenflow-development-environment)
   * [Introduction](#introduction)
   * [Technologies used](#technologies-used)
   * [Clone the code](#clone-the-code)

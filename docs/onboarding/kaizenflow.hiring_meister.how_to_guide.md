@@ -71,15 +71,15 @@
 
   Post any errors you face in this issue.
   - [ ] Acknowledge the pledge to put time in the project [here](https://github.com/kaizen-ai/kaizenflow/blob/master/README.md#Important)
-  - [ ] Read [How to organize your work](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/work_organization/sorrentum.organize_your_work.how_to_guide.md)
-  - [ ] Read [Quick start for developing](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/onboarding/sorrentum.set_up_development_environment.how_to_guide.md)
+  - [ ] Read [How to organize your work](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/work_organization/kaizenflow.organize_your_work.how_to_guide.md)
+  - [ ] Read [Quick start for developing](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/onboarding/kaizenflow.set_up_development_environment.how_to_guide.md)
   - [ ] Make sure the [Docker dev container](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/work_tools/all.docker.how_to_guide.md) works
   - [ ] Make sure the [unit tests](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/coding/all.write_unit_tests.how_to_guide.md) run successfully
   - [ ] Read [Kaizenflow Python coding style guide](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/coding/all.coding_style.how_to_guide.md)
   - [ ] Fork, star, watch the Kaizenflow repo so that GitHub promotes our repo (we gotta work the system)
   - [ ] Learn about the [Morning Email](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/work_organization/all.team_collaboration.how_to_guide.md#morning-email)
   - [ ] How to do a [review](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/coding/all.submit_code_for_review.how_to_guide.md)
-  - [ ] If you are graduating soon and you would like to get a full-time job in one of the companies in the Kaizenflow ecosystem reach out to GP at [gp@sorrentum.org](mailto:gp@sorrentum.org)
+  - [ ] If you are graduating soon and you would like to get a full-time job in one of the companies in the Kaizenflow ecosystem reach out to GP at [gp@kaizenflow.org](mailto:gp@kaizenflow.org)
   - [ ] Get assigned a warm-up issue
   ```
 
