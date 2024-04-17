@@ -1,7 +1,0 @@
-ubuntu_version: "20.04"
-docker_compose_version: "1.29.2"
-docker_apt_url: "https://download.docker.com/linux/ubuntu"
-docker_apt_key_url: "https://download.docker.com/linux/ubuntu/gpg"
-cmamp_repo_url: "https://{{ github_user }}:{{ github_pat }}@github.com/cryptokaizen/cmamp.git"
-github_user: "${GITHUB_USER}"
-github_pat: "${GITHUB_PAT}"

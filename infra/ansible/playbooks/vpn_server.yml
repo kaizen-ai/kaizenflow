@@ -1,6 +1,0 @@
----
-- name: Install and Configure OpenVPN Server
-  hosts: vpn_server
-  roles:
-    - vpn_server
-    - zabbix_agent

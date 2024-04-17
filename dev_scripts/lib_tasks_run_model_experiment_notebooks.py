@@ -31,6 +31,7 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 import im_v2.common.universe as ivcu
+import reconciliation as reconcil
 import reconciliation.sim_prod_reconciliation as rsiprrec
 
 _LOG = logging.getLogger(__name__)
@@ -40,7 +41,8 @@ def _run_notebook(
     config_builder: str,
     base_dst_dir: str,
     notebook_path: str,
-    abort_on_error=False,
+    *,
+    abort_on_error: bool = False,
 ) -> None:
     """
     Run analysis notebooks and store it in a specified location.
@@ -172,9 +174,7 @@ def publish_system_reconciliation_notebook(
 # TODO(Grisha): Consider to move the script to `oms.`
 @task
 def run_notebooks(
-    ctx,
-    system_log_dir,
-    base_dst_dir,
+    ctx, system_log_dir: str, base_dst_dir: str, run_mode: str = "all_notebooks"
 ):  # type: ignore
     """
     Run cross dataset reconciliation notebook and store it in a specified
@@ -188,8 +188,19 @@ def run_notebooks(
         Full System run:
             /shared_data/ecs/test/system_reconciliation/C5b/prod/20240108_170500.20240108_173000/system_log_dir.manual/process_forecasts
         ```
+
     :param base_dst_dir: dir to store ipython notebooks
+    :param run_mode: detetermine set of notebooks to run, only relevant for full system runs,
+        broker only runs run all notebooks by default
+        all_notebooks: default option, run all notebooks
+            - for full system experiments assumes that reconciliation flow has been run
+        skip_reconciliation: skip `Master_system_reconciliation_fast` notebook
+        reconciliation_only: only publish `Master_system_reconciliation_fast`
+            - only applicable for full system run, assumes that reconciliation flow has been run
     """
+    hdbg.dassert_in(
+        run_mode, ["all_notebooks", "skip_reconciliation", "reconciliation_only"]
+    )
     _ = ctx
     # `system_log_dir` is in a form `.../system_log_dir/process_forecasts` and
     # we want to extract `.../system_log_dir` to find SystemConfig.
@@ -202,14 +213,15 @@ def run_notebooks(
     # The assumption is that a full System run saves SystemConfig which is not
     # the case for broker-only runs.
     is_full_system_run = os.path.exists(config_path)
+    if not is_full_system_run:
+        # For broker-only run, only "all_notebooks" is valid.
+        hdbg.dassert_eq(run_mode, "all_notebooks")
     # For broker only runs we are guaranteed to capture all bid/ask data
     # during experiment itself.
     bid_ask_data_source = "logged_during_experiment"
     if is_full_system_run:
         # Load pickled SystemConfig.
-        config_file_name = "system_config.output.values_as_strings.pkl"
-        system_config_path = os.path.join(full_system_log_dir, config_file_name)
-        system_config = cconfig.load_config_from_pickle(system_config_path)
+        system_config = cconfig.load_config_from_pickle(config_path)
         hdbg.dassert_in("dag_runner_config", system_config)
         if isinstance(system_config["dag_runner_config"], tuple):
             _LOG.warning("Reading Config v1.0")
@@ -224,6 +236,12 @@ def run_notebooks(
                     full_system_log_dir
                 )
             )
+            price_col = rsiprrec.extract_price_column_name_from_pkl_config(
+                full_system_log_dir
+            )
+            table_name = reconcil.extract_table_name_from_pkl_config(
+                full_system_log_dir
+            )
         else:
             # TODO(Grisha): preserve types when reading SystemConfig back and
             #  remove all the post-processing.
@@ -235,14 +253,18 @@ def run_notebooks(
             ]
             # Convert to a string representation of bar duration in minutes
             # in order to use it in the pipeline.
-            bar_duration_in_mins = int(bar_duration_in_secs / 60)
+            bar_duration_in_mins = int(int(bar_duration_in_secs) / 60)
             bar_duration = f"{bar_duration_in_mins}T"
             universe_version = system_config["market_data_config"][
-                "im_client_config"
-            ]["universe_version"]
+                "universe_version"
+            ]
             child_order_execution_freq = system_config[
                 "process_forecasts_node_dict"
             ]["process_forecasts_dict"]["order_config"]["execution_frequency"]
+            price_col = system_config["portfolio_config"]["mark_to_market_col"]
+            table_name = system_config["market_data_config"]["im_client_config"][
+                "table_name"
+            ]
         _LOG.debug("Using bar_duration=%s from SystemConfig", bar_duration)
         _LOG.debug(
             "Using universe_version=%s from SystemConfig", universe_version
@@ -250,6 +272,14 @@ def run_notebooks(
         _LOG.debug(
             "Using child_order_execution_freq=%s from SystemConfig",
             child_order_execution_freq,
+        )
+        _LOG.debug(
+            "Using price_col=%s from SystemConfig",
+            price_col,
+        )
+        _LOG.debug(
+            "Using table_name=%s from SystemConfig",
+            table_name,
         )
         # For full system runs, the default method is to use bid/ask data
         # Logged after the experiment to avoid potential gaps.
@@ -269,6 +299,9 @@ def run_notebooks(
         _LOG.debug("Using child_order_execution_freq from Broker only args")
     _LOG.info("bar_duration=%s", bar_duration)
     _LOG.info("universe_version=%s", universe_version)
+    _LOG.info("child_order_execution_freq=%s", child_order_execution_freq)
+    _LOG.info("price_col=%s", price_col)
+    _LOG.info("table_name=%s", table_name)
     # Get a random `test_asset_id` from the universe.
     vendor = "CCXT"
     mode = "trade"
@@ -288,6 +321,8 @@ def run_notebooks(
             "{bar_duration}", \
             "{universe_version}", \
             "{child_order_execution_freq}", \
+            "{price_col}", \
+            "{table_name}", \
             test_asset_id={test_asset_id})',
     )
     broker_debug = (
@@ -301,9 +336,15 @@ def run_notebooks(
         + f'get_broker_portfolio_reconciliation_configs_Cmtask5690("{system_log_dir}")',
     )
     # create list of notebooks to run.
-    notebooks = [bid_ask, master_exec, broker_debug]
-    if is_full_system_run:
-        notebooks.append(portfolio_recon)
+    notebooks = []
+    if run_mode in ["all_notebooks", "skip_reconciliation"]:
+        notebooks = [bid_ask, master_exec, broker_debug]
+        if is_full_system_run:
+            notebooks.append(portfolio_recon)
+    if is_full_system_run and run_mode in [
+        "all_notebooks",
+        "reconciliation_only",
+    ]:
         publish_system_reconciliation_notebook(system_log_dir, base_dst_dir)
     for notebook, config in notebooks:
         _run_notebook(config, base_dst_dir, notebook)

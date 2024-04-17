@@ -1,8 +1,0 @@
-# Using the 'ck' profile to access AWS Secrets Manager
-profile: "ck"
-
-# Fetching the secret
-airflow_secrets: "{{ lookup('amazon.aws.secretsmanager_secret', 'ansible/airflow_secrets', region='eu-north-1', aws_profile=profile) }}"
-
-easyrsa_ca_password_vpn1_eu: "{{ airflow_secrets.easyrsa_ca_password_vpn1_eu }}"
-easyrsa_ca_password_vpn1_us: "{{ airflow_secrets.easyrsa_ca_password_vpn1_us }}"
