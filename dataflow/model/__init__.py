@@ -14,3 +14,4 @@ from dataflow.model.parquet_tile_analyzer import *  # pylint: disable=unused-imp
 from dataflow.model.regression_analyzer import *  # pylint: disable=unused-import # NOQA
 from dataflow.model.stats_computer import *  # pylint: disable=unused-import # NOQA
 from dataflow.model.tiled_flows import *  # pylint: disable=unused-import # NOQA
+from dataflow.model.abstract_forecast_evaluator import * # pylint: disable=unused-import # NOQA

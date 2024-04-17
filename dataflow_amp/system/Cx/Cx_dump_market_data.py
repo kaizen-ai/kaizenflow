@@ -8,6 +8,7 @@ The script saves market data from the DB to a file.
     --start_timestamp_as_str 20221010_060500 \
     --end_timestamp_as_str 20221010_080000 \
     --db_stage 'prod' \
+    --table_name 'ccxt_ohlcv_futures' \
     --universe 'v7.4'
 """
 import argparse
@@ -50,6 +51,13 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
     )
     parser.add_argument(
+        "--table_name",
+        action="store",
+        required=True,
+        type=str,
+        help="Name of the table from database",
+    )
+    parser.add_argument(
         "--universe",
         action="store",
         required=True,
@@ -71,6 +79,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         args.start_timestamp_as_str,
         args.end_timestamp_as_str,
         args.db_stage,
+        args.table_name,
         args.universe,
     )
 

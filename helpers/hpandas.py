@@ -2024,13 +2024,11 @@ def compare_dfs(
     elif diff_mode == "pct_change":
         # Compare NaN values in dataframes.
         nan_diff_df = compare_nans_in_dataframes(df1, df2)
-        _LOG.log(
-            log_level,
-            "Dataframe with NaN differences=\n%s",
-            df_to_str(nan_diff_df, log_level=log_level),
-        )
+        _LOG.debug("Dataframe with NaN differences=\n%s", df_to_str(nan_diff_df))
         msg = "There are NaN values in one of the dataframes that are not in the other one."
-        hdbg.dassert_eq(0, nan_diff_df.shape[0], msg=msg, only_warning=only_warning)
+        hdbg.dassert_eq(
+            0, nan_diff_df.shape[0], msg=msg, only_warning=only_warning
+        )
         # Compute pct_change.
         df_diff = 100 * (df1 - df2) / df2.abs()
         if zero_vs_zero_is_zero:
@@ -2068,6 +2066,13 @@ def compare_dfs(
                     df_to_str(df2, log_level=log_level),
                     only_warning=only_warning,
                 )
+        # Report max diff.
+        max_diff = df_diff.abs().max().max()
+        _LOG.log(
+            log_level,
+            "Maximum percentage difference between the two dataframes = %s",
+            max_diff,
+        )
     else:
         raise ValueError(f"diff_mode={diff_mode}")
     df_diff = df_diff.add_suffix(f".{diff_mode}")

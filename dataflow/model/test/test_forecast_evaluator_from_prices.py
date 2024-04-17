@@ -521,7 +521,9 @@ class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
             burn_in_bars=0,
         )
         #
-        portfolio_df, stats_df = forecast_evaluator.load_portfolio(log_dir)
+        portfolio_df, stats_df = forecast_evaluator.load_portfolio_and_stats(
+            log_dir
+        )
         # Ensure that the `int` asset id type is recovered.
         asset_id_idx = portfolio_df.columns.levels[1]
         self.assertEqual(asset_id_idx.dtype.type, np.int64)
