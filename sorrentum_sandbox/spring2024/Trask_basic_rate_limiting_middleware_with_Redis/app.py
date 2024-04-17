@@ -20,11 +20,10 @@ app = Flask(__name__)
 
 @app.route('/')
 def hello():
-   for i in range(110):
-      if request_is_limited(r, "admin", 10, timedelta(minutes=1)):
-         return "<h1>BLOCKED </h2>"
-      else:
-         return '<h1>Hello World </h2>'
+   if request_is_limited(r, "admin", 10, timedelta(minutes=1)):
+      return "<h1>BLOCKED </h2>"
+   else:
+      return '<h1>Hello World </h2>'
 
 @app.route('/test')
 def test():
