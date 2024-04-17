@@ -2,32 +2,32 @@
 
 https://hub.docker.com/
 
-Username: sorrentum
+Username: kaizenflow
 Email: gp@crypto-kaizen.com
 
 There are several public images
 
-- sorrentum/cmamp
-- sorrentum/dev_tools
+- kaizenflow/cmamp
+- kaizenflow/dev_tools
 
 Used in DATA605:
-- sorrentum/sorrentum
-- sorrentum/defi
-- sorrentum/jupyter
+- kaizen-ai/kaizenflow
+- kaizenflow/defi
+- kaizenflow/jupyter
 
-The page corresponding to the Sorrentum repo is
-https://hub.docker.com/u/sorrentum
+The page corresponding to the Kaizenflow repo is
+https://hub.docker.com/u/kaizenflow
 
 # Login through CLI
 
-> docker login --username sorrentum --password XYZ
+> docker login --username kaizenflow --password XYZ
 
 # List all the images
 
 - Without authentication
 ```
-> curl -s "https://hub.docker.com/v2/repositories/sorrentum/?page_size=100" | jq '.results|.[]|.name'
-"sorrentum"
+> curl -s "https://hub.docker.com/v2/repositories/kaizenflow/?page_size=100" | jq '.results|.[]|.name'
+"kaizenflow"
 "cmamp"
 "jupyter"
 "dev_tools"

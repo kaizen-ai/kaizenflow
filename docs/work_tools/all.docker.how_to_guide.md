@@ -430,7 +430,7 @@
     local image by default
   - Images are pushed to the remote registry and pulled for testing and usage
   - To tag the local image as dev and push it to the target registry: e.g.,
-    `aws_ecr.ck` or `dockerhub.sorrentum` , use
+    `aws_ecr.ck` or `dockerhub.kaizenflow` , use
     ```
     > i docker_tag_push_multi_build_local_image_as_dev --version <VERSION> --target <TARGET>
     ```
@@ -508,7 +508,7 @@ Where `1.10.0` is the new version of the image with stage as local.
 
 E.g.,
 ```
-i docker_release_multi_build_dev_image --version 1.6.1 --platform linux/amd64,linux/arm64 --target-registries aws_ecr.ck,dockerhub.sorrentum
+i docker_release_multi_build_dev_image --version 1.6.1 --platform linux/amd64,linux/arm64 --target-registries aws_ecr.ck,dockerhub.kaizenflow
 ```
 
 TARGET_REGISTRIES: list of target registries to push the image to.
@@ -516,7 +516,7 @@ TARGET_REGISTRIES: list of target registries to push the image to.
 E.g.,
 
 - `aws_ecr.ck` -- private CK AWS Docker registry
-- `dockerhub.sorrentum` -- public Dockerhub registry
+- `dockerhub.kaizenflow` -- public Dockerhub registry
 
 All other options are the same as for the `docker_release_dev_image` end-to-end
 flow.
@@ -525,7 +525,7 @@ flow.
 
 #### Post-release check-list
 
-- [ ] Make an integration with the `sorrentum` repository in order to copy all
+- [ ] Make an integration with the `kaizenflow` repository in order to copy all
       the changes from the `cmamp` repository
 - [ ] Tag the new `dev` image to GHCR namespace and push it to GHCR registry
 
@@ -1113,25 +1113,25 @@ flow.
   TODO(Vlad): Add a command to run the push to Dockerhub and add it to the
   single arch release flow
 - Push the image to Dockerhub manually
-  - Login to Dockerhub with the `sorrentum` account
+  - Login to Dockerhub with the `kaizenflow` account
   ```
-  > docker login --username=sorrentum
+  > docker login --username=kaizenflow
   ```
-  - Tag the dev version image as `sorrentum/dev_tools:dev`
+  - Tag the dev version image as `kaizenflow/dev_tools:dev`
   ```
-  > docker tag 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:dev-1.1.0 sorrentum/dev_tools:dev
+  > docker tag 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:dev-1.1.0 kaizenflow/dev_tools:dev
   ```
   - Push the dev image to Dockerhub
   ```
-  > docker push sorrentum/dev_tools:dev
+  > docker push kaizenflow/dev_tools:dev
   ```
-  - Tag the prod version image as `sorrentum/dev_tools:prod`
+  - Tag the prod version image as `kaizenflow/dev_tools:prod`
   ```
-  > docker tag 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:prod sorrentum/dev_tools:prod
+  > docker tag 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:prod kaizenflow/dev_tools:prod
   ```
   - Push the prod image to Dockerhub
   ```
-  > docker push sorrentum/dev_tools:prod
+  > docker push kaizenflow/dev_tools:prod
   ```
 - Push the latest `prod` image to GHCR registry manually for GH actions to use
   it

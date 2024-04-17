@@ -27,7 +27,7 @@
 
 ## Tech leads
 
-- Tech leads are contributors that have put more effort in Sorrentum and / or
+- Tech leads are contributors that have put more effort in Kaizenflow and / or
   have more experience in research and development
 
 - The same project (e.g., Web3, Model, Arbitrage, NLP) can have multiple tech
@@ -52,7 +52,7 @@
   - Practice leadership skills (which mainly entail technical excellence and
     patience)
   - Work closely with GP / Paul
-  - Material benefits (e.g., higher Sorrentum bonuses once the reward system is
+  - Material benefits (e.g., higher Kaizenflow bonuses once the reward system is
     in place)
 
 ## Developers
@@ -77,8 +77,8 @@
 
   - You can say "this is what I'm doing, what do you think?"
   - E.g., create a dir like 'SorrIssueXYZ\_...' under
-    https://github.com/sorrentum/sorrentum/tree/master/sorrentum_sandbox/examples/ml_projects
-  - E.g., see the PR under https://github.com/sorrentum/sorrentum/pull/31
+    https://github.com/kaizen-ai/kaizenflow/tree/master/sorrentum_sandbox/examples/ml_projects
+  - E.g., see the PR under https://github.com/kaizen-ai/kaizenflow/pull/31
 
 - Work in the Docker container so that you use the standard flow and it's easy
   to collaborate
