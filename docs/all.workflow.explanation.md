@@ -2,7 +2,7 @@
 
 <!-- toc -->
 
-- [KaizenFlow Workflow Explanation](#kaizenflow-workflow-explanation)
+- [KaizenFlow workflow explanation](#kaizenflow-workflow-explanation)
 - [Set-up](#set-up)
 - [Quant workflows](#quant-workflows)
   * [`DataPull`](#datapull)
@@ -44,6 +44,8 @@ A high-level description of KaizenFlow is
 <!-- ####################################################################### -->
 
 # Quant workflows
+
+<!-- ####################################################################### -->
 
 The life of a Quant is spent between:
 
@@ -340,13 +342,14 @@ These activities are mapped in `KaizenFlow` as follows:
 
 # Quant dev workflows
 
+<!-- ####################################################################### -->
+
 <!-- /////////////////////////////////////////////////////////////////////// -->
 
 ## DataPull
 
 - Learn how to create a `DataPull` adapter for a new data source
-  - [/docs/datapull/ck.dataset_onboarding_checklist.reference.md](/docs/datapull/ck.dataset_onboarding_checklist.reference.md)
-    - TODO(Juraj):
+  - [/docs/datapull/all.dataset_onboarding_checklist.reference.md](/docs/datapull/all.dataset_onboarding_checklist.reference.md)
   - [/docs/datapull/ck.add_new_data_source.how_to_guide.md](/docs/datapull/ck.add_new_data_source.how_to_guide.md)
 - How to update CCXT version
   - [/docs/datapull/all.update_CCXT_version.how_to_guide.md](/docs/datapull/all.update_CCXT_version.how_to_guide.md)
@@ -380,6 +383,8 @@ These activities are mapped in `KaizenFlow` as follows:
 <!-- ####################################################################### -->
 
 # TradingOps workflows
+
+<!-- ####################################################################### -->
 
 <!-- /////////////////////////////////////////////////////////////////////// -->
 

@@ -206,6 +206,16 @@ some helpful tips and resources to guide you through your first review.
   - E.g. on how to report any issues
     - Https://github.com/sorrentum/sorrentum/issues/370#issue-1782574355
 
+## Talk through code and not GitHub
+
+- Authors of the PR should not initiate talking to reviewers through GitHub but
+  only through code
+  - E.g., if there is something you want to explain to the reviewers, you should
+    not comment your own PR, but should add comments or improve the code
+  - Everything in GitHub is lost once the PR is closed, so all knowledge needs to
+    go inside the code or the documentation
+- Of course it's ok to respond to questions in GitHub
+
 ## Look at examples of the first reviews
 
 - It can be helpful to review some examples of previous first reviews to get an

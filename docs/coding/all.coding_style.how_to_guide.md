@@ -796,6 +796,20 @@
     sometimes this happens silently and it is reported only from the OS return
     code
 
+### How to pick the level for a logging statement
+
+- If all the debug info was printed at `INFO` level, the output will be too slow
+  by default
+- So we separate what needs to be always printed (i.e., `INFO`) and what is
+  needed only if there is a problem to debug (i.e., `DEBUG`)
+  - Only who writes the code should decide what is `DEBUG`, since they know what
+    is needed to debug
+  - In fact many loggers use multiple levels of debugging level depending of how
+    much detailed debugging info are needed
+- `logging` has ways to enable logging on a per module basis
+   - So in prod mode you need to know which part you want to debug, since
+     printing everything at `INFO` level is not possible
+
 ### Use positional args when logging
 
 - _Bad_
