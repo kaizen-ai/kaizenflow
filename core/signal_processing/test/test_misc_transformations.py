@@ -14,7 +14,7 @@ class Test_sign_normalize(hunitest.TestCase):
     """
     Test that values in Series and DataFrame are normalized correctly
     """
-    def test_Series_1(self) -> None:
+    def test_Series1(self) -> None:
         """
         - Test on Series: all elements are in positive values
         - atol = 0
@@ -25,7 +25,7 @@ class Test_sign_normalize(hunitest.TestCase):
         expected = pd.Series([1, 1, 1, 1, 1]).all()
         self.assertEqual(actual, expected)
 
-    def test_Series_2(self) -> None:
+    def test_Series2(self) -> None:
         """
         - Test on Series: elements are in positive and negative values
         - atol = 0
@@ -36,7 +36,7 @@ class Test_sign_normalize(hunitest.TestCase):
         expected = pd.Series([-1, -1, -1, 1, 1]).all()
         self.assertEqual(actual, expected)
 
-    def test_Series_3(self) -> None:
+    def test_Series3(self) -> None:
         """
         - Test on Series: all elements are in negative values
         - atol = 0
@@ -47,7 +47,7 @@ class Test_sign_normalize(hunitest.TestCase):
         expected = pd.Series([-1, -1, -1, -1, -1]).all()
         self.assertEqual(actual, expected)
 
-    def test_Series_4(self) -> None:
+    def test_Series4(self) -> None:
         """
         - Test on Series
         - atol = 2
@@ -58,7 +58,7 @@ class Test_sign_normalize(hunitest.TestCase):
         expected = pd.Series([-1, -1, -1, 0, 0, 0, 1, 1, 1]).all()
         self.assertEqual(actual, expected)
 
-    def test_DataFrame_1(self) -> None:
+    def test_DataFrame1(self) -> None:
         """
         - Test on 1-dimensional DataFrame: all elements are in positive values
         - atol = 0
@@ -69,7 +69,7 @@ class Test_sign_normalize(hunitest.TestCase):
         expected = pd.DataFrame([1, 1, 1, 1, 1])
         self.assertTrue(actual.equals(expected))
 
-    def test_DataFrame_2(self) -> None:
+    def test_DataFrame2(self) -> None:
         """
         - Test on 1-dimensional DataFrame: elements are in positive and negative values
         - atol = 0
@@ -80,7 +80,7 @@ class Test_sign_normalize(hunitest.TestCase):
         expected = pd.DataFrame([-1, -1, -1, 1, 1])
         self.assertTrue(actual.equals(expected))
 
-    def test_DataFrame_3(self) -> None:
+    def test_DataFrame3(self) -> None:
         """
         - Test on 1-dimensional DataFrame: all elements are in negative values
         - atol = 0
@@ -91,7 +91,7 @@ class Test_sign_normalize(hunitest.TestCase):
         expected = pd.DataFrame([-1, -1, -1, -1, -1])
         self.assertTrue(actual.equals(expected))
 
-    def test_DataFrame_4(self) -> None:
+    def test_DataFrame4(self) -> None:
         """
         - Test on DataFrame
         - atol = 2
