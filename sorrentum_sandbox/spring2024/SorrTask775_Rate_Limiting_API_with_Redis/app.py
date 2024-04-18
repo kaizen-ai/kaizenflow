@@ -6,7 +6,8 @@ app = Flask(__name__)
 
 limiter = Limiter(
     get_remote_address,
-    app=app
+    app=app,
+    storage_uri="memory://"
 )
 
 @app.route("/")
