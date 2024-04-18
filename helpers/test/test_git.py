@@ -166,7 +166,7 @@ class Test_git_repo_name1(hunitest.TestCase):
         self.assert_equal(act, exp)
 
     def test_get_repo_name4(self) -> None:
-        full_name = "sorrentum/dev_tools"
+        full_name = "kaizen-ai/dev_tools"
         mode = "full_name"
         act = hgit.get_repo_name(full_name, mode)
         exp = "dev_tools"
