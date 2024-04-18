@@ -12,6 +12,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_compress_tails(hunitest.TestCase):
+    # Input data.
     actual_srs = pd.Series([1, 2, 3, 4, 5])
     actual_df = pd.DataFrame({"A": [1, 2, 3, 4, 5], "B": [1, 2, 3, 4, 5]})
 
@@ -69,7 +70,7 @@ class Test_compress_tails(hunitest.TestCase):
         """
         # Run test.
         with self.assertRaises(AssertionError) as context:
-            expected_series = csprmitr.compress_tails(self.actual_srs, scale=-1)
+            csprmitr.compress_tails(self.actual_srs, scale=-1)
         actual_error_message = str(context.exception)
         expected_error_message = r"""
         ################################################################################
@@ -88,7 +89,7 @@ class Test_compress_tails(hunitest.TestCase):
         """
         # Run test.
         with self.assertRaises(AssertionError) as context:
-            expected_df = csprmitr.compress_tails(self.actual_df, scale=-1)
+            csprmitr.compress_tails(self.actual_df, scale=-1)
         actual_error_message = str(context.exception)
         expected_error_message = r"""
         ################################################################################
@@ -107,7 +108,7 @@ class Test_compress_tails(hunitest.TestCase):
         """
         # Run test.
         with self.assertRaises(AssertionError) as context:
-            expected_srs = csprmitr.compress_tails(self.actual_srs, rescale=-1)
+            csprmitr.compress_tails(self.actual_srs, rescale=-1)
         actual_error_message = str(context.exception)
         expected_error_message = r"""
         ################################################################################
@@ -126,7 +127,7 @@ class Test_compress_tails(hunitest.TestCase):
         """
         # Run test.
         with self.assertRaises(AssertionError) as context:
-            expected_df = csprmitr.compress_tails(self.actual_df, rescale=-1)
+            csprmitr.compress_tails(self.actual_df, rescale=-1)
         actual_error_message = str(context.exception)
         expected_error_message = r"""
         ################################################################################
@@ -145,7 +146,7 @@ class Test_compress_tails(hunitest.TestCase):
         """
         # Run test.
         with self.assertRaises(AssertionError) as context:
-            expected_srs = csprmitr.compress_tails(self.actual_srs, scale=0)
+            csprmitr.compress_tails(self.actual_srs, scale=0)
         actual_error_message = str(context.exception)
         expected_error_message = r"""
         ################################################################################
@@ -164,7 +165,7 @@ class Test_compress_tails(hunitest.TestCase):
         """
         # Run test.
         with self.assertRaises(AssertionError) as context:
-            expected_srs = csprmitr.compress_tails(self.actual_srs, rescale=0)
+            csprmitr.compress_tails(self.actual_srs, rescale=0)
         actual_error_message = str(context.exception)
         expected_error_message = r"""
         ################################################################################
@@ -219,7 +220,7 @@ class Test_compress_tails(hunitest.TestCase):
         """
         # Run test.
         with self.assertRaises(TypeError) as context:
-            expected_srs = csprmitr.compress_tails(self.actual_srs, scale="abc")
+            csprmitr.compress_tails(self.actual_srs, scale="abc")
         # Check results.
         actual_error_message = str(context.exception)
         expected_error_message = r"""
@@ -235,7 +236,7 @@ class Test_compress_tails(hunitest.TestCase):
         """
         # Run test.
         with self.assertRaises(TypeError) as context:
-            expected_df = csprmitr.compress_tails(self.actual_df, rescale="def")
+            csprmitr.compress_tails(self.actual_df, rescale="def")
         # Check results.
         actual_error_message = str(context.exception)
         expected_error_message = r"""
