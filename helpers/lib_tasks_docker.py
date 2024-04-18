@@ -340,8 +340,8 @@ def docker_login(ctx, target_registry="aws_ecr.ck"):  # type: ignore
     """
     # No login required as sorrentum container is accessible on the public
     # DockerHub registry.
-    if henv.execute_repo_config_code("get_name()") == "//sorr":
-        _LOG.warning("Skipping logging in for Sorrentum")
+    if henv.execute_repo_config_code("get_name()") == "//kaizen":
+        _LOG.warning("Skipping logging in for Kaizenflow")
         return
     hlitauti.report_task()
     # We run everything using `hsystem.system(...)` but `ctx` is needed
