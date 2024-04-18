@@ -55,7 +55,7 @@
 
 - Upon identifying the top candidate(s), the HiringMeister is expected to notify
   GP for sending invitations to the
-  [sorrenutum](https://github.com/kaizen-ai/kaizenflow) GitHub repository
+  [kaizenflow](https://github.com/kaizen-ai/kaizenflow) GitHub repository
 
 ## On-boarding bug creation
 

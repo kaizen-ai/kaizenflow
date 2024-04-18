@@ -253,7 +253,8 @@ Happy coding!
   ```bash
   > i docker_pull
   or
-  > docker pull kaizenflow/cmamp:latest
+  # TODO(Sameep): Update to kaizenflow once docker is updated.
+  > docker pull sorrentum/cmamp:latest
   ```
 
 - Pull the latest `dev_tools` image containing the linter; this is done once
@@ -261,7 +262,8 @@ Happy coding!
   ```bash
   > i docker_pull_dev_tools
   or
-  > docker pull kaizenflow/dev_tools:prod
+  # TODO(Sameep): Update to kaizenflow once docker is updated.
+  > docker pull sorrentum/dev_tools:prod
   ```
 
 - Get the latest version of `master`
