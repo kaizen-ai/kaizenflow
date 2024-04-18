@@ -197,7 +197,7 @@ class Test_git_repo_name1(hunitest.TestCase):
         mode = "full_name"
         act = hgit.get_all_repo_names(mode)
         # Difference between `cmamp` and `kaizenflow`.
-        exp = ["alphamatic/amp", "kaizenflow/dev_tools", "kaizen-ai/kaizenflow"]
+        exp = ["alphamatic/amp", "kaizen-ai/dev_tools", "kaizen-ai/kaizenflow"]
         self.assert_equal(str(act), str(exp))
 
     def test_get_repo_name_rountrip1(self) -> None:
