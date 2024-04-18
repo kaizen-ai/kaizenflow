@@ -1,18 +1,22 @@
-from flask import Flask, render_template, jsonify
-import json
+from flask import Flask, render_template
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
 
-with open('static/data.json', encoding='UTF-8') as file:
-    data = json.load(file)
+limiter = Limiter(
+    get_remote_address,
+    app=app
+)
 
-@app.route('/')
+@app.route("/")
 def home():
-    return render_template('index.html', data=data)
+    return render_template("index.html")
 
-@app.route('/api/<int:i>')
-def api(i):
-    return jsonify(data[i])
+@app.route("/api")
+@limiter.limit("3/second")
+def api():
+    return "Hello World!"
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
