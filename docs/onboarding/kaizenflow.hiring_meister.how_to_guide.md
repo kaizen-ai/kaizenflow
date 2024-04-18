@@ -79,7 +79,7 @@
   - [ ] Fork, star, watch the Kaizenflow repo so that GitHub promotes our repo (we gotta work the system)
   - [ ] Learn about the [Morning Email](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/work_organization/all.team_collaboration.how_to_guide.md#morning-email)
   - [ ] How to do a [review](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/coding/all.submit_code_for_review.how_to_guide.md)
-  - [ ] If you are graduating soon and you would like to get a full-time job in one of the companies in the Kaizenflow ecosystem reach out to GP at [gp@kaizenflow.org](mailto:gp@kaizenflow.org)
+  - [ ] If you are graduating soon and you would like to get a full-time job in one of the companies in the Kaizenflow ecosystem reach out to GP at [gp@kaizen-tech.io](mailto:gp@kaizen-tech.io)
   - [ ] Get assigned a warm-up issue
   ```
 
