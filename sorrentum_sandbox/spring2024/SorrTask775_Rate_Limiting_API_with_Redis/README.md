@@ -7,12 +7,13 @@ This is a basic Flask application. Flask is a micro web framework written in Pyt
 Before you begin, ensure you have met the following requirements:
 - You have installed the latest version of Python and pip.
 
-## Installing Flask
+## Installing Flask and Flask Limiter
 
 To install Flask, follow these steps:
 
 ```bash
 pip install flask
+pip install flask limiter
 ```
 
 ## Running the Flask Application
@@ -25,16 +26,10 @@ To run the Flask application, follow these steps:
 cd /path/to/your/flask/app
 ```
 
-2. Set the environment variable `FLASK_APP` to be your Flask application file.
+2. Run the Flask application.
 
 ```bash
-export FLASK_APP=app.py
-```
-
-3. Run the Flask application.
-
-```bash
-flask run
+python3 app.py
 ```
 
 After running the command, you should see output similar to the following:
@@ -43,4 +38,4 @@ After running the command, you should see output similar to the following:
 * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
 ```
 
-4. Open your web browser and enter the URL provided in the terminal (`http://127.0.0.1:5000/` in this case). You should now be able to see your Flask application running.
+3. Open your web browser and enter the URL provided in the terminal (`http://127.0.0.1:5000/` in this case). You should now be able to see your Flask application running.
