@@ -12,7 +12,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_compress_tails(hunitest.TestCase):
-    # Defin
     actual_srs = pd.Series([1, 2, 3, 4, 5])
     actual_df = pd.DataFrame({"A": [1, 2, 3, 4, 5], "B": [1, 2, 3, 4, 5]})
 
