@@ -7,5 +7,5 @@ poetry
 pytest >= "6.0.0"
 s3fs  # For tools like `publish_notebook.py`.
 tqdm
-# TODO(gp): Difference in cmamp vs sorrentum.
+# TODO(gp): Difference in cmamp vs kaizenflow.
 # pyyaml == 5.3.1
