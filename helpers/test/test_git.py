@@ -182,8 +182,8 @@ class Test_git_repo_name1(hunitest.TestCase):
             return
         mode = "short_name"
         act = hgit.get_all_repo_names(mode)
-        # Difference between `cmamp` and `sorrentum`.
-        exp = ["amp", "dev_tools", "sorr"]
+        # Difference between `cmamp` and `kaizenflow`.
+        exp = ["amp", "dev_tools", "kaizen"]
         self.assert_equal(str(act), str(exp))
 
     # Outside CK infra, the following call hangs, so we skip it.
@@ -196,8 +196,8 @@ class Test_git_repo_name1(hunitest.TestCase):
             return
         mode = "full_name"
         act = hgit.get_all_repo_names(mode)
-        # Difference between `cmamp` and `sorrentum`.
-        exp = ["alphamatic/amp", "sorrentum/dev_tools", "sorrentum/sorrentum"]
+        # Difference between `cmamp` and `kaizenflow`.
+        exp = ["alphamatic/amp", "kaizenflow/dev_tools", "kaizen-ai/kaizenflow"]
         self.assert_equal(str(act), str(exp))
 
     def test_get_repo_name_rountrip1(self) -> None:
