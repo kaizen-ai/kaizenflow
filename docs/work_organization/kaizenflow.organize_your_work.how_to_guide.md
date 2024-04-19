@@ -27,7 +27,7 @@
 
 ## Tech leads
 
-- Tech leads are contributors that have put more effort in Kaizenflow and / or
+- Tech leads are contributors that have put more effort in KaizenFlow and / or
   have more experience in research and development
 
 - The same project (e.g., Web3, Model, Arbitrage, NLP) can have multiple tech
@@ -52,7 +52,7 @@
   - Practice leadership skills (which mainly entail technical excellence and
     patience)
   - Work closely with GP / Paul
-  - Material benefits (e.g., higher Kaizenflow bonuses once the reward system is
+  - Material benefits (e.g., higher KaizenFlow bonuses once the reward system is
     in place)
 
 ## Developers

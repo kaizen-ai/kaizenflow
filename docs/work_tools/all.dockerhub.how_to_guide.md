@@ -16,7 +16,7 @@ Used in DATA605:
 - sorrentum/defi
 - sorrentum/jupyter
 
-The page corresponding to the Kaizenflow repo is
+The page corresponding to the Sorrentum repo is
 https://hub.docker.com/u/sorrentum
 
 # Login through CLI
