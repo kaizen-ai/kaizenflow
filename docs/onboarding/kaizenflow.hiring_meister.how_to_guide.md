@@ -32,7 +32,7 @@
 
 - Upon receipt of applications for new positions, the HiringMeister is
   responsible for sending
-  [Sorrentum - Contributor Info](https://docs.google.com/forms/d/1-iegytm5t1w-LPs7gm8IuUHTxi3cKI2iqzlPKdanWqY)
+  [KaizenFlow - Contributor Info](https://docs.google.com/forms/d/1-iegytm5t1w-LPs7gm8IuUHTxi3cKI2iqzlPKdanWqY)
   to gather additional information from candidates
 
 - Upon receiving responses, the HiringMeister should compile the necessary
@@ -55,7 +55,7 @@
 
 - Upon identifying the top candidate(s), the HiringMeister is expected to notify
   GP for sending invitations to the
-  [sorrenutum](https://github.com/sorrentum/sorrentum) GitHub repository
+  [KaizenFlow](https://github.com/kaizen-ai/kaizenflow) GitHub repository
 
 ## On-boarding bug creation
 
@@ -70,20 +70,20 @@
   Please follow this checklist. Mark each item as done once completed.
 
   Post any errors you face in this issue.
-  - [ ] Acknowledge the pledge to put time in the project [here](https://github.com/sorrentum/sorrentum/blob/master/README.md#Important)
-  - [ ] Read [How to organize your work](https://github.com/sorrentum/sorrentum/blob/master/docs/work_organization/sorrentum.organize_your_work.how_to_guide.md)
-  - [ ] Read [Quick start for developing](https://github.com/sorrentum/sorrentum/blob/master/docs/onboarding/sorrentum.set_up_development_environment.how_to_guide.md)
-  - [ ] Make sure the [Docker dev container](https://github.com/sorrentum/sorrentum/blob/master/docs/work_tools/all.docker.how_to_guide.md) works
-  - [ ] Make sure the [unit tests](https://github.com/sorrentum/sorrentum/blob/master/docs/coding/all.write_unit_tests.how_to_guide.md) run successfully
-  - [ ] Read [Sorrentum Python coding style guide](https://github.com/sorrentum/sorrentum/blob/master/docs/coding/all.coding_style.how_to_guide.md)
-  - [ ] Fork, star, watch the Sorrentum repo so that GitHub promotes our repo (we gotta work the system)
-  - [ ] Learn about the [Morning Email](https://github.com/sorrentum/sorrentum/blob/master/docs/work_organization/all.team_collaboration.how_to_guide.md#morning-email)
-  - [ ] How to do a [review](https://github.com/sorrentum/sorrentum/blob/master/docs/coding/all.submit_code_for_review.how_to_guide.md)
-  - [ ] If you are graduating soon and you would like to get a full-time job in one of the companies in the Sorrentum ecosystem reach out to GP at [gp@sorrentum.org](mailto:gp@sorrentum.org)
+  - [ ] Acknowledge the pledge to put time in the project [here](https://github.com/kaizen-ai/kaizenflow/blob/master/README.md#Important)
+  - [ ] Read [How to organize your work](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/work_organization/kaizenflow.organize_your_work.how_to_guide.md)
+  - [ ] Read [Quick start for developing](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/onboarding/kaizenflow.set_up_development_environment.how_to_guide.md)
+  - [ ] Make sure the [Docker dev container](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/work_tools/all.docker.how_to_guide.md) works
+  - [ ] Make sure the [unit tests](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/coding/all.write_unit_tests.how_to_guide.md) run successfully
+  - [ ] Read [KaizenFlow Python coding style guide](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/coding/all.coding_style.how_to_guide.md)
+  - [ ] Fork, star, watch the KaizenFlow repo so that GitHub promotes our repo (we gotta work the system)
+  - [ ] Learn about the [Morning Email](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/work_organization/all.team_collaboration.how_to_guide.md#morning-email)
+  - [ ] How to do a [review](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/coding/all.submit_code_for_review.how_to_guide.md)
+  - [ ] If you are graduating soon and you would like to get a full-time job in one of the companies in the KaizenFlow ecosystem reach out to GP at [gp@kaizen-tech.io](mailto:gp@kaizen-tech.io)
   - [ ] Get assigned a warm-up issue
   ```
 
-- Reference [On-boarding](https://github.com/sorrentum/sorrentum/issues/437)
+- Reference [On-boarding](https://github.com/kaizen-ai/kaizenflow/issues/437)
   issue
 - Regularly check the updates made by the candidate and help resolving any
   errors faced by them
@@ -118,7 +118,7 @@
 - Upon submission of a pull request by the candidate for the task, review it to
   ensure adherence to our processes. Provide constructive feedback on areas for
   improvement and ascertain if the task's objectives have been fully met
-- Before merging the PR on `sorrentum`, create a similar PR on `cmamp` and merge
+- Before merging the PR on `kaizenflow`, create a similar PR on `cmamp` and merge
   both of them together
 - Assign more task to the candidate if required to make a final decision
 

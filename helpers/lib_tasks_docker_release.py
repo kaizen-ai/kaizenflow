@@ -362,7 +362,7 @@ def docker_tag_push_multi_build_local_image_as_dev(  # type: ignore
     :param local_base_image: base name of a local image,
         e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param target_registry: target Docker image registry to push the image to
-        - "dockerhub.sorrentum": public Sorrentum Docker image registry
+        - "dockerhub.sorrentum": public kaizenflow Docker image registry
         - "aws_ecr.ck": private AWS CK ECR
     :param container_dir_name: directory where the Dockerfile is located
     """

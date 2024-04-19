@@ -184,7 +184,7 @@
   - List all the tasks you're going to work during the day in priority order
   - Add a hyperlink to the corresponding GitHub issue to each task in order to
     ease the navigation
-    - <img width="381" alt="Снимок экрана 2023-05-29 в 02 59 55" src="https://github.com/sorrentum/sorrentum/assets/31514660/0d2fbba4-1e6c-4c39-9c04-7ffc4acdde81">
+    - <img width="381" alt="Снимок экрана 2023-05-29 в 02 59 55" src="https://github.com/kaizen-ai/kaizenflow/assets/31514660/0d2fbba4-1e6c-4c39-9c04-7ffc4acdde81">
   - Communicate realistic ETAs
     - No reason to be optimistic: complex things take time to be done correctly
     - Use a date in the usual format, e.g. 2023-05-10
