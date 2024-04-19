@@ -10,6 +10,7 @@ import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
+
 class Test_sign_normalize(hunitest.TestCase):
     """
     Check that signal values are normalized according to sign correctly.
