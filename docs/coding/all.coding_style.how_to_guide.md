@@ -1,4 +1,4 @@
-# Sorrentum - Python Style Guide
+# KaizenFlow - Python Style Guide
 
 <!-- toc -->
 
