@@ -2,7 +2,7 @@
 
 <!-- toc -->
 
-- [Set up Sorrentum development environment](#set-up-sorrentum-development-environment)
+- [Set up KaizenFlow development environment](#set-up-kaizenflow-development-environment)
   * [Introduction](#introduction)
   * [Technologies used](#technologies-used)
   * [Clone the code](#clone-the-code)
@@ -22,11 +22,11 @@
 
 <!-- tocstop -->
 
-# Set up Sorrentum development environment
+# Set up KaizenFlow development environment
 
 ## Introduction
 
-This document outlines the development set up to be followed by Sorrentum
+This document outlines the development set up to be followed by KaizenFlow
 contributors. By documenting the set up, we aim to streamline the information
 flow and make the contribution process seamless by creating a collaborative and
 efficient coding environment for all contributors.
@@ -39,7 +39,7 @@ Happy coding!
   contains
   [lectures](https://github.com/gpsaggese/umd_data605/tree/main/lectures) and
   [tutorials](https://github.com/gpsaggese/umd_data605/tree/main/tutorials)
-  about most of the technologies we use in Sorrentum, e.g., Dask, Docker, Docker
+  about most of the technologies we use in KaizenFlow, e.g., Dask, Docker, Docker
   Compose, Git, github, Jupyter, MongoDB, Pandas, Postgres, Apache Spark
 - You can go through the lectures and tutorials on a per-need basis, depending
   on what it's useful for you to develop
@@ -55,13 +55,13 @@ Happy coding!
 - Example of cloning command:
 
   ```bash
-  > git clone git@github.com:sorrentum/sorrentum.git ~/src/sorrentum1
+  > git clone git@github.com:kaizen-ai/kaizenflow.git ~/src/kaizenflow1
   ```
   - The previous command might not work sometimes and an alternative command
     using HTTP instead of SSH
 
   ```bash
-  > git clone https://github.com/sorrentum/sorrentum.git ~/src/sorrentum1
+  > git clone https://github.com/kaizen-ai/kaizenflow.git ~/src/kaizenflow1
   ```
 
 - All the source code should go under `~/src` (e.g., `/Users/<YOUR_USER>/src` on
@@ -74,7 +74,7 @@ Happy coding!
 ## Building the thin environment
 
 - Create the "thin environment" which contains the minimum set of dependencies
-  needed for running the Sorrentum Dev Docker container
+  needed for running the KaizenFlow Dev Docker container
 
 - Build the thin environment; this is done once per client
 
@@ -108,7 +108,7 @@ Happy coding!
 
 ### Supported OS
 
-- Sorrentum supports Mac (both x86 and Apple Silicon) and Linux Ubuntu
+- KaizenFlow supports Mac (both x86 and Apple Silicon) and Linux Ubuntu
 - We do not support Windows and WSL: we have tried several times to port the
   tool chain to it, but there are always subtle incompatible behaviors that
   drive everyone crazy
@@ -221,7 +221,7 @@ Happy coding!
 - To create the standard tmux view on a cloned environment run
 
   ```bash
-  > go_amp.sh sorrentum 1
+  > go_amp.sh kaizenflow 1
   ```
 
 - You need to create the tmux environment once per Git client and then you can
@@ -248,11 +248,12 @@ Happy coding!
   Using default tag: latest
   ```
 
-- Pull the latest Sorrentum image; this is done once
+- Pull the latest KaizenFlow image; this is done once
 
   ```bash
   > i docker_pull
   or
+  # TODO(Sameep): Update to kaizenflow once docker is updated.
   > docker pull sorrentum/cmamp:latest
   ```
 
@@ -261,6 +262,7 @@ Happy coding!
   ```bash
   > i docker_pull_dev_tools
   or
+  # TODO(Sameep): Update to kaizenflow once docker is updated.
   > docker pull sorrentum/dev_tools:prod
   ```
 
@@ -342,8 +344,8 @@ Happy coding!
   what you want to implement and assign it to yourself and your team
 - Create a branch of your assigned issues/bugs
   - E.g., for a GitHub issue with the name: "Expose the linter container to
-    Sorrentum contributors #63", The GitHub issue and the branch name should be
-    called `SorrTask63_Expose_the_linter_container_to_Sorrentum_contributors`
+    KaizenFlow contributors #63", The GitHub issue and the branch name should be
+    called `SorrTask63_Expose_the_linter_container_to_Kaizenflow_contributors`
 - Implement the code based on the requirements in the assigned issue
 - Run the linter on your code before pushing
 - Do `git commit` and `git push` together so the latest changes are readily
