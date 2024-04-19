@@ -1,0 +1,5 @@
+pandas
+matplotlib
+seaborn
+requests # if you are fetching data
+jupyter
