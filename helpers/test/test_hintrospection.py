@@ -140,7 +140,7 @@ class Test_is_pickleable1(hunitest.TestCase):
     def test_method1(self) -> None:
         # A class method but unbound to an object.
         func = _ClassPickleable.say
-        exp_str = r"<function Hello.say at 0x>"
+        exp_str = r"<function _ClassPickleable.say at 0x>"
         exp_bound = False
         exp_lambda = False
         # A unbound class method is actually pickleable.
@@ -150,7 +150,7 @@ class Test_is_pickleable1(hunitest.TestCase):
     def test_method2(self) -> None:
         # A static class method.
         func = _ClassPickleable.say2
-        exp_str = r"<function Hello.say2 at 0x>"
+        exp_str = r"<function _ClassPickleable.say2 at 0x>"
         exp_bound = False
         exp_lambda = False
         exp_pickled = True
@@ -160,7 +160,7 @@ class Test_is_pickleable1(hunitest.TestCase):
         # A bound method.
         class_instance = _ClassPickleable()
         func = class_instance.say
-        exp_str = r"<bound method Hello.say of <helpers.test.test_hintrospection.Hello object at 0x>>"
+        exp_str = r"<bound method _ClassPickleable.say of <helpers.test.test_hintrospection._ClassPickleable object at 0x>>"
         exp_bound = True
         exp_lambda = False
         # A method bound to an object is just a function, so it's pickleable.
@@ -171,7 +171,7 @@ class Test_is_pickleable1(hunitest.TestCase):
         # A static class method.
         class_instance = _ClassPickleable()
         func = class_instance.say2
-        exp_str = r"<function Hello.say2 at 0x>"
+        exp_str = r"<function _ClassPickleable.say2 at 0x>"
         exp_bound = False
         exp_lambda = False
         exp_pickled = True
