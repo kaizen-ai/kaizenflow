@@ -11,6 +11,70 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
+class Test_sign_normalize(hunitest.TestCase):
+    """
+    Check that signal values are normalized according to sign correctly.
+    """
+
+    def test1(self) -> None:
+        """
+        - input signal is `pd.Series`
+        - atol = 0
+        """
+        signal = pd.Series([-5, -1, 0, 1, 5])
+        res = csprmitr.sign_normalize(signal)
+        actual_signature = hpandas.df_to_str(res)
+        expected_signature = r"""
+           0
+        0 -1
+        1 -1
+        2  0
+        3  1
+        4  1
+        """
+        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)
+
+    def test2(self) -> None:
+        """
+        - input signal is `pd.Series`
+        - atol = 2
+        """
+        signal = pd.Series([-3, -2, 0, 2, 3])
+        atol = 2
+        res = csprmitr.sign_normalize(signal, atol)
+        actual_signature = hpandas.df_to_str(res)
+        expected_signature = r"""
+           0
+        0 -1
+        1 -1
+        2  0
+        3  1
+        4  1
+        """
+        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        - input signal is `pd.DataFrame`
+        - atol = 0
+        """
+        signal = pd.DataFrame([-5, -1, 0, 1, 5])
+        actual = csprmitr.sign_normalize(signal)
+        expected = pd.DataFrame([-1, -1, 0, 1, 1])
+        self.assertTrue(actual.equals(expected))
+
+    def test4(self) -> None:
+        """
+        - input signal is `pd.DataFrame`
+        - atol = 2
+        """
+        signal = pd.DataFrame([-3, -2, 0, 2, 3])
+        atol = 2
+        actual = csprmitr.sign_normalize(signal, atol)
+        expected = pd.DataFrame([-1, -1, 0, 1, 1])
+        self.assertTrue(actual.equals(expected))
+
+
 class Test_get_symmetric_equisized_bins(hunitest.TestCase):
     def test_zero_in_bin_interior_false(self) -> None:
         input_ = pd.Series([-1, 3])
