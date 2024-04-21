@@ -1,2 +1,2 @@
-flask
-flask_limiter
+Flask
+Flask-Limiter[redis]
