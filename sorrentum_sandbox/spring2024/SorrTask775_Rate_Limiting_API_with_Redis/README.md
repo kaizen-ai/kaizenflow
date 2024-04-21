@@ -1,41 +1,41 @@
-# Flask Application
+# Rate Limiting API with Redis
 
-This is a basic Flask application. Flask is a micro web framework written in Python.
+This project is a [Flask](https://flask.palletsprojects.com/en/3.0.x/) application. It uses [Flask-Limiter](https://flask-limiter.readthedocs.io/en/stable/) for rate limiting, and [Redis](https://redis.io/) for storage.
 
-## Prerequisites
+## Introduction
 
-Before you begin, ensure you have met the following requirements:
-- You have installed the latest version of Python and pip.
+## Background
 
-## Installing Flask and Flask Limiter
+### Flask
 
-To install Flask, follow these steps:
+Flask is a lightweight, modular web framework for Python. In general, Flask works like this: First, Flask (optionally) starts a server. Next, a browser sends a request to the server, which forwards the request to the application. Then, Flask routes the request to a function, which processes the request, and returns a reponse. Finally, Flask sends the response to the server, which forwards the response to the browser.
 
-```bash
-pip install flask
-pip install flask limiter
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant Server
+    box Application
+    participant Flask
+    participant Function
+    end
+    Flask-->>Server: Create Server
+    Browser->>Server: Send Request
+    Server->>Flask: Forward Reqeust
+    Flask->>Function: Route Request
+    Function->>Function: Process Request
+    Function->>Flask: Return Response
+    Flask->>Server: Send Response
+    Server->> Browser: Forward Response
 ```
 
-## Running the Flask Application
+Other popular web frameworks for Python include Django (high-level and feature-rich) and FastAPI (modern and...fast).
 
-To run the Flask application, follow these steps:
+### Redis
 
-1. Navigate to the directory containing the Flask application file (let's say `app.py`).
+### Docker
 
-```bash
-cd /path/to/your/flask/app
-```
+## Overview
 
-2. Run the Flask application.
+## Conclusion
 
-```bash
-python3 app.py
-```
-
-After running the command, you should see output similar to the following:
-
-```bash
-* Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
-```
-
-3. Open your web browser and enter the URL provided in the terminal (`http://127.0.0.1:5000/` in this case). You should now be able to see your Flask application running.
+## References
