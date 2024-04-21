@@ -1,6 +1,6 @@
 # Rate Limiting API with Redis
 
-This project is a [Flask](https://flask.palletsprojects.com/en/3.0.x/) application. It uses [Flask-Limiter](https://flask-limiter.readthedocs.io/en/stable/) for rate limiting, and [Redis](https://redis.io/) for storage.
+This project is a [Flask](https://flask.palletsprojects.com/en/3.0.x/) application, which uses [Flask-Limiter](https://flask-limiter.readthedocs.io/en/stable/) for rate limiting, and [Redis](https://redis.io/) for storage.
 
 ## Introduction
 
