@@ -38,7 +38,7 @@ some helpful tips and resources to guide you through your first review.
 - To be able to run the linter, you need to you need to set up your client first
   since you're outside Docker:
   - The instructions are available at
-    [Sorrentum_development_setup.md](Sorrentum_development_setup.md.md)
+    [KaizenFlow_development_setup.md](KaizenFlow_development_setup.md.md)
   - In practice you need to have run
     ```
     > source dev_scripts/setenv_amp.sh
@@ -99,7 +99,7 @@ some helpful tips and resources to guide you through your first review.
 
 - Make sure to select a Reviewer in a corresponding GitHub field so he/she gets
   notified
-  - <img width="313" alt="" src="https://github.com/sorrentum/sorrentum/assets/31514660/f8534c49-bff6-4d59-9037-d70dc03d5ff9">
+  - <img width="313" alt="" src="https://github.com/kaizen-ai/kaizenflow/assets/31514660/f8534c49-bff6-4d59-9037-d70dc03d5ff9">
   - Junior contributors should assign Team Leaders (e.g., Grisha, DanY, Samarth,
     ...) to review their PR
     - Team Leaders will assign integrators (GP & Paul) themselves after all
@@ -112,15 +112,15 @@ some helpful tips and resources to guide you through your first review.
 
 - Mention the corresponding issue in the PR description to ease the navigation
   - E.g., see an
-    [example](https://github.com/sorrentum/sorrentum/pull/288#issue-1729654983)
-    - <img width="505" alt="" src="https://github.com/sorrentum/sorrentum/assets/31514660/69fbabec-300c-4f7c-94fc-45c5da5a6817">
+    [example](https://github.com/kaizen-ai/kaizenflow/pull/288#issue-1729654983)
+    - <img width="505" alt="" src="https://github.com/kaizen-ai/kaizenflow/assets/31514660/69fbabec-300c-4f7c-94fc-45c5da5a6817">
 
 ### Resolve conversations
 
 - When you've implemented a comment from a Reviewer, press
   `Resolve conversation` button so the Reviewer knows that you actually took
   care of it
-  - <img width="328" alt="" src="https://github.com/sorrentum/sorrentum/assets/31514660/a4c79d73-62bd-419b-b3cf-e8011621ba3c">
+  - <img width="328" alt="" src="https://github.com/kaizen-ai/kaizenflow/assets/31514660/a4c79d73-62bd-419b-b3cf-e8011621ba3c">
 
 ### Merge master to your branch
 
@@ -140,10 +140,10 @@ some helpful tips and resources to guide you through your first review.
 
 - When you've implemented all the comments and need another round of review:
   - Press the circling arrows sign next to the Reviewer for the ping
-    - <img width="280" alt="" src="https://github.com/sorrentum/sorrentum/assets/31514660/4f924f4f-abab-40be-975d-a4fa81d9af3b">
+    - <img width="280" alt="" src="https://github.com/kaizen-ai/kaizenflow/assets/31514660/4f924f4f-abab-40be-975d-a4fa81d9af3b">
   - Remove `PR_for_authors` and add `PR_for_reviewers` label (labels
     [desc](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_organization/all.use_github_and_zenhub.how_to_guide.md#pr-labels))
-    - <img width="271" alt="" src="https://github.com/sorrentum/sorrentum/assets/31514660/3580bf34-dcba-431b-af5c-5ae65f7597c3">
+    - <img width="271" alt="" src="https://github.com/kaizen-ai/kaizenflow/assets/31514660/3580bf34-dcba-431b-af5c-5ae65f7597c3">
 
 ### Do not use screenshots
 
@@ -154,7 +154,7 @@ some helpful tips and resources to guide you through your first review.
 - Examples:
   - _Bad_
 
-    <img width="677" alt="scree" src="https://github.com/sorrentum/sorrentum/assets/31514660/699cd1c5-53d2-403b-a0d7-96c66d4360ce">
+    <img width="677" alt="scree" src="https://github.com/kaizen-ai/kaizenflow/assets/31514660/699cd1c5-53d2-403b-a0d7-96c66d4360ce">
   - _Good_
 
     Input:
@@ -204,7 +204,17 @@ some helpful tips and resources to guide you through your first review.
   - What the problem is
   - Why the outcome is different from what you expected
   - E.g. on how to report any issues
-    - Https://github.com/sorrentum/sorrentum/issues/370#issue-1782574355
+    - https://github.com/kaizen-ai/kaizenflow/issues/370#issue-1782574355
+
+## Talk through code and not GitHub
+
+- Authors of the PR should not initiate talking to reviewers through GitHub but
+  only through code
+  - E.g., if there is something you want to explain to the reviewers, you should
+    not comment your own PR, but should add comments or improve the code
+  - Everything in GitHub is lost once the PR is closed, so all knowledge needs to
+    go inside the code or the documentation
+- Of course it's ok to respond to questions in GitHub
 
 ## Look at examples of the first reviews
 
@@ -212,8 +222,8 @@ some helpful tips and resources to guide you through your first review.
   idea of what common issues are and how to address them.
 - Here are some links to a few "painful" first reviews:
   - Adding unit tests:
-    - Https://github.com/sorrentum/sorrentum/pull/166
-    - Https://github.com/sorrentum/sorrentum/pull/186
+    - https://github.com/kaizen-ai/kaizenflow/pull/166
+    - https://github.com/kaizen-ai/kaizenflow/pull/186
   - Writing scripts:
-    - Https://github.com/sorrentum/sorrentum/pull/267
-    - Https://github.com/sorrentum/sorrentum/pull/276
+    - https://github.com/kaizen-ai/kaizenflow/pull/267
+    - https://github.com/kaizen-ai/kaizenflow/pull/276

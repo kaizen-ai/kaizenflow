@@ -38,6 +38,7 @@ import pandas as pd
 import core.config as cconfig
 import core.plotting as coplotti
 import dataflow.core as dtfcore
+import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
@@ -93,7 +94,7 @@ else:
     bar_duration_in_secs = system_config["dag_runner_config"][
         "bar_duration_in_secs"
     ]
-    bar_duration_in_mins = int(bar_duration_in_secs / 60)
+    bar_duration_in_mins = int(int(bar_duration_in_secs) / 60)
     bar_duration = f"{bar_duration_in_mins}T"
 # %%
 dag_builder_ctor_as_str = (
@@ -212,3 +213,12 @@ bars_to_burn = config["research_forecast_evaluator_config"][
 coplotti.plot_portfolio_stats(
     portfolio_stats_df.iloc[bars_to_burn:], freq=config["pnl_freq"]
 )
+
+# %%
+stats_computer = dtfmod.StatsComputer()
+stats_sxs, _ = stats_computer.compute_portfolio_stats(
+    portfolio_stats_df.iloc[bars_to_burn:], config["bar_duration"]
+)
+display(stats_sxs)
+
+# %%

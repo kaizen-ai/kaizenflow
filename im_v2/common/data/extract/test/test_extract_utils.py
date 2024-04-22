@@ -851,7 +851,8 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "data_format": "parquet",
             "unit": "ms",
             "assert_on_missing_data": assert_on_missing_data,
-            "universe_part": 1,
+            "universe_part": [10, 1],
+            "version": "v1_0_0",
         }
         with umock.patch.object(
             ivcdexex.CcxtExtractor,

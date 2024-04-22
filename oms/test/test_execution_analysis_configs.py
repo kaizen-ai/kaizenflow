@@ -16,6 +16,7 @@ class Test_build_broker_portfolio_reconciliation_configs(hunitest.TestCase):
         vendor = "CCXT"
         mode = "download"
         bar_duration = "5T"
+        table_name = "ccxt_ohlcv_futures"
         actual = oexancon.build_broker_portfolio_reconciliation_configs(
             system_log_dir,
             id_col,
@@ -24,6 +25,7 @@ class Test_build_broker_portfolio_reconciliation_configs(hunitest.TestCase):
             vendor,
             mode,
             bar_duration,
+            table_name,
         )
         # Convert `Config` into a string.
         mode = "only_values"
@@ -32,10 +34,12 @@ class Test_build_broker_portfolio_reconciliation_configs(hunitest.TestCase):
         expected = r"""
         id_col: asset_id
         system_log_dir: $GIT_ROOT/oms/test/outcomes/Test_build_broker_portfolio_reconciliation_configs.test1/tmp.scratch
-        ohlcv_market_data:
+        market_data:
             vendor: CCXT
             mode: download
             universe_version: v7.4
+            im_client_config:
+                table_name: ccxt_ohlcv_futures
         price_column_name: close
         bar_duration: 5T
         share_asset_ids_with_no_fills: 0.3
@@ -48,4 +52,4 @@ class Test_build_broker_portfolio_reconciliation_configs(hunitest.TestCase):
             assert_diff_threshold: 0.001
             log_level: 20
         """
-        self.assert_equal(actual, expected,  purify_text=True, fuzzy_match=True)
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)

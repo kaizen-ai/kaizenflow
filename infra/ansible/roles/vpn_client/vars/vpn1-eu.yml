@@ -1,5 +1,0 @@
----
-openvpn_server_common_name: vpn1.eu-north-1
-openvpn_server_proto: udp
-openvpn_server_port: 1194
-openvpn_server_remote_host: 13.50.101.111

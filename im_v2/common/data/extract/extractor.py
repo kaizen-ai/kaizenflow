@@ -53,7 +53,7 @@ class Extractor(abc.ABC):
             hdbg.dfatal(f"Unknown data type {data_type}.")
         return data
 
-    # #############################################################################
+    # #########################################################################
 
     def download_websocket_data(
         self, data_type: str, exchange_id: str, currency_pair: str, **kwargs: Any
@@ -79,6 +79,10 @@ class Extractor(abc.ABC):
             )
         elif data_type == "trades":
             data = self._download_websocket_trades(
+                exchange_id, currency_pair, **kwargs
+            )
+        elif data_type == "ohlcv_from_trades":
+            data = self._download_websocket_ohlcv_from_trades(
                 exchange_id, currency_pair, **kwargs
             )
         else:
@@ -108,11 +112,19 @@ class Extractor(abc.ABC):
             await self._subscribe_to_websocket_trades(
                 exchange_id, currency_pair, **kwargs
             )
+        elif data_type == "ohlcv_from_trades":
+            await self._subscribe_to_websocket_trades(
+                exchange_id, currency_pair, **kwargs
+            )
         else:
             hdbg.dfatal(f"Unknown data type {data_type}")
-    
+
     async def subscribe_to_websocket_data_multiple_symbols(
-        self, data_type: str, exchange_id: str, currency_pairs: List[str], **kwargs: Any
+        self,
+        data_type: str,
+        exchange_id: str,
+        currency_pairs: List[str],
+        **kwargs: Any,
     ):
         """
         Subscribe to websocket based data stream for a particular exchange
@@ -137,9 +149,9 @@ class Extractor(abc.ABC):
         else:
             hdbg.dfatal(f"Unknown data type {data_type}")
 
-    # #############################################################################
+    # #########################################################################
     # Private methods.
-    # #############################################################################
+    # #########################################################################
 
     @abc.abstractmethod
     def _download_ohlcv(
@@ -161,6 +173,12 @@ class Extractor(abc.ABC):
 
     @abc.abstractmethod
     def _download_websocket_ohlcv(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        ...
+
+    @abc.abstractmethod
+    def _download_websocket_ohlcv_from_trades(
         self, exchange_id: str, currency_pair: str, **kwargs: Any
     ) -> Dict:
         ...
@@ -188,7 +206,7 @@ class Extractor(abc.ABC):
         self, exchange_id: str, currency_pair: str, **kwargs: Any
     ) -> Dict:
         ...
-    
+
     @abc.abstractmethod
     def _subscribe_to_websocket_bid_ask_multiple_symbols(
         self, exchange_id: str, currency_pair: List[str], **kwargs: Any
