@@ -1,7 +1,7 @@
 import itertools
 import logging
 import os
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple, Generator
 
 import pytest
 
@@ -12,7 +12,9 @@ import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
-
+import unittest.mock as umock
+from invoke import Context
+import dev_scripts.lib_tasks_run_model_experiment_notebooks as run_experiment_notebooks
 _LOG = logging.getLogger(__name__)
 
 
@@ -512,3 +514,158 @@ class TestRunNotebook3(hunitest.TestCase):
         actual_rc, _ = self.helper(fail, allow_errors, tee)
         expected_rc = 0
         self.assertEqual(actual_rc, expected_rc)
+
+class Test_run_notebooks(hunitest.TestCase):
+    mock_os_path_exists = umock.patch.object(os.path, "exists")
+    mock_load_config_from_pickle = umock.patch.object(cconfig, "load_config_from_pickle")
+    mock_hio_from_json = umock.patch.object(hio, "from_json")
+    mock_run_notebook = umock.patch.object(run_experiment_notebooks, "_run_notebook")
+    mock_publish_notebook = umock.patch.object(run_experiment_notebooks, "publish_system_reconciliation_notebook")
+    ctx = umock.MagicMock(spec=Context)
+
+    @pytest.fixture(autouse=True)
+    def setup_teardown_test(self) -> Generator[Any, Any, Any]:
+        self.set_up_test()
+        yield
+        self.tear_down_test()
+
+    def set_up_test(self) -> None:
+        self.os_mock: umock.MagicMock = self.mock_os_path_exists.start()
+        self.config_mock: umock.MagicMock = self.mock_load_config_from_pickle.start()
+        self.json_mock: umock.MagicMock = self.mock_hio_from_json.start()
+        self.run_notebook_mock: umock.MagicMock = self.mock_run_notebook.start()
+        self.run_notebook_mock.return_value = None
+        self.publish_notebook_mock: umock.MagicMock = self.mock_publish_notebook.start()
+        self.publish_notebook_mock.return_value = None
+
+    def tear_down_test(self) -> None:
+        self.mock_os_path_exists.stop()
+        self.mock_load_config_from_pickle.stop()
+        self.mock_hio_from_json.stop()
+        self.mock_run_notebook.stop()
+
+    def test1(self) -> None:
+        """
+        Test for a full system run scenario where the config file for a full system run exists.
+        """
+        self.os_mock.return_value = True
+        self.json_mock.return_value = {}
+        self.config_mock.return_value = {
+            "dag_runner_config" : {
+                "bar_duration_in_secs" : 1800,
+            },
+            "market_data_config" : {
+                "universe_version" : "test_universe",
+                "im_client_config" : {
+                    "table_name" : "ABC",
+                },
+            },
+            "process_forecasts_node_dict" : {
+                "process_forecasts_dict" : {
+                    "order_config" : {
+                        "execution_frequency" : "hourly",
+                    }
+                }
+            },
+            "portfolio_config" : {
+                "mark_to_market_config" : "40"
+            }
+        }
+        run_experiment_notebooks.run_notebooks(
+            ctx = self.ctx,
+            system_log_dir = "/shared_data/ecs/test/system_reconciliation/C5b/prod/20240108_170500.20240108_173000/system_log_dir.manual/process_forecasts",
+            base_dst_dir="/notebooks_output",
+        )
+
+        self.run_notebook_mock.assert_called_once()
+
+    def test2(self) -> None:
+        """
+        Test for a broker-only run scenario where the config file for a broker-only run exists.
+        """
+        self.os_mock.return_value = False
+        self.config_mock.return_value = {}
+        self.json_mock.return_value = {
+            "parent_order_duration_in_min": 32,
+            "universe" : "test_universe",
+            "child_order_execution_freq" : "hourly",
+        }
+
+        run_experiment_notebooks.run_notebooks(
+            ctx=self.ctx,
+            system_log_dir="/shared_data/ecs/test/20240110_experiment1",
+            base_dst_dir="/notebooks_output"
+        )
+
+        self.run_notebook_mock.assert_called_once()
+
+    def test3(self) -> None:
+        """
+        Test for a scenario where the config file doesn't exist.
+        """
+        self.os_mock.return_value = False
+        self.config_mock.return_value = {}
+        self.json_mock.return_value = {}
+        run_experiment_notebooks.run_notebooks(
+            ctx=self.ctx,
+            system_log_dir="/non_existing_dir",
+            base_dst_dir="/notebooks_output"
+        )
+
+        self.run_notebook_mock.assert_not_called()
+
+    def test4(self) -> None:
+        """
+        Test for a scenario where the config file exists but is missing some required keys.
+        """
+        # Missing "dag_runner_config" key.
+        self.config_mock.return_value = {
+            "market_data_config" : {
+                "universe_version" : "test_universe",
+                "im_client_config" : {
+                    "table_name" : "ABC",
+                },
+            },
+            "process_forecasts_node_dict" : {
+                "process_forecasts_dict" : {
+                    "order_config" : {
+                        "execution_frequency" : "hourly",
+                    }
+                }
+            },
+            "portfolio_config" : {
+                "mark_to_market_config" : "40"
+            }
+        }
+        self.os_mock.return_value = True
+        self.json_mock.return_value = {}
+        run_experiment_notebooks.run_notebooks(
+            ctx = self.ctx,
+            system_log_dir="/shared_data/ecs/test/system_reconciliation/C5b/prod/20240108_170500.20240108_173000/system_log_dir.manual/process_forecasts",
+            base_dst_dir="/notebooks_output"
+        )
+        self.run_notebook_mock.assert_not_called()
+
+    def test5(self) -> None:
+        """
+        Test for a scenario where the cconfig.load_config_from_pickle function returns an empty dictionary.
+        """
+        self.os_mock.return_value = True
+        self.json_mock.return_value = {}
+        self.config_mock.return_value = {}
+        run_experiment_notebooks.run_notebooks(
+            ctx=self.ctx,
+            system_log_dir="/shared_data/ecs/test/system_reconciliation/C5b/prod/20240108_170500.20240108_173000/system_log_dir.manual/process_forecasts",
+            base_dst_dir="/notebooks_output"
+        )
+        self.run_notebook_mock.assert_not_called()
+
+
+    
+
+    
+
+
+
+    
+
