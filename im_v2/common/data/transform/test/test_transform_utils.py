@@ -799,7 +799,7 @@ class TestCalculateVwapTwap(hunitest.TestCase):
         df = pd.DataFrame(data=d).set_index("timestamp")
         expected_df_columns = pd.MultiIndex.from_product(
             [["close", "twap", "volume", "vwap"], sorted(asset_id)]
-        )
+        ).to_list()
         return df, expected_df_columns
     
     def test_calculate_vwap_twap_with_5T_resample_kwargs(self) -> None:
