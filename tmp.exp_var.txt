@@ -1,3 +1,0 @@
-exp = r"""
-'<' not supported between instances of 'int' and 'str'
-"""
