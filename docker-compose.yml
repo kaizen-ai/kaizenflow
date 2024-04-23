@@ -1,0 +1,27 @@
+version: '3'
+services:
+  naughty_hopper:
+    image: kaizenflow
+    command: bash -c "fetch_and_save_data.sh && tail -f /dev/null"
+    ports:
+      - '4000:80'
+  web:
+    image: 'nginx:latest'
+    ports:
+      - '80:80'
+  redis:
+    image: 'redis:latest'
+    container_name: redis-server
+    ports:
+      - '6379:6379'
+  notebook:
+    build: .
+    container_name: notebook-server
+    ports:
+      - '8888:8888'
+  environment:
+    - REDIS_HOST=redis
+  depends_on:
+    - redis
+  volumes:
+    - '.:/app'
