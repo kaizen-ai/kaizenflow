@@ -4,8 +4,12 @@ import json
 from datetime import datetime
 
 fake = Faker()
+
 try:
-    es = Elasticsearch("http://localhost:9200")  # Check the URL!
+    es = Elasticsearch(
+        ['http://localhost:9200'],
+        basic_auth=('elastic', 'CpZcVEXMtU04YG515b08')  # Updated to use basic_auth
+    )  
 
     def generate_log_entry():
         entry = {
@@ -26,3 +30,4 @@ try:
     ingest_data()
 except Exception as e:
     print(f"An error occurred: {e}")
+
