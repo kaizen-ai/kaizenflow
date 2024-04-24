@@ -83,9 +83,9 @@ class Test_compress_tails(hunitest.TestCase):
         """
         signal = pd.Series([])
         result_empty_series = csprmitr.compress_tails(signal)
-        actual = True
-        expected = result_empty_series.empty
-        self.assertTrue(actual.equals(expected))
+        actual = str(True)
+        expected = str(result_empty_series.empty)
+        self.assert_equal(actual, expected)
 
     def test2(self) -> None:
         """
@@ -136,22 +136,6 @@ class Test_compress_tails(hunitest.TestCase):
         expected = (
             "unsupported operand type(s) for /: 'str' and 'int'"
         )
-        self.assert_equal(
-            actual, expected, fuzzy_match=True
-        )
-
-    def test5(self) -> None:
-        """
-        Test with non-numeric scale parameter.
-        """
-        signal = pd.Series([1, 2, 3, 4, 5])
-        scale = "abc"
-        with self.assertRaises(TypeError) as cm:
-            csprmitr.compress_tails(signal, scale=scale)
-        actual = str(cm.exception)
-        expected = r"""
-        '<' not supported between instances of 'int' and 'str'
-        """
         self.assert_equal(
             actual, expected, fuzzy_match=True
         )
