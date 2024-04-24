@@ -79,6 +79,20 @@ class Test_compress_tails(hunitest.TestCase):
 
     def test1(self) -> None:
         """
+        Check that a regular input with valid scale processed correctly.
+        """
+        signal = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
+        scale = 2
+        actual = csprmitr.compress_tails(signal, scale = scale)
+        expected = r"""          A         B
+        0  0.924234  1.928055
+        1  1.523188  1.973229
+        2  1.810297  1.990110
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+    
+    def test2(self) -> None:
+        """
         Check that an empty input is processed correctly.
         """
         signal = pd.Series([])
@@ -87,7 +101,7 @@ class Test_compress_tails(hunitest.TestCase):
         expected = str(result_empty_series.empty)
         self.assert_equal(actual, expected)
 
-    def test2(self) -> None:
+    def test3(self) -> None:
         """
         Check that an error is raised if scale is lower than 0.
         """
@@ -106,7 +120,7 @@ class Test_compress_tails(hunitest.TestCase):
             actual, expected, fuzzy_match=True
         )
 
-    def test3(self) -> None:
+    def test4(self) -> None:
         """
         Check that an error is raised if rescale is lower than 0.
         """
@@ -125,7 +139,7 @@ class Test_compress_tails(hunitest.TestCase):
             actual, expected, fuzzy_match=True
         )
 
-    def test4(self) -> None:
+    def test5(self) -> None:
         """
         Check that an error is raised if input contains non-numeric values.
         """
