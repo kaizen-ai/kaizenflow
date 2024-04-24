@@ -1,6 +1,7 @@
 from flask import Flask
 import redis
 from datetime import timedelta
+from flask import request
 
 r = redis.Redis(host='redis', port=6379, db=0)
 
@@ -27,8 +28,18 @@ def hello():
 
 @app.route('/test')
 def test():
-   return '<h1>TEST </h2>'
+   pings = request.args.get("pings", "")
+   return (
+	 """<form action="" method="get">
+		<input type="text" name="pings">
+		<input type="submit" value="Convert">
+	     </form>"""
+	+ pings
+   )
 
+@app.route('/<int:pings>')
+def send_pings(pings):
+   return "None"
 
 if __name__ == "__main__":
     app.run(debug=True)
