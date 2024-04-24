@@ -10,36 +10,33 @@ def request_is_limited(r: redis.Redis, key: str, limit: int, period: timedelta):
     t = r.time()[0]
     separation = round(period_in_seconds / limit)
     r.setnx(key, 0)
-    tat = max(int(r.get(key)), t)
-    if tat - t <= period_in_seconds - separation:
-        new_tat = max(tat, t) + separation
-        r.set(key, new_tat)
-        return False
-    return True
-
+    try:
+        with r.lock('lock:' + key, blocking_timeout=5) as lock:
+            tat = max(int(r.get(key)), t)
+            if tat - t <= period_in_seconds - separation:
+                new_tat = max(tat, t) + separation
+                r.set(key, new_tat)
+                return False
+            return True
+    except LockError:
+        return True
 app = Flask(__name__)
 
 @app.route('/')
 def hello():
-   if request_is_limited(r, "admin", 10, timedelta(minutes=1)):
-      return "<h1>BLOCKED </h2>"
+   pings = int(request.args.get("pings", 1))
+   block_flag = False
+   for i in range(pings):
+      if request_is_limited(r, "admin", 10, timedelta(minutes=1)):
+         block_flag = True
+   if block_flag:
+      return '<h1>BLOCKED </h2>'
    else:
-      return '<h1>Hello World </h2>'
-
-@app.route('/test')
-def test():
-   pings = request.args.get("pings", "")
-   return (
-	 """<form action="" method="get">
+      return (
+		"""<form action="" method="get">
 		<input type="text" name="pings">
 		<input type="submit" value="Convert">
-	     </form>"""
-	+ pings
-   )
-
-@app.route('/<int:pings>')
-def send_pings(pings):
-   return "None"
+		</form>""")
 
 if __name__ == "__main__":
     app.run(debug=True)
