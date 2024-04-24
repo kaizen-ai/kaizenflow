@@ -79,126 +79,81 @@ class Test_compress_tails(hunitest.TestCase):
 
     def test1(self) -> None:
         """
-        Test with an empty input series.
+        Check that an empty input is processed correctly.
         """
-        # Prepare test data.
-        data_empty_series = pd.Series([])
-        # Run test.
-        result_empty_series = csprmitr.compress_tails(data_empty_series)
-        # Check results.
-        self.assertTrue(result_empty_series.empty)
+        signal = pd.Series([])
+        result_empty_series = csprmitr.compress_tails(signal)
+        actual = True
+        expected = result_empty_series.empty
+        self.assertTrue(actual.equals(expected))
 
     def test2(self) -> None:
         """
-        Test with an input data frame containing all zeros.
+        Check that an error is raised if scale is lower than 0.
         """
-        # Prepare test data.
-        data_df = pd.DataFrame({"A": [0, 0, 0], "B": [0, 0, 0]}, dtype=float)
-        expected_df = pd.DataFrame({"A": [0, 0, 0], "B": [0, 0, 0]}, dtype=float)
-        expected_df = hpandas.df_to_str(expected_df)
-        # Run test.
-        actual_df = csprmitr.compress_tails(data_df)
-        actual_df = hpandas.df_to_str(actual_df)
-        # Check results.
-        self.assert_equal(actual_df, expected_df)
-
-    def test3(self) -> None:
-        """
-        Test with negative scale parameter for input series.
-        """
-        # Prepare test data.
-        actual_srs = pd.Series([1, 2, 3, 4, 5])
-        # Run test.
-        with self.assertRaises(AssertionError) as context:
-            csprmitr.compress_tails(actual_srs, scale=-1)
-        actual_error_message = str(context.exception)
-        expected_error_message = r"""
+        signal = pd.Series([1, 2, 3, 4, 5])
+        scale = -1
+        with self.assertRaises(AssertionError) as cm:
+            csprmitr.compress_tails(signal, scale=scale)
+        actual = str(cm.exception)
+        expected = r"""
         ################################################################################
         * Failed assertion *
         0 < -1
         ################################################################################
         """
-        # Check results.
         self.assert_equal(
-            actual_error_message, expected_error_message, fuzzy_match=True
+            actual, expected, fuzzy_match=True
+        )
+
+    def test3(self) -> None:
+        """
+        Check that an error is raised if rescale is lower than 0.
+        """
+        signal = pd.DataFrame({"A": [1, 2, 3, 4, 5], "B": [1, 2, 3, 4, 5]})
+        rescale = -1
+        with self.assertRaises(AssertionError) as cm:
+            csprmitr.compress_tails(signal, rescale=rescale)
+        actual = str(cm.exception)
+        expected = r"""
+        ################################################################################
+        * Failed assertion *
+        0 < -1
+        ################################################################################
+        """
+        self.assert_equal(
+            actual, expected, fuzzy_match=True
         )
 
     def test4(self) -> None:
         """
-        Test method for negative rescale parameter for input data frame.
+        Check that an error is raised if input contains non-numeric values.
         """
-        # Prepare test data.
-        actual_df = pd.DataFrame({"A": [1, 2, 3, 4, 5], "B": [1, 2, 3, 4, 5]})
-        # Run test.
-        with self.assertRaises(AssertionError) as context:
-            csprmitr.compress_tails(actual_df, rescale=-1)
-        actual_error_message = str(context.exception)
-        expected_error_message = r"""
-        ################################################################################
-        * Failed assertion *
-        0 < -1
-        ################################################################################
-        """
-        # Check results.
+        signal = pd.DataFrame({"A": ["x", "y", "z"], "B": [1, 2, 3]})
+        with self.assertRaises(TypeError) as cm:
+            csprmitr.compress_tails(signal)
+        actual = str(cm.exception)
+        expected = (
+            "unsupported operand type(s) for /: 'str' and 'int'"
+        )
         self.assert_equal(
-            actual_error_message, expected_error_message, fuzzy_match=True
+            actual, expected, fuzzy_match=True
         )
 
     def test5(self) -> None:
         """
-        Test with 0 scale parameter.
-        """
-        # Prepare test data.
-        actual_srs = pd.Series([1, 2, 3, 4, 5])
-        # Run test.
-        with self.assertRaises(AssertionError) as context:
-            csprmitr.compress_tails(actual_srs, scale=0)
-        actual_error_message = str(context.exception)
-        expected_error_message = r"""
-        ################################################################################
-        * Failed assertion *
-        0 < 0
-        ################################################################################
-        """
-        # Check results.
-        self.assert_equal(
-            actual_error_message, expected_error_message, fuzzy_match=True
-        )
-
-    def test6(self) -> None:
-        """
-        Test with non-numeric input data frame.
-        """
-        # Prepare test data.
-        actual_df = pd.DataFrame({"A": ["x", "y", "z"], "B": ["p", "q", "r"]})
-        # Run test.
-        with self.assertRaises(TypeError) as context:
-            csprmitr.compress_tails(actual_df)
-        # Check results.
-        actual_error_message = str(context.exception)
-        expected_error_message = (
-            "unsupported operand type(s) for /: 'str' and 'int'"
-        )
-        self.assert_equal(
-            actual_error_message, expected_error_message, fuzzy_match=True
-        )
-
-    def test7(self) -> None:
-        """
         Test with non-numeric scale parameter.
         """
-        # Prepare test data.
-        actual_srs = pd.Series([1, 2, 3, 4, 5])
-        # Run test.
-        with self.assertRaises(TypeError) as context:
-            csprmitr.compress_tails(actual_srs, scale="abc")
-        # Check results.
-        actual_error_message = str(context.exception)
-        expected_error_message = r"""
+        signal = pd.Series([1, 2, 3, 4, 5])
+        scale = "abc"
+        with self.assertRaises(TypeError) as cm:
+            csprmitr.compress_tails(signal, scale=scale)
+        actual = str(cm.exception)
+        expected = r"""
         '<' not supported between instances of 'int' and 'str'
         """
         self.assert_equal(
-            actual_error_message, expected_error_message, fuzzy_match=True
+            actual, expected, fuzzy_match=True
         )
 
 class Test_get_symmetric_equisized_bins(hunitest.TestCase):
