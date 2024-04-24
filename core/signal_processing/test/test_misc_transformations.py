@@ -79,20 +79,51 @@ class Test_compress_tails(hunitest.TestCase):
 
     def test1(self) -> None:
         """
-        Check that a regular input with valid scale processed correctly.
+        Check that an input with valid scale processed correctly.
         """
         signal = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
         scale = 2
         actual = csprmitr.compress_tails(signal, scale = scale)
-        actual = hpandas._df_to_str(actual)
+        actual = hpandas.df_to_str(actual)
         expected = r"""          A         B
         0  0.924234  1.928055
         1  1.523188  1.973229
         2  1.810297  1.990110
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
-    
+
     def test2(self) -> None:
+        """
+        Check that an input with valid rescale processed correctly.
+        """
+        signal = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
+        rescale = 10
+        actual = csprmitr.compress_tails(signal, rescale = rescale)
+        actual = hpandas.df_to_str(actual)
+        expected = r"""     A    B
+        0  1.0  1.0
+        1  1.0  1.0
+        2  1.0  1.0
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Check that an input with valid scale and rescale processed correctly.
+        """
+        signal = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
+        rescale = 4
+        scale = 0.5
+        actual = csprmitr.compress_tails(signal, scale = scale, rescale = rescale)
+        actual = hpandas.df_to_str(actual)
+        expected = r"""     A    B
+        0  0.5  0.5
+        1  0.5  0.5
+        2  0.5  0.5
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+    
+    def test4(self) -> None:
         """
         Check that an empty input is processed correctly.
         """
@@ -102,7 +133,7 @@ class Test_compress_tails(hunitest.TestCase):
         expected = str(result_empty_series.empty)
         self.assert_equal(actual, expected)
 
-    def test3(self) -> None:
+    def test5(self) -> None:
         """
         Check that an error is raised if scale is lower than 0.
         """
@@ -121,7 +152,7 @@ class Test_compress_tails(hunitest.TestCase):
             actual, expected, fuzzy_match=True
         )
 
-    def test4(self) -> None:
+    def test6(self) -> None:
         """
         Check that an error is raised if rescale is lower than 0.
         """
@@ -140,7 +171,7 @@ class Test_compress_tails(hunitest.TestCase):
             actual, expected, fuzzy_match=True
         )
 
-    def test5(self) -> None:
+    def test7(self) -> None:
         """
         Check that an error is raised if input contains non-numeric values.
         """
