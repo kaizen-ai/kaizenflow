@@ -84,6 +84,7 @@ class Test_compress_tails(hunitest.TestCase):
         signal = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
         scale = 2
         actual = csprmitr.compress_tails(signal, scale = scale)
+        actual = hpandas._df_to_str(actual)
         expected = r"""          A         B
         0  0.924234  1.928055
         1  1.523188  1.973229
