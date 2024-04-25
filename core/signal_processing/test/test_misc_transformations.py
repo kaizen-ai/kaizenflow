@@ -90,7 +90,7 @@ class Test_compress_tails(hunitest.TestCase):
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    def test3(self) -> None:
+    def test2(self) -> None:
         """
         Check that an input with valid scale and rescale processed correctly.
         """
@@ -106,7 +106,7 @@ class Test_compress_tails(hunitest.TestCase):
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    def test4(self) -> None:
+    def test3(self) -> None:
         """
         Check that an empty input is processed correctly.
         """
@@ -118,7 +118,7 @@ class Test_compress_tails(hunitest.TestCase):
         Index: []"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    def test5(self) -> None:
+    def test4(self) -> None:
         """
         Check that an error is raised if scale is lower than 0.
         """
@@ -135,7 +135,7 @@ class Test_compress_tails(hunitest.TestCase):
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    def test6(self) -> None:
+    def test5(self) -> None:
         """
         Check that an error is raised if rescale is lower than 0.
         """
@@ -152,7 +152,7 @@ class Test_compress_tails(hunitest.TestCase):
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    def test7(self) -> None:
+    def test6(self) -> None:
         """
         Check that an error is raised if input contains non-numeric values.
         """
