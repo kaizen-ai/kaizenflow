@@ -13,6 +13,27 @@
 - `producer.py`
 - `consumer.py`
 
+## Docker Implementation
+```mermaid
+graph TB
+  subgraph m[Kakfa Network]
+    direction TB
+    Z["Zookeeper"]
+    B["Broker"]
+    SR["Schema Registry"]
+    J["Jupyter"]
+    PG["PostgreSQL"]
+    Z --> B
+    Z --> SR
+    B <--> SR
+	SR <--> J	
+    B <-- "9092:9092" --> J
+    PG <-- "5432:5432" --> J
+	end
+id1((8080)) --> J
+
+```
+
 ## How to Run
 - Run the following command to build, start, and run all of our Docker containers defined in our `docker-compose.yml` file in detached mode (running in background)
 ```sh
@@ -47,6 +68,24 @@ To get started, make sure all the containers are up and running, then
 ## Data Streaming Platform
 
 In the section, we will build a simple data streaming platform where a producer continuously generates messages and sends them to a topic in our Apache Kafka cluster. A consumer will subscribe to this topic, read and process the messages in real time, and then insert the processed data into our PostgreSQL database.
+
+```mermaid
+flowchart LR
+    Producer --> m --> Consumer --> db[(PostgreSQL)]
+    subgraph m[Kafka Cluster]
+		direction TB
+        style m fill:#f9f9f9, stroke-dasharray: 5, stroke-width:2px
+        subgraph b1[broker1]
+            subgraph topic[Topic trade]
+                style topic fill:#e0f7fa
+                direction LR
+                partition1[[Partition 1]]
+                partition2[[Partition 2]]
+                partition3[[Partition 3]]
+            end
+        end
+    end
+```
 
 - To start a producer, open another terminal window and run the following commands:
 ```sh
