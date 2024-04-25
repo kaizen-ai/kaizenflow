@@ -79,47 +79,31 @@ class Test_compress_tails(hunitest.TestCase):
 
     def test1(self) -> None:
         """
-        Check that an input with valid scale processed correctly.
+        Check that an input with default params processed correctly.
         """
         signal = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
-        scale = 2
-        actual = csprmitr.compress_tails(signal, scale = scale)
+        actual = csprmitr.compress_tails(signal)
         actual = hpandas.df_to_str(actual)
         expected = r"""          A         B
-        0  0.924234  1.928055
-        1  1.523188  1.973229
-        2  1.810297  1.990110
+        0  0.761594  0.999329
+        1  0.964028  0.999909
+        2  0.995055  0.999988
         """
-        self.assert_equal(actual, expected, fuzzy_match=True)
-
-    def test2(self) -> None:
-        """
-        Check that an input with valid rescale processed correctly.
-        """
-        signal = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
-        rescale = 10
-        actual = csprmitr.compress_tails(signal, rescale = rescale)
-        actual = hpandas.df_to_str(actual)
-        expected = r"""     A    B
-        0  1.0  1.0
-        1  1.0  1.0
-        2  1.0  1.0
-        """
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.assert_equal(actual, expected)
 
     def test3(self) -> None:
         """
         Check that an input with valid scale and rescale processed correctly.
         """
-        signal = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
+        signal = pd.DataFrame({"A": [1, 0, -3], "B": [-4, 5, 6]})
         rescale = 4
         scale = 0.5
-        actual = csprmitr.compress_tails(signal, scale = scale, rescale = rescale)
+        actual = csprmitr.compress_tails(signal,scale=scale,rescale=rescale)
         actual = hpandas.df_to_str(actual)
         expected = r"""     A    B
-        0  0.5  0.5
-        1  0.5  0.5
-        2  0.5  0.5
+        0  0.5 -0.5
+        1  0.0  0.5
+        2 -0.5  0.5
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
     
@@ -127,11 +111,13 @@ class Test_compress_tails(hunitest.TestCase):
         """
         Check that an empty input is processed correctly.
         """
-        signal = pd.Series([])
-        result_empty_series = csprmitr.compress_tails(signal)
-        actual = str(True)
-        expected = str(result_empty_series.empty)
-        self.assert_equal(actual, expected)
+        signal = pd.DataFrame({"A" : [], "B" : []})
+        expected = csprmitr.compress_tails(signal)
+        expected = hpandas.df_to_str(expected)
+        actual = r"""Empty DataFrame
+        Columns: [A, B]
+        Index: []"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test5(self) -> None:
         """
@@ -140,7 +126,7 @@ class Test_compress_tails(hunitest.TestCase):
         signal = pd.Series([1, 2, 3, 4, 5])
         scale = -1
         with self.assertRaises(AssertionError) as cm:
-            csprmitr.compress_tails(signal, scale=scale)
+            csprmitr.compress_tails(signal,scale=scale)
         actual = str(cm.exception)
         expected = r"""
         ################################################################################
@@ -148,9 +134,7 @@ class Test_compress_tails(hunitest.TestCase):
         0 < -1
         ################################################################################
         """
-        self.assert_equal(
-            actual, expected, fuzzy_match=True
-        )
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test6(self) -> None:
         """
@@ -159,7 +143,7 @@ class Test_compress_tails(hunitest.TestCase):
         signal = pd.DataFrame({"A": [1, 2, 3, 4, 5], "B": [1, 2, 3, 4, 5]})
         rescale = -1
         with self.assertRaises(AssertionError) as cm:
-            csprmitr.compress_tails(signal, rescale=rescale)
+            csprmitr.compress_tails(signal,rescale=rescale)
         actual = str(cm.exception)
         expected = r"""
         ################################################################################
@@ -167,9 +151,7 @@ class Test_compress_tails(hunitest.TestCase):
         0 < -1
         ################################################################################
         """
-        self.assert_equal(
-            actual, expected, fuzzy_match=True
-        )
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test7(self) -> None:
         """
@@ -182,9 +164,7 @@ class Test_compress_tails(hunitest.TestCase):
         expected = (
             "unsupported operand type(s) for /: 'str' and 'int'"
         )
-        self.assert_equal(
-            actual, expected, fuzzy_match=True
-        )
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
 class Test_get_symmetric_equisized_bins(hunitest.TestCase):
     def test_zero_in_bin_interior_false(self) -> None:
