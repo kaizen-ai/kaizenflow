@@ -1,0 +1,1 @@
+hbase-docker/172.18.0.2 Written by an hbase-2.x Master to block an attempt by an hbase-1.x HBCK tool making modification to state. See 'HBCK must match HBase server version' in the hbase refguide.

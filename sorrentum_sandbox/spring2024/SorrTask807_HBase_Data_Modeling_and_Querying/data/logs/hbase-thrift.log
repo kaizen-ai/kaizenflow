@@ -1,0 +1,48 @@
+2024-04-24 23:52:29,138 INFO  [main] thrift.ThriftServer: ***** STARTING service 'ThriftServer' *****
+2024-04-24 23:52:29,139 INFO  [main] util.VersionInfo: HBase 2.1.2
+2024-04-24 23:52:29,139 INFO  [main] util.VersionInfo: Source code repository git://kalashnikov/Users/stack/checkouts/hbase.git revision=1dfc418f77801fbfb59a125756891b9100c1fc6d
+2024-04-24 23:52:29,139 INFO  [main] util.VersionInfo: Compiled by stack on Sun Dec 30 21:45:09 PST 2018
+2024-04-24 23:52:29,139 INFO  [main] util.VersionInfo: From source with checksum 5701bcce2fc4832a4b2990adc735b516
+2024-04-24 23:52:29,903 INFO  [main] thrift.ThriftServerRunner: Using default thrift server type
+2024-04-24 23:52:29,903 INFO  [main] thrift.ThriftServerRunner: Using thrift server type threadpool
+2024-04-24 23:52:30,011 WARN  [main] util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2024-04-24 23:52:31,196 INFO  [main] metrics.MetricRegistries: Loaded MetricRegistries class org.apache.hadoop.hbase.metrics.impl.MetricRegistriesImpl
+2024-04-24 23:52:31,600 INFO  [main] util.log: Logging initialized @2783ms
+2024-04-24 23:52:31,728 INFO  [main] http.HttpRequestLog: Http request log for http.requests.thrift is not defined
+2024-04-24 23:52:31,786 INFO  [main] http.HttpServer: Added global filter 'safety' (class=org.apache.hadoop.hbase.http.HttpServer$QuotingInputFilter)
+2024-04-24 23:52:31,787 INFO  [main] http.HttpServer: Added global filter 'clickjackingprevention' (class=org.apache.hadoop.hbase.http.ClickjackingPreventionFilter)
+2024-04-24 23:52:31,792 INFO  [main] http.HttpServer: Added filter static_user_filter (class=org.apache.hadoop.hbase.http.lib.StaticUserWebFilter$StaticUserFilter) to context thrift
+2024-04-24 23:52:31,792 INFO  [main] http.HttpServer: Added filter static_user_filter (class=org.apache.hadoop.hbase.http.lib.StaticUserWebFilter$StaticUserFilter) to context static
+2024-04-24 23:52:31,792 INFO  [main] http.HttpServer: Added filter static_user_filter (class=org.apache.hadoop.hbase.http.lib.StaticUserWebFilter$StaticUserFilter) to context logs
+2024-04-24 23:52:31,846 INFO  [main] http.HttpServer: Jetty bound to port 9095
+2024-04-24 23:52:31,847 INFO  [main] server.Server: jetty-9.3.19.v20170502
+2024-04-24 23:52:31,896 INFO  [main] handler.ContextHandler: Started o.e.j.s.ServletContextHandler@be35cd9{/logs,file:///opt/hbase/logs/,AVAILABLE}
+2024-04-24 23:52:31,897 INFO  [main] handler.ContextHandler: Started o.e.j.s.ServletContextHandler@44821a96{/static,file:///opt/hbase/hbase-webapps/static/,AVAILABLE}
+2024-04-24 23:52:32,264 INFO  [main] handler.ContextHandler: Started o.e.j.w.WebAppContext@14028087{/,file:///opt/hbase/hbase-webapps/thrift/,AVAILABLE}{file:/opt/hbase/hbase-webapps/thrift}
+2024-04-24 23:52:32,311 INFO  [main] server.AbstractConnector: Started ServerConnector@7c137fd5{HTTP/1.1,[http/1.1]}{0.0.0.0:9095}
+2024-04-24 23:52:32,311 INFO  [main] server.Server: Started @3496ms
+2024-04-24 23:52:32,420 INFO  [main] thrift.ThriftServerRunner: starting TBoundedThreadPoolServer on /0.0.0.0:9090 with readTimeout 60000ms; min worker threads=16, max worker threads=1000, max queued requests=1000
+2024-04-25 00:18:56,474 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9] zookeeper.ZooKeeper: Client environment:zookeeper.version=3.4.10-39d3a4f269333c922ed3db283be479f9deacaa0f, built on 03/23/2017 10:13 GMT
+2024-04-25 00:18:56,474 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9] zookeeper.ZooKeeper: Client environment:host.name=hbase-docker
+2024-04-25 00:18:56,474 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9] zookeeper.ZooKeeper: Client environment:java.version=1.8.0_191
+2024-04-25 00:18:56,475 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9] zookeeper.ZooKeeper: Client environment:java.vendor=Oracle Corporation
+2024-04-25 00:18:56,475 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9] zookeeper.ZooKeeper: Client environment:java.home=/usr/lib/jvm/java-8-openjdk-amd64/jre
+2024-04-25 00:18:56,475 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9] zookeeper.ZooKeeper: 30121.jar:/opt/hbase/bin/../lib/osgi-resource-locator-1.0.1.jar:/opt/hbase/bin/../lib/paranamer-2.3.jar:/opt/hbase/bin/../lib/protobuf-java-2.5.0.jar:/opt/hbase/bin/../lib/snappy-java-1.0.5.jar:/opt/hbase/bin/../lib/spymemcached-2.12.2.jar:/opt/hbase/bin/../lib/validation-api-1.1.0.Final.jar:/opt/hbase/bin/../lib/xmlenc-0.52.jar:/opt/hbase/bin/../lib/xz-1.0.jar:/opt/hbase/bin/../lib/zookeeper-3.4.10.jar:/opt/hbase/bin/../lib/client-facing-thirdparty/audience-annotations-0.5.0.jar:/opt/hbase/bin/../lib/client-facing-thirdparty/commons-logging-1.2.jar:/opt/hbase/bin/../lib/client-facing-thirdparty/findbugs-annotations-1.3.9-1.jar:/opt/hbase/bin/../lib/client-facing-thirdparty/htrace-core4-4.2.0-incubating.jar:/opt/hbase/bin/../lib/client-facing-thirdparty/log4j-1.2.17.jar:/opt/hbase/bin/../lib/client-facing-thirdparty/slf4j-api-1.7.25.jar:/opt/hbase/bin/../lib/client-facing-thirdparty/htrace-core-3.1.0-incubating.jar:/opt/hbase/bin/../lib/client-facing-thirdparty/slf4j-log4j12-1.7.25.jar
+2024-04-25 00:18:56,475 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9] zookeeper.ZooKeeper: Client environment:java.library.path=/usr/java/packages/lib/amd64:/usr/lib/x86_64-linux-gnu/jni:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/usr/lib/jni:/lib:/usr/lib
+2024-04-25 00:18:56,475 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9] zookeeper.ZooKeeper: Client environment:java.io.tmpdir=/tmp
+2024-04-25 00:18:56,475 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9] zookeeper.ZooKeeper: Client environment:java.compiler=<NA>
+2024-04-25 00:18:56,475 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9] zookeeper.ZooKeeper: Client environment:os.name=Linux
+2024-04-25 00:18:56,475 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9] zookeeper.ZooKeeper: Client environment:os.arch=amd64
+2024-04-25 00:18:56,475 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9] zookeeper.ZooKeeper: Client environment:os.version=6.5.0-27-generic
+2024-04-25 00:18:56,475 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9] zookeeper.ZooKeeper: Client environment:user.name=root
+2024-04-25 00:18:56,475 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9] zookeeper.ZooKeeper: Client environment:user.home=/root
+2024-04-25 00:18:56,475 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9] zookeeper.ZooKeeper: Client environment:user.dir=/
+2024-04-25 00:18:56,479 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9] zookeeper.ZooKeeper: Initiating client connection, connectString=hbase-docker:2181 sessionTimeout=90000 watcher=org.apache.hadoop.hbase.zookeeper.ReadOnlyZKClient$$Lambda$28/2005388528@160fbc3d
+2024-04-25 00:18:56,506 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9-SendThread(hbase-docker:2181)] zookeeper.ClientCnxn: Opening socket connection to server hbase-docker/172.18.0.2:2181. Will not attempt to authenticate using SASL (unknown error)
+2024-04-25 00:18:56,511 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9-SendThread(hbase-docker:2181)] zookeeper.ClientCnxn: Socket connection established to hbase-docker/172.18.0.2:2181, initiating session
+2024-04-25 00:18:56,524 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9-SendThread(hbase-docker:2181)] zookeeper.ClientCnxn: Session establishment complete on server hbase-docker/172.18.0.2:2181, sessionid = 0x18f12866d210005, negotiated timeout = 40000
+2024-04-25 00:18:58,981 INFO  [thrift-worker-0] client.HBaseAdmin: Operation: CREATE, Table Name: default:Books, procId: 7 completed
+2024-04-25 00:18:59,762 INFO  [thrift-worker-0] client.HBaseAdmin: Operation: CREATE, Table Name: default:Authors, procId: 9 completed
+2024-04-25 00:19:57,793 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9-EventThread] zookeeper.ClientCnxn: EventThread shut down for session: 0x18f12866d210005
+2024-04-25 00:19:57,794 INFO  [ReadOnlyZKClient-hbase-docker:2181@0x55c2f4d9] zookeeper.ZooKeeper: Session: 0x18f12866d210005 closed
+2024-04-25 00:29:21,433 INFO  [ConnectionCache.Chore.1] client.ConnectionImplementation: Closing master protocol: MasterService

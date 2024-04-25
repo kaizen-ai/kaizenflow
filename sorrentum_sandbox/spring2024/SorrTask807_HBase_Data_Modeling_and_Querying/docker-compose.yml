@@ -1,0 +1,22 @@
+
+
+services:
+  hbase:
+    image: dajobe/hbase
+    container_name: hbase-docker
+    hostname: hbase-docker
+    ports:
+      - "2181:2181"   # Zookeeper
+      - "8080:8080"   # REST API
+      - "8085:8085"   # REST Web UI
+      - "9090:9090"   # Thrift API
+      - "9095:9095"   # Thrift Web UI
+      - "16010:16010" # Master UI
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
+# This configuration maps the necessary ports and sets up a volume for data persistence.
+# It also sets the container to restart unless explicitly stopped.
+
+# Note: Depending on your needs, you might also want to configure network settings or additional environment variables.
