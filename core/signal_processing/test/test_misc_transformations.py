@@ -78,7 +78,7 @@ class Test_sign_normalize(hunitest.TestCase):
 class Test_compress_tails(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Check that an input with default params processed correctly.
+        Check that an input is processed correctly with default param values.
         """
         signal = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
         actual = csprmitr.compress_tails(signal)
@@ -92,7 +92,7 @@ class Test_compress_tails(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        Check that an input with valid scale and rescale processed correctly.
+        Check that an input is processed correctly with specified param values.
         """
         signal = pd.DataFrame({"A": [1, 0, -3], "B": [-4, 5, 6]})
         rescale = 4
@@ -111,9 +111,9 @@ class Test_compress_tails(hunitest.TestCase):
         Check that an empty input is processed correctly.
         """
         signal = pd.DataFrame({"A": [], "B": []})
-        expected = csprmitr.compress_tails(signal)
-        expected = hpandas.df_to_str(expected)
-        actual = r"""Empty DataFrame
+        actual = csprmitr.compress_tails(signal)
+        actual = hpandas.df_to_str(actual)
+        expected = r"""Empty DataFrame
         Columns: [A, B]
         Index: []"""
         self.assert_equal(actual, expected, fuzzy_match=True)
