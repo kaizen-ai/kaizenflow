@@ -1,0 +1,11 @@
+application	1
+cluster	2
+count	1
+file	1
+hadoop	1
+hello	1
+sample	1
+test	1
+text	1
+word	1
+world	3

@@ -1,0 +1,4 @@
+"Hello world world world'
+This is a a a sample text file!!
+To test the word count application?
+In a Hadoop cluster cluster!
