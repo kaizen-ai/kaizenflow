@@ -1,0 +1,6 @@
+version: '3'
+services:
+  hadoop-container:
+    image: docker-hadoop
+    environment:
+      - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-arm64
