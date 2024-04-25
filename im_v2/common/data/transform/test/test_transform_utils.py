@@ -3,7 +3,6 @@ import unittest.mock as umock
 
 import pandas as pd
 import pytest
-import random
 
 import data_schema.dataset_schema_utils as dsdascut
 import helpers.hdbg as hdbg
@@ -784,7 +783,6 @@ class TestResampleBidAskData2(hunitest.TestCase):
 
 
 class TestCalculateVwapTwap(hunitest.TestCase):
-
     def get_test_data(self):
         """
         Fetch data for price and volume columns with timestamp index
@@ -795,36 +793,40 @@ class TestCalculateVwapTwap(hunitest.TestCase):
         close = [34501.279, 29952.436]
         volume = [229894.0, 99837.4]
         asset_id = [18109, 15479]
-        d = {"timestamp":index_timestamp, "close":close, "volume":volume, "full_symbol":asset_id}
+        d = {
+            "timestamp": index_timestamp,
+            "close": close,
+            "volume": volume,
+            "full_symbol": asset_id,
+        }
         df = pd.DataFrame(data=d).set_index("timestamp")
         expected_df_columns = pd.MultiIndex.from_product(
             [["close", "twap", "volume", "vwap"], sorted(asset_id)]
         ).to_list()
         return df, expected_df_columns
-    
+
     def test_calculate_vwap_twap_with_5T_resample_kwargs(self) -> None:
         """
-        Verify calculated price for given volume from data WITH resample rule
+        Verify dataframe signature for given volume from data WITH 5T resample
+        rule.
         """
         df, expected_df_columns = self.get_test_data()
-        result_df = ramptran.calculate_vwap_twap(
-            df, "5T"
-        )
-        #Expected Values
+        result_df = ramptran.calculate_vwap_twap(df, "5T")
+        # Expected Values
         expected_length = 2
         expected_column_unique_values = None
-        expected_signature=r"""
+        expected_signature = r"""
         # df=
         index=[2024-01-01 00:00:00, 2024-01-01 00:05:00]
         columns=('close', 15479),('close', 18109),('twap', 15479),('twap', 18109),('volume', 15479),('volume', 18109),('vwap', 15479),('vwap', 18109)
         shape=(2, 8)
-                            close	        twap	        volume	        vwap
-                            15479	18109	15479	18109	15479	18109	15479	18109
-                  timestamp								
-        2024-01-01 00:00:00	NaN	34501.279	NaN	34501.279	NaN	229894.0	NaN	34501.279
-        2024-01-01 00:05:00	29952.436 NaN	29952.436 NaN	99837.4	NaN	    29952.436 NaN
+                            close            twap            volume            vwap
+                            15479    18109    15479    18109    15479    18109    15479    18109
+                  timestamp
+        2024-01-01 00:00:00    NaN    34501.279    NaN    34501.279    NaN    229894.0    NaN    34501.279
+        2024-01-01 00:05:00    29952.436 NaN    29952.436 NaN    99837.4    NaN        29952.436 NaN
         """
-        # Check.
+        # Check signature
         self.check_df_output(
             result_df,
             expected_length,
@@ -832,17 +834,15 @@ class TestCalculateVwapTwap(hunitest.TestCase):
             expected_column_unique_values,
             expected_signature,
         )
-        
 
     def test_calculate_vwap_twap_with_halfT_resample_kwargs(self) -> None:
         """
-        Verify calculated price for given volume from data WITHOUT resample rules
+        Verify dataframe signature for given volume from data WITH .5T resample
+        rule.
         """
         df, expected_df_columns = self.get_test_data()
-        result_df = ramptran.calculate_vwap_twap(
-            df, "0.5T"
-        )
-        #Expected Values
+        result_df = ramptran.calculate_vwap_twap(df, "0.5T")
+        # Expected Values
         expected_length = 3
         expected_column_unique_values = None
         expected_signature = r"""
@@ -850,14 +850,14 @@ class TestCalculateVwapTwap(hunitest.TestCase):
         index=[2024-01-01 00:00:00, 2024-01-01 00:01:00]
         columns=('close', 15479),('close', 18109),('twap', 15479),('twap', 18109),('volume', 15479),('volume', 18109),('vwap', 15479),('vwap', 18109)
         shape=(3, 8)
-                            close	        twap	        volume	        vwap
-                            15479	18109	15479	18109	15479	18109	15479	18109
-                  timestamp								
-        2024-01-01 00:00:00	NaN	34501.279	NaN	34501.279	NaN	229894.0	NaN	34501.279
-        2024-01-01 00:00:30	NaN	      NaN 	NaN 	  NaN	NaN	     NaN	NaN	      NaN
-        2024-01-01 00:01:00	29952.436 NaN	29952.436 NaN	99837.4	 NaN	29952.436 NaN
+                            close            twap            volume            vwap
+                            15479    18109    15479    18109    15479    18109    15479    18109
+                  timestamp
+        2024-01-01 00:00:00    NaN    34501.279    NaN    34501.279    NaN    229894.0    NaN    34501.279
+        2024-01-01 00:00:30    NaN          NaN     NaN       NaN    NaN         NaN    NaN          NaN
+        2024-01-01 00:01:00    29952.436 NaN    29952.436 NaN    99837.4     NaN    29952.436 NaN
         """
-        # Check.
+        # Check signature
         self.check_df_output(
             result_df,
             expected_length,
