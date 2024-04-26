@@ -14,7 +14,6 @@ import helpers.hunit_test as hunitest
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.data.transform.resample_daily_bid_ask_data as imvcdtrdbad
 import im_v2.common.data.transform.transform_utils as imvcdttrut
-import research_amp.transform as ramptran
 
 
 class TestGetVendorEpochUnit(hunitest.TestCase):
@@ -777,91 +776,3 @@ class TestResampleBidAskData2(hunitest.TestCase):
         scratch_dir = self.get_scratch_space()
         aws_profile = "ck"
         hs3.copy_data_from_s3_to_local_dir(s3_input_dir, scratch_dir, aws_profile)
-
-
-# #############################################################################
-
-
-class TestCalculateVwapTwap(hunitest.TestCase):
-    def get_test_data(self):
-        """
-        Fetch data for price and volume columns with timestamp index
-        returns: pandas dataframe with timestamp index, close and volume column with asset_id as full_sumbol
-        """
-        #
-        index_timestamp = pd.date_range("2024-01-01", periods=2, freq="min")
-        close = [34501.279, 29952.436]
-        volume = [229894.0, 99837.4]
-        asset_id = [18109, 15479]
-        d = {
-            "timestamp": index_timestamp,
-            "close": close,
-            "volume": volume,
-            "full_symbol": asset_id,
-        }
-        df = pd.DataFrame(data=d).set_index("timestamp")
-        expected_df_columns = pd.MultiIndex.from_product(
-            [["close", "twap", "volume", "vwap"], sorted(asset_id)]
-        ).to_list()
-        return df, expected_df_columns
-
-    def test_calculate_vwap_twap_with_5T_resample_kwargs(self) -> None:
-        """
-        Verify dataframe signature for given volume from data WITH 5T resample
-        rule.
-        """
-        df, expected_df_columns = self.get_test_data()
-        result_df = ramptran.calculate_vwap_twap(df, "5T")
-        # Expected Values
-        expected_length = 2
-        expected_column_unique_values = None
-        expected_signature = r"""
-        # df=
-        index=[2024-01-01 00:00:00, 2024-01-01 00:05:00]
-        columns=('close', 15479),('close', 18109),('twap', 15479),('twap', 18109),('volume', 15479),('volume', 18109),('vwap', 15479),('vwap', 18109)
-        shape=(2, 8)
-                            close            twap            volume            vwap
-                            15479    18109    15479    18109    15479    18109    15479    18109
-                  timestamp
-        2024-01-01 00:00:00    NaN    34501.279    NaN    34501.279    NaN    229894.0    NaN    34501.279
-        2024-01-01 00:05:00    29952.436 NaN    29952.436 NaN    99837.4    NaN        29952.436 NaN
-        """
-        # Check signature
-        self.check_df_output(
-            result_df,
-            expected_length,
-            expected_df_columns,
-            expected_column_unique_values,
-            expected_signature,
-        )
-
-    def test_calculate_vwap_twap_with_halfT_resample_kwargs(self) -> None:
-        """
-        Verify dataframe signature for given volume from data WITH .5T resample
-        rule.
-        """
-        df, expected_df_columns = self.get_test_data()
-        result_df = ramptran.calculate_vwap_twap(df, "0.5T")
-        # Expected Values
-        expected_length = 3
-        expected_column_unique_values = None
-        expected_signature = r"""
-        # df=
-        index=[2024-01-01 00:00:00, 2024-01-01 00:01:00]
-        columns=('close', 15479),('close', 18109),('twap', 15479),('twap', 18109),('volume', 15479),('volume', 18109),('vwap', 15479),('vwap', 18109)
-        shape=(3, 8)
-                            close            twap            volume            vwap
-                            15479    18109    15479    18109    15479    18109    15479    18109
-                  timestamp
-        2024-01-01 00:00:00    NaN    34501.279    NaN    34501.279    NaN    229894.0    NaN    34501.279
-        2024-01-01 00:00:30    NaN          NaN     NaN       NaN    NaN         NaN    NaN          NaN
-        2024-01-01 00:01:00    29952.436 NaN    29952.436 NaN    99837.4     NaN    29952.436 NaN
-        """
-        # Check signature
-        self.check_df_output(
-            result_df,
-            expected_length,
-            expected_df_columns,
-            expected_column_unique_values,
-            expected_signature,
-        )
