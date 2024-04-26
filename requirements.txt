@@ -1,5 +1,7 @@
 pandas
 matplotlib
 seaborn
-requests # if you are fetching data
+requests #Fetching data
 jupyter
+jupyter
+redis

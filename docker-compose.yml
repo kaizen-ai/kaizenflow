@@ -1,27 +1,27 @@
-version: '3'
+
 services:
-  naughty_hopper:
-    image: kaizenflow
-    command: bash -c "fetch_and_save_data.sh && tail -f /dev/null"
+  jupyter:
+    #image: jupyter/my_data605_project-notebook  # Use your custom-built image
+    image: my_data605_project-notebook
+    command: sleep infinity
     ports:
-      - '4000:80'
-  web:
-    image: 'nginx:latest'
-    ports:
-      - '80:80'
+      - "8888:8888"  # Map port 8888 on the host to port 8888 in the container
+    environment:
+      - JUPYTER_ENABLE_LAB=yes  # Optionally enable Jupyter Lab
+    volumes:
+      - ./notebooks:/home/jovyan/work  # Map a notebooks directory on your host to the work directory in the container
+    depends_on:
+      - redis  # Ensures that Redis is started before Jupyter
+
+  your_service:
+    image: my_data605_project-notebook
+    environment:
+      - CMC_API_KEY=${CMC_API_KEY}  # Make sure this environment variable is set in your host or .env file
+    volumes:
+      - ./data:/app/data  # Maps the 'data' directory on your host to '/app/data' inside the container
+
   redis:
-    image: 'redis:latest'
-    container_name: redis-server
+    image: redis:latest
     ports:
-      - '6379:6379'
-  notebook:
-    build: .
-    container_name: notebook-server
-    ports:
-      - '8888:8888'
-  environment:
-    - REDIS_HOST=redis
-  depends_on:
-    - redis
-  volumes:
-    - '.:/app'
+      - "6379:6379"  # Map Redis port 6379 on the host to port 6379 in the container
+ 
