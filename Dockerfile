@@ -16,3 +16,6 @@ RUN pip install -r requirements.txt
 # Specify the command to run when the container starts
 CMD ["python", "app.py"]
 
+# Expose the port the app runs on
+EXPOSE 8888
+
