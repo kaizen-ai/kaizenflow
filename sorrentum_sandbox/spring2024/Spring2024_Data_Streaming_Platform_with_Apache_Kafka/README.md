@@ -2,42 +2,74 @@
 
 ## Overview
 
-## Understanding Kafka
+The project involves setting up Apache Kafka and a PostgreSQL database encapsulated in multiple Docker containers with docker-compose to establish a streamlined data streaming platform.
+
+Utilize Python to simulate the production of a continuous data stream, format it for Kafka ingestion (topics), and configure producers for efficient data transfer into Kafka topics. Python-based Kafka consumers will read data from our Kafka stream, process and validate it before storing it into PostgreSQL using a predefined schema.
+
+The goal is to create a reliable system that seamlessly produce, processes, and securely stores external data in real-time using Kafka as the intermediary, Python for logic handling, and Docker for deployment flexibility.
+
+## Technologies Used
+- **Apache Kafka:** A distributed streaming platform that enables building real-time data pipelines and streaming applications. Kafka is used in this project to handle the publishing, storage, and processing of streams of records.
+- **ZooKeeper:** A centralized service for maintaining configuration information and providing distributed synchronization. In project, ZooKeeper ensures that all Kafka nodes within the cluster are consistently managed and kept in sync, which is essential for the proper functioning of our distributed streaming platform.
+- **Postgres:** An relational database system that is used in this project to store and manage the structured data generated from Kafka streams, supporting complex queries and data analysis.
+- **Docker:** A tool for developing, shipping, and running applications inside lightweight and portable containers. In this project, Docker is utilized to containerize all of our running services.
+- **Docker Compose:** A tool for defining and managing multi-container Docker applications. In this project, Docker Compose is used to configure and connect the Kafka, ZooKeeper, Jupyter Notebook and Postgres containers, simplifying the process of deploying the interconnected services.
 
 ## Project Structure
-- `docker-compose.yml`
-- `Dockerfile`
-- `requirements.txt`
-- `.gitignore`
-- `kafka_tutorial.ipynb`
-- `producer.py`
-- `consumer.py`
+- `docker-compose.yml`: defines the multi-container Docker applications for this project. It specifies services, networks, and volumes based on the Docker images and configurations.
+- `Dockerfile`: used to build a Docker container specifically configured for running a Jupyter Notebook server, our producer, and our consumer.
+- `requirements.txt`: lists all the Python libraries required for the Jupyter Notebook server and other Python scripts in the project, such as producer and consumer.
+- `.gitignore`: specifies the files and directories that Git should ignore in the project
+- `kafka_tutorial.ipynb`: A Jupyter notebook that provides a tutorial on how to use Kafka with Python. It includes example code and explanations on creating topics, producing. and consuming messages.
+- `producer.py`: acts as a Kafka producer. It defines the Kafka producer's configuration and the logic for creating and publishing messages to our Kafka cluster
+- `consumer.py`: acts as a Kafka consumer. It defines the Kafka consumer's configuration and the logic to subscribe to topics and process incoming messages
 
 ## Docker Implementation
-```mermaid
-graph TB
-  subgraph m[Kakfa Network]
-    direction TB
-    Z["Zookeeper"]
-    B["Broker"]
-    SR["Schema Registry"]
-    J["Jupyter"]
-    PG["PostgreSQL"]
-    Z --> B
-    Z --> SR
-    B <--> SR
-	SR <--> J	
-    B <-- "9092:9092" --> J
-    PG <-- "5432:5432" --> J
-	end
-id1((8080)) --> J
 
+The following diagram illustrates the network setup and inter-component communication within our Kafka data streaming project using Docker containers, all running inside `kafka_network` to ensure isolated and secured communication pathways.
+
+- **`zookeeper`**: manages and coordinates the Kafka `broker`. It connects to the `broker` on port `2181`, facilitating the management of broker states and cluster membership.
+
+- **`broker`**: acts as the central Kafka `broker` managing the flow of messages. It communicates with the `schema-registry` on port `8081` to handle schema validation and versioning for the messages being processed.
+
+- **`schema-registry`**: provides a serving layer for our metadata. It interfaces with the Kafka `broker` and `jupyter` notebook service on port `8081` to ensure that message schemas are correctly applied and enforced during data streaming.
+
+- **`jupyter`**: A Jupyter notebook environment configured to interact with the Kafka `broker`, `schema-registry`, and Postgres `pgdatabase`. It connects to the broker on port `9092` for message streaming, to the schema registry on port `8081` for schema interactions, and to the Postgres database on port `5432` for data storage and querying.
+
+- **`pgdatabase`**: A Postgres database used for storing and managing structured data that are streamed from our Kafka cluster.
+
+- Access to the `jupyter` notebook container from the host machine is facilitated through port `8080`.
+
+This setup not only ensures each service is isolated but also remains interconnected within the defined network for seamless data flow and processing.
+
+```mermaid
+graph TD
+	subgraph m["kafka_network"]
+		Z["zookeeper"]
+		B["broker"]
+		SR["schema-registry"]
+		J["jupyter"]
+		PG["pgdatabase"]
+		Z <-- "2181:2181" --> B
+		B -- "8081:8081"  --> SR
+		J -- "9092:9092" --> B
+		J -- "8081:8081" --> SR
+		J -- "5432:5432" --> PG
+	end
+	u((8080)) -- "8080:8080" --> J
 ```
 
 ## How to Run
 - Run the following command to build, start, and run all of our Docker containers defined in our `docker-compose.yml` file in detached mode (running in background)
 ```sh
-> docker compose up -d
+❯ docker compose up -d
+[+] Running 5/6
+ ⠙ Network kafka_network      Created                                                                                       1.1s
+ ✔ Container zookeeper        Started                                                                                       0.6s
+ ✔ Container jupyter          Started                                                                                       0.6s
+ ✔ Container pgdatabase       Started                                                                                       0.7s
+ ✔ Container broker           Started                                                                                       0.7s
+ ✔ Container schema-registry  Started                                                                                       1.0s
  ```
 -  Run the following command to list the containers defined in our `docker-compose.yml` file, showing their current state, ports, and other details.
 ```sh
