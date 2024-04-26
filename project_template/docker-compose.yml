@@ -1,0 +1,38 @@
+version: '3.8'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=CpZcVEXMtU04YG515b08
+      - xpack.security.http.ssl.enabled=false  # Enable this only if you configure SSL/TLS
+    volumes:
+      - esdata1:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - esnet
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.2
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=yLfMImd4YdP0HZ9Qdqmy
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5601:5601"
+    networks:
+      - esnet
+
+volumes:
+  esdata1:
+    driver: local
+
+networks:
+  esnet:
+
