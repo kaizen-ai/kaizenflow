@@ -70,6 +70,10 @@ def _run_notebook(
     # Prepare the destination file.
     idx = config[("backtest_config", "id")]
     experiment_result_dir = config[("backtest_config", "experiment_result_dir")]
+    # TODO(Grisha): instead of assuming a certain file name, inside
+    # `setup_experiment_dir()` assign config file name to config and retrieve
+    # here.
+    config_file_path = os.path.join(experiment_result_dir, "config.pkl")
     dst_file = os.path.join(
         experiment_result_dir,
         os.path.basename(notebook_file).replace(".ipynb", ".%s.ipynb" % idx),
@@ -87,6 +91,7 @@ def _run_notebook(
         f"export __CONFIG_BUILDER__='{config_builder}';",
         f'export __CONFIG_IDX__="{idx}";',
         f'export __CONFIG_DST_DIR__="{dst_dir}"',
+        f'export __NOTEBOOK_CONFIG_PATH__="{config_file_path}"',
         f"; jupyter nbconvert {notebook_file}",
         "--execute",
         "--to notebook",

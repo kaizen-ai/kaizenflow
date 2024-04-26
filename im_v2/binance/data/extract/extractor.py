@@ -21,13 +21,12 @@ import glob
 import json
 import logging
 import os
-import sys
 import time
-import urllib.error as urlerr
 import urllib.request as urlreq
 import uuid
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
+import aiohttp
 import pandas as pd
 
 import helpers.hdatetime as hdateti
@@ -73,7 +72,9 @@ class BinanceExtractor(ivcdexex.Extractor):
         contract_type: str,
         time_period: BinanceNativeTimePeriod,
         data_type: str,
+        *,
         allow_data_gaps: Optional[bool] = False,
+        max_attempts: int = 0,
     ) -> None:
         """
         Construct Binance native data extractor.
@@ -125,6 +126,8 @@ class BinanceExtractor(ivcdexex.Extractor):
             on_message=message_handler,
             on_error=self._handle_error,
             on_disconnect=self._handle_disconnect,
+            # max attempts for retry on failed subscription
+            max_attempts=max_attempts,
         )
         super().__init__()
 
@@ -249,15 +252,17 @@ class BinanceExtractor(ivcdexex.Extractor):
         hio.create_dir(self.tmp_dir_path, incremental=False)
         return self.tmp_dir_path
 
-    def _download_single_binance_file(
+    async def _download_single_binance_file(
         self,
+        session: aiohttp.ClientSession,
         file_url: str,
         file_name: str,
         dst_path: Optional[str] = None,
     ) -> bool:
         """
-        Download a single file from Binance.
+        Download a single file from Binance asynchronously.
 
+        :param session: aiohttp ClientSession
         :param file_url: url of the file to download
         :param file_name: name of the file to download
         :param dst_path: path to save the file to
@@ -270,30 +275,20 @@ class BinanceExtractor(ivcdexex.Extractor):
             raise FileExistsError(save_path)
         try:
             download_url = f"{BASE_URL}{file_url}{file_name}"
-            dl_file = urlreq.urlopen(download_url)
-            length = dl_file.getheader("content-length")
-            if length:
-                length = int(length)
+            async with session.get(download_url) as response:
+                response.raise_for_status()
+                length = int(response.headers.get("content-length"))
                 blocksize = max(4096, length // 100)
-            else:
-                raise ValueError(
-                    "No content-length header in the file: %s", download_url
-                )
-            with open(save_path, "wb") as out_file:
-                dl_progress = 0
-                # TODO(Vlad): Refactor this to use tqdm.
-                print(f"\nFile Download: {download_url}")
-                while True:
-                    buf = dl_file.read(blocksize)
-                    if not buf:
-                        print("\n")
-                        break
-                    dl_progress += len(buf)
-                    out_file.write(buf)
-                    done = int(50 * dl_progress / length)
-                    sys.stdout.write(f"\r[{'#' * done}{'.' * (50 - done)}]")
-                    sys.stdout.flush()
-        except urlerr.HTTPError:
+                with open(save_path, "wb") as out_file:
+                    dl_progress = 0
+                    async for chunk in response.content.iter_chunked(blocksize):
+                        if not chunk:
+                            break
+                        dl_progress += len(chunk)
+                        out_file.write(chunk)
+                        done = int(50 * dl_progress / length)
+                        print(f"\r[{'#' * done}{'.' * (50 - done)}]", end="")
+        except aiohttp.ClientResponseError as e:
             if self.allow_data_gaps:
                 _LOG.warning("File not found: %s", download_url)
                 return False
@@ -369,47 +364,65 @@ class BinanceExtractor(ivcdexex.Extractor):
             raise ValueError(f"Unsupported time period: {self.time_period}")
         return file_name
 
-    def _download_binance_files(
+    async def _download_binance_files(
         self,
         currency_pair: str,
         start_timestamp: pd.Timestamp,
         end_timestamp: pd.Timestamp,
         dst_path: str,
+        *,
+        batch_size: int = 10,
     ) -> None:
         """
-        Download files from Binance.
+        Download files from Binance asynchronously.
 
         :param currency_pair: currency pair to download
         :param start_timestamp: start date
         :param end_timestamp: end date
         :param dst_path: path to save the files to
+        :param batch_size: number of files to download concurrently
         """
-        # Get the list of periods to download.
-        binance_to_pandas_time_period = {
-            BinanceNativeTimePeriod.DAILY: "D",
-            BinanceNativeTimePeriod.MONTHLY: "M",
-        }
-        periods = pd.date_range(
-            start=start_timestamp,
-            end=end_timestamp,
-            freq=binance_to_pandas_time_period[self.time_period],
-        )
-        # TODO(Vlad): Refactor this when we add more data types.
-        # Get the path to the data on Binance.
-        if self.contract_type == "futures":
-            trading_type = "um"
-        else:
-            trading_type = "spot"
-        market_data_type = "trades"
-        path = self._get_binance_file_path(
-            trading_type, market_data_type, self.time_period.value, currency_pair
-        )
-        # Download files date by date.
-        for period in periods:
-            file_name = self._get_file_name_by_period(
-                self.time_period, currency_pair, period
+        async with aiohttp.ClientSession() as session:
+            # Get the list of periods to download.
+            binance_to_pandas_time_period = {
+                BinanceNativeTimePeriod.DAILY: "D",
+                BinanceNativeTimePeriod.MONTHLY: "M",
+            }
+            periods = pd.date_range(
+                start=start_timestamp,
+                end=end_timestamp,
+                freq=binance_to_pandas_time_period[self.time_period],
             )
-            self._download_single_binance_file(path, file_name, dst_path)
+            _LOG.debug("Downloading data for periods %s", periods)
+            # TODO(Vlad): Refactor this when we add more data types.
+            # Get the path to the data on Binance.
+            if self.contract_type == "futures":
+                trading_type = "um"
+            else:
+                trading_type = "spot"
+            market_data_type = "trades"
+            path = self._get_binance_file_path(
+                trading_type,
+                market_data_type,
+                self.time_period.value,
+                currency_pair,
+            )
+            # Create tasks for downloading files
+            tasks = []
+            for period in periods:
+                file_name = self._get_file_name_by_period(
+                    self.time_period, currency_pair, period
+                )
+                task = self._download_single_binance_file(
+                    session, path, file_name, dst_path
+                )
+                tasks.append(task)
+                if len(tasks) == batch_size:
+                    await asyncio.gather(*tasks)
+                    tasks.clear()
+            # Download remaining files if any
+            if tasks:
+                await asyncio.gather(*tasks)
 
     def _read_trades_from_csv_file(self, file_path: str) -> pd.DataFrame:
         """
@@ -577,35 +590,46 @@ class BinanceExtractor(ivcdexex.Extractor):
         )
         data["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
         data.rename(columns={"time": "timestamp", "qty": "amount"}, inplace=True)
-        data["side"] = data.is_buyer_maker.map({False: "sell", True: "buy"})
         data = data[
-            ["timestamp", "price", "amount", "side", "end_download_timestamp"]
+            [
+                "timestamp",
+                "price",
+                "amount",
+                "is_buyer_maker",
+                "end_download_timestamp",
+                "id",
+                "quote_qty",
+            ]
         ]
         return data[data.timestamp.between(start_timestamp, end_timestamp)]
 
-    def _get_binance_data_iterator(
+    async def _get_binance_data_iterator(
         self,
         src_path: str,
     ) -> Iterator[pd.DataFrame]:
         """
-        Get iterator over the Binance data.
+        Get iterator over the Binance data asynchronously.
 
         :param src_path: path to the files to extract data from
         :return: iterator over Binance data that return pandas DataFrame
             with the data splitted by days
         """
+
+        async def _process_file(file_name):
+            data = []
+            chunks = self._read_trades_from_csv_file_by_chunks(file_name)
+            for df in self._read_trades_from_chunks_by_days(chunks):
+                data.append(df)
+            return data
+
         search_path = f"{src_path}/**/*.zip"
-        # There is 3 levels of iteration:
-        # 1. Iterate over files.
-        # 2. Iterate over chunks in the file.
-        # 3. Group chunks by days.
-        data_iterator = (
-            df
+        data_iterator = []
+        tasks = [
+            _process_file(file_name)
             for file_name in glob.glob(search_path, recursive=True)
-            for df in self._read_trades_from_chunks_by_days(
-                self._read_trades_from_csv_file_by_chunks(file_name)
-            )
-        )
+        ]
+        for result in await asyncio.gather(*tasks):
+            data_iterator.extend(result)
         return data_iterator
 
     def _get_trades_iterator(
@@ -626,11 +650,13 @@ class BinanceExtractor(ivcdexex.Extractor):
         # Make temporary directory.
         tmp_dir = self._make_tmp_dir()
         # Download files locally.
-        self._download_binance_files(
+        coroutine = self._download_binance_files(
             currency_pair, start_timestamp, end_timestamp, tmp_dir
         )
+        asyncio.run(coroutine)
         # Get iterator over the files and chunks.
-        data_iterator = self._get_binance_data_iterator(tmp_dir)
+        coroutine = self._get_binance_data_iterator(tmp_dir)
+        data_iterator = asyncio.run(coroutine)
         # Wrap the iterator with the data post-processing.
         data_iterator = (
             self._post_process_binance_data(data, start_timestamp, end_timestamp)
@@ -655,9 +681,10 @@ class BinanceExtractor(ivcdexex.Extractor):
         # Make temporary directory.
         tmp_dir = self._make_tmp_dir()
         # Download files locally.
-        self._download_binance_files(
+        coroutine = self._download_binance_files(
             currency_pair, start_timestamp, end_timestamp, tmp_dir
         )
+        asyncio.run(coroutine)
         # Extract data from files.
         trades_df = self._extract_data_from_binance_files(tmp_dir)
         # Remove temporary directory.
@@ -896,6 +923,30 @@ class BinanceExtractor(ivcdexex.Extractor):
         if len(data["data"]) == 0:
             return None
         return data
+
+    def _download_websocket_ohlcv_from_trades(
+        self,
+        exchange_id: str,
+        currency_pair: str,
+        *,
+        start_timestamp: Optional[pd.Timestamp] = None,
+        end_timestamp: Optional[pd.Timestamp] = None,
+        **kwargs: Any,
+    ) -> pd.DataFrame:
+        """
+        Download OHLCV data from trades data from Binance.
+
+        :param exchange_id: parameter for compatibility with other extractors
+          always set to `binance`
+        :param currency_pair: currency pair to get data for, e.g. `BTC_USDT`
+        :param start_timestamp: start timestamp
+        :param end_timestamp: end timestamp
+        :return: exchange data
+        """
+        raise NotImplementedError(
+            "This extractor is for historical data download only. "
+            "It can't be used for the real-time data downloading."
+        )
 
     def _subscribe_to_websocket_bid_ask(
         self,

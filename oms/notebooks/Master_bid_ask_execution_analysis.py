@@ -53,12 +53,11 @@ hprint.config_notebook()
 # # Config
 
 # %%
-config = cconfig.get_config_from_env()
-if config:
-    # Get config from env when running the notebook via the `run_notebook.py` script, e.g.,
-    # in the system reconciliation flow.
-    _LOG.info("Using config from env vars")
-else:
+# When running manually, specify the path to the config to load config from file,
+# for e.g., `.../reconciliation_notebook/fast/result_0/config.pkl`.
+config_file_name = None
+config = cconfig.get_notebook_config(config_file_name)
+if config is None:
     system_log_dir = "/shared_data/ecs/test/system_reconciliation/C12a/prod/20240226_103300.20240226_113000/system_log_dir.manual/process_forecasts"
     # Use "logged_during_experiment" to use data logged from inside broker during the experiment.
     # (In full system run might result in gaps in data if no trades were generated for one or more bars).

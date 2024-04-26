@@ -1,5 +1,6 @@
 import argparse
 import collections
+import unittest.mock as umock
 from typing import Any
 
 import pandas as pd
@@ -549,3 +550,51 @@ class Test_make_hashable(hunitest.TestCase):
         is_hashable = True
         expected = r"2"
         self.helper(obj, is_hashable, expected)
+
+
+# #############################################################################
+# Test_replace_shared_root_path
+# #############################################################################
+
+
+class Test_replace_shared_root_path(hunitest.TestCase):
+    def test_replace_shared_dir_paths(self) -> None:
+        """
+        Test replacing in config all shared root paths with the dummy mapping.
+        """
+        # Mock `henv.execute_repo_config_code()` to return a dummy mapping.
+        mock_mapping = {
+            "/shared_folder1": "/data/shared1",
+            "/shared_folder2": "/data/shared2",
+        }
+        with umock.patch.object(
+            cconfig.hdocker.henv,
+            "execute_repo_config_code",
+            return_value=mock_mapping,
+        ):
+            # Initial Config.
+            initial_config = cconfig.Config.from_dict(
+                {
+                    "key1": "/shared_folder1/asset1",
+                    "key2": "/shared_folder2/asset1/item",
+                    "key3": 1,
+                    "key4": 'object("/shared_folder2/asset1/item")',
+                    "key5": {
+                        "key5.1": "/shared_folder1/asset1",
+                        "key5.2": "/shared_folder2/asset2",
+                    },
+                }
+            )
+            actual_config = cconfig.replace_shared_dir_paths(initial_config)
+            # Check that shared root paths have been replaced.
+            act = str(actual_config)
+            exp = """
+                key1: /data/shared1/asset1
+                key2: /data/shared2/asset1/item
+                key3: 1
+                key4: object("/data/shared2/asset1/item")
+                key5:
+                key5.1: /data/shared1/asset1
+                key5.2: /data/shared2/asset2
+            """
+            self.assert_equal(act, exp, fuzzy_match=True)
