@@ -75,6 +75,95 @@ class Test_sign_normalize(hunitest.TestCase):
         self.assertTrue(actual.equals(expected))
 
 
+class Test_compress_tails(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check that an input is processed correctly with default param values.
+        """
+        signal = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
+        actual = csprmitr.compress_tails(signal)
+        actual = hpandas.df_to_str(actual)
+        expected = r"""          A         B
+        0  0.761594  0.999329
+        1  0.964028  0.999909
+        2  0.995055  0.999988
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test2(self) -> None:
+        """
+        Check that an input is processed correctly with specified param values.
+        """
+        signal = pd.DataFrame({"A": [1, 0, -3], "B": [-4, 5, 6]})
+        rescale = 4
+        scale = 0.5
+        actual = csprmitr.compress_tails(signal, scale=scale, rescale=rescale)
+        actual = hpandas.df_to_str(actual)
+        expected = r"""     A    B
+        0  0.5 -0.5
+        1  0.0  0.5
+        2 -0.5  0.5
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Check that an empty input is processed correctly.
+        """
+        signal = pd.DataFrame({"A": [], "B": []})
+        actual = csprmitr.compress_tails(signal)
+        actual = hpandas.df_to_str(actual)
+        expected = r"""Empty DataFrame
+        Columns: [A, B]
+        Index: []"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Check that an error is raised if scale is lower than 0.
+        """
+        signal = pd.Series([1, 2, 3, 4, 5])
+        scale = -1
+        with self.assertRaises(AssertionError) as cm:
+            csprmitr.compress_tails(signal, scale=scale)
+        actual = str(cm.exception)
+        expected = r"""
+        ################################################################################
+        * Failed assertion *
+        0 < -1
+        ################################################################################
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test5(self) -> None:
+        """
+        Check that an error is raised if rescale is lower than 0.
+        """
+        signal = pd.DataFrame({"A": [1, 2, 3, 4, 5], "B": [1, 2, 3, 4, 5]})
+        rescale = -1
+        with self.assertRaises(AssertionError) as cm:
+            csprmitr.compress_tails(signal, rescale=rescale)
+        actual = str(cm.exception)
+        expected = r"""
+        ################################################################################
+        * Failed assertion *
+        0 < -1
+        ################################################################################
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test6(self) -> None:
+        """
+        Check that an error is raised if input contains non-numeric values.
+        """
+        signal = pd.DataFrame({"A": ["x", "y", "z"], "B": [1, 2, 3]})
+        with self.assertRaises(TypeError) as cm:
+            csprmitr.compress_tails(signal)
+        actual = str(cm.exception)
+        expected = "unsupported operand type(s) for /: 'str' and 'int'"
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
 class Test_get_symmetric_equisized_bins(hunitest.TestCase):
     def test_zero_in_bin_interior_false(self) -> None:
         input_ = pd.Series([-1, 3])
