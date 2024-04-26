@@ -217,8 +217,6 @@ $ docker compose down
 ## Conclusion
 
 ## References
-
-### Redis
 https://en.wikipedia.org/wiki/Redis
 
 https://github.com/redis/redis
@@ -227,7 +225,6 @@ https://github.com/redis/redis-py
 
 https://redis.io/docs/latest/commands/incr/
 
-### Flask
 https://en.wikipedia.org/wiki/Flask
 
 https://github.com/pallets/flask
@@ -236,7 +233,6 @@ https://github.com/alisaifee/flask-limiter
 
 https://github.com/DomainTools/rate-limit
 
-### Misc
 https://en.wikipedia.org/wiki/Rate_limiting
 
 https://en.wikipedia.org/wiki/Web_Server_Gateway_Interface
