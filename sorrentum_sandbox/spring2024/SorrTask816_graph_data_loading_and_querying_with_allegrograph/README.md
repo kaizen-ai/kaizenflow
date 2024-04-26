@@ -15,3 +15,8 @@ https://www.crossref.org/blog/2023-public-data-file-now-available-with-new-and-i
 To date the following steps have been completed:
 - A preliminary dataset has been compiled by narrowing the full Crossref database (185GB) down to a small number of variables and a narrow band of published dates, however the data will need to be narrowed further prior to implementation simply for size reasons (still about 6GB).
 - A docker file containing the building of necessary containers has been written. These containers include AllegroGraph, Python, and Jupyter Notebook.
+
+To Do:
+- The dataset needs to be trimmed down to an appropriate size for implementation
+- Python code for configuring the data in Allegrograph needs to be written
+- Jupyter Notebook pulling from SPARQL endpoint with some sort of basic analysis of the data
