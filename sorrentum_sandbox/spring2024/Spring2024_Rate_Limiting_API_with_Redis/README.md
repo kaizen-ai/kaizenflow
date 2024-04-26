@@ -1,23 +1,54 @@
 # Rate Limiting API with Redis
 
-This project is a [Flask](https://flask.palletsprojects.com/en/3.0.x/) application. It uses [Flask-Limiter](https://flask-limiter.readthedocs.io/en/stable/) for rate limiting, and [Redis](https://redis.io/) for storage.
-
-## Introduction
+This project is a Flask application that uses Flask-Limiter for rate limiting and Redis for storage.
 
 ## Background
 
+### Redis
+
+Redis is an in-memory key-value store. Compared to memory, Redis has several advantages:
+
+- **Persistence**: Redis stores data on disk.
+- **Durability**: Redis uses asynchronous replication.
+- **Flexibility**: Redis supports various data structures.
+- **Atomicity**: Redis guarantees atomic operations.
+
+Here's an example of how to use Redis in Python:
+
+```python
+import redis
+
+# Connect to Redis server
+r = redis.Redis(host='redis', port=6379, db=0)
+
+# Set key-value pair
+r.set('key', 'value')
+
+# Get value by key
+value = r.get('key')
+print(value.decode())  # Output: value
+```
+
+This project uses Redis to track API requests.
+
+Alternatives to Redis include:
+
+- **Memcached**: Another in-memory key-value store.
+- **MongoDB**: A document-oriented NoSQL database.
+- **etcd**: A distributed key-value store.
+
 ### Flask
 
-Flask is a web framework for Python. In general, Flask works like this: First, Flask (optionally) starts a server. Next, a client sends a request to the server, which forwards the request to the application. Then, Flask routes the request to a function, which processes the request, and returns a reponse. Finally, Flask sends the response to the server, which forwards the response to the client.
+Flask is a web framework for Python. In general: Flask works like this:
+
+<!-- First, Flask (optionally) starts a server. Next, a client sends a request to the server, which forwards the request to the application. Then, Flask routes the request to a function, which processes the request, and returns a reponse. Finally, Flask sends the response to the server, which forwards the response to the client. -->
 
 ```mermaid
 sequenceDiagram
     participant Client
     participant Server
-    box Application
     participant Flask
     participant Function
-    end
     Flask-->>Server: Create Server
     Client->>Server: Send Request
     Server->>Flask: Forward Reqeust
@@ -28,60 +59,100 @@ sequenceDiagram
     Server->>Client: Forward Response
 ```
 
-- What are other options?
-- Django (high-level) and FastAPI (based on type hints)
+Here's an example of how to use Flask in Python:
 
-### Redis
+```python
+from flask import Flask
 
-Redis is an in-memory database that persists on disk.
+# Create Flask instance
+app = Flask(__name__)
 
-- Why not just store in memory?
-- This project uses Redis for rate limiting.
-- Flask Limiter abstracts Redis.
-- Here's a gross simplification:
+# Define route for URL
+@app.route('/')
+def api():
+    return 'OK', 200
+```
+
+Alternatives to Flask include:
+
+- **Django**: A high-level web framework for Python.
+- **FastAPI**: A web framework for Python based on type hints.
+
+### Flask-Limiter
+
+Flask-Limiter is a Flask extension. Flask-Limiter supports several rate limiting strategies and storage backends.
+
+Here's an example of how to use Flask-Limiter in Python:
+
+```python
+from flask import Flask
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+# Create Flask instance
+app = Flask(__name__)
+
+# Create Limiter instance
+limiter = Limiter(get_remote_address, app=app)
+
+# Define route for URL
+@app.route('/')
+@limiter.limit('3/second')  # Limit to 3 requests per second
+def api():
+    return 'OK', 200
+```
+
+By default, Flask-Limiter uses a fixed window strategy. Here's a simplification of how Flask-Limiter works:
 
 ```python
 import redis
 import time
 
+# Connect to Redis server
 r = redis.Redis(host='redis', port=6379, db=0)
 
-def fixed_window(requests, seconds, ip='127.0.0.1'):
+# Define decorator factory
+def limit(requests, seconds, ip='127.0.0.1'):  # IP supplied by Flask
     def decorator(function):
         def wrapper(*args, **kwargs):
-            key = f'{function.__name__}:{ip}:{int(time.time() // seconds)}'
+            # Generate unique key
+            key = f'{ip}:{function.__name__}:{int(time.time() // seconds)}'
+
+            # Increment and timeout key
             with r.pipeline() as pipe:
                 pipe.incr(key)
                 pipe.expire(key, seconds)
                 count, _ = pipe.execute()
+
+            # Check if limit exceeded
             if count > requests:
                 return 'TOO MANY REQUESTS', 429
             return function(*args, **kwargs)
         return wrapper
     return decorator
 
-@fixed_window(10, 60)
-def api()
+@limit(3, 1)  # Limit to 3 requests per second
+def api():
     return 'OK', 200
 ```
 
-- Flask-Limiter supports Memcached, Redis, and MongoDB
-- Flask also allows Fixed Window and Moving Window
-- Have to implement Leaky Bucket or Token Bucket yourself
+Here, `limit` takes three arguments (`requests`, `seconds`, and `ip`) and returns a decorator, which returns a wrapper. First, it generates a unique key. Next, it increments and timeouts the key. Finally, it checks if the value of the key is greater than the limit. If so, it returns `'TOO MANY REQUESTS', 429`. Otherwise, it calls the function.
 
 ### Docker
 
-## Overview
+Docker is a platform that helps developers build, share, and run applications in isolated environments called containers. This project uses two containers named `web` and `redis`.
 
 ```mermaid
 sequenceDiagram
     participant Client
-    participant Server
-    box Application
-    participant Flask
-    participant Function
+    box web
+        participant Server
+        participant Flask
+        participant Function
     end
-    participant Redis
+    box redis
+        participant Redis
+    end
     Flask-->>Server: Create Server
     Client->>Server: Send Request
     Server->>Flask: Forward Reqeust
@@ -97,67 +168,69 @@ sequenceDiagram
     Server->>Client: Forward Response
 ```
 
-To run the application, run `docker compose up`.
+## Running the Application
+
+To run the application, use `docker compose up`
 
 ```console
-> docker compose up
-[+] Running 2/0
- ✔ Container app-redis-1  Created                                                        0.0s 
- ✔ Container app-flask-1  Created                                                        0.0s 
-Attaching to flask-1, redis-1
-redis-1  | 1:C 26 Apr 2024 02:49:03.669 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
-redis-1  | 1:C 26 Apr 2024 02:49:03.674 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
-redis-1  | 1:C 26 Apr 2024 02:49:03.674 * Redis version=7.2.4, bits=64, commit=00000000, modified=0, pid=1, just started
-redis-1  | 1:C 26 Apr 2024 02:49:03.674 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
-redis-1  | 1:M 26 Apr 2024 02:49:03.676 * monotonic clock: POSIX clock_gettime
-redis-1  | 1:M 26 Apr 2024 02:49:03.678 * Running mode=standalone, port=6379.
-redis-1  | 1:M 26 Apr 2024 02:49:03.681 * Server initialized
-redis-1  | 1:M 26 Apr 2024 02:49:03.681 * Loading RDB produced by version 7.2.4
-redis-1  | 1:M 26 Apr 2024 02:49:03.681 * RDB age 27 seconds
-redis-1  | 1:M 26 Apr 2024 02:49:03.681 * RDB memory usage when created 0.83 Mb
-redis-1  | 1:M 26 Apr 2024 02:49:03.681 * Done loading RDB, keys loaded: 0, keys expired: 0.
-redis-1  | 1:M 26 Apr 2024 02:49:03.681 * DB loaded from disk: 0.000 seconds
-redis-1  | 1:M 26 Apr 2024 02:49:03.681 * Ready to accept connections tcp
-flask-1  |  * Serving Flask app 'app'
-flask-1  |  * Debug mode: off
-flask-1  | WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
-flask-1  |  * Running on all addresses (0.0.0.0)
-flask-1  |  * Running on http://127.0.0.1:5000
-flask-1  |  * Running on http://172.18.0.3:5000
-flask-1  | Press CTRL+C to quit
+$ docker compose up
+[+] Running 9/9
+ ✔ redis 8 layers [⣿⣿⣿⣿⣿⣿⣿⣿]      0B/0B      Pulled                     8.9s
+ ...
+   ✔ c16c264be546 Pull complete                                            1.7s
+[+] Building 29.4s (9/9) FINISHED                                docker:default
+ => [web internal] load build definition from Dockerfile                   0.1s
+ ...
+[+] Running 3/2
+ ✔ Network app_default    Created                                          0.5s
+ ✔ Container app-redis-1  Created                                          0.4s
+ ✔ Container app-web-1    Created                                          0.1s
 ```
 
-Docker will build the Redis and Flask containers. We see that Redis is running on port 6379, and Flask is running on `localhost:5000`.
+To see the containers, use `docker ps`
 
-When we request the page, we see the HTML, CSS, and JavaScript files load normally. Then, I make four rapid API requests. The first three return `200 (OK)`, however the fourth returns `429 (TOO MANY REQUESTS)`. This is intended, and the JavaScript correctly catches the error.
+```console
+$ docker ps
+CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS         PORTS                                       NAMES
+3961a5b0082f   app-web        "python app.py"          2 minutes ago   Up 2 minutes   0.0.0.0:5000->5000/tcp, :::5000->5000/tcp   app-web-1
+59e8aa89a0c1   redis:latest   "docker-entrypoint.s…"   2 minutes ago   Up 2 minutes   0.0.0.0:6379->6379/tcp, :::6379->6379/tcp   app-redis-1
+```
+
+To use the application, navigate to `localhost:5000` and click `Call API`.
+
+Using DevTools, we can monitor the API requests.
 
 <img width="960" alt="image" src="https://github.com/kaizen-ai/kaizenflow/assets/103896552/a41c1a29-f525-43fc-b537-9c988b993d0f">
+
+Here, we make four rapid API requests. As expected, the first three requests succeed, and the fourth request fails.
+
+To close the application, use `docker compose down`
+
+```console
+$ docker compose down
+[+] Running 3/3
+ ✔ Container app-web-1    Removed                                         12.4s 
+ ✔ Container app-redis-1  Removed                                          0.9s 
+ ✔ Network app_default    Removed                                          0.4s 
+```
 
 ## Conclusion
 
 ## References
 
-### Flask
-https://en.wikipedia.org/wiki/Flask
-
-https://github.com/pallets/flask
-
-https://github.com/alisaifee/flask-limiter
-
 ### Redis
 https://en.wikipedia.org/wiki/Redis
-
 https://github.com/redis/redis
-
 https://github.com/redis/redis-py
-
 https://redis.io/docs/latest/commands/incr/
 
-### Misc
-https://en.wikipedia.org/wiki/Web_Server_Gateway_Interface
-
-https://levelup.gitconnected.com/top-5-rate-limiting-tactics-for-optimal-traffic-5ea77fd4461c
-
-^ This has a great infographic
-
+### Flask
+https://en.wikipedia.org/wiki/Flask
+https://github.com/pallets/flask
+https://github.com/alisaifee/flask-limiter
 https://github.com/DomainTools/rate-limit
+
+### Misc
+https://en.wikipedia.org/wiki/Rate_limiting
+https://en.wikipedia.org/wiki/Web_Server_Gateway_Interface
+https://levelup.gitconnected.com/top-5-rate-limiting-tactics-for-optimal-traffic-5ea77fd4461c
