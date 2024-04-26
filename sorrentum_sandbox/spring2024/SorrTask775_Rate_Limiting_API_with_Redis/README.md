@@ -139,7 +139,9 @@ When we request the page, we see the HTML, CSS, and JavaScript files load normal
 
 ### Flask
 https://en.wikipedia.org/wiki/Flask
+
 https://github.com/pallets/flask
+
 https://github.com/alisaifee/flask-limiter
 
 ### Redis
