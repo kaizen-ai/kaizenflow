@@ -26,7 +26,24 @@ The goal is to create a reliable system that seamlessly produce, processes, and 
 
 ## Docker Implementation
 
-The following diagram illustrates the network setup and inter-component communication within our Kafka data streaming project using Docker containers, all running inside `kafka_network` to ensure isolated and secured communication pathways.
+```mermaid
+graph TD
+	subgraph m["kafka_network"]
+		Z["zookeeper"]
+		B["broker"]
+		SR["schema-registry"]
+		J["jupyter"]
+		PG["pgdatabase"]
+		Z <-- "2181" --> B
+		B -- "8081"  --> SR
+		J -- "9092" --> B
+		J -- "8081" --> SR
+		J -- "5432" --> PG
+	end
+	u((8080)) -- "8080:8080" --> J
+```
+
+The above diagram illustrates the network setup and inter-component communication within our Kafka data streaming project using Docker containers, all running inside `kafka_network` to ensure isolated and secured communication pathways.
 
 - **`zookeeper`**: manages and coordinates the Kafka `broker`. It connects to the `broker` on port `2181`, facilitating the management of broker states and cluster membership.
 
@@ -42,22 +59,7 @@ The following diagram illustrates the network setup and inter-component communic
 
 This setup not only ensures each service is isolated but also remains interconnected within the defined network for seamless data flow and processing.
 
-```mermaid
-graph TD
-	subgraph m["kafka_network"]
-		Z["zookeeper"]
-		B["broker"]
-		SR["schema-registry"]
-		J["jupyter"]
-		PG["pgdatabase"]
-		Z <-- "2181:2181" --> B
-		B -- "8081:8081"  --> SR
-		J -- "9092:9092" --> B
-		J -- "8081:8081" --> SR
-		J -- "5432:5432" --> PG
-	end
-	u((8080)) -- "8080:8080" --> J
-```
+
 
 ## How to Run
 - Run the following command to build, start, and run all of our Docker containers defined in our `docker-compose.yml` file in detached mode (running in background)
