@@ -1,0 +1,6 @@
+pyzmq==22.3.0
+msgpack==1.0.3
+protobuf==3.19.4
+asyncio==3.4.4
+numpy==1.21.5
+jsonschema==4.2.0
