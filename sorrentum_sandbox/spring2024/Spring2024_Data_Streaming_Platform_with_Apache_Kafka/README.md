@@ -1,4 +1,24 @@
+
+<!-- TOC -->
+
+- [Data Streaming Platform with Apache Kafka](#data-streaming-platform-with-apache-kafka)
+  - [Overview](#overview)
+  - [Technologies Used](#technologies-used)
+  - [Project Structure](#project-structure)
+  - [Docker Implementation](#docker-implementation)
+  - [How to Run](#how-to-run)
+  - [Kafka Tutorial](#kafka-tutorial)
+  - [Implementing Data Streaming Platform](#implementing-data-streaming-platform)
+  - [Cleaning Up](#cleaning-up)
+  - [Conclusion](#conclusion)
+
+<!-- /TOC -->
+
 # Data Streaming Platform with Apache Kafka
+
+- Author: Heanh Sok
+- GitHub Account: heanhsok 
+- Email: heanhsok@umd.edu
 
 ## Overview
 
@@ -99,7 +119,7 @@ To get started, make sure all the containers are up and running, then
 2. Locate and open the `kafka_tutorial.ipynb` notebook.
 3. Follow along by reading and executing each cell in the notebook.
 
-## Data Streaming Platform
+## Implementing Data Streaming Platform
 
 In the section, we will build a simple data streaming platform where a producer continuously generates messages and sends them to a topic in our Apache Kafka cluster. A consumer will subscribe to this topic, read and process the messages in real time, and then insert the processed data into our PostgreSQL database.
 
