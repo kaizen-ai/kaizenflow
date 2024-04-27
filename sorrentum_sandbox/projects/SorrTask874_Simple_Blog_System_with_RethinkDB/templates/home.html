@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Home</title>
+    <style>
+        /* Styling for the header */
+        header {
+            background-image: url('/static/image.jpg'); 
+            background-size: cover;
+            background-position: center;
+            text-align: center;
+            padding: 100px 0;
+            color: black;
+        }
+
+        h1 {
+            font-size: 60px;
+        }
+
+        .new-post-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 17px;
+        }
+
+        .new-post-button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Customizing font size for title and summary */
+        h2 {
+            font-size: 35px; 
+        }
+
+        p {
+            font-size: 25px;
+        }
+
+        /* Two-column layout for posts */
+        ul {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            width: 48%; 
+            margin-bottom: 20px;
+            background-color: #f9f9f9; 
+            padding: 20px;
+            border-radius: 5px;
+            box-sizing: border-box; 
+        }
+
+        h2 a {
+            text-decoration: none; 
+            color: black; 
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Welcome to the Blog</h1>
+        <a class="new-post-button" href="{{ url_for('create_post') }}">New Post</a> <!-- New Post button -->
+    </header>
+    
+    <!-- Display each post with title and summary -->
+    <ul>
+        {% for post in posts %}
+        <li>
+            <h2><a href="{{ url_for('post', post_id=post.id) }}">{{ post.title }}</a></h2> <!-- Link to full post -->
+            <p>{{ post.content[:150] }}{% if post.content|length > 150 %}...{% endif %}</p> <!-- Display first 150 characters as summary -->
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

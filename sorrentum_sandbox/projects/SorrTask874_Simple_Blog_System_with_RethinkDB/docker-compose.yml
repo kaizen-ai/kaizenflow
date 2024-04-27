@@ -1,0 +1,14 @@
+version: '3'
+services:
+  flask-app:
+    build: .
+    ports:
+      - "4000:5000"
+    depends_on:
+      - rethinkdb
+
+  rethinkdb:
+    image: rethinkdb:latest
+    ports:
+      - "28015:28015"
+      - "8080:8080"

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ post.title }}</title>
+    <!-- Add Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* Style for home button */
+        .home-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 9999;
+            color: #333;
+            font-size: 24px;
+            text-decoration: none;
+        }
+        /* Style for delete button */
+        .delete-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            background-color: #f00;
+            color: #fff;
+            font-size: 18px;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        /* Style for content */
+        .content {
+            margin-top: 40px; 
+        }
+
+        #commenter {
+            width: 500px; 
+            padding: 5px; 
+            font-size: 20px
+        }
+
+        /* Style for the content textarea */
+        #comment {
+            width: 800px; 
+            height: 200px;
+            padding: 5px; 
+            font-size: 20px;
+        }
+
+        /* Style for title */
+        #title {
+            position: relative;
+            width: 100%;
+            height: 100px; 
+            margin-top: -40px;
+            background-image: url("{{ url_for('static', filename='image2.jpg') }}"); 
+            background-size: cover;
+            background-position: center;
+            color: black;
+            text-align: left;
+            padding-top: 80px; 
+        }
+        .title-text {
+            font-size: 55px;
+           
+        }
+        .content {
+            font-size: 27px;
+        }
+        .commentee,
+        .commenter {
+            font-size: 2px; 
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        /* Rest of your styles */
+    </style>
+</head>
+<body>
+    <!-- Home button -->
+    <a href="{{ url_for('index') }}" class="home-button"><i class="fas fa-home"></i></a>
+    
+    <!-- Delete button -->
+    <a href="{{ url_for('delete_post', post_id=post.id) }}" class="delete-button"><i class="fas fa-trash"></i> Delete</a>
+
+    <div class="content">
+        <div id="title">
+            <span class="title-text">{{ post.title }}</span>
+        </div>
+        <p>{{ post.content }}</p>
+
+        <!-- Display comments if any -->
+        <h2>Comments and Discussions:</h2>
+        <p style="margin-top: 2px;">Please be respectful towards your fellow bloggers.</p>
+        <ul>
+            {% for comment in post.comments %}
+            <li>{{ comment.commenter }} says: {{ comment.comment }}</li>
+            {% endfor %}
+        </ul>
+
+        <!-- Form to add a new comment -->
+        <form action="{{ url_for('add_comment', post_id=post.id) }}" method="post">
+            <label for="commenter">Your Name:</label><br>
+            <input type="text" id="commenter" name="commenter"><br>
+            <label for="comment">Your Comment:</label><br>
+            <textarea id="comment" name="comment"></textarea><br>
+            <input type="submit" value="Add Comment" class="add-comment-button"> <!-- Add this line -->
+        </form>
+    </div>
+</body>
+</html>
