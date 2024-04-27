@@ -1,0 +1,18 @@
+#!/bin/bash
+
+declare -a files=(
+	'/opt/hbase/conf/hbase-site.xml'
+)
+
+# Optional custom hostname replacement
+REPLACEMENT_HOSTNAME=${HBASE_DOCKER_HOSTNAME:-$HOSTNAME}
+
+for file in "${files[@]}"; do
+	if [ -f "${file}.bak" ]; then
+		cp "${file}.bak" "${file}"
+	else
+		cp "${file}" "${file}.bak"
+	fi
+
+	sed -i "s/hbase-docker/${REPLACEMENT_HOSTNAME}/g" "${file}"
+done
