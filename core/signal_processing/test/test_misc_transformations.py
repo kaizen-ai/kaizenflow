@@ -223,3 +223,62 @@ class Test_compute_weighted_sum1(hunitest.TestCase):
 1           1.0
 2          -2.0"""
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+
+class Test_split_positive_and_negative_parts(hunitest.TestCase):
+    """
+    Test the split_positive_and_negative_parts function.
+    """
+
+    @staticmethod
+    def get_test_data() -> pd.Series:
+        """
+        Create a sample input Series representing the "position_intent_1"
+        column.
+        """
+        data = [100, -50, 0, 75, -25]
+        index = pd.date_range(start="2023-04-01", periods=5)
+        test_data = pd.Series(data, index=index, name="position_intent_1")
+        return test_data
+
+    def test1(self) -> None:
+        """
+        Test split_positive_and_negative_parts with a Series input.
+        """
+        series_input = self.get_test_data()
+        long_and_short_intents_series = (
+            csprmitr.split_positive_and_negative_parts(series_input)
+        )
+        actual_str = hpandas.df_to_str(long_and_short_intents_series)
+        #
+        expected_str = r"""
+        positive negative
+        2023-04-01 100.0 0.0
+        2023-04-02 0.0 50.0
+        2023-04-03 0.0 0.0
+        2023-04-04 75.0 0.0
+        2023-04-05 0.0 25.0
+        """
+        #
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+    def test2(self) -> None:
+        """
+        Test split_positive_and_negative_parts with a DataFrame input.
+        """
+        df_input = pd.DataFrame({"position_intent_1": self.get_test_data()})
+        long_and_short_intents_df = csprmitr.split_positive_and_negative_parts(
+            df_input["position_intent_1"]
+        )
+        actual_str = hpandas.df_to_str(long_and_short_intents_df)
+        #
+        expected_str = r"""
+        positive negative
+        2023-04-01 100.0 0.0
+        2023-04-02 0.0 50.0
+        2023-04-03 0.0 0.0
+        2023-04-04 75.0 0.0
+        2023-04-05 0.0 25.0
+        """
+        #
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
