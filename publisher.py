@@ -3,6 +3,7 @@ from pika.exchange_type import ExchangeType
 
 connection_parameters = pika.ConnectionParameters(host='localhost')
 
+# test comment
 # Establish connection to RabbitMQ server
 connection = pika.BlockingConnection(connection_parameters)
 channel = connection.channel()
