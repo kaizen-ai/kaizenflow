@@ -1,27 +1,18 @@
-
+version: '3.8'
 services:
   jupyter:
-    #image: jupyter/my_data605_project-notebook  # Use your custom-built image
-    image: my_data605_project-notebook
-    command: sleep infinity
+    build: .
     ports:
-      - "8888:8888"  # Map port 8888 on the host to port 8888 in the container
+      - "8888:8888"
     environment:
-      - JUPYTER_ENABLE_LAB=yes  # Optionally enable Jupyter Lab
+      - JUPYTER_ENABLE_LAB=yes
+      - CMC_API_KEY=${CMC_API_KEY}
     volumes:
-      - ./notebooks:/home/jovyan/work  # Map a notebooks directory on your host to the work directory in the container
+      - ./notebooks:/home/jovyan/work
     depends_on:
-      - redis  # Ensures that Redis is started before Jupyter
-
-  your_service:
-    image: my_data605_project-notebook
-    environment:
-      - CMC_API_KEY=${CMC_API_KEY}  # Make sure this environment variable is set in your host or .env file
-    volumes:
-      - ./data:/app/data  # Maps the 'data' directory on your host to '/app/data' inside the container
+      - redis
 
   redis:
     image: redis:latest
     ports:
-      - "6379:6379"  # Map Redis port 6379 on the host to port 6379 in the container
- 
+      - "6379:6379"

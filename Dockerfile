@@ -1,51 +1,37 @@
-# Base image using Python
-FROM python:3.9
+# Base image
+FROM jupyter/base-notebook:latest
 
 # Maintainer and metadata
 LABEL maintainer="Farhad Abasahl <farhad@umd.edu>"
 LABEL version="1.0"
 LABEL description="This is my project Docker image for running a Python script and Jupyter notebook along with Node.js."
 
-# Set working directory to /app
-WORKDIR /app
-
-# Copy only the dependency management files first
-COPY requirements.txt package.json package-lock.json ./
+# Set user to root to install additional software
+USER root
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt --verbose
+COPY requirements.txt /tmp/
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # Install Node.js
-RUN apt-get update && apt-get install -y curl
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
-RUN apt-get install -y nodejs
+RUN apt-get update && apt-get install -y curl \
+    && curl -sL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Node dependencies
-RUN npm install
+COPY package.json package-lock.json /tmp/
+RUN cd /tmp && npm install && mv node_modules $CONDA_DIR
 
-# Copy the rest of the application source code
-COPY . /app
+# Revert to non-root user
+USER jovyan
 
-# Expose the necessary ports
-EXPOSE 8888 80
+# Copy your application source code
+COPY --chown=jovyan:jovyan . /home/jovyan/work
 
-# Create a non-privileged user
-RUN useradd -ms /bin/sh -u 1001 app
-USER app
-
-# Define environment variable
-ENV NAME World
+# Expose the necessary port
+EXPOSE 8888
 
 # Set the default command to launch Jupyter Notebook
-CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]
-
-
-
-
-
-
-
-
-
-
-
+CMD ["start-notebook.sh", "--ip='0.0.0.0'", "--port=8888", "--no-browser"]
