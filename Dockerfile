@@ -34,4 +34,4 @@ COPY --chown=jovyan:jovyan . /home/jovyan/work
 EXPOSE 8888
 
 # Set the default command to launch Jupyter Notebook
-CMD ["start-notebook.sh", "--ip='0.0.0.0'", "--port=8888", "--no-browser"]
+CMD ["start-notebook.sh", "--ip=0.0.0.0", "--port=8888", "--no-browser"]

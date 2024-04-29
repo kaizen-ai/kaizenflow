@@ -1,62 +1,81 @@
 import requests
-import os
 import json
 import redis
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Initialize Redis
-r = redis.Redis(host='redis', port=6379, db=0)
+r = redis.Redis(host='localhost', port=6379, db=0)  # Ensure this matches your Redis setup
 
-def fetch_specific_cryptocurrency_data():
-    api_key = os.getenv('CMC_API_KEY')
-    if not api_key:
-        raise Exception("API key is not available. Set the CMC_API_KEY environment variable.")
-
-    url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
-    parameters = {'symbol': 'BTC,ETH,SOL,AXS,MANA,ENJ,RNDR,INJ,VTHO,LINK,ADA,MATIC,QSP,VARA,USDT', 'convert': 'USD'}
-    headers = {'Accept': 'application/json', 'X-CMC_PRO_API_KEY': api_key}
-
-    # Check Redis cache before API request
-    cache_key = f"cryptocurrency_data_{parameters['symbol']}"
-    cached_data = r.get(cache_key)
-    if cached_data:
-        return json.loads(cached_data)
-
-    response = requests.get(url, headers=headers, params=parameters)
+def fetch_historical_data(pair, since):
+    url = "https://api.kraken.com/0/public/OHLC"
+    params = {
+        'pair': pair,
+        'interval': 1440,  # Daily data
+        'since': since
+    }
+    response = requests.get(url, params=params)
     if response.status_code == 200:
         data = response.json()
-        # Cache data with a timeout (e.g., 1 hour = 3600 seconds)
-        r.set(cache_key, json.dumps(data), ex=3600)
-        return data
+        return data['result'][pair], data['result']['last']
     else:
         print(f"Error occurred: {response.status_code}")
         print(response.text)
-        return None
+        return [], None
 
-def save_data(data, filename='cryptocurrency_data.json'):
-    try:
-        with open(filename, 'r') as file:
-            existing_data = json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError):
-        existing_data = {}
-
-    timestamp = datetime.now().isoformat()
-
-    if 'data' not in existing_data:
-        existing_data['data'] = {}
-    for symbol, details in data['data'].items():
-        if symbol not in existing_data['data']:
-            existing_data['data'][symbol] = []
-        details['timestamp'] = timestamp
-        existing_data['data'][symbol].append(details)
-
+def save_data(data, filename):
     with open(filename, 'w') as file:
-        json.dump(existing_data, file, indent=4)
+        json.dump(data, file, indent=4)
 
 def main():
-    data = fetch_specific_cryptocurrency_data()
-    if data:
-        save_data(data)
+    pairs = {
+        'BTCUSD': 'XXBTZUSD',
+        'ETHUSD': 'XETHZUSD',
+        'SOLUSD': 'SOLUSD',
+        'LINKUSD': 'LINKUSD',
+        'XBTUSD': 'XBTUSD',
+        'SOLUSD': 'SOLUSD',
+        'ADAUSD': 'ADAUSD',
+        'AXSUSD': 'AXSUSD',
+        'MANAUSD': 'MANAUSD',
+        'ENJUSD': 'ENJUSD',
+        'RNDRUSD': 'RNDRUSD',
+        'VTHOUSD': 'VTHOUSD',
+        'QSPUSD': 'QSPUSD',
+        'VARAUSD': 'VARAUSD',
+        'USDTUSD': 'USDTUSD',
+        'INJUSD': 'INJUSD',
+        'MATICUSD': 'MATICUSD'
+
+    }
+    start_date = datetime.strptime('2010-01-01', '%Y-%m-%d')
+    end_date = datetime.now()
+
+    for symbol, kraken_symbol in pairs.items():
+        all_data = []
+        since = int(start_date.timestamp())
+
+        while True:
+            cache_key = f"historical_{kraken_symbol}_{since}"
+            cached_data = r.get(cache_key)
+            if cached_data:
+                data, last = json.loads(cached_data)
+            else:
+                data, last = fetch_historical_data(kraken_symbol, since)
+                if data:
+                    r.setex(cache_key, 3600, json.dumps((data, last)))  # Cache for 1 hour
+
+            if not data:
+                break
+
+            all_data.extend(data)
+            if since == last or not last:
+                break
+            since = last
+
+        if all_data:
+            save_data(all_data, f'{symbol}_historical_data.json')
 
 if __name__ == "__main__":
     main()
+
+

@@ -1,18 +1,23 @@
 version: '3.8'
+
 services:
-  jupyter:
+  app:
     build: .
-    ports:
-      - "8888:8888"
+    image: my_data605_project-notebook
     environment:
-      - JUPYTER_ENABLE_LAB=yes
       - CMC_API_KEY=${CMC_API_KEY}
     volumes:
-      - ./notebooks:/home/jovyan/work
+      - ./data:/app/data  # Maps the 'data' directory on your host to '/app/data' inside the container
+    ports:
+      - "8888:8888"
     depends_on:
       - redis
 
   redis:
-    image: redis:latest
+    image: redis
     ports:
       - "6379:6379"
+
+volumes:
+  data:
+    driver: local
