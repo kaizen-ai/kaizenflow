@@ -30,7 +30,7 @@ class TestCalculateVwapTwap(hunitest.TestCase):
         resample_rule = "5T"
         df = self.helper()
         result_df = ramptran.calculate_vwap_twap(df, resample_rule)
-        # Define expected values
+        # Define expected values.
         expected_length = 3
         expected_column_value = None
         expected_signature = r"""
@@ -45,7 +45,7 @@ class TestCalculateVwapTwap(hunitest.TestCase):
         2024-01-01 00:05:00        204.0    205.0    203.0    203.0    86.0    129.0    203.023256    203.062016
         2024-01-01 00:10:00        208.0    209.0    207.0    208.0    94.0    96.0    207.021277    208.020833
         """
-        # Check signature
+        # Check signature.
         self.check_df_output(
             result_df,
             expected_length,
@@ -58,7 +58,7 @@ class TestCalculateVwapTwap(hunitest.TestCase):
         resample_rule = "1T"
         df = self.helper()
         result_df = ramptran.calculate_vwap_twap(df, resample_rule)
-        # Define expected values
+        # Define expected values.
         expected_length = 10
         expected_column_value = None
         expected_signature = r"""
@@ -78,7 +78,7 @@ class TestCalculateVwapTwap(hunitest.TestCase):
         2024-01-01 00:08:00    208.0    NaN        208.0    NaN        48.0    NaN        208.0    NaN
         2024-01-01 00:09:00    NaN        209.0    NaN        209.0    NaN        49.0    NaN        209.0
         """
-        # Check signature
+        # Check signature.
         self.check_df_output(
             result_df,
             expected_length,
