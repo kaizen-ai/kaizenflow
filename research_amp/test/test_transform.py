@@ -12,11 +12,7 @@ class TestCalculateVwapTwap(hunitest.TestCase):
     def helper(self) -> pd.DataFrame:
         """
         Create data for testing.
-
-        :returns: pandas dataframe with timestamp index, close and
-            volume column with asset_id as full_sumbol
         """
-        #
         timestamp_index = pd.date_range("2024-01-01", periods=10, freq="T")
         close = list(range(200, 210))
         volume = list(range(40, 50))
@@ -30,11 +26,11 @@ class TestCalculateVwapTwap(hunitest.TestCase):
         df = pd.DataFrame(data=data).set_index("timestamp")
         return df
 
-    def test_5T_resample(self) -> None:
+    def test1(self) -> None:
         resample_rule = "5T"
         df = self.helper()
         result_df = ramptran.calculate_vwap_twap(df, resample_rule)
-        # Expected Values
+        # Define expected values
         expected_length = 3
         expected_column_value = None
         expected_signature = r"""
@@ -58,11 +54,11 @@ class TestCalculateVwapTwap(hunitest.TestCase):
             expected_signature,
         )
 
-    def test_T_resample(self) -> None:
+    def test2(self) -> None:
         resample_rule = "1T"
         df = self.helper()
         result_df = ramptran.calculate_vwap_twap(df, resample_rule)
-        # Expected Values
+        # Define expected values
         expected_length = 10
         expected_column_value = None
         expected_signature = r"""
