@@ -1,5 +1,6 @@
 # Distributed Messaging with ZeroMQ
 # Dockerfile for building a containerized application
+RUN apt-get update && apt-get install -y git
 
 # Use an official Python runtime as a base image
 FROM python:3.8-slim
