@@ -58,3 +58,42 @@ datetime,MN0,MN1,MN0,MN1,MN0,MN1,MN0,MN1
         )
         df.index.freq = "T"
         return df
+
+
+# ########################################################################
+
+
+class TestComputeEpoch(hunitest.TestCase):
+    """
+    Test the computation of epoch time series with different units.
+    """
+
+    def get_series_data(self):
+        """
+        Generate series input data for test.
+        """
+
+    def get_dataframe_data(self):
+        """
+        Generateb dataframe input data for test.
+        """
+
+    def test1(self):
+        """
+        Test series input data with unit - minutes.
+        """
+
+    def test2(self):
+        """
+        Test series input data with unit - seconds.
+        """
+
+    def test3(self):
+        """
+        Test series input data with unit - nanoseconds.
+        """
+
+    def test4(self):
+        """
+        Test dataframe input data with any unit.
+        """
