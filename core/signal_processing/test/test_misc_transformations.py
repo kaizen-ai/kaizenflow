@@ -228,6 +228,9 @@ class Test_compute_weighted_sum1(hunitest.TestCase):
 class Test_split_positive_and_negative_parts(hunitest.TestCase):
     @staticmethod
     def get_test_data() -> pd.Series:
+        """
+        Create artificial signal for unit test.
+        """
         data = [100, -50, 0, 75, -25]
         index = pd.date_range(start="2023-04-01", periods=5)
         test_data = pd.Series(data, index=index, name="position_intent_1")
@@ -248,6 +251,9 @@ class Test_split_positive_and_negative_parts(hunitest.TestCase):
         self._test(df_input["position_intent_1"])
 
     def _test(self, series_input):
+        """
+        Compare actual data with generated expected data.
+        """
         actual_df = csprmitr.split_positive_and_negative_parts(series_input)
         #
         expected_length = 5
