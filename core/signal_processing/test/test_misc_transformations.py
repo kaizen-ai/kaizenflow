@@ -1,4 +1,5 @@
 import logging
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -238,24 +239,20 @@ class Test_split_positive_and_negative_parts(hunitest.TestCase):
 
     def test1(self) -> None:
         """
-        Test split_positive_and_negative_parts with a Series input.
+        Check that a Series input is processed correctly.
         """
         series_input = self.get_test_data()
-        self._test(series_input)
+        self.helper(series_input)
 
     def test2(self) -> None:
         """
-        Test split_positive_and_negative_parts with a DataFrame input.
+        Check that a DataFrame input is processed correctly.
         """
         df_input = pd.DataFrame({"position_intent_1": self.get_test_data()})
-        self._test(df_input["position_intent_1"])
+        self.helper(df_input["position_intent_1"])
 
-    def _test(self, series_input):
-        """
-        Compare actual data with generated expected data.
-        """
-        actual_df = csprmitr.split_positive_and_negative_parts(series_input)
-        #
+    def helper(self, input: Union[pd.Series, pd.DataFrame]) -> None:
+        actual_df = csprmitr.split_positive_and_negative_parts(input)
         expected_length = 5
         expected_column_names = ["positive", "negative"]
         expected_column_unique_values = None
