@@ -285,6 +285,10 @@ def run_notebooks(
         # Logged after the experiment to avoid potential gaps.
         bid_ask_data_source = "logged_after_experiment"
     else:
+        # Setting default values for `table_name` and `price_col`.
+        # These initializations are essential for the execution analysis notebook to run smoothly.
+        table_name = "ccxt_ohlcv_futures"
+        price_col = "close"
         args_logfile = os.path.join(system_log_dir, "args.json")
         hdbg.dassert_file_exists(args_logfile)
         args_dict = hio.from_json(args_logfile)
