@@ -249,7 +249,7 @@ class Test_split_positive_and_negative_parts(hunitest.TestCase):
         Check that a DataFrame input is processed correctly.
         """
         df_input = pd.DataFrame({"position_intent_1": self.get_test_data()})
-        self.helper(df_input["position_intent_1"])
+        self.helper(df_input)
 
     def helper(self, input: Union[pd.Series, pd.DataFrame]) -> None:
         actual_df = csprmitr.split_positive_and_negative_parts(input)
