@@ -42,6 +42,7 @@ import oms.broker.ccxt.ccxt_execution_quality as obccexqu
 import oms.broker.ccxt.ccxt_logger as obcccclo
 import oms.child_order_quantity_computer.child_order_quantity_computer_instances as ocoqccoqci
 import oms.order.order_converter as oororcon
+import reconciliation.sim_prod_reconciliation as rsiprrec
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -56,14 +57,14 @@ hprint.config_notebook()
 # # Config
 
 # %%
-config = cconfig.get_config_from_env()
-if config:
-    # Get config from env when running the notebook via the `run_notebook.py` script, e.g.,
-    # in the system reconciliation flow.
-    _LOG.info("Using config from env vars")
-else:
+# When running manually, specify the path to the config to load config from file,
+# for e.g., `.../reconciliation_notebook/fast/result_0/config.pkl`.
+config_file_name = None
+config = cconfig.get_notebook_config(config_file_name)
+if config is None:
     system_log_dir = "/shared_data/ecs/test/system_reconciliation/C12a/prod/20240219_150900.20240219_160600/system_log_dir.manual/process_forecasts"
     id_col = "asset_id"
+    price_col = "close"
     universe_version = "v7.5"
     vendor = "CCXT"
     mode = "trade"
@@ -71,16 +72,23 @@ else:
     bar_duration = "3T"
     child_order_execution_freq = "60S"
     use_historical = True
+    system_config_dir = system_log_dir.rstrip("/process_forecasts")
+    table_name = rsiprrec.extract_table_name_from_pkl_config(system_config_dir)
     config_dict = {
-        "meta": {"id_col": id_col, "use_historical": use_historical},
+        "meta": {
+            "id_col": id_col,
+            "price_col": price_col,
+            "use_historical": use_historical,
+        },
         "system_log_dir": system_log_dir,
-        "ohlcv_market_data": {
+        "market_data": {
             "vendor": vendor,
             "mode": mode,
             "universe": {
                 "universe_version": universe_version,
                 "test_asset_id": test_asset_id,
             },
+            "im_client_config": {"table_name": table_name},
         },
         "execution_parameters": {
             "bar_duration": bar_duration,
@@ -118,9 +126,10 @@ if experiment_config:
 # %%
 # Get the test asset ID from the config.
 test_asset_id = config.get_and_mark_as_used(
-    ("ohlcv_market_data", "universe", "test_asset_id")
+    ("market_data", "universe", "test_asset_id")
 )
 id_col = config.get_and_mark_as_used(("meta", "id_col"))
+price_col = config.get_and_mark_as_used(("meta", "price_col"))
 
 # %%
 bar_duration = config.get_and_mark_as_used(
@@ -281,18 +290,25 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 
 # %%
 universe_version = config.get_and_mark_as_used(
-    ("ohlcv_market_data", "universe", "universe_version")
+    ("market_data", "universe", "universe_version")
 )
 vendor = config.get_and_mark_as_used(
     (
-        "ohlcv_market_data",
+        "market_data",
         "vendor",
     )
 )
 mode = config.get_and_mark_as_used(
     (
-        "ohlcv_market_data",
+        "market_data",
         "mode",
+    )
+)
+table_name = config.get_and_mark_as_used(
+    (
+        "market_data",
+        "im_client_config",
+        "table_name",
     )
 )
 # Get asset ids.
@@ -300,7 +316,7 @@ asset_ids = ivcu.get_vendor_universe_as_asset_ids(universe_version, vendor, mode
 # Get prod `MarketData`.
 db_stage = "preprod"
 market_data = dtfamsysc.get_Cx_RealTimeMarketData_prod_instance1(
-    asset_ids, db_stage
+    asset_ids, db_stage, table_name=table_name
 )
 # Load and resample OHLCV data.
 ohlcv_bars = dtfamsysc.load_and_resample_ohlcv_data(
@@ -570,8 +586,7 @@ child_order_df["lifespan_in_seconds"] = child_order_df["ccxt_id"].apply(
 # ## Compute `target_position_df` and `portfolio_df`
 
 # %%
-# TODO(Danya): add to config.
-price_df = ohlcv_bars["close"]
+price_df = ohlcv_bars[price_col]
 target_position_df = oororcon.convert_order_df_to_target_position_df(
     parent_order_df,
     price_df,
@@ -818,15 +833,15 @@ filled_child_order_df[["asset_id", "order_slippage"]]
 
 # %%
 # Get the total underfill notional for the run per asset.
-execution_quality_df["underfill_notional"].abs().sum()
+execution_quality_df["underfill_notional"].abs().sum().round(9)
 
 # %%
 # Get the total underfill notional for the run per bar.
-execution_quality_df["underfill_notional"].abs().sum(axis=1)
+execution_quality_df["underfill_notional"].abs().sum(axis=1).round(9)
 
 # %%
 # Get the total underfill notional.
-execution_quality_df["underfill_notional"].abs().sum().sum()
+execution_quality_df["underfill_notional"].abs().sum().sum().round(9)
 
 # %% [markdown]
 # ### Aggregate fill rate

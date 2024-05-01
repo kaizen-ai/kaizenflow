@@ -7,9 +7,13 @@ import dataflow.model.backtest_notebook_utils as dtfmbanout
 """
 
 import logging
-from typing import Dict
+from typing import Dict, List
+
+import pandas as pd
 
 import core.config as cconfig
+import core.finance as cofinanc
+import dataflow.core as dtfcore
 import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
@@ -48,3 +52,39 @@ def build_research_backtest_analyzer_config_sweep(
         # Put single input config to a dict.
         config_dict = {"default_config": default_config}
     return config_dict
+
+
+def resample_with_weights_ohlcv_bars(
+    df_ohlcv: pd.DataFrame,
+    price_col: str,
+    bar_duration: str,
+    weights: List[float],
+) -> pd.DataFrame:
+    """
+    Resample 1-minute data to `bar_duration` with weights.
+
+    :param df_ohlcv: input OHLCV data
+    :param price_col: price column
+    :param bar_duration: bar duration
+    :param weights: weights for resampling
+    :return: resampled OHLCV data
+    """
+    resampling_node = dtfcore.GroupedColDfToDfTransformer(
+        "resample",
+        transformer_func=cofinanc.resample_with_weights,
+        **{
+            "in_col_groups": [
+                (price_col,),
+            ],
+            "out_col_group": (),
+            "transformer_kwargs": {
+                "rule": bar_duration,
+                "col": price_col,
+                "weights": weights,
+            },
+            "reindex_like_input": False,
+            "join_output_with_input": False,
+        },
+    )
+    resampled_ohlcv = resampling_node.fit(df_ohlcv)["df_out"]
+    return resampled_ohlcv

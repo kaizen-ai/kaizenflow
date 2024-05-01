@@ -26,6 +26,8 @@ def get_execution_analysis_configs_Cmtask4881(
     bar_duration: str,
     universe_version: str,
     child_order_execution_freq: str,
+    price_col: str,
+    table_name: str,
     *,
     test_asset_id: int = 1464553467,
 ) -> cconfig.ConfigList:
@@ -38,6 +40,8 @@ def get_execution_analysis_configs_Cmtask4881(
     :param bar_duration: length of bar in time, e.g., `5T`
     :param universe_version: version of the universe, e.g., `v7.4`
     :param child_order_execution_freq: execution frequency of child order, e.g. `1T`
+    :param price_col: name of the price column, e.g., `close`
+    :param table_name: name of the DB table to connect to
     :param test_asset_id: asset id to use as example
     """
     #
@@ -48,6 +52,8 @@ def get_execution_analysis_configs_Cmtask4881(
     config_list = build_execution_analysis_configs(
         system_log_dir,
         id_col,
+        price_col,
+        table_name,
         universe_version,
         vendor,
         mode,
@@ -62,6 +68,8 @@ def get_execution_analysis_configs_Cmtask4881(
 def build_execution_analysis_configs(
     system_log_dir: str,
     id_col: str,
+    price_col: str,
+    table_name: str,
     universe_version: str,
     vendor: str,
     mode: str,
@@ -75,6 +83,8 @@ def build_execution_analysis_configs(
 
     :param system_log_dir: path to execution logs
     :param id_col: name of asset_id column, e.g. 'asset_id'
+    :param price_col: name of price column, e.g., 'close'
+    :param table_name: name of the DB table to connect to
     :param universe_version: e.g. 'v7.4'
     :param vendor: vendor to load data for (e.g., CCXT)
     :param mode: download or trade universe
@@ -90,15 +100,20 @@ def build_execution_analysis_configs(
     hdbg.dassert_path_exists(system_log_dir)
     # Build the config.
     config_dict = {
-        "meta": {"id_col": id_col, "use_historical": use_historical},
+        "meta": {
+            "id_col": id_col,
+            "use_historical": use_historical,
+            "price_col": price_col,
+        },
         "system_log_dir": system_log_dir,
-        "ohlcv_market_data": {
+        "market_data": {
             "vendor": vendor,
             "mode": mode,
             "universe": {
                 "universe_version": universe_version,
                 "test_asset_id": test_asset_id,
             },
+            "im_client_config": {"table_name": table_name},
         },
         "execution_parameters": {
             "bar_duration": bar_duration,
@@ -187,6 +202,7 @@ def build_broker_portfolio_reconciliation_configs(
     vendor: str,
     mode: str,
     bar_duration: str,
+    table_name: str,
 ) -> cconfig.ConfigList:
     """
     Build configs for `Master_broker_portfolio_reconciliation` notebook.
@@ -199,6 +215,7 @@ def build_broker_portfolio_reconciliation_configs(
     :param mode: download or trade universe
     :param bar_duration: as pd.Timedelta-compatible string, e.g. "5T"
         for 5 minutes
+    :param table_name: name of the DB table to connect to
     :return: list of configs with a single resulting config
     """
     hdbg.dassert_path_exists(system_log_dir)
@@ -206,10 +223,13 @@ def build_broker_portfolio_reconciliation_configs(
     config_dict = {
         "id_col": id_col,
         "system_log_dir": system_log_dir,
-        "ohlcv_market_data": {
+        "market_data": {
             "vendor": vendor,
             "mode": mode,
             "universe_version": universe_version,
+            "im_client_config": {
+                "table_name": table_name,
+            },
         },
         # TODO(Nina): extract from `SystemConfig`.
         "price_column_name": price_column_name,
@@ -247,8 +267,12 @@ def get_broker_portfolio_reconciliation_configs_Cmtask5690(
     """
     Build default config for `Master_broker_portfolio_reconciliation` using
     real-time data with provided system log dir.
+
+    :param system_log_dir: dir where run logs are saved, e.g.,
+        ../system_log_dir.manual/process_forecasts
     """
     id_col = "asset_id"
+    # TODO(Sameep): Repeated code. Pass it using an argument to the function.
     system_config_dir = system_log_dir.rstrip("/process_forecasts")
     # Load pickled SystemConfig.
     config_file_name = "system_config.output.values_as_strings.pkl"
@@ -266,21 +290,25 @@ def get_broker_portfolio_reconciliation_configs_Cmtask5690(
         price_column_name = reconcil.extract_price_column_name_from_pkl_config(
             system_config_dir
         )
+        table_name = reconcil.extract_table_name_from_pkl_config(
+            system_config_dir
+        )
     else:
         # TODO(Grisha): preserve types when reading SystemConfig back and
         #  remove all the post-processing.
         _LOG.warning("Reading Config v2.0")
         hdbg.dassert_isinstance(system_config, cconfig.Config)
-        universe_version = system_config["market_data_config"][
-            "im_client_config"
-        ]["universe_version"]
+        universe_version = system_config["market_data_config"]["universe_version"]
         bar_duration_in_secs = system_config["dag_runner_config"][
             "bar_duration_in_secs"
         ]
-        bar_duration_in_mins = int(bar_duration_in_secs / 60)
+        bar_duration_in_mins = int(int(bar_duration_in_secs) / 60)
         bar_duration = f"{bar_duration_in_mins}T"
         price_column_name = system_config["portfolio_config"][
             "mark_to_market_col"
+        ]
+        table_name = system_config["market_data_config"]["im_client_config"][
+            "table_name"
         ]
     vendor = "CCXT"
     mode = "trade"
@@ -293,5 +321,6 @@ def get_broker_portfolio_reconciliation_configs_Cmtask5690(
         vendor,
         mode,
         bar_duration,
+        table_name,
     )
     return config_list

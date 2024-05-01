@@ -15,6 +15,7 @@ import dataflow_amp.system.Cx.utils as dtfasycxut
 import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 import im_v2.common.universe as ivcu
@@ -62,6 +63,12 @@ class Test_Cx_ProdReconciliation_TestCase(hunitest.TestCase):
         dst_root_dir = self.get_scratch_space()
         aws_profile = "ck"
         s3_prod_data_source_dir = self.get_s3_input_dir()
+        # Copy market data file to the target dir.
+        file_name = "test_data.csv.gz"
+        market_data_file_path = os.path.join(s3_prod_data_source_dir, file_name)
+        hs3.dassert_path_exists(market_data_file_path, aws_profile)
+        cmd = f"aws s3 cp {market_data_file_path} {dst_root_dir} --profile {aws_profile}"
+        hsystem.system(cmd, suppress_output=False)
         # TODO(Grisha): maybe enable running the notebook.
         # The overwriting is not prevented because scratch dir must be removed
         # after the run is finished.
@@ -72,7 +79,7 @@ class Test_Cx_ProdReconciliation_TestCase(hunitest.TestCase):
             f"--end-timestamp-as-str {end_timestamp_as_str}",
             f"--dst-root-dir {dst_root_dir}",
             f"--prod-data-source-dir {s3_prod_data_source_dir}",
-            f"--market-data-source-dir {s3_prod_data_source_dir}",
+            f"--market-data-source-dir {dst_root_dir}",
             f"--mode {mode}",
             f"--stage {stage}",
             "--no-prevent-overwriting",
@@ -191,11 +198,14 @@ class Test_Cx_ProdReconciliation_TestCase(hunitest.TestCase):
         market_data_file_path = os.path.join(dst_root_dir, "test_data.csv.gz")
         db_stage = "preprod"
         universe_version = ivcu.get_latest_universe_version()
+        # TODO(Grisha): this is overfit for OHLCV models, expose to the interface.
+        table_name = "ccxt_ohlcv_futures"
         # Save market data to the dir with the inputs.
         dtfasycxut.dump_market_data_from_db(
             market_data_file_path,
             start_timestamp_as_str,
             end_timestamp_as_str,
             db_stage,
+            table_name,
             universe_version,
         )
