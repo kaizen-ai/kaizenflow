@@ -57,6 +57,7 @@ def build_test_master_execution_analysis_config(
     Default config builder for testing the Master_execution_analysis notebook.
     """
     id_col = "asset_id"
+    price_col = "close"
     universe_version = "v7.1"
     vendor = "CCXT"
     mode = "trade"
@@ -64,9 +65,12 @@ def build_test_master_execution_analysis_config(
     bar_duration = "5T"
     child_order_execution_freq = "1T"
     use_historical = True
+    table_name = "ccxt_ohlcv_futures"
     config_list = oexancon.build_execution_analysis_configs(
         system_log_dir,
         id_col,
+        price_col,
+        table_name,
         universe_version,
         vendor,
         mode,
@@ -102,15 +106,21 @@ def build_test_broker_portfolio_reconciliation_config(
         universe_version = reconcil.extract_universe_version_from_pkl_config(
             system_log_dir
         )
+        table_name = reconcil.extract_table_name_from_pkl_config(system_log_dir)
     else:
         # TODO(Grisha): preserve types when reading SystemConfig back and
         #  remove all the post-processing.
         _LOG.warning("Reading Config v2.0")
         hdbg.dassert_isinstance(system_config, cconfig.Config)
-        bar_duration = system_config["dag_runner_config"]["bar_duration_in_secs"]
-        universe_version = system_config["market_data_config"][
-            "im_client_config"
-        ]["universe_version"]
+        bar_duration_in_secs = system_config["dag_runner_config"][
+            "bar_duration_in_secs"
+        ]
+        bar_duration_in_mins = int(int(bar_duration_in_secs) / 60)
+        bar_duration = f"{bar_duration_in_mins}T"
+        universe_version = system_config["market_data_config"]["universe_version"]
+        table_name = system_config["market_data_config"]["im_client_config"][
+            "table_name"
+        ]
     #
     config_list = oexancon.build_broker_portfolio_reconciliation_configs(
         system_log_dir,
@@ -120,6 +130,7 @@ def build_test_broker_portfolio_reconciliation_config(
         vendor,
         mode,
         bar_duration,
+        table_name,
     )
     return config_list
 

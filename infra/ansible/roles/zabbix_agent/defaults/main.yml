@@ -1,3 +1,0 @@
-zabbix_agent_version: "6.4"
-zabbix_server_host: "172.30.3.63"
-agent_server_host: "172.30.2.114"

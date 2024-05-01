@@ -146,6 +146,7 @@ def _copy_result_file(
     _system(cmd)
 
 
+# TODO(Nina): Consider killing the function as it is not used.
 @task
 def reconcile_dump_market_data(
     ctx,
@@ -246,6 +247,9 @@ def reconcile_run_sim(
     end_timestamp_as_str,
     mode,
     dst_root_dir,
+    stage,
+    market_data_source_dir=None,
+    incremental=False,
     set_config_values=None,
 ):  # type: ignore
     """
@@ -282,6 +286,9 @@ def reconcile_run_sim(
     # Set the latest universe version.
     universe_version = ivcu.get_latest_universe_version()
     system.config["market_data_config", "universe_version"] = universe_version
+    system.config[
+        "market_data_config", "im_client_config", "table_name"
+    ] = "ccxt_ohlcv_futures"
     system = dtfsys.apply_Portfolio_config(system)
     order_config = dtfasysc.get_Cx_order_config_instance1()
     optimizer_config = dtfasysc.get_Cx_optimizer_config_instance1()
@@ -292,6 +299,8 @@ def reconcile_run_sim(
     # Build paths to a market data file and a result dir.
     file_name = "test_data.csv.gz"
     market_data_file_path = os.path.join(sim_target_dir, file_name)
+    if market_data_source_dir is not None:
+        market_data_file_path = os.path.join(market_data_source_dir, file_name)
     # Run simulation.
     _ = dtfasc.run_simulation(
         system,
@@ -300,6 +309,8 @@ def reconcile_run_sim(
         market_data_file_path,
         dst_result_dir,
         set_config_values=set_config_values,
+        incremental=incremental,
+        db_stage=stage,
     )
     # Check that the required dirs were created.
     hdbg.dassert_dir_exists(os.path.join(dst_result_dir, "dag"))
@@ -954,6 +965,10 @@ def reconcile_run_all(
     :param mode: the prod system run mode which defines a prod system log dir name
         - "scheduled": the system is run at predefined time automatically
         - "manual": the system run is triggered manually
+    :param incremental:
+        - if `True` use the data located at `market_data_file_path`
+            in case the file path exists
+        - if `False` dump market data
     :param prevent_overwriting: if True write permissions are removed otherwise
         a permissions remain as they are
     :param abort_if_exists: see `hio.create_dir()`
@@ -996,28 +1011,6 @@ def reconcile_run_all(
         aws_profile=aws_profile,
     )
     #
-    # Check if there is a universe version override.
-    universe_version = rsiprrec.get_universe_version_from_config_overrides(
-        set_config_values
-    )
-    if universe_version is None:
-        # Use the latest version.
-        universe_version = ivcu.get_latest_universe_version()
-    _LOG.debug(hprint.to_str("universe_version"))
-    reconcile_dump_market_data(
-        ctx,
-        dag_builder_ctor_as_str,
-        run_mode,
-        start_timestamp_as_str,
-        end_timestamp_as_str,
-        dst_root_dir,
-        stage,
-        universe_version,
-        source_dir=market_data_source_dir,
-        incremental=incremental,
-        prevent_overwriting=prevent_overwriting,
-    )
-    #
     reconcile_run_sim(
         ctx,
         dag_builder_ctor_as_str,
@@ -1026,6 +1019,9 @@ def reconcile_run_all(
         end_timestamp_as_str,
         mode,
         dst_root_dir,
+        stage,
+        market_data_source_dir=market_data_source_dir,
+        incremental=incremental,
         set_config_values=set_config_values,
     )
     # TODO(Grisha): decide do we need to run TCA given that `CcxtBroker` logs

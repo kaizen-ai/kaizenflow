@@ -194,6 +194,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(
             "websocket_data_buffer_size": None,
             "db_saving_mode": "on_buffer_full",
             "bid_ask_depth": 10,
+            "ohlcv_download_method": "from_exchange",
         }
         namespace = argparse.Namespace(**kwargs)
         mock_argument_parser.parse_args.return_value = namespace
@@ -396,7 +397,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(
         # mock_get_connection.return_value = self.connection
         # Set a side effects. for the instantiation of the binance class.
         mock_instance = umock.AsyncMock()
-        mock_instance.describe = umock.MagicMock(return_value = {"has" : {}})
+        mock_instance.describe = umock.MagicMock(return_value={"has": {}})
         mock_instance.sleep = lambda *args, **kwargs: asyncio.sleep(1)
         if data_type == "ohlcv":
             mock_instance.watchOHLCV = umock.AsyncMock(return_value=None)
@@ -467,6 +468,7 @@ class TestDownloadRealtimeForOneExchangePeriodically2(hunitest.TestCase):
             "log_level": "INFO",
             "websocket_data_buffer_size": expected_buffer_size,
             "db_saving_mode": "on_buffer_full",
+            "ohlcv_download_method": "from_exchange",
         }
         # Run.
         namespace = argparse.Namespace(**kwargs)
@@ -478,8 +480,7 @@ class TestDownloadRealtimeForOneExchangePeriodically2(hunitest.TestCase):
             return_value=[],
         ):
             with umock.patch.object(
-                imvcdededtdp.imvcdeexut.imvcdexex,
-                "CcxtExtractor"
+                imvcdededtdp.imvcdeexut.imvcdexex, "CcxtExtractor"
             ) as mock_ccxt_extractor:
                 # Mock the `close()` method of CcxtExtractor
                 mock_ccxt_extractor_instance = mock_ccxt_extractor.return_value
@@ -578,6 +579,7 @@ class TestDownloadRealtimeForOneExchangePeriodically3(
             "log_level": "INFO",
             "websocket_data_buffer_size": 0,
             "db_saving_mode": "on_buffer_full",
+            "ohlcv_download_method": "from_exchange",
         }
         # Create argparser.
         namespace = argparse.Namespace(**kwargs)

@@ -1,3 +1,7 @@
+v8
+- 2024-04-04
+- Removing delisted symbols ANT_USDT, DGB_USDT and CTK_USDT
+
 v8.0
 - 2024-03-14
 - Removed "FTT_USDT", "SC_USDT", "BTS_USDT", "SRM_USDT", "COCOS_USDT",

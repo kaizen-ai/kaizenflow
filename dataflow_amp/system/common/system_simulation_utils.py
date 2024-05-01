@@ -7,6 +7,7 @@ import dataflow_amp.system.common.system_simulation_utils as dtfascssiut
 # the name is not concrete enough.
 
 import logging
+import os
 from typing import Any, List, Optional
 
 import pandas as pd
@@ -14,6 +15,7 @@ import pandas as pd
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
+import dataflow_amp.system.Cx as dtfamsysc
 import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -32,6 +34,8 @@ def run_simulation(
     system_log_dir: str,
     *,
     set_config_values: Optional[str] = None,
+    incremental: bool = False,
+    db_stage: str = "preprod",
     # TODO(Grisha): separate unit testing from the actual use, i.e. move
     # out the unit-test related parameters to a different function (or test case).
     config_tag: Optional[str] = None,
@@ -54,6 +58,11 @@ def run_simulation(
         with ';' in order to be processed by invoke. E.g.,
         '("process_forecasts_node_dict","process_forecasts_dict","optimizer_config","params","style"),(str("longitudinal")); \n
         ("process_forecasts_node_dict","process_forecasts_dict","optimizer_config","params","kwargs"),({"target_dollar_risk_per_name": float(0.1), "prediction_abs_threshold": float(0.35)})'
+    :param incremental:
+        - if `True` use the data located at `market_data_file_path`
+            in case the file path exists
+        - if `False` dump market data
+    :param db_stage: stage of the database to use, e.g., "prod"
     :param config_tag: tag used to freeze the system config by
         `check_SystemConfig()`
     :param check_config: freeze the config before running the System
@@ -72,6 +81,7 @@ def run_simulation(
     system = dtfasccxbu.apply_Cx_MarketData_config(
         system, replayed_delay_in_mins_or_timestamp
     )
+    # 2) Apply DAG config.
     # TODO(Grisha): Pass via `apply_dag_property()`.
     system.config["dag_builder_config", "fast_prod_setup"] = False
     system.config["dag_property_config", "force_free_nodes"] = True
@@ -86,6 +96,7 @@ def run_simulation(
     )
     system.config["market_data_config", "file_path"] = market_data_file_path
     system.config["system_log_dir"] = system_log_dir
+    #
     if set_config_values is not None:
         # Extract config values from a string.
         # TODO(Nina): pass already split values.
@@ -100,6 +111,28 @@ def run_simulation(
             config, set_config_values, clobber_mode=clobber_mode
         )
         system.set_config(config)
+    path_exists = os.path.exists(market_data_file_path)
+    universe_version = system.config["market_data_config", "universe_version"]
+    # 3) Dump Market data.
+    # Dump market data if either condition is false, otherwise copy from
+    # `market_data_file_path`.
+    if incremental and path_exists:
+        _LOG.warning(
+            "Skipping generating %s, since it already exists.",
+            market_data_file_path,
+        )
+    else:
+        table_name = system.config[
+            "market_data_config", "im_client_config", "table_name"
+        ]
+        dtfamsysc.dump_market_data_from_db(
+            market_data_file_path,
+            start_timestamp_as_str,
+            end_timestamp_as_str,
+            db_stage,
+            table_name,
+            universe_version,
+        )
     # TODO(Nina): pass via config so it will be possible to override vendor
     # and/or mode if needed.
     # The version corresponds to `CCXT` trade universe.
@@ -108,7 +141,7 @@ def run_simulation(
     # Add asset ids to the `SystemConfig` after all values are overridden
     # so that asset ids correspond with universe version.
     asset_ids = ivcu.get_vendor_universe_as_asset_ids(
-        system.config["market_data_config", "universe_version"], vendor, mode
+        universe_version, vendor, mode
     )
     system.config["market_data_config", "asset_ids"] = asset_ids
     # Override `bar_duration_in_secs` after overriding all values since it

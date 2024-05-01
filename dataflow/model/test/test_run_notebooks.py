@@ -24,7 +24,7 @@ def build_config() -> cconfig.ConfigList:
 
 
 def build_test_master_research_backtest_analyzer_config(
-    sweep_param: bool,
+    sweep_param: bool, output_dir_name: str
 ) -> cconfig.ConfigList:
     """
     Default config builder for testing the Master_research_backtest_analyzer
@@ -39,6 +39,7 @@ def build_test_master_research_backtest_analyzer_config(
     )
     config_dict = {
         "dir_name": dir_name,
+        "output_dir_name": output_dir_name,
         "start_date": datetime.date(2024, 1, 1),
         "end_date": datetime.date(2024, 1, 31),
         "asset_id_col": "asset_id",
@@ -177,7 +178,8 @@ class Test_run_master_research_backtest_analyzer(
         `sweep_param` is not exposed, use only default config.
         """
         notebook_name = "Master_research_backtest_analyzer"
-        config_builder = "dataflow.model.test.test_run_notebooks.build_test_master_research_backtest_analyzer_config(True)"
+        output_dir_name = self.get_scratch_space()
+        config_builder = f'dataflow.model.test.test_run_notebooks.build_test_master_research_backtest_analyzer_config(True, "{output_dir_name}")'
         _test_run_notebook(self, notebook_name, config_builder)
 
     @pytest.mark.skip("Run manually.")
@@ -199,7 +201,8 @@ class Test_toy_research_backtest_analyzer(dsnrnteca.Test_Run_Notebook_TestCase):
         `sweep_param` is not exposed, use only default config.
         """
         notebook_name = "Toy_research_backtest_analyzer"
-        config_builder = "dataflow.model.test.test_run_notebooks.build_test_master_research_backtest_analyzer_config(False)"
+        output_dir_name = self.get_scratch_space()
+        config_builder = f'dataflow.model.test.test_run_notebooks.build_test_master_research_backtest_analyzer_config(False, "{output_dir_name}")'
         _test_run_notebook(self, notebook_name, config_builder)
 
     @pytest.mark.superslow("~60 sec.")
@@ -210,7 +213,8 @@ class Test_toy_research_backtest_analyzer(dsnrnteca.Test_Run_Notebook_TestCase):
         `sweep_param` is exposed, multiple configs are used.
         """
         notebook_name = "Toy_research_backtest_analyzer"
-        config_builder = "dataflow.model.test.test_run_notebooks.build_test_master_research_backtest_analyzer_config(True)"
+        output_dir_name = self.get_scratch_space()
+        config_builder = f'dataflow.model.test.test_run_notebooks.build_test_master_research_backtest_analyzer_config(True, "{output_dir_name}")'
         _test_run_notebook(self, notebook_name, config_builder)
 
     @pytest.mark.skip("Run manually.")

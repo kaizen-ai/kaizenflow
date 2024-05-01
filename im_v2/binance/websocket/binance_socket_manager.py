@@ -5,7 +5,9 @@ import im_v2.binance.websocket.binance_socket_manager as imvbwbsoma
 """
 
 import logging
+import random
 import threading
+import time
 from typing import Optional
 
 from websocket import (
@@ -31,6 +33,7 @@ class BinanceSocketManager(threading.Thread):
         on_disconnect=None,
         logger=None,
         proxies: Optional[dict] = None,
+        max_attempts=0,
     ):
         threading.Thread.__init__(self)
         if not logger:
@@ -49,6 +52,8 @@ class BinanceSocketManager(threading.Thread):
         self._proxy_params = imvbiweut.parse_proxies(proxies) if proxies else {}
 
         self.create_ws_connection()
+        # Max attempts for retry subscription.
+        self.max_attempts = max_attempts
 
     def create_ws_connection(self):
         self.logger.debug(
@@ -89,7 +94,19 @@ class BinanceSocketManager(threading.Thread):
                 self.logger.error("Exception in read_data: {}".format(e))
                 raise e
 
-            if op_code == ABNF.OPCODE_CLOSE:
+            if op_code == ABNF.OPCODE_CLOSE and self.max_attempts:
+                # Handle cases where the connection closes unexpectedly during initial subscription attempts.
+                # Decrease the max attempts counter to manage reconnection attempts.
+                self.max_attempts = self.max_attempts - 1
+                self.logger.warning(
+                    "Subscribing Again, Attempts left %s", self.max_attempts
+                )
+                # Sleep for some random time to cool things down.
+                sleep_secs = random.randint(2,5)
+                time.sleep(sleep_secs)
+                self._callback(self.on_disconnect)
+                continue
+            elif op_code == ABNF.OPCODE_CLOSE:
                 self.logger.warning(
                     "CLOSE frame received, closing websocket connection"
                 )
@@ -104,6 +121,8 @@ class BinanceSocketManager(threading.Thread):
                 self._callback(self.on_pong)
             else:
                 data = frame.data
+                # If the subscription was successful, set max_attempts to 0 to avoid redundant resubscriptions.
+                self.max_attempts = 0
                 if op_code == ABNF.OPCODE_TEXT:
                     data = data.decode("utf-8")
                 self._callback(self.on_message, data)
