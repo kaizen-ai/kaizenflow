@@ -9,20 +9,24 @@ from io import StringIO
 import re
 import os
 from sqlalchemy import create_engine, text
-from load_sql import engine, session
-
+import mysql.connector
+import hashlib 
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key_here'
 jwt = JWTManager(app)
 
+MYSQL_USERNAME = 'username'
+MYSQL_PASSWORD = 'password23!'
+MYSQL_HOST = 'employee-db-sketl.mysql.database.azure.com'
+MYSQL_DATABASE = 'employees'
 
-db_folder = '/Users/josephsketl/Docs/School/Data605/Project/employee_db'
-db_file = os.path.join(db_folder, 'employees.db')
 
 # Create a SQLAlchemy engine
-engine = create_engine(f'sqlite:///{db_file}')
+engine = create_engine(f'mysql+mysqlconnector://{MYSQL_USERNAME}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{MYSQL_DATABASE}')
 
+Session = sessionmaker(bind=engine)
+session = Session()
 
 #----------------Authentication-----------------#
 # Initialize JWTManager
@@ -58,15 +62,30 @@ def protected():
 # Routes for CRUD operations
 # ---------------Create Operations----------------#
 
+# Generate a unique ID
+def generate_unique_id():
+    unique_id = uuid.uuid4()
+    hashed_id = hashlib.sha1(str(unique_id).encode()).hexdigest()[:6]
+    return int(hashed_id, 16)  # Convert hexadecimal to integer
+
+
+# Endpoint to generate a unique ID
+@app.route('/generate-unique-id', methods=['GET'])
+@jwt_required()
+def generate_unique_id_endpoint():
+    unique_id = generate_unique_id()
+    return jsonify({'unique_id': unique_id}), 200
+
 # Create a new employee
 @app.route('/employees', methods=['POST'])
 @jwt_required()
 def create_employee():
     # Parse request data
     data = request.json
-
+    emp_no = generate_unique_id()
     # Create a new Employee instance
     new_employee = Employee(
+        emp_no=emp_no,
         birth_date=data['birth_date'],
         first_name=data['first_name'],
         last_name=data['last_name'],
@@ -95,6 +114,7 @@ def create_employees_batch():
 
     for item in data:
         new_employee = Employee(
+            emp_no=item['emp_no'],
             birth_date=item['birth_date'],
             first_name=item['first_name'],
             last_name=item['last_name'],
@@ -197,16 +217,7 @@ def validate_row(row):
 
     return True
 
-# Generate a unique ID
-def generate_unique_id():
-    return str(uuid.uuid4())
 
-# Endpoint to generate a unique ID
-@app.route('/generate-unique-id', methods=['GET'])
-@jwt_required()
-def generate_unique_id_endpoint():
-    unique_id = generate_unique_id()
-    return jsonify({'unique_id': unique_id}), 200
 
 #-----------Read Operations----------------#
 @app.route('/employees', methods=['GET'])
