@@ -2,16 +2,18 @@
 <!-- TOC -->
 
 - [Data Streaming Platform with Apache Kafka](#data-streaming-platform-with-apache-kafka)
-  - [Overview](#overview)
-  - [Technologies Used](#technologies-used)
-  - [Project Structure](#project-structure)
-  - [Docker Implementation](#docker-implementation)
-  - [How to Run](#how-to-run)
-  - [Kafka Tutorial](#kafka-tutorial)
-  - [Implementing Data Streaming Platform](#implementing-data-streaming-platform)
-  - [Cleaning Up](#cleaning-up)
-  - [Conclusion](#conclusion)
+	- [Overview](#overview)
+	- [Technologies Used](#technologies-used)
+	- [Project Structure](#project-structure)
+	- [Docker Implementation](#docker-implementation)
+	- [How to Run](#how-to-run)
+	- [Kafka Tutorial](#kafka-tutorial)
+	- [Implementing Data Streaming Platform](#implementing-data-streaming-platform)
+	- [Cleaning Up](#cleaning-up)
+	- [Conclusion](#conclusion)
+	- [References](#references)
 
+<!-- /TOC -->
 <!-- /TOC -->
 
 # Data Streaming Platform with Apache Kafka
@@ -31,6 +33,7 @@ The goal is to create a reliable system that seamlessly produce, processes, and 
 ## Technologies Used
 - **Apache Kafka:** A distributed streaming platform that enables building real-time data pipelines and streaming applications. Kafka is used in this project to handle the publishing, storage, and processing of streams of records.
 - **ZooKeeper:** A centralized service for maintaining configuration information and providing distributed synchronization. In project, ZooKeeper ensures that all Kafka nodes within the cluster are consistently managed and kept in sync, which is essential for the proper functioning of our distributed streaming platform.
+- **Apache Avro:** : A data serialization format. In this project, Apache Avro is used to define schemas for our data, which are stored in Schema Registry. This setup ensures compatibility between the producers and consumers, and provides a robust mechanism for enforcing data contracts, managing schema evolution, and making Kafka data flows more efficient and reliable.
 - **Postgres:** An relational database system that is used in this project to store and manage the structured data generated from Kafka streams, supporting complex queries and data analysis.
 - **Docker:** A tool for developing, shipping, and running applications inside lightweight and portable containers. In this project, Docker is utilized to containerize all of our running services.
 - **Docker Compose:** A tool for defining and managing multi-container Docker applications. In this project, Docker Compose is used to configure and connect the Kafka, ZooKeeper, Jupyter Notebook and Postgres containers, simplifying the process of deploying the interconnected services.
@@ -41,8 +44,8 @@ The goal is to create a reliable system that seamlessly produce, processes, and 
 - `requirements.txt`: lists all the Python libraries required for the Jupyter Notebook server and other Python scripts in the project, such as producer and consumer.
 - `.gitignore`: specifies the files and directories that Git should ignore in the project
 - `kafka_tutorial.ipynb`: A Jupyter notebook that provides a tutorial on how to use Kafka with Python. It includes example code and explanations on creating topics, producing. and consuming messages.
-- `producer.py`: acts as a Kafka producer. It defines the Kafka producer's configuration and the logic for creating and publishing messages to our Kafka cluster
-- `consumer.py`: acts as a Kafka consumer. It defines the Kafka consumer's configuration and the logic to subscribe to topics and process incoming messages
+- `producer.py`: acts as a Kafka producer. It defines the Kafka producer's configuration and the logic for creating and publishing messages to our Kafka cluster.
+- `consumer.py`: acts as a Kafka consumer. It defines the Kafka consumer's configuration and the logic to subscribe to topics and process incoming messages.
 
 ## Docker Implementation
 
@@ -121,7 +124,13 @@ To get started, make sure all the containers are up and running, then
 
 ## Implementing Data Streaming Platform
 
-In the section, we will build a simple data streaming platform where a producer continuously generates messages and sends them to a topic in our Apache Kafka cluster. A consumer will subscribe to this topic, read and process the messages in real time, and then insert the processed data into our PostgreSQL database.
+In the section, we will build a simple data streaming platform where a producer continuously generates messages and sends them to a topic in our Apache Kafka cluster. A consumer subscribes to this topic, read and process the messages in real time, and then insert the processed data into our PostgreSQL database.
+
+Our data streaming platform consists of the the following components:
+- **Producer:** includes functionality for topic management, data generation, and message sending. It simulates trade data similar to those from the Binance trading platform. While currently it generates random trade data for demonstration, in a production environment, it could be adapted to listen to Binance's WebSocket API to stream real-time trade data directly into a Kafka topic.
+- **Kafka Cluster:** contains a single broker and manages a Kafka topic with three partitions to ensure distributed data processing and fault tolerance
+- **Consumer:** includes functionality for managing database connection, consuming messages, validating and inserting data into PosgresSQL database. It also create the necessary database and table structures if they don't exist.
+- **PostgreSQL:** a relational database for storing trade data, enabling persistent storage and further analysis.
 
 ```mermaid
 flowchart LR
@@ -192,3 +201,8 @@ docker compose down -v --remove-orphans
 ```
 
 ## Conclusion
+
+## References
+- https://kafka.apache.org/documentation.html
+- https://www.conduktor.io/kafka/kafka-fundamentals/
+- https://github.com/confluentinc/confluent-kafka-python/
