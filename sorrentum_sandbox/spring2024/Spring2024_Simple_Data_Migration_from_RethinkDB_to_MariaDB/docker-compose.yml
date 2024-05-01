@@ -1,0 +1,16 @@
+---
+version: "3.8"
+services:
+  jupyterlab:
+    build: ./Jupyterlab
+    ports:
+      - 8888:8888
+    volumes:
+      - ./Python Codes:/app
+  rethinkdb:
+    build: ./Rethinkdb
+    ports: 
+      - 8080:8080
+      - 28015:28015
+      - 29015:29015
+
