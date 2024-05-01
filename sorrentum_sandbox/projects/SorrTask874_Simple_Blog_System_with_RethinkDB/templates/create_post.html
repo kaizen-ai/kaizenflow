@@ -57,26 +57,31 @@
             margin-top: 20px;
         }
 
-        /* Style for the header */
-        h1 {
-            font-size: 40px; 
-            text-align: center; 
-            margin-top: 50px;
+        /* Style for text formatting buttons */
+        .formatting-button {
+            margin-right: 10px;
+            padding: 5px 10px;
+            font-size: 15px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-
-
     <h1>Create a New Post</h1>
     <a href="{{ url_for('index') }}" class="home-button">Back</a> <!-- Home button -->
 
     <form id="post-form" action="{{ url_for('create_post') }}" method="POST">
-        <label for="title">Title:</label><br>
+        <label for="title" style="font-size: 30px;">Title:</label><br>
         <input type="text" id="title" name="title" required><br> 
-        <label for="content">Content:</label><br>
-        <textarea id="content" name="content" rows="4" cols="50" required></textarea><br>
-        <input type="submit" id="submit-button" value="Submit"> 
+        <label for="content" style="font-size: 30px;">Content:</label><br>
+        <textarea id="content" name="content" rows="4" cols="50" required></textarea><br> 
+        
+        <!-- Formatting buttons -->
+        <button type="button" class="formatting-button" onclick="formatText('bold')">Bold</button>
+        <button type="button" class="formatting-button" onclick="formatText('italic')">Italic</button>
+        <button type="button" class="formatting-button" onclick="formatText('underline')">Underline</button>
+        
+        <input type="submit" id="submit-button" value="Submit"> <!-- Styled submit button -->
     </form>
 
     <!-- Confirmation message -->
@@ -89,26 +94,25 @@
             confirmationMsg.style.display = 'block';
             setTimeout(() => {
                 confirmationMsg.style.display = 'none';
-            }, 3000); 
+                window.location.href = "{{ url_for('index') }}";
+            }, 400); 
         }
 
         document.addEventListener('DOMContentLoaded', function() {
             const postForm = document.getElementById('post-form');
             const submitButton = document.getElementById('submit-button');
             
-            // Function to check if input fields are empty
+
             function checkInputs() {
                 const titleValue = document.getElementById('title').value.trim();
                 const contentValue = document.getElementById('content').value.trim();
                 submitButton.disabled = titleValue === '' || contentValue === '';
             }
 
-            // Event listeners for input fields
             postForm.addEventListener('input', checkInputs);
 
-            // Event listener for form submission
             postForm.addEventListener('submit', function(event) {
-                event.preventDefault(); // Prevent default form submission
+                event.preventDefault(); 
                 const formData = new FormData(postForm);
                 fetch(postForm.action, {
                     method: 'POST',
@@ -117,18 +121,42 @@
                 .then(response => {
                     if (response.ok) {
                         showConfirmationMessage();
-                        postForm.reset(); // Clear form inputs after successful submission
-                        submitButton.disabled = true; // Disable submit button after submission
+                        postForm.reset(); 
+                        submitButton.disabled = true;
                     } else {
-                        alert('Error creating post. Please try again.'); // Show error message
+                        alert('Error creating post. Please try again.'); 
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('An unexpected error occurred. Please try again later.'); // Show error message
+                    alert('An unexpected error occurred. Please try again later.'); 
                 });
             });
         });
+
+        // Function to format text (bold, italic, underline)
+        function formatText(style) {
+            const contentTextarea = document.getElementById('content');
+            const selectionStart = contentTextarea.selectionStart;
+            const selectionEnd = contentTextarea.selectionEnd;
+            const selectedText = contentTextarea.value.substring(selectionStart, selectionEnd);
+
+            let formattedText = '';
+            switch (style) {
+                case 'bold':
+                    formattedText = `<b>${selectedText}</b>`;
+                    break;
+                case 'italic':
+                    formattedText = `<i>${selectedText}</i>`;
+                    break;
+                case 'underline':
+                    formattedText = `<u>${selectedText}</u>`;
+                    break;
+            }
+
+            const newText = contentTextarea.value.substring(0, selectionStart) + formattedText + contentTextarea.value.substring(selectionEnd);
+            contentTextarea.value = newText;
+        }
     </script>
 </body>
 </html>

@@ -1,14 +1,26 @@
-version: '3'
+version: '3.8'
+
 services:
-  flask-app:
+  blog:
+    container_name: blog
     build: .
+    image: blog
     ports:
-      - "4000:5000"
+      - "5001:5001"
+    networks:
+      - blognet
     depends_on:
       - rethinkdb
 
   rethinkdb:
-    image: rethinkdb:latest
+    container_name: rethinkdb
+    image: rethinkdb
+    networks:
+      - blognet
     ports:
-      - "28015:28015"
       - "8080:8080"
+      - "28015:28015"
+      - "29015:29015"
+
+networks:
+  blognet:
