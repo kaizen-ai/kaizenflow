@@ -14,6 +14,7 @@ def fetch_historical_data(pair, since):
         'since': since
     }
     response = requests.get(url, params=params)
+    print(response.json()) #this will print json file from the API
     if response.status_code == 200:
         data = response.json()
         return data['result'][pair], data['result']['last']
@@ -23,16 +24,17 @@ def fetch_historical_data(pair, since):
         return [], None
 
 def save_data(data, filename):
-    with open(filename, 'w') as file:
+    directory = '/app/data'  # Set the directory to the mounted volume
+    filepath = os.path.join(directory, filename)
+    with open(filepath, 'w') as file:
         json.dump(data, file, indent=4)
-
+        
 def main():
     pairs = {
         'BTCUSD': 'XXBTZUSD',
         'ETHUSD': 'XETHZUSD',
         'SOLUSD': 'SOLUSD',
         'LINKUSD': 'LINKUSD',
-        'XBTUSD': 'XBTUSD',
         'SOLUSD': 'SOLUSD',
         'ADAUSD': 'ADAUSD',
         'AXSUSD': 'AXSUSD',
@@ -40,8 +42,6 @@ def main():
         'ENJUSD': 'ENJUSD',
         'RNDRUSD': 'RNDRUSD',
         'VTHOUSD': 'VTHOUSD',
-        'QSPUSD': 'QSPUSD',
-        'VARAUSD': 'VARAUSD',
         'USDTUSD': 'USDTUSD',
         'INJUSD': 'INJUSD',
         'MATICUSD': 'MATICUSD'
@@ -77,5 +77,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
