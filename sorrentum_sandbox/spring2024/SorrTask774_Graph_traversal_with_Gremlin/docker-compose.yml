@@ -1,15 +1,11 @@
-version: '3'
-
 services:
-  gremlin:
+  gremlin-server:
     image: tinkerpop/gremlin-server
     ports:
       - "8182:8182"
-    volumes:
-      - ./gremlin-server.yaml:/opt/gremlin-server/conf/gremlin-server.yaml
 
   gremlin-python:
     build:
       context: .
     depends_on:
-      - gremlin
+      - gremlin-server
