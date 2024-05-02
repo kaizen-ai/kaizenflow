@@ -268,7 +268,6 @@ class Test_split_positive_and_negative_parts(hunitest.TestCase):
         2023-04-04      75.0       0.0
         2023-04-05       0.0      25.0
         """
-        #
         self.check_df_output(
             actual_df,
             expected_length,
