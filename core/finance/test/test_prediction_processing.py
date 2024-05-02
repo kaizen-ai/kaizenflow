@@ -70,7 +70,7 @@ class TestComputeEpoch(hunitest.TestCase):
 
     def get_series_input(self) -> pd.Series:
         """
-        Generate series input data for test.
+        Fetch series input data for test.
         """
         timestamp_index = pd.date_range("2024-01-01", periods=10, freq="T")
         close = list(range(200, 210))
@@ -80,8 +80,13 @@ class TestComputeEpoch(hunitest.TestCase):
 
     def get_dataframe_input(self) -> pd.DataFrame:
         """
-        Generate dataframe input data for test.
+        Fetch dataframe input data for test.
         """
+        timestamp_index = pd.date_range("2024-01-01", periods=10, freq="T")
+        volume = list(range(40, 50))
+        data = {"timestamp": timestamp_index, "volume": volume}
+        df = pd.DataFrame(data=data).set_index("timestamp")
+        return df
 
     def test1(self) -> None:
         """
@@ -171,3 +176,32 @@ class TestComputeEpoch(hunitest.TestCase):
         """
         Test dataframe input data with any unit.
         """
+        df = self.get_dataframe_input()
+        # Testing df input with default unit - minute.
+        result_df = cfiprpro.compute_epoch(df)
+        # Define expected values.
+        expected_length = 10
+        expected_column_value = None
+        expected_signature = r"""
+        # df=
+        index=[2024-01-01 00:00:00, 2024-01-01 00:09:00]
+        columns=minute
+        shape=(10, 1)
+                                minute
+                  timestamp
+        2024-01-01 00:00:00        28401120
+        2024-01-01 00:01:00        28401121
+        2024-01-01 00:02:00        28401122
+                                 ...
+        2024-01-01 00:07:00        28401127
+        2024-01-01 00:08:00        28401128
+        2024-01-01 00:09:00        28401129
+        """
+        # Check signature.
+        self.check_df_output(
+            result_df,
+            expected_length,
+            expected_column_value,
+            expected_column_value,
+            expected_signature,
+        )
