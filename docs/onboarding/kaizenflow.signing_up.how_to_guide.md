@@ -4,7 +4,7 @@
   are doing, and you have time to contribute
   - Ponder on the **IMPORTANT** note about committing to contribute to the
     project [here](/README.md#commitment-to-Contribute)
-  - Please fork, star, watch the Sorrentum repo so that GitHub promotes our repo
+  - Please fork, star, watch the KaizenFlow repo so that GitHub promotes our repo
     (this will help us promote our effort)
 
 - Fill out the
@@ -13,13 +13,13 @@
   - Don’t worry: by working with us, you will quickly become a coding machine
 
 - Communication with the project teams happens through:
-  - GitHub on the [repo](https://github.com/sorrentum/sorrentum) like in any
+  - GitHub on the [repo](https://github.com/kaizen-ai/kaizenflow) like in any
     open-source development
   - Telegram IM channel for higher bandwidth discussion
-  - Through the Sorrentum mailing list
+  - Through the KaizenFlow mailing list
 
 - Accept the invite from GitHub that we will send you
-  - Again please don't forget to fork, star, watch the Sorrentum repo so that
+  - Again please don't forget to fork, star, watch the KaizenFlow repo so that
     GitHub promotes our repo
 
 - Accept the invite to join the Google Drive that we will send you
