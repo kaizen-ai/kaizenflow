@@ -68,33 +68,23 @@ class TestComputeEpoch(hunitest.TestCase):
     Test the computation of epoch time series with different units.
     """
 
-    def get_series_input(self) -> pd.Series:
+    def helper(self) -> pd.Series:
         """
-        Fetch series input data for test.
+        Fetch input data for test.
         """
         timestamp_index = pd.date_range("2024-01-01", periods=10, freq="T")
         close = list(range(200, 210))
-        data = {"timestamp": timestamp_index, "close": close}
-        srs = pd.Series(data, timestamp_index)
+        data = {"close": close}
+        srs = pd.Series(data=data, index=timestamp_index)
         return srs
-
-    def get_dataframe_input(self) -> pd.DataFrame:
-        """
-        Fetch dataframe input data for test.
-        """
-        timestamp_index = pd.date_range("2024-01-01", periods=10, freq="T")
-        volume = list(range(40, 50))
-        data = {"timestamp": timestamp_index, "volume": volume}
-        df = pd.DataFrame(data=data).set_index("timestamp")
-        return df
 
     def test1(self) -> None:
         """
-        Test series input data with unit - minute.
+        Check that epoch is computed correctly for minute unit.
         """
         unit = "minute"
-        srs = self.get_series_input()
-        result_srs = cfiprpro.compute_epoch(srs, unit=unit)
+        srs = self.helper()
+        result = cfiprpro.compute_epoch(srs, unit=unit)
         # Define expected values.
         expected_length = 10
         expected_column_value = None
@@ -113,16 +103,16 @@ class TestComputeEpoch(hunitest.TestCase):
         """
         # Check signature.
         self.check_srs_output(
-            result_srs, expected_length, expected_column_value, expected_signature
+            result, expected_length, expected_column_value, expected_signature
         )
 
     def test2(self) -> None:
         """
-        Test series input data with unit - second.
+        Check that epoch is computed correctly for second unit.
         """
         unit = "second"
-        srs = self.get_series_input()
-        result_srs = cfiprpro.compute_epoch(srs, unit=unit)
+        srs = self.helper()
+        result = cfiprpro.compute_epoch(srs, unit=unit)
         # Define expected values.
         expected_length = 10
         expected_column_value = None
@@ -141,16 +131,16 @@ class TestComputeEpoch(hunitest.TestCase):
         """
         # Check signature.
         self.check_srs_output(
-            result_srs, expected_length, expected_column_value, expected_signature
+            result, expected_length, expected_column_value, expected_signature
         )
 
     def test3(self) -> None:
         """
-        Test series input data with unit - nanosecond.
+        Check that epoch is computed correctly for nanosecond unit.
         """
         unit = "nanosecond"
-        srs = self.get_series_input()
-        result_srs = cfiprpro.compute_epoch(srs, unit=unit)
+        srs = self.helper()
+        result = cfiprpro.compute_epoch(srs, unit=unit)
         # Define expected values.
         expected_length = 10
         expected_column_value = None
@@ -169,16 +159,18 @@ class TestComputeEpoch(hunitest.TestCase):
         """
         # Check signature.
         self.check_srs_output(
-            result_srs, expected_length, expected_column_value, expected_signature
+            result, expected_length, expected_column_value, expected_signature
         )
 
     def test4(self) -> None:
         """
-        Test dataframe input data with any unit.
+        Check that epoch is computed correctly for dataframe input.
         """
-        df = self.get_dataframe_input()
-        # Testing df input with default unit - minute.
-        result_df = cfiprpro.compute_epoch(df)
+        srs = self.helper()
+        # Convert series data to dataframe
+        df = srs.to_frame()
+        # Testing input with default unit - minute.
+        result = cfiprpro.compute_epoch(df)
         # Define expected values.
         expected_length = 10
         expected_column_value = None
@@ -188,7 +180,6 @@ class TestComputeEpoch(hunitest.TestCase):
         columns=minute
         shape=(10, 1)
                                 minute
-                  timestamp
         2024-01-01 00:00:00        28401120
         2024-01-01 00:01:00        28401121
         2024-01-01 00:02:00        28401122
@@ -199,7 +190,7 @@ class TestComputeEpoch(hunitest.TestCase):
         """
         # Check signature.
         self.check_df_output(
-            result_df,
+            result,
             expected_length,
             expected_column_value,
             expected_column_value,
