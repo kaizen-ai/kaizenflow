@@ -60,7 +60,7 @@ datetime,MN0,MN1,MN0,MN1,MN0,MN1,MN0,MN1
         return df
 
 
-# ########################################################################
+# #############################################################################
 
 
 class TestComputeEpoch(hunitest.TestCase):
@@ -68,32 +68,106 @@ class TestComputeEpoch(hunitest.TestCase):
     Test the computation of epoch time series with different units.
     """
 
-    def get_series_data(self):
+    def get_series_input(self) -> pd.Series:
         """
         Generate series input data for test.
         """
+        timestamp_index = pd.date_range("2024-01-01", periods=10, freq="T")
+        close = list(range(200, 210))
+        data = {"timestamp": timestamp_index, "close": close}
+        srs = pd.Series(data, timestamp_index)
+        return srs
 
-    def get_dataframe_data(self):
+    def get_dataframe_input(self) -> pd.DataFrame:
         """
-        Generateb dataframe input data for test.
-        """
-
-    def test1(self):
-        """
-        Test series input data with unit - minutes.
-        """
-
-    def test2(self):
-        """
-        Test series input data with unit - seconds.
+        Generate dataframe input data for test.
         """
 
-    def test3(self):
+    def test1(self) -> None:
         """
-        Test series input data with unit - nanoseconds.
+        Test series input data with unit - minute.
         """
+        unit = "minute"
+        srs = self.get_series_input()
+        result_srs = cfiprpro.compute_epoch(srs, unit=unit)
+        # Define expected values.
+        expected_length = 10
+        expected_column_value = None
+        expected_signature = r"""
+                              minute
+        2024-01-01 00:00:00    28401120
+        2024-01-01 00:01:00    28401121
+        2024-01-01 00:02:00    28401122
+        2024-01-01 00:03:00    28401123
+        2024-01-01 00:04:00    28401124
+        2024-01-01 00:05:00    28401125
+        2024-01-01 00:06:00    28401126
+        2024-01-01 00:07:00    28401127
+        2024-01-01 00:08:00    28401128
+        2024-01-01 00:09:00    28401129
+        """
+        # Check signature.
+        self.check_srs_output(
+            result_srs, expected_length, expected_column_value, expected_signature
+        )
 
-    def test4(self):
+    def test2(self) -> None:
+        """
+        Test series input data with unit - second.
+        """
+        unit = "second"
+        srs = self.get_series_input()
+        result_srs = cfiprpro.compute_epoch(srs, unit=unit)
+        # Define expected values
+        expected_length = 10
+        expected_column_value = None
+        expected_signature = r"""
+                                second
+        2024-01-01 00:00:00    1704067200
+        2024-01-01 00:01:00    1704067260
+        2024-01-01 00:02:00    1704067320
+        2024-01-01 00:03:00    1704067380
+        2024-01-01 00:04:00    1704067440
+        2024-01-01 00:05:00    1704067500
+        2024-01-01 00:06:00    1704067560
+        2024-01-01 00:07:00    1704067620
+        2024-01-01 00:08:00    1704067680
+        2024-01-01 00:09:00    1704067740
+        """
+        # Check signature.
+        self.check_srs_output(
+            result_srs, expected_length, expected_column_value, expected_signature
+        )
+
+    def test3(self) -> None:
+        """
+        Test series input data with unit - nanosecond.
+        """
+        unit = "nanosecond"
+        srs = self.get_series_input()
+        result_srs = cfiprpro.compute_epoch(srs, unit=unit)
+        # Define expected values
+        expected_length = 10
+        expected_column_value = None
+        expected_signature = r"""
+                                     nanosecond
+        2024-01-01 00:00:00    1704067200000000000
+        2024-01-01 00:01:00    1704067260000000000
+        2024-01-01 00:02:00    1704067320000000000
+        2024-01-01 00:03:00    1704067380000000000
+        2024-01-01 00:04:00    1704067440000000000
+        2024-01-01 00:05:00    1704067500000000000
+        2024-01-01 00:06:00    1704067560000000000
+        2024-01-01 00:07:00    1704067620000000000
+        2024-01-01 00:08:00    1704067680000000000
+        2024-01-01 00:09:00    1704067740000000000
+        """
+        # Check signature.
+        self.check_srs_output(
+            result_srs, expected_length, expected_column_value, expected_signature
+        )
+
+    def test4(self) -> None:
         """
         Test dataframe input data with any unit.
         """
