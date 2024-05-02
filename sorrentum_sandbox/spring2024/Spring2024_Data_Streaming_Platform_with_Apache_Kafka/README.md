@@ -4,6 +4,7 @@
 - [Data Streaming Platform with Apache Kafka](#data-streaming-platform-with-apache-kafka)
 	- [Overview](#overview)
 	- [Technologies Used](#technologies-used)
+	- [Understanding Apache Kafka](#understanding-apache-kafka)
 	- [Project Structure](#project-structure)
 	- [Docker Implementation](#docker-implementation)
 	- [How to Run](#how-to-run)
@@ -15,20 +16,23 @@
 
 <!-- /TOC -->
 <!-- /TOC -->
+<!-- /TOC -->
 
 # Data Streaming Platform with Apache Kafka
 
 - Author: Heanh Sok
-- GitHub Account: heanhsok 
+- GitHub Account: heanhsok
 - Email: heanhsok@umd.edu
 
 ## Overview
 
-The project involves setting up Apache Kafka and a PostgreSQL database encapsulated in multiple Docker containers with docker-compose to establish a streamlined data streaming platform.
+The project involves setting up Apache Kafka and a PostgreSQL database, encapsulated in multiple Docker containers using docker-compose, to establish a streamlined data streaming platform.
 
-Utilize Python to simulate the production of a continuous data stream, format it for Kafka ingestion (topics), and configure producers for efficient data transfer into Kafka topics. Python-based Kafka consumers will read data from our Kafka stream, process and validate it before storing it into PostgreSQL using a predefined schema.
+First, we will learn the fundamentals of Kafka and understand its essential building blocks. We will also go through an interactive coding example as a tutorial in a Jupyter notebook, where we can apply the concepts we have learned in practice.
 
-The goal is to create a reliable system that seamlessly produce, processes, and securely stores external data in real-time using Kafka as the intermediary, Python for logic handling, and Docker for deployment flexibility.
+Then, we will build a simple data streaming platform. Python is utilized to simulate the production of a continuous data stream, format it for Kafka ingestion (topics), and configure producers for efficient data transfer into Kafka topics. Python-based Kafka consumers will read data from our Kafka stream, process and validate it before storing it into PostgreSQL using a predefined schema.
+
+The goal is to learn how a data streaming platform is built using Kafka and to create a reliable system that seamlessly produces, processes, and securely stores external data in real-time using Kafka as the intermediary, Python for logic handling, and Docker for deployment flexibility.
 
 ## Technologies Used
 - **Apache Kafka:** A distributed streaming platform that enables building real-time data pipelines and streaming applications. Kafka is used in this project to handle the publishing, storage, and processing of streams of records.
@@ -37,6 +41,21 @@ The goal is to create a reliable system that seamlessly produce, processes, and 
 - **Postgres:** An relational database system that is used in this project to store and manage the structured data generated from Kafka streams, supporting complex queries and data analysis.
 - **Docker:** A tool for developing, shipping, and running applications inside lightweight and portable containers. In this project, Docker is utilized to containerize all of our running services.
 - **Docker Compose:** A tool for defining and managing multi-container Docker applications. In this project, Docker Compose is used to configure and connect the Kafka, ZooKeeper, Jupyter Notebook and Postgres containers, simplifying the process of deploying the interconnected services.
+
+## Understanding Apache Kafka
+
+Before we dive into the code examples, this section will focus on learning the fundamentals of Kafka and understanding its essential building blocks.
+
+- **Kafka:** is an open source distributed streaming platform that enables building real-time data pipelines and streaming applications. It is designed to handle vast amounts of data efficiently which makes it an essential tool for dealing with high-volume data processing. Kafka operates on a publish-subscribe model whick makes it highly scalable and fault-tolerant.
+- **Kafka Cluster:** consists of one or more servers (nodes), each of which is called a broker. Clusters are used to manage the storage and processing of stream's data. The distributed nature of the cluster enhances both the scalability and fault tolerance of system.
+- **Producer:** is any application or service that publishes records to Kafka topics.
+- **Consumer:** is any application or service that reads records from Kafka topics. It subscribes to one or more topics and reads the records in the order in which they were stored.
+- **Message:** are the basic unit of data. Each message is a key-value pair stored in topics. Messages are appended to a Kafka topic and are read by consumers.
+- **Topic:** allows us to organize our messages. It is a category where producers publish messages to. Multiple producers can publish to a topic and a topic can be subscibed to by multiple consumers.
+- **Partition:** Topics are split into partitions which allows the data to be spread across the cluster. Each partition is an ordered, immutable sequence of messages that is continually appended to. Partitions allow topics to be parallelized by splitting the data across multiple brokers.
+- **Replication Factor:** defines the number of copies of partitions over multiple Kafka brokers. Higher replication factors ensure greater availability and durability of data.
+- **Comsumer Group:** consist of multiple consumers who work together to consume data. Each consumer in a group reads from exclusive partitions of a topic. No two consumers in the same group read the same data. This allows the consumer group to scale horizontally, processing data in parallel.
+- **Offset:** a sequential ID number assigned to each record in a partition that uniquely identifies it. Consumers track offsets to know where they are in a stream and to ensure messages are processed in order. This approach allows consumers to resume from where they left off in case of failure or restart.
 
 ## Project Structure
 - `docker-compose.yml`: defines the multi-container Docker applications for this project. It specifies services, networks, and volumes based on the Docker images and configurations.
@@ -63,26 +82,19 @@ graph TD
 		J -- "8081" --> SR
 		J -- "5432" --> PG
 	end
-	u((8080)) -- "8080:8080" --> J
+	u((8888)) -- "8888:8888" --> J
 ```
 
 The above diagram illustrates the network setup and inter-component communication within our Kafka data streaming project using Docker containers, all running inside `kafka_network` to ensure isolated and secured communication pathways.
 
 - **`zookeeper`**: manages and coordinates the Kafka `broker`. It connects to the `broker` on port `2181`, facilitating the management of broker states and cluster membership.
-
 - **`broker`**: acts as the central Kafka `broker` managing the flow of messages. It communicates with the `schema-registry` on port `8081` to handle schema validation and versioning for the messages being processed.
-
 - **`schema-registry`**: provides a serving layer for our metadata. It interfaces with the Kafka `broker` and `jupyter` notebook service on port `8081` to ensure that message schemas are correctly applied and enforced during data streaming.
-
 - **`jupyter`**: A Jupyter notebook environment configured to interact with the Kafka `broker`, `schema-registry`, and Postgres `pgdatabase`. It connects to the broker on port `9092` for message streaming, to the schema registry on port `8081` for schema interactions, and to the Postgres database on port `5432` for data storage and querying.
-
 - **`pgdatabase`**: A Postgres database used for storing and managing structured data that are streamed from our Kafka cluster.
-
-- Access to the `jupyter` notebook container from the host machine is facilitated through port `8080`.
+- Access to the `jupyter` notebook container from the host machine is facilitated through port `8888`.
 
 This setup not only ensures each service is isolated but also remains interconnected within the defined network for seamless data flow and processing.
-
-
 
 ## How to Run
 - Run the following command to build, start, and run all of our Docker containers defined in our `docker-compose.yml` file in detached mode (running in background)
@@ -113,9 +125,10 @@ In this section, we will go through interactive code examples in Jupyter Noteboo
 1. Create topics and define partitions and replication factors.
 2. Create producers and send messages to the topic.
 3. Create consumers that read and process messages from the topic.
-4. Set up a PostgreSQL database and create a table for storing messages.
-5. Create consumers that read and process messages from the topic, and insert them into our database.
-6. Explore data in our PostgreSQL database.
+4. Create schema validation for producer and consumer using Apache Avro as data serialization.
+5. Set up a PostgreSQL database and create a table for storing messages.
+6. Create consumers that read and process messages from the topic, and insert them into our database.
+7. Explore data in our PostgreSQL database.
 
 To get started, make sure all the containers are up and running, then
 1. Open your web browser and go to [http://localhost:8888](http://localhost:8888) to access the Jupyter Notebook.
@@ -202,7 +215,10 @@ docker compose down -v --remove-orphans
 
 ## Conclusion
 
+In conclusion, this project has demonstrated how to set up a robust data streaming platform using Apache Kafka and PostgreSQL, encapsulated within Docker containers. Through interactive tutorial and practical implementation of the system, we have gained a solid understanding of Kafka's fundamental and its essential elements for building real-time data streaming system. As we move forward, the knowledge and skills acquired from this project can laid a good foundation for tackling more complex data streaming challenges and exploring further innovations in the field of real-time data processing.
+
 ## References
 - https://kafka.apache.org/documentation.html
 - https://www.conduktor.io/kafka/kafka-fundamentals/
+- https://redpanda.com/guides/kafka-tutorial
 - https://github.com/confluentinc/confluent-kafka-python/
