@@ -123,7 +123,7 @@ class TestComputeEpoch(hunitest.TestCase):
         unit = "second"
         srs = self.get_series_input()
         result_srs = cfiprpro.compute_epoch(srs, unit=unit)
-        # Define expected values
+        # Define expected values.
         expected_length = 10
         expected_column_value = None
         expected_signature = r"""
@@ -151,7 +151,7 @@ class TestComputeEpoch(hunitest.TestCase):
         unit = "nanosecond"
         srs = self.get_series_input()
         result_srs = cfiprpro.compute_epoch(srs, unit=unit)
-        # Define expected values
+        # Define expected values.
         expected_length = 10
         expected_column_value = None
         expected_signature = r"""
