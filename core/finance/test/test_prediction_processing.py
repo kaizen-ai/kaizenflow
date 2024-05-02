@@ -167,9 +167,7 @@ class TestComputeEpoch(hunitest.TestCase):
         Check that epoch is computed correctly for dataframe input.
         """
         srs = self.helper()
-        # Convert series data to dataframe
         df = srs.to_frame()
-        # Testing input with default unit - minute.
         result = cfiprpro.compute_epoch(df)
         # Define expected values.
         expected_length = 10
