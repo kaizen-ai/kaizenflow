@@ -3,3 +3,4 @@ phoenix
 data/
 logs
 old/
+config.json
