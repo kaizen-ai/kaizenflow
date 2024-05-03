@@ -9,6 +9,9 @@ LABEL description="This is my project Docker image for running a Python script a
 # Set user to root to install additional software
 USER root
 
+#Create data directory
+RUN mkdir -p /app/data
+
 # Install Python dependencies
 COPY requirements.txt /tmp/
 RUN pip install --no-cache-dir -r /tmp/requirements.txt

@@ -12,12 +12,20 @@ services:
       - "8888:8888"
     depends_on:
       - redis
+    networks:
+      - app-network
 
   redis:
     image: redis
     ports:
       - "6379:6379"
+    networks:
+      - app-network
 
 volumes:
   data:
     driver: local
+
+networks:
+  app-network:
+    driver: bridge
