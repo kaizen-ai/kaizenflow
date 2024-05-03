@@ -58,3 +58,139 @@ datetime,MN0,MN1,MN0,MN1,MN0,MN1,MN0,MN1
         )
         df.index.freq = "T"
         return df
+
+
+# #############################################################################
+
+
+class TestComputeEpoch(hunitest.TestCase):
+    """
+    Test the computation of epoch time series with different units.
+    """
+
+    def helper(self) -> pd.Series:
+        """
+        Fetch input data for test.
+        """
+        timestamp_index = pd.date_range("2024-01-01", periods=10, freq="T")
+        close = list(range(200, 210))
+        data = {"close": close}
+        srs = pd.Series(data=data, index=timestamp_index)
+        return srs
+
+    def test1(self) -> None:
+        """
+        Check that epoch is computed correctly for minute unit.
+        """
+        unit = "minute"
+        srs = self.helper()
+        result = cfiprpro.compute_epoch(srs, unit=unit)
+        # Define expected values.
+        expected_length = 10
+        expected_column_value = None
+        expected_signature = r"""
+                              minute
+        2024-01-01 00:00:00    28401120
+        2024-01-01 00:01:00    28401121
+        2024-01-01 00:02:00    28401122
+        2024-01-01 00:03:00    28401123
+        2024-01-01 00:04:00    28401124
+        2024-01-01 00:05:00    28401125
+        2024-01-01 00:06:00    28401126
+        2024-01-01 00:07:00    28401127
+        2024-01-01 00:08:00    28401128
+        2024-01-01 00:09:00    28401129
+        """
+        # Check signature.
+        self.check_srs_output(
+            result, expected_length, expected_column_value, expected_signature
+        )
+
+    def test2(self) -> None:
+        """
+        Check that epoch is computed correctly for second unit.
+        """
+        unit = "second"
+        srs = self.helper()
+        result = cfiprpro.compute_epoch(srs, unit=unit)
+        # Define expected values.
+        expected_length = 10
+        expected_column_value = None
+        expected_signature = r"""
+                                second
+        2024-01-01 00:00:00    1704067200
+        2024-01-01 00:01:00    1704067260
+        2024-01-01 00:02:00    1704067320
+        2024-01-01 00:03:00    1704067380
+        2024-01-01 00:04:00    1704067440
+        2024-01-01 00:05:00    1704067500
+        2024-01-01 00:06:00    1704067560
+        2024-01-01 00:07:00    1704067620
+        2024-01-01 00:08:00    1704067680
+        2024-01-01 00:09:00    1704067740
+        """
+        # Check signature.
+        self.check_srs_output(
+            result, expected_length, expected_column_value, expected_signature
+        )
+
+    def test3(self) -> None:
+        """
+        Check that epoch is computed correctly for nanosecond unit.
+        """
+        unit = "nanosecond"
+        srs = self.helper()
+        result = cfiprpro.compute_epoch(srs, unit=unit)
+        # Define expected values.
+        expected_length = 10
+        expected_column_value = None
+        expected_signature = r"""
+                                     nanosecond
+        2024-01-01 00:00:00    1704067200000000000
+        2024-01-01 00:01:00    1704067260000000000
+        2024-01-01 00:02:00    1704067320000000000
+        2024-01-01 00:03:00    1704067380000000000
+        2024-01-01 00:04:00    1704067440000000000
+        2024-01-01 00:05:00    1704067500000000000
+        2024-01-01 00:06:00    1704067560000000000
+        2024-01-01 00:07:00    1704067620000000000
+        2024-01-01 00:08:00    1704067680000000000
+        2024-01-01 00:09:00    1704067740000000000
+        """
+        # Check signature.
+        self.check_srs_output(
+            result, expected_length, expected_column_value, expected_signature
+        )
+
+    def test4(self) -> None:
+        """
+        Check that epoch is computed correctly for dataframe input.
+        """
+        srs = self.helper()
+        df = srs.to_frame()
+        result = cfiprpro.compute_epoch(df)
+        # Define expected values.
+        expected_length = 10
+        expected_column_value = None
+        expected_signature = r"""
+        # df=
+        index=[2024-01-01 00:00:00, 2024-01-01 00:09:00]
+        columns=minute
+        shape=(10, 1)
+                                minute
+        2024-01-01 00:00:00        28401120
+        2024-01-01 00:01:00        28401121
+        2024-01-01 00:02:00        28401122
+                                 ...
+        2024-01-01 00:07:00        28401127
+        2024-01-01 00:08:00        28401128
+        2024-01-01 00:09:00        28401129
+        """
+        # Check signature.
+        self.check_df_output(
+            result,
+            expected_length,
+            expected_column_value,
+            expected_column_value,
+            expected_signature,
+        )
