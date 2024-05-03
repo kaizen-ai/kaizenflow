@@ -47,8 +47,8 @@ try:
             'MANAUSD': 'MANAUSD',
             'ENJUSD': 'ENJUSD',
             'RNDRUSD': 'RNDRUSD',
-            'VTHOUSD': 'VTHOUSD',
-            'USDTUSD': 'USDTUSD',
+        #   'VTHOUSD': 'VTHOUSD',
+        #   'USDT': 'USDTUSD',
             'INJUSD': 'INJUSD',
             'MATICUSD': 'MATICUSD'
         }
