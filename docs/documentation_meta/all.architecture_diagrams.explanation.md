@@ -446,7 +446,7 @@
 
 ### Class Notation
 
-- A class represents a concept which encapsulates state (attributes) and 
+- A class represents a concept which encapsulates state (attributes) and
   behavior (methods)
 - The class name is the only mandatory information
 - The class diagram consists of
@@ -475,6 +475,7 @@
     - `#` denotes protected attributes or methods
 
 - An example of a Class Diagram is below
+
   ```mermaid
   classDiagram
 
@@ -495,13 +496,13 @@
 #### Inheritance/Generalization
 
 - It indicates that:
-  - one of the two related classes (the subclass) is considered to be a
+  - One of the two related classes (the subclass) is considered to be a
     specialized form of the other (the superclass) and
-  - the superclass is considered a generalization of the subclass
+  - The superclass is considered a generalization of the subclass
 - Each instance of the subclass is also an indirect instance of the superclass
 - Represents an "is-a" relationship
 - An abstract class name is shown in italics
- 
+
 - Example: in the given diagram, class `Animal` is the superclass and class
   `Duck` and `Fish` are its subclass
 
@@ -539,7 +540,7 @@
 - Aggregation
   - A special type of association which represents a "part of" relationship
   - Variant of the "has-a" association relationship
-  - Many instances (denoted by the diamond) of `Duck` can be associated with 
+  - Many instances (denoted by the diamond) of `Duck` can be associated with
     `Pond`
   - `Duck` is part of `Pond`
   - Objects of `Pond` and `Duck` have separate lifetimes
@@ -558,7 +559,7 @@
   - Objects of `Class2` live and die with `Class1`
   - `Class2` cannot stand by itself
   - In the given e.g., a `Car` has exactly one `Carburetor`, and a `Carburetor`
-  - is a part of one `Car`. `Carburetor`s cannot exist as separate parts,
+  - Is a part of one `Car`. `Carburetor`s cannot exist as separate parts,
     detached from a specific `Car`
 
   ```mermaid

@@ -163,16 +163,13 @@ def sanity_check_indices_difference(
 # # Config
 
 # %%
-config = cconfig.get_config_from_env()
-if config:
-    # Get config from env when running the notebook via the `run_notebook.py`
-    # script, e.g., in the system reconciliation flow.
-    _LOG.info("Using config from env vars")
-else:
+# When running manually, specify the path to the config to load config from file,
+# for e.g., `.../reconciliation_notebook/fast/result_0/config.pkl`.
+config_file_name = None
+config = cconfig.get_notebook_config(config_file_name)
+if config is None:
     id_col = "asset_id"
-    system_log_dir = (
-        "/shared_data/CmTask6032/system_log_dir.manual/process_forecasts"
-    )
+    system_log_dir = "/shared_data/CmTask7811/20240405_105500.20240405_115000/system_log_dir.manual/process_forecasts"
     # Load pickled SystemConfig.
     config_file_name = "system_config.output.values_as_strings.pkl"
     system_config_dir = system_log_dir.rstrip("/process_forecasts")
@@ -187,19 +184,23 @@ else:
         universe_version = rsiprrec.extract_universe_version_from_pkl_config(
             system_config_dir
         )
+        table_name = rsiprrec.extract_table_name_from_pkl_config(
+            system_config_dir
+        )
         price_column_name = rsiprrec.extract_price_column_name_from_pkl_config(
             system_config_dir
         )
     else:
         hdbg.dassert_isinstance(system_config, cconfig.Config)
-        universe_version = system_config["market_data_config"][
-            "im_client_config"
-        ]["universe_version"]
+        universe_version = system_config["market_data_config"]["universe_version"]
         bar_duration_in_secs = system_config["dag_runner_config"][
             "bar_duration_in_secs"
         ]
-        bar_duration_in_mins = int(bar_duration_in_secs / 60)
+        bar_duration_in_mins = int(int(bar_duration_in_secs) / 60)
         bar_duration = f"{bar_duration_in_mins}T"
+        table_name = system_config["market_data_config"]["im_client_config"][
+            "table_name"
+        ]
         price_column_name = system_config["portfolio_config"][
             "mark_to_market_col"
         ]
@@ -208,10 +209,13 @@ else:
     config_dict = {
         "id_col": id_col,
         "system_log_dir": system_log_dir,
-        "ohlcv_market_data": {
+        "market_data": {
             "vendor": vendor,
             "mode": mode,
             "universe_version": universe_version,
+            "im_client_config": {
+                "table_name": table_name,
+            },
         },
         "price_column_name": price_column_name,
         "bar_duration": bar_duration,
@@ -279,7 +283,7 @@ parent_order_df = ccxt_log_reader.load_oms_parent_order(convert_to_dataframe=Tru
 parent_order_df.head(3)
 
 # %% [markdown]
-# ## Load OHLCV data
+# ## Load market data
 
 # %%
 # TODO(Paul): Refine the cuts around the first and last bars.
@@ -291,28 +295,38 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 # %%
 universe_version = config.get_and_mark_as_used(
     (
-        "ohlcv_market_data",
+        "market_data",
         "universe_version",
     )
 )
 vendor = config.get_and_mark_as_used(
     (
-        "ohlcv_market_data",
+        "market_data",
         "vendor",
     )
 )
 mode = config.get_and_mark_as_used(
     (
-        "ohlcv_market_data",
+        "market_data",
         "mode",
+    )
+)
+table_name = config.get_and_mark_as_used(
+    (
+        "market_data",
+        "im_client_config",
+        "table_name",
     )
 )
 # Get asset ids.
 asset_ids = ivcu.get_vendor_universe_as_asset_ids(universe_version, vendor, mode)
 # Get prod `MarketData`.
+# TODO(Grisha): expose stage to the notebook config.
 db_stage = "preprod"
 market_data = dtfamsysc.get_Cx_RealTimeMarketData_prod_instance1(
-    asset_ids, db_stage
+    asset_ids,
+    db_stage,
+    table_name=table_name,
 )
 # Load and resample OHLCV data.
 ohlcv_bars = dtfamsysc.load_and_resample_ohlcv_data(

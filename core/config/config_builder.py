@@ -13,7 +13,10 @@ from typing import Dict, Optional, cast
 
 import core.config.config_ as cconconf
 import core.config.config_list as ccocolis
+import core.config.config_utils as ccocouti
 import helpers.hdbg as hdbg
+import helpers.hdocker as hdocker
+import helpers.hpickle as hpickle
 
 _LOG = logging.getLogger(__name__)
 
@@ -57,6 +60,38 @@ def get_config_list_from_builder(config_builder: str) -> ccocolis.ConfigList:
     hdbg.dassert_isinstance(config_list, ccocolis.ConfigList)
     config_list.validate_config_list()
     return config_list
+
+
+# #############################################################################
+
+
+def get_notebook_config(
+    config_file_path: Optional[str] = None,
+) -> Optional[cconconf.Config]:
+    """
+    Get the config from the environment variables or from a file.
+
+    :param config_file_path: path to a config file
+    :return: the config or `None` if env vars are not set and `config_file_path`
+        is None.
+    """
+    config = get_config_from_env()
+    if config is not None:
+        _LOG.info("Using config from env vars")
+    elif config_file_path is not None:
+        _LOG.info(
+            "Config env vars not set. Using config from the pickle file: %s",
+            config_file_path,
+        )
+        config_file_path = hdocker.replace_shared_root_path(config_file_path)
+        config = hpickle.from_pickle(config_file_path)
+        # To run locally we need to replace path to the shared folder, e.g.,
+        # `/data/shared` -> `/shared_data`.
+        config = ccocouti.replace_shared_dir_paths(config)
+    else:
+        config = None
+        _LOG.warning("No config found, returning None")
+    return config
 
 
 # #############################################################################
@@ -128,6 +163,9 @@ def get_config_from_experiment_list_params(
 
 # #############################################################################
 
+
+# TODO(Grisha): allow reading config from a file using the
+# `__NOTEBOOK_CONFIG_PATH__` environment variable.
 # TODO(gp): rename to get_experiment_config_from_env since it's a particular
 # case of passing certain params.
 def get_config_from_env() -> Optional[cconconf.Config]:
@@ -135,7 +173,12 @@ def get_config_from_env() -> Optional[cconconf.Config]:
     Build a config passed through environment vars, if possible, or return
     `None`.
     """
-    config_vars = ["__CONFIG_BUILDER__", "__CONFIG_IDX__", "__CONFIG_DST_DIR__"]
+    config_vars = [
+        "__CONFIG_BUILDER__",
+        "__CONFIG_IDX__",
+        "__CONFIG_DST_DIR__",
+        "__NOTEBOOK_CONFIG_PATH__",
+    ]
     # Check the existence of any config var in env.
     if not any(var in os.environ for var in config_vars):
         _LOG.debug("No CONFIG* env vars for building config: returning")
@@ -146,6 +189,9 @@ def get_config_from_env() -> Optional[cconconf.Config]:
         all(var in os.environ for var in config_vars),
         "Some config vars '%s' were defined, but not all"
         % (", ".join(config_vars)),
+    )
+    _LOG.info(
+        "__NOTEBOOK_CONFIG_PATH__: %s", os.environ["__NOTEBOOK_CONFIG_PATH__"]
     )
     params = {}
     #

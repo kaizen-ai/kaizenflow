@@ -1787,6 +1787,7 @@ class Test_to_pickleable_string(hunitest.TestCase):
         self,
         value: Any,
         should_be_pickleable_before: bool,
+        force_values_to_string: bool,
     ) -> str:
         # Set config.
         nested: Dict[str, Any] = {
@@ -1798,7 +1799,7 @@ class Test_to_pickleable_string(hunitest.TestCase):
         is_pickleable_before = hintros.is_pickleable(config["key1"])
         self.assertEqual(is_pickleable_before, should_be_pickleable_before)
         # Check if function was succesfully applied on config.
-        actual = config.to_pickleable_string()
+        actual = config.to_pickleable(force_values_to_string)
         is_pickleable_after = hintros.is_pickleable(actual["key1"])
         self.assertTrue(is_pickleable_after)
         # Convert `actual` to string since `assert_equal` comparing
@@ -1820,9 +1821,11 @@ class Test_to_pickleable_string(hunitest.TestCase):
 
         """
         should_be_pickleable_before = True
+        force_values_to_string = True
         actual = self.helper(
             value,
             should_be_pickleable_before,
+            force_values_to_string,
         )
         self.assert_equal(actual, expected, fuzzy_match=True)
 
@@ -1840,9 +1843,11 @@ class Test_to_pickleable_string(hunitest.TestCase):
 
         """
         should_be_pickleable_before = False
+        force_values_to_string = True
         actual = self.helper(
             value,
             should_be_pickleable_before,
+            force_values_to_string,
         )
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
@@ -1866,9 +1871,15 @@ class Test_save_to_file(hunitest.TestCase):
         config.save_to_file(log_dir, tag)
         # Set expected values.
         expected_txt_path = os.path.join(log_dir, f"{tag}.txt")
-        expected_pkl_path = os.path.join(log_dir, f"{tag}.values_as_strings.pkl")
+        expected_pkl_str_path = os.path.join(
+            log_dir, f"{tag}.values_as_strings.pkl"
+        )
+        expected_pkl_path = os.path.join(
+            log_dir, f"{tag}.all_values_picklable.pkl"
+        )
         # Check that file paths exist.
         hdbg.dassert_path_exists(expected_txt_path)
+        hdbg.dassert_path_exists(expected_pkl_str_path)
         hdbg.dassert_path_exists(expected_pkl_path)
 
     def test1(self) -> None:

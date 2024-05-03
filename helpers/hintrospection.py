@@ -8,6 +8,7 @@ import collections.abc as cabc
 import importlib
 import inspect
 import logging
+import pickle
 import re
 import sys
 import types
@@ -158,26 +159,45 @@ def is_lambda_function(method: object) -> bool:
     return isinstance(method, types.LambdaType) and method.__name__ == "<lambda>"
 
 
-def is_pickleable(obj: object) -> bool:
+def is_pickleable(obj: object, *, mode: str = "try_and_catch") -> bool:
     """
     Return if an object is a bound method.
+
+    :param obj: object to process
+    :param mode: approach to detect non-pikleable objects
+        - "type_search": detect non-pickleable objects by type, e.g., lambda
+            functions are not Pickleable
+        - "try_and_catch": try to pickle an object directly, if it fails,
+            an object is non-pickleable then
     """
     _LOG.debug("obj=%s", obj)
-    _LOG.debug("callable=%s", callable(obj))
-    if not callable:
+    if mode == "type_search":
+        _LOG.debug("callable=%s", callable(obj))
+        if not callable(obj):
+            return True
+        #
+        is_bound = is_bound_to_object(obj)
+        _LOG.debug("is_bound=%s", is_bound)
+        if is_bound:
+            return False
+        #
+        is_lambda = is_lambda_function(obj)
+        _LOG.debug("is_lambda=%s", is_lambda)
+        if is_lambda:
+            return False
         return True
-    #
-    is_bound = is_bound_to_object(obj)
-    _LOG.debug("is_bound=%s", is_bound)
-    if is_bound:
-        return False
-    #
-    is_lambda = is_lambda_function(obj)
-    _LOG.debug("is_lambda=%s", is_lambda)
-    if is_lambda:
-        return False
-    #
-    return True
+    elif mode == "try_and_catch":
+        try:
+            _ = pickle.dumps(obj)
+            return True
+        # `AttributeError` is raised when obj is a class with lambda param
+        # values, and `TypeError`is raised when the class has DB connection
+        # object as value.
+        except (AttributeError, TypeError) as e:
+            _LOG.debug("Cannot pickle object=%s, the error is %s", obj, str(e))
+            return False
+    else:
+        raise ValueError(f"Invalid mode='{mode}'")
 
 
 # #############################################################################
