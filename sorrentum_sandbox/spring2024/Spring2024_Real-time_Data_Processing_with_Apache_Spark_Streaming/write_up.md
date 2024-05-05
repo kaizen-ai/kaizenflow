@@ -97,4 +97,75 @@ COPY main_app.ipynb /home/jovyan/
 CMD ["start-notebook.sh", "--NotebookApp.token=''"]
 ```
 
+With the Dockerfile constructed as detailed above, the user is able to employ
+multiple methods by which to run the code.  The user can directly access the
+code output in real-time by navigating directly to the container terminal and
+converting the notebook file to a single script.  Alternatively, the user can
+also view and run the code directly from the notebook in his/her browser, by
+navigating to localhost:8888.  I chose this approach for the purpose of
+flexibility--the user can access and run the full code if he/she would like,
+but has the option to simply see the output, saving time and decreasing 
+procedural complexity.
 
+The process is further streamlined by incorporating Docker Compose, using the
+following .yml file:
+
+```yml
+version: '3'
+
+services:
+  jupyter:
+    container_name: my_jupyter_container 
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./main_app.ipynb:/home/jovyan/main_app.ipynb
+    environment:
+      - "NOTEBOOK_TOKEN="
+```
+
+With this setup, only one container needs to be run--"my_jupyter_container",
+defined in the .yml file above.  
+
+**Instructions**
+
+*Activating the Container*
+
+Navigate to "Spring2024_Real-time_Data_Processing_with_Apache_Spark_Streaming"
+folder in terminal, then enter:
+
+```plaintext
+docker-compose up -d
+```
+
+*To access just the output*
+
+First, access the container terminal:
+
+```plaintext
+docker exec -it my_jupyter_container /bin/bash
+```
+
+Once inside the container terminal, run these commands to access the script:
+
+```plaintext
+>jupyter nbconvert --to script main_app.ipynb
+>mv main_app.txt main_app.py
+```
+
+Run the script:
+
+```plaintext
+python main_app.py
+```
+
+*To view the notebook*
+
+Open your browser, and navigate to
+
+```plaintext
+http://localhost:8888/
+```
