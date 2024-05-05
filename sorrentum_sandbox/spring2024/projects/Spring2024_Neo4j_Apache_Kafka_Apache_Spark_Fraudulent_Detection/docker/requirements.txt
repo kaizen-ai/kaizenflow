@@ -19,7 +19,7 @@ jupyterlab_widgets==3.0.10
 keyring==23.5.0
 lockfile==0.12.2
 matplotlib-inline==0.1.7
-neo4j==5.2.1
+neo4j==5.10.0
 nest-asyncio==1.6.0
 notebook==7.1.2
 notebook_shim==0.2.4
