@@ -1,3 +1,4 @@
+import datetime
 import logging
 from typing import Tuple
 
@@ -149,7 +150,9 @@ class Test_convert_to_multiindex(hunitest.TestCase):
         1 <= 0
         ################################################################################
         """
-        self.assert_equal(actual_error_message, expected_error_message, fuzzy_match=True)
+        self.assert_equal(
+            actual_error_message, expected_error_message, fuzzy_match=True
+        )
 
     def test4(self) -> None:
         """
@@ -186,7 +189,9 @@ class Test_convert_to_multiindex(hunitest.TestCase):
                                                       names=[None, 'id']))' is '<class 'tuple'>' instead of '<class 'pandas.core.frame.DataFrame'>'
         ################################################################################
         """
-        self.assert_equal(actual_error_message, expected_error_message, fuzzy_match=True)
+        self.assert_equal(
+            actual_error_message, expected_error_message, fuzzy_match=True
+        )
 
     def test6(self) -> None:
         """
@@ -201,3 +206,181 @@ class Test_convert_to_multiindex(hunitest.TestCase):
         actual_df = dtfcorutil.convert_to_multiindex(df, asset_id_col)
         # Compare the result.
         self.assert_multiindex_columns_equal(expected_df_columns, actual_df)
+
+
+class TestFindMinMaxTimestampsFromIntervals(hunitest.TestCase):
+    @staticmethod
+    def get_data(method_name: str) -> Tuple:
+        COMMON_YEAR = 2022
+        COMMON_MONTH = 1
+        COMMON_DAY = 1
+        COMMON_HOUR = 10
+        COMMON_TZ = "UTC"
+        COMMON_DATETIME_START = datetime.datetime(
+            COMMON_YEAR, COMMON_MONTH, COMMON_DAY, COMMON_HOUR, 0, 0
+        )
+        COMMON_DATETIME_END = datetime.datetime(
+            COMMON_YEAR, COMMON_MONTH, COMMON_DAY, COMMON_HOUR + 1, 0, 0
+        )
+        COMMON_TIMESTAMP_START = pd.Timestamp(
+            year=COMMON_YEAR,
+            month=COMMON_MONTH,
+            day=COMMON_DAY,
+            hour=COMMON_HOUR,
+            tz=COMMON_TZ,
+        )
+        COMMON_TIMESTAMP_END = pd.Timestamp(
+            year=COMMON_YEAR,
+            month=COMMON_MONTH,
+            day=COMMON_DAY,
+            hour=COMMON_HOUR + 1,
+            tz=COMMON_TZ,
+        )
+
+        if method_name == "empty_intervals":
+            return (None, (None, None))
+        elif method_name == "single_interval_with_none_endpoints":
+            return ([(None, None)], (None, None))
+        elif method_name == "single_interval_with_datetime_endpoints":
+            return (
+                [(COMMON_DATETIME_START, COMMON_DATETIME_END)],
+                (COMMON_DATETIME_START, COMMON_DATETIME_END),
+            )
+        elif method_name == "single_interval_with_same_datetime_endpoints":
+            return (
+                [(COMMON_DATETIME_START, COMMON_DATETIME_START)],
+                (COMMON_DATETIME_START, COMMON_DATETIME_START),
+            )
+        elif method_name == "single_interval_with_timestamp_endpoints":
+            return (
+                [(COMMON_TIMESTAMP_START, COMMON_TIMESTAMP_END)],
+                (COMMON_TIMESTAMP_START, COMMON_TIMESTAMP_END),
+            )
+        elif method_name == "single_interval_with_same_timestamp_endpoints":
+            return (
+                [(COMMON_TIMESTAMP_START, COMMON_TIMESTAMP_START)],
+                (COMMON_TIMESTAMP_START, COMMON_TIMESTAMP_START),
+            )
+        elif method_name == "multiple_intervals_with_mixed_endpoints":
+            return (
+                [(COMMON_DATETIME_START, None), (None, COMMON_TIMESTAMP_END)],
+                (None, None),
+            )
+        elif method_name == "multiple_intervals_with_datetime_endpoints":
+            interval1_start = COMMON_DATETIME_START
+            interval1_end = COMMON_DATETIME_END
+            interval2_start = interval1_start - datetime.timedelta(hours=4)
+            interval2_end = interval1_end - datetime.timedelta(hours=2)
+            intervals = [
+                (interval1_start, interval1_end),
+                (interval2_start, interval2_end),
+            ]
+            overall_start = interval2_start
+            overall_end = interval1_end
+            return (intervals, (overall_start, overall_end))
+        elif method_name == "multiple_intervals_with_timestamp_endpoints":
+            interval1_start = COMMON_TIMESTAMP_START
+            interval1_end = COMMON_TIMESTAMP_END
+            interval2_start = interval1_start.tz_convert("EST")
+            interval2_end = interval1_end.tz_convert("EST")
+            intervals = [
+                (interval1_start, interval1_end),
+                (interval2_start, interval2_end),
+            ]
+            overall_start = interval1_start
+            overall_end = interval2_end
+            return (intervals, (overall_start, overall_end))
+        else:
+            raise ValueError(f"Invalid method_name: {method_name}")
+
+    def helper(self, intervals, expected_min_max):
+        actual_min_max = dtfcorutil.find_min_max_timestamps_from_intervals(
+            intervals
+        )
+        self.assertEqual(expected_min_max, actual_min_max)
+
+    def test1(self) -> None:
+        """
+        Test case when intervals is None.
+        """
+        intervals, expected_min_max = self.get_data("empty_intervals")
+        self.helper(intervals, expected_min_max)
+
+    def test2(self) -> None:
+        """
+        Test case with a single interval where both endpoints are None.
+        """
+        intervals, expected_min_max = self.get_data(
+            "single_interval_with_none_endpoints"
+        )
+        self.helper(intervals, expected_min_max)
+
+    def test3(self) -> None:
+        """
+        Test case with a single interval with datetime.datetime objects as
+        endpoints.
+        """
+        intervals, expected_min_max = self.get_data(
+            "single_interval_with_datetime_endpoints"
+        )
+        self.helper(intervals, expected_min_max)
+
+    def test4(self) -> None:
+        """
+        Test case with a single interval with same datetime.datetime objects as
+        endpoints.
+        """
+        intervals, expected_min_max = self.get_data(
+            "single_interval_with_same_datetime_endpoints"
+        )
+        self.helper(intervals, expected_min_max)
+
+    def test5(self) -> None:
+        """
+        Test case with a single interval with pd.Timestamp objects as
+        endpoints.
+        """
+        intervals, expected_min_max = self.get_data(
+            "single_interval_with_timestamp_endpoints"
+        )
+        self.helper(intervals, expected_min_max)
+
+    def test6(self) -> None:
+        """
+        Test case with a single interval with same pd.Timestamp objects as
+        endpoints.
+        """
+        intervals, expected_min_max = self.get_data(
+            "single_interval_with_same_timestamp_endpoints"
+        )
+        self.helper(intervals, expected_min_max)
+
+    def test7(self) -> None:
+        """
+        Test case with multiple intervals with a mix of datetime.datetime,
+        pd.Timestamp objects, and None as endpoints.
+        """
+        intervals, expected_min_max = self.get_data(
+            "multiple_intervals_with_mixed_endpoints"
+        )
+        self.helper(intervals, expected_min_max)
+
+    def test8(self) -> None:
+        """
+        Test case with multiple intervals with datetime.datetime objects as
+        endpoints.
+        """
+        intervals, expected_min_max = self.get_data(
+            "multiple_intervals_with_datetime_endpoints"
+        )
+        self.helper(intervals, expected_min_max)
+
+    def test9(self) -> None:
+        """
+        Test case with multiple intervals with pd.Timestamp objects as
+        endpoints.
+        """
+        intervals, expected_min_max = self.get_data(
+            "multiple_intervals_with_timestamp_endpoints"
+        )
+        self.helper(intervals, expected_min_max)
