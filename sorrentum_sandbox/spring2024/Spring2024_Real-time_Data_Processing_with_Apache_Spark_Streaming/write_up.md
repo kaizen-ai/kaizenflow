@@ -1,6 +1,14 @@
 **Technology Used**
 
-The primary technology used in my project, aside from Python and Jupyter 
+The goal of this project was to simulate the processing of real-time data from 
+the social media platform "X" (formerly Twitter).  As trending topics and news 
+stories vary, we can reasonably expect the lengths of Tweets (or X Posts) to do 
+the same.  Unfortunately, X's API is not free, and therefore random data can be 
+used to simulate this experiment.  Aside from purchasing access to said API, an
+individual seeking to perform this experiment with real data would only need to 
+apply minor modifications to the existing code.
+
+The primary technology used in this project, aside from Python and Jupyter 
 notebooks, was PySpark, the Python API for accessing Apache Spark.  Apache 
 Spark is a framework designed for quickly processing large datasets, and can be
 used in conjunction with a wide array of languages (such as Java, Python, and 
@@ -30,10 +38,10 @@ terms of ease of use (Mohan & Thyagarajan, 2023).
 
 Hadoop MapReduce is among the most popular alternatives, but still has some key
 differences.  While Hadoop MapReduce performs better with batch processing, 
-"Apache Spark is more suited for real-time data processing [the central focus
-of this project] and iterative analytics" (Tobin, 2023).  Additionally, as is
-the case in the comparison to Flink, Spark is easier to use than MapReduce, 
-with a "more user-friendly programming interface" (Tobin, 2023).  
+"Apache Spark is more suited for real-time data processing and iterative 
+analytics" (Tobin, 2023).  Additionally, as is the case in the comparison to 
+Flink, Spark is easier to use than MapReduce, with a "more user-friendly 
+programming interface" (Tobin, 2023).  
 
 MapReduce also lacks flexibility in terms of language, as it is only compatible 
 with Java.  This would have presented a major hurdle in terms of using 
@@ -43,8 +51,9 @@ feature superior fault tolerance when compared with MapReduce's counterpart,
 Hadoop Distributed File Systems (HDFS's) (Tobin, 2023).
 
 Spark is known as "the Swiss army knife of big data processing" (Tobin, 2023), 
-underscoring its flexibility and ease of use.  With that in mind, Spark is
-clearly the ideal choice for this particular project.
+underscoring its flexibility and ease of use.  With that in mind, despite
+MapReduce's superior performance with batch data, Spark is clearly the ideal 
+choice for this particular project.
 
 *Course Material*
 
@@ -134,8 +143,9 @@ defined in the .yml file above.
 
 *Activating the Container*
 
-Navigate to "Spring2024_Real-time_Data_Processing_with_Apache_Spark_Streaming"
-folder in terminal, then enter:
+Ensure that Docker is properly installed on your system.  Navigate to 
+"Spring2024_Real-time_Data_Processing_with_Apache_Spark_Streaming" folder in 
+terminal, then enter:
 
 ```plaintext
 docker-compose up -d
@@ -162,10 +172,149 @@ Run the script:
 python main_app.py
 ```
 
+Expected output:
+
+```plaintext
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+24/05/05 19:20:40 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+/usr/local/spark/python/pyspark/streaming/context.py:72: FutureWarning: DStream is deprecated as of Spark 3.4.0. Migrate to Structured Streaming.
+  warnings.warn(
+Starting Spark Streaming context...
+Awaiting termination...
+New Batch Arrived!
+Average characters per Tweet in this batch: 141.41
+Shortest Tweet in this batch: 41 characters
+Longest Tweet in this batch: 253 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 148.9
+Shortest Tweet in this batch: 22 characters
+Longest Tweet in this batch: 224 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 138.21
+Shortest Tweet in this batch: 42 characters
+Longest Tweet in this batch: 231 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 142.54
+Shortest Tweet in this batch: 55 characters
+Longest Tweet in this batch: 241 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 140.7
+Shortest Tweet in this batch: 32 characters
+Longest Tweet in this batch: 239 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 136.86
+Shortest Tweet in this batch: 45 characters
+Longest Tweet in this batch: 214 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 143.44
+Shortest Tweet in this batch: 33 characters
+Longest Tweet in this batch: 261 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 134.29
+Shortest Tweet in this batch: 23 characters
+Longest Tweet in this batch: 264 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 142.26
+Shortest Tweet in this batch: 45 characters
+Longest Tweet in this batch: 231 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 135.03
+Shortest Tweet in this batch: 11 characters
+Longest Tweet in this batch: 270 characters
+
+All Batches Processed! Run Again for More Data
+```
+The warnings are to be expected and do not affect the code output.
+
 *To view the notebook*
 
 Open your browser, and navigate to
 
 ```plaintext
 http://localhost:8888/
+```
+
+The output should look like this:
+
+```plaintext
+Starting Spark Streaming context...
+Awaiting termination...
+New Batch Arrived!
+Average characters per Tweet in this batch: 141.5
+Shortest Tweet in this batch: 47 characters
+Longest Tweet in this batch: 247 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 140.15
+Shortest Tweet in this batch: 56 characters
+Longest Tweet in this batch: 251 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 135.09
+Shortest Tweet in this batch: 46 characters
+Longest Tweet in this batch: 231 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 144.17
+Shortest Tweet in this batch: 48 characters
+Longest Tweet in this batch: 248 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 139.5
+Shortest Tweet in this batch: 35 characters
+Longest Tweet in this batch: 225 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 135.64
+Shortest Tweet in this batch: 36 characters
+Longest Tweet in this batch: 261 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 135.78
+Shortest Tweet in this batch: 26 characters
+Longest Tweet in this batch: 232 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 143.8
+Shortest Tweet in this batch: 75 characters
+Longest Tweet in this batch: 265 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 142.67
+Shortest Tweet in this batch: 62 characters
+Longest Tweet in this batch: 222 characters
+
+New Batch Arrived!
+Average characters per Tweet in this batch: 141.69
+Shortest Tweet in this batch: 46 characters
+Longest Tweet in this batch: 273 characters
+
+All Batches Processed! Run Again for More Data
+```
+
+**The Code**
+
+First, we need to initialize the SparkContext (to create RDD's) and the 
+Streaming Context (to establish a connection with the SparkContext).
+
+```python
+from pyspark import SparkContext
+from pyspark.streaming import StreamingContext
+import time
+import random
+import numpy as np
+
+# Initialize SparkContext and StreamingContext
+sc = SparkContext("local[2]", "RandomDataStream")
+ssc = StreamingContext(sc, 1)  # Batch interval of 1 second
 ```
