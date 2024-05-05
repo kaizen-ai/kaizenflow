@@ -104,6 +104,8 @@ services:
       interval: 10s
       timeout: 10s
       retries: 120
+    networks: 
+      - elasticnet
 
   es02:
     depends_on:
@@ -143,7 +145,8 @@ services:
       interval: 10s
       timeout: 10s
       retries: 120
-
+    networks: 
+      - elasticnet
   es03:
     depends_on:
       - es02
@@ -182,7 +185,8 @@ services:
       interval: 10s
       timeout: 10s
       retries: 120
-
+    networks: 
+      - elasticnet
   kibana:
     depends_on:
       es01:
@@ -208,11 +212,31 @@ services:
       test:
         [
           "CMD-SHELL",
-          "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
+          "curl -s -I https://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
         ]
       interval: 10s
       timeout: 10s
       retries: 120
+    networks: 
+      - elasticnet
+
+  log-generator:
+    build: .
+    networks:
+      - elasticnet
+    environment:
+      ELASTICSEARCH_HOST: "https://es01:9200"
+      ELASTICSEARCH_USERNAME: "elastic"
+      ELASTICSEARCH_PASSWORD: "${ELASTIC_PASSWORD}"
+      ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES: /usr/share/elasticsearch/config/certs/ca/ca.crt
+    depends_on:
+      es01:
+        condition: service_healthy
+
+
+networks:
+  elasticnet:
+    driver: bridge
 
 volumes:
   certs:
