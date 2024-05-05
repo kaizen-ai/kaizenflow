@@ -166,7 +166,16 @@ Once inside the container terminal, run these commands to access the script:
 >mv main_app.txt main_app.py
 ```
 
-Run the script:
+The first command should produce the following output:
+
+```plaintext
+[NbConvertApp] Converting notebook main_app.ipynb to script
+[NbConvertApp] Writing 1487 bytes to main_app.txt
+```
+
+The second command (final script conversion) should not generate any output.
+
+Now, we can run the script:
 
 ```plaintext
 python main_app.py
@@ -317,4 +326,84 @@ import numpy as np
 # Initialize SparkContext and StreamingContext
 sc = SparkContext("local[2]", "RandomDataStream")
 ssc = StreamingContext(sc, 1)  # Batch interval of 1 second
+```
+
+Next, we define our functions.
+
+```python
+def generate_data():
+    return [int(np.random.normal(140, 40)) for _ in range(100)]
+
+def process_data(data):
+    if data.isEmpty():
+        print("All Batches Processed! Run Again for More Data")
+        ssc.stop(stopSparkContext=True, stopGraceFully=True)
+    else:
+
+        # Calculate mean
+        count = data.count()
+        sum_of_data = data.reduce(lambda x, y: x + y)
+        mean = sum_of_data / count
+        print("New Batch Arrived!")
+        print("Average characters per Tweet in this batch:", mean)
+
+        # Calculate min and max
+        min_val = data.min()
+        max_val = data.max()
+        print(f"Shortest Tweet in this batch: {min_val} characters")
+        print(f"Longest Tweet in this batch: {max_val} characters\n")
+```
+
+Here, 'generate_data' constructs a list of 100 simulated Tweet lengths 
+expressed as integer values.  Each length is drawn randomly from a normal 
+distribution with mean equal to 140 and standard deviation equal to 40, and
+rounded to an integer value using Python's built-in 'int' function.  These 
+parameters are estimations based upon pure speculation, but can easily be 
+adjusted as desired.
+
+Our second function, 'process_data', is used to perform the necessary 
+calculations on each batch of data.  Here, the 'reduce' function is used to
+apply summation to the entire dataset from left to right, with the result
+divided by the length of the list (which, in this experiment, will always be 
+100) to calculate the mean/average Tweet length in the batch. Next, we use
+Python's built-in 'min' and 'max' functions to find the minimum and maximum 
+Tweet lengths in the batch.  Finally, the print statements give us the output 
+seen in the prior sections, with each output block of the format:
+
+```plaintext
+New Batch Arrived!
+Average characters per Tweet in this batch: {mean}
+Shortest Tweet in this batch: {min} characters
+Longest Tweet in this batch: {max} characters
+```
+
+We proceed to use these commands to generate a stream and, subsequently, output
+the processed data.
+
+```python
+# Create a DStream from generate_data
+stream = ssc.queueStream([sc.parallelize(generate_data()) for _ in range(10)])
+
+# Process the stream
+stream.foreachRDD(process_data)
+```
+
+Here, 'parallelize' converts the generated data into an RDD, and list 
+comprehension is used to generate 10 unique batches.  The 'queueStream'
+function creates a Discretized Stream, or DStream from the 10 RDD's.  The
+'stream' object, containing the DStream of the 10 RDD's, is then processed
+using the final command.
+
+```mermaid
+graph TD;
+	A[Docker Compose Initialization] --> B[Container Created]
+	B --> C[Access Container Terminal]
+	C --> D[Convert .ipynb to .py]
+	D --> E[Run Python Code]
+	B --> F[Access Notebook in Browser]
+	F --> G[Edit Python Code in Notebook]
+	G --> H[Download Edited Notebook]
+	H --> I[Replace Old Notebook File with New One]
+	I --> A
+	F --> E
 ```
