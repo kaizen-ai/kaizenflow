@@ -108,13 +108,18 @@ CMD ["start-notebook.sh", "--NotebookApp.token=''"]
 
 With the Dockerfile constructed as detailed above, the user is able to employ
 multiple methods by which to run the code.  The user can directly access the
-code output in real-time by navigating directly to the container terminal and
+code output in real time by navigating directly to the container terminal and
 converting the notebook file to a single script.  Alternatively, the user can
 also view and run the code directly from the notebook in his/her browser, by
 navigating to localhost:8888.  I chose this approach for the purpose of
 flexibility--the user can access and run the full code if he/she would like,
 but has the option to simply see the output, saving time and decreasing 
 procedural complexity.
+
+Additionally, this approach gives the user the option to edit the notebook.
+After navigating to localhost:8888 and modifying the notebook, the user can
+download the edited notebook under the same file name, and replace the old 
+notebook with the new, updated one within the project directory.
 
 The process is further streamlined by incorporating Docker Compose, using the
 following .yml file:
@@ -394,6 +399,28 @@ function creates a Discretized Stream, or DStream from the 10 RDD's.  The
 'stream' object, containing the DStream of the 10 RDD's, is then processed
 using the final command.
 
+Since the data is randomly generated and in the form of a simple list, there is
+no predefined schema to which the data adheres.  However, this may not remain
+the case if the randomly generated data is replaced with real data obtained
+from X's API.  The API has been somewhat of an enigma since owner Elon Musk
+put it behind a paywall in early 2023 (Stokel-Walker, 2023), but the schema of
+the data likely includes fields such as text, user ID, username, date/time,
+like count, retweet count, etc.  In this scenario, Tweet length could easily be
+parsed using built-in string functions, as the following pseudocode illustrates:
+
+```python
+tweet['length'] = len(tweet['text'])
+```
+
+However, this is entirely hypothetical, and without direct access to the API--
+which costs $42,000 per month for the smallest package (Stokel-Walker, 2023)--
+a more specific method cannot be obtained.
+
+*Visualization*
+
+Below, the different ways in which the user can interact with this project
+are visualized:
+
 ```mermaid
 graph TD;
 	A[Docker Compose Initialization] --> B[Container Created]
@@ -404,6 +431,10 @@ graph TD;
 	F --> G[Edit Python Code in Notebook]
 	G --> H[Download Edited Notebook]
 	H --> I[Replace Old Notebook File with New One]
-	I --> A
+	I --> J[Stop Docker Container]
+	J --> A
 	F --> E
 ```
+
+*References*
+Stokel-Walker, 2023: https://tinyurl.com/4p5r22fs
