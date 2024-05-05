@@ -1,11 +1,9 @@
 **To run code**
 
 
-docker build -t <image_name>
+docker-compose up -d
 
-docker run -p 8888:8888 --name <container_name> <image_name>
-
-docker exec -it <container name> /bin/bash (*To access the container terminal*)
+docker exec -it my_jupyter_container /bin/bash (*To access the container terminal*)
 
 
 **Once inside the container terminal, convert the notebook to a script**
@@ -18,6 +16,7 @@ mv main_app.txt main_app.py
 
 
 **Finally, you can run the script**
+
 python main_app.py
 
 
