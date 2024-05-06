@@ -217,3 +217,23 @@ where t1.amt > 200 and t2.amt > 200 and t2.trans_date - duration('P7D')<= t1.tra
 return t1, t2
 order by t1.trans_date`
 ![multiple credit cards](multiple_cards.png)
+
+
+## Project Diagram
+---
+```mermaid
+sequenceDiagram
+   participant User
+   participant Cypher Queries
+   participant Data Generation
+   participant Spark Script
+   participant Neo4j Database
+   User->>Spark Script: Initialize Spark Streams
+   Data Generation->>Spark Script: Read source files
+   Spark Script->>Neo4j Database: Transform and write transactions
+   Data Generation->>Data Generation: Continue generating batch transactions
+   User->>Cypher Queries: Execute queries on Neo4j
+   Cypher Queries->>Neo4j Database: Execute queries
+   Neo4j Database-->>Cypher Queries: Return results
+   Cypher Queries-->>User: Pass results
+```
