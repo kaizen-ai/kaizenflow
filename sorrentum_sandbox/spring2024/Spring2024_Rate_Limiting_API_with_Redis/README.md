@@ -143,11 +143,11 @@ def api():
     return 'OK', 200
 ```
 
-The `Limiter` class has one property, `r`, which connects to a Redis server. It also has one method, `limit`, which returns a decorator, which returns a wrapper. First, it generates a unique key. Next, it increments and timeouts the key. Finally, it checks if the value of the key is greater than the limit. If so, it returns `'TOO MANY REQUESTS', 429`. Otherwise, it calls the function.
+The `Limiter` class has one property, `r`, which connects to a Redis server. It also has one method, `limit`, which returns a decorator, which returns a wrapper. First, it generates a unique key. Next, it increments and timeouts the key. Finally, it checks whether the value of the key is greater than the limit. If so, it returns `'TOO MANY REQUESTS', 429`. Otherwise, it calls the function.
 
 ### Docker
 
-Docker is a platform for building, sharing, and running applications in isolated environments called containers, which are built from templates called images, which are built from instructions in a Dockerfile.
+Docker is a platform for building, sharing, and running applications in isolated environments called containers, which are built from templates called images, which are built from instructions in Dockerfiles.
 
 Here's an example Dockerfile:
 
@@ -171,9 +171,7 @@ EXPOSE 5000
 CMD ["python", "app.py"]
 ```
 
-First, we specify the base image as Python Slim Buster, a minimal version of Debian Buster with Python 3.8 installed. Next, we set the working directory to `/app`, and copy the current directory to `/app`. Then, we pip install our Python dependencies. We disable the cache to reduce the size of the image.<sup>[*](#footnote)</sup> After that, we expose port 5000. Finally, we run `app.py`.
-
-<a name="footnote">*</a>: Caching is unnecessary because each `RUN` command creates a new, immutable layer in the image. So, the cache won't be used in subsequent runs, and it just takes up space.
+First, it specifies the base image as Python Slim Buster: a minimal version of Debian Buster with Python 3.8 installed. Next, it sets the working directory to `/app`, and copies the current directory to `/app`. Then, it installs the Python dependencies. Caching is unnecessary because each `RUN` command creates a new, immutable layer in the image. So, the cache won't be used in subsequent runs, and it just takes up space. After that, it exposes port 5000. Finally, it runs `app.py`.
 
 ## Overview
 
