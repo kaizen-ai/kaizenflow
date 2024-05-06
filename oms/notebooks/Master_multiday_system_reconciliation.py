@@ -66,13 +66,15 @@ else:
     # Specify the config directly when running the notebook manually.
     # Below is just an example.
     dst_root_dir = "/shared_data/ecs/preprod/prod_reconciliation"
-    dag_builder_name = "C3a"
+    dag_builder_ctor_as_str = (
+        "dataflow_orange.pipelines.C3.C3a_pipeline_tmp.C3a_DagBuilder_tmp"
+    )
     run_mode = "paper_trading"
     start_timestamp_as_str = "20230716_000000"
     end_timestamp_as_str = "20230723_000000"
     config = rsiprrec.build_multiday_system_reconciliation_config(
         dst_root_dir,
-        dag_builder_name,
+        dag_builder_ctor_as_str,
         run_mode,
         start_timestamp_as_str,
         end_timestamp_as_str,
@@ -177,7 +179,7 @@ for start_timestamp_as_str, end_timestamp_as_str, mode in system_run_params:
     # Build system reconciliation config.
     config_list = rsiprrec.build_reconciliation_configs(
         config["dst_root_dir"],
-        config["dag_builder_name"],
+        config["dag_builder_ctor_as_str"],
         start_timestamp_as_str,
         end_timestamp_as_str,
         config["run_mode"],

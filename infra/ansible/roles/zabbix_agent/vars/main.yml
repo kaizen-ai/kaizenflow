@@ -1,1 +1,0 @@
-zabbix_package_url: "https://repo.zabbix.com/zabbix/{{ zabbix_agent_version }}/ubuntu/pool/main/z/zabbix-release/zabbix-release_{{ zabbix_agent_version }}-1+ubuntu20.04_all.deb"

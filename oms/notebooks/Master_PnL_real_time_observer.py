@@ -36,6 +36,8 @@ import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
+import oms.broker.ccxt.ccxt_broker_instances as obccbrin
+import oms.hsecrets as homssec
 import reconciliation as reconcil
 
 # %%
@@ -48,16 +50,23 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 # %% [markdown]
+# # Last update time
+
+# %%
+# TODO(Grisha): tz should go to notebook's config.
+tz = "ET"
+current_time = hdateti.get_current_time(tz)
+print(current_time)
+
+# %% [markdown]
 # # Build the reconciliation config
 
 # %%
-# Get config from env when running the notebook via the `run_notebook.py` script, e.g.,
-# in the system reconciliation flow.
-config = cconfig.get_config_from_env()
-#
-if config:
-    _LOG.info("Using config from env vars")
-else:
+# When running manually, specify the path to the config to load config from file,
+# for e.g., `.../reconciliation_notebook/fast/result_0/config.pkl`.
+config_file_name = None
+config = cconfig.get_notebook_config(config_file_name)
+if config is None:
     _LOG.info("Using hardwired config")
     # Specify the config directly when running the notebook manually.
     # Below is just an example.
@@ -84,6 +93,48 @@ else:
     )
     config = config_list[0]
 print(config)
+
+# %% [markdown]
+# # System config
+
+# %%
+# Load the system config.
+config_file_name = "system_config.output.values_as_strings.pkl"
+system_config_path = os.path.join(config["system_log_dir"], config_file_name)
+system_config = cconfig.load_config_from_pickle(system_config_path)
+print(system_config)
+
+# %% [markdown]
+# # Current balance, open positions
+
+# %%
+# Real broker is used only with production runs so we check balance and open
+# positions only for this run mode. Paper trading is run with fake broker so we
+# can't get such info.
+if system_config["run_mode"] == "prod":
+    # Get Broker.
+    universe_version = system_config["market_data_config"]["universe_version"]
+    # TODO(Grisha): store `exchange, preprod, account_type, secret_id` as separate
+    # fields in SystemConfig.
+    exchange, preprod, account_type, secret_id = system_config[
+        "secret_identifier_config"
+    ].split(".")
+    secret_identifier = homssec.SecretIdentifier(
+        exchange, preprod, account_type, secret_id
+    )
+    # Use temporary local dir in order not to override related production results
+    # for this run.
+    broker = obccbrin.get_CcxtBroker_exchange_only_instance1(
+        universe_version, secret_identifier, "/app/tmp.log_dir"
+    )
+
+# %%
+if system_config["run_mode"] == "prod":
+    broker.get_open_positions()
+
+# %%
+if system_config["run_mode"] == "prod":
+    _LOG.info(broker.get_total_balance())
 
 # %% [markdown]
 # # Specify data to load
@@ -113,17 +164,6 @@ orders_path = reconcil.get_data_type_system_log_path(
     config["system_log_dir"], data_type
 )
 _LOG.info("orders_path=%s", orders_path)
-
-# %% [markdown]
-# # System config
-
-# %%
-# TODO(Grisha): Load the system config as df instead of just printing the DAG config.
-dag_builder = dtfcore.get_DagBuilder_from_string(
-    config["dag_builder_ctor_as_str"]
-)
-dag_config = dag_builder.get_config_template()
-print(dag_config)
 
 # %% [markdown]
 # # DAG io
@@ -251,6 +291,7 @@ display(stats_sxs)
 
 # %% [markdown]
 # # PnL for investors
+
 
 # %%
 # TODO(Grisha): move to a lib.

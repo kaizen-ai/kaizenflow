@@ -23,28 +23,47 @@ import helpers.htimer as htimer
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Dan): Add unit test.
-def to_pickleable(obj: Any) -> Any:
+def to_pickleable(obj: Any, force_values_to_string: bool) -> Any:
     """
-    Convert an object into an object with the same nested structure (e.g., lists and dicts),
-    but where all objects are replaced with their string representation.
+    Convert an object into an object with the same nested structure (e.g.,
+    lists and dicts), but where all values are replaced with their pickleable
+    representations.
+
+    :param obj: object to convert
+    :param force_values_to_string: if True, store all the object values
+        as strings
+    :return: pickleable object
     """
     if isinstance(obj, list):
-        out = []
-        for k in obj:
-            out.append(to_pickleable(k))
+        # Process list values recursively.
+        out = [to_pickleable(k, force_values_to_string) for k in obj]
     elif isinstance(obj, tuple):
-        out = tuple([to_pickleable(k) for k in obj])
+        # Process tuple values recursively.
+        out = tuple([to_pickleable(k, force_values_to_string) for k in obj])
     elif isinstance(obj, dict):
+        # Process dict keys and values recursively.
         out = {}
         for k, v in obj.items():
-            k = to_pickleable(k)
-            v = to_pickleable(v)
+            k = to_pickleable(k, force_values_to_string)
+            v = to_pickleable(v, force_values_to_string)
             out[k] = v
     elif hintros.is_iterable(obj):
-        out = [str(v) for v in obj]
+        # TODO(Grisha): is it ok that we convert any Iterable (e.g., set) to list?
+        #  This means that input and output data types do not match.
+        # Process other iterable values recursively.
+        out = [to_pickleable(v, force_values_to_string) for v in obj]
     else:
-        out = str(obj)
+        # We need to use try_and_catch mode because of CmTask7713.
+        if hintros.is_pickleable(obj, mode="try_and_catch"):
+            # Store a pickleable object.
+            if force_values_to_string:
+                # Store as string if specified.
+                out = str(obj)
+            else:
+                out = obj
+        else:
+            # Store a string representation of an unpickleable object.
+            out = str(obj)
     return out
 
 

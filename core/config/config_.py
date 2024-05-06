@@ -984,13 +984,15 @@ class Config:
             if isinstance(v, Config):
                 v.mark_read_only(value)
 
+    # TODO(Dan): Centralize the config file names in CmTask7795.
     def save_to_file(self, log_dir: str, tag: str) -> None:
         """
         Save config as a string and pickle.
 
-        Save 2 files in a log dir:
+        Save files in a log dir:
         - ${log_dir}/{tag}.txt
         - ${log_dir}/{tag}.values_as_strings.pkl
+        - ${log_dir}/{tag}.all_values_picklable.pkl
 
         :param tag: basename of the files to save (e.g., "system_config.input")
         """
@@ -999,21 +1001,34 @@ class Config:
         hio.to_file(file_name, repr(self))
         # 2) As a pickle containing all values as string.
         file_name = os.path.join(log_dir, f"{tag}.values_as_strings.pkl")
-        config = self.to_pickleable_string()
+        force_values_to_string = True
+        config = self.to_pickleable(force_values_to_string)
+        hpickle.to_pickle(config, file_name)
+        # 3) As a pickle containing all values in pickleable format.
+        file_name = os.path.join(log_dir, f"{tag}.all_values_picklable.pkl")
+        force_values_to_string = False
+        config = self.to_pickleable(force_values_to_string)
         hpickle.to_pickle(config, file_name)
 
-    def to_pickleable_string(self) -> "Config":
+    def to_pickleable(self, force_values_to_string: bool) -> "Config":
         """
         Transform this Config into a pickle-able one where all values are
         replaced with their string representation.
+
+        :param force_values_to_string: if True, store all the object
+            values as strings
         """
         config_out = Config()
         # TODO(Grisha): do we need to save `writer_info` and `mark_as_used`?
         for key, (_, _, val) in self._config.items():
             if isinstance(val, Config):
-                config_out[key] = val.to_pickleable_string()
+                # Call the method recursively on a value of a `Config` type.
+                config_out[key] = val.to_pickleable(force_values_to_string)
             else:
-                config_out[key] = hpickle.to_pickleable(val)
+                # Add processed value to the result config.
+                config_out[key] = hpickle.to_pickleable(
+                    val, force_values_to_string
+                )
         return config_out
 
     # /////////////////////////////////////////////////////////////////////////////

@@ -57,12 +57,11 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
-# Get config from env when running the notebook via the `run_notebook.py` script, e.g.,
-# in the system reconciliation flow.
-config = cconfig.get_config_from_env()
-if config:
-    _LOG.info("Using config from env vars")
-else:
+# When running manually, specify the path to the config to load config from file,
+# for e.g., `.../reconciliation_notebook/fast/result_0/config.pkl`.
+config_file_name = None
+config = cconfig.get_notebook_config(config_file_name)
+if config is None:
     _LOG.info("Using hardwired config")
     # Specify the config directly when running the notebook manually.
     # Below is just an example.
@@ -70,8 +69,8 @@ else:
     dag_builder_ctor_as_str = (
         "dataflow_orange.pipelines.C3.C3a_pipeline_tmp.C3a_DagBuilder_tmp"
     )
-    start_timestamp_as_str = "20240305_131000"
-    end_timestamp_as_str = "20240306_130500"
+    start_timestamp_as_str = "20240330_131000"
+    end_timestamp_as_str = "20240331_130500"
     run_mode = "paper_trading"
     mode = "scheduled"
     set_config_values = None
@@ -338,10 +337,16 @@ _LOG.info("start_timestamp=%s", start_timestamp)
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 # %%
-fep = dtfmod.ForecastEvaluatorFromPrices(
-    **config["research_forecast_evaluator_from_prices"]["init"]
+# Get forecast evaluator.
+forecast_evaluator_type = config["forecast_evaluator_config"][
+    "forecast_evaluator_type"
+]
+forecast_evaluator_kwargs = config["forecast_evaluator_config"]["init"]
+forecast_evaluator = reconcil.get_forecast_evaluator_instance1(
+    forecast_evaluator_type, forecast_evaluator_kwargs
 )
-annotate_forecasts_kwargs = config["research_forecast_evaluator_from_prices"][
+#
+annotate_forecasts_kwargs = config["forecast_evaluator_config"][
     "annotate_forecasts_kwargs"
 ].to_dict()
 # Get dag data path for research portfolio.
@@ -355,7 +360,10 @@ computation_dag_path = reconcil.get_dag_output_path(
 research_portfolio_input_df = dtfcore.load_dag_outputs(
     computation_dag_path, dag_node_names[-1]
 )
-research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
+(
+    research_portfolio_df,
+    research_portfolio_stats_df,
+) = forecast_evaluator.annotate_forecasts(
     research_portfolio_input_df,
     **annotate_forecasts_kwargs,
     compute_extended_stats=True,
@@ -393,9 +401,9 @@ hpandas.df_to_str(portfolio_stats_df, num_rows=5, log_level=logging.INFO)
 # ## Compute Portfolio statistics (prod vs research vs sim)
 
 # %%
-bars_to_burn = config["research_forecast_evaluator_from_prices"][
-    "annotate_forecasts_kwargs"
-]["burn_in_bars"]
+bars_to_burn = config["forecast_evaluator_config"]["annotate_forecasts_kwargs"][
+    "burn_in_bars"
+]
 coplotti.plot_portfolio_stats(portfolio_stats_df.iloc[bars_to_burn:])
 
 # %%

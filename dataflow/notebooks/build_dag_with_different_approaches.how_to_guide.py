@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -36,7 +36,6 @@ import core.finance.resampling as cfinresa
 import core.finance.returns as cfinretu
 import dataflow.core as dtfcore
 import dataflow.core.utils as dtfcorutil
-import dataflow.system as dtfsys
 import dataflow.universe as dtfuniver
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
@@ -53,6 +52,7 @@ hprint.config_notebook()
 
 # %% [markdown]
 # # Config
+
 
 # %%
 def get_gallery_dataflow_example_config() -> cconconf.Config:
@@ -159,6 +159,7 @@ resampling_freq = config["data"]["resampling_rule"]
 # %% [markdown]
 # This approach does both resampling and computation of metrics and applied them individually to each `full_symbol` using the loop.
 
+
 # %%
 def resample_calculate_twap_vwap_and_returns(df, resampling_freq):
     result = []
@@ -210,9 +211,7 @@ data_hist_num = data_hist.drop(
 
 # %% run_control={"marked": false}
 # Convert historical data to multiindex format.
-converted_data = dtfcorutil.convert_to_multiindex(
-    data_hist_num, "asset_id"
-)
+converted_data = dtfcorutil.convert_to_multiindex(data_hist_num, "asset_id")
 converted_data.head(3)
 
 # %%

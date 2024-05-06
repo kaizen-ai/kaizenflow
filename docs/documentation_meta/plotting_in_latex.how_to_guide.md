@@ -1,9 +1,22 @@
-For plotting a certain classes of drawings (e.g., diagrams, graph) one should use
-frameworks like dot, mermaid, plantuml
+
+
+<!-- toc -->
+
+  * [Tikz](#tikz)
+  * [Pgfplots](#pgfplots)
+  * [Asymptote](#asymptote)
+- [Plotting in markdown](#plotting-in-markdown)
+  * [How to draw in markdown](#how-to-draw-in-markdown)
+
+<!-- tocstop -->
+
+For plotting a certain classes of drawings (e.g., diagrams, graph) one should
+use frameworks like dot, mermaid, plantuml
 
 For technical drawing there are several solutions, as described below
 
 ## Tikz
+
 - Language for producing vector graphics from a textual description
 - Several drawing programs can export figures as Tikz format (e.g., Inkspace,
   matplotlib, gnuplot)
@@ -24,6 +37,7 @@ For technical drawing there are several solutions, as described below
     - https://tex.stackexchange.com/?tags=tikz-pgf
 
 ## Pgfplots
+
 - Plots functions directly in Tex/Latex
 - Based on TikZ
 
@@ -32,6 +46,7 @@ For technical drawing there are several solutions, as described below
   - https://www.overleaf.com/learn/latex/Pgfplots_package
 
 ## Asymptote
+
 - A descriptive vector graphics language
 - Provide a coordinate-based framework for technical drawing
 - It has a Python frontend
@@ -44,14 +59,13 @@ For technical drawing there are several solutions, as described below
   - Asymptote web application
     - http://asymptote.ualberta.ca/
 
-
 # Plotting in markdown
 
 ## How to draw in markdown
 
 We would like to use the same plots for both Latex and Markdown documents
 
-We can use pandoc 
+We can use pandoc
 
 TODO(gp): Consider extending ./dev_scripts/documentation/render_md.py to render
 also complex Latex, tikz
