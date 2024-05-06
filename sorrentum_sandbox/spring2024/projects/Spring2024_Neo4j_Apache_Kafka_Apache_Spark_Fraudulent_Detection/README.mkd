@@ -115,27 +115,30 @@ The python Implementation composes several pieces:
     - May replicate a known transaction id in the system
 - I use a fixed list of 50 random customers and batch generate additional transactions for a given month.
 - To execute during testing run:
-    cd Sparkov_Data_Generation
     
 
+    cd Sparkov_Data_Generation
     python3 datagen.py -o output -n output/customers.csv <start date like 01-01-2024> <end date>
+    
+
 
 ### Spark Structured Streaming
 
 Spark Structured streaming is built using the pyspark package in the Spark `Streaming.ipynb` notebook. This code block ingests data saved to the Sparkov_Data_Generation/output directory into the neo4j database.
 
-The script is divided into roughly five sections:
+The script is divided into roughly seven sections:
 - Instantiate the SparkSession object and define its configuration parameters
 - Create neo4j indexes on the node properties used most for querying and writes
 - Load the standard file schema and identify the output fields which belong to each node
 - Instantiate the read stream pointing at the Sparkov output location
 - Create the class `StreamWriter` with `insert_node` and `insert_relationship` methods to manage the stream writes
     - These methods take parameter inputs for:
-        - node fields
-        - the checkpoint location (a tmp file used by spark to manage streams and their metadata)
-        - node labels
-        - node unique key identifiers (for upserts)
-        - specific to relationship inserts the source and target relationship labels and keys
+        - Node fields used to allocate specific fields as properties on the relevant node.
+        - The checkpoint location (a tmp file used by spark to manage streams and their metadata)
+        - Node labels - the highest-level identifier for the database schema
+        - Node unique key identifiers (for upserts). For example I used the SSN for Person nodes, Credit Card numbers for credit card nodes, etc.
+        - Relationship types - analogous to node labels for relationships
+        - The source and target relationship labels and keys for relationships to be their respective to given nodes
 - Define the data cleansing logic being performed:
     - Convert transaction amounts, latitudes and longitudes to double
     - Convert transaction date and persons date of birth to date
@@ -143,3 +146,74 @@ The script is divided into roughly five sections:
     - Remove the header row from the insert
 - Instantiate a different stream object for each write stream (for each node and relationship type
     - Execute the relevant method on each stream object to start the write stream with each configuration
+
+### Fraud Queries
+Fraud queries are sample queries found in the `Fraud Discovery.ipynb` jupyter notebook. This script breaks down into two parts:
+- Connect to the Neo4j database with the python neo4j library
+- Use Cypher query language to interrogate the database for suspected cases of fraud.
+    - Leverages the benefit of node-traversal to move from transactions to credit cards to people, and the opposite direction from transactions to merchants.
+    - Looks for series of transactions which happened within 7 days of each other that are of suspiciously high amounts or spent at atypical merchants
+    - Looks for transaction ids which are associated with multiple merchants or credit cards
+
+- I recommend you copy and paste these queries into the Neo4j web gui to really see the power of Neo4j visualization. Wait for the spark jobs to be completed to see they full depth of the transactional picture, and set a `limit` to improve query performance and visualization rendering.
+
+
+## Database Schema
+---
+The Neo4j schema consists of Person, CreditCard, Transaction, Location and Merchant nodes. And Used, Sent, Received and Resides in relationships.
+
+Node properties are as follows:
+- Person
+    - First name
+    - Last name
+    - SSN
+    - Date of Birth
+    - Gender
+    - Job
+- Location
+    - Street address
+    - City
+    - State
+    - Zip code
+    - Latitude
+    - Longitude
+    - City population
+- Account
+    - Account number
+- Credit Card
+    - Credit card number
+- Transaction
+    - Transaction number
+    - Date
+    - Time
+    - Datetime
+    - Amount
+- Merchant
+    - Name
+    - Category
+    - Latitude
+    - Longitude
+
+See the graphic for how the nodes and relationships relate:
+
+![DB Schema](db_schema.png)
+
+## Example Input and Output
+---
+### Input Source
+Sparkov generates flat, pipe-delimited csv files with one record per transaction and all related data joined to it. As an example see this transaction:
+
+ssn|cc_num|first|last|gender|street|city|state|zip|lat|long|city_pop|job|dob|acct_num|profile|trans_num|trans_date|trans_time|unix_time|category|amt|is_fraud|merchant|merch_lat|merch_long
+225-82-3116|3521047095214560|Christopher|Anderson|M|842 Sloan Orchard Suite 517|Rockford|IL|61102|42.2547|-89.1247|189162|Call centre manager|1980-12-27|829533234908|adults_2550_male_urban.json|92c5e06f2f70b2e12c631711ba640686|2024-01-05|02:11:21|1704438681|grocery_net|72.28|0|Tromp, Kerluke and Glover|42.487952|-89.695647
+
+### Example Output
+In the graph database this input transaction is converted to this graphical representation:
+![transaction](sample_transaction.png)
+
+Demonstrating more sophisticated fraud queries here's an example looking for transactions of amounts over $200 which occured within 7 days of each other from the same credit card?
+
+`match (c:CreditCard)-[s:SENT]-(t1:Transaction), (c)-[:SENT]-(t2:Transaction)
+where t1.amt > 200 and t2.amt > 200 and t2.trans_date - duration('P7D')<= t1.trans_date <= t2.trans_date + duration('P7D')
+return t1, t2
+order by t1.trans_date`
+![multiple credit cards](multiple_cards.png)
