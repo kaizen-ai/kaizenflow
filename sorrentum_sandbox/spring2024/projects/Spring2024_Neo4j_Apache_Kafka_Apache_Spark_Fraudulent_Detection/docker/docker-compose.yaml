@@ -11,8 +11,6 @@ services:
       - NEO4J_AUTH=none
     networks:
       - graph-net
-    volumes:
-      - ./neo4j/data:/app/data
  
   spark:
     build: .
