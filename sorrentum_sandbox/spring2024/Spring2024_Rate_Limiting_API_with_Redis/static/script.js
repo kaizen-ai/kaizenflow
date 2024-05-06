@@ -1,4 +1,5 @@
-async function api() {
+// Call API and log data if response OK else log response
+async function callApi() {
     try {
         const response = await fetch('/api');
         if (response.ok) {
