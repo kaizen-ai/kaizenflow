@@ -108,9 +108,38 @@ The python Implementation composes several pieces:
     - Merchants and their category and location
 
 - It provides `is_fraud` labels useful for performing accuracy tests of the system
-- It's built on the recognition the fraudulent purchases are likely to be different from typical transactions in that they:
+- It's built with the recognition that fraudulent purchases are likely to be different from typical transactions in some important ways:
     - Will often come over relatively quick succession (1-7 days)
     - Will be of higher amounts than most purchases
     - Are more likely to be made at Grocery or online retailers
     - May replicate a known transaction id in the system
-### 
+- I use a fixed list of 50 random customers and batch generate additional transactions for a given month.
+- To execute during testing run:
+    cd Sparkov_Data_Generation
+    
+
+    python3 datagen.py -o output -n output/customers.csv <start date like 01-01-2024> <end date>
+
+### Spark Structured Streaming
+
+Spark Structured streaming is built using the pyspark package in the Spark `Streaming.ipynb` notebook. This code block ingests data saved to the Sparkov_Data_Generation/output directory into the neo4j database.
+
+The script is divided into roughly five sections:
+- Instantiate the SparkSession object and define its configuration parameters
+- Create neo4j indexes on the node properties used most for querying and writes
+- Load the standard file schema and identify the output fields which belong to each node
+- Instantiate the read stream pointing at the Sparkov output location
+- Create the class `StreamWriter` with `insert_node` and `insert_relationship` methods to manage the stream writes
+    - These methods take parameter inputs for:
+        - node fields
+        - the checkpoint location (a tmp file used by spark to manage streams and their metadata)
+        - node labels
+        - node unique key identifiers (for upserts)
+        - specific to relationship inserts the source and target relationship labels and keys
+- Define the data cleansing logic being performed:
+    - Convert transaction amounts, latitudes and longitudes to double
+    - Convert transaction date and persons date of birth to date
+    - Concatenate the date and time field and convert to a transaction datetime
+    - Remove the header row from the insert
+- Instantiate a different stream object for each write stream (for each node and relationship type
+    - Execute the relevant method on each stream object to start the write stream with each configuration
