@@ -9,8 +9,8 @@ app = Flask(__name__)
 limiter = Limiter(
     get_remote_address,
     app=app,
-    # storage_uri='redis://redis:6379'
-    storage_uri='memory://'
+    storage_uri='redis://redis:6379'
+    # storage_uri='memory://'
 )
 
 # Define route for root URL
