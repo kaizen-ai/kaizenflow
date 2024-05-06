@@ -1,6 +1,6 @@
 # Rate Limiting API with Redis
 
-This project is a Flask application that uses Flask-Limiter for rate limiting and Redis for storage.
+This project is a Flask application that uses Redis and Flask-Limiter for rate limiting.
 
 ## Background
 
@@ -19,14 +19,13 @@ Here's an example of how to use Redis in Python:
 import redis
 
 # Connect to Redis server
-r = redis.Redis(host='redis', port=6379, db=0)
+r = redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
 
 # Set key-value pair
-r.set('key', 'value')
+r.set('foo', 'bar')
 
 # Get value by key
-value = r.get('key')
-print(value.decode())  # Output: value
+r.get('foo')  # bar
 ```
 
 This project uses Redis to track API requests.
@@ -39,9 +38,7 @@ Alternatives to Redis include:
 
 ### Flask
 
-Flask is a web framework for Python. In general: Flask works like this:
-
-<!-- First, Flask (optionally) starts a server. Next, a client sends a request to the server, which forwards the request to the application. Then, Flask routes the request to a function, which processes the request, and returns a reponse. Finally, Flask sends the response to the server, which forwards the response to the client. -->
+Flask is a web framework for Python. In general, Flask works like this:
 
 ```mermaid
 sequenceDiagram
@@ -58,6 +55,8 @@ sequenceDiagram
     Flask->>Server: Send Response
     Server->>Client: Forward Response
 ```
+
+First, Flask (optionally) starts a server. Next, a client sends a request to the server, which forwards the request to the application. Then, Flask routes the request to a function, which processes the request, and returns a response. Finally, Flask sends the response to the server, which forwards the response to the client.
 
 Here's an example of how to use Flask in Python:
 
@@ -102,45 +101,103 @@ def api():
     return 'OK', 200
 ```
 
-By default, Flask-Limiter uses a fixed window strategy. Here's a simplification of how Flask-Limiter works:
+By default, Flask-Limiter uses a fixed window strategy.
+
+Here's a simplification of how it works:
 
 ```python
 import redis
 import time
 
-# Connect to Redis server
-r = redis.Redis(host='redis', port=6379, db=0)
+# Define Limiter class
+class Limiter:
+    def __init__(self, host='redis', port=6379, db=0):
+        # Connect to Redis server
+        self.r = redis.Redis(host=host, port=port, db=db)
 
-# Define decorator factory
-def limit(requests, seconds, ip='127.0.0.1'):  # IP supplied by Flask
-    def decorator(function):
-        def wrapper(*args, **kwargs):
-            # Generate unique key
-            key = f'{ip}:{function.__name__}:{int(time.time() // seconds)}'
+    # Define decorator factory
+    def limit(self, requests, seconds, ip='127.0.0.1'):  # IP supplied by Flask
+        def decorator(function):
+            def wrapper(*args, **kwargs):
+                # Generate unique key
+                key = f'{ip}:{function.__name__}:{int(time.time() // seconds)}'
 
-            # Increment and timeout key
-            with r.pipeline() as pipe:
-                pipe.incr(key)
-                pipe.expire(key, seconds)
-                count, _ = pipe.execute()
+                # Increment and timeout key
+                with self.r.pipeline() as pipe:
+                    pipe.incr(key)
+                    pipe.expire(key, seconds)
+                    count, _ = pipe.execute()
 
-            # Check if limit exceeded
-            if count > requests:
-                return 'TOO MANY REQUESTS', 429
-            return function(*args, **kwargs)
-        return wrapper
-    return decorator
+                # Check if limit exceeded
+                if count > requests:
+                    return 'TOO MANY REQUESTS', 429
+                return function(*args, **kwargs)
+            return wrapper
+        return decorator
 
-@limit(3, 1)  # Limit to 3 requests per second
+# Create Limiter instance
+limiter = Limiter()
+
+@limiter.limit(3, 1)  # Limit to 3 requests per second
 def api():
     return 'OK', 200
 ```
 
-Here, `limit` takes three arguments (`requests`, `seconds`, and `ip`) and returns a decorator, which returns a wrapper. First, it generates a unique key. Next, it increments and timeouts the key. Finally, it checks if the value of the key is greater than the limit. If so, it returns `'TOO MANY REQUESTS', 429`. Otherwise, it calls the function.
+The `Limiter` class has one property, `r`, which connects to a Redis server. It also has one method, `limit`, which returns a decorator, which returns a wrapper. First, it generates a unique key. Next, it increments and timeouts the key. Finally, it checks if the value of the key is greater than the limit. If so, it returns `'TOO MANY REQUESTS', 429`. Otherwise, it calls the function.
 
 ### Docker
 
-Docker is a platform that helps developers build, share, and run applications in isolated environments called containers. This project uses two containers named `web` and `redis`.
+Docker is a platform for building, sharing, and running applications in isolated environments called containers, which are built from templates called images, which are built from instructions in a Dockerfile.
+
+Here's an example Dockerfile:
+
+```dockerfile
+# Specify base image 
+FROM python:3.8-slim-buster
+
+# Set working directory to /app
+WORKDIR /app
+
+# Copy current directory to /app
+COPY . /app
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Listen on port 5000
+EXPOSE 5000
+
+# Run app.py
+CMD ["python", "app.py"]
+```
+
+First, we specify the base image as Python Slim Buster, a minimal version of Debian Buster with Python 3.8 installed. Next, we set the working directory to `/app`, and copy the current directory to `/app`. Then, we pip install our Python dependencies. We disable the cache to reduce the size of the image.<sup>[*](#footnote)</sup> After that, we expose port 5000. Finally, we run `app.py`.
+
+<a name="footnote">*</a>: Caching is unnecessary because each `RUN` command creates a new, immutable layer in the image. So, the cache won't be used in subsequent runs, and it just takes up space.
+
+## Overview
+
+This project uses Docker Compose: a tool for defining and building multi-container applications.
+
+The `docker-compose.yml` looks like this:
+
+```yml
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis
+```
+
+When we use `docker compose up`, several things happen. First, it creates a network named `app_default`. Next, builds the `redis` container from the latest Redis image on Docker Hub, and attaches it to `app_default`. Then, it builds the `web` container from our Dockerfile, and attaches it to `app_default`. Now, the application is running on `localhost:5000`.
+
+Here's how everything works together:
 
 ```mermaid
 sequenceDiagram
@@ -167,6 +224,8 @@ sequenceDiagram
     Flask->>Server: Send Response
     Server->>Client: Forward Response
 ```
+
+First, a client sends a request to the server, which forwards the request to the application. Next, Flask routes the request to a function. Then, the rate-limiter checks whether the client has exceeded the limit. If so, it returns `'TOO MANY REQUESTS', 429`. Otherwise, the function processes the request, and returns a response. Finally, Flask sends the response to the server, which forwards the response to the client.
 
 ## Running the Application
 
@@ -198,13 +257,13 @@ CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS   
 
 To use the application, navigate to `localhost:5000` and click `Call API`.
 
-Using DevTools, we can monitor the API requests.
+Using DevTools (Ctrl + Shift + I), we can monitor the API requests.
 
 <img width="960" alt="image" src="https://github.com/kaizen-ai/kaizenflow/assets/103896552/a41c1a29-f525-43fc-b537-9c988b993d0f">
 
 Here, we make four rapid API requests. As expected, the first three requests succeed, and the fourth request fails.
 
-To close the application, use `docker compose down`
+To close the application, use `docker compose down` (Ctrl + C).
 
 ```console
 $ docker compose down
