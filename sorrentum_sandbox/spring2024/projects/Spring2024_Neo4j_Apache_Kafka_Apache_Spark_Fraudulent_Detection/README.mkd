@@ -9,18 +9,43 @@ Email: istobbe@umd.edu
 ## Technology
 ---
 #### Neo4j
-Neo4j is the premier graph database which instead of modeling data in a tabular form with fields and records, models data using nodes and relationships between them. Nodes have labels denoting what they are, and similar entries will have the same node label synonymous to how similar entries in a relationshal database would be stored in the same table. Within nodes are properties, which store the unique information about a node - such as it's name, a time it occured, and other descriptive characteristic. Relationships have types which describe how two nodes are related. A common use of a graphical database could be a social media platform, in which nodes are people and a relationship between two people nodes could be "follows". 
+- Neo4j is the premier graph database which instead of modeling data in a tabular form with fields and records, models data using nodes and relationships between them. 
+    - Nodes have labels denoting what they are, and similar entries will have the same node label synonymous to how similar entries in a relationshal database would be stored in the same table. 
+        - Within nodes are properties, which store the unique information about a node - such as
+            -it's name, a time it occured, and other descriptive characteristics 
+    - Relationships have types which describe how two nodes are related. 
+    - A common use of a graphical database could be a social media platform, in which nodes are people and a relationship between two people nodes could be "follows". 
 
-A major benefit to graph databases is that the data is stored and traversed more intuitively than in a traditional relational databases. There's no need to concern yourself with joins across many normalized tables. Instead you query the database by asking it about types of nodes and the relationships between them. There are also major performants improvements in a graph model. When querying for nodes 1 away it is about as performant as a relational database, but as you begin looking for friends of friends of a person, or friends of friends of friends the graph datastore in Neo4j performs exponentially better. 
+- A major benefit to graph databases is that the data is stored and traversed more intuitively than in a traditional relational databases. There's no need to concern yourself with joins across many normalized tables. 
+- Instead you query the database by asking it about types of nodes and the relationships between them. 
+- There are major performants improvements in a graph model. 
+    - When querying for nodes 1 away it is about as performant as a relational database, but as you begin looking for friends of friends of a person, or friends of friends of friends the graph datastore in Neo4j performs exponentially better. 
 
-Fraud detection is a common use case for graph databases and is the domain I selected for this project. In it there are person, merchant, credit card, transactional and other nodes which effectively model the transactional dataspace. A fascinating added complexity is the way Neo4j can model fraud rings and interested mischeiving parties working together to conduct fraud. Storing the data in graphs makes it easier to understand the sophisticated interworkings in this arena and it's a use case growing more and more common in the Banking, Financial and Tax industries.
+- Fraud detection is a common use case for graph databases and is the domain I selected for this project. 
+    - In it there are person, merchant, credit card, transactional and other nodes which effectively model the transactional dataspace. - A fascinating added complexity is the way Neo4j can model fraud rings and interested mischeiving parties working together to conduct fraud. 
+    - Storing the data in graphs makes it easier to understand the sophisticated interworkings in this arena and it's a use case growing more and more common in the Banking, Financial and Tax industries.
 
-A downside of using Neo4j is the increased time required to perform writes to the database. This is especially true of writing relationships as these require the database to search and lock both the source and target nodes in order to insert the relationship. This is a time intensive processes and inhibits parallelization of writes, especially as the database size grows. Another downside is the requirement to learn to use Cypher query language to perform queries. While SQL has developed many different flavors in its long life there are similarities between the versions. Cypher query language requires a learning curve to develop accurate and time-effective queries.
+- A downside of using Neo4j is the increased time required to perform writes to the database. 
+- This is especially true of writing relationships as these require the database to search and lock both the source and target nodes in order to insert the relationship. 
+    - This is a time intensive processes and inhibits parallelization of writes, especially as the database size grows.
+- Another downside is the requirement to learn to use Cypher query language to perform queries. While SQL has developed many different flavors in its long life there are similarities between the versions. Cypher query language requires a learning curve to develop accurate and time-effective queries.
 
 #### Apache Spark Structured Streaming
-Apache Spark Structured Streaming is a streaming framework built on top of Spark SQL which is built in Java and accessible in python via the Pyspark package API. Spark Structured Streaming handles the scheduling, checkpoints and datasource detection and its interface allows you to develop with its streaming objects as if they are static data sources. By defining reading and writing streams Structured Streaming will identify when knew file sources are detected and instantaneously schedule and monito jobs to pick up the source data. Data transformations, casting and cleansing are handled in the write streams, along with the Neo4j write once the neo4j spark driver is properly installed and the data schemas are defined.
 
-Leveraging data streaming with spark is beneficial to standard batch jobs as pipeline scheduling is not needed. You aren't required to identify triggers to orchestrate pipeline execution stages, and data will always be processed once its deposited to the source. This is incredibly powerful and the access to native Spark Dataframe methods within the streaming pipelines provides sufficient tools for data transformation. Another pro is the highly-parallelized nature of streams, alowing many to run simulatenously and improving performance. Some cons to Structured Streams are its not easy to see which particular files are being inserted. Oftentimes especially with large data flows its unclear if the streams are running successfully and the parallelization can mean a lot of the processing power is being divided up among many jobs. This slows down the write performance while inhibiting visibility into the process. Another con is the difficulty of implementing data transformations. I found the transformations needed possible to implement, however the development was more challenging than batch processing in pandas for example, and pandas provides many more tools for manipulation. A third con is the need to have multiple streams per sink. In the case of file writes to different locations this does make more sense, however in its integration with Neo4j all data was coming from csv files, however the different writes by node were required to be different. This meant the engine needed to run multiple jobs which slowed-down performance.
+- Apache Spark Structured Streaming is a streaming framework built on top of Spark SQL which is built in Java and accessible in python via the Pyspark package API. 
+- Spark Structured Streaming handles the scheduling, checkpoints and datasource detection and its interface allows you to develop with its streaming objects as if they are static data sources. 
+- By defining reading and writing streams, Structured Streaming will identify when new file sources are detected and instantaneously schedule and monito jobs to pick up the source data. 
+- Data transformations, casting and cleansing are handled in the write streams, along with the Neo4j write once the neo4j spark driver is properly installed and the data schemas are defined.
+
+- Leveraging data streaming with spark is beneficial to standard batch jobs as pipeline scheduling is not needed. You aren't required to identify triggers to orchestrate pipeline execution stages, and data will always be processed once its deposited to the source. 
+- This is incredibly powerful and the access to native Spark Dataframe methods within the streaming pipelines provides sufficient tools for data transformation. 
+- Another pro is the highly-parallelized nature of streams, allowing many to run simulatenously and improving performance. 
+- Some cons to Structured Streams are its not easy to see which particular files are being inserted. 
+    - Oftentimes with large data flows it's unclear if the streams are running successfully and the parallelization can mean a lot of the processing power is being divided up among many jobs. This slows down the write performance while inhibiting visibility into the process. 
+- Another con is the difficulty of implementing data transformations. 
+        - I found the transformations needed possible to implement, however the development was more challenging than batch processing in pandas for example, and pandas provides many more tools for manipulation. 
+- A third con is the need to have multiple streams per sink. In the case of file writes to different locations this does make more sense, however in its integration with Neo4j all data was coming from csv files.
+    -The different writes by node were required to be different streams. This meant the engine needed to run multiple jobs which slowed-down performance.
 
 Sources: Neo4j, Apache Spark, Medium.
 
@@ -68,4 +93,24 @@ Sources: Neo4j, Apache Spark, Medium.
 ## Python Implementation
 ---
 
+The python Implementation composes several pieces:
 
+- Leverage Spakov_Data_Generation git repo to randomly generate real and fraudulent credit card transactions
+- Establishes a cron job to continuously generate more transactions for a subsequent month every 10 minutes
+- Develops spark structured streaming pipelines to pickup these csv files and insert them into neo4j
+- An additional notebook `Fraud Detection.ipynb` provides example queries to detect fraudulent transactions
+
+### Data Generation
+- Sparkov Data Generation provided rich transaction data including important attributes like:
+    - Peoples names, addresses, professions and ages
+    - Transaction dates, times and amounts
+    - Credit cards and bank accounts
+    - Merchants and their category and location
+
+- It provides `is_fraud` labels useful for performing accuracy tests of the system
+- It's built on the recognition the fraudulent purchases are likely to be different from typical transactions in that they:
+    - Will often come over relatively quick succession (1-7 days)
+    - Will be of higher amounts than most purchases
+    - Are more likely to be made at Grocery or online retailers
+    - May replicate a known transaction id in the system
+### 
