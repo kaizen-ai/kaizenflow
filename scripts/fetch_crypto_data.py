@@ -1,11 +1,10 @@
 import os
 import json
-import shutil
 import subprocess
 import logging
 from datetime import datetime
-import requests
 import redis
+import requests
 
 # Setup logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -32,52 +31,39 @@ def fetch_historical_data(pair, since):
 
 def save_data(data, filename):
     directory = '/app/data'
+    os.makedirs(directory, exist_ok=True)
     filepath = os.path.join(directory, filename)
     with open(filepath, 'w') as file:
         json.dump(data, file, indent=4)
         logging.info(f"Data saved to {filepath}")
         return filepath
 
-def configure_git():
-    try:
-        subprocess.run(["git", "config", "--global", "user.email", "farhad@umd.edu"])
-        subprocess.run(["git", "config", "--global", "user.name", "Farhad Abasahl"])
-        logging.info("Git configured successfully")
-    except Exception as e:
-        logging.error(f"Failed to configure Git: {str(e)}")
-
 def save_to_github(filepath):
     try:
-        # Configure Git
-        configure_git()
-
-        # Copy file from /app/data to /home/jovyan/work
-        host_filepath = filepath.replace('/app/data', '/home/jovyan/work')
-        shutil.copy(filepath, host_filepath)
-        os.remove(filepath)
-
         # Change to the appropriate directory
         os.chdir("/home/jovyan/work")
-
+        
+        # Configure Git
+        subprocess.run(["git", "config", "--global", "user.email", "you@example.com"])
+        subprocess.run(["git", "config", "--global", "user.name", "Your Name"])
+        
         # Add the file
-        subprocess.run(["git", "add", host_filepath])
+        subprocess.run(["git", "add", filepath])
 
         # Commit the changes
         subprocess.run(["git", "commit", "-m", f"Added {os.path.basename(filepath)}"])
 
         # Push the changes
         github_pat = os.getenv("GITHUB_PAT")
-        push_url = f"https://farhad:{github_pat}@github.com/Farhad1969/sorrentum.git"
         result = subprocess.run(
-            ["git", "push", push_url],
-            stderr=subprocess.PIPE,
+            ["git", "push", f"https://{github_pat}@github.com/Farhad1969/sorrentum.git"],
             stdout=subprocess.PIPE,
-            text=True,
+            stderr=subprocess.PIPE,
+            text=True
         )
-        if result.returncode != 0:
-            logging.error(f"Failed to push {filepath} to GitHub: {result.stderr}")
-        else:
-            logging.info(f"Successfully pushed {host_filepath} to GitHub")
+        logging.info(result.stdout)
+        logging.error(result.stderr)
+        logging.info(f"Successfully pushed {filepath} to GitHub")
     except Exception as e:
         logging.error(f"Failed to save {filepath} to GitHub: {str(e)}")
 
