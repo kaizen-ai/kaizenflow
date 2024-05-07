@@ -2,6 +2,8 @@
 
 This project is a Flask application that uses Redis and Flask-Limiter for rate limiting.
 
+For a quick overview, watch this [YouTube](https://youtu.be/NlB2aVGZTSA) video!
+
 ## Background
 
 ### Redis
@@ -143,7 +145,7 @@ def api():
     return 'OK', 200
 ```
 
-The `Limiter` class has one property, `r`, which connects to a Redis server. It also has one method, `limit`, which returns a decorator, which returns a wrapper. First, it generates a unique key. Next, it increments and timeouts the key. Finally, it checks whether the value of the key is greater than the limit. If so, it returns `'TOO MANY REQUESTS', 429`. Otherwise, it calls the function.
+The `Limiter` class has one property, `r`, which connects to a Redis server. It also has one method, `limit`, which returns a decorator, which returns a wrapper. First, it generates a unique key. Then, it atomically increments and timeouts the key. Finally, it checks whether the value of the key is greater than the limit. If so, it returns `'TOO MANY REQUESTS', 429`. Otherwise, it calls the function.
 
 ### Docker
 
@@ -193,7 +195,7 @@ services:
       - redis
 ```
 
-When we use `docker compose up`, several things happen. First, it creates a network named `app_default`. Next, builds the `redis` container from the latest Redis image on Docker Hub, and attaches it to `app_default`. Then, it builds the `web` container from our Dockerfile, and attaches it to `app_default`. Now, the application is running on `localhost:5000`.
+When we use `docker compose up`, several things happen. First, it creates a network named `app_default`. Then, builds the `redis` container from the latest Redis image on Docker Hub, and attaches it to `app_default`. Finally, it builds the `web` container from our Dockerfile, and attaches it to `app_default`. Now, the application is running on `localhost:5000`.
 
 Here's how everything works together:
 
@@ -273,29 +275,59 @@ $ docker compose down
 
 ## Conclusion
 
+This project is a small example of how to create a Flask application that uses Redis and Flask-Limiter for rate limiting. I recommend that you use this example as a foundation to build more complex APIs.
+
+Here's an example of how to add a new API route:
+
+```python
+from flask import Flask, render_template, jsonify
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+# Create Flask instance
+app = Flask(__name__)
+
+# Create Limiter instance
+limiter = Limiter(get_remote_address, app=app)
+
+# Define route for root URL
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+# Define route for API
+@app.route('/api')
+@limiter.limit('3/second')  # Limit to 3 requests per second
+def api():
+    return jsonify({'foo': 'bar', 'baz': 'qux'})
+
+# Define route for new API
+@app.route('/new_api/<int:i>')  # Add variable rules
+@limiter.limit('1/minute;10/day')  # Add multiple rate limits
+def new_api(i):
+    return ['foo', 'bar', 'baz', 'qux'][i]
+```
+
+Thank you for reading, and please watch the [YouTube](https://youtu.be/NlB2aVGZTSA) video if you haven't already.
+
 ## References
 
-### Redis
+https://en.wikipedia.org/wiki/Flask
+
+https://en.wikipedia.org/wiki/Rate_limiting
+
 https://en.wikipedia.org/wiki/Redis
+
+https://en.wikipedia.org/wiki/Web_Server_Gateway_Interface
+
+https://github.com/alisaifee/flask-limiter
+
+https://github.com/DomainTools/rate-limit
+
+https://github.com/pallets/flask
 
 https://github.com/redis/redis
 
 https://github.com/redis/redis-py
 
 https://redis.io/docs/latest/commands/incr/
-
-### Flask
-https://en.wikipedia.org/wiki/Flask
-
-https://github.com/pallets/flask
-
-https://github.com/alisaifee/flask-limiter
-
-https://github.com/DomainTools/rate-limit
-
-### Misc
-https://en.wikipedia.org/wiki/Rate_limiting
-
-https://en.wikipedia.org/wiki/Web_Server_Gateway_Interface
-
-https://levelup.gitconnected.com/top-5-rate-limiting-tactics-for-optimal-traffic-5ea77fd4461c
