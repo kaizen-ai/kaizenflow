@@ -1,13 +1,17 @@
-# File, images, container
-
+# Use the official Python image as the base image
 FROM python:3.9-slim
 
-WORKDIR /server
+# Set the working directory in the container
+WORKDIR /app
 
+# Copy the server script to the container
 COPY server.py .
 
-# RUN pip install  -r requirements.txt
+# Install any required Python packages
+# RUN pip install --no-cache-dir queue
 
-# EXPOSE 9999/udp
+# Expose the port the server will run on
+EXPOSE 9999
 
-CMD ["python", "./server.py"]
+# Command to run the server script
+CMD ["python", "server.py"]
