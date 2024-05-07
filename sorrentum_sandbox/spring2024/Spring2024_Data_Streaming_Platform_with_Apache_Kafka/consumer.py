@@ -10,17 +10,29 @@ logging.basicConfig(
 
 
 class Env:
+    """
+    This class is used to store the Kafka configuration and the Consumer instance.
+    """
+
     def __init__(self, conf):
         self.conf = conf
         self.consumer = Consumer(conf)
 
 
 def create_database(conn_params, dbname):
+    """
+    Creates a new database in the PostgreSQL server.
+
+    Parameters:
+    conn_params (dict): A dictionary containing the connection parameters.
+    dbname (str): The name of the database.
+    """
     conn_params_default = conn_params.copy()
     conn_params_default["dbname"] = "postgres"
 
     # Connect to the default database (postgres) to issue commands
     conn = psycopg2.connect(**conn_params_default)
+
     # Set the connection to autocommit mode
     conn.autocommit = True
     cur = conn.cursor()
@@ -29,18 +41,20 @@ def create_database(conn_params, dbname):
     cur.execute("SELECT 1 FROM pg_database WHERE datname=%s", (dbname,))
     exists = cur.fetchone()
 
+    # Create the database if it does not exist
     if exists:
-        print(f"Database '{dbname}' already exists.")
+        logging.warning(f"Database '{dbname}' already exists.")
     else:
         # Execute the command to create a new database
         try:
             cur.execute(
                 f"CREATE DATABASE {dbname};"
             )  # Using f-string for database name in SQL statement
-            print(f"Database '{dbname}' created successfully.")
+            logging.info(f"Database '{dbname}' created successfully.")
         except psycopg2.Error as e:
-            print(f"An error occurred: {e}")
+            logging.error(f"An error occurred: {e}")
 
+    # Close the cursor and connection
     cur.close()
     conn.close()
 
@@ -77,20 +91,69 @@ def create_table(conn_params, table_name):
                 cur.execute(create_table_command)
                 # Commit the transaction
                 conn.commit()
-                print(f"Table '{table_name}' created successfully")
+                logging.info(f"Table '{table_name}' created successfully")
 
     except psycopg2.Error as e:
         # Handle exceptions that occur during the creation of the table
-        print(f"Failed to create table: {e}")
+        logging.error(f"Failed to create table: {e}")
+
+
+def validate_trade(trade):
+    """
+    This function validates trade record.
+
+    Parameters:
+    trade (dict): A dictionary containing a trader record.
+    """
+    required_keys = {"e", "E", "s", "t", "p", "q", "b", "a", "T", "m", "M"}
+
+    # Check for missing keys
+    if not required_keys.issubset(trade.keys()):
+        return False, "Missing required fields"
+
+    # Check event type
+    if trade["e"] != "trade":
+        return False, "Invalid event type, must be 'trade'"
+
+    # Validate timestamps and IDs
+    for key in ["E", "t", "b", "a", "T"]:
+        if not isinstance(trade[key], int) or trade[key] <= 0:
+            return False, f"Field {key} must be a positive integer"
+
+    # Validate price and quantity to be positive numbers
+    for key in ["p", "q"]:
+        try:
+            val = float(trade[key])
+            if val <= 0:
+                return False, f"Field {key} must be a positive number"
+        except ValueError:
+            return False, f"Field {key} must be a numeric value"
+
+    # Check boolean fields
+    if not isinstance(trade["m"], bool) or not isinstance(trade["M"], bool):
+        return False, "Fields 'm' and 'M' must be boolean values"
+
+    return True, "Valid trade"
 
 
 def consume_from_kafka(env, topic_name):
+    """
+    This function consumes messages from a Kafka topic, validate, and inserts them into a PostgreSQL database.
+
+    Parameters:
+    env (Env): An instance of the Env class containing the Kafka configuration and the Consumer instance.
+    topic_name (str): The name of the Kafka topic to consume messages from.
+    """
     try:
+        # Get the Consumer instance from the Env object
         consumer = env.consumer
+
+        # Subscribe to the topic
         consumer.subscribe([topic_name])
+
         with psycopg2.connect(**conn_params) as conn:
             with conn.cursor() as cursor:
-                print("Starting the consumer loop.")
+                logging.info("Starting the consumer loop.")
                 # Consumer loop
                 while True:
                     # Poll for a new message
@@ -102,48 +165,65 @@ def consume_from_kafka(env, topic_name):
                     if msg.error():
                         if msg.error().code() == KafkaError._PARTITION_EOF:
                             # End of partition event
-                            print(
+                            logging.info(
                                 f"Reached end of {msg.partition()} at offset {msg.offset()}"
                             )
                         else:
-                            print(f"Error: {msg.error()}")
+                            logging.error(f"Error: {msg.error()}")
                         continue
 
                     # process_message
                     message_data = json.loads(msg.value().decode("utf-8"))
-                    print(
+                    logging.info(
                         f"Received message: {message_data} from partition {msg.partition()}"
                     )
-                    insert_query = """
-						INSERT INTO binance 
-							(
-								event_type, event_time, symbol, trade_id, price, quantity, buyer_order_id, 
-								seller_order_id, trade_time, is_buyer_maker, ignore_in_price
-							)
-						VALUES (%(e)s, %(E)s, %(s)s, %(t)s, %(p)s, %(q)s, %(b)s, %(a)s, %(T)s, %(m)s, %(M)s);
-					"""
-                    cursor.execute(insert_query, message_data)
-                    print("Record inserted")
-                    conn.commit()
+
+                    # Validate the trade message
+                    valid, message = validate_trade(message_data)
+
+                    # Insert the trade message into the database if it is valid
+                    if valid:
+                        logging.info("Trade is valid. Inserting into database.")
+                        insert_query = """
+                            INSERT INTO binance 
+                                (
+                                    event_type, event_time, symbol, trade_id, price, quantity, buyer_order_id, 
+                                    seller_order_id, trade_time, is_buyer_maker, ignore_in_price
+                                )
+                            VALUES (%(e)s, %(E)s, %(s)s, %(t)s, %(p)s, %(q)s, %(b)s, %(a)s, %(T)s, %(m)s, %(M)s);
+                        """
+                        cursor.execute(insert_query, message_data)
+                        logging.info("Record inserted")
+                        conn.commit()
+                    else:
+                        logging.info(f"Validation failed: {message}")
 
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        # Handle exceptions that occur during the consumption of messages
+        logging.error(f"An unexpected error occurred: {e}")
 
     finally:
-        print("Closing the consumer.")
+        # Close the consumer when the loop ends
+        logging.error("Closing the consumer.")
         consumer.close()
 
 
 if __name__ == "__main__":
 
+    # Kafka configuration
     conf = {
         "bootstrap.servers": "broker:9092",
         "group.id": "group1",
         "auto.offset.reset": "earliest",
     }
+
+    # Create an instance of the Env class
     env = Env(conf)
+
+    # Kafka topic name
     topic_name = "trades"
 
+    # Connection parameters for PostgreSQL
     conn_params = {
         "dbname": "trades",
         "user": "postgres",
@@ -151,6 +231,12 @@ if __name__ == "__main__":
         "host": "pgdatabase",
         "port": "5432",
     }
+
+    # Create 'trades' database
     create_database(conn_params, "trades")
+
+    # Create 'binance' table in the database
     create_table(conn_params, "binance")
+
+    # Consume messages from Kafka
     consume_from_kafka(env, topic_name)
