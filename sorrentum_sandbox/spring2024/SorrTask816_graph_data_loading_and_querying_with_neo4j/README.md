@@ -9,7 +9,7 @@ Install and configure Neo4j, and create a Python script to load graph data into 
 
 The implementation of this project will store graph data from *The Marvel Comics character collaboration graph* originally constructed by Cesc Rosselló, Ricardo Alberich, and Joe Miro from the University of the Balearic Islands. The data pulls from Marvel's superhero comic books, linking hero's to the stories they appear in. While this is obviosuly a non-serious use, it is still demonstraive of the capabilties of a dockerized environment for doing data analysis on graph data.
 
-This data is stored in the sh_nw (Superhero Network) subdirectory in `nodes.csv` and `edges.csv`
+This data is stored in the `sh_nw` (Superhero Network) subdirectory in `nodes.csv` and `edges.csv`
 
 https://bioinfo.uib.es/~joemiro/marvel.html
 
