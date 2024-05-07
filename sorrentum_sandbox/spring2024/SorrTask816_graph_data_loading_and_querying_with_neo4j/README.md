@@ -3,7 +3,7 @@
 ## Project Description:
 Install and configure Neo4j, and create a Python script to load graph data into the database. Define a simple graph schema and insert sample data representing entities and relationships. Use Neo4j's endpoint to execute basic graph queries and retrieve information from the database. Explore and present an innovative project.
 
-***Please note that this project was changed to use Neo4j rather than Allegrograph as originally intended with Professor Permission. The original project description can be found at the bottom of this page.***
+****Please note that this project was changed to use Neo4j rather than Allegrograph as originally intended with Professor Permission. The original project description can be found at the bottom of this page.***
 
 ## Implementation
 
