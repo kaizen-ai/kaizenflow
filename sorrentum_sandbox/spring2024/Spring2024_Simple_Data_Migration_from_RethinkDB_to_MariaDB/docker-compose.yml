@@ -13,4 +13,15 @@ services:
       - 8080:8080
       - 28015:28015
       - 29015:29015
+  mariadb:
+    image: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: <196900>
+      MYSQL_USER: <user>
+      MYSQL_PASSWORD: <196900>
+      MYSQL_DATABASE: <data>
+    ports:
+      - "3306:3306"
+    volumes:
+      - "./:/docker-entrypoint-initdb.d/1.sql"
 
