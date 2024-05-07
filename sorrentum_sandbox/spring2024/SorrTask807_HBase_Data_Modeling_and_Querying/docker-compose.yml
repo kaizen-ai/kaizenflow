@@ -15,6 +15,7 @@ services:
     volumes:
       - ./data:/data
     restart: unless-stopped
+    
 
 # This configuration maps the necessary ports and sets up a volume for data persistence.
 # It also sets the container to restart unless explicitly stopped.
