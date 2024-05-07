@@ -1,20 +1,32 @@
 import zmq
-import time
 
 def client():
-    context = zmq.Context()
-    socket = context.socket(zmq.REQ)
-    socket.connect("tcp://server:5555")
-    
-    for request_num in range(10):
-        # Send request to server
-        print("Sending request:", request_num)
-        socket.send_multipart([b"",b"Client request"])
-        
-        # Receive response from server
-        message = socket.recv_multipart()
-        address, response = message
-        print("Received response:", response.decode())
+    try:
+        context = zmq.Context()
+        socket = context.socket(zmq.REQ)
+        socket.connect("tcp://server:5555")
+
+        for request_num in range(10):
+            try:
+                # Send request to server
+                print("Sending request:", request_num)
+                
+                # Intentionally send a malformed request on the third request
+                if request_num == 2:
+                    socket.send_multipart([b"Client request"])  # Missing empty address
+                else:
+                    socket.send_multipart([b"", b"Client request"])
+                
+                # Receive response from server
+                message = socket.recv_multipart()
+                address, response = message
+                print("Received response:", response.decode())
+
+            except zmq.error.ZMQError as e:
+                print(f"Error occurred during message exchange: {e}")
+
+    except zmq.error.ZMQError as e:
+        print(f"Error occurred during initialization: {e}")
 
 if __name__ == "__main__":
     client()

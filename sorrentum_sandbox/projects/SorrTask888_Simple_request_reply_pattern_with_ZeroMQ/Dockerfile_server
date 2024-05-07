@@ -5,3 +5,4 @@ COPY server.py .
 RUN pip install pyzmq
 
 CMD ["python", "./server.py"]
+
