@@ -7,8 +7,15 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
+# Install any needed packages specified in requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Make port 4000 available to the world outside this container
+EXPOSE 4000
+
 # Define environment variable
 ENV NAME World
 
-# Command to run on container start
+# Run main.py when the container launches
 CMD ["python", "main.py"]
