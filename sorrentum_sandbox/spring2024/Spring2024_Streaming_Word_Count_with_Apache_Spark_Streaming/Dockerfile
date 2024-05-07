@@ -1,37 +1,45 @@
+#test git
+
 # Use an official Python runtime as a parent image
 FROM python:3.8-slim
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Install dependencies
-RUN apt-get update && apt-get install -y wget && \
-    apt-get install -y tar && \
-    wget https://downloads.apache.org/spark/spark-3.5.1/spark-3.5.1-bin-hadoop3.2.tgz && \
-    tar xzf spark-3.5.1-bin-hadoop3.2.tgz && \
-    mv spark-3.5.1-bin-hadoop3.2 /spark && \
-    rm spark-3.5.1-bin-hadoop3.2.tgz && \
-    apt-get remove -y wget && \
+# Copy the current directory contents into the container at /app
+COPY . /app
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y wget tar && \
+    apt-get install -y gcc python3-dev libc-dev && \
+    apt-get install -y python3-distutils && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Download and setup Apache Spark
+RUN wget https://downloads.apache.org/spark/spark-3.5.1/spark-3.5.1.tgz && \
+    tar xzf spark-3.5.1.tgz && \
+    mv spark-3.5.1 /spark && \
+    rm spark-3.5.1.tgz
+
 # Set environment variables for Spark
-ENV SPARK_HOME=/spark
-ENV PATH=$PATH:$SPARK_HOME/bin
+ENV PYSPARK_PYTHON python3
+ENV SPARK_HOME /spark
+ENV PATH $PATH:$SPARK_HOME/bin
 
 # Install Python dependencies
-RUN pip install pyspark
+RUN pip install --upgrade pip
+RUN pip install pyspark numpy matplotlib notebook
 
-# Copy the Python script into the container
-COPY spring2024_streaming_word_count_with_apache_spark_streaming.py /app
+# Set up Jupyter configuration
+RUN jupyter notebook --generate-config && \
+    echo "c.NotebookApp.token = ''" >> /root/.jupyter/jupyter_notebook_config.py
 
-# Command to run your Python script
-CMD ["python", "spring2024_streaming_word_count_with_apache_spark_streaming.py"]
+# Expose port for Jupyter Notebook
+EXPOSE 8888
 
+#Update file
 
-
-
-
-
-
-
+# Command to run Jupyter Notebook
+CMD ["jupyter", "notebook", "--ip", "0.0.0.0", "--no-browser", "--allow-root"]
