@@ -163,36 +163,41 @@ Fraud queries are sample queries found in the `Fraud Discovery.ipynb` jupyter no
 The Neo4j schema consists of Person, CreditCard, Transaction, Location and Merchant nodes. And Used, Sent, Received and Resides in relationships.
 
 Node properties are as follows:
-- Person
-    - First name
-    - Last name
-    - SSN
-    - Date of Birth
-    - Gender
-    - Job
+- Person 
+    - First name, Last name, SSN, Date of Birth, Gender, Job
 - Location
-    - Street address
-    - City
-    - State
-    - Zip code
-    - Latitude
-    - Longitude
-    - City population
+    - Street address, City, State, Zip code, Latitude, Longitude, City population
 - Account
     - Account number
 - Credit Card
     - Credit card number
 - Transaction
-    - Transaction number
-    - Date
-    - Time
-    - Datetime
-    - Amount
+    - Transaction number, Date, Time, Datetime, Amount
 - Merchant
-    - Name
-    - Category
-    - Latitude
-    - Longitude
+    - Name, Category, Latitude, Longitude
+
+Relationship scehmas are as follows:
+- Used
+    - Source node:
+        - Person, key: ssn
+    - Target node:
+        - Credit Card, key: cc_num
+- Resides In
+    - Source node:
+        - Person, key: ssn
+    - Target node:
+        - Location, key: city
+- Sent
+    - Source node:
+        - Credit Card key: cc_num
+    - Target node:
+        - Transaction, key: trans_num
+- Received
+    - Source node:
+        - Transaction, key: trans_num
+    - Target node:
+        - Merchant, key: merchant
+        
 
 See the graphic for how the nodes and relationships relate:
 
@@ -203,8 +208,8 @@ See the graphic for how the nodes and relationships relate:
 ### Input Source
 Sparkov generates flat, pipe-delimited csv files with one record per transaction and all related data joined to it. As an example see this transaction:
 
-ssn|cc_num|first|last|gender|street|city|state|zip|lat|long|city_pop|job|dob|acct_num|profile|trans_num|trans_date|trans_time|unix_time|category|amt|is_fraud|merchant|merch_lat|merch_long
-225-82-3116|3521047095214560|Christopher|Anderson|M|842 Sloan Orchard Suite 517|Rockford|IL|61102|42.2547|-89.1247|189162|Call centre manager|1980-12-27|829533234908|adults_2550_male_urban.json|92c5e06f2f70b2e12c631711ba640686|2024-01-05|02:11:21|1704438681|grocery_net|72.28|0|Tromp, Kerluke and Glover|42.487952|-89.695647
+`ssn|cc_num|first|last|gender|street|city|state|zip|lat|long|city_pop|job|dob|acct_num|profile|trans_num|trans_date|trans_time|unix_time|category|amt|is_fraud|merchant|merch_lat|merch_long
+225-82-3116|3521047095214560|Christopher|Anderson|M|842 Sloan Orchard Suite 517|Rockford|IL|61102|42.2547|-89.1247|189162|Call centre manager|1980-12-27|829533234908|adults_2550_male_urban.json|92c5e06f2f70b2e12c631711ba640686|2024-01-05|02:11:21|1704438681|grocery_net|72.28|0|Tromp, Kerluke and Glover|42.487952|-89.695647`
 
 ### Example Output
 In the graph database this input transaction is converted to this graphical representation:
