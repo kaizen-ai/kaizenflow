@@ -41,9 +41,9 @@ This project is an advanced implementation of a request/reply pattern using Zero
 ### Components of the Docker System
 
 - Server Container:
-•	Hosts the server-side logic implemented in server.py.
-•	Utilizes ZeroMQ sockets to listen for incoming requests from clients.
-•	Handles request processing and sends back responses.
+</t><br>•	Hosts the server-side logic implemented in server.py.
+</t></br>•	Utilizes ZeroMQ sockets to listen for incoming requests from clients.
+</t></br>•	Handles request processing and sends back responses.
 
 - Client Container:
 •	Contains the client-side logic implemented in client.py.
