@@ -5,8 +5,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile_server
-    ports:
-      - "5555:5555"
     networks:
       - zmq_network
 
@@ -16,6 +14,15 @@ services:
       dockerfile: Dockerfile_client
     depends_on:
       - server
+    networks:
+      - zmq_network
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile_nginx
+    ports:
+      - "80:80"
     networks:
       - zmq_network
 

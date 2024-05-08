@@ -1,10 +1,14 @@
 import zmq
 
+
 def client():
     try:
         context = zmq.Context()
         socket = context.socket(zmq.REQ)
         socket.connect("tcp://server:5555")
+
+        # Set timeout for socket operations (in milliseconds)
+        socket.setsockopt(zmq.RCVTIMEO, 5000)  # 5 seconds
 
         for request_num in range(10):
             try:
@@ -23,7 +27,12 @@ def client():
                 print("Received response:", response.decode())
 
             except zmq.error.ZMQError as e:
-                print(f"Error occurred during message exchange: {e}")
+                if e.errno == zmq.ETERM:
+                    print("Socket closed during operation.")
+                elif e.errno == zmq.EAGAIN:
+                    print("Timeout occurred while waiting for response.")
+                else:
+                    print(f"Error occurred during message exchange: {e}")
 
     except zmq.error.ZMQError as e:
         print(f"Error occurred during initialization: {e}")

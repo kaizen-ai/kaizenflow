@@ -1,34 +1,35 @@
 import zmq
-import time
+import asyncio
+from zmq.asyncio import Context, Poller
 
-def server():
+async def server():
     try:
-        context = zmq.Context()
+        context = Context.instance()
         socket = context.socket(zmq.REP)
         socket.bind("tcp://*:5555")
         
-        poller = zmq.Poller()
+        poller = Poller()
         poller.register(socket, zmq.POLLIN)
 
         while True:
-            socks = dict(poller.poll(timeout=1000))  # Poll for 1 second
+            events = await poller.poll(timeout=1000)  # Poll for 1 second
             
-            if socket in socks and socks[socket] == zmq.POLLIN:
+            if socket in dict(events):
                 try:
                     # Receive request from client
-                    message = socket.recv_multipart()
+                    message = await socket.recv_multipart()
                     
                     # Check if the message has the correct format
                     if len(message) != 2:
                         print("Received invalid message from client")
-                        socket.send_multipart([address, b"Invalid message"])
+                        await socket.send_multipart([address ,b"Invalid message"])
                         continue  # Skip processing invalid messages
 
                     address, req = message
                     print("Received request:", req.decode())
 
                     # Send response to client
-                    socket.send_multipart([address, b"Server response"])
+                    await socket.send_multipart([address, b"Server response"])
                 except zmq.error.ZMQError as e:
                     print(f"ZMQ error: {e}")
 
@@ -39,5 +40,5 @@ def server():
         print(f"ZMQ error during initialization: {e}")
 
 if __name__ == "__main__":
-    server()
+    asyncio.run(server())
 
