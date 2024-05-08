@@ -133,7 +133,7 @@
     
             console.log(jsonData); // Log the JSON data to the console for debugging
     
-            fetch('http://127.0.0.1:5000/predict', { // Include the full URL here
+            fetch('http://localhost:8082/predict', { // Include the full URL here
                 method: 'POST',
                 body: jsonData,
                 headers: {
