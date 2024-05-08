@@ -412,9 +412,10 @@ parsed using built-in string functions, as the following pseudocode illustrates:
 tweet['length'] = len(tweet['text'])
 ```
 
-However, this is entirely hypothetical, and without direct access to the API--
-which costs $42,000 per month for the smallest package (Stokel-Walker, 2023)--
-a more specific method cannot be obtained.
+However, this is entirely hypothetical--obtaining an understanding of the true
+schema of the data would require direct access to the API, which costs $42,000 
+per month for the smallest package (Stokel-Walker, 2023).  With an 
+understanding of said schema, a more granular method is entirely possible.
 
 *Visualization*
 
@@ -434,6 +435,17 @@ graph TD;
 	I --> J[Stop Docker Container]
 	J --> A
 	F --> E
+```
+
+The technologies involved are visualized below:
+
+```mermaid
+graph TD;
+	A[Docker Compose] --> B[Docker Container]
+	B --> C[Jupyter Notebooks]
+	C --> D[Python]
+	D --> E[Apache Spark]
+	B --> D
 ```
 
 *References*
