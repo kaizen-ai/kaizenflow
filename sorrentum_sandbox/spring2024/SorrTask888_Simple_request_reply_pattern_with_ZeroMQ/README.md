@@ -76,18 +76,18 @@ This project is an advanced implementation of a request/reply pattern using Zero
 To run the entire system, including the server, client, and NGINX load balancer, follow these steps:
 
 - Build the Docker Images:
- - Navigate to the directory containing the Dockerfiles and the docker-compose.yml file.
- - Run the command docker-compose up --build. This will build the Docker images for the server, client, and NGINX load balancer.
+  - Navigate to the directory containing the Dockerfiles and the docker-compose.yml file.
+  - Run the command `docker-compose up --build`. This will build the Docker images for the server, client, and NGINX load balancer.
 - Start the Server:
- - Open a new terminal window or tab.
- - Navigate to the same directory as before.
- - Run the command docker-compose up server. This will start the server container.
+  - Open a new terminal window or tab.
+  - Navigate to the same directory as before.
+  - Run the command `docker-compose up server`. This will start the server container.
 - Start the Client:
- - Open another terminal window or tab.
- - Navigate to the same directory.
- - Run the command docker-compose up client. This will start the client container.
+  - Open another terminal window or tab.
+  - Navigate to the same directory.
+  - Run the command `docker-compose up client`. This will start the client container.
 - Run the Clients Script:
- - To simulate multiple clients connecting to the server concurrently, execute the run_clients.py script.
+  - To simulate multiple clients connecting to the server concurrently, execute the run_clients.py script by running the `python3 run_clients.py` command.
 
 ## Expected Output
 
