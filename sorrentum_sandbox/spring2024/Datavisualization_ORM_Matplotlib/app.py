@@ -1,7 +1,7 @@
-import pandas as pd
-import pickle
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
+import pandas as pd
+import pickle
 
 app = Flask(__name__)
 CORS(app)
@@ -20,7 +20,7 @@ def predict_gross_income():
 
         # Get input features from the request JSON
         input_features = request.get_json()  # Adjusted here
-        
+
         # Convert the input features to a DataFrame
         input_df = pd.DataFrame([input_features])
 
@@ -34,5 +34,6 @@ def predict_gross_income():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    # Change the host parameter to '0.0.0.0' to make the Flask server externally visible
+    app.run(debug=True, host='0.0.0.0', port=8082)
