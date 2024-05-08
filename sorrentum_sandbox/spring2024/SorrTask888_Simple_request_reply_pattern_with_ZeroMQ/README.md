@@ -35,4 +35,23 @@ This project is an advanced implementation of a request/reply pattern using Zero
 -  Docker containers provide a high level of isolation, allowing applications to run independently of the underlying host system.
 -  Docker simplifies dependency management by allowing developers to specify the exact environment needed for their applications. This reduces compatibility issues and ensures that applications run consistently across different development machines and servers.
 -   Docker encourages a modular approach to application development, where applications are broken down into smaller, independent services running in separate containers. This facilitates the adoption of microservices architecture, allowing for easier maintenance, updates, and scaling of individual components.
--   
+
+## Docker System Overview
+
+### Components of the Docker System
+
+- Server Container:
+•	Hosts the server-side logic implemented in server.py.
+•	Utilizes ZeroMQ sockets to listen for incoming requests from clients.
+•	Handles request processing and sends back responses.
+
+- Client Container:
+•	Contains the client-side logic implemented in client.py.
+•	Sends requests to the server container using ZeroMQ sockets.
+•	Processes responses received from the server.
+
+- Nginx Container:
+•	Acts as a reverse proxy and load balancer for the server containers.
+•	Receives incoming requests from clients.
+•	Distributes these requests among multiple server instances for load balancing.
+
