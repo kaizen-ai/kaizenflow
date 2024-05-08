@@ -55,3 +55,19 @@ This project is an advanced implementation of a request/reply pattern using Zero
 </t></br>•	Receives incoming requests from clients.
 </t></br>•	Distributes these requests among multiple server instances for load balancing.
 
+### Mock Workflow of the docker system
+
+- The Docker system is initialized by running docker-compose up command.
+- Docker Compose creates containers for the server, client, and Nginx components based on the specifications in the docker-compose.yml file.
+- Multiple client instances are spawned using the run_clients.py script.
+- Each client instance sends requests to the Nginx container, specifying the endpoint for the desired service.
+- Nginx receives incoming requests from the client instances.
+- It distributes these requests among multiple server instances based on load balancing algorithms such as round-robin or least connections.
+- The server instances receive requests forwarded by Nginx.
+- They process these requests asynchronously, handling multiple concurrent requests efficiently using asyncio in the server-side code.
+- Upon processing, the servers send back HTTP responses to Nginx.
+- Nginx receives responses from the server instances.
+- It aggregates these responses and forwards them back to the respective client instances that originated the requests.
+- Each client instance receives responses from Nginx.
+- Once all client requests have been processed and responses received, the Docker system remains active and ready to handle subsequent requests.
+
