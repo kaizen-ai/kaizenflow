@@ -21,4 +21,10 @@ This project is an advanced implementation of a request/reply pattern using Zero
 - ZeroMQ provides built-in support for fault tolerance and reliability, with features like message queuing, message buffering, and automatic reconnection mechanisms.
 - This helps ensure that messages are delivered reliably even in the presence of network failures or node crashes.
 - ZeroMQ supports asynchronous messaging, allowing processes to send and receive messages independently without blocking. This enables efficient communication and coordination between components of a distributed system. It is a powerful tool for building distributed and concurrent applications, offering a simple yet powerful messaging infrastructure that can handle a wide range of communication scenarios.
-- ZeroMQ stands out from traditional messaging systems like RabbitMQ and ActiveMQ due to its lightweight nature and minimalistic design. Unlike these systems, which often rely on centralized brokers for message routing, ZeroMQ uses a broker less architecture, reducing overhead and improving scalability. This design choice makes ZeroMQ particularly suitable for high-throughput, low-latency scenarios. 
+- ZeroMQ stands out from traditional messaging systems like RabbitMQ and ActiveMQ due to its lightweight nature and minimalistic design. Unlike these systems, which often rely on centralized brokers for message routing, ZeroMQ uses a broker less architecture, reducing overhead and improving scalability. This design choice makes ZeroMQ particularly suitable for high-throughput, low-latency scenarios.
+- ZeroMQ is designed to be lightweight and efficient, making it suitable for resource-constrained environments.
+- It supports various messaging patterns and can be easily integrated into existing applications.
+- ZeroMQ offers high throughput and low latency, making it ideal for demanding real-time applications.
+- The absence of a centralized broker simplifies deployment and reduces single points of failure.
+- Unlike some traditional messaging systems, ZeroMQ does not provide built-in message persistence, which may be a limitation for certain use cases.
+- It is universal, high speed, multi-socket and backed by a large and active open-source community. 
