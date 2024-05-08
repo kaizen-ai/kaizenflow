@@ -1,5 +1,0 @@
----
-- name: Add/Remove a User from the Server
-  hosts: server_user
-  roles:
-    - server_user

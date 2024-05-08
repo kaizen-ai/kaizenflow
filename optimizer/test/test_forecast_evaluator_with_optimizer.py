@@ -1,6 +1,7 @@
 import logging
 from typing import List
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -268,6 +269,69 @@ class TestForecastEvaluatorWithOptimizer1(hunitest.TestCase):
 2022-01-03 10:00:00-05:00  105.71          0.00        0.00  99659.12 -99659.12
 """
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_save_portfolio_load_portfolio(self) -> None:
+        data = self.get_data(
+            pd.Timestamp("2022-01-03 09:30:00", tz="America/New_York"),
+            pd.Timestamp("2022-01-03 10:00:00", tz="America/New_York"),
+            asset_ids=[101, 201, 301],
+        )
+        config_dict = self.get_config_dict()
+        config_dict["target_gmv"] = 1e5
+        forecast_evaluator = ofevwiop.ForecastEvaluatorWithOptimizer(
+            price_col="price",
+            volatility_col="volatility",
+            prediction_col="prediction",
+            optimizer_config_dict=config_dict,
+        )
+        #
+        log_dir = self.get_scratch_space()
+        _ = forecast_evaluator.save_portfolio(
+            data,
+            log_dir,
+            target_gmv=1e5,
+            quantization=0,
+            liquidate_at_end_of_day=False,
+            burn_in_bars=0,
+        )
+        #
+        portfolio_df, stats_df = forecast_evaluator.load_portfolio_and_stats(
+            log_dir
+        )
+        # Ensure that the `int` asset id type is recovered.
+        asset_id_idx = portfolio_df.columns.levels[1]
+        self.assertEqual(asset_id_idx.dtype.type, np.int64)
+        #
+        precision = 2
+        portfolio_df_str = hpandas.df_to_str(
+            portfolio_df, num_rows=None, precision=precision
+        )
+        expected_portfolio_df_str = r"""
+                            price                  volatility                     prediction                     holdings_shares             holdings_notional                     executed_trades_shares             executed_trades_notional                        pnl
+                              101     201      301        101       201       301        101       201       301             101   201   301               101       201       301                    101   201   301                      101       201       301    101     201    301
+2022-01-03 09:35:00-05:00  998.90  999.66   999.87        NaN       NaN       NaN   8.43e-04 -1.77e-04 -2.38e-04             NaN   NaN   NaN               NaN       NaN       NaN                    NaN   NaN   NaN                      NaN       NaN       NaN    NaN     NaN    NaN
+2022-01-03 09:40:00-05:00  998.17  999.60   998.00   7.25e-04  5.14e-05  1.87e-03   8.58e-04  4.26e-04 -1.84e-03             0.0   0.0   0.0              0.00      0.00      0.00                    0.0   0.0   0.0                     0.00      0.00      0.00   0.00    0.00   0.00
+2022-01-03 09:45:00-05:00  997.39  998.63   997.58   7.57e-04  7.29e-04  1.28e-03   4.75e-04 -9.85e-04  1.70e-04            40.0   0.0 -60.0          39895.73      0.00 -59854.81                   40.0   0.0 -60.0                 39895.73      0.00 -59854.81   0.00    0.00   0.00
+2022-01-03 09:50:00-05:00  997.66  997.50   998.59   6.02e-04  9.21e-04  1.17e-03  -4.51e-04 -1.11e-03 -1.76e-04            40.0 -60.0   0.0          39906.38 -59850.07      0.00                    0.0 -60.0  60.0                     0.00 -59850.07  59915.53  10.65    0.00 -60.72
+2022-01-03 09:55:00-05:00  997.41  997.81   999.57   5.07e-04  7.64e-04  1.11e-03  -7.55e-04 -7.61e-04  7.68e-05           -40.0 -60.0   0.0         -39896.46 -59868.37      0.00                  -80.0   0.0   0.0                -79792.93      0.00      0.00  -9.92  -18.30   0.00
+2022-01-03 10:00:00-05:00  997.54  995.96  1000.20   4.27e-04  1.21e-03  9.87e-04  -8.15e-04  6.48e-04  1.54e-03           -40.0 -60.0   0.0         -39901.51 -59757.61      0.00                    0.0   0.0   0.0                     0.00      0.00      0.00  -5.05  110.75   0.00
+"""
+        self.assert_equal(
+            portfolio_df_str, expected_portfolio_df_str, fuzzy_match=True
+        )
+        #
+        stats_df_str = hpandas.df_to_str(
+            stats_df, num_rows=None, precision=precision
+        )
+        expected_stats_df_str = r"""
+                              pnl  gross_volume  net_volume       gmv       nmv
+2022-01-03 09:40:00-05:00    0.00          0.00        0.00      0.00      0.00
+2022-01-03 09:45:00-05:00    0.00      99750.54   -19959.08  99750.54 -19959.08
+2022-01-03 09:50:00-05:00  -50.06     119765.59       65.46  99756.45 -19943.69
+2022-01-03 09:55:00-05:00  -28.22      79792.93   -79792.93  99764.83 -99764.83
+2022-01-03 10:00:00-05:00  105.71          0.00        0.00  99659.12 -99659.12
+"""
+        self.assert_equal(stats_df_str, expected_stats_df_str, fuzzy_match=True)
 
 
 class TestForecastEvaluatorWithOptimizer2(hunitest.TestCase):

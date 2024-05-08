@@ -1,6 +1,7 @@
 import time
 import unittest.mock as umock
 from collections import namedtuple
+from typing import Any, List
 
 import pandas as pd
 
@@ -25,7 +26,7 @@ class TestBinanceExtractor1(hunitest.TestCase):
             binance_extractor = imvbdexex.BinanceExtractor(
                 contract_type, imvbdexex.BinanceNativeTimePeriod.DAILY, data_type
             )
-            binance_extractor._download_binance_files = umock.MagicMock()
+            binance_extractor._download_binance_files = umock.AsyncMock()
             binance_extractor._extract_data_from_binance_files = umock.MagicMock(
                 return_value=self._get_mock_trades()
             )
@@ -86,8 +87,105 @@ class TestBinanceExtractor2(hunitest.TestCase):
     Test subscription and reconnection on error.
     """
 
-    def test1(self):
-        # Store dummy data from websocket.
+    def test1(self) -> None:
+        """
+        Test subscription and WebSocketConnectionClosedException.
+
+        The expected behavior is as follows:
+            1. We subscribe to the webSocket with the specified currency pairs and begin receiving data.
+            2. WebSocket exception is thrown during data reception, we catch it internally.
+            3. Upon catching the exception, we proceed to resubscribe to the same currency pairs.
+            4. Once resubscribed, we resume receiving data from the WebSocket.
+        """
+        # Create dummy data.
+        bid_ask = namedtuple("bid_ask", ["data"])
+        dummy_data = bid_ask(data="dummy")
+        side_effect = [
+            ["", dummy_data],
+            imvbwbsoma.WebSocketConnectionClosedException,
+            ["", dummy_data],
+            [imvbwbsoma.ABNF.OPCODE_CLOSE, {}],
+        ]
+        exp = r"""['dummy', 'dummy']"""
+        self._test_binance_extractor(side_effect, exp)
+
+    def test2(self) -> None:
+        """
+        Test max attempts for retry subscription.
+
+        The expected behavior is as follows:
+            1. Initially attempts to subscribe to the websocket may fail.
+            2. Subscription is retried based on the specified maximum attempts count.
+            3. Upon successful subscription, data reception starts.
+        """
+        # Create dummy data.
+        bid_ask = namedtuple("bid_ask", ["data"])
+        dummy_data = bid_ask(data="dummy")
+        max_attempts = 2
+        side_effect = [
+            [imvbwbsoma.ABNF.OPCODE_CLOSE, {}],
+            [imvbwbsoma.ABNF.OPCODE_CLOSE, {}],
+            ["", dummy_data],
+            [imvbwbsoma.ABNF.OPCODE_CLOSE, {}],
+        ]
+        exp = r"""['dummy']"""
+        self._test_binance_extractor(side_effect, exp, max_attempts=max_attempts)
+
+    def test3(self) -> None:
+        """
+        Test max attempts for retry subscription.
+
+        The expected behavior is as follows:
+            1. Initially attempts to subscribe to the websocket may fail.
+            2. Subscription is retried based on the specified maximum attempts count.
+            3. Max attempts are exhausted, data reception fails.
+        """
+        # Create dummy data.
+        bid_ask = namedtuple("bid_ask", ["data"])
+        dummy_data = bid_ask(data="dummy")
+        max_attempts = 2
+        side_effect = [
+            [imvbwbsoma.ABNF.OPCODE_CLOSE, {}],
+            [imvbwbsoma.ABNF.OPCODE_CLOSE, {}],
+            [imvbwbsoma.ABNF.OPCODE_CLOSE, {}],
+            ["", dummy_data],
+            [imvbwbsoma.ABNF.OPCODE_CLOSE, {}],
+        ]
+        exp = r"""[]"""
+        self._test_binance_extractor(side_effect, exp, max_attempts=max_attempts)
+
+    def test4(self) -> None:
+        """
+        Test max attempts for retry subscription.
+
+        The expected behavior is as follows:
+            1. Initial subscription attempts are successful.
+            2. An unexpected close connection signal is received.
+            3. Subscription is not retried as max attempts only apply to initial subscription.
+        """
+        # Create dummy data.
+        bid_ask = namedtuple("bid_ask", ["data"])
+        dummy_data = bid_ask(data="dummy")
+        max_attempts = 2
+        side_effect = [
+            ["", dummy_data],
+            [imvbwbsoma.ABNF.OPCODE_CLOSE, {}],
+            ["", dummy_data],
+            [imvbwbsoma.ABNF.OPCODE_CLOSE, {}],
+        ]
+        exp = r"""['dummy']"""
+        self._test_binance_extractor(side_effect, exp, max_attempts=max_attempts)
+
+    def _test_binance_extractor(
+        self,
+        side_effect: List[Any],
+        expected: str,
+        *,
+        max_attempts: int = 0,
+    ) -> None:
+        """
+        Init `BinanceExtractor` and subscribe.
+        """
         self.actual = []
         try:
             with umock.patch.object(
@@ -95,20 +193,16 @@ class TestBinanceExtractor2(hunitest.TestCase):
                 "_handle_orderbook_message",
                 new=self._mock_handle_orderbook_message,
             ), umock.patch.object(
+                imvbwbsoma.random, "randint",
+                # Mock waiting time for resubscription.
+                new=self._mock_randint,
+            ), umock.patch.object(
                 imvbwbsoma, "create_connection"
             ) as mock_ws_connection:
-                # Create dummy data.
-                bid_ask = namedtuple("bid_ask", ["data"])
-                dummy_data = bid_ask(data="dummy")
                 # Mock WebSocketConnectionClosed error.
                 mock_ws_connection_instance = mock_ws_connection.return_value
                 mock_ws_connection_instance.recv_data_frame = umock.MagicMock(
-                    side_effect=[
-                        ["", dummy_data],
-                        imvbwbsoma.WebSocketConnectionClosedException,
-                        ["", dummy_data],
-                        [imvbwbsoma.ABNF.OPCODE_CLOSE, {}],
-                    ]
+                    side_effect=side_effect
                 )
                 # Init.
                 contract_type = "futures"
@@ -120,13 +214,9 @@ class TestBinanceExtractor2(hunitest.TestCase):
                     contract_type,
                     imvbdexex.BinanceNativeTimePeriod.DAILY,
                     data_type,
+                    max_attempts=max_attempts,
                 )
                 # Subscribe.
-                # The expected behavior is as follows:
-                # 1. We subscribe to the WebSocket with the specified currency pairs and begin receiving data.
-                # 2. WebSocket exception is thrown during data reception, we catch it internally.
-                # 3. Upon catching the exception, we proceed to resubscribe to the same currency pairs.
-                # 4. Once resubscribed, we resume receiving data from the WebSocket.
                 with hasynci.solipsism_context() as event_loop:
                     coroutine = binance_extractor._subscribe_to_websocket_bid_ask_multiple_symbols(
                         exchange_id,
@@ -136,8 +226,7 @@ class TestBinanceExtractor2(hunitest.TestCase):
                     hasynci.run(coroutine, event_loop=event_loop)
                 time.sleep(1)
                 # Assert.
-                exp = r"""['dummy', 'dummy']"""
-                self.assert_equal(str(self.actual), exp)
+                self.assert_equal(str(self.actual), expected)
         except Exception as e:
             raise e
         finally:
@@ -148,3 +237,9 @@ class TestBinanceExtractor2(hunitest.TestCase):
         Mock `_handle_orderbook_message`.
         """
         self.actual.append(message)
+    
+    def _mock_randint(self, start: int, end: int):
+        """
+        Mock `random.randint()`
+        """
+        return 0

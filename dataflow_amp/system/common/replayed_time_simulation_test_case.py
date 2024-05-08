@@ -31,16 +31,19 @@ class Test_Replayed_Time_Simulation_TestCase(hunitest.TestCase):
         Save market data for unit testing.
         """
         scratch_dir = self.get_scratch_space()
-        # Dump market data for a given interval.
-        db_stage = "preprod"
-        universe_version = "v7.4"
         # TODO(Grisha): rename `test_data.csv.gz` -> `market_data.csv.gz`.
         market_data_file_path = os.path.join(scratch_dir, "test_data.csv.gz")
+        # Dump market data for a given interval.
+        db_stage = "preprod"
+        # TODO(Grisha): this is overfit for OHLCV models, expose to the interface.
+        table_name = "ccxt_ohlcv_futures"
+        universe_version = "v7.4"
         dtfamsysc.dump_market_data_from_db(
             market_data_file_path,
             start_timestamp_as_str,
             end_timestamp_as_str,
             db_stage,
+            table_name,
             universe_version,
         )
         # Copy data to the test S3 input dir.
@@ -53,15 +56,25 @@ class Test_Replayed_Time_Simulation_TestCase(hunitest.TestCase):
         system: dtfsys.System,
         start_timestamp_as_str: str,
         end_timestamp_as_str: str,
+        incremental: bool,
     ) -> None:
         """
         Run simulation.
         """
-        # Copy market data file from S3 to a scratch dir.
+        # Check if the market data file exists in the test dir on S3.
         s3_input_dir = self.get_s3_input_dir()
-        scratch_dir = self.get_scratch_space()
         aws_profile = "ck"
-        hs3.copy_data_from_s3_to_local_dir(s3_input_dir, scratch_dir, aws_profile)
+        s3fs_ = hs3.get_s3fs(aws_profile)
+        path_exists = s3fs_.exists(s3_input_dir)
+        #
+        scratch_dir = self.get_scratch_space()
+        # Test a case when `incremental = False` or path doesn't exist, then
+        # `run_simulation()` will dump market data if either condition is false.
+        if incremental and path_exists:
+            # Copy market data file from S3 to a scratch dir.
+            hs3.copy_data_from_s3_to_local_dir(
+                s3_input_dir, scratch_dir, aws_profile
+            )
         # Define params for the simulation run.
         dst_system_log_dir = os.path.join(scratch_dir, "system_log_dir")
         market_data_file_name = "test_data.csv.gz"
@@ -75,6 +88,7 @@ class Test_Replayed_Time_Simulation_TestCase(hunitest.TestCase):
             end_timestamp_as_str,
             market_data_file_path,
             dst_system_log_dir,
+            incremental=incremental,
             config_tag=config_tag,
             self_=self,
             check_config=check_config,

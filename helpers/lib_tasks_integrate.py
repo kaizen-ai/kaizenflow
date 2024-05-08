@@ -25,7 +25,7 @@ _LOG = logging.getLogger(__name__)
 
 
 DEFAULT_SRC_DIR_BASENAME = "cmamp1"
-DEFAULT_DST_DIR_BASENAME = "sorrentum1"
+DEFAULT_DST_DIR_BASENAME = "kaizenflow1"
 
 # DEFAULT_SRC_DIR_BASENAME="amp1"
 # DEFAULT_DST_DIR_BASENAME="cmamp1"
@@ -271,7 +271,7 @@ def integrate_diff_dirs(  # type: ignore
 # im_v2/test/test_im_lib_tasks.py
 #
 # for file in im_v2/ccxt/data/extract/test/test_ccxt_extractor.py im_v2/common/data/transform/convert_pq_to_csv.py im_v2/im_lib_tasks.py im_v2/test/test_im_lib_tasks.py; do
-#   vimdiff ~/src/cmamp1/$file ~/src/sorrentum1/$file
+#   vimdiff ~/src/cmamp1/$file ~/src/kaizenflow1/$file
 # done
 
 def _find_files_touched_since_last_integration(
@@ -763,16 +763,16 @@ def integrate_file(  # type: ignore
     # The path is assumed referred to current dir.
     > i integrate_file --file-name helpers/lib_tasks_integrate.py
 
-    > i integrate_file --file-name /Users/saggese/src/sorrentum1/helpers/lib_tasks_integrate.py
+    > i integrate_file --file-name /Users/saggese/src/kaizenflow1/helpers/lib_tasks_integrate.py
 
     > i integrate_file \
         --file-name helpers/lib_tasks_integrate.py \
         --src-dir-name cmamp1
-        --dst-dir-name sorrentum1
+        --dst-dir-name kaizenflow1
     ```
 
     :param file_name: it can be a full path (e.g.,
-        `/Users/saggese/src/sorrentum1/helpers/lib_tasks_integrate.py`)
+        `/Users/saggese/src/kaizenflow1/helpers/lib_tasks_integrate.py`)
         or a relative path to the root of the Git repo (e.g.,
         `helpers/lib_tasks_integrate.py)
     :param dst_dir: dir to be used. If empty, it is inferred from file_name
@@ -804,7 +804,7 @@ def integrate_file(  # type: ignore
 
 
 # Compare the timestamp of last modification of a file.
-# FILE=helpers/lib_tasks_git.py; (cd ~/src/cmamp1; git log -1 $FILE); (cd ~/src/sorrentum1; git log -1 $FILE)
+# FILE=helpers/lib_tasks_git.py; (cd ~/src/cmamp1; git log -1 $FILE); (cd ~/src/kaizenflow1; git log -1 $FILE)
 
 # > git log --pretty=format:"%h - %an, %ad : %s" --date=short | grep _Integrate_ | head -5
 # fffa1c8b2 - GP Saggese, 2023-06-30 : AmpTask1786_Integrate_20230627_7 (#367)

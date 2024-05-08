@@ -148,6 +148,7 @@ def dump_market_data_from_db(
     start_timestamp_as_str: str,
     end_timestamp_as_str: str,
     db_stage: str,
+    table_name: str,
     universe_version: str,
 ) -> None:
     """
@@ -182,7 +183,7 @@ def dump_market_data_from_db(
         universe_version, vendor, mode
     )
     market_data = dtfasccxbu.get_Cx_RealTimeMarketData_prod_instance1(
-        asset_ids, db_stage
+        asset_ids, db_stage, table_name=table_name
     )
     # Convert timestamps to a timezone in which `MarketData` operates.
     market_data_tz = market_data._timezone
