@@ -8,11 +8,13 @@ fake = Faker()
 
 try:
     es = Elasticsearch(
-        "https://localhost:9200",
+        "https://es01:9200",
         #api_key="aHZMcFJZOEJxNGJsQVJBWDdfQTg6N05PYllRb0xSNXFzYWxnSWMwaGVXUQ==",#verify_certs=False
         basic_auth=("elastic", "ilovethis"),
-        ca_certs='/Users/berksomer/src/kaizenflow/sorrentum_sandbox/spring2024/SorrTask833_ElasticSearch_WebTraffic/ca.crt'
-        #verify_certs=False
+        #ca_certs='/Users/berksomer/src/kaizenflow/sorrentum_sandbox/spring2024/SorrTask833_ElasticSearch_WebTraffic/ca.crt',
+        #ca_certs='/usr/share/elasticsearch/config/certs/ca/ca.crt',
+        ca_certs='/usr/share/elasticsearch/config/certs/ca/ca.crt',
+        verify_certs=True
     )
     
     current_time = datetime.now()

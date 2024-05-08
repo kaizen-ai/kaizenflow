@@ -229,10 +229,31 @@ services:
       ELASTICSEARCH_USERNAME: "elastic"
       ELASTICSEARCH_PASSWORD: "${ELASTIC_PASSWORD}"
       ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES: /usr/share/elasticsearch/config/certs/ca/ca.crt
+    volumes:
+       - certs:/usr/share/elasticsearch/config/certs
     depends_on:
       es01:
         condition: service_healthy
 
+  jupyter:
+    build:
+      context: ./jupyterlab
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./jupyterlab:/app
+      - certs:/usr/share/elasticsearch/config/certs
+    environment:
+      ELASTICSEARCH_HOST: "https://es01:9200"
+      ELASTICSEARCH_USERNAME: "elastic"
+      ELASTICSEARCH_PASSWORD: "${ELASTIC_PASSWORD}"
+      ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES: "/usr/share/elasticsearch/config/certs/ca/ca.crt"
+
+    networks:
+      - elasticnet
+    depends_on:
+      - es01
 
 networks:
   elasticnet:
