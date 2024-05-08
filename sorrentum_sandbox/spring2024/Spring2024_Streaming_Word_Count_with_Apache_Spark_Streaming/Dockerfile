@@ -43,3 +43,11 @@ EXPOSE 8888
 
 # Command to run Jupyter Notebook
 CMD ["jupyter", "notebook", "--ip", "0.0.0.0", "--no-browser", "--allow-root"]
+
+
+
+
+
+
+
+
