@@ -3,6 +3,10 @@
 - [Simple Messaging System with RabbitMQ](#simple-messaging-system-with-rabbitmq)
 	- [Description](#description)
 	- [Technologies Used in this Project](#technologies-used-in-this-project)
+	- [RabbitMQ: Messaging and Streaming Broker](#rabbitmq:-messaging-and-streaming-broker)
+	- [Docker: Portable Container Platform](#docker:-portable-container-platform)
+	- [Project Structure](#project-structure)
+	- [Docker Implementation](#docker-implementation)
 
 <!-- /TOC -->
 <!-- /TOC -->
@@ -68,3 +72,18 @@ This is a Python-based project that leverages RabbitMQ, a robust messaging syste
 - `receive_logs_topic.py`: connects to a RabbitMQ server, declares a topic exchange named 'topic_logs', and sets up an exclusive queue for receiving messages. It binds the queue to one or more routing keys specified via command-line arguments, listens for incoming messages, and prints them out as they arrive. If no routing keys are provided, the script displays usage information and exits.
 - `requirements.txt`: lists a library that is needed for this project.
 
+## Docker Implementation
+- Dockerfile Configuration
+    - Utilize an official Python runtime as the base image `python:3.8`
+    - Set the working directory in the container to `/usr/src/app`
+    - Copy the `requirements.txt` file from the project folder into the current working directory inside the container `/usr/src/app`
+    - Run the pip install command inside the container to install the Python packages specified in the `requirements.txt` file
+    - Specify the command that will be executed when the Docker container starts `CMD ["python", "./emit_log_topic.py", "./receive_logs_topic.py"]`
+
+- Docker-compose.yml Configuration
+    - Utilize the `rabbitmq:3-management` image to run a RabbitMQ server with a management UI, exposing standard RabbitMQ and management ports to the host.
+    - Build an image from the current directory and runs `emit_log_topic.py` with info as an argument, relying on the rabbitmq service being available.
+    - Similarly build an image from the current directory and runs `receive_logs_topic.py` with info as an argument, also dependent on the rabbitmq service.
+
+
+## Project Diagram
