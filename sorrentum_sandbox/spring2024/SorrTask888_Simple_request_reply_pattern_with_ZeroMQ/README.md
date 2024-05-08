@@ -96,3 +96,58 @@ Upon running the system, you will observe the following outputs:
 - The client will connect to the server and send multiple requests sequentially.
 - If any request contains malformed data (such as missing address), the server will log an error message but continue processing subsequent requests.
 - As the clients script runs, you may notice the outputs of the two clients interleaved in the terminal. This indicates that the server is processing requests asynchronously, handling multiple clients concurrently.
+
+### Example Output
+- On running the `python3 run_clients.py` command with 2 client instances, we may observe an output that looks like:
+
+```
+tarting sorrtask888_simple_request_reply_pattern_with_zeromq_client_1 ... done
+Starting sorrtask888_simple_request_reply_pattern_with_zeromq_client_1 ... done
+Attaching to sorrtask888_simple_request_reply_pattern_with_zeromq_client_1
+client_1  | Sending request: 0
+client_1  | Sending request: 0
+client_1  | Received response: Server response
+client_1  | Sending request: 1
+client_1  | Received response: Server response
+client_1  | Sending request: 2
+client_1  | Received response: Invalid message
+client_1  | Received response: Server response
+client_1  | Sending request: 1
+client_1  | Sending request: 3
+client_1  | Received response: Server response
+client_1  | Sending request: 4
+client_1  | Received response: Server response
+client_1  | Sending request: 2
+client_1  | Received response: Server response
+client_1  | Sending request: 5
+client_1  | Received response: Invalid message
+client_1  | Sending request: 3
+client_1  | Received response: Server response
+client_1  | Received response: Server response
+client_1  | Sending request: 6
+client_1  | Received response: Server response
+client_1  | Sending request: 7
+client_1  | Sending request: 4
+client_1  | Received response: Server response
+client_1  | Sending request: 5
+client_1  | Received response: Server response
+client_1  | Sending request: 8
+client_1  | Received response: Server response
+client_1  | Received response: Server response
+client_1  | Sending request: 6
+client_1  | Received response: Server response
+client_1  | Sending request: 9
+client_1  | Received response: Server response
+client_1  | Sending request: 7
+client_1  | Received response: Server response
+client_1  | Sending request: 8
+client_1  | Received response: Server response
+client_1  | Sending request: 9
+client_1  | Received response: Server response
+sorrtask888_simple_request_reply_pattern_with_zeromq_client_1 exited with code 0
+sorrtask888_simple_request_reply_pattern_with_zeromq_client_1 exited with code 0
+```
+- Output Explanation:
+    - 2 clients sends requests to the server at roughly the same time.
+    - The server responds to each of these clients asynchronously, thus, we get interleaved outputs.
+    - As both instances of the client runs the same command to send erroneous data at request 2, the server responds with `Invalid message` and continues processing the next requests.
