@@ -441,11 +441,15 @@ The technologies involved are visualized below:
 
 ```mermaid
 graph TD;
-	A[Docker Compose] --> B[Docker Container]
-	B --> C[Jupyter Notebooks]
-	C --> D[Python]
-	D --> E[Apache Spark]
-	B --> D
+	A[Terminal] --> B[Docker Compose]
+	B --> C[Docker Container]
+	A -- C
+	C --> D[Jupyter Notebooks]
+	D -- E[Python]
+	E -- F[Apache Spark]
+	B -- E
+	A --> G[Output]
+	D --> G
 ```
 
 *References*
