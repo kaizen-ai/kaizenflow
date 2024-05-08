@@ -71,3 +71,28 @@ This project is an advanced implementation of a request/reply pattern using Zero
 - Each client instance receives responses from Nginx.
 - Once all client requests have been processed and responses received, the Docker system remains active and ready to handle subsequent requests.
 
+## Running the Docker System
+
+To run the entire system, including the server, client, and NGINX load balancer, follow these steps:
+
+- Build the Docker Images:
+ - Navigate to the directory containing the Dockerfiles and the docker-compose.yml file.
+ - Run the command docker-compose up --build. This will build the Docker images for the server, client, and NGINX load balancer.
+- Start the Server:
+ - Open a new terminal window or tab.
+ - Navigate to the same directory as before.
+ - Run the command docker-compose up server. This will start the server container.
+- Start the Client:
+ - Open another terminal window or tab.
+ - Navigate to the same directory.
+ - Run the command docker-compose up client. This will start the client container.
+- Run the Clients Script:
+ - To simulate multiple clients connecting to the server concurrently, execute the run_clients.py script.
+
+## Expected Output
+
+Upon running the system, you will observe the following outputs:
+- The server will start and listen for incoming requests on port 5555.
+- The client will connect to the server and send multiple requests sequentially.
+- If any request contains malformed data (such as missing address), the server will log an error message but continue processing subsequent requests.
+- As the clients script runs, you may notice the outputs of the two clients interleaved in the terminal. This indicates that the server is processing requests asynchronously, handling multiple clients concurrently.
