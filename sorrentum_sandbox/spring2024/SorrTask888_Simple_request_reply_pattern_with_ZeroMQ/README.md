@@ -46,12 +46,12 @@ This project is an advanced implementation of a request/reply pattern using Zero
 </t></br>•	Handles request processing and sends back responses.
 
 - Client Container:
-•	Contains the client-side logic implemented in client.py.
-•	Sends requests to the server container using ZeroMQ sockets.
-•	Processes responses received from the server.
+</t><br>•	Contains the client-side logic implemented in client.py.
+</t></br>•	Sends requests to the server container using ZeroMQ sockets.
+</t></br>•	Processes responses received from the server.
 
 - Nginx Container:
-•	Acts as a reverse proxy and load balancer for the server containers.
-•	Receives incoming requests from clients.
-•	Distributes these requests among multiple server instances for load balancing.
+</t></br>•	Acts as a reverse proxy and load balancer for the server containers.
+</t></br>•	Receives incoming requests from clients.
+</t></br>•	Distributes these requests among multiple server instances for load balancing.
 
