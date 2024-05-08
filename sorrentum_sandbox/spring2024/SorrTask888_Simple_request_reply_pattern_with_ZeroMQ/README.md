@@ -28,3 +28,11 @@ This project is an advanced implementation of a request/reply pattern using Zero
 - The absence of a centralized broker simplifies deployment and reduces single points of failure.
 - Unlike some traditional messaging systems, ZeroMQ does not provide built-in message persistence, which may be a limitation for certain use cases.
 - It is universal, high speed, multi-socket and backed by a large and active open-source community. 
+
+### Docker: Containerization
+
+-  Docker is a containerization platform that allows developers to package applications and their dependencies into lightweight, portable containers.
+-  Docker containers provide a high level of isolation, allowing applications to run independently of the underlying host system.
+-  Docker simplifies dependency management by allowing developers to specify the exact environment needed for their applications. This reduces compatibility issues and ensures that applications run consistently across different development machines and servers.
+-   Docker encourages a modular approach to application development, where applications are broken down into smaller, independent services running in separate containers. This facilitates the adoption of microservices architecture, allowing for easier maintenance, updates, and scaling of individual components.
+-   
