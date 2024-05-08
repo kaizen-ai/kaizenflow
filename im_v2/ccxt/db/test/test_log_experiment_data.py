@@ -1,10 +1,11 @@
 import pandas as pd
 import unittest.mock as umock
 import helpers.hunit_test as hunitest
+import im_v2.common.db.db_utils as imvcddbut
 import im_v2.common.data.client.im_raw_data_client as imvcdcimrdc
 
 
-class TestLogExperimentData(hunitest.TestCase):
+class TestLogExperimentData(imvcddbut.TestImDbHelper):
 
     def helper(self) -> pd.DataFrame:
         """
@@ -32,7 +33,7 @@ class TestLogExperimentData(hunitest.TestCase):
         """
         db_stage = "local"
         data_vendor = "CCXT"
-        universe = "binance"
+        universe = "v7.4"
         mock_load_db_data.return_value = self.helper()
         # Call function to load saved data from db
         bid_ask_raw_data_reader = imvcdcimrdc.get_bid_ask_realtime_raw_data_reader(
