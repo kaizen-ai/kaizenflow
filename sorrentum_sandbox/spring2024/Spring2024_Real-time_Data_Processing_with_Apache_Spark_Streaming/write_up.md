@@ -443,11 +443,15 @@ The technologies involved are visualized below:
 graph TD;
 	A[Terminal] --> B[Docker Compose]
 	B --> C[Docker Container]
-	A -- C
+	A --> C
+	C --> A
 	C --> D[Jupyter Notebooks]
-	D -- E[Python]
-	E -- F[Apache Spark]
-	B -- E
+	D --> E[Python]
+	E --> D
+	E --> C
+	E --> F[Apache Spark]
+	F --> E
+	C --> E
 	A --> G[Output]
 	D --> G
 ```
