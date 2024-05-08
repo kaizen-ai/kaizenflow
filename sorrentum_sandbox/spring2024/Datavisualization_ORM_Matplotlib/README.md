@@ -257,8 +257,6 @@ sequenceDiagram
     FlaskApp->>MySQL: Query database for prediction
     MySQL-->>FlaskApp: Return prediction data
     FlaskApp-->>Browser: Display predicted gross sales
-end
-
 ```
 
 ## 6. Conclusion
