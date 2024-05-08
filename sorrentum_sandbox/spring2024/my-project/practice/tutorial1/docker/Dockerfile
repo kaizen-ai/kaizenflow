@@ -8,6 +8,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["python", "./emit_log_direct.py", "./receive_logs_direct.py"]
+CMD ["python", "./emit_log_topic.py", "./receive_logs_topic.py"]
 
 

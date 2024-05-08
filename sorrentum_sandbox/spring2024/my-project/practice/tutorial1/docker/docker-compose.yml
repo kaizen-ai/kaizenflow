@@ -9,18 +9,18 @@ services:
     labels:
       NAME: 'rabbitmq'
 
-  emitter:
+  emit:
     build: .
     volumes:
       - .:/data
-    command: python emit_log_direct.py info
+    command: python emit_log_topic.py info
     depends_on:
       - rabbitmq
 
-  receiver:
+  receive:
     build: .
     volumes:
       - .:/data
-    command: python receive_logs_direct.py info
+    command: python receive_logs_topic.py info
     depends_on:
       - rabbitmq
