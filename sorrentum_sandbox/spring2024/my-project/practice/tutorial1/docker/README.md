@@ -30,13 +30,15 @@ This is a Python-based project that leverages RabbitMQ, a robust messaging syste
 - RabbitMQ is an open-source message broker, which helps applications communicate asynchronously. 
 - It acts like a post office: applications send messages (letters) to queues (mailboxes), and RabbitMQ (postal workers) route them based on rules (sorting) to the appropriate queues (recipients) for processing later.
 
+
+<div  style="width:80%; margin: auto;">
+<img src="./RabbitMQ_TopicExchange.png" alt="Topic Exchange Example"/>
+</div>
+
 - **Topic Exchange**
     - Messages sent to a `topic` exchange can't have an arbitrary `routing_key` - it must be a list of words, delimited by dots. The words can be anything, but usually they specify some features connected to the message.
     - A few valid routing key exmamples: `stock.usd.nyse`, `nyse.vmw`, `quick.orange.rabbit`.
     - There can be as many words in the routing key as a user likes, up to the limit of 255 bytes.
-    <div  style="width:80%; margin: auto;">
-    <img src="./RabbitMQ_TopicExchange.png" alt="Topic Exchange Example"/>
-    </div>
     - In this example, the messages are sent with a routing key that consists of three words (two dots).
     - The first word in the routing key will describe a celerity, second a colour and third a species: `<celerity>.<colour>.<species>`.
     - Three bindings are created: Q1 is bound with binding key `*.orange.*` and Q2 with `*.*.rabbit` and `lazy.#`.
