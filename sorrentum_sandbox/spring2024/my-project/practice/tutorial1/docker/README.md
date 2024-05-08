@@ -3,7 +3,7 @@
 ## Author info
 
 - Author: Youjin Park
-- GitHub account: thepeanutbasket
+- GitHub account: thepeanutbasket (https://github.com/thepeanutbasket)
 - UMD email: ypark112@umd.edu
 - Personal email: park.youjin331@gmail.com
 
