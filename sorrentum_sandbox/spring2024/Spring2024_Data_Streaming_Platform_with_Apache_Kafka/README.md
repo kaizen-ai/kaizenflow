@@ -46,6 +46,10 @@ The goal is to learn how a data streaming platform is built using Kafka and to c
 
 Before we dive into the code examples, this section will focus on learning the fundamentals of Kafka and understanding its essential building blocks.
 
+<div  style="width:80%; margin: auto;">
+  <img src="./assets/understanding_kafka.png" alt="Understanding Apache Kafka"/>
+</div>
+
 - **Kafka:** is an open source distributed streaming platform that enables building real-time data pipelines and streaming applications. It is designed to handle vast amounts of data efficiently which makes it an essential tool for dealing with high-volume data processing. Kafka operates on a publish-subscribe model whick makes it highly scalable and fault-tolerant.
 - **Kafka Cluster:** consists of one or more servers (nodes), each of which is called a broker. Clusters are used to manage the storage and processing of stream's data. The distributed nature of the cluster enhances both the scalability and fault tolerance of system.
 - **Producer:** is any application or service that publishes records to Kafka topics.
