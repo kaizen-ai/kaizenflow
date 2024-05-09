@@ -156,8 +156,8 @@ sorrtask888_simple_request_reply_pattern_with_zeromq_client_1 exited with code 0
 
 ### Dockerfiles:
 - Dockerfile_server and Dockerfile_client:
-    -This Dockerfile defines the environment and instructions for building the server/client container.
-    -It starts with the Python 3 base image to provide the necessary runtime environment.
-    -Copies the server/client.py file into the container's filesystem.
-    -Installs the pyzmq library using pip to enable ZeroMQ functionality.
-    -Sets the command to execute when the container starts, which is to run the server/client.py script.
+      -This Dockerfile defines the environment and instructions for building the server/client container.
+      -It starts with the Python 3 base image to provide the necessary runtime environment.
+      -Copies the server/client.py file into the container's filesystem.
+      -Installs the pyzmq library using pip to enable ZeroMQ functionality.
+      -Sets the command to execute when the container starts, which is to run the server/client.py script.
