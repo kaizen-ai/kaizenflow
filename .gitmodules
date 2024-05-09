@@ -1,0 +1,3 @@
+[submodule "path/within/your/project/605-FINAL-PROJECT"]
+	path = path/within/your/project/605-FINAL-PROJECT
+	url = https://github.com/kaizen-ai/kaizenflow.git
