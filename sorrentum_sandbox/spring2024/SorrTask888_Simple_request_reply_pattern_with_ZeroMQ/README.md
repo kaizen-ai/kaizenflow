@@ -193,7 +193,7 @@ sorrtask888_simple_request_reply_pattern_with_zeromq_client_1 exited with code 0
     - It creates a ZeroMQ REQ socket to connect to the server and send requests.
     - In request number 2 we intentionally send data without its address to test the error handling of the server.
 
--run_clients.py
+- run_clients.py
     - This script is designed to run multiple instances of the client concurrently to simulate multiple clients connecting to the server.
     - It utilizes the subprocess module to execute the client.py script in separate Python processes.
     - The run_client_instance function defines the command to run a single client instance using the subprocess.run() function.
