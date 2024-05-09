@@ -7,7 +7,10 @@
 	- [Docker](#docker)
 	- [Project Structure](#project-structure)
 	- [Docker Implementation](#docker-implementation)
+	- [How to Run](#how-to-run)
 	- [Project Diagram](#project-diagram)
+	- [How to Send Messages and Receive Them](#how-to-send-messages-and-receive-them)
+	- [Conclusion](#conclusion)
 	- [Reference](#reference)
 
 <!-- /TOC -->
@@ -106,6 +109,16 @@ This is a Python-based project that leverages RabbitMQ, a robust messaging syste
     - Sets up the queue to consume messages, automatically acknowledging them upon receipt.
     - Starts the consuming look, which will run indefinitely until interrupted (e.g., via CTRL+C)
 
+## How to Run
+- Run the following command to build, start, and run all of our Docker containers defined in our `docker-compose.yml` file in detached mode (running in background)
+```sh
+❯ docker compose up -d
+[+] Running 3/4
+ ⠦ Network spring2024_simple_messaging_system_with_rabbitmq_default       Created                  0.6s 
+ ✔ Container spring2024_simple_messaging_system_with_rabbitmq-rabbitmq-1  Started                  0.2s 
+ ✔ Container spring2024_simple_messaging_system_with_rabbitmq-receive-1   Started                  0.5s 
+ ✔ Container spring2024_simple_messaging_system_with_rabbitmq-emit-1      Started                  0.5s 
+ ```
 
 ## Project Diagram
 ```mermaid
@@ -118,6 +131,41 @@ sequenceDiagram
     RabbitMQ->>ReceiveLog: Route message based on topic
     ReceiveLog-->>EmitLog: Acknowledge receipt
 ```
+
+## How to Send Messages and Receive Them
+- Subscribing to messages with a specific topic pattern using a Python script
+```sh
+❯ python receive_logs_topic.py 'professor.saggese' 
+ [*] Waiting for logs. To exit press CTRL+C
+```
+- Using other terminals and assign other routing keys
+```sh
+❯ python receive_logs_topic.py 'professor.benjamin' 
+ [*] Waiting for logs. To exit press CTRL+C
+```
+
+```sh
+❯ python receive_logs_topic.py 'student.youjin' 
+ [*] Waiting for logs. To exit press CTRL+C
+```
+
+```sh
+❯ python receive_logs_topic.py '#.#' 
+ [*] Waiting for logs. To exit press CTRL+C
+```
+
+ - Sending messages to receivers
+```sh
+❯ python emit_log_topic.py 'professors.' 'hello, thanks for your hard work this semester'
+ [x] Sent professors.:hello, thanks for your hard work this semester
+```
+
+- Then the receivers with the matching binding keys receive the message.
+```sh
+[x] professors.:b'hello, thanks for your hard work this semester'
+```
+
+## Conclusion
 
 ## Reference
 - https://www.rabbitmq.com/tutorials/tutorial-five-python
