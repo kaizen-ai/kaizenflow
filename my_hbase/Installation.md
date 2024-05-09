@@ -56,5 +56,10 @@ We are going to be using Phoenix 5.2.0.
 1) Go into the phoenix folder
 2) Copy this file phoenix-server-hbase-2.5-5.2.0.jar into your
    hbase/lib folder
+3) Go into the hbase/conf folder and edit the hbase-site.xml
+   Add in the lines of code from the Copy_Paste.txt
 
-3) And you are done
+   - Make sure to add it in between the configuration tags
+   - Make sure to NOT place it in between the already existing property tags
+
+4) You are good to go
