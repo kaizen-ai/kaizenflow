@@ -74,6 +74,8 @@ def create_task():
     user_id = data.get('user_id')
     task_name = data.get('task_name')
     task_description = data.get('task_description')
+    deadline = data.get('deadline')
+    category = data.get('category')
 
     # Check if the user exists
     if not r.exists(f'user:{user_id}'):
@@ -87,7 +89,9 @@ def create_task():
         'task_name': task_name,
         'task_description': task_description,
         'assigned_to': user_id,
-        'status': 'pending'
+        'status': 'pending',
+        'deadline': deadline,
+        'category': category
     }
 
     # Store task details in Redis
@@ -109,9 +113,31 @@ def get_tasks(user_id):
                 'task_id': task_id.decode().split(':')[1],
                 'task_name': task_data[b'task_name'].decode(),
                 'task_description': task_data[b'task_description'].decode(),
-                'status': task_data[b'status'].decode()
+                'status': task_data[b'status'].decode(),
+                'deadline': task_data[b'deadline'].decode(),
+                'category': task_data[b'category'].decode()
             })
     return jsonify({'user_tasks': user_tasks}), 201
+
+@app.route('/tasks/category/<category>', methods=['GET'])
+def get_tasks_by_category(category):
+    # Retrieve all tasks from Redis
+    task_ids = r.keys(f'task:*')
+    tasks_in_category = []
+
+    # Iterate through each task and filter by category
+    for task_id in task_ids:
+        task_data = r.hgetall(task_id)
+        if task_data[b'category'].decode() == category:
+            tasks_in_category.append({
+                'task_id': task_id.decode().split(':')[1],
+                'task_name': task_data[b'task_name'].decode(),
+                'task_description': task_data[b'task_description'].decode(),
+                'status': task_data[b'status'].decode(),
+                'deadline': task_data[b'deadline'].decode()
+            })
+
+    return jsonify({'tasks_in_category': tasks_in_category}), 200
 
 # Endpoint to get a single task by ID
 @app.route('/tasks/<user_id>/<task_name>', methods=['GET'])
@@ -125,7 +151,9 @@ def get_user_task_by_name(user_id, task_name):
                 'task_id': task_id.decode().split(':')[1],
                 'task_name': task_data[b'task_name'].decode(),
                 'task_description': task_data[b'task_description'].decode(),
-                'status': task_data[b'status'].decode()
+                'status': task_data[b'status'].decode(),
+                'deadline': task_data[b'deadline'].decode(),
+                'category': task_data[b'category'].decode()
             })
 
     return jsonify({'error': 'Task not found'}), 404
