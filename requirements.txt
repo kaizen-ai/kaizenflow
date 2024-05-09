@@ -3,3 +3,5 @@ pandas #Used for data manipulation
 scikit-learn # Provides clustering algorithms
 matplotlib #Used for data visualization 
 seaborn # Enhances matplotlib plots
+
+#Complete
