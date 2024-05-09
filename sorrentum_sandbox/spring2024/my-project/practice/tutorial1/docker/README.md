@@ -7,6 +7,7 @@
 	- [Docker](#docker)
 	- [Project Structure](#project-structure)
 	- [Docker Implementation](#docker-implementation)
+	- [Project Diagram](#project-diagram)
 
 <!-- /TOC -->
 <!-- /TOC -->
@@ -39,7 +40,7 @@ This is a Python-based project that leverages RabbitMQ, a robust messaging syste
 <img src="./RabbitMQ.png" alt="Topic Exchange Example"/>
 </div>
 
-- **Topic Exchange**
+- **An Example of Topic Exchange**
     - Messages sent to a `topic` exchange can't have an arbitrary `routing_key` - it must be a list of words, delimited by dots. The words can be anything, but usually they specify some features connected to the message.
     - A few valid routing key exmamples: `stock.usd.nyse`, `nyse.vmw`, `quick.orange.rabbit`.
     - There can be as many words in the routing key as a user likes, up to the limit of 255 bytes.
@@ -85,5 +86,34 @@ This is a Python-based project that leverages RabbitMQ, a robust messaging syste
     - Build an image from the current directory and runs `emit_log_topic.py` with info as an argument, relying on the rabbitmq service being available.
     - Similarly build an image from the current directory and runs `receive_logs_topic.py` with info as an argument, also dependent on the rabbitmq service.
 
+- Emit_lot_topic.py Configuration
+    - Establishes a blocking connection to the RabbitMQ server running on `localhost`.
+    - Opens a channel over which all the operations like declaring exchanges and sending messages will occur.
+    - Declares a topic exchange names `topic_logs`. Topic exchanges route messages to one or many queus based on matching between a message routing key and the patten that was used to bind a queue to an exchange.
+    - Extracts the routing key from the first command-line arguement. If insufficient arguments are given, default to `anonymous.info`.
+    - Joins all remaining command-line arguments into a single string to form the message. Defaults to "Hello World!" if no additional arguments are provided.
+    - Publishes the message to the `topic_logs` exchange with the specified routing key and prints out the routing key and message.
+    - Closes the connection to the RabbitMQ server.
+- Receive_logs_topic.py Configuration
+    - Establishes a blocking connection to the RabbitMQ server running on `localhost`.
+    - Opens a channel which is used for all operations such as declaring exchanges and queues.
+    - Declares a topic exchange named `topic_logs`. Topic exchanges route messages based on a routing pattern that matches the routing keys.
+    - Declares an exclusive queue with a generated name. Exclusive queues are only accessible by the declaring connection and are deleted when the connection closes.
+    - Retrieves binding keys from the command line arguments and the scrip wrties a usage message to `stderr` and exits if no binding keys are provided.
+    - Binds the declared queue to the `topic_logs` exchange using the provided binding keys, allowing it to receive messages that match these keys.
+    - Prints a message indicating the script is ready to receive logs and Defines a callback function that is called whenever a message is received. 
+    - Sets up the queue to consume messages, automatically acknowledging them upon receipt.
+    - Starts the consuming look, which will run indefinitely until interrupted (e.g., via CTRL+C)
+
 
 ## Project Diagram
+```mermaid
+sequenceDiagram
+    participant Producer as Emit Log
+    participant RabbitMQ
+    participant Consumer as Receive Log
+
+    Producer->>+RabbitMQ: Publish message (topic: 'info')
+    RabbitMQ->>+Consumer: Route message based on topic
+    Consumer-->>-Producer: Acknowledge receipt
+```
