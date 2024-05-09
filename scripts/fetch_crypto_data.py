@@ -44,14 +44,20 @@ def save_to_github(filepath):
         os.chdir("/home/jovyan/work")
         
         # Configure Git
-        subprocess.run(["git", "config", "--global", "user.email", "you@example.com"])
-        subprocess.run(["git", "config", "--global", "user.name", "Your Name"])
+        subprocess.run(["git", "config", "--global", "user.email", "farhad@umd.edu"])
+        subprocess.run(["git", "config", "--global", "user.name", "Farhad Abasahl"])
         
         # Add the file
         subprocess.run(["git", "add", filepath])
 
         # Commit the changes
         subprocess.run(["git", "commit", "-m", f"Added {os.path.basename(filepath)}"])
+        
+        # Pull and rebase the latest changes from remote
+        subprocess.run(["git", "pull", "--rebase", "origin", "main"])
+        
+        # Push the changes
+        subprocess.run(["git", "push", "origin", "main"])
 
         # Push the changes
         github_pat = os.getenv("GITHUB_PAT")
@@ -66,6 +72,9 @@ def save_to_github(filepath):
         logging.info(f"Successfully pushed {filepath} to GitHub")
     except Exception as e:
         logging.error(f"Failed to save {filepath} to GitHub: {str(e)}")
+       
+   
+
 
 
 def main():
@@ -113,3 +122,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

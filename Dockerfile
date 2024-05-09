@@ -9,14 +9,25 @@ LABEL description="Docker image for running Python script and Jupyter notebook a
 # Install software as root
 USER root
 
-# Install Python, Node.js, curl, and git
-RUN apt-get update && apt-get install -y python3 python3-pip curl git && \
+# Install Python, Node.js, curl, git, and LaTeX packages
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    curl \
+    git \
+    texlive-xetex \
+    texlive-fonts-recommended \
+    texlive-plain-generic && \
     curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Node dependencies as root
 COPY package.json package-lock.json /tmp/
 RUN cd /tmp && npm install && mv node_modules /opt/conda
+
+# Allow jovyan to use sudo without password
+RUN apt-get install -y sudo && \
+    echo "jovyan ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Switch back to the regular user
 USER jovyan
