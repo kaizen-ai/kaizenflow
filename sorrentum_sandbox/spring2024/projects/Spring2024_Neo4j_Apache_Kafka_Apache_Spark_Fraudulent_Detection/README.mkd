@@ -83,7 +83,7 @@ Sources: Neo4j, Apache Spark, Medium.
 - Disables neo4j authentication to simplify access
 
 ### Build and Access the Containers
-- Navigate to the `/docker` directory
+- Navigate to the `sorrentum/sorrentum_sandbox/spring2024/projects/Spring2024_Neo4j_Apache_Kafka_Apache_Spark_Fraudulent_Detection/docker` directory
 - Run `sudo docker compose up` to simultaneously build and run the containers
 - Navigate to `https://localhost:8888` to access the jupyter notebook and open `Spark Streams.ipynb`, execute the code in this notebook to start the streams
 - Navigate to `https://localhost:7474` to use the Neo4j web gui
