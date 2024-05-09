@@ -8,6 +8,7 @@
 	- [Project Structure](#project-structure)
 	- [Docker Implementation](#docker-implementation)
 	- [Project Diagram](#project-diagram)
+	- [Reference](#reference)
 
 <!-- /TOC -->
 <!-- /TOC -->
@@ -117,3 +118,8 @@ sequenceDiagram
     RabbitMQ->>ReceiveLog: Route message based on topic
     ReceiveLog-->>EmitLog: Acknowledge receipt
 ```
+
+## Reference
+- https://www.rabbitmq.com/tutorials/tutorial-five-python
+- https://medium.com/analytics-vidhya/how-to-use-rabbitmq-with-python-e0ccfe7fa959
+- https://medium.com/swlh/rabbitmq-developing-message-based-applications-a56003c55649
