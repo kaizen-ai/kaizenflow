@@ -71,6 +71,12 @@ This project is an advanced implementation of a request/reply pattern using Zero
 - Each client instance receives responses from Nginx.
 - Once all client requests have been processed and responses received, the Docker system remains active and ready to handle subsequent requests.
 
+- The following diagram shows the workflow of the project.
+
+![image](https://github.com/Kev-Daran/kaizenflow/assets/81677957/699d060d-8e6e-4d15-9585-7f3065af7c6b)
+
+
+
 ## Running the Docker System
 
 To run the entire system, including the server, client, and NGINX load balancer, follow these steps:
@@ -198,4 +204,9 @@ sorrtask888_simple_request_reply_pattern_with_zeromq_client_1 exited with code 0
     - It utilizes the subprocess module to execute the client.py script in separate Python processes.
     - The run_client_instance function defines the command to run a single client instance using the subprocess.run() function.
     - In the main block, it iterates twice to run two client instances concurrently.
-    -By running multiple client instances concurrently, it simulates concurrent connections to the server and helps test the server's asynchronous capabilities.
+    - By running multiple client instances concurrently, it simulates concurrent connections to the server and helps test the server's asynchronous capabilities.
+
+## Conclusion
+The project showcases the versatility and efficiency of ZeroMQ in building distributed and scalable systems. By incorporating features such as error handling, load balancing, and asynchronous communication, we have created a robust client-server architecture suitable for various real-world applications.
+
+- Demo link: 
