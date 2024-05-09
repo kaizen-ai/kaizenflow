@@ -89,16 +89,27 @@ Below, I'll discuss the decisions made, the containers involved, and how they co
 #### --> Decisions Made
 
 [1] Base Image
+
 The system uses Ubuntu as the base image, upon which Java and Hadoop are installed. Ubuntu is chosen for its widespread use and ease of customization.
+
 [2] Java and Hadoop Installation
+
 OpenJDK 8 and Hadoop 3.3.1 are installed within the Docker image. These versions are selected based on compatibility and stability considerations.
+
 [3] Configuration
+
 Environment variables are set to configure Hadoop paths and other settings. Configuration files such as core-site.xml, hdfs-site.xml, mapred-site.xml, and yarn-site.xml are copied into the container to customize Hadoop's behavior.
+
 [4] SSH Configuration
+
 SSH is configured within the container to allow passwordless SSH connections, which are necessary for Hadoop's internal communication between nodes.
+
 [5] Mapper and Reducer Scripts
+
 Python scripts for Mapper and Reducer tasks, along with sample data (Train.csv), are copied into the container. These scripts are used for processing data in MapReduce jobs.
+
 [6] Dockerfile Structure
+
 The Dockerfile is structured to ensure efficient layer caching and readability. Each step is documented to explain its purpose and rationale.
 
 #### --> Containers Involved:
@@ -115,6 +126,7 @@ Containers communicate internally through Hadoop's native communication protocol
 [2] SSH
 
 SSH is configured within the container to allow communication between nodes in the Hadoop cluster. This enables tasks to be executed on different nodes and for nodes to exchange data during MapReduce job execution.
+
 ## Running the Docker system by starting the container 
 
 To run the Docker system  follow these steps:
