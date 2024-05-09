@@ -3,6 +3,7 @@ import logging
 from typing import Tuple
 
 import pandas as pd
+import pytz
 
 import dataflow.core.utils as dtfcorutil
 import helpers.hunit_test as hunitest
@@ -211,28 +212,25 @@ class Test_convert_to_multiindex(hunitest.TestCase):
 class TestFindMinMaxTimestampsFromIntervals(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Check for the case when intervals is None.
+        Check for the case when no intervals are provided.
         """
         intervals = None
-        expected_min_max = (None, None)
-
         actual = dtfcorutil.find_min_max_timestamps_from_intervals(intervals)
-        self.assertEqual(expected_min_max, actual)
+        expected = (None, None)
+        self.assertEqual(expected, actual)
 
     def test2(self) -> None:
         """
-        Check for a single interval where both endpoints are None.
+        Check for a single interval where both endpoints are empty.
         """
         intervals = [(None, None)]
-        expected_min_max = (None, None)
-
         actual = dtfcorutil.find_min_max_timestamps_from_intervals(intervals)
-        self.assertEqual(expected_min_max, actual)
+        expected = (None, None)
+        self.assertEqual(expected, actual)
 
     def test3(self) -> None:
         """
-        Check for a single interval with datetime.datetime objects as
-        endpoints.
+        Check for a single interval with valid endpoints.
         """
         intervals = [
             (
@@ -240,119 +238,98 @@ class TestFindMinMaxTimestampsFromIntervals(hunitest.TestCase):
                 datetime.datetime(2022, 1, 1, 11, 0, 0),
             )
         ]
-        expected_min_max = (
+        actual = dtfcorutil.find_min_max_timestamps_from_intervals(intervals)
+        expected = (
             datetime.datetime(2022, 1, 1, 10, 0, 0),
             datetime.datetime(2022, 1, 1, 11, 0, 0),
         )
-
-        actual = dtfcorutil.find_min_max_timestamps_from_intervals(intervals)
-        self.assertEqual(expected_min_max, actual)
+        self.assertEqual(expected, actual)
 
     def test4(self) -> None:
         """
-        Check for a single interval with the same datetime.datetime objects as
-        endpoints.
+        Check for a single interval where both endpoints are the same.
         """
         intervals = [
             (
-                datetime.datetime(2022, 1, 1, 10, 0, 0),
-                datetime.datetime(2022, 1, 1, 10, 0, 0),
+                pd.Timestamp(2022, 1, 1, 10, tz="UTC"),
+                pd.Timestamp(2022, 1, 1, 10, tz="UTC"),
             )
         ]
-        expected_min_max = (
-            datetime.datetime(2022, 1, 1, 10, 0, 0),
-            datetime.datetime(2022, 1, 1, 10, 0, 0),
-        )
-
         actual = dtfcorutil.find_min_max_timestamps_from_intervals(intervals)
-        self.assertEqual(expected_min_max, actual)
+        expected = (
+            pd.Timestamp(2022, 1, 1, 10, tz="UTC"),
+            pd.Timestamp(2022, 1, 1, 10, tz="UTC"),
+        )
+        self.assertEqual(expected, actual)
 
     def test5(self) -> None:
         """
-        Check for a single interval with pd.Timestamp objects as endpoints.
+        Check for multiple intervals with a mix of valid and empty endpoints.
+        """
+        intervals = [
+            (pd.Timestamp(2022, 1, 1, 10, tz="UTC"), None),
+            (None, pd.Timestamp(2022, 1, 1, 11, tz="UTC")),
+        ]
+        actual = dtfcorutil.find_min_max_timestamps_from_intervals(intervals)
+        expected = (None, None)
+        self.assertEqual(expected, actual)
+
+    def test6(self) -> None:
+        """
+        Check for multiple intervals with valid endpoints.
         """
         intervals = [
             (
                 pd.Timestamp(2022, 1, 1, 10, tz="UTC"),
                 pd.Timestamp(2022, 1, 1, 11, tz="UTC"),
-            )
+            ),
+            (
+                pd.Timestamp(2022, 1, 1, 6, tz="UTC"),
+                pd.Timestamp(2022, 1, 1, 9, tz="UTC"),
+            ),
         ]
-        expected_min_max = (
-            pd.Timestamp(2022, 1, 1, 10, tz="UTC"),
+        actual = dtfcorutil.find_min_max_timestamps_from_intervals(intervals)
+        expected = (
+            pd.Timestamp(2022, 1, 1, 6, tz="UTC"),
             pd.Timestamp(2022, 1, 1, 11, tz="UTC"),
         )
+        self.assertEqual(expected, actual)
 
-        actual = dtfcorutil.find_min_max_timestamps_from_intervals(intervals)
-        self.assertEqual(expected_min_max, actual)
-
-    def test6(self) -> None:
+    def test7(self) -> None:
         """
-        Check for a single interval with the same pd.Timestamp objects as
-        endpoints.
+        Check for multiple intervals with valid endpoints of different time
+        zones.
         """
         intervals = [
             (
                 pd.Timestamp(2022, 1, 1, 10, tz="UTC"),
-                pd.Timestamp(2022, 1, 1, 10, tz="UTC"),
-            )
+                pd.Timestamp(2022, 1, 1, 11, tz="UTC"),
+            ),
+            (
+                pd.Timestamp(2022, 1, 1, 10, tz="EST"),
+                pd.Timestamp(2022, 1, 1, 11, tz="EST"),
+            ),
         ]
-        expected_min_max = (
+        actual = dtfcorutil.find_min_max_timestamps_from_intervals(intervals)
+        expected = (
             pd.Timestamp(2022, 1, 1, 10, tz="UTC"),
-            pd.Timestamp(2022, 1, 1, 10, tz="UTC"),
+            pd.Timestamp(2022, 1, 1, 11, tz="EST"),
         )
-
-        actual = dtfcorutil.find_min_max_timestamps_from_intervals(intervals)
-        self.assertEqual(expected_min_max, actual)
-
-    def test7(self) -> None:
-        """
-        Check for multiple intervals with a mix of datetime.datetime,
-        pd.Timestamp objects, and None as endpoints.
-        """
-        intervals = [
-            (datetime.datetime(2022, 1, 1, 10, 0, 0), None),
-            (None, pd.Timestamp(2022, 1, 1, 11, tz="UTC")),
-        ]
-        expected_min_max = (None, None)
-
-        actual = dtfcorutil.find_min_max_timestamps_from_intervals(intervals)
-        self.assertEqual(expected_min_max, actual)
+        self.assertEqual(expected, actual)
 
     def test8(self) -> None:
         """
-        Check for multiple intervals with datetime.datetime objects as
-        endpoints.
+        Check for an interval with different endpoint types.
         """
-        interval1_start = datetime.datetime(2022, 1, 1, 10, 0, 0)
-        interval1_end = datetime.datetime(2022, 1, 1, 11, 0, 0)
-        interval2_start = interval1_start - datetime.timedelta(hours=4)
-        interval2_end = interval1_end - datetime.timedelta(hours=2)
         intervals = [
-            (interval1_start, interval1_end),
-            (interval2_start, interval2_end),
+            (
+                datetime.datetime(2022, 1, 1, 10, 0, 0, tzinfo=pytz.utc),
+                pd.Timestamp(2022, 1, 1, 11, tz="UTC"),
+            )
         ]
-        overall_start = interval2_start
-        overall_end = interval1_end
-        expected_min_max = (overall_start, overall_end)
-
         actual = dtfcorutil.find_min_max_timestamps_from_intervals(intervals)
-        self.assertEqual(expected_min_max, actual)
-
-    def test9(self) -> None:
-        """
-        Check for multiple intervals with pd.Timestamp objects as endpoints.
-        """
-        interval1_start = pd.Timestamp(2022, 1, 1, 10, tz="UTC")
-        interval1_end = pd.Timestamp(2022, 1, 1, 11, tz="UTC")
-        interval2_start = interval1_start.tz_convert("EST")
-        interval2_end = interval1_end.tz_convert("EST")
-        intervals = [
-            (interval1_start, interval1_end),
-            (interval2_start, interval2_end),
-        ]
-        overall_start = interval1_start
-        overall_end = interval2_end
-        expected_min_max = (overall_start, overall_end)
-
-        actual = dtfcorutil.find_min_max_timestamps_from_intervals(intervals)
+        expected_min_max = (
+            datetime.datetime(2022, 1, 1, 10, 0, 0, tzinfo=pytz.utc),
+            pd.Timestamp(2022, 1, 1, 11, tz="UTC"),
+        )
         self.assertEqual(expected_min_max, actual)
