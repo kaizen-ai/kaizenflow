@@ -10,8 +10,10 @@
 	- [How to Run](#how-to-run)
 	- [Project Diagram](#project-diagram)
 	- [How to Send Messages and Receive Them](#how-to-send-messages-and-receive-them)
+	- [Cleaning](#cleaning)
 	- [Conclusion](#conclusion)
 	- [Reference](#reference)
+	- [Video Recording](#video-recording)
 
 <!-- /TOC -->
 <!-- /TOC -->
@@ -185,6 +187,16 @@ sequenceDiagram
 [x] professors.:b'hello, thanks for your hard work this semester'
 ```
 
+## Cleaning
+- Cleaning the docker containers and removing them.
+```sh
+❯ docker compose down -v --remove-orphans
+[+] Running 4/4
+ ✔ Container spring2024_simple_messaging_system_with_rabbitmq-emit-1      Removed                                                          0.0s 
+ ✔ Container spring2024_simple_messaging_system_with_rabbitmq-receive-1   Removed                                                          0.0s 
+ ✔ Container spring2024_simple_messaging_system_with_rabbitmq-rabbitmq-1  Removed                                                          6.3s 
+ ✔ Network spring2024_simple_messaging_system_with_rabbitmq_default       Removed                                                          0.1s 
+```
 ## Conclusion
 This project successfully demonstrates the power and flexibility of RabbitMQ for handling complex messaging and routing scenarios in a distributed application environment. Through the implementation of a topic exchange mechanism, we were able to dynamically route messages based on multiple criteria, showcasing RabbitMQ's capability to support sophisticated messaging patterns beyond simple queuing.
 
