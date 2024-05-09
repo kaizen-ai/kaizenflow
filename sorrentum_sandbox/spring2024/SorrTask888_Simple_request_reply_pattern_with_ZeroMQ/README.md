@@ -179,3 +179,16 @@ sorrtask888_simple_request_reply_pattern_with_zeromq_client_1 exited with code 0
     - Copies the nginx.conf file from the local filesystem to the NGINX configuration directory within the container.
  
 ### Python Scripts:
+
+- Server.py
+    - This script implements the server-side logic using the ZeroMQ and asyncio libraries.
+    - It creates a ZeroMQ REP socket to listen for incoming requests from clients.
+    - The server is designed to handle requests asynchronously using asyncio.
+    - It registers the socket with a poller to wait for incoming messages and responds to them accordingly.
+    - The server checks the format of incoming messages and sends appropriate responses.
+    - Error handling is implemented to catch ZeroMQ errors during socket operations.
+ 
+- Client.py
+    - This script implements the client-side logic using the ZeroMQ library.
+    - It creates a ZeroMQ REQ socket to connect to the server and send requests.
+    - In request number 2 we intentionally send data without its address to test the error handling of the server.
