@@ -3,7 +3,6 @@ import logging
 from typing import Tuple
 
 import pandas as pd
-import pytz
 
 import dataflow.core.utils as dtfcorutil
 import helpers.hunit_test as hunitest
@@ -209,7 +208,7 @@ class Test_convert_to_multiindex(hunitest.TestCase):
         self.assert_multiindex_columns_equal(expected_df_columns, actual_df)
 
 
-class TestFindMinMaxTimestampsFromIntervals(hunitest.TestCase):
+class Test_find_min_max_timestamps_from_intervals(hunitest.TestCase):
     def test1(self) -> None:
         """
         Check for the case when no intervals are provided.
@@ -217,7 +216,7 @@ class TestFindMinMaxTimestampsFromIntervals(hunitest.TestCase):
         intervals = None
         actual = dtfcorutil.find_min_max_timestamps_from_intervals(intervals)
         expected = (None, None)
-        self.assertEqual(expected, actual)
+        self.assertEqual(actual, expected)
 
     def test2(self) -> None:
         """
@@ -226,7 +225,7 @@ class TestFindMinMaxTimestampsFromIntervals(hunitest.TestCase):
         intervals = [(None, None)]
         actual = dtfcorutil.find_min_max_timestamps_from_intervals(intervals)
         expected = (None, None)
-        self.assertEqual(expected, actual)
+        self.assertEqual(actual, expected)
 
     def test3(self) -> None:
         """
@@ -243,7 +242,7 @@ class TestFindMinMaxTimestampsFromIntervals(hunitest.TestCase):
             datetime.datetime(2022, 1, 1, 10, 0, 0),
             datetime.datetime(2022, 1, 1, 11, 0, 0),
         )
-        self.assertEqual(expected, actual)
+        self.assertEqual(actual, expected)
 
     def test4(self) -> None:
         """
@@ -260,7 +259,7 @@ class TestFindMinMaxTimestampsFromIntervals(hunitest.TestCase):
             pd.Timestamp(2022, 1, 1, 10, tz="UTC"),
             pd.Timestamp(2022, 1, 1, 10, tz="UTC"),
         )
-        self.assertEqual(expected, actual)
+        self.assertEqual(actual, expected)
 
     def test5(self) -> None:
         """
@@ -272,7 +271,7 @@ class TestFindMinMaxTimestampsFromIntervals(hunitest.TestCase):
         ]
         actual = dtfcorutil.find_min_max_timestamps_from_intervals(intervals)
         expected = (None, None)
-        self.assertEqual(expected, actual)
+        self.assertEqual(actual, expected)
 
     def test6(self) -> None:
         """
@@ -293,7 +292,7 @@ class TestFindMinMaxTimestampsFromIntervals(hunitest.TestCase):
             pd.Timestamp(2022, 1, 1, 6, tz="UTC"),
             pd.Timestamp(2022, 1, 1, 11, tz="UTC"),
         )
-        self.assertEqual(expected, actual)
+        self.assertEqual(actual, expected)
 
     def test7(self) -> None:
         """
@@ -315,7 +314,7 @@ class TestFindMinMaxTimestampsFromIntervals(hunitest.TestCase):
             pd.Timestamp(2022, 1, 1, 10, tz="UTC"),
             pd.Timestamp(2022, 1, 1, 11, tz="EST"),
         )
-        self.assertEqual(expected, actual)
+        self.assertEqual(actual, expected)
 
     def test8(self) -> None:
         """
@@ -323,13 +322,15 @@ class TestFindMinMaxTimestampsFromIntervals(hunitest.TestCase):
         """
         intervals = [
             (
-                datetime.datetime(2022, 1, 1, 10, 0, 0, tzinfo=pytz.utc),
+                datetime.datetime(
+                    2022, 1, 1, 10, 0, 0, tzinfo=datetime.timezone.utc
+                ),
                 pd.Timestamp(2022, 1, 1, 11, tz="UTC"),
             )
         ]
         actual = dtfcorutil.find_min_max_timestamps_from_intervals(intervals)
-        expected_min_max = (
-            datetime.datetime(2022, 1, 1, 10, 0, 0, tzinfo=pytz.utc),
+        expected = (
+            datetime.datetime(2022, 1, 1, 10, 0, 0, tzinfo=datetime.timezone.utc),
             pd.Timestamp(2022, 1, 1, 11, tz="UTC"),
         )
-        self.assertEqual(expected_min_max, actual)
+        self.assertEqual(actual, expected)
