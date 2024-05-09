@@ -8,24 +8,38 @@ import numpy as np
 import pandas as pd
 import findspark
 
+# Initialize spark dependencies with findspark
 findspark.init()
 
+# Initialize a SparkSession
 spark = SparkSession.builder.getOrCreate()
 
+# Pulling data from UCI database and converting to Spark Dataframe format
 wine = fetch_ucirepo(id=109)
 X = wine.data.features
 y = wine.data.targets
 data = spark.createDataFrame(pd.concat([X, y], axis=1))
 
+# Using columns 1-12 as variables and the last column as data labels for prediction,
+# import the VectorAssembler class and create an array of features
 assembler = VectorAssembler(inputCols=data.columns[:-1], outputCol='features')
 data = assembler.transform(data)
 
+# Split the train set and test set using the RandomSplit function
 train, test = data.randomSplit([0.7, 0.3])
 
+# Importing LR model from the Spark library
 LR = LinearRegression(featuresCol='features', labelCol='class')
+
+# Train the model
 model = LR.fit(train)
+
+# Get the evaluation of model
 eva = model.evaluate(test)
-print(eva.rootMeanSquaredError)
+
+# Output the MSE and r2
+print(eva.meanSquaredError)
 print(eva.r2)
 
+# Get the prediction of test set label
 pred = model.transform(test)
