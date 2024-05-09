@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+
 import os
 import sys
 import csv
@@ -57,23 +58,3 @@ class Reducer(Streaming):
             yield key, val
 
     
-
-
-class AggReducer(Reducer):
-
-    def reduce(self):
-        
-        for key, val in self:
-            total = 0
-            count = 0
-
-            for item in val:
-                total+=float(item[1])
-                count+=1
-
-            self.emit(key, float(total)/float(count))
-
-
-if __name__ == '__main__':
-    reducer = AggReducer(sys.stdin)
-    reducer.reduce()
