@@ -109,9 +109,9 @@ This is a Python-based project that leverages RabbitMQ, a robust messaging syste
 ## Project Diagram
 ```mermaid
 sequenceDiagram
-    participant EmitLog as "Emit Log"
-    participant RabbitMQ as "RabbitMQ"
-    participant ReceiveLog as "Receive Log"
+    participant EmitLog as Emit Log
+    participant RabbitMQ as RabbitMQ
+    participant ReceiveLog as Receive Log
 
     EmitLog->>RabbitMQ: Publish message (topic: 'info')
     RabbitMQ->>ReceiveLog: Route message based on topic
