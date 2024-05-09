@@ -25,11 +25,11 @@
 
 ## Description
 
-This is a Python-based project that leverages RabbitMQ, a robust messaging system, diving deeper into RabbitMQ's capabilities by incorporating message acknowledgement mechanisms to ensure reliable message delivery and fault tolerance. This project takes a step forward from a simple logging system to a more advanced system that uses a topic exchange instead of a direct exchange. With a topic exchange, messages can be routed based on multiple criteria. Specifically, this project will focus on how to subscribe to logs based on the severity of the log as well as the source that generated the log.
+This is a Python-based project that leverages RabbitMQ, a robust messaging system, diving deeper into RabbitMQ's capabilities by incorporating message acknowledgment mechanisms to ensure reliable message delivery and fault tolerance. This project takes a step forward from a simple logging system to a more advanced system that uses a topic exchange instead of a direct exchange. With a topic exchange, messages can be routed based on multiple criteria. Specifically, this project will focus on how to subscribe to logs based on the severity of the log as well as the source that generated the log.
 
 ## Technologies Used in this Project
 - **RabbitMQ**: An open-source message broker, which helps applications communicate asynchronously.
-- **Docker**: A powerful platform designed to make it easier to create, deploy, and run applications by using containers. Docker run is entirely command line based
+- **Docker**: A powerful platform designed to make it easier to create, deploy, and run applications by using containers. Docker run is entirely command line-based
 - **Docker Compose**: A tool for defining and running multi-container applications. Docker-compose reads configuration data from a YAML file.
 
 ## RabbitMQ
@@ -43,16 +43,16 @@ This is a Python-based project that leverages RabbitMQ, a robust messaging syste
 
 - **An Example of Topic Exchange**
     - Messages sent to a `topic` exchange can't have an arbitrary `routing_key` - it must be a list of words, delimited by dots. The words can be anything, but usually they specify some features connected to the message.
-    - A few valid routing key exmamples: `stock.usd.nyse`, `nyse.vmw`, `quick.orange.rabbit`.
+    - A few valid routing key examples: `stock.usd.nyse`, `nyse.vmw`, `quick.orange.rabbit`.
     - There can be as many words in the routing key as a user likes, up to the limit of 255 bytes.
     - In this example, the messages are sent with a routing key that consists of three words (two dots).
-    - The first word in the routing key will describe a celerity, second a colour and third a species: `<celerity>.<colour>.<species>`.
+    - The first word in the routing key will describe a celerity, second a color, and third a species: `<celerity>.<color>.<species>`.
     - Three bindings are created: Q1 is bound with binding key `*.orange.*` and Q2 with `*.*.rabbit` and `lazy.#`.
         - Q1 is interested in all the orange animals.
-        - Q2 wants to hear everything about rabbits, and everything about lazy animals.
+        - Q2 wants to hear everything about rabbits and everything about lazy animals.
     - A message with a routing key set to `quick.orange.rabbit` will be delivered to both queues.
-    - Message `lazy.orange.elephant` also will go to both of them.
-    - Message `quick.orange.fox` will only go to the first queue.
+    - The message `lazy.orange.elephant` will also go to both of them.
+    - The Message `quick.orange.fox` will only go to the first queue.
     - Message `lazy.brown.fox` only to the second.
     - `quick.brown.fox` doesn't match any binding, so it will be discarded.
 
@@ -62,9 +62,9 @@ This is a Python-based project that leverages RabbitMQ, a robust messaging syste
     - Containers: Containers allow a user to package up an application with all of the parts it needs, such as libraries and other dependencies, and ship it all out as one package. They are isolated from each other and the host system.
     - Images: Docker images are lightweight, standalone, executable packages that include everything needed to run a software application: code, runtime, system tools, system libraries, and settings. 
     - Dockerfile: A Docker file is a text document that contains all the commands a user could call on the command line to assemble an image. Using `docker build`, users can create an automated build that executes several command-line instructions in succession.
-    - Docker Compose: Docker Compose is a tool for defining an running multi-container Docker applications. With Compose, a use uses a YAML file to configure application's services, networks, and volumes, and then create and start all the services from your configuration with a single command.
+    - Docker Compose: Docker Compose is a tool for defining and running multi-container Docker applications. With Compose, a user uses a YAML file to configure application's services, networks, and volumes, and then creates and starts all the services from your configuration with a single command.
 - With Docker Containers, users can create predictable environments that are isolated from other applications. Docker ensures that software behaves the same way regardless of where it is deployed.
-- Once an application and its dependencies are containerized, the container can be shared among users, and it can run on any system that has Docker installed-regardless of the underlying infrastructure.
+- Once an application and its dependencies are containerized, the container can be shared among users, and it can run on any system that has Docker installed regardless of the underlying infrastructure.
 - Docker is ideal for building microservice architectures because each part of the application can be independently housed in separate containers. This makes managing each service or part of the app easier and more precise.
 
 ## Project Structure
@@ -84,23 +84,23 @@ This is a Python-based project that leverages RabbitMQ, a robust messaging syste
 
 - Docker-compose.yml Configuration
     - Utilize the `rabbitmq:3-management` image to run a RabbitMQ server with a management UI, exposing standard RabbitMQ and management ports to the host.
-    - Build an image from the current directory and runs `emit_log_topic.py` with info as an argument, relying on the rabbitmq service being available.
-    - Similarly build an image from the current directory and runs `receive_logs_topic.py` with info as an argument, also dependent on the rabbitmq service.
+    - Build an image from the current directory and run `emit_log_topic.py` with info as an argument, relying on the rabbitmq service being available.
+    - Similarly, build an image from the current directory and run `receive_logs_topic.py` with info as an argument, also dependent on the rabbitmq service.
 
 - Emit_lot_topic.py Configuration
     - Establishes a blocking connection to the RabbitMQ server running on `localhost`.
     - Opens a channel over which all the operations like declaring exchanges and sending messages will occur.
-    - Declares a topic exchange names `topic_logs`. Topic exchanges route messages to one or many queus based on matching between a message routing key and the patten that was used to bind a queue to an exchange.
-    - Extracts the routing key from the first command-line arguement. If insufficient arguments are given, default to `anonymous.info`.
+    - Declares a topic exchange named `topic_logs`. Topic exchanges route messages to one or many queues based on matching between a message routing key and the pattern that was used to bind a queue to an exchange.
+    - Extracts the routing key from the first command-line argument. If insufficient arguments are given, default to `anonymous.info`.
     - Joins all remaining command-line arguments into a single string to form the message. Defaults to "Hello World!" if no additional arguments are provided.
     - Publishes the message to the `topic_logs` exchange with the specified routing key and prints out the routing key and message.
     - Closes the connection to the RabbitMQ server.
 - Receive_logs_topic.py Configuration
     - Establishes a blocking connection to the RabbitMQ server running on `localhost`.
-    - Opens a channel which is used for all operations such as declaring exchanges and queues.
+    - Opens a channel that is used for all operations such as declaring exchanges and queues.
     - Declares a topic exchange named `topic_logs`. Topic exchanges route messages based on a routing pattern that matches the routing keys.
     - Declares an exclusive queue with a generated name. Exclusive queues are only accessible by the declaring connection and are deleted when the connection closes.
-    - Retrieves binding keys from the command line arguments and the scrip wrties a usage message to `stderr` and exits if no binding keys are provided.
+    - Retrieves binding keys from the command line arguments and the script writes a usage message to `stderr` and exits if no binding keys are provided.
     - Binds the declared queue to the `topic_logs` exchange using the provided binding keys, allowing it to receive messages that match these keys.
     - Prints a message indicating the script is ready to receive logs and Defines a callback function that is called whenever a message is received. 
     - Sets up the queue to consume messages, automatically acknowledging them upon receipt.
