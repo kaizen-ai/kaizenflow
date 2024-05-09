@@ -1,7 +1,8 @@
 **Purpose Of This File**
 ---------------------------
 
-  This repository seeks to show the advantages of using Secondary Indexing in HBase.
+  This repository seeks to show the advantages of using Secondary Indexing in HBase. In Kaizenflow, this is
+  under the branch SorrTask800. 
 
   Hbase is a columnar database that utilizes Hadoop as the foundation. However, for simplicity, this installation will not
 be deploying Hadoop clusters, and thus we will have Hbase manage Zookeeper.
