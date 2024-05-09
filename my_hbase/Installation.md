@@ -31,18 +31,10 @@ export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 
 5) Save the hbase-env.sh file and exit
 6) Go back into the hbase file, and go into conf, and edit the hbase-site.xml file.
-   You will be adding these 2 lines between <configuration> </configuration> tags
+   You will be adding the lines of code from the Copy_Paste.txt.
 
-<property>
-  <name>hbase.rootdir</name>
-  <value>file://path_to_hbase_file/hbfiles/</value>
-</property>
-
-<property>
-  <name>hbase.zookeeper.property.dataDir</name>
-  <value>path_to_hbase_file/zookeeper</value>
-</property>
-
+  - Make sure to add it in between the configuration tags.
+  - Make sure NOT to place it in between the already existing property tags.
   - Make sure to fill into the path of your hbase file where the line requires it
 
 7) Save the file and exit
