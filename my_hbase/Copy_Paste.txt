@@ -10,3 +10,10 @@ Copy and paste material for the Hbase set up
   <value>path_to_hbase_file/zookeeper</value>
 </property>
 
+
+Copy and paste material for the Phoenix Set Up
+<property>
+  <name>hbase.regionserver.wal.codec</name>
+  <value>org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec</value>
+</property>
+
