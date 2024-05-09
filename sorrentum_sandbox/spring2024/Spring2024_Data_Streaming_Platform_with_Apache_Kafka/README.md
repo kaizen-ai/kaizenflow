@@ -23,6 +23,7 @@
 - Author: Heanh Sok
 - GitHub Account: heanhsok
 - Email: heanhsok@umd.edu
+- Video Walkthrough: [DATA605 - Data Streaming Platform with Apache Kafka](https://youtu.be/5PhI5CO9oPo)
 
 ## Overview
 
@@ -32,7 +33,7 @@ First, we will learn the fundamentals of Kafka and understand its essential buil
 
 Then, we will build a simple data streaming platform. Python is utilized to simulate the production of a continuous data stream, format it for Kafka ingestion (topics), and configure producers for efficient data transfer into Kafka topics. Python-based Kafka consumers will read data from our Kafka stream, process and validate it before storing it into PostgreSQL using a predefined schema.
 
-The goal is to learn how a data streaming platform is built using Kafka and to create a reliable system that seamlessly produces, processes, and securely stores external data in real-time using Kafka as the intermediary, Python for logic handling, and Docker for deployment flexibility.
+The goal is to learn how a data streaming platform is built using Kafka and to create a reliable system that seamlessly produces, processes, and securely stores external data in real-time using Kafka as an intermediary, Python for logic handling, and Docker for deployment flexibility.
 
 ## Technologies Used
 - **Apache Kafka:** A distributed streaming platform that enables building real-time data pipelines and streaming applications. Kafka is used in this project to handle the publishing, storage, and processing of streams of records.
@@ -56,9 +57,9 @@ Before we dive into the code examples, this section will focus on learning the f
 - **Consumer:** is any application or service that reads records from Kafka topics. It subscribes to one or more topics and reads the records in the order in which they were stored.
 - **Message:** are the basic unit of data. Each message is a key-value pair stored in topics. Messages are appended to a Kafka topic and are read by consumers.
 - **Topic:** allows us to organize our messages. It is a category where producers publish messages to. Multiple producers can publish to a topic and a topic can be subscibed to by multiple consumers.
-- **Partition:** Topics are split into partitions which allows the data to be spread across the cluster. Each partition is an ordered, immutable sequence of messages that is continually appended to. Partitions allow topics to be parallelized by splitting the data across multiple brokers.
+- **Partition:** Topics are split into partitions which allows the data to be spreaded across the cluster. Each partition is an ordered, immutable sequence of messages that is continually appended to. Partitions allow topics to be parallelized by splitting the data across multiple brokers.
 - **Replication Factor:** defines the number of copies of partitions over multiple Kafka brokers. Higher replication factors ensure greater availability and durability of data.
-- **Comsumer Group:** consist of multiple consumers who work together to consume data. Each consumer in a group reads from exclusive partitions of a topic. No two consumers in the same group read the same data. This allows the consumer group to scale horizontally, processing data in parallel.
+- **Consumer Group:** consist of multiple consumers who work together to consume data. Each consumer in a group reads from exclusive partitions of a topic. No two consumers in the same group read the same data. This allows the consumer group to scale horizontally, processing data in parallel.
 - **Offset:** a sequential ID number assigned to each record in a partition that uniquely identifies it. Consumers track offsets to know where they are in a stream and to ensure messages are processed in order. This approach allows consumers to resume from where they left off in case of failure or restart.
 
 ## Project Structure
