@@ -71,9 +71,10 @@ This project is an advanced implementation of a request/reply pattern using Zero
 - Each client instance receives responses from Nginx.
 - Once all client requests have been processed and responses received, the Docker system remains active and ready to handle subsequent requests.
 
--The following diagram shows the workflow of the project.
+- The following diagram shows the workflow of the project.
 
-![image](https://github.com/Kev-Daran/kaizenflow/assets/81677957/89779bf9-c7b6-4408-add8-a64f42cabd90)
+![image](https://github.com/Kev-Daran/kaizenflow/assets/81677957/699d060d-8e6e-4d15-9585-7f3065af7c6b)
+
 
 
 ## Running the Docker System
