@@ -52,6 +52,7 @@ To load in data, run the following commands
 
 
 **Testing Secondary Indexing**
+---
 Open the hbase shell, and run a full scan using the command
   -scan 'users'
 
