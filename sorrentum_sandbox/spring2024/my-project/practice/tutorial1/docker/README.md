@@ -3,8 +3,8 @@
 - [Simple Messaging System with RabbitMQ](#simple-messaging-system-with-rabbitmq)
 	- [Description](#description)
 	- [Technologies Used in this Project](#technologies-used-in-this-project)
-	- [RabbitMQ: Messaging and Streaming Broker](#rabbitmq:-messaging-and-streaming-broker)
-	- [Docker: Portable Container Platform](#docker:-portable-container-platform)
+	- [RabbitMQ](#rabbitmq)
+	- [Docker](#docker)
 	- [Project Structure](#project-structure)
 	- [Docker Implementation](#docker-implementation)
 
@@ -30,7 +30,7 @@ This is a Python-based project that leverages RabbitMQ, a robust messaging syste
 - **Docker**: A powerful platform designed to make it easier to create, deploy, and run applications by using containers. Docker run is entirely command line based
 - **Docker Compose**: A tool for defining and running multi-container applications. Docker-compose reads configuration data from a YAML file.
 
-## RabbitMQ: Messaging and Streaming Broker
+## RabbitMQ
 - RabbitMQ is an open-source message broker, which helps applications communicate asynchronously. 
 - It acts like a post office: applications send messages (letters) to queues (mailboxes), and RabbitMQ (postal workers) route them based on rules (sorting) to the appropriate queues (recipients) for processing later.
 
@@ -54,7 +54,7 @@ This is a Python-based project that leverages RabbitMQ, a robust messaging syste
     - Message `lazy.brown.fox` only to the second.
     - `quick.brown.fox` doesn't match any binding, so it will be discarded.
 
-## Docker: Portable Container Platform
+## Docker
 - Docker is a powerful platform designed to make it easier to create, deploy, and run applications by using containers. 
 - Key concepts:
     - Containers: Containers allow a user to package up an application with all of the parts it needs, such as libraries and other dependencies, and ship it all out as one package. They are isolated from each other and the host system.
