@@ -3,8 +3,8 @@
 - [Simple Messaging System with RabbitMQ](#simple-messaging-system-with-rabbitmq)
 	- [Description](#description)
 	- [Technologies Used in this Project](#technologies-used-in-this-project)
-	- [RabbitMQ: Messaging and Streaming Broker](#rabbitmq:messaging-and-streaming-broker)
-	- [Docker: Portable Container Platform](#docker:portable-container-platform)
+	- [RabbitMQ: Messaging and Streaming Broker](#rabbitmq:-messaging-and-streaming-broker)
+	- [Docker: Portable Container Platform](#docker:-portable-container-platform)
 	- [Project Structure](#project-structure)
 	- [Docker Implementation](#docker-implementation)
 
@@ -36,7 +36,7 @@ This is a Python-based project that leverages RabbitMQ, a robust messaging syste
 
 
 <div  style="width:80%; margin: auto;">
-<img src="./RabbitMQ_TopicExchange.png" alt="Topic Exchange Example"/>
+<img src="./RabbitMQ.png" alt="Topic Exchange Example"/>
 </div>
 
 - **Topic Exchange**
