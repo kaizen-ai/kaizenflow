@@ -1,0 +1,55 @@
+version: '3.7'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5320:5432"
+    environment:
+      POSTGRES_DB: gabriel
+      POSTGRES_USER: gabriel
+      POSTGRES_PASSWORD: yourpassword
+    volumes:
+      - ./custom_pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - postgres-data:/var/lib/postgresql/data
+
+  python-app:
+    image: python-app-image
+    build:
+      context: ./python-app
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8888"  # For Jupyter
+      - "80:80"      # For the web application
+    volumes:
+      - ./notebooks:/app
+    environment:
+      - APP_MODE=jupyter  # Change to 'jupyter' to run Jupyter Notebook
+    depends_on:
+      - kafka
+      - postgres
+
+volumes:
+  postgres-data: {}
+
