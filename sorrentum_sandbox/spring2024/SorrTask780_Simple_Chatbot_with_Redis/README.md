@@ -17,7 +17,7 @@
   * [Flask](#flask)
   * [Redis](#redis)
   * [Docker](#docker)
-  * [Huggingface - DialoGPT-medium](#hugginface-dialogpt-medium)
+  * [Huggingface - DialoGPT-medium model](#huggingface)
 - [Docker implementation](#docker-implementation)
   * [Dockerfile and compose.yaml code](#dockerfile-and-compose.yaml-code)
   * [Docker file exaplanation](#docker-file-explanation)
@@ -35,7 +35,7 @@
 
 ## Link to the video explanation
 
-
+Link: 
 
 ## Overview
 
@@ -69,7 +69,7 @@
 
 - Finally, the generated response is delivered back to the user through the web interface, completing the interaction cycle. The user can then continue the conversation by providing additional input, and the process repeats
 
-<img src="images/flowchart.png" />
+<img src="images/flowchart.png" width="250" height="330" style="display: block; margin-left: auto; margin-right: auto;"/>
 
 ## Technologies used
 
@@ -90,7 +90,7 @@
 
     - I preferred Flask over FastAPI due to its simplicity, ease of use, and familiarity
         
-        + Moore suitable for projects with straightforward requirements, such as small to medium-sized web applications 
+        + More suitable for projects with straightforward requirements, such as small to medium-sized web applications 
 
         + Flask's extensive documentation and large community make it easier to find resources and support when developing the project 
 
@@ -122,50 +122,54 @@
 
     * Its support for data structures and atomic operations enables efficient storage and retrieval of chatbot responses, making it ideal for caching dynamic content and session management in this project
 
-    * Redis's simplicity and ease of use made it the best choice for to the project. It was easy to implement caching, session management, real-time analytics, and pub/sub messaging in their applications.
+    * Redis's simplicity and ease of use made it the best choice for to the project. It was easy to implement caching, session management, real-time analytics, and pub/sub messaging in their applications
 
 - Pros
 
-    * Fast read and write operations, enhancing the responsiveness of the chatbot application
-    * Efficient storage and retrieval of frequently accessed responses, reducing response latency and improving user experience
-    Scalable and highly available, with support for replication and clustering, ensuring the reliability and availability of cached data.
-    Simple and straightforward integration with the chatbot application, with a rich set of commands and APIs for seamless data manipulation.
-    Active community and extensive documentation provide ample resources and support for implementing and optimizing Redis caching in the chatbot application.
-
+    * Fast read and write operations, this speed makes it an ideal choice for caching frequently accessed data, reducing database load, and improving overall application performance
+    * Efficient storage and retrieval of frequently accessed responses. Redis offers the option to persist data to disk, ensuring that cached data is not lost in case of system failures or restarts
+    * Scalable and highly available, with support for replication and clustering, ensuring the reliability and availability of cached data.
+    * Active community and extensive documentation provide ample resources and support for implementation and optimization
+    
 - Cons
 
-    Limited storage capacity compared to disk-based databases, requiring careful management of cached data to avoid exceeding memory limits.
-    Data stored in memory is volatile and can be lost in case of server restart or failure, necessitating periodic persistence to disk for data durability.
-    May require configuration and optimization for optimal performance and scalability in large-scale deployments, especially in high-traffic chatbot applications.
-    Additional effort may be needed for setting up and managing Redis clusters for high availability and fault tolerance, depending on the project's scalability requirements.
-
+    * Limited by memory capacity, requiring careful management of cached data to avoid exceeding memory limits
+    * Data stored in memory is volatile and can be lost in case of server restart or failure
+    * Not suitable for complex queries or transaction handling
 
 ### - Docker
 
 - What is Docker?
 
-Docker is a containerization platform that allows you to package and distribute applications and their dependencies in isolated, lightweight containers. These containers encapsulate everything needed to run the application, including code, runtime, system tools, libraries, and settings, ensuring consistency and portability across different environments.
+    * Docker is a containerization platform that allows you to package and distribute applications and their dependencies in lightweight containers
+    * These containers encapsulate everything needed to run the application, including code, runtime, system tools, libraries, and settings, across different environments
+    * It gets easier to efficiently ship, build and run applications due to docker
 
 - Why is Docker better?
 
-    Docker enables you to encapsulate your chatbot application and its dependencies into a containerized environment, ensuring consistency and reproducibility across different development, testing, and production environments.
-    With Docker, you can easily package your chatbot application, including Flask, Redis, and any other dependencies, into a single container, simplifying deployment and reducing compatibility issues.
-    Docker's containerization technology provides isolation between your chatbot application and the underlying host system, enhancing security and minimizing conflicts with other applications running on the same host.
-    Docker's lightweight and efficient containerization approach minimizes resource overhead, making it suitable for deploying and scaling your chatbot application in resource-constrained environments, such as cloud servers or edge devices.
+    * With Docker, I can simplify deployment and reducing compatibility issues
+    * Minimizes conflicts with other applications running on the same host
+    * Containerization approach minimizes resource overhead, making it suitable for deploying and scaling 
 
 - Pros
 
-    * Docker provides process-level isolation, ensuring that your chatbot application runs independently of other applications on the host system. This isolation enhances security and stability by preventing conflicts and minimizing the impact of changes to the underlying system
-
     * Enables easy deployment and scaling of applications through containerization
+    * Docker containers offer a high level of isolation between applications and their dependencies
+    * Docker provides process-level isolation, ensuring that the application runs independently of other applications on the host system 
+    * Each container runs independently, which means that it will not interfere with other containers on the same machine or server
+    * This isolation enhances security and stability in shared environments, by preventing conflicts and minimizing the impact of changes
+    * Docker Desktop GUI is also easy to use
 
 - Cons
 
-### - Huggingface - DialoGPT-medium
+    * It can be difficult to effectively manage multiple containers at once without orchestration capabilities
+    * Docker’s extensive documentation doesn’t always keep pace with platform updates
+
+### - Huggingface
 
 - What is Huggingface?
 
-    * Hugging Face is a machine learning (ML) and data science platform and community that helps users build, deploy and train machine learning models
+    * Hugging Face is a machine learning (ML) and data science platform and community that helps users build, deploy and train machine learning models - it has over 120k models, 20k datasets, and 50k demos in which people can easily collaborate
 
     * Hugging Face is known for its Transformers Python library, which simplifies the process of downloading and training ML models
     
@@ -173,14 +177,34 @@ Docker is a containerization platform that allows you to package and distribute 
 
 - Why Huggingface and DialoGPT-medium model?
 
+    * OpenAI models, like GPT-3 could have been better, but they come with certain limitations, such as API rate limits and potential costs associated with usage
+    
+    * GPT-2 form Huggingface was another option - but it may struggle with maintaining context over longer conversations or in complex dialogue scenarios. GPT-2 has fewer parameters compared to larger models like GPT-3 or DialoGPT
+
+    * DialoGPT-medium on the other hand is specifically designed and fine-tuned for conversational dialogue
+    
     * Unlike GPT-2, which trains on general text data, DialoGPT draws on 147M multi-turn dialogues extracted from Reddit discussion threads
 
-    * Why no openai 
+    * It has the ability to maintain context over longer conversations and understand the nuances of human dialogue
 
 - Pros of Huggingface Transformers
 
+    * Hugging Face Transformers library offers a wide range of pre-trained models for various NLP tasks, including text classification, text generation, question answering, and more
+    * The Transformers library is open-source, which means it's free to use and modify
+    * Hugging Face has a large and active community of developers and researchers
+
 - Cons of Higgingface Transformers
 
+    * While powerful, a LLM like DialoGPT-medium might be more complex than necessary, it has a slower response times and higher resource usage compared to other simpler NLP models
+    * Like any machine learning model, transformer-based models can exhibit biases present in the training data and may produce outputs that reflect these biases
+
+### - What we studied in class
+
+- In our Big Data Systems class, we learned about the importance of selecting the right tools and technologies for developing scalable and efficient applications
+- Flask, Redis, Docker, and Hugging Face Transformers are all examples of technologies that we have studied and utilized in our project
+- Hugging Face Transformers aligns with our study of pre-trained machine learning models, particularly for Natural Language Processing (NLP) tasks
+- Redis corresponds to our exploration of in-memory data stores for efficient caching and data retrieval
+- Docker ties back to our discussions on containerization, a critical approach for scalable and portable deployments 
 
 ## Docker implementation
 
@@ -263,7 +287,7 @@ services:
 
 - **Redis Container**: This container runs the Redis server, providing caching functionality for the chatbot responses.
 
-<img src="images/image.png" />
+<img src="images/image.png" width="900" height="140" style="display: block; margin-left: auto; margin-right: auto;" />
 
 ### How do the containers communicate?
 
@@ -293,13 +317,19 @@ services:
 
 - Once the containers are built, open a web browser and enter `localhost:8000` or `https://127.0.0.1:8000` in the address bar.
 
-    <img src="images/container.png" />
+    <img src="images/container.png" width="600" height="310" style="display: block; margin-left: auto; margin-right: auto;"/>
 
 - You can now interact with the chatbot by typing in the message box.
 
 - Navigate back to Docker Desktop to view the built containers `chatbot-redis-1` and `chatbot-web-1`. It should ideally look like this:
 
-    <img src="images/image.png" />
+    <img src="images/image.png" width="900" height="140" style="display: block; margin-left: auto; margin-right: auto;"/>
+
+
+- To stop the containers, simple press `CLT+C` to stop the containers in terminal or use command 
+    ```bash
+    docker-compose down
+    ```
 
 - Open another terminal window and run the following command to access the Redis CLI within the `chatbot-redis-1` container 
     ```bash
@@ -309,20 +339,25 @@ services:
     ```bash
     KEYS *
     ```
+- Type `exit` to come out of the Redis CLI
 
 ### Output screenshots
 
 - Shown below is the output screenshot at `localhost:8000` or `https://127.0.0.1:8000`
 
-    <img src="images/chatbot.png" />
+    <img src="images/chatbot.png" width="600" height="450" style="display: block; margin-left: auto; margin-right: auto;"/>
+
+
 
 - You can chat with the chatbot and get a dynamic and personalized response
 
-    <img src="images/Chat.png" />
+    <img src="images/Chat.png" width="600" height="450" style="display: block; margin-left: auto; margin-right: auto;"/>
+
+
 
 - The image below shows the Redis CLI, where you can inspect the cache data
 
-    <img src="images/redis-cli.png" />
+    <img src="images/redis-cli.png" width="500" height="310" style="display: block; margin-left: auto; margin-right: auto;"/>
 
 ## Dive deep into the code
 
@@ -427,7 +462,7 @@ Exploring `app.py` file:
             return response
     ```
 
-    * This method handles POST requests to the "/get" URL
+    * This method handles `POST` requests to the `"/get"` URL
 
     * When a user submits a message through the frontend interface, Flask invokes the `chat()` function. This function acts as the middleware between the user interface and the chatbot model
     
@@ -482,9 +517,13 @@ Exploring `app.py` file:
 
 - DialoGPT-medium is pre-trained on a large corpus of conversational data using unsupervised learning
 
-- During pre-training, the model learns to predict the next word in a sequence of conversation based on the context provided by the preceding words. This enables the model to capture conversational patterns, context, and semantics from the training data, enabling it to generate contextually relevant responses 
+- During pre-training, the model learns to predict the next word in a sequence of conversation based on the context provided by the preceding words
 
-- When presented with a prompt or message, DialoGPT-medium generates a response by predicting the next sequence of words that are most likely to follow based on the context provided by the input. It utilizes the learned patterns and associations from the pre-training and fine-tuning stages to generate coherent and contextually relevant responses
+- This enables the model to capture conversational patterns, context, and semantics from the training data, enabling it to generate contextually relevant responses 
+
+- When presented with a prompt or message, DialoGPT-medium generates a response by predicting the next sequence of words that are most likely to follow based on the context provided by the input
+
+- It utilizes the learned patterns and associations from the pre-training and fine-tuning stages to generate coherent and contextually relevant responses
 
 - Through a sampling strategy, it generates responses by predicting the next sequence of words based on the provided context
 
@@ -495,11 +534,11 @@ Exploring `app.py` file:
 ```mermaid
 sequenceDiagram;
     participant User;
-    participant FlaskApp;
-    participant Redis;
-    participant NLPModel;
     participant Browser;
-
+    participant FlaskApp;
+    participant NLPModel;
+    participant Redis;
+    
     User->>Browser: Interact with Chatbot;
     Browser->>FlaskApp: Input message;
     FlaskApp->>NLPModel: Tokenize and encode input;
@@ -515,4 +554,17 @@ sequenceDiagram;
 - Flask Documentation: https://flask.palletsprojects.com/
 - Redis Documentation: https://redis.io/documentation
 - Hugging Face Transformers Documentation: https://huggingface.co/transformers/
+- Dialogpt Documentation: https://huggingface.co/docs/transformers/en/model_doc/dialogpt
+- Tutorials: 
+
+    * https://www.youtube.com/watch?v=70H_7C0kMbI&ab_channel=Binaryhood
+
+    * https://github.com/RedisAI/ChatBotDemo/tree/master
+
+    * https://www.youtube.com/watch?v=4vWAMMFjwd0&ab_channel=CodingwithRaphaelDeLio
+
+- Git Documentation: https://git-scm.com/docs/git
+
+- Docker Documentation: https://readthedocs.org/projects/docker-sean/downloads/pdf/latest/
+
 
