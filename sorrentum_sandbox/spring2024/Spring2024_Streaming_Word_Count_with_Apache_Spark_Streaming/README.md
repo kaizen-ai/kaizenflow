@@ -1,4 +1,4 @@
-#### Streaming Word Count with Apache Spark Streaming
+## Streaming Word Count with Apache Spark Streaming
 
 ### Author Info
 Author: Meghana Kolanu
@@ -9,16 +9,20 @@ UMD email: mkolanu@umd.edu
 In this project, we leverage Apache Spark Streaming, a real-time processing framework, to implement a streaming word count application. The application processes continuous streams of text data, conducts word count aggregation within micro-batch intervals, and visualizes real-time insights. Apache Spark Streaming offers scalability, fault-tolerance, and integration with the Apache Spark system, making it an ideal choice for processing large-scale data streams in real-time. 
 
 ### Technology Used: Apache Spark Streaming
-Apache Spark Streaming represents a groundbreaking innovation in the domain of real-time data processing, fundamentally altering the landscape by extending the core Apache Spark API to facilitate scalable, fault-tolerant stream processing of live data streams. Traditional batch processing frameworks, with their emphasis on static datasets, are overshadowed by the dynamic capabilities of Apache Spark Streaming, which empowers organizations to engage in real-time processing and analysis with minimal latency. The standout features of this technology, which include robust scalability, fault tolerance mechanisms, and seamless integration capabilities, herald a paradigm shift in the approach to data streaming and utilization.
+Apache Spark Streaming represents a prominent foundation in the domain of real-time data processing, fundamentally altering the landscape by extending the core Apache Spark API to facilitate scalable, fault-tolerant stream processing of live data streams. Traditional batch processing frameworks, with their emphasis on static datasets, are overshadowed by the dynamic capabilities of Apache Spark Streaming, which empowers organizations to engage in real-time processing and analysis with minimal latency. The standout features of this technology, which include robust scalability, fault tolerance mechanisms, and seamless integration capabilities, indicate a model shift in the approach to data streaming and utilization.
 
 At its core, Apache Spark Streaming derives its exceptional scalability from tapping into the innate scalability of Apache Spark. This capability enables distributed processing of large-scale data streams across multiple nodes, ensuring that organizations can effectively navigate escalating data volumes and processing demands without compromising performance or reliability. The fault tolerance mechanisms embedded within Apache Spark Streaming, such as lineage information and resilient distributed datasets (RDDs), serve as steadfast safeguards against disruptions, ensuring the consistent processing of data streams even in the face of failures or network disturbances.
 
 Furthermore, the seamless integration of Apache Spark Streaming with other components of the Apache Spark ecosystem, including Spark SQL, MLlib, and GraphX, amplifies its appeal and utility. This integration fosters the development of comprehensive stream processing pipelines encompassing a diverse array of data processing and analytics functionalities. By leveraging these integrated components, Apache Spark Streaming furnishes organizations with a unified platform for real-time data processing and analysis, streamlining both the development and deployment processes.
 
-Nevertheless, amidst its array of benefits, Apache Spark Streaming presents certain challenges. Among these is the inherent complexity associated with setting up and managing a Spark cluster tailored for streaming processing. This complexity manifests in the meticulous configuration and optimization of cluster resources, navigation of dependencies, and adept management of infrastructure requirements. Additionally, achieving proficiency in Apache Spark Streaming necessitates a deep understanding of distributed computing concepts and adept navigation of Spark's programming model, thereby presenting a formidable learning curve for developers.
+Nevertheless, Apache Spark Streaming presents certain challenges as well. Among these is the inherent complexity associated with setting up and managing a Spark cluster tailored for streaming processing. This complexity manifests in the meticulous configuration and optimization of cluster resources, navigation of dependencies, and adept management of infrastructure requirements. Additionally, achieving proficiency in Apache Spark Streaming necessitates a deep understanding of distributed computing concepts and adept navigation of Spark's programming model, thereby presenting a learning curve for developers.
 
 From an educational standpoint in relation to the class material, Apache Spark Streaming serves as a channel for deeper exploration into distributed computing and stream processing, embodying the principles and techniques explained in academic curriculum. It serves as a practical phenomenon of real-time data processing pipelines, providing students with invaluable insights into scalable, fault-tolerant stream processing methodologies and equipping them with the requisite skills to conceive, develop, and deploy real-time analytics applications in distributed environments.
-Source: Apache Spark Streaming Documentation
+
+References:
+1. *Spark Streaming Programming Guide- Spark 3.5.1 Documentation.* Available at https://spark.apache.org/docs/latest/streaming-programming-guide.html
+2. *Apache spark- Streaming- Word Count hands on CloudXLab.* Available at https://cloudxlab.com/assessment/displayslide/458/apache-spark-streaming-wordcount-hands-on
+
 
 ### Docker System Architecture**
 **Dockerfile**	
@@ -33,10 +37,10 @@ The Dockerfile meticulously configures environment variables essential for seaml
 
 The subsequent directives utilize pip to install Python dependencies crucial for executing the Python script and interfacing with Spark. This includes upgrading pip to the latest version to ensure compatibility and subsequently installing pyspark, numpy, matplotlib, and notebook. These dependencies encompass the necessary Spark bindings, numerical computing capabilities, and visualization libraries, equipping the Dockerized environment with the requisite tools for executing the streaming word count Python script seamlessly.
 
-The Dockerfile concludes with the setup of Jupyter Notebook configuration to facilitate interactive computing and visualization. This involves generating the Jupyter configuration file using jupyter notebook --generate-config and appending a configuration parameter to disable token authentication, thereby simplifying access. By configuring Jupyter in this manner, the Dockerized environment becomes conducive to interactive experimentation and exploration, fostering a collaborative and iterative workflow.Lastly, the Dockerfile exposes port 8888, the default port used by Jupyter Notebook, to enable external access. Additionally, the final CMD directive specifies the command to be executed upon container startup. In this case, it initiates the execution of Jupyter Notebook with specific parameters (--ip, --no-browser, --allow-root) to enable remote access and disable browser auto-launch. This command effectively kickstarts the Jupyter Notebook server, enabling users to interact with the Python script and perform streaming word count operations via a web interface.
+The Dockerfile concludes with the setup of Jupyter Notebook configuration to facilitate interactive computing and visualization. This involves generating the Jupyter configuration file using jupyter notebook --generate-config and appending a configuration parameter to disable token authentication, thereby simplifying access. By configuring Jupyter in this manner, the Dockerized environment becomes conducive to interactive experimentation and exploration, fostering a collaborative and iterative workflow. Lastly, the Dockerfile exposes port 8888, the default port used by Jupyter Notebook, to enable external access. Additionally, the final CMD directive specifies the command to be executed upon container startup. In this case, it initiates the execution of Jupyter Notebook with specific parameters (--ip, --no-browser, --allow-root) to enable remote access and disable browser auto-launch. This command effectively kickstarts the Jupyter Notebook server, enabling users to interact with the Python script and perform streaming word count operations via a web interface.
     
 **Docker-compose.yml**
-Meanwhile, the docker-compose.yml file choreographs the deployment of the Docker container, harmonizing the orchestration of resources for Python script execution. Here, the service definition delineates a singular service, aptly named pyspark_app, corresponding to the Docker image crafted from the Dockerfile. The build configuration section orchestrates the build process, defining the build context and the Dockerfile to wield for image construction. Volume mounting emerges as a pivotal feature, facilitating the live updates of the Python script directory from the host machine to the /app directory within the container, obviating the need for image rebuilding and expediting development and debugging endeavors. Environment configuration ensures harmonious Python 3 compatibility by setting the PYSPARK_PYTHON environment variable. Finally, the command configuration section prescribes the command to trigger the execution of the Python script upon container initiation, thus igniting the streaming word count process with Apache Spark Streaming.
+Meanwhile, the docker-compose.yml file choreographs the deployment of the Docker container, harmonizing the orchestration of resources for Python script execution. Here, the service definition delineates a singular service, aptly named pyspark_app, corresponding to the Docker image crafted from the Dockerfile. The build configuration section orchestrates the build process, defining the build context and the Dockerfile to use for image construction. Volume mounting emerges as a pivotal feature, facilitating the live updates of the Python script directory from the host machine to the /app directory within the container, obviating the need for image rebuilding and expediting development and debugging endeavors. Environment configuration ensures Python 3 compatibility by setting the PYSPARK_PYTHON environment variable. Finally, the command configuration section prescribes the command to trigger the execution of the Python script upon container initiation, thus igniting the streaming word count process with Apache Spark Streaming.
 
 **Container Communication**
 In this setup, only one container (‘pyspark_app’) is involved. The container executes the Python script using Apache Spark Streaming to perform streaming word count. There is no explicit communication between containers since all the required functionality is within a single container. 
@@ -45,11 +49,24 @@ In this setup, only one container (‘pyspark_app’) is involved. The container
 The slim version of the official Python runtime image was chosen to minimize the image size and resource footprint, enhancing efficiency and portability. Apache Spark is downloaded and installed within the container to provide the necessary runtime environment for executing Spark jobs seamlessly. Also, by mounting the script directly as a volume allowed live code updates without the need for rebuilding the Docker image, establishing rapid development and debugging. Finally, setting the environment variable ‘PYSPARK_PYTHON’ ensured compatibility with Python 3, which is necessary for executing the Python script. 
 
 **Run the System**
+
 To run the system, you first need to build a Docker image containing the necessary dependencies and configuration. This is achieved using the docker build command. Upon executing docker build -t my-pyspark-app ., Docker begins the build process defined in the Dockerfile located in the current directory (.). The output provides a step-by-step log of each action taken during the build, including downloading dependencies, installing packages, and configuring the environment. Once the build completes successfully, Docker creates the image named my-pyspark-app.
 
-Next, you start a Docker container using the built image with the docker run command. By specifying -p 8888:8888, you map port 8888 on the host to port 8888 in the container, allowing access to the Jupyter Notebook server running inside the container. As the container starts, Jupyter Notebook server extensions and configurations are initialized, and the server starts running. The output displays information about the running Jupyter server, including the URL where it is accessible.
+Next, you start a Docker container using the built image with the docker run command: docker compose up. 
+
+By specifying -p 8888:8888, you map port 8888 on the host to port 8888 in the container, allowing access to the Jupyter Notebook server running inside the container. As the container starts, Jupyter Notebook server extensions and configurations are initialized, and the server starts running. The output displays information about the running Jupyter server, including the URL where it is accessible. docker run -p 8888:8888 my-pyspark-app
 
 To access the Jupyter Notebook server, you can use the provided URL (http://localhost:8888/?token=<token>) in a web browser. This URL allows you to interact with the Jupyter Notebook interface and execute the Python code for streaming word count with Apache Spark Streaming.
+jupyter server list
+Currently running servers:
+http://localhost:8888/?token=f00f86ffa25501992974d7ece829fead05023d3c4f5b90d5 :: 
+http://localhost:8890/ :: 
+
+Copy the files into the docker container: 
+docker cp /Users/meghanakolanu/src/sorrentum1/sorrentum_sandbox/projects/Spring2024_Streaming_Word_Count_with_Apache_Spark_Streaming/. 574596761e9104f9702fdc1d2654dbccba0a0b1d96d73763d2158dc638a91331:/app
+
+Execute the container: 
+docker exec -it 574596761e9104f9702fdc1d2654dbccba0a0b1d96d73763d2158dc638a91331 bash
 
 If you need to stop and restart the container later, you can use the docker stop and docker start commands, respectively, followed by the container ID or name. Additionally, you can list all running containers using docker ps, which provides information such as the container ID, image used, command running inside the container, and port mappings.
 
@@ -78,7 +95,7 @@ Finally, it starts the streaming process (ssc.start()) and waits for it to finis
 
 Example Output:
 The script outputs the top 10 words in the Billboard song lyrics dataset, along with their respective counts, in near real-time.
-It visualizes the word counts using a bar plot, providing a clear representation of the most common words.
+It visualizes the word counts using a bar plot, providing a clear representation of the most common words. In addition, it prints out the results including total word count, average word length, most common word, its count, and the number of unique words and shows the visualization. 
 
 **Database Scheme**
 The database schema employed by the application offers a structured framework for organizing song-related data, facilitating efficient storage and retrieval of information. It encompasses essential fields such as "Rank," denoting a song's position in the Billboard chart, providing a metric for popularity. "Song" serves as a repository for song titles, enabling easy identification and reference. "Artist" stores the names of musicians or bands responsible for performing the songs, ensuring proper attribution and categorization. "Year" captures the release year of each song, aiding in chronological analysis and historical context. The "Lyrics" field holds the textual content of the songs, allowing for textual analysis and sentiment assessment. Lastly, the "Source" field indicates the origin of the lyrics, providing insights into data provenance and quality. Together, these schema components form a cohesive framework that supports comprehensive song data management and analysis within the application.
@@ -93,6 +110,7 @@ The mock database follows a simple JSON structure:
     "Lyrics": "Sam the Sham miscellaneous Wooly Bullywooly"
   }
 }
+
 
 ### Project Diagram
 [Link](https://mermaid.live/view#pako:eNplkU1ugzAQha9iedVKyQVYVGogJCRdVIWmC8hiBJPECtjIjPsTxN1rjJU2rTf2vO_N-Fnueakq5AE_1OqjPIEmlkWFZHY95hEQsFQZXWLAwnTHYlHjns3nD2xxl7agzyl2nVCSJVKQgFpcgGx5Pw1YOGfYZ-qMUlxQD5MeOj3KU1Ltm9JVx16wUe9Q7yceOb7MR8ZCZSR5sHQgzneiM9fLPIsdW9mhGqER8mg7JeEn_cnm7StnX1v7-ORrk6drR5P8WavSvtBzDxMHN__jbRzY3sZjr20FhN6ynQb7Yjw__Uqcobb7T0w-442VQFT2g_pRKTidsMGCB_ZY4QFMTQUv5GCtYEilX7LkAWmDM27cxZGAo4ZmEodvvxOd_g)
