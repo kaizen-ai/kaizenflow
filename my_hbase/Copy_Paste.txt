@@ -1,0 +1,2 @@
+Copy and paste material for the Hbase set up
+
