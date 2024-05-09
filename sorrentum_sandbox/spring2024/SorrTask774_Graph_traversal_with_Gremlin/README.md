@@ -3,12 +3,15 @@ Rick Powell - DATA 605
 
 **Project Description:** Begin by installing Apache TinkerPop's Gremlin Python library (gremlinpython). Next, create a sample graph structure using Gremlin's graph traversal API. Define vertices and edges, and establish connections between them to form a graph. Then, use Gremlin queries to traverse the graph, retrieving vertices, edges, and their properties. Experiment with various traversal strategies and filtering techniques to explore different aspects of the graph.
 
-**Files Contained**
+**Files Contained:**
 * [gremlin.py](./gremlin.py): Python file to connect to Gremlin server and run basic graph functions and traversals.
 * [dockerfile](./dockerfile): Dockerfile to set up container and run python file
 * [docker-compose.yml](./docker-compose.yml): Docker-compose to create Gremlin server and run Gremlin python code
 * [requirements.txt](./requirements.txt): Required packages to run my dockerfile
 * [wait-for-it.sh](./wait-for-it.sh): File to ensure gremlin python file runs after gremlin-server is created. From: https://github.com/vishnubob/wait-for-it
+
+## Video Demo:
+Here is a link to a video demonstration of this project: [Graph Traversal with Gremlin](https://www.youtube.com/watch?v=AAoiSMdADtA).
 
 ## Technology Used:
 ![Gremlin Logo](./images/gremlin.png) 
