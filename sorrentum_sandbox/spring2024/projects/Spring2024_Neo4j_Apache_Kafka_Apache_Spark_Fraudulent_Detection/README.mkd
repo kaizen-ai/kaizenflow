@@ -242,3 +242,6 @@ sequenceDiagram
    Neo4j Database-->>Cypher Queries: Return results
    Cypher Queries-->>User: Pass results
 ```
+
+## Project Recording:
+The recording is too large to upload to git so please watch here: [Recording](https://drive.google.com/file/d/1wAz-R-HBITVRbsVKRaiStuKkC2u45piv/view?usp=sharing)
