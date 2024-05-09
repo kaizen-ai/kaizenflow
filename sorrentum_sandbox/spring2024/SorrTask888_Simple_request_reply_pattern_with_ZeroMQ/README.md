@@ -157,12 +157,25 @@ sorrtask888_simple_request_reply_pattern_with_zeromq_client_1 exited with code 0
 ### Dockerfiles:
 - Dockerfile_server and Dockerfile_client:
   
-    -This Dockerfile defines the environment and instructions for building the server/client container
-    
-    -It starts with the Python 3 base image to provide the necessary runtime environment.
-  
-    -Copies the server/client.py file into the container's filesystem.
-  
-    -Installs the pyzmq library using pip to enable ZeroMQ functionality.
-  
-    -Sets the command to execute when the container starts, which is to run the server/client.py script.
+    - This Dockerfile defines the environment and instructions for building the server/client container.
+    - It starts with the Python 3 base image to provide the necessary runtime environment.
+    - Copies the server/client.py file into the container's filesystem.
+    - Installs the pyzmq library using pip to enable ZeroMQ functionality.  
+    - Sets the command to execute when the container starts, which is to run the server/client.py script.
+
+- docker-compose.yaml:
+
+    - It specifies three services: server, client, and nginx.
+    - Each service is built using its respective Dockerfile (Dockerfile_server, Dockerfile_client, and Dockerfile_nginx).
+    - The server service is connected to the zmq_network bridge network, ensuring communication with other services.
+    - The client service depends on the server service, ensuring that the server is started before the client.
+    - The nginx service is configured to listen on port 80 and forward requests to the backend servers.
+    - All services are connected to the zmq_network bridge network for communication between containers.
+
+- NGINX Dockerfile :
+
+    - This Dockerfile specifies the NGINX configuration for the load balancer.
+    - It uses the official NGINX base image.
+    - Copies the nginx.conf file from the local filesystem to the NGINX configuration directory within the container.
+ 
+### Python Scripts:
