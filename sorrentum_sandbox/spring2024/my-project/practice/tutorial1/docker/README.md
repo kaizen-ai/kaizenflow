@@ -61,7 +61,7 @@ This is a Python-based project that leverages RabbitMQ, a robust messaging syste
 - Key concepts:
     - Containers: Containers allow a user to package up an application with all of the parts it needs, such as libraries and other dependencies, and ship it all out as one package. They are isolated from each other and the host system.
     - Images: Docker images are lightweight, standalone, executable packages that include everything needed to run a software application: code, runtime, system tools, system libraries, and settings. 
-    - Dockerfile: A Docker file is a text document that contains all the commands a user could call on the command line to assemble an image. Using 'docker build', users can create an automated build that executes several command-line instructions in succession.
+    - Dockerfile: A Docker file is a text document that contains all the commands a user could call on the command line to assemble an image. Using `docker build`, users can create an automated build that executes several command-line instructions in succession.
     - Docker Compose: Docker Compose is a tool for defining an running multi-container Docker applications. With Compose, a use uses a YAML file to configure application's services, networks, and volumes, and then create and start all the services from your configuration with a single command.
 - With Docker Containers, users can create predictable environments that are isolated from other applications. Docker ensures that software behaves the same way regardless of where it is deployed.
 - Once an application and its dependencies are containerized, the container can be shared among users, and it can run on any system that has Docker installed-regardless of the underlying infrastructure.
