@@ -37,3 +37,38 @@ This project uses Python within a notebook environment to orchestrate time-based
 * Jupyter notebooks also can display various types of output such as interactive visualizations and tables, making it an excellent choice for compiling and sharing research insights.
 * Jupyter is commonly used in data science and machine learning workflows because of its seamless integration with widely used libraries such as NumPy, pandas, Matplotlib, and scikit-learn. These libraries facilitate data manipulation, analysis, and modeling within Jupyter.
 * A jupyter notebook is used as the IDE for this project as it provides functionality to write code, use Markdown, and output visualizations all in the same place.
+
+## Docker Implementation
+* Using Docker for this project significantly simplies the development and deployment process.
+
+* Working Directory:
+  * The folder titled dev_environment within my repository contains all the files needed for the project. It includes:
+    * spark_app.ipynb: Jupyter notebook where the code for the application is contained
+    * Dockerfile: text document which contains all the steps needed to create a Docker image
+    * docker-compose.yml: file used to define multi-container Docker application
+* Dockerfile Structure:
+  * Uses a FROM instruction to specify jupyter/pyspark-notebook:latest as the base image. This image is preconfigured for Pyspark and simplifies the Pyspark installation process.
+  * Sets the working directory to /app
+  * Uses a COPY instruction to copy the contents of the current directory into the /app directory
+  * Installs additional Python packages
+  * Uses a EXPOSE instruction to expose port 888, which is the port Jupyter Notebook runs on
+  * Uses a CMD instruction to start a Jupyter Notebook inside the container
+* docker-compose.yml Structure:
+  * Specifies version 3 as the Docker Compose syntax version
+  * Sefines spark-app as the service to be run
+  * Specifies that the service should be built using the Dockerfile located in the current directory through the use of '.'
+  * Maps port 8888 on the host machine to port 8888 in the container
+  * Mounts the current directory as a volume inside the container at /app
+    * Enables sharing of files between the host and the container
+    * Ensures any changes made to files in the current directory are reflected inside the container
+* To build the Docker Image:
+  * Run command: docker build -t temp-spark .
+  * The image is tagged with name 'temp-spark' and is built from a Dockerfile in the current directory
+* To run the Docker Containers
+  * Run command: docker-compose up
+  * Creates a container that will run Jupyter Notebook and Spark
+* To launch the Jupyter Notebook
+  * Paste in the url provided by the command line interface
+  * It will look similar to http://127.0.0.1:8888/tree?token=<string_of_num_and_letters>
+* To stop and remove the Docker Container
+  * Run command: docker-compose down
