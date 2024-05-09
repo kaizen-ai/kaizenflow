@@ -19,7 +19,7 @@
   * [Docker](#docker)
   * [Huggingface - DialoGPT-medium model](#huggingface)
 - [Docker implementation](#docker-implementation)
-  * [Dockerfile and compose.yaml code](#dockerfile-and-compose.yaml-code)
+  * [Dockerfile and compose.yaml code](#dockerfile-and-composeyaml-code)
   * [Docker file exaplanation](#docker-file-explanation)
     + [Containers involved](#containers-involved)
     + [How do the Containers communicate?](#how-do-the-containers-communicate)
@@ -35,7 +35,7 @@
 
 ## Link to the video explanation
 
-Link: 
+Link: https://drive.google.com/file/d/1MU_h2R_SFE9Pij2diYzNY5NxoQxUeuSO/view?usp=sharing
 
 ## Overview
 
@@ -296,6 +296,8 @@ services:
 - The Flask application running in the web service container communicates with the Redis server container using the standard Redis client-server communication protocol over TCP/IP
 
 - The Flask application sends requests to the Redis server to retrieve cached responses or store new responses, improving performance by reducing the need for repeated computation of responses
+
+<img src="images/flow.png" width="590" height="300" style="display: block; margin-left: auto; margin-right: auto;"/>
 
 ## How to run the project?
 
