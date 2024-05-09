@@ -3,13 +3,13 @@
 <!-- toc -->
 
 - [DATA605 Class Projects](#data605-class-projects)
-  - [Choosing a project](#choosing-a-project)
-  - [Working](#working)
-  - [Pre-requisites](#pre-requisites)
-  - [Project assignment](#project-assignment)
-    - [Documentation](#documentation)
-    - [Submitting project](#submitting-project)
-  - [Examples of a class project](#examples-of-a-class-project)
+  * [Choosing a project](#choosing-a-project)
+  * [Working](#working)
+  * [Pre-requisites](#pre-requisites)
+  * [Project assignment](#project-assignment)
+    + [Documentation](#documentation)
+    + [Submitting project](#submitting-project)
+  * [Example of a class project](#example-of-a-class-project)
 
 <!-- tocstop -->
 
