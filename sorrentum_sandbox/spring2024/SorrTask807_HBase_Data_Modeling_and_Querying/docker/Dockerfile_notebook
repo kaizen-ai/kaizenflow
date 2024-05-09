@@ -9,7 +9,13 @@ RUN conda install --quiet --yes 'happybase' && \
     conda clean -afy
 
 # Copy the notebook files into the container
-COPY . /home/jovyan/work
+COPY . /home/jovyan/work/
+
+# Set the working directory to /home/jovyan/work
+WORKDIR /home/jovyan/work
 
 # Expose the port the notebook runs on
 EXPOSE 8888
+
+# Change ownership of the files
+RUN chown -R jovyan:users /home/jovyan/work

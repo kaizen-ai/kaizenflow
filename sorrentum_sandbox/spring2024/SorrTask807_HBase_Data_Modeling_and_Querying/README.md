@@ -12,25 +12,25 @@ The project focuses on using the HBase database in a containerized environment w
 
 ### HBase
 
-- HBase is a columnar, NoSQL database where data is stored in columns rather than rows, as seen in relational databases. 
-- One characteristic of a columnar database is that it shares similarities with both key-value and relational databases.
-- Keys are used to query values like key value stores.
-- Values are groups of zero or more columns like relational stores.
-- The pros of a columnar store include excellent horizontal scalability, the ability to have sparse tables without extra storage costs, and the inexpensive addition of columns. 
-- The cons include the necessity to design schemas based on anticipated query patterns and the lack of native joins, requiring applications to handle joins themselves. 
-- In the CAP Taxonomy, the columnar store behaves as a CP (Consistent, Partition-Tolerant) system, which struggles with availability while maintaining data consistency across partitioned nodes. 
-- The python scripts will be used to perform CRUD operations on HBase columnar store. 
-- Demonstrate how the columnar store may be modeled using the column family and denormalzation as a NoSQL database.
+- HBase is a columnar, NoSQL database where data is stored in columns rather than rows, unlike relational databases.
+- A distinctive characteristic of a columnar database is its similarities with both key-value and relational databases:
+	- Keys are used to query values similar to key-value stores.
+	- Values are grouped into zero or more columns akin to relational stores.
+- The advantages of a columnar store include excellent horizontal scalability, the ability to manage sparse tables without extra storage costs, and the inexpensive addition of columns.
+- The disadvantages involve the need to design schemas based on anticipated query patterns and the absence of native joins, which requires applications to handle joins themselves.
+- In the CAP Taxonomy, the columnar store functions as a CP (Consistent, Partition-Tolerant) system, facing challenges with availability while maintaining data consistency across partitioned nodes.
+- Python scripts will be utilized to perform CRUD (Create, Read, Update, Delete) operations on the HBase columnar store.
+- The demonstration will show how the columnar store may be modeled using the column family approach and denormalization in a NoSQL database context
 
 *source: DATA605 5.1-NoSQL lecture*
 
 ### Docker
-- Containertaization technique that develops and run individual applications in each container.
-- Fast and Portable
-- Does not require full Operating System like virtual machines which reduces OS licencing cost, including, overhead of OS patchning and maintenance.
-- All containers run on a single host for single maintenance.
-- The cons are high CPU overhead and many toolchain to learn and master.
-- Docker container and images setups the environment needed to run the required applications, in this case jupyter notebook and HBase database, improving the usability and portability.
+- Containerization technique that develops and runs individual applications in each container.
+- Fast and portable.
+- Does not require a full operating system like virtual machines, which reduces OS licensing costs, including overhead from OS patching and maintenance.
+- All containers run on a single host for simplified maintenance.
+- The cons include high CPU overhead and a variety of toolchains to learn and master.
+- Docker containers and images set up the environment needed to run the required applications, in this case, Jupyter Notebook and HBase database, improving usability and portability.
 
 *source: DATA605 3-Docker DevOps lecture*
 
@@ -38,22 +38,41 @@ The project focuses on using the HBase database in a containerized environment w
 
 - **Project files:**
 	- <mark>docker-compose.yml</mark>: Composes the two services, jupyter notebook and HBase with network and volume setup for the containers.
-	- <mark>Dockerfile</mark>: Instruction for building a docker jupyter notebook image.
+	- <mark>Dockerfile_hbase</mark>: Instruction for building a docker hbase image.
+	- <mark>Dockerfile_notebook</mark>: Instruction for building a docker jupyter notebook image.
 	- <mark>hbase.ipynb</mark>: Query and Modeling Interaction with HBase using jupyter notebook.
+	- <mark>config</mark>: Credit goes to dajobe/hbase image. Had trouble with persistent data configuration using the container when pulling the image. Decided to clone the required files from git for building HBase.
+		- hbase-site.xml
+		- zoo.cfg
+		- hbase-server: configurates the environment and starts HBase.
 
-- **Dockerfile content:**
+- **Dockerfile_notebook content:**
 	- It starts with quay.io/jupyter/base-notebook as the base image, which includes Jupyter Notebook and a minimal Conda installation. This choice simplifies setup and ensures that Jupyter and Conda are ready to use.
 	- The Dockerfile switches to the root user to perform installations that require administrative privileges. This is necessary for steps that go beyond the permissions of the default jovyan user.
 	- It installs the happybase package using Conda. This package is specifically for interacting with Apache HBase. The installation commands are run quietly and confirmations are auto-approved for efficiency. Post-installation, it cleans up Conda caches to reduce the image size.
 	- The Dockerfile copies the current directory (presumably containing notebook files and other necessary project files) into /home/jovyan/work in the container. This makes these files available within the Jupyter environment.
+	- Sets the working directory to the specified path.
 	- It exposes port 8888, which is the standard port for Jupyter Notebook servers. This is a documentation practice that indicates which port the container is expected to listen on.
-	- It switches back to the non-root jovyan user. This is a security practice to ensure that the Jupyter server runs with limited permissions, reducing risks associated with running processes as root.
+	- Changes the ownership of the files, as the Jupyter Notebook is usually run by the jovyan user
+
+- **Dockerfile_hbase content:**
+	- The Dockerfile starts by specifying openjdk:8-jdk as the base image, which provides the Java 8 development kit necessary for running Java applications like HBase.
+	- It labels the Docker image with the maintainer's contact information (dave@dajobe.org), which is useful for identification and support. Also to give credit to the maintainer.
+	- Sets environment variables to configure the HBase installation.
+	- Sets the working directory to the HBase home directory (HBASE_HOME).
+	- Sets the working directory to the path specified.
+	- Install dependencies and HBase.
+	- Copies HBase configuration files (hbase-site.xml and zoo.cfg) into the container's HBase configuration directory. 
+	- Copies a custom script (hbase-server) to start the HBase server into the container
+	- Makes the hbase-server script executable, which is necessary for starting the HBase server.
+	- Defines the command to start the HBase server using the hbase-server script when the container is run.
 
 - **docker-compose.yml content:**
 	 - Configuration is a Docker Compose file that orchestrates two services, hbase and notebook, facilitating their deployment and interaction within a Docker-managed network environment.
 	 - HBase Service:
-		- Uses dajobe/hbase, a Docker image for Apache HBase, which is a distributed, scalable, big data store.
-		- Container Name and Hostname both are set to hbase-docker, providing a consistent naming scheme that simplifies internal network references.
+		- Specifies the directory (.) and Dockerfile (Dockerfile_hbase) to build the HBase Docker image
+		- Defines the Docker image name as hbase-image:latest and sets the container name to hbase-docker.
+		-  Assigns hbase-docker as the hostname within the network.
 		- Ports:
 			- 2181: ZooKeeper, used for managing the distributed configuration and providing distributed synchronization.
 			- 8080: HBase REST API, allowing HTTP-based interactions with HBase.
@@ -61,14 +80,15 @@ The project focuses on using the HBase database in a containerized environment w
 			- 9090: HBase Thrift API, offering a service for programming languages to interact with HBase.
 			- 9095: Thrift Web UI, a user interface for the Thrift API.
 			- 16010: Master UI, the web UI for HBase's master server.
-		- Maps ./data on the host to /data in the container, providing persistent storage for HBase data.
-		- Connects to a custom network named app-network, facilitating isolated communication between configured services.
+		- Mounts a named volume (hbase-data) at /data in the container for persistent data storage.
+		- Connects the container to a custom network named app-network.
 		- Uses unless-stopped, meaning the container will restart if it exits for any reason unless it has been manually stopped.
 
 	 - Notebook Service:
 	 	- Specifies the local directory as the context for building the Docker image using a Dockerfile. This allows for the customization of the notebook environment.
-		- Specifies a custom image named "notebook-image:latest" to be built or used directly.
-		- Identified as notebook-server, clearly indicating its purpose.
+		- Uses the current directory (.) and a specific Dockerfile (Dockerfile_notebook) to build the Jupyter Notebook image.
+		- Sets the image as notebook-image:latest and names the container notebook-server.
+		- Runs the container as root (0:0), which is often necessary for certain administrative permissions within the container.
 		- Exposes port 8888, commonly used for Jupyter Notebook servers.
 		- Mounts the current directory to /home/jovyan/work in the container, providing access to necessary files within the notebook server.
 		- Sets HBASE_HOST to hbase-docker, configuring the notebook server to connect to the HBase service using the internal network hostname.
@@ -79,21 +99,23 @@ The project focuses on using the HBase database in a containerized environment w
 	 - Networks:
 	 	-  Configured with a bridge driver, creating a private internal network for the services to communicate. This isolates them from other network traffic, enhancing security and performance.
 
+	- Volumes:
+		- hbase-data: Utilizes a local driver for storing HBase data persistently.
+
 ### Using the Docker Image:
-- <mark> docker compose up --build </mark> Command executes the compose file and build necessary image using the configuration in Dockerfile specified. 
-- <mark> docker compose down </mark> To terminate the containers.
-- <mark> docker compose up </mark> To start/ compose the containers.
-- Once the containers are running, access the Jupyter Notebook <mark> http://localhost:8888 </mark> in the web browser. Enter the work folder and open hbase.ipynb file.
-- Use <mark> Ctrl + C </mark> command to stop the running containers in the terminal.
-- Use <mark> docker compose down </mark> to terminate and remove containers using separate terminal.
+- <mark> docker compose up --build </mark> Command executes the compose file and build necessary image using the configuration in Dockerfile specified. Should be exectued only once for building the images.
+- <mark> docker compose up </mark> To start/ compose the containers again.
+- Once the containers are running, access the Jupyter Notebook <mark> http://localhost:8888 </mark> in the web browser.  Open hbase.ipynb file.
+- <mark> Ctrl + C </mark> Command to stop the running containers in the terminal.
+- <mark> docker compose down </mark> To terminate and remove containers.
 
 ## Python Script
 
-- <mark> http://localhost:8888 </mark> Once accessing the Jupyter Notebook interface using url, navigate to "work" folder to find "hbase.ipynb" file.
-- We will use the python environment to interact with HBase.
-- The interaction is possbile using the happybase python library. The docker compose installed the package thus just need to import happybase.
-- The connection is made using the Thrift API using its port 9090 that was exposed prior in composing the container.
-- The detailed demonstration is shown in python notebook thus reference the notebook for exact implementation.
+- Use the URL <mark>http://localhost:8888</mark> to access the Jupyter Notebook interface. Once there, navigate to find the "hbase.ipynb" file.
+- We will use the Python environment configured in the notebook to interact with HBase.
+- Interaction with HBase is facilitated by the Happybase Python library. The Docker Compose setup has already installed this package, so you simply need to import Happybase in the notebook.
+- The connection to HBase is made using the Thrift API on its exposed port, 9090, which was specified in the Docker Compose file.
+- For precise implementation details, refer to the "hbase.ipynb" notebook. This document contains a step-by-step guide on how to execute operations using Happybase.
 
 **Designing the schema**
 Creating a database for a simple bookstore. We need tables for Books and Authors.

@@ -1,6 +1,9 @@
 services:
   hbase:
-    image: dajobe/hbase
+    build: 
+      context: .
+      dockerfile: Dockerfile_hbase
+    image: hbase-image:latest
     container_name: hbase-docker
     hostname: hbase-docker
     ports:
@@ -9,9 +12,9 @@ services:
       - "8085:8085"   # REST Web UI
       - "9090:9090"   # Thrift API
       - "9095:9095"   # Thrift Web UI
-      - "16010:16010" # Master UI
+      - "16010:16010" # Master UI 
     volumes:
-      - hbase-data:/data
+      - hbase-data:/data       	
     networks:
       - app-network       
     restart: unless-stopped
@@ -19,7 +22,7 @@ services:
   notebook:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile_notebook
     image: notebook-image:latest
     container_name: notebook-server
     user: "0:0" 
@@ -38,7 +41,7 @@ services:
 networks:
   app-network:
     driver: bridge
-    
+
 volumes:
   hbase-data:
     driver: local
