@@ -71,6 +71,10 @@ print("People known by Delta:", result)
 result = g.V().has('name', 'Epsilon').out('knows').toList()
 print("People known by Epsilon:", result)
 
+# Example traversal: Find all people who know Epsilon
+result = g.V().has('name', 'Epsilon').in_('knows').toList()
+print("People who know Epsilon:", result)
+
 # Example traversal: Find all dogs owned by Epsilon
 result = g.V().has('name', 'Epsilon').out('owns').toList()
 print("Dogs owned by Epsilon:", result)
