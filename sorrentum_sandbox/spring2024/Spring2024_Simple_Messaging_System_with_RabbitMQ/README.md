@@ -137,17 +137,17 @@ sequenceDiagram
 ## How to Send Messages and Receive Them
 - Subscribing to messages with a specific topic pattern using a Python script
 ```sh
-❯ python receive_logs_topic.py 'professor.saggese' 
+❯ python receive_logs_topic.py 'professor.*' '*.saggese'
  [*] Waiting for logs. To exit press CTRL+C
 ```
 - Using other terminals and assign other routing keys
 ```sh
-❯ python receive_logs_topic.py 'professor.benjamin' 
+❯ python receive_logs_topic.py 'professor.*' '*.benjamin'
  [*] Waiting for logs. To exit press CTRL+C
 ```
 
 ```sh
-❯ python receive_logs_topic.py 'student.youjin' 
+❯ python receive_logs_topic.py 'student.*' '*.youjin'
  [*] Waiting for logs. To exit press CTRL+C
 ```
 
@@ -158,25 +158,25 @@ sequenceDiagram
 
  - Sending messages to receivers
 ```sh
-❯ python emit_log_topic.py 'professors.' 'hello, thanks for your hard work this semester'
+❯ python emit_log_topic.py 'professor.' 'hello, thanks for your hard work this semester'
  [x] Sent professors.:hello, thanks for your hard work this semester
 ```
 
 - Then the receivers with the matching binding keys receive the message.
 ```sh
-❯ python receive_logs_topic.py 'professor.saggese' 
+❯ python receive_logs_topic.py 'professor.*' '*.saggese'
  [*] Waiting for logs. To exit press CTRL+C
 [x] professors.:b'hello, thanks for your hard work this semester'
 ```
 ```sh
-❯ python receive_logs_topic.py 'professor.benjamin' 
+❯ python receive_logs_topic.py 'professor.*' '*.benjamin'
  [*] Waiting for logs. To exit press CTRL+C
 [x] professors.:b'hello, thanks for your hard work this semester'
 ```
 
 - In this case, the student named Youjin would not get the message because the binding key doesn't match, and the shell remains the same as before the message was sent.
 ```sh
-❯ python receive_logs_topic.py 'student.youjin' 
+❯ python receive_logs_topic.py 'student.*' '*.youjin'
  [*] Waiting for logs. To exit press CTRL+C
 ```
 
