@@ -162,7 +162,20 @@ sequenceDiagram
 
 - Then the receivers with the matching binding keys receive the message.
 ```sh
+❯ python receive_logs_topic.py 'professor.saggese' 
+ [*] Waiting for logs. To exit press CTRL+C
 [x] professors.:b'hello, thanks for your hard work this semester'
+```
+```sh
+❯ python receive_logs_topic.py 'professor.benjamin' 
+ [*] Waiting for logs. To exit press CTRL+C
+[x] professors.:b'hello, thanks for your hard work this semester'
+```
+
+- In this case, the student named Youjin would not get the message because the binding key doesn't match, and the shell remains the same as before the message was sent.
+```sh
+❯ python receive_logs_topic.py 'student.youjin' 
+ [*] Waiting for logs. To exit press CTRL+C
 ```
 
 ## Conclusion
