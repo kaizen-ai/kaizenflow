@@ -178,7 +178,23 @@ sequenceDiagram
  [*] Waiting for logs. To exit press CTRL+C
 ```
 
+- The last terminal with the binding key of '#.#' receives the message as well because # is a wild card and means it matches all the binding keys.
+```sh
+❯ python receive_logs_topic.py '#.#' 
+ [*] Waiting for logs. To exit press CTRL+C
+[x] professors.:b'hello, thanks for your hard work this semester'
+```
+
 ## Conclusion
+This project successfully demonstrates the power and flexibility of RabbitMQ for handling complex messaging and routing scenarios in a distributed application environment. Through the implementation of a topic exchange mechanism, we were able to dynamically route messages based on multiple criteria, showcasing RabbitMQ's capability to support sophisticated messaging patterns beyond simple queuing.
+
+### Reflections
+- The integration of RabbitMQ with Python through the Pika library proved to be a robust combination for building message-oriented middleware. This approach can be adapted for various real-world applications such as event-driven systems, service orchestration, and workload management.
+- Docker and Docker Compose not only streamlined the deployment process but also highlighted the benefits of microservices architecture by allowing each component of our application to be scaled independently.
+
+### Future Directions
+- Integration with More Complex Systems: Future enhancements could include integrating this messaging system with a front-end interface or other third-party services to create a more interactive and user-friendly application.
+- Expanding Message Durability and Persistence: While we touched on message durability, further exploration into persistent messages and long-term storage could be valuable, especially for applications requiring audit logs or historical data analysis.
 
 ## Reference
 - https://www.rabbitmq.com/tutorials/tutorial-five-python
