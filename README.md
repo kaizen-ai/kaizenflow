@@ -2,7 +2,7 @@
 ZooKeeper Integration with Data Mining
 
 ## Overview
-This project integrates ZooKeeper with data mining tasks using Pandas for data analysis. It demonstrates fetching data from ZooKeeper nodes, converting it into Pandas DataFrames, and visualizing results using matplotlib/seaborn libraries.
+This project integrates ZooKeeper with data mining tasks using Pandas for data analysis. It demonstrates fetching data from ZooKeeper nodes, converting it into Pandas DataFrames, and visualizing results using matplotlib/seaborn libraries. 
 
 ## Technologies Used
 - ZooKeeper
@@ -36,6 +36,7 @@ cd kaizenflow
   ```
   docker-compose up --build
   ```
+
 Here's a structured guide to set up and run your project involving ZooKeeper, Pandas, Redis, Jupyter Notebook, and GitHub:
 
 
@@ -88,7 +89,8 @@ cd kaizenflow
 - Access the application via `localhost:PORT` where `PORT` is the port specified in your Docker or environment settings.
 
 ### Additional Configuration
-- Configure additional settings such as API keys and database connections in the `.env` file or directly in your configuration files.
+.enf file:
+GITHUB_PAT=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
 
 ### Installation Steps
 1. **Clone the Repository**:
