@@ -15,15 +15,15 @@ Docker provides a containerized environment for running our project. This provid
 Jupyter Notebooks provide a rich interactive environment for multiple programming languages, Python in the case of this project. It allows for mixed programming and presentation in the same document, allowing explanation, code, and output to all be visualized together easily.
 
 Python's immense library of packages allows for flexible usage in production environments, and in this case provides simple means of communicating with the database through the py2neo package.
-\### Neo4j
+### Neo4j
 Neo4j is a graph database management system (GDBMS) which aims to comply with ACID principles. It is implemented using JAVA and and can be queried using both an HTTP endpoint or through the binary Bolt protocol. Like other GDBMSs, [Neo provides robust and fast structures with numerous advantages over traditional relational databases for data which is hierarchical and/or semi-structured.](https://www.infoq.com/news/2008/06/neo4j/) Neo's HTTP endpoint uses their Cypher declarative query languages, allowing for relatively easy access to databases through a SQL-like language.
 
 Two different Python packages are commonly used for interacting with Neo4j DBs- [the Neo4j created "Neo4j" and the community built "py2neo". Recently, py2neo has moved to being managed directly by Neo4j and the packages are basically interchangeable.](https://neo4j.com/developer-blog/py2neo-end-migration-guide/)In the case of my project I use py2neo. The py2neo python package allows for easy usage of the HTTP endpoint using normal CYPHER queries, as well as pseudo-Cypher which uses traditional elements of coding in Python and converts to CYPHER queries.
-\## Docker Logic
+## Docker Logic
 - Update version in docker compose
 
 The Docker system I constructed is fairly simple. It has two primary components built on top of a base linux environment: Jupyter notebook and Neo4j.
-\### Jupyter Notebook
+### Jupyter Notebook
 Starting in the Dockerfile, the first few lines a pretty intuitive:
 
 ``` dockerfile
@@ -553,7 +553,7 @@ top_pairs = sorted(hero_pairs_connections.items(), key=lambda x: x[1], reverse=T
 
 *Please see resulting visualization in the data_analysis.ibynb*
 
-``` ouput
+``` output
 Top 5 Hero Pairs by Connection Count:
 THING/BENJAMIN J. GR - HUMAN TORCH/JOHNNY S: 724 connections
 HUMAN TORCH/JOHNNY S - MR. FANTASTIC/REED R: 694 connections
