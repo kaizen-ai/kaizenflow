@@ -18,22 +18,25 @@ Integrate ZooKeeper with data mining tasks using Pandas for data analysis. Fetch
   ### Prerequisites
   - Install Python, Docker, and Git.
   - Ensure you have access to a ZooKeeper service, either locally or remotely.
+
   ### Clone the Repository
+
   ### Setup Environment
   - Install Python dependencies
   - Start Redis and ZooKeeper using Docke
 
   ### Running Jupyter Notebook
   - Launch Jupyter Notebook to access and run your Python notebooks.
-  - ### Utilize ZooKeeper and Redis
+
+  ### Utilize ZooKeeper and Redis
   - Connect to ZooKeeper within your Python code to manage configurations or state.
   - Use Redis for caching data to enhance performance.
 
  ### Data Analysis with Pandas
  - Load your data into Pandas DataFrames for analysis and visualization in Jupyter Notebook.
 
-### Version Control
-- Use Git to manage and version your project code. Push updates to GitHub.
+ ### Version Control
+ - Use Git to manage and version your project code. Push updates to GitHub.
   
 ## Setup and Installation
 Provide instructions on how to set up and run the project.
