@@ -1,0 +1,27 @@
+version: '3.9'
+
+services:
+  zeromq_receiver:
+    build: .
+    command: python3 messaging_patterns/pub_sub/zeromq_receiver.py
+    depends_on:
+      - rabbitmq
+
+  send:
+    build: .
+    command: python3 messaging_patterns/pub_sub/send.py
+    depends_on:
+      - zeromq_receiver
+  
+  rabbitmq_to_zeromq:
+    build: .
+    command: python3 rabbitmq_to_zeromq/rabbit_to_zero_bridge.py
+    depends_on:
+      - send
+      - rabbitmq
+  
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
