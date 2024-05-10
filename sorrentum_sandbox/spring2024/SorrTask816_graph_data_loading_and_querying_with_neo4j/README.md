@@ -67,7 +67,7 @@ CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--noteboo
 ```
 
 The docker compose file basically reiterates these details in the Jupyter section.
-\### Neo4j
+### Neo4j
 In the docker-compose file I specify various details for building the Neo4j container, first specifying the image and container name:
 
 ``` yml
