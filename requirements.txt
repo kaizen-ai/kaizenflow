@@ -1,0 +1,9 @@
+pandas
+
+matplotlib
+
+seaborn
+
+requests
+
+redis
