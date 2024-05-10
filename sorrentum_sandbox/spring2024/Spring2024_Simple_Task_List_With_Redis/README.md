@@ -6,7 +6,7 @@
 - UMD email: dmistry2@umd.edu
 
 # Link to the Final Project Video
-  https://drive.google.com/file/d/1jt-Lr8aTWv4mv8MGBp4lz2WYhSuiGlDx/view?usp=sharing
+  https://drive.google.com/file/d/1zD7wqvX62ee5AI5tNiDAZ31_xGyHoLJd/view?usp=sharing
 # Project Description
 This app takes your basic to-do list to the next level. With features like user authentication, task categorization, and setting deadlines, it's more than just a simple task manager. It runs smoothly thanks to Redis, ensuring quick access to your tasks and user data. Plus, with Flask handling the API, managing tasks becomes easier.
 
