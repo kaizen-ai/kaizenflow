@@ -1,4 +1,4 @@
-# Project Name
+# ZooKeeper Integration with Data Mining
 ZooKeeper Integration with Data Mining
 
 ## Overview
