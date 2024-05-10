@@ -135,7 +135,8 @@ This code deploys a simple blog system using Flask as the web framework and Reth
     - **request**: Provides access to the request data.
     - **redirect, url_for**: Functions for redirection.
     - **RethinkDB**: A Python driver for RethinkDB, a NoSQL database.
-- conn = r.connect("rethinkdb", 28015, db="blog").repl() esablishes a connection to the RethinkDB database running on *rethinkdb* container. 
+- >conn = r.connect("rethinkdb", 28015, db="blog").repl()
+  esablishes a connection to the RethinkDB database running on *rethinkdb* container. 
 - Database setup functions:
     - **create_database()**: Checks if the "blog" database exists; if not, creates it along with a "posts" table.
     - **add_post(title, content)**: Adds a new post to the database.
