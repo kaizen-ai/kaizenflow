@@ -91,6 +91,41 @@ Docker is a containerization platform that allows developers to package applicat
 - Client Container:
 </t><br>• Jupyter Notebook provides an interactive environment where you can execute code and query databases like PostgreSQL using libraries such as psycopg2.
 
+
+
+### Dockerfiles:
+- Dockerfile_server and Dockerfile_client:
+  
+    - This Dockerfile defines the environment and instructions for building the server/client container.
+    - It starts with the ZOOKEEPER AND KAFKA for .
+    - Copies the server/client.py file into the container's filesystem.
+    - Installs the pyzmq library using pip to enable ZeroMQ functionality.  
+    - Sets the command to execute when the container starts, which is to run the server/client.py script.
+
+- docker-compose.yaml:
+
+    - It specifies three services: server, client, and nginx.
+    - Each service is built using its respective Dockerfile (Dockerfile_server, Dockerfile_client, and Dockerfile_nginx).
+    - The server service is connected to the zmq_network bridge network, ensuring communication with other services.
+    - The client service depends on the server service, ensuring that the server is started before the client.
+    - The nginx service is configured to listen on port 80 and forward requests to the backend servers.
+    - All services are connected to the zmq_network bridge network for communication between containers.
+
+![image]https://github.com/kaizen-ai/kaizenflow/commit/aa81d17d1ccbcab563935f29a90f547c6f672786)
+
+
+### Example Output
+- On running the docker containers we may observe an output that looks like:
+```
+gabriel@DIPO:~/605-FINAL-PROJECT$ docker compose up -d
+WARN[0000] /home/gabriel/605-FINAL-PROJECT/docker-compose.yml: `version` is obsolete
+[+] Running 4/0
+ ✔ Container 605-final-project-postgres-1    Running                                                                            0.0s
+ ✔ Container 605-final-project-zookeeper-1   Running                                                                            0.0s
+ ✔ Container 605-final-project-kafka-1       Running                                                                            0.0s
+ ✔ Container 605-final-project-python-app-1  Running                                                                            0.0s
+```
+
 ## Mock Workflow of the docker system
 The smooth operation of Zookeeper, Kafka, PostgreSQL, and the Python program in a Dockerized setup creates a workflow that is necessary for efficient data processing and analysis. The connectivity of these services is orchestrated by Docker Compose, which makes sure that the right services are created in the right sequence with the required configurations for inter-service communication.
 
@@ -133,38 +168,126 @@ I can effectively retrieve and process this precise weather data by integrating 
 
 
 
-### Dockerfiles:
-- Dockerfile_server and Dockerfile_client:
-  
-    - This Dockerfile defines the environment and instructions for building the server/client container.
-    - It starts with the ZOOKEEPER AND KAFKA for .
-    - Copies the server/client.py file into the container's filesystem.
-    - Installs the pyzmq library using pip to enable ZeroMQ functionality.  
-    - Sets the command to execute when the container starts, which is to run the server/client.py script.
+## LINKING THE POSTGRESQL TO MY JUPYTER NOTEBOOK THEN CREATING A TABLE QUERY
 
-- docker-compose.yaml:
+Database Connection Establishment: First, the code uses the host, port, database name, user, and password to connect to a PostgreSQL database. Setting up a session with the database server in this stage is essential since it enables further actions like querying or changing the database.
 
-    - It specifies three services: server, client, and nginx.
-    - Each service is built using its respective Dockerfile (Dockerfile_server, Dockerfile_client, and Dockerfile_nginx).
-    - The server service is connected to the zmq_network bridge network, ensuring communication with other services.
-    - The client service depends on the server service, ensuring that the server is started before the client.
-    - The nginx service is configured to listen on port 80 and forward requests to the backend servers.
-    - All services are connected to the zmq_network bridge network for communication between containers.
+Cursor Creation: The connection is used to build a cursor object. This cursor is used to do database operations in Python. It serves as a go-between for Python and the PostgreSQL CLI, allowing Python code to execute SQL statements.
+
+Creating a Table: If the weather data table does not already exist, the code provides an SQL query to create it. The purpose of this table is to hold the names of the cities and the accompanying meteorological information, such as wind speed and temperature. Re-creating an existing table can lead to mistakes and data loss, thus the “CREATE TABLE IF NOT EXISTS” line makes that the table is only created if it does not already exist.
+
+Inserting Data: A loop in the code iterates through a collection of meteorological data that was probably previously gathered from an API. The city name, temperature, and wind speed are extracted from each list element, and an INSERT SQL query is created to add these details to the weather data table. Every insertion is a transaction that is started with the SQL command and data tuple formatting and is finished with the cursor.
+
+Transaction Commitment: The transactions are committed following the execution of the SQL statements to establish the table and enter data. The modifications are now complete and will remain in the database after this action. To make sure that the activities don't only remain pending, transactions must be committed.
+
+Resource Cleanup: Lastly, the database connection and the cursor are shut down. Since server resources are limited and might create a bottleneck if connections are left open forever, closing the connection is a crucial step in database management. 
 
 
-### Example Output
-- On running the docker containers we may observe an output that looks like:
+## PUTTING THE CITIES, TEMPERATURE AND WIND SPEED DATA IN THE POSTGRESQL TABLE
+
+Database Connection and Cursor Creation: In both scripts, connecting to a PostgreSQL database using the psycopg2 package is the initial step. They supply details such database name, user, password, host, and port in order to establish a connection to the right database on the assigned server. Once the connection is established, a cursor object is generated. This cursor is used to execute SQL statements using Python.
+Checking Table Existence and Data Retrieval: A preliminary check is made in the first script to see if the database has the particular table ('weather_data'). This is accomplished by running a SELECT query over the information_schema.tables to see if the 'weather_data' table is there. The script alerts the user if the table doesn't exist and then retrieves data from it if it does. When actions on a table depend on the table's existence, this type of check is essential to preventing mistakes.
+Data Fetching and DataFrame Conversion: An SQL query is run to retrieve temperature and wind speed data from the 'weather_data' table as soon as it is verified that the table exists or is specifically mentioned in the second script. Using the fetchall() method, the data retrieved by the cursor is fetched all at once and loaded into a pandas DataFrame. The column names in this DataFrame are named specifically for easier reading and manipulation. Pandas is a recommended option for managing structured data since it offers a practical and strong data structure for data analysis and manipulation.
+Closing Resources: In both scripts, the cursor and the database connection are closed after the required SQL operations have been carried out and the data has been handled. In order to release database resources—which can be scarce on a server and must be carefully managed to prevent performance problems—the database connection and cursor must be closed properly.
+
+Error Handling: To handle any exceptions that may arise during database operations, such as connection failures or SQL issues, the first script has a try-except block. This is a recommended programming strategy that increases the application's resilience by offering a gentle way to handle unforeseen problems. In order to prevent database connection leaks, it is essential to use finally to guarantee that the database connection is closed even in the event of an error.
+
 ```
-gabriel@DIPO:~/605-FINAL-PROJECT$ docker compose up -d
-WARN[0000] /home/gabriel/605-FINAL-PROJECT/docker-compose.yml: `version` is obsolete
-[+] Running 4/0
- ✔ Container 605-final-project-postgres-1    Running                                                                            0.0s
- ✔ Container 605-final-project-zookeeper-1   Running                                                                            0.0s
- ✔ Container 605-final-project-kafka-1       Running                                                                            0.0s
- ✔ Container 605-final-project-python-app-1  Running                                                                            0.0s
+import psycopg2
+import pandas as pd
+
+def fetch_weather_data():
+    # Connect to PostgreSQL
+    conn = psycopg2.connect(
+        dbname="postgres", 
+        user="postgres", 
+        password="mypassword", 
+        host="localhost", 
+        port="5432"
+    )
+    cur = conn.cursor()
+
+    # Execute query to retrieve temperature and wind_speed
+    cur.execute("SELECT temperature, wind_speed FROM weather_data")
+    data = cur.fetchall()
+    
+    # Close the connection
+    cur.close()
+    conn.close()
+
+    # Load data into a DataFrame
+    df = pd.DataFrame(data, columns=['temperature', 'wind_speed'])
+    return df
+
+# Fetch data
+df = fetch_weather_data()
+print(df.head())
+```
+## Performing Linear Regression on the Data and analyzing the results.
+The basic predictive modeling approaches are then demonstrated by using this data to build a linear regression model that predicts temperature depending on wind speed. When one wishes to comprehend or forecast continuous variables based on other variables, linear regression is a useful tool. Additionally, the script has a visualization component that helps visualize the link between temperature and wind speed by plotting the actual data points against the anticipated regression line.
+The results from the linear regression, as noted in your provided output, include an intercept and a coefficient for wind speed. Here’s a detailed explanation of these results:
+</t></br>• Intercept (290.23534597869286): This value represents the predicted temperature (in Kelvin) when the wind speed is zero. Essentially, it's the starting point of the regression line on the y-axis. In the context of this weather dataset, you could interpret it as the baseline temperature that the model predicts in the absence of wind.
+</t></br>• Coefficient for Wind Speed (0.5418079806625375): This coefficient tells us how much the temperature is expected to increase with each one-meter-per-second increase in wind speed. Specifically, for each 1 m/s increase in wind speed, the temperature is predicted to increase by about 0.542 Kelvin. This relationship is key to understanding how wind speed influences temperature, according to the model.
+### These components form the linear regression equation:
+</t></br>• Temperature=290.235+0.542×Wind SpeedTemperature=290.235+0.542×Wind Speed
+This equation can be used to predict the temperature based on given values of wind speed.
+Fetching Data and Handling Results
+The query tries to fetch a single record that matches the city name. If a matching record is found, it is returned; otherwise, the script indicates that no record was found for that city
+
+```
+import psycopg2
+import pandas as pd
+import numpy as np
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+
+def fetch_weather_data():
+    try:
+        conn = psycopg2.connect(
+            dbname="postgres", 
+            user="postgres", 
+            password="mypassword", 
+            host="localhost", 
+            port="5432"
+        )
+        cur = conn.cursor()
+        cur.execute("SELECT temperature, wind_speed FROM weather_data")
+        data = cur.fetchall()
+        cur.close()
+        conn.close()
+        return pd.DataFrame(data, columns=['temperature', 'wind_speed'])
+    except psycopg2.Error as e:
+        print("Error retrieving data from PostgreSQL:", e)
+        return pd.DataFrame()
+
+def plot_regression(X, y, predicted_y):
+    plt.scatter(X, y, color='blue', label='Actual data', alpha=0.5)
+    plt.plot(X, predicted_y, color='red', label='Regression line')
+    plt.title('Temperature vs Wind Speed')
+    plt.xlabel('Wind Speed (m/s)')
+    plt.ylabel('Temperature (K)')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+def main():
+    df = fetch_weather_data()
+    if not df.empty:
+        X = df[['wind_speed']]  # scikit-learn expects 2D array for X
+        y = df['temperature']
+        model = LinearRegression()
+        model.fit(X, y)
+        print(f'Intercept: {model.intercept_}')
+        print(f'Coefficient for wind speed: {model.coef_[0]}')
+        predicted_temps = model.predict(X)
+        plot_regression(df['wind_speed'], df['temperature'], predicted_temps)
+
+if __name__ == "__main__":
+    main()
 ```
 
+## Conclusion
+The project showcases the versatility and efficiency of Kafka, PostgreSQL and Jupyter Notebook in building distributed and scalable systems. By incorporating features such as error handling, and asynchronous communication, we have created a robust client-server architecture suitable for various real-world applications.
 
-
-
+Demo link: [https://drive.google.com/file/d/17nlUTElRDGIZmdLY7SWDoJafAB4mtwTa/view?usp=sharing](https://drive.google.com/file/d/1MXGzvrtCmJ7notjt_WJBcSRBUsJ1inCN/view?usp=drive_link)
 
