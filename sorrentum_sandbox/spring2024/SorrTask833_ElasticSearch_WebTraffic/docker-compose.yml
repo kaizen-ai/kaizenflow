@@ -90,6 +90,7 @@ services:
       - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
       - xpack.security.transport.ssl.verification_mode=certificate
       - xpack.license.self_generated.type=${LICENSE}
+      - TZ=America/New_York
     mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -131,6 +132,7 @@ services:
       - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
       - xpack.security.transport.ssl.verification_mode=certificate
       - xpack.license.self_generated.type=${LICENSE}
+      - TZ=America/New_York
     mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -171,6 +173,7 @@ services:
       - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
       - xpack.security.transport.ssl.verification_mode=certificate
       - xpack.license.self_generated.type=${LICENSE}
+      - TZ=America/New_York
     mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -229,6 +232,7 @@ services:
       ELASTICSEARCH_USERNAME: "elastic"
       ELASTICSEARCH_PASSWORD: "${ELASTIC_PASSWORD}"
       ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES: /usr/share/elasticsearch/config/certs/ca/ca.crt
+      TZ: America/New_York
     volumes:
        - certs:/usr/share/elasticsearch/config/certs
     depends_on:
@@ -249,11 +253,13 @@ services:
       ELASTICSEARCH_USERNAME: "elastic"
       ELASTICSEARCH_PASSWORD: "${ELASTIC_PASSWORD}"
       ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES: "/usr/share/elasticsearch/config/certs/ca/ca.crt"
+      TZ: America/New_York
 
     networks:
       - elasticnet
     depends_on:
-      - es01
+      es01:
+        condition: service_healthy
 
 networks:
   elasticnet:

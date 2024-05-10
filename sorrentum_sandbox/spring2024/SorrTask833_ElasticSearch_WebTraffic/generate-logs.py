@@ -1,44 +1,52 @@
 from elasticsearch import Elasticsearch
 from faker import Faker
-import json
+import os
 import random
+import numpy as np
 from datetime import datetime, timedelta
+
+es_host = os.getenv("ELASTICSEARCH_HOST")
+es_username = os.getenv("ELASTICSEARCH_USERNAME")
+es_password = os.getenv("ELASTICSEARCH_PASSWORD")
+es_ca_certs = os.getenv("ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES")
 
 fake = Faker()
 
 try:
     es = Elasticsearch(
-        "https://es01:9200",
-        #api_key="aHZMcFJZOEJxNGJsQVJBWDdfQTg6N05PYllRb0xSNXFzYWxnSWMwaGVXUQ==",#verify_certs=False
-        basic_auth=("elastic", "ilovethis"),
-        #ca_certs='/Users/berksomer/src/kaizenflow/sorrentum_sandbox/spring2024/SorrTask833_ElasticSearch_WebTraffic/ca.crt',
-        #ca_certs='/usr/share/elasticsearch/config/certs/ca/ca.crt',
-        ca_certs='/usr/share/elasticsearch/config/certs/ca/ca.crt',
+        es_host,
+        basic_auth=(es_username, es_password),
+        ca_certs=es_ca_certs,
         verify_certs=True
     )
     
     current_time = datetime.now()
-    
-    def generate_log_entry(seconds):
-        # Generate a fake log entry within a time interval between now(current_time) and 3600 seconds earlier (1hr)
-        time_offset = timedelta(seconds=random.randint(0, seconds))
-        entry_time = current_time - time_offset
+    num_samples = 10000
+
+    def generate_log_entry():
+        
+        # Generate a time offset from a normal distribution
+        mean = 6 * 3600  # Mean time in seconds (6 hours)
+        std = 2 * 3600  # Standard deviation in seconds (30 minutes)
+        offset_seconds = np.random.normal(mean, std)
+        offset_seconds = int(np.clip(offset_seconds, 0, 12 * 3600))  # Clip to range of 0 to 12 hours
+
+        # Calculate the entry time
+        entry_time = current_time - timedelta(seconds=offset_seconds)
 
         entry = {
             "timestamp": entry_time.strftime("%Y-%m-%dT%H:%M:%S"),
             "ip": fake.ipv4(),
-            "method": random.choices(["GET", "POST", "DELETE", "PUT"], weights=[65, 22, 8, 5],k=1)[0],
+            "method": random.choices(["GET", "POST", "DELETE", "PUT"], weights=[65, 22, 8, 5], k=1)[0],
             "endpoint": fake.uri_path(),
-            "response_code": random.choices([200, 201, 404, 500], weights=[50, 30, 15, 5],k=1)[0],
+            "response_code": random.choices([200, 201, 404, 500], weights=[50, 30, 15, 5], k=1)[0],
             "response_time": fake.random_int(min=5, max=1000)
         }
         return entry
 
     def ingest_data():
-        for i in range(4000):
-        # Generate this fake log 4000 times
-        # With this logs are randomly distributed between now and a time interval before
-            entry = generate_log_entry(3600)
+        for _ in range(num_samples):
+            entry = generate_log_entry()
             response = es.index(index="web-logs", document=entry)
             print(response)
 
@@ -46,5 +54,3 @@ try:
 
 except Exception as e:
     print(f"An error occurred: {e}")
-
-

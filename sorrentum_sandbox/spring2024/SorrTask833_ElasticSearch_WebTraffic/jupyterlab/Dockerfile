@@ -1,7 +1,5 @@
 FROM python:3.9
 
-ENV TZ=America/New_York
-
 # Update and install necessary packages
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
