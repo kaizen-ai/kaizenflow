@@ -80,7 +80,7 @@ cd kaizenflow
   - Axie Infinity
   - Enjin Coin
   
-Apparently the free version of kraken provides data from the beginnign of the year 2022  
+Apparently the free version of kraken provides data only from the past two years till now (2024).
 
 ### Data Analysis with Pandas
 - Load the data for 11 specified cryptos into Pandas DataFrames for the following analysis and visualization in Jupyter Notebook.
@@ -93,7 +93,24 @@ Apparently the free version of kraken provides data from the beginnign of the ye
   - Bollinger Bands
   - MACD Histogram
   - Trend Analysis
-  - 
+  - Trading Volume
+  - Volatility Comparison (Daily % Change) for Various Cryptocurrencies
+  - Comparing Closing Prices Over Time for Various Crytptocurremcies
+  - Price Movement Word Cloud for Each Crypto
+  - Candlestick Chart
+  - Dynamic Visualization of Closing Prices
+  - Volume Percentage
+  - ARIMA Forcast
+  - Prophet Forecast
+  - Fourier Transform
+  - Wavelet Coefficient 1 To 7
+  - Anomaly Detection
+  - 5-Year LSTM Forecast
+  - 5-Year Prophet Forecast
+  - SARIMA Forecast
+  - Minimum Risk Portfolio Allocation, Expected Annual Return and Annual Volatility.
+  - Optimal Portfolio Weights
+  
 ### Version Control
 - Use Git to manage and version your project code. Push updates to GitHub:
   ```bash
@@ -103,14 +120,14 @@ Apparently the free version of kraken provides data from the beginnign of the ye
   ```
 
 3. **Environment Setup**:
-- Copy the `GITHUB_PAT=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` file to `.env` and modify it according to your local environment settings.
+- Copy the `GITHUB_PAT=ghp_XXXXXXXXXXXXXXXXXXXXXXX` file to `.env` and modify it according to your local environment settings.
 
 4. **Running the Application**:
 - To start the application:
   ```
   docker-compose up
   ```
-- Access the application via `localhost:PORT` where `PORT` is the port specified in your Docker or environment settings.
+- Access the application via `localhost:8888`.
 
 ### Additional Configuration
 
@@ -121,7 +138,7 @@ Apparently the free version of kraken provides data from the beginnign of the ye
 ## Contribution Guidelines
 
 ## License
-This project has been for educational purposes.
+This project has been for the educational purposes.
 
 ## Contact
 For more information, contact [Farhad Abasahl](mailto:farhad@umd.edu).
