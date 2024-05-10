@@ -1,31 +1,3 @@
-# # Use an official Python runtime as a parent image
-# FROM python:3.8-slim
-
-# # Set the working directory in the container
-# WORKDIR /usr/src/app
-
-# # Copy the Flask application into the container at /usr/src/app
-# COPY publisher_app.py ./
-
-# # Install Flask and pika
-# RUN pip install flask pika && flask --version
-
-# # Expose the Flask default port
-# EXPOSE 5000
-
-# # Set environment variables
-# ENV FLASK_APP=publisher_app.py
-# ENV FLASK_RUN_HOST=0.0.0.0
-# ENV FLASK_RUN_PORT=5000
-# ENV RABBITMQ_HOST=my-rabbit
-# ENV RABBITMQ_USER=user
-# ENV RABBITMQ_PASSWORD=user
-
-# # Set the command to run the Flask app
-# CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
-
-# -----------------------------------------------------------
-
 # Dockerfile-flask
 FROM python:3.8-slim
 
