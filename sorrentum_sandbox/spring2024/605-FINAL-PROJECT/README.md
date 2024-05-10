@@ -291,4 +291,6 @@ The project showcases the versatility and efficiency of Kafka, PostgreSQL and Ju
 
 Demo link: [https://drive.google.com/file/d/17nlUTElRDGIZmdLY7SWDoJafAB4mtwTa/view?usp=sharing](https://drive.google.com/file/d/1MXGzvrtCmJ7notjt_WJBcSRBUsJ1inCN/view?usp=drive_link)
 
-JUPYER NOTEBOOK: THE JUPYTER NOTEBOOK I CODED ON IS IN THE 605 PROJECT FILE. The link: [https://github.com/kaizen-ai/kaizenflow/blob/SorrTask826_Apache_Kafka_to_create_a_data_streaming_platform/sorrentum_sandbox/spring2024/605-FINAL-PROJECT/DATA%20605%20PROJECT%20FINAL.ipynb]. NAME: 
+JUPYER NOTEBOOK: THE JUPYTER NOTEBOOK I CODED ON IS IN THE 605 PROJECT FILE.
+The link: [https://github.com/kaizen-ai/kaizenflow/blob/SorrTask826_Apache_Kafka_to_create_a_data_streaming_platform/sorrentum_sandbox/spring2024/605-FINAL-PROJECT/DATA%20605%20PROJECT%20FINAL.ipynb]. 
+NAME: DATA 605 PROJECT FINAL.ipynb
