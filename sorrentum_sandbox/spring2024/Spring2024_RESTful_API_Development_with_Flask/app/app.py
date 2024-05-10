@@ -1,33 +1,22 @@
+# Import required libraries
 from flask import Flask, jsonify, request
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import Employee, Department, DeptEmployee, DeptManager, Title, Salary
-import uuid
-import csv
-from io import StringIO
-import re
-import os
-from sqlalchemy import create_engine, text
-import mysql.connector
-import hashlib 
 
+# Create a Flask application
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key_here'
-jwt = JWTManager(app)
-
-MYSQL_USERNAME = 'username'
-MYSQL_PASSWORD = 'password23!'
-MYSQL_HOST = 'employee-db-sketl.mysql.database.azure.com'
-MYSQL_DATABASE = 'employees'
 
 
 # Create a SQLAlchemy engine
-engine = create_engine(f'mysql+mysqlconnector://{MYSQL_USERNAME}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{MYSQL_DATABASE}')
+db_uri = 'mysql://root:password@mysql:3306/employees'
+engine = create_engine(db_uri)
 
+# Create a SQLAlchemy session
 Session = sessionmaker(bind=engine)
 session = Session()
-
 #----------------Authentication-----------------#
 # Initialize JWTManager
 jwt = JWTManager(app)
@@ -42,7 +31,7 @@ def authenticate():
     username = data.get('username')
     password = data.get('password')
 
-    # Dummy user authentication (replace with your own authentication logic)
+    # Check if the username and password are valid
     if username in users and users[username] == password:
         # Generate JWT token
         access_token = create_access_token(identity=username)
@@ -62,30 +51,15 @@ def protected():
 # Routes for CRUD operations
 # ---------------Create Operations----------------#
 
-# Generate a unique ID
-def generate_unique_id():
-    unique_id = uuid.uuid4()
-    hashed_id = hashlib.sha1(str(unique_id).encode()).hexdigest()[:6]
-    return int(hashed_id, 16)  # Convert hexadecimal to integer
-
-
-# Endpoint to generate a unique ID
-@app.route('/generate-unique-id', methods=['GET'])
-@jwt_required()
-def generate_unique_id_endpoint():
-    unique_id = generate_unique_id()
-    return jsonify({'unique_id': unique_id}), 200
-
 # Create a new employee
 @app.route('/employees', methods=['POST'])
 @jwt_required()
 def create_employee():
     # Parse request data
     data = request.json
-    emp_no = generate_unique_id()
     # Create a new Employee instance
     new_employee = Employee(
-        emp_no=emp_no,
+        emp_no=data['emp_no'],
         birth_date=data['birth_date'],
         first_name=data['first_name'],
         last_name=data['last_name'],
@@ -105,124 +79,151 @@ def create_employee():
         session.rollback()
         return jsonify({'error': str(e)}), 500
 
-# Create Batch Employees
-@app.route('/employees/batch', methods=['POST'])
+# Create Employee Title
+@app.route('/titles', methods=['POST'])
 @jwt_required()
-def create_employees_batch():
-    data = request.json  # Assuming data is a list of employee objects
-    new_employees = []
+def create_title():
+    # Parse request data
+    data = request.json
 
-    for item in data:
-        new_employee = Employee(
-            emp_no=item['emp_no'],
-            birth_date=item['birth_date'],
-            first_name=item['first_name'],
-            last_name=item['last_name'],
-            gender=item['gender'],
-            hire_date=item['hire_date']
-        )
-        new_employees.append(new_employee)
+    # Create a new Title instance
+    new_title = Title(
+        emp_no=data['emp_no'],
+        title=data['title'],
+        from_date=data['from_date'],
+        to_date=data['to_date']
+    )
 
-    session.add_all(new_employees)
+    # Add the new title to the session
+    session.add(new_title)
 
     try:
+        # Commit the changes to persist the new title in the database
         session.commit()
-        return jsonify({'message': f'{len(new_employees)} employees created successfully'}), 201
+        # Return the created title data
+        return jsonify({'message': 'Title created successfully'}), 201
     except Exception as e:
+        # Rollback the session in case of any error
+        session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# Create Employee Salary
+@app.route('/salaries', methods=['POST'])
+@jwt_required()
+def create_salary():
+    # Parse request data
+    data = request.json
+
+    # Create a new Salary instance
+    new_salary = Salary(
+        emp_no=data['emp_no'],
+        salary=data['salary'],
+        from_date=data['from_date'],
+        to_date=data['to_date']
+    )
+
+    # Add the new salary to the session
+    session.add(new_salary)
+
+    try:
+        # Commit the changes to persist the new salary in the database
+        session.commit()
+        # Return the created salary data
+        return jsonify({'message': 'Salary created successfully'}), 201
+    except Exception as e:
+        # Rollback the session in case of any error
+        session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# Employee Department Assignment
+@app.route('/dept_employees', methods=['POST'])
+@jwt_required()
+def assign_department():
+    # Parse request data
+    data = request.json
+
+    # Create a new DeptEmployee instance
+    new_dept_employee = DeptEmployee(
+        emp_no=data['emp_no'],
+        dept_no=data['dept_no'],
+        from_date=data['from_date'],
+        to_date=data['to_date']
+    )
+
+    # Add the new department employee record to the session
+    session.add(new_dept_employee)
+
+    try:
+        # Commit the changes to persist the new department employee record in the database
+        session.commit()
+        # Return the created department employee record data
+        return jsonify({'message': 'Department employee record created successfully'}), 201
+    except Exception as e:
+        # Rollback the session in case of any error
+        session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# Create New Department
+@app.route('/departments', methods=['POST'])
+@jwt_required()
+def create_department():
+    # Parse request data
+    data = request.json
+
+    # Create a new Department instance
+    new_department = Department(
+        dept_no=data['dept_no'],
+        dept_name=data['dept_name']
+    )
+
+    # Add the new department to the session
+    session.add(new_department)
+
+    try:
+        # Commit the changes to persist the new department in the database
+        session.commit()
+        # Return the created department data
+        return jsonify({'message': 'Department created successfully'}), 201
+    except Exception as e:
+        # Rollback the session in case of any error
         session.rollback()
         return jsonify({'error': str(e)}), 500
     
-# Import csv file to create employees
-# Import data from a CSV file
-@app.route('/import-data', methods=['POST'])
+# Assign Department Manager
+@app.route('/dept_managers', methods=['POST'])
 @jwt_required()
-def import_data():
-    # Check if a file was provided in the request
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file provided'}), 400
+def assign_department_manager():
+    # Parse request data
+    data = request.json
 
-    file = request.files['file']
+    # Create a new DeptManager instance
+    new_dept_manager = DeptManager(
+        emp_no=data['emp_no'],
+        dept_no=data['dept_no'],
+        from_date=data['from_date'],
+        to_date=data['to_date']
+    )
 
-    # Check if the file has a valid format (e.g., CSV)
-    if file.filename.endswith('.csv'):
-        try:
-            # Process the CSV file and insert data into the database
-            # Example: You can use libraries like pandas to read and process the CSV
-            # Here, we're assuming you have a function called process_csv_data
-            data = process_csv_data(file)
-            
-            # Add the data to the database
-            session.add_all(data)
-            session.commit()
+    # Add the new department manager record to the session
+    session.add(new_dept_manager)
 
-            return jsonify({'message': 'Data imported successfully'}), 200
-        except Exception as e:
-            session.rollback()
-            return jsonify({'error': str(e)}), 500
-    else:
-        return jsonify({'error': 'Unsupported file format'}), 400
-
-
-# Endpoint to validate imported CSV data
-@app.route('/validate-imported-csv', methods=['POST'])
-def validate_imported_csv():
-    # Check if a file was provided in the request
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file provided'}), 400
-
-    file = request.files['file']
-
-    # Validate file format (CSV)
-    if file.filename.endswith('.csv'):
-        try:
-            # Read the CSV file
-            csv_data = file.stream.read().decode('utf-8')
-
-            # Perform validation on CSV data
-            validation_errors = validate_csv_data(csv_data)
-
-            if validation_errors:
-                return jsonify({'errors': validation_errors}), 400
-            else:
-                return jsonify({'message': 'CSV data validation successful'}), 200
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
-    else:
-        return jsonify({'error': 'Unsupported file format'}), 400
-
-# Validation function for CSV data
-def validate_csv_data(csv_data):
-    validation_errors = []
-
-    # Read CSV data using the csv module
-    csv_reader = csv.DictReader(StringIO(csv_data))
-
-    for row in csv_reader:
-        # Perform validation checks on each row
-        if not validate_row(row):
-            validation_errors.append({'error': 'Validation failed for row', 'data': row})
-
-    return validation_errors
-
-# Validation function for a single row of CSV data
-def validate_row(row):
-    # Example validation checks for each field in the row
-    if 'emp_no' not in row or not row['emp_no'].isdigit():
-        return False
-
-    if 'first_name' not in row or not row['first_name']:
-        return False
-
-    # Add more validation checks as needed
-
-    return True
-
+    try:
+        # Commit the changes to persist the new department manager record in the database
+        session.commit()
+        # Return the created department manager record data
+        return jsonify({'message': 'Department manager record created successfully'}), 201
+    except Exception as e:
+        # Rollback the session in case of any error
+        session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 
 #-----------Read Operations----------------#
+
+# Get All Employees
 @app.route('/employees', methods=['GET'])
 def get_employees():
-    # Query all employees using SQLAlchemy ORM
+    # Query all employees using SQLAlchemy
     employees = session.query(Employee).all()
 
     # Serialize the employees' data
@@ -243,6 +244,7 @@ def get_employees():
 
     # Return the JSON response containing the employees' data
     return jsonify(serialized_employees)
+# Search Employee by ID
 @app.route('/employees/<int:emp_no>', methods=['GET'])
 def get_employee(emp_no):
     employee = session.query(Employee).filter_by(emp_no=emp_no).first()
@@ -251,34 +253,6 @@ def get_employee(emp_no):
     else:
         return jsonify({'error': 'Employee not found'}), 404
 
-# Filtering employees by gender
-@app.route('/employees/filter', methods=['GET'])
-def filter_employees():
-    gender = request.args.get('gender')
-    employees = session.query(Employee).filter_by(gender=gender).all()
-    return jsonify([employee.serialize() for employee in employees])
-
-# Sorting employees by hire date
-@app.route('/employees/sort', methods=['GET'])
-def sort_employees():
-    sort_by = request.args.get('sort_by')
-    if sort_by == 'hire_date':
-        employees = session.query(Employee).order_by(Employee.hire_date).all()
-        return jsonify([employee.serialize() for employee in employees])
-    else:
-        return jsonify({'error': 'Invalid sorting parameter'}), 400
-
-# Pagination
-@app.route('/employees/page', methods=['GET'])
-def paginate_employees():
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
-    employees = session.query(Employee).paginate(page, per_page, error_out=False)
-    return jsonify({
-        'employees': [employee.serialize() for employee in employees.items],
-        'total_pages': employees.pages,
-        'total_employees': employees.total
-    })
 
 # Search employees by name
 @app.route('/employees/search', methods=['GET'])
@@ -293,6 +267,51 @@ def search_employees():
 def total_employees():
     total_count = session.query(Employee).count()
     return jsonify({'total_employees': total_count})
+
+
+# View Titles Table Endpoint
+@app.route('/titles', methods=['GET'])
+def view_titles():
+    titles = session.query(Title).all()
+    return jsonify([title.serialize() for title in titles])
+
+# View Titles by Employee ID Endpoint
+@app.route('/titles/<int:emp_no>', methods=['GET'])
+def view_titles_by_emp_no(emp_no):
+    titles = session.query(Title).filter_by(emp_no=emp_no).all()
+    return jsonify([title.serialize() for title in titles])
+
+
+# View Salaries Table Endpoint
+@app.route('/salaries', methods=['GET'])
+def view_salaries():
+    salaries = session.query(Salary).all()
+    return jsonify([salary.serialize() for salary in salaries])
+
+# View Department Employees Table Endpoint
+@app.route('/dept_employees', methods=['GET'])
+def view_department_employees():
+    department_employees = session.query(DeptEmployee).all()
+    return jsonify([dept_employee.serialize() for dept_employee in department_employees])
+
+# View Department Employees by Employee ID Endpoint
+@app.route('/dept_employees/<int:emp_no>', methods=['GET'])
+def view_department_employees_by_emp_no(emp_no):
+    department_employees = session.query(DeptEmployee).filter_by(emp_no=emp_no).all()
+    return jsonify([dept_employee.serialize() for dept_employee in department_employees])
+
+# View Departments Table Endpoint
+@app.route('/departments', methods=['GET'])
+def view_departments():
+    departments = session.query(Department).all()
+    return jsonify([department.serialize() for department in departments])
+
+# View Department Managers Table Endpoint
+@app.route('/dept_managers', methods=['GET'])
+def view_department_managers():
+    department_managers = session.query(DeptManager).all()
+    return jsonify([dept_manager.serialize() for dept_manager in department_managers])
+
 
 #------------Update Operations----------------#
 
@@ -339,49 +358,10 @@ def update_employee(emp_no):
         # Close the session
         session.close()
 
-# Change Department Assignment Endpoint
-@app.route('/employees/<int:emp_no>/departments', methods=['PUT'])
+# Update Titles Table Endpoint
+@app.route('/titles/<int:emp_no>', methods=['PUT'])
 @jwt_required()
-def change_department_assignment(emp_no):
-    # Parse request data
-    data = request.json
-    new_dept_no = data.get('dept_no')
-    new_from_date = data.get('from_date')
-    new_to_date = data.get('to_date')
-
-    # Create a session
-    session = Session()
-
-    try:
-        # Retrieve the department assignment from the database
-        dept_assignment = session.query(DeptEmployee).filter_by(emp_no=emp_no).first()
-        if not dept_assignment:
-            return jsonify({'error': 'Department assignment not found'}), 404
-
-        # Update department assignment
-        if new_dept_no:
-            dept_assignment.dept_no = new_dept_no
-        if new_from_date:
-            dept_assignment.from_date = new_from_date
-        if new_to_date:
-            dept_assignment.to_date = new_to_date
-
-        # Commit the changes to the database
-        session.commit()
-
-        # Return the updated department assignment data
-        return jsonify(dept_assignment.serialize())
-    except Exception as e:
-        # Rollback the transaction if an error occurs
-        session.rollback()
-        return jsonify({'error': str(e)}), 500
-    finally:
-        # Close the session
-        session.close()
-# Update Employee Title Endpoint
-@app.route('/employees/<int:emp_no>/title', methods=['PUT'])
-@jwt_required()
-def update_employee_title(emp_no):
+def update_titles(emp_no):
     # Parse request data
     data = request.json
     new_title = data.get('title')
@@ -392,24 +372,27 @@ def update_employee_title(emp_no):
     session = Session()
 
     try:
-        # Retrieve the title record from the database
-        title_record = session.query(Title).filter_by(emp_no=emp_no).first()
-        if not title_record:
-            return jsonify({'error': 'Title record not found'}), 404
+        # Retrieve the title records from the database
+        titles = session.query(Title).filter_by(emp_no=emp_no).all()
+        if not titles:
+            return jsonify({'error': 'No titles found for employee'}), 404
 
         # Update title information
         if new_title:
-            title_record.title = new_title
+            for title in titles:
+                title.title = new_title
         if new_from_date:
-            title_record.from_date = new_from_date
+            for title in titles:
+                title.from_date = new_from_date
         if new_to_date:
-            title_record.to_date = new_to_date
+            for title in titles:
+                title.to_date = new_to_date
 
         # Commit the changes to the database
         session.commit()
 
-        # Return the updated title record data
-        return jsonify(title_record.serialize())
+        # Return the updated title records data
+        return jsonify([title.serialize() for title in titles])
     except Exception as e:
         # Rollback the transaction if an error occurs
         session.rollback()
@@ -418,53 +401,15 @@ def update_employee_title(emp_no):
         # Close the session
         session.close()
 
-# Adjust Employee Salary Endpoint
-@app.route('/employees/<int:emp_no>/salary', methods=['PUT'])
-@jwt_required()
-def adjust_employee_salary(emp_no):
-    # Parse request data
-    data = request.json
-    new_salary = data.get('salary')
-    new_from_date = data.get('from_date')
-    new_to_date = data.get('to_date')
-
-    # Create a session
-    session = Session()
-
-    try:
-        # Retrieve the salary record from the database
-        salary_record = session.query(Salary).filter_by(emp_no=emp_no).first()
-        if not salary_record:
-            return jsonify({'error': 'Salary record not found'}), 404
-
-        # Update salary information
-        if new_salary:
-            salary_record.salary = new_salary
-        if new_from_date:
-            salary_record.from_date = new_from_date
-        if new_to_date:
-            salary_record.to_date = new_to_date
-
-        # Commit the changes to the database
-        session.commit()
-
-        # Return the updated salary record data
-        return jsonify(salary_record.serialize())
-    except Exception as e:
-        # Rollback the transaction if an error occurs
-        session.rollback()
-        return jsonify({'error': str(e)}), 500
-    finally:
-        # Close the session
-        session.close()
-
-# Extend Managerial Assignment Endpoint
+# Update Managerial Assignment Endpoint
 @app.route('/employees/<int:emp_no>/managerial_assignment', methods=['PUT'])
 @jwt_required()
-def extend_managerial_assignment(emp_no):
+def update_managerial_assignment(emp_no):
     # Parse request data
     data = request.json
-    new_to_date = data.get('new_to_date')
+    new_dept_no = data.get('dept_no')
+    new_from_date = data.get('from_date')
+    new_to_date = data.get('to_date')
 
     # Create a session
     session = Session()
@@ -475,19 +420,19 @@ def extend_managerial_assignment(emp_no):
         if not managerial_assignment_record:
             return jsonify({'error': 'Managerial assignment record not found'}), 404
 
-        # Update to_date with the new value
+        # Update managerial assignment information
+        if new_dept_no:
+            managerial_assignment_record.dept_no = new_dept_no
+        if new_from_date:
+            managerial_assignment_record.from_date = new_from_date
         if new_to_date:
-            # Convert the new_to_date string to a datetime object
-            new_to_date = datetime.strptime(new_to_date, '%Y-%m-%d')
             managerial_assignment_record.to_date = new_to_date
 
-            # Commit the changes to the database
-            session.commit()
+        # Commit the changes to the database
+        session.commit()
 
-            # Return the updated managerial assignment record data
-            return jsonify(managerial_assignment_record.serialize())
-        else:
-            return jsonify({'error': 'New to_date is required'}), 400
+        # Return the updated managerial assignment record data
+        return jsonify(managerial_assignment_record.serialize())
     except Exception as e:
         # Rollback the transaction if an error occurs
         session.rollback()
@@ -495,6 +440,8 @@ def extend_managerial_assignment(emp_no):
     finally:
         # Close the session
         session.close()
+
+
 # Update Department Information Endpoint
 @app.route('/departments/<string:dept_no>', methods=['PUT'])
 @jwt_required()
@@ -531,7 +478,6 @@ def update_department(dept_no):
         # Close the session
         session.close()
 
-# Modify Title Names Endpoint
 # Modify Title Names Endpoint
 @app.route('/titles/<int:emp_no>', methods=['PUT'])
 @jwt_required()
@@ -598,6 +544,46 @@ def adjust_salary_ranges(emp_no):
             return jsonify([salary.serialize() for salary in salaries])
         else:
             return jsonify({'error': 'New salary is required'}), 400
+    except Exception as e:
+        # Rollback the transaction if an error occurs
+        session.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        # Close the session
+        session.close()
+
+# Update Department Employee Endpoint
+@app.route('/dept_employees/<int:emp_no>', methods=['PUT'])
+@jwt_required()
+def update_department_employee(emp_no):
+    # Parse request data
+    data = request.json
+    new_dept_no = data.get('dept_no')
+    new_from_date = data.get('from_date')
+    new_to_date = data.get('to_date')
+
+    # Create a session
+    session = Session()
+
+    try:
+        # Retrieve the department employee record from the database
+        dept_employee = session.query(DeptEmployee).filter_by(emp_no=emp_no).first()
+        if not dept_employee:
+            return jsonify({'error': 'Department employee not found'}), 404
+
+        # Update department employee information
+        if new_dept_no:
+            dept_employee.dept_no = new_dept_no
+        if new_from_date:
+            dept_employee.from_date = new_from_date
+        if new_to_date:
+            dept_employee.to_date = new_to_date
+
+        # Commit the changes to the database
+        session.commit()
+
+        # Return the updated department employee record data
+        return jsonify(dept_employee.serialize())
     except Exception as e:
         # Rollback the transaction if an error occurs
         session.rollback()
@@ -677,7 +663,37 @@ def delete_employee(emp_no):
         # Close the session
         session.close()
 
-# Delete Department Endpoint
+# Delete Batch Employees Endpoint
+@app.route('/employees/delete_batch', methods=['DELETE'])
+@jwt_required()
+def delete_batch_employees():
+    # Parse request data
+    data = request.json
+    emp_nos = data.get('emp_nos')
+
+    # Create a session
+    session = Session()
+
+    try:
+        # Retrieve the employee records to be deleted
+        employees = session.query(Employee).filter(Employee.emp_no.in_(emp_nos)).all()
+
+        # Delete the employee records
+        for employee in employees:
+            session.delete(employee)
+
+        # Commit the changes to the database
+        session.commit()
+
+        return jsonify({'message': 'Employees deleted successfully'})
+    except Exception as e:
+        # Rollback the transaction if an error occurs
+        session.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        # Close the session
+        session.close()
+# Delete Department
 @app.route('/departments/<string:dept_no>', methods=['DELETE'])
 @jwt_required()
 def delete_department(dept_no):
@@ -705,147 +721,6 @@ def delete_department(dept_no):
         # Close the session
         session.close()
 
-# Delete Department Manager Endpoint
-@app.route('/dept_managers/<int:emp_no>', methods=['DELETE'])
-@jwt_required()
-def delete_department_manager(emp_no):
-    # Create a session
-    session = Session()
-
-    try:
-        # Retrieve the department manager record to be deleted
-        dept_manager = session.query(DeptManager).filter_by(emp_no=emp_no).first()
-        if not dept_manager:
-            return jsonify({'error': 'Department manager not found'}), 404
-
-        # Delete the department manager record
-        session.delete(dept_manager)
-
-        # Commit the changes to the database
-        session.commit()
-
-        return jsonify({'message': 'Department manager deleted successfully'})
-    except Exception as e:
-        # Rollback the transaction if an error occurs
-        session.rollback()
-        return jsonify({'error': str(e)}), 500
-    finally:
-        # Close the session
-        session.close()
-
-# Delete Department Assignment Endpoint
-@app.route('/employees/<int:emp_no>/departments', methods=['DELETE'])
-@jwt_required()
-def delete_department_assignment(emp_no):
-    # Create a session
-    session = Session()
-
-    try:
-        # Retrieve the department assignment record to be deleted
-        dept_assignment = session.query(DeptEmployee).filter_by(emp_no=emp_no).first()
-        if not dept_assignment:
-            return jsonify({'error': 'Department assignment not found'}), 404
-
-        # Delete the department assignment record
-        session.delete(dept_assignment)
-
-        # Commit the changes to the database
-        session.commit()
-
-        return jsonify({'message': 'Department assignment deleted successfully'})
-    except Exception as e:
-        # Rollback the transaction if an error occurs
-        session.rollback()
-        return jsonify({'error': str(e)}), 500
-    finally:
-        # Close the session
-        session.close()
-
-# Delete Employee Title Endpoint
-@app.route('/employees/<int:emp_no>/title', methods=['DELETE'])
-@jwt_required()
-def delete_employee_title(emp_no):
-    # Create a session
-    session = Session()
-
-    try:
-        # Retrieve the title record to be deleted
-        title_record = session.query(Title).filter_by(emp_no=emp_no).first()
-        if not title_record:
-            return jsonify({'error': 'Title record not found'}), 404
-
-        # Delete the title record
-        session.delete(title_record)
-
-        # Commit the changes to the database
-        session.commit()
-
-        return jsonify({'message': 'Title record deleted successfully'})
-    except Exception as e:
-        # Rollback the transaction if an error occurs
-        session.rollback()
-        return jsonify({'error': str(e)}), 500
-    finally:
-        # Close the session
-        session.close()
-
-# Delete Employee Salary Endpoint
-@app.route('/employees/<int:emp_no>/salary', methods=['DELETE'])
-@jwt_required()
-def delete_employee_salary(emp_no):
-    # Create a session
-    session = Session()
-
-    try:
-        # Retrieve the salary record to be deleted
-        salary_record = session.query(Salary).filter_by(emp_no=emp_no).first()
-        if not salary_record:
-            return jsonify({'error': 'Salary record not found'}), 404
-
-        # Delete the salary record
-        session.delete(salary_record)
-
-        # Commit the changes to the database
-        session.commit()
-
-        return jsonify({'message': 'Salary record deleted successfully'})
-    except Exception as e:
-        # Rollback the transaction if an error occurs
-        session.rollback()
-        return jsonify({'error': str(e)}), 500
-    finally:
-        # Close the session
-        session.close()
-
-# Delete Managerial Assignment Endpoint
-@app.route('/employees/<int:emp_no>/managerial_assignment', methods=['DELETE'])
-@jwt_required()
-def delete_managerial_assignment(emp_no):
-    # Create a session
-    session = Session()
-
-    try:
-        # Retrieve the managerial assignment record to be deleted
-        managerial_assignment_record = session.query(DeptManager).filter_by(emp_no=emp_no).first()
-        if not managerial_assignment_record:
-            return jsonify({'error': 'Managerial assignment record not found'}), 404
-
-        # Delete the managerial assignment record
-        session.delete(managerial_assignment_record)
-
-        # Commit the changes to the database
-        session.commit()
-
-        return jsonify({'message': 'Managerial assignment record deleted successfully'})
-    except Exception as e:
-        # Rollback the transaction if an error occurs
-        session.rollback()
-        return jsonify({'error': str(e)}), 500
-    finally:
-        # Close the session
-        session.close()
-
-
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000)
