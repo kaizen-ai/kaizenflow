@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    image: my_data605_project-notebook
+    environment:
+      - CMC_API_KEY=${CMC_API_KEY}
+      - ZOOKEEPER_HOST=app_zookeeper
+      - ZOOKEEPER_PORT=2181
+      - GITHUB_PAT=${GITHUB_PAT}
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "8888:8888"
+    depends_on:
+      - redis
+      - zookeeper
+    networks:
+      - app-network
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  zookeeper:
+    image: zookeeper
+    ports:
+      - "2182:2181"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
