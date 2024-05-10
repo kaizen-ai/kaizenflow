@@ -66,10 +66,34 @@ cd kaizenflow
 ### Utilize ZooKeeper and Redis
 - Connect to ZooKeeper within your Python code to manage configurations or state.
 - Use Redis for caching data to enhance performance.
+### Data
+- Cryptocurrencies Including:
+  - Bitcoin
+  - Ethereum
+  - Solana
+  - Injective
+  - Render
+  - Cardano
+  - Chainlink
+  - Polygon
+  - Decentrailized
+  - Axie Infinity
+  - Enjin Coin
+  
+Apparently the free version of kraken provides data from the beginnign of the year 2022  
 
 ### Data Analysis with Pandas
-- Load your data into Pandas DataFrames for analysis and visualization in Jupyter Notebook.
-
+- Load the data for 11 specified cryptos into Pandas DataFrames for the following analysis and visualization in Jupyter Notebook.
+  - Summary of statistics
+  - Diagram of Closing Prices Over Time 
+  - Histogram of Daily Percentage Change
+  - Correlation Matrix of Closing Prices
+  - Moving Averages
+  - Relative Strength Index (RSI)
+  - Bollinger Bands
+  - MACD Histogram
+  - Trend Analysis
+  - 
 ### Version Control
 - Use Git to manage and version your project code. Push updates to GitHub:
   ```bash
