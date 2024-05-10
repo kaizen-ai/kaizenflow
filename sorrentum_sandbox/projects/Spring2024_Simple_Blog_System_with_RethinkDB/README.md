@@ -4,7 +4,7 @@
 
 ## RethinkDB 
 
-RethinkDB is a NoSQL database designed to handle realtime data. This database stores JSON documents with dynamic schemas and is designed to facilitate pushing realtime updates for query results to applications. RethinkDB uses the ReQL query language, an embedded domain specific language. It is available for Ruby, Python, Java and JavaScript. Its has support for table joins, groupings, aggregations and functions. 
+RethinkDB is a NoSQL database designed to handle realtime data. This database stores JSON documents with dynamic schemas and is designed to facilitate pushing realtime updates for query results to applications. RethinkDB uses the ReQL query language, an embedded domain specific language. It is available for Ruby, Python, Java and JavaScript. It has support for table joins, groupings, aggregations and functions. 
 
 A distinguishing features of RethinkDB is the first class support for realtime change feeds. A change query returns a cursor which allows blocking or non blocking requests to keep track of a potentially infinite stream of realtime changes. 
 
