@@ -26,13 +26,18 @@ try:
     def generate_log_entry():
         
         # Generate a time offset from a normal distribution
-        mean = 6 * 3600  # Mean time in seconds (6 hours)
-        std = 2 * 3600  # Standard deviation in seconds (30 minutes)
+        mean = 10 * 3600  # Mean time in seconds (6 hours)
+        std = 4 * 3600  # Standard deviation in seconds (2 hours)
         offset_seconds = np.random.normal(mean, std)
-        offset_seconds = int(np.clip(offset_seconds, 0, 12 * 3600))  # Clip to range of 0 to 12 hours
+        offset_seconds = int(np.clip(offset_seconds, 0, 24 * 3600))  # Clip to range of 0 to 12 hours
 
         # Calculate the entry time
         entry_time = current_time - timedelta(seconds=offset_seconds)
+        # Introduce a chance for high response times
+        if random.random() < 0.005:  # 0.5% chance to have high response time
+            response_time = random.randint(2000, 5000)
+        else:
+            response_time = fake.random_int(min=5, max=1000)
 
         entry = {
             "timestamp": entry_time.strftime("%Y-%m-%dT%H:%M:%S"),
@@ -40,7 +45,7 @@ try:
             "method": random.choices(["GET", "POST", "DELETE", "PUT"], weights=[65, 22, 8, 5], k=1)[0],
             "endpoint": fake.uri_path(),
             "response_code": random.choices([200, 201, 404, 500], weights=[50, 30, 15, 5], k=1)[0],
-            "response_time": fake.random_int(min=5, max=1000)
+            "response_time": response_time
         }
         return entry
 
