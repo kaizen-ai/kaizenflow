@@ -6,12 +6,12 @@ Install and configure Neo4j, and create a Python script to load graph data into 
 
 [Watch the project video here](https://youtu.be/2khlbcsMUuQ)
 
-\*\*\*\*Please note that this project was changed with the Professor's Permission to use Neo4j rather than Allegrograph as originally intended. The original project description can be found at the end of this report.\*\*\*
-\## Technologies Used
+*Please note that this project was changed with the Professor's Permission to use Neo4j rather than Allegrograph as originally intended. The original project description can be found at the end of this report.*
+## Technologies Used
 This project used 3 primary technologies: Docker, Jupyter Notebook, and Neo4j.
-\### Docker
+### Docker
 Docker provides a containerized environment for running our project. This provides numerous advantages, most notably, it makes the project extremely portable, meaning it can easily be adapted for use in different environments and scales. Moving from a small scale container running on a PC can easily be scaled up to use on a dedicated rack or cloud environment.
-\### Jupyter Notebooks
+### Jupyter Notebooks
 Jupyter Notebooks provide a rich interactive environment for multiple programming languages, Python in the case of this project. It allows for mixed programming and presentation in the same document, allowing explanation, code, and output to all be visualized together easily.
 
 Python's immense library of packages allows for flexible usage in production environments, and in this case provides simple means of communicating with the database through the py2neo package.
