@@ -1,0 +1,8 @@
+# Leave out the infrastructure directory when building prod container.
+infra/
+# Leave out infra directory when amp is a submodule.
+amp/infra/
+# Leav out documentation directories, they can contain large files such as images.
+docs/
+docs_amp/
+documentation/

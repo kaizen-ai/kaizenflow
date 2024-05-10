@@ -1,0 +1,105 @@
+name: Supersuperslow tests
+on:
+  pull_request:
+    # https://github.community/t/dont-run-actions-on-draft-pull-requests/16817/19
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - master
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+  schedule:
+    # Run this once a day even if there are no commit.
+    - cron:  '0 0 */1 * *'
+
+jobs:
+
+  Run_superslow_tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Cleanup
+        run: sudo chmod 777 -R .
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          # TODO(gp): Not needed?
+          ssh-key: ${{ secrets.GH_ACTION_SSH_PRIVATE_KEY }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r .github/gh_requirements.txt
+
+      - name: Pull image
+        env:
+          AM_ECR_BASE_PATH: ${{ secrets.AM_ECR_BASE_PATH }}
+        run: invoke docker_pull
+
+      - name: Run superslow tests
+        env:
+          AM_ECR_BASE_PATH: ${{ secrets.AM_ECR_BASE_PATH }}
+          AM_AWS_S3_BUCKET: ${{ secrets.AM_AWS_S3_BUCKET }}
+          AM_TELEGRAM_TOKEN: ${{ secrets.AM_TELEGRAM_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          GH_ACTION_ACCESS_TOKEN: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
+        # https://github.community/t/dont-run-actions-on-draft-pull-requests/16817/19
+        # Do not run on draft pull requests.
+        if: github.event.pull_request.draft == false
+        run: invoke run_superslow_tests
+
+      - name: Post status if was triggered manually
+        if: ${{ always() && github.event_name == 'workflow_dispatch' }}
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{ secrets.GITHUB_TOKEN }}
+          context: "Run_superslow_tests"
+          description: 'Job is done (manual run)'
+          state: ${{ job.status }}
+          sha: ${{ github.sha }}
+          target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Send Telegram notification for success
+        if: ${{ success() && github.head_ref == 'master' }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
+          message: |
+            🎉 Superslow tests succeded at master
+            Build failure '${{ github.workflow }}'
+            Repo: '${{ github.repository }}'
+            Branch: '$${{ github.head_ref }}'
+            Event: '${{ github.event_name }}'
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Send Telegram notification for failure
+        if: ${{ failure() }}
+        #if: ${{ failure() && github.event_name == 'schedule' }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
+          message: |
+            💣 SUPERSLOW TESTS FAILED
+            Build failure '${{ github.workflow }}'
+            Repo: '${{ github.repository }}'
+            Branch: '$${{ github.head_ref }}'
+            Event: '${{ github.event_name }}'
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
