@@ -114,6 +114,7 @@ The mock database follows a simple JSON structure:
 
 ### Project Diagram
 [Link](https://mermaid.live/view#pako:eNplkU1ugzAQha9iedVKyQVYVGogJCRdVIWmC8hiBJPECtjIjPsTxN1rjJU2rTf2vO_N-Fnueakq5AE_1OqjPIEmlkWFZHY95hEQsFQZXWLAwnTHYlHjns3nD2xxl7agzyl2nVCSJVKQgFpcgGx5Pw1YOGfYZ-qMUlxQD5MeOj3KU1Ltm9JVx16wUe9Q7yceOb7MR8ZCZSR5sHQgzneiM9fLPIsdW9mhGqER8mg7JeEn_cnm7StnX1v7-ORrk6drR5P8WavSvtBzDxMHN__jbRzY3sZjr20FhN6ynQb7Yjw__Uqcobb7T0w-442VQFT2g_pRKTidsMGCB_ZY4QFMTQUv5GCtYEilX7LkAWmDM27cxZGAo4ZmEodvvxOd_g)
+![image](https://github.com/kaizen-ai/kaizenflow/assets/99992251/05cd32fe-687e-4dde-85f7-10b774386084)
 
 flowchart TD
     A[Data Source: CSV File] --> B(SparkSession Initialization)
