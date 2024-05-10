@@ -64,7 +64,7 @@ Spark is a key element of the Berkeley AMPLab Data Analytics Stack (BDAS),
 "an open source software stack that integrates software components being built 
 by the AMPLab to make sense of Big Data" (BDAS Info).
 
-*References*
+*References for this Section*
 
 BDAS Info: https://amplab.cs.berkeley.edu/software/
 
@@ -465,6 +465,7 @@ graph TD;
 ```
 
 *Notes on Environment*
+
 To ensure the project worked universally, I tested it in multiple environments,
 including a friend's MacBook Pro and virtual Linux on my Windows computer.
 Surprisingly, I was also able to get it to work natively in Windows with Docker
@@ -474,7 +475,9 @@ would have significantly exceeded timing guidelines if I were to type out each
 command manually.
 
 The video can be accessed via the following link:
+
 https://tinyurl.com/4pbxjrv7
 
-*References*
+*References for this Section*
+
 Stokel-Walker, 2023: https://tinyurl.com/4p5r22fs
