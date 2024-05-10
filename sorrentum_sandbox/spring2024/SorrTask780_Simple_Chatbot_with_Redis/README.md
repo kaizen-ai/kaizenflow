@@ -39,11 +39,13 @@ Link: https://drive.google.com/file/d/1hGhIeJZ1arcEJYY0HQFQdoVAvQIxujQm/view?usp
 
 ## Overview
 
- - The project aims to develop a simple chatbot application using Python, Flask framework for web development, Redis for caching responses, and Hugging Face's Transformers library for natural language processing
+ - The project aims to develop a simple chatbot for conversational purposes, and finetune it to give a more humanized response 
  
- - This system incorporates natural language processing techniques to enhance user interactions and offers a seamless conversational experience
+ - This application uses Python, Flask framework for web development, Redis for caching responses, and Hugging Face's Transformers library for Natural Language Processing
  
  - Users can engage with the chatbot through a web interface created using Flask, where their queries are processed in real-time
+
+ - This system incorporates NLP techniques to enhance user interactions and offers a seamless conversational experience
  
  - The chatbot utilizes Redis as a key-value store to map user queries to appropriate responses, enabling quick retrieval and facilitating a smooth conversation flow
  
@@ -55,7 +57,7 @@ Link: https://drive.google.com/file/d/1hGhIeJZ1arcEJYY0HQFQdoVAvQIxujQm/view?usp
 
 - The chatbot system receives the user input and processes it to understand the context of the message. This processing involves tokenization and encoding of the input text to prepare it for analysis and response generation
 
-- The processed user input is then passed through a natural language processing (NLP) model. In this project, the DialoGPT-medium model from Hugging Face Transformers is used for NLP tasks
+- The processed user input is then passed through a NLP model. In this project, the DialoGPT-medium model from Hugging Face Transformers is used for NLP tasks
 
 - DialoGPT is a conversational language model trained on large-scale conversational datasets, allowing it to generate human-like responses based on the input text
 
@@ -79,19 +81,14 @@ Link: https://drive.google.com/file/d/1hGhIeJZ1arcEJYY0HQFQdoVAvQIxujQm/view?usp
 
 - What is Flask?
     * It is a small and lightweight Python web framework that provides useful tools and features that make creating web applications in Python easier 
-
     * It provides tools and utilities for handling HTTP requests, routing, templating, and more, making it suitable for developing a wide range of web-based projects
 
 - Why is Flask better?
 
     * Flask's simplicity and minimalistic approach make it easy to start web development, for small to medium-sized projects, flask is a better option to work faster as it is lightweight and has flexible framework
-    
     * This lightweight design allows developers to have more control over their application structure and choose the components they need, resulting in greater flexibility and simplicity
-
     - I preferred Flask over FastAPI due to its simplicity, ease of use, and familiarity
-        
         + More suitable for projects with straightforward requirements, such as small to medium-sized web applications 
-
         + Flask's extensive documentation and large community make it easier to find resources and support when developing the project 
 
 - Pros
@@ -113,15 +110,12 @@ Link: https://drive.google.com/file/d/1hGhIeJZ1arcEJYY0HQFQdoVAvQIxujQm/view?usp
 - What is Redis?
 
     * Redis is an open-source, in-memory data structure store used as a database, cache, and message broker
-
     * It supports various data structures such as strings, hashes, lists, sets, and sorted sets, and provides powerful features like replication, persistence, and clustering
 
 - Why is Redis better?
 
     * Redis's in-memory nature allows for incredibly fast read and write operations, making it ideal for caching frequently accessed data and improving application performance
-
     * Its support for data structures and atomic operations enables efficient storage and retrieval of chatbot responses, making it ideal for caching dynamic content and session management in this project
-
     * Redis's simplicity and ease of use made it the best choice for to the project. It was easy to implement caching, session management, real-time analytics, and pub/sub messaging in their applications
 
 - Pros
@@ -169,22 +163,16 @@ Link: https://drive.google.com/file/d/1hGhIeJZ1arcEJYY0HQFQdoVAvQIxujQm/view?usp
 
 - What is Huggingface?
 
-    * Hugging Face is a machine learning (ML) and data science platform and community that helps users build, deploy and train machine learning models - it has over 120k models, 20k datasets, and 50k demos in which people can easily collaborate
-
+    * Hugging Face is a machine learning (ML) and data science platform and community that helps users build, deploy and train machine learning models it has over 120k models, 20k datasets, and 50k demos in which people can easily collaborate
     * Hugging Face is known for its Transformers Python library, which simplifies the process of downloading and training ML models
-    
     * The library gives developers an efficient way to include one of the ML models hosted on Hugging Face in their workflow and create ML pipelines
 
 - Why Huggingface and DialoGPT-medium model?
 
     * OpenAI models, like GPT-3 could have been better, but they come with certain limitations, such as API rate limits and potential costs associated with usage
-    
     * GPT-2 form Huggingface was another option - but it may struggle with maintaining context over longer conversations or in complex dialogue scenarios. GPT-2 has fewer parameters compared to larger models like GPT-3 or DialoGPT
-
     * DialoGPT-medium on the other hand is specifically designed and fine-tuned for conversational dialogue
-    
     * Unlike GPT-2, which trains on general text data, DialoGPT draws on 147M multi-turn dialogues extracted from Reddit discussion threads
-
     * It has the ability to maintain context over longer conversations and understand the nuances of human dialogue
 
 - Pros of Huggingface Transformers
@@ -202,7 +190,7 @@ Link: https://drive.google.com/file/d/1hGhIeJZ1arcEJYY0HQFQdoVAvQIxujQm/view?usp
 
 - In our Big Data Systems class, we learned about the importance of selecting the right tools and technologies for developing scalable and efficient applications
 - Flask, Redis, Docker, and Hugging Face Transformers are all examples of technologies that we have studied and utilized in our project
-- Hugging Face Transformers aligns with our study of pre-trained machine learning models, particularly for Natural Language Processing (NLP) tasks
+- Hugging Face Transformers aligns with our study of pre-trained machine learning models, particularly for NLP tasks
 - Redis corresponds to our exploration of in-memory data stores for efficient caching and data retrieval
 - Docker ties back to our discussions on containerization, a critical approach for scalable and portable deployments 
 
@@ -283,18 +271,15 @@ services:
 
 ### Containers involved
 
-- **Web Service Container**: This container runs the Flask application, serving as the frontend for the chatbot.
-
-- **Redis Container**: This container runs the Redis server, providing caching functionality for the chatbot responses.
+- **Web Service Container**: This container runs the Flask application, serving as the frontend for the chatbot
+- **Redis Container**: This container runs the Redis server, providing caching functionality for the chatbot responses
 
 <img src="images/docker.png" width="900" height="140" style="display: block; margin-left: auto; margin-right: auto;" />
 
 ### How do the containers communicate?
 
 - The containers communicate via Docker's internal networking
-
 - The Flask application running in the web service container communicates with the Redis server container using the standard Redis client-server communication protocol over TCP/IP
-
 - The Flask application sends requests to the Redis server to retrieve cached responses or store new responses, improving performance by reducing the need for repeated computation of responses
 
 <img src="images/flow.png" width="590" height="300" style="display: block; margin-left: auto; margin-right: auto;"/>
@@ -303,9 +288,7 @@ services:
 
 - This project utilizes Docker to run two containers: `chatbot-redis` for caching and `chatbot-web` for hosting the chatbot application
 
-- Open the docker desktop and ensure the engine is started
-
-- Open the terminal and navigate the project directory `sorrentum_sandbox/spring2024/SorrTask780_Simple_Chatbot_with_Redis`
+- Open the terminal and navigate to the project directory `sorrentum_sandbox/spring2024/SorrTask780_Simple_Chatbot_with_Redis`
 
 - Run the following command to build the containers
     ```bash
@@ -321,13 +304,19 @@ services:
 
     <img src="images/container.png" width="600" height="310" style="display: block; margin-left: auto; margin-right: auto;"/>
 
-- You can now interact with the chatbot by typing in the message box.
+- You can now interact with the chatbot by typing in the message box
 
 - Navigate back to Docker Desktop to view the built containers `chatbot-redis` and `chatbot-web`. It should ideally look like this:
 
     <img src="images/docker.png" width="900" height="140" style="display: block; margin-left: auto; margin-right: auto;"/>
 
-- To stop the containers, simple press `CLT+C` to stop the containers in terminal or use command 
+- Another option, open another terminal and enter the command to see the running containers
+
+    ```bash
+    docker ps
+    ```
+
+- To stop the containers, simply press `CLT+C` to stop the containers in terminal or use command 
     ```bash
     docker-compose down
     ```
