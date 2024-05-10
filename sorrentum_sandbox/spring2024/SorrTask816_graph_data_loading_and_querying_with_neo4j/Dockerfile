@@ -1,3 +1,4 @@
+# Base Jupyter Notebook Docker Image
 FROM jupyter/datascience-notebook
 
 # Disable authentication for JupyterLab
@@ -10,7 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 ENV JUPYTER_ENABLE_LAB=yes
 
-# Explicitly copy only necessary files
+# Copy files into jupyter environment
 COPY --chown=${NB_UID}:${NB_GID} ./notebooks /home/jovyan/work/analysis
 COPY --chown=${NB_UID}:${NB_GID} ./sh_nw /home/jovyan/work/data
 
