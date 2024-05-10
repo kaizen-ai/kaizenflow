@@ -1,0 +1,5 @@
+flask==1.1.2
+psycopg2-binary==2.8.6
+jupyter==1.0.0
+numpy==1.19.5
+pandas==1.1.5
