@@ -567,22 +567,12 @@ This concludes my project on using Neo4j and Jupyter Notebook in a Dockerized en
 ## Original Project Description
 
 Install and configure AllegroGraph, and create a Python script to load graph data into the database. Define a simple graph schema and insert sample data representing entities and relationships. Use AllegroGraph's SPARQL endpoint to execute basic graph queries and retrieve information from the database. Explore and present an innovative project.
-\## Works Cited
+## Works Cited
 
-::::::: {.csl-bib-body style="line-height: 2; padding-left: 1em; text-indent:-1em;"}
-::: {.csl-entry}
-Alberich, R., et al. <i>Marvel Universe Looks Almost like a Real Social Network</i>. 2002, https://doi.org/10.48550/ARXIV.COND-MAT/0202174.
-:::
-
-::: {.csl-entry}
-Conjeaud, Marius. "Py2neo Is End-of-Life -- A Basic Migration Guide." <i>Graph Database & Analytics</i>, 3 Nov. 2023, https://neo4j.com/developer-blog/py2neo-end-migration-guide/.
-:::
-
-::: {.csl-entry}
-Jensen, Daron. <i>Marvel Chronology Project</i>. https://www.chronologyproject.com/. Accessed 10 May 2024.
-:::
-
-::: {.csl-entry}
-Terrill, Gavin. "Neo4j - an Embedded, Network Database." <i>InfoQ</i>, 5 June 2008, https://www.infoq.com/news/2008/06/neo4j/.
-:::
-:::::::
+<?xml version="1.0"?>
+<div class="csl-bib-body" style="line-height: 2; padding-left: 1em; text-indent:-1em;">
+  <div class="csl-entry">Alberich, R., et al. <i>Marvel Universe Looks Almost like a Real Social Network</i>. 2002, https://doi.org/10.48550/ARXIV.COND-MAT/0202174.</div>
+  <div class="csl-entry">Conjeaud, Marius. &#x201C;Py2neo Is End-of-Life &#x2013; A Basic Migration Guide.&#x201D; <i>Graph Database &amp; Analytics</i>, 3 Nov. 2023, https://neo4j.com/developer-blog/py2neo-end-migration-guide/.</div>
+  <div class="csl-entry">Jensen, Daron. <i>Marvel Chronology Project</i>. https://www.chronologyproject.com/. Accessed 10 May 2024.</div>
+  <div class="csl-entry">Terrill, Gavin. &#x201C;Neo4j - an Embedded, Network Database.&#x201D; <i>InfoQ</i>, 5 June 2008, https://www.infoq.com/news/2008/06/neo4j/.</div>
+</div>
