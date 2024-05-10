@@ -18,7 +18,6 @@ st.title("Events Information Dashboard")
 @st.cache_data
 def load_cache_data():
     data = pd.read_csv('events.csv')
-
     # Store data in redis.
     store_data(data)
     return data
@@ -27,7 +26,6 @@ def load_cache_data():
 def store_data(data, batch_size=100000):
     # Convert DataFrame to dictionary.
     data_dict = data.to_dict(orient='records')
-    
     # Split data into batches.
     for i in range(0, len(data_dict), batch_size):
         batch = data_dict[i:i + batch_size]
@@ -63,16 +61,12 @@ with st.spinner("Loading data & visualizations..."):
 with st.sidebar:
     #  Sidebar title.
     st.title('Looker ecommerce website dashboard')
-
     # Option to select all years.
     year_list = ['All Years'] + sorted(events_data['year'].unique())
-
     # Select years from the data.
     selected_year = st.selectbox('Select a year', year_list, index=0)  # Set index to 0 for "All Years"
-
     # Filter data based on the selected year.
     data_year_selected = filter_data(events_data, selected_year)
-
     # Select a color theme.
     color_theme_list = ['blues', 'cividis', 'greens', 'inferno', 'magma', 'plasma', 'reds', 'rainbow', 'turbo', 'viridis']
     selected_color_theme = st.selectbox('Select a color theme', color_theme_list)
@@ -124,11 +118,9 @@ def make_faceted_plot(input_df, y_column, faceting_column, selected_color_scheme
 def line_plot(input_df, x_column, y_column, selected_color_scheme):
     # Group by 'year', 'month', and 'traffic_source', and count the records.
     traffic_counts = input_df.groupby([x_column, y_column]).size().unstack(fill_value=0).reset_index()
-
     # Melt the dataframe to have each traffic source as a separate row
     traffic_counts_melted = pd.melt(traffic_counts, id_vars=[x_column], value_vars=list(traffic_counts.columns[1:]),
                                     var_name=y_column, value_name='Count')
-
     # Create a custom color scheme based on the selected theme.
     if selected_color_scheme == 'blues':
         color_scheme = alt.Scale(scheme='blues')
@@ -158,14 +150,12 @@ def line_plot(input_df, x_column, y_column, selected_color_scheme):
         color=alt.Color(y_column, scale=color_scheme),
         tooltip=[x_column, 'Count']
     )
-
     # Create a scatter plot for dots.
     scatter_chart = alt.Chart(traffic_counts_melted).mark_circle(color='black').encode(
         x=alt.X(x_column, type='ordinal'),
         y='Count',
         size=alt.value(50)  # Size of dots
     )
-
     # Combine line chart and scatter plot.
     chart = (line_chart + scatter_chart).properties(
         width=700,
@@ -217,10 +207,8 @@ def highest_count_summary(input_df):
     # Group by 'year', 'event_type', 'traffic_source', and 'browser', and count the records.
     summary_df = input_df.groupby(['year', 'event_type', 'traffic_source', 'browser']).size().reset_index()
     summary_df.columns = ['year', 'event_type', 'traffic_source', 'browser', 'count']
-
     # Get the rows with the highest count for each year.
     summary_df = summary_df.loc[summary_df.groupby('year')['count'].idxmax()]
-
     # Reset index and rename columns.
     summary_df.reset_index(drop=True, inplace=True)
     summary_df.rename(columns={'event_type': 'highest_count_event_type',
@@ -243,7 +231,6 @@ def display_unique_visitors(input_df, column_name):
 
         unique_visitors_event_type = temp_df['ip_address'].nunique() 
         events[i] = unique_visitors_event_type
-
     # Define box colors based on selected color theme.
     box_colors = {
         'blues': '#1f77b4',
@@ -261,7 +248,6 @@ def display_unique_visitors(input_df, column_name):
     # Get the selected color for the boxes.
     # Default color if not found.
     selected_color = box_colors.get(selected_color_theme, '#1f77b4') 
-
     # CSS styling for the box.
     box_style = f"""
         background-color: {selected_color};
@@ -277,7 +263,6 @@ def display_unique_visitors(input_df, column_name):
         subheader_style = "font-size: small;"
         # Text for the boxes with line breaks.
         text_box = f"{event}<br>{unique_value}"
-
         # Render the boxes with text.
         st.write(f'<div style="{box_style}">{text_box}</div>', unsafe_allow_html=True)
 
@@ -309,7 +294,6 @@ def make_pie_chart(input_df, input_column, selected_color_theme):
         color_scheme = alt.Scale(scheme='turbo')
     elif selected_color_theme == 'viridis':
         color_scheme = alt.Scale(scheme='viridis')
-
     # Create an interactive pie chart using Altair with custom color scheme.
     chart = alt.Chart(traffic_counts).mark_arc().encode(
         color=alt.Color('traffic_source', scale=color_scheme),

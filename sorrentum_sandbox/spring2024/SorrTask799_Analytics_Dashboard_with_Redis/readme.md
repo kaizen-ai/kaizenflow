@@ -29,7 +29,11 @@ Video link: https://drive.google.com/file/d/1k4E3Nsww60D7xhM1iD41osw4uuYuamMY/vi
 
 ## Technologies
 ### Redis
-* Redis is an open-source, in-memory data structure store that can be used as a database, cache, and message broker. It provides a key-value store where keys can be strings, hashes, lists, sets, sorted sets etc. It stores data primarily in memory, making it extremely fast for read and write operations compared to disk-based databases like traditional SQL databases. It supports various data structures and provides built-in commands for operations on these structures making it versatile for different use cases compared to simple key-value stores. Redis can be used for caching frequently accessed data, and as a database for storing application data. \
+* Redis is an open-source, in-memory data structure store that can be used as a database, cache, and message broker. 
+* It provides a key-value store where keys can be strings, hashes, lists, sets, sorted sets etc. 
+* It stores data primarily in memory, making it extremely fast for read and write operations compared to disk-based databases like traditional SQL databases. 
+* It supports various data structures and provides built-in commands for operations on these structures making it versatile for different use cases compared to simple key-value stores. 
+* Redis can be used for caching frequently accessed data, and as a database for storing application data. \
     <ins>Pros: </ins>
     * **Speed:** It is extremely fast due to its in-memory storage and optimized data structures.
     * **Versatile:** It doesn't only support the String data type, rather it supports more complex data structures such as lists, hashes, sets and sorted sets.
@@ -43,7 +47,8 @@ Video link: https://drive.google.com/file/d/1k4E3Nsww60D7xhM1iD41osw4uuYuamMY/vi
 
 
 ### Streamlit
-Streamlit is an open-source Python library that allows developers to create web applications quickly and easily using Python scripts. With just a few lines of code, one can create dynamic, visually appealing apps that allow users to input data and view the results in real-time. Developers can write Python code to create data visualizations, interactive widgets, and entire web applications without needing to write HTML, CSS, or JavaScript.
+* Streamlit is an open-source Python library that allows developers to create web applications quickly and easily using Python scripts. With just a few lines of code, one can create dynamic, visually appealing apps that allow users to input data and view the results in real-time. 
+* Developers can write Python code to create data visualizations, interactive widgets, and entire web applications without needing to write HTML, CSS, or JavaScript.
 
 <ins>Pros:</ins>
 * **Python Integration:** It is completely written in python making it really easy adn comfortable for python developers to work with.
@@ -57,7 +62,10 @@ Streamlit is an open-source Python library that allows developers to create web 
 * **Dependency on Python:** Since it is Python-centric, developers must be proficient in Python to use it effectively, which may limit its adoption in teams with diverse skill sets.
 
 ### Altair
-Altair is a statistical visualization library in Python. It is a declarative in nature and is based on Vega and Vega-Lite visualization grammars. It allows users to create interactive visualizations quickly and easily using a concise and expressive syntax. Altair generates Vega-Lite specifications behind the scenes, which are then rendered as interactive visualizations in web browsers.
+* Altair is a statistical visualization library in Python. 
+* It is a declarative in nature and is based on Vega and Vega-Lite visualization grammars. 
+* It allows users to create interactive visualizations quickly and easily using a concise and expressive syntax. 
+* Altair generates Vega-Lite specifications behind the scenes, which are then rendered as interactive visualizations in web browsers.
 
 <ins>Pros:</ins>
 * **Interactive Visualizations:** It generates interactive visualizations by default, allowing users to explore data dynamically by panning, zooming, and interacting with elements.
@@ -69,7 +77,9 @@ Altair is a statistical visualization library in Python. It is a declarative in 
 * **Dependency on Web Technologies:** Altair relies on web technologies like JavaScript for rendering visualizations in web browsers, which may introduce dependencies and compatibility issues.
 
 ### Docker
-Docker is a platform that enables developers to build, ship, and run applications in lightweight, portable containers. It packages applications and their dependencies into isolated, self-sufficient containers. The containers are lightweight and portable, making it easy to deploy applications consistently across different environments, from development to production.
+* Docker is a platform that enables developers to build, ship, and run applications in lightweight, portable containers. 
+* It packages applications and their dependencies into isolated, self-sufficient containers. 
+* The containers are lightweight and portable, making it easy to deploy applications consistently across different environments, from development to production.
 
 <ins>Pros:</ins>
 * **Portable:** Docker containers can run on any platform that supports Docker, making it easy to deploy applications across different environments, from development laptops to cloud servers.
@@ -90,15 +100,15 @@ Project setup:
 |   |--inventory_dashboard.py 
 |--Users_dashboard.py
 |--users.csv
-|--events_updated.csv
+|--events.csv
 |--inventory.csv
 |--requirements.txt
 |--Dockerfile
 |--docker-compose.yml
 ```
 * Main-pages
-    * The main page is `Users_dashboard.py` which has be run in order to run the webpage. 
-    * `Dockerfile`: contains the istructions for building the image.
+    * The main page is `Users_dashboard.py` which has to be run in order to run the webpage. 
+    * `Dockerfile`: contains the instructions for building the image.
     * `docker-compose.yml`: Defines the services, ports for the Docker containers. 
 
 * `Dockerfile` configuration:
@@ -136,9 +146,9 @@ Project setup:
     ```
 * `docker-compose.yml` file configuration
     * Configure docker-compose.yml file to define the services required for this service.
-        * Define the two services redis and streamlit
-        * Use redis image `redis`
-        * Map port `8501` for the streamlit server to run.
+        * Define the two services redis and streamlit.
+        * Use redis image `redis`.
+        * Map port `8501` for the streamlit server to run on.
 
     ```
     version: '3'
@@ -155,34 +165,63 @@ Project setup:
     ```
 ### Running the project
 * Building the docker image:
-    * Execute `docker build -t <image name> .` to build the docker image. Use any name of your choice for <image name>
+    * Execute `docker build -t <image_name> .` to build the docker image. Use any name of your choice for `<image_name>`
 * Running the docker container:
     * Execute `docker-compose up` to start the docker container.
     * You can see the streamlit app at `http://localhost:8501/` in a browser.
-* After the plots load you will be able to interact with the plots by selecting certain years for the plots to change accordingly and also selecting different color palettes for the plots.
+* After the plots load you will be able to interact with the plots by selecting certain years for the plots in the left side panel to change accordingly and also selecting different color palettes for the plots.
 * You will be able to navigate to different dashboards using the left side panel of the web page. 
 * Stopping the docker container:
-    * Press `ctrl + c` to get out of the container. Alternatively you can execute `docker-compose down` to stop the container.
+    * Press `ctrl + c` in you terminal (where the project is running) to get out of the container. Alternatively you can execute `docker-compose down` to stop the container.
 * Check if the container has stopped or not:
     * To check if your container stopped or not execute `docker ps -a` to get a list of all the docker containers.
-    * The container has stopped if it status says `Exited`. 
-    * You can remove the image of any container by executing `docker rm <container id>`. You will be able to find the container id when you execute `docker ps -a`.
+    * The container has stopped if the status of the containre says `Exited`. 
+    * You can remove the image of any container by executing `docker rm <container_id>`. You will be able to find the container id when you execute `docker ps -a`.
 
 ## Project overview
 The project contains three different dashboards that show insights into different data related to the e-commerce website. You can select an year from the drop down on the left side panel of the webpage to filter the data to shows plots related to that particular year. You can also change the color palette of the plots using the drop down in the same side panel. Additionally, you can also make the plots appear in full screen as well as download png, svg images of them.
 ### Python script
-The project includes three python files `Users_dashboard.py`, `events_dashboard.py`, `Inventory_dashboard.py` for the three dashboards. All the python files are divided into 3 big parts.
-#### Part 1
+The project includes three python files `Users_dashboard.py`, `events_dashboard.py` and `Inventory_dashboard.py` for the three dashboards. All the python files are divided into 3 sections.
+#### Section 1
 * Connecting to redis: 
     * We begin by connecting to the redis client to store data for the visuailzations. We are creating a connection to a Redis server running locally on the default port `6379`.
+    ```
+    # Connect to Redis.
+    redis_client = redis.Redis(host='localhost', port=6379, db=0)
+    ```
 * Read and store the data:
     * After establishing the connection we are reading the data from a `.csv` file and storiing it in redis using the functions `load_cache_data()` and `store_data()` respectively. 
-    * TO optimize performance we are storing data in batches. We are using `redis_client.pipeline()` to execute multiple commands in a single round trip to the server improving efficiency.
+    * To optimize performance we are storing data in batches. We are using `redis_client.pipeline()` to execute multiple commands in a single round trip to the server improving efficiency.
     * We are iterating over each record in the batch and are converting it into a Redis Hash using `hmset()`.
+    ```
+    # Function to store data in Redis.
+    def store_data(data, batch_size=10000):
+        # Convert DataFrame to dictionary.
+        data_dict = data.to_dict(orient='records')
+        # Split data into batches.
+        for i in range(0, len(data_dict), batch_size):
+            batch = data_dict[i:i + batch_size]
+            with redis_client.pipeline() as pipe:
+                for record in batch:
+                    # Store each record in Redis hash.
+                    pipe.hmset(f"user:{record['id']}", record)
+                pipe.execute()
+    ```
 * Get the data:
     * We are retrieving data from Redis and are constructing a DataFrame from it.
+    ```
+    # Function to retrieve data from Redis.
+    def get_data():
+        data = []
+        # Retrieve all keys matching 'user:*'.
+        keys = redis_client.keys("user:*")
+        for key in keys:
+            # Retrieve data for each user and append to list.
+            data.append(redis_client.hgetall(key))
+        return pd.DataFrame(data)
+    ```
 
-#### Part 2
+#### Section 2
 * The second part of the python file contains different functions that are used to make visualizations using the retreived data. 
 * `Altair` was used to make interactive visualizations. 
 * An example of a visualization:
@@ -228,10 +267,10 @@ def make_pie_chart(input_df, input_column, selected_color_theme):
     return chart
 ```
 
-#### Part 3
+#### Section 3
 * In the last part of the code we split the webpage into three different columns for building the dashboard.
 * Functions were called in the respective columns to display the visualizations as a dashboard.
-* An example of function calls
+* An example of function calls.
 ```
 # APP LAYOUT.
 # Creating columns (3 columns).
@@ -281,8 +320,10 @@ Here are the screenshots of the dashboards you will be able to see on the webpag
 
 <img src="outputs/Events_dashboard_output.png" alt="Inventory Dashboard Output" width="1000"/>
 
-<img src="outputs/Inventory_dashboard_output.png" alt="Inventory Dashboard Output" width="1000"/>
+<img src="outputs/Inventory_dashboard_output.png" alt="Inventory Dashboard Output" width="1000"/> <br /><br />
 
+The complete dashboard without the left side panel.
+<img src="outputs/Events_complete_dashboard.png" alt="Inventory Dashboard Output" width="1000"/>
 
 ## Conclusion
 To conclude, this project builds an analytics dashboard using Streamlit and Redis, offering comprehensive insights into website traffic data of Looker an e-commerce website. Leveraging Redis for efficient data storage and aggregation, the dashboard provides detailed metrics, customizable date ranges and colors. With its user-friendly interface and efficient caching mechanisms, the dashboard stands as a valuable tool for understanding the nuances of data.
