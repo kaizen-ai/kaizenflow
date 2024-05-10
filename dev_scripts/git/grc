@@ -1,9 +1,0 @@
-#!/bin/bash -e
-
-# """
-# > git rebase --continue
-# """
-
-source helpers.sh
-
-execute "git rebase --continue"

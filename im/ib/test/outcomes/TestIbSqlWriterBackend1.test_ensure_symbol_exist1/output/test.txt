@@ -1,2 +1,0 @@
-                                            code description asset_class symbol_base
-TestIbSqlWriterBackend1test_ensure_symbol_exist1        None     Futures        None

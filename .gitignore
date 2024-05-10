@@ -1,5 +1,0 @@
-.DS_Store   # macOS hidden files.
-.idea
-.ipynb_checkpoints
-__pycache__
-.dockerignore

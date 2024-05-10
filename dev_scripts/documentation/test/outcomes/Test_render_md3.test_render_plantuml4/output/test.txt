@@ -1,6 +1,0 @@
-```plantuml
-@startuml
-Alice --> Bob
-@enduml
-```
-![](plantuml-images/out.1.png)

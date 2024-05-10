@@ -1,3 +1,0 @@
-## docker_kill: all=False
-docker ps -l
-docker rm -f $(docker ps -l -q)

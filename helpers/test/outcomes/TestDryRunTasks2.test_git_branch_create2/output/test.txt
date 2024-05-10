@@ -1,3 +1,0 @@
-call('git pull --autostash --rebase')
-call('git checkout -b SorrTask1_Predict_large_asset_movements_with_NLP')
-call('git push --set-upstream origin SorrTask1_Predict_large_asset_movements_with_NLP')

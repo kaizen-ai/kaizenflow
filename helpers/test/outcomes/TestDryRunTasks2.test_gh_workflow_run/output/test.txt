@@ -1,2 +1,0 @@
-call('gh workflow run fast_tests.yml --ref AmpTask1310_Implement_RH1E')
-call('gh workflow run slow_tests.yml --ref AmpTask1310_Implement_RH1E')

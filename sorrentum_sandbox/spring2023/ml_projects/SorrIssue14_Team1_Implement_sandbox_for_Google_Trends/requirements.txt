@@ -1,7 +1,0 @@
-dask
-matplotlib
-pandas
-pmdarima
-psycopg2_binary
-python-dotenv
-statsmodels

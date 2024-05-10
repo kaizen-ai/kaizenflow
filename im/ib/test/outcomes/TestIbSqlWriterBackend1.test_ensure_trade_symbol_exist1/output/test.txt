@@ -1,2 +1,0 @@
- exchange_id  symbol_id
-          20         10
