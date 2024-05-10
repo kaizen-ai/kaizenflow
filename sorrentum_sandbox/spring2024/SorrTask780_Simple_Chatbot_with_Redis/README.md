@@ -35,7 +35,7 @@
 
 ## Link to the video explanation
 
-Link: https://drive.google.com/file/d/1MU_h2R_SFE9Pij2diYzNY5NxoQxUeuSO/view?usp=sharing
+Link: https://drive.google.com/file/d/1hGhIeJZ1arcEJYY0HQFQdoVAvQIxujQm/view?usp=sharing
 
 ## Overview
 
@@ -287,7 +287,7 @@ services:
 
 - **Redis Container**: This container runs the Redis server, providing caching functionality for the chatbot responses.
 
-<img src="images/image.png" width="900" height="140" style="display: block; margin-left: auto; margin-right: auto;" />
+<img src="images/docker.png" width="900" height="140" style="display: block; margin-left: auto; margin-right: auto;" />
 
 ### How do the containers communicate?
 
@@ -301,7 +301,7 @@ services:
 
 ## How to run the project?
 
-- This project utilizes Docker to run two containers: `chatbot-redis-1` for caching and `chatbot-web-1` for hosting the chatbot application
+- This project utilizes Docker to run two containers: `chatbot-redis` for caching and `chatbot-web` for hosting the chatbot application
 
 - Open the docker desktop and ensure the engine is started
 
@@ -323,19 +323,18 @@ services:
 
 - You can now interact with the chatbot by typing in the message box.
 
-- Navigate back to Docker Desktop to view the built containers `chatbot-redis-1` and `chatbot-web-1`. It should ideally look like this:
+- Navigate back to Docker Desktop to view the built containers `chatbot-redis` and `chatbot-web`. It should ideally look like this:
 
-    <img src="images/image.png" width="900" height="140" style="display: block; margin-left: auto; margin-right: auto;"/>
-
+    <img src="images/docker.png" width="900" height="140" style="display: block; margin-left: auto; margin-right: auto;"/>
 
 - To stop the containers, simple press `CLT+C` to stop the containers in terminal or use command 
     ```bash
     docker-compose down
     ```
 
-- Open another terminal window and run the following command to access the Redis CLI within the `chatbot-redis-1` container 
+- Open another terminal window and run the following command to access the Redis CLI within the `chatbot-redis` container 
     ```bash
-    docker exec -it chatbot-redis-1 redis-cli
+    docker exec -it <redis container name e.g. chatbot-redis> redis-cli
     ```
 - Once inside the Redis CLI, enter the following command to view the cached data
     ```bash
