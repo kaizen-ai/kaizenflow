@@ -295,7 +295,7 @@ services:
     docker-compose up --build
     ```
 
-- Next time when you run the code, you can run the container with the below command, as it is already built
+- Next time when you run the code, you can run the containers with the below command, as it is already built
     ```bash
     docker-compose up
     ```
