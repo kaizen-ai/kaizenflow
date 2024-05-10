@@ -4,7 +4,8 @@ services:
   neo4j:
     image: neo4j:4.2.3-enterprise
     container_name: "neo-gds"
-    #volumes:
+    #Commented out as it is no longer needed, but shows how to specify volumes for Neo4j to access directly
+    #volumes: Commented out as is no longer needed
       #- ./sh_nw:/data
       #- ./sh_nw:/var/lib/neo4j/import
     ports:
@@ -25,7 +26,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    user: root  # Run the container as root temporarily
+    user: root  
     ports:
       - "8888:8888"
     volumes:
