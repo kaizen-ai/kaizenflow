@@ -252,7 +252,11 @@ Longest Tweet in this batch: 270 characters
 
 All Batches Processed! Run Again for More Data
 ```
-The warnings are to be expected and do not affect the code output.
+The warnings are to be expected and do not affect the code output.  To
+terminate and run again, simply press Ctrl+C (Command + C on Mac) and re-enter
+the "python main_app.py" command.  You will see an error message after pressing
+Ctrl+C, but this is expected, and related to the stoppage of the stream
+(similar to a keyboardInterrupt).
 
 *To view the notebook*
 
@@ -459,6 +463,18 @@ graph TD;
 	A --> G[Output]
 	D --> G
 ```
+
+*Notes on Environment*
+To ensure the project worked universally, I tested it in multiple environments,
+including a friend's MacBook Pro and virtual Linux on my Windows computer.
+Surprisingly, I was also able to get it to work natively in Windows with Docker
+Desktop running--I used this environment for my video demonstration, since 
+VMWare does not allow copy/paste from the local environment, and the video
+would have significantly exceeded timing guidelines if I were to type out each
+command manually.
+
+The video can be accessed via the following link:
+https://tinyurl.com/4pbxjrv7
 
 *References*
 Stokel-Walker, 2023: https://tinyurl.com/4p5r22fs
