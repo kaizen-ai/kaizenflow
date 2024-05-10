@@ -79,7 +79,7 @@ cd kaizenflow
   ```
 
 3. **Environment Setup**:
-- Copy the `.env.example` file to `.env` and modify it according to your local environment settings.
+- Copy the `GITHUB_PAT=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` file to `.env` and modify it according to your local environment settings.
 
 4. **Running the Application**:
 - To start the application:
@@ -89,8 +89,7 @@ cd kaizenflow
 - Access the application via `localhost:PORT` where `PORT` is the port specified in your Docker or environment settings.
 
 ### Additional Configuration
-.enf file:
-GITHUB_PAT=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
+
 
 ### Installation Steps
 1. **Clone the Repository**:
