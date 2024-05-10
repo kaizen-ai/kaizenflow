@@ -117,6 +117,7 @@ This line of code connects to rethinkdb which is running on a container called *
 Then run the app.py script
 
 - >python3.8 app.py
+  
 This will run the code and displays links to rethinkdb web interface and the web application as the output.
 
 - cmd + click http://127.0.0.1:5001 will open the web application.
