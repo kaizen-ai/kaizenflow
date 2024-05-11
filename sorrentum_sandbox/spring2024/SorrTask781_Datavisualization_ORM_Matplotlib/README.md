@@ -271,7 +271,7 @@ sequenceDiagram
 The Supermarket Sales Analysis and Prediction Project uses advanced technologies like SQLAlchemy ORM, Matplotlib, Flask, and Docker to analyse sales data, create predictive models, and deploy scalable applications. By integrating these technologies, the project provides a comprehensive approach to data science and web development, solving issues with data analysis, visualisation, and deployment. With its clear logical framework and realistic examples, the project is an excellent resource for understanding modern software engineering processes and data-driven decision-making in real-world circumstances.
 
 
-## References:
+## 7. References:
 
 - Dataset: https://www.kaggle.com/datasets/lovishbansal123/sales-of-a-supermarket
 - SQLALchemy: https://tangelo.readthedocs.io/en/v0.10/tutorials/db-vis.html
