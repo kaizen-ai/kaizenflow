@@ -24,6 +24,8 @@
 ## Project Description 
 The URL Shortener project is a web application designed to simplify the process of sharing and managing long URLs. It provides users with the ability to shorten lengthy URLs into concise and easily shareable links. This project utilizes modern web development technologies, including Flask for the backend framework, Redis for data storage, bcrypt for password hashing, and Docker for containerization. Key features of the application include URL shortening with custom aliases and expiration dates, user authentication for secure access, and an analytics dashboard for monitoring URL access counts.
 
+Video Link : https://drive.google.com/file/d/18zD7XL48EXmUyop6Joz6w2j0dvjUnHru/view?usp=sharing
+
 ## Technologies
 
 ### Redis:
