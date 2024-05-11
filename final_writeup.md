@@ -1,0 +1,77 @@
+---
+title: Developing a Distributed Messaging System for Hospitals with ZeroMQ
+author: Margaret Kimbis
+date: May 5, 2024
+---
+# Developing a Distributed Messaging System for Hospitals with ZeroMQ
+
+## Introduction
+>   When tasked with utilizing ZeroMQ to create a distributed messaging system, I wanted to relate the project to my own personal interests. I obtained my undergraduate degree in Psychology with a minor in Neuroscience. Through my professional career, I have explored my interests in psychiatric and developmental disorders, and my goal is to explore whether we can utilize data science to improve diagnosis and treatment methods within the mental health industry. In order to integrate my personal and professional interests in this project I created a distributed messaging system to be used within a psychiatric hospital to facilitate communication between patients and caregivers. While many patients residing in these facilities do not have access to phones or other devices, I wanted to come up with an easy way for the hospital staff to send daily updates to patients' families in lieu of limited communication. In this scenario, there are 25 patients. Caregivers have the ability to subscribe to individual patients, psychiatrists can subscribe to multiple patients, and the administration can subscribe to all patients for record keeping purposes. 
+
+## What is ZeroMQ?
+>ZeroMQ is a free asynchronous messaging library that supports a wide variety of messaging patterns including: pub-sub, task distribution and request and reply. This library is universal allowing programmers or data scientists to utilize this tool on any platform, and can carry messages at high speeds without the use of a message broker (ZeroMQ, 2024). 
+> ZeroMQ can be used in conjunction with many common tools used for big data systems. First, the messaging application can be built within a container using Docker to make sharing across platforms more efficient. It can also help facilitate communication between multiple containers. This package can also be utilized within a data pipeline. One of the main problems with pipelines is the orchestration problem because data pipelines require coordination across systems (Saggese, 2024). This library can be used for monitoring the pipeline, by notifying devops of failure, publishing status updates, or using fault tolerance to send error messages in the case of publisher failure.
+> Although ZeroMQ is a useful tool, there are a wide variety of other messaging libraries  including RabbitMQ, Redis, ActiveMQ, NATS, etc. RabbitMQ, ActiveMQ and NATS all use message brokers. ZeroMQ is a better option for applications that do not require a message broker, decentralized systems, or when less management capabilities are required. Message brokers are commonly integrated into the architecture of messaging systems to assist with processing asynchronous messages, data loss, managing multiple platforms and handling cues. They are beneficial for fault tolerance but often have difficulty being scaled for cloud services (What is a Message Broker, 2024) but are useful for handling data storage. Since ZeroMQ lacks a message broker, RabbitMQ, ActiveMQ and NATS would be more suitable for complex systems requiring a message broker, as they provide more management abilities. Consequently ZeroMQ is better for lightweight systems where a package like RabbitMQ would be overly complex (RabbitMQ vs ZeroMQ, n.d). Another popular alternative is Redis. Redis is another messaging system, but is fundamentally different from ZeroMQ. Redis is a key-valued storage system (Chen et.al, 2016), while ZeroMQ sendings messages between nodes without requiring data storage. While both systems can support a publisher/subscriber model, Redis tends to support a more complex publisher/subscriber pattern. Now that the benefits of ZeroMQ have been established, it is a good option for implementation of this project due to its lightweight neature, no need for a message broker, and easy maintenence. 
+
+## Docker
+> Docker is a platform that aids in the development and collaboration of applications. A container is an isolated environment that has everything necessary to run the application, so that other users do not need to install any dependencies (Docker Overview, 2013). This makes it easy for sharing across platforms.
+> The code is run directly in the terminal window, thus a dockerfile is not necessary for operation but is a useful tool for sharing. The first step was to create the publisher and subscriber files so that they could later be copied into the dockerfile.  Once this was completed the dockerfile was created. In the beginning of the dockerfile, the base image is designated to python:3.8-slim. For this system there are two containers, so two dockerfiles have been developed. The dockerfile sets the working directory to be within the desired container. 
+> A requirements.txt file was also added to the directory to install any packages that would be required to run the messaging system. This ensures that users will not have to download any dependencies to their system because it is already installed in the dockerfile. In order to add those into the container, the system will run `pip install` on the requirements.txt file. Once the container is started it will automatically start running the publisher file based on the CMD command, and the docker image is built locally on port 8888. If another user wants to run this on another device they will use the IP address of the machine the container was built on rather than using the local host.
+> Building the container occurs in the terminal by specifying the working directory, followed by running the docker build command. This command specifies the desired name for the container. Once the docker container is created `docker run -it` can be run in the terminal to start the container. Based on the CMD command in the Dockerfile, running the container should automatically start the publisher file. There will be no output when the publisher file is run as there will only be output once a subscriber is connected to the publisher. A second dockerfile was created for one of the subscribers the same way as the publisher, except the CMD command now specifies the sub_patient1.py file instead of the pub file. In order to connect the two containers,they both were connected to a network by using this command: docker network create my-network. The publisher and subscriber containers are then started within the network, and should be able to communicate with each other this way.
+graph LR;
+    Publisher_File --> Publisher_Container;
+    Subscriber_File --> Subscriber_Container;
+    Publisher_Container --> Network;
+    Subscriber_Container --> Network;
+> Once both the publisher and subscriber are running within the network, the publisher should then begin sending messages to the subscriber and will output the message that is dependent on which subscriber was specified in the CMD command. An example output is as follows: “Dear Caregiver, on 2024-05-11 12:00:002024-05-11 12:00:00: your patient Patient_1 received 25 mg of Klonopin. The patient reported having Suicidal thoughts and feelings of anger. If you have any questions or concerns please call our facility at 240-123-4567 or email umdpsychiatrics@gmail.com!”
+
+## Building the PUB/SUB Model
+>To delve further into the development process, it is important to discuss the features of the publisher and subscriber files. Since there is no access to real patient data, synthetic data was generated at the beginning of the script by creating 25 patient ID’s as well as creating lists of potential medications, dosages, symptoms, and moods that a patient may be experiencing at the time of the check-in. Each list contained 6 text strings.
+> To create the publisher file, the first step was to create a context, using `zmq.Context`. A context is an object that holds the socket which is the component that binds to the local address, ultimately allowing the messaging system to operate in an isolated environment. The socket is then created by adding .socket to the end of the context. The socket can then be binded to a local network or IP address. Later on, the subscriber will be binded to the same address to allow the publisher to send messages to the subscribers. 
+```python
+context_pub = zmq.Context()  # Create a ZeroMQ context for publisher
+socket_pub = context_pub.socket(zmq.PUB)  # Create a publisher socket
+socket_pub.bind("tcp://*:5555")  # Bind the socket to a network address 
+```
+
+>Since the caregivers will be receiving patient updates daily, datetime was used to grab today's current date so that the application can simulate daily updates. A while loop was created to create an identity for each patient within the patients variable, as it assigned randomized moods, medications, dosages alongside two timestamps one occurring at midnight and one at noon for each given day. Error handling was implemented, by instructing the program to try to create two messages, one for noon and one for midnight. A topic was created by the name of each patient ID followed by a string to allow for message filtering. The topic will be ‘Patient_{i}_data’ so that each subscriber can filter based on which patient or patients they are interested in receiving updates for. The publisher creates a send string to send a message to the subscriber which includes the timestamp and a message. 
+
+>If the message is unable to be sent, the following exception was added:
+
+```python
+except Exception as e:
+    print(f"An error occurred and no message has been sent: {e}")
+```
+
+> To simulate real data, `time.sleep(60)` allows the program to rest for 60 seconds before sending the next update to simulate waiting for the updates in real time. The messaging system then moves onto the next day. If this were to be used in a real hospital, it is likely that they would import a csv file, and import real data into the message this way, and the time.sleep function would not be used.
+> The next step was to create the subscriber files. Since there needs to be multiple subscribers connected to the same publisher, 6 example subscribers were created. The three potential users include caregivers, administration, and psychiatrists, all of which are connected to one publisher.
+graph LR;
+    Psychiatrist  --> Publisher;
+    Caregiver --> Publisher;
+    Administration --> Publisher;
+    
+> In order to have a caregiver subscribe to one patient, zmq must be imported and a function is developed to create a subscriber. Similar to the publisher model, a context was created and the socket was added inside the context. Using socket.connect, the subscriber was connected to the same network address as the publisher. In order to use message filtering, each subscriber can use zmq.SUBSCRIBE and specify the topic they want to subscribe to and will be set up in this manner: ` socket.setsockopt_string(zmq.SUBSCRIBE, 'Patient_1_data')`. A while loop specifies that while True, the socket will receive the string sent from the publisher and print it out. The function was run to finalize the creation of the subscriber. It is possible that a subscriber may want to subscribe to more than one patient. For example, the administration or record keeping staff may want to subscribe to all patients. In this case, all the steps will be the same, but instead of specifying the topic, two single quotation marks will be put in its place `socket.setsockopt_string(zmq.SUBSCRIBE, '')`. This action will have the subscriber subscribe to all messages. One final message filtering that was explored. There may be instances where a subscriber may want to subscribe to 2-5 patients, for example if there is a psychiatrist who sees multiple patients at the same facility. This method of message filtering is similar to the others, except this line: `socket.setsockopt_string(zmq.SUBSCRIBE, 'Patient_8_data')` will be repeated for each patient of interest.
+The psychiatrist may receive an output like so:
+
+Patient_8_data: Dear Caregiver, on 2024-08-09 12:00:002024-08-09 12:00:00: your patient Patient_8 received 20mg of Lithium. The patient reported having Loss of appetite and feelings of sadness. If you have any questions or concerns please call our facility at 240-123-4567 or email umdpsychiatrics@gmail.com!
+Patient_8_data: Dear Caregiver, on 2024-08-09 00:00:002024-08-09 00:00:00: your patient Patient_8  received 20mg of Lithium. The patient reported having Loss of appetite and feelings of sadness. If you have any questions or concerns please call our facility at 240-123-4567 or email umdpsychiatrics@gmail.com!
+Patient_9_data: Dear Caregiver, on 2024-08-09 12:00:002024-08-09 12:00:00: your patient Patient_9 received 5mg of Paxil. The patient reported having Increased appetite and feelings of depression. If you have any questions or concerns please call our facility at 240-123-4567 or email umdpsychiatrics@gmail.com!
+Patient_9_data: Dear Caregiver, on 2024-08-09 00:00:002024-08-09 00:00:00: your patient Patient_9  received 5mg of Paxil. The patient reported having Increased appetite and feelings of depression. If you have any questions or concerns please call our facility at 240-123-4567 or email umdpsychiatrics@gmail.com!
+
+> There have been some issues running the network using docker, so to run this locally two terminals can be opened. After specifying the working directory, one terminal will run the publisher file, and the other will run the desired subscriber file. After running the subscriber file the messages will be output into the terminal. 
+
+## Conclusion
+> ZeroMQ stands out as a lightweight messaging system, offering simplicity and versatility, particularly well-suited for the PUB/SUB pattern. With features like fault tolerance and message filtering, it meets the specific needs of hospitals while effictively handling errors. This model is scalable, capable of handling larger datasets, and adaptable for integration into applications or interfaces rather than being confined to terminal or container environments. Overall, ZeroMQ proves to be a flexible library that is easily customizable to developers' requirements. In the hospital scenario, it effectively facilitated the creation of a messaging system, enabling multiple subscribers to connect to a single publisher and receive important patient information. Although Docker had issues deploying the system, it is still an important part of managing Big Data systems, and can be a vital tool in combination with ZeroMQ for distributed messaging.
+
+## References
+
+Chen, S., Tang, X., Wang, H., Zhao, H., & Guo, M. (2016, August). Towards scalable and reliable in-memory storage system: A case study with redis. In 2016 IEEE Trustcom/BigDataSE/ISPA (pp. 1660-1667). IEEE.
+
+Docker Overview. (2013). Docker. Retrieved 2024, from https://docs.docker.com/get-started/overview/
+
+RabbitMQ vs ZeroMQ. (2024). Svix. https://www.svix.com/resources/faq/rabbitmq-vs-zeromq/
+#:~:text=RabbitMQ%20is%20more%20suitable%20for,with%20minimal%20overhead%20is%20desired
+
+Saggese, G., Dr. (Presenter). (2024). Orchestration with Airflow, Data Wrangling, Deployment [Lecture].
+
+What is a Message Broker: A Comprehensive Guide. (2024). SageIT. Retrieved May 10, 2024, from https://sageitinc.com/reference-center whatis-a-message-broker#:~:text=Potential%20Drawbacks%20of%20Using%20Message,notifications%2C%20and%20cloud%20service%20scalability
