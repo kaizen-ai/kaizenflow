@@ -25,6 +25,6 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 
 RUN pip3 install confluent-kafka
 
-ADD transactions_data_generator.py /
+ADD iot_data_generator.py /
 
-CMD ["python", "./transactions_data_generator.py"]
+CMD ["python", "./iot_data_generator.py"]

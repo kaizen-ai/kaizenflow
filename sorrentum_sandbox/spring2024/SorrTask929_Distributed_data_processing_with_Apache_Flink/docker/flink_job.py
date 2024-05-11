@@ -12,13 +12,6 @@ from pyflink.table import *
 from pyflink.table.expressions import call, col, lit
 from pyflink.table.window import Tumble
 
-
-APP_NAME = 'STREAMING_API_AGGREGATE_KAFKA'
-KAFKA_SERVERS = 'kafka:9092'
-KAFKA_SOURCE_TOPIC = 'client_amount'
-KAFKA_TARGET_TOPIC = 'client_total_amount'
-KAFKA_CONSUMER = 'Flink1'
-
 class ParseMapFunction(MapFunction):
 
     def map(self, data):
@@ -48,13 +41,14 @@ def process_json_data():
 
     create_kafka_source_ddl = """
             CREATE TABLE iot_msg(
-                client INT,
-                amount INT,
+                client VARCHAR,
                 ts TIMESTAMP(3),
-                WATERMARK FOR ts AS ts
+                temperature DOUBLE,
+                humidity DOUBLE,
+                WATERMARK FOR ts AS ts - INTERVAL '5' SECOND
             ) WITH (
               'connector' = 'kafka',
-              'topic' = 'client_amount',
+              'topic' = 'weather_data',
               'properties.bootstrap.servers' = 'kafka:9092',
               'properties.group.id' = 'test_3',
               'scan.startup.mode' = 'latest-offset',
@@ -64,14 +58,15 @@ def process_json_data():
 
     create_es_sink_ddl = """
             CREATE TABLE es_sink(
-                client INT PRIMARY KEY NOT ENFORCED,
-                window_start TIMESTAMP(3),
-                window_end TIMESTAMP(3),
-                total_amount INT
+                client VARCHAR PRIMARY KEY NOT ENFORCED,
+                row_date DATE,
+                row_time TIME(0),
+                avg_temp DOUBLE,
+                avg_hum DOUBLE
             ) with (
                 'connector' = 'elasticsearch-7',
                 'hosts' = 'http://elasticsearch:9200',
-                'index' = 'total_amount_1',
+                'index' = 'weather_data_1',
                 'document-id.key-delimiter' = '$',
                 'sink.bulk-flush.max-size' = '42mb',
                 'sink.bulk-flush.max-actions' = '32',
@@ -88,10 +83,8 @@ def process_json_data():
 
     results = iot_data.window(Tumble.over(lit(1).minutes).on(col("ts")).alias("w")) \
         .group_by(col("w"), col("client")) \
-        .select(col("client"), col("w").start.alias("window_start"), col("w").end.alias("window_end"), col("amount").sum.alias("total_amount")) \
+        .select(col("client"), col("w").rowtime.to_date.alias("row_date"), col("w").rowtime.to_time.alias("row_time"), col("temperature").avg.alias("avg_temp"), col("humidity").avg.alias("avg_hum")) \
         .execute_insert("es_sink")
-
-    # env.execute_async(APP_NAME)
 
 
 if __name__ == '__main__':

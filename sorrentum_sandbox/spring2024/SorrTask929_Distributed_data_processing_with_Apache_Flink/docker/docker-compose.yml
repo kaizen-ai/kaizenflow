@@ -22,6 +22,7 @@ networks:
 
 services:
   jobmanager:
+    container_name: jobmanager
     build: .
     image: pyflink:1.18.1
     volumes:
@@ -40,6 +41,7 @@ services:
       - docker_network        
 
   taskmanager:
+    container_name: taskmanager
     image: pyflink:1.18.1
     volumes:
       - .:/opt/docker
@@ -56,11 +58,12 @@ services:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
-        taskmanager.numberOfTaskSlots: 2
+        taskmanager.numberOfTaskSlots: 5
     networks:
       - docker_network
 
   zookeeper:
+    container_name: zookeeper
     image: bitnami/zookeeper:latest
     ports:
       - '2181:2181'
@@ -70,6 +73,7 @@ services:
       - docker_network
 
   kafka:
+    container_name: kafka
     image: bitnami/kafka:latest
     user: root
     ports:
@@ -82,14 +86,16 @@ services:
       - zookeeper
     
   generator:
+    container_name: generator
     build: generator
-    image: generator:1.0
+    image: generator:2.0
     depends_on:
       - kafka
     networks:
       - docker_network
 
   elasticsearch:
+    container_name: elasticsearch
     image: elasticsearch:7.8.0
     environment:
       - cluster.name=docker-cluster
@@ -110,10 +116,19 @@ services:
       - docker_network
 
   kibana:
+    container_name: kibana
     image: kibana:7.8.0
     ports:
       - "5601:5601"
     depends_on:
       - elasticsearch
+    networks:
+      - docker_network
+
+  load-kibana-dashboard:
+    build: ./kibana
+    command: ['/bin/bash', '-c', 'cat /tmp/load/load_ndjson.sh | tr -d "\r" | bash']
+    depends_on:
+      - kibana
     networks:
       - docker_network
