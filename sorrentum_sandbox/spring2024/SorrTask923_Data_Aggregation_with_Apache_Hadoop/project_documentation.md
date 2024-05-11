@@ -488,3 +488,10 @@ Throughout the project, key concepts of distributed computing, such as parallel 
 The final output of the project, as demonstrated by the example provided, offered valuable insights into the dataset's categories, such as the average values or counts for each category. This information can be further utilized for various purposes, such as decision-making, trend analysis, or predictive modeling.
 
 Overall, the project showcased the power and versatility of MapReduce programming paradigm in handling big data tasks, and demonstrated how Hadoop ecosystem can be leveraged to build scalable and robust data processing pipelines.
+
+## Reference
+
+
+[1] https://www.oreilly.com/library/view/hadoop-the-definitive/9780596521974/
+
+
