@@ -137,21 +137,21 @@ output will be something like:
 ![docker compose up](up1.png)
 ![docker compose up](up2.png)
 * ***NEXT, RUN ```ctl+C``` to exit.***
-* nextm run ```docker compose up``` again giving you a output like this:
+* next run ```docker compose up``` again giving you a output like this:
 ![text](goodbuild1.png)
 ![text](goodbuild.png)
 * there are two things we need to take note:
 * at the end of rethinkdb call, there are three lines looking like this:
-rethinkdb-1   | Listening on cluster addresses: 127.0.0.1, 172.18.0.2, ::1, fe80::42:acff:fe12:2%24
-rethinkdb-1   | Listening on driver addresses: 127.0.0.1, 172.18.0.2, ::1, fe80::42:acff:fe12:2%24
-rethinkdb-1   | Listening on http addresses: 127.0.0.1, 172.18.0.2, ::1, fe80::42:acff:fe12:2%24
-* we need to note ```172.18.02```, or just the 18 is okay. 
-* we also need to note the toke as it is needed to access our jupyterlab
+* ```rethinkdb-1   | Listening on cluster addresses: 127.0.0.1, 172.18.0.2, ::1, fe80::42:acff:fe12:2%24```
+* ```rethinkdb-1   | Listening on driver addresses: 127.0.0.1, 172.18.0.2, ::1, fe80::42:acff:fe12:2%24```
+* ```rethinkdb-1   | Listening on http addresses: 127.0.0.1, 172.18.0.2, ::1, fe80::42:acff:fe12:2%24```
+* ***we need to note ```172.18.02```, or just the 18 is okay. This number is critical for running the code later***
+* the second thing we need to note is the token, which is outline at the bottom of the result. As it will be needed to access the jupyterlab later
 * after openning ```localhost:8888```, you will see
 ![8888](8888.png)
 * paste the token into the password or token, you will then see my code and when we want to connect to mariadb, we need to make sure the 18 we remembered before matches with the second number in my mariadb connection code:
 ![connect](conn.png)
-* if it saids 18 before, the host section should be changed to '192.18.0.1', otherwise it won't coneect correctly. 
+* if it saids 18 before, the host section should be changed to '172.18.0.1', otherwise it won't coneect correctly. 
 * after this, everything should run correctly
 ## Project Report
 ***here is a visual walkthrough of my project***:https://drive.google.com/file/d/17qLVEq4ixBnuWWViMLRrytYRndwsvDEV/view?usp=drive_link
