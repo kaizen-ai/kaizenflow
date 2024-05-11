@@ -1,3 +1,0 @@
-apache-beam[gcp]==2.55.1  # Match the version needed by your Apache Flink version
-apache-flink==1.19.0
-jupyter
