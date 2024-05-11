@@ -203,9 +203,9 @@ This Docker Compose file simplifies the deployment and management of the UDP cha
 
 - **Building Images**
 
-
-![alt text](<../../Desktop/Screenshot 2024-05-10 at 9.40.21 PM.png>)
-
+```
+docker compose build
+```
 
 - **Running Containers**
 
