@@ -1,6 +1,7 @@
-FROM rethinkdb:2.4.3
-
-WORKDIR /app
+#import rethinkdb docker image
+FROM rethinkdb:2.4.3 
+#setup work directory
+WORKDIR /app 
 
 # Define default command.
 CMD ["rethinkdb", "--bind", "all"]

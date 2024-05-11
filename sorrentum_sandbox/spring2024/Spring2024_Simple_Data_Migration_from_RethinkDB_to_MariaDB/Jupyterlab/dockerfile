@@ -1,7 +1,8 @@
+#import python docker image
 FROM python:3.9
-
+#setup work directory
 WORKDIR /app
-
+#install needed dependencies
 COPY requirements.txt .
 
 RUN pip install jupyter -U && pip install jupyterlab
@@ -12,6 +13,10 @@ RUN pip install -r requirements.txt
 
 RUN pip install mariadb
 
-EXPOSE 8888
+RUN pip install pydub
 
+RUN pip install soundfile
+#expose port 8888 on the container
+EXPOSE 8888
+#run default command
 CMD ["jupyter", "lab","--ip=0.0.0.0","--allow-root"]
