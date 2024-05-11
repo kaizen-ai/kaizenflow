@@ -1,238 +1,206 @@
-# Redis cache to fetch user profile
+# CRUD Operations with CouchDB, RethinkDB, and MariaDB
 
 ## Author info
 
-- Author: Shaunak Dhande
-- GitHub account: Shaunak01
-- UMD email: sdhande@umd.edu
-- Personal email: sdhande@umd.edu
+- Author: Rutvik Patel
+- GitHub account: rutvik5rv
+- UMD email: rvpatel@umd.edu
+- Personal email: rutvik5rv@gmail.com
 
 ## Description
 
-This is a Python based project that exemplifies a straightforward implementation
-of user profile caching using Redis. This efficient mechanism aims to enhance the
-retrieval speed of user profiles by employing Redis, a high-performance in-memory
-data structure store.
+This project demonstrates basic CRUD (Create, Read, Update, Delete) operations across three different database systems: CouchDB, RethinkDB, and MariaDB. 
+Each system offers unique features and capabilities for data management. The Python project utilizes specific libraries for each database to perform CRUD operations, showcasing basic data manipulation techniques across these platforms.
+Video link: https://drive.google.com/drive/folders/1A18z9Qyvb_jrg5AGj29YuZ3EkiVn_RzD?usp=drive_link
+
+
 
 ## Technologies
 
-### Redis: In-Memory Data Structure Store
+- **CouchDB**: An open-source NoSQL database that uses JSON for documents, JavaScript for MapReduce indexes, and regular HTTP for its API.
+- **RethinkDB**: A JSON-based NoSQL database that automatically syncs data in realtime between users and servers.
+- **MariaDB**: A community-developed, commercially supported fork of the MySQL relational database management system.
+- **Python libraries**:
+  - `python-couchdb` for interacting with CouchDB.
+  - `rethinkdb` for managing RethinkDB operations.
+  - `mysql-connector-python` for connecting to MariaDB.
+- **Flask**: A micro web framework written in Python, used for handling web requests.
+- **Docker**: Simplifies deployment by containerizing the application and its dependencies.
 
-- Redis is an advanced key-value store known for its speed and versatility
-- Functioning as an in-memory data structure store, Redis holds data in RAM,
-  allowing for fast read and write operations
-- It supports various data structures, including strings, hashes, lists, and
-  sets, making it suitable for a wide range of use cases
-- Redis is often used as a caching mechanism to boost the performance of
-  applications by reducing the time it takes to retrieve frequently accessed
-  data
-- Additionally, its support for advanced features like pub/sub messaging and
-  transactions makes it a valuable tool for building scalable and responsive
-  systems.
+# Project Components Explanation
 
-- Redis serves as the backbone of this project, providing an in-memory data
-  structure for key-value pair storage and retrieval. In the context of the
-  project, Redis is employed as a caching mechanism
-- The speed of data retrieval from Redis significantly outpaces traditional
-  databases, making it an ideal choice for scenarios where rapid access to
-  frequently used data, such as user profiles, is paramount.
+## CouchDB
 
-- The function that retrieved user profiles showcases the power of Redis caching.
-- It first checks if the user's profile is already present in the Redis cache
-  - If found, the profile is retrieved directly from Redis
-  - If not found, the script fetches the profile from the mock database, stores
-    it in Redis for future use, and then returns the profile
-- This use of Redis caching optimizes the overall performance of the application
-  by reducing the load on the underlying data source
+**CouchDB** is an open-source NoSQL database that focuses on ease of use. It is based on JSON to store data, uses JavaScript as its query language, and WebHTTP for an API. CouchDB is designed to work well with modern web and mobile apps.
 
-### Docker: Containerization for Portability
+### Files related to CouchDB in the project:
+- `app.py`: Contains the Flask routes that handle CRUD operations specifically tailored for CouchDB using the `python-couchdb` library. The CRUD functions interact with CouchDB to create, read, update, and delete documents.
+- `Dockerfile`: Includes commands to set up the Python environment where `python-couchdb` is installed to interact with CouchDB.
+- `docker-compose.yml`: Defines a CouchDB service that runs the official CouchDB Docker image, exposing the default port and setting up initial configurations like admin user and password.
 
-- Docker is a containerization platform that simplifies the process of
-  developing, deploying, and running applications
-- It allows developers to package an application and its dependencies into a
-  lightweight, portable container
-- These containers can run consistently across different environments, ensuring
-  that the application behaves the same way in development, testing, and
-  production
-- Docker provides a standardized way to encapsulate and distribute applications,
-  making it easier to manage dependencies, streamline deployment, and enhance
-  collaboration among development teams.
+## RethinkDB
 
-- The Dockerfile specifies the use of an official Python runtime as the base
-  image, installs the Redis server, and copies the Python script and mock
-  database file into the container. The resulting Docker image encapsulates the
-  entire project, making it easily deployable and scalable.
+**RethinkDB** is a JSON-based, open-source NoSQL database that facilitates real-time web applications. It pushes updates to the application in real-time instead of polling the database for changes. It’s well-suited for applications that require real-time feeds to their data.
 
-- By using Docker, the project achieves portability and encapsulation, allowing
-  developers to run the application in any environment with minimal setup.
+### Files related to RethinkDB in the project:
+- `app.py`: Incorporates routes for performing CRUD operations on RethinkDB. These operations use the `rethinkdb` Python library to connect to the database and manipulate the data.
+- `Dockerfile`: Ensures the Python environment is prepared to include the `rethinkdb` library.
+- `docker-compose.yml`: Configures the RethinkDB service using its official Docker image, specifies ports, and manages database initialization settings.
 
-## Docker implementation
+## MariaDB
 
-- The Docker system designed for this project follows a logical sequence to
-  ensure a smooth and consistent environment for both development and deployment
+**MariaDB** is a community-developed fork of MySQL and is one of the most popular database servers in the world. Being a relational database, it uses SQL (Structured Query Language) to access and manage the data, which is organized into tables.
 
-- Let's delve into the intricacies of the Docker system logic:
+### Files related to MariaDB in the project:
+- `app.py`: Defines Flask routes that facilitate CRUD operations on MariaDB using `mysql-connector-python` for connecting and executing SQL statements.
+- `Dockerfile`: Lists commands for installing `mysql-connector-python` within the Python environment.
+- `docker-compose.yml`: Outlines the MariaDB service setup with the necessary environment variables like root password, and exposes the default SQL port for connections.
 
-- Project Setup:
-  - Begin with organizing your project files within a directory structure. The
-    main files include:
-    - `Redis_cache_to_fetch_user_profile.ipynb`: Contains the Jupyter Notebook
-      code for fetching user profiles with Redis caching.
-    - `Dockerfile`: Includes instructions for building a Docker image for the
-      project.
-    - `Docker-compose.yaml`: Defines services, networks, and volumes for Docker
-      containers.
+# Explaining Docker, Flask, and GitHub Usage
 
-- Dockerfile Configuration:
-  - Start by setting up the Dockerfile with the following steps:
-    - Utilize an official Python runtime as the base image `python:3.8-slim`
-    - Set the working directory in the container to `/app`.
-    - Copy the project files into the container.
-    - Install necessary dependencies (redis and notebook) using pip.
-    - `Expose port 8888` for the Jupyter Notebook server.
-    - Specify the default command to run the Jupyter Notebook server.
+## Docker
 
-- Docker-compose.yaml Configuration:
-  - Configure the docker-compose.yaml file to define the services required for
-    the project:
-    - Define two services: redis and notebook.
-    - Configure the redis service:
-      - Use the official redis:latest image.
-      - Map `port 6378` on the host to `port 6379` in the container.
-      - Set the container name as redis-server.
-    - Configure the notebook service:
-      - Use the custom Docker image built from the Dockerfile.
-      - Map `port 8888` on the host to `port 8888` in the container.
-      - Set the `REDIS_HOST` environment variable to redis.
-      - Make it dependent on the redis service.
-      - Specify the container name as `notebook-server`.
-      - Mount the project directory into the container at `/app`.
+### What is Docker?
+Docker is a set of platform as a service (PaaS) products that use OS-level virtualization to deliver software in packages called containers. Containers are isolated from one another and bundle their own software, libraries, and configuration files; they can communicate with each other through well-defined channels.
 
-- Building the Docker Image:
-  - Execute `docker build -t <your_image_name> .` to build the Docker image
-    using the Dockerfile.
-  - Replace `<your_image_name>` with a suitable name for the Docker image.
+### Why Use Docker?
+- **Consistency Across Environments**: Docker ensures that the application runs the same way in different environments, be it development, testing, or production. This consistency eliminates the "it works on my machine" problem.
+- **Simplicity and Speed**: Docker containers can be configured once and run anywhere, simplifying setup. They also make use of snapshots and image layers, which speeds up the development and deployment processes.
+- **Isolation**: Each service (CouchDB, RethinkDB, MariaDB, Flask app) runs in its own container, ensuring they do not interfere with each other. This isolation helps in easy management and scaling of services.
 
-- Running the Docker Containers:
-  - Start the Docker containers with `docker-compose up`.
-  - Docker Compose will create and launch containers for the redis and notebook
-    services.
-  - Access the Jupyter Notebook server at `http://localhost:8888` in a web
-    browser.
+### Docker in the Project
+In this project, Docker is used to manage and run the Flask application along with the three different databases—CouchDB, RethinkDB, and MariaDB—each in separate containers. The configurations are defined in the `docker-compose.yml` file, which simplifies the management of these multi-container setups.
 
-- Accessing the Jupyter Notebook Server:
-  - Navigate to `http://localhost:8888` in a web browser to access the Jupyter
-    Notebook interface.
-  - Interact with your notebook file (Redis_cache_to_fetch_user_profile.ipynb)
-    to execute code for fetching user profiles using Redis caching.
+## Flask
 
-- Stopping the Docker Containers:
-  - To stop containers, press `Ctrl + C` in the terminal running
-    `docker-compose up`.
-  - Alternatively, use `docker-compose down` to stop and remove containers.
+### What is Flask?
+Flask is a micro web application framework written in Python. It is classified as a microframework because it does not require particular tools or libraries but supports extensions that can add application features as if they were implemented in Flask itself.
 
-## 3. Python Script Overview
+### Why Use Flask?
+- **Simplicity and Flexibility**: Flask's simple and easy-to-understand syntax makes it perfect for small projects as well as large scale applications. Its flexibility allows developers to use the right tools for their tasks.
+- **Lightweight**: Flask has minimal core dependencies, making it lightweight and easy to add only the tools needed, which keeps the application efficient.
+- **Rapid Development**: Flask allows for fast development of web applications, thanks to its ability to reload code changes on the fly and its helpful debugging tools.
 
-The Redis Cache to Fetch User Profiles script demonstrates an efficient approach
-to user profile caching using Redis. The script is structured to fetch user
-profiles from a mock database, implement caching with Redis, and showcase the
-seamless integration of Docker for containerization.
+### Flask in the Project
+Flask is used as the backend framework for handling HTTP requests and responding with data from the databases. It is responsible for handling the CRUD operations that interact with the databases and serving the results to the user.
 
-The script is primarily divided into three sections:
+## GitHub
 
-- Set up Redis Connection: The script begins by establishing a connection to a
-  Redis server to enable caching of user profiles.The `REDIS_HOST` environment
-  variable is utilized to dynamically specify the host address of the Redis
-  server.
+### What is GitHub?
+GitHub is a code hosting platform for version control and collaboration. It lets you and others work together on projects from anywhere. It is built on Git, a distributed version control system.
 
-- Mock Database: The json data is saved in a variable in the script. User can
-  also include an externl json file.
+### Why Use GitHub?
+- **Version Control**: GitHub uses Git to manage different versions of project files. It allows tracking changes, reverting to previous stages, and efficient handling of project updates.
+- **Collaboration**: Multiple people can work together on a project from any location. GitHub provides tools such as issues, pull requests, and project boards that facilitate seamless collaboration among team members.
+- **Documentation and Management**: GitHub supports additional documentation for projects, such as wikis. It also provides a comprehensive way to manage projects through milestones, labels, and assignees.
 
-- Fetch User Profile Function:
-  - Implements the `fetch_user_profile` function to read the mock database file
-    and retrieve a user's profile based on their ID.
-  - Implements the `get_user_profile` function to check if the user's profile is
-    in the Redis cache, fetches it if present, or retrieves it from the mock
-    database, stores it in the cache, and returns the profile.
+### GitHub in the Project
+GitHub hosts the repository containing all project files, ensuring that changes are tracked and that team members can collaborate efficiently. It serves as the central hub for source code management, issue tracking, and feature requests, helping maintain the project's lifecycle.
 
-- Example Usage: Provides an example usage at the end of the script,
-  demonstrating how to fetch a user's profile using the caching mechanism.
+ # Docker System for CRUD Operations with CouchDB, RethinkDB, and MariaDB
 
-- Example Output: Let's walk through the script's functionality with an example:
-  ```
-  user_id_to_fetch = '123'
-  user_profile = get_user_profile(user_id_to_fetch)
-  print(f"Fetched user profile: {user_profile}")
-  ```
+## Overview
 
-- Output Explanation:
-  - If the user profile is in the Redis cache:
-    ```
-    User profile for 123 found in Redis cache.
-    Fetched user profile: {'user_id': '123', 'name': 'Shaunak Dhande', 'email': 'shaunakdhande4000@gmail.com', 'age': 22}
-    ```
-  - If the user profile is not in the Redis cache:
-    ```
-    User profile for 123 not found in cache. Fetched from the database and stored in Redis.
-    Fetched user profile: {'user_id': '123', 'name': 'Shaunak Dhande', 'email': 'shaunakdhande4000@gmail.com', 'age': 22}
-    ```
+This Docker system is designed to facilitate a development environment that supports CRUD (Create, Read, Update, Delete) operations on three different databases: CouchDB, RethinkDB, and MariaDB. Each database has its own dedicated Docker container to ensure that they are isolated from one another, which helps in maintaining the integrity and independence of each database's data and operations.
 
-## 4. Mock Database Schema
+## Docker Architecture
 
-The mock database follows a simple JSON structure where each user profile is
-represented as a dictionary. The schema includes the user's ID, name, email, and
-age.
-```
-{
-  "123": {
-    "user_id": "123",
-    "name": "Shaunak Dhande",
-    "email": "shaunakdhande4000@gmail.com",
-    "age": 22
-  },
-  "456": {
-    "user_id": "456",
-    "name": "Alice Johnson",
-    "email": "alice.johnson@example.com",
-    "age": 30
-  },
-  // Additional profiles...
-}
-```
+The architecture consists of three main parts, each configured to run within its own Docker container:
 
-## 5. Project Diagram
+1. **CouchDB** - An open-source NoSQL database, known for its easy scalability and flexible data structure.
+2. **RethinkDB** - A NoSQL database optimized for real-time web applications.
+3. **MariaDB** - A relational database that is a fork of MySQL, known for its performance and reliability.
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant Script
-    participant Redis
-    participant Database
+Each part of the application (CouchDB, RethinkDB, and MariaDB) has been containerized using Docker to provide a consistent and isolated environment for development and testing.
 
-    User->>Script: Request profile for '123'
-    Script->>Redis: Check cache for '123'
-    alt Profile in Redis Cache
-        Redis-->>Script: Return cached profile
-    else Profile not in Redis Cache
-        Script->>Database: Fetch profile for '123'
-        Database-->>Script: Return user profile
-        Script->>Redis: Store profile in cache
-        Redis-->>Script: Confirm profile stored
-    end
-    Script-->>User: Return user profile
-```
+## Docker Configuration
 
-## 6. Conclusion
+### Dockerfile
 
-The Redis Cache to Fetch User Profiles project establishes an effective synergy
-between Redis caching, Python scripting, and Docker containerization. By
-prioritizing efficient user profile retrieval, the project showcases the power
-of Redis in optimizing data access, minimizing database load, and enhancing
-overall system responsiveness. The seamless integration of Docker ensures a
-consistent and portable environment, simplifying deployment across various
-platforms. With its clear logical structure, illustrated diagrams, and practical
-example usage, the project serves as a valuable resource for developers looking
-to implement robust caching mechanisms in their applications. While achieving
-its primary goals, the project also opens avenues for future enhancements,
-encouraging exploration of advanced Redis features and scalability
-considerations.
+Each Dockerfile in the project setups up the necessary environment for the Python Flask application that interacts with one of the databases. It includes:
+
+- Pulling the base image (usually Python 3.8-slim).
+- Installing Python packages that are required for connecting and operating the database using a `requirements.txt` file.
+- Copying the application source code into the container.
+
+### docker-compose.yml
+
+The `docker-compose.yml` file for each database defines how the containers should be built and run. It specifies:
+
+- The services required (the database and the Flask app).
+- The Docker images to use for the databases.
+- Port mappings that expose the databases and the Flask app on specified ports.
+- Environment variables necessary for the databases (such as user credentials and database names).
+- Volumes for persistent data storage outside of the containers.
+
+## Running the System
+
+To run the Docker system for each database, you will need to perform the following steps:
+
+1. **Navigate to the Directory**:
+   Go to the directory specific to the database you want to operate. Each directory contains a `run_docker.sh` script tailored for its respective database.
+
+2. **Run the Docker Script**:
+   Execute the `run_docker.sh` script to build and start the Docker containers. This can be done using the following command:
+   ```bash
+   ./run_docker.sh
+
+
+# Overview of Python Scripts for CRUD Operations
+
+It provides a detailed overview of the Python scripts designed for handling CRUD (Create, Read, Update, Delete) operations for CouchDB, RethinkDB, and MariaDB. Each script is tailored to interact with its respective database using Flask, a lightweight WSGI web application framework in Python.
+
+## CouchDB: `app.py`
+
+### Functionality:
+- **Create**: Inserts new documents into the CouchDB database. Each document's structure is defined within the script, typically including fields like name, age, and other relevant data.
+- **Read**: Fetches documents from CouchDB. It can retrieve a single document by ID or all documents within a specific collection.
+- **Update**: Modifies existing documents in CouchDB. The script identifies documents by ID and applies updates to fields such as name, age, or other attributes.
+- **Delete**: Removes documents from CouchDB based on their ID.
+
+### Role:
+The script serves as the backend component of a Flask application. It handles HTTP requests that perform CRUD operations on the CouchDB database. Each operation is accessible via specific routes (endpoints) defined in the Flask app.
+
+## RethinkDB: `app.py`
+
+### Functionality:
+- **Create**: Adds new entries to tables in RethinkDB. The data schema for entries typically includes fields relevant to the application's context, like user data or transaction details.
+- **Read**: Retrieves data from RethinkDB. This includes reading specific entries using unique identifiers or querying multiple entries based on certain conditions.
+- **Update**: Updates existing entries in RethinkDB. This script can change specific fields of entries, reflecting new data or corrections.
+- **Delete**: Deletes entries from a table in RethinkDB based on a specified criterion, typically an ID.
+
+### Role:
+This script also acts as a backend for a Flask application, handling requests to interact with the RethinkDB database. It defines routes that the frontend can call to perform database operations, effectively communicating with the database and returning results to the user.
+
+## MariaDB: `app.py`
+
+### Functionality:
+- **Create**: Executes SQL commands to insert new records into MariaDB tables. The records adhere to the relational schema defined in the database.
+- **Read**: Performs SQL queries to fetch records from MariaDB. It can be configured to fetch all records or filter records based on specific fields.
+- **Update**: Runs SQL update statements to modify existing records in MariaDB tables. Updates can involve one or more fields, depending on the operation's requirements.
+- **Delete**: Deletes records from MariaDB using SQL delete commands, typically targeting records based on their unique identifiers.
+
+### Role:
+As with the other scripts, this serves as the backend for a Flask application specifically designed for MariaDB operations. It defines various endpoints for CRUD operations, processing HTTP requests, executing the corresponding SQL commands in MariaDB, and returning the outcomes to the client.
+
+
+# Conclusion
+
+The "CRUD Operations with CouchDB, RethinkDB, and MariaDB" project exemplifies a robust implementation of basic database operations across three distinct database systems using a unified Python-Flask application framework. Each part of the project—CouchDB, RethinkDB, and MariaDB—brings unique features and capabilities to the table, from CouchDB's flexible JSON-based document structure to MariaDB's efficient relational data handling and RethinkDB's real-time data synchronization.
+
+## Key Takeaways
+
+- **Technology Integration**: By integrating Flask, Docker, and GitHub, the project achieves a seamless development workflow that is easy to set up, test, and scale. Flask's lightweight and flexible nature allows for straightforward routing and request handling, which is essential for CRUD operations. Docker enhances the deployment process, ensuring that each database environment is isolated and consistent, thus preventing "it works on my machine" issues. GitHub provides a platform for version control and collaboration, enabling ongoing development and iteration of the project.
+  
+- **Real-World Application**: The project serves as an excellent reference for developers looking to understand or implement CRUD operations across different databases. The distinct characteristics of each database system are harnessed to demonstrate specific data management techniques, making the project not only a learning tool but also a practical blueprint for real-world applications.
+
+- **Scalability and Maintenance**: The use of Docker containers ensures that the application components can be easily scaled and maintained. The containerization of each database and the Flask app allows developers to update, modify, or scale parts of the application independently without affecting the entire system.
+
+## Future Directions
+
+Moving forward, the project can be expanded in several ways:
+- **API Development**: Enhance the Flask application to provide a more comprehensive RESTful API interface, allowing for better interaction with other applications and services.
+- **Front-end Integration**: Develop a front-end interface to provide users with a graphical user interface (GUI) for performing CRUD operations, improving the user experience and accessibility.
+- **Performance Optimization**: Conduct performance benchmarks to optimize CRUD operations, especially in scenarios involving large datasets and complex queries.
+
+In conclusion, this project not only demonstrates the capability to manage different database systems effectively but also sets a foundation for more complex applications that require real-time data handling, reliable data storage, and efficient data retrieval. It stands as a testament to the power of integrating modern development tools and technologies to build scalable and robust applications.
