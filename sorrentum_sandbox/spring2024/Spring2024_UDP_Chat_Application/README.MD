@@ -223,35 +223,71 @@ This command will open a server container which will broadcast the chats between
 
 **First instance**
 
-![alt text](<../../Desktop/Screenshot 2024-05-10 at 9.54.21 PM.png>)
+```
+➜  Final Project docker compose run --rm udp-chat-server
+
+
+```
 
 **Same for client we will run `docker-compose run --rm udp-chat-client` in two terminals.**
 
 It will show a prompt of entering "NICKNAME:" for userID.
 
-![alt text](<../../Desktop/Screenshot 2024-05-10 at 10.14.41 PM.png>)
+```
+➜  Final Project docker-compose run --rm udp-chat-client
+WARN[0000] /Users/abhinav/Documents/Final Project/docker-compose.yml: `version` is obsolete 
+NICKNAME:   
+```
 
 After entering prompts in two clients container, as Jack and Jill.
 
 Our server container will look like this:
 
-![alt text](<../../Desktop/Screenshot 2024-05-10 at 10.19.37 PM.png>)
+```
+SIGNUP_TAG:jill
+SIGNUP_TAG:jack
+```
 
 
 **Now we will display instances of chats exchanges between Jack and Jill**
 
-- Jack
-
-![alt text](<../../Desktop/Screenshot 2024-05-10 at 10.28.59 PM.png>)
-
 - Jill
 
-![alt text](<../../Desktop/Screenshot 2024-05-10 at 10.26.34 PM.png>)
+```
+NICKNAME:jill
+ jill joined!
+jack joined!
+hey jack
+ jill: hey jack
+jack: hi jill
+i liked the data 605 classes a lot
+ jill: i liked the data 605 classes a lot
+jack: yeah me too
+```
 
+- Jack
+
+```
+NICKNAME:jack
+ jack joined!
+jill: hey jack
+hi jill
+ jack: hi jill
+jill: i liked the data 605 classes a lot
+yeah me too
+ jack: yeah me too
+```
 
 - Server container which broadcast all the chats.
 
-![alt text](<../../Desktop/Screenshot 2024-05-10 at 10.27.34 PM.png>)
+```
+SIGNUP_TAG:jill
+SIGNUP_TAG:jack
+jill: hey jack
+jack: hi jill
+jill: i liked the data 605 classes a lot
+jack: yeah me too
+```
 
 - For exiting the container we will use keyboard shortcut ` cntrl + c` as we have an interactive shell.
 
