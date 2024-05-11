@@ -1,33 +1,13 @@
-version: "2.2"
+version: '3.8'
 services:
-  jobmanager:
-    image: flink:latest
+  flink-app:
+    build: .
+    stdin_open: true  # Keep stdin open
+    tty: true         # Allocate a pseudo-TTY
     ports:
       - "8081:8081"
-    command: jobmanager
+    volumes:
+      - .:/app
     environment:
-      - |
-        FLINK_PROPERTIES=
-        jobmanager.rpc.address: jobmanager        
+      - flink-1.19.0
 
-  taskmanager:
-    image: flink:latest
-    depends_on:
-      - jobmanager
-    command: taskmanager
-    scale: 1
-    environment:
-      - |
-        FLINK_PROPERTIES=
-        jobmanager.rpc.address: jobmanager
-        taskmanager.numberOfTaskSlots: 2        
-  sql-client:
-    image: flink:latest
-    command: bin/sql-client.sh
-    depends_on:
-      - jobmanager
-    environment:
-      - |
-        FLINK_PROPERTIES=
-        jobmanager.rpc.address: jobmanager
-        rest.address: jobmanager 
