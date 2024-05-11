@@ -6,6 +6,6 @@ RUN pip install --no-cache-dir scikit-learn pandas matplotlib seaborn
 
 COPY 605_pro.py .
 
-VOLUME ["/intput","/output"]
+VOLUME ["/input","/output"]
 
 CMD ["python","605_pro.py"]
