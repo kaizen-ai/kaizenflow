@@ -134,9 +134,8 @@ Apparently the free version of kraken provides data only from the past two years
 
 ### Additional Configuration
 
+- Configure PAT at GitHub 
 
-### Installation Steps
-1. **Clone the Repository**:
 
 ## Contribution Guidelines
 
