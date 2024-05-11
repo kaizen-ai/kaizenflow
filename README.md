@@ -80,8 +80,7 @@ cd kaizenflow
   - Axie Infinity
   - Enjin Coin
   
-  <img width="842" alt="Screenshot 2024-05-10 at 6 03 31 PM" src="https://github.com/kaizen-ai/kaizenflow/assets/124461281/63c7cf57-8b7b-46c7-890d-5140f42efe2e">
-
+ 
 Apparently the free version of kraken provides data only from the past two years till now (2024).
 
 ### Data Analysis with Pandas
@@ -112,7 +111,9 @@ Apparently the free version of kraken provides data only from the past two years
   - SARIMA Forecast
   - Minimum Risk Portfolio Allocation, Expected Annual Return and Annual Volatility.
   - Optimal Portfolio Weights
-  
+
+      <img width="842" alt="Screenshot 2024-05-10 at 6 03 31 PM" src="https://github.com/kaizen-ai/kaizenflow/assets/124461281/63c7cf57-8b7b-46c7-890d-5140f42efe2e">
+
 ### Version Control
 - Use Git to manage and version your project code. Push updates to GitHub:
   ```bash
