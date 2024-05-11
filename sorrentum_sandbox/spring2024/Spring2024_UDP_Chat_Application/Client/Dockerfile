@@ -5,10 +5,7 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # Copy the client script to the container
-COPY client.py .
-
-# Expose the port the client will use (not necessary in this case)
-# EXPOSE 0
+COPY client/client.py .
 
 # Command to run the client script
 CMD ["python", "client.py"]

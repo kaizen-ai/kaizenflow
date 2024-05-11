@@ -1,4 +1,4 @@
-version: '3.5'
+version: '3.8'
 
 services:
   udp-chat-server:
@@ -6,8 +6,11 @@ services:
       dockerfile: ./server/Dockerfile
     ports:
       - "9999:9999/udp"
+    network_mode: host
   
   udp-chat-client:
     build:
       dockerfile: ./client/Dockerfile
-    
+    network_mode: host
+    stdin_open: true
+    tty: true

@@ -5,10 +5,7 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # Copy the server script to the container
-COPY server.py .
-
-# Install any required Python packages
-# RUN pip install --no-cache-dir queue
+COPY server/server.py .
 
 # Expose the port the server will run on
 EXPOSE 9999
