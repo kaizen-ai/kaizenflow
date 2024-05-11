@@ -116,7 +116,7 @@ Apparently the free version of kraken provides data only from the past two years
 
     All The Data Analysis Results gathered here:
     
-        https://github.com/kaizen-ai/kaizenflow/tree/project-structure/notebook/project-structure/notebook
+        https://github.com/kaizen-ai/kaizenflow/blob/project-structure/notebook/project-structure/notebook/final_data_analysis.pdf
 
 ### Version Control
 - Use Git to manage and version your project code. Push updates to GitHub:
