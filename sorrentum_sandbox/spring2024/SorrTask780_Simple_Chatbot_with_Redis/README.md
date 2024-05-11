@@ -89,7 +89,7 @@ Link: https://drive.google.com/file/d/1hGhIeJZ1arcEJYY0HQFQdoVAvQIxujQm/view?usp
     * This lightweight design allows developers to have more control over their application structure and choose the components they need, resulting in greater flexibility and simplicity
     - I preferred Flask over FastAPI due to its simplicity, ease of use, and familiarity
         + More suitable for projects with straightforward requirements, such as small to medium-sized web applications 
-        + Flask's extensive documentation and large community make it easier to find resources and support when developing the project 
+        + Flask's extensive documentation and large community make it easier to find resources and support when developing the projects 
 
 - Pros
 
