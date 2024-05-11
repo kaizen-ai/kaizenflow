@@ -25,3 +25,23 @@ In a big data scenario, if there are frequent data communication operations in t
 ## Logic of Docker System
 
 In dockerfile, I used python:3.11.8-slim as base image. Then set the working directory in the container to /app, and copy the current directory contents into that. This project requires several python libraries and java jdk support, so in the next step I downloaded these supports. Finally I exposed the port and run the python script when the container launches.
+
+After creating the image, A running instance can be created from the docker image, i.e., the docker container. I used docker desktop to monitor image and container usage. From the application, the base docker image hierarchy is debian:12-slim and python:3.11-slim. And there are 23 layers in the image I created.
+
+## Run the system
+
+First build the image in the dockerfile directory:
+
+`docker build -t mllib .`
+
+it will return:
+
+`[+] Building 89.2s (13/13) FINISHED                                                                                                               docker:default => [internal] load build definition from Dockerfile                                                                                                        0.0s => => transferring dockerfile: 300B                                                                                                                        0.0s => [internal] load metadata for docker.io/library/python:3.11.8-slim                                                                                       0.8s => [auth] library/python:pull token for registry-1.docker.io                                                                                             0.0s View a summary of image vulnerabilities and recommendations → docker scout quickview`
+
+Then run the container:
+
+`docker run mllib`
+
+It will return the result from the python script and some warnings because of the java environment:
+
+`2024-05-10 22:51:09 Setting default log level to "WARN". 2024-05-10 22:51:09 To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel). 2024-05-10 22:51:09 24/05/11 02:51:09 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable 24/05/11 02:51:15 WARN InstanceBuilder: Failed to load implementation from:dev.ludovic.netlib.blas.JNIBLAS 2024-05-10 22:51:15 24/05/11 02:51:15 WARN InstanceBuilder: Failed to load implementation from:dev.ludovic.netlib.blas.VectorBLAS 2024-05-10 22:51:19 24/05/11 02:51:19 WARN SparkStringUtils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.`
