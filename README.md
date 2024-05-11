@@ -14,3 +14,6 @@ The Database has the username as the primary key which prevent duplicate usernam
 options including login, register and exit at the start of the application. The operation will fail if you input a wrong password or username, or register with a password that are too short,
 and you will need to try again. Once you login or register successfully, you can only choose to logout or exit the application. If you choose to logout, you can choose to login or register
 again. The application start with the command docker compose run pythonapp.
+
+
+Video link: https://drive.google.com/file/d/1xWAWPGlB3BC0AD5TEjJkmJX-_JBRzMZ_/view?usp=drive_link
