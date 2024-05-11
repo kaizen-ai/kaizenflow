@@ -265,7 +265,7 @@ services:
 
 - The flask application is written in the `app.py` file. The `CMD` instruction in the `Dockerfile` specifies the command `python app.py` to run the Flask application when the Docker container starts
 
-- Additional installations include system-level dependencies required by the Python packages specified in `requirements.txt`, to ensure that the packages can be installed successfully within the Docker containers 
+- Additional installations include system-level dependencies required by the Python packages specified in `requirements.txt`, to ensure that the packages can be installed successfully within the Docker container 
 
 - Extra configurations and/or setup steps required by the application is included for smooth running of the application
 
