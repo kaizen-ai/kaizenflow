@@ -1,29 +1,15 @@
-FROM python:3.9
+# Use a small image `alpine` with Python inside.
+FROM python:3.8
+# Copy current dir `counter_app` into image.
 
-# Install Redis
-RUN apt-get update && apt-get install -y redis-server
 
-# Install redis-py
-RUN pip install redis
-
-# Expose the Redis port
-FROM python:3.9
-
-# Install Redis
-RUN apt-get update && apt-get install -y redis-server
-
-# Install redis-py
-RUN pip install redis
-
-# Expose the Redis port
-EXPOSE 6379
-
-# Set working directory
 WORKDIR /app
 
-# Copy Python script (assuming your Python script is named app.py)
 COPY app.py .
+# Install requirements.
+RUN pip install mysql-connector
 
-# Start Redis server and run the Python script
-CMD ["bash", "-c", "service redis-server start && python app.py"]
 
+
+# Set the default app.
+CMD ["python", "final.py"]
