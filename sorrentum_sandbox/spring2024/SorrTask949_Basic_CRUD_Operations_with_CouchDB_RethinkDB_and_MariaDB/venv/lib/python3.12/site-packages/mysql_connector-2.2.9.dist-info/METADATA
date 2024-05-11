@@ -1,0 +1,32 @@
+Metadata-Version: 2.1
+Name: mysql-connector
+Version: 2.2.9
+Summary: MySQL driver written in Python
+Home-page: http://dev.mysql.com/doc/connector-python/en/index.html
+Download-URL: http://dev.mysql.com/downloads/connector/python/
+Author: Oracle and/or its affiliates
+Author-email: 
+License: GNU GPLv2 (with FOSS License Exception)
+Keywords: mysql db
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Other Environment
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Information Technology
+Classifier: Intended Audience :: System Administrators
+Classifier: License :: OSI Approved :: GNU General Public License (GPL)
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.1
+Classifier: Programming Language :: Python :: 3.2
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Topic :: Database
+Classifier: Topic :: Software Development
+Classifier: Topic :: Software Development :: Libraries :: Application Frameworks
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+License-File: LICENSE.txt
+
+
+Deprecated, go for official version https://pypi.org/project/mysql-connector-python.
