@@ -24,8 +24,8 @@ This project integrates ZooKeeper with data mining tasks using Pandas for data a
 ### Installation Steps
 1. **Clone the Repository**:
  ```
-git clone https://github.com/kaizen-ai/kaizenflow.git
-cd kaizenflow
+  git clone https://github.com/kaizen-ai/kaizenflow.git
+  cd kaizenflow
   ```
 2. **Install Dependencies**:
 - For Python packages:
