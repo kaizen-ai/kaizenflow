@@ -239,15 +239,8 @@ CREATE TABLE marketsales (
     `gross income` DOUBLE,
     Rating DOUBLE
 );
-
-
-<img src="outputs/scatterplot.png" alt="Scatter Plot Image" width="1000"/>
-<img src="outputs/Piechart.png" alt="Piechart Image" width="1000"/>
-<img src="outputs/Plot.png.png" alt="Plotly Image" width="1000"/>
-<img src="outputs/htmloutput.png" alt="Website gross income predictor" width="1000"/>
-
-
 ```
+
 ## 5. Project Diagram
 
 ```mermaid
@@ -265,6 +258,11 @@ sequenceDiagram
     MySQL-->>FlaskApp: Return prediction data
     FlaskApp-->>Browser: Display predicted gross sales
 ```
+
+<img src="outputs/scatterplot.png" alt="Scatter Plot Image" width="1000"/>
+<img src="outputs/Piechart.png" alt="Piechart Image" width="1000"/>
+<img src="outputs/Plot.png.png" alt="Plotly Image" width="1000"/>
+<img src="outputs/htmloutput.png" alt="Website gross income predictor" width="1000"/>
 
 ## 6. Conclusion
 
