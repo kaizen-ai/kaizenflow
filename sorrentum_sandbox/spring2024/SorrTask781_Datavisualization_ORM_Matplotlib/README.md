@@ -74,7 +74,7 @@ The technologies utilized in this project align with the concepts covered in our
 
 - Dockerfile Configuration:
   - Start by setting up the Dockerfile with the following steps:
-    - Utilize an official Python runtime as the base image `python:3.11.7-slim`
+    - Utilize an official Python runtime as the base image `python:3.11.7`
     - Set the working directory in the container to `/app`.
     - Copy the project files into the container.
     - Install necessary dependencies (mysql-connector-python, pyodbc and sqlalchemy) using pip.
@@ -171,7 +171,7 @@ ENV MYSQL_PASSWORD=1024
 #COPY init.sql /docker-entrypoint-initdb.d/
 
 ```
-Note: While running the ipynb on the local host `8888` if the MYSQL connector cell doesn't run please change the host between '172.19.0.2' and '172.19.0.3'. Sometimes it tends to glitch between these two ports.
+Note: While running the ipynb on the local host `8888` if the MYSQL connector cell doesn't run please change the host depending on the IP address the mysql shows on building the image and inspecting the ID. I have tried to fix it but I could not find a workaround.
 
 ## 4. Project Details
 
@@ -240,6 +240,13 @@ CREATE TABLE marketsales (
     Rating DOUBLE
 );
 
+
+<img src="outputs/scatterplot.png" alt="Scatter Plot Image" width="1000"/>
+<img src="outputs/Piechart.png" alt="Piechart Image" width="1000"/>
+<img src="outputs/Plot.png.png" alt="Plotly Image" width="1000"/>
+<img src="outputs/htmloutput.png" alt="Website gross income predictor" width="1000"/>
+
+
 ```
 ## 5. Project Diagram
 
@@ -262,3 +269,11 @@ sequenceDiagram
 ## 6. Conclusion
 
 The Supermarket Sales Analysis and Prediction Project uses advanced technologies like SQLAlchemy ORM, Matplotlib, Flask, and Docker to analyse sales data, create predictive models, and deploy scalable applications. By integrating these technologies, the project provides a comprehensive approach to data science and web development, solving issues with data analysis, visualisation, and deployment. With its clear logical framework and realistic examples, the project is an excellent resource for understanding modern software engineering processes and data-driven decision-making in real-world circumstances.
+
+
+## References:
+
+- Dataset: https://www.kaggle.com/datasets/lovishbansal123/sales-of-a-supermarket
+- SQLALchemy: https://tangelo.readthedocs.io/en/v0.10/tutorials/db-vis.html
+- ORM: https://docs.sqlalchemy.org/en/20/tutorial/orm_data_manipulation.html
+- Flask: https://docs.sqlalchemy.org/en/20/tutorial/orm_data_manipulation.html
