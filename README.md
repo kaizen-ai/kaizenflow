@@ -1,5 +1,4 @@
 # ZooKeeper Integration with Data Mining
-ZooKeeper Integration with Data Mining
 
 ## Overview
 This project integrates ZooKeeper with data mining tasks using Pandas for data analysis. It demonstrates fetching data from ZooKeeper nodes, converting it into Pandas DataFrames, and visualizing results using matplotlib/seaborn libraries. 
