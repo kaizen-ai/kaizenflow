@@ -114,7 +114,7 @@ Apparently the free version of kraken provides data only from the past two years
 
       <img width="842" alt="Screenshot 2024-05-10 at 6 03 31 PM" src="https://github.com/kaizen-ai/kaizenflow/assets/124461281/63c7cf57-8b7b-46c7-890d-5140f42efe2e">
 
-    All The Data Analysis Results are here:
+    All The Data Analysis Results gathered here:
     
         https://github.com/kaizen-ai/kaizenflow/tree/project-structure/notebook/project-structure/notebook
 
