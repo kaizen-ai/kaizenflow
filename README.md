@@ -75,7 +75,7 @@ cd kaizenflow
   - Cardano
   - Chainlink
   - Polygon
-  - Decentrailized
+  - Decentralized
   - Axie Infinity
   - Enjin Coin
   
