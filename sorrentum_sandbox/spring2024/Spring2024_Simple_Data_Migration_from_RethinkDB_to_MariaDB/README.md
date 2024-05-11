@@ -154,7 +154,7 @@ output will be something like:
 * if it saids 18 before, the host section should be changed to '172.18.0.1', otherwise it won't coneect correctly. 
 * after this, everything should run correctly
 ## Project Report
-***here is a visual walkthrough of my project***:https://drive.google.com/file/d/17qLVEq4ixBnuWWViMLRrytYRndwsvDEV/view?usp=drive_link
+***here is a visual walkthrough of my project***:https://drive.google.com/file/d/1Sr8_lQkYcng6d4h5ZW6ixshkwhD9G-9W/view?usp=sharing&t=311
 * Since I find data migreation to be quite broad as a topic, I did an example for migreating four different kind of data: 
 ### listed data
 * I first read the data in as a dataframe, 
