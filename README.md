@@ -67,7 +67,7 @@ cd kaizenflow
 - Connect to ZooKeeper within your Python code to manage configurations or state.
 - Use Redis for caching data to enhance performance.
 ### Data
-- Cryptocurrencies Including:
+- Cryptocurrencies Studied:
   - Bitcoin
   - Ethereum
   - Solana
