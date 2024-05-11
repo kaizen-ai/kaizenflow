@@ -127,7 +127,7 @@ Apparently the free version of kraken provides data only from the past two years
   ```
 
 3. **Environment Setup**:
-- Copy the `GITHUB_PAT=ghp_XXXXXXXXXXXXXXXXXXXXXXX` file to `.env` and modify it according to your local environment settings.
+- Copy the `GITHUB_PAT=ghp_xxXXXxxXXXxxxxXXXXxxxXXxxX` file to `.env` and modify it according to your local environment settings.
 
 4. **Running the Application**:
 - To start the application:
