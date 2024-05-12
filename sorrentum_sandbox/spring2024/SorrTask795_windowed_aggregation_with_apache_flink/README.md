@@ -7,9 +7,34 @@
 - UMD email: rekhach@umd.edu
 - Personal email: rekhach@umd.edu
 
+# Table of Contents
+- [Windowed aggregation with apache flink](#windowed-aggregation-with-apache-flink)
+  - [Author info](#author-info)
+- [Table of Contents](#table-of-contents)
+  - [Description](#description)
+  - [Project Video](#project-video)
+  - [Technologies](#technologies)
+    - [Apache Flink: Stream Processing Framework](#apache-flink-stream-processing-framework)
+    - [Pros](#pros)
+    - [Cons](#cons)
+    - [Zookeeper: Distributed Coordination Service](#zookeeper-distributed-coordination-service)
+    - [Apache Kafka: Distributed Streaming Platform](#apache-kafka-distributed-streaming-platform)
+    - [Elasticsearch: Distributed Search and Analytics Engine](#elasticsearch-distributed-search-and-analytics-engine)
+    - [Kibana: Data Visualization and Exploration Tool](#kibana-data-visualization-and-exploration-tool)
+  - [Docker implementation](#docker-implementation)
+  - [Python Script Overview](#python-script-overview)
+  - [Project Diagram](#project-diagram)
+  - [Output](#output)
+  - [Conclusion](#conclusion)
+  - [References](#references)
+
 ## Description
 
 This Python-based project showcases a simplified method for streaming data analysis with Apache Flink. It highlights the use of tumbling windows and aggregation functions for streamlined data processing. The aggregated results are then stored in Elasticsearch for further analysis and visualized using Kibana.
+
+## Project Video 
+
+- https://drive.google.com/file/d/1_VZjHcYRWvwSLppjW18jDMOvOOLatCni/view?usp=sharing
 
 ## Technologies
 
@@ -33,13 +58,6 @@ By connecting to other systems like Kafka and Elasticsearch, Flink becomes even 
 - Requires significant resources such as memory, CPU, and network bandwidth to operate efficiently
 
 - Python and SQL features in Flink are not as developed as Java and Scala features, lacking support for certain data types, functions, or operators, and may not fully support standard SQL syntax.
-
-### Sources
-- https://flink.apache.org/what-is-flink/flink-applications/
-
-- https://medium.com/@olhrachov/apache-flink-pyflink-the-concept-of-windows-in-flink-example-of-an-application-for-1be04ecaa11f
-
-- https://www.linkedin.com/advice/0/what-advantages-disadvantages-using-apache-flink-cshec
 
 ### Zookeeper: Distributed Coordination Service
 
@@ -282,3 +300,12 @@ Visualize the processed data in Kibana for insights and exploration. Go to the K
 ## Conclusion
 
 This project demonstrates a streamlined approach to real-time data analysis using Apache Flink, efficiently processing continuous data streams. Leveraging Flink's capabilities alongside Kafka, Elasticsearch, and Kibana, it integrates data ingestion, storage, querying, and visualization seamlessly. Through the use of tumbling windows and aggregation functions, data is analyzed with precision. The Docker implementation ensures easy deployment and scalability. With Kafka for ingestion and Elasticsearch for storage, the project establishes a robust infrastructure, while Kibana's visualization tools empower insightful analysis.
+
+## References
+- https://flink.apache.org/what-is-flink/flink-applications/
+
+- https://medium.com/@olhrachov/apache-flink-pyflink-the-concept-of-windows-in-flink-example-of-an-application-for-1be04ecaa11f
+
+- https://www.linkedin.com/advice/0/what-advantages-disadvantages-using-apache-flink-cshec
+
+
