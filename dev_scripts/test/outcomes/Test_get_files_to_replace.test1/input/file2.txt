@@ -1,3 +1,0 @@
-first line
-testing for Test.file2
-third line

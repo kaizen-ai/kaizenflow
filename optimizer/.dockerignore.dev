@@ -1,4 +1,0 @@
-# The build context for DEV is only devops, so we ignore everything but
-# `devops`.
-**
-!devops/**

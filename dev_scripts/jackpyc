@@ -1,7 +1,0 @@
-#!/bin/bash
-#
-# Run jackpy and pipe it to vim cfile.
-#
-cmd="jackpy $* | tee cfile; vic"
-echo "> $cmd"
-eval $cmd

@@ -1,6 +1,0 @@
-.vscode
-Dockerfile
-*.yml
-__pycache__/
-outcome/
-README.md

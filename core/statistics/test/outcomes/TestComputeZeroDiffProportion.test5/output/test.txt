@@ -1,3 +1,0 @@
-                         test
-approx_const_count  15.000000
-approx_const_frac    0.151515
