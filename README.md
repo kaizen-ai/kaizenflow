@@ -16,7 +16,7 @@ developer, as ZeroMQ does not automatically handle these tasks.
 
 Despite these challenges, ZeroMQ's flexibility and adaptability across various platforms make it an 
 excellent choice for developing distributed applications that need to handle multiple data streams 
-simultaneously. It allows developers to concentrate on building the core functionality of their 
+simultaneously. It allows developers to concentrate on building the functionality of their 
 applications without getting bogged down by the underlying network communication details. ZeroMQ's 
 ability to facilitate efficient and scalable communication is particularly beneficial in environments
 where high performance and low overhead are crucial.
@@ -31,9 +31,9 @@ The project utilizes Docker to create a consistent and isolated environment for 
 system, by ensuring that the application is portable and behaves the same across different setups. Below, 
 the structure of the Docker setup will be explained, detailing the roles of the containers, the Dockerfile configuration, and the communication setup between the containers.
 
-- **Base Image**: We start from the `python:3.8-slim` image. This is a lightweight version of the Python image that provides all necessary Python functionalities without unnecessary extras, keeping the container small.
-- **Working Directory**: The `WORKDIR` instruction is set to `/app`. This instruction specifies that all subsequent actions should be taken from the `/app` directory inside the container, which helps in keeping our application files organized.
-- **Add Files**: The `ADD . /app` command copies all files from the host's current directory to `/app` in the container. This includes our Python scripts and any other files needed for the application.
+- **Base Image**: Starting from the `python:3.8-slim` image. This version of the Python image provides all necessary Python functionalities without unnecessary extras, keeping the container small.
+- **Working Directory**: The `WORKDIR` instruction is set to `/app`. This instruction specifies that all subsequent actions should be taken from the `/app` directory inside the container, which helps in keeping the application files organized.
+- **Add Files**: The `ADD . /app` command copies all files from the host's current directory to `/app` in the container. This includes the Python scripts and any other files needed for the application.
 - **Install Dependencies**: `RUN pip install --no-cache-dir -r requirements.txt` installs the Python dependencies defined in `requirements.txt`. The `--no-cache-dir` option is used to reduce the build size by not storing the extra cache data.
 - **Default Command**: The `CMD ["python", "pusher.py"]` command sets the container to run `pusher.py` by default when it starts. This script initiates the message sending process.
 
@@ -78,14 +78,14 @@ puller_1  | Received message: Message 1: Data from the pusher
 
 ##### What Was Done
 
-In this project, the primary components are two Python scripts, pusher.py and puller.py, operating within a structured Docker 
+The primary components are two Python scripts, pusher.py and puller.py, operating within a structured Docker 
 environment to establish a robust messaging system using ZeroMQ. This setup leverages ZeroMQ’s efficient push/pull messaging pattern,
 providing a detailed insight into its practical application and demonstrating how Docker can be utilized to ensure an isolated and 
 consistent setup across different environments.
 
 The pusher.py script functions as the message sender in this system. It creates a ZeroMQ context and establishes a PUSH socket, 
 binding it to a specified port where it can send out messages to any listening counterpart. The script enters a loop where it 
-constructs and sends messages continuously. Each message includes a sequence number, enhancing traceability and debugging by clearly indicating the message order. The script prints each message to the console before sending, which provides real-time logging of its activity and is essential for monitoring the system’s operation in a production or testing environment. Here is a look at what happens in the pusher.py script:
+constructs and sends messages continuously. Each message includes a sequence number, enhancing traceability and debugging by clearly indicating the message order. The script prints each message to the console before sending, which provides real-time logging of its activity and is essential for monitoring the system’s operation in a production or testing environment. This is what happens in the pusher.py script:
 
 def main():
     context = zmq.Context()  # Creates a new ZeroMQ context
