@@ -12,28 +12,6 @@ from pyflink.table import *
 from pyflink.table.expressions import call, col, lit
 from pyflink.table.window import Tumble
 
-class ParseMapFunction(MapFunction):
-
-    def map(self, data):
-        json_data = json.loads(data)
-        return json_data['client'], json_data['amount']
-
-
-class SumAggregate(AggregateFunction):
-
-    def create_accumulator(self) -> Tuple[int, int]:
-        return 0, 0
-
-    def add(self, value: Tuple[int, int], accumulator: Tuple[int, int]) -> Tuple[int, int]:
-        return value[0], accumulator[1] + value[1]
-
-    def get_result(self, accumulator: Tuple[int, int]) -> Tuple[int, int]:
-        return Row(accumulator[0], accumulator[1])
-
-    def merge(self, a: Tuple[int, int], b: Tuple[int, int]) -> Tuple[int, int]:
-        return a[0], a[1] + b[1]
-
-
 def process_json_data():
     env = StreamExecutionEnvironment.get_execution_environment()
     t_env = StreamTableEnvironment.create(stream_execution_environment=env)
