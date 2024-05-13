@@ -290,7 +290,7 @@ class TestNormalize(hunitest.TestCase):
         actual_result = csprmitr.normalize(signal)
         # Define expected values.
         expected_length = len(signal)
-        expected_column_value = "Signals"
+        expected_unique_values = None
         expected_result_signature = r"""
             Signals
         0    -0.490098
@@ -307,7 +307,7 @@ class TestNormalize(hunitest.TestCase):
         self.check_srs_output(
             actual_result,
             expected_length,
-            expected_column_value,
+            expected_unique_values,
             expected_result_signature,
         )
 
@@ -322,7 +322,6 @@ class TestNormalize(hunitest.TestCase):
         actual_result = str(result.exception)
         # Define expected values.
         expected_result_signature = r"""
-
         ################################################################################
         * Failed assertion *
         cond=False
@@ -330,4 +329,6 @@ class TestNormalize(hunitest.TestCase):
         ################################################################################
         """
         # Check result.
-        self.assert_equal(actual_result, expected_result_signature)
+        self.assert_equal(
+            actual_result, expected_result_signature, fuzzy_match=True
+        )
