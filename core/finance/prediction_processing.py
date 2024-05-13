@@ -37,6 +37,7 @@ def compute_bar_start_timestamps(
     return srs
 
 
+# TODO(Paul): Add unit tests.
 def compute_epoch(
     data: Union[pd.Series, pd.DataFrame], *, unit: Optional[str] = None
 ) -> Union[pd.Series, pd.DataFrame]:
