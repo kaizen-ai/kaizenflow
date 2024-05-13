@@ -277,11 +277,10 @@ class Test_split_positive_and_negative_parts(hunitest.TestCase):
         )
 
 
-# ########################################################################
+# #############################################################################
 
 
 class TestNormalize(hunitest.TestCase):
-
     def test1(self):
         """
         Check that a simple signal input is normalized correctly.
@@ -294,19 +293,22 @@ class TestNormalize(hunitest.TestCase):
         expected_column_value = "Signals"
         expected_result_signature = r"""
             Signals
-        0	-0.490098
-        1	-0.420084
-        2	-0.350070
-        3	-0.070014
-        4	0.000000
-        5	0.140028
-        6	0.210042
-        7	0.280056
-        8	0.560112
+        0    -0.490098
+        1    -0.420084
+        2    -0.350070
+        3    -0.070014
+        4    0.000000
+        5    0.140028
+        6    0.210042
+        7    0.280056
+        8    0.560112
         """
         # Check result.
         self.check_srs_output(
-            actual_result, expected_length, expected_column_value, expected_result_signature
+            actual_result,
+            expected_length,
+            expected_column_value,
+            expected_result_signature,
         )
 
     def test2(self):
