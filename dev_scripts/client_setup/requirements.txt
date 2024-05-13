@@ -7,5 +7,6 @@ poetry
 pytest >= "6.0.0"
 s3fs  # For tools like `publish_notebook.py`.
 tqdm
-# TODO(gp): Difference in cmamp vs kaizenflow.
+# On Mac there is an issue related to this package, so you might want to pin it
+# down.
 # pyyaml == 5.3.1
