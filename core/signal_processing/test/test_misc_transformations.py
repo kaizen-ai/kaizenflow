@@ -1,4 +1,5 @@
 import logging
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -223,3 +224,111 @@ class Test_compute_weighted_sum1(hunitest.TestCase):
 1           1.0
 2          -2.0"""
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+
+class Test_split_positive_and_negative_parts(hunitest.TestCase):
+    @staticmethod
+    def get_test_data() -> pd.Series:
+        """
+        Create artificial signal for unit test.
+        """
+        data = [100, -50, 0, 75, -25]
+        index = pd.date_range(start="2023-04-01", periods=5)
+        test_data = pd.Series(data, index=index, name="position_intent_1")
+        return test_data
+
+    def test1(self) -> None:
+        """
+        Check that a Series input is processed correctly.
+        """
+        series_input = self.get_test_data()
+        self.helper(series_input)
+
+    def test2(self) -> None:
+        """
+        Check that a DataFrame input is processed correctly.
+        """
+        df_input = pd.DataFrame({"position_intent_1": self.get_test_data()})
+        self.helper(df_input)
+
+    def helper(self, input: Union[pd.Series, pd.DataFrame]) -> None:
+        actual_df = csprmitr.split_positive_and_negative_parts(input)
+        expected_length = 5
+        expected_column_names = ["positive", "negative"]
+        expected_column_unique_values = None
+        expected_signature = r"""
+        # df=
+        index=[2023-04-01 00:00:00, 2023-04-05 00:00:00]
+        columns=positive,negative
+        shape=(5, 2)
+                    positive  negative
+        2023-04-01     100.0       0.0
+        2023-04-02       0.0      50.0
+        2023-04-03       0.0       0.0
+        2023-04-04      75.0       0.0
+        2023-04-05       0.0      25.0
+        """
+        self.check_df_output(
+            actual_df,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+
+# #############################################################################
+
+
+class TestNormalize(hunitest.TestCase):
+    def test1(self):
+        """
+        Check that a simple signal input is normalized correctly.
+        """
+        # Create input data for testing.
+        signal = pd.Series([-7, -6, -5, -1, 0, 2, 3, 4, 8], name="Signals")
+        actual_result = csprmitr.normalize(signal)
+        # Define expected values.
+        expected_length = len(signal)
+        expected_unique_values = None
+        expected_result_signature = r"""
+            Signals
+        0    -0.490098
+        1    -0.420084
+        2    -0.350070
+        3    -0.070014
+        4    0.000000
+        5    0.140028
+        6    0.210042
+        7    0.280056
+        8    0.560112
+        """
+        # Check result.
+        self.check_srs_output(
+            actual_result,
+            expected_length,
+            expected_unique_values,
+            expected_result_signature,
+        )
+
+    def test2(self):
+        """
+        Check that a signal input with NaN values is processed correctly.
+        """
+        # Create input data for testing.
+        signal = pd.Series([-7, -6, -5, -1, np.NaN, 2, 3, 4, 8], name="Signals")
+        with self.assertRaises(AssertionError) as result:
+            csprmitr.normalize(signal)
+        actual_result = str(result.exception)
+        # Define expected values.
+        expected_result_signature = r"""
+        ################################################################################
+        * Failed assertion *
+        cond=False
+        NaNs detected at Index([4], dtype='int64')
+        ################################################################################
+        """
+        # Check result.
+        self.assert_equal(
+            actual_result, expected_result_signature, fuzzy_match=True
+        )
