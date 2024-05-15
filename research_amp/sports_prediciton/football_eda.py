@@ -377,32 +377,6 @@ merged_df = pd.merge(games_df, match_df[['home_team_name', 'away_team_name', 'da
 
 
 # %%
-merged_df.info()
-
-# %%
-games_df = games_df.merge(competitions_df[['competition_id', 'league_name']],
-                         on = 'competition_id',
-                         how = 'left')
-
-# %%
-competitions_df = competitions_df.rename(columns={'name': 'league_name'})
-
-# %%
-match_df[match_df['date'] == '2013-08-18'][['home_team_name', 'away_team_name', 'league_name', 'date'] + custom_columns]
-
-# %%
-games_df[games_df['date'] == '2013-08-18']
-
-# %%
-merged_df[merged_df['date'] == '2013-08-18']
-
-# %%
-games_df = games_df.rename(columns{'away_club_name': 'away_team_name', 'home_club_name':'home_team_name'})
-
-# %%
-merged_df.columns
-
-# %%
 # Convert the date column to datetime.
 merged_df['date'] = pd.to_datetime(merged_df['date']).
 # Distribution of betting odds (KDE plots).
