@@ -9,7 +9,49 @@ import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
+class TestComputeBarStartTimestamps(hunitest.TestCase):
+    """
+    Test the `compute_bar_start_timestamps` function with different types of inputs.
+    """
 
+    def helper(self, freq):
+        """
+        Generate a DataFrame or Series with a DatetimeIndex with a specified frequency.
+        """
+        timestamp_index = pd.date_range("2024-01-01", periods=10, freq=freq)
+        data = {"value": range(10)}
+        return pd.DataFrame(data, index=timestamp_index)
+    
+    def test_dataframe_with_valid_freq(self):
+        """
+        Test compute_bar_start_timestamps with a DataFrame that has a valid frequency.
+        """
+        df = self.helper("T")  # Minute frequency
+        result = cfiprpro.compute_bar_start_timestamps(df)
+        expected_index = df.index.shift(-1, freq='T')
+        expected_series = pd.Series(range(10), index=expected_index, name='bar_start_timestamp')
+        pd.testing.assert_series_equal(result, expected_series)
+
+    def test_series_with_valid_freq(self):
+        """
+        Test compute_bar_start_timestamps with a Series that has a valid frequency.
+        """
+        srs = self.helper("T")['value']  # Just using the 'value' column as a Series
+        result = cfiprpro.compute_bar_start_timestamps(srs)
+        expected_index = srs.index.shift(-1, freq='T')
+        expected_series = pd.Series(srs.values, index=expected_index, name='bar_start_timestamp')
+        pd.testing.assert_series_equal(result, expected_series)
+
+    def test_dataframe_with_invalid_freq(self):
+        """
+        Test compute_bar_start_timestamps with a DataFrame lacking a frequency, expecting a failure.
+        """
+        df = self.helper(None)  # No frequency
+        with self.assertRaises(ValueError) as context:
+            cfiprpro.compute_bar_start_timestamps(df)
+        self.assertIn("DatetimeIndex must have a frequency.", str(context.exception))
+
+        
 class TestStackPredictionDf(hunitest.TestCase):
     def test1(self) -> None:
         df = self._get_data()
