@@ -14,7 +14,21 @@ class TestComputeBarStartTimestamps(hunitest.TestCase):
     """
     Test the ⁠ compute_bar_start_timestamps ⁠ function with different types of inputs.
     """
-    def test_freq_present(self):
+    def test1(self):
+        """Test with valid DataFrame input."""
+        df_sample = pd.DataFrame({'value': range(1)}, index=pd.date_range(start='2024-01-01', periods=1, freq='D'))
+        result = cfiprpro.compute_bar_start_timestamps(df_sample)
+        self.assertIsInstance(result, pd.Series)
+        self.assertEqual(result.name, "bar_start_timestamp")
+
+    def test2(self):
+        """Test with valid Series input."""
+        sr_sample = pd.Series(range(1), index=pd.date_range(start='2024-01-01', periods=1, freq='D'))
+        result = cfiprpro.compute_bar_start_timestamps(sr_sample)
+        self.assertIsInstance(result, pd.Series)
+        self.assertEqual(result.name, "bar_start_timestamp")
+
+    def test3(self):
         """Test that a ValueError is raised if freq is not present."""
         # Scenario 1: Missing frequency
         df_missing_freq = pd.DataFrame({'value': range(1)}, index=pd.date_range(start='2024-01-01', periods=1, freq='D'))
@@ -28,20 +42,6 @@ class TestComputeBarStartTimestamps(hunitest.TestCase):
         with self.assertRaises(ValueError) as cm:
             cfiprpro.compute_bar_start_timestamps(df_large_size)
         self.assertEqual(str(cm.exception), "DatetimeIndex has size=6 values")
-
-    def test_dataframe_input(self):
-        """Test with DataFrame input."""
-        df_sample = pd.DataFrame({'value': range(1)}, index=pd.date_range(start='2024-01-01', periods=1, freq='D'))
-        result = cfiprpro.compute_bar_start_timestamps(df_sample)
-        self.assertIsInstance(result, pd.Series)
-        self.assertEqual(result.name, "bar_start_timestamp")
-
-    def test_series_input(self):
-        """Test with Series input."""
-        sr_sample = pd.Series(range(1), index=pd.date_range(start='2024-01-01', periods=1, freq='D'))
-        result = cfiprpro.compute_bar_start_timestamps(sr_sample)
-        self.assertIsInstance(result, pd.Series)
-        self.assertEqual(result.name, "bar_start_timestamp")
 
 
 
