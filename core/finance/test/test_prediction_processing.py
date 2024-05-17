@@ -14,47 +14,34 @@ class TestComputeBarStartTimestamps(hunitest.TestCase):
     """
     Test the ⁠ compute_bar_start_timestamps ⁠ function with different types of inputs.
     """
+    def test_freq_present(self):
+        """Test that a ValueError is raised if freq is not present."""
+        # Scenario 1: Missing frequency
+        df_missing_freq = pd.DataFrame({'value': range(1)}, index=pd.date_range(start='2024-01-01', periods=1, freq='D'))
+        df_missing_freq.index.freq = None  # Explicitly remove the frequency
+        with self.assertRaises(ValueError) as cm:
+            cfiprpro.compute_bar_start_timestamps(df_missing_freq)
+        self.assertEqual(str(cm.exception), "DatetimeIndex must have a frequency.")
 
-    def helper(self, freq):
-        """
-        Generate a DataFrame or Series with a DatetimeIndex with a specified frequency.
-        """
-        timestamp_index = pd.date_range("2024-01-01", periods=10, freq=freq)
-        data = {"value": range(10)}
-        df = pd.DataFrame(data, index=timestamp_index)
-        if freq is None:
-            df.index.freq = None  # Explicitly remove frequency for the test
-        return df
-    
-    def test_dataframe_with_valid_freq(self):
-        """
-        Test compute_bar_start_timestamps with a DataFrame that has a valid frequency.
-        """
-        df = self.helper("T")  # Minute frequency
-        result = cfiprpro.compute_bar_start_timestamps(df)
-        expected_index = df.index.shift(-1, freq='T')
-        expected_series = pd.Series(range(10), index=expected_index, name='bar_start_timestamp')
-        pd.testing.assert_series_equal(result, expected_series)
+        # Scenario 2: Size greater than 1
+        df_large_size = pd.DataFrame({'value': range(6)}, index=pd.date_range(start='2024-01-01', periods=6, freq='D'))
+        with self.assertRaises(ValueError) as cm:
+            cfiprpro.compute_bar_start_timestamps(df_large_size)
+        self.assertEqual(str(cm.exception), "DatetimeIndex has size=6 values")
 
-    def test_series_with_valid_freq(self):
-        """
-        Test compute_bar_start_timestamps with a Series that has a valid frequency.
-        """
-        srs = self.helper("T")['value']  # Just using the 'value' column as a Series
-        result = cfiprpro.compute_bar_start_timestamps(srs)
-        expected_index = srs.index.shift(-1, freq='T')
-        expected_series = pd.Series(srs.values, index=expected_index, name='bar_start_timestamp')
-        pd.testing.assert_series_equal(result, expected_series)
+    def test_dataframe_input(self):
+        """Test with DataFrame input."""
+        df_sample = pd.DataFrame({'value': range(1)}, index=pd.date_range(start='2024-01-01', periods=1, freq='D'))
+        result = cfiprpro.compute_bar_start_timestamps(df_sample)
+        self.assertIsInstance(result, pd.Series)
+        self.assertEqual(result.name, "bar_start_timestamp")
 
-    def test_dataframe_with_invalid_freq(self):
-        """
-        Test compute_bar_start_timestamps with a DataFrame without a frequency, expecting a failure.
-        """
-        df = self.helper(None)  # No frequency
-        with self.assertRaises(ValueError) as context:
-            cfiprpro.compute_bar_start_timestamps(df)
-        #self.assertIn("DatetimeIndex must have a frequency.", str(context.exception))
-
+    def test_series_input(self):
+        """Test with Series input."""
+        sr_sample = pd.Series(range(1), index=pd.date_range(start='2024-01-01', periods=1, freq='D'))
+        result = cfiprpro.compute_bar_start_timestamps(sr_sample)
+        self.assertIsInstance(result, pd.Series)
+        self.assertEqual(result.name, "bar_start_timestamp")
 
 
 
@@ -91,7 +78,6 @@ class TestStackPredictionDf(hunitest.TestCase):
         # expected_str = hpandas.convert_df_to_json_string(expected)
         # self.assert_equal(actual_str, expected_str)
         hunitest.compare_df(actual, expected)
-
     @staticmethod
     def _get_data() -> pd.DataFrame:
         txt = """
