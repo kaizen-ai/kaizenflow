@@ -127,25 +127,10 @@ Key Features of SPARQL:
 * To stop and remove the Docker Container
   * Run command: docker-compose down
 
-# Discussion
-
-The RDF dataset I'm using is a metadata RDF file related to the index of /wikidatawiki/entities/. Specifically, the file named dcatap.rdf adheres to the DCAT-AP standard, which stands for Data Catalog Vocabulary - Application Profile for data portals in Europe. DCAT-AP is a specification designed to describe datasets in data catalogs, ensuring interoperability across different platforms.
-
-The dcatap.rdf file typically contains metadata about the datasets available in this directory. This metadata includes information such as dataset titles, descriptions, publishers, distribution formats, and other relevant attributes. By standardizing how datasets are described and cataloged, this file facilitates the discovery and sharing of datasets across various platforms.
-
-
-![alt text](image-1.png)
-
-In the image above, you can see the distribution plot of the languages used, with the language tags on the bottom. The language tag used the most is de (deutsch), followed by en (english), and then it (italian)
-
-![alt text](image.png)
-The above graph shows us the frequency of the most used words in metadata titles. 
-
-![alt text](image-2.png)
-
-This graph shows us the distribution of resource types. 
 
 
 # Conclusion
 
 This project provides a framework for analyzing RDF metadata using RDFLib and visualizing the results with Matplotlib. It can be adapted and extended to suit various types of RDF datasets and analysis requirements.
+
+This README document provides an overview of the project, installation instructions, usage examples, and suggestions for further analysis. You can customize it further based on any additional features or specific details of your project.
