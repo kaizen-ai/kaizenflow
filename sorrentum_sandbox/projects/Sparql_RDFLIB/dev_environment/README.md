@@ -28,7 +28,7 @@ This project demonstrates how to perform data analysis on an RDF metadata file d
 
 
 ## Description
-This project uses Python within a notebook environment to orchestrate time-based aggregations, leveraging tumbling windows for granular insights into the data. Due to the fact that publicly available streaming datasets are limited, this project will use a static csv file as the data source.
+This project uses Python within a notebook environment to use SPARQL queries with a fixed, non changing RDF dataset. 
 
 ## Technologies
 ### SPARQL:
