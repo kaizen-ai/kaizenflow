@@ -12,6 +12,9 @@
 #     name: python3
 # ---
 
+# %%
+# !pip install pymc
+
 # %% [markdown]
 # # Load datasets
 
@@ -437,7 +440,23 @@ validation_data, test_data = train_test_split(temp_data, test_size=0.5, random_s
 win_counts = train_data['home_win'].value_counts()
 plt.figure(figsize=(8, 6))
 sns.barplot(x=win_counts.index, y=win_counts.values, palette='viridis')
-plt.title('Home Team Wins vs Away Team Wins vs Draws')
+plt.title('Home Team Wins vs Away Team Wins vs Draws for Train set')
+plt.xlabel('Home Win (1), Away Win (0), Draw (-1)')
+plt.ylabel('Count')
+plt.show()
+
+win_counts = validation_data['home_win'].value_counts()
+plt.figure(figsize=(8, 6))
+sns.barplot(x=win_counts.index, y=win_counts.values, palette='viridis')
+plt.title('Home Team Wins vs Away Team Wins vs Draws for validation set')
+plt.xlabel('Home Win (1), Away Win (0), Draw (-1)')
+plt.ylabel('Count')
+plt.show()
+
+win_counts = test_data['home_win'].value_counts()
+plt.figure(figsize=(8, 6))
+sns.barplot(x=win_counts.index, y=win_counts.values, palette='viridis')
+plt.title('Home Team Wins vs Away Team Wins vs Draws for test set')
 plt.xlabel('Home Win (1), Away Win (0), Draw (-1)')
 plt.ylabel('Count')
 plt.show()
@@ -490,6 +509,9 @@ plt.tight_layout()
 plt.show()
 
 
+# %% [markdown]
+# # Baseline Model 
+
 # %%
 columns = ['home_club_id', 'away_club_id', 'home_aggregate_skill_score',
                    'away_aggregate_skill_score', 'home_aggregate_performance', 
@@ -508,106 +530,56 @@ print(f"Test data shape: {X_test.shape}")
 
 # %%
 # Identify the numeric columns for normalization
-numeric_cols = X.select_dtypes(include=['int64', 'float64']).columns
-
+numeric_cols = X_train.select_dtypes(include=['int64', 'float64']).columns
 # Normalize the numeric columns
 scaler = StandardScaler()
 X_train[numeric_cols] = scaler.fit_transform(X_train[numeric_cols])
 X_val[numeric_cols] = scaler.transform(X_val[numeric_cols])
 X_test[numeric_cols] = scaler.transform(X_test[numeric_cols])
 
-# Convert DataFrame to numpy arrays for PyMC
-X_train_np = X_train.values
-y_train_np = y_train.values
-X_val_np = X_val.values
-y_val_np = y_val.values
+# Define the Logistic Regression model
+model = LogisticRegression(multi_class='multinomial', max_iter=1000, solver='lbfgs')
 
-# Define a function to create and evaluate a PyMC model
-def create_and_evaluate_model(prior_mu=0, prior_sigma=10):
-    with pm.Model() as logistic_model:
-        # Priors for the model coefficients
-        intercept = pm.Normal('intercept', mu=prior_mu, sigma=prior_sigma)
-        coefs = pm.Normal('coefs', mu=prior_mu, sigma=prior_sigma, shape=X_train_np.shape[1])
-        
-        # Linear combination
-        logits = intercept + pm.math.dot(X_train_np, coefs)
-        
-        # Likelihood
-        likelihood = pm.Bernoulli('likelihood', logit_p=logits, observed=y_train_np)
-        
-        # Inference
-        trace = pm.sample(2000, tune=1000, cores=2, return_inferencedata=True)
-        
-        # Posterior predictive checks
-        ppc = pm.sample_posterior_predictive(trace, var_names=['likelihood'])
-        
-        # Evaluate on the validation set
-        pm.set_data({'X': X_val_np, 'y': y_val_np})
-        posterior_pred = pm.sample_posterior_predictive(trace, var_names=['likelihood'])
-        
-        # Predicted probabilities
-        y_val_pred_prob = posterior_pred['likelihood'].mean(axis=0)
-        y_val_pred = (y_val_pred_prob > 0.5).astype(int)
-        
-        # Evaluate the model
-        val_accuracy = accuracy_score(y_val_np, y_val_pred)
-        val_f1 = f1_score(y_val_np, y_val_pred)
-        val_roc_auc = roc_auc_score(y_val_np, y_val_pred_prob)
-        
-        return {
-            'model': logistic_model,
-            'trace': trace,
-            'ppc': ppc,
-            'val_accuracy': val_accuracy,
-            'val_f1': val_f1,
-            'val_roc_auc': val_roc_auc
-        }
+# Define hyperparameter grid for tuning
+param_grid = {
+    'C': [0.01, 0.1, 1, 10, 100]
+}
 
-# Tune the model with different priors and compare performance
-results = []
-for prior_mu in [0, 1, 2]:
-    for prior_sigma in [5, 10, 20]:
-        result = create_and_evaluate_model(prior_mu=prior_mu, prior_sigma=prior_sigma)
-        result['prior_mu'] = prior_mu
-        result['prior_sigma'] = prior_sigma
-        results.append(result)
-        print(f"Model with prior_mu={prior_mu}, prior_sigma={prior_sigma}")
-        print(f"Validation Accuracy: {result['val_accuracy']:.4f}")
-        print(f"Validation F1 Score: {result['val_f1']:.4f}")
-        print(f"Validation ROC AUC Score: {result['val_roc_auc']:.4f}")
-        print()
+# Use GridSearchCV to find the best hyperparameters
+grid_search = GridSearchCV(model, param_grid, cv=5, scoring='accuracy')
+grid_search.fit(X_train, y_train)
 
-# Find the best model based on validation accuracy
-best_result = max(results, key=lambda x: x['val_accuracy'])
-best_model = best_result['model']
-best_trace = best_result['trace']
-best_ppc = best_result['ppc']
+# Print the best parameters found by GridSearchCV
+print(f"Best parameters: {grid_search.best_params_}")
 
-print(f"Best Model with prior_mu={best_result['prior_mu']}, prior_sigma={best_result['prior_sigma']}")
-print(f"Validation Accuracy: {best_result['val_accuracy']:.4f}")
-print(f"Validation F1 Score: {best_result['val_f1']:.4f}")
-print(f"Validation ROC AUC Score: {best_result['val_roc_auc']:.4f}")
+# Train the model with the best parameters on the training set
+best_model = grid_search.best_estimator_
+best_model.fit(X_train, y_train)
+
+# Evaluate the model on the validation set
+y_val_pred = best_model.predict(X_val)
+y_val_pred_prob = best_model.predict_proba(X_val)
+
+val_accuracy = accuracy_score(y_val, y_val_pred)
+val_f1 = f1_score(y_val, y_val_pred, average='weighted')
+val_roc_auc = roc_auc_score(y_val, y_val_pred_prob, multi_class='ovr')
+
+print(f"Validation Accuracy: {val_accuracy:.4f}")
+print(f"Validation F1 Score: {val_f1:.4f}")
+print(f"Validation ROC AUC Score: {val_roc_auc:.4f}")
+print(classification_report(y_val, y_val_pred))
 
 # Evaluate the best model on the test set
-X_test_np = X_test.values
-y_test_np = y_test.values
+y_test_pred = best_model.predict(X_test)
+y_test_pred_prob = best_model.predict_proba(X_test)
 
-with best_model:
-    pm.set_data({'X': X_test_np, 'y': y_test_np})
-    posterior_pred = pm.sample_posterior_predictive(best_trace, var_names=['likelihood'])
-
-# Predicted probabilities
-y_test_pred_prob = posterior_pred['likelihood'].mean(axis=0)
-y_test_pred = (y_test_pred_prob > 0.5).astype(int)
-
-# Evaluate the model
-test_accuracy = accuracy_score(y_test_np, y_test_pred)
-test_f1 = f1_score(y_test_np, y_test_pred)
-test_roc_auc = roc_auc_score(y_test_np, y_test_pred_prob)
+test_accuracy = accuracy_score(y_test, y_test_pred)
+test_f1 = f1_score(y_test, y_test_pred, average='weighted')
+test_roc_auc = roc_auc_score(y_test, y_test_pred_prob, multi_class='ovr')
 
 print(f"Test Accuracy: {test_accuracy:.4f}")
 print(f"Test F1 Score: {test_f1:.4f}")
 print(f"Test ROC AUC Score: {test_roc_auc:.4f}")
-print(classification_report(y_test_np, y_test_pred))
+print(classification_report(y_test, y_test_pred))
 
 # %%
