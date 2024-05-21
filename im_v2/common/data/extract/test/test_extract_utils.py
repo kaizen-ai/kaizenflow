@@ -22,8 +22,6 @@ import im_v2.common.data.transform.resample_daily_bid_ask_data as imvcdtrdbad
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
 
-# To get the private method.
-
 
 class TestDownloadExchangeDataToDbPeriodically1(hunitest.TestCase):
     # Regular mock for capturing logs.
