@@ -15,12 +15,14 @@ import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
-import im_v2.ccxt.data.extract.extractor as ivcdexex
+import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.data.transform.resample_daily_bid_ask_data as imvcdtrdbad
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
+
+# To get the private method.
 
 
 class TestDownloadExchangeDataToDbPeriodically1(hunitest.TestCase):
@@ -63,7 +65,7 @@ class TestDownloadExchangeDataToDbPeriodically1(hunitest.TestCase):
         self.sleep_mock: umock.MagicMock = self.sleep_patch.start()
         # Commonly used extractor mock.
         self.extractor_mock = umock.create_autospec(
-            ivcdexex.CcxtExtractor, instance=True
+            imvcdexex.CcxtExtractor, instance=True
         )
         # Commonly used kwargs across the tests.
         self.kwargs = {
@@ -381,13 +383,13 @@ class TestDownloadExchangeDataToDbPeriodically2(hunitest.TestCase):
 
     @pytest.mark.slow("18 seconds")
     @umock.patch.object(
-        ivcdexex.CcxtExtractor,
+        imvcdexex.CcxtExtractor,
         "get_exchange_currency_pairs",
         autospec=True,
         spec_set=True,
     )
     @umock.patch.object(
-        ivcdexex.CcxtExtractor, "log_into_exchange", autospec=True, spec_set=True
+        imvcdexex.CcxtExtractor, "log_into_exchange", autospec=True, spec_set=True
     )
     def test_realtime_bid_ask_download(
         self,
@@ -427,13 +429,13 @@ class TestDownloadExchangeDataToDbPeriodically2(hunitest.TestCase):
             pass
 
         umock.MagicMock.__await__ = lambda x: async_magic().__await__()
-        mock_okx = umock.MagicMock(spec=ivcdexex.ccxtpro.okx())
+        mock_okx = umock.MagicMock(spec=imvcdexex.ccxtpro.okx())
         mock_log_into_exchange.return_value = mock_okx
         mock_okx.watchOrderBook.return_value = {}
         mock_data = self.get_mock_ccxt_okx_data(int(start_time.timestamp()))
         mock_okx.orderbooks["some_symbol"].limit.return_value = mock_data
         mock_get_exchange_currency_pairs.return_value = []
-        exchange = ivcdexex.CcxtExtractor(
+        exchange = imvcdexex.CcxtExtractor(
             args["exchange_id"], args["contract_type"]
         )
         # Run.
@@ -511,7 +513,7 @@ class TestDownloadExchangeDataToDb1(
             "s3_path": None,
             "connection": self.connection,
         }
-        extractor = ivcdexex.CcxtExtractor(
+        extractor = imvcdexex.CcxtExtractor(
             kwargs["exchange_id"], kwargs["contract_type"]
         )
         if use_s3:
@@ -546,7 +548,7 @@ class TestDownloadExchangeDataToDb1(
         "Cannot be run from the US due to 451 error API error. Run manually."
     )
     @pytest.mark.slow
-    @umock.patch.object(ivcdexex.hdateti, "get_current_timestamp_as_string")
+    @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcddbut.hdateti, "get_current_time")
     def test_function_call1(
         self,
@@ -825,6 +827,62 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
+class TestSplitUniverse(hunitest.TestCase):
+    # A universe list from the example.
+    universe = [
+        "ALICE_USDT",
+        "GALA_USDT",
+        "FLOW_USDT",
+        "HBAR_USDT",
+        "INJ_USDT",
+        "NEAR_USDT",
+    ]
+
+    def test1(self) -> None:
+        """
+        Test if both group_size and universe_part are 0.
+        """
+        universe_subset = imvcdeexut._split_universe(self.universe, 0, 0)
+        actual_str = " ".join([str(element) for element in universe_subset])
+        expected_str = r"""
+
+        """
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+    def test2(self) -> None:
+        """
+        Test if group_size is 6 and universe_part is 1.
+
+        (This returns the whole list in the 1st part)
+        """
+        universe_subset = imvcdeexut._split_universe(self.universe, 6, 1)
+        actual_str = " ".join([str(element) for element in universe_subset])
+        expected_str = r"""
+        ALICE_USDT GALA_USDT FLOW_USDT HBAR_USDT INJ_USDT NEAR_USDT
+        """
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Test if roup_size is 6 and universe_part is 2.
+
+        (This returns an empty list, since no groups in the part)
+        """
+        universe_subset = imvcdeexut._split_universe(self.universe, 6, 2)
+        actual_str = " ".join([str(element) for element in universe_subset])
+        expected_str = r"""
+
+        """
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Test to check for error.
+        """
+        with pytest.raises(RuntimeError):
+            (imvcdeexut._split_universe(self.universe, 6, 6))
+
+
 class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
     def call_download_historical_data(
         self, incremental: bool, *, assert_on_missing_data: bool = False
@@ -855,7 +913,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "version": "v1_0_0",
         }
         with umock.patch.object(
-            ivcdexex.CcxtExtractor,
+            imvcdexex.CcxtExtractor,
             "get_exchange_currency_pairs",
             # Changed return values as a part of CmTask2956
             # return_value=["BTC_USDT", "ETH_USDT"],
@@ -871,7 +929,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
                 "SOL/USDT",
             ],
         ):
-            exchange = ivcdexex.CcxtExtractor(
+            exchange = imvcdexex.CcxtExtractor(
                 args["exchange_id"], args["contract_type"]
             )
             imvcdeexut.download_historical_data(args, exchange)
@@ -885,7 +943,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         """
         # Mock downloader to return an empty dataframe.
         with umock.patch.object(
-            ivcdexex.CcxtExtractor, "download_data", return_value=pd.DataFrame()
+            imvcdexex.CcxtExtractor, "download_data", return_value=pd.DataFrame()
         ):
             # Check for an exception raising.
             with self.assertRaises(RuntimeError) as fail:
@@ -1303,11 +1361,11 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
             "dst_dir": "csv_test",
         }
         with umock.patch.object(
-            ivcdexex.CcxtExtractor,
+            imvcdexex.CcxtExtractor,
             "get_exchange_currency_pairs",
             return_value=["ADA_USDT", "BTC_USDT"],
         ):
-            exchange = ivcdexex.CcxtExtractor(
+            exchange = imvcdexex.CcxtExtractor(
                 args["exchange_id"], args["contract_type"]
             )
             imvcdeexut.download_historical_data(args, exchange)
@@ -1323,7 +1381,7 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
         mock_get_current_time.return_value = "2022-02-08 10:12:00.000000+00:00"
         self.data_format = "csv"
         with umock.patch.object(
-            ivcdexex.CcxtExtractor,
+            imvcdexex.CcxtExtractor,
             "download_data",
             return_value=self.get_simple_ccxt_mock_data(
                 start_timestamp=int("20211231230000"),
@@ -1356,7 +1414,7 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
         mock_get_current_time.return_value = "2022-02-08 10:12:00.000000+00:00"
         self.data_format = "test"
         with umock.patch.object(
-            ivcdexex.CcxtExtractor,
+            imvcdexex.CcxtExtractor,
             "download_data",
             return_value=self.get_simple_ccxt_mock_data(
                 start_timestamp=int("20211231230000"),
