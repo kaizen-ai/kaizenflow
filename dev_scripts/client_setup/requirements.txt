@@ -1,4 +1,8 @@
 boto3 >= 1.20.17
+# Restricted because of CmTask8340
+# https://github.com/cryptokaizen/cmamp/issues/8340
+# See https://github.com/psf/requests/issues/6707 for more details.
+requests <= 2.31.0
 # Keep in sync with `.github/gh_requirements.txt`, see CmTask6488.
 docker < 7
 docker-compose >= 1.29.0
