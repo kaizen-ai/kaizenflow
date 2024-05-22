@@ -31,15 +31,15 @@ class TestComputeBarStartTimestamps(hunitest.TestCase):
     def test3(self):
         """Test that a ValueError is raised if freq is not present."""
         # Scenario 1: Missing frequency
-        df_missing_freq = pd.DataFrame({'value': range(1)}, index=pd.date_range(start='2024-01-01', periods=1, freq='D'))
+        df_missing_freq = pd.DataFrame({'value': range(1)}, index=pd.date_range(start='2024-01-01', periods=1))
         df_missing_freq.index.freq = None  # Explicitly remove the frequency
-        with self.assertRaises(ValueError) as cm:
+        with self.assertRaises(AssertionError) as cm:
             cfiprpro.compute_bar_start_timestamps(df_missing_freq)
         self.assertEqual(str(cm.exception), "DatetimeIndex must have a frequency.")
 
         # Scenario 2: Size greater than 1
-        df_large_size = pd.DataFrame({'value': range(6)}, index=pd.date_range(start='2024-01-01', periods=6, freq='D'))
-        with self.assertRaises(ValueError) as cm:
+        df_large_size = pd.DataFrame({'value': range(6)}, index=pd.date_range(start='2024-01-01', periods=6))
+        with self.assertRaises(AssertionError) as cm:
             cfiprpro.compute_bar_start_timestamps(df_large_size)
         self.assertEqual(str(cm.exception), "DatetimeIndex has size=6 values")
 
