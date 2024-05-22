@@ -31,7 +31,6 @@ class TestComputeBarStartTimestamps(hunitest.TestCase):
     def test3(self):
         """Test that a ValueError is raised if freq is not present."""
         # Scenario 1: Missing frequency
-        print("test 3")
         df_missing_freq = pd.DataFrame({'value': range(1)}, index=pd.date_range(start='2024-01-01', periods=1))
         df_missing_freq.index.freq = None  # Explicitly remove the frequency
         with self.assertRaises(AssertionError) as cm:
