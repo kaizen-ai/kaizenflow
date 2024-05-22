@@ -80,7 +80,7 @@ Happy coding!
 
   ```bash
   > cd $GIT_ROOT
-  > source dev_scripts/client_setup/build.sh
+  > dev_scripts/client_setup/build.sh
   ```
 
 - Activate the thin environment; make sure it is always activated
