@@ -8,14 +8,13 @@ import core.finance.prediction_processing as cfiprpro
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
-
-
 class TestComputeBarStartTimestamps(hunitest.TestCase):
     """
     Test the ⁠ compute_bar_start_timestamps ⁠ function with different types of inputs.
     """
     def test1(self):
         """Test with valid DataFrame input."""
+        print("test 1")
         df_sample = pd.DataFrame({'value': range(1)}, index=pd.date_range(start='2024-01-01', periods=1, freq='D'))
         result = cfiprpro.compute_bar_start_timestamps(df_sample)
         self.assertIsInstance(result, pd.Series)
@@ -23,6 +22,7 @@ class TestComputeBarStartTimestamps(hunitest.TestCase):
 
     def test2(self):
         """Test with valid Series input."""
+        print("test 2")
         sr_sample = pd.Series(range(1), index=pd.date_range(start='2024-01-01', periods=1, freq='D'))
         result = cfiprpro.compute_bar_start_timestamps(sr_sample)
         self.assertIsInstance(result, pd.Series)
@@ -31,20 +31,19 @@ class TestComputeBarStartTimestamps(hunitest.TestCase):
     def test3(self):
         """Test that a ValueError is raised if freq is not present."""
         # Scenario 1: Missing frequency
+        print("test 3")
         df_missing_freq = pd.DataFrame({'value': range(1)}, index=pd.date_range(start='2024-01-01', periods=1))
         df_missing_freq.index.freq = None  # Explicitly remove the frequency
         with self.assertRaises(AssertionError) as cm:
             cfiprpro.compute_bar_start_timestamps(df_missing_freq)
         self.assertEqual(str(cm.exception), "DatetimeIndex must have a frequency.")
-
+        
         # Scenario 2: Size greater than 1
         df_large_size = pd.DataFrame({'value': range(6)}, index=pd.date_range(start='2024-01-01', periods=6))
         with self.assertRaises(AssertionError) as cm:
             cfiprpro.compute_bar_start_timestamps(df_large_size)
         self.assertEqual(str(cm.exception), "DatetimeIndex has size=6 values")
-
-
-
+        
 class TestStackPredictionDf(hunitest.TestCase):
     def test1(self) -> None:
         df = self._get_data()
@@ -78,6 +77,7 @@ class TestStackPredictionDf(hunitest.TestCase):
         # expected_str = hpandas.convert_df_to_json_string(expected)
         # self.assert_equal(actual_str, expected_str)
         hunitest.compare_df(actual, expected)
+
     @staticmethod
     def _get_data() -> pd.DataFrame:
         txt = """
