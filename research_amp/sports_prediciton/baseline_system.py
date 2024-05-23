@@ -12,11 +12,11 @@
 #     name: python3
 # ---
 
-# %%
-# !pip install pymc
-
 # %% [markdown]
 # # Load datasets
+
+# %%
+pip install pymc
 
 # %%
 import sqlite3
@@ -44,7 +44,7 @@ import seaborn as sns
 from scipy.stats import kde
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.impute import SimpleImputer
+from sklearn.impute import SimpleImputer, KNNImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, classification_report
@@ -200,6 +200,40 @@ lineups_master = pd.merge(game_lineups_df, master_player, left_on=['player_name'
 # Output the merged dataframe
 lineups_master.head()
 
+
+# %% [markdown]
+# Impute missing values for player by position and then knn imputation to finetune the values
+
+# %%
+# Define skill columns
+skill_columns = [
+    'current_rating', 'potential_rating', 'ball_control', 'dribbling', 'marking', 'aggression',
+    'composure', 'crossing', 'short_pass', 'long_pass', 'acceleration', 'stamina', 'strength',
+    'heading', 'shot_power', 'finishing', 'long_shots', 'gk_positioning', 'gk_diving'
+]
+
+# Save the indices of the originally missing values
+missing_indices = {col: lineups_master[col].isna() for col in skill_columns}
+
+# Group by player position and impute missing values with group mean
+lineups_master_grouped = lineups_master.groupby('position')
+
+# Apply group-based imputation
+for col in skill_columns:
+    lineups_master[col] = lineups_master_grouped[col].transform(lambda x: x.fillna(x.mean()))
+    
+# Initialize KNNImputer
+knn_imputer = KNNImputer(n_neighbors=5)
+
+# Apply KNN imputer to skill columns
+knn_imputed_data = knn_imputer.fit_transform(lineups_master[skill_columns])
+
+# Update only the originally missing values with KNN imputed values
+for col in skill_columns:
+    lineups_master.loc[missing_indices[col], col] = knn_imputed_data[missing_indices[col], skill_columns.index(col)]
+print("Missing values after KNN imputation:")
+print(lineups_master[skill_columns].isnull().sum())
+lineups_master.head()
 
 # %% [markdown]
 # Create an aggregated skill dataframe for each team of each match. Impact players are given most weightage, captains second most. If a player is both captain and impact, then multiplicative weights are used.  
@@ -424,10 +458,34 @@ merged_master.head()
 # %%
 merged_master = merged_master.dropna(subset=['home_aggregate_skill_score','away_aggregate_skill_score'])
 merged_master['home_head_head_prob'] = merged_master['home_head_head_prob'].fillna(0)
-merged_master.head()
+merged_master
 
 # %% [markdown]
-# Create a train-test-val split
+# Rest Days before match
+#
+
+# %%
+# Ensure the date column is in datetime format
+merged_master['date'] = pd.to_datetime(merged_master['date'])
+
+# Function to calculate rest days for each team
+def calculate_rest_days(data, team_column, date_column):
+    data = data.sort_values(by=date_column)
+    data['previous_date'] = data.groupby(team_column)[date_column].shift(1)
+    data['rest_days'] = (data[date_column] - data['previous_date']).dt.days
+    data['rest_days'] = data['rest_days'].fillna(-1)  
+    return data.drop(columns=['previous_date'])
+
+# Calculate rest days for home and away teams
+merged_master = calculate_rest_days(merged_master, 'home_club_id', 'date')
+merged_master = merged_master.rename(columns={'rest_days': 'home_rest_days'})
+merged_master = calculate_rest_days(merged_master, 'away_club_id', 'date')
+merged_master = merged_master.rename(columns={'rest_days': 'away_rest_days'})
+
+merged_master
+
+# %% [markdown]
+# Create train-test-val split
 
 # %%
 # Split the data into train, validation, and test sets (60% train, 20% validation, 20% test)
@@ -505,6 +563,83 @@ plt.title('Performance Scores vs Match Outcome')
 plt.xlabel('Home Aggregate Performance Score')
 plt.ylabel('Away Aggregate Performance Score')
 
+plt.tight_layout()
+plt.show()
+
+# Rest days vs Wins.
+# Create a new column to capture the appropriate rest days for wins
+train_data['rest_days_for_win'] = np.where(train_data['home_win'] == 1, train_data['home_rest_days'], 
+                                           np.where(train_data['home_win'] == 0, train_data['away_rest_days'], np.nan))
+
+# Apply the threshold of 45 days
+train_data['rest_days_for_win'] = train_data['rest_days_for_win'].apply(lambda x: min(x, 50))
+
+# Filter the data for wins only
+wins_data = train_data[train_data['home_win'].isin([0, 1])]
+
+# Create bins for rest days
+wins_data['rest_days_bin'] = pd.cut(wins_data['rest_days_for_win'], bins=range(0, 50, 5), right=False)
+
+# Count the number of wins in each bin
+wins_counts = wins_data['rest_days_bin'].value_counts().sort_index()
+
+# Plot the bar graph
+plt.figure(figsize=(10, 6))
+sns.barplot(x=wins_counts.index.astype(str), y=wins_counts.values, palette='viridis')
+plt.title('Number of Wins vs. Rest Days')
+plt.xlabel('Number of Rest Days (binned)')
+plt.ylabel('Number of Wins')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+
+# Create a new column to capture the appropriate rest days for wins
+train_data['rest_days_for_win'] = np.where(train_data['home_win'] == 1, train_data['home_rest_days'], 
+                                           np.where(train_data['home_win'] == 0, train_data['away_rest_days'], np.nan))
+
+# Apply the threshold of 45 days
+train_data['rest_days_for_win'] = train_data['rest_days_for_win'].apply(lambda x: min(x, 15))
+
+# Filter the data for wins only
+wins_data = train_data[train_data['home_win'].isin([0, 1])]
+
+# Create bins for rest days
+wins_data['rest_days_bin'] = pd.cut(wins_data['rest_days_for_win'], bins=range(0, 16, 5), right=False)
+
+# Count the number of wins in each bin
+wins_counts = wins_data['rest_days_bin'].value_counts().sort_index()
+
+# Plot the bar graph
+plt.figure(figsize=(10, 6))
+sns.barplot(x=wins_counts.index.astype(str), y=wins_counts.values, palette='viridis')
+plt.title('Number of Wins vs. Rest Days')
+plt.xlabel('Number of Rest Days (binned)')
+plt.ylabel('Number of Wins')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+
+# Create a new column to capture the appropriate rest days for wins
+train_data['rest_days_for_win'] = np.where(train_data['home_win'] == 1, train_data['home_rest_days'], 
+                                           np.where(train_data['home_win'] == 0, train_data['away_rest_days'], np.nan))
+
+# Apply the threshold of 15 days
+train_data['rest_days_for_win'] = train_data['rest_days_for_win'].apply(lambda x: min(x, 15))
+
+# Filter the data for wins only
+wins_data = train_data[train_data['home_win'].isin([0, 1])]
+
+# Count the number of wins for each rest day
+wins_counts = wins_data['rest_days_for_win'].value_counts().sort_index()
+
+# Plot the bar graph
+plt.figure(figsize=(10, 6))
+sns.barplot(x=wins_counts.index, y=wins_counts.values, palette='viridis')
+plt.title('Number of Wins vs. Rest Days')
+plt.xlabel('Number of Rest Days')
+plt.ylabel('Number of Wins')
 plt.tight_layout()
 plt.show()
 
