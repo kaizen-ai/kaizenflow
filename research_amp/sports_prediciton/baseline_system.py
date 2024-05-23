@@ -16,9 +16,6 @@
 # # Load datasets
 
 # %%
-pip install pymc
-
-# %%
 import sqlite3
 import pandas as pd
 import numpy as np
@@ -49,96 +46,147 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, classification_report
 from sklearn.impute import SimpleImputer
-import pymc as pm
-import arviz as az
+import boto3
 import warnings
 pd.set_option('display.max_columns', None)
 
+# %% [markdown]
+# Set the s3 credentials
+
 # %%
-database_path = "datasets/football/european-football/database.sqlite" 
+session = boto3.Session(profile_name = 'ck')
+s3 = session.client('s3')
+
+
+# %%
+# Define the S3 bucket and prefix
+bucket_name = 'cryptokaizen-data-test'
+s3_object_key = 'kaizen-ai/datasets/football/european-football/database.sqlite'
+
+# Define the local path to save the file
+local_path = 'datasets/football/european-football'
+os.makedirs(local_path, exist_ok=True)
+database_path = os.path.join(local_path, 'database.sqlite')
+
+# Function to download file from S3
+def download_file_from_s3(bucket, key, local_file_path):
+    try:
+        print(f"Downloading {key} to {local_file_path}")
+        s3.download_file(bucket, key, local_file_path)
+    except Exception as e:
+        print(f"Error occurred: {e}")
+
+# Call the function to download the file
+download_file_from_s3(bucket_name, s3_object_key, database_path)
+
+# Connect to the downloaded SQLite database
 conn = sqlite3.connect(database_path)
 tables = pd.read_sql("""SELECT *
                         FROM sqlite_master
                         WHERE type='table';""", conn)
 print(tables)
 
-# %%
+# Load the datasets into pandas dataframes
 dataframes = {}
 for idx, name in enumerate(tables['name']):
     if name.lower() != "sqlite_sequence":
-        file = ((name.lower() + '_df'))
+        file = (name.lower() + '_df')
         if file != "_df":
-            query = f"\
-                    SELECT * \
-                    FROM {name}\
-                    "
+            query = f"SELECT * FROM {name}"
             df = pd.read_sql(query, conn)
             exec(f'{file} = df.copy()')
             print(file, df.shape)
             df = df.drop_duplicates()
-            dataframes[file]= df
+            dataframes[file] = df
+
 print("Data imported")
 
 # %%
-# Set the directory path.
-kaggle_dataset_path = 'davidcariboo/player-scores'
-directory_path = 'datasets/football/player-scores'
-# Download the datasets
-#directory_path = os.path.expanduser('~/src/sorrentum1/research_llm/player-scores')
-#os.makedirs(directory_path, exist_ok=True)
-#kaggle.api.dataset_download_files(kaggle_dataset_path, path=directory_path, unzip=True)
-# Manually unzip the files.
-#for dirname, _, filenames in os.walk(local_directory):
-#    for filename in filenames:
-#        if filename.endswith('.zip'):
-#            zip_path = os.path.join(dirname, filename)
-#            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-#                zip_ref.ref.extractall(local_directory)
-# Load the datasets into pandas dataframes.            
-dataframes_2={}
-for dirname, _, filenames in os.walk(directory_path):
+# Define the S3 bucket and prefix
+bucket_name = 'cryptokaizen-data-test'
+prefix = 'kaizen-ai/datasets/football/player-scores/'
+
+# Define the local directory to save the files
+local_directory = 'datasets/football/player-scores'
+os.makedirs(local_directory, exist_ok=True)
+
+# Function to download files from S3
+def download_files_from_s3(bucket, prefix, local_dir):
+    try:
+        response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
+        if 'Contents' not in response:
+            print(f"No files found at s3://{bucket}/{prefix}")
+            return
+        for obj in response['Contents']:
+            key = obj['Key']
+            if key.endswith('.csv'):
+                local_file_path = os.path.join(local_dir, os.path.basename(key))
+                print(f"Downloading {key} to {local_file_path}")
+                s3.download_file(bucket, key, local_file_path)
+    except Exception as e:
+        print(f"Error occurred: {e}")
+
+# Call the function to download the files
+download_files_from_s3(bucket_name, prefix, local_directory)
+
+# Load the datasets into pandas dataframes
+dataframes_2 = {}
+for dirname, _, filenames in os.walk(local_directory):
     for filename in filenames:
         if filename.endswith(".csv"):
-            file=filename.split('.')
-            file=((file[0]+"_df"))
-            if file !="_df":
-                filepath=os.path.join(dirname,filename)
-                df=pd.read_csv(filepath,sep=",",encoding = "UTF-8")
-                exec(f'{file} = df.copy()')
-                print(file, df.shape)
-                df = df.drop_duplicates()
-                dataframes_2[file]= df
+            file = filename.split('.')[0] + '_df'
+            filepath = os.path.join(dirname, filename)
+            print(f"Loading {filepath}")
+            df = pd.read_csv(filepath, sep=",", encoding="UTF-8")
+            exec(f'{file} = df.copy()')
+            print(file, df.shape)
+            df = df.drop_duplicates()
+            dataframes_2[file] = df
+
 print('Data imported')
 
 # %%
-# Set the directory path.
-kaggle_dataset_path2 = 'davidcariboo/player-scores'
-directory_path = 'datasets/football/player_attributes'
-# Download the datasets
-#directory_path = os.path.expanduser('~/src/sorrentum1/research_llm/player-scores')
-#os.makedirs(directory_path, exist_ok=True)
-#kaggle.api.dataset_download_files(kaggle_dataset_path, path=directory_path, unzip=True)
-# Manually unzip the files.
-#for dirname, _, filenames in os.walk(local_directory):
-#    for filename in filenames:
-#        if filename.endswith('.zip'):
-#            zip_path = os.path.join(dirname, filename)
-#            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-#                zip_ref.ref.extractall(local_directory)
-# Load the datasets into pandas dataframes.            
-dataframes_3={}
-for dirname, _, filenames in os.walk(directory_path):
+# Define the S3 bucket and prefix
+bucket_name = 'cryptokaizen-data-test'
+prefix = 'kaizen-ai/datasets/football/player_attributes/'
+
+# Define the local directory to save the files
+local_directory = 'datasets/football/player_attributes'
+os.makedirs(local_directory, exist_ok=True)
+
+# Function to download files from S3
+def download_files_from_s3(bucket, prefix, local_dir):
+    try:
+        response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
+        if 'Contents' not in response:
+            print(f"No files found at s3://{bucket}/{prefix}")
+            return
+        for obj in response['Contents']:
+            key = obj['Key']
+            if key.endswith('.csv'):
+                local_file_path = os.path.join(local_dir, os.path.basename(key))
+                print(f"Downloading {key} to {local_file_path}")
+                s3.download_file(bucket, key, local_file_path)
+    except Exception as e:
+        print(f"Error occurred: {e}")
+
+# Call the function to download the files
+download_files_from_s3(bucket_name, prefix, local_directory)
+
+# Load the datasets into pandas dataframes
+dataframes_3 = {}
+for dirname, _, filenames in os.walk(local_directory):
     for filename in filenames:
         if filename.endswith(".csv"):
-            file=filename.split('.')
-            file=((file[0]+"_df"))
-            if file !="_df":
-                filepath=os.path.join(dirname,filename)
-                df=pd.read_csv(filepath,sep=";",encoding = "UTF-8")
-                exec(f'{file} = df.copy()')
-                print(file, df.shape)
-                df = df.drop_duplicates()
-                dataframes_3[file]= df
+            file = filename.split('.')[0] + '_df'
+            filepath = os.path.join(dirname, filename)
+            print(f"Loading {filepath}")
+            df = pd.read_csv(filepath, sep=";", encoding="UTF-8")
+            exec(f'{file} = df.copy()')
+            print(file, df.shape)
+            df = df.drop_duplicates()
+            dataframes_3[file] = df
+
 print('Data imported')
 
 # %% [markdown]
