@@ -14,36 +14,61 @@ class TestComputeBarStartTimestamps(hunitest.TestCase):
     Test the ⁠ compute_bar_start_timestamps ⁠ function with different types of inputs.
     """
     def test1(self):
-        """Test with valid DataFrame input."""
-        print("test 1")
+        """
+        Test with valid DataFrame input.
+
+        This test ensures that the `compute_bar_start_timestamps` function correctly processes
+        a valid DataFrame input and returns a pandas Series with the expected properties.
+
+        :raises AssertionError: If the function output is not a pandas Series or does not have the expected name.
+        """
         df_sample = pd.DataFrame({'value': range(1)}, index=pd.date_range(start='2024-01-01', periods=1, freq='D'))
         result = cfiprpro.compute_bar_start_timestamps(df_sample)
         self.assertIsInstance(result, pd.Series)
         self.assertEqual(result.name, "bar_start_timestamp")
 
     def test2(self):
-        """Test with valid Series input."""
-        print("test 2")
+        """
+        Test with valid Series input.
+
+        This test ensures that the `compute_bar_start_timestamps` function correctly processes
+        a valid Series input and returns a pandas Series with the expected properties.
+
+        :raises AssertionError: If the function output is not a pandas Series or does not have the expected name.
+        """
         sr_sample = pd.Series(range(1), index=pd.date_range(start='2024-01-01', periods=1, freq='D'))
         result = cfiprpro.compute_bar_start_timestamps(sr_sample)
         self.assertIsInstance(result, pd.Series)
         self.assertEqual(result.name, "bar_start_timestamp")
 
     def test3(self):
-        """Test that a ValueError is raised if freq is not present."""
-        # Scenario 1: Missing frequency
+        """
+        Test that a AssertionError is raised if freq is not present.
+
+        This test checks the behavior of the `compute_bar_start_timestamps` function when
+        the frequency attribute is missing from the DatetimeIndex or the DataFrame size is greater than 1.
+
+        :raises AssertionError: If the function does not raise the expected AssertionError with the correct message.
+        """
+        # Scenario 1: Missing frequency.
         print("test 3")
         df_missing_freq = pd.DataFrame({'value': range(1)}, index=pd.date_range(start='2024-01-01', periods=1))
-        df_missing_freq.index.freq = None  # Explicitly remove the frequency
+        # Explicitly remove the frequency
+        df_missing_freq.index.freq = None
         with self.assertRaises(AssertionError) as cm:
             cfiprpro.compute_bar_start_timestamps(df_missing_freq)
         self.assertEqual(str(cm.exception), "DatetimeIndex must have a frequency.")
-
-        # Scenario 2: Size greater than 1
-        df_large_size = pd.DataFrame({'value': range(6)}, index=pd.date_range(start='2024-01-01', periods=6))
+        #
+        # Scenario 2: Size greater than 1.
+        periods: int = 6
+        df_large_size = pd.DataFrame({'value': range(6)}, index=pd.date_range(start='2024-01-01', periods=periods))
         with self.assertRaises(AssertionError) as cm:
             cfiprpro.compute_bar_start_timestamps(df_large_size)
-        self.assertEqual(str(cm.exception), "DatetimeIndex has size=6 values")
+        self.assertEqual(str(cm.exception), f"DatetimeIndex has size={periods} values")
+
+
+# #############################################################################
+
 
 class TestStackPredictionDf(hunitest.TestCase):
     def test1(self) -> None:
