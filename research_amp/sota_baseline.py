@@ -24,19 +24,19 @@ import calendar
 import datetime 
 import zipfile
 import re
-import sklearn.model_selection 
+import sklearn.model_selection as sms 
 import scipy.stats
 import sklearn.preprocessing 
 import sklearn.impute
 import boto3
 import io 
-import scipy.optimize 
+import scipy.optimize as sopt
 import warnings
 import joblib 
 import math
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
-import sklearn.metrics
+import sklearn.metrics as skm
 import helpers.haws as haws
 pd.set_option('display.max_columns', None)
 warnings.filterwarnings("ignore")
@@ -46,32 +46,27 @@ warnings.filterwarnings("ignore")
 
 # %%
 # Initialize a session.
-session = boto3.Session(profile_name='ck')
-s3 = session.client('s3')
+s3 = haws.get_service_resource(aws_profile='ck', service_name = 's3')
 
 # Set the S3 bucket and dataset path.
 s3_bucket_name = 'cryptokaizen-data-test'
-s3_dataset_path = 'kaizen-ai/datasets/football/OSF_football/'
+s3_dataset_path = 'kaizen_ai/soccer_prediction/datasets/OSF_football/'
 
 # Define the local directory to save the files.
 local_directory = 'datasets/OSF_football'
 os.makedirs(local_directory, exist_ok=True)
 
-# Function to download files from S3.
-def download_files_from_s3(bucket, prefix, local_dir):
-    try:
-        response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
-        if 'Contents' not in response:
-            print(f"No files found at s3://{bucket}/{prefix}")
-            return
-        for obj in response['Contents']:
-            key = obj['Key']
-            if key.endswith('.txt'):
-                local_file_path = os.path.join(local_dir, os.path.basename(key))
-                print(f"Downloading {key} to {local_file_path}")
-                s3.download_file(bucket, key, local_file_path)
-    except Exception as e:
-        print(f"Error occurred: {e}")
+def download_files_from_s3(bucket_name, prefix, local_dir):
+    """
+    Function to download files from S3.
+    """
+    bucket = s3.Bucket(bucket_name)
+    for obj in bucket.objects.filter(Prefix=prefix):
+        key = obj.key
+        if key.endswith('.txt'):
+            local_file_path = os.path.join(local_dir, os.path.basename(key))
+            print(f"Downloading {key} to {local_file_path}")
+            bucket.download_file(key, local_file_path)
 
 # Call the function to download the files
 download_files_from_s3(s3_bucket_name, s3_dataset_path, local_directory)
@@ -91,15 +86,15 @@ for dirname, _, filenames in os.walk(local_directory):
 
 print('Data imported')
 
-# Verify the content of dataframes_3 dictionary
+# Verify the content of dataframes_3 dictionary.
 for key, df in dataframes_3.items():
     print(f"{key}: {df.shape}")
 
-# Access the dataframes directly from the dictionary
+# Access the dataframes directly from the dictionary.
 ISDBv1_df = dataframes_3.get('ISDBv1_df')
 ISDBv2_df = dataframes_3.get('ISDBv2_df')
 
-# Print the shapes to confirm they are loaded correctly
+# Print the shapes to confirm they are loaded correctly.
 print(f"ISDBv1_df shape: {ISDBv1_df.shape if ISDBv1_df is not None else 'Not found'}")
 print(f"ISDBv2_df shape: {ISDBv2_df.shape if ISDBv2_df is not None else 'Not found'}")
 
@@ -201,7 +196,7 @@ def refit_parameters(train_df, teams):
     initial_params = np.concatenate([initial_strength, [initial_home_advantage]])
 
     print("Starting optimization with initial parameters")
-    result = scipy.optimize.minimize(
+    result = sopt.minimize(
         double_poisson_log_likelihood,
         x0=initial_params,
         args=(train_df, teams),
@@ -337,7 +332,7 @@ train_indices = []
 test_indices = []
 for team in teams:
     team_df = df[df['HT'] == team]
-    train_team, test_team = sklearn.model_selection.train_test_split(
+    train_team, test_team = sms.train_test_split(
         team_df, 
         test_size=0.2, 
         random_state=random_state
@@ -511,7 +506,7 @@ test_df['predicted_outcome'] = np.where(test_df['prob_home_win'] > test_df['prob
 test_df['actual_outcome'] = np.where(test_df['HS'] > test_df['AS'], 'home_win',
                                      np.where(test_df['HS'] < test_df['AS'], 'away_win', 'draw'))
 # Calculate accuracy
-accuracy = sklearn.metrics.accuracy_score(test_df['actual_outcome'], test_df['predicted_outcome'])
+accuracy = skm.accuracy_score(test_df['actual_outcome'], test_df['predicted_outcome'])
 print("Model Accuracy on Test Set:", accuracy)
 
 # %%
