@@ -21,22 +21,23 @@ import itertools
 import matplotlib.pyplot as plt
 import os
 import calendar
-from datetime import datetime, timedelta, date
+import datetime 
 import zipfile
 import re
-from sklearn.model_selection import train_test_split, GridSearchCV
-from scipy.stats import gaussian_kde
-from sklearn.model_selection import StratifiedShuffleSplit
-import matplotlib.pyplot as plt
-from scipy.stats import kde
-from sklearn.preprocessing import StandardScaler
-from sklearn.impute import SimpleImputer, KNNImputer
+import sklearn.model_selection 
+import scipy.stats
+import sklearn.preprocessing 
+import sklearn.impute
 import boto3
-from io import BytesIO
-from scipy.optimize import minimize
+import io 
+import scipy.optimize 
 import warnings
-from joblib import Parallel, delayed
+import joblib 
 import math
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+import sklearn.metrics
+import helpers.haws as haws
 pd.set_option('display.max_columns', None)
 warnings.filterwarnings("ignore")
 
@@ -44,19 +45,19 @@ warnings.filterwarnings("ignore")
 # Set the s3 credentials
 
 # %%
-# Initialize a session using Amazon S3 with a specific profile
+# Initialize a session.
 session = boto3.Session(profile_name='ck')
 s3 = session.client('s3')
 
-# Set the S3 bucket and dataset path
+# Set the S3 bucket and dataset path.
 s3_bucket_name = 'cryptokaizen-data-test'
 s3_dataset_path = 'kaizen-ai/datasets/football/OSF_football/'
 
-# Define the local directory to save the files
-local_directory = 'datasets/football/OSF_football'
+# Define the local directory to save the files.
+local_directory = 'datasets/OSF_football'
 os.makedirs(local_directory, exist_ok=True)
 
-# Function to download files from S3
+# Function to download files from S3.
 def download_files_from_s3(bucket, prefix, local_dir):
     try:
         response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
@@ -141,10 +142,10 @@ val_df = df_final[train_size:train_size + val_size]
 test_df = df_final[train_size + val_size:]
 
 # %%
-df_final.head()
+df_final.columns
 
 # %% [markdown]
-# Double Precision Model 
+# # Double Precision Model (IGNORE)
 
 # %% run_control={"marked": true}
 # Check if the validation dataframe is empty
@@ -163,7 +164,7 @@ else:
 def double_poisson_log_likelihood(params, df, teams, alpha=0.0019):
     strength = dict(zip(teams, params[:-1]))
     home_advantage = params[-1]
-    current_date = datetime.now()
+    current_date = datetime.datetime.now()
 
     # Map team strengths to home and away teams
     home_teams = df['HT'].map(strength)
@@ -200,7 +201,7 @@ def refit_parameters(train_df, teams):
     initial_params = np.concatenate([initial_strength, [initial_home_advantage]])
 
     print("Starting optimization with initial parameters")
-    result = minimize(
+    result = scipy.optimize.minimize(
         double_poisson_log_likelihood,
         x0=initial_params,
         args=(train_df, teams),
@@ -277,7 +278,7 @@ def evaluate_model(df, team_strengths, home_advantage):
         total_rps += rps(predictions, actual_result)
         total_predictions += 1
 
-    Parallel(n_jobs=-1)(delayed(calculate_metrics)(row) for idx, row in df.iterrows())
+    joblib.Parallel(n_jobs=-1)(joblib.delayed(calculate_metrics)(row) for idx, row in df.iterrows())
 
     # Check if total_predictions is zero to avoid ZeroDivisionError
     if total_predictions == 0:
@@ -315,5 +316,202 @@ print(hit_rate)
 print("Confidence Interval:")
 print(confidence_interval)
 
+
+# %% [markdown]
+# # GLM Model 
+
+# %%
+ISDBv2_df['season'] = ISDBv2_df['Sea'].apply(lambda x: int('20' + str(x)[:2]))
+df = ISDBv2_df[ISDBv2_df['season'] >= 2009]
+# Preprocess the dataset.
+df['Date'] = pd.to_datetime(df['Date'], dayfirst=True)
+df.sort_values(by='Date', inplace=True)
+categorical_columns = ['HT', 'AT']
+for col in categorical_columns:
+    df[col] = df[col].astype('category')
+# Ensure reproducibility.
+random_state = 42
+# Step 1: Split by team to ensure each team is represented in the train split.
+teams = df['HT'].unique()
+train_indices = []
+test_indices = []
+for team in teams:
+    team_df = df[df['HT'] == team]
+    train_team, test_team = sklearn.model_selection.train_test_split(
+        team_df, 
+        test_size=0.2, 
+        random_state=random_state
+    )
+    train_indices.extend(train_team.index)
+    test_indices.extend(test_team.index)
+# Create train and test DataFrames.
+train_df = df.loc[train_indices]
+test_df = df.loc[test_indices]
+
+def unravel_dataset(df) -> pd.DataFrame():
+    """
+    Unravel the dataset by creating one entry for each row as team-opponent pair. 
+    """
+    home_df = df[['Date', 'Sea', 'Lge', 'HT', 'AT', 'HS']].copy()
+    home_df.rename(columns={'HT': 'team', 'AT': 'opponent', 'HS': 'goals'}, inplace=True)
+    home_df['is_home'] = 1
+    away_df = df[['Date', 'Sea', 'Lge', 'HT', 'AT', 'AS']].copy()
+    away_df.rename(columns={'AT': 'team', 'HT': 'opponent', 'AS': 'goals'}, inplace=True)
+    away_df['is_home'] = 0
+    unraveled_df = pd.concat([home_df, away_df], ignore_index=True)
+    return unraveled_df
+
+# Unravel the training dataset.
+unraveled_train_df = unravel_dataset(train_df)
+# Unravel the test dataset.
+unraveled_test_df = unravel_dataset(test_df)
+
+# %%
+unraveled_train_df.head()
+
+
+# %% [markdown]
+# Create a representative sample for easier handling.
+
+# %%
+def representative_sample(df, sample_size) -> pd.DataFrame():
+    """
+    Function to perform representative sampling to ensure each team 
+    is represented.
+    param: df: Input dataframe for sampling.
+    param: sample_size: Size of the extracted sample (output dataframe).
+    return: sampled_df: Sampled dataframe.
+    """
+    teams = df['team'].unique()
+    samples_per_team = sample_size // len(teams)
+    sampled_df = pd.DataFrame()
+    for team in teams:
+        team_df = df[df['team'] == team]
+        team_sample = team_df.sample(n=min(samples_per_team, len(team_df)), random_state=1)
+        sampled_df = pd.concat([sampled_df, team_sample])
+    # Additional random sampling to fill the remaining sample size
+    remaining_sample_size = sample_size - len(sampled_df)
+    if remaining_sample_size > 0:
+        additional_sample = df.drop(sampled_df.index).sample(n=remaining_sample_size, random_state=1)
+        sampled_df = pd.concat([sampled_df, additional_sample])
+    return sampled_df
+
+# Sample 20% of the training data.
+sample_size = int(0.2 * len(unraveled_train_df))
+# Perform representative sampling on the training set.
+sampled_train_df = representative_sample(unraveled_train_df, sample_size)
+sampled_train_df.head()
+
+# %% [markdown]
+# Describe the sampled DataFrame.
+
+# %%
+print("NaN values per column:")
+print(sampled_train_df.isna().sum())
+
+numeric_cols = sampled_train_df.select_dtypes(include=[np.number]).columns
+print("\nInfinite values per numeric column:")
+for col in numeric_cols:
+    num_infs = np.isinf(sampled_train_df[col]).sum()
+    print(f"{col}: {num_infs}")
+print(sampled_train_df.dtypes)
+print(sampled_train_df.describe(include='all'))
+
+
+# %%
+def ensure_finite_weights(df) -> pd.DataFrame():
+    """
+    Function to ensure weights are finite.
+    """
+    # Adding a small constant to goals to avoid log(0).
+    df['goals'] = df['goals'].apply(lambda x: x + 1e-9 if x == 0 else x)
+    # Check if there are any infinite or NaN weights and handle them
+    if df.isna().sum().sum() > 0:
+        print("NaN values found in the data. Removing rows with NaNs.")
+        df.dropna(inplace=True)
+    if np.isinf(df.select_dtypes(include=[np.number])).sum().sum() > 0:
+        print("Infinite values found in the data. Removing rows with Infs.")
+        df = df[~np.isinf(df.select_dtypes(include=[np.number])).any(1)]
+    return df
+
+# Ensure weights are finite in the sampled training data.
+sampled_train_df = ensure_finite_weights(sampled_train_df)
+# Create the formula to include team offensive and opponent defensive strengths and home advantage.
+formula = 'goals ~ C(team) + C(opponent) + is_home'
+# Fit the Poisson regression model.
+poisson_model = smf.glm(formula=formula, data=sampled_train_df, family=sm.families.Poisson()).fit(maxiter=10)
+# Display the summary of the model.
+print(poisson_model.summary())
+
+# %% [markdown]
+# Generate Predictions
+
+# %% run_control={"marked": true}
+# Predict the expected goals for home and away teams in the test set.
+unraveled_test_df['predicted_goals'] = poisson_model.predict(unraveled_test_df)
+unraveled_test_df
+
+# %%
+# Split the dataframe into home and away rows.
+home_df = unraveled_test_df[unraveled_test_df['is_home'] == 1].copy()
+away_df = unraveled_test_df[unraveled_test_df['is_home'] == 0].copy()
+# Rename columns for merging
+home_df.rename(columns={'team': 'HT', 'opponent': 'AT', 'goals': 'HS', 'predicted_goals': 'Lambda_HS'}, inplace=True)
+away_df.rename(columns={'team': 'AT', 'opponent': 'HT', 'goals': 'AS', 'predicted_goals': 'Lambda_AS'}, inplace=True)
+# Merge the home and away dataframes
+merged_df = pd.merge(home_df, away_df, on=['Date', 'Sea', 'Lge', 'HT', 'AT'], suffixes=('_home', '_away'))
+# Select and reorder columns for the final dataframe
+test_df = merged_df[['Date', 'Sea', 'Lge', 'HT', 'AT', 'HS', 'AS', 'Lambda_HS', 'Lambda_AS']]
+# Display the resulting dataframe
+print(test_df.head())
+
+# %% [markdown]
+# Evaluate
+
+# %%
+# Round off the predicted goals to integers
+test_df['Lambda_HS'] = test_df['Lambda_HS'].round().astype(int)
+test_df['Lambda_AS'] = test_df['Lambda_AS'].round().astype(int)
+
+# Define the 
+def calculate_match_outcome_probabilities(row):
+    """
+    Function to calculate match outcome probabilities.
+    """
+    max_goals = 10  
+    home_goals_probs = [np.exp(-row['Lambda_HS']) * row['Lambda_HS']**i / np.math.factorial(i) for i in range(max_goals)]
+    away_goals_probs = [np.exp(-row['Lambda_AS']) * row['Lambda_AS']**i / np.math.factorial(i) for i in range(max_goals)]
+    prob_home_win = 0
+    prob_away_win = 0
+    prob_draw = 0
+    for i in range(max_goals):
+        for j in range(max_goals):
+            prob = home_goals_probs[i] * away_goals_probs[j]
+            if i > j:
+                prob_home_win += prob
+            elif i < j:
+                prob_away_win += prob
+            else:
+                prob_draw += prob
+    return pd.Series({
+        'prob_home_win': prob_home_win,
+        'prob_away_win': prob_away_win,
+        'prob_draw': prob_draw
+    })
+# Apply the function to the test set
+probabilities = test_df.apply(calculate_match_outcome_probabilities, axis=1)
+test_df = pd.concat([test_df, probabilities], axis=1)
+# Display the test set with probabilities
+print(test_df.head())
+# Predict the outcomes based on probabilities
+test_df['predicted_outcome'] = np.where(test_df['prob_home_win'] > test_df['prob_away_win'], 'home_win',
+                                        np.where(test_df['prob_away_win'] > test_df['prob_home_win'], 
+                                                 'away_win', 'draw'))
+# Calculate actual outcomes for comparison
+test_df['actual_outcome'] = np.where(test_df['HS'] > test_df['AS'], 'home_win',
+                                     np.where(test_df['HS'] < test_df['AS'], 'away_win', 'draw'))
+# Calculate accuracy
+accuracy = sklearn.metrics.accuracy_score(test_df['actual_outcome'], test_df['predicted_outcome'])
+print("Model Accuracy on Test Set:", accuracy)
 
 # %%
