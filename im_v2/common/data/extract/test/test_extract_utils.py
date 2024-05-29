@@ -820,7 +820,7 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
 
 
 class TestSplitUniverse(hunitest.TestCase):
-    # A universe list from the example.
+    # Prepare inputs.
     universe = [
         "ALICE_USDT",
         "GALA_USDT",
@@ -829,16 +829,24 @@ class TestSplitUniverse(hunitest.TestCase):
         "INJ_USDT",
         "NEAR_USDT",
     ]
+    group_size = 0
+    universe_part = 0
+
+    # Call function under test.
+    def get_universe_part(self) -> str:
+        actual_output = imvcdeexut._split_universe(
+            self.universe, self.group_size, self.universe_part
+        )
+        # Return the actual output.
+        return actual_output
 
     def test1(self) -> None:
         """
         Test if both group_size and universe_part are 0.
         """
-        actual_str = " ".join(
-            map(str, imvcdeexut._split_universe(self.universe, 0, 0))
-        )
+        actual_str = str(self.get_universe_part())
         expected_str = r"""
-
+        []
         """
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
@@ -848,46 +856,52 @@ class TestSplitUniverse(hunitest.TestCase):
 
         (This returns the whole list in the 1st part)
         """
-        actual_str = " ".join(
-            map(str, imvcdeexut._split_universe(self.universe, 6, 1))
-        )
+        self.group_size = 6
+        self.universe_part = 1
+        actual_str = str(self.get_universe_part())
         expected_str = r"""
-        ALICE_USDT GALA_USDT FLOW_USDT HBAR_USDT INJ_USDT NEAR_USDT
+        ['ALICE_USDT', 'GALA_USDT', 'FLOW_USDT', 'HBAR_USDT', 'INJ_USDT', 'NEAR_USDT']
         """
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
     def test3(self) -> None:
         """
-        Test if roup_size is 6 and universe_part is 2.
+        Test if group_size is 6 and universe_part is 2.
 
         (This returns an empty list, since no groups in the part)
         """
-        actual_str = " ".join(
-            map(str, imvcdeexut._split_universe(self.universe, 6, 2))
-        )
+        self.group_size = 6
+        self.universe_part = 2
+        actual_str = str(self.get_universe_part())
         expected_str = r"""
-
+        []
         """
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
     def test4(self) -> None:
         """
-        Test to check for error.
+        Test to check for group_size 4 and universe_part 2.
         """
-        with pytest.raises(RuntimeError):
-            (imvcdeexut._split_universe(self.universe, 6, 6))
+        self.group_size = 4
+        self.universe_part = 2
+        actual_str = str(self.get_universe_part())
+        expected_str = r"""
+        ['INJ_USDT', 'NEAR_USDT']
+        """
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
     def test5(self) -> None:
         """
-        Test to check for group_size 4 and universe_part 2.
+        Test to check for error.
         """
-        actual_str = " ".join(
-            map(str, imvcdeexut._split_universe(self.universe, 4, 2))
-        )
-        expected_str = r"""
-        INJ_USDT NEAR_USDT
-        """
-        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+        self.group_size = 6
+        self.universe_part = 6
+        with self.assertRaises(RuntimeError):
+            actual_str = str(self.get_universe_part())
+            expected_str = r"""
+            RuntimeError: Universe does not have 6 parts of 6 pairs.    It has 6 symbols.
+            """
+            self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
 
 @pytest.mark.requires_ck_infra
