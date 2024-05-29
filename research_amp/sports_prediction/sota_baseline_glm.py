@@ -323,5 +323,3 @@ test_df['actual_outcome'] = np.where(test_df['HS'] > test_df['AS'], 'home_win',
 # Calculate accuracy
 accuracy = skm.accuracy_score(test_df['actual_outcome'], test_df['predicted_outcome'])
 print("Model Accuracy on Test Set:", accuracy)
-
-# %%
