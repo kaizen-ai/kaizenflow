@@ -1,0 +1,23 @@
+{
+    "id": "9",
+    "status": "closed",
+    "symbol": "APE/USDT:USDT",
+    "type": "limit",
+    "side": "buy",
+    "price": {
+        "py/object": "numpy.float64",
+        "dtype": "float64",
+        "value": 29.5
+    },
+    "amount": 0.002,
+    "filled": 0.001,
+    "remaining": 0.001,
+    "cost": {
+        "py/object": "numpy.float64",
+        "dtype": "float64",
+        "value": 0.029500000000000002
+    },
+    "info": {
+        "updateTime": 1676966342000
+    }
+}

@@ -1,0 +1,7 @@
+exp = r"""
+          holdings_shares  price  holdings_notional  prediction  volatility  target_holdings_shares  target_holdings_notional  target_trades_shares  target_trades_notional
+asset_id                                                                                                                                                                   
+1                    1000      1               1000        0.05        0.05             -876.190925               -876.190925          -1876.190925            -1876.190925
+2                    1500      1               1500        0.09        0.07             1514.944901               1514.944901             14.944901               14.944901
+3                    -500      1               -500        0.03        0.08             -638.763200               -638.763200           -138.763200             -138.763200
+"""

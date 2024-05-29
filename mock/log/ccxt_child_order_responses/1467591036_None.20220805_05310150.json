@@ -1,0 +1,23 @@
+{
+    "id": "1",
+    "status": "closed",
+    "symbol": "BTC/USDT:USDT",
+    "type": "limit",
+    "side": "sell",
+    "price": {
+        "py/object": "numpy.float64",
+        "dtype": "float64",
+        "value": 15.0
+    },
+    "amount": -20.0,
+    "filled": 18.0,
+    "remaining": 2.0,
+    "cost": {
+        "py/object": "numpy.float64",
+        "dtype": "float64",
+        "value": 270.0
+    },
+    "info": {
+        "updateTime": 1659691861500
+    }
+}

@@ -1,0 +1,23 @@
+{
+    "id": "4",
+    "status": "closed",
+    "symbol": "ETH/USDT:USDT",
+    "type": "limit",
+    "side": "sell",
+    "price": {
+        "py/object": "numpy.float64",
+        "dtype": "float64",
+        "value": 20.5
+    },
+    "amount": -0.001,
+    "filled": 0.0007,
+    "remaining": 0.00030000000000000003,
+    "cost": {
+        "py/object": "numpy.float64",
+        "dtype": "float64",
+        "value": 0.01435
+    },
+    "info": {
+        "updateTime": 1676966222000
+    }
+}

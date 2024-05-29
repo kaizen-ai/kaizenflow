@@ -10,36 +10,71 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 class TestComputeBarStartTimestamps(hunitest.TestCase):
-    """
-    Test the ⁠ compute_bar_start_timestamps ⁠ function with different types of inputs.
-    """
-    def test1(self):
+    def test1(self) -> None:
+        '''
+            Check that the function works correctly if input is a DataFrame.
+        '''
+        df = pd.DataFrame({
+            'value': range(4),
+            'dummy_variable': ['a', 'b', 'c', 'd']
+        }, index=pd.date_range(start='2023-03-03', periods=4, freq='D'))        
+        result = cfiprpro.compute_bar_start_timestamps(df)
+        # Set expected values.
+        expected_length = 4
+        expected_unique_values = None
+        expected_signature = r"""
+        bar_start_timestamp
+        2023-03-03 2023-03-02              
+        2023-03-04 2023-03-03              
+        2023-03-05 2023-03-04              
+        2023-03-06 2023-03-05              
         """
-        Test with valid DataFrame input.
+        # Check the result.
+        self.check_srs_output(
+            result,
+            expected_length,
+            expected_unique_values,
+            expected_signature
+        )
 
-        This test ensures that the `compute_bar_start_timestamps` function correctly processes
-        a valid DataFrame input and returns a pandas Series with the expected properties.
-
-        :raises AssertionError: If the function output is not a pandas Series or does not have the expected name.
+    def test2(self) -> None:
+        ''''
+            Check that the function works correctly if input is a Series.
+        '''
+        series = pd.Series({'value': range(4)}, index=pd.date_range(start='2022-03-03', periods=4, freq='D'))        
+        result = cfiprpro.compute_bar_start_timestamps(series)
+        # Set expected values.
+        expected_length = 4
+        expected_unique_values = None
+        expected_signature = r"""
+        bar_start_timestamp
+        2022-03-03 2022-03-02              
+        2022-03-04 2022-03-03              
+        2022-03-05 2022-03-04              
+        2022-03-06 2022-03-05              
         """
-        df_sample = pd.DataFrame({'value': range(1)}, index=pd.date_range(start='2024-01-01', periods=1, freq='D'))
-        result = cfiprpro.compute_bar_start_timestamps(df_sample)
-        self.assertIsInstance(result, pd.Series)
-        self.assertEqual(result.name, "bar_start_timestamp")
+        # Check the result.
+        self.check_srs_output(
+            result,
+            expected_length,
+            expected_unique_values,
+            expected_signature
+        )
 
-    def test2(self):
-        """
-        Test with valid Series input.
-
-        This test ensures that the `compute_bar_start_timestamps` function correctly processes
-        a valid Series input and returns a pandas Series with the expected properties.
-
-        :raises AssertionError: If the function output is not a pandas Series or does not have the expected name.
-        """
-        sr_sample = pd.Series(range(1), index=pd.date_range(start='2024-01-01', periods=1, freq='D'))
-        result = cfiprpro.compute_bar_start_timestamps(sr_sample)
-        self.assertIsInstance(result, pd.Series)
-        self.assertEqual(result.name, "bar_start_timestamp")
+    def test3(self) -> None:
+        '''
+            Check that the function raises an error when input is Dataframe with invalid timestamp index & freq. 
+        '''
+        index = pd.to_datetime(['2023-03-03', '2023-03-04', '2023-03-05', '2023-03-06'])
+        df = pd.DataFrame({
+            'value': range(4),
+            'dummy_variable': ['a', 'b', 'c', 'd']
+        }, index=index)
+        
+        # Check that the appropriate error is raised.
+        with self.assertRaises(AssertionError) as context:
+            cfiprpro.compute_bar_start_timestamps(df)
+        self.assertIn("DatetimeIndex must have a frequency.", str(context.exception))
 
 # #############################################################################
 

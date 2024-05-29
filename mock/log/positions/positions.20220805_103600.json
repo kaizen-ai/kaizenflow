@@ -1,0 +1,14 @@
+[
+    {
+        "info": {
+            "positionAmt": 2500
+        },
+        "symbol": "ETH/USDT:USDT"
+    },
+    {
+        "info": {
+            "positionAmt": 1000
+        },
+        "symbol": "BTC/USDT:USDT"
+    }
+]

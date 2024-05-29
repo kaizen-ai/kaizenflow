@@ -1,0 +1,151 @@
+The AM_AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
+The AM_AWS_DEFAULT_REGION variable is not set. Defaulting to a blank string.
+The AM_AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
+The AM_FORCE_TEST_FAIL variable is not set. Defaulting to a blank string.
+The AM_TELEGRAM_TOKEN variable is not set. Defaulting to a blank string.
+The CK_AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
+The CK_AWS_DEFAULT_REGION variable is not set. Defaulting to a blank string.
+The CK_AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
+The CK_TELEGRAM_TOKEN variable is not set. Defaulting to a blank string.
+Creating network "compose_default" with the default driver
+Creating compose_linter_run ... 
+Creating compose_linter_run ... done
+##> devops/docker_run/entrypoint.sh
+UID=501
+GID=20
+# Activate environment
+##> /app/devops/docker_run/setenv.sh
+# Set PATH
+PATH=/app:/app/linters:/app/dev_scripts_devto/notebooks:/app/documentation_devto/scripts:/app/amp/documentation/scripts:/app/amp/dev_scripts/testing:/app/amp/dev_scripts/notebooks:/app/amp/dev_scripts/install:/app/amp/dev_scripts/infra:/app/amp/dev_scripts/git:/app/amp/dev_scripts/aws:/app/amp/dev_scripts:/app/amp:.:/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+# Set PYTHONPATH
+PYTHONPATH=/app:/app/amp:
+# Configure env
+git --version: git version 2.25.1
+/src
+[33mWARNING[0m: AWS credential check failed: can't find /home/.aws/credentials file.
+[33mWARNING[0m: AWS credential check failed: can't find /home/.aws/config file.
+# Check AWS authentication setup
+
+The config profile (am) could not be found
+      Name                    Value             Type    Location
+      ----                    -----             ----    --------
+   profile                       am           manual    --profile
+AM_CONTAINER_VERSION='1.4.0'
+which python: /venv/bin/python
+python -V: Python 3.9.5
+pandas: 2.0.3
+helpers: <module 'helpers' from '/src/helpers/__init__.py'>
+PATH=/app:/app/linters:/app/dev_scripts_devto/notebooks:/app/documentation_devto/scripts:/app/amp/documentation/scripts:/app/amp/dev_scripts/testing:/app/amp/dev_scripts/notebooks:/app/amp/dev_scripts/install:/app/amp/dev_scripts/infra:/app/amp/dev_scripts/git:/app/amp/dev_scripts/aws:/app/amp/dev_scripts:/app/amp:.:/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PYTHONPATH=/app:/app/amp:
+entrypoint.sh: 'pre-commit run -c /app/.pre-commit-config.yaml --files /Users/nitteshkataria/src/kaizenflow1/core/finance/test/test_prediction_processing.py'
+[0m[36mINFO[0m: > cmd='/venv/bin/invoke print_env'
+01:23:32 - [41mWARN [0m henv.py get_repo_config_file:502                       Using value '/app/repo_config.py' for AM_REPO_CONFIG_PATH from env var
+[31m-----------------------------------------------------------------------------
+This code is not in sync with the container:
+code_version='1.14.0' != container_version='1.4.0'
+-----------------------------------------------------------------------------
+You need to:
+- merge origin/master into your branch with `invoke git_merge_master`
+- pull the latest container with `invoke docker_pull`[0m
+# Repo config:
+  enable_privileged_mode='False'
+  get_docker_base_image_name='dev_tools'
+  get_docker_shared_group=''
+  get_docker_user=''
+  get_host_name='github.com'
+  get_invalid_words='[]'
+  get_name='//dev_tools'
+  get_repo_map='{'cmamp': 'cryptokaizen/cmamp'}'
+  get_shared_data_dirs='None'
+  has_dind_support='False'
+  has_docker_sudo='True'
+  is_AM_S3_available='True'
+  is_CK_S3_available='False'
+  is_dev4='False'
+  is_dev_ck='False'
+  is_inside_ci='False'
+  is_inside_docker='True'
+  is_mac='True'
+  run_docker_as_root='False'
+  skip_submodules_test='True'
+  use_docker_network_mode_host='True'
+  use_docker_sibling_containers='False'
+# System signature:
+  # Git
+    branch_name='testing'
+    hash='ccbd47292'
+    # Last commits:
+      * ccbd47292 Nitesh703 removed third testcase                                            (    2 days ago) Mon May 27 00:40:44 2024  (HEAD -> testing, origin/testing)
+      * 3590b7f89 Nitesh703 updated testcases                                                 (    2 days ago) Mon May 27 00:11:01 2024           
+      * 2ab70f6e4 Nitesh703 updated testcases                                                 (    2 days ago) Mon May 27 00:10:12 2024           
+  # Machine info
+    system=Linux
+    node name=35bc1c081fa6
+    release=6.6.22-linuxkit
+    version=#1 SMP Fri Mar 29 12:21:27 UTC 2024
+    machine=x86_64
+    processor=x86_64
+    cpu count=8
+    cpu freq=None
+    memory=svmem(total=4113563648, available=3543638016, percent=13.9, used=425054208, free=3330523136, active=594038784, inactive=64606208, buffers=26001408, cached=331984896, shared=737280, slab=51834880)
+    disk usage=sdiskusage(total=62671097856, used=16593735680, free=42860646400, percent=27.9)
+  # Packages
+    python: 3.9.5
+    cvxopt: ?
+    cvxpy: ?
+    gluonnlp: ?
+    gluonts: ?
+    joblib: 1.3.2
+    mxnet: ?
+    numpy: 1.24.4
+    pandas: 2.0.3
+    pyarrow: ?
+    scipy: 1.10.1
+    seaborn: ?
+    sklearn: ?
+    statsmodels: 0.14.0
+# Env vars:
+  AM_AWS_ACCESS_KEY_ID=undef
+  AM_AWS_DEFAULT_REGION=undef
+  AM_AWS_PROFILE='am'
+  AM_AWS_S3_BUCKET='alphamatic-data'
+  AM_AWS_SECRET_ACCESS_KEY=undef
+  AM_ECR_BASE_PATH='665840871993.dkr.ecr.us-east-1.amazonaws.com'
+  AM_ENABLE_DIND='0'
+  AM_FORCE_TEST_FAIL=''
+  AM_HOST_NAME='Nitteshs-Air'
+  AM_HOST_OS_NAME='Darwin'
+  AM_HOST_USER_NAME='nitteshkataria'
+  AM_HOST_VERSION='22.3.0'
+  AM_REPO_CONFIG_CHECK='True'
+  AM_REPO_CONFIG_PATH='/app/repo_config.py'
+  AM_TELEGRAM_TOKEN=empty
+  CI=''
+  CK_AWS_ACCESS_KEY_ID=empty
+  CK_AWS_DEFAULT_REGION=''
+  CK_AWS_S3_BUCKET='cryptokaizen-data'
+  CK_AWS_SECRET_ACCESS_KEY=empty
+  CK_ECR_BASE_PATH='sorrentum'
+  GH_ACTION_ACCESS_TOKEN=empty
+
+Check for merge conflicts............................(no files to check)Skipped
+Trim Trailing Whitespace.............................(no files to check)Skipped
+Fix End of Files.....................................(no files to check)Skipped
+Check for added large files..........................(no files to check)Skipped
+CRLF end-lines remover...............................(no files to check)Skipped
+Tabs remover.........................................(no files to check)Skipped
+autoflake............................................(no files to check)Skipped
+add_python_init_files................................(no files to check)Skipped
+amp_lint_md..........................................(no files to check)Skipped
+amp_doc_formatter....................................(no files to check)Skipped
+amp_isort............................................(no files to check)Skipped
+amp_class_method_order...............................(no files to check)Skipped
+amp_normalize_import.................................(no files to check)Skipped
+amp_format_separating_line...........................(no files to check)Skipped
+amp_black............................................(no files to check)Skipped
+amp_processjupytext..................................(no files to check)Skipped
+amp_check_filename...................................(no files to check)Skipped
+amp_warn_incorrectly_formatted_todo..................(no files to check)Skipped
+amp_flake8...........................................(no files to check)Skipped
+amp_pylint...........................................(no files to check)Skipped
+amp_mypy.............................................(no files to check)Skipped
