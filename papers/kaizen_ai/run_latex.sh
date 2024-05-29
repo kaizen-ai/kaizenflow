@@ -7,15 +7,17 @@ if [[ -z $GIT_ROOT ]]; then
 fi;
 
 # Relative to papers, without '.tex'.
-FILE_NAME=DataFlow_stream_computing_framework/DataFlow_stream_computing_framework
-(cd $GIT_ROOT/papers; pdflatex ${FILE_NAME}.tex && pdflatex ${FILE_NAME}.tex)
+FILE_NAME=papers/kaizen_ai/ai_reasoning_in_science
+(cd $GIT_ROOT; pdflatex ${FILE_NAME}.tex && pdflatex ${FILE_NAME}.tex)
+
 
 PDF_FILE_NAME=$(basename $FILE_NAME)
-open -a Skim papers/${PDF_FILE_NAME}.pdf
+mv ${PDF_FILE_NAME}.pdf papers/kaizen_ai
+open -a Skim papers/kaizen_ai/${PDF_FILE_NAME}.pdf
 
 #rm -f ${FILE_NAME}.pdf
 #/usr/bin/osascript << EOF
-#set theFile to POSIX file "${FILE_NAME}.pdf" as alias
+#set theFile to POSIX file "$GIT_ROOT/papers/${FILE_NAME}.pdf" as alias
 #tell application "Skim"
 #activate
 #set theDocs to get documents whose path is (get POSIX path of theFile)
