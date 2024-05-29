@@ -18,23 +18,26 @@
 # https://www.kaggle.com/datasets/hugomathien/soccer
 
 # %%
-import sqlite3
-import pandas as pd
-import numpy as np
-import seaborn as sns
-import itertools
-import matplotlib.pyplot as plt
-import os
 import calendar
-from datetime import datetime, timedelta, date
+import itertools
+import os
+import sqlite3
 import warnings
-#import kaggle 
-import zipfile
+from datetime import date, datetime, timedelta
+
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+import seaborn as sns
+
+#import kaggle
 import re
+import zipfile
+
+import pandas as pd
 
 # %%
-database_path = "datasets/football/european-football/database.sqlite" 
+database_path = "datasets/football/european-football/database.sqlite"
 conn = sqlite3.connect(database_path)
 tables = pd.read_sql("""SELECT *
                         FROM sqlite_master
@@ -79,7 +82,7 @@ directory_path = 'datasets/football/player-scores'
 #            zip_path = os.path.join(dirname, filename)
 #            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
 #                zip_ref.ref.extractall(local_directory)
-# Load the datasets into pandas dataframes.            
+# Load the datasets into pandas dataframes.
 dataframes_2={}
 for dirname, _, filenames in os.walk(directory_path):
     for filename in filenames:
@@ -129,8 +132,8 @@ player_valuations_df = player_valuations_df.merge(
 # Add position to appearances.
 value_df=players_df[['player_id','position','sub_position', 'market_value_in_eur', 'term_days_remaining']]
 appearances_df1=value_df.merge(
-    appearances_df, 
-    left_on='player_id', 
+    appearances_df,
+    left_on='player_id',
     right_on='player_id')
 # Add year to player valuations.
 player_valuations_df['date']=pd.to_datetime(player_valuations_df['date'], format="%Y-%m-%d")
@@ -142,7 +145,9 @@ appearances_df['year']=appearances_df['datetime'].dt.year
 
 # %%
 def plot_scatter(df, title, xlabel, ylabel, color, alpha=0.15):
-    """Generalized scatter plot function."""
+    """
+    Generalized scatter plot function.
+    """
     plt.scatter(df['date'], df['market_value_in_eur']/1e6, c=color, alpha=alpha)
     plt.title(title, fontsize=20)
     plt.xlabel(xlabel)
@@ -151,7 +156,9 @@ def plot_scatter(df, title, xlabel, ylabel, color, alpha=0.15):
     plt.grid(True)
 
 def plot_time_series(df_groups, titles, ylabels, styles, colors):
-    """Function to plot time series data from grouped DataFrames."""
+    """
+    Function to plot time series data from grouped DataFrames.
+    """
     fig, axes = plt.subplots(1, len(df_groups), figsize=(20, 8))
     if len(df_groups) == 1:
         axes = [axes]  # Ensure axes is iterable for a single subplot
@@ -297,7 +304,7 @@ latest_attributes_df = latest_attributes_df.merge(latest_valuations_df,
 # Extract the positions lists.
 positions = players_df1['position'].unique()
 # Set up the figure.
-f = plt.figure(figsize=(36, 48)) 
+f = plt.figure(figsize=(36, 48))
 # Indices for subplots.
 n = 1
 # Plot for each position.
@@ -308,7 +315,7 @@ for position in positions:
     latest_attributes_df1 = latest_attributes_df[latest_attributes_df['position']==position]
     sns.boxplot(x=players_df2["age"], y=(players_df2['market_value_in_eur']) / 1000000)
     plt.title(f'{position} player market value in million euros by age')
-    plt.xticks(rotation=45)  
+    plt.xticks(rotation=45)
     n += 1
     # Market value by height for all players.
     plt.subplot(6, 4, n)
