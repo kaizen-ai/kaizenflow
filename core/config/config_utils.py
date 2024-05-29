@@ -16,6 +16,7 @@ import pandas as pd
 import core.config.config_ as cconconf
 import helpers.hdbg as hdbg
 import helpers.hdict as hdict
+import helpers.hdocker as hdocker
 import helpers.hpickle as hpickle
 import helpers.hprint as hprint
 
@@ -47,6 +48,32 @@ def configs_to_str(configs: List[cconconf.Config]) -> str:
         txt.append(hprint.indent(str(config)))
     res = "\n".join(txt)
     return res
+
+
+def replace_shared_dir_paths(config: cconconf.Config) -> cconconf.Config:
+    """
+    Replace all the root paths of the shared data directory in the config.
+
+    :return: updated version of a config
+    """
+    new_config = config.copy()
+    initial_update_mode = new_config.update_mode
+    # Update mode should be set to "overwrite" to allow the changes in the
+    # config.
+    new_config.update_mode = "overwrite"
+    for key in config.keys():
+        value = config[key]
+        if isinstance(value, cconconf.Config):
+            value = replace_shared_dir_paths(value)
+        elif isinstance(value, str):
+            # Search for file paths among string values only.
+            value = hdocker.replace_shared_root_path(value)
+        else:
+            # No need to change values other than strings.
+            pass
+        new_config[key] = value
+    new_config.update_mode = initial_update_mode
+    return new_config
 
 
 # TODO(gp): Add unit tests.
@@ -112,11 +139,12 @@ def load_config_from_pickle(config_path: str) -> cconconf.Config:
     hdbg.dassert_path_exists(config_path)
     _LOG.debug("Reading config from %s", config_path)
     config = hpickle.from_pickle(config_path)
-    # TODO(Dan): `config` should be a `cconconf.Config` but previously it
-    #  used to be dict, so keeping both for back-compatibility, see CmTask6627.
     if isinstance(config, dict):
-        _LOG.warning("Found Config v1.0 flow: converting")
-        config = cconconf.Config.from_dict(config)
+        # _LOG.warning("Found Config v1.0 flow: converting")
+        # config = cconconf.Config.from_dict(config)
+        raise TypeError(
+            f"Found Config v1.0 flow at '{config_path}'. Deprecated in CmTask7794."
+        )
     return config
 
 

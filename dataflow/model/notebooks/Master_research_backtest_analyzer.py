@@ -30,14 +30,11 @@
 import datetime
 import logging
 import os
-from typing import List
 
 import pandas as pd
 
 import core.config as cconfig
-import core.finance as cofinanc
 import core.plotting as coplotti
-import dataflow.core as dtfcore
 import dataflow.model as dtfmod
 import dataflow_amp.system.Cx as dtfamsysc
 import helpers.hdbg as hdbg
@@ -73,15 +70,26 @@ else:
     amp_dir = hgit.get_amp_abs_path()
     dir_name = os.path.join(
         amp_dir,
-        "/shared_data/backtest.danya/build_tile_configs.C11a.ccxt_v8_1-all.6T.2023-06-01_2024-01-31.ins.run0/tiled_results",
+        "/shared_data/backtest.danya/build_tile_configs.C11a.ccxt_v8_1-all.120T.2023-08-01_2024-01-31.ins.run0/tiled_results",
+    )
+    # Create a subfolder to store portfolio metrics.
+    # The subfolder is marked by the datetime of the run, e.g.
+    # "build_tile_configs.C11a.ccxt_v8_1-all.5T.2023-01-01_2024-03-20.ins.run0/portfolio_dfs/20240326_131724".
+    # TODO(Danya): Factor out into a function.
+    output_dir_name = os.path.join(
+        dir_name.rstrip("tiled_results"),
+        "portfolio_dfs",
+        pd.Timestamp.utcnow().strftime("%Y%m%d_%H%M%S"),
     )
     default_config_dict = {
         "dir_name": dir_name,
-        "start_date": datetime.date(2023, 6, 1),
+        "output_dir_name": output_dir_name,
+        "start_date": datetime.date(2023, 8, 1),
         "end_date": datetime.date(2024, 1, 31),
         "asset_id_col": "asset_id",
         "pnl_resampling_frequency": "D",
-        "rule": "6T",
+        "rule": "120T",
+        "forecast_evaluator_class_name": "ForecastEvaluatorFromPrices",
         "im_client_config": {
             "vendor": "ccxt",
             "universe_version": "v8.1",
@@ -106,10 +114,10 @@ else:
             "burn_in_bars": 3,
             "compute_extended_stats": True,
             "target_dollar_risk_per_name": 1.0,
-            "modulate_using_prediction_magnitude": False,
-            "prediction_abs_threshold": 0.3,
+            "modulate_using_prediction_magnitude": True,
+            "prediction_abs_threshold": 0.0,
         },
-        "column_names": {
+        "forecast_evaluator_kwargs": {
             "price_col": "open",
             "volatility_col": "garman_klass_vol",
             "prediction_col": "feature",
@@ -121,7 +129,7 @@ else:
         "load_all_tiles_in_memory": True,
         "sweep_param": {
             "keys": (
-                "column_names",
+                "forecast_evaluator_kwargs",
                 "price_col",
             ),
             "values": [
@@ -214,7 +222,7 @@ tile_df.head(3)
 # Since the Optimizer cannot work with NaN values in the price column,
 # check the presence of NaN values and return the first and last date
 # where NaNs are encountered.
-price_col = default_config["column_names"]["price_col"]
+price_col = default_config["forecast_evaluator_kwargs"]["price_col"]
 price_df = tile_df[price_col]
 try:
     hdbg.dassert_eq(price_df.isna().sum().sum(), 0)
@@ -229,7 +237,7 @@ except AssertionError as e:
 
 # %% run_control={"marked": true}
 # If NaNs in the feature column are found, replace them with 0.
-feature_col = default_config["column_names"]["prediction_col"]
+feature_col = default_config["forecast_evaluator_kwargs"]["prediction_col"]
 tile_df[feature_col].isna().sum()
 
 # %%
@@ -272,38 +280,6 @@ _LOG.info("ohlcv_data max index=%s", ohlcv_data.index.max())
 _LOG.info("tile_df min index=%s", tile_df.index.min())
 _LOG.info("tile_df max index=%s", tile_df.index.max())
 
-
-# %%
-def resample_with_weights_ohlcv_bars(
-    df_ohlcv: pd.DataFrame,
-    price_col: str,
-    bar_duration: str,
-    weights: List[float],
-) -> pd.DataFrame:
-    """
-    Resample 1-minute data to `bar_duration` with weights.
-    """
-    resampling_node = dtfcore.GroupedColDfToDfTransformer(
-        "resample",
-        transformer_func=cofinanc.resample_with_weights,
-        **{
-            "in_col_groups": [
-                (price_col,),
-            ],
-            "out_col_group": (),
-            "transformer_kwargs": {
-                "rule": bar_duration,
-                "col": price_col,
-                "weights": weights,
-            },
-            "reindex_like_input": False,
-            "join_output_with_input": False,
-        },
-    )
-    resampled_ohlcv = resampling_node.fit(df_ohlcv)["df_out"]
-    return resampled_ohlcv
-
-
 # %%
 rule = default_config["rule"]
 rule_n_minutes = int(pd.Timedelta(rule).total_seconds() / 60)
@@ -313,21 +289,25 @@ rule_n_minutes
 weights_dict = {
     "first_min_past": [0.0] * 1 + [1.0] + [0.0] * (rule_n_minutes - 2),
     "second_min_past": [0.0] * 2 + [1.0] + [0.0] * (rule_n_minutes - 3),
-    "third_min_past": [0.0] * 3 + [1.0] + [0.0] * (rule_n_minutes - 4),
+    #     "third_min_past": [0.0] * 3 + [1.0] + [0.0] * (rule_n_minutes - 4),
 }
 
 # %%
 for weight_rule, weights in weights_dict.items():
     #
-    resampled_price_col = resample_with_weights_ohlcv_bars(
+    resampled_price_col = dtfmod.resample_with_weights_ohlcv_bars(
         ohlcv_data,
-        default_config["column_names", "price_col"],
+        default_config["forecast_evaluator_kwargs", "price_col"],
         rule,
         weights,
     )
     # Rename the resampled price column.
     res_price_col = "_".join(
-        ["resampled", weight_rule, default_config["column_names", "price_col"]]
+        [
+            "resampled",
+            weight_rule,
+            default_config["forecast_evaluator_kwargs", "price_col"],
+        ]
     )
     resampled_price_col.columns = resampled_price_col.columns.set_levels(
         [res_price_col], level=0
@@ -339,9 +319,10 @@ for weight_rule, weights in weights_dict.items():
 tile_df.head()
 
 # %% [markdown]
-# # Compute portfolio bar metrics
+# # Compute and save portfolio bar metrics
 
 # %%
+# Get configs sweeping over parameter.
 config_dict = dtfmod.build_research_backtest_analyzer_config_sweep(default_config)
 print(config_dict.keys())
 
@@ -350,12 +331,24 @@ portfolio_df_dict = {}
 bar_metrics_dict = {}
 for key, config in config_dict.items():
     if config["load_all_tiles_in_memory"]:
-        fep = dtfmod.ForecastEvaluatorFromPrices(
-            **config["column_names"].to_dict()
+        fep = dtfmod.get_forecast_evaluator(
+            config["forecast_evaluator_class_name"],
+            **config["forecast_evaluator_kwargs"].to_dict(),
         )
-        portfolio_df, bar_metrics = fep.annotate_forecasts(
+        # Create a subdirectory for the current config, e.g.
+        # "optimizer_config_dict:constant_correlation_penalty=1".
+        experiment_dir = os.path.join(
+            config["output_dir_name"], key.replace(" ", "")
+        )
+        _LOG.info("Saving portfolio in experiment_dir=%s", experiment_dir)
+        file_name = fep.save_portfolio(
             tile_df,
+            experiment_dir,
             **config["annotate_forecasts_kwargs"].to_dict(),
+        )
+        # Load back the portfolio and metrics that were calculated.
+        portfolio_df, bar_metrics = fep.load_portfolio_and_stats(
+            experiment_dir, file_name=file_name
         )
     else:
         portfolio_df, bar_metrics = dtfmod.annotate_forecasts_by_tile(
@@ -363,9 +356,9 @@ for key, config in config_dict.items():
             config["start_date"],
             config["end_date"],
             config["asset_id_col"],
-            config["column_names"]["price_col"],
-            config["column_names"]["volatility_col"],
-            config["column_names"]["prediction_col"],
+            config["forecast_evaluator_kwargs"]["price_col"],
+            config["forecast_evaluator_kwargs"]["volatility_col"],
+            config["forecast_evaluator_kwargs"]["prediction_col"],
             asset_ids=None,
             annotate_forecasts_kwargs=config[
                 "annotate_forecasts_kwargs"

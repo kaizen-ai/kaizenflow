@@ -34,7 +34,13 @@ _LOG = logging.getLogger(__name__)
 # Set of columns which are unique row-wise across db tables for corresponding
 # data type.
 BASE_UNIQUE_COLUMNS = ["timestamp", "exchange_id", "currency_pair"]
-BID_ASK_UNIQUE_COLUMNS = []
+BID_ASK_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + [
+    "bid_size", 
+    "bid_price", 
+    "ask_size", 
+    "ask_price", 
+    "level"
+]
 TRADES_UNIQUE_COLUMNS = ["id"]
 NUMBER_OF_RETRIES_TO_SAVE = 3
 OHLCV_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + [
@@ -332,7 +338,7 @@ def fetch_last_minute_bid_ask_rt_db_data(
         end_ts,
         bid_ask_levels=[1],
         exchange_id=exchange_id,
-        time_interval_closed="left"
+        time_interval_closed="left",
     )
 
 
@@ -373,7 +379,7 @@ def load_db_data(
     limit: Optional[int] = None,
     bid_ask_levels: Optional[List[int]] = None,
     exchange_id: Optional[str] = None,
-    time_interval_closed: Union[bool, str] = True
+    time_interval_closed: Union[bool, str] = True,
 ) -> pd.DataFrame:
     """
     Load database data from a specified table given an opened DB connection.
@@ -604,10 +610,15 @@ def save_data_to_db(
         return
     if add_knowledge_timestamp:
         data = imvcdttrut.add_knowledge_timestamp_col(data, "UTC")
-    if data_type == "ohlcv":
+    if data_type == "ohlcv" or data_type == "ohlcv_from_trades":
         unique_columns = OHLCV_UNIQUE_COLUMNS
     elif data_type == "bid_ask":
         unique_columns = BID_ASK_UNIQUE_COLUMNS
+        #TODO(Juraj): Hacky fix, because proper solution requires 
+        # more time spent on updating DB schema,
+        # will be addressed in a follow-up of #7932.
+        if db_table != "binance_bid_ask_futures_raw":
+            unique_columns= []
     elif data_type == "trades":
         unique_columns = TRADES_UNIQUE_COLUMNS
     else:

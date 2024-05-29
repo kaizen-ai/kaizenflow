@@ -10,6 +10,7 @@ import pandas as pd
 from tqdm.autonotebook import tqdm
 
 import core.finance as cofinanc
+import dataflow.model.abstract_forecast_evaluator as dtfmabfoev
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
@@ -18,7 +19,7 @@ import optimizer.single_period_optimization as osipeopt
 _LOG = logging.getLogger(__name__)
 
 
-class ForecastEvaluatorWithOptimizer:
+class ForecastEvaluatorWithOptimizer(dtfmabfoev.AbstractForecastEvaluator):
     """
     Evaluate returns/volatility forecasts.
     """
@@ -45,103 +46,40 @@ class ForecastEvaluatorWithOptimizer:
             - the `prediction_col` is a prediction of vol-adjusted returns
               (presumably with volatility given by `volatility_col`)
         """
-        _LOG.debug(hprint.to_str("price_col volatility_col prediction_col"))
         # Initialize dataframe columns.
-        hdbg.dassert_isinstance(price_col, str)
-        self._price_col = price_col
-        #
-        hdbg.dassert_isinstance(volatility_col, str)
-        self._volatility_col = volatility_col
-        #
-        hdbg.dassert_isinstance(prediction_col, str)
-        self._prediction_col = prediction_col
+        super().__init__(price_col, volatility_col, prediction_col)
+        _LOG.debug(hprint.to_str("price_col volatility_col prediction_col"))
         #
         self._optimizer_config_dict = optimizer_config_dict
 
-    def to_str(
+    def annotate_forecasts(
         self,
         df: pd.DataFrame,
-        **kwargs,
-    ) -> str:
+        **kwargs: Dict[str, Any],
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
-        Return the state of the Portfolio as a string.
+        Compute target positions, PnL, and portfolio stats.
 
-        :param df: as in `compute_portfolio`
-        :param kwargs: forwarded to `compute_portfolio()`
-        :return: portfolio state (rounded) as a string
+        :param df: multiindexed dataframe with predictions, price,
+            volatility
         """
-        dfs = self.compute_portfolio(
-            df,
-            **kwargs,
-        )
-        #
-        act = []
-        round_precision = 6
-        precision = 2
-        act.append("# holdings_shares=")
-        act.append(
-            hpandas.df_to_str(
-                dfs["holdings_shares"].round(round_precision),
-                handle_signed_zeros=True,
-                num_rows=None,
-                precision=precision,
-                log_level=logging.INFO,
-            )
-        )
-        act.append("# holdings_notional=")
-        act.append(
-            hpandas.df_to_str(
-                dfs["holdings_notional"].round(round_precision),
-                handle_signed_zeros=True,
-                num_rows=None,
-                precision=precision,
-                log_level=logging.INFO,
-            )
-        )
-        act.append("# executed_trades_shares=")
-        act.append(
-            hpandas.df_to_str(
-                dfs["executed_trades_shares"].round(round_precision),
-                handle_signed_zeros=True,
-                num_rows=None,
-                precision=precision,
-                log_level=logging.INFO,
-            )
-        )
-        act.append("# executed_trades_notional=")
-        act.append(
-            hpandas.df_to_str(
-                dfs["executed_trades_notional"].round(round_precision),
-                handle_signed_zeros=True,
-                num_rows=None,
-                precision=precision,
-                log_level=logging.INFO,
-            )
-        )
-        act.append("# pnl=")
-        act.append(
-            hpandas.df_to_str(
-                dfs["pnl"].round(round_precision),
-                handle_signed_zeros=True,
-                num_rows=None,
-                precision=precision,
-                log_level=logging.INFO,
-            )
-        )
-        act.append("# statistics=")
-        act.append(
-            hpandas.df_to_str(
-                dfs["stats"].round(round_precision),
-                handle_signed_zeros=True,
-                num_rows=None,
-                precision=precision,
-                log_level=logging.INFO,
-            )
-        )
-        act = "\n".join(act)
-        return act
+        derived_dfs = self.compute_portfolio(df, **kwargs)
+        dfs = {
+            "price": df[self._price_col],
+            "volatility": df[self._volatility_col],
+            "prediction": df[self._prediction_col],
+            "holdings_shares": derived_dfs["holdings_shares"],
+            "holdings_notional": derived_dfs["holdings_notional"],
+            "executed_trades_shares": derived_dfs["executed_trades_shares"],
+            "executed_trades_notional": derived_dfs["executed_trades_notional"],
+            "pnl": derived_dfs["pnl"],
+        }
+        portfolio_df = ForecastEvaluatorWithOptimizer._build_multiindex_df(dfs)
+        return portfolio_df, derived_dfs["stats"]
 
-    def compute_portfolio(
+    # //////////////////////////////////////////////////////////////////////////////
+
+    def _compute_portfolio(
         self,
         df: pd.DataFrame,
         *,
@@ -156,15 +94,13 @@ class ForecastEvaluatorWithOptimizer:
         asset_id_to_share_decimals: Optional[Dict[int, int]] = None,
         **kwargs: Dict[str, Any],
     ) -> Dict[str, pd.DataFrame]:
-        _LOG.debug("df=\n%s", hpandas.df_to_str(df, print_shape_info=True))
-        self._validate_df(df)
         # Record index in case we reindex the results.
         if reindex_like_input:
-            idx = df.index
+            raise NotImplementedError(
+                "`reindex_like_input` is not supported for ForecastEvaluatorWithOptimizer"
+            )
         else:
             idx = None
-        # Trim to indices with prices and beginning of forecast availability.
-        df = self._apply_trimming(df)
         # Prepare to process the DAG df row by row.
         iter_ = enumerate(df.iterrows())
         iter_idx = df.index
@@ -299,36 +235,6 @@ class ForecastEvaluatorWithOptimizer:
             idx,
         )
 
-    def annotate_forecasts(
-        self,
-        df: pd.DataFrame,
-        **kwargs: Dict[str, Any],
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, Dict[str, pd.DataFrame]]:
-        """
-        Compute target positions, PnL, and portfolio stats.
-
-        :param df: multiindexed dataframe with predictions, price,
-            volatility
-        """
-        derived_dfs = self.compute_portfolio(df, **kwargs)
-        dfs = {
-            "price": df[self._price_col],
-            "volatility": df[self._volatility_col],
-            "prediction": df[self._prediction_col],
-            "holdings_shares": derived_dfs["holdings_shares"],
-            "holdings_notional": derived_dfs["holdings_notional"],
-            "executed_trades_shares": derived_dfs["executed_trades_shares"],
-            "executed_trades_notional": derived_dfs["executed_trades_notional"],
-            "pnl": derived_dfs["pnl"],
-        }
-        portfolio_df = ForecastEvaluatorWithOptimizer._build_multiindex_df(dfs)
-        return portfolio_df, derived_dfs["stats"]
-
-    @staticmethod
-    def _build_multiindex_df(dfs: Dict[str, pd.DataFrame]) -> pd.DataFrame:
-        portfolio_df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
-        return portfolio_df
-
     def _compute_holdings_notional(
         self,
         df_slice: pd.DataFrame,
@@ -375,16 +281,6 @@ class ForecastEvaluatorWithOptimizer:
             liquidate_holdings=liquidate_holdings,
         )
         return output_df
-
-    def _validate_df(self, df: pd.DataFrame) -> None:
-        hpandas.dassert_time_indexed_df(
-            df, allow_empty=True, strictly_increasing=True
-        )
-        hdbg.dassert_eq(df.columns.nlevels, 2)
-        hdbg.dassert_is_subset(
-            [self._price_col, self._volatility_col, self._prediction_col],
-            df.columns.levels[0].to_list(),
-        )
 
     def _apply_trimming(self, df: pd.DataFrame) -> pd.DataFrame:
         """

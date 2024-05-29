@@ -10,13 +10,14 @@ import logging
 import os
 import pprint
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config as cconfig
 import dataflow.core as dtfcore
+import dataflow.model as dtfmod
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
@@ -27,8 +28,9 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 import oms.broker.ccxt.ccxt_utils as obccccut
-import oms.order_processing.target_position_and_order_generator as ooptpaog
+import oms.order_processing.target_position_and_order_generator as ooptpaoge
 import oms.portfolio.portfolio as oporport
+import optimizer.forecast_evaluator_with_optimizer as ofevwiop
 
 _LOG = logging.getLogger(__name__)
 
@@ -100,6 +102,8 @@ def build_reconciliation_configs(
     end_timestamp_as_str: str,
     run_mode: str,
     mode: str,
+    *,
+    tag: str = "",
     set_config_values: Optional[str] = None,
 ) -> cconfig.ConfigList:
     """
@@ -118,6 +122,7 @@ def build_reconciliation_configs(
         at which to end reconcile run, e.g. "20221010_080000"
     :param run_mode: prod run mode, e.g. "prod" or "paper_trading"
     :param mode: reconciliation run mode, i.e., "scheduled" and "manual"
+    param tag: config tag, e.g., "config1"
     :param set_config_values: see `reconcile_run_all` for detailed description
     :return: list of reconciliation configs
     """
@@ -142,10 +147,18 @@ def build_reconciliation_configs(
             run_mode,
             start_timestamp_as_str,
             end_timestamp_as_str,
+            tag=tag,
         )
         system_log_path_dict = get_system_log_dir_paths(target_dir, mode)
         system_log_dir = system_log_path_dict["prod"]
-        bar_duration = extract_bar_duration_from_pkl_config(system_log_dir)
+        config_file_name = "system_config.output.values_as_strings.pkl"
+        config_path = os.path.join(system_log_dir, config_file_name)
+        system_config = cconfig.load_config_from_pickle(config_path)
+        # Get bar duration from config.
+        bar_duration_in_secs = get_bar_duration_from_config(system_config)
+        bar_duration = hdateti.convert_seconds_to_pandas_minutes(
+            bar_duration_in_secs
+        )
         # Get column names from `DagBuilder`.
         dag_builder = dtfcore.get_DagBuilder_from_string(dag_builder_ctor_as_str)
         fep_init_dict = {
@@ -206,7 +219,8 @@ def build_reconciliation_configs(
         },
         "system_log_path": system_log_path_dict,
         "dag_builder_ctor_as_str": dag_builder_ctor_as_str,
-        "research_forecast_evaluator_from_prices": {
+        "forecast_evaluator_config": {
+            "forecast_evaluator_type": "ForecastEvaluatorFromPrices",
             "init": fep_init_dict,
             "annotate_forecasts_kwargs": {
                 "quantization": quantization,
@@ -217,7 +231,6 @@ def build_reconciliation_configs(
             },
         },
     }
-    config = cconfig.Config.from_dict(config_dict)
     # Set the default optimizer config values.
     style = "cross_sectional"
     optimizer_config_kwargs = {
@@ -225,51 +238,85 @@ def build_reconciliation_configs(
         "target_gmv": gmv,
     }
     #
-    if set_config_values is not None:
-        # Check if optimizer config is in set_config_values.
-        is_optimizer_config = "optimizer_config" in set_config_values
-        if is_optimizer_config:
-            # Create a config with the passed from cmd values.
-            set_config_values = set_config_values.split(";")
-            override_config = cconfig.Config()
-            override_config = cconfig.apply_config(
-                override_config, set_config_values
-            )
-            # Extract optimizer config params to update.
-            # Expected optimizer config outlook:
-            # {
-            #     "optimizer_config": {
-            #         "backend": "cc_pomo",
-            #         "params": {
-            #             "style": "longitudinal",
-            #             "kwargs": {
-            #                 "target_dollar_risk_per_name": 0.1,
-            #                 "prediction_abs_threshold": 0.35,
-            #             },
-            #         },
-            #     },
-            # }
-            optimizer_config_params = override_config[
-                "process_forecasts_node_dict"
-            ]["process_forecasts_dict"]["optimizer_config"]["params"]
-            if "style" in optimizer_config_params:
-                style = optimizer_config_params["style"]
-            if "kwargs" in optimizer_config_params:
-                optimizer_config_kwargs = optimizer_config_params["kwargs"]
-    update_dict = {
-        "research_forecast_evaluator_from_prices": {
+    optimizer_dict = {
+        "forecast_evaluator_config": {
             "annotate_forecasts_kwargs": {
                 "style": style,
                 **optimizer_config_kwargs,
             }
         }
     }
-    update_config = cconfig.Config.from_dict(update_dict)
-    config.update(update_config)
+    # Create default optimizer config.
+    config = cconfig.Config.from_dict(config_dict)
+    optimizer_config = cconfig.Config.from_dict(optimizer_dict)
+    config.update(optimizer_config)
+    #
+    if set_config_values is not None and "optimizer_config" in set_config_values:
+        # Update optimizer config for a `ForecastEvaluator` using the
+        # SystemConfig overrides.
+        config = build_optimizer_config_from_config_overrides(
+            config_dict, set_config_values
+        )
+    else:
+        _LOG.debug("No optimzer config overrides found, using the default config")
     # Put config in a config list for compatability with the `run_notebook.py`
     # script.
     config_list = cconfig.ConfigList([config])
     return config_list
+
+
+# TODO(Grisha): read optimizer parameters from SystemConfig instead of
+# inferring them from `set_config_values`. See CmTask7725 for details.
+def build_optimizer_config_from_config_overrides(
+    config_dict: Dict[str, Any],
+    set_config_values: str,
+) -> cconfig.Config:
+    """
+    Create a config with optimizer overrides using the values passed from the
+    cmd line.
+
+    :param config_dict: config params
+    :param set_config_values: values to override in the config
+    :return: reconciliation notebook config with optimizer overrides
+    """
+    set_config_values_list = set_config_values.split(";")
+    override_config = cconfig.Config()
+    override_config = cconfig.apply_config(
+        override_config, set_config_values_list
+    )
+    # Get optimizer config params from config overrides.
+    optimizer_config = override_config["process_forecasts_node_dict"][
+        "process_forecasts_dict"
+    ]["optimizer_config"]
+    optimizer_config_params = optimizer_config["params"]
+    #
+    if "batch_optimizer" in set_config_values:
+        # Set `batch_optimizer` config params in the config.
+        config_dict["forecast_evaluator_config"][
+            "forecast_evaluator_type"
+        ] = "ForecastEvaluatorWithOptimizer"
+        optimizer_config_params["verbose"] = False
+        optimizer_config_dict = {"optimizer_config_dict": optimizer_config_params}
+        config_dict["forecast_evaluator_config"]["init"].update(
+            optimizer_config_dict
+        )
+        # Create config with `batch_optimizer`.
+        config = cconfig.Config.from_dict(config_dict)
+    else:
+        # Set `pomo_optimizer` config params in the config.
+        if "style" in optimizer_config_params:
+            style = optimizer_config_params["style"]
+        if "kwargs" in optimizer_config_params:
+            optimizer_config_kwargs = optimizer_config_params["kwargs"]
+        config_dict["forecast_evaluator_config"]["annotate_forecasts_kwargs"][
+            "style"
+        ] = style
+        config_dict["forecast_evaluator_config"][
+            "annotate_forecasts_kwargs"
+        ].update(optimizer_config_kwargs)
+        # Override config for `pomo` optimizer from command line.
+        config = cconfig.Config.from_dict(config_dict)
+    return config
 
 
 def build_multiday_system_reconciliation_config(
@@ -329,6 +376,7 @@ def build_prod_pnl_real_time_observer_configs(
     mode: str,
     save_plots_for_investors: bool,
     *,
+    tag: str = "",
     s3_dst_dir: Optional[str] = None,
 ) -> cconfig.ConfigList:
     """
@@ -347,6 +395,7 @@ def build_prod_pnl_real_time_observer_configs(
         at which a production run ended, e.g. "20221010_080000"
     :param mode: prod run mode, i.e., "scheduled" and "manual"
     :param save_plots_for_investors: whether to save PnL plots for investors or not
+    :param tag: config tag, e.g., "config1"
     :param s3_dst_dir: dst dir where to save plots for investors on S3
     :return: list of configs
     """
@@ -361,6 +410,7 @@ def build_prod_pnl_real_time_observer_configs(
         run_mode,
         start_timestamp_as_str,
         end_timestamp_as_str,
+        tag=tag,
     )
     #
     system_log_subdir = get_prod_system_log_dir(mode)
@@ -436,136 +486,18 @@ def load_config_dict_from_pickle(
     return config_dict
 
 
-def extract_bar_duration_from_pkl_config(system_log_dir: str) -> str:
+def get_bar_duration_from_config(config: cconfig.Config) -> int:
     """
-    Get bar duration from pickled system config.
-
-    :param system_log_dir: dir containing
-        `system_config.output.values_as_strings.pkl` file
-    :return: bar duration as a string representation, e.g., "30T"
+    Get bar duration value from Config.
     """
-    # Extract bar duration from a pickled config as different models
-    # could be run with different bar duration, e.g., `C11a`.
-    config_file_name = "system_config.output.values_as_strings.pkl"
-    system_config_path = os.path.join(system_log_dir, config_file_name)
-    system_config_pkl = cconfig.load_config_from_pickle(system_config_path)
-    # Get string representation of `DagRunner` config.
-    # Bar duration should not depend on the resampling rule
-    # from `dag_config` so we take its value from `DagRunner` config.
-    dag_runner_config_str = str(system_config_pkl["dag_runner_config"])
-    # Infer `bar_duration_in_secs`.
-    # TODO(Nina): Get value from config directly instead of parsing string,
-    # see CmTask6627.
-    # Config from a pickle file has only string values that require
-    # string processing to extract actual config values from it.
-    match = re.search(r"bar_duration_in_secs:\s*(\d+)", dag_runner_config_str)
-    if match is not None:
-        bar_duration_in_secs = int(match.group(1))
-        # Convert bar duration into minutes.
-        bar_duration_in_mins = int(bar_duration_in_secs / 60)
-        bar_duration_in_mins_as_str = f"{bar_duration_in_mins}T"
+    val = config["dag_runner_config", "bar_duration_in_secs"]
+    if isinstance(val, str):
+        _LOG.warning("Found Config v2 flow, converting value to int.")
+        val = int(val)
     else:
-        raise ValueError("Cannot parse `bar_duration_in_secs` from the config")
-    return bar_duration_in_mins_as_str
-
-
-# TODO(Nina): consider removing once CmTask6627 is implemented.
-def extract_price_column_name_from_pkl_config(system_log_dir: str) -> str:
-    """
-    Get price column from pickled system config.
-
-    :param system_log_dir: dir containing
-        `system_config.output.values_as_strings.pkl` file
-         e.g., ".../system_log_dir.scheduled"
-    :return: price column, e.g., "close"
-    """
-    # Get string representation of portfolio config.
-    config_file_name = "system_config.output.values_as_strings.pkl"
-    system_config_path = os.path.join(system_log_dir, config_file_name)
-    system_config_pkl = cconfig.load_config_from_pickle(system_config_path)
-    # Transform tuple into a string for regex.
-    portfolio_config_str = str(system_config_pkl["portfolio_config"])
-    _LOG.debug(hprint.to_str("portfolio_config_str"))
-    # Get price column name.
-    # TODO(Dan): Fix after CmTask6627 is implemented.
-    # Config from a pickle file has only string values that require
-    # string processing to extract actual config values from it.
-    #
-    # `mark_to_market_col` inside `portfolio_config` appears in the pickled
-    # Config as: "('False', 'None', 'mark_to_market_col: close\\npricing_method:".
-    #
-    re_pattern = r"mark_to_market_col:\s?([^\s\\']+)"
-    match = re.search(re_pattern, portfolio_config_str)
-    msg = f"Cannot parse `mark_to_market_col` from the Config stored at={system_config_path}"
-    hdbg.dassert_ne(match, None, msg=msg)
-    # There should be exactly one match.
-    hdbg.dassert_eq(1, len(match.groups()))
-    price_column_name = match.group(1)
-    return price_column_name
-
-
-def extract_universe_version_from_pkl_config(system_log_dir: str) -> str:
-    """
-    Get universe version from pickled system config.
-
-    :param system_log_dir: dir containing
-        `system_config.output.values_as_strings.pkl` file
-         e.g., ".../system_log_dir.scheduled"
-    :return: universe version, e.g., "v7.1"
-    """
-    # Get string representation of market data config.
-    config_file_name = "system_config.output.values_as_strings.pkl"
-    system_config_path = os.path.join(system_log_dir, config_file_name)
-    system_config_pkl = cconfig.load_config_from_pickle(system_config_path)
-    # Transform tuple into a string for regex.
-    market_data_config_str = str(system_config_pkl["market_data_config"])
-    _LOG.debug(hprint.to_str("market_data_config_str"))
-    # Get universe version.
-    # TODO(Dan): Fix after CmTask6627 is implemented.
-    # Config from a pickle file has only string values that require
-    # string processing to extract actual config values from it.
-    #
-    # `universe_version` inside `market_data_config` appears in the pickled
-    # Config as: ('False', 'None', 'sleep_in_secs: 0.1\ndays: None\n
-    # universe_version:v7.4\nasset_ids: [6051632686, 8717633868,]\n
-    # history_lookback: 0 days 00:15:00').
-    #
-    re_pattern = r"universe_version:\s?([^\s\\']+)"
-    match = re.search(re_pattern, market_data_config_str)
-    msg = f"Cannot parse `universe_version` from the Config stored at={system_config_path}"
-    hdbg.dassert_ne(match, None, msg=msg)
-    # There should be exactly one match.
-    hdbg.dassert_eq(1, len(match.groups()))
-    universe_version = match.group(1)
-    return universe_version
-
-
-def extract_execution_freq_from_pkl_config(system_log_dir: str) -> str:
-    """
-    Get child order execution frequency from pickled system config.
-
-    :param system_log_dir: dir containing
-        `system_config.output.values_as_strings.pkl` file
-         e.g., ".../system_log_dir.scheduled"
-    :return: child order execution frequency, e.g., "1T"
-    """
-    # Get string representation of market data config.
-    config_file_name = "system_config.output.values_as_strings.pkl"
-    system_config_path = os.path.join(system_log_dir, config_file_name)
-    system_config_pkl = cconfig.load_config_from_pickle(system_config_path)
-    # Transform tuple into a string for regex.
-    process_forecasts_node_dict = str(
-        system_config_pkl["process_forecasts_node_dict"]
-    )
-    _LOG.debug(hprint.to_str("process_forecasts_node_dict"))
-    re_pattern = r"execution_frequency:\s?([^\s\\']+)"
-    match = re.search(re_pattern, process_forecasts_node_dict)
-    msg = f"Cannot parse `execution_frequency` from the Config stored at={system_config_path}"
-    hdbg.dassert_ne(match, None, msg=msg)
-    # There should be exactly one match.
-    hdbg.dassert_eq(1, len(match.groups()))
-    execution_frequency = match.group(1)
-    return execution_frequency
+        # Bar duration is stored as int for Config v3 version and higher.
+        hdbg.dassert_type_is(val, int)
+    return val
 
 
 def get_universe_version_from_config_overrides(
@@ -638,6 +570,8 @@ def reconcile_create_dirs(
     dst_root_dir: str,
     abort_if_exists: bool,
     backup_dir_if_exists: bool,
+    *,
+    tag: str = "",
 ) -> None:
     """
     Create dirs for storing reconciliation data.
@@ -669,6 +603,7 @@ def reconcile_create_dirs(
         run_mode,
         start_timestamp_as_str,
         end_timestamp_as_str,
+        tag=tag,
     )
     # Create a dir for reconcilation results.
     hio.create_dir(
@@ -794,6 +729,7 @@ def get_simulation_dir(dst_root_dir: str) -> str:
 def _get_timestamp_dirs(
     dst_root_dir: str,
     dag_builder_name: str,
+    tag: str,
     run_mode: str,
 ) -> List[str]:
     """
@@ -811,7 +747,8 @@ def _get_timestamp_dirs(
         ]
         ```
     """
-    target_dir = os.path.join(dst_root_dir, dag_builder_name, run_mode)
+    dag_builder_dir = f"{dag_builder_name}.{tag}" if tag != "" else dag_builder_name
+    target_dir = os.path.join(dst_root_dir, dag_builder_dir, run_mode)
     # `listdir()` utilizes `glob` which has limited functionality compared
     # to regex so other variations of the pattern might not work.
     date_pattern = "[0-9]" * 8
@@ -845,6 +782,7 @@ def _get_timestamp_dirs(
 def get_system_run_timestamps(
     dst_root_dir: str,
     dag_builder_name: str,
+    tag: str,
     run_mode: str,
     start_timestamp: Optional[pd.Timestamp],
     end_timestamp: Optional[pd.Timestamp],
@@ -871,7 +809,9 @@ def get_system_run_timestamps(
     if end_timestamp is not None:
         hdateti.dassert_has_specified_tz(end_timestamp, tz)
     # Find all availiable timestamp dirs.
-    timestamp_dirs = _get_timestamp_dirs(dst_root_dir, dag_builder_name, run_mode)
+    timestamp_dirs = _get_timestamp_dirs(
+        dst_root_dir, dag_builder_name, tag, run_mode
+    )
     # Get start and end timestamps from a timestamp dir name. E.g.,
     # `[("20230723_131000", "20230724_130500"), ...]`.
     system_run_timestamps = [tuple(ts.split(".")) for ts in timestamp_dirs]
@@ -912,6 +852,7 @@ def get_system_run_timestamps(
 def get_system_run_parameters(
     dst_root_dir: str,
     dag_builder_name: str,
+    tag: str,
     run_mode: str,
     start_timestamp: Optional[pd.Timestamp],
     end_timestamp: Optional[pd.Timestamp],
@@ -926,6 +867,7 @@ def get_system_run_parameters(
     :param prod_data_root_dir: dir to store the production results in,
         e.g., "/shared_data/ecs/preprod/system_reconciliation/"
     :param dag_builder_name: name of the DAG builder, e.g. "C1b"
+    :param tag: config tag, e.g., "config1"
     :param run_mode: prod system run mode, e.g. "prod" or
         "paper_trading"
     :param start_timestamp: a timestamp to filter out system run params
@@ -936,7 +878,12 @@ def get_system_run_parameters(
         run, e.g., "20220212_101500", "20220213_100500", "scheduled"
     """
     timestamps = get_system_run_timestamps(
-        dst_root_dir, dag_builder_name, run_mode, start_timestamp, end_timestamp
+        dst_root_dir,
+        dag_builder_name,
+        tag,
+        run_mode,
+        start_timestamp,
+        end_timestamp,
     )
     system_run_params = []
     for start_timestamp_as_str, end_timestamp_as_str in timestamps:
@@ -947,6 +894,7 @@ def get_system_run_parameters(
             run_mode,
             start_timestamp_as_str,
             end_timestamp_as_str,
+            tag=tag,
         )
         # TODO(Grisha): consider moving `mode` to timestamp dir, e.g.,
         # `20220212_101500.20220213_100500` -> `20220212_101500.20220213_100500.scheduled`.
@@ -984,6 +932,7 @@ def get_target_dir(
     start_timestamp_as_str: str,
     end_timestamp_as_str: str,
     *,
+    tag: str = "",
     aws_profile: Optional[str] = None,
 ) -> str:
     """
@@ -998,6 +947,7 @@ def get_target_dir(
     :param dst_root_dir: root dir of reconciliation result dirs, e.g.,
         "/shared_data/prod_reconciliation"
     :param dag_builder_name: name of the DAG builder, e.g. "C1b"
+    :param tag: config tag, e.g., "config1"
     :param run_mode: prod run mode, e.g. "prod" or "paper_trading"
     :param start_timestamp_as_str: string representation of timestamp
         at which to start reconcile run, e.g. "20221010_060500"
@@ -1016,8 +966,9 @@ def get_target_dir(
     hdbg.dassert_in(run_mode, ["prod", "paper_trading"])
     #
     timestamp_dir = f"{start_timestamp_as_str}.{end_timestamp_as_str}"
+    dag_builder_dir = f"{dag_builder_name}.{tag}" if tag else dag_builder_name
     target_dir = os.path.join(
-        dst_root_dir, dag_builder_name, run_mode, timestamp_dir
+        dst_root_dir, dag_builder_dir, run_mode, timestamp_dir
     )
     _LOG.info(hprint.to_str("target_dir"))
     return target_dir
@@ -1276,6 +1227,41 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
 
 
 # #############################################################################
+# Forecast Evaluator
+# #############################################################################
+
+
+# TODO(Grisha): unclear where it should be, `ForecastEvaluatorFromPrices` is in
+# `amp/dataflow` and `ForecastEvaluatorWithOptimizer` is in `amp/optimizer`.
+def get_forecast_evaluator_instance1(
+    forecast_evaluator_type: str,
+    forecast_evaluator_kwargs: Dict[str, Any],
+) -> Union[
+    ofevwiop.ForecastEvaluatorWithOptimizer, dtfmod.ForecastEvaluatorFromPrices
+]:
+    """
+    Instantiate forecast evaluator object from a optimizer backend.
+
+    :param forecast_evaluator_type: type of forecast evaluator
+    :param forecast_evaluator_kwargs: required arguments to pass to the
+        forecast evaluator
+    """
+    if forecast_evaluator_type == "ForecastEvaluatorFromPrices":
+        forecast_evaluator = dtfmod.ForecastEvaluatorFromPrices(
+            **forecast_evaluator_kwargs
+        )
+    elif forecast_evaluator_type == "ForecastEvaluatorWithOptimizer":
+        forecast_evaluator = ofevwiop.ForecastEvaluatorWithOptimizer(
+            **forecast_evaluator_kwargs
+        )
+    else:
+        raise ValueError(
+            "forecast_evaluator_type='%s' not supported" % forecast_evaluator_type
+        )
+    return forecast_evaluator
+
+
+# #############################################################################
 # Portfolio loader
 # #############################################################################
 
@@ -1464,7 +1450,7 @@ def load_target_positions(
     hdbg.dassert_dir_exists(target_position_dir)
     # Load the target position dataframe.
     target_position_df = (
-        ooptpaog.TargetPositionAndOrderGenerator.load_target_positions(
+        ooptpaoge.TargetPositionAndOrderGenerator.load_target_positions(
             target_position_dir
         )
     )
@@ -1628,3 +1614,169 @@ def load_and_process_artifacts(
         portfolio_stats_dfs,
         target_position_dfs,
     )
+
+
+# TODO(Grisha): consider removing completely, see CmTask7794.
+# #############################################################################
+# Extract system config param values from v1 config version
+# #############################################################################
+
+
+def extract_bar_duration_from_pkl_config(system_log_dir: str) -> str:
+    """
+    Get bar duration from pickled system config.
+
+    :param system_log_dir: dir containing
+        `system_config.output.values_as_strings.pkl` file
+    :return: bar duration as a string representation, e.g., "30T"
+    """
+    # Extract bar duration from a pickled config as different models
+    # could be run with different bar duration, e.g., `C11a`.
+    config_file_name = "system_config.output.values_as_strings.pkl"
+    system_config_path = os.path.join(system_log_dir, config_file_name)
+    system_config_pkl = cconfig.load_config_from_pickle(system_config_path)
+    # Get string representation of `DagRunner` config.
+    # Bar duration should not depend on the resampling rule
+    # from `dag_config` so we take its value from `DagRunner` config.
+    dag_runner_config_str = str(system_config_pkl["dag_runner_config"])
+    # Infer `bar_duration_in_secs`.
+    # TODO(Nina): Get value from config directly instead of parsing string,
+    # see CmTask6627.
+    # Config from a pickle file has only string values that require
+    # string processing to extract actual config values from it.
+    match = re.search(r"bar_duration_in_secs:\s*(\d+)", dag_runner_config_str)
+    if match is not None:
+        bar_duration_in_secs = int(match.group(1))
+        # Convert bar duration into minutes.
+        bar_duration_in_mins = int(bar_duration_in_secs / 60)
+        bar_duration_in_mins_as_str = f"{bar_duration_in_mins}T"
+    else:
+        raise ValueError("Cannot parse `bar_duration_in_secs` from the config")
+    return bar_duration_in_mins_as_str
+
+
+# TODO(Nina): consider removing once CmTask6627 is implemented.
+def extract_price_column_name_from_pkl_config(system_log_dir: str) -> str:
+    """
+    Get price column from pickled system config.
+
+    :param system_log_dir: dir containing
+        `system_config.output.values_as_strings.pkl` file
+         e.g., ".../system_log_dir.scheduled"
+    :return: price column, e.g., "close"
+    """
+    # Get string representation of portfolio config.
+    config_file_name = "system_config.output.values_as_strings.pkl"
+    system_config_path = os.path.join(system_log_dir, config_file_name)
+    system_config_pkl = cconfig.load_config_from_pickle(system_config_path)
+    # Transform tuple into a string for regex.
+    portfolio_config_str = str(system_config_pkl["portfolio_config"])
+    _LOG.debug(hprint.to_str("portfolio_config_str"))
+    # Get price column name.
+    # TODO(Dan): Fix after CmTask6627 is implemented.
+    # Config from a pickle file has only string values that require
+    # string processing to extract actual config values from it.
+    #
+    # `mark_to_market_col` inside `portfolio_config` appears in the pickled
+    # Config as: "('False', 'None', 'mark_to_market_col: close\\npricing_method:".
+    #
+    re_pattern = r"mark_to_market_col:\s?([^\s\\']+)"
+    match = re.search(re_pattern, portfolio_config_str)
+    msg = f"Cannot parse `mark_to_market_col` from the Config stored at={system_config_path}"
+    hdbg.dassert_ne(match, None, msg=msg)
+    # There should be exactly one match.
+    hdbg.dassert_eq(1, len(match.groups()))
+    price_column_name = match.group(1)
+    return price_column_name
+
+
+def extract_universe_version_from_pkl_config(system_log_dir: str) -> str:
+    """
+    Get universe version from pickled system config.
+
+    :param system_log_dir: dir containing
+        `system_config.output.values_as_strings.pkl` file
+         e.g., ".../system_log_dir.scheduled"
+    :return: universe version, e.g., "v7.1"
+    """
+    # Get string representation of market data config.
+    config_file_name = "system_config.output.values_as_strings.pkl"
+    system_config_path = os.path.join(system_log_dir, config_file_name)
+    system_config_pkl = cconfig.load_config_from_pickle(system_config_path)
+    # Transform tuple into a string for regex.
+    market_data_config_str = str(system_config_pkl["market_data_config"])
+    _LOG.debug(hprint.to_str("market_data_config_str"))
+    # Get universe version.
+    # TODO(Dan): Fix after CmTask6627 is implemented.
+    # Config from a pickle file has only string values that require
+    # string processing to extract actual config values from it.
+    #
+    # `universe_version` inside `market_data_config` appears in the pickled
+    # Config as: ('False', 'None', 'sleep_in_secs: 0.1\ndays: None\n
+    # universe_version:v7.4\nasset_ids: [6051632686, 8717633868,]\n
+    # history_lookback: 0 days 00:15:00').
+    #
+    re_pattern = r"universe_version:\s?([^\s\\']+)"
+    match = re.search(re_pattern, market_data_config_str)
+    msg = f"Cannot parse `universe_version` from the Config stored at={system_config_path}"
+    hdbg.dassert_ne(match, None, msg=msg)
+    # There should be exactly one match.
+    hdbg.dassert_eq(1, len(match.groups()))
+    universe_version = match.group(1)
+    return universe_version
+
+
+# TODO(Nina): consider removing once CmTask6627 is implemented.
+def extract_table_name_from_pkl_config(system_log_dir: str) -> str:
+    """
+    Get table name from pickled system config.
+
+    :param system_log_dir: dir containing
+        `system_config.output.values_as_strings.pkl` file
+        e.g., ".../system_log_dir.scheduled"
+    :return: table name, e.g., "ccxt_ohlcv_futures"
+    """
+    # Get string representation of market data config.
+    config_file_name = "system_config.output.values_as_strings.pkl"
+    system_config_path = os.path.join(system_log_dir, config_file_name)
+    system_config_pkl = cconfig.load_config_from_pickle(system_config_path)
+    # Transform tuple into a string for regex.
+    market_data_config_str = str(system_config_pkl["market_data_config"])
+    _LOG.debug(hprint.to_str("market_data_config_str"))
+    # Get table name.
+    re_pattern = r"table_name:\s?([^\s\\']+)"
+    match = re.search(re_pattern, market_data_config_str)
+    msg = f"Cannot parse `table_name` from the Config stored at={system_config_path}"
+    hdbg.dassert_ne(match, None, msg=msg)
+    # There should be exactly one match.
+    hdbg.dassert_eq(1, len(match.groups()))
+    table_name = match.group(1)
+    return table_name
+
+
+def extract_execution_freq_from_pkl_config(system_log_dir: str) -> str:
+    """
+    Get child order execution frequency from pickled system config.
+
+    :param system_log_dir: dir containing
+        `system_config.output.values_as_strings.pkl` file
+         e.g., ".../system_log_dir.scheduled"
+    :return: child order execution frequency, e.g., "1T"
+    """
+    # Get string representation of market data config.
+    config_file_name = "system_config.output.values_as_strings.pkl"
+    system_config_path = os.path.join(system_log_dir, config_file_name)
+    system_config_pkl = cconfig.load_config_from_pickle(system_config_path)
+    # Transform tuple into a string for regex.
+    process_forecasts_node_dict = str(
+        system_config_pkl["process_forecasts_node_dict"]
+    )
+    _LOG.debug(hprint.to_str("process_forecasts_node_dict"))
+    re_pattern = r"execution_frequency:\s?([^\s\\']+)"
+    match = re.search(re_pattern, process_forecasts_node_dict)
+    msg = f"Cannot parse `execution_frequency` from the Config stored at={system_config_path}"
+    hdbg.dassert_ne(match, None, msg=msg)
+    # There should be exactly one match.
+    hdbg.dassert_eq(1, len(match.groups()))
+    execution_frequency = match.group(1)
+    return execution_frequency

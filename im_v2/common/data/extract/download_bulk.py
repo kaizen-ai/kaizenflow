@@ -58,6 +58,24 @@ def _parse() -> argparse.ArgumentParser:
         help="Raise an Exception if no data is downloaded for "
         "one or more symbols in the universe",
     )
+    parser.add_argument(
+        "--version",
+        required=False,
+        default="v1_0_0",
+        type=str,
+        help="Dataset version"
+    )
+    parser.add_argument(
+        "--download_period",
+        required=False,
+        default="daily",
+        type=str,
+        choices=["daily", "monthly"],
+        help="Specify the frequency of bulk data downloads."
+            "Choose 'daily' to download data for each day individually,"
+            "or 'monthly' to download data for entire months at once."
+            "This option is only supported by the Binance vendor."
+    )
     return parser  # type: ignore[no-any-return]
 
 
@@ -79,13 +97,18 @@ def _run(args: argparse.Namespace) -> None:
         )
     elif vendor == "binance":
         # For the bulk download, we allow data gaps.
+        if args["download_period"] == "daily":
+            time_period = imvbdexex.BinanceNativeTimePeriod.DAILY
+        elif args["download_period"] == "monthly":
+            time_period = imvbdexex.BinanceNativeTimePeriod.MONTHLY
+        else:
+            raise NotImplementedError
         try:
             exchange = imvbdexex.BinanceExtractor(
                 args["contract_type"],
                 allow_data_gaps=True,
                 data_type=args["data_type"],
-                # TODO(Vlad): Temporary stick to daily data for Binance.
-                time_period=imvbdexex.BinanceNativeTimePeriod.DAILY,
+                time_period=time_period,
             )
         except Exception as e:
             raise e

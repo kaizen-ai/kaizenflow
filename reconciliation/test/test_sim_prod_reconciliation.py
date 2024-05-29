@@ -53,12 +53,14 @@ class Test_get_system_run_parameters(hunitest.TestCase):
             mode,
         ) in system_run_params:
             # Create target dir.
+            tag = ""
             target_dir = rsiprrec.get_target_dir(
                 self._prod_data_root_dir,
                 self._dag_builder_name,
                 self._run_mode,
                 start_timestamp_as_str,
                 end_timestamp_as_str,
+                tag=tag,
             )
             hio.create_dir(target_dir, incremental=True)
             # Create system log dir.
@@ -88,9 +90,11 @@ class Test_get_system_run_parameters(hunitest.TestCase):
         Compare the output with the expected result.
         """
         # Get system run parameters.
+        tag = ""
         output = func(
             self._prod_data_root_dir,
             self._dag_builder_name,
+            tag,
             self._run_mode,
             start_timestamp,
             end_timestamp,
@@ -272,7 +276,7 @@ class Test_build_reconciliation_configs(hunitest.TestCase):
                 "wake_up_timestamp": "2023-11-13 08:09:00-05:00",
                 "rt_timeout_in_secs_or_time": 86400,
                 "bar_duration_in_secs": 300,
-            }
+            },
         }
         config = cconfig.Config.from_dict(config_dict)
         tag = "system_config.output"
@@ -292,6 +296,7 @@ class Test_build_reconciliation_configs(hunitest.TestCase):
         end_timestamp_as_str = "20230802_160000"
         run_mode = "prod"
         mode = "scheduled"
+        tag = ""
         # Create required dirs and config files in scratch space.
         self.set_up_test(
             dst_root_dir,
@@ -308,6 +313,7 @@ class Test_build_reconciliation_configs(hunitest.TestCase):
             end_timestamp_as_str,
             run_mode,
             mode,
+            tag=tag,
         )
         actual = str(config)
         self.check_string(actual, purify_text=True)
@@ -327,6 +333,7 @@ class Test_build_reconciliation_configs(hunitest.TestCase):
         end_timestamp_as_str = "20230802_160000"
         run_mode = "prod"
         mode = "scheduled"
+        tag = ""
         set_config_values = '("process_forecasts_node_dict","process_forecasts_dict","optimizer_config","params","style"),(str("longitudinal"));("process_forecasts_node_dict","process_forecasts_dict","optimizer_config","params","kwargs"),({"target_dollar_risk_per_name": float(1.0), "prediction_abs_threshold": float(0.3)})'
         # Create required dirs and config files in scratch space.
         self.set_up_test(
@@ -344,7 +351,88 @@ class Test_build_reconciliation_configs(hunitest.TestCase):
             end_timestamp_as_str,
             run_mode,
             mode,
-            set_config_values,
+            tag=tag,
+            set_config_values=set_config_values,
+        )
+        actual = str(config)
+        self.check_string(actual, purify_text=True)
+
+    def test3(self) -> None:
+        """
+        Check that reconciliation config is being built correctly with backend
+        as `batch_optimizer`.
+
+        `set_config_values` is passed to override default values.
+        """
+        dst_root_dir = self.get_scratch_space()
+        dag_builder_ctor_as_str = (
+            "dataflow_amp.pipelines.mock1.mock1_pipeline.Mock1_DagBuilder"
+        )
+        start_timestamp_as_str = "20230802_154500"
+        end_timestamp_as_str = "20230802_160000"
+        run_mode = "prod"
+        mode = "scheduled"
+        tag = ""
+        set_config_values = """("process_forecasts_node_dict","process_forecasts_dict","optimizer_config","backend"),(str("batch_optimizer"));("process_forecasts_node_dict","process_forecasts_dict","optimizer_config","params"),({"dollar_neutrality_penalty": float(0.0), "constant_correlation": float(0.85), "constant_correlation_penalty": float(1.0), "relative_holding_penalty": float(0.0), "relative_holding_max_frac_of_gmv": float(0.6), "target_gmv": float(1500.0), "target_gmv_upper_bound_penalty": float(0.0), "target_gmv_hard_upper_bound_multiple": float(1.0), "transaction_cost_penalty": float(0.1), "solver": str("ECOS")})"""
+        # Create required dirs and config files in scratch space.
+        self.set_up_test(
+            dst_root_dir,
+            start_timestamp_as_str,
+            end_timestamp_as_str,
+            run_mode,
+            mode,
+        )
+        # Run.
+        config = rsiprrec.build_reconciliation_configs(
+            dst_root_dir,
+            dag_builder_ctor_as_str,
+            start_timestamp_as_str,
+            end_timestamp_as_str,
+            run_mode,
+            mode,
+            tag=tag,
+            set_config_values=set_config_values,
+        )
+        actual = str(config)
+        self.check_string(actual, purify_text=True)
+
+    def test4(self) -> None:
+        """
+        Check that reconciliation config is being built correctly when no
+        optimizer overrides are present.
+
+        `set_config_values` is passed to override default values.
+        """
+        # Define params.
+        dst_root_dir = self.get_scratch_space()
+        dag_builder_ctor_as_str = (
+            "dataflow_amp.pipelines.mock1.mock1_pipeline.Mock1_DagBuilder"
+        )
+        start_timestamp_as_str = "20230802_154500"
+        end_timestamp_as_str = "20230802_160000"
+        run_mode = "prod"
+        mode = "scheduled"
+        tag = ""
+        # Config overrides don't have any optimizer overrides.
+        set_config_values = '("market_data_config","days"),(pd.Timedelta(str("150T")));("trading_period"),(str("3T"))'
+        # Create required dirs and config files in scratch space.
+        self.set_up_test(
+            dst_root_dir,
+            start_timestamp_as_str,
+            end_timestamp_as_str,
+            run_mode,
+            mode,
+        )
+        # Run.
+        config = rsiprrec.build_reconciliation_configs(
+            dst_root_dir,
+            dag_builder_ctor_as_str,
+            start_timestamp_as_str,
+            end_timestamp_as_str,
+            run_mode,
+            mode,
+            tag=tag,
+            set_config_values=set_config_values,
         )
         actual = str(config)
         self.check_string(actual, purify_text=True)
@@ -558,6 +646,75 @@ class Test_extract_universe_version_from_pkl_config(hunitest.TestCase):
         # Check output.
         actual = str(cm.exception)
         self.check_string(actual, purify_text=True)
+
+
+# #############################################################################
+# Check `extract_table_name_from_pkl_config()`.
+# #############################################################################
+
+
+class Test_extract_table_name_from_pkl_config(hunitest.TestCase):
+    """
+    Check that `extract_table_name_from_pkl_config()` works correctly.
+    """
+
+    def save_config_to_file(self, config_dict: Dict[str, Any]) -> None:
+        """
+        Save text and pickled config file for the test.
+        """
+        # Dir to store config files.
+        dst_dir = self.get_scratch_space()
+        # Build Config.
+        config = cconfig.Config.from_dict(config_dict)
+        tag = "system_config.output"
+        # Save config to `txt` and `pkl` file.
+        config.save_to_file(dst_dir, tag)
+
+    def test1(self) -> None:
+        """
+        Test the function when the `table_name` is present in
+        `market_data_config` config.
+        """
+        config_dict = {
+            "market_data_config": {
+                "universe_version": "v7.4",
+                "asset_ids": [3303714233, 1467591036],
+                "asset_id_col_name": "asset_id",
+                "im_client_config": {
+                    "table_name": "ccxt_ohlcv_futures",
+                },
+            }
+        }
+        self.save_config_to_file(config_dict)
+        dst_dir = self.get_scratch_space()
+        actual = rsiprrec.extract_table_name_from_pkl_config(dst_dir)
+        expected = "ccxt_ohlcv_futures"
+        self.assert_equal(actual, expected)
+
+    def test2(self) -> None:
+        """
+        Test that the function raises exception when the `table_name` is not
+        present in `market_data_config` config.
+        """
+        config_dict = {
+            "market_data_config": {
+                "universe_version": "v7.4",
+                "asset_ids": [3303714233, 1467591036],
+                "asset_id_col_name": "asset_id",
+            }
+        }
+        self.save_config_to_file(config_dict)
+        dst_dir = self.get_scratch_space()
+        with self.assertRaises(AssertionError) as cm:
+            rsiprrec.extract_table_name_from_pkl_config(dst_dir)
+        # Check output.
+        actual = str(cm.exception)
+        self.check_string(actual, purify_text=True)
+
+
+# #############################################################################
+# Check `extract_execution_freq_from_pkl_config()`.
+# #############################################################################
 
 
 class Test_extract_execution_freq_from_pkl_config(hunitest.TestCase):
@@ -977,6 +1134,7 @@ class Test_reconcile_create_dirs(hunitest.TestCase):
         run_mode = "paper_trading"
         start_timestamp_as_str = "20230828_130500"
         end_timestamp_as_str = "20230829_131000"
+        tag = ""
         abort_if_exists = False
         # Create the existing dir for the test.
         if create_dir:
@@ -986,6 +1144,7 @@ class Test_reconcile_create_dirs(hunitest.TestCase):
                 run_mode,
                 start_timestamp_as_str,
                 end_timestamp_as_str,
+                tag=tag,
             )
             existing_dir = os.path.join(existing_dir, "mock_dir")
             hio.create_dir(existing_dir, incremental=False)
@@ -998,6 +1157,7 @@ class Test_reconcile_create_dirs(hunitest.TestCase):
             dst_root_dir,
             abort_if_exists,
             backup_dir_if_exists,
+            tag=tag,
         )
         # Check.
         actual_dirs = sorted(

@@ -180,7 +180,8 @@ def _transform_bid_ask_websocket_dataframe(
     database insertion.
 
     :param df: DataFrame formed from raw bid/ask dict data.
-    :param max_num_levels: filter bid ask data on level <= max_num_levels
+    :param max_num_levels: filter bid ask data on level <=
+        max_num_levels
     :return: transformed DataFrame
     """
     df = df.explode(["asks", "bids"])
@@ -253,9 +254,11 @@ def _transform_ohlcv_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     # Remove bars which are certainly unfinished
     #  bars with end_download_timestamp which is not atleast
     #  a minute (60000 ms) after the timestamp are certainly unfinished.
-    #  TODO(Juraj): this holds only for binance data.
+    # Note: this holds only when exchange is using the opening, see
+    # docs/datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md
+    # Note: format="ISO8601" is needed because of CmTask7859.
     df = df[
-        pd.to_datetime(df["end_download_timestamp"]).map(
+        pd.to_datetime(df["end_download_timestamp"], format="ISO8601").map(
             hdateti.convert_timestamp_to_unix_epoch
         )
         >= df["timestamp"] + 60000
@@ -300,8 +303,11 @@ def transform_trades_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def transform_raw_websocket_data(
-    raw_data: List[Dict], data_type: str, exchange_id: str,
-    *, max_num_levels: int = 10,
+    raw_data: List[Dict],
+    data_type: str,
+    exchange_id: str,
+    *,
+    max_num_levels: int = 10,
 ) -> pd.DataFrame:
     """
     Transform list of raw websocket data into a DataFrame with columns
@@ -310,16 +316,19 @@ def transform_raw_websocket_data(
     :param data: data to be transformed
     :param data_type: type of data, e.g. OHLCV
     :param exchange_id: ID of the exchange where the data come from
-    :param max_num_levels: Bid ask downloads minimum of 10 levels of data but with
-        increasing universe it is impractical to dump all the levels. This flag when
-        set will filter bid ask data till level <= max_num_levels
+    :param max_num_levels: Bid ask downloads minimum of 10 levels of
+        data but with increasing universe it is impractical to dump all
+        the levels. This flag when set will filter bid ask data till
+        level <= max_num_levels
     :return: database compliant DataFrame formed from raw data
     """
     df = pd.DataFrame(raw_data)
-    if data_type == "ohlcv":
+    if data_type == "ohlcv" or data_type == "ohlcv_from_trades":
         df = _transform_ohlcv_websocket_dataframe(df)
     elif data_type == "bid_ask":
-        df = _transform_bid_ask_websocket_dataframe(df, exchange_id, max_num_levels)
+        df = _transform_bid_ask_websocket_dataframe(
+            df, exchange_id, max_num_levels
+        )
     elif data_type == "trades":
         df = transform_trades_websocket_dataframe(df)
     else:

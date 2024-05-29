@@ -61,6 +61,12 @@ WEBSOCKET_CONFIG = {
         "sleep_between_iter_in_ms": 200,
         "resubscription_threshold_in_iter": 3,
     },
+    # This data_type is used when to build OHLCV data from trades.
+    "ohlcv_from_trades": {
+        "max_buffer_size": 0,
+        "sleep_between_iter_in_ms": 200,
+        "resubscription_threshold_in_iter": 3,
+    },
 }
 
 
@@ -304,7 +310,7 @@ DATASET_SCHEMA = {
         "end_download_timestamp": "datetime64[ns, UTC]",
         "exchange_id": "object",
         "is_buyer_maker": "int32",
-        "side": "object",
+        "is_buyer_maker": "bool",
         "knowledge_timestamp": "datetime64[ns, UTC]",
         "month": "int32",
         "price": "float64",
@@ -313,6 +319,8 @@ DATASET_SCHEMA = {
         "timestamp": "int64",
         "year": "int32",
         "day": "int32",
+        "id": "int64",
+        "quote_qty": "float64",
     },
 }
 
@@ -405,11 +413,45 @@ def _download_exchange_data_to_db_with_timeout(
     download_exchange_data_to_db(args, exchange_class)
 
 
+def _should_add_timestamp(
+    timestamp: int, currency_pair: str, timestamps_dict: Dict[str, Any]
+) -> bool:
+    """
+    Determine if a timestamp should be added to the timestamps dictionary.
+
+    :param timestamp: Timestamp of the OHLCV data point
+    :param currency_pair: Currency pair of the data_point
+    :param timestamps_dict: Dictionary to store the latest_downloaded
+        timestamp for the currency_pair.
+    :return: True if timestamp is new or missed before, False otherwise.
+    """
+    # Backfill timestamps which got missed due to delay from Binance.
+    is_missed_timestamp = (
+        timestamp
+        not in timestamps_dict[currency_pair]["all_downloaded_timestamp"]
+        and timestamp
+        < timestamps_dict[currency_pair]["latest_downloaded_timestamp"]
+    )
+    if is_missed_timestamp:
+        _LOG.info(
+            "Backfilling Missing timestamp=%s for currency_pair=%s",
+            timestamp,
+            currency_pair,
+        )
+    # The timestamp is added if it is missed or it is the latest timestamp.
+    return (
+        is_missed_timestamp
+        or timestamps_dict[currency_pair]["latest_downloaded_timestamp"]
+        < timestamp
+    )
+
+
 def _is_fresh_data_point(
     currency_pair: str,
     data_point: Dict[Any, Any],
     data_type: str,
-    timestamps_dict: Dict[str, str],
+    timestamps_dict: Dict[str, Any],
+    start_time_unix_epoch: int,
 ) -> Union[bool, Dict]:
     """
     Check if a data point is valid based on its current timestamp and the
@@ -468,16 +510,73 @@ def _is_fresh_data_point(
         end_download_timestamp_unix = hdateti.convert_timestamp_to_unix_epoch(
             end_download_timestamp
         )
-        for ohlcv_data in data_point["ohlcv"]:
+        # Set the limit for the number of data points to ingest.
+        ingestion_limit = 10
+        # Initialize `timestamps_dict`.
+        if currency_pair not in timestamps_dict:
+            timestamps_dict[currency_pair] = {}
+            timestamps_dict[currency_pair]["latest_downloaded_timestamp"] = -1
+            timestamps_dict[currency_pair]["all_downloaded_timestamp"] = []
+        for ohlcv_data in data_point["ohlcv"][-ingestion_limit:]:
             timestamp = ohlcv_data[0]
             # Check download timestamp greater than 1 minute (60000ms) than the timestamp.
             if timestamp + 60000 <= end_download_timestamp_unix:
-                if (
-                    currency_pair not in timestamps_dict
-                    or timestamps_dict[currency_pair] < timestamp
+                if _should_add_timestamp(
+                    timestamp, currency_pair, timestamps_dict
                 ):
                     new_data_point["ohlcv"].append(ohlcv_data)
-                    timestamps_dict[currency_pair] = timestamp
+                    timestamps_dict[currency_pair][
+                        "latest_downloaded_timestamp"
+                    ] = timestamp
+                    timestamps_dict[currency_pair][
+                        "all_downloaded_timestamp"
+                    ].append(timestamp)
+                    if (
+                        len(
+                            timestamps_dict[currency_pair][
+                                "all_downloaded_timestamp"
+                            ]
+                        )
+                        > ingestion_limit
+                    ):
+                        # Remove older timestamps to preserve the length.
+                        timestamps_dict[currency_pair]["all_downloaded_timestamp"].pop(0)
+        if len(new_data_point["ohlcv"]) > 0:
+            return True, timestamps_dict, new_data_point
+    elif data_type == "ohlcv_from_trades":
+        # Example format of an ohlcv_trades data_point
+        # data_point = { "ohlcv" : [
+        #                           [1695120600000, 1645.08, 1645.23, 1643.83, 1643.97, 1584.69, 100],
+        #                           [1695120660000, 1648.08, 1643.23, 1643.84, 1643.67, 1584.49, 120]
+        #                          ],
+        #                 "trades_endtimestamp" : 1695120659800,
+        #                 "currency_pair" : "BTC_USD",
+        #               }
+        # Building OHLCV bars from trades data. Only keeping OHLCV bars not already stored in the database.
+        # This is checked via timestamps dict. Ensuring complete OHLCV bars by verifying if the latest trades timestamp
+        # is greater than 1 minute for that bar to be valid.
+        # new_data_point = { "ohlcv" : [
+        #                           [1695120600000, 1645.08, 1645.23, 1643.83, 1643.97, 1584.69],
+        #                          ],
+        #                 "trades_endtimestamp" : 1695120659800,
+        #                 "currency_pair" : "BTC_USD",
+        #               }
+        new_data_point = deepcopy(data_point)
+        new_data_point["ohlcv"] = []
+        for ohlcv_data in data_point["ohlcv"]:
+            timestamp = ohlcv_data[0]
+            is_valid = start_time_unix_epoch <= timestamp
+            if (
+                is_valid
+                and (
+                    currency_pair not in timestamps_dict
+                    or timestamps_dict[currency_pair] < timestamp
+                )
+                and data_point["trades_endtimestamp"] >= timestamp + 60000
+            ):
+                timestamps_dict[currency_pair] = timestamp
+                # Remove the number of trades in that bar info.
+                new_data_point["ohlcv"].append(ohlcv_data[:-1])
         if len(new_data_point["ohlcv"]) > 0:
             return True, timestamps_dict, new_data_point
     else:
@@ -601,6 +700,7 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
     next_bid_ask_resampling_threshold = pd.Timestamp.now(tz).replace(
         second=0, microsecond=0
     ) + pd.Timedelta(minutes=1)
+    start_time_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(start_time)
     while pd.Timestamp.now(tz) < stop_time:
         if data_type == "bid_ask" and args.get("vendor") == "ccxt":
             try:
@@ -623,9 +723,28 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
             data_point = exchange.download_websocket_data(
                 data_type, exchange_id, curr_pair
             )
+            if data_type == "ohlcv_from_trades" and args.get("vendor") == "ccxt":
+                since = (
+                    timestamps_dict[curr_pair]
+                    if curr_pair in timestamps_dict
+                    else 0
+                )
+                # Building ohlcv every iteration because there is a limit on trades which we can store
+                # as ccxt follows FIFO approach. This has been observed that building ohlcv every minute
+                # adds an extra layer of complexity and corner cases which is unnecessary considering the
+                # speed is already very fast. Still adding a todo for future improvements.
+                # TODO(Sonaal): Build ohlcv every minute instead of every iteration.
+                data_point["ohlcv"] = exchange.build_ohlcvc(
+                    curr_pair, data_point["trades"], timeframe="1m", since=since
+                )
+                del data_point["trades"]
             # Check if the data point is not a duplicate one.
             is_fresh, timestamps_dict, data_point = _is_fresh_data_point(
-                curr_pair, data_point, data_type, timestamps_dict
+                curr_pair,
+                data_point,
+                data_type,
+                timestamps_dict,
+                start_time_unix_epoch,
             )
             if is_fresh:
                 data_buffer.append(data_point)
@@ -655,25 +774,13 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
             )
             # Store the names of currency pairs that were successfully downloaded
             # to log missing symbols every iteration.
-            downloaded_currency_pairs = df['currency_pair'].unique().tolist()
-            hdbg.dassert_set_eq(currency_pairs, downloaded_currency_pairs, only_warning=True)
-            # TODO(Juraj): experimental feature, the problem is speed for now.
-            # data_buffer_to_resample.append(df)
+            downloaded_currency_pairs = df["currency_pair"].unique().tolist()
+            hdbg.dassert_set_eq(
+                currency_pairs, downloaded_currency_pairs, only_warning=True
+            )
             imvcddbut.save_data_to_db(
                 df, data_type, db_connection, db_table, str(tz)
             )
-            # TODO(Juraj): experimental feature, the problem is speed for now.
-            # if args.resample_bid_ask_data_to_1min and pd.Timestamp.now(tz) > next_bid_ask_resampling_threshold:
-            #    with htimer.TimedScope(logging.DEBUG, "# Resample 1-minute of raw data"):
-            #        df_resampled = imvcdttrut.transform_and_resample_rt_bid_ask_data(
-            #            pd.concat(data_buffer_to_resample)
-            #        )
-            # imvcddbut.save_data_to_db(
-            #    df_resampled, data_type, db_connection, db_resampled_table, str(tz), add_knowledge_timestamp=False
-            # )
-            # Reset resampling variables to start over.
-            # data_buffer_to_resample = []
-            # next_bid_ask_resampling_threshold += pd.Timedelta(minutes=1)
             # Empty buffer after persisting the data.
             data_buffer = []
         # Determine actual sleep time needed based on the difference
@@ -1079,8 +1186,6 @@ def download_historical_data(
     # TODO(Juraj): refactor cmd line arguments to accept `asset_type`
     #  instead of `contract_type` once a decision is made.
     args["asset_type"] = args["contract_type"]
-    # TODO(Juraj): Handle dataset version #CmTask3348.
-    args["version"] = "v1_0_0"
     if args.get("dst_dir"):
         path_to_dataset = args["dst_dir"]
     else:
@@ -1099,10 +1204,9 @@ def download_historical_data(
         exchange.vendor, mode, version=args["universe"]
     )
     currency_pairs = universe[args["exchange_id"]]
-    if args["vendor"] == "crypto_chassis":
-        # A hack introduced to overcme strict API call restrictions.
+    if args.get("universe_part"):
         currency_pairs = _split_universe(
-            currency_pairs, 10, args["universe_part"]
+            currency_pairs, args["universe_part"][0], args["universe_part"][1]
         )
     # Convert timestamps.
     start_timestamp = pd.Timestamp(args["start_timestamp"])

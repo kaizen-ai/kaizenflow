@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# TODO(Grisha): consider discontinuing the flow as we have more powerful tools,
+# e.g., grafana, see CmTask7916.
 """
 Dash app for displaying PnL.
 

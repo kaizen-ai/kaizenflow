@@ -15,6 +15,7 @@ import dataflow_amp.system.Cx.utils as dtfasycxut
 import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 import im_v2.common.universe as ivcu
@@ -39,6 +40,7 @@ class Test_Cx_ProdReconciliation_TestCase(hunitest.TestCase):
         start_timestamp_as_str: str,
         end_timestamp_as_str: str,
         *,
+        tag: str = "",
         set_config_values: Optional[str] = None,
     ) -> None:
         """
@@ -48,6 +50,7 @@ class Test_Cx_ProdReconciliation_TestCase(hunitest.TestCase):
             e.g., `dataflow_orange.pipelines.C1.C1b_pipeline.C1b_DagBuilder`
         :param start_timestamp_as_str: system start timestamp as str, e.g., "20220101_130500"
         :param end_timestamp_as_str: system end timestamp as str, e.g., "20220101_130500"
+        :param tag: config tag, e.g., "config1"
         :param set_config_values: string representations of config values used
             to override simulation params and update research portoflio config when
             running the system reconciliation notebook. Config values are separated
@@ -62,6 +65,12 @@ class Test_Cx_ProdReconciliation_TestCase(hunitest.TestCase):
         dst_root_dir = self.get_scratch_space()
         aws_profile = "ck"
         s3_prod_data_source_dir = self.get_s3_input_dir()
+        # Copy market data file to the target dir.
+        file_name = "test_data.csv.gz"
+        market_data_file_path = os.path.join(s3_prod_data_source_dir, file_name)
+        hs3.dassert_path_exists(market_data_file_path, aws_profile)
+        cmd = f"aws s3 cp {market_data_file_path} {dst_root_dir} --profile {aws_profile}"
+        hsystem.system(cmd, suppress_output=False)
         # TODO(Grisha): maybe enable running the notebook.
         # The overwriting is not prevented because scratch dir must be removed
         # after the run is finished.
@@ -72,9 +81,10 @@ class Test_Cx_ProdReconciliation_TestCase(hunitest.TestCase):
             f"--end-timestamp-as-str {end_timestamp_as_str}",
             f"--dst-root-dir {dst_root_dir}",
             f"--prod-data-source-dir {s3_prod_data_source_dir}",
-            f"--market-data-source-dir {s3_prod_data_source_dir}",
+            f"--market-data-source-dir {dst_root_dir}",
             f"--mode {mode}",
             f"--stage {stage}",
+            f"--tag '{tag}'",
             "--no-prevent-overwriting",
             "--allow-update",
             "--incremental",
@@ -95,6 +105,7 @@ class Test_Cx_ProdReconciliation_TestCase(hunitest.TestCase):
             run_mode,
             start_timestamp_as_str,
             end_timestamp_as_str,
+            tag=tag,
         )
         system_log_dir_paths = reconcil.get_system_log_dir_paths(target_dir, mode)
         # Check configs. Since we don't have access to the System directly as it
@@ -191,11 +202,14 @@ class Test_Cx_ProdReconciliation_TestCase(hunitest.TestCase):
         market_data_file_path = os.path.join(dst_root_dir, "test_data.csv.gz")
         db_stage = "preprod"
         universe_version = ivcu.get_latest_universe_version()
+        # TODO(Grisha): this is overfit for OHLCV models, expose to the interface.
+        table_name = "ccxt_ohlcv_futures"
         # Save market data to the dir with the inputs.
         dtfasycxut.dump_market_data_from_db(
             market_data_file_path,
             start_timestamp_as_str,
             end_timestamp_as_str,
             db_stage,
+            table_name,
             universe_version,
         )

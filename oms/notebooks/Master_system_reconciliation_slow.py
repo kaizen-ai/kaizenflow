@@ -50,12 +50,11 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
-# Get config from env when running the notebook via the `run_notebook.py` script, e.g.,
-# in the system reconciliation flow.
-config = cconfig.get_config_from_env()
-if config:
-    _LOG.info("Using config from env vars")
-else:
+# When running manually, specify the path to the config to load config from file,
+# for e.g., `.../reconciliation_notebook/fast/result_0/config.pkl`.
+config_file_name = None
+config = cconfig.get_notebook_config(config_file_name)
+if config is None:
     _LOG.info("Using hardwired config")
     # Specify the config directly when running the notebook manually.
     # Below is just an example.

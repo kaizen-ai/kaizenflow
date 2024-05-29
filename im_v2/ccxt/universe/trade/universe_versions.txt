@@ -1,3 +1,7 @@
+v8
+- 2024-04-04
+- Removing delisted symbols ANT_USDT, DGB_USDT and CTK_USDT
+
 v8.2
 - 2024-03-05
 - Coins from v8 with `bid_vol_to_half_spread > 10` and `half_spread <=1` excluding BTC, ETH and v8.1 coins

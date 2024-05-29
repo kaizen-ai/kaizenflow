@@ -21,6 +21,7 @@
 # %load_ext autoreload
 # %autoreload 2
 import logging
+import os
 
 import numpy as np
 import pandas as pd
@@ -36,6 +37,7 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import im_v2.ccxt.utils as imv2ccuti
 import im_v2.common.universe as ivcu
 import oms.broker.ccxt.ccxt_aggregation_functions as obccagfu
 import oms.broker.ccxt.ccxt_execution_quality as obccexqu
@@ -56,31 +58,47 @@ hprint.config_notebook()
 # # Config
 
 # %%
-config = cconfig.get_config_from_env()
-if config:
-    # Get config from env when running the notebook via the `run_notebook.py` script, e.g.,
-    # in the system reconciliation flow.
-    _LOG.info("Using config from env vars")
-else:
+# When running manually, specify the path to the config to load config from file,
+# for e.g., `.../reconciliation_notebook/fast/result_0/config.pkl`.
+config_file_name = None
+config = cconfig.get_notebook_config(config_file_name)
+if config is None:
     system_log_dir = "/shared_data/ecs/test/system_reconciliation/C12a/prod/20240219_150900.20240219_160600/system_log_dir.manual/process_forecasts"
     id_col = "asset_id"
-    universe_version = "v7.5"
+    price_col = "close"
+    universe_version = "v8.1"
     vendor = "CCXT"
     mode = "trade"
-    test_asset_id = 1464553467
-    bar_duration = "3T"
-    child_order_execution_freq = "60S"
+    test_asset_id = 1020313424
+    bar_duration = "5T"
+    child_order_execution_freq = "10S"
     use_historical = True
+    system_config_dir = system_log_dir.rstrip("/process_forecasts")
+    # Load pickled SystemConfig.
+    config_path = os.path.join(
+        system_config_dir, "system_config.output.values_as_strings.pkl"
+    )
+    system_config = cconfig.load_config_from_pickle(config_path)
+    # Get table name from SystemConfig.
+    table_name = system_config[
+        "market_data_config", "im_client_config", "table_name"
+    ]
+    #
     config_dict = {
-        "meta": {"id_col": id_col, "use_historical": use_historical},
+        "meta": {
+            "id_col": id_col,
+            "price_col": price_col,
+            "use_historical": use_historical,
+        },
         "system_log_dir": system_log_dir,
-        "ohlcv_market_data": {
+        "market_data": {
             "vendor": vendor,
             "mode": mode,
             "universe": {
                 "universe_version": universe_version,
                 "test_asset_id": test_asset_id,
             },
+            "im_client_config": {"table_name": table_name},
         },
         "execution_parameters": {
             "bar_duration": bar_duration,
@@ -118,9 +136,10 @@ if experiment_config:
 # %%
 # Get the test asset ID from the config.
 test_asset_id = config.get_and_mark_as_used(
-    ("ohlcv_market_data", "universe", "test_asset_id")
+    ("market_data", "universe", "test_asset_id")
 )
 id_col = config.get_and_mark_as_used(("meta", "id_col"))
+price_col = config.get_and_mark_as_used(("meta", "price_col"))
 
 # %%
 bar_duration = config.get_and_mark_as_used(
@@ -281,18 +300,25 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 
 # %%
 universe_version = config.get_and_mark_as_used(
-    ("ohlcv_market_data", "universe", "universe_version")
+    ("market_data", "universe", "universe_version")
 )
 vendor = config.get_and_mark_as_used(
     (
-        "ohlcv_market_data",
+        "market_data",
         "vendor",
     )
 )
 mode = config.get_and_mark_as_used(
     (
-        "ohlcv_market_data",
+        "market_data",
         "mode",
+    )
+)
+table_name = config.get_and_mark_as_used(
+    (
+        "market_data",
+        "im_client_config",
+        "table_name",
     )
 )
 # Get asset ids.
@@ -300,7 +326,7 @@ asset_ids = ivcu.get_vendor_universe_as_asset_ids(universe_version, vendor, mode
 # Get prod `MarketData`.
 db_stage = "preprod"
 market_data = dtfamsysc.get_Cx_RealTimeMarketData_prod_instance1(
-    asset_ids, db_stage
+    asset_ids, db_stage, table_name=table_name
 )
 # Load and resample OHLCV data.
 ohlcv_bars = dtfamsysc.load_and_resample_ohlcv_data(
@@ -312,17 +338,27 @@ ohlcv_bars = dtfamsysc.load_and_resample_ohlcv_data(
 hpandas.df_to_str(ohlcv_bars, num_rows=5, log_level=logging.INFO)
 
 # %% [markdown]
+# ## Load universe and get symbol/asset_id mappings
+
+# %%
+# Get the universe to map asset_id's.
+universe = ivcu.get_vendor_universe(
+    "CCXT", "trade", version=universe_version, as_full_symbol=True
+)
+# Get the asset_id/symbol mapping.
+asset_id_to_symbol_mapping = ivcu.build_numerical_to_string_id_mapping(universe)
+# Get the symbol/asset_id mapping.
+symbol_to_asset_id_mapping = {
+    imv2ccuti.convert_full_symbol_to_binance_symbol(symbol): asset_id
+    for asset_id, symbol in asset_id_to_symbol_mapping.items()
+}
+
+# %% [markdown]
 # ## Load exchange tick sizes by asset id
 
 # %%
-# Create a mapping between binance full symbol and asset_id.
-binance_full_symbol_to_asset_id_mapping = dict(
-    zip(fills_df.symbol, fills_df.asset_id)
-)
-# Load exchange markets and restrict to assets traded.
-exchange_markets = data["exchange_markets"].loc[
-    binance_full_symbol_to_asset_id_mapping.keys()
-]
+# Load exchange markets and restrict to the asset universe.
+exchange_markets = data["exchange_markets"].loc[symbol_to_asset_id_mapping.keys()]
 exchange_markets.head(3)
 
 # %%
@@ -330,9 +366,7 @@ exchange_markets.head(3)
 price_tick_srs = exchange_markets["precision"].apply(lambda x: x["price"])
 price_tick_srs = price_tick_srs.apply(lambda x: 10**-x)
 # Map index to the asset_id.
-price_tick_srs.index = price_tick_srs.index.map(
-    binance_full_symbol_to_asset_id_mapping
-)
+price_tick_srs.index = price_tick_srs.index.map(symbol_to_asset_id_mapping)
 price_tick_srs.head(3)
 
 # %% [markdown]
@@ -410,11 +444,6 @@ no_response_orders["error_msg"] = no_response_orders["extra_params"].apply(
 # %%
 # Check the error messages for child orders that did not come through.
 # Display error messages grouped by symbol.
-# Get the universe to map asset_id's.
-universe = ivcu.get_vendor_universe(
-    "CCXT", "trade", version=universe_version, as_full_symbol=True
-)
-asset_id_to_symbol_mapping = ivcu.build_numerical_to_string_id_mapping(universe)
 no_response_orders["full_symbol"] = no_response_orders["asset_id"].map(
     asset_id_to_symbol_mapping
 )
@@ -541,7 +570,7 @@ if "wave_id" in child_order_df.columns:
 # %% run_control={"marked": false}
 # Map symbol to asset ID.
 ccxt_fills["asset_id"] = ccxt_fills["symbol"].apply(
-    lambda x: binance_full_symbol_to_asset_id_mapping[x]
+    lambda x: symbol_to_asset_id_mapping[x]
 )
 # Convert `datetime` column from string to timestamp.
 ccxt_fills["datetime"] = ccxt_fills["datetime"].apply(
@@ -570,8 +599,7 @@ child_order_df["lifespan_in_seconds"] = child_order_df["ccxt_id"].apply(
 # ## Compute `target_position_df` and `portfolio_df`
 
 # %%
-# TODO(Danya): add to config.
-price_df = ohlcv_bars["close"]
+price_df = ohlcv_bars[price_col]
 target_position_df = oororcon.convert_order_df_to_target_position_df(
     parent_order_df,
     price_df,
@@ -818,15 +846,15 @@ filled_child_order_df[["asset_id", "order_slippage"]]
 
 # %%
 # Get the total underfill notional for the run per asset.
-execution_quality_df["underfill_notional"].abs().sum()
+execution_quality_df["underfill_notional"].abs().sum().round(9)
 
 # %%
 # Get the total underfill notional for the run per bar.
-execution_quality_df["underfill_notional"].abs().sum(axis=1)
+execution_quality_df["underfill_notional"].abs().sum(axis=1).round(9)
 
 # %%
 # Get the total underfill notional.
-execution_quality_df["underfill_notional"].abs().sum().sum()
+execution_quality_df["underfill_notional"].abs().sum().sum().round(9)
 
 # %% [markdown]
 # ### Aggregate fill rate

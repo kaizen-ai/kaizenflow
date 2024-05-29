@@ -16,7 +16,6 @@ import core.config as cconfig
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hio as hio
-import helpers.hpickle as hpickle
 import helpers.hprint as hprint
 import helpers.hwall_clock_time as hwacltim
 import oms.fill as omfill
@@ -228,7 +227,9 @@ class CcxtLogger:
             "extra_params"
         ].get("ccxt_id", -1)
         # Get current timestamp and bar.
-        wall_clock_time_str = hdateti.timestamp_to_str(get_wall_clock_time())
+        wall_clock_time_str = hdateti.timestamp_to_str(
+            get_wall_clock_time(), include_msec=True
+        )
         bar_timestamp = hwacltim.get_current_bar_timestamp(
             as_str=True, include_msec=True
         )
@@ -380,7 +381,9 @@ class CcxtLogger:
         """
         # Generate file name based on the bar timestamp.
         # TODO(gp): P1, @all Factor out the logic to format the timestamps.
-        wall_clock_time = hdateti.timestamp_to_str(get_wall_clock_time())
+        wall_clock_time = hdateti.timestamp_to_str(
+            get_wall_clock_time(), include_msec=True
+        )
         bar_timestamp = hwacltim.get_current_bar_timestamp(
             as_str=True, include_msec=True
         )
@@ -1944,9 +1947,11 @@ def load_config_for_execution_analysis(system_log_dir: str) -> pd.DataFrame:
         config = None
     # Load the config as a string.
     else:
-        config_pkl = hpickle.from_pickle(config_file_path)
-        config = cconfig.Config.from_dict(config_pkl)
-        config = config.to_string("only_values").replace("\\n", "\n")
+        config = cconfig.load_config_from_pickle(config_file_path)
+        hdbg.dassert_in("dag_runner_config", config)
+        if isinstance(config["dag_runner_config"], tuple):
+            # This is a hack to display a config that was made from unpickled dict.
+            config = config.to_string("only_values").replace("\\n", "\n")
     return config
 
 

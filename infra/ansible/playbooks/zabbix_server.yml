@@ -1,5 +1,0 @@
----
-- name: Deploy Zabbix Server
-  hosts: zabbix_server
-  roles:
-    - zabbix_server

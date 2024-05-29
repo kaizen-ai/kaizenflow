@@ -11,7 +11,7 @@ import pytest
 
 import core.config as cconfig
 import dev_scripts.notebooks as dsnrn
-import helpers.hdbg as hdbg
+import helpers.hdatetime as hdateti
 import helpers.hgit as hgit
 import helpers.hs3 as hs3
 import helpers.hserver as hserver
@@ -57,6 +57,7 @@ def build_test_master_execution_analysis_config(
     Default config builder for testing the Master_execution_analysis notebook.
     """
     id_col = "asset_id"
+    price_col = "close"
     universe_version = "v7.1"
     vendor = "CCXT"
     mode = "trade"
@@ -64,9 +65,12 @@ def build_test_master_execution_analysis_config(
     bar_duration = "5T"
     child_order_execution_freq = "1T"
     use_historical = True
+    table_name = "ccxt_ohlcv_futures"
     config_list = oexancon.build_execution_analysis_configs(
         system_log_dir,
         id_col,
+        price_col,
+        table_name,
         universe_version,
         vendor,
         mode,
@@ -93,24 +97,13 @@ def build_test_broker_portfolio_reconciliation_config(
     config_file_name = "system_config.output.values_as_strings.pkl"
     system_config_path = os.path.join(system_log_dir, config_file_name)
     system_config = cconfig.load_config_from_pickle(system_config_path)
-    hdbg.dassert_in("dag_runner_config", system_config)
-    if isinstance(system_config["dag_runner_config"], tuple):
-        _LOG.warning("Reading Config v1.0")
-        bar_duration = reconcil.extract_bar_duration_from_pkl_config(
-            system_log_dir
-        )
-        universe_version = reconcil.extract_universe_version_from_pkl_config(
-            system_log_dir
-        )
-    else:
-        # TODO(Grisha): preserve types when reading SystemConfig back and
-        #  remove all the post-processing.
-        _LOG.warning("Reading Config v2.0")
-        hdbg.dassert_isinstance(system_config, cconfig.Config)
-        bar_duration = system_config["dag_runner_config"]["bar_duration_in_secs"]
-        universe_version = system_config["market_data_config"][
-            "im_client_config"
-        ]["universe_version"]
+    # Get param values from SystemConfig.
+    bar_duration_in_secs = reconcil.get_bar_duration_from_config(system_config)
+    bar_duration = hdateti.convert_seconds_to_pandas_minutes(bar_duration_in_secs)
+    universe_version = system_config["market_data_config", "universe_version"]
+    table_name = system_config[
+        "market_data_config", "im_client_config", "table_name"
+    ]
     #
     config_list = oexancon.build_broker_portfolio_reconciliation_configs(
         system_log_dir,
@@ -120,6 +113,7 @@ def build_test_broker_portfolio_reconciliation_config(
         vendor,
         mode,
         bar_duration,
+        table_name,
     )
     return config_list
 
