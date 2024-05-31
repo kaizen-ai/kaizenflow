@@ -63,15 +63,11 @@ def load_data_to_dataframe(
     **kwargs: Any,
 ) -> Dict:
     """
-    Load the International Soccer Databases(ISDB) into pandas dataframes and
-    collect the dataframes into a dictionary.
-        - ISDBv2: 218,916 entries. 52 leagues, from 2000/01 to 2016/17 seasons
-            completed leagues only.
-        - ISDBv1: 216,743 entries. 52 leagues, from 2000/01 to 2017/18 seasons.
-            Some leagues incomplete and some cover only subset of seasons.
+    Function to load datasets into pandas dataframe.
 
     :param local_path: Local directory where the S3 data was downloaded.
-    :param file_format: The format of the files to be loaded. Default is ".txt".
+    :param file_format: The format of the files to be loaded. Default is
+        ".txt".
     :param logging_level: Logging level. Default is logging.INFO.
     :param kwargs: Additional arguments to pass to pandas read_csv.
     :return: Dictionary of the datasets downloaded.

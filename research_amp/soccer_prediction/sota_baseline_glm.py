@@ -15,7 +15,12 @@
 # %% [markdown]
 # # Establish a baseline Poisson Regression Model 
 # - Use the International soccer database (ISDB) to predict the goals scored by each team.
-# - Dataset Description:
+# - Database Description:
+#     - ISDBv2: 218,916 entries. 52 leagues, from 2000/01 to 2016/17 seasons
+#               completed leagues only.
+#     - ISDBv1: 216,743 entries. 52 leagues, from 2000/01 to 2017/18 seasons.
+#               Some leagues incomplete and some cover only subset of seasons.
+# - Metadata:
 #     - `'Date'`: Date on which the match took place.
 #     - `'Sea'` : Describes the yearly season in which the match happened.
 #     - `'Lea'` : League of in which the match is part of.
