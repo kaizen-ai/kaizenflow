@@ -10,6 +10,75 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
+class TestComputeBarStartTimestamps(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check that the function works correctly if input is a DataFrame.
+        """
+        index = pd.date_range(start="2023-03-03", periods=4, freq="D")
+        data = {"value": [0, 1, 2, 3], "dummy_variable": ["a", "b", "c", "d"]}
+        df = pd.DataFrame(data=data, index=index)
+        actual = cfiprpro.compute_bar_start_timestamps(df)
+        # Set expected values.
+        expected_length = 4
+        expected_unique_values = None
+        expected_signature = r"""
+        bar_start_timestamp
+        2023-03-03 2023-03-02
+        2023-03-04 2023-03-03
+        2023-03-05 2023-03-04
+        2023-03-06 2023-03-05
+        """
+        # Check the result.
+        self.check_srs_output(
+            actual, expected_length, expected_unique_values, expected_signature
+        )
+
+    def test2(self) -> None:
+        """
+        Check that the function works correctly if input is a Series.
+        """
+        index = pd.date_range(start="2022-03-03", periods=4, freq="D")
+        data = range(4)
+        series = pd.Series(data=data, index=index)
+        actual = cfiprpro.compute_bar_start_timestamps(series)
+        # Set expected values.
+        expected_length = 4
+        expected_unique_values = None
+        expected_signature = r"""
+        bar_start_timestamp
+        2022-03-03 2022-03-02
+        2022-03-04 2022-03-03
+        2022-03-05 2022-03-04
+        2022-03-06 2022-03-05
+        """
+        # Check the result.
+        self.check_srs_output(
+            actual, expected_length, expected_unique_values, expected_signature
+        )
+
+    def test3(self) -> None:
+        """
+        Check that an error is raised when input index has no freq.
+        """
+        index = pd.to_datetime(["2023-03-03", "2023-03-04", "2023-03-05", "2023-03-06"])
+        data = {"value": [0, 1, 2, 3], "dummy_variable": ["a", "b", "c", "d"]}
+        df = pd.DataFrame(data=data, index=index)
+        # Check that the appropriate error is raised.
+        with self.assertRaises(AssertionError) as cm:
+            cfiprpro.compute_bar_start_timestamps(df)
+        actual = str(cm.exception)
+        expected = r"""
+        * Failed assertion *
+        cond=None
+        DatetimeIndex must have a frequency.
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
+
+
 class TestStackPredictionDf(hunitest.TestCase):
     def test1(self) -> None:
         df = self._get_data()
