@@ -3,7 +3,7 @@ import asyncio
 import os
 import unittest.mock as umock
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import pytest
@@ -833,7 +833,7 @@ class TestSplitUniverse(hunitest.TestCase):
     universe_part = 0
 
     # Call function under test.
-    def get_universe_part(self) -> str:
+    def get_universe_part(self) -> List:
         actual_output = imvcdeexut._split_universe(
             self.universe, self.group_size, self.universe_part
         )
