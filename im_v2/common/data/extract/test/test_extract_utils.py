@@ -896,12 +896,13 @@ class TestSplitUniverse(hunitest.TestCase):
         """
         self.group_size = 6
         self.universe_part = 6
-        with self.assertRaises(RuntimeError):
-            actual_str = str(self.get_universe_part())
-            expected_str = r"""
-            RuntimeError: Universe does not have 6 parts of 6 pairs.    It has 6 symbols.
-            """
-            self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+        with self.assertRaises(RuntimeError) as cm:
+            self.get_universe_part()
+        actual_str = str(cm.exception)
+        expected_str = r"""
+        Universe does not have 6 parts of 6 pairs.    It has 6 symbols.
+        """
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
 
 @pytest.mark.requires_ck_infra
