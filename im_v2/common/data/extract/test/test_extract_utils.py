@@ -820,88 +820,77 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
 
 
 class TestSplitUniverse(hunitest.TestCase):
-    # Prepare inputs.
-    universe = [
-        "ALICE_USDT",
-        "GALA_USDT",
-        "FLOW_USDT",
-        "HBAR_USDT",
-        "INJ_USDT",
-        "NEAR_USDT",
-    ]
-    group_size = 0
-    universe_part = 0
+    """
+    Test that `_split_universe()` works correctly.
+    """
 
-    # Call function under test.
-    def get_universe_part(self) -> List:
+    def helper(self, group_size: int, universe_part: int) -> List:
+        """
+        Helper function to get the actual output.
+        """
+        universe = [
+            "ALICE_USDT",
+            "GALA_USDT",
+            "FLOW_USDT",
+            "HBAR_USDT",
+            "INJ_USDT",
+            "NEAR_USDT",
+        ]
         actual_output = imvcdeexut._split_universe(
-            self.universe, self.group_size, self.universe_part
+            universe, group_size, universe_part
         )
-        # Return the actual output.
         return actual_output
 
     def test1(self) -> None:
         """
-        Test if both group_size and universe_part are 0.
+        Test if both `group_size` and `universe_part` are 0.
         """
-        actual_str = str(self.get_universe_part())
+        actual_str = str(self.helper(0, 0))
         expected_str = r"""
-        []
-        """
+                    []
+                    """
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
     def test2(self) -> None:
         """
-        Test if group_size is 6 and universe_part is 1.
-
-        (This returns the whole list in the 1st part)
+        Test if `group_size` is 6 and `universe_part` is 1.
         """
-        self.group_size = 6
-        self.universe_part = 1
-        actual_str = str(self.get_universe_part())
+        actual_str = str(self.helper(6, 1))
         expected_str = r"""
-        ['ALICE_USDT', 'GALA_USDT', 'FLOW_USDT', 'HBAR_USDT', 'INJ_USDT', 'NEAR_USDT']
-        """
+                    ['ALICE_USDT', 'GALA_USDT', 'FLOW_USDT', 'HBAR_USDT', 'INJ_USDT', 'NEAR_USDT']
+                    """
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
     def test3(self) -> None:
         """
-        Test if group_size is 6 and universe_part is 2.
-
-        (This returns an empty list, since no groups in the part)
+        Test if `group_size` is 6 and `universe_part` is 2.
         """
-        self.group_size = 6
-        self.universe_part = 2
-        actual_str = str(self.get_universe_part())
+        actual_str = str(self.helper(6, 2))
         expected_str = r"""
-        []
-        """
+                    []
+                    """
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
     def test4(self) -> None:
         """
-        Test to check for group_size 4 and universe_part 2.
+        Test to check for `group_size` 4 and `universe_part` 2.
         """
-        self.group_size = 4
-        self.universe_part = 2
-        actual_str = str(self.get_universe_part())
+        actual_str = str(self.helper(4, 2))
         expected_str = r"""
-        ['INJ_USDT', 'NEAR_USDT']
-        """
+                    ['INJ_USDT', 'NEAR_USDT']
+                    """
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
     def test5(self) -> None:
         """
-        Test to check for error.
+        Test if the error is raised if no such part exists.
         """
-        self.group_size = 6
-        self.universe_part = 6
         with self.assertRaises(RuntimeError) as cm:
-            self.get_universe_part()
+            self.helper(6, 6)
         actual_str = str(cm.exception)
         expected_str = r"""
-        Universe does not have 6 parts of 6 pairs.    It has 6 symbols.
-        """
+                    Universe does not have 6 parts of 6 pairs.    It has 6 symbols.
+                    """
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
 
