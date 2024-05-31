@@ -14,17 +14,17 @@
 
 # %% [markdown]
 # # Establish a baseline Poisson Regression Model 
-# - Use the International soccer database (ISDB) to predict the goals scored by each team. 
+# - Use the International soccer database (ISDB) to predict the goals scored by each team.
 # - Dataset Description:
-#         - `'Date'`: Date on which the match took place.
-#         - `'Sea'` : Describes the yearly season in which the match happened.
-#         - `'Lea'` : League of in which the match is part of.
-#         - `'HT'`  : Home Team.
-#         - `'AT'`  : Away Team.
-#         - `'HS'`  : Goals scored by Home Team.
-#         - `'AS'`  : Goals scored by Away Team.
-#         - `'GD'`  : Goal difference (`HS - AS`)
-#         - `'WDL'` : Match outcome w/r to Home team (home win, home loss, draw)
+#     - `'Date'`: Date on which the match took place.
+#     - `'Sea'` : Describes the yearly season in which the match happened.
+#     - `'Lea'` : League of in which the match is part of.
+#     - `'HT'`  : Home Team.
+#     - `'AT'`  : Away Team.
+#     - `'HS'`  : Goals scored by Home Team.
+#     - `'AS'`  : Goals scored by Away Team.
+#     - `'GD'`  : Goal difference (`HS - AS`)
+#     - `'WDL'` : Match outcome w/r to Home team (home win, home loss, draw)
 # - Use the poisson regressor of the GLM model in stats models
 # - Evaluate the model performance
 
@@ -240,7 +240,7 @@ def generate_predictions(model: GLMResults, test_df: pd.DataFrame, **kwargs: Any
         suffixes=("_home", "_away"),
     )
     # Select and reorder columns for the final dataframe.
-    test_df = merged_df[["Date", "Sea", "Lge", "HT", "AT", "HS", "AS", "Lambda_HS", "Lambda_AS"]]  
+    test_df = merged_df[["Date", "Sea", "Lge", "HT", "AT", "HS", "AS", "Lambda_HS", "Lambda_AS"]] 
     # Return the final dataframe.
     return test_df
 
@@ -291,8 +291,6 @@ def evaluate_model_predictions(test_df: pd.DataFrame()) -> None:
     # Apply the function to the test set.
     probabilities = test_df.apply(calculate_match_outcome_probabilities, axis=1)
     test_df = pd.concat([test_df, probabilities], axis=1)
-    # Display the test set with probabilities.
-    print(test_df.head())
     # Predict the outcomes based on probabilities.
     test_df["predicted_outcome"] = np.where(
         test_df["prob_home_win"] > test_df["prob_away_win"],
@@ -310,7 +308,13 @@ def evaluate_model_predictions(test_df: pd.DataFrame()) -> None:
     # Calculate accuracy.
     accuracy = skm.accuracy_score(test_df["actual_outcome"], test_df["predicted_outcome"])
     print("Model Accuracy on Test Set:", accuracy)
-    
+    # Round off the predicted goals to integers.
+    test_df["Lambda_HS"] = test_df["Lambda_HS"].round().astype(int)
+    test_df["Lambda_AS"] = test_df["Lambda_AS"].round().astype(int)
+    # Display the test set with probabilities.
+    print(test_df.head())
+    # Return the final dataframe
+    return test_df
 
 
 # %%
@@ -345,7 +349,13 @@ def main():
     # Generate predictions on test set.
     predictions_df = generate_predictions(poisson_model, unraveled_test_df)
     # Evaluate model predictions.
-    evaluate_model_predictions(predictions_df)
+    final_df = evaluate_model_predictions(predictions_df)
+    # Save dataframe to S3.
+    final_df.to_csv("glm_predictions.csv", index = False)
+    save_path = "kaizen_ai/soccer_predictions/model_output/glm_predictions.csv"
+    s3 = haws.get_service_resource(aws_profile="ck", service_name="s3")
+    # Upload the file to S3
+    s3.Bucket(bucket).upload_file('glm_predictions.csv', save_path)
 
 
 # %%
