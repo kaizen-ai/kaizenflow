@@ -1,14 +1,13 @@
 import logging
-
 import pandas as pd
 import pytz
-
 import core.finance.target_position_df_processing.fill_stats as cftpdpfst
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 # Initialize logger.
 _LOG = logging.getLogger(__name__)
+
 # Set logging level to INFO.
 logging.basicConfig(level=logging.INFO)
 class Test_compute_fill_stats(hunitest.TestCase):
