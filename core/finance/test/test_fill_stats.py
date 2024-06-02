@@ -77,11 +77,7 @@ class Test_compute_fill_stats(hunitest.TestCase):
             ("is_benchmark_profitable", 2),
         ]
         expected_column_unique_values = None
-
-        # Convert DataFrame to string.
-        act = hpandas.df_to_str(fills_df)
-        _LOG.debug("df=\n%s", act)
-
+       
         # Expected DataFrame as string.
         expected_signature = r"""
         # df=
