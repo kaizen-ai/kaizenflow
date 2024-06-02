@@ -10,6 +10,8 @@ _LOG = logging.getLogger(__name__)
 
 # Set logging level to INFO.
 logging.basicConfig(level=logging.INFO)
+
+
 class Test_compute_fill_stats(hunitest.TestCase):
     def helper(self) -> pd.DataFrame:
         """
@@ -45,7 +47,7 @@ class Test_compute_fill_stats(hunitest.TestCase):
         _LOG.debug("df=\n%s", target_position_df)
         fills_df = cftpdpfst.compute_fill_stats(target_position_df)
         _LOG.debug("df=\n%s", fills_df)
-        
+
         # Define expected values.
         expected_length = 5
         expected_column_names = [
@@ -79,9 +81,9 @@ class Test_compute_fill_stats(hunitest.TestCase):
         # Convert DataFrame to string.
         act = hpandas.df_to_str(fills_df)
         _LOG.debug("df=\n%s", act)
-        
+
         # Expected DataFrame as string.
-        exp = r"""
+        expected_signature = r"""
         # df=
         index=[2023-01-01 00:00:00+00:00, 2023-01-01 00:04:00+00:00]
         columns=('executed_trades_shares', 1),('executed_trades_shares', 2),('fill_rate', 1),('fill_rate', 2),('underfill_share_count', 1),('underfill_share_count', 2),('underfill_notional', 1),('underfill_notional', 2),('underfill_opportunity_cost_realized_notional', 1),('underfill_opportunity_cost_realized_notional', 2),('underfill_opportunity_cost_notional', 1),('underfill_opportunity_cost_notional', 2),('tracking_error_shares', 1),('tracking_error_shares', 2),('tracking_error_notional', 1),('tracking_error_notional', 2),('tracking_error_bps', 1),('tracking_error_bps', 2),('is_buy', 1),('is_buy', 2),('is_sell', 1),('is_sell', 2),('is_benchmark_profitable', 1),('is_benchmark_profitable', 2)
@@ -94,7 +96,7 @@ class Test_compute_fill_stats(hunitest.TestCase):
         2023-01-01 00:03:00+00:00                    2.0  1.0       2.0  3.333333                  -1.0 -0.7             -102.0 -35.7                                          6.0  1.0                                 2.0  0.7                   3.0  1.3                   250.0  50.0        2380.952381  588.235294   True   True   False  False                     1.0  1.0
         2023-01-01 00:04:00+00:00                    1.0  0.5       0.5  0.714286                   1.0  0.2              108.0  10.6                                          2.0  0.7                                 NaN  NaN                   2.0  0.8                   150.0  70.0        1200.000000  795.454545   True   True   False  False                     NaN  NaN
         """
-        _LOG.debug("df=\n%s", exp)
+        _LOG.debug("df=\n%s", expected_signature)
 
         # Check DataFrame output.
         self.check_df_output(
@@ -102,5 +104,5 @@ class Test_compute_fill_stats(hunitest.TestCase):
             expected_length,
             expected_column_names,
             expected_column_unique_values,
-            exp,
+            expected_signature,
         )
