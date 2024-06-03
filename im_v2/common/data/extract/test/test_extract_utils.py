@@ -821,12 +821,12 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
 
 class TestSplitUniverse(hunitest.TestCase):
     """
-    Test that `_split_universe()` works correctly.
+    Test that universe is split correctly.
     """
 
     def helper(self, group_size: int, universe_part: int) -> List:
         """
-        Helper function to get the actual output.
+        Run the function and get the actual output.
         """
         universe = [
             "ALICE_USDT",
@@ -836,6 +836,7 @@ class TestSplitUniverse(hunitest.TestCase):
             "INJ_USDT",
             "NEAR_USDT",
         ]
+        # Call function under test.
         actual_output = imvcdeexut._split_universe(
             universe, group_size, universe_part
         )
@@ -843,54 +844,90 @@ class TestSplitUniverse(hunitest.TestCase):
 
     def test1(self) -> None:
         """
-        Test if both `group_size` and `universe_part` are 0.
+        group_size = 0 universe_part = 0.
         """
-        actual_str = str(self.helper(0, 0))
+        # Get the actual output from helper function.
+        actual = self.helper(0, 0)
+        # Check the output.
+        actual_str = str(actual)
         expected_str = r"""
-                    []
-                    """
+        []
+        """
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
     def test2(self) -> None:
         """
-        Test if `group_size` is 6 and `universe_part` is 1.
+        group_size = 6 universe_part = 1.
         """
-        actual_str = str(self.helper(6, 1))
+        # Get the actual output from helper function.
+        actual = self.helper(6, 1)
+        # Check the output.
+        actual_str = str(actual)
         expected_str = r"""
-                    ['ALICE_USDT', 'GALA_USDT', 'FLOW_USDT', 'HBAR_USDT', 'INJ_USDT', 'NEAR_USDT']
-                    """
+        ['ALICE_USDT', 'GALA_USDT', 'FLOW_USDT', 'HBAR_USDT', 'INJ_USDT', 'NEAR_USDT']
+        """
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
     def test3(self) -> None:
         """
-        Test if `group_size` is 6 and `universe_part` is 2.
+        group_size = 6 universe_part = 2.
         """
-        actual_str = str(self.helper(6, 2))
+        # Get the actual output from helper function.
+        actual = self.helper(6, 2)
+        # Check the output.
+        actual_str = str(actual)
         expected_str = r"""
-                    []
-                    """
+        []
+        """
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
     def test4(self) -> None:
         """
-        Test to check for `group_size` 4 and `universe_part` 2.
+        group_size = 4 universe_part = 2.
         """
-        actual_str = str(self.helper(4, 2))
+        # Get the actual output from helper function.
+        actual = self.helper(4, 2)
+        # Check the output.
+        actual_str = str(actual)
         expected_str = r"""
-                    ['INJ_USDT', 'NEAR_USDT']
-                    """
+        ['INJ_USDT', 'NEAR_USDT']
+        """
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
     def test5(self) -> None:
         """
-        Test if the error is raised if no such part exists.
+        Check the error is raised if universe does not have input part.
+
+        group_size = 6 universe_part = 6
         """
+        # Raise an error for no input part.
         with self.assertRaises(RuntimeError) as cm:
             self.helper(6, 6)
-        actual_str = str(cm.exception)
+        # Get the error output from helper function.
+        actual = cm.exception
+        # Check the output.
+        actual_str = str(actual)
         expected_str = r"""
-                    Universe does not have 6 parts of 6 pairs.    It has 6 symbols.
-                    """
+        Universe does not have 6 parts of 6 pairs.    It has 6 symbols.
+        """
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+    def test6(self) -> None:
+        """
+        Check the error is raised if universe does not have input part.
+
+        group_size = 6 universe_part = 7
+        """
+        # Raise an error for no input part.
+        with self.assertRaises(RuntimeError) as cm:
+            self.helper(6, 7)
+        # Get the error output from helper function.
+        actual = cm.exception
+        # Check the output.
+        actual_str = str(actual)
+        expected_str = r"""
+        Universe does not have 7 parts of 6 pairs.    It has 6 symbols.
+        """
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
 
