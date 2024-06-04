@@ -398,7 +398,6 @@ def perform_model_hypothesis(test_df: pd.DataFrame) -> None:
     plt.show()
 
 
-
 # %% run_control={"marked": true}
 perform_model_hypothesis(glm_predictions)
 
