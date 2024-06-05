@@ -5,13 +5,7 @@ import core.finance.target_position_df_processing.fill_stats as cftpdpfst
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
-# Initialize logger.
 _LOG = logging.getLogger(__name__)
-
-# Set logging level to INFO.
-logging.basicConfig(level=logging.INFO)
-
-
 class Test_compute_fill_stats(hunitest.TestCase):
     def helper(self) -> pd.DataFrame:
         """
@@ -38,16 +32,15 @@ class Test_compute_fill_stats(hunitest.TestCase):
         df = pd.DataFrame(data, index=index, columns=columns)
         return df
 
-    def test_compute_fill_stats3(self) -> None:
+    def test_compute_fill_stats1(self) -> None:
         """
-        Test indexes, columns, and values in test_compute_fill_stats3.
+        Test indexes, columns, and values in `fills_df`.
         """
         # Create sample target positions DataFrame.
         target_position_df = self.helper()
         _LOG.debug("df=\n%s", target_position_df)
         fills_df = cftpdpfst.compute_fill_stats(target_position_df)
         _LOG.debug("df=\n%s", fills_df)
-
         # Define expected values.
         expected_length = 5
         expected_column_names = [
@@ -77,8 +70,6 @@ class Test_compute_fill_stats(hunitest.TestCase):
             ("is_benchmark_profitable", 2),
         ]
         expected_column_unique_values = None
-       
-        # Expected DataFrame as string.
         expected_signature = r"""
         # df=
         index=[2023-01-01 00:00:00+00:00, 2023-01-01 00:04:00+00:00]
@@ -93,8 +84,6 @@ class Test_compute_fill_stats(hunitest.TestCase):
         2023-01-01 00:04:00+00:00                    1.0  0.5       0.5  0.714286                   1.0  0.2              108.0  10.6                                          2.0  0.7                                 NaN  NaN                   2.0  0.8                   150.0  70.0        1200.000000  795.454545   True   True   False  False                     NaN  NaN
         """
         _LOG.debug("df=\n%s", expected_signature)
-
-        # Check DataFrame output.
         self.check_df_output(
             fills_df,
             expected_length,
