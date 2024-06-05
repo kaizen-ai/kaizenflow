@@ -1,11 +1,13 @@
 import logging
+
 import pandas as pd
 import pytz
+
 import core.finance.target_position_df_processing.fill_stats as cftpdpfst
-import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
+
 
 class Test_compute_fill_stats(hunitest.TestCase):
     def helper(self) -> pd.DataFrame:
@@ -35,7 +37,7 @@ class Test_compute_fill_stats(hunitest.TestCase):
 
     def test_compute_fill_stats1(self) -> None:
         """
-        Test indexes, columns, and values in `fills_df`.
+        Check that fills are computed correctly.
         """
         # Get target positions data sample.
         target_position_df = self.helper()
