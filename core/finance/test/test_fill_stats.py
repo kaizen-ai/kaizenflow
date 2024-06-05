@@ -6,6 +6,7 @@ import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
+
 class Test_compute_fill_stats(hunitest.TestCase):
     def helper(self) -> pd.DataFrame:
         """
