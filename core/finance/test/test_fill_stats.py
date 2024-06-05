@@ -36,11 +36,9 @@ class Test_compute_fill_stats(hunitest.TestCase):
         """
         Test indexes, columns, and values in `fills_df`.
         """
-        # Create sample target positions DataFrame.
+        # Get target positions data sample.
         target_position_df = self.helper()
-        _LOG.debug("df=\n%s", target_position_df)
         fills_df = cftpdpfst.compute_fill_stats(target_position_df)
-        _LOG.debug("df=\n%s", fills_df)
         # Define expected values.
         expected_length = 5
         expected_column_names = [
@@ -83,7 +81,6 @@ class Test_compute_fill_stats(hunitest.TestCase):
         2023-01-01 00:03:00+00:00                    2.0  1.0       2.0  3.333333                  -1.0 -0.7             -102.0 -35.7                                          6.0  1.0                                 2.0  0.7                   3.0  1.3                   250.0  50.0        2380.952381  588.235294   True   True   False  False                     1.0  1.0
         2023-01-01 00:04:00+00:00                    1.0  0.5       0.5  0.714286                   1.0  0.2              108.0  10.6                                          2.0  0.7                                 NaN  NaN                   2.0  0.8                   150.0  70.0        1200.000000  795.454545   True   True   False  False                     NaN  NaN
         """
-        _LOG.debug("df=\n%s", expected_signature)
         self.check_df_output(
             fills_df,
             expected_length,
