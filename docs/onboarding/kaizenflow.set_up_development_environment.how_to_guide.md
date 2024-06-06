@@ -335,7 +335,7 @@ Happy coding!
   ```
 
 - More information about Linter -
-  [Link](/docs/infra/linter_gh_workflow.explanation.md)
+  [Link](/docs/build/all.linter_gh_workflow.explanation.md)
 - Internalize the guidelines to maintain code consistency
 
 ## Writing and Contributing Code
