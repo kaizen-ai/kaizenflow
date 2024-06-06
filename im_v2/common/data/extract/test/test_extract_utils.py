@@ -822,7 +822,7 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
 class TestSplitUniverse(hunitest.TestCase):
     def helper(self, group_size: int, universe_part: int) -> List:
         """
-        Run the function and get ta string representation of its output.
+        Run the function and get a string representation of its output.
         """
         universe = [
             "ALICE_USDT",
@@ -835,7 +835,8 @@ class TestSplitUniverse(hunitest.TestCase):
         actual_output = imvcdeexut._split_universe(
             universe, group_size, universe_part
         )
-        return actual_output
+        output_str = str(actual_output)
+        return output_str
 
     def test1(self) -> None:
         """
@@ -843,8 +844,7 @@ class TestSplitUniverse(hunitest.TestCase):
         """
         group_size = 0
         universe_part = 0
-        actual = self.helper(group_size, universe_part)
-        actual_str = str(actual)
+        actual_str = self.helper(group_size, universe_part)
         expected_str = r"""
         []
         """
@@ -856,8 +856,7 @@ class TestSplitUniverse(hunitest.TestCase):
         """
         group_size = 6
         universe_part = 1
-        actual = self.helper(group_size, universe_part)
-        actual_str = str(actual)
+        actual_str = self.helper(group_size, universe_part)
         expected_str = r"""
         ['ALICE_USDT', 'GALA_USDT', 'FLOW_USDT', 'HBAR_USDT', 'INJ_USDT', 'NEAR_USDT']
         """
@@ -869,8 +868,7 @@ class TestSplitUniverse(hunitest.TestCase):
         """
         group_size = 6
         universe_part = 2
-        actual = self.helper(group_size, universe_part)
-        actual_str = str(actual)
+        actual_str = self.helper(group_size, universe_part)
         expected_str = r"""
         []
         """
@@ -882,29 +880,13 @@ class TestSplitUniverse(hunitest.TestCase):
         """
         group_size = 4
         universe_part = 2
-        actual = self.helper(group_size, universe_part)
-        actual_str = str(actual)
+        actual_str = self.helper(group_size, universe_part)
         expected_str = r"""
         ['INJ_USDT', 'NEAR_USDT']
         """
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
     def test5(self) -> None:
-        """
-        Check the error is raised if universe does not have input part.
-        """
-        group_size = 6
-        universe_part = 6
-        # Raise an error for no input part.
-        with self.assertRaises(RuntimeError) as cm:
-            self.helper(group_size, universe_part)
-        actual_str = str(cm.exception)
-        expected_str = r"""
-        Universe does not have 6 parts of 6 pairs.    It has 6 symbols.
-        """
-        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
-
-    def test6(self) -> None:
         """
         Check the error is raised if universe does not have input part.
         """
