@@ -3483,6 +3483,79 @@ class Test_dassert_increasing_index(hunitest.TestCase):
 # #############################################################################
 
 
+class Test_dassert_strictly_increasing_index(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check that unique and monotonically increasing index passes the assert
+        """
+        # Build test dataframe.
+        idx = [
+            pd.Timestamp("2000-01-01 9:01"),
+            pd.Timestamp("2000-01-01 9:02"),
+            pd.Timestamp("2000-01-01 9:03"),
+            pd.Timestamp("2000-01-01 9:04"),
+        ]
+        values = [0, 0, 0, 0]
+        df = pd.DataFrame(values, index=idx)
+        # Run.
+        hpandas.dassert_strictly_increasing_index(df)
+
+    def test2(self) -> None:
+        """
+        Check that Duplicate but monotonically increasing index raises the assert
+        """
+        # Build test dataframe.
+        idx = [
+            pd.Timestamp("2000-01-01 9:01"),
+            pd.Timestamp("2000-01-01 9:01"),
+            pd.Timestamp("2000-01-01 9:02"),
+            pd.Timestamp("2000-01-01 9:03"),
+        ]
+        values = [0, 0, 0, 0]
+        df = pd.DataFrame(values, index=idx)
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_strictly_increasing_index(df)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        cond=False
+        Duplicated rows are:
+                            0
+        2000-01-01 09:01:00  0
+        2000-01-01 09:01:00  0"""
+        self.assert_equal(act, exp, fuzzy_match=True)       
+
+    def test3(self) -> None:
+        """
+        Check that assert is raised if index is unique but not monotonically increasing
+        """
+        # Build test dataframe.
+        idx = [
+            pd.Timestamp("2000-01-01 9:01"),
+            pd.Timestamp("2000-01-01 9:03"),
+            pd.Timestamp("2000-01-01 9:02"),
+            pd.Timestamp("2000-01-01 9:04"),
+        ]
+        values = [0, 0, 0, 0]
+        df = pd.DataFrame(values, index=idx)
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_strictly_increasing_index(df)
+        act = str(cm.exception)
+        exp = r"""
+        * Failed assertion *
+        cond=False
+        Not increasing indices are:
+                                0
+        2000-01-01 09:03:00  0
+        2000-01-01 09:02:00  0"""
+        self.assert_equal(act, exp, fuzzy_match=True)
+   
+
+# #############################################################################
+
+
 class Test_apply_index_mode(hunitest.TestCase):
     @staticmethod
     def get_test_data() -> Tuple[pd.DataFrame]:
