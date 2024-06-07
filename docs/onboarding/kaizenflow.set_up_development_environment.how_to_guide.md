@@ -355,3 +355,5 @@ Happy coding!
 - Add your assigned reviewers for your PR so that they are informed of your PR
 - After being reviewed, the PR will be merged to the master branch by your
   reviewers
+- Do not respond to emails for replies to comments in issues or PRs. Use the
+  GitHub GUI instead, as replying through email adds unwanted information.
