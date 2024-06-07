@@ -3,12 +3,11 @@ import asyncio
 import os
 import unittest.mock as umock
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import pytest
 
-import helpers.hdatetime as hdateti
 import helpers.henv as henv
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
@@ -818,6 +817,88 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
         """
         self.check_download_historical_data()
         self.check_resampler()
+
+
+class TestSplitUniverse(hunitest.TestCase):
+    def helper(self, group_size: int, universe_part: int) -> List:
+        """
+        Run the function and get a string representation of its output.
+        """
+        universe = [
+            "ALICE_USDT",
+            "GALA_USDT",
+            "FLOW_USDT",
+            "HBAR_USDT",
+            "INJ_USDT",
+            "NEAR_USDT",
+        ]
+        actual_output = imvcdeexut._split_universe(
+            universe, group_size, universe_part
+        )
+        output_str = str(actual_output)
+        return output_str
+
+    def test1(self) -> None:
+        """
+        Check that universe is split correctly.
+        """
+        group_size = 0
+        universe_part = 0
+        actual_str = self.helper(group_size, universe_part)
+        expected_str = r"""
+        []
+        """
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+    def test2(self) -> None:
+        """
+        Check that universe is split correctly.
+        """
+        group_size = 6
+        universe_part = 1
+        actual_str = self.helper(group_size, universe_part)
+        expected_str = r"""
+        ['ALICE_USDT', 'GALA_USDT', 'FLOW_USDT', 'HBAR_USDT', 'INJ_USDT', 'NEAR_USDT']
+        """
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Check that universe is split correctly.
+        """
+        group_size = 6
+        universe_part = 2
+        actual_str = self.helper(group_size, universe_part)
+        expected_str = r"""
+        []
+        """
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Check that universe is split correctly.
+        """
+        group_size = 4
+        universe_part = 2
+        actual_str = self.helper(group_size, universe_part)
+        expected_str = r"""
+        ['INJ_USDT', 'NEAR_USDT']
+        """
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+    def test5(self) -> None:
+        """
+        Check the error is raised if universe does not have input part.
+        """
+        group_size = 6
+        universe_part = 7
+        with self.assertRaises(RuntimeError) as cm:
+            self.helper(group_size, universe_part)
+        actual_str = str(cm.exception)
+        expected_str = r"""
+        Universe does not have 7 parts of 6 pairs.    It has 6 symbols.
+        """
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
 
 @pytest.mark.requires_ck_infra
@@ -1766,7 +1847,9 @@ class TestDownloadRealtimeForOneExchangePeriodically1(
     ) -> None:
         """
         Test the correct download of OHLCV data with consideration for
-        incomplete bars. Invariant #1. 
+        incomplete bars.
+
+        Invariant #1.
         """
         # Data received from exchange in second iteration.
         next_data = {}
@@ -1815,6 +1898,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(
     ) -> None:
         """
         Test the correct download of OHLCV data with backfilling.
+
         Invariant #2.
         """
         # Data received from exchange in second iteration.
