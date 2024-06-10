@@ -3528,8 +3528,7 @@ class Test_dassert_strictly_increasing_index(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        Check that an assert is raised for a not monotonically increasing
-        index.
+        Check that an assert is raised for a not monotonically increasing index.
         """
         # Build test dataframe.
         idx = [
