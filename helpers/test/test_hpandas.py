@@ -3984,7 +3984,6 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
                 string2     1.333692    1.708455
         ```
         """
-
         if index_is_datetime:
             index_inner = [
                 pd.Timestamp("2022-01-01 21:00:00", tz="UTC"),
