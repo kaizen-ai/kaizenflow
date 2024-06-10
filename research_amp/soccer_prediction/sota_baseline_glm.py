@@ -62,6 +62,21 @@ _LOG = logging.getLogger(__name__)
 
 
 # %% run_control={"marked": true}
+def compute_stats(df: pd.DataFrame) -> None:
+    """
+    Compute # instances for each class (win, loss, draw) and prior probabilities.
+    
+    :param df: Input DataFrame.
+    """
+    # Calculate value counts for each outcome.
+    value_counts = df['WDL'].value_counts()
+    print("Value Counts:\n", value_counts)
+    # Calculate total number of matches.
+    total_matches = len(df)
+    # Calculate prior probabilities for each outcome.
+    prior_probabilities = value_counts / total_matches
+    print("\nPrior Probabilities:\n", prior_probabilities)
+    
 def preprocess_data(df: pd.DataFrame()) -> pd.DataFrame():
     """
     Preprocess the loaded ISDB dataframe of interest.
@@ -406,6 +421,8 @@ def main():
     # Access the dataframes directly from the dictionary.
     ISDBv1_df = dataframes.get("ISDBv1_df")
     ISDBv2_df = dataframes.get("ISDBv2_df")
+    print("Stats ISDBv2")
+    compute_stats(ISDBv2_df)
     # Preprocess the selected dataframe (ISDBv2_df).
     preprocessed_df = preprocess_data(ISDBv2_df)
     # Create a train-test split. 
@@ -413,6 +430,10 @@ def main():
     # Access the test/train dataframes directly from the dictionary.
     train_df = dataframes_test_train.get("train_df")
     test_df = dataframes_test_train.get("test_df")
+    print("\n\n\nStats training set")
+    compute_stats(train_df)
+    print("\n\n\nStats testing set")
+    compute_stats(test_df)
     # Save train and test dataframes to S3.
     s3_path = "kaizen_ai/soccer_predictions/model_input/glm_poisson"
     rasoprut.save_data_to_s3(df = train_df, 
@@ -563,5 +584,3 @@ def get_mle_performance() -> None:
 
 # %%
 get_mle_performance()
-
-# %%
