@@ -3486,7 +3486,7 @@ class Test_dassert_increasing_index(hunitest.TestCase):
 class Test_dassert_strictly_increasing_index(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Check that unique and monotonically increasing index passes the assert
+        Check that unique and monotonically increasing index passes the assert.
         """
         # Build test dataframe.
         idx = [
@@ -3502,7 +3502,7 @@ class Test_dassert_strictly_increasing_index(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        Check that Duplicate but monotonically increasing index raises the assert
+        Check that an assert is raised for an increasing index with duplicates.
         """
         # Build test dataframe.
         idx = [
@@ -3524,11 +3524,12 @@ class Test_dassert_strictly_increasing_index(hunitest.TestCase):
                             0
         2000-01-01 09:01:00  0
         2000-01-01 09:01:00  0"""
-        self.assert_equal(act, exp, fuzzy_match=True)       
+        self.assert_equal(act, exp, fuzzy_match=True)
 
     def test3(self) -> None:
         """
-        Check that assert is raised if index is unique but not monotonically increasing
+        Check that an assert is raised for a not monotonically increasing
+        index.
         """
         # Build test dataframe.
         idx = [
@@ -3551,7 +3552,7 @@ class Test_dassert_strictly_increasing_index(hunitest.TestCase):
         2000-01-01 09:03:00  0
         2000-01-01 09:02:00  0"""
         self.assert_equal(act, exp, fuzzy_match=True)
-   
+
 
 # #############################################################################
 
@@ -3964,25 +3965,19 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
 
         Example of dataframe returned when `index_is_datetime = True`:
 
-        ```
-                                            column1     column2
-        index   timestamp
-        index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
-                2022-01-01 21:10:00+00:00   1.303778    -0.288235
-        index2  2022-01-01 21:00:00+00:00   1.237079    1.168012
-                2022-01-01 21:10:00+00:00   1.333692    1.708455
-        ```
+        ```                                     column1     column2
+        index   timestamp index1  2022-01-01 21:00:00+00:00   -0.122140
+        -1.949431         2022-01-01 21:10:00+00:00   1.303778
+        -0.288235 index2  2022-01-01 21:00:00+00:00   1.237079
+        1.168012         2022-01-01 21:10:00+00:00   1.333692
+        1.708455 ```
 
         Example of dataframe returned when `index_is_datetime = False`:
 
-        ```
-                            column1     column2
-        index   timestamp
-        index1  string1     -0.122140   -1.949431
-                string2     1.303778    -0.288235
-        index2  string1     1.237079    1.168012
-                string2     1.333692    1.708455
-        ```
+        ```                     column1     column2 index   timestamp
+        index1  string1     -0.122140   -1.949431         string2
+        1.303778    -0.288235 index2  string1     1.237079    1.168012
+        string2     1.333692    1.708455 ```
         """
         if index_is_datetime:
             index_inner = [
