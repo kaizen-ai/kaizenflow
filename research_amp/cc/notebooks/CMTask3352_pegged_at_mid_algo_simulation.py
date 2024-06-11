@@ -290,6 +290,7 @@ exec_df.head(5)
 # %% [markdown]
 # ## Compare to benchmark price.
 
+
 # %% run_control={"marked": true}
 def compute_benchmark_stats(df):
     df["twap_mid_price"] = df["mid"].resample("5T").mean()
@@ -345,7 +346,7 @@ freq_offset = "0T"
 ffill_limit = 60
 tick_decimals = 5
 # Generate limit order prices.
-limit_orders = cofinanc.generate_limit_order_price(
+limit_orders = cofinanc._generate_limit_order_price(
     df_flat,
     bid_col,
     ask_col,
@@ -363,7 +364,9 @@ limit_orders = cofinanc.generate_limit_order_price(
 limit_orders.head()
 
 # %%
-limit_orders[["buy_limit_order_price", "sell_limit_order_price"]].tail(60 * 60).plot()
+limit_orders[["buy_limit_order_price", "sell_limit_order_price"]].tail(
+    60 * 60
+).plot()
 
 # %%
 df_flat_with_limit_orders = pd.concat([df_flat, limit_orders], axis=1)
@@ -472,7 +475,7 @@ bar_executions_with_midpoint.plot()
 
 # %%
 import helpers.hdatetime as hdateti
-import helpers.hparquet as hparquet
+import helpers.hparquet as hparque
 
 # %%
 first_timestamp = pd.Timestamp("2022-12-14 17:59:43-05:00")
@@ -495,7 +498,7 @@ filters = [
     # ("level", "==", 1)
 ]
 file_name = "s3://cryptokaizen-data/v3/periodic_daily/airflow/downloaded_1sec/parquet/trades/futures/v3_1/crypto_chassis/binance/v1_0_0/"
-df = hparquet.from_parquet(file_name, filters=filters, aws_profile="ck")
+df = hparque.from_parquet(file_name, filters=filters, aws_profile="ck")
 
 # %%
 df.head()
