@@ -337,7 +337,7 @@ class Test_limit_price_computer_using_volatility(hunitest.TestCase):
         """
         with self.assertRaises(ValueError) as cm:
             self._calculate_price_helper(
-                "non-existent-side", 0.5, 0.01, 1464553467, 3, 0
+                "non-existent-side", 0.5, 0.01, pd.Timedelta("30S"), 3, 0
             )
         act = str(cm.exception)
         exp = r"Invalid side='non-existent-side'"
