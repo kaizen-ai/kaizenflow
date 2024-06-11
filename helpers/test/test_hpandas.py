@@ -4040,6 +4040,7 @@ class Test_CheckSummary(hunitest.TestCase):
 
 
 # #############################################################################
+
 class Test_compute_weighted_sum(hunitest.TestCase):
     def helper1(self) -> Tuple[Dict[str, pd.DataFrame], pd.DataFrame]:
         """
