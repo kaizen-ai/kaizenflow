@@ -34,6 +34,7 @@
 # - Evaluate the model performance
 
 # %%
+import io
 import os
 import warnings
 import logging
@@ -41,6 +42,8 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import pickle
+import matplotlib.pyplot as plt
 import sklearn.metrics as skm
 import sklearn.model_selection as sms
 import statsmodels.api as sm
@@ -59,6 +62,21 @@ _LOG = logging.getLogger(__name__)
 
 
 # %% run_control={"marked": true}
+def compute_stats(df: pd.DataFrame) -> None:
+    """
+    Compute # instances for each class (win, loss, draw) and prior probabilities.
+    
+    :param df: Input DataFrame.
+    """
+    # Calculate value counts for each outcome.
+    value_counts = df['WDL'].value_counts()
+    print("Value Counts:\n", value_counts)
+    # Calculate total number of matches.
+    total_matches = len(df)
+    # Calculate prior probabilities for each outcome.
+    prior_probabilities = value_counts / total_matches
+    print("\nPrior Probabilities:\n", prior_probabilities)
+    
 def preprocess_data(df: pd.DataFrame()) -> pd.DataFrame():
     """
     Preprocess the loaded ISDB dataframe of interest.
@@ -183,27 +201,88 @@ def representative_sample(df: pd.DataFrame(), sample_size: int) -> pd.DataFrame(
     # Return the sampled dataframe.
     return sampled_df
 
-def train_model(train_df: pd.DataFrame(), 
+def train_model(train_df: pd.DataFrame,
                 logging_level: int = logging.INFO,
+                n_splits: int = 5,
                 **kwargs: Any,
                ) -> GLMResults:
     """
     Train a Poisson regression model to estimate the number of goals.
     
     :param train_df: Input training set.
+    :param logging_level: Logging level for the model summary.
+    :param n_splits: Number of splits for cross-validation.
     :return: Trained GLM model.
     """
     # Create the formula to include team offensive and opponent defensive strengths and home advantage.
-    formula = "goals ~ C(team) + C(opponent) + is_home"
-    # Fit the Poisson regression model.
-    poisson_model = smf.glm(
+    formula = "goals ~ team - opponent + is_home"
+    # Split the training data into k-folds for cross-validation.
+    kf = sms.KFold(n_splits=n_splits, shuffle=True, random_state=42)
+    train_accuracies = []
+    val_accuracies = []
+    for fold, (train_index, val_index) in enumerate(kf.split(train_df), 1):
+        train_split = train_df.iloc[train_index]
+        val_split = train_df.iloc[val_index]
+        # Fit the Poisson regression model on the training split.
+        poisson_model = smf.glm(
+            formula=formula, data=train_split, family=sm.families.Poisson()
+        ).fit(maxiter=10)
+        # Predict on training and validation splits.
+        train_preds = poisson_model.predict(train_split)
+        val_preds = poisson_model.predict(val_split)
+        # Round the predictions to the nearest integer.
+        train_preds_rounded = np.round(train_preds).astype(int)
+        val_preds_rounded = np.round(val_preds).astype(int)
+        train_split['goals'] = train_split['goals'].astype(int)
+        val_split['goals'] = val_split['goals'].astype(int)
+        # Calculate accuracy for training and validation sets.
+        train_acc = skm.accuracy_score(train_split['goals'], train_preds_rounded)
+        val_acc = skm.accuracy_score(val_split['goals'], val_preds_rounded)
+        train_accuracies.append(train_acc)
+        val_accuracies.append(val_acc)
+        # Log the model summary for the current fold.
+        _LOG.log(logging_level, f"Training fold {fold}", poisson_model.summary())
+    # Visualize training and validation accuracies over iterations.
+    plt.figure(figsize=(10, 6))
+    plt.plot(range(n_splits), train_accuracies, label='Training Accuracy')
+    plt.plot(range(n_splits), val_accuracies, label='Validation Accuracy')
+    plt.xlabel('Iteration')
+    plt.ylabel('Accuracy')
+    plt.title('Training and Validation Accuracy over Iterations')
+    plt.legend()
+    plt.show()
+    # Fit the model on the entire training dataset.
+    final_model = smf.glm(
         formula=formula, data=train_df, family=sm.families.Poisson()
     ).fit(maxiter=10)
-    _LOG.log(logging_level,
-             poisson_model.summary()
-            )
+    # Visualize the coefficients.
+    coeffs = poisson_model.params
+    plt.figure(figsize=(10, 6))
+    coeffs.plot(kind='bar')
+    plt.title('Model Coefficients')
+    plt.xlabel('Features')
+    plt.ylabel('Coefficient Value')
+    plt.show()
+    # Plot the residuals.
+    residuals = poisson_model.resid_deviance
+    plt.figure(figsize=(10, 6))
+    plt.hist(residuals, bins=30, edgecolor='k', alpha=0.7)
+    plt.title('Distribution of Residuals')
+    plt.xlabel('Residuals')
+    plt.ylabel('Frequency')
+    plt.show()
+    # Save the trained model. 
+    local_model_path = 'poisson_model.pkl'
+    with open(local_model_path, 'wb') as f:
+        pickle.dump(final_model, f)
+    # Define the S3 bucket and path.
+    bucket_name = 'cryptokaizen-data-test'
+    s3_model_path = 'kaizen_ai/soccer_prediction/models/poisson_model.pkl'
+    # Upload the model to S3.
+    s3 = haws.get_service_resource(aws_profile = 'ck', service_name = 's3')
+    s3.Bucket(bucket_name).upload_file(local_model_path, s3_model_path)
     # Return the model.
-    return poisson_model
+    return final_model
 
 def generate_predictions(model: GLMResults, test_df: pd.DataFrame, **kwargs: Any) -> pd.DataFrame():
     """
@@ -318,6 +397,13 @@ def evaluate_model_predictions(test_df: pd.DataFrame()) -> None:
     test_df["Lambda_AS"] = test_df["Lambda_AS"].round().astype(int)
     # Display the test set with probabilities.
     print(test_df.head())
+    # Count each type of class prediction.
+    predicted_counts = test_df["predicted_outcome"].value_counts()
+    actual_counts = test_df["actual_outcome"].value_counts()
+    print("Counts of each type of class prediction:")
+    print(predicted_counts)
+    print("Counts of each type of actual outcomes:")
+    print(actual_counts)
     # Return the final dataframe
     return test_df
 
@@ -335,6 +421,8 @@ def main():
     # Access the dataframes directly from the dictionary.
     ISDBv1_df = dataframes.get("ISDBv1_df")
     ISDBv2_df = dataframes.get("ISDBv2_df")
+    print("Stats ISDBv2")
+    compute_stats(ISDBv2_df)
     # Preprocess the selected dataframe (ISDBv2_df).
     preprocessed_df = preprocess_data(ISDBv2_df)
     # Create a train-test split. 
@@ -342,26 +430,157 @@ def main():
     # Access the test/train dataframes directly from the dictionary.
     train_df = dataframes_test_train.get("train_df")
     test_df = dataframes_test_train.get("test_df")
+    print("\n\n\nStats training set")
+    compute_stats(train_df)
+    print("\n\n\nStats testing set")
+    compute_stats(test_df)
+    # Save train and test dataframes to S3.
+    s3_path = "kaizen_ai/soccer_predictions/model_input/glm_poisson"
+    rasoprut.save_data_to_s3(df = train_df, 
+                             bucket_name = bucket, 
+                             s3_path = s3_path, 
+                             file_name = "train")
+    rasoprut.save_data_to_s3(df = test_df, 
+                             bucket_name = bucket, 
+                             s3_path = s3_path, 
+                             file_name = "test")
     # Unravel the datasets.
     unraveled_train_df = unravel_df(train_df)
     unraveled_test_df = unravel_df(test_df)
     # Create a representative sample of train set and define sample size.
-    sample_size = int(0.2 * len(unraveled_train_df))
+    #sample_size = int(0.2 * len(unraveled_train_df))
     # Perform representative sampling on the training set.
-    sampled_train_df = representative_sample(df = unraveled_train_df, sample_size = sample_size)
+    #sampled_train_df = representative_sample(df = unraveled_train_df, sample_size = sample_size)
+    #rasoprut.save_data_to_s3(df = sampled_train_df, 
+    #                         bucket_name = bucket, 
+    #                         s3_path = s3_path, 
+    #                         file_name = "sampled_train")
     # Train Poisson Regression model.
+    sampled_train_df = unraveled_train_df.sample(n = 40000, random_state = 42)
     poisson_model = train_model(sampled_train_df)
     # Generate predictions on test set.
     predictions_df = generate_predictions(poisson_model, unraveled_test_df)
     # Evaluate model predictions.
     final_df = evaluate_model_predictions(predictions_df)
-    # Save dataframe to S3.
-    final_df.to_csv("glm_predictions.csv", index = False)
-    save_path = "kaizen_ai/soccer_predictions/model_output/glm_predictions.csv"
-    s3 = haws.get_service_resource(aws_profile="ck", service_name="s3")
-    # Upload the file to S3
-    s3.Bucket(bucket).upload_file('glm_predictions.csv', save_path)
+    # Save dataframe predictions to S3.
+    s3_path_predictions = "kaizen_ai/soccer_predictions/model_output/glm_poisson"
+    rasoprut.save_data_to_s3(df = final_df, 
+                             bucket_name = bucket, 
+                             s3_path = s3_path_predictions, 
+                             file_name = "glm_predictions" )
 
 
 # %%
 main()
+
+
+# %% [markdown]
+# ### MLE Outcomes
+
+# %%
+def get_predictions_data( 
+                    bucket_name: str,
+                    dataset_path: str,
+                    ) -> Dict:
+    """
+    Download and load the GLM Poisson Regression Predictions data.
+    
+    :param bucket_name: S3 bucket name.
+    :param dataset_path: Dataset path. 
+    :return: dataset with predictions.
+    """
+        # Initialize a session.
+    s3 = haws.get_service_resource(aws_profile="ck", service_name="s3")
+    # Retrieve the CSV file from S3.
+    obj = s3.Object(bucket_name, dataset_path)
+    data = obj.get()["Body"].read().decode("utf-8")
+    # Load the CSV file content into a pandas DataFrame.
+    glm_predictions = pd.read_csv(io.StringIO(data))
+    # Return the dataframe.
+    return glm_predictions
+
+# Define the S3 location.
+bucket_name = "cryptokaizen-data-test"
+s3_file_path = "kaizen_ai/soccer_predictions/model_output/glm_predictions.csv" 
+glm_predictions = get_predictions_data(bucket_name=bucket_name, dataset_path=s3_file_path)
+
+
+# %%
+def calculate_match_outcome_probabilities(row: pd.Series) -> pd.Series:
+    """
+    Function to calculate match outcome probabilities using Poisson distribution.
+    
+    :param row: Input row containing "Lambda_HS" (expected home goals) and "Lambda_AS" (expected away goals).
+    :return: A Pandas Series with probabilities of match outcomes and the predicted outcome.
+    """
+    # Define maximum number of goals for calculation.
+    max_goals = 10  
+    # Calculate Poisson probabilities for the home team.
+    home_goals_probs = [np.exp(-row["Lambda_HS"]) * row["Lambda_HS"] ** i / np.math.factorial(i) 
+                        for i in range(max_goals)]
+    # Calculate Poisson probabilities for the away team.
+    away_goals_probs = [np.exp(-row["Lambda_AS"]) * row["Lambda_AS"] ** i / np.math.factorial(i) 
+                        for i in range(max_goals)]
+    # Initialize the results matrix.
+    results = np.zeros((max_goals, max_goals))
+    # Compute the joint probability distribution.
+    for i in range(max_goals):
+        for j in range(max_goals):
+            results[i, j] = home_goals_probs[i] * away_goals_probs[j]
+    # Determine the most likely outcome.
+    max_index = np.unravel_index(np.argmax(results, axis=None), results.shape)
+    max_prob = results[max_index]
+    # Determine the predicted outcome based on the most likely result
+    if max_index[0] > max_index[1]:
+        predicted_outcome = "home_win"
+    elif max_index[0] < max_index[1]:
+        predicted_outcome = "away_win"
+    else:
+        predicted_outcome = "draw"
+    # Create a series with the calculated probabilities and predicted outcome
+    probabilities = pd.Series({
+        "prob_mle": max_prob,
+        "predicted_mle_outcome": predicted_outcome
+    })   
+    return probabilities
+
+def evaluate_mle_predictions(test_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Evaluate the performance of the model.
+    
+    :param test_df: Test DataFrame with the model predictions.
+    :return: Test DataFrame with additional columns for calculated probabilities and predictions.
+    """
+    # Apply the function to the test set.
+    probabilities = test_df.apply(calculate_match_outcome_probabilities, axis=1)
+    test_df = pd.concat([test_df, probabilities], axis=1)
+    # Calculate accuracy.
+    accuracy = skm.accuracy_score(test_df["actual_outcome"], test_df["predicted_mle_outcome"])
+    print("Model Accuracy on Test Set:", accuracy)
+    # Display the test set with probabilities.
+    print(test_df.head())
+    # Count each type of class prediction.
+    predicted_counts = test_df["predicted_mle_outcome"].value_counts()
+    actual_counts = test_df["actual_outcome"].value_counts()
+    print("Counts of each type of class prediction (predicted_mle_outcome):")
+    print(predicted_counts)
+    print("Counts of each type of actual outcomes:")
+    print(actual_counts)
+    # Return the final DataFrame.
+    return test_df
+
+def get_mle_performance() -> None:
+    # Define the S3 location.
+    bucket_name = "cryptokaizen-data-test"
+    s3_file_path = "kaizen_ai/soccer_predictions/model_output/glm_predictions.csv" 
+    glm_predictions = get_predictions_data(bucket_name=bucket_name, dataset_path=s3_file_path)
+    mle_predictions = evaluate_mle_predictions(glm_predictions)
+    s3_path_predictions = "kaizen_ai/soccer_predictions/model_output/mle"
+    rasoprut.save_data_to_s3(df = mle_predictions, 
+                             bucket_name = bucket_name, 
+                             s3_path = s3_path_predictions, 
+                             file_name = "mle_predictions" )
+
+
+# %%
+get_mle_performance()
