@@ -538,8 +538,12 @@ def _get_aws_file_text(key_to_env_var: Dict[str, str]) -> List[str]:
     """
     Generate text from env vars for AWS files.
 
-    E.g.: ``` aws_access_key_id=*** aws_secret_access_key=***
-    aws_s3_bucket=*** ```
+    E.g.: 
+    ```
+    aws_access_key_id=***
+    aws_secret_access_key=***
+    aws_s3_bucket=***
+    ```
 
     :param key_to_env_var: aws settings names to the corresponding env
         var names mapping
