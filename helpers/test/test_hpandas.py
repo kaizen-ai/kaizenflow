@@ -4045,5 +4045,275 @@ class Test_CheckSummary(hunitest.TestCase):
         self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
 
 
+        return dfs, weights
+
+    def helper2(self) -> Tuple[Dict[str, pd.DataFrame], pd.DataFrame]:
+        """
+        Create artificial data with intersecting indices for unit tests .
+        """
+        columns = ["A", "B"]
+        idx1 = [0, 1]
+        idx2 = [0, 2]
+        data1 = [[1, 2], [3, 4]]
+        data2 = [[5, 6], [7, 8]]
+        df1 = pd.DataFrame(data1, columns=columns, index=idx1)
+        df2 = pd.DataFrame(data2, columns=columns, index=idx2)
+        dfs = {"df1": df1, "df2": df2}
+        weights_data = {"w1": [0.2, 0.8], "w2": [0.5, 0.5]}
+        idx3 = dfs.keys()
+        weights = pd.DataFrame(weights_data, index=idx3)
+        return dfs, weights
+
+    def helper3(self) -> Tuple[Dict[str, pd.DataFrame], pd.DataFrame]:
+        """
+        Create artificial data with indices mismatched for unit tests .
+        """
+        columns = ["A", "B"]
+        idx1 = [0, 1]
+        idx2 = [2, 3]
+        data1 = [[1, 2], [3, 4]]
+        data2 = [[5, 6], [7, 8]]
+        df1 = pd.DataFrame(data1, columns=columns, index=idx1)
+        df2 = pd.DataFrame(data2, columns=columns, index=idx2)
+        dfs = {"df1": df1, "df2": df2}
+        weights_data = {"w1": [0.2, 0.8]}
+        idx3 = dfs.keys()
+        weights = pd.DataFrame(weights_data, index=idx3)
+        return dfs, weights
+
+    def test_compute_weighted_sum1(self) -> None:
+        """
+        Check that weighted sums are computed correctly for index
+        `mode="assert_equal"`.
+        """
+        # Get test data.
+        dfs, weights = self.helper1()
+        mode = "assert_equal"
+        weighted_sums = hpandas.compute_weighted_sum(
+            dfs=dfs, weights=weights, index_mode=mode
+        )
+        # Define expected values.
+        expected_length = 2
+        expected_column_names = ["A", "B"]
+        expected_values = {
+            "w1": r"""
+            # df=
+            index=[0, 1]
+            columns=A,B
+            shape=(2, 2)
+                 A    B
+            0  4.2  5.2
+            1  6.2  7.2
+            """
+        }
+        for key, expected_signature in expected_values.items():
+            actual_df = weighted_sums[key]
+            self.check_df_output(
+                actual_df,
+                expected_length,
+                expected_column_names,
+                expected_column_unique_values=None,
+                expected_signature=expected_signature,
+            )
+
+    def test_compute_weighted_sum2(self) -> None:
+        """
+        Check that weighted sums are computed correctly for index
+        `mode="intersect"`.
+        """
+        # Get test data.
+        dfs, weights = self.helper2()
+        mode = "intersect"
+        weighted_sums = hpandas.compute_weighted_sum(
+            dfs=dfs, weights=weights, index_mode=mode
+        )
+        # Define expected values.
+        expected_length = 3
+        expected_column_names = ["A", "B"]
+        expected_values = {
+            "w1": r"""
+            # df=
+            index=[0, 2]
+            columns=A,B
+            shape=(3, 2)
+                A    B
+            0  4.2  5.2
+            1  NaN  NaN
+            2  NaN  NaN
+            """,
+            "w2": r"""
+            # df=
+            index=[0, 2]
+            columns=A,B
+            shape=(3, 2)
+                A    B
+            0  3.0  4.0
+            1  NaN  NaN
+            2  NaN  NaN
+            """,
+        }
+        for key, expected_signature in expected_values.items():
+            actual_df = weighted_sums[key]
+            self.check_df_output(
+                actual_df,
+                expected_length,
+                expected_column_names,
+                expected_column_unique_values=None,
+                expected_signature=expected_signature,
+            )
+
+    def test_compute_weighted_sum3(self) -> None:
+        """
+        Check that weighted sums are computed correctly for index `mode
+        ="leave_unchanged"`.
+        """
+        # Get test data.
+        dfs, weights = self.helper3()
+        mode = "leave_unchanged"
+        weighted_sums = hpandas.compute_weighted_sum(
+            dfs=dfs, weights=weights, index_mode=mode
+        )
+        # Define expected values.
+        expected_length = 4
+        expected_column_names = ["A", "B"]
+        expected_values = {
+            "w1": r"""# df=
+                index=[0, 3]
+                columns=A,B
+                shape=(4, 2)
+                   A   B
+                0 NaN NaN
+                1 NaN NaN
+                2 NaN NaN
+                3 NaN NaN
+                """
+        }
+        for key, expected_signature in expected_values.items():
+            actual_df = weighted_sums[key]
+            self.check_df_output(
+                actual_df,
+                expected_length,
+                expected_column_names,
+                expected_column_unique_values=None,
+                expected_signature=expected_signature,
+            )
 
 
+# #############################################################################
+
+class Test_compute_weighted_sum(hunitest.TestCase):
+    
+    @staticmethod
+    def helper(index1: List[int], index2: List[int]) -> Dict[str, pd.DataFrame]:
+        data1 = {"A": [1, 2], "B": [3, 4]}
+        df1 = pd.DataFrame(data1, index=index1)
+        data2 = {"A": [5, 6], "B": [7, 8]}
+        df2 = pd.DataFrame(data2, index=index2)
+        dfs = {"df1": df1, "df2": df2}
+        return dfs
+    
+    def test_compute_weighted_sum1(self) -> None:
+        """
+        Check that weighted sums are computed correctly.
+        
+        index_mode = "assert_equal".
+        """
+        # Create test data.
+        index1 = [0, 1]
+        index2 = [0, 1]
+        #
+        dfs = self.helper(index1, index2)
+        weights_data = {"w1": [0.2, 0.5]}
+        weights = pd.DataFrame(weights_data, index=dfs.keys())
+        index_mode = "assert_equal"
+        #
+        weighted_sums = hpandas.compute_weighted_sum(
+            dfs=dfs, weights=weights, index_mode=index_mode
+        )
+        actual_signature = str(weighted_sums)
+        # Set expected values.
+        expected_signature = r"""
+        {'w1': A B
+        0 2.7 4.1
+        1 3.4 4.8}
+        """
+        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)    
+
+    def test_compute_weighted_sum2(self) -> None:
+        """
+        Check that weighted sums are computed correctly.
+        
+        index_mode = "intersect"
+        """
+        # Create test data.
+        index1 = [0, 1]
+        index2 = [0, 2]
+        # 
+        dfs = self.helper(index1, index2)
+        # 
+        weights_data = {"w1": [0.2, 0.8], "w2": [0.5, 0.5]}
+        weights = pd.DataFrame(weights_data, index=dfs.keys())
+        index_mode = "intersect"
+        # 
+        weighted_sums = hpandas.compute_weighted_sum(dfs=dfs, weights=weights, index_mode=index_mode)
+        actual_signature = str(weighted_sums)
+        # Set expected values.
+        expected_signature = r"""
+        {'w1': A B
+        0 4.2 6.2
+        1 NaN NaN
+        2 NaN NaN, 'w2': A B
+        0 3.0 5.0
+        1 NaN NaN
+        2 NaN NaN}
+        """
+        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)    
+
+    def test_compute_weighted_sum3(self) -> None:
+        """
+        Check that weighted sums are computed correctly.
+        
+        index_mode = "leave_unchanged"
+        """
+        # Create test data.
+        index1 = [0, 1]
+        index2 = [2, 3]
+        # 
+        dfs = self.helper(index1, index2)
+        # 
+        weights_data = {"w1": [0.2, 0.8]}
+        weights = pd.DataFrame(weights_data, index=dfs.keys())
+        index_mode = "leave_unchanged"
+        # 
+        weighted_sums = hpandas.compute_weighted_sum(dfs=dfs, weights=weights, index_mode=index_mode)
+        actual_signature = str(weighted_sums)
+        # Set expected values.
+        expected_signature = r"""
+        {'w1': A B
+         0 NaN NaN
+         1 NaN NaN
+         2 NaN NaN
+         3 NaN NaN}
+        """     
+        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)    
+        
+    def test_compute_weighted_sum4(self) -> None:
+        """
+        Check that an assertion is raised if input is an empty dict.
+        """
+        dfs = {}
+        weights_data = {"w1": [0.2, 0.8]}
+        weights = pd.DataFrame(weights_data)
+        index_mode = "assert_equal"
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.compute_weighted_sum(
+                dfs=dfs, weights=weights, index_mode=index_mode
+            )
+        actual_signature = str(cm.exception)
+        # Check.
+        expected_signature = r"""
+        * Failed assertion *
+        cond={}
+        dictionary of dfs must be nonempty
+        """
+        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)    
