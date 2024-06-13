@@ -3528,8 +3528,7 @@ class Test_dassert_strictly_increasing_index(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        Check that an assert is raised for a not monotonically increasing
-        index.
+        Check that an assert is raised for a not monotonically increasing index.
         """
         # Build test dataframe.
         idx = [
@@ -3965,19 +3964,25 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
 
         Example of dataframe returned when `index_is_datetime = True`:
 
-        ```                                     column1     column2
-        index   timestamp index1  2022-01-01 21:00:00+00:00   -0.122140
-        -1.949431         2022-01-01 21:10:00+00:00   1.303778
-        -0.288235 index2  2022-01-01 21:00:00+00:00   1.237079
-        1.168012         2022-01-01 21:10:00+00:00   1.333692
-        1.708455 ```
+        ```
+                                            column1     column2
+        index   timestamp
+        index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
+                2022-01-01 21:10:00+00:00   1.303778    -0.288235
+        index2  2022-01-01 21:00:00+00:00   1.237079    1.168012
+                2022-01-01 21:10:00+00:00   1.333692    1.708455
+        ```
 
         Example of dataframe returned when `index_is_datetime = False`:
 
-        ```                     column1     column2 index   timestamp
-        index1  string1     -0.122140   -1.949431         string2
-        1.303778    -0.288235 index2  string1     1.237079    1.168012
-        string2     1.333692    1.708455 ```
+        ```
+                            column1     column2
+        index   timestamp
+        index1  string1     -0.122140   -1.949431
+                string2     1.303778    -0.288235
+        index2  string1     1.237079    1.168012
+                string2     1.333692    1.708455
+        ```
         """
         if index_is_datetime:
             index_inner = [
@@ -4115,8 +4120,8 @@ class Test_CheckSummary(hunitest.TestCase):
 
 # #############################################################################
 
-
 class Test_compute_weighted_sum(hunitest.TestCase):
+    
     @staticmethod
     def helper(index1: List[int], index2: List[int]) -> Dict[str, pd.DataFrame]:
         data1 = {"A": [1, 2], "B": [3, 4]}
@@ -4125,11 +4130,11 @@ class Test_compute_weighted_sum(hunitest.TestCase):
         df2 = pd.DataFrame(data2, index=index2)
         dfs = {"df1": df1, "df2": df2}
         return dfs
-
+    
     def test_compute_weighted_sum1(self) -> None:
         """
         Check that weighted sums are computed correctly.
-
+        
         index_mode = "assert_equal".
         """
         # Create test data.
@@ -4137,7 +4142,7 @@ class Test_compute_weighted_sum(hunitest.TestCase):
         index2 = [0, 1]
         #
         dfs = self.helper(index1, index2)
-        weights_data = {"w1": [0.1, 0.5]}
+        weights_data = {"w1": [0.2, 0.5]}
         weights = pd.DataFrame(weights_data, index=dfs.keys())
         index_mode = "assert_equal"
         #
@@ -4148,30 +4153,28 @@ class Test_compute_weighted_sum(hunitest.TestCase):
         # Set expected values.
         expected_signature = r"""
         {'w1': A B
-        0 2.6 3.8
-        1 3.2 4.4}
+        0 2.7 4.1
+        1 3.4 4.8}
         """
-        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)
+        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)    
 
     def test_compute_weighted_sum2(self) -> None:
         """
         Check that weighted sums are computed correctly.
-
+        
         index_mode = "intersect"
         """
         # Create test data.
         index1 = [0, 1]
         index2 = [0, 2]
-        #
+        # 
         dfs = self.helper(index1, index2)
-        #
+        # 
         weights_data = {"w1": [0.2, 0.8], "w2": [0.5, 0.5]}
         weights = pd.DataFrame(weights_data, index=dfs.keys())
         index_mode = "intersect"
-        #
-        weighted_sums = hpandas.compute_weighted_sum(
-            dfs=dfs, weights=weights, index_mode=index_mode
-        )
+        # 
+        weighted_sums = hpandas.compute_weighted_sum(dfs=dfs, weights=weights, index_mode=index_mode)
         actual_signature = str(weighted_sums)
         # Set expected values.
         expected_signature = r"""
@@ -4183,27 +4186,25 @@ class Test_compute_weighted_sum(hunitest.TestCase):
         1 NaN NaN
         2 NaN NaN}
         """
-        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)
+        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)    
 
     def test_compute_weighted_sum3(self) -> None:
         """
         Check that weighted sums are computed correctly.
-
+        
         index_mode = "leave_unchanged"
         """
         # Create test data.
         index1 = [0, 1]
         index2 = [2, 3]
-        #
+        # 
         dfs = self.helper(index1, index2)
-        #
+        # 
         weights_data = {"w1": [0.2, 0.8]}
         weights = pd.DataFrame(weights_data, index=dfs.keys())
         index_mode = "leave_unchanged"
-        #
-        weighted_sums = hpandas.compute_weighted_sum(
-            dfs=dfs, weights=weights, index_mode=index_mode
-        )
+        # 
+        weighted_sums = hpandas.compute_weighted_sum(dfs=dfs, weights=weights, index_mode=index_mode)
         actual_signature = str(weighted_sums)
         # Set expected values.
         expected_signature = r"""
@@ -4212,9 +4213,9 @@ class Test_compute_weighted_sum(hunitest.TestCase):
          1 NaN NaN
          2 NaN NaN
          3 NaN NaN}
-        """
-        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)
-
+        """     
+        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)    
+        
     def test_compute_weighted_sum4(self) -> None:
         """
         Check that an assertion is raised if input is an empty dict.
@@ -4234,4 +4235,4 @@ class Test_compute_weighted_sum(hunitest.TestCase):
         cond={}
         dictionary of dfs must be nonempty
         """
-        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)
+        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)    
