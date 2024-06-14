@@ -356,28 +356,28 @@ class Test_get_s3_bucket_from_stage(hunitest.TestCase):
         """
         Check for a valid stage.
         """
-        #Define arguments
+        # Define arguments
         stage = "test"
-        #Run
+        # Run
         hs3.get_s3_bucket_from_stage(stage)
 
     def test2(self) -> None:
         """
         Check for a valid stage and optional suffix.
         """
-        #Define arguments
+        # Define arguments
         stage = "preprod"
         suffix = "suffix_test"
-        #Run
-        hs3.get_s3_bucket_from_stage(stage,add_suffix=suffix)
+        # Run
+        hs3.get_s3_bucket_from_stage(stage, add_suffix=suffix)
 
     def test3(self) -> None:
         """
         Check Invalid stage.
         """
-        #Define arguments
+        # Define arguments
         stage = "Invalid"
-        #Run
+        # Run
         with self.assertRaises(AssertionError) as cm:
             hs3.get_s3_bucket_from_stage(stage)
         actual = str(cm.exception)
@@ -385,7 +385,7 @@ class Test_get_s3_bucket_from_stage(hunitest.TestCase):
             * Failed assertion *
             'Invalid' in '{'test': 'cryptokaizen-data-test', 'preprod': 'cryptokaizen-data.preprod', 'prod': 'cryptokaizen-data'}'
              """
-        self.assert_equal(actual,expected,fuzzy_match=True)
-    
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
 
 # #############################################################################
