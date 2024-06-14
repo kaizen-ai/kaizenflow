@@ -178,8 +178,8 @@ class Test_run_master_notebooks(dsnrn.Test_Run_Notebook_TestCase):
     @pytest.mark.superslow("~50 seconds.")
     def test_run_master_system_run_debugger(self) -> None:
         """
-        Run `oms/notebooks/Master_system_run_debugger.ipynb` notebook end-to-
-        end.
+        Run `oms/notebooks/Master_system_run_debugger.ipynb` notebook 
+        end-to-end.
         """
         notebook_path = "oms/notebooks/Master_system_run_debugger.ipynb"
         config_builder = "oms.test.test_notebooks.build_test_master_system_run_debugger_configs"
