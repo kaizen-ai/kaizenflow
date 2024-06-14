@@ -132,8 +132,7 @@ def build_test_master_system_run_debugger_configs() -> cconfig.ConfigList:
     bar_timestamp = "2023-07-13 10:20:00-04:00"
     asset_id = 2484635488
     columns = ["close", "feature"]
-
-    return oexancon.build_master_system_run_debugger_configs(
+    config_list = oexancon.build_master_system_run_debugger_configs(
         dst_root_dir,
         dag_builder_name,
         run_mode,
@@ -145,6 +144,7 @@ def build_test_master_system_run_debugger_configs() -> cconfig.ConfigList:
         asset_id,
         columns=columns,
     )
+    return config_list
 
 
 class Test_run_master_notebooks(dsnrn.Test_Run_Notebook_TestCase):
