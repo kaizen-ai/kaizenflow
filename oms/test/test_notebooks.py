@@ -118,6 +118,35 @@ def build_test_broker_portfolio_reconciliation_config(
     return config_list
 
 
+def build_test_master_system_run_debugger_configs() -> cconfig.ConfigList:
+    """
+    Default config builder for testing the Master_system_run_debugger notebook
+    """
+    dst_root_dir = "/shared_data/ecs/preprod/system_reconciliation"
+    dag_builder_name = "C5b"
+    run_mode = "paper_trading"
+    start_timestamp_as_str = "20230713_131000"
+    end_timestamp_as_str = "20230714_130500"
+    mode = "scheduled"
+    node_name = "predict.9.process_forecasts"
+    bar_timestamp = "2023-07-13 10:20:00-04:00"
+    asset_id = 2484635488
+    columns = ["close", "feature"]
+
+    return oexancon.build_master_system_run_debugger_configs(
+        dst_root_dir,
+        dag_builder_name,
+        run_mode,
+        start_timestamp_as_str,
+        end_timestamp_as_str,
+        mode,
+        node_name,
+        bar_timestamp,
+        asset_id,
+        columns=columns,
+    )
+
+
 class Test_run_master_notebooks(dsnrn.Test_Run_Notebook_TestCase):
     @pytest.mark.superslow("~125 seconds.")
     @pytest.mark.skipif(
@@ -143,6 +172,17 @@ class Test_run_master_notebooks(dsnrn.Test_Run_Notebook_TestCase):
         notebook_path = "oms/notebooks/Master_broker_debugging.ipynb"
         config_builder = (
             "oms.test.test_notebooks.build_test_broker_debugging_config"
+        )
+        self._run_notebook(notebook_path, config_builder)
+
+    @pytest.mark.superslow("~50 seconds.")
+    def test_run_master_system_run_debugger(self) -> None:
+        """
+        Run `oms/notebooks/Master_system_run_debugger.ipynb` notebook end-to-end.
+        """
+        notebook_path = "oms/notebooks/Master_system_run_debugger.ipynb"
+        config_builder = (
+            "oms.test.test_notebooks.build_test_master_system_run_debugger_configs"
         )
         self._run_notebook(notebook_path, config_builder)
 
