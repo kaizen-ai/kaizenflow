@@ -354,7 +354,7 @@ class TestGenerateAwsFiles(hunitest.TestCase):
 class Test_get_s3_bucket_from_stage(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Check for a valid stage
+        Check for a valid stage.
         """
         #Define arguments
         stage = "test"
@@ -363,25 +363,25 @@ class Test_get_s3_bucket_from_stage(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        Check for valid stage and optional suffix
+        Check for a valid stage and optional suffix.
         """
         #Define arguments
         stage = "preprod"
-        suffix= "suffix_test"
+        suffix = "suffix_test"
         #Run
         hs3.get_s3_bucket_from_stage(stage,add_suffix=suffix)
 
     def test3(self) -> None:
         """
-        Check Invalid stage
+        Check Invalid stage.
         """
         #Define arguments
-        stage="Invalid"
+        stage = "Invalid"
         #Run
         with self.assertRaises(AssertionError) as cm:
             hs3.get_s3_bucket_from_stage(stage)
         actual = str(cm.exception)
-        expected= r"""
+        expected = r"""
             * Failed assertion *
             'Invalid' in '{'test': 'cryptokaizen-data-test', 'preprod': 'cryptokaizen-data.preprod', 'prod': 'cryptokaizen-data'}'
              """
