@@ -120,7 +120,7 @@ def build_test_broker_portfolio_reconciliation_config(
 
 def build_test_master_system_run_debugger_configs() -> cconfig.ConfigList:
     """
-    Default config builder for testing the Master_system_run_debugger notebook
+    Default config builder for testing the Master_system_run_debugger notebook.
     """
     dst_root_dir = "/shared_data/ecs/preprod/system_reconciliation"
     dag_builder_name = "C5b"
@@ -178,12 +178,11 @@ class Test_run_master_notebooks(dsnrn.Test_Run_Notebook_TestCase):
     @pytest.mark.superslow("~50 seconds.")
     def test_run_master_system_run_debugger(self) -> None:
         """
-        Run `oms/notebooks/Master_system_run_debugger.ipynb` notebook end-to-end.
+        Run `oms/notebooks/Master_system_run_debugger.ipynb` notebook end-to-
+        end.
         """
         notebook_path = "oms/notebooks/Master_system_run_debugger.ipynb"
-        config_builder = (
-            "oms.test.test_notebooks.build_test_master_system_run_debugger_configs"
-        )
+        config_builder = "oms.test.test_notebooks.build_test_master_system_run_debugger_configs"
         self._run_notebook(notebook_path, config_builder)
 
     @pytest.mark.superslow("~90 seconds.")
