@@ -177,12 +177,13 @@ def train_model(
 
     :param train_df: Input training set.
     :param model: Model object that implements fit() and predict().
-    :param formula: Optional formula for models that require it.
+    :param hyperparameters: dictionary of hyperparameters for models.
+    :param target_columns: target column/variable of interest.
     :param logging_level: Logging level for the model summary.
     :param n_splits: Number of splits for cross-validation.
     :return: Trained model.
     """
-    # Configure logging
+    # Configure logging.
     logging.basicConfig(level=logging_level)
     train_accuracies = []
     val_accuracies = []
@@ -190,7 +191,7 @@ def train_model(
     val_mae = []
     model.hyperparams = hyperparameters
     sample_sizes = kwargs.get("sample_sizes")
-    # Split the data into training and validation sets
+    # Split the data into training and validation sets.
     for sample_size in sample_sizes:
         # Sample the training data.
         sample_train_data = train_df.sample(n=sample_size, random_state=42)
@@ -201,11 +202,11 @@ def train_model(
         X_train = train_data.drop(target_column, axis=1)
         y_val = val_data[target_column]
         X_val = val_data.drop(target_column, axis=1)
-        # Fit the Poisson regression model on the sampled training data
+        # Fit the Poisson regression model on the sampled training data.
         model.fit(X_train, y_train)
         train_preds = model.predict(X_train)
         val_preds = model.predict(X_val)
-        # Predict on training and validation sets
+        # Predict on training and validation sets.
         train_preds_rounded = np.round(train_preds).astype(int)
         val_preds_rounded = np.round(val_preds).astype(int)
         y_train = y_train.astype(int)
@@ -214,7 +215,7 @@ def train_model(
         val_acc = skm.accuracy_score(y_val, val_preds_rounded)
         train_accuracies.append(train_acc)
         val_accuracies.append(val_acc)
-        # Calculate MAE for training and validation sets
+        # Calculate MAE for training and validation sets.
         train_mae_value = skm.mean_absolute_error(y_train, train_preds)
         val_mae_value = skm.mean_absolute_error(y_val, val_preds)
         train_mae.append(train_mae_value)
@@ -237,6 +238,12 @@ def train_model(
         residuals=residuals,
         n_splits=len(sample_sizes),
     )
+    max_index = np.argmax(val_accuracies)
+    train_data = train_df.sample(n=sample_sizes[max_index], random_state=42)
+    y_train = train_data[target_column]
+    X_train = train_data.drop(target_column, axis=1)
+    # Fit the Poisson regression model on the sampled training data
+    model.fit(X_train, y_train)
     return model
 
 
