@@ -54,15 +54,20 @@ _LOG = logging.getLogger(__name__)
 
 # %%
 def calculate_match_outcome_and_probabilities(
-    df: pd.DataFrame, max_goals: int = 10
+    df: pd.DataFrame,
+    max_goals: int = 10,
+    apply_dixon_coles: bool = False,
+    rho: float = -0.2,
 ) -> pd.DataFrame:
     """
     Calculate match outcome probabilities for the entire DataFrame.
 
-    :param df: input DataFrame with predicted goals.
-    :param max_goals: maximum goals to considered for calculation the
-        probabilites.
-    :return: dataFrame with added probabilities for home win, away win,
+    :param df: Input DataFrame with predicted goals.
+    :param max_goals: Maximum goals to consider for calculating the
+        probabilities.
+    :param apply_dixon_coles: Flag to apply Dixon-Coles adjustment.
+    :param rho: Dixon-Coles adjustment parameter.
+    :return: DataFrame with added probabilities for home win, away win,
         and draw.
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
@@ -88,6 +93,10 @@ def calculate_match_outcome_and_probabilities(
     for i in range(max_goals):
         for j in range(max_goals):
             prob = home_goals_probs[i] * away_goals_probs[j]
+            if apply_dixon_coles:
+                prob *= dixon_coles_adjustment(
+                    i, j, df["Lambda_HS"], df["Lambda_AS"], rho
+                )
             prob_home_win += np.where(i > j, prob, 0)
             prob_away_win += np.where(i < j, prob, 0)
             prob_draw += np.where(i == j, prob, 0)
@@ -95,7 +104,6 @@ def calculate_match_outcome_and_probabilities(
     df["prob_home_win"] = prob_home_win
     df["prob_away_win"] = prob_away_win
     df["prob_draw"] = prob_draw
-    # Estimate the match outcome.
     # Predict the outcomes based on probabilities.
     df["predicted_outcome"] = np.where(
         df["prob_home_win"] > df["prob_away_win"],
@@ -165,6 +173,14 @@ def poisson_model(label_encode: bool = False):
     # Inverse transform.
     if label_encode:
         pipeline.named_steps["label_encoding"].inverse_transform(final_df)
+    # Save data to S3.
+    s3_path_predictions = "kaizen_ai/soccer_prediction/model_output/glm_poisson"
+    rasoprut.save_data_to_s3(
+        df=final_df,
+        bucket_name=bucket,
+        s3_path=s3_path_predictions,
+        file_name="glm_poisson_predictions",
+    )
 
 
 # %%
