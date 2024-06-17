@@ -185,3 +185,46 @@ def poisson_model(label_encode: bool = False):
 
 # %%
 poisson_model()
+
+# %%
+# Load predictions dataset.
+bucket = "cryptokaizen-data-test"
+dataset_path = "kaizen_ai/soccer_prediction/model_output/glm_poisson/"
+local_dir = "model_output/glm_poisson"
+# Download data from S3.
+rasoprut.download_data_from_s3(
+    bucket_name=bucket, dataset_path=dataset_path, local_path=local_dir, file_format = ".csv"
+)
+# Load the data from S3 into pandas dataframe objects.
+dataframes = rasoprut.load_data_to_dataframe(local_path=local_dir, file_format = ".csv", sep = ",")
+glm_poisson_prediction_df = dataframes["glm_poisson_predictions_df"]
+
+
+# Dixon-Coles predictions.
+def dixon_coles_adjustment(home_goals, away_goals, mu_home, mu_away, rho):
+    """
+    Apply Dixon-Coles adjustment for low-scoring outcomes.
+    
+    :param home_goals: Number of goals scored by home team.
+    :param away_goals: Number of goals scored by away team.
+    :param mu_home: Expected goals for home team.
+    :param mu_away: Expected goals for away team.
+    :param rho: Dixon-Coles adjustment parameter.
+    :return: Adjustment factor.
+    """
+    # Implement Dixon-Coles adjustment.
+    if home_goals <1 and away_goals <1:
+        if home_goals == away_goals:
+            adjustment = 1 + rho
+        elif home_goals != away_goals:
+            adjustment = 1 - rho
+    else:
+        adjustment = 1
+    return adjustment
+
+
+final_df_with_dixon = calculate_match_outcome_and_probabilities(glm_poisson_prediction_df, max_goals=10, apply_dixon_coles=True, rho=0.13)
+# Evaluate model.
+rasoprut.evaluate_model_predictions(
+        final_df_with_dixon["actual_outcome"], final_df_with_dixon["predicted_outcome"]
+    )
