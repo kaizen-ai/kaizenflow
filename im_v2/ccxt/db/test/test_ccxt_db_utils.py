@@ -71,7 +71,7 @@ class TestPopulateExchangeCurrencyTables(imvcddbut.TestImDbHelper):
         imvccdbut.populate_exchange_currency_tables(self.connection)
         # Verify that the exchange names table is populated correctly.
         # Check the content of the table.
-        query = f"SELECT * FROM exchange_currency"
+        query = f"SELECT * FROM exchange_name"
         actual = hsql.execute_query_to_df(self.connection, query)
         # Define expected values.
         expected_length = 1
