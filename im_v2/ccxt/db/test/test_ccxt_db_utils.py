@@ -66,13 +66,13 @@ class TestPopulateExchangeCurrencyTables(imvcddbut.TestImDbHelper):
 
     def test1(self) -> None:
         """
-        Check that the exchange_currency and currency_pair tables are
-        populated.
+        Verify that the exchange_currency and currency_pair tables are
+        populated correctly.
         """
         # Run test.
         imvccdbut.populate_exchange_currency_tables(self.connection)
         #
-        # Check that the exchange_currency table is populated.
+        # Verify that the exchange_currency table is populated correctly.
         #
         # Check the content of the table.
         query = f"SELECT * FROM exchange_currency"
@@ -97,7 +97,7 @@ class TestPopulateExchangeCurrencyTables(imvcddbut.TestImDbHelper):
             expected_signature,
         )
         #
-        # Check that the currency_pair table is populated.
+        # Verify that the currency_pair table is populated correctly.
         #
         # Check the content of the table.
         query = f"SELECT * FROM currency_pair"
