@@ -20,6 +20,10 @@ _LOG = logging.getLogger(__name__)
 )
 @pytest.mark.slow("22 seconds.")
 class TestPopulateExchangeCurrencyTables(imvcddbut.TestImDbHelper):
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
+    
     # Mock calls to external providers.
     ccxt_patch = umock.patch.object(imvccdbut, "ccxt", spec=ccxt)
 
