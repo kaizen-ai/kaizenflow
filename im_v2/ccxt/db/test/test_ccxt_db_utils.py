@@ -20,12 +20,12 @@ _LOG = logging.getLogger(__name__)
 )
 @pytest.mark.slow("22 seconds.")
 class TestPopulateExchangeCurrencyTables(imvcddbut.TestImDbHelper):
+    # Mock calls to external providers.
+    ccxt_patch = umock.patch.object(imvccdbut, "ccxt", spec=ccxt)
+
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
-
-    # Mock calls to external providers.
-    ccxt_patch = umock.patch.object(imvccdbut, "ccxt", spec=ccxt)
 
     # This will be run before and after each test.
     @pytest.fixture(autouse=True)
@@ -37,19 +37,19 @@ class TestPopulateExchangeCurrencyTables(imvcddbut.TestImDbHelper):
         self.tear_down_test()
 
     def set_up_test(self) -> None:
-        # Create `exchange_name` table in the database.
+        # Create exchange names table in the database.
         exchange_name_create_table_query = (
             imvccdbut.get_exchange_name_create_table_query()
         )
         hsql.execute_query(self.connection, exchange_name_create_table_query)
-        # Create `currency_pair` table in the database.
+        # Create currency pairs table in the database.
         currency_pair_create_table_query = (
             imvccdbut.get_currency_pair_create_table_query()
         )
         hsql.execute_query(self.connection, currency_pair_create_table_query)
         # Activate mock for `ccxt`.
         self.ccxt_mock: umock.MagicMock = self.ccxt_patch.start()
-        # Set up the mock exchanges
+        # Set up the mock exchanges.
         self.ccxt_mock.exchanges = ["binance"]
         # Mock the binance ccxt to return load market keys.
         self.ccxt_mock.binance.return_value.load_markets.return_value.keys.return_value = [
@@ -57,23 +57,19 @@ class TestPopulateExchangeCurrencyTables(imvcddbut.TestImDbHelper):
         ]
 
     def tear_down_test(self) -> None:
-        # Drop `exchange_name` table in the database.
         hsql.remove_table(self.connection, "exchange_name")
-        # Drop `currency_pair` table in the database.
         hsql.remove_table(self.connection, "currency_pair")
         # Deactivate mock for `ccxt`.
         self.ccxt_patch.stop()
 
     def test1(self) -> None:
         """
-        Verify that the exchange_currency and currency_pair tables are
-        populated correctly.
+        Verify that the exchange names and currency pairs tables are populated
+        correctly.
         """
         # Run test.
         imvccdbut.populate_exchange_currency_tables(self.connection)
-        #
-        # Verify that the exchange_currency table is populated correctly.
-        #
+        # Verify that the exchange names table is populated correctly.
         # Check the content of the table.
         query = f"SELECT * FROM exchange_currency"
         actual = hsql.execute_query_to_df(self.connection, query)
@@ -96,9 +92,7 @@ class TestPopulateExchangeCurrencyTables(imvcddbut.TestImDbHelper):
             expected_column_value,
             expected_signature,
         )
-        #
-        # Verify that the currency_pair table is populated correctly.
-        #
+        # Verify that the currency pairs table is populated correctly.
         # Check the content of the table.
         query = f"SELECT * FROM currency_pair"
         actual = hsql.execute_query_to_df(self.connection, query)
