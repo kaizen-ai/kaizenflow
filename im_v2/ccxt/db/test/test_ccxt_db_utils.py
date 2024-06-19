@@ -23,7 +23,7 @@ class TestPopulateExchangeCurrencyTables(imvcddbut.TestImDbHelper):
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
-    
+
     # Mock calls to external providers.
     ccxt_patch = umock.patch.object(imvccdbut, "ccxt", spec=ccxt)
 
@@ -37,11 +37,15 @@ class TestPopulateExchangeCurrencyTables(imvcddbut.TestImDbHelper):
         self.tear_down_test()
 
     def set_up_test(self) -> None:
-        # Create `exchange_name` table in the database. 
-        exchange_name_create_table_query = imvccdbut.get_exchange_name_create_table_query()
+        # Create `exchange_name` table in the database.
+        exchange_name_create_table_query = (
+            imvccdbut.get_exchange_name_create_table_query()
+        )
         hsql.execute_query(self.connection, exchange_name_create_table_query)
-        # Create `currency_pair` table in the database. 
-        currency_pair_create_table_query = imvccdbut.get_currency_pair_create_table_query()
+        # Create `currency_pair` table in the database.
+        currency_pair_create_table_query = (
+            imvccdbut.get_currency_pair_create_table_query()
+        )
         hsql.execute_query(self.connection, currency_pair_create_table_query)
         # Activate mock for `ccxt`.
         self.ccxt_mock: umock.MagicMock = self.ccxt_patch.start()
