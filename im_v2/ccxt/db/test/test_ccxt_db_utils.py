@@ -37,6 +37,12 @@ class TestPopulateExchangeCurrencyTables(imvcddbut.TestImDbHelper):
         self.tear_down_test()
 
     def set_up_test(self) -> None:
+        # Create `exchange_name` table in the database. 
+        exchange_name_create_table_query = imvccdbut.get_exchange_name_create_table_query()
+        hsql.execute_query(self.connection, exchange_name_create_table_query)
+        # Create `currency_pair` table in the database. 
+        currency_pair_create_table_query = imvccdbut.get_currency_pair_create_table_query()
+        hsql.execute_query(self.connection, currency_pair_create_table_query)
         # Activate mock for `ccxt`.
         self.ccxt_mock: umock.MagicMock = self.ccxt_patch.start()
         # Set up the mock exchanges
@@ -47,6 +53,11 @@ class TestPopulateExchangeCurrencyTables(imvcddbut.TestImDbHelper):
         ]
 
     def tear_down_test(self) -> None:
+        # Drop `exchange_name` table in the database.
+        hsql.remove_table(self.connection, "exchange_name")
+        # Drop `currency_pair` table in the database.
+        hsql.remove_table(self.connection, "currency_pair")
+        # Deactivate mock for `ccxt`.
         self.ccxt_patch.stop()
 
     def test1(self) -> None:
