@@ -1,0 +1,19 @@
+Copy and paste material for the Hbase set up
+
+<property>
+  <name>hbase.rootdir</name>
+  <value>file://path_to_hbase_file/hbfiles/</value>
+</property>
+
+<property>
+  <name>hbase.zookeeper.property.dataDir</name>
+  <value>path_to_hbase_file/zookeeper</value>
+</property>
+
+
+Copy and paste material for the Phoenix Set Up
+<property>
+  <name>hbase.regionserver.wal.codec</name>
+  <value>org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec</value>
+</property>
+
