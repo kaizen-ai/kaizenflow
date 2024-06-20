@@ -1,0 +1,37 @@
+!pip install pika
+Collecting pika
+ Downloading pika-1.3.2-py3-none-any.whl (155 kB)
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 155.4/155.4 kB 1.9 MB/s eta 0:00:00
+Installing collected packages: pika
+Successfully installed pika-1.3.2
+import pika
+# Connect to RabbitMQ server
+parameters = pika.URLParameters('amqps://gismdphv:***@porpoise.rmq.cloudamqp.com/gismdphv')
+connection = pika.BlockingConnection(parameters)
+channel = connection.channel()
+# Declare a queue
+channel.queue_declare(queue='hello')
+# Publish a message
+channel.basic_publish(exchange='', routing_key='hello', body='Hello, RabbitMQ!')
+print(" [x] Sent 'Hello, RabbitMQ!' ")
+# Close the connection
+connection.close()
+ [x] Sent 'Hello, RabbitMQ!' 
+
+# Connect to RabbitMQ server
+parameters = pika.URLParameters('amqps://gismdphv:***@porpoise.rmq.cloudamqp.com/gismdphv')
+connection = pika.BlockingConnection(parameters)
+channel = connection.channel()
+# Declare a queue
+channel.queue_declare(queue='hello')
+def callback(ch, method, properties, body):
+print(" [x] Received %r" % body)
+# Consume messages
+channel.basic_consume(queue='hello', on_message_callback=callback, auto_ack=True)
+print(' [*] Waiting for messages. To exit press CTRL+C')
+channel.start_consuming()
+# Close the connection
+connection.close()
+
+[*] Waiting for messages. To exit press CTRL+C
+ [x] Received b'Hello, RabbitMQ!'
