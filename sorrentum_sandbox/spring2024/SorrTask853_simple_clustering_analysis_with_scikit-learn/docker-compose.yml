@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  app:
+    build: .  # Uses the Dockerfile in the current directory to build the container
+    ports:
+      - "4000:4000"  # Maps port 4000 of the container to port 4000 on the host
+    environment:
+      - NAME=World  # Sets an environment variable in the container
+    volumes:
+      - .:/app  # Mounts the current directory to /app in the container
+
+#Complete
