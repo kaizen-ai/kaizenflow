@@ -21,7 +21,6 @@ _LOG = logging.getLogger(__name__)
 
 _AWS_PROFILE = "ck"
 
-
 class Test_dassert_is_unique1(hunitest.TestCase):
     def get_df1(self) -> pd.DataFrame:
         """
@@ -4116,3 +4115,110 @@ class Test_CheckSummary(hunitest.TestCase):
         is_ok=False
         """
         self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class Test_compute_weighted_sum(hunitest.TestCase):
+    def helper(
+        self,
+        index1: List[int],
+        index2: List[int],
+        weights_data: Dict[str, List[float]],
+        index_mode: str,
+        expected_signature: str,
+    ) -> None:
+        """
+        Build inputs and check that function output is correct.
+        """
+        # Create test data.
+        data1 = {"A": [1, 2], "B": [3, 4]}
+        df1 = pd.DataFrame(data1, index=index1)
+        data2 = {"A": [5, 6], "B": [7, 8]}
+        df2 = pd.DataFrame(data2, index=index2)
+        dfs = {"df1": df1, "df2": df2}
+        # Create weights DataFrame.
+        weights = pd.DataFrame(weights_data, index=dfs.keys())
+        # Run the function.
+        weighted_sums = hpandas.compute_weighted_sum(
+            dfs=dfs, weights=weights, index_mode=index_mode
+        )
+        actual_signature = str(weighted_sums)
+        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)
+
+    def test_compute_weighted_sum1(self) -> None:
+        """
+        Check that weighted sums are computed correctly.
+
+        index_mode = "assert_equal".
+        """
+        index1 = [0, 1]
+        index2 = [0, 1]
+        weights_data = {"w1": [0.2, 0.8]}
+        index_mode = "assert_equal"
+        expected_signature = r"""
+            {'w1':      A    B
+            0  4.2  6.2
+            1  5.2  7.2}
+            """
+        self.helper(index1, index2, weights_data, index_mode, expected_signature)
+
+    def test_compute_weighted_sum2(self) -> None:
+        """
+        Check that weighted sums are computed correctly.
+
+        index_mode = "intersect".
+        """
+        index1 = [0, 1]
+        index2 = [0, 2]
+        weights_data = {"w1": [0.2, 0.8], "w2": [0.5, 0.5]}
+        index_mode = "intersect"
+        expected_signature = r"""
+            {'w1':      A    B
+            0  4.2  6.2
+            1  NaN  NaN
+            2  NaN  NaN, 'w2':      A    B
+            0  3.0  5.0
+            1  NaN  NaN
+            2  NaN  NaN}
+            """
+        self.helper(index1, index2, weights_data, index_mode, expected_signature)
+
+    def test_compute_weighted_sum3(self) -> None:
+        """
+        Check that weighted sums are computed correctly.
+
+        index_mode = "leave_unchanged".
+        """
+        index1 = [0, 1]
+        index2 = [2, 3]
+        weights_data = {"w1": [0.2, 0.8]}
+        index_mode = "leave_unchanged"
+        expected_signature = r"""
+            {'w1':      A    B
+                0  NaN  NaN
+                1  NaN  NaN
+                2  NaN  NaN
+                3  NaN  NaN}
+            """
+        self.helper(index1, index2, weights_data, index_mode, expected_signature)
+
+    def test_compute_weighted_sum4(self) -> None:
+        """
+        Check that an assertion is raised if input is an empty dict.
+        """
+        dfs: Dict[str, pd.DataFrame] = {}
+        weights_data = {"w1": [0.2, 0.8]}
+        index_mode = "assert_equal"
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.compute_weighted_sum(
+                dfs=dfs, weights=pd.DataFrame(weights_data), index_mode=index_mode
+            )
+        actual_signature = str(cm.exception)
+        expected_signature = r"""
+            * Failed assertion *
+            cond={}
+            dictionary of dfs must be nonempty
+            """
+        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)
