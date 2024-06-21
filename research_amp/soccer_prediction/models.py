@@ -14,7 +14,7 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
 # import xgboost as xgb
-import pickle
+import jpickle
 
 import sklearn.metrics as skm
 import sklearn.model_selection as sms
@@ -265,8 +265,7 @@ def save_model_to_s3(
     :param aws_profile: AWS profile name.
     """
     # Save the model locally.
-    with open(local_path, "wb") as f:
-        pickle.dump(model, f)
+    jpickle.dump(model, local_path)
     # Upload the model to S3.
     s3 = haws.get_service_resource(aws_profile=aws_profile, service_name="s3")
     s3.Bucket(s3_bucket).upload_file(local_path, s3_path)
