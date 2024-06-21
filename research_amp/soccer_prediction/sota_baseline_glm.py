@@ -182,7 +182,6 @@ def poisson_model(label_encode: bool = False):
         file_name="glm_poisson_predictions",
     )
 
-
 # %%
 poisson_model()
 
