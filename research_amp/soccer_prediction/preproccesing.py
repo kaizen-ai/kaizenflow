@@ -141,7 +141,7 @@ class LabelEncoding(BaseEstimator, TransformerMixin):
 
 
 def add_epsilon(
-    X: pd.DataFrame, epsilon: float = 0.5, columns: Optional[List[Any]] = None
+    X: pd.DataFrame, *, epsilon: float = 0.5, columns: Optional[List[Any]] = None
 ) -> pd.DataFrame:
     """
     Add epsilon to specified columns to avoid log(0).
@@ -248,6 +248,7 @@ class Dropnan(BaseEstimator, TransformerMixin):
 
 def preprocess_and_unravel_data(
     df: pd.DataFrame,
+    *,
     add_epsilon_flag: bool = False,
     epsilon_columns: Optional[List[str]] = ["HS", "AS"],
     test_size: float = 0.2,

@@ -55,6 +55,7 @@ _LOG = logging.getLogger(__name__)
 # %%
 def calculate_match_outcome_and_probabilities(
     df: pd.DataFrame,
+    *,
     max_goals: int = 10,
     apply_dixon_coles: bool = False,
     rho: float = -0.2,

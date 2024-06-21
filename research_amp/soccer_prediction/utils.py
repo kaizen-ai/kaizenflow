@@ -23,6 +23,7 @@ def download_data_from_s3(
     bucket_name: str,
     dataset_path: str,
     local_path: str,
+    *,
     file_format: str = ".txt",
     logging_level: int = logging.INFO,
 ) -> None:
@@ -60,6 +61,7 @@ def download_data_from_s3(
 
 def load_data_to_dataframe(
     local_path: str,
+    *,
     file_format: str = ".txt",
     logging_level: int = logging.INFO,
     sep: str = "\t",
@@ -103,6 +105,7 @@ def save_data_to_s3(
     bucket_name: str,
     s3_path: str,
     file_name: str,
+    *,
     index: bool = False,
 ) -> None:
     """
@@ -123,7 +126,7 @@ def save_data_to_s3(
     s3.Bucket(bucket_name).upload_file(file_path, save_path)
 
 
-def compute_stats(df: pd.DataFrame, column: str = "WDL") -> Dict:
+def compute_stats(df: pd.DataFrame, *, column: str = "WDL") -> Dict:
     """
     Compute # instances for each class (win, loss, draw) and prior
     probabilities.
@@ -153,6 +156,7 @@ def compute_stats(df: pd.DataFrame, column: str = "WDL") -> Dict:
 def plot_metrics(
     train_accuracies: List,
     val_accuracies: List,
+    *,
     feature_importances: pd.Series = None,
     coeffs: pd.Series = None,
     residuals: pd.Series = None,
@@ -275,7 +279,7 @@ def evaluate_model_predictions(
 
 
 def representative_sample(
-    df: pd.DataFrame, sample_size: int, column: str = "team"
+    df: pd.DataFrame, *, sample_size: int, column: str = "team"
 ) -> pd.DataFrame:
     """
     Perform representative sampling on training set to ensure each team is
@@ -337,6 +341,7 @@ def plot_learning_curves(
 
 def create_train_test_split(
     df: pd.DataFrame,
+    *,
     stratify: bool = True,
     stratify_column: str = "HT",
     test_size: float = 0.2,

@@ -55,7 +55,7 @@ class PoissonModel(BaseModel):
     PoissonModel implements a Poisson regression model using statsmodels.
     """
 
-    def __init__(self, hyperparams: Optional[Dict[str, Any]] = None):
+    def __init__(self, *, hyperparams: Optional[Dict[str, Any]] = None):
         self.hyperparams = hyperparams or {}
         self.model = None
 
@@ -132,7 +132,7 @@ class LinearRegressionModel(BaseModel):
     LinearRegressionModel implements a linear regression model using sklearn.
     """
 
-    def __init__(self, hyperparams: Optional[Dict[str, Any]] = None):
+    def __init__(self, *, hyperparams: Optional[Dict[str, Any]] = None):
         self.hyperparams = hyperparams or {}
         self.model = slm.LinearRegression(**self.hyperparams)
 
@@ -167,6 +167,7 @@ def train_model(
     train_df: pd.DataFrame,
     model: BaseModel,
     hyperparameters: Dict,
+    *,
     target_column: str = "goals",
     logging_level: int = logging.INFO,
     n_splits: int = 5,
