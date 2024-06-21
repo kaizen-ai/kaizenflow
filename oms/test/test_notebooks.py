@@ -118,11 +118,12 @@ def build_test_broker_portfolio_reconciliation_config(
     return config_list
 
 
-def build_test_master_system_run_debugger_configs() -> cconfig.ConfigList:
+def build_test_master_system_run_debugger_configs(
+        system_log_dir: str,
+    ) -> cconfig.ConfigList:
     """
     Default config builder for testing the Master_system_run_debugger notebook.
     """
-    dst_root_dir = "/shared_data/ecs/preprod/system_reconciliation"
     dag_builder_name = "C5b"
     run_mode = "paper_trading"
     start_timestamp_as_str = "20230713_131000"
@@ -133,7 +134,7 @@ def build_test_master_system_run_debugger_configs() -> cconfig.ConfigList:
     asset_id = 2484635488
     columns = ["close", "feature"]
     config_list = oexancon.build_master_system_run_debugger_configs(
-        dst_root_dir,
+        system_log_dir,
         dag_builder_name,
         run_mode,
         start_timestamp_as_str,
