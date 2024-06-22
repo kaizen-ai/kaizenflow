@@ -95,7 +95,14 @@ preprocessed_df = preprocess_data(ISDBv2_df)
 # preprocessed_df.set_index('Date', inplace=True)
 
 # %%
-preprocessed_df[preprocessed_df["AT"] == 'FC Barcelona']
+preprocessed_df["Lge"].value_counts()
+
+# %%
+SPA1_df = preprocessed_df[preprocessed_df["Lge"] == "SPA1"]
+SPA1_df
+
+# %%
+SPA1_df["HT"].value_counts()[:50]
 
 
 # %%
@@ -123,88 +130,46 @@ get_away_team(preprocessed_df, 'FC Barcelona')
 # %%
 teams = set(preprocessed_df["HT"].to_list() +  preprocessed_df["AT"].to_list())
 data = {}
-teams = ['FC Barcelona', 'Real Madrid']
+# teams = ['FC Barcelona', 'Real Madrid']
 for team in teams:
     data[team] = []
-    data[team].extend(get_home_team(preprocessed_df, team))
-    data[team].extend(get_away_team(preprocessed_df, team))
+    data[team].extend(get_home_team(SPA1_df, team))
+    data[team].extend(get_away_team(SPA1_df, team))
+    if len(data[team]) == 0:
+        del data[team]
 
 
 # %%
 data
 
 # %%
-# Flatten the dictionary of lists of dictionaries to create a list of DataFrames
-flattened_data = {
-    (outer_key, inner_key): [d.get(inner_key, None) for d in outer_list]
-    for outer_key, outer_list in data.items()
-    for inner_key in {k for d in outer_list for k in d.keys()}
-}
+dfs = []
 
-# Convert the flattened dictionary to a DataFrame
-df = pd.DataFrame(flattened_data)
+for key, inner_list in data.items():
+    df_inner = pd.DataFrame(inner_list)
+    df_inner['outer_key'] = key  # Add outer key as a column
+    dfs.append(df_inner)
+
+# Concatenate all DataFrames
+df_concat = pd.concat(dfs, ignore_index=True)
+
+df_concat['Date'] = pd.to_datetime(df_concat['Date'], format='mixed')
+
+# Pivot the DataFrame to have 'date' as index and 'outer_key' as columns
+df_pivot = df_concat.pivot_table(index='Date', columns='outer_key', aggfunc='first')
 
 # Sort the columns to ensure the outer keys are grouped together
-df = df.sort_index(axis=1, level=0)
-# Switch outer and inner levels
-df.stack(level=0).unstack()
+df_pivot = df_pivot.sort_index(axis=1, level=0)
+
+df_pivot
 
 # %%
 # `nid` is short for "node id"
 nid = "df_data_source"
-df_data_source = dtfcore.DfDataSource(nid, preprocessed_df)
+df_data_source = dtfcore.DfDataSource(nid, df_pivot)
 
 # %%
 df_out_fit = df_data_source.fit()["df_out"]
 _LOG.debug(hpandas.df_to_str(df_out_fit))
-
-# %%
-"""
-  is_home              GS
-Manta FC
-
-"""
-
-
-# %%
-def unravel_df(df: pd.DataFrame()) -> pd.DataFrame():
-    """    
-    Unravel the dataset by creating two entries for each row as team-opponent
-    pair.
-    
-    :param df: Input dataframe.
-    :return: unraveled dataframe.
-    """
-    # Create entry for home team `HT`.
-    home_df = df[["Sea", "Lge", "HT", "AT", "HS"]].copy()
-    home_df.rename(
-                columns={"HT": "team", "AT": "opponent", "HS": "goals"}, inplace=True
-                  )
-    home_df["is_home"] = 1
-    # Create entry for away team `AT`.
-    away_df = df[["Sea", "Lge", "HT", "AT", "AS"]].copy()
-    away_df.rename(
-                columns={"AT": "team", "HT": "opponent", "AS": "goals"}, inplace=True
-                  )
-    away_df["is_home"] = 0
-    # Concatenate the two splits.
-    unraveled_df = pd.concat([home_df, away_df], ignore_index=True)
-    # return the unraveled dataframe.
-    return unraveled_df
-
-
-# %%
-# Prepare a DataFlow transformer node to compute percentage returns
-#  and only return percentage returns.
-nid = "unravel_dataset"
-unravel_node_v2 = dtfcore.GroupedColDfToDfTransformer(
-    nid,
-    transformer_func=unravel_df,
-    in_col_groups=[('Sea', 'Lge', 'HT', 'AT', 'HS', 'AS', 'GD', 'WDL', 'season')],
-    out_col_group=(),
-)
-
-# %%
-unravel_node_v2.fit(preprocessed_df)["df_out"]
 
 # %%
