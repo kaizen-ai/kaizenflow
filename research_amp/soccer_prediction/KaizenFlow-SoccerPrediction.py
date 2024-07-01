@@ -95,18 +95,10 @@ preprocessed_df = preprocess_data(ISDBv2_df)
 # preprocessed_df.set_index('Date', inplace=True)
 
 # %%
-preprocessed_df["Lge"].value_counts()
-
-# %%
-SPA1_df = preprocessed_df[preprocessed_df["Lge"] == "SPA1"]
-SPA1_df
-
-# %%
-SPA1_df["HT"].value_counts()[:50]
-
-
-# %%
 def get_home_team(df, team):
+    """
+    Convert home team data rows to dict of list.
+    """
     df = df[df["HT"] == team]
     df["is_home"] = 1
     df = df.rename(columns={"AT" : "opponent", "HS" : "goals_scored", "AS": "goals_scored_by_opponent"})
@@ -114,6 +106,9 @@ def get_home_team(df, team):
     return df.to_dict(orient='records')
 
 def get_away_team(df, team):
+    """
+    Convert away team data rows to dict of list.
+    """
     df = df[df["AT"] == team]
     df["is_home"] = 0
     df = df.rename(columns={"HT" : "opponent", "AS" : "goals_scored", "HS": "goals_scored_by_opponent"})
@@ -125,51 +120,57 @@ def get_away_team(df, team):
     df['GD'] = df['GD'].apply(lambda x : -x)
     return df.to_dict(orient='records')
 
-get_away_team(preprocessed_df, 'FC Barcelona')
-
-# %%
-teams = set(preprocessed_df["HT"].to_list() +  preprocessed_df["AT"].to_list())
-data = {}
-# teams = ['FC Barcelona', 'Real Madrid']
-for team in teams:
-    data[team] = []
-    data[team].extend(get_home_team(SPA1_df, team))
-    data[team].extend(get_away_team(SPA1_df, team))
-    if len(data[team]) == 0:
-        del data[team]
 
 
 # %%
-data
+def get_data_for_kaizenflow(preprocessed_df) -> pd.DataFrame:
+    """
+    Convert the preprocessed df to Kaizen compatible interface.
+    
+    :param df: Input df e.g.,
+    
+    ```
+            Sea      Lge	      Date	         HT	         AT	  HS	 AS	GD	WDL	season
+    102914	09-10	SPA1	29/08/2009	Real Madrid	  La Coruna	 3.0	2.0	1	W	2009
+    102915	09-10	SPA1	29/08/2009	   Zaragoza	   Tenerife	 1.0	0.0	1	W	2009
+    102916	09-10	SPA1	30/08/2009	    Almeria	 Valladolid	 0.0	0.0	0	D	2009
+    ```
+    """
+    # Get all the unique teams.
+    teams = set(preprocessed_df["HT"].to_list() +  preprocessed_df["AT"].to_list())
+    # Convert rows to dict of list of dict.
+    data = {}
+    for team in teams:
+        data[team] = []
+        data[team].extend(get_home_team(SPA1_df, team))
+        data[team].extend(get_away_team(SPA1_df, team))
+        if len(data[team]) == 0:
+            del data[team]
+    # Convert dict of list of dict to pandas dataframe.
+    dfs = []
+    for key, inner_list in data.items():
+        df_inner = pd.DataFrame(inner_list)
+        # Add outer key as a column
+        df_inner['outer_key'] = key  
+        dfs.append(df_inner)
+    # Concatenate all DataFrames
+    df_concat = pd.concat(dfs, ignore_index=True)
+    df_concat['Date'] = pd.to_datetime(df_concat['Date'], format='mixed')
+    # Pivot the DataFrame to have 'date' as index and 'outer_key' as columns
+    df_pivot = df_concat.pivot_table(index='Date', columns='outer_key', aggfunc='first')
+    # Sort the columns to ensure the outer keys are grouped together
+    df_pivot = df_pivot.sort_index(axis=1, level=0)
+    return df_pivot 
+
 
 # %%
-dfs = []
-
-for key, inner_list in data.items():
-    df_inner = pd.DataFrame(inner_list)
-    df_inner['outer_key'] = key  # Add outer key as a column
-    dfs.append(df_inner)
-
-# Concatenate all DataFrames
-df_concat = pd.concat(dfs, ignore_index=True)
-
-df_concat['Date'] = pd.to_datetime(df_concat['Date'], format='mixed')
-
-# Pivot the DataFrame to have 'date' as index and 'outer_key' as columns
-df_pivot = df_concat.pivot_table(index='Date', columns='outer_key', aggfunc='first')
-
-# Sort the columns to ensure the outer keys are grouped together
-df_pivot = df_pivot.sort_index(axis=1, level=0)
-
-df_pivot
+df = get_data_for_kaizenflow(preprocessed_df)
 
 # %%
 # `nid` is short for "node id"
 nid = "df_data_source"
-df_data_source = dtfcore.DfDataSource(nid, df_pivot)
+df_data_source = dtfcore.DfDataSource(nid, df)
 
 # %%
 df_out_fit = df_data_source.fit()["df_out"]
 _LOG.debug(hpandas.df_to_str(df_out_fit))
-
-# %%
