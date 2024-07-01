@@ -83,16 +83,18 @@ class TestStaticSchedulingChildOrderQuantityComputer(hunitest.TestCase):
 
     def test_get_range_filter(self) -> None:
         """
-        Test that the range of child orders are returned as expected.
+        Check that the correct range of expected child orders is returned.
         """
         # Set inputs.
         bar_duration = "5T"
         exec_freq = "2T"
+        # Test.
         range_filter = self._get_range_filter(bar_duration, exec_freq)
         actual = str(range_filter)
         expected = r"""
         [0, 2]
         """
+        # Check outputs.
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def _get_wave_quantities(
@@ -232,16 +234,18 @@ class TestDynamicSchedulingChildOrderQuantityComputer(hunitest.TestCase):
 
     def test_get_range_filter(self) -> None:
         """
-        Test that the range of child orders are returned as expected.
+        Check that the correct range of expected child orders is returned.
         """
         # Set inputs.
         bar_duration = "5T"
         exec_freq = "2T"
+        # Test.
         range_filter = self._get_range_filter(bar_duration, exec_freq)
         actual = str(range_filter)
         expected = r"""
         [0, 1, 2]
         """
+        # Check outputs.
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def _get_wave_quantities(
