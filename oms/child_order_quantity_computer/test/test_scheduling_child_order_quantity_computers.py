@@ -83,9 +83,9 @@ class TestStaticSchedulingChildOrderQuantityComputer(hunitest.TestCase):
 
     def test_get_range_filter(self) -> None:
         """
-        Test that the range of expected number of child orders.
+        Test that the range of child orders are returned as expected.
         """
-        # Define the parameters.
+        # Set inputs.
         bar_duration = "5T"
         exec_freq = "2T"
         range_filter = self._get_range_filter(bar_duration, exec_freq)
@@ -232,9 +232,9 @@ class TestDynamicSchedulingChildOrderQuantityComputer(hunitest.TestCase):
 
     def test_get_range_filter(self) -> None:
         """
-        Test that the range of expected number of child orders.
+        Test that the range of child orders are returned as expected.
         """
-        # Define the parameters.
+        # Set inputs.
         bar_duration = "5T"
         exec_freq = "2T"
         range_filter = self._get_range_filter(bar_duration, exec_freq)
