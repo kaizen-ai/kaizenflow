@@ -94,7 +94,7 @@ options = {
     'disp': True      
 }
 # Optimize parameters using the BFGS algorithm with options.
-result = minimize(bivariate_poisson_log_likelihood, initial_params, args=(final_data.iloc[:552],), method='BFGS', options=options)
+result = minimize(bivariate_poisson_log_likelihood, initial_params, args=(final_data.iloc[:552],), method='L-BFGS-B', options=options)
 optimized_params = result.x
 print("Optimized Parameters:", optimized_params)
 
