@@ -39,6 +39,7 @@ import warnings
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 import helpers.hdbg as hdbg
 import research_amp.soccer_prediction.models as rasoprmo
@@ -147,7 +148,7 @@ def poisson_model(label_encode: bool = False):
     test_df = preprocessed_df.get("test_df")
     # Train model
     hyperparameters = {
-        "formula": "goals~ team - opponent + is_home",
+        "formula": "goals~ team + opponent + is_home",
         "maxiter": 10,
     }
     sample_sizes = [20000, 30000, 40000, 50000, 60000]
@@ -197,7 +198,7 @@ rasoprut.download_data_from_s3(
 )
 # Load the data from S3 into pandas dataframe objects.
 dataframes = rasoprut.load_data_to_dataframe(local_path=local_dir, file_format = ".csv", sep = ",")
-glm_poisson_prediction_df = dataframes["glm_poisson_predictions_df"]
+glm_poisson_predictions_df = dataframes["glm_poisson_predictions_df"]
 
 
 # Dixon-Coles predictions.
@@ -228,3 +229,171 @@ final_df_with_dixon = calculate_match_outcome_and_probabilities(glm_poisson_pred
 rasoprut.evaluate_model_predictions(
         final_df_with_dixon["actual_outcome"], final_df_with_dixon["predicted_outcome"]
     )
+
+# %%
+# Filter dataframe to include only rows where the actual outcome is a draw
+draw_df = glm_poisson_prediction_df[glm_poisson_prediction_df['actual_outcome'] == 'draw']
+
+# Function to create a bar plot for probabilities with actual draw outcomes
+def plot_draw_probabilities(draw_df):
+    # Set the positions and width for the bars
+    bar_width = 0.25
+    r1 = np.arange(len(draw_df))
+    r2 = [x + bar_width for x in r1]
+    r3 = [x + bar_width for x in r2]
+
+    # Create the bar plot
+    fig, ax = plt.subplots(figsize=(14, 8))
+
+    # Bar plots
+    ax.bar(r1, draw_df['prob_home_win'], color='blue', width=bar_width, edgecolor='grey', label='Prob Home Win')
+    ax.bar(r2, draw_df['prob_away_win'], color='red', width=bar_width, edgecolor='grey', label='Prob Away Win')
+    ax.bar(r3, draw_df['prob_draw'], color='green', width=bar_width, edgecolor='grey', label='Prob Draw')
+
+    # Add annotations for predicted outcomes
+    for idx, predicted in enumerate(draw_df['predicted_outcome']):
+        ax.text(r2[idx], draw_df['prob_away_win'].iloc[idx] + 0.02, f'Pred: {predicted}', ha='center', fontsize=8)
+
+    # Labels and title
+    ax.set_xlabel('Game Index', fontweight='bold')
+    ax.set_ylabel('Probability', fontweight='bold')
+    ax.set_title('Probabilities of Outcomes with Actual Draw Outcomes Highlighted', fontweight='bold')
+    ax.set_xticks([r + bar_width for r in range(len(draw_df))])
+    ax.set_xticklabels(draw_df.index)
+    ax.legend()
+    ax.grid(True)
+
+    plt.show()
+
+# Plot the draw probabilities
+plot_draw_probabilities(draw_df)
+
+# %%
+# Mapping outcomes to readable format for visualization purposes
+outcome_mapping = {'home_win': 'Home Win', 'away_win': 'Away Win', 'draw': 'Draw'}
+glm_poisson_predictions_df['predicted_outcome'] = glm_poisson_predictions_df['predicted_outcome'].map(outcome_mapping)
+glm_poisson_predictions_df['actual_outcome'] = glm_poisson_predictions_df['actual_outcome'].map(outcome_mapping)
+
+# Calculate counts only for existing predicted outcomes
+counts = glm_poisson_predictions_df.groupby(['predicted_outcome', 'actual_outcome']).size().unstack(fill_value=0)
+
+# Remove columns that don't have any predicted outcomes
+counts = counts.loc[(counts.sum(axis=1) != 0), :]
+
+# Convert counts to numeric
+counts = counts.astype(int)
+
+# Plotting
+ax = counts.plot(kind='bar', stacked=True, figsize=(14, 8), color=['blue', 'green', 'red'])
+
+# Adding labels and title
+plt.xlabel('Predicted Outcome', fontweight='bold')
+plt.ylabel('Count', fontweight='bold')
+plt.title('Counts of Predicted Outcomes with Actual Outcomes Segmented', fontweight='bold')
+plt.legend(title='Actual Outcome', loc='upper right')
+plt.xticks(rotation=0)
+plt.grid(axis='y')
+
+# Show the plot
+plt.show()
+
+
+# %% run_control={"marked": true}
+# Compute probability statistics for each predicted class
+probability_stats = glm_poisson_predictions_df.groupby('predicted_outcome').agg({
+    'prob_home_win': ['min', 'mean', 'median', 'max'],
+    'prob_away_win': ['min', 'mean', 'median', 'max'],
+    'prob_draw': ['min', 'mean', 'median', 'max']
+})
+
+# Print min, median, and max values for reference
+print("Probability Stats DataFrame:\n", probability_stats)
+
+# Calculate priors for the actual outcomes
+total_count = len(glm_poisson_predictions_df)
+actual_counts = glm_poisson_predictions_df['actual_outcome'].value_counts()
+priors = actual_counts / total_count
+
+# Print priors for reference
+print("Priors:\n", priors)
+
+# Plotting
+fig, ax = plt.subplots(figsize=(14, 8))
+
+# Stacked bar plot
+counts.plot(kind='bar', stacked=True, color=['blue', 'green', 'red'], ax=ax)
+
+# Plot average probability at appropriate positions
+for outcome, color in zip(['Home Win', 'Away Win', 'Draw'], ['blue', 'red', 'green']):
+    if outcome in probability_stats.index:
+        avg_prob = probability_stats.at[outcome, ('prob_home_win', 'mean')]
+        avg_prob_position = counts.loc[outcome].sum() * avg_prob
+        pos = [i for i, x in enumerate(counts.index) if x == outcome]
+        if pos:
+            position = pos[0]
+            ax.plot([position - 0.2, position + 0.2], [avg_prob_position, avg_prob_position], linestyle='-', color=color, label=f'{outcome} - Average Probability')
+
+# Plot priors for actual outcomes
+for outcome, color in zip(['Home Win', 'Away Win', 'Draw'], ['blue', 'red', 'green']):
+    if outcome in priors.index:
+        y_prior = priors[outcome] * counts.sum().sum()
+        ax.axhline(y_prior, linestyle='-', color=color, label=f'Prior - {outcome}', alpha=0.6)
+
+# Adding labels and title
+ax.set_xlabel('Predicted Outcome', fontweight='bold')
+ax.set_ylabel('Count / Probability', fontweight='bold')
+ax.set_title('Counts of Predicted Outcomes with Actual Outcomes and Probability Statistics', fontweight='bold')
+ax.legend(loc='upper left')
+ax.set_xticks(range(len(counts.index)))
+ax.set_xticklabels(counts.index)
+ax.grid(axis='y')
+
+# Show the plot
+plt.show()
+
+
+# %%
+# Function to plot bar graphs for probability ranges
+def plot_probability_ranges(data, predicted_class, prob_column):
+    df = data[data["predicted_outcome"] == predicted_class]
+    min_prob = df[prob_column].min()
+    max_prob = df[prob_column].max()
+    range_step = 0.25
+    ranges = []
+
+    current_min = min_prob
+    while current_min < max_prob:
+        current_max = min(current_min * (1 + range_step), max_prob)
+        ranges.append((current_min, current_max))
+        current_min = current_max
+
+    for prob_range in ranges:
+        lower, upper = prob_range
+        subset = df[(df[prob_column] >= lower) & (df[prob_column] < upper)]
+        actual_counts = subset['actual_outcome'].value_counts()
+
+        if not actual_counts.empty:
+            fig, ax = plt.subplots(figsize=(10, 6))
+            actual_counts.plot(kind='bar', ax=ax, color=['blue', 'green', 'red'])
+            
+            # Adding labels and title
+            ax.set_xlabel('Predicted Outcome', fontweight='bold')
+            ax.set_ylabel('Count', fontweight='bold')
+            ax.set_title(f'Probability Range: {lower:.4f} - {upper:.4f}\nPredicted {predicted_class}: {len(subset)}', fontweight='bold')
+            ax.grid(axis='y')
+
+            plt.show()
+
+# Plot for home wins
+plot_probability_ranges(glm_poisson_predictions_df, 'Home Win', 'prob_home_win')
+# Plot for home wins
+plot_probability_ranges(glm_poisson_predictions_df, 'Away Win', 'prob_a_win')
+# Plot for home wins
+plot_probability_ranges(glm_poisson_predictions_df, 'Home Win', 'prob_home_win')
+
+# %%
+plot_probability_ranges(glm_poisson_predictions_df, 'Away Win', 'prob_away_win')
+
+# %%
+# Plot for home wins
+plot_probability_ranges(glm_poisson_predictions_df, 'Draw', 'prob_draw')
