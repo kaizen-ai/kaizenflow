@@ -148,7 +148,7 @@ def poisson_model(label_encode: bool = False):
     test_df = preprocessed_df.get("test_df")
     # Train model
     hyperparameters = {
-        "formula": "goals~ team + opponent + is_home",
+        "formula": "goals~ team - opponent + is_home",
         "maxiter": 10,
     }
     sample_sizes = [20000, 30000, 40000, 50000, 60000]
@@ -224,7 +224,7 @@ def dixon_coles_adjustment(home_goals, away_goals, mu_home, mu_away, rho):
     return adjustment
 
 
-final_df_with_dixon = calculate_match_outcome_and_probabilities(glm_poisson_prediction_df, max_goals=10, apply_dixon_coles=True, rho=0.13)
+final_df_with_dixon = calculate_match_outcome_and_probabilities(glm_poisson_predictions_df, max_goals=10, apply_dixon_coles=True, rho=0.13)
 # Evaluate model.
 rasoprut.evaluate_model_predictions(
         final_df_with_dixon["actual_outcome"], final_df_with_dixon["predicted_outcome"]
@@ -232,7 +232,7 @@ rasoprut.evaluate_model_predictions(
 
 # %%
 # Filter dataframe to include only rows where the actual outcome is a draw
-draw_df = glm_poisson_prediction_df[glm_poisson_prediction_df['actual_outcome'] == 'draw']
+draw_df = glm_poisson_predictions_df[glm_poisson_predictions_df['actual_outcome'] == 'draw']
 
 # Function to create a bar plot for probabilities with actual draw outcomes
 def plot_draw_probabilities(draw_df):
@@ -386,10 +386,6 @@ def plot_probability_ranges(data, predicted_class, prob_column):
 
 # Plot for home wins
 plot_probability_ranges(glm_poisson_predictions_df, 'Home Win', 'prob_home_win')
-# Plot for home wins
-plot_probability_ranges(glm_poisson_predictions_df, 'Away Win', 'prob_a_win')
-# Plot for home wins
-plot_probability_ranges(glm_poisson_predictions_df, 'Home Win', 'prob_home_win')
 
 # %%
 plot_probability_ranges(glm_poisson_predictions_df, 'Away Win', 'prob_away_win')
@@ -397,3 +393,39 @@ plot_probability_ranges(glm_poisson_predictions_df, 'Away Win', 'prob_away_win')
 # %%
 # Plot for home wins
 plot_probability_ranges(glm_poisson_predictions_df, 'Draw', 'prob_draw')
+
+# %%
+# Assuming glm_poisson_predictions_df is already defined
+df = glm_poisson_predictions_df
+
+# Define probability bins
+bins = np.linspace(0, 1, 21)  # 20 bins from 0 to 1
+df['prob_bin'] = pd.cut(df['prob_home_win'], bins)
+
+# Determine correctness of the prediction
+df['correct'] = df['predicted_outcome'] == df['actual_outcome']
+
+# Calculate the number of correct and incorrect predictions per bin
+bin_accuracy = df.groupby('prob_bin')['correct'].value_counts().unstack().fillna(0)
+
+# Rename columns for clarity
+bin_accuracy.columns = ['Incorrect', 'Correct']
+
+# Plotting
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# Plot correct predictions
+bin_accuracy['Correct'].plot(kind='bar', color='red', ax=ax, position=1, width=0.4, label='Correct')
+
+# Plot incorrect predictions
+bin_accuracy['Incorrect'].plot(kind='bar', color='green', ax=ax, position=0, width=0.4, label='Incorrect')
+
+# Add labels and title
+ax.set_xlabel('Probability Bins')
+ax.set_ylabel('Number of Predictions')
+ax.set_title('Prediction Accuracy by Probability Threshold')
+ax.legend()
+
+# Display the plot
+plt.xticks(rotation=45)
+plt.show()
