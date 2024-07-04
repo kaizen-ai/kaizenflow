@@ -55,6 +55,26 @@ _VENDOR = "ccxt"
 _EXCHANGE = "binance"
 
 
+def get_next_order_side(
+    symbol: str, order_sides: Dict[str, Optional[str]]
+) -> str:
+    """
+    Determine the next order side for a given symbol.
+
+    :param symbol: The trading symbol
+    :param order_sides: Dictionary tracking the last order side for each
+        symbol
+    :return: The next order side ('buy' or 'sell')
+    """
+    current_side = order_sides.get(symbol)
+    if current_side is None or current_side == "sell":
+        next_side = "buy"
+    else:
+        next_side = "sell"
+    order_sides[symbol] = next_side
+    return next_side
+
+
 def _get_symbols(
     universe_version: str,
     vendor: str,
@@ -141,6 +161,7 @@ def _get_random_order(
     parent_order_duration_in_min: int,
     current_position: float,
     close_position: bool,
+    order_sides: Dict[str, Optional[str]],
     *,
     order_direction: Optional[str] = None,
 ) -> oordorde.Order:
@@ -162,9 +183,9 @@ def _get_random_order(
     else:
         num_shares = np.random.uniform(min_order_size, max_order_size)
         # Set negative amount of shares when direction is sell, or direction should be random.
-        if order_direction == "sell" or (
-            order_direction is None and np.random.choice([True, False])
-        ):
+        if order_direction is None:
+            order_direction = get_next_order_side(symbol, order_sides)
+        if order_direction == "sell":
             num_shares = -num_shares
     _LOG.debug(hprint.to_str2(num_shares))
     # Timestamps.
@@ -197,6 +218,7 @@ def _get_random_orders(
     positions: Dict[int, float],
     start_timestamp: pd.Timestamp,
     symbol_to_price_dict: Dict[str, float],
+    order_sides: Dict[str, Optional[str]],
     *,
     close_positions: bool = False,
     orders_direction: Optional[str] = None,
@@ -226,6 +248,12 @@ def _get_random_orders(
             continue
         # Set order direction for the current order.
         symbol = asset_id["symbol"]
+        _LOG.debug(order_sides)
+        order_diretion = (
+            orders_direction
+            if orders_direction is not None
+            else order_sides.get(symbol)
+        )
         order = _get_random_order(
             start_timestamp,
             asset_id["asset_id"],
@@ -235,6 +263,7 @@ def _get_random_orders(
             parent_order_duration_in_min,
             position,
             close_positions,
+            order_sides,
             order_direction=order_diretion,
         )
         if order is not None:
@@ -414,6 +443,7 @@ def _execute_one_bar_using_twap(
     broker: obccccbr.CcxtBroker,
     execution_freq: str,
     symbol_to_price_dict: Dict[str, float],
+    order_sides: Dict[str, Optional[str]],
     *,
     close_positions: bool = False,
     previous_start_timestamp: Optional[pd.Timestamp] = None,
@@ -447,6 +477,7 @@ def _execute_one_bar_using_twap(
             positions=positions,
             start_timestamp=start_timestamp,
             symbol_to_price_dict=symbol_to_price_dict,
+            order_sides=order_sides,
             close_positions=close_positions,
             orders_direction=orders_direction,
             include_btc_usdt=args.include_btc_usdt,
@@ -556,12 +587,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
     try:
         previous_start_timestamp = None
         # orders_direction = "buy"
+        order_sides = {}
         for bar in range(args.num_bars):
             previous_start_timestamp = _execute_one_bar_using_twap(
                 args,
                 broker,
                 child_order_execution_freq,
                 symbol_to_price_dict,
+                order_sides,
                 previous_start_timestamp=previous_start_timestamp,
                 # orders_direction=orders_direction
             )
@@ -573,6 +606,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 broker,
                 child_order_execution_freq,
                 symbol_to_price_dict,
+                order_sides,
                 previous_start_timestamp=previous_start_timestamp,
                 close_positions=True,
             )
