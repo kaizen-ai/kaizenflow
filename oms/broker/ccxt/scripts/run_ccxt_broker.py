@@ -241,12 +241,10 @@ def _get_random_orders(
         number_asset_ids=number_orders,
         include_btc_usdt=include_btc_usdt,
     )
-    order_sides = {
-        symbol: None
-        for symbol in _get_symbols(
-            broker._universe_version, _VENDOR, _EXCHANGE, broker._contract_type
-        )
-    }
+    symbols = _get_symbols(
+        broker._universe_version, _VENDOR, _EXCHANGE, broker._contract_type
+    )
+    order_sides = {symbol: None for symbol in symbols}
     orders = []
     for asset_id in asset_ids:
         position = positions.get(asset_id["asset_id"], 0)
