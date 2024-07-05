@@ -55,7 +55,7 @@ _VENDOR = "ccxt"
 _EXCHANGE = "binance"
 
 
-def get_next_order_side(
+def _get_next_order_side(
     symbol: str, order_sides: Dict[str, Optional[str]]
 ) -> str:
     """
@@ -184,7 +184,7 @@ def _get_random_order(
         num_shares = np.random.uniform(min_order_size, max_order_size)
         # Set negative amount of shares when direction is sell, or direction should be random.
         if order_direction is None:
-            order_direction = get_next_order_side(symbol, order_sides)
+            order_direction = _get_next_order_side(symbol, order_sides)
         if order_direction == "sell":
             num_shares = -num_shares
     _LOG.debug(hprint.to_str2(num_shares))
@@ -241,6 +241,12 @@ def _get_random_orders(
         number_asset_ids=number_orders,
         include_btc_usdt=include_btc_usdt,
     )
+    order_sides = {
+        symbol: None
+        for symbol in _get_symbols(
+            broker._universe_version, _VENDOR, _EXCHANGE, broker._contract_type
+        )
+    }
     orders = []
     for asset_id in asset_ids:
         position = positions.get(asset_id["asset_id"], 0)
