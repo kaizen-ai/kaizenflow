@@ -252,7 +252,7 @@ def _get_random_orders(
             continue
         # Set order direction for the current order.
         symbol = asset_id["symbol"]
-        _LOG.debug(order_sides)
+        _LOG.debug("%s", order_sides)
         order_diretion = (
             orders_direction
             if orders_direction is not None
