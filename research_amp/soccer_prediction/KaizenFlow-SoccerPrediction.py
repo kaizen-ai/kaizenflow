@@ -17,6 +17,9 @@ import logging
 
 import pandas as pd
 import numpy as np
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+
 
 import core.finance as cofinanc
 import dataflow.core as dtfcore
@@ -24,6 +27,10 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import dataflow.core.nodes.sklearn_models as dtfcnoskmo
+import dataflow.core.node as dtfcornode
+import dataflow.core.utils as dtfcorutil
+
 
 import research_amp.soccer_prediction.utils as rasoprut
 
@@ -174,3 +181,96 @@ df_data_source = dtfcore.DfDataSource(nid, df)
 # %%
 df_out_fit = df_data_source.fit()["df_out"]
 _LOG.debug(hpandas.df_to_str(df_out_fit))
+
+
+# %%
+class StatsmodelsPoissonWrapper:
+    """
+    A wrapper for the statsmodels Poisson regressor to make it compatible with scikit-learn interface.
+
+    This class provides a fit and predict method similar to scikit-learn models,
+    allowing it to be used in existing pipelines designed for scikit-learn models.
+
+    Attributes:
+        model (sm.GLM): The statsmodels Generalized Linear Model instance.
+        formula (str): The formula for the Poisson regression.
+        maxiter (int): Maximum number of iterations for fitting the model.
+    """
+
+    def __init__(self, formula: str, maxiter: int = 100, **kwargs):
+        """
+        Initialize the StatsmodelsPoissonWrapper with the given formula, maximum iterations, and additional keyword arguments.
+
+        :param formula: The formula for the Poisson regression.
+        :param maxiter: Maximum number of iterations for fitting the model.
+        :param kwargs: Additional keyword arguments for the statsmodels Poisson regressor.
+        """
+        self.formula = formula
+        self.maxiter = maxiter
+        self.kwargs = kwargs
+        self.model = None
+        self.result = None
+
+    def fit(self, X, y):
+        """
+        Fit the Poisson regressor to the given data.
+
+        :param X: Features (design matrix) for the regression.
+        :param y: Target variable.
+        :return: self
+        """
+        data = X.copy()
+        data['y'] = y
+        self.model = smf.poisson(self.formula, data, **self.kwargs)
+        self.result = self.model.fit(maxiter=self.maxiter)
+        return self
+
+    def predict(self, X):
+        """
+        Predict the target variable for the given features.
+
+        :param X: Features (design matrix) for the prediction.
+        :return: Predicted values.
+        """
+        return self.result.predict(X)
+
+    def get_params(self, deep=True):
+        """
+        Get the parameters of the Poisson regressor.
+
+        :param deep: Ignored, added for compatibility with scikit-learn.
+        :return: The keyword arguments for the statsmodels Poisson regressor.
+        """
+        return {"formula": self.formula, "maxiter": self.maxiter, **self.kwargs}
+
+    def set_params(self, **params):
+        """
+        Set the parameters of the Poisson regressor.
+
+        :param params: Keyword arguments for the statsmodels Poisson regressor.
+        :return: self
+        """
+        self.formula = params.get("formula", self.formula)
+        self.maxiter = params.get("maxiter", self.maxiter)
+        self.kwargs.update({k: v for k, v in params.items() if k not in {"formula", "maxiter"}})
+        return self
+
+# Define variables.
+node_id = dtfcornode.NodeId("poisson_regressor_node")
+model_func = lambda: StatsmodelsPoissonWrapper(formula="", maxiter=10)
+x_vars = ["x1", "x2", "x3"]
+y_vars = ["y"]
+steps_ahead = 1
+# Instantiate the ContinuousSkLearnModel with the statsmodels Poisson wrapper.
+poisson_model_node = dtfcnoskmo.ContinuousSkLearnModel(
+    nid=node_id,
+    model_func=model_func,
+    x_vars=x_vars,
+    y_vars=y_vars,
+    steps_ahead=steps_ahead,
+)
+# Fit the model.
+poisson_model_node.fit(df_out_fit)
+# Predict using the model.
+#predictions = poisson_model_node.predict(df_in)
+#print(predictions)
