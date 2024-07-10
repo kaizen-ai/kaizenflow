@@ -14,7 +14,7 @@
     + [Ad-hoc meetings](#ad-hoc-meetings)
     + [Org emails](#org-emails)
     + [Synchronization point](#synchronization-point)
-    + [Morning email](#morning-email)
+    + [Morning TODO email](#morning-todo-email)
   * [Communication](#communication)
     + [Use the right form of communication](#use-the-right-form-of-communication)
     + [DRY also applies to documentation](#dry-also-applies-to-documentation)
@@ -22,6 +22,7 @@
     + [Consistency](#consistency)
     + [Training period](#training-period)
     + [Go slowly to go faster](#go-slowly-to-go-faster)
+  * [Vacations/OOTO time](#vacationsooto-time)
   * [Improve your English!](#improve-your-english)
     + [Study an English grammar book](#study-an-english-grammar-book)
 
@@ -30,7 +31,9 @@
 # Ask somebody if you have any doubts
 
 - If you have doubts on how to do something you want to do:
-  - Look in the [documentation](/docs) and our
+  - Look in the
+    [documentation](https://github.com/cryptokaizen/cmamp/tree/master/docs) and
+    our
     [Google drive](https://drive.google.com/drive/u/0/folders/1LXwKpmaFWJI-887IoA50sVC8-dw_1L8I)
   - Google search is your friend
   - Ask your team-members
@@ -47,10 +50,10 @@
 - When you're close to being out of tasks or all your ongoing PRs are waiting
   for review and are close to being merged, feel free to ping us in the Telegram
   chat to ask for more issues
-  - In this way, Team Leaders can quickly assign you another issue, before you run
-  out of work
-  - The goal is for everyone to have 2 issues to work on at the same time to avoid
-  getting blocked on us
+  - In this way, Team Leaders can quickly assign you another issue, before you
+    run out of work
+  - The goal is for everyone to have 2 issues to work on at the same time to
+    avoid getting blocked on us
 
 # Collaboration
 
@@ -144,28 +147,79 @@
   - Everybody does what's asked
   - Mark on the GitHub task your name
 
-### Morning email
+### Morning TODO email
 
-- First thing in the morning, send an email to `all@kaizen-tech.io` if you
-  are **full-time** or to `contributors@crypto-kaizen.com` if you are **interns
-  or collaborators** to broadcast what you are planning to work on during that
-  day
-- If you are a collaborator or intern, follow the steps to join the mailing
-  group
+The idea is to send a morning TODO email to broadcast:
 
-  - Visit the
-    [group](https://groups.google.com/a/crypto-kaizen.com/g/contributors/)
-  - Click “ask to join group”
+- Issues you will be working on
+- Working hours
+- Blocking issues/PRs
 
-    ![alt_text](figs/team_collaboration/1_Visits.png)
+E-mail template:
+```
+To: all@kaizen-tech.io
 
-  - Choose the following settings
+Subject: TODO
 
-    ![alt_text](figs/team_collaboration/2_Settings.png)
+Hi all,
 
-  - Wait for the confirmation e-mail, one for the group managers will approve
-    your request. It should look like this:
-    ![alt_text](figs/team_collaboration/3_Request.png)
+Today I am going to work
+
+Hours:
+- ...
+
+Issues:
+- GitHub issue title and number with a hyperlink
+   - Original ETA: YYYY-MM-DD
+   - ETA: YYYY-MM-DD
+   - Reason for ETA update: ...
+   - Blocked on: ... (ok to omit if not blocked)
+- GitHub issue title and number with a hyperlink
+   - Original ETA: YYYY-MM-DD
+   - ETA: YYYY-MM-DD
+   - Reason for ETA update: ...
+   - Blocked on: ... (ok to omit if not blocked)
+```
+
+Good example:
+```
+To: all@kaizen-tech.io
+
+Subject: TODO
+
+Hi all,
+
+Today I am going to work
+
+Hours:
+- 8
+
+Issues:
+- Create matching service #261
+    - ETA: today (2023-05-25)
+    - Original ETA: yesterday (2023-05-24)
+    - Reason for ETA update: it was more complex than what we thought
+    - Blocked on: PR review from Grisha
+- Create linear supply/demand curves #177
+    - ETA: tomorrow (2023-05-26)
+- Unit test `compute_share_prices_and_slippage()` #8482
+    - ETA Wednesday (06-19-2024)
+```
+
+Bad example:
+```
+To: all@kaizen-tech.io
+
+Subject: to-do
+
+Hi all,
+
+Today I am going to work 2-6 hours.
+
+- Calls
+- PR reviews
+- Finish the trading report analysis
+```
 
 - The goal is:
   - Think about what you are going to work on for the day, so you have a clear
@@ -174,62 +228,51 @@
   - Make sure people blocked on your tasks know that / whether you are working
     on those tasks
   - Broadcast if you are blocked or if you don't have tasks
-- The process is:
-  - Stick to using `TODO` (all caps) as the email subject, and the suggested
-    format, so that it's easy to filter emails and see what everybody is doing
-    today and what was going on in the previous days
-  - Specify how many hours are you going to work today
-    - At Monday we also specify an estimation for a week
-    - No need to be too specific, give just an approximation
-  - List all the tasks you're going to work during the day in priority order
+  - A TODO email replaces stand-up meetings
+- When to send an email:
+  - Within the first hour of beginning the day
+  - It is recommended to check the inbox (email, GitHub) first to reflect all
+    the update in the plan for the day
+- Send an email to:
+  - For full-time employees/contractors: `all@kaizen-tech.io`
+  - For interns or collaborators: `contributors@crypto-kaizen.com`
+- Email subject:
+  - `TODO` (all caps)
+  - It easier to filter emails by subject
+- Reply to your previous TODO email so that at least last week of TODOs is
+  included
+- Specify how many hours are you going to work today
+  - On Monday we also specify an estimation for a week
+  - No need to be too specific, give just an approximation
+- List all the tasks you're going to work during the day in priority order
   - Add a hyperlink to the corresponding GitHub issue to each task in order to
     ease the navigation
-    - <img width="381" alt="Снимок экрана 2023-05-29 в 02 59 55" src="https://github.com/kaizen-ai/kaizenflow/assets/31514660/0d2fbba4-1e6c-4c39-9c04-7ffc4acdde81">
-  - Communicate realistic ETAs
+    <img width="381" alt="Снимок экрана 2023-05-29 в 02 59 55" src="https://github.com/sorrentum/sorrentum/assets/31514660/0d2fbba4-1e6c-4c39-9c04-7ffc4acdde81">
+  - For each task provide an ETA
     - No reason to be optimistic: complex things take time to be done correctly
     - Use a date in the usual format, e.g. 2023-05-10
     - Add "today", "yesterday", "tomorrow", "end of week" so that it's easier to
       parse
     - If your original ETA needs to be updated (e.g., you thought that you would
       have finished a task by yesterday, but it's taking longer) keep the older
-      ETA and add the new one, e.g.,
-      ```
-      - Create matching service #261
-        - ETA: today (2023-05-25)
-        - Original ETA: yesterday (2023-05-24)
-        - Reason: it was more complex than what we thought
-                or
-        - Reason: I had to context switch to ...
-      ```
-- Full example:
+      ETA and add the new one
+- Report the PR/issue blocked
 
-  ```
-  Subject: TODO
+If you are a collaborator or intern, follow the steps to join the mailing group
 
-  Hi everybody!
+- Visit the
+  [group](https://groups.google.com/a/crypto-kaizen.com/g/contributors/)
+- Click “ask to join group”
 
-  This week I'm going to work ~40 hours
+  ![alt_text](figs/team_collaboration/1_Visits.png)
 
-  Today I'm going to work ~8 hours on:
+- Choose the following settings
 
-  - Create matching service #261
-      - ETA: today (2023-05-25)
-      - Original ETA: yesterday (2023-05-24)
-      - Reason: it was more complex than what we thought
-  - SorrTask154: Create linear supply/demand curves #177
-      - Implement requested changes and lead to merge
-      - ETA: tomorrow (2023-05-26)
-  - Background tasks
-      - Help Toma with creating TWAP/VWAP external adapter
-      - Publish documentation about Jupyter notebooks
-      - Technical sync-up with GP
-  - Blocked on SorrTaskXYZ: Fix the world before it explodes #666
-  - I'm running out of tasks!
-  ```
+  ![alt_text](figs/team_collaboration/2_Settings.png)
 
-- Example image:
-
-  ![alt_text](figs/team_collaboration/image.png)
+- Wait for the confirmation e-mail, one for the group managers will approve your
+  request. It should look like this:
+  ![alt_text](figs/team_collaboration/3_Request.png)
 
 ## Communication
 
@@ -275,7 +318,8 @@
 - There should be little replication among these forms of documentation
   - It's not ok to file a bug and then ping on Telegram unless it's urgent
 - Google Form
-  - When you want to ask a question anonymously use https://forms.gle/KMQgobqbyxhoTR9n6
+  - When you want to ask a question anonymously use
+    https://forms.gle/KMQgobqbyxhoTR9n6
   - The question will be discussed at the all hands meeting
 
 ### DRY also applies to documentation
@@ -326,9 +370,13 @@
 
 ## Vacations/OOTO time
 
-- We use [vacation calendar](https://calendar.google.com/calendar/u/0?cid=Y19kYWRlOGU0NTUwMzhiMDllMmUzNDk1OWM2YzFkYWNhYTVmMTAzYjdjZmNiODQ1MDkzOWZhMTBkZDY2NWI3ZjJhQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20) to announce time off
-- If you are a part of _@all_ mailing group you should be able to access this calendar with your company email
-- Create an event in it, whenever you have planned time off in order to let your colleagues know in advance
+- We use
+  [vacation calendar](https://calendar.google.com/calendar/u/0?cid=Y19kYWRlOGU0NTUwMzhiMDllMmUzNDk1OWM2YzFkYWNhYTVmMTAzYjdjZmNiODQ1MDkzOWZhMTBkZDY2NWI3ZjJhQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20)
+  to announce time off
+- If you are a part of _@all_ mailing group you should be able to access this
+  calendar with your company email
+- Create an event in it, whenever you have planned time off in order to let your
+  colleagues know in advance
 
 ## Improve your English!
 
