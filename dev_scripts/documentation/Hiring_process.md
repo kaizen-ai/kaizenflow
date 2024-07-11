@@ -133,7 +133,7 @@ The scoring process is described here
 
 ```docs/work_organization/all.contributor_scoring.how_to_guide.md```
 
-[Internships - Feedack 2024](https://docs.google.com/spreadsheets/d/1FCuM3dPP3QZCT7iOHSKXls-maSZ0Mwj7BjsbaUq-T0Y/edit?gid=1816709202#gid=1816709202)
+[Internships - Feedback 2024](https://docs.google.com/spreadsheets/d/1FCuM3dPP3QZCT7iOHSKXls-maSZ0Mwj7BjsbaUq-T0Y/edit?gid=1816709202#gid=1816709202)
 
 ## Feedback for full-timers
 
