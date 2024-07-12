@@ -55,26 +55,6 @@ _VENDOR = "ccxt"
 _EXCHANGE = "binance"
 
 
-def _get_next_order_side(
-    symbol: str, order_sides: Dict[str, Optional[str]]
-) -> str:
-    """
-    Determine the next order side for a given symbol.
-
-    :param symbol: The trading symbol
-    :param order_sides: Dictionary tracking the last order side for each
-        symbol
-    :return: The next order side ('buy' or 'sell')
-    """
-    current_side = order_sides.get(symbol)
-    if current_side is None or current_side == "sell":
-        next_side = "buy"
-    else:
-        next_side = "sell"
-    order_sides[symbol] = next_side
-    return next_side
-
-
 def _get_symbols(
     universe_version: str,
     vendor: str,
@@ -182,11 +162,13 @@ def _get_random_order(
         num_shares = current_position * -1
     else:
         num_shares = np.random.uniform(min_order_size, max_order_size)
+        order_sides[symbol] = "sell"
         # Set negative amount of shares when direction is sell, or direction should be random.
-        if order_direction is None:
-            order_direction = _get_next_order_side(symbol, order_sides)
-        if order_direction == "sell":
+        if order_direction == "sell" or (
+            order_direction is None and np.random.choice([True, False])
+        ):
             num_shares = -num_shares
+            order_sides[symbol] = "buy"
     _LOG.debug(hprint.to_str2(num_shares))
     # Timestamps.
     end_timestamp = start_timestamp + pd.Timedelta(
