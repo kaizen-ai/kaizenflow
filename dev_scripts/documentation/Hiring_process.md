@@ -85,7 +85,7 @@ We get candidates in several ways
     - _Goal_: set up candidates to work on their laptop on KaizenAI
     - _Duration_: few days
     - The checklist for onboarding on KaizenAI is
-      [here](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/onboarding/kaizenflow.hiring_meister.how_to_guide.md#on-boarding-bug-creation)
+      [here](/docs/onboarding/kaizenflow.hiring_meister.how_to_guide.md#on-boarding-bug-creation)
     - Once the checklist is complete, candidates move to the next step
   - **Working on KaizenAI**
     - _Goal_: understand who can/should join the team
