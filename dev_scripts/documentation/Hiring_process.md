@@ -64,7 +64,7 @@ We get candidates in several ways
 ## Mentors
 
 - Hiring Meisters (e.g., Sonaal and Samarth) supervise the hiring process
-  - [Docs/onboarding/kaizenflow.hiring_meister.how_to_guide.md](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/onboarding/kaizenflow.hiring_meister.how_to_guide.md)
+  - [docs/onboarding/kaizenflow.hiring_meister.how_to_guide.md](https://github.com/kaizen-ai/kaizenflow/blob/master/docs/onboarding/kaizenflow.hiring_meister.how_to_guide.md)
 
 - Coding mentors are:
   - Hiring Meisters
