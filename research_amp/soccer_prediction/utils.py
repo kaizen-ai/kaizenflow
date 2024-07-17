@@ -9,6 +9,7 @@ import os
 from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import sklearn.metrics as skm
 import sklearn.model_selection as sms
@@ -380,3 +381,72 @@ def create_train_test_split(
     # Return the dictionary of DataFrames.
     dataframes = {"train_df": train_df, "test_df": test_df}
     return dataframes
+
+
+def calculate_match_outcomes(**kwargs) -> pd.DataFrame:
+    """
+    Calculate match outcome probabilities.
+
+    :param actual_df: input df containing match data
+    :param predictions_df: df containing predictions from the model
+    :param params: model parameters including team strengths and other
+        factors
+    :param data: data used for fitting the model
+    :param max_goals: maximum number of goals to consider in the
+        probability calculation
+    :param apply_dixon_coles: flag to indicate whether to apply the
+        Dixon-Coles adjustment for low-scoring matches
+    :param rho: Adjustment Factor for Dixon-Coles adjustment
+    :return: df with added columns for the probabilities of home win,
+        away win, and draw, as well as the predicted outcomes
+    """
+    # Extract the Parameters.
+    actual_df = kwargs.get("actual_df")
+    predictions_df = kwargs.get("predictions_df")
+    max_goals = kwargs.get("max_goals", 10)
+    apply_dixon_coles = kwargs.get("apply_dixon_coles", False)
+    rho = kwargs.get("rho", -0.2)
+    # Combine the input dfs.
+    df = pd.merge(actual_df, predictions_df, right_index=True, left_index=True)
+    # Calculate probabilities of goals for home and away teams.
+    home_goals_probs = np.array(
+        [
+            np.exp(-df["Lambda_HS"]) * df["Lambda_HS"] ** i / np.math.factorial(i)
+            for i in range(max_goals)
+        ]
+    )
+    away_goals_probs = np.array(
+        [
+            np.exp(-df["Lambda_AS"]) * df["Lambda_AS"] ** i / np.math.factorial(i)
+            for i in range(max_goals)
+        ]
+    )
+    prob_home_win = np.zeros(len(df))
+    prob_away_win = np.zeros(len(df))
+    prob_draw = np.zeros(len(df))
+    # Calculate probabilities of match outcomes.
+    for i in range(max_goals):
+        for j in range(max_goals):
+            prob = home_goals_probs[i] * away_goals_probs[j]
+            if apply_dixon_coles:
+                prob *= rho
+            prob_home_win += np.where(i > j, prob, 0)
+            prob_away_win += np.where(i < j, prob, 0)
+            prob_draw += np.where(i == j, prob, 0)
+    # Add calculated probabilities and outcomes to the DataFrame.
+    df["prob_home_win"] = prob_home_win
+    df["prob_away_win"] = prob_away_win
+    df["prob_draw"] = prob_draw
+    df["predicted_outcome"] = np.where(
+        df["prob_home_win"] > df["prob_away_win"],
+        "home_win",
+        np.where(df["prob_away_win"] > df["prob_home_win"], "away_win", "draw"),
+    )
+    df["actual_outcome"] = np.where(
+        df["HS"] > df["AS"],
+        "home_win",
+        np.where(df["HS"] < df["AS"], "away_win", "draw"),
+    )
+    df["Lambda_HS"] = df["Lambda_HS"].round().astype(int)
+    df["Lambda_AS"] = df["Lambda_AS"].round().astype(int)
+    return df

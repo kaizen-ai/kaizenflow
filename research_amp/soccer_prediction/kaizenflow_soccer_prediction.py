@@ -461,5 +461,3 @@ display(dag)
 
 # %%
 dtfcore.draw(dag)
-
-# %%
