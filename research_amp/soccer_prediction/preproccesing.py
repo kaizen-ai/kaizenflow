@@ -247,14 +247,7 @@ class Dropnan(BaseEstimator, TransformerMixin):
 
 
 def preprocess_and_unravel_data(
-    df: pd.DataFrame,
-    *,
-    add_epsilon_flag: bool = False,
-    epsilon_columns: Optional[List[str]] = ["HS", "AS"],
-    test_size: float = 0.2,
-    stratify: bool = True,
-    label_encode: bool = False,
-    stratify_column: str = "HT",
+    **kwargs,
 ) -> (Dict, LabelEncoder):
     """
     Preprocess, split, and unravel the ISDB dataframe of interest.
@@ -274,6 +267,8 @@ def preprocess_and_unravel_data(
         and test DataFrames.
     """
     # Define the preprocessing pipeline.
+    df = kwargs.get('df')
+    add_epsilon_flag = kwargs.get('add_epsilon_flag', False)
     pipeline_steps = [
         ("general_preprocessing", GeneralPreprocessing()),
         ("drop_nan_and_inf", Dropnan()),
@@ -291,6 +286,8 @@ def preprocess_and_unravel_data(
     pipeline = Pipeline(pipeline_steps)
     # Apply the initial pipeline to the combined data.
     preprocessed_df = pipeline.fit_transform(df)
+    return preprocessed_df
+    """
     # Split the data into training and testing sets.
     split_data = rasoprut.create_train_test_split(
         preprocessed_df,
@@ -323,3 +320,4 @@ def preprocess_and_unravel_data(
             "train_df": preprocessed_train_df,
             "test_df": preprocessed_test_df,
         }, {}
+    """
