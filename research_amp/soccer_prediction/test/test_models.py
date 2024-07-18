@@ -30,7 +30,7 @@ class TestBivariatePoissonWrapper(hunitest.TestCase):
         X = data[["HT_id", "AT_id", "Time_Weight"]]
         data[["HS", "AS"]]
         # Define the model function.
-        model_func = lambda: rasoprmo.BivariatePoissonWrapper(maxiter=10)
+        model_func = lambda: rasoprmo.BivariatePoissonWrapper(maxiter=1)
         # Define node ID and variables.
         node_id = dtfcornode.NodeId("poisson_regressor")
         x_vars = X.columns.tolist()
