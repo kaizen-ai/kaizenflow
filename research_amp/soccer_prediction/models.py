@@ -6,16 +6,20 @@ import research_amp.soccer_prediction.models as rasoprmo
 
 import logging
 from typing import Any, Dict, Optional
+from sklearn.base import BaseEstimator, RegressorMixin
 
 import numpy as np
 import pandas as pd
 import sklearn.linear_model as slm
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
+import scipy.optimize import spop
+
+import helpers.hdbg as hdbg
+import research_amp.soccer_prediction.utils as rasoprut
 
 # import xgboost as xgb
-import jpickle
-
+#import jpickle
 import sklearn.metrics as skm
 import sklearn.model_selection as sms
 
@@ -191,7 +195,7 @@ def train_model(
     train_mae = []
     val_mae = []
     model.hyperparams = hyperparameters
-    sample_sizes = kwargs.get("sample_sizes")
+    sample_sizes = kwargs.get("sample_sizes", [20000, 30000, 40000, 50000])
     # Split the data into training and validation sets.
     for sample_size in sample_sizes:
         # Sample the training data.
@@ -265,7 +269,256 @@ def save_model_to_s3(
     :param aws_profile: AWS profile name.
     """
     # Save the model locally.
-    jpickle.dump(model, local_path)
+    #jpickle.dump(model, local_path)
     # Upload the model to S3.
-    s3 = haws.get_service_resource(aws_profile=aws_profile, service_name="s3")
-    s3.Bucket(s3_bucket).upload_file(local_path, s3_path)
+    #s3 = haws.get_service_resource(aws_profile=aws_profile, service_name="s3")
+    #s3.Bucket(s3_bucket).upload_file(local_path, s3_path)
+
+
+class BivariatePoissonWrapper(BaseEstimator, RegressorMixin):
+    """
+    A wrapper for the bivariate Poisson model to make it compatible with the
+    scikit-learn interface.
+    """
+
+    def __init__(self, maxiter: int = 100):
+        """
+        Initialize the BivariatePoissonWrapper with the maximum iterations.
+
+        :param maxiter: maximum number of iterations for fitting the
+            model
+        """
+        self.maxiter = maxiter
+        self.params = None
+        self.data = None  # To store data used in fitting
+
+    def bivariate_poisson_log_likelihood(
+        self, params: np.ndarray, data: pd.DataFrame
+    ) -> float:
+        """
+        Calculate the negative log likelihood for the bivariate Poisson model.
+
+        :param params: model parameters including team strengths and other factors
+                       the expected format is [c, h, rho, *strengths], where:
+                       - c: constant term
+                       - h: home advantage term
+                       - rho: correlation term
+                       - strengths: strengths of the teams
+        :param data: df with the data
+        :return: negative log likelihood
+        """
+        c, h, rho, *strengths = params
+        log_likelihood = 0
+        for _, row in data.iterrows():
+            # Extract and convert necessary variables.
+            i, j, goals_i, goals_j, time_weight = (
+                int(row["HT_id"]),
+                int(row["AT_id"]),
+                int(row["HS"]),
+                int(row["AS"]),
+                row["Time_Weight"],
+            )
+            # Check for out-of-bounds indices.
+            if i >= len(strengths) or j >= len(strengths):
+                print(
+                    f"Index out of bounds: i={i}, j={j}, len(strengths)={len(strengths)}"
+                )
+                continue
+            # Calculate lambda values.
+            lambda_i = np.exp(c + strengths[i] + h)
+            lambda_j = np.exp(c + strengths[j] - h)
+            joint_prob = 0
+            # Compute joint probability.
+            for k in range(min(goals_i, goals_j) + 1):
+                P_goals_i = (
+                    lambda_i**goals_i * np.exp(-lambda_i)
+                ) / np.math.factorial(goals_i)
+                P_goals_j = (
+                    lambda_j**goals_j * np.exp(-lambda_j)
+                ) / np.math.factorial(goals_j)
+                joint_prob += P_goals_i * P_goals_j
+            log_likelihood += time_weight * np.log(joint_prob)
+        return -log_likelihood
+
+    def fit(
+        self,
+        X: pd.DataFrame,
+        y: Optional[pd.DataFrame] = None,
+        sample_weight: Optional[np.ndarray] = None,
+    ) -> None:
+        """
+        Fit the bivariate Poisson model to the given data.
+
+        :param X: features (design matrix) for the regression
+        :param y: Target variable (DataFrame or ndarray)
+        :param sample_weight: Ignored, added for compatibility
+        """
+        if y is not None:
+            # Convert numpy arrays to DataFrames if necessary.
+            if isinstance(X, np.ndarray):
+                X = pd.DataFrame(X, columns=["HT_id", "AT_id", "Time_Weight"])
+            if isinstance(y, np.ndarray):
+                y = pd.DataFrame(y, columns=["HS", "AS"])
+            # Combine features and target into a single DataFrame.
+            data = pd.concat(
+                [X.reset_index(drop=True), y.reset_index(drop=True)], axis=1
+            )
+        else:
+            data = X
+        # Ensure HT_id and AT_id are integers.
+        data["HT_id"] = data["HT_id"].astype(int)
+        data["AT_id"] = data["AT_id"].astype(int)
+        # Store the data for use in predict.
+        self.data = data
+        # Calculate the number of teams.
+        num_teams = max(data["HT_id"].max(), data["AT_id"].max()) + 1
+        # Initialize parameters for optimization.
+        initial_params = [0, 0, 0.1] + [1] * num_teams
+        # Set optimization options.
+        options = {"maxiter": self.maxiter, "disp": True}
+        # Minimize the negative log likelihood.
+        result = minimize(
+            self.bivariate_poisson_log_likelihood,
+            initial_params,
+            args=(data,),
+            method="L-BFGS-B",
+            options=options,
+        )
+        # Store the optimized parameters.
+        self.params = result.x
+        return self
+
+    def predict(self, X: pd.DataFrame) -> pd.DataFrame:
+        """
+        Predict match outcomes using the fitted bivariate Poisson model.
+
+        :param X: features (design matrix) for the prediction
+        :return: predicted values
+        """
+        # Ensure that self.data is used in calculate_match_outcomes.
+        df_out = self.calculate_match_outcomes(self.data, self.params)
+        return df_out[["Lambda_HS", "Lambda_AS"]].values
+
+    def calculate_match_outcomes(
+        self,
+        df: pd.DataFrame,
+        params: np.ndarray,
+        *,
+        max_goals: int = 10,
+        apply_dixon_coles: bool = False,
+        rho: float = -0.2,
+    ) -> pd.DataFrame:
+        """
+        Calculate match outcome probabilities.
+
+        :param df: input DataFrame containing match data.
+        :param params: model parameters including team strengths and
+            other factors
+        :param data: data used for fitting the model
+        :param max_goals: maximum number of goals to consider in the
+            probability calculation
+        :param apply_dixon_coles: flag to indicate whether to apply the
+            Dixon-Coles adjustment for low-scoring matches.
+        :param rho: adjustment Factor for Dixon-Coles adjustment
+        :return: df with added columns for the probabilities of
+            home win, away win, and draw as well as the predicted
+            outcomes
+        """
+        c, h, rho, *strengths = params
+        # Calculate Lambda values for home and away teams.
+        df["Lambda_HS"] = np.exp(
+            c + df["HT_id"].apply(lambda x: strengths[int(x)]) + h
+        )
+        df["Lambda_AS"] = np.exp(
+            c + df["AT_id"].apply(lambda x: strengths[int(x)]) - h
+        )
+        # Calculate probabilities of goals for home and away teams.
+        home_goals_probs = np.array(
+            [
+                np.exp(-df["Lambda_HS"])
+                * df["Lambda_HS"] ** i
+                / np.math.factorial(i)
+                for i in range(max_goals)
+            ]
+        )
+        away_goals_probs = np.array(
+            [
+                np.exp(-df["Lambda_AS"])
+                * df["Lambda_AS"] ** i
+                / np.math.factorial(i)
+                for i in range(max_goals)
+            ]
+        )
+        prob_home_win = np.zeros(len(df))
+        prob_away_win = np.zeros(len(df))
+        prob_draw = np.zeros(len(df))
+        # Calculate probabilities of match outcomes.
+        for i in range(max_goals):
+            for j in range(max_goals):
+                prob = home_goals_probs[i] * away_goals_probs[j]
+                if apply_dixon_coles:
+                    prob *= self.dixon_coles_adjustment(
+                        i, j, df["Lambda_HS"], df["Lambda_AS"], rho
+                    )
+                prob_home_win += np.where(i > j, prob, 0)
+                prob_away_win += np.where(i < j, prob, 0)
+                prob_draw += np.where(i == j, prob, 0)
+        # Add calculated probabilities and outcomes to the DataFrame.
+        df["prob_home_win"] = prob_home_win
+        df["prob_away_win"] = prob_away_win
+        df["prob_draw"] = prob_draw
+        df["predicted_outcome"] = np.where(
+            df["prob_home_win"] > df["prob_away_win"],
+            "home_win",
+            np.where(
+                df["prob_away_win"] > df["prob_home_win"], "away_win", "draw"
+            ),
+        )
+        df["actual_outcome"] = np.where(
+            df["HS"] > df["AS"],
+            "home_win",
+            np.where(df["HS"] < df["AS"], "away_win", "draw"),
+        )
+        df["Lambda_HS"] = df["Lambda_HS"].round().astype(int)
+        df["Lambda_AS"] = df["Lambda_AS"].round().astype(int)
+        return df
+
+    def score(
+        self,
+        X: pd.DataFrame,
+        y: pd.DataFrame,
+        sample_weight: Optional[np.ndarray] = None,
+    ) -> float:
+        """
+        Score the model using the accuracy of the predicted outcomes.
+
+        :param X: features (design matrix) for the scoring
+        :param y: true target values
+        :param sample_weight: ignored, added for compatibility
+        :return: accuracy score
+        """
+        # Predict match outcomes.
+        predictions = self.predict(X)
+        # Calculate the number of correct predictions.
+        correct_predictions = (
+            predictions["predicted_outcome"] == predictions["actual_outcome"]
+        ).sum()
+        # Calculate and return accuracy.
+        return correct_predictions / len(predictions)
+
+    def get_fit_state(self) -> Dict[str, Any]:
+        """
+        Get the current fit state of the model.
+
+        :return: dictionary containing the fit state of the model
+        """
+        return {"params": self.params}
+
+    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
+        """
+        Set the fit state of the model.
+
+        :param fit_state: dictionary containing the fit state of the
+            model
+        """
+        self.params = fit_state["params"]
