@@ -378,7 +378,7 @@ class BivariatePoissonWrapper(BaseEstimator, RegressorMixin):
         options = {"maxiter": self.maxiter, "disp": False}
         # Minimize the negative log likelihood and capture the display output.
         _LOG.info("Starting optimization process...")
-        result = minimize(
+        result = spop.minimize(
             self.bivariate_poisson_log_likelihood,
             initial_params,
             args=(data,),
