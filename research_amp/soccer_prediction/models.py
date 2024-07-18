@@ -13,7 +13,7 @@ import pandas as pd
 import sklearn.linear_model as slm
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
-import scipy.optimize import spop
+import scipy.optimize as spop
 
 import helpers.hdbg as hdbg
 import research_amp.soccer_prediction.utils as rasoprut
@@ -375,14 +375,16 @@ class BivariatePoissonWrapper(BaseEstimator, RegressorMixin):
         # Initialize parameters for optimization.
         initial_params = [0, 0, 0.1] + [1] * num_teams
         # Set optimization options.
-        options = {"maxiter": self.maxiter, "disp": True}
-        # Minimize the negative log likelihood.
+        options = {"maxiter": self.maxiter, "disp": False}
+        # Minimize the negative log likelihood and capture the display output.
+        _LOG.info("Starting optimization process...")
         result = minimize(
             self.bivariate_poisson_log_likelihood,
             initial_params,
             args=(data,),
             method="L-BFGS-B",
             options=options,
+            callback=lambda xk: _LOG.info(f"Current params: {xk}")
         )
         # Store the optimized parameters.
         self.params = result.x
