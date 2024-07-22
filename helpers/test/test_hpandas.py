@@ -196,17 +196,43 @@ class Test_dassert_valid_remap(hunitest.TestCase):
 
     def test4(self) -> None:
         """
-        Check if duplicate key entries pass the test.
+        Check if an error is raised when the instance is not a list.
         """
         # Set inputs.
-        to_remap = ["dummy_value_1", "dummy_value_2", "dummy_value_3"]
+        to_remap = {"dummy_value_1"}
         remap_dict = {
             "dummy_value_1": "1, 2, 3",
-            "dummy_value_2": "A, B, C",
-            "dummy_value_1": "A1, B2, C3",
         }
+        # Run
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_valid_remap(to_remap, remap_dict)
+        actual = str(cm.exception)
+        expected = r"""
+        * Failed assertion *
+        Instance of '{'dummy_value_1'}' is '<class 'set'>' instead of '<class 'list'>'
+        """
         # Check.
-        hpandas.dassert_valid_remap(to_remap, remap_dict)
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test5(self) -> None:
+        """
+        Check if an error is raised when the instance is not a dictionary.
+        """
+        # Set inputs.
+        to_remap = ["dummy_value_1"]
+        remap_dict = [
+            "dummy_value_1 : 1, 2, 3",
+        ]
+        # Run
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_valid_remap(to_remap, remap_dict)
+        actual = str(cm.exception)
+        expected = r"""
+        * Failed assertion *
+        Instance of '['dummy_value_1 : 1, 2, 3']' is '<class 'list'>' instead of '<class 'dict'>'
+        """
+        # Check.
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
 
 # #############################################################################
@@ -4037,29 +4063,29 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
         index_is_datetime: bool,
     ) -> pd.DataFrame:
         """
-        Helper function to get test multi-index dataframe.
-        Example of dataframe returned when `index_is_datetime = True`:
+         Helper function to get test multi-index dataframe.
+         Example of dataframe returned when `index_is_datetime = True`:
 
-        ``` 
-        
-                                            column1     column2
-        index   timestamp
-        index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
-                2022-01-01 21:10:00+00:00   1.303778    -0.288235
-        index2  2022-01-01 21:00:00+00:00   1.237079    1.168012
-                2022-01-01 21:10:00+00:00   1.333692    1.708455
+         ```
+
+                                             column1     column2
+         index   timestamp
+         index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
+                 2022-01-01 21:10:00+00:00   1.303778    -0.288235
+         index2  2022-01-01 21:00:00+00:00   1.237079    1.168012
+                 2022-01-01 21:10:00+00:00   1.333692    1.708455
+         ```
+
+         Example of dataframe returned when `index_is_datetime = False`:
+
         ```
-
-        Example of dataframe returned when `index_is_datetime = False`:
-
-       ```
-                            column1     column2
-        index   timestamp
-        index1  string1     -0.122140   -1.949431
-                string2     1.303778    -0.288235
-        index2  string1     1.237079    1.168012
-                string2     1.333692    1.708455
-        ```
+                             column1     column2
+         index   timestamp
+         index1  string1     -0.122140   -1.949431
+                 string2     1.303778    -0.288235
+         index2  string1     1.237079    1.168012
+                 string2     1.333692    1.708455
+         ```
         """
         if index_is_datetime:
             index_inner = [
