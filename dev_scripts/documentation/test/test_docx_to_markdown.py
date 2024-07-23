@@ -46,9 +46,6 @@ class Test_move_media(hunitest.TestCase):
         with open(img2_path, 'w') as f:
             f.write("Sample image content")
         
-
-       
-
     def tear_down_test(self) -> None:
         """
         Clean up temporary files and directories created for testing.
@@ -82,3 +79,4 @@ class Test_move_media(hunitest.TestCase):
         mock_move.assert_has_calls(expected_calls, any_order=True)
 
 # #############################################################################
+
