@@ -773,3 +773,51 @@ class Test_dassert_str_is_date(hunitest.TestCase):
             hdateti.dassert_str_is_date(date)
         actual = str(err.exception)
         self.check_string(actual)
+
+# #############################################################################
+# Test_dassert_timestamp_lt
+# #############################################################################
+
+class Test_dassert_timestamp_lt(hunitest.TestCase):
+    def test1(self):
+        """
+        Test dassert_timestamp_lt with valid timestamps where start is less than end.
+        """
+        start_timestamp = _PD_TS_ET
+        end_timestamp = pd.Timestamp("2021-02-02 09:30:00-00:00", tz="UTC")
+
+        # This should not raise any exceptions.
+        hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
+
+    def test2(self):
+        """
+        Test dassert_timestamp_lt with equal timestamps, should raise an exception.
+        """
+        start_timestamp = _PD_TS_ET
+        end_timestamp = _PD_TS_ET
+
+        with self.assertRaises(AssertionError) as cm:
+            hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        2021-01-04 09:30:00-05:00 < 2021-01-04 09:30:00-05:00
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test3(self):
+        """
+        Test dassert_timestamp_lt with start timestamp greater than end timestamp,
+        should raise an exception.
+        """
+        start_timestamp = pd.Timestamp("2021-02-04 09:30:00-05:00", tz="America/New_York")
+        end_timestamp = pd.Timestamp("2021-01-04 09:30:00-05:00", tz="America/New_York")
+        
+        with self.assertRaises(AssertionError) as cm:
+            hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        2021-02-04 09:30:00-05:00 < 2021-01-04 09:30:00-05:00
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
