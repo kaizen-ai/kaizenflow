@@ -779,7 +779,8 @@ class Test_dassert_str_is_date(hunitest.TestCase):
 # #############################################################################
 
 class Test_dassert_timestamp_lt(hunitest.TestCase):
-    def test1(self):
+
+    def test1(self) -> None:
         """
         Test dassert_timestamp_lt with valid timestamps where start is less than end.
         """
@@ -789,7 +790,7 @@ class Test_dassert_timestamp_lt(hunitest.TestCase):
         # This should not raise any exceptions.
         hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
 
-    def test2(self):
+    def test2(self) -> None:
         """
         Test dassert_timestamp_lt with equal timestamps, should raise an exception.
         """
@@ -805,7 +806,7 @@ class Test_dassert_timestamp_lt(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test3(self):
+    def test3(self) -> None:
         """
         Test dassert_timestamp_lt with start timestamp greater than end timestamp,
         should raise an exception.
@@ -821,3 +822,33 @@ class Test_dassert_timestamp_lt(hunitest.TestCase):
         2021-02-04 09:30:00-05:00 < 2021-01-04 09:30:00-05:00
         """
         self.assert_equal(act, exp, fuzzy_match=True)
+    
+    def test4(self) -> None:
+        """
+        Test dassert_timestamp_lt with start timestamp as None
+        """
+        start_timestamp = None
+        end_timestamp = pd.Timestamp("2021-01-04 09:30:00-05:00", tz="America/New_York")
+        
+        # This should not raise any exceptions.
+        hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
+
+    def test5(self) -> None:
+        """
+        Test dassert_timestamp_lt with end timestamp as None
+        """
+        start_timestamp = pd.Timestamp("2021-01-04 09:30:00-05:00", tz="America/New_York")
+        end_timestamp = None
+        
+        # This should not raise any exceptions.
+        hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
+
+    def test6(self) -> None:
+        """
+        Test dassert_timestamp_lt with both timestamps as None
+        """
+        start_timestamp = None
+        end_timestamp = None
+        
+        # This should not raise any exceptions.
+        hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
