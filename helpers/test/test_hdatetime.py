@@ -773,3 +773,44 @@ class Test_dassert_str_is_date(hunitest.TestCase):
             hdateti.dassert_str_is_date(date)
         actual = str(err.exception)
         self.check_string(actual)
+
+# #############################################################################
+# Test_dassert_is_valid_timestamp
+# #############################################################################
+
+class Test_dassert_is_valid_timestamp(hunitest.TestCase):
+
+    def test1(self) -> None:
+        """
+        Test dassert_timestamp_lt by checking a timestamp with a timezone
+        """
+        timestamp = _PD_TS_UTC
+
+        # This should not raise any exceptions.
+        hdateti.dassert_is_valid_timestamp(timestamp)
+        
+
+    def test2(self) -> None:
+        """
+        Test dassert_timestamp_lt by checking a timestamp without a timezone
+        """
+        timestamp = _PD_TS_NAIVE  # No timezone info
+
+        with self.assertRaises(AssertionError) as cm:
+            hdateti.dassert_is_valid_timestamp(timestamp)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        'None' is not 'None'
+        datetime_='2021-01-04 09:30:00' doesn't have timezone info
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Test dassert_timestamp_lt by checking a timestamp as None
+        """
+        timestamp = None
+
+         # This should not raise any exceptions.
+        hdateti.dassert_is_valid_timestamp(timestamp)
