@@ -4,7 +4,7 @@ Import as:
 import research_amp.soccer_prediction.preproccesing as rasoprpr
 """
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -21,11 +21,10 @@ _LOG = logging.getLogger(__name__)
 class GeneralPreprocessing(BaseEstimator, TransformerMixin):
     """
     Perform general preprocessing on the dataframe.
-    - Filter and select matches from seasons starting from 2009.
-      Adds `season` column that takes the first year of a `Sea` as integer value.
-      (e.g if `Sea` == "09-10" then `season` == 2009).
+
     - Convert 'Date' to datetime and sort.
-    - Drop rows with NaNs.
+    - Changes column names to a more readable format.
+    - Changes match_outcome values to a more readable format.
     """
 
     def fit(
@@ -49,22 +48,38 @@ class GeneralPreprocessing(BaseEstimator, TransformerMixin):
         """
         # Validate input.
         hdbg.dassert_isinstance(X, pd.DataFrame)
-        rows_before = len(X)
-        # Add 'season' column.
-        X["season"] = X["Sea"].apply(lambda x: int("20" + str(x)[:2]))
-        # Filter out seasons before 2009.
-        X = X[X["season"] >= 2009]
-        len(X)
-        _LOG.info(
-            "Rows removed after the operation: %s ", rows_before - rows_before
-        )
         # Convert 'Date' to datetime and sort.
         X["Date"] = pd.to_datetime(X["Date"], dayfirst=True)
         X.sort_values(by="Date", inplace=True)
+        # Rename columns in the dataframe.
+        rename_columns = {
+            "Sea": "season",
+            "Lge": "league",
+            "HT": "home_team",
+            "AT": "opponent",
+            "AS": "goals_scored_by_opponent",
+            "HS": "goals_scored_by_home_team",
+            "WDL": "match_outcome",
+            "GD": "goal_difference",
+        }
+        X = X.rename(columns=rename_columns)
+        # Change `match_outcome` values.
+        new_values = {"W": "win", "L": "loss", "D": "draw"}
+        X["match_outcome"] = X["match_outcome"].replace(new_values)
         # Convert categorical columns to 'category' type.
-        categorical_columns = ["HT", "AT"]
+        categorical_columns = ["home_team", "opponent"]
         for col in categorical_columns:
             X[col] = X[col].astype("category")
+        # Sort the dataframe by date
+        X = X.sort_values(by="Date").reset_index(drop=True)
+        # Add a 'Time_Adjusted' column to separate matches on the same day by 2 hours
+        X["Time_Adjusted"] = X.groupby("Date").cumcount() * 2
+        X["Adjusted_Date"] = X["Date"] + pd.to_timedelta(
+            X["Time_Adjusted"], unit="h"
+        )
+        # Set the 'Adjusted_Date' as the index
+        X = X.set_index("Adjusted_Date")
+        X = X.drop(columns=["Time_Adjusted"])
         return X
 
 
@@ -246,78 +261,46 @@ class Dropnan(BaseEstimator, TransformerMixin):
         return X
 
 
-def preprocess_and_unravel_data(
+def load_and_preprocess_data(
+    *,
+    bucket_name: str,
+    dataset_path: str,
+    logging_level: int = logging.INFO,
+    add_epsilon: bool = False,
+    epsilon_val: float = 0.5,
+    add_epsilon_to_columns: Optional[List[str]] = None,
     **kwargs,
-) -> (Dict, LabelEncoder):
+) -> pd.DataFrame:
     """
-    Preprocess, split, and unravel the ISDB dataframe of interest.
+    Load and preprocess df.
 
-    :param df: Input DataFrame.
-    :param add_epsilon_flag: Flag to indicate if epsilon should be added
-        to scores.
-    :param epsilon_columns: List of columns to which epsilon should be
-        added.
-    :param test_size: Proportion of the dataset to include in the test
-        split.
-    :param stratify: Whether to stratify the split based on the
-        stratify_column.
-    :param stratify_column: The column to use for stratification if
-        stratify is True.
-    :return: Dictionary containing the preprocessed and unraveled train
-        and test DataFrames.
+    :param df: input DataFrame.
+    :param add_epsilon: check to add eplison value to goals
+    :param add_eplison_to_columns: columns to which epsilon should be
+    :return: processed df
     """
-    # Define the preprocessing pipeline.
-    df = kwargs.get('df')
-    add_epsilon_flag = kwargs.get('add_epsilon_flag', False)
+    # Load df.
+    df = rasoprut.load_data_from_s3(bucket_name, dataset_path)
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    # Check if loaded df is empty.
+    hdbg.dassert_ne(0, len(df), "Dataframe is empty.")
+    # Create preprocessing pipeline.
     pipeline_steps = [
         ("general_preprocessing", GeneralPreprocessing()),
         ("drop_nan_and_inf", Dropnan()),
     ]
-    if add_epsilon_flag:
+    # Add eplison value to goals scored.
+    if add_epsilon:
         pipeline_steps.append(
             (
                 "add_epsilon",
                 FunctionTransformer(
                     add_epsilon,
-                    kw_args={"epsilon": 0.5, "columns": epsilon_columns},
+                    kw_args={"epsilon": epsilon_val, "columns": add_epsilon_to_columns},
                 ),
             )
         )
     pipeline = Pipeline(pipeline_steps)
-    # Apply the initial pipeline to the combined data.
+    # Apply the initial pipeline to the data.
     preprocessed_df = pipeline.fit_transform(df)
     return preprocessed_df
-    """
-    # Split the data into training and testing sets.
-    split_data = rasoprut.create_train_test_split(
-        preprocessed_df,
-        stratify=stratify,
-        stratify_column=stratify_column,
-        test_size=test_size,
-    )
-    train_df, test_df = split_data["train_df"], split_data["test_df"]
-    # Apply label encoding on the combined dataset.
-    combined_df = pd.concat([train_df, test_df])
-    if label_encode:
-        label_encoder = LabelEncoding(columns=["HT", "AT"])
-        combined_df_encoded = label_encoder.fit_transform(combined_df)
-        # Split the encoded combined dataset back into train and test sets.
-        train_df_encoded = combined_df_encoded.loc[train_df.index]
-        test_df_encoded = combined_df_encoded.loc[test_df.index]
-        # Apply the unravel step to both train and test sets.
-        unravel = UnravelData()
-        preprocessed_train_df = unravel.fit_transform(train_df_encoded)
-        preprocessed_test_df = unravel.transform(test_df_encoded)
-        return {
-            "train_df": preprocessed_train_df,
-            "test_df": preprocessed_test_df,
-        }, label_encoder
-    else:
-        unravel = UnravelData()
-        preprocessed_train_df = unravel.fit_transform(train_df)
-        preprocessed_test_df = unravel.transform(test_df)
-        return {
-            "train_df": preprocessed_train_df,
-            "test_df": preprocessed_test_df,
-        }, {}
-    """

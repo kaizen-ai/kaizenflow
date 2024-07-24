@@ -6,24 +6,20 @@ import research_amp.soccer_prediction.models as rasoprmo
 
 import logging
 from typing import Any, Dict, Optional
-from sklearn.base import BaseEstimator, RegressorMixin
 
 import numpy as np
 import pandas as pd
+import scipy.optimize as spop
 import sklearn.linear_model as slm
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
-import scipy.optimize as spop
-
-import helpers.hdbg as hdbg
-import research_amp.soccer_prediction.utils as rasoprut
+from sklearn.base import BaseEstimator, RegressorMixin
 
 # import xgboost as xgb
-#import jpickle
+# import jpickle
 import sklearn.metrics as skm
 import sklearn.model_selection as sms
 
-import helpers.haws as haws
 import helpers.hdbg as hdbg
 import research_amp.soccer_prediction.utils as rasoprut
 
@@ -269,10 +265,10 @@ def save_model_to_s3(
     :param aws_profile: AWS profile name.
     """
     # Save the model locally.
-    #jpickle.dump(model, local_path)
+    # jpickle.dump(model, local_path)
     # Upload the model to S3.
-    #s3 = haws.get_service_resource(aws_profile=aws_profile, service_name="s3")
-    #s3.Bucket(s3_bucket).upload_file(local_path, s3_path)
+    # s3 = haws.get_service_resource(aws_profile=aws_profile, service_name="s3")
+    # s3.Bucket(s3_bucket).upload_file(local_path, s3_path)
 
 
 class BivariatePoissonWrapper(BaseEstimator, RegressorMixin):
@@ -330,12 +326,8 @@ class BivariatePoissonWrapper(BaseEstimator, RegressorMixin):
             joint_prob = 0
             # Compute joint probability.
             for k in range(min(goals_i, goals_j) + 1):
-                P_goals_i = (
-                    lambda_i**goals_i * np.exp(-lambda_i)
-                ) / np.math.factorial(goals_i)
-                P_goals_j = (
-                    lambda_j**goals_j * np.exp(-lambda_j)
-                ) / np.math.factorial(goals_j)
+                P_goals_i = rasoprut.poisson_probability(lambda_i, goals_i)
+                P_goals_j = rasoprut.poisson_probability(lambda_j, goals_j)
                 joint_prob += P_goals_i * P_goals_j
             log_likelihood += time_weight * np.log(joint_prob)
         return -log_likelihood
@@ -384,7 +376,7 @@ class BivariatePoissonWrapper(BaseEstimator, RegressorMixin):
             args=(data,),
             method="L-BFGS-B",
             options=options,
-            callback=lambda xk: _LOG.info(f"Current params: {xk}")
+            callback=lambda xk: _LOG.info(f"Current params: {xk}"),
         )
         # Store the optimized parameters.
         self.params = result.x
@@ -398,92 +390,8 @@ class BivariatePoissonWrapper(BaseEstimator, RegressorMixin):
         :return: predicted values
         """
         # Ensure that self.data is used in calculate_match_outcomes.
-        df_out = self.calculate_match_outcomes(self.data, self.params)
+        df_out = rasoprut.calculate_match_outcomes(self.data, self.params)
         return df_out[["Lambda_HS", "Lambda_AS"]].values
-
-    def calculate_match_outcomes(
-        self,
-        df: pd.DataFrame,
-        params: np.ndarray,
-        *,
-        max_goals: int = 10,
-        apply_dixon_coles: bool = False,
-        rho: float = -0.2,
-    ) -> pd.DataFrame:
-        """
-        Calculate match outcome probabilities.
-
-        :param df: input DataFrame containing match data.
-        :param params: model parameters including team strengths and
-            other factors
-        :param data: data used for fitting the model
-        :param max_goals: maximum number of goals to consider in the
-            probability calculation
-        :param apply_dixon_coles: flag to indicate whether to apply the
-            Dixon-Coles adjustment for low-scoring matches.
-        :param rho: adjustment Factor for Dixon-Coles adjustment
-        :return: df with added columns for the probabilities of
-            home win, away win, and draw as well as the predicted
-            outcomes
-        """
-        c, h, rho, *strengths = params
-        # Calculate Lambda values for home and away teams.
-        df["Lambda_HS"] = np.exp(
-            c + df["HT_id"].apply(lambda x: strengths[int(x)]) + h
-        )
-        df["Lambda_AS"] = np.exp(
-            c + df["AT_id"].apply(lambda x: strengths[int(x)]) - h
-        )
-        # Calculate probabilities of goals for home and away teams.
-        home_goals_probs = np.array(
-            [
-                np.exp(-df["Lambda_HS"])
-                * df["Lambda_HS"] ** i
-                / np.math.factorial(i)
-                for i in range(max_goals)
-            ]
-        )
-        away_goals_probs = np.array(
-            [
-                np.exp(-df["Lambda_AS"])
-                * df["Lambda_AS"] ** i
-                / np.math.factorial(i)
-                for i in range(max_goals)
-            ]
-        )
-        prob_home_win = np.zeros(len(df))
-        prob_away_win = np.zeros(len(df))
-        prob_draw = np.zeros(len(df))
-        # Calculate probabilities of match outcomes.
-        for i in range(max_goals):
-            for j in range(max_goals):
-                prob = home_goals_probs[i] * away_goals_probs[j]
-                if apply_dixon_coles:
-                    prob *= self.dixon_coles_adjustment(
-                        i, j, df["Lambda_HS"], df["Lambda_AS"], rho
-                    )
-                prob_home_win += np.where(i > j, prob, 0)
-                prob_away_win += np.where(i < j, prob, 0)
-                prob_draw += np.where(i == j, prob, 0)
-        # Add calculated probabilities and outcomes to the DataFrame.
-        df["prob_home_win"] = prob_home_win
-        df["prob_away_win"] = prob_away_win
-        df["prob_draw"] = prob_draw
-        df["predicted_outcome"] = np.where(
-            df["prob_home_win"] > df["prob_away_win"],
-            "home_win",
-            np.where(
-                df["prob_away_win"] > df["prob_home_win"], "away_win", "draw"
-            ),
-        )
-        df["actual_outcome"] = np.where(
-            df["HS"] > df["AS"],
-            "home_win",
-            np.where(df["HS"] < df["AS"], "away_win", "draw"),
-        )
-        df["Lambda_HS"] = df["Lambda_HS"].round().astype(int)
-        df["Lambda_AS"] = df["Lambda_AS"].round().astype(int)
-        return df
 
     def score(
         self,
