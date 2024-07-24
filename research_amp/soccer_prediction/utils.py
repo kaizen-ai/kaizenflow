@@ -426,8 +426,7 @@ def poisson_probability(mean: float, k: int) -> float:
     """
     Calculate the Poisson probability.
 
-    :param mean: the average rate (lambda) of the Poisson
-        distribution
+    :param mean: the average rate (lambda) of the Poisson distribution
     :param k: the number of occurrences (k)
     :return: the Poisson probability of k occurrences
     """
@@ -441,53 +440,52 @@ def calculate_match_outcomes(
     Calculate match outcome probabilities.
 
     :param df: input dataframe containing match data.
-    :param params: model parameters including team strengths and
-        other factors.
+    :param params: model parameters including team strengths and other
+        factors.
     :param max_goals: maximum number of goals to consider in the
         probability calculation.
-    :return: dataframe with added columns for the probabilities of
-        home win, away win, and draw as well as the predicted
-        outcomes.
+    :return: dataframe with added columns for the probabilities of home
+        win, away win, and draw as well as the predicted outcomes.
     """
     c, h, rho, *strengths = params
     # Calculate Lambda values for home and away teams.
-    df["Lambda_HS"] = np.exp(
-        c + df["HT_id"].apply(lambda x: strengths[int(x)]) + h
+    df["lambda_goals_by_home_team"] = np.exp(
+        c + df["home_team_id"].apply(lambda x: strengths[int(x)]) + h
     )
-    df["Lambda_AS"] = np.exp(
-        c + df["AT_id"].apply(lambda x: strengths[int(x)]) - h
+    df["lambda_goals_by_opponent"] = np.exp(
+        c + df["opponent_id"].apply(lambda x: strengths[int(x)]) - h
     )
     # Calculate probabilities of goals for home and away teams.
     home_goals_probs = np.array(
-        [poisson_probability(df["Lambda_HS"], i) for i in range(max_goals)]
+        [
+            poisson_probability(df["lambda_goals_by_home_team"], i)
+            for i in range(max_goals)
+        ]
     )
     away_goals_probs = np.array(
-        [poisson_probability(df["Lambda_AS"], i) for i in range(max_goals)]
+        [
+            poisson_probability(df["lambda_goals_by_opponent"], i)
+            for i in range(max_goals)
+        ]
     )
-    prob_home_win = np.zeros(len(df))
-    prob_away_win = np.zeros(len(df))
+    prob_win = np.zeros(len(df))
+    prob_loss = np.zeros(len(df))
     prob_draw = np.zeros(len(df))
     # Calculate probabilities of match outcomes.
     for i in range(max_goals):
         for j in range(max_goals):
             prob = home_goals_probs[i] * away_goals_probs[j]
-            prob_home_win += np.where(i > j, prob, 0)
-            prob_away_win += np.where(i < j, prob, 0)
+            prob_win += np.where(i > j, prob, 0)
+            prob_loss += np.where(i < j, prob, 0)
             prob_draw += np.where(i == j, prob, 0)
     # Add calculated probabilities and outcomes to the dataframe.
-    df["prob_home_win"] = prob_home_win
-    df["prob_away_win"] = prob_away_win
+    df["prob_win"] = prob_win
+    df["prob_loss"] = prob_loss
     df["prob_draw"] = prob_draw
-    df["predicted_outcome"] = np.where(
-        df["prob_home_win"] > df["prob_away_win"],
-        "home_win",
-        np.where(df["prob_away_win"] > df["prob_home_win"], "away_win", "draw"),
+    df["lambda_goals_by_home_team"] = (
+        df["lambda_goals_by_home_team"].round().astype(int)
     )
-    df["actual_outcome"] = np.where(
-        df["HS"] > df["AS"],
-        "home_win",
-        np.where(df["HS"] < df["AS"], "away_win", "draw"),
+    df["lambda_goals_by_opponent"] = (
+        df["lambda_goals_by_opponent"].round().astype(int)
     )
-    df["Lambda_HS"] = df["Lambda_HS"].round().astype(int)
-    df["Lambda_AS"] = df["Lambda_AS"].round().astype(int)
-    return df
+    return df[["prob_win", "prob_loss", "prob_draw"]]

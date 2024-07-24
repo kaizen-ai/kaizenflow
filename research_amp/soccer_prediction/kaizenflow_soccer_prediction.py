@@ -64,54 +64,14 @@ _LOG.debug(hpandas.df_to_str(preprocessed_df_out))
 
 
 # %%
-# This is temporary data for sanity checks.
-data = pd.DataFrame(
-    {
-        "HT_id": np.random.randint(0, 10, 1000),
-        "AT_id": np.random.randint(0, 10, 1000),
-        "HS": np.random.poisson(1.5, 1000),
-        "AS": np.random.poisson(1.5, 1000),
-        "Time_Weight": np.random.uniform(0.8, 1.2, 1000),
-        "Lge": ["ENG5"] * 1000,
-        "Sea": np.random.choice(["07-08", "06-07", "08-09"], 1000),
-    }
-)
-
-# Select the data for the league and season
-final_data = data[
-    (data["Lge"] == "ENG5")
-    & (
-        (data["Sea"] == "07-08")
-        | (data["Sea"] == "06-07")
-        | (data["Sea"] == "08-09")
-    )
-]
-
-# Ensure correct column names and types
-final_data["HT_id"] = final_data["HT_id"].astype(int)
-final_data["AT_id"] = final_data["AT_id"].astype(int)
-final_data["HS"] = final_data["HS"].astype(int)
-final_data["AS"] = final_data["AS"].astype(int)
-# Split into features and target
-X = final_data[["HT_id", "AT_id", "Time_Weight"]]
-y = final_data[["HS", "AS"]]
-df = final_data
-# Define the model function.
-model_func = lambda: rasoprmo.BivariatePoissonWrapper(maxiter=10)
 # Define node ID and variables.
 node_3 = dtfcornode.NodeId("poisson_regressor")
-x_vars = X.columns.tolist()
-y_vars = ["HS", "AS"]
-steps_ahead = 1
 # Instantiate the ContinuousSkLearnModel with the bivariate Poisson wrapper.
-poisson_model_node = dtfcnoskmo.ContinuousSkLearnModel(
+poisson_model_node = rasoprmo.BivariatePoissonModel(
     nid=node_3,
-    model_func=model_func,
-    x_vars=x_vars,
-    y_vars=y_vars,
-    steps_ahead=steps_ahead,
+    maxiter = 1
 )
-df_model_fit = poisson_model_node.fit(df)["df_out"]
+df_model_fit = poisson_model_node.fit(preprocessed_df_out[:1000])["df_out"]
 _LOG.debug(hpandas.df_to_str(df_model_fit))
 
 
