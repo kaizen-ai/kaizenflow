@@ -713,3 +713,57 @@ class Test_dassert_all_attributes_are_same1(hunitest.TestCase):
         Obj = collections.namedtuple("Obj", ["a", "b"])
         list_ = [Obj(1, 2), Obj(1, 2)]
         hdbg.dassert_all_attributes_are_same(list_, "b")
+
+# #############################################################################
+class Test_dassert_lt(hunitest.TestCase):
+    
+    def test1(self) -> None:
+        """
+        Test where val1 is less than val2.
+        """
+        hdbg.dassert_lt(1, 2)
+    
+    def test2(self) -> None:
+        """
+        Test where val1 is equal to val2.
+        """
+        with self.assertRaises(AssertionError) as cm:
+            hdbg.dassert_lt(2, 2)
+        
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        2 < 2
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+    
+    def test3(self) -> None:
+        """
+        Test where val1 is greater than val2.
+        """
+        with self.assertRaises(AssertionError) as cm:
+            hdbg.dassert_lt(3, 2)
+        act = str(cm.exception).strip()
+        exp = """
+            * Failed assertion *
+            3 < 2
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Test where val1 is less than val2 with strings.
+        """
+        hdbg.dassert_lt("a", "b")
+
+    def test5(self) -> None:
+        """
+        Test where val1 is greater than val2 with floats.
+        """
+        with self.assertRaises(AssertionError) as cm:
+            hdbg.dassert_lt(2.0, 1.0)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        2.0 < 1.0"""
+        self.assert_equal(act, exp, fuzzy_match=True)
