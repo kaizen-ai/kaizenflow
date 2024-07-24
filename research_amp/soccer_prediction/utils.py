@@ -439,14 +439,14 @@ def calculate_match_outcomes(
     """
     Calculate match outcome probabilities.
 
-    :param df: input dataframe containing match data.
+    :param df: input dataframe containing match data
     :param params: model parameters including team strengths and
-        other factors.
+        other factors
     :param max_goals: maximum number of goals to consider in the
-        probability calculation.
+        probability calculation
     :return: dataframe with added columns for the probabilities of
         home win, away win, and draw as well as the predicted
-        outcomes.
+        outcomes
     """
     c, h, rho, *strengths = params
     # Calculate Lambda values for home and away teams.
@@ -498,13 +498,13 @@ def get_outcome_probability(
     """
     Calculate match outcome probabilities.
 
-    :param df: input dataframe containing match data.
+    :param df: input dataframe containing match data
     :param params: model parameters including team strengths and other
-        factors.
+        factors
     :param max_goals: maximum number of goals to consider in the
-        probability calculation.
+        probability calculation
     :return: dataframe with added columns for the probabilities of home
-        win, away win, and draw as well as the predicted outcomes.
+        win, away win, and draw as well as the predicted outcomes
     """
     c, h, rho, *strengths = params
     # Calculate Lambda values for home and away teams.

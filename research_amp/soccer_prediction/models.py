@@ -454,12 +454,12 @@ class BivariatePoissonModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         """
         Initialize the BivariatePoissonModel with the maximum iterations.
 
-        :param nid: unique node id.
+        :param nid: unique node id
         :param maxiter: maximum number of iterations for fitting the
-            model.
+            model
         :param col_mode: "merge_all" or "replace_all", as in
-            `ColumnTransformer()`.
-        :param half_life_period: half-life period for time weighting.
+            `ColumnTransformer()`
+        :param half_life_period: half-life period for time weighting
         """
         super().__init__(nid)
         self.maxiter = maxiter
@@ -492,9 +492,9 @@ class BivariatePoissonModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         """
         Preprocess the input dataframe for the BivariatePoissonModel.
 
-        :param df_in: input dataframe containing match data.
-        :param half_life_period: half-life period for time weighting.
-        :return: preprocessed dataframe.
+        :param df_in: input dataframe containing match data
+        :param half_life_period: half-life period for time weighting
+        :return: preprocessed dataframe
         """
         # Calculate the number of days ago each match was played.
         df_in["Days_Ago"] = (df_in["Date"].max() - df_in["Date"]).dt.days
@@ -561,9 +561,9 @@ class BivariatePoissonModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         Calculate the negative log likelihood for the bivariate Poisson model.
 
         :param params: model parameters including team strengths and
-            other factors.
-        :param data: dataframe with the data.
-        :return: negative log likelihood.
+            other factors
+        :param data: dataframe with the data
+        :return: negative log likelihood
         """
         c, h, rho, *strengths = params
         log_likelihood = 0

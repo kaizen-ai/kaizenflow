@@ -66,7 +66,7 @@ _LOG.debug(hpandas.df_to_str(preprocessed_df_out))
 # %%
 # Define node ID and variables.
 node_3 = dtfcornode.NodeId("poisson_regressor")
-# Instantiate the ContinuousSkLearnModel with the bivariate Poisson wrapper.
+# Instantiate the poisson model.
 poisson_model_node = rasoprmo.BivariatePoissonModel(
     nid=node_3,
     maxiter = 1
