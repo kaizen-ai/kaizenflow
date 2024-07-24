@@ -822,7 +822,6 @@ class Test_dassert_is_valid_timestamp(hunitest.TestCase):
         act = str(cm.exception)
         exp = """
         * Failed assertion *
-        Instance of '2021-01-04 09:30:00' is '<class 'str'>' instead of '
-        <class 'pandas._libs.tslibs.timestamps.Timestamp'>'
+        Instance of '2021-01-04 09:30:00' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs.timestamps.Timestamp'>'
         """
         self.assert_equal(act, exp, fuzzy_match=True)
