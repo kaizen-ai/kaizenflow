@@ -21,6 +21,116 @@ _LOG = logging.getLogger(__name__)
 
 _AWS_PROFILE = "ck"
 
+
+class Test_dassert_is_days(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Timedelta is an exact integer number of days.
+        """
+        timedelta = pd.Timedelta(days=5)
+        hpandas.dassert_is_days(timedelta)  # Should pass without exception
+
+    def test2(self) -> None:
+        """
+        Timedelta is a float number of days.
+        """
+        timedelta = pd.Timedelta(days=1.5)
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_is_days(timedelta)  # Should raise AssertionError
+        actual_exception = str(cm.exception)
+        expected_exception = r"""
+        * Failed assertion *
+        cond=False
+        timedelta='1 days 12:00:00' is not an integer number of days
+        """
+        self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Timedelta is provided in the form of days and hours.
+        """
+        timedelta = pd.Timedelta(days=5, hours=1)
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_is_days(timedelta)  # Should raise AssertionError
+        actual_exception = str(cm.exception)
+        expected_exception = r"""
+        * Failed assertion *
+        cond=False
+        timedelta='5 days 01:00:00' is not an integer number of days
+        """
+        self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Timedelta is provided as 0 number of days.
+        """
+        timedelta = pd.Timedelta(days=0)
+        hpandas.dassert_is_days(timedelta)  # Should pass without exception
+
+    def test5(self) -> None:
+        """
+        Timedelta is provided as a string.
+        """
+        timedelta = pd.Timedelta("5")
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_is_days(timedelta)  # Should raise AssertionError
+
+        actual_exception = str(cm.exception)
+        expected_exception = r"""
+        * Failed assertion *
+        cond=False
+        timedelta='0 days 00:00:00.000000005' is not an integer number of days
+        """
+        self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
+
+    def test6(self) -> None:
+        """
+        Timedelta is provided as a negative number of days.
+        """
+        timedelta = pd.Timedelta(days=-1)
+        hpandas.dassert_is_days(timedelta)  # Should pass without exception
+
+    def test7(self) -> None:
+        """
+        Timedelta is provided as a number of days less than the minimum number
+        of days.
+        """
+        timedelta = pd.Timedelta(days=-1)
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_is_days(
+                timedelta, min_num_days=1
+            )  # Should raise AssertionError
+        actual_exception = str(cm.exception)
+        expected_exception = r"""
+        * Failed assertion *
+        1 <= -1
+        """
+        self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
+
+    def test8(self) -> None:
+        """
+        Timedelta and minimum number of days are 0.
+        """
+        timedelta = pd.Timedelta(days=0)
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_is_days(
+                timedelta, min_num_days=0
+            )  # Should raise AssertionError
+        actual_exception = str(cm.exception)
+        expected_exception = r"""
+        * Failed assertion *
+        1 <= 0
+        """
+        self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
+
+    def test9(self) -> None:
+        """
+        Timedelta and minimum number are valid integer inputs.
+        """
+        timedelta = pd.Timedelta(days=5)
+        hpandas.dassert_is_days(timedelta, min_num_days=1)
+
+
 class Test_dassert_is_unique1(hunitest.TestCase):
     def get_df1(self) -> pd.DataFrame:
         """
@@ -3527,7 +3637,8 @@ class Test_dassert_strictly_increasing_index(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        Check that an assert is raised for a not monotonically increasing index.
+        Check that an assert is raised for a not monotonically increasing
+        index.
         """
         # Build test dataframe.
         idx = [
@@ -3963,25 +4074,19 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
 
         Example of dataframe returned when `index_is_datetime = True`:
 
-        ```
-                                            column1     column2
-        index   timestamp
-        index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
-                2022-01-01 21:10:00+00:00   1.303778    -0.288235
-        index2  2022-01-01 21:00:00+00:00   1.237079    1.168012
-                2022-01-01 21:10:00+00:00   1.333692    1.708455
-        ```
+        ```                                     column1     column2
+        index   timestamp index1  2022-01-01 21:00:00+00:00   -0.122140
+        -1.949431         2022-01-01 21:10:00+00:00   1.303778
+        -0.288235 index2  2022-01-01 21:00:00+00:00   1.237079
+        1.168012         2022-01-01 21:10:00+00:00   1.333692
+        1.708455 ```
 
         Example of dataframe returned when `index_is_datetime = False`:
 
-        ```
-                            column1     column2
-        index   timestamp
-        index1  string1     -0.122140   -1.949431
-                string2     1.303778    -0.288235
-        index2  string1     1.237079    1.168012
-                string2     1.333692    1.708455
-        ```
+        ```                     column1     column2 index   timestamp
+        index1  string1     -0.122140   -1.949431         string2
+        1.303778    -0.288235 index2  string1     1.237079    1.168012
+        string2     1.333692    1.708455 ```
         """
         if index_is_datetime:
             index_inner = [
@@ -4222,3 +4327,112 @@ class Test_compute_weighted_sum(hunitest.TestCase):
             dictionary of dfs must be nonempty
             """
         self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)
+
+
+class TestDassertIsDays(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Timedelta is an exact integer number of days.
+        """
+        timedelta = pd.Timedelta(days=5)
+        hpandas.dassert_is_days(timedelta)  # Should pass without exception
+
+    def test2(self) -> None:
+        """
+        Timedelta is a float number of days.
+        """
+        timedelta = pd.Timedelta(days=1.5)
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_is_days(timedelta)  # Should raise AssertionError
+        actual_exception = str(cm.exception)
+        expected_exception = r"""
+        * Failed assertion *
+        cond=False
+        timedelta='1 days 12:00:00' is not an integer number of days
+        """
+        self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Timedelta is provided in the form of days and hours.
+        """
+        timedelta = pd.Timedelta(days=5, hours=1)
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_is_days(timedelta)  # Should raise AssertionError
+        actual_exception = str(cm.exception)
+        expected_exception = r"""
+        * Failed assertion *
+        cond=False
+        timedelta='5 days 01:00:00' is not an integer number of days
+        """
+        self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Timedelta is provided as 0 number of days.
+        """
+        timedelta = pd.Timedelta(days=0)
+        hpandas.dassert_is_days(timedelta)  # Should pass without exception
+
+    def test5(self) -> None:
+        """
+        Timedelta is provided as a string.
+        """
+        timedelta = pd.Timedelta("5")
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_is_days(timedelta)  # Should raise AssertionError
+
+        actual_exception = str(cm.exception)
+        expected_exception = r"""
+        * Failed assertion *
+        cond=False
+        timedelta='0 days 00:00:00.000000005' is not an integer number of days
+        """
+        self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
+
+    def test6(self) -> None:
+        """
+        Timedelta is provided as a negative number of days.
+        """
+        timedelta = pd.Timedelta(days=-1)
+        hpandas.dassert_is_days(timedelta)  # Should pass without exception
+
+    def test7(self) -> None:
+        """
+        Timedelta is provided as a number of days less than the minimum number
+        of days.
+        """
+        timedelta = pd.Timedelta(days=-1)
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_is_days(
+                timedelta, min_num_days=1
+            )  # Should raise AssertionError
+        actual_exception = str(cm.exception)
+        expected_exception = r"""
+        * Failed assertion *
+        1 <= -1
+        """
+        self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
+
+    def test8(self) -> None:
+        """
+        Timedelta and minimum number of days are 0.
+        """
+        timedelta = pd.Timedelta(days=0)
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_is_days(
+                timedelta, min_num_days=0
+            )  # Should raise AssertionError
+        actual_exception = str(cm.exception)
+        expected_exception = r"""
+        * Failed assertion *
+        1 <= 0
+        """
+        self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
+
+    def test9(self) -> None:
+        """
+        Timedelta and minimum number are valid integer inputs.
+        """
+        timedelta = pd.Timedelta(days=5)
+        hpandas.dassert_is_days(timedelta, min_num_days=1)
