@@ -715,55 +715,69 @@ class Test_dassert_all_attributes_are_same1(hunitest.TestCase):
         hdbg.dassert_all_attributes_are_same(list_, "b")
 
 # #############################################################################
+
 class Test_dassert_lt(hunitest.TestCase):
     
     def test1(self) -> None:
         """
-        Test where val1 is less than val2.
+        Test that the function works fine if first value is less than second value.
         """
-        hdbg.dassert_lt(1, 2)
+        val1 = 1
+        val2 = 2
+        hdbg.dassert_lt(val1, val2)
     
     def test2(self) -> None:
         """
-        Test where val1 is equal to val2.
+        Test that the function works fine if first value is equal to second value, this raises an exception.
         """
+        val1 = 2
+        val2 = 2
         with self.assertRaises(AssertionError) as cm:
-            hdbg.dassert_lt(2, 2)
-        
+            hdbg.dassert_lt(val1, val2)
         act = str(cm.exception)
         exp = """
         * Failed assertion *
         2 < 2
         """
+        #check.
         self.assert_equal(act, exp, fuzzy_match=True)
     
     def test3(self) -> None:
         """
-        Test where val1 is greater than val2.
+        Test that the function works fine if first value is greater than second value, this raises an exception.
         """
+        val1 = 3
+        val2 = 2
         with self.assertRaises(AssertionError) as cm:
-            hdbg.dassert_lt(3, 2)
+            hdbg.dassert_lt(val1, val2)
         act = str(cm.exception).strip()
         exp = """
-            * Failed assertion *
-            3 < 2
+        * Failed assertion *
+        3 < 2
         """
+        #check.
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test4(self) -> None:
         """
-        Test where val1 is less than val2 with strings.
+        Test that the function works with string inputs.
         """
-        hdbg.dassert_lt("a", "b")
+        val1 = "a"
+        val2 = "b"
+        hdbg.dassert_lt(val1, val2)
 
     def test5(self) -> None:
         """
-        Test where val1 is greater than val2 with floats.
+        Test where first value is greater than second value with floats, this raises an exception.
         """
+        val1 = 2.0
+        val2 = 1.0
         with self.assertRaises(AssertionError) as cm:
-            hdbg.dassert_lt(2.0, 1.0)
+            hdbg.dassert_lt(val1, val2)
         act = str(cm.exception)
         exp = """
         * Failed assertion *
-        2.0 < 1.0"""
+        2.0 < 1.0
+        """
+        #check.
         self.assert_equal(act, exp, fuzzy_match=True)
