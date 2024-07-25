@@ -802,6 +802,7 @@ class Test_dassert_is_valid_timestamp(hunitest.TestCase):
         'None' is not 'None'
         datetime_='2021-01-04 09:30:00' doesn't have timezone info
         """
+        #check.
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test3(self) -> None:
@@ -824,4 +825,5 @@ class Test_dassert_is_valid_timestamp(hunitest.TestCase):
         * Failed assertion *
         Instance of '2021-01-04 09:30:00' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs.timestamps.Timestamp'>'
         """
+        #check.
         self.assert_equal(act, exp, fuzzy_match=True)
