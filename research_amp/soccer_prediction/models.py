@@ -500,14 +500,6 @@ class BivariatePoissonModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         df_in["Days_Ago"] = (df_in["Date"].max() - df_in["Date"]).dt.days
         # Calculate time weights.
         df_in["Time_Weight"] = 0.5 ** (df_in["Days_Ago"] / half_life_period)
-        # Generate unique team identifiers.
-        teams = pd.Series(
-            df_in["home_team"].tolist() + df_in["opponent"].tolist()
-        ).unique()
-        team_to_id = {team: idx for idx, team in enumerate(teams)}
-        # Map teams to unique identifiers.
-        df_in["home_team_id"] = df_in["home_team"].map(team_to_id).astype(int)
-        df_in["opponent_id"] = df_in["opponent"].map(team_to_id).astype(int)
         # Return the processed dataframe.
         return df_in
 
@@ -515,11 +507,10 @@ class BivariatePoissonModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         self, df_in: pd.DataFrame, fit: bool
     ) -> Dict[str, pd.DataFrame]:
         if fit:
-            # Store the input data for use in prediction.
-            self.data = self._preprocess_df(df_in, self.half_life_period)
+            data = self._preprocess_df(df_in, self.half_life_period)
             # Initialize parameters for optimization.
             num_teams = int(
-                max(df_in["home_team_id"].max(), df_in["opponent_id"].max()) + 1
+                max(data["home_team_id"].max(), data["opponent_id"].max()) + 1
             )
             initial_params = [0, 0, 0.1] + [1] * num_teams
             options = {"maxiter": self.maxiter, "disp": False}
@@ -527,7 +518,7 @@ class BivariatePoissonModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
             result = spop.minimize(
                 self._bivariate_poisson_log_likelihood,
                 initial_params,
-                args=(df_in,),
+                args=(data,),
                 method="L-BFGS-B",
                 options=options,
                 callback=lambda xk: _LOG.info(f"Current params: {xk}"),

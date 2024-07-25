@@ -433,6 +433,7 @@ def poisson_probability(mean: float, k: int) -> float:
     return (np.exp(-mean) * mean**k) / np.math.factorial(k)
 
 
+# TODO(Krishna): Remove the unused/repeated functions.
 def calculate_match_outcomes(
     df: pd.DataFrame, params: np.ndarray, *, max_goals: int = 10
 ) -> pd.DataFrame:
@@ -440,13 +441,12 @@ def calculate_match_outcomes(
     Calculate match outcome probabilities.
 
     :param df: input dataframe containing match data
-    :param params: model parameters including team strengths and
-        other factors
+    :param params: model parameters including team strengths and other
+        factors
     :param max_goals: maximum number of goals to consider in the
         probability calculation
-    :return: dataframe with added columns for the probabilities of
-        home win, away win, and draw as well as the predicted
-        outcomes
+    :return: dataframe with added columns for the probabilities of home
+        win, away win, and draw as well as the predicted outcomes
     """
     c, h, rho, *strengths = params
     # Calculate Lambda values for home and away teams.
@@ -493,7 +493,10 @@ def calculate_match_outcomes(
 
 
 def get_outcome_probability(
-    df: pd.DataFrame, params: np.ndarray, *, max_goals: int = 10
+    df: pd.DataFrame,
+    params: np.ndarray,
+    *,
+    max_goals: int = 10,
 ) -> pd.DataFrame:
     """
     Calculate match outcome probabilities.
@@ -507,12 +510,27 @@ def get_outcome_probability(
         win, away win, and draw as well as the predicted outcomes
     """
     c, h, rho, *strengths = params
+    # Calculate the average strength, excluding strengths still set to 1.
+    valid_strengths = [s for s in strengths if s != 1]
+    avg_strength = np.mean(valid_strengths) if valid_strengths else 1
     # Calculate Lambda values for home and away teams.
     df["lambda_goals_by_home_team"] = np.exp(
-        c + df["home_team_id"].apply(lambda x: strengths[int(x)]) + h
+        c
+        + df["home_team_id"].apply(
+            lambda x: strengths[int(x)]
+            if int(x) < len(strengths) and strengths[int(x)] != 1
+            else avg_strength
+        )
+        + h
     )
     df["lambda_goals_by_opponent"] = np.exp(
-        c + df["opponent_id"].apply(lambda x: strengths[int(x)]) - h
+        c
+        + df["opponent_id"].apply(
+            lambda x: strengths[int(x)]
+            if int(x) < len(strengths) and strengths[int(x)] != 1
+            else avg_strength
+        )
+        - h
     )
     # Calculate probabilities of goals for home and away teams.
     home_goals_probs = np.array(

@@ -14,7 +14,7 @@
 
 # %%
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 import numpy as np
 import pandas as pd
@@ -26,6 +26,8 @@ import dataflow.core as dtfcore
 import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.sklearn_models as dtfcnoskmo
 import dataflow.core.nodes.sources as dtfconosou
+import dataflow.core.nodes.base as dtfconobas
+import dataflow.core.utils as dtfcorutil
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
@@ -43,9 +45,17 @@ _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
 
+# %% [markdown]
+# ### Source Node
+
 # %% run_control={"marked": true}
 # Define the necessary preprocessing step configuration.
-config = {"load_and_preprocess_node": {"bucket_name": "cryptokaizen-data-test", "dataset_path": "kaizen_ai/soccer_prediction/datasets/OSF_football/ISDBv2.txt"}}
+config = {
+            "load_and_preprocess_node": {
+                "bucket_name": "cryptokaizen-data-test", 
+                "dataset_path": "kaizen_ai/soccer_prediction/datasets/OSF_football/ISDBv2.txt"
+            }
+         }
 node_1 = "load_and_preprocess_node"
 # Initialize the FunctionDataSource with the correct configuration.
 load_and_preprocess_node = dtfconosou.FunctionDataSource(
@@ -53,14 +63,28 @@ load_and_preprocess_node = dtfconosou.FunctionDataSource(
     func=rasoprpr.load_and_preprocess_data, 
     func_kwargs=config[node_1]
     )
-preprocessed_df_out = load_and_preprocess_node.fit()["df_out"]
+# Create train-test split using the source node.
+# Define the training and testing intervals.
+train_intervals = [(pd.Timestamp("2000-03-19 00:00:00"), pd.Timestamp("2000-08-26 00:03:20"))]
+test_intervals = [(pd.Timestamp("2000-08-26 00:03:40"), pd.Timestamp("2000-08-27 00:04:00"))]
+# Set the intervals in the source node.
+load_and_preprocess_node.set_fit_intervals(train_intervals)
+load_and_preprocess_node.set_predict_intervals(test_intervals)
+# Generate the training dataset.
+train_df_out = load_and_preprocess_node.fit()["df_out"]
+# Generate the testing dataset.
+test_df_out = load_and_preprocess_node.predict()["df_out"]
 
-
-# %%
-_LOG.debug(hpandas.df_to_str(preprocessed_df_out))
 
 # %% [markdown]
-# #### Bivariate model Node
+# ### Train-Test split
+
+# %%
+_LOG.debug(hpandas.df_to_str(train_df_out))
+_LOG.debug(hpandas.df_to_str(test_df_out))
+
+# %% [markdown]
+# ### Bivariate model Node
 
 
 # %%
@@ -71,9 +95,13 @@ poisson_model_node = rasoprmo.BivariatePoissonModel(
     nid=node_3,
     maxiter = 1
 )
-df_model_fit = poisson_model_node.fit(preprocessed_df_out[:1000])["df_out"]
+df_model_fit = poisson_model_node.fit(train_df_out)["df_out"]
 _LOG.debug(hpandas.df_to_str(df_model_fit))
 
+
+# %%
+df_model_predict = poisson_model_node.predict(test_df_out)["df_out"]
+_LOG.debug(hpandas.df_to_str(df_model_predict))
 
 # %%
 # # Combine Predictions and calculate match outcomes.
