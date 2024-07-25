@@ -138,7 +138,7 @@ class Test_to_series1(hunitest.TestCase):
 class Test_dassert_valid_remap(hunitest.TestCase):
     def test1(self) -> None:
         """
-        A simple test to check that the function works.
+        Check that the function works with correct inputs.
         """
         # Set inputs.
         to_remap = ["dummy_value_1", "dummy_value_2", "dummy_value_3"]
@@ -151,7 +151,7 @@ class Test_dassert_valid_remap(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        Check that an assert is raised if dictionary keys are not a subset.
+        Check that an assertion is raised if dictionary keys are not a subset.
         """
         # Set inputs.
         to_remap = ["dummy_value_1", "dummy_value_2"]
@@ -160,7 +160,7 @@ class Test_dassert_valid_remap(hunitest.TestCase):
             "dummy_value_2": "A, B, C",
             "dummy_value_3": "A1, A2, A3",
         }
-        # Run
+        # Run.
         with self.assertRaises(AssertionError) as cm:
             hpandas.dassert_valid_remap(to_remap, remap_dict)
         actual = str(cm.exception)
@@ -176,16 +176,16 @@ class Test_dassert_valid_remap(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        Check if duplicate values create error.
+        Check that an assertion is raised if the duplicate values are present in the dict.
         """
         # Set inputs.
         to_remap = ["dummy_value_1", "dummy_value_2", "dummy_value_3"]
         remap_dict = {
-            "dummy_value_1": "1, 2, 3",
+            "dummy_value_1": 1,
             "dummy_value_2": "A, B, C",
-            "dummy_value_3": "1, 2, 3",
+            "dummy_value_3": "A, B, C",
         }
-        # Run
+        # Run.
         with self.assertRaises(AttributeError) as cm:
             hpandas.dassert_valid_remap(to_remap, remap_dict)
         actual = str(cm.exception)
@@ -196,14 +196,14 @@ class Test_dassert_valid_remap(hunitest.TestCase):
 
     def test4(self) -> None:
         """
-        Check if an error is raised when the instance is not a list.
+        Check that an assertion is raised if the input is not a list.
         """
         # Set inputs.
         to_remap = {"dummy_value_1"}
         remap_dict = {
             "dummy_value_1": "1, 2, 3",
         }
-        # Run
+        # Run.
         with self.assertRaises(AssertionError) as cm:
             hpandas.dassert_valid_remap(to_remap, remap_dict)
         actual = str(cm.exception)
@@ -216,14 +216,14 @@ class Test_dassert_valid_remap(hunitest.TestCase):
 
     def test5(self) -> None:
         """
-        Check if an error is raised when the instance is not a dictionary.
+        Check that an assertion is raised if the input is not a dictionary.
         """
         # Set inputs.
         to_remap = ["dummy_value_1"]
         remap_dict = [
             "dummy_value_1 : 1, 2, 3",
         ]
-        # Run
+        # Run.
         with self.assertRaises(AssertionError) as cm:
             hpandas.dassert_valid_remap(to_remap, remap_dict)
         actual = str(cm.exception)
