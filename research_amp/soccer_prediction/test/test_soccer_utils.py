@@ -19,7 +19,7 @@ class TestCalculateRPS(hunitest.TestCase):
         """
         Test RPS for custom dataframe.
 
-        - Expected RPS: 0.05
+        - Expected RPS = ((0.7 - 1) ** 2 + (0.9 - 1) ** 2) / 2 
         - Correct class (home_win) predicted, the RPS value should be lowest.
         """
         # Test data.
@@ -31,7 +31,7 @@ class TestCalculateRPS(hunitest.TestCase):
         }
         df_test = pd.DataFrame(data)
         # Expected RPS calculation.
-        expected_rps_val = ((0.7 - 1) ** 2 + (0.9 - 1) ** 2) / 2
+        expected_rps_val = 0.05
         expected_rps = f"{expected_rps_val: .2f}"
         actual_rps_val = rasoprut.calculate_rps(df_test)
         actual_rps = f"{actual_rps_val: .2f}"
@@ -42,7 +42,7 @@ class TestCalculateRPS(hunitest.TestCase):
         """
         Test RPS for custom dataframe.
 
-        - Expected RPS: 0.33
+        - Expected RPS: ((0.2 - 1) ** 2 + (0.9 - 1) ** 2) / 2
         - Next nearest class predcited (draw), the RPS value increases
         """
         # Test data.
@@ -54,7 +54,7 @@ class TestCalculateRPS(hunitest.TestCase):
         }
         df_test = pd.DataFrame(data)
         # Expected RPS calculation.
-        expected_rps_val = ((0.2 - 1) ** 2 + (0.9 - 1) ** 2) / 2
+        expected_rps_val = 0.33
         expected_rps = f"{expected_rps_val: .2f}"
         actual_rps_val = rasoprut.calculate_rps(df_test)
         actual_rps = f"{actual_rps_val: .2f}"
@@ -65,7 +65,7 @@ class TestCalculateRPS(hunitest.TestCase):
         """
         Test RPS for custom dataframe.
 
-        - Expected RPS: 0.65
+        - Expected RPS: ((0.1 - 1) ** 2 + (0.3 - 1) ** 2) / 2
         - Farthest class predicted (away_win), RPS value should be highest.
         """
         # Test data.
@@ -77,7 +77,7 @@ class TestCalculateRPS(hunitest.TestCase):
         }
         df_test = pd.DataFrame(data)
         # Expected RPS.
-        expected_rps_val = ((0.1 - 1) ** 2 + (0.3 - 1) ** 2) / 2
+        expected_rps_val = 0.65
         expected_rps = f"{expected_rps_val: .2f}"
         actual_rps_val = rasoprut.calculate_rps(df_test)
         actual_rps = f"{actual_rps_val: .2f}"
@@ -87,6 +87,14 @@ class TestCalculateRPS(hunitest.TestCase):
     def test4(self) -> None:
         """
         Check the function for custom column names.
+        - Expected RPS: expected_rps_val = (
+            (0.6 - 1) ** 2
+            + (0.9 - 1) ** 2
+            + (0.3 - 0) ** 2
+            + (0.7 - 1) ** 2
+            + (0.4 - 0) ** 2
+            + (0.8 - 0) ** 2
+        ) / 6
         """
         # Test data with custom column names
         data = {
@@ -97,14 +105,7 @@ class TestCalculateRPS(hunitest.TestCase):
         }
         df_test = pd.DataFrame(data)
         # Expected RPS calculation.
-        expected_rps_val = (
-            (0.6 - 1) ** 2
-            + (0.9 - 1) ** 2
-            + (0.3 - 0) ** 2
-            + (0.7 - 1) ** 2
-            + (0.4 - 0) ** 2
-            + (0.8 - 0) ** 2
-        ) / 6
+        expected_rps_val = 0.19
         expected_rps = f"{expected_rps_val: .2f}"
         actual_rps_val = rasoprut.calculate_rps(
             df_test,
