@@ -384,6 +384,54 @@ def create_train_test_split(
     return dataframes
 
 
+def calculate_rps(
+    df: pd.DataFrame,
+    prob_home_win_col: str = "prob_home_win",
+    prob_draw_col: str = "prob_draw",
+    prob_away_win_col: str = "prob_away_win",
+    actual_outcome_col: str = "actual_outcome",
+) -> float:
+    """
+    Calculate the Rank Probability Score (RPS) for three-way outcome
+    predictions in a DataFrame.
+
+    :param df: df containing the columns for predicted probabilities and
+        actual outcomes
+    :param prob_home_win_col: column name for the probability of home
+        win
+    :param prob_draw_col: column name for the probability of draw
+    :param prob_away_win_col: column name for the probability of away
+        win
+    :param actual_outcome_col: column name for the actual outcome
+    :return: RPS score for the entire model
+    """
+    # Initialize RPS sum.
+    rps_sum = 0
+    # Calculate the total number of matches.
+    M = len(df)
+    # Iterate over each row in the DataFrame.
+    for index, row in df.iterrows():
+        # Extract predicted probabilities
+        probs = np.array([row[prob_home_win_col], row[prob_away_win_col]])
+        # Calculate cumulative predicted probabilities.
+        probs.cumsum()
+        # Determine actual outcomes.
+        if row[actual_outcome_col] == "home_win":
+            actuals = np.array([1, 0])
+        elif row[actual_outcome_col] == "away_win":
+            actuals = np.array([0, 1])
+        else:
+            actuals = np.array([0, 0])
+        # Calculate RPS for the current match.
+        rps = (np.sum((probs - actuals) ** 2)) / 2
+        # Add the RPS of the current match to the total RPS sum.
+        rps_sum += rps
+    # Average RPS over all matches.
+    rps_avg = rps_sum / M
+    _LOG.debug("RPS value for the model: %.4f", rps_avg)
+    return rps_avg
+
+
 def load_data_from_s3(
     bucket_name: str,
     dataset_path: str,
@@ -426,28 +474,27 @@ def poisson_probability(mean: float, k: int) -> float:
     """
     Calculate the Poisson probability.
 
-    :param mean: the average rate (lambda) of the Poisson
-        distribution
+    :param mean: the average rate (lambda) of the Poisson distribution
     :param k: the number of occurrences (k)
     :return: the Poisson probability of k occurrences
     """
     return (np.exp(-mean) * mean**k) / np.math.factorial(k)
 
 
+# TODO(Krishna): Remove the unused/repeated functions.
 def calculate_match_outcomes(
     df: pd.DataFrame, params: np.ndarray, *, max_goals: int = 10
 ) -> pd.DataFrame:
     """
     Calculate match outcome probabilities.
 
-    :param df: input dataframe containing match data.
-    :param params: model parameters including team strengths and
-        other factors.
+    :param df: input dataframe containing match data
+    :param params: model parameters including team strengths and other
+        factors
     :param max_goals: maximum number of goals to consider in the
-        probability calculation.
-    :return: dataframe with added columns for the probabilities of
-        home win, away win, and draw as well as the predicted
-        outcomes.
+        probability calculation
+    :return: dataframe with added columns for the probabilities of home
+        win, away win, and draw as well as the predicted outcomes
     """
     c, h, rho, *strengths = params
     # Calculate Lambda values for home and away teams.
@@ -491,3 +538,79 @@ def calculate_match_outcomes(
     df["Lambda_HS"] = df["Lambda_HS"].round().astype(int)
     df["Lambda_AS"] = df["Lambda_AS"].round().astype(int)
     return df
+
+
+def get_outcome_probability(
+    df: pd.DataFrame,
+    params: np.ndarray,
+    *,
+    max_goals: int = 10,
+) -> pd.DataFrame:
+    """
+    Calculate match outcome probabilities.
+
+    :param df: input dataframe containing match data
+    :param params: model parameters including team strengths and other
+        factors
+    :param max_goals: maximum number of goals to consider in the
+        probability calculation
+    :return: dataframe with added columns for the probabilities of home
+        win, away win, and draw as well as the predicted outcomes
+    """
+    c, h, rho, *strengths = params
+    # Calculate the average strength, excluding strengths still set to 1.
+    valid_strengths = [s for s in strengths if s != 1]
+    avg_strength = np.mean(valid_strengths) if valid_strengths else 1
+    # Calculate Lambda values for home and away teams.
+    df["lambda_goals_by_home_team"] = np.exp(
+        c
+        + df["home_team_id"].apply(
+            lambda x: strengths[int(x)]
+            if int(x) < len(strengths) and strengths[int(x)] != 1
+            else avg_strength
+        )
+        + h
+    )
+    df["lambda_goals_by_opponent"] = np.exp(
+        c
+        + df["opponent_id"].apply(
+            lambda x: strengths[int(x)]
+            if int(x) < len(strengths) and strengths[int(x)] != 1
+            else avg_strength
+        )
+        - h
+    )
+    # Calculate probabilities of goals for home and away teams.
+    home_goals_probs = np.array(
+        [
+            poisson_probability(df["lambda_goals_by_home_team"], i)
+            for i in range(max_goals)
+        ]
+    )
+    away_goals_probs = np.array(
+        [
+            poisson_probability(df["lambda_goals_by_opponent"], i)
+            for i in range(max_goals)
+        ]
+    )
+    prob_win = np.zeros(len(df))
+    prob_loss = np.zeros(len(df))
+    prob_draw = np.zeros(len(df))
+    # Calculate probabilities of match outcomes.
+    for i in range(max_goals):
+        for j in range(max_goals):
+            prob = home_goals_probs[i] * away_goals_probs[j]
+            prob_win += np.where(i > j, prob, 0)
+            prob_loss += np.where(i < j, prob, 0)
+            prob_draw += np.where(i == j, prob, 0)
+    # Add calculated probabilities and outcomes to the dataframe.
+    df["prob_win"] = prob_win
+    df["prob_loss"] = prob_loss
+    df["prob_draw"] = prob_draw
+    df["lambda_goals_by_home_team"] = (
+        df["lambda_goals_by_home_team"].round().astype(int)
+    )
+    df["lambda_goals_by_opponent"] = (
+        df["lambda_goals_by_opponent"].round().astype(int)
+    )
+    return df[["prob_win", "prob_loss", "prob_draw"]]
