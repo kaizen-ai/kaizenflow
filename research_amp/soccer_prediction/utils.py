@@ -384,6 +384,54 @@ def create_train_test_split(
     return dataframes
 
 
+def calculate_rps(
+    df: pd.DataFrame,
+    prob_home_win_col: str = "prob_home_win",
+    prob_draw_col: str = "prob_draw",
+    prob_away_win_col: str = "prob_away_win",
+    actual_outcome_col: str = "actual_outcome",
+) -> float:
+    """
+    Calculate the Rank Probability Score (RPS) for three-way outcome
+    predictions in a DataFrame.
+
+    :param df: df containing the columns for predicted probabilities and
+        actual outcomes
+    :param prob_home_win_col: column name for the probability of home
+        win
+    :param prob_draw_col: column name for the probability of draw
+    :param prob_away_win_col: column name for the probability of away
+        win
+    :param actual_outcome_col: column name for the actual outcome
+    :return: RPS score for the entire model
+    """
+    # Initialize RPS sum.
+    rps_sum = 0
+    # Calculate the total number of matches.
+    M = len(df)
+    # Iterate over each row in the DataFrame.
+    for index, row in df.iterrows():
+        # Extract predicted probabilities
+        probs = np.array([row[prob_home_win_col], row[prob_away_win_col]])
+        # Calculate cumulative predicted probabilities.
+        probs.cumsum()
+        # Determine actual outcomes.
+        if row[actual_outcome_col] == "home_win":
+            actuals = np.array([1, 0])
+        elif row[actual_outcome_col] == "away_win":
+            actuals = np.array([0, 1])
+        else:
+            actuals = np.array([0, 0])
+        # Calculate RPS for the current match.
+        rps = (np.sum((probs - actuals) ** 2)) / 2
+        # Add the RPS of the current match to the total RPS sum.
+        rps_sum += rps
+    # Average RPS over all matches.
+    rps_avg = rps_sum / M
+    _LOG.debug("RPS value for the model: %.4f", rps_avg)
+    return rps_avg
+
+
 def load_data_from_s3(
     bucket_name: str,
     dataset_path: str,
