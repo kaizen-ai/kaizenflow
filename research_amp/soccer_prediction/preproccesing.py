@@ -70,16 +70,24 @@ class GeneralPreprocessing(BaseEstimator, TransformerMixin):
         categorical_columns = ["home_team", "opponent"]
         for col in categorical_columns:
             X[col] = X[col].astype("category")
-        # Sort the dataframe by date
+        # Sort the dataframe by date.
         X = X.sort_values(by="Date").reset_index(drop=True)
-        # Add a 'Time_Adjusted' column to separate matches on the same day by 2 hours
-        X["Time_Adjusted"] = X.groupby("Date").cumcount() * 2
+        # Separate matches on the same day by 20 seconds.
+        X["Time_Adjusted"] = X.groupby("Date").cumcount() * 20
         X["Adjusted_Date"] = X["Date"] + pd.to_timedelta(
-            X["Time_Adjusted"], unit="h"
+            X["Time_Adjusted"], unit="s"
         )
         # Set the 'Adjusted_Date' as the index
         X = X.set_index("Adjusted_Date")
         X = X.drop(columns=["Time_Adjusted"])
+        # Generate unique team identifiers.
+        teams = pd.Series(
+            X["home_team"].tolist() + X["opponent"].tolist()
+        ).unique()
+        team_to_id = {team: idx for idx, team in enumerate(teams)}
+        # Map teams to unique identifiers.
+        X["home_team_id"] = X["home_team"].map(team_to_id).astype(int)
+        X["opponent_id"] = X["opponent"].map(team_to_id).astype(int)
         return X
 
 
@@ -296,7 +304,10 @@ def load_and_preprocess_data(
                 "add_epsilon",
                 FunctionTransformer(
                     add_epsilon,
-                    kw_args={"epsilon": epsilon_val, "columns": add_epsilon_to_columns},
+                    kw_args={
+                        "epsilon": epsilon_val,
+                        "columns": add_epsilon_to_columns,
+                    },
                 ),
             )
         )
