@@ -4,6 +4,7 @@ Import as:
 import research_amp.soccer_prediction.utils as rasoprut
 """
 
+import io
 import logging
 import os
 from typing import Any, Dict, List
@@ -429,3 +430,112 @@ def calculate_rps(
     rps_avg = rps_sum / M
     _LOG.debug("RPS value for the model: %.4f", rps_avg)
     return rps_avg
+
+
+def load_data_from_s3(
+    bucket_name: str,
+    dataset_path: str,
+    *,
+    aws_profile: str = "ck",
+    decoding: str = "utf-8",
+    logging_level: int = logging.INFO,
+    read_method: str = "read_csv",
+    seperator: str = "\t",
+    **kwargs,
+) -> pd.DataFrame:
+    """
+    Load a single file from S3 directly into memory.
+
+    :param bucket_name: S3 bucket
+    :param dataset_path: path for the dataset in the S3 bucket
+    :param aws_profile: associated profile for checking credentials.
+    :param decoding: decoding type for the file content
+    :param logging_level: logging level
+    :param read_method: method used to read the file into df.(read_csv,
+        read_excel, etc.)
+    :return: DataFrame with the content of the file.
+    """
+    # Initialize S3 session.
+    s3 = haws.get_service_resource(aws_profile=aws_profile, service_name="s3")
+    # Retrieve the file from S3.
+    obj = s3.Object(bucket_name, dataset_path)
+    _LOG.log(
+        logging_level, "Loading %s from bucket %s", dataset_path, bucket_name
+    )
+    data = obj.get()["Body"].read().decode(decoding)
+    # Load data using the read method.
+    read_func = getattr(pd, read_method)
+    dataframe = read_func(io.StringIO(data), sep=seperator, **kwargs)
+    _LOG.log(logging_level, "Data Loaded into Memory.")
+    return dataframe
+
+
+def poisson_probability(mean: float, k: int) -> float:
+    """
+    Calculate the Poisson probability.
+
+    :param mean: the average rate (lambda) of the Poisson
+        distribution
+    :param k: the number of occurrences (k)
+    :return: the Poisson probability of k occurrences
+    """
+    return (np.exp(-mean) * mean**k) / np.math.factorial(k)
+
+
+def calculate_match_outcomes(
+    df: pd.DataFrame, params: np.ndarray, *, max_goals: int = 10
+) -> pd.DataFrame:
+    """
+    Calculate match outcome probabilities.
+
+    :param df: input dataframe containing match data.
+    :param params: model parameters including team strengths and
+        other factors.
+    :param max_goals: maximum number of goals to consider in the
+        probability calculation.
+    :return: dataframe with added columns for the probabilities of
+        home win, away win, and draw as well as the predicted
+        outcomes.
+    """
+    c, h, rho, *strengths = params
+    # Calculate Lambda values for home and away teams.
+    df["Lambda_HS"] = np.exp(
+        c + df["HT_id"].apply(lambda x: strengths[int(x)]) + h
+    )
+    df["Lambda_AS"] = np.exp(
+        c + df["AT_id"].apply(lambda x: strengths[int(x)]) - h
+    )
+    # Calculate probabilities of goals for home and away teams.
+    home_goals_probs = np.array(
+        [poisson_probability(df["Lambda_HS"], i) for i in range(max_goals)]
+    )
+    away_goals_probs = np.array(
+        [poisson_probability(df["Lambda_AS"], i) for i in range(max_goals)]
+    )
+    prob_home_win = np.zeros(len(df))
+    prob_away_win = np.zeros(len(df))
+    prob_draw = np.zeros(len(df))
+    # Calculate probabilities of match outcomes.
+    for i in range(max_goals):
+        for j in range(max_goals):
+            prob = home_goals_probs[i] * away_goals_probs[j]
+            prob_home_win += np.where(i > j, prob, 0)
+            prob_away_win += np.where(i < j, prob, 0)
+            prob_draw += np.where(i == j, prob, 0)
+    # Add calculated probabilities and outcomes to the dataframe.
+    df["prob_home_win"] = prob_home_win
+    df["prob_away_win"] = prob_away_win
+    df["prob_draw"] = prob_draw
+    df["predicted_outcome"] = np.where(
+        df["prob_home_win"] > df["prob_away_win"],
+        "home_win",
+        np.where(df["prob_away_win"] > df["prob_home_win"], "away_win", "draw"),
+    )
+    df["actual_outcome"] = np.where(
+        df["HS"] > df["AS"],
+        "home_win",
+        np.where(df["HS"] < df["AS"], "away_win", "draw"),
+    )
+    df["Lambda_HS"] = df["Lambda_HS"].round().astype(int)
+    df["Lambda_AS"] = df["Lambda_AS"].round().astype(int)
+    return df
