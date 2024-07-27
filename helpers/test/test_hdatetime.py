@@ -801,7 +801,7 @@ class Test_dassert_timestamp_lt(hunitest.TestCase):
          * Failed assertion *
         2021-02-02 09:30:00+00:00 < 2021-02-02 09:30:00+00:00
         """
-        #check.
+        # check.
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test3(self) -> None:
@@ -817,7 +817,7 @@ class Test_dassert_timestamp_lt(hunitest.TestCase):
         * Failed assertion *
         2021-02-04 09:30:00-05:00 < 2021-01-04 09:30:00-05:00
         """
-        #check.
+        # check.
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test4(self) -> None:
