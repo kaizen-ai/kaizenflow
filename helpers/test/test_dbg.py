@@ -720,14 +720,14 @@ class Test_dassert_is_integer(hunitest.TestCase):
 
     def test1(self) -> None:
         """
-        Test that the function works fine for integer values.
+        Test that the function do not raise the exception with integer values.
         """
         val = 5
         hdbg.dassert_is_integer(val)
 
     def test2(self) -> None:
         """
-        Test with float values that represent an integer.
+        Test that the function do not raise the exception with float values that represent an integer.
         """
         val = 5.0
         hdbg.dassert_is_integer(val)
