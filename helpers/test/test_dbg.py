@@ -720,7 +720,7 @@ class Test_dassert_lt(hunitest.TestCase):
     
     def test1(self) -> None:
         """
-        Test that the function works fine if first value is less than second value.
+        Test that the function doesn't raise an exception if first value is less than second value.
         """
         val1 = 1
         val2 = 2
@@ -728,7 +728,7 @@ class Test_dassert_lt(hunitest.TestCase):
     
     def test2(self) -> None:
         """
-        Test that the function works fine if first value is equal to second value, this raises an exception.
+        Test that the function raises an exception if first value is equal to second value.
         """
         val1 = 2
         val2 = 2
@@ -739,28 +739,28 @@ class Test_dassert_lt(hunitest.TestCase):
         * Failed assertion *
         2 < 2
         """
-        #check.
+        # check.
         self.assert_equal(act, exp, fuzzy_match=True)
     
     def test3(self) -> None:
         """
-        Test that the function works fine if first value is greater than second value, this raises an exception.
+       Test that the function raises an exception if first value is greater than second value.
         """
         val1 = 3
         val2 = 2
         with self.assertRaises(AssertionError) as cm:
             hdbg.dassert_lt(val1, val2)
-        act = str(cm.exception).strip()
+        act = str(cm.exception)
         exp = """
         * Failed assertion *
         3 < 2
         """
-        #check.
+        # check.
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test4(self) -> None:
         """
-        Test that the function works with string inputs.
+        Test that the function doesn't raise an exception when we pass string inputs.
         """
         val1 = "a"
         val2 = "b"
@@ -768,7 +768,7 @@ class Test_dassert_lt(hunitest.TestCase):
 
     def test5(self) -> None:
         """
-        Test where first value is greater than second value with floats, this raises an exception.
+        Test that the function raises an exception where first value is greater than second value with floats.
         """
         val1 = 2.0
         val2 = 1.0
@@ -779,5 +779,5 @@ class Test_dassert_lt(hunitest.TestCase):
         * Failed assertion *
         2.0 < 1.0
         """
-        #check.
+        # check.
         self.assert_equal(act, exp, fuzzy_match=True)
