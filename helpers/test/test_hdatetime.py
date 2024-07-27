@@ -782,16 +782,14 @@ class Test_dassert_is_valid_timestamp(hunitest.TestCase):
 
     def test1(self) -> None:
         """
-        Test by checking a timestamp with a timezone.
+        Test should not raise an exception when timestamp has a timezone.
         """
         timestamp = pd.Timestamp("2021-01-04 09:30:00-05:00", tz="America/New_York")
-        # This should not raise any exceptions.
         hdateti.dassert_is_valid_timestamp(timestamp)
         
-
     def test2(self) -> None:
         """
-        Check timestamp without a timezone info, should raise an exception.
+        Test should raise an exception when timestamp is without timezone info.
         """
         timestamp = pd.Timestamp("2021-01-04 09:30:00")
         with self.assertRaises(AssertionError) as cm:
@@ -802,20 +800,19 @@ class Test_dassert_is_valid_timestamp(hunitest.TestCase):
         'None' is not 'None'
         datetime_='2021-01-04 09:30:00' doesn't have timezone info
         """
-        #check.
+        # check.
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test3(self) -> None:
         """
-        Test by checking a timestamp as None.
+        Test should not raise an exception when timestamp is none.
         """
         timestamp = None
-        # This should not raise any exceptions.
         hdateti.dassert_is_valid_timestamp(timestamp)
 
     def test4(self) -> None:
         """
-        Test by passing a timestamp as a string, should raise an exception.
+        Test should raise an exception when timestamp is of type string.
         """
         timestamp = "2021-01-04 09:30:00"
         with self.assertRaises(AssertionError) as cm:
@@ -825,5 +822,5 @@ class Test_dassert_is_valid_timestamp(hunitest.TestCase):
         * Failed assertion *
         Instance of '2021-01-04 09:30:00' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs.timestamps.Timestamp'>'
         """
-        #check.
+        # check.
         self.assert_equal(act, exp, fuzzy_match=True)
