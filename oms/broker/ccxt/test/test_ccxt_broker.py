@@ -1898,17 +1898,18 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
         ccxt_fills = self._test_ccxt_fills(broker, orders, "test_ccxt_fills")
         # Assert ccxt trades.
         self._test_ccxt_trades(broker, ccxt_fills, "test_ccxt_trades")
+
     #
     @umock.patch.object(
         obcaccbr.AbstractCcxtBroker, "_build_asset_id_to_ccxt_symbol_mapping"
     )
-    def Test_submit_twap_orders_multiple_submission(
+    def test_submit_twap_orders_multiple_submission(
         self,
         mock_build_asset_id_to_ccxt_symbol_mapping: umock.MagicMock,
     ) -> None:
         """
-        Verify that TWAP orders are submitted correctly when 
-        using the same broker instance to call submit_twap_orders_twice.
+        Verify that TWAP orders are submitted correctly when using the same
+        broker instance to call submit_twap_orders_twice.
         """
         mock_build_asset_id_to_ccxt_symbol_mapping.return_value = {
             6051632686: "APE/USDT:USDT",
@@ -1940,16 +1941,18 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
                 starting_positions,
                 event_loop,
                 fill_percents,
-                limit_price_computer=oliprcom.LimitPriceComputerUsingVolatility(0.5),
+                limit_price_computer=oliprcom.LimitPriceComputerUsingVolatility(
+                    0.5
+                ),
                 child_order_quantity_computer=ochorquco.DynamicSchedulingChildOrderQuantityComputer(),
                 num_trades_per_order=2,
             )
             # First submission.
-            coroutine = broker._submit_twap_orders(
-                orders, execution_freq="1T"
+            coroutine = broker._submit_twap_orders(orders, execution_freq="1T")
+            receipt, orders = hasynci.run(
+                coroutine, event_loop=event_loop, close_event_loop=False
             )
-            receipt, orders = hasynci.run(coroutine, event_loop=event_loop)
-            
+
             # Modify orders for the second submission.
             orders_str_2 = "\n".join(
                 [
@@ -1957,11 +1960,8 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
                 ]
             )
             orders_2 = oordorde.orders_from_string(orders_str_2)
-        with hasynci.solipsism_context() as event_loop:
             # Second submission.
-            coroutine = broker._submit_twap_orders(
-                orders_2, execution_freq="1T"
-            )
+            coroutine = broker._submit_twap_orders(orders_2, execution_freq="1T")
             receipt_2, orders_2 = hasynci.run(coroutine, event_loop=event_loop)
             # Check.
             self.assert_equal(receipt, "order_0")
