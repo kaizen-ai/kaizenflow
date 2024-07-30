@@ -827,4 +827,3 @@ class Test_dassert_is_valid_timestamp(hunitest.TestCase):
         """
         # check.
         self.assert_equal(act, exp, fuzzy_match=True)
-        
