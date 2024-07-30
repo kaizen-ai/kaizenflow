@@ -774,19 +774,22 @@ class Test_dassert_str_is_date(hunitest.TestCase):
         actual = str(err.exception)
         self.check_string(actual)
 
+
 # #############################################################################
 # Test_dassert_is_valid_timestamp
 # #############################################################################
 
-class Test_dassert_is_valid_timestamp(hunitest.TestCase):
 
+class Test_dassert_is_valid_timestamp(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test should not raise an exception when timestamp has a timezone.
         """
-        timestamp = pd.Timestamp("2021-01-04 09:30:00-05:00", tz="America/New_York")
+        timestamp = pd.Timestamp(
+            "2021-01-04 09:30:00-05:00", tz="America/New_York"
+        )
         hdateti.dassert_is_valid_timestamp(timestamp)
-        
+
     def test2(self) -> None:
         """
         Test should raise an exception when timestamp is without timezone info.
