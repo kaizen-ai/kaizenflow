@@ -774,12 +774,13 @@ class Test_dassert_str_is_date(hunitest.TestCase):
         actual = str(err.exception)
         self.check_string(actual)
 
+
 # #############################################################################
 # Test_dassert_timestamp_lt
 # #############################################################################
 
-class Test_dassert_timestamp_lt(hunitest.TestCase):
 
+class Test_dassert_timestamp_lt(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test with valid timestamps where start is less than end.
@@ -806,10 +807,15 @@ class Test_dassert_timestamp_lt(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        Test with start timestamp greater than end timestamp, this is should raise an exception.
+        Test with start timestamp greater than end timestamp, this is should
+        raise an exception.
         """
-        start_timestamp = pd.Timestamp("2021-02-04 09:30:00-05:00", tz="America/New_York")
-        end_timestamp = pd.Timestamp("2021-01-04 09:30:00-05:00", tz="America/New_York")
+        start_timestamp = pd.Timestamp(
+            "2021-02-04 09:30:00-05:00", tz="America/New_York"
+        )
+        end_timestamp = pd.Timestamp(
+            "2021-01-04 09:30:00-05:00", tz="America/New_York"
+        )
         with self.assertRaises(AssertionError) as cm:
             hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
         act = str(cm.exception)
@@ -825,14 +831,18 @@ class Test_dassert_timestamp_lt(hunitest.TestCase):
         Test with start timestamp as None.
         """
         start_timestamp = None
-        end_timestamp = pd.Timestamp("2021-01-04 09:30:00-05:00", tz="America/New_York")
+        end_timestamp = pd.Timestamp(
+            "2021-01-04 09:30:00-05:00", tz="America/New_York"
+        )
         hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
 
     def test5(self) -> None:
         """
         Test with end timestamp as None.
         """
-        start_timestamp = pd.Timestamp("2021-01-04 09:30:00-05:00", tz="America/New_York")
+        start_timestamp = pd.Timestamp(
+            "2021-01-04 09:30:00-05:00", tz="America/New_York"
+        )
         end_timestamp = None
         hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
 
