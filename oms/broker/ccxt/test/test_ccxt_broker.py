@@ -1898,3 +1898,72 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
         ccxt_fills = self._test_ccxt_fills(broker, orders, "test_ccxt_fills")
         # Assert ccxt trades.
         self._test_ccxt_trades(broker, ccxt_fills, "test_ccxt_trades")
+    #
+    @umock.patch.object(
+        obcaccbr.AbstractCcxtBroker, "_build_asset_id_to_ccxt_symbol_mapping"
+    )
+    def test_multiple_twap_orders_submission(
+        self,
+        mock_build_asset_id_to_ccxt_symbol_mapping: umock.MagicMock,
+    ) -> None:
+        """
+        Verify that TWAP orders are submitted correctly when 
+        using the same broker instance to call submit_twap_orders_twice.
+        """
+        mock_build_asset_id_to_ccxt_symbol_mapping.return_value = {
+            6051632686: "APE/USDT:USDT",
+            1467591036: "BTC/USDT:USDT",
+            1464553467: "ETH/USDT:USDT",
+        }
+        creation_timestamp = pd.Timestamp("2022-08-05 09:29:55+00:00")
+        start_timestamp = pd.Timestamp("2022-08-05 09:30:00+00:00")
+        end_timestamp = pd.Timestamp("2022-08-05 09:34:00+00:00")
+        curr_num_shares = 12
+        asset_id = 1464553467
+        # Order string
+        orders_str = "\n".join(
+            [
+                f"Order: order_id=1 creation_timestamp={creation_timestamp} asset_id={asset_id} type_=limit start_timestamp={start_timestamp} end_timestamp={end_timestamp} curr_num_shares={curr_num_shares} diff_num_shares=-{curr_num_shares} tz=UTC extra_params={{}}",
+            ]
+        )
+        # Get orders and positions.
+        orders = oordorde.orders_from_string(orders_str)
+        starting_positions = [
+            {
+                "info": {"positionAmt": curr_num_shares},
+                "symbol": "ETH/USDT:USDT",
+            },
+        ]
+        fill_percents = [0.6, 0.5, 0.4, 0.5, 0.6, 0.7, 0.5, 0.4, 0.3]
+        with hasynci.solipsism_context() as event_loop:
+            broker = self.get_test_broker(
+                orders[0].creation_timestamp,
+                starting_positions,
+                event_loop,
+                fill_percents,
+                limit_price_computer=oliprcom.LimitPriceComputerUsingVolatility(0.5),
+                child_order_quantity_computer=ochorquco.DynamicSchedulingChildOrderQuantityComputer(),
+                num_trades_per_order=2,
+            )
+            # First submission
+            coroutine = broker._submit_twap_orders(
+                orders, execution_freq="1T"
+            )
+            receipt, orders = hasynci.run(coroutine, event_loop=event_loop)
+            # Modify orders for the second submission
+            orders_str_2 = "\n".join(
+                [
+                    f"Order: order_id=2 creation_timestamp={creation_timestamp} asset_id={asset_id} type_=limit start_timestamp={start_timestamp} end_timestamp={end_timestamp} curr_num_shares={curr_num_shares} diff_num_shares=-{curr_num_shares} tz=UTC extra_params={{}}",
+                ]
+            )
+            orders_2 = oordorde.orders_from_string(orders_str_2)
+        with hasynci.solipsism_context() as event_loop:
+            # Second submission
+            coroutine = broker._submit_twap_orders(
+                orders_2, execution_freq="1T"
+            )
+            receipt_2, orders_2 = hasynci.run(coroutine, event_loop=event_loop)
+            # Check the results of the first submission
+            self.assert_equal(receipt, "order_0")
+            # Check the results of the second submission
+            self.assert_equal(receipt_2, "order_1")
