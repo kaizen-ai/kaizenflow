@@ -256,6 +256,7 @@ def dassert_valid_remap(to_remap: List[str], remap_dict: Dict[str, str]) -> None
         to_remap,
         "Keys to remap should be a subset of existing columns",
     )
+    # TODO(Samarth): Function does not work for dict keys.
     # The mapping is invertible.
     hdbg.dassert_no_duplicates(remap_dict.keys())
     hdbg.dassert_no_duplicates(remap_dict.values())
