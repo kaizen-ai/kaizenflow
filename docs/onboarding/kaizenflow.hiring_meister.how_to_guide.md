@@ -15,49 +15,15 @@
 
 - The HiringMeister is responsible for testing prospective candidates for
   full-time and part-time positions within our organization
-- The HiringMeister rotates every 2 weeks
-  - To see who is the HiringMeister now refer to
-    [HiringMeister gsheet](https://docs.google.com/spreadsheets/d/1Ab6a3BVeLX1l1B3_A6rNY9pHRsofeoCw2ip2dkQ6SdA)
-  - Each rotation should be confirmed by a 'handshake' between the outgoing
-    HiringMeister and the new one in the related Telegram chat
-- The HiringMeister
-  - ensures candidate evaluation through PR and pointing them to documentation
-  - maintains hiring standards
-  - fosters skill assessment through task assignments
-  - continuously improves the recruitment process
+- To see who is the HiringMeister now refer to
+    [Rotation Meisters](https://docs.google.com/spreadsheets/d/1Ab6a3BVeLX1l1B3_A6rNY9pHRsofeoCw2ip2dkQ6SdA)
+- The HiringMeister:
+  - Ensures candidate evaluation through PR and pointing them to documentation
+  - Maintains hiring standards
+  - Fosters skill assessment through task assignments
+  - Continuously improves the recruitment process
 
-# Order of Responsibilities
-
-## Candidate Evaluation
-
-- Upon receipt of applications for new positions, the HiringMeister is
-  responsible for sending
-  [KaizenFlow - Contributor Info](https://docs.google.com/forms/d/1-iegytm5t1w-LPs7gm8IuUHTxi3cKI2iqzlPKdanWqY)
-  to gather additional information from candidates
-
-- Upon receiving responses, the HiringMeister should compile the necessary
-  information into a single Google Sheet dedicated to the respective position
-  (e.g., [Research candidates](https://docs.google.com/spreadsheets/d/1XiAKCZKDHSLFvakpLz-BO6SvGriXZB3Mhe8FxXzRi2k))
-
-- Once a sufficient number of responses have been recorded in the Google Sheet,
-  the HiringMeister is required to assess and score each candidate based on
-  predefined criteria, then organize the sheet in descending order of scores
-
-- We want to increase the quality of the collaborators, so if there is a red
-  flag (e.g., no GitHub, low GPA, undergrad) we can decide to not on-board
-  - The goal is to avoid on-boarding people that will likely disappoint us
-
-- If we receive a single candidate application and find no red flags in the
-  profile, we should proceed further in the process
-  - It's ok to ask more team members to take a look
-
-- If the candidate is a no go, GP sends an email of rejection
-
-- Upon identifying the top candidate(s), the HiringMeister is expected to notify
-  GP for sending invitations to the
-  [KaizenFlow](https://github.com/kaizen-ai/kaizenflow) GitHub repository
-
-## On-boarding bug creation
+## On-boarding issue
 
 - As the invitation to the repo are accepted by the selected candidates, create
   an `On-boarding` GitHub issue for each candidate
@@ -83,8 +49,8 @@
   - [ ] Get assigned a warm-up issue
   ```
 
-- Reference [On-boarding](https://github.com/kaizen-ai/kaizenflow/issues/437)
-  issue
+- A reference issue is
+  [On-boarding](https://github.com/kaizen-ai/kaizenflow/issues/437)
 - Regularly check the updates made by the candidate and help resolving any
   errors faced by them
 
