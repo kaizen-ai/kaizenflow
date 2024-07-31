@@ -114,7 +114,6 @@ class Test_dassert_eq1(hunitest.TestCase):
 
 # TODO(gp): Break it in piece.
 class Test_dassert_misc1(hunitest.TestCase):
-
     # dassert_in
 
     def test_in1(self) -> None:
@@ -660,7 +659,9 @@ class Test_dassert_related_params2(hunitest.TestCase):
         """
         self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
 
+
 # #############################################################################
+
 
 class Test_dassert_all_attributes_are_same1(hunitest.TestCase):
     def test1(self) -> None:
@@ -713,3 +714,55 @@ class Test_dassert_all_attributes_are_same1(hunitest.TestCase):
         Obj = collections.namedtuple("Obj", ["a", "b"])
         list_ = [Obj(1, 2), Obj(1, 2)]
         hdbg.dassert_all_attributes_are_same(list_, "b")
+
+
+# #############################################################################
+
+
+class Test_dassert_is_integer(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test that the function do not raise the exception with integer values.
+        """
+        val = 5
+        hdbg.dassert_is_integer(val)
+
+    def test2(self) -> None:
+        """
+        Test that the function do not raise the exception with float values
+        that represent an integer.
+        """
+        val = 5.0
+        hdbg.dassert_is_integer(val)
+
+    def test3(self) -> None:
+        """
+        Test that the function raises an exception for float values that do not
+        represent an integer.
+        """
+        val = 5.5
+        with self.assertRaises(AssertionError) as cm:
+            hdbg.dassert_is_integer(val)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        Invalid val='5.5' of type '<class 'float'>'
+        """
+        # Check.
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Test that the function raises an exception for non-integer and non-
+        float types.
+        """
+        val = "5"
+        with self.assertRaises(AssertionError) as cm:
+            hdbg.dassert_is_integer(val)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        Invalid val='5' of type '<class 'str'>'
+        """
+        # Check.
+        self.assert_equal(act, exp, fuzzy_match=True)
