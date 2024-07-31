@@ -15,7 +15,7 @@ import logging
 import os
 import shutil
 import tempfile
-
+import re
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hsystem as hsystem
@@ -98,6 +98,19 @@ def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
     # TODO(gp): Use f-strings to avoid the linter error.
     perl_regex_replacements = [
         # # \# Running PyCharm remotely -> # Running PyCharm remotely.
+        # Remove <span> and <u> tags for "Google Authenticator".
+        r'''perl -pi -e 's/&lt;span class="underline"&gt;Google Authenticator&lt;\/span&gt;//g' {}'''.format(md_file),
+        r'''perl -pi -e 's/&lt;u&gt;Google Authenticator&lt;\/u&gt;//g' {}'''.format(md_file),
+        r'''perl -pi -e 's/<span class="underline">Google Authenticator<\/span>//g' {}'''.format(md_file),
+        r'''perl -pi -e 's/<u>Google Authenticator<\/u>//g' {}'''.format(md_file),
+        # Replace ellipsis character with three dots.
+        r'''perl -pi -e 's/…/.../g' {}'''.format(md_file),
+        # Remove empty square brackets (various forms).
+        r'''perl -pi -e 's/\[\s*\]//g' {}'''.format(md_file),
+        r'''perl -pi -e 's/\[\]//g' {}'''.format(md_file),
+        r'''perl -pi -e 's/\[\s*\]//g' {}'''.format(md_file),
+        r'''perl -pi -e 's/\[[\s\n]*\]//g' {}'''.format(md_file),
+        # Existing replacements.
         r"perl -pi -e 's:# (\\#)+ :# :g' {}".format(md_file),
         # \#\# Docker image"  -> ## Docker image.
         r"perl -pi -e 's:\\#:#:g' {}".format(md_file),
@@ -135,7 +148,13 @@ def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
         r"perl -pi -e 's:{}/media/:{}/:g' {}".format(
             md_file_figs, md_file_figs, md_file
         ),
+       
     ]
+    # # Remove unnecessary whitespace and newlines.
+    # md_file = re.sub(r'[<span class="underline">Google Authenticator</span>]', '', md_file)
+    # md_file = re.sub(r'[<u>Google Authenticator</u>]', '', md_file)
+    # # Remove style attribute from img tags
+    # md_file = re.sub(r'[<img src="([^"]+)" style="[^"]+" \/>', r'![Image](\1)]', md_file)
     # Run the commands.
     for clean_cmd in perl_regex_replacements:
         hsystem.system(clean_cmd, suppress_output=False)
