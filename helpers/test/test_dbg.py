@@ -734,8 +734,10 @@ class Test_dassert_lt(hunitest.TestCase):
         Test that the function raises an exception if first value is equal to
         second value.
         """
+        # Set inputs.
         val1 = 2
         val2 = 2
+        # Run.
         with self.assertRaises(AssertionError) as cm:
             hdbg.dassert_lt(val1, val2)
         act = str(cm.exception)
@@ -743,7 +745,7 @@ class Test_dassert_lt(hunitest.TestCase):
         * Failed assertion *
         2 < 2
         """
-        # check.
+        # Check.
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test3(self) -> None:
@@ -751,8 +753,10 @@ class Test_dassert_lt(hunitest.TestCase):
         Test that the function raises an exception if first value is greater
         than second value.
         """
+        # Set inputs.
         val1 = 3
         val2 = 2
+        # Run.
         with self.assertRaises(AssertionError) as cm:
             hdbg.dassert_lt(val1, val2)
         act = str(cm.exception)
@@ -760,7 +764,7 @@ class Test_dassert_lt(hunitest.TestCase):
         * Failed assertion *
         3 < 2
         """
-        # check.
+        # Check.
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test4(self) -> None:
@@ -777,8 +781,10 @@ class Test_dassert_lt(hunitest.TestCase):
         Test that the function raises an exception where first value is greater
         than second value with floats.
         """
+        # Set inputs.
         val1 = 2.0
         val2 = 1.0
+        # Run.
         with self.assertRaises(AssertionError) as cm:
             hdbg.dassert_lt(val1, val2)
         act = str(cm.exception)
@@ -786,5 +792,58 @@ class Test_dassert_lt(hunitest.TestCase):
         * Failed assertion *
         2.0 < 1.0
         """
-        # check.
+        # Check.
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+
+class Test_dassert_is_integer(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test that the function do not raise the exception with integer values.
+        """
+        val = 5
+        hdbg.dassert_is_integer(val)
+
+    def test2(self) -> None:
+        """
+        Test that the function do not raise the exception with float values
+        that represent an integer.
+        """
+        val = 5.0
+        hdbg.dassert_is_integer(val)
+
+    def test3(self) -> None:
+        """
+        Test that the function raises an exception for float values that do not
+        represent an integer.
+        """
+        # Set inputs.
+        val = 5.5
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hdbg.dassert_is_integer(val)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        Invalid val='5.5' of type '<class 'float'>'
+        """
+        # Check.
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test5(self) -> None:
+        """
+        Test that the function raises an exception for non-integer and non-
+        float types.
+        """
+        # Set inputs.
+        val = "5"
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hdbg.dassert_is_integer(val)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        Invalid val='5' of type '<class 'str'>'
+        """
+        # Check.
         self.assert_equal(act, exp, fuzzy_match=True)
