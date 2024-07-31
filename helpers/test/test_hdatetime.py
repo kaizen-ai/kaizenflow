@@ -794,7 +794,9 @@ class Test_dassert_is_valid_timestamp(hunitest.TestCase):
         """
         Test should raise an exception when timestamp is without timezone info.
         """
+        # Set inputs.
         timestamp = pd.Timestamp("2021-01-04 09:30:00")
+        # Run.
         with self.assertRaises(AssertionError) as cm:
             hdateti.dassert_is_valid_timestamp(timestamp)
         act = str(cm.exception)
@@ -817,7 +819,9 @@ class Test_dassert_is_valid_timestamp(hunitest.TestCase):
         """
         Test should raise an exception when timestamp is of type string.
         """
+        # Set input.
         timestamp = "2021-01-04 09:30:00"
+        # Run.
         with self.assertRaises(AssertionError) as cm:
             hdateti.dassert_is_valid_timestamp(timestamp)
         act = str(cm.exception)
