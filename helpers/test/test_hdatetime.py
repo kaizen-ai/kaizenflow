@@ -773,3 +773,87 @@ class Test_dassert_str_is_date(hunitest.TestCase):
             hdateti.dassert_str_is_date(date)
         actual = str(err.exception)
         self.check_string(actual)
+
+
+# #############################################################################
+# Test_dassert_timestamp_lt
+# #############################################################################
+
+
+class Test_dassert_timestamp_lt(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test with valid timestamps where start is less than end.
+        """
+        start_timestamp = pd.Timestamp("2021-01-02 09:30:00-00:00", tz="UTC")
+        end_timestamp = pd.Timestamp("2021-02-02 09:30:00-00:00", tz="UTC")
+        hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
+
+    def test2(self) -> None:
+        """
+        Test with equal timestamps, this is should raise an exception.
+        """
+        # Set inputs.
+        start_timestamp = pd.Timestamp("2021-02-02 09:30:00-00:00", tz="UTC")
+        end_timestamp = pd.Timestamp("2021-02-02 09:30:00-00:00", tz="UTC")
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
+        act = str(cm.exception)
+        exp = """
+         * Failed assertion *
+        2021-02-02 09:30:00+00:00 < 2021-02-02 09:30:00+00:00
+        """
+        # Check.
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Test with start timestamp greater than end timestamp, this is should
+        raise an exception.
+        """
+        # Set inputs.
+        start_timestamp = pd.Timestamp(
+            "2021-02-04 09:30:00-05:00", tz="America/New_York"
+        )
+        end_timestamp = pd.Timestamp(
+            "2021-01-04 09:30:00-05:00", tz="America/New_York"
+        )
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        2021-02-04 09:30:00-05:00 < 2021-01-04 09:30:00-05:00
+        """
+        # Check.
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Test with start timestamp as None.
+        """
+        start_timestamp = None
+        end_timestamp = pd.Timestamp(
+            "2021-01-04 09:30:00-05:00", tz="America/New_York"
+        )
+        hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
+
+    def test5(self) -> None:
+        """
+        Test with end timestamp as None.
+        """
+        start_timestamp = pd.Timestamp(
+            "2021-01-04 09:30:00-05:00", tz="America/New_York"
+        )
+        end_timestamp = None
+        hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
+
+    def test6(self) -> None:
+        """
+        Test with both timestamps as None.
+        """
+        start_timestamp = None
+        end_timestamp = None
+        hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
