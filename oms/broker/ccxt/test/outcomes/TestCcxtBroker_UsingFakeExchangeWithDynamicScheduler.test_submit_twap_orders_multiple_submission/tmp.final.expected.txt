@@ -1,0 +1,1 @@
+[Fill: asset_id=1464553467 fill_id=1 timestamp=2022-08-05 09:33:02+00:00 num_shares=-11.28 price=30.999999999999996]
