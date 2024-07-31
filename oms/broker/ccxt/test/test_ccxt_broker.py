@@ -1950,7 +1950,7 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
             # First submission.
             coroutine = broker._submit_twap_orders(orders, execution_freq="1T")
             receipt, orders = hasynci.run(
-                coroutine, event_loop=event_loop, close_event_loop=False
+                coroutine, event_loop=event_loop
             )
             # Assert fills.
             exp = r"""
@@ -1968,6 +1968,7 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
                 ]
             )
             orders_2 = oordorde.orders_from_string(orders_str_2)
+        with hasynci.solipsism_context() as event_loop:
             # Second submission.
             coroutine = broker._submit_twap_orders(orders_2, execution_freq="1T")
             receipt_2, orders_2 = hasynci.run(coroutine, event_loop=event_loop)
