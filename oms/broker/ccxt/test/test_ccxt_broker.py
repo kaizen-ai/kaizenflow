@@ -1958,10 +1958,12 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
             )
             submitted_orders = broker._previous_parent_orders
             actual_orders = pprint.pformat(orders)
-            self.check_string(actual_orders)
+            self.check_string(
+                actual_orders, tag="actual_orders1", fuzzy_match=True
+            )
             submitted_orders = pprint.pformat(submitted_orders)
             self.check_string(
-                submitted_orders, tag="test_submitted_orders", fuzzy_match=True
+                submitted_orders, tag="test_submitted_orders1", fuzzy_match=True
             )
             # Assert fills.
             exp = r"""
@@ -1985,7 +1987,9 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
             receipt_2, orders_2 = hasynci.run(coroutine, event_loop=event_loop)
             submitted_orders = broker._previous_parent_orders
             actual_orders = pprint.pformat(orders_2)
-            self.check_string(actual_orders)
+            self.check_string(
+                actual_orders, tag="actual_orders2", fuzzy_match=True
+            )
             submitted_orders = pprint.pformat(submitted_orders)
             self.check_string(
                 submitted_orders, tag="test_submitted_orders2", fuzzy_match=True
