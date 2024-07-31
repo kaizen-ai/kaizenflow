@@ -21,6 +21,7 @@ _LOG = logging.getLogger(__name__)
 
 _AWS_PROFILE = "ck"
 
+
 class Test_dassert_is_unique1(hunitest.TestCase):
     def get_df1(self) -> pd.DataFrame:
         """
@@ -129,6 +130,109 @@ class Test_to_series1(hunitest.TestCase):
         a4    4
         Name: 0, dtype: int64"""
         self.helper(n, exp)
+
+
+# #############################################################################
+
+
+class Test_dassert_valid_remap(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check that the function works with correct inputs.
+        """
+        # Set inputs.
+        to_remap = ["dummy_value_1", "dummy_value_2", "dummy_value_3"]
+        remap_dict = {
+            "dummy_value_1": "1, 2, 3",
+            "dummy_value_2": "A, B, C",
+        }
+        # Check.
+        hpandas.dassert_valid_remap(to_remap, remap_dict)
+
+    def test2(self) -> None:
+        """
+        Check that an assertion is raised if dictionary keys are not a subset.
+        """
+        # Set inputs.
+        to_remap = ["dummy_value_1", "dummy_value_2"]
+        remap_dict = {
+            "dummy_value_1": "1, 2, 3",
+            "dummy_value_2": "A, B, C",
+            "dummy_value_3": "A1, A2, A3",
+        }
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_valid_remap(to_remap, remap_dict)
+        actual = str(cm.exception)
+        expected = r"""
+        * Failed assertion *
+        val1=['dummy_value_1', 'dummy_value_2', 'dummy_value_3']
+        issubset
+        val2=['dummy_value_1', 'dummy_value_2']
+        val1 - val2=['dummy_value_3']
+        Keys to remap should be a subset of existing columns"""
+        # Check.
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Check that an assertion is raised if the duplicate values are present in the dict.
+        """
+        # Set inputs.
+        to_remap = ["dummy_value_1", "dummy_value_2", "dummy_value_3"]
+        remap_dict = {
+            "dummy_value_1": 1,
+            "dummy_value_2": "A, B, C",
+            "dummy_value_3": "A, B, C",
+        }
+        # Run.
+        with self.assertRaises(AttributeError) as cm:
+            hpandas.dassert_valid_remap(to_remap, remap_dict)
+        actual = str(cm.exception)
+        expected = r"""
+        'dict_values' object has no attribute 'count'"""
+        # Check.
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Check that an assertion is raised if the input is not a list.
+        """
+        # Set inputs.
+        to_remap = {"dummy_value_1"}
+        remap_dict = {
+            "dummy_value_1": "1, 2, 3",
+        }
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_valid_remap(to_remap, remap_dict)
+        actual = str(cm.exception)
+        expected = r"""
+        * Failed assertion *
+        Instance of '{'dummy_value_1'}' is '<class 'set'>' instead of '<class 'list'>'
+        """
+        # Check.
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test5(self) -> None:
+        """
+        Check that an assertion is raised if the input is not a dictionary.
+        """
+        # Set inputs.
+        to_remap = ["dummy_value_1"]
+        remap_dict = [
+            "dummy_value_1 : 1, 2, 3",
+        ]
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_valid_remap(to_remap, remap_dict)
+        actual = str(cm.exception)
+        expected = r"""
+        * Failed assertion *
+        Instance of '['dummy_value_1 : 1, 2, 3']' is '<class 'list'>' instead of '<class 'dict'>'
+        """
+        # Check.
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
 
 # #############################################################################
@@ -3959,29 +4063,29 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
         index_is_datetime: bool,
     ) -> pd.DataFrame:
         """
-        Helper function to get test multi-index dataframe.
+         Helper function to get test multi-index dataframe.
+         Example of dataframe returned when `index_is_datetime = True`:
 
-        Example of dataframe returned when `index_is_datetime = True`:
+         ```
+
+                                             column1     column2
+         index   timestamp
+         index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
+                 2022-01-01 21:10:00+00:00   1.303778    -0.288235
+         index2  2022-01-01 21:00:00+00:00   1.237079    1.168012
+                 2022-01-01 21:10:00+00:00   1.333692    1.708455
+         ```
+
+         Example of dataframe returned when `index_is_datetime = False`:
 
         ```
-                                            column1     column2
-        index   timestamp
-        index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
-                2022-01-01 21:10:00+00:00   1.303778    -0.288235
-        index2  2022-01-01 21:00:00+00:00   1.237079    1.168012
-                2022-01-01 21:10:00+00:00   1.333692    1.708455
-        ```
-
-        Example of dataframe returned when `index_is_datetime = False`:
-
-        ```
-                            column1     column2
-        index   timestamp
-        index1  string1     -0.122140   -1.949431
-                string2     1.303778    -0.288235
-        index2  string1     1.237079    1.168012
-                string2     1.333692    1.708455
-        ```
+                             column1     column2
+         index   timestamp
+         index1  string1     -0.122140   -1.949431
+                 string2     1.303778    -0.288235
+         index2  string1     1.237079    1.168012
+                 string2     1.333692    1.708455
+         ```
         """
         if index_is_datetime:
             index_inner = [
