@@ -1952,7 +1952,15 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
             receipt, orders = hasynci.run(
                 coroutine, event_loop=event_loop, close_event_loop=False
             )
-
+            # Assert fills.
+            exp = r"""
+            [Fill: asset_id=1464553467 fill_id=1 timestamp=2022-08-05 09:33:02+00:00 num_shares=-11.28 price=30.999999999999996]
+            """
+            self._test_get_fills(broker, exp)
+            # Assert ccxt fills.
+            ccxt_fills = self._test_ccxt_fills(broker, orders, "test_ccxt_fills")
+            # Assert ccxt trades.
+            self._test_ccxt_trades(broker, ccxt_fills, "test_ccxt_trades")
             # Modify orders for the second submission.
             orders_str_2 = "\n".join(
                 [
@@ -1963,6 +1971,12 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
             # Second submission.
             coroutine = broker._submit_twap_orders(orders_2, execution_freq="1T")
             receipt_2, orders_2 = hasynci.run(coroutine, event_loop=event_loop)
+            # Assert ccxt fills.
+            ccxt_fills = self._test_ccxt_fills(
+                broker, orders_2, "test_ccxt_fills"
+            )
+            # Assert ccxt trades.
+            self._test_ccxt_trades(broker, ccxt_fills, "test_ccxt_trades")
             # Check.
             self.assert_equal(receipt, "order_0")
             # Check.
