@@ -830,7 +830,7 @@ class Test_dassert_is_integer(hunitest.TestCase):
         # Check.
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test5(self) -> None:
+    def test4(self) -> None:
         """
         Test that the function raises an exception for non-integer and non-
         float types.
