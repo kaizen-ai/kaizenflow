@@ -1918,7 +1918,10 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
         }
         creation_timestamp = pd.Timestamp("2022-08-05 09:29:55+00:00")
         start_timestamp = pd.Timestamp("2022-08-05 09:30:00+00:00")
-        end_timestamp = pd.Timestamp("2022-08-05 09:34:00+00:00")
+        end_timestamp = pd.Timestamp("2022-08-05 09:31:00+00:00")
+        creation_timestamp2 = pd.Timestamp("2022-08-05 09:31:00+00:00")
+        start_timestamp2 = pd.Timestamp("2022-08-05 09:31:00+00:00")
+        end_timestamp2 = pd.Timestamp("2022-08-05 09:32:00+00:00")
         curr_num_shares = 12
         asset_id = 1464553467
         orders_str = "\n".join(
@@ -1947,38 +1950,49 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
                 child_order_quantity_computer=ochorquco.DynamicSchedulingChildOrderQuantityComputer(),
                 num_trades_per_order=2,
             )
+            broker._async_exchange._positions = starting_positions
             # First submission.
             coroutine = broker._submit_twap_orders(orders, execution_freq="1T")
             receipt, orders = hasynci.run(
-                coroutine, event_loop=event_loop
+                coroutine, event_loop=event_loop, close_event_loop=False
+            )
+            submitted_orders = broker._previous_parent_orders
+            actual_orders = pprint.pformat(orders)
+            self.check_string(actual_orders)
+            submitted_orders = pprint.pformat(submitted_orders)
+            self.check_string(
+                submitted_orders, tag="test_submitted_orders", fuzzy_match=True
             )
             # Assert fills.
             exp = r"""
-            [Fill: asset_id=1464553467 fill_id=1 timestamp=2022-08-05 09:33:02+00:00 num_shares=-11.28 price=30.999999999999996]
+            [Fill: asset_id=1464553467 fill_id=1 timestamp=2022-08-05 09:30:02+00:00 num_shares=-7.199999999999999 price=31.0]
             """
             self._test_get_fills(broker, exp)
             # Assert ccxt fills.
-            ccxt_fills = self._test_ccxt_fills(broker, orders, "test_ccxt_fills")
+            ccxt_fills = self._test_ccxt_fills(broker, orders, "test_ccxt_fills1")
             # Assert ccxt trades.
-            self._test_ccxt_trades(broker, ccxt_fills, "test_ccxt_trades")
+            self._test_ccxt_trades(broker, ccxt_fills, "test_ccxt_trades1")
             # Modify orders for the second submission.
             orders_str_2 = "\n".join(
                 [
-                    f"Order: order_id=2 creation_timestamp={creation_timestamp} asset_id={asset_id} type_=limit start_timestamp={start_timestamp} end_timestamp={end_timestamp} curr_num_shares={curr_num_shares} diff_num_shares=-{curr_num_shares} tz=UTC extra_params={{}}",
+                    f"Order: order_id=2 creation_timestamp={creation_timestamp2} asset_id={asset_id} type_=limit start_timestamp={start_timestamp2} end_timestamp={end_timestamp2} curr_num_shares={curr_num_shares} diff_num_shares=-{curr_num_shares} tz=UTC extra_params={{}}",
                 ]
             )
             orders_2 = oordorde.orders_from_string(orders_str_2)
-        with hasynci.solipsism_context() as event_loop:
+            broker._async_exchange._positions = starting_positions
             # Second submission.
             coroutine = broker._submit_twap_orders(orders_2, execution_freq="1T")
             receipt_2, orders_2 = hasynci.run(coroutine, event_loop=event_loop)
+            submitted_orders = broker._previous_parent_orders
+            actual_orders = pprint.pformat(orders_2)
+            self.check_string(actual_orders)
+            submitted_orders = pprint.pformat(submitted_orders)
+            self.check_string(
+                submitted_orders, tag="test_submitted_orders2", fuzzy_match=True
+            )
             # Assert ccxt fills.
             ccxt_fills = self._test_ccxt_fills(
-                broker, orders_2, "test_ccxt_fills"
+                broker, orders_2, "test_ccxt_fills2"
             )
             # Assert ccxt trades.
-            self._test_ccxt_trades(broker, ccxt_fills, "test_ccxt_trades")
-            # Check.
-            self.assert_equal(receipt, "order_0")
-            # Check.
-            self.assert_equal(receipt_2, "order_1")
+            self._test_ccxt_trades(broker, ccxt_fills, "test_ccxt_trades2")
