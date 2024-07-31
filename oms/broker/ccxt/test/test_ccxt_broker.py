@@ -1909,39 +1909,40 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
     ) -> None:
         """
         Verify that TWAP orders are submitted correctly when using the same
-        broker instance to call submit_twap_orders_twice.
+        broker instance to call submit_twap_orders twice.
         """
         mock_build_asset_id_to_ccxt_symbol_mapping.return_value = {
             6051632686: "APE/USDT:USDT",
             1467591036: "BTC/USDT:USDT",
             1464553467: "ETH/USDT:USDT",
         }
-        creation_timestamp = pd.Timestamp("2022-08-05 09:29:55+00:00")
-        start_timestamp = pd.Timestamp("2022-08-05 09:30:00+00:00")
-        end_timestamp = pd.Timestamp("2022-08-05 09:31:00+00:00")
-        creation_timestamp2 = pd.Timestamp("2022-08-05 09:31:00+00:00")
-        start_timestamp2 = pd.Timestamp("2022-08-05 09:31:00+00:00")
-        end_timestamp2 = pd.Timestamp("2022-08-05 09:32:00+00:00")
+
+        initial_timestamps = [
+            (
+                pd.Timestamp("2022-08-05 09:30:00+00:00"),
+                pd.Timestamp("2022-08-05 09:30:00+00:00"),
+                pd.Timestamp("2022-08-05 09:31:00+00:00"),
+            ),
+            (
+                pd.Timestamp("2022-08-05 09:31:00+00:00"),
+                pd.Timestamp("2022-08-05 09:31:00+00:00"),
+                pd.Timestamp("2022-08-05 09:32:00+00:00"),
+            ),
+        ]
+
         curr_num_shares = 12
         asset_id = 1464553467
-        orders_str = "\n".join(
-            [
-                f"Order: order_id=1 creation_timestamp={creation_timestamp} asset_id={asset_id} type_=limit start_timestamp={start_timestamp} end_timestamp={end_timestamp} curr_num_shares={curr_num_shares} diff_num_shares=-{curr_num_shares} tz=UTC extra_params={{}}",
-            ]
-        )
-        # Get orders and positions.
-        orders = oordorde.orders_from_string(orders_str)
-        starting_positions = [
-            {
-                "info": {"positionAmt": curr_num_shares},
-                "symbol": "ETH/USDT:USDT",
-            },
-        ]
         fill_percents = [0.6, 0.5, 0.4, 0.5, 0.6, 0.7, 0.5, 0.4, 0.3]
+        initial_position_amt = curr_num_shares
         with hasynci.solipsism_context() as event_loop:
             broker = self.get_test_broker(
-                orders[0].creation_timestamp,
-                starting_positions,
+                initial_timestamps[0][0],
+                [
+                    {
+                        "info": {"positionAmt": initial_position_amt},
+                        "symbol": "ETH/USDT:USDT",
+                    }
+                ],
                 event_loop,
                 fill_percents,
                 limit_price_computer=oliprcom.LimitPriceComputerUsingVolatility(
@@ -1950,53 +1951,51 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
                 child_order_quantity_computer=ochorquco.DynamicSchedulingChildOrderQuantityComputer(),
                 num_trades_per_order=2,
             )
-            broker._async_exchange._positions = starting_positions
-            # First submission.
-            coroutine = broker._submit_twap_orders(orders, execution_freq="1T")
-            receipt, orders = hasynci.run(
-                coroutine, event_loop=event_loop, close_event_loop=False
-            )
-            submitted_orders = broker._previous_parent_orders
-            actual_orders = pprint.pformat(orders)
-            self.check_string(
-                actual_orders, tag="actual_orders1", fuzzy_match=True
-            )
-            submitted_orders = pprint.pformat(submitted_orders)
-            self.check_string(
-                submitted_orders, tag="test_submitted_orders1", fuzzy_match=True
-            )
-            # Assert fills.
-            exp = r"""
-            [Fill: asset_id=1464553467 fill_id=1 timestamp=2022-08-05 09:30:02+00:00 num_shares=-7.199999999999999 price=31.0]
-            """
-            self._test_get_fills(broker, exp)
-            # Assert ccxt fills.
-            ccxt_fills = self._test_ccxt_fills(broker, orders, "test_ccxt_fills1")
-            # Assert ccxt trades.
-            self._test_ccxt_trades(broker, ccxt_fills, "test_ccxt_trades1")
-            # Modify orders for the second submission.
-            orders_str_2 = "\n".join(
-                [
-                    f"Order: order_id=2 creation_timestamp={creation_timestamp2} asset_id={asset_id} type_=limit start_timestamp={start_timestamp2} end_timestamp={end_timestamp2} curr_num_shares={curr_num_shares} diff_num_shares=-{curr_num_shares} tz=UTC extra_params={{}}",
+            for i, (
+                creation_timestamp,
+                start_timestamp,
+                end_timestamp,
+            ) in enumerate(initial_timestamps, start=1):
+                orders_str = f"Order: order_id={i} creation_timestamp={creation_timestamp} asset_id={asset_id} type_=limit start_timestamp={start_timestamp} end_timestamp={end_timestamp} curr_num_shares={curr_num_shares} diff_num_shares={curr_num_shares} tz=UTC extra_params={{}}"
+                orders = oordorde.orders_from_string(orders_str)
+
+                fill_amount = curr_num_shares * fill_percents[i - 1]
+                initial_position_amt = initial_position_amt - fill_amount
+
+                broker._async_exchange._positions = [
+                    {
+                        "info": {"positionAmt": initial_position_amt},
+                        "symbol": "ETH/USDT:USDT",
+                    }
                 ]
-            )
-            orders_2 = oordorde.orders_from_string(orders_str_2)
-            broker._async_exchange._positions = starting_positions
-            # Second submission.
-            coroutine = broker._submit_twap_orders(orders_2, execution_freq="1T")
-            receipt_2, orders_2 = hasynci.run(coroutine, event_loop=event_loop)
-            submitted_orders = broker._previous_parent_orders
-            actual_orders = pprint.pformat(orders_2)
-            self.check_string(
-                actual_orders, tag="actual_orders2", fuzzy_match=True
-            )
-            submitted_orders = pprint.pformat(submitted_orders)
-            self.check_string(
-                submitted_orders, tag="test_submitted_orders2", fuzzy_match=True
-            )
-            # Assert ccxt fills.
-            ccxt_fills = self._test_ccxt_fills(
-                broker, orders_2, "test_ccxt_fills2"
-            )
-            # Assert ccxt trades.
-            self._test_ccxt_trades(broker, ccxt_fills, "test_ccxt_trades2")
+
+                coroutine = broker._submit_twap_orders(
+                    orders, execution_freq="1T"
+                )
+                receipt, orders = hasynci.run(
+                    coroutine,
+                    event_loop=event_loop,
+                    close_event_loop=(i == len(initial_timestamps)),
+                )
+
+                actual_orders = pprint.pformat(orders)
+                self.check_string(
+                    actual_orders, tag=f"actual_orders{i}", fuzzy_match=True
+                )
+
+                submitted_orders = pprint.pformat(broker._previous_parent_orders)
+                self.check_string(
+                    submitted_orders,
+                    tag=f"test_submitted_orders{i}",
+                    fuzzy_match=True,
+                )
+                if i == 1:
+                    exp = r"""
+                    [Fill: asset_id=1464553467 fill_id=1 timestamp=2022-08-05 09:30:02+00:00 num_shares=7.199999999999999 price=10.000000000000002]
+                    """
+                    self._test_get_fills(broker, exp)
+                # Assert ccxt fills and trades.
+                ccxt_fills = self._test_ccxt_fills(
+                    broker, orders, f"test_ccxt_fills{i}"
+                )
+                self._test_ccxt_trades(broker, ccxt_fills, f"test_ccxt_trades{i}")
