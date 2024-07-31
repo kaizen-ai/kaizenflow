@@ -25,146 +25,123 @@ _AWS_PROFILE = "ck"
 class Test_dassert_is_days(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Test that function do not raise an exception with exact integer number of days.
+        Test that function do not raise an exception with exact integer number
+        of days.
         """
-
         timedelta = pd.Timedelta(days=5)
-
-        # Should pass without exception
+        # Should pass without exception.
         hpandas.dassert_is_days(timedelta)
 
     def test2(self) -> None:
         """
         Test that function raises an exception with float number of days.
         """
-
         timedelta = pd.Timedelta(days=1.5)
-
         with self.assertRaises(AssertionError) as cm:
-            # Should raise AssertionError
+            # Should raise AssertionError.
             hpandas.dassert_is_days(timedelta)
-
         actual_exception = str(cm.exception)
         expected_exception = r"""
         * Failed assertion *
         cond=False
         timedelta='1 days 12:00:00' is not an integer number of days
         """
-
-        # Check
+        # Check.
         self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
 
     def test3(self) -> None:
         """
-        Test that function raises an exception with number of days in days and hours format.
+        Test that function raises an exception with duration in days and hours.
         """
-
         timedelta = pd.Timedelta(days=5, hours=1)
-
         with self.assertRaises(AssertionError) as cm:
             # Should raise AssertionError
             hpandas.dassert_is_days(timedelta)
-
         actual_exception = str(cm.exception)
         expected_exception = r"""
         * Failed assertion *
         cond=False
         timedelta='5 days 01:00:00' is not an integer number of days
         """
-
-        # Check
+        # Check.
         self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
 
     def test4(self) -> None:
         """
         Test that function do not raise an exception with 0 number of days.
         """
-
         timedelta = pd.Timedelta(days=0)
-
-        # Should pass without exception
+        # Should pass without exception.
         hpandas.dassert_is_days(timedelta)
 
     def test5(self) -> None:
         """
-        Test that function raises an exception with the duration in string format.
+        Test that function raises an exception with the duration in string
+        format.
         """
-
         timedelta = pd.Timedelta("5")
-
         with self.assertRaises(AssertionError) as cm:
-            # Should raise AssertionError
+            # Should raise AssertionError.
             hpandas.dassert_is_days(timedelta)
-
         actual_exception = str(cm.exception)
         expected_exception = r"""
         * Failed assertion *
         cond=False
         timedelta='0 days 00:00:00.000000005' is not an integer number of days
         """
-
-        # Check
+        # Check.
         self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
 
     def test6(self) -> None:
         """
-        Test that function do not raise an exception with negative number of days.
+        Test that function do not raise an exception with negative number of
+        days.
         """
-
         timedelta = pd.Timedelta(days=-1)
-
-        # Should pass without exception
+        # Should pass without exception.
         hpandas.dassert_is_days(timedelta)
 
     def test7(self) -> None:
         """
-        Test that function raises an exception with number of days less than the minimum number
+        Test that function raises an exception with duration < minimum number
         of days.
         """
-
         timedelta = pd.Timedelta(days=-1)
-
         with self.assertRaises(AssertionError) as cm:
-            # Should raise AssertionError
+            # Should raise AssertionError.
             hpandas.dassert_is_days(timedelta, min_num_days=1)
-
         actual_exception = str(cm.exception)
         expected_exception = r"""
         * Failed assertion *
         1 <= -1
         """
-
-        # Check
+        # Check.
         self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
 
     def test8(self) -> None:
         """
-        Test that function raises an exception with exact integer number of days and with 0 as minimum number of days.
+        Test that function raises an exception with exact integer days and 0
+        minimum days.
         """
-
         timedelta = pd.Timedelta(days=0)
-
         with self.assertRaises(AssertionError) as cm:
-            # Should raise AssertionError
+            # Should raise AssertionError.
             hpandas.dassert_is_days(timedelta, min_num_days=0)
-
         actual_exception = str(cm.exception)
         expected_exception = r"""
         * Failed assertion *
         1 <= 0
         """
-
-        # Check
+        # Check.
         self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
 
     def test9(self) -> None:
         """
-        Test that function do not raise an exception with exact integer number of days and valid integer inputs as minimum number of days.
+        Test that function do not raise an exception with integer days and
+        minimum days > 1.
         """
-
         timedelta = pd.Timedelta(days=5)
-
-        # Should pass without exception
+        # Should pass without exception.
         hpandas.dassert_is_days(timedelta, min_num_days=1)
 
 
@@ -425,14 +402,14 @@ class Test_trim_df1(hunitest.TestCase):
     # //////////////////////////////////////////////////////////////////////////////
 
     def helper(
-            self,
-            df: pd.DataFrame,
-            ts_col_name: Optional[str],
-            start_ts: Optional[pd.Timestamp],
-            end_ts: Optional[pd.Timestamp],
-            left_close: bool,
-            right_close: bool,
-            expected: str,
+        self,
+        df: pd.DataFrame,
+        ts_col_name: Optional[str],
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        left_close: bool,
+        right_close: bool,
+        expected: str,
     ) -> None:
         """
         Run trimming and check the outcome.
@@ -792,7 +769,7 @@ class Test_trim_df2(Test_trim_df1):
     """
 
     def get_data(
-            self, set_as_index: bool, sort: bool
+        self, set_as_index: bool, sort: bool
     ) -> Tuple[pd.DataFrame, str, pd.Timestamp, pd.Timestamp]:
         """
         Get the data for experiments.
@@ -819,11 +796,11 @@ class Test_trim_df2(Test_trim_df1):
         return df, ts_col_name, start_ts, end_ts
 
     def check_trimmed_df(
-            self,
-            df: pd.DataFrame,
-            ts_col_name: str,
-            start_ts: pd.Timestamp,
-            end_ts: pd.Timestamp,
+        self,
+        df: pd.DataFrame,
+        ts_col_name: str,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
     ) -> None:
         """
         Confirm that the trimmed df matches what is expected.
@@ -3439,10 +3416,10 @@ class Test_compute_duration_df(hunitest.TestCase):
         return tag_to_df
 
     def intersection_helper(
-            self,
-            valid_intersect: bool,
-            expected_start_timestamp: pd.Timestamp,
-            expected_end_timestamp: pd.Timestamp,
+        self,
+        valid_intersect: bool,
+        expected_start_timestamp: pd.Timestamp,
+        expected_end_timestamp: pd.Timestamp,
     ) -> None:
         """
         Checks if the intersection is valid and the same amongst all dfs.
@@ -4104,33 +4081,27 @@ class Test_cast_series_to_type(hunitest.TestCase):
 class Test_dassert_index_is_datetime(hunitest.TestCase):
     @staticmethod
     def get_multiindex_df(
-            index_is_datetime: bool,
+        index_is_datetime: bool,
     ) -> pd.DataFrame:
         """
-               Helper function to get test multi-index dataframe.
+        Helper function to get test multi-index dataframe.
 
-               Example of dataframe returned when `index_is_datetime = True`:
+        Example of dataframe returned when `index_is_datetime = True`:
 
-               ```
-                                                   column1     column2
-               index   timestamp
-               index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
-                       2022-01-01 21:10:00+00:00   1.303778    -0.288235
-               index2  2022-01-01 21:00:00+00:00   1.237079    1.168012
-                       2022-01-01 21:10:00+00:00   1.333692    1.708455
-               ```
+        ```                                     column1     column2
+        index   timestamp index1  2022-01-01 21:00:00+00:00   -0.122140
+        -1.949431         2022-01-01 21:10:00+00:00   1.303778
+        -0.288235 index2  2022-01-01 21:00:00+00:00   1.237079
+        1.168012         2022-01-01 21:10:00+00:00   1.333692
+        1.708455 ```
 
-               Example of dataframe returned when `index_is_datetime = False`:
+        Example of dataframe returned when `index_is_datetime = False`:
 
-               ```
-                                   column1     column2
-               index   timestamp
-               index1  string1     -0.122140   -1.949431
-                       string2     1.303778    -0.288235
-               index2  string1     1.237079    1.168012
-                       string2     1.333692    1.708455
-               ```
-               """
+        ```                     column1     column2 index   timestamp
+        index1  string1     -0.122140   -1.949431         string2
+        1.303778    -0.288235 index2  string1     1.237079    1.168012
+        string2     1.333692    1.708455 ```
+        """
         if index_is_datetime:
             index_inner = [
                 pd.Timestamp("2022-01-01 21:00:00", tz="UTC"),
@@ -4270,12 +4241,12 @@ class Test_CheckSummary(hunitest.TestCase):
 
 class Test_compute_weighted_sum(hunitest.TestCase):
     def helper(
-            self,
-            index1: List[int],
-            index2: List[int],
-            weights_data: Dict[str, List[float]],
-            index_mode: str,
-            expected_signature: str,
+        self,
+        index1: List[int],
+        index2: List[int],
+        weights_data: Dict[str, List[float]],
+        index_mode: str,
+        expected_signature: str,
     ) -> None:
         """
         Build inputs and check that function output is correct.
