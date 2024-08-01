@@ -1931,15 +1931,14 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
         asset_id = 1464553467
         fill_percents = [0.6, 0.5, 0.4, 0.5, 0.6, 0.7, 0.5, 0.4, 0.3]
         initial_position_amt = curr_num_shares
+        positions = [
+            { "info": {"positionAmt": initial_position_amt},
+            "symbol": "ETH/USDT:USDT",}
+        ]
         with hasynci.solipsism_context() as event_loop:
             broker = self.get_test_broker(
                 initial_timestamps[0][0],
-                [
-                    {
-                        "info": {"positionAmt": initial_position_amt},
-                        "symbol": "ETH/USDT:USDT",
-                    }
-                ],
+                positions,
                 event_loop,
                 fill_percents,
                 limit_price_computer=oliprcom.LimitPriceComputerUsingVolatility(
@@ -1959,18 +1958,13 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
                     curr_num_shares = 5
                 orders_str = f"Order: order_id={i} creation_timestamp={creation_timestamp} asset_id={asset_id} type_=limit start_timestamp={start_timestamp} end_timestamp={end_timestamp} curr_num_shares={curr_num_shares} diff_num_shares={curr_num_shares} tz=UTC extra_params={{}}"
                 orders = oordorde.orders_from_string(orders_str)
-
-                fill_amount = curr_num_shares * fill_percents[i - 1]
-                initial_position_amt = initial_position_amt - fill_amount
-                broker._async_exchange._positions = [
-                    {
-                        "info": {"positionAmt": initial_position_amt},
-                        "symbol": "ETH/USDT:USDT",
-                    }
-                ]
                 coroutine = broker._submit_twap_orders(
                     orders, execution_freq="1T"
                 )
+                fill_amount = curr_num_shares * fill_percents[i - 1]
+                initial_position_amt = initial_position_amt - fill_amount
+                positions[0]["info"]["positionAmt"] = initial_position_amt
+                broker._async_exchange._positions = positions
                 receipt, orders = hasynci.run(
                     coroutine,
                     event_loop=event_loop,
