@@ -1899,7 +1899,6 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
         # Assert ccxt trades.
         self._test_ccxt_trades(broker, ccxt_fills, "test_ccxt_trades")
 
-    #
     @umock.patch.object(
         obcaccbr.AbstractCcxtBroker, "_build_asset_id_to_ccxt_symbol_mapping"
     )
@@ -1916,7 +1915,6 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
             1467591036: "BTC/USDT:USDT",
             1464553467: "ETH/USDT:USDT",
         }
-
         initial_timestamps = [
             (
                 pd.Timestamp("2022-08-05 09:30:00+00:00"),
@@ -1929,8 +1927,7 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
                 pd.Timestamp("2022-08-05 09:32:00+00:00"),
             ),
         ]
-
-        curr_num_shares = 12
+        curr_num_shares = 0
         asset_id = 1464553467
         fill_percents = [0.6, 0.5, 0.4, 0.5, 0.6, 0.7, 0.5, 0.4, 0.3]
         initial_position_amt = curr_num_shares
@@ -1956,19 +1953,21 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
                 start_timestamp,
                 end_timestamp,
             ) in enumerate(initial_timestamps, start=1):
+                if i == 1:
+                    curr_num_shares = 10
+                else:
+                    curr_num_shares = 5
                 orders_str = f"Order: order_id={i} creation_timestamp={creation_timestamp} asset_id={asset_id} type_=limit start_timestamp={start_timestamp} end_timestamp={end_timestamp} curr_num_shares={curr_num_shares} diff_num_shares={curr_num_shares} tz=UTC extra_params={{}}"
                 orders = oordorde.orders_from_string(orders_str)
 
                 fill_amount = curr_num_shares * fill_percents[i - 1]
                 initial_position_amt = initial_position_amt - fill_amount
-
                 broker._async_exchange._positions = [
                     {
                         "info": {"positionAmt": initial_position_amt},
                         "symbol": "ETH/USDT:USDT",
                     }
                 ]
-
                 coroutine = broker._submit_twap_orders(
                     orders, execution_freq="1T"
                 )
@@ -1977,12 +1976,10 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
                     event_loop=event_loop,
                     close_event_loop=(i == len(initial_timestamps)),
                 )
-
                 actual_orders = pprint.pformat(orders)
                 self.check_string(
                     actual_orders, tag=f"actual_orders{i}", fuzzy_match=True
                 )
-
                 submitted_orders = pprint.pformat(broker._previous_parent_orders)
                 self.check_string(
                     submitted_orders,
@@ -1991,7 +1988,7 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
                 )
                 if i == 1:
                     exp = r"""
-                    [Fill: asset_id=1464553467 fill_id=1 timestamp=2022-08-05 09:30:02+00:00 num_shares=7.199999999999999 price=10.000000000000002]
+                    [Fill: asset_id=1464553467 fill_id=1 timestamp=2022-08-05 09:30:02+00:00 num_shares=6.0 price=10.0]
                     """
                     self._test_get_fills(broker, exp)
                 # Assert ccxt fills and trades.
