@@ -776,6 +776,64 @@ class Test_dassert_str_is_date(hunitest.TestCase):
 
 
 # #############################################################################
+# Test_dassert_is_valid_timestamp
+# #############################################################################
+
+
+class Test_dassert_is_valid_timestamp(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test should not raise an exception when timestamp has a timezone.
+        """
+        timestamp = pd.Timestamp(
+            "2021-01-04 09:30:00-05:00", tz="America/New_York"
+        )
+        hdateti.dassert_is_valid_timestamp(timestamp)
+
+    def test2(self) -> None:
+        """
+        Test should raise an exception when timestamp is without timezone info.
+        """
+        # Set inputs.
+        timestamp = pd.Timestamp("2021-01-04 09:30:00")
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hdateti.dassert_is_valid_timestamp(timestamp)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        'None' is not 'None'
+        datetime_='2021-01-04 09:30:00' doesn't have timezone info
+        """
+        # Check.
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Test should not raise an exception when timestamp is none.
+        """
+        timestamp = None
+        hdateti.dassert_is_valid_timestamp(timestamp)
+
+    def test4(self) -> None:
+        """
+        Test should raise an exception when timestamp is of type string.
+        """
+        # Set input.
+        timestamp = "2021-01-04 09:30:00"
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hdateti.dassert_is_valid_timestamp(timestamp)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        Instance of '2021-01-04 09:30:00' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs.timestamps.Timestamp'>'
+        """
+        # Check.
+        self.assert_equal(act, exp, fuzzy_match=True)
+        
+        
+# #############################################################################
 # Test_dassert_timestamp_lt
 # #############################################################################
 
