@@ -1961,15 +1961,15 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
                 coroutine = broker._submit_twap_orders(
                     orders, execution_freq="1T"
                 )
-                fill_amount = curr_num_shares * fill_percents[i - 1]
-                initial_position_amt = initial_position_amt - fill_amount
-                positions[0]["info"]["positionAmt"] = initial_position_amt
-                broker._async_exchange._positions = positions
                 receipt, orders = hasynci.run(
                     coroutine,
                     event_loop=event_loop,
                     close_event_loop=(i == len(initial_timestamps)),
                 )
+                fill_amount = curr_num_shares * fill_percents[i - 1]
+                initial_position_amt = initial_position_amt - fill_amount
+                positions[0]["info"]["positionAmt"] = initial_position_amt
+                broker._async_exchange._positions = positions
                 actual_orders = pprint.pformat(orders)
                 self.check_string(
                     actual_orders, tag=f"actual_orders{i}", fuzzy_match=True
