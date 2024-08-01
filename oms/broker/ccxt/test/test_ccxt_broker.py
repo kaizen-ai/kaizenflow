@@ -1929,12 +1929,15 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
         ]
         curr_num_shares = 0
         asset_id = 1464553467
-        fill_percents = [0.6, 0.5, 0.4, 0.5, 0.6, 0.7, 0.5, 0.4, 0.3]
+        fill_percents = 0.5
         initial_position_amt = curr_num_shares
         positions = [
-            { "info": {"positionAmt": initial_position_amt},
-            "symbol": "ETH/USDT:USDT",}
+            {
+                "info": {"positionAmt": initial_position_amt},
+                "symbol": "ETH/USDT:USDT",
+            }
         ]
+        curr_num_shares = [40, 20]
         with hasynci.solipsism_context() as event_loop:
             broker = self.get_test_broker(
                 initial_timestamps[0][0],
@@ -1952,23 +1955,18 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
                 start_timestamp,
                 end_timestamp,
             ) in enumerate(initial_timestamps, start=1):
-                if i == 1:
-                    curr_num_shares = 10
-                else:
-                    curr_num_shares = 5
-                orders_str = f"Order: order_id={i} creation_timestamp={creation_timestamp} asset_id={asset_id} type_=limit start_timestamp={start_timestamp} end_timestamp={end_timestamp} curr_num_shares={curr_num_shares} diff_num_shares={curr_num_shares} tz=UTC extra_params={{}}"
+                orders_str = f"Order: order_id={i} creation_timestamp={creation_timestamp} asset_id={asset_id} type_=limit start_timestamp={start_timestamp} end_timestamp={end_timestamp} curr_num_shares={curr_num_shares[i-1]} diff_num_shares={curr_num_shares[i-1]} tz=UTC extra_params={{}}"
                 orders = oordorde.orders_from_string(orders_str)
                 coroutine = broker._submit_twap_orders(
-                    orders, execution_freq="1T"
+                    orders, execution_freq="10S"
                 )
                 receipt, orders = hasynci.run(
                     coroutine,
                     event_loop=event_loop,
                     close_event_loop=(i == len(initial_timestamps)),
                 )
-                fill_amount = curr_num_shares * fill_percents[i - 1]
-                initial_position_amt = initial_position_amt - fill_amount
-                positions[0]["info"]["positionAmt"] = initial_position_amt
+                # TODO(Sameep): make updating positions automatic
+                positions[0]["info"]["positionAmt"] = 9.8435
                 broker._async_exchange._positions = positions
                 actual_orders = pprint.pformat(orders)
                 self.check_string(
@@ -1980,11 +1978,14 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
                     tag=f"test_submitted_orders{i}",
                     fuzzy_match=True,
                 )
-                if i == 1:
-                    exp = r"""
-                    [Fill: asset_id=1464553467 fill_id=1 timestamp=2022-08-05 09:30:02+00:00 num_shares=6.0 price=10.0]
-                    """
-                    self._test_get_fills(broker, exp)
+                shares = curr_num_shares[i - 1] * sum(
+                    fill_percents**i for i in range(1, 7)
+                )
+                exp = f"""
+                [Fill: asset_id=1464553467 fill_id={i} timestamp={creation_timestamp + pd.Timedelta(seconds=52)} num_shares={shares} price=10.0]
+                """
+                # Test get_fills for all indices
+                self._test_get_fills(broker, exp)
                 # Assert ccxt fills and trades.
                 ccxt_fills = self._test_ccxt_fills(
                     broker, orders, f"test_ccxt_fills{i}"
