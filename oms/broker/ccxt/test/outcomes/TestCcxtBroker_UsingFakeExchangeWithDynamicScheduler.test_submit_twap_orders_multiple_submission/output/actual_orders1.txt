@@ -5,8 +5,8 @@ asset_id=1464553467
 type_=limit
 start_timestamp=2022-08-05 05:30:00-04:00
 end_timestamp=2022-08-05 05:31:00-04:00
-curr_num_shares=4.800000000000001
-diff_num_shares=12.0
+curr_num_shares=-6.0
+diff_num_shares=10.0
 tz=America/New_York
 extra_params={'ccxt_id': [0],
  'oms_parent_order_id': 1,
