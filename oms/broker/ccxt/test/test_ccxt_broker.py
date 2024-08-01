@@ -1966,7 +1966,7 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
                     close_event_loop=(i == len(initial_timestamps)),
                 )
                 # TODO(Sameep): make updating positions automatic
-                positions[0]["info"]["positionAmt"] = 9.8435
+                positions[0]["info"]["positionAmt"] = 39.375
                 broker._async_exchange._positions = positions
                 actual_orders = pprint.pformat(orders)
                 self.check_string(
