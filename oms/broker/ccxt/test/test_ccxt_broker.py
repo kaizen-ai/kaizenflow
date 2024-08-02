@@ -1938,6 +1938,10 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
             }
         ]
         curr_num_shares = [40, 20]
+        shares_sum = sum(
+            fill_percents**i for i in range(1, 7)
+        )
+        shares = [shares_sum * num for num in curr_num_shares]
         with hasynci.solipsism_context() as event_loop:
             broker = self.get_test_broker(
                 initial_timestamps[0][0],
@@ -1978,15 +1982,12 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
                     tag=f"test_submitted_orders{i}",
                     fuzzy_match=True,
                 )
-                shares = curr_num_shares[i - 1] * sum(
-                    fill_percents**i for i in range(1, 7)
-                )
                 exp = f"""
-                [Fill: asset_id=1464553467 fill_id={i} timestamp={creation_timestamp + pd.Timedelta(seconds=52)} num_shares={shares} price=10.0]
+                [Fill: asset_id=1464553467 fill_id={i} timestamp={creation_timestamp + pd.Timedelta(seconds=52)} num_shares={shares[i-1]} price=10.0]
                 """
-                # Test get_fills for all indices
+                # Check get_fills for all indices
                 self._test_get_fills(broker, exp)
-                # Assert ccxt fills and trades.
+                # Check ccxt fills and trades.
                 ccxt_fills = self._test_ccxt_fills(
                     broker, orders, f"test_ccxt_fills{i}"
                 )
