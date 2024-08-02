@@ -1938,10 +1938,7 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
             }
         ]
         curr_num_shares = [40, 20]
-        shares_sum = sum(
-            fill_percents**i for i in range(1, 7)
-        )
-        shares = [shares_sum * num for num in curr_num_shares]
+        shares = [39.375, 19.6875]
         with hasynci.solipsism_context() as event_loop:
             broker = self.get_test_broker(
                 initial_timestamps[0][0],
@@ -1964,10 +1961,12 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
                 coroutine = broker._submit_twap_orders(
                     orders, execution_freq="10S"
                 )
+                # Close the event loop after all the iterations are run i.e in the last iteration
+                close_event_loop = i == len(initial_timestamps)
                 receipt, orders = hasynci.run(
                     coroutine,
                     event_loop=event_loop,
-                    close_event_loop=(i == len(initial_timestamps)),
+                    close_event_loop=close_event_loop,
                 )
                 # TODO(Sameep): make updating positions automatic
                 positions[0]["info"]["positionAmt"] = 39.375
