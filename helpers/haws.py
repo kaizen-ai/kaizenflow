@@ -5,7 +5,7 @@ import helpers.haws as haws
 """
 
 import logging
-from typing import Optional
+from typing import Dict, List, Optional
 
 import boto3
 from boto3.resources.base import ServiceResource
@@ -51,7 +51,6 @@ def get_session(
         #  then passing everything.
         if "aws_s3_bucket" in credentials:
             del credentials["aws_s3_bucket"]
-        _LOG.debug(hprint.to_str("credentials"))
         session = boto3.session.Session(**credentials)
     return session
 
@@ -127,9 +126,8 @@ def update_task_definition(
     """
     Create the new revision of specified ECS task definition.
 
-    If region is different then the default one, it is assumed 
-    that ECR replication is enabled from the default region to the
-    target region.
+    If region is different then the default one, it is assumed that ECR
+    replication is enabled from the default region to the target region.
 
     :param task_definition_name: the name of the ECS task definition for
         which an update to container image URL is made, e.g., cmamp-test
@@ -176,3 +174,58 @@ def update_task_definition(
         task_definition_name,
         updated_image_url,
     )
+
+
+def list_all_objects(
+    s3_client: BaseClient, bucket_name: str, prefix: str
+) -> List[Dict]:
+    """
+    List all objects in the specified S3 bucket under the given prefix,
+    handling pagination.
+
+    :param s3_client: instance of boto3 S3 client
+    :param bucket_name: the name of the S3 bucket e.g., `cryptokaizen-data-test`
+    :param prefix: prefix to filter the S3 objects e.g., `binance/historical_bid_ask/`
+    :return: A list of dictionaries containing metadata about each object. E.g.,
+        ```
+        [
+            {
+                'Key': 'binance/historical_bid_ask/S_DEPTH/1000BONK_USDT/2023-05-27/data.tar.gz',
+                'LastModified': datetime.datetime(2024, 5, 30, 17, 12, 12, tzinfo=tzlocal()),
+                'ETag': '"d41d8cd98f00b204e9800998ecf8427e"',
+                'Size': 0,
+                'StorageClass': 'STANDARD'
+            },
+            {
+                'Key': 'binance/historical_bid_ask/S_DEPTH/1000BONK_USDT/2023-05-28/data.tar.gz',
+                'LastModified': datetime.datetime(2024, 5, 30, 17, 12, 12, tzinfo=tzlocal()),
+                'ETag': '"d41d8cd98f00b204e9800998ecf8427e"',
+                'Size': 0,
+                'StorageClass': 'STANDARD'
+            }
+        ]
+        ```
+    """
+    objects = []
+    continuation_token = None
+    while True:
+        # If there's a continuation token, include it in the request to fetch
+        # the next page of results.
+        if continuation_token:
+            response = s3_client.list_objects_v2(
+                Bucket=bucket_name,
+                Prefix=prefix,
+                ContinuationToken=continuation_token,
+            )
+        else:
+            response = s3_client.list_objects_v2(
+                Bucket=bucket_name, Prefix=prefix
+            )
+        # Extend the objects list with the contents of the current page.
+        objects.extend(response.get("Contents", []))
+        # Check if there are more pages.
+        if response.get("IsTruncated"):
+            continuation_token = response.get("NextContinuationToken")
+        else:
+            break
+    return objects

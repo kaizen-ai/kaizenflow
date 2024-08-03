@@ -256,7 +256,6 @@ def dassert_valid_remap(to_remap: List[str], remap_dict: Dict[str, str]) -> None
         to_remap,
         "Keys to remap should be a subset of existing columns",
     )
-    # TODO(Samarth): Function does not work for dict keys.
     # The mapping is invertible.
     hdbg.dassert_no_duplicates(remap_dict.keys())
     hdbg.dassert_no_duplicates(remap_dict.values())
@@ -2457,3 +2456,24 @@ class CheckSummary:
         if notebook_output:
             result = None
         return result
+
+
+# #############################################################################
+
+
+def add_end_download_timestamp(
+    obj: Union[pd.DataFrame, Dict], *, timezone: str = "UTC"
+) -> Union[pd.DataFrame, Dict]:
+    """
+    Add a column 'end_download_timestamp' to the DataFrame with the current
+    time.
+
+    :param obj: The DataFrame to which the column will be added.
+    :param timezone: The timezone for the current time. Defaults to
+        'UTC'.
+    """
+    # Get current timestamp.
+    current_ts = hdateti.get_current_time(timezone)
+    # Set value of end_download_timestamp.
+    obj["end_download_timestamp"] = current_ts
+    return obj
