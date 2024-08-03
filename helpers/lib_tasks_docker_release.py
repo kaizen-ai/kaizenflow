@@ -805,6 +805,38 @@ def docker_rollback_prod_image(  # type: ignore
     _LOG.info("==> SUCCESS <==")
 
 
+def _check_workspace_dir_sizes() -> None:
+    """
+    Check if user doesn't have large files/directories in their workspace.
+
+    Use-case is running the function before building a candidate image.
+    Large files significanty slow dwon image creation and subsequent
+    pulling. Overtime it also increases costs of ECR usage.
+    """
+    # Execute system command and split into a list of tuples [size, dir].
+    # Threshold is chosen heuristically according to current repo dir sizes.
+    fs_item_max_threshold = "200M"
+    directory_size_list = hsystem.system_to_string(
+        f"du --threshold {fs_item_max_threshold} -hs $(ls -A) | sort -hr"
+    )[1].split("\n")
+    # Filter out directories ignored by ``.dockerignore.prod` + "amp/"
+    # as submodule.
+    ignored_dirs = ["amp", "ck.infra", "amp/ck.infra", "docs", ".git", "amp/.git"]
+    offending_items = [
+        it.replace("\t", " ")
+        for it in directory_size_list
+        if it.split("\t")[1] not in ignored_dirs
+    ]
+    hdbg.dassert(
+        len(offending_items) == 0,
+        (
+            "Your workspace contains one or more files/directories "
+            f"larger than {fs_item_max_threshold} move "
+            f"or delete the items:\n\t {offending_items}"
+        ),
+    )
+
+
 @task
 def docker_create_candidate_image(ctx, task_definition, user_tag="", region="eu-north-1"):  # type: ignore
     """
@@ -818,6 +850,7 @@ def docker_create_candidate_image(ctx, task_definition, user_tag="", region="eu-
         parameter means the command was run via gh actions
     :param region: AWS Region, for Tokyo region specify 'ap-northeast-1'
     """
+    _check_workspace_dir_sizes()
     # Get the hash of the image.
     tag = hgit.get_head_hash(".", short_hash=True)
     if user_tag:
