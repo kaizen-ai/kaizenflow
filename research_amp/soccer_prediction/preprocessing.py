@@ -20,35 +20,47 @@ _LOG = logging.getLogger(__name__)
 
 class GeneralPreprocessing(BaseEstimator, TransformerMixin):
     """
-    Perform general preprocessing on the dataframe.
+    Perform general preprocessing on the dataframe
 
-    - Convert 'Date' to datetime and sort.
-    - Changes column names to a more readable format.
-    - Changes match_outcome values to a more readable format.
+    - Convert 'Date' to datetime and sort
+    - Change column names to a more readable format
+    - Change match_outcome values to a more readable format
+    - Filter by leagues and seasons if provided
     """
 
-    def fit(
-        self,
-        X: pd.DataFrame,
-    ) -> "GeneralPreprocessing":
-        """
-        Fit method, which does nothing and is here for compatibility.
+    def __init__(self, *, leagues: Optional[List[str]] = None, seasons: Optional[List[str]] = None):
+        self.leagues = leagues
+        self.seasons = seasons
 
-        :param X: input DataFrame.
-        :return: self
+    def fit(self,
+    X: pd.DataFrame,
+    ) -> None:
+        """
+        Fit method, which does nothing and is here for compatibility
+
+        :param X: input DataFrame
         """
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         """
-        Transform method to apply general preprocessing.
+        Transform method to apply general preprocessing
 
-        :param X: input DataFrame.
-        :return: preprocessed DataFrame.
+        :param X: input DataFrame
+        :return: preprocessed DataFrame
         """
         # Validate input.
         hdbg.dassert_isinstance(X, pd.DataFrame)
         # Convert 'Date' to datetime and sort.
+        rows_before = len(X)
+        # Add 'season' column.
+        X["season"] = X["Sea"].apply(lambda x: "20" + str(x)[:2])
+        # Filter by leagues and seasons if provided.
+        if self.leagues is not None:
+            X = X[X["Lge"].isin(self.leagues)]
+        if self.seasons is not None:
+            X = X[X["season"].isin(self.seasons)]
+        X.drop(columns = "season", inplace=True)
         X["Date"] = pd.to_datetime(X["Date"], dayfirst=True)
         X.sort_values(by="Date", inplace=True)
         # Rename columns in the dataframe.
@@ -268,7 +280,6 @@ class Dropnan(BaseEstimator, TransformerMixin):
         X.dropna(inplace=True)
         return X
 
-
 def load_and_preprocess_data(
     *,
     bucket_name: str,
@@ -277,15 +288,22 @@ def load_and_preprocess_data(
     add_epsilon: bool = False,
     epsilon_val: float = 0.5,
     add_epsilon_to_columns: Optional[List[str]] = None,
+    leagues: Optional[List[str]] = None,
+    seasons: Optional[List[str]] = None,
     **kwargs,
 ) -> pd.DataFrame:
     """
     Load and preprocess df.
 
-    :param df: input DataFrame.
-    :param add_epsilon: check to add eplison value to goals
-    :param add_eplison_to_columns: columns to which epsilon should be
-    :return: processed df
+    :param bucket_name: S3 bucket name
+    :param dataset_path: path to the dataset in the S3 bucket
+    :param logging_level: logging level
+    :param add_epsilon: flag to add epsilon value to columns
+    :param epsilon_val: epsilon value to add
+    :param add_epsilon_to_columns: list of columns to which epsilon should be added
+    :param leagues: list of leagues to filter by
+    :param seasons: list of seasons to filter by
+    :return: processed DataFrame
     """
     # Load df.
     df = rasoprut.load_data_from_s3(bucket_name, dataset_path)
@@ -294,10 +312,10 @@ def load_and_preprocess_data(
     hdbg.dassert_ne(0, len(df), "Dataframe is empty.")
     # Create preprocessing pipeline.
     pipeline_steps = [
-        ("general_preprocessing", GeneralPreprocessing()),
+        ("general_preprocessing", GeneralPreprocessing(leagues=leagues, seasons=seasons)),
         ("drop_nan_and_inf", Dropnan()),
     ]
-    # Add eplison value to goals scored.
+    # Add epsilon value to goals scored.
     if add_epsilon:
         pipeline_steps.append(
             (

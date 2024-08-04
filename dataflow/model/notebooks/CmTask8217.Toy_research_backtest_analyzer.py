@@ -31,7 +31,6 @@
 # %%
 import datetime
 import logging
-import os
 
 import pandas as pd
 
@@ -40,10 +39,10 @@ import core.plotting as coplotti
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
-import helpers.hgit as hgit
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import oms.broker.ccxt.ccxt_utils as obccccut
+import optimizer.forecast_evaluator_with_optimizer as ofevwiop
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -66,18 +65,18 @@ if default_config:
 else:
     _LOG.info("Using hardwired config")
     # Build default config.
-    #amp_dir = hgit.get_amp_abs_path()
-    dir_name = "/shared_data/model/historical/build_tile_configs.C11a.ccxt_v8_1-all.5T.2024-04-01_2024-05-31.ins.run0/tiled_results"
+    # amp_dir = hgit.get_amp_abs_path()
+    dir_name = "/shared_data/CmTask8217/build_tile_configs.C11a.ccxt_v8_1-all.5T.2023-08-01_2024-05-22.ins.run0/tiled_results"
     # Create a subfolder to store portfolio metrics.
     # The subfolder is marked by the datetime of the run, e.g.
     # "build_tile_configs.C11a.ccxt_v8_1-all.5T.2023-01-01_2024-03-20.ins.run0/portfolio_dfs/20240326_131724".
     # TODO(Danya): Factor out into a function.
     default_config_dict = {
         "dir_name": dir_name,
-        "start_date": datetime.date(2024, 4, 1),
-        "end_date": datetime.date(2024, 5, 31),
+        "start_date": datetime.date(2023, 8, 1),
+        "end_date": datetime.date(2024, 5, 22),
         "asset_id_col": "asset_id",
-        "pnl_resampling_frequency": "H",
+        "pnl_resampling_frequency": "D",
         "rule": "5T",
         "im_client_config": {
             "vendor": "ccxt",
@@ -112,7 +111,7 @@ else:
                 "constant_correlation_penalty": 50.0,
                 "relative_holding_penalty": 0.0,
                 "relative_holding_max_frac_of_gmv": 0.1,
-                "target_gmv": 1000.0,
+                "target_gmv": 100000.0,
                 "target_gmv_upper_bound_penalty": 0.0,
                 "target_gmv_hard_upper_bound_multiple": 1.05,
                 "transaction_cost_penalty": 0.5,
@@ -214,9 +213,14 @@ config_dict = dtfmod.build_research_backtest_analyzer_config_sweep(default_confi
 print(config_dict.keys())
 
 # %%
-import optimizer.forecast_evaluator_with_optimizer as ofevwiop
+# If NaNs in the feature column are found, replace them with 0.
+feature_col = default_config["forecast_evaluator_kwargs"]["prediction_col"]
+feature_col_nans = tile_df[feature_col].isna().sum()
+if feature_col_nans.sum():
+    _LOG.warning("NaN values in the feature column:\n%s", feature_col_nans)
+    tile_df[feature_col] = tile_df[feature_col].fillna(0)
 
-
+# %%
 portfolio_df_dict = {}
 bar_metrics_dict = {}
 for key, config in config_dict.items():
@@ -246,22 +250,16 @@ for key, config in config_dict.items():
     portfolio_df_dict[key] = portfolio_df
     bar_metrics_dict[key] = bar_metrics
 portfolio_stats_df = pd.concat(bar_metrics_dict, axis=1)
+portfolio_stats_df.tail(3)
 
-
-# %%
-portfolio_stats_df
 
 # %%
 # Drop level with the col_name label so that we remove the label from the plots.
 portfolio_stats_df = portfolio_stats_df.droplevel(0, axis=1)
 
 # %%
-# Keep only the last month only.
-portfolio_stats_df_timestamped = portfolio_stats_df.loc["2024-04-07 00:00:00+00:00":]
-
-# %%
 coplotti.plot_portfolio_stats(
-    portfolio_stats_df_timestamped, freq=default_config["pnl_resampling_frequency"]
+    portfolio_stats_df, freq=default_config["pnl_resampling_frequency"]
 )
 
 # %%
@@ -278,7 +276,7 @@ stats_computer = dtfmod.StatsComputer()
 
 # %%
 portfolio_stats, daily_metrics = stats_computer.compute_portfolio_stats(
-    portfolio_stats_df_timestamped,
+    portfolio_stats_df,
     default_config["pnl_resampling_frequency"],
 )
 display(portfolio_stats)

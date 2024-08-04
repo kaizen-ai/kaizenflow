@@ -15,7 +15,8 @@
             "archived_1sec",
             "archived_1min",
             "archived_250ms",
-            "archived_200ms"
+            "archived_200ms",
+            "resampled_10sec"
         ],
         "data_format": ["parquet", "csv", "postgres"],
         "data_type": ["ohlcv", "bid_ask", "trades"],

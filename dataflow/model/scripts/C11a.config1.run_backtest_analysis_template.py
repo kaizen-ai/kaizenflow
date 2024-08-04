@@ -38,7 +38,7 @@ def get_run_backtest_analysis_config(
         "end_date": end_date,
         "asset_id_col": "asset_id",
         "pnl_resampling_frequency": "D",
-        "rule": "6T",
+        "rule": "5T",
         "im_client_config": {
             "vendor": "ccxt",
             "universe_version": "v8.1",
@@ -99,9 +99,16 @@ def get_run_backtest_analysis_config(
 
 def main() -> None:
     # Provide parameters for building the backtest analysis config.
-    tiles_dir = "/shared_data/backtest.danya/build_tile_configs.C11a.ccxt_v8_1-all.5T.2023-08-01_2024-03-31.ins.run0/tiled_results"
-    start_date = datetime.date(2023, 8, 1)
-    end_date = datetime.date(2024, 1, 31)
+    # The end timestamp is set to yesterday by default to get the latest
+    # full day data available.
+    end_date = datetime.date.today() - datetime.timedelta(1)
+    end_date_as_str = end_date.strftime("%Y-%m-%d")
+    # Get start timestamp equal to the start of the DST.
+    # TODO(Danya): See CmampTask 8437.
+    start_date = datetime.datetime(2023, 8, 1)
+    start_date_as_str = start_date.strftime("%Y-%m-%d")
+    #
+    tiles_dir = f"/shared_data/backtest.C11a.config1/build_tile_configs.C11a.ccxt_v8_1-all.5T.{start_date_as_str}_{end_date_as_str}.ins.run0/tiled_results"
     forecast_evaluator_class_name = "ForecastEvaluatorWithOptimizer"
     optimizer_config_dict: Dict[str, Any] = {
         "dollar_neutrality_penalty": 0.0,
@@ -112,7 +119,7 @@ def main() -> None:
         "target_gmv": 1000,
         "target_gmv_upper_bound_penalty": 0.0,
         "target_gmv_hard_upper_bound_multiple": 1.05,
-        "transaction_cost_penalty": 1.2,
+        "transaction_cost_penalty": 0.5,
         "solver": "ECOS",
         "verbose": False,
     }
