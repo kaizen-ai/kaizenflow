@@ -38,7 +38,7 @@ def get_run_backtest_analysis_config(
         "end_date": end_date,
         "asset_id_col": "asset_id",
         "pnl_resampling_frequency": "D",
-        "rule": "6T",
+        "rule": "15T",
         "im_client_config": {
             "vendor": "ccxt",
             "universe_version": "v8.1",
@@ -68,7 +68,7 @@ def get_run_backtest_analysis_config(
         },
         "forecast_evaluator_kwargs": {
             "price_col": "open",
-            "volatility_col": "garman_klass_vol",
+            "volatility_col": "vol",
             "prediction_col": "feature",
         },
     }
@@ -99,20 +99,22 @@ def get_run_backtest_analysis_config(
 
 def main() -> None:
     # Provide parameters for building the backtest analysis config.
-    tiles_dir = "/shared_data/backtest.danya/build_tile_configs.C11a.ccxt_v8_1-all.5T.2023-08-01_2024-03-31.ins.run0/tiled_results"
+    end_date = datetime.date.today() - datetime.timedelta(1)
+    end_date_as_str = end_date.strftime("%Y-%m-%d")
     start_date = datetime.date(2023, 8, 1)
-    end_date = datetime.date(2024, 1, 31)
+    start_date_as_str = start_date.strftime("%Y-%m-%d")
+    tiles_dir = f"/shared_data/backtest.C14a.config1/build_tile_configs.C14a.ccxt_v8_1-all.15T.{start_date_as_str}_{end_date_as_str}.ins.run0/tiled_results"
     forecast_evaluator_class_name = "ForecastEvaluatorWithOptimizer"
     optimizer_config_dict: Dict[str, Any] = {
         "dollar_neutrality_penalty": 0.0,
         "constant_correlation": 0.5,
-        "constant_correlation_penalty": 50.0,
+        "constant_correlation_penalty": 0.0,
         "relative_holding_penalty": 0.0,
         "relative_holding_max_frac_of_gmv": 0.1,
         "target_gmv": 1000,
         "target_gmv_upper_bound_penalty": 0.0,
         "target_gmv_hard_upper_bound_multiple": 1.05,
-        "transaction_cost_penalty": 1.2,
+        "transaction_cost_penalty": 0.35,
         "solver": "ECOS",
         "verbose": False,
     }
@@ -160,6 +162,7 @@ def main() -> None:
     if feature_col_nans.sum():
         _LOG.warning("NaN values in the feature column:\n%s", feature_col_nans)
         tile_df[feature_col] = tile_df[feature_col].fillna(0)
+        tile_df["vol"] = tile_df["vol"].fillna(0)
 
     # #########################################################################
     # Compute and save portfolio

@@ -225,7 +225,7 @@ def integrate_diff_dirs(  # type: ignore
         if use_linux_diff:
             cmd = f"diff -r --brief {abs_src_dir} {abs_dst_dir}"
         else:
-            cmd = "dev_scripts/diff_to_vimdiff.py"
+            cmd = "diff_to_vimdiff.py"
             if run_diff_script:
                 cmd += " --run_diff_script"
             else:
