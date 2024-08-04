@@ -167,7 +167,11 @@ def sanity_check_indices_difference(
 # When running manually, specify the path to the config to load config from file,
 # for e.g., `.../reconciliation_notebook/fast/result_0/config.pkl`.
 config_file_name = None
-config = cconfig.get_notebook_config(config_file_name)
+# Set 'replace_ecs_tokyo = True' if running the notebook manually.
+replace_ecs_tokyo = False
+config = cconfig.get_notebook_config(
+    config_file_path=config_file_name, replace_ecs_tokyo=replace_ecs_tokyo
+)
 if config is None:
     id_col = "asset_id"
     system_log_dir = "/shared_data/CmTask7811/20240405_105500.20240405_115000/system_log_dir.manual/process_forecasts"

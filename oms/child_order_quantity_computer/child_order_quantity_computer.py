@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 import oms.order.order as oordorde
 
 _LOG = logging.getLogger(__name__)
@@ -78,13 +79,19 @@ class AbstractChildOrderQuantityComputer(abc.ABC):
                 self.parent_order_id_to_amount_precision,
             )
 
-    def get_wave_quantities(self, wave_id: int) -> Dict[int, float]:
+    def get_wave_quantities(self, is_first_wave: bool) -> Dict[int, float]:
         """
-        Return the quantity for the `wave_id`.
+        Return the quantity of child orders of the wave.
+
+        :param is_first_wave: True if the current wave is the first one,
+            False otherwise
         """
-        hdbg.dassert_lt(wave_id, self._num_waves)
+        _LOG.debug(hprint.to_str("is_first_wave"))
         # Calculate wave quantities.
-        wave_quantities = self._get_wave_quantities(wave_id)
+        # The variables needed to calculate wave quantities are initialized
+        # in the first wave and updated in subsequent waves. Hence, we use
+        # is_first_wave to determine if we need to reinitialize the variables.
+        wave_quantities = self._get_wave_quantities(is_first_wave)
         # Verify that parent order IDs in cached values correspond to provided parent orders.
         parent_order_ids = [
             parent_order.order_id for parent_order in self._parent_orders
@@ -135,7 +142,7 @@ class AbstractChildOrderQuantityComputer(abc.ABC):
         return obj_dict
 
     @abc.abstractmethod
-    def _get_wave_quantities(self, wave_id: int) -> Dict[int, float]:
+    def _get_wave_quantities(self, is_first_wave: bool) -> Dict[int, float]:
         """
         Specific implementation of `get_wave_quantities`.
         """

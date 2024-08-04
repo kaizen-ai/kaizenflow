@@ -14,6 +14,7 @@ import pandas as pd
 import pytest
 
 import helpers.hasyncio as hasynci
+import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
 import im_v2.common.data.client as icdc
 import im_v2.common.universe as ivcu
@@ -30,6 +31,9 @@ import oms.fill as omfill
 import oms.hsecrets.secret_identifier as ohsseide
 import oms.limit_price_computer as oliprcom
 import oms.order.order as oordorde
+
+# For simplicity, say values can be of Any type.
+CcxtOrderStructure = Dict[str, Any]
 
 
 def _generate_test_bid_ask_data(
@@ -151,6 +155,7 @@ def _get_test_broker(
             logger=logger,
             limit_price_computer=limit_price_computer,
             max_order_submit_retries=3,
+            max_order_cancel_retries=3,
             child_order_quantity_computer=child_order_quantity_computer,
             sync_exchange=mock_exchange,
             async_exchange=mock_exchange,
@@ -212,7 +217,8 @@ class MockExchangeTestCase(hunitest.TestCase):
         *,
         bid_ask_df: pd.DataFrame = None,
         num_trades_per_order: int = 1,
-        num_exceptions: int = 0,
+        num_exceptions: Dict = None,
+        mock_exchange_delay: int = 2,
         **broker_kwargs,
     ) -> Tuple[List[oordorde.Order], obccccbr.CcxtBroker]:
         """
@@ -230,6 +236,8 @@ class MockExchangeTestCase(hunitest.TestCase):
           - if float: how much % of the child order is filled, the same for all waves
         :param num_trades_per_order: number of trades to be simulated
             for child order
+        :param num_exceptions: mapping of method names to number of consecutive
+            exceptions to raise for it
         :return: fully initialized broker object
         """
         num_minutes = 10
@@ -253,7 +261,9 @@ class MockExchangeTestCase(hunitest.TestCase):
             0,
             list(obcttcut._ASSET_ID_SYMBOL_MAPPING.keys()),
         )
-        mock_exchange_delay = 2
+        if num_exceptions is None:
+            num_exceptions = {}
+        hdbg.dassert_isinstance(num_exceptions, dict)
         mock_exchange = obcmccex.MockCcxtExchange_withErrors(
             num_exceptions,
             mock_exchange_delay,
@@ -391,6 +401,8 @@ class MockExchangeTestCase(hunitest.TestCase):
         *,
         bid_ask_df: pd.DataFrame = None,
         num_trades_per_order: int = 1,
+        mock_exchange_delay: int = 2,
+        execution_freq: str = "1T",
         **broker_kwargs,
     ) -> Tuple[List[oordorde.Order], obccccbr.CcxtBroker]:
         """
@@ -420,9 +432,9 @@ class MockExchangeTestCase(hunitest.TestCase):
                 num_trades_per_order=num_trades_per_order,
                 limit_price_computer=limit_price_computer,
                 child_order_quantity_computer=child_order_quantity_computer,
+                mock_exchange_delay=mock_exchange_delay,
                 **broker_kwargs,
             )
-            execution_freq = "1T"
             # TODO(Juraj): How to set timestamp for the test orders?
             # On one hand we do not want to freeze time but passing real wall
             # clock time might results in irrepeatable test?
@@ -483,3 +495,17 @@ class MockExchangeTestCase(hunitest.TestCase):
             # TODO(Juraj): this does not hold in all cases.
             # self.assert_equal(receipt, "order_0")
         return orders, broker
+
+    def _test_order_cancelation(self, orders: List[CcxtOrderStructure]) -> None:
+        """
+        Test the status of submitted orders based on their fill rates.
+
+        :param orders: submitted orders
+        """
+        for order in orders:
+            # Determine if the current order was closed or canceled based upon
+            # remaning amount to be filled.
+            if order["remaining"] == 0:
+                self.assert_equal(order["status"], "closed")
+            else:
+                self.assert_equal(order["status"], "canceled")

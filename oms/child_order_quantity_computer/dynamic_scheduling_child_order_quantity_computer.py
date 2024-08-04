@@ -30,9 +30,27 @@ class DynamicSchedulingChildOrderQuantityComputer(
         super().__init__()
         self._target_positions = {}
 
-    def _get_wave_quantities(self, wave_id: int) -> Dict[int, float]:
+    @staticmethod
+    def _apply_share_precision(shares: float, amount_precision: int) -> float:
         """
-        Return the child order quantity to be placed during `wave_id`.
+        Round number of shares to the given precision.
+
+        :param shares: number of shares to round
+        :param amount_precision: precision to apply
+        :return: rounded number of shares
+        """
+        shares_before_floor = shares
+        shares = hnumpy.floor_with_precision(shares, amount_precision)
+        if shares_before_floor != shares:
+            _LOG.warning(
+                "Share amount changed due to precision limit: "
+                + hprint.to_str("shares_before_floor shares amount_precision"),
+            )
+        return shares
+
+    def _get_wave_quantities(self, is_first_wave: bool) -> Dict[int, float]:
+        """
+        Return the child order quantity to be placed during the current wave.
 
         During the first wave, compute the target positions for parent orders
         and get the first child order quantity as equal to the parent order
@@ -44,78 +62,47 @@ class DynamicSchedulingChildOrderQuantityComputer(
         - We cannot rely only on open positions, since the bar can start with
         an unflattened account, and parent orders do not update information
         on current holdings in live fashion.
+
+        :param is_first_wave: True if the current wave is the first one, False
+            otherwise
         """
         next_wave_quantities: Dict[int, float] = {}
-        if wave_id == 0:
-            # Compute the target positions based on current positions.
-            # We need the `target_positions` variable to track the fill rate
-            # for the parent order without conducting additional API calls.
-            for parent_order in self._parent_orders:
-                parent_order_id = parent_order.order_id
+        for parent_order in self._parent_orders:
+            parent_order_id = parent_order.order_id
+            ccxt_symbol = parent_order.extra_params["ccxt_symbol"]
+            # Get current open positions for an asset.
+            # If no position is held, return 0.
+            current_position = self._current_positions.get(ccxt_symbol, 0)
+            # Round to the number allowable by the exchange.
+            amount_precision = self.parent_order_id_to_amount_precision[
+                parent_order_id
+            ]
+            if is_first_wave:
+                # Compute the target positions based on current positions.
+                # Use `target_positions` to track parent order fill rates
+                # without extra API calls.
                 diff_num_shares = parent_order.diff_num_shares
-                #
-                ccxt_symbol = parent_order.extra_params["ccxt_symbol"]
-                current_position = self._current_positions.get(ccxt_symbol, 0)
-                # Get the target position for the current parent order,
-                # as a sum of current position and `diff_num_shares`.
                 self._target_positions[parent_order_id] = (
                     current_position + diff_num_shares
                 )
-                # Round to the number allowable by the exchange.
-                amount_precision = self.parent_order_id_to_amount_precision[
-                    parent_order_id
-                ]
-                diff_num_shares_before_floor = diff_num_shares
-                diff_num_shares = hnumpy.floor_with_precision(
+                diff_num_shares = self._apply_share_precision(
                     diff_num_shares, amount_precision
                 )
-                if diff_num_shares_before_floor != diff_num_shares:
-                    _LOG.warning(
-                        "Share amount changed due to precision limit: "
-                        + hprint.to_str(
-                            "diff_num_shares_before_floor \
-                            diff_num_shares amount_precision"
-                        )
-                    )
+                # Assign to the output.
                 next_wave_quantities[parent_order_id] = diff_num_shares
-        else:
-            # Calculate the order size based on current holdings.
-            # Given the open positions, the next wave quantity
-            # is computed as target_position - current_position.
-            for parent_order in self._parent_orders:
-                parent_order_id = parent_order.order_id
-                ccxt_symbol = parent_order.extra_params["ccxt_symbol"]
-                # Get the current amount of holdings.
-                # If there is no held amount of an asset, it is not included
-                # in the `open_positions`, so we default to 0.
-                current_position = self._current_positions.get(ccxt_symbol, 0)
-                #
+            else:
+                # Calculate the order size based on current holdings.
+                # Given the open positions, the next wave quantity is computed
+                # as `target_position - current_position`.
                 target_position = self._target_positions[parent_order_id]
-                # Calculate the child order size based on missing amount for a full fill.
+                # Calculate the child order size based on missing amount
+                # for a full fill.
                 child_order_diff_signed_num_shares = (
                     target_position - current_position
                 )
-                # Round to the number allowable by the exchange.
-                amount_precision = self.parent_order_id_to_amount_precision[
-                    parent_order_id
-                ]
-                child_order_diff_signed_num_shares_before_floor = (
-                    child_order_diff_signed_num_shares
-                )
-                child_order_diff_signed_num_shares = hnumpy.floor_with_precision(
+                child_order_diff_signed_num_shares = self._apply_share_precision(
                     child_order_diff_signed_num_shares, amount_precision
                 )
-                if (
-                    child_order_diff_signed_num_shares_before_floor
-                    != child_order_diff_signed_num_shares
-                ):
-                    _LOG.warning(
-                        "Share amount changed due to precision limit: "
-                        + hprint.to_str(
-                            "child_order_diff_signed_num_shares_before_floor \
-                            child_order_diff_signed_num_shares amount_precision"
-                        )
-                    )
                 # Assign to the output.
                 next_wave_quantities[
                     parent_order_id

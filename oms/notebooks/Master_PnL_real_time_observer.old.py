@@ -82,7 +82,7 @@ if config is None:
     save_plots_for_investors = True
     html_bucket_path = henv.execute_repo_config_code("get_html_bucket_path()")
     s3_dst_dir = os.path.join(html_bucket_path, "pnl_for_investors")
-    config_list = reconcil.build_prod_pnl_real_time_observer_configs(
+    config_list = reconcil.build_system_observer_configs(
         prod_data_root_dir,
         dag_builder_ctor_as_str,
         run_mode,
