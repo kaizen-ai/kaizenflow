@@ -3,6 +3,10 @@
     "binance": [
       "BTC_USDT",
       "ETH_USDT"
+    ],
+    "cryptocom": [
+      "BTC_USD",
+      "ETH_USD"
     ]
   }
 }

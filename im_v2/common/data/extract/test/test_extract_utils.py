@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 import pytest
 
+import helpers.hdatetime as hdateti
 import helpers.henv as henv
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
@@ -1529,12 +1530,13 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
         self.mock_connection_manager.stop()
 
     @umock.patch.object(imvcdeexut.pd.Timestamp, "now")
+    @umock.patch.object(hdateti, "get_current_time")
     @umock.patch.object(
-        imvcdeexut.imvcddbut, "fetch_last_minute_bid_ask_rt_db_data"
+        imvcdeexut.imvcddbut, "fetch_last_bid_ask_rt_db_data"
     )
     @umock.patch.object(imvcdeexut.hasynci.time, "sleep")
     def test_resample_rt_bid_ask_data_periodically(
-        self, mock_sleep, mock_fetch_data, mock_now
+        self, mock_sleep, mock_fetch_data, mock_get_current_time, mock_now
     ) -> None:
         """
         Test resampling realtime bid/ask data.
@@ -1555,18 +1557,12 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
             pd.Timestamp("2024-02-20T18:00:00+00:00"),
             # While loop check
             pd.Timestamp("2024-02-20T18:00:00.200+00:00"),
-            # First iteration.
-            # Set `end_download_timestamp`.
-            pd.Timestamp("2024-02-20T18:00:01+00:00"),
             # Wait until next iteration.
             pd.Timestamp("2024-02-20T18:00:01+00:00"),
             pd.Timestamp("2024-02-20T18:00:01+00:00"),
             pd.Timestamp("2024-02-20T18:00:01+00:00"),
             # While loop check.
             pd.Timestamp("2024-02-20T18:01:00.200+00:00"),
-            # Second Iteration.
-            # Set `end_download_timestamp`.
-            pd.Timestamp("2024-02-20T18:01:01+00:00"),
             # Wait until next iteration.
             pd.Timestamp("2024-02-20T18:01:02+00:00"),
             pd.Timestamp("2024-02-20T18:01:02+00:00"),
@@ -1575,6 +1571,14 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
             pd.Timestamp("2024-02-20T18:02:00.200+00:00"),
             # Log message
             pd.Timestamp("2024-02-20T18:02:00.200+00:00"),
+        ]
+        mock_get_current_time.side_effect = [
+            # First iteration.
+            # Set `end_download_timestamp`.
+            pd.Timestamp("2024-02-20T18:00:01+00:00"),
+            # Second iteration.
+            # Set `end_download_timestamp`.
+            pd.Timestamp("2024-02-20T18:01:01+00:00"),
         ]
         # Mock data that would otherwise be fetched from the DB.
         mock_fetch_data.side_effect = [
@@ -1729,7 +1733,7 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
                     ),
                     (
                         47007459918,
-                        1709281403886,
+                        1709148545396,
                         1.617,
                         3384.71,
                         109.136,
@@ -1742,7 +1746,7 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
                     ),
                     (
                         47007460168,
-                        1709281404500,
+                        1709148545699,
                         0.61,
                         3384.7,
                         129.577,
@@ -1755,7 +1759,7 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
                     ),
                     (
                         47007460418,
-                        1709281404907,
+                        1709148546699,
                         0.629,
                         3384.63,
                         79.098,
@@ -1768,7 +1772,7 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
                     ),
                     (
                         47007460668,
-                        1709281405312,
+                        1709148548699,
                         34.431,
                         3384.4,
                         48.92,
@@ -1794,6 +1798,7 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
                 "mock_table",
                 "mock_table",
                 "mock_exchange",
+                "1T",
                 start_ts,
                 end_ts,
             )
@@ -1824,7 +1829,7 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
             shape=(2, 44)
             timestamp bid_price_open bid_size_open ask_price_open ask_size_open bid_ask_midpoint_open half_spread_open log_size_imbalance_open bid_price_close bid_size_close ask_price_close ask_size_close bid_ask_midpoint_close half_spread_close log_size_imbalance_close bid_price_high bid_size_max ask_price_high ask_size_max bid_ask_midpoint_max half_spread_max log_size_imbalance_max bid_price_low bid_size_min ask_price_low ask_size_min bid_ask_midpoint_min half_spread_min log_size_imbalance_min bid_price_mean bid_size_mean ask_price_mean ask_size_mean bid_ask_midpoint_mean half_spread_mean log_size_imbalance_mean bid_ask_midpoint_var_100ms bid_ask_midpoint_autocovar_100ms log_size_imbalance_var_100ms log_size_imbalance_autocovar_100ms exchange_id currency_pair level end_download_timestamp
             0 1709148600000 61506.70 2.094 61506.80 4.633 61506.750 0.050 -0.794128 61509.3 2.315 61509.40 0.918 61509.350 0.050 0.924968 61515.20 2.831 61515.30 4.633 61515.250 0.050 0.924968 61506.7 0.707 61506.80 0.918 61506.750 0.050 -1.641178 61512.507692 1.967692 61512.607692 3.276385 61512.557692 0.050 -0.589638 93.3800 0.0 13.546810 10.614239 binance BTC_USDT 1 2024-02-20 18:01:01+00:00
-            1 1709281440000 3384.71 1.617 3384.72 109.136 3384.715 0.005 -4.212022 3384.4 34.431 3384.41 48.920 3384.405 0.005 -0.351229 3384.71 34.431 3384.72 129.577 3384.715 0.005 -0.351229 3384.4 0.610 3384.41 48.920 3384.405 0.005 -5.358572 3384.667500 3.106187 3384.677500 104.250812 3384.672500 0.005 -4.484592 0.0579 0.0 343.623874 323.847900 binance ETH_USDT 1 2024-02-20 18:01:01+00:00
+            1 1709148600000 3384.71 1.617 3384.72 109.136 3384.715 0.005 -4.212022 3384.4 34.431 3384.41 48.920 3384.405 0.005 -0.351229 3384.71 34.431 3384.72 129.577 3384.715 0.005 -0.351229 3384.4 0.610 3384.41 48.920 3384.405 0.005 -5.358572 3384.650882 1.704765 3384.660882 95.707588 3384.655882 0.005 -4.801742 0.0579 0.0 807.901029 788.125056 binance ETH_USDT 1 2024-02-20 18:01:01+00:00
             """
             self.check_df_output(resampled_df2, None, None, None, exp_df2)
 
@@ -1846,10 +1851,9 @@ class TestDownloadRealtimeForOneExchangePeriodically1(
         self,
     ) -> None:
         """
-        Test the correct download of OHLCV data with consideration for
-        incomplete bars.
+        Invariant #1: test the correct download of OHLCV data with
+        consideration for incomplete bars.
 
-        Invariant #1.
         """
         # Data received from exchange in second iteration.
         next_data = {}
@@ -1897,9 +1901,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(
         self,
     ) -> None:
         """
-        Test the correct download of OHLCV data with backfilling.
-
-        Invariant #2.
+        Invariant #2: test the correct download of OHLCV data with backfilling.
         """
         # Data received from exchange in second iteration.
         next_data = {}

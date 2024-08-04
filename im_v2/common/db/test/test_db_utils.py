@@ -65,6 +65,7 @@ class TestLoadDBData(hunitest.TestCase):
             bid_ask_levels=bid_ask_levels,
             exchange_id=exchange_id,
             time_interval_closed=time_interval_closed,
+            order_by_col="timestamp",
         )
         # Check results.
         expected_query = (
@@ -176,6 +177,73 @@ class TestLoadDBData(hunitest.TestCase):
         actual = str(e.exception)
         expected = "invalid_datetime_format"
         self.assert_equal(actual, expected)
+
+    def test7(self) -> None:
+        """
+        Test if the query construction is done correctly.
+        """
+        # Prepare mock data.
+        currency_pairs = ["BTC_USDT"]
+        limit = 100
+        bid_ask_levels = [1, 2]
+        exchange_id = "Exchange1"
+        time_interval_closed = True
+        # Run test.
+        result = imvcddbut.load_db_data(
+            self.db_connection,
+            self.src_table,
+            self.start_timestamp,
+            self.end_timestamp,
+            currency_pairs=currency_pairs,
+            limit=limit,
+            bid_ask_levels=bid_ask_levels,
+            exchange_id=exchange_id,
+            time_interval_closed=time_interval_closed,
+            order_by_col=None,
+        )
+        # Check results.
+        expected_query = (
+            f"SELECT * FROM {self.src_table} WHERE timestamp >= {self.start_ts} AND timestamp <= {self.end_ts} "
+            f"AND currency_pair IN ('BTC_USDT') AND level IN (1, 2) AND exchange_id = 'Exchange1' "
+            "LIMIT 100"
+        )
+        self.query_mock.assert_called_once_with(
+            self.db_connection, expected_query
+        )
+
+    def test8(self) -> None:
+        """
+        Test if the query construction is done correctly.
+        """
+        # Prepare mock data.
+        currency_pairs = ["BTC_USDT"]
+        limit = 100
+        bid_ask_levels = [1, 2]
+        exchange_id = "Exchange1"
+        time_interval_closed = True
+        # Run test.
+        result = imvcddbut.load_db_data(
+            self.db_connection,
+            self.src_table,
+            self.start_timestamp,
+            self.end_timestamp,
+            currency_pairs=currency_pairs,
+            limit=limit,
+            bid_ask_levels=bid_ask_levels,
+            exchange_id=exchange_id,
+            time_interval_closed=time_interval_closed,
+            order_by_col="timestamp",
+            order_by_method="ASC",
+        )
+        # Check results.
+        expected_query = (
+            f"SELECT * FROM {self.src_table} WHERE timestamp >= {self.start_ts} AND timestamp <= {self.end_ts} "
+            f"AND currency_pair IN ('BTC_USDT') AND level IN (1, 2) AND exchange_id = 'Exchange1' "
+            f"ORDER BY timestamp ASC LIMIT 100"
+        )
+        self.query_mock.assert_called_once_with(
+            self.db_connection, expected_query
+        )
 
 
 class TestDbConnectionManager(hunitest.TestCase):

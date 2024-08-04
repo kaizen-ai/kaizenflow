@@ -18,9 +18,11 @@ import asyncio
 import copy
 import enum
 import glob
+import io
 import json
 import logging
 import os
+import tarfile
 import time
 import urllib.request as urlreq
 import uuid
@@ -28,12 +30,15 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 import aiohttp
 import pandas as pd
+import requests
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hio as hio
+import helpers.hpandas as hpandas
+import im_v2.binance.data.extract.api_client as imvbdeapcl
 import im_v2.binance.websocket.websocket_client as imvbwwecl
-import im_v2.common.data.extract.extractor as ivcdexex
+import im_v2.common.data.extract.extractor as imvcdexex
 
 _LOG = logging.getLogger(__name__)
 BASE_URL = "https://data.binance.vision/"
@@ -62,10 +67,12 @@ class BinanceNativeTimePeriod(enum.Enum):
     YEARLY = "yearly"
 
 
-class BinanceExtractor(ivcdexex.Extractor):
+class BinanceExtractor(imvcdexex.Extractor):
     """
     Extracts data from the Binance native data API.
     """
+
+    S_URL_V1 = "https://api.binance.com/sapi/v1/futures"
 
     def __init__(
         self,
@@ -75,6 +82,7 @@ class BinanceExtractor(ivcdexex.Extractor):
         *,
         allow_data_gaps: Optional[bool] = False,
         max_attempts: int = 0,
+        secret_name: str = None,
     ) -> None:
         """
         Construct Binance native data extractor.
@@ -129,6 +137,7 @@ class BinanceExtractor(ivcdexex.Extractor):
             # max attempts for retry on failed subscription
             max_attempts=max_attempts,
         )
+        self.APIClient = imvbdeapcl.BinanceAPIClient(secret_name)
         super().__init__()
 
     def __del__(self) -> None:
@@ -138,6 +147,44 @@ class BinanceExtractor(ivcdexex.Extractor):
         # Remove the temporary directory.
         if hasattr(self, "tmp_dir_path") and os.path.exists(self.tmp_dir_path):
             hio.delete_dir(self.tmp_dir_path)
+
+    @staticmethod
+    def extract_all_files_from_tar_to_dataframe(url):
+        """
+        Extract all files from a tar archive at a given URL and read them into
+        pandas DataFrames.
+
+        :param url: The URL of the tar file.
+        :return: list of dataframes, extracted from url
+        """
+        # Download the tar file and stream it
+        response = requests.get(url, stream=True)
+        if response.status_code == 200:
+            file_like_object = io.BytesIO(response.raw.read())
+            # Open the tar file
+            with tarfile.open(fileobj=file_like_object) as tar:
+                dataframes = []
+                for member in tar.getmembers():
+                    # Extract the file into memory
+                    file = tar.extractfile(member)
+                    if file is not None:
+                        # Read the file into a pandas DataFrame
+                        try:
+                            df = pd.read_csv(file)
+                            dataframes.append(df)
+                        except pd.errors.EmptyDataError:
+                            _LOG.warning(
+                                f"File {member.name} is empty and will be skipped."
+                            )
+                        except pd.errors.ParserError:
+                            _LOG.warning(
+                                f"File {member.name} is not a CSV and will be skipped."
+                            )
+                return dataframes
+        else:
+            raise Exception(
+                f"Failed to download file. HTTP Status Code: {response.status_code}. Response content: {response.content}"
+            )
 
     def convert_currency_pair(self, currency_pair: str) -> str:
         """
@@ -159,6 +206,39 @@ class BinanceExtractor(ivcdexex.Extractor):
         Close the connection of exchange.
         """
         self._client.stop()
+
+    @staticmethod
+    def _validate_date_range(
+        start_timestamp: pd.Timestamp, end_timestamp: pd.Timestamp
+    ) -> None:
+        """
+        Validate date values.
+        """
+        # Check for none values.
+        hdbg.dassert_ne(start_timestamp, None, "Start/End time cannot be none.")
+        hdbg.dassert_ne(end_timestamp, None, "Start/End time cannot be none.")
+        # Check for difference in days.
+        days_difference = (end_timestamp - start_timestamp).days
+        hdbg.dassert_lt(
+            days_difference,
+            7,
+            "Invalid date range. Difference should not be more than 7 days.",
+        )
+
+    @staticmethod
+    def _check_download_response_for_error(response: requests.Response) -> Any:
+        """
+        Check status of response and handle errors.
+        """
+        if response.status_code != 200:
+            try:
+                # Try to parse result_to_be_downloaded JSON if available.
+                error_message = response.json()
+            except Exception:
+                # If result_to_be_downloaded is not JSON, use result_to_be_downloaded text.
+                error_message = response.text
+            _LOG.error("%s", error_message)
+            hdbg.dfatal(error_message)
 
     def _handle_disconnect(self, _) -> None:
         _LOG.warning("Websocket connection closed, subscribing again.")
@@ -588,7 +668,7 @@ class BinanceExtractor(ivcdexex.Extractor):
         end_timestamp = hdateti.convert_timestamp_to_unix_epoch(
             end_timestamp, unit="ms"
         )
-        data["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+        data = hpandas.add_end_download_timestamp(data)
         data.rename(columns={"time": "timestamp", "qty": "amount"}, inplace=True)
         data = data[
             [
@@ -700,7 +780,7 @@ class BinanceExtractor(ivcdexex.Extractor):
             trades_df.time.between(start_timestamp_epoch, end_timestamp_epoch)
         ]
         # Convert data.
-        trades_df["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+        trades_df = hpandas.add_end_download_timestamp(trades_df)
         trades_df.rename(
             columns={"time": "timestamp", "qty": "amount"}, inplace=True
         )
@@ -806,7 +886,59 @@ class BinanceExtractor(ivcdexex.Extractor):
         :param end_timestamp: end timestamp
         :return: exchange data
         """
-        raise NotImplementedError("This method is not implemented yet.")
+        _LOG.info(
+            "Starting download for %s from %s - %s",
+            currency_pair,
+            start_timestamp,
+            end_timestamp,
+        )
+        # current timestamp which serves as an input for the params variable
+        timestamp = hdateti.convert_timestamp_to_unix_epoch(
+            hdateti.get_current_time("UTC")
+        )
+        BinanceExtractor._validate_date_range(start_timestamp, end_timestamp)
+        start_time = hdateti.convert_timestamp_to_unix_epoch(start_timestamp)
+        end_time = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
+        # Calls the "get" function to obtain the download link for the specified
+        # symbol, dataType and time range combination
+        paramsToObtainDownloadLink = {
+            "symbol": currency_pair.replace("_", ""),
+            "dataType": "T_DEPTH",
+            "startTime": start_time,
+            "endTime": end_time,
+            "timestamp": timestamp,
+        }
+        pathToObtainDownloadLink = "%s/histDataLink" % self.S_URL_V1
+        result_to_be_downloaded = self.APIClient._get(
+            pathToObtainDownloadLink, paramsToObtainDownloadLink
+        )
+        _LOG.debug("Response %s", result_to_be_downloaded)
+        # Check the response status and continue if 200.
+        BinanceExtractor._check_download_response_for_error(
+            result_to_be_downloaded
+        )
+        urls = result_to_be_downloaded.json()["data"]
+        _LOG.debug("Urls to download %s", urls)
+        data_iterator = []
+        for url in urls:
+            try:
+                (
+                    snap_df,
+                    update_df,
+                ) = BinanceExtractor.extract_all_files_from_tar_to_dataframe(
+                    url["url"]
+                )
+            except Exception:
+                _LOG.warn(
+                    "Data doesn't exist for %s for %s", currency_pair, url["day"]
+                )
+                snap_df = pd.DataFrame()
+                update_df = pd.DataFrame()
+            snap_df.rename(columns={"symbol": "currency_pair"}, inplace=True)
+            update_df.rename(columns={"symbol": "currency_pair"}, inplace=True)
+            combined = pd.concat([snap_df, update_df], ignore_index=True)
+            data_iterator.append(combined)
+        return iter(data_iterator)
 
     def _download_ohlcv(
         self,
@@ -857,7 +989,7 @@ class BinanceExtractor(ivcdexex.Extractor):
             data["bids"] = []
             data["asks"] = []
         self._websocket_data_buffer[symbol] = []
-        data["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+        data = hpandas.add_end_download_timestamp(data)
         data["symbol"] = currency_pair
         if data.get("bids") != None and data.get("asks") != None:
             (
@@ -889,7 +1021,7 @@ class BinanceExtractor(ivcdexex.Extractor):
         data["currency_pair"] = currency_pair
         currency_pair = self.convert_currency_pair(currency_pair)
         data["ohlcv"] = list(self._ohlcv[currency_pair].values())
-        data["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+        data = hpandas.add_end_download_timestamp(data)
         if len(data["ohlcv"]) == 0:
             return None
         return data
@@ -918,7 +1050,7 @@ class BinanceExtractor(ivcdexex.Extractor):
         currency_pair = self.convert_currency_pair(currency_pair)
         data["data"] = copy.deepcopy(list(self._trades[currency_pair]))
         self._trades[currency_pair] = []
-        data["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+        data = hpandas.add_end_download_timestamp(data)
         data["exchange_id"] = "binance"
         if len(data["data"]) == 0:
             return None
