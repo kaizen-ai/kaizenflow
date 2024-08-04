@@ -3,7 +3,7 @@ import asyncio
 import os
 import unittest.mock as umock
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import pytest
