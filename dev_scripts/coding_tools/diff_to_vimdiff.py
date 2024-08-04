@@ -30,7 +30,7 @@ Diff content of two directories using vimdiff, by transform the output of `diff 
 
 Import as:
 
-import dev_scripts.diff_to_vimdiff as dsditovi
+import dev_scripts.coding_tools.diff_to_vimdiff as dsditovi
 """
 
 import argparse
