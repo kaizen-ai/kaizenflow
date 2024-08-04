@@ -16,6 +16,8 @@ import helpers.hpandas as hpandas
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(Grisha): add a flag for benchmark price. Currently the function is overfit
+# to benchmark “arrival price”.
 def compute_share_prices_and_slippage(
     portfolio_df: pd.DataFrame,
     join_output_with_input: bool = False,
@@ -59,6 +61,11 @@ def compute_share_prices_and_slippage(
     else:
         # TODO(Paul): Perform checks on indices.
         holdings_price_per_share = price_df
+    # Shift is needed for “arrival price” benchmark but not for TWAP/VWAP benchmarks.
+    # We label trades executed between T and T+1 as T+1. In this case "arrival price"
+    # is price at T (shift by 1 lag) and TWAP/VWAP price between T and T+1 is available
+    # only at T+1 (no shift needed).
+    holdings_price_per_share = holdings_price_per_share.shift(1)
     # We do not expect negative prices.
     hdbg.dassert_lte(0, holdings_price_per_share.min().min())
     # Compute price per share of trades (using execution reference prices).

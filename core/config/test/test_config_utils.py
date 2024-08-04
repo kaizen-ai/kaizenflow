@@ -1,11 +1,13 @@
 import argparse
 import collections
+import os
 import unittest.mock as umock
 from typing import Any
 
 import pandas as pd
 
 import core.config as cconfig
+import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
@@ -564,8 +566,9 @@ class Test_replace_shared_root_path(hunitest.TestCase):
         """
         # Mock `henv.execute_repo_config_code()` to return a dummy mapping.
         mock_mapping = {
-            "/shared_folder1": "/data/shared1",
-            "/shared_folder2": "/data/shared2",
+            "/ecs_tokyo": "/ecs",
+            "/data/shared1": "/shared_folder1",
+            "/data/shared2": "/shared_folder2",
         }
         with umock.patch.object(
             cconfig.hdocker.henv,
@@ -575,26 +578,91 @@ class Test_replace_shared_root_path(hunitest.TestCase):
             # Initial Config.
             initial_config = cconfig.Config.from_dict(
                 {
-                    "key1": "/shared_folder1/asset1",
-                    "key2": "/shared_folder2/asset1/item",
+                    "key1": "/data/shared1/asset1",
+                    "key2": "/data/shared2/asset1/item",
                     "key3": 1,
-                    "key4": 'object("/shared_folder2/asset1/item")',
+                    "key4": 'object("/data/shared2/asset1/item")',
                     "key5": {
-                        "key5.1": "/shared_folder1/asset1",
-                        "key5.2": "/shared_folder2/asset2",
+                        "key5.1": "/data/shared1/asset1",
+                        "key5.2": "/data/shared2/asset2",
                     },
+                    "key6": "/data/shared1/ecs_tokyo/some_path",
                 }
             )
             actual_config = cconfig.replace_shared_dir_paths(initial_config)
             # Check that shared root paths have been replaced.
             act = str(actual_config)
             exp = """
-                key1: /data/shared1/asset1
-                key2: /data/shared2/asset1/item
+                key1: /shared_folder1/asset1
+                key2: /shared_folder2/asset1/item
                 key3: 1
-                key4: object("/data/shared2/asset1/item")
+                key4: object("/shared_folder2/asset1/item")
                 key5:
-                key5.1: /data/shared1/asset1
-                key5.2: /data/shared2/asset2
+                key5.1: /shared_folder1/asset1
+                key5.2: /shared_folder2/asset2
+                key6: /shared_folder1/ecs/some_path
             """
             self.assert_equal(act, exp, fuzzy_match=True)
+
+
+# #############################################################################
+# Test_load_config_from_pickle1
+# #############################################################################
+
+
+class Test_load_config_from_pickle1(hunitest.TestCase):
+    def helper(
+        self, expected_config_version: str, expected_signature: str
+    ) -> None:
+        # Set config.
+        log_dir = self.get_scratch_space()
+        tag = "system_config.output"
+        nested: Dict[str, Any] = {
+            "key1": "val",
+            "key2": {"key3": {"key4": [1, 2, 3]}},
+        }
+        config = cconfig.Config.from_dict(nested)
+        # Save config and related files.
+        config.save_to_file(log_dir, tag)
+        # Check config version file for different config versions.
+        config_version_path = os.path.join(log_dir, "config_version.txt")
+        if expected_config_version == "v2":
+            # v2 config version has no file with info about it.
+            hio.delete_file(config_version_path)
+        else:
+            # Check config version.
+            actual_config_version = hio.from_file(config_version_path)
+            self.assert_equal(actual_config_version, expected_config_version)
+        # Load config from the file.
+        actual = cconfig.load_config_from_pickle1(log_dir, tag)
+        # Check signature.
+        actual_signature = str(actual)
+        self.assert_equal(actual_signature, expected_signature, fuzzy_match=True)
+
+    def test_v2_config1(self) -> None:
+        """
+        Check that v2 config is extracted correctly.
+        """
+        expected_config_version = "v2"
+        # Integer values are extracted as strings as expected for v2.
+        expected_signature = r"""
+        key1: val
+        key2:
+            key3:
+                key4: ['1', '2', '3']
+        """
+        self.helper(expected_config_version, expected_signature)
+
+    def test_v3_config1(self) -> None:
+        """
+        Check that v3 config is extracted correctly.
+        """
+        expected_config_version = "v3"
+        # Integer values are extracted in original format as expected for v3.
+        expected_signature = r"""
+        key1: val
+        key2:
+            key3:
+                key4: [1, 2, 3]
+        """
+        self.helper(expected_config_version, expected_signature)

@@ -407,7 +407,8 @@ def run_notebooks(
         hdbg.dassert_eq(run_mode, "all_notebooks")
     # For broker only runs we are guaranteed to capture all bid/ask data
     # during experiment itself.
-    bid_ask_data_source = "logged_during_experiment"
+    # TODO(Sameep): Uncomment when CmTask8123 is resolved.
+    # bid_ask_data_source = "logged_during_experiment"
     if is_full_system_run:
         # Load pickled SystemConfig.
         system_config = cconfig.load_config_from_pickle(config_path)
@@ -448,7 +449,8 @@ def run_notebooks(
         )
         # For full system runs, the default method is to use bid/ask data
         # Logged after the experiment to avoid potential gaps.
-        bid_ask_data_source = "logged_after_experiment"
+        # TODO(Sameep): Uncomment when CmTask8123 is resolved.
+        # bid_ask_data_source = "logged_after_experiment"
     else:
         # Setting default values for `table_name` and `price_col`.
         # These initializations are essential for the execution analysis notebook to run smoothly.
@@ -478,11 +480,12 @@ def run_notebooks(
         ivcu.get_vendor_universe_as_asset_ids(universe_version, vendor, mode)
     )
     test_asset_id = asset_ids[0]
-    bid_ask = (
-        "amp/oms/notebooks/Master_bid_ask_execution_analysis.ipynb",
-        "amp.oms.execution_analysis_configs."
-        + f'get_bid_ask_execution_analysis_configs("{system_log_dir}", "{bar_duration}", "{bid_ask_data_source}", test_asset_id={test_asset_id})',
-    )
+    # TODO(Sameep): Uncomment when CmTask8123 is resolved.
+    # bid_ask = (
+    #     "amp/oms/notebooks/Master_bid_ask_execution_analysis.ipynb",
+    #     "amp.oms.execution_analysis_configs."
+    #     + f'get_bid_ask_execution_analysis_configs("{system_log_dir}", "{bar_duration}", "{bid_ask_data_source}", test_asset_id={test_asset_id})',
+    # )
     master_exec = (
         "amp/oms/notebooks/Master_execution_analysis.ipynb",
         "amp.oms.execution_analysis_configs."
@@ -511,7 +514,8 @@ def run_notebooks(
             notebooks.append(portfolio_recon)
         # Sometimes the bid/ask notebook fails for long runs. It's the last one
         # so that we run the rest before failing on the bid/ask notebook.
-        notebooks.extend([broker_debug, master_exec, bid_ask])
+        # TODO(Sameep): Add `bid_ask` to the list when CmTask8123 is resolved.
+        notebooks.extend([broker_debug, master_exec])
     if is_full_system_run and run_mode in [
         "all_notebooks",
         "reconciliation_only",
