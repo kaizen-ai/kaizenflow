@@ -67,7 +67,7 @@ class TestGetOptDockerUpDownCmd(_OptLibTasksTestCase):
         )
         expected = r"""
         IMAGE=$CK_ECR_BASE_PATH/opt_test:dev-1.0.0 \
-            docker-compose \
+            docker compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml \
             --env-file devops/env/default.env \
             up \
@@ -89,7 +89,7 @@ class TestGetOptDockerUpDownCmd(_OptLibTasksTestCase):
         )
         expected = r"""
         IMAGE=$CK_ECR_BASE_PATH/opt_test:dev-1.0.0 \
-            docker-compose \
+            docker compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml \
             --env-file devops/env/default.env \
             up \
@@ -107,7 +107,7 @@ class TestGetOptDockerUpDownCmd(_OptLibTasksTestCase):
         actual = ooplitas._get_opt_docker_down_cmd(base_image, stage, version)
         expected = r"""
         IMAGE=$CK_ECR_BASE_PATH/opt_test:dev-1.0.0 \
-            docker-compose \
+            docker compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml \
             --env-file devops/env/default.env \
             down

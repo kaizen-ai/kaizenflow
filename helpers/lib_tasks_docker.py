@@ -1104,11 +1104,10 @@ def _get_docker_base_cmd(
         for env_var in extra_env_vars:
             docker_cmd_.append(f"{env_var}")
     #
-    if hserver.is_inside_ci():
-        compose_str = r"""docker compose"""
-    else:
-        compose_str = r"""docker-compose"""
-    docker_cmd_.append(compose_str)
+    docker_cmd_.append(
+        r"""
+        docker compose"""
+    )
     docker_compose_files = _get_docker_compose_files(
         stage,
         generate_docker_compose_file,
