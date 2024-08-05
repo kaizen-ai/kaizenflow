@@ -889,13 +889,16 @@ def timestamp_to_str(
 
     :param timestamp: timestamp to convert
     :param include_msec: whether to include milliseconds e.g.
-        `20230727-11105712`
-    :return: timestamp in string format e.g. `20230727-111057`.
+        `20230727_111057_123`
+    :return: timestamp in string format e.g. `20230727_111057`.
     """
     hdbg.dassert_isinstance(timestamp, pd.Timestamp)
     # Convert timestamp to string.
     if include_msec:
-        timestamp_str = timestamp.strftime("%Y%m%d_%H%M%S%f")[:-4]
+        # %f is the format code for microseconds. We truncate the last 3 digits
+        # to get milliseconds.
+        # This results in a string like "20230426_153042_123".
+        timestamp_str = timestamp.strftime("%Y%m%d_%H%M%S_%f")[:-3]
     else:
         timestamp_str = timestamp.strftime("%Y%m%d_%H%M%S")
     return timestamp_str
