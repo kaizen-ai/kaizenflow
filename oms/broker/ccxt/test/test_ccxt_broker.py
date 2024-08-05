@@ -2419,7 +2419,7 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
             }
         ]
         curr_num_shares = [40, 20]
-        shares = [39.375, 19.6875]
+        shares = [38.75, 18.788999999999998]
         with hasynci.solipsism_context() as event_loop:
             broker = self.get_test_broker(
                 initial_timestamps[0][0],
@@ -2463,7 +2463,7 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
                     fuzzy_match=True,
                 )
                 exp = f"""
-                [Fill: asset_id=1464553467 fill_id={i} timestamp={creation_timestamp + pd.Timedelta(seconds=52)} num_shares={shares[i-1]} price=10.0]
+                [Fill: asset_id=1464553467 fill_id={i} timestamp={creation_timestamp + pd.Timedelta(seconds=42)} num_shares={shares[i-1]} price=10.0]
                 """
                 # Check get_fills for all indices
                 self._test_get_fills(broker, exp)
