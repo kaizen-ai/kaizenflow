@@ -88,8 +88,15 @@
     + [`ReplayedFillsDataFrameBroker`](#replayedfillsdataframebroker)
 - [oms/broker/ccxt](#omsbrokerccxt)
     + [`AbstractCcxtBroker`](#abstractccxtbroker)
+    + [`CcxtBroker`](#ccxtbroker)
 - [oms/limit_computer](#omslimit_computer)
+    + [`AbstractLimitPriceComputer`](#abstractlimitpricecomputer)
+    + [`LimitPriceComputerUsingSpread`](#limitpricecomputerusingspread)
+    + [`LimitPriceComputerUsingVolatility`](#limitpricecomputerusingvolatility)
 - [oms/child_order_quantity_computer](#omschild_order_quantity_computer)
+    + [`AbstractChildOrderQuantityComputer`](#abstractchildorderquantitycomputer)
+    + [`DynamicSchedulingChildOrderQuantityComputer`](#dynamicschedulingchildorderquantitycomputer)
+    + [`StaticSchedulingChildOrderQuantityComputer`](#staticschedulingchildorderquantitycomputer)
 - [oms/portfolio](#omsportfolio)
     + [`Portfolio`](#portfolio)
     + [`DataFramePortfolio`](#dataframeportfolio)
@@ -552,6 +559,7 @@ DataFrameBroker <|-- ReplayedFillsDataFrameBroker : Inheritance
 FakeFillsBroker <|-- DatabaseBroker : Inheritance
 
 Broker <|-- AbstractCcxtBroker : Inheritance
+AbstractCcxtBroker <|-- CcxtBroker : Inheritance
 ```
 
 ### `Broker`
@@ -604,6 +612,7 @@ Broker <|-- AbstractCcxtBroker : Inheritance
 - Responsibilities:
   - Replay data from an actual `RawDataReader`
 - Interactions:
+  - Derived from `DataFrameBroker`
 - Main methods:
 
 ### `ReplayedFillsDataFrameBroker`
@@ -616,11 +625,167 @@ Broker <|-- AbstractCcxtBroker : Inheritance
 
 # oms/broker/ccxt
 
+```mermaid
+classDiagram
+    Broker <|-- AbstractCcxtBroker : Inheritance
+    AbstractCcxtBroker <|-- CcxtBroker : Inheritance
+```
+
 ### `AbstractCcxtBroker`
+
+- Responsibilities:
+  - Retrieve broker configuration, market data (including CCXT), open positions,
+    fills, and trades
+  - Update order statistics, validate child orders, handle exceptions, and
+    calculate TWAP waves.
+
+- Interactions:
+  - Derived from `Broker`
+
+- Main methods:
+  - `get_broker_config()`: Retrieve broker configuration.
+  - `get_bid_ask_data_for_last_period()`: Obtain bid-ask data for the given last
+    period.
+  - `get_market_info()`: Load market information from the given exchange and map
+    to asset ids.
+  - `get_fills()`: Retrieves a list of completed trades (fills) from the
+    previous order execution, to allow the Portfolio component to update its
+    state accurately.
+  - `get_ccxt_trades()`: Retrieves CCXT trades (completed orders/fills)
+    corresponding to a list of provided CCXT orders, grouped by trading symbol.
+  - `get_open_positions()`: Retrieves and caches the open positions from the
+    exchange, with an optional sanity check against live data, to efficiently
+    provide the current open positions for the trading account.
+  - `cancel_open_orders_for_symbols()`: Cancels all open orders for a given list
+    of trading pairs.
+  - `get_total_balance()`: Retrieves, validates, and logs the total available
+    balance from an exchange.
+
+### `CcxtBroker`
+
+- Responsibilities:
+  - Manage CCXT interactions, submit orders, handle cancellations, and sync with
+    wave start times; log results, obtain fills and trades, manage TWAP child
+    orders, and get CCXT order structures.
+
+- Interactions:
+  - Derived from `AbstractCcxtBroker`
+
+- Main methods:
+  - `get_ccxt_fills()`: Get fills from submitted orders in OMS and CCXT formats.
+  - `_submit_twap_orders()`: Execute orders using the TWAP strategy.
+  - `_get_ccxt_order_structure()`: Get the CCXT order structure corresponding to
+    the submitted order.
 
 # oms/limit_computer
 
+```mermaid
+classDiagram
+    AbstractLimitPriceComputer <|-- LimitPriceComputerUsingSpread : Inheritance
+    AbstractLimitPriceComputer <|-- LimitPriceComputerUsingVolatility : Inheritance
+```
+
+### `AbstractLimitPriceComputer`
+
+- Responsibilities:
+  - Provide methods to retrieve timestamp data, extract latest bid/ask sizes,
+    and validate/normalize bid/ask data.
+
+- Interactions:
+
+- Main methods:
+  - `get_latest_timestamps_from_bid_ask_data()`: Get timestamp data related to
+    the bid/ask price.
+  - `get_latest_size_from_bid_ask_data()`: Extract latest bid/ask size data and
+    returns the size data dictionary.
+  - `calculate_limit_price()`: Return limit price and price data such as
+    latest/mean bid/ask price.
+  - `normalize_bid_ask_data()`: Validate and normalize the bid ask data.
+
+### `LimitPriceComputerUsingSpread`
+
+- Responsibilities:
+  - Retrieve, compare latest and average bid/ask prices.
+
+- Interactions:
+  - Derived from `AbstractLimitPriceComputer`
+
+- Main methods:
+  - `compare_latest_and_average_price()` : Retrieve and compare latest and
+    average bid/ask prices.
+  - `calculate_limit_price()`:Calculate limit price based on recent bid / ask
+    data and uses a `passivity_factor` to adjust the limit price between the bid
+    and ask prices.
+
+### `LimitPriceComputerUsingVolatility`
+
+- Responsibilities:
+  - Compute limit price based on volatility multiple
+
+- Interactions:
+  - Derived from `AbstractLimitPriceComputer`
+
+- Main methods:
+  - `compute_metrics_from_price_data()`: Analyze bid-ask price data to compute
+    volume, sum of squares of difference, last price, and count.
+  - `calculate_limit_price()`:Calculate limit price based on recent bid / ask
+    data and uses a `volatility_multiple` to adjust the limit price based on the
+    volatility of the bid and ask prices.
+
 # oms/child_order_quantity_computer
+
+```mermaid
+classDiagram
+    AbstractChildOrderQuantityComputer <|-- DynamicSchedulingChildOrderQuantityComputer : Inheritance
+    AbstractChildOrderQuantityComputer <|-- StaticSchedulingChildOrderQuantityComputer : Inheritance
+```
+
+### `AbstractChildOrderQuantityComputer`
+
+- Responsibilities:
+  - Represent strategy to decide child order quantities within a parent order
+
+- Interactions:
+
+- Main methods:
+  - `set_instance_params()`: Initialize instance parameters with parent order
+    size, market data, and execution goals.
+  - `get_wave_quantities()`: Return the quantity for the specified wave ID from
+    the wave quantities.
+  - `update_current_positions()`: Update the current positions using data from
+    the Broker.
+
+### `DynamicSchedulingChildOrderQuantityComputer`
+
+- Responsibilities:
+  - Place each child order wave with the remaining amount to fill.
+  - Determine the child order quantity to be placed during each wave.
+
+- Interactions:
+  - Derived from `AbstractChildOrderQuantityComputer`
+
+- Main methods:
+  - `get_wave_quantities()`: calculates the target positions for parent orders
+    and get the first child order quantity as equal to the parent order quantity
+    for the first wave and for following waves, the child order quantities are
+    computed as
+    ```
+    target_position - open_position
+    ```
+
+### `StaticSchedulingChildOrderQuantityComputer`
+
+- Responsibilities:
+  - Generate a TWAP-like schedule for placing child orders.
+  - Calculate child order quantities for each provided parent order.
+
+- Interactions:
+  - Derived from `AbstractChildOrderQuantityComputer`
+
+- Main methods:
+  - `calculate_static_child_order_quantities()`: Calculate child order
+    quantities for each provided parent order. The quantity is static, so it is
+    calculated only once.
 
 # oms/portfolio
 
