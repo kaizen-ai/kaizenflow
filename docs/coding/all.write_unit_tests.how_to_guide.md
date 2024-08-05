@@ -3,26 +3,32 @@
 <!-- toc -->
 
 - [Guidelines about writing unit tests](#guidelines-about-writing-unit-tests)
-    + [**What is a unit test?**](#what-is-a-unit-test)
-    + [**Why is unit testing important?**](#why-is-unit-testing-important)
+  * [What is a unit test?](#what-is-a-unit-test)
+  * [Why is unit testing important?](#why-is-unit-testing-important)
+  * [The Pragmatic Programming and unit testing](#the-pragmatic-programming-and-unit-testing)
   * [Unit testing tips](#unit-testing-tips)
-    + [Tip #1: Test one thing](#tip-%231-test-one-thing)
-    + [Tip #2: Keep tests self-contained](#tip-%232-keep-tests-self-contained)
-    + [Tip #3: Only specify data related to what is being tested](#tip-%233-only-specify-data-related-to-what-is-being-tested)
-    + [Tip #4: Test realistic corner cases](#tip-%234-test-realistic-corner-cases)
-    + [Tip #5: Test a typical scenario](#tip-%235-test-a-typical-scenario)
-    + [Tip #6: Test executable scripts end-to-end](#tip-%236-test-executable-scripts-end-to-end)
+    + [Test one thing](#test-one-thing)
+    + [Keep tests self-contained](#keep-tests-self-contained)
+    + [Only specify data related to what is being tested](#only-specify-data-related-to-what-is-being-tested)
+    + [Test realistic corner cases](#test-realistic-corner-cases)
+    + [Test a typical scenario](#test-a-typical-scenario)
+    + [Test executable scripts end-to-end](#test-executable-scripts-end-to-end)
   * [Conventions](#conventions)
     + [Naming and placement conventions](#naming-and-placement-conventions)
+    + [Keep testing code in sync with tested code](#keep-testing-code-in-sync-with-tested-code)
+    + [Test code is not second-class citizen](#test-code-is-not-second-class-citizen)
+    + [Testing code layout](#testing-code-layout)
     + [Our framework to test using input / output data](#our-framework-to-test-using-input--output-data)
-    + [Use text and not pickle files as input](#use-text-and-not-pickle-files-as-input)
+    + [Use text and not pickle files as input/outputs](#use-text-and-not-pickle-files-as-inputoutputs)
+    + [Small testing data is best](#small-testing-data-is-best)
     + [`check_string` vs `self.assertEqual`](#check_string-vs-selfassertequal)
-    + [Use `self.assert_equal`](#use-selfassert_equal)
+    + [Use `self.assert_equal()`](#use-selfassert_equal)
     + [How to split unit test code in files](#how-to-split-unit-test-code-in-files)
     + [Skeleton for unit test](#skeleton-for-unit-test)
     + [Hierarchical `TestCase` approach](#hierarchical-testcase-approach)
     + [Use the appropriate `self.assert*`](#use-the-appropriate-selfassert)
-    + [Do not use `hdbg.dassert`](#do-not-use-hdbgdassert)
+    + [Do not use `hdbg.dassert` in testing](#do-not-use-hdbgdassert-in-testing)
+    + [Always explain `self.assertRaises`](#always-explain-selfassertraises)
     + [Interesting testing functions](#interesting-testing-functions)
     + [Use set_up_test / tear_down_test](#use-set_up_test--tear_down_test)
       - [Nested set_up_test / tear_down_test](#nested-set_up_test--tear_down_test)
@@ -53,19 +59,30 @@
 
 # Guidelines about writing unit tests
 
-### **What is a unit test?**
+## What is a unit test?
 
-- A unit test is a small, self-contained test of a public function or public
-  method of a library
+- A unit test is a small, self-contained test of a (public) function or method
+  of a library
 - The test specifies the given inputs, any necessary state, and the expected
   output
 - Running the test ensures that the actual output agrees with the expected
   output
 
-### **Why is unit testing important?**
+## Why is unit testing important?
 
-- Unit testing is an integral part of Pragmatic programming approach
-- Some of the tips that relate to it are:
+- Good unit testing improves software quality by:
+  - Eliminating bugs (obvious)
+  - Clarifying code design and interfaces ("Design to Test")
+  - Making refactoring safer and easier ("Refactor Early, Refactor Often")
+  - Documenting expected behavior and usage
+
+## The Pragmatic Programming and unit testing
+
+- Unit testing is an integral part of
+  [The Pragmatic Programming](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/)
+  approach
+
+- Some of the tips that relate to unit testing are:
   - Design with Contracts
   - Refactor Early, Refactor Often
   - Test Your Software, or Your Users Will
@@ -85,19 +102,18 @@
 
 ## Unit testing tips
 
-### Tip #1: Test one thing
+### Test one thing
 
 - A good unit test tests only one thing
 - Testing one thing keeps the unit test simple, relatively easy to understand,
   and helps isolate the root cause when the test fails
-- How do we test more than one thing? By having more than one unit test!
+- How do you test more than one thing? By having more than one unit test!
 
-### Tip #2: Keep tests self-contained
+### Keep tests self-contained
 
 - A unit test should be independent of all other unit tests
 - Each test should be self-sufficient
-- Additionally, one should never assume that unit tests will be executed in a
-  particular order
+- One should never assume that unit tests will be executed in a particular order
 - A corollary of keeping tests self-contained is to keep all information needed
   to understand the test within the test itself
 - In other words, when possible, avoid calling helper functions to load data or
@@ -107,30 +123,33 @@
   - If multiple unit tests use or can use the same initialization data, do not
     hesitate repeating it in each test (or consider using parameterized testing)
 
-### Tip #3: Only specify data related to what is being tested
+### Only specify data related to what is being tested
 
 - If a function that is being tested supports optional arguments, but those
   optional arguments are not needed for a particular unit test, then do not
   specify them in the test
-- Specify the minimum of what is required to test what is being tested.
+- Specify the minimum of what is required to test what is being tested
+- E.g., if a function that is being tested supports optional arguments, but
+  those optional arguments are not needed for a particular unit test, then do
+  not specify them in the test
 
-### Tip #4: Test realistic corner cases
+### Test realistic corner cases
 
-- Can your function receive an empty list?
+- Can the function receive an empty list?
 - Can it return an empty Series?
 - What happens if it receives a numerical value outside of an expected range?
-- How should the function behave in those cases? Should it crash? Should it
-  return a reasonable default value?
+  - How should the function behave in those cases? Should it crash? Should it
+    return a reasonable default value?
 - Expect these questions to come up in practice and think through what the
   appropriate behavior should be. Then, test for it.
 
-### Tip #5: Test a typical scenario
+### Test a typical scenario
 
 - In ensuring that corner cases are covered, do not overlook testing basic
   functionality for typical cases
 - This is useful for verifying current behavior and to support refactoring.
 
-### Tip #6: Test executable scripts end-to-end
+### Test executable scripts end-to-end
 
 - In some cases, like scripts, it is easy to get lost chasing the coverage %
   - E.g., covering every line of the original, including the parser
@@ -140,19 +159,21 @@
   - So an end-to-end smoke test will also cover the parser
   - This saves a little time and reduces the bloat
 - If you need to test the functionality, consider factoring out as much code as
-  possible from `_main`
-  - A good practice is to have a `_run` function that does all the job and
-    `_main` only brings together the parser and the executable part
+  possible from `_main()`
+  - A good practice is to have a `_run()` function that does all the job and
+    `_main()` only brings together the parser and the executable part
 
 ## Conventions
 
 ### Naming and placement conventions
 
-- We follow the convention (that happen to be mostly the default to `pytest`):
-- A directory `test` that contains all the test code and artifacts
+- We follow conventions that happen to be mostly the default to `pytest`
+
+- A directory `test` contains all the test code and artifacts
   - The `test` directory contains all the `test_*.py` files and all inputs and
     outputs for the tests.
   - A unit test file should be close to the library / code it tests
+
 - The test class should make clear reference to the code that is tested
   - To test a class `FooBar`, the corresponding test class is named
     `TestFooBar`, i.e. we use the CamelCase for the test classes
@@ -165,44 +186,76 @@
     method is named `test__gozilla` (note the double underscore). This is needed
     to distinguish testing the public method `FooBar.gozilla()` from
     `FooBar._gozilla()`
+
 - Numbers can be used to differentiate between separate test cases clearly
   - A number can be added to the test class name, e.g., `TestFooBar1()`, if
     there are multiple test classes that are testing the code in different ways
     (e.g., with different set up and tear down actions)
   - We prefer to name classes `TestFooBar1` and methods `TestFooBar1.test1()`,
     even if there is a single class / method, to make it easier to add another
-    test class, without having to rename class and `check_string` files.
-  - We are OK with using suffixes like `01`, `02`, … , when we believe it's
+    test class, without having to rename class and `check_string` files
+  - We are OK with using suffixes like `01`, `02`, ... , when we believe it's
     important that methods are tested in a certain order (e.g., from the
     simplest to the most complex)
-- It's OK to have multiple test methods in a single class, e.g., for
+
+- A single test class can have multiple test methods, e.g., for
   `FooBar.method_a()` and `FooBar.method_b()`, the test class contains the
   following methods:
+
   ```python
   class TestFooBar1(unittest2.TestCase):
       def test_method_a(self):
           ...
+
       def test_method_b(self):
           ...
   ```
+
 - Split test classes and methods in a reasonable way so each one tests one
   single thing in the simplest possible way
-- Remember that test code is not second-class citizen, although it's auxiliary
-  to the code
-  - Add comments and docstring explaining what the code is doing
-  - If you change the name of a class, also the test should be changed
-  - If you change the name of a file also the name of the file with the testing
-    code should be changed
+
+### Keep testing code in sync with tested code
+
+- If you change the name of a tested class, also the test should be changed
+- If you change the name of a file also the name of the file with the testing
+  code should be changed
+
+### Test code is not second-class citizen
+
+- Test code is not second-class citizen, even though it's auxiliary to the code
+
+- Add comments and docstring explaining what the code is doing
+
+- Avoid repetition in test code, but use helper to factor out common code
+- Abhor copy-paste and keep the code DRY
+
+### Testing code layout
+
+- The layout of a test dir should look like:
+  ```bash
+  > ls -1 helpers/test/
+  Test_dassert1.test2
+  Test_dassert1.test3
+  Test_dassert1.test4
+  ...
+  Test_dassert_misc1.test6
+  Test_dassert_misc1.test8
+  Test_system1.test7
+  test_dbg.py
+  test_helpers.py
+  test_system_interaction.py
+  ```
 
 ### Our framework to test using input / output data
 
 - `helpers/unit_test.py` has some utilities to create input and output easily
   dirs storing data for unit tests
 - `hut.TestCase` has various methods to help you create
-  - `get_input_dir`: return the name of the dir used to store the inputs
-  - `get_scratch_space`: return the name of a scratch dir to keep artifacts of
+  - `get_input_dir()`: return the name of the dir used to store the inputs
+  - `get_scratch_space()`: return the name of a scratch dir to keep artifacts of
     the test
-  - `get_output_dir`: probably not interesting for the user
+  - `get_output_dir()`: probably not interesting for the user
+
 - The directory structure enforced by the out `TestCase` is like:
 
   ```bash
@@ -228,28 +281,37 @@
   test_system_interaction.py
   ```
 
-### Use text and not pickle files as input
+### Use text and not pickle files as input/outputs
 
-- The problem with pickle files is the usual ones
-  - They are not stable across different versions of libraries
-  - They are not human-readable
+- The problems with pickle files are the usual ones
+  - Pickle files are not stable across different versions of libraries
+  - Pickle files are not human-readable
+
 - Prefer to use text file
   - E.g., use a CSV file
+
 - If the data used for testing is generated in a non-complicated way
   - Document how it was generated
   - Even better, add a test that generates the data
+
+### Small testing data is best
+
 - Use a subset of the input data
-  - The smaller, the better for everybody
-    - Fast tests
-    - Easier to debug
-    - More targeted unit test
-  - Do not check in 1 megabyte of test data!
+
+- The smaller, the better for everybody
+  - Fast tests
+  - Easier to debug
+  - More targeted unit test
+
+- Do not check in 1 megabyte of test data!
+
+Last review: GP on 2024-05-13
 
 ### `check_string` vs `self.assertEqual`
 
 - TODO(gp): Add
 
-### Use `self.assert_equal`
+### Use `self.assert_equal()`
 
 - This is a function that helps you understand what the mismatches are
 - It works on `str`
@@ -350,11 +412,31 @@
 - Bad `self.assertTrue(a < b)`
 - Good `self.assertLess(a, b)`
 
-### Do not use `hdbg.dassert`
+### Do not use `hdbg.dassert` in testing
 
 - `dassert`s are for checking the self-consistency of the code
 - The invariant is that you can remove `dbg.dassert` without changing the code's
   behavior. Of course, you can't remove the assertion and get unit tests to work
+
+### Always explain `self.assertRaises`
+
+- Testing for an assertion needs to always be done with the following idiom to
+  explain exactly what we are catching and why
+  ```python
+  with self.assertRaises(AssertionError) as cm:
+      hlitagit.git_patch_create(
+          ctx, mode, modified, branch, last_commit, files
+      )
+  act = str(cm.exception)
+  exp = r"""
+  * Failed assertion *
+  '0'
+  ==
+  '1'
+  Specify only one among --modified, --branch, --last-commit
+  """
+  self.assert_equal(act, exp, fuzzy_match=True)
+  ```
 
 ### Interesting testing functions
 

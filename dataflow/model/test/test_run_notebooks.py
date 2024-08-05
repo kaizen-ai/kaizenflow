@@ -41,17 +41,7 @@ def build_test_toy_research_backtest_analyzer_config(
         "asset_id_col": "asset_id",
         "pnl_resampling_frequency": "D",
         "rule": "6T",
-        "annotate_forecasts_kwargs": {
-            "style": "longitudinal",
-            "quantization": 30,
-            "liquidate_at_end_of_day": False,
-            "initialize_beginning_of_day_trades_to_zero": False,
-            "burn_in_bars": 3,
-            "compute_extended_stats": True,
-            "target_dollar_risk_per_name": 1.0,
-            "modulate_using_prediction_magnitude": False,
-            "prediction_abs_threshold": 0.3,
-        },
+        "forecast_evaluator_class_name": "ForecastEvaluatorFromPrices",
         "im_client_config": {
             "vendor": "ccxt",
             "universe_version": "v7.5",
@@ -62,11 +52,22 @@ def build_test_toy_research_backtest_analyzer_config(
             "data_snapshot": "",
             "aws_profile": "ck",
             "version": "v1_0_0",
-            "download_universe_version": "v8",
+            "download_universe_version": "v7",
             "tag": "downloaded_1min",
             "download_mode": "periodic_daily",
             "downloading_entity": "airflow",
             "resample_1min": False,
+        },
+        "annotate_forecasts_kwargs": {
+            "style": "longitudinal",
+            "quantization": 30,
+            "liquidate_at_end_of_day": False,
+            "initialize_beginning_of_day_trades_to_zero": False,
+            "burn_in_bars": 3,
+            "compute_extended_stats": True,
+            "target_dollar_risk_per_name": 1.0,
+            "modulate_using_prediction_magnitude": False,
+            "prediction_abs_threshold": 0.3,
         },
         "forecast_evaluator_kwargs": {
             "price_col": "open",
@@ -298,6 +299,20 @@ class Test_run_master_research_backtest_analyzer(
         Save test data.
         """
         _test_save_data(self)
+
+
+class Test_master_backtest_analysis(dsnrnteca.Test_Run_Notebook_TestCase):
+    @pytest.mark.superslow("~55 sec.")
+    def test_run_notebook1(self) -> None:
+        """
+        Test that notebook runs end-to-end without errors.
+        """
+        # Copy test data to the local scratch directory.
+        input_dir = _load_test_data(self)
+        #
+        notebook_name = "Master_backtest_analysis"
+        config_builder = f'dataflow.model.backtest_notebook_utils.get_backtest_analysis_configs(["{input_dir}"])'
+        _test_run_notebook(self, notebook_name, config_builder)
 
 
 class Test_toy_research_backtest_analyzer(dsnrnteca.Test_Run_Notebook_TestCase):

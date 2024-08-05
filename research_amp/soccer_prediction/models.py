@@ -447,7 +447,7 @@ class BivariatePoissonModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
     def __init__(
         self,
         nid: dtfcornode.NodeId,
-        maxiter: int = 100,
+        maxiter: int = None,
         col_mode: Optional[str] = None,
         half_life_period: Optional[int] = None,
     ):
@@ -468,6 +468,7 @@ class BivariatePoissonModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         self._col_mode = col_mode or "replace_all"
         hdbg.dassert_in(self._col_mode, ["replace_all", "merge_all"])
         self.half_life_period = half_life_period or 180
+        self.iteration_params = []  # To store parameters at each iteration.
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         # Fit the model to the input dataframe.
@@ -479,12 +480,12 @@ class BivariatePoissonModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
 
     def get_fit_state(self) -> Dict[str, Any]:
         # Get the current fit state of the model.
-        fit_state = {"params": self.params}
+        fit_state = {"params": self.iteration_params}
         return fit_state
 
     def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
         # Set the fit state of the model.
-        self.params = fit_state["params"]
+        self.params = fit_state["params"][-1]
 
     def _preprocess_df(
         self, df_in: pd.DataFrame, half_life_period: int
@@ -512,8 +513,11 @@ class BivariatePoissonModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
             num_teams = int(
                 max(data["home_team_id"].max(), data["opponent_id"].max()) + 1
             )
-            initial_params = [0, 0, 0.1] + [1] * num_teams
-            options = {"maxiter": self.maxiter, "disp": False}
+            initial_params = [0, 0, 1] + [0] * num_teams
+            # Create the options dictionary conditionally including maxiter.
+            options = {"disp": False}
+            if self.maxiter is not None:
+                options["maxiter"] = self.maxiter
             # Minimize the negative log likelihood.
             result = spop.minimize(
                 self._bivariate_poisson_log_likelihood,
@@ -521,7 +525,7 @@ class BivariatePoissonModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
                 args=(data,),
                 method="L-BFGS-B",
                 options=options,
-                callback=lambda xk: _LOG.info(f"Current params: {xk}"),
+                callback=lambda xk: self._store_and_log_iteration_params(xk),
             )
             # Store the optimized parameters.
             self.params = result.x
@@ -544,6 +548,15 @@ class BivariatePoissonModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         mode = "fit" if fit else "predict"
         self._set_info(mode, info)
         return {"df_out": df_out}
+
+    def _store_and_log_iteration_params(self, params: np.ndarray) -> None:
+        """
+        Store parameters at each iteration and log them.
+
+        :param params: Current parameters of the optimizer.
+        """
+        self.iteration_params.append(params.copy())
+        _LOG.info(f"Current params: {params}")
 
     def _bivariate_poisson_log_likelihood(
         self, params: np.ndarray, data: pd.DataFrame

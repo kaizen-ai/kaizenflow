@@ -1,5 +1,3 @@
-# HiringMeister Process
-
 <!-- toc -->
 
 - [General](#general)
@@ -102,3 +100,16 @@
   members
 - The final scored are delivered to the candidates every two weeks
 - The candidate with low score should be dropped
+
+## Suggestions
+- In the first couple of weeks we should try to ingrain the following flow into a
+  new team member’s mind
+- Instead of spending hours coding on their own, apply the following steps:
+  1. Identify a problem and describe it in the issue
+  2. Design solution or seek guidance from a mentor
+  3. Let mentor approve/comment and reach consensus on the solution
+  4. Write code
+- Stick to smaller PRs
+  - It's very important to push frequently and ask for feedback early to avoid
+    large refactoring
+

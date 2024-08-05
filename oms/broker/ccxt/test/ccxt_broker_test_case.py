@@ -1286,6 +1286,7 @@ class TestCcxtBroker_TestCase(hunitest.TestCase, abc.ABC):
         log_dir: Optional[str] = "mock/log",
         passivity_factor: float = 0.1,
         use_mock_data_reader: Optional[bool] = False,
+        max_order_cancel_retries: int = 2,
     ) -> obcaccbr.AbstractCcxtBroker:
         """
         Build the mocked `AbstractCcxtBroker` for unit testing.
@@ -1328,6 +1329,7 @@ class TestCcxtBroker_TestCase(hunitest.TestCase, abc.ABC):
                 passivity_factor
             ),
             max_order_submit_retries=3,
+            max_order_cancel_retries=max_order_cancel_retries,
             bid_ask_raw_data_reader=mock_data_reader,
             sync_exchange=sync_exchange,
             async_exchange=async_exchange,
@@ -1448,6 +1450,7 @@ class TestSaveBrokerData1(hunitest.TestCase):
         exchange = "binance"
         stage = "preprod"
         account_type = "trading"
+        contract_type = "futures"
         secret_id = 4
         secret_identifier = ohsseide.SecretIdentifier(
             exchange, stage, account_type, secret_id
@@ -1456,9 +1459,7 @@ class TestSaveBrokerData1(hunitest.TestCase):
         # Use the exchange-only Broker because we only need to fetch Binance
         # limits.
         broker = obccbrin.get_CcxtBroker_exchange_only_instance1(
-            universe_version,
-            secret_identifier,
-            log_dir,
+            universe_version, secret_identifier, log_dir, contract_type
         )
         return broker
 

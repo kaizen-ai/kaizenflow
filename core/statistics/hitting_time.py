@@ -43,6 +43,32 @@ def get_standard_brownian_motion_hitting_time_truncated_cdf(
     return cdf
 
 
+def get_brownian_motion_with_drift_hitting_time_truncated_cdf(
+    grid_width: float,
+    value: float,
+    drift: float,
+) -> pd.Series:
+    """
+    Get CDF as a series for a BM with drift hitting time.
+
+    The CDF is truncated at time T=1.
+
+    :param grid_width: controls the CDF resolution
+    :param value: the value for the SBM to hit
+    :param drift: the value of the drift
+    :return: CDF as a series
+    """
+    hdbg.dassert_lte(grid_width, 0.5)
+    hdbg.dassert_lt(0, grid_width)
+    hdbg.dassert_lte(0, value)
+    grid = np.arange(grid_width, 1 + grid_width, grid_width)
+    cdf_vals_term1 = sp.stats.norm.cdf((-value + drift * grid) / np.sqrt(grid))
+    cdf_vals_term2 = sp.stats.norm.cdf((-value - drift * grid) / np.sqrt(grid))
+    cdf_vals = cdf_vals_term1 + np.exp(2 * value * drift) * cdf_vals_term2
+    cdf = pd.Series(cdf_vals, grid, name="bm_with_drift_hitting_time_cdf")
+    return cdf
+
+
 def compute_threshold_upcrossing_prob(
     thresholds: pd.Series,
 ) -> pd.Series:

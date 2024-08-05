@@ -1,9 +1,15 @@
 """
 The following module handles retrieving scheduling intervals for all DAGs used
-within our environment The nuances of Airflow scheduling intervals:
+within our environment.
 
-- Previously a solution of using Airflow variables to store scheduling interval for each DAG was used, this goes against Airflow best practices since each call to airflow.Variable interface creates a DB connection so it is advised against using this approach in the top level code of the DAG definition.
-- It is sometimes safer to schedule the same DAGs in different stages in non overlapping interval to avoid throttling or spiking number of active workers.
+The nuances of Airflow scheduling intervals:
+
+- Previously a solution of using Airflow variables to store scheduling interval
+  for each DAG was used, this goes against Airflow best practices since each
+  call to airflow.Variable interface creates a DB connection so it is advised
+  against using this approach in the top level code of the DAG definition.
+- It is sometimes safer to schedule the same DAGs in different stages in non
+  overlapping interval to avoid throttling or spiking number of active workers.
 
 Import as:
 

@@ -66,12 +66,18 @@ def get_config_list_from_builder(config_builder: str) -> ccocolis.ConfigList:
 
 
 def get_notebook_config(
+    *,
     config_file_path: Optional[str] = None,
+    # TODO(Grisha): it's more general to do `dst_region: Optional[str] = None`,
+    # where `None` means keep the original region and any other value means
+    # replace the original region with the `dst_region`.
+    replace_ecs_tokyo: Optional[bool] = False,
 ) -> Optional[cconconf.Config]:
     """
     Get the config from the environment variables or from a file.
 
     :param config_file_path: path to a config file
+    :param replace_ecs_tokyo: if True replace `ecs_tokyo` to `ecs` in the path
     :return: the config or `None` if env vars are not set and `config_file_path`
         is None.
     """
@@ -83,11 +89,15 @@ def get_notebook_config(
             "Config env vars not set. Using config from the pickle file: %s",
             config_file_path,
         )
-        config_file_path = hdocker.replace_shared_root_path(config_file_path)
+        config_file_path = hdocker.replace_shared_root_path(
+            config_file_path, replace_ecs_tokyo=replace_ecs_tokyo
+        )
         config = hpickle.from_pickle(config_file_path)
         # To run locally we need to replace path to the shared folder, e.g.,
         # `/data/shared` -> `/shared_data`.
-        config = ccocouti.replace_shared_dir_paths(config)
+        config = ccocouti.replace_shared_dir_paths(
+            config, replace_ecs_tokyo=replace_ecs_tokyo
+        )
     else:
         config = None
         _LOG.warning("No config found, returning None")

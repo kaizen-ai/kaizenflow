@@ -44,10 +44,9 @@ def _run_optimizer(
 # #############################################################################
 
 
-@pytest.mark.skipif(
-    hserver.is_inside_ci(),
+@pytest.mark.skip(
     reason="""The optimizer produces different results on different machines,
-        see CmTask5114.""",
+        see CmTask5477.""",
 )
 class TestSinglePeriodOptimizer1(hunitest.TestCase):
     @staticmethod

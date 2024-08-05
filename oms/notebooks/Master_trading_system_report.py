@@ -54,10 +54,10 @@ config = cconfig.get_config_from_env()
 if config:
     _LOG.info("Using config from env vars")
 else:
-    timestamp_dir = "/shared_data/CmTask7895/system_reconciliation/C11a/prod/20240419_103500.20240419_113000/"
+    system_log_dir = "/shared_data/CmTask7852_5/system_reconciliation/C11a/prod/20240509_155500.20240509_165000/system_log_dir.manual"
+    timestamp_dir, _ = os.path.split(system_log_dir)
     analysis_notebooks_file_path = os.path.join(
-        timestamp_dir,
-        "system_log_dir.manual",
+        system_log_dir,
         "analysis_notebooks",
         "analysis_notebooks_links.csv",
     )
@@ -89,10 +89,15 @@ def get_balances(ccxt_log: obcccclo.CcxtLogger) -> pd.DataFrame:
     """
     Load balances Dataframe.
     """
-    balances_before = ccxt_log_reader.load_balances()
-    # Get the balances JSON from 1-element list returned by `load_balances` and
+    balances = ccxt_log.load_balances()
+    # Get the balances JSON from the list returned by `load_balances` and
     # transform per-asset information to Dataframe.
-    balances_df = pd.DataFrame(balances_before[0]["info"]["assets"])
+    # Pick the latest balance to process the edge case when the data from
+    # multiple runs is saved to the same directory due to re-runs.
+    if len(balances) > 1:
+        # TODO(Toma): consider assert.
+        _LOG.info("Multiple files found, using the balances from the latest run")
+    balances_df = pd.DataFrame(balances[-1]["info"]["assets"])
     balances_df = balances_df[["asset", "walletBalance"]]
     return balances_df
 

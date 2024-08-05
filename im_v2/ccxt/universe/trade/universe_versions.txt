@@ -1,4 +1,46 @@
 v8
+- 2024-07-30
+- Remove delisted symbol 'GAL_USDT'
+
+v8.2
+- 2024-07-30
+- Remove delisted symbol 'GAL_USDT'
+
+v8.4
+- 2024-07-16
+- Universe with only `ETH_USDT` for binance
+
+v8.3
+- 2024-07-16
+- Universe with only `BTC_USDT` for binance
+
+v8.1
+- 2024-07-16
+- Remove delisted symbol 'RNDR_USDT' for binance
+
+v8
+- 2024-07-16
+- Remove delisted symbol 'RNDR_USDT' for binance
+
+v8
+- 2024-06-28
+- Remove delisted symbol 'WAVES_USDT', 'OMG_USDT', 'XEM_USDT'
+
+v7.5
+- 2024-07-01
+- Create cryptocom universe
+
+v7.3
+- 2024-06-28
+- Remove delisted symbol 'WAVES_USDT'
+
+v8/v8.2
+- 2024-05-28
+- Remove delisted/inactive symbols 'CVC_USDT', 'CTK_USDT', 'BTCST_USDT', 'SC_USDT',
+ 'RAY_USDT', 'FTT_USDT', 'CVX_USDT', 'IDEX_USDT', 'RAD_USDT', 'MDT_USDT', 'GLMR_USDT',
+ 'STRAX_USDT', 'STPT_USDT', 'SLP_USDT', 'SNT_USDT', 'AUDIO_USDT, 'MBL_USDT' 
+
+v8
 - 2024-04-04
 - Removing delisted symbols ANT_USDT, DGB_USDT and CTK_USDT
 

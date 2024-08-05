@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Union
 import pandas as pd
 
 import dataflow_amp.system.Cx as dtfamsysc
+import helpers.hdbg as hdbg
 import helpers.hdict as hdict
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
@@ -35,6 +36,7 @@ def get_CcxtBroker_exchange_only_instance1(
     universe_version: str,
     secret_identifier: omssec.SecretIdentifier,
     log_dir: str,
+    contract_type: str,
 ) -> obccccbr.CcxtBroker:
     """
     Build a `CcxtBroker` for exchange only operations or tests.
@@ -43,6 +45,8 @@ def get_CcxtBroker_exchange_only_instance1(
     - No RawDataReader
     - MarketData object is present because of dependence on
     the wall clock and lower level interface
+
+    :param contract_type: type of asset class, "spot" or "futures"
     """
     # Strategy ID is a dummy value
     strategy_id = "C1b"
@@ -52,7 +56,9 @@ def get_CcxtBroker_exchange_only_instance1(
     # stage = "preprod"
     account_type = secret_identifier.account_type
     # account_type = "trading"
-    contract_type = "swap"
+    hdbg.dassert_in(contract_type, ["spot", "futures"])
+    # What we refer to as futures is called "swap" at CCXT level.
+    ccxt_contract_type = "swap" if contract_type == "futures" else "spot"
     portfolio_id = "ccxt_portfolio_1"
     # Build logger.
     logger = obcccclo.CcxtLogger(log_dir, mode="write")
@@ -65,21 +71,25 @@ def get_CcxtBroker_exchange_only_instance1(
     # `MarketData` is not strictly needed to talk to exchange, but since it is
     #  required to init the `Broker` we pass something to make it work.
     asset_ids = None
-    db_stage = "preprod"
-    market_data = dtfamsysc.get_Cx_RealTimeMarketData_prod_instance1(
-        asset_ids, db_stage
+    market_data = dtfamsysc.get_Cx_RealTimeMarketData_prod_instance2(
+        asset_ids, universe_version
     )
     sync_exchange, async_exchange = obccccut.create_ccxt_exchanges(
-        secret_identifier, contract_type, exchange_id, account_type
+        secret_identifier, ccxt_contract_type, exchange_id, account_type
     )
     max_order_submit_retries = 1
     volatility_multiple = [0.75, 0.7, 0.6, 0.8, 1.0]
     # Build Broker.
-    broker = obccccbr.CcxtBroker(
+    # TODO(Juraj): Turn this if/else into a function:
+    if exchange_id.lower() == "binance":
+        broker_class = obccccbr.CcxtBroker
+    elif exchange_id.lower() == "cryptocom":
+        broker_class = obccccbr.CcxtCryptocomBroker
+    broker = broker_class(
         exchange_id=exchange_id,
         account_type=account_type,
         portfolio_id=portfolio_id,
-        contract_type=contract_type,
+        contract_type=ccxt_contract_type,
         secret_identifier=secret_identifier,
         strategy_id=strategy_id,
         market_data=market_data,
@@ -137,7 +147,7 @@ def get_CcxtBroker_prod_instance1(
     )
     # Build bid_ask_raw_data_reader.
     bid_ask_raw_data_reader = imvcdcimrdc.get_bid_ask_realtime_raw_data_reader(
-        stage, "CCXT", universe_version
+        stage, "CCXT", universe_version, exchange_id
     )
     max_order_submit_retries = 1
     # Build LimitPriceComputer.
@@ -151,7 +161,12 @@ def get_CcxtBroker_prod_instance1(
         limit_price_computer_type, limit_price_computer_kwargs
     )
     # Build Broker.
-    broker = obccccbr.CcxtBroker(
+    # TODO(Juraj): Turn this if/else into a function:
+    if exchange_id.lower() == "binance":
+        broker_class = obccccbr.CcxtBroker
+    elif exchange_id.lower() == "cryptocom":
+        broker_class = obccccbr.CcxtCryptocomBroker
+    broker = broker_class(
         exchange_id=exchange_id,
         account_type=account_type,
         portfolio_id=portfolio_id,
@@ -295,6 +310,7 @@ def get_CcxtBroker(
     log_dir: str,
     universe: str,
     broker_config: Dict[str, Any],
+    exchange_id: str,
     *,
     stage: str = "prod",
 ) -> obccccbr.CcxtBroker:
@@ -312,7 +328,6 @@ def get_CcxtBroker(
     )
     universe_version = universe
     strategy_id = "C1b"
-    exchange_id = "binance"
     account_type = "trading"
     secret_identifier = omssec.SecretIdentifier(
         exchange_id, stage, account_type, secret_id

@@ -68,21 +68,21 @@ def get_universe(universe_str: str) -> List[Amid]:
     Get the correct universe from the provided string.
 
     :param universe_str: string consisting of vendor, universe version
-        and top number of assets or all to get. E.g., `ccxt_v7_1-top1`
-        or `ccxt_v7_1-all`
+        and top number of assets or all to get. E.g., `ccxt_v7_1-top1`,
+        `binance_v7_1-all` or `ccxt_eth-all`
     """
     # E.g., `universe_str == "ccxt_v7_1-top100"`
     vendor_universe_version_str, top_n = cconfig.parse_universe_str(universe_str)
     # Parse the vendor and universe version.
     # E.g., "ccxt_v7_1" -> "ccxt" and "v7_1".
-    pattern = r"(\D+(\d+)?)_(\D+\d+(\_\d+)?)"
+    pattern = r"(\D+(\d+)?)_(\D+(\d+(\_\d+)?)?)"
     match = re.match(pattern, vendor_universe_version_str)
     msg = f"""
     The vendor and universe version are not found in
     `universe_str = {universe_str}`.
     """
     hdbg.dassert_is_not(match, None, msg=msg)
-    hdbg.dassert_eq(len(match.groups()), 4, msg=msg)
+    hdbg.dassert_eq(len(match.groups()), 5, msg=msg)
     # E.g., `ccxt`.
     vendor = match.group(1)
     # Get `universe_verison` and modify it in case the universe has a

@@ -341,6 +341,7 @@ for key, config in config_dict.items():
             config["output_dir_name"], key.replace(" ", "")
         )
         _LOG.info("Saving portfolio in experiment_dir=%s", experiment_dir)
+        config.save_to_file(experiment_dir, "config")
         file_name = fep.save_portfolio(
             tile_df,
             experiment_dir,

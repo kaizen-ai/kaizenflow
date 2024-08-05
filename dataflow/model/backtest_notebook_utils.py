@@ -65,6 +65,30 @@ def build_research_backtest_analyzer_config_sweep(
     return config_dict
 
 
+def get_backtest_analysis_configs(
+    system_log_dirs: List[str],
+) -> cconfig.ConfigList:
+    """
+    Build `Master_backtest_analysis.ipynb` configs.
+
+    :param system_log_dirs: locations of portfolios for analysis
+    :return: a list of configs with a single resulting config
+    """
+    config_dict = {
+        # Provide a list of experiment output dirs for analysis.
+        "system_log_dirs": system_log_dirs,
+        "pnl_resampling_frequency": "D",
+        "bin_annotated_portfolio_df_kwargs": {
+            "proportion_of_data_per_bin": 0.2,
+            "normalize_prediction_col_values": False,
+        },
+        "start_date": None,
+    }
+    config = cconfig.Config.from_dict(config_dict)
+    config_list = cconfig.ConfigList([config])
+    return config_list
+
+
 # #############################################################################
 # Resampling and param sweeping
 # #############################################################################
@@ -170,12 +194,14 @@ def load_backtest_tiles(
         src_dir
     )
     asset_ids = parquet_tile_metadata.index.levels[0].to_list()
-    #
-    tile_df = next(
+    # Load all tiles.
+    # TODO(Danya): implement yielding tiles by year using 'next'.
+    tile_df = list(
         dtfmotiflo.yield_processed_parquet_tiles_by_year(
             src_dir, start_date, end_date, asset_id_col, cols, asset_ids=asset_ids
         )
     )
+    tile_df = pd.concat(tile_df)
     # Trim tile to the specified time interval.
     tile_df = tile_df[
         (tile_df.index >= pd.Timestamp(start_date, tz="UTC"))

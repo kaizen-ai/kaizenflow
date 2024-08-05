@@ -21,8 +21,8 @@
     in the other fork
 - Often we can integrate "by directory", i.e., finding entire directories that
   were touched in one branch but not in the other
-  - In this case we can simply copy the entire dir from one dir to the other
-- Other times we need to integrate "by file"
+  - In this case we can simply copy the entire dir from one repo to the other
+- Other times we need to integrate each file
 
 - There are various interesting Git reference points:
   1. The branch point for each fork, at which the integration branch was started

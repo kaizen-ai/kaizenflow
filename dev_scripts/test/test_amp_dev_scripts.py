@@ -37,7 +37,8 @@ class Test_url_py1(hunitest.TestCase):
         self.assertEqual(act, exp)
 
     def test_run1(self) -> None:
-        exec_name = os.path.join(hgit.get_amp_abs_path(), "dev_scripts/url.py")
+        exec_name = os.path.join(hgit.get_amp_abs_path(),
+            "dev_scripts/coding_tools/url.py")
         hdbg.dassert_path_exists(exec_name)
         _LOG.debug(hprint.to_str("exec_name"))
         cmd = (

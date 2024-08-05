@@ -23,6 +23,7 @@ E.g., to run for certain date from a Docker container:
     --dst-root-dir ".../prod_reconciliation" \
     --no-prevent-overwriting \
     --run-notebook \
+    --check-dag-output-self-consistency \
     --mark-as-last-24-hour-run
 ```
 
@@ -494,6 +495,7 @@ def reconcile_run_notebook(
     dst_root_dir,
     mode,
     tag="",
+    check_dag_output_self_consistency=False,
     incremental=False,
     mark_as_last_24_hour_run=False,
     prevent_overwriting=True,
@@ -570,14 +572,14 @@ def reconcile_run_notebook(
         # Get a string representation of config builder.
         config_builder = (
             f"amp.reconciliation.sim_prod_reconciliation.build_reconciliation_configs"
-            + f'("{dst_root_dir}", "{dag_builder_ctor_as_str}", "{start_timestamp_as_str}", "{end_timestamp_as_str}", "{run_mode}", "{mode}", tag="{tag}")'
+            + f'("{dst_root_dir}", "{dag_builder_ctor_as_str}", "{start_timestamp_as_str}", "{end_timestamp_as_str}", "{run_mode}", "{mode}", tag="{tag}", check_dag_output_self_consistency={check_dag_output_self_consistency})'
         )
     else:
         # Append config values to override to a string representation of config
         # builder.
         config_builder = (
             f"amp.reconciliation.sim_prod_reconciliation.build_reconciliation_configs"
-            + f'("{dst_root_dir}", "{dag_builder_ctor_as_str}", "{start_timestamp_as_str}", "{end_timestamp_as_str}", "{run_mode}", "{mode}", tag="{tag}", set_config_values="""{set_config_values}""")'
+            + f'("{dst_root_dir}", "{dag_builder_ctor_as_str}", "{start_timestamp_as_str}", "{end_timestamp_as_str}", "{run_mode}", "{mode}", tag="{tag}", check_dag_output_self_consistency={check_dag_output_self_consistency}, set_config_values="""{set_config_values}""")'
         )
     opts = "--tee --no_suppress_output --num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
     cmd_run_txt = [
@@ -611,12 +613,15 @@ def reconcile_run_notebook(
     aws_profile = "ck"
     hs3.copy_file_to_s3(html_notebook_path, s3_dst_path, aws_profile)
     if mark_as_last_24_hour_run:
+        # Set run mode value for s3 HTML file name path.
+        if run_mode == "paper_trading":
+            s3_run_mode = "shadow_trading"
+        else:
+            s3_run_mode = run_mode
         # Copy the reconciliation notebook to S3 HTML bucket so that it becomes
         # available via the static link, e.g.,
         # `https://***/system_reconciliation/C3a.last_24hours.html`.
-        html_file_name = (
-            f"{dag_builder_name}.{notebook_run_mode}.last_24hours.html"
-        )
+        html_file_name = f"{dag_builder_name}.{tag}.{s3_run_mode}.{notebook_run_mode}.last_24hours.html"
         s3_dst_path = os.path.join(s3_dst_dir, html_file_name)
         hs3.copy_file_to_s3(html_notebook_path, s3_dst_path, aws_profile)
     if prevent_overwriting:
@@ -636,16 +641,17 @@ def reconcile_run_notebook(
 
 # TODO(Grisha): consider moving to a different file.
 @task
-def run_master_pnl_real_time_observer_notebook(
+def run_master_system_observer_notebook(
     ctx,
     prod_data_root_dir,
     dag_builder_ctor_as_str,
     run_mode,
+    # TODO(Toma): Consider using to `notebook_path` or choosing the notebook based on run mode.
+    notebook_name,
     tag="",
     start_timestamp_as_str=None,
     end_timestamp_as_str=None,
     mode=None,
-    burn_in_bars=3,
     mark_as_last_5minute_run=False,
     save_plots_for_investors=True,
 ):  # type: ignore
@@ -661,6 +667,7 @@ def run_master_pnl_real_time_observer_notebook(
         e.g., "/shared_data/ecs/preprod/system_reconciliation/"
     :param dag_builder_ctor_as_str: a pointer to a `DagBuilder` constructor,
         e.g., `dataflow_orange.pipelines.C1.C1b_pipeline.C1b_DagBuilder`
+    :param notebook_name: name of the notebook to run, e.g., "Master_PnL_real_time_observer"
     :param start_timestamp_as_str: string representation of timestamp
         at which a production run started
     :param end_timestamp_as_str: string representation of timestamp
@@ -668,7 +675,6 @@ def run_master_pnl_real_time_observer_notebook(
     :param mode: the prod system run mode which defines a prod system log dir name
         - "scheduled": the system is run at predefined time automatically
         - "manual": the system run is triggered manually
-    :param burn_in_bars: a minimum amount of bars that is needed for calculations
     :param mark_as_last_5minute_run: mark the production run as latest so
         that the latest PnL real-time observer notebook becomes available via
         a static link, e.g., `https://***/system_reconciliation/C3a.last_5minutes.html`
@@ -729,25 +735,9 @@ def run_master_pnl_real_time_observer_notebook(
     )
     system_log_dir = rsiprrec.get_prod_system_log_dir(mode)
     system_log_dir = os.path.join(target_dir, system_log_dir)
-    data_type = "orders"
-    orders_dir = rsiprrec.get_data_type_system_log_path(system_log_dir, data_type)
-    # TODO(Grisha): create a separate function to get orders files.
-    order_files = dtfcore.get_dag_node_csv_file_names(orders_dir)
-    # There is a separate order file for each bar. Assumption: a bar is computed
-    # when a corresponding order file exists. We use the number of order files as
-    # a proxy for the number of computed bars.
-    n_bars = len(order_files)
-    if n_bars < burn_in_bars:
-        _LOG.warn(
-            "Not enough data to run the notebook, should be at least %s bars computed, received %s bars, exiting",
-            burn_in_bars,
-            n_bars,
-        )
-        return None
     _ = ctx
     # Add the command to run the notebook.
     amp_dir = hgit.get_amp_abs_path()
-    notebook_name = "Master_PnL_real_time_observer"
     script_path = os.path.join(
         amp_dir, "dev_scripts", "notebooks", "run_notebook.py"
     )
@@ -757,20 +747,20 @@ def run_master_pnl_real_time_observer_notebook(
     html_bucket_path = henv.execute_repo_config_code("get_html_bucket_path()")
     s3_dst_dir = os.path.join(html_bucket_path, "pnl_for_investors")
     config_builder = (
-        f"amp.reconciliation.sim_prod_reconciliation.build_prod_pnl_real_time_observer_configs"
+        f"amp.reconciliation.sim_prod_reconciliation.build_system_observer_configs"
         + f'("{prod_data_root_dir}", "{dag_builder_ctor_as_str}", "{run_mode}", "{start_timestamp_as_str}", "{end_timestamp_as_str}",  "{mode}", {save_plots_for_investors}, s3_dst_dir="{s3_dst_dir}", tag="{tag}")'
     )
     # Since the invoke is run multiple times per day create a subdir for every
     # run and mark it with the current UTC timestamp, e.g.,
-    # `.../C3a/20230411/pnl_realtime_observer_notebook/20230411_130510`.
-    notebook_dir = "pnl_realtime_observer_notebook"
+    # `.../C3a/20230411/system_observer_notebook/20230411_130510`.
+    notebook_dir = "system_observer_notebook"
     shared_notebook_dir = os.path.join(target_dir, notebook_dir)
     hio.create_dir(shared_notebook_dir, incremental=True)
     #
     tz = "UTC"
     current_time = hdateti.get_current_timestamp_as_string(tz)
     current_time = current_time.replace("-", "_")
-    # E.g., `.../C3a/20230411/pnl_realtime_observer_notebook/20230411_130510`.
+    # E.g., `.../C3a/20230411/system_observer_notebook/20230411_130510`.
     shared_nootebook_timestamp_dir = os.path.join(
         shared_notebook_dir, current_time
     )
@@ -801,9 +791,7 @@ def run_master_pnl_real_time_observer_notebook(
         # it becomes available via the static link, e.g.,
         # `https://***/system_reconciliation/C3a.last_5minutes.html`.
         html_bucket_path = henv.execute_repo_config_code("get_html_bucket_path()")
-        html_file_name = (
-            f"{dag_builder_name}.{tag}.last_5minutes.html"
-        )
+        html_file_name = f"{dag_builder_name}.{tag}.{run_mode}.last_5minutes.html"
         s3_dst_path = os.path.join(
             html_bucket_path, "system_reconciliation", html_file_name
         )
@@ -954,6 +942,7 @@ def reconcile_run_all(
     mode,
     stage,
     tag="",
+    check_dag_output_self_consistency=False,
     market_data_source_dir=None,
     mark_as_last_24_hour_run=False,
     # TODO(Grisha): propagate everywhere below.
@@ -985,6 +974,8 @@ def reconcile_run_all(
     :param stage: development stage, e.g., `preprod`. Also applies to a database
         stage
     :param tag: config tag, e.g., "config1"
+    :param check_dag_output_self_consistency: switch for DAG output self-consistency check
+        to make sure that the past outputs are invariant over time
     :param mark_as_last_24_hour_run: mark the reconciliation run as latest so
         that the latest reconciliation notebook becomes available via a static
         link, e.g., `https://***/system_reconciliation/C3a.last_24hours.html`
@@ -1075,6 +1066,7 @@ def reconcile_run_all(
             dst_root_dir,
             mode,
             tag=tag,
+            check_dag_output_self_consistency=check_dag_output_self_consistency,
             mark_as_last_24_hour_run=mark_as_last_24_hour_run,
             prevent_overwriting=prevent_overwriting,
             set_config_values=set_config_values,
@@ -1090,6 +1082,7 @@ def reconcile_run_all(
             dst_root_dir,
             mode,
             tag=tag,
+            check_dag_output_self_consistency=check_dag_output_self_consistency,
             mark_as_last_24_hour_run=mark_as_last_24_hour_run,
             prevent_overwriting=prevent_overwriting,
             # The slow version of the notebook does not compute research
