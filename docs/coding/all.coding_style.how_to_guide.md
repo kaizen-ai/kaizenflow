@@ -4,136 +4,138 @@
 
 - [Meta](#meta)
 - [Disclaimer](#disclaimer)
-* [References](#references)
+  * [References](#references)
 - [High-Level Principles](#high-level-principles)
-  - [Follow the DRY principle](#follow-the-dry-principle)
-  - [The writer is the reader](#the-writer-is-the-reader)
-  - [Encapsulate what changes](#encapsulate-what-changes)
-  - [Least surprise principle](#least-surprise-principle)
-  - [Pay the technical debt](#pay-the-technical-debt)
-  - [End-to-end first](#end-to-end-first)
-  - [Unit test everything](#unit-test-everything)
-  - [Don't get attached to code](#dont-get-attached-to-code)
-  - [Always plan before writing code](#always-plan-before-writing-code)
-  - [Think hard about naming](#think-hard-about-naming)
-  - [Look for inconsistencies](#look-for-inconsistencies)
-  - [No ugly hacks](#no-ugly-hacks)
+    + [Follow the [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself) principle](#follow-the-dryhttpsenwikipediaorgwikidon%2527t_repeat_yourself-principle)
+    + [The writer is the reader](#the-writer-is-the-reader)
+    + [Encapsulate what changes](#encapsulate-what-changes)
+    + [Least surprise principle](#least-surprise-principle)
+    + [Pay the technical debt](#pay-the-technical-debt)
+    + [End-to-end first](#end-to-end-first)
+    + [Unit test everything](#unit-test-everything)
+    + [Don't get attached to code](#dont-get-attached-to-code)
+    + [Always plan before writing code](#always-plan-before-writing-code)
+    + [Think hard about naming](#think-hard-about-naming)
+    + [Look for inconsistencies](#look-for-inconsistencies)
+    + [No ugly hacks](#no-ugly-hacks)
 - [Our coding suggestions](#our-coding-suggestions)
-* [Being careful with naming](#being-careful-with-naming)
-  - [Follow the conventions](#follow-the-conventions)
-  - [Follow spelling rules](#follow-spelling-rules)
-  - [Search good names, avoid bad names](#search-good-names-avoid-bad-names)
-    - [General naming rules](#general-naming-rules)
-    - [Do not be stingy](#do-not-be-stingy)
-    - [Do not abbreviate just to save characters](#do-not-abbreviate-just-to-save-characters)
-    - [When to use abbreviations](#when-to-use-abbreviations)
-  - [Avoid code stutter](#avoid-code-stutter)
-* [Comments and docstrings](#comments-and-docstrings)
-  - [General conventions](#general-conventions)
-  - [Descriptive vs imperative style](#descriptive-vs-imperative-style)
-  - [Docstrings style](#docstrings-style)
-  - [Comments style](#comments-style)
-  - [Replace empty lines in code with comments](#replace-empty-lines-in-code-with-comments)
-  - [Referring to an object in code comments](#referring-to-an-object-in-code-comments)
-  - [Avoid distracting comments](#avoid-distracting-comments)
-  - [Commenting out code](#commenting-out-code)
-  - [Use type hints](#use-type-hints)
-  - [Interval notation](#interval-notation)
-  - [If you find a bug or obsolete docstring/TODO in the code](#if-you-find-a-bug-or-obsolete-docstringtodo-in-the-code)
-* [Linter](#linter)
-  - [Remove linter messages](#remove-linter-messages)
-  - [When to disable linter messages](#when-to-disable-linter-messages)
-  - [Prefer non-inlined linter comments](#prefer-non-inlined-linter-comments)
-  - [Don't mix real changes with linter changes](#dont-mix-real-changes-with-linter-changes)
-* [Logging](#logging)
-  - [Always use logging instead of prints](#always-use-logging-instead-of-prints)
-  - [Our logging idiom](#our-logging-idiom)
-  - [Logging level](#logging-level)
-  - [Use positional args when logging](#use-positional-args-when-logging)
-  - [Exceptions don't allow positional args](#exceptions-dont-allow-positional-args)
-  - [Report warnings](#report-warnings)
-* [Assertions](#assertions)
-  - [Validate values before an assignment](#validate-values-before-an-assignment)
-  - [Encode the assumptions using assertions](#encode-the-assumptions-using-assertions)
-  - [Use positional args when asserting](#use-positional-args-when-asserting)
-  - [Report as much information as possible in an assertion](#report-as-much-information-as-possible-in-an-assertion)
-* [Imports](#imports)
-  - [Don't use evil `import *`](#dont-use-evil-import-)
-  - [Cleaning up the evil `import *`](#cleaning-up-the-evil-import-)
-  - [Avoid `from ... import ...`](#avoid-from--import-)
-  - [Exceptions to the import style](#exceptions-to-the-import-style)
-  - [Always import with a full path from the root of the repo / submodule](#always-import-with-a-full-path-from-the-root-of-the-repo--submodule)
-  - [Baptizing module import](#baptizing-module-import)
-  - [Examples of imports](#examples-of-imports)
-* [Scripts](#scripts)
-  - [Use Python and not bash for scripting](#use-python-and-not-bash-for-scripting)
-  - [Skeleton for a script](#skeleton-for-a-script)
-  - [Some useful patterns](#some-useful-patterns)
-  - [Use scripts and not notebooks for long-running jobs](#use-scripts-and-not-notebooks-for-long-running-jobs)
-  - [Follow the same structure](#follow-the-same-structure)
-  - [Use clear names for the scripts](#use-clear-names-for-the-scripts)
-* [Functions](#functions)
-  - [Avoid using non-exclusive `bool` arguments](#avoid-using-non-exclusive-bool-arguments)
-  - [Try to make functions work on multiple types](#try-to-make-functions-work-on-multiple-types)
-  - [Avoid hard-wired column name dependencies](#avoid-hard-wired-column-name-dependencies)
-  - [Single exit point from a function](#single-exit-point-from-a-function)
-  - [Order of function parameters](#order-of-function-parameters)
-    - [Problem](#problem)
-    - [Decision](#decision)
-  - [Consistency of ordering of function parameters](#consistency-of-ordering-of-function-parameters)
-  - [Style for default parameter](#style-for-default-parameter)
-    - [Problem](#problem-1)
-    - [Decision](#decision-1)
-    - [Rationale](#rationale)
-  - [Calling functions with default parameters](#calling-functions-with-default-parameters)
-    - [Problem](#problem-2)
-    - [Decision](#decision-2)
-    - [Rationale](#rationale-1)
-  - [Don't repeat non-default parameters](#dont-repeat-non-default-parameters)
-    - [Problem](#problem-3)
-    - [Decision](#decision-3)
-    - [Rationale](#rationale-2)
-* [Writing clear beautiful code](#writing-clear-beautiful-code)
-  - [Keep related code close](#keep-related-code-close)
-  - [Order functions in topological order](#order-functions-in-topological-order)
-  - [Distinguish public and private functions](#distinguish-public-and-private-functions)
-  - [Keep public functions organized in a logical order](#keep-public-functions-organized-in-a-logical-order)
-  - [Do not make tiny wrappers](#do-not-make-tiny-wrappers)
-  - [Regex](#regex)
-  - [Do not introduce another “concept” unless really needed](#do-not-introduce-another-concept-unless-really-needed)
-  - [Return `None` or keep one type](#return-none-or-keep-one-type)
-  - [Avoid wall-of-text functions](#avoid-wall-of-text-functions)
-* [Writing robust code](#writing-robust-code)
-  - [Don’t let your functions catch the default-itis](#dont-let-your-functions-catch-the-default-itis)
-  - [Explicitly bind default parameters](#explicitly-bind-default-parameters)
-  - [Don’t hardwire params in a function call](#dont-hardwire-params-in-a-function-call)
-  - [Make `if-elif-else` complete](#make-if-elif-else-complete)
-  - [Add TODOs when needed](#add-todos-when-needed)
-* [Common Python mistakes](#common-python-mistakes)
-  - [`==` vs `is`](#-vs-is)
-  - [`type()` vs `isinstance()`](#type-vs-isinstance)
-* [Unit tests](#unit-tests)
-* [Refactoring](#refactoring)
-  - [When moving / refactoring code](#when-moving--refactoring-code)
-  - [Write script for renamings](#write-script-for-renamings)
-* [Architectural and design pattern](#architectural-and-design-pattern)
-  - [Research quality vs production quality](#research-quality-vs-production-quality)
-  - [Always separate what changes from what stays the same](#always-separate-what-changes-from-what-stays-the-same)
-  - [Organize scripts as pipelines](#organize-scripts-as-pipelines)
-  - [Make filename unique](#make-filename-unique)
-  - [Incremental behavior](#incremental-behavior)
-  - [Run end-to-end](#run-end-to-end)
-  - [Think about scalability](#think-about-scalability)
-  - [Use command line for reproducibility](#use-command-line-for-reproducibility)
-  - [Structure the code in terms of filters](#structure-the-code-in-terms-of-filters)
-* [Code style for different languages](#code-style-for-different-languages)
-  - [SQL](#sql)
+  * [Being careful with naming](#being-careful-with-naming)
+    + [Follow the conventions](#follow-the-conventions)
+    + [Follow spelling rules](#follow-spelling-rules)
+    + [Search good names, avoid bad names](#search-good-names-avoid-bad-names)
+      - [General naming rules](#general-naming-rules)
+      - [Do not be stingy](#do-not-be-stingy)
+      - [Do not abbreviate just to save characters](#do-not-abbreviate-just-to-save-characters)
+      - [When to use abbreviations](#when-to-use-abbreviations)
+    + [Avoid code stutter](#avoid-code-stutter)
+  * [Comments and docstrings](#comments-and-docstrings)
+    + [General conventions](#general-conventions)
+    + [Descriptive vs imperative style](#descriptive-vs-imperative-style)
+    + [Docstrings style](#docstrings-style)
+    + [Comments style](#comments-style)
+    + [Replace empty lines in code with comments](#replace-empty-lines-in-code-with-comments)
+    + [Comment chunk of codes](#comment-chunk-of-codes)
+    + [Referring to an object in code comments](#referring-to-an-object-in-code-comments)
+    + [Avoid distracting comments](#avoid-distracting-comments)
+    + [Commenting out code](#commenting-out-code)
+    + [Use type hints](#use-type-hints)
+    + [Interval notation](#interval-notation)
+    + [If you find a bug or obsolete docstring/TODO in the code](#if-you-find-a-bug-or-obsolete-docstringtodo-in-the-code)
+  * [Linter](#linter)
+    + [Remove linter messages](#remove-linter-messages)
+    + [When to disable linter messages](#when-to-disable-linter-messages)
+    + [Prefer non-inlined linter comments](#prefer-non-inlined-linter-comments)
+    + [Don't mix real changes with linter changes](#dont-mix-real-changes-with-linter-changes)
+  * [Logging](#logging)
+    + [Always use logging instead of prints](#always-use-logging-instead-of-prints)
+    + [Our logging idiom](#our-logging-idiom)
+    + [Logging level](#logging-level)
+    + [How to pick the level for a logging statement](#how-to-pick-the-level-for-a-logging-statement)
+    + [Use positional args when logging](#use-positional-args-when-logging)
+    + [Exceptions don't allow positional args](#exceptions-dont-allow-positional-args)
+    + [Report warnings](#report-warnings)
+  * [Assertions](#assertions)
+    + [Validate values before an assignment](#validate-values-before-an-assignment)
+    + [Encode the assumptions using assertions](#encode-the-assumptions-using-assertions)
+    + [Use positional args when asserting](#use-positional-args-when-asserting)
+    + [Report as much information as possible in an assertion](#report-as-much-information-as-possible-in-an-assertion)
+  * [Imports](#imports)
+    + [Don't use evil `import *`](#dont-use-evil-import-)
+    + [Cleaning up the evil `import *`](#cleaning-up-the-evil-import-)
+    + [Avoid `from ... import ...`](#avoid-from--import-)
+    + [Exceptions to the import style](#exceptions-to-the-import-style)
+    + [Always import with a full path from the root of the repo / submodule](#always-import-with-a-full-path-from-the-root-of-the-repo--submodule)
+    + [Baptizing module import](#baptizing-module-import)
+    + [Examples of imports](#examples-of-imports)
+  * [Scripts](#scripts)
+    + [Use Python and not bash for scripting](#use-python-and-not-bash-for-scripting)
+    + [Skeleton for a script](#skeleton-for-a-script)
+    + [Some useful patterns](#some-useful-patterns)
+    + [Use scripts and not notebooks for long-running jobs](#use-scripts-and-not-notebooks-for-long-running-jobs)
+    + [Follow the same structure](#follow-the-same-structure)
+    + [Use clear names for the scripts](#use-clear-names-for-the-scripts)
+  * [Functions](#functions)
+    + [Avoid using non-exclusive `bool` arguments](#avoid-using-non-exclusive-bool-arguments)
+    + [Try to make functions work on multiple types](#try-to-make-functions-work-on-multiple-types)
+    + [Avoid hard-wired column name dependencies](#avoid-hard-wired-column-name-dependencies)
+    + [Single exit point from a function](#single-exit-point-from-a-function)
+    + [Order of function parameters](#order-of-function-parameters)
+      - [Problem](#problem)
+      - [Decision](#decision)
+    + [Consistency of ordering of function parameters](#consistency-of-ordering-of-function-parameters)
+    + [Style for default parameter](#style-for-default-parameter)
+      - [Problem](#problem-1)
+      - [Decision](#decision-1)
+      - [Rationale](#rationale)
+    + [Calling functions with default parameters](#calling-functions-with-default-parameters)
+      - [Problem](#problem-2)
+      - [Decision](#decision-2)
+      - [Rationale](#rationale-1)
+    + [Don't repeat non-default parameters](#dont-repeat-non-default-parameters)
+      - [Problem](#problem-3)
+      - [Decision](#decision-3)
+      - [Rationale](#rationale-2)
+  * [Writing clear beautiful code](#writing-clear-beautiful-code)
+    + [Keep related code close](#keep-related-code-close)
+    + [Order functions in topological order](#order-functions-in-topological-order)
+    + [Distinguish public and private functions](#distinguish-public-and-private-functions)
+    + [Keep public functions organized in a logical order](#keep-public-functions-organized-in-a-logical-order)
+    + [Do not make tiny wrappers](#do-not-make-tiny-wrappers)
+    + [Regex](#regex)
+    + [Do not introduce another “concept” unless really needed](#do-not-introduce-another-concept-unless-really-needed)
+    + [Return `None` or keep one type](#return-none-or-keep-one-type)
+    + [Avoid wall-of-text functions](#avoid-wall-of-text-functions)
+  * [Writing robust code](#writing-robust-code)
+    + [Don’t let your functions catch the default-itis](#dont-let-your-functions-catch-the-default-itis)
+    + [Explicitly bind default parameters](#explicitly-bind-default-parameters)
+    + [Don’t hardwire params in a function call](#dont-hardwire-params-in-a-function-call)
+    + [Make `if-elif-else` complete](#make-if-elif-else-complete)
+    + [Add TODOs when needed](#add-todos-when-needed)
+  * [Common Python mistakes](#common-python-mistakes)
+    + [`==` vs `is`](#-vs-is)
+    + [`type()` vs `isinstance()`](#type-vs-isinstance)
+  * [Unit tests](#unit-tests)
+  * [Refactoring](#refactoring)
+    + [When moving / refactoring code](#when-moving--refactoring-code)
+    + [Write script for renamings](#write-script-for-renamings)
+  * [Architectural and design pattern](#architectural-and-design-pattern)
+    + [Research quality vs production quality](#research-quality-vs-production-quality)
+    + [Always separate what changes from what stays the same](#always-separate-what-changes-from-what-stays-the-same)
+    + [Organize scripts as pipelines](#organize-scripts-as-pipelines)
+    + [Make filename unique](#make-filename-unique)
+    + [Incremental behavior](#incremental-behavior)
+    + [Run end-to-end](#run-end-to-end)
+    + [Think about scalability](#think-about-scalability)
+    + [Use command line for reproducibility](#use-command-line-for-reproducibility)
+    + [Structure the code in terms of filters](#structure-the-code-in-terms-of-filters)
+  * [Code style for different languages](#code-style-for-different-languages)
+    + [SQL](#sql)
 - [Conventions (Addendum)](#conventions-addendum)
-* [Be patient](#be-patient)
-* [Goal](#goal)
-* [Keep the rules simple](#keep-the-rules-simple)
-* [Allow turning off the automatic tools](#allow-turning-off-the-automatic-tools)
-* [Make the spell-checker happy](#make-the-spell-checker-happy)
+  * [Be patient](#be-patient)
+  * [Goal](#goal)
+  * [Keep the rules simple](#keep-the-rules-simple)
+  * [Allow turning off the automatic tools](#allow-turning-off-the-automatic-tools)
+  * [Make the spell-checker happy](#make-the-spell-checker-happy)
 
 <!-- tocstop -->
 
@@ -544,6 +546,10 @@
 
 ### Replace empty lines in code with comments
 
+- The problem with empty lines is that they are visually confusing since one
+  empty line is used also to separate functions. For this reason we suggest
+  using a comment
+
 - If you feel that you need an empty line in the code, it probably means that a
   specific chunk of code is a logical piece of code performing a cohesive
   function
@@ -565,7 +571,7 @@
   paths = list()
   ...
   ```
-- If you don't want to add comments, just comment the empty line.
+- A less optimal solution is to add an empty comment, but this is not great:
   ```python
   ...
   end_y = end_dt.year
@@ -573,9 +579,59 @@
   paths = list()
   ...
   ```
-- The problem with empty lines is that they are visually confusing since one
-  empty line is used also to separate functions. For this reason we suggest
-  using an empty comment
+
+### Comment chunk of codes
+
+- Avoid wall-of-code, by commenting chunks of code that perform a cohesive work
+
+- _Bad_
+
+  ```python
+  system_log_dir = rsiprrec.get_prod_system_log_dir(mode)
+  prod_dir = os.path.join(target_dir, system_log_dir)
+  hio.create_dir(prod_dir, incremental=True)
+  config_dict = {
+      "dag_runner_config": {
+          "wake_up_timestamp": "2023-11-13 08:09:00-05:00",
+          "rt_timeout_in_secs_or_time": 86400,
+          "bar_duration_in_secs": 300,
+      },
+  }
+  config = cconfig.Config.from_dict(config_dict)
+  config_tag = "system_config.output"
+  config.save_to_file(prod_dir, config_tag)
+  ```
+
+- The code above has obviously various chunks that can be described with
+  comments
+  ```
+  # Create a dir to store the System Config.
+  ...
+  # Create an example Config.
+  ...
+  # Save the Config in the target dir.
+  ```
+
+- _Good_
+
+  ```python
+  # Create a dir to store the System Config.
+  system_log_dir = rsiprrec.get_prod_system_log_dir(mode)
+  prod_dir = os.path.join(target_dir, system_log_dir)
+  hio.create_dir(prod_dir, incremental=True)
+  # Create an example Config.
+  config_dict = {
+      "dag_runner_config": {
+          "wake_up_timestamp": "2023-11-13 08:09:00-05:00",
+          "rt_timeout_in_secs_or_time": 86400,
+          "bar_duration_in_secs": 300,
+      },
+  }
+  config = cconfig.Config.from_dict(config_dict)
+  config_tag = "system_config.output"
+  # Save the Config in the target dir.
+  config.save_to_file(prod_dir, config_tag)
+  ```
 
 ### Referring to an object in code comments
 
@@ -807,8 +863,8 @@
   - In fact many loggers use multiple levels of debugging level depending of how
     much detailed debugging info are needed
 - `logging` has ways to enable logging on a per module basis
-   - So in prod mode you need to know which part you want to debug, since
-     printing everything at `INFO` level is not possible
+  - So in prod mode you need to know which part you want to debug, since
+    printing everything at `INFO` level is not possible
 
 ### Use positional args when logging
 
@@ -1388,8 +1444,10 @@
 
 - Pros of the _Good_ vs _Bad_ style
   - When you wrap multiple functions, each function needs to propagate the
-    default parameters, which: - violates DRY; and - adds maintenance burden (if
-    you change the innermost default parameter, you need to change all of them!)
+    default parameters, which:
+    - Violates DRY; and
+    - Adds maintenance burden (if you change the innermost default parameter,
+      you need to change all of them!)
     - With the proposed approach, all the functions use `None`, until the
       innermost function resolves the parameters to the default values
   - The interface is cleaner

@@ -130,16 +130,34 @@
 - You can also use the action `status` to see the status and `remove` to the
   hooks.
 
-# Create the env
+# Create the thin env
 
 - You can follow the
   ```bash
-  # Build the client env
-  > dev_scripts/client_setup/build.sh
+  # Build the client env.
+  > dev_scripts/client_setup/build.sh 2>&1 | tee tmp.build.log
   > source dev_scripts/setenv_amp.sh
   ```
 
-# Playback
+- The installation is successful if you see at the end of the output
+  ```verbatim
+  ...
+  # Installation 
+  # Configure your client with:
+  > source dev_scripts/setenv_amp.sh
+  ```
+
+- To configure each shell, you should run:
+  ```bash
+  > source dev_scripts/setenv_amp.sh
+  ```
+  which should output
+  ```verbatim
+  ...
+  alias w='which'
+  # Enable invoke autocompletion.
+  ==> SUCCESS <==
+  ```
 
 # Publish a notebook
 

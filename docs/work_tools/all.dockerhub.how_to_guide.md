@@ -2,7 +2,6 @@
 
 https://hub.docker.com/
 
-# TODO(Sameep): Update to `kaizenflow` once docker is updated
 Username: sorrentum
 Email: gp@crypto-kaizen.com
 
