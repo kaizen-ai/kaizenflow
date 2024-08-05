@@ -23,6 +23,7 @@
 import logging
 import os
 
+import numpy as np
 import pandas as pd
 
 import core.config as cconfig
@@ -32,6 +33,7 @@ import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hgit as hgit
+import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
 
@@ -78,6 +80,10 @@ config = {
         "x_cols": cols,
         "x_col_shift": 1,
     },
+    "cross_correlation_config": {
+        "first_lag": 1,
+        "last_lag": 5,
+    }
 }
 config = cconfig.Config().from_dict(config)
 print(config)
@@ -121,6 +127,7 @@ feature_df = dtfmod.process_parquet_read_df(
     tile[config["feature_col_names"] + [config["asset_id_col"]]],
     config["asset_id_col"],
 )
+hpandas.df_to_str(feature_df, log_level=logging.INFO)
 
 # %% [markdown]
 # # Generate target
@@ -142,6 +149,7 @@ price_df = dtfmod.process_parquet_read_df(
     tile[[config["price_col_name"]] + [config["asset_id_col"]]],
     config["asset_id_col"],
 )
+hpandas.df_to_str(price_df, log_level=logging.INFO)
 
 # %%
 rets_df = price_df.pct_change()
@@ -161,16 +169,14 @@ zrets_df.stack().hist(bins=31)
 
 # %%
 # Approximate total vol in bps by asset.
-1e4 * vol_df.mean()
+1e4 * vol_df.mean().sort_values(ascending=False)
 
 # %% [markdown]
 # # Combine features and target
 
 # %%
 regression_df = pd.concat([feature_df, zrets_df], axis=1)
-
-# %%
-regression_df.columns.levels[0]
+hpandas.df_to_str(regression_df, log_level=logging.INFO)
 
 # %%
 regression_coeffs = costatis.compute_regression_coefficients_by_group(
@@ -202,3 +208,31 @@ q_val_df = pd.concat(q_val_df, axis=1)
 
 # %%
 q_val_df.plot()
+
+# %%
+first_lag = config["cross_correlation_config"]["first_lag"]
+last_lag = config["cross_correlation_config"]["last_lag"]
+xcorrs = csigproc.compute_mean_cross_correlations(
+    regression_df,
+    config["feature_col_names"],
+    "zrets",
+    first_lag,
+    last_lag,
+)
+xcorrs.head()
+
+# %%
+xcorrs.plot(
+    title="Cross-correlation",
+    xticks=range(first_lag, last_lag + 1),
+    xlabel="lag",
+    ylabel="correlation",
+).legend(loc="right")
+
+# %%
+(np.arctanh(xcorrs) * np.sqrt(regression_df.shape[0])).plot(
+    title="Standardized cross-correlation",
+    xticks=range(first_lag, last_lag + 1),
+    xlabel="lag",
+    ylabel="Standardized correlation",
+).legend(loc="right")

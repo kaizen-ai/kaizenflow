@@ -1,5 +1,3 @@
-# Update CCXT version
-
 <!-- toc -->
 
 - [Testing CCXT Stability Before Docker Container Update](#testing-ccxt-stability-before-docker-container-update)
@@ -10,19 +8,19 @@
 
 <!-- tocstop -->
 
-# Testing CCXT Stability Before Docker Container Update
+# Testing CCXT stability before docker container update
 
 In order to ensure the stability of our code following a CCXT update, a
 thorough testing process is required. Prior to constructing a new container, we
-will update the ccxt version locally and execute tests on the actual API to
+will update the CCXT version locally and execute tests on the actual API to
 verify the reliability of our codebase.
 
-## Steps for Performing CCXT API Tests:
+## Steps for performing CCXT API tests:
 
-1. Update CCXT version locally using the following command :
+1. Update CCXT version locally in the container using the following command:
 
    ```bash
-   sudo /venv/bin/pip install ccxt --upgrade
+   docker> sudo /venv/bin/pip install ccxt --upgrade
    ```
 
 2. Open the file `im_v2/test/test_ccxt.py` and comment the following code
@@ -43,32 +41,28 @@ verify the reliability of our codebase.
 4. Run the following commands locally with the new version installed and file a
    PR with fixes to any breaks that may appear
    - The PR will be merged directly after the new image release to minimize time
-     when build is brroken.
+     when build is broken.
 
    ```bash
-   i run_fast_tests
-   i run_slow_tests
-   i run_superslow_tests
+   > i run_fast_tests
+   > i run_slow_tests
+   > i run_superslow_tests
    ```
 
 5. Verify that all test results are marked as "green" before proceeding with the
    update of the Docker container.
 
-## Failure Handling:
+## Failure handling
 
 In the event that any test fails to pass successfully, an issue should be
-promptly filed. The issue report must include comprehensive details regarding
-the failure, allowing for a swift and accurate diagnosis of the problem. This
-information is vital for maintaining the integrity and reliability of our
-codebase.
+filed. The issue report must include details regarding
+the failure, allowing for an accurate diagnosis of the problem.
 
-By adhering to these testing procedures, we ensure that only thoroughly
-validated code is integrated into the updated Docker container, minimizing the
-risk of potential issues in the production environment.
+# Read CCXT exchange timestamp interpretation
 
-# Reading [CCXT Exchange Timestamp Interpretation](amp/docs/datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md)
+Read [CCXT Exchange Timestamp Interpretation](amp/docs/datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md)
 
-## Steps to Confirm Timestamp Representation
+## Steps to confirm timestamp representation
 
 In order to ensure accurate and up-to-date information regarding the
 interpretation of timestamps in the CCXT exchange library, follow these detailed
@@ -89,3 +83,5 @@ steps:
 3. **Update "As of Version" Information:**
    - Ensure that the "as of version" information is updated to reflect the
      version of the CCXT exchange library that is about to be used.
+
+Last review: GP on 2024-04-20

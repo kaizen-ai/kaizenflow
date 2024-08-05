@@ -25,6 +25,11 @@ _LOG = logging.getLogger(__name__)
 BID_ASK_COLS = ["bid_price", "bid_size", "ask_price", "ask_size"]
 # NUMBER_LEVELS_OF_ORDER_BOOK = 10
 
+# Forward fill is done to resample on grid, this defines the extent of forward fill
+FFILL_LIMIT = 601
+# Currently working at 100 millisecond resolution.
+TIME_RESOLUTION_MS = 100
+
 
 def get_vendor_epoch_unit(vendor: str, data_type: str) -> str:
     """
@@ -394,8 +399,10 @@ def calculate_vwap(
     return calculated_price
 
 
-def resample_bid_ask_data_to_1min(
+def resample_bid_ask_data(
     data: pd.DataFrame,
+    freq: str,
+    *,
     time_resolution_in_ms: int = 200,
 ) -> pd.DataFrame:
     """
@@ -403,11 +410,15 @@ def resample_bid_ask_data_to_1min(
     symbol.
 
     The method expects data in the following format:
-            bid_size, bid_price, ask_size, ask_price
-    timestamp 2022-11-16T00:00:01+00:00 5450, 13.50, 5200, 13.25
 
-    :data: bid/ask price and size information for a single symbol, indexed by
+    ```
+                                        bid_size, bid_price, ask_size, ask_price
+    timestamp 2022-11-16T00:00:01+00:00     5450,     13.50,     5200,     13.25
+    ```
+
+    :param data: bid/ask price and size information for a single symbol, indexed by
         point-in-time
+    :param freq: frequency at which we want to do resampling
     :return: data resampled to 1 minute bars
     """
     try:
@@ -432,7 +443,7 @@ def resample_bid_ask_data_to_1min(
     # Forward fill.
     rule = str(int(time_resolution_in_ms / 2)) + "ms"
     # TODO(Paul): Consider parametrizing `limit`.
-    data = cfinresa.resample(data, rule=rule).last().ffill(limit=601)
+    data = cfinresa.resample(data, rule=rule).last().ffill(limit=FFILL_LIMIT)
     # Compute derived columns with time diff. We do this after resampling
     # everything on a uniform grid.
     bid_ask_midpoint_var = data["bid_ask_midpoint"].diff() ** 2
@@ -448,8 +459,8 @@ def resample_bid_ask_data_to_1min(
     data["bid_ask_midpoint_autocovar"] = bid_ask_midpoint_autocovar
     data["log_size_imbalance_var"] = log_size_imbalance_var
     data["log_size_imbalance_autocovar"] = log_size_imbalance_autocovar
-    # Resample to 1 minute.
-    resampling_groups_1min = [
+    # Resample.
+    resampling_groups = [
         (
             {
                 "bid_price": "bid_price.open",
@@ -526,18 +537,19 @@ def resample_bid_ask_data_to_1min(
             {},
         ),
     ]
-    data_1min = cfinresa.resample_bars(
+    data = cfinresa.resample_bars(
         data,
-        "1T",
-        resampling_groups_1min,
+        freq,
+        resampling_groups,
         vwap_groups=[],
         resample_kwargs={},
     )
-    return data_1min
+    return data
 
 
-def resample_multilevel_bid_ask_data_to_1min(
+def resample_multilevel_bid_ask_data(
     data: pd.DataFrame,
+    freq: str,
     *,
     number_levels_of_order_book: int = 10,
 ) -> pd.DataFrame:
@@ -545,11 +557,16 @@ def resample_multilevel_bid_ask_data_to_1min(
     Resample multilevel bid/ask data to 1 minute interval for single symbol.
 
     The method expects data in the following format:
-            exchange_id, bid_size_l1,bid_price_l1,ask_size_l1,ask_price_l1...
-    timestamp 2022-11-16T00:00:01+00:00 binance, 5450, 13.50, 5200, 13.25...
+    ```
+                                        exchange_id, bid_size_l1, bid_price_l1, ask_size_l1, ask_price_l1...
+    timestamp 2022-11-16T00:00:01+00:00     binance,        5450,        13.50,        5200,        13.25...
+    ```
 
     The method assumes NUMBER_LEVELS_OF_ORDER_BOOK levels of order book
     and a data coming from single exchange.
+
+    :param data: bid/ask data which is to be resampled
+    :param freq: frequency at which the data will be resampled
 
     :return: DataFrame resampled to 1 minute.
     """
@@ -559,7 +576,7 @@ def resample_multilevel_bid_ask_data_to_1min(
         data_one_level = data[bid_ask_cols_level]
         # Canonize column name for resampling function.
         data_one_level.columns = BID_ASK_COLS
-        data_one_level = resample_bid_ask_data_to_1min(data_one_level)
+        data_one_level = resample_bid_ask_data(data_one_level, freq)
         # Uncanonize the column levels back.
         data_one_level = data_one_level.rename(columns=lambda x: f"level_{i}.{x}")
         all_levels_resampled.append(data_one_level)
@@ -569,30 +586,39 @@ def resample_multilevel_bid_ask_data_to_1min(
     return data_resampled
 
 
-def resample_multisymbol_multilevel_bid_ask_data_to_1min(
+def resample_multisymbol_multilevel_bid_ask_data(
     data: pd.DataFrame,
+    freq: str,
     *,
     number_levels_of_order_book: int = 10,
+    currency_pairs: List[str] = None,
 ) -> pd.DataFrame:
     """
-    Resample multilevel bid/ask data to 1 minute interval.
+    Resample multilevel bid/ask data to `freq` interval.
 
     This function supports resampling DataFrame with multiple assets from
     a single exchange.
 
     The method expects data in the following format:
+
+    ```
             exchange_id, currency_pair, bid_size_l1,bid_price_l1,ask_size_l1,ask_price_l1...
     timestamp 2022-11-16T00:00:01+00:00 binance, BTC_USDT, 5450, 13.50, 5200, 13.25...
-
+    ```
     :param number_levels_of_order_book: top N levels to include in the resulting
     DataFrame.
-    :return: DataFrame resampled to 1 minute.
+    :return: DataFrame resampled to `freq`.
     """
     hdbg.dassert_eq(data["exchange_id"].nunique(), 1)
     data_resampled = []
-    for currency_pair, group in data.groupby("currency_pair"):
-        data_resampled_single = resample_multilevel_bid_ask_data_to_1min(
-            group, number_levels_of_order_book=number_levels_of_order_book
+    if not currency_pairs:
+        currency_pairs = data["currency_pair"].unique()
+    for currency_pair in currency_pairs:
+        group = data[data["currency_pair"] == currency_pair]
+        data_resampled_single = resample_multilevel_bid_ask_data(
+            group,
+            freq,
+            number_levels_of_order_book=number_levels_of_order_book,
         )
         data_resampled_single["currency_pair"] = currency_pair
         data_resampled.append(data_resampled_single)
@@ -602,16 +628,37 @@ def resample_multisymbol_multilevel_bid_ask_data_to_1min(
 
 def transform_and_resample_rt_bid_ask_data(
     df_raw: pd.DataFrame,
+    freq: str,
+    *,
+    currency_pairs: List[str] = None,
 ) -> pd.DataFrame:
     """
-    Transform raw bid/ask realtime data and resample to 1 min.
+    Transform raw bid/ask realtime data and resample.
 
-    Input data is assumed to be compatible with schema of `ccxt_bid_ask_futures_raw`.
+    Input data is assumed to be compatible with schema of `ccxt_bid_ask_futures_raw`
+    also assumed to have data from single exchange.
     Currently only level 1 of the orderbook is returned in the resampled DataFrame.
 
     :param df_raw: real-time bid/ask data from a single exchange
-    :return: Data resampled to 1-minute output column schema
+    :param freq: frequency that want we to resample our data, e.g., "10S", "1T",
+
+    :return: Data resampled to `freq` output column schema
     is compatible with `ccxt_bid_ask_futures_resampled_1min` table.
+
+    Example:
+        ---------------
+        Input DataFrame (df_raw):
+        -------------------------
+             timestamp      currency_pair  level  bid_price  bid_size  ask_price  ask_size  id  end_download_timestamp  knowledge_timestamp exchange_id
+        0  1622548800000      BTC_USDT      1      35000       1.2      35005       1.1   1           1622548801000        1622548802000     binance
+        1  1622548805000      BTC_USDT      2      35010       1.5      35015       1.4   2           1622548806000        1622548807000     binance
+        2  1622548810000      BTC_USDT      3      35020       1.8      35025       1.7   3           1622548811000        1622548812000     binance
+
+        Output DataFrame after resampling to 1 second frequency ("1S"):
+        ----------------------------------------------------------------
+            timestamp        bid_price_open  bid_size_open  ask_price_open  ask_size_open  bid_ask_midpoint_open  half_spread_open  log_size_imbalance_open  bid_price_close  bid_size_close  ask_price_close  ask_size_close  bid_ask_midpoint_close  half_spread_close  log_size_imbalance_close  bid_price_high  bid_size_max  ask_price_high  ask_size_max  bid_ask_midpoint_max  half_spread_max  log_size_imbalance_max  bid_price_low  bid_size_min  ask_price_low  ask_size_min  bid_ask_midpoint_min  half_spread_min  log_size_imbalance_min  bid_price_mean  bid_size_mean  ask_price_mean  ask_size_mean  bid_ask_midpoint_mean  half_spread_mean  log_size_imbalance_mean  bid_ask_midpoint_var_100ms  bid_ask_midpoint_autocovar_100ms  log_size_imbalance_var_100ms  log_size_imbalance_autocovar_100ms exchange_id currency_pair  level
+        0  1622548800000         35000.0          1.2           35005.0          1.1              35002.5               2.5               0.087011               35000.0           1.2            35005.0           1.1               35002.5                2.5                  0.087011             35000.0           1.2         35005.0           1.1            35002.5              2.5                0.087011            35000.0         1.2        3  5005.0         1.1             35002.5              2.5                0.087011            35000.0          1.2           35005.0            1.1             35002.5               2.5                 0.087011                    0.0                            0.0                         0.007571                             0.0                   binance      BTC_USDT       1
+        ---------------
     """
     # TODO(Juraj): what's happening is here very similar to
     # `im_v2/common/data/transform/resample_daily_bid_ask_data.py`
@@ -621,16 +668,26 @@ def transform_and_resample_rt_bid_ask_data(
     )
     # TODO(Juraj): for simplicty only level 1 is used now.
     df_raw = df_raw[df_raw["level"] == 1]
-    # Occasionally we can get some duplicates because of downloader overlap,
-    # but the duplicate should contain identical values.
-    df_raw = df_raw.drop_duplicates()
+    # TODO(Juraj): we are aware of duplicate data problem #7230 but for the
+    # sake of resampled data availability we allow occasional duplicate with different values.
+    duplicate_cols_subset = [
+        "timestamp",
+        "currency_pair",
+        "level",
+    ]
+    # Ensure there are no duplicates, in this case
+    #  using duplicates would compute the wrong resampled values.
+    df_raw = df_raw.drop_duplicates(subset=duplicate_cols_subset)
     df_raw["timestamp"] = pd.to_datetime(df_raw["timestamp"], unit="ms")
     df_raw = df_raw.set_index("timestamp")
     df_raw_wide = cfibiask.transform_bid_ask_long_data_to_wide(
         df_raw, "timestamp"
     )
-    df_resampled = resample_multisymbol_multilevel_bid_ask_data_to_1min(
-        df_raw_wide, number_levels_of_order_book=1
+    df_resampled = resample_multisymbol_multilevel_bid_ask_data(
+        df_raw_wide,
+        freq,
+        number_levels_of_order_book=1,
+        currency_pairs=currency_pairs,
     )
     # Rename column to match DB table schema.
     # TODO(Juraj): the lambda will need to be more sophisticated for more levels.

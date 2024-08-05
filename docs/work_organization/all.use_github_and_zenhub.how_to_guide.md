@@ -1,5 +1,3 @@
-# GitHub/ZenHub workflows
-
 <!-- toc -->
 
 - [Introduction](#introduction)
@@ -279,7 +277,7 @@
 - Labels are attributes of an issue (or PR), e.g., `good first issue`,
   `PR_for_reviewers`, `duplicate`, etc.
 - See the current list of labels and their descriptions are
-  [KaizenFlow](https://github.com/kaizen-ai/kaizenflow/labels) and
+  [Sorrentum](https://github.com/sorrentum/sorrentum/labels) and
   [cmamp](https://github.com/cryptokaizen/cmamp/labels)
   - The repos should always have labels in sync
 
@@ -367,10 +365,28 @@ stateDiagram
 
 # Issue workflows
 
+## Naming an Issue
+
+- Use an informative description, typically in the form an action
+  - E.g., "Do this and that"
+- We don't use a period at the end of the title
+- We prefer to avoid too much capitalization to make the Issue title easy to read
+  and for consistency with the rest of the bugs
+  
+  **Good**
+  ```
+  Optimize Prometheus configuration for enhanced Kubernetes monitoring 
+  ```
+
+  **Bad**
+  ```
+  Optimize Prometheus Configuration for Enhanced Kubernetes Monitoring
+  ```
+
+- They are equivalent, but the first one is more readable
+
 ## Filing a new issue
 
-- Use an informative description (typically an action "Do this and that")
-  - We don't use a period at the end of the title
 - If it is a "serious" problem (bug) put as much information about the Issue as
   possible, e.g.,:
   - What you are trying to achieve
@@ -554,7 +570,7 @@ stateDiagram
     in the format below. The report should contain only the files that were
     touched in a PR.
     - We have `run_coverage_report` invoke
-      - `TODO(*): Enable for KaizenFlow and add usage examples.`
+      - `TODO(*): Enable for Sorrentum and add usage examples.`
     - Maybe we can automate it somehow, e.g., with GH actions. But we need to
       start from something.
       ```

@@ -344,9 +344,9 @@ class RawDataReader:
         :return: s3 path
         """
         s3_bucket = f"s3://{self.s3_bucket_name}"
-        _LOG.debug("s3_bucket=", s3_bucket)
+        _LOG.debug("s3_bucket=%s", s3_bucket)
         s3_path = dsdascut.build_s3_dataset_path_from_args(s3_bucket, self.args)
-        _LOG.debug("s3_path=", s3_path)
+        _LOG.debug("s3_path=%s", s3_path)
         s3_path += f"/{currency_pair}.csv.gz"
         return s3_path
 
@@ -356,6 +356,9 @@ class RawDataReader:
 
         This can help in filtering.
         """
+        # TODO(Juraj): heuristically set based on our current datasets,
+        # non-heuristic approach we used to apply causes super-slow
+        # performance for large datasets, see #CmTask8306.
         if (self.args["data_type"] in ["bid_ask", "trades"]) and self.args[
             "action_tag"
         ] != "resampled_1min":
@@ -371,7 +374,7 @@ class RawDataReader:
 
 
 def get_bid_ask_realtime_raw_data_reader(
-    stage: str, data_vendor: str, universe_version: str
+    stage: str, data_vendor: str, universe_version: str, exchange_id: str
 ) -> RawDataReader:
     """
     Get raw data reader for the real-time bid/ask price data.
@@ -383,10 +386,11 @@ def get_bid_ask_realtime_raw_data_reader(
     :param data_vendor: provider of the realtime data, e.g. CCXT or
         Binance
     :param universe_version: version of the universe
+    :param exchange_id: exchange to get data from
     :return: RawDataReader initialized for the realtime bid/ask data
     """
     universe_version = universe_version.replace(".", "_")
     data_vendor = data_vendor.lower()
-    bid_ask_db_signature = f"realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.{universe_version}.{data_vendor}.binance.v1_0_0"
+    bid_ask_db_signature = f"realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.{universe_version}.{data_vendor}.{exchange_id}.v1_0_0"
     bid_ask_raw_data_reader = RawDataReader(bid_ask_db_signature, stage=stage)
     return bid_ask_raw_data_reader

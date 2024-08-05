@@ -10,6 +10,7 @@
   * [Prerequisites](#prerequisites)
   * [Tips](#tips)
   * [Steps](#steps)
+- [How to access the Jupyter server running on the remote server through your local machine](#how-to-access-the-jupyter-server-running-on-the-remote-server-through-your-local-machine)
 
 <!-- tocstop -->
 
@@ -198,3 +199,19 @@ that runs within a docker container located on a remote server.
     "convert"
 ]
 ```
+
+# How to access the Jupyter server running on the remote server through your local machine
+
+1.`i docker_jupyter`
+
+```sh
+##> devops/docker_run/run_jupyter_server.sh
+> cmd=jupyter notebook --ip=* --port=10421 --allow-root --NotebookApp.token=''
+...
+```
+
+2. In VSCode, add port forwarding from port `10421` on the server to the same
+   port on your local machine. You can then access the Jupyter notebook running
+   on the remote machine through `http://localhost:10421` on your local machine.
+
+<img src="figs/visual_studio_code/port_fowarding.png" style="width:6.5in;" />

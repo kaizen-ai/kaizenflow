@@ -143,8 +143,9 @@ def _validate_dataset_signature_semantics(
             mode = "download"
             vendor = tokens_values["vendor"]
             # Convert universe version to the format used in the vendor.
-            version = tokens_values["universe"].replace("_", ".")
-            imvcounun.get_vendor_universe(vendor, mode, version=version)
+            if tokens_values["universe"] != "all":
+                version = tokens_values["universe"].replace("_", ".")
+                imvcounun.get_vendor_universe(vendor, mode, version=version)
         except AssertionError:
             warning_messages.append(
                 f"Universe version {version} is not supported for vendor {vendor}"
@@ -295,12 +296,6 @@ def build_s3_dataset_path_from_args(
 
     :param s3_base_path: Base S3 path to use, i.e.
     's3://cryptokaizen-data'
-     :param s3_base_path: Base S3 path to use, i.e.
-    's3://cryptokaizen-data'
-    :param s3_base_path: Base S3 path to use, i.e. 's3://cryptokaizen-
-        data'
-    :param s3_base_path: Base S3 path to use, i.e. 's3://cryptokaizen-
-        data'
     :param args: arguments to build the dataset signature from
     :param version: version of the dataset schema to use, if None,
         latest version

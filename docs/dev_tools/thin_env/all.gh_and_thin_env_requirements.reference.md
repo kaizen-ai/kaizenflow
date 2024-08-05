@@ -46,15 +46,13 @@ File location:
 
 - `requests`
   - Dependency for the `docker`, for now pinned to the version `2.31.0` since
-    the versions >=`2.32.1` is causing the issue with the `docker-compose`: 
+    the versions >=`2.32.1` is causing the issue with the `docker-compose`:
     https://github.com/psf/requests/issues/6707
   - See the https://github.com/cryptokaizen/cmamp/issues/8340 for details
 
 ### Candidate Packages to remove
 
-- `docker` and `docker-compose`
-
-  Should to be moved to os installation
+- `docker` and `docker-compose` should be moved to OS installation
   https://github.com/cryptokaizen/cmamp/issues/6498
 
 ## GH Actions
@@ -87,11 +85,11 @@ File location:
 
 - `requests`
   - Dependency for the `docker`, for now pinned to the version `2.31.0` since
-    the versions >=`2.32.1` is causing the issue with the `docker-compose`: 
+    the versions >=`2.32.1` is causing the issue with the `docker-compose`:
     https://github.com/psf/requests/issues/6707
   - See the https://github.com/cryptokaizen/cmamp/issues/8340 for details
 
 ### Candidate Packages to remove
 
-- `docker` and `docker-compose` should to be moved to os installation
-  https://github.com/cryptokaizen/cmamp/issues/6498
+- `docker` and `docker-compose` see in the
+  [Thin environment](#candidate-packages-to-remove) section

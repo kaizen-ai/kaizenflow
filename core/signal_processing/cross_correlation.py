@@ -256,3 +256,64 @@ def compute_cross_correlation(
         correlations.append(corr)
     corr_df = pd.concat(correlations, axis=1)
     return corr_df.transpose()
+
+
+def compute_mean_cross_correlation(
+    df: pd.DataFrame,
+    panel_1_name: str,
+    panel_2_name: str,
+    first_lag: int,
+    last_lag: int,
+) -> pd.Series:
+    """
+    Compute mean cross-correlation of lags of panel_1_name with panel_2_man.
+
+    Cross-correlations are computed using `corrwith()`. The mean is computed
+    on the Fisher transformation.
+
+    :param df: dataframe with 2 column levels
+    :panel_1_name: outermost column name of panel to lag
+    :panel_2_name: outermost column name of second panel
+    :first_lag: first lag to compute, e.g., 0, 1, or -1.
+    :last_lag: last lag to compute; must be greater than first_lag
+    :return: series of mean cross-correlations
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_eq(2, df.columns.nlevels)
+    hdbg.dassert_in(panel_1_name, df.columns.levels[0])
+    hdbg.dassert_in(panel_2_name, df.columns.levels[0])
+    hdbg.dassert_lt(first_lag, last_lag)
+    corrs = []
+    idx = list(range(first_lag, last_lag + 1))
+    for lag in idx:
+        corr_srs = df[panel_1_name].shift(lag).corrwith(df[panel_2_name])
+        #
+        mean_corr = np.tanh(np.arctanh(corr_srs).mean())
+        corrs.append(mean_corr)
+    name = panel_1_name + "._xcorr_." + panel_2_name
+    corrs = pd.Series(corrs, index=idx, name=name)
+    return corrs
+
+
+def compute_mean_cross_correlations(
+    df: pd.DataFrame,
+    panel_1_names: List[str],
+    panel_2_name: str,
+    first_lag: int,
+    last_lag: int,
+) -> pd.DataFrame:
+    """
+    Wraps `compute_mean_cross_correlation()`.
+    """
+    xcorrs = []
+    for panel_1_name in panel_1_names:
+        xcorr = compute_mean_cross_correlation(
+            df,
+            panel_1_name,
+            panel_2_name,
+            first_lag,
+            last_lag,
+        )
+        xcorrs.append(xcorr)
+    xcorrs = pd.concat(xcorrs, axis=1)
+    return xcorrs

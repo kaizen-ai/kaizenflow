@@ -42,7 +42,7 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import research_amp.soccer_prediction.models as rasoprmo
-import research_amp.soccer_prediction.preproccesing as rasoprpr
+import research_amp.soccer_prediction.preprocessing as rasoprpr
 import research_amp.soccer_prediction.utils as rasoprut
 
 pd.set_option("display.max_columns", None)

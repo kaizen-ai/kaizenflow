@@ -17,6 +17,7 @@ https://gist.github.com/DGabri/44c682da111ec99186e8550c28466e3c
 Usage:
 ./im_v2/binance/data/extract/maintain_local_orderbook_copy.py
 """
+import copy
 import json
 import logging
 import time
@@ -31,19 +32,35 @@ _LOG = logging.getLogger(__name__)
 
 _SYMBOL = "BTCUSDT"
 
+# File to save snapshosts to.
+_SAVE_LOCATION = f"{_SYMBOL}_order_book_snapshots.csv"
+
 # How long does the script run for.
-_RUN_FOR_SECONDS = 10
+_RUN_FOR_SECONDS = 14400
 
 # How often to receive updates in miliseconds,
 # allowed values: 100, 250, 500ms.
-_ORDER_BOOK_UPDATE_SPEED_MS = 500
+_ORDER_BOOK_UPDATE_SPEED_MS = 100
 
 _ORDER_BOOK = {
     "lastUpdateId": -1,
     "bids": [],
     "asks": [],
+    # Transaction time of the latest processed message
+    "T": None,
+    # Event timestamps of the latest processed message
+    "E": None,
     "wasfirstProcessedEvent": False,
 }
+
+# Each snapshot has a structure:
+# { "T": 123456789,
+#   "E": 123456789,
+#   "bids": [[20000.43, 0.2], [19999.42, 1]...],
+#   "asks": [[20000.43, 0.2], [19999.42, 1]...]
+# }
+# TODO(Juraj): remove global var
+_ORDER_BOOK_SNAPSHOTS_BUFFER = []
 
 
 def _get_orderbook_snapshot() -> None:
@@ -77,7 +94,7 @@ def _update_order_book(message: Dict) -> None:
                         _ORDER_BOOK[side].pop(i)
                     else:
                         # 7. The data in each event is the absolute quantity for a price level.
-                        _ORDER_BOOK[side][i] = quantity
+                        _ORDER_BOOK[side][i][1] = quantity
                     break
 
             # Price not present, add new level
@@ -98,6 +115,10 @@ def _update_order_book(message: Dict) -> None:
 
             if len(_ORDER_BOOK[side]) > 1000:
                 _ORDER_BOOK[side].pop(len(_ORDER_BOOK[side]) - 1)
+    _ORDER_BOOK["E"] = message["E"]
+    _ORDER_BOOK["T"] = message["T"]
+    # Store current state in snapshot buffer.
+    _ORDER_BOOK_SNAPSHOTS_BUFFER.append(copy.deepcopy(_ORDER_BOOK))
 
 
 # Two arguments are required by the library.
@@ -142,7 +163,9 @@ def _listen_ws() -> imvbwwecl.UMFuturesWebsocketClient:
         on_message=_handle_message, on_error=_handle_error
     )
     # 1. Open a stream to wss://fstream.binance.com/stream?streams={symbol}@depth.
-    ws_client.diff_book_depth(symbol=_SYMBOL.lower(), speed=_ORDER_BOOK_UPDATE_SPEED_MS)
+    ws_client.diff_book_depth(
+        symbol=_SYMBOL.lower(), speed=_ORDER_BOOK_UPDATE_SPEED_MS
+    )
     return ws_client
 
 
@@ -150,7 +173,8 @@ def _track_order_book() -> None:
     """
     Log order book periodically.
     """
-    _LOG.info(f"Tracking orderbook for {_RUN_FOR_SECONDS} minute...")
+    global _ORDER_BOOK_SNAPSHOTS_BUFFER
+    _LOG.info(f"Tracking orderbook for {_RUN_FOR_SECONDS} seconds...")
     start = time.time()
     while time.time() - start < _RUN_FOR_SECONDS:
         # If we have gotten in sync with Binance's order book.
@@ -159,12 +183,21 @@ def _track_order_book() -> None:
             _LOG.info(f"Bids: {_ORDER_BOOK['bids'][:10]}")
             _LOG.info(f"Asks: {_ORDER_BOOK['asks'][:10]}")
             _LOG.info("\n#######################\n")
+            with open(_SAVE_LOCATION, mode="a") as f:
+                for snapshot in _ORDER_BOOK_SNAPSHOTS_BUFFER:
+                    # For simpler processing store only top 10 levels
+                    snapshot["bids"] = snapshot["bids"][:10]
+                    snapshot["asks"] = snapshot["asks"][:10]
+                    json.dump(snapshot, f)
+                    # Makes loading the data back into DF easier
+                    f.write("\n")
+                _ORDER_BOOK_SNAPSHOTS_BUFFER = []
         time.sleep(2)
 
 
 def _main():
     hdbg.init_logger(verbosity="INFO", use_exec_path=True)
-    # Websocket order book 
+    # Websocket order book
     try:
         ws_client = _listen_ws()
         _track_order_book()

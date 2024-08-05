@@ -72,6 +72,8 @@ def _get_universe_file_path(
     return file_path
 
 
+# TODO(Dan): Consider to get not numeric universe versions like "universe_btc"
+#  or "universe_small" as well.
 def get_universe_versions(vendor: str, mode: str) -> List[str]:
     """
     Get all the universe versions for the specified vendor and mode.

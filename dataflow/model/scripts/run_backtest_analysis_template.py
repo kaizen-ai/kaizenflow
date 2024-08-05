@@ -71,31 +71,25 @@ def get_run_backtest_analysis_config(
             "volatility_col": "garman_klass_vol",
             "prediction_col": "feature",
         },
-        "bin_annotated_portfolio_df_kwargs": {
-            "proportion_of_data_per_bin": 0.2,
-            "normalize_prediction_col_values": False,
-        },
     }
-    # Add 'asset_id_to_share_decimals' based on the `quantization` parameter:
+    # Add 'asset_id_to_share_decimals' based on the `quantization` parameter.
+    # If quantization is enabled, the share amount is rounded up to the
+    # appropriate accuracy level.
+    asset_id_to_share_decimals = None
     if not backtest_analysis_config_dict["annotate_forecasts_kwargs"][
         "quantization"
     ]:
         asset_id_to_share_decimals = obccccut.get_asset_id_to_share_decimals()
-        backtest_analysis_config_dict["annotate_forecasts_kwargs"][
-            "asset_id_to_share_decimals"
-        ] = asset_id_to_share_decimals
-    else:
-        backtest_analysis_config_dict["annotate_forecasts_kwargs"][
-            "asset_id_to_share_decimals"
-        ] = None
-    # Add `optimizer_config_dict` to the
+    backtest_analysis_config_dict["annotate_forecasts_kwargs"][
+        "asset_id_to_share_decimals"
+    ] = asset_id_to_share_decimals
+    # Add `optimizer_config_dict` to the config.
     if optimizer_config_dict:
         backtest_analysis_config_dict["forecast_evaluator_kwargs"][
             "optimizer_config_dict"
         ] = optimizer_config_dict
     if sweep_param:
         backtest_analysis_config_dict["sweep_param"] = sweep_param
-
     # Build config from dict.
     backtest_analysis_config = cconfig.Config().from_dict(
         backtest_analysis_config_dict
@@ -186,6 +180,7 @@ def main() -> None:
         experiment_dir = os.path.join(
             config["output_dir_name"], key.replace(" ", "")
         )
+        config.save_to_file(experiment_dir, "config")
         _LOG.warning("Saving portfolio in experiment_dir=%s", experiment_dir)
         _ = fep.save_portfolio(
             tile_df,

@@ -8,12 +8,14 @@ Example use:
     --start_timestamp '2023-09-22' \
     --end_timestamp '2023-09-23' \
     --log_dir '/shared_data/filled_orders/' \
-    --secrets_id '4' \
-    --universe 'v7.4'
+    --secret_id '4' \
+    --universe 'v7.4' \
+    --exchange 'binance' \
+    --contract_type 'futures' \
+    --stage 'preprod'
 """
 
 import argparse
-import logging
 
 import pandas as pd
 
@@ -21,8 +23,7 @@ import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import oms.broker.ccxt.ccxt_broker_instances as obccbrin
 import oms.broker.ccxt.ccxt_utils as obccccut
-
-_LOG = logging.getLogger(__name__)
+import oms.hsecrets.secret_identifier as ohsseide
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -44,25 +45,6 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="Beginning of the time period, e.g. '2022-09-23'",
     )
-    parser.add_argument(
-        "--log_dir",
-        action="store",
-        required=True,
-        type=str,
-        help="Location of the output JSON, e.g. '/shared_data/filled_orders/'",
-    )
-    parser.add_argument(
-        "--secrets_id",
-        type=int,
-        default=1,
-        help="Integer ID of the secret key, 1 by default.",
-    )
-    parser.add_argument(
-        "--universe",
-        type=str,
-        required=True,
-        help="Version of the universe, e.g. 'v7.4'",
-    )
     parser = obccccut.add_CcxtBroker_cmd_line_args(parser)
     parser = hparser.add_verbosity_arg(parser)
     return parser
@@ -71,16 +53,11 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Broker config.
-    broker_config = {
-        "limit_price_computer_type": "LimitPriceComputerUsingSpread",
-        "limit_price_computer_kwargs": {
-            "passivity_factor": 0.1,
-        }
-    }
-    # Initialize broker.
-    broker = obccbrin.get_CcxtBroker(
-        args.secrets_id, args.log_dir, args.universe, broker_config
+    secret_identifier = ohsseide.SecretIdentifier(
+        args.exchange, args.stage, "trading", args.secret_id
+    )
+    broker = obccbrin.get_CcxtBroker_exchange_only_instance1(
+        args.universe, secret_identifier, args.log_dir, args.contract_type
     )
     #
     start_timestamp = pd.Timestamp(args.start_timestamp)
