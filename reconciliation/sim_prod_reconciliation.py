@@ -28,7 +28,7 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 import oms.broker.ccxt.ccxt_utils as obccccut
-import oms.order_processing.target_position_and_order_generator as ooptpaoge
+import oms.order_processing.target_position_and_order_generator as ooptpaog
 import oms.portfolio.portfolio as oporport
 import optimizer.forecast_evaluator_with_optimizer as ofevwiop
 
@@ -81,6 +81,7 @@ def build_reconciliation_configs_instance1(
     end_timestamp_as_str = config_dict["end_timestamp_as_str"]
     run_mode = config_dict["run_mode"]
     mode = config_dict["mode"]
+    # TODO(Dan): Consider to expose `check_dag_output_self_consistency`.
     config_list = build_reconciliation_configs(
         dst_root_dir,
         dag_builder_ctor_as_str,
@@ -104,6 +105,7 @@ def build_reconciliation_configs(
     mode: str,
     *,
     tag: str = "",
+    check_dag_output_self_consistency: bool = False,
     set_config_values: Optional[str] = None,
 ) -> cconfig.ConfigList:
     """
@@ -122,7 +124,8 @@ def build_reconciliation_configs(
         at which to end reconcile run, e.g. "20221010_080000"
     :param run_mode: prod run mode, e.g. "prod" or "paper_trading"
     :param mode: reconciliation run mode, i.e., "scheduled" and "manual"
-    param tag: config tag, e.g., "config1"
+    :param tag: config tag, e.g., "config1"
+    :param check_dag_output_self_consistency: switch for DAG output self-consistency check
     :param set_config_values: see `reconcile_run_all` for detailed description
     :return: list of reconciliation configs
     """
@@ -226,10 +229,11 @@ def build_reconciliation_configs(
                 "quantization": quantization,
                 "liquidate_at_end_of_day": liquidate_at_end_of_day,
                 "initialize_beginning_of_day_trades_to_zero": initialize_beginning_of_day_trades_to_zero,
-                "burn_in_bars": 3,
+                "burn_in_bars": 1,
                 "asset_id_to_share_decimals": asset_id_to_share_decimals,
             },
         },
+        "check_dag_output_self_consistency": check_dag_output_self_consistency,
     }
     # Set the default optimizer config values.
     style = "cross_sectional"
@@ -367,7 +371,8 @@ def build_multiday_system_reconciliation_config(
 
 
 # TODO(Grisha): Factor out common code with `build_reconciliation_configs()`.
-def build_prod_pnl_real_time_observer_configs(
+# TODO(Toma): Consider renaming to `system_observer_notebook_configs()`.
+def build_system_observer_configs(
     prod_data_root_dir: str,
     dag_builder_ctor_as_str: str,
     run_mode: str,
@@ -416,10 +421,16 @@ def build_prod_pnl_real_time_observer_configs(
     system_log_subdir = get_prod_system_log_dir(mode)
     system_log_dir = os.path.join(prod_data_dir, system_log_subdir)
     hdbg.dassert_dir_exists(system_log_dir)
+    # TODO(Nina): factor out loading pickled `SystemConfig`.
+    # Load pickled SystemConfig.
+    config_file_name = "system_config.output.values_as_strings.pkl"
+    system_config_path = os.path.join(system_log_dir, config_file_name)
+    system_config = cconfig.load_config_from_pickle(system_config_path)
+    # Get bar duration.
+    bar_duration_in_secs = get_bar_duration_from_config(system_config)
+    bar_duration = hdateti.convert_seconds_to_pandas_minutes(bar_duration_in_secs)
     # Get necessary data from `DagBuilder`.
     dag_builder = dtfcore.get_DagBuilder_from_string(dag_builder_ctor_as_str)
-    dag_config = dag_builder.get_config_template()
-    bar_duration = dag_config["resample"]["transformer_kwargs"]["rule"]
     fep_init_dict = {
         "price_col": dag_builder.get_column_name("price"),
         "prediction_col": dag_builder.get_column_name("prediction"),
@@ -440,6 +451,7 @@ def build_prod_pnl_real_time_observer_configs(
             "date_str": run_date,
             "bar_duration": bar_duration,
             "save_plots_for_investors": save_plots_for_investors,
+            "tag": tag,
         },
         "s3_dst_dir": s3_dst_dir,
         "system_log_dir": system_log_dir,
@@ -452,9 +464,9 @@ def build_prod_pnl_real_time_observer_configs(
                 "liquidate_at_end_of_day": liquidate_at_end_of_day,
                 "initialize_beginning_of_day_trades_to_zero": initialize_beginning_of_day_trades_to_zero,
                 # TODO(Grisha): should it be a function of a model?
-                # TODO(Grisha): ideally the value should come from `run_master_pnl_real_time_observer_notebook()`
+                # TODO(Grisha): ideally the value should come from `run_master_system_observer_notebook()`
                 # because some bars are burnt already there. E.g., the first 3 bars skipped by the
-                # `run_master_pnl_real_time_observer_notebook()` -> no need to burn here.
+                # `run_master_system_observer_notebook()` -> no need to burn here.
                 "burn_in_bars": 0,
                 "asset_id_to_share_decimals": asset_id_to_share_decimals,
                 "bulk_frac_to_remove": 0.0,
@@ -747,7 +759,9 @@ def _get_timestamp_dirs(
         ]
         ```
     """
-    dag_builder_dir = f"{dag_builder_name}.{tag}" if tag != "" else dag_builder_name
+    dag_builder_dir = (
+        f"{dag_builder_name}.{tag}" if tag != "" else dag_builder_name
+    )
     target_dir = os.path.join(dst_root_dir, dag_builder_dir, run_mode)
     # `listdir()` utilizes `glob` which has limited functionality compared
     # to regex so other variations of the pattern might not work.
@@ -1450,7 +1464,7 @@ def load_target_positions(
     hdbg.dassert_dir_exists(target_position_dir)
     # Load the target position dataframe.
     target_position_df = (
-        ooptpaoge.TargetPositionAndOrderGenerator.load_target_positions(
+        ooptpaog.TargetPositionAndOrderGenerator.load_target_positions(
             target_position_dir
         )
     )

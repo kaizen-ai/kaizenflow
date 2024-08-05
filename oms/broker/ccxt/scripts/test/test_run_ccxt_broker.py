@@ -40,6 +40,7 @@ class TestRunCcxtBroker1(hunitest.TestCase):
             "incremental": False,
             "volatility_multiple": [0.75],
             "include_btc_usdt": "false",
+            "exchange_id": "binance"
         }
         mock_parse = argparse.Namespace(**kwargs)
         mock_argument_parser.parse_args.return_value = mock_parse
