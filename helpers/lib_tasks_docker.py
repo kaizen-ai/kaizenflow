@@ -1106,7 +1106,7 @@ def _get_docker_base_cmd(
     #
     docker_cmd_.append(
         r"""
-        docker-compose"""
+        docker compose"""
     )
     docker_compose_files = _get_docker_compose_files(
         stage,
