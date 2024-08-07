@@ -22,6 +22,129 @@ _LOG = logging.getLogger(__name__)
 _AWS_PROFILE = "ck"
 
 
+class Test_dassert_is_days(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test that function do not raise an exception with exact integer number
+        of days.
+        """
+        timedelta = pd.Timedelta(days=5)
+        # Should pass without exception.
+        hpandas.dassert_is_days(timedelta)
+
+    def test2(self) -> None:
+        """
+        Test that function raises an exception with float number of days.
+        """
+        timedelta = pd.Timedelta(days=1.5)
+        with self.assertRaises(AssertionError) as cm:
+            # Should raise AssertionError.
+            hpandas.dassert_is_days(timedelta)
+        actual_exception = str(cm.exception)
+        expected_exception = r"""
+        * Failed assertion *
+        cond=False
+        timedelta='1 days 12:00:00' is not an integer number of days
+        """
+        # Check.
+        self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Test that function raises an exception with duration in days and hours.
+        """
+        timedelta = pd.Timedelta(days=5, hours=1)
+        with self.assertRaises(AssertionError) as cm:
+            # Should raise AssertionError
+            hpandas.dassert_is_days(timedelta)
+        actual_exception = str(cm.exception)
+        expected_exception = r"""
+        * Failed assertion *
+        cond=False
+        timedelta='5 days 01:00:00' is not an integer number of days
+        """
+        # Check.
+        self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Test that function do not raise an exception with 0 number of days.
+        """
+        timedelta = pd.Timedelta(days=0)
+        # Should pass without exception.
+        hpandas.dassert_is_days(timedelta)
+
+    def test5(self) -> None:
+        """
+        Test that function raises an exception with the duration in string
+        format.
+        """
+        timedelta = pd.Timedelta("5")
+        with self.assertRaises(AssertionError) as cm:
+            # Should raise AssertionError.
+            hpandas.dassert_is_days(timedelta)
+        actual_exception = str(cm.exception)
+        expected_exception = r"""
+        * Failed assertion *
+        cond=False
+        timedelta='0 days 00:00:00.000000005' is not an integer number of days
+        """
+        # Check.
+        self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
+
+    def test6(self) -> None:
+        """
+        Test that function do not raise an exception with negative number of
+        days.
+        """
+        timedelta = pd.Timedelta(days=-1)
+        # Should pass without exception.
+        hpandas.dassert_is_days(timedelta)
+
+    def test7(self) -> None:
+        """
+        Test that function raises an exception with duration < minimum number
+        of days.
+        """
+        timedelta = pd.Timedelta(days=-1)
+        with self.assertRaises(AssertionError) as cm:
+            # Should raise AssertionError.
+            hpandas.dassert_is_days(timedelta, min_num_days=1)
+        actual_exception = str(cm.exception)
+        expected_exception = r"""
+        * Failed assertion *
+        1 <= -1
+        """
+        # Check.
+        self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
+
+    def test8(self) -> None:
+        """
+        Test that function raises an exception with exact integer days and 0
+        minimum days.
+        """
+        timedelta = pd.Timedelta(days=0)
+        with self.assertRaises(AssertionError) as cm:
+            # Should raise AssertionError.
+            hpandas.dassert_is_days(timedelta, min_num_days=0)
+        actual_exception = str(cm.exception)
+        expected_exception = r"""
+        * Failed assertion *
+        1 <= 0
+        """
+        # Check.
+        self.assert_equal(actual_exception, expected_exception, fuzzy_match=True)
+
+    def test9(self) -> None:
+        """
+        Test that function do not raise an exception with integer days and
+        minimum days > 1.
+        """
+        timedelta = pd.Timedelta(days=5)
+        # Should pass without exception.
+        hpandas.dassert_is_days(timedelta, min_num_days=1)
+
+
 class Test_dassert_is_unique1(hunitest.TestCase):
     def get_df1(self) -> pd.DataFrame:
         """
@@ -130,109 +253,6 @@ class Test_to_series1(hunitest.TestCase):
         a4    4
         Name: 0, dtype: int64"""
         self.helper(n, exp)
-
-
-# #############################################################################
-
-
-class Test_dassert_valid_remap(hunitest.TestCase):
-    def test1(self) -> None:
-        """
-        Check that the function works with correct inputs.
-        """
-        # Set inputs.
-        to_remap = ["dummy_value_1", "dummy_value_2", "dummy_value_3"]
-        remap_dict = {
-            "dummy_value_1": "1, 2, 3",
-            "dummy_value_2": "A, B, C",
-        }
-        # Check.
-        hpandas.dassert_valid_remap(to_remap, remap_dict)
-
-    def test2(self) -> None:
-        """
-        Check that an assertion is raised if dictionary keys are not a subset.
-        """
-        # Set inputs.
-        to_remap = ["dummy_value_1", "dummy_value_2"]
-        remap_dict = {
-            "dummy_value_1": "1, 2, 3",
-            "dummy_value_2": "A, B, C",
-            "dummy_value_3": "A1, A2, A3",
-        }
-        # Run.
-        with self.assertRaises(AssertionError) as cm:
-            hpandas.dassert_valid_remap(to_remap, remap_dict)
-        actual = str(cm.exception)
-        expected = r"""
-        * Failed assertion *
-        val1=['dummy_value_1', 'dummy_value_2', 'dummy_value_3']
-        issubset
-        val2=['dummy_value_1', 'dummy_value_2']
-        val1 - val2=['dummy_value_3']
-        Keys to remap should be a subset of existing columns"""
-        # Check.
-        self.assert_equal(actual, expected, fuzzy_match=True)
-
-    def test3(self) -> None:
-        """
-        Check that an assertion is raised if the duplicate values are present in the dict.
-        """
-        # Set inputs.
-        to_remap = ["dummy_value_1", "dummy_value_2", "dummy_value_3"]
-        remap_dict = {
-            "dummy_value_1": 1,
-            "dummy_value_2": "A, B, C",
-            "dummy_value_3": "A, B, C",
-        }
-        # Run.
-        with self.assertRaises(AttributeError) as cm:
-            hpandas.dassert_valid_remap(to_remap, remap_dict)
-        actual = str(cm.exception)
-        expected = r"""
-        'dict_values' object has no attribute 'count'"""
-        # Check.
-        self.assert_equal(actual, expected, fuzzy_match=True)
-
-    def test4(self) -> None:
-        """
-        Check that an assertion is raised if the input is not a list.
-        """
-        # Set inputs.
-        to_remap = {"dummy_value_1"}
-        remap_dict = {
-            "dummy_value_1": "1, 2, 3",
-        }
-        # Run.
-        with self.assertRaises(AssertionError) as cm:
-            hpandas.dassert_valid_remap(to_remap, remap_dict)
-        actual = str(cm.exception)
-        expected = r"""
-        * Failed assertion *
-        Instance of '{'dummy_value_1'}' is '<class 'set'>' instead of '<class 'list'>'
-        """
-        # Check.
-        self.assert_equal(actual, expected, fuzzy_match=True)
-
-    def test5(self) -> None:
-        """
-        Check that an assertion is raised if the input is not a dictionary.
-        """
-        # Set inputs.
-        to_remap = ["dummy_value_1"]
-        remap_dict = [
-            "dummy_value_1 : 1, 2, 3",
-        ]
-        # Run.
-        with self.assertRaises(AssertionError) as cm:
-            hpandas.dassert_valid_remap(to_remap, remap_dict)
-        actual = str(cm.exception)
-        expected = r"""
-        * Failed assertion *
-        Instance of '['dummy_value_1 : 1, 2, 3']' is '<class 'list'>' instead of '<class 'dict'>'
-        """
-        # Check.
-        self.assert_equal(actual, expected, fuzzy_match=True)
 
 
 # #############################################################################
@@ -3631,7 +3651,8 @@ class Test_dassert_strictly_increasing_index(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        Check that an assert is raised for a not monotonically increasing index.
+        Check that an assert is raised for a not monotonically increasing
+        index.
         """
         # Build test dataframe.
         idx = [
@@ -4065,9 +4086,7 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
         """
          Helper function to get test multi-index dataframe.
          Example of dataframe returned when `index_is_datetime = True`:
-
          ```
-
                                              column1     column2
          index   timestamp
          index1  2022-01-01 21:00:00+00:00   -0.122140   -1.949431
@@ -4075,9 +4094,7 @@ class Test_dassert_index_is_datetime(hunitest.TestCase):
          index2  2022-01-01 21:00:00+00:00   1.237079    1.168012
                  2022-01-01 21:10:00+00:00   1.333692    1.708455
          ```
-
          Example of dataframe returned when `index_is_datetime = False`:
-
         ```
                              column1     column2
          index   timestamp
