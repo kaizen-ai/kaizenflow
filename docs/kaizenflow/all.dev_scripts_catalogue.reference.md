@@ -97,7 +97,7 @@
 ## poetry
 ## process_prof.py
 ## release_encrypted_model.sh
-## release_kaizenflow
+## release_sorrentum
 ## remove_escape_chars.py
 ## remove_jupyter_metadata.sh
 ## remove_redundant_paths.sh

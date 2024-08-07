@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, List
 
-import dev_scripts.find_unused_golden_files as dsfugofi
+import dev_scripts.coding_tools.find_unused_golden_files as dsfugofi
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)

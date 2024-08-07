@@ -62,10 +62,18 @@ else:
     default_config_dict = {
         # Provide a list of experiment output dirs for analysis.
         "system_log_dirs": [
-            "/shared_data/backtest.danya/build_tile_configs.C11a.ccxt_v8_1-all.5T.2023-01-01_2024-03-20.ins.run0/portfolio_dfs/20240331_204543/optimizer_config_dict:constant_correlation_penalty=5000",
-            "/shared_data/backtest.danya/build_tile_configs.C11a.ccxt_v8_1-all.5T.2023-01-01_2024-03-20.ins.run0/portfolio_dfs/20240331_204543/optimizer_config_dict:constant_correlation_penalty=10000",
+            "/shared_data/backtest.C14a.config1/build_tile_configs.C14a.ccxt_v8_1-all.15T.2023-08-01_2024-07-07.ins.run0/portfolio_dfs/20240708_125433/default_config"
         ],
         "pnl_resampling_frequency": "D",
+        "bin_annotated_portfolio_df_kwargs": {
+            "proportion_of_data_per_bin": 0.2,
+            "normalize_prediction_col_values": False,
+        },
+        # Start date to trim the data for analysis.
+        # To use all data, use "None".
+        # Example of `start_date` value:
+        # "start_date": pd.Timestamp("2023-08-01", tz="US/Eastern")
+        "start_date": None,
     }
     # Build config from dict.
     default_config = cconfig.Config().from_dict(default_config_dict)
@@ -75,12 +83,24 @@ print(default_config)
 # # Load portfolio metrics
 
 # %%
-# Load the portfolio metrics.
-afe = dtfmod.AbstractForecastEvaluator()
+# Load the portfolio DFs and stats.
 bar_metrics_dict = {}
+portfolio_df_dict = {}
+start_date = default_config["start_date"]
 for index, system_log_dir in enumerate(default_config["system_log_dirs"]):
-    bar_metrics = afe.load_portfolio_stats(system_log_dir)
+    (
+        portfolio_df,
+        bar_metrics,
+    ) = dtfmod.AbstractForecastEvaluator.load_portfolio_and_stats(system_log_dir)
+    bar_metrics_dict[index] = bar_metrics.loc[start_date:]
+    portfolio_df_dict[index] = portfolio_df.loc[start_date:]
+    # Trim to given start_date, if provided.
+    if start_date is not None:
+        _LOG.warning("Trimming data starting from %s", str(start_date))
+        bar_metrics = bar_metrics.loc[start_date:]
+        portfolio_df = portfolio_df.loc[start_date:]
     bar_metrics_dict[index] = bar_metrics
+    portfolio_df_dict[index] = portfolio_df
 portfolio_stats_df = pd.concat(bar_metrics_dict, axis=1)
 
 # %% [markdown]
@@ -89,6 +109,13 @@ portfolio_stats_df = pd.concat(bar_metrics_dict, axis=1)
 # %%
 coplotti.plot_portfolio_stats(
     portfolio_stats_df, freq=default_config["pnl_resampling_frequency"]
+)
+
+# %%
+# Plot binned stats.
+coplotti.plot_portfolio_binned_stats(
+    portfolio_df_dict,
+    **default_config["bin_annotated_portfolio_df_kwargs"],
 )
 
 # %% [markdown]

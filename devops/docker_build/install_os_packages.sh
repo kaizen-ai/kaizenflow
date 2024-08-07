@@ -44,7 +44,6 @@ apt-get install $APT_GET_OPTS build-essential autoconf libtool python3.9-dev pyt
 update-alternatives --install /usr/local/bin/python python /usr/bin/python3.9 40
 update-alternatives --install /usr/local/bin/python3 python3 /usr/bin/python3.9 40
 
-
 # Install pip.
 apt-get install $APT_GET_OPTS curl
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py -k

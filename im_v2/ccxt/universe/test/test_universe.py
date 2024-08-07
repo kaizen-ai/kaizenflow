@@ -31,6 +31,20 @@ class TestGetUniverse1(imvcountt.TestGetUniverse1_TestCase):
         """
         self._test_get_universe_invalid_version("CCXT")
 
+    def test_get_vendor_universe_one_symbol1(self) -> None:
+        """
+        Test that vendor universe is loaded correctly as dict using one symbol
+        universe file.
+        """
+        self._test_get_vendor_universe_one_symbol("CCXT", "btc", "binance", "BTC_USDT")
+
+    def test_get_vendor_universe_one_symbol2(self) -> None:
+        """
+        Test that vendor universe is loaded correctly as dict using one symbol
+        universe file.
+        """
+        self._test_get_vendor_universe_one_symbol("binance", "eth", "binance", "ETH_USDT")
+
     def test_get_vendor_universe_small(self) -> None:
         """
         Test that vendor universe is loaded correctly as dict using small
@@ -55,7 +69,7 @@ class TestGetUniverseVersions1(imvcountt.TestGetUniverseVersions1_TestCase):
         """
         vendor = "CCXT"
         mode = "trade"
-        expected_universes_str = "['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v7.1', 'v7.2', 'v7.3', 'v7.4', 'v7.5', 'v8', 'v8.1', 'v8.2']"
+        expected_universes_str = "['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v7.1', 'v7.2', 'v7.3', 'v7.4', 'v7.5', 'v8', 'v8.1', 'v8.2', 'v8.3', 'v8.4']"
         self._test_get_universe_versions(vendor, mode, expected_universes_str)
 
     def test_get_universe_versions2(self) -> None:

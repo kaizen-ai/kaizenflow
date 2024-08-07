@@ -1,0 +1,8 @@
+                          holdings_price_per_share trade_price_per_share slippage_notional slippage_notional_per_share slippage_in_bps benchmark_return_notional benchmark_return_in_bps is_buy is_sell is_benchmark_profitable
+                                                 1                     1                 1                           1               1                         1                       1      1       1                       1
+wall_clock_timestamp
+2024-05-30 08:00:00-04:00                      NaN                   NaN               NaN                         NaN             NaN                       NaN                     NaN  False   False                     NaN
+2024-05-30 10:00:00-04:00                      NaN                594.35               NaN                         NaN             NaN                       NaN                     NaN  False    True                     NaN
+2024-05-30 12:00:00-04:00                   596.99                597.35            0.0612                        0.36        6.030252                       NaN                     0.0   True   False                     NaN
+2024-05-30 14:00:00-04:00                      NaN                   NaN               NaN                         NaN             NaN                       NaN                     0.0  False   False                     NaN
+2024-05-30 16:00:00-04:00                      NaN                   NaN               NaN                         NaN             NaN                       NaN                     NaN  False   False                     NaN

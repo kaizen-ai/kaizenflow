@@ -78,7 +78,7 @@ This contains a set of resources that over time will make 10x more productive
 
 # In-depth docs
 
-- [Code organization](/docs/kaizenflow/all.amp_code_organization.reference.md)
+- [Code organization](/docs/all.code_organization.reference.md)
 
 - [Buildmeister process](/docs/work_organization/all.buildmeister.how_to_guide.md)
 

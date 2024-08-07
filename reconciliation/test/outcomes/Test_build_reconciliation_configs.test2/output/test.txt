@@ -21,7 +21,7 @@
         quantization: None
         liquidate_at_end_of_day: False
         initialize_beginning_of_day_trades_to_zero: False
-        burn_in_bars: 3
+        burn_in_bars: 1
         asset_id_to_share_decimals:
           1759964944: 0
           2499295598: 0
@@ -235,3 +235,4 @@
         style: longitudinal
         target_dollar_risk_per_name: 1.0
         prediction_abs_threshold: 0.3
+    check_dag_output_self_consistency: True

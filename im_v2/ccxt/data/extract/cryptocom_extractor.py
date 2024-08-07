@@ -12,13 +12,14 @@ import pandas as pd
 import tqdm
 
 import helpers.hdatetime as hdateti
+import helpers.hpandas as hpandas
 import helpers.hdbg as hdbg
-import im_v2.ccxt.data.extract.extractor as imvcdexex
+import im_v2.ccxt.data.extract.extractor as ivcdexex
 
 _LOG = logging.getLogger(__name__)
 
 
-class CryptocomCcxtExtractor(imvcdexex.CcxtExtractor):
+class CryptocomCcxtExtractor(ivcdexex.CcxtExtractor):
     def __init__(self, exchange_id: str, contract_type: str) -> None:
         _LOG.info("Logging using Cryptocom Extractor")
         hdbg.dassert_eq(exchange_id, "cryptocom")
@@ -132,13 +133,17 @@ class CryptocomCcxtExtractor(imvcdexex.CcxtExtractor):
         :param bar_per_iteration: number of bars per iteration
         :param end_timestamp: end time till when is data fetched in
             milliseconds
-        :return: OHLCV data from CCXT that looks like: ``` timestamp
-            open high low close volume
-            end_download_timestamp 0 1631145600000 46048.31
-            46050.00 46002.02 46005.10 55.12298 2022-02-22
-            18:00:06.091652+00:00 1 1631145660000 46008.34 46037.70
-            45975.59 46037.70 70.45695 2022-02-22
-            18:00:06.091652+00:00 ```
+        :return: OHLCV data from CCXT that looks like: 
+        
+        ``` 
+              timestamp      open       high        low       close      volume         
+        0 1631145600000  46048.31   46050.00   46002.02    46005.10    55.12298    
+        1 1631145660000  46008.34   46037.70   45975.59    46037.70    70.45695    
+
+                    end_download_timestamp
+        0 2022-02-22 18:00:06.091652+00:00
+        1 2022-02-22 18:00:06.091652+00:00
+        ```
         """
         # Change currency pair to CCXT format.
         currency_pair = currency_pair.replace("_", "/")
@@ -155,9 +160,9 @@ class CryptocomCcxtExtractor(imvcdexex.CcxtExtractor):
         # Package the data.
         columns = ["timestamp", "open", "high", "low", "close", "volume"]
         bars = pd.DataFrame(bars, columns=columns)
-        bars["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+        bars = hpandas.add_end_download_timestamp(bars)
         return bars
-    
+
     def _fetch_trades(
         self,
         currency_pair: str,
@@ -176,11 +181,12 @@ class CryptocomCcxtExtractor(imvcdexex.CcxtExtractor):
         :param sleep_time_in_secs: time to sleep between iterations
         :param limit: number of trades per iteration
         :return: trades data from CCXT that looks like:
-            ```
+        
+        ``` 
                 timestamp      symbol      side    price     amount           end_download_timestamp
             0   1631145600000  BTC/USDT    buy     46048.31  0.001  2022-02-22 18:00:06.091652+00:00
             1   1631145600000  BTC/USDT    sell    46050.00  0.001  2022-02-22 18:00:06.091652+00:00
-            ```
+        ```
         """
         # Prepare parameters.
         columns = ["id", "timestamp", "symbol", "side", "price", "amount"]
@@ -193,10 +199,13 @@ class CryptocomCcxtExtractor(imvcdexex.CcxtExtractor):
         while True:
             if last_data_id is None:
                 # Start from beginning, get the data from the start timestamp.
-                params = {"start_ts":start_timestamp, "end_ts":end_timestamp, "count":limit}
+                params = {
+                    "start_ts": start_timestamp,
+                    "end_ts": end_timestamp,
+                    "count": limit,
+                }
                 data = self._sync_exchange.fetch_trades(
-                    currency_pair,
-                    params=params
+                    currency_pair, params=params
                 )
             else:
                 data = self._sync_exchange.fetch_trades(
@@ -216,7 +225,7 @@ class CryptocomCcxtExtractor(imvcdexex.CcxtExtractor):
             # Take a nap in order to avoid hitting the rate limit.
             time.sleep(sleep_time_in_secs)
         trades_df = pd.concat(trades).reset_index(drop=True).drop(columns=["id"])
-        trades_df["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+        trades_df = hpandas.add_end_download_timestamp(trades_df)
         # Cut the data if it exceeds the end timestamp.
         trades_df = trades_df[trades_df["timestamp"] < end_timestamp]
         return trades_df

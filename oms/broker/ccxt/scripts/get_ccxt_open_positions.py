@@ -10,16 +10,16 @@ Example use:
     --contract_type 'futures' \
     --stage 'preprod' \
     --secret_id 4 \
+    --universe 'v8.1' \
     --log_dir '/shared_data/system_log_dir/'
 """
 import argparse
 import logging
 
 import helpers.hdbg as hdbg
-import helpers.hprint as hprint
 import helpers.hparser as hparser
+import helpers.hprint as hprint
 import oms.broker.ccxt.ccxt_broker_instances as obccbrin
-import oms.broker.ccxt.ccxt_broker_utils as obccbrut
 import oms.broker.ccxt.ccxt_utils as obccccut
 import oms.hsecrets.secret_identifier as ohsseide
 
@@ -49,10 +49,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
         exchange, stage, "trading", secret_id
     )
     broker = obccbrin.get_CcxtBroker_exchange_only_instance1(
-        universe_version, secret_identifier, log_dir,
+        universe_version, secret_identifier, log_dir, contract_type
     )
     open_positions = broker.get_open_positions()
     _LOG.info("Open positions : %s", hprint.pprint_pformat(open_positions))
+
 
 if __name__ == "__main__":
     _main(_parse())

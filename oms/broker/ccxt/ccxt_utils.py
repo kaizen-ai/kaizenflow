@@ -215,15 +215,26 @@ def _assert_exchange_methods_present(
 ) -> None:
     # Assert that the requested exchange supports all methods necessary to
     # make placing/fetching orders possible.
-    methods = [
-        "createOrder",
-        "fetchClosedOrders",
-        "fetchPositions",
-        "fetchBalance",
-        "fetchLeverageTiers",
-        "setLeverage",
-        "fetchMyTrades",
-    ]
+    # TODO(Juraj): This is a hacky solution -> crypto.com
+    # does not have setLeverage method but it's not needed.
+    if str(exchange) == "Binance":
+        methods = [
+            "createOrder",
+            "fetchClosedOrders",
+            "fetchPositions",
+            "fetchBalance",
+            "fetchLeverageTiers",
+            "setLeverage",
+            "fetchMyTrades",
+        ]
+    else:
+        methods = [
+            "createOrder",
+            "fetchClosedOrders",
+            "fetchPositions",
+            "fetchBalance",
+            "fetchMyTrades",
+        ]
     if additional_methods is not None:
         methods.extend(additional_methods)
     abort = False
@@ -272,6 +283,17 @@ def create_ccxt_exchanges(
     # If enabled, CCXT can reject an order silently, which we want to avoid.
     # See CMTask4113.
     exchange_params["rateLimit"] = False
+    # Set request timeout to lower value to reduce waiting time.
+    # Different API end-points need different timeout thresholds,
+    # but CCXT does not allow to set per-end-point timeout thresholds,
+    # only the global one. So we use the default CCXT timeout threshold for
+    # every end-point to increase the probability of a call to be successful.
+    # See related discussion in CmTask8552.
+    # TODO(Samarth): This parameter needs to be parameterized in the config
+    # as it depends on the region.
+    # TODO(Samarth): Revisit to find ideal number that can avoid
+    # `RequestTimeout` exception and prevents wave miss-alignment on retries.
+    exchange_params["timeout"] = 10000
     # Log into futures/spot market.
     if contract_type == "futures":
         exchange_params["options"] = {"defaultType": "future"}

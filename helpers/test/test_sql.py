@@ -244,3 +244,97 @@ class TestSql1(imvcddbut.TestImDbHelper):
                     )
                     """
         self.connection.cursor().execute(query)
+
+
+class TestSql2(imvcddbut.TestImDbHelper):
+    """
+    Test case for writing and reading postgres database with mixed timestamp
+    formats.
+    """
+
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
+
+    def test1(self) -> None:
+        """
+        Write two DataFrames with different timestamp formats to a postgres
+        database and read it back.
+        """
+        # Create the table.
+        self._create_test_table()
+        # Insert data in the table with timestamp in string format.
+        initial_df = self._get_test_df()
+        hsql.execute_insert_query(
+            self.connection, initial_df.reset_index(), "test_table"
+        )
+        # Append data in the table with timestamp in pd.Timestamp format.
+        second_df = initial_df.copy()
+        second_df["end_download_timestamp"] = pd.to_datetime(
+            second_df["end_download_timestamp"]
+        )
+        hsql.execute_insert_query(
+            self.connection, second_df.reset_index(), "test_table"
+        )
+        # Read it back and verify the output.
+        actual_table = hsql.execute_query_to_df(
+            self.connection, "SELECT * FROM test_table"
+        )
+        actual = str(actual_table)
+        expected = r"""
+          bids  asks    symbol                        ts  \
+        0   200   150  BTC_USDT 2024-05-20 00:00:00+00:00
+        1   123   120  BTC_USDT 2024-05-20 00:00:00+00:00
+        2   263   240  BTC_USDT 2024-05-20 00:00:00+00:00
+        3   167   150  BTC_USDT 2024-05-20 00:00:00+00:00
+        4   200   150  BTC_USDT 2024-05-20 00:00:00+00:00
+        5   123   120  BTC_USDT 2024-05-20 00:00:00+00:00
+        6   263   240  BTC_USDT 2024-05-20 00:00:00+00:00
+        7   167   150  BTC_USDT 2024-05-20 00:00:00+00:00
+
+            end_download_timestamp
+        0 2024-06-04 20:38:43.467599+00:00
+        1 2024-06-04 20:38:43.467599+00:00
+        2 2024-06-04 20:38:43.467599+00:00
+        3 2024-06-04 20:38:43.467599+00:00
+        4 2024-06-04 20:38:43.467599+00:00
+        5 2024-06-04 20:38:43.467599+00:00
+        6 2024-06-04 20:38:43.467599+00:00
+        7 2024-06-04 20:38:43.467599+00:00
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+        # Delete the table.
+        hsql.remove_table(self.connection, "test_table")
+
+    def _get_test_df(self) -> pd.DataFrame:
+        """
+        Create a Test DataFrame with timestamps.
+        """
+        timestamp = pd.Timestamp("2024-05-20 00:00:00", tz="UTC")
+        index = [timestamp for _ in range(4)]
+        df = pd.DataFrame(
+            {
+                "bids": [200, 123, 263, 167],
+                "asks": [150, 120, 240, 150],
+                "symbol": ["BTC_USDT" for _ in range(4)],
+            },
+            index=index,
+        )
+        df.index.name = "ts"
+        end_download_timestamp = "2024-06-04 20:38:43.467599+00:00"
+        df["end_download_timestamp"] = end_download_timestamp
+        return df
+
+    def _create_test_table(self) -> None:
+        """
+        Create the test table.
+        """
+        query = """CREATE TABLE IF NOT EXISTS test_table(
+            bids INT,
+            asks INT,
+            symbol TEXT,
+            ts TIMESTAMP WITH TIME ZONE,
+            end_download_timestamp TIMESTAMP WITH TIME ZONE
+        )
+        """
+        self.connection.cursor().execute(query)

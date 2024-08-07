@@ -189,4 +189,58 @@ ohlcv_from_df_data = dataframe_im_client.read_data(
 )
 ohlcv_from_df_data.head()
 
+# %% [markdown]
+# # CCXT Crypto.com 1-minute bid/ask futures data
+
+# %%
+config = {
+    "universe": {
+        "vendor": "CCXT",
+        "mode": "trade",
+        "version": "v7.5",
+        "as_full_symbol": True,
+    },
+    # This is roughly the span of the dataset but there will be gaps for sure.
+    "start_timestamp": pd.Timestamp("2024-01-22T00:00:00", tz="UTC"),
+    "end_timestamp": pd.Timestamp("2024-07-08T23:59:00", tz="UTC"),
+    "columns": None,
+    "filter_data_mode": "assert",
+    "bid_ask_parquet_config": {
+        "vendor": "ccxt",
+        "universe_version": "v7.5",
+        "root_dir": "s3://cryptokaizen-data.preprod/tokyo/v3",
+        "partition_mode": "by_year_month",
+        "dataset": "bid_ask",
+        "contract_type": "futures",
+        "data_snapshot": "",
+        "version": "v2_0_0",
+        "download_universe_version": "v7_5",
+        "tag": "resampled_1min",
+        "aws_profile": "ck",
+    },
+}
+config = cconfig.Config().from_dict(config)
+print(config)
+
+# %%
+full_symbols = ivcu.get_vendor_universe(**config["universe"])
+# Filter crypto.com symbols
+full_symbols = [fs for fs in full_symbols if fs.startswith("crypto")]
+full_symbols
+
+# %%
+bid_ask_im_client = icdc.HistoricalPqByCurrencyPairTileClient(
+    **config["bid_ask_parquet_config"]
+)
+
+# %%
+bid_ask_data = bid_ask_im_client.read_data(
+    full_symbols,
+    config["start_timestamp"],
+    config["end_timestamp"],
+    config["columns"],
+    config["filter_data_mode"],
+)
+bid_ask_data.head()
+
 # %%

@@ -157,17 +157,16 @@ class TestImRawDataClient2(imvcddbut.TestImDbHelper):
         actual = reader.load_db_table_head()
         actual = pprint.pformat(actual)
         expected = r"""
-                        timestamp  bid_size  bid_price  ask_size  ask_price currency_pair  \
-                    0  1659710207000      10.0       31.0      41.0       51.0      ETH_USDT
-                    1  1659710207000      15.0       12.0      22.0       32.0      BTC_USDT
-                    2  1659710146000      10.0       30.0      40.0       50.0      ETH_USDT
-                    3  1659710146000      15.0       10.0      20.0       30.0      BTC_USDT
-
-                    exchange_id  level    end_download_timestamp       knowledge_timestamp
-                    0     binance      2 2022-08-05 14:35:47+00:00 2022-08-05 14:35:47+00:00
-                    1     binance      1 2022-08-05 14:35:47+00:00 2022-08-05 14:35:47+00:00
-                    2     binance      1 2022-08-05 14:35:46+00:00 2022-08-05 14:35:46+00:00
-                    3     binance      2 2022-08-05 14:35:46+00:00 2022-08-05 14:35:46+00:00
+                timestamp bid_size bid_price ask_size ask_price currency_pair \
+                0 1659710146000 10.0 30.0 40.0 50.0 ETH_USDT
+                1 1659710207000 10.0 31.0 41.0 51.0 ETH_USDT
+                2 1659710146000 15.0 10.0 20.0 30.0 BTC_USDT
+                3 1659710207000 15.0 12.0 22.0 32.0 BTC_USDT
+                exchange_id level end_download_timestamp knowledge_timestamp
+                0 binance 1 2022-08-05 14:35:46+00:00 2022-08-05 14:35:46+00:00
+                1 binance 2 2022-08-05 14:35:47+00:00 2022-08-05 14:35:47+00:00
+                2 binance 2 2022-08-05 14:35:46+00:00 2022-08-05 14:35:46+00:00
+                3 binance 1 2022-08-05 14:35:47+00:00 2022-08-05 14:35:47+00:00
                 """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
@@ -185,17 +184,16 @@ class TestImRawDataClient2(imvcddbut.TestImDbHelper):
         actual = reader.read_data_head()
         actual = pprint.pformat(actual)
         expected = r"""
-                        timestamp  bid_size  bid_price  ask_size  ask_price currency_pair  \
-                    0  1659710207000      10.0       31.0      41.0       51.0      ETH_USDT
-                    1  1659710207000      15.0       12.0      22.0       32.0      BTC_USDT
-                    2  1659710146000      10.0       30.0      40.0       50.0      ETH_USDT
-                    3  1659710146000      15.0       10.0      20.0       30.0      BTC_USDT
-
-                    exchange_id  level    end_download_timestamp       knowledge_timestamp
-                    0     binance      2 2022-08-05 14:35:47+00:00 2022-08-05 14:35:47+00:00
-                    1     binance      1 2022-08-05 14:35:47+00:00 2022-08-05 14:35:47+00:00
-                    2     binance      1 2022-08-05 14:35:46+00:00 2022-08-05 14:35:46+00:00
-                    3     binance      2 2022-08-05 14:35:46+00:00 2022-08-05 14:35:46+00:00
+                    timestamp bid_size bid_price ask_size ask_price currency_pair \
+                    0 1659710146000 10.0 30.0 40.0 50.0 ETH_USDT
+                    1 1659710207000 10.0 31.0 41.0 51.0 ETH_USDT
+                    2 1659710146000 15.0 10.0 20.0 30.0 BTC_USDT
+                    3 1659710207000 15.0 12.0 22.0 32.0 BTC_USDT
+                    exchange_id level end_download_timestamp knowledge_timestamp
+                    0 binance 1 2022-08-05 14:35:46+00:00 2022-08-05 14:35:46+00:00
+                    1 binance 2 2022-08-05 14:35:47+00:00 2022-08-05 14:35:47+00:00
+                    2 binance 2 2022-08-05 14:35:46+00:00 2022-08-05 14:35:46+00:00
+                    3 binance 1 2022-08-05 14:35:47+00:00 2022-08-05 14:35:47+00:00
                 """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
@@ -868,7 +866,9 @@ class TestImRawDataClient4(hunitest.TestCase):
         signature = "bulk.airflow.resampled_1min.parquet.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0"
         obj = imvcdcimrdc.RawDataReader(signature)
         actual = str(obj.partition_mode)
-        expected = r"""None"""
+        # TODO(Juraj): this is hardcoded, see explanation 
+        # in definition of _get_partition_mode.
+        expected = "by_year_month"
         self.assert_equal(actual, expected)
 
     @pytest.mark.slow("9 seconds.")
@@ -891,7 +891,9 @@ class TestImRawDataClient4(hunitest.TestCase):
         signature = "bulk.airflow.resampled_1min.parquet.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0"
         obj = imvcdcimrdc.RawDataReader(signature)
         actual = str(obj.partition_mode)
-        expected = "by_year_month_day"
+        # TODO(Juraj): this is hardcoded, see explanation 
+        # in definition of _get_partition_mode.
+        expected = "by_year_month"
         self.assert_equal(actual, expected)
 
     @staticmethod

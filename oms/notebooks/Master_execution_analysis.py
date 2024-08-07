@@ -21,6 +21,7 @@
 # %load_ext autoreload
 # %autoreload 2
 import logging
+import os
 
 import numpy as np
 import pandas as pd
@@ -30,19 +31,18 @@ import core.finance as cofinanc
 import core.finance.target_position_df_processing as cftpdp
 import core.plotting as coplotti
 import core.plotting.execution_stats as cplexsta
-import core.statistics as costatis
 import dataflow_amp.system.Cx as dtfamsysc
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import im_v2.ccxt.utils as imv2ccuti
 import im_v2.common.universe as ivcu
 import oms.broker.ccxt.ccxt_aggregation_functions as obccagfu
 import oms.broker.ccxt.ccxt_execution_quality as obccexqu
 import oms.broker.ccxt.ccxt_logger as obcccclo
 import oms.child_order_quantity_computer.child_order_quantity_computer_instances as ocoqccoqci
 import oms.order.order_converter as oororcon
-import reconciliation.sim_prod_reconciliation as rsiprrec
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -60,20 +60,33 @@ hprint.config_notebook()
 # When running manually, specify the path to the config to load config from file,
 # for e.g., `.../reconciliation_notebook/fast/result_0/config.pkl`.
 config_file_name = None
-config = cconfig.get_notebook_config(config_file_name)
+# Set 'replace_ecs_tokyo = True' if running the notebook manually.
+replace_ecs_tokyo = False
+config = cconfig.get_notebook_config(
+    config_file_path=config_file_name, replace_ecs_tokyo=replace_ecs_tokyo
+)
 if config is None:
-    system_log_dir = "/shared_data/ecs/test/system_reconciliation/C12a/prod/20240219_150900.20240219_160600/system_log_dir.manual/process_forecasts"
+    system_log_dir = "/shared_data/ecs/preprod/system_reconciliation/C11a.config3/prod/20240516_220000.20240517_100000/system_log_dir.manual/process_forecasts"
     id_col = "asset_id"
     price_col = "close"
-    universe_version = "v7.5"
+    universe_version = "v8.1"
     vendor = "CCXT"
     mode = "trade"
-    test_asset_id = 1464553467
-    bar_duration = "3T"
-    child_order_execution_freq = "60S"
+    test_asset_id = 1020313424
+    bar_duration = "120T"
+    child_order_execution_freq = "10S"
     use_historical = True
     system_config_dir = system_log_dir.rstrip("/process_forecasts")
-    table_name = rsiprrec.extract_table_name_from_pkl_config(system_config_dir)
+    # Load pickled SystemConfig.
+    config_path = os.path.join(
+        system_config_dir, "system_config.output.values_as_strings.pkl"
+    )
+    system_config = cconfig.load_config_from_pickle(config_path)
+    # Get table name from SystemConfig.
+    table_name = system_config[
+        "market_data_config", "im_client_config", "table_name"
+    ]
+    #
     config_dict = {
         "meta": {
             "id_col": id_col,
@@ -172,7 +185,6 @@ ccxt_order_response_df.info()
 
 # %%
 child_order_df = data["oms_child_orders"]
-# TODO: group by asset, agg by mean total_vol_to_spread_bps, chart.
 child_order_df.head(3)
 
 # %%
@@ -215,6 +227,9 @@ ccxt_fills.info()
 # If the `test_asset_id` is not present, choose the first traded asset.
 traded_asset_ids = sorted(set(child_order_df["asset_id"]))
 if test_asset_id not in traded_asset_ids:
+    _LOG.info(
+        "test_asset_id=%s not in traded asset id's. Updating...", test_asset_id
+    )
     test_asset_id = traded_asset_ids[0]
 _LOG.info("test_asset_id=%s", test_asset_id)
 
@@ -246,21 +261,27 @@ bar_child_order_aggregation = obccagfu.aggregate_child_limit_orders_by_bar(
 )
 
 # %%
-bar_ccxt_order_aggregation.head(3)
+hpandas.df_to_str(bar_ccxt_order_aggregation, num_rows=6, log_level=logging.INFO)
 
 # %%
-ccxt_order_fills.head(3)
+hpandas.df_to_str(ccxt_order_fills, num_rows=6, log_level=logging.INFO)
 
 # %%
-bar_fills.head(3)
+hpandas.df_to_str(bar_fills, num_rows=6, log_level=logging.INFO)
 
 # %%
-trade_prices.head(3)
+hpandas.df_to_str(trade_prices, num_rows=6, log_level=logging.INFO)
 
 # %%
+# TODO: Get `hpandas.df_to_str()` to work with this.
 bar_child_order_aggregation.head(3)
 
 # %%
+# Show the bar-level ccxt (child) order aggregation for the test asset.
+# If there are child orders in a bar, their aggregation should agree with
+#   the corresponding parent order in terms of buy/sell and amount.
+# If there is a parent order for a bar, we should see at least one child order
+#   (which may or may not have been filled)
 cofinanc.get_asset_slice(bar_ccxt_order_aggregation, test_asset_id)
 
 # %% [markdown]
@@ -273,10 +294,10 @@ filled_ccxt_orders, unfilled_ccxt_orders = obccexqu.align_ccxt_orders_and_fills(
 )
 
 # %%
-filled_ccxt_orders.head(3)
+hpandas.df_to_str(filled_ccxt_orders, num_rows=6, log_level=logging.INFO)
 
 # %%
-unfilled_ccxt_orders.head(3)
+hpandas.df_to_str(unfilled_ccxt_orders, num_rows=6, log_level=logging.INFO)
 
 # %% [markdown]
 # ## Load OHLCV data
@@ -325,31 +346,40 @@ ohlcv_bars = dtfamsysc.load_and_resample_ohlcv_data(
     end_timestamp,
     bar_duration,
 )
-hpandas.df_to_str(ohlcv_bars, num_rows=5, log_level=logging.INFO)
+hpandas.df_to_str(ohlcv_bars, num_rows=6, log_level=logging.INFO)
+
+# %% [markdown]
+# ## Load universe and get symbol/asset_id mappings
+
+# %%
+# Get the universe to map asset_id's.
+universe = ivcu.get_vendor_universe(
+    "CCXT", "trade", version=universe_version, as_full_symbol=True
+)
+# Get the asset_id/symbol mapping.
+asset_id_to_symbol_mapping = ivcu.build_numerical_to_string_id_mapping(universe)
+# Get the symbol/asset_id mapping.
+symbol_to_asset_id_mapping = {
+    imv2ccuti.convert_full_symbol_to_binance_symbol(symbol): asset_id
+    for asset_id, symbol in asset_id_to_symbol_mapping.items()
+}
 
 # %% [markdown]
 # ## Load exchange tick sizes by asset id
 
 # %%
-# Create a mapping between binance full symbol and asset_id.
-binance_full_symbol_to_asset_id_mapping = dict(
-    zip(fills_df.symbol, fills_df.asset_id)
-)
-# Load exchange markets and restrict to assets traded.
-exchange_markets = data["exchange_markets"].loc[
-    binance_full_symbol_to_asset_id_mapping.keys()
-]
+# Load exchange markets and restrict to the asset universe.
+exchange_markets = data["exchange_markets"].loc[symbol_to_asset_id_mapping.keys()]
 exchange_markets.head(3)
 
 # %%
 # Get the minimum tick size per asset.
 price_tick_srs = exchange_markets["precision"].apply(lambda x: x["price"])
+# Convert from decimal place to decimal value.
 price_tick_srs = price_tick_srs.apply(lambda x: 10**-x)
 # Map index to the asset_id.
-price_tick_srs.index = price_tick_srs.index.map(
-    binance_full_symbol_to_asset_id_mapping
-)
-price_tick_srs.head(3)
+price_tick_srs.index = price_tick_srs.index.map(symbol_to_asset_id_mapping)
+price_tick_srs.describe()
 
 # %% [markdown]
 # # Cross-checks
@@ -363,7 +393,7 @@ price_tick_srs.head(3)
 # - Non-submitted orders
 
 # %%
-# Verify number of bars in the parent order DF.
+# Verify number of bars in the parent order dataframe.
 number_of_bars = int(
     np.ceil(
         (
@@ -376,13 +406,13 @@ number_of_bars = int(
 _LOG.info("number of bars=%d", number_of_bars)
 
 # %% run_control={"marked": false}
-# Check number of unique asset IDs.
+# Check number of unique asset ids.
 unique_asset_id_count = len(parent_order_df["asset_id"].unique())
 _LOG.info("unique asset_id count=%d", unique_asset_id_count)
 
 # %%
 # Share counts should change if there are many orders and we are getting fills.
-costatis.compute_moments(parent_order_df["curr_num_shares"])
+parent_order_df["curr_num_shares"].describe()
 
 # %%
 # Verify that test asset id is present in the CCXT fills.
@@ -407,8 +437,8 @@ if not inconsistent_order_num_df.empty:
 
 # %%
 # The number of child orders can be greater than the number of order responses
-# if the child order was not accepted by the exchange.
-# In this case the child order should have an error message (see cells below).
+#   if the child order was not accepted by the exchange.
+# In this case, the child order should have an error message (see cells below).
 # If some non-submitted orders don't have an error message, it indicates a bug.
 _LOG.info(
     f"child orders in child_order_df={child_order_df.shape[0]}\n\
@@ -426,11 +456,6 @@ no_response_orders["error_msg"] = no_response_orders["extra_params"].apply(
 # %%
 # Check the error messages for child orders that did not come through.
 # Display error messages grouped by symbol.
-# Get the universe to map asset_id's.
-universe = ivcu.get_vendor_universe(
-    "CCXT", "trade", version=universe_version, as_full_symbol=True
-)
-asset_id_to_symbol_mapping = ivcu.build_numerical_to_string_id_mapping(universe)
 no_response_orders["full_symbol"] = no_response_orders["asset_id"].map(
     asset_id_to_symbol_mapping
 )
@@ -478,23 +503,6 @@ has_sells = bar_fills["sell_count"] > 0
 bar_fills.loc[has_buys & has_sells].shape[0]
 
 # %%
-# If `order_twap` and `order_vwap` are different for a given instrument and bar,
-#  then we are likely submitting orders of differing sizes.
-# Use rounding to ignore machine precision artifacts.
-#
-# If this number is not zero, then closely inspect the dataframe (without summing
-# absolute values).
-bar_ccxt_order_aggregation["buy_limit_twap"].subtract(
-    bar_ccxt_order_aggregation["buy_limit_vwap"]
-).abs().sum().sum().round(9)
-
-# %%
-# Analogous check but for sells.
-bar_ccxt_order_aggregation["sell_limit_twap"].subtract(
-    bar_ccxt_order_aggregation["sell_limit_vwap"]
-).abs().sum().sum().round(9)
-
-# %%
 # Plot order counts by timestamp.
 col = "order_count"
 coplotti.plot_boxplot(bar_ccxt_order_aggregation[col], "by_row", ylabel=col)
@@ -524,7 +532,7 @@ group_by_col = "wave_id"
 obccexqu.generate_fee_summary(fills_df, group_by_col)
 
 # %%
-# Get by-wave summary for a single test asset.
+# Get by-wave summary for the test asset.
 test_fills = fills_df[fills_df["asset_id"] == test_asset_id]
 group_by_col = "wave_id"
 obccexqu.generate_fee_summary(test_fills, group_by_col)
@@ -555,9 +563,11 @@ if "wave_id" in child_order_df.columns:
 # ## Average order lifespan in seconds
 
 # %% run_control={"marked": false}
+# TODO: All of these calculations should be factored out (and their accuracy checked).
+
 # Map symbol to asset ID.
 ccxt_fills["asset_id"] = ccxt_fills["symbol"].apply(
-    lambda x: binance_full_symbol_to_asset_id_mapping[x]
+    lambda x: symbol_to_asset_id_mapping[x]
 )
 # Convert `datetime` column from string to timestamp.
 ccxt_fills["datetime"] = ccxt_fills["datetime"].apply(
@@ -591,14 +601,14 @@ target_position_df = oororcon.convert_order_df_to_target_position_df(
     parent_order_df,
     price_df,
 )
-hpandas.df_to_str(target_position_df, num_rows=5, log_level=logging.INFO)
+hpandas.df_to_str(target_position_df, num_rows=6, log_level=logging.INFO)
 
 # %%
 portfolio_df = obccexqu.convert_bar_fills_to_portfolio_df(
     bar_fills,
     price_df,
 )
-hpandas.df_to_str(portfolio_df, num_rows=5, log_level=logging.INFO)
+hpandas.df_to_str(portfolio_df, num_rows=6, log_level=logging.INFO)
 
 # %% [markdown]
 # ## PNL and price for the test asset
@@ -620,8 +630,8 @@ target_position_df["price"][test_asset_id].plot()
     portfolio_df,
     target_position_df,
 )
-hpandas.df_to_str(execution_quality_df, num_rows=5, log_level=logging.INFO)
-hpandas.df_to_str(execution_quality_stats_df, num_rows=5, log_level=logging.INFO)
+hpandas.df_to_str(execution_quality_df, num_rows=6, log_level=logging.INFO)
+hpandas.df_to_str(execution_quality_stats_df, num_rows=6, log_level=logging.INFO)
 
 # %%
 execution_quality_df.columns.levels[0].to_list()
@@ -645,7 +655,12 @@ coplotti.plot_execution_stats(execution_quality_stats_df)
 filled_order_execution_quality = obccexqu.compute_filled_order_execution_quality(
     filled_ccxt_orders, tick_decimals=6
 )
-filled_order_execution_quality.head()
+hpandas.df_to_str(
+    filled_order_execution_quality, num_rows=6, log_level=logging.INFO
+)
+
+# %%
+filled_order_execution_quality.describe()
 
 # %%
 # If any value is negative (up to machine precision), except for `direction`, it indicates a bug.
@@ -655,12 +670,6 @@ filled_order_execution_quality.loc[
     )
 ].shape[0]
 
-# %%
-filled_order_execution_quality.min()
-
-# %%
-filled_order_execution_quality.max()
-
 # %% [markdown]
 # ## Compare bar trade prices to OHLCV TWAP
 
@@ -669,33 +678,26 @@ actual_and_ohlcv_price_df = {
     "buy_trade_price": trade_prices["buy_trade_price"],
     "sell_trade_price": trade_prices["sell_trade_price"],
     "twap": ohlcv_bars["twap"],
+    "open": ohlcv_bars["open"],
     "high": ohlcv_bars["high"],
     "low": ohlcv_bars["low"],
+    "close": ohlcv_bars["close"],
 }
 actual_and_ohlcv_price_df = pd.concat(actual_and_ohlcv_price_df, axis=1)
-hpandas.df_to_str(actual_and_ohlcv_price_df, num_rows=5, log_level=logging.INFO)
+hpandas.df_to_str(actual_and_ohlcv_price_df, num_rows=6, log_level=logging.INFO)
 
 # %%
-actual_vs_ohlcv_execution_df = cofinanc.compute_ref_price_execution_quality(
-    actual_and_ohlcv_price_df,
-    "twap",
-    "twap",
+cols = [
     "buy_trade_price",
     "sell_trade_price",
+    "twap",
+    "open",
+    "high",
+    "low",
+]
+cofinanc.get_asset_slice(actual_and_ohlcv_price_df[cols], test_asset_id).plot(
+    kind="line", style=["o:", "o-", "--", "+-", "+-", "+-"]
 )
-hpandas.df_to_str(
-    actual_vs_ohlcv_execution_df, num_rows=5, log_level=logging.INFO
-)
-
-# %%
-actual_vs_ohlcv_execution_df.columns.levels[0].to_list()
-
-# %%
-# Some values can be missing in `buy_trade_price` and `sell_trade_price` columns.
-# Interpolate missing values to build continuous line.
-cofinanc.get_asset_slice(actual_and_ohlcv_price_df, test_asset_id).interpolate(
-    method="zero"
-).plot()
 
 # %% [markdown]
 # ## Spread and High-Low Range
@@ -705,21 +707,24 @@ cofinanc.get_asset_slice(actual_and_ohlcv_price_df, test_asset_id).interpolate(
 
 # %%
 # Display average notional spread per instrument.
-average_spread_notional = child_order_df.groupby("asset_id")["spread"].mean()
-average_spread_notional
-
-# %%
-child_order_df.head()
-
-# %%
-# Display average spread per instrument in bps.
-average_spread_bps = (
-    child_order_df.groupby("asset_id")["spread_bps"].mean().sort_values()
+mean_spread_notional = (
+    child_order_df.groupby("asset_id")["spread"]
+    .mean()
+    .rename("mean_spread_notional")
 )
-average_spread_bps
+# Brutally average bps.
+mean_spread_bps = (
+    child_order_df.groupby("asset_id")["spread_bps"]
+    .mean()
+    .rename("mean_spread_bps")
+)
+mean_spreads = pd.concat([mean_spread_notional, mean_spread_bps], axis=1)
 
 # %%
-average_spread_bps.plot(
+mean_spreads.sort_values("mean_spread_bps")
+
+# %%
+mean_spread_bps.sort_values().plot(
     kind="bar",
     title="Average Spread per Instrument in Basis Points",
     xlabel="Instrument",
@@ -727,124 +732,104 @@ average_spread_bps.plot(
 )
 
 # %% [markdown]
-# ### OHLCV high-low spread to tick ratio
+# ### OHLCV high-low range to tick ratio
 
 # %%
-# Calculate the high-low spread to tick ratio.
+# Calculate the high-low range to tick ratio.
 high_low_range = (ohlcv_bars["high"] - ohlcv_bars["low"]) / price_tick_srs
 # Plot average.
 high_low_range.mean().sort_values(ascending=False).plot(
     kind="bar",
     logy=True,
-    title="Average High/Low Range per Instrument (log)",
+    title="Average high/low range to tick size per instrument (log)",
     xlabel="Instrument",
-    ylabel="Average High/Low Range (log)",
+    ylabel="Average high/low range to tick size (log)",
 )
 
 # %% [markdown]
-# # Child order DF stats
+# ## Volatility and top-of-book notional
 
 # %% [markdown]
-# ## Volatility
+# ### Volatility
 
 # %%
-# Average volatility in bps by asset.
-# Note: `mean()` used as a placeholder.
-child_order_df.groupby("asset_id")["total_vol_bps"].mean()
+# Brutally average volatility in bps by asset.
+mean_vol_bps = child_order_df.groupby("asset_id")["total_vol_bps"].mean()
+
+# %%
+mean_vol_bps.sort_values(ascending=False)
 
 # %%
 # Total volatility in bps histogram.
 child_order_df["total_vol_bps"].hist()
 
 # %% [markdown]
-# ## Bid/ask
+# ### Bid/ask notional
 
 # %%
-# Average bid cost by asset.
-avg_bid_price_by_asset = child_order_df.groupby("asset_id")[
-    "latest_bid_price"
-].mean()
-_LOG.info(avg_bid_price_by_asset)
-avg_bid_size_by_asset = child_order_df.groupby("asset_id")[
-    "latest_bid_size"
-].mean()
-_LOG.info(avg_bid_size_by_asset)
-avg_bid_cost_by_asset = avg_bid_price_by_asset * avg_bid_size_by_asset
-avg_bid_cost_by_asset
+# TODO: Factor out these calculations.
+
+# Mean bid notional by asset id.
+bid_notional = (
+    child_order_df["latest_bid_price"] * child_order_df["latest_bid_size"]
+).rename("bid_notional")
+pd.concat([child_order_df["asset_id"], bid_notional], axis=1).groupby(
+    "asset_id"
+).mean().squeeze().sort_values(ascending=False)
 
 # %%
-# Average ask cost by asset.
-avg_ask_price_by_asset = child_order_df.groupby("asset_id")[
-    "latest_ask_price"
-].mean()
-_LOG.info(avg_ask_price_by_asset)
-avg_ask_size_by_asset = child_order_df.groupby("asset_id")[
-    "latest_ask_size"
-].mean()
-_LOG.info(avg_ask_size_by_asset)
-avg_ask_cost_by_asset = avg_ask_price_by_asset * avg_ask_size_by_asset
-avg_ask_cost_by_asset
+# Mean ask notional by asset id.
+ask_notional = (
+    child_order_df["latest_ask_price"] * child_order_df["latest_ask_size"]
+).rename("ask_notional")
+pd.concat([child_order_df["asset_id"], ask_notional], axis=1).groupby(
+    "asset_id"
+).mean().squeeze().sort_values(ascending=False)
+
+# %%
+# Use for round off.
+round_to = 9
 
 # %% [markdown]
-# # Analyze filled orders
+# ## Underfill share counts
 
 # %%
-# Group child orders by corresponding parent order.
-child_order_df["parent_order_id"] = child_order_df.extra_params.apply(
-    lambda x: x["oms_parent_order_id"]
+# Calculate underfills from parent orders and fills.
+
+# Extract the share amounts from the parent orders.
+parent_order_amount = (
+    parent_order_df.set_index(["end_timestamp", "asset_id"])
+    .sort_index()["diff_num_shares"]
+    .abs()
 )
-child_order_df_by_parent = child_order_df.reset_index().set_index(
-    ["parent_order_id", "order_id"]
-)
-
-# %% [markdown]
-# ## Filled order slippage normalized by parent order
-
-# %% [markdown]
-# Calculate filled order slippage as a difference between the bid/ask midpoint at the start of the parent order execution and the execution price of the filled order.
+# Subtract the bar fill amounts from the parent order amounts.
+underfill_shares = parent_order_amount.subtract(
+    bar_fills["amount"], fill_value=0
+).replace(-0.0, 0.0)
+# Group by asset id.
+underfill_shares.abs().groupby(level=1).sum().round(round_to)
 
 # %%
-first_mid_price_by_parent = child_order_df_by_parent.groupby(level=0)[
-    "latest_mid_price"
-].first()
-
-# %%
-# Add filled order slippage for each child order.
-child_order_df_by_parent["order_slippage"] = (
-    first_mid_price_by_parent - child_order_df_by_parent["limit_price"]
-)
-
-
-# %%
-# Filter to only unfilled child orders.
-filled_child_order_df = child_order_df_by_parent[
-    child_order_df_by_parent["ccxt_id"].isin(filled_ccxt_orders.index)
-]
-filled_child_order_df[["asset_id", "order_slippage"]]
+# Show underfills calculated from reconstructed portfolio.
+execution_quality_df["underfill_share_count"].abs().sum().round(9)
 
 # %% [markdown]
-# # Analyze unfilled orders
-
-# %% [markdown]
-# ## Underfill execution quality
-
-# %% [markdown]
-# ### Underfill notional
+# ## Underfill notional
 
 # %%
 # Get the total underfill notional for the run per asset.
-execution_quality_df["underfill_notional"].abs().sum().round(9)
+execution_quality_df["underfill_notional"].abs().sum().round(round_to)
 
 # %%
 # Get the total underfill notional for the run per bar.
-execution_quality_df["underfill_notional"].abs().sum(axis=1).round(9)
+execution_quality_df["underfill_notional"].abs().sum(axis=1).round(round_to)
 
 # %%
 # Get the total underfill notional.
-execution_quality_df["underfill_notional"].abs().sum().sum().round(9)
+execution_quality_df["underfill_notional"].abs().sum().sum().round(round_to)
 
 # %% [markdown]
-# ### Aggregate fill rate
+# ## Aggregate fill rate
 
 # %%
 underfill_notional = execution_quality_df["underfill_notional"].abs().sum()
@@ -860,26 +845,81 @@ total_executed_volume_notional / (
 )
 
 # %% [markdown]
-# ### Underfill share count
+# ## Notional slippage
 
 # %%
-# Get underfill share count per asset.
-execution_quality_df["underfill_share_count"].abs().sum().round(9)
-
-# %% [markdown]
-# ### Notional slippage
-
-# %%
-# Total slippage.
-execution_quality_df["slippage_notional"].sum().sum().round(9)
-
-# %%
-# Notional slippage by asset.
-execution_quality_df["slippage_notional"].sum().round(9)
+# Per-share slippage.
+actual_vs_ohlcv_execution_df = cofinanc.compute_ref_price_execution_quality(
+    actual_and_ohlcv_price_df,
+    "open",
+    "open",
+    "buy_trade_price",
+    "sell_trade_price",
+)
+hpandas.df_to_str(
+    actual_vs_ohlcv_execution_df, num_rows=6, log_level=logging.INFO
+)
 
 # %%
-# Slippage in bps by timestamp.
-execution_quality_df["slippage_notional"].sum(axis=1).round(9)
+buy_slippage_notional = (
+    actual_vs_ohlcv_execution_df["buy_trade_slippage_notional"]
+    * bar_fills["buy_volume"].unstack()
+)
+sell_slippage_notional = (
+    actual_vs_ohlcv_execution_df["sell_trade_slippage_notional"]
+    * bar_fills["sell_volume"].unstack()
+)
+
+# %%
+# Compute total notional slippage in two ways.
+slippage_notional_total_1 = (
+    buy_slippage_notional.sum(axis=1) + sell_slippage_notional.sum(axis=1)
+).sum()
+slippage_notional_total_2 = execution_quality_df["slippage_notional"].sum().sum()
+
+# %%
+slippage_notional_by_asset_1 = (
+    buy_slippage_notional.sum(axis=0) + sell_slippage_notional.sum(axis=0)
+).rename("slippage_notional_1")
+slippage_notional_by_timestamp_1 = (
+    buy_slippage_notional.sum(axis=1) + sell_slippage_notional.sum(axis=1)
+).rename("slippage_notional_1")
+
+# %%
+slippage_notional_by_asset_2 = (
+    execution_quality_df["slippage_notional"].sum().rename("slippage_notional_2")
+)
+slippage_notional_by_timestamp_2 = (
+    execution_quality_df["slippage_notional"]
+    .sum(axis=1)
+    .rename("slippage_notional_2")
+)
+
+# %%
+pd.Series(
+    {
+        "slippage_notional_1": slippage_notional_total_1,
+        "slippage_notional_2": slippage_notional_total_2,
+    },
+)
+
+# %%
+pd.concat(
+    [
+        slippage_notional_by_asset_1,
+        slippage_notional_by_asset_2,
+    ],
+    axis=1,
+)
+
+# %%
+pd.concat(
+    [
+        slippage_notional_by_timestamp_1,
+        slippage_notional_by_timestamp_2,
+    ],
+    axis=1,
+)
 
 # %% [markdown]
 # ### Slippage in bps adjusted by total executed volume
@@ -888,29 +928,32 @@ execution_quality_df["slippage_notional"].sum(axis=1).round(9)
 # Total.
 execution_quality_df[
     "slippage_notional"
-].sum().sum() * 1e4 / executed_volume_notional.sum().round(9)
+].sum().sum() * 1e4 / executed_volume_notional.sum().round(round_to)
 
 # %%
 # By asset.
 execution_quality_df[
     "slippage_notional"
-].sum() * 1e4 / executed_volume_notional.round(9)
+].sum() * 1e4 / executed_volume_notional.round(round_to)
 
 # %%
 # By timestamp.
 execution_quality_df["slippage_notional"].sum(axis=1) * 1e4 / portfolio_df[
     "executed_trades_notional"
-].abs().sum(axis=1).round(9)
+].abs().sum(axis=1).round(round_to)
 
 
 # %% [markdown]
-# ### Slippage in bps over volatility
+# ## Compute vol-adjusted close price for unfilled orders
 
 # %%
-execution_quality_df["slippage_in_bps"].mean() / average_spread_bps
-
-# %% [markdown]
-# ## Compute vol-adjusted close price
+# Annotate child orders with parent order id.
+child_order_df["parent_order_id"] = child_order_df.extra_params.apply(
+    lambda x: x["oms_parent_order_id"]
+)
+child_order_df_by_parent = child_order_df.reset_index().set_index(
+    ["parent_order_id", "order_id"]
+)
 
 # %%
 zero_vol = child_order_df_by_parent[child_order_df_by_parent["total_vol"] == 0]

@@ -7,7 +7,7 @@
 source helpers.sh
 
 echo "==================== git pull ===================="
-execute "git pull --autostash"
+execute "git pull --autostash --rebase"
 
 echo
 echo "==================== git push ===================="

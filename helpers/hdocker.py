@@ -4,7 +4,9 @@ Import as:
 import helpers.hdocker as hdocker
 """
 
+import copy
 import logging
+from typing import Optional
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -37,22 +39,35 @@ def volume_rm(volume_name: str) -> None:
     _LOG.debug("docker volume '%s' deleted", volume_name)
 
 
-def replace_shared_root_path(path: str) -> str:
+def replace_shared_root_path(
+    path: str, *, replace_ecs_tokyo: Optional[bool] = False
+) -> str:
     """
     Replace root path of the shared directory based on the mapping.
 
     :param path: path to replace, e.g., `/data/shared`
-    :return: replaced shared data dir root path, e.g., `/shared_data`
+    :param replace_ecs_tokyo: if True replace `ecs_tokyo` to `ecs` in the path
+    :return: replaced shared data dir root path, e.g.,
+    - `/data/shared/ecs_tokyo/test/system_reconciliation/C11a/prod/20240522_173000.20240522_182500/` ->
+        `/shared_data/ecs/test/system_reconciliation/C11a/prod/20240522_173000.20240522_182500/`
+    - `/data/shared/ecs/test/system_reconciliation/C11a/prod/20240522_173000.20240522_182500` ->
+        `/shared_data/ecs/test/system_reconciliation/C11a/prod/20240522_173000.20240522_182500`
     """
     # Inside ECS we keep the original shared data path and replace it only when
     # running inside Docker on the dev server.
     if hserver.is_inside_docker() and not hserver.is_inside_ecs_container():
         shared_data_dirs = henv.execute_repo_config_code("get_shared_data_dirs()")
+        if replace_ecs_tokyo:
+            # Make a copy to avoid modifying the original one.
+            shared_data_dirs = copy.deepcopy(shared_data_dirs)
+            shared_data_dirs["ecs_tokyo"] = "ecs"
         for shared_dir, docker_shared_dir in shared_data_dirs.items():
             path = path.replace(shared_dir, docker_shared_dir)
             _LOG.debug(
                 "Running inside Docker on the dev server, thus replacing %s "
-                "with %s", shared_dir, docker_shared_dir,
+                "with %s",
+                shared_dir,
+                docker_shared_dir,
             )
     else:
         _LOG.debug("No replacement found, returning path as-is: %s", path)

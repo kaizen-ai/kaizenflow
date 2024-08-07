@@ -15,10 +15,16 @@ import ccxt
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 
-_EXCEPTIONS = [
-    ccxt.ExchangeNotAvailable,
-    ccxt.OnMaintenance,
-]
+# Different exceptions to raise or handle for different methods.
+_EXCEPTIONS = {
+    "create_order": [ccxt.ExchangeNotAvailable, ccxt.OnMaintenance],
+    "cancel_all_orders": [
+        ccxt.NetworkError,
+        ccxt.RequestTimeout,
+        ccxt.OrderNotFound,
+    ],
+}
+
 _LOG = logging.getLogger(__name__)
 
 # Represent a deterministic delay or a delay randomly distributed in an interval.
@@ -256,10 +262,10 @@ class MockCcxtExchange:
             fill_percent = self._fill_percents.pop(0)
         filled = abs(amount) * fill_percent
         remaining = abs(amount) - filled
+        status = "closed" if remaining == 0 else "opened"
         order = {
             "id": self._generate_ccxt_order_id(),  # string
-            # Currently we simulate order being filled immediately meaning its closed.
-            "status": "closed",
+            "status": status,
             "symbol": symbol,
             # TODO(Juraj): Only "limit" is supported for now.
             "type": "limit",
@@ -354,29 +360,55 @@ class MockCcxtExchange_withErrors(MockCcxtExchange):
     """
     Invariants in this child class:
 
-    - Calling method which creates order results in raising an exception.
+    - Calling method will result in raising an exception.
     - The number of consecutive exceptions raised when repeating the method call is
     determined by the parameter set in constructor.
     """
 
-    def __init__(self, num_exceptions: int, *args, **kwargs):
+    def __init__(self, num_exceptions: Dict[str, int], *args, **kwargs):
         """
         Initialize MockCcxtExchange_withErrors.
 
-        :param num_exceptions: number of consecutive exceptions to raise
-            when repeating a call to any of the order creating methods
+        :param num_exceptions: mapping of method names to number of
+            consecutive exceptions to raise for it
         """
         super().__init__(*args, **kwargs)
         self._num_exceptions = num_exceptions
-        self._num_exceptions_raised = 0
-        self.exceptions_cycler = itertools.cycle(_EXCEPTIONS)
+        self._num_exceptions_raised = {key: 0 for key in num_exceptions}
+        self.exceptions_cycler = {
+            key: itertools.cycle(value) for key, value in _EXCEPTIONS.items()
+        }
 
     async def create_order(self, *args, **kwargs) -> CcxtOrderStructure:
-        if self._num_exceptions_raised < self._num_exceptions:
-            # Simulate waiting response time from server.
-            await self._simulate_waiting_for_response()
-            self._num_exceptions_raised += 1
-            exception_to_raise = next(self.exceptions_cycler)
-            raise exception_to_raise("Some error message")
+        """
+        Create order while raising an exception.
+        """
+        method = "create_order"
+        await self._raise_exception(method)
         order = await super().create_order(*args, **kwargs)
         return order
+
+    async def cancel_all_orders(
+        self, *args, **kwargs
+    ) -> List[CcxtOrderStructure]:
+        """
+        Cancel orders while raising an exception.
+        """
+        method = "cancel_all_orders"
+        await self._raise_exception(method)
+        cancelled_orders = await super().cancel_all_orders(*args, **kwargs)
+        return cancelled_orders
+
+    async def _raise_exception(self, method: str) -> None:
+        """
+        Raise an exception for a given method.
+
+        :param method: method to raise exception for
+        """
+        if method in self._num_exceptions:
+            if self._num_exceptions_raised[method] < self._num_exceptions[method]:
+                # Simulate waiting response time from server.
+                await self._simulate_waiting_for_response()
+                self._num_exceptions_raised[method] += 1
+                exception_to_raise = next(self.exceptions_cycler[method])
+                raise exception_to_raise(f"Error: {exception_to_raise}")

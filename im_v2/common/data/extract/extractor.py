@@ -3,7 +3,7 @@ Implement abstract extractor class.
 
 Import as:
 
-import im_v2.common.data.extract.extractor as ivcdexex
+import im_v2.common.data.extract.extractor as imvcdexex
 """
 
 import abc

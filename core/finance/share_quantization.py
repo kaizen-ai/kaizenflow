@@ -70,7 +70,7 @@ def quantize_shares(
         quantized_shares = quantized_shares.round(asset_id_to_decimals)
         # If series-to-dataframe conversion was performed, undo it here.
         if isinstance(shares, pd.Series):
-            quantized_shares = quantized_shares.squeeze()
+            quantized_shares = quantized_shares.squeeze(axis=0)
             quantized_shares.name = shares.name
     _LOG.debug("`quantized_shares`=\n%s", hpandas.df_to_str(quantized_shares))
     return quantized_shares

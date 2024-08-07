@@ -494,7 +494,12 @@ class Test_create_ccxt_exchange(hunitest.TestCase):
         )
         # Check exchange mock assertions.
         actual_args = pprint.pformat(tuple(exchange_mock.call_args))
-        call_args_dict = {"apiKey": "test", "rateLimit": False, "secret": "test"}
+        call_args_dict = {
+            "apiKey": "test",
+            "rateLimit": False,
+            "secret": "test",
+            "timeout": 10000,
+        }
         if contract_type == "futures":
             call_args_dict["options"] = {"defaultType": "future"}
         expected_args = pprint.pformat(((call_args_dict,), {}))

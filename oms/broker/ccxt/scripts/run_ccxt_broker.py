@@ -21,6 +21,7 @@ Example use:
     --child_order_execution_freq 1T \
     --volatility_multiple 0.75 0.7 0.6 0.8 1.0 \
     --include_btc_usdt True \
+    --exchange_id 'binance' \
     -v DEBUG
 """
 import argparse
@@ -52,9 +53,6 @@ _LOG = logging.getLogger(__name__)
 
 _BINANCE_MIN_NOTIONAL = 10
 _VENDOR = "ccxt"
-_EXCHANGE = "binance"
-# TODO(Juraj): a hacky way to make progress, implement this as one of the run modes.
-_NEXT_ORDER_SIDE_PER_ASSET = {}
 
 
 def _get_symbols(
@@ -81,9 +79,6 @@ def _get_symbols(
         )
         for symbol in universe[exchange]
     ]
-    # TODO(Juraj): Remove global var #CmTask7601.
-    global _NEXT_ORDER_SIDE_PER_ASSET
-    _NEXT_ORDER_SIDE_PER_ASSET = {symbol: None for symbol in symbols}
     return symbols
 
 
@@ -105,7 +100,10 @@ def _get_asset_ids(
     if number_asset_ids is None:
         number_asset_ids = np.random.randint(5, 10)
     top_symbols = _get_symbols(
-        broker._universe_version, _VENDOR, _EXCHANGE, broker._contract_type
+        broker._universe_version,
+        _VENDOR,
+        broker._exchange_id,
+        broker._contract_type,
     )
     btc_usdt = "BTC/USDT:USDT"
     if not include_btc_usdt and btc_usdt in top_symbols:
@@ -146,6 +144,7 @@ def _get_random_order(
     parent_order_duration_in_min: int,
     current_position: float,
     close_position: bool,
+    order_sides: Dict[str, Optional[str]],
     *,
     order_direction: Optional[str] = None,
 ) -> oordorde.Order:
@@ -166,13 +165,13 @@ def _get_random_order(
         num_shares = current_position * -1
     else:
         num_shares = np.random.uniform(min_order_size, max_order_size)
-        _NEXT_ORDER_SIDE_PER_ASSET[symbol] = "sell"
+        order_sides[symbol] = "sell"
         # Set negative amount of shares when direction is sell, or direction should be random.
         if order_direction == "sell" or (
             order_direction is None and np.random.choice([True, False])
         ):
             num_shares = -num_shares
-            _NEXT_ORDER_SIDE_PER_ASSET[symbol] = "buy"
+            order_sides[symbol] = "buy"
     _LOG.debug(hprint.to_str2(num_shares))
     # Timestamps.
     end_timestamp = start_timestamp + pd.Timedelta(
@@ -204,6 +203,7 @@ def _get_random_orders(
     positions: Dict[int, float],
     start_timestamp: pd.Timestamp,
     symbol_to_price_dict: Dict[str, float],
+    order_sides: Dict[str, Optional[str]],
     *,
     close_positions: bool = False,
     orders_direction: Optional[str] = None,
@@ -226,6 +226,13 @@ def _get_random_orders(
         number_asset_ids=number_orders,
         include_btc_usdt=include_btc_usdt,
     )
+    symbols = _get_symbols(
+        broker._universe_version,
+        _VENDOR,
+        broker._exchange_id,
+        broker._contract_type,
+    )
+    order_sides = {symbol: None for symbol in symbols}
     orders = []
     for asset_id in asset_ids:
         position = positions.get(asset_id["asset_id"], 0)
@@ -233,11 +240,11 @@ def _get_random_orders(
             continue
         # Set order direction for the current order.
         symbol = asset_id["symbol"]
-        _LOG.debug(_NEXT_ORDER_SIDE_PER_ASSET)
+        _LOG.debug("%s", order_sides)
         order_diretion = (
             orders_direction
             if orders_direction is not None
-            else _NEXT_ORDER_SIDE_PER_ASSET[symbol]
+            else order_sides.get(symbol)
         )
         order = _get_random_order(
             start_timestamp,
@@ -248,6 +255,7 @@ def _get_random_orders(
             parent_order_duration_in_min,
             position,
             close_positions,
+            order_sides,
             order_direction=order_diretion,
         )
         if order is not None:
@@ -418,6 +426,13 @@ def _parse() -> argparse.ArgumentParser:
         type=hparser.str_to_bool,
         help="Flag to control inclusion of BTC_USDT in the experiment.",
     )
+    parser.add_argument(
+        "--exchange_id",
+        required=True,
+        type=str,
+        choices=["binance", "cryptocom"],
+        help="Exchange to place orders on",
+    )
     parser = hparser.add_verbosity_arg(parser)
     return parser
 
@@ -427,6 +442,7 @@ def _execute_one_bar_using_twap(
     broker: obccccbr.CcxtBroker,
     execution_freq: str,
     symbol_to_price_dict: Dict[str, float],
+    order_sides: Dict[str, Optional[str]],
     *,
     close_positions: bool = False,
     previous_start_timestamp: Optional[pd.Timestamp] = None,
@@ -460,6 +476,7 @@ def _execute_one_bar_using_twap(
             positions=positions,
             start_timestamp=start_timestamp,
             symbol_to_price_dict=symbol_to_price_dict,
+            order_sides=order_sides,
             close_positions=close_positions,
             orders_direction=orders_direction,
             include_btc_usdt=args.include_btc_usdt,
@@ -481,16 +498,16 @@ def _execute_one_bar_using_twap(
 
 
 def _generate_prices_from_data_reader(
-    contract_type: str, db_stage: str, universe_version: str
+    contract_type: str, db_stage: str, universe_version: str, exchange_id: str
 ) -> Dict[str, float]:
     """
     Generate prices for all the currency pairs in the universe.
     """
-    signature = f"realtime.airflow.downloaded_1min.postgres.ohlcv.futures.{universe_version.replace('.', '_')}.ccxt.binance.v1_0_0"
+    signature = f"realtime.airflow.downloaded_1min.postgres.ohlcv.futures.{universe_version.replace('.', '_')}.ccxt.{exchange_id}.v1_0_0"
     universe = ivcu.get_vendor_universe(
         _VENDOR, "trade", version=universe_version
     )
-    currency_pairs = universe[_EXCHANGE]
+    currency_pairs = universe[exchange_id]
     # Get latest price for currency from database.
     reader = imvcdcimrdc.RawDataReader(signature, stage=db_stage)
     # Timedelta here has been taken as 4 minutes just to be sure that data from
@@ -508,7 +525,7 @@ def _generate_prices_from_data_reader(
     latest_prices_dict = dict(latest_prices)
     symbol_to_price_dict = {
         imv2ccuti.convert_currency_pair_to_ccxt_format(
-            symbol, _EXCHANGE, contract_type
+            symbol, exchange_id, contract_type
         ): price
         for symbol, price in latest_prices_dict.items()
     }
@@ -552,10 +569,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
         log_dir,
         args.universe,
         broker_config,
+        args.exchange_id,
         stage=args.db_stage,
     )
     symbol_to_price_dict = _generate_prices_from_data_reader(
-        broker._contract_type, args.db_stage, args.universe
+        broker._contract_type, args.db_stage, args.universe, args.exchange_id
     )
     # Clean up before running the script.
     if args.clean_up_before_run:
@@ -569,12 +587,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
     try:
         previous_start_timestamp = None
         # orders_direction = "buy"
+        order_sides = {}
         for bar in range(args.num_bars):
             previous_start_timestamp = _execute_one_bar_using_twap(
                 args,
                 broker,
                 child_order_execution_freq,
                 symbol_to_price_dict,
+                order_sides,
                 previous_start_timestamp=previous_start_timestamp,
                 # orders_direction=orders_direction
             )
@@ -586,6 +606,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 broker,
                 child_order_execution_freq,
                 symbol_to_price_dict,
+                order_sides,
                 previous_start_timestamp=previous_start_timestamp,
                 close_positions=True,
             )

@@ -66,7 +66,7 @@ def is_dev_ck() -> bool:
     #   root:xnu-6153.141.2~1/RELEASE_X86_64'
     # machine='x86_64'
     host_name = os.uname()[1]
-    host_names = ("dev1", "dev2")
+    host_names = ("dev1", "dev2" ,"dev3")
     am_host_name = os.environ.get("AM_HOST_NAME", "")
     _LOG.debug("host_name=%s am_host_name=%s", host_name, am_host_name)
     is_dev_ck_ = host_name in host_names or am_host_name in host_names

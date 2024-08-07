@@ -1,7 +1,5 @@
 # Auto Scaling Explanation
 
-## Table of Contents
-
 <!-- toc -->
 
 - [Introduction](#introduction)
@@ -122,14 +120,12 @@ pods and nodes based on the workload demands.
    that cannot be scheduled due to insufficient resources.
 
 2. **Horizontal Pod Autoscaler (HPA) Reaction**:
-
    - If the HPA detects that the CPU or memory usage of the pods exceeds or
      falls below the configured thresholds, it triggers a scale-out or scale-in
      action for the pods within the target deployment (e.g., increasing or
      decreasing the number of replicas of the Airflow Scheduler).
 
 3. **Cluster Autoscaler (CA) Reaction**:
-
    - If new pods cannot be scheduled because there are not enough resources in
      the cluster, the CA identifies this and decides to scale up the number of
      nodes.
@@ -138,19 +134,16 @@ pods and nodes based on the workload demands.
      evicting pods and terminating excess nodes.
 
 4. **Auto Scaling Groups (ASG) Execution**:
-
    - When the CA decides to scale up, it communicates with the cloud provider's
      ASG to add more nodes into the cluster.
    - For scaling down, it selects nodes to remove, ensures pods are safely
      evicted to other nodes, and then reduces the node count in the ASG.
 
 5. **New Nodes Joining the Cluster**:
-
    - As new nodes are provisioned by the ASG, they join the Kubernetes cluster,
      becoming available resources for scheduling pods.
 
 6. **Rebalancing and Optimization**:
-
    - With the addition of new nodes, the HPA might adjust the number of pod
      replicas again, based on the now-available resources and the target
      utilization rates.

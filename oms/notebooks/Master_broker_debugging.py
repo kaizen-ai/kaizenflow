@@ -54,7 +54,11 @@ hprint.config_notebook()
 # When running manually, specify the path to the config to load config from file,
 # for e.g., `.../reconciliation_notebook/fast/result_0/config.pkl`.
 config_file_name = None
-config = cconfig.get_notebook_config(config_file_name)
+# Set 'replace_ecs_tokyo = True' if running the notebook manually.
+replace_ecs_tokyo = False
+config = cconfig.get_notebook_config(
+    config_file_path=config_file_name, replace_ecs_tokyo=replace_ecs_tokyo
+)
 if config is None:
     system_log_dir = "/shared_data/toma/CmTask7440_1"
 
@@ -325,21 +329,28 @@ wave_zero = oms_child_order_df_unpacked[
 ]
 # Get the timestamps of events for each child order
 wave_zero_events = obccexqu.get_oms_child_order_timestamps(wave_zero)
-wave_zero_events = wave_zero_events.sort_values(
-    wave_zero_events.first_valid_index(), axis=1
-)
+# Skip plotting wave 0 if it was not executed during the run.
+plot_wave_zero = len(wave_zero_events) > 0
+if plot_wave_zero:
+    wave_zero_events = wave_zero_events.sort_values(
+        wave_zero_events.first_valid_index(), axis=1
+    )
+else:
+    _LOG.warning("Wave 0 was not executed during the run. Skipping plotting.")
 
 # %%
 wave_zero_events.head(3)
 
 # %%
-# Get the difference between event timestamps.
-time_delays = obccexqu.get_time_delay_between_events(wave_zero_events)
+if plot_wave_zero:
+    # Get the difference between event timestamps.
+    time_delays = obccexqu.get_time_delay_between_events(wave_zero_events)
 
 # %%
-time_delays.boxplot(rot=45, ylabel="Time delay").set_title(
-    "Time delay between events for wave 0"
-)
+if plot_wave_zero:
+    time_delays.boxplot(rot=45, ylabel="Time delay").set_title(
+        "Time delay between events for wave 0"
+    )
 
 # %% [markdown]
 # ### Plot the rest of the waves

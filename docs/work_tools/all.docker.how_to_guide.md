@@ -85,8 +85,6 @@
 
 <!-- tocstop -->
 
-TODO(Sameep): Update the doc by replacing `sorrentum` with `kaizenflow` once docker is updated.
-
 # Introduction
 
 - Docker is an open-source tool designed to make our life typically easier
@@ -432,7 +430,6 @@ TODO(Sameep): Update the doc by replacing `sorrentum` with `kaizenflow` once doc
     local image by default
   - Images are pushed to the remote registry and pulled for testing and usage
   - To tag the local image as dev and push it to the target registry: e.g.,
-    TODO(Sameep): Update to `dockerhub.kaizenflow` once docker is updated
     `aws_ecr.ck` or `dockerhub.sorrentum` , use
     ```
     > i docker_tag_push_multi_build_local_image_as_dev --version <VERSION> --target <TARGET>
@@ -511,7 +508,6 @@ Where `1.10.0` is the new version of the image with stage as local.
 
 E.g.,
 ```
-# TODO(Sameep): Update to `dockerhub.kaizenflow` once docker is updated
 i docker_release_multi_build_dev_image --version 1.6.1 --platform linux/amd64,linux/arm64 --target-registries aws_ecr.ck,dockerhub.sorrentum
 ```
 
@@ -520,7 +516,6 @@ TARGET_REGISTRIES: list of target registries to push the image to.
 E.g.,
 
 - `aws_ecr.ck` -- private CK AWS Docker registry
-TODO(Sameep): Update to `dockerhub.kaizenflow` once docker is updated
 - `dockerhub.sorrentum` -- public Dockerhub registry
 
 All other options are the same as for the `docker_release_dev_image` end-to-end
@@ -1120,7 +1115,6 @@ flow.
 - Push the image to Dockerhub manually
   - Login to Dockerhub with the `sorrentum` account
   ```
-  # TODO(Sameep): Update to `kaizenflow` once docker is updated
   > docker login --username=sorrentum
   ```
   - Tag the dev version image as `sorrentum/dev_tools:dev`
@@ -1345,7 +1339,7 @@ A hack is to
 vimdiff /Users/saggese/src/lemonade2/amp/dev_scripts/client_setup/requirements.txt dev_scripts_devto/client_setup/requirements.txt
 ```
 ```
-> source dev_scripts_devto/client_setup/build.sh
+> dev_scripts_devto/client_setup/build.sh
 ```
 
 A possible solution is to use Docker-in-Docker
