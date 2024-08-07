@@ -12,9 +12,10 @@ Use as:
    --db_stage 'preprod' \
    --start_timestamp_as_str '20240220_124800' \
    --end_timestamp_as_str '20240220_131500' \
-   --universe 'v7.5'
-   --data_vendor 'CCXT'
-   --log_dir 'tmp_log_dir'
+   --universe 'v7.5' \
+   --data_vendor 'CCXT' \
+   --log_dir 'tmp_log_dir' \
+   --exchange_id 'binance' \
 """
 import argparse
 import logging
@@ -40,10 +41,10 @@ def _log_experiment_data(args) -> None:
         args.end_timestamp_as_str
     )
     bid_ask_raw_data_reader = imvcdcimrdc.get_bid_ask_realtime_raw_data_reader(
-        args.db_stage, args.data_vendor, args.universe
+        args.db_stage, args.data_vendor, args.universe, args.exchange_id
     )
     # TODO(Juraj): this should match exactly what happens in ccxt_broker.py
-    # consider unifyig through lib function.
+    # consider unifying through a lib function.
     bid_ask_data = bid_ask_raw_data_reader.load_db_table(
         start_timestamp,
         end_timestamp,
@@ -122,6 +123,14 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         type=str,
         help="Vendor of the bid/ask data, e.g. CCXT or Binance",
+    )
+    parser.add_argument(
+        "--exchange_id",
+        action="store",
+        required=True,
+        type=str,
+        choices=["binance", "cryptocom"],
+        help="Exchange to load data from",
     )
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]

@@ -37,7 +37,6 @@ import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.data.qa.validate_input_args as imvcdqviar
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
-import im_v2.ccxt.data.extract.cryptocom_extractor as imvcdecrex
 
 _LOG = logging.getLogger(__name__)
 
@@ -63,7 +62,7 @@ def _parse() -> argparse.ArgumentParser:
         required=False,
         default="v1_0_0",
         type=str,
-        help="Dataset version"
+        help="Dataset version",
     )
     parser.add_argument(
         "--download_period",
@@ -72,9 +71,16 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         choices=["daily", "monthly"],
         help="Specify the frequency of bulk data downloads."
-            "Choose 'daily' to download data for each day individually,"
-            "or 'monthly' to download data for entire months at once."
-            "This option is only supported by the Binance vendor."
+        "Choose 'daily' to download data for each day individually,"
+        "or 'monthly' to download data for entire months at once."
+        "This option is only supported by the Binance vendor.",
+    )
+    parser.add_argument(
+        "--secret_name",
+        required=False,
+        type=str,
+        help="Specify the secret name to download historical bid/ask data"
+        "This option is only supported by the Binance vendor.",
     )
     return parser  # type: ignore[no-any-return]
 
@@ -109,6 +115,7 @@ def _run(args: argparse.Namespace) -> None:
                 allow_data_gaps=True,
                 data_type=args["data_type"],
                 time_period=time_period,
+                secret_name=args["secret_name"],
             )
         except Exception as e:
             raise e

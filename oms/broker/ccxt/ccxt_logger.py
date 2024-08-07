@@ -85,7 +85,7 @@ class CcxtLogger:
     - Submitted child orders
 
     For more info on logs structure, see
-    `docs/trade_execution/ck.ccxt_broker_logs_schema.reference.md`
+    `docs/oms/broker/ck.ccxt_broker_logs_schema.reference.md`
     """
 
     # Default locations of log files.
@@ -227,7 +227,9 @@ class CcxtLogger:
             "extra_params"
         ].get("ccxt_id", -1)
         # Get current timestamp and bar.
-        wall_clock_time_str = hdateti.timestamp_to_str(get_wall_clock_time())
+        wall_clock_time_str = hdateti.timestamp_to_str(
+            get_wall_clock_time(), include_msec=True
+        )
         bar_timestamp = hwacltim.get_current_bar_timestamp(
             as_str=True, include_msec=True
         )
@@ -379,7 +381,9 @@ class CcxtLogger:
         """
         # Generate file name based on the bar timestamp.
         # TODO(gp): P1, @all Factor out the logic to format the timestamps.
-        wall_clock_time = hdateti.timestamp_to_str(get_wall_clock_time())
+        wall_clock_time = hdateti.timestamp_to_str(
+            get_wall_clock_time(), include_msec=True
+        )
         bar_timestamp = hwacltim.get_current_bar_timestamp(
             as_str=True, include_msec=True
         )
@@ -410,7 +414,7 @@ class CcxtLogger:
         self,
         get_wall_clock_time: Callable,
         exchange_markets: CcxtData,
-        leverage_info: CcxtData,
+        leverage_info: Optional[CcxtData],
     ) -> None:
         """
         Log exchange info on markets and leverage info from CCXT Exchange as
@@ -445,8 +449,10 @@ class CcxtLogger:
         hio.to_json(
             exchange_market_log_filename, exchange_markets, use_types=True
         )
-        hio.to_json(leverage_info_log_filename, leverage_info, use_types=True)
         _LOG.debug(hprint.to_str("exchange_market_log_filename"))
+        if leverage_info:
+            hio.to_json(leverage_info_log_filename, leverage_info, use_types=True)
+            _LOG.debug(hprint.to_str("leverage_info_log_filename"))
 
     def log_bid_ask_data(
         self,
@@ -1110,9 +1116,6 @@ class CcxtLogger:
         Load the exchange markets data from the JSON files in the log directory
         as Dict.
 
-        The exchange markets has the exchange structure, as described in
-        https://docs.ccxt.com/#/?id=exchange-structure.
-
         :param convert_to_dataframe: same interface as
             `load_all_data()`.
         :param abort_on_missing_data: same interface as
@@ -1301,13 +1304,21 @@ class CcxtLogger:
             if (
                 not ccxt_order_structure
                 or ccxt_order_structure.get("empty") == True
+                # TODO(Juraj): investigate this phenomenon arising in crypto.com.
+                or ccxt_order_structure["id"] == None
             ):
                 continue
             srs = pd.Series(
                 ccxt_order_structure.values(), ccxt_order_structure.keys()
             )
             # Get order update Unix timestamp from the exchange.
-            info_timestamp = ccxt_order_structure["info"]["updateTime"]
+            if "updateTime" in ccxt_order_structure["info"]:
+                # Binance.
+                info_timestamp = ccxt_order_structure["info"]["updateTime"]
+            else:
+                # Crypto.com
+                info_timestamp = ccxt_order_structure["info"]["update_time"]
+
             srs["info_timestamp"] = info_timestamp
             # Convert to datetime.
             # Note: using 'coerce' since we expect the exchange to return a
@@ -1828,7 +1839,17 @@ class CcxtLogger:
         #
         trades["transaction_cost"] = [fee["cost"] for fee in trades["fee"]]
         trades["fees_currency"] = [fee["currency"] for fee in trades["fee"]]
-        trades["realized_pnl"] = [info["realizedPnl"] for info in trades["info"]]
+        # TODO(Juraj): crypto.com does not have expose "realizedPnl" field
+        if len(trades_json) > 0 and "realizedPnl" in trades_json[0]["info"]:
+            trades["realized_pnl"] = [
+                info["realizedPnl"] for info in trades["info"]
+            ]
+        else:
+            _LOG.warning(
+                "Setting realized_pnl to 0 because crypto.com does not expose such field."
+                "Receiving a warning for non-crypto.com related data means there is a problem"
+            )
+            trades["realized_pnl"] = [0 for _ in trades["info"]]
         # Force conversion of PnL to float.
         # PnL is extracted from `info` field, which stores all values as strings.
         trades["realized_pnl"] = trades["realized_pnl"].astype(float)

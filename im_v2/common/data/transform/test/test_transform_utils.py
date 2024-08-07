@@ -651,9 +651,10 @@ class TestResampleBidAskData2(hunitest.TestCase):
         # Choose only one level as the function expects.
         data = data[data["level"] == 1]
         # Check results.
+        freq = "1T"
         bid_ask_cols = ["bid_size", "bid_price", "ask_size", "ask_price"]
         actual_df = data.groupby("currency_pair")[bid_ask_cols].apply(
-            imvcdttrut.resample_bid_ask_data_to_1min
+            imvcdttrut.resample_bid_ask_data, freq=freq
         )
 
         expected = r"""
@@ -685,7 +686,8 @@ class TestResampleBidAskData2(hunitest.TestCase):
             imvcdttrut.cfinresa, "resample_bars"
         ) as resample_bars:
             bid_ask_cols = ["bid_size", "bid_price", "ask_size", "ask_price"]
-            imvcdttrut.resample_bid_ask_data_to_1min(data[bid_ask_cols])
+            freq = "1T"
+            imvcdttrut.resample_bid_ask_data(data[bid_ask_cols], freq)
             self.assertEqual(resample_bars.call_count, 1)
             # Get the dataset passed to resampler.
             # call_args_list has the following structure:
@@ -712,9 +714,10 @@ class TestResampleBidAskData2(hunitest.TestCase):
         data["timestamp"] = pd.to_datetime(data["timestamp"])
         data = data.set_index("timestamp")
         # Check assertion.
+        freq = "1T"
         with self.assertRaises(AssertionError) as ae:
             data.groupby("currency_pair").apply(
-                imvcdttrut.resample_bid_ask_data_to_1min
+                imvcdttrut.resample_bid_ask_data, freq=freq
             )
         exp = r"""
         ################################################################################
@@ -739,10 +742,11 @@ class TestResampleBidAskData2(hunitest.TestCase):
         data = pd.read_csv(file_name)
         data["timestamp"] = pd.to_datetime(data["timestamp"])
         data = data.set_index("timestamp")
+        freq = "1T"
         # Run Resampling
         actual_df = data.groupby("currency_pair").apply(
-            lambda group: imvcdttrut.resample_multilevel_bid_ask_data_to_1min(
-                group, number_levels_of_order_book=2
+            lambda group: imvcdttrut.resample_multilevel_bid_ask_data(
+                group, freq, number_levels_of_order_book=2
             )
         )
         actual = hpandas.df_to_str(actual_df)
@@ -753,6 +757,33 @@ class TestResampleBidAskData2(hunitest.TestCase):
         Verify that multisymbol multilevel raw data 200ms is correctly
         resampled to 1min.
         """
+        freq = "1T"
+        actual = self._test_helper(freq)
+        self.check_string(actual)
+
+    def test_resample_multisymbol_multilevel_bid_ask_data1(self) -> None:
+        """
+        Verify that multisymbol multilevel raw data 200ms is correctly
+        resampled to 10sec.
+        """
+        freq = "10S"
+        actual = self._test_helper(freq)
+        self.check_string(actual)
+
+    def test_resample_multisymbol_multilevel_bid_ask_data2(self) -> None:
+        """
+        Verify that multisymbol multilevel raw data 200ms is correctly
+        resampled to 1sec.
+        """
+        freq = "1S"
+        actual = self._test_helper(freq)
+        self.check_string(actual)
+
+    def _test_helper(self, freq: str):
+        """
+        Verify that multisymbol multilevel raw data 200ms is correctly
+        resampled to given frequency.
+        """
         scratch_dir = self.get_scratch_space()
         file_name = os.path.join(scratch_dir, "SampleBidAskDataWide.csv")
         # Data has 2 levels in wide format.
@@ -760,13 +791,13 @@ class TestResampleBidAskData2(hunitest.TestCase):
         data["timestamp"] = pd.to_datetime(data["timestamp"])
         data.set_index("timestamp", inplace=True)
         # Run Resampling.
-        actual_df = (
-            imvcdttrut.resample_multisymbol_multilevel_bid_ask_data_to_1min(
-                data, number_levels_of_order_book=2
-            )
+        actual_df = imvcdttrut.resample_multisymbol_multilevel_bid_ask_data(
+            data,
+            freq,
+            number_levels_of_order_book=2,
         )
         actual = hpandas.df_to_str(actual_df)
-        self.check_string(actual)
+        return actual
 
     def _get_test_data(self) -> None:
         """
@@ -776,3 +807,127 @@ class TestResampleBidAskData2(hunitest.TestCase):
         scratch_dir = self.get_scratch_space()
         aws_profile = "ck"
         hs3.copy_data_from_s3_to_local_dir(s3_input_dir, scratch_dir, aws_profile)
+
+
+class Test_transform_and_resample_rt_bid_ask_data(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check that the function correctly handle input with default param
+        values.
+        """
+        # Prepare input.
+        freq = "1S"
+        df_test = self._get_test_data()
+        # Test method.
+        actual_df = imvcdttrut.transform_and_resample_rt_bid_ask_data(
+            df_test, freq
+        )
+        actual = hpandas.df_to_str(actual_df)
+        # Verify output.
+        self.check_string(actual)
+
+    def test2(self) -> None:
+        """
+        Check that the function throws exception when input data frame is
+        empty.
+        """
+        # Prepare an empty input.
+        freq = "1S"
+        df_test = self._get_test_data()
+        empty_df = pd.DataFrame(columns=df_test.keys())
+        # Test method.
+        with self.assertRaises(AssertionError) as cm:
+            imvcdttrut.transform_and_resample_rt_bid_ask_data(empty_df, freq)
+        expected = r"""
+        ################################################################################
+        * Failed assertion *
+        '0'
+        ==
+        '1'
+        ################################################################################
+        """
+        actual = str(cm.exception)
+        # Compare outputs.
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Check that an input with multiple currency pairs are processed
+        correctly.
+        """
+        # Prepare input.
+        freq = "1T"
+        df_test = self._get_test_data()
+        df_test["currency_pair"] = ["BTC_USDT", "ADA_USDT", "BTC_USDT"]
+        df_test["level"] = [1, 1, 2]
+        # Test method.
+        actual_df = imvcdttrut.transform_and_resample_rt_bid_ask_data(
+            df_test, freq
+        )
+        actual = hpandas.df_to_str(actual_df)
+        # Verify output.
+        self.check_string(actual)
+
+    def test4(self) -> None:
+        """
+        Check that an error is raised if invalid frequency is provided as an
+        input.
+        """
+        # Prepare input.
+        freq = "invalid_frequency"
+        df_test = self._get_test_data()
+        # Test method.
+        with self.assertRaises(ValueError) as cm:
+            imvcdttrut.transform_and_resample_rt_bid_ask_data(df_test, freq)
+        expected = "Invalid frequency: invalid_frequency"
+        actual = str(cm.exception)
+        # Compare outputs.
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test5(self) -> None:
+        """
+        Check that function throws exception when non-level 1 bid/ask data is
+        passed as an input.
+        """
+        # Prepare input.
+        freq = "1T"
+        df_test = self._get_test_data()
+        df_test["level"] = [2, 3, 2]
+        # Test method.
+        with self.assertRaises(AssertionError) as cm:
+            imvcdttrut.transform_and_resample_rt_bid_ask_data(df_test, freq)
+        expected = r"""
+        ################################################################################
+        * Failed assertion *
+        '0'
+        ==
+        '1'
+        ################################################################################
+        """
+        actual = str(cm.exception)
+        # Verify output.
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def _get_test_data(self) -> pd.DataFrame:
+        """
+        Prepare test input data.
+        """
+        df_dict = {
+            "timestamp": [1622548800000, 1622548805000, 1622548810000],
+            "currency_pair": ["BTC_USDT", "BTC_USDT", "BTC_USDT"],
+            "level": [1, 2, 3],
+            "bid_price": [35000, 35010, 35020],
+            "bid_size": [1.2, 1.5, 1.8],
+            "ask_price": [35005, 35015, 35025],
+            "ask_size": [1.1, 1.4, 1.7],
+            "id": [1, 2, 3],
+            "end_download_timestamp": [
+                1622548801000,
+                1622548806000,
+                1622548811000,
+            ],
+            "knowledge_timestamp": [1622548802000, 1622548807000, 1622548812000],
+            "exchange_id": ["binance", "binance", "binance"],
+        }
+        df_test = pd.DataFrame(df_dict)
+        return df_test

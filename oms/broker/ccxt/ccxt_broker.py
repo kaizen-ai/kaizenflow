@@ -27,13 +27,25 @@ _LOG = logging.getLogger(__name__)
 # side.
 nest_asyncio.apply()
 
+# TODO(Grisha): propagate via SystemConfig.
+# Minimum number of seconds required for wave completion.
+_WAVE_COMPLETION_TIME_THRESHOLD = 4
 
 # #############################################################################
 # CcxtBroker
 # #############################################################################
 
 
+# TODO(Juraj): Effectively this is a BinanceCcxtBroker
+# since it is so heavily overfitted.
 class CcxtBroker(obcaccbr.AbstractCcxtBroker):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        # TODO(Juraj): Rewrite using polymorphism ASAP.
+        if self._exchange_id == "binance":
+            leverage = 1
+            self._set_leverage_for_all_symbols(leverage)
+
     async def get_ccxt_fills(
         self, orders: List[oordorde.Order]
     ) -> List[Dict[str, Any]]:
@@ -180,7 +192,7 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
         # there are 5 waves.
         execution_freq = pd.Timedelta(execution_freq)
         num_waves = self._calculate_num_twap_child_order_waves(
-            execution_end_timestamp, execution_freq
+            execution_start_timestamp, execution_end_timestamp, execution_freq
         )
         if hasattr(
             self._limit_price_computer, "_volatility_multiple"
@@ -195,7 +207,28 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
             parent_orders_copy, num_waves, self.market_info
         )
         child_orders = []
-        for wave_id in range(num_waves):
+        # Track the previous wave ID to determine if more than one wave has
+        # been skipped. Assumption is wave ID should start from 0.
+        prev_wave_id = -1
+        is_first_wave = True
+        while True:
+            # Calculate the wave ID to be used at the current time for each
+            # order submission wave.
+            wave_id = self._calculate_wave_id(
+                num_waves, execution_end_timestamp, execution_freq
+            )
+            # TODO(Sameep): Log the skipped waves so that we can reconstruct
+            # the missing waves in notebooks.
+            # Check if any waves were skipped.
+            if wave_id != prev_wave_id + 1:
+                skipped_num_waves = wave_id - (prev_wave_id + 1)
+                _LOG.warning(
+                    "%s waves were skipped. Expected wave_id=%s, Current wave_id=%s",
+                    skipped_num_waves,
+                    prev_wave_id + 1,
+                    wave_id,
+                )
+            prev_wave_id = wave_id
             wave_start_time = self._get_wall_clock_time()
             _LOG.info(hprint.to_str("wave_id wave_start_time"))
             # Get all the open positions to determine `curr_num_shares`.
@@ -213,8 +246,31 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
             quantity_computer.update_current_positions(open_positions)
             # Generate the quantities for the wave about to be submitted.
             parent_order_ids_to_child_order_shares = (
-                quantity_computer.get_wave_quantities(wave_id)
+                quantity_computer.get_wave_quantities(is_first_wave)
             )
+            # Since the wave ID is determined adaptively, the first wave may
+            # not have a wave_id of 0. Therefore, we use a flag to identify
+            # if the current wave is the first one and toggle the flag
+            # accordingly.
+            is_first_wave = False
+            is_last_wave_duration = self.market_data.get_wall_clock_time() >= (
+                execution_end_timestamp - pd.Timedelta(execution_freq)
+            )
+            if is_last_wave_duration:
+                _LOG.warning(
+                    "Exiting wave loop %s before bar end timestamp of %s to have enough time for all parent orders fills fetching and logging",
+                    execution_freq,
+                    execution_end_timestamp,
+                )
+                break
+            if await self._skip_wave(
+                wave_start_time,
+                execution_freq,
+                wave_id,
+            ):
+                # Skip the wave if the time left to complete the wave is less
+                # than the threshold.
+                continue
             child_orders_iter = await self._submit_twap_child_orders(
                 parent_orders_copy,
                 parent_order_ids_to_child_order_shares,
@@ -231,7 +287,6 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
                 parent_orders_ccxt_symbols,
                 execution_freq,
                 wave_start_time,
-                is_last_wave=wave_id == num_waves - 1,
             )
             # Log time of alignment with the next wave.
             next_wave_sync_timestamp = self.market_data.get_wall_clock_time()
@@ -264,11 +319,22 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
         #    ...]
         # ```
         self._previous_parent_orders = parent_orders_copy
-        _LOG.info(hprint.to_str("self._previous_parent_orders"))
+        if _LOG.isEnabledFor(logging.DEBUG):
+            # The `oms.Order` object is enormous for long trading periods so
+            # displaying it at the debug level.
+            _LOG.debug(hprint.to_str("self._previous_parent_orders"))
         # TODO(Danya): Factor out the loading and logging of oms.Fills
         #  into a separate method.
         oms_fills = await self.get_fills_async()
+        _LOG.info(
+            "get_fills_async() is done, current time is %s",
+            self.market_data.get_wall_clock_time(),
+        )
         self._logger.log_oms_fills(self._get_wall_clock_time, oms_fills)
+        _LOG.info(
+            "log_oms_fills() is done, current time is %s",
+            self.market_data.get_wall_clock_time(),
+        )
         # The receipt is not really needed since the order is accepted right away,
         # and we don't need to wait for the order being accepted.
         submitted_order_id = self._get_next_submitted_order_id()
@@ -310,8 +376,6 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
         parent_orders_ccxt_symbols: List[str],
         execution_freq: pd.Timedelta,
         wave_start_time: pd.Timestamp,
-        *,
-        is_last_wave=False,
     ) -> None:
         """
         Wait until the end of current wave, cancel orders and sync to next wave
@@ -325,9 +389,6 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
         :param parent_orders_ccxt_symbols: symbols to cancel orders for
         :param execution_freq: wave execution frequency as pd.Timedelta
         :param wave_start_time: start time of the wave to cancel orders for
-        :param is_last_wave: True if the current wave is the last one for the
-         current parent order, waiting times are handled differently
-         in the last wave.
         """
         # This approach is safer than wave_start_time.ceil(execution_freq).
         # In case ceil was applied on a precisely rounded start timestamp
@@ -340,10 +401,10 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
         # cancellation before the bar ends. See CmTask5129.
         # Note that the length of the delay increases with the distance
         # of the trading server from the exchange's servers.
-        # From the system POV it's important that the bar ends before the
-        # next one starts, AKA doesn't leak to the next bar. To facilitate
-        # that, we cancer earlier for in the last wave.
-        early_cancel_delay = 2 if is_last_wave else 0.2
+        # TODO(Grisha): pass values via SystemConfig.
+        # TODO(Grisha): should this be a function of `execution_frequency`?
+        # Currently we assume `10S` execution window.
+        early_cancel_delay = 0.2
         wait_until_modified = wait_until - pd.Timedelta(
             seconds=early_cancel_delay
         )
@@ -351,23 +412,24 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
             wait_until_modified,
             self._get_wall_clock_time,
         )
-        await self.cancel_open_orders_for_symbols(parent_orders_ccxt_symbols)
+        if self._exchange_id == "cryptocom":
+            self._cancel_all_open_orders_with_exception()
+        else:
+            await self.cancel_open_orders_for_symbols(parent_orders_ccxt_symbols)
         _LOG.info(
             "Orders cancelled timestamp=%s",
             self.market_data.get_wall_clock_time(),
         )
         # Wait again in case the order cancellation was faster than expected
-        # and we are still in the same wave time-wise, but only if it is not
-        # last wave.
-        if not is_last_wave:
-            await hasynci.async_wait_until(
-                wait_until,
-                self._get_wall_clock_time,
-            )
-            _LOG.info(
-                "After syncing with next child wave=%s",
-                self.market_data.get_wall_clock_time(),
-            )
+        # and we are still in the same wave time-wise.
+        await hasynci.async_wait_until(
+            wait_until,
+            self._get_wall_clock_time,
+        )
+        _LOG.info(
+            "After syncing with next child wave=%s",
+            self.market_data.get_wall_clock_time(),
+        )
 
     async def _log_last_wave_results(
         self, child_orders: List[oordorde.Order]
@@ -389,6 +451,32 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
             "CCXT fills and trades logging finished=%s",
             self.market_data.get_wall_clock_time(),
         )
+
+    def _add_update_time_to_ccxt_response(
+        self, child_order_ccxt_response: Dict[str, any]
+    ) -> Dict[str, Any]:
+        """
+        Add "update_time" equal to current wall clock time.
+
+        This action is necessary for child order responses from
+        crypto.com. Unlike Binance, which automatically sends an
+        "updateTime" field, crypto.com does not provide any timestamp
+        information in the receipt of the order submission. This field
+        is used in the CCXT logger. As an improvised solution we set an
+        "update_time" field equal to current timestamp (slightly less
+        accurate then the Binance behavior) but good enough. Technically
+        we could choose any name for the field, e.g match the Binance
+        interface "updateTime", however, crypto.com uses "update_time"
+        elsewhere. For this reason we stick to the same field name to
+        avoid confusion.
+
+        :param child_order_ccxt_response: response dict to update
+        :return: child order CCXT response with an "update_time" field
+        """
+        child_order_ccxt_response["info"][
+            "update_time"
+        ] = self.market_data.get_wall_clock_time()
+        return child_order_ccxt_response
 
     async def _submit_twap_child_order(
         self,
@@ -530,6 +618,15 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
             ] = self.asset_id_to_ccxt_symbol_mapping[child_order.asset_id]
             ccxt_child_order_response["empty"] = True
             ccxt_child_order_response["id"] = -1
+        # The second part of the if technically does not need to be there,
+        # we keep it as a safety check.
+        if (
+            self._exchange_id == "cryptocom"
+            and not ccxt_child_order_response.get("updateTime")
+        ):
+            ccxt_child_order_response = self._add_update_time_to_ccxt_response(
+                ccxt_child_order_response
+            )
         # Here log CCXT trades and CCXT fills.
         # Log submitted child order with extra price info.
         self._logger.log_child_order(
@@ -655,3 +752,362 @@ class CcxtBroker(obcaccbr.AbstractCcxtBroker):
                 id=str(ccxt_id), symbol=symbol
             )
         return ccxt_order
+
+    async def _skip_wave(
+        self,
+        wave_start_time: pd.Timestamp,
+        execution_freq: pd.Timedelta,
+        wave_id: int,
+    ) -> bool:
+        """
+        Skip the wave if the time left to complete the wave is less than the
+        threshold.
+
+        :param wave_start_time: The start time of the wave.
+        :param execution_freq: The frequency of execution.
+        :param wave_id: The ID of the wave.
+        :return: True if the wave should be skipped, False otherwise.
+        """
+        # Calculate the end timestamp of the wave.
+        wave_end_time = (wave_start_time + execution_freq).floor(execution_freq)
+        # Check if the time left to complete the wave is less than the
+        # threshold.
+        if (
+            wave_end_time - self.market_data.get_wall_clock_time()
+        ).total_seconds() < _WAVE_COMPLETION_TIME_THRESHOLD:
+            _LOG.info(
+                hprint.to_str(
+                    "wave_start_time wave_end_time wave_id _WAVE_COMPLETION_TIME_THRESHOLD"
+                )
+            )
+            _LOG.warning(
+                "Skipping wave %s, time left is less than threshold.", wave_id
+            )
+            await hasynci.async_wait_until(
+                wave_end_time,
+                self._get_wall_clock_time,
+            )
+            _LOG.info(
+                "After syncing with next child wave=%s",
+                self.market_data.get_wall_clock_time(),
+            )
+            return True
+        return False
+
+    # TODO(Sameep): Add explanation of the approach in the docs.
+    def _calculate_wave_id(
+        self,
+        total_num_waves: int,
+        execution_end_timestamp: pd.Timestamp,
+        execution_freq: pd.Timedelta,
+    ) -> int:
+        """
+        Calculate the current wave ID using current time, execution end
+        timestamp and the execution frequency.
+
+        Example:
+        total_num_waves = 720
+        execution_end_timestamp = pd.Timestamp("5:00:00")
+        execution_freq = pd.Timedelta(seconds=10)
+        current_timestamp = pd.Timestamp("3:00:25")
+
+        remaining_time = (execution_end_timestamp - current_timestamp.floor(execution_freq))
+                       = 5:00:00 - 3:00:20 = 1:59:40
+        remaining_num_waves = 1:59:40 / 10s = 718
+        wave_id = 720 - 718 = 2
+
+        :param num_waves: The number of waves to be executed.
+        :param execution_end_timestamp: The timestamp when the execution of the
+            parent order ends.
+        :param execution_freq: The frequency of execution.
+        :returns: wave id to be utilized at the current time
+        """
+        remaining_time = (
+            execution_end_timestamp
+            - self.market_data.get_wall_clock_time().floor(execution_freq)
+        )
+        remaining_num_waves = remaining_time // execution_freq
+        wave_id = total_num_waves - remaining_num_waves
+        hdbg.dassert_lte(0, wave_id)
+        return wave_id
+
+
+class CcxtCryptocomBroker(CcxtBroker):
+    def _get_market_info(self) -> Dict[int, Any]:
+        """
+        Load market information from the given exchange and map to asset ids.
+
+        The following data is saved:
+        - minimal order limits (notional and quantity)
+        - asset quantity precision (for rounding of orders)
+
+        In contract with Binance, we do not load leverage information here.
+        The related methods are not supported by CCXT as version 4.2.13.
+        ```
+        `>>> ccxtpro.cryptocom().has["fetchLeverageTiers"]
+        False
+        ```
+        The numbers are determined by loading the market metadata from CCXT.
+        """
+        minimal_order_limits: Dict[int, Any] = {}
+        # Load market information from CCXT.
+        exchange_markets = self._sync_exchange.load_markets()
+        self._logger.log_exchange_markets(
+            self._get_wall_clock_time, exchange_markets, None
+        )
+        for asset_id, symbol in self.asset_id_to_ccxt_symbol_mapping.items():
+            minimal_order_limits[asset_id] = {}
+            currency_market = exchange_markets[symbol]
+            # Example swap (perpetual future):
+            # {
+            #    "id": "BTCUSD-PERP",
+            #    "lowercaseId": null,
+            #    "symbol": "BTC/USD:USD",
+            #    "base": "BTC",
+            #    "quote": "USD",
+            #    "settle": "USD",
+            #    "baseId": "BTC",
+            #    "quoteId": "USD",
+            #    "settleId": "USD",
+            #    "type": "swap",
+            #    "spot": false,
+            #    "margin": false,
+            #    "swap": true,
+            #    "future": false,
+            #    "option": false,
+            #    "index": null,
+            #    "active": true,
+            #    "contract": true,
+            #    "linear": true,
+            #    "inverse": false,
+            #    "subType": "linear",
+            #    "taker": 0.004,
+            #    "maker": 0.004,
+            #    "contractSize": 1,
+            #    "expiry": null,
+            #    "expiryDatetime": null,
+            #    "strike": null,
+            #    "optionType": null,
+            #    "precision": {
+            #        "amount": 0.0001,
+            #        "price": 0.1,
+            #        "cost": null,
+            #        "base": null,s
+            #        "quote": null
+            #    },
+            #    "limits": {
+            #        "leverage": {
+            #            "min": 1,
+            #            "max": 100
+            #        },
+            #        "amount": {
+            #            "min": null,
+            #            "max": null
+            #        },
+            #        "price": {
+            #            "min": null,
+            #            "max": null
+            #        },
+            #        "cost": {
+            #            "min": null,
+            #            "max": null
+            #        }
+            #    },
+            #    "created": null,
+            #    "info": {
+            #        "symbol": "BTCUSD-PERP",
+            #        "inst_type": "PERPETUAL_SWAP",
+            #        "display_name": "BTCUSD Perpetual",
+            #        "base_ccy": "BTC",
+            #        "quote_ccy": "USD",
+            #        "quote_decimals": "1",
+            #        "quantity_decimals": "4",
+            #        "price_tick_size": "0.1",
+            #        "qty_tick_size": "0.0001",
+            #        "max_leverage": "100",
+            #        "tradable": true,
+            #        "expiry_timestamp_ms": "0",
+            #        "beta_product": false,
+            #        "underlying_symbol": "BTCUSD-INDEX",
+            #        "contract_size": "1",
+            #        "margin_buy_enabled": false,
+            #        "margin_sell_enabled": false
+            #    },
+            #    "percentage": true,
+            #    "tiers": {
+            #        "maker": [
+            #            [
+            #                0,
+            #                0.004
+            #            ],
+            #            [
+            #                25000,
+            #                0.0035
+            #            ],
+            #            [
+            #                50000,
+            #                0.0015
+            #            ],
+            #            [
+            #                100000,
+            #                0.001
+            #            ],
+            #            [
+            #                250000,
+            #                0.0009
+            #            ],
+            #            [
+            #                1000000,
+            #                0.0008
+            #            ],
+            #            [
+            #                20000000,
+            #                0.0007
+            #            ],
+            #            [
+            #                100000000,
+            #                0.0006
+            #            ],
+            #            [
+            #                200000000,
+            #                0.0004
+            #            ]
+            #        ],
+            #        "taker": [
+            #            [
+            #                0,
+            #                0.004
+            #            ],
+            #            [
+            #                25000,
+            #                0.0035
+            #            ],
+            #            [
+            #                50000,
+            #                0.0025
+            #            ],
+            #            [
+            #                100000,
+            #                0.0016
+            #            ],
+            #            [
+            #                250000,
+            #                0.00015
+            #            ],
+            #            [
+            #                1000000,
+            #                0.00014
+            #            ],
+            #            [
+            #                20000000,
+            #                0.00013
+            #            ],
+            #            [
+            #                100000000,
+            #                0.00012
+            #            ],
+            #            [
+            #                200000000,
+            #                0.0001
+            #            ]
+            #        ]
+            #    }
+            # }
+            limits = currency_market["limits"]
+            # Get the minimal amount of asset in the order.
+            amount_limit = limits["amount"]["min"]
+            # Set the minimal cost of asset in the order.
+            # The notional limit can differ between symbols and subject to
+            # fluctuations, so it is set manually to 10.
+            notional_limit = 10.0
+            minimal_order_limits[asset_id]["min_cost"] = notional_limit
+            # Set the rounding precision for amount of the asset.
+            amount_precision_decimal = currency_market["precision"]["amount"]
+            # Crypto.com expresses precision in a decimal form, whereas Binance
+            # uses integer notation as "number of decimal places", e.g.:
+            # - If the lowest amount of asset you can buy is 0.01
+            #   - Binance: amount = 2
+            #   - Crypto.com amount = 0.01
+            # Our interfaces later during child order quantity calculation expect
+            # the integer notation, so convert the format early - here.
+            # Convert the precision to string and count the number of decimal places.
+            amount_precision = len(str(amount_precision_decimal).split(".")[1])
+            minimal_order_limits[asset_id]["amount_precision"] = amount_precision
+            # The amount limit is used in `_apply_cc_limits`
+            # mathematical comparisons, it cannot be None.
+            # The amount precision implies the minimum amount.
+            amount_limit = (
+                amount_precision_decimal if amount_limit is None else amount_limit
+            )
+            minimal_order_limits[asset_id]["min_amount"] = amount_limit
+            # Set the rounding precision for price of the asset.
+            price_precision = currency_market["precision"]["price"]
+            # See above comment for amount precision that explains the format
+            # conversion.
+            price_precision = len(str(price_precision).split(".")[1])
+            minimal_order_limits[asset_id]["price_precision"] = price_precision
+        return minimal_order_limits
+
+    def _get_open_positions_from_exchange(self):
+        """
+        Load open positions from the exchange and return as dict.
+
+        Implementation of `get_open_positions`.
+        """
+        positions = []
+        # Fetch all the open positions. The response from the exchange looks like:
+        # ```
+        # [
+        #     {
+        #         "info": {
+        #             "account_id": "780cbc31-e427-5969-b3e6-635694755089",
+        #             "quantity": "0.008",
+        #             "cost": "24.7224",
+        #             "open_pos_cost": "24.7224",
+        #             "open_position_pnl": "-0.00988896",
+        #             "session_pnl": "-0.0159588",
+        #             "update_timestamp_ms": "1720605170161",
+        #             "instrument_name": "ETHUSD-PERP",
+        #             "type": "PERPETUAL_SWAP"
+        #         },
+        #         "id": null,
+        #         "symbol": "ETH/USD:USD",
+        #         "timestamp": 1720605170161,
+        #         "datetime": "2024-07-10T09:52:50.161Z",
+        #         "hedged": null,
+        #         "side": "buy",
+        #         "contracts": "0.008",
+        #         "contractSize": 1.0,
+        #         "entryPrice": null,
+        #         "markPrice": null,
+        #         "notional": null,
+        #         "leverage": null,
+        #         "collateral": 24.7224,
+        #         "initialMargin": 24.7224,
+        #         "maintenanceMargin": null,
+        #         "initialMarginPercentage": null,
+        #         "maintenanceMarginPercentage": null,
+        #         "unrealizedPnl": -0.00988896,
+        #         "liquidationPrice": null,
+        #         "marginMode": null,
+        #         "percentage": null,
+        #         "marginRatio": null,
+        #         "stopLossPrice": null,
+        #         "takeProfitPrice": null
+        #     }
+        # ]
+        # TODO(Juraj): factor out common code from base method.
+        # The method differs only in one dict field name.
+        _LOG.info("No cached value for open positions: accessing exchange")
+        positions = self._sync_exchange.fetch_positions()
+        self._logger.log_positions(self._get_wall_clock_time, positions)
+        # Map from symbol to the amount currently owned if different than zero,
+        # e.g. `{'BTC/USDT': 0.01}`.
+        open_positions: Dict[str, float] = {}
+        for position in positions:
+            # Get the quantity of assets on short/long positions.
+            position_amount = float(position["info"]["quantity"])
+            position_symbol = position["symbol"]
+            if position_amount != 0:
+                open_positions[position_symbol] = position_amount
+        return open_positions

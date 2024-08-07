@@ -9,11 +9,12 @@ curr_num_shares=2500.0
 diff_num_shares=10.0
 tz=America/New_York
 extra_params={'ccxt_id': [0],
- 'error_msg': 'Some error message',
+ 'error_msg': "Error: <class 'ccxt.base.errors.ExchangeNotAvailable'>",
  'stats': {'_submit_single_order_to_ccxt::all_attempts_end.timestamp': Timestamp('2022-08-05 05:30:59.500000-0400', tz='America/New_York'),
            '_submit_single_order_to_ccxt::attempt_num': 2,
-           '_submit_single_order_to_ccxt::exception_on_retry.1': 'Some error '
-                                                                 'message',
+           '_submit_single_order_to_ccxt::exception_on_retry.1': 'Error: '
+                                                                 '<class '
+                                                                 "'ccxt.base.errors.ExchangeNotAvailable'>",
            '_submit_single_order_to_ccxt::start.timestamp': Timestamp('2022-08-05 05:30:55-0400', tz='America/New_York')}},
  Order:
 order_id=1

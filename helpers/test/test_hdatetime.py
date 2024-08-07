@@ -577,6 +577,40 @@ class Test_find_bar_timestamp2(hunitest.TestCase):
 
 
 # #############################################################################
+# Test_convert_seconds_to_minutes
+# #############################################################################
+
+
+class Test_convert_seconds_to_minutes(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check that conversion is implemented correcty.
+        """
+        num_secs = 300
+        act = hdateti.convert_seconds_to_minutes(num_secs)
+        exp = int(num_secs / 60)
+        self.assertEqual(act, exp)
+
+    def test2(self) -> None:
+        """
+        Check that an error is raised when input is not an integer number of
+        minutes.
+        """
+        num_secs = 10
+        with self.assertRaises(AssertionError) as cm:
+            hdateti.convert_seconds_to_minutes(num_secs)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        '10'
+        ==
+        '0'
+        num_secs=10 is not an integer number of minutes
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+
+# #############################################################################
 # Test_convert_unix_epoch_to_timestamp
 # #############################################################################
 
@@ -739,3 +773,145 @@ class Test_dassert_str_is_date(hunitest.TestCase):
             hdateti.dassert_str_is_date(date)
         actual = str(err.exception)
         self.check_string(actual)
+
+
+# #############################################################################
+# Test_dassert_is_valid_timestamp
+# #############################################################################
+
+
+class Test_dassert_is_valid_timestamp(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test should not raise an exception when timestamp has a timezone.
+        """
+        timestamp = pd.Timestamp(
+            "2021-01-04 09:30:00-05:00", tz="America/New_York"
+        )
+        hdateti.dassert_is_valid_timestamp(timestamp)
+
+    def test2(self) -> None:
+        """
+        Test should raise an exception when timestamp is without timezone info.
+        """
+        # Set inputs.
+        timestamp = pd.Timestamp("2021-01-04 09:30:00")
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hdateti.dassert_is_valid_timestamp(timestamp)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        'None' is not 'None'
+        datetime_='2021-01-04 09:30:00' doesn't have timezone info
+        """
+        # Check.
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Test should not raise an exception when timestamp is none.
+        """
+        timestamp = None
+        hdateti.dassert_is_valid_timestamp(timestamp)
+
+    def test4(self) -> None:
+        """
+        Test should raise an exception when timestamp is of type string.
+        """
+        # Set input.
+        timestamp = "2021-01-04 09:30:00"
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hdateti.dassert_is_valid_timestamp(timestamp)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        Instance of '2021-01-04 09:30:00' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs.timestamps.Timestamp'>'
+        """
+        # Check.
+        self.assert_equal(act, exp, fuzzy_match=True)
+        
+        
+# #############################################################################
+# Test_dassert_timestamp_lt
+# #############################################################################
+
+
+class Test_dassert_timestamp_lt(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test with valid timestamps where start is less than end.
+        """
+        start_timestamp = pd.Timestamp("2021-01-02 09:30:00-00:00", tz="UTC")
+        end_timestamp = pd.Timestamp("2021-02-02 09:30:00-00:00", tz="UTC")
+        hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
+
+    def test2(self) -> None:
+        """
+        Test with equal timestamps, this is should raise an exception.
+        """
+        # Set inputs.
+        start_timestamp = pd.Timestamp("2021-02-02 09:30:00-00:00", tz="UTC")
+        end_timestamp = pd.Timestamp("2021-02-02 09:30:00-00:00", tz="UTC")
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
+        act = str(cm.exception)
+        exp = """
+         * Failed assertion *
+        2021-02-02 09:30:00+00:00 < 2021-02-02 09:30:00+00:00
+        """
+        # Check.
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Test with start timestamp greater than end timestamp, this is should
+        raise an exception.
+        """
+        # Set inputs.
+        start_timestamp = pd.Timestamp(
+            "2021-02-04 09:30:00-05:00", tz="America/New_York"
+        )
+        end_timestamp = pd.Timestamp(
+            "2021-01-04 09:30:00-05:00", tz="America/New_York"
+        )
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        2021-02-04 09:30:00-05:00 < 2021-01-04 09:30:00-05:00
+        """
+        # Check.
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Test with start timestamp as None.
+        """
+        start_timestamp = None
+        end_timestamp = pd.Timestamp(
+            "2021-01-04 09:30:00-05:00", tz="America/New_York"
+        )
+        hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
+
+    def test5(self) -> None:
+        """
+        Test with end timestamp as None.
+        """
+        start_timestamp = pd.Timestamp(
+            "2021-01-04 09:30:00-05:00", tz="America/New_York"
+        )
+        end_timestamp = None
+        hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)
+
+    def test6(self) -> None:
+        """
+        Test with both timestamps as None.
+        """
+        start_timestamp = None
+        end_timestamp = None
+        hdateti.dassert_timestamp_lt(start_timestamp, end_timestamp)

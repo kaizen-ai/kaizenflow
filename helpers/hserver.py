@@ -66,7 +66,7 @@ def is_dev_ck() -> bool:
     #   root:xnu-6153.141.2~1/RELEASE_X86_64'
     # machine='x86_64'
     host_name = os.uname()[1]
-    host_names = ("dev1", "dev2")
+    host_names = ("dev1", "dev2" ,"dev3")
     am_host_name = os.environ.get("AM_HOST_NAME", "")
     _LOG.debug("host_name=%s am_host_name=%s", host_name, am_host_name)
     is_dev_ck_ = host_name in host_names or am_host_name in host_names
@@ -175,8 +175,8 @@ def is_inside_ecs_container() -> bool:
     """
     Detect whether we are running in an ECS container.
 
-    When deploying jobs via ECS the container obtains credentials based on
-    passed task role specified in the ECS task-definition, refer to:
+    When deploying jobs via ECS the container obtains credentials based
+    on passed task role specified in the ECS task-definition, refer to:
     https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html.
     """
     ret = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI" in os.environ
@@ -231,7 +231,7 @@ def _dassert_setup_consistency() -> None:
     )
     if sum_ != 1:
         msg = "One and only one set-up config should be true:\n" + setup_to_str()
-        # TODO(gp): Unclear if this is a difference between Sorrentum and cmamp.
+        # TODO(gp): Unclear if this is a difference between Kaizenflow and cmamp.
         _LOG.warning(msg)
         # raise ValueError(msg)
 

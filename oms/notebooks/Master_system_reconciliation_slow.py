@@ -53,7 +53,11 @@ hprint.config_notebook()
 # When running manually, specify the path to the config to load config from file,
 # for e.g., `.../reconciliation_notebook/fast/result_0/config.pkl`.
 config_file_name = None
-config = cconfig.get_notebook_config(config_file_name)
+# Set 'replace_ecs_tokyo = True' if running the notebook manually.
+replace_ecs_tokyo = False
+config = cconfig.get_notebook_config(
+    config_file_path=config_file_name, replace_ecs_tokyo=replace_ecs_tokyo
+)
 if config is None:
     _LOG.info("Using hardwired config")
     # Specify the config directly when running the notebook manually.
@@ -66,6 +70,7 @@ if config is None:
     end_timestamp_as_str = "20231104_130500"
     run_mode = "paper_trading"
     mode = "scheduled"
+    check_dag_output_self_consistency = True
     config_list = reconcil.build_reconciliation_configs(
         dst_root_dir,
         dag_builder_ctor_as_str,
@@ -73,6 +78,7 @@ if config is None:
         end_timestamp_as_str,
         run_mode,
         mode,
+        check_dag_output_self_consistency=check_dag_output_self_consistency,
     )
     config = config_list[0]
 print(config)
@@ -141,10 +147,7 @@ compare_dfs_kwargs = {
 # %%
 # Run for all timestamps.
 bar_timestamp = "all"
-dag_builder_name = dtfcore.get_DagBuilder_name_from_string(
-    config["dag_builder_ctor_as_str"]
-)
-if dag_builder_name not in ["C11a", "C12a"]:
+if config["check_dag_output_self_consistency"]:
     # Self-consistency check fails for C11a. See CmTask6519
     # for more details. Also for C12a, see CmTask7053.
     # Compare DAG output at T with itself at time T-1.

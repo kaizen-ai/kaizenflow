@@ -18,13 +18,34 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
+def normalized_ema(
+    signal: Union[pd.DataFrame, pd.Series],
+    com: float,
+    min_periods: float = 0,
+    adjust: bool = True,
+    ignore_na: bool = False,
+) -> Union[pd.DataFrame, pd.Series]:
+    """
+    EMA normalized so that filtered iid Gaussians have variance 1.
+    """
+    ewm = signal.ewm(
+        com=com,
+        min_periods=min_periods,
+        adjust=adjust,
+        ignore_na=ignore_na,
+    ).mean()
+    ewm *= np.sqrt(2 * com + 1)
+    return ewm
+
+
 def compute_ema(
     signal: Union[pd.DataFrame, pd.Series],
     tau: float,
     min_periods: int,
     depth: int = 1,
 ) -> Union[pd.DataFrame, pd.Series]:
-    r"""Implement iterated EMA operator (e.g., see 3.3.6 of Dacorogna, et al).
+    r"""
+    Implement iterated EMA operator (e.g., see 3.3.6 of Dacorogna, et al).
 
     depth=1 corresponds to a single application of exponential smoothing.
 
@@ -75,7 +96,8 @@ def compute_smooth_derivative(
     scaling: int = 1,
     order: int = 1,
 ) -> Union[pd.DataFrame, pd.Series]:
-    r"""Compute a "low-noise" differential operator.
+    r"""
+    Compute a "low-noise" differential operator.
 
     'Low-noise' differential operator as in 3.3.9 of Dacorogna, et al.
 

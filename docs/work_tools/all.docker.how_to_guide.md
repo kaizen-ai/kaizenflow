@@ -1339,7 +1339,7 @@ A hack is to
 vimdiff /Users/saggese/src/lemonade2/amp/dev_scripts/client_setup/requirements.txt dev_scripts_devto/client_setup/requirements.txt
 ```
 ```
-> source dev_scripts_devto/client_setup/build.sh
+> dev_scripts_devto/client_setup/build.sh
 ```
 
 A possible solution is to use Docker-in-Docker

@@ -1,7 +1,7 @@
 import logging
 from typing import List, Tuple
 
-import dev_scripts.replace_text as dscretex
+import dev_scripts.system_tools.replace_text as dscretex
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)

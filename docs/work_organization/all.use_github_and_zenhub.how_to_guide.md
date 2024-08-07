@@ -1,5 +1,3 @@
-# GitHub/ZenHub workflows
-
 <!-- toc -->
 
 - [Introduction](#introduction)
@@ -367,10 +365,28 @@ stateDiagram
 
 # Issue workflows
 
+## Naming an Issue
+
+- Use an informative description, typically in the form an action
+  - E.g., "Do this and that"
+- We don't use a period at the end of the title
+- We prefer to avoid too much capitalization to make the Issue title easy to read
+  and for consistency with the rest of the bugs
+  
+  **Good**
+  ```
+  Optimize Prometheus configuration for enhanced Kubernetes monitoring 
+  ```
+
+  **Bad**
+  ```
+  Optimize Prometheus Configuration for Enhanced Kubernetes Monitoring
+  ```
+
+- They are equivalent, but the first one is more readable
+
 ## Filing a new issue
 
-- Use an informative description (typically an action "Do this and that")
-  - We don't use a period at the end of the title
 - If it is a "serious" problem (bug) put as much information about the Issue as
   possible, e.g.,:
   - What you are trying to achieve

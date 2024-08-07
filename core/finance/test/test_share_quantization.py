@@ -125,3 +125,21 @@ class Test_quantize_shares(hunitest.TestCase):
 202                      100.1
 """
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_asset_specific_rounding_for_single_element_series(self) -> None:
+        shares = self.get_shares().loc["2000-01-01 09:40:00-05:00", [101]]
+        quantization = None
+        asset_id_to_decimals = {
+            101: -1,
+        }
+        quantized_shares = cfishqua.quantize_shares(
+            shares,
+            quantization,
+            asset_id_to_decimals=asset_id_to_decimals,
+        )
+        actual = hpandas.df_to_str(quantized_shares, num_rows=None)
+        expected = r"""
+     2000-01-01 09:40:00-05:00
+101                      -50.0
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)

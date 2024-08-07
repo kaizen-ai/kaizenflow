@@ -1,4 +1,56 @@
 v8
+- 2024-08-01
+- Remove delisted symbol 'AGIX_USDT' for okx
+
+v8
+- 2024-07-30
+- Remove delisted symbol 'GAL_USDT'
+
+v7.5
+- 2024-07-16
+- Remove delisted symbol 'RNDR_USDT' for binance
+
+v7.6
+- 2024-07-16
+- Remove delisted symbol 'RNDR_USDT' for binance
+
+v8.1
+- 2024-07-16
+- Remove delisted symbol 'RNDR_USDT' for binance
+
+v8
+- 2024-07-16
+- Remove delisted symbol 'RNDR_USDT' for binance
+
+v7.5
+- 2024-07-05
+- Add v7.5 download universe for cryptocom
+  - only BTC and ETH
+
+v8
+- 2024-06-28
+- Remove delisted symbol 'WAVES_USDT', 'OMG_USDT', 'XEM_USDT'
+
+v7.3
+- 2024-06-28
+- Remove delisted symbol 'WAVES_USDT'
+
+v8
+- 2024-05-28
+- Remove delisted/inactive 'ANT_USDT' symbols from okx 
+
+v8.1
+- 2024-06-07
+- Copy cryptocom universe from ccxt v7.4 to v8.1
+- Remove delisted/inactive symbols `WAVES_USDT` from cryptocom
+
+v8
+- 2024-05-28
+- Remove delisted/inactive symbols 'CVC_USDT', 'CTK_USDT', 'BTCST_USDT', 'SC_USDT',
+ 'RAY_USDT', 'FTT_USDT', 'CVX_USDT', 'IDEX_USDT', 'RAD_USDT', 'MDT_USDT', 'GLMR_USDT',
+ 'STRAX_USDT', 'STPT_USDT', 'SLP_USDT', 'SNT_USDT', 'AUDIO_USDT', 'MBL_USDT' 
+
+v8
 - 2024-04-04
 - Removing delisted symbols ANT_USDT, DGB_USDT and CTK_USDT
 

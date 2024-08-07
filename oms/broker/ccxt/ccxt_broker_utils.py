@@ -9,6 +9,7 @@ import asyncio
 import logging
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 
 import helpers.hasyncio as hasynci
@@ -23,7 +24,7 @@ import oms.order.order as oordorde
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Juraj): this is only used in web_apps/monitoring/app.py,
+# TODO(Juraj): this is only used in ck_web_apps/monitoring/app.py,
 # consider deprecating.
 def get_broker(
     exchange: str,
@@ -84,6 +85,9 @@ def flatten_ccxt_account(
         # Create orders.
         orders = []
         # TODO(Danya): Replace with reduce only, maybe close all.
+        # crypto.com throws a "DUPLICATE_CLORDID" error
+        # if we do not send unique order ID per each request.
+        order_id = np.random.randint(111111, high=999999)
         for symbol, position in open_positions.items():
             _LOG.info("%s - %s", symbol, position)
             # Build an order to flatten the account.
@@ -96,7 +100,6 @@ def flatten_ccxt_account(
             end_timestamp = start_timestamp + pd.DateOffset(
                 seconds=deadline_in_secs
             )
-            order_id = 0
             order = oordorde.Order(
                 curr_timestamp,
                 asset_id,
@@ -110,6 +113,7 @@ def flatten_ccxt_account(
             # Set order as reduce-only to close the position.
             order.extra_params["reduce_only"] = True
             orders.append(order)
+            order_id += 1
         order_type = "market"
         hasynci.run(
             broker.submit_orders(orders, order_type, dry_run=dry_run),

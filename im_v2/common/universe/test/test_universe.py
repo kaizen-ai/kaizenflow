@@ -96,6 +96,22 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
                 vendor, mode="download", version=version
             )
 
+    def _test_get_vendor_universe_one_symbol(
+        self, vendor: str, version: str, exchange: str, currency_pair: str, 
+    ) -> None:
+        """
+        Test that vendor universe is loaded correctly as dict using one symbol
+        universe file.
+
+        :param vendor: vendor to apply test to, e.g. CCXT
+        :param version: one symbol universe version, e.g. "btc" or "eth"
+        :param exchange: exchange to load currency pairs for
+        :param currency_pair: currency pair in format: SYMBOL_SYMBOL
+        """
+        universe = imvcounun.get_vendor_universe(vendor, "trade", version=version)
+        self.assertIn(exchange, universe)
+        self.assertEqual([currency_pair], universe[exchange])
+
     def _test_get_vendor_universe_small(
         self, vendor: str, exchange: str, currency_pair: str
     ) -> None:

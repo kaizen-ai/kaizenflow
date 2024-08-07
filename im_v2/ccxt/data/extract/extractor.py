@@ -7,6 +7,7 @@ import im_v2.ccxt.data.extract.extractor as ivcdexex
 import copy
 import logging
 import math
+import os
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -17,6 +18,7 @@ import tqdm
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import im_v2.ccxt.utils as imv2ccuti
 import im_v2.common.data.extract.extractor as imvcdexex
 
@@ -191,6 +193,13 @@ class CcxtExtractor(imvcdexex.Extractor):
         exchange_class = getattr(module, self.exchange_id)
         # Using API keys was deprecated in #2919.
         exchange = exchange_class(exchange_params)
+        if self.exchange_id == "cryptocom" and async_:
+            # TODO(Juraj): hacky solution for #CmTask9247.
+            # Only enable it for Tokyo region.
+            if os.getenv("CK_AWS_DEFAULT_REGION", None) == "ap-northeast-1":
+                exchange.urls["api"]["ws"][
+                    "public"
+                ] = "http://privatelink.crypto.local:24100/v1/market"
         return exchange
 
     def convert_currency_pair(self, currency_pair: str) -> str:
@@ -226,7 +235,6 @@ class CcxtExtractor(imvcdexex.Extractor):
         Close the connection of exchange.
         """
         # CCXT handles closing connections implicitly.
-        pass
 
     def _is_latest_kline_present(self, data: list) -> bool:
         """
@@ -539,9 +547,8 @@ class CcxtExtractor(imvcdexex.Extractor):
                     f"{data_type} not supported. Supported data types: ohlcv, bid_ask, trades"
                 )
             if data:
-                data["end_download_timestamp"] = str(
-                    hdateti.get_current_time("UTC")
-                )
+                data = hpandas.add_end_download_timestamp(data)
+
             return data
         except KeyError as e:
             _LOG.error(
@@ -622,9 +629,8 @@ class CcxtExtractor(imvcdexex.Extractor):
         )
         # Download order book data.
         order_book = self._sync_exchange.fetch_order_book(currency_pair, depth)
-        order_book["end_download_timestamp"] = str(
-            hdateti.get_current_time("UTC")
-        )
+        order_book = hpandas.add_end_download_timestamp(order_book)
+
         order_book = pd.DataFrame.from_dict(order_book)
         # Separate price and size into columns.
         order_book[["bid_price", "bid_size"]] = pd.DataFrame(
@@ -780,12 +786,13 @@ class CcxtExtractor(imvcdexex.Extractor):
         :param timeframe: fetch data for certain timeframe
         :param since: from when is data fetched in milliseconds
         :param bar_per_iteration: number of bars per iteration
-        :return: OHLCV data from CCXT that looks like:
-            ```
-                    timestamp      open      high       low     close    volume            end_download_timestamp
-            0    1631145600000  46048.31  46050.00  46002.02  46005.10  55.12298  2022-02-22 18:00:06.091652+00:00
-            1    1631145660000  46008.34  46037.70  45975.59  46037.70  70.45695  2022-02-22 18:00:06.091652+00:00
-            ```
+        :return: OHLCV data from CCXT that looks like: ``` timestamp
+            open high low close volume
+            end_download_timestamp 0 1631145600000 46048.31
+            46050.00 46002.02 46005.10 55.12298 2022-02-22
+            18:00:06.091652+00:00 1 1631145660000 46008.34 46037.70
+            45975.59 46037.70 70.45695 2022-02-22
+            18:00:06.091652+00:00 ```
         """
         # Change currency pair to CCXT format.
         currency_pair = currency_pair.replace("_", "/")
@@ -799,7 +806,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         # Package the data.
         columns = ["timestamp", "open", "high", "low", "close", "volume"]
         bars = pd.DataFrame(bars, columns=columns)
-        bars["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+        bars = hpandas.add_end_download_timestamp(bars)
         return bars
 
     def _fetch_trades(
@@ -819,12 +826,12 @@ class CcxtExtractor(imvcdexex.Extractor):
         :param end_timestamp: end timestamp of the data to download.
         :param sleep_time_in_secs: time to sleep between iterations
         :param limit: number of trades per iteration
-        :return: trades data from CCXT that looks like: 
-            ```
-                timestamp      symbol      side    price     amount           end_download_timestamp
-            0   1631145600000  BTC/USDT    buy     46048.31  0.001  2022-02-22 18:00:06.091652+00:00
-            1   1631145600000  BTC/USDT    sell    46050.00  0.001  2022-02-22 18:00:06.091652+00:00
-            ```
+        :return: trades data from CCXT that looks like: ``` timestamp
+            symbol side price amount
+            end_download_timestamp 0 1631145600000 BTC/USDT buy
+            46048.31 0.001 2022-02-22 18:00:06.091652+00:00 1
+            1631145600000 BTC/USDT sell 46050.00 0.001
+            2022-02-22 18:00:06.091652+00:00 ```
         """
         # Prepare parameters.
         columns = ["id", "timestamp", "symbol", "side", "price", "amount"]
@@ -872,7 +879,7 @@ class CcxtExtractor(imvcdexex.Extractor):
             # Take a nap in order to avoid hitting the rate limit.
             time.sleep(sleep_time_in_secs)
         trades_df = pd.concat(trades).reset_index(drop=True).drop(columns=["id"])
-        trades_df["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+        trades_df = hpandas.add_end_download_timestamp(trades_df)
         # Cut the data if it exceeds the end timestamp.
         trades_df = trades_df[trades_df["timestamp"] < end_timestamp]
         return trades_df

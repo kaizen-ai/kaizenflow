@@ -878,6 +878,7 @@ class TestReplayedCcxtExchange3(hunitest.TestCase):
             log_data["oms_parent_orders"], 2, update_time=False
         )
         secret_id = 3
+        exchange_id = "binance"
         scratch_dir = self.get_scratch_space()
         log_dir = os.path.join(scratch_dir, "mock", "log")
         universe = "v7.4"
@@ -934,6 +935,7 @@ class TestReplayedCcxtExchange3(hunitest.TestCase):
                 log_dir,
                 universe,
                 broker_config,
+                exchange_id
             )
             coroutine = broker._submit_twap_orders(
                 # Selecting the first two twap parent orders
