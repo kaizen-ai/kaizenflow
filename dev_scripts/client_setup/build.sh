@@ -8,13 +8,15 @@
 
 set -e
 
+# Difference btw Kaizenflow and cmamp. Kaizenflow people do not require aws
+# installation.
 # Check if AWS CLI V2 is already installed.
-if command -v aws &>/dev/null; then
-    aws_version=$(aws --version)
-else
-    echo "AWS CLI is not installed. Please install it and try again."
-    exit 1
-fi;
+# if command -v aws &>/dev/null; then
+#     aws_version=$(aws --version)
+# else
+#     echo "AWS CLI is not installed. Please install it and try again."
+#     exit 1
+# fi;
 
 echo "which python="$(which python 2>&1)
 echo "python -v="$(python --version 2>&1)
