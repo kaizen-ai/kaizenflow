@@ -7,6 +7,7 @@ import helpers.test.test_dataframe as httdat
 import collections
 import logging
 import os
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -181,7 +182,7 @@ class Test_apply_nan_mode(hunitest.TestCase):
         Test for `info` parameter.
         """
         series = self._get_series_with_nans(seed=1)
-        actual_info: Optional[collections.OrderedDict] = {}
+        actual_info: Optional[dict] = {}
         hdatafr.apply_nan_mode(series, mode="drop", info=actual_info)
         expected_info = {
             "series_name": series.name,
