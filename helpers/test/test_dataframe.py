@@ -181,7 +181,7 @@ class Test_apply_nan_mode(hunitest.TestCase):
         Test for `info` parameter.
         """
         series = self._get_series_with_nans(seed=1)
-        actual_info = {}
+        actual_info: Optional[collections.OrderedDict] = {}
         hdatafr.apply_nan_mode(series, mode="drop", info=actual_info)
         expected_info = {
             "series_name": series.name,
