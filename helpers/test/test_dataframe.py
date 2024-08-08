@@ -168,6 +168,53 @@ class Test_apply_nan_mode(hunitest.TestCase):
         series = pd.Series(dtype="float64")
         hdatafr.apply_nan_mode(series)
 
+    def test7(self) -> None:
+        """
+        Test for 'mode="strict".
+        """
+        series = self._get_series_with_nans(seed=1)
+        with self.assertRaises(ValueError):
+            hdatafr.apply_nan_mode(series, mode="strict")
+
+    def test8(self) -> None:
+        """
+        Test for `info` parameter.
+        """
+        series = self._get_series_with_nans(seed=1)
+        actual_info = {}
+        hdatafr.apply_nan_mode(series, mode="drop", info=actual_info)
+        expected_info = {
+            "series_name": series.name,
+            "num_elems_before": len(series),
+            "num_nans_before": series.isna().sum(),
+            "num_elems_removed": series.isna().sum(),
+            "num_nans_imputed": 0,
+            "percentage_elems_removed": 100.0 * series.isna().sum() / len(series),
+            "percentage_elems_imputed": 0.0,
+        }
+        self.assertDictEqual(actual_info, expected_info)
+
+    def test9(self) -> None:
+        """
+        Test for series with all NaNs.
+        """
+        series = pd.Series([np.nan, np.nan, np.nan])
+        actual = hdatafr.apply_nan_mode(series, mode="ffill")
+        expected = pd.Series([np.nan, np.nan, np.nan])
+        pd.testing.assert_series_equal(actual, expected)
+
+    def test10(self) -> None:
+        """
+        Test with a large series.
+        """
+        series = pd.Series(np.random.randn(1000000))
+        nan_indices = np.random.choice(series.index, size=10000, replace=False)
+        series[nan_indices] = np.nan
+        actual = hdatafr.apply_nan_mode(series, mode="ffill")
+        expected = series.ffill()
+        self.assertIsInstance(actual, pd.Series)
+        pd.testing.assert_series_equal(actual, expected)
+
     @staticmethod
     def _get_series_with_nans(seed: int) -> pd.Series:
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
