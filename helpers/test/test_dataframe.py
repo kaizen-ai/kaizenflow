@@ -174,8 +174,11 @@ class Test_apply_nan_mode(hunitest.TestCase):
         Test for 'mode="strict".
         """
         series = self._get_series_with_nans(seed=1)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError) as e:
             hdatafr.apply_nan_mode(series, mode="strict")
+        actual_error = str(e.exception)
+        expected_error = r"""NaNs detected in mode `strict`"""
+        self.assert_equal(actual_error, expected_error)
 
     def test8(self) -> None:
         """
