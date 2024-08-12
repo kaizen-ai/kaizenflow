@@ -2379,3 +2379,96 @@ class TestCcxtBroker_UsingFakeExchangeWithDynamicScheduler(
         # Check orders were canceled correctly.
         orders = broker._sync_exchange._orders
         self._test_order_cancelation(orders)
+
+    @umock.patch.object(
+        obcaccbr.AbstractCcxtBroker, "_build_asset_id_to_ccxt_symbol_mapping"
+    )
+    def test_submit_twap_orders_multiple_submission(
+        self,
+        mock_build_asset_id_to_ccxt_symbol_mapping: umock.MagicMock,
+    ) -> None:
+        """
+        Verify that TWAP orders are submitted correctly when using the same
+        broker instance to call submit_twap_orders twice.
+        """
+        mock_build_asset_id_to_ccxt_symbol_mapping.return_value = {
+            6051632686: "APE/USDT:USDT",
+            1467591036: "BTC/USDT:USDT",
+            1464553467: "ETH/USDT:USDT",
+        }
+        initial_timestamps = [
+            (
+                pd.Timestamp("2022-08-05 09:30:00+00:00"),
+                pd.Timestamp("2022-08-05 09:30:00+00:00"),
+                pd.Timestamp("2022-08-05 09:31:00+00:00"),
+            ),
+            (
+                pd.Timestamp("2022-08-05 09:31:00+00:00"),
+                pd.Timestamp("2022-08-05 09:31:00+00:00"),
+                pd.Timestamp("2022-08-05 09:32:00+00:00"),
+            ),
+        ]
+        curr_num_shares = 0
+        asset_id = 1464553467
+        fill_percents = 0.5
+        initial_position_amt = curr_num_shares
+        positions = [
+            {
+                "info": {"positionAmt": initial_position_amt},
+                "symbol": "ETH/USDT:USDT",
+            }
+        ]
+        curr_num_shares = [40, 20]
+        shares = [38.75, 18.788999999999998]
+        with hasynci.solipsism_context() as event_loop:
+            broker = self.get_test_broker(
+                initial_timestamps[0][0],
+                positions,
+                event_loop,
+                fill_percents,
+                limit_price_computer=oliprcom.LimitPriceComputerUsingVolatility(
+                    0.5
+                ),
+                child_order_quantity_computer=ochorquco.DynamicSchedulingChildOrderQuantityComputer(),
+                num_trades_per_order=2,
+            )
+            for i, (
+                creation_timestamp,
+                start_timestamp,
+                end_timestamp,
+            ) in enumerate(initial_timestamps, start=1):
+                orders_str = f"Order: order_id={i} creation_timestamp={creation_timestamp} asset_id={asset_id} type_=limit start_timestamp={start_timestamp} end_timestamp={end_timestamp} curr_num_shares={curr_num_shares[i-1]} diff_num_shares={curr_num_shares[i-1]} tz=UTC extra_params={{}}"
+                orders = oordorde.orders_from_string(orders_str)
+                coroutine = broker._submit_twap_orders(
+                    orders, execution_freq="10S"
+                )
+                # Close the event loop after all the iterations are run i.e in the last iteration
+                close_event_loop = i == len(initial_timestamps)
+                receipt, orders = hasynci.run(
+                    coroutine,
+                    event_loop=event_loop,
+                    close_event_loop=close_event_loop,
+                )
+                # TODO(Sameep): make updating positions automatic
+                positions[0]["info"]["positionAmt"] = 39.375
+                broker._async_exchange._positions = positions
+                actual_orders = pprint.pformat(orders)
+                self.check_string(
+                    actual_orders, tag=f"actual_orders{i}", fuzzy_match=True
+                )
+                submitted_orders = pprint.pformat(broker._previous_parent_orders)
+                self.check_string(
+                    submitted_orders,
+                    tag=f"test_submitted_orders{i}",
+                    fuzzy_match=True,
+                )
+                exp = f"""
+                [Fill: asset_id=1464553467 fill_id={i} timestamp={creation_timestamp + pd.Timedelta(seconds=42)} num_shares={shares[i-1]} price=10.0]
+                """
+                # Check get_fills for all indices
+                self._test_get_fills(broker, exp)
+                # Check ccxt fills and trades.
+                ccxt_fills = self._test_ccxt_fills(
+                    broker, orders, f"test_ccxt_fills{i}"
+                )
+                self._test_ccxt_trades(broker, ccxt_fills, f"test_ccxt_trades{i}")
