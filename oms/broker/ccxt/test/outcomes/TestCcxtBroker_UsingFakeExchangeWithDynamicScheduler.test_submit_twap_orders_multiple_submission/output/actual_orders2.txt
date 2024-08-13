@@ -30,8 +30,8 @@ asset_id=1464553467
 type_=limit
 start_timestamp=2022-08-05 05:31:10-04:00
 end_timestamp=2022-08-05 05:31:20-04:00
-curr_num_shares=49.375
-diff_num_shares=9.375
+curr_num_shares=48.75
+diff_num_shares=10.0
 tz=America/New_York
 extra_params={'ccxt_id': [6],
  'oms_parent_order_id': 2,
@@ -55,8 +55,8 @@ asset_id=1464553467
 type_=limit
 start_timestamp=2022-08-05 05:31:20-04:00
 end_timestamp=2022-08-05 05:31:30-04:00
-curr_num_shares=54.0625
-diff_num_shares=4.687
+curr_num_shares=53.75
+diff_num_shares=5.0
 tz=America/New_York
 extra_params={'ccxt_id': [7],
  'oms_parent_order_id': 2,
@@ -80,8 +80,8 @@ asset_id=1464553467
 type_=limit
 start_timestamp=2022-08-05 05:31:30-04:00
 end_timestamp=2022-08-05 05:31:40-04:00
-curr_num_shares=56.406
-diff_num_shares=2.344
+curr_num_shares=56.25
+diff_num_shares=2.5
 tz=America/New_York
 extra_params={'ccxt_id': [8],
  'oms_parent_order_id': 2,
@@ -105,8 +105,8 @@ asset_id=1464553467
 type_=limit
 start_timestamp=2022-08-05 05:31:40-04:00
 end_timestamp=2022-08-05 05:31:50-04:00
-curr_num_shares=57.577999999999996
-diff_num_shares=1.172
+curr_num_shares=57.5
+diff_num_shares=1.25
 tz=America/New_York
 extra_params={'ccxt_id': [9],
  'oms_parent_order_id': 2,
