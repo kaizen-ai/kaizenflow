@@ -173,9 +173,11 @@ class Test_apply_nan_mode(hunitest.TestCase):
         """
         Test for 'mode="strict".
         """
+        # Prepare inputs.
         series = self._get_series_with_nans(seed=1)
         with self.assertRaises(ValueError) as e:
             hdatafr.apply_nan_mode(series, mode="strict")
+        # Check output.
         actual_error = str(e.exception)
         expected_error = r"""NaNs detected in mode `strict`"""
         self.assert_equal(actual_error, expected_error)
@@ -184,16 +186,19 @@ class Test_apply_nan_mode(hunitest.TestCase):
         """
         Test for `info` parameter.
         """
+        # Prepare inputs.
         series = self._get_series_with_nans(seed=1)
         actual_info: Optional[dict] = {}
+        # Test.
         hdatafr.apply_nan_mode(series, mode="drop", info=actual_info)
+        # Check output.
         expected_info = {
-            "series_name": series.name,
-            "num_elems_before": len(series),
-            "num_nans_before": series.isna().sum(),
-            "num_elems_removed": series.isna().sum(),
+            "series_name": 0,
+            "num_elems_before": 40,
+            "num_nans_before": 8,
+            "num_elems_removed": 8,
             "num_nans_imputed": 0,
-            "percentage_elems_removed": 100.0 * series.isna().sum() / len(series),
+            "percentage_elems_removed": 20.0,
             "percentage_elems_imputed": 0.0,
         }
         self.assertDictEqual(actual_info, expected_info)
@@ -202,8 +207,11 @@ class Test_apply_nan_mode(hunitest.TestCase):
         """
         Test for series with all NaNs.
         """
+        # Prepare inputs.
         series = pd.Series([np.nan, np.nan, np.nan])
+        # Test.
         actual = hdatafr.apply_nan_mode(series, mode="ffill")
+        # Check output.
         expected = pd.Series([np.nan, np.nan, np.nan])
         pd.testing.assert_series_equal(actual, expected)
 
@@ -211,11 +219,14 @@ class Test_apply_nan_mode(hunitest.TestCase):
         """
         Test with a large series.
         """
+        # Prepare inputs.
         series = pd.Series(np.random.randn(1000000))
         nan_indices = np.random.choice(series.index, size=10000, replace=False)
         series[nan_indices] = np.nan
+        # Test.
         actual = hdatafr.apply_nan_mode(series, mode="ffill")
-        expected = series.ffill()
+        # Check output.
+        expected = pd.Series(actual.to_list())
         self.assertIsInstance(actual, pd.Series)
         pd.testing.assert_series_equal(actual, expected)
 
