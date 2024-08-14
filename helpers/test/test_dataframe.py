@@ -175,6 +175,7 @@ class Test_apply_nan_mode(hunitest.TestCase):
         """
         # Prepare inputs.
         series = self._get_series_with_nans(seed=1)
+        # Run function.
         with self.assertRaises(ValueError) as e:
             hdatafr.apply_nan_mode(series, mode="strict")
         # Check output.
@@ -189,7 +190,7 @@ class Test_apply_nan_mode(hunitest.TestCase):
         # Prepare inputs.
         series = self._get_series_with_nans(seed=1)
         actual_info: Optional[dict] = {}
-        # Test.
+        # Run function.
         hdatafr.apply_nan_mode(series, mode="drop", info=actual_info)
         # Check output.
         expected_info = {
@@ -209,7 +210,7 @@ class Test_apply_nan_mode(hunitest.TestCase):
         """
         # Prepare inputs.
         series = pd.Series([np.nan, np.nan, np.nan])
-        # Test.
+        # Run function.
         actual = hdatafr.apply_nan_mode(series, mode="ffill")
         # Check output.
         expected = pd.Series([np.nan, np.nan, np.nan])
@@ -223,7 +224,7 @@ class Test_apply_nan_mode(hunitest.TestCase):
         series = pd.Series(np.random.randn(1000000))
         nan_indices = np.random.choice(series.index, size=10000, replace=False)
         series[nan_indices] = np.nan
-        # Test.
+        # Run function.
         actual = hdatafr.apply_nan_mode(series, mode="ffill")
         # Check output.
         expected = pd.Series(actual.to_list())
