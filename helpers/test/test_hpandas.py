@@ -55,7 +55,7 @@ class Test_dassert_is_days(hunitest.TestCase):
         """
         timedelta = pd.Timedelta(days=5, hours=1)
         with self.assertRaises(AssertionError) as cm:
-            # Should raise AssertionError
+            # Should raise AssertionError.
             hpandas.dassert_is_days(timedelta)
         actual_exception = str(cm.exception)
         expected_exception = r"""
@@ -103,7 +103,7 @@ class Test_dassert_is_days(hunitest.TestCase):
 
     def test7(self) -> None:
         """
-        Test that function raises an exception with duration < minimum number
+        Test that function raises an exception with duration less than minimum number
         of days.
         """
         timedelta = pd.Timedelta(days=-1)
@@ -138,7 +138,7 @@ class Test_dassert_is_days(hunitest.TestCase):
     def test9(self) -> None:
         """
         Test that function do not raise an exception with integer days and
-        minimum days > 1.
+        minimum days greater than 1.
         """
         timedelta = pd.Timedelta(days=5)
         # Should pass without exception.
