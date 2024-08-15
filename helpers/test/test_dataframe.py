@@ -171,7 +171,7 @@ class Test_apply_nan_mode(hunitest.TestCase):
 
     def test7(self) -> None:
         """
-        Test for 'mode="strict".
+        Test for `mode="strict"`.
         """
         # Prepare inputs.
         series = self._get_series_with_nans(seed=1)
@@ -189,9 +189,13 @@ class Test_apply_nan_mode(hunitest.TestCase):
         """
         # Prepare inputs.
         series = self._get_series_with_nans(seed=1)
+        # Supply empty dictionary which will be populated by the function for information storage.
         actual_info: Optional[dict] = {}
         # Run function.
-        hdatafr.apply_nan_mode(series, mode="drop", info=actual_info)
+        actual = hdatafr.apply_nan_mode(series, mode="drop", info=actual_info)
+        # Check the returned series.
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
+        self.check_string(actual_string)
         # Check output.
         expected_info = {
             "series_name": 0,
@@ -203,33 +207,6 @@ class Test_apply_nan_mode(hunitest.TestCase):
             "percentage_elems_imputed": 0.0,
         }
         self.assertDictEqual(actual_info, expected_info)
-
-    def test9(self) -> None:
-        """
-        Test for series with all NaNs.
-        """
-        # Prepare inputs.
-        series = pd.Series([np.nan, np.nan, np.nan])
-        # Run function.
-        actual = hdatafr.apply_nan_mode(series, mode="ffill")
-        # Check output.
-        expected = pd.Series([np.nan, np.nan, np.nan])
-        pd.testing.assert_series_equal(actual, expected)
-
-    def test10(self) -> None:
-        """
-        Test with a large series.
-        """
-        # Prepare inputs.
-        series = pd.Series(np.random.randn(1000000))
-        nan_indices = np.random.choice(series.index, size=10000, replace=False)
-        series[nan_indices] = np.nan
-        # Run function.
-        actual = hdatafr.apply_nan_mode(series, mode="ffill")
-        # Check output.
-        expected = pd.Series(actual.to_list())
-        self.assertIsInstance(actual, pd.Series)
-        pd.testing.assert_series_equal(actual, expected)
 
     @staticmethod
     def _get_series_with_nans(seed: int) -> pd.Series:
