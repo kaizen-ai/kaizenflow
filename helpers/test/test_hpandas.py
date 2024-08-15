@@ -258,6 +258,109 @@ class Test_to_series1(hunitest.TestCase):
 # #############################################################################
 
 
+class Test_dassert_valid_remap(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Check that the function works with correct inputs.
+        """
+        # Set inputs.
+        to_remap = ["dummy_value_1", "dummy_value_2", "dummy_value_3"]
+        remap_dict = {
+            "dummy_value_1": "1, 2, 3",
+            "dummy_value_2": "A, B, C",
+        }
+        # Check.
+        hpandas.dassert_valid_remap(to_remap, remap_dict)
+
+    def test2(self) -> None:
+        """
+        Check that an assertion is raised if dictionary keys are not a subset.
+        """
+        # Set inputs.
+        to_remap = ["dummy_value_1", "dummy_value_2"]
+        remap_dict = {
+            "dummy_value_1": "1, 2, 3",
+            "dummy_value_2": "A, B, C",
+            "dummy_value_3": "A1, A2, A3",
+        }
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_valid_remap(to_remap, remap_dict)
+        actual = str(cm.exception)
+        expected = r"""
+        * Failed assertion *
+        val1=['dummy_value_1', 'dummy_value_2', 'dummy_value_3']
+        issubset
+        val2=['dummy_value_1', 'dummy_value_2']
+        val1 - val2=['dummy_value_3']
+        Keys to remap should be a subset of existing columns"""
+        # Check.
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Check that an assertion is raised if the duplicate values are present in the dict.
+        """
+        # Set inputs.
+        to_remap = ["dummy_value_1", "dummy_value_2", "dummy_value_3"]
+        remap_dict = {
+            "dummy_value_1": 1,
+            "dummy_value_2": "A, B, C",
+            "dummy_value_3": "A, B, C",
+        }
+        # Run.
+        with self.assertRaises(AttributeError) as cm:
+            hpandas.dassert_valid_remap(to_remap, remap_dict)
+        actual = str(cm.exception)
+        expected = r"""
+        'dict_values' object has no attribute 'count'"""
+        # Check.
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Check that an assertion is raised if the input is not a list.
+        """
+        # Set inputs.
+        to_remap = {"dummy_value_1"}
+        remap_dict = {
+            "dummy_value_1": "1, 2, 3",
+        }
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_valid_remap(to_remap, remap_dict)
+        actual = str(cm.exception)
+        expected = r"""
+        * Failed assertion *
+        Instance of '{'dummy_value_1'}' is '<class 'set'>' instead of '<class 'list'>'
+        """
+        # Check.
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test5(self) -> None:
+        """
+        Check that an assertion is raised if the input is not a dictionary.
+        """
+        # Set inputs.
+        to_remap = ["dummy_value_1"]
+        remap_dict = [
+            "dummy_value_1 : 1, 2, 3",
+        ]
+        # Run.
+        with self.assertRaises(AssertionError) as cm:
+            hpandas.dassert_valid_remap(to_remap, remap_dict)
+        actual = str(cm.exception)
+        expected = r"""
+        * Failed assertion *
+        Instance of '['dummy_value_1 : 1, 2, 3']' is '<class 'list'>' instead of '<class 'dict'>'
+        """
+        # Check.
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
+
+
 class Test_trim_df1(hunitest.TestCase):
     def get_df(self, *args: Any, **kwargs: Any) -> pd.DataFrame:
         """
@@ -402,14 +505,14 @@ class Test_trim_df1(hunitest.TestCase):
     # //////////////////////////////////////////////////////////////////////////////
 
     def helper(
-        self,
-        df: pd.DataFrame,
-        ts_col_name: Optional[str],
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-        left_close: bool,
-        right_close: bool,
-        expected: str,
+            self,
+            df: pd.DataFrame,
+            ts_col_name: Optional[str],
+            start_ts: Optional[pd.Timestamp],
+            end_ts: Optional[pd.Timestamp],
+            left_close: bool,
+            right_close: bool,
+            expected: str,
     ) -> None:
         """
         Run trimming and check the outcome.
@@ -769,7 +872,7 @@ class Test_trim_df2(Test_trim_df1):
     """
 
     def get_data(
-        self, set_as_index: bool, sort: bool
+            self, set_as_index: bool, sort: bool
     ) -> Tuple[pd.DataFrame, str, pd.Timestamp, pd.Timestamp]:
         """
         Get the data for experiments.
@@ -796,11 +899,11 @@ class Test_trim_df2(Test_trim_df1):
         return df, ts_col_name, start_ts, end_ts
 
     def check_trimmed_df(
-        self,
-        df: pd.DataFrame,
-        ts_col_name: str,
-        start_ts: pd.Timestamp,
-        end_ts: pd.Timestamp,
+            self,
+            df: pd.DataFrame,
+            ts_col_name: str,
+            start_ts: pd.Timestamp,
+            end_ts: pd.Timestamp,
     ) -> None:
         """
         Confirm that the trimmed df matches what is expected.
@@ -3416,10 +3519,10 @@ class Test_compute_duration_df(hunitest.TestCase):
         return tag_to_df
 
     def intersection_helper(
-        self,
-        valid_intersect: bool,
-        expected_start_timestamp: pd.Timestamp,
-        expected_end_timestamp: pd.Timestamp,
+            self,
+            valid_intersect: bool,
+            expected_start_timestamp: pd.Timestamp,
+            expected_end_timestamp: pd.Timestamp,
     ) -> None:
         """
         Checks if the intersection is valid and the same amongst all dfs.
@@ -4081,7 +4184,7 @@ class Test_cast_series_to_type(hunitest.TestCase):
 class Test_dassert_index_is_datetime(hunitest.TestCase):
     @staticmethod
     def get_multiindex_df(
-        index_is_datetime: bool,
+            index_is_datetime: bool,
     ) -> pd.DataFrame:
         """
          Helper function to get test multi-index dataframe.
@@ -4243,12 +4346,12 @@ class Test_CheckSummary(hunitest.TestCase):
 
 class Test_compute_weighted_sum(hunitest.TestCase):
     def helper(
-        self,
-        index1: List[int],
-        index2: List[int],
-        weights_data: Dict[str, List[float]],
-        index_mode: str,
-        expected_signature: str,
+            self,
+            index1: List[int],
+            index2: List[int],
+            weights_data: Dict[str, List[float]],
+            index_mode: str,
+            expected_signature: str,
     ) -> None:
         """
         Build inputs and check that function output is correct.
