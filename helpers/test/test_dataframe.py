@@ -183,30 +183,33 @@ class Test_apply_nan_mode(hunitest.TestCase):
         expected_error = r"""NaNs detected in mode `strict`"""
         self.assert_equal(actual_error, expected_error)
 
-    def test8(self) -> None:
+    def test9(self) -> None:
         """
-        Test for `info` parameter.
+        Test for `mode="invalid_mode"`.
         """
         # Prepare inputs.
         series = self._get_series_with_nans(seed=1)
-        # Supply empty dictionary which will be populated by the function for information storage.
-        actual_info: Optional[dict] = {}
-        # Run function.
-        actual = hdatafr.apply_nan_mode(series, mode="drop", info=actual_info)
-        # Check the returned series.
-        actual_string = hpandas.df_to_str(actual, num_rows=None)
-        self.check_string(actual_string)
+        invalid_mode = "invalid_mode"
+        # Run function and expect a ValueError.
+        with self.assertRaises(ValueError) as e:
+            hdatafr.apply_nan_mode(series, mode=invalid_mode)
         # Check output.
-        expected_info = {
-            "series_name": 0,
-            "num_elems_before": 40,
-            "num_nans_before": 8,
-            "num_elems_removed": 8,
-            "num_nans_imputed": 0,
-            "percentage_elems_removed": 20.0,
-            "percentage_elems_imputed": 0.0,
-        }
-        self.assertDictEqual(actual_info, expected_info)
+        actual_error = str(e.exception)
+        expected_error = f"Unrecognized mode `{invalid_mode}`"
+        self.assert_equal(actual_error, expected_error)
+
+    def test10(self) -> None:
+        """
+        Test for `mode="strict"` passes and no NaNs are present.
+        """
+        # Prepare inputs: A Series without NaNs.
+        series = pd.Series([0, 1, 2, 3, 4, 5])
+        # Run function.
+        actual = hdatafr.apply_nan_mode(series, mode="strict")
+        # Check output.
+        expected = pd.Series([0, 1, 2, 3, 4, 5])
+        self.assertIsInstance(actual, pd.Series)
+        pd.testing.assert_series_equal(actual, expected)
 
     @staticmethod
     def _get_series_with_nans(seed: int) -> pd.Series:
