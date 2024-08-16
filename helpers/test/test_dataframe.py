@@ -183,6 +183,31 @@ class Test_apply_nan_mode(hunitest.TestCase):
         expected_error = r"""NaNs detected in mode `strict`"""
         self.assert_equal(actual_error, expected_error)
 
+    def test8(self) -> None:
+        """
+        Test for `info` parameter.
+        """
+        # Prepare inputs.
+        series = self._get_series_with_nans(seed=1)
+        # Supply empty dictionary which will be populated by the function for information storage.
+        actual_info: Optional[dict] = {}
+        # Run function.
+        actual = hdatafr.apply_nan_mode(series, mode="drop", info=actual_info)
+        # Check the returned series.
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
+        self.check_string(actual_string)
+        # Check output.
+        expected_info = {
+            "series_name": 0,
+            "num_elems_before": 40,
+            "num_nans_before": 8,
+            "num_elems_removed": 8,
+            "num_nans_imputed": 0,
+            "percentage_elems_removed": 20.0,
+            "percentage_elems_imputed": 0.0,
+        }
+        self.assertDictEqual(actual_info, expected_info)
+
     def test9(self) -> None:
         """
         Test for `mode="invalid_mode"`.
