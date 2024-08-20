@@ -171,11 +171,24 @@ class Test_apply_nan_mode(hunitest.TestCase):
 
     def test7(self) -> None:
         """
-        Test for `mode="strict"`.
+        Test that function doesn't raise an exception with no NaN values in series for
+        `mode="strict"`.
+        """
+        # Prepare inputs.
+        series = pd.Series([0, 1, 2, 3, 4, 5])
+        # Run.
+        actual = hdatafr.apply_nan_mode(series, mode="strict")
+        # Check output.
+        actual_string = hpandas.df_to_str(actual, num_rows=None)
+        self.check_string(actual_string)
+
+    def test8(self) -> None:
+        """
+        Test that function raises an exception with NaN values in series for `mode="strict"`.
         """
         # Prepare inputs.
         series = self._get_series_with_nans(seed=1)
-        # Run function.
+        # Run.
         with self.assertRaises(ValueError) as e:
             hdatafr.apply_nan_mode(series, mode="strict")
         # Check output.
@@ -183,7 +196,7 @@ class Test_apply_nan_mode(hunitest.TestCase):
         expected_error = r"""NaNs detected in mode `strict`"""
         self.assert_equal(actual_error, expected_error)
 
-    def test8(self) -> None:
+    def test9(self) -> None:
         """
         Test for info parameter.
         """
@@ -191,7 +204,7 @@ class Test_apply_nan_mode(hunitest.TestCase):
         series = self._get_series_with_nans(seed=1)
         # Supply empty dictionary which will be populated by the function for information storage.
         actual_info: Optional[dict] = {}
-        # Run function.
+        # Run.
         actual = hdatafr.apply_nan_mode(series, mode="drop", info=actual_info)
         # Check the returned series.
         actual_string = hpandas.df_to_str(actual, num_rows=None)
@@ -208,33 +221,20 @@ class Test_apply_nan_mode(hunitest.TestCase):
         }
         self.assertDictEqual(actual_info, expected_info)
 
-    def test9(self) -> None:
+    def test10(self) -> None:
         """
         Test for `mode="invalid_mode"`.
         """
         # Prepare inputs.
         series = self._get_series_with_nans(seed=1)
-        invalid_mode = "invalid_mode"
-        # Run function and expect a ValueError.
+        mode = "invalid_mode"
+        # Run.
         with self.assertRaises(ValueError) as e:
-            hdatafr.apply_nan_mode(series, mode=invalid_mode)
+            hdatafr.apply_nan_mode(series, mode=mode)
         # Check output.
         actual_error = str(e.exception)
-        expected_error = f"Unrecognized mode `{invalid_mode}`"
+        expected_error = f"Unrecognized mode `{mode}`"
         self.assert_equal(actual_error, expected_error)
-
-    def test10(self) -> None:
-        """
-        Test for `mode="strict"` passes and no NaNs are present.
-        """
-        # Prepare inputs: A Series without NaNs.
-        series = pd.Series([0, 1, 2, 3, 4, 5])
-        # Run function.
-        actual = hdatafr.apply_nan_mode(series, mode="strict")
-        # Check output.
-        expected = pd.Series([0, 1, 2, 3, 4, 5])
-        self.assertIsInstance(actual, pd.Series)
-        pd.testing.assert_series_equal(actual, expected)
 
     @staticmethod
     def _get_series_with_nans(seed: int) -> pd.Series:
