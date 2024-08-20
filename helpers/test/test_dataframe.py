@@ -171,8 +171,8 @@ class Test_apply_nan_mode(hunitest.TestCase):
 
     def test7(self) -> None:
         """
-        Test that function doesn't raise an exception with no NaN values in series for
-        `mode="strict"`.
+        Test that function doesn't raise an exception with no NaN values in
+        series for`mode="strict"`.
         """
         # Prepare inputs.
         series = pd.Series([0, 1, 2, 3, 4, 5])
@@ -184,7 +184,8 @@ class Test_apply_nan_mode(hunitest.TestCase):
 
     def test8(self) -> None:
         """
-        Test that function raises an exception with NaN values in series for `mode="strict"`.
+        Test that function raises an exception with NaN values in series for
+        `mode="strict"`.
         """
         # Prepare inputs.
         series = self._get_series_with_nans(seed=1)
@@ -202,14 +203,15 @@ class Test_apply_nan_mode(hunitest.TestCase):
         """
         # Prepare inputs.
         series = self._get_series_with_nans(seed=1)
-        # Supply empty dictionary which will be populated by the function for information storage.
+        # Supply empty dictionary which will be populated by the function for
+        # information storage.
         actual_info: Optional[dict] = {}
         # Run.
         actual = hdatafr.apply_nan_mode(series, mode="drop", info=actual_info)
         # Check the returned series.
         actual_string = hpandas.df_to_str(actual, num_rows=None)
         self.check_string(actual_string)
-        # Check output.
+        # Check that info param has populated the empty dictionary.
         expected_info = {
             "series_name": 0,
             "num_elems_before": 40,
