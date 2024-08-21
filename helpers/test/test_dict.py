@@ -113,13 +113,14 @@ class Test_typed_get(hunitest.TestCase):
         # Run.
         actual = hdict.typed_get(dict_, "key1")
         # Check output.
+        self.assertIsInstance(actual, str)
         expected = "value1"
         self.assert_equal(actual, expected)
 
     def test2(self) -> None:
         """
-        Test that the function raises an exception when dictionary is empty and
-        no default value.
+        Test that the function raises an exception when key is not present in
+        dictionary without default value.
         """
         # Prepare inputs.
         dict_ = {}
@@ -136,8 +137,8 @@ class Test_typed_get(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        Test that the function raises an exception when the provided dict_ is
-        not a dictionary but list.
+        Test that the function raises an exception when a non-dict type is
+        provided instead of dictionary.
         """
         # Prepare inputs.
         dict_ = []
@@ -154,103 +155,67 @@ class Test_typed_get(hunitest.TestCase):
 
     def test4(self) -> None:
         """
-        Test that the function raises an exception when the provided dict_ is
-        not a dictionary but set.
-        """
-        # Prepare inputs.
-        dict_ = set()
-        # Run.
-        with self.assertRaises(AssertionError) as e:
-            hdict.typed_get(dict_, "key1")
-        # Check output.
-        actual = str(e.exception)
-        expected = r"""
-        * Failed assertion *
-        Instance of 'set()' is '<class 'set'>' instead of '<class 'dict'>'
-        """
-        self.assert_equal(actual, expected, fuzzy_match=True)
-
-    def test5(self) -> None:
-        """
-        Test that the function raises an exception when the provided dict_ is
-        not a dictionary but integer.
-        """
-        # Prepare inputs.
-        dict_ = 42
-        # Run.
-        with self.assertRaises(AssertionError) as e:
-            hdict.typed_get(dict_, "key1")
-        # Check output.
-        actual = str(e.exception)
-        expected = r"""
-        * Failed assertion *
-        Instance of '42' is '<class 'int'>' instead of '<class 'dict'>'
-        """
-        self.assert_equal(actual, expected, fuzzy_match=True)
-
-    def test6(self) -> None:
-        """
-        Test that the function raises an exception when the provided dict_ is
-        not a dictionary but string.
-        """
-        # Prepare inputs.
-        dict_ = "dict"
-        # Run.
-        with self.assertRaises(AssertionError) as e:
-            hdict.typed_get(dict_, "key1")
-        # Check output.
-        actual = str(e.exception)
-        expected = r"""
-        * Failed assertion *
-        Instance of 'dict' is '<class 'str'>' instead of '<class 'dict'>'
-        """
-        self.assert_equal(actual, expected, fuzzy_match=True)
-
-    def test7(self) -> None:
-        """
         Test that the function doesn't raise an exception when key is not
-        present in the dictionary and a default value is provided.
+        present in the dictionary with default value provided.
         """
         # Prepare inputs.
         dict_ = {"key0": "value0", "key1": "value1"}
         # Run.
         actual = hdict.typed_get(dict_, "key2", default_value="default_value")
         # Check output.
+        self.assertIsInstance(actual, str)
         expected = "default_value"
         self.assert_equal(actual, expected)
 
-    def test8(self) -> None:
+    def test5(self) -> None:
         """
-        Test that the function doesn't raise an exception when dictionary is
-        empty and default value is provided.
+        Test that the function doesn't raise an exception when key is not
+        present in the dictionary with default value as None.
         """
         # Prepare inputs.
-        dict_ = {}
+        dict_ = {"key0": "value0", "key1": "value1"}
         # Run.
-        actual = hdict.typed_get(dict_, "key1", default_value="default_value")
+        actual = hdict.typed_get(dict_, "key2", default_value=None)
         # Check output.
-        expected = "default_value"
-        self.assert_equal(actual, expected)
+        expected = None
+        self.assertIsNone(actual, expected)
 
-    def test9(self) -> None:
+    def test6(self) -> None:
         """
         Test that the function doesn't raise an exception when the key is
-        present in the dictionary and the value's type matches the expected
-        type.
+        present in the dictionary and value is of the expected type.
         """
         # Prepare inputs.
         dict_ = {"key0": "value0", "key1": "value1"}
         # Run.
         actual = hdict.typed_get(dict_, "key0", expected_type=str)
         # Check output.
+        self.assertIsInstance(actual, str)
         expected = "value0"
         self.assert_equal(actual, expected)
 
-    def test10(self) -> None:
+    def test7(self) -> None:
         """
-        Test that the function does not raise an exception when the key is
-        missing, the default value is used, and the retrieved value's type
-        matches the expected type.
+        Test that the function raises an exception when the key is
+        present in the dictionary and the value is not of the expected type.
+        """
+        # Prepare inputs.
+        dict_ = {"key0": "value0", "key1": "value1"}
+        # Run.
+        with self.assertRaises(AssertionError) as e:
+            hdict.typed_get(dict_, "key0", expected_type=int)
+        # Check output.
+        actual_exp = str(e.exception)
+        expected_exp = r"""
+        * Failed assertion *
+        Instance of 'value0' is '<class 'str'>' instead of '<class 'int'>'
+        """
+        self.assert_equal(actual_exp, expected_exp, fuzzy_match=True)
+
+    def test8(self) -> None:
+        """
+        Test that the function doesn't raise an exception when the key is not
+        present in dictionary and default value matches expected type.
         """
         # Prepare inputs.
         dict_ = {"key0": "value0", "key1": "value1"}
@@ -259,8 +224,28 @@ class Test_typed_get(hunitest.TestCase):
             dict_, "key2", default_value="default_value", expected_type=str
         )
         # Check output.
+        self.assertIsInstance(actual, str)
         expected = "default_value"
         self.assert_equal(actual, expected)
+
+    def test9(self) -> None:
+        """
+        Test that the function raises an exception when the key is not present
+        in dictionary and default value doesn't match correct expected type.
+        """
+        # Prepare inputs.
+        dict_ = {"key0": "value0", "key1": "value1"}
+        # Run.
+        with self.assertRaises(AssertionError) as e:
+            hdict.typed_get(
+                dict_, "key2", default_value="dft_value", expected_type=int)
+        # Check output.
+        actual_exp = str(e.exception)
+        expected_exp = r"""
+        * Failed assertion *
+        Instance of 'dft_value' is '<class 'str'>' instead of '<class 'int'>'
+        """
+        self.assert_equal(actual_exp, expected_exp, fuzzy_match=True)
 
 
 class Test_checked_get(hunitest.TestCase):
@@ -274,6 +259,7 @@ class Test_checked_get(hunitest.TestCase):
         # Run.
         actual = hdict.checked_get(dict_, "key0")
         # Check output.
+        self.assertIsInstance(actual, str)
         expected = "value0"
         self.assert_equal(actual, expected)
 
@@ -297,7 +283,7 @@ class Test_checked_get(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        Test that the function raises an exception with key of different type.
+        Test that the function raises an exception with key of non-string type.
         """
         # Prepare inputs.
         dict_ = {"0": "value0", "1": "value1"}
