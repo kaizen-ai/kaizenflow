@@ -1,11 +1,15 @@
-
+# Workflow
 
 <!-- toc -->
 
 - [KaizenFlow workflow explanation](#kaizenflow-workflow-explanation)
+- [Work organization](#work-organization)
 - [Set-up](#set-up)
+  * [Documentation_meta](#documentation_meta)
 - [Quant workflows](#quant-workflows)
   * [`DataPull`](#datapull)
+    + [Universe](#universe)
+    + [Dataset signature](#dataset-signature)
   * [`DataFlow`](#dataflow)
     + [Meta](#meta)
     + [DAG](#dag)
@@ -22,14 +26,17 @@
 - [MLOps workflows](#mlops-workflows)
   * [Deploying](#deploying)
   * [Monitoring](#monitoring)
-- [Devops workflows](#devops-workflows)
+- [DevOps workflows](#devops-workflows)
+  * [Overview](#overview)
+  * [Current set-up description](#current-set-up-description)
+  * [Set up infra](#set-up-infra)
 
 <!-- tocstop -->
 
-# KaizenFlow workflow explanation
+## KaizenFlow workflow explanation
 
 This document is a roadmap of most activities that Quants, Quant devs, and
-Devops can perform using `KaizenFlow`.
+DevOps can perform using `KaizenFlow`.
 
 For each activity we point to the relevant resources (e.g., documents in `docs`,
 notebooks) in the repo.
@@ -37,15 +44,42 @@ notebooks) in the repo.
 A high-level description of KaizenFlow is
 [KaizenFlow White Paper](/papers/DataFlow_stream_computing_framework/DataFlow_stream_computing_framework.pdf)
 
-# Set-up
+## Work organization
+
+- Issues workflow explained
+  [`amp/docs/work_organization/ck.issue_workflow.explanation.md`](/docs/work_organization/ck.issue_workflow.explanation.md)
+- GitHub and ZenHub workflows explained
+  [`/docs/work_organization/all.use_github_and_zenhub.how_to_guide.md`](/docs/work_organization/all.use_github_and_zenhub.how_to_guide.md)
+- TODO(Grisha): add more from `/docs/work_organization/`.
+
+## Set-up
 
 - TODO(gp): Add pointers to the docs we ask to read during the on-boarding
 
+### Documentation_meta
+
+- The dir `docs/documentation_meta` contains documents about writing the
+  documentation
+
+- Conventions and suggestions on how to create diagrams in the documentation
+  - [/docs/documentation_meta/all.architecture_diagrams.explanation.md](/docs/documentation_meta/all.architecture_diagrams.explanation.md)
+
+- A summary of how to create how-to, tutorial, explanations, reference according
+  to the Diataxis framework
+  - [/docs/documentation_meta/all.diataxis.explanation.md](/docs/documentation_meta/all.diataxis.explanation.md)
+
+- Writing documentation in Google Docs
+  - [/docs/documentation_meta/all.gdocs.how_to_guide.md](/docs/documentation_meta/all.gdocs.how_to_guide.md)
+
+- Writing documentation in Markdown
+  - [/docs/documentation_meta/all.writing_docs.how_to_guide.md](/docs/documentation_meta/all.writing_docs.how_to_guide.md)
+
+- Plotting in Latex
+  - [/docs/documentation_meta/plotting_in_latex.how_to_guide.md](/docs/documentation_meta/plotting_in_latex.how_to_guide.md)
+
 <!-- ####################################################################### -->
 
-# Quant workflows
-
-<!-- ####################################################################### -->
+## Quant workflows
 
 The life of a Quant is spent between:
 
@@ -73,7 +107,7 @@ These activities are mapped in `KaizenFlow` as follows:
 
 <!-- /////////////////////////////////////////////////////////////////////// -->
 
-## `DataPull`
+### `DataPull`
 
 - General intro to `DataPull`
   - [/docs/datapull/ck.datapull.explanation.md](/docs/datapull/ck.datapull.explanation.md)
@@ -82,8 +116,7 @@ These activities are mapped in `KaizenFlow` as follows:
   - [/docs/datapull/all.datapull_sandbox.explanation.md](/docs/datapull/all.datapull_sandbox.explanation.md)
   - [/docs/datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md](/docs/datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md)
 
-- Onboard new exchange
-  - [/docs/datapull/ck.onboarding_new_exchnage.md](/docs/datapull/ck.onboarding_new_exchnage.md)
+#### Universe
 
 - Universe explanation
   - [/docs/datapull/ck.universe.explanation.md](/docs/datapull/ck.universe.explanation.md)
@@ -92,10 +125,12 @@ These activities are mapped in `KaizenFlow` as follows:
   - [/im_v2/common/universe/notebooks/Master_universe_analysis.ipynb](/im_v2/common/universe/notebooks/Master_universe_analysis.ipynb)
   - [/im_v2/ccxt/notebooks/Master_universe.ipynb](/im_v2/ccxt/notebooks/Master_universe.ipynb)
 
+#### Dataset signature
+
 - Organize and label datasets
   - Helps to uniquely identify datasets across different sources, types,
     attributes etc.
-  - [/data_schema](/data_schema)
+  - [/docs/datapull/all.data_schema.explanation.md](/docs/datapull/all.data_schema.explanation.md)
   - [/docs/datapull/ck.handle_datasets.how_to_guide.md](/docs/datapull/ck.handle_datasets.how_to_guide.md)
 
 - Inspect RawData
@@ -117,7 +152,7 @@ These activities are mapped in `KaizenFlow` as follows:
     generalized for more sources
 
 - Download data in real time over a given time interval
-  - [/im_v2/ccxt/data/extract/download_exchange_data_to_db_periodically.py](/im_v2/ccxt/data/extract/download_exchange_data_to_db_periodically.py)
+  - [/im_v2/common/data/extract/periodic_download_exchange_data_to_db.py](/im_v2/common/data/extract/periodic_download_exchange_data_to_db.py)
 
 - Archive data
   - Helps with optimizing data storage performance/costs by transferring older
@@ -161,24 +196,22 @@ These activities are mapped in `KaizenFlow` as follows:
   [/docs/datapull/ck.run_im_app.how_to_guide.md](/docs/datapull/ck.run_im_app.how_to_guide.md)
 
 - TODO(gp): Reorg
-  ```
-  ./research_amp/cc/notebooks/Master_single_vendor_qa.ipynb
-  ./research_amp/cc/notebooks/Master_model_performance_analyser.old.ipynb
-  ./research_amp/cc/notebooks/Master_machine_learning.ipynb
-  ./research_amp/cc/notebooks/Master_cross_vendor_qa.ipynb
-  ./research_amp/cc/notebooks/Master_model_performance_analyser.ipynb
-  ./research_amp/cc/notebooks/Master_crypto_analysis.ipynb
-  ./research_amp/cc/notebooks/Master_model_prediction_analyzer.ipynb
-  ./research_amp/cc/notebooks/Master_Analysis_CrossSectionalLearning.ipynb
-  ./im/app/notebooks/Master_IM_DB.ipynb
-  ./im/ib/metadata/extract/notebooks/Master_analyze_ib_metadata_crawler.ipynb
-  ```
+  [/research_amp/cc/notebooks/Master_single_vendor_qa.ipynb](/research_amp/cc/notebooks/Master_single_vendor_qa.ipynb)
+  [/research_amp/cc/notebooks/Master_model_performance_analyser.old.ipynb](/research_amp/cc/notebooks/Master_model_performance_analyser.old.ipynb)
+  [/research_amp/cc/notebooks/Master_machine_learning.ipynb](/research_amp/cc/notebooks/Master_machine_learning.ipynb)
+  [/research_amp/cc/notebooks/Master_cross_vendor_qa.ipynb](/research_amp/cc/notebooks/Master_cross_vendor_qa.ipynb)
+  [/research_amp/cc/notebooks/Master_model_performance_analyser.ipynb](/research_amp/cc/notebooks/Master_model_performance_analyser.ipynb)
+  [/research_amp/cc/notebooks/Master_crypto_analysis.ipynb](/research_amp/cc/notebooks/Master_crypto_analysis.ipynb)
+  [/research_amp/cc/notebooks/Master_model_prediction_analyzer.ipynb](/research_amp/cc/notebooks/Master_model_prediction_analyzer.ipynb)
+  [/research_amp/cc/notebooks/Master_Analysis_CrossSectionalLearning.ipynb](/research_amp/cc/notebooks/Master_Analysis_CrossSectionalLearning.ipynb)
+  [/im/app/notebooks/Master_IM_DB.ipynb](/im/app/notebooks/Master_IM_DB.ipynb)
+  [/im/ib/metadata/extract/notebooks/Master_analyze_ib_metadata_crawler.ipynb](/im/ib/metadata/extract/notebooks/Master_analyze_ib_metadata_crawler.ipynb)
 
 <!-- /////////////////////////////////////////////////////////////////////// -->
 
-## `DataFlow`
+### `DataFlow`
 
-### Meta
+#### Meta
 
 - Best practices for Quant research
   - [/docs/dataflow/ck.research_methodology.explanation.md](/docs/dataflow/ck.research_methodology.explanation.md)
@@ -189,7 +222,7 @@ These activities are mapped in `KaizenFlow` as follows:
   - TODO(Grisha): does this belong to `DataFlow`?
   - TODO(Grisha): `ck.master_notebooks...` -> `all.master_notebooks`?
 
-### DAG
+#### DAG
 
 - General concepts of `DataFlow`
   - Introduction to KaizenFlow, DAG nodes, DataFrame as unit of computation, DAG
@@ -224,10 +257,8 @@ These activities are mapped in `KaizenFlow` as follows:
 - General intro about model simulation
   - Property of tilability, batch vs streaming
     - [/docs/dataflow/all.batch_and_streaming_mode_using_tiling.explanation.md](/docs/dataflow/all.batch_and_streaming_mode_using_tiling.explanation.md)
-    - TODO(gp): @paul Review
   - Time semantics, How clock is handled, Flows
     - [/docs/dataflow/all.timing_semantic_and_clocks.md](/docs/dataflow/all.timing_semantic_and_clocks.md)
-    - TODO(gp): Review
   - Phases of evaluation of `Dag`s
     - [/docs/dataflow/all.train_and_predict_phases.explanation.md](/docs/dataflow/all.train_and_predict_phases.explanation.md)
   - Event study explanation
@@ -239,12 +270,11 @@ These activities are mapped in `KaizenFlow` as follows:
   - How to build a system, run research backtesting, Process results of
     backtesting, How to run replayed time simulation, Running experiments
     - [/docs/dataflow/ck.run_backtest.how_to_guide.md](/docs/dataflow/ck.run_backtest.how_to_guide.md)
-    - TODO(gp): Review
   - Simulation output explanation
     - [/docs/dataflow/all.simulation_output.reference.md](/docs/dataflow/all.simulation_output.reference.md)
 
 - Run a simulation sweep using a list of `Config` parameters
-  - [/docs/dataflow/ck.run_backtest.how_to_guide.md](/docs/dataflow/ck.run_backtest.how_to_guide.md#how-to-utilize-the-backtest-analyzer-notebook)
+  - [/docs/dataflow/ck.run_backtest.how_to_guide.md](/docs/dataflow/ck.run_backtest.how_to_guide.md)
   - TODO(gp): @grisha do we have anything here? It's like the stuff that Dan
     does
   - TODO(Grisha): @Dan, add a link to the doc here once it is ready
@@ -282,7 +312,7 @@ These activities are mapped in `KaizenFlow` as follows:
   - [/docs/dataflow/ck.load_alpha_and_trades.tutorial.py](/docs/dataflow/ck.load_alpha_and_trades.tutorial.py)
   - TODO(gp): add more comments
 
-### System
+#### System
 
 - Learn how to build `System`
   - TODO(gp): @grisha what do we have for this?
@@ -290,7 +320,7 @@ These activities are mapped in `KaizenFlow` as follows:
     flow step-by-step
 
 - Configure a full system using a `Config`
-  - Fill the SystemConfig, Build all the components and run the System
+  - Fill the `SystemConfig`, build all the components and run the `System`
   - [/docs/dataflow/system/all.use_system_config.tutorial.ipynb](/docs/dataflow/system/all.use_system_config.tutorial.ipynb)
 
 - Create an ETL batch process using a `System`
@@ -305,7 +335,7 @@ These activities are mapped in `KaizenFlow` as follows:
     - [/dataflow_amp/system/realtime_etl_data_observer/scripts/run_realtime_etl_data_observer.py](/dataflow_amp/system/realtime_etl_data_observer/scripts/run_realtime_etl_data_observer.py)
     - TODO(Grisha): consider converting into a Jupyter notebook.
   - Build a `System` that runs in real time
-    - [dataflow_amp/system/realtime_etl_data_observer/scripts/DataObserver_template.run_data_observer_simulation.py](/dataflow_amp/system/realtime_etl_data_observer/scripts/DataObserver_template.run_data_observer_simulation.py)
+    - [/dataflow_amp/system/realtime_etl_data_observer/scripts/DataObserver_template.run_data_observer_simulation.py](/dataflow_amp/system/realtime_etl_data_observer/scripts/DataObserver_template.run_data_observer_simulation.py)
     - TODO(Grisha): consider converting into a Jupyter notebook.
 
 - Batch simulation a Mock2 `System`
@@ -321,43 +351,45 @@ These activities are mapped in `KaizenFlow` as follows:
   - [/dataflow_amp/system/mock2/scripts/run_end_to_end_Mock2_system.py](/dataflow_amp/system/mock2/scripts/run_end_to_end_Mock2_system.py)
 
 - TODO(gp): reorg the following files
-  ```
-  ./oms/notebooks/Master_PnL_real_time_observer.ipynb
-  ./oms/notebooks/Master_bid_ask_execution_analysis.ipynb
-  ./oms/notebooks/Master_broker_debugging.ipynb
-  ./oms/notebooks/Master_broker_portfolio_reconciliation.ipynb
-  ./oms/notebooks/Master_c1b_portfolio_vs_portfolio_reconciliation.ipynb
-  ./oms/notebooks/Master_dagger_reconciliation.ipynb
-  ./oms/notebooks/Master_execution_analysis.ipynb
-  ./oms/notebooks/Master_model_qualifier.ipynb
-  ./oms/notebooks/Master_multiday_system_reconciliation.ipynb
-  ./oms/notebooks/Master_portfolio_vs_portfolio_reconciliation.ipynb
-  ./oms/notebooks/Master_portfolio_vs_research_stats.ipynb
-  ./oms/notebooks/Master_system_reconciliation_fast.ipynb
-  ./oms/notebooks/Master_system_reconciliation_slow.ipynb
-  ./oms/notebooks/Master_system_run_debugger.ipynb
-  ```
+  [/oms/notebooks/Master_PnL_real_time_observer.ipynb](/oms/notebooks/Master_PnL_real_time_observer.ipynb)
+  [/oms/notebooks/Master_bid_ask_execution_analysis.ipynb](/oms/notebooks/Master_bid_ask_execution_analysis.ipynb)
+  [/oms/notebooks/Master_broker_debugging.ipynb](/oms/notebooks/Master_broker_debugging.ipynb)
+  [/oms/notebooks/Master_broker_portfolio_reconciliation.ipynb](/oms/notebooks/Master_broker_portfolio_reconciliation.ipynb)
+  [/oms/notebooks/Master_c1b_portfolio_vs_portfolio_reconciliation.ipynb](/oms/notebooks/Master_c1b_portfolio_vs_portfolio_reconciliation.ipynb)
+  [/oms/notebooks/Master_dagger_reconciliation.ipynb](/oms/notebooks/Master_dagger_reconciliation.ipynb)
+  [/oms/notebooks/Master_execution_analysis.ipynb](/oms/notebooks/Master_execution_analysis.ipynb)
+  [/oms/notebooks/Master_model_qualifier.ipynb](/oms/notebooks/Master_model_qualifier.ipynb)
+  [/oms/notebooks/Master_multiday_system_reconciliation.ipynb](/oms/notebooks/Master_multiday_system_reconciliation.ipynb)
+  [/oms/notebooks/Master_portfolio_vs_portfolio_reconciliation.ipynb](/oms/notebooks/Master_portfolio_vs_portfolio_reconciliation.ipynb)
+  [/oms/notebooks/Master_portfolio_vs_research_stats.ipynb](/oms/notebooks/Master_portfolio_vs_research_stats.ipynb)
+  [/oms/notebooks/Master_system_reconciliation_fast.ipynb](/oms/notebooks/Master_system_reconciliation_fast.ipynb)
+  [/oms/notebooks/Master_system_reconciliation_slow.ipynb](/oms/notebooks/Master_system_reconciliation_slow.ipynb)
+  [/oms/notebooks/Master_system_run_debugger.ipynb](/oms/notebooks/Master_system_run_debugger.ipynb)
 
 <!-- ####################################################################### -->
 
-# Quant dev workflows
-
-<!-- ####################################################################### -->
+## Quant dev workflows
 
 <!-- /////////////////////////////////////////////////////////////////////// -->
 
-## DataPull
+### DataPull
 
 - Learn how to create a `DataPull` adapter for a new data source
   - [/docs/datapull/all.dataset_onboarding_checklist.reference.md](/docs/datapull/all.dataset_onboarding_checklist.reference.md)
   - [/docs/datapull/ck.add_new_data_source.how_to_guide.md](/docs/datapull/ck.add_new_data_source.how_to_guide.md)
+
 - How to update CCXT version
   - [/docs/datapull/all.update_CCXT_version.how_to_guide.md](/docs/datapull/all.update_CCXT_version.how_to_guide.md)
+
 - Download `DataPull` historical data
+  - ?
+
+- Onboard new exchange
+  - [/docs/datapull/ck.onboarding_new_exchange.md](/docs/datapull/ck.onboarding_new_exchange.md)
 
 - Put a `DataPull` source in production with Airflow
   - [/docs/datapull/ck.create_airflow_dag.tutorial.md](/docs/datapull/ck.create_airflow_dag.tutorial.md)
-    - TODO(gp, Juraj): double check
+    - TODO(gp): This file is missing
   - [/docs/datapull/ck.develop_an_airflow_dag_for_production.explanation.md](/docs/datapull/ck.develop_an_airflow_dag_for_production.explanation.md)
     - TODO(Juraj): See https://github.com/cryptokaizen/cmamp/issues/6444
 
@@ -373,54 +405,58 @@ These activities are mapped in `KaizenFlow` as follows:
 - How to import `Bloomberg` real-time data
   - TODO(\*): add doc.
 
+- TODO(gp): Add docs
+  [/docs/datapull/ck.binance_trades_data_pipeline.explanation.md](/docs/datapull/ck.binance_trades_data_pipeline.explanation.md)
+  [/docs/datapull/ck.database_schema_update.how_to_guide.md](/docs/datapull/ck.database_schema_update.how_to_guide.md)
+  [/docs/datapull/ck.datapull.explanation.md](/docs/datapull/ck.datapull.explanation.md)
+  [/docs/datapull/ck.relational_database.explanation.md](/docs/datapull/ck.relational_database.explanation.md)
+
 <!-- /////////////////////////////////////////////////////////////////////// -->
 
-## DataFlow
+### DataFlow
 
 - All software components
   - [/docs/dataflow/ck.data_pipeline_architecture.reference.md](/docs/dataflow/ck.data_pipeline_architecture.reference.md)
 
 <!-- ####################################################################### -->
 
-# TradingOps workflows
-
-<!-- ####################################################################### -->
+## TradingOps workflows
 
 <!-- /////////////////////////////////////////////////////////////////////// -->
 
-## Trading execution
+### Trading execution
 
-### Intro
+#### Intro
 
 - Binance trading terms
-  - [/docs/trade_execution/ck.binance_terms.reference.md](/docs/trade_execution/ck.binance_terms.reference.md)
+  - [/docs/oms/broker/ck.binance_terms.reference.md](/docs/oms/broker/ck.binance_terms.reference.md)
 
-### Components
+#### Components
 
 - OMS explanation
-  - [/docs/trade_execution/ck.oms.explanation.md](/docs/trade_execution/ck.oms.explanation.md)
+  - [/docs/oms/ck.oms.explanation.md](/docs/oms/ck.oms.explanation.md)
 - CCXT log structure
-  - [/docs/trade_execution/ck.ccxt_broker_logs_schema.reference.md](/docs/trade_execution/ck.ccxt_broker_logs_schema.reference.md)
+  - [/docs/oms/broker/ck.ccxt_broker_logs_schema.reference.md](/docs/oms/broker/ck.ccxt_broker_logs_schema.reference.md)
 
-### Testing
+#### Testing
 
 - Replayed CCXT exchange explanation
-  - [/docs/trade_execution/ck.replayed_ccxt_exchange.explanation.md](/docs/trade_execution/ck.replayed_ccxt_exchange.explanation.md)
+  - [/docs/oms/broker/ck.replayed_ccxt_exchange.explanation.md](/docs/oms/broker/ck.replayed_ccxt_exchange.explanation.md)
 - How to generate broker test data
-  - [/docs/trade_execution/ck.generate_broker_test_data.how_to_guide.md](/docs/trade_execution/ck.generate_broker_test_data.how_to_guide.md)
+  - [/docs/oms/broker/ck.generate_broker_test_data.how_to_guide.md](/docs/oms/broker/ck.generate_broker_test_data.how_to_guide.md)
 
-### Procedures
+#### Procedures
 
 - Trading procedures (e.g., trading account information)
-  - [/docs/trade_execution/ck.trading.how_to_guide.md](/docs/trade_execution/ck.trading.how_to_guide.md)
+  - [/docs/trading_ops/ck.trading.how_to_guide.md](/docs/trading_ops/ck.trading.how_to_guide.md)
 - How to run broker only/full system experiments
-  - [/docs/trade_execution/ck.trade_execution_experiment.how_to_guide.md](/docs/trade_execution/ck.trade_execution_experiment.how_to_guide.md)
+  - [/docs/trading_ops/ck.trade_execution_experiment.how_to_guide.md](/docs/trading_ops/ck.trade_execution_experiment.how_to_guide.md)
 - Execution notebooks explanation
-  - [/docs/trade_execution/ck.execution_notebooks.explanation.md](/docs/trade_execution/ck.execution_notebooks.explanation.md)
+  - [/docs/oms/broker/ck.execution_notebooks.explanation.md](/docs/oms/broker/ck.execution_notebooks.explanation.md)
 
 <!-- ####################################################################### -->
 
-# MLOps workflows
+## MLOps workflows
 
 - Encrypt a model
   - [/docs/dataflow/ck.release_encrypted_models.explanation.md](/docs/dataflow/ck.release_encrypted_models.explanation.md)
@@ -428,7 +464,7 @@ These activities are mapped in `KaizenFlow` as follows:
 
 <!-- /////////////////////////////////////////////////////////////////////// -->
 
-## Deploying
+### Deploying
 
 - Model deployment in production
   - [/docs/deploying/all.model_deployment.how_to_guide.md](/docs/deploying/all.model_deployment.how_to_guide.md)
@@ -439,7 +475,7 @@ These activities are mapped in `KaizenFlow` as follows:
 
 <!-- /////////////////////////////////////////////////////////////////////// -->
 
-## Monitoring
+### Monitoring
 
 - Monitor system
   - [/docs/monitoring/ck.monitor_system.how_to_guide.md](/docs/monitoring/ck.monitor_system.how_to_guide.md)
@@ -450,4 +486,60 @@ These activities are mapped in `KaizenFlow` as follows:
 
 <!-- ####################################################################### -->
 
-# Devops workflows
+## DevOps workflows
+
+The documentation outlines the architecture and deployment processes for the
+Kaizen Infrastructure, leveraging a blend of AWS services, Kubernetes for
+container orchestration, and traditional EC2 for virtualized computing.
+Emphasizing Infrastructure as Code (IaC), the project employs Terraform for
+provisioning and Ansible for configuration, ensuring a maintainable and
+replicable environment.
+
+### Overview
+
+- Development and deployment stages
+  - [/docs/infra/ck.development_stages.explanation.md](/docs/infra/ck.development_stages.explanation.md)
+
+- S3 Buckets overview
+  - [/docs/infra/ck.s3_buckets.explanation.md](/docs/infra/ck.s3_buckets.explanation.md)
+  - This document provides an overview of the S3 buckets utilized by Kaizen
+    Technologies.
+
+### Current set-up description
+
+- Document details steps for setting up Kaizen infrastructure
+  - [/docs/infra/ck.kaizen_infrastructure.reference.md](/docs/infra/ck.kaizen_infrastructure.reference.md)
+
+- EC2 servers overview
+  - [/docs/infra/ck.ec2_servers.explanation.md](/docs/infra/ck.ec2_servers.explanation.md)
+
+### Set up infra
+
+- Document the implementation of Auto Scaling in the Kubernetes setup, focusing
+  on the Cluster Autoscaler (CA), Horizontal Pod Autoscaler (HPA), and Auto
+  Scaling Groups (ASG)
+  - [/docs/infra/all.auto_scaling.explanation.md](/docs/infra/all.auto_scaling.explanation.md)
+
+- Compare AWS RDS instance types and storage performance
+  - [/docs/infra/all.rds.comparison.md](/docs/infra/all.rds.comparison.md)
+
+- Setup S3 buckets with Terraform
+  - [/docs/infra/ck.set_up_s3_buckets.how_to_guide.md](/docs/infra/ck.set_up_s3_buckets.how_to_guide.md)
+
+- AWS API Key rotation guide
+  - [/docs/infra/ck.aws_api_key_rotation.how_to_guide.md](/docs/infra/ck.aws_api_key_rotation.how_to_guide.md)
+
+- Amazon Elastic File System (EFS) overview
+  - [/docs/infra/ck.aws_elastic_file_system.explanation.md](/docs/infra/ck.aws_elastic_file_system.explanation.md)
+
+- Client VPN endpoint creation with Terraform
+  - [/docs/infra/ck.create_client_vpn_endpoint.how_to_guide.md](/docs/infra/ck.create_client_vpn_endpoint.how_to_guide.md)
+
+- Set-up AWS Client VPN
+  - [/docs/infra/ck.set_up_aws_client_vpn.how_to_guide.md](/docs/infra/ck.set_up_aws_client_vpn.how_to_guide.md)
+
+- Utility server application set-up overview
+  - [/docs/infra/ck.set_up_utility_server_app.how_to_guide.md](/docs/infra/ck.set_up_utility_server_app.how_to_guide.md)
+
+- Storing secret information (API keys, login credentials, access tokens etc.)
+  - [/docs/infra/ck.storing_secrets.explanation.md](/docs/infra/ck.storing_secrets.explanation.md)

@@ -193,6 +193,7 @@ def skip_apply_func(
     return df
 
 
+# TODO(Paul): Add test coverage.
 def sign_normalize(
     signal: Union[pd.DataFrame, pd.Series],
     atol: float = 0,
@@ -283,3 +284,17 @@ def compute_weighted_sum(
     if convert_to_dataframe:
         product = product.to_frame()
     return product
+
+
+def schmitt_trigger(
+    signal: Union[pd.DataFrame, pd.Series],
+    threshold: float,
+) -> Union[pd.DataFrame, pd.Series]:
+    """
+    Implement a Schmitt trigger with a symmetric upper/lower threshold.
+    """
+    hdbg.dassert_lte(0, threshold)
+    above_threshold = (signal > threshold).astype(int).replace(0, np.nan)
+    below_threshold = -(signal < -threshold).astype(int).replace(0, np.nan)
+    result = above_threshold.add(below_threshold, fill_value=0).ffill()
+    return result

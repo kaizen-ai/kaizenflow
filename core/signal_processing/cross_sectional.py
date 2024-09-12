@@ -65,7 +65,9 @@ def gaussian_rank(
         elif bulk_fill_method == "ffill":
             df = df.ffill()
         else:
-            raise ValueError("Unrecognized `bulk_fill_method`=%s" % bulk_fill_method)
+            raise ValueError(
+                "Unrecognized `bulk_fill_method`=%s" % bulk_fill_method
+            )
         # Add back the all-NaN rows.
         df = df.reindex(index=idx)
     return df
@@ -88,3 +90,13 @@ def uniform_rank(
     translation = -(counts + 1) / (counts - 1)
     ranked = (ranked.multiply(multiplier, axis=0)).add(translation, axis=0)
     return ranked
+
+
+def xs_demean(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Cross-sectionally demean dataframe.
+    """
+    demeaned_df = df.subtract(df.mean(axis=1), axis=0)
+    return demeaned_df

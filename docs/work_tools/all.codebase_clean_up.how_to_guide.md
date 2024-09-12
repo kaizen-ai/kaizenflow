@@ -1,4 +1,4 @@
-
+# Codebase Clean Up
 
 <!-- toc -->
 
@@ -19,9 +19,9 @@
 
 <!-- tocstop -->
 
-# Codebase clean-up scripts
+## Codebase clean-up scripts
 
-## Problem
+### Problem
 
 1. Since we have multiple repos, we can't always easily replace code in one repo
    (e.g., with PyCharm) and have all the other repos work properly
@@ -35,7 +35,7 @@
   - The reviewers might ask some changes
   - This creates a lot of manual changes
 
-## Solution: script approach
+### Solution: script approach
 
 - Create a shell `sh` script that applies the correct changes to all the repos
   using [/dev_scripts/replace_text.py](/dev_scripts/replace_text.py)
@@ -49,13 +49,13 @@
 3. We can check out a clean master, run the script to apply the changes
    automatically, regress and merge
 
-## Using the script approach
+### Using the script approach
 
 - We want to apply clean-up changes to the code base with a script
 
 - Ideally we would like to apply all the changes automatically through the
   script
-  - E.g., in [SorrTask258](https://github.com/kaizen-ai/kaizenflow/issues/258) a
+  - E.g., in [SorrTask258](https://github.com/sorrentum/sorrentum/issues/258) a
     script that replaces `pytest.raises` with `self.assertRaises` everywhere in
     the code
 - We are ok to make the vast majority (like 95%) of the changes automatically,
@@ -70,7 +70,7 @@
   - The author/reviewers should run the script on all the repos, run the unit
     tests, and merge (through a PR as usual)
 
-# How to use `replace_text.py`
+## How to use `replace_text.py`
 
 - See `-h` for updated list of options
 
@@ -93,7 +93,7 @@
   the files with extensions `.py`, `.ipynb`, `.txt`, `.md` and to do a `git mv`
   for files based on certain criteria
 
-## Rename a file
+### Rename a file
 
 - Preview the change
   ```bash
@@ -111,7 +111,7 @@
   > git mv ./dataflow/backtest/{research_backtest_utils.py,backtest_api.py}
   ```
 
-## Replace an import with a new one
+### Replace an import with a new one
 
 ```bash
 > replace_text.py \
@@ -119,7 +119,7 @@
     --new "import core.finance"
 ```
 
-## Replace text in a specific directory
+### Replace text in a specific directory
 
 ```bash
 > replace_text.py \
@@ -130,7 +130,7 @@
     --exts None
 ```
 
-## Revert all files but this one
+### Revert all files but this one
 
 - There is an option `--revert_all` to apply this before the script
   ```bash
@@ -141,7 +141,7 @@
       xargs git checkout --
   ```
 
-## Custom flows
+### Custom flows
 
 ```bash
 > replace_text.py --custom_flow _custom1
@@ -152,10 +152,10 @@
   > replace_text.py --custom_flow _custom2 --revert_all
   ```
 
-# Usage examples
+## Usage examples
 
-- See [SorrIssue259](https://github.com/kaizen-ai/kaizenflow/issues/259) and the
-  related [PR](https://github.com/kaizen-ai/kaizenflow/pull/336) for reference
+- See [SorrIssue259](https://github.com/sorrentum/sorrentum/issues/259) and the
+  related [PR](https://github.com/sorrentum/sorrentum/pull/336) for reference
   - We wanted to make `_to_multiline_cmd()` from `helpers/lib_tasks_utils.py` a
     public function
   - This would require to rename `_to_multiline_cmd()` to `to_multiline_cmd()`
@@ -165,18 +165,18 @@
     will make the replacement smoothly everywhere in the code except for the
     dirs specified `--exclude_dirs` flag.
 
-- See [SorrIssue258](https://github.com/kaizen-ai/kaizenflow/issues/258) and the
-  related [PR](https://github.com/kaizen-ai/kaizenflow/pull/350) for reference
+- See [SorrIssue258](https://github.com/sorrentum/sorrentum/issues/258) and the
+  related [PR](https://github.com/sorrentum/sorrentum/pull/350) for reference
   - We wanted to replace `pytest.raises` with `self.assertRaises`
   - This
-    [script](https://github.com/kaizen-ai/kaizenflow/blob/master/dev_scripts/cleanup_scripts/SorrTask258_Replace_pytest_raises_with_self_assertraises.sh)
+    [script](https://github.com/sorrentum/sorrentum/blob/master/dev_scripts/cleanup_scripts/SorrTask258_Replace_pytest_raises_with_self_assertraises.sh)
     will replace it everywhere in the code
   - Note the use of `--ext` flag to specify the file extentions the script
     should work on
 - Of course the changes need to be applied in one repo and then propagated to
   all the other repos if the tests are successful
 
-## Instructions for the PR author
+### Instructions for the PR author
 
 - Create a local branch called `...TaskXYZ_..._script` containing:
   - The code that needs to be changed manually
@@ -202,7 +202,7 @@
     automate as much as possible
 - Finally, the PR author merges the PR with the results of the script
 
-### Example
+#### Example
 
 - The name of script should be related to the task. E.g:
   `SorrTask259_Make_to_multi_line_cmd_public.sh`
@@ -210,7 +210,7 @@
   required functionality as provided in the above examples
 - Create a PR only with the script and the changes
 
-## Instructions for the subrepo integrator
+### Instructions for the subrepo integrator
 
 - Do a `git checkout` of the `...TaskXYZ_..._script`
 - Run the script

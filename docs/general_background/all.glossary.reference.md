@@ -27,25 +27,25 @@
 
 - HLD (High Level Design)
   - Is a general system design and includes the description of the System
-  architecture and design
+    architecture and design
 
 - IM (Instrument Master)
   - A software component that associates symbolic names to assets and their
-  prices
+    prices
 
 - Integrator
   - Someone on the team that is in charge of merging code to the main line of
-  development
+    development
   - Aka: master
 
 - OHLCV bar
   - An **open-high-low-close chart** (also **OHLC**) is a type of chart
-  typically used to illustrate movements in the price of a financial instrument
-  over time
+    typically used to illustrate movements in the price of a financial
+    instrument over time
 
 - OMS (Order Management System)
   - A software component in charge of placing and monitoring trading orders to
-  market or broker
+    market or broker
 
 - PR (Pull Request)
   - Request to merge code in GitHub

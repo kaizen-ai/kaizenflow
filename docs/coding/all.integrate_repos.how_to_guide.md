@@ -1,4 +1,6 @@
-# How to integrate repos
+# Integrate Repos
+
+## How to integrate repos
 
 <!-- toc -->
 
@@ -12,7 +14,7 @@
 
 <!-- tocstop -->
 
-# Concepts
+## Concepts
 
 - We have two dirs storing two forks of the same repo
   - Files are touched (e.g., added, modified, deleted) in each forks
@@ -21,15 +23,15 @@
     in the other fork
 - Often we can integrate "by directory", i.e., finding entire directories that
   were touched in one branch but not in the other
-  - In this case we can simply copy the entire dir from one dir to the other
-- Other times we need to integrate "by file"
+  - In this case we can simply copy the entire dir from one repo to the other
+- Other times we need to integrate each file
 
 - There are various interesting Git reference points:
   1. The branch point for each fork, at which the integration branch was started
   2. The last integration point for each fork, at which the repos are the same,
      or at least aligned
 
-# Invariants for the integration workflows
+## Invariants for the integration workflows
 
 - The user runs commands in an abs dir, e.g., `/Users/saggese/src/{amp1,cmamp1}`
 - The user refers in the command line to `dir_basename`, which is the basename
@@ -38,9 +40,9 @@
   - The `dst_dir_basename` is assumed to be parallel to the `src_dir_basename`
 - The dirs are then transformed in absolute dirs `abs_src_dir`
 
-# Integration process
+## Integration process
 
-## Preparation
+### Preparation
 
 - Pull master
 
@@ -116,7 +118,7 @@
   > vimdiff ~/src/{amp1,cmamp1}/tasks.py; diff_to_vimdiff.py --dir1 ~/src/amp1 --dir2 ~/src/cmamp1 --subdir helpers
   ```
 
-## Integration
+### Integration
 
 - Create the integration branches:
 
@@ -199,7 +201,7 @@
   > rsync --delete -a -r {src_dir}/ {dst_dir}/
   ```
 
-## Double-check the integration
+### Double-check the integration
 
 - Check that the regressions are passing on GH
 
@@ -234,7 +236,7 @@
   > i git_branch_diff_with -t base
   ```
 
-## Run tests
+### Run tests
 
 - Check `amp` / `cmamp` using GH actions:
 

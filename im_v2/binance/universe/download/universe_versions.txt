@@ -1,4 +1,20 @@
 v8
+- 2024-07-30
+- Remove delisted symbol 'GAL_USDT'
+
+v8
+- 2024-07-16
+- Remove delisted symbol 'RNDR_USDT'
+
+v8.1
+- 2024-07-16
+- Remove delisted symbol 'RNDR_USDT'
+
+v8
+- 2024-06-28
+- Remove delisted symbol 'WAVES_USDT', 'OMG_USDT', 'XEM_USDT'
+
+v8
 - 2024-04-04
 - Removing delisted symbols ANT_USDT, DGB_USDT and CTK_USDT
 

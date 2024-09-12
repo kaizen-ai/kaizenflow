@@ -1,29 +1,31 @@
-# Hubstaff
+# Track Time With Hubstaff
+
+## Hubstaff
 
 <!-- toc -->
 
 - [General](#general)
 - [Time Tracking](#time-tracking)
-  - [Privacy](#privacy)
-  - [Tracking time automatically](#tracking-time-automatically)
-  - [Tracking time manually](#tracking-time-manually)
-  - [Overriding time tracking](#overriding-time-tracking)
+  * [Privacy](#privacy)
+  * [Tracking time automatically](#tracking-time-automatically)
+  * [Tracking time manually](#tracking-time-manually)
+  * [Overriding time tracking](#overriding-time-tracking)
 
 <!-- tocstop -->
 
-# General
+## General
 
 - [Hubstaff](https://hubstaff.com/) is a tool for remote working that automates:
-  - time tracking
-  - invoice creation
-  - payment
+  - Time tracking
+  - Invoice creation
+  - Payment
 - The goal is to replace our
   [hour log spreadsheet](https://docs.google.com/spreadsheets/d/1oNd6ORhc94oUzg5nhNC7fQelN_PmfAv110F7lUiZsxo/edit#gid=0)
   with Hubstaff and get paid automatically for the worked hours.
 
-# Time Tracking
+## Time Tracking
 
-## Privacy
+### Privacy
 
 - We have decided to turn off the feature of taking screenshots of the laptop as
   proof-as-work, URL, and app tracking.
@@ -43,7 +45,7 @@
   - <img src="figs/track_time_with_hubstaff/image1.png" />
 - You can change your mind over time.
 
-## Tracking time automatically
+### Tracking time automatically
 
 - You can use the desktop [App](https://app.hubstaff.com/download)
   - I prefer this since it's completely automated
@@ -55,7 +57,7 @@
 - See
   [https://hubstaff.com/how-tracking-works](https://hubstaff.com/how-tracking-works)
 
-## Tracking time manually
+### Tracking time manually
 
 - You can track time using the
   [Google Chrome extension](https://chrome.google.com/webstore/detail/hubstaff-time-tracker/mipeohjjimeknlkekbemdjbjniogbgel):
@@ -63,7 +65,7 @@
   - Start the timer when you start the work
   - Stop the timer when the work is paused
 
-## Overriding time tracking
+### Overriding time tracking
 
 - In case you forgot to turn on the timer or you are tracking time manually, go
   to

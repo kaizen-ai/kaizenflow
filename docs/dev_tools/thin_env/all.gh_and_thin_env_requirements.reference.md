@@ -44,11 +44,15 @@ File location:
   - Needed for some invoke targets, for example:
   - [docker_update_prod_task_definition](https://github.com/cryptokaizen/cmamp/blob/CmampTask6520_gDoc_for_required_packages_in_github_workflow_and_thin_env/helpers/lib_tasks_docker_release.py#L866)
 
+- `requests`
+  - Dependency for the `docker`, for now pinned to the version `2.31.0` since
+    the versions >=`2.32.1` is causing the issue with the `docker-compose`:
+    https://github.com/psf/requests/issues/6707
+  - See the https://github.com/cryptokaizen/cmamp/issues/8340 for details
+
 ### Candidate Packages to remove
 
-- `docker` and `docker-compose`
-
-  Should to be moved to os installation
+- `docker` and `docker-compose` should be moved to OS installation
   https://github.com/cryptokaizen/cmamp/issues/6498
 
 ## GH Actions
@@ -79,7 +83,13 @@ File location:
   - Needed for some invoke targets, for example:
   - [docker_update_prod_task_definition](https://github.com/cryptokaizen/cmamp/blob/CmampTask6520_gDoc_for_required_packages_in_github_workflow_and_thin_env/helpers/lib_tasks_docker_release.py#L866)
 
+- `requests`
+  - Dependency for the `docker`, for now pinned to the version `2.31.0` since
+    the versions >=`2.32.1` is causing the issue with the `docker-compose`:
+    https://github.com/psf/requests/issues/6707
+  - See the https://github.com/cryptokaizen/cmamp/issues/8340 for details
+
 ### Candidate Packages to remove
 
-- `docker` and `docker-compose` should to be moved to os installation
-  https://github.com/cryptokaizen/cmamp/issues/6498
+- `docker` and `docker-compose` see in the
+  [Thin environment](#candidate-packages-to-remove) section

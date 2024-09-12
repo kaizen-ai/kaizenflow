@@ -3,11 +3,12 @@ import asyncio
 import os
 import unittest.mock as umock
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import pytest
 
+import helpers.hdatetime as hdateti
 import helpers.henv as henv
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
@@ -15,7 +16,7 @@ import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
-import im_v2.ccxt.data.extract.extractor as ivcdexex
+import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.data.transform.resample_daily_bid_ask_data as imvcdtrdbad
@@ -63,7 +64,7 @@ class TestDownloadExchangeDataToDbPeriodically1(hunitest.TestCase):
         self.sleep_mock: umock.MagicMock = self.sleep_patch.start()
         # Commonly used extractor mock.
         self.extractor_mock = umock.create_autospec(
-            ivcdexex.CcxtExtractor, instance=True
+            imvcdexex.CcxtExtractor, instance=True
         )
         # Commonly used kwargs across the tests.
         self.kwargs = {
@@ -381,13 +382,13 @@ class TestDownloadExchangeDataToDbPeriodically2(hunitest.TestCase):
 
     @pytest.mark.slow("18 seconds")
     @umock.patch.object(
-        ivcdexex.CcxtExtractor,
+        imvcdexex.CcxtExtractor,
         "get_exchange_currency_pairs",
         autospec=True,
         spec_set=True,
     )
     @umock.patch.object(
-        ivcdexex.CcxtExtractor, "log_into_exchange", autospec=True, spec_set=True
+        imvcdexex.CcxtExtractor, "log_into_exchange", autospec=True, spec_set=True
     )
     def test_realtime_bid_ask_download(
         self,
@@ -427,13 +428,13 @@ class TestDownloadExchangeDataToDbPeriodically2(hunitest.TestCase):
             pass
 
         umock.MagicMock.__await__ = lambda x: async_magic().__await__()
-        mock_okx = umock.MagicMock(spec=ivcdexex.ccxtpro.okx())
+        mock_okx = umock.MagicMock(spec=imvcdexex.ccxtpro.okx())
         mock_log_into_exchange.return_value = mock_okx
         mock_okx.watchOrderBook.return_value = {}
         mock_data = self.get_mock_ccxt_okx_data(int(start_time.timestamp()))
         mock_okx.orderbooks["some_symbol"].limit.return_value = mock_data
         mock_get_exchange_currency_pairs.return_value = []
-        exchange = ivcdexex.CcxtExtractor(
+        exchange = imvcdexex.CcxtExtractor(
             args["exchange_id"], args["contract_type"]
         )
         # Run.
@@ -511,7 +512,7 @@ class TestDownloadExchangeDataToDb1(
             "s3_path": None,
             "connection": self.connection,
         }
-        extractor = ivcdexex.CcxtExtractor(
+        extractor = imvcdexex.CcxtExtractor(
             kwargs["exchange_id"], kwargs["contract_type"]
         )
         if use_s3:
@@ -546,7 +547,7 @@ class TestDownloadExchangeDataToDb1(
         "Cannot be run from the US due to 451 error API error. Run manually."
     )
     @pytest.mark.slow
-    @umock.patch.object(ivcdexex.hdateti, "get_current_timestamp_as_string")
+    @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcddbut.hdateti, "get_current_time")
     def test_function_call1(
         self,
@@ -819,6 +820,88 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
         self.check_resampler()
 
 
+class TestSplitUniverse(hunitest.TestCase):
+    def helper(self, group_size: int, universe_part: int) -> List:
+        """
+        Run the function and get a string representation of its output.
+        """
+        universe = [
+            "ALICE_USDT",
+            "GALA_USDT",
+            "FLOW_USDT",
+            "HBAR_USDT",
+            "INJ_USDT",
+            "NEAR_USDT",
+        ]
+        actual_output = imvcdeexut._split_universe(
+            universe, group_size, universe_part
+        )
+        output_str = str(actual_output)
+        return output_str
+
+    def test1(self) -> None:
+        """
+        Check that universe is split correctly.
+        """
+        group_size = 0
+        universe_part = 0
+        actual_str = self.helper(group_size, universe_part)
+        expected_str = r"""
+        []
+        """
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+    def test2(self) -> None:
+        """
+        Check that universe is split correctly.
+        """
+        group_size = 6
+        universe_part = 1
+        actual_str = self.helper(group_size, universe_part)
+        expected_str = r"""
+        ['ALICE_USDT', 'GALA_USDT', 'FLOW_USDT', 'HBAR_USDT', 'INJ_USDT', 'NEAR_USDT']
+        """
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Check that universe is split correctly.
+        """
+        group_size = 6
+        universe_part = 2
+        actual_str = self.helper(group_size, universe_part)
+        expected_str = r"""
+        []
+        """
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Check that universe is split correctly.
+        """
+        group_size = 4
+        universe_part = 2
+        actual_str = self.helper(group_size, universe_part)
+        expected_str = r"""
+        ['INJ_USDT', 'NEAR_USDT']
+        """
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+    def test5(self) -> None:
+        """
+        Check the error is raised if universe does not have input part.
+        """
+        group_size = 6
+        universe_part = 7
+        with self.assertRaises(RuntimeError) as cm:
+            self.helper(group_size, universe_part)
+        actual_str = str(cm.exception)
+        expected_str = r"""
+        Universe does not have 7 parts of 6 pairs.    It has 6 symbols.
+        """
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+
 @pytest.mark.requires_ck_infra
 @pytest.mark.requires_aws
 @pytest.mark.skipif(
@@ -855,7 +938,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "version": "v1_0_0",
         }
         with umock.patch.object(
-            ivcdexex.CcxtExtractor,
+            imvcdexex.CcxtExtractor,
             "get_exchange_currency_pairs",
             # Changed return values as a part of CmTask2956
             # return_value=["BTC_USDT", "ETH_USDT"],
@@ -871,7 +954,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
                 "SOL/USDT",
             ],
         ):
-            exchange = ivcdexex.CcxtExtractor(
+            exchange = imvcdexex.CcxtExtractor(
                 args["exchange_id"], args["contract_type"]
             )
             imvcdeexut.download_historical_data(args, exchange)
@@ -885,7 +968,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         """
         # Mock downloader to return an empty dataframe.
         with umock.patch.object(
-            ivcdexex.CcxtExtractor, "download_data", return_value=pd.DataFrame()
+            imvcdexex.CcxtExtractor, "download_data", return_value=pd.DataFrame()
         ):
             # Check for an exception raising.
             with self.assertRaises(RuntimeError) as fail:
@@ -1303,11 +1386,11 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
             "dst_dir": "csv_test",
         }
         with umock.patch.object(
-            ivcdexex.CcxtExtractor,
+            imvcdexex.CcxtExtractor,
             "get_exchange_currency_pairs",
             return_value=["ADA_USDT", "BTC_USDT"],
         ):
-            exchange = ivcdexex.CcxtExtractor(
+            exchange = imvcdexex.CcxtExtractor(
                 args["exchange_id"], args["contract_type"]
             )
             imvcdeexut.download_historical_data(args, exchange)
@@ -1323,7 +1406,7 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
         mock_get_current_time.return_value = "2022-02-08 10:12:00.000000+00:00"
         self.data_format = "csv"
         with umock.patch.object(
-            ivcdexex.CcxtExtractor,
+            imvcdexex.CcxtExtractor,
             "download_data",
             return_value=self.get_simple_ccxt_mock_data(
                 start_timestamp=int("20211231230000"),
@@ -1356,7 +1439,7 @@ class TestDownloadHistoricalData2(hunitest.TestCase):
         mock_get_current_time.return_value = "2022-02-08 10:12:00.000000+00:00"
         self.data_format = "test"
         with umock.patch.object(
-            ivcdexex.CcxtExtractor,
+            imvcdexex.CcxtExtractor,
             "download_data",
             return_value=self.get_simple_ccxt_mock_data(
                 start_timestamp=int("20211231230000"),
@@ -1447,12 +1530,13 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
         self.mock_connection_manager.stop()
 
     @umock.patch.object(imvcdeexut.pd.Timestamp, "now")
+    @umock.patch.object(hdateti, "get_current_time")
     @umock.patch.object(
-        imvcdeexut.imvcddbut, "fetch_last_minute_bid_ask_rt_db_data"
+        imvcdeexut.imvcddbut, "fetch_last_bid_ask_rt_db_data"
     )
     @umock.patch.object(imvcdeexut.hasynci.time, "sleep")
     def test_resample_rt_bid_ask_data_periodically(
-        self, mock_sleep, mock_fetch_data, mock_now
+        self, mock_sleep, mock_fetch_data, mock_get_current_time, mock_now
     ) -> None:
         """
         Test resampling realtime bid/ask data.
@@ -1473,18 +1557,12 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
             pd.Timestamp("2024-02-20T18:00:00+00:00"),
             # While loop check
             pd.Timestamp("2024-02-20T18:00:00.200+00:00"),
-            # First iteration.
-            # Set `end_download_timestamp`.
-            pd.Timestamp("2024-02-20T18:00:01+00:00"),
             # Wait until next iteration.
             pd.Timestamp("2024-02-20T18:00:01+00:00"),
             pd.Timestamp("2024-02-20T18:00:01+00:00"),
             pd.Timestamp("2024-02-20T18:00:01+00:00"),
             # While loop check.
             pd.Timestamp("2024-02-20T18:01:00.200+00:00"),
-            # Second Iteration.
-            # Set `end_download_timestamp`.
-            pd.Timestamp("2024-02-20T18:01:01+00:00"),
             # Wait until next iteration.
             pd.Timestamp("2024-02-20T18:01:02+00:00"),
             pd.Timestamp("2024-02-20T18:01:02+00:00"),
@@ -1493,6 +1571,14 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
             pd.Timestamp("2024-02-20T18:02:00.200+00:00"),
             # Log message
             pd.Timestamp("2024-02-20T18:02:00.200+00:00"),
+        ]
+        mock_get_current_time.side_effect = [
+            # First iteration.
+            # Set `end_download_timestamp`.
+            pd.Timestamp("2024-02-20T18:00:01+00:00"),
+            # Second iteration.
+            # Set `end_download_timestamp`.
+            pd.Timestamp("2024-02-20T18:01:01+00:00"),
         ]
         # Mock data that would otherwise be fetched from the DB.
         mock_fetch_data.side_effect = [
@@ -1647,7 +1733,7 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
                     ),
                     (
                         47007459918,
-                        1709281403886,
+                        1709148545396,
                         1.617,
                         3384.71,
                         109.136,
@@ -1660,7 +1746,7 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
                     ),
                     (
                         47007460168,
-                        1709281404500,
+                        1709148545699,
                         0.61,
                         3384.7,
                         129.577,
@@ -1673,7 +1759,7 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
                     ),
                     (
                         47007460418,
-                        1709281404907,
+                        1709148546699,
                         0.629,
                         3384.63,
                         79.098,
@@ -1686,7 +1772,7 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
                     ),
                     (
                         47007460668,
-                        1709281405312,
+                        1709148548699,
                         34.431,
                         3384.4,
                         48.92,
@@ -1712,6 +1798,7 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
                 "mock_table",
                 "mock_table",
                 "mock_exchange",
+                "1T",
                 start_ts,
                 end_ts,
             )
@@ -1742,6 +1829,233 @@ class TestResampleRtBidAskDataPeriodically(hunitest.TestCase):
             shape=(2, 44)
             timestamp bid_price_open bid_size_open ask_price_open ask_size_open bid_ask_midpoint_open half_spread_open log_size_imbalance_open bid_price_close bid_size_close ask_price_close ask_size_close bid_ask_midpoint_close half_spread_close log_size_imbalance_close bid_price_high bid_size_max ask_price_high ask_size_max bid_ask_midpoint_max half_spread_max log_size_imbalance_max bid_price_low bid_size_min ask_price_low ask_size_min bid_ask_midpoint_min half_spread_min log_size_imbalance_min bid_price_mean bid_size_mean ask_price_mean ask_size_mean bid_ask_midpoint_mean half_spread_mean log_size_imbalance_mean bid_ask_midpoint_var_100ms bid_ask_midpoint_autocovar_100ms log_size_imbalance_var_100ms log_size_imbalance_autocovar_100ms exchange_id currency_pair level end_download_timestamp
             0 1709148600000 61506.70 2.094 61506.80 4.633 61506.750 0.050 -0.794128 61509.3 2.315 61509.40 0.918 61509.350 0.050 0.924968 61515.20 2.831 61515.30 4.633 61515.250 0.050 0.924968 61506.7 0.707 61506.80 0.918 61506.750 0.050 -1.641178 61512.507692 1.967692 61512.607692 3.276385 61512.557692 0.050 -0.589638 93.3800 0.0 13.546810 10.614239 binance BTC_USDT 1 2024-02-20 18:01:01+00:00
-            1 1709281440000 3384.71 1.617 3384.72 109.136 3384.715 0.005 -4.212022 3384.4 34.431 3384.41 48.920 3384.405 0.005 -0.351229 3384.71 34.431 3384.72 129.577 3384.715 0.005 -0.351229 3384.4 0.610 3384.41 48.920 3384.405 0.005 -5.358572 3384.667500 3.106187 3384.677500 104.250812 3384.672500 0.005 -4.484592 0.0579 0.0 343.623874 323.847900 binance ETH_USDT 1 2024-02-20 18:01:01+00:00
+            1 1709148600000 3384.71 1.617 3384.72 109.136 3384.715 0.005 -4.212022 3384.4 34.431 3384.41 48.920 3384.405 0.005 -0.351229 3384.71 34.431 3384.72 129.577 3384.715 0.005 -0.351229 3384.4 0.610 3384.41 48.920 3384.405 0.005 -5.358572 3384.650882 1.704765 3384.660882 95.707588 3384.655882 0.005 -4.801742 0.0579 0.0 807.901029 788.125056 binance ETH_USDT 1 2024-02-20 18:01:01+00:00
             """
             self.check_df_output(resampled_df2, None, None, None, exp_df2)
+
+
+class TestDownloadRealtimeForOneExchangePeriodically1(
+    imvcddbut.TestImDbHelper, hunitest.TestCase
+):
+    """
+    Testing invariants in OHLCV, See
+    `docs/datapull/ck.data_pipeline.explanation.md` .
+    """
+
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
+
+    @pytest.mark.slow("~10 seconds.")
+    def test_download_websocket_ohlcv_futures1(
+        self,
+    ) -> None:
+        """
+        Invariant #1: test the correct download of OHLCV data with
+        consideration for incomplete bars.
+
+        """
+        # Data received from exchange in second iteration.
+        next_data = {}
+        next_data["ohlcv"] = [
+            [1695120600000, 1.159, 1.159, 1.157, 1.158, 127432.0],
+            [1695120660000, 1.159, 1.159, 1.167, 1.158, 137432.0],
+        ]
+        next_data["currency_pair"] = "ETH_USDT"
+        next_data["end_download_timestamp"] = str(
+            hdateti.convert_unix_epoch_to_timestamp(1695120660000 + 59000)
+        )
+        expected = r"""
+               id      timestamp   open   high    low  close    volume currency_pair exchange_id    end_download_timestamp       knowledge_timestamp
+            0   1  1695120600000  1.159  1.159  1.157  1.158  127432.0      ETH_USDT     binance 2023-09-19 10:51:00+00:00 2023-09-26 16:04:10+00:00
+            """
+        self._test_websocket_data_download(next_data, expected)
+
+    @pytest.mark.slow("~10 seconds.")
+    def test_download_websocket_ohlcv_futures2(
+        self,
+    ) -> None:
+        """
+        Test the correct download of OHLCV data with consideration for complete
+        bars.
+        """
+        # Data received from exchange in second iteration.
+        next_data = {}
+        next_data["ohlcv"] = [
+            [1695120600000, 1.159, 1.159, 1.157, 1.158, 127432.0],
+            [1695120660000, 1.159, 1.159, 1.167, 1.158, 137432.0],
+        ]
+        next_data["currency_pair"] = "ETH_USDT"
+        next_data["end_download_timestamp"] = str(
+            hdateti.convert_unix_epoch_to_timestamp(1695120660000 + 60000)
+        )
+        expected = r"""
+               id      timestamp   open   high    low  close    volume currency_pair exchange_id    end_download_timestamp       knowledge_timestamp
+            0   1  1695120600000  1.159  1.159  1.157  1.158  127432.0      ETH_USDT     binance 2023-09-19 10:51:00+00:00 2023-09-26 16:04:10+00:00
+            1   2  1695120660000  1.159  1.159  1.167  1.158  137432.0      ETH_USDT     binance 2023-09-19 10:52:00+00:00 2023-09-26 16:04:10+00:00
+            """
+        self._test_websocket_data_download(next_data, expected)
+
+    @pytest.mark.slow("~10 seconds.")
+    def test_download_websocket_ohlcv_futures3(
+        self,
+    ) -> None:
+        """
+        Invariant #2: test the correct download of OHLCV data with backfilling.
+        """
+        # Data received from exchange in second iteration.
+        next_data = {}
+        next_data["ohlcv"] = [
+            [1695120540000, 1.159, 1.159, 1.127, 1.158, 117432.0],
+            [1695120600000, 1.159, 1.159, 1.157, 1.158, 127432.0],
+            [1695120660000, 1.159, 1.159, 1.167, 1.158, 137432.0],
+        ]
+        next_data["currency_pair"] = "ETH_USDT"
+        next_data["end_download_timestamp"] = str(
+            hdateti.convert_unix_epoch_to_timestamp(1695120660000 + 60000)
+        )
+        expected = r"""
+                id      timestamp   open   high    low  close    volume currency_pair exchange_id    end_download_timestamp       knowledge_timestamp
+            0   1  1695120600000  1.159  1.159  1.157  1.158  127432.0      ETH_USDT     binance 2023-09-19 10:51:00+00:00 2023-09-26 16:04:10+00:00
+            1   2  1695120540000  1.159  1.159  1.127  1.158  117432.0      ETH_USDT     binance 2023-09-19 10:52:00+00:00 2023-09-26 16:04:10+00:00
+            2   4  1695120660000  1.159  1.159  1.167  1.158  137432.0      ETH_USDT     binance 2023-09-19 10:52:00+00:00 2023-09-26 16:04:10+00:00
+        """
+        self._test_websocket_data_download(next_data, expected)
+
+    @pytest.mark.slow("~10 seconds.")
+    def test_download_websocket_ohlcv_futures4(
+        self,
+    ) -> None:
+        """
+        Test the correct download of OHLCV data with differing duplicates.
+
+        Exchange platforms construct OHLCV bars based on ongoing trade
+        activity. Behind the scenes, exchanges maintain an internal
+        queue to store all trade data. When OHLCV data is requested,
+        bars are sampled from the available trades in this queue.
+        However, over time, the queue removes older trade data, and
+        consequently, OHLCV bars for the same timestamps may have
+        different values due to changes in the underlying trade data.
+        """
+        # Data received from exchange in second iteration.
+        next_data = {}
+        next_data["ohlcv"] = [
+            [1695120600000, 1.150, 1.159, 1.157, 1.158, 107432.0],
+            [1695120660000, 1.159, 1.159, 1.167, 1.158, 137432.0],
+        ]
+        next_data["currency_pair"] = "ETH_USDT"
+        next_data["end_download_timestamp"] = str(
+            hdateti.convert_unix_epoch_to_timestamp(1695120660000 + 60000)
+        )
+        expected = r"""
+               id      timestamp   open   high    low  close    volume currency_pair exchange_id    end_download_timestamp       knowledge_timestamp
+            0   1  1695120600000  1.159  1.159  1.157  1.158  127432.0      ETH_USDT     binance 2023-09-19 10:51:00+00:00 2023-09-26 16:04:10+00:00
+            1   2  1695120660000  1.159  1.159  1.167  1.158  137432.0      ETH_USDT     binance 2023-09-19 10:52:00+00:00 2023-09-26 16:04:10+00:00
+            """
+        self._test_websocket_data_download(next_data, expected)
+
+    @staticmethod
+    def _get_argument() -> Dict[str, str]:
+        """
+        Prepare argumnets.
+        """
+        # Amount of downloads depends on the start time and stop time.
+        current_time = datetime.now()
+        start_time = current_time + timedelta(minutes=0, seconds=1)
+        stop_time = current_time + timedelta(minutes=0, seconds=3)
+        kwargs = {
+            "data_type": "ohlcv",
+            "exchange_id": "binance",
+            "universe": "v7.3",
+            "db_stage": "test",
+            "contract_type": "futures",
+            "vendor": "ccxt",
+            "db_table": "ccxt_ohlcv_futures",
+            "aws_profile": "ck",
+            "start_time": f"{start_time}",
+            "stop_time": f"{stop_time}",
+            "method": "websocket",
+            "download_mode": "realtime",
+            "downloading_entity": "manual",
+            "action_tag": "downloaded_200ms",
+            "data_format": "postgres",
+            "log_level": "INFO",
+            "websocket_data_buffer_size": None,
+            "db_saving_mode": "on_buffer_full",
+            "bid_ask_depth": 10,
+            "ohlcv_download_method": "from_exchange",
+            "universe_part": [1, 1],
+        }
+        return kwargs
+
+    @staticmethod
+    def _get_ohlcvs_periodical_data() -> Dict[str, Dict[str, Any]]:
+        """
+        Get mock data for the OHLCV method.
+
+        :return: mock data
+        """
+        data = {}
+        data["ohlcv"] = [
+            [1695120600000, 1.159, 1.159, 1.157, 1.158, 127432.0],
+        ]
+        data["currency_pair"] = "ETH_USDT"
+        # Mocking download timestamp by adding 1 minute to show OHLCV bar is complete.
+        data["end_download_timestamp"] = str(
+            hdateti.convert_unix_epoch_to_timestamp(1695120600000 + 60000)
+        )
+        return data
+
+    def _test_websocket_data_download(
+        self, data: pd.DataFrame, expected: str
+    ) -> pd.DataFrame:
+        """
+        Test data download.
+
+        :param data: mocked data from exchange in second iteration
+        :param expected: Expected output from the method
+        :return: downloaded data
+        """
+        # Data we get from exchange in the first iteration
+        mocked_data = self._get_ohlcvs_periodical_data()
+        # Create the database.
+        cursor = self.connection.cursor()
+        # Remove table if already exists.
+        cursor.execute("DROP TABLE IF EXISTS ccxt_ohlcv_futures;")
+        # Get query to create the `ccxt_ohlcv_futures` database.
+        create_db_query = imvccdbut.get_ccxt_ohlcv_futures_create_table_query()
+        cursor.execute(create_db_query)
+        # Prepare inputs.
+        args = self._get_argument()
+        with umock.patch.object(imvcdexex, "CcxtExtractor") as mock_extractor:
+            # Tests use special connection params, so we mock the module function.
+            mock_instance = umock.AsyncMock()
+            mock_instance.vendor = "CCXT"
+            mock_instance.sleep = lambda *args, **kwargs: asyncio.sleep(1)
+            mock_instance.download_websocket_data = umock.MagicMock(
+                side_effect=[mocked_data, data], return_value=None
+            )
+            mock_extractor.return_value = mock_instance
+            with umock.patch.object(
+                imvcdeexut, "_subscribe_to_websocket_data"
+            ), umock.patch.object(
+                imvcdeexut.hdateti,
+                "get_current_time",
+                return_value=pd.Timestamp("2023-09-26 16:04:10+00:00"),
+            ), umock.patch.object(
+                imvcdeexut.imvcddbut.DbConnectionManager,
+                "get_connection",
+            ) as mock_get_connection:
+                mock_get_connection.return_value = self.connection
+                # Run the sctipt.
+                extractor = imvcdexex.CcxtExtractor()
+                coroutine = imvcdeexut._download_websocket_realtime_for_one_exchange_periodically(
+                    args, extractor
+                )
+                asyncio.run(coroutine)
+        # Get downloaded data.
+        get_data_query = f"SELECT * FROM ccxt_ohlcv_futures;"
+        data = hsql.execute_query_to_df(self.connection, get_data_query)
+        # Check downloaded data.
+        actual = hpandas.df_to_str(data, num_rows=None)
+        self.assert_equal(actual, expected, fuzzy_match=True)

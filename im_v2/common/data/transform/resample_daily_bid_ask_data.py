@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 """
-Load bid/ask parquet data from S3 exchange dir, resample to 1 minute and upload
+Load bid/ask parquet data from S3 exchange dir, resample to given frequency and upload
 back.
-
-This assumes that the underlying data is sampled at a 1 second resolution.
 
 # Usage sample:
 > im_v2/common/data/transform/resample_daily_bid_ask_data.py \
-    --start_timestamp '20220916-000000' \
-    --end_timestamp '20220920-000000' \
-    --src_signature 'periodic_daily.airflow.downloaded_1sec.csv.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0' \
+    --start_timestamp '20240606-150500' \
+    --end_timestamp '20240606-152000' \
+    --src_signature 'realtime.manual.archived_200ms.parquet.bid_ask.futures.v8_1.ccxt.binance.v1_0_0' \
     --src_s3_path 's3://cryptokaizen-data-test/' \
-    --dst_signature 'periodic_daily.airflow.resampled_1min.parquet.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0' \
-    --dst_s3_path 's3://cryptokaizen-data-test/'
+    --dst_signature 'periodic_daily.manual.resampled_10sec.parquet.bid_ask.futures.v8_1.ccxt.binance.v1_0_0' \
+    --dst_s3_path 's3://cryptokaizen-data-test/' \
+    --universe_part 3 1 \
+    --resample_freq '10S'
+
 
 Import as:
 
@@ -152,6 +153,10 @@ def _run(args: argparse.Namespace, aws_profile: hs3.AwsProfile = "ck") -> None:
     data = _preprocess_src_data(scr_signature_args["action_tag"], data)
     data_resampled = []
     input_currency_pairs = data["currency_pair"].unique()
+    if args.universe_part:
+        input_currency_pairs = imvcdeexut._split_universe(
+            input_currency_pairs, args.universe_part[0], args.universe_part[1]
+        )
     for currency_pair in input_currency_pairs:
         data_single = data[data["currency_pair"] == currency_pair]
         if data_single.empty:
@@ -162,8 +167,8 @@ def _run(args: argparse.Namespace, aws_profile: hs3.AwsProfile = "ck") -> None:
                 args.end_timestamp,
             )
             continue
-        data_resampled_single = imvcdttrut.resample_multilevel_bid_ask_data_to_1min(
-            data_single, number_levels_of_order_book=args.bid_ask_levels
+        data_resampled_single = imvcdttrut.resample_multilevel_bid_ask_data(
+            data_single, args.resample_freq, number_levels_of_order_book=args.bid_ask_levels,
         )
         if not data_resampled_single.empty:
             data_resampled_single["currency_pair"] = currency_pair
@@ -284,6 +289,23 @@ def _parse() -> argparse.ArgumentParser:
         required=False,
         type=int,
         help='Filter data to get top "n" levels of bid-ask data.',
+    )
+    parser.add_argument(
+        "--resample_freq",
+        default="1T",
+        required=False,
+        type=str,
+        help='Frequency that we want to resample the data to',
+    )
+    parser.add_argument(
+        "--universe_part",
+        action="store",
+        required=False,
+        type=int,
+        nargs=2,
+        help="Pass two int argument x,y. Split universe into N chunks each contains X symbols. \
+            groups of 10 pairs, 'y' denotes which part should be downloaded \
+            (e.g. 10, 1 - download first 10 symbols)",
     )
     parser = hparser.add_verbosity_arg(parser)
     return parser

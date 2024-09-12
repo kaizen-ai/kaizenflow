@@ -42,7 +42,7 @@ def binance_display_open_positions(ctx, secret_id, universe):  # type: ignore
         }
     }
     ccxt_broker = obccbrin.get_CcxtBroker(
-        secret_id, log_dir, universe, broker_config
+        secret_id, log_dir, universe, broker_config, "binance"
     )
     open_positions = ccxt_broker.get_open_positions()
     columns = ["symbol", "side", "contracts", "contractSize", "notional"]

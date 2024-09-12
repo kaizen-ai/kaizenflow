@@ -10,7 +10,6 @@ set -e
 
 # Difference btw Kaizenflow and cmamp. Kaizenflow people do not require aws
 # installation.
-# TODO(gp): Once we need to share data on S3 will need to re-enable.
 # Check if AWS CLI V2 is already installed.
 # if command -v aws &>/dev/null; then
 #     aws_version=$(aws --version)
@@ -82,5 +81,6 @@ if [[ $(uname) == "Darwin" ]]; then
     #echo "dive version="$(dive --version)
 fi;
 
+echo "# Installation successful"
 echo "# Configure your client with:"
 echo "> source dev_scripts/setenv_amp.sh"

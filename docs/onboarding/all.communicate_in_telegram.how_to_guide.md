@@ -1,4 +1,6 @@
-# Telegram
+# Communicate In Telegram
+
+## Telegram
 
 <!-- toc -->
 
@@ -11,18 +13,18 @@
 
 <!-- tocstop -->
 
-# General
+## General
 
 - We use [Telegram](https://telegram.org/) for
   - Discussions that need
-    - tight interaction (like a debug session)
-    - immediacy (e.g., "are you ready for the sync up?")
+    - Tight interaction (like a debug session)
+    - Immediacy (e.g., "are you ready for the sync up?")
   - Github Actions notifications from Telegram bots
     - E.g., regressions fail in one of our repos
 
-# Secret vs Regular chats
+## Secret vs Regular chats
 
-## Secret
+### Secret
 
 - We use secret chats for private one-on-one communication
   - We prefer to send all the sensitive information using encrypted chats
@@ -39,20 +41,20 @@
     Telegram cloud. This means you can only access messages in a secret chat
     from their device of origin.
 
-## Regular
+### Regular
 
 - We use regular chats for
   - General discussions within a team
   - Group chats
 - We do not share sensitive information via regular chats
 
-# Username
+## Username
 
 - We ask everyone to set a username so that is easier to find a person
 - See the instructions
   [here](https://telegram.org/faq#q-what-are-usernames-how-do-i-get-one)
 
-# Google meet room
+## Google meet room
 
 - It is always nice to pin a google meeting room in a chat
 - We usually use `->` as an invitation to join a google meet room pinned in a

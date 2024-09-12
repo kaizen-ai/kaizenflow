@@ -1,4 +1,4 @@
-
+# Invoke Workflows
 
 <!-- toc -->
 
@@ -15,8 +15,8 @@
     + [Using git](#using-git)
   * [Systematic code transformation](#systematic-code-transformation)
   * [Generate a local `amp` Docker image](#generate-a-local-amp-docker-image)
-  * [Update the dev `amp` Docker image](#update-the-dev-amp-docker-image)
-  * [Experiment in a local image](#experiment-in-a-local-image)
+- [Update the dev `amp` Docker image](#update-the-dev-amp-docker-image)
+- [Experiment in a local image](#experiment-in-a-local-image)
 - [GitHub Actions (CI)](#github-actions-ci)
 - [pytest](#pytest)
   * [Run with coverage](#run-with-coverage)
@@ -30,7 +30,7 @@
 
 <!-- tocstop -->
 
-# Introduction
+## Introduction
 
 - We use `invoke` to implement workflows (aka "tasks") similar to Makefile
   targets, but using Python
@@ -45,7 +45,7 @@
   - Branch integration: `integrate_*`
   - Releasing tools and Docker images: `docker_*`
   - Lint: `lint_*`
-  - Pytest:
+
 - Each set of commands starts with the name of the corresponding topic:
   - E.g., `docker_*` for all the tasks related to Docker
 - The best approach to getting familiar with the tasks is to browse the list and
@@ -81,7 +81,7 @@
   - Tabbing after typing a dash (-) or double dash (--) will display valid
     options/flags for the current context.
 
-## Listing all the tasks
+### Listing all the tasks
 
 - New commands are always being added, but a list of valid tasks is below
 
@@ -172,7 +172,7 @@
   traceback Parse the traceback from Pytest and navigate it with vim.
   ```
 
-## Getting help for a specific workflow
+### Getting help for a specific workflow
 
 - You can get a more detailed help with
 
@@ -201,7 +201,7 @@
   -y STRING, --pytest-mark=STRING
   ```
 
-## Implementation details
+### Implementation details
 
 - By convention all invoke targets are in `*_lib_tasks.py`, e.g.,
   - `helpers/lib_tasks.py` - tasks to be run in `cmamp`
@@ -229,15 +229,15 @@
     - In other words one should do `cd cmamp/optimizer` before doing
       `i invoke_task2 ...`
 
-# Git
+## Git
 
-## Merge master in the current branch
+### Merge master in the current branch
 
 ```bash
 > i git_merge_master
 ```
 
-# GitHub
+## GitHub
 
 - Get the official branch name corresponding to an Issue
 
@@ -250,16 +250,16 @@
   https://github.com/alphamatic/amp/pull/256
   ```
 
-## Create a PR
+### Create a PR
 
 TODO(gp): Describe
 
-## Extract a PR from a larger one
+### Extract a PR from a larger one
 
 - When having a PR which is really big we prefer to brake it into smaller
   mergeable PRs using `i git_branch_copy`
 
-### Example
+#### Example
 
 - In my workflow there is a feature branch (e.g. `CmTask5874_Document_PR_flow`
   that I am developing in.
@@ -411,7 +411,7 @@ TODO(gp): Describe
   all the code is merged.
   ```
 
-### Using git
+#### Using git
 
 ```bash
 > git checkout `dst_branch`
@@ -419,11 +419,11 @@ TODO(gp): Describe
 > git reset HEAD
 ```
 
-## Systematic code transformation
+### Systematic code transformation
 
 - See the help of `amp/dev_scripts/replace_text.py`
 
-## Generate a local `amp` Docker image
+### Generate a local `amp` Docker image
 
 - This is a manual flow used to test and debug images before releasing them to
   the team.
@@ -508,10 +508,10 @@ TODO(gp): Describe
 - If you are running inside a notebook using `i docker_jupyter` you can install
   packages using a one liner `! sudo su -; source ...; `
 
-# GitHub Actions (CI)
+## GitHub Actions (CI)
 
 ```bash
-## Running a single test in GH Actions
+### Running a single test in GH Actions
 
 Create a branch
 
@@ -520,30 +520,30 @@ Change .github/workflows/fast_tests.yml
 run: invoke run_fast_tests
 --pytest-opts="helpers/test/test_git.py::Test_git_modified_files1::test_get_modified_files_in_branch1
 -s --dbg"
-# In the current implementation (where we try to not run for branches) to run in a branch
+## In the current implementation (where we try to not run for branches) to run in a branch
 ```
 
-# pytest
+## pytest
 
 - From https://gist.github.com/kwmiebach/3fd49612ef7a52b5ce3a
 
 - More details on running unit tests with `invoke` is
   [/docs/coding/all.run_unit_tests.how_to_guide.md](/docs/coding/all.run_unit_tests.how_to_guide.md)
 
-## Run with coverage
+### Run with coverage
 
 ```bash
 > i run_fast_tests --pytest-opts="core/test/test_finance.py" --coverage
 ```
 
-## Capture output of a pytest
+### Capture output of a pytest
 
 - Inside the `dev` container (i.e., docker bash)
   ```bash
   docker> pytest_log ...
   ```
 
-## Run only one test based on its name
+### Run only one test based on its name
 
 - Outside the `dev` container
 
@@ -557,7 +557,7 @@ run: invoke run_fast_tests
   ./helpers/test/test_hobject.py::Test_obj_to_str1
   ```
 
-## Iterate on stacktrace of failing test
+### Iterate on stacktrace of failing test
 
 - Inside docker bash
   ```bash
@@ -590,7 +590,7 @@ run: invoke run_fast_tests
 
 - The short form is `it`
 
-## Iterating on a failing regression test
+### Iterating on a failing regression test
 
 - The workflow is:
 
@@ -603,7 +603,7 @@ run: invoke run_fast_tests
   > invoke pytest_repro
   ```
 
-## Detect mismatches with golden test outcomes
+### Detect mismatches with golden test outcomes
 
 - The command is
 
@@ -631,9 +631,9 @@ run: invoke run_fast_tests
 - For more details see
   [CmTask528](https://github.com/cryptokaizen/cmamp/issues/528).
 
-# Lint
+## Lint
 
-## Lint everything
+### Lint everything
 
 ```bash
 > i lint --phases="amp_isort amp_class_method_order amp_normalize_import

@@ -4,7 +4,6 @@
         "ETC_USDT",
         "FTM_USDT",
         "ICX_USDT",
-        "RNDR_USDT",
         "XTZ_USDT",
         "SOL_USDT",
         "DOT_USDT",
@@ -13,7 +12,6 @@
         "CRV_USDT",
         "SNX_USDT",
         "LTC_USDT",
-        "AUDIO_USDT",
         "ANT_USDT",
         "IMX_USDT",
         "1INCH_USDT",
@@ -40,7 +38,6 @@
         "IOTX_USDT",
         "ZEC_USDT",
         "ROSE_USDT",
-        "CVX_USDT",
         "AGIX_USDT",
         "HOT_USDT",
         "MANA_USDT",
@@ -59,7 +56,6 @@
         "BAKE_USDT",
         "XLM_USDT",
         "HBAR_USDT",
-        "CTK_USDT",
         "WOO_USDT",
         "ETH_USDT",
         "ALGO_USDT",
@@ -167,6 +163,10 @@
         "ATOM_USDT",
         "XMR_USDT",
         "BCH_USDT"
-    ]
+    ],
+    "cryptocom": [
+     "ETH_USD",
+     "BTC_USD"
+     ]
    }
  }

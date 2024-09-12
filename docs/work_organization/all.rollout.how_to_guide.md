@@ -1,4 +1,4 @@
-
+# Rollout
 
 <!-- toc -->
 
@@ -8,7 +8,7 @@
 
 <!-- tocstop -->
 
-# Roll-out process
+## Roll-out process
 
 - Implement
 - Prepare documentation
@@ -23,7 +23,7 @@
   - The assignee is the person in charge of making sure the rollout is done
 - Send an ORG email with the same content of the Issue
 
-# Roll-out documentation
+## Roll-out documentation
 
 - A roll-out should address the following points:
   - Short summary
@@ -34,15 +34,15 @@
   - Why is it important
   - Whom to ask for help
 
-# An example of roll-out email
+## An example of roll-out email
 ```
 Hello team,
 
-## Intended audience
+### Intended audience
 
 Anybody using Jupyter notebooks
 
-## What it is about
+### What it is about
 
 - `publish_notebook.py` is a little tool that allows to:
   1. Opening a notebook in your browser (useful for read-only mode)
@@ -63,7 +63,7 @@ Anybody using Jupyter notebooks
 
 You can get details by running: `dev_scripts/notebooks/publish_notebook.py -h`
 
-## What you need to do
+### What you need to do
 
 Please update your branches from the `master` for all the submodules.
 
@@ -71,7 +71,7 @@ You can use our shortcut:
 
 > make git_pull
 
-## What has changed
+### What has changed
 
 We've deployed the new service for storing notebooks in HTML format. From now on
 `publish_notebook.py` will work from the Docker container. The new version of
@@ -82,6 +82,6 @@ won't work from now on, we need to replace them with the new ones
 (http://notebook-keeper.p1/...) If you see any link starts with
 http://research:8077 replace them with http://notebook-keeper.p1 .
 
-## Reference documentation
+### Reference documentation
 //amp/docs/coding/all.publish_notebook.how_to_guide.md
 ```

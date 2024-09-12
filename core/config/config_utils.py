@@ -8,6 +8,7 @@ import argparse
 import collections
 import copy
 import logging
+import os
 import re
 from typing import Any, Iterable, List, Optional
 
@@ -17,6 +18,7 @@ import core.config.config_ as cconconf
 import helpers.hdbg as hdbg
 import helpers.hdict as hdict
 import helpers.hdocker as hdocker
+import helpers.hio as hio
 import helpers.hpickle as hpickle
 import helpers.hprint as hprint
 
@@ -50,10 +52,14 @@ def configs_to_str(configs: List[cconconf.Config]) -> str:
     return res
 
 
-def replace_shared_dir_paths(config: cconconf.Config) -> cconconf.Config:
+def replace_shared_dir_paths(
+    config: cconconf.Config, *, replace_ecs_tokyo: Optional[bool] = False
+) -> cconconf.Config:
     """
     Replace all the root paths of the shared data directory in the config.
 
+    :param config: config to update
+    :param replace_ecs_tokyo: if True replace `ecs_tokyo` to `ecs` in the path
     :return: updated version of a config
     """
     new_config = config.copy()
@@ -64,10 +70,14 @@ def replace_shared_dir_paths(config: cconconf.Config) -> cconconf.Config:
     for key in config.keys():
         value = config[key]
         if isinstance(value, cconconf.Config):
-            value = replace_shared_dir_paths(value)
+            value = replace_shared_dir_paths(
+                value, replace_ecs_tokyo=replace_ecs_tokyo
+            )
         elif isinstance(value, str):
             # Search for file paths among string values only.
-            value = hdocker.replace_shared_root_path(value)
+            value = hdocker.replace_shared_root_path(
+                value, replace_ecs_tokyo=replace_ecs_tokyo
+            )
         else:
             # No need to change values other than strings.
             pass
@@ -132,6 +142,48 @@ def sort_config_string(txt: str) -> str:
     return chunks
 
 
+def load_config_from_pickle1(log_dir: str, tag: str) -> cconconf.Config:
+    """
+    Load config from a pickle file.
+
+    :param log_dir: path to execution logs
+    :param tag: basename of the pickle file (e.g.,
+        "system_config.output")
+    :return: config object
+    """
+    hdbg.dassert_dir_exists(log_dir)
+    # TODO(Grisha): centralize version file name somehow, e.g., move to the `Config` class.
+    # Build path to config version file.
+    config_version_filename = "config_version.txt"
+    config_version_path = os.path.join(log_dir, config_version_filename)
+    if os.path.exists(config_version_path):
+        # Extract config version from the corresponding file.
+        config_version = hio.from_file(config_version_path)
+        # TODO(Grisha): centralize file name, e.g., move to the `Config` class.
+        # Set file name that corresponds to the extracted config version.
+        file_name = f"{tag}.all_values_picklable.pkl"
+        config_path = os.path.join(log_dir, file_name)
+    else:
+        # Only v2 config version has no version file.
+        config_version = "v2"
+        # Set file name corresponding to v2 config version.
+        file_name = f"{tag}.values_as_strings.pkl"
+    _LOG.info(f"Found Config {config_version} flow")
+    # Get config from file.
+    config_path = os.path.join(log_dir, file_name)
+    hdbg.dassert_path_exists(config_path)
+    _LOG.debug("Reading config from %s", config_path)
+    config = hpickle.from_pickle(config_path)
+    if isinstance(config, dict):
+        # _LOG.warning("Found Config v1.0 flow: converting")
+        # config = cconconf.Config.from_dict(config)
+        raise TypeError(
+            f"Found Config v1.0 flow at '{config_path}'. Deprecated in CmTask7794."
+        )
+    return config
+
+
+# TODO(Dan): Replace with `load_config_from_pickle1()` in CmTask7795.
 def load_config_from_pickle(config_path: str) -> cconconf.Config:
     """
     Load config from pickle file.
@@ -139,11 +191,12 @@ def load_config_from_pickle(config_path: str) -> cconconf.Config:
     hdbg.dassert_path_exists(config_path)
     _LOG.debug("Reading config from %s", config_path)
     config = hpickle.from_pickle(config_path)
-    # TODO(Dan): `config` should be a `cconconf.Config` but previously it
-    #  used to be dict, so keeping both for back-compatibility, see CmTask6627.
     if isinstance(config, dict):
-        _LOG.warning("Found Config v1.0 flow: converting")
-        config = cconconf.Config.from_dict(config)
+        # _LOG.warning("Found Config v1.0 flow: converting")
+        # config = cconconf.Config.from_dict(config)
+        raise TypeError(
+            f"Found Config v1.0 flow at '{config_path}'. Deprecated in CmTask7794."
+        )
     return config
 
 

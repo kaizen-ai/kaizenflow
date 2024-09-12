@@ -18,8 +18,9 @@
 # %% [markdown]
 # Explore research backtest results.
 #
-# **Note**: use `dataflow/model/notebooks/Master_backtest_analysis_param_sweep.ipynb` for standard backtest analysis.
-# This notebook is used for free-form analysis and hypotheses testing, and thus is not as strictly maintained.
+# **Note**: use `dataflow/model/scripts/run_backtest_analysis_template.py` and `dataflow/model/notebooks/Master_backtest_analysis.ipynb` for standard backtest analysis.
+#
+# This notebook is used for free-form analysis and hypotheses testing, does not save the resulting backtest portfolio, and is not as strictly maintained.
 # %% [markdown]
 # # Imports
 
@@ -69,40 +70,32 @@ else:
     amp_dir = hgit.get_amp_abs_path()
     dir_name = os.path.join(
         amp_dir,
-        "/shared_data/backtest.danya/build_tile_configs.C11a.ccxt_v8_1-all.6T.2023-06-01_2024-01-31.ins.run0/tiled_results",
+        "/shared_data/backtest.danya/build_tile_configs.C13a.ccxt_v7_5-all.2T.2024-01-22_2024-07-08.ins.run0/tiled_results",
     )
     # Create a subfolder to store portfolio metrics.
     # The subfolder is marked by the datetime of the run, e.g.
     # "build_tile_configs.C11a.ccxt_v8_1-all.5T.2023-01-01_2024-03-20.ins.run0/portfolio_dfs/20240326_131724".
-    # TODO(Danya): Factor out into a function.
-    output_dir_name = os.path.join(
-        dir_name.rstrip("tiled_results"),
-        "portfolio_dfs",
-        pd.Timestamp.utcnow().strftime("%Y%m%d_%H%M%S"),
-    )
     default_config_dict = {
         "dir_name": dir_name,
-        "output_dir_name": output_dir_name,
-        "start_date": datetime.date(2024, 1, 1),
-        "end_date": datetime.date(2024, 1, 31),
+        "start_date": datetime.date(2023, 1, 22),
+        "end_date": datetime.date(2024, 7, 8),
         "asset_id_col": "asset_id",
         "pnl_resampling_frequency": "D",
-        "rule": "6T",
+        "rule": "2T",
+        "forecast_evaluator_class_name": "ForecastEvaluatorFromPrices",
         "im_client_config": {
-            "vendor": "ccxt",
-            "universe_version": "v8.1",
-            "root_dir": "s3://cryptokaizen-data.preprod/v3",
+            "universe_version": "v7.5",
+            "root_dir": "s3://cryptokaizen-data.preprod/tokyo/v3",
             "partition_mode": "by_year_month",
-            "dataset": "ohlcv",
+            "dataset": "bid_ask",
             "contract_type": "futures",
             "data_snapshot": "",
             "aws_profile": "ck",
-            "version": "v1_0_0",
-            "download_universe_version": "v8",
-            "tag": "downloaded_1min",
-            "download_mode": "periodic_daily",
-            "downloading_entity": "airflow",
-            "resample_1min": False,
+            # "resample_1min": False,
+            "version": "v2_0_0",
+            # Make sure it is related to `universe_version`.
+            "download_universe_version": "v7_5",
+            "tag": "resampled_1min",
         },
         "annotate_forecasts_kwargs": {
             "style": "longitudinal",
@@ -112,30 +105,32 @@ else:
             "burn_in_bars": 3,
             "compute_extended_stats": True,
             "target_dollar_risk_per_name": 1.0,
-            "modulate_using_prediction_magnitude": False,
-            "prediction_abs_threshold": 0.3,
+            "modulate_using_prediction_magnitude": True,
+            "prediction_abs_threshold": 0.0,
         },
-        "column_names": {
-            "price_col": "open",
-            "volatility_col": "garman_klass_vol",
-            "prediction_col": "feature",
+        "forecast_evaluator_kwargs": {
+            "price_col": "bid_ask_midpoint.open",
+            "volatility_col": "vol_in_bps",
+            "prediction_col": "f1",
         },
         "bin_annotated_portfolio_df_kwargs": {
             "proportion_of_data_per_bin": 0.2,
             "normalize_prediction_col_values": False,
         },
         "load_all_tiles_in_memory": True,
-        "sweep_param": {
-            "keys": (
-                "column_names",
-                "price_col",
-            ),
-            "values": [
-                "open",
-            ],
-        },
+        # Uncomment and provide config key and values to
+        # perform a parameter sweep.
+        #         "sweep_param": {
+        #             "keys": (
+        #                 "forecast_evaluator_kwargs",
+        #                 "price_col",
+        #             ),
+        #             "values": [
+        #                 "open",
+        #             ],
+        #         },
     }
-    # Add asset_id_to_share_decimals based on the `quantization` parameter.
+    # Add asset_id_to_share_decimals based on the `quantization` parameter:
     if not default_config_dict["annotate_forecasts_kwargs"]["quantization"]:
         asset_id_to_share_decimals = obccccut.get_asset_id_to_share_decimals(
             "amount_precision"
@@ -218,23 +213,13 @@ portfolio_df_dict = {}
 bar_metrics_dict = {}
 for key, config in config_dict.items():
     if config["load_all_tiles_in_memory"]:
-        fep = dtfmod.ForecastEvaluatorFromPrices(
-            **config["column_names"].to_dict(),
+        fep = dtfmod.get_forecast_evaluator(
+            config["forecast_evaluator_class_name"],
+            **config["forecast_evaluator_kwargs"].to_dict(),
         )
-        # Create a subdirectory for the current config, e.g.
-        # "optimizer_config_dict:constant_correlation_penalty=1".
-        experiment_dir = os.path.join(
-            config["output_dir_name"], key.replace(" ", "")
-        )
-        _LOG.info("Saving portfolio in experiment_dir=%s", experiment_dir)
-        file_name = fep.save_portfolio(
+        portfolio_df, bar_metrics = fep.annotate_forecasts(
             tile_df,
-            experiment_dir,
             **config["annotate_forecasts_kwargs"].to_dict(),
-        )
-        # Load back the portfolio and metrics that were calculated.
-        portfolio_df, bar_metrics = fep.load_portfolio_and_stats(
-            experiment_dir, file_name=file_name
         )
     else:
         portfolio_df, bar_metrics = dtfmod.annotate_forecasts_by_tile(
@@ -242,9 +227,9 @@ for key, config in config_dict.items():
             config["start_date"],
             config["end_date"],
             config["asset_id_col"],
-            config["column_names"]["price_col"],
-            config["column_names"]["volatility_col"],
-            config["column_names"]["prediction_col"],
+            config["forecast_evaluator_kwargs"]["price_col"],
+            config["forecast_evaluator_kwargs"]["volatility_col"],
+            config["forecast_evaluator_kwargs"]["prediction_col"],
             asset_ids=None,
             annotate_forecasts_kwargs=config[
                 "annotate_forecasts_kwargs"
@@ -264,7 +249,7 @@ coplotti.plot_portfolio_stats(
 # %%
 coplotti.plot_portfolio_binned_stats(
     portfolio_df_dict,
-    **config["bin_annotated_portfolio_df_kwargs"],
+    **default_config["bin_annotated_portfolio_df_kwargs"],
 )
 
 # %% [markdown]

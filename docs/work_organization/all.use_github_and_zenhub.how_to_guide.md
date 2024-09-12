@@ -1,4 +1,4 @@
-# GitHub/ZenHub workflows
+# Use Github And Zenhub
 
 <!-- toc -->
 
@@ -17,6 +17,7 @@
   * [Issue Estimate](#issue-estimate)
   * [PR](#pr)
 - [Issue workflows](#issue-workflows)
+  * [Naming an Issue](#naming-an-issue)
   * [Filing a new issue](#filing-a-new-issue)
   * [Updating an issue](#updating-an-issue)
   * [Closing an issue](#closing-an-issue)
@@ -31,7 +32,7 @@
 
 <!-- tocstop -->
 
-# Introduction
+## Introduction
 
 - In the following we use the abbreviations below:
   - GH = GitHub
@@ -51,9 +52,9 @@
   - Please install the [ZH extension](https://www.zenhub.com/extension) for GH,
     since it is going to make your life easier
 
-# Concepts
+## Concepts
 
-## Sprints
+### Sprints
 
 - Sprints are weekly, Monday - Friday and consist of the Issues worked on during
   the week
@@ -67,8 +68,8 @@
 - Each week's Sprint has Issues added to it by Team Leaders before Monday's work
   begins
 - Every Issue in a Sprint should have
-  - a point estimate
-  - an Epic
+  - A point estimate
+  - An Epic
 - The Team Member working on the Issue sets the point estimate by themselves or
   together with the Team Leader
 - Each sprint should have limits based on the estimates. E.g., a sprint cannot
@@ -78,7 +79,7 @@
   sacrificing other Issues in the Sprint, the point is to make the trade-off
   apparent
 
-## Epics
+### Epics
 
 - Epics are thematic groups of Issues that are somehow related by their topic
   - It may take multiple Sprints to complete all the Issues in an Epic
@@ -95,7 +96,7 @@
   description
 - We keep the Epics alphabetized on the board under the pipeline "EPICs"
 
-### Master Epics
+#### Master Epics
 
 - Master Epics are long-running Epics (i.e., projects)
   - E.g., `WEB3`
@@ -105,7 +106,7 @@
   - There is no need to add an Issue to a Master Epic if it is already added to
     a sub-Epic, since this is handled automatically by ZH
 
-### Sub-Epics
+#### Sub-Epics
 
 - Master Epics can be broken down into smaller Epics, called "sub-Epics"
   - E.g., `WEB3 - DaoCross v0.1`
@@ -120,10 +121,9 @@
 - Sub-Epics should belong to a Master Epic in ZH so that querying by Epic and
   sub-epics is simplified
 
-### List of Epics
+#### List of Epics
 
 - Below there is a list of the Epics and sub-Epics
-
   - For simplicity we keep the information about the Epics here, instead of
     ZenHub
 
@@ -249,7 +249,7 @@
   - `Tulip`
   - `Utils`
 
-## Issue
+### Issue
 
 - Each Issue is a piece of work to be done
 - Issues are combined into Epics by topic
@@ -260,7 +260,7 @@
 - An issue might not have an assignee and estimate if it is not inside an epic
   but before execution of course it needs to be resolved
 
-## Milestone
+### Milestone
 
 - Milestone consist of group of tasks we want to accomplish during certain
   period
@@ -274,16 +274,16 @@
   - Not having a start and end date to an Epic is fine if it does not belong to
     the current milestone
 
-## Label
+### Label
 
 - Labels are attributes of an issue (or PR), e.g., `good first issue`,
   `PR_for_reviewers`, `duplicate`, etc.
 - See the current list of labels and their descriptions are
-  [KaizenFlow](https://github.com/kaizen-ai/kaizenflow/labels) and
+  [Sorrentum](https://github.com/sorrentum/sorrentum/labels) and
   [cmamp](https://github.com/cryptokaizen/cmamp/labels)
   - The repos should always have labels in sync
 
-### List of labels
+#### List of labels
 
 - `Blocking`: This issue needs to be worked on immediately
 - `Bug`: Something isn't working
@@ -308,7 +308,7 @@
 - `To close`: An issue can be potentially closed
   > TODO(gp): -> To_close
 
-## Pipeline
+### Pipeline
 
 - A ZH Pipeline represents the "progress" status of an Issue in our process
 - We have the following Pipelines on the ZH board:
@@ -350,7 +350,7 @@ stateDiagram
     Done --> [*]
 ```
 
-## Issue Estimate
+### Issue Estimate
 
 - The Issue estimates ranges from 1 to 5:
   - 1 (e.g., a function rename, updating the entire code base and the unit
@@ -360,17 +360,35 @@ stateDiagram
   - 4 (e.g., implement a new feature, where the solution is clear in advance)
   - 5 (e.g., implement a new feature, where the solution is complex)
 
-## PR
+### PR
 
 - A pull request is an event where a contributor asks to review code they want
   to merge into a project
 
-# Issue workflows
+## Issue workflows
 
-## Filing a new issue
+### Naming an Issue
 
-- Use an informative description (typically an action "Do this and that")
-  - We don't use a period at the end of the title
+- Use an informative description, typically in the form an action
+  - E.g., "Do this and that"
+- We don't use a period at the end of the title
+- We prefer to avoid too much capitalization to make the Issue title easy to
+  read and for consistency with the rest of the bugs
+
+  **Good**
+  ```
+  Optimize Prometheus configuration for enhanced Kubernetes monitoring
+  ```
+
+  **Bad**
+  ```
+  Optimize Prometheus Configuration for Enhanced Kubernetes Monitoring
+  ```
+
+- They are equivalent, but the first one is more readable
+
+### Filing a new issue
+
 - If it is a "serious" problem (bug) put as much information about the Issue as
   possible, e.g.,:
   - What you are trying to achieve
@@ -420,7 +438,7 @@ stateDiagram
   - If you are unsure then you can leave it empty, but `@tag` Integrator / team
     leaders to make sure we can re-route and improve the Epics/Labels
 
-## Updating an issue
+### Updating an issue
 
 - For large or complex Issues, there should be a design phase (in the form of GH
   Issue, Google Doc, or design PR) before starting to write a code
@@ -441,7 +459,7 @@ stateDiagram
 - If we decide to stop the work, add a `Paused` label and move it back to the
   backlog, e.g., `Sprint backlog (P0)`, `Product backlog (P1)`, `Icebox (P2)`
 
-## Closing an issue
+### Closing an issue
 
 - A task is closed when PR has been reviewed and merged into `master`
 - When, in your opinion, there is no more work to be done on your side on an
@@ -459,9 +477,9 @@ stateDiagram
   - E.g. - closing as PR is merged
   - E.g. - closing since obsolete
 
-# PR workflows
+## PR workflows
 
-## PR labels
+### PR labels
 
 - `PR_for_authors`
   - There are changes to be addressed by an author of a PR
@@ -471,9 +489,9 @@ stateDiagram
   - PR is ready for the final round of review by Integrators, i.e. close to
     merge
 
-## Filing a new PR
+### Filing a new PR
 
-### General tips
+#### General tips
 
 - Implement a feature in a branch (not `master`), once it is ready for review
   push it and file a PR via GH interface
@@ -486,13 +504,12 @@ stateDiagram
 - If you want to make sure you are going in a right direction or just to confirm
   the interfaces you can also file a PR to discuss
 - Mark PR as draft if it is not ready, use the `convert to draft` button
-
   - Draft PR should be filed when there is something to discuss with and
     demonstrate to the reviewer, but the feature is not completely implemented
 
     <img src="figs/use_github_and_zenhub/Draft_PR.png"  width=80% height=80%>
 
-### Filing process
+#### Filing process
 
 - Add a description to help reviewers to understand what it is about and what
   you want the focus to be
@@ -515,7 +532,7 @@ stateDiagram
   - Attach a command line to open a published notebook, see
     [here](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_tools/all.development.how_to_guide.md#open-a-published-notebook)
 
-## Review
+### Review
 
 - A reviewer should check the code:
   - Architecture
@@ -532,7 +549,7 @@ stateDiagram
     - Pass it to integrators and mark it as `PR_for_integrators`
       - Usually is placed by team leaders after they approve PR
 
-## Addressing comment
+### Addressing comment
 
 - If the reviewer's comment is clear to the author and agreed upon:
   - The author addresses the comment with a code change and after changing the
@@ -545,7 +562,7 @@ stateDiagram
   - Re-request the review
   - Mark it as `PR_for_reviewers`
 
-## Coverage reports in PRs - discussion
+### Coverage reports in PRs - discussion
 
 - We should start posting coverage reports in PRs.
 
@@ -554,7 +571,7 @@ stateDiagram
     in the format below. The report should contain only the files that were
     touched in a PR.
     - We have `run_coverage_report` invoke
-      - `TODO(*): Enable for KaizenFlow and add usage examples.`
+      - `TODO(*): Enable for Sorrentum and add usage examples.`
     - Maybe we can automate it somehow, e.g., with GH actions. But we need to
       start from something.
       ```

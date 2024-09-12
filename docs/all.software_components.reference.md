@@ -1,4 +1,4 @@
-
+# Software Components
 
 <!-- toc -->
 
@@ -88,8 +88,15 @@
     + [`ReplayedFillsDataFrameBroker`](#replayedfillsdataframebroker)
 - [oms/broker/ccxt](#omsbrokerccxt)
     + [`AbstractCcxtBroker`](#abstractccxtbroker)
+    + [`CcxtBroker`](#ccxtbroker)
 - [oms/limit_computer](#omslimit_computer)
+    + [`AbstractLimitPriceComputer`](#abstractlimitpricecomputer)
+    + [`LimitPriceComputerUsingSpread`](#limitpricecomputerusingspread)
+    + [`LimitPriceComputerUsingVolatility`](#limitpricecomputerusingvolatility)
 - [oms/child_order_quantity_computer](#omschild_order_quantity_computer)
+    + [`AbstractChildOrderQuantityComputer`](#abstractchildorderquantitycomputer)
+    + [`DynamicSchedulingChildOrderQuantityComputer`](#dynamicschedulingchildorderquantitycomputer)
+    + [`StaticSchedulingChildOrderQuantityComputer`](#staticschedulingchildorderquantitycomputer)
 - [oms/portfolio](#omsportfolio)
     + [`Portfolio`](#portfolio)
     + [`DataFramePortfolio`](#dataframeportfolio)
@@ -149,18 +156,18 @@ process_forecasts()
 HistoricalDataSource
 ```
 
-# Conventions
+## Conventions
 
 - A dir is a C4 container (level 2)
 - A subdir is a C4 component (level 3)
 - A class is a C4/UML class (level 4)
 - We use the same level of header for each of these C4 levels
 
-# `DataPull`
+## `DataPull`
 
-## Extract
+### Extract
 
-### `Extractor`
+#### `Extractor`
 
 - File: im_v2/common/data/extract/extractor.py
 - Responsibilities: abstract class for downloading raw data from vendors
@@ -175,9 +182,9 @@ classDiagram
   Extractor <|-- CryptoChassisExtractor
 ```
 
-## QA
+### QA
 
-### `QaCheck`
+#### `QaCheck`
 
 - File: sorrentum_sandbox/common/validate.py
 - Responsibilities: QA check on one or more datasets
@@ -198,7 +205,7 @@ classDiagram
   QaCheck <|-- DuplicateDifferingOhlcvCheck
 ```
 
-### `DataSetValidator`
+#### `DataSetValidator`
 
 - File: sorrentum_sandbox/common/validate.py
 - Responsibilities: Apply a set of QA checks to validate one or more datasets
@@ -213,23 +220,23 @@ classDiagram
     DataSetValidator <|-- DataFrameDatasetValidator
   ```
 
-## Transform
+### Transform
 
-## DB
+### DB
 
-### `DbConnectionManager`
+#### `DbConnectionManager`
 
-### `TestImDbHelper`
+#### `TestImDbHelper`
 
-## Universe
+### Universe
 
-### `FullSymbol`
+#### `FullSymbol`
 
 - Responsibilities: implement full symbol (e.g., `binance:BTC_USDT`)
 
-## Client
+### Client
 
-### `ImClient`
+#### `ImClient`
 
 - Responsibilities: adapts the data from a vendor to the MarketData format
   (i.e., a wide format with knowledge time)
@@ -251,66 +258,66 @@ classDiagram
     RealTimeImClient <|-- SqlRealTimeImClient
   ```
 
-### `DataFrameImClient`
+#### `DataFrameImClient`
 
 - Responsibilities: read data from a passed dataframe
   - This is used for synthetic data
 
-### `HistoricalPqByTileClient`
+#### `HistoricalPqByTileClient`
 
 - Responsibilities: read historical data stored as Parquet by-tile
 
-### `HistoricalPqByCurrencyPairTileClient`
+#### `HistoricalPqByCurrencyPairTileClient`
 
 - Responsibilities: read historical data stored as Parquet by asset
 
-### `HistoricalPqByDateClient`
+#### `HistoricalPqByDateClient`
 
 - Responsibilities: read historical data stored as Parquet by tile
 
-### `RealTimeImClient`
+#### `RealTimeImClient`
 
 - Responsibilities: type representing a real-time client
 
-### `SqlRealTimeImClient`
+#### `SqlRealTimeImClient`
 
 - Responsibilities: read data from a table of an SQL DB
 
-### `ImClientTestCase`
+#### `ImClientTestCase`
 
 - Responsibilities: help test for classes derived from `ImClient`
 
-### `RawDataReader`read data from a table of an SQL DB
+#### `RawDataReader`read data from a table of an SQL DB
 
 - Responsibilities: read data based on a dataset signature
 
-# `market_data`
+## `market_data`
 
-### `MarketData`
+#### `MarketData`
 
 - Responsibilities:
 - Interactions:
 - Main methods:
 
-### `ImClientMarketData`
+#### `ImClientMarketData`
 
-### `MarketData_*_TestCase`
+#### `MarketData_*_TestCase`
 
-### `RealTimeMarketData`
+#### `RealTimeMarketData`
 
-### `RealTimeMarketData2`
+#### `RealTimeMarketData2`
 
-### `ReplayedMarketData`
+#### `ReplayedMarketData`
 
-### `HorizontalStitchedMarketData`
+#### `HorizontalStitchedMarketData`
 
-### `IgStitchedMarketData`
+#### `IgStitchedMarketData`
 
-# `dataflow`
+## `dataflow`
 
-# `dataflow/core`
+## `dataflow/core`
 
-### `Node`
+#### `Node`
 
 - Responsibilities:
   - Store and retrieve its output values on a per-method (e.g., "fit" and
@@ -323,7 +330,7 @@ classDiagram
 
 - Main methods:
 
-### `DAG`
+#### `DAG`
 
 - Responsibilities:
   - Build a DAG of `Nodes` by adding and connecting `Node`s
@@ -336,7 +343,7 @@ classDiagram
 
 - Main methods:
 
-### `DagBuilder`
+#### `DagBuilder`
 
 - Responsibilities:
   - Abstract class for creating DAGs
@@ -346,14 +353,14 @@ classDiagram
     customized when building the `DAG`
   - `get_dag()`: builds the `DAG`
 
-### `DagRunner`
+#### `DagRunner`
 
 - Responsibilities:
   - Run a `DAG` by calling a `Method` on all the nodes
 - Interactions:
 - Main methods:
 
-### `FitPredictDagRunner`
+#### `FitPredictDagRunner`
 
 - Responsibilities:
   - Run a `DAG` with `fit`, `predict` methods
@@ -363,7 +370,7 @@ classDiagram
     on
   - `fit()`, `predict()` to run the corresponding methods
 
-### `RollingFitPredictDagRunner`
+#### `RollingFitPredictDagRunner`
 
 - Responsibilities:
   - Run a `DAG` by periodic fitting on previous history and evaluating on new
@@ -371,73 +378,73 @@ classDiagram
 - Interactions:
 - Main methods:
 
-### `ResultBundle`
+#### `ResultBundle`
 
 - Responsibilities:
   - Store `DAG` execution results.
 - Interactions:
 - Main methods:
 
-# dataflow/core/nodes
+## dataflow/core/nodes
 
-### `FitPredictNode`
+#### `FitPredictNode`
 
 - Abstract node implementing `fit()` / `predict()` function
 - Store and load state
 
-### `DataSource`
+#### `DataSource`
 
 - DataSource <|-- FitPredictNode
 - Abstract
 - Generate train/test data from the passed data frame
 
-### `Transformer`
+#### `Transformer`
 
 - FitPredictNode <|-- DataSource
 - Abstract
 - Single-input single-output node calling a stateless transformation
 
-### `YConnector`
+#### `YConnector`
 
 - FitPredictNode <|-- YConnector
 - Create an output df from two input dataframes
 
-### `GroupedColDfToDfColProcessor`
+#### `GroupedColDfToDfColProcessor`
 
-### `CrossSectionalDfToDfColProcessor`
+#### `CrossSectionalDfToDfColProcessor`
 
 - Wrappers for cross-sectional transformations
 
-### `SeriesToDfColProcessor`
+#### `SeriesToDfColProcessor`
 
 - Series-to-dataframe wrapper
 
-### `SeriesToSeriesColProcessor`
+#### `SeriesToSeriesColProcessor`
 
 - Series-to-series wrapper
 
-### `DfStacker`
+#### `DfStacker`
 
 - Stack and unstack dataframes with identical columns
 
-###
+####
 
-# dataflow/system
+## dataflow/system
 
-### `RealTimeDagRunner`
+#### `RealTimeDagRunner`
 
 - Run a DAG in real-time
 
-### `ProcessForecastsNode`
+#### `ProcessForecastsNode`
 
-### `HistoricalDataSource`
+#### `HistoricalDataSource`
 
 - Adapt a `MarketData` object to a DAG
 - Store and load the state of the node.
 
-### `RealTimeDataSource`
+#### `RealTimeDataSource`
 
-### `System`
+#### `System`
 
 - Responsibilities: abstract class that builds a `System`
 - Interactions: there are several derived classes that allow to build various
@@ -455,25 +462,25 @@ classDiagram
   ```
 - Main methods:
 
-### `ForecastSystem`
+#### `ForecastSystem`
 
-### `Df_ForecastSystem`
+#### `Df_ForecastSystem`
 
-### `NonTime_ForecastSystem`
+#### `NonTime_ForecastSystem`
 
-### `Time_ForecastSystem`
+#### `Time_ForecastSystem`
 
-### `ForecastSystem_with_DataFramePortfolio`
+#### `ForecastSystem_with_DataFramePortfolio`
 
-### `Time_ForecastSystem_with_DataFramePortfolio`
+#### `Time_ForecastSystem_with_DataFramePortfolio`
 
-### `Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor`
+#### `Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor`
 
-### `Time_ForecastSystem_with_DatabasePortfolio`
+#### `Time_ForecastSystem_with_DatabasePortfolio`
 
-# dataflow/backtest
+## dataflow/backtest
 
-### Forecaster
+#### Forecaster
 
 - It is a DAG system that forecasts the value of the target economic quantities
   (e.g.,
@@ -484,7 +491,7 @@ for each asset in the target
 - Interactions:
 - Main methods:
 
-### `MarketOms`
+#### `MarketOms`
 
 MarketOms is the interface that allows to place orders and receive back fills to
 the specific target market. This is provided as-is and it's not under control of
@@ -492,15 +499,15 @@ the user or of the protocol
 
 - E.g., a specific exchange API interface
 
-### `OrderProcessor`
+#### `OrderProcessor`
 
 - TODO(gp): Maybe MockedMarketOms since that's the actual function?
 
-### `OmsDb`
+#### `OmsDb`
 
 Simulation
 
-### `ImplementedBroker`
+#### `ImplementedBroker`
 
 - `submit_orders()`
 - Save files in the proper location
@@ -513,21 +520,21 @@ Mocked system
 - Our implementation of the implemented system where we replace DB with a mock
 - The mocked DB should be as similar as possible to the implemented DB
 
-### `DatabaseBroker`
+#### `DatabaseBroker`
 
 - `submit_orders()`
 - Same behavior of `ImplementedBroker` but using `OmsDb`
 
-### `OmsDb`
+#### `OmsDb`
 
 - `submitted_orders` table (mocks S3)
 - Contain the submitted orders
 - `accepted_orders` table
 - `current_position` table
 
-# oms/fill
+## oms/fill
 
-### `Fill`
+#### `Fill`
 
 - Responsibilities:
   - Represent an order fill
@@ -535,14 +542,14 @@ Mocked system
   - `Order`
 - Main methods:
 
-# oms/order
+## oms/order
 
-### `Order`
+#### `Order`
 
 - Responsibilities:
   - Represent an order to be executed over a period of time
 
-# oms/broker
+## oms/broker
 
 ```mermaid
 classDiagram
@@ -552,9 +559,10 @@ DataFrameBroker <|-- ReplayedFillsDataFrameBroker : Inheritance
 FakeFillsBroker <|-- DatabaseBroker : Inheritance
 
 Broker <|-- AbstractCcxtBroker : Inheritance
+AbstractCcxtBroker <|-- CcxtBroker : Inheritance
 ```
 
-### `Broker`
+#### `Broker`
 
 - Description
   - A `Broker` is an object to place orders to the market and to receive fills,
@@ -581,32 +589,33 @@ Broker <|-- AbstractCcxtBroker : Inheritance
   - `submit_orders()`: submit orders to the trading exchange
   - `get_fills()`
 
-### `FakeFillsBroker`
+#### `FakeFillsBroker`
 
 - Responsibilities:
 - Interactions:
 - Main methods:
 
-### `DataFrameBroker`
+#### `DataFrameBroker`
 
 - Responsibilities:
 - Interactions:
 - Main methods:
 
-### `DatabaseBroker`
+#### `DatabaseBroker`
 
 - Responsibilities:
 - Interactions:
 - Main methods:
 
-### `ReplayedDataReader`
+#### `ReplayedDataReader`
 
 - Responsibilities:
   - Replay data from an actual `RawDataReader`
 - Interactions:
+  - Derived from `DataFrameBroker`
 - Main methods:
 
-### `ReplayedFillsDataFrameBroker`
+#### `ReplayedFillsDataFrameBroker`
 
 - Responsibilities:
   - Replay the fills from a Broker
@@ -614,17 +623,173 @@ Broker <|-- AbstractCcxtBroker : Inheritance
   - Derived from `DataFrameBroker`
 - Main methods:
 
-# oms/broker/ccxt
+## oms/broker/ccxt
 
-### `AbstractCcxtBroker`
+```mermaid
+classDiagram
+    Broker <|-- AbstractCcxtBroker : Inheritance
+    AbstractCcxtBroker <|-- CcxtBroker : Inheritance
+```
 
-# oms/limit_computer
+#### `AbstractCcxtBroker`
 
-# oms/child_order_quantity_computer
+- Responsibilities:
+  - Retrieve broker configuration, market data (including CCXT), open positions,
+    fills, and trades
+  - Update order statistics, validate child orders, handle exceptions, and
+    calculate TWAP waves.
 
-# oms/portfolio
+- Interactions:
+  - Derived from `Broker`
 
-### `Portfolio`
+- Main methods:
+  - `get_broker_config()`: Retrieve broker configuration.
+  - `get_bid_ask_data_for_last_period()`: Obtain bid-ask data for the given last
+    period.
+  - `get_market_info()`: Load market information from the given exchange and map
+    to asset ids.
+  - `get_fills()`: Retrieves a list of completed trades (fills) from the
+    previous order execution, to allow the Portfolio component to update its
+    state accurately.
+  - `get_ccxt_trades()`: Retrieves CCXT trades (completed orders/fills)
+    corresponding to a list of provided CCXT orders, grouped by trading symbol.
+  - `get_open_positions()`: Retrieves and caches the open positions from the
+    exchange, with an optional sanity check against live data, to efficiently
+    provide the current open positions for the trading account.
+  - `cancel_open_orders_for_symbols()`: Cancels all open orders for a given list
+    of trading pairs.
+  - `get_total_balance()`: Retrieves, validates, and logs the total available
+    balance from an exchange.
+
+#### `CcxtBroker`
+
+- Responsibilities:
+  - Manage CCXT interactions, submit orders, handle cancellations, and sync with
+    wave start times; log results, obtain fills and trades, manage TWAP child
+    orders, and get CCXT order structures.
+
+- Interactions:
+  - Derived from `AbstractCcxtBroker`
+
+- Main methods:
+  - `get_ccxt_fills()`: Get fills from submitted orders in OMS and CCXT formats.
+  - `_submit_twap_orders()`: Execute orders using the TWAP strategy.
+  - `_get_ccxt_order_structure()`: Get the CCXT order structure corresponding to
+    the submitted order.
+
+## oms/limit_computer
+
+```mermaid
+classDiagram
+    AbstractLimitPriceComputer <|-- LimitPriceComputerUsingSpread : Inheritance
+    AbstractLimitPriceComputer <|-- LimitPriceComputerUsingVolatility : Inheritance
+```
+
+#### `AbstractLimitPriceComputer`
+
+- Responsibilities:
+  - Provide methods to retrieve timestamp data, extract latest bid/ask sizes,
+    and validate/normalize bid/ask data.
+
+- Interactions:
+
+- Main methods:
+  - `get_latest_timestamps_from_bid_ask_data()`: Get timestamp data related to
+    the bid/ask price.
+  - `get_latest_size_from_bid_ask_data()`: Extract latest bid/ask size data and
+    returns the size data dictionary.
+  - `calculate_limit_price()`: Return limit price and price data such as
+    latest/mean bid/ask price.
+  - `normalize_bid_ask_data()`: Validate and normalize the bid ask data.
+
+#### `LimitPriceComputerUsingSpread`
+
+- Responsibilities:
+  - Retrieve, compare latest and average bid/ask prices.
+
+- Interactions:
+  - Derived from `AbstractLimitPriceComputer`
+
+- Main methods:
+  - `compare_latest_and_average_price()` : Retrieve and compare latest and
+    average bid/ask prices.
+  - `calculate_limit_price()`:Calculate limit price based on recent bid / ask
+    data and uses a `passivity_factor` to adjust the limit price between the bid
+    and ask prices.
+
+#### `LimitPriceComputerUsingVolatility`
+
+- Responsibilities:
+  - Compute limit price based on volatility multiple
+
+- Interactions:
+  - Derived from `AbstractLimitPriceComputer`
+
+- Main methods:
+  - `compute_metrics_from_price_data()`: Analyze bid-ask price data to compute
+    volume, sum of squares of difference, last price, and count.
+  - `calculate_limit_price()`:Calculate limit price based on recent bid / ask
+    data and uses a `volatility_multiple` to adjust the limit price based on the
+    volatility of the bid and ask prices.
+
+## oms/child_order_quantity_computer
+
+```mermaid
+classDiagram
+    AbstractChildOrderQuantityComputer <|-- DynamicSchedulingChildOrderQuantityComputer : Inheritance
+    AbstractChildOrderQuantityComputer <|-- StaticSchedulingChildOrderQuantityComputer : Inheritance
+```
+
+#### `AbstractChildOrderQuantityComputer`
+
+- Responsibilities:
+  - Represent strategy to decide child order quantities within a parent order
+
+- Interactions:
+
+- Main methods:
+  - `set_instance_params()`: Initialize instance parameters with parent order
+    size, market data, and execution goals.
+  - `get_wave_quantities()`: Return the quantity for the specified wave ID from
+    the wave quantities.
+  - `update_current_positions()`: Update the current positions using data from
+    the Broker.
+
+#### `DynamicSchedulingChildOrderQuantityComputer`
+
+- Responsibilities:
+  - Place each child order wave with the remaining amount to fill.
+  - Determine the child order quantity to be placed during each wave.
+
+- Interactions:
+  - Derived from `AbstractChildOrderQuantityComputer`
+
+- Main methods:
+  - `get_wave_quantities()`: calculates the target positions for parent orders
+    and get the first child order quantity as equal to the parent order quantity
+    for the first wave and for following waves, the child order quantities are
+    computed as
+    ```
+    target_position - open_position
+    ```
+
+#### `StaticSchedulingChildOrderQuantityComputer`
+
+- Responsibilities:
+  - Generate a TWAP-like schedule for placing child orders.
+  - Calculate child order quantities for each provided parent order.
+
+- Interactions:
+  - Derived from `AbstractChildOrderQuantityComputer`
+
+- Main methods:
+  - `calculate_static_child_order_quantities()`: Calculate child order
+    quantities for each provided parent order. The quantity is static, so it is
+    calculated only once.
+
+## oms/portfolio
+
+#### `Portfolio`
 
 - A Portfolio stores information about asset and cash holdings of a System over
   time.
@@ -653,7 +818,7 @@ Broker <|-- AbstractCcxtBroker : Inheritance
 - We are trying not to mix static typing and duck typing
 - CASH_ID, `_compute_statistics()` goes in `Portolio`
 
-### `DataFramePortfolio`
+#### `DataFramePortfolio`
 
 - An implementation of a Portfolio backed by a DataFrame. This is used to
   simulate a system on an order-by-order basis. This should be equivalent to
@@ -668,7 +833,7 @@ Broker <|-- AbstractCcxtBroker : Inheritance
 - Update the holdings with fills -> `SimulatedBroker.get_fills()`
 - To make the simulated system closer to the implemented
 
-### `DatabasePortfolio`
+#### `DatabasePortfolio`
 
 an implementation of a Portfolio backed by an SQL Database to simulate systems
 where the Portfolio state is held in a database. This allows to simulate a
@@ -677,7 +842,7 @@ system on an order-by-order basis.
 - `get_holdings()`
 - Same behavior of `ImplementedPortfolio` but using `OmsDb`
 
-### ImplementedPortfolio
+#### ImplementedPortfolio
 
 - `get_holdings()`
 - Check self-consistency and assumptions
@@ -686,9 +851,9 @@ system on an order-by-order basis.
 - `update_state()`
 - No-op since the portfolio is updated automatically
 
-# oms/order_processing
+## oms/order_processing
 
-### `OrderProcessor`
+#### `OrderProcessor`
 
 - Monitor `OmsDb.submitted_orders`
 - Update `OmsDb.accepted_orders`
@@ -696,7 +861,7 @@ system on an order-by-order basis.
 
 - TODO(gp): Unclear where it is used?
 
-### `process_forecasts`
+#### `process_forecasts`
 
 - Responsibilities:
   - Process all the forecasts from `prediction_df` using
@@ -708,7 +873,7 @@ system on an order-by-order basis.
   different optimization conditions, spread, and restrictions, without running
   the Forecaster
 
-### `TargetPositionAndOrderGenerator`
+#### `TargetPositionAndOrderGenerator`
 
 - Responsibilities:
   - Retrieve the current holdings from `Portfolio`
@@ -746,12 +911,12 @@ system on an order-by-order basis.
 - For IS it is different
 - It should not use any concrete implementation but only `Abstract\*`
 
-## Locates
+### Locates
 
-## Restrictions
+### Restrictions
 
-# oms/optimizer
+## oms/optimizer
 
-# oms/db
+## oms/db
 
-# oms/ccxt
+## oms/ccxt

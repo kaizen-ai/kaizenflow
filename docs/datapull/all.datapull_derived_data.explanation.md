@@ -1,4 +1,12 @@
-## Derived data workflows
+
+
+<!-- toc -->
+
+- [Derived data workflows](#derived-data-workflows)
+
+<!-- tocstop -->
+
+# Derived data workflows
 
 **Derived data workflows**. Data workflows can transform datasets into other
 datasets

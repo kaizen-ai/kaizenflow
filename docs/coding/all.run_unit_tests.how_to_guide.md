@@ -1,4 +1,4 @@
-
+# Run Unit Tests
 
 <!-- toc -->
 
@@ -32,13 +32,13 @@
 
 <!-- tocstop -->
 
-# Run unit tests
+## Run unit tests
 
 - We use `pytest` and `unittest` as testing framework
 - Before any PR (and ideally after a few commits), we want to run all the unit
   tests to make sure we didn't introduce any new bugs
 
-## Test lists
+### Test lists
 
 - We have different test set lists:
   - `fast`
@@ -57,7 +57,7 @@
     - No time limit but we need to be judicious with length
       - Anything above 5-15 mins is problematic
 
-## Using `invoke`
+### Using `invoke`
 
 - [`invoke`](https://www.pyinvoke.org/) is a task execution framework which
   allows to execute some typical workflows in a simple way
@@ -98,7 +98,7 @@
     -v STRING, --version=STRING
   ```
 
-### Docker image stage and version
+#### Docker image stage and version
 
 - To select a specific stage for Docker image use the `--stage` option. E.g.,
   this might be useful when a user wants to run regressions on the local Docker
@@ -115,12 +115,12 @@
     > i run_fast_tests --stage local --version 1.0.4
     ```
 
-### Specifying `pytest` options
+#### Specifying `pytest` options
 
 - With the option `--pytest-opts` it is possible to pass any `pytest` option to
   `invoke`.
 
-### Running in debug mode
+#### Running in debug mode
 
 - If a user wants to run the tests in debug mode to show the output
   ```bash
@@ -129,7 +129,7 @@
 - This is equivalent to specifying `-v DEBUG` through the command line of one of
   the executables
 
-### Save test output to a file
+#### Save test output to a file
 
 - To save the output of `pytest` to `tmp.pytest.log` use the `--tee-to-file`
   option.
@@ -137,14 +137,14 @@
   > i run_fast_tests --tee-to-file
   ```
 
-### Show the tests but do not run
+#### Show the tests but do not run
 
 - To list, but not run, the tests that will be executed, use `--collect-only`.
   ```bash
   > i run_fast_test --collect-only
   ```
 
-### Skip submodules
+#### Skip submodules
 
 - To skip running tests in submodules, use the `--skip-submodules` option.
 - This option is useful in repos with Git submodules so that you can run only
@@ -156,7 +156,7 @@
     > i run_fast_tests --skip-submodules
     ```
 
-### Compute test coverage
+#### Compute test coverage
 
 - To compute test coverage use the `--coverage` option
 
@@ -164,7 +164,7 @@
   > i run_fast_tests --coverage
   ```
 
-## Timeout
+### Timeout
 
 - We use the [`pytest-timeout`](https://pypi.org/project/pytest-timeout/)
   package to limit durations of fast, slow, and superslow tests
@@ -174,7 +174,7 @@
   `set_up_test()` and `tear_down_test()` time, if they are run at the
   beginning/end of the methods
 
-## Rerunning timeout-ed tests
+### Rerunning timeout-ed tests
 
 - Running tests can take different amounts of time depending on workload and
   machine
@@ -193,7 +193,7 @@
   now due to
   [#693 (comment)](https://github.com/cryptokaizen/cmamp/issues/693#issuecomment-989456031)
 
-## Compute test coverage
+### Compute test coverage
 
 - The documentation for `coverage` is
   [here](https://coverage.readthedocs.io/en/latest/cmd.html#reporting).
@@ -374,7 +374,7 @@
 
   ![alt_text](figs/unit_tests/image_2.png)
 
-### An example coverage session
+#### An example coverage session
 
 - We want to measure the unit test coverage of `oms` component from both fast
   and slow tests
@@ -478,7 +478,7 @@
   Combined data file .coverage_slow_tests
   ```
 
-### An example with customized `pytest-cov` html run
+#### An example with customized `pytest-cov` html run
 
 - We want to measure unit test coverage specifically for one test in
   `im_v2/common/data/transform/` and to save generated `htmlcov` in the same
@@ -508,7 +508,7 @@
   Coverage HTML written to dir im_v2/common/data/transform/htmlcov
   ```
 
-### Generate coverage report with `invoke`
+#### Generate coverage report with `invoke`
 
 - One can compute test coverage for a specified directory and generate text and
   HTML reports automatically using `invoke task run_coverage_report`
@@ -535,7 +535,7 @@
     -t STRING, --target-dir=STRING
   ```
 
-#### Common usage
+##### Common usage
 
 - Compute coverage for `market_data` dir, generate text and HTML reports and
   publish HTML report on S3
@@ -558,7 +558,7 @@
   20:08:53 - INFO  lib_tasks.py _publish_html_coverage_report_on_s3:3679  HTML coverage report is published on S3: path=`s3://cryptokaizen-html/html_coverage/grisha_CmTask1038_Tool_to_extract_the_dependency_from_a_project`
   ```
 
-### Publishing HTML report on S3
+#### Publishing HTML report on S3
 
 - To make a dir with the report unique, we decorate the dir with a linux user
   and a Git branch name, e.g.,
@@ -570,9 +570,9 @@
   - E.g.
     [http://172.30.2.44/html_coverage/grisha_CmTask1038_Tool_to_extract_the_dependency_from_a_project/](http://172.30.2.44/html_coverage/grisha_CmTask1038_Tool_to_extract_the_dependency_from_a_project/)
 
-# Running `pytest` directly
+## Running `pytest` directly
 
-## Usage and Invocations reference
+### Usage and Invocations reference
 
 - See [`pytest` documentation](http://doc.pytest.org/en/latest/usage.html)
 - Some examples of useful command lines:
@@ -604,9 +604,9 @@
   > pytest --last-failed
   ```
 
-## Custom `pytest` options behaviors
+### Custom `pytest` options behaviors
 
-### Enable logging
+#### Enable logging
 
 - To enable logging of `_LOG.debug` for a single test run:
 
@@ -615,7 +615,7 @@
   > pytest oms/test/test_broker.py::TestSimulatedBroker1 -s --dbg
   ```
 
-### Update golden outcomes
+#### Update golden outcomes
 
 - This switch allows to overwrite the golden outcomes that are used as reference
   in the unit tests to detect failures
@@ -624,7 +624,7 @@
   > pytest --update_outcomes
   ```
 
-### Incremental test mode
+#### Incremental test mode
 
 - This switch allows to reuse artifacts in the test directory and to skip the
   clean up phase
@@ -636,7 +636,7 @@
   > pytest --incremental
   ```
 
-## Debugging Notebooks
+### Debugging Notebooks
 
 1. Run a failing test with `-s --dbg` to get detailed logs
    - E.g., `> pytest core/plotting/test/test_gallery_notebook.py -s --dbg`
@@ -653,12 +653,12 @@
    - E.g.,
      <img width="756" src="https://github.com/kaizen-ai/kaizenflow/assets/31514660/43a2854e-ae4e-450d-95fd-f16df0a53c79">
 
-# Running tests on GH Actions
+## Running tests on GH Actions
 
 - The official documentation is
   [https://docs.github.com/en/actions](https://docs.github.com/en/actions)
 
-## How to run a single test on GH Action
+### How to run a single test on GH Action
 
 - Unfortunately, there is no way to log in and run interactively on GH machines.
   This is a feature requested but not implemented by GH yet.

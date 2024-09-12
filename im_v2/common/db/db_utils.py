@@ -34,7 +34,13 @@ _LOG = logging.getLogger(__name__)
 # Set of columns which are unique row-wise across db tables for corresponding
 # data type.
 BASE_UNIQUE_COLUMNS = ["timestamp", "exchange_id", "currency_pair"]
-BID_ASK_UNIQUE_COLUMNS = []
+BID_ASK_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + [
+    "bid_size",
+    "bid_price",
+    "ask_size",
+    "ask_price",
+    "level",
+]
 TRADES_UNIQUE_COLUMNS = ["id"]
 NUMBER_OF_RETRIES_TO_SAVE = 3
 OHLCV_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + [
@@ -307,23 +313,34 @@ def delete_duplicate_rows_from_ohlcv_table(db_stage: str, db_table: str) -> None
     )
 
 
-def fetch_last_minute_bid_ask_rt_db_data(
+def fetch_last_bid_ask_rt_db_data(
     db_connection: hsql.DbConnection,
     src_table: str,
     time_zone: str,
     exchange_id: str,
+    milliseconds: int,
 ) -> pd.Timestamp:
     """
-    Fetch last full minute of bid/ask RT data as an left-closed interval.
+    Fetch bid/ask RT data for a specified time interval as a left-closed
+    interval.
 
-    E.g. when the script is called at 9:05:05AM, The functions return
-    data where timestamp is in interval [9:04:00, 9:05).
+    E.g. if the current time is 9:05:05AM and `milliseconds` is 60100
+    (1 minute and 100 milliseconds), the function will return data where
+    the timestamp is in the interval [9:03:59.900, 9:05:00).
 
     This is a convenience wrapper function to make the most likely use
     case easier to execute.
+
+    :param db_connection: database connection object
+    :param src_table: name of the source table to fetch data from
+    :param time_zone: timezone to use for the current time
+    :param exchange_id: exchange identifier for which to fetch the data
+    :param milliseconds: duration in milliseconds for the time interval
+                         to fetch data for
+    :return:  DataFrame containing the fetched bid/ask data
     """
     end_ts = hdateti.get_current_time(time_zone).floor("min")
-    start_ts = end_ts - timedelta(minutes=1)
+    start_ts = end_ts - timedelta(milliseconds=milliseconds)
     # TODO(Juraj): expose `bid_ask_levels` as a parameter.
     return load_db_data(
         db_connection,
@@ -374,6 +391,8 @@ def load_db_data(
     bid_ask_levels: Optional[List[int]] = None,
     exchange_id: Optional[str] = None,
     time_interval_closed: Union[bool, str] = True,
+    order_by_col: str = None,
+    order_by_method: str = "DESC",
 ) -> pd.DataFrame:
     """
     Load database data from a specified table given an opened DB connection.
@@ -401,9 +420,14 @@ def load_db_data(
      False: (start_ts, end_ts)
      "left": <start_ts, end_ts)
      "right": (start_ts, end_ts>
+    :param order_by_col: column name to order by, default is no ordering (None)
+    :param order_by_method: sorting rule to use, used only if order_by_col is not
+     None. Default is "DESC" (due to the natural preference of many queries to take
+     the latest data by timestamp)
     :return DataFrame with data loaded from `src_table`
     """
     hdbg.dassert_in(time_interval_closed, [True, False, "left", "right"])
+    hdbg.dassert_in(order_by_method, ["ASC", "DESC"])
     query = f"SELECT * FROM {src_table}"
     and_query = []
     if any([start_ts, end_ts, currency_pairs, bid_ask_levels, exchange_id]):
@@ -426,8 +450,10 @@ def load_db_data(
     if exchange_id:
         and_query.append(f"exchange_id = '{exchange_id}'")
     query += " AND ".join(and_query)
+    if order_by_col:
+        query += f" ORDER BY {order_by_col} {order_by_method}"
     if limit:
-        query += f" ORDER BY timestamp DESC LIMIT {limit}"
+        query += f" LIMIT {limit}"
     _LOG.info(f"Executing query: \n\t{query}")
     return hsql.execute_query_to_df(db_connection, query)
 
@@ -608,6 +634,10 @@ def save_data_to_db(
         unique_columns = OHLCV_UNIQUE_COLUMNS
     elif data_type == "bid_ask":
         unique_columns = BID_ASK_UNIQUE_COLUMNS
+        # TODO(Juraj): Hacky fix, because proper solution requires more time spent on
+        # updating DB schema, will be addressed in a follow-up of #7932.
+        if db_table != "binance_bid_ask_futures_raw":
+            unique_columns = []
     elif data_type == "trades":
         unique_columns = TRADES_UNIQUE_COLUMNS
     else:

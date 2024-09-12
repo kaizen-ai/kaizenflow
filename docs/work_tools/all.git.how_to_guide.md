@@ -1,4 +1,6 @@
-# Git workflow and best practices
+# Git
+
+## Git workflow and best practices
 
 <!-- toc -->
 
@@ -44,7 +46,7 @@
 
 <!-- tocstop -->
 
-# Before you start
+## Before you start
 
 - GitHub is the place where we keep our code
 - `git` is the tool (program) for version control
@@ -55,7 +57,7 @@
   - More details about what is public key you can find in
     [all.ssh.how_to_guide.md](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_tools/all.ssh.how_to_guide.md)
 
-## Readings
+### Readings
 
 - Read at least the first 3 chapters of
   [Git book](https://git-scm.com/book/en/v2)
@@ -63,7 +65,7 @@
   [Git Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
   - We use Git submodules to compose and share code about repos
 
-# Workflow
+## Workflow
 
 - Run `git fetch`
   ```
@@ -102,12 +104,12 @@
     report_memory_usage=False report_cpu_usage=False
     ## gh_issue_title: issue_id='274', repo_short_name='current'
     ## gh_login:
-    07:35:54 - INFO  lib_tasks_gh.py gh_login:48                            account='kaizenflow'
-    export GIT_SSH_COMMAND='ssh -i /Users/saggese/.ssh/id_rsa.kaizenflow.github'
-    gh auth login --with-token </Users/saggese/.ssh/github_pat.kaizenflow.txt
+    07:35:54 - INFO  lib_tasks_gh.py gh_login:48                            account='sorrentum'
+    export GIT_SSH_COMMAND='ssh -i /Users/saggese/.ssh/id_rsa.sorrentum.github'
+    gh auth login --with-token </Users/saggese/.ssh/github_pat.sorrentum.txt
 
     # Copied to system clipboard:
-    CmTask274_Update_names: https://github.com/kaizen-ai/kaizenflow/pull/274
+    CmTask274_Update_names: https://github.com/sorrentum/sorrentum/pull/274
     ```
     - Before running verify that GitHub cli `gh` works
       ```
@@ -196,9 +198,9 @@
   - Follow up on all comments and mark as resolved any requested changes that
     you resolve
 
-# Best Practices
+## Best Practices
 
-## Do not check in large data files
+### Do not check in large data files
 
 - Avoid checking in large data files
   - The reason is that large files bloat the repo
@@ -208,13 +210,13 @@
 - Sometimes is makes sense to check in some representative data for unit tests
 - BUT, larger tests should obtain their data from s3 or MongoDB
 
-## Branch workflow best practices
+### Branch workflow best practices
 
-### Branches are cheap
+#### Branches are cheap
 
 - One of the advantages of working with Git is that branches are cheap
 
-### `master` is sacred
+#### `master` is sacred
 
 - In an ideal world `master` branch is sacred (see Platinum rule of Git)
   - Development should never be done directly on master
@@ -224,7 +226,7 @@
   - `master` should be always never broken (all tests are passing and it is
     deployable)
 
-### Always work in a branch
+#### Always work in a branch
 
 - Generally it is best to be the sole contributor to your branch
   - If you need to collaborate with somebody on a branch, remember that the
@@ -247,7 +249,7 @@
     changes outside of the notebook (e.g., hacks to get the notebook working
     that need to be cleaned up)
 
-### Keep different changes in separate branches
+#### Keep different changes in separate branches
 
 - It is easier for you to keep work sane and separated
 - Cons of multiple conceptual changes in the same branches
@@ -257,7 +259,7 @@
 - Packaging unrelated changes together that means no change gets merged until
   all of the changes are accepted
 
-## Pull request (PR) best practices
+### Pull request (PR) best practices
 
 - Make sure your PR is coherent
   - It may not need to do everything the Task requires, but the PR should be
@@ -278,9 +280,9 @@
     don't need to write any code, just do &lt;this_and_that>"
 - Merged changes are tested in the Jenkins build
 
-## Workflow diagram
+### Workflow diagram
 
-## Deleting a branch
+### Deleting a branch
 
 - You can run the script `dev_scripts/git/git_branch.sh` to get all the branches
   together with some information, e.g., last commit and creator
@@ -332,9 +334,9 @@
       > git push origin --delete PTask354_INFRA_Populate_S3_bucket
       ```
 
-# How-to and troubleshooting
+## How-to and troubleshooting
 
-## Do not mess up your branch
+### Do not mess up your branch
 
 - If you are working in a branch, before doing `git push` make sure the branch
   is not broken (e.g., from a mistake in merge / rebase mess)
@@ -361,9 +363,9 @@
   - If you see that there is a problem, don't push upstream (because the branch
     will be broken for everybody) and ask a Git expert
 
-## Analyzing commits
+### Analyzing commits
 
-### Show files modified in a commit
+#### Show files modified in a commit
 
 - You can see the files modified in a given commit hash with:
   ```
@@ -383,9 +385,9 @@
   vendors/first_rate/utils.py
   ```
 
-## Conflicts
+### Conflicts
 
-### Getting the conflicting files
+#### Getting the conflicting files
 
 - To see the files in conflicts
   ```
@@ -393,7 +395,7 @@
   ```
 - This is what the script `git_conflict_files.sh` does
 
-### Accepting "theirs"
+#### Accepting "theirs"
 ```
 > git checkout --theirs $FILES
 > git add $FILES
@@ -410,7 +412,7 @@
 - Stage #1 is the common ancestor of the files, stage #2 is the target-branch
   version, and stage #3 is the version you are merging from.
 
-## How to get out of a messy/un-mergeable branch
+### How to get out of a messy/un-mergeable branch
 
 - If one screws up a branch:
   - Rebase to master
@@ -446,16 +448,16 @@
     ...
     ```
 
-## Reverting
+### Reverting
 
-### Reverting the last local commit
+#### Reverting the last local commit
 ```
 > git reset --soft HEAD~
 ```
 
-## Branching
+### Branching
 
-### Checking what work has been done in a branch
+#### Checking what work has been done in a branch
 
 - Look at all the branches available:
   ```
@@ -489,7 +491,7 @@
   > gd a637594..eb12233
   ```
 
-### Checking if you need to merge `master` into your feature branch
+#### Checking if you need to merge `master` into your feature branch
 
 - You can see what commits are in master but missing in your branch with:
   ```
@@ -499,7 +501,7 @@
   ```
 - You want to `rebase` your feature branch onto `master`
 
-### Comparing the difference of a directory among branches
+#### Comparing the difference of a directory among branches
 
 - This is useful if we want to focus on changes on a single dir
   ```
@@ -521,7 +523,7 @@
   vendors/test/test_vendors.py
   ```
 
-## Merging `master`
+### Merging `master`
 
 - If your branch lives long, you want to apply changes made on master to show on
   your branch
@@ -549,7 +551,7 @@
     change in one shot like we would do for a merge commit, but you need to
     revert all the inlined changes
 
-## Rebasing
+### Rebasing
 
 - **For now, we suggest avoiding the rebase flow**
 - The reason is that rebase makes things cleaner when used properly, but can get
@@ -569,7 +571,7 @@
   # You can see that you are ahead of master
   ```
 
-## Merging pull requests
+### Merging pull requests
 
 - The procedure for manual merges is as follows
 - **Do not merge yourself unless explicitly requested by a reviewer**
@@ -591,14 +593,14 @@
   > git branch -d my_feature
   ```
 
-# Submodules
+## Submodules
 
-## Adding a submodule
+### Adding a submodule
 
 - Following the instructions in
   [https://git-scm.com/book/en/v2/Git-Tools-Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
 
-## Working in a submodule
+### Working in a submodule
 
 - When you work in a submodule, the flow should be like:
   - Create a branch in a submodule
@@ -606,7 +608,7 @@
   - Push the submodule branch
   - Create a PR in the submodule when you are done
 
-## Updating a submodule to the latest commit
+### Updating a submodule to the latest commit
 
 - After the submodule PR is merged:
   - Checkout the submodule in the master branch and do `git pull`
@@ -615,26 +617,26 @@
   - Commit changes, push
   - Create a PR
 
-## To check if supermodule and amp are in sync
+### To check if supermodule and amp are in sync
 
 - Run the script:
   ```
   > dev_scripts/git/git_submodules_are_updated.sh
   ```
 
-## Roll forward git submodules pointers:
+### Roll forward git submodules pointers:
 
 - Run the script:
   ```
   > dev_scripts/git/git_submodules_roll_fwd.sh
   ```
 
-## To clean all the repos
+### To clean all the repos
 ```
 > git submodule foreach git clean -fd
 ```
 
-## Pull a branch without checkout
+### Pull a branch without checkout
 
 - This is useful when merging `master` in a different branch and we don't want
   to checkout master just to pull
@@ -642,7 +644,7 @@
   > git fetch origin master:master
   ```
 
-## To force updating all the submodules
+### To force updating all the submodules
 
 - Run the script `> dev_scripts/git/git_submodules_pull.sh` or
   ```

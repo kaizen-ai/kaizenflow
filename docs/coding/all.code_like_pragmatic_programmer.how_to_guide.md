@@ -1,4 +1,4 @@
-
+# Code Like Pragmatic Programmer
 
 <!-- toc -->
 
@@ -185,18 +185,18 @@
 
 <!-- tocstop -->
 
-# A pragmatic philosophy
+## A pragmatic philosophy
 
-## PP_Tip 1: Care about your craft
+### PP_Tip 1: Care about your craft
 
 - Why spending your life developing software unless you care doing it well?
 
-## PP_Tip 2: Think! About your work
+### PP_Tip 2: Think! About your work
 
 - Turn off the autopilot and take control
 - Constantly critique and evaluate your work
 
-## PP_Tip 3: Provide options, don't make lame excuses
+### PP_Tip 3: Provide options, don't make lame excuses
 
 - Things go wrong:
   - Deliverables are late
@@ -211,18 +211,18 @@
   - "Did you consider that?"
   - ...
 
-## Broken windows
+### Broken windows
 
 - = bad designs, wrong decisions, poor code, rotten software
 
-## PP_Tip 4: Don't live with broken windows
+### PP_Tip 4: Don't live with broken windows
 
 - A broken window left un-repaired instills a sense of abandonment
 - Don't live with broken windows un-repaired
   - If there is no time, board it up
   - Take action to show that you are on top of the situation
 
-## PP_Tip 5: Be a catalyst for change
+### PP_Tip 5: Be a catalyst for change
 
 - Sometimes you know what is right, but if you ask for permissions you will be
   slowed down
@@ -232,18 +232,18 @@
 
 - It's easier to ask forgiveness, than it is to get permission
 
-## PP_Tip 6: Remember the big picture
+### PP_Tip 6: Remember the big picture
 
 - Projects slowly and inexorably get totally out of hand
 - Missing a deadline happens one day at a time
 
-## PP_Tip 7: Make quality a requirement issue
+### PP_Tip 7: Make quality a requirement issue
 
 - One of the requirements from the user should be "how good do you want the
   software to be?"
 - Good software today is better than perfect software tomorrow
 
-## PP_Tip 8: Invest regularly in your knowledge portfolio
+### PP_Tip 8: Invest regularly in your knowledge portfolio
 
 - Your knowledge and experience are your most important professional assets
   - Unfortunately they are expiring assets
@@ -258,13 +258,13 @@
      - Don't put all the technical eggs in one basket
   4. Review and rebalance periodically
 
-## PP_Tip 9: Critically analyze what you read and hear
+### PP_Tip 9: Critically analyze what you read and hear
 
 - Beware of media hype
 - Beware of zealots who insist that their dogma provides the only answer
 - A best seller book is not necessarily a good book
 
-## PP_Tip 10: It's both what you say and the way you say it
+### PP_Tip 10: It's both what you say and the way you say it
 
 - Plan what you want to say: write an outline
 - Choose the right moment
@@ -274,7 +274,7 @@
 - Be a listener
 - Get back to people
 
-## PP_Tip 10: Remember the WISDOM acrostic
+### PP_Tip 10: Remember the WISDOM acrostic
 
 - What do you *W*ant them to learn?
 - What is their *I*nterest in what you've got to say?
@@ -283,9 +283,9 @@
 - Whom do you want to *O*wn the information?
 - How can you *M*otivate them to listen?
 
-# A pragmatic approach
+## A pragmatic approach
 
-## PP_Tip 11: DRY - Don't repeat yourself
+### PP_Tip 11: DRY - Don't repeat yourself
 
 - Every piece of information must have a:
   - Single
@@ -294,7 +294,7 @@
 
 - Information is duplicated in multiple places -> maintenance nightmare
 
-## PP_Tip 11: Programs = knowledge
+### PP_Tip 11: Programs = knowledge
 
 - Programs are made of knowledge (e.g., requirements, specifications, code,
   internal and external documentation)
@@ -304,7 +304,7 @@
   - The solution to a problem changes over time
     - E.g., tests show that an algorithm is not general or does not work
 
-## PP_Tip 11: How does duplication arise?
+### PP_Tip 11: How does duplication arise?
 
 - There are 4 I's of duplication:
 
@@ -317,7 +317,7 @@
 4. Inter-developer
    - Multiple developers duplicate a piece of info
 
-## PP_Tip 11: Imposed duplication
+### PP_Tip 11: Imposed duplication
 
 - Multiple representations of the same piece of info
   - E.g., same info in two pieces of code written in different languages
@@ -335,7 +335,7 @@
   - Solution: at least warnings and errors are reported
   - Do not duplicate comments in headers and code
 
-## PP_Tip 11: Inadvertent duplication
+### PP_Tip 11: Inadvertent duplication
 
 - Un-normalized data structures
   - E.g.,
@@ -350,13 +350,13 @@
     redundant
   - Solution: use accessors to read/write object attributes
 
-## PP_Tip 11: Impatient duplication
+### PP_Tip 11: Impatient duplication
 
 - The temptation is always to cut-and-paste code and then modify it
   - It increases the technical debt: shortcuts end up in long delays
   - Solution: re-factor and then change it
 
-## PP_Tip 11: Inter-developer duplication
+### PP_Tip 11: Inter-developer duplication
 
 - It is hard to detect
 
@@ -367,21 +367,21 @@
     to look before writing a routine)
   - Project librarian to supervise the reuse
 
-## PP_Tip 12: Make it easy to reuse
+### PP_Tip 12: Make it easy to reuse
 
 - If something is not easy to find, use, reuse, people won't reuse
 
-## Orthogonality
+### Orthogonality
 
 - = independence, decoupling
 
-## PP_Tip 13: Eliminate effects between unrelated things
+### PP_Tip 13: Eliminate effects between unrelated things
 
 - Systems are orthogonal when changes in one sub-system don't affect other
   sub-systems
   - E.g., helicopter controls are not orthogonal
 
-## PP_Tip 13: Orthogonality: pros
+### PP_Tip 13: Orthogonality: pros
 
 1. Easier to change
    - Changes are localized
@@ -393,7 +393,7 @@
    - Easier to change design
    - Not being tied to a particular vendor / product / platform
 
-## PP_Tip 13: How to maintain orthogonality
+### PP_Tip 13: How to maintain orthogonality
 
 1. Avoid global state (e.g., singletons)
 2. Write shy code
@@ -405,22 +405,22 @@
    - Improve structure
    - Increase orthogonality
 
-## PP_Tip 14: There are no final decisions
+### PP_Tip 14: There are no final decisions
 
 - Do not carve decisions into stone
 - Think of them as being written on the sand
 
-## PP_Tip 14: There are no final decisions: why
+### PP_Tip 14: There are no final decisions: why
 
 1. Requirements can change on us
 2. The first decision is not always the best one
 3. Change 3rd party components
 
-## PP_Tip 15: Use tracer bullets to find the target
+### PP_Tip 15: Use tracer bullets to find the target
 
 - Ready, fire, aim!
 
-## Analogy between shooting bullets in the dark and software engineering
+### Analogy between shooting bullets in the dark and software engineering
 
 - How to shoot a bullet to a target in the dark?
 
@@ -442,29 +442,29 @@
      - Achieve end-to-end connection among components with minimal functionality
      - Then adjust, re-aim, ... until you are on target
 
-## PP_Tip 15: Tracer bullets: pros
+### PP_Tip 15: Tracer bullets: pros
 
 - Users see something working early
 - You have an integration platform, instead of big-bang integration
 
-## PP_Tip 15: Tracer bullets: cons
+### PP_Tip 15: Tracer bullets: cons
 
 - Tracer bullets don't always hit their target
 - Still imagine the result using a waterfall approach
 
-## PP_Tip 16: Prototype to learn
+### PP_Tip 16: Prototype to learn
 
 - The value of prototype lies not in the code produced, but in the lessons
   learned
 
-## PP_Tip 16: Prototype to learn: cons
+### PP_Tip 16: Prototype to learn: cons
 
 - Set the right expectations
 - Make sure everyone understands that you are writing disposable code
 - Otherwise management might insist on deploying the prototype or a cleaned up
   version of it
 
-## PP_Tip 16: Tracer code vs prototyping
+### PP_Tip 16: Tracer code vs prototyping
 
 - Prototype:
   - When experimentation is done, the prototype is thrown away and it is
@@ -477,7 +477,7 @@
   - Over time stubbed routines are completed
   - The framework stays intact
 
-## PP_Tip 17: Program close to the problem domain
+### PP_Tip 17: Program close to the problem domain
 
 - Always try to write code using the vocabulary of the application domain
 - So you are free to concentrate on solving domain problems and ignore petty
@@ -488,7 +488,7 @@
 - Code can issue domain specific errors
 - Create metadata compiled or read-in by the main application
 
-## PP_Tip 18: Estimate to avoid surprises
+### PP_Tip 18: Estimate to avoid surprises
 
 - All answers are estimates: some are more accurate than others
 
@@ -496,7 +496,7 @@
   - The unit of measurement of the estimate conveys a message about accuracy
   - E.g., 130 working days vs 6 months
 
-## PP_Tip 18: How to make estimates
+### PP_Tip 18: How to make estimates
 
 1. Ask people that have done a similar project before
 2. Specify what's the scope of an estimate: "under assumptions X and Y, the
@@ -507,7 +507,7 @@
    properly
 5. When estimates are wrong, understand why
 
-## PP_Tip 19: Iterate the schedule with the code
+### PP_Tip 19: Iterate the schedule with the code
 
 - Management often wants a single estimate for the schedule before the project
   starts
@@ -517,14 +517,14 @@
   - Productivity
   - Environment will determine the schedule
 
-## PP_Tip 19: Estimates at the coffee machine
+### PP_Tip 19: Estimates at the coffee machine
 
 - Estimates given at the coffee machine will come back to haunt you
 - When asked for an estimate, answer "I'll get back to you"
 
-# The basic tools
+## The basic tools
 
-## PP_Tip 20: Keep knowledge in plain text
+### PP_Tip 20: Keep knowledge in plain text
 
 - The base material for a programmer is knowledge
 
@@ -543,7 +543,7 @@
   - All other forms of data; and
   - The application that created it
 
-## PP_Tip 21: Use the power of command shells
+### PP_Tip 21: Use the power of command shells
 
 - GUIs
   - Are great
@@ -553,18 +553,18 @@
 - Shells allow to automate and combine tools in ways that one didn't intended or
   planned for
 
-## PP_Tip 22: Use a single editor well
+### PP_Tip 22: Use a single editor well
 
 - Better to know one editor very well than knowing many editors superficially
 - Use the same editor for all editing tasks
 
-## PP_Tip 23: Always use source code control
+### PP_Tip 23: Always use source code control
 
 - Source control is like an undo key, a time machine
 - Use it always: even if you are a single person team, even if you are working
   on a throw-away prototype
 
-## PP_Tip 23: Advantages of source code control
+### PP_Tip 23: Advantages of source code control
 
 - It allows to answer questions like:
   - Who made changes to this line of code?
@@ -573,14 +573,14 @@
   branches)
 - It can connect to automatic repeatable builds and regressions
 
-## PP_Tip 24: Fix the problem, not the blame
+### PP_Tip 24: Fix the problem, not the blame
 
 - No one writes perfect software so debugging will take up a major portion of
   your day
 - Attack debugging as a puzzle to be solved
 - Avoid denial, finger pointing, lame excuses
 
-## PP_Tip 25: Don't panic
+### PP_Tip 25: Don't panic
 
 - Before you start debugging, adopt the right mindset:
   - Turn off defenses that protect your ego
@@ -589,7 +589,7 @@
 - Don't panic while you debug, even if you have your nervous boss or your client
   breathing on your neck
 
-## PP_Tip 25: How to debug
+### PP_Tip 25: How to debug
 
 - Don't waste time thinking "this cannot happen"
   - Obviously it is happening
@@ -607,22 +607,22 @@
 - Corrupt variables?
   - Check their neighborhood variables, use `valgrind`
 
-## PP_Tip 25: Rubber ducking
+### PP_Tip 25: Rubber ducking
 
 - = explain the issue step-by-step to someone else, even to a yellow rubber duck
 
-## PP_Tip 25: Why rubber ducking works?
+### PP_Tip 25: Why rubber ducking works?
 
 - The simple act of explaining the issue often uncovers the problem
 - You state things that you may take for granted
 - Verbalizing your assumptions lets you gain new insights into the problem
 
-## PP_Tip 26: `select` is not broken
+### PP_Tip 26: `select` is not broken
 
 - Do not assume that the library is broken
 - Assume that you are calling the library in the wrong way
 
-## PP_Tip 27: Don't assume it: prove it
+### PP_Tip 27: Don't assume it: prove it
 
 - Don't assume that a piece of code works in any condition
   - Avoid statements like "that piece of code has been used for years: it cannot
@@ -636,13 +636,13 @@
   may be susceptible to the same bug?
 - Make sure that whatever happened, never happens again
 
-## PP_Tip 28: Learn a text manipulation language
+### PP_Tip 28: Learn a text manipulation language
 
 - Spending 30 mins trying out a crazy idea is better than spending 5 hours
 - With scripting languages (e.g., Python, perl) you can quickly prototype ideas
   instead of using a production language (e.g., C, C++)
 
-## PP_Tip 29: Write code that writes code
+### PP_Tip 29: Write code that writes code
 
 - **_Passive code generators_**
 - They are run once and the origin of the code is forgotten
@@ -654,85 +654,85 @@
   needed
 - This is not duplication, it is the DRY principle in action
 
-# Pragmatic paranoia
+## Pragmatic paranoia
 
-## PP_Tip 30: You cannot write perfect software
+### PP_Tip 30: You cannot write perfect software
 
 - Accept it and celebrate it
   - Unless you accept it, you'll end up wasting time chasing an impossible dream
 
-## Know when to stop
+### Know when to stop
 
 - A painter needs to know when to stop adding layers of paint
 
-## Don't trust others
+### Don't trust others
 
 - Code defensively
 - Anticipate the unexpected
 
-## Don't trust yourself
+### Don't trust yourself
 
 - Code defensively against your own mistakes
 
-## Preconditions
+### Preconditions
 
 - = what must be true in order for the routine to be called
 - It is caller's responsibility to pass good data
 
-## Postconditions
+### Postconditions
 
 - = what the routine is guaranteed to do
 
-## Class invariants
+### Class invariants
 
 - = a class ensures that some conditions are always true
   - E.g., between invocations to public methods
 
-## Contracts
+### Contracts
 
 - If all routines' preconditions are met
   - => the routine guarantees that all postconditions and invariants will be
     true when it completes
 
-## PP_Tip 31: Design with contracts
+### PP_Tip 31: Design with contracts
 
 - Some languages support design by contract:
   - In the compiler (e.g., static assertion, type system)
   - In the runtime systems (e.g., assertions)
 
-## PP_Tip 32: Crash early
+### PP_Tip 32: Crash early
 
 - Better to crash than to thrash (=corrupting the state of the system)
 - When something unexpected happens throw a runtime exception
   - The exception, if not caught, will percolate up to the top level halting the
     program
 
-## PP_Tip 33: If it cannot happen, use assertions to ensure that it won't
+### PP_Tip 33: If it cannot happen, use assertions to ensure that it won't
 
 - Assertions check for things that should never happen
   - E.g., at the end of a sorting routine the data is not sorted
 - Don't use assertions in place of real error handling
 
-## Leave assertions enabled
+### Leave assertions enabled
 
 - Assertions should be left on even after the system is tested and shipped
 - The assumption that testing will find all the bugs is wrong
   - Testing tests a miniscule percentage of possible real-world conditions
 
-## PP_Tip 34: Use exceptions for exceptional problems
+### PP_Tip 34: Use exceptions for exceptional problems
 
 - Interleaving normal control flow code and error handling code leads to ugly
   code
   - With exceptions one can split the code neatly into two parts
   - Exceptions are like `goto`
 
-## Exceptions are for unexpected events
+### Exceptions are for unexpected events
 
 - Use exceptions only for truly unexpected events
 - The code should still run in normal conditions if one removes all the
   exception handlers
 
-## PP_Tip 35: Finish what you start
+### PP_Tip 35: Finish what you start
 
 - Resources (e.g., memory, DB transactions, threads, files, timers) follow a
   pattern:
@@ -744,9 +744,9 @@
 - To avoid deadlocks always deallocate resources in the opposite order to that
   in which you allocate them
 
-# Bend or break
+## Bend or break
 
-## PP_Tip 36: Minimize coupling between modules
+### PP_Tip 36: Minimize coupling between modules
 
 - We want to limit the interaction between modules
   - If one modules has to be replaced / is broken, the other modules can carry
@@ -754,7 +754,7 @@
 - Traversing relationships between objects can quickly lead to a combinatorial
   explosion of dependencies
 
-## PP_Tip 36: Law of Demeter for functions
+### PP_Tip 36: Law of Demeter for functions
 
 - Any method `O.m(A, B, C)` of an object `O` should call only methods belonging
   to:
@@ -765,7 +765,7 @@
 - A rule of thumb in OOP is to use a single dot, e.g., `a.m()` and avoid
   multiple dots, e.g., `a.b.m()`
 
-## PP_Tip 36: Intuition of the Law of Demeter
+### PP_Tip 36: Intuition of the Law of Demeter
 
 - Object `A` can call a method of `B`
 - `A` cannot reach through `B` to access an object `C`
@@ -773,7 +773,7 @@
 - `B` needs to be changed to expose the interface of `C`
   - Cons: lots of wrapper methods to forward requests to delegates
 
-## PP_Tip 36: Law of Demeter as general contractor
+### PP_Tip 36: Law of Demeter as general contractor
 
 - It's like using a general contractor
 
@@ -782,7 +782,7 @@
 - Cons
   - The client needs to go through the general contractor all the times
 
-## PP_Tip 37: Configure, don't integrate
+### PP_Tip 37: Configure, don't integrate
 
 - Every time we change the code to accommodate a change in business logic we
   risk to break the system or to introduce a new bug
@@ -792,7 +792,7 @@
   database, middleware, user-interface style, ...)
 - Use `.ini` files
 
-## PP_Tip 38: Put abstractions in code, details in metadata
+### PP_Tip 38: Put abstractions in code, details in metadata
 
 - The goal is to think declaratively: specify what to do, not how to do it
 - We want to configure and drive the application via metadata as much as
@@ -800,12 +800,12 @@
 - So we program for the general case and put the specifics outside the compiled
   code
 
-## Mechanisms vs policies
+### Mechanisms vs policies
 
 - Mechanisms = primitives, what can be done
 - Policies = how to put together primitives
 
-## PP_Tip 38: Advantages of splitting mechanisms and policies
+### PP_Tip 38: Advantages of splitting mechanisms and policies
 
 1. Decouple components in the design, resulting in more flexible and adaptable
    programs
@@ -813,19 +813,19 @@
 3. Metadata can be expressed in a form closer to problem domain
 4. Anybody can change the behavior without understanding the code
 
-## PP_Tip 38: Put business logic in metadata
+### PP_Tip 38: Put business logic in metadata
 
 - Business logic and rules are the parts that are most likely to change
 - So we want to maintain them in a flexible format, e.g., metadata
 - Metadata should be encoded in plain text
 
-## PP_Tip 39: Analyze workflow to improve concurrency
+### PP_Tip 39: Analyze workflow to improve concurrency
 
 - Avoid temporal coupling
 - Use activity diagrams to identify activities that could be performed in
   parallel
 
-## PP_Tip 40: Temporal coupling
+### PP_Tip 40: Temporal coupling
 
 - Time is often ignored when designing a software architecture
 - We tend to think in a linear sequential fashion: "do this, then do that"
@@ -835,7 +835,7 @@
   - Concurrency = things happening at the same time
   - Ordering = `A` must occur before `B`
 
-## PP_Tip 40: UML activity diagram
+### PP_Tip 40: UML activity diagram
 
 - Actions are represented by rounded boxes
 - Arrows between actions mean "temporal ordering"
@@ -844,15 +844,15 @@
   - Once all the actions leading to a barrier are done, one can proceed with the
     arrows leaving the synchronization point
 
-## Service
+### Service
 
 - = independent, concurrent objects behind well-defined, consistent interfaces
 
-## PP_Tip 40: Design using services
+### PP_Tip 40: Design using services
 
 - Using services allows to avoid temporal coupling
 
-## PP_Tip 41: Hungry consumer model
+### PP_Tip 41: Hungry consumer model
 
 - There are multiple independent consumers and a centralized work queue
 - Each consumer grabs a task from the work queue and processes it
@@ -884,12 +884,12 @@
 - Actions are asynchronous: as soon as a request is handled by a process and put
   on next queue, the process goes back to monitor inputs
 
-## PP_Tip 41: Always design for concurrency
+### PP_Tip 41: Always design for concurrency
 
 - Programming with threads imposes some design constraints
 - Concurrency forces you to think things more carefully
 
-## Examples of problems with concurrency
+### Examples of problems with concurrency
 
 - Global or static variables must be protected from concurrent access
   - Do you really need a global variable?
@@ -899,11 +899,11 @@
 - Interfaces should not keep state
   - Make services stateless
 
-## Event
+### Event
 
 - = special message that says "something interesting just happened"
 
-## PP_Tip 42: Objects communicating through events
+### PP_Tip 42: Objects communicating through events
 
 - We know that we need to separate a program in modules / classes
   - A module / class has a single, well-defined responsibility
@@ -914,7 +914,7 @@
 - By using events one can minimize coupling between objects: objects are
   interested in events and not in other objects
 
-## PP_Tip 42: All events through a single routine approach
+### PP_Tip 42: All events through a single routine approach
 
 - One approach is to send all events to a single routine that dispatches them to
   the objects
@@ -923,7 +923,7 @@
   - It's like a huge case statement
   - It violates encapsulation, increases coupling
 
-## PP_Tip 42: Publish / subscribe model
+### PP_Tip 42: Publish / subscribe model
 
 - Objects should only receive events they want (do no spam objects!)
   - Subscribers register themselves with publisher objects for interesting
@@ -934,14 +934,14 @@
   - Software bus (a centralized object maintains DB of listeners and dispatches
     messages)
 
-## PP_Tip 42: Sequence diagram
+### PP_Tip 42: Sequence diagram
 
 - It shows the flow of messages among several objects
 - Objects are arranged in columns
 - Each message is an arrow from sender's column to receiver's column
 - Timing relationship between messages is captured by vertical ordering
 
-## PP_Tip 42: Push / pull model for event services
+### PP_Tip 42: Push / pull model for event services
 
 - **_Push mode_**
 - Event producers inform the event channel that event has occurred
@@ -952,7 +952,7 @@
 - Event consumers poll the event channel periodically
 - Event channel polls possible suppliers and report interesting events
 
-## PP_Tip 42: Separate views from models
+### PP_Tip 42: Separate views from models
 
 - Model-View-Controller design pattern
 
@@ -986,13 +986,13 @@
   - A View looks for new world records
   - A View posts information on the web
 
-## PP_Tip 43: Use blackboards to coordinate workflow
+### PP_Tip 43: Use blackboards to coordinate workflow
 
 - A blackboard system lets decouple objects from each other completely
 - There is even less coupling that publish / subscribe model
 - Consumers and producers exchange data anonymously and asynchronously
 
-## PP_Tip 43: Example of blackboard implementation
+### PP_Tip 43: Example of blackboard implementation
 
 - Blackboard is like a DB providing atomic and distributed storage of objects
 
@@ -1007,7 +1007,7 @@
 - Advantage is a single and consistent interface to blackboard, instead of
   different APIs for every transaction / interaction in the system
 
-## PP_Tip 43: Example of blackboard application
+### PP_Tip 43: Example of blackboard application
 
 - Program that accepts and process loan applications
 
@@ -1025,14 +1025,14 @@
 - Any time new data arrives, a new rule is triggered
 - Rules can output more data on the blackboard, triggering more rules and so on
 
-# While you are coding
+## While you are coding
 
-## PP_Tip 44: Don't program by coincidence
+### PP_Tip 44: Don't program by coincidence
 
 - Do not program by coincidence (= relying on luck and accidental successes)
 - Program deliberately
 
-## PP_Tip 44: How to program by coincidence
+### PP_Tip 44: How to program by coincidence
 
 - You type some code, try it, and it seems to work
 - Type more code and still works
@@ -1042,14 +1042,14 @@
 - The code seemed to work, given the (limited) testing did, but it was just a
   coincidence
 
-## PP_Tip 44: Why program by coincidence seems to work?
+### PP_Tip 44: Why program by coincidence seems to work?
 
 - One ends up relying on undocumented boundary conditions and when the code is
   fixed / changed, our code breaks
 - One tries until something works, then it does not wonder why it works: "it
   works now, better leave it alone"
 
-## PP_Tip 44: How to program deliberately
+### PP_Tip 44: How to program deliberately
 
 - Rely only on reliable things
 - Document your assumptions (e.g., design by contract)
@@ -1058,13 +1058,13 @@
   unit tests)
 - Don't let existing code (even your own code) dictate future code
 
-## PP_Tip 45: Estimate the order of your algorithms
+### PP_Tip 45: Estimate the order of your algorithms
 
 - We always want to estimate the resources (e.g., time, memory) required by
   algorithms
 - E.g., "Would the algorithm scale up from 1k records to 1M records?"
 
-## Big-Oh notation
+### Big-Oh notation
 
 - Big-Oh notation represents the worst-case time taken by an algorithm
   - Simple loops: $O(n)$
@@ -1073,48 +1073,48 @@
   - Divide and conquer (split, recurse, combine): $O(n \log(n))$
   - Combinatoric: $O(2^n)$
 
-## Estimating Big-Oh
+### Estimating Big-Oh
 
 - If you are not sure about Big Oh, vary input record size and plot the resource
   needed (e.g., time, memory) against the input size
 
-## Big-Oh in the real world
+### Big-Oh in the real world
 
 - It is possible that a $O(n^2)$ algorithm is faster than a $O(n \log(n))$ for
   small inputs
 - Even if runtime looks linear, the machine might start trashing for lack of
   memory and thus not scale linearly in the real world
 
-## PP_Tip 46: Test your estimate
+### PP_Tip 46: Test your estimate
 
 - It's tricky to get accurate execution times
 - Use code profilers to count the number of times different steps of your
   algorithm get executed and plot against the input size
 
-## Be wary of premature optimization
+### Be wary of premature optimization
 
 - Make sure an algorithm is really the bottleneck before investing precious time
   trying to improve it
 
-## Refactoring
+### Refactoring
 
 - = re-writing, re-working, re-architecting code
 
-## PP_Tip 47: Refactor early, refactor often
+### PP_Tip 47: Refactor early, refactor often
 
 - If you cannot refactor immediately
   - Make space in the schedule
   - File a bug
   - Limit the spread of the virus
 
-## How to refactor
+### How to refactor
 
 - Refactoring needs to be undertaken slowly, deliberately, and carefully
 - Don't refactor and add functionality at the same time
 - Make sure you have good tests before refactoring
 - Take baby steps to avoid prolonged debugging
 
-## PP_Tip 47: Software development is more gardening than building
+### PP_Tip 47: Software development is more gardening than building
 
 - Unfortunately the most common metaphor for software development is building
   construction: blueprints, build, release, maintenance, ...
@@ -1129,7 +1129,7 @@
   - Monitor health of the plants
   - Make adjustments
 
-## PP_Tip 47: When to refactor?
+### PP_Tip 47: When to refactor?
 
 - It is time to refactor when you notice:
   - Duplication
@@ -1137,7 +1137,7 @@
   - Outdated knowledge
   - Bad performance
 
-## PP_Tip 47: Management and refactoring
+### PP_Tip 47: Management and refactoring
 
 - How do you explain to your boss that "the code works, but it needs to be
   refactored?"
@@ -1146,7 +1146,7 @@
 - It's like accumulating debt: at some point it will need to be repaid, with
   interests!
 
-## PP_Tip 48: Design to test
+### PP_Tip 48: Design to test
 
 - Chips are designed to be tested
   - At the factory
@@ -1161,7 +1161,7 @@
 - Test each piece thoroughly (unit testing) before wiring them together
   (integration testing)
 
-## PP_Tip 48: Testing against contract
+### PP_Tip 48: Testing against contract
 
 - Write test cases that ensure that a unit honors its contract
   - This also checks whether the contract means what we think it means
@@ -1169,12 +1169,12 @@
 - We need to check over a wide range of test cases and boundary conditions
 - There's no better way to fix errors than by avoiding them in the first place
 
-## Test-driven development
+### Test-driven development
 
 - By building the tests before you implement the code, you try out the interface
   before you commit to it
 
-## PP_Tip 48: Where to put unit tests?
+### PP_Tip 48: Where to put unit tests?
 
 - Unit tests should be somehow close to the code they test
   - E.g., in a parallel directory
@@ -1184,7 +1184,7 @@
   - Examples of how to use a module
   - A means to validate any future changes to code
 
-## PP_Tip 48: Provide a test harness
+### PP_Tip 48: Provide a test harness
 
 - It's good to have a way to:
   - Select tests to run
@@ -1198,7 +1198,7 @@
 - There are standard test harness (e.g., `unittest` for Python, `cppunit` for
   C++)
 
-## PP_Tip 48: Build a test backdoor
+### PP_Tip 48: Build a test backdoor
 
 - No piece of software is perfect and bugs show up in real world
 - Have log files containing trace messages
@@ -1207,13 +1207,13 @@
   - Pointing to a certain port of the machine one can see internal status, log
     entries, a debug control panel
 
-## PP_Tip 49: Test your software or your users will
+### PP_Tip 49: Test your software or your users will
 
 - All software you write will be tested
   - If not by you, then by the eventual users
 - It is better to test it thoroughly than being swamped in help desk calls
 
-## PP_Tip 50: Don't use wizard code you don't understand
+### PP_Tip 50: Don't use wizard code you don't understand
 
 - Applications are getting harder and harder to write
   - User interfaces are becoming increasingly sophisticated
@@ -1226,13 +1226,13 @@
   - What we don't understand is behind a tidy interface
   - Wizard code is interwoven with our application
 
-# Before the project
+## Before the project
 
-## Requirement
+### Requirement
 
 - = a statement about something that needs to be accomplished
 
-## PP_Tip 51: Don't gather requirements: dig for them
+### PP_Tip 51: Don't gather requirements: dig for them
 
 - Gathering requirements implies that the requirements are already there
 - In reality they are buried deep beneath layers of
@@ -1240,7 +1240,7 @@
   - Misconceptions
   - Politics
 
-## PP_Tip 51: Example of tricky requirements
+### PP_Tip 51: Example of tricky requirements
 
 - A requirements can sound like: "Only an employee's supervisors and HR may view
   an employee's records"
@@ -1252,7 +1252,7 @@
 - Give the policy as an example of what should be supported
 - Policies should eventually go in the metadata of the application
 
-## PP_Tip 52: Work with a user to think like a user
+### PP_Tip 52: Work with a user to think like a user
 
 - We need to discover the underlying reason why users do a thing, rather than
   just the way they currently do it
@@ -1262,24 +1262,24 @@
     used
   - Build trust and establish communication with your users
 
-## Use cases
+### Use cases
 
 - = capture requirements through a particular use of the system
 
-## PP_Tip 53: Use cases
+### PP_Tip 53: Use cases
 
 - While sitting with the user, you see a few interesting scenarios that describe
   what the application needs to do
 - Write the scenarios in a document that everyone (developers, end users,
   project sponsor, management) can discuss
 
-## PP_Tip 53: Abstractions live longer than details
+### PP_Tip 53: Abstractions live longer than details
 
 - Good requirement docs should remain abstract
 - They reflect the business needs, not architecture, not design, not user
   interface, ...
 
-## PP_Tip 53: Feature-itis
+### PP_Tip 53: Feature-itis
 
 - Aka feature bloat
 - The issue is that by adding "just one more feature", the scope of the project
@@ -1287,19 +1287,19 @@
 - One should track the number of bugs reported and fixed, the number of
   additional features requested and who approved them
 
-## Project glossary
+### Project glossary
 
 - = one place that defines all the specific terms and vocabulary used in a
   project
 
-## PP_Tip 54: Use a project glossary
+### PP_Tip 54: Use a project glossary
 
 - It's hard to succeed if users and developers
   - Refer to the same thing with different names, or
   - Refer to different things with the same name
 - Create and maintain a project glossary
 
-## PP_Tip 55: Don't think outside the box: find the box
+### PP_Tip 55: Don't think outside the box: find the box
 
 - The secret to solve a puzzle is to identify the real (not imagined)
   constraints and find a solution therein
@@ -1315,7 +1315,7 @@
   - Don't dismiss anything, then explain why a certain path cannot be taken. Can
     you prove it?
 
-## PP_Tip 55: Impossible problems
+### PP_Tip 55: Impossible problems
 
 - You are stuck on a problem that seems "impossible"
 - You are late on the schedule
@@ -1325,7 +1325,7 @@
   - Does it have to be done this way?
   - Does it have to be done _at all_?
 
-## PP_Tip 56: Listen to nagging doubts: start when you are ready
+### PP_Tip 56: Listen to nagging doubts: start when you are ready
 
 - When you experience some reluctance when faced with a task, take notice
 - Sometimes your instinct is right on the spot, although you cannot put a finger
@@ -1337,7 +1337,7 @@
 - = process of reducing requirements to the point where coding can start
 - The goal is to remove major ambiguities
 
-## PP_Tip 57: Some things are better done than described
+### PP_Tip 57: Some things are better done than described
 
 - Program specification is an agreement with the user
 - It's important to stop increasing level of detail and start coding,
@@ -1346,7 +1346,7 @@
   - Once the system is running, users will ask for changes
   - Natural language is not expressive enough to clarify everything
 
-## PP_Tip 58: Don't be a slave to formal methods
+### PP_Tip 58: Don't be a slave to formal methods
 
 - Many methods have been developed to make programming more like engineering
   (e.g., waterfall development, UML, ...)
@@ -1354,14 +1354,14 @@
 - The user typically does not understand them and cannot provide feedback
 - It's better to give the users a prototype and let them play with it
 
-## PP_Tip 59: Expensive tools do not produce better designs
+### PP_Tip 59: Expensive tools do not produce better designs
 
 - Never give in into a methodology just because it is the hot new fad
 - Do not think about how much a tool costs when you look at its output
 
-# Pragmatic projects
+## Pragmatic projects
 
-## PP_Tip 60: Pragmatic teams
+### PP_Tip 60: Pragmatic teams
 
 - Most of the pragmatic programming principles apply to teams, as much as they
   apply to an individual
@@ -1395,7 +1395,7 @@
    - Different activities of a project (analysis, design, coding, testing) can't
      happen in isolation
 
-## PP_Tip 60: Organize around functionality, not job functions
+### PP_Tip 60: Organize around functionality, not job functions
 
 - Organize people in the same way one organizes code
   - Design by contract
@@ -1412,7 +1412,7 @@
   - Of course this approach works only with responsible developers and strong
     project management
 
-## PP_Tip 61: Don't use manual procedures
+### PP_Tip 61: Don't use manual procedures
 
 - We want to ensure consistency and repeatability in the project
   - Manual procedures leave consistency up to chance
@@ -1422,29 +1422,29 @@
 - We want to check out, build, test, ship with a single command
 - `make` and `cronjobs` are the solutions
 
-## PP_Tip 62: Test early
+### PP_Tip 62: Test early
 
 - Look for your bugs now, so you don't have to endure the shame of others
   finding your bugs later
 - Start testing as soon as you have code
 - Code a little, test a little
 
-## PP_Tip 62: Test often
+### PP_Tip 62: Test often
 
 - The earlier a bug is found, the cheaper it is to remedy
 
-## PP_Tip 62: Test automatically
+### PP_Tip 62: Test automatically
 
 - Tests that run with every build are better than test plans that sit on a shelf
 - A good project may well have more test code than production code
 
-## PP Top 63: Coding ain't done 'til all the tests run
+### PP Top 63: Coding ain't done 'til all the tests run
 
 - Just because you finished coding, you cannot tell that the code is done
 - You cannot claim that the code is done until it passes all the available tests
 - Code is never really done
 
-## PP_Tip 63: What to test
+### PP_Tip 63: What to test
 
 - There are multiple types of tests:
   - Unit
@@ -1453,23 +1453,23 @@
   - Performance
   - Usability tests
 
-## Unit test
+### Unit test
 
 - = exercise a module
 - If the parts don't work by themselves, they won't work together
 
-## Integration test
+### Integration test
 
 - = show that the major subsystems work well together
 - Integration is the largest source of bugs in the system
   - Test that the entire system honors its contract
 
-## Validation and verification test
+### Validation and verification test
 
 - = the users told you what they wanted, but is it what they really need?
 - A bug-free system that answers the wrong question is not useful
 
-## Resource exhaustion, errors, and recovery test
+### Resource exhaustion, errors, and recovery test
 
 - Resources are limited in the real world, e.g.:
   - Memory
@@ -1479,21 +1479,21 @@
   - Video resolution
 - How will the system behave under real-world conditions?
 
-## Performance test
+### Performance test
 
 - = testing under a given load (e.g., expected number of users, connections,
   transactions per second)
 - Does the system scale?
 
-## Usability test
+### Usability test
 
 - = performed with real users, under real environmental conditions
 
-## PP_Tip 63: How to test
+### PP_Tip 63: How to test
 
 - Run regression tests for all types of tests
 
-## Regression testing
+### Regression testing
 
 - = compare output of current test with previous known values
 - It ensures that fixes for today's bugs don't break things that were working
@@ -1505,7 +1505,7 @@
   - Performance
   - Usability tests
 
-## Test data
+### Test data
 
 - Test data is either real-world data or synthetic data
   - One needs to use both, since they expose different kind of bugs
@@ -1514,31 +1514,31 @@
   - Can have certain statistical properties (e.g., data to sort is already
     sorted or inversely sorted)
 
-## Exercising GUI systems
+### Exercising GUI systems
 
 - Often specialized testing tools are required, e.g.,
   - Event capture / playback model
   - A data processing application with GUI front end should be decoupled so that
     one can test each component by itself
 
-## Testing the tests
+### Testing the tests
 
 - We cannot write perfect software
 - We need to test the tests and the test infrastructure
 
-## Testing thoroughly
+### Testing thoroughly
 
 - Use coverage analysis tools to keep track of which lines of the code have been
   / not been executed
 
-## PP_Tip 64: Use saboteurs to test your testing
+### PP_Tip 64: Use saboteurs to test your testing
 
 - If the system is a security system, test the system by trying to break in
 - After you have written a test to detect a particular bug, cause the bug
   deliberately and make sure the tests catch it
 - Write test for both positive and negative cases
 
-## PP_Tip 65: Test state coverage, not code coverage
+### PP_Tip 65: Test state coverage, not code coverage
 
 - Knowing that you executed all code does not tell you if you tested all states
 - This is a combinatorial problem
@@ -1546,7 +1546,7 @@
   - Boundary conditions
   - Structure of the code
 
-## PP_Tip 65: When to test
+### PP_Tip 65: When to test
 
 - As soon as any code exists, it must be tested
 - Testing should be done automatically as often as we can (e.g., before code is
@@ -1555,14 +1555,14 @@
   `not_ok`
 - Expensive / special tests can be run less frequently, but on a regular basis
 
-## PP_Tip 66: Find bugs once
+### PP_Tip 66: Find bugs once
 
 - Once a human tester finds a bug, a new test should be created to check for
   that bug every time
 - You don't want to keep chasing the same bugs that the automated tests could
   find for you
 
-## PP_Tip 67: Treat English as just another programming language
+### PP_Tip 67: Treat English as just another programming language
 
 - Embrace documentation as an integral part of software development
 - Keep the documentation in the code itself as much as possible
@@ -1570,23 +1570,23 @@
 - Apply all the principles learned for coding (DRY principle, orthogonality,
   ...) to English as well
 
-## PP_Tip 68: Internal documentation
+### PP_Tip 68: Internal documentation
 
 - Source code comments
 - Design documents
 - Test documents
 
-## External documentation
+### External documentation
 
 - = anything that is shipped or published to the outside world together with the
   software product (e.g., user manuals)
 
-## Documentation vs code
+### Documentation vs code
 
 - Documentation and code are different views of the same underlying model
 - If there is a discrepancy, the code is what matters
 
-## PP_Tip 68: Comments
+### PP_Tip 68: Comments
 
 - Code should have comments, but too many comments are as bad as too few
   - Comments should discuss \textit{why} something is done (e.g, engineering
@@ -1596,14 +1596,14 @@
 - Javadoc notation is useful (`\@param`, `\@return`, ...) to extract information
   from the code automatically
 
-## Naming concepts
+### Naming concepts
 
 - Variable names should be meaningful
 - Remember that you will be writing the code once, but reading it hundreds of
   time: avoid write-only code
 - Misleading names are worse than meaningless names
 
-## PP_Tip 68: Automatically generated documentation
+### PP_Tip 68: Automatically generated documentation
 
 - Also for documentation we want to use pragmatic principles
   - DRY principle
@@ -1616,12 +1616,12 @@
 - There should be a single command to generate and publish the documents on-line
 - Use a timestamp or review number for each page
 
-## PP_Tip 69: Gently exceed your users' expectations
+### PP_Tip 69: Gently exceed your users' expectations
 
 - Success of a project is measured by how well it meets the expectations of its
   users
 
-## Examples of difference between actual and expected results
+### Examples of difference between actual and expected results
 
 - A company announces record profits, and its share price drops 20\%
   - It didn't meet analysts' expectations
@@ -1630,7 +1630,7 @@
 - A team works miracles to implement a complex application
   - The users don't like it because it does not have an help system
 
-## PP_Tip 69: Communicating expectations
+### PP_Tip 69: Communicating expectations
 
 - Users come to you with some vision of what they want
 - It may be
@@ -1639,24 +1639,24 @@
   - Impossible
 - They are invested in it: you cannot ignore this
 
-## Manage expectations
+### Manage expectations
 
 - Work with your users so that they understand what you are delivering
 - Never lose sight of the business problems your application is intended to
   solve
 
-## Go the extra mile
+### Go the extra mile
 
 - Surprise and delight your users
 - E.g., balloon help, colorization, automatic installation, splash screen
   customized for their organization, ...
 
-## PP_Tip 70: Sign your work
+### PP_Tip 70: Sign your work
 
 - Craftsmen of earlier ages were proud to sign their work
 - Your signature should come to be recognized as an indicator of quality
 
-## PP_Tip 70: Code ownership vs anonymity
+### PP_Tip 70: Code ownership vs anonymity
 
 - Code ownership can cause cooperation problems: people become territorial
 - Anonymity can enable sloppiness, laziness

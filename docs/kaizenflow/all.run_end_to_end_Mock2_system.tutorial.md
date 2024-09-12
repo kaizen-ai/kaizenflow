@@ -1,4 +1,4 @@
-
+# Run End To End Mock2 System
 
 <!-- toc -->
 
@@ -16,7 +16,7 @@
 
 <!-- tocstop -->
 
-# Overview
+## Overview
 
 The goal is to run a `System` with `Portfolio` in the replayed time mode for a
 few bars.
@@ -39,7 +39,7 @@ flowchart LR
     DataFrameBroker --> Trades
 ```
 
-# High-level architecture and code organization
+## High-level architecture and code organization
 
 - `dataflow_amp/pipelines/mock2/mock2_pipeline.py`
   - Builder that creates the prediction model
@@ -73,7 +73,7 @@ flowchart LR
 - `dataflow_amp/system/mock2/scripts/run_end_to_end_Mock2_system.py`
   - Run an end-to-end streaming simulation
 
-# System Configuration
+## System Configuration
 
 `System` parameters are controlled via `SystemConfig`, which is built
 `dataflow_amp/system/mock2/scripts/run_end_to_end_Mock2_system.py`.
@@ -82,10 +82,10 @@ The snippet of code below configures the input data, e.g., bar duration, history
 amount, number of assets
 
 ```python
-# Bar duration in seconds, e.g., 60 * 60 is 1 hour bar.
+## Bar duration in seconds, e.g., 60 * 60 is 1 hour bar.
 system.config["bar_duration_in_seconds"] = 60 * 60
 system.config["market_data_config", "number_of_assets"] = 10
-# History amount, e.g., 10 days worth of data.
+## History amount, e.g., 10 days worth of data.
 system.config["market_data_config", "history_lookback"] = pd.Timedelta(
     days=10
 )
@@ -258,9 +258,9 @@ dag_runner_config (marked_as_used=False, writer=None, val_type=core.config.confi
 event_loop_object (marked_as_used=True, writer=/app/amp/dataflow/system/system_builder_utils.py::711::get_DataFramePortfolio_from_System, val_type=helpers.hasyncio._EventLoop): <_EventLoop running=False closed=False debug=False>
 ```
 
-# System components
+## System components
 
-## MarketData
+### MarketData
 
 The source of data is `ReplayedMarketData`, an object that can replay a
 synthetic or previously capture dataframe. The data is represented by random
@@ -272,10 +272,12 @@ Data snippet:
 
 ```markdown
                                      start_datetime              timestamp_db     open     high      low    close  volume  asset_id
-end_datetime
-2023-08-08 15:00:00-04:00 2023-08-08 14:00:00-04:00 2023-08-08 15:00:10-04:00   985.34   986.36   984.87   986.25   935.0         0
-2023-08-08 15:00:00-04:00 2023-08-08 14:00:00-04:00 2023-08-08 15:00:10-04:00  1005.38  1006.65  1005.07  1006.34   948.0         1
-2023-08-08 15:00:00-04:00 2023-08-08 14:00:00-04:00 2023-08-08 15:00:10-04:00  1002.44  1002.49  1001.60  1001.88  1013.0         2
+
+end_datetime 2023-08-08 15:00:00-04:00 2023-08-08 14:00:00-04:00 2023-08-08
+15:00:10-04:00 985.34 986.36 984.87 986.25 935.0 0 2023-08-08 15:00:00-04:00
+2023-08-08 14:00:00-04:00 2023-08-08 15:00:10-04:00 1005.38 1006.65 1005.07
+1006.34 948.0 1 2023-08-08 15:00:00-04:00 2023-08-08 14:00:00-04:00 2023-08-08
+15:00:10-04:00 1002.44 1002.49 1001.60 1001.88 1013.0 2
 ```
 
 We also control via `SystemConfig`:
@@ -286,7 +288,7 @@ We also control via `SystemConfig`:
 - Delay in seconds, i.e. the `System` simulates delay and waits for data to
   become available for `X` seconds
 
-## DagBuilder
+### DagBuilder
 
 A `DagBuilder` configures `Nodes` and connects them into a `Dag` in order to
 generate forecasts. The `DagBuilder` used in this example is the toy model
@@ -303,7 +305,7 @@ generate forecasts. The `DagBuilder` used in this example is the toy model
 - Adjusts returns using volatility
 - Clips returns
 
-## DAG
+### DAG
 
 `Dag` is represented by:
 
@@ -315,7 +317,7 @@ generate forecasts. The `DagBuilder` used in this example is the toy model
 One can configure portfolio construction (e.g, maximum portfolio notional, i.e.
 `target_gmv`) via `SystemConfig`.
 
-## DagRunner
+### DagRunner
 
 `DagRunner` is represented by `RealTimeDagRunner` which is an executor that
 controls how to run the `System` in streaming mode (both real-time and
@@ -324,7 +326,7 @@ simulated).
 One can configure any parameter (e.g., for how long to run the `System`, e.g.,
 for 2 bars) via `SystemConfig`.
 
-## Portfolio
+### Portfolio
 
 `Portfolio` is implemented by `DataFramePortfolio` with a `DataFrameBroker`
 which:
@@ -333,7 +335,7 @@ which:
 - Has no advanced mechanism to control trade execution, i.e. all orders always
   are fully filled
 
-# System run
+## System run
 
 To run the `System` and save logs execute the following cmd:
 ```
@@ -344,29 +346,29 @@ The System starts at `2023-08-15 11:00:00-04:00` and computes the DAG for 2
 bars.
 
 ```markdown
-# Real-time loop: num_it=1: rt_time_out_in_secs=7200 wall_clock_time='2023-08-15 11:00:00-04:00' real_wall_clock_time='2024-01-05 08:39:32.981505-05:00'
+## Real-time loop: num_it=1: rt_time_out_in_secs=7200 wall_clock_time='2023-08-15 11:00:00-04:00' real_wall_clock_time='2024-01-05 08:39:32.981505-05:00'
 ```
 
 It waits for the data to become available for 10 seconds (configurable):
 
 ```markdown
-### waiting on last bar: num_iter=10/120: current_bar_timestamp=2023-08-15 11:00:00-04:00 wall_clock_time=2023-08-15 11:00:10-04:00 last_db_end_time=2023-08-15 11:00:00-04:00
+#### waiting on last bar: num_iter=10/120: current_bar_timestamp=2023-08-15 11:00:00-04:00 wall_clock_time=2023-08-15 11:00:10-04:00 last_db_end_time=2023-08-15 11:00:00-04:00
 
 08:39:33 rss=0.292GB vms=1.261GB mem_pct=1% Task-3 hprint.py log_frame:604
 
-# Waiting on last bar: done
+## Waiting on last bar: done
 ```
 
 And once the data is ready the `System` computes the `Dag`:
 
 ```markdown
-################################################################################
+#################################################################################
 Executing method 'predict' for node topological_id=0 nid='read_data' ...
-################################################################################
+#################################################################################
 ...
-################################################################################
+#################################################################################
 Executing method 'predict' for node topological_id=8 nid='process_forecasts' ...
-################################################################################
+#################################################################################
 ```
 
 When executing the `ProcessForecastsNode` the System:
@@ -376,42 +378,80 @@ When executing the `ProcessForecastsNode` the System:
 - Submits orders (in this case all orders are fully filled)
 
 ```markdown
-# last target positions=
+## last target positions=
+
           holdings_shares    price  holdings_notional      wall_clock_timestamp  prediction  volatility  spread  target_holdings_notional  target_trades_notional  target_trades_shares  target_holdings_shares
-asset_id
-0                       0   983.66                  0 2023-08-15 11:00:11-04:00      0.9674    0.000967       0              586609.98842            586609.98842             596.35442               596.35442
-1                       0  1010.59                  0 2023-08-15 11:00:11-04:00    0.772048    0.001099       0             454185.047454           454185.047454             449.42563               449.42563
-2                       0  1005.54                  0 2023-08-15 11:00:11-04:00   -0.607692    0.000675       0            -1202955.27038          -1202955.27038          -1196.327615            -1196.327615
-...
-7                       0  1014.55                  0 2023-08-15 11:00:11-04:00   -0.632565    0.000568       0            -1699546.60519          -1699546.60519           -1675.17284             -1675.17284
-8                       0   996.88                  0 2023-08-15 11:00:11-04:00   -1.287815    0.000904       0            -670108.728394          -670108.728394           -672.206011             -672.206011
-9                       0   993.89                  0 2023-08-15 11:00:11-04:00    -0.02503     0.00066       0            1259035.977478          1259035.977478           1266.775979             1266.775979
-...
-# last orders=
-Order: order_id=0 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=0 type_=price@twap start_timestamp=2023-08-15 11:00:11-04:00 end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0 diff_num_shares=596.354419637 tz=America/New_York extra_params={}
-Order: order_id=1 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=1 type_=price@twap start_timestamp=2023-08-15 11:00:11-04:00 end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0 diff_num_shares=449.425630032 tz=America/New_York extra_params={}
-Order: order_id=2 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=2 type_=price@twap start_timestamp=2023-08-15 11:00:11-04:00 end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0 diff_num_shares=-1196.327615391 tz=America/New_York extra_params={}
-Order: order_id=3 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=3 type_=price@twap start_timestamp=2023-08-15 11:00:11-04:00 end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0 diff_num_shares=-686.685193608 tz=America/New_York extra_params={}
-Order: order_id=4 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=4 type_=price@twap start_timestamp=2023-08-15 11:00:11-04:00 end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0 diff_num_shares=386.275392292 tz=America/New_York extra_params={}
-Order: order_id=5 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=5 type_=price@twap start_timestamp=2023-08-15 11:00:11-04:00 end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0 diff_num_shares=1960.903428683 tz=America/New_York extra_params={}
-Order: order_id=6 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=6 type_=price@twap start_timestamp=2023-08-15 11:00:11-04:00 end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0 diff_num_shares=-1086.072750644 tz=America/New_York extra_params={}
-Order: order_id=7 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=7 type_=price@twap start_timestamp=2023-08-15 11:00:11-04:00 end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0 diff_num_shares=-1675.172840363 tz=America/New_York extra_params={}
-Order: order_id=8 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=8 type_=price@twap start_timestamp=2023-08-15 11:00:11-04:00 end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0 diff_num_shares=-672.206011149 tz=America/New_York extra_params={}
-Order: order_id=9 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=9 type_=price@twap start_timestamp=2023-08-15 11:00:11-04:00 end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0 diff_num_shares=1266.775978708 tz=America/New_York extra_params={}
+
+asset_id 0 0 983.66 0 2023-08-15 11:00:11-04:00 0.9674 0.000967 0 586609.98842
+586609.98842 596.35442 596.35442 1 0 1010.59 0 2023-08-15 11:00:11-04:00
+0.772048 0.001099 0 454185.047454 454185.047454 449.42563 449.42563 2 0 1005.54
+0 2023-08-15 11:00:11-04:00 -0.607692 0.000675 0 -1202955.27038 -1202955.27038
+-1196.327615 -1196.327615 ... 7 0 1014.55 0 2023-08-15 11:00:11-04:00 -0.632565
+0.000568 0 -1699546.60519 -1699546.60519 -1675.17284 -1675.17284 8 0 996.88 0
+2023-08-15 11:00:11-04:00 -1.287815 0.000904 0 -670108.728394 -670108.728394
+-672.206011 -672.206011 9 0 993.89 0 2023-08-15 11:00:11-04:00 -0.02503 0.00066
+0 1259035.977478 1259035.977478 1266.775979 1266.775979 ...
+
+## last orders=
+
+Order: order*id=0 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=0
+type*=price@twap start*timestamp=2023-08-15 11:00:11-04:00
+end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0
+diff_num_shares=596.354419637 tz=America/New_York extra_params={} Order:
+order_id=1 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=1
+type*=price@twap start*timestamp=2023-08-15 11:00:11-04:00
+end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0
+diff_num_shares=449.425630032 tz=America/New_York extra_params={} Order:
+order_id=2 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=2
+type*=price@twap start*timestamp=2023-08-15 11:00:11-04:00
+end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0
+diff_num_shares=-1196.327615391 tz=America/New_York extra_params={} Order:
+order_id=3 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=3
+type*=price@twap start*timestamp=2023-08-15 11:00:11-04:00
+end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0
+diff_num_shares=-686.685193608 tz=America/New_York extra_params={} Order:
+order_id=4 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=4
+type*=price@twap start*timestamp=2023-08-15 11:00:11-04:00
+end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0
+diff_num_shares=386.275392292 tz=America/New_York extra_params={} Order:
+order_id=5 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=5
+type*=price@twap start*timestamp=2023-08-15 11:00:11-04:00
+end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0
+diff_num_shares=1960.903428683 tz=America/New_York extra_params={} Order:
+order_id=6 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=6
+type*=price@twap start*timestamp=2023-08-15 11:00:11-04:00
+end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0
+diff_num_shares=-1086.072750644 tz=America/New_York extra_params={} Order:
+order_id=7 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=7
+type*=price@twap start*timestamp=2023-08-15 11:00:11-04:00
+end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0
+diff_num_shares=-1675.172840363 tz=America/New_York extra_params={} Order:
+order_id=8 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=8
+type*=price@twap start*timestamp=2023-08-15 11:00:11-04:00
+end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0
+diff_num_shares=-672.206011149 tz=America/New_York extra_params={} Order:
+order_id=9 creation_timestamp=2023-08-15 11:00:11-04:00 asset_id=9
+type*=price@twap start_timestamp=2023-08-15 11:00:11-04:00
+end_timestamp=2023-08-15 12:00:00-04:00 curr_num_shares=0.0
+diff_num_shares=1266.775978708 tz=America/New_York extra_params={}
 ```
 
 Then the `System` goes to sleep waiting for the next bar to start:
+
 ```markdown
-08:39:37 rss=0.296GB vms=1.325GB mem_pct=1%% Task-3 process_forecasts_.py process_forecasts:353 Event: exiting process_forecasts() for loop.
-08:39:37 rss=0.296GB vms=1.325GB mem_pct=1% Task-3 real_time_dag_runner.py _run_dag:264 Waiting on node 'process_forecasts': done
-08:39:37 rss=0.296GB vms=1.325GB mem_pct=1% Task-1 real_time.py execute_with_real_time_loop:422 await done (wall_clock_time=2023-08-15 12:00:00-04:00)
+08:39:37 rss=0.296GB vms=1.325GB mem*pct=1%% Task-3 process_forecasts*.py
+process_forecasts:353 Event: exiting process_forecasts() for loop. 08:39:37
+rss=0.296GB vms=1.325GB mem_pct=1% Task-3 real_time_dag_runner.py \_run_dag:264
+Waiting on node 'process_forecasts': done 08:39:37 rss=0.296GB vms=1.325GB
+mem_pct=1% Task-1 real_time.py execute_with_real_time_loop:422 await done
+(wall_clock_time=2023-08-15 12:00:00-04:00)
 ```
 
 Since the clock is simulated, instead of waiting 1 hour, the `System` moves the
 clock forward within a few seconds and starts to compute the 2nd bar:
 
 ```markdown
-# Real-time loop: num_it=2: rt_time_out_in_secs=7200 wall_clock_time='2023-08-15 12:00:00-04:00' real_wall_clock_time='2024-01-05 08:39:37.416849-05:00'
+## Real-time loop: num_it=2: rt_time_out_in_secs=7200 wall_clock_time='2023-08-15 12:00:00-04:00' real_wall_clock_time='2024-01-05 08:39:37.416849-05:00'
 ```
 
 Then the `System` repeats the `Dag` computation and order submission but for the
@@ -419,9 +459,13 @@ next bar and exits once the termination condition becomes True (run for 2 bars
 in this case):
 
 ```markdown
-08:39:42 rss=0.297GB vms=1.326GB mem_pct=1% Task-1 hwall_clock_time.py set_current_bar_timestamp:105 timestamp=2023-08-15 13:00:00-04:00
-08:39:42 rss=0.297GB vms=1.326GB mem_pct=1%% Task-1 real_time.py execute_with_real_time_loop:433 rt_timeout_in_secs_or_time=7200, bar_duration_in_secs=3600, num_it=2, num_iterations=2, is_done=True
-08:39:42 rss=0.297GB vms=1.326GB mem_pct=1% - ^[[36mINFO ^[[0m Task-1 real_time.py execute_with_real_time_loop:443 Exiting loop: num_it=2, num_iterations=2
+08:39:42 rss=0.297GB vms=1.326GB mem_pct=1% Task-1 hwall_clock_time.py
+set_current_bar_timestamp:105 timestamp=2023-08-15 13:00:00-04:00 08:39:42
+rss=0.297GB vms=1.326GB mem_pct=1%% Task-1 real_time.py
+execute_with_real_time_loop:433 rt_timeout_in_secs_or_time=7200,
+bar_duration_in_secs=3600, num_it=2, num_iterations=2, is_done=True 08:39:42
+rss=0.297GB vms=1.326GB mem_pct=1% - ^[[36mINFO ^[[0m Task-1 real_time.py
+execute_with_real_time_loop:443 Exiting loop: num_it=2, num_iterations=2
 ```
 
 The output is in the dir:
@@ -460,4 +504,4 @@ system_log_dir/
 10 directories, 18 files
 ```
 
-# TODO(gp): @all Describe the output
+## TODO(gp): @all Describe the output

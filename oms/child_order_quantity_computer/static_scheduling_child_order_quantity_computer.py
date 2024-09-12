@@ -84,18 +84,20 @@ class StaticSchedulingChildOrderQuantityComputer(
             ] = child_order_diff_signed_num_shares
         return next_wave_quantities
 
-    def _get_wave_quantities(self, wave_id: int) -> Dict[int, float]:
+    def _get_wave_quantities(self, is_first_wave: bool) -> Dict[int, float]:
         """
         Return the quantity for the wave.
 
         Since the scheduling is static, the same value is returned from
         the state each time.
+
+        :param is_first_wave: True if the current wave is the first one,
+            False otherwise
         """
-        if wave_id == 0:
+        if is_first_wave:
             self._next_wave_quantities = (
                 self._calculate_static_child_order_quantities()
             )
-        _ = wave_id
         return self._next_wave_quantities
 
     def _get_range_filter(self, expected_num_child_orders: int) -> List[int]:

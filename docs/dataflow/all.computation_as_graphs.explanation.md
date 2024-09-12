@@ -1,4 +1,4 @@
-
+# Computation As Graphs
 
 <!-- toc -->
 
@@ -15,9 +15,9 @@
 
 <!-- tocstop -->
 
-# KaizenFlow computing
+## KaizenFlow computing
 
-## Introduction
+### Introduction
 
 `KaizenFlow` is a computing framework to build and test AI/machine learning
 models that can run:
@@ -44,7 +44,7 @@ Some of the advantages of the DataFlow approach are:
   detection of future peeking
 - Ability to replay and debug model executions
 
-## DAG Node
+### DAG Node
 
 A DAG Node is a unit of computation in the DataFlow model.
 
@@ -62,7 +62,7 @@ A DAG Node has:
 
 TODO(gp): circle with inputs and outputs
 
-### DAG node examples
+#### DAG node examples
 
 Examples of operations that may be performed by nodes include:
 
@@ -103,7 +103,7 @@ A DagConfig is hierarchical and contains one subconfig per DAG node. It should
 only include `Dag` node configuration parameters, and not information about
 `Dag` connectivity, which is specified in the `Dag` builder part.
 
-## DataFrame as unit of computation
+### DataFrame as unit of computation
 
 The basic unit of computation of each node is a "dataframe". Each node takes
 multiple dataframes through its inputs, and emits one or more dataframes as
@@ -157,9 +157,9 @@ Some characteristics of dataframes are:
      placeholder.
    - They provide tools to handle, fill, or remove missing data.
 
-# DAG execution
+## DAG execution
 
-## Simulation kernel
+### Simulation kernel
 
 A computation graph is a directed graph where nodes represent operations or
 variables, and edges represent dependencies between these operations.
@@ -170,7 +170,7 @@ operations need to be completed before others.
 
 KaizenFlow simulation kernel schedules nodes according to their dependencies.
 
-## Implementation of simulation kernel
+### Implementation of simulation kernel
 
 The most general case of simulation consists of multiple loops:
 
@@ -222,7 +222,7 @@ component in a trading system, where a DAG computes forecasts which are acted
 upon based on the available funds). In this case, the simulation kernel needs to
 enforce dependencies in the time dimension.
 
-## Nodes ordering for execution
+### Nodes ordering for execution
 
 TODO(gp, Paul): Extend this to the multiple loop.
 
@@ -250,7 +250,7 @@ def topological_sort(graph):
     return post_order[::-1]  # Reverse the post-order to get the topological order
 ```
 
-## Heuristics for splitting code in nodes
+### Heuristics for splitting code in nodes
 
 There are degrees of freedom in splitting the work between various nodes of a
 graph E.g., the same DataFlow computation can be described with several nodes or

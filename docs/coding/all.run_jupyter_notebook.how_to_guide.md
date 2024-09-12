@@ -1,4 +1,4 @@
-
+# Run Jupyter notebook
 
 <!-- toc -->
 
@@ -54,6 +54,8 @@ notebook so that a user knows where a config file is stored.
   `__NOTEBOOK_CONFIG_PATH__` environment variable and copy its value
 - Where to use a path: pass the value as `config_file_name` in
   `get_notebook_config()`
+  - Note: Make sure to set `replace_ecs_tokyo = True` to replace the `ecs_tokyo`
+    with `ecs` in the actual pathh
 
 2. Specify a config builder function manually
 

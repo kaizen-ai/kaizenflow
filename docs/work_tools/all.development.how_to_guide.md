@@ -1,4 +1,4 @@
-
+# Development
 
 <!-- toc -->
 
@@ -7,8 +7,7 @@
   * [Check Git credentials](#check-git-credentials)
   * [Setting Git credentials](#setting-git-credentials)
   * [Enforcing Git credentials](#enforcing-git-credentials)
-- [Create the env](#create-the-env)
-- [Playback](#playback)
+- [Create the thin env](#create-the-thin-env)
 - [Publish a notebook](#publish-a-notebook)
   * [Detailed instructions](#detailed-instructions)
   * [Publish notebooks](#publish-notebooks)
@@ -36,9 +35,9 @@
 
 <!-- tocstop -->
 
-# Setting up Git credentials
+## Setting up Git credentials
 
-## Preamble
+### Preamble
 
 - Git allows setting credentials at different "levels":
   - System (set for all the users in `/etc/git`)
@@ -52,7 +51,7 @@
     https://git-scm.com/book/en/v2/Customizing-Git-Git-Configuration
   - Details on `git config`: https://git-scm.com/docs/git-config
 
-## Check Git credentials
+### Check Git credentials
 
 - You can check the Git credentials that will be used to commit in a client by
   running:
@@ -85,7 +84,7 @@
   Update hooks
   ```
 
-## Setting Git credentials
+### Setting Git credentials
 
 - To keep things simple and avoid variability, our convention is to use:
   - As `user.name` our Linux user name on the local computer we are using to
@@ -108,7 +107,7 @@
 - Note that you need to set these local values on each Git client that you have
   cloned, since Git doesn't version control these values
 
-## Enforcing Git credentials
+### Enforcing Git credentials
 
 - We use Git hooks to enforce that certain emails are used for certain repos
   (e.g., we should commit to our open-source repos only using our personal
@@ -130,18 +129,38 @@
 - You can also use the action `status` to see the status and `remove` to the
   hooks.
 
-# Create the env
+## Create the thin env
 
 - You can follow the
+
   ```bash
-  # Build the client env
-  > dev_scripts/client_setup/build.sh
+  # Build the client env.
+  > dev_scripts/client_setup/build.sh 2>&1 | tee tmp.build.log
   > source dev_scripts/setenv_amp.sh
   ```
 
-# Playback
+- The installation is successful if you see at the end of the output
 
-# Publish a notebook
+  ```verbatim
+  ...
+  # Installation
+  # Configure your client with:
+  > source dev_scripts/setenv_amp.sh
+  ```
+
+- To configure each shell, you should run:
+  ```bash
+  > source dev_scripts/setenv_amp.sh
+  ```
+  which should output
+  ```verbatim
+  ...
+  alias w='which'
+  # Enable invoke autocompletion.
+  ==> SUCCESS <==
+  ```
+
+## Publish a notebook
 
 - `publish_notebook.py` is a little tool that allows to:
   1. Opening a notebook in your browser (useful for read-only mode)
@@ -160,7 +179,7 @@
      - One can take a snapshot and visually compare multiple notebooks
        side-by-side for changes
 
-## Detailed instructions
+### Detailed instructions
 
 - You can get details by running:
 
@@ -171,7 +190,7 @@
 - Plug-in for Chrome
   [my-s3-browser](https://chrome.google.com/webstore/detail/my-s3-browser/lgkbddebikceepncgppakonioaopmbkk?hl=en)
 
-## Publish notebooks
+### Publish notebooks
 
 - Make sure that your environment is set up properly
 
@@ -226,15 +245,15 @@
   --aws_profile am
   ```
 
-## Open a published notebook
+### Open a published notebook
 
-### Start a server
+#### Start a server
 
 - `(cd /local/home/share/html/published_notebooks; python3 -m http.server 8000)`
 
 - Go to the page in the local browser
 
-### Using the dev box
+#### Using the dev box
 
 - To open a notebook saved on S3, \*outside\* a Docker container run:
 
@@ -253,7 +272,7 @@
 - And then navigate to the path (e.g.,
   `/local/home/share/html/published_notebooks/Master_forecast_processor_reader.20220810-112328.html`)
 
-### Using Windows browser
+#### Using Windows browser
 
 - Another approach is:
 
@@ -266,9 +285,9 @@
 - For some reason, Chrome saves the link instead of opening, so you need to
   click on the saved link
 
-# How to create a private fork
+## How to create a private fork
 
-- https://stackoverflow.com/questions/10065526/github-how-to-make-a-fork-of-public-repository-private
+- Https://stackoverflow.com/questions/10065526/github-how-to-make-a-fork-of-public-repository-private
 - From
   https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/duplicating-a-repository
 
@@ -280,19 +299,19 @@
 
 - It worked only as cryptomtc, but not using my key
 
-# Integrate public to private: `amp` -> `cmamp`
+## Integrate public to private: `amp` -> `cmamp`
 
-## Set-up
+### Set-up
 
 ```bash
 > git remote add public git@github.com:alphamatic/amp
 
-# Go to cmamp
+## Go to cmamp
 > cd /data/saggese/src/cmamp1
 > cd /Users/saggese/src/cmamp1
 
-# Add the remote
-# git remote add public https://github.com/exampleuser/public-repo.git
+## Add the remote
+## git remote add public https://github.com/exampleuser/public-repo.git
 > git remote add public git@github.com:alphamatic/amp
 
 > git remote -v
@@ -302,7 +321,7 @@ public git@github.com:alphamatic/amp (fetch)
 public git@github.com:alphamatic/amp(push)
 ```
 
-## Ours vs theirs
+### Ours vs theirs
 
 - From
   https://stackoverflow.com/questions/25576415/what-is-the-precise-meaning-of-ours-and-theirs-in-git/25576672
@@ -314,28 +333,28 @@ public git@github.com:alphamatic/amp(push)
   - Ours = branch being rebased onto (e.g., master)
   - Theirs = branch being rebased (e.g., feature)
 
-## Sync the repos (after double integration)
+### Sync the repos (after double integration)
 
 ```bash
 > git fetch origin; git fetch public
 
-# Pull from both repos
+## Pull from both repos
 
 > git pull public master -X ours
 
-# You might want to use `git pull -X theirs` or `ours`
+## You might want to use `git pull -X theirs` or `ours`
 
 > git pull -X theirs
 
 > git pull public master -s recursive -X ours
 
-# When there is a file added it is better to add
+## When there is a file added it is better to add
 
 > git diff --name-status --diff-filter=U | awk '{print $2}'
 
 im/ccxt/db/test/test_ccxt_db_utils.py
 
-# Merge branch
+## Merge branch
 
 > gs
 + git status
@@ -348,7 +367,7 @@ nothing to commit, working tree clean
 
 > git pull -X ours
 
-## Make sure it's synced at ToT
+### Make sure it's synced at ToT
 
 > rsync --delete -r /Users/saggese/src/cmamp2/ /Users/saggese/src/cmamp1
 --exclude='.git/'
@@ -356,36 +375,36 @@ nothing to commit, working tree clean
 > diff -r --brief /Users/saggese/src/cmamp1 /Users/saggese/src/cmamp2 | grep -v \.git
 ```
 
-## Updated sync
+### Updated sync
 
 ```bash
 > git fetch origin; git fetch public
 ```
 
-## Check that things are fine
+### Check that things are fine
 
 ```bash
 > git diff origin/master... >patch.txt
 
 > cd /Users/saggese/src/cmamp2
 
-# Create a branch
+## Create a branch
 
 > git checkout -b Cmamp114_Integrate_amp_cmamp_20210928
 > git apply patch.txt
 
-# Compare branch with references
+## Compare branch with references
 
 > dev_scripts/diff_to_vimdiff.py --dir1 /Users/saggese/src/cmamp1/im --dir2
 /Users/saggese/src/cmamp2/im
 
 > diff -r --brief /Users/saggese/src/lemonade3/amp \~/src/cmamp2 | grep -v "/im"
 
-# Creates a merge commit
+## Creates a merge commit
 > git push origin master
 ```
 
-## Integrate private to public: `cmamp` -> `amp`
+### Integrate private to public: `cmamp` -> `amp`
 
 ```bash
 > cd /data/saggese/src/cmamp1
@@ -403,7 +422,7 @@ nothing to commit, working tree clean
 > cmamp master -X ours
 ```
 
-## Squash commit of everything in the branch
+### Squash commit of everything in the branch
 
 - From
   https://stackoverflow.com/questions/25356810/git-how-to-squash-all-commits-on-branch
@@ -417,11 +436,11 @@ nothing to commit, working tree clean
   > git push --force
   ```
 
-# Double integration `cmamp` < -- > `amp`
+## Double integration `cmamp` < -- > `amp`
 
 - The bug is https://github.com/alphamatic/amp/issues/1786
 
-## Script set-up
+### Script set-up
 
 ```bash
 > vi /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
@@ -436,26 +455,26 @@ Update the date
 > source /Users/saggese/src/amp1/dev_scripts/integrate_repos/setup.sh
 ```
 
-## Manual set-up branches
+### Manual set-up branches
 
 ```bash
-# Go to cmamp1
+## Go to cmamp1
 > go_amp.sh cmamp 1
 
-# Set up the env vars in both clients
+## Set up the env vars in both clients
 > export AMP_DIR=/Users/saggese/src/amp1; export
 CMAMP_DIR=/Users/saggese/src/cmamp1; echo "$AMP_DIR"; ls
 $AMP_DIR; echo "$CMAMP_DIR"; ls $CMAMP_DIR
 
-# Create two branches
+## Create two branches
 > export BRANCH_NAME=AmpTask1786_Integrate_20211010 export BRANCH_NAME=AmpTask1786_Integrate_2021117
 ...
 > cd $AMP_DIR
 
-# Create automatically
+## Create automatically
 > i git_create_branch -b $BRANCH_NAME
 
-# Create manually
+## Create manually
 > git checkout -b $BRANCH_NAME
 > git push --set-upstream origin $BRANCH_NAME
 
@@ -463,7 +482,7 @@ $AMP_DIR; echo "$CMAMP_DIR"; ls $CMAMP_DIR
 > i git_create_branch -b $BRANCH_NAME
 ```
 
-## High-level plan
+### High-level plan
 
 - SUBDIR=im
   - Typically `cmamp` is copied on top of `amp`
@@ -472,30 +491,30 @@ $AMP_DIR; echo "$CMAMP_DIR"; ls $CMAMP_DIR
 - Everything else
   - Typically `amp` -> `cmamp`
 
-## Sync `im` `cmamp` -> `amp`
+### Sync `im` `cmamp` -> `amp`
 
 ```bash
 SUBDIR=im
 
-# Check different files
+## Check different files
 > diff -r --brief $AMP_DIR/$SUBDIR $CMAMP_DIR/$SUBDIR | grep -v .git
 
-# Diff the entire dirs with vimdiff
+## Diff the entire dirs with vimdiff
 > dev_scripts/diff_to_vimdiff.py --dir1 $AMP_DIR/$SUBDIR --dir2 $CMAMP_DIR/$SUBDIR
 
-# Find different files
+## Find different files
 > find $AMP_DIR/$SUBDIR -name "*"; find $CMAMP_DIR/$SUBDIR -name "*" sdiff
 /tmp/dir1 /tmp/dir2
 
-# Copy cmamp -> amp
+## Copy cmamp -> amp
 > rsync --delete -au $CMAMP_DIR/$SUBDIR/ $AMP_DIR/$SUBDIR
 -a = archive
 -u = ignore newer
 
-# Add all the untracked files
+## Add all the untracked files
 > cd $AMP_DIR/$SUBDIR && git add $(git ls-files -o --exclude-standard)
 
-# Check that there are no differences after copying
+## Check that there are no differences after copying
 > dev_scripts/diff_to_vimdiff.py --dir1 $AMP_DIR/$SUBDIR --dir2 $CMAMP_DIR/$SUBDIR
 
 ==========
@@ -541,13 +560,13 @@ cd+++++++ real_time/test/TestRealTimeReturnPipeline1.test1/output/
 > f..t.... returns/test/TestReturnsBuilder.test_futures1/output/test.txt
 ```
 
-## Sync everything
+### Sync everything
 
 ```bash
-# Check if there is anything in cmamp more recent than amp
+## Check if there is anything in cmamp more recent than amp
 > rsync -au --exclude='.git' --exclude='devops' $CMAMP_DIR/ $AMP_DIR
 
-# vimdiff
+## vimdiff
 > dev_scripts/diff_to_vimdiff.py --dir1 $AMP_DIR --dir2
 $CMAMP_DIR
 
@@ -555,20 +574,20 @@ F1: skip
 F9: choose left (i.e., amp)
 F10: choose right (i.e,. cmamp)
 
-# Copy
+## Copy
 
 > rsync -au --delete --exclude='.git' --exclude='devops' --exclude='im'
 $AMP_DIR/
 $CMAMP_DIR
 
-# Add all the untracked files
+## Add all the untracked files
 
 > (cd $CMAMP_DIR/$SUBDIR && git add $(git ls-files -o --exclude-standard))
 
 > diff -r --brief $AMP_DIR $CMAMP_DIR | grep -v .git | grep Only
 ```
 
-## Files that need to be different
+### Files that need to be different
 
 - `amp` needs an `if False` `helpers/lib_tasks.py`
 
@@ -588,7 +607,7 @@ TODO(gp): How to copy files in vimdiff including last line?
   > find . -name "\*.txt" | xargs perl -pi -e 'chomp if eof'
   ```
 
-### Testing
+#### Testing
 
 - Run `amp` on my laptop (or on the server)
 - IN PROGRESS: Get `amp` PR to pass on GH

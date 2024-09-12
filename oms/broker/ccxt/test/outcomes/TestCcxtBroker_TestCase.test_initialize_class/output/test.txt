@@ -17,6 +17,7 @@
  '_log_dir': 'mock/log',
  '_logger': <oms.broker.ccxt.ccxt_logger.CcxtLogger object at 0x>,
  '_max_exchange_request_retries': 3,
+ '_max_order_cancel_retries': 2,
  '_orders': OrderedDict(),
  '_portfolio_id': 'ccxt_portfolio_mock',
  '_previous_parent_orders': None,

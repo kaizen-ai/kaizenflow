@@ -1,4 +1,4 @@
-
+# Batch And Streaming Mode Using Tiling
 
 <!-- toc -->
 
@@ -12,7 +12,7 @@
 
 <!-- tocstop -->
 
-# The property of tilability
+## The property of tilability
 
 The working principle of a DataFlow computation is that nodes should be able to
 compute their outputs from their inputs without a dependency on how the inputs
@@ -61,7 +61,7 @@ exponentially weighted moving average for adjacent intervals of times), then it
 can be made tileable by adding auxiliary state to store the partial amount of
 computatin.
 
-## Temporal tiling
+### Temporal tiling
 
 In most computations there is a special axis that represents time and moves only
 from past to future. The data along other axes represent (potentially
@@ -162,7 +162,7 @@ described above is general, within any desired level of approximation.
 
 The amount of history is function of a node
 
-## Cross-sectional tiling
+### Cross-sectional tiling
 
 - The same principle can be applied to tiling computation cross-sectionally
 
@@ -170,20 +170,20 @@ The amount of history is function of a node
   correct
 - TODO(gp): Make an example
 
-## Temporal and cross-sectional tiling
+### Temporal and cross-sectional tiling
 
 - These two styles of tiling can be composed
 - The tiling doesn't even have to be regular, as long as the constraints for a
   correct computation are correct
 
-## Detecting incorrect tiled computations
+### Detecting incorrect tiled computations
 
 - One can use the tiling invariance of a computation to verify that it is
   correct
 - E.g., if computing a DAG gives different results for different tiled, then the
   amount of history to each node is not correct
 
-## Benefits of tiled computation
+### Benefits of tiled computation
 
 - Another benefit of tiled computation is that future peeking (i.e., a fault in
   a computation that requires data not yet available at the computation time)
@@ -199,7 +199,7 @@ transformation without altering the computation, e.g.,
 - Parallelization of tiles and nodes across different CPUs
 - Select the size of a tile so that the computation fits in memory
 
-# Batch vs streaming
+## Batch vs streaming
 
 Once a computation can be tiled, the same computation can be performed in batch
 mode (e.g., the entire data set is processed at once) or in streaming mode

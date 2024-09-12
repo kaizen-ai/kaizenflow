@@ -24,8 +24,7 @@ practices to avoid common pitfalls.
 ## Nomenclature in asyncio
 
 - Event Loop
-
-  - asyncio operates on an event loop that manages the execution of asynchronous
+  - Asyncio operates on an event loop that manages the execution of asynchronous
     tasks. Whenever one wants to execute the asynchronous tasks we do
     `asyncio.run()` or `asyncio.run_until_complete()`: both of these methods
     will start the event loop and it will be set to running yielding control to
@@ -38,7 +37,6 @@ practices to avoid common pitfalls.
     compatibility with asyncio.
 
 - Coroutines (aka "async functions" defined with `async def`)
-
   - These functions can be paused and resumed without blocking other tasks.
 
 - `await`
@@ -58,13 +56,11 @@ error.
 To avoid this:
 
 - Solution 1: use `nest_asyncio`
-
   - `nest_asyncio` is a library that allows you to create nested event loops.
     While this may seem like a solution but may lead to complex issues. This was
     mainly developed to run `asyncio` in Jupyter/ipython which already runs an
     event loop in backend. This library also does not support
     `asyncio_solipsism` so there is another trade-off.
-
   - Here's how nest_asyncio works:
     - It saves the current event loop, if any, that is running in the
       environment.
@@ -74,14 +70,13 @@ To avoid this:
       original event loop, ensuring compatibility with the environment.
 
 - Solution 2: use threads
-
   - Instead of starting a new event loop, run that specific part of your code in
     a separate thread to prevent conflicts. This solves the issue but using
     thread has its own complications such as race conditions which can be
     difficult to debug
 
 - Solution 3: embrace "async all the way up" approach
-  - use `await` instead of nested call to `asyncio.run` and make your methods
+  - Use `await` instead of nested call to `asyncio.run` and make your methods
     asynchronous using `async def` all the way
 
 #### Example Code
@@ -101,11 +96,9 @@ Consider the following coroutines
       style B fill:#98FB98, stroke:#2E8B57
       style C fill:#ADD8E6, stroke:#4682B4
   ```
-
   ```
   import asyncio
   import helpers.hasyncio as hasynci
-
 
   # Corresponds to `submit twap` in CmampTask5842
   async def A():
@@ -114,13 +107,11 @@ Consider the following coroutines
       print("ENTER B")
       B()
 
-
   # Corresponds to `get_fill_per_order`
   async def C():
       print("IN C")
       await asyncio.sleep(2)
       print("EXIT C")
-
 
   # get_fill
   def B():
@@ -129,13 +120,11 @@ Consider the following coroutines
       asyncio.get_running_loop().run_until_complete(cor)
       print("EXIT B")
 
-
   # Call A.
   hasynci.run(A(), asyncio.get_event_loop(), close_event_loop=False)
   ```
 
 - The code above won't work and will give
-
   ```
   Error: "Event loop is already running"
   ```
@@ -147,7 +136,6 @@ Consider the following coroutines
   already running' error."
 
 - Adding
-
   ```
   import nest_asyncio
 
